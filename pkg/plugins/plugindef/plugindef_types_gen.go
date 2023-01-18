@@ -108,18 +108,18 @@ type BasicRole string
 // BuildInfo defines model for BuildInfo.
 type BuildInfo struct {
 	// Git branch the plugin was built from.
-	Branch *string `json:"branch,omitempty"`
+	Branch string `json:"branch,omitempty"`
 
 	// Git hash of the commit the plugin was built from
-	Hash   *string `json:"hash,omitempty"`
-	Number *int64  `json:"number,omitempty"`
+	Hash   string `json:"hash,omitempty"`
+	Number int64  `json:"number,omitempty"`
 
 	// GitHub pull request the plugin was built from
-	Pr   *int32  `json:"pr,omitempty"`
-	Repo *string `json:"repo,omitempty"`
+	Pr   int32  `json:"pr,omitempty"`
+	Repo string `json:"repo,omitempty"`
 
 	// Time when the plugin was built, as a Unix timestamp.
-	Time *int64 `json:"time,omitempty"`
+	Time int64 `json:"time,omitempty"`
 }
 
 // Dependencies defines model for Dependencies.
@@ -131,10 +131,10 @@ type Dependencies struct {
 	// (Deprecated) Required Grafana version for this plugin, e.g.
 	// `6.x.x 7.x.x` to denote plugin requires Grafana v6.x.x or
 	// v7.x.x.
-	GrafanaVersion *string `json:"grafanaVersion,omitempty"`
+	GrafanaVersion string `json:"grafanaVersion,omitempty"`
 
 	// An array of required plugins on which this plugin depends.
-	Plugins *[]Dependency `json:"plugins,omitempty"`
+	Plugins []Dependency `json:"plugins,omitempty"`
 }
 
 // Dependency describes another plugin on which a plugin depends.
@@ -160,33 +160,33 @@ type Header struct {
 // A resource to be included in a plugin.
 type Include struct {
 	// RBAC action the user must have to access the route
-	Action *string `json:"action,omitempty"`
+	Action string `json:"action,omitempty"`
 
 	// Add the include to the side menu.
-	AddToNav *bool `json:"addToNav,omitempty"`
+	AddToNav bool `json:"addToNav,omitempty"`
 
 	// (Legacy) The Angular component to use for a page.
-	Component *string `json:"component,omitempty"`
+	Component string `json:"component,omitempty"`
 
 	// Page or dashboard when user clicks the icon in the side menu.
-	DefaultNav *bool `json:"defaultNav,omitempty"`
+	DefaultNav bool `json:"defaultNav,omitempty"`
 
 	// Icon to use in the side menu. For information on available
 	// icon, refer to [Icons
 	// Overview](https://developers.grafana.com/ui/latest/index.html?path=/story/docs-overview-icon--icons-overview).
-	Icon *string `json:"icon,omitempty"`
-	Name *string `json:"name,omitempty"`
+	Icon string `json:"icon,omitempty"`
+	Name string `json:"name,omitempty"`
 
 	// Used for app plugins.
-	Path *string      `json:"path,omitempty"`
-	Role *IncludeRole `json:"role,omitempty"`
+	Path string      `json:"path,omitempty"`
+	Role IncludeRole `json:"role,omitempty"`
 
 	// IncludeType is a string identifier of a plugin include type, which is
 	// a superset of plugin types.
 	Type IncludeType `json:"type"`
 
 	// Unique identifier of the included resource
-	Uid *string `json:"uid,omitempty"`
+	Uid string `json:"uid,omitempty"`
 }
 
 // IncludeRole defines model for Include.Role.
@@ -200,21 +200,21 @@ type IncludeType string
 // page in Grafana and others on grafana.com, if the plugin is published.
 type Info struct {
 	// Information about the plugin author.
-	Author *struct {
+	Author struct {
 		// Author's name.
-		Email *string `json:"email,omitempty"`
+		Email string `json:"email,omitempty"`
 
 		// Author's name.
-		Name *string `json:"name,omitempty"`
+		Name string `json:"name,omitempty"`
 
 		// Link to author's website.
-		Url *string `json:"url,omitempty"`
+		Url string `json:"url,omitempty"`
 	} `json:"author,omitempty"`
-	Build *BuildInfo `json:"build,omitempty"`
+	Build BuildInfo `json:"build,omitempty"`
 
 	// Description of plugin. Used on the plugins page in Grafana and
 	// for search on grafana.com.
-	Description *string `json:"description,omitempty"`
+	Description string `json:"description,omitempty"`
 
 	// Array of plugin keywords. Used for search on grafana.com.
 	Keywords []string `json:"keywords"`
@@ -222,13 +222,13 @@ type Info struct {
 	// An array of link objects to be displayed on this plugin's
 	// project page in the form `{name: 'foo', url:
 	// 'http://example.com'}`
-	Links *[]struct {
-		Name *string `json:"name,omitempty"`
-		Url  *string `json:"url,omitempty"`
+	Links []struct {
+		Name string `json:"name,omitempty"`
+		Url  string `json:"url,omitempty"`
 	} `json:"links,omitempty"`
 
 	// SVG images that are used as plugin icons.
-	Logos *struct {
+	Logos struct {
 		// Link to the "large" version of the plugin logo, which must be
 		// an SVG image. "Large" and "small" logos can be the same image.
 		Large string `json:"large"`
@@ -240,16 +240,16 @@ type Info struct {
 
 	// An array of screenshot objects in the form `{name: 'bar', path:
 	// 'img/screenshot.png'}`
-	Screenshots *[]struct {
-		Name *string `json:"name,omitempty"`
-		Path *string `json:"path,omitempty"`
+	Screenshots []struct {
+		Name string `json:"name,omitempty"`
+		Path string `json:"path,omitempty"`
 	} `json:"screenshots,omitempty"`
 
 	// Date when this plugin was built.
-	Updated *string `json:"updated,omitempty"`
+	Updated string `json:"updated,omitempty"`
 
 	// Project version of this commit, e.g. `6.7.x`.
-	Version *string `json:"version,omitempty"`
+	Version string `json:"version,omitempty"`
 }
 
 // TODO docs
@@ -270,8 +270,8 @@ type JWTTokenAuth struct {
 // scope.
 // Example: action: 'test-app.schedules:read', scope: 'test-app.schedules:*'
 type Permission struct {
-	Action string  `json:"action"`
-	Scope  *string `json:"scope,omitempty"`
+	Action string `json:"action"`
+	Scope  string `json:"scope,omitempty"`
 }
 
 // ReleaseState indicates release maturity state of a plugin.
@@ -310,34 +310,34 @@ type RoleRegistration struct {
 type Route struct {
 	// For data source plugins. Route headers set the body content and
 	// length to the proxied request.
-	Body *map[string]interface{} `json:"body,omitempty"`
+	Body map[string]interface{} `json:"body,omitempty"`
 
 	// For data source plugins. Route headers adds HTTP headers to the
 	// proxied request.
-	Headers *[]Header `json:"headers,omitempty"`
+	Headers []Header `json:"headers,omitempty"`
 
 	// TODO docs
 	// TODO should this really be separate from TokenAuth?
-	JwtTokenAuth *JWTTokenAuth `json:"jwtTokenAuth,omitempty"`
+	JwtTokenAuth JWTTokenAuth `json:"jwtTokenAuth,omitempty"`
 
 	// For data source plugins. Route method matches the HTTP verb
 	// like GET or POST. Multiple methods can be provided as a
 	// comma-separated list.
-	Method *string `json:"method,omitempty"`
+	Method string `json:"method,omitempty"`
 
 	// For data source plugins. The route path that is replaced by the
 	// route URL field when proxying the call.
-	Path        *string `json:"path,omitempty"`
-	ReqRole     *string `json:"reqRole,omitempty"`
-	ReqSignedIn *bool   `json:"reqSignedIn,omitempty"`
+	Path        string `json:"path,omitempty"`
+	ReqRole     string `json:"reqRole,omitempty"`
+	ReqSignedIn bool   `json:"reqSignedIn,omitempty"`
 
 	// TODO docs
-	TokenAuth *TokenAuth `json:"tokenAuth,omitempty"`
+	TokenAuth TokenAuth `json:"tokenAuth,omitempty"`
 
 	// For data source plugins. Route URL is where the request is
 	// proxied to.
-	Url       *string     `json:"url,omitempty"`
-	UrlParams *[]URLParam `json:"urlParams,omitempty"`
+	Url       string     `json:"url,omitempty"`
+	UrlParams []URLParam `json:"urlParams,omitempty"`
 }
 
 // TODO docs
@@ -347,10 +347,10 @@ type TokenAuth struct {
 
 	// The list of scopes that your application should be granted
 	// access to.
-	Scopes *[]string `json:"scopes,omitempty"`
+	Scopes []string `json:"scopes,omitempty"`
 
 	// URL to fetch the authentication token.
-	Url *string `json:"url,omitempty"`
+	Url string `json:"url,omitempty"`
 }
 
 // URLParam describes query string parameters for
@@ -364,32 +364,32 @@ type URLParam struct {
 // PluginDef defines model for plugindef.
 type PluginDef struct {
 	// For data source plugins, if the plugin supports alerting.
-	Alerting *bool `json:"alerting,omitempty"`
+	Alerting bool `json:"alerting,omitempty"`
 
 	// For data source plugins, if the plugin supports annotation
 	// queries.
-	Annotations *bool `json:"annotations,omitempty"`
+	Annotations bool `json:"annotations,omitempty"`
 
 	// Set to true for app plugins that should be enabled by default
 	// in all orgs
-	AutoEnabled *bool `json:"autoEnabled,omitempty"`
+	AutoEnabled bool `json:"autoEnabled,omitempty"`
 
 	// If the plugin has a backend component.
-	Backend *bool `json:"backend,omitempty"`
+	Backend bool `json:"backend,omitempty"`
 
 	// builtin indicates whether the plugin is developed and shipped as part
 	// of Grafana. Also known as a "core plugin."
 	BuiltIn bool `json:"builtIn"`
 
 	// Plugin category used on the Add data source page.
-	Category     *Category    `json:"category,omitempty"`
+	Category     Category     `json:"category,omitempty"`
 	Dependencies Dependencies `json:"dependencies"`
 
 	// Grafana Enerprise specific features.
-	EnterpriseFeatures *struct {
+	EnterpriseFeatures struct {
 		// Enable/Disable health diagnostics errors. Requires Grafana
 		// >=7.5.5.
-		HealthDiagnosticsErrors *bool `json:"healthDiagnosticsErrors,omitempty"`
+		HealthDiagnosticsErrors bool `json:"healthDiagnosticsErrors,omitempty"`
 	} `json:"enterpriseFeatures,omitempty"`
 
 	// The first part of the file name of the backend component
@@ -399,11 +399,11 @@ type PluginDef struct {
 	// $GOARCH><.exe for Windows>`, e.g. `plugin_linux_amd64`.
 	// Combination of $GOOS and $GOARCH can be found here:
 	// https://golang.org/doc/install/source#environment.
-	Executable *string `json:"executable,omitempty"`
+	Executable string `json:"executable,omitempty"`
 
 	// For data source plugins, include hidden queries in the data
 	// request.
-	HiddenQueries *bool `json:"hiddenQueries,omitempty"`
+	HiddenQueries bool `json:"hiddenQueries,omitempty"`
 
 	// hideFromList excludes the plugin from listings in Grafana's UI. Only
 	// allowed for builtin plugins.
@@ -415,18 +415,18 @@ type PluginDef struct {
 	Id string `json:"id"`
 
 	// Resources to include in plugin.
-	Includes *[]Include `json:"includes,omitempty"`
+	Includes []Include `json:"includes,omitempty"`
 
 	// Metadata about a Grafana plugin. Some fields are used on the plugins
 	// page in Grafana and others on grafana.com, if the plugin is published.
 	Info Info `json:"info"`
 
 	// For data source plugins, if the plugin supports logs.
-	Logs *bool `json:"logs,omitempty"`
+	Logs bool `json:"logs,omitempty"`
 
 	// For data source plugins, if the plugin supports metric queries.
 	// Used in Explore.
-	Metrics *bool `json:"metrics,omitempty"`
+	Metrics bool `json:"metrics,omitempty"`
 
 	// Human-readable name of the plugin that is shown to the user in
 	// the UI.
@@ -434,23 +434,23 @@ type PluginDef struct {
 
 	// Initialize plugin on startup. By default, the plugin
 	// initializes on first use.
-	Preload *bool `json:"preload,omitempty"`
+	Preload bool `json:"preload,omitempty"`
 
 	// For data source plugins. There is a query options section in
 	// the plugin's query editor and these options can be turned on
 	// if needed.
-	QueryOptions *struct {
+	QueryOptions struct {
 		// For data source plugins. If the `cache timeout` option should
 		// be shown in the query options section in the query editor.
-		CacheTimeout *bool `json:"cacheTimeout,omitempty"`
+		CacheTimeout bool `json:"cacheTimeout,omitempty"`
 
 		// For data source plugins. If the `max data points` option should
 		// be shown in the query options section in the query editor.
-		MaxDataPoints *bool `json:"maxDataPoints,omitempty"`
+		MaxDataPoints bool `json:"maxDataPoints,omitempty"`
 
 		// For data source plugins. If the `min interval` option should be
 		// shown in the query options section in the query editor.
-		MinInterval *bool `json:"minInterval,omitempty"`
+		MinInterval bool `json:"minInterval,omitempty"`
 	} `json:"queryOptions,omitempty"`
 
 	// Optional list of RBAC RoleRegistrations.
@@ -458,25 +458,25 @@ type PluginDef struct {
 	// which characterizes what viewers, editors, admins, or grafana admins can do on the plugin.
 	// The Admin basic role inherits its default permissions from the Editor basic role which in turn
 	// inherits them from the Viewer basic role.
-	Roles *[]RoleRegistration `json:"roles,omitempty"`
+	Roles []RoleRegistration `json:"roles,omitempty"`
 
 	// Routes is a list of proxy routes, if any. For datasource plugins only.
-	Routes *[]Route `json:"routes,omitempty"`
+	Routes []Route `json:"routes,omitempty"`
 
 	// For panel plugins. Hides the query editor.
-	SkipDataQuery *bool `json:"skipDataQuery,omitempty"`
+	SkipDataQuery bool `json:"skipDataQuery,omitempty"`
 
 	// ReleaseState indicates release maturity state of a plugin.
-	State *ReleaseState `json:"state,omitempty"`
+	State ReleaseState `json:"state,omitempty"`
 
 	// For data source plugins, if the plugin supports streaming.
-	Streaming *bool `json:"streaming,omitempty"`
+	Streaming bool `json:"streaming,omitempty"`
 
 	// This is an undocumented feature.
-	Tables *bool `json:"tables,omitempty"`
+	Tables bool `json:"tables,omitempty"`
 
 	// For data source plugins, if the plugin supports tracing.
-	Tracing *bool `json:"tracing,omitempty"`
+	Tracing bool `json:"tracing,omitempty"`
 
 	// type indicates which type of Grafana plugin this is, of the defined
 	// set of Grafana plugin types.

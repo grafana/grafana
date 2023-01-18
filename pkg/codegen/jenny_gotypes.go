@@ -20,8 +20,9 @@ func (j GoTypesJenny) Generate(sfg SchemaForGen) (*codejen.File, error) {
 	// TODO allow using name instead of machine name in thema generator
 	b, err := gocode.GenerateTypesOpenAPI(sfg.Schema, &gocode.TypeConfigOpenAPI{
 		// TODO will need to account for sanitizing e.g. dashes here at some point
-		PackageName: sfg.Schema.Lineage().Name(),
-		ApplyFuncs:  append(j.ApplyFuncs, PrefixDropper(sfg.Name), DecoderCompactor()),
+		PackageName:        sfg.Schema.Lineage().Name(),
+		ApplyFuncs:         append(j.ApplyFuncs, PrefixDropper(sfg.Name)),
+		NoOptionalPointers: true,
 	})
 
 	if err != nil {

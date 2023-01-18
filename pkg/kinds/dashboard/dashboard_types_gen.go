@@ -174,29 +174,29 @@ type AnnotationQuery struct {
 
 	// Datasource to use for annotation.
 	Datasource struct {
-		Type *string `json:"type,omitempty"`
-		Uid  *string `json:"uid,omitempty"`
+		Type string `json:"type,omitempty"`
+		Uid  string `json:"uid,omitempty"`
 	} `json:"datasource"`
 
 	// Whether annotation is enabled.
 	Enable bool `json:"enable"`
 
 	// Whether to hide annotation.
-	Hide *bool `json:"hide,omitempty"`
+	Hide bool `json:"hide,omitempty"`
 
 	// Annotation icon color.
-	IconColor *string `json:"iconColor,omitempty"`
+	IconColor string `json:"iconColor,omitempty"`
 
 	// Name of annotation.
-	Name *string `json:"name,omitempty"`
+	Name string `json:"name,omitempty"`
 
 	// Query for annotation data.
-	RawQuery *string `json:"rawQuery,omitempty"`
-	ShowIn   int     `json:"showIn"`
+	RawQuery string `json:"rawQuery,omitempty"`
+	ShowIn   int    `json:"showIn"`
 
 	// TODO docs
-	Target *AnnotationTarget `json:"target,omitempty"`
-	Type   string            `json:"type"`
+	Target AnnotationTarget `json:"target,omitempty"`
+	Type   string           `json:"type"`
 }
 
 // TODO docs
@@ -235,28 +235,28 @@ type LinkType string
 // Ref to a DataSource instance
 type DataSourceRef struct {
 	// The plugin type-id
-	Type *string `json:"type,omitempty"`
+	Type string `json:"type,omitempty"`
 
 	// Specific datasource instance
-	Uid *string `json:"uid,omitempty"`
+	Uid string `json:"uid,omitempty"`
 }
 
 // DynamicConfigValue defines model for DynamicConfigValue.
 type DynamicConfigValue struct {
-	Id    string       `json:"id"`
-	Value *interface{} `json:"value,omitempty"`
+	Id    string      `json:"id"`
+	Value interface{} `json:"value,omitempty"`
 }
 
 // TODO docs
 type FieldColor struct {
 	// Stores the fixed color value if mode is fixed
-	FixedColor *string `json:"fixedColor,omitempty"`
+	FixedColor string `json:"fixedColor,omitempty"`
 
 	// The main color scheme mode
 	Mode interface{} `json:"mode"`
 
 	// TODO docs
-	SeriesBy *FieldColorSeriesByMode `json:"seriesBy,omitempty"`
+	SeriesBy FieldColorSeriesByMode `json:"seriesBy,omitempty"`
 }
 
 // TODO docs
@@ -268,52 +268,52 @@ type FieldColorSeriesByMode string
 // FieldConfig defines model for FieldConfig.
 type FieldConfig struct {
 	// TODO docs
-	Color *FieldColor `json:"color,omitempty"`
+	Color FieldColor `json:"color,omitempty"`
 
 	// custom is specified by the PanelFieldConfig field
 	// in panel plugin schemas.
-	Custom *map[string]interface{} `json:"custom,omitempty"`
+	Custom map[string]interface{} `json:"custom,omitempty"`
 
 	// Significant digits (for display)
-	Decimals *float32 `json:"decimals,omitempty"`
+	Decimals float32 `json:"decimals,omitempty"`
 
 	// Human readable field metadata
-	Description *string `json:"description,omitempty"`
+	Description string `json:"description,omitempty"`
 
 	// The display value for this field.  This supports template variables blank is auto
-	DisplayName *string `json:"displayName,omitempty"`
+	DisplayName string `json:"displayName,omitempty"`
 
 	// This can be used by data sources that return and explicit naming structure for values and labels
 	// When this property is configured, this value is used rather than the default naming strategy.
-	DisplayNameFromDS *string `json:"displayNameFromDS,omitempty"`
+	DisplayNameFromDS string `json:"displayNameFromDS,omitempty"`
 
 	// True if data source field supports ad-hoc filters
-	Filterable *bool `json:"filterable,omitempty"`
+	Filterable bool `json:"filterable,omitempty"`
 
 	// The behavior when clicking on a result
-	Links *[]interface{} `json:"links,omitempty"`
+	Links []interface{} `json:"links,omitempty"`
 
 	// Convert input values into a display string
-	Mappings *[]ValueMapping `json:"mappings,omitempty"`
-	Max      *float32        `json:"max,omitempty"`
-	Min      *float32        `json:"min,omitempty"`
+	Mappings []ValueMapping `json:"mappings,omitempty"`
+	Max      float32        `json:"max,omitempty"`
+	Min      float32        `json:"min,omitempty"`
 
 	// Alternative to empty string
-	NoValue *string `json:"noValue,omitempty"`
+	NoValue string `json:"noValue,omitempty"`
 
 	// An explicit path to the field in the datasource.  When the frame meta includes a path,
 	// This will default to `${frame.meta.path}/${field.name}
 	//
 	// When defined, this value can be used as an identifier within the datasource scope, and
 	// may be used to update the results
-	Path       *string           `json:"path,omitempty"`
-	Thresholds *ThresholdsConfig `json:"thresholds,omitempty"`
+	Path       string           `json:"path,omitempty"`
+	Thresholds ThresholdsConfig `json:"thresholds,omitempty"`
 
 	// Numeric Options
-	Unit *string `json:"unit,omitempty"`
+	Unit string `json:"unit,omitempty"`
 
 	// True if data source can write a value to the path.  Auth/authz are supported separately
-	Writeable *bool `json:"writeable,omitempty"`
+	Writeable bool `json:"writeable,omitempty"`
 }
 
 // FieldConfigSource defines model for FieldConfigSource.
@@ -328,10 +328,10 @@ type FieldConfigSource struct {
 // Support for legacy graph and heatmap panels.
 type GraphPanel struct {
 	// @deprecated this is part of deprecated graph panel
-	Legend *struct {
-		Show     bool    `json:"show"`
-		Sort     *string `json:"sort,omitempty"`
-		SortDesc *bool   `json:"sortDesc,omitempty"`
+	Legend struct {
+		Show     bool   `json:"show"`
+		Sort     string `json:"sort,omitempty"`
+		SortDesc bool   `json:"sortDesc,omitempty"`
 	} `json:"legend,omitempty"`
 	Type GraphPanelType `json:"type"`
 }
@@ -345,7 +345,7 @@ type GridPos struct {
 	H int `json:"h"`
 
 	// true if fixed
-	Static *bool `json:"static,omitempty"`
+	Static bool `json:"static,omitempty"`
 
 	// Panel
 	W int `json:"w"`
@@ -373,8 +373,8 @@ type MappingType string
 
 // MatcherConfig defines model for MatcherConfig.
 type MatcherConfig struct {
-	Id      string       `json:"id"`
-	Options *interface{} `json:"options,omitempty"`
+	Id      string      `json:"id"`
+	Options interface{} `json:"options,omitempty"`
 }
 
 // Dashboard panels. Panels are canonically defined inline
@@ -382,39 +382,39 @@ type MatcherConfig struct {
 // schema; they do not evolve independently.
 type Panel struct {
 	// The datasource used in all targets.
-	Datasource *struct {
-		Type *string `json:"type,omitempty"`
-		Uid  *string `json:"uid,omitempty"`
+	Datasource struct {
+		Type string `json:"type,omitempty"`
+		Uid  string `json:"uid,omitempty"`
 	} `json:"datasource,omitempty"`
 
 	// Description.
-	Description *string           `json:"description,omitempty"`
+	Description string            `json:"description,omitempty"`
 	FieldConfig FieldConfigSource `json:"fieldConfig"`
-	GridPos     *GridPos          `json:"gridPos,omitempty"`
+	GridPos     GridPos           `json:"gridPos,omitempty"`
 
 	// TODO docs
-	Id *int `json:"id,omitempty"`
+	Id int `json:"id,omitempty"`
 
 	// TODO docs
 	// TODO tighter constraint
-	Interval *string `json:"interval,omitempty"`
+	Interval string `json:"interval,omitempty"`
 
 	// Panel links.
 	// TODO fill this out - seems there are a couple variants?
-	Links *[]Link `json:"links,omitempty"`
+	Links []Link `json:"links,omitempty"`
 
 	// TODO docs
-	MaxDataPoints *float32 `json:"maxDataPoints,omitempty"`
+	MaxDataPoints float32 `json:"maxDataPoints,omitempty"`
 
 	// options is specified by the PanelOptions field in panel
 	// plugin schemas.
 	Options map[string]interface{} `json:"options"`
 
 	// FIXME this almost certainly has to be changed in favor of scuemata versions
-	PluginVersion *string `json:"pluginVersion,omitempty"`
+	PluginVersion string `json:"pluginVersion,omitempty"`
 
 	// Name of template variable to repeat for.
-	Repeat *string `json:"repeat,omitempty"`
+	Repeat string `json:"repeat,omitempty"`
 
 	// Direction to repeat in if 'repeat' is set.
 	// "h" for horizontal, "v" for vertical.
@@ -422,30 +422,30 @@ type Panel struct {
 	RepeatDirection PanelRepeatDirection `json:"repeatDirection"`
 
 	// Id of the repeating panel.
-	RepeatPanelId *int64 `json:"repeatPanelId,omitempty"`
+	RepeatPanelId int64 `json:"repeatPanelId,omitempty"`
 
 	// TODO docs
-	Tags *[]string `json:"tags,omitempty"`
+	Tags []string `json:"tags,omitempty"`
 
 	// TODO docs
-	Targets *[]Target `json:"targets,omitempty"`
+	Targets []Target `json:"targets,omitempty"`
 
 	// TODO docs - seems to be an old field from old dashboard alerts?
-	Thresholds *[]interface{} `json:"thresholds,omitempty"`
+	Thresholds []interface{} `json:"thresholds,omitempty"`
 
 	// TODO docs
 	// TODO tighter constraint
-	TimeFrom *string `json:"timeFrom,omitempty"`
+	TimeFrom string `json:"timeFrom,omitempty"`
 
 	// TODO docs
-	TimeRegions *[]interface{} `json:"timeRegions,omitempty"`
+	TimeRegions []interface{} `json:"timeRegions,omitempty"`
 
 	// TODO docs
 	// TODO tighter constraint
-	TimeShift *string `json:"timeShift,omitempty"`
+	TimeShift string `json:"timeShift,omitempty"`
 
 	// Panel title.
-	Title           *string          `json:"title,omitempty"`
+	Title           string           `json:"title,omitempty"`
 	Transformations []Transformation `json:"transformations"`
 
 	// Whether to display the panel without a background.
@@ -497,17 +497,17 @@ type RowPanel struct {
 	Collapsed bool `json:"collapsed"`
 
 	// Name of default datasource.
-	Datasource *struct {
-		Type *string `json:"type,omitempty"`
-		Uid  *string `json:"uid,omitempty"`
+	Datasource struct {
+		Type string `json:"type,omitempty"`
+		Uid  string `json:"uid,omitempty"`
 	} `json:"datasource,omitempty"`
-	GridPos *GridPos      `json:"gridPos,omitempty"`
+	GridPos GridPos       `json:"gridPos,omitempty"`
 	Id      int           `json:"id"`
 	Panels  []interface{} `json:"panels"`
 
 	// Name of template variable to repeat for.
-	Repeat *string      `json:"repeat,omitempty"`
-	Title  *string      `json:"title,omitempty"`
+	Repeat string       `json:"repeat,omitempty"`
+	Title  string       `json:"title,omitempty"`
 	Type   RowPanelType `json:"type"`
 }
 
@@ -544,7 +544,7 @@ type Snapshot struct {
 	Updated string `json:"updated"`
 
 	// TODO docs
-	Url *string `json:"url,omitempty"`
+	Url string `json:"url,omitempty"`
 
 	// TODO docs
 	UserId int `json:"userId"`
@@ -589,11 +589,11 @@ type Threshold struct {
 	// TODO docs
 	// TODO are the values here enumerable into a disjunction?
 	// Some seem to be listed in typescript comment
-	State *string `json:"state,omitempty"`
+	State string `json:"state,omitempty"`
 
 	// TODO docs
 	// FIXME the corresponding typescript field is required/non-optional, but nulls currently appear here when serializing -Infinity to JSON
-	Value *float32 `json:"value,omitempty"`
+	Value float32 `json:"value,omitempty"`
 }
 
 // ThresholdsConfig defines model for ThresholdsConfig.
@@ -629,10 +629,10 @@ type ValueMapping interface{}
 
 // TODO docs
 type ValueMappingResult struct {
-	Color *string `json:"color,omitempty"`
-	Icon  *string `json:"icon,omitempty"`
-	Index *int32  `json:"index,omitempty"`
-	Text  *string `json:"text,omitempty"`
+	Color string `json:"color,omitempty"`
+	Icon  string `json:"icon,omitempty"`
+	Index int32  `json:"index,omitempty"`
+	Text  string `json:"text,omitempty"`
 }
 
 // VariableHide defines model for VariableHide.
@@ -644,19 +644,19 @@ type VariableHide int
 // TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
 type VariableModel struct {
 	// Ref to a DataSource instance
-	Datasource  *DataSourceRef          `json:"datasource,omitempty"`
-	Description *string                 `json:"description,omitempty"`
-	Error       *map[string]interface{} `json:"error,omitempty"`
-	Global      bool                    `json:"global"`
-	Hide        VariableHide            `json:"hide"`
-	Id          string                  `json:"id"`
-	Index       int                     `json:"index"`
-	Label       *string                 `json:"label,omitempty"`
-	Name        string                  `json:"name"`
+	Datasource  DataSourceRef          `json:"datasource,omitempty"`
+	Description string                 `json:"description,omitempty"`
+	Error       map[string]interface{} `json:"error,omitempty"`
+	Global      bool                   `json:"global"`
+	Hide        VariableHide           `json:"hide"`
+	Id          string                 `json:"id"`
+	Index       int                    `json:"index"`
+	Label       string                 `json:"label,omitempty"`
+	Name        string                 `json:"name"`
 
 	// TODO: Move this into a separated QueryVariableModel type
-	Query        *interface{} `json:"query,omitempty"`
-	RootStateKey *string      `json:"rootStateKey,omitempty"`
+	Query        interface{}  `json:"query,omitempty"`
+	RootStateKey string       `json:"rootStateKey,omitempty"`
 	SkipUrlSync  bool         `json:"skipUrlSync"`
 	State        LoadingState `json:"state"`
 
@@ -674,19 +674,19 @@ type VariableType string
 // Dashboard defines model for dashboard.
 type Dashboard struct {
 	// TODO docs
-	Annotations *struct {
-		List *[]AnnotationQuery `json:"list,omitempty"`
+	Annotations struct {
+		List []AnnotationQuery `json:"list,omitempty"`
 	} `json:"annotations,omitempty"`
 
 	// Description of dashboard.
-	Description *string `json:"description,omitempty"`
+	Description string `json:"description,omitempty"`
 
 	// Whether a dashboard is editable or not.
 	Editable bool `json:"editable"`
 
 	// TODO docs
-	FiscalYearStartMonth *int    `json:"fiscalYearStartMonth,omitempty"`
-	GnetId               *string `json:"gnetId,omitempty"`
+	FiscalYearStartMonth int    `json:"fiscalYearStartMonth,omitempty"`
+	GnetId               string `json:"gnetId,omitempty"`
 
 	// 0 for no shared crosshair or tooltip (default).
 	// 1 for shared crosshair.
@@ -695,17 +695,17 @@ type Dashboard struct {
 
 	// Unique numeric identifier for the dashboard.
 	// TODO must isolate or remove identifiers local to a Grafana instance...?
-	Id *int64 `json:"id,omitempty"`
+	Id int64 `json:"id,omitempty"`
 
 	// TODO docs
-	Links *[]Link `json:"links,omitempty"`
+	Links []Link `json:"links,omitempty"`
 
 	// TODO docs
-	LiveNow *bool          `json:"liveNow,omitempty"`
-	Panels  *[]interface{} `json:"panels,omitempty"`
+	LiveNow bool          `json:"liveNow,omitempty"`
+	Panels  []interface{} `json:"panels,omitempty"`
 
 	// TODO docs
-	Refresh *interface{} `json:"refresh,omitempty"`
+	Refresh interface{} `json:"refresh,omitempty"`
 
 	// Version of the current dashboard data
 	Revision int `json:"revision"`
@@ -716,28 +716,28 @@ type Dashboard struct {
 	SchemaVersion int `json:"schemaVersion"`
 
 	// TODO docs
-	Snapshot *Snapshot `json:"snapshot,omitempty"`
+	Snapshot Snapshot `json:"snapshot,omitempty"`
 
 	// Theme of dashboard.
 	Style Style `json:"style"`
 
 	// Tags associated with dashboard.
-	Tags *[]string `json:"tags,omitempty"`
+	Tags []string `json:"tags,omitempty"`
 
 	// TODO docs
-	Templating *struct {
-		List *[]VariableModel `json:"list,omitempty"`
+	Templating struct {
+		List []VariableModel `json:"list,omitempty"`
 	} `json:"templating,omitempty"`
 
 	// Time range for dashboard, e.g. last 6 hours, last 7 days, etc
-	Time *struct {
+	Time struct {
 		From string `json:"from"`
 		To   string `json:"to"`
 	} `json:"time,omitempty"`
 
 	// TODO docs
 	// TODO this appears to be spread all over in the frontend. Concepts will likely need tidying in tandem with schema changes
-	Timepicker *struct {
+	Timepicker struct {
 		// Whether timepicker is collapsed or not.
 		Collapse bool `json:"collapse"`
 
@@ -755,19 +755,19 @@ type Dashboard struct {
 	} `json:"timepicker,omitempty"`
 
 	// Timezone of dashboard,
-	Timezone *Timezone `json:"timezone,omitempty"`
+	Timezone Timezone `json:"timezone,omitempty"`
 
 	// Title of dashboard.
-	Title *string `json:"title,omitempty"`
+	Title string `json:"title,omitempty"`
 
 	// Unique dashboard identifier that can be generated by anyone. string (8-40)
-	Uid *string `json:"uid,omitempty"`
+	Uid string `json:"uid,omitempty"`
 
 	// Version of the dashboard, incremented each time the dashboard is updated.
-	Version *int `json:"version,omitempty"`
+	Version int `json:"version,omitempty"`
 
 	// TODO docs
-	WeekStart *string `json:"weekStart,omitempty"`
+	WeekStart string `json:"weekStart,omitempty"`
 }
 
 // Theme of dashboard.
