@@ -10,7 +10,6 @@ import (
 
 // This function can be used for local testing, just remove the skip call.
 func TestLokiHTTPClient(t *testing.T) {
-
 	t.Skip()
 
 	url, err := url.Parse("https://logs-prod-eu-west-0.grafana.net")
