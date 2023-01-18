@@ -112,6 +112,7 @@ export class UserAdminPage extends PureComponent<Props> {
       user?.isExternal && user?.authLabels?.some((r) => SyncedOAuthLabels.includes(r));
     const isSAMLUser = user?.isExternal && user?.authLabels?.includes('SAML');
     const isGoogleUser = user?.isExternal && user?.authLabels?.includes('Google');
+    const isGithubUser = user?.isExternal && user?.authLabels?.includes('Github');
     const isAuthProxyUser = user?.isExternal && user?.authLabels?.includes('Auth Proxy');
     const isAzureADUser = user?.isExternal && user?.authLabels?.includes('AzureAD');
     const isGrafanaComUser = user?.isExternal && user?.authLabels?.includes('grafana.com');
@@ -132,6 +133,7 @@ export class UserAdminPage extends PureComponent<Props> {
         (!config.auth.LDAPSkipOrgRoleSync && isLDAPUser) ||
         // both OAuthSkipOrgRoleUpdateSync and specific provider settings needs to be false for a user to be synced
         (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.GrafanaComSkipOrgRoleSync && isGrafanaComUser) ||
+        (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.GithubSkipOrgRoleSync && isGithubUser) ||
         (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.AzureADSkipOrgRoleSync && isAzureADUser));
 
     const pageNav: NavModelItem = {

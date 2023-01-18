@@ -117,6 +117,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 		userRawJSON              string
 		userTeamsRawJSON         string
 		settingAutoAssignOrgRole string
+		settingSkipOrgRoleSync   bool
 		roleAttributePath        string
 		autoAssignOrgRole        string
 		want                     *BasicUserInfo
@@ -182,6 +183,22 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 				Groups: []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
 			},
 		},
+		{
+			name:                   "Should be empty role if setting skipOrgRoleSync is set to true",
+			roleAttributePath:      "contains(groups[*], '@github/justice-league') && 'Editor' || 'Viewer'",
+			settingSkipOrgRoleSync: true,
+			userRawJSON:            testGHUserJSON,
+			userTeamsRawJSON:       testGHUserTeamsJSON,
+			want: &BasicUserInfo{
+				Id:     "1",
+				Name:   "monalisa octocat",
+				Email:  "octocat@github.com",
+				Login:  "octocat",
+				Role:   "",
+				Groups: []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -208,6 +225,7 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 				allowedOrganizations: []string{},
 				apiUrl:               server.URL + "/user",
 				teamIds:              []int{},
+				skipOrgRoleSync:      tt.settingSkipOrgRoleSync,
 			}
 
 			token := &oauth2.Token{

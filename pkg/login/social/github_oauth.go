@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/grafana/grafana/pkg/models/roletype"
 	"golang.org/x/oauth2"
 )
 
@@ -15,6 +16,7 @@ type SocialGithub struct {
 	allowedOrganizations []string
 	apiUrl               string
 	teamIds              []int
+	skipOrgRoleSync      bool
 }
 
 type GithubTeam struct {
@@ -201,9 +203,15 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 
 	teams := convertToGroupList(teamMemberships)
 
-	role, grafanaAdmin := s.extractRoleAndAdmin(response.Body, teams, true)
-	if s.roleAttributeStrict && !role.IsValid() {
-		return nil, &InvalidBasicRoleError{idP: "Github", assignedRole: string(role)}
+	var role roletype.RoleType
+	var grafanaAdmin bool
+
+	if !s.skipOrgRoleSync {
+		role, grafanaAdmin = s.extractRoleAndAdmin(response.Body, teams, true)
+
+		if s.roleAttributeStrict && !role.IsValid() {
+			return nil, &InvalidBasicRoleError{idP: "Github", assignedRole: string(role)}
+		}
 	}
 
 	var isGrafanaAdmin *bool = nil

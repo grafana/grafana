@@ -144,6 +144,7 @@ func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager) *Soc
 				apiUrl:               info.ApiUrl,
 				teamIds:              sec.Key("team_ids").Ints(","),
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
+				skipOrgRoleSync:      cfg.GithubSkipOrgRoleSync,
 			}
 		}
 
