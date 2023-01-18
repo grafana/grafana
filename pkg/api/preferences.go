@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/kinds/preferences"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -31,15 +32,15 @@ func (hs *HTTPServer) SetHomeDashboard(c *models.ReqContext) response.Response {
 	// UID is used in preference to identify dashboard
 	dashboardID := cmd.HomeDashboardID
 	if cmd.HomeDashboardUID != nil {
-		query := models.GetDashboardQuery{Uid: *cmd.HomeDashboardUID}
-		if query.Uid == "" {
+		query := dashboards.GetDashboardQuery{UID: *cmd.HomeDashboardUID}
+		if query.UID == "" {
 			dashboardID = 0 // clear the value
 		} else {
 			err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 			if err != nil {
 				return response.Error(404, "Dashboard not found", err)
 			}
-			dashboardID = query.Result.Id
+			dashboardID = query.Result.ID
 		}
 	}
 
@@ -76,10 +77,10 @@ func (hs *HTTPServer) getPreferencesFor(ctx context.Context, orgID, userID, team
 
 	// when homedashboardID is 0, that means it is the default home dashboard, no UID would be returned in the response
 	if preference.HomeDashboardID != 0 {
-		query := models.GetDashboardQuery{Id: preference.HomeDashboardID, OrgId: orgID}
+		query := dashboards.GetDashboardQuery{ID: preference.HomeDashboardID, OrgID: orgID}
 		err = hs.DashboardService.GetDashboard(ctx, &query)
 		if err == nil {
-			dashboardUID = query.Result.Uid
+			dashboardUID = query.Result.UID
 		}
 	}
 
@@ -139,8 +140,8 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 
 	dashboardID := dtoCmd.HomeDashboardID
 	if dtoCmd.HomeDashboardUID != nil {
-		query := models.GetDashboardQuery{Uid: *dtoCmd.HomeDashboardUID, OrgId: orgID}
-		if query.Uid == "" {
+		query := dashboards.GetDashboardQuery{UID: *dtoCmd.HomeDashboardUID, OrgID: orgID}
+		if query.UID == "" {
 			// clear the value
 			dashboardID = 0
 		} else {
@@ -148,7 +149,7 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 			if err != nil {
 				return response.Error(404, "Dashboard not found", err)
 			}
-			dashboardID = query.Result.Id
+			dashboardID = query.Result.ID
 		}
 	}
 	dtoCmd.HomeDashboardID = dashboardID
@@ -198,8 +199,8 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 	// convert dashboard UID to ID in order to store internally if it exists in the query, otherwise take the id from query
 	dashboardID := dtoCmd.HomeDashboardID
 	if dtoCmd.HomeDashboardUID != nil {
-		query := models.GetDashboardQuery{Uid: *dtoCmd.HomeDashboardUID, OrgId: orgID}
-		if query.Uid == "" {
+		query := dashboards.GetDashboardQuery{UID: *dtoCmd.HomeDashboardUID, OrgID: orgID}
+		if query.UID == "" {
 			// clear the value
 			defaultDash := int64(0)
 			dashboardID = &defaultDash
@@ -208,7 +209,7 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 			if err != nil {
 				return response.Error(404, "Dashboard not found", err)
 			}
-			dashboardID = &query.Result.Id
+			dashboardID = &query.Result.ID
 		}
 	}
 	dtoCmd.HomeDashboardID = dashboardID

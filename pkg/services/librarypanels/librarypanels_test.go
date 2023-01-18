@@ -72,7 +72,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 					},
 				},
 			}
-			dash := models.Dashboard{
+			dash := dashboards.Dashboard{
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
@@ -81,7 +81,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 			err := sc.service.ConnectLibraryPanelsForDashboard(sc.ctx, sc.user, dashInDB)
 			require.NoError(t, err)
 
-			elements, err := sc.elementService.GetElementsForDashboard(sc.ctx, dashInDB.Id)
+			elements, err := sc.elementService.GetElementsForDashboard(sc.ctx, dashInDB.ID)
 			require.NoError(t, err)
 			require.Len(t, elements, 1)
 			require.Equal(t, sc.initialResult.Result.UID, elements[sc.initialResult.Result.UID].UID)
@@ -170,7 +170,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 					},
 				},
 			}
-			dash := models.Dashboard{
+			dash := dashboards.Dashboard{
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
@@ -179,7 +179,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 			err = sc.service.ConnectLibraryPanelsForDashboard(sc.ctx, sc.user, dashInDB)
 			require.NoError(t, err)
 
-			elements, err := sc.elementService.GetElementsForDashboard(sc.ctx, dashInDB.Id)
+			elements, err := sc.elementService.GetElementsForDashboard(sc.ctx, dashInDB.ID)
 			require.NoError(t, err)
 			require.Len(t, elements, 2)
 			require.Equal(t, sc.initialResult.Result.UID, elements[sc.initialResult.Result.UID].UID)
@@ -216,7 +216,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 					},
 				},
 			}
-			dash := models.Dashboard{
+			dash := dashboards.Dashboard{
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
@@ -272,12 +272,12 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 				},
 			}
 
-			dash := models.Dashboard{
+			dash := dashboards.Dashboard{
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
 			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.Id)
-			err = sc.elementService.ConnectElementsToDashboard(sc.ctx, sc.user, []string{sc.initialResult.Result.UID}, dashInDB.Id)
+			err = sc.elementService.ConnectElementsToDashboard(sc.ctx, sc.user, []string{sc.initialResult.Result.UID}, dashInDB.ID)
 			require.NoError(t, err)
 
 			panelJSON := []interface{}{
@@ -310,7 +310,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 			err = sc.service.ConnectLibraryPanelsForDashboard(sc.ctx, sc.user, dashInDB)
 			require.NoError(t, err)
 
-			elements, err := sc.elementService.GetElementsForDashboard(sc.ctx, dashInDB.Id)
+			elements, err := sc.elementService.GetElementsForDashboard(sc.ctx, dashInDB.ID)
 			require.NoError(t, err)
 			require.Len(t, elements, 1)
 			require.Equal(t, sc.initialResult.Result.UID, elements[sc.initialResult.Result.UID].UID)
@@ -684,12 +684,12 @@ func getExpected(t *testing.T, res libraryelements.LibraryElementDTO, UID string
 	}
 }
 
-func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash *models.Dashboard, folderID int64) *models.Dashboard {
-	dash.FolderId = folderID
+func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash *dashboards.Dashboard, folderID int64) *dashboards.Dashboard {
+	dash.FolderID = folderID
 	dashItem := &dashboards.SaveDashboardDTO{
 		Dashboard: dash,
 		Message:   "",
-		OrgId:     user.OrgID,
+		OrgID:     user.OrgID,
 		User:      user,
 		Overwrite: false,
 	}
@@ -767,11 +767,11 @@ func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, s
 	store := dbtest.NewFakeDB()
 
 	dashSvc := dashboards.NewFakeDashboardService(t)
-	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*models.GetDashboardQuery)
-		q.Result = &models.Dashboard{
-			Id:  q.Id,
-			Uid: q.Uid,
+	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*dashboards.GetDashboardQuery)
+		q.Result = &dashboards.Dashboard{
+			ID:  q.ID,
+			UID: q.UID,
 		}
 	}).Return(nil)
 	guardian.InitLegacyGuardian(store, dashSvc, &teamtest.FakeService{})

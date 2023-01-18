@@ -63,8 +63,9 @@ const ResourceField: React.FC<ResourceFieldProps<string | AzureMetricResource>> 
       >
         <ResourcePicker
           resourcePickerData={datasource.resourcePickerData}
-          resource={resource}
-          onApply={handleApply}
+          // TODO: This should be a list of resources, not a single resource
+          resources={[resource]}
+          onApply={(resources) => resources && handleApply(resources[0])}
           onCancel={closePicker}
           selectableEntryTypes={selectableEntryTypes}
           queryType={queryType}

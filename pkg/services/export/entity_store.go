@@ -2,6 +2,7 @@ package export
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sync"
 	"time"
@@ -14,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store/entity"
+	"github.com/grafana/grafana/pkg/services/store/kind/folder"
 	"github.com/grafana/grafana/pkg/services/store/kind/snapshot"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -103,7 +105,60 @@ func (e *entityStoreJob) start(ctx context.Context) {
 	}
 	ctx = appcontext.WithUser(ctx, rowUser)
 
-	what := models.StandardKindDashboard
+	what := models.StandardKindFolder
+	e.status.Count[what] = 0
+
+	folders := make(map[int64]string)
+	folderInfo, err := e.getFolders(ctx)
+	if err != nil {
+		e.status.Status = "error: " + err.Error()
+		return
+	}
+	e.status.Last = fmt.Sprintf("export %d folders", len(folderInfo))
+	e.broadcaster(e.status)
+
+	for _, dash := range folderInfo {
+		folders[dash.ID] = dash.UID
+	}
+
+	for _, dash := range folderInfo {
+		rowUser.OrgID = dash.OrgID
+		rowUser.UserID = dash.UpdatedBy
+		if dash.UpdatedBy < 0 {
+			rowUser.UserID = 0 // avoid Uint64Val issue????
+		}
+		f := folder.Model{Name: dash.Title}
+		d, _ := json.Marshal(f)
+
+		_, err = e.store.AdminWrite(ctx, &entity.AdminWriteEntityRequest{
+			GRN: &entity.GRN{
+				UID:  dash.UID,
+				Kind: models.StandardKindFolder,
+			},
+			ClearHistory: true,
+			CreatedAt:    dash.Created.UnixMilli(),
+			UpdatedAt:    dash.Updated.UnixMilli(),
+			UpdatedBy:    fmt.Sprintf("user:%d", dash.UpdatedBy),
+			CreatedBy:    fmt.Sprintf("user:%d", dash.CreatedBy),
+			Body:         d,
+			Folder:       folders[dash.FolderID],
+			Comment:      "(exported from SQL)",
+			Origin: &entity.EntityOriginInfo{
+				Source: "export-from-sql",
+			},
+		})
+		if err != nil {
+			e.status.Status = "error: " + err.Error()
+			return
+		}
+		e.status.Changed = time.Now().UnixMilli()
+		e.status.Index++
+		e.status.Count[what] += 1
+		e.status.Last = fmt.Sprintf("ITEM: %s", dash.UID)
+		e.broadcaster(e.status)
+	}
+
+	what = models.StandardKindDashboard
 	e.status.Count[what] = 0
 
 	// TODO paging etc
@@ -135,6 +190,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 			UpdatedBy:    fmt.Sprintf("user:%d", dash.UpdatedBy),
 			CreatedBy:    fmt.Sprintf("user:%d", dash.CreatedBy),
 			Body:         dash.Data,
+			Folder:       folders[dash.FolderID],
 			Comment:      "(exported from SQL)",
 			Origin: &entity.EntityOriginInfo{
 				Source: "export-from-sql",
@@ -269,6 +325,19 @@ type dashInfo struct {
 	Updated   time.Time
 	CreatedBy int64 `db:"created_by"`
 	UpdatedBy int64 `db:"updated_by"`
+	FolderID  int64 `db:"folder_id"`
+}
+
+type folderInfo struct {
+	ID        int64 `db:"id"`
+	OrgID     int64 `db:"org_id"`
+	UID       string
+	Title     string
+	Created   time.Time
+	Updated   time.Time
+	CreatedBy int64 `db:"created_by"`
+	UpdatedBy int64 `db:"updated_by"`
+	FolderID  int64 `db:"folder_id"`
 }
 
 // TODO, paging etc
@@ -277,7 +346,17 @@ func (e *entityStoreJob) getDashboards(ctx context.Context) ([]dashInfo, error) 
 	e.broadcaster(e.status)
 
 	dash := make([]dashInfo, 0)
-	err := e.sess.Select(ctx, &dash, "SELECT org_id,uid,version,slug,data,created,updated,created_by,updated_by FROM dashboard WHERE is_folder=false")
+	err := e.sess.Select(ctx, &dash, "SELECT org_id,uid,version,slug,data,folder_id,created,updated,created_by,updated_by FROM dashboard WHERE is_folder=false")
+	return dash, err
+}
+
+// TODO, paging etc
+func (e *entityStoreJob) getFolders(ctx context.Context) ([]folderInfo, error) {
+	e.status.Last = "find dashbaords...."
+	e.broadcaster(e.status)
+
+	dash := make([]folderInfo, 0)
+	err := e.sess.Select(ctx, &dash, "SELECT id,org_id,uid,title,folder_id,created,updated,created_by,updated_by FROM dashboard WHERE is_folder=true")
 	return dash, err
 }
 

@@ -17,6 +17,7 @@ export * from './ldap';
 export * from './appEvent';
 export * from './query';
 export * from './accessControl';
+export * from './supportBundles';
 
 import * as CoreEvents from './events';
 export { CoreEvents };

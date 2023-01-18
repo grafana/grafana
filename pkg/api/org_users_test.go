@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -203,9 +204,9 @@ func TestOrgUsersAPIEndpoint_LegacyAccessControl_FolderAdmin(t *testing.T) {
 	setInitCtxSignedInViewer(sc.initCtx)
 
 	// Create a dashboard folder
-	cmd := models.SaveDashboardCommand{
-		OrgId:    testOrgID,
-		FolderId: 1,
+	cmd := dashboards.SaveDashboardCommand{
+		OrgID:    testOrgID,
+		FolderID: 1,
 		IsFolder: true,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
 			"id":    nil,
@@ -220,7 +221,7 @@ func TestOrgUsersAPIEndpoint_LegacyAccessControl_FolderAdmin(t *testing.T) {
 	// Grant our test Viewer with permission to admin the folder
 	acls := []*models.DashboardACL{
 		{
-			DashboardID: folder.Id,
+			DashboardID: folder.ID,
 			OrgID:       testOrgID,
 			UserID:      testUserID,
 			Permission:  models.PERMISSION_ADMIN,
@@ -228,7 +229,7 @@ func TestOrgUsersAPIEndpoint_LegacyAccessControl_FolderAdmin(t *testing.T) {
 			Updated:     time.Now(),
 		},
 	}
-	err = sc.dashboardsStore.UpdateDashboardACL(context.Background(), folder.Id, acls)
+	err = sc.dashboardsStore.UpdateDashboardACL(context.Background(), folder.ID, acls)
 	require.NoError(t, err)
 
 	response := callAPI(sc.server, http.MethodGet, "/api/org/users/lookup", nil, t)

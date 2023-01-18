@@ -16,6 +16,8 @@ var (
 	ErrLastTeamAdmin                        = errors.New("not allowed to remove last admin")
 	ErrNotAllowedToUpdateTeam               = errors.New("user not allowed to update team")
 	ErrNotAllowedToUpdateTeamInDifferentOrg = errors.New("user not allowed to update team in another org")
+
+	ErrTeamMemberAlreadyAdded = errors.New("user is already added to this team")
 )
 
 // Team model
@@ -98,4 +100,69 @@ type SearchTeamQueryResult struct {
 
 type IsAdminOfTeamsQuery struct {
 	SignedInUser *user.SignedInUser
+}
+
+// TeamMember model
+type TeamMember struct {
+	ID         int64 `xorm:"pk autoincr 'id'"`
+	OrgID      int64 `xorm:"org_id"`
+	TeamID     int64 `xorm:"team_id"`
+	UserID     int64 `xorm:"user_id"`
+	External   bool  // Signals that the membership has been created by an external systems, such as LDAP
+	Permission models.PermissionType
+
+	Created time.Time
+	Updated time.Time
+}
+
+// ---------------------
+// COMMANDS
+
+type AddTeamMemberCommand struct {
+	UserID     int64                 `json:"userId" binding:"Required"`
+	OrgID      int64                 `json:"-"`
+	TeamID     int64                 `json:"-"`
+	External   bool                  `json:"-"`
+	Permission models.PermissionType `json:"-"`
+}
+
+type UpdateTeamMemberCommand struct {
+	UserID     int64                 `json:"-"`
+	OrgID      int64                 `json:"-"`
+	TeamID     int64                 `json:"-"`
+	Permission models.PermissionType `json:"permission"`
+}
+
+type RemoveTeamMemberCommand struct {
+	OrgID  int64 `json:"-"`
+	UserID int64
+	TeamID int64
+}
+
+// ----------------------
+// QUERIES
+
+type GetTeamMembersQuery struct {
+	OrgID        int64
+	TeamID       int64
+	UserID       int64
+	External     bool
+	SignedInUser *user.SignedInUser
+}
+
+// ----------------------
+// Projections and DTOs
+
+type TeamMemberDTO struct {
+	OrgID      int64                 `json:"orgId" xorm:"org_id"`
+	TeamID     int64                 `json:"teamId" xorm:"team_id"`
+	UserID     int64                 `json:"userId" xorm:"user_id"`
+	External   bool                  `json:"-"`
+	AuthModule string                `json:"auth_module"`
+	Email      string                `json:"email"`
+	Name       string                `json:"name"`
+	Login      string                `json:"login"`
+	AvatarURL  string                `json:"avatarUrl" xorm:"avatar_url"`
+	Labels     []string              `json:"labels"`
+	Permission models.PermissionType `json:"permission"`
 }
