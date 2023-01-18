@@ -3,14 +3,13 @@ package searchV2
 import (
 	"context"
 	"fmt"
-	"sync"
 	"testing"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
-	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -24,64 +23,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const concurrency = 10
-const batchSize = 100
-
-type bounds struct {
-	start, end int
-}
-
-// concurrentBatch spawns the requested amount of workers then ask them to run eachFn on chunks of the requested size
-func concurrentBatch(workers, count, size int, eachFn func(start, end int) error) error {
-	var wg sync.WaitGroup
-	alldone := make(chan bool) // Indicates that all workers have finished working
-	chunk := make(chan bounds) // Gives the workers the bounds they should work with
-	ret := make(chan error)    // Allow workers to notify in case of errors
-	defer close(ret)
-
-	// Launch all workers
-	for x := 0; x < workers; x++ {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for ck := range chunk {
-				if err := eachFn(ck.start, ck.end); err != nil {
-					ret <- err
-					return
-				}
-			}
-		}()
-	}
-
-	go func() {
-		// Tell the workers the chunks they have to work on
-		for i := 0; i < count; {
-			end := i + size
-			if end > count {
-				end = count
-			}
-
-			chunk <- bounds{start: i, end: end}
-
-			i = end
-		}
-		close(chunk)
-
-		// Wait for the workers
-		wg.Wait()
-		close(alldone)
-	}()
-
-	// wait for an error or for all workers to be done
-	select {
-	case err := <-ret:
-		return err
-	case <-alldone:
-		break
-	}
-	return nil
-}
-
 // setupBenchEnv will set up a database with folderCount folders and dashboardsPerFolder dashboards per folder
 // It will also set up and run the search service
 // and create a signed in user object with explicit permissions on each dashboard and folder.
@@ -94,12 +35,11 @@ func setupBenchEnv(b *testing.B, folderCount, dashboardsPerFolder int) (*Standar
 	dbLoadingBatchSize := (dashboardsPerFolder + 1) * folderCount
 	cfg := &setting.Cfg{Search: setting.SearchSettings{DashboardLoadingBatchSize: dbLoadingBatchSize}}
 	features := featuremgmt.WithFeatures()
-
-	orgSvc := orgtest.NewOrgServiceFake()
-	orgSvc.ExpectedOrgs = []*org.OrgDTO{{ID: 1}}
+	orgSvc := &orgtest.FakeOrgService{
+		ExpectedOrgs: []*org.OrgDTO{{ID: 1}},
+	}
 	querySvc := querylibraryimpl.ProvideService(cfg, features)
-
-	searchService, ok := ProvideService(cfg, sqlStore, store.NewDummyEntityEventsService(), accesscontrolmock.New(),
+	searchService, ok := ProvideService(cfg, sqlStore, store.NewDummyEntityEventsService(), actest.FakeService{},
 		tracing.InitializeTracerForTest(), features, orgSvc, nil, querySvc).(*StandardSearchService)
 	require.True(b, ok)
 
@@ -111,6 +51,7 @@ func setupBenchEnv(b *testing.B, folderCount, dashboardsPerFolder int) (*Standar
 	return searchService, user, nil
 }
 
+// Returns a signed in user object with permissions on all dashboards and folders
 func getSignedInUser(folderCount, dashboardsPerFolder int) *user.SignedInUser {
 	folderScopes := make([]string, folderCount)
 	for i := 1; i <= folderCount; i++ {
@@ -143,6 +84,7 @@ func runSearchService(searchService *StandardSearchService) error {
 	}
 	searchService.dashboardIndex.initialIndexingComplete = true
 
+	// Required for sync that is called during dashboard search
 	go func() {
 		for {
 			doneCh := <-searchService.dashboardIndex.syncCh
@@ -157,7 +99,7 @@ func runSearchService(searchService *StandardSearchService) error {
 func populateDB(folderCount, dashboardsPerFolder int, sqlStore *sqlstore.SQLStore) error {
 	// Insert folders
 	offset := 1
-	if errInsert := concurrentBatch(concurrency, folderCount, batchSize, func(start, end int) error {
+	if errInsert := actest.ConcurrentBatch(actest.Concurrency, folderCount, actest.BatchSize, func(start, end int) error {
 		n := end - start
 		folders := make([]models.Dashboard, 0, n)
 		now := time.Now()
@@ -188,7 +130,7 @@ func populateDB(folderCount, dashboardsPerFolder int, sqlStore *sqlstore.SQLStor
 
 	// Insert dashboards
 	offset += folderCount
-	if errInsert := concurrentBatch(concurrency, dashboardsPerFolder*folderCount, batchSize, func(start, end int) error {
+	if errInsert := actest.ConcurrentBatch(actest.Concurrency, dashboardsPerFolder*folderCount, actest.BatchSize, func(start, end int) error {
 		n := end - start
 		dashboards := make([]models.Dashboard, 0, n)
 		now := time.Now()
