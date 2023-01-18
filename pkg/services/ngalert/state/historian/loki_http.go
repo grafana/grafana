@@ -1,6 +1,8 @@
 package historian
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -66,5 +68,54 @@ func (c *httpLokiClient) ping() error {
 		return fmt.Errorf("ping request to loki endpoint returned a non-200 status code: %d", res.StatusCode)
 	}
 	c.log.Debug("Ping request to Loki endpoint succeeded", "status", res.StatusCode)
+	return nil
+}
+
+type payload struct {
+	Streams []stream `json:"streams"`
+}
+
+type stream struct {
+	Stream map[string]string `json:"stream"`
+	Values []row             `json:"values"`
+}
+
+type row struct {
+	At  time.Time
+	Val string
+}
+
+func (r *row) MarshalJSON() ([]byte, error) {
+	return json.Marshal([2]string{
+		fmt.Sprintf("%d", r.At.Unix()), r.Val,
+	})
+}
+
+func (c *httpLokiClient) push(s []stream) error {
+	body := struct {
+		Streams []stream `json:"streams"`
+	}{Streams: s}
+	enc, err := json.Marshal(body)
+	if err != nil {
+		return fmt.Errorf("failed to serialize Loki payload: %w", err)
+	}
+
+	uri := c.url.JoinPath("/loki/api/v1/push")
+	req, err := http.NewRequest(http.MethodPost, uri.String(), bytes.NewBuffer(enc))
+	if err != nil {
+		return fmt.Errorf("failed to create Loki request: %w", err)
+	}
+
+	req.Header.Add("content-type", "application/json")
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send request: %w", err)
+	}
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		// TODO: log body if error?
+		return fmt.Errorf("received an error response from loki, status: %d", resp.StatusCode)
+	}
 	return nil
 }
