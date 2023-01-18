@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/dskit/backoff"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
@@ -104,7 +103,7 @@ func setupBenchEnv(b *testing.B, folderCount, dashboardsPerFolder int) (*Standar
 		tracing.InitializeTracerForTest(), features, orgSvc, nil, querySvc).(*StandardSearchService)
 	require.True(b, ok)
 
-	err = runSearchService(b, searchService)
+	err = runSearchService(searchService)
 	require.NoError(b, err, "error when running search service")
 
 	user := getSignedInUser(folderCount, dashboardsPerFolder)
@@ -119,7 +118,7 @@ func getSignedInUser(folderCount, dashboardsPerFolder int) *user.SignedInUser {
 	}
 
 	dashScopes := make([]string, folderCount*dashboardsPerFolder)
-	for i := folderCount + 1; i <= ((folderCount + 1) * dashboardsPerFolder); i++ {
+	for i := folderCount + 1; i <= (folderCount * (dashboardsPerFolder + 1)); i++ {
 		dashScopes[i-(folderCount+1)] = dashboards.ScopeDashboardsProvider.GetResourceScopeUID(fmt.Sprintf("dashboard%d", i))
 	}
 
@@ -137,28 +136,20 @@ func getSignedInUser(folderCount, dashboardsPerFolder int) *user.SignedInUser {
 	return user
 }
 
-// Runs search service (indexing etc) and waits until it becomes ready
-func runSearchService(b *testing.B, searchService *StandardSearchService) error {
+// Runs initial indexing of search service
+func runSearchService(searchService *StandardSearchService) error {
+	if err := searchService.dashboardIndex.buildInitialIndexes(context.Background(), []int64{int64(1)}); err != nil {
+		return err
+	}
+	searchService.dashboardIndex.initialIndexingComplete = true
+
 	go func() {
-		err := searchService.Run(context.Background())
-		require.NoError(b, err)
+		for {
+			doneCh := <-searchService.dashboardIndex.syncCh
+			close(doneCh)
+		}
 	}()
 
-	backoff := backoff.New(context.Background(), backoff.Config{MaxBackoff: time.Second * 15})
-	var ready bool
-	for {
-		ready = searchService.IsReady(context.Background(), 1).IsReady
-		if ready {
-			break
-		}
-		backoff.Wait()
-		if !backoff.Ongoing() {
-			break
-		}
-	}
-	if !ready {
-		return fmt.Errorf("search service did not become ready within the allocsted time")
-	}
 	return nil
 }
 
