@@ -192,7 +192,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 		if err != nil {
 			return response.Error(500, "Error while checking dashboard permissions", err)
 		}
-		if err := hs.updateDashboardAccessControl(c.Req.Context(), dash.OrgId, dash.Uid, false, items, old); err != nil {
+		if err := hs.updateDashboardAccessControl(c.Req.Context(), dash.OrgID, dash.UID, false, items, old); err != nil {
 			return response.Error(500, "Failed to update permissions", err)
 		}
 		return response.Success("Dashboard permissions updated")

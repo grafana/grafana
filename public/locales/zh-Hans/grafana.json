@@ -12,6 +12,9 @@
       "light-theme": "",
       "search": ""
     },
+    "search-box": {
+      "placeholder": ""
+    },
     "section": {
       "actions": "",
       "dashboard-search-results": "",
