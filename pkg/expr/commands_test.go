@@ -221,4 +221,12 @@ func TestResampleCommand_Execute(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("should return empty result if input is nil Value", func(t *testing.T) {
+		result, err := cmd.Execute(context.Background(), time.Now(), mathexp.Vars{
+			varToReduce: mathexp.Results{Values: mathexp.Values{nil}},
+		})
+		require.Empty(t, result.Values)
+		require.NoError(t, err)
+	})
 }
