@@ -59,7 +59,7 @@ export const Alert = React.forwardRef<HTMLDivElement, Props>(
       error: 'alert',
       warning: 'alert',
       info: 'status',
-      success: 'status',
+      success: 'status', // TMP
     };
     const role = restProps['role'] || rolesBySeverity[severity];
     const ariaLabel = restProps['aria-label'] || title;
