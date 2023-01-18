@@ -42,7 +42,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 	defer resetTimeNow()
 
 	var store *sqlStore
-	var testDash *models.Dashboard
+	var testDash *dashboards.Dashboard
 	var items []*models.Alert
 
 	setup := func(t *testing.T) {
@@ -63,8 +63,8 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 		items = []*models.Alert{
 			{
 				PanelId:     1,
-				DashboardId: testDash.Id,
-				OrgId:       testDash.OrgId,
+				DashboardId: testDash.ID,
+				OrgId:       testDash.OrgID,
 				Name:        "Alerting title",
 				Message:     "Alerting message",
 				Settings:    simplejson.New(),
@@ -73,7 +73,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 			},
 		}
 
-		err = store.SaveAlerts(context.Background(), testDash.Id, items)
+		err = store.SaveAlerts(context.Background(), testDash.ID, items)
 		require.Nil(t, err)
 	}
 
@@ -81,7 +81,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 		setup(t)
 
 		// Get alert so we can use its ID in tests
-		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
+		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, PanelId: 1, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
 		err2 := store.HandleAlertsQuery(context.Background(), &alertQuery)
 		require.Nil(t, err2)
 
@@ -138,13 +138,13 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 
 	t.Run("Can read properties", func(t *testing.T) {
 		setup(t)
-		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
+		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, PanelId: 1, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
 		err2 := store.HandleAlertsQuery(context.Background(), &alertQuery)
 
 		alert := alertQuery.Result[0]
 		require.Nil(t, err2)
 		require.Greater(t, alert.Id, int64(0))
-		require.Equal(t, testDash.Id, alert.DashboardId)
+		require.Equal(t, testDash.ID, alert.DashboardId)
 		require.Equal(t, int64(1), alert.PanelId)
 		require.Equal(t, "Alerting title", alert.Name)
 		require.Equal(t, models.AlertStateUnknown, alert.State)
@@ -160,7 +160,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 	t.Run("Viewer can read alerts", func(t *testing.T) {
 		setup(t)
 		viewerUser := &user.SignedInUser{OrgRole: org.RoleViewer, OrgID: 1}
-		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: viewerUser}
+		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, PanelId: 1, OrgId: 1, User: viewerUser}
 		err2 := store.HandleAlertsQuery(context.Background(), &alertQuery)
 
 		require.Nil(t, err2)
@@ -172,14 +172,14 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 		modifiedItems := items
 		modifiedItems[0].Name = "Name"
 
-		err := store.SaveAlerts(context.Background(), testDash.Id, items)
+		err := store.SaveAlerts(context.Background(), testDash.ID, items)
 
 		t.Run("Can save alerts with same dashboard and panel id", func(t *testing.T) {
 			require.Nil(t, err)
 		})
 
 		t.Run("Alerts should be updated", func(t *testing.T) {
-			query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
+			query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
 			err2 := store.HandleAlertsQuery(context.Background(), &query)
 
 			require.Nil(t, err2)
@@ -192,7 +192,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 		})
 
 		t.Run("Updates without changes should be ignored", func(t *testing.T) {
-			err3 := store.SaveAlerts(context.Background(), testDash.Id, items)
+			err3 := store.SaveAlerts(context.Background(), testDash.ID, items)
 			require.Nil(t, err3)
 		})
 	})
@@ -201,21 +201,21 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 		setup(t)
 		multipleItems := []*models.Alert{
 			{
-				DashboardId: testDash.Id,
+				DashboardId: testDash.ID,
 				PanelId:     1,
 				Name:        "1",
 				OrgId:       1,
 				Settings:    simplejson.New(),
 			},
 			{
-				DashboardId: testDash.Id,
+				DashboardId: testDash.ID,
 				PanelId:     2,
 				Name:        "2",
 				OrgId:       1,
 				Settings:    simplejson.New(),
 			},
 			{
-				DashboardId: testDash.Id,
+				DashboardId: testDash.ID,
 				PanelId:     3,
 				Name:        "3",
 				OrgId:       1,
@@ -223,12 +223,12 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 			},
 		}
 
-		err := store.SaveAlerts(context.Background(), testDash.Id, multipleItems)
+		err := store.SaveAlerts(context.Background(), testDash.ID, multipleItems)
 
 		t.Run("Should save 3 dashboards", func(t *testing.T) {
 			require.Nil(t, err)
 
-			queryForDashboard := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
+			queryForDashboard := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
 			err2 := store.HandleAlertsQuery(context.Background(), &queryForDashboard)
 
 			require.Nil(t, err2)
@@ -238,10 +238,10 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 		t.Run("should updated two dashboards and delete one", func(t *testing.T) {
 			missingOneAlert := multipleItems[:2]
 
-			err = store.SaveAlerts(context.Background(), testDash.Id, missingOneAlert)
+			err = store.SaveAlerts(context.Background(), testDash.ID, missingOneAlert)
 
 			t.Run("should delete the missing alert", func(t *testing.T) {
-				query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
+				query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
 				err2 := store.HandleAlertsQuery(context.Background(), &query)
 				require.Nil(t, err2)
 				require.Equal(t, 2, len(query.Result))
@@ -254,24 +254,24 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 		items := []*models.Alert{
 			{
 				PanelId:     1,
-				DashboardId: testDash.Id,
+				DashboardId: testDash.ID,
 				Name:        "Alerting title",
 				Message:     "Alerting message",
 			},
 		}
 
-		err := store.SaveAlerts(context.Background(), testDash.Id, items)
+		err := store.SaveAlerts(context.Background(), testDash.ID, items)
 		require.Nil(t, err)
 
 		err = store.db.WithDbSession(context.Background(), func(sess *db.Session) error {
-			dash := models.Dashboard{Id: testDash.Id, OrgId: 1}
+			dash := dashboards.Dashboard{ID: testDash.ID, OrgID: 1}
 			_, err := sess.Delete(dash)
 			return err
 		})
 		require.Nil(t, err)
 
 		t.Run("Alerts should be removed", func(t *testing.T) {
-			query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
+			query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
 			err2 := store.HandleAlertsQuery(context.Background(), &query)
 
 			require.Nil(t, err2)
@@ -292,21 +292,21 @@ func TestIntegrationPausingAlerts(t *testing.T) {
 		sqlStore := sqlStore{db: ss, log: log.New(), tagService: tagimpl.ProvideService(ss, ss.Cfg)}
 
 		testDash := insertTestDashboard(t, sqlStore.db, "dashboard with alerts", 1, 0, false, "alert")
-		alert, err := insertTestAlert("Alerting title", "Alerting message", testDash.OrgId, testDash.Id, simplejson.New(), sqlStore)
+		alert, err := insertTestAlert("Alerting title", "Alerting message", testDash.OrgID, testDash.ID, simplejson.New(), sqlStore)
 		require.Nil(t, err)
 
 		stateDateBeforePause := alert.NewStateDate
 		stateDateAfterPause := stateDateBeforePause
 
 		// Get alert so we can use its ID in tests
-		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.Id}, PanelId: 1, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
+		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, PanelId: 1, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
 		err2 := sqlStore.HandleAlertsQuery(context.Background(), &alertQuery)
 		require.Nil(t, err2)
 
 		insertedAlert := alertQuery.Result[0]
 
 		t.Run("when paused", func(t *testing.T) {
-			_, err := sqlStore.pauseAlert(t, testDash.OrgId, insertedAlert.Id, true)
+			_, err := sqlStore.pauseAlert(t, testDash.OrgID, insertedAlert.Id, true)
 			require.Nil(t, err)
 
 			t.Run("the NewStateDate should be updated", func(t *testing.T) {
@@ -319,7 +319,7 @@ func TestIntegrationPausingAlerts(t *testing.T) {
 		})
 
 		t.Run("when unpaused", func(t *testing.T) {
-			_, err := sqlStore.pauseAlert(t, testDash.OrgId, insertedAlert.Id, false)
+			_, err := sqlStore.pauseAlert(t, testDash.OrgID, insertedAlert.Id, false)
 			require.Nil(t, err)
 
 			t.Run("the NewStateDate should be updated again", func(t *testing.T) {
@@ -380,11 +380,11 @@ func (ss *sqlStore) pauseAllAlerts(t *testing.T, pauseState bool) error {
 }
 
 func insertTestDashboard(t *testing.T, store db.DB, title string, orgId int64,
-	folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
+	folderId int64, isFolder bool, tags ...interface{}) *dashboards.Dashboard {
 	t.Helper()
-	cmd := models.SaveDashboardCommand{
-		OrgId:    orgId,
-		FolderId: folderId,
+	cmd := dashboards.SaveDashboardCommand{
+		OrgID:    orgId,
+		FolderID: folderId,
 		IsFolder: isFolder,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
 			"id":    nil,
@@ -393,25 +393,25 @@ func insertTestDashboard(t *testing.T, store db.DB, title string, orgId int64,
 		}),
 	}
 
-	var dash *models.Dashboard
+	var dash *dashboards.Dashboard
 	err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
 		dash = cmd.GetDashboardModel()
 		dash.SetVersion(1)
 		dash.Created = time.Now()
 		dash.Updated = time.Now()
-		dash.Uid = util.GenerateShortUID()
+		dash.UID = util.GenerateShortUID()
 		_, err := sess.Insert(dash)
 		return err
 	})
 
 	require.NoError(t, err)
 	require.NotNil(t, dash)
-	dash.Data.Set("id", dash.Id)
-	dash.Data.Set("uid", dash.Uid)
+	dash.Data.Set("id", dash.ID)
+	dash.Data.Set("uid", dash.UID)
 
 	err = store.WithDbSession(context.Background(), func(sess *db.Session) error {
 		dashVersion := &dashver.DashboardVersion{
-			DashboardID:   dash.Id,
+			DashboardID:   dash.ID,
 			ParentVersion: dash.Version,
 			RestoredFrom:  cmd.RestoredFrom,
 			Version:       dash.Version,
