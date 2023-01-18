@@ -143,8 +143,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 				reqContext.IsSignedIn = true
 				reqContext.UserToken = identity.SessionToken
 				reqContext.SignedInUser = identity.SignedInUser()
-				// FIXME: cannot only depend on empty id
-				reqContext.AllowAnonymous = identity.IsAnonymous()
+				reqContext.AllowAnonymous = identity.IsAnonymous
 				reqContext.IsRenderCall = identity.AuthModule == login.RenderModule
 
 				// Add authentication headers based on what method was used

@@ -137,6 +137,8 @@ type Identity struct {
 	// Namespace* constants. For example, "user:1" or "api-key:1".
 	// If the entity is not found in the DB or this entity is non-persistent, this field will be empty.
 	ID string
+	// IsAnonymous
+	IsAnonymous bool
 	// Login is the short hand identifier of the entity. Should be unique.
 	Login string
 	// Name is the display name of the entity. It is not guaranteed to be unique.
@@ -174,11 +176,6 @@ type Identity struct {
 // Role returns the role of the identity in the active organization.
 func (i *Identity) Role() org.RoleType {
 	return i.OrgRoles[i.OrgID]
-}
-
-// IsAnonymous will return true if no ID is set on the identity
-func (i *Identity) IsAnonymous() bool {
-	return i.ID == ""
 }
 
 // TODO: improve error handling
@@ -227,7 +224,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		Email:              i.Email,
 		OrgCount:           i.OrgCount,
 		IsGrafanaAdmin:     isGrafanaAdmin,
-		IsAnonymous:        i.IsAnonymous(),
+		IsAnonymous:        i.IsAnonymous,
 		IsDisabled:         i.IsDisabled,
 		HelpFlags1:         i.HelpFlags1,
 		LastSeenAt:         i.LastSeenAt,
