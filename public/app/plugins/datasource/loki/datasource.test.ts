@@ -156,6 +156,10 @@ describe('LokiDatasource', () => {
     it('should use query max lines, if both exist, even if it is higher than ds max lines', async () => {
       await runTest(80, '40', 80);
     });
+
+    it('should use query max lines, if both exist, even if it is 0', async () => {
+      await runTest(0, '40', 0);
+    });
   });
 
   describe('When using adhoc filters', () => {
