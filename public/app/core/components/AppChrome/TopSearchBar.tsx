@@ -14,7 +14,7 @@ import { QuickAdd } from './QuickAdd/QuickAdd';
 import { SignInLink } from './TopBar/SignInLink';
 import { TopNavBarMenu } from './TopBar/TopNavBarMenu';
 import { TopSearchBarSection } from './TopBar/TopSearchBarSection';
-import { TopSearchBarInput } from './TopSearchBarInput';
+import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
 export function TopSearchBar() {
@@ -34,7 +34,7 @@ export function TopSearchBar() {
       </TopSearchBarSection>
 
       <TopSearchBarSection>
-        <TopSearchBarInput />
+        <TopSearchBarCommandPaletteTrigger />
       </TopSearchBarSection>
 
       <TopSearchBarSection align="right">

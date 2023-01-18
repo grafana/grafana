@@ -8,7 +8,7 @@ import { focusCss } from '@grafana/ui/src/themes/mixins';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { t } from 'app/core/internationalization';
 
-export function TopSearchBarInput() {
+export function TopSearchBarCommandPaletteTrigger() {
   const theme = useTheme2();
   const { query: kbar } = useKBar((kbarState) => ({
     kbarSearchQuery: kbarState.searchQuery,
