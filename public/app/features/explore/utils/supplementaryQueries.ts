@@ -1,48 +1,11 @@
-import { Observable } from 'rxjs';
-
-import {
-  DataQuery,
-  DataQueryRequest,
-  DataQueryResponse,
-  hasLogsSampleSupport,
-  hasLogsVolumeSupport,
-} from '@grafana/data';
+import { SupplementaryQueryType } from '@grafana/data';
 import store from 'app/core/store';
-import { SupplementaryQueries, SupplementaryQueryType } from 'app/types';
+import { SupplementaryQueries } from 'app/types';
 
-export const supplementaryQueriesList: Array<{
-  getProvider: (
-    datasource: unknown,
-    request: DataQueryRequest<DataQuery>
-  ) => (Observable<DataQueryResponse> | undefined) | undefined;
-  requestId: string;
-  type: SupplementaryQueryType;
-}> = [
-  {
-    type: SupplementaryQueryType.LogsVolume,
-    getProvider: getLogsVolumeDataProvider,
-    requestId: '_log_volume',
-  },
-  {
-    type: SupplementaryQueryType.LogsSample,
-    getProvider: getLogsSamplesDataProvider,
-    requestId: '_log_sample',
-  },
+export const supplementaryQueryTypes: SupplementaryQueryType[] = [
+  SupplementaryQueryType.LogsVolume,
+  SupplementaryQueryType.LogsSample,
 ];
-
-export function getLogsSamplesDataProvider(datasource: unknown, request: DataQueryRequest<DataQuery>) {
-  if (hasLogsSampleSupport(datasource)) {
-    return datasource.getLogsSampleDataProvider(request);
-  }
-  return undefined;
-}
-
-export function getLogsVolumeDataProvider(datasource: unknown, request: DataQueryRequest<DataQuery>) {
-  if (hasLogsVolumeSupport(datasource)) {
-    return datasource.getLogsVolumeDataProvider(request);
-  }
-  return undefined;
-}
 
 const getSupplementaryQuerySettingKey = (type: SupplementaryQueryType) => `grafana.explore.logs.enable${type}`;
 
@@ -58,7 +21,7 @@ export const loadSupplementaryQueries = (): SupplementaryQueries => {
     [SupplementaryQueryType.LogsSample]: { enabled: false },
   };
 
-  for (const { type } of Object.values(supplementaryQueriesList)) {
+  for (const type of supplementaryQueryTypes) {
     if (type === SupplementaryQueryType.LogsVolume) {
       // TODO: Remove this in 10.0
       // For LogsVolume we need to migrate old key to new key. So check for old key:

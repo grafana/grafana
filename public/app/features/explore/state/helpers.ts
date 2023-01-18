@@ -1,6 +1,6 @@
-import { DefaultTimeZone, TimeRange, toUtc } from '@grafana/data';
+import { DefaultTimeZone, TimeRange, toUtc, SupplementaryQueryType } from '@grafana/data';
 
-import { ExploreId, SupplementaryQueryType } from '../../../types';
+import { ExploreId } from '../../../types';
 
 export const createDefaultInitialState = () => {
   const t = toUtc();

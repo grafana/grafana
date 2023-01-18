@@ -14,8 +14,8 @@ import {
   DataQueryResponse,
   DataSourceInstanceSettings,
   DataSourceWithLogsContextSupport,
-  DataSourceWithLogsVolumeSupport,
-  DataSourceWithLogsSampleSupport,
+  DataSourceWithSupplementaryQueriesSupport,
+  SupplementaryQueryType,
   DataSourceWithQueryExportSupport,
   DataSourceWithQueryImportSupport,
   dateMath,
@@ -116,8 +116,7 @@ export class LokiDatasource
   extends DataSourceWithBackend<LokiQuery, LokiOptions>
   implements
     DataSourceWithLogsContextSupport,
-    DataSourceWithLogsVolumeSupport<LokiQuery>,
-    DataSourceWithLogsSampleSupport<LokiQuery>,
+    DataSourceWithSupplementaryQueriesSupport<LokiQuery>,
     DataSourceWithQueryImportSupport<LokiQuery>,
     DataSourceWithQueryExportSupport<LokiQuery>
 {
@@ -139,6 +138,27 @@ export class LokiDatasource
       QueryEditor: LokiAnnotationsQueryEditor,
     };
     this.variables = new LokiVariableSupport(this);
+  }
+
+  getDataProvider(
+    type: SupplementaryQueryType,
+    request: DataQueryRequest<LokiQuery>
+  ): Observable<DataQueryResponse> | undefined {
+    if (!this.getSupportedSupplementaryQueryTypes().includes(type)) {
+      return undefined;
+    }
+    switch (type) {
+      case SupplementaryQueryType.LogsVolume:
+        return this.getLogsVolumeDataProvider(request);
+      case SupplementaryQueryType.LogsSample:
+        return this.getLogsSampleDataProvider(request);
+      default:
+        return undefined;
+    }
+  }
+
+  getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[] {
+    return [SupplementaryQueryType.LogsVolume, SupplementaryQueryType.LogsSample];
   }
 
   getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {

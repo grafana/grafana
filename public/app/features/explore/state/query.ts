@@ -1,6 +1,6 @@
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
 import deepEqual from 'fast-deep-equal';
-import { flatten, groupBy } from 'lodash';
+import { flatten, groupBy, snakeCase } from 'lodash';
 import { identity, Observable, of, SubscriptionLike, Unsubscribable, combineLatest } from 'rxjs';
 import { mergeMap, throttleTime } from 'rxjs/operators';
 
@@ -10,6 +10,8 @@ import {
   DataQueryErrorType,
   DataQueryResponse,
   DataSourceApi,
+  hasSupplementaryQuerySupport,
+  SupplementaryQueryType,
   hasLogsVolumeSupport,
   hasQueryExportSupport,
   hasQueryImportSupport,
@@ -36,13 +38,13 @@ import { getTimeZone } from 'app/features/profile/state/selectors';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { store } from 'app/store/store';
 import { ExploreItemState, ExplorePanelData, ThunkDispatch, ThunkResult } from 'app/types';
-import { ExploreId, ExploreState, QueryOptions, SupplementaryQueryType, SupplementaryQueries } from 'app/types/explore';
+import { ExploreId, ExploreState, QueryOptions, SupplementaryQueries } from 'app/types/explore';
 
 import { notifyApp } from '../../../core/actions';
 import { createErrorNotification } from '../../../core/copy/appNotification';
 import { runRequest } from '../../query/state/runRequest';
 import { decorateData } from '../utils/decorators';
-import { storeSupplementaryQueryEnabled, supplementaryQueriesList } from '../utils/supplementaryQueries';
+import { storeSupplementaryQueryEnabled, supplementaryQueryTypes } from '../utils/supplementaryQueries';
 
 import { addHistoryItem, historyUpdatedAction, loadRichHistory } from './history';
 import { stateSave } from './main';
@@ -251,7 +253,7 @@ export function cancelQueries(exploreId: ExploreId): ThunkResult<void> {
 
     const supplementaryQueries = getState().explore[exploreId]!.supplementaryQueries;
     // Cancel all data providers
-    for (const { type } of supplementaryQueriesList) {
+    for (const type of supplementaryQueryTypes) {
       dispatch(cleanSupplementaryQueryDataProviderAction({ exploreId, type }));
 
       // And clear any incomplete data
@@ -495,7 +497,9 @@ export const runQueries = (
               refreshInterval,
               queries,
               correlations,
-              datasourceInstance != null && hasLogsVolumeSupport(datasourceInstance)
+              datasourceInstance != null &&
+                (hasSupplementaryQuerySupport(datasourceInstance, SupplementaryQueryType.LogsVolume) ||
+                  hasLogsVolumeSupport(datasourceInstance))
             )
           )
         )
@@ -558,7 +562,9 @@ export const runQueries = (
               refreshInterval,
               queries,
               correlations,
-              datasourceInstance != null && hasLogsVolumeSupport(datasourceInstance)
+              datasourceInstance != null &&
+                (hasSupplementaryQuerySupport(datasourceInstance, SupplementaryQueryType.LogsVolume) ||
+                  hasLogsVolumeSupport(datasourceInstance))
             )
           )
         )
@@ -599,7 +605,7 @@ export const runQueries = (
         });
 
       if (live) {
-        for (const { type } of supplementaryQueriesList) {
+        for (const type of supplementaryQueryTypes) {
           dispatch(
             cleanSupplementaryQueryDataProviderAction({
               exploreId,
@@ -609,13 +615,22 @@ export const runQueries = (
           dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
         }
       } else {
-        for (const { type, getProvider, requestId } of supplementaryQueriesList) {
+        for (const type of supplementaryQueryTypes) {
           // We always prepare provider, even is supplementary query is disabled because when the user
           // enables the query, we need to load the data, so we need the provider
-          const dataProvider = getProvider(datasourceInstance, {
-            ...transaction.request,
-            requestId: transaction.request.requestId + requestId,
-          });
+          let dataProvider: Observable<DataQueryResponse> | undefined;
+          if (hasSupplementaryQuerySupport(datasourceInstance, type)) {
+            dataProvider = datasourceInstance.getDataProvider(type, {
+              ...transaction.request,
+              requestId: `${transaction.request.requestId}_${snakeCase(type)}`,
+            });
+          } else if (hasLogsVolumeSupport(datasourceInstance) && type === SupplementaryQueryType.LogsVolume) {
+            dataProvider = datasourceInstance.getLogsVolumeDataProvider({
+              ...transaction.request,
+              requestId: `${transaction.request.requestId}_${snakeCase(type)}`,
+            });
+          }
+
           if (dataProvider) {
             handleSupplementaryQuery(dispatch, getState().explore, exploreId, type, dataProvider);
           } else {

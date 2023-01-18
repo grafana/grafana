@@ -179,7 +179,42 @@ export const hasLogsContextSupport = (datasource: unknown): datasource is DataSo
   return withLogsSupport.getLogRowContext !== undefined && withLogsSupport.showContextToggle !== undefined;
 };
 
+export enum SupplementaryQueryType {
+  LogsVolume = 'LogsVolume',
+  LogsSample = 'LogsSample',
+}
+
 /**
+ * Data sources that support supplementary queries in Explore.
+ * This will enable users to see additional data  when running original queries.
+ * Supported supplementary queries are defined in SupplementaryQueryType enum.
+ */
+export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQuery> {
+  getDataProvider(
+    type: SupplementaryQueryType,
+    request: DataQueryRequest<TQuery>
+  ): Observable<DataQueryResponse> | undefined;
+  getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[];
+}
+
+export const hasSupplementaryQuerySupport = <TQuery extends DataQuery>(
+  datasource: unknown,
+  type: SupplementaryQueryType
+): datasource is DataSourceWithSupplementaryQueriesSupport<TQuery> => {
+  if (!datasource) {
+    return false;
+  }
+
+  const withSupplementaryQueriesSupport = datasource as DataSourceWithSupplementaryQueriesSupport<TQuery>;
+
+  return (
+    withSupplementaryQueriesSupport.getDataProvider !== undefined &&
+    withSupplementaryQueriesSupport.getSupportedSupplementaryQueryTypes().includes(type)
+  );
+};
+
+/**
+ * @deprecated Will be removed in a future version. Use `DataSourceWithSupplementaryQueriesSupport` instead.
  * Data sources that support log volume.
  * This will enable full-range log volume histogram in Explore.
  */
@@ -191,18 +226,4 @@ export const hasLogsVolumeSupport = <TQuery extends DataQuery>(
   datasource: unknown
 ): datasource is DataSourceWithLogsVolumeSupport<TQuery> => {
   return (datasource as DataSourceWithLogsVolumeSupport<TQuery>).getLogsVolumeDataProvider !== undefined;
-};
-
-/**
- * Data sources that support log sample.
- * This will enable users to see log samples when running metric queries.
- */
-export interface DataSourceWithLogsSampleSupport<TQuery extends DataQuery> {
-  getLogsSampleDataProvider(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse> | undefined;
-}
-
-export const hasLogsSampleSupport = <TQuery extends DataQuery>(
-  datasource: unknown
-): datasource is DataSourceWithLogsSampleSupport<TQuery> => {
-  return (datasource as DataSourceWithLogsSampleSupport<TQuery>).getLogsSampleDataProvider !== undefined;
 };
