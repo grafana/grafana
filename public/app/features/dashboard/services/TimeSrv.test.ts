@@ -96,7 +96,7 @@ describe('timeSrv', () => {
 
         locationService.push('/d/id?from=now-24h&to=now');
         config.isPublicDashboardView = true;
-        timeSrv = new TimeSrv(new ContextSrvStub() as any);
+        timeSrv = new TimeSrv(new ContextSrvStub());
       });
 
       it("should ignore from and to if it's a public dashboard and time picker is hidden", () => {
