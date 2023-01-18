@@ -239,6 +239,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       padding: theme.spacing(0, 0, 0, 1),
+      '&:hover': {
+        cursor: 'move',
+      },
     }),
     streaming: css({
       marginRight: 0,
