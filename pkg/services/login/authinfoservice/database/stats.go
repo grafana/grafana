@@ -10,7 +10,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 )
 
-func InitMetrics() {
+// Should be in use in ProvideAuthInfoStore
+// due to query performance for big user tables
+// we have disabled these metrics from Grafana for now
+func InitDuplicateUserMetrics() {
 	login.Once.Do(func() {
 		login.MStatDuplicateUserEntries = prometheus.NewGauge(prometheus.GaugeOpts{
 			Name:      "stat_users_total_duplicate_user_entries",
