@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
@@ -24,7 +23,7 @@ type Notifier interface {
 	NeedsImage() bool
 
 	// ShouldNotify checks this evaluation should send an alert notification
-	ShouldNotify(ctx context.Context, evalContext *EvalContext, notificationState *models.AlertNotificationState) bool
+	ShouldNotify(ctx context.Context, evalContext *EvalContext, notificationState *AlertNotificationState) bool
 
 	GetNotifierUID() string
 	GetIsDefault() bool
@@ -35,7 +34,7 @@ type Notifier interface {
 
 type notifierState struct {
 	notifier Notifier
-	state    *models.AlertNotificationState
+	state    *AlertNotificationState
 }
 
 type notifierStateSlice []*notifierState

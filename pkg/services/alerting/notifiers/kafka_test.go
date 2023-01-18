@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 
 	"github.com/stretchr/testify/require"
@@ -18,7 +18,7 @@ func TestKafkaNotifier(t *testing.T) {
 			json := `{ }`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &models.AlertNotification{
+			model := &alerting.AlertNotification{
 				Name:     "kafka_testing",
 				Type:     "kafka",
 				Settings: settingsJSON,
@@ -36,7 +36,7 @@ func TestKafkaNotifier(t *testing.T) {
 				}`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &models.AlertNotification{
+			model := &alerting.AlertNotification{
 				Name:     "kafka_testing",
 				Type:     "kafka",
 				Settings: settingsJSON,

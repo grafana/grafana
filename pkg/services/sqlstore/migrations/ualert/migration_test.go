@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -128,7 +129,7 @@ func TestAMConfigMigration(t *testing.T) {
 
 	tc := []struct {
 		name           string
-		legacyChannels []*models.AlertNotification
+		legacyChannels []*alerting.AlertNotification
 		alerts         []*models.Alert
 
 		expected map[int64]*ualert.PostableUserConfig
@@ -136,7 +137,7 @@ func TestAMConfigMigration(t *testing.T) {
 	}{
 		{
 			name: "general multi-org, multi-alert, multi-channel migration",
-			legacyChannels: []*models.AlertNotification{
+			legacyChannels: []*alerting.AlertNotification{
 				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, false),
 				createAlertNotification(t, int64(1), "notifier2", "slack", slackSettings, false),
 				createAlertNotification(t, int64(1), "notifier3", "opsgenie", opsgenieSettings, false),
@@ -196,7 +197,7 @@ func TestAMConfigMigration(t *testing.T) {
 		},
 		{
 			name: "when no default channel, create empty autogen-contact-point-default",
-			legacyChannels: []*models.AlertNotification{
+			legacyChannels: []*alerting.AlertNotification{
 				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, false),
 			},
 			alerts: []*models.Alert{},
@@ -221,7 +222,7 @@ func TestAMConfigMigration(t *testing.T) {
 		},
 		{
 			name: "when single default channel, don't create autogen-contact-point-default",
-			legacyChannels: []*models.AlertNotification{
+			legacyChannels: []*alerting.AlertNotification{
 				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, true),
 			},
 			alerts: []*models.Alert{},
@@ -245,7 +246,7 @@ func TestAMConfigMigration(t *testing.T) {
 		},
 		{
 			name: "when single default channel with SendReminder, use channel Frequency as RepeatInterval",
-			legacyChannels: []*models.AlertNotification{
+			legacyChannels: []*alerting.AlertNotification{
 				createAlertNotificationWithReminder(t, int64(1), "notifier1", "email", emailSettings, true, true, time.Duration(1)*time.Hour),
 			},
 			alerts: []*models.Alert{},
@@ -269,7 +270,7 @@ func TestAMConfigMigration(t *testing.T) {
 		},
 		{
 			name: "when multiple default channels, add them to autogen-contact-point-default as well",
-			legacyChannels: []*models.AlertNotification{
+			legacyChannels: []*alerting.AlertNotification{
 				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, true),
 				createAlertNotification(t, int64(1), "notifier2", "slack", slackSettings, true),
 			},
@@ -297,7 +298,7 @@ func TestAMConfigMigration(t *testing.T) {
 		},
 		{
 			name: "when multiple default channels with SendReminder, use minimum channel frequency as RepeatInterval",
-			legacyChannels: []*models.AlertNotification{
+			legacyChannels: []*alerting.AlertNotification{
 				createAlertNotificationWithReminder(t, int64(1), "notifier1", "email", emailSettings, true, true, time.Duration(1)*time.Hour),
 				createAlertNotificationWithReminder(t, int64(1), "notifier2", "slack", slackSettings, true, true, time.Duration(30)*time.Minute),
 			},
@@ -325,7 +326,7 @@ func TestAMConfigMigration(t *testing.T) {
 		},
 		{
 			name: "when default channels exist alongside non-default, add only defaults to autogen-contact-point-default",
-			legacyChannels: []*models.AlertNotification{
+			legacyChannels: []*alerting.AlertNotification{
 				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, true), // default
 				createAlertNotification(t, int64(1), "notifier2", "slack", slackSettings, false),
 				createAlertNotification(t, int64(1), "notifier3", "opsgenie", opsgenieSettings, true), // default
@@ -355,7 +356,7 @@ func TestAMConfigMigration(t *testing.T) {
 		},
 		{
 			name: "when alerts share channels, only create one receiver per legacy channel",
-			legacyChannels: []*models.AlertNotification{
+			legacyChannels: []*alerting.AlertNotification{
 				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, false),
 				createAlertNotification(t, int64(1), "notifier2", "slack", slackSettings, false),
 			},
@@ -385,7 +386,7 @@ func TestAMConfigMigration(t *testing.T) {
 		},
 		{
 			name: "when channel not linked to any alerts, still create a receiver for it",
-			legacyChannels: []*models.AlertNotification{
+			legacyChannels: []*alerting.AlertNotification{
 				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, false),
 			},
 			alerts: []*models.Alert{},
@@ -409,7 +410,7 @@ func TestAMConfigMigration(t *testing.T) {
 		},
 		{
 			name: "when unsupported channels, do not migrate them",
-			legacyChannels: []*models.AlertNotification{
+			legacyChannels: []*alerting.AlertNotification{
 				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, false),
 				createAlertNotification(t, int64(1), "notifier2", "hipchat", "", false),
 				createAlertNotification(t, int64(1), "notifier3", "sensu", "", false),
@@ -435,7 +436,7 @@ func TestAMConfigMigration(t *testing.T) {
 		},
 		{
 			name: "when unsupported channel linked to alert, do not migrate only that channel",
-			legacyChannels: []*models.AlertNotification{
+			legacyChannels: []*alerting.AlertNotification{
 				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, false),
 				createAlertNotification(t, int64(1), "notifier2", "sensu", "", false),
 			},
@@ -507,7 +508,7 @@ func TestDashAlertMigration(t *testing.T) {
 
 	t.Run("when DashAlertMigration create ContactLabel on migrated AlertRules", func(t *testing.T) {
 		defer teardown(t, x)
-		legacyChannels := []*models.AlertNotification{
+		legacyChannels := []*alerting.AlertNotification{
 			createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, false),
 			createAlertNotification(t, int64(1), "notifier2", "slack", slackSettings, false),
 			createAlertNotification(t, int64(1), "notifier3", "opsgenie", opsgenieSettings, false),
@@ -550,7 +551,7 @@ func TestDashAlertMigration(t *testing.T) {
 
 	t.Run("when DashAlertMigration create ContactLabel with sanitized name if name contains double quote", func(t *testing.T) {
 		defer teardown(t, x)
-		legacyChannels := []*models.AlertNotification{
+		legacyChannels := []*alerting.AlertNotification{
 			createAlertNotification(t, int64(1), "notif\"ier1", "email", emailSettings, false),
 		}
 		alerts := []*models.Alert{
@@ -607,7 +608,7 @@ var (
 )
 
 // createAlertNotificationWithReminder creates a legacy alert notification channel for inserting into the test database.
-func createAlertNotificationWithReminder(t *testing.T, orgId int64, uid string, channelType string, settings string, defaultChannel bool, sendReminder bool, frequency time.Duration) *models.AlertNotification {
+func createAlertNotificationWithReminder(t *testing.T, orgId int64, uid string, channelType string, settings string, defaultChannel bool, sendReminder bool, frequency time.Duration) *alerting.AlertNotification {
 	t.Helper()
 	settingsJson := simplejson.New()
 	if settings != "" {
@@ -618,7 +619,7 @@ func createAlertNotificationWithReminder(t *testing.T, orgId int64, uid string, 
 		settingsJson = s
 	}
 
-	return &models.AlertNotification{
+	return &alerting.AlertNotification{
 		OrgId:                 orgId,
 		Uid:                   uid,
 		Name:                  uid, // Same as uid to make testing easier.
@@ -635,7 +636,7 @@ func createAlertNotificationWithReminder(t *testing.T, orgId int64, uid string, 
 }
 
 // createAlertNotification creates a legacy alert notification channel for inserting into the test database.
-func createAlertNotification(t *testing.T, orgId int64, uid string, channelType string, settings string, defaultChannel bool) *models.AlertNotification {
+func createAlertNotification(t *testing.T, orgId int64, uid string, channelType string, settings string, defaultChannel bool) *alerting.AlertNotification {
 	return createAlertNotificationWithReminder(t, orgId, uid, channelType, settings, defaultChannel, false, time.Duration(0))
 }
 
@@ -736,7 +737,7 @@ func runDashAlertMigrationTestRun(t *testing.T, x *xorm.Engine) {
 }
 
 // setupLegacyAlertsTables inserts data into the legacy alerting tables that is needed for testing the migration.
-func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*models.AlertNotification, alerts []*models.Alert) {
+func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*alerting.AlertNotification, alerts []*models.Alert) {
 	t.Helper()
 
 	orgs := []org.Org{

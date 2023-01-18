@@ -181,8 +181,8 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 
 		store := evalCtx.Store.(*AlertStoreMock)
 
-		store.getAlertNotificationsWithUidToSend = func(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error {
-			query.Result = []*models.AlertNotification{
+		store.getAlertNotificationsWithUidToSend = func(ctx context.Context, query *GetAlertNotificationsWithUidToSendQuery) error {
+			query.Result = []*AlertNotification{
 				{
 					Id:   1,
 					Type: "test",
@@ -194,13 +194,13 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 			return nil
 		}
 
-		store.getOrCreateNotificationState = func(ctx context.Context, query *models.GetOrCreateNotificationStateQuery) error {
-			query.Result = &models.AlertNotificationState{
+		store.getOrCreateNotificationState = func(ctx context.Context, query *GetOrCreateNotificationStateQuery) error {
+			query.Result = &AlertNotificationState{
 				AlertId:                      evalCtx.Rule.ID,
 				AlertRuleStateUpdatedVersion: 1,
 				Id:                           1,
 				OrgId:                        evalCtx.Rule.OrgID,
-				State:                        models.AlertNotificationStateUnknown,
+				State:                        AlertNotificationStateUnknown,
 			}
 			return nil
 		}
@@ -275,7 +275,7 @@ type testNotifier struct {
 	Frequency             time.Duration
 }
 
-func newTestNotifier(model *models.AlertNotification, _ GetDecryptedValueFn, ns notifications.Service) (Notifier, error) {
+func newTestNotifier(model *AlertNotification, _ GetDecryptedValueFn, ns notifications.Service) (Notifier, error) {
 	uploadImage := true
 	value, exist := model.Settings.CheckGet("uploadImage")
 	if exist {
@@ -301,7 +301,7 @@ func (n *testNotifier) Notify(evalCtx *EvalContext) error {
 	return nil
 }
 
-func (n *testNotifier) ShouldNotify(ctx context.Context, evalCtx *EvalContext, notifierState *models.AlertNotificationState) bool {
+func (n *testNotifier) ShouldNotify(ctx context.Context, evalCtx *EvalContext, notifierState *AlertNotificationState) bool {
 	return true
 }
 

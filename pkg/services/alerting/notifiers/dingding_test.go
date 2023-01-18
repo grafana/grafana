@@ -21,7 +21,7 @@ func TestDingDingNotifier(t *testing.T) {
 		json := `{ }`
 
 		settingsJSON, _ := simplejson.NewJson([]byte(json))
-		model := &models.AlertNotification{
+		model := &alerting.AlertNotification{
 			Name:     "dingding_testing",
 			Type:     "dingding",
 			Settings: settingsJSON,
@@ -34,7 +34,7 @@ func TestDingDingNotifier(t *testing.T) {
 		json := `{ "url": "https://www.google.com" }`
 
 		settingsJSON, _ := simplejson.NewJson([]byte(json))
-		model := &models.AlertNotification{
+		model := &alerting.AlertNotification{
 			Name:     "dingding_testing",
 			Type:     "dingding",
 			Settings: settingsJSON,

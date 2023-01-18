@@ -154,7 +154,7 @@ func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, no
 		return nil
 	}
 
-	cmd := &models.SetAlertNotificationStateToCompleteCommand{
+	cmd := &SetAlertNotificationStateToCompleteCommand{
 		Id:      notifierState.state.Id,
 		Version: notifierState.state.Version,
 	}
@@ -164,7 +164,7 @@ func (n *notificationService) sendAndMarkAsComplete(evalContext *EvalContext, no
 
 func (n *notificationService) sendNotification(evalContext *EvalContext, notifierState *notifierState) error {
 	if !evalContext.IsTestRun {
-		setPendingCmd := &models.SetAlertNotificationStateToPendingCommand{
+		setPendingCmd := &SetAlertNotificationStateToPendingCommand{
 			Id:                           notifierState.state.Id,
 			Version:                      notifierState.state.Version,
 			AlertRuleStateUpdatedVersion: evalContext.Rule.StateChanges,
@@ -172,7 +172,7 @@ func (n *notificationService) sendNotification(evalContext *EvalContext, notifie
 
 		err := n.sqlStore.SetAlertNotificationStateToPendingCommand(evalContext.Ctx, setPendingCmd)
 		if err != nil {
-			if errors.Is(err, models.ErrAlertNotificationStateVersionConflict) {
+			if errors.Is(err, ErrAlertNotificationStateVersionConflict) {
 				return nil
 			}
 
@@ -256,7 +256,7 @@ func (n *notificationService) renderAndUploadImage(evalCtx *EvalContext, timeout
 }
 
 func (n *notificationService) getNeededNotifiers(orgID int64, notificationUids []string, evalContext *EvalContext) (notifierStateSlice, error) {
-	query := &models.GetAlertNotificationsWithUidToSendQuery{OrgId: orgID, Uids: notificationUids}
+	query := &GetAlertNotificationsWithUidToSendQuery{OrgId: orgID, Uids: notificationUids}
 
 	if err := n.sqlStore.GetAlertNotificationsWithUidToSend(evalContext.Ctx, query); err != nil {
 		return nil, err
@@ -270,7 +270,7 @@ func (n *notificationService) getNeededNotifiers(orgID int64, notificationUids [
 			continue
 		}
 
-		query := &models.GetOrCreateNotificationStateQuery{
+		query := &GetOrCreateNotificationStateQuery{
 			NotifierId: notification.Id,
 			AlertId:    evalContext.Rule.ID,
 			OrgId:      evalContext.Rule.OrgID,
@@ -294,7 +294,7 @@ func (n *notificationService) getNeededNotifiers(orgID int64, notificationUids [
 }
 
 // InitNotifier instantiate a new notifier based on the model.
-func InitNotifier(model *models.AlertNotification, fn GetDecryptedValueFn, notificationService *notifications.NotificationService) (Notifier, error) {
+func InitNotifier(model *AlertNotification, fn GetDecryptedValueFn, notificationService *notifications.NotificationService) (Notifier, error) {
 	notifierPlugin, found := notifierFactories[model.Type]
 	if !found {
 		return nil, fmt.Errorf("unsupported notification type %q", model.Type)
@@ -308,7 +308,7 @@ func InitNotifier(model *models.AlertNotification, fn GetDecryptedValueFn, notif
 type GetDecryptedValueFn func(ctx context.Context, sjd map[string][]byte, key string, fallback string, secret string) string
 
 // NotifierFactory is a signature for creating notifiers.
-type NotifierFactory func(*models.AlertNotification, GetDecryptedValueFn, notifications.Service) (Notifier, error)
+type NotifierFactory func(*AlertNotification, GetDecryptedValueFn, notifications.Service) (Notifier, error)
 
 var notifierFactories = make(map[string]*NotifierPlugin)
 

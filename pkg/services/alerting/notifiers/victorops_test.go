@@ -34,7 +34,7 @@ func TestVictoropsNotifier(t *testing.T) {
 			json := `{ }`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &models.AlertNotification{
+			model := &alerting.AlertNotification{
 				Name:     "victorops_testing",
 				Type:     "victorops",
 				Settings: settingsJSON,
@@ -51,7 +51,7 @@ func TestVictoropsNotifier(t *testing.T) {
 				}`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &models.AlertNotification{
+			model := &alerting.AlertNotification{
 				Name:     "victorops_testing",
 				Type:     "victorops",
 				Settings: settingsJSON,
@@ -75,7 +75,7 @@ func TestVictoropsNotifier(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(json))
 			require.Nil(t, err)
 
-			model := &models.AlertNotification{
+			model := &alerting.AlertNotification{
 				Name:     "victorops_testing",
 				Type:     "victorops",
 				Settings: settingsJSON,
@@ -123,7 +123,7 @@ func TestVictoropsNotifier(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(json))
 			require.Nil(t, err)
 
-			model := &models.AlertNotification{
+			model := &alerting.AlertNotification{
 				Name:     "victorops_testing",
 				Type:     "victorops",
 				Settings: settingsJSON,

@@ -24,7 +24,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 		newState     models.AlertStateType
 		sendReminder bool
 		frequency    time.Duration
-		state        *models.AlertNotificationState
+		state        *alerting.AlertNotificationState
 
 		expect bool
 	}{
@@ -82,7 +82,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			prevState:    models.AlertStateAlerting,
 			frequency:    time.Minute * 10,
 			sendReminder: true,
-			state:        &models.AlertNotificationState{UpdatedAt: tnow.Add(-time.Minute).Unix()},
+			state:        &alerting.AlertNotificationState{UpdatedAt: tnow.Add(-time.Minute).Unix()},
 
 			expect: true,
 		},
@@ -101,7 +101,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			prevState:    models.AlertStateAlerting,
 			frequency:    time.Minute * 10,
 			sendReminder: true,
-			state:        &models.AlertNotificationState{UpdatedAt: tnow.Add(-time.Minute).Unix()},
+			state:        &alerting.AlertNotificationState{UpdatedAt: tnow.Add(-time.Minute).Unix()},
 
 			expect: false,
 		},
@@ -111,7 +111,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			prevState:    models.AlertStateAlerting,
 			frequency:    time.Minute * 10,
 			sendReminder: true,
-			state:        &models.AlertNotificationState{UpdatedAt: tnow.Add(-11 * time.Minute).Unix()},
+			state:        &alerting.AlertNotificationState{UpdatedAt: tnow.Add(-11 * time.Minute).Unix()},
 
 			expect: true,
 		},
@@ -119,7 +119,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			name:      "OK -> alerting with notification state pending and updated 30 seconds ago should not trigger",
 			newState:  models.AlertStateAlerting,
 			prevState: models.AlertStateOK,
-			state:     &models.AlertNotificationState{State: models.AlertNotificationStatePending, UpdatedAt: tnow.Add(-30 * time.Second).Unix()},
+			state:     &alerting.AlertNotificationState{State: alerting.AlertNotificationStatePending, UpdatedAt: tnow.Add(-30 * time.Second).Unix()},
 
 			expect: false,
 		},
@@ -127,7 +127,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 			name:      "OK -> alerting with notification state pending and updated 2 minutes ago should trigger",
 			newState:  models.AlertStateAlerting,
 			prevState: models.AlertStateOK,
-			state:     &models.AlertNotificationState{State: models.AlertNotificationStatePending, UpdatedAt: tnow.Add(-2 * time.Minute).Unix()},
+			state:     &alerting.AlertNotificationState{State: alerting.AlertNotificationStatePending, UpdatedAt: tnow.Add(-2 * time.Minute).Unix()},
 
 			expect: true,
 		},
@@ -174,7 +174,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 
 		if tc.state == nil {
-			tc.state = &models.AlertNotificationState{}
+			tc.state = &alerting.AlertNotificationState{}
 		}
 
 		evalContext.Rule.State = tc.newState
@@ -188,7 +188,7 @@ func TestShouldSendAlertNotification(t *testing.T) {
 func TestBaseNotifier(t *testing.T) {
 	bJSON := simplejson.New()
 
-	model := &models.AlertNotification{
+	model := &alerting.AlertNotification{
 		Uid:      "1",
 		Name:     "name",
 		Type:     "email",

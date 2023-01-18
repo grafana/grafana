@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 
 	"github.com/stretchr/testify/require"
@@ -17,7 +17,7 @@ func TestLineNotifier(t *testing.T) {
 		json := `{ }`
 
 		settingsJSON, _ := simplejson.NewJson([]byte(json))
-		model := &models.AlertNotification{
+		model := &alerting.AlertNotification{
 			Name:     "line_testing",
 			Type:     "line",
 			Settings: settingsJSON,
@@ -32,7 +32,7 @@ func TestLineNotifier(t *testing.T) {
   "token": "abcdefgh0123456789"
 			}`
 		settingsJSON, _ := simplejson.NewJson([]byte(json))
-		model := &models.AlertNotification{
+		model := &alerting.AlertNotification{
 			Name:     "line_testing",
 			Type:     "line",
 			Settings: settingsJSON,

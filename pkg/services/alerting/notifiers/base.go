@@ -31,7 +31,7 @@ type NotifierBase struct {
 }
 
 // NewNotifierBase returns a new `NotifierBase`.
-func NewNotifierBase(model *models.AlertNotification, notificationService notifications.Service) NotifierBase {
+func NewNotifierBase(model *alerting.AlertNotification, notificationService notifications.Service) NotifierBase {
 	uploadImage := true
 	if value, exists := model.Settings.CheckGet("uploadImage"); exists {
 		uploadImage = value.MustBool()
@@ -52,7 +52,7 @@ func NewNotifierBase(model *models.AlertNotification, notificationService notifi
 }
 
 // ShouldNotify checks this evaluation should send an alert notification
-func (n *NotifierBase) ShouldNotify(ctx context.Context, context *alerting.EvalContext, notifierState *models.AlertNotificationState) bool {
+func (n *NotifierBase) ShouldNotify(ctx context.Context, context *alerting.EvalContext, notifierState *alerting.AlertNotificationState) bool {
 	prevState := context.PrevAlertState
 	newState := context.Rule.State
 
@@ -97,7 +97,7 @@ func (n *NotifierBase) ShouldNotify(ctx context.Context, context *alerting.EvalC
 	}
 
 	// Do not notify if state pending and it have been updated last minute
-	if notifierState.State == models.AlertNotificationStatePending {
+	if notifierState.State == alerting.AlertNotificationStatePending {
 		lastUpdated := time.Unix(notifierState.UpdatedAt, 0)
 		if lastUpdated.Add(1 * time.Minute).After(time.Now()) {
 			return false

@@ -7,12 +7,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/alerting"
+	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestSlackNotifier(t *testing.T) {
@@ -23,7 +24,7 @@ func TestSlackNotifier(t *testing.T) {
 
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.NoError(t, err)
-		model := &models.AlertNotification{
+		model := &alerting.AlertNotification{
 			Name:     "ops",
 			Type:     "slack",
 			Settings: settingsJSON,
@@ -41,7 +42,7 @@ func TestSlackNotifier(t *testing.T) {
 
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.NoError(t, err)
-		model := &models.AlertNotification{
+		model := &alerting.AlertNotification{
 			Name:     "ops",
 			Type:     "slack",
 			Settings: settingsJSON,
@@ -79,7 +80,7 @@ func TestSlackNotifier(t *testing.T) {
 
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.NoError(t, err)
-		model := &models.AlertNotification{
+		model := &alerting.AlertNotification{
 			Name:     "ops",
 			Type:     "slack",
 			Settings: settingsJSON,
@@ -126,7 +127,7 @@ func TestSlackNotifier(t *testing.T) {
 			}, setting.SecretKey)
 		require.NoError(t, err)
 
-		model := &models.AlertNotification{
+		model := &alerting.AlertNotification{
 			Name:           "ops",
 			Type:           "slack",
 			Settings:       settingsJSON,
@@ -158,7 +159,7 @@ func TestSlackNotifier(t *testing.T) {
 
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.NoError(t, err)
-		model := &models.AlertNotification{
+		model := &alerting.AlertNotification{
 			Name:     "ops",
 			Type:     "slack",
 			Settings: settingsJSON,
@@ -251,7 +252,7 @@ func TestSendSlackRequest(t *testing.T) {
 
 			settingsJSON, err := simplejson.NewJson([]byte(fmt.Sprintf(`{"url": %q}`, server.URL)))
 			require.NoError(t, err)
-			model := &models.AlertNotification{
+			model := &alerting.AlertNotification{
 				Settings: settingsJSON,
 			}
 

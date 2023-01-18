@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/localcache"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
@@ -206,11 +205,11 @@ func TestAlertRuleExtraction(t *testing.T) {
 	t.Run("Alert notifications are in DB", func(t *testing.T) {
 		sqlStore := sqlStore{db: sqlstore.InitTestDB(t)}
 
-		firstNotification := models.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
+		firstNotification := CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
 		err = sqlStore.CreateAlertNotificationCommand(context.Background(), &firstNotification)
 		require.Nil(t, err)
 
-		secondNotification := models.CreateAlertNotificationCommand{Uid: "notifier2", OrgId: 1, Name: "2"}
+		secondNotification := CreateAlertNotificationCommand{Uid: "notifier2", OrgId: 1, Name: "2"}
 		err = sqlStore.CreateAlertNotificationCommand(context.Background(), &secondNotification)
 		require.Nil(t, err)
 

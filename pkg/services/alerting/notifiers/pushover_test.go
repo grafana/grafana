@@ -23,7 +23,7 @@ func TestPushoverNotifier(t *testing.T) {
 			json := `{ }`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &models.AlertNotification{
+			model := &alerting.AlertNotification{
 				Name:     "Pushover",
 				Type:     "pushover",
 				Settings: settingsJSON,
@@ -45,7 +45,7 @@ func TestPushoverNotifier(t *testing.T) {
 				}`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &models.AlertNotification{
+			model := &alerting.AlertNotification{
 				Name:     "Pushover",
 				Type:     "pushover",
 				Settings: settingsJSON,

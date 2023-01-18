@@ -73,7 +73,7 @@ func TestWhenAlertManagerShouldNotify(t *testing.T) {
 
 		evalContext.Rule.State = tc.newState
 
-		res := am.ShouldNotify(context.Background(), evalContext, &models.AlertNotificationState{})
+		res := am.ShouldNotify(context.Background(), evalContext, &alerting.AlertNotificationState{})
 		if res != tc.expect {
 			t.Errorf("got %v expected %v", res, tc.expect)
 		}
@@ -89,7 +89,7 @@ func TestAlertmanagerNotifier(t *testing.T) {
 			json := `{ }`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &models.AlertNotification{
+			model := &alerting.AlertNotification{
 				Name:     "alertmanager",
 				Type:     "alertmanager",
 				Settings: settingsJSON,
@@ -103,7 +103,7 @@ func TestAlertmanagerNotifier(t *testing.T) {
 			json := `{ "url": "http://127.0.0.1:9093/", "basicAuthUser": "user", "basicAuthPassword": "password" }`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &models.AlertNotification{
+			model := &alerting.AlertNotification{
 				Name:     "alertmanager",
 				Type:     "alertmanager",
 				Settings: settingsJSON,
@@ -122,7 +122,7 @@ func TestAlertmanagerNotifier(t *testing.T) {
 			json := `{ "url": "http://alertmanager1:9093,http://alertmanager2:9093" }`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &models.AlertNotification{
+			model := &alerting.AlertNotification{
 				Name:     "alertmanager",
 				Type:     "alertmanager",
 				Settings: settingsJSON,

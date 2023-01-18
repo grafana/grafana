@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 
 	"github.com/stretchr/testify/require"
@@ -19,7 +19,7 @@ func TestHipChatNotifier(t *testing.T) {
 			json := `{ }`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &models.AlertNotification{
+			model := &alerting.AlertNotification{
 				Name:     "ops",
 				Type:     "hipchat",
 				Settings: settingsJSON,
@@ -35,7 +35,7 @@ func TestHipChatNotifier(t *testing.T) {
           			"url": "http://google.com"
 				}`
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &models.AlertNotification{
+			model := &alerting.AlertNotification{
 				Name:     "ops",
 				Type:     "hipchat",
 				Settings: settingsJSON,
@@ -61,7 +61,7 @@ func TestHipChatNotifier(t *testing.T) {
 				}`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &models.AlertNotification{
+			model := &alerting.AlertNotification{
 				Name:     "ops",
 				Type:     "hipchat",
 				Settings: settingsJSON,

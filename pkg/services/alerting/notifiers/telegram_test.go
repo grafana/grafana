@@ -22,7 +22,7 @@ func TestTelegramNotifier(t *testing.T) {
 			json := `{ }`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &models.AlertNotification{
+			model := &alerting.AlertNotification{
 				Name:     "telegram_testing",
 				Type:     "telegram",
 				Settings: settingsJSON,
@@ -40,7 +40,7 @@ func TestTelegramNotifier(t *testing.T) {
 				}`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &models.AlertNotification{
+			model := &alerting.AlertNotification{
 				Name:     "telegram_testing",
 				Type:     "telegram",
 				Settings: settingsJSON,

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 
 	"github.com/stretchr/testify/assert"
@@ -16,7 +16,7 @@ func TestSensuGoNotifier(t *testing.T) {
 
 	settingsJSON, err := simplejson.NewJson([]byte(json))
 	require.NoError(t, err)
-	model := &models.AlertNotification{
+	model := &alerting.AlertNotification{
 		Name:     "Sensu Go",
 		Type:     "sensugo",
 		Settings: settingsJSON,
@@ -39,7 +39,7 @@ func TestSensuGoNotifier(t *testing.T) {
 
 	settingsJSON, err = simplejson.NewJson([]byte(json))
 	require.NoError(t, err)
-	model = &models.AlertNotification{
+	model = &alerting.AlertNotification{
 		Name:     "Sensu Go",
 		Type:     "sensugo",
 		Settings: settingsJSON,

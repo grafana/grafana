@@ -26,7 +26,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 			json := `{ }`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &models.AlertNotification{
+			model := &alerting.AlertNotification{
 				Name:     "opsgenie_testing",
 				Type:     "opsgenie",
 				Settings: settingsJSON,
@@ -43,7 +43,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 				}`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &models.AlertNotification{
+			model := &alerting.AlertNotification{
 				Name:     "opsgenie_testing",
 				Type:     "opsgenie",
 				Settings: settingsJSON,
@@ -67,7 +67,7 @@ func TestOpsGenieNotifier(t *testing.T) {
                                 }`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &models.AlertNotification{
+			model := &alerting.AlertNotification{
 				Name:     "opsgenie_testing",
 				Type:     "opsgenie",
 				Settings: settingsJSON,
@@ -90,7 +90,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 			}
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &models.AlertNotification{
+			model := &alerting.AlertNotification{
 				Name:     "opsgenie_testing",
 				Type:     "opsgenie",
 				Settings: settingsJSON,
@@ -139,7 +139,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 			}
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &models.AlertNotification{
+			model := &alerting.AlertNotification{
 				Name:     "opsgenie_testing",
 				Type:     "opsgenie",
 				Settings: settingsJSON,
@@ -188,7 +188,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 			}
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &models.AlertNotification{
+			model := &alerting.AlertNotification{
 				Name:     "opsgenie_testing",
 				Type:     "opsgenie",
 				Settings: settingsJSON,

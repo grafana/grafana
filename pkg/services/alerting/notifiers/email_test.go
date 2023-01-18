@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 
 	"github.com/stretchr/testify/require"
@@ -18,7 +18,7 @@ func TestEmailNotifier(t *testing.T) {
 			json := `{ }`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &models.AlertNotification{
+			model := &alerting.AlertNotification{
 				Name:     "ops",
 				Type:     "email",
 				Settings: settingsJSON,
@@ -35,7 +35,7 @@ func TestEmailNotifier(t *testing.T) {
 				}`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &models.AlertNotification{
+			model := &alerting.AlertNotification{
 				Name:     "ops",
 				Type:     "email",
 				Settings: settingsJSON,
@@ -59,7 +59,7 @@ func TestEmailNotifier(t *testing.T) {
 			settingsJSON, err := simplejson.NewJson([]byte(json))
 			require.Nil(t, err)
 
-			model := &models.AlertNotification{
+			model := &alerting.AlertNotification{
 				Name:     "ops",
 				Type:     "email",
 				Settings: settingsJSON,

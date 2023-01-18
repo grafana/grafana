@@ -53,7 +53,7 @@ const (
 
 // NewHipChatNotifier is the constructor functions
 // for the HipChatNotifier
-func NewHipChatNotifier(model *models.AlertNotification, _ alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
+func NewHipChatNotifier(model *alerting.AlertNotification, _ alerting.GetDecryptedValueFn, ns notifications.Service) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
 	url = strings.TrimSuffix(url, "/")
 	if url == "" {

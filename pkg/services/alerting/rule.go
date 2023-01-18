@@ -172,7 +172,7 @@ func NewRuleFromDBAlert(ctx context.Context, store AlertStore, ruleDef *models.A
 		if id, err := jsonModel.Get("id").Int64(); err == nil {
 			uid, err := translateNotificationIDToUID(ctx, store, id, ruleDef.OrgId)
 			if err != nil {
-				if !errors.Is(err, models.ErrAlertNotificationFailedTranslateUniqueID) {
+				if !errors.Is(err, ErrAlertNotificationFailedTranslateUniqueID) {
 					logger.Error("Failed to translate notification id to uid", "error", err.Error(), "dashboardId", model.DashboardID, "alert", model.Name, "panelId", model.PanelID, "notificationId", id)
 				}
 
@@ -221,7 +221,7 @@ func translateNotificationIDToUID(ctx context.Context, store AlertStore, id int6
 }
 
 func getAlertNotificationUIDByIDAndOrgID(ctx context.Context, store AlertStore, notificationID int64, orgID int64) (string, error) {
-	query := &models.GetAlertNotificationUidQuery{
+	query := &GetAlertNotificationUidQuery{
 		OrgId: orgID,
 		Id:    notificationID,
 	}

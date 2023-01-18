@@ -91,10 +91,10 @@ func TestAlertRuleModel(t *testing.T) {
 		return &FakeCondition{}, nil
 	})
 
-	firstNotification := models.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
+	firstNotification := CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
 	err := sqlStore.CreateAlertNotificationCommand(context.Background(), &firstNotification)
 	require.Nil(t, err)
-	secondNotification := models.CreateAlertNotificationCommand{Uid: "notifier2", OrgId: 1, Name: "2"}
+	secondNotification := CreateAlertNotificationCommand{Uid: "notifier2", OrgId: 1, Name: "2"}
 	err = sqlStore.CreateAlertNotificationCommand(context.Background(), &secondNotification)
 	require.Nil(t, err)
 

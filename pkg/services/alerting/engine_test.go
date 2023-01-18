@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -19,7 +21,6 @@ import (
 	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/require"
 )
 
 type FakeEvalHandler struct {
@@ -50,8 +51,8 @@ func (handler *FakeResultHandler) handle(evalContext *EvalContext) error {
 // A mock implementation of the AlertStore interface, allowing to override certain methods individually
 type AlertStoreMock struct {
 	getAllAlerts                       func(context.Context, *models.GetAllAlertsQuery) error
-	getAlertNotificationsWithUidToSend func(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error
-	getOrCreateNotificationState       func(ctx context.Context, query *models.GetOrCreateNotificationStateQuery) error
+	getAlertNotificationsWithUidToSend func(ctx context.Context, query *GetAlertNotificationsWithUidToSendQuery) error
+	getOrCreateNotificationState       func(ctx context.Context, query *GetOrCreateNotificationStateQuery) error
 }
 
 func (a *AlertStoreMock) GetAlertById(c context.Context, cmd *models.GetAlertByIdQuery) error {
@@ -65,18 +66,18 @@ func (a *AlertStoreMock) GetAllAlertQueryHandler(c context.Context, cmd *models.
 	return nil
 }
 
-func (a *AlertStoreMock) GetAlertNotificationUidWithId(c context.Context, query *models.GetAlertNotificationUidQuery) error {
+func (a *AlertStoreMock) GetAlertNotificationUidWithId(c context.Context, query *GetAlertNotificationUidQuery) error {
 	return nil
 }
 
-func (a *AlertStoreMock) GetAlertNotificationsWithUidToSend(c context.Context, cmd *models.GetAlertNotificationsWithUidToSendQuery) error {
+func (a *AlertStoreMock) GetAlertNotificationsWithUidToSend(c context.Context, cmd *GetAlertNotificationsWithUidToSendQuery) error {
 	if a.getAlertNotificationsWithUidToSend != nil {
 		return a.getAlertNotificationsWithUidToSend(c, cmd)
 	}
 	return nil
 }
 
-func (a *AlertStoreMock) GetOrCreateAlertNotificationState(c context.Context, cmd *models.GetOrCreateNotificationStateQuery) error {
+func (a *AlertStoreMock) GetOrCreateAlertNotificationState(c context.Context, cmd *GetOrCreateNotificationStateQuery) error {
 	if a.getOrCreateNotificationState != nil {
 		return a.getOrCreateNotificationState(c, cmd)
 	}
@@ -87,11 +88,11 @@ func (a *AlertStoreMock) GetDashboardUIDById(_ context.Context, _ *dashboards.Ge
 	return nil
 }
 
-func (a *AlertStoreMock) SetAlertNotificationStateToCompleteCommand(_ context.Context, _ *models.SetAlertNotificationStateToCompleteCommand) error {
+func (a *AlertStoreMock) SetAlertNotificationStateToCompleteCommand(_ context.Context, _ *SetAlertNotificationStateToCompleteCommand) error {
 	return nil
 }
 
-func (a *AlertStoreMock) SetAlertNotificationStateToPendingCommand(_ context.Context, _ *models.SetAlertNotificationStateToPendingCommand) error {
+func (a *AlertStoreMock) SetAlertNotificationStateToPendingCommand(_ context.Context, _ *SetAlertNotificationStateToPendingCommand) error {
 	return nil
 }
 

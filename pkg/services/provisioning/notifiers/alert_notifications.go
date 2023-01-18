@@ -4,25 +4,25 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
 type Manager interface {
-	GetAlertNotifications(ctx context.Context, query *models.GetAlertNotificationsQuery) error
-	CreateAlertNotificationCommand(ctx context.Context, cmd *models.CreateAlertNotificationCommand) error
-	UpdateAlertNotification(ctx context.Context, cmd *models.UpdateAlertNotificationCommand) error
-	DeleteAlertNotification(ctx context.Context, cmd *models.DeleteAlertNotificationCommand) error
-	GetAllAlertNotifications(ctx context.Context, query *models.GetAllAlertNotificationsQuery) error
-	GetOrCreateAlertNotificationState(ctx context.Context, cmd *models.GetOrCreateNotificationStateQuery) error
-	SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToCompleteCommand) error
-	SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToPendingCommand) error
-	GetAlertNotificationsWithUid(ctx context.Context, query *models.GetAlertNotificationsWithUidQuery) error
-	DeleteAlertNotificationWithUid(ctx context.Context, cmd *models.DeleteAlertNotificationWithUidCommand) error
-	GetAlertNotificationsWithUidToSend(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error
-	UpdateAlertNotificationWithUid(ctx context.Context, cmd *models.UpdateAlertNotificationWithUidCommand) error
+	GetAlertNotifications(ctx context.Context, query *alerting.GetAlertNotificationsQuery) error
+	CreateAlertNotificationCommand(ctx context.Context, cmd *alerting.CreateAlertNotificationCommand) error
+	UpdateAlertNotification(ctx context.Context, cmd *alerting.UpdateAlertNotificationCommand) error
+	DeleteAlertNotification(ctx context.Context, cmd *alerting.DeleteAlertNotificationCommand) error
+	GetAllAlertNotifications(ctx context.Context, query *alerting.GetAllAlertNotificationsQuery) error
+	GetOrCreateAlertNotificationState(ctx context.Context, cmd *alerting.GetOrCreateNotificationStateQuery) error
+	SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *alerting.SetAlertNotificationStateToCompleteCommand) error
+	SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *alerting.SetAlertNotificationStateToPendingCommand) error
+	GetAlertNotificationsWithUid(ctx context.Context, query *alerting.GetAlertNotificationsWithUidQuery) error
+	DeleteAlertNotificationWithUid(ctx context.Context, cmd *alerting.DeleteAlertNotificationWithUidCommand) error
+	GetAlertNotificationsWithUidToSend(ctx context.Context, query *alerting.GetAlertNotificationsWithUidToSendQuery) error
+	UpdateAlertNotificationWithUid(ctx context.Context, cmd *alerting.UpdateAlertNotificationWithUidCommand) error
 }
 
 // Provision alert notifiers
@@ -80,14 +80,14 @@ func (dc *NotificationProvisioner) deleteNotifications(ctx context.Context, noti
 			notification.OrgID = 1
 		}
 
-		getNotification := &models.GetAlertNotificationsWithUidQuery{Uid: notification.UID, OrgId: notification.OrgID}
+		getNotification := &alerting.GetAlertNotificationsWithUidQuery{Uid: notification.UID, OrgId: notification.OrgID}
 
 		if err := dc.alertingManager.GetAlertNotificationsWithUid(ctx, getNotification); err != nil {
 			return err
 		}
 
 		if getNotification.Result != nil {
-			cmd := &models.DeleteAlertNotificationWithUidCommand{Uid: getNotification.Result.Uid, OrgId: getNotification.OrgId}
+			cmd := &alerting.DeleteAlertNotificationWithUidCommand{Uid: getNotification.Result.Uid, OrgId: getNotification.OrgId}
 			if err := dc.alertingManager.DeleteAlertNotificationWithUid(ctx, cmd); err != nil {
 				return err
 			}
@@ -110,7 +110,7 @@ func (dc *NotificationProvisioner) mergeNotifications(ctx context.Context, notif
 			notification.OrgID = 1
 		}
 
-		cmd := &models.GetAlertNotificationsWithUidQuery{OrgId: notification.OrgID, Uid: notification.UID}
+		cmd := &alerting.GetAlertNotificationsWithUidQuery{OrgId: notification.OrgID, Uid: notification.UID}
 		err := dc.alertingManager.GetAlertNotificationsWithUid(ctx, cmd)
 		if err != nil {
 			return err
@@ -118,7 +118,7 @@ func (dc *NotificationProvisioner) mergeNotifications(ctx context.Context, notif
 
 		if cmd.Result == nil {
 			dc.log.Debug("inserting alert notification from configuration", "name", notification.Name, "uid", notification.UID)
-			insertCmd := &models.CreateAlertNotificationCommand{
+			insertCmd := &alerting.CreateAlertNotificationCommand{
 				Uid:                   notification.UID,
 				Name:                  notification.Name,
 				Type:                  notification.Type,
@@ -136,7 +136,7 @@ func (dc *NotificationProvisioner) mergeNotifications(ctx context.Context, notif
 			}
 		} else {
 			dc.log.Debug("updating alert notification from configuration", "name", notification.Name)
-			updateCmd := &models.UpdateAlertNotificationWithUidCommand{
+			updateCmd := &alerting.UpdateAlertNotificationWithUidCommand{
 				Uid:                   notification.UID,
 				Name:                  notification.Name,
 				Type:                  notification.Type,
