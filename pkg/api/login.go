@@ -141,13 +141,16 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 
 func (hs *HTTPServer) tryAutoLogin(c *models.ReqContext) bool {
 	samlAutoLogin := hs.samlAutoLoginEnabled()
-	if !setting.OAuthAutoLogin && !samlAutoLogin {
-		return false
-	}
 	oauthInfos := hs.SocialService.GetOAuthInfoProviders()
 
 	autoLoginProvidersLen := 0
-	if setting.OAuthAutoLogin {
+	for _, provider := range oauthInfos {
+		if provider.AutoLogin {
+			autoLoginProvidersLen++
+		}
+	}
+	// If no auto_login option configured for specific OAuth, use legacy option
+	if setting.OAuthAutoLogin && autoLoginProvidersLen == 0 {
 		autoLoginProvidersLen = len(oauthInfos)
 	}
 	if samlAutoLogin {
@@ -155,11 +158,20 @@ func (hs *HTTPServer) tryAutoLogin(c *models.ReqContext) bool {
 	}
 
 	if autoLoginProvidersLen > 1 {
-		c.Logger.Warn("Skipping auto login because multiple auth providers are configured")
+		c.Logger.Warn("Skipping auto login because multiple auth providers are configured with auto_login option")
 		return false
-	} else if autoLoginProvidersLen == 0 {
+	} else if autoLoginProvidersLen == 0 && setting.OAuthAutoLogin {
 		c.Logger.Warn("Skipping auto login because no auth providers are configured")
 		return false
+	}
+
+	for providerName, provider := range oauthInfos {
+		if provider.AutoLogin || setting.OAuthAutoLogin {
+			redirectUrl := hs.Cfg.AppSubURL + "/login/" + providerName
+			c.Logger.Info("OAuth auto login enabled. Redirecting to " + redirectUrl)
+			c.Redirect(redirectUrl, 307)
+			return true
+		}
 	}
 
 	if samlAutoLogin {
@@ -169,12 +181,6 @@ func (hs *HTTPServer) tryAutoLogin(c *models.ReqContext) bool {
 		return true
 	}
 
-	for key := range oauthInfos {
-		redirectUrl := hs.Cfg.AppSubURL + "/login/" + key
-		c.Logger.Info("OAuth auto login enabled. Redirecting to " + redirectUrl)
-		c.Redirect(redirectUrl, 307)
-		return true
-	}
 	return false
 }
 
