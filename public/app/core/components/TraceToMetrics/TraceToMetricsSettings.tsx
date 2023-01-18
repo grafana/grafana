@@ -5,7 +5,6 @@ import {
   DataSourceJsonData,
   DataSourcePluginOptionsEditorProps,
   GrafanaTheme2,
-  KeyValue,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
 import { DataSourcePicker } from '@grafana/runtime';
@@ -15,7 +14,7 @@ import { TagMappingInput } from '../TraceToLogs/TagMappingInput';
 
 export interface TraceToMetricsOptions {
   datasourceUid?: string;
-  tags?: Array<KeyValue<string>>;
+  tags?: Array<{ key: string; value: string }>;
   queries: TraceToMetricQuery[];
   spanStartTimeShift?: string;
   spanEndTimeShift?: string;

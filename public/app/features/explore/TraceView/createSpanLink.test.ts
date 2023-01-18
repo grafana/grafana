@@ -766,6 +766,49 @@ describe('createSpanLinkFactory', () => {
       );
     });
   });
+
+  describe('custom query', () => {
+    beforeAll(() => {
+      setDataSourceSrv({
+        getInstanceSettings() {
+          return { uid: 'loki1_uid', name: 'loki1', type: 'loki' } as unknown as DataSourceInstanceSettings;
+        },
+      } as unknown as DataSourceSrv);
+
+      setLinkSrv(new LinkSrv());
+      setTemplateSrv(new TemplateSrv());
+    });
+
+    it('interpolates custom query correctly', () => {
+      const createLink = setupSpanLinkFactory({
+        tags: [
+          { key: 'service.name', value: 'service' },
+          { key: 'k8s.pod.name', value: 'pod' },
+        ],
+        customQuery: true,
+        query: '{${__tags}} |="${__span.tags["service.name"]}" |="${__trace.id}"',
+      });
+      expect(createLink).toBeDefined();
+      const links = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'service',
+            tags: [
+              { key: 'service.name', value: 'serviceName' },
+              { key: 'k8s.pod.name', value: 'podName' },
+            ],
+          },
+        })
+      );
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
+      expect(decodeURIComponent(linkDef!.href)).toContain(
+        '"queries":' +
+          JSON.stringify([{ expr: '{service="serviceName", pod="podName"} |="serviceName" |="trace1"', refId: '' }])
+      );
+    });
+  });
 });
 
 function setupSpanLinkFactory(options: Partial<TraceToLogsOptionsV2> = {}, datasourceUid = 'lokiUid') {

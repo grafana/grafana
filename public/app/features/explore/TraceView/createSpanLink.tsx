@@ -133,18 +133,19 @@ function legacyCreateSpanLinkFactory(
     //  deprecated blob format and we can map the link easily in data frame.
     if (logsDataSourceSettings && traceToLogsOptions) {
       const customQuery = traceToLogsOptions.customQuery ? traceToLogsOptions.query : undefined;
+      const tagsToUse = traceToLogsOptions.tags || defaultKeys;
       switch (logsDataSourceSettings?.type) {
         case 'loki':
-          tags = getFormattedTags(span, traceToLogsOptions.tags || defaultKeys);
+          tags = getFormattedTags(span, tagsToUse);
           query = getQueryForLoki(span, traceToLogsOptions, tags, customQuery);
           break;
         case 'grafana-splunk-datasource':
-          tags = getFormattedTags(span, traceToLogsOptions.tags || defaultKeys, { joinBy: ' ' });
+          tags = getFormattedTags(span, tagsToUse, { joinBy: ' ' });
           query = getQueryForSplunk(span, traceToLogsOptions, tags, customQuery);
           break;
         case 'elasticsearch':
         case 'grafana-opensearch-datasource':
-          tags = getFormattedTags(span, traceToLogsOptions.tags || [], { labelValueSign: ':', joinBy: ' AND ' });
+          tags = getFormattedTags(span, tagsToUse, { labelValueSign: ':', joinBy: ' AND ' });
           query = getQueryForElasticsearchOrOpensearch(span, traceToLogsOptions, tags, customQuery);
           break;
       }
@@ -473,9 +474,16 @@ function scopedVarsFromTrace(trace: Trace): ScopedVars {
 
 function scopedVarsFromSpan(span: TraceSpan): ScopedVars {
   const tags: ScopedVars = {};
+
+  // We put all these tags together similar way we do for the __tags variable. This means there can be some overriding
+  // of values if there is the same tag in both process tags and span tags.
+  for (const tag of span.process.tags) {
+    tags[tag.key] = tag.value;
+  }
   for (const tag of span.tags) {
     tags[tag.key] = tag.value;
   }
+
   return {
     __span: {
       text: 'Span',

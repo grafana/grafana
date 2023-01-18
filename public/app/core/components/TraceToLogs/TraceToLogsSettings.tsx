@@ -167,6 +167,7 @@ export function TraceToLogsSettings({ options, onOptionsChange }: Props) {
           labelWidth={26}
         >
           <InlineSwitch
+            id={'customQuerySwitch'}
             value={customQuery}
             onChange={(event: React.SyntheticEvent<HTMLInputElement>) =>
               updateTracesToLogs({ customQuery: event.currentTarget.checked })
