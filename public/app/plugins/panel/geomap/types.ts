@@ -8,28 +8,12 @@ import { MapLayerHandler, MapLayerOptions } from '@grafana/data';
 import { HideableFieldConfig } from '@grafana/schema';
 import { LayerElement } from 'app/core/components/Layers/types';
 
+import * as raw from './models.gen';
 import { StyleConfig } from './style/types';
 import { MapCenterID } from './view';
 
-export interface ControlsOptions {
-  // Zoom (upper left)
-  showZoom?: boolean;
-
-  // let the mouse wheel zoom
-  mouseWheelZoom?: boolean;
-
-  // Lower right
-  showAttribution?: boolean;
-
-  // Scale options
-  showScale?: boolean;
+export interface ControlsOptions extends raw.ControlsOptions {
   scaleUnits?: Units;
-
-  // Show debug
-  showDebug?: boolean;
-
-  // Show measure
-  showMeasure?: boolean;
 }
 
 export enum TooltipMode {
@@ -122,3 +106,5 @@ export interface MapLayerState<TConfig = unknown> extends LayerElement {
   isBasemap?: boolean;
   mouseEvents: Subject<FeatureLike | undefined>;
 }
+
+export * from './models.gen';

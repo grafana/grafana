@@ -51,7 +51,7 @@ export interface ControlsOptions {
    * let the mouse wheel zoom
    */
   mouseWheelZoom?: boolean;
-  scaleUnits?: Units;
+  scaleUnits?: unknown;
   /**
    * Lower right
    */
@@ -73,11 +73,6 @@ export interface ControlsOptions {
    */
   showZoom?: boolean;
 }
-
-/**
- * TODO this is a type from a 3rd party library
- */
-export type Units = ('degrees' | 'imperial' | 'nautical' | 'metric' | 'us');
 
 export interface TooltipOptions {
   mode: TooltipMode;

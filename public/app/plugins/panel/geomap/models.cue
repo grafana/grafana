@@ -26,14 +26,14 @@ Panel: thema.#Lineage & {
 			schemas: [
 				{
 					PanelOptions: {
-						view: #MapViewConfig
-						controls: #ControlsOptions
+						view: MapViewConfig
+						controls: ControlsOptions
 						basemap: ui.MapLayerOptions
 						layers: [...ui.MapLayerOptions]
-						tooltip: #TooltipOptions
+						tooltip: TooltipOptions
 					} @cuetsy(kind="interface")
 
-					#MapViewConfig: {
+					MapViewConfig: {
 						id: string | *"zero"
 						lat?: int64 | *0
 						lon?: int64 | *0
@@ -47,7 +47,7 @@ Panel: thema.#Lineage & {
 						shared?: bool
 					} @cuetsy(kind="interface")
 
-					#ControlsOptions: {
+					ControlsOptions: {
 						// Zoom (upper left)
 						showZoom?: bool
 						// let the mouse wheel zoom
@@ -56,23 +56,20 @@ Panel: thema.#Lineage & {
 						showAttribution?: bool
 						// Scale options
 						showScale?: bool
-						scaleUnits?: #Units
+						scaleUnits?: _
 						// Show debug
 						showDebug?: bool
 						// Show measure
 						showMeasure?: bool
 					} @cuetsy(kind="interface")
 
-					// TODO this is a type from a 3rd party library
-					#Units: "degrees" | "imperial" | "nautical" | "metric" | "us" @cuetsy(kind="type")
-
-					#TooltipOptions: {
-						mode: #TooltipMode
+					TooltipOptions: {
+						mode: TooltipMode
 					} @cuetsy(kind="interface")
 
-					#TooltipMode: "none" | "details" @cuetsy(kind="enum",memberNames="None|Details")
+					TooltipMode: "none" | "details" @cuetsy(kind="enum",memberNames="None|Details")
 
-					#MapCenterID: "zero"|"coords"|"fit" @cuetsy(kind="enum",members="Zero|Coordinates|Fit")
+					MapCenterID: "zero"|"coords"|"fit" @cuetsy(kind="enum",members="Zero|Coordinates|Fit")
 				},
 			]
 		},
