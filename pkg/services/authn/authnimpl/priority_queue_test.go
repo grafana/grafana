@@ -3,15 +3,15 @@ package authnimpl
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
 )
 
 func TestQueue(t *testing.T) {
-	q := newQueue()
+	q := newQueue[authn.ContextAwareClient]()
 
 	anonymous := &clients.Anonymous{}
 	q.insert(anonymous)
@@ -35,8 +35,8 @@ func TestQueue(t *testing.T) {
 		authn.ClientAnonymous,
 	}
 
-	require.Len(t, q.clients, len(expectedOrder))
-	for i := range q.clients {
-		assert.Equal(t, q.clients[i].Name(), expectedOrder[i])
+	require.Len(t, q.items, len(expectedOrder))
+	for i := range q.items {
+		assert.Equal(t, q.items[i].Name(), expectedOrder[i])
 	}
 }

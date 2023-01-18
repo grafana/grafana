@@ -1,33 +1,34 @@
 package authnimpl
 
-import (
-	"github.com/grafana/grafana/pkg/services/authn"
-)
-
-func newQueue() *queue {
-	return &queue{clients: []authn.ContextAwareClient{}}
+type priority interface {
+	Priority() uint
 }
 
-type queue struct {
-	clients []authn.ContextAwareClient
+func newQueue[T priority]() *queue[T] {
+	return &queue[T]{items: []T{}}
 }
 
-func (q *queue) insert(c authn.ContextAwareClient) {
+
+type queue[T priority] struct {
+	items []T
+}
+
+func (q *queue[T]) insert(c T) {
 	// no clients in the queue so we just add it
-	if len(q.clients) == 0 {
-		q.clients = append(q.clients, c)
+	if len(q.items) == 0 {
+		q.items = append(q.items, c)
 		return
 	}
 
 	// find the position in the queue the client should be placed based on priority
-	for i, client := range q.clients {
+	for i, client := range q.items{
 		if c.Priority() < client.Priority() {
-			q.clients = append(q.clients[:i+1], q.clients[i:]...)
-			q.clients[i] = c
+			q.items= append(q.items[:i+1], q.items[i:]...)
+			q.items[i] = c
 			return
 		}
 	}
 
 	// client did not have higher priority then what is in the queue currently, so we need to add it to the end
-	q.clients = append(q.clients, c)
+	q.items = append(q.items, c)
 }
