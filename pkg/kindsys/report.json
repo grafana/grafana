@@ -624,6 +624,18 @@
         0
       ]
     },
+    "preferences": {
+      "name": "Preferences",
+      "pluralName": "Preferencess",
+      "machineName": "preferences",
+      "pluralMachineName": "preferencess",
+      "lineageIsGroup": false,
+      "maturity": "merged",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
     "prometheus_dsoptions": {
       "name": "Prometheus-DSOptions",
       "pluralName": "Prometheus-DSOptionss",
@@ -968,6 +980,7 @@
           "datasource",
           "folder",
           "playlist",
+          "preferences",
           "query",
           "queryhistory",
           "serviceaccount",
@@ -975,7 +988,7 @@
           "thumb",
           "user"
         ],
-        "count": 11
+        "count": 12
       }
     },
     "maturity": {
@@ -1002,11 +1015,12 @@
           "news_panel",
           "piechart_panel",
           "playlist",
+          "preferences",
           "stat_panel",
           "team",
           "text_panel"
         ],
-        "count": 13
+        "count": 14
       },
       "planned": {
         "name": "planned",
