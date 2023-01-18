@@ -64,7 +64,7 @@ func ProvideService(cfg *setting.Cfg,
 		log:             log.New("supportbundle.service"),
 		encrypt:         section.Key("encrypt").MustBool(false),
 		enabled:         section.Key("enabled").MustBool(true),
-		serverAdminOnly: section.Key("server_admin_only").MustBool(false),
+		serverAdminOnly: section.Key("server_admin_only").MustBool(true),
 		collectors:      make(map[string]supportbundles.Collector),
 	}
 
