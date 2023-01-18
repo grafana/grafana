@@ -92,14 +92,14 @@ describe('<VirtualizedTraceViewImpl>', () => {
   it('renders without exploding', () => {
     render(<VirtualizedTraceView {...props} />);
     expect(screen.getByTestId('ListView')).toBeInTheDocument();
-    expect(screen.getByTestId('ToolbarButton')).toBeInTheDocument();
+    expect(screen.getByTitle('Scroll to top')).toBeInTheDocument();
   });
 
   it('renders when a trace is not set', () => {
     props = { ...props, trace: null as unknown as Trace };
     render(<VirtualizedTraceView {...props} />);
     expect(screen.getByTestId('ListView')).toBeInTheDocument();
-    expect(screen.getByTestId('ToolbarButton')).toBeInTheDocument();
+    expect(screen.getByTitle('Scroll to top')).toBeInTheDocument();
   });
 
   it('renders ListView', () => {
