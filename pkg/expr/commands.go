@@ -266,15 +266,22 @@ func (gr *ResampleCommand) Execute(_ context.Context, now time.Time, vars mathex
 	newRes := mathexp.Results{}
 	timeRange := gr.TimeRange.AbsoluteTime(now)
 	for _, val := range vars[gr.VarToResample].Values {
-		series, ok := val.(mathexp.Series)
-		if !ok {
+		if val == nil {
+			continue
+		}
+		switch v := val.(type) {
+		case mathexp.Series:
+			num, err := v.Resample(gr.refID, gr.Window, gr.Downsampler, gr.Upsampler, timeRange.From, timeRange.To)
+			if err != nil {
+				return newRes, err
+			}
+			newRes.Values = append(newRes.Values, num)
+		case mathexp.NoData:
+			newRes.Values = append(newRes.Values, v.New())
+			return newRes, nil
+		default:
 			return newRes, fmt.Errorf("can only resample type series, got type %v", val.Type())
 		}
-		num, err := series.Resample(gr.refID, gr.Window, gr.Downsampler, gr.Upsampler, timeRange.From, timeRange.To)
-		if err != nil {
-			return newRes, err
-		}
-		newRes.Values = append(newRes.Values, num)
 	}
 	return newRes, nil
 }
