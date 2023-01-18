@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -20,7 +19,7 @@ type UsageStats struct {
 	kvStore       *kvstore.NamespacedKVStore
 	RouteRegister routing.RouteRegister
 	pluginStore   plugins.Store
-	accesscontrol accesscontrol.AccessControl
+	accesscontrol ac.AccessControl
 
 	log    log.Logger
 	tracer tracing.Tracer
