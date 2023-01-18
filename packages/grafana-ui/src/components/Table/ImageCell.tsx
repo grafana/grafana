@@ -22,14 +22,15 @@ export const ImageCell: FC<TableCellProps> = (props) => {
       {hasLinks && (
         <DataLinksContextMenu style={{ height: '100%' }} links={() => getCellLinks(field, row) || []}>
           {(api) => {
+            const img = <img src={displayValue.text} className={tableStyles.imageCell} alt="" />;
             if (api.openMenu) {
               return (
                 <Button className={cx(clearButtonStyle)} onClick={api.openMenu}>
-                  <img src={displayValue.text} className={tableStyles.imageCell} alt="" />
+                  {img}
                 </Button>
               );
             } else {
-              return <img src={displayValue.text} className={tableStyles.imageCell} alt="" />;
+              return img;
             }
           }}
         </DataLinksContextMenu>

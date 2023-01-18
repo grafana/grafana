@@ -42,14 +42,15 @@ export const DefaultCell: FC<TableCellProps> = (props) => {
       {hasLinks && (
         <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
           {(api) => {
+            const content = <div className={getLinkStyle(tableStyles, cellOptions, api.targetClassName)}>{value}</div>;
             if (api.openMenu) {
               return (
                 <Button className={cx(clearButtonStyle)} onClick={api.openMenu}>
-                  <div className={getLinkStyle(tableStyles, cellOptions, api.targetClassName)}>{value}</div>
+                  {content}
                 </Button>
               );
             } else {
-              return <div className={getLinkStyle(tableStyles, cellOptions, api.targetClassName)}>{value}</div>;
+              return content;
             }
           }}
         </DataLinksContextMenu>
