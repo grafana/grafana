@@ -42,18 +42,18 @@ func InitDuplicateUserMetrics() {
 }
 
 func (s *AuthInfoStore) RunMetricsCollection(ctx context.Context) error {
-	if _, err := s.GetLoginStats(ctx); err != nil {
-		s.logger.Warn("Failed to get authinfo metrics", "error", err.Error())
-	}
+	// 	if _, err := s.GetLoginStats(ctx); err != nil {
+	// 		s.logger.Warn("Failed to get authinfo metrics", "error", err.Error())
+	// 	}
 	updateStatsTicker := time.NewTicker(login.MetricsCollectionInterval)
 	defer updateStatsTicker.Stop()
 
 	for {
 		select {
 		case <-updateStatsTicker.C:
-			if _, err := s.GetLoginStats(ctx); err != nil {
-				s.logger.Warn("Failed to get authinfo metrics", "error", err.Error())
-			}
+			// if _, err := s.GetLoginStats(ctx); err != nil {
+			// s.logger.Warn("Failed to get authinfo metrics", "error", nil)
+			// }
 		case <-ctx.Done():
 			return ctx.Err()
 		}

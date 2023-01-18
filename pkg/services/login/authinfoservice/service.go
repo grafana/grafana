@@ -212,8 +212,5 @@ func (s *Implementation) DeleteUserAuthInfo(ctx context.Context, userID int64) e
 
 func (s *Implementation) Run(ctx context.Context) error {
 	s.logger.Debug("Started AuthInfo Metrics collection service")
-	// FIXME: disabled metrics until further notice
-	// query performance is slow for more than 20000 users
-	// return s.authInfoStore.RunMetricsCollection(ctx)
-	return nil
+	return s.authInfoStore.RunMetricsCollection(ctx)
 }
