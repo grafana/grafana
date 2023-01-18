@@ -471,6 +471,16 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
       }
 
       const { nodes, edges } = mapPromMetricsToServiceMap(responses, request.range);
+      if (nodes.fields.length > 0 && edges.fields.length > 0) {
+        const nodeLength = nodes.fields[0].values.length;
+        const edgeLength = edges.fields[0].values.length;
+
+        reportInteraction('grafana_traces_service_graph_size', {
+          datasourceType: 'tempo',
+          nodeLength,
+          edgeLength,
+        });
+      }
 
       // No handling of multiple targets assume just one. NodeGraph does not support it anyway, but still should be
       // fixed at some point.
