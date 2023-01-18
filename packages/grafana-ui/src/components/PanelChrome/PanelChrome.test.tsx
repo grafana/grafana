@@ -37,16 +37,48 @@ it('renders an empty panel with padding', () => {
   expect(screen.getByText("Panel's Content").parentElement).not.toHaveStyle({ padding: '0px' });
 });
 
-it('renders panel with a header if prop title', () => {
+// Check for backwards compatibility
+it('renders panel header if prop title', () => {
   setup({ title: 'Test Panel Header' });
 
   expect(screen.getByTestId('header-container')).toBeInTheDocument();
 });
 
-it('renders panel with a header with title in place if prop title', () => {
+// Check for backwards compatibility
+it('renders panel with title in place if prop title', () => {
   setup({ title: 'Test Panel Header' });
 
   expect(screen.getByText('Test Panel Header')).toBeInTheDocument();
+});
+
+// Check for backwards compatibility
+it('renders panel with a header if prop leftItems', () => {
+  setup({
+    leftItems: [<div key="left-item-test"> This should be a self-contained node </div>],
+  });
+
+  expect(screen.getByTestId('header-container')).toBeInTheDocument();
+});
+
+// todo implement when hoverHeader is implemented
+it.skip('renders panel without header if no title, no leftItems, and hoverHeader is undefined', () => {
+  setup();
+
+  expect(screen.getByTestId('header-container')).toBeInTheDocument();
+});
+
+// todo implement when hoverHeader is implemented
+it.skip('renders panel with a fixed header if prop hoverHeader is false', () => {
+  setup({ hoverHeader: false });
+
+  expect(screen.getByTestId('header-container')).toBeInTheDocument();
+});
+
+// todo implement when hoverHeader is implemented
+it.skip('renders panel with a hovering header if prop hoverHeader is true', () => {
+  setup({ title: 'Test Panel Header', hoverHeader: true });
+
+  expect(screen.getByTestId('header-container')).not.toBeInTheDocument();
 });
 
 it('renders panel with a header if prop titleItems', () => {
@@ -63,11 +95,6 @@ it('renders panel with a header with icons in place if prop titleItems', () => {
   });
 
   expect(screen.getByTestId('title-items-container')).toBeInTheDocument();
-});
-
-it.skip('renders panel with a fixed header if prop hoverHeader is false', () => {
-  // setup({ title: 'Test Panel Header', hoverHeader: false });
-  // expect(screen.getByTestId('header-container')).toBeInTheDocument();
 });
 
 it('renders panel with a header if prop menu', () => {
@@ -97,6 +124,18 @@ it('renders error status in the panel header if loadingState is error', () => {
 
 it('renders loading indicator in the panel header if loadingState is loading', () => {
   setup({ loadingState: LoadingState.Loading });
+
+  expect(screen.getByTestId('panel-loading-wrapper')).toBeInTheDocument();
+});
+
+it('renders loading indicator in the panel header if loadingState is loading regardless of not having a header', () => {
+  setup({ loadingState: LoadingState.Loading, hoverHeader: true });
+
+  expect(screen.getByTestId('panel-loading-wrapper')).toBeInTheDocument();
+});
+
+it('renders loading indicator in the panel header if loadingState is loading regardless of having a header', () => {
+  setup({ loadingState: LoadingState.Loading, hoverHeader: false });
 
   expect(screen.getByTestId('panel-loading-wrapper')).toBeInTheDocument();
 });
