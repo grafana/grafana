@@ -689,7 +689,6 @@ func TestNestedFolderService(t *testing.T) {
 		})
 
 		t.Run("delete with success", func(t *testing.T) {
-
 			g := guardian.New
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true, CanViewValue: true})
 			t.Cleanup(func() {
