@@ -1048,6 +1048,7 @@
           "annotationslistpanelcfg",
           "barchartpanelcfg",
           "bargaugepanelcfg",
+          "dashboard",
           "dashboardlistpanelcfg",
           "gaugepanelcfg",
           "histogrampanelcfg",
@@ -1056,11 +1057,7 @@
           "statpanelcfg",
           "textpanelcfg"
         ],
-        "count": 10
-        "items": [
-          "dashboard"
-        ],
-        "count": 1
+        "count": 11
       },
       "mature": {
         "name": "mature",
@@ -1070,20 +1067,10 @@
       "merged": {
         "name": "merged",
         "items": [
-          "dashboard",
-          "annolist_panel",
-          "barchart_panel",
-          "bargauge_panel",
-          "dashlist_panel",
-          "gauge_panel",
-          "histogram_panel",
-          "news_panel",
-          "piechart_panel",
           "playlist",
           "team"
         ],
-        "count": 3
-        "count": 12
+        "count": 2
       },
       "planned": {
         "name": "planned",

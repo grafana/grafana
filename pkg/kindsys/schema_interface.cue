@@ -87,6 +87,10 @@ SchemaInterface: {
 	group: bool | *true
 }
 
+// alias the exported type because DataQuery is shadowed by the schema interface
+// name where we need to use the type
+let dq = DataQuery
+
 // The canonical list of all Grafana schema interfaces.
 schemaInterfaces: [N=string]: SchemaInterface & { name: N }
 schemaInterfaces: {
@@ -120,8 +124,7 @@ schemaInterfaces: {
 	// identify a distinct type of query supported by the plugin.
 	DataQuery: {
 		interface: {
-			queryType?: string
-			// TODO make ^^ this required and give it a default
+			dq
 		}
 
 		pluginTypes: ["datasource"]
