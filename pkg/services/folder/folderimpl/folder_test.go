@@ -230,9 +230,9 @@ func TestIntegrationFolderService(t *testing.T) {
 				f.UID = util.GenerateShortUID()
 				dashStore.On("GetFolderByUID", mock.Anything, orgID, f.UID).Return(f, nil)
 
-				var actualCmd *models.DeleteDashboardCommand
+				var actualCmd *dashboards.DeleteDashboardCommand
 				dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-					actualCmd = args.Get(1).(*models.DeleteDashboardCommand)
+					actualCmd = args.Get(1).(*dashboards.DeleteDashboardCommand)
 				}).Return(nil).Once()
 
 				expectedForceDeleteRules := rand.Int63()%2 == 0
@@ -244,8 +244,8 @@ func TestIntegrationFolderService(t *testing.T) {
 				})
 				require.NoError(t, err)
 				require.NotNil(t, actualCmd)
-				require.Equal(t, f.ID, actualCmd.Id)
-				require.Equal(t, orgID, actualCmd.OrgId)
+				require.Equal(t, f.ID, actualCmd.ID)
+				require.Equal(t, orgID, actualCmd.OrgID)
 				require.Equal(t, expectedForceDeleteRules, actualCmd.ForceDeleteFolderRules)
 			})
 
@@ -378,10 +378,10 @@ func TestNestedFolderService(t *testing.T) {
 		t.Run("When delete folder, no delete in folder table done", func(t *testing.T) {
 			dashboardsvc := dashboards.FakeDashboardService{}
 
-			var actualCmd *models.DeleteDashboardCommand
+			var actualCmd *dashboards.DeleteDashboardCommand
 			dashStore := &dashboards.FakeDashboardStore{}
 			dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-				actualCmd = args.Get(1).(*models.DeleteDashboardCommand)
+				actualCmd = args.Get(1).(*dashboards.DeleteDashboardCommand)
 			}).Return(nil).Once()
 			dashStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
 
@@ -473,9 +473,9 @@ func TestNestedFolderService(t *testing.T) {
 			dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*dashboards.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
 			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(dashboardFolder, nil)
 			dashStore.On("GetFolderByID", mock.Anything, orgID, dashboardFolder.ID).Return(f, nil)
-			var actualCmd *models.DeleteDashboardCommand
+			var actualCmd *dashboards.DeleteDashboardCommand
 			dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-				actualCmd = args.Get(1).(*models.DeleteDashboardCommand)
+				actualCmd = args.Get(1).(*dashboards.DeleteDashboardCommand)
 			}).Return(nil).Once()
 
 			folderStore := NewFakeStore()
@@ -519,9 +519,9 @@ func TestNestedFolderService(t *testing.T) {
 			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(&dashboards.Dashboard{}, nil)
 			dashStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
 			dashStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
-			var actualCmd *models.DeleteDashboardCommand
+			var actualCmd *dashboards.DeleteDashboardCommand
 			dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-				actualCmd = args.Get(1).(*models.DeleteDashboardCommand)
+				actualCmd = args.Get(1).(*dashboards.DeleteDashboardCommand)
 			}).Return(nil).Once()
 
 			// return an error from the folder store
@@ -698,9 +698,9 @@ func TestNestedFolderService(t *testing.T) {
 			dashboardsvc := dashboards.FakeDashboardService{}
 
 			dashStore := &dashboards.FakeDashboardStore{}
-			var actualCmd *models.DeleteDashboardCommand
+			var actualCmd *dashboards.DeleteDashboardCommand
 			dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-				actualCmd = args.Get(1).(*models.DeleteDashboardCommand)
+				actualCmd = args.Get(1).(*dashboards.DeleteDashboardCommand)
 			}).Return(nil).Once()
 			dashStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
 
@@ -735,9 +735,9 @@ func TestNestedFolderService(t *testing.T) {
 			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(&dashboards.Dashboard{}, nil)
 			dashStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
 			dashStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
-			var actualCmd *models.DeleteDashboardCommand
+			var actualCmd *dashboards.DeleteDashboardCommand
 			dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-				actualCmd = args.Get(1).(*models.DeleteDashboardCommand)
+				actualCmd = args.Get(1).(*dashboards.DeleteDashboardCommand)
 			}).Return(nil).Once()
 
 			parents := make([]*folder.Folder, 0, folder.MaxNestedFolderDepth)

@@ -159,9 +159,9 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		setup()
 		dash := insertTestDashboard(t, dashboardStore, "delete me", 1, 0, false, "delete this")
 
-		err := dashboardStore.DeleteDashboard(context.Background(), &models.DeleteDashboardCommand{
-			Id:    dash.ID,
-			OrgId: 1,
+		err := dashboardStore.DeleteDashboard(context.Background(), &dashboards.DeleteDashboardCommand{
+			ID:    dash.ID,
+			OrgID: 1,
 		})
 		require.NoError(t, err)
 	})
@@ -233,14 +233,14 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		setup()
 		emptyFolder := insertTestDashboard(t, dashboardStore, "2 test dash folder", 1, 0, true, "prod", "webapp")
 
-		deleteCmd := &models.DeleteDashboardCommand{Id: emptyFolder.ID}
+		deleteCmd := &dashboards.DeleteDashboardCommand{ID: emptyFolder.ID}
 		err := dashboardStore.DeleteDashboard(context.Background(), deleteCmd)
 		require.NoError(t, err)
 	})
 
 	t.Run("Should be not able to delete a dashboard if force delete rules is disabled", func(t *testing.T) {
 		setup()
-		deleteCmd := &models.DeleteDashboardCommand{Id: savedFolder.ID, ForceDeleteFolderRules: false}
+		deleteCmd := &dashboards.DeleteDashboardCommand{ID: savedFolder.ID, ForceDeleteFolderRules: false}
 		err := dashboardStore.DeleteDashboard(context.Background(), deleteCmd)
 		require.True(t, errors.Is(err, dashboards.ErrFolderContainsAlertRules))
 	})
@@ -266,7 +266,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		pubdashConfig, _ := publicDashboardStore.FindByAccessToken(context.Background(), "an-access-token")
 		require.NotNil(t, pubdashConfig)
 
-		deleteCmd := &models.DeleteDashboardCommand{Id: savedDash.ID, OrgId: savedDash.OrgID}
+		deleteCmd := &dashboards.DeleteDashboardCommand{ID: savedDash.ID, OrgID: savedDash.OrgID}
 		err = dashboardStore.DeleteDashboard(context.Background(), deleteCmd)
 		require.NoError(t, err)
 
@@ -301,7 +301,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		pubdashConfig, _ := publicDashboardStore.FindByAccessToken(context.Background(), "an-access-token")
 		require.NotNil(t, pubdashConfig)
 
-		deleteCmd := &models.DeleteDashboardCommand{Id: savedFolder.ID, ForceDeleteFolderRules: true}
+		deleteCmd := &dashboards.DeleteDashboardCommand{ID: savedFolder.ID, ForceDeleteFolderRules: true}
 		err = dashboardStore.DeleteDashboard(context.Background(), deleteCmd)
 		require.NoError(t, err)
 
@@ -319,7 +319,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 	t.Run("Should be able to delete a dashboard folder and its children if force delete rules is enabled", func(t *testing.T) {
 		setup()
-		deleteCmd := &models.DeleteDashboardCommand{Id: savedFolder.ID, ForceDeleteFolderRules: true}
+		deleteCmd := &dashboards.DeleteDashboardCommand{ID: savedFolder.ID, ForceDeleteFolderRules: true}
 		err := dashboardStore.DeleteDashboard(context.Background(), deleteCmd)
 		require.NoError(t, err)
 
@@ -380,7 +380,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 	t.Run("Should be able to get dashboard tags", func(t *testing.T) {
 		setup()
-		query := models.GetDashboardTagsQuery{OrgId: 1}
+		query := dashboards.GetDashboardTagsQuery{OrgID: 1}
 
 		err := dashboardStore.GetDashboardTags(context.Background(), &query)
 		require.NoError(t, err)
@@ -598,9 +598,9 @@ func TestIntegrationDashboardDataAccessGivenPluginWithImportedDashboards(t *test
 	insertTestDashboardForPlugin(t, dashboardStore, "app-dash1", 1, appFolder.ID, false, pluginId)
 	insertTestDashboardForPlugin(t, dashboardStore, "app-dash2", 1, appFolder.ID, false, pluginId)
 
-	query := models.GetDashboardsByPluginIdQuery{
-		PluginId: pluginId,
-		OrgId:    1,
+	query := dashboards.GetDashboardsByPluginIDQuery{
+		PluginID: pluginId,
+		OrgID:    1,
 	}
 
 	err = dashboardStore.GetDashboardsByPluginID(context.Background(), &query)
@@ -866,7 +866,7 @@ func makeQueryResult(query *models.FindPersistedDashboardsQuery, res []dashboard
 				UID:         item.UID,
 				Title:       item.Title,
 				URI:         "db/" + item.Slug,
-				URL:         models.GetDashboardFolderUrl(item.IsFolder, item.UID, item.Slug),
+				URL:         dashboards.GetDashboardFolderURL(item.IsFolder, item.UID, item.Slug),
 				Type:        hitType,
 				FolderID:    item.FolderID,
 				FolderUID:   item.FolderUID,
@@ -875,7 +875,7 @@ func makeQueryResult(query *models.FindPersistedDashboardsQuery, res []dashboard
 			}
 
 			if item.FolderID > 0 {
-				hit.FolderURL = models.GetFolderUrl(item.FolderUID, item.FolderSlug)
+				hit.FolderURL = dashboards.GetFolderURL(item.FolderUID, item.FolderSlug)
 			}
 
 			if query.Sort.MetaName != "" {

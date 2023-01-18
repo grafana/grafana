@@ -143,14 +143,14 @@ func (du *DashboardUpdater) handlePluginStateChanged(ctx context.Context, event 
 
 		du.syncPluginDashboards(ctx, p, event.OrgId)
 	} else {
-		query := models.GetDashboardsByPluginIdQuery{PluginId: event.PluginId, OrgId: event.OrgId}
+		query := dashboards.GetDashboardsByPluginIDQuery{PluginID: event.PluginId, OrgID: event.OrgId}
 		if err := du.dashboardPluginService.GetDashboardsByPluginID(ctx, &query); err != nil {
 			return err
 		}
 
 		for _, dash := range query.Result {
 			du.logger.Info("Deleting plugin dashboard", "pluginId", event.PluginId, "dashboard", dash.Slug)
-			if err := du.dashboardService.DeleteDashboard(ctx, dash.Id, dash.OrgId); err != nil {
+			if err := du.dashboardService.DeleteDashboard(ctx, dash.ID, dash.OrgID); err != nil {
 				return err
 			}
 		}
