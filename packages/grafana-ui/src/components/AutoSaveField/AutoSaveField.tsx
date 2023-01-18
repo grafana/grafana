@@ -62,7 +62,7 @@ export const AutoSaveField = React.forwardRef<FieldProps, Props>((props) => {
       if (invalid) {
         return;
       }
-      setFieldState({ ...fieldState, isLoading: true });
+      setFieldState({ ...fieldState, isLoading: true, showSuccess: false });
       onFinishChange(nextValue)
         .then(() => {
           setFieldState({
