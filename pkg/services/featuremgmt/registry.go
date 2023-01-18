@@ -124,6 +124,12 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
+			Name:         "gettingStartedTour",
+			Description:  "Show getting started tour",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
 			Name:        "featureHighlights",
 			Description: "Highlight Grafana Enterprise features",
 			State:       FeatureStateStable,

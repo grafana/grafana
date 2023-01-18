@@ -91,6 +91,10 @@ const (
 	// Serves swagger UI
 	FlagSwaggerUi = "swaggerUi"
 
+	// FlagGettingStartedTour
+	// Show getting started tour
+	FlagGettingStartedTour = "gettingStartedTour"
+
 	// FlagFeatureHighlights
 	// Highlight Grafana Enterprise features
 	FlagFeatureHighlights = "featureHighlights"

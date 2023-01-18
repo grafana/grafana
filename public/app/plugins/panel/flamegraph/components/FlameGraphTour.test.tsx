@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { CoreApp, DataFrameView, MutableDataFrame } from '@grafana/data';
+import { config } from '@grafana/runtime';
 
 import FlameGraph from './FlameGraph/FlameGraph';
 import { Item, nestedSetToLevels } from './FlameGraph/dataTransform';
@@ -17,6 +18,7 @@ describe('FlameGraphTour', () => {
   const flameGraphData = new MutableDataFrame(data);
   const dataView = new DataFrameView<Item>(flameGraphData);
   const levels = nestedSetToLevels(dataView);
+  config.featureToggles.gettingStartedTour = true;
 
   const FlameGraphHeaderWithProps = ({ app }: { app: CoreApp }) => {
     return (

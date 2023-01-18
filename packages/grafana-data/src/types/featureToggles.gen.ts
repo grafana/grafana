@@ -37,6 +37,7 @@ export interface FeatureToggles {
   lokiDataframeApi?: boolean;
   lokiMonacoEditor?: boolean;
   swaggerUi?: boolean;
+  gettingStartedTour?: boolean;
   featureHighlights?: boolean;
   dashboardComments?: boolean;
   annotationComments?: boolean;

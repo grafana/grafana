@@ -65,6 +65,7 @@ Alpha features might be changed or removed without prior notice.
 | `publicDashboards`                 | Enables public access to dashboards                                                                                                                                          |
 | `lokiLive`                         | Support WebSocket streaming for loki (early prototype)                                                                                                                       |
 | `lokiDataframeApi`                 | Use experimental loki api for WebSocket streaming (early prototype)                                                                                                          |
+| `gettingStartedTour`               | Show getting started tour                                                                                                                                                    |
 | `dashboardComments`                | Enable dashboard-wide comments                                                                                                                                               |
 | `annotationComments`               | Enable annotation comments                                                                                                                                                   |
 | `storage`                          | Configurable storage for dashboards, datasources, and resources                                                                                                              |

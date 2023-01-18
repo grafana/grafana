@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
 import { GrafanaTheme2, CoreApp } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Button, Input, RadioButtonGroup, ToolbarButton, useStyles2 } from '@grafana/ui';
 
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from '../constants';
@@ -75,7 +76,7 @@ const FlameGraphHeader = ({
       </div>
 
       <div className={styles.rightContainer}>
-        {app === CoreApp.Explore && (
+        {app === CoreApp.Explore && config.featureToggles.gettingStartedTour && (
           <>
             <FlameGraphTour
               selectedView={selectedView}
