@@ -214,11 +214,12 @@ const Policy: FC<PolicyComponentProps> = ({
               )}
               {!readOnly && (
                 <Stack direction="row" gap={0.5}>
-                  {/* <ButtonGroup>
+                  <ButtonGroup>
                     <Button
                       variant="secondary"
                       icon="pen"
                       size="sm"
+                      disabled={!isEditable}
                       onClick={() => onEditPolicy(currentRoute, isDefault)}
                       type="button"
                     >
@@ -227,38 +228,32 @@ const Policy: FC<PolicyComponentProps> = ({
                     <Dropdown
                       overlay={
                         <Menu>
-                          <Menu.Item
-                            destructive
-                            icon="trash-alt"
-                            label="Delete"
-                            onClick={() => onDeletePolicy(currentRoute)}
-                          />
+                          {hasChildPolicies ? (
+                            <Menu.Item icon="plus" label="Add policy" onClick={() => onAddPolicy(currentRoute)} />
+                          ) : (
+                            <Menu.Item
+                              icon="corner-down-right-alt"
+                              label="Create nested policy"
+                              onClick={() => onAddPolicy(currentRoute)}
+                            />
+                          )}
+                          {isDeletable && (
+                            <>
+                              <Menu.Divider />
+                              <Menu.Item
+                                destructive
+                                icon="trash-alt"
+                                label="Delete"
+                                onClick={() => onDeletePolicy(currentRoute)}
+                              />
+                            </>
+                          )}
                         </Menu>
                       }
                     >
                       <Button variant="secondary" size="sm" icon="angle-down" type="button" />
                     </Dropdown>
-                  </ButtonGroup> */}
-                  {isEditable && (
-                    <Button
-                      variant="secondary"
-                      icon="pen"
-                      size="sm"
-                      onClick={() => onEditPolicy(currentRoute, isDefault)}
-                      type="button"
-                    >
-                      Edit
-                    </Button>
-                  )}
-                  {isDeletable && (
-                    <Button
-                      variant="secondary"
-                      icon="trash-alt"
-                      size="sm"
-                      onClick={() => onDeletePolicy(currentRoute)}
-                      type="button"
-                    />
-                  )}
+                  </ButtonGroup>
                 </Stack>
               )}
             </Stack>
@@ -417,13 +412,6 @@ const Policy: FC<PolicyComponentProps> = ({
           );
         })}
       </div>
-      {/* <div className={styles.addPolicyWrapper(hasChildPolicies)}>
-        <CreateOrAddPolicy
-          onClick={() => onAddPolicy(currentRoute)}
-          hasChildPolicies={hasChildPolicies}
-          isDefaultPolicy={isDefaultPolicy}
-        />
-      </div> */}
     </Stack>
   );
 };
@@ -531,25 +519,6 @@ function createContactPointLink(contactPoint: string, alertManagerSourceName = '
     alertManagerSourceName
   )}`;
 }
-
-interface AddPolicyProps {
-  onClick: () => void;
-  hasChildPolicies?: boolean;
-  isDefaultPolicy?: boolean;
-}
-
-const CreateOrAddPolicy: FC<AddPolicyProps> = ({ hasChildPolicies = true, isDefaultPolicy = false, onClick }) => (
-  <Button
-    type="button"
-    variant={isDefaultPolicy ? 'primary' : 'secondary'}
-    size={'sm'}
-    fill={isDefaultPolicy ? 'solid' : 'outline'}
-    icon={hasChildPolicies ? 'plus' : 'corner-down-right-alt'}
-    onClick={onClick}
-  >
-    {hasChildPolicies ? 'Add policy' : 'Create nested policy'}
-  </Button>
-);
 
 const wildcardRouteWarning = <Badge icon="exclamation-triangle" text="Matches all labels" color="orange" />;
 
