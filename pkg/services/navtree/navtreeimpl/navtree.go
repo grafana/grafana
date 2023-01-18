@@ -222,7 +222,7 @@ func (s *ServiceImpl) getHomeNode(c *models.ReqContext, prefs *pref.Preference) 
 		slugQuery := dashboards.GetDashboardRefByIDQuery{ID: prefs.HomeDashboardID}
 		err := s.dashboardService.GetDashboardUIDByID(c.Req.Context(), &slugQuery)
 		if err == nil {
-			homeUrl = models.GetDashboardUrl(slugQuery.Result.UID, slugQuery.Result.Slug)
+			homeUrl = dashboards.GetDashboardURL(slugQuery.Result.UID, slugQuery.Result.Slug)
 		}
 	}
 

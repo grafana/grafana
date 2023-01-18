@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -163,10 +162,10 @@ func TestDashboardFileReader(t *testing.T) {
 			checksum, err := util.Md5Sum(file)
 			require.NoError(t, err)
 
-			provisionedDashboard := []*models.DashboardProvisioning{
+			provisionedDashboard := []*dashboards.DashboardProvisioning{
 				{
 					Name:       "Default",
-					ExternalId: absPath,
+					ExternalID: absPath,
 					Updated:    stat.ModTime().AddDate(0, 0, +1).Unix(),
 					CheckSum:   checksum,
 				},
@@ -190,10 +189,10 @@ func TestDashboardFileReader(t *testing.T) {
 			stat, err := os.Stat(oneDashboard + "/dashboard1.json")
 			require.NoError(t, err)
 
-			provisionedDashboard := []*models.DashboardProvisioning{
+			provisionedDashboard := []*dashboards.DashboardProvisioning{
 				{
 					Name:       "Default",
-					ExternalId: absPath,
+					ExternalID: absPath,
 					Updated:    stat.ModTime().AddDate(0, 0, +1).Unix(),
 					CheckSum:   "fakechecksum",
 				},
@@ -226,10 +225,10 @@ func TestDashboardFileReader(t *testing.T) {
 			checksum, err := util.Md5Sum(file)
 			require.NoError(t, err)
 
-			provisionedDashboard := []*models.DashboardProvisioning{
+			provisionedDashboard := []*dashboards.DashboardProvisioning{
 				{
 					Name:       "Default",
-					ExternalId: absPath,
+					ExternalID: absPath,
 					Updated:    stat.ModTime().AddDate(0, 0, -1).Unix(),
 					CheckSum:   checksum,
 				},
@@ -253,10 +252,10 @@ func TestDashboardFileReader(t *testing.T) {
 			stat, err := os.Stat(oneDashboard + "/dashboard1.json")
 			require.NoError(t, err)
 
-			provisionedDashboard := []*models.DashboardProvisioning{
+			provisionedDashboard := []*dashboards.DashboardProvisioning{
 				{
 					Name:       "Default",
-					ExternalId: absPath,
+					ExternalID: absPath,
 					Updated:    stat.ModTime().AddDate(0, 0, -1).Unix(),
 					CheckSum:   "fakechecksum",
 				},
@@ -431,9 +430,9 @@ func TestDashboardFileReader(t *testing.T) {
 		absPath2, err := filepath.Abs(unprovision + "/dashboard2.json")
 		require.NoError(t, err)
 
-		provisionedDashboard := []*models.DashboardProvisioning{
-			{DashboardId: 1, Name: "Default", ExternalId: absPath1},
-			{DashboardId: 2, Name: "Default", ExternalId: absPath2},
+		provisionedDashboard := []*dashboards.DashboardProvisioning{
+			{DashboardID: 1, Name: "Default", ExternalID: absPath1},
+			{DashboardID: 2, Name: "Default", ExternalID: absPath2},
 		}
 
 		setupFakeService := func() {
