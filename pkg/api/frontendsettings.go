@@ -35,10 +35,10 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		return nil, err
 	}
 
-	pluginExtensions := make([]*plugins.Extensions, 0)
+	pluginExtensions := map[string]*plugins.Extensions{}
 	for _, app := range enabledPlugins[plugins.App] {
 		if app.Extensions != nil {
-			pluginExtensions = append(pluginExtensions, app.Extensions)
+			pluginExtensions[app.ID] = app.Extensions
 		}
 	}
 
