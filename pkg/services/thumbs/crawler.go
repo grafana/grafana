@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/rendering"
 )
@@ -286,7 +287,7 @@ func (r *simpleCrawler) walk(ctx context.Context, id int) {
 			break
 		}
 
-		url := models.GetKioskModeDashboardUrl(item.Uid, item.Slug, r.opts.Theme)
+		url := dashboards.GetKioskModeDashboardURL(item.Uid, item.Slug, r.opts.Theme)
 		r.log.Info("Getting dashboard thumbnail", "walkerId", id, "dashboardUID", item.Uid, "url", url)
 
 		dsUids, err := r.dsUidsLookup(ctx, item.Uid, item.OrgId)

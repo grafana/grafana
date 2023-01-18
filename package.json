@@ -94,6 +94,7 @@
     "@emotion/eslint-plugin": "11.10.0",
     "@grafana/e2e": "workspace:*",
     "@grafana/eslint-config": "5.1.0",
+    "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules",
     "@grafana/toolkit": "workspace:*",
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@pmmmwh/react-refresh-webpack-plugin": "0.5.8",

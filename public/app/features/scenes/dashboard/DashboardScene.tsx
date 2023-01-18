@@ -1,25 +1,25 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
-import { PageLayoutType } from '@grafana/data';
+import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import {
   UrlSyncManager,
   SceneObjectBase,
   SceneComponentProps,
-  SceneLayout,
   SceneObject,
   SceneObjectStatePlain,
 } from '@grafana/scenes';
-import { PageToolbar, ToolbarButton } from '@grafana/ui';
+import { PageToolbar, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
 
 interface DashboardSceneState extends SceneObjectStatePlain {
   title: string;
-  uid: string;
-  body: SceneLayout;
+  uid?: string;
+  body: SceneObject;
   actions?: SceneObject[];
-  subMenu?: SceneObject;
+  controls?: SceneObject[];
 }
 
 export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
@@ -48,7 +48,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> {
 }
 
 function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
-  const { title, body, actions = [], uid, subMenu } = model.useState();
+  const { title, body, actions = [], uid, controls } = model.useState();
+  const styles = useStyles2(getStyles);
 
   const toolbarActions = (actions ?? []).map((action) => <action.Component key={action.state.key} model={action} />);
 
@@ -63,10 +64,31 @@ function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) 
 
   return (
     <Page navId="scenes" pageNav={{ text: title }} layout={PageLayoutType.Canvas} toolbar={pageToolbar}>
-      {subMenu && <subMenu.Component model={subMenu} />}
-      <div style={{ flexGrow: 1, display: 'flex', gap: '8px', overflow: 'auto' }}>
+      {controls && (
+        <div className={styles.controls}>
+          {controls.map((control) => (
+            <control.Component key={control.state.key} model={control} />
+          ))}
+        </div>
+      )}
+      <div className={styles.body}>
         <body.Component model={body} />
       </div>
     </Page>
   );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    body: css({
+      flexGrow: 1,
+      display: 'flex',
+      gap: '8px',
+    }),
+    controls: css({
+      display: 'flex',
+      gap: theme.spacing(1),
+      alignItems: 'center',
+    }),
+  };
 }

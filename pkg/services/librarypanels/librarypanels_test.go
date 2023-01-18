@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -883,8 +884,19 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			sqlStore:       sqlStore,
 		}
 
-		sc.folder = createFolderWithACL(t, sc.sqlStore, "ScenarioFolder", sc.user, []folderACLItem{}).ToLegacyModel()
-
+		folder := createFolderWithACL(t, sc.sqlStore, "ScenarioFolder", sc.user, []folderACLItem{})
+		sc.folder = &models.Folder{
+			Id:        folder.ID,
+			Uid:       folder.UID,
+			Title:     folder.Title,
+			Url:       dashboards.GetFolderURL(folder.UID, slugify.Slugify(folder.Title)),
+			Version:   0,
+			Created:   folder.Created,
+			Updated:   folder.Updated,
+			UpdatedBy: 0,
+			CreatedBy: 0,
+			HasACL:    false,
+		}
 		fn(t, sc)
 	})
 }
