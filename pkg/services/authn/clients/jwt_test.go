@@ -83,6 +83,40 @@ func TestAuthenticateJWT(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.EqualValues(t, wantID, id, fmt.Sprintf("%+v", id))
+
+	// Test missing login and email from configuration should fail
+	cfg.JWTAuthEmailClaim = ""
+	cfg.JWTAuthUsernameClaim = ""
+	jwtClient = ProvideJWT(jwtService, cfg)
+	_, err = jwtClient.Authenticate(context.Background(), &authn.Request{
+		OrgID:       1,
+		HTTPRequest: validHTTPReq,
+		Resp:        nil,
+	})
+	require.Error(t, err)
+
+	// Test missing login from configuration should not fail
+	cfg.JWTAuthEmailClaim = "email"
+	cfg.JWTAuthUsernameClaim = ""
+	jwtClient = ProvideJWT(jwtService, cfg)
+	_, err = jwtClient.Authenticate(context.Background(), &authn.Request{
+		OrgID:       1,
+		HTTPRequest: validHTTPReq,
+		Resp:        nil,
+	})
+	require.NoError(t, err)
+
+	// Test missing email from configuration should fail
+	cfg.JWTAuthEmailClaim = ""
+	cfg.JWTAuthUsernameClaim = "preferred_username"
+	jwtClient = ProvideJWT(jwtService, cfg)
+	_, err = jwtClient.Authenticate(context.Background(), &authn.Request{
+		OrgID:       1,
+		HTTPRequest: validHTTPReq,
+		Resp:        nil,
+	})
+	require.NoError(t, err)
+
 }
 
 func TestJWTTest(t *testing.T) {
