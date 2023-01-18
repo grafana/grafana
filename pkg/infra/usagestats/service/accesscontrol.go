@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	ActionRead = "server.stats.report:read"
+	ActionRead = "server.usagestats.report:read"
 )
 
 var (
