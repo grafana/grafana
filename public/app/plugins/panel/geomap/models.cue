@@ -16,6 +16,7 @@ package grafanaplugin
 
 import (
 	"github.com/grafana/thema"
+		ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
 )
 
 Panel: thema.#Lineage & {
@@ -27,13 +28,13 @@ Panel: thema.#Lineage & {
 					PanelOptions: {
 						view: #MapViewConfig
 						controls: #ControlsOptions
-						basemap: #MapLayerOptions
-						layers: [...#MapLayerOptions]
+						basemap: ui.MapLayerOptions
+						layers: [...ui.MapLayerOptions]
 						tooltip: #TooltipOptions
 					} @cuetsy(kind="interface")
 
 					#MapViewConfig: {
-						id: string | *#MapCenterID.zero // TODO this doesn't work
+						id: string | *"zero"
 						lat?: int64 | *0
 						lon?: int64 | *0
 						zoom?: int64 | *1
@@ -44,25 +45,6 @@ Panel: thema.#Lineage & {
 						lastOnly?: bool
 						layer?: string
 						shared?: bool
-					} @cuetsy(kind="interface")
-
-					// TODO this is a copy of a type from @grafana/data
-					#MapLayerOptions: {
-						type: string
-						// configured unique display name
-						name: string
-						// Custom options depending on the type
-						config?: {...} //TODO fix, this should be a generic type
-						// Common method to define geometry fields
-						location?: #FrameGeometrySource
-						// Defines which data query refId is associated with the layer
-						filterData?: #MatcherConfig
-						// Common properties:
-						// https://openlayers.org/en/latest/apidoc/module-ol_layer_Base-BaseLayer.html
-						// Layer opacity (0-1)
-						opacity?: int64
-						// Check tooltip (defaults to true)
-						tooltip?: bool
 					} @cuetsy(kind="interface")
 
 					#ControlsOptions: {
@@ -89,26 +71,6 @@ Panel: thema.#Lineage & {
 					} @cuetsy(kind="interface")
 
 					#TooltipMode: "none" | "details" @cuetsy(kind="enum",memberNames="None|Details")
-
-					#FrameGeometrySource: {
-						 mode: #FrameGeometrySourceMode
-						// Field mappings
-						geohash?: string
-						latitude?: string
-						longitude?: string
-						h3?: string
-						wkt?: string
-						lookup?: string
-						// Path to Gazetteer
-						gazetteer?: string
-					}
-
-					#FrameGeometrySourceMode: "auto" | "geohash" |"coords" | "lookup" @cuetsy(kind="enum",memberNames="Auto|Geohash|Coords|Lookup")
-
-					#MatcherConfig: {
-						id: string
-  					options?: {...} // TODO should be a generic type
-					}
 
 					#MapCenterID: "zero"|"coords"|"fit" @cuetsy(kind="enum",members="Zero|Coordinates|Fit")
 				},

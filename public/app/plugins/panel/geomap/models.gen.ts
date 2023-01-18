@@ -8,12 +8,14 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+import * as ui from '@grafana/schema';
+
 export const PanelModelVersion = Object.freeze([0, 0]);
 
 export interface PanelOptions {
-  basemap: MapLayerOptions;
+  basemap: ui.MapLayerOptions;
   controls: ControlsOptions;
-  layers: Array<MapLayerOptions>;
+  layers: Array<ui.MapLayerOptions>;
   tooltip: TooltipOptions;
   view: MapViewConfig;
 }
@@ -24,7 +26,7 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
 
 export interface MapViewConfig {
   allLayers?: boolean;
-  id: MapCenterID;
+  id: string;
   lastOnly?: boolean;
   lat?: number;
   layer?: string;
@@ -38,61 +40,11 @@ export interface MapViewConfig {
 
 export const defaultMapViewConfig: Partial<MapViewConfig> = {
   allLayers: true,
+  id: 'zero',
   lat: 0,
   lon: 0,
   zoom: 1,
 };
-
-/**
- * TODO this is a copy of a type from @grafana/data
- */
-export interface MapLayerOptions {
-  /**
-   * Custom options depending on the type
-   */
-  config?: Record<string, unknown>;
-  /**
-   * Defines which data query refId is associated with the layer
-   */
-  filterData?: {
-    id: string;
-    options?: Record<string, unknown>;
-  };
-  /**
-   * Common method to define geometry fields
-   */
-  location?: {
-    mode: FrameGeometrySourceMode;
-    /**
-     * Field mappings
-     */
-    geohash?: string;
-    latitude?: string;
-    longitude?: string;
-    h3?: string;
-    wkt?: string;
-    lookup?: string;
-    /**
-     * Path to Gazetteer
-     */
-    gazetteer?: string;
-  };
-  /**
-   * configured unique display name
-   */
-  name: string;
-  /**
-   * Common properties:
-   * https://openlayers.org/en/latest/apidoc/module-ol_layer_Base-BaseLayer.html
-   * Layer opacity (0-1)
-   */
-  opacity?: number;
-  /**
-   * Check tooltip (defaults to true)
-   */
-  tooltip?: boolean;
-  type: string;
-}
 
 export interface ControlsOptions {
   /**
@@ -134,13 +86,6 @@ export interface TooltipOptions {
 export enum TooltipMode {
   Details = 'details',
   None = 'none',
-}
-
-export enum FrameGeometrySourceMode {
-  Auto = 'auto',
-  Coords = 'coords',
-  Geohash = 'geohash',
-  Lookup = 'lookup',
 }
 
 export enum MapCenterID {

@@ -564,3 +564,58 @@ export type TimeZoneBrowser = 'browser';
 export type TimeZone = (TimeZoneUtc | TimeZoneBrowser | string);
 
 export const defaultTimeZone: TimeZone = 'browser';
+
+export interface MapLayerOptions {
+  /**
+   * Custom options depending on the type
+   */
+  config?: Record<string, unknown>;
+  /**
+   * Defines which data query refId is associated with the layer
+   */
+  filterData?: {
+    id: string;
+    options?: Record<string, unknown>;
+  };
+  /**
+   * Common method to define geometry fields
+   */
+  location?: {
+    mode: FrameGeometrySourceMode;
+    /**
+     * Field mappings
+     */
+    geohash?: string;
+    latitude?: string;
+    longitude?: string;
+    h3?: string;
+    wkt?: string;
+    lookup?: string;
+    /**
+     * Path to Gazetteer
+     */
+    gazetteer?: string;
+  };
+  /**
+   * configured unique display name
+   */
+  name: string;
+  /**
+   * Common properties:
+   * https://openlayers.org/en/latest/apidoc/module-ol_layer_Base-BaseLayer.html
+   * Layer opacity (0-1)
+   */
+  opacity?: number;
+  /**
+   * Check tooltip (defaults to true)
+   */
+  tooltip?: boolean;
+  type: string;
+}
+
+export enum FrameGeometrySourceMode {
+  Auto = 'auto',
+  Coords = 'coords',
+  Geohash = 'geohash',
+  Lookup = 'lookup',
+}

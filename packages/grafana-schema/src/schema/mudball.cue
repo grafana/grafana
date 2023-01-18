@@ -203,7 +203,7 @@ FieldTextAlignment: "auto" | "left" | "right" | "center" @cuetsy(kind="type")
 
 // Internally, this is the "type" of cell that's being displayed
 // in the table such as colored text, JSON, gauge, etc.
-// The color-background-solid, gradient-gauge, and lcd-gauge 
+// The color-background-solid, gradient-gauge, and lcd-gauge
 // modes are deprecated in favor of new cell subOptions
 TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-background-solid" | "gradient-gauge" | "lcd-gauge" | "json-view" | "basic" | "image" | "gauge" @cuetsy(kind="enum",memberNames="Auto|ColorText|ColorBackground|ColorBackgroundSolid|GradientGauge|LcdGauge|JSONView|BasicGauge|Image|Gauge")
 // : TableCellDisplayMode @cuetsy(kind="enum")
@@ -278,7 +278,7 @@ TableColoredBackgroundCellOptions: {
 } @cuetsy(kind="interface")
 
 // Table cell options. Each cell has a display mode
-// and other potential options for that display. 
+// and other potential options for that display.
 TableCellOptions: TableAutoCellOptions | TableBarGaugeCellOptions | TableColoredBackgroundCellOptions @cuetsy(kind="type")
 
 // Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
@@ -310,3 +310,41 @@ TimeZoneBrowser: "browser"  @cuetsy(kind="type")
 
 // A specific timezone from https://en.wikipedia.org/wiki/Tz_database
 TimeZone: TimeZoneUtc | TimeZoneBrowser | string | *"browser" @cuetsy(kind="type")
+
+MapLayerOptions: {
+		type: string
+		// configured unique display name
+		name: string
+		// Custom options depending on the type
+		config?: {...} //TODO fix, this should be a generic type
+		// Common method to define geometry fields
+		location?: #FrameGeometrySource
+		// Defines which data query refId is associated with the layer
+		filterData?: MatcherConfig
+		// Common properties:
+		// https://openlayers.org/en/latest/apidoc/module-ol_layer_Base-BaseLayer.html
+		// Layer opacity (0-1)
+		opacity?: int64
+		// Check tooltip (defaults to true)
+		tooltip?: bool
+} @cuetsy(kind="interface")
+
+MatcherConfig: {
+		id: string
+		options?: {...} // TODO should be a generic type
+}
+
+#FrameGeometrySourceMode: "auto" | "geohash" |"coords" | "lookup" @cuetsy(kind="enum",memberNames="Auto|Geohash|Coords|Lookup")
+
+#FrameGeometrySource: {
+		mode: #FrameGeometrySourceMode
+		// Field mappings
+		geohash?: string
+		latitude?: string
+		longitude?: string
+		h3?: string
+		wkt?: string
+		lookup?: string
+		// Path to Gazetteer
+		gazetteer?: string
+	}
