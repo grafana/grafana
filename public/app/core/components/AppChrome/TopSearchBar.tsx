@@ -32,9 +32,11 @@ export function TopSearchBar() {
         </a>
         <OrganizationSwitcher />
       </TopSearchBarSection>
+
       <TopSearchBarSection>
         <TopSearchBarInput />
       </TopSearchBarSection>
+
       <TopSearchBarSection align="right">
         <QuickAdd />
         {helpNode && (
@@ -70,7 +72,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'space-between',
 
     [theme.breakpoints.up('sm')]: {
-      gridTemplateColumns: '1fr 1fr 1fr',
+      gridTemplateColumns: '2fr minmax(200px, 1fr) 2fr', // search is .5fr, with a min width of 200px
       display: 'grid',
 
       justifyContent: 'flex-start',
