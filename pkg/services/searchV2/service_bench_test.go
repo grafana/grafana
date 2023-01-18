@@ -244,7 +244,6 @@ func benchSearchV2(b *testing.B, folderCount, dashboardsPerFolder int) {
 
 // Test with some dashboards and some folders
 func BenchmarkSearchV2_10_10(b *testing.B) {
-	b.SetParallelism(1)
 	benchSearchV2(b, 10, 10)
 } // ~0.0002 s/op
 func BenchmarkSearchV2_10_100(b *testing.B) {
