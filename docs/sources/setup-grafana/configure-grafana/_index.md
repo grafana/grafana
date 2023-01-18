@@ -880,7 +880,7 @@ To prevent synchronization of organization roles for a specific OAuth integratio
 
 The setting `oauth_skip_org_role_update_sync` will be deprecated in favor of provider-specific settings.
 
-The table below show the OAuth provider and their setting with the default value and the skip org role sync setting.
+The following table shows the OAuth provider's setting with the default value and the skip org role sync setting.
 | OAuth Provider | `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | Behavior |
 | --- | --- | --- | --- |
 | AzureAD | false | false | will sync with AzureAD roles |
