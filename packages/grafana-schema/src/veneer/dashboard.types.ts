@@ -36,6 +36,10 @@ export interface FieldConfigSource<TOptions = Record<string, unknown>> extends r
   defaults: FieldConfig<TOptions>;
 }
 
+export interface MatcherConfig<TConfig = any> extends raw.MatcherConfig {
+  options?: TConfig;
+}
+
 export const defaultDashboard = raw.defaultDashboard as Dashboard;
 export const defaultVariableModel = {
   ...raw.defaultVariableModel,
@@ -49,9 +53,4 @@ export const defaultVariableModel = {
 export const defaultPanel: Partial<Panel> = raw.defaultPanel;
 export const defaultFieldConfig: Partial<FieldConfig> = raw.defaultFieldConfig;
 export const defaultFieldConfigSource: Partial<FieldConfigSource> = raw.defaultFieldConfigSource;
-
-export interface MatcherConfig<TConfig = any> extends raw.MatcherConfig {
-  options?: TConfig;
-}
-
 export const defaultMatcherConfig: Partial<MatcherConfig> = raw.defaultMatcherConfig;
