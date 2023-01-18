@@ -105,7 +105,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		return
 	}
 
-	if hs.tryOAuthAutoLogin(c) {
+	if hs.tryAutoLogin(c) {
 		return
 	}
 
@@ -139,18 +139,36 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	c.HTML(http.StatusOK, getViewIndex(), viewData)
 }
 
-func (hs *HTTPServer) tryOAuthAutoLogin(c *models.ReqContext) bool {
-	if !setting.OAuthAutoLogin {
+func (hs *HTTPServer) tryAutoLogin(c *models.ReqContext) bool {
+	samlAutoLogin := hs.samlAutoLoginEnabled()
+	if !setting.OAuthAutoLogin && !samlAutoLogin {
 		return false
 	}
 	oauthInfos := hs.SocialService.GetOAuthInfoProviders()
-	if len(oauthInfos) > 1 {
-		c.Logger.Warn("Skipping OAuth auto login because multiple OAuth providers are configured")
+
+	autoLoginProvidersLen := 0
+	if setting.OAuthAutoLogin {
+		autoLoginProvidersLen = len(oauthInfos)
+	}
+	if samlAutoLogin {
+		autoLoginProvidersLen++
+	}
+
+	if autoLoginProvidersLen > 1 {
+		c.Logger.Warn("Skipping auto login because multiple auth providers are configured")
 		return false
-	} else if len(oauthInfos) == 0 {
-		c.Logger.Warn("Skipping OAuth auto login because no OAuth providers are configured")
+	} else if autoLoginProvidersLen == 0 {
+		c.Logger.Warn("Skipping auto login because no auth providers are configured")
 		return false
 	}
+
+	if samlAutoLogin {
+		redirectUrl := hs.Cfg.AppSubURL + "/login/saml"
+		c.Logger.Info("SAML auto login enabled. Redirecting to " + redirectUrl)
+		c.Redirect(redirectUrl, 307)
+		return true
+	}
+
 	for key := range oauthInfos {
 		redirectUrl := hs.Cfg.AppSubURL + "/login/" + key
 		c.Logger.Info("OAuth auto login enabled. Redirecting to " + redirectUrl)
@@ -401,6 +419,10 @@ func (hs *HTTPServer) samlName() string {
 
 func (hs *HTTPServer) samlSingleLogoutEnabled() bool {
 	return hs.samlEnabled() && hs.SettingsProvider.KeyValue("auth.saml", "single_logout").MustBool(false) && hs.samlEnabled()
+}
+
+func (hs *HTTPServer) samlAutoLoginEnabled() bool {
+	return hs.samlEnabled() && hs.SettingsProvider.KeyValue("auth.saml", "auto_login").MustBool(false)
 }
 
 func getLoginExternalError(err error) string {
