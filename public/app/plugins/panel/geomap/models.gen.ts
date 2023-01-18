@@ -51,7 +51,6 @@ export interface ControlsOptions {
    * let the mouse wheel zoom
    */
   mouseWheelZoom?: boolean;
-  scaleUnits?: unknown;
   /**
    * Lower right
    */

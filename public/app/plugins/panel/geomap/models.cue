@@ -56,7 +56,6 @@ Panel: thema.#Lineage & {
 						showAttribution?: bool
 						// Scale options
 						showScale?: bool
-						scaleUnits?: _
 						// Show debug
 						showDebug?: bool
 						// Show measure
