@@ -230,8 +230,7 @@ func perFloat(e *State, val Value, floatF func(x float64) float64) (Value, error
 		}
 		newVal = newSeries
 	case parse.TypeNoData:
-		nodata := val.(NoData)
-		newVal = nodata.New()
+		newVal = NewNoData()
 	default:
 		// TODO: Should we deal with TypeString, TypeVariantSet?
 	}
@@ -261,6 +260,8 @@ func perNullableFloat(e *State, val Value, floatF func(x *float64) *float64) (Va
 			newSeries.SetPoint(i, t, floatF(f))
 		}
 		newVal = newSeries
+	case parse.TypeNoData:
+		newVal = NewNoData()
 	default:
 		// TODO: Should we deal with TypeString, TypeVariantSet?
 	}
