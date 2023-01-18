@@ -1,9 +1,9 @@
 package authnimpl
 
 import (
-	"reflect"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -27,20 +27,16 @@ func TestQueue(t *testing.T) {
 	q.insert(jwt)
 
 	expectedOrder := []string{
-		structName(render),
-		structName(jwt),
-		structName(basic),
-		structName(proxy),
-		structName(session),
-		structName(anonymous),
+		authn.ClientRender,
+		authn.ClientJWT,
+		authn.ClientBasic,
+		authn.ClientProxy,
+		authn.ClientSession,
+		authn.ClientAnonymous,
 	}
 
 	require.Len(t, q.clients, len(expectedOrder))
 	for i := range q.clients {
-		assert.Equal(t, structName(q.clients[i]), expectedOrder[i])
+		assert.Equal(t, q.clients[i].Name(), expectedOrder[i])
 	}
-}
-
-func structName(s any) string {
-	return reflect.TypeOf(s).Elem().Name()
 }
