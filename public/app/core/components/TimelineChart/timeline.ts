@@ -2,12 +2,11 @@ import uPlot, { Cursor, Series } from 'uplot';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
-import { VisibilityMode } from '@grafana/schema';
+import { VisibilityMode, TimelineValueAlignment } from '@grafana/schema';
 import { FIXED_UNIT } from '@grafana/ui/src/components/GraphNG/GraphNG';
 import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
 import { pointWithin, Quadtree, Rect } from 'app/plugins/panel/barchart/quadtree';
 
-import { PanelFieldConfig, TimelineValueAlignment } from './models.gen';
 import { TimelineMode } from './utils';
 
 const { round, min, ceil } = Math;
@@ -50,7 +49,7 @@ export interface TimelineCoreOptions {
   label: (seriesIdx: number) => string;
   getTimeRange: () => TimeRange;
   formatValue?: (seriesIdx: number, value: any) => string;
-  getFieldConfig: (seriesIdx: number) => PanelFieldConfig;
+  getFieldConfig: (seriesIdx: number) => { fillOpacity?: number; lineWidth?: number };
   onHover: (seriesIdx: number, valueIdx: number, rect: Rect) => void;
   onLeave: () => void;
 }
@@ -568,7 +567,7 @@ export function getConfig(opts: TimelineCoreOptions) {
   };
 }
 
-function getFillColor(fieldConfig: PanelFieldConfig, color: string) {
+function getFillColor(fieldConfig: { fillOpacity?: number; lineWidth?: number }, color: string) {
   // if #rgba with pre-existing alpha. ignore fieldConfig.fillOpacity
   // e.g. thresholds with opacity
   if (color[0] === '#' && color.length === 9) {

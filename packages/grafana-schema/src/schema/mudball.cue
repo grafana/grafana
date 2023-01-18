@@ -324,3 +324,6 @@ TimeZoneBrowser: "browser"  @cuetsy(kind="type")
 
 // A specific timezone from https://en.wikipedia.org/wiki/Tz_database
 TimeZone: TimeZoneUtc | TimeZoneBrowser | string | *"browser" @cuetsy(kind="type")
+
+// Controls the value alignment in the TimelineChart component
+TimelineValueAlignment: "center" | "left" | "right" @cuetsy(kind="type")

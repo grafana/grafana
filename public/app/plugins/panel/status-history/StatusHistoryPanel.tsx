@@ -12,9 +12,13 @@ import {
 } from '@grafana/ui';
 import { HoverEvent, addTooltipSupport } from '@grafana/ui/src/components/uPlot/config/addTooltipSupport';
 import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
+import { TimelineChart } from 'app/core/components/TimelineChart/TimelineChart';
+import {
+  prepareTimelineFields,
+  prepareTimelineLegendItems,
+  TimelineMode,
+} from 'app/core/components/TimelineChart/utils';
 
-import { TimelineChart } from '../state-timeline/TimelineChart';
-import { prepareTimelineFields, prepareTimelineLegendItems, TimelineMode } from '../state-timeline/utils';
 import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getTimezones } from '../timeseries/utils';
 

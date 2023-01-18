@@ -24,7 +24,15 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
-import { VizLegendOptions, AxisPlacement, ScaleDirection, ScaleOrientation, VisibilityMode } from '@grafana/schema';
+import {
+  VizLegendOptions,
+  AxisPlacement,
+  ScaleDirection,
+  ScaleOrientation,
+  VisibilityMode,
+  TimelineValueAlignment,
+  HideableFieldConfig,
+} from '@grafana/schema';
 import {
   FIXED_UNIT,
   SeriesVisibilityChangeMode,
@@ -37,7 +45,6 @@ import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
 import { PlotTooltipInterpolator } from '@grafana/ui/src/components/uPlot/types';
 import { preparePlotData2, getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 
-import { PanelFieldConfig, TimelineValueAlignment } from './models.gen';
 import { getConfig, TimelineCoreOptions } from './timeline';
 
 /**
@@ -54,6 +61,14 @@ interface UPlotConfigOptions {
   alignValue?: TimelineValueAlignment;
   mergeValues?: boolean;
   getValueColor: (frameIdx: number, fieldIdx: number, value: any) => string;
+}
+
+/**
+ * @internal
+ */
+interface PanelFieldConfig extends HideableFieldConfig {
+  fillOpacity?: number;
+  lineWidth?: number;
 }
 
 export enum TimelineMode {

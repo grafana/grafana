@@ -9,9 +9,9 @@ import { DataFrame, formattedValueToString, getFieldColorModeForField, GrafanaTh
 import { getMinMaxAndDelta } from '@grafana/data/src/field/scale';
 import { useStyles2, VizLegendItem } from '@grafana/ui';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
+import { getThresholdItems } from 'app/core/components/TimelineChart/utils';
 import { config } from 'app/core/config';
 import { DimensionSupplier } from 'app/features/dimensions';
-import { getThresholdItems } from 'app/plugins/panel/state-timeline/utils';
 
 import { StyleConfigState } from '../style/types';
 import { MapLayerState } from '../types';
