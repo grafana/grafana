@@ -23,8 +23,12 @@ func TestLokiHTTPClient(t *testing.T) {
 	err = client.ping()
 	require.Error(t, err)
 
-	client.cfg.TenantID = "<your_tenant_id>"
-	client.cfg.TenantPassword = "<your_password>"
+	client.cfg.BasicAuthUser = "<your_username>"
+	client.cfg.BasicAuthPassword = "<your_password>"
+
+	// When running on prem, you might need to set the tenant id,
+	// so the x-scope-orgid header is set.
+	// client.cfg.TenentID = "<your_tenant_id>"
 
 	// Authorized request should fail against Grafana Cloud.
 	err = client.ping()

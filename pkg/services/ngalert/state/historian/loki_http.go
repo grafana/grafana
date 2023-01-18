@@ -12,9 +12,10 @@ import (
 const defaultClientTimeout = 30 * time.Second
 
 type LokiConfig struct {
-	Url            *url.URL
-	TenantID       string
-	TenantPassword string
+	Url               *url.URL
+	BasicAuthUser     string
+	BasicAuthPassword string
+	TenentID          string
 }
 
 type httpLokiClient struct {
@@ -37,8 +38,12 @@ func (c *httpLokiClient) ping() error {
 	uri := c.cfg.Url.JoinPath("/loki/api/v1/labels")
 	req, err := http.NewRequest(http.MethodGet, uri.String(), nil)
 
-	if c.cfg.TenantID != "" && c.cfg.TenantPassword != "" {
-		req.SetBasicAuth(c.cfg.TenantID, c.cfg.TenantPassword)
+	if c.cfg.BasicAuthUser != "" || c.cfg.BasicAuthPassword != "" {
+		req.SetBasicAuth(c.cfg.BasicAuthUser, c.cfg.BasicAuthPassword)
+	}
+
+	if c.cfg.TenentID != "" {
+		req.Header.Add("X-Scope-OrgID", c.cfg.TenentID)
 	}
 
 	if err != nil {
