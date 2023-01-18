@@ -78,7 +78,7 @@ it.skip('renders panel with a fixed header if prop hoverHeader is false', () => 
 it.skip('renders panel with a hovering header if prop hoverHeader is true', () => {
   setup({ title: 'Test Panel Header', hoverHeader: true });
 
-  expect(screen.getByTestId('header-container')).not.toBeInTheDocument();
+  expect(screen.queryByTestId('header-container')).not.toBeInTheDocument();
 });
 
 it('renders panel with a header if prop titleItems', () => {
@@ -111,15 +111,15 @@ it('renders panel with a show-on-hover menu icon if prop menu', () => {
 });
 
 it('renders error status in the panel header if any given', () => {
-  setup({ status: { message: 'Error test' } });
+  setup({ statusMessage: 'Error test' });
 
   expect(screen.getByTestId('panel-status-wrapper')).toBeInTheDocument();
 });
 
-it('renders error status in the panel header if loadingState is error', () => {
-  setup({ loadingState: LoadingState.Error });
+it('does not render error status in the panel header if loadingState is error, but no statusMessage', () => {
+  setup({ loadingState: LoadingState.Error, statusMessage: '' });
 
-  expect(screen.getByTestId('panel-status-wrapper')).toBeInTheDocument();
+  expect(screen.queryByTestId('panel-status-wrapper')).not.toBeInTheDocument();
 });
 
 it('renders loading indicator in the panel header if loadingState is loading', () => {
