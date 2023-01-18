@@ -320,35 +320,4 @@ describe('DashboardPage', () => {
       expect(screen.queryAllByLabelText(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(0);
     });
   });
-
-  dashboardPageScenario('When dashboard is public', (ctx) => {
-    ctx.setup(() => {
-      locationService.partial({ kiosk: false });
-      ctx.mount({
-        queryParams: {},
-        dashboard: getTestDashboard(),
-      });
-      ctx.rerender({ dashboard: ctx.dashboard, isPublic: true });
-    });
-
-    it('should not render page toolbar and submenu', () => {
-      expect(screen.queryAllByTestId(selectors.pages.Dashboard.DashNav.navV2)).toHaveLength(0);
-      expect(screen.queryAllByLabelText(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(0);
-    });
-  });
-  dashboardPageScenario('When dashboard is public and timeSelection is enabled', (ctx) => {
-    ctx.setup(() => {
-      locationService.partial({ kiosk: false });
-      ctx.mount({
-        queryParams: {},
-        dashboard: getTestDashboard(null, { publicDashboardTimeSelectionEnabled: true }),
-      });
-      ctx.rerender({ dashboard: ctx.dashboard, isPublic: true });
-    });
-
-    it('should render page toolbar because timeSelection is enabled, but not submenu', () => {
-      expect(screen.queryAllByTestId(selectors.pages.Dashboard.DashNav.navV2)).toHaveLength(1);
-      expect(screen.queryAllByLabelText(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(0);
-    });
-  });
 });

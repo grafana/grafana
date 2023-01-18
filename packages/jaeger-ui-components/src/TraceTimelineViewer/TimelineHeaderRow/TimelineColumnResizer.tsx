@@ -97,7 +97,7 @@ export const getStyles = stylesFactory(() => {
   };
 });
 
-type TimelineColumnResizerProps = {
+export type TimelineColumnResizerProps = {
   min: number;
   max: number;
   onChange: (newSize: number) => void;

@@ -175,12 +175,13 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
     }
     if (targets.traceql?.length) {
       try {
-        const queryValue = targets.traceql[0].query;
+        const appliedQuery = this.applyVariables(targets.traceql[0], options.scopedVars);
+        const queryValue = appliedQuery?.query || '';
         const hexOnlyRegex = /^[0-9A-Fa-f]*$/;
         // Check whether this is a trace ID or traceQL query by checking if it only contains hex characters
         if (queryValue.trim().match(hexOnlyRegex)) {
           // There's only hex characters so let's assume that this is a trace ID
-          reportInteraction('grafana_traces_traceql_traceID_queried', {
+          reportInteraction('grafana_traces_traceID_queried', {
             datasourceType: 'tempo',
             app: options.app ?? '',
             query: queryValue ?? '',
@@ -470,6 +471,16 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
       }
 
       const { nodes, edges } = mapPromMetricsToServiceMap(responses, request.range);
+      if (nodes.fields.length > 0 && edges.fields.length > 0) {
+        const nodeLength = nodes.fields[0].values.length;
+        const edgeLength = edges.fields[0].values.length;
+
+        reportInteraction('grafana_traces_service_graph_size', {
+          datasourceType: 'tempo',
+          nodeLength,
+          edgeLength,
+        });
+      }
 
       // No handling of multiple targets assume just one. NodeGraph does not support it anyway, but still should be
       // fixed at some point.
@@ -819,7 +830,11 @@ export function buildExpr(
   extraParams: string,
   request: DataQueryRequest<TempoQuery>
 ) {
-  let serviceMapQuery = request.targets[0]?.serviceMapQuery?.replace('{', '').replace('}', '') ?? '';
+  let serviceMapQuery = request.targets[0]?.serviceMapQuery ?? '';
+  const serviceMapQueryMatch = serviceMapQuery.match(/^{(.*)}$/);
+  if (serviceMapQueryMatch?.length) {
+    serviceMapQuery = serviceMapQueryMatch[1];
+  }
   // map serviceGraph metric tags to APM metric tags
   serviceMapQuery = serviceMapQuery.replace('client', 'service').replace('server', 'service');
   const metricParams = serviceMapQuery.includes('span_name')

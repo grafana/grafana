@@ -28,7 +28,7 @@ type Props = {
 
 export const HeatmapHoverView = (props: Props) => {
   if (props.hover.seriesIdx === 2) {
-    return <DataHoverView data={props.data.exemplars} rowIndex={props.hover.dataIdx} />;
+    return <DataHoverView data={props.data.exemplars} rowIndex={props.hover.dataIdx} header={'Exemplar'} />;
   }
   return <HeatmapHoverCell {...props} />;
 };
@@ -64,11 +64,18 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
   let yBucketMin: string;
   let yBucketMax: string;
 
+  let nonNumericOrdinalDisplay: string | undefined = undefined;
+
   if (meta.yOrdinalDisplay) {
     const yMinIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx - 1 : yValueIdx;
     const yMaxIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx : yValueIdx + 1;
-    yBucketMin = `${meta.yOrdinalDisplay[yMinIdx]}`;
+    yBucketMin = yMinIdx < 0 ? meta.yMinDisplay! : `${meta.yOrdinalDisplay[yMinIdx]}`;
     yBucketMax = `${meta.yOrdinalDisplay[yMaxIdx]}`;
+
+    // e.g. "pod-xyz123"
+    if (!meta.yOrdinalLabel || Number.isNaN(+meta.yOrdinalLabel[0])) {
+      nonNumericOrdinalDisplay = data.yLayout === HeatmapCellLayout.le ? yBucketMax : yBucketMin;
+    }
   } else {
     const value = yVals?.[yValueIdx];
 
@@ -210,7 +217,11 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
     );
   }
 
-  const renderYBuckets = () => {
+  const renderYBucket = () => {
+    if (nonNumericOrdinalDisplay) {
+      return <div>Name: {nonNumericOrdinalDisplay}</div>;
+    }
+
     switch (data.yLayout) {
       case HeatmapCellLayout.unknown:
         return <div>{yDisp(yBucketMin)}</div>;
@@ -237,7 +248,7 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
         />
       )}
       <div>
-        {renderYBuckets()}
+        {renderYBucket()}
         <div>
           {getFieldDisplayName(countField!, data.heatmap)}: {data.display!(count)}
         </div>

@@ -22,11 +22,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	ngchannels "github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -719,29 +718,29 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 	mockChannel.responses["slack_recvX"] = `{"ok": true}`
 
 	// Overriding some URLs to send to the mock channel.
-	os, opa, ot, opu, ogb, ol, oth := ngchannels.SlackAPIEndpoint, channels.PagerdutyEventAPIURL,
+	os, opa, ot, opu, ogb, ol, oth := channels.SlackAPIEndpoint, channels.PagerdutyEventAPIURL,
 		channels.TelegramAPIURL, channels.PushoverEndpoint, channels.GetBoundary,
-		ngchannels.LineNotifyURL, channels.ThreemaGwBaseURL
+		channels.LineNotifyURL, channels.ThreemaGwBaseURL
 	originalTemplate := channels.DefaultTemplateString
 	t.Cleanup(func() {
-		ngchannels.SlackAPIEndpoint, channels.PagerdutyEventAPIURL,
+		channels.SlackAPIEndpoint, channels.PagerdutyEventAPIURL,
 			channels.TelegramAPIURL, channels.PushoverEndpoint, channels.GetBoundary,
-			ngchannels.LineNotifyURL, channels.ThreemaGwBaseURL = os, opa, ot, opu, ogb, ol, oth
+			channels.LineNotifyURL, channels.ThreemaGwBaseURL = os, opa, ot, opu, ogb, ol, oth
 		channels.DefaultTemplateString = originalTemplate
 	})
 	channels.DefaultTemplateString = channels.TemplateForTestsString
-	ngchannels.SlackAPIEndpoint = fmt.Sprintf("http://%s/slack_recvX/slack_testX", mockChannel.server.Addr)
+	channels.SlackAPIEndpoint = fmt.Sprintf("http://%s/slack_recvX/slack_testX", mockChannel.server.Addr)
 	channels.PagerdutyEventAPIURL = fmt.Sprintf("http://%s/pagerduty_recvX/pagerduty_testX", mockChannel.server.Addr)
 	channels.TelegramAPIURL = fmt.Sprintf("http://%s/telegram_recv/bot%%s/%%s", mockChannel.server.Addr)
 	channels.PushoverEndpoint = fmt.Sprintf("http://%s/pushover_recv/pushover_test", mockChannel.server.Addr)
-	ngchannels.LineNotifyURL = fmt.Sprintf("http://%s/line_recv/line_test", mockChannel.server.Addr)
+	channels.LineNotifyURL = fmt.Sprintf("http://%s/line_recv/line_test", mockChannel.server.Addr)
 	channels.ThreemaGwBaseURL = fmt.Sprintf("http://%s/threema_recv/threema_test", mockChannel.server.Addr)
 	channels.GetBoundary = func() string { return "abcd" }
 
 	env.NotificationService.EmailHandlerSync = mockEmail.sendEmailCommandHandlerSync
 	// As we are using a NotificationService mock here, but the test expects real NotificationService -
 	// we try to issue a real POST request here
-	env.NotificationService.WebhookHandler = func(_ context.Context, cmd *models.SendWebhookSync) error {
+	env.NotificationService.WebhookHandler = func(_ context.Context, cmd *notifications.SendWebhookSync) error {
 		if res, err := http.Post(cmd.Url, "", strings.NewReader(cmd.Body)); err == nil {
 			_ = res.Body.Close()
 		}
@@ -1166,10 +1165,10 @@ func (nc *mockNotificationChannel) Close() error {
 }
 
 type mockEmailHandler struct {
-	emails []*models.SendEmailCommandSync
+	emails []*notifications.SendEmailCommandSync
 }
 
-func (e *mockEmailHandler) sendEmailCommandHandlerSync(_ context.Context, cmd *models.SendEmailCommandSync) error {
+func (e *mockEmailHandler) sendEmailCommandHandlerSync(_ context.Context, cmd *notifications.SendEmailCommandSync) error {
 	// We 0 out the start time since that is a variable that we cannot predict.
 	alerts := cmd.Data["Alerts"].(channels.ExtendedAlerts)
 	for i := range alerts {
@@ -1186,7 +1185,7 @@ type mockEmailHandlerWithTimeout struct {
 	timeout time.Duration
 }
 
-func (e *mockEmailHandlerWithTimeout) sendEmailCommandHandlerSync(ctx context.Context, cmd *models.SendEmailCommandSync) error {
+func (e *mockEmailHandlerWithTimeout) sendEmailCommandHandlerSync(ctx context.Context, cmd *notifications.SendEmailCommandSync) error {
 	select {
 	case <-time.After(e.timeout):
 		return e.mockEmailHandler.sendEmailCommandHandlerSync(ctx, cmd)
@@ -2281,9 +2280,9 @@ var expAlertmanagerConfigFromAPI = `
 }
 `
 
-var expEmailNotifications = []*models.SendEmailCommandSync{
+var expEmailNotifications = []*notifications.SendEmailCommandSync{
 	{
-		SendEmailCommand: models.SendEmailCommand{
+		SendEmailCommand: notifications.SendEmailCommand{
 			To:          []string{"test@email.com"},
 			SingleEmail: true,
 			Template:    "ng_alert_notification",

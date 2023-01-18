@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -41,9 +40,9 @@ func TestAPIEndpoint_GetCurrentOrgPreferences_LegacyAccessControl(t *testing.T) 
 	cfg.RBACEnabled = false
 	sc := setupHTTPServerWithCfg(t, true, cfg)
 	dashSvc := dashboards.NewFakeDashboardService(t)
-	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*models.GetDashboardQuery)
-		q.Result = &models.Dashboard{Uid: "home", Id: 1}
+	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*dashboards.GetDashboardQuery)
+		q.Result = &dashboards.Dashboard{UID: "home", ID: 1}
 	}).Return(nil)
 
 	sc.hs.DashboardService = dashSvc
@@ -175,9 +174,9 @@ func TestAPIEndpoint_PatchUserPreferences(t *testing.T) {
 	})
 	input = strings.NewReader(testUpdateOrgPreferencesWithHomeDashboardUIDCmd)
 	dashSvc := dashboards.NewFakeDashboardService(t)
-	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*models.GetDashboardQuery)
-		q.Result = &models.Dashboard{Uid: "home", Id: 1}
+	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*dashboards.GetDashboardQuery)
+		q.Result = &dashboards.Dashboard{UID: "home", ID: 1}
 	}).Return(nil)
 	sc.hs.DashboardService = dashSvc
 	t.Run("Returns 200 on success", func(t *testing.T) {

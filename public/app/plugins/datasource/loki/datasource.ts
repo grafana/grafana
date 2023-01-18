@@ -57,6 +57,12 @@ import {
   addNoPipelineErrorToQuery,
   addParserToQuery,
   removeCommentsFromQuery,
+  addFilterAsLabelFilter,
+  getParserPositions,
+  toLabelFilter,
+  addLineFilter,
+  findLastPosition,
+  getLabelFilterPositions,
 } from './modifyQuery';
 import { getQueryHints } from './queryHints';
 import { getNormalizedLokiQuery, isLogsQuery, isValidQuery } from './queryUtils';
@@ -168,7 +174,7 @@ export class LokiDatasource
   query(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
     const queries = request.targets
       .map(getNormalizedLokiQuery) // "fix" the `.queryType` prop
-      .map((q) => ({ ...q, maxLines: q.maxLines || this.maxLines })); // set maxLines if not set
+      .map((q) => ({ ...q, maxLines: q.maxLines ?? this.maxLines }));
 
     const fixedRequest: DataQueryRequest<LokiQuery> & { targets: LokiQuery[] } = {
       ...request,
@@ -494,6 +500,18 @@ export class LokiDatasource
             originalLabel: action.options.originalLabel,
           });
         }
+        break;
+      }
+      case 'ADD_LABEL_FILTER': {
+        const parserPositions = getParserPositions(query.expr);
+        const labelFilterPositions = getLabelFilterPositions(query.expr);
+        const lastPosition = findLastPosition([...parserPositions, ...labelFilterPositions]);
+        const filter = toLabelFilter('', '', '=');
+        expression = addFilterAsLabelFilter(expression, [lastPosition], filter);
+        break;
+      }
+      case 'ADD_LINE_FILTER': {
+        expression = addLineFilter(expression);
         break;
       }
       default:
