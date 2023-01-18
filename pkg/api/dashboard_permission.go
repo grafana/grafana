@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -82,7 +83,7 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.
 			perm.TeamAvatarUrl = dtos.GetGravatarUrlWithDefault(perm.TeamEmail, perm.Team)
 		}
 		if perm.Slug != "" {
-			perm.Url = models.GetDashboardFolderUrl(perm.IsFolder, perm.Uid, perm.Slug)
+			perm.Url = dashboards.GetDashboardFolderURL(perm.IsFolder, perm.Uid, perm.Slug)
 		}
 
 		filteredACLs = append(filteredACLs, perm)
