@@ -15,7 +15,6 @@ export interface TooltipProps {
   placement?: TooltipPlacement;
   content: PopoverContent;
   children: JSX.Element;
-  tabIndex?: number;
   /**
    * Set to true if you want the tooltip to stay long enough so the user can move mouse over content to select text or click a link
    */
