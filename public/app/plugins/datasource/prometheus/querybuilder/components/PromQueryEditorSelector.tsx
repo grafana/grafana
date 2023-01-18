@@ -40,10 +40,11 @@ export const PromQueryEditorSelector = React.memo<Props>((props) => {
     onRunQuery,
     data,
     app,
-    datasource: { defaultEditor },
     onAddQuery,
+    datasource: { defaultEditor },
     queries,
   } = props;
+
   const [parseModalOpen, setParseModalOpen] = useState(false);
   const [queryPatternsModalOpen, setQueryPatternsModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
