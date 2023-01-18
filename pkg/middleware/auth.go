@@ -223,12 +223,13 @@ func OrgAdminDashOrFolderAdminOrTeamAdmin(ss db.DB, ds dashboards.DashboardServi
 			return
 		}
 
-		isAdminOfTeamsQuery := models.IsAdminOfTeamsQuery{SignedInUser: c.SignedInUser}
-		if err := ts.IsAdminOfTeams(c.Req.Context(), &isAdminOfTeamsQuery); err != nil {
+		isAdminOfTeamsQuery := team.IsAdminOfTeamsQuery{SignedInUser: c.SignedInUser}
+		isAdminOfTeamsQueryResult, err := ts.IsAdminOfTeams(c.Req.Context(), &isAdminOfTeamsQuery)
+		if err != nil {
 			c.JsonApiErr(500, "Failed to check if user is a team admin", err)
 		}
 
-		if isAdminOfTeamsQuery.Result {
+		if isAdminOfTeamsQueryResult {
 			return
 		}
 

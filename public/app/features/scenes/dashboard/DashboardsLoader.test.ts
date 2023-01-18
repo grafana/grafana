@@ -1,20 +1,23 @@
+import {
+  CustomVariable,
+  DataSourceVariable,
+  QueryVariable,
+  SceneGridLayout,
+  SceneGridRow,
+  SceneQueryRunner,
+  VizPanel,
+} from '@grafana/scenes';
 import { defaultDashboard, LoadingState, Panel, RowPanel, VariableType } from '@grafana/schema';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { createPanelJSONFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 
-import { SceneGridLayout, SceneGridRow, VizPanel } from '../components';
-import { SceneQueryRunner } from '../querying/SceneQueryRunner';
-import { CustomVariable } from '../variables/variants/CustomVariable';
-import { DataSourceVariable } from '../variables/variants/DataSourceVariable';
-import { QueryVariable } from '../variables/variants/query/QueryVariable';
-
 import { DashboardScene } from './DashboardScene';
 import {
   createDashboardSceneFromDashboardModel,
+  createVizPanelFromPanelModel,
   createSceneVariableFromVariableModel,
   DashboardLoader,
-  createVizPanelFromPanelModel,
 } from './DashboardsLoader';
 
 describe('DashboardLoader', () => {
@@ -132,7 +135,7 @@ describe('DashboardLoader', () => {
       expect(scene.state.uid).toBe('test-uid');
       expect(scene.state?.$timeRange?.state.value.raw).toEqual(dash.time);
       expect(scene.state?.$variables?.state.variables).toHaveLength(1);
-      expect(scene.state.subMenu).toBeDefined();
+      expect(scene.state.controls).toBeDefined();
     });
   });
 
@@ -159,9 +162,10 @@ describe('DashboardLoader', () => {
       const oldModel = new DashboardModel(dashboard);
 
       const scene = createDashboardSceneFromDashboardModel(oldModel);
+      const body = scene.state.body as SceneGridLayout;
 
-      expect(scene.state.body.state.children).toHaveLength(1);
-      const rowScene = scene.state.body.state.children[0] as SceneGridRow;
+      expect(body.state.children).toHaveLength(1);
+      const rowScene = body.state.children[0] as SceneGridRow;
       expect(rowScene).toBeInstanceOf(SceneGridRow);
       expect(rowScene.state.title).toEqual(row.title);
       expect(rowScene.state.placement?.y).toEqual(row.gridPos!.y);
@@ -223,16 +227,17 @@ describe('DashboardLoader', () => {
       const oldModel = new DashboardModel(dashboard);
 
       const scene = createDashboardSceneFromDashboardModel(oldModel);
+      const body = scene.state.body as SceneGridLayout;
 
-      expect(scene.state.body.state.children).toHaveLength(3);
-      expect(scene.state.body).toBeInstanceOf(SceneGridLayout);
+      expect(body.state.children).toHaveLength(3);
+      expect(body).toBeInstanceOf(SceneGridLayout);
       // Panel out of row
-      expect(scene.state.body.state.children[0]).toBeInstanceOf(VizPanel);
-      const panelOutOfRowVizPanel = scene.state.body.state.children[0] as VizPanel;
+      expect(body.state.children[0]).toBeInstanceOf(VizPanel);
+      const panelOutOfRowVizPanel = body.state.children[0] as VizPanel;
       expect(panelOutOfRowVizPanel.state.title).toBe(panelOutOfRow.title);
       // Row with panel
-      expect(scene.state.body.state.children[1]).toBeInstanceOf(SceneGridRow);
-      const rowWithPanelsScene = scene.state.body.state.children[1] as SceneGridRow;
+      expect(body.state.children[1]).toBeInstanceOf(SceneGridRow);
+      const rowWithPanelsScene = body.state.children[1] as SceneGridRow;
       expect(rowWithPanelsScene.state.title).toBe(rowWithPanel.title);
       expect(rowWithPanelsScene.state.children).toHaveLength(1);
       // Panel within row
@@ -240,8 +245,8 @@ describe('DashboardLoader', () => {
       const panelInRowVizPanel = rowWithPanelsScene.state.children[0] as VizPanel;
       expect(panelInRowVizPanel.state.title).toBe(panelInRow.title);
       // Empty row
-      expect(scene.state.body.state.children[2]).toBeInstanceOf(SceneGridRow);
-      const emptyRowScene = scene.state.body.state.children[2] as SceneGridRow;
+      expect(body.state.children[2]).toBeInstanceOf(SceneGridRow);
+      const emptyRowScene = body.state.children[2] as SceneGridRow;
       expect(emptyRowScene.state.title).toBe(emptyRow.title);
       expect(emptyRowScene.state.children).toHaveLength(0);
     });

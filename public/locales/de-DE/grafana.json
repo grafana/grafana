@@ -2,7 +2,25 @@
   "_comment": "Do not manually edit this file. Translations must be made in Crowdin which will sync them back into this file",
   "clipboard-button": {
     "inline-toast": {
-      "success": ""
+      "success": "Kopiert"
+    }
+  },
+  "command-palette": {
+    "action": {
+      "change-theme": "",
+      "dark-theme": "",
+      "light-theme": "",
+      "search": ""
+    },
+    "search-box": {
+      "placeholder": ""
+    },
+    "section": {
+      "actions": "",
+      "dashboard-search-results": "",
+      "pages": "",
+      "preferences": "",
+      "recent-dashboards": ""
     }
   },
   "common": {
@@ -81,14 +99,13 @@
     }
   },
   "datasource-onboarding": {
-    "contact-admin": "",
-    "explanation": "",
-    "logo": "",
-    "new-dashboard": "",
-    "preferred": "",
-    "sampleData": "",
-    "viewAll": "",
-    "welcome": ""
+    "contact-admin": "Bitte wenden Sie sich an Ihren Administrator, um die Datenquellen zu konfigurieren.",
+    "explanation": "Um Ihre Daten zu visualisieren, müssen Sie sie zunächst verknüpfen.",
+    "new-dashboard": "Neues Dashboard",
+    "preferred": "Verbinden Sie Ihre bevorzugte Datenquelle:",
+    "sampleData": "Oder erstellen Sie ein neues Dashboard mit Beispieldaten",
+    "viewAll": "Alle anzeigen",
+    "welcome": "Willkommen bei Grafana Dashboards!"
   },
   "folder-picker": {
     "loading": "Ordner werden geladen …"
@@ -114,15 +131,6 @@
       "subtitle": "Serverweite Einstellungen und Zugriff auf Ressourcen wie Organisationen, Benutzer und Lizenzen verwalten",
       "title": "Server-Administrator"
     },
-    "admin-access": {
-      "title": ""
-    },
-    "admin-general": {
-      "title": ""
-    },
-    "admin-plugins": {
-      "title": ""
-    },
     "alerting": {
       "subtitle": "Informiere dich über Probleme in deinen Systemen kurz nach deren Auftreten",
       "title": "Meldungen"
@@ -142,7 +150,7 @@
       "title": "Gruppen"
     },
     "alerting-home": {
-      "title": ""
+      "title": "Home"
     },
     "alerting-legacy": {
       "title": "Warnungen (Legacy)"
@@ -210,7 +218,7 @@
       "title": "Organisationen"
     },
     "global-users": {
-      "subtitle": "",
+      "subtitle": "Benutzer in Grafana verwalten",
       "title": "Benutzer",
       "titleBeforeTopnav": "Benutzer"
     },
@@ -221,7 +229,7 @@
     "help/documentation": "Dokumentation",
     "help/keyboard-shortcuts": "Tastaturbefehle",
     "help/support": "Support",
-    "help/support-bundle": "",
+    "help/support-bundle": "Support Bundles",
     "home": {
       "title": "Home"
     },
@@ -248,6 +256,9 @@
       "subtitle": "Überwachungs- und Infrastruktur-Apps",
       "title": "Überwachung"
     },
+    "new": {
+      "title": ""
+    },
     "new-dashboard": {
       "title": "Neues Dashboard"
     },
@@ -256,7 +267,7 @@
     },
     "org-settings": {
       "subtitle": "Verwalte Einstellungen in der gesamten Organisation",
-      "title": "",
+      "title": "Standardeinstellungen",
       "titleBeforeTopnav": "Einstellungen"
     },
     "playlists": {
@@ -284,7 +295,7 @@
       "placeholder": "Grafana durchsuchen"
     },
     "search-dashboards": {
-      "title": ""
+      "title": "Dashboards durchsuchen"
     },
     "server-settings": {
       "subtitle": "Zeige die in deiner Grafana-Konfiguration festgelegten Einstellungen an",
@@ -313,8 +324,8 @@
       "title": "Speicher"
     },
     "support-bundles": {
-      "subtitle": "",
-      "title": ""
+      "subtitle": "Support Bundles herunterladen",
+      "title": "Support Bundles"
     },
     "teams": {
       "subtitle": "Gruppen von Benutzern mit gemeinsamen Dashboards und Benachrichtigungen",
@@ -337,36 +348,53 @@
     "title": "Das Neueste aus dem Blog"
   },
   "notifications": {
-    "starred-dashboard": "",
-    "unstarred-dashboard": ""
+    "starred-dashboard": "Dashboard markiert",
+    "unstarred-dashboard": "Dashboard nicht markiert"
   },
   "panel": {
     "header-menu": {
-      "hide-legend": "",
+      "copy": "",
+      "create-library-panel": "",
+      "duplicate": "",
+      "edit": "",
+      "explore": "",
+      "get-help": "",
+      "hide-legend": "Legende ausblenden",
       "inspect": "Überprüfen",
       "inspect-data": "Daten",
       "inspect-json": "Panel-JSON",
       "more": "Mehr …",
+      "query": "",
+      "remove": "",
       "share": "Teilen",
-      "show-legend": "",
+      "show-legend": "Legende anzeigen",
+      "unlink-library-panel": "",
       "view": "Anzeigen"
     }
   },
   "refresh-picker": {
     "aria-label": {
-      "choose-interval": "Automatische Aktualisierung deaktiviert. Zeitintervall für Aktualisierungen auswählen",
-      "duration-selected": ""
+      "choose-interval": "Automatische Aktualisierung ausgeschaltet. Aktualisierungszeitintervall auswählen",
+      "duration-selected": "Aktualisierungszeitintervall mit aktuellem Intervall {{durationAriaLabel}} ausgewählt"
     },
     "live-option": {
-      "aria-label": "",
-      "label": ""
+      "aria-label": "Live-Streaming einschalten",
+      "label": "Live"
     },
     "off-option": {
-      "aria-label": "Automatische Aktualisierung deaktivieren",
+      "aria-label": "Automatische Aktualisierung ausschalten",
       "label": "Aus"
     },
     "select-button": {
-      "auto-refresh": ""
+      "auto-refresh": "Automatisches Aktualisierungsintervall festlegen"
+    }
+  },
+  "search": {
+    "dashboard-actions": {
+      "import": "",
+      "new": "",
+      "new-dashboard": "",
+      "new-folder": ""
     }
   },
   "share-modal": {
@@ -425,7 +453,7 @@
       "name": "Name des Schnappschusses",
       "timeout": "Timeout (Sekunden)",
       "timeout-description": "Wenn die Erfassung deiner Dashboard-Metriken lange dauert, musst du ggf. den Timeout-Wert anpassen.",
-      "url-label": ""
+      "url-label": "Schnappschuss-URL"
     },
     "tab-title": {
       "embed": "Einbetten",
@@ -441,7 +469,7 @@
       "light": "Hell"
     },
     "view-json": {
-      "copy-button": ""
+      "copy-button": "In Zwischenablage kopieren"
     }
   },
   "shared-dashboard": {
@@ -471,46 +499,46 @@
       "title": "Absoluter Zeitbereich"
     },
     "calendar": {
-      "apply-button": "",
+      "apply-button": "Zeitbereich anwenden",
       "cancel-button": "Abbrechen",
-      "select-time": ""
+      "select-time": "Einen Zeitbereich auswählen"
     },
     "content": {
-      "empty-recent-list": "",
-      "filter-placeholder": ""
+      "empty-recent-list": "<0><0>Es sieht so aus, als hätten Sie diesen Zeit-Auswähler noch nie benutzt. Sobald Sie einige Zeitintervalle eingeben, werden hier die zuletzt verwendeten Intervalle angezeigt.</0></0><1><0>Lesen Sie die Dokumentation</0><1>, um mehr darüber zu erfahren, wie Sie benutzerdefinierte Zeitbereiche eingeben können.</1></1>",
+      "filter-placeholder": "Schnellbereiche suchen"
     },
     "footer": {
-      "change-settings-button": "",
-      "fiscal-year-option": "",
-      "fiscal-year-start": "",
-      "time-zone-option": "",
-      "time-zone-selection": ""
+      "change-settings-button": "Zeiteinstellungen ändern",
+      "fiscal-year-option": "Geschäftsjahr",
+      "fiscal-year-start": "Startmonat Geschäftsjahr",
+      "time-zone-option": "Zeitzone",
+      "time-zone-selection": "Zeitzonenauswahl"
     },
     "range-content": {
-      "apply-button": "",
-      "default-error": "",
-      "fiscal-year": "",
-      "from-input": "",
-      "range-error": "",
-      "to-input": ""
+      "apply-button": "Zeitbereich anwenden",
+      "default-error": "Ein vergangenes Datum oder \"heutiges\" eingeben",
+      "fiscal-year": "Geschäftsjahr",
+      "from-input": "Von",
+      "range-error": "„Von“ darf nicht nach „Bis“ sein",
+      "to-input": "Bis"
     },
     "range-picker": {
-      "backwards-time-aria-label": "",
-      "current-time-selected": "",
-      "forwards-time-aria-label": "",
-      "to": "",
-      "zoom-out-button": "",
-      "zoom-out-tooltip": ""
+      "backwards-time-aria-label": "Zeitbereich nach hinten verschieben",
+      "current-time-selected": "Ausgewählter Zeitbereich: {{currentTimeRange}}",
+      "forwards-time-aria-label": "Zeitbereich nach vorne verschieben",
+      "to": "bis",
+      "zoom-out-button": "Zeitbereich verkleinern",
+      "zoom-out-tooltip": "Zeitbereich verkleinern <1></1> STRG +Z"
     },
     "time-range": {
-      "aria-role": "",
-      "default-title": "",
-      "example-title": "",
-      "specify": ""
+      "aria-role": "Zeitbereichauswahl",
+      "default-title": "Zeitbereiche",
+      "example-title": "Zeitbereiche-Beispiel",
+      "specify": "Zeitbereich festlegen <1></1>"
     },
     "zone": {
-      "select-aria-label": "",
-      "select-search-input": ""
+      "select-aria-label": "Zeitzonen-Auswähler",
+      "select-search-input": "Suchbegriff eingeben (Land, Stadt, Abkürzung)"
     }
   },
   "user-orgs": {
@@ -528,7 +556,7 @@
       "name-label": "Name",
       "username-label": "Benutzername"
     },
-    "title": "Profil bearbeiten"
+    "title": "Profil"
   },
   "user-session": {
     "browser-column": "Browser & Betriebssystem",
@@ -542,11 +570,11 @@
   },
   "variable": {
     "picker": {
-      "input": "",
-      "link-all": "",
-      "option-all": "",
-      "option-selected-values": "",
-      "option-tooltip": ""
+      "input": "Variablenwert eingeben",
+      "link-all": "Alle",
+      "option-all": "Alle",
+      "option-selected-values": "Ausgewählt",
+      "option-tooltip": "Auswahl löschen"
     }
   }
 }

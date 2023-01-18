@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
@@ -96,7 +96,7 @@ func (ts *TimeSettings) ToDB() ([]byte, error) {
 }
 
 // BuildTimeSettings build time settings object using selected values if enabled and are valid or dashboard default values
-func (pd PublicDashboard) BuildTimeSettings(dashboard *models.Dashboard, reqDTO PublicDashboardQueryDTO) TimeSettings {
+func (pd PublicDashboard) BuildTimeSettings(dashboard *dashboards.Dashboard, reqDTO PublicDashboardQueryDTO) TimeSettings {
 	from := dashboard.Data.GetPath("time", "from").MustString()
 	to := dashboard.Data.GetPath("time", "to").MustString()
 

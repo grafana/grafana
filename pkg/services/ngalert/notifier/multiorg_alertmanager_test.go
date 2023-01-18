@@ -179,18 +179,18 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 	{
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 		require.Len(t, mam.alertmanagers, 3)
-		require.True(t, mam.alertmanagers[1].ready())
-		require.False(t, mam.alertmanagers[2].ready())
-		require.True(t, mam.alertmanagers[3].ready())
+		require.True(t, mam.alertmanagers[1].Ready())
+		require.False(t, mam.alertmanagers[2].Ready())
+		require.True(t, mam.alertmanagers[3].Ready())
 	}
 
 	// On the next sync, it never panics and alertmanager is still not ready.
 	{
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 		require.Len(t, mam.alertmanagers, 3)
-		require.True(t, mam.alertmanagers[1].ready())
-		require.False(t, mam.alertmanagers[2].ready())
-		require.True(t, mam.alertmanagers[3].ready())
+		require.True(t, mam.alertmanagers[1].Ready())
+		require.False(t, mam.alertmanagers[2].Ready())
+		require.True(t, mam.alertmanagers[3].Ready())
 	}
 
 	// If we fix the configuration, it becomes ready.
@@ -198,9 +198,9 @@ func TestMultiOrgAlertmanager_SyncAlertmanagersForOrgsWithFailures(t *testing.T)
 		configStore.configs = map[int64]*models.AlertConfiguration{} // It'll apply the default config.
 		require.NoError(t, mam.LoadAndSyncAlertmanagersForOrgs(ctx))
 		require.Len(t, mam.alertmanagers, 3)
-		require.True(t, mam.alertmanagers[1].ready())
-		require.True(t, mam.alertmanagers[2].ready())
-		require.True(t, mam.alertmanagers[3].ready())
+		require.True(t, mam.alertmanagers[1].Ready())
+		require.True(t, mam.alertmanagers[2].Ready())
+		require.True(t, mam.alertmanagers[3].Ready())
 	}
 }
 
@@ -238,23 +238,13 @@ func TestMultiOrgAlertmanager_AlertmanagerFor(t *testing.T) {
 		require.EqualError(t, err, ErrNoAlertmanagerForOrg.Error())
 	}
 
-	// Now, let's try to request an Alertmanager that is not ready.
-	{
-		// let's delete its "running config" to make it non-ready
-		mam.alertmanagers[1].config = nil
-		am, err := mam.AlertmanagerFor(1)
-		require.NotNil(t, am)
-		require.False(t, am.Ready())
-		require.EqualError(t, err, ErrAlertmanagerNotReady.Error())
-	}
-
 	// With an Alertmanager that exists, it responds correctly.
 	{
 		am, err := mam.AlertmanagerFor(2)
 		require.NoError(t, err)
 		require.Equal(t, *am.GetStatus().VersionInfo.Version, "N/A")
 		require.Equal(t, am.orgID, int64(2))
-		require.NotNil(t, am.config)
+		require.NotNil(t, am.Base.ConfigHash())
 	}
 
 	// Let's now remove the previous queried organization.

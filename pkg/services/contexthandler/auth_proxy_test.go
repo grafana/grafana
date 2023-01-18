@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -106,7 +107,7 @@ func getContextHandler(t *testing.T) *ContextHandler {
 
 	return ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc,
 		renderSvc, sqlStore, tracer, authProxy, loginService, nil, authenticator,
-		&userService, orgService, nil, nil, &authntest.FakeService{})
+		&userService, orgService, nil, featuremgmt.WithFeatures(), &authntest.FakeService{})
 }
 
 type fakeAuthenticator struct{}

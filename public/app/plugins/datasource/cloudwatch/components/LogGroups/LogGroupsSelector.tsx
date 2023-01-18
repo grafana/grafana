@@ -2,10 +2,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, Space } from '@grafana/experimental';
-import { Button, Checkbox, Icon, Label, LoadingPlaceholder, Modal, useStyles2 } from '@grafana/ui';
+import { Button, Checkbox, Icon, Label, LoadingPlaceholder, Modal, Select, useStyles2 } from '@grafana/ui';
 
 import Search from '../../Search';
-import { DescribeLogGroupsRequest, LogGroup, LogGroupResponse, ResourceResponse } from '../../types';
+import { DescribeLogGroupsRequest, ResourceResponse, LogGroupResponse } from '../../resources/types';
+import { LogGroup } from '../../types';
 import { Account, ALL_ACCOUNTS_OPTION } from '../Account';
 import getStyles from '../styles';
 
@@ -13,12 +14,14 @@ type CrossAccountLogsQueryProps = {
   selectedLogGroups?: LogGroup[];
   accountOptions?: Array<SelectableValue<string>>;
   fetchLogGroups: (params: Partial<DescribeLogGroupsRequest>) => Promise<Array<ResourceResponse<LogGroupResponse>>>;
+  variables?: string[];
   onChange: (selectedLogGroups: LogGroup[]) => void;
   onBeforeOpen?: () => void;
 };
 
 export const LogGroupsSelector = ({
   accountOptions = [],
+  variables = [],
   fetchLogGroups,
   onChange,
   onBeforeOpen,
@@ -31,6 +34,19 @@ export const LogGroupsSelector = ({
   const [searchAccountId, setSearchAccountId] = useState(ALL_ACCOUNTS_OPTION.value);
   const [isLoading, setIsLoading] = useState(false);
   const styles = useStyles2(getStyles);
+  const selectedLogGroupsCounter = useMemo(
+    () => selectedLogGroups.filter((lg) => !lg.name?.startsWith('$')).length,
+    [selectedLogGroups]
+  );
+  const variableOptions = useMemo(() => variables.map((v) => ({ label: v, value: v })), [variables]);
+  const selectedVariable = useMemo(
+    () => selectedLogGroups.find((lg) => lg.name?.startsWith('$'))?.name,
+    [selectedLogGroups]
+  );
+  const currentVariableOption = {
+    label: selectedVariable,
+    value: selectedVariable,
+  };
 
   useEffect(() => {
     setSelectedLogGroups(props.selectedLogGroups ?? []);
@@ -136,7 +152,7 @@ export const LogGroupsSelector = ({
               <thead>
                 <tr className={styles.row}>
                   <td className={styles.cell}>Log Group</td>
-                  <td className={styles.cell}>Account name</td>
+                  {accountOptions.length > 0 && <td className={styles.cell}>Account label</td>}
                   <td className={styles.cell}>Account ID</td>
                 </tr>
               </thead>
@@ -169,7 +185,7 @@ export const LogGroupsSelector = ({
                           </label>
                         </div>
                       </td>
-                      <td className={styles.cell}>{row.accountLabel}</td>
+                      {accountOptions.length > 0 && <td className={styles.cell}>{row.accountLabel}</td>}
                       <td className={styles.cell}>{row.accountId}</td>
                     </tr>
                   ))}
@@ -179,9 +195,30 @@ export const LogGroupsSelector = ({
         </div>
         <Space layout="block" v={2} />
         <Label className={styles.logGroupCountLabel}>
-          {selectedLogGroups.length} log group{selectedLogGroups.length !== 1 && 's'} selected
+          {selectedLogGroupsCounter} log group{selectedLogGroupsCounter !== 1 && 's'} selected
         </Label>
-        <Space layout="block" v={1.5} />
+        <Space layout="block" v={1} />
+        <EditorField
+          label="Template variable"
+          width={26}
+          tooltip="Optionally you can specify a single or multi-valued template variable. Select a variable separately or in conjunction with log groups."
+        >
+          <Select
+            isClearable
+            aria-label="Template variable"
+            value={currentVariableOption}
+            allowCustomValue
+            options={variableOptions}
+            onChange={(option) => {
+              const newValues = selectedLogGroups.filter((lg) => !lg.name?.startsWith('$'));
+              if (option?.label) {
+                newValues.push({ name: option.label, arn: option.label });
+              }
+              setSelectedLogGroups(newValues);
+            }}
+          />
+        </EditorField>
+        <Space layout="block" v={2} />
         <div>
           <Button onClick={handleApply} type="button" className={styles.addBtn}>
             Add log groups

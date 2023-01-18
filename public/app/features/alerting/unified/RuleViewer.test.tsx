@@ -4,8 +4,9 @@ import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { byRole } from 'testing-library-selector';
 
-import { locationService } from '@grafana/runtime';
+import { locationService, setBackendSrv } from '@grafana/runtime';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
@@ -69,6 +70,10 @@ jest.mock('./hooks/useIsRuleEditable');
 const mocks = {
   useIsRuleEditable: jest.mocked(useIsRuleEditable),
 };
+
+beforeAll(() => {
+  setBackendSrv(backendSrv);
+});
 
 describe('RuleViewer', () => {
   let mockCombinedRule: jest.MockedFn<typeof useCombinedRule>;

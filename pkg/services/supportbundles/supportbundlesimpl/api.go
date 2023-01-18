@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -72,32 +71,20 @@ func (s *Service) handleCreate(ctx *models.ReqContext) response.Response {
 	return response.JSON(http.StatusCreated, data)
 }
 
-func (s *Service) handleDownload(ctx *models.ReqContext) {
+func (s *Service) handleDownload(ctx *models.ReqContext) response.Response {
 	uid := web.Params(ctx.Req)[":uid"]
 	bundle, err := s.get(ctx.Req.Context(), uid)
 	if err != nil {
-		ctx.Redirect("/admin/support-bundles")
-		return
+		return response.Redirect("/admin/support-bundles")
 	}
 
 	if bundle.State != supportbundles.StateComplete {
-		ctx.Redirect("/admin/support-bundles")
-		return
-	}
-
-	if bundle.FilePath == "" {
-		ctx.Redirect("/admin/support-bundles")
-		return
-	}
-
-	if _, err := os.Stat(bundle.FilePath); err != nil {
-		ctx.Redirect("/admin/support-bundles")
-		return
+		return response.Redirect("/admin/support-bundles")
 	}
 
 	ctx.Resp.Header().Set("Content-Type", "application/tar+gzip")
-	ctx.Resp.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%d.tar.gz", bundle.CreatedAt))
-	http.ServeFile(ctx.Resp, ctx.Req, bundle.FilePath)
+	ctx.Resp.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s.tar.gz", uid))
+	return response.CreateNormalResponse(ctx.Resp.Header(), bundle.TarBytes, http.StatusOK)
 }
 
 func (s *Service) handleRemove(ctx *models.ReqContext) response.Response {
