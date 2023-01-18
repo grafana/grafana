@@ -1,7 +1,5 @@
 package kind
 
-import "github.com/grafana/grafana/packages/grafana-schema/src/common"
-
 name: "Preferences"
 maturity: "merged"
 
@@ -13,7 +11,7 @@ lineage: seqs: [
 				homeDashboardUID?: string
 
 				// The timezone selection
-				timezone?: common.TimeZone
+				timezone?: string
 
 				// day of the week (sunday, monday, etc)
 				weekStart?: string

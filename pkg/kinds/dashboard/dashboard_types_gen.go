@@ -158,6 +158,15 @@ const (
 	StyleLight Style = "light"
 )
 
+// Defines values for Timezone.
+const (
+	TimezoneBrowser Timezone = "browser"
+
+	TimezoneEmpty Timezone = ""
+
+	TimezoneUtc Timezone = "utc"
+)
+
 // TODO docs
 // FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
 type AnnotationQuery struct {
@@ -598,9 +607,6 @@ type ThresholdsConfig struct {
 // ThresholdsMode defines model for ThresholdsMode.
 type ThresholdsMode string
 
-// A specific timezone from https://en.wikipedia.org/wiki/Tz_database
-type TimeZone interface{}
-
 // TODO docs
 // FIXME this is extremely underspecfied; wasn't obvious which typescript types corresponded to it
 type Transformation struct {
@@ -748,8 +754,8 @@ type Dashboard struct {
 		TimeOptions []string `json:"time_options"`
 	} `json:"timepicker,omitempty"`
 
-	// A specific timezone from https://en.wikipedia.org/wiki/Tz_database
-	Timezone *TimeZone `json:"timezone,omitempty"`
+	// Timezone of dashboard,
+	Timezone *Timezone `json:"timezone,omitempty"`
 
 	// Title of dashboard.
 	Title *string `json:"title,omitempty"`
@@ -766,3 +772,6 @@ type Dashboard struct {
 
 // Theme of dashboard.
 type Style string
+
+// Timezone of dashboard,
+type Timezone string

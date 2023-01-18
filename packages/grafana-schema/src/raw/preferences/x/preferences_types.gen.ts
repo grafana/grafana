@@ -35,13 +35,9 @@ export interface Preferences {
   /**
    * The timezone selection
    */
-  timezone?: common.TimeZone;
+  timezone?: string;
   /**
    * day of the week (sunday, monday, etc)
    */
   weekStart?: string;
 }
-
-export const defaultPreferences: Partial<Preferences> = {
-  timezone: common.defaultTimeZone,
-};

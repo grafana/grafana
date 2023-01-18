@@ -1,7 +1,6 @@
 package kind
 
 import "strings"
-import "github.com/grafana/grafana/packages/grafana-schema/src/common"
 
 name:     "Dashboard"
 maturity: "experimental"
@@ -31,7 +30,7 @@ lineage: seqs: [
 				// Theme of dashboard.
 				style: "light" | *"dark" @grafanamaturity(NeedsExpertReview)
 				// Timezone of dashboard,
-				timezone?: common.TimeZone @grafanamaturity(NeedsExpertReview)
+				timezone?: *"browser" | "utc" | "" @grafanamaturity(NeedsExpertReview)
 				// Whether a dashboard is editable or not.
 				editable:     bool | *true
 				graphTooltip: #DashboardCursorSync @grafanamaturity(NeedsExpertReview)

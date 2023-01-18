@@ -776,7 +776,7 @@ export interface Dashboard {
   /**
    * Timezone of dashboard,
    */
-  timezone?: common.TimeZone;
+  timezone?: ('browser' | 'utc' | '');
   /**
    * Title of dashboard.
    */
@@ -804,5 +804,5 @@ export const defaultDashboard: Partial<Dashboard> = {
   schemaVersion: 36,
   style: 'dark',
   tags: [],
-  timezone: common.defaultTimeZone,
+  timezone: 'browser',
 };

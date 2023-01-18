@@ -12,14 +12,14 @@ title: Preferences kind
 
 ## Properties
 
-| Property           | Type                                              | Required | Description                                                                            |
-|--------------------|---------------------------------------------------|----------|----------------------------------------------------------------------------------------|
-| `homeDashboardUID` | string                                            | No       | UID for the home dashboard                                                             |
-| `language`         | string                                            | No       | Selected language (beta)                                                               |
-| `queryHistory`     | [QueryHistoryPreference](#queryhistorypreference) | No       |                                                                                        |
-| `theme`            | string                                            | No       | light, dark, empty is default                                                          |
-| `timezone`         | string                                            | No       | A specific timezone from https://en.wikipedia.org/wiki/Tz_database Default: `browser`. |
-| `weekStart`        | string                                            | No       | day of the week (sunday, monday, etc)                                                  |
+| Property           | Type                                              | Required | Description                           |
+|--------------------|---------------------------------------------------|----------|---------------------------------------|
+| `homeDashboardUID` | string                                            | No       | UID for the home dashboard            |
+| `language`         | string                                            | No       | Selected language (beta)              |
+| `queryHistory`     | [QueryHistoryPreference](#queryhistorypreference) | No       |                                       |
+| `theme`            | string                                            | No       | light, dark, empty is default         |
+| `timezone`         | string                                            | No       | The timezone selection                |
+| `weekStart`        | string                                            | No       | day of the week (sunday, monday, etc) |
 
 ## QueryHistoryPreference
 

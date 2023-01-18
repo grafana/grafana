@@ -101,9 +101,6 @@ export type {
   QueryHistoryPreference
 } from './raw/preferences/x/preferences_types.gen';
 
-// Raw generated enums and default consts from preferences kind.
-export { defaultPreferences } from './raw/preferences/x/preferences_types.gen';
-
 // Raw generated types from Team kind.
 export type { Team } from './raw/team/x/team_types.gen';
 
