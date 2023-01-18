@@ -553,10 +553,8 @@ func (mss *mockSearchService) SearchHandler(_ context.Context, q *search.Query) 
 func (mss *mockSearchService) SortOptions() []models.SortOption { return nil }
 
 func setUp(confs ...setUpConf) *HTTPServer {
-	singleAlert := &models.Alert{Id: 1, DashboardId: 1, Name: "singlealert"}
 	store := dbtest.NewFakeDB()
 	hs := &HTTPServer{SQLStore: store, SearchService: &mockSearchService{}}
-	store.ExpectedAlert = singleAlert
 
 	aclMockResp := []*models.DashboardACLInfoDTO{}
 	for _, c := range confs {
@@ -564,7 +562,6 @@ func setUp(confs ...setUpConf) *HTTPServer {
 			aclMockResp = c.aclMockResp
 		}
 	}
-	store.ExpectedTeamsByUser = []*team.TeamDTO{}
 	teamSvc := &teamtest.FakeService{}
 	dashSvc := &dashboards.FakeDashboardService{}
 	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {

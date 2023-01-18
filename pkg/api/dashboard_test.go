@@ -43,7 +43,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
 	"github.com/grafana/grafana/pkg/services/provisioning"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -733,7 +732,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("Given a dashboard to validate", func(t *testing.T) {
-		sqlmock := mockstore.SQLStoreMock{}
+		sqlmock := dbtest.NewFakeDB()
 
 		t.Run("When an invalid dashboard json is posted", func(t *testing.T) {
 			cmd := models.ValidateDashboardCommand{
@@ -748,7 +747,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				assert.Equal(t, 422, sc.resp.Code)
 				assert.False(t, result.Get("isValid").MustBool())
 				assert.NotEmpty(t, result.Get("message").MustString())
-			}, &sqlmock)
+			}, sqlmock)
 		})
 
 		t.Run("When a dashboard with a too-low schema version is posted", func(t *testing.T) {
@@ -764,7 +763,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				assert.Equal(t, 412, sc.resp.Code)
 				assert.False(t, result.Get("isValid").MustBool())
 				assert.Equal(t, "invalid schema version", result.Get("message").MustString())
-			}, &sqlmock)
+			}, sqlmock)
 		})
 
 		t.Run("When a valid dashboard is posted", func(t *testing.T) {
@@ -782,7 +781,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				result := sc.ToJSON()
 				assert.Equal(t, 200, sc.resp.Code)
 				assert.True(t, result.Get("isValid").MustBool())
-			}, &sqlmock)
+			}, sqlmock)
 		})
 	})
 

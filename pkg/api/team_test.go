@@ -21,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
@@ -39,7 +38,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		store.Cfg = hs.Cfg
 		hs.teamService = teamimpl.ProvideService(store, hs.Cfg)
 		hs.SQLStore = store
-		mock := &mockstore.SQLStoreMock{}
+		mock := dbtest.NewFakeDB()
 
 		loggedInUserScenarioWithRole(t, "When admin is calling GET on", "GET", "/api/teams/search", "/api/teams/search",
 			org.RoleAdmin, func(sc *scenarioContext) {
