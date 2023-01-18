@@ -256,6 +256,7 @@ type GetDashboardTagsQuery struct {
 type GetDashboardsQuery struct {
 	DashboardIDs  []int64
 	DashboardUIDs []string
+	OrgID         int64
 	Result        []*Dashboard
 }
 

@@ -50,6 +50,7 @@ import { expandRecordingRules } from './language_utils';
 import { renderLegendFormat } from './legend';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { getInitHints, getQueryHints } from './query_hints';
+import { QueryEditorMode } from './querybuilder/shared/types';
 import { getOriginalMetricName, transform, transformV2 } from './result_transformer';
 import { trackQuery } from './tracking';
 import {
@@ -92,6 +93,7 @@ export class PrometheusDatasource
   customQueryParameters: any;
   datasourceConfigurationPrometheusFlavor?: PromApplication;
   datasourceConfigurationPrometheusVersion?: string;
+  defaultEditor?: QueryEditorMode;
   exemplarsAvailable: boolean;
   subType: PromApplication;
   rulerEnabled: boolean;
@@ -126,6 +128,7 @@ export class PrometheusDatasource
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
     this.datasourceConfigurationPrometheusFlavor = instanceSettings.jsonData.prometheusType;
     this.datasourceConfigurationPrometheusVersion = instanceSettings.jsonData.prometheusVersion;
+    this.defaultEditor = instanceSettings.jsonData.defaultEditor;
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
 

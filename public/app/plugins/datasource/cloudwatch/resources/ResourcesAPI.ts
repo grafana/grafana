@@ -4,28 +4,24 @@ import { DataSourceInstanceSettings, SelectableValue } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 
-import { CloudWatchRequest } from './query-runner/CloudWatchRequest';
+import { CloudWatchRequest } from '../query-runner/CloudWatchRequest';
+import { CloudWatchJsonData, LogGroupField, MultiFilters } from '../types';
+
 import {
-  CloudWatchJsonData,
+  ResourceRequest,
+  Account,
+  ResourceResponse,
   DescribeLogGroupsRequest,
+  LogGroupResponse,
+  GetLogGroupFieldsRequest,
+  GetMetricsRequest,
   GetDimensionKeysRequest,
   GetDimensionValuesRequest,
-  GetMetricsRequest,
-  LogGroupResponse,
   MetricResponse,
-  MultiFilters,
-  Account,
-  ResourceRequest,
-  ResourceResponse,
-  GetLogGroupFieldsRequest,
-  LogGroupField,
+  SelectableResourceValue,
 } from './types';
 
-export interface SelectableResourceValue extends SelectableValue<string> {
-  text: string;
-}
-
-export class CloudWatchAPI extends CloudWatchRequest {
+export class ResourcesAPI extends CloudWatchRequest {
   private memoizedGetRequest;
 
   constructor(instanceSettings: DataSourceInstanceSettings<CloudWatchJsonData>, templateSrv: TemplateSrv) {

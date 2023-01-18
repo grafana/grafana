@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -646,7 +647,7 @@ func (hs *HTTPServer) NotificationTest(c *models.ReqContext) response.Response {
 	}
 
 	if err := hs.AlertNotificationService.HandleNotificationTestCommand(c.Req.Context(), cmd); err != nil {
-		if errors.Is(err, models.ErrSmtpNotEnabled) {
+		if errors.Is(err, notifications.ErrSmtpNotEnabled) {
 			return response.Error(412, err.Error(), err)
 		}
 		var alertingErr alerting.ValidationError
