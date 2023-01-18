@@ -109,7 +109,7 @@ func TestJWTClaimConfig(t *testing.T) {
 		JWTAuthRoleAttributePath:       "roles",
 	}
 
-	// #nosec G101 -- This is dummy/test token
+	// #nosec G101 -- This is a dummy/test token
 	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.XbPfbIHMI6arZ3Y922BhjWgQzWXcXNrz0ogtVhfEd2o"
 
 	type Dictionary map[string]interface{}
@@ -164,18 +164,13 @@ func TestJWTClaimConfig(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		fmt.Println(tc.desc)
 		t.Run(tc.desc, func(t *testing.T) {
 			for _, claims := range tc.claimsConfigurations {
 				if claims["JWTAuthEmailClaim"] == true {
 					cfg.JWTAuthEmailClaim = "email"
-				} else {
-					cfg.JWTAuthEmailClaim = ""
 				}
 				if claims["JWTAuthUsernameClaim"] == true {
 					cfg.JWTAuthUsernameClaim = "preferred_username"
-				} else {
-					cfg.JWTAuthUsernameClaim = ""
 				}
 			}
 		})
