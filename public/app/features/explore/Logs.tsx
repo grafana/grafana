@@ -507,6 +507,22 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 scrollElement={scrollElement}
                 onLogRowHover={this.onLogRowHover}
               />
+              {!loading && !hasData && !scanning && (
+                <div className={styles.noData}>
+                  No logs found.
+                  <Button size="sm" variant="secondary" onClick={this.onClickScan}>
+                    Scan for older logs
+                  </Button>
+                </div>
+              )}
+              {scanning && (
+                <div className={styles.noData}>
+                  <span>{scanText}</span>
+                  <Button size="sm" variant="secondary" onClick={this.onClickStopScan}>
+                    Stop scan
+                  </Button>
+                </div>
+              )}
             </div>
             <LogsNavigation
               logsSortOrder={logsSortOrder}
@@ -521,22 +537,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
               clearCache={clearCache}
             />
           </div>
-          {!loading && !hasData && !scanning && (
-            <div className={styles.noData}>
-              No logs found.
-              <Button size="xs" fill="text" onClick={this.onClickScan}>
-                Scan for older logs
-              </Button>
-            </div>
-          )}
-          {scanning && (
-            <div className={styles.noData}>
-              <span>{scanText}</span>
-              <Button size="xs" fill="text" onClick={this.onClickStopScan}>
-                Stop scan
-              </Button>
-            </div>
-          )}
         </Collapse>
       </>
     );

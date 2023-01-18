@@ -12,12 +12,15 @@
       "light-theme": "Light",
       "search": "Search"
     },
+    "search-box": {
+      "placeholder": "Search Grafana"
+    },
     "section": {
       "actions": "Actions",
       "dashboard-search-results": "Dashboards",
       "pages": "Pages",
       "preferences": "Preferences",
-      "recent-dashboards": "Recently viewed dashboards"
+      "recent-dashboards": "Recent dashboards"
     }
   },
   "common": {

@@ -57,14 +57,6 @@ type UpdatePluginSettingVersionCmd struct {
 // ---------------------
 // QUERIES
 
-type PluginSettingInfoDTO struct {
-	OrgId         int64
-	PluginId      string
-	Enabled       bool
-	Pinned        bool
-	PluginVersion string
-}
-
 type GetPluginSettingByIdQuery struct {
 	PluginId string
 	OrgId    int64

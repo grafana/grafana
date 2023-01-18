@@ -17,7 +17,7 @@ const indexPatternTypes: Array<SelectableValue<'none' | Interval>> = [
 
 const esVersions: SelectableValue[] = [
   { label: '7.10+', value: '7.10.0' },
-  { label: '8.0+', value: '8.0.0' },
+  { label: '8.x', value: '8.0.0' },
 ];
 
 type Props = {
