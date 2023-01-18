@@ -269,14 +269,6 @@ export enum LegendDisplayMode {
 /**
  * TODO docs
  */
-export interface TableSortByFieldState {
-  desc?: boolean;
-  displayName: string;
-}
-
-/**
- * TODO docs
- */
 export interface SingleStatBaseOptions extends OptionsWithTextFormatting {
   orientation: VizOrientation;
   reduceOptions: ReduceDataOptions;
@@ -393,35 +385,6 @@ export enum BigValueTextMode {
 export type FieldTextAlignment = ('auto' | 'left' | 'right' | 'center');
 
 /**
- * Internally, this is the "type" of cell that's being displayed
- * in the table such as colored text, JSON, gauge, etc.
- * The color-background-solid, gradient-gauge, and lcd-gauge
- * modes are deprecated in favor of new cell subOptions
- */
-export enum TableCellDisplayMode {
-  Auto = 'auto',
-  BasicGauge = 'basic',
-  ColorBackground = 'color-background',
-  ColorBackgroundSolid = 'color-background-solid',
-  ColorText = 'color-text',
-  Gauge = 'gauge',
-  GradientGauge = 'gradient-gauge',
-  Image = 'image',
-  JSONView = 'json-view',
-  LcdGauge = 'lcd-gauge',
-}
-
-/**
- * Display mode to the "Colored Background" display
- * mode for table cells. Either displays a solid color (basic mode)
- * or a gradient.
- */
-export enum TableCellBackgroundDisplayMode {
-  Basic = 'basic',
-  Gradient = 'gradient',
-}
-
-/**
  * TODO docs
  */
 export interface VizTextDisplayOptions {
@@ -490,6 +453,43 @@ export enum BarGaugeDisplayMode {
   Basic = 'basic',
   Gradient = 'gradient',
   Lcd = 'lcd',
+}
+
+/**
+ * Internally, this is the "type" of cell that's being displayed
+ * in the table such as colored text, JSON, gauge, etc.
+ * The color-background-solid, gradient-gauge, and lcd-gauge
+ * modes are deprecated in favor of new cell subOptions
+ */
+export enum TableCellDisplayMode {
+  Auto = 'auto',
+  BasicGauge = 'basic',
+  ColorBackground = 'color-background',
+  ColorBackgroundSolid = 'color-background-solid',
+  ColorText = 'color-text',
+  Gauge = 'gauge',
+  GradientGauge = 'gradient-gauge',
+  Image = 'image',
+  JSONView = 'json-view',
+  LcdGauge = 'lcd-gauge',
+}
+
+/**
+ * Display mode to the "Colored Background" display
+ * mode for table cells. Either displays a solid color (basic mode)
+ * or a gradient.
+ */
+export enum TableCellBackgroundDisplayMode {
+  Basic = 'basic',
+  Gradient = 'gradient',
+}
+
+/**
+ * TODO docs
+ */
+export interface TableSortByFieldState {
+  desc?: boolean;
+  displayName: string;
 }
 
 /**

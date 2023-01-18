@@ -138,12 +138,6 @@ LegendPlacement: "bottom" | "right" @cuetsy(kind="type")
 LegendDisplayMode: "list" | "table" | "hidden" @cuetsy(kind="enum")
 
 // TODO docs
-TableSortByFieldState: {
-	displayName: string
-	desc?:       bool
-} @cuetsy(kind="interface")
-
-// TODO docs
 SingleStatBaseOptions: {
 	OptionsWithTextFormatting
 	reduceOptions: ReduceDataOptions
@@ -200,18 +194,6 @@ BigValueTextMode: "auto" | "value" | "value_and_name" | "name" | "none" @cuetsy(
 // TODO -- should not be table specific!
 // TODO docs
 FieldTextAlignment: "auto" | "left" | "right" | "center" @cuetsy(kind="type")
-
-// Internally, this is the "type" of cell that's being displayed
-// in the table such as colored text, JSON, gauge, etc.
-// The color-background-solid, gradient-gauge, and lcd-gauge
-// modes are deprecated in favor of new cell subOptions
-TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-background-solid" | "gradient-gauge" | "lcd-gauge" | "json-view" | "basic" | "image" | "gauge" @cuetsy(kind="enum",memberNames="Auto|ColorText|ColorBackground|ColorBackgroundSolid|GradientGauge|LcdGauge|JSONView|BasicGauge|Image|Gauge")
-
-// Display mode to the "Colored Background" display
-// mode for table cells. Either displays a solid color (basic mode)
-// or a gradient.
-TableCellBackgroundDisplayMode: "basic" | "gradient" @cuetsy(kind="enum",memberNames="Basic|Gradient")
-
 
 // TODO docs
 VizTextDisplayOptions: {

@@ -72,6 +72,30 @@
         0
       ]
     },
+    "barchart_panel": {
+      "name": "Barchart-Panel",
+      "pluralName": "Barchart-Panels",
+      "machineName": "barchart_panel",
+      "pluralMachineName": "barchart_panels",
+      "lineageIsGroup": true,
+      "maturity": "merged",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
+    "bargauge_panel": {
+      "name": "Bargauge-Panel",
+      "pluralName": "Bargauge-Panels",
+      "machineName": "bargauge_panel",
+      "pluralMachineName": "bargauge_panels",
+      "lineageIsGroup": true,
+      "maturity": "merged",
+      "currentVersion": [
+        0,
+        0
+      ]
+    },
     "cloudwatch_dsoptions": {
       "name": "Cloudwatch-DSOptions",
       "pluralName": "Cloudwatch-DSOptionss",
