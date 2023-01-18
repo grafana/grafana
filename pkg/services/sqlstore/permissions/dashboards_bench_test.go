@@ -41,13 +41,13 @@ func setupBenchMark(b *testing.B, numUsers, numDashboards int) db.DB {
 	store := db.InitTestDB(b)
 	now := time.Now()
 	err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		dashes := make([]models.Dashboard, 0, numDashboards)
+		dashes := make([]dashboards.Dashboard, 0, numDashboards)
 		for i := 1; i <= numDashboards; i++ {
 			str := strconv.Itoa(i)
-			dashes = append(dashes, models.Dashboard{
-				OrgId:    1,
+			dashes = append(dashes, dashboards.Dashboard{
+				OrgID:    1,
 				IsFolder: false,
-				Uid:      str,
+				UID:      str,
 				Slug:     str,
 				Title:    str,
 				Data:     simplejson.New(),
@@ -82,7 +82,7 @@ func setupBenchMark(b *testing.B, numUsers, numDashboards int) db.DB {
 				permissions = append(permissions, accesscontrol.Permission{
 					RoleID:  int64(i),
 					Action:  dashboards.ActionDashboardsRead,
-					Scope:   dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.Uid),
+					Scope:   dashboards.ScopeDashboardsProvider.GetResourceScopeUID(dash.UID),
 					Updated: now,
 					Created: now,
 				})
