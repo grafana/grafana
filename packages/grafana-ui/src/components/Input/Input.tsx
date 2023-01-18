@@ -61,7 +61,7 @@ export const Input = React.forwardRef<HTMLInputElement, Props>((props, ref) => {
           {...restProps}
           style={{
             paddingLeft: prefix ? prefixRect.width + 12 : undefined,
-            paddingRight: suffix || loading ? suffixRect.width + 12 : undefined,
+            paddingRight: suffix || loading ? (suffix ? suffixRect.width + 12 : 0) : undefined,
           }}
         />
 
@@ -171,7 +171,8 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
         &:not(:first-child) {
           padding-left: ${prefixSuffixStaticWidth};
         }
-        &:not(:last-child) {
+        &:not(:last-child),
+        &:not(& + div > [data-testid='Spinner']) {
           padding-right: ${prefixSuffixStaticWidth};
         }
         &[readonly] {
