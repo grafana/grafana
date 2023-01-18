@@ -541,7 +541,6 @@ func TestNestedFolderService(t *testing.T) {
 			// CreateFolder should also call the folder store's create method.
 			require.True(t, folderStore.CreateCalled)
 			require.NotNil(t, actualCmd)
-
 		})
 
 		t.Run("move, no view permission should fail", func(t *testing.T) {
