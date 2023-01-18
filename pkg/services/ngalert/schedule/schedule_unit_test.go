@@ -103,12 +103,13 @@ func TestProcessTicks(t *testing.T) {
 	t.Run("on 1st tick alert rule should be evaluated", func(t *testing.T) {
 		tick = tick.Add(cfg.BaseInterval)
 
-		scheduled, stopped := sched.processTick(ctx, dispatcherGroup, tick)
+		scheduled, stopped, paused := sched.processTick(ctx, dispatcherGroup, tick)
 
 		require.Len(t, scheduled, 1)
 		require.Equal(t, alertRule1, scheduled[0].rule)
 		require.Equal(t, tick, scheduled[0].scheduledAt)
 		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+		require.Emptyf(t, paused, "No rules are expected to be paused")
 
 		assertEvalRun(t, evalAppliedCh, tick, alertRule1.GetKey())
 	})
@@ -119,18 +120,19 @@ func TestProcessTicks(t *testing.T) {
 
 	t.Run("on 2nd tick first alert rule should be evaluated", func(t *testing.T) {
 		tick = tick.Add(cfg.BaseInterval)
-		scheduled, stopped := sched.processTick(ctx, dispatcherGroup, tick)
+		scheduled, stopped, paused := sched.processTick(ctx, dispatcherGroup, tick)
 
 		require.Len(t, scheduled, 1)
 		require.Equal(t, alertRule1, scheduled[0].rule)
 		require.Equal(t, tick, scheduled[0].scheduledAt)
 		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+		require.Emptyf(t, paused, "No rules are expected to be paused")
 		assertEvalRun(t, evalAppliedCh, tick, alertRule1.GetKey())
 	})
 
 	t.Run("on 3rd tick two alert rules should be evaluated", func(t *testing.T) {
 		tick = tick.Add(cfg.BaseInterval)
-		scheduled, stopped := sched.processTick(ctx, dispatcherGroup, tick)
+		scheduled, stopped, paused := sched.processTick(ctx, dispatcherGroup, tick)
 		require.Len(t, scheduled, 2)
 		var keys []models.AlertRuleKey
 		for _, item := range scheduled {
@@ -141,18 +143,20 @@ func TestProcessTicks(t *testing.T) {
 		require.Contains(t, keys, alertRule2.GetKey())
 
 		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+		require.Emptyf(t, paused, "No rules are expected to be paused")
 
 		assertEvalRun(t, evalAppliedCh, tick, keys...)
 	})
 
 	t.Run("on 4th tick only one alert rule should be evaluated", func(t *testing.T) {
 		tick = tick.Add(cfg.BaseInterval)
-		scheduled, stopped := sched.processTick(ctx, dispatcherGroup, tick)
+		scheduled, stopped, paused := sched.processTick(ctx, dispatcherGroup, tick)
 
 		require.Len(t, scheduled, 1)
 		require.Equal(t, alertRule1, scheduled[0].rule)
 		require.Equal(t, tick, scheduled[0].scheduledAt)
 		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+		require.Emptyf(t, paused, "No rules are expected to be paused")
 
 		assertEvalRun(t, evalAppliedCh, tick, alertRule1.GetKey())
 	})
@@ -162,12 +166,13 @@ func TestProcessTicks(t *testing.T) {
 
 		ruleStore.DeleteRule(alertRule1)
 
-		scheduled, stopped := sched.processTick(ctx, dispatcherGroup, tick)
+		scheduled, stopped, paused := sched.processTick(ctx, dispatcherGroup, tick)
 
 		require.Empty(t, scheduled)
 		require.Len(t, stopped, 1)
 
 		require.Contains(t, stopped, alertRule1.GetKey())
+		require.Emptyf(t, paused, "No rules are expected to be paused")
 
 		assertStopRun(t, stopAppliedCh, alertRule1.GetKey())
 	})
@@ -175,30 +180,71 @@ func TestProcessTicks(t *testing.T) {
 	t.Run("on 6th tick one alert rule should be evaluated", func(t *testing.T) {
 		tick = tick.Add(cfg.BaseInterval)
 
-		scheduled, stopped := sched.processTick(ctx, dispatcherGroup, tick)
+		scheduled, stopped, paused := sched.processTick(ctx, dispatcherGroup, tick)
 
 		require.Len(t, scheduled, 1)
 		require.Equal(t, alertRule2, scheduled[0].rule)
 		require.Equal(t, tick, scheduled[0].scheduledAt)
 		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+		require.Emptyf(t, paused, "No rules are expected to be paused")
 
 		assertEvalRun(t, evalAppliedCh, tick, alertRule2.GetKey())
 	})
 
+	// create alert rule with one base interval
+	alertRule3 := models.AlertRuleGen(models.WithOrgID(mainOrgID), models.WithInterval(cfg.BaseInterval), models.WithTitle("rule-3"))()
+	ruleStore.PutRule(ctx, alertRule3)
+
 	t.Run("on 7th tick a new alert rule should be evaluated", func(t *testing.T) {
-		// create alert rule with one base interval
-		alertRule3 := models.AlertRuleGen(models.WithOrgID(mainOrgID), models.WithInterval(cfg.BaseInterval), models.WithTitle("rule-3"))()
-		ruleStore.PutRule(ctx, alertRule3)
 		tick = tick.Add(cfg.BaseInterval)
 
-		scheduled, stopped := sched.processTick(ctx, dispatcherGroup, tick)
+		scheduled, stopped, paused := sched.processTick(ctx, dispatcherGroup, tick)
 
 		require.Len(t, scheduled, 1)
 		require.Equal(t, alertRule3, scheduled[0].rule)
 		require.Equal(t, tick, scheduled[0].scheduledAt)
 		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+		require.Emptyf(t, paused, "No rules are expected to be paused")
 
 		assertEvalRun(t, evalAppliedCh, tick, alertRule3.GetKey())
+	})
+
+	t.Run("on 8th tick a the 1 alert should skip evaluation due tu pausing", func(t *testing.T) {
+		// We pause alert rule 3
+		alertRule3.IsPaused = true
+
+		tick = tick.Add(cfg.BaseInterval)
+
+		scheduled, stopped, paused := sched.processTick(ctx, dispatcherGroup, tick)
+
+		require.Empty(t, scheduled)
+		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+		require.Contains(t, paused, alertRule3.GetKey())
+
+		assertStopRun(t, stopAppliedCh, alertRule3.GetKey())
+	})
+
+	t.Run("on 9th tick unpause alert rule 3 and two alerts should be evaluated", func(t *testing.T) {
+		// We pause alert rule 3
+		alertRule3.IsPaused = false
+
+		tick = tick.Add(cfg.BaseInterval)
+
+		scheduled, stopped, paused := sched.processTick(ctx, dispatcherGroup, tick)
+
+		require.Len(t, scheduled, 2)
+		var keys []models.AlertRuleKey
+		for _, item := range scheduled {
+			keys = append(keys, item.rule.GetKey())
+			require.Equal(t, tick, item.scheduledAt)
+		}
+		require.Contains(t, keys, alertRule2.GetKey())
+		require.Contains(t, keys, alertRule3.GetKey())
+
+		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+		require.Emptyf(t, paused, "No rules are expected to be paused")
+
+		assertEvalRun(t, evalAppliedCh, tick, keys...)
 	})
 }
 

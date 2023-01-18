@@ -210,7 +210,7 @@ type readyToRunItem struct {
 	evaluation
 }
 
-func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.Group, tick time.Time) ([]readyToRunItem, map[ngmodels.AlertRuleKey]struct{}) {
+func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.Group, tick time.Time) ([]readyToRunItem, map[ngmodels.AlertRuleKey]struct{}, map[ngmodels.AlertRuleKey]struct{}) {
 	tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
 
 	if err := sch.updateSchedulableAlertRules(ctx); err != nil {
@@ -230,6 +230,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
 
 	readyToRun := make([]readyToRunItem, 0)
+	pausedAlertRuleKeys := make(map[ngmodels.AlertRuleKey]struct{}, 0)
 	missingFolder := make(map[string][]string)
 	for _, item := range alertRules {
 		key := item.GetKey()
@@ -239,6 +240,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 				sch.log.Info("alert rule paused", key.LogContext()...)
 			}
 			delete(registeredDefinitions, key)
+			pausedAlertRuleKeys[key] = struct{}{}
 			continue
 		}
 
@@ -320,7 +322,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 		toDelete = append(toDelete, key)
 	}
 	sch.DeleteAlertRule(toDelete...)
-	return readyToRun, registeredDefinitions
+	return readyToRun, registeredDefinitions, pausedAlertRuleKeys
 }
 
 func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertRuleKey, evalCh <-chan *evaluation, updateCh <-chan ruleVersion) error {
