@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { PanelData, GrafanaTheme2, PanelModel, LinkModel, AlertState, DataLink } from '@grafana/data';
-import { Icon, PanelChrome, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, PanelChrome, Tooltip, useStyles2, TimePickerTooltip } from '@grafana/ui';
 
 import { PanelLinks } from '../PanelLinks';
 
@@ -37,14 +37,14 @@ export function PanelHeaderTitleItems(props: Props) {
 
   const timeshift = (
     <>
-      <Tooltip
-        content={data.request?.range ? `Time Range: ${data.request.range.from} to ${data.request.range.to}` : ''}
-      >
-        <PanelChrome.TitleItem className={styles.timeshift}>
-          <Icon name="clock-nine" />
-          {data.request?.timeInfo}
-        </PanelChrome.TitleItem>
-      </Tooltip>
+      {data.request && data.request.timeInfo && (
+        <Tooltip content={<TimePickerTooltip timeRange={data.request?.range} timeZone={data.request?.timezone} />}>
+          <PanelChrome.TitleItem className={styles.timeshift}>
+            <Icon name="clock-nine" />
+            {data.request?.timeInfo}
+          </PanelChrome.TitleItem>
+        </Tooltip>
+      )}
     </>
   );
 
@@ -55,7 +55,7 @@ export function PanelHeaderTitleItems(props: Props) {
       )}
 
       {<PanelHeaderNotices panelId={panelId} frames={data.series} />}
-      {data.request && data.request.timeInfo && timeshift}
+      {timeshift}
       {alertState && alertStateItem}
     </>
   );
