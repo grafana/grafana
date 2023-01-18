@@ -131,7 +131,7 @@ func (p *DataSourceProxyService) proxyDatasourceRequest(c *models.ReqContext, ds
 	proxy.HandleRequest()
 }
 
-var proxyPathRegexp = regexp.MustCompile(`^\/api\/datasources\/proxy\/([\d]+|uid\/[\w]+)\/?`)
+var proxyPathRegexp = regexp.MustCompile(`^\/api\/datasources\/proxy\/([\d]+|uid\/[\w-]+)\/?`)
 
 func extractProxyPath(originalRawPath string) string {
 	return proxyPathRegexp.ReplaceAllString(originalRawPath, "")
