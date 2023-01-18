@@ -138,11 +138,11 @@ func (_m *FakeDashboardService) GetDashboardACLInfoList(ctx context.Context, que
 }
 
 // GetDashboardTags provides a mock function with given fields: ctx, query
-func (_m *FakeDashboardService) GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error {
+func (_m *FakeDashboardService) GetDashboardTags(ctx context.Context, query *GetDashboardTagsQuery) error {
 	ret := _m.Called(ctx, query)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.GetDashboardTagsQuery) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *GetDashboardTagsQuery) error); ok {
 		r0 = rf(ctx, query)
 	} else {
 		r0 = ret.Error(0)

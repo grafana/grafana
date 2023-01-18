@@ -256,12 +256,13 @@ type GetDashboardTagsQuery struct {
 type GetDashboardsQuery struct {
 	DashboardIDs  []int64
 	DashboardUIDs []string
+	OrgID         int64
 	Result        []*Dashboard
 }
 
-type GetDashboardsByPluginIdQuery struct {
+type GetDashboardsByPluginIDQuery struct {
 	OrgID    int64
-	PluginId string
+	PluginID string
 	Result   []*Dashboard
 }
 
@@ -334,7 +335,7 @@ func FromDashboard(dash *Dashboard) *folder.Folder {
 		UID:       dash.UID,
 		Title:     dash.Title,
 		HasACL:    dash.HasACL,
-		Url:       models.GetFolderUrl(dash.UID, dash.Slug),
+		Url:       GetFolderURL(dash.UID, dash.Slug),
 		Version:   dash.Version,
 		Created:   dash.Created,
 		CreatedBy: dash.CreatedBy,

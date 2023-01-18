@@ -93,34 +93,33 @@ export const Examples = () => {
     <DashboardStoryCanvas>
       <HorizontalGroup spacing="md" align="flex-start">
         <VerticalGroup spacing="md">
-          {renderPanel('Error status', {
+          {renderPanel('Has statusMessage', {
             title: 'Default title',
-            status: {
-              message: 'Error text',
-              onClick: action('ErrorIndicator: onClick fired'),
-            },
+            statusMessage: 'Error text',
+            statusMessageOnClick: action('ErrorIndicator: onClick fired'),
           })}
-          {renderPanel('No padding, error loadingState', {
+          {renderPanel('No padding, has statusMessage', {
             padding: 'none',
             title: 'Default title',
+            statusMessage: 'Error text',
+            statusMessageOnClick: action('ErrorIndicator: onClick fired'),
+          })}
+          {renderPanel('No title, loadingState is Error, no statusMessage', {
             loadingState: LoadingState.Error,
           })}
-          {renderPanel('No title, error loadingState', {
-            loadingState: LoadingState.Error,
-          })}
-          {renderPanel('Streaming loadingState', {
+          {renderPanel('loadingState is Streaming', {
             title: 'Default title',
             loadingState: LoadingState.Streaming,
           })}
 
-          {renderPanel('Loading loadingState', {
+          {renderPanel('loadingState is Loading', {
             title: 'Default title',
             loadingState: LoadingState.Loading,
           })}
         </VerticalGroup>
         <VerticalGroup spacing="md">
           {renderPanel('Default panel: no non-required props')}
-          {renderPanel('No padding, no title', {
+          {renderPanel('No padding', {
             padding: 'none',
           })}
           {renderPanel('Very long title', {
@@ -137,28 +136,27 @@ export const Examples = () => {
           {renderPanel('Error status, menu', {
             title: 'Default title',
             menu,
-            status: {
-              message: 'Error text',
-              onClick: action('ErrorIndicator: onClick fired'),
-            },
+            statusMessage: 'Error text',
+            statusMessageOnClick: action('ErrorIndicator: onClick fired'),
           })}
-          {renderPanel('No padding, error loadingState, menu', {
+          {renderPanel('No padding; has statusMessage, menu', {
             padding: 'none',
             title: 'Default title',
             menu,
-            loadingState: LoadingState.Error,
+            statusMessage: 'Error text',
+            statusMessageOnClick: action('ErrorIndicator: onClick fired'),
           })}
-          {renderPanel('No title, error loadingState, menu', {
+          {renderPanel('No title, loadingState is Error, no statusMessage, menu', {
             menu,
             loadingState: LoadingState.Error,
           })}
-          {renderPanel('Streaming loadingState, menu', {
+          {renderPanel('loadingState is Streaming, menu', {
             title: 'Default title',
             menu,
             loadingState: LoadingState.Streaming,
           })}
 
-          {renderPanel('Loading loadingState, menu', {
+          {renderPanel('loadingState is Loading, menu', {
             title: 'Default title',
             menu,
             loadingState: LoadingState.Loading,

@@ -56,17 +56,6 @@ func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Ide
 		return nil, errAPIKeyRevoked.Errorf("Api key is revoked")
 	}
 
-	go func(id int64) {
-		defer func() {
-			if err := recover(); err != nil {
-				s.log.Error("api key authentication panic", "err", err)
-			}
-		}()
-		if err := s.apiKeyService.UpdateAPIKeyLastUsedDate(context.Background(), id); err != nil {
-			s.log.Warn("failed to update last use date for api key", "id", id)
-		}
-	}(apiKey.Id)
-
 	// if the api key don't belong to a service account construct the identity and return it
 	if apiKey.ServiceAccountId == nil || *apiKey.ServiceAccountId < 1 {
 		return &authn.Identity{
