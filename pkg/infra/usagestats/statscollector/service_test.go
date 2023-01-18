@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -36,7 +35,7 @@ func TestTotalStatsUpdate(t *testing.T) {
 	s.cfg.MetricsEndpointEnabled = true
 	s.cfg.MetricsEndpointDisableTotalStats = false
 
-	statsService.ExpectedSystemStats = &models.SystemStats{}
+	statsService.ExpectedSystemStats = &stats.SystemStats{}
 
 	tests := []struct {
 		MetricsEndpointEnabled           bool
@@ -254,7 +253,7 @@ func TestDatasourceStats(t *testing.T) {
 
 	setupSomeDataSourcePlugins(t, s)
 
-	statsService.ExpectedDataSourceStats = []*models.DataSourceStats{
+	statsService.ExpectedDataSourceStats = []*stats.DataSourceStats{
 		{
 			Type:  datasources.DS_ES,
 			Count: 9,
@@ -291,7 +290,7 @@ func TestDatasourceStats(t *testing.T) {
 		},
 	}
 
-	statsService.ExpectedDataSourcesAccessStats = []*models.DataSourceAccessStats{
+	statsService.ExpectedDataSourcesAccessStats = []*stats.DataSourceAccessStats{
 		{
 			Type:   datasources.DS_ES,
 			Access: "direct",
@@ -360,7 +359,7 @@ func TestAlertNotifiersStats(t *testing.T) {
 	statsService := statstest.NewFakeService()
 	s := createService(t, &setting.Cfg{}, sqlStore, statsService)
 
-	statsService.ExpectedNotifierUsageStats = []*models.NotifierUsageStats{
+	statsService.ExpectedNotifierUsageStats = []*stats.NotifierUsageStats{
 		{
 			Type:  "slack",
 			Count: 1,
@@ -379,7 +378,7 @@ func TestAlertNotifiersStats(t *testing.T) {
 }
 
 func mockSystemStats(statsService *statstest.FakeService) {
-	statsService.ExpectedSystemStats = &models.SystemStats{
+	statsService.ExpectedSystemStats = &stats.SystemStats{
 		Dashboards:                1,
 		Datasources:               2,
 		Users:                     3,

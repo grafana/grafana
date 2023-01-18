@@ -64,7 +64,7 @@ func dashboardGuardianResponse(err error) response.Response {
 // 401: unauthorisedError
 // 500: internalServerError
 func (hs *HTTPServer) TrimDashboard(c *models.ReqContext) response.Response {
-	cmd := models.TrimDashboardCommand{}
+	cmd := dashboards.TrimDashboardCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -169,7 +169,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	meta := dtos.DashboardMeta{
 		IsStarred:              isStarred,
 		Slug:                   dash.Slug,
-		Type:                   models.DashTypeDB,
+		Type:                   dashboards.DashTypeDB,
 		CanStar:                c.IsSignedIn,
 		CanSave:                canSave,
 		CanEdit:                canEdit,
@@ -217,7 +217,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 
 		meta.ProvisionedExternalId, err = filepath.Rel(
 			hs.ProvisioningService.GetDashboardProvisionerResolvedPath(provisioningData.Name),
-			provisioningData.ExternalId,
+			provisioningData.ExternalID,
 		)
 		if err != nil {
 			// Not sure when this could happen so not sure how to better handle this. Right now ProvisionedExternalId
@@ -429,7 +429,7 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd dashboards.SaveDas
 		}
 	}
 
-	var provisioningData *models.DashboardProvisioning
+	var provisioningData *dashboards.DashboardProvisioning
 	if dash.ID != 0 {
 		data, err := hs.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardID(c.Req.Context(), dash.ID)
 		if err != nil {
@@ -536,7 +536,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 		slugQuery := dashboards.GetDashboardRefByIDQuery{ID: preference.HomeDashboardID}
 		err := hs.DashboardService.GetDashboardUIDByID(c.Req.Context(), &slugQuery)
 		if err == nil {
-			url := models.GetDashboardUrl(slugQuery.Result.UID, slugQuery.Result.Slug)
+			url := dashboards.GetDashboardURL(slugQuery.Result.UID, slugQuery.Result.Slug)
 			dashRedirect := dtos.DashboardRedirect{RedirectUri: url}
 			return response.JSON(http.StatusOK, &dashRedirect)
 		}
@@ -786,7 +786,7 @@ func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Respons
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) ValidateDashboard(c *models.ReqContext) response.Response {
-	cmd := models.ValidateDashboardCommand{}
+	cmd := dashboards.ValidateDashboardCommand{}
 
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -1018,7 +1018,7 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext) response.Res
 // 401: unauthorisedError
 // 500: internalServerError
 func (hs *HTTPServer) GetDashboardTags(c *models.ReqContext) {
-	query := models.GetDashboardTagsQuery{OrgId: c.OrgID}
+	query := dashboards.GetDashboardTagsQuery{OrgID: c.OrgID}
 	err := hs.DashboardService.GetDashboardTags(c.Req.Context(), &query)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get tags from database", err)
@@ -1137,7 +1137,7 @@ type DeleteDashboardByUIDParams struct {
 type PostDashboardParams struct {
 	// in:body
 	// required:true
-	Body models.SaveDashboardCommand
+	Body dashboards.SaveDashboardCommand
 }
 
 // swagger:parameters calculateDashboardDiff
@@ -1160,7 +1160,7 @@ type CalcDashboardDiffParams struct {
 type TrimDashboardParams struct {
 	// in:body
 	// required:true
-	Body models.TrimDashboardCommand
+	Body dashboards.TrimDashboardCommand
 }
 
 // swagger:response dashboardResponse
@@ -1249,7 +1249,7 @@ type GetHomeDashboardResponse struct {
 // swagger:response getDashboardsTagsResponse
 type DashboardsTagsResponse struct {
 	// in: body
-	Body []*models.DashboardTagCloudItem `json:"body"`
+	Body []*dashboards.DashboardTagCloudItem `json:"body"`
 }
 
 // Get home dashboard response.

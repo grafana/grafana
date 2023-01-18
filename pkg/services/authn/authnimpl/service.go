@@ -14,10 +14,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
-	sync "github.com/grafana/grafana/pkg/services/authn/authnimpl/usersync"
+	"github.com/grafana/grafana/pkg/services/authn/authnimpl/sync"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -43,6 +45,7 @@ func ProvideService(
 	userProtectionService login.UserProtectionService,
 	loginAttempts loginattempt.Service, quotaService quota.Service,
 	authInfoService login.AuthInfoService, renderService rendering.Service,
+	features *featuremgmt.FeatureManager, oauthTokenService oauthtoken.OAuthTokenService,
 ) *Service {
 	s := &Service{
 		log:            log.New("authn.service"),
@@ -108,6 +111,12 @@ func ProvideService(
 	orgUserSyncService := sync.ProvideOrgSync(userService, orgService, accessControlService)
 	s.RegisterPostAuthHook(userSyncService.SyncUser)
 	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgUser)
+	s.RegisterPostAuthHook(sync.ProvideUserLastSeenSync(userService).SyncLastSeen)
+	s.RegisterPostAuthHook(sync.ProvideAPIKeyLastSeenSync(apikeyService).SyncLastSeen)
+
+	if features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
+		s.RegisterPostAuthHook(sync.ProvideOauthTokenSync(oauthTokenService, sessionService).SyncOauthToken)
+	}
 
 	return s
 }

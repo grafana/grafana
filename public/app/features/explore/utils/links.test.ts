@@ -133,7 +133,7 @@ describe('getFieldLinksForExplore', () => {
     expect(links).toHaveLength(0);
   });
 
-  it('returns internal links when target contains defined template variables', () => {
+  it('returns internal links when target contains __data template variables', () => {
     const { field, range, dataFrame } = setup({
       title: '',
       url: '',
@@ -145,6 +145,100 @@ describe('getFieldLinksForExplore', () => {
     });
     const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_TEXT_VALUE.index, range, dataFrame });
     expect(links).toHaveLength(1);
+    expect(links[0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo"}],"panelsState":{}}'
+      )}`
+    );
+  });
+
+  it('returns internal links when target contains targetField template variable', () => {
+    const { field, range, dataFrame } = setup({
+      title: '',
+      url: '',
+      internal: {
+        query: { query: 'query_1-${__targetField}' },
+        datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
+      },
+    });
+    const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_TEXT_VALUE.index, range, dataFrame });
+    expect(links).toHaveLength(1);
+    expect(links[0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo"}],"panelsState":{}}'
+      )}`
+    );
+  });
+
+  it('returns internal links when target contains field name template variable', () => {
+    // field cannot be hyphenated, change field name to non-hyphenated
+    const noHyphenLink = {
+      title: '',
+      url: '',
+      internal: {
+        query: { query: 'query_1-${fluxDimensions}' },
+        datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
+      },
+    };
+    const { field, range, dataFrame } = setup(noHyphenLink, true, {
+      name: 'fluxDimensions',
+      type: FieldType.string,
+      values: new ArrayVector([ROW_WITH_TEXT_VALUE.value, ROW_WITH_NULL_VALUE.value]),
+      config: {
+        links: [noHyphenLink],
+      },
+    });
+    const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_TEXT_VALUE.index, range, dataFrame });
+    expect(links).toHaveLength(1);
+    expect(links[0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo"}],"panelsState":{}}'
+      )}`
+    );
+  });
+
+  it('returns internal links when target contains other field name template variables', () => {
+    // field cannot be hyphenated, change field name to non-hyphenated
+    const noHyphenLink = {
+      title: '',
+      url: '',
+      internal: {
+        query: { query: 'query_1-${fluxDimensions}-${fluxDimension2}' },
+        datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
+      },
+    };
+    const { field, range, dataFrame } = setup(
+      noHyphenLink,
+      true,
+      {
+        name: 'fluxDimensions',
+        type: FieldType.string,
+        values: new ArrayVector([ROW_WITH_TEXT_VALUE.value, ROW_WITH_NULL_VALUE.value]),
+        config: {
+          links: [noHyphenLink],
+        },
+      },
+      [
+        {
+          name: 'fluxDimension2',
+          type: FieldType.string,
+          values: new ArrayVector(['foo2', ROW_WITH_NULL_VALUE.value]),
+          config: {
+            links: [noHyphenLink],
+          },
+        },
+      ]
+    );
+    const links = getFieldLinksForExplore({ field, rowIndex: ROW_WITH_TEXT_VALUE.index, range, dataFrame });
+    expect(links).toHaveLength(1);
+    expect(links[0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo-foo2"}],"panelsState":{}}'
+      )}`
+    );
   });
 
   it('returns no internal links when target contains empty template variables', () => {
@@ -165,7 +259,12 @@ describe('getFieldLinksForExplore', () => {
 const ROW_WITH_TEXT_VALUE = { value: 'foo', index: 0 };
 const ROW_WITH_NULL_VALUE = { value: null, index: 1 };
 
-function setup(link: DataLink, hasAccess = true) {
+function setup(
+  link: DataLink,
+  hasAccess = true,
+  fieldOverride?: Field<string | null>,
+  dataFrameOtherFieldOverride?: Field[]
+) {
   setLinkSrv({
     getDataLinkUIModel(link: DataLink, replaceVariables: InterpolateFunction | undefined, origin: any): LinkModel<any> {
       return {
@@ -196,8 +295,14 @@ function setup(link: DataLink, hasAccess = true) {
     },
   };
 
+  let fieldsArr = [fieldOverride || field];
+
+  if (dataFrameOtherFieldOverride) {
+    fieldsArr = [...fieldsArr, ...dataFrameOtherFieldOverride];
+  }
+
   const dataFrame: DataFrame = toDataFrame({
-    fields: [field],
+    fields: fieldsArr,
   });
 
   const range: TimeRange = {
@@ -209,5 +314,5 @@ function setup(link: DataLink, hasAccess = true) {
     },
   };
 
-  return { range, field, dataFrame };
+  return { range, field: fieldOverride || field, dataFrame };
 }
