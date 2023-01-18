@@ -49,3 +49,9 @@ export const defaultVariableModel = {
 export const defaultPanel: Partial<Panel> = raw.defaultPanel;
 export const defaultFieldConfig: Partial<FieldConfig> = raw.defaultFieldConfig;
 export const defaultFieldConfigSource: Partial<FieldConfigSource> = raw.defaultFieldConfigSource;
+
+export interface MatcherConfig<TConfig = any> extends raw.MatcherConfig {
+  options?: TConfig;
+}
+
+export const defaultMatcherConfig: Partial<MatcherConfig> = raw.defaultMatcherConfig;

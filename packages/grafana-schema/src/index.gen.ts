@@ -27,7 +27,6 @@ export type {
   SpecialValueMap,
   ValueMappingResult,
   Transformation,
-  MatcherConfig,
   RowPanel,
   GraphPanel,
   HeatmapPanel
@@ -47,7 +46,6 @@ export {
   SpecialValueMatch,
   DashboardCursorSync,
   defaultDashboardCursorSync,
-  defaultMatcherConfig,
   defaultRowPanel
 } from './raw/dashboard/x/dashboard_types.gen';
 
@@ -65,6 +63,7 @@ export type {
   VariableModel,
   Panel,
   FieldConfigSource,
+  MatcherConfig,
   FieldConfig
 } from './veneer/dashboard.types';
 
@@ -83,6 +82,7 @@ export {
   VariableHide,
   defaultPanel,
   defaultFieldConfigSource,
+  defaultMatcherConfig,
   defaultFieldConfig
 } from './veneer/dashboard.types';
 

@@ -569,33 +569,15 @@ export interface MapLayerOptions {
   /**
    * Custom options depending on the type
    */
-  config?: Record<string, unknown>;
+  config?: unknown;
   /**
    * Defines which data query refId is associated with the layer
    */
-  filterData?: {
-    id: string;
-    options?: Record<string, unknown>;
-  };
+  filterData?: unknown;
   /**
    * Common method to define geometry fields
    */
-  location?: {
-    mode: FrameGeometrySourceMode;
-    /**
-     * Field mappings
-     */
-    geohash?: string;
-    latitude?: string;
-    longitude?: string;
-    h3?: string;
-    wkt?: string;
-    lookup?: string;
-    /**
-     * Path to Gazetteer
-     */
-    gazetteer?: string;
-  };
+  location?: FrameGeometrySource;
   /**
    * configured unique display name
    */
@@ -618,4 +600,21 @@ export enum FrameGeometrySourceMode {
   Coords = 'coords',
   Geohash = 'geohash',
   Lookup = 'lookup',
+}
+
+export interface FrameGeometrySource {
+  /**
+   * Path to Gazetteer
+   */
+  gazetteer?: string;
+  /**
+   * Field mappings
+   */
+  geohash?: string;
+  h3?: string;
+  latitude?: string;
+  longitude?: string;
+  lookup?: string;
+  mode: FrameGeometrySourceMode;
+  wkt?: string;
 }

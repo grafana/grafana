@@ -316,28 +316,23 @@ MapLayerOptions: {
 		// configured unique display name
 		name: string
 		// Custom options depending on the type
-		config?: {...} //TODO fix, this should be a generic type
+  	config?: _
 		// Common method to define geometry fields
-		location?: #FrameGeometrySource
+		location?: FrameGeometrySource
 		// Defines which data query refId is associated with the layer
-		filterData?: MatcherConfig
+		filterData?: _
 		// Common properties:
 		// https://openlayers.org/en/latest/apidoc/module-ol_layer_Base-BaseLayer.html
 		// Layer opacity (0-1)
 		opacity?: int64
 		// Check tooltip (defaults to true)
 		tooltip?: bool
-} @cuetsy(kind="interface")
+} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
-MatcherConfig: {
-		id: string
-		options?: {...} // TODO should be a generic type
-}
+FrameGeometrySourceMode: "auto" | "geohash" |"coords" | "lookup" @cuetsy(kind="enum",memberNames="Auto|Geohash|Coords|Lookup")
 
-#FrameGeometrySourceMode: "auto" | "geohash" |"coords" | "lookup" @cuetsy(kind="enum",memberNames="Auto|Geohash|Coords|Lookup")
-
-#FrameGeometrySource: {
-		mode: #FrameGeometrySourceMode
+FrameGeometrySource: {
+		mode: FrameGeometrySourceMode
 		// Field mappings
 		geohash?: string
 		latitude?: string
@@ -347,4 +342,4 @@ MatcherConfig: {
 		lookup?: string
 		// Path to Gazetteer
 		gazetteer?: string
-	}
+} @cuetsy(kind="interface")
