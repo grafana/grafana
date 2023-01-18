@@ -10,7 +10,7 @@ module.exports = {
     '^.+\\.(ts|tsx|js|jsx)$': [require.resolve('ts-jest'), { isolatedModules: true }],
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(ol)/)', // <- exclude the open layers library
+    'node_modules/(?!(ol|d3-color)/)', // <- exclude es modules so they are compiled
   ],
   moduleDirectories: ['public'],
   roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages'],
