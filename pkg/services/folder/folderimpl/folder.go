@@ -378,9 +378,9 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 			// (legacy) folder.
 			logger.Error("error saving folder to nested folder store", "error", err)
 			// do not shallow create error if the legacy folder delete fails
-			if deleteErr := s.dashboardStore.DeleteDashboard(ctx, &models.DeleteDashboardCommand{
-				Id:    createdFolder.ID,
-				OrgId: createdFolder.OrgID,
+			if deleteErr := s.dashboardStore.DeleteDashboard(ctx, &dashboards.DeleteDashboardCommand{
+				ID:    createdFolder.ID,
+				OrgID: createdFolder.OrgID,
 			}); deleteErr != nil {
 				logger.Error("error deleting folder after failed save to nested folder store", "error", err)
 			}
@@ -557,7 +557,7 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 }
 
 func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderCommand, dashFolder *folder.Folder) error {
-	deleteCmd := models.DeleteDashboardCommand{OrgId: cmd.OrgID, Id: dashFolder.ID, ForceDeleteFolderRules: cmd.ForceDeleteRules}
+	deleteCmd := dashboards.DeleteDashboardCommand{OrgID: cmd.OrgID, ID: dashFolder.ID, ForceDeleteFolderRules: cmd.ForceDeleteRules}
 
 	if err := s.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
 		return toFolderError(err)
