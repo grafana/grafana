@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting/alerts"
 	"github.com/grafana/grafana/pkg/services/tag"
 )
 
@@ -49,9 +49,9 @@ type Rule struct {
 	Message             string
 	LastStateChange     time.Time
 	For                 time.Duration
-	NoDataState         models.NoDataOption
-	ExecutionErrorState models.ExecutionErrorOption
-	State               models.AlertStateType
+	NoDataState         alerts.NoDataOption
+	ExecutionErrorState alerts.ExecutionErrorOption
+	State               alerts.AlertStateType
 	Conditions          []Condition
 	Notifications       []string
 	AlertRuleTags       []*tag.Tag
@@ -145,7 +145,7 @@ func getForValue(rawFor string) (time.Duration, error) {
 
 // NewRuleFromDBAlert maps a db version of
 // alert to an in-memory version.
-func NewRuleFromDBAlert(ctx context.Context, store AlertStore, ruleDef *models.Alert, logTranslationFailures bool) (*Rule, error) {
+func NewRuleFromDBAlert(ctx context.Context, store AlertStore, ruleDef *alerts.Alert, logTranslationFailures bool) (*Rule, error) {
 	model := &Rule{}
 	model.ID = ruleDef.Id
 	model.OrgID = ruleDef.OrgId
@@ -156,8 +156,8 @@ func NewRuleFromDBAlert(ctx context.Context, store AlertStore, ruleDef *models.A
 	model.State = ruleDef.State
 	model.LastStateChange = ruleDef.NewStateDate
 	model.For = ruleDef.For
-	model.NoDataState = models.NoDataOption(ruleDef.Settings.Get("noDataState").MustString("no_data"))
-	model.ExecutionErrorState = models.ExecutionErrorOption(ruleDef.Settings.Get("executionErrorState").MustString("alerting"))
+	model.NoDataState = alerts.NoDataOption(ruleDef.Settings.Get("noDataState").MustString("no_data"))
+	model.ExecutionErrorState = alerts.ExecutionErrorOption(ruleDef.Settings.Get("executionErrorState").MustString("alerting"))
 	model.StateChanges = ruleDef.StateChanges
 
 	model.Frequency = ruleDef.Frequency

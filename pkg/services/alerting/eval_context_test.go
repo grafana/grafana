@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting/alerts"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/validations"
 )
@@ -18,8 +18,8 @@ func TestStateIsUpdatedWhenNeeded(t *testing.T) {
 	ctx := NewEvalContext(context.Background(), &Rule{Conditions: []Condition{&conditionStub{firing: true}}}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 
 	t.Run("ok -> alerting", func(t *testing.T) {
-		ctx.PrevAlertState = models.AlertStateOK
-		ctx.Rule.State = models.AlertStateAlerting
+		ctx.PrevAlertState = alerts.AlertStateOK
+		ctx.Rule.State = alerts.AlertStateAlerting
 
 		if !ctx.shouldUpdateAlertState() {
 			t.Fatalf("expected should updated to be true")
@@ -27,8 +27,8 @@ func TestStateIsUpdatedWhenNeeded(t *testing.T) {
 	})
 
 	t.Run("ok -> ok", func(t *testing.T) {
-		ctx.PrevAlertState = models.AlertStateOK
-		ctx.Rule.State = models.AlertStateOK
+		ctx.PrevAlertState = alerts.AlertStateOK
+		ctx.Rule.State = alerts.AlertStateOK
 
 		if ctx.shouldUpdateAlertState() {
 			t.Fatalf("expected should updated to be false")
@@ -39,31 +39,31 @@ func TestStateIsUpdatedWhenNeeded(t *testing.T) {
 func TestGetStateFromEvalContext(t *testing.T) {
 	tcs := []struct {
 		name     string
-		expected models.AlertStateType
+		expected alerts.AlertStateType
 		applyFn  func(ec *EvalContext)
 	}{
 		{
 			name:     "ok -> alerting",
-			expected: models.AlertStateAlerting,
+			expected: alerts.AlertStateAlerting,
 			applyFn: func(ec *EvalContext) {
 				ec.Firing = true
-				ec.PrevAlertState = models.AlertStateOK
+				ec.PrevAlertState = alerts.AlertStateOK
 			},
 		},
 		{
 			name:     "ok -> error(alerting)",
-			expected: models.AlertStateAlerting,
+			expected: alerts.AlertStateAlerting,
 			applyFn: func(ec *EvalContext) {
-				ec.PrevAlertState = models.AlertStateOK
+				ec.PrevAlertState = alerts.AlertStateOK
 				ec.Error = errors.New("test error")
-				ec.Rule.ExecutionErrorState = models.ExecutionErrorSetAlerting
+				ec.Rule.ExecutionErrorState = alerts.ExecutionErrorSetAlerting
 			},
 		},
 		{
 			name:     "ok -> pending. since its been firing for less than FOR",
-			expected: models.AlertStatePending,
+			expected: alerts.AlertStatePending,
 			applyFn: func(ec *EvalContext) {
-				ec.PrevAlertState = models.AlertStateOK
+				ec.PrevAlertState = alerts.AlertStateOK
 				ec.Firing = true
 				ec.Rule.LastStateChange = time.Now().Add(-time.Minute * 2)
 				ec.Rule.For = time.Minute * 5
@@ -71,9 +71,9 @@ func TestGetStateFromEvalContext(t *testing.T) {
 		},
 		{
 			name:     "ok -> pending. since it has to be pending longer than FOR and prev state is ok",
-			expected: models.AlertStatePending,
+			expected: alerts.AlertStatePending,
 			applyFn: func(ec *EvalContext) {
-				ec.PrevAlertState = models.AlertStateOK
+				ec.PrevAlertState = alerts.AlertStateOK
 				ec.Firing = true
 				ec.Rule.LastStateChange = time.Now().Add(-(time.Hour * 5))
 				ec.Rule.For = time.Minute * 2
@@ -81,9 +81,9 @@ func TestGetStateFromEvalContext(t *testing.T) {
 		},
 		{
 			name:     "pending -> alerting. since its been firing for more than FOR and prev state is pending",
-			expected: models.AlertStateAlerting,
+			expected: alerts.AlertStateAlerting,
 			applyFn: func(ec *EvalContext) {
-				ec.PrevAlertState = models.AlertStatePending
+				ec.PrevAlertState = alerts.AlertStatePending
 				ec.Firing = true
 				ec.Rule.LastStateChange = time.Now().Add(-(time.Hour * 5))
 				ec.Rule.For = time.Minute * 2
@@ -91,9 +91,9 @@ func TestGetStateFromEvalContext(t *testing.T) {
 		},
 		{
 			name:     "alerting -> alerting. should not update regardless of FOR",
-			expected: models.AlertStateAlerting,
+			expected: alerts.AlertStateAlerting,
 			applyFn: func(ec *EvalContext) {
-				ec.PrevAlertState = models.AlertStateAlerting
+				ec.PrevAlertState = alerts.AlertStateAlerting
 				ec.Firing = true
 				ec.Rule.LastStateChange = time.Now().Add(-time.Minute * 5)
 				ec.Rule.For = time.Minute * 2
@@ -101,64 +101,64 @@ func TestGetStateFromEvalContext(t *testing.T) {
 		},
 		{
 			name:     "ok -> ok. should not update regardless of FOR",
-			expected: models.AlertStateOK,
+			expected: alerts.AlertStateOK,
 			applyFn: func(ec *EvalContext) {
-				ec.PrevAlertState = models.AlertStateOK
+				ec.PrevAlertState = alerts.AlertStateOK
 				ec.Rule.LastStateChange = time.Now().Add(-time.Minute * 5)
 				ec.Rule.For = time.Minute * 2
 			},
 		},
 		{
 			name:     "ok -> error(keep_last)",
-			expected: models.AlertStateOK,
+			expected: alerts.AlertStateOK,
 			applyFn: func(ec *EvalContext) {
-				ec.PrevAlertState = models.AlertStateOK
+				ec.PrevAlertState = alerts.AlertStateOK
 				ec.Error = errors.New("test error")
-				ec.Rule.ExecutionErrorState = models.ExecutionErrorKeepState
+				ec.Rule.ExecutionErrorState = alerts.ExecutionErrorKeepState
 			},
 		},
 		{
 			name:     "pending -> error(keep_last)",
-			expected: models.AlertStatePending,
+			expected: alerts.AlertStatePending,
 			applyFn: func(ec *EvalContext) {
-				ec.PrevAlertState = models.AlertStatePending
+				ec.PrevAlertState = alerts.AlertStatePending
 				ec.Error = errors.New("test error")
-				ec.Rule.ExecutionErrorState = models.ExecutionErrorKeepState
+				ec.Rule.ExecutionErrorState = alerts.ExecutionErrorKeepState
 			},
 		},
 		{
 			name:     "ok -> no_data(alerting)",
-			expected: models.AlertStateAlerting,
+			expected: alerts.AlertStateAlerting,
 			applyFn: func(ec *EvalContext) {
-				ec.PrevAlertState = models.AlertStateOK
-				ec.Rule.NoDataState = models.NoDataSetAlerting
+				ec.PrevAlertState = alerts.AlertStateOK
+				ec.Rule.NoDataState = alerts.NoDataSetAlerting
 				ec.NoDataFound = true
 			},
 		},
 		{
 			name:     "ok -> no_data(keep_last)",
-			expected: models.AlertStateOK,
+			expected: alerts.AlertStateOK,
 			applyFn: func(ec *EvalContext) {
-				ec.PrevAlertState = models.AlertStateOK
-				ec.Rule.NoDataState = models.NoDataKeepState
+				ec.PrevAlertState = alerts.AlertStateOK
+				ec.Rule.NoDataState = alerts.NoDataKeepState
 				ec.NoDataFound = true
 			},
 		},
 		{
 			name:     "pending -> no_data(keep_last)",
-			expected: models.AlertStatePending,
+			expected: alerts.AlertStatePending,
 			applyFn: func(ec *EvalContext) {
-				ec.PrevAlertState = models.AlertStatePending
-				ec.Rule.NoDataState = models.NoDataKeepState
+				ec.PrevAlertState = alerts.AlertStatePending
+				ec.Rule.NoDataState = alerts.NoDataKeepState
 				ec.NoDataFound = true
 			},
 		},
 		{
 			name:     "pending -> no_data(alerting) with for duration have not passed",
-			expected: models.AlertStatePending,
+			expected: alerts.AlertStatePending,
 			applyFn: func(ec *EvalContext) {
-				ec.PrevAlertState = models.AlertStatePending
-				ec.Rule.NoDataState = models.NoDataSetAlerting
+				ec.PrevAlertState = alerts.AlertStatePending
+				ec.Rule.NoDataState = alerts.NoDataSetAlerting
 				ec.NoDataFound = true
 				ec.Rule.For = time.Minute * 5
 				ec.Rule.LastStateChange = time.Now().Add(-time.Minute * 2)
@@ -166,10 +166,10 @@ func TestGetStateFromEvalContext(t *testing.T) {
 		},
 		{
 			name:     "pending -> no_data(alerting) should set alerting since time passed FOR",
-			expected: models.AlertStateAlerting,
+			expected: alerts.AlertStateAlerting,
 			applyFn: func(ec *EvalContext) {
-				ec.PrevAlertState = models.AlertStatePending
-				ec.Rule.NoDataState = models.NoDataSetAlerting
+				ec.PrevAlertState = alerts.AlertStatePending
+				ec.Rule.NoDataState = alerts.NoDataSetAlerting
 				ec.NoDataFound = true
 				ec.Rule.For = time.Minute * 2
 				ec.Rule.LastStateChange = time.Now().Add(-time.Minute * 5)
@@ -177,10 +177,10 @@ func TestGetStateFromEvalContext(t *testing.T) {
 		},
 		{
 			name:     "pending -> error(alerting) with for duration have not passed ",
-			expected: models.AlertStatePending,
+			expected: alerts.AlertStatePending,
 			applyFn: func(ec *EvalContext) {
-				ec.PrevAlertState = models.AlertStatePending
-				ec.Rule.ExecutionErrorState = models.ExecutionErrorSetAlerting
+				ec.PrevAlertState = alerts.AlertStatePending
+				ec.Rule.ExecutionErrorState = alerts.ExecutionErrorSetAlerting
 				ec.Error = errors.New("test error")
 				ec.Rule.For = time.Minute * 5
 				ec.Rule.LastStateChange = time.Now().Add(-time.Minute * 2)
@@ -188,10 +188,10 @@ func TestGetStateFromEvalContext(t *testing.T) {
 		},
 		{
 			name:     "pending -> error(alerting) should set alerting since time passed FOR",
-			expected: models.AlertStateAlerting,
+			expected: alerts.AlertStateAlerting,
 			applyFn: func(ec *EvalContext) {
-				ec.PrevAlertState = models.AlertStatePending
-				ec.Rule.ExecutionErrorState = models.ExecutionErrorSetAlerting
+				ec.PrevAlertState = alerts.AlertStatePending
+				ec.Rule.ExecutionErrorState = alerts.ExecutionErrorSetAlerting
 				ec.Error = errors.New("test error")
 				ec.Rule.For = time.Minute * 2
 				ec.Rule.LastStateChange = time.Now().Add(-time.Minute * 5)

@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting/alerts"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fd "github.com/grafana/grafana/pkg/services/datasources/fakes"
 )
@@ -30,7 +30,7 @@ func TestAlertingUsageStats(t *testing.T) {
 		datasourceService: dsMock,
 	}
 
-	store.getAllAlerts = func(ctx context.Context, query *models.GetAllAlertsQuery) error {
+	store.getAllAlerts = func(ctx context.Context, query *alerts.GetAllAlertsQuery) error {
 		var createFake = func(file string) *simplejson.Json {
 			// Ignore gosec warning G304 since it's a test
 			// nolint:gosec
@@ -42,7 +42,7 @@ func TestAlertingUsageStats(t *testing.T) {
 			return j
 		}
 
-		query.Result = []*models.Alert{
+		query.Result = []*alerts.Alert{
 			{Id: 1, Settings: createFake("testdata/settings/one_condition.json")},
 			{Id: 2, Settings: createFake("testdata/settings/two_conditions.json")},
 			{Id: 2, Settings: createFake("testdata/settings/three_conditions.json")},

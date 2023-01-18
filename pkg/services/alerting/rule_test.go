@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting/alerts"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
@@ -123,7 +123,7 @@ func TestAlertRuleModel(t *testing.T) {
 		alertJSON, jsonErr := simplejson.NewJson([]byte(json))
 		require.Nil(t, jsonErr)
 
-		alert := &models.Alert{
+		alert := &alerts.Alert{
 			Id:          1,
 			OrgId:       1,
 			DashboardId: 1,
@@ -162,7 +162,7 @@ func TestAlertRuleModel(t *testing.T) {
 		alertJSON, jsonErr := simplejson.NewJson([]byte(json))
 		require.Nil(t, jsonErr)
 
-		alert := &models.Alert{
+		alert := &alerts.Alert{
 			Id:          1,
 			OrgId:       1,
 			DashboardId: 1,
@@ -192,7 +192,7 @@ func TestAlertRuleModel(t *testing.T) {
 		alertJSON, jsonErr := simplejson.NewJson([]byte(json))
 		require.Nil(t, jsonErr)
 
-		alert := &models.Alert{
+		alert := &alerts.Alert{
 			Id:          1,
 			OrgId:       1,
 			DashboardId: 1,
@@ -230,7 +230,7 @@ func TestAlertRuleModel(t *testing.T) {
 		alertJSON, jsonErr := simplejson.NewJson([]byte(json))
 		require.Nil(t, jsonErr)
 
-		alert := &models.Alert{
+		alert := &alerts.Alert{
 			Id:          1,
 			OrgId:       1,
 			DashboardId: 1,

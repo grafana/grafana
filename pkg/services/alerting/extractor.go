@@ -8,13 +8,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting/alerts"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 )
 
 type DashAlertExtractor interface {
-	GetAlerts(ctx context.Context, dashAlertInfo DashAlertInfo) ([]*models.Alert, error)
+	GetAlerts(ctx context.Context, dashAlertInfo DashAlertInfo) ([]*alerts.Alert, error)
 	ValidateAlerts(ctx context.Context, dashAlertInfo DashAlertInfo) error
 }
 
@@ -106,8 +106,8 @@ func UAEnabled(ctx context.Context) bool {
 	return enabled
 }
 
-func (e *DashAlertExtractorService) getAlertFromPanels(ctx context.Context, jsonWithPanels *simplejson.Json, validateAlertFunc func(*models.Alert) bool, logTranslationFailures bool, dashAlertInfo DashAlertInfo) ([]*models.Alert, error) {
-	alerts := make([]*models.Alert, 0)
+func (e *DashAlertExtractorService) getAlertFromPanels(ctx context.Context, jsonWithPanels *simplejson.Json, validateAlertFunc func(*alerts.Alert) bool, logTranslationFailures bool, dashAlertInfo DashAlertInfo) ([]*alerts.Alert, error) {
+	ret := make([]*alerts.Alert, 0)
 
 	for _, panelObj := range jsonWithPanels.Get("panels").MustArray() {
 		panel := simplejson.NewFromAny(panelObj)
@@ -121,7 +121,7 @@ func (e *DashAlertExtractorService) getAlertFromPanels(ctx context.Context, json
 				return nil, err
 			}
 
-			alerts = append(alerts, alertSlice...)
+			ret = append(ret, alertSlice...)
 			continue
 		}
 
@@ -174,7 +174,7 @@ func (e *DashAlertExtractorService) getAlertFromPanels(ctx context.Context, json
 			return nil, addIdentifiersToValidationError(err)
 		}
 
-		alert := &models.Alert{
+		alert := &alerts.Alert{
 			DashboardId: dashAlertInfo.Dash.ID,
 			OrgId:       dashAlertInfo.OrgID,
 			PanelId:     panelID,
@@ -242,28 +242,28 @@ func (e *DashAlertExtractorService) getAlertFromPanels(ctx context.Context, json
 			return nil, ValidationError{Reason: fmt.Sprintf("Panel id is not correct, alertName=%v, panelId=%v", alert.Name, alert.PanelId)}
 		}
 
-		alerts = append(alerts, alert)
+		ret = append(ret, alert)
 	}
 
-	return alerts, nil
+	return ret, nil
 }
 
-func validateAlertRule(alert *models.Alert) bool {
+func validateAlertRule(alert *alerts.Alert) bool {
 	return alert.ValidToSave()
 }
 
 // GetAlerts extracts alerts from the dashboard json and does full validation on the alert json data.
-func (e *DashAlertExtractorService) GetAlerts(ctx context.Context, dashAlertInfo DashAlertInfo) ([]*models.Alert, error) {
+func (e *DashAlertExtractorService) GetAlerts(ctx context.Context, dashAlertInfo DashAlertInfo) ([]*alerts.Alert, error) {
 	return e.extractAlerts(ctx, validateAlertRule, true, dashAlertInfo)
 }
 
-func (e *DashAlertExtractorService) extractAlerts(ctx context.Context, validateFunc func(alert *models.Alert) bool, logTranslationFailures bool, dashAlertInfo DashAlertInfo) ([]*models.Alert, error) {
+func (e *DashAlertExtractorService) extractAlerts(ctx context.Context, validateFunc func(alert *alerts.Alert) bool, logTranslationFailures bool, dashAlertInfo DashAlertInfo) ([]*alerts.Alert, error) {
 	dashboardJSON, err := copyJSON(dashAlertInfo.Dash.Data)
 	if err != nil {
 		return nil, err
 	}
 
-	alerts := make([]*models.Alert, 0)
+	alerts := make([]*alerts.Alert, 0)
 
 	// We extract alerts from rows to be backwards compatible
 	// with the old dashboard json model.
@@ -294,7 +294,7 @@ func (e *DashAlertExtractorService) extractAlerts(ctx context.Context, validateF
 // ValidateAlerts validates alerts in the dashboard json but does not require a valid dashboard id
 // in the first validation pass.
 func (e *DashAlertExtractorService) ValidateAlerts(ctx context.Context, dashAlertInfo DashAlertInfo) error {
-	_, err := e.extractAlerts(ctx, func(alert *models.Alert) bool {
+	_, err := e.extractAlerts(ctx, func(alert *alerts.Alert) bool {
 		return alert.OrgId != 0 && alert.PanelId != 0
 	}, false, dashAlertInfo)
 	return err

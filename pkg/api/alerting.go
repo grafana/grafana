@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/alerts"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -28,7 +29,7 @@ func (hs *HTTPServer) ValidateOrgAlert(c *models.ReqContext) {
 		c.JsonApiErr(http.StatusBadRequest, "alertId is invalid", nil)
 		return
 	}
-	query := models.GetAlertByIdQuery{Id: id}
+	query := alerts.GetAlertByIdQuery{Id: id}
 
 	if err := hs.AlertEngine.AlertStore.GetAlertById(c.Req.Context(), &query); err != nil {
 		c.JsonApiErr(404, "Alert not found", nil)
@@ -57,7 +58,7 @@ func (hs *HTTPServer) GetAlertStatesForDashboard(c *models.ReqContext) response.
 		return response.Error(400, "Missing query parameter dashboardId", nil)
 	}
 
-	query := models.GetAlertStatesForDashboardQuery{
+	query := alerts.GetAlertStatesForDashboardQuery{
 		OrgId:       c.OrgID,
 		DashboardId: c.QueryInt64("dashboardId"),
 	}
@@ -125,11 +126,11 @@ func (hs *HTTPServer) GetAlerts(c *models.ReqContext) response.Response {
 
 		// if we didn't find any dashboards, return empty result
 		if len(dashboardIDs) == 0 {
-			return response.JSON(http.StatusOK, []*models.AlertListItemDTO{})
+			return response.JSON(http.StatusOK, []*alerts.AlertListItemDTO{})
 		}
 	}
 
-	query := models.GetAlertsQuery{
+	query := alerts.GetAlertsQuery{
 		OrgId:        c.OrgID,
 		DashboardIDs: dashboardIDs,
 		PanelId:      c.QueryInt64("panelId"),
@@ -223,7 +224,7 @@ func (hs *HTTPServer) GetAlert(c *models.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "alertId is invalid", err)
 	}
-	query := models.GetAlertByIdQuery{Id: id}
+	query := alerts.GetAlertByIdQuery{Id: id}
 
 	if err := hs.AlertEngine.AlertStore.GetAlertById(c.Req.Context(), &query); err != nil {
 		return response.Error(500, "List alerts failed", err)
@@ -690,7 +691,7 @@ func (hs *HTTPServer) PauseAlert(legacyAlertingEnabled *bool) func(c *models.Req
 		result := make(map[string]interface{})
 		result["alertId"] = alertID
 
-		query := models.GetAlertByIdQuery{Id: alertID}
+		query := alerts.GetAlertByIdQuery{Id: alertID}
 		if err := hs.AlertEngine.AlertStore.GetAlertById(c.Req.Context(), &query); err != nil {
 			return response.Error(500, "Get Alert failed", err)
 		}
@@ -708,17 +709,17 @@ func (hs *HTTPServer) PauseAlert(legacyAlertingEnabled *bool) func(c *models.Req
 		}
 
 		// Alert state validation
-		if query.Result.State != models.AlertStatePaused && !dto.Paused {
+		if query.Result.State != alerts.AlertStatePaused && !dto.Paused {
 			result["state"] = "un-paused"
 			result["message"] = "Alert is already un-paused"
 			return response.JSON(http.StatusOK, result)
-		} else if query.Result.State == models.AlertStatePaused && dto.Paused {
-			result["state"] = models.AlertStatePaused
+		} else if query.Result.State == alerts.AlertStatePaused && dto.Paused {
+			result["state"] = alerts.AlertStatePaused
 			result["message"] = "Alert is already paused"
 			return response.JSON(http.StatusOK, result)
 		}
 
-		cmd := models.PauseAlertCommand{
+		cmd := alerts.PauseAlertCommand{
 			OrgId:    c.OrgID,
 			AlertIds: []int64{alertID},
 			Paused:   dto.Paused,
@@ -728,10 +729,10 @@ func (hs *HTTPServer) PauseAlert(legacyAlertingEnabled *bool) func(c *models.Req
 			return response.Error(500, "", err)
 		}
 
-		resp := models.AlertStateUnknown
+		resp := alerts.AlertStateUnknown
 		pausedState := "un-paused"
 		if cmd.Paused {
-			resp = models.AlertStatePaused
+			resp = alerts.AlertStatePaused
 			pausedState = "paused"
 		}
 
@@ -765,7 +766,7 @@ func (hs *HTTPServer) PauseAllAlerts(legacyAlertingEnabled *bool) func(c *models
 		if err := web.Bind(c.Req, &dto); err != nil {
 			return response.Error(http.StatusBadRequest, "bad request data", err)
 		}
-		updateCmd := models.PauseAllAlertCommand{
+		updateCmd := alerts.PauseAllAlertCommand{
 			Paused: dto.Paused,
 		}
 
@@ -773,10 +774,10 @@ func (hs *HTTPServer) PauseAllAlerts(legacyAlertingEnabled *bool) func(c *models
 			return response.Error(500, "Failed to pause alerts", err)
 		}
 
-		resp := models.AlertStatePending
+		resp := alerts.AlertStatePending
 		pausedState := "un paused"
 		if updateCmd.Paused {
-			resp = models.AlertStatePaused
+			resp = alerts.AlertStatePaused
 			pausedState = "paused"
 		}
 
@@ -997,14 +998,14 @@ type SMTPNotEnabledError PreconditionFailedError
 type GetAlertsResponse struct {
 	// The response message
 	// in: body
-	Body []*models.AlertListItemDTO `json:"body"`
+	Body []*alerts.AlertListItemDTO `json:"body"`
 }
 
 // swagger:response getAlertResponse
 type GetAlertResponse struct {
 	// The response message
 	// in: body
-	Body *models.Alert `json:"body"`
+	Body *alerts.Alert `json:"body"`
 }
 
 // swagger:response pauseAlertResponse
@@ -1032,5 +1033,5 @@ type TestAlertResponse struct {
 type GetDashboardStatesResponse struct {
 	// The response message
 	// in: body
-	Body []*models.AlertStateInfoDTO `json:"body"`
+	Body []*alerts.AlertStateInfoDTO `json:"body"`
 }

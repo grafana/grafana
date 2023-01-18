@@ -4,16 +4,16 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/alerts"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/validations"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestReplaceIllegalCharswithUnderscore(t *testing.T) {
@@ -38,29 +38,29 @@ func TestReplaceIllegalCharswithUnderscore(t *testing.T) {
 
 func TestWhenAlertManagerShouldNotify(t *testing.T) {
 	tcs := []struct {
-		prevState models.AlertStateType
-		newState  models.AlertStateType
+		prevState alerts.AlertStateType
+		newState  alerts.AlertStateType
 
 		expect bool
 	}{
 		{
-			prevState: models.AlertStatePending,
-			newState:  models.AlertStateOK,
+			prevState: alerts.AlertStatePending,
+			newState:  alerts.AlertStateOK,
 			expect:    false,
 		},
 		{
-			prevState: models.AlertStateAlerting,
-			newState:  models.AlertStateOK,
+			prevState: alerts.AlertStateAlerting,
+			newState:  alerts.AlertStateOK,
 			expect:    true,
 		},
 		{
-			prevState: models.AlertStateOK,
-			newState:  models.AlertStatePending,
+			prevState: alerts.AlertStateOK,
+			newState:  alerts.AlertStatePending,
 			expect:    false,
 		},
 		{
-			prevState: models.AlertStateUnknown,
-			newState:  models.AlertStatePending,
+			prevState: alerts.AlertStateUnknown,
+			newState:  alerts.AlertStatePending,
 			expect:    false,
 		},
 	}

@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/alerts"
 	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
@@ -69,30 +69,30 @@ func (n *NotifierBase) ShouldNotify(ctx context.Context, context *alerting.EvalC
 		}
 
 		// Do not notify if alert state is OK or pending even on repeated notify
-		if newState == models.AlertStateOK || newState == models.AlertStatePending {
+		if newState == alerts.AlertStateOK || newState == alerts.AlertStatePending {
 			return false
 		}
 	}
 
-	okOrPending := newState == models.AlertStatePending || newState == models.AlertStateOK
+	okOrPending := newState == alerts.AlertStatePending || newState == alerts.AlertStateOK
 
 	// Do not notify when new state is ok/pending when previous is unknown
-	if prevState == models.AlertStateUnknown && okOrPending {
+	if prevState == alerts.AlertStateUnknown && okOrPending {
 		return false
 	}
 
 	// Do not notify when we become Pending for the first
-	if prevState == models.AlertStateNoData && newState == models.AlertStatePending {
+	if prevState == alerts.AlertStateNoData && newState == alerts.AlertStatePending {
 		return false
 	}
 
 	// Do not notify when we become OK from pending
-	if prevState == models.AlertStatePending && newState == models.AlertStateOK {
+	if prevState == alerts.AlertStatePending && newState == alerts.AlertStateOK {
 		return false
 	}
 
 	// Do not notify when we OK -> Pending
-	if prevState == models.AlertStateOK && newState == models.AlertStatePending {
+	if prevState == alerts.AlertStateOK && newState == alerts.AlertStatePending {
 		return false
 	}
 
@@ -105,7 +105,7 @@ func (n *NotifierBase) ShouldNotify(ctx context.Context, context *alerting.EvalC
 	}
 
 	// Do not notify when state is OK if DisableResolveMessage is set to true
-	if newState == models.AlertStateOK && n.DisableResolveMessage {
+	if newState == alerts.AlertStateOK && n.DisableResolveMessage {
 		return false
 	}
 

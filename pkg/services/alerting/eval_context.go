@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting/alerts"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -34,7 +35,7 @@ type EvalContext struct {
 	ImagePublicURL  string
 	ImageOnDiskPath string
 	NoDataFound     bool
-	PrevAlertState  models.AlertStateType
+	PrevAlertState  alerts.AlertStateType
 
 	RequestValidator models.PluginRequestValidator
 
@@ -76,22 +77,22 @@ type StateDescription struct {
 // GetStateModel returns the `StateDescription` based on current state.
 func (c *EvalContext) GetStateModel() *StateDescription {
 	switch c.Rule.State {
-	case models.AlertStateOK:
+	case alerts.AlertStateOK:
 		return &StateDescription{
 			Color: "#36a64f",
 			Text:  "OK",
 		}
-	case models.AlertStateNoData:
+	case alerts.AlertStateNoData:
 		return &StateDescription{
 			Color: "#888888",
 			Text:  "No Data",
 		}
-	case models.AlertStateAlerting:
+	case alerts.AlertStateAlerting:
 		return &StateDescription{
 			Color: "#D63232",
 			Text:  "Alerting",
 		}
-	case models.AlertStateUnknown:
+	case alerts.AlertStateUnknown:
 		return &StateDescription{
 			Color: "#888888",
 			Text:  "Unknown",
@@ -146,25 +147,25 @@ func (c *EvalContext) GetRuleURL() (string, error) {
 }
 
 // GetNewState returns the new state from the alert rule evaluation.
-func (c *EvalContext) GetNewState() models.AlertStateType {
+func (c *EvalContext) GetNewState() alerts.AlertStateType {
 	ns := getNewStateInternal(c)
-	if ns != models.AlertStateAlerting || c.Rule.For == 0 {
+	if ns != alerts.AlertStateAlerting || c.Rule.For == 0 {
 		return ns
 	}
 
 	since := time.Since(c.Rule.LastStateChange)
-	if c.PrevAlertState == models.AlertStatePending && since > c.Rule.For {
-		return models.AlertStateAlerting
+	if c.PrevAlertState == alerts.AlertStatePending && since > c.Rule.For {
+		return alerts.AlertStateAlerting
 	}
 
-	if c.PrevAlertState == models.AlertStateAlerting {
-		return models.AlertStateAlerting
+	if c.PrevAlertState == alerts.AlertStateAlerting {
+		return alerts.AlertStateAlerting
 	}
 
-	return models.AlertStatePending
+	return alerts.AlertStatePending
 }
 
-func getNewStateInternal(c *EvalContext) models.AlertStateType {
+func getNewStateInternal(c *EvalContext) alerts.AlertStateType {
 	if c.Error != nil {
 		c.Log.Error("Alert Rule Result Error",
 			"ruleId", c.Rule.ID,
@@ -172,14 +173,14 @@ func getNewStateInternal(c *EvalContext) models.AlertStateType {
 			"error", c.Error,
 			"changing state to", c.Rule.ExecutionErrorState.ToAlertState())
 
-		if c.Rule.ExecutionErrorState == models.ExecutionErrorKeepState {
+		if c.Rule.ExecutionErrorState == alerts.ExecutionErrorKeepState {
 			return c.PrevAlertState
 		}
 		return c.Rule.ExecutionErrorState.ToAlertState()
 	}
 
 	if c.Firing {
-		return models.AlertStateAlerting
+		return alerts.AlertStateAlerting
 	}
 
 	if c.NoDataFound {
@@ -188,13 +189,13 @@ func getNewStateInternal(c *EvalContext) models.AlertStateType {
 			"name", c.Rule.Name,
 			"changing state to", c.Rule.NoDataState.ToAlertState())
 
-		if c.Rule.NoDataState == models.NoDataKeepState {
+		if c.Rule.NoDataState == alerts.NoDataKeepState {
 			return c.PrevAlertState
 		}
 		return c.Rule.NoDataState.ToAlertState()
 	}
 
-	return models.AlertStateOK
+	return alerts.AlertStateOK
 }
 
 // evaluateNotificationTemplateFields will treat the alert evaluation rule's name and message fields as

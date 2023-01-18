@@ -17,8 +17,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/alerts"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -255,7 +255,7 @@ func (sn *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		}
 	}
 	msg := ""
-	if evalContext.Rule.State != models.AlertStateOK { // don't add message when going back to alert state ok.
+	if evalContext.Rule.State != alerts.AlertStateOK { // don't add message when going back to alert state ok.
 		msg = evalContext.Rule.Message
 	}
 	imageURL := ""

@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/alerts"
 	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
@@ -81,7 +81,7 @@ func (tn *TeamsNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	message := ""
-	if evalContext.Rule.State != models.AlertStateOK { // don't add message when going back to alert state ok.
+	if evalContext.Rule.State != alerts.AlertStateOK { // don't add message when going back to alert state ok.
 		message = evalContext.Rule.Message
 	}
 

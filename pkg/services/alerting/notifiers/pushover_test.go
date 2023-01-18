@@ -5,14 +5,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/alerts"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/validations"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestPushoverNotifier(t *testing.T) {
@@ -76,7 +76,7 @@ func TestGenPushoverBody(t *testing.T) {
 		t.Run("When alert is firing - should use siren sound", func(t *testing.T) {
 			evalContext := alerting.NewEvalContext(context.Background(),
 				&alerting.Rule{
-					State: models.AlertStateAlerting,
+					State: alerts.AlertStateAlerting,
 				}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 			_, pushoverBody, err := notifier.genPushoverBody(evalContext, "", "")
 
@@ -87,7 +87,7 @@ func TestGenPushoverBody(t *testing.T) {
 		t.Run("When alert is ok - should use success sound", func(t *testing.T) {
 			evalContext := alerting.NewEvalContext(context.Background(),
 				&alerting.Rule{
-					State: models.AlertStateOK,
+					State: alerts.AlertStateOK,
 				}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 			_, pushoverBody, err := notifier.genPushoverBody(evalContext, "", "")
 

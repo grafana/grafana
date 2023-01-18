@@ -6,8 +6,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/alerts"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -82,7 +82,7 @@ func (vn *VictoropsNotifier) buildEventPayload(evalContext *alerting.EvalContext
 		return nil, err
 	}
 
-	if evalContext.Rule.State == models.AlertStateOK && !vn.AutoResolve {
+	if evalContext.Rule.State == alerts.AlertStateOK && !vn.AutoResolve {
 		vn.log.Info("Not alerting VictorOps", "state", evalContext.Rule.State, "auto resolve", vn.AutoResolve)
 		return nil, nil
 	}
@@ -105,11 +105,11 @@ func (vn *VictoropsNotifier) buildEventPayload(evalContext *alerting.EvalContext
 		}
 	}
 
-	if evalContext.Rule.State == models.AlertStateNoData { // translate 'NODATA' to set alert
+	if evalContext.Rule.State == alerts.AlertStateNoData { // translate 'NODATA' to set alert
 		messageType = vn.NoDataAlertType
 	}
 
-	if evalContext.Rule.State == models.AlertStateOK {
+	if evalContext.Rule.State == alerts.AlertStateOK {
 		messageType = alertStateRecovery
 	}
 

@@ -5,14 +5,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
-	"github.com/grafana/grafana/pkg/services/validations"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/alerts"
+	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
+	"github.com/grafana/grafana/pkg/services/validations"
 )
 
 func TestShouldSendAlertNotification(t *testing.T) {
@@ -20,8 +20,8 @@ func TestShouldSendAlertNotification(t *testing.T) {
 
 	tcs := []struct {
 		name         string
-		prevState    models.AlertStateType
-		newState     models.AlertStateType
+		prevState    alerts.AlertStateType
+		newState     alerts.AlertStateType
 		sendReminder bool
 		frequency    time.Duration
 		state        *alerting.AlertNotificationState
@@ -30,56 +30,56 @@ func TestShouldSendAlertNotification(t *testing.T) {
 	}{
 		{
 			name:         "pending -> ok should not trigger an notification",
-			newState:     models.AlertStateOK,
-			prevState:    models.AlertStatePending,
+			newState:     alerts.AlertStateOK,
+			prevState:    alerts.AlertStatePending,
 			sendReminder: false,
 
 			expect: false,
 		},
 		{
 			name:         "ok -> alerting should trigger an notification",
-			newState:     models.AlertStateAlerting,
-			prevState:    models.AlertStateOK,
+			newState:     alerts.AlertStateAlerting,
+			prevState:    alerts.AlertStateOK,
 			sendReminder: false,
 
 			expect: true,
 		},
 		{
 			name:         "ok -> pending should not trigger an notification",
-			newState:     models.AlertStatePending,
-			prevState:    models.AlertStateOK,
+			newState:     alerts.AlertStatePending,
+			prevState:    alerts.AlertStateOK,
 			sendReminder: false,
 
 			expect: false,
 		},
 		{
 			name:         "ok -> ok should not trigger an notification",
-			newState:     models.AlertStateOK,
-			prevState:    models.AlertStateOK,
+			newState:     alerts.AlertStateOK,
+			prevState:    alerts.AlertStateOK,
 			sendReminder: false,
 
 			expect: false,
 		},
 		{
 			name:         "ok -> ok with reminder should not trigger an notification",
-			newState:     models.AlertStateOK,
-			prevState:    models.AlertStateOK,
+			newState:     alerts.AlertStateOK,
+			prevState:    alerts.AlertStateOK,
 			sendReminder: true,
 
 			expect: false,
 		},
 		{
 			name:         "alerting -> ok should trigger an notification",
-			newState:     models.AlertStateOK,
-			prevState:    models.AlertStateAlerting,
+			newState:     alerts.AlertStateOK,
+			prevState:    alerts.AlertStateAlerting,
 			sendReminder: false,
 
 			expect: true,
 		},
 		{
 			name:         "alerting -> ok should trigger an notification when reminders enabled",
-			newState:     models.AlertStateOK,
-			prevState:    models.AlertStateAlerting,
+			newState:     alerts.AlertStateOK,
+			prevState:    alerts.AlertStateAlerting,
 			frequency:    time.Minute * 10,
 			sendReminder: true,
 			state:        &alerting.AlertNotificationState{UpdatedAt: tnow.Add(-time.Minute).Unix()},
@@ -88,8 +88,8 @@ func TestShouldSendAlertNotification(t *testing.T) {
 		},
 		{
 			name:         "alerting -> alerting with reminder and no state should trigger",
-			newState:     models.AlertStateAlerting,
-			prevState:    models.AlertStateAlerting,
+			newState:     alerts.AlertStateAlerting,
+			prevState:    alerts.AlertStateAlerting,
 			frequency:    time.Minute * 10,
 			sendReminder: true,
 
@@ -97,8 +97,8 @@ func TestShouldSendAlertNotification(t *testing.T) {
 		},
 		{
 			name:         "alerting -> alerting with reminder and last notification sent 1 minute ago should not trigger",
-			newState:     models.AlertStateAlerting,
-			prevState:    models.AlertStateAlerting,
+			newState:     alerts.AlertStateAlerting,
+			prevState:    alerts.AlertStateAlerting,
 			frequency:    time.Minute * 10,
 			sendReminder: true,
 			state:        &alerting.AlertNotificationState{UpdatedAt: tnow.Add(-time.Minute).Unix()},
@@ -107,8 +107,8 @@ func TestShouldSendAlertNotification(t *testing.T) {
 		},
 		{
 			name:         "alerting -> alerting with reminder and last notification sent 11 minutes ago should trigger",
-			newState:     models.AlertStateAlerting,
-			prevState:    models.AlertStateAlerting,
+			newState:     alerts.AlertStateAlerting,
+			prevState:    alerts.AlertStateAlerting,
 			frequency:    time.Minute * 10,
 			sendReminder: true,
 			state:        &alerting.AlertNotificationState{UpdatedAt: tnow.Add(-11 * time.Minute).Unix()},
@@ -117,52 +117,52 @@ func TestShouldSendAlertNotification(t *testing.T) {
 		},
 		{
 			name:      "OK -> alerting with notification state pending and updated 30 seconds ago should not trigger",
-			newState:  models.AlertStateAlerting,
-			prevState: models.AlertStateOK,
+			newState:  alerts.AlertStateAlerting,
+			prevState: alerts.AlertStateOK,
 			state:     &alerting.AlertNotificationState{State: alerting.AlertNotificationStatePending, UpdatedAt: tnow.Add(-30 * time.Second).Unix()},
 
 			expect: false,
 		},
 		{
 			name:      "OK -> alerting with notification state pending and updated 2 minutes ago should trigger",
-			newState:  models.AlertStateAlerting,
-			prevState: models.AlertStateOK,
+			newState:  alerts.AlertStateAlerting,
+			prevState: alerts.AlertStateOK,
 			state:     &alerting.AlertNotificationState{State: alerting.AlertNotificationStatePending, UpdatedAt: tnow.Add(-2 * time.Minute).Unix()},
 
 			expect: true,
 		},
 		{
 			name:      "unknown -> ok",
-			prevState: models.AlertStateUnknown,
-			newState:  models.AlertStateOK,
+			prevState: alerts.AlertStateUnknown,
+			newState:  alerts.AlertStateOK,
 
 			expect: false,
 		},
 		{
 			name:      "unknown -> pending",
-			prevState: models.AlertStateUnknown,
-			newState:  models.AlertStatePending,
+			prevState: alerts.AlertStateUnknown,
+			newState:  alerts.AlertStatePending,
 
 			expect: false,
 		},
 		{
 			name:      "unknown -> alerting",
-			prevState: models.AlertStateUnknown,
-			newState:  models.AlertStateAlerting,
+			prevState: alerts.AlertStateUnknown,
+			newState:  alerts.AlertStateAlerting,
 
 			expect: true,
 		},
 		{
 			name:      "no_data -> pending",
-			prevState: models.AlertStateNoData,
-			newState:  models.AlertStatePending,
+			prevState: alerts.AlertStateNoData,
+			newState:  alerts.AlertStatePending,
 
 			expect: false,
 		},
 		{
 			name:      "no_data -> ok",
-			prevState: models.AlertStateNoData,
-			newState:  models.AlertStateOK,
+			prevState: alerts.AlertStateNoData,
+			newState:  alerts.AlertStateOK,
 
 			expect: true,
 		},

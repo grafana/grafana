@@ -9,8 +9,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/alerts"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -89,22 +89,22 @@ func (am *AlertmanagerNotifier) ShouldNotify(ctx context.Context, evalContext *a
 	am.log.Debug("Should notify", "ruleId", evalContext.Rule.ID, "state", evalContext.Rule.State, "previousState", evalContext.PrevAlertState)
 
 	// Do not notify when we become OK for the first time.
-	if (evalContext.PrevAlertState == models.AlertStatePending) && (evalContext.Rule.State == models.AlertStateOK) {
+	if (evalContext.PrevAlertState == alerts.AlertStatePending) && (evalContext.Rule.State == alerts.AlertStateOK) {
 		return false
 	}
 
 	// Notify on Alerting -> OK to resolve before alertmanager timeout.
-	if (evalContext.PrevAlertState == models.AlertStateAlerting) && (evalContext.Rule.State == models.AlertStateOK) {
+	if (evalContext.PrevAlertState == alerts.AlertStateAlerting) && (evalContext.Rule.State == alerts.AlertStateOK) {
 		return true
 	}
 
-	return evalContext.Rule.State == models.AlertStateAlerting
+	return evalContext.Rule.State == alerts.AlertStateAlerting
 }
 
 func (am *AlertmanagerNotifier) createAlert(evalContext *alerting.EvalContext, match *alerting.EvalMatch, ruleURL string) *simplejson.Json {
 	alertJSON := simplejson.New()
 	alertJSON.Set("startsAt", evalContext.StartTime.UTC().Format(time.RFC3339))
-	if evalContext.Rule.State == models.AlertStateOK {
+	if evalContext.Rule.State == alerts.AlertStateOK {
 		alertJSON.Set("endsAt", time.Now().UTC().Format(time.RFC3339))
 	}
 	alertJSON.Set("generatorURL", ruleURL)

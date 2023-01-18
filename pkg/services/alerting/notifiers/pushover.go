@@ -9,12 +9,11 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/setting"
-
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/alerts"
 	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const pushoverEndpoint = "https://api.pushover.net/1/messages.json"
@@ -337,7 +336,7 @@ func (pn *PushoverNotifier) genPushoverBody(evalContext *alerting.EvalContext, m
 
 	// Add priority
 	priority := pn.AlertingPriority
-	if evalContext.Rule.State == models.AlertStateOK {
+	if evalContext.Rule.State == alerts.AlertStateOK {
 		priority = pn.OKPriority
 	}
 	err = w.WriteField("priority", strconv.Itoa(priority))
@@ -367,7 +366,7 @@ func (pn *PushoverNotifier) genPushoverBody(evalContext *alerting.EvalContext, m
 
 	// Add sound
 	sound := pn.AlertingSound
-	if evalContext.Rule.State == models.AlertStateOK {
+	if evalContext.Rule.State == alerts.AlertStateOK {
 		sound = pn.OKSound
 	}
 	if sound != "default" {

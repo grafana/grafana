@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/alerts"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -123,11 +123,11 @@ func (notifier *ThreemaNotifier) Notify(evalContext *alerting.EvalContext) error
 	// Determine emoji
 	stateEmoji := ""
 	switch evalContext.Rule.State {
-	case models.AlertStateOK:
+	case alerts.AlertStateOK:
 		stateEmoji = "\u2705 " // Check Mark Button
-	case models.AlertStateNoData:
+	case alerts.AlertStateNoData:
 		stateEmoji = "\u2753\uFE0F " // Question Mark
-	case models.AlertStateAlerting:
+	case alerts.AlertStateAlerting:
 		stateEmoji = "\u26A0\uFE0F " // Warning sign
 	default:
 		// Handle other cases?

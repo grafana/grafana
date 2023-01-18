@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting/alerts"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -43,7 +43,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 
 	var store *sqlStore
 	var testDash *dashboards.Dashboard
-	var items []*models.Alert
+	var items []*alerts.Alert
 
 	setup := func(t *testing.T) {
 		ss := db.InitTestDB(t)
@@ -60,7 +60,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 		testDash = insertTestDashboard(t, store.db, "dashboard with alerts", 1, 0, false, "alert")
 		evalData, err := simplejson.NewJson([]byte(`{"test": "test"}`))
 		require.Nil(t, err)
-		items = []*models.Alert{
+		items = []*alerts.Alert{
 			{
 				PanelId:     1,
 				DashboardId: testDash.ID,
@@ -81,16 +81,16 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 		setup(t)
 
 		// Get alert so we can use its ID in tests
-		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, PanelId: 1, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
+		alertQuery := alerts.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, PanelId: 1, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
 		err2 := store.HandleAlertsQuery(context.Background(), &alertQuery)
 		require.Nil(t, err2)
 
 		insertedAlert := alertQuery.Result[0]
 
 		t.Run("new state ok", func(t *testing.T) {
-			cmd := &models.SetAlertStateCommand{
+			cmd := &alerts.SetAlertStateCommand{
 				AlertId: insertedAlert.Id,
-				State:   models.AlertStateOK,
+				State:   alerts.AlertStateOK,
 			}
 
 			err := store.SetAlertState(context.Background(), cmd)
@@ -105,9 +105,9 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 			require.Nil(t, err)
 
 			t.Run("cannot updated paused alert", func(t *testing.T) {
-				cmd := &models.SetAlertStateCommand{
+				cmd := &alerts.SetAlertStateCommand{
 					AlertId: insertedAlert.Id,
-					State:   models.AlertStateOK,
+					State:   alerts.AlertStateOK,
 				}
 
 				err = store.SetAlertState(context.Background(), cmd)
@@ -117,7 +117,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 			t.Run("alert is paused", func(t *testing.T) {
 				alert, _ = getAlertById(t, insertedAlert.Id, store)
 				currentState := alert.State
-				require.Equal(t, models.AlertStatePaused, currentState)
+				require.Equal(t, alerts.AlertStatePaused, currentState)
 			})
 
 			t.Run("pausing alerts should update their NewStateDate", func(t *testing.T) {
@@ -138,7 +138,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 
 	t.Run("Can read properties", func(t *testing.T) {
 		setup(t)
-		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, PanelId: 1, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
+		alertQuery := alerts.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, PanelId: 1, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
 		err2 := store.HandleAlertsQuery(context.Background(), &alertQuery)
 
 		alert := alertQuery.Result[0]
@@ -147,7 +147,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 		require.Equal(t, testDash.ID, alert.DashboardId)
 		require.Equal(t, int64(1), alert.PanelId)
 		require.Equal(t, "Alerting title", alert.Name)
-		require.Equal(t, models.AlertStateUnknown, alert.State)
+		require.Equal(t, alerts.AlertStateUnknown, alert.State)
 		require.NotNil(t, alert.NewStateDate)
 		require.NotNil(t, alert.EvalData)
 		require.Equal(t, "test", alert.EvalData.Get("test").MustString())
@@ -160,7 +160,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 	t.Run("Viewer can read alerts", func(t *testing.T) {
 		setup(t)
 		viewerUser := &user.SignedInUser{OrgRole: org.RoleViewer, OrgID: 1}
-		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, PanelId: 1, OrgId: 1, User: viewerUser}
+		alertQuery := alerts.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, PanelId: 1, OrgId: 1, User: viewerUser}
 		err2 := store.HandleAlertsQuery(context.Background(), &alertQuery)
 
 		require.Nil(t, err2)
@@ -179,7 +179,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 		})
 
 		t.Run("Alerts should be updated", func(t *testing.T) {
-			query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
+			query := alerts.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
 			err2 := store.HandleAlertsQuery(context.Background(), &query)
 
 			require.Nil(t, err2)
@@ -187,7 +187,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 			require.Equal(t, "Name", query.Result[0].Name)
 
 			t.Run("Alert state should not be updated", func(t *testing.T) {
-				require.Equal(t, models.AlertStateUnknown, query.Result[0].State)
+				require.Equal(t, alerts.AlertStateUnknown, query.Result[0].State)
 			})
 		})
 
@@ -199,7 +199,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 
 	t.Run("Multiple alerts per dashboard", func(t *testing.T) {
 		setup(t)
-		multipleItems := []*models.Alert{
+		multipleItems := []*alerts.Alert{
 			{
 				DashboardId: testDash.ID,
 				PanelId:     1,
@@ -228,7 +228,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 		t.Run("Should save 3 dashboards", func(t *testing.T) {
 			require.Nil(t, err)
 
-			queryForDashboard := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
+			queryForDashboard := alerts.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
 			err2 := store.HandleAlertsQuery(context.Background(), &queryForDashboard)
 
 			require.Nil(t, err2)
@@ -241,7 +241,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 			err = store.SaveAlerts(context.Background(), testDash.ID, missingOneAlert)
 
 			t.Run("should delete the missing alert", func(t *testing.T) {
-				query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
+				query := alerts.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
 				err2 := store.HandleAlertsQuery(context.Background(), &query)
 				require.Nil(t, err2)
 				require.Equal(t, 2, len(query.Result))
@@ -251,7 +251,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 
 	t.Run("When dashboard is removed", func(t *testing.T) {
 		setup(t)
-		items := []*models.Alert{
+		items := []*alerts.Alert{
 			{
 				PanelId:     1,
 				DashboardId: testDash.ID,
@@ -271,7 +271,7 @@ func TestIntegrationAlertingDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		t.Run("Alerts should be removed", func(t *testing.T) {
-			query := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
+			query := alerts.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
 			err2 := store.HandleAlertsQuery(context.Background(), &query)
 
 			require.Nil(t, err2)
@@ -299,7 +299,7 @@ func TestIntegrationPausingAlerts(t *testing.T) {
 		stateDateAfterPause := stateDateBeforePause
 
 		// Get alert so we can use its ID in tests
-		alertQuery := models.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, PanelId: 1, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
+		alertQuery := alerts.GetAlertsQuery{DashboardIDs: []int64{testDash.ID}, PanelId: 1, OrgId: 1, User: &user.SignedInUser{OrgRole: org.RoleAdmin}}
 		err2 := sqlStore.HandleAlertsQuery(context.Background(), &alertQuery)
 		require.Nil(t, err2)
 
@@ -334,7 +334,7 @@ func TestIntegrationPausingAlerts(t *testing.T) {
 }
 
 func (ss *sqlStore) pauseAlert(t *testing.T, orgId int64, alertId int64, pauseState bool) (int64, error) {
-	cmd := &models.PauseAlertCommand{
+	cmd := &alerts.PauseAlertCommand{
 		OrgId:    orgId,
 		AlertIds: []int64{alertId},
 		Paused:   pauseState,
@@ -344,8 +344,8 @@ func (ss *sqlStore) pauseAlert(t *testing.T, orgId int64, alertId int64, pauseSt
 	return cmd.ResultCount, err
 }
 
-func insertTestAlert(title string, message string, orgId int64, dashId int64, settings *simplejson.Json, ss sqlStore) (*models.Alert, error) {
-	items := []*models.Alert{
+func insertTestAlert(title string, message string, orgId int64, dashId int64, settings *simplejson.Json, ss sqlStore) (*alerts.Alert, error) {
+	items := []*alerts.Alert{
 		{
 			PanelId:     1,
 			DashboardId: dashId,
@@ -361,8 +361,8 @@ func insertTestAlert(title string, message string, orgId int64, dashId int64, se
 	return items[0], err
 }
 
-func getAlertById(t *testing.T, id int64, ss *sqlStore) (*models.Alert, error) {
-	q := &models.GetAlertByIdQuery{
+func getAlertById(t *testing.T, id int64, ss *sqlStore) (*alerts.Alert, error) {
+	q := &alerts.GetAlertByIdQuery{
 		Id: id,
 	}
 	err := ss.GetAlertById(context.Background(), q)
@@ -371,7 +371,7 @@ func getAlertById(t *testing.T, id int64, ss *sqlStore) (*models.Alert, error) {
 }
 
 func (ss *sqlStore) pauseAllAlerts(t *testing.T, pauseState bool) error {
-	cmd := &models.PauseAllAlertCommand{
+	cmd := &alerts.PauseAllAlertCommand{
 		Paused: pauseState,
 	}
 	err := ss.PauseAllAlerts(context.Background(), cmd)

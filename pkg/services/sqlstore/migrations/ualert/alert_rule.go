@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
-	legacymodels "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting/alerts"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 )
@@ -264,28 +264,28 @@ func ruleAdjustInterval(freq int64) int64 {
 }
 
 func transNoData(s string) (string, error) {
-	switch legacymodels.NoDataOption(s) {
-	case legacymodels.NoDataSetOK:
+	switch alerts.NoDataOption(s) {
+	case alerts.NoDataSetOK:
 		return string(ngmodels.OK), nil // values from ngalert/models/rule
-	case "", legacymodels.NoDataSetNoData:
+	case "", alerts.NoDataSetNoData:
 		return string(ngmodels.NoData), nil
-	case legacymodels.NoDataSetAlerting:
+	case alerts.NoDataSetAlerting:
 		return string(ngmodels.Alerting), nil
-	case legacymodels.NoDataKeepState:
+	case alerts.NoDataKeepState:
 		return string(ngmodels.NoData), nil // "keep last state" translates to no data because we now emit a special alert when the state is "noData". The result is that the evaluation will not return firing and instead we'll raise the special alert.
 	}
 	return "", fmt.Errorf("unrecognized No Data setting %v", s)
 }
 
 func transExecErr(s string) (string, error) {
-	switch legacymodels.ExecutionErrorOption(s) {
-	case "", legacymodels.ExecutionErrorSetAlerting:
+	switch alerts.ExecutionErrorOption(s) {
+	case "", alerts.ExecutionErrorSetAlerting:
 		return string(ngmodels.AlertingErrState), nil
-	case legacymodels.ExecutionErrorKeepState:
+	case alerts.ExecutionErrorKeepState:
 		// Keep last state is translated to error as we now emit a
 		// DatasourceError alert when the state is error
 		return string(ngmodels.ErrorErrState), nil
-	case legacymodels.ExecutionErrorSetOk:
+	case alerts.ExecutionErrorSetOk:
 		return string(ngmodels.OkErrState), nil
 	}
 	return "", fmt.Errorf("unrecognized Execution Error setting %v", s)
