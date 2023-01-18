@@ -71,11 +71,11 @@ type Client interface {
 	Authenticate(ctx context.Context, r *Request) (*Identity, error)
 }
 
-// FIXME: better name / description
 type ContextAwareClient interface {
 	Client
 	// Test should return true if client can be used to authenticate request
 	Test(ctx context.Context, r *Request) bool
+	// Priority for the client, a lower number means higher priority
 	Priority() uint
 }
 
