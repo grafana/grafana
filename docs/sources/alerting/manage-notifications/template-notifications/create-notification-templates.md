@@ -30,13 +30,13 @@ To create a template, complete the following steps.
 
 3. Write the content of the template in the content field.
 
-{{< figure max-width="940px" src="/static/img/docs/alerting/unified/new-message-template-email-subject-9-3.png" caption="New notification template email.subject" >}}
+{{< figure max-width="940px" src="/static/img/docs/alerting/unified/new-notification-template-email-subject-9-4.png" caption="New notification template email.subject" >}}
 
 5. Click Save.
 
 `{{ define "email.subject" }}` and `{{ end }}` is automatically added to the start and end of the content:
 
-{{< figure max-width="940px" src="/static/img/docs/alerting/unified/edit-message-template-email-subject-9-3.png" caption="Edit notification template email.subject" >}}
+{{< figure max-width="940px" src="/static/img/docs/alerting/unified/edit-notification-template-email-subject-9-4.png" caption="Edit notification template email.subject" >}}
 
 To create a notification template that contains more than one template:
 
@@ -46,7 +46,7 @@ To create a notification template that contains more than one template:
 
 3. Write each template in the Content field, including `{{ define "name-of-template" }}` and `{{ end }}` at the start and end of each template.
 
-{{< figure max-width="940px" src="/static/img/docs/alerting/unified/new-message-template-email-9-3.png" caption="New notification template" >}}
+{{< figure max-width="940px" src="/static/img/docs/alerting/unified/new-notification-template-email-9-4.png" caption="New notification template" >}}
 
 5. Click Save.
 
