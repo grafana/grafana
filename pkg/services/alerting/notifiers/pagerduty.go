@@ -231,7 +231,7 @@ func (pn *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 		return err
 	}
 
-	cmd := &models.SendWebhookSync{
+	cmd := &notifications.SendWebhookSync{
 		Url:        pagerdutyEventAPIURL,
 		Body:       string(body),
 		HttpMethod: "POST",

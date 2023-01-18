@@ -1,4 +1,4 @@
-package usersync
+package sync
 
 import (
 	"context"

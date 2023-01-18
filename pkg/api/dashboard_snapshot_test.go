@@ -14,13 +14,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
-	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 )
 
@@ -33,8 +32,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 		return s
 	}
 
-	sqlmock := mockstore.NewSQLStoreMock()
-	sqlmock.ExpectedTeamsByUser = []*team.TeamDTO{}
+	sqlmock := dbtest.NewFakeDB()
 	jsonModel, err := simplejson.NewJson([]byte(`{"id":100}`))
 	require.NoError(t, err)
 
@@ -257,8 +255,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 }
 
 func TestGetDashboardSnapshotNotFound(t *testing.T) {
-	sqlmock := mockstore.NewSQLStoreMock()
-	sqlmock.ExpectedTeamsByUser = []*team.TeamDTO{}
+	sqlmock := dbtest.NewFakeDB()
 
 	setUpSnapshotTest := func(t *testing.T) dashboardsnapshots.Service {
 		t.Helper()
@@ -307,8 +304,7 @@ func TestGetDashboardSnapshotNotFound(t *testing.T) {
 }
 
 func TestGetDashboardSnapshotFailure(t *testing.T) {
-	sqlmock := mockstore.NewSQLStoreMock()
-	sqlmock.ExpectedTeamsByUser = []*team.TeamDTO{}
+	sqlmock := dbtest.NewFakeDB()
 
 	setUpSnapshotTest := func(t *testing.T) dashboardsnapshots.Service {
 		t.Helper()

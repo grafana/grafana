@@ -173,7 +173,7 @@ func (hc *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 	hipURL := fmt.Sprintf("%s/v2/room/%s/notification?auth_token=%s", hc.URL, hc.RoomID, hc.APIKey)
 	data, _ := json.Marshal(&body)
 	hc.log.Info("Request payload", "json", string(data))
-	cmd := &models.SendWebhookSync{Url: hipURL, Body: string(data)}
+	cmd := &notifications.SendWebhookSync{Url: hipURL, Body: string(data)}
 
 	if err := hc.NotificationService.SendWebhookSync(evalContext.Ctx, cmd); err != nil {
 		hc.log.Error("Failed to send hipchat notification", "error", err, "webhook", hc.Name)

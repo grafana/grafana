@@ -18,7 +18,7 @@ type DashboardService interface {
 	GetDashboard(ctx context.Context, query *GetDashboardQuery) error
 	GetDashboardACLInfoList(ctx context.Context, query *models.GetDashboardACLInfoListQuery) error
 	GetDashboards(ctx context.Context, query *GetDashboardsQuery) error
-	GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error
+	GetDashboardTags(ctx context.Context, query *GetDashboardTagsQuery) error
 	GetDashboardUIDByID(ctx context.Context, query *GetDashboardRefByIDQuery) error
 	HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *models.HasAdminPermissionInDashboardsOrFoldersQuery) error
 	HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error
@@ -33,18 +33,18 @@ type DashboardService interface {
 
 // PluginService is a service for operating on plugin dashboards.
 type PluginService interface {
-	GetDashboardsByPluginID(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error
+	GetDashboardsByPluginID(ctx context.Context, query *GetDashboardsByPluginIDQuery) error
 }
 
 // DashboardProvisioningService is a service for operating on provisioned dashboards.
 //
 //go:generate mockery --name DashboardProvisioningService --structname FakeDashboardProvisioning --inpackage --filename dashboard_provisioning_mock.go
 type DashboardProvisioningService interface {
-	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error
+	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *DeleteOrphanedProvisionedDashboardsCommand) error
 	DeleteProvisionedDashboard(ctx context.Context, dashboardID int64, orgID int64) error
-	GetProvisionedDashboardData(ctx context.Context, name string) ([]*models.DashboardProvisioning, error)
-	GetProvisionedDashboardDataByDashboardID(ctx context.Context, dashboardID int64) (*models.DashboardProvisioning, error)
-	GetProvisionedDashboardDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*models.DashboardProvisioning, error)
+	GetProvisionedDashboardData(ctx context.Context, name string) ([]*DashboardProvisioning, error)
+	GetProvisionedDashboardDataByDashboardID(ctx context.Context, dashboardID int64) (*DashboardProvisioning, error)
+	GetProvisionedDashboardDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*DashboardProvisioning, error)
 	SaveFolderForProvisionedDashboards(context.Context, *SaveDashboardDTO) (*Dashboard, error)
 	SaveProvisionedDashboard(ctx context.Context, dto *SaveDashboardDTO, provisioning *DashboardProvisioning) (*Dashboard, error)
 	UnprovisionDashboard(ctx context.Context, dashboardID int64) error
@@ -54,19 +54,19 @@ type DashboardProvisioningService interface {
 //
 //go:generate mockery --name Store --structname FakeDashboardStore --inpackage --filename store_mock.go
 type Store interface {
-	DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error
-	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error
+	DeleteDashboard(ctx context.Context, cmd *DeleteDashboardCommand) error
+	DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *DeleteOrphanedProvisionedDashboardsCommand) error
 	FindDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error)
 	GetDashboard(ctx context.Context, query *GetDashboardQuery) (*Dashboard, error)
 	GetDashboardACLInfoList(ctx context.Context, query *models.GetDashboardACLInfoListQuery) error
 	GetDashboardUIDByID(ctx context.Context, query *GetDashboardRefByIDQuery) error
 	GetDashboards(ctx context.Context, query *GetDashboardsQuery) error
 	// GetDashboardsByPluginID retrieves dashboards identified by plugin.
-	GetDashboardsByPluginID(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error
-	GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error
-	GetProvisionedDashboardData(ctx context.Context, name string) ([]*models.DashboardProvisioning, error)
-	GetProvisionedDataByDashboardID(ctx context.Context, dashboardID int64) (*models.DashboardProvisioning, error)
-	GetProvisionedDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*models.DashboardProvisioning, error)
+	GetDashboardsByPluginID(ctx context.Context, query *GetDashboardsByPluginIDQuery) error
+	GetDashboardTags(ctx context.Context, query *GetDashboardTagsQuery) error
+	GetProvisionedDashboardData(ctx context.Context, name string) ([]*DashboardProvisioning, error)
+	GetProvisionedDataByDashboardID(ctx context.Context, dashboardID int64) (*DashboardProvisioning, error)
+	GetProvisionedDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*DashboardProvisioning, error)
 	HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *models.HasAdminPermissionInDashboardsOrFoldersQuery) error
 	HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error
 	// SaveAlerts saves dashboard alerts.
