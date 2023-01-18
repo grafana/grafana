@@ -92,7 +92,6 @@ export function getCredentials(options: AzureDataSourceSettings): AzureCredentia
       if (config.azure.managedIdentityEnabled) {
         return {
           authType: 'msi',
-          defaultSubscriptionId: options.jsonData.subscriptionId,
         };
       } else {
         // If authentication type is managed identity but managed identities were disabled in Grafana config,
@@ -109,14 +108,14 @@ export function getCredentials(options: AzureDataSourceSettings): AzureCredentia
         tenantId: options.jsonData.tenantId,
         clientId: options.jsonData.clientId,
         clientSecret: getSecret(options),
-        defaultSubscriptionId: options.jsonData.subscriptionId,
       };
   }
 }
 
 export function updateCredentials(
   options: AzureDataSourceSettings,
-  credentials: AzureCredentials
+  credentials: AzureCredentials,
+  subscriptionId?: string
 ): AzureDataSourceSettings {
   switch (credentials.authType) {
     case 'msi':
@@ -129,7 +128,7 @@ export function updateCredentials(
         jsonData: {
           ...options.jsonData,
           azureAuthType: 'msi',
-          subscriptionId: credentials.defaultSubscriptionId,
+          subscriptionId,
         },
       };
 
@@ -144,7 +143,7 @@ export function updateCredentials(
           cloudName: credentials.azureCloud || getDefaultAzureCloud(),
           tenantId: credentials.tenantId,
           clientId: credentials.clientId,
-          subscriptionId: credentials.defaultSubscriptionId,
+          subscriptionId,
         },
         secureJsonData: {
           ...options.secureJsonData,

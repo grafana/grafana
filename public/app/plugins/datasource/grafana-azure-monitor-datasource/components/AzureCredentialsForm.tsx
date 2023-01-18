@@ -13,7 +13,6 @@ export interface Props {
   credentials: AzureCredentials;
   azureCloudOptions?: SelectableValue[];
   onCredentialsChange?: (updatedCredentials: AzureCredentials) => void;
-  getSubscriptions?: () => Promise<SelectableValue[]>;
   disabled?: boolean;
   children?: JSX.Element;
 }
@@ -32,14 +31,13 @@ const authTypeOptions: Array<SelectableValue<AzureAuthType>> = [
 const LABEL_WIDTH = 18;
 
 export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => {
-  const { credentials, azureCloudOptions, onCredentialsChange, disabled } = props;
+  const { credentials, azureCloudOptions, onCredentialsChange, disabled, managedIdentityEnabled } = props;
 
   const onAuthTypeChange = (selected: SelectableValue<AzureAuthType>) => {
     if (onCredentialsChange) {
       const updated: AzureCredentials = {
         ...credentials,
         authType: selected.value || 'msi',
-        defaultSubscriptionId: undefined,
       };
       onCredentialsChange(updated);
     }
@@ -50,7 +48,6 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
       const updated: AzureCredentials = {
         ...credentials,
         azureCloud: selected.value,
-        defaultSubscriptionId: undefined,
       };
       onCredentialsChange(updated);
     }
@@ -61,7 +58,6 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
       const updated: AzureCredentials = {
         ...credentials,
         tenantId: event.target.value,
-        defaultSubscriptionId: undefined,
       };
       onCredentialsChange(updated);
     }
@@ -72,7 +68,6 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
       const updated: AzureCredentials = {
         ...credentials,
         clientId: event.target.value,
-        defaultSubscriptionId: undefined,
       };
       onCredentialsChange(updated);
     }
@@ -83,7 +78,6 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
       const updated: AzureCredentials = {
         ...credentials,
         clientSecret: event.target.value,
-        defaultSubscriptionId: undefined,
       };
       onCredentialsChange(updated);
     }
@@ -94,7 +88,6 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
       const updated: AzureCredentials = {
         ...credentials,
         clientSecret: '',
-        defaultSubscriptionId: undefined,
       };
       onCredentialsChange(updated);
     }
@@ -102,7 +95,7 @@ export const AzureCredentialsForm: FunctionComponent<Props> = (props: Props) => 
 
   return (
     <div className="gf-form-group">
-      {props.managedIdentityEnabled && (
+      {managedIdentityEnabled && (
         <InlineField
           label="Authentication"
           labelWidth={LABEL_WIDTH}

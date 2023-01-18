@@ -5,21 +5,30 @@ import { InlineField, Select, Button } from '@grafana/ui';
 
 import { isCredentialsComplete } from '../credentials';
 import { selectors } from '../e2e/selectors';
-import { AzureCredentials } from '../types';
+import { AzureCredentials, AzureDataSourceJsonData } from '../types';
 
 const LABEL_WIDTH = 18;
 
 interface Props {
+  options: AzureDataSourceJsonData;
   credentials: AzureCredentials;
   getSubscriptions?: () => Promise<SelectableValue[]>;
-  onCredentialsChange?: (updatedCredentials: AzureCredentials) => void;
+  onCredentialsChange?: (updatedCredentials: AzureCredentials, subscriptionId?: string) => void;
   subscriptions: Array<SelectableValue<string>>;
   onSubscriptionsChange: (receivedSubscriptions: Array<SelectableValue<string>>) => void;
   disabled?: boolean;
 }
 
 export const DefaultSubscription: FunctionComponent<Props> = (props: Props) => {
-  const { credentials, onCredentialsChange, getSubscriptions, disabled, subscriptions, onSubscriptionsChange } = props;
+  const {
+    credentials,
+    onCredentialsChange,
+    getSubscriptions,
+    disabled,
+    subscriptions,
+    onSubscriptionsChange,
+    options,
+  } = props;
   const hasRequiredFields = isCredentialsComplete(credentials);
   const [loadSubscriptionsClicked, onLoadSubscriptions] = useReducer((val) => val + 1, 0);
 
@@ -44,11 +53,11 @@ export const DefaultSubscription: FunctionComponent<Props> = (props: Props) => {
   const updateSubscriptions = (received: Array<SelectableValue<string>>, autoSelect = false) => {
     onSubscriptionsChange(received);
     if (getSubscriptions) {
-      if (autoSelect && !credentials.defaultSubscriptionId && received.length > 0) {
+      if (autoSelect && !options.subscriptionId && received.length > 0) {
         // Selecting the default subscription if subscriptions received but no default subscription selected
         onSubscriptionChange(received[0]);
-      } else if (credentials.defaultSubscriptionId) {
-        const found = received.find((opt) => opt.value === credentials.defaultSubscriptionId);
+      } else if (options.subscriptionId) {
+        const found = received.find((opt) => opt.value === options.subscriptionId);
         if (!found) {
           // Unselecting the default subscription if it isn't found among the received subscriptions
           onSubscriptionChange(undefined);
@@ -61,9 +70,8 @@ export const DefaultSubscription: FunctionComponent<Props> = (props: Props) => {
     if (onCredentialsChange) {
       const updated: AzureCredentials = {
         ...credentials,
-        defaultSubscriptionId: selected?.value,
       };
-      onCredentialsChange(updated);
+      onCredentialsChange(updated, selected?.value);
     }
   };
   return (
@@ -79,9 +87,7 @@ export const DefaultSubscription: FunctionComponent<Props> = (props: Props) => {
             inputId="default-subscription"
             aria-label="Default Subscription"
             value={
-              credentials.defaultSubscriptionId
-                ? subscriptions.find((opt) => opt.value === credentials.defaultSubscriptionId)
-                : undefined
+              options.subscriptionId ? subscriptions.find((opt) => opt.value === options.subscriptionId) : undefined
             }
             options={subscriptions}
             onChange={onSubscriptionChange}

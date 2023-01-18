@@ -1,11 +1,14 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
+import { createMockInstanceSetttings } from '../__mocks__/instanceSettings';
 import { selectors } from '../e2e/selectors';
 import { AzureClientSecretCredentials } from '../types';
 
 import AzureCredentialsForm, { Props } from './AzureCredentialsForm';
 import { DefaultSubscription } from './DefaultSubscription';
+
+const mockInstanceSettings = createMockInstanceSetttings();
 
 const setup = (propsFunc?: (props: Props) => Props) => {
   let props: Props = {
@@ -16,7 +19,6 @@ const setup = (propsFunc?: (props: Props) => Props) => {
       tenantId: 'e7f3f661-a933-3h3f-0294-31c4f962ec48',
       clientId: '34509fad-c0r9-45df-9e25-f1ee34af6900',
       clientSecret: undefined,
-      defaultSubscriptionId: '44987801-6nn6-49he-9b2d-9106972f9789',
     },
     azureCloudOptions: [
       { value: 'azuremonitor', label: 'Azure' },
@@ -24,7 +26,6 @@ const setup = (propsFunc?: (props: Props) => Props) => {
       { value: 'chinaazuremonitor', label: 'Azure China' },
     ],
     onCredentialsChange: jest.fn(),
-    getSubscriptions: jest.fn(() => Promise.resolve([])),
   };
 
   if (propsFunc) {
@@ -69,8 +70,9 @@ describe('Render', () => {
       credentials,
       children: (
         <DefaultSubscription
+          options={mockInstanceSettings.jsonData}
           credentials={credentials}
-          getSubscriptions={props.getSubscriptions}
+          getSubscriptions={jest.fn(() => Promise.resolve([]))}
           onCredentialsChange={props.onCredentialsChange}
           subscriptions={[]}
           onSubscriptionsChange={jest.fn()}
@@ -99,8 +101,9 @@ describe('Render', () => {
         disabled: true,
         children: (
           <DefaultSubscription
+            options={mockInstanceSettings.jsonData}
             credentials={props.credentials}
-            getSubscriptions={props.getSubscriptions}
+            getSubscriptions={jest.fn(() => Promise.resolve([]))}
             onCredentialsChange={props.onCredentialsChange}
             subscriptions={[]}
             onSubscriptionsChange={jest.fn()}

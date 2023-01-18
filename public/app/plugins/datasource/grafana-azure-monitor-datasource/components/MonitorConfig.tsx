@@ -22,15 +22,15 @@ export interface Props {
 }
 
 export const MonitorConfig: FunctionComponent<Props> = (props: Props) => {
-  const { updateOptions, getSubscriptions } = props;
+  const { updateOptions, getSubscriptions, options } = props;
   const [subscriptions, setSubscriptions] = useState<Array<SelectableValue<string>>>([]);
   const credentials = useMemo(() => getCredentials(props.options), [props.options]);
 
-  const onCredentialsChange = (credentials: AzureCredentials): void => {
-    if (!credentials.defaultSubscriptionId) {
+  const onCredentialsChange = (credentials: AzureCredentials, subscriptionId?: string): void => {
+    if (!subscriptionId) {
       setSubscriptions([]);
     }
-    updateOptions((options) => updateCredentials(options, credentials));
+    updateOptions((options) => updateCredentials(options, credentials, subscriptionId));
   };
 
   const onSubscriptionsChange = (receivedSubscriptions: Array<SelectableValue<string>>) =>
@@ -44,7 +44,6 @@ export const MonitorConfig: FunctionComponent<Props> = (props: Props) => {
         credentials={credentials}
         azureCloudOptions={azureClouds}
         onCredentialsChange={onCredentialsChange}
-        getSubscriptions={getSubscriptions}
         disabled={props.options.readOnly}
       >
         <DefaultSubscription
@@ -54,6 +53,7 @@ export const MonitorConfig: FunctionComponent<Props> = (props: Props) => {
           onCredentialsChange={onCredentialsChange}
           disabled={props.options.readOnly}
           onSubscriptionsChange={onSubscriptionsChange}
+          options={options.jsonData}
         />
       </AzureCredentialsForm>
     </>
