@@ -3,14 +3,13 @@ import { useCopyToClipboard } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorHeader, EditorMode, EditorRow, FlexItem, InlineSelect, Space } from '@grafana/experimental';
-import { Button, InlineField, InlineSwitch, RadioButtonGroup, Select, Tooltip } from '@grafana/ui';
+import { Button, InlineSwitch, RadioButtonGroup, Tooltip } from '@grafana/ui';
 
 import { QueryWithDefaults } from '../defaults';
 import { SQLQuery, QueryFormat, QueryRowFilter, QUERY_FORMAT_OPTIONS, DB } from '../types';
 
 import { ConfirmModal } from './ConfirmModal';
 import { DatasetSelector } from './DatasetSelector';
-import { ErrorBoundary } from './ErrorBoundary';
 import { TableSelector } from './TableSelector';
 
 export interface QueryHeaderProps {
@@ -22,6 +21,7 @@ export interface QueryHeaderProps {
   queryRowFilter: QueryRowFilter;
   isQueryRunnable: boolean;
   isDatasetSelectorHidden?: boolean;
+  showEscapeControl?: boolean;
 }
 
 const editorModes = [
@@ -38,11 +38,13 @@ export function QueryHeader({
   onQueryRowChange,
   isQueryRunnable,
   isDatasetSelectorHidden,
+  showEscapeControl,
 }: QueryHeaderProps) {
   const { editorMode } = query;
   const [_, copyToClipboard] = useCopyToClipboard();
   const [showConfirm, setShowConfirm] = useState(false);
   const toRawSql = db.toRawSql;
+  const [escape, setEscape] = useState(db.escapeIdentifiers ?? false);
 
   const onEditorModeChange = useCallback(
     (newEditorMode: EditorMode) => {
@@ -93,28 +95,31 @@ export function QueryHeader({
   return (
     <>
       <EditorHeader>
-        {/* Backward compatibility check. Inline select uses SelectContainer that was added in 8.3 */}
-        <ErrorBoundary
-          fallBackComponent={
-            <InlineField label="Format" labelWidth={15}>
-              <Select
-                placeholder="Select format"
-                value={query.format}
-                onChange={onFormatChange}
-                options={QUERY_FORMAT_OPTIONS}
-              />
-            </InlineField>
-          }
-        >
-          <InlineSelect
-            label="Format"
-            value={query.format}
-            placeholder="Select format"
-            menuShouldPortal
-            onChange={onFormatChange}
-            options={QUERY_FORMAT_OPTIONS}
+        <InlineSelect
+          label="Format"
+          value={query.format}
+          placeholder="Select format"
+          menuShouldPortal
+          onChange={onFormatChange}
+          options={QUERY_FORMAT_OPTIONS}
+        />
+        {showEscapeControl && (
+          <InlineSwitch
+            id="sql-escape"
+            label="Escape identifiers"
+            transparent={true}
+            showLabel={true}
+            value={escape}
+            onChange={(ev) => {
+              if (ev.target instanceof HTMLInputElement) {
+                const checked = ev.target.checked;
+                setEscape(checked);
+                db.escapeIdentifiers = checked;
+                onChange({ ...query, rawSql: toRawSql(query, checked) });
+              }
+            }}
           />
-        </ErrorBoundary>
+        )}
 
         {editorMode === EditorMode.Builder && (
           <>

@@ -1,9 +1,9 @@
 import { isEmpty } from 'lodash';
 
 import { SQLQuery } from 'app/features/plugins/sql/types';
-import { createSelectClause, haveColumns } from 'app/features/plugins/sql/utils/sql.utils';
+import { createSelectClause, escapeValue, haveColumns } from 'app/features/plugins/sql/utils/sql.utils';
 
-export function toRawSql({ sql, dataset, table }: SQLQuery): string {
+export function toRawSql({ sql, dataset, table }: SQLQuery, escapeIdentifiers?: boolean): string {
   let rawQuery = '';
 
   // Return early with empty string if there is no sql column
@@ -11,10 +11,10 @@ export function toRawSql({ sql, dataset, table }: SQLQuery): string {
     return rawQuery;
   }
 
-  rawQuery += createSelectClause(sql.columns);
+  rawQuery += createSelectClause(sql.columns, escapeIdentifiers);
 
   if (dataset && table) {
-    rawQuery += `FROM ${dataset}.${table} `;
+    rawQuery += `FROM ${escapeValue(dataset, escapeIdentifiers)}.${escapeValue(table, escapeIdentifiers)} `;
   }
 
   if (sql.whereString) {
@@ -22,12 +22,15 @@ export function toRawSql({ sql, dataset, table }: SQLQuery): string {
   }
 
   if (sql.groupBy?.[0]?.property.name) {
-    const groupBy = sql.groupBy.map((g) => g.property.name).filter((g) => !isEmpty(g));
+    const groupBy = sql.groupBy
+      .map((g) => g.property.name)
+      .filter((g) => !isEmpty(g))
+      .map((g) => escapeValue(g, escapeIdentifiers));
     rawQuery += `GROUP BY ${groupBy.join(', ')} `;
   }
 
   if (sql.orderBy?.property.name) {
-    rawQuery += `ORDER BY ${sql.orderBy.property.name} `;
+    rawQuery += `ORDER BY ${escapeValue(sql.orderBy.property.name, escapeIdentifiers)} `;
   }
 
   if (sql.orderBy?.property.name && sql.orderByDirection) {
@@ -39,9 +42,4 @@ export function toRawSql({ sql, dataset, table }: SQLQuery): string {
     rawQuery += `LIMIT ${sql.limit} `;
   }
   return rawQuery;
-}
-
-// Puts backticks (`) around the string value.
-export function escapeValue(value: string) {
-  return `\`${value}\``;
 }
