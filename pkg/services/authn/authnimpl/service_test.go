@@ -8,76 +8,100 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/auth/authtest"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestService_Authenticate(t *testing.T) {
 	type TestCase struct {
-		desc           string
-		clientName     string
-		clientErr      error
-		clientIdentity *authn.Identity
-		expectedOK     bool
-		expectedErr    error
+		desc             string
+		clients          []authn.Client
+		clientErr        error
+		expectedIdentity *authn.Identity
+		expectedErr      error
 	}
 
-	var clientErr = errors.New("some err")
+	var (
+		firstErr = errors.New("first")
+		lastErr  = errors.New("last")
+	)
 
 	tests := []TestCase{
 		{
-			desc:           "should succeed with authentication for configured client",
-			clientIdentity: &authn.Identity{},
-			clientName:     "fake",
-			expectedOK:     true,
+			desc: "should succeed with authentication for configured client",
+			clients: []authn.Client{
+				&authntest.FakeClient{ExpectedTest: true, ExpectedIdentity: &authn.Identity{ID: "user:1"}},
+			},
+			expectedIdentity: &authn.Identity{ID: "user:1"},
 		},
 		{
-			desc:       "should return false when client is not configured",
-			clientName: "gitlab",
-			expectedOK: false,
+			desc: "should succeed with authentication for second client when first test fail",
+			clients: []authn.Client{
+				&authntest.FakeClient{ExpectedName: "1", ExpectedPriority: 1, ExpectedTest: false},
+				&authntest.FakeClient{ExpectedName: "2", ExpectedPriority: 2, ExpectedTest: true, ExpectedIdentity: &authn.Identity{ID: "user:2"}},
+			},
+			expectedIdentity: &authn.Identity{ID: "user:2"},
 		},
 		{
-			desc:        "should return true and error when client could be used but failed to authenticate",
-			clientName:  "fake",
-			expectedOK:  true,
-			clientErr:   clientErr,
-			expectedErr: clientErr,
+			desc: "should succeed with authentication for third client when error happened in first",
+			clients: []authn.Client{
+				&authntest.FakeClient{ExpectedName: "1", ExpectedPriority: 2, ExpectedTest: false},
+				&authntest.FakeClient{ExpectedName: "2", ExpectedPriority: 1, ExpectedTest: true, ExpectedErr: errors.New("some error")},
+				&authntest.FakeClient{ExpectedName: "3", ExpectedPriority: 3, ExpectedTest: true, ExpectedIdentity: &authn.Identity{ID: "user:3"}},
+			},
+			expectedIdentity: &authn.Identity{ID: "user:3"},
 		},
 		{
-			desc:           "should return error if identity is disabled",
-			clientName:     "fake",
-			clientIdentity: &authn.Identity{IsDisabled: true},
-			expectedOK:     true,
-			expectedErr:    errDisabledIdentity,
+			desc: "should return error when no client could authenticate the request",
+			clients: []authn.Client{
+				&authntest.FakeClient{ExpectedName: "1", ExpectedPriority: 2, ExpectedTest: false},
+				&authntest.FakeClient{ExpectedName: "2", ExpectedPriority: 1, ExpectedTest: false},
+				&authntest.FakeClient{ExpectedName: "3", ExpectedPriority: 3, ExpectedTest: false},
+			},
+			expectedErr: errCantAuthenticateReq,
+		},
+		{
+			desc: "should return latest error",
+			clients: []authn.Client{
+				&authntest.FakeClient{ExpectedName: "1", ExpectedPriority: 2, ExpectedTest: false},
+				&authntest.FakeClient{ExpectedName: "2", ExpectedPriority: 1, ExpectedTest: true, ExpectedErr: firstErr},
+				&authntest.FakeClient{ExpectedName: "3", ExpectedPriority: 3, ExpectedTest: true, ExpectedErr: lastErr},
+			},
+			expectedErr: lastErr,
+		},
+		{
+			desc: "should return error on disabled identity",
+			clients: []authn.Client{
+				&authntest.FakeClient{ExpectedName: "1", ExpectedTest: true, ExpectedIdentity: &authn.Identity{IsDisabled: true}},
+			},
+			expectedErr: errDisabledIdentity,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			svc := setupTests(t, func(svc *Service) {
-				svc.clients["fake"] = &authntest.FakeClient{
-					ExpectedIdentity: tt.clientIdentity,
-					ExpectedErr:      tt.clientErr,
-					ExpectedTest:     tt.expectedOK,
+				for _, c := range tt.clients {
+					svc.RegisterClient(c)
 				}
 			})
 
-			_, ok, err := svc.Authenticate(context.Background(), tt.clientName, &authn.Request{})
-			assert.Equal(t, tt.expectedOK, ok)
+			identity, err := svc.Authenticate(context.Background(), &authn.Request{})
 			assert.ErrorIs(t, err, tt.expectedErr)
+			assert.EqualValues(t, tt.expectedIdentity, identity)
 		})
 	}
 }
 
-func TestService_AuthenticateOrgID(t *testing.T) {
+func TestService_Authenticate_OrgID(t *testing.T) {
 	type TestCase struct {
 		desc          string
 		req           *authn.Request
@@ -123,18 +147,16 @@ func TestService_AuthenticateOrgID(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			var calledWith int64
 			s := setupTests(t, func(svc *Service) {
-				svc.clients["fake"] = authntest.MockClient{
+				svc.RegisterClient(authntest.MockClient{
 					AuthenticateFunc: func(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 						calledWith = r.OrgID
 						return &authn.Identity{}, nil
 					},
-					TestFunc: func(ctx context.Context, r *authn.Request) bool {
-						return true
-					},
-				}
+					TestFunc: func(ctx context.Context, r *authn.Request) bool { return true },
+				})
 			})
 
-			_, _, _ = s.Authenticate(context.Background(), "fake", tt.req)
+			_, _ = s.Authenticate(context.Background(), tt.req)
 			assert.Equal(t, tt.expectedOrgID, calledWith)
 		})
 	}
@@ -157,7 +179,7 @@ func TestService_Login(t *testing.T) {
 
 	tests := []TestCase{
 		{
-			desc:             "should authenticate and create session for valid request",
+			desc:             "should login for valid request",
 			client:           "fake",
 			expectedClientOK: true,
 			expectedClientIdentity: &authn.Identity{
@@ -169,12 +191,12 @@ func TestService_Login(t *testing.T) {
 			},
 		},
 		{
-			desc:        "should not authenticate with invalid client",
+			desc:        "should not login with invalid client",
 			client:      "invalid",
 			expectedErr: authn.ErrClientNotConfigured,
 		},
 		{
-			desc:                   "should not authenticate non user identity",
+			desc:                   "should not login non user identity",
 			client:                 "fake",
 			expectedClientOK:       true,
 			expectedClientIdentity: &authn.Identity{ID: "apikey:1"},
@@ -185,11 +207,12 @@ func TestService_Login(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			s := setupTests(t, func(svc *Service) {
-				svc.clients["fake"] = &authntest.FakeClient{
+				svc.RegisterClient(&authntest.FakeClient{
+					ExpectedName:     "fake",
 					ExpectedErr:      tt.expectedClientErr,
 					ExpectedTest:     tt.expectedClientOK,
 					ExpectedIdentity: tt.expectedClientIdentity,
-				}
+				})
 				svc.sessionService = &authtest.FakeUserAuthTokenService{
 					CreateTokenProvider: func(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*auth.UserToken, error) {
 						if tt.expectedSessionErr != nil {
@@ -267,6 +290,7 @@ func setupTests(t *testing.T, opts ...func(svc *Service)) *Service {
 	s := &Service{
 		log:     log.NewNopLogger(),
 		cfg:     setting.NewCfg(),
+		queue:   newQueue(),
 		clients: map[string]authn.Client{},
 		tracer:  tracing.InitializeTracerForTest(),
 	}
