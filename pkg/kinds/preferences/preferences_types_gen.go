@@ -16,6 +16,9 @@ type QueryHistoryPreference struct {
 	HomeTab *string `json:"homeTab,omitempty"`
 }
 
+// A specific timezone from https://en.wikipedia.org/wiki/Tz_database
+type TimeZone interface{}
+
 // Preferences defines model for preferences.
 type Preferences struct {
 	// UID for the home dashboard
@@ -28,10 +31,8 @@ type Preferences struct {
 	// light, dark, empty is default
 	Theme *string `json:"theme,omitempty"`
 
-	// The timezone selection
-	// Would be nice it this used:
-	// import { TimeZone } from '@grafana/data';
-	Timezone *string `json:"timezone,omitempty"`
+	// A specific timezone from https://en.wikipedia.org/wiki/Tz_database
+	Timezone *TimeZone `json:"timezone,omitempty"`
 
 	// day of the week (sunday, monday, etc)
 	WeekStart *string `json:"weekStart,omitempty"`

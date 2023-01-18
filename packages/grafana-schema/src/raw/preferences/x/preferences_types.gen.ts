@@ -34,12 +34,14 @@ export interface Preferences {
   theme?: string;
   /**
    * The timezone selection
-   * Would be nice it this used:
-   * import { TimeZone } from '@grafana/data';
    */
-  timezone?: string;
+  timezone?: common.TimeZone;
   /**
    * day of the week (sunday, monday, etc)
    */
   weekStart?: string;
 }
+
+export const defaultPreferences: Partial<Preferences> = {
+  timezone: common.defaultTimeZone,
+};
