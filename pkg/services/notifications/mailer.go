@@ -10,7 +10,6 @@ import (
 	"html/template"
 	"net/mail"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
@@ -54,9 +53,9 @@ func (ns *NotificationService) Send(msg *Message) (int, error) {
 	return ns.mailer.Send(messages...)
 }
 
-func (ns *NotificationService) buildEmailMessage(cmd *models.SendEmailCommand) (*Message, error) {
+func (ns *NotificationService) buildEmailMessage(cmd *SendEmailCommand) (*Message, error) {
 	if !ns.Cfg.Smtp.Enabled {
-		return nil, models.ErrSmtpNotEnabled
+		return nil, ErrSmtpNotEnabled
 	}
 
 	data := cmd.Data
@@ -120,7 +119,7 @@ func (ns *NotificationService) buildEmailMessage(cmd *models.SendEmailCommand) (
 
 // buildAttachedFiles build attached files
 func buildAttachedFiles(
-	attached []*models.SendEmailAttachFile,
+	attached []*SendEmailAttachFile,
 ) []*AttachedFile {
 	result := make([]*AttachedFile, 0)
 

@@ -86,7 +86,7 @@ func (dd *DingDingNotifier) Notify(evalContext *alerting.EvalContext) error {
 		return err
 	}
 
-	cmd := &models.SendWebhookSync{
+	cmd := &notifications.SendWebhookSync{
 		Url:  dd.URL,
 		Body: string(body),
 	}

@@ -91,7 +91,7 @@ func (api *AccessControlAPI) searchUsersPermissions(c *models.ReqContext) respon
 
 	permsByAction := map[int64]map[string][]string{}
 	for userID, userPerms := range permissions {
-		permsByAction[userID] = ac.GroupScopesByAction(userPerms)
+		permsByAction[userID] = ac.Reduce(userPerms)
 	}
 
 	return response.JSON(http.StatusOK, permsByAction)
@@ -121,5 +121,5 @@ func (api *AccessControlAPI) searchUserPermissions(c *models.ReqContext) respons
 		response.Error(http.StatusInternalServerError, "could not search user permissions", err)
 	}
 
-	return response.JSON(http.StatusOK, ac.GroupScopesByAction(permissions))
+	return response.JSON(http.StatusOK, ac.Reduce(permissions))
 }
