@@ -1,7 +1,6 @@
 import { AwsAuthDataSourceJsonData, AwsAuthDataSourceSecureJsonData } from '@grafana/aws-sdk';
 import { DataFrame, DataQuery, DataSourceRef, SelectableValue } from '@grafana/data';
 
-import { SelectableResourceValue } from './api';
 import {
   QueryEditorArrayExpression,
   QueryEditorFunctionExpression,
@@ -41,7 +40,7 @@ export interface SQLExpression {
 }
 
 export interface CloudWatchMetricsQuery extends MetricStat, DataQuery {
-  queryMode?: 'Metrics';
+  queryMode?: CloudWatchQueryMode;
   metricQueryType?: MetricQueryType;
   metricEditorMode?: MetricEditorMode;
 
@@ -77,14 +76,7 @@ export interface CloudWatchMathExpressionQuery extends DataQuery {
   expression: string;
 }
 
-export type LogAction =
-  | 'DescribeLogGroups'
-  | 'DescribeAllLogGroups'
-  | 'GetQueryResults'
-  | 'GetLogGroupFields'
-  | 'GetLogEvents'
-  | 'StartQuery'
-  | 'StopQuery';
+export type LogAction = 'GetQueryResults' | 'GetLogEvents' | 'StartQuery' | 'StopQuery';
 
 export enum CloudWatchLogsQueryStatus {
   Scheduled = 'Scheduled',
@@ -96,20 +88,26 @@ export enum CloudWatchLogsQueryStatus {
 }
 
 export interface CloudWatchLogsQuery extends DataQuery {
-  queryMode: 'Logs';
+  queryMode: CloudWatchQueryMode;
   id: string;
   region: string;
   expression?: string;
   statsGroups?: string[];
-  logGroups?: SelectableResourceValue[];
-  /* not quite deprecated yet, but will be soon */
+  logGroups?: LogGroup[];
+  /* deprecated, use logGroups instead */
   logGroupNames?: string[];
 }
+// We want to allow setting defaults for both Logs and Metrics queries
+export type CloudWatchDefaultQuery = Omit<CloudWatchLogsQuery, 'queryMode'> & CloudWatchMetricsQuery;
 
-export type CloudWatchQuery = CloudWatchMetricsQuery | CloudWatchLogsQuery | CloudWatchAnnotationQuery;
+export type CloudWatchQuery =
+  | CloudWatchMetricsQuery
+  | CloudWatchLogsQuery
+  | CloudWatchAnnotationQuery
+  | CloudWatchDefaultQuery;
 
 export interface CloudWatchAnnotationQuery extends MetricStat, DataQuery {
-  queryMode: 'Annotations';
+  queryMode: CloudWatchQueryMode;
   prefixMatching?: boolean;
   actionPrefix?: string;
   alarmNamePrefix?: string;
@@ -126,6 +124,11 @@ export interface CloudWatchJsonData extends AwsAuthDataSourceJsonData {
   logsTimeout?: string;
   // Used to create links if logs contain traceId.
   tracingDatasourceUid?: string;
+
+  logGroups?: LogGroup[];
+  /**
+   * @deprecated use logGroups
+   */
   defaultLogGroups?: string[];
 }
 
@@ -134,46 +137,7 @@ export interface CloudWatchSecureJsonData extends AwsAuthDataSourceSecureJsonDat
   secretKey?: string;
 }
 
-export interface GetQueryResultsRequest {
-  /**
-   * The ID number of the query.
-   */
-  queryId: string;
-}
-
-export interface ResultField {
-  /**
-   * The log event field.
-   */
-  field?: string;
-  /**
-   * The value of this field.
-   */
-  value?: string;
-}
-
-export interface QueryStatistics {
-  /**
-   * The number of log events that matched the query string.
-   */
-  recordsMatched?: number;
-  /**
-   * The total number of log events scanned during the query.
-   */
-  recordsScanned?: number;
-  /**
-   * The total number of bytes in the log events scanned during the query.
-   */
-  bytesScanned?: number;
-}
-
-export type QueryStatus = 'Scheduled' | 'Running' | 'Complete' | 'Failed' | 'Cancelled' | string;
-
-export type CloudWatchLogsRequest =
-  | GetLogEventsRequest
-  | StartQueryRequest
-  | DescribeLogGroupsRequest
-  | GetLogGroupFieldsRequest;
+export type CloudWatchLogsRequest = GetLogEventsRequest | StartQueryRequest | QueryParam;
 
 export interface GetLogEventsRequest {
   /**
@@ -207,20 +171,6 @@ export interface GetLogEventsRequest {
   region?: string;
 }
 
-export interface GetQueryResultsResponse {
-  /**
-   * The log events that matched the query criteria during the most recent time it ran. The results value is an array of arrays. Each log event is one object in the top-level array. Each of these log event objects is an array of field/value pairs.
-   */
-  results?: ResultField[][];
-  /**
-   * Includes the number of log events scanned by the query, the number of log events that matched the query criteria, and the total number of bytes in the log events that were scanned.
-   */
-  statistics?: QueryStatistics;
-  /**
-   * The status of the most recent running of the query. Possible values are Cancelled, Complete, Failed, Running, Scheduled, Timeout, and Unknown. Queries time out after 15 minutes of execution. To avoid having your queries time out, reduce the time range being searched, or partition your query into a number of queries.
-   */
-  status?: QueryStatus;
-}
 export interface TSDBResponse<T = any> {
   results: Record<string, TSDBQueryResult<T>>;
   message?: string;
@@ -257,70 +207,15 @@ export interface TSDBTimeSeries {
 }
 export type TSDBTimePoint = [number, number];
 
-export interface LogGroup {
-  /**
-   * The name of the log group.
-   */
-  logGroupName?: string;
-  /**
-   * The creation time of the log group, expressed as the number of milliseconds after Jan 1, 1970 00:00:00 UTC.
-   */
-  creationTime?: number;
-  retentionInDays?: number;
-  /**
-   * The number of metric filters.
-   */
-  metricFilterCount?: number;
-  /**
-   * The Amazon Resource Name (ARN) of the log group.
-   */
-  arn?: string;
-  /**
-   * The number of bytes stored.
-   */
-  storedBytes?: number;
-  /**
-   * The Amazon Resource Name (ARN) of the CMK to use when encrypting log data.
-   */
-  kmsKeyId?: string;
-}
-
-export interface DescribeLogGroupsResponse {
-  /**
-   * The log groups.
-   */
-  logGroups?: LogGroup[];
-  nextToken?: string;
-}
-
-export interface GetLogGroupFieldsRequest {
-  /**
-   * The name of the log group to search.
-   */
-  logGroupName: string;
-  /**
-   * The time to set as the center of the query. If you specify time, the 8 minutes before and 8 minutes after this time are searched. If you omit time, the past 15 minutes are queried. The time value is specified as epoch time, the number of seconds since January 1, 1970, 00:00:00 UTC.
-   */
-  time?: number;
-  region: string;
-}
-
 export interface LogGroupField {
   /**
    * The name of a log field.
    */
-  name?: string;
+  name: string;
   /**
    * The percentage of log events queried that contained the field.
    */
   percent?: number;
-}
-
-export interface GetLogGroupFieldsResponse {
-  /**
-   * The array of fields found in the query. Each object in the array contains the name of the field, along with the percentage of time it appeared in the log events that were queried.
-   */
-  logGroupFields?: LogGroupField[];
 }
 
 export interface StartQueryRequest {
@@ -331,7 +226,8 @@ export interface StartQueryRequest {
   /**
    * The list of log groups to be queried. You can include up to 20 log groups. A StartQuery operation must include a logGroupNames or a logGroupName parameter, but not both.
    */
-  logGroupNames?: string[];
+  logGroupNames?: string[] /* not quite deprecated yet, but will be soon */;
+  logGroups?: LogGroup[];
   /**
    * The query string to use. For more information, see CloudWatch Logs Insights Query Syntax.
    */
@@ -343,11 +239,13 @@ export interface StartQueryRequest {
   refId: string;
   region: string;
 }
-export interface StartQueryResponse {
-  /**
-   * The unique ID of the query.
-   */
-  queryId?: string;
+
+export interface QueryParam {
+  queryId: string;
+  refId: string;
+  limit?: number;
+  region: string;
+  statsGroups?: string[];
 }
 
 export interface MetricRequest {
@@ -438,59 +336,9 @@ export interface LegacyAnnotationQuery extends MetricStat, DataQuery {
   type: string;
 }
 
-export interface MetricResponse {
-  name: string;
-  namespace: string;
-}
-
-export interface ResourceRequest {
-  region: string;
-  accountId?: string;
-}
-
-export interface GetDimensionKeysRequest extends ResourceRequest {
-  metricName?: string;
-  namespace?: string;
-  dimensionFilters?: Dimensions;
-}
-
-export interface GetDimensionValuesRequest extends ResourceRequest {
-  dimensionKey: string;
-  namespace: string;
-  metricName?: string;
-  dimensionFilters?: Dimensions;
-}
-
-export interface GetMetricsRequest extends ResourceRequest {
-  namespace?: string;
-}
-
-export interface DescribeLogGroupsRequest extends ResourceRequest {
-  logGroupNamePrefix?: string;
-  logGroupPattern?: string;
-  // used by legacy requests, in the future deprecate these fields
-  refId?: string;
-  limit?: number;
-}
-
-export interface Account {
-  arn: string;
-  id: string;
-  label: string;
-  isMonitoringAccount: boolean;
-}
-
-export interface LogGroupResponse {
+export interface LogGroup {
   arn: string;
   name: string;
-}
-
-export interface MetricResponse {
-  name: string;
-  namespace: string;
-}
-
-export interface ResourceResponse<T> {
   accountId?: string;
-  value: T;
+  accountLabel?: string;
 }

@@ -111,7 +111,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-type AccordianReferencesProps = {
+export type AccordianReferencesProps = {
   data: TraceSpanReference[];
   highContrast?: boolean;
   interactive?: boolean;

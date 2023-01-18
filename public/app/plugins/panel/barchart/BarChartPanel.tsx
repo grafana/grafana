@@ -20,6 +20,7 @@ import {
   measureText,
   PlotLegend,
   Portal,
+  StackingMode,
   TooltipDisplayMode,
   UPlotConfigBuilder,
   UPLOT_AXIS_FONT_SIZE,
@@ -168,6 +169,8 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       const disp = getFieldDisplayName(field, alignedFrame);
       seriesIdx = info.aligned.fields.findIndex((f) => disp === getFieldDisplayName(f, info.aligned));
     }
+    const tooltipMode =
+      options.fullHighlight && options.stacking !== StackingMode.None ? TooltipDisplayMode.Multi : options.tooltip.mode;
 
     return (
       <>
@@ -195,7 +198,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
           rowIndex={datapointIdx}
           columnIndex={seriesIdx}
           sortOrder={options.tooltip.sort}
-          mode={options.tooltip.mode}
+          mode={tooltipMode}
         />
       </>
     );
@@ -242,7 +245,17 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
         f.config.custom?.gradientMode === GraphGradientMode.Scheme &&
         f.config.color?.mode === FieldColorModeId.Thresholds;
 
-      return fromThresholds || f.config.mappings?.some((m) => m.options.result.color != null);
+      return (
+        fromThresholds ||
+        f.config.mappings?.some((m) => {
+          // ValueToText mappings have a different format, where all of them are grouped into an object keyed by value
+          if (m.type === 'value') {
+            // === MappingType.ValueToText
+            return Object.values(m.options).some((result) => result.color != null);
+          }
+          return m.options.result.color != null;
+        })
+      );
     });
 
     if (hasPerBarColor) {
@@ -270,6 +283,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       text,
       xTickLabelRotation,
       xTickLabelSpacing,
+      fullHighlight,
     } = options;
 
     return preparePlotConfigBuilder({
@@ -295,6 +309,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       getColor,
       fillOpacity,
       allFrames: info.viz,
+      fullHighlight,
     });
   };
 
@@ -340,7 +355,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
                 offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
                 allowPointerEvents={isToolTipOpen.current}
               >
-                {renderTooltip(info.aligned, focusedSeriesIdx, focusedPointIdx)}
+                {renderTooltip(info.viz[0], focusedSeriesIdx, focusedPointIdx)}
               </VizTooltipContainer>
             )}
           </Portal>

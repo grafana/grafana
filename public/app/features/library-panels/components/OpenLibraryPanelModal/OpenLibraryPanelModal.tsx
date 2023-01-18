@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { debounce } from 'lodash';
+import debounce from 'debounce-promise';
 import React, { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue, urlUtil } from '@grafana/data';
@@ -31,10 +31,7 @@ export function OpenLibraryPanelModal({ libraryPanel, onDismiss }: OpenLibraryPa
     (searchString: string) => loadOptionsAsync(libraryPanel.uid, searchString, setLoading),
     [libraryPanel.uid]
   );
-  const debouncedLoadOptions = useMemo(
-    () => debounce(loadOptions, 300, { leading: true, trailing: true }),
-    [loadOptions]
-  );
+  const debouncedLoadOptions = useMemo(() => debounce(loadOptions, 300, { leading: true }), [loadOptions]);
   const onViewPanel = (e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
     locationService.push(urlUtil.renderUrl(`/d/${option?.value?.uid}`, {}));

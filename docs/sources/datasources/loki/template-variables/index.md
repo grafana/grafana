@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/data-sources/loki/template-variables/
+  - ../../data-sources/loki/template-variables/
 description: Guide for using template variables when querying the Loki data source
 keywords:
   - grafana

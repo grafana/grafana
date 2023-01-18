@@ -2,7 +2,7 @@ import { getDefaultNormalizer, render, RenderResult, SelectorMatcherOptions, wai
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route } from 'react-router-dom';
 
 import {
   PluginErrorCode,
@@ -13,7 +13,6 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
-import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { configureStore } from 'app/store/configureStore';
 
 import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock, mockUserPermissions } from '../__mocks__';
@@ -70,24 +69,14 @@ const renderPluginDetails = (
 ): RenderResult => {
   const plugin = getCatalogPluginMock(pluginOverride);
   const { id } = plugin;
-  const props = getRouteComponentProps({
-    match: { params: { pluginId: id }, isExact: true, url: '', path: '' },
-    queryParams: { page: pageId },
-    location: {
-      hash: '',
-      pathname: `/plugins/${id}`,
-      search: pageId ? `?page=${pageId}` : '',
-      state: undefined,
-    },
-  });
   const store = configureStore({
     plugins: pluginsStateOverride || getPluginsStateMock([plugin]),
   });
 
   return render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[{ pathname: `/plugins/${id}`, search: pageId ? `?page=${pageId}` : '' }]}>
       <Provider store={store}>
-        <PluginDetailsPage {...props} />
+        <Route path="/plugins/:pluginId" component={PluginDetailsPage} />
       </Provider>
     </MemoryRouter>
   );
@@ -137,24 +126,7 @@ describe('Plugin details page', () => {
         local: { id },
       });
 
-      const props = getRouteComponentProps({
-        match: { params: { pluginId: id }, isExact: true, url: '', path: '' },
-        queryParams: {},
-        location: {
-          hash: '',
-          pathname: `/plugins/${id}`,
-          search: '',
-          state: undefined,
-        },
-      });
-      const store = configureStore();
-      const { queryByText } = render(
-        <MemoryRouter>
-          <Provider store={store}>
-            <PluginDetailsPage {...props} />
-          </Provider>
-        </MemoryRouter>
-      );
+      const { queryByText } = renderPluginDetails({ id });
 
       await waitFor(() => expect(queryByText(/licensed under the apache 2.0 license/i)).toBeInTheDocument());
     });

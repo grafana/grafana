@@ -7,7 +7,6 @@ import { stylesFactory, useTheme2 } from '../../../themes';
 import { isCompactUrl } from '../../../utils/dataLinks';
 import { FieldValidationMessage } from '../../Forms/FieldValidationMessage';
 import { IconButton } from '../../IconButton/IconButton';
-import { HorizontalGroup, VerticalGroup } from '../../Layout/Layout';
 
 export interface DataLinksListItemProps {
   index: number;
@@ -31,26 +30,24 @@ export const DataLinksListItem: FC<DataLinksListItemProps> = ({ link, onEdit, on
 
   return (
     <div className={styles.wrapper}>
-      <VerticalGroup spacing="xs">
-        <HorizontalGroup justify="space-between" align="flex-start" width="100%">
-          <div className={cx(styles.url, !hasUrl && styles.notConfigured, isCompactExploreUrl && styles.errored)}>
-            {hasTitle ? title : 'Data link title not provided'}
-          </div>
-          <HorizontalGroup>
-            <IconButton name="pen" onClick={onEdit} />
-            <IconButton name="times" onClick={onRemove} />
-          </HorizontalGroup>
-        </HorizontalGroup>
-        <div
-          className={cx(styles.url, !hasUrl && styles.notConfigured, isCompactExploreUrl && styles.errored)}
-          title={url}
-        >
-          {hasUrl ? url : 'Data link url not provided'}
+      <div className={styles.titleWrapper}>
+        <div className={cx(styles.url, !hasUrl && styles.notConfigured, isCompactExploreUrl && styles.errored)}>
+          {hasTitle ? title : 'Data link title not provided'}
         </div>
-        {isCompactExploreUrl && (
-          <FieldValidationMessage>Explore data link may not work in the future. Please edit.</FieldValidationMessage>
-        )}
-      </VerticalGroup>
+        <div className={styles.actionButtons}>
+          <IconButton name="pen" onClick={onEdit} />
+          <IconButton name="times" onClick={onRemove} />
+        </div>
+      </div>
+      <div
+        className={cx(styles.url, !hasUrl && styles.notConfigured, isCompactExploreUrl && styles.errored)}
+        title={url}
+      >
+        {hasUrl ? url : 'Data link url not provided'}
+      </div>
+      {isCompactExploreUrl && (
+        <FieldValidationMessage>Explore data link may not work in the future. Please edit.</FieldValidationMessage>
+      )}
     </div>
   );
 };
@@ -63,6 +60,19 @@ const getDataLinkListItemStyles = stylesFactory((theme: GrafanaTheme2) => {
       &:last-child {
         margin-bottom: 0;
       }
+      display: flex;
+      flex-direction: column;
+    `,
+    titleWrapper: css`
+      label: data-links-list-item-title;
+      justify-content: space-between;
+      display: flex;
+      width: 100%;
+      align-items: center;
+    `,
+    actionButtons: css`
+      margin-left: ${theme.spacing(1)};
+      display: flex;
     `,
     errored: css`
       color: ${theme.colors.error.text};

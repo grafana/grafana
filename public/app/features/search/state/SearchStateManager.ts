@@ -136,6 +136,10 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     store.set(SEARCH_PANELS_LOCAL_STORAGE_KEY, includePanels);
   };
 
+  hasSearchFilters() {
+    return this.state.query || this.state.tag.length || this.state.starred;
+  }
+
   getSearchQuery() {
     const q: SearchQuery = {
       query: this.state.query,
@@ -239,7 +243,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   /**
    * Caller should handle debounce
    */
-  onReportSearchUsage() {
+  onReportSearchUsage = () => {
     reportDashboardListViewed(this.state.eventTrackingNamespace, {
       layout: this.state.layout,
       starred: this.state.starred,
@@ -248,7 +252,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       tagCount: this.state.tag?.length,
       includePanels: this.state.includePanels,
     });
-  }
+  };
 }
 
 let stateManager: SearchStateManager;

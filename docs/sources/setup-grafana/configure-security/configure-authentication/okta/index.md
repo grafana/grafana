@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/auth/okta/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/okta/
+  - ../../../auth/okta/
 description: Grafana Okta OAuth Guide
 title: Configure Okta OAuth2 authentication
 weight: 1200
@@ -80,6 +79,12 @@ The `allowed_domains` option limits access to the users belonging to the specifi
 
 ```ini
 allowed_domains = mycompany.com mycompany.org
+```
+
+To put values containing spaces in the list, use the following JSON syntax:
+
+```ini
+allowed_groups = ["Admins", "Software Engineers"]
 ```
 
 ### Map roles

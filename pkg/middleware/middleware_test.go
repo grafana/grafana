@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey/apikeytest"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -232,6 +233,50 @@ func TestMiddlewareContext(t *testing.T) {
 		assert.Equal(t, orgID, sc.context.OrgID)
 		assert.Equal(t, org.RoleEditor, sc.context.OrgRole)
 	}, configureJWTAuthHeader)
+
+	middlewareScenario(t, "Valid Basic Auth header with JWT enabled and empty 'sub' claim", func(t *testing.T, sc *scenarioContext) {
+		const password = "MyPass"
+		const orgID int64 = 2
+		const userID int64 = 12
+		// #nosec G101 -- This is dummy/test token
+		const emptySubToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSm9obiBEb2UiLCJzdWIiOiIiLCJpYXQiOjE1MTYyMzkwMjJ9.tnwtOHK58d47dO4DHW4b9MzeToxa1kGiko5Oo887Rqc"
+
+		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: orgID, UserID: userID}
+		authHeader := util.GetBasicAuthHeader("myuser", password)
+		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).withJWTAuthHeader(emptySubToken).exec()
+
+		require.Equal(t, 200, sc.resp.Code)
+
+		assert.True(t, sc.context.IsSignedIn)
+		assert.Equal(t, orgID, sc.context.OrgID)
+		assert.Equal(t, userID, sc.context.UserID)
+	}, func(cfg *setting.Cfg) {
+		cfg.JWTAuthEnabled = true
+		cfg.JWTAuthHeaderName = "X-JWT-Token"
+		cfg.BasicAuthEnabled = true
+	})
+
+	middlewareScenario(t, "Valid Basic Auth header with JWT enabled and missing 'sub' claim", func(t *testing.T, sc *scenarioContext) {
+		const password = "MyPass"
+		const orgID int64 = 2
+		const userID int64 = 12
+		// #nosec G101 -- This is dummy/test token
+		const missingSubToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSm9obiBEb2UiLCJpYXQiOjE1MTYyMzkwMjJ9.8nYFUX869Y1mnDDDU4yL11aANgVRuifoxrE8BHZY1iE"
+
+		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: orgID, UserID: userID}
+		authHeader := util.GetBasicAuthHeader("myuser", password)
+		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).withJWTAuthHeader(missingSubToken).exec()
+
+		require.Equal(t, 200, sc.resp.Code)
+
+		assert.True(t, sc.context.IsSignedIn)
+		assert.Equal(t, orgID, sc.context.OrgID)
+		assert.Equal(t, userID, sc.context.UserID)
+	}, func(cfg *setting.Cfg) {
+		cfg.JWTAuthEnabled = true
+		cfg.JWTAuthHeaderName = "X-JWT-Token"
+		cfg.BasicAuthEnabled = true
+	})
 
 	middlewareScenario(t, "Valid API key, but does not match DB hash", func(t *testing.T, sc *scenarioContext) {
 		const keyhash = "Something_not_matching"
@@ -514,6 +559,17 @@ func TestMiddlewareContext(t *testing.T) {
 		cfg.AnonymousOrgRole = string(org.RoleEditor)
 	})
 
+	middlewareScenario(t, "middleware should add custom response headers", func(t *testing.T, sc *scenarioContext) {
+		sc.fakeReq("GET", "/api/").exec()
+		assert.Regexp(t, "test", sc.resp.Header().Get("X-Custom-Header"))
+		assert.Regexp(t, "other-test", sc.resp.Header().Get("X-Other-Header"))
+	}, func(cfg *setting.Cfg) {
+		cfg.CustomResponseHeaders = map[string]string{
+			"X-Custom-Header": "test",
+			"X-Other-Header":  "other-test",
+		}
+	})
+
 	t.Run("auth_proxy", func(t *testing.T) {
 		const userID int64 = 33
 		const orgID int64 = 4
@@ -684,7 +740,7 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 
 		middlewareScenario(t, "Request body should not be read in default context handler, but query should be altered - jwt", func(t *testing.T, sc *scenarioContext) {
-			sc.fakeReq("POST", "/?targetOrgId=123&auth_token=token")
+			sc.fakeReq("POST", "/?targetOrgId=123&auth_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NSIsImlhdCI6MTUxNjIzOTAyMn0.1E9qmtctlHAeJzNLPgGFfxdA8WfbEl_vwYO91ffQGxs")
 			body := "key=value"
 			sc.req.Body = io.NopCloser(strings.NewReader(body))
 
@@ -811,6 +867,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		require.Truef(t, exists, "Views directory should exist at %q", viewsPath)
 
 		sc.m = web.New()
+		sc.m.Use(AddCustomResponseHeaders(cfg))
 		sc.m.Use(AddDefaultResponseHeaders(cfg))
 		sc.m.UseMiddleware(ContentSecurityPolicy(cfg, logger))
 		sc.m.UseMiddleware(web.Renderer(viewsPath, "[[", "]]"))
@@ -875,7 +932,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *dbtest.Fake
 	tracer := tracing.InitializeTracerForTest()
 	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService, userService, mockSQLStore)
 	authenticator := &logintest.AuthenticatorFake{ExpectedUser: &user.User{}}
-	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, mockSQLStore, tracer, authProxy, loginService, apiKeyService, authenticator, userService, orgService, oauthTokenService, featuremgmt.WithFeatures(featuremgmt.FlagAccessTokenExpirationCheck))
+	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, mockSQLStore, tracer, authProxy, loginService, apiKeyService, authenticator, userService, orgService, oauthTokenService, featuremgmt.WithFeatures(featuremgmt.FlagAccessTokenExpirationCheck), &authntest.FakeService{})
 }
 
 type fakeRenderService struct {

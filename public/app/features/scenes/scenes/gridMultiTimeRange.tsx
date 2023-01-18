@@ -1,27 +1,20 @@
-import { dateTime } from '@grafana/data';
+import { VizPanel, SceneGridRow, SceneTimePicker, SceneGridLayout, SceneTimeRange } from '@grafana/scenes';
 
-import { VizPanel } from '../components';
-import { Scene } from '../components/Scene';
-import { SceneTimePicker } from '../components/SceneTimePicker';
-import { SceneGridLayout, SceneGridRow } from '../components/layout/SceneGridLayout';
-import { SceneTimeRange } from '../core/SceneTimeRange';
+import { DashboardScene } from '../dashboard/DashboardScene';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getGridWithMultipleTimeRanges(): Scene {
+export function getGridWithMultipleTimeRanges(): DashboardScene {
   const globalTimeRange = new SceneTimeRange();
-
-  const now = dateTime();
   const row1TimeRange = new SceneTimeRange({
-    from: dateTime(now).subtract(1, 'year'),
-    to: now,
-    raw: { from: 'now-1y', to: 'now' },
+    from: 'now-1y',
+    to: 'now',
   });
 
-  const scene = new Scene({
+  return new DashboardScene({
     title: 'Grid with rows and different queries and time ranges',
-    layout: new SceneGridLayout({
+    body: new SceneGridLayout({
       children: [
         new SceneGridRow({
           $timeRange: row1TimeRange,
@@ -29,39 +22,35 @@ export function getGridWithMultipleTimeRanges(): Scene {
           title: 'Row A - has its own query, last year time range',
           key: 'Row A',
           isCollapsed: true,
-          size: { y: 0 },
+          placement: { y: 0 },
           children: [
             new VizPanel({
               pluginId: 'timeseries',
               title: 'Row A Child1',
               key: 'Row A Child1',
-              isResizable: true,
-              isDraggable: true,
-              size: { x: 0, y: 1, width: 12, height: 5 },
+              placement: { x: 0, y: 1, width: 12, height: 5, isResizable: true, isDraggable: true },
             }),
             new VizPanel({
               pluginId: 'timeseries',
               title: 'Row A Child2',
               key: 'Row A Child2',
-              isResizable: true,
-              isDraggable: true,
-              size: { x: 0, y: 5, width: 6, height: 5 },
+              placement: { x: 0, y: 5, width: 6, height: 5, isResizable: true, isDraggable: true },
             }),
           ],
         }),
 
         new VizPanel({
           $data: getQueryRunnerWithRandomWalkQuery(),
-          isResizable: true,
-          isDraggable: true,
           pluginId: 'timeseries',
           title: 'Outsider, has its own query',
           key: 'Outsider-own-query',
-          size: {
+          placement: {
             x: 0,
             y: 12,
             width: 6,
             height: 10,
+            isResizable: true,
+            isDraggable: true,
           },
         }),
       ],
@@ -71,6 +60,4 @@ export function getGridWithMultipleTimeRanges(): Scene {
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
   });
-
-  return scene;
 }

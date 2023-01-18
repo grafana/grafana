@@ -6,7 +6,8 @@ import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { locationService, setDataSourceSrv, logInfo } from '@grafana/runtime';
+import { locationService, setDataSourceSrv, logInfo, setBackendSrv } from '@grafana/runtime';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import * as actions from 'app/features/alerting/unified/state/actions';
@@ -132,6 +133,10 @@ const ui = {
     saveButton: byRole('button', { name: /Save changes/ }),
   },
 };
+
+beforeAll(() => {
+  setBackendSrv(backendSrv);
+});
 
 describe('RuleList', () => {
   beforeEach(() => {
@@ -322,8 +327,11 @@ describe('RuleList', () => {
 
     const groups = await ui.ruleGroup.findAll();
     expect(groups).toHaveLength(2);
-    expect(groups[0]).toHaveTextContent('1 rule');
-    expect(groups[1]).toHaveTextContent('4 rules: 1 firing, 1 pending');
+    expect(groups[0]).toHaveTextContent('1 firing');
+    expect(groups[1]).toHaveTextContent('1 firing');
+    expect(groups[1]).toHaveTextContent('1 pending');
+    expect(groups[1]).toHaveTextContent('1 recording');
+    expect(groups[1]).toHaveTextContent('1 normal');
 
     // expand second group to see rules table
     expect(ui.rulesTable.query()).not.toBeInTheDocument();

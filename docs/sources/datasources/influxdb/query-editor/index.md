@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/influxdb/influxdb-flux/
-  - /docs/grafana/latest/datasources/influxdb/query-editor/
-  - /docs/grafana/latest/data-sources/influxdb/query-editor/
+  - ../../data-sources/influxdb/query-editor/
+  - influxdb-flux/
 description: Guide for Flux in Grafana
 title: Flux support in Grafana
 weight: 200

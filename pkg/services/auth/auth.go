@@ -3,8 +3,10 @@ package auth
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -18,10 +20,14 @@ const (
 
 // Typed errors
 var (
-	ErrUserTokenNotFound = errors.New("user token not found")
+	ErrUserTokenNotFound   = errors.New("user token not found")
+	ErrInvalidSessionToken = usertoken.ErrInvalidSessionToken
 )
 
-type TokenRevokedError = usertoken.TokenRevokedError
+type (
+	TokenRevokedError = usertoken.TokenRevokedError
+	UserToken         = usertoken.UserToken
+)
 
 // CreateTokenErr represents a token creation error; used in Enterprise
 type CreateTokenErr struct {
@@ -42,9 +48,11 @@ type TokenExpiredError struct {
 	TokenID int64
 }
 
-func (e *TokenExpiredError) Error() string { return "user token expired" }
+func (e *TokenExpiredError) Unwrap() error { return ErrInvalidSessionToken }
 
-type UserToken = usertoken.UserToken
+func (e *TokenExpiredError) Error() string {
+	return fmt.Sprintf("%s: user token expired", ErrInvalidSessionToken)
+}
 
 type RevokeAuthTokenCmd struct {
 	AuthTokenId int64 `json:"authTokenId"`
@@ -65,3 +73,5 @@ type UserTokenService interface {
 type UserTokenBackgroundService interface {
 	registry.BackgroundService
 }
+
+type JWTVerifierService = models.JWTService

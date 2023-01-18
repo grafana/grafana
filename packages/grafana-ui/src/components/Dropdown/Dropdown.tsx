@@ -44,6 +44,11 @@ export const Dropdown = React.memo(({ children, overlay, placement }: Props) => 
       {visible && (
         <Portal>
           <FocusScope autoFocus>
+            {/*
+              this is handling bubbled events from the inner overlay
+              see https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/main/docs/rules/no-static-element-interactions.md#case-the-event-handler-is-only-being-used-to-capture-bubbled-events
+            */}
+            {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events */}
             <div ref={setTooltipRef} {...getTooltipProps()} onClick={onOverlayClicked}>
               <div {...getArrowProps({ className: 'tooltip-arrow' })} />
               <CSSTransition
@@ -67,17 +72,16 @@ Dropdown.displayName = 'Dropdown';
 
 const getStyles = (duration: number) => {
   return {
-    appear: css`
-      opacity: 0;
-      position: relative;
-      transform: scaleY(0.5);
-      transform-origin: top;
-    `,
-    appearActive: css`
-      opacity: 1;
-      transform: scaleY(1);
-      transition: transform ${duration}ms cubic-bezier(0.2, 0, 0.2, 1),
-        opacity ${duration}ms cubic-bezier(0.2, 0, 0.2, 1);
-    `,
+    appear: css({
+      opacity: '0',
+      position: 'relative',
+      transform: 'scaleY(0.5)',
+      transformOrigin: 'top',
+    }),
+    appearActive: css({
+      opacity: '1',
+      transform: 'scaleY(1)',
+      transition: `transform ${duration}ms cubic-bezier(0.2, 0, 0.2, 1), opacity ${duration}ms cubic-bezier(0.2, 0, 0.2, 1)`,
+    }),
   };
 };

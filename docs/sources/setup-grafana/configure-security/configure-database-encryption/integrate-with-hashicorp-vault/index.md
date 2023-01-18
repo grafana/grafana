@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/enterprise/vault/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-database-encryption/integrate-with-hashicorp-vault/
+  - ../../../enterprise/vault/
 description: Learn how to integrate Grafana with Hashicorp Vault so that you can use
   secrets for configuration and provisioning.
 title: Integrate Grafana with Hashicorp Vault
@@ -12,7 +11,7 @@ weight: 500
 
 If you manage your secrets with [Hashicorp Vault](https://www.hashicorp.com/products/vault), you can use them for [Configuration]({{< relref "../../../configure-grafana/" >}}) and [Provisioning]({{< relref "../../../../administration/provisioning/" >}}).
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
 
 > **Note:** If you have Grafana [set up for high availability]({{< relref "../../../set-up-for-high-availability/" >}}), then we advise not to use dynamic secrets for provisioning files.
 > Each Grafana instance is responsible for renewing its own leases. Your data source leases might expire when one of your Grafana servers shuts down.

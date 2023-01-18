@@ -10,7 +10,7 @@ import { fieldReducers, ReducerID, reduceField } from './fieldReducer';
 /**
  * Run a reducer and get back the value
  */
-function reduce(field: Field, id: string): any {
+function reduce(field: Field, id: string) {
   return reduceField({ field, reducers: [id] })[id];
 }
 

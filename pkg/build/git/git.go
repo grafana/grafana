@@ -60,7 +60,7 @@ func NewGitHubClient(ctx context.Context, token string) *github.Client {
 }
 
 func PRCheckRegexp() *regexp.Regexp {
-	reBranch, err := regexp.Compile(`^pr-check-([0-9]+)\/(.+)$`)
+	reBranch, err := regexp.Compile(`^prc-([0-9]+)-([A-Za-z0-9]+)\/(.+)$`)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to compile regexp: %s", err))
 	}
@@ -105,8 +105,7 @@ func AddLabelToPR(ctx context.Context, client LabelsService, prID int, newLabel 
 
 func DeleteEnterpriseBranch(ctx context.Context, client GitService, branchName string) error {
 	ref := "heads/" + branchName
-	_, err := client.DeleteRef(ctx, RepoOwner, EnterpriseRepo, ref)
-	if err != nil {
+	if _, err := client.DeleteRef(ctx, RepoOwner, EnterpriseRepo, ref); err != nil {
 		return err
 	}
 

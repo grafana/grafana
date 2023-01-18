@@ -1,6 +1,6 @@
 import { useContext, useEffect } from 'react';
 
-import { DataSourcePluginMeta, DataSourceSettings, NavModelItem, urlUtil } from '@grafana/data';
+import { DataSourcePluginMeta, DataSourceSettings, NavModelItem } from '@grafana/data';
 import { cleanUpAction } from 'app/core/actions/cleanUp';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
@@ -9,6 +9,7 @@ import { AccessControlAction, useDispatch, useSelector } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { DataSourceRights } from '../types';
+import { constructDataSourceExploreUrl } from '../utils';
 
 import {
   initDataSourceSettings,
@@ -108,10 +109,7 @@ export const useDataSource = (uid: string) => {
 
 export const useDataSourceExploreUrl = (uid: string) => {
   const dataSource = useDataSource(uid);
-  const exploreState = JSON.stringify({ datasource: dataSource.name, context: 'explore' });
-  const exploreUrl = urlUtil.renderUrl('/explore', { left: exploreState });
-
-  return exploreUrl;
+  return constructDataSourceExploreUrl(dataSource);
 };
 
 export const useDataSourceMeta = (pluginType: string): DataSourcePluginMeta => {
