@@ -77,11 +77,11 @@ func (_m *FakeDashboardStore) DeleteACLByUser(_a0 context.Context, _a1 int64) er
 }
 
 // DeleteDashboard provides a mock function with given fields: ctx, cmd
-func (_m *FakeDashboardStore) DeleteDashboard(ctx context.Context, cmd *models.DeleteDashboardCommand) error {
+func (_m *FakeDashboardStore) DeleteDashboard(ctx context.Context, cmd *DeleteDashboardCommand) error {
 	ret := _m.Called(ctx, cmd)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.DeleteDashboardCommand) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *DeleteDashboardCommand) error); ok {
 		r0 = rf(ctx, cmd)
 	} else {
 		r0 = ret.Error(0)
@@ -91,11 +91,11 @@ func (_m *FakeDashboardStore) DeleteDashboard(ctx context.Context, cmd *models.D
 }
 
 // DeleteOrphanedProvisionedDashboards provides a mock function with given fields: ctx, cmd
-func (_m *FakeDashboardStore) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *models.DeleteOrphanedProvisionedDashboardsCommand) error {
+func (_m *FakeDashboardStore) DeleteOrphanedProvisionedDashboards(ctx context.Context, cmd *DeleteOrphanedProvisionedDashboardsCommand) error {
 	ret := _m.Called(ctx, cmd)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.DeleteOrphanedProvisionedDashboardsCommand) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *DeleteOrphanedProvisionedDashboardsCommand) error); ok {
 		r0 = rf(ctx, cmd)
 	} else {
 		r0 = ret.Error(0)
@@ -165,11 +165,11 @@ func (_m *FakeDashboardStore) GetDashboardACLInfoList(ctx context.Context, query
 }
 
 // GetDashboardTags provides a mock function with given fields: ctx, query
-func (_m *FakeDashboardStore) GetDashboardTags(ctx context.Context, query *models.GetDashboardTagsQuery) error {
+func (_m *FakeDashboardStore) GetDashboardTags(ctx context.Context, query *GetDashboardTagsQuery) error {
 	ret := _m.Called(ctx, query)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.GetDashboardTagsQuery) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *GetDashboardTagsQuery) error); ok {
 		r0 = rf(ctx, query)
 	} else {
 		r0 = ret.Error(0)
@@ -207,11 +207,11 @@ func (_m *FakeDashboardStore) GetDashboards(ctx context.Context, query *GetDashb
 }
 
 // GetDashboardsByPluginID provides a mock function with given fields: ctx, query
-func (_m *FakeDashboardStore) GetDashboardsByPluginID(ctx context.Context, query *models.GetDashboardsByPluginIdQuery) error {
+func (_m *FakeDashboardStore) GetDashboardsByPluginID(ctx context.Context, query *GetDashboardsByPluginIDQuery) error {
 	ret := _m.Called(ctx, query)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.GetDashboardsByPluginIdQuery) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *GetDashboardsByPluginIDQuery) error); ok {
 		r0 = rf(ctx, query)
 	} else {
 		r0 = ret.Error(0)
@@ -290,15 +290,15 @@ func (_m *FakeDashboardStore) GetFolderByUID(ctx context.Context, orgID int64, u
 }
 
 // GetProvisionedDashboardData provides a mock function with given fields: ctx, name
-func (_m *FakeDashboardStore) GetProvisionedDashboardData(ctx context.Context, name string) ([]*models.DashboardProvisioning, error) {
+func (_m *FakeDashboardStore) GetProvisionedDashboardData(ctx context.Context, name string) ([]*DashboardProvisioning, error) {
 	ret := _m.Called(ctx, name)
 
-	var r0 []*models.DashboardProvisioning
-	if rf, ok := ret.Get(0).(func(context.Context, string) []*models.DashboardProvisioning); ok {
+	var r0 []*DashboardProvisioning
+	if rf, ok := ret.Get(0).(func(context.Context, string) []*DashboardProvisioning); ok {
 		r0 = rf(ctx, name)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*models.DashboardProvisioning)
+			r0 = ret.Get(0).([]*DashboardProvisioning)
 		}
 	}
 
@@ -313,15 +313,15 @@ func (_m *FakeDashboardStore) GetProvisionedDashboardData(ctx context.Context, n
 }
 
 // GetProvisionedDataByDashboardID provides a mock function with given fields: ctx, dashboardID
-func (_m *FakeDashboardStore) GetProvisionedDataByDashboardID(ctx context.Context, dashboardID int64) (*models.DashboardProvisioning, error) {
+func (_m *FakeDashboardStore) GetProvisionedDataByDashboardID(ctx context.Context, dashboardID int64) (*DashboardProvisioning, error) {
 	ret := _m.Called(ctx, dashboardID)
 
-	var r0 *models.DashboardProvisioning
-	if rf, ok := ret.Get(0).(func(context.Context, int64) *models.DashboardProvisioning); ok {
+	var r0 *DashboardProvisioning
+	if rf, ok := ret.Get(0).(func(context.Context, int64) *DashboardProvisioning); ok {
 		r0 = rf(ctx, dashboardID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.DashboardProvisioning)
+			r0 = ret.Get(0).(*DashboardProvisioning)
 		}
 	}
 
@@ -336,15 +336,15 @@ func (_m *FakeDashboardStore) GetProvisionedDataByDashboardID(ctx context.Contex
 }
 
 // GetProvisionedDataByDashboardUID provides a mock function with given fields: ctx, orgID, dashboardUID
-func (_m *FakeDashboardStore) GetProvisionedDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*models.DashboardProvisioning, error) {
+func (_m *FakeDashboardStore) GetProvisionedDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*DashboardProvisioning, error) {
 	ret := _m.Called(ctx, orgID, dashboardUID)
 
-	var r0 *models.DashboardProvisioning
-	if rf, ok := ret.Get(0).(func(context.Context, int64, string) *models.DashboardProvisioning); ok {
+	var r0 *DashboardProvisioning
+	if rf, ok := ret.Get(0).(func(context.Context, int64, string) *DashboardProvisioning); ok {
 		r0 = rf(ctx, orgID, dashboardUID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*models.DashboardProvisioning)
+			r0 = ret.Get(0).(*DashboardProvisioning)
 		}
 	}
 

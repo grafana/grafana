@@ -114,7 +114,7 @@ func (kn *KafkaNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	topicURL := kn.Endpoint + "/topics/" + kn.Topic
 
-	cmd := &models.SendWebhookSync{
+	cmd := &notifications.SendWebhookSync{
 		Url:        topicURL,
 		Body:       string(body),
 		HttpMethod: "POST",

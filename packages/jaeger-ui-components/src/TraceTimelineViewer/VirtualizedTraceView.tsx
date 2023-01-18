@@ -19,6 +19,7 @@ import * as React from 'react';
 import { createRef, RefObject } from 'react';
 
 import { GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { stylesFactory, withTheme2, ToolbarButton } from '@grafana/ui';
 
 import { Accessors } from '../ScrollManager';
@@ -536,8 +537,13 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
   }
 
   scrollToTop = () => {
-    const { topOfViewRef } = this.props;
+    const { topOfViewRef, datasourceType, trace } = this.props;
     topOfViewRef?.current?.scrollIntoView({ behavior: 'smooth' });
+    reportInteraction('grafana_traces_trace_view_scroll_to_top_clicked', {
+      datasourceType: datasourceType,
+      numServices: trace.services.length,
+      numSpans: trace.spans.length,
+    });
   };
 
   render() {

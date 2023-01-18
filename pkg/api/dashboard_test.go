@@ -578,14 +578,14 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 	})
 
 	t.Run("Given two dashboards with the same title in different folders", func(t *testing.T) {
-		dashOne := models.NewDashboard("dash")
-		dashOne.Id = 2
-		dashOne.FolderId = 1
+		dashOne := dashboards.NewDashboard("dash")
+		dashOne.ID = 2
+		dashOne.FolderID = 1
 		dashOne.HasACL = false
 
-		dashTwo := models.NewDashboard("dash")
-		dashTwo.Id = 4
-		dashTwo.FolderId = 3
+		dashTwo := dashboards.NewDashboard("dash")
+		dashTwo.ID = 4
+		dashTwo.FolderID = 3
 		dashTwo.HasACL = false
 	})
 
@@ -597,14 +597,14 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			const folderID int64 = 3
 			const dashID int64 = 2
 
-			cmd := models.SaveDashboardCommand{
-				OrgId:  1,
-				UserId: 5,
+			cmd := dashboards.SaveDashboardCommand{
+				OrgID:  1,
+				UserID: 5,
 				Dashboard: simplejson.NewFromAny(map[string]interface{}{
 					"title": "Dash",
 				}),
 				Overwrite: true,
-				FolderId:  folderID,
+				FolderID:  folderID,
 				IsFolder:  false,
 				Message:   "msg",
 			}
@@ -629,14 +629,14 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			const folderUid string = "folderUID"
 			const dashID int64 = 2
 
-			cmd := models.SaveDashboardCommand{
-				OrgId:  1,
-				UserId: 5,
+			cmd := dashboards.SaveDashboardCommand{
+				OrgID:  1,
+				UserID: 5,
 				Dashboard: simplejson.NewFromAny(map[string]interface{}{
 					"title": "Dash",
 				}),
 				Overwrite: true,
-				FolderUid: folderUid,
+				FolderUID: folderUid,
 				IsFolder:  false,
 				Message:   "msg",
 			}
@@ -662,14 +662,14 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		})
 
 		t.Run("Given a request with incorrect folder uid for creating a dashboard with", func(t *testing.T) {
-			cmd := models.SaveDashboardCommand{
-				OrgId:  1,
-				UserId: 5,
+			cmd := dashboards.SaveDashboardCommand{
+				OrgID:  1,
+				UserID: 5,
 				Dashboard: simplejson.NewFromAny(map[string]interface{}{
 					"title": "Dash",
 				}),
 				Overwrite: true,
-				FolderUid: "folderUID",
+				FolderUID: "folderUID",
 				IsFolder:  false,
 				Message:   "msg",
 			}
@@ -712,8 +712,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				{SaveError: dashboards.UpdatePluginDashboardError{PluginId: "plug"}, ExpectedStatusCode: 412},
 			}
 
-			cmd := models.SaveDashboardCommand{
-				OrgId: 1,
+			cmd := dashboards.SaveDashboardCommand{
+				OrgID: 1,
 				Dashboard: simplejson.NewFromAny(map[string]interface{}{
 					"title": "",
 				}),
@@ -736,7 +736,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		sqlmock := mockstore.SQLStoreMock{}
 
 		t.Run("When an invalid dashboard json is posted", func(t *testing.T) {
-			cmd := models.ValidateDashboardCommand{
+			cmd := dashboards.ValidateDashboardCommand{
 				Dashboard: "{\"hello\": \"world\"}",
 			}
 
@@ -752,7 +752,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		})
 
 		t.Run("When a dashboard with a too-low schema version is posted", func(t *testing.T) {
-			cmd := models.ValidateDashboardCommand{
+			cmd := dashboards.ValidateDashboardCommand{
 				Dashboard: "{\"schemaVersion\": 1}",
 			}
 
@@ -771,7 +771,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			devenvDashboard, readErr := os.ReadFile("../../devenv/dev-dashboards/home.json")
 			assert.Empty(t, readErr)
 
-			cmd := models.ValidateDashboardCommand{
+			cmd := dashboards.ValidateDashboardCommand{
 				Dashboard: string(devenvDashboard),
 			}
 
@@ -930,7 +930,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 	t.Run("Given provisioned dashboard", func(t *testing.T) {
 		mockSQLStore := mockstore.NewSQLStoreMock()
 		dashboardStore := dashboards.NewFakeDashboardStore(t)
-		dashboardStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&models.DashboardProvisioning{ExternalId: "/dashboard1.json"}, nil).Once()
+		dashboardStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioning{ExternalID: "/dashboard1.json"}, nil).Once()
 
 		teamService := &teamtest.FakeService{}
 		dashboardService := dashboards.NewFakeDashboardService(t)
@@ -1086,7 +1086,7 @@ func callPostDashboardShouldReturnSuccess(sc *scenarioContext) {
 	assert.Equal(sc.t, 200, sc.resp.Code)
 }
 
-func postDashboardScenario(t *testing.T, desc string, url string, routePattern string, cmd models.SaveDashboardCommand, dashboardService dashboards.DashboardService, folderService folder.Service, fn scenarioFunc) {
+func postDashboardScenario(t *testing.T, desc string, url string, routePattern string, cmd dashboards.SaveDashboardCommand, dashboardService dashboards.DashboardService, folderService folder.Service, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		cfg := setting.NewCfg()
 		hs := HTTPServer{
@@ -1109,7 +1109,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
-			sc.context.SignedInUser = &user.SignedInUser{OrgID: cmd.OrgId, UserID: cmd.UserId}
+			sc.context.SignedInUser = &user.SignedInUser{OrgID: cmd.OrgID, UserID: cmd.UserID}
 
 			return hs.PostDashboard(c)
 		})
@@ -1120,7 +1120,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 	})
 }
 
-func postValidateScenario(t *testing.T, desc string, url string, routePattern string, cmd models.ValidateDashboardCommand,
+func postValidateScenario(t *testing.T, desc string, url string, routePattern string, cmd dashboards.ValidateDashboardCommand,
 	role org.RoleType, fn scenarioFunc, sqlmock db.DB) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		cfg := setting.NewCfg()
@@ -1250,7 +1250,7 @@ type mockDashboardProvisioningService struct {
 }
 
 func (s mockDashboardProvisioningService) GetProvisionedDashboardDataByDashboardID(ctx context.Context, dashboardID int64) (
-	*models.DashboardProvisioning, error) {
+	*dashboards.DashboardProvisioning, error) {
 	return nil, nil
 }
 

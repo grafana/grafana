@@ -176,6 +176,10 @@ describe('LokiDatasource', () => {
       await runTest(80, '40', 80, undefined);
     });
 
+    it('should use query max lines, if both exist, even if it is 0', async () => {
+      await runTest(0, '40', 0, undefined);
+    });
+
     it('should report query interaction', async () => {
       await runTest(80, '40', 80, CoreApp.Explore);
       expect(reportInteraction).toHaveBeenCalledWith(

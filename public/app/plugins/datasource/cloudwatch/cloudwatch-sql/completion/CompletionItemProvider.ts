@@ -3,11 +3,11 @@ import { uniq } from 'lodash';
 import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
-import { CloudWatchAPI } from '../../api';
 import { CompletionItemProvider } from '../../monarch/CompletionItemProvider';
 import { LinkedToken } from '../../monarch/LinkedToken';
 import { TRIGGER_SUGGEST } from '../../monarch/commands';
 import { SuggestionKind, CompletionItemPriority, StatementPosition } from '../../monarch/types';
+import { ResourcesAPI } from '../../resources/ResourcesAPI';
 import {
   BY,
   FROM,
@@ -34,9 +34,9 @@ type CompletionItem = monacoTypes.languages.CompletionItem;
 export class SQLCompletionItemProvider extends CompletionItemProvider {
   region: string;
 
-  constructor(api: CloudWatchAPI, templateSrv: TemplateSrv = getTemplateSrv()) {
-    super(api, templateSrv);
-    this.region = api.getActualRegion() ?? '';
+  constructor(resources: ResourcesAPI, templateSrv: TemplateSrv = getTemplateSrv()) {
+    super(resources, templateSrv);
+    this.region = resources.getActualRegion() ?? '';
     this.getStatementPosition = getStatementPosition;
     this.getSuggestionKinds = getSuggestionKinds;
     this.tokenTypes = SQLTokenTypes;
@@ -112,14 +112,14 @@ export class SQLCompletionItemProvider extends CompletionItemProvider {
             const namespaceToken = getNamespaceToken(currentToken);
             if (namespaceToken?.value) {
               // if a namespace is specified, only suggest metrics for the namespace
-              const metrics = await this.api.getMetrics({
+              const metrics = await this.resources.getMetrics({
                 namespace: namespaceToken?.value.replace(/\"/g, ''),
                 region: this.region,
               });
               metrics.forEach((m) => m.value && addSuggestion(m.value));
             } else {
               // If no namespace is specified in the query, just list all metrics
-              const metrics = await this.api.getAllMetrics({ region: this.region });
+              const metrics = await this.resources.getAllMetrics({ region: this.region });
               uniq(metrics.map((m) => m.metricName)).forEach((m) => m && addSuggestion(m, { insertText: m }));
             }
           }
@@ -147,12 +147,12 @@ export class SQLCompletionItemProvider extends CompletionItemProvider {
           let namespaces = [];
           if (metricNameToken?.value) {
             // if a metric is specified, only suggest namespaces that actually have that metric
-            const metrics = await this.api.getMetrics({ region: this.region });
+            const metrics = await this.resources.getMetrics({ region: this.region });
             const metricName = this.templateSrv.replace(metricNameToken.value);
             namespaces = metrics.filter((m) => m.metricName === metricName).map((m) => m.namespace);
           } else {
             // if no metric is specified, just suggest all namespaces
-            const ns = await this.api.getNamespaces();
+            const ns = await this.resources.getNamespaces();
             namespaces = ns.map((n) => n.value);
           }
           namespaces.map((n) => addSuggestion(`"${n}"`, { insertText: `"${n}"` }));
@@ -179,7 +179,7 @@ export class SQLCompletionItemProvider extends CompletionItemProvider {
               dimensionFilters = (labelKeyTokens || []).reduce((acc, curr) => {
                 return { ...acc, [curr.value]: null };
               }, {});
-              const keys = await this.api.getDimensionKeys({
+              const keys = await this.resources.getDimensionKeys({
                 namespace: this.templateSrv.replace(namespaceToken.value.replace(/\"/g, '')),
                 region: this.templateSrv.replace(this.region),
                 metricName: metricNameToken?.value,
@@ -199,7 +199,7 @@ export class SQLCompletionItemProvider extends CompletionItemProvider {
             const metricNameToken = getMetricNameToken(currentToken);
             const labelKey = currentToken?.getPreviousNonWhiteSpaceToken()?.getPreviousNonWhiteSpaceToken();
             if (namespaceToken?.value && labelKey?.value && metricNameToken?.value) {
-              const values = await this.api.getDimensionValues({
+              const values = await this.resources.getDimensionValues({
                 region: this.region,
                 namespace: namespaceToken.value.replace(/\"/g, ''),
                 metricName: metricNameToken.value,
