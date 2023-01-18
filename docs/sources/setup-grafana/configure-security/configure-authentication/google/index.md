@@ -71,7 +71,7 @@ By default, Grafana includes the `access_type=offline` parameter in the authoriz
 
 ## Skip organization role sync
 
-We do not currently sync roles from Google and instead set the AutoAssigned role to the user at first login. To be able to manage your users organization role from within Grafana , set `skip_org_role_sync` to `true`.
+We do not currently sync roles from Google and instead set the AutoAssigned role to the user at first login. To manage your user's organization role from within Grafana, set `skip_org_role_sync` to `true`.
 
 ```ini
 [auth.google]
