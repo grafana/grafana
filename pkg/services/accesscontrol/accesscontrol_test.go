@@ -43,6 +43,17 @@ func TestReduce(t *testing.T) {
 			},
 		},
 		{
+			name: "specific permissions with repeated scope",
+			ps: []Permission{
+				{Action: "teams:read", Scope: "teams:id:1"},
+				{Action: "teams:read", Scope: "teams:id:2"},
+				{Action: "teams:read", Scope: "teams:id:1"},
+			},
+			want: map[string][]string{
+				"teams:read": {"teams:id:1", "teams:id:2"},
+			},
+		},
+		{
 			name: "wildcard permission",
 			ps: []Permission{
 				{Action: "teams:read", Scope: "teams:id:1"},
@@ -86,6 +97,16 @@ func TestReduce(t *testing.T) {
 			},
 			want: map[string][]string{
 				"dashboards:read": {"*"},
+			},
+		},
+		{
+			name: "non-wilcard scopes with * in them",
+			ps: []Permission{
+				{Action: "dashboards:read", Scope: "dashboards:uid:123"},
+				{Action: "dashboards:read", Scope: "dashboards:uid:1*"},
+			},
+			want: map[string][]string{
+				"dashboards:read": {"dashboards:uid:123", "dashboards:uid:1*"},
 			},
 		},
 	}

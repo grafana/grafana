@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -671,12 +672,12 @@ func createAlert(t *testing.T, orgId int64, dashboardId int64, panelsId int64, n
 }
 
 // createDashboard creates a dashboard for inserting into the test database.
-func createDashboard(t *testing.T, id int64, orgId int64, uid string) *models.Dashboard {
+func createDashboard(t *testing.T, id int64, orgId int64, uid string) *dashboards.Dashboard {
 	t.Helper()
-	return &models.Dashboard{
-		Id:      id,
-		OrgId:   orgId,
-		Uid:     uid,
+	return &dashboards.Dashboard{
+		ID:      id,
+		OrgID:   orgId,
+		UID:     uid,
 		Created: now,
 		Updated: now,
 		Title:   uid, // Not tested, needed to satisfy contraint.
@@ -744,7 +745,7 @@ func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*mod
 	}
 
 	// Setup dashboards.
-	dashboards := []models.Dashboard{
+	dashboards := []dashboards.Dashboard{
 		*createDashboard(t, 1, 1, "dash1-1"),
 		*createDashboard(t, 2, 1, "dash2-1"),
 		*createDashboard(t, 3, 2, "dash3-2"),

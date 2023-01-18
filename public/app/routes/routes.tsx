@@ -575,8 +575,7 @@ export function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {
     {
       path: '/admin/support-bundles/create',
       component: SafeDynamicImport(
-        () =>
-          import(/* webpackChunkName: "ServiceAccountCreatePage" */ 'app/features/support-bundles/SupportBundlesCreate')
+        () => import(/* webpackChunkName: "SupportBundlesCreate" */ 'app/features/support-bundles/SupportBundlesCreate')
       ),
     },
   ];

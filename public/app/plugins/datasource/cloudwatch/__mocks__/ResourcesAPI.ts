@@ -3,11 +3,11 @@ import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { TemplateSrv } from 'app/features/templating/template_srv';
 import { CustomVariableModel } from 'app/features/variables/types';
 
-import { CloudWatchAPI } from '../api';
+import { ResourcesAPI } from '../resources/ResourcesAPI';
 
 import { CloudWatchSettings, setupMockedTemplateService } from './CloudWatchDataSource';
 
-export function setupMockedAPI({
+export function setupMockedResourcesAPI({
   variables,
   response,
   getMock,
@@ -20,7 +20,7 @@ export function setupMockedAPI({
   let templateService = variables ? setupMockedTemplateService(variables) : new TemplateSrv();
 
   const timeSrv = getTimeSrv();
-  const api = new CloudWatchAPI(CloudWatchSettings, templateService);
+  const api = new ResourcesAPI(CloudWatchSettings, templateService);
   let resourceRequestMock = getMock ? getMock : jest.fn().mockReturnValue(response);
   setBackendSrv({
     ...getBackendSrv(),

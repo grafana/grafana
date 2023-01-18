@@ -136,7 +136,7 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
     );
     const results = await Promise.all(
       interpolatedLogGroups.map((logGroupName) =>
-        this.datasource.api
+        this.datasource.resources
           .getLogGroupFields({ logGroupName, region })
           .then((fields) => fields.filter((f) => f).map((f) => f.value.name ?? ''))
       )
