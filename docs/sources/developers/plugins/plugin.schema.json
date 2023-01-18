@@ -471,6 +471,31 @@
           "default": false
         }
       }
+    },
+    "extensions": {
+      "type": "object",
+      "description": "Extends various parts of the Grafana UI with commands or links.",
+      "additionalProperties": false,
+      "properties": {
+        "links": {
+          "type": "array",
+          "description": "Expose a page link that can be used by Grafana core or other plugins to navigate users to the plugin",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
