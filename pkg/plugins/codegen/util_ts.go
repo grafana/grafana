@@ -18,7 +18,7 @@ var importMap = map[string]string{
 
 	"github.com/grafana/grafana/pkg/kindsys":                        "",
 	"github.com/grafana/grafana/pkg/plugins/pfs":                    "",
-	"github.com/grafana/grafana/packages/grafana-schema/src/schema": "@grafana/schema",
+	"github.com/grafana/grafana/packages/grafana-schema/src/common": "@grafana/schema",
 }
 
 func init() {

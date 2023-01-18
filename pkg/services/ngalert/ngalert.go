@@ -210,12 +210,13 @@ func (ng *AlertNG) init() error {
 		return err
 	}
 	cfg := state.ManagerCfg{
-		Metrics:       ng.Metrics.GetStateMetrics(),
-		ExternalURL:   appUrl,
-		InstanceStore: store,
-		Images:        ng.imageService,
-		Clock:         clk,
-		Historian:     history,
+		Metrics:              ng.Metrics.GetStateMetrics(),
+		ExternalURL:          appUrl,
+		InstanceStore:        store,
+		Images:               ng.imageService,
+		Clock:                clk,
+		Historian:            history,
+		DoNotSaveNormalState: ng.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingNoNormalState),
 	}
 	stateManager := state.NewManager(cfg)
 	scheduler := schedule.NewScheduler(schedCfg, stateManager)
@@ -386,7 +387,15 @@ func configureHistorianBackend(cfg setting.UnifiedAlertingStateHistorySettings, 
 		return historian.NewAnnotationBackend(ar, ds), nil
 	}
 	if cfg.Backend == "loki" {
-		return historian.NewRemoteLokiBackend(), nil
+		baseURL, err := url.Parse(cfg.LokiRemoteURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse remote loki URL: %w", err)
+		}
+		backend := historian.NewRemoteLokiBackend(baseURL)
+		if err := backend.TestConnection(); err != nil {
+			return nil, fmt.Errorf("failed to ping the remote loki historian: %w", err)
+		}
+		return backend, nil
 	}
 	if cfg.Backend == "sql" {
 		return historian.NewSqlBackend(), nil

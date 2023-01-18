@@ -15,6 +15,7 @@ import (
 
 	"cuelang.org/go/cue/errors"
 	"github.com/grafana/codejen"
+	"github.com/grafana/cuetsy"
 
 	"github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
@@ -40,9 +41,11 @@ func main() {
 		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), kindsys.GoCoreKindParentPath),
 		codegen.LatestMajorsOrXJenny(kindsys.TSCoreKindParentPath, codegen.TSTypesJenny{}),
 		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
+		codegen.DocsJenny(filepath.Join("docs", "sources", "developers", "kinds", "core")),
 	)
 
-	coreKindsGen.AddPostprocessors(codegen.SlashHeaderMapper("kinds/gen.go"))
+	header := codegen.SlashHeaderMapper("kinds/gen.go")
+	coreKindsGen.AddPostprocessors(header)
 
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -80,6 +83,13 @@ func main() {
 	if err != nil {
 		die(fmt.Errorf("core kinddirs codegen failed: %w", err))
 	}
+	sharedf, err := dummyCommonJenny{}.Generate(nil)
+	if err != nil {
+		die(fmt.Errorf("common schemas failed"))
+	}
+	if err = jfs.Add(elsedie(header(*sharedf))("couldn't inject header")); err != nil {
+		die(err)
+	}
 
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
 		if err = jfs.Verify(context.Background(), groot); err != nil {
@@ -102,6 +112,29 @@ func nameFor(m kindsys.SomeKindProperties) string {
 		// unreachable so long as all the possibilities in KindProperties have switch branches
 		panic("unreachable")
 	}
+}
+
+type dummyCommonJenny struct{}
+
+func (j dummyCommonJenny) JennyName() string {
+	return "CommonSchemaJenny"
+}
+
+func (j dummyCommonJenny) Generate(dummy any) (*codejen.File, error) {
+	path := filepath.Join("packages", "grafana-schema", "src", "common")
+	v, err := cuectx.BuildGrafanaInstance(nil, path, "", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := cuetsy.Generate(v, cuetsy.Config{
+		Export: true,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate TS: %w", err)
+	}
+
+	return codejen.NewFile(filepath.Join(path, "common.gen.ts"), b, dummyCommonJenny{}), nil
 }
 
 func elsedie[T any](t T, err error) func(msg string) T {

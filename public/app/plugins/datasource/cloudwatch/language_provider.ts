@@ -3,6 +3,7 @@ import { lastValueFrom } from 'rxjs';
 
 import { AbsoluteTimeRange, HistoryItem, LanguageProvider } from '@grafana/data';
 import { CompletionItemGroup, SearchFunctionType, Token, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
+import { getTemplateSrv } from 'app/features/templating/template_srv';
 
 import { CloudWatchDatasource } from './datasource';
 import syntax, {
@@ -16,6 +17,7 @@ import syntax, {
   STRING_FUNCTIONS,
 } from './syntax';
 import { CloudWatchQuery, LogGroup, TSDBResponse } from './types';
+import { interpolateStringArrayUsingSingleOrMultiValuedVariable } from './utils/templateVariableUtils';
 
 export type CloudWatchHistoryItem = HistoryItem<CloudWatchQuery>;
 
@@ -127,10 +129,15 @@ export class CloudWatchLanguageProvider extends LanguageProvider {
   }
 
   private fetchFields = async (logGroups: LogGroup[], region: string): Promise<string[]> => {
+    const interpolatedLogGroups = interpolateStringArrayUsingSingleOrMultiValuedVariable(
+      getTemplateSrv(),
+      logGroups.map((lg) => lg.name),
+      'text'
+    );
     const results = await Promise.all(
-      logGroups.map((logGroup) =>
-        this.datasource.api
-          .getLogGroupFields({ logGroupName: logGroup.name, arn: logGroup.arn, region })
+      interpolatedLogGroups.map((logGroupName) =>
+        this.datasource.resources
+          .getLogGroupFields({ logGroupName, region })
           .then((fields) => fields.filter((f) => f).map((f) => f.value.name ?? ''))
       )
     );

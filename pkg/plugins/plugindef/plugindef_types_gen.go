@@ -67,6 +67,7 @@ const (
 )
 
 // Defines values for Category.
+// Defines values for PlugindefCategory.
 const (
 	CategoryCloud Category = "cloud"
 
@@ -86,6 +87,7 @@ const (
 )
 
 // Defines values for Type.
+// Defines values for PlugindefType.
 const (
 	TypeApp Type = "app"
 
@@ -358,6 +360,7 @@ type URLParam struct {
 	Name    string `json:"name"`
 }
 
+// Plugindef defines model for plugindef.
 // PluginDef defines model for plugindef.
 type PluginDef struct {
 	// For data source plugins, if the plugin supports alerting.

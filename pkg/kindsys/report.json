@@ -161,7 +161,7 @@
       "machineName": "dashboard",
       "pluralMachineName": "dashboards",
       "lineageIsGroup": false,
-      "maturity": "merged",
+      "maturity": "experimental",
       "currentVersion": [
         0,
         0
@@ -1057,6 +1057,10 @@
           "textpanelcfg"
         ],
         "count": 10
+        "items": [
+          "dashboard"
+        ],
+        "count": 1
       },
       "mature": {
         "name": "mature",
@@ -1067,10 +1071,19 @@
         "name": "merged",
         "items": [
           "dashboard",
+          "annolist_panel",
+          "barchart_panel",
+          "bargauge_panel",
+          "dashlist_panel",
+          "gauge_panel",
+          "histogram_panel",
+          "news_panel",
+          "piechart_panel",
           "playlist",
           "team"
         ],
         "count": 3
+        "count": 12
       },
       "planned": {
         "name": "planned",

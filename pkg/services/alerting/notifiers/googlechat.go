@@ -220,7 +220,7 @@ func (gcn *GoogleChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 	body, _ := json.Marshal(res1D)
 
-	cmd := &models.SendWebhookSync{
+	cmd := &notifications.SendWebhookSync{
 		Url:        gcn.URL,
 		HttpMethod: "POST",
 		HttpHeader: headers,
