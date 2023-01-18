@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 )
 
 func TestInitializer_Initialize(t *testing.T) {
@@ -135,14 +136,14 @@ func TestInitializer_envVars(t *testing.T) {
 			},
 		}
 
-		licensing := &testLicensingService{
-			edition:  "test",
-			tokenRaw: "token",
+		licensing := &fakes.FakeLicensingService{
+			LicenseEdition: "test",
+			TokenRaw:       "token",
+			LicensePath:    "/path/to/ent/license",
 		}
 
 		i := &Initializer{
 			cfg: &config.Cfg{
-				EnterpriseLicensePath: "/path/to/ent/license",
 				PluginSettings: map[string]map[string]string{
 					"test": {
 						"custom_env_var": "customVal",
@@ -192,43 +193,6 @@ func Test_getPluginSettings(t *testing.T) {
 
 func Test_pluginSettings_ToEnv(t *testing.T) {
 
-}
-
-type testLicensingService struct {
-	edition  string
-	tokenRaw string
-}
-
-func (t *testLicensingService) Expiry() int64 {
-	return 0
-}
-
-func (t *testLicensingService) Edition() string {
-	return t.edition
-}
-
-func (t *testLicensingService) StateInfo() string {
-	return ""
-}
-
-func (t *testLicensingService) ContentDeliveryPrefix() string {
-	return ""
-}
-
-func (t *testLicensingService) LicenseURL(_ bool) string {
-	return ""
-}
-
-func (t *testLicensingService) Environment() map[string]string {
-	return map[string]string{"GF_ENTERPRISE_LICENSE_TEXT": t.tokenRaw}
-}
-
-func (*testLicensingService) EnabledFeatures() map[string]bool {
-	return map[string]bool{}
-}
-
-func (*testLicensingService) FeatureEnabled(feature string) bool {
-	return false
 }
 
 type fakeBackendProvider struct {

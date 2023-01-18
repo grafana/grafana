@@ -91,7 +91,7 @@ func TestDashboardService(t *testing.T) {
 
 			t.Run("Should return validation error if dashboard is provisioned", func(t *testing.T) {
 				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything, mock.AnythingOfType("bool")).Return(true, nil).Once()
-				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&models.DashboardProvisioning{}, nil).Once()
+				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioning{}, nil).Once()
 
 				dto.Dashboard = dashboards.NewDashboard("Dash")
 				dto.Dashboard.SetID(3)
@@ -176,7 +176,7 @@ func TestDashboardService(t *testing.T) {
 
 			t.Run("Should return validation error if dashboard is provisioned", func(t *testing.T) {
 				fakeStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.Anything, mock.AnythingOfType("bool")).Return(true, nil).Once()
-				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&models.DashboardProvisioning{}, nil).Once()
+				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioning{}, nil).Once()
 
 				dto.Dashboard = dashboards.NewDashboard("Dash")
 				dto.Dashboard.SetID(3)
@@ -188,14 +188,14 @@ func TestDashboardService(t *testing.T) {
 
 		t.Run("Given provisioned dashboard", func(t *testing.T) {
 			t.Run("DeleteProvisionedDashboard should delete it", func(t *testing.T) {
-				args := &models.DeleteDashboardCommand{OrgId: 1, Id: 1}
+				args := &dashboards.DeleteDashboardCommand{OrgID: 1, ID: 1}
 				fakeStore.On("DeleteDashboard", mock.Anything, args).Return(nil).Once()
 				err := service.DeleteProvisionedDashboard(context.Background(), 1, 1)
 				require.NoError(t, err)
 			})
 
 			t.Run("DeleteDashboard should fail to delete it when provisioning information is missing", func(t *testing.T) {
-				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&models.DashboardProvisioning{}, nil).Once()
+				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(&dashboards.DashboardProvisioning{}, nil).Once()
 				err := service.DeleteDashboard(context.Background(), 1, 1)
 				require.Equal(t, err, dashboards.ErrDashboardCannotDeleteProvisionedDashboard)
 			})
@@ -203,14 +203,14 @@ func TestDashboardService(t *testing.T) {
 
 		t.Run("Given non provisioned dashboard", func(t *testing.T) {
 			t.Run("DeleteProvisionedDashboard should delete the dashboard", func(t *testing.T) {
-				args := &models.DeleteDashboardCommand{OrgId: 1, Id: 1, ForceDeleteFolderRules: false}
+				args := &dashboards.DeleteDashboardCommand{OrgID: 1, ID: 1, ForceDeleteFolderRules: false}
 				fakeStore.On("DeleteDashboard", mock.Anything, args).Return(nil).Once()
 				err := service.DeleteProvisionedDashboard(context.Background(), 1, 1)
 				require.NoError(t, err)
 			})
 
 			t.Run("DeleteDashboard should delete it", func(t *testing.T) {
-				args := &models.DeleteDashboardCommand{OrgId: 1, Id: 1}
+				args := &dashboards.DeleteDashboardCommand{OrgID: 1, ID: 1}
 				fakeStore.On("DeleteDashboard", mock.Anything, args).Return(nil).Once()
 				fakeStore.On("GetProvisionedDataByDashboardID", mock.Anything, mock.AnythingOfType("int64")).Return(nil, nil).Once()
 				err := service.DeleteDashboard(context.Background(), 1, 1)

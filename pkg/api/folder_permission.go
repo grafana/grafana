@@ -64,7 +64,7 @@ func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) response.Res
 		}
 
 		if perm.Slug != "" {
-			perm.Url = models.GetDashboardFolderUrl(perm.IsFolder, perm.Uid, perm.Slug)
+			perm.Url = dashboards.GetDashboardFolderURL(perm.IsFolder, perm.Uid, perm.Slug)
 		}
 
 		filteredACLs = append(filteredACLs, perm)
