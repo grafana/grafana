@@ -283,13 +283,16 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, dbCfg *ngmodels.AlertCo
 	am.Base.WithLock(func() {
 		// If the config is not marked as applied, we mark it in the DB.
 		if dbCfg.AppliedAt == 0 {
-			if err = am.applyAndMarkConfig(ctx, dbCfg.ID, dbCfg.ConfigurationHash, cfg, nil); err != nil {
+			if err := am.applyAndMarkConfig(ctx, dbCfg.ID, dbCfg.ConfigurationHash, cfg, nil); err != nil {
 				outerErr = fmt.Errorf("unable to apply configuration: %w", err)
 				return
 			}
 		} else {
 			// If the config is already marked, we just apply it.
-			am.applyConfig(cfg, nil)
+			if err := am.applyConfig(cfg, nil); err != nil {
+				outerErr = fmt.Errorf("unable to apply configuration: %w", err)
+				return
+			}
 		}
 	})
 
