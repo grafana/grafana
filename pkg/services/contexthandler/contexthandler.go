@@ -138,6 +138,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 					// Burn the cookie in case of invalid, expired or missing token
 					reqContext.Resp.Before(h.deleteInvalidCookieEndOfRequestFunc(reqContext))
 				}
+				// set all errors on LookupTokenErr, so we can check it in auth middlewares
 				reqContext.LookupTokenErr = err
 			} else {
 				reqContext.IsSignedIn = true
