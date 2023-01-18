@@ -96,6 +96,7 @@ export type SpanDetailRowProps = {
   focusedSpanId?: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   topOfViewRefType?: TopOfViewRefType;
+  datasourceType: string;
 };
 
 export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProps> {
@@ -132,6 +133,7 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
       focusedSpanId,
       createFocusSpanLink,
       topOfViewRefType,
+      datasourceType,
     } = this.props;
     const styles = getStyles(theme);
     return (
@@ -172,6 +174,7 @@ export class UnthemedSpanDetailRow extends React.PureComponent<SpanDetailRowProp
               focusedSpanId={focusedSpanId}
               createFocusSpanLink={createFocusSpanLink}
               topOfViewRefType={topOfViewRefType}
+              datasourceType={datasourceType}
             />
           </div>
         </TimelineRow.Cell>

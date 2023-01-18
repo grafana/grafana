@@ -39,7 +39,7 @@ interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {
   error?: UserAdminError;
 }
 
-const SyncedOAuthLabels: string[] = ['GitHub', 'GitLab', 'AzureAD', 'OAuth'];
+const SyncedOAuthLabels: string[] = ['GitHub', 'GitLab', 'OAuth'];
 
 export class UserAdminPage extends PureComponent<Props> {
   async componentDidMount() {
@@ -106,6 +106,7 @@ export class UserAdminPage extends PureComponent<Props> {
   render() {
     const { user, orgs, sessions, ldapSyncInfo, isLoading } = this.props;
     const isLDAPUser = user?.isExternal && user?.authLabels?.includes('LDAP');
+    const isJWTUser = user?.authLabels?.includes('JWT');
     const canReadSessions = contextSrv.hasPermission(AccessControlAction.UsersAuthTokenList);
     const canReadLDAPStatus = contextSrv.hasPermission(AccessControlAction.LDAPStatusRead);
     const isOAuthUserWithSkippableSync =
@@ -113,9 +114,8 @@ export class UserAdminPage extends PureComponent<Props> {
     const isSAMLUser = user?.isExternal && user?.authLabels?.includes('SAML');
     const isGoogleUser = user?.isExternal && user?.authLabels?.includes('Google');
     const isAuthProxyUser = user?.isExternal && user?.authLabels?.includes('Auth Proxy');
+    const isAzureADUser = user?.isExternal && user?.authLabels?.includes('AzureAD');
     const isGrafanaComUser = user?.isExternal && user?.authLabels?.includes('grafana.com');
-    // isGrafanaComUser true
-    // isOAuthUserWithSkippableSync true
     const isUserSynced =
       !config.auth.DisableSyncLock &&
       ((user?.isExternal &&
@@ -125,13 +125,17 @@ export class UserAdminPage extends PureComponent<Props> {
           isOAuthUserWithSkippableSync ||
           isSAMLUser ||
           isLDAPUser ||
+          isAzureADUser ||
+          isJWTUser ||
           isGrafanaComUser
         )) ||
         (!config.auth.OAuthSkipOrgRoleUpdateSync && isOAuthUserWithSkippableSync) ||
         (!config.auth.SAMLSkipOrgRoleSync && isSAMLUser) ||
         (!config.auth.LDAPSkipOrgRoleSync && isLDAPUser) ||
-        // both OAuthSkipOrgRoleUpdateSync and GrafanaComSkipOrgRoleSync needs to be false for a GrafanaComUser to be synced
-        (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.GrafanaComSkipOrgRoleSync && isGrafanaComUser));
+        (!config.auth.JWTAuthSkipOrgRoleSync && isJWTUser) ||
+        // both OAuthSkipOrgRoleUpdateSync and specific provider settings needs to be false for a user to be synced
+        (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.GrafanaComSkipOrgRoleSync && isGrafanaComUser) ||
+        (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.AzureADSkipOrgRoleSync && isAzureADUser));
 
     const pageNav: NavModelItem = {
       text: user?.login ?? '',

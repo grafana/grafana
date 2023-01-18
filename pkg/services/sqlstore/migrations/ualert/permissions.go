@@ -144,7 +144,7 @@ func (m *folderHelper) generateNewDashboardUid(orgId int64) (string, error) {
 	for i := 0; i < 3; i++ {
 		uid := util.GenerateShortUID()
 
-		exists, err := m.sess.Where("org_id=? AND uid=?", orgId, uid).Get(&models.Dashboard{})
+		exists, err := m.sess.Where("org_id=? AND uid=?", orgId, uid).Get(&dashboards.Dashboard{})
 		if err != nil {
 			return "", err
 		}
@@ -252,7 +252,7 @@ func (m *folderHelper) setACL(orgID int64, dashboardID int64, items []*dashboard
 	}
 
 	// Update dashboard HasACL flag
-	dashboard := models.Dashboard{HasACL: true}
+	dashboard := dashboards.Dashboard{HasACL: true}
 	_, err := m.sess.Cols("has_acl").Where("id=?", dashboardID).Update(&dashboard)
 	return err
 }
