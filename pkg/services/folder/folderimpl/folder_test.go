@@ -728,7 +728,6 @@ func TestNestedFolderService(t *testing.T) {
 			dashboardsvc := dashboards.FakeDashboardService{}
 
 			dashStore := &dashboards.FakeDashboardStore{}
-			dashStore = &dashboards.FakeDashboardStore{}
 			// dashboard store & service commands that should be called.
 			dashboardsvc.On("BuildSaveDashboardCommand",
 				mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"),
