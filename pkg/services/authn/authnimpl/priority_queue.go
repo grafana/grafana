@@ -13,20 +13,21 @@ type queue struct {
 }
 
 func (q *queue) insert(c authn.ContextAwareClient) {
+	// no clients in the queue so we just add it
 	if len(q.clients) == 0 {
 		q.clients = append(q.clients, c)
+		return
 	}
 
+	// find the position in the queue the client should be placed based on priority
 	for i, client := range q.clients {
-		if len(q.clients) == i {
-			q.clients = append(q.clients, client)
-			break
-		}
-
 		if c.Priority() < client.Priority() {
 			q.clients = append(q.clients[:i+1], q.clients[i:]...)
 			q.clients[i] = c
-			break
+			return
 		}
 	}
+
+	// client did not have higher priority then what is in the queue currently, so we need to add it to the end
+	q.clients = append(q.clients, c)
 }
