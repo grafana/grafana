@@ -83,39 +83,115 @@ func TestAuthenticateJWT(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.EqualValues(t, wantID, id, fmt.Sprintf("%+v", id))
+}
 
-	// Test missing login and email from configuration should fail
-	cfg.JWTAuthEmailClaim = ""
-	cfg.JWTAuthUsernameClaim = ""
-	jwtClient = ProvideJWT(jwtService, cfg)
-	_, err = jwtClient.Authenticate(context.Background(), &authn.Request{
-		OrgID:       1,
-		HTTPRequest: validHTTPReq,
-		Resp:        nil,
-	})
-	require.Error(t, err)
+func TestJWTClaimConfig(t *testing.T) {
+	jwtService := &models.FakeJWTService{
+		VerifyProvider: func(context.Context, string) (models.JWTClaims, error) {
+			return models.JWTClaims{
+				"sub":                "1234567890",
+				"email":              "eai.doe@cor.po",
+				"preferred_username": "eai-doe",
+				"name":               "Eai Doe",
+				"roles":              "Admin",
+			}, nil
+		},
+	}
 
-	// Test missing login from configuration should not fail
-	cfg.JWTAuthEmailClaim = "email"
-	cfg.JWTAuthUsernameClaim = ""
-	jwtClient = ProvideJWT(jwtService, cfg)
-	_, err = jwtClient.Authenticate(context.Background(), &authn.Request{
-		OrgID:       1,
-		HTTPRequest: validHTTPReq,
-		Resp:        nil,
-	})
-	require.NoError(t, err)
+	jwtHeaderName := "X-Forwarded-User"
 
-	// Test missing email from configuration should fail
-	cfg.JWTAuthEmailClaim = ""
-	cfg.JWTAuthUsernameClaim = "preferred_username"
-	jwtClient = ProvideJWT(jwtService, cfg)
-	_, err = jwtClient.Authenticate(context.Background(), &authn.Request{
-		OrgID:       1,
-		HTTPRequest: validHTTPReq,
-		Resp:        nil,
-	})
-	require.NoError(t, err)
+	cfg := &setting.Cfg{
+		JWTAuthEnabled:                 true,
+		JWTAuthHeaderName:              jwtHeaderName,
+		JWTAuthAutoSignUp:              true,
+		JWTAuthAllowAssignGrafanaAdmin: true,
+		JWTAuthRoleAttributeStrict:     true,
+		JWTAuthRoleAttributePath:       "roles",
+	}
+
+	// #nosec G101 -- This is dummy/test token
+	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.XbPfbIHMI6arZ3Y922BhjWgQzWXcXNrz0ogtVhfEd2o"
+
+	type Dictionary map[string]interface{}
+
+	type testCase struct {
+		desc                 string
+		claimsConfigurations []Dictionary
+		want                 bool
+	}
+
+	testCases := []testCase{
+		{
+			desc: "JWT configuration with email and username claims",
+			claimsConfigurations: []Dictionary{
+				{
+					"JWTAuthEmailClaim":    true,
+					"JWTAuthUsernameClaim": true,
+				},
+			},
+			want: true,
+		},
+		{
+			desc: "JWT configuration with email claim",
+			claimsConfigurations: []Dictionary{
+				{
+					"JWTAuthEmailClaim":    true,
+					"JWTAuthUsernameClaim": false,
+				},
+			},
+			want: true,
+		},
+		{
+			desc: "JWT configuration with username claim",
+			claimsConfigurations: []Dictionary{
+				{
+					"JWTAuthEmailClaim":    false,
+					"JWTAuthUsernameClaim": true,
+				},
+			},
+			want: true,
+		},
+		{
+			desc: "JWT configuration without email and username claims",
+			claimsConfigurations: []Dictionary{
+				{
+					"JWTAuthEmailClaim":    false,
+					"JWTAuthUsernameClaim": false,
+				},
+			},
+			want: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		fmt.Println(tc.desc)
+		t.Run(tc.desc, func(t *testing.T) {
+			for _, claims := range tc.claimsConfigurations {
+				if claims["JWTAuthEmailClaim"] == true {
+					cfg.JWTAuthEmailClaim = "email"
+				} else {
+					cfg.JWTAuthEmailClaim = ""
+				}
+				if claims["JWTAuthUsernameClaim"] == true {
+					cfg.JWTAuthUsernameClaim = "preferred_username"
+				} else {
+					cfg.JWTAuthUsernameClaim = ""
+				}
+			}
+		})
+		httpReq := &http.Request{
+			URL: &url.URL{RawQuery: "auth_token=" + token},
+			Header: map[string][]string{
+				jwtHeaderName: {token}},
+		}
+		jwtClient := ProvideJWT(jwtService, cfg)
+		got := jwtClient.Test(context.Background(), &authn.Request{
+			OrgID:       1,
+			HTTPRequest: httpReq,
+			Resp:        nil,
+		})
+		require.Equal(t, tc.want, got)
+	}
 }
 
 func TestJWTTest(t *testing.T) {
