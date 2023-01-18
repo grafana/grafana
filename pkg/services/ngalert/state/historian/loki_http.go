@@ -15,7 +15,7 @@ type LokiConfig struct {
 	Url               *url.URL
 	BasicAuthUser     string
 	BasicAuthPassword string
-	TenentID          string
+	TenantID          string
 }
 
 type httpLokiClient struct {
@@ -42,8 +42,8 @@ func (c *httpLokiClient) ping() error {
 		req.SetBasicAuth(c.cfg.BasicAuthUser, c.cfg.BasicAuthPassword)
 	}
 
-	if c.cfg.TenentID != "" {
-		req.Header.Add("X-Scope-OrgID", c.cfg.TenentID)
+	if c.cfg.TenantID != "" {
+		req.Header.Add("X-Scope-OrgID", c.cfg.TenantID)
 	}
 
 	if err != nil {

@@ -28,7 +28,7 @@ func TestLokiHTTPClient(t *testing.T) {
 
 	// When running on prem, you might need to set the tenant id,
 	// so the x-scope-orgid header is set.
-	// client.cfg.TenentID = "<your_tenant_id>"
+	// client.cfg.TenantID = "<your_tenant_id>"
 
 	// Authorized request should fail against Grafana Cloud.
 	err = client.ping()
