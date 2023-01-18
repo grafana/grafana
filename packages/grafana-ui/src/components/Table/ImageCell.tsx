@@ -3,7 +3,7 @@ import React, { FC } from 'react';
 
 import { useStyles2 } from '../../themes';
 import { getCellLinks } from '../../utils';
-import { clearLinkButtonStyles, LinkButton } from '../Button';
+import { Button, clearLinkButtonStyles } from '../Button';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { TableCellProps } from './types';
@@ -22,14 +22,15 @@ export const ImageCell: FC<TableCellProps> = (props) => {
       {hasLinks && (
         <DataLinksContextMenu style={{ height: '100%' }} links={() => getCellLinks(field, row) || []}>
           {(api) => {
-            return (
-              <LinkButton
-                onClick={api.openMenu}
-                className={cx(tableStyles.imageCellLink, api.targetClassName, clearButtonStyle)}
-              >
-                <img src={displayValue.text} className={tableStyles.imageCell} alt="" />
-              </LinkButton>
-            );
+            if (api.openMenu) {
+              return (
+                <Button className={cx(clearButtonStyle)} onClick={api.openMenu}>
+                  <img src={displayValue.text} className={tableStyles.imageCell} alt="" />
+                </Button>
+              );
+            } else {
+              return <img src={displayValue.text} className={tableStyles.imageCell} alt="" />;
+            }
           }}
         </DataLinksContextMenu>
       )}

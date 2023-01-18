@@ -4,7 +4,7 @@ import React from 'react';
 
 import { useStyles2 } from '../../themes';
 import { getCellLinks } from '../../utils';
-import { clearLinkButtonStyles, LinkButton } from '../Button';
+import { Button, clearLinkButtonStyles } from '../Button';
 import { DataLinksContextMenu } from '../DataLinks/DataLinksContextMenu';
 
 import { CellActions } from './CellActions';
@@ -39,11 +39,15 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
         {hasLinks && (
           <DataLinksContextMenu links={() => getCellLinks(field, row) || []}>
             {(api) => {
-              return (
-                <LinkButton onClick={api.openMenu} className={cx(api.targetClassName, clearButtonStyle)}>
-                  {displayValue}
-                </LinkButton>
-              );
+              if (api.openMenu) {
+                return (
+                  <Button className={cx(clearButtonStyle)} onClick={api.openMenu}>
+                    {displayValue}
+                  </Button>
+                );
+              } else {
+                return <>{displayValue}</>;
+              }
             }}
           </DataLinksContextMenu>
         )}
