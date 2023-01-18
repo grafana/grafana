@@ -548,6 +548,13 @@ type RemoveOrgUserParams struct {
 	UserID int64 `json:"user_id"`
 }
 
+// swagger:parameters searchOrgUsers
+type SearchOrgUsersParams struct {
+	// in:path
+	// required:true
+	OrgID int64 `json:"org_id"`
+}
+
 // swagger:response getOrgUsersForCurrentOrgLookupResponse
 type GetOrgUsersForCurrentOrgLookupResponse struct {
 	// The response message
@@ -564,7 +571,14 @@ type GetOrgUsersForCurrentOrgResponse struct {
 
 // swagger:response getOrgUsersResponse
 type GetOrgUsersResponse struct {
-	// The response message
+	// The response message/
 	// in: body
 	Body []*org.OrgUserDTO `json:"body"`
+}
+
+// swagger:response searchOrgUsersResponse
+type SearchOrgUsersResponse struct {
+	// The response message
+	// in: body
+	Body *org.SearchOrgUsersQueryResult `json:"body"`
 }

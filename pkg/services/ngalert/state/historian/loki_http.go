@@ -11,25 +11,41 @@ import (
 
 const defaultClientTimeout = 30 * time.Second
 
+type LokiConfig struct {
+	Url               *url.URL
+	BasicAuthUser     string
+	BasicAuthPassword string
+	TenantID          string
+}
+
 type httpLokiClient struct {
 	client http.Client
-	url    *url.URL
+	cfg    LokiConfig
 	log    log.Logger
 }
 
-func newLokiClient(u *url.URL, logger log.Logger) *httpLokiClient {
+func newLokiClient(cfg LokiConfig, logger log.Logger) *httpLokiClient {
 	return &httpLokiClient{
 		client: http.Client{
 			Timeout: defaultClientTimeout,
 		},
-		url: u,
+		cfg: cfg,
 		log: logger.New("protocol", "http"),
 	}
 }
 
 func (c *httpLokiClient) ping() error {
-	uri := c.url.JoinPath("/loki/api/v1/status/buildinfo")
+	uri := c.cfg.Url.JoinPath("/loki/api/v1/labels")
 	req, err := http.NewRequest(http.MethodGet, uri.String(), nil)
+
+	if c.cfg.BasicAuthUser != "" || c.cfg.BasicAuthPassword != "" {
+		req.SetBasicAuth(c.cfg.BasicAuthUser, c.cfg.BasicAuthPassword)
+	}
+
+	if c.cfg.TenantID != "" {
+		req.Header.Add("X-Scope-OrgID", c.cfg.TenantID)
+	}
+
 	if err != nil {
 		return fmt.Errorf("error creating request: %w", err)
 	}
@@ -47,8 +63,8 @@ func (c *httpLokiClient) ping() error {
 	}
 
 	if res.StatusCode < 200 || res.StatusCode >= 300 {
-		return fmt.Errorf("request to the loki buildinfo endpoint returned a non-200 status code: %d", res.StatusCode)
+		return fmt.Errorf("ping request to loki endpoint returned a non-200 status code: %d", res.StatusCode)
 	}
-	c.log.Debug("Request to Loki buildinfo endpoint succeeded", "status", res.StatusCode)
+	c.log.Debug("Ping request to Loki endpoint succeeded", "status", res.StatusCode)
 	return nil
 }
