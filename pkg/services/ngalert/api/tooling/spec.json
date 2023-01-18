@@ -2276,13 +2276,13 @@
           "provisioning",
           "stable"
         ],
-        "summary": "Get all message templates.",
+        "summary": "Get all notification templates.",
         "operationId": "RouteGetTemplates",
         "responses": {
           "200": {
-            "description": "MessageTemplates",
+            "description": "NotificationTemplates",
             "schema": {
-              "$ref": "#/definitions/MessageTemplates"
+              "$ref": "#/definitions/NotificationTemplates"
             }
           },
           "404": {
@@ -2297,7 +2297,7 @@
           "provisioning",
           "stable"
         ],
-        "summary": "Get a message template.",
+        "summary": "Get a notification template.",
         "operationId": "RouteGetTemplate",
         "parameters": [
           {
@@ -2310,9 +2310,9 @@
         ],
         "responses": {
           "200": {
-            "description": "MessageTemplate",
+            "description": "NotificationTemplate",
             "schema": {
-              "$ref": "#/definitions/MessageTemplate"
+              "$ref": "#/definitions/NotificationTemplate"
             }
           },
           "404": {
@@ -2328,7 +2328,7 @@
           "provisioning",
           "stable"
         ],
-        "summary": "Updates an existing template.",
+        "summary": "Updates an existing notification template.",
         "operationId": "RoutePutTemplate",
         "parameters": [
           {
@@ -2342,15 +2342,15 @@
             "name": "Body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/MessageTemplateContent"
+              "$ref": "#/definitions/NotificationTemplateContent"
             }
           }
         ],
         "responses": {
           "202": {
-            "description": "MessageTemplate",
+            "description": "NotificationTemplate",
             "schema": {
-              "$ref": "#/definitions/MessageTemplate"
+              "$ref": "#/definitions/NotificationTemplate"
             }
           },
           "400": {
@@ -3977,34 +3977,6 @@
       },
       "$ref": "#/definitions/Matchers"
     },
-    "MessageTemplate": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "provenance": {
-          "$ref": "#/definitions/Provenance"
-        },
-        "template": {
-          "type": "string"
-        }
-      }
-    },
-    "MessageTemplateContent": {
-      "type": "object",
-      "properties": {
-        "template": {
-          "type": "string"
-        }
-      }
-    },
-    "MessageTemplates": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/MessageTemplate"
-      }
-    },
     "MultiStatus": {
       "type": "object"
     },
@@ -4065,6 +4037,34 @@
       "type": "integer",
       "format": "int64",
       "title": "NoticeSeverity is a type for the Severity property of a Notice."
+    },
+    "NotificationTemplate": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
+        "template": {
+          "type": "string"
+        }
+      }
+    },
+    "NotificationTemplateContent": {
+      "type": "object",
+      "properties": {
+        "template": {
+          "type": "string"
+        }
+      }
+    },
+    "NotificationTemplates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/NotificationTemplate"
+      }
     },
     "NotifierConfig": {
       "type": "object",
@@ -5943,6 +5943,7 @@
       }
     },
     "gettableAlert": {
+      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -5999,7 +6000,6 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
@@ -6246,7 +6246,6 @@
       "$ref": "#/definitions/postableSilence"
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",
