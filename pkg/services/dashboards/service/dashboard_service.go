@@ -93,7 +93,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		return nil, dashboards.ErrDashboardFolderCannotHaveParent
 	}
 
-	if dash.IsFolder && strings.EqualFold(dash.Title, models.RootFolderName) {
+	if dash.IsFolder && strings.EqualFold(dash.Title, dashboards.RootFolderName) {
 		return nil, dashboards.ErrDashboardFolderNameExists
 	}
 
@@ -382,7 +382,7 @@ func (dr *DashboardServiceImpl) DeleteDashboard(ctx context.Context, dashboardId
 	return dr.deleteDashboard(ctx, dashboardId, orgId, true)
 }
 
-func (dr *DashboardServiceImpl) GetDashboardByPublicUid(ctx context.Context, dashboardPublicUid string) (*models.Dashboard, error) {
+func (dr *DashboardServiceImpl) GetDashboardByPublicUid(ctx context.Context, dashboardPublicUid string) (*dashboards.Dashboard, error) {
 	return nil, nil
 }
 
@@ -571,7 +571,7 @@ func makeQueryResult(query *models.FindPersistedDashboardsQuery, res []dashboard
 				UID:         item.UID,
 				Title:       item.Title,
 				URI:         "db/" + item.Slug,
-				URL:         models.GetDashboardFolderUrl(item.IsFolder, item.UID, item.Slug),
+				URL:         dashboards.GetDashboardFolderURL(item.IsFolder, item.UID, item.Slug),
 				Type:        getHitType(item),
 				FolderID:    item.FolderID,
 				FolderUID:   item.FolderUID,
@@ -580,7 +580,7 @@ func makeQueryResult(query *models.FindPersistedDashboardsQuery, res []dashboard
 			}
 
 			if item.FolderID > 0 {
-				hit.FolderURL = models.GetFolderUrl(item.FolderUID, item.FolderSlug)
+				hit.FolderURL = dashboards.GetFolderURL(item.FolderUID, item.FolderSlug)
 			}
 
 			if query.Sort.MetaName != "" {

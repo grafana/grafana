@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
@@ -146,7 +147,7 @@ func (hs *HTTPServer) GetAlerts(c *models.ReqContext) response.Response {
 	}
 
 	for _, alert := range query.Result {
-		alert.Url = models.GetDashboardUrl(alert.DashboardUid, alert.DashboardSlug)
+		alert.Url = dashboards.GetDashboardURL(alert.DashboardUid, alert.DashboardSlug)
 	}
 
 	return response.JSON(http.StatusOK, query.Result)

@@ -458,7 +458,7 @@ func (s *dashboardServiceMock) DeleteDashboard(_ context.Context, dashboardId in
 	return nil
 }
 
-func (s *dashboardServiceMock) GetDashboardByPublicUid(ctx context.Context, dashboardPublicUid string) (*models.Dashboard, error) {
+func (s *dashboardServiceMock) GetDashboardByPublicUid(ctx context.Context, dashboardPublicUid string) (*dashboards.Dashboard, error) {
 	return nil, nil
 }
 
@@ -554,7 +554,7 @@ func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenar
 		for _, d := range input.pluginDashboards {
 			if d.PluginId == req.PluginID && req.Reference == d.Reference {
 				return &plugindashboards.LoadPluginDashboardResponse{
-					Dashboard: &models.Dashboard{},
+					Dashboard: &dashboards.Dashboard{},
 				}, nil
 			}
 		}

@@ -866,7 +866,7 @@ func makeQueryResult(query *models.FindPersistedDashboardsQuery, res []dashboard
 				UID:         item.UID,
 				Title:       item.Title,
 				URI:         "db/" + item.Slug,
-				URL:         models.GetDashboardFolderUrl(item.IsFolder, item.UID, item.Slug),
+				URL:         dashboards.GetDashboardFolderURL(item.IsFolder, item.UID, item.Slug),
 				Type:        hitType,
 				FolderID:    item.FolderID,
 				FolderUID:   item.FolderUID,
@@ -875,7 +875,7 @@ func makeQueryResult(query *models.FindPersistedDashboardsQuery, res []dashboard
 			}
 
 			if item.FolderID > 0 {
-				hit.FolderURL = models.GetFolderUrl(item.FolderUID, item.FolderSlug)
+				hit.FolderURL = dashboards.GetFolderURL(item.FolderUID, item.FolderSlug)
 			}
 
 			if query.Sort.MetaName != "" {
