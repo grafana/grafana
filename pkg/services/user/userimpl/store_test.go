@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
@@ -844,7 +845,7 @@ func updateDashboardACL(t *testing.T, sqlStore db.DB, dashboardID int64, items .
 		}
 
 		// Update dashboard HasACL flag
-		dashboard := models.Dashboard{HasACL: true}
+		dashboard := dashboards.Dashboard{HasACL: true}
 		_, err = sess.Cols("has_acl").Where("id=?", dashboardID).Update(&dashboard)
 		return err
 	})
