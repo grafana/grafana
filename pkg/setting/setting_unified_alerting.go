@@ -104,6 +104,10 @@ type UnifiedAlertingStateHistorySettings struct {
 	Enabled       bool
 	Backend       string
 	LokiRemoteURL string
+	// LokiTenantID and LokiPassword are used for basic auth if both
+	// are set.
+	LokiTenantID string
+	LokiPassword string
 }
 
 // IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
@@ -317,6 +321,8 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		Enabled:       stateHistory.Key("enabled").MustBool(stateHistoryDefaultEnabled),
 		Backend:       stateHistory.Key("backend").MustString("annotations"),
 		LokiRemoteURL: stateHistory.Key("loki_remote_url").MustString(""),
+		LokiTenantID:  stateHistory.Key("loki_tenant_id").MustString(""),
+		LokiPassword:  stateHistory.Key("loki_password").MustString(""),
 	}
 	uaCfg.StateHistory = uaCfgStateHistory
 
