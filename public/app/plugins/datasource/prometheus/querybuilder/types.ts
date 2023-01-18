@@ -120,10 +120,8 @@ export enum PromOperationId {
 }
 
 export enum PromQueryPatternType {
-  RateSum = 'rate_sum',
-  RateSumAvg = 'rate_sum_avg',
-  HistQuantRate = 'histogram_quantile_rate',
-  HistQuantIncrease = 'histogram_quantile_increase',
+  Rate = 'rate',
+  Histogram = 'histogram',
 }
 
 export interface PromQueryPattern {
