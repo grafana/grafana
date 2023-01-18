@@ -191,12 +191,9 @@ func (st *Manager) resetStateByRuleUID(ctx context.Context, rule *ngModels.Alert
 		for _, s := range states {
 			oldState := s.State
 			oldReason := s.StateReason
-			s.State = eval.Normal
-			s.StateReason = reason
 			now := time.Now()
-			s.EndsAt = now
+			s.SetNormal(reason, s.StartsAt, now)
 			s.LastEvaluationTime = now
-			s.Error = nil
 			s.Values = map[string]float64{}
 			transitions = append(transitions, StateTransition{
 				State:               s,
