@@ -1,4 +1,4 @@
-package models
+package dashboards
 
 import (
 	"testing"
@@ -15,7 +15,7 @@ func TestGetDashboardUrl(t *testing.T) {
 	t.Cleanup(func() { setting.AppUrl = origAppURL })
 
 	setting.AppUrl = ""
-	url := GetDashboardUrl("uid", "my-dashboard")
+	url := GetDashboardURL("uid", "my-dashboard")
 	assert.Equal(t, "/d/uid/my-dashboard", url)
 }
 
@@ -24,7 +24,7 @@ func TestGetFullDashboardUrl(t *testing.T) {
 	t.Cleanup(func() { setting.AppUrl = origAppURL })
 
 	setting.AppUrl = "http://grafana.local/"
-	url := GetFullDashboardUrl("uid", "my-dashboard")
+	url := GetFullDashboardURL("uid", "my-dashboard")
 	assert.Equal(t, "http://grafana.local/d/uid/my-dashboard", url)
 }
 
@@ -62,10 +62,10 @@ func TestSaveDashboardCommand_GetDashboardModel(t *testing.T) {
 		json := simplejson.New()
 		json.Set("title", "test dash")
 
-		cmd := &SaveDashboardCommand{Dashboard: json, FolderId: 1}
+		cmd := &SaveDashboardCommand{Dashboard: json, FolderID: 1}
 		dash := cmd.GetDashboardModel()
 
-		assert.Equal(t, int64(1), dash.FolderId)
+		assert.Equal(t, int64(1), dash.FolderID)
 	})
 }
 
