@@ -20,7 +20,7 @@ export default function Home() {
         <ContentBox className={styles.flowBlock}>
           <div>
             <h3>How it works</h3>
-            <ul>
+            <ul className={styles.list}>
               <li>
                 Grafana alerting periodically queries data sources and evaluates the condition defined in the alert rule
               </li>
@@ -38,7 +38,7 @@ export default function Home() {
         <ContentBox className={styles.gettingStartedBlock}>
           <h3>Get started</h3>
           <Stack direction="column" alignItems="space-between">
-            <ul>
+            <ul className={styles.list}>
               <li>
                 <strong>Create an alert rule</strong> by adding queries and expressions from multiple data sources.
               </li>
@@ -102,9 +102,6 @@ const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
     & > div {
       flex: 2;
       min-width: 350px;
-      ul {
-        margin-left: ${theme.spacing(2)};
-      }
     }
     & > svg {
       flex: 3;
@@ -131,21 +128,11 @@ const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
   gettingStartedBlock: css`
     grid-column: 1 / span 2;
     justify-content: space-between;
-
-    ul {
-      margin-left: ${theme.spacing(2)};
-    }
   `,
-  howItWorks: css`
-    display: flex;
-    flex-wrap: wrap;
-    & > ul {
-      flex: 2;
-      margin-left: ${theme.spacing(2)};
-    }
-    & > svg {
-      flex: 3;
-      min-width: 600px;
+  list: css`
+    margin: ${theme.spacing(0, 2)};
+    & > li {
+      margin-bottom: ${theme.spacing(1)};
     }
   `,
 });
@@ -236,6 +223,7 @@ const getWelcomeCTAButtonStyles = (theme: GrafanaTheme2) => ({
   `,
 
   title: css`
+    margin-bottom: 0;
     grid-column: 2 / span 3;
     grid-row: 1;
   `,
