@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ authn.Client = new(Anonymous)
+var _ authn.ContextAwareClient = new(Anonymous)
 
 func ProvideAnonymous(cfg *setting.Cfg, orgService org.Service) *Anonymous {
 	return &Anonymous{
@@ -44,4 +44,8 @@ func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 func (a *Anonymous) Test(ctx context.Context, r *authn.Request) bool {
 	// If anonymous client is register it can always be used for authentication
 	return true
+}
+
+func (a *Anonymous) Priority() uint {
+	return 100
 }

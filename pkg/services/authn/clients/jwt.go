@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-var _ authn.Client = new(JWT)
+var _ authn.ContextAwareClient = new(JWT)
 
 var (
 	ErrJWTInvalid = errutil.NewBase(errutil.StatusUnauthorized,
@@ -155,6 +155,10 @@ func (s *JWT) Test(ctx context.Context, r *authn.Request) bool {
 	}
 
 	return true
+}
+
+func (s *JWT) Priority() uint {
+	return 20
 }
 
 const roleGrafanaAdmin = "GrafanaAdmin"

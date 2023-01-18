@@ -20,7 +20,7 @@ const (
 	renderCookieName = "renderKey"
 )
 
-var _ authn.Client = new(Render)
+var _ authn.ContextAwareClient = new(Render)
 
 func ProvideRender(userService user.Service, renderService rendering.Service) *Render {
 	return &Render{userService, renderService}
@@ -64,6 +64,10 @@ func (c *Render) Test(ctx context.Context, r *authn.Request) bool {
 		return false
 	}
 	return getRenderKey(r) != ""
+}
+
+func (c *Render) Priority() uint {
+	return 10
 }
 
 func getRenderKey(r *authn.Request) string {

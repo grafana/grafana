@@ -74,6 +74,7 @@ type ContextAwareClient interface {
 	Client
 	// Test should return true if client can be used to authenticate request
 	Test(ctx context.Context, r *Request) bool
+	Priority() uint
 }
 
 type RedirectClient interface {

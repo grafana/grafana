@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-var _ authn.Client = new(Session)
+var _ authn.ContextAwareClient = new(Session)
 
 func ProvideSession(sessionService auth.UserTokenService, userService user.Service,
 	cookieName string, maxLifetime time.Duration) *Session {
@@ -34,18 +34,6 @@ type Session struct {
 	sessionService   auth.UserTokenService
 	userService      user.Service
 	log              log.Logger
-}
-
-func (s *Session) Test(ctx context.Context, r *authn.Request) bool {
-	if s.loginCookieName == "" {
-		return false
-	}
-
-	if _, err := r.HTTPRequest.Cookie(s.loginCookieName); err != nil {
-		return false
-	}
-
-	return true
 }
 
 func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
@@ -77,6 +65,22 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 	identity.SessionToken = token
 
 	return identity, nil
+}
+
+func (s *Session) Test(ctx context.Context, r *authn.Request) bool {
+	if s.loginCookieName == "" {
+		return false
+	}
+
+	if _, err := r.HTTPRequest.Cookie(s.loginCookieName); err != nil {
+		return false
+	}
+
+	return true
+}
+
+func (s *Session) Priority() uint {
+	return 60
 }
 
 func (s *Session) RefreshTokenHook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {

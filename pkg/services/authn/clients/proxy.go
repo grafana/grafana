@@ -29,7 +29,7 @@ var (
 	errInvalidProxyHeader = errutil.NewBase(errutil.StatusInternal, "auth-proxy.invalid-proxy-header")
 )
 
-var _ authn.Client = new(Proxy)
+var _ authn.ContextAwareClient = new(Proxy)
 
 func ProvideProxy(cfg *setting.Cfg, clients ...authn.ProxyClient) (*Proxy, error) {
 	list, err := parseAcceptList(cfg.AuthProxyWhitelist)
@@ -73,6 +73,10 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 
 func (c *Proxy) Test(ctx context.Context, r *authn.Request) bool {
 	return len(getProxyHeader(r, c.cfg.AuthProxyHeaderName, c.cfg.AuthProxyHeadersEncoded)) != 0
+}
+
+func (c *Proxy) Priority() uint {
+	return 50
 }
 
 func (c *Proxy) isAllowedIP(r *authn.Request) bool {
