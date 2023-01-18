@@ -20,11 +20,11 @@ GrafanaPlugin: {
 	composableKinds?: [Iface=string]: kindsys.Composable & {
 		name: pascalName + Iface
 		schemaInterface: Iface
-		lineage: name: id
+		lineage: name: pascalName + Iface
 	}
 
-	// A plugin defines its #CustomStructured kinds under this key.
-	customKinds?: [Name=string]: kindsys.CustomStructured & {
+	// A plugin defines its Custom kinds under this key.
+	customKinds?: [Name=string]: kindsys.Custom & {
 		name: Name
 	}
 	...
