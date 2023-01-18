@@ -70,15 +70,12 @@ func (o *Service) GetCurrentOAuthToken(ctx context.Context, usr *user.SignedInUs
 		return nil
 	}
 
-	if err := isRefreshableOAuthProvider(authInfoQuery.Result); err != nil {
+	token, err := o.tryGetOrRefreshAccessToken(ctx, authInfoQuery.Result)
+	if err != nil {
 		if errors.Is(err, ErrNoRefreshTokenFound) {
 			return buildOAuthTokenFromAuthInfo(authInfoQuery.Result)
 		}
-		return nil
-	}
 
-	token, err := o.tryGetOrRefreshAccessToken(ctx, authInfoQuery.Result)
-	if err != nil {
 		return nil
 	}
 
@@ -120,10 +117,6 @@ func (o *Service) TryTokenRefresh(ctx context.Context, usr *models.UserAuth) err
 	_, err, _ := o.singleFlightGroup.Do(lockKey, func() (interface{}, error) {
 		logger.Debug("singleflight request for getting a new access token", "key", lockKey)
 
-		if err := isRefreshableOAuthProvider(usr); err != nil {
-			return nil, err
-		}
-
 		return o.tryGetOrRefreshAccessToken(ctx, usr)
 	})
 	return err
@@ -136,14 +129,17 @@ func buildOAuthTokenFromAuthInfo(authInfo *models.UserAuth) *oauth2.Token {
 		RefreshToken: authInfo.OAuthRefreshToken,
 		TokenType:    authInfo.OAuthTokenType,
 	}
-	token = token.WithExtra(map[string]interface{}{"id_token": authInfo.OAuthIdToken})
+
+	if authInfo.OAuthIdToken != "" {
+		token = token.WithExtra(map[string]interface{}{"id_token": authInfo.OAuthIdToken})
+	}
 
 	return token
 }
 
-func isRefreshableOAuthProvider(authInfo *models.UserAuth) error {
+func checkOAuthRefreshToken(authInfo *models.UserAuth) error {
 	if !strings.Contains(authInfo.AuthModule, "oauth") {
-		logger.Error("the specified user's auth provider is not oauth",
+		logger.Warn("the specified user's auth provider is not oauth",
 			"authmodule", authInfo.AuthModule, "userid", authInfo.UserId)
 		return ErrNotAnOAuthProvider
 	}
@@ -172,6 +168,10 @@ func (o *Service) InvalidateOAuthTokens(ctx context.Context, usr *models.UserAut
 }
 
 func (o *Service) tryGetOrRefreshAccessToken(ctx context.Context, usr *models.UserAuth) (*oauth2.Token, error) {
+	if err := checkOAuthRefreshToken(usr); err != nil {
+		return nil, err
+	}
+
 	authProvider := usr.AuthModule
 	connect, err := o.SocialService.GetConnector(authProvider)
 	if err != nil {
@@ -191,7 +191,8 @@ func (o *Service) tryGetOrRefreshAccessToken(ctx context.Context, usr *models.Us
 	// TokenSource handles refreshing the token if it has expired
 	token, err := connect.TokenSource(ctx, persistedToken).Token()
 	if err != nil {
-		logger.Warn("failed to retrieve oauth access token", "provider", usr.AuthModule, "userId", usr.UserId, "error", err)
+		logger.Error("failed to retrieve oauth access token",
+			"provider", usr.AuthModule, "userId", usr.UserId, "error", err)
 		return nil, err
 	}
 
