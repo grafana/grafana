@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/stretchr/testify/require"
 )
@@ -21,7 +21,7 @@ func TestValidatePublicDashboard(t *testing.T) {
 			}
 		}`)
 		dashboardData, _ := simplejson.NewJson(templateVars)
-		dashboard := models.NewDashboardFromJson(dashboardData)
+		dashboard := dashboards.NewDashboardFromJson(dashboardData)
 		dto := &SavePublicDashboardDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: nil}
 
 		err := ValidatePublicDashboard(dto, dashboard)
@@ -35,7 +35,7 @@ func TestValidatePublicDashboard(t *testing.T) {
 			}
 		}`)
 		dashboardData, _ := simplejson.NewJson(templateVars)
-		dashboard := models.NewDashboardFromJson(dashboardData)
+		dashboard := dashboards.NewDashboardFromJson(dashboardData)
 		dto := &SavePublicDashboardDTO{DashboardUid: "abc123", OrgId: 1, UserId: 1, PublicDashboard: nil}
 
 		err := ValidatePublicDashboard(dto, dashboard)

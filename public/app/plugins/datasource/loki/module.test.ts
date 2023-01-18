@@ -81,7 +81,7 @@ describe('queriesOnInitDashboard', () => {
       metric_queries_count: 3,
       queries_count: 5,
       queries_with_changed_legend_count: 3,
-      queries_with_changed_line_limit_count: 5,
+      queries_with_changed_line_limit_count: 2,
       queries_with_changed_resolution_count: 0,
       queries_with_template_variables_count: 2,
       range_queries_count: 4,

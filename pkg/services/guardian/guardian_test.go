@@ -698,12 +698,12 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 				{Inherited: true, UserId: 3, UserLogin: "user3", Permission: models.PERMISSION_VIEW},
 			}
 		}).Return(nil)
-		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
-			q := args.Get(1).(*models.GetDashboardQuery)
-			q.Result = &models.Dashboard{
-				Id:    q.Id,
-				Uid:   q.Uid,
-				OrgId: q.OrgId,
+		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
+			q := args.Get(1).(*dashboards.GetDashboardQuery)
+			q.Result = &dashboards.Dashboard{
+				ID:    q.ID,
+				UID:   q.UID,
+				OrgID: q.OrgID,
 			}
 		}).Return(nil)
 
@@ -734,11 +734,11 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 				IsGrafanaAdmin: true,
 			}
 			dashSvc := dashboards.NewFakeDashboardService(t)
-			dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
-				q := args.Get(1).(*models.GetDashboardQuery)
-				q.Result = &models.Dashboard{
-					Id:  q.Id,
-					Uid: q.Uid,
+			dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
+				q := args.Get(1).(*dashboards.GetDashboardQuery)
+				q.Result = &dashboards.Dashboard{
+					ID:  q.ID,
+					UID: q.UID,
 				}
 			}).Return(nil)
 			g, err := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, dashSvc, &teamtest.FakeService{})
@@ -769,12 +769,12 @@ func TestGuardianGetACLWithoutDuplicates(t *testing.T) {
 				{Inherited: false, UserId: 6, UserLogin: "user6", Permission: models.PERMISSION_EDIT},
 			}
 		}).Return(nil)
-		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
-			q := args.Get(1).(*models.GetDashboardQuery)
-			q.Result = &models.Dashboard{
-				Id:    q.Id,
-				Uid:   q.Uid,
-				OrgId: q.OrgId,
+		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
+			q := args.Get(1).(*dashboards.GetDashboardQuery)
+			q.Result = &dashboards.Dashboard{
+				ID:    q.ID,
+				UID:   q.UID,
+				OrgID: q.OrgID,
 			}
 		}).Return(nil)
 

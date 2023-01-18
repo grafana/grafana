@@ -7,7 +7,7 @@ keywords:
   - templates
   - write templates
 title: Using Go's templating language
-weight: 200
+weight: 100
 ---
 
 # Using Go's templating language

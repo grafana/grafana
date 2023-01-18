@@ -60,7 +60,7 @@ func AlertRuleGen(mutators ...AlertRuleMutator) func() *AlertRule {
 
 		rule := &AlertRule{
 			ID:              rand.Int63n(1500),
-			OrgID:           rand.Int63n(1500),
+			OrgID:           rand.Int63n(1500) + 1, // Prevent OrgID=0 as this does not pass alert rule validation.
 			Title:           "TEST-ALERT-" + util.GenerateShortUID(),
 			Condition:       "A",
 			Data:            []AlertQuery{GenerateAlertQuery()},

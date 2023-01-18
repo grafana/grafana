@@ -1,14 +1,12 @@
-import { VizPanel, SceneGridRow } from '../components';
-import { EmbeddedScene, Scene } from '../components/Scene';
-import { SceneTimePicker } from '../components/SceneTimePicker';
-import { SceneGridLayout } from '../components/layout/SceneGridLayout';
-import { SceneTimeRange } from '../core/SceneTimeRange';
+import { VizPanel, SceneGridRow, SceneTimePicker, SceneGridLayout, SceneTimeRange } from '@grafana/scenes';
+
+import { DashboardScene } from '../dashboard/DashboardScene';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getGridWithMultipleData(standalone: boolean): Scene {
-  const state = {
+export function getGridWithMultipleData(): DashboardScene {
+  return new DashboardScene({
     title: 'Grid with rows and different queries',
     body: new SceneGridLayout({
       children: [
@@ -88,7 +86,5 @@ export function getGridWithMultipleData(standalone: boolean): Scene {
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
-  };
-
-  return standalone ? new Scene(state) : new EmbeddedScene(state);
+  });
 }
