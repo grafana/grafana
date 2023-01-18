@@ -341,9 +341,9 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			var states []*state.State
 			rule := sch.schedulableAlertRules.get(key)
 			if isRuleDeleted {
-				states = sch.stateManager.ResetStateByDeletedRuleUID(ctx, rule)
+				states = sch.stateManager.ResetStateByDeletedRuleUID(ctx, key)
 			} else if isRulePaused {
-				states = sch.stateManager.ResetStateByPausedRuleUID(ctx, rule)
+				states = sch.stateManager.ResetStateByPausedRuleUID(ctx, key, rule)
 			}
 			expiredAlerts := FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
 			if len(expiredAlerts.PostableAlerts) > 0 {

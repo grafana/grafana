@@ -164,23 +164,22 @@ func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) *State {
 }
 
 // ResetStateByDeletedRuleUID deletes all entries in the state manager that match the given rule UID.
-func (st *Manager) ResetStateByDeletedRuleUID(ctx context.Context, rule *ngModels.AlertRule) []*State {
-	return st.resetStateByRuleUID(ctx, rule, ngModels.StateReasonDeleted)
+func (st *Manager) ResetStateByDeletedRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey) []*State {
+	return st.resetStateByRuleUID(ctx, ruleKey, nil, ngModels.StateReasonDeleted)
 }
 
 // ResetStateByPausedRuleUID deletes all entries in the state manager that match the given rule UID.
-func (st *Manager) ResetStateByPausedRuleUID(ctx context.Context, rule *ngModels.AlertRule) []*State {
-	return st.resetStateByRuleUID(ctx, rule, ngModels.StateReasonPaused)
+func (st *Manager) ResetStateByPausedRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey, rule *ngModels.AlertRule) []*State {
+	return st.resetStateByRuleUID(ctx, ruleKey, rule, ngModels.StateReasonPaused)
 }
 
-func (st *Manager) resetStateByRuleUID(ctx context.Context, rule *ngModels.AlertRule, reason string) []*State {
-	key := rule.GetKey()
-	logger := st.log.New(key.LogContext()...)
+func (st *Manager) resetStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey, rule *ngModels.AlertRule, reason string) []*State {
+	logger := st.log.New(ruleKey.LogContext()...)
 	logger.Debug("Resetting state of the rule")
 
-	states := st.cache.removeByRuleUID(rule.OrgID, rule.UID)
+	states := st.cache.removeByRuleUID(ruleKey.OrgID, ruleKey.UID)
 	if len(states) > 0 && st.instanceStore != nil {
-		err := st.instanceStore.DeleteAlertInstancesByRule(ctx, key)
+		err := st.instanceStore.DeleteAlertInstancesByRule(ctx, ruleKey)
 		if err != nil {
 			logger.Error("Failed to delete states that belong to a rule from database", "error", err)
 		}
