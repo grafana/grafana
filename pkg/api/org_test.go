@@ -1,8 +1,6 @@
 package api
 
 import (
-	"context"
-	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -14,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -620,20 +617,5 @@ func TestAPIEndpoint_GetOrg_RBAC(t *testing.T) {
 			// fetch by name
 			verify("/api/orgs/name/test")
 		})
-	}
-}
-
-// setupOrgsDBForAccessControlTests creates orgs up until orgID and fake user as member of org
-func setupOrgsDBForAccessControlTests(t *testing.T, db *sqlstore.SQLStore, c accessControlScenarioContext, orgID int64) {
-	t.Helper()
-	setInitCtxSignedInViewer(c.initCtx)
-	u := *c.initCtx.SignedInUser
-	u.OrgID = orgID
-	c.userService.(*usertest.FakeUserService).ExpectedSignedInUser = &u
-
-	// Create `orgsCount` orgs
-	for i := 1; i <= int(orgID); i++ {
-		_, err := c.hs.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: fmt.Sprintf("TestOrg%v", i), UserID: 0})
-		require.NoError(t, err)
 	}
 }

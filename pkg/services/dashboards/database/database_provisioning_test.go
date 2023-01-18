@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -86,7 +85,7 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 			require.Nil(t, err)
 			require.NotNil(t, query.Result)
 
-			deleteCmd := &models.DeleteOrphanedProvisionedDashboardsCommand{ReaderNames: []string{"default"}}
+			deleteCmd := &dashboards.DeleteOrphanedProvisionedDashboardsCommand{ReaderNames: []string{"default"}}
 			require.Nil(t, dashboardStore.DeleteOrphanedProvisionedDashboards(context.Background(), deleteCmd))
 
 			query = &dashboards.GetDashboardsQuery{DashboardIDs: []int64{dash.ID, anotherDash.ID}}
@@ -102,7 +101,7 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 			require.Nil(t, err)
 
 			require.Equal(t, 1, len(rslt))
-			require.Equal(t, dashId, rslt[0].DashboardId)
+			require.Equal(t, dashId, rslt[0].DashboardID)
 			require.Equal(t, now.Unix(), rslt[0].Updated)
 		})
 
@@ -119,9 +118,9 @@ func TestIntegrationDashboardProvisioningTest(t *testing.T) {
 		})
 
 		t.Run("Deleting folder should delete provision meta data", func(t *testing.T) {
-			deleteCmd := &models.DeleteDashboardCommand{
-				Id:    dash.ID,
-				OrgId: 1,
+			deleteCmd := &dashboards.DeleteDashboardCommand{
+				ID:    dash.ID,
+				OrgID: 1,
 			}
 
 			require.Nil(t, dashboardStore.DeleteDashboard(context.Background(), deleteCmd))

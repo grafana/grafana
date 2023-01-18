@@ -6,18 +6,17 @@ import {
   VizPanel,
   SceneCanvasText,
   SceneToolbarInput,
-  EmbeddedScene,
   SceneDataNode,
 } from '@grafana/scenes';
 
 import { panelBuilders } from '../builders/panelBuilders';
-import { Scene } from '../components/Scene';
+import { DashboardScene } from '../dashboard/DashboardScene';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getFlexLayoutTest(standalone: boolean): Scene | EmbeddedScene {
-  const state = {
+export function getFlexLayoutTest(): DashboardScene {
+  return new DashboardScene({
     title: 'Flex layout test',
     body: new SceneFlexLayout({
       direction: 'row',
@@ -63,19 +62,17 @@ export function getFlexLayoutTest(standalone: boolean): Scene | EmbeddedScene {
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
-  };
-
-  return standalone ? new Scene(state) : new EmbeddedScene(state);
+  });
 }
 
-export function getScenePanelRepeaterTest(standalone: boolean): Scene | EmbeddedScene {
+export function getScenePanelRepeaterTest(): DashboardScene {
   const queryRunner = getQueryRunnerWithRandomWalkQuery({
     seriesCount: 2,
     alias: '__server_names',
     scenarioId: 'random_walk',
   });
 
-  const state = {
+  return new DashboardScene({
     title: 'Panel repeater test',
     body: new SceneByFrameRepeater({
       body: new SceneFlexLayout({
@@ -133,7 +130,5 @@ export function getScenePanelRepeaterTest(standalone: boolean): Scene | Embedded
       }),
       new SceneTimePicker({}),
     ],
-  };
-
-  return standalone ? new Scene(state) : new EmbeddedScene(state);
+  });
 }
