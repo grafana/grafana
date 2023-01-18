@@ -7,7 +7,6 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -519,7 +518,6 @@ func TestNestedFolderService(t *testing.T) {
 			var actualCmd *models.DeleteDashboardCommand
 			dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 				actualCmd = args.Get(1).(*models.DeleteDashboardCommand)
-				spew.Dump("inside mock", actualCmd)
 			}).Return(nil).Once()
 
 			// return an error from the folder store
