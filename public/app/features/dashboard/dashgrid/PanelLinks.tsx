@@ -26,10 +26,13 @@ export function PanelLinks({ panelLinks, onShowPanelLinks }: Props) {
   if (panelLinks.length === 1) {
     const linkModel = onShowPanelLinks()[0];
     return (
-      <PanelChrome.TitleItem>
-        <a href={linkModel.href} onClick={linkModel.onClick} target={linkModel.target} title={linkModel.title}>
-          <Icon name="external-link-alt" size="lg" />
-        </a>
+      <PanelChrome.TitleItem
+        href={linkModel.href}
+        onClick={linkModel.onClick}
+        target={linkModel.target}
+        title={linkModel.title}
+      >
+        <Icon name="external-link-alt" size="lg" />
       </PanelChrome.TitleItem>
     );
   } else {

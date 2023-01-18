@@ -1,7 +1,7 @@
 import { cx, css } from '@emotion/css';
 import React, { forwardRef } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, LinkModel, LinkTarget } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
@@ -9,16 +9,39 @@ import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 type TitleItemProps = {
   className?: string;
   children: React.ReactNode;
+  onClick?: LinkModel['onClick'];
+  href?: string;
+  target?: LinkTarget;
+  title?: string;
 };
 
-export const TitleItem = forwardRef<HTMLElement, TitleItemProps>(({ className, children, ...rest }, ref) => {
-  const styles = useStyles2(getStyles);
-  return (
-    <span ref={ref} className={cx(styles.item, className)} {...rest}>
-      {children}
-    </span>
-  );
-});
+export const TitleItem = forwardRef<HTMLAnchorElement, TitleItemProps>(
+  ({ className, children, href, onClick, target, title, ...rest }, ref) => {
+    const styles = useStyles2(getStyles);
+
+    if (href) {
+      return (
+        <a
+          ref={ref}
+          href={href}
+          onClick={onClick}
+          target={target}
+          title={title}
+          className={cx(styles.item, className)}
+          {...rest}
+        >
+          {children}
+        </a>
+      );
+    } else {
+      return (
+        <span ref={ref} className={cx(styles.item, className)} {...rest}>
+          {children}
+        </span>
+      );
+    }
+  }
+);
 
 TitleItem.displayName = 'TitleItem';
 
