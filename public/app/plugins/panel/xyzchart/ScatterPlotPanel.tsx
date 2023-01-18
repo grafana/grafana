@@ -19,7 +19,7 @@ export const ScatterPlotPanel = (props: Props) => {
     }
   }, [props.data.series, props.options.series, props.options.dims, props.options.seriesMapping]);
 
-  const options: ScatterPlotOptions = props.options as ScatterPlotOptions;
+  const options: ScatterPlotOptions = props.options;
   options.themeColor = theme.isDark ? '#ffffff' : '#000000';
   options.hudBgColor = theme.colors.background.secondary;
 

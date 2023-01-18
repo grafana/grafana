@@ -155,6 +155,9 @@ export function prepData(frames: DataFrame[], dataPointColor: string): PointData
   const points = [],
     colors = [];
   let scaleFactors: ScaleFactors = {};
+  // TODO: add support for multiple frames
+  // Also, at this moment, we assume that the first 3 fields of a frame are supported types and use those to plot.
+  // Having a frame with more fields, where some fields are not supported (e.g: string), will result in a broken chart.
 
   // Create scaling factor to map data coordinates to
   // chart coords, assuming as single data frame (although that's silly)

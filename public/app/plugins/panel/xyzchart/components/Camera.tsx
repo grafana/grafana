@@ -1,5 +1,5 @@
 import { PerspectiveCamera } from '@react-three/drei';
-import { useThree, Vector3 } from '@react-three/fiber'
+import { useThree, Vector3 } from '@react-three/fiber';
 import React, { useEffect } from 'react';
 import { OrbitControls, MapControls } from 'three-stdlib';
 

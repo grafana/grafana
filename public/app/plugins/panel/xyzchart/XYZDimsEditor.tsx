@@ -1,4 +1,4 @@
-import React, { FC, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import { SelectableValue, getFrameDisplayName, StandardEditorProps, getFieldDisplayName } from '@grafana/data';
 import { Label, Select } from '@grafana/ui';
@@ -11,11 +11,11 @@ interface XYZInfo {
   xField: SelectableValue<string>;
 }
 
-export const XYZDimsEditor: FC<StandardEditorProps<XYZDimensionConfig, any, ScatterPlotOptions>> = ({
+export const XYZDimsEditor = ({
   value,
   onChange,
   context,
-}) => {
+}: StandardEditorProps<XYZDimensionConfig, null, ScatterPlotOptions>) => {
   const frameNames = useMemo(() => {
     if (context?.data?.length) {
       return context.data.map((f, idx) => ({
@@ -43,7 +43,7 @@ export const XYZDimsEditor: FC<StandardEditorProps<XYZDimensionConfig, any, Scat
         : first,
     };
 
-    if (context.data.length === 0) {
+    if (context.data.length === 0 || !dims.frame) {
       return v;
     }
 

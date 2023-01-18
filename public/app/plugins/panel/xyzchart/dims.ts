@@ -9,7 +9,7 @@ export enum DimensionError {
 }
 
 export interface XYZDimensions {
-  frame: DataFrame;
+  frame?: DataFrame;
   error?: DimensionError;
 }
 
@@ -19,7 +19,11 @@ export function isGraphable(field: Field) {
 
 export function getXYZDimensions(cfg?: XYZDimensionConfig, data?: DataFrame[]): XYZDimensions {
   if (!data || !data.length) {
-    return { error: DimensionError.NoData } as XYZDimensions;
+    const dims: XYZDimensions = {
+      error: DimensionError.NoData,
+    };
+
+    return dims;
   }
   if (!cfg) {
     cfg = {
@@ -29,7 +33,11 @@ export function getXYZDimensions(cfg?: XYZDimensionConfig, data?: DataFrame[]): 
 
   let frame = data[cfg.frame ?? 0];
   if (!frame) {
-    return { error: DimensionError.BadFrameSelection } as XYZDimensions;
+    const dims: XYZDimensions = {
+      error: DimensionError.BadFrameSelection,
+    };
+
+    return dims;
   }
 
   let xIndex = -1;

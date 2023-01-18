@@ -1,5 +1,5 @@
 import { Line } from '@react-three/drei';
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo } from 'react';
 
 import { AXIS_COLOR, LABEL_INTERVAL, SCENE_SCALE } from '../consts';
 import { Direction, GridPlaneProps, LineGeometry } from '../types';
@@ -7,25 +7,40 @@ import { Direction, GridPlaneProps, LineGeometry } from '../types';
 import { Axis } from './Axis';
 
 export const GridPlane = ({ direction, intervalLabels }: GridPlaneProps) => {
-  const ref = useRef<any>(null);
-
-
   const createGeometry = (direction: Direction): LineGeometry[] => {
     let lineGeometries: LineGeometry[] = [];
 
     for (let i = 0; i < SCENE_SCALE; i = i + LABEL_INTERVAL) {
       switch (direction) {
         case Direction.Up:
-          lineGeometries.push([[i, 0, 0], [i, SCENE_SCALE, 0]]);
-          lineGeometries.push([[0, i, 0], [SCENE_SCALE, i, 0]]);
+          lineGeometries.push([
+            [i, 0, 0],
+            [i, SCENE_SCALE, 0],
+          ]);
+          lineGeometries.push([
+            [0, i, 0],
+            [SCENE_SCALE, i, 0],
+          ]);
           break;
         case Direction.Right:
-          lineGeometries.push([[0, 0, i], [SCENE_SCALE, 0, i]]);
-          lineGeometries.push([[i, 0, 0], [i, 0, SCENE_SCALE]]);
+          lineGeometries.push([
+            [0, 0, i],
+            [SCENE_SCALE, 0, i],
+          ]);
+          lineGeometries.push([
+            [i, 0, 0],
+            [i, 0, SCENE_SCALE],
+          ]);
           break;
         case Direction.Forward:
-          lineGeometries.push([[0, i, 0], [0, i, SCENE_SCALE]]);
-          lineGeometries.push([[0, 0, i], [0, SCENE_SCALE, i]]);
+          lineGeometries.push([
+            [0, i, 0],
+            [0, i, SCENE_SCALE],
+          ]);
+          lineGeometries.push([
+            [0, 0, i],
+            [0, SCENE_SCALE, i],
+          ]);
           break;
       }
     }
@@ -37,15 +52,7 @@ export const GridPlane = ({ direction, intervalLabels }: GridPlaneProps) => {
   return (
     <group>
       {lines.map((lineGeo, index) => {
-        return (
-          <Line
-            ref={ ref }
-            points={ lineGeo }
-            color={ AXIS_COLOR }
-            key={ index }
-            lineWidth={ 2 }
-          />
-        );
+        return <Line points={lineGeo} color={AXIS_COLOR} key={index} lineWidth={2} />;
       })}
       <Axis direction={direction} intervalLabels={intervalLabels} />
     </group>

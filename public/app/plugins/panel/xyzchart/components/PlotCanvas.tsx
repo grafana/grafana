@@ -1,3 +1,4 @@
+import { Html, useProgress } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
 import React, { createRef, useEffect, useState, RefObject, Suspense } from 'react';
 import { AmbientLight, PointLight } from 'three';
@@ -32,6 +33,11 @@ export const PlotCanvas = ({ frames, options }: Props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [frames]);
 
+  function Loader() {
+    const { progress } = useProgress();
+    return <Html center>{progress} % loaded</Html>;
+  }
+
   return (
     <>
       <Canvas raycaster={{ params: { Points: { threshold: 2 } } }} linear flat>
@@ -39,17 +45,17 @@ export const PlotCanvas = ({ frames, options }: Props) => {
           Context does not work outside of Canvas. Seems Canvas is outside parent component in DOM 
           https://github.com/facebook/react/issues/17126
         */}
-        <OptionsProvider value={options}>
-          <Camera />
-          {/* eslint-disable-next-line */}
-          <ambientLight ref={ambLightRef} intensity={0.8} color={WHITE} />
-          {/* eslint-disable-next-line */}
-          <pointLight ref={pntLightRef} intensity={1.0} position={[10, 10, 10]} />
-          <Suspense fallback={null}>
+        <Suspense fallback={<Loader />}>
+          <OptionsProvider value={options}>
+            <Camera />
+            {/* eslint-disable-next-line */}
+            <ambientLight ref={ambLightRef} intensity={0.8} color={WHITE} />
+            {/* eslint-disable-next-line */}
+            <pointLight ref={pntLightRef} intensity={1.0} position={[10, 10, 10]} />
             <PointCloud frames={frames} points={pointData} lights={[ambLightRef, pntLightRef]} />
-          </Suspense>
-          <GridVolume intervalLabels={intervalLabels} />
-        </OptionsProvider>
+            <GridVolume intervalLabels={intervalLabels} />
+          </OptionsProvider>
+        </Suspense>
       </Canvas>
     </>
   );

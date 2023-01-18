@@ -1,10 +1,11 @@
-
+/* eslint-disable react/no-unknown-property */
 import { useTexture } from '@react-three/drei';
 import React, { useRef, useState, useContext, useEffect, useCallback, RefObject, ReactNode } from 'react';
-import { BufferAttribute, PointsMaterial, Vector3 } from 'three';
+import { BufferAttribute, PointsMaterial, Vector3, BufferGeometry } from 'three';
 
 import { DataFrame } from '@grafana/data';
 
+import { ScatterPlotOptions } from '../models.gen';
 import OptionsContext from '../optionsContext';
 import { PointData, RGBColor } from '../types';
 import { hexToRgb } from '../utils';
@@ -19,11 +20,11 @@ interface Props {
 }
 
 export const PointCloud = ({ points, lights, frames }: Props) => {
-  const colorAttrRef: any = useRef(null);
-  const pointsRef: any = useRef(null);
-  const posRef: any = useRef(null);
-  const materialRef = useRef({} as PointsMaterial);
-  const options: any = useContext(OptionsContext);
+  const pts: { geometry: BufferGeometry } = { geometry: new BufferGeometry() };
+  const ptsMat: PointsMaterial = new PointsMaterial();
+  const pointsRef = useRef(pts);
+  const materialRef = useRef(ptsMat);
+  const options: ScatterPlotOptions = useContext(OptionsContext);
   const circleTexture = useTexture('/public/img/3d-texture/dot.png');
   const [hoveredPointPos, setHoveredStatePos] = useState<Vector3 | null>(null);
   const [hoveredPointData, setHoveredPointData] = useState<string[]>([]);
@@ -58,9 +59,7 @@ export const PointCloud = ({ points, lights, frames }: Props) => {
     (e) => {
       e.stopPropagation();
       const colorAttr = pointsRef.current.geometry.getAttribute('color');
-      colorAttr.array[e.index * 3] = 1;
-      colorAttr.array[e.index * 3 + 1] = 1;
-      colorAttr.array[e.index * 3 + 2] = 1;
+      colorAttr.setXYZ(e.index * 3, 1, 1, 1);
       colorAttr.needsUpdate = true;
       pointsRef.current.geometry.setAttribute('color', colorAttr);
 
@@ -85,9 +84,7 @@ export const PointCloud = ({ points, lights, frames }: Props) => {
 
       const color: RGBColor = hexToRgb(options.pointColor ?? '#ff0000');
       const colorAttr = pointsRef.current.geometry.getAttribute('color');
-      colorAttr.array[e.index * 3] = color.r;
-      colorAttr.array[e.index * 3 + 1] = color.g;
-      colorAttr.array[e.index * 3 + 2] = color.b;
+      colorAttr.setXYZ(e.index * 3, color.r, color.g, color.b);
       colorAttr.needsUpdate = true;
       pointsRef.current.geometry.setAttribute('color', colorAttr);
 
@@ -102,14 +99,12 @@ export const PointCloud = ({ points, lights, frames }: Props) => {
       <points ref={pointsRef} onPointerOver={hover} onPointerOut={unhover}>
         <bufferGeometry attach="geometry">
           <bufferAttribute
-            ref={posRef}
             attachObject={['attributes', 'position']}
             count={points.points.length / 3}
             array={points.points}
             itemSize={3}
           />
           <bufferAttribute
-            ref={colorAttrRef}
             attachObject={['attributes', 'color']}
             count={points.colors.length / 3}
             array={points.colors}
