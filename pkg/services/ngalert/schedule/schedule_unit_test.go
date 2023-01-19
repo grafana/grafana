@@ -218,7 +218,7 @@ func TestProcessTicks(t *testing.T) {
 		scheduled, stopped, paused := sched.processTick(ctx, dispatcherGroup, tick)
 
 		require.Empty(t, scheduled)
-		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+		require.Emptyf(t, stopped, "No rules are expected to be stopped")
 		require.Contains(t, paused, alertRule3.GetKey())
 
 		assertStopRun(t, stopAppliedCh, alertRule3.GetKey())
