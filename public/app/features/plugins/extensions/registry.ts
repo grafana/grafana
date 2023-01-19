@@ -1,6 +1,6 @@
 import { error } from 'jquery';
 
-import type { PluginExtensions } from '@grafana/data';
+import type { PluginExtensions, PluginExtensionsLink } from '@grafana/data';
 
 type PluginExtensionsRegistryLink = {
   description: string;
@@ -19,19 +19,26 @@ export function getRegistry() {
   return extensionsRegistry;
 }
 
+function getRegistryLinks(pluginId: string, links: PluginExtensionsLink[]) {
+  return links.reduce<Record<string, PluginExtensionsRegistryLink>>((registryLinks, linkExtension) => {
+    const linkId = `${pluginId}.${linkExtension.id}`;
+
+    if (registryLinks[linkId]) {
+      return registryLinks;
+    }
+
+    registryLinks[linkId] = {
+      description: linkExtension.description,
+      href: `/a/${pluginId}${linkExtension.path}`,
+    };
+    return registryLinks;
+  }, {});
+}
+
 export function configurePluginExtensions(pluginExtensions: Record<string, PluginExtensions>): void {
   const registry = Object.entries(pluginExtensions).reduce<PluginExtensionsRegistry>(
     (registry, [pluginId, pluginExtension]) => {
-      const links = pluginExtension.links.reduce<Record<string, PluginExtensionsRegistryLink>>(
-        (registryLinks, linkExtension) => {
-          registryLinks[`${pluginId}.${linkExtension.id}`] = {
-            description: linkExtension.description,
-            href: `/a/${pluginId}${linkExtension.path}`,
-          };
-          return registryLinks;
-        },
-        {}
-      );
+      const links = getRegistryLinks(pluginId, pluginExtension.links);
 
       registry.links = { ...links, ...registry.links };
       return registry;
