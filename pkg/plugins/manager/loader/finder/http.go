@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -20,7 +21,7 @@ type HTTP struct {
 	log log.Logger
 }
 
-func NewRemote() *HTTP {
+func newRemote() *HTTP {
 	return &HTTP{log: log.New("plugin.remote.finder")}
 }
 
@@ -111,10 +112,14 @@ func (h *HTTP) fetchPlugin(path string) (plugins.JSONData, error) {
 	}
 
 	resp, err := http.Get(path)
-	if err != nil || resp.StatusCode/100 != 2 {
+	if err != nil {
 		h.log.Warn("Error occurred when fetching plugin.json", "path", path, "err", err)
 		return plugins.JSONData{}, skipErr
+	}
 
+	if resp.StatusCode/100 == http.StatusNotFound {
+		h.log.Warn("Could not find plugin.json", "path", path)
+		return plugins.JSONData{}, fmt.Errorf("could not find plugin.json at %s", path)
 	}
 
 	var jd plugins.JSONData

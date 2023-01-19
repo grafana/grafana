@@ -278,7 +278,7 @@ func TestFinder_Find(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			f := NewFS()
+			f := newFS()
 			pluginBundles, err := f.Find(context.Background(), tc.pluginDirs...)
 			if (err != nil) && !errors.Is(err, tc.err) {
 				t.Errorf("Find() error = %v, expected error %v", err, tc.err)
@@ -458,7 +458,7 @@ func TestFinder_readPluginJSON(t *testing.T) {
 		},
 	}
 
-	f := NewFS()
+	f := newFS()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := f.readPluginJSON(tt.pluginPath)

@@ -28,8 +28,8 @@ type FS struct {
 	log log.Logger
 }
 
-func NewFS() FS {
-	return FS{log: log.New("plugin.fs.finder")}
+func newFS() *FS {
+	return &FS{log: log.New("plugin.fs.finder")}
 }
 
 func (f *FS) Find(_ context.Context, pluginPaths ...string) ([]*plugins.FoundBundle, error) {

@@ -50,7 +50,7 @@ func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLo
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
 	processManager process.Service, pluginStorage storage.Manager, roleRegistry plugins.RoleRegistry) *Loader {
 	return &Loader{
-		pluginFinder:       finder.NewRemote(),
+		pluginFinder:       finder.NewService(),
 		pluginRegistry:     pluginRegistry,
 		pluginInitializer:  initializer.New(cfg, backendProvider, license),
 		signatureValidator: signature.NewValidator(authorizer),
