@@ -89,4 +89,5 @@ export interface FeatureToggles {
   alertingBacktesting?: boolean;
   alertingNoNormalState?: boolean;
   azureMultipleResourcePicker?: boolean;
+  topNavCommandPalette?: boolean;
 }

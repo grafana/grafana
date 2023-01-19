@@ -46,6 +46,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `datasourceLogger`                | Logs all datasource requests                                                    |
 | `accessControlOnCall`             | Access control primitives for OnCall                                            |
 | `alertingNoNormalState`           | Stop maintaining state of alerts that are not firing                            |
+| `topNavCommandPalette`            | Launch the Command Palette from top nav search box                              |
 
 ## Alpha feature toggles
 
