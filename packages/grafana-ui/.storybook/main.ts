@@ -1,7 +1,8 @@
 import path from 'path';
 import type { StorybookConfig } from '@storybook/react/types';
-import { getAvailableIcons, IconName } from '../src/types/icon';
-import { getIconSubDir } from '../src/components/Icon/utils';
+// import { IconName } from '../src/types/icon';
+// import { getIconSubDir } from '../src/components/Icon/utils';
+import availableIcons from '../src/components/Icon/cached.json';
 
 const stories = ['../src/**/*.story.@(tsx|mdx)'];
 
@@ -11,15 +12,12 @@ if (process.env.NODE_ENV !== 'production') {
 
 // We limit icon paths to only the available icons so publishing
 // doesn't require uploading 1000s of unused assets.
-const iconPaths = getAvailableIcons()
-  .filter((iconName) => !iconName.includes('fa'))
-  .map((iconName) => {
-    const subDir = getIconSubDir(iconName as IconName, 'default');
-    return {
-      from: `../../../public/img/icons/${subDir}/${iconName}.svg`,
-      to: `/public/img/icons/${subDir}/${iconName}.svg`,
-    };
-  });
+const iconPaths = availableIcons.map((iconName) => {
+  return {
+    from: `../../../public/img/icons/${iconName}.svg`,
+    to: `/public/img/icons/${iconName}.svg`,
+  };
+});
 
 const mainConfig: StorybookConfig = {
   stories,
