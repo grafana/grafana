@@ -43,10 +43,15 @@ export interface DataTransformerConfig<TOptions = any> {
    * Unique identifier of transformer
    */
   id: string;
+
   /**
    * Disabled transformations are skipped
    */
   disabled?: boolean;
+
+  /** Optional frame matcher.  When missing it will be applied to all results  */
+  filter?: MatcherConfig;
+
   /**
    * Options to be passed to the transformer
    */
