@@ -229,7 +229,11 @@ const Policy: FC<PolicyComponentProps> = ({
                       overlay={
                         <Menu>
                           {hasChildPolicies ? (
-                            <Menu.Item icon="plus" label="Add policy" onClick={() => onAddPolicy(currentRoute)} />
+                            <Menu.Item
+                              icon="plus"
+                              label="Add additional policy"
+                              onClick={() => onAddPolicy(currentRoute)}
+                            />
                           ) : (
                             <Menu.Item
                               icon="corner-down-right-alt"
