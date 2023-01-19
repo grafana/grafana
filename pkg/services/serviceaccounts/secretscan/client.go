@@ -38,7 +38,7 @@ type Token struct {
 
 var ErrInvalidStatusCode = errors.New("invalid status code")
 
-func newClient(url, version string) *client {
+func newClient(url, version string) (*client, error) {
 	return &client{
 		version: version,
 		baseURL: url,
@@ -59,7 +59,7 @@ func newClient(url, version string) *client {
 			},
 			Timeout: time.Second * 30,
 		},
-	}
+	}, nil
 }
 
 // checkTokens checks if any leaked tokens exist.

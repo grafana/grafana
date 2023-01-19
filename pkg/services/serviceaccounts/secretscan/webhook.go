@@ -3,9 +3,12 @@ package secretscan
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -20,17 +23,28 @@ type webHookClient struct {
 
 var ErrInvalidWebHookStatusCode = errors.New("invalid webhook status code")
 
-func newWebHookClient(url, version string) *webHookClient {
+func newWebHookClient(url, version string) (*webHookClient, error) {
 	return &webHookClient{
 		version: version,
 		url:     url,
 		httpClient: &http.Client{
-			Transport:     nil,
-			CheckRedirect: nil,
-			Jar:           nil,
-			Timeout:       timeout,
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					Renegotiation: tls.RenegotiateFreelyAsClient,
+				},
+				Proxy: http.ProxyFromEnvironment,
+				DialContext: (&net.Dialer{
+					Timeout:   timeout,
+					KeepAlive: 15 * time.Second,
+				}).DialContext,
+				TLSHandshakeTimeout:   10 * time.Second,
+				ExpectContinueTimeout: 1 * time.Second,
+				MaxIdleConns:          100,
+				IdleConnTimeout:       30 * time.Second,
+			},
+			Timeout: time.Second * 30,
 		},
-	}
+	}, nil
 }
 
 func (wClient *webHookClient) Notify(ctx context.Context,

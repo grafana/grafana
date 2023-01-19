@@ -40,20 +40,34 @@ type Service struct {
 	revoke        bool // whether to revoke leaked tokens
 }
 
-func NewService(store SATokenRetriever, cfg *setting.Cfg) *Service {
+func NewService(store SATokenRetriever, cfg *setting.Cfg) (*Service, error) {
 	secretscanBaseURL := cfg.SectionWithEnvOverrides("secretscan").Key("base_url").MustString(defaultURL)
 	// URL to send outgoing webhook when a token is leaked.
 	oncallURL := cfg.SectionWithEnvOverrides("secretscan").Key("oncall_url").MustString("")
 	revoke := cfg.SectionWithEnvOverrides("secretscan").Key("revoke").MustBool(true)
 
+	client, err := newClient(secretscanBaseURL, cfg.BuildVersion)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create secretscan client: %w", err)
+	}
+
+	var webHookClient WebHookClient
+	if oncallURL != "" {
+		var errWebhook error
+		webHookClient, errWebhook = newWebHookClient(oncallURL, cfg.BuildVersion)
+		if errWebhook != nil {
+			return nil, fmt.Errorf("failed to create secretscan webhook client: %w", errWebhook)
+		}
+	}
+
 	return &Service{
 		store:         store,
-		client:        newClient(secretscanBaseURL, cfg.BuildVersion),
-		webHookClient: newWebHookClient(oncallURL, cfg.BuildVersion),
+		client:        client,
+		webHookClient: webHookClient,
 		logger:        log.New("secretscan"),
 		webHookNotify: oncallURL != "",
 		revoke:        revoke,
-	}
+	}, nil
 }
 
 func (s *Service) RetrieveActiveTokens(ctx context.Context) ([]apikey.APIKey, error) {
