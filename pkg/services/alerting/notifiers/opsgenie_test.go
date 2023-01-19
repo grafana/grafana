@@ -10,7 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/alerting/alerts"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -105,7 +105,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 				ID:            0,
 				Name:          "someRule",
 				Message:       "someMessage",
-				State:         alerts.AlertStateAlerting,
+				State:         models.AlertStateAlerting,
 				AlertRuleTags: tagPairs,
 			}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 			evalContext.IsTestRun = true
@@ -154,7 +154,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 				ID:            0,
 				Name:          "someRule",
 				Message:       "someMessage",
-				State:         alerts.AlertStateAlerting,
+				State:         models.AlertStateAlerting,
 				AlertRuleTags: tagPairs,
 			}, nil, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 			evalContext.IsTestRun = true
@@ -203,7 +203,7 @@ func TestOpsGenieNotifier(t *testing.T) {
 				ID:            0,
 				Name:          "someRule",
 				Message:       "someMessage",
-				State:         alerts.AlertStateAlerting,
+				State:         models.AlertStateAlerting,
 				AlertRuleTags: tagPairs,
 			}, nil, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 			evalContext.IsTestRun = true

@@ -9,7 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/alerting/alerts"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/tag"
@@ -89,7 +89,7 @@ func TestVictoropsNotifier(t *testing.T) {
 				ID:      0,
 				Name:    "someRule",
 				Message: "someMessage",
-				State:   alerts.AlertStateAlerting,
+				State:   models.AlertStateAlerting,
 				AlertRuleTags: []*tag.Tag{
 					{Key: "keyOnly"},
 					{Key: "severity", Value: "warning"},
@@ -137,7 +137,7 @@ func TestVictoropsNotifier(t *testing.T) {
 				ID:      0,
 				Name:    "someRule",
 				Message: "someMessage",
-				State:   alerts.AlertStateOK,
+				State:   models.AlertStateOK,
 				AlertRuleTags: []*tag.Tag{
 					{Key: "keyOnly"},
 					{Key: "severity", Value: "warning"},

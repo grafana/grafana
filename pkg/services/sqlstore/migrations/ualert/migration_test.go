@@ -15,7 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/alerting/alerts"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -130,7 +130,7 @@ func TestAMConfigMigration(t *testing.T) {
 	tc := []struct {
 		name           string
 		legacyChannels []*alerting.AlertNotification
-		alerts         []*alerts.Alert
+		alerts         []*models.Alert
 
 		expected map[int64]*ualert.PostableUserConfig
 		expErr   error
@@ -145,7 +145,7 @@ func TestAMConfigMigration(t *testing.T) {
 				createAlertNotification(t, int64(2), "notifier5", "slack", slackSettings, false),
 				createAlertNotification(t, int64(2), "notifier6", "opsgenie", opsgenieSettings, true), // default
 			},
-			alerts: []*alerts.Alert{
+			alerts: []*models.Alert{
 				createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notifier1"}),
 				createAlert(t, int64(1), int64(1), int64(2), "alert2", []string{"notifier2", "notifier3"}),
 				createAlert(t, int64(1), int64(2), int64(3), "alert3", []string{"notifier3"}),
@@ -200,7 +200,7 @@ func TestAMConfigMigration(t *testing.T) {
 			legacyChannels: []*alerting.AlertNotification{
 				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, false),
 			},
-			alerts: []*alerts.Alert{},
+			alerts: []*models.Alert{},
 			expected: map[int64]*ualert.PostableUserConfig{
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
@@ -225,7 +225,7 @@ func TestAMConfigMigration(t *testing.T) {
 			legacyChannels: []*alerting.AlertNotification{
 				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, true),
 			},
-			alerts: []*alerts.Alert{},
+			alerts: []*models.Alert{},
 			expected: map[int64]*ualert.PostableUserConfig{
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
@@ -249,7 +249,7 @@ func TestAMConfigMigration(t *testing.T) {
 			legacyChannels: []*alerting.AlertNotification{
 				createAlertNotificationWithReminder(t, int64(1), "notifier1", "email", emailSettings, true, true, time.Duration(1)*time.Hour),
 			},
-			alerts: []*alerts.Alert{},
+			alerts: []*models.Alert{},
 			expected: map[int64]*ualert.PostableUserConfig{
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
@@ -274,7 +274,7 @@ func TestAMConfigMigration(t *testing.T) {
 				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, true),
 				createAlertNotification(t, int64(1), "notifier2", "slack", slackSettings, true),
 			},
-			alerts: []*alerts.Alert{},
+			alerts: []*models.Alert{},
 			expected: map[int64]*ualert.PostableUserConfig{
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
@@ -302,7 +302,7 @@ func TestAMConfigMigration(t *testing.T) {
 				createAlertNotificationWithReminder(t, int64(1), "notifier1", "email", emailSettings, true, true, time.Duration(1)*time.Hour),
 				createAlertNotificationWithReminder(t, int64(1), "notifier2", "slack", slackSettings, true, true, time.Duration(30)*time.Minute),
 			},
-			alerts: []*alerts.Alert{},
+			alerts: []*models.Alert{},
 			expected: map[int64]*ualert.PostableUserConfig{
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
@@ -331,7 +331,7 @@ func TestAMConfigMigration(t *testing.T) {
 				createAlertNotification(t, int64(1), "notifier2", "slack", slackSettings, false),
 				createAlertNotification(t, int64(1), "notifier3", "opsgenie", opsgenieSettings, true), // default
 			},
-			alerts: []*alerts.Alert{},
+			alerts: []*models.Alert{},
 			expected: map[int64]*ualert.PostableUserConfig{
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
@@ -360,7 +360,7 @@ func TestAMConfigMigration(t *testing.T) {
 				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, false),
 				createAlertNotification(t, int64(1), "notifier2", "slack", slackSettings, false),
 			},
-			alerts: []*alerts.Alert{
+			alerts: []*models.Alert{
 				createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notifier1"}),
 				createAlert(t, int64(1), int64(1), int64(1), "alert2", []string{"notifier1", "notifier2"}),
 			},
@@ -389,7 +389,7 @@ func TestAMConfigMigration(t *testing.T) {
 			legacyChannels: []*alerting.AlertNotification{
 				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, false),
 			},
-			alerts: []*alerts.Alert{},
+			alerts: []*models.Alert{},
 			expected: map[int64]*ualert.PostableUserConfig{
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
@@ -415,7 +415,7 @@ func TestAMConfigMigration(t *testing.T) {
 				createAlertNotification(t, int64(1), "notifier2", "hipchat", "", false),
 				createAlertNotification(t, int64(1), "notifier3", "sensu", "", false),
 			},
-			alerts: []*alerts.Alert{},
+			alerts: []*models.Alert{},
 			expected: map[int64]*ualert.PostableUserConfig{
 				int64(1): {
 					AlertmanagerConfig: ualert.PostableApiAlertingConfig{
@@ -440,7 +440,7 @@ func TestAMConfigMigration(t *testing.T) {
 				createAlertNotification(t, int64(1), "notifier1", "email", emailSettings, false),
 				createAlertNotification(t, int64(1), "notifier2", "sensu", "", false),
 			},
-			alerts: []*alerts.Alert{
+			alerts: []*models.Alert{
 				createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notifier1", "notifier2"}),
 			},
 			expected: map[int64]*ualert.PostableUserConfig{
@@ -501,7 +501,7 @@ func TestAMConfigMigration(t *testing.T) {
 	}
 }
 
-// TestDashAlertMigration tests the execution of the main DashAlertMigration specifically for migrations of alerts.
+// TestDashAlertMigration tests the execution of the main DashAlertMigration specifically for migrations of models.
 func TestDashAlertMigration(t *testing.T) {
 	// Run initial migration to have a working DB.
 	x := setupTestDB(t)
@@ -516,7 +516,7 @@ func TestDashAlertMigration(t *testing.T) {
 			createAlertNotification(t, int64(2), "notifier5", "slack", slackSettings, false),
 			createAlertNotification(t, int64(2), "notifier6", "opsgenie", opsgenieSettings, true), // default
 		}
-		alerts := []*alerts.Alert{
+		alerts := []*models.Alert{
 			createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notifier1"}),
 			createAlert(t, int64(1), int64(1), int64(2), "alert2", []string{"notifier2", "notifier3"}),
 			createAlert(t, int64(1), int64(2), int64(3), "alert3", []string{"notifier3"}),
@@ -554,7 +554,7 @@ func TestDashAlertMigration(t *testing.T) {
 		legacyChannels := []*alerting.AlertNotification{
 			createAlertNotification(t, int64(1), "notif\"ier1", "email", emailSettings, false),
 		}
-		alerts := []*alerts.Alert{
+		alerts := []*models.Alert{
 			createAlert(t, int64(1), int64(1), int64(1), "alert1", []string{"notif\"ier1"}),
 		}
 		expected := map[int64]map[string]*ngModels.AlertRule{
@@ -641,7 +641,7 @@ func createAlertNotification(t *testing.T, orgId int64, uid string, channelType 
 }
 
 // createAlert creates a legacy alert rule for inserting into the test database.
-func createAlert(t *testing.T, orgId int64, dashboardId int64, panelsId int64, name string, notifierUids []string) *alerts.Alert {
+func createAlert(t *testing.T, orgId int64, dashboardId int64, panelsId int64, name string, notifierUids []string) *models.Alert {
 	t.Helper()
 
 	var settings = simplejson.New()
@@ -656,7 +656,7 @@ func createAlert(t *testing.T, orgId int64, dashboardId int64, panelsId int64, n
 		settings.Set("notifications", notifiers)
 	}
 
-	return &alerts.Alert{
+	return &models.Alert{
 		OrgId:        orgId,
 		DashboardId:  dashboardId,
 		PanelId:      panelsId,
@@ -664,7 +664,7 @@ func createAlert(t *testing.T, orgId int64, dashboardId int64, panelsId int64, n
 		Message:      "message",
 		Frequency:    int64(60),
 		For:          time.Duration(time.Duration(60).Seconds()),
-		State:        alerts.AlertStateOK,
+		State:        models.AlertStateOK,
 		Settings:     settings,
 		NewStateDate: now,
 		Created:      now,
@@ -737,7 +737,7 @@ func runDashAlertMigrationTestRun(t *testing.T, x *xorm.Engine) {
 }
 
 // setupLegacyAlertsTables inserts data into the legacy alerting tables that is needed for testing the migration.
-func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*alerting.AlertNotification, alerts []*alerts.Alert) {
+func setupLegacyAlertsTables(t *testing.T, x *xorm.Engine, legacyChannels []*alerting.AlertNotification, alerts []*models.Alert) {
 	t.Helper()
 
 	orgs := []org.Org{

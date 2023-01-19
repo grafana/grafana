@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/alerting/alerts"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/tag"
@@ -142,7 +142,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			ID:      0,
 			Name:    "someRule",
 			Message: "someMessage",
-			State:   alerts.AlertStateAlerting,
+			State:   models.AlertStateAlerting,
 		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 		evalContext.IsTestRun = true
 
@@ -198,7 +198,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 		evalContext := alerting.NewEvalContext(context.Background(), &alerting.Rule{
 			ID:    0,
 			Name:  "someRule",
-			State: alerts.AlertStateAlerting,
+			State: models.AlertStateAlerting,
 		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 		evalContext.IsTestRun = true
 
@@ -256,7 +256,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			ID:      0,
 			Name:    "someRule",
 			Message: "someMessage",
-			State:   alerts.AlertStateAlerting,
+			State:   models.AlertStateAlerting,
 		}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 		evalContext.IsTestRun = true
 		evalContext.EvalMatches = []*alerting.EvalMatch{
@@ -327,7 +327,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			ID:      0,
 			Name:    "someRule",
 			Message: "someMessage",
-			State:   alerts.AlertStateAlerting,
+			State:   models.AlertStateAlerting,
 			AlertRuleTags: []*tag.Tag{
 				{Key: "keyOnly"},
 				{Key: "group", Value: "aGroup"},
@@ -407,7 +407,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			ID:      0,
 			Name:    "someRule",
 			Message: "someMessage",
-			State:   alerts.AlertStateAlerting,
+			State:   models.AlertStateAlerting,
 			AlertRuleTags: []*tag.Tag{
 				{Key: "keyOnly"},
 				{Key: "group", Value: "aGroup"},
@@ -486,7 +486,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 			ID:      0,
 			Name:    "someRule",
 			Message: "someMessage",
-			State:   alerts.AlertStateAlerting,
+			State:   models.AlertStateAlerting,
 			AlertRuleTags: []*tag.Tag{
 				{Key: "keyOnly"},
 				{Key: "group", Value: "aGroup"},

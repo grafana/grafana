@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/alerting/alerts"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -1012,7 +1012,7 @@ func toSaveDashboardDto(cmd dashboards.SaveDashboardCommand) dashboards.SaveDash
 type dummyDashAlertExtractor struct {
 }
 
-func (d *dummyDashAlertExtractor) GetAlerts(ctx context.Context, dashAlertInfo alerting.DashAlertInfo) ([]*alerts.Alert, error) {
+func (d *dummyDashAlertExtractor) GetAlerts(ctx context.Context, dashAlertInfo alerting.DashAlertInfo) ([]*models.Alert, error) {
 	return nil, nil
 }
 

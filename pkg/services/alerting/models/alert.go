@@ -1,4 +1,4 @@
-package alerts
+package models
 
 import (
 	"fmt"

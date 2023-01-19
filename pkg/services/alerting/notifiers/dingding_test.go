@@ -8,7 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/alerting/alerts"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/validations"
@@ -51,7 +51,7 @@ func TestDingDingNotifier(t *testing.T) {
 		t.Run("genBody should not panic", func(t *testing.T) {
 			evalContext := alerting.NewEvalContext(context.Background(),
 				&alerting.Rule{
-					State:   alerts.AlertStateAlerting,
+					State:   models.AlertStateAlerting,
 					Message: `{host="localhost"}`,
 				}, &validations.OSSPluginRequestValidator{}, nil, nil, nil, annotationstest.NewFakeAnnotationsRepo())
 			_, err = notifier.genBody(evalContext, "")

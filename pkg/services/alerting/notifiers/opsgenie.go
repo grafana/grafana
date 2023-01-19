@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/alerting/alerts"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -130,11 +130,11 @@ type OpsGenieNotifier struct {
 func (on *OpsGenieNotifier) Notify(evalContext *alerting.EvalContext) error {
 	var err error
 	switch evalContext.Rule.State {
-	case alerts.AlertStateOK:
+	case models.AlertStateOK:
 		if on.AutoClose {
 			err = on.closeAlert(evalContext)
 		}
-	case alerts.AlertStateAlerting:
+	case models.AlertStateAlerting:
 		err = on.createAlert(evalContext)
 	default:
 		// Handle other cases?

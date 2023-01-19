@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/alerting/alerts"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -95,7 +95,7 @@ type WebhookNotifierBody struct {
 	Title       string                `json:"title"`
 	RuleID      int64                 `json:"ruleId"`
 	RuleName    string                `json:"ruleName"`
-	State       alerts.AlertStateType `json:"state"`
+	State       models.AlertStateType `json:"state"`
 	EvalMatches []*alerting.EvalMatch `json:"evalMatches"`
 	OrgID       int64                 `json:"orgId"`
 	DashboardID int64                 `json:"dashboardId"`

@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/services/alerting/alerts"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -51,7 +51,7 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 	if evalContext.shouldUpdateAlertState() {
 		handler.log.Info("New state change", "ruleId", evalContext.Rule.ID, "newState", evalContext.Rule.State, "prev state", evalContext.PrevAlertState)
 
-		cmd := &alerts.SetAlertStateCommand{
+		cmd := &models.SetAlertStateCommand{
 			AlertId:  evalContext.Rule.ID,
 			OrgId:    evalContext.Rule.OrgID,
 			State:    evalContext.Rule.State,
@@ -60,12 +60,12 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 		}
 
 		if err := handler.sqlStore.SetAlertState(evalContext.Ctx, cmd); err != nil {
-			if errors.Is(err, alerts.ErrCannotChangeStateOnPausedAlert) {
+			if errors.Is(err, models.ErrCannotChangeStateOnPausedAlert) {
 				handler.log.Error("Cannot change state on alert that's paused", "error", err)
 				return err
 			}
 
-			if errors.Is(err, alerts.ErrRequiresNewState) {
+			if errors.Is(err, models.ErrRequiresNewState) {
 				handler.log.Info("Alert already updated")
 				return nil
 			}

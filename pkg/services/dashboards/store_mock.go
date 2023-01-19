@@ -4,9 +4,9 @@ package dashboards
 
 import (
 	context "context"
-	alerts "github.com/grafana/grafana/pkg/services/alerting/alerts"
-	models "github.com/grafana/grafana/pkg/models"
+	alerts "github.com/grafana/grafana/pkg/services/alerting/models"
 	mock "github.com/stretchr/testify/mock"
+	models "github.com/grafana/grafana/pkg/models"
 	quota "github.com/grafana/grafana/pkg/services/quota"
 )
 

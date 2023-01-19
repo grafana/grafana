@@ -8,7 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/alerting/alerts"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
@@ -118,7 +118,7 @@ func (hc *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	message := ""
-	if evalContext.Rule.State != alerts.AlertStateOK { // don't add message when going back to alert state ok.
+	if evalContext.Rule.State != models.AlertStateOK { // don't add message when going back to alert state ok.
 		message += " " + evalContext.Rule.Message
 	}
 
@@ -129,11 +129,11 @@ func (hc *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 	// HipChat has a set list of colors
 	var color string
 	switch evalContext.Rule.State {
-	case alerts.AlertStateOK:
+	case models.AlertStateOK:
 		color = "green"
-	case alerts.AlertStateNoData:
+	case models.AlertStateNoData:
 		color = "gray"
-	case alerts.AlertStateAlerting:
+	case models.AlertStateAlerting:
 		color = "red"
 	default:
 		// Handle other cases?

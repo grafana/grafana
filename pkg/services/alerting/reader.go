@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/services/alerting/alerts"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 )
 
 type ruleReader interface {
@@ -29,7 +29,7 @@ func newRuleReader(sqlStore AlertStore) *defaultRuleReader {
 }
 
 func (arr *defaultRuleReader) fetch(ctx context.Context) []*Rule {
-	cmd := &alerts.GetAllAlertsQuery{}
+	cmd := &models.GetAllAlertsQuery{}
 
 	if err := arr.sqlStore.GetAllAlertQueryHandler(ctx, cmd); err != nil {
 		arr.log.Error("Could not load alerts", "error", err)

@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/alerting/alerts"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 )
 
 func formatShort(interval time.Duration) string {
@@ -98,7 +98,7 @@ type AlertTestCommand struct {
 
 type AlertTestResult struct {
 	Firing         bool                  `json:"firing"`
-	State          alerts.AlertStateType `json:"state"`
+	State          models.AlertStateType `json:"state"`
 	ConditionEvals string                `json:"conditionEvals"`
 	TimeMs         string                `json:"timeMs"`
 	Error          string                `json:"error,omitempty"`
