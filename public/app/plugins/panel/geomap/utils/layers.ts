@@ -117,7 +117,6 @@ export async function initLayer(
 
   const handler = await item.create(map, options, panel.props.eventBus, config.theme2);
   const layer = handler.init(); // eslint-disable-line
-
   if (options.opacity != null) {
     layer.setOpacity(options.opacity);
   }
