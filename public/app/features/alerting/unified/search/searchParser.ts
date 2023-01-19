@@ -29,13 +29,11 @@ const filterTermToTypeMap: Record<number, string> = {
 };
 
 export function getSearchFilterFromQuery(query: string): SearchFilterState {
-  const parsed = parser.parse(query);
   const filterState: SearchFilterState = { labels: [], freeFormWords: [] };
 
-  let cursor = parsed.cursor();
-  do {
-    if (cursor.node.type.id === terms.FilterExpression) {
-      const filter = getFilterFromSyntaxNode(query, cursor.node);
+  traverseNodeTree(query, (node) => {
+    if (node.type.id === terms.FilterExpression) {
+      const filter = getFilterFromSyntaxNode(query, node);
 
       if (filter.type && filter.value) {
         switch (filter.type) {
@@ -67,10 +65,10 @@ export function getSearchFilterFromQuery(query: string): SearchFilterState {
             break;
         }
       }
-    } else if (cursor.node.type.id === terms.FreeFormExpression) {
-      filterState.freeFormWords.push(getNodeContent(query, cursor.node));
+    } else if (node.type.id === terms.FreeFormExpression) {
+      filterState.freeFormWords.push(getNodeContent(query, node));
     }
-  } while (cursor.next());
+  });
 
   return filterState;
 }
@@ -96,11 +94,10 @@ function getNodeContent(query: string, node: SyntaxNode) {
 }
 
 export function applySearchFilterToQuery(query: string, filter: SearchFilterState): string {
-  const parsed = parser.parse(query);
-
-  let cursor = parsed.cursor();
-
   const filterStateArray: Array<{ type: number; value: string }> = [];
+
+  // Convert filter object into an array
+  // It allows to pick filters from the array in the same order as they were applied in the original query
   if (filter.dataSourceName) {
     filterStateArray.push({ type: terms.DataSourceFilter, value: filter.dataSourceName });
   }
@@ -127,32 +124,38 @@ export function applySearchFilterToQuery(query: string, filter: SearchFilterStat
   }
 
   const existingFilterNodes: SyntaxNode[] = [];
-
-  do {
-    if (cursor.node.type.id === terms.FilterExpression && cursor.node.firstChild) {
-      existingFilterNodes.push(cursor.node.firstChild);
+  traverseNodeTree(query, (node) => {
+    if (node.type.id === terms.FilterExpression && node.firstChild) {
+      existingFilterNodes.push(node.firstChild);
     }
-    if (cursor.node.type.id === terms.FreeFormExpression) {
-      existingFilterNodes.push(cursor.node);
+    if (node.type.id === terms.FreeFormExpression) {
+      existingFilterNodes.push(node);
     }
-  } while (cursor.next());
+  });
 
   let newQueryExpressions: string[] = [];
 
-  existingFilterNodes.map((filterNode) => {
+  // Apply filters from filterState in the same order as they appear in the search query
+  // This allows to remain the order of filters in the search input during changes
+  existingFilterNodes.forEach((filterNode) => {
     const matchingFilterIdx = filterStateArray.findIndex((f) => f.type === filterNode.type.id);
-    const filterValueNode = filterNode.getChild(terms.FilterValue);
+    if (matchingFilterIdx === -1) {
+      return;
+    }
 
-    if (matchingFilterIdx !== -1 && filterValueNode) {
-      const filterToken = query.substring(filterNode.from, filterValueNode.from); // Extract the filter type only
+    if (filterNode.parent?.type.is(terms.FilterExpression)) {
+      const filterToken = filterTermToTypeMap[filterNode.type.id];
       const filterItem = filterStateArray.splice(matchingFilterIdx, 1)[0];
-      newQueryExpressions.push(`${filterToken}${getSafeFilterValue(filterItem.value)}`);
-    } else if (matchingFilterIdx !== -1 && filterNode.node.type.id === terms.FreeFormExpression) {
+      newQueryExpressions.push(`${filterToken}:${getSafeFilterValue(filterItem.value)}`);
+    }
+
+    if (filterNode.type.is(terms.FreeFormExpression)) {
       const freeFormWordNode = filterStateArray.splice(matchingFilterIdx, 1)[0];
       newQueryExpressions.push(freeFormWordNode.value);
     }
   });
 
+  // Apply new filters that were not in the query yet
   filterStateArray.forEach((fs) => {
     if (fs.type === terms.FreeFormExpression) {
       newQueryExpressions.push(fs.value);
@@ -162,6 +165,14 @@ export function applySearchFilterToQuery(query: string, filter: SearchFilterStat
   });
 
   return newQueryExpressions.join(' ');
+}
+
+function traverseNodeTree(query: string, visit: (node: SyntaxNode) => void) {
+  const parsed = parser.parse(query);
+  let cursor = parsed.cursor();
+  do {
+    visit(cursor.node);
+  } while (cursor.next());
 }
 
 function getSafeFilterValue(filterValue: string) {
