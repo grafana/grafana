@@ -27,11 +27,21 @@ The following snippet shows an example configuration:
 [auth.grafana_com]
 enabled = true
 allow_sign_up = true
+auto_login = false
 client_id = 450bc21c10dc2194879d
 client_secret = eyJ0Ijoib2F1dGgyYyIhlmlkIjoiNzUwYmMzM2MxMGRjMjE6NDh3OWQiLCJ2IjoiZmI1YzVlYmIwYzFmN2ZhYzZmNjIwOGI1NmVkYTRlNWYxMzgwM2NkMiJ9
 scopes = user:email
 allowed_organizations = sampleorganization
 enabled = true
+```
+
+### Configure automatic login
+
+Set `auto_login` option to true to attempt login automatically, skipping the login screen.
+This setting is ignored if multiple auth providers are configured to use auto login.
+
+```
+auto_login = true
 ```
 
 ## Skip organization role sync

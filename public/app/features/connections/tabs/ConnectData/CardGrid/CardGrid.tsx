@@ -39,17 +39,28 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
 });
 
+export type CardGridItem = { id: string; name: string; description: string; url: string; logo?: string };
 export interface CardGridProps {
-  items: Array<{ id: string; name: string; url: string; logo?: string }>;
+  items: CardGridItem[];
+  onClickItem?: (e: React.MouseEvent<HTMLElement>, item: CardGridItem) => void;
 }
 
-export const CardGrid: FC<CardGridProps> = ({ items }) => {
+export const CardGrid: FC<CardGridProps> = ({ items, onClickItem }) => {
   const styles = useStyles2(getStyles);
 
   return (
     <ul className={styles.sourcesList}>
       {items.map((item) => (
-        <Card key={item.id} className={styles.card} href={item.url}>
+        <Card
+          key={item.id}
+          className={styles.card}
+          href={item.url}
+          onClick={(e) => {
+            if (onClickItem) {
+              onClickItem(e, item);
+            }
+          }}
+        >
           <Card.Heading>
             <div className={styles.cardContent}>
               {item.logo && (
