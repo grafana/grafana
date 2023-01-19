@@ -12,8 +12,11 @@ Grafana supports a wide range of _data sources_.
 These data sources might be files, services, or databases.
 You can also extend the supported data sources through one of the many [Plugins](/grafana/plugins/) (or [build your own](/docs/grafana/latest/developers/plugins/)).
 
-For each data source that you add, Grafana provides a _query editor_, which formulates custom queries according to the source's particular data structure.
-After you add a data source, you can use it as an input to [explore queries]({{< relref "../explore" >}}), make [panels]({{< relref "../panels-visualizations" >}}), set up [alerts]({{< relref "../alerting" >}}), and more.
+For each data source that you add, Grafana provides a _query editor_, which formulates custom queries according to the source's particular structure.
+After you add a data source, you can use it as an input for many operations:
+- Query the data with [Explore]({{< relref "../explore" >}}).
+- Visualize it in in [panels]({{< relref "../panels-visualizations" >}}).
+- Make criteria for [alerts]({{< relref "../alerting" >}}).
 
 In this documentation, read about how to add and query a particular data source, or about how to manage your data sources in general.
 
