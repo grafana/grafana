@@ -115,10 +115,10 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 		}
 	}
 
-	if id.Login == "" || id.Email == "" {
+	if id.Login == "" && id.Email == "" {
 		s.log.Debug("Failed to get an authentication claim from JWT",
 			"login", id.Login, "email", id.Email)
-		return nil, ErrJWTMissingClaim.Errorf("missing login or email claim in JWT")
+		return nil, ErrJWTMissingClaim.Errorf("missing login and email claim in JWT")
 	}
 
 	if s.cfg.JWTAuthAutoSignUp {
