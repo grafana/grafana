@@ -133,9 +133,11 @@ export const getFieldLinksForExplore = (options: {
             if (transformation.type === 'regex' && transformation.expression) {
               const regexp = new RegExp(transformation.expression, 'g');
               const matches = fieldValue.match(regexp);
-              scopedVars[transformation.variable || field.name] = {
-                value: matches[0],
-              };
+              if (matches.length > 0) {
+                scopedVars[transformation.variable || field.name] = {
+                  value: matches[0],
+                };
+              }
             }
           });
         }
