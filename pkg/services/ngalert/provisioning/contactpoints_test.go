@@ -19,7 +19,7 @@ import (
 
 func TestContactPointService(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
-	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore, sqlStore.Bus()))
+	secretsService := manager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 	t.Run("service gets contact points from AM config", func(t *testing.T) {
 		sut := createContactPointServiceSut(secretsService)
 

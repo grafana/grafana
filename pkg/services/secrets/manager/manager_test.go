@@ -25,7 +25,7 @@ import (
 
 func TestSecretsService_EnvelopeEncryption(t *testing.T) {
 	testDB := db.InitTestDB(t)
-	store := database.ProvideSecretsStore(testDB, testDB.Bus())
+	store := database.ProvideSecretsStore(testDB)
 	svc := SetupTestService(t, store)
 	ctx := context.Background()
 
@@ -86,7 +86,7 @@ func TestSecretsService_EnvelopeEncryption(t *testing.T) {
 
 func TestSecretsService_DataKeys(t *testing.T) {
 	testDB := db.InitTestDB(t)
-	store := database.ProvideSecretsStore(testDB, testDB.Bus())
+	store := database.ProvideSecretsStore(testDB)
 	ctx := context.Background()
 
 	dataKey := &secrets.DataKey{
@@ -165,7 +165,7 @@ func TestSecretsService_DataKeys(t *testing.T) {
 func TestSecretsService_UseCurrentProvider(t *testing.T) {
 	t.Run("When encryption_provider is not specified explicitly, should use 'secretKey' as a current provider", func(t *testing.T) {
 		testDB := db.InitTestDB(t)
-		svc := SetupTestService(t, database.ProvideSecretsStore(testDB, testDB.Bus()))
+		svc := SetupTestService(t, database.ProvideSecretsStore(testDB))
 		assert.Equal(t, secrets.ProviderID("secretKey.v1"), svc.currentProviderID)
 	})
 
@@ -193,7 +193,7 @@ func TestSecretsService_UseCurrentProvider(t *testing.T) {
 		features := featuremgmt.WithFeatures()
 		kms := newFakeKMS(osskmsproviders.ProvideService(encryptionService, settings, features))
 		testDB := db.InitTestDB(t)
-		secretStore := database.ProvideSecretsStore(testDB, testDB.Bus())
+		secretStore := database.ProvideSecretsStore(testDB)
 
 		secretsService, err := ProvideSecretsService(
 			secretStore,
@@ -268,7 +268,7 @@ func (f *fakeKMS) Provide() (map[secrets.ProviderID]secrets.Provider, error) {
 func TestSecretsService_Run(t *testing.T) {
 	ctx := context.Background()
 	testDB := db.InitTestDB(t)
-	store := database.ProvideSecretsStore(testDB, testDB.Bus())
+	store := database.ProvideSecretsStore(testDB)
 	svc := SetupTestService(t, store)
 
 	t.Run("should stop with no error once the context's finished", func(t *testing.T) {
@@ -280,15 +280,25 @@ func TestSecretsService_Run(t *testing.T) {
 	})
 
 	t.Run("should trigger cache clean up", func(t *testing.T) {
-		// Encrypt to ensure there's a data encryption key generated
-		_, err := svc.Encrypt(ctx, []byte("grafana"), secrets.WithoutScope())
+		restoreTimeNowAfterTestExec(t)
+
+		// Encrypt to force data encryption key generation
+		encrypted, err := svc.Encrypt(ctx, []byte("grafana"), secrets.WithoutScope())
+		require.NoError(t, err)
+
+		// Five minutes later (after caution period)
+		// Look SecretsService.cacheDataKey for more details.
+		now = func() time.Time { return time.Now().Add(5 * time.Minute) }
+
+		// Decrypt to ensure data encryption key is cached
+		_, err = svc.Decrypt(ctx, encrypted)
 		require.NoError(t, err)
 
 		// Data encryption key cache should contain one element
 		require.Len(t, svc.dataKeyCache.byId, 1)
 		require.Len(t, svc.dataKeyCache.byLabel, 1)
 
-		t.Cleanup(func() { now = time.Now })
+		// Ten minutes later (after cache ttl)
 		now = func() time.Time { return time.Now().Add(10 * time.Minute) }
 
 		ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
@@ -308,7 +318,7 @@ func TestSecretsService_Run(t *testing.T) {
 func TestSecretsService_ReEncryptDataKeys(t *testing.T) {
 	ctx := context.Background()
 	testDB := db.InitTestDB(t)
-	store := database.ProvideSecretsStore(testDB, testDB.Bus())
+	store := database.ProvideSecretsStore(testDB)
 	svc := SetupTestService(t, store)
 
 	// Encrypt to generate data encryption key
@@ -332,6 +342,12 @@ func TestSecretsService_ReEncryptDataKeys(t *testing.T) {
 	})
 
 	t.Run("data keys cache should be invalidated", func(t *testing.T) {
+		restoreTimeNowAfterTestExec(t)
+
+		// Five minutes later (after caution period)
+		// Look SecretsService.cacheDataKey for more details.
+		now = func() time.Time { return time.Now().Add(5 * time.Minute) }
+
 		// Decrypt to ensure data key is cached
 		_, err := svc.Decrypt(ctx, ciphertext)
 		require.NoError(t, err)
@@ -349,7 +365,7 @@ func TestSecretsService_ReEncryptDataKeys(t *testing.T) {
 func TestSecretsService_Decrypt(t *testing.T) {
 	ctx := context.Background()
 	testDB := db.InitTestDB(t)
-	store := database.ProvideSecretsStore(testDB, testDB.Bus())
+	store := database.ProvideSecretsStore(testDB)
 
 	t.Run("empty payload should fail", func(t *testing.T) {
 		svc := SetupTestService(t, store)
@@ -506,7 +522,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 	for name, tc := range tcs {
 		t.Run(name, func(t *testing.T) {
 			testDB := db.InitTestDB(t)
-			svc := SetupTestService(t, database.ProvideSecretsStore(testDB, testDB.Bus()))
+			svc := SetupTestService(t, database.ProvideSecretsStore(testDB))
 
 			// Here's what actually matters and varies on each test: look at the test case name.
 			//
@@ -533,4 +549,12 @@ func TestIntegration_SecretsService(t *testing.T) {
 			assert.Equal(t, toEncrypt, decrypted)
 		})
 	}
+}
+
+// Use this function at the beginning of those tests
+// that manipulates 'now', so it'll leave it in a
+// correct state once test execution finishes.
+func restoreTimeNowAfterTestExec(t *testing.T) {
+	t.Helper()
+	t.Cleanup(func() { now = time.Now })
 }

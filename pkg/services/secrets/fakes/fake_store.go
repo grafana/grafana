@@ -41,11 +41,8 @@ func (f FakeSecretsStore) GetAllDataKeys(_ context.Context) ([]*secrets.DataKey,
 	return result, nil
 }
 
-func (f FakeSecretsStore) CreateDataKey(_ context.Context, dataKey *secrets.DataKey, fns ...secrets.OnSuccessfulDataKeyCreation) error {
+func (f FakeSecretsStore) CreateDataKey(_ context.Context, dataKey *secrets.DataKey) error {
 	f.store[dataKey.Id] = dataKey
-	for _, fn := range fns {
-		fn()
-	}
 	return nil
 }
 

@@ -3,10 +3,8 @@ package database
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/kmsproviders"
@@ -16,19 +14,15 @@ import (
 const dataKeysTable = "data_keys"
 
 type SecretsStoreImpl struct {
-	db               db.DB
-	log              log.Logger
-	successCallbacks *sync.Map
+	db  db.DB
+	log log.Logger
 }
 
-func ProvideSecretsStore(db db.DB, bus bus.Bus) *SecretsStoreImpl {
+func ProvideSecretsStore(db db.DB) *SecretsStoreImpl {
 	store := &SecretsStoreImpl{
-		db:               db,
-		log:              log.New("secrets.store"),
-		successCallbacks: new(sync.Map),
+		db:  db,
+		log: log.New("secrets.store"),
 	}
-
-	bus.AddEventListener(store.onDataKeyStored)
 
 	return store
 }
@@ -88,7 +82,7 @@ func (ss *SecretsStoreImpl) GetAllDataKeys(ctx context.Context) ([]*secrets.Data
 	return result, err
 }
 
-func (ss *SecretsStoreImpl) CreateDataKey(ctx context.Context, dataKey *secrets.DataKey, fns ...secrets.OnSuccessfulDataKeyCreation) error {
+func (ss *SecretsStoreImpl) CreateDataKey(ctx context.Context, dataKey *secrets.DataKey) error {
 	if !dataKey.Active {
 		return fmt.Errorf("cannot insert deactivated data keys")
 	}
@@ -101,11 +95,6 @@ func (ss *SecretsStoreImpl) CreateDataKey(ctx context.Context, dataKey *secrets.
 		if err != nil {
 			return err
 		}
-
-		// In case of success we save the callbacks
-		// and set the event to be published after commit.
-		ss.successCallbacks.Store(dataKey.Id, fns)
-		sess.PublishAfterCommit(&DataKeyStored{DataKeyID: dataKey.Id})
 
 		return nil
 	})
@@ -206,18 +195,4 @@ func (ss *SecretsStoreImpl) ReEncryptDataKeys(
 	}
 
 	return nil
-}
-
-func (ss *SecretsStoreImpl) onDataKeyStored(_ context.Context, evt *DataKeyStored) error {
-	if val, ok := ss.successCallbacks.Load(evt.DataKeyID); ok {
-		fns := val.([]secrets.OnSuccessfulDataKeyCreation)
-		for _, fn := range fns {
-			fn()
-		}
-	}
-	return nil
-}
-
-type DataKeyStored struct {
-	DataKeyID string
 }

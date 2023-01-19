@@ -28,6 +28,12 @@ const (
 	keyIdDelimiter = '#'
 )
 
+var (
+	// now is used for testing purposes,
+	// as a way to fake time.Now function.
+	now = time.Now
+)
+
 type SecretsService struct {
 	store      secrets.Store
 	enc        encryption.Internal
@@ -252,12 +258,7 @@ func (s *SecretsService) dataKeyByLabel(ctx context.Context, label string) (stri
 	}
 
 	// 3. Store the decrypted data key into the in-memory cache.
-	s.dataKeyCache.add(&dataKeyCacheEntry{
-		id:      dataKey.Id,
-		label:   dataKey.Label,
-		dataKey: decrypted,
-		active:  dataKey.Active,
-	})
+	s.cacheDataKey(dataKey, decrypted)
 
 	return dataKey.Id, decrypted, nil
 }
@@ -282,21 +283,9 @@ func (s *SecretsService) newDataKey(ctx context.Context, label string, scope str
 		return "", nil, err
 	}
 
-	// 3. Generate the data key id
+	// 3. Store its encrypted value into the DB.
 	id := util.GenerateShortUID()
 
-	// 4. Prepare the callback that will cache the data
-	// key only in case of successful data key creation.
-	onSuccessfulDataKeyCreation := func() {
-		s.dataKeyCache.add(&dataKeyCacheEntry{
-			id:      id,
-			label:   label,
-			dataKey: dataKey,
-			active:  true,
-		})
-	}
-
-	// 5. Store its encrypted value into the DB.
 	dbDataKey := secrets.DataKey{
 		Active:        true,
 		Id:            id,
@@ -306,7 +295,7 @@ func (s *SecretsService) newDataKey(ctx context.Context, label string, scope str
 		Scope:         scope,
 	}
 
-	err = s.store.CreateDataKey(ctx, &dbDataKey, onSuccessfulDataKeyCreation)
+	err = s.store.CreateDataKey(ctx, &dbDataKey)
 	if err != nil {
 		return "", nil, err
 	}
@@ -449,12 +438,7 @@ func (s *SecretsService) dataKeyById(ctx context.Context, id string) ([]byte, er
 	}
 
 	// 3. Store the decrypted data key into the in-memory cache.
-	s.dataKeyCache.add(&dataKeyCacheEntry{
-		id:      dataKey.Id,
-		label:   dataKey.Label,
-		dataKey: decrypted,
-		active:  dataKey.Active,
-	})
+	s.cacheDataKey(dataKey, decrypted)
 
 	return decrypted, nil
 }
@@ -537,5 +521,28 @@ func (s *SecretsService) Run(ctx context.Context) error {
 
 			return nil
 		}
+	}
+}
+
+// We only cache those data keys with more than 5m of life, because we cannot
+// guarantee a data key read/write isn't happening within a database transaction
+// that could later be rolled back, and cause issues because other operations
+// using a non-persisted-but-cached data key for encryption operations.
+//
+// Look https://github.com/grafana/grafana-enterprise/issues/4252 for details.
+func (s *SecretsService) cacheDataKey(dataKey *secrets.DataKey, decrypted []byte) {
+	// We consider a "caution period" of 5m long enough to reduce chances of
+	// aforementioned issue to happen.
+	const cautionPeriod = 5 * time.Minute
+
+	nowMinusCautionPeriod := now().Add(-cautionPeriod)
+
+	if dataKey.Created.Before(nowMinusCautionPeriod) {
+		s.dataKeyCache.add(&dataKeyCacheEntry{
+			id:      dataKey.Id,
+			label:   dataKey.Label,
+			dataKey: decrypted,
+			active:  dataKey.Active,
+		})
 	}
 }

@@ -8,10 +8,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-var (
-	now = time.Now
-)
-
 type dataKeyCacheEntry struct {
 	id         string
 	label      string
