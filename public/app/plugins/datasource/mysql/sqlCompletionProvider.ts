@@ -124,10 +124,7 @@ function getDatabaseName(token: LinkedToken | null | undefined) {
 
 function getTableName(token: LinkedToken | null | undefined) {
   const identifier = token?.getNextOfType(TokenType.Identifier);
-  if (identifier?.next?.is(TokenType.IdentifierQuote)) {
-    return identifier?.value;
-  }
-  return;
+  return identifier?.value;
 }
 
 const getFromKeywordToken = (currentToken: LinkedToken | null) => {

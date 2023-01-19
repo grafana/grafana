@@ -7,20 +7,17 @@ import {
 } from '../expressions';
 import { SQLExpression } from '../types';
 
-export function createSelectClause(
-  sqlColumns: NonNullable<SQLExpression['columns']>,
-  escapeIdentifiers?: boolean
-): string {
+export function createSelectClause(sqlColumns: NonNullable<SQLExpression['columns']>): string {
   const columns = sqlColumns.map((c) => {
     let rawColumn = '';
     if (c.name && c.alias) {
-      rawColumn += `${c.name}(${c.parameters?.map((p) => `${escapeValue(p.name, escapeIdentifiers)}`)}) AS ${c.alias}`;
+      rawColumn += `${c.name}(${c.parameters?.map((p) => `${p.name}`)}) AS ${c.alias}`;
     } else if (c.name) {
-      rawColumn += `${c.name}(${c.parameters?.map((p) => `${escapeValue(p.name, escapeIdentifiers)}`)})`;
+      rawColumn += `${c.name}(${c.parameters?.map((p) => `${p.name}`)})`;
     } else if (c.alias) {
-      rawColumn += `${c.parameters?.map((p) => `${escapeValue(p.name, escapeIdentifiers)}`)} AS ${c.alias}`;
+      rawColumn += `${c.parameters?.map((p) => `${p.name}`)} AS ${c.alias}`;
     } else {
-      rawColumn += `${c.parameters?.map((p) => `${escapeValue(p.name, escapeIdentifiers)}`)}`;
+      rawColumn += `${c.parameters?.map((p) => `${p.name}`)}`;
     }
     return rawColumn;
   });
@@ -69,12 +66,4 @@ export function createFunctionField(functionName?: string): QueryEditorFunctionE
     name: functionName,
     parameters: [],
   };
-}
-
-// Puts backticks (`) around the string value.
-export function escapeValue(value?: string, escapeIdentifiers = false) {
-  if (!value || value === '*') {
-    return value;
-  }
-  return escapeIdentifiers === true ? `\`${value}\`` : value;
 }

@@ -14,7 +14,7 @@ import { RawEditor } from './query-editor-raw/RawEditor';
 import { VisualEditor } from './visual-query-builder/VisualEditor';
 
 interface Props extends QueryEditorProps<SqlDatasource, SQLQuery, SQLOptions> {
-  queryHeaderProps?: Pick<QueryHeaderProps, 'isDatasetSelectorHidden' | 'showEscapeControl'>;
+  queryHeaderProps?: Pick<QueryHeaderProps, 'isDatasetSelectorHidden'>;
 }
 
 export function SqlQueryEditor({ datasource, query, onChange, onRunQuery, range, queryHeaderProps }: Props) {

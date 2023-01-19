@@ -132,9 +132,8 @@ export interface DB {
   dispose?: (dsID?: string) => void;
   lookup?: (path?: string) => Promise<Array<{ name: string; completion: string }>>;
   getEditorLanguageDefinition: () => LanguageDefinition;
-  toRawSql: (query: SQLQuery, escapeIdentifiers?: boolean) => string;
+  toRawSql: (query: SQLQuery) => string;
   functions?: () => string[];
-  escapeIdentifiers?: boolean;
 }
 
 export interface QueryEditorProps {

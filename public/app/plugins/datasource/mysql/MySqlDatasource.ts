@@ -8,7 +8,7 @@ import MySQLQueryModel from './MySqlQueryModel';
 import { mapFieldsToTypes } from './fields';
 import { buildColumnQuery, buildTableQuery, showDatabases } from './mySqlMetaQuery';
 import { getSqlCompletionProvider } from './sqlCompletionProvider';
-import { toRawSql } from './sqlUtil';
+import { quoteIdentifierIfNecessary, toRawSql } from './sqlUtil';
 import { MySQLOptions } from './types';
 
 export class MySqlDatasource extends SqlDatasource {
@@ -40,12 +40,12 @@ export class MySqlDatasource extends SqlDatasource {
 
   async fetchDatasets(): Promise<string[]> {
     const datasets = await this.runSql<string[]>(showDatabases(), { refId: 'datasets' });
-    return datasets.map((t) => t[0]);
+    return datasets.map((t) => quoteIdentifierIfNecessary(t[0]));
   }
 
   async fetchTables(dataset?: string): Promise<string[]> {
     const tables = await this.runSql<string[]>(buildTableQuery(dataset), { refId: 'tables' });
-    return tables.map((t) => t[0]);
+    return tables.map((t) => quoteIdentifierIfNecessary(t[0]));
   }
 
   async fetchFields(query: Partial<SQLQuery>) {
@@ -54,7 +54,13 @@ export class MySqlDatasource extends SqlDatasource {
     }
     const queryString = buildColumnQuery(query.table, query.dataset);
     const frame = await this.runSql<string[]>(queryString, { refId: 'fields' });
-    const fields = frame.map((f) => ({ name: f[0], text: f[0], value: f[0], type: f[1], label: f[0] }));
+    const fields = frame.map((f) => ({
+      name: f[0],
+      text: f[0],
+      value: quoteIdentifierIfNecessary(f[0]),
+      type: f[1],
+      label: f[0],
+    }));
     return mapFieldsToTypes(fields);
   }
 

@@ -21,7 +21,6 @@ export interface QueryHeaderProps {
   queryRowFilter: QueryRowFilter;
   isQueryRunnable: boolean;
   isDatasetSelectorHidden?: boolean;
-  showEscapeControl?: boolean;
 }
 
 const editorModes = [
@@ -38,13 +37,11 @@ export function QueryHeader({
   onQueryRowChange,
   isQueryRunnable,
   isDatasetSelectorHidden,
-  showEscapeControl,
 }: QueryHeaderProps) {
   const { editorMode } = query;
   const [_, copyToClipboard] = useCopyToClipboard();
   const [showConfirm, setShowConfirm] = useState(false);
   const toRawSql = db.toRawSql;
-  const [escape, setEscape] = useState(db.escapeIdentifiers ?? false);
 
   const onEditorModeChange = useCallback(
     (newEditorMode: EditorMode) => {
@@ -103,23 +100,6 @@ export function QueryHeader({
           onChange={onFormatChange}
           options={QUERY_FORMAT_OPTIONS}
         />
-        {showEscapeControl && (
-          <InlineSwitch
-            id="sql-escape"
-            label="Escape identifiers"
-            transparent={true}
-            showLabel={true}
-            value={escape}
-            onChange={(ev) => {
-              if (ev.target instanceof HTMLInputElement) {
-                const checked = ev.target.checked;
-                setEscape(checked);
-                db.escapeIdentifiers = checked;
-                onChange({ ...query, rawSql: toRawSql(query, checked) });
-              }
-            }}
-          />
-        )}
 
         {editorMode === EditorMode.Builder && (
           <>
