@@ -64,6 +64,7 @@ interface PolicyComponentProps {
   continueMatching?: boolean;
   alertManagerSourceName: string;
   inheritedProperties?: InhertitableProperties;
+  routesMatchingFilters?: RouteWithID[];
 
   currentRoute: RouteWithID;
   routeTree: RouteWithID;
@@ -90,6 +91,7 @@ const Policy: FC<PolicyComponentProps> = ({
   currentRoute,
   routeTree,
   inheritedProperties,
+  routesMatchingFilters = [],
   onEditPolicy,
   onAddPolicy,
   onDeletePolicy,
@@ -104,6 +106,7 @@ const Policy: FC<PolicyComponentProps> = ({
 
   const hasMatchers = Boolean(matchers && matchers.length);
   const hasMuteTimings = Boolean(muteTimings.length);
+  const hasFocus = routesMatchingFilters.some((route) => route.id === currentRoute.id);
 
   // gather warnings and errors here
   const warnings: ReactNode[] = [];
@@ -141,7 +144,7 @@ const Policy: FC<PolicyComponentProps> = ({
   // TODO dead branch detection, warnings for all sort of configs that won't work or will never be activated
   return (
     <Stack direction="column" gap={1.5}>
-      <div className={styles.policyWrapper}>
+      <div className={styles.policyWrapper(hasFocus)}>
         {continueMatching === true && (
           <Tooltip placement="top" content="This route will continue matching other policies">
             <div className={styles.continueMatching}>
@@ -412,6 +415,7 @@ const Policy: FC<PolicyComponentProps> = ({
               onShowAlertInstances={onShowAlertInstances}
               alertManagerSourceName={alertManagerSourceName}
               alertGroups={alertGroups}
+              routesMatchingFilters={routesMatchingFilters}
             />
           );
         })}
@@ -608,13 +612,18 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: ${theme.spacing(1.5)};
     border-bottom: solid 1px ${theme.colors.border.weak};
   `,
-  policyWrapper: css`
+  policyWrapper: (hasFocus = false) => css`
     flex: 1;
     position: relative;
     background: ${theme.colors.background.secondary};
 
     border-radius: ${theme.shape.borderRadius(2)};
     border: solid 1px ${theme.colors.border.weak};
+
+    ${hasFocus &&
+    css`
+      border-color: ${theme.colors.primary.border};
+    `}
   `,
   metadata: css`
     color: ${theme.colors.text.secondary};

@@ -27,6 +27,11 @@ import { ProvisionedResource, ProvisioningAlert } from './components/Provisionin
 import { Spacer } from './components/Spacer';
 import { MuteTimingsTable } from './components/amroutes/MuteTimingsTable';
 import {
+  computeInheritedTree,
+  findRoutesMatchingFilter,
+  NotificationPoliciesFilter,
+} from './components/notification-policies/Filters';
+import {
   useAddPolicyModal,
   useEditPolicyModal,
   useDeletePolicyModal,
@@ -54,6 +59,7 @@ const AmRoutes = () => {
   // TODO add querystring param for the current tab so we can route to it immediately
   const [activeTab, setActiveTab] = useState<ActiveTab>(ActiveTab.NotificationPolicies);
   const [updatingTree, setUpdatingTree] = useState<boolean>(false);
+  const [contactPointFilter, setContactPointFilter] = useState<string>('');
 
   const { useGetAlertmanagerChoiceQuery } = alertmanagerApi;
   const { currentData: alertmanagerChoice } = useGetAlertmanagerChoiceQuery();
@@ -86,6 +92,16 @@ const AmRoutes = () => {
 
     return;
   }, [config?.route]);
+
+  // these are computed from the contactPoint filter
+  const routesMatchingFilters = useMemo(() => {
+    if (rootRoute) {
+      const fullRoute = computeInheritedTree(rootRoute);
+      return findRoutesMatchingFilter(fullRoute, { receiver: contactPointFilter });
+    }
+
+    return [];
+  }, [contactPointFilter, rootRoute]);
 
   const isProvisioned = Boolean(config?.route?.provenance);
 
@@ -243,6 +259,13 @@ const AmRoutes = () => {
                   alertmanagerChoice={alertmanagerChoice}
                 />
                 {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.RootNotificationPolicy} />}
+                {rootRoute && (
+                  <NotificationPoliciesFilter
+                    receivers={receivers}
+                    onChangeLabels={() => {}}
+                    onChangeReceiver={setContactPointFilter}
+                  />
+                )}
                 {rootRoute && haveData && (
                   <Policy
                     isDefault
@@ -264,6 +287,7 @@ const AmRoutes = () => {
                     onEditPolicy={openEditModal}
                     onDeletePolicy={openDeleteModal}
                     onShowAlertInstances={showAlertGroupsModal}
+                    routesMatchingFilters={routesMatchingFilters}
                   />
                 )}
                 {addModal}

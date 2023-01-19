@@ -37,6 +37,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   interactive: css`
     cursor: pointer;
+
+    &:hover {
+      color: ${theme.colors.text.primary};
+    }
   `,
 });
 
