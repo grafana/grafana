@@ -6,7 +6,7 @@ keywords:
   - images
   - notifications
 title: Use images in notifications
-weight: 480
+weight: 500
 ---
 
 # Use images in notifications
@@ -40,6 +40,8 @@ If using Grafana as its own cloud storage service then screenshots will be saved
 When using Grafana as its own cloud storage service screenshots are copied from [data]({{< relref "../../setup-grafana/configure-grafana/#paths" >}}) to `static_root_path/img/attachments`. Screenshots older than `temp_data_lifetime` are deleted from [data]({{< relref "../../setup-grafana/configure-grafana/#paths" >}}) but not from `static_root_path/images/attachments`. To delete screenshots from `static_root_path` after a certain amount of time we recommend setting up a CRON job.
 
 ## Configuration
+
+> **Note:** Grafana Cloud users can request this feature by [opening a support ticket in the Cloud Portal](https://grafana.com/profile/org#support).
 
 Having installed either the image rendering plugin, or set up Grafana to use a remote rendering service, set `capture` in `[unified_alerting.screenshots]` to `true`:
 

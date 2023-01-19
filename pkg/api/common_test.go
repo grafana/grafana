@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -54,7 +55,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/stats/statsimpl"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -323,7 +323,7 @@ func setAccessControlPermissions(acmock *accesscontrolmock.Mock, perms []accessc
 }
 
 func userWithPermissions(orgID int64, permissions []accesscontrol.Permission) *user.SignedInUser {
-	return &user.SignedInUser{OrgID: orgID, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(permissions)}}
+	return &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(permissions)}}
 }
 
 // setInitCtxSignedInUser sets a copy of the user in initCtx
@@ -335,11 +335,6 @@ func setInitCtxSignedInUser(initCtx *models.ReqContext, user user.SignedInUser) 
 func setInitCtxSignedInViewer(initCtx *models.ReqContext) {
 	initCtx.IsSignedIn = true
 	initCtx.SignedInUser = &user.SignedInUser{UserID: testUserID, OrgID: 1, OrgRole: org.RoleViewer, Login: testUserLogin}
-}
-
-func setInitCtxSignedInEditor(initCtx *models.ReqContext) {
-	initCtx.IsSignedIn = true
-	initCtx.SignedInUser = &user.SignedInUser{UserID: testUserID, OrgID: 1, OrgRole: org.RoleEditor, Login: testUserLogin}
 }
 
 func setInitCtxSignedInOrgAdmin(initCtx *models.ReqContext) {
@@ -398,6 +393,7 @@ func setupHTTPServerWithCfgDb(
 	userMock.ExpectedUser = &user.User{ID: 1}
 	orgMock := orgtest.NewOrgServiceFake()
 	orgMock.ExpectedOrg = &org.Org{}
+	orgMock.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{}
 
 	// Defining the accesscontrol service has to be done before registering routes
 	if useFakeAccessControl {
@@ -436,7 +432,7 @@ func setupHTTPServerWithCfgDb(
 		teamPermissionsService: teamPermissionService,
 		searchUsersService:     searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), usertest.NewUserServiceFake()),
 		DashboardService: dashboardservice.ProvideDashboardService(
-			cfg, dashboardsStore, nil, features,
+			cfg, dashboardsStore, dashboardsStore, nil, features,
 			folderPermissionsService, dashboardPermissionsService, ac,
 		),
 		preferenceService: preftest.NewPreferenceServiceFake(),
@@ -557,10 +553,8 @@ func (mss *mockSearchService) SearchHandler(_ context.Context, q *search.Query) 
 func (mss *mockSearchService) SortOptions() []models.SortOption { return nil }
 
 func setUp(confs ...setUpConf) *HTTPServer {
-	singleAlert := &models.Alert{Id: 1, DashboardId: 1, Name: "singlealert"}
-	store := mockstore.NewSQLStoreMock()
+	store := dbtest.NewFakeDB()
 	hs := &HTTPServer{SQLStore: store, SearchService: &mockSearchService{}}
-	store.ExpectedAlert = singleAlert
 
 	aclMockResp := []*models.DashboardACLInfoDTO{}
 	for _, c := range confs {
@@ -568,7 +562,6 @@ func setUp(confs ...setUpConf) *HTTPServer {
 			aclMockResp = c.aclMockResp
 		}
 	}
-	store.ExpectedTeamsByUser = []*models.TeamDTO{}
 	teamSvc := &teamtest.FakeService{}
 	dashSvc := &dashboards.FakeDashboardService{}
 	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {

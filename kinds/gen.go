@@ -15,6 +15,7 @@ import (
 
 	"cuelang.org/go/cue/errors"
 	"github.com/grafana/codejen"
+	"github.com/grafana/cuetsy"
 
 	"github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
@@ -28,7 +29,7 @@ func main() {
 	}
 
 	// Core kinds composite code generator. Produces all generated code in
-	// grafana/grafana that derives from raw and structured core kinds.
+	// grafana/grafana that derives from core kinds.
 	coreKindsGen := codejen.JennyListWithNamer(func(decl *codegen.DeclForGen) string {
 		return decl.Properties.Common().MachineName
 	})
@@ -36,14 +37,15 @@ func main() {
 	// All the jennies that comprise the core kinds generator pipeline
 	coreKindsGen.Append(
 		codegen.LatestJenny(kindsys.GoCoreKindParentPath, codegen.GoTypesJenny{}),
-		codegen.CoreStructuredKindJenny(kindsys.GoCoreKindParentPath, nil),
-		codegen.RawKindJenny(kindsys.GoCoreKindParentPath, nil),
+		codegen.CoreKindJenny(kindsys.GoCoreKindParentPath, nil),
 		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), kindsys.GoCoreKindParentPath),
 		codegen.LatestMajorsOrXJenny(kindsys.TSCoreKindParentPath, codegen.TSTypesJenny{}),
 		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
+		codegen.DocsJenny(filepath.Join("docs", "sources", "developers", "kinds", "core")),
 	)
 
-	coreKindsGen.AddPostprocessors(codegen.SlashHeaderMapper("kinds/gen.go"))
+	header := codegen.SlashHeaderMapper("kinds/gen.go")
+	coreKindsGen.AddPostprocessors(header)
 
 	cwd, err := os.Getwd()
 	if err != nil {
@@ -55,15 +57,14 @@ func main() {
 	rt := cuectx.GrafanaThemaRuntime()
 	var all []*codegen.DeclForGen
 
-	// structured kinddirs first
-	f := os.DirFS(filepath.Join(groot, kindsys.CoreStructuredDeclParentPath))
-	kinddirs := elsedie(fs.ReadDir(f, "."))("error reading structured fs root directory")
+	f := os.DirFS(filepath.Join(groot, kindsys.CoreDeclParentPath))
+	kinddirs := elsedie(fs.ReadDir(f, "."))("error reading core kind fs root directory")
 	for _, ent := range kinddirs {
 		if !ent.IsDir() {
 			continue
 		}
-		rel := filepath.Join(kindsys.CoreStructuredDeclParentPath, ent.Name())
-		decl, err := kindsys.LoadCoreKind[kindsys.CoreStructuredProperties](rel, rt.Context(), nil)
+		rel := filepath.Join(kindsys.CoreDeclParentPath, ent.Name())
+		decl, err := kindsys.LoadCoreKind(rel, rt.Context(), nil)
 		if err != nil {
 			die(fmt.Errorf("%s is not a valid kind: %s", rel, errors.Details(err, nil)))
 		}
@@ -74,25 +75,6 @@ func main() {
 		all = append(all, elsedie(codegen.ForGen(rt, decl.Some()))(rel))
 	}
 
-	// now raw kinddirs
-	f = os.DirFS(filepath.Join(groot, kindsys.RawDeclParentPath))
-	kinddirs = elsedie(fs.ReadDir(f, "."))("error reading raw fs root directory")
-	for _, ent := range kinddirs {
-		if !ent.IsDir() {
-			continue
-		}
-		rel := filepath.Join(kindsys.RawDeclParentPath, ent.Name())
-		decl, err := kindsys.LoadCoreKind[kindsys.RawProperties](rel, rt.Context(), nil)
-		if err != nil {
-			die(fmt.Errorf("%s is not a valid kind: %s", rel, errors.Details(err, nil)))
-		}
-		if decl.Properties.MachineName != ent.Name() {
-			die(fmt.Errorf("%s: kind's machine name (%s) must equal parent dir name (%s)", rel, decl.Properties.Name, ent.Name()))
-		}
-		dfg, _ := codegen.ForGen(nil, decl.Some())
-		all = append(all, dfg)
-	}
-
 	sort.Slice(all, func(i, j int) bool {
 		return nameFor(all[i].Properties) < nameFor(all[j].Properties)
 	})
@@ -100,6 +82,13 @@ func main() {
 	jfs, err := coreKindsGen.GenerateFS(all...)
 	if err != nil {
 		die(fmt.Errorf("core kinddirs codegen failed: %w", err))
+	}
+	sharedf, err := dummyCommonJenny{}.Generate(nil)
+	if err != nil {
+		die(fmt.Errorf("common schemas failed"))
+	}
+	if err = jfs.Add(elsedie(header(*sharedf))("couldn't inject header")); err != nil {
+		die(err)
 	}
 
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
@@ -113,11 +102,9 @@ func main() {
 
 func nameFor(m kindsys.SomeKindProperties) string {
 	switch x := m.(type) {
-	case kindsys.RawProperties:
+	case kindsys.CoreProperties:
 		return x.Name
-	case kindsys.CoreStructuredProperties:
-		return x.Name
-	case kindsys.CustomStructuredProperties:
+	case kindsys.CustomProperties:
 		return x.Name
 	case kindsys.ComposableProperties:
 		return x.Name
@@ -125,6 +112,29 @@ func nameFor(m kindsys.SomeKindProperties) string {
 		// unreachable so long as all the possibilities in KindProperties have switch branches
 		panic("unreachable")
 	}
+}
+
+type dummyCommonJenny struct{}
+
+func (j dummyCommonJenny) JennyName() string {
+	return "CommonSchemaJenny"
+}
+
+func (j dummyCommonJenny) Generate(dummy any) (*codejen.File, error) {
+	path := filepath.Join("packages", "grafana-schema", "src", "common")
+	v, err := cuectx.BuildGrafanaInstance(nil, path, "", nil)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := cuetsy.Generate(v, cuetsy.Config{
+		Export: true,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate TS: %w", err)
+	}
+
+	return codejen.NewFile(filepath.Join(path, "common.gen.ts"), b, dummyCommonJenny{}), nil
 }
 
 func elsedie[T any](t T, err error) func(msg string) T {

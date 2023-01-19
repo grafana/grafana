@@ -76,7 +76,7 @@ describe('QueryEditor should render right editor', () => {
       const query = {
         ...migratedFields,
         alias: '',
-        apiMode: 'Logs',
+        apiMode: 'Metrics',
         dimensions: {
           InstanceId: 'i-123',
         },
@@ -87,7 +87,7 @@ describe('QueryEditor should render right editor', () => {
         metricName: 'CPUUtilization',
         namespace: 'AWS/EC2',
         period: '',
-        queryMode: 'Logs',
+        queryMode: 'Metrics',
         refId: 'A',
         region: 'ap-northeast-2',
         statistics: 'Average',
@@ -95,12 +95,12 @@ describe('QueryEditor should render right editor', () => {
       await act(async () => {
         render(<QueryEditor {...props} query={query} />);
       });
-      expect(screen.getByText('Choose Log Groups')).toBeInTheDocument();
+      expect(screen.getByText('Metric name')).toBeInTheDocument();
     });
   });
 
   describe('when using grafana 7.0.0 style logs query', () => {
-    it('should render the metrics query editor', async () => {
+    it('should render the logs query editor', async () => {
       const query = {
         ...migratedFields,
         alias: '',
@@ -123,7 +123,7 @@ describe('QueryEditor should render right editor', () => {
       await act(async () => {
         render(<QueryEditor {...props} query={query} />);
       });
-      expect(screen.getByText('Log Groups')).toBeInTheDocument();
+      expect(screen.getByText('Select Log Groups')).toBeInTheDocument();
     });
   });
 
@@ -165,9 +165,9 @@ describe('QueryEditor should render right editor', () => {
     let datasourceMock: ReturnType<typeof setupMockedDataSource>;
     beforeEach(() => {
       datasourceMock = setupMockedDataSource();
-      datasourceMock.datasource.api.isMonitoringAccount = jest.fn().mockResolvedValue(true);
-      datasourceMock.datasource.api.getMetrics = jest.fn().mockResolvedValue([]);
-      datasourceMock.datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([]);
+      datasourceMock.datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(true);
+      datasourceMock.datasource.resources.getMetrics = jest.fn().mockResolvedValue([]);
+      datasourceMock.datasource.resources.getDimensionKeys = jest.fn().mockResolvedValue([]);
       originalValue = config.featureToggles.cloudWatchCrossAccountQuerying;
     });
     afterEach(() => {

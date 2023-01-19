@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Route, Switch } from 'react-router-dom';
+import { Redirect, Route, Switch } from 'react-router-dom';
 
 import { NavLandingPage } from 'app/core/components/AppChrome/NavLandingPage';
 import { DataSourcesRoutesContext } from 'app/features/datasources/state';
@@ -28,7 +28,7 @@ export default function Connections() {
       }}
     >
       <Switch>
-        <Route exact path={ROUTES.Base} component={() => <NavLandingPage navId="connections" />} />
+        <Route exact path={ROUTES.Base} component={() => <Redirect to={ROUTES.ConnectData} />} />
         <Route
           exact
           path={ROUTES.YourConnections}

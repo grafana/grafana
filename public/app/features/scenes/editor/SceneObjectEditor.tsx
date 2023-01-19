@@ -1,8 +1,7 @@
 import React from 'react';
 
+import { SceneObject } from '@grafana/scenes';
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
-
-import { SceneObject } from '../core/types';
 
 export interface Props {
   model: SceneObject;

@@ -59,15 +59,6 @@ export const ResultItem = React.forwardRef(
           </div>
           {action.subtitle && <span className={styles.subtitleText}>{action.subtitle}</span>}
         </div>
-        {action.shortcut?.length ? (
-          <div aria-hidden className={styles.shortcutContainer}>
-            {action.shortcut.map((sc) => (
-              <kbd key={sc} className={styles.shortcut}>
-                {sc}
-              </kbd>
-            ))}
-          </div>
-        ) : null}
       </div>
     );
   }
@@ -87,6 +78,7 @@ const getResultItemStyles = (theme: GrafanaTheme2, isActive: boolean) => {
       alightItems: 'center',
       justifyContent: 'space-between',
       cursor: 'pointer',
+      position: 'relative',
       '&:before': {
         display: isActive ? 'block' : 'none',
         content: '" "',
@@ -116,8 +108,8 @@ const getResultItemStyles = (theme: GrafanaTheme2, isActive: boolean) => {
       fontSize: theme.typography.fontSize,
     }),
     breadcrumbAncestor: css({
-      opacity: 0.5,
       marginRight: theme.spacing(1),
+      color: theme.colors.text.secondary,
     }),
     subtitleText: css({
       fontSize: theme.typography.fontSize - 2,

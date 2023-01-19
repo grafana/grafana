@@ -128,10 +128,7 @@ export function removeCommentsFromQuery(query: string): string {
   let prev = 0;
 
   for (let lineCommentPosition of lineCommentPositions) {
-    const beforeComment = query.substring(prev, lineCommentPosition.from);
-    const afterComment = query.substring(lineCommentPosition.to);
-
-    newQuery += beforeComment + afterComment;
+    newQuery = newQuery + query.substring(prev, lineCommentPosition.from);
     prev = lineCommentPosition.to;
   }
   return newQuery;
@@ -267,7 +264,7 @@ function getLogQueryPositions(query: string): Position[] {
   return positions;
 }
 
-function toLabelFilter(key: string, value: string, operator: string): QueryBuilderLabelFilter {
+export function toLabelFilter(key: string, value: string, operator: string): QueryBuilderLabelFilter {
   // We need to make sure that we convert the value back to string because it may be a number
   return { label: key, op: operator, value };
 }
@@ -314,7 +311,7 @@ function addFilterToStreamSelector(
  * @param positionsToAddAfter
  * @param filter
  */
-function addFilterAsLabelFilter(
+export function addFilterAsLabelFilter(
   query: string,
   positionsToAddAfter: Position[],
   filter: QueryBuilderLabelFilter
@@ -393,6 +390,14 @@ function addLabelFormat(
   return newQuery;
 }
 
+export function addLineFilter(query: string): string {
+  const streamSelectorPositions = getStreamSelectorPositions(query);
+  const streamSelectorEnd = streamSelectorPositions[0].to;
+
+  const newQueryExpr = query.slice(0, streamSelectorEnd) + ' |= ``' + query.slice(streamSelectorEnd);
+  return newQueryExpr;
+}
+
 function getLineCommentPositions(query: string): Position[] {
   const tree = parser.parse(query);
   const positions: Position[] = [];
@@ -420,7 +425,7 @@ function labelExists(labels: QueryBuilderLabelFilter[], filter: QueryBuilderLabe
  * Return the last position based on "to" property
  * @param positions
  */
-function findLastPosition(positions: Position[]): Position {
+export function findLastPosition(positions: Position[]): Position {
   return positions.reduce((prev, current) => (prev.to > current.to ? prev : current));
 }
 
