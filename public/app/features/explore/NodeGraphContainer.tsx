@@ -82,12 +82,7 @@ export function UnconnectedNodeGraphContainer(props: Props) {
 
   return (
     <Collapse
-      label={
-        <span>
-          Node graph{countWarning}{' '}
-          <Badge text={'Beta'} color={'blue'} icon={'rocket'} tooltip={'This visualization is in beta'} />
-        </span>
-      }
+      label={<span>Node graph{countWarning} </span>}
       collapsible={withTraceView}
       // We allow collapsing this only when it is shown together with trace view.
       isOpen={withTraceView ? open : true}
