@@ -34,7 +34,6 @@ type Service struct {
 
 	log log.Logger
 
-	encrypt         bool
 	enabled         bool
 	serverAdminOnly bool
 
@@ -62,7 +61,6 @@ func ProvideService(cfg *setting.Cfg,
 		accessControl:   accessControl,
 		features:        features,
 		log:             log.New("supportbundle.service"),
-		encrypt:         section.Key("encrypt").MustBool(false),
 		enabled:         section.Key("enabled").MustBool(true),
 		serverAdminOnly: section.Key("server_admin_only").MustBool(true),
 		collectors:      make(map[string]supportbundles.Collector),
