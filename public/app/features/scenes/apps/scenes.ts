@@ -13,7 +13,6 @@ import {
   SceneVariableSet,
   QueryVariable,
   SceneControlsSpacer,
-  SceneCanvasText,
 } from '@grafana/scenes';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
@@ -21,15 +20,7 @@ import { SceneRadioToggle } from './SceneRadioToggle';
 import { SceneSearchBox, SceneSearchFilterDataNode } from './SceneSearchBox';
 import { getLinkUrlWithAppUrlState } from './utils';
 
-let sceneCache: Map<string, EmbeddedScene> = new Map();
-
 export function getHttpHandlerListScene(): EmbeddedScene {
-  const sceneKey = 'handler level';
-
-  if (sceneCache.has(sceneKey)) {
-    return sceneCache.get(sceneKey)!;
-  }
-
   const searchBox = new SceneSearchBox({ value: '' });
 
   const httpHandlerQueries = getInstantQuery({
@@ -198,17 +189,10 @@ export function getHttpHandlerListScene(): EmbeddedScene {
     body: layout,
   });
 
-  sceneCache.set(sceneKey, scene);
   return scene;
 }
 
 export function getHandlerDetailsScene(handler: string): EmbeddedScene {
-  const sceneKey = `handler ${handler}`;
-
-  if (sceneCache.has(sceneKey)) {
-    return sceneCache.get(sceneKey)!;
-  }
-
   const reqDurationTimeSeries = getTimeSeriesQuery({
     expr: `avg without(job, instance) (rate(grafana_http_request_duration_seconds_sum{handler="${handler}"}[$__rate_interval])) * 1e3`,
     legendFormat: '{{method}} {{handler}} (status = {{status_code}})',
@@ -245,7 +229,6 @@ export function getHandlerDetailsScene(handler: string): EmbeddedScene {
     }),
   });
 
-  sceneCache.set(sceneKey, scene);
   return scene;
 }
 
@@ -280,12 +263,6 @@ function getTimeSeriesQuery(query: Partial<PromQuery>): SceneQueryRunner {
 }
 
 export function getOverviewScene(): EmbeddedScene {
-  const sceneKey = 'overview';
-
-  if (sceneCache.has(sceneKey)) {
-    return sceneCache.get(sceneKey)!;
-  }
-
   const scene = new EmbeddedScene({
     $variables: getVariablesDefinitions(),
     $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
@@ -371,7 +348,6 @@ export function getOverviewScene(): EmbeddedScene {
     }),
   });
 
-  sceneCache.set(sceneKey, scene);
   return scene;
 }
 
@@ -403,12 +379,6 @@ function getInstantStatPanel(query: string, title: string) {
 }
 
 export function getHandlerLogsScene(handler: string): EmbeddedScene {
-  const sceneKey = `handler logs ${handler}`;
-
-  if (sceneCache.has(sceneKey)) {
-    return sceneCache.get(sceneKey)!;
-  }
-
   const logsQuery = new SceneQueryRunner({
     datasource: { uid: 'gdev-loki' },
     queries: [
@@ -458,17 +428,10 @@ export function getHandlerLogsScene(handler: string): EmbeddedScene {
     }),
   });
 
-  sceneCache.set(sceneKey, scene);
   return scene;
 }
 
 export function getOverviewLogsScene(): EmbeddedScene {
-  const sceneKey = 'logs';
-
-  if (sceneCache.has(sceneKey)) {
-    return sceneCache.get(sceneKey)!;
-  }
-
   const logsQuery = new SceneQueryRunner({
     datasource: { uid: 'gdev-loki' },
     queries: [
@@ -507,6 +470,5 @@ export function getOverviewLogsScene(): EmbeddedScene {
     }),
   });
 
-  sceneCache.set(sceneKey, scene);
   return scene;
 }

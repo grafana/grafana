@@ -16,13 +16,6 @@ import {
 export function GrafanaMonitoringApp2() {
   const appScene = new SceneApp({
     pages: [getMainPageScene()],
-    // routes: [
-    //   { path: '/scenes/grafana-monitoring', getScene: getMainPageScene },
-    //   { path: '/scenes/grafana-monitoring/handlers', getScene: getMainPageScene },
-    //   { path: '/scenes/grafana-monitoring/logs', getScene: getMainPageScene },
-    //   { path: '/scenes/grafana-monitoring/handlers/:handler', getScene: getDrilldownPageScene },
-    //   { path: '/scenes/grafana-monitoring/handlers/:handler/:tab', getScene: getDrilldownPageScene },
-    // ],
   });
 
   return <appScene.Component model={appScene} />;
@@ -33,6 +26,7 @@ export function getMainPageScene() {
     title: 'Grafana Monitoring',
     subTitle: 'A custom app with embedded scenes to monitor your Grafana server',
     url: '/scenes/grafana-monitoring',
+    hideFromBreadcrumbs: true,
     getScene: getOverviewScene,
     tabs: [
       new SceneAppPage({
@@ -49,7 +43,7 @@ export function getMainPageScene() {
         drilldowns: [
           new SceneAppDrilldownView({
             routePath: '/scenes/grafana-monitoring/handlers/:handler',
-            getPage: getDrilldownPageScene,
+            getPage: getHandlerDrilldownPage,
           }),
         ],
       }),
@@ -63,7 +57,10 @@ export function getMainPageScene() {
   });
 }
 
-export function getDrilldownPageScene(match: SceneRouteMatch<{ handler: string; tab?: string }>) {
+export function getHandlerDrilldownPage(
+  match: SceneRouteMatch<{ handler: string; tab?: string }>,
+  parent: SceneAppPage
+) {
   const handler = decodeURIComponent(match.params.handler);
   const baseUrl = `/scenes/grafana-monitoring/handlers/${encodeURIComponent(handler)}`;
 
@@ -71,23 +68,26 @@ export function getDrilldownPageScene(match: SceneRouteMatch<{ handler: string; 
     title: handler,
     subTitle: 'A grafana http handler is responsible for service a specific API request',
     url: baseUrl,
+    getParentPage: () => parent,
     getScene: () => getHandlerDetailsScene(handler),
     tabs: [
       new SceneAppPage({
         title: 'Metrics',
         url: baseUrl,
+        routePath: '/scenes/grafana-monitoring/handlers/:handler',
         getScene: () => getHandlerDetailsScene(handler),
         preserveUrlKeys: ['from', 'to', 'var-instance'],
       }),
       new SceneAppPage({
         title: 'Logs',
         url: baseUrl + '/logs',
+        routePath: '/scenes/grafana-monitoring/handlers/:handler/logs',
         getScene: () => getHandlerLogsScene(handler),
         preserveUrlKeys: ['from', 'to', 'var-instance'],
         drilldowns: [
           new SceneAppDrilldownView({
-            routePath: '/scenes/grafana-monitoring/handlers/:handler/logs/:drilldown',
-            getPage: getHandlerDrilldown,
+            routePath: '/scenes/grafana-monitoring/handlers/:handler/logs/:secondLevel',
+            getPage: getSecondLevelDrilldown,
           }),
         ],
       }),
@@ -95,20 +95,24 @@ export function getDrilldownPageScene(match: SceneRouteMatch<{ handler: string; 
   });
 }
 
-export function getHandlerDrilldown(match: SceneRouteMatch<{ handler: string; drilldown: string }>) {
+export function getSecondLevelDrilldown(
+  match: SceneRouteMatch<{ handler: string; secondLevel: string }>,
+  parent: SceneAppPage
+) {
   const handler = decodeURIComponent(match.params.handler);
-  const drilldown = decodeURIComponent(match.params.drilldown);
-  const baseUrl = `/scenes/grafana-monitoring/handlers/${encodeURIComponent(handler)}/logs/${drilldown}`;
+  const secondLevel = decodeURIComponent(match.params.secondLevel);
+  const baseUrl = `/scenes/grafana-monitoring/handlers/${encodeURIComponent(handler)}/logs/${secondLevel}`;
 
   return new SceneAppPage({
-    title: handler + ' ' + drilldown,
-    subTitle: 'A grafana http handler is responsible for service a specific API request',
+    title: secondLevel,
+    subTitle: 'Second level dynamic drilldown',
     url: baseUrl,
+    getParentPage: () => parent,
     getScene: () => {
       return new SceneFlexLayout({
         children: [
           new SceneCanvasText({
-            text: 'Drilldown: ' + drilldown,
+            text: 'Drilldown: ' + secondLevel,
           }),
         ],
       });
