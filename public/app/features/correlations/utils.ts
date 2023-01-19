@@ -16,7 +16,6 @@ export const attachCorrelationsToDataFrames = (
   correlations: CorrelationData[],
   dataFrameRefIdToDataSourceUid: DataFrameRefIdToDataSourceUid
 ): DataFrame[] => {
-  console.log(correlations);
   dataFrames.forEach((dataFrame) => {
     const frameRefId = dataFrame.refId;
     if (!frameRefId) {

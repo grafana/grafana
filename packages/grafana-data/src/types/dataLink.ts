@@ -40,7 +40,7 @@ export interface DataLink<T extends DataQuery = any> {
   internal?: InternalDataLink<T>;
 }
 
-interface Transformation {
+export interface Transformation {
   type: 'logfmt' | 'regex' | 'path' | 'none';
   field: string;
   variable?: string;

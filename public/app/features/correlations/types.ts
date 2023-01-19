@@ -1,3 +1,5 @@
+import { Transformation } from '@grafana/data';
+
 export interface AddCorrelationResponse {
   correlation: Correlation;
 }
@@ -6,19 +8,11 @@ export type GetCorrelationsResponse = Correlation[];
 
 type CorrelationConfigType = 'query';
 
-export interface Transformation {
-  type: 'logfmt' | 'regex' | 'path' | 'none';
-  field: string;
-  variable?: string;
-  mappings?: object;
-  expression?: string;
-}
-
 export interface CorrelationConfig {
   field: string;
   target: object;
-  transformations: Transformation[];
   type: CorrelationConfigType;
+  transformations?: Transformation[];
 }
 
 export interface Correlation {
