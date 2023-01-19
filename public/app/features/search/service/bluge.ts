@@ -42,7 +42,7 @@ export class BlugeSearcher implements GrafanaSearcher {
     }
     // get the starred dashboards
     const starsUIDS = await getBackendSrv().get('api/user/stars');
-    if (starsUIDS.length) {
+    if (starsUIDS?.length) {
       return this.doSearchQuery({
         uid: starsUIDS,
         query: query.query ?? '*',
