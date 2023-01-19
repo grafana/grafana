@@ -139,15 +139,6 @@ export class ElasticQueryBuilder {
     return filterObj;
   }
 
-  getNestedAgg(aggDef: Nested, queryNode: { nested?: {path?: string}; aggs?: any }, target: ElasticsearchQuery) {
-    if (!aggDef.field || !target || !target.metrics) {
-      return queryNode;
-    }
-    queryNode.nested = { path: aggDef.field };
-
-    return queryNode;
-  }
-
   documentQuery(query: any, size: number) {
     query.size = size;
     query.sort = [
@@ -294,7 +285,7 @@ export class ElasticQueryBuilder {
           break;
         }
         case 'nested': {
-          this.getNestedAgg(aggDef, esAgg, target);
+          esAgg['nested'] = { path: aggDef.field };
           break;
         }
       }
