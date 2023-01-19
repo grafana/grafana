@@ -45,7 +45,6 @@ func (wClient *webHookClient) Notify(ctx context.Context,
 	values := map[string]interface{}{
 		"alert_uid":                uuid.NewString(),
 		"title":                    "SecretScan Alert: Grafana Token leaked",
-		"image_url":                "https://images.pexels.com/photos/5119737/pexels-photo-5119737.jpeg?auto=compress&cs=tinysrgb&w=300", //nolint
 		"state":                    "alerting",
 		"link_to_upstream_details": token.URL,
 		"message": "Token of type " +

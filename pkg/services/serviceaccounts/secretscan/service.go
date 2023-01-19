@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-const defaultURL = "https://secretscan.grafana.com"
+const defaultURL = "https://secret-scanning.grafana.net"
 
 type Checker interface {
 	CheckTokens(ctx context.Context) error
