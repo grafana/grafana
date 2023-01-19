@@ -97,7 +97,7 @@ export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
     setSubmissionError(undefined);
     const dashboardUid = data.saveTarget === SaveTarget.ExistingDashboard ? data.dashboardUid : undefined;
 
-    reportInteraction('e2d_submit', {
+    reportInteraction('e_2_d_submit', {
       newTab: openInNewTab,
       saveTarget: data.saveTarget,
       queries: exploreItem.queries.length,
@@ -144,7 +144,7 @@ export const AddToDashboardModal = ({ onClose, exploreId }: Props) => {
   };
 
   useEffect(() => {
-    reportInteraction('e2d_open');
+    reportInteraction('e_2_d_open');
   }, []);
 
   return (

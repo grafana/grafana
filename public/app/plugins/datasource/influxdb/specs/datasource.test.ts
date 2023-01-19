@@ -1,9 +1,8 @@
 import { lastValueFrom, of } from 'rxjs';
 import { TemplateSrvStub } from 'test/specs/helpers';
 
-import { ScopedVars } from '@grafana/data/src';
-import { FetchResponse } from '@grafana/runtime';
-import config from 'app/core/config';
+import { ScopedVars } from '@grafana/data';
+import { FetchResponse, setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv'; // will use the version in __mocks__
 
 import { BROWSER_MODE_DISABLED_MESSAGE } from '../constants';
@@ -11,11 +10,6 @@ import InfluxDatasource from '../datasource';
 
 //@ts-ignore
 const templateSrv = new TemplateSrvStub();
-
-jest.mock('@grafana/runtime', () => ({
-  ...(jest.requireActual('@grafana/runtime') as unknown as object),
-  getBackendSrv: () => backendSrv,
-}));
 
 describe('InfluxDataSource', () => {
   const ctx: any = {
@@ -29,6 +23,7 @@ describe('InfluxDataSource', () => {
     ctx.instanceSettings.url = '/api/datasources/proxy/1';
     ctx.instanceSettings.access = 'proxy';
     ctx.ds = new InfluxDatasource(ctx.instanceSettings, templateSrv);
+    setBackendSrv(backendSrv);
   });
 
   describe('When issuing metricFindQuery', () => {
@@ -210,7 +205,18 @@ describe('InfluxDataSource', () => {
       $interpolationVar: text,
       $interpolationVar2: text2,
     };
+    const adhocFilters = [
+      {
+        key: 'adhoc',
+        operator: '=',
+        value: 'val',
+        condition: '',
+      },
+    ];
     const templateSrv: any = {
+      getAdhocFilters: jest.fn((name: string) => {
+        return adhocFilters;
+      }),
       replace: jest.fn((target?: string, scopedVars?: ScopedVars, format?: string | Function): string => {
         if (!format) {
           return variableMap[target!] || '';
@@ -252,6 +258,7 @@ describe('InfluxDataSource', () => {
           },
         ],
       ],
+      adhocFilters,
     };
 
     function influxChecks(query: any) {
@@ -265,6 +272,7 @@ describe('InfluxDataSource', () => {
       expect(query.tags![0].value).toBe(textWithFormatRegex);
       expect(query.groupBy![0].params![0]).toBe(textWithFormatRegex);
       expect(query.select![0][0].params![0]).toBe(textWithFormatRegex);
+      expect(query.adhocFilters[0].key).toBe(adhocFilters[0].key);
     }
 
     describe('when interpolating query variables for dashboard->explore', () => {
@@ -312,7 +320,6 @@ describe('InfluxDataSource', () => {
       it('should apply all template variables with InfluxQL mode', () => {
         ds.isFlux = false;
         ds.access = 'proxy';
-        config.featureToggles.influxdbBackendMigration = true;
         const query = ds.applyTemplateVariables(influxQuery, {
           interpolationVar: { text: text, value: text },
           interpolationVar2: { text: 'interpolationText2', value: 'interpolationText2' },
@@ -323,7 +330,6 @@ describe('InfluxDataSource', () => {
       it('should apply all scopedVars to tags', () => {
         ds.isFlux = false;
         ds.access = 'proxy';
-        config.featureToggles.influxdbBackendMigration = true;
         const query = ds.applyTemplateVariables(influxQuery, {
           interpolationVar: { text: text, value: text },
           interpolationVar2: { text: 'interpolationText2', value: 'interpolationText2' },

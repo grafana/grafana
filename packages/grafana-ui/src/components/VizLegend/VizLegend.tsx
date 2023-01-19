@@ -28,8 +28,11 @@ export function VizLegend<T>({
 }: LegendProps<T>) {
   const { eventBus, onToggleSeriesVisibility, onToggleLegendSort } = usePanelContext();
 
-  const onMouseEnter = useCallback(
-    (item: VizLegendItem, event: React.MouseEvent<HTMLElement, MouseEvent>) => {
+  const onMouseOver = useCallback(
+    (
+      item: VizLegendItem,
+      event: React.MouseEvent<HTMLButtonElement, MouseEvent> | React.FocusEvent<HTMLButtonElement>
+    ) => {
       eventBus?.publish({
         type: DataHoverEvent.type,
         payload: {
@@ -44,7 +47,10 @@ export function VizLegend<T>({
   );
 
   const onMouseOut = useCallback(
-    (item: VizLegendItem, event: React.MouseEvent<HTMLElement, MouseEvent>) => {
+    (
+      item: VizLegendItem,
+      event: React.MouseEvent<HTMLButtonElement, MouseEvent> | React.FocusEvent<HTMLButtonElement>
+    ) => {
       eventBus?.publish({
         type: DataHoverClearEvent.type,
         payload: {
@@ -59,7 +65,7 @@ export function VizLegend<T>({
   );
 
   const onLegendLabelClick = useCallback(
-    (item: VizLegendItem, event: React.MouseEvent<HTMLElement, MouseEvent>) => {
+    (item: VizLegendItem, event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
       if (onLabelClick) {
         onLabelClick(item, event);
       }
@@ -86,7 +92,7 @@ export function VizLegend<T>({
           sortDesc={sortDesc}
           onLabelClick={onLegendLabelClick}
           onToggleSort={onToggleSort || onToggleLegendSort}
-          onLabelMouseEnter={onMouseEnter}
+          onLabelMouseOver={onMouseOver}
           onLabelMouseOut={onMouseOut}
           itemRenderer={itemRenderer}
           readonly={readonly}
@@ -98,7 +104,7 @@ export function VizLegend<T>({
           className={className}
           items={items}
           placement={placement}
-          onLabelMouseEnter={onMouseEnter}
+          onLabelMouseOver={onMouseOver}
           onLabelMouseOut={onMouseOut}
           onLabelClick={onLegendLabelClick}
           itemRenderer={itemRenderer}
@@ -110,4 +116,4 @@ export function VizLegend<T>({
   }
 }
 
-VizLegend.displayName = 'Legend';
+VizLegend.displayName = 'VizLegend';

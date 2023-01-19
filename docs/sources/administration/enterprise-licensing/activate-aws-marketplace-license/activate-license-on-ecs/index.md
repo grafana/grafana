@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/enterprise/activate-aws-marketplace-license/activate-license-on-ecs/
-  - /docs/grafana/latest/enterprise/license/activate-aws-marketplace-license/activate-license-on-ecs/
-  - /docs/grafana/latest/administration/enterprise-licensing/activate-aws-marketplace-license/activate-license-on-ecs/
+  - ../../../enterprise/activate-aws-marketplace-license/activate-license-on-ecs/
+  - ../../../enterprise/license/activate-aws-marketplace-license/activate-license-on-ecs/
 description: Activate a Grafana Enterprise license from AWS Marketplace on ECS
 keywords:
   - grafana
@@ -111,4 +110,4 @@ In this task you configure Grafana Enterprise to validate the license with AWS i
 1. To restart Grafana and activate your license, update the service running Grafana to use the latest revision of the task definition that you created.
 1. After you update the service, navigate to your Grafana instance, sign in with Grafana Admin credentials, and navigate to the **Statistics and Licensing** page to validate that your license is active.
 
-For more information about validating that your license is active, refer to [Determine the number of active users for each licensed role](../../license-restrictions/#determine-the-number-of-active-users-for-each-licensed-role).
+For more information about validating that your license is active, refer to [Grafana Enterprise license restrictions]({{< relref "../../#grafana-enterprise-license-restrictions" >}}).

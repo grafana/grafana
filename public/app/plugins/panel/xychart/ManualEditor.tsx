@@ -1,8 +1,8 @@
 import { css, cx } from '@emotion/css';
 import React, { useState, useEffect } from 'react';
 
-import { GrafanaTheme, StandardEditorProps } from '@grafana/data';
-import { Button, Field, IconButton, useStyles } from '@grafana/ui';
+import { GrafanaTheme2, StandardEditorProps } from '@grafana/data';
+import { Button, Field, IconButton, useStyles2 } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
 import { LayerName } from 'app/core/components/Layers/LayerName';
 import { ColorDimensionEditor, ScaleDimensionEditor } from 'app/features/dimensions/editors';
@@ -14,8 +14,8 @@ export const ManualEditor = ({
   onChange,
   context,
 }: StandardEditorProps<ScatterSeriesConfig[], any, XYChartOptions>) => {
-  const [selected, setSelected] = useState<number>(0);
-  const style = useStyles(getStyles);
+  const [selected, setSelected] = useState(0);
+  const style = useStyles2(getStyles);
 
   const onFieldChange = (val: any | undefined, index: number, field: string) => {
     onChange(
@@ -115,7 +115,7 @@ export const ManualEditor = ({
                 value={value[selected].pointSize!}
                 context={context}
                 onChange={(field) => onFieldChange(field, selected, 'pointSize')}
-                item={{ settings: { min: 1, max: 50 } } as any}
+                item={{ settings: { min: 1, max: 100 } } as any}
               />
             </Field>
           </div>
@@ -125,34 +125,34 @@ export const ManualEditor = ({
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   marginBot: css`
     margin-bottom: 20px;
   `,
   row: css`
-    padding: ${theme.spacing.xs} ${theme.spacing.sm};
-    border-radius: ${theme.border.radius.sm};
-    background: ${theme.colors.bg2};
-    min-height: ${theme.spacing.formInputHeight}px;
+    padding: ${theme.spacing(0.5, 1)};
+    border-radius: ${theme.shape.borderRadius(1)};
+    background: ${theme.colors.background.secondary};
+    min-height: ${theme.spacing(4)};
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 3px;
     cursor: pointer;
 
-    border: 1px solid ${theme.colors.formInputBorder};
+    border: 1px solid ${theme.components.input.borderColor};
     &:hover {
-      border: 1px solid ${theme.colors.formInputBorderHover};
+      border: 1px solid ${theme.components.input.borderHover};
     }
   `,
   sel: css`
-    border: 1px solid ${theme.colors.formInputBorderActive};
+    border: 1px solid ${theme.colors.primary.border};
     &:hover {
-      border: 1px solid ${theme.colors.formInputBorderActive};
+      border: 1px solid ${theme.colors.primary.border};
     }
   `,
   actionIcon: css`
-    color: ${theme.colors.textWeak};
+    color: ${theme.colors.text.secondary};
     &:hover {
       color: ${theme.colors.text};
     }

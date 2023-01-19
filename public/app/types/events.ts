@@ -1,5 +1,5 @@
 import { AnnotationQuery, BusEventBase, BusEventWithPayload, eventFactory } from '@grafana/data';
-import { IconName } from '@grafana/ui';
+import { IconName, ButtonVariant } from '@grafana/ui';
 
 /**
  * Event Payloads
@@ -37,7 +37,9 @@ export interface ShowConfirmModalPayload {
   yesText?: string;
   noText?: string;
   icon?: IconName;
+  yesButtonVariant?: ButtonVariant;
 
+  onDismiss?: () => void;
   onConfirm?: () => void;
   onAltAction?: () => void;
 }
@@ -118,7 +120,7 @@ export class PanelOptionsChangedEvent extends BusEventBase {
 }
 
 /**
- * Used internally by DashboardModel to commmunicate with DashboardGrid that it needs to re-render
+ * Used internally by DashboardModel to communicate with DashboardGrid that it needs to re-render
  */
 export class DashboardPanelsChangedEvent extends BusEventBase {
   static type = 'dashboard-panels-changed';

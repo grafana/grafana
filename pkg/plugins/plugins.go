@@ -4,6 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"runtime"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -11,7 +16,10 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/util"
 )
+
+var ErrFileNotExist = fmt.Errorf("file does not exist")
 
 type Plugin struct {
 	JSONData
@@ -30,7 +38,6 @@ type Plugin struct {
 	SignatureOrg   string
 	Parent         *Plugin
 	Children       []*Plugin
-	SignedFiles    PluginFiles
 	SignatureError *SignatureError
 
 	// SystemJS fields
@@ -46,8 +53,10 @@ type Plugin struct {
 type PluginDTO struct {
 	JSONData
 
-	PluginDir string
-	Class     Class
+	logger    log.Logger
+	pluginDir string
+
+	Class Class
 
 	// App fields
 	IncludedInAppID string
@@ -58,7 +67,6 @@ type PluginDTO struct {
 	Signature      SignatureStatus
 	SignatureType  SignatureType
 	SignatureOrg   string
-	SignedFiles    PluginFiles
 	SignatureError *SignatureError
 
 	// SystemJS fields
@@ -89,21 +97,29 @@ func (p PluginDTO) IsSecretsManager() bool {
 	return p.JSONData.Type == SecretsManager
 }
 
-func (p PluginDTO) IncludedInSignature(file string) bool {
-	// permit Core plugin files
-	if p.IsCorePlugin() {
-		return true
+func (p PluginDTO) File(name string) (fs.File, error) {
+	cleanPath, err := util.CleanRelativePath(name)
+	if err != nil {
+		// CleanRelativePath should clean and make the path relative so this is not expected to fail
+		return nil, err
 	}
 
-	// permit when no signed files (no MANIFEST)
-	if p.SignedFiles == nil {
-		return true
+	absPluginDir, err := filepath.Abs(p.pluginDir)
+	if err != nil {
+		return nil, err
 	}
 
-	if _, exists := p.SignedFiles[file]; !exists {
-		return false
+	absFilePath := filepath.Join(absPluginDir, cleanPath)
+	// Wrapping in filepath.Clean to properly handle
+	// gosec G304 Potential file inclusion via variable rule.
+	f, err := os.Open(filepath.Clean(absFilePath))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, ErrFileNotExist
+		}
+		return nil, err
 	}
-	return true
+	return f, nil
 }
 
 // JSONData represents the plugin's plugin.json
@@ -121,6 +137,9 @@ type JSONData struct {
 	Preload      bool         `json:"preload"`
 	Backend      bool         `json:"backend"`
 	Routes       []*Route     `json:"routes"`
+
+	// AccessControl settings
+	Roles []RoleRegistration `json:"roles,omitempty"`
 
 	// Panel settings
 	SkipDataQuery bool `json:"skipDataQuery"`
@@ -315,6 +334,25 @@ func (p *Plugin) Client() (PluginClient, bool) {
 	return nil, false
 }
 
+func (p *Plugin) ExecutablePath() string {
+	os := strings.ToLower(runtime.GOOS)
+	arch := runtime.GOARCH
+	extension := ""
+
+	if os == "windows" {
+		extension = ".exe"
+	}
+	if p.IsRenderer() {
+		return filepath.Join(p.PluginDir, fmt.Sprintf("%s_%s_%s%s", "plugin_start", os, strings.ToLower(arch), extension))
+	}
+
+	if p.IsSecretsManager() {
+		return filepath.Join(p.PluginDir, fmt.Sprintf("%s_%s_%s%s", "secrets_plugin_start", os, strings.ToLower(arch), extension))
+	}
+
+	return filepath.Join(p.PluginDir, fmt.Sprintf("%s_%s_%s%s", p.Executable, os, strings.ToLower(arch), extension))
+}
+
 type PluginClient interface {
 	backend.QueryDataHandler
 	backend.CollectMetricsHandler
@@ -327,8 +365,9 @@ func (p *Plugin) ToDTO() PluginDTO {
 	c, _ := p.Client()
 
 	return PluginDTO{
+		logger:          p.Logger(),
+		pluginDir:       p.PluginDir,
 		JSONData:        p.JSONData,
-		PluginDir:       p.PluginDir,
 		Class:           p.Class,
 		IncludedInAppID: p.IncludedInAppID,
 		DefaultNavURL:   p.DefaultNavURL,
@@ -336,7 +375,6 @@ func (p *Plugin) ToDTO() PluginDTO {
 		Signature:       p.Signature,
 		SignatureType:   p.SignatureType,
 		SignatureOrg:    p.SignatureOrg,
-		SignedFiles:     p.SignedFiles,
 		SignatureError:  p.SignatureError,
 		Module:          p.Module,
 		BaseURL:         p.BaseURL,
@@ -382,6 +420,15 @@ func (p *Plugin) IsBundledPlugin() bool {
 
 func (p *Plugin) IsExternalPlugin() bool {
 	return p.Class == External
+}
+
+func (p *Plugin) Manifest() []byte {
+	d, err := os.ReadFile(filepath.Join(p.PluginDir, "MANIFEST.txt"))
+	if err != nil {
+		return []byte{}
+	}
+
+	return d
 }
 
 type Class string

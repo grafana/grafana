@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import Prism, { Grammar, LanguageMap } from 'prismjs';
-import React, { memo, RefObject, useEffect, useMemo, useRef, useState } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { Popper as ReactPopper } from 'react-popper';
 import usePrevious from 'react-use/lib/usePrevious';
 import { Value } from 'slate';
@@ -74,7 +74,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 // was used and changes to different state were propagated here.
 export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
   ({ value, onChange, suggestions, placeholder = 'http://your-grafana.com/d/000000010/annotations' }) => {
-    const editorRef = useRef<Editor>() as RefObject<Editor>;
+    const editorRef = useRef<Editor>(null);
     const styles = useStyles2(getStyles);
     const [showingSuggestions, setShowingSuggestions] = useState(false);
     const [suggestionsIndex, setSuggestionsIndex] = useState(0);
@@ -121,6 +121,7 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
         default:
           return next();
       }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -137,11 +138,12 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
     }, []);
 
     const onVariableSelect = (item: VariableSuggestion, editor = editorRef.current!) => {
-      const includeDollarSign = Plain.serialize(editor.value).slice(-1) !== '$';
+      const precedingChar: string = getCharactersAroundCaret();
+      const precedingDollar = precedingChar === '$';
       if (item.origin !== VariableOrigin.Template || item.value === DataLinkBuiltInVars.includeVars) {
-        editor.insertText(`${includeDollarSign ? '$' : ''}\{${item.value}}`);
+        editor.insertText(`${precedingDollar ? '' : '$'}\{${item.value}}`);
       } else {
-        editor.insertText(`\${${item.value}:queryparam}`);
+        editor.insertText(`${precedingDollar ? '' : '$'}\{${item.value}:queryparam}`);
       }
 
       setLinkUrl(editor.value);
@@ -151,10 +153,28 @@ export const DataLinkInput: React.FC<DataLinkInputProps> = memo(
       stateRef.current.onChange(Plain.serialize(editor.value));
     };
 
+    const getCharactersAroundCaret = () => {
+      const input: HTMLSpanElement | null = document.getElementById('data-link-input')!;
+      let precedingChar = '',
+        sel: Selection | null,
+        range: Range;
+      if (window.getSelection) {
+        sel = window.getSelection();
+        if (sel && sel.rangeCount > 0) {
+          range = sel.getRangeAt(0).cloneRange();
+          // Collapse to the start of the range
+          range.collapse(true);
+          range.setStart(input, 0);
+          precedingChar = range.toString().slice(-1);
+        }
+      }
+      return precedingChar;
+    };
+
     return (
       <div className={styles.wrapperOverrides}>
         <div className="slate-query-field__wrapper">
-          <div className="slate-query-field">
+          <div id="data-link-input" className="slate-query-field">
             {showingSuggestions && (
               <Portal>
                 <ReactPopper

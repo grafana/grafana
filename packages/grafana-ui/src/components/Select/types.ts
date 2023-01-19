@@ -27,6 +27,8 @@ export interface SelectCommonProps<T> {
   closeMenuOnSelect?: boolean;
   /** Used for custom components. For more information, see `react-select` */
   components?: any;
+  /** Sets the position of the createOption element in your options list. Defaults to 'last' */
+  createOptionPosition?: 'first' | 'last';
   defaultValue?: any;
   disabled?: boolean;
   filterOption?: (option: SelectableValue<T>, searchQuery: string) => boolean;
@@ -77,6 +79,8 @@ export interface SelectCommonProps<T> {
   renderControl?: ControlComponent<T>;
   tabSelectsValue?: boolean;
   value?: T | SelectValue<T> | null;
+  /** Will wrap the MenuList in a react-window FixedSizeVirtualList for improved performance, does not support options with "description" properties */
+  virtualized?: boolean;
   /** Sets the width to a multiple of 8px. Should only be used with inline forms. Setting width of the container is preferred in other cases.*/
   width?: number | 'auto';
   isOptionDisabled?: () => boolean;
@@ -102,6 +106,16 @@ export interface SelectAsyncProps<T> {
   /** Message to display when options are loading */
   loadingMessage?: string;
 }
+
+/** The VirtualizedSelect component uses a slightly different SelectableValue, description and other props are not supported */
+export interface VirtualizedSelectProps<T> extends Omit<SelectCommonProps<T>, 'virtualized'> {
+  options?: Array<Pick<SelectableValue<T>, 'label' | 'value'>>;
+}
+
+/** The AsyncVirtualizedSelect component uses a slightly different SelectableValue, description and other props are not supported */
+export interface VirtualizedSelectAsyncProps<T>
+  extends Omit<SelectCommonProps<T>, 'virtualized'>,
+    SelectAsyncProps<T> {}
 
 export interface MultiSelectCommonProps<T> extends Omit<SelectCommonProps<T>, 'onChange' | 'isMulti' | 'value'> {
   value?: Array<SelectableValue<T>> | T[];
@@ -133,6 +147,7 @@ export type ControlComponent<T> = React.ComponentType<CustomControlProps<T>>;
 export interface SelectableOptGroup<T = any> {
   label: string;
   options: Array<SelectableValue<T>>;
+
   [key: string]: any;
 }
 

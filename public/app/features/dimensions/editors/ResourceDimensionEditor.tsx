@@ -1,4 +1,4 @@
-import React, { FC, useCallback } from 'react';
+import React, { useCallback } from 'react';
 
 import { FieldNamePickerConfigSettings, StandardEditorProps, StandardEditorsRegistryItem } from '@grafana/data';
 import { InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui';
@@ -25,14 +25,14 @@ const dummyFieldSettings: StandardEditorsRegistryItem<string, FieldNamePickerCon
   settings: {},
 } as any;
 
-export const ResourceDimensionEditor: FC<
-  StandardEditorProps<ResourceDimensionConfig, ResourceDimensionOptions, any>
-> = (props) => {
+export const ResourceDimensionEditor = (
+  props: StandardEditorProps<ResourceDimensionConfig, ResourceDimensionOptions, unknown>
+) => {
   const { value, context, onChange, item } = props;
   const labelWidth = 9;
 
   const onModeChange = useCallback(
-    (mode) => {
+    (mode: ResourceDimensionMode) => {
       onChange({
         ...value,
         mode,
@@ -42,7 +42,7 @@ export const ResourceDimensionEditor: FC<
   );
 
   const onFieldChange = useCallback(
-    (field) => {
+    (field = '') => {
       onChange({
         ...value,
         field,

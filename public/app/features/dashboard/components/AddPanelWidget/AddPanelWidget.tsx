@@ -19,7 +19,6 @@ import {
   LibraryPanelsSearchVariant,
 } from '../../../library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
 import { LibraryElementDTO } from '../../../library-panels/types';
-import { toPanelModelLibraryPanel } from '../../../library-panels/utils';
 import { DashboardModel, PanelModel } from '../../state';
 
 export type PanelPluginInfo = { id: any; defaults: { gridPos: { w: any; h: any }; title: any } };
@@ -76,6 +75,7 @@ export const AddPanelWidgetUnconnected = ({ panel, dashboard }: Props) => {
     const newPanel: Partial<PanelModel> = {
       type: 'timeseries',
       title: 'Panel Title',
+      datasource: panel.datasource,
       gridPos: { x: gridPos.x, y: gridPos.y, w: gridPos.w, h: gridPos.h },
     };
 
@@ -116,7 +116,7 @@ export const AddPanelWidgetUnconnected = ({ panel, dashboard }: Props) => {
     const newPanel: PanelModel = {
       ...panelInfo.model,
       gridPos,
-      libraryPanel: toPanelModelLibraryPanel(panelInfo),
+      libraryPanel: panelInfo,
     };
 
     dashboard.addPanel(newPanel);

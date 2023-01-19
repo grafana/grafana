@@ -23,14 +23,14 @@ describe('getPanelEditorTabs selector', () => {
 
   it('marks tab as active when tab param provided', () => {
     expect(getPanelEditorTabs('transform', { meta: { skipDataQuery: false } } as PanelPlugin)).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "active": false,
           "icon": "database",
           "id": "query",
           "text": "Query",
         },
-        Object {
+        {
           "active": true,
           "icon": "process",
           "id": "transform",

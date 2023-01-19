@@ -17,6 +17,7 @@ import {
   PreloadPlugin,
   systemDateFormats,
   SystemDateFormatSettings,
+  NewThemeOptions,
 } from '@grafana/data';
 
 export interface AzureSettings {
@@ -135,15 +136,15 @@ export class GrafanaBootConfig implements GrafanaConfig {
   };
   googleAnalyticsId: undefined;
   googleAnalytics4Id: undefined;
+  googleAnalytics4SendManualPageViews = false;
   rudderstackWriteKey: undefined;
   rudderstackDataPlaneUrl: undefined;
   rudderstackSdkUrl: undefined;
   rudderstackConfigUrl: undefined;
 
+  tokenExpirationDayLimit: undefined;
+
   constructor(options: GrafanaBootConfig) {
-    const mode = options.bootData.user.lightTheme ? 'light' : 'dark';
-    this.theme2 = createTheme({ colors: { mode } });
-    this.theme = this.theme2.v1;
     this.bootData = options.bootData;
     this.isPublicDashboardView = options.bootData.settings.isPublicDashboardView;
 
@@ -176,9 +177,22 @@ export class GrafanaBootConfig implements GrafanaConfig {
 
     overrideFeatureTogglesFromUrl(this);
 
+    // Creating theme after applying feature toggle overrides in case we need to toggle anything
+    this.theme2 = createTheme(getThemeCustomizations(this));
+
+    this.theme = this.theme2.v1;
     // Special feature toggle that impact theme/component looks
     this.theme2.flags.topnav = this.featureToggles.topnav;
   }
+}
+
+function getThemeCustomizations(config: GrafanaBootConfig) {
+  const mode = config.bootData.user.lightTheme ? 'light' : 'dark';
+  const themeOptions: NewThemeOptions = {
+    colors: { mode },
+  };
+
+  return themeOptions;
 }
 
 function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {

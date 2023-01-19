@@ -1,4 +1,3 @@
-import { t } from '@lingui/macro';
 import React, { Component } from 'react';
 import { Unsubscribable } from 'rxjs';
 
@@ -7,6 +6,7 @@ import { TimeRangeUpdatedEvent } from '@grafana/runtime';
 import { defaultIntervals, RefreshPicker } from '@grafana/ui';
 import { TimePickerWithHistory } from 'app/core/components/TimePicker/TimePickerWithHistory';
 import { appEvents } from 'app/core/core';
+import { t } from 'app/core/internationalization';
 import { getTimeSrv } from 'app/features/dashboard/services/TimeSrv';
 
 import { ShiftTimeEvent, ShiftTimeEventDirection, ZoomOutEvent } from '../../../../types/events';
@@ -107,20 +107,8 @@ export class DashNavTimeControls extends Component<Props> {
           value={dashboard.refresh}
           intervals={intervals}
           isOnCanvas={isOnCanvas}
-          tooltip={t({ id: 'dashboard.toolbar.refresh', message: 'Refresh dashboard' })}
+          tooltip={t('dashboard.toolbar.refresh', 'Refresh dashboard')}
           noIntervalPicker={hideIntervalPicker}
-          offDescriptionAriaLabelMsg={t({
-            id: 'dashboard.refresh-picker.off-description',
-            message: 'Auto refresh turned off. Choose refresh time interval',
-          })}
-          onDescriptionAriaLabelMsg={(durationAriaLabel) =>
-            t({
-              id: 'dashboard.refresh-picker.on-description',
-              message: `Choose refresh time interval with current interval ${durationAriaLabel} selected`,
-            })
-          }
-          offOptionLabelMsg={t({ id: 'dashboard.refresh-picker.off-label', message: 'Off' })}
-          offOptionAriaLabelMsg={t({ id: 'dashboard.refresh-picker.off-arialabel', message: 'Turn off auto refresh' })}
         />
       </>
     );

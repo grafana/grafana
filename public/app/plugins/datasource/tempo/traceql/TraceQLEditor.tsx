@@ -3,6 +3,7 @@ import type { languages } from 'monaco-editor';
 import React, { useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { CodeEditor, Monaco, monacoTypes, useTheme2 } from '@grafana/ui';
 
 import { createErrorNotification } from '../../../../core/copy/appNotification';
@@ -10,7 +11,7 @@ import { notifyApp } from '../../../../core/reducers/appNotification';
 import { dispatch } from '../../../../store/store';
 import { TempoDatasource } from '../datasource';
 
-import { CompletionProvider } from './autocomplete';
+import { CompletionProvider, CompletionType } from './autocomplete';
 import { languageDefinition } from './traceql';
 
 interface Props {
@@ -22,7 +23,7 @@ interface Props {
 }
 
 export function TraceQLEditor(props: Props) {
-  const { onRunQuery, placeholder } = props;
+  const { onChange, onRunQuery, placeholder } = props;
   const setupAutocompleteFn = useAutocomplete(props.datasource);
   const theme = useTheme2();
   const styles = getStyles(theme, placeholder);
@@ -31,8 +32,8 @@ export function TraceQLEditor(props: Props) {
     <CodeEditor
       value={props.value}
       language={langId}
-      onBlur={props.onChange}
-      height={'30px'}
+      onBlur={onChange}
+      onChange={onChange}
       containerStyles={styles.queryField}
       monacoOptions={{
         folding: false,
@@ -51,9 +52,10 @@ export function TraceQLEditor(props: Props) {
       }}
       onBeforeEditorMount={ensureTraceQL}
       onEditorDidMount={(editor, monaco) => {
-        setupAutocompleteFn(editor, monaco);
+        setupAutocompleteFn(editor, monaco, setupRegisterInteractionCommand(editor));
         setupActions(editor, monaco, onRunQuery);
         setupPlaceholder(editor, monaco, styles);
+        setupAutoSize(editor);
       }}
     />
   );
@@ -91,17 +93,39 @@ function setupActions(editor: monacoTypes.editor.IStandaloneCodeEditor, monaco: 
   editor.addAction({
     id: 'run-query',
     label: 'Run Query',
-
     keybindings: [monaco.KeyMod.Shift | monaco.KeyCode.Enter],
-
     contextMenuGroupId: 'navigation',
-
     contextMenuOrder: 1.5,
-
     run: function () {
       onRunQuery();
     },
   });
+}
+
+function setupRegisterInteractionCommand(editor: monacoTypes.editor.IStandaloneCodeEditor): string | null {
+  return editor.addCommand(0, function (_, label, type: CompletionType) {
+    const properties: Record<string, unknown> = { datasourceType: 'tempo', type };
+    // Filter out the label for TAG_VALUE completions to avoid potentially exposing sensitive data
+    if (type !== 'TAG_VALUE') {
+      properties.label = label;
+    }
+    reportInteraction('grafana_traces_traceql_completion', properties);
+  });
+}
+
+function setupAutoSize(editor: monacoTypes.editor.IStandaloneCodeEditor) {
+  const container = editor.getDomNode();
+  const updateHeight = () => {
+    if (container) {
+      const contentHeight = Math.min(1000, editor.getContentHeight());
+      const width = parseInt(container.style.width, 10);
+      container.style.width = `${width}px`;
+      container.style.height = `${contentHeight}px`;
+      editor.layout({ width, height: contentHeight });
+    }
+  };
+  editor.onDidContentSizeChange(updateHeight);
+  updateHeight();
 }
 
 /**
@@ -144,9 +168,14 @@ function useAutocomplete(datasource: TempoDatasource) {
   }, []);
 
   // This should be run in monaco onEditorDidMount
-  return (editor: monacoTypes.editor.IStandaloneCodeEditor, monaco: Monaco) => {
+  return (
+    editor: monacoTypes.editor.IStandaloneCodeEditor,
+    monaco: Monaco,
+    registerInteractionCommandId: string | null
+  ) => {
     providerRef.current.editor = editor;
     providerRef.current.monaco = monaco;
+    providerRef.current.setRegisterInteractionCommandId(registerInteractionCommandId);
 
     const { dispose } = monaco.languages.registerCompletionItemProvider(langId, providerRef.current);
     autocompleteDisposeFun.current = dispose;

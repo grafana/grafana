@@ -11,8 +11,11 @@ import (
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	jsoniter "github.com/json-iterator/go"
+
+	"github.com/grafana/grafana/pkg/infra/appcontext"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type commitHelper struct {
@@ -43,13 +46,17 @@ type commitOptions struct {
 	comment string
 }
 
-func (ch *commitHelper) initOrg(sql *sqlstore.SQLStore, orgID int64) error {
-	return sql.WithDbSession(ch.ctx, func(sess *sqlstore.DBSession) error {
+func (ch *commitHelper) initOrg(ctx context.Context, sql db.DB, orgID int64) error {
+	return sql.WithDbSession(ch.ctx, func(sess *db.Session) error {
+		userprefix := "user"
+		if isPostgreSQL(sql) {
+			userprefix = `"user"` // postgres has special needs
+		}
 		sess.Table("user").
-			Join("inner", "org_user", "user.id = org_user.user_id").
-			Cols("user.*", "org_user.role").
+			Join("inner", "org_user", userprefix+`.id = org_user.user_id`).
+			Cols(userprefix+`.*`, "org_user.role").
 			Where("org_user.org_id = ?", orgID).
-			Asc("user.id")
+			Asc(userprefix + `.id`)
 
 		rows := make([]*userInfo, 0)
 		err := sess.Find(&rows)
@@ -63,6 +70,14 @@ func (ch *commitHelper) initOrg(sql *sqlstore.SQLStore, orgID int64) error {
 		}
 		ch.users = lookup
 		ch.orgID = orgID
+
+		// Set an admin user with the
+		rowUser := &user.SignedInUser{
+			Login:  "",
+			OrgID:  orgID, // gets filled in from each row
+			UserID: 0,
+		}
+		ch.ctx = appcontext.WithUser(context.Background(), rowUser)
 		return err
 	})
 }
@@ -139,19 +154,28 @@ func (ch *commitHelper) add(opts commitOptions) error {
 }
 
 type userInfo struct {
-	ID               int64     `json:"-" xorm:"id"`
+	ID               int64     `json:"-" db:"id"`
 	Login            string    `json:"login"`
 	Email            string    `json:"email"`
 	Name             string    `json:"name"`
 	Password         string    `json:"password"`
 	Salt             string    `json:"salt"`
+	Company          string    `json:"company,omitempty"`
+	Rands            string    `json:"-"`
 	Role             string    `json:"org_role"` // org role
 	Theme            string    `json:"-"`        // managed in preferences
 	Created          time.Time `json:"-"`        // managed in git or external source
 	Updated          time.Time `json:"-"`        // managed in git or external source
-	IsDisabled       bool      `json:"disabled" xorm:"is_disabled"`
-	IsServiceAccount bool      `json:"serviceAccount" xorm:"is_service_account"`
-	LastSeenAt       time.Time `json:"-" xorm:"last_seen_at"`
+	IsDisabled       bool      `json:"disabled" db:"is_disabled"`
+	IsServiceAccount bool      `json:"serviceAccount" db:"is_service_account"`
+	LastSeenAt       time.Time `json:"-" db:"last_seen_at"`
+
+	// Added to make sqlx happy
+	Version       int   `json:"-"`
+	HelpFlags1    int   `json:"-" db:"help_flags1"`
+	OrgID         int64 `json:"-" db:"org_id"`
+	EmailVerified bool  `json:"-" db:"email_verified"`
+	IsAdmin       bool  `json:"-" db:"is_admin"`
 }
 
 func (u *userInfo) getAuthor() object.Signature {

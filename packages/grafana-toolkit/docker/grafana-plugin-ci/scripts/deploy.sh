@@ -2,16 +2,16 @@
 source "./deploy-common.sh"
 
 # Install Go
-filename="go1.18.linux-amd64.tar.gz"
-get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "e85278e98f57cdb150fe8409e6e5df5343ecb13cebf03a5d5ff12bd55a80264f"
+filename="go1.19.4.linux-amd64.tar.gz"
+get_file "https://dl.google.com/go/$filename" "/tmp/$filename" "c9c08f783325c4cf840a94333159cc937f05f75d36a8b307951d5bd959cf2ab8"
 untar_file "/tmp/$filename"
 
 # Install golangci-lint
-GOLANGCILINT_VERSION=1.45.0
+GOLANGCILINT_VERSION=1.50.0
 filename="golangci-lint-${GOLANGCILINT_VERSION}-linux-amd64"
 get_file "https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCILINT_VERSION}/$filename.tar.gz" \
     "/tmp/$filename.tar.gz" \
-    "ca06a2b170f41a9e1e34d40ca88b15b8fed2d7e37310f0c08b7fc244c34292a9"
+    "b4b329efcd913082c87d0e9606711ecb57415b5e6ddf233fde9e76c69d9b4e8b"
 untar_file "/tmp/$filename.tar.gz"
 ln -s /usr/local/${filename}/golangci-lint /usr/local/bin/golangci-lint
 ln -s /usr/local/go/bin/go /usr/local/bin/go
@@ -24,7 +24,7 @@ apt-get update -y && apt-get install -y adduser libfontconfig1 locate && /bin/rm
 # Install code climate
 get_file "https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64" \
     "/usr/local/bin/cc-test-reporter" \
-    "e1be1930379bd169d3a8e82135cf57216ad52ecfaf520b5804f269721e4dcc3d"
+    "20d1d4e2b399d0287d91e65faeee8ffbef08e3262b0be5eda7def7b3c2799ddd"
 chmod 755 /usr/local/bin/cc-test-reporter
 
 wget -O /usr/local/bin/grabpl "https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v2.9.27/grabpl"

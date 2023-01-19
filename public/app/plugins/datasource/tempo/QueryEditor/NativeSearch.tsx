@@ -1,32 +1,18 @@
 import { css } from '@emotion/css';
-import Prism from 'prismjs';
 import React, { useCallback, useState, useEffect, useMemo } from 'react';
-import { Node } from 'slate';
 
 import { GrafanaTheme2, isValidGoDuration, SelectableValue, toOption } from '@grafana/data';
 import { FetchError, getTemplateSrv, isFetchError, TemplateSrv } from '@grafana/runtime';
-import {
-  InlineFieldRow,
-  InlineField,
-  Input,
-  QueryField,
-  SlatePrism,
-  BracesPlugin,
-  TypeaheadInput,
-  TypeaheadOutput,
-  Alert,
-  useStyles2,
-  fuzzyMatch,
-  Select,
-} from '@grafana/ui';
+import { InlineFieldRow, InlineField, Input, Alert, useStyles2, fuzzyMatch, Select } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { dispatch } from 'app/store/store';
 
 import { DEFAULT_LIMIT, TempoDatasource } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
-import { tokenizer } from '../syntax';
 import { TempoQuery } from '../types';
+
+import { TagsField } from './TagsField/TagsField';
 
 interface Props {
   datasource: TempoDatasource;
@@ -36,22 +22,11 @@ interface Props {
   onRunQuery: () => void;
 }
 
-const PRISM_LANGUAGE = 'tempo';
 const durationPlaceholder = 'e.g. 1.2s, 100ms';
-const plugins = [
-  BracesPlugin(),
-  SlatePrism({
-    onlyIn: (node: Node) => node.object === 'block' && node.type === 'code_block',
-    getSyntax: () => PRISM_LANGUAGE,
-  }),
-];
-
-Prism.languages[PRISM_LANGUAGE] = tokenizer;
 
 const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props) => {
   const styles = useStyles2(getStyles);
   const languageProvider = useMemo(() => new TempoLanguageProvider(datasource), [datasource]);
-  const [hasSyntaxLoaded, setHasSyntaxLoaded] = useState(false);
   const [serviceOptions, setServiceOptions] = useState<Array<SelectableValue<string>>>();
   const [spanOptions, setSpanOptions] = useState<Array<SelectableValue<string>>>();
   const [error, setError] = useState<Error | FetchError | null>(null);
@@ -111,32 +86,6 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
     fetchOptions();
   }, [languageProvider, loadOptions, query.serviceName, query.spanName]);
 
-  useEffect(() => {
-    const fetchTags = async () => {
-      try {
-        await languageProvider.start();
-        setHasSyntaxLoaded(true);
-      } catch (error) {
-        if (error instanceof Error) {
-          dispatch(notifyApp(createErrorNotification('Error', error)));
-        }
-      }
-    };
-    fetchTags();
-  }, [languageProvider]);
-
-  const onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
-    return await languageProvider.provideCompletionItems(typeahead);
-  };
-
-  const cleanText = (text: string) => {
-    const splittedText = text.split(/\s+(?=([^"]*"[^"]*")*[^"]*$)/g);
-    if (splittedText.length > 1) {
-      return splittedText[splittedText.length - 1];
-    }
-    return text;
-  };
-
   const onKeyDown = (keyEvent: React.KeyboardEvent) => {
     if (keyEvent.key === 'Enter' && (keyEvent.shiftKey || keyEvent.ctrlKey)) {
       onRunQuery();
@@ -156,6 +105,16 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
       });
     }
   };
+
+  const handleOnChange = useCallback(
+    (value) => {
+      onChange({
+        ...query,
+        search: value,
+      });
+    },
+    [onChange, query]
+  );
 
   const templateSrv: TemplateSrv = getTemplateSrv();
 
@@ -206,22 +165,12 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
         </InlineFieldRow>
         <InlineFieldRow>
           <InlineField label="Tags" labelWidth={14} grow tooltip="Values should be in logfmt.">
-            <QueryField
-              additionalPlugins={plugins}
-              query={query.search}
-              onTypeahead={onTypeahead}
-              onBlur={onBlur}
-              onChange={(value) => {
-                onChange({
-                  ...query,
-                  search: value,
-                });
-              }}
+            <TagsField
               placeholder="http.status_code=200 error=true"
-              cleanText={cleanText}
-              onRunQuery={onRunQuery}
-              syntaxLoaded={hasSyntaxLoaded}
-              portalOrigin="tempo"
+              value={query.search || ''}
+              onChange={handleOnChange}
+              onBlur={onBlur}
+              datasource={datasource}
             />
           </InlineField>
         </InlineFieldRow>

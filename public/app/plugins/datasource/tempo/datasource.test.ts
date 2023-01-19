@@ -6,13 +6,20 @@ import {
   DataFrame,
   dataFrameToJSON,
   DataSourceInstanceSettings,
+  dateTime,
   FieldType,
   getDefaultTimeRange,
   LoadingState,
   MutableDataFrame,
   PluginType,
 } from '@grafana/data';
-import { BackendDataSourceResponse, FetchResponse, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
+import {
+  BackendDataSourceResponse,
+  FetchResponse,
+  setBackendSrv,
+  setDataSourceSrv,
+  TemplateSrv,
+} from '@grafana/runtime';
 import config from 'app/core/config';
 
 import {
@@ -33,7 +40,6 @@ let mockObservable: () => Observable<any>;
 jest.mock('@grafana/runtime', () => {
   return {
     ...jest.requireActual('@grafana/runtime'),
-    reportInteraction: jest.fn(),
     getBackendSrv: () => ({
       fetch: mockObservable,
       _request: mockObservable,
@@ -49,9 +55,10 @@ describe('Tempo data source', () => {
   beforeEach(() => (console.error = consoleErrorMock));
 
   it('returns empty response when traceId is empty', async () => {
-    const ds = new TempoDatasource(defaultSettings);
+    const templateSrv: TemplateSrv = { replace: jest.fn() } as unknown as TemplateSrv;
+    const ds = new TempoDatasource(defaultSettings, templateSrv);
     const response = await lastValueFrom(
-      ds.query({ targets: [{ refId: 'refid1', queryType: 'traceId', query: '' } as Partial<TempoQuery>] } as any),
+      ds.query({ targets: [{ refId: 'refid1', queryType: 'traceql', query: '' } as Partial<TempoQuery>] } as any),
       { defaultValue: 'empty' }
     );
     expect(response).toBe('empty');
@@ -61,7 +68,7 @@ describe('Tempo data source', () => {
     function getQuery(): TempoQuery {
       return {
         refId: 'x',
-        queryType: 'traceId',
+        queryType: 'traceql',
         linkedQuery: {
           refId: 'linked',
           expr: '{instance="$interpolationVar"}',
@@ -365,6 +372,64 @@ describe('Tempo data source', () => {
       expect(response).toBe('456');
     });
   });
+
+  it('should include time shift when querying for traceID', () => {
+    const ds = new TempoDatasource({
+      ...defaultSettings,
+      jsonData: { traceQuery: { timeShiftEnabled: true, spanStartTimeShift: '2m', spanEndTimeShift: '4m' } },
+    });
+
+    const request = ds.traceIdQueryRequest(
+      {
+        requestId: 'test',
+        interval: '',
+        intervalMs: 5,
+        scopedVars: {},
+        targets: [],
+        timezone: '',
+        app: '',
+        startTime: 0,
+        range: {
+          from: dateTime(new Date(2022, 8, 13, 16, 0, 0, 0)),
+          to: dateTime(new Date(2022, 8, 13, 16, 15, 0, 0)),
+          raw: { from: '15m', to: 'now' },
+        },
+      },
+      [{ refId: 'refid1', queryType: 'traceql', query: '' } as TempoQuery]
+    );
+
+    expect(request.range.from.unix()).toBe(dateTime(new Date(2022, 8, 13, 15, 58, 0, 0)).unix());
+    expect(request.range.to.unix()).toBe(dateTime(new Date(2022, 8, 13, 16, 19, 0, 0)).unix());
+  });
+
+  it('should not include time shift when querying for traceID and time shift config is off', () => {
+    const ds = new TempoDatasource({
+      ...defaultSettings,
+      jsonData: { traceQuery: { timeShiftEnabled: false, spanStartTimeShift: '2m', spanEndTimeShift: '4m' } },
+    });
+
+    const request = ds.traceIdQueryRequest(
+      {
+        requestId: 'test',
+        interval: '',
+        intervalMs: 5,
+        scopedVars: {},
+        targets: [],
+        timezone: '',
+        app: '',
+        startTime: 0,
+        range: {
+          from: dateTime(new Date(2022, 8, 13, 16, 0, 0, 0)),
+          to: dateTime(new Date(2022, 8, 13, 16, 15, 0, 0)),
+          raw: { from: '15m', to: 'now' },
+        },
+      },
+      [{ refId: 'refid1', queryType: 'traceql', query: '' } as TempoQuery]
+    );
+
+    expect(request.range.from.unix()).toBe(dateTime(0).unix());
+    expect(request.range.to.unix()).toBe(dateTime(0).unix());
+  });
 });
 
 describe('Tempo apm table', () => {
@@ -502,6 +567,16 @@ describe('Tempo apm table', () => {
     expect(builtQuery).toBe(
       'topk(5, sum(rate(traces_spanmetrics_calls_total{service="app",service="app"}[$__range])) by (span_name))'
     );
+
+    targets = { targets: [{ queryType: 'serviceMap', serviceMapQuery: '{client="${app}",service="$app"}' }] } as any;
+    builtQuery = buildExpr(
+      { expr: 'topk(5, sum(rate(traces_spanmetrics_calls_total{}[$__range])) by (span_name))', params: [] },
+      '',
+      targets
+    );
+    expect(builtQuery).toBe(
+      'topk(5, sum(rate(traces_spanmetrics_calls_total{service="${app}",service="$app"}[$__range])) by (span_name))'
+    );
   });
 
   it('should build link expr correctly', () => {
@@ -604,17 +679,17 @@ describe('Tempo apm table', () => {
     ];
     const objToAlign = {
       'HTTP GET - root': {
-        value: 0.1234,
+        value: '0.1234',
       },
       'HTTP GET': {
-        value: 0.6789,
+        value: '0.6789',
       },
       'HTTP POST - post': {
-        value: 0.4321,
+        value: '0.4321',
       },
     };
 
-    let value = getRateAlignedValues(resp, objToAlign as any);
+    let value = getRateAlignedValues(resp, objToAlign);
     expect(value.toString()).toBe('0,0.6789,0.1234,0,0.4321');
   });
 

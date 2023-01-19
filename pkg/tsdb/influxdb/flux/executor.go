@@ -9,28 +9,30 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/influxdata/influxdb-client-go/v2/api"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 const maxPointsEnforceFactor float64 = 10
 
 // executeQuery runs a flux query using the queryModel to interpolate the query and the runner to execute it.
 // maxSeries somehow limits the response.
-func executeQuery(ctx context.Context, query queryModel, runner queryRunner, maxSeries int) (dr backend.DataResponse) {
+func executeQuery(ctx context.Context, logger log.Logger, query queryModel, runner queryRunner, maxSeries int) (dr backend.DataResponse) {
 	dr = backend.DataResponse{}
 
 	flux := interpolate(query)
 
-	glog.Debug("Executing Flux query", "flux", flux)
+	logger.Debug("Executing Flux query", "flux", flux)
 
 	tables, err := runner.runQuery(ctx, flux)
 	if err != nil {
-		glog.Warn("Flux query failed", "err", err, "query", flux)
+		logger.Warn("Flux query failed", "err", err, "query", flux)
 		dr.Error = err
 	} else {
 		// we only enforce a larger number than maxDataPoints
 		maxPointsEnforced := int(float64(query.MaxDataPoints) * maxPointsEnforceFactor)
 
-		dr = readDataFrames(tables, maxPointsEnforced, maxSeries)
+		dr = readDataFrames(logger, tables, maxPointsEnforced, maxSeries)
 
 		if dr.Error != nil {
 			// we check if a too-many-data-points error happened, and if it is so,
@@ -62,8 +64,8 @@ func executeQuery(ctx context.Context, query queryModel, runner queryRunner, max
 	return dr
 }
 
-func readDataFrames(result *api.QueryTableResult, maxPoints int, maxSeries int) (dr backend.DataResponse) {
-	glog.Debug("Reading data frames from query result", "maxPoints", maxPoints, "maxSeries", maxSeries)
+func readDataFrames(logger log.Logger, result *api.QueryTableResult, maxPoints int, maxSeries int) (dr backend.DataResponse) {
+	logger.Debug("Reading data frames from query result", "maxPoints", maxPoints, "maxSeries", maxSeries)
 	dr = backend.DataResponse{}
 
 	builder := &frameBuilder{

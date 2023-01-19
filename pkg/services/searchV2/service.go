@@ -10,14 +10,15 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
+	"github.com/grafana/grafana/pkg/services/querylibrary"
+
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -64,7 +65,7 @@ type StandardSearchService struct {
 	registry.BackgroundService
 
 	cfg         *setting.Cfg
-	sql         *sqlstore.SQLStore
+	sql         db.DB
 	auth        FutureAuthService // eventually injected from elsewhere
 	ac          accesscontrol.Service
 	orgService  org.Service
@@ -74,15 +75,17 @@ type StandardSearchService struct {
 	dashboardIndex *searchIndex
 	extender       DashboardIndexExtender
 	reIndexCh      chan struct{}
+	queries        querylibrary.Service
+	features       featuremgmt.FeatureToggles
 }
 
 func (s *StandardSearchService) IsReady(ctx context.Context, orgId int64) IsSearchReadyResponse {
 	return s.dashboardIndex.isInitialized(ctx, orgId)
 }
 
-func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore store.EntityEventsService,
+func ProvideService(cfg *setting.Cfg, sql db.DB, entityEventStore store.EntityEventsService,
 	ac accesscontrol.Service, tracer tracing.Tracer, features featuremgmt.FeatureToggles, orgService org.Service,
-	userService user.Service) SearchService {
+	userService user.Service, queries querylibrary.Service) SearchService {
 	extender := &NoopExtender{}
 	s := &StandardSearchService{
 		cfg: cfg,
@@ -106,6 +109,8 @@ func ProvideService(cfg *setting.Cfg, sql *sqlstore.SQLStore, entityEventStore s
 		reIndexCh:   make(chan struct{}, 1),
 		orgService:  orgService,
 		userService: userService,
+		queries:     queries,
+		features:    features,
 	}
 	return s
 }
@@ -118,14 +123,14 @@ func (s *StandardSearchService) IsDisabled() bool {
 }
 
 func (s *StandardSearchService) Run(ctx context.Context) error {
-	orgQuery := &models.SearchOrgsQuery{}
-	err := s.sql.SearchOrgs(ctx, orgQuery)
+	orgQuery := &org.SearchOrgsQuery{}
+	result, err := s.orgService.Search(ctx, orgQuery)
 	if err != nil {
 		return fmt.Errorf("can't get org list: %w", err)
 	}
-	orgIDs := make([]int64, 0, len(orgQuery.Result))
-	for _, org := range orgQuery.Result {
-		orgIDs = append(orgIDs, org.Id)
+	orgIDs := make([]int64, 0, len(result))
+	for _, org := range result {
+		orgIDs = append(orgIDs, org.ID)
 	}
 	return s.dashboardIndex.run(ctx, orgIDs, s.reIndexCh)
 }
@@ -148,14 +153,15 @@ func (s *StandardSearchService) getUser(ctx context.Context, backendUser *backen
 
 	var usr *user.SignedInUser
 	if s.cfg.AnonymousEnabled && backendUser.Email == "" && backendUser.Login == "" {
-		orga, err := s.sql.GetOrgByName(s.cfg.AnonymousOrgName)
+		getOrg := org.GetOrgByNameQuery{Name: s.cfg.AnonymousOrgName}
+		orga, err := s.orgService.GetByName(ctx, &getOrg)
 		if err != nil {
 			s.logger.Error("Anonymous access organization error.", "org_name", s.cfg.AnonymousOrgName, "error", err)
 			return nil, err
 		}
 
 		usr = &user.SignedInUser{
-			OrgID:       orga.Id,
+			OrgID:       orga.ID,
 			OrgName:     orga.Name,
 			OrgRole:     org.RoleType(s.cfg.AnonymousOrgRole),
 			IsAnonymous: true,
@@ -233,6 +239,10 @@ func (s *StandardSearchService) DoDashboardQuery(ctx context.Context, user *back
 }
 
 func (s *StandardSearchService) doDashboardQuery(ctx context.Context, signedInUser *user.SignedInUser, orgID int64, q DashboardQuery) *backend.DataResponse {
+	if !s.queries.IsDisabled() && len(q.Kind) == 1 && q.Kind[0] == string(entityKindQuery) {
+		return s.searchQueries(ctx, signedInUser, q)
+	}
+
 	rsp := &backend.DataResponse{}
 
 	filter, err := s.auth.GetDashboardReadFilter(signedInUser)

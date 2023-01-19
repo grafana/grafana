@@ -4,7 +4,8 @@ import { useForm, Validate } from 'react-hook-form';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, Field, FieldSet, Input, LinkButton, Stack, useStyles2 } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { Alert, Button, Field, FieldSet, Input, LinkButton, useStyles2 } from '@grafana/ui';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
@@ -104,7 +105,7 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
 
   return (
     <form onSubmit={handleSubmit(submit)}>
-      <h4>{existing ? 'Edit message template' : 'Create message template'}</h4>
+      <h4>{existing ? 'Edit notification template' : 'Create notification template'}</h4>
       {error && (
         <Alert severity="error" title="Error saving template">
           {error.message || (error as any)?.data?.message || String(error)}
@@ -182,7 +183,7 @@ function TemplatingGuideline() {
         </div>
         <div>
           <LinkButton
-            href="https://grafana.com/docs/grafana/latest/alerting/contact-points/message-templating"
+            href="https://grafana.com/docs/grafana/latest/alerting/manage-notifications/template-notifications/"
             target="_blank"
             icon="external-link-alt"
           >

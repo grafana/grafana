@@ -11,27 +11,25 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
+
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
 var eslog = log.New("tsdb.elasticsearch")
 
 type Service struct {
 	httpClientProvider httpclient.Provider
-	intervalCalculator intervalv2.Calculator
 	im                 instancemgmt.InstanceManager
 }
 
 func ProvideService(httpClientProvider httpclient.Provider) *Service {
-	eslog.Debug("initializing")
+	eslog.Debug("Initializing")
 
 	return &Service{
 		im:                 datasource.NewInstanceManager(newInstanceSettings(httpClientProvider)),
 		httpClientProvider: httpClientProvider,
-		intervalCalculator: intervalv2.NewCalculator(),
 	}
 }
 
@@ -41,22 +39,26 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return &backend.QueryDataResponse{}, err
 	}
 
+	return queryData(ctx, req.Queries, dsInfo)
+}
+
+// separate function to allow testing the whole transformation and query flow
+func queryData(ctx context.Context, queries []backend.DataQuery, dsInfo *es.DatasourceInfo) (*backend.QueryDataResponse, error) {
 	// Support for version after their end-of-life (currently <7.10.0) was removed
 	lastSupportedVersion, _ := semver.NewVersion("7.10.0")
 	if dsInfo.ESVersion.LessThan(lastSupportedVersion) {
 		return &backend.QueryDataResponse{}, fmt.Errorf("support for elasticsearch versions after their end-of-life (currently versions < 7.10) was removed")
 	}
 
-	if len(req.Queries) == 0 {
+	if len(queries) == 0 {
 		return &backend.QueryDataResponse{}, fmt.Errorf("query contains no queries")
 	}
 
-	client, err := es.NewClient(ctx, dsInfo, req.Queries[0].TimeRange)
+	client, err := es.NewClient(ctx, dsInfo, queries[0].TimeRange)
 	if err != nil {
 		return &backend.QueryDataResponse{}, err
 	}
-
-	query := newTimeSeriesQuery(client, req.Queries, s.intervalCalculator)
+	query := newTimeSeriesQuery(client, queries)
 	return query.execute()
 }
 

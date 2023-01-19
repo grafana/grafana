@@ -8,8 +8,8 @@ import (
   {{ if .NoAlias }}{{ .PkgName }} {{end}}"{{ .Path }}"{{ end }}
 )
 
-func coreTreeLoaders() []func(*thema.Library) *pfs.Tree{
-  return []func(*thema.Library) *pfs.Tree{
+func coreTreeLoaders() []func(*thema.Runtime) *pfs.Tree{
+  return []func(*thema.Runtime) *pfs.Tree{
     {{- range .Plugins }}
     {{ .PkgName }}.PluginTree,{{ end }}
   }

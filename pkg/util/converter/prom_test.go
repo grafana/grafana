@@ -32,7 +32,8 @@ func TestReadPromFrames(t *testing.T) {
 		"prom-series",
 		"prom-warnings",
 		"prom-error",
-		"prom-exemplars",
+		"prom-exemplars-a",
+		"prom-exemplars-b",
 		"loki-streams-a",
 		"loki-streams-b",
 		"loki-streams-c",
@@ -67,7 +68,7 @@ func runScenario(name string, opts Options) func(t *testing.T) {
 		}
 
 		fname := name + "-frame"
-		experimental.CheckGoldenJSONResponse(t, "testdata", fname, rsp, update)
+		experimental.CheckGoldenJSONResponse(t, "testdata", fname, &rsp, update)
 	}
 }
 

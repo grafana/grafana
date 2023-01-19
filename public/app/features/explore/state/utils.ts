@@ -12,13 +12,21 @@ import {
   PanelData,
 } from '@grafana/data';
 import { ExplorePanelData } from 'app/types';
-import { ExploreGraphStyle, ExploreItemState } from 'app/types/explore';
+import { ExploreItemState, SupplementaryQueries, SupplementaryQueryType } from 'app/types/explore';
 
 import store from '../../../core/store';
-import { clearQueryKeys, lastUsedDatasourceKeyForOrgId, toGraphStyle } from '../../../core/utils/explore';
+import { clearQueryKeys, lastUsedDatasourceKeyForOrgId } from '../../../core/utils/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
 import { SETTINGS_KEYS } from '../utils/logs';
 import { toRawTimeRange } from '../utils/time';
+
+export const SUPPLEMENTARY_QUERY_TYPES: SupplementaryQueryType[] = [SupplementaryQueryType.LogsVolume];
+
+// Used to match supplementaryQueryType to corresponding local storage key
+// TODO: Remove this and unify enum values with SETTINGS_KEYS.enableVolumeHistogram
+const supplementaryQuerySettings: { [key in SupplementaryQueryType]: string } = {
+  [SupplementaryQueryType.LogsVolume]: SETTINGS_KEYS.enableVolumeHistogram,
+};
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -30,24 +38,25 @@ export const storeGraphStyle = (graphStyle: string): void => {
   store.set(GRAPH_STYLE_KEY, graphStyle);
 };
 
-const loadGraphStyle = (): ExploreGraphStyle => {
-  const data = store.get(GRAPH_STYLE_KEY);
-  return toGraphStyle(data);
-};
-
-const LOGS_VOLUME_ENABLED_KEY = SETTINGS_KEYS.enableVolumeHistogram;
-export const storeLogsVolumeEnabled = (enabled: boolean): void => {
-  store.set(LOGS_VOLUME_ENABLED_KEY, enabled ? 'true' : 'false');
-};
-
-const loadLogsVolumeEnabled = (): boolean => {
-  const data = store.get(LOGS_VOLUME_ENABLED_KEY);
-  // we default to `enabled=true`
-  if (data === 'false') {
-    return false;
+export const storeSupplementaryQueryEnabled = (enabled: boolean, type: SupplementaryQueryType): void => {
+  if (supplementaryQuerySettings[type]) {
+    store.set(supplementaryQuerySettings[type], enabled ? 'true' : 'false');
   }
+};
 
-  return true;
+export const loadSupplementaryQueries = (): SupplementaryQueries => {
+  // We default to true for all supp queries
+  let supplementaryQueries: SupplementaryQueries = {
+    [SupplementaryQueryType.LogsVolume]: { enabled: true },
+  };
+
+  for (const type of SUPPLEMENTARY_QUERY_TYPES) {
+    // Only if "false" value in local storage, we disable it
+    if (store.get(supplementaryQuerySettings[type]) === 'false') {
+      supplementaryQueries[type] = { enabled: false };
+    }
+  }
+  return supplementaryQueries;
 };
 
 /**
@@ -78,13 +87,11 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   tableResult: null,
   graphResult: null,
   logsResult: null,
+  rawPrometheusResult: null,
   eventBridge: null as unknown as EventBusExtended,
   cache: [],
   richHistory: [],
-  logsVolumeEnabled: loadLogsVolumeEnabled(),
-  logsVolumeDataProvider: undefined,
-  logsVolumeData: undefined,
-  graphStyle: loadGraphStyle(),
+  supplementaryQueries: loadSupplementaryQueries(),
   panelsState: {},
 });
 
@@ -96,7 +103,10 @@ export const createEmptyQueryResponse = (): ExplorePanelData => ({
   logsFrames: [],
   traceFrames: [],
   nodeGraphFrames: [],
+  flameGraphFrames: [],
   tableFrames: [],
+  rawPrometheusFrames: [],
+  rawPrometheusResult: null,
   graphResult: null,
   logsResult: null,
   tableResult: null,

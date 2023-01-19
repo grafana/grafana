@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretskvs "github.com/grafana/grafana/pkg/services/secrets/kvstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -19,7 +19,7 @@ var errPluginUnavailable = errors.New("remote secret management plugin is unavai
 // MigrateFromPluginService This migrator will handle migration of the configured plugin secrets back to Grafana unified secrets
 type MigrateFromPluginService struct {
 	cfg            *setting.Cfg
-	sqlStore       sqlstore.Store
+	sqlStore       db.DB
 	secretsService secrets.Service
 	manager        plugins.SecretsPluginManager
 	kvstore        kvstore.KVStore
@@ -27,7 +27,7 @@ type MigrateFromPluginService struct {
 
 func ProvideMigrateFromPluginService(
 	cfg *setting.Cfg,
-	sqlStore sqlstore.Store,
+	sqlStore db.DB,
 	secretsService secrets.Service,
 	manager plugins.SecretsPluginManager,
 	kvstore kvstore.KVStore,

@@ -1,7 +1,8 @@
 import React, { FC, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, Select } from '@grafana/ui';
+import { EditorField } from '@grafana/experimental';
+import { Select } from '@grafana/ui';
 
 import { getAggregationOptionsByMetric } from '../functions';
 import { MetricDescriptor, MetricKind, ValueTypes } from '../types';
@@ -38,6 +39,7 @@ export const Aggregation: FC<Props> = (props) => {
         ]}
         placeholder="Select Reducer"
         inputId={`${props.refId}-group-by-function`}
+        menuPlacement="top"
       />
     </EditorField>
   );

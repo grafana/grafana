@@ -20,7 +20,7 @@ const (
 	alertmanagerDefaultPeerTimeout        = 15 * time.Second
 	alertmanagerDefaultGossipInterval     = cluster.DefaultGossipInterval
 	alertmanagerDefaultPushPullInterval   = cluster.DefaultPushPullInterval
-	alertmanagerDefaultConfigPollInterval = 60 * time.Second
+	alertmanagerDefaultConfigPollInterval = time.Minute
 	// To start, the alertmanager needs at least one route defined.
 	// TODO: we should move this to Grafana settings and define this as the default.
 	alertmanagerDefaultConfiguration = `{
@@ -45,11 +45,13 @@ const (
 }
 `
 	evaluatorDefaultEvaluationTimeout       = 30 * time.Second
-	schedulerDefaultAdminConfigPollInterval = 60 * time.Second
+	schedulerDefaultAdminConfigPollInterval = time.Minute
 	schedulereDefaultExecuteAlerts          = true
 	schedulerDefaultMaxAttempts             = 3
 	schedulerDefaultLegacyMinInterval       = 1
 	screenshotsDefaultCapture               = false
+	screenshotsDefaultCaptureTimeout        = 10 * time.Second
+	screenshotsMaxCaptureTimeout            = 30 * time.Second
 	screenshotsDefaultMaxConcurrent         = 5
 	screenshotsDefaultUploadImageStorage    = false
 	// SchedulerBaseInterval base interval of the scheduler. Controls how often the scheduler fetches database for new changes as well as schedules evaluation of a rule
@@ -58,6 +60,7 @@ const (
 	SchedulerBaseInterval = 10 * time.Second
 	// DefaultRuleEvaluationInterval indicates a default interval of for how long a rule should be evaluated to change state from Pending to Alerting
 	DefaultRuleEvaluationInterval = SchedulerBaseInterval * 6 // == 60 seconds
+	stateHistoryDefaultEnabled    = true
 )
 
 type UnifiedAlertingSettings struct {
@@ -83,16 +86,29 @@ type UnifiedAlertingSettings struct {
 	DefaultRuleEvaluationInterval time.Duration
 	Screenshots                   UnifiedAlertingScreenshotSettings
 	ReservedLabels                UnifiedAlertingReservedLabelSettings
+	StateHistory                  UnifiedAlertingStateHistorySettings
 }
 
 type UnifiedAlertingScreenshotSettings struct {
 	Capture                    bool
+	CaptureTimeout             time.Duration
 	MaxConcurrentScreenshots   int64
 	UploadExternalImageStorage bool
 }
 
 type UnifiedAlertingReservedLabelSettings struct {
 	DisabledLabels map[string]struct{}
+}
+
+type UnifiedAlertingStateHistorySettings struct {
+	Enabled       bool
+	Backend       string
+	LokiRemoteURL string
+	LokiTenantID  string
+	// LokiBasicAuthUsername and LokiBasicAuthPassword are used for basic auth
+	// if one of them is set.
+	LokiBasicAuthPassword string
+	LokiBasicAuthUsername string
 }
 
 // IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
@@ -281,6 +297,13 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfgScreenshots := uaCfg.Screenshots
 
 	uaCfgScreenshots.Capture = screenshots.Key("capture").MustBool(screenshotsDefaultCapture)
+
+	captureTimeout := screenshots.Key("capture_timeout").MustDuration(screenshotsDefaultCaptureTimeout)
+	if captureTimeout > screenshotsMaxCaptureTimeout {
+		return fmt.Errorf("value of setting 'capture_timeout' cannot exceed %s", screenshotsMaxCaptureTimeout)
+	}
+	uaCfgScreenshots.CaptureTimeout = captureTimeout
+
 	uaCfgScreenshots.MaxConcurrentScreenshots = screenshots.Key("max_concurrent_screenshots").MustInt64(screenshotsDefaultMaxConcurrent)
 	uaCfgScreenshots.UploadExternalImageStorage = screenshots.Key("upload_external_image_storage").MustBool(screenshotsDefaultUploadImageStorage)
 	uaCfg.Screenshots = uaCfgScreenshots
@@ -293,6 +316,17 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		uaCfgReservedLabels.DisabledLabels[label] = struct{}{}
 	}
 	uaCfg.ReservedLabels = uaCfgReservedLabels
+
+	stateHistory := iniFile.Section("unified_alerting.state_history")
+	uaCfgStateHistory := UnifiedAlertingStateHistorySettings{
+		Enabled:               stateHistory.Key("enabled").MustBool(stateHistoryDefaultEnabled),
+		Backend:               stateHistory.Key("backend").MustString("annotations"),
+		LokiRemoteURL:         stateHistory.Key("loki_remote_url").MustString(""),
+		LokiTenantID:          stateHistory.Key("loki_tenant_id").MustString(""),
+		LokiBasicAuthUsername: stateHistory.Key("loki_basic_auth_username").MustString(""),
+		LokiBasicAuthPassword: stateHistory.Key("loki_basic_auth_password").MustString(""),
+	}
+	uaCfg.StateHistory = uaCfgStateHistory
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil

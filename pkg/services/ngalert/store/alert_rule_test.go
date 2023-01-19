@@ -11,45 +11,26 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/exp/rand"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func TestUpdateAlertRules(t *testing.T) {
-	sqlStore := sqlstore.InitTestDB(t)
-	store := DBstore{
+func TestIntegrationUpdateAlertRules(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	sqlStore := db.InitTestDB(t)
+	store := &DBstore{
 		SQLStore: sqlStore,
 		Cfg: setting.UnifiedAlertingSettings{
 			BaseInterval: time.Duration(rand.Int63n(100)) * time.Second,
 		},
 	}
-	createRule := func(t *testing.T) *models.AlertRule {
-		t.Helper()
-		rule := models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval))()
-		err := sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-			_, err := sess.Table(models.AlertRule{}).InsertOne(rule)
-			if err != nil {
-				return err
-			}
-			dbRule := &models.AlertRule{}
-			exist, err := sess.Table(models.AlertRule{}).ID(rule.ID).Get(dbRule)
-			if err != nil {
-				return err
-			}
-			if !exist {
-				return errors.New("cannot read inserted record")
-			}
-			rule = dbRule
-			return nil
-		})
-		require.NoError(t, err)
-		return rule
-	}
 
 	t.Run("should increase version", func(t *testing.T) {
-		rule := createRule(t)
+		rule := createRule(t, store)
 		newRule := models.CopyRule(rule)
 		newRule.Title = util.GenerateShortUID()
 		err := store.UpdateAlertRules(context.Background(), []models.UpdateRule{{
@@ -60,7 +41,7 @@ func TestUpdateAlertRules(t *testing.T) {
 		require.NoError(t, err)
 
 		dbrule := &models.AlertRule{}
-		err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 			exist, err := sess.Table(models.AlertRule{}).ID(rule.ID).Get(dbrule)
 			require.Truef(t, exist, fmt.Sprintf("rule with ID %d does not exist", rule.ID))
 			return err
@@ -71,7 +52,7 @@ func TestUpdateAlertRules(t *testing.T) {
 	})
 
 	t.Run("should fail due to optimistic locking if version does not match", func(t *testing.T) {
-		rule := createRule(t)
+		rule := createRule(t, store)
 		rule.Version-- // simulate version discrepancy
 
 		newRule := models.CopyRule(rule)
@@ -94,7 +75,10 @@ func withIntervalMatching(baseInterval time.Duration) func(*models.AlertRule) {
 	}
 }
 
-func Test_getFilterByOrgsString(t *testing.T) {
+func TestIntegration_getFilterByOrgsString(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	testCases := []struct {
 		testName       string
 		orgs           map[int64]struct{}
@@ -144,4 +128,71 @@ func Test_getFilterByOrgsString(t *testing.T) {
 			assert.ElementsMatch(t, testCase.expectedArgs, args)
 		})
 	}
+}
+
+func TestIntegration_CountAlertRules(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+
+	sqlStore := db.InitTestDB(t)
+	store := &DBstore{SQLStore: sqlStore}
+	rule := createRule(t, store)
+
+	tests := map[string]struct {
+		query     *models.CountAlertRulesQuery
+		expected  int64
+		expectErr bool
+	}{
+		"basic success": {
+			&models.CountAlertRulesQuery{
+				NamespaceUID: rule.NamespaceUID,
+				OrgID:        rule.OrgID,
+			},
+			1,
+			false,
+		},
+		"successfully returning no results": {
+			&models.CountAlertRulesQuery{
+				NamespaceUID: "probably not a uid we'd generate",
+				OrgID:        rule.OrgID,
+			},
+			0,
+			false,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			count, err := store.CountAlertRulesInFolder(context.Background(), test.query)
+			if test.expectErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, test.expected, count)
+			}
+		})
+	}
+}
+
+func createRule(t *testing.T, store *DBstore) *models.AlertRule {
+	rule := models.AlertRuleGen(withIntervalMatching(store.Cfg.BaseInterval))()
+	err := store.SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		_, err := sess.Table(models.AlertRule{}).InsertOne(rule)
+		if err != nil {
+			return err
+		}
+		dbRule := &models.AlertRule{}
+		exist, err := sess.Table(models.AlertRule{}).ID(rule.ID).Get(dbRule)
+		if err != nil {
+			return err
+		}
+		if !exist {
+			return errors.New("cannot read inserted record")
+		}
+		rule = dbRule
+		return nil
+	})
+	require.NoError(t, err)
+	return rule
 }

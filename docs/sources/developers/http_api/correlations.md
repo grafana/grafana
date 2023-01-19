@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/correlations/
-  - /docs/grafana/latest/http_api/correlations/
+  - ../../http_api/correlations/
 description: Grafana Correlations HTTP API
 keywords:
   - grafana
@@ -34,6 +33,11 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 	"targetUID": "PDDA8E780A17E7EF1",
 	"label": "My Label",
 	"description": "Logs to Traces",
+  "config": {
+    "type": "query",
+    "field": "message",
+    "target": {},
+  }
 }
 ```
 
@@ -55,7 +59,12 @@ Content-Type: application/json
     "label": "My Label",
     "sourceUID": "uyBf2637k",
     "targetUID": "PDDA8E780A17E7EF1",
-    "uid": "50xhMlg9k"
+    "uid": "50xhMlg9k",
+    "config": {
+      "type": "query",
+      "field": "message",
+      "target": {},
+    }
   }
 }
 ```
@@ -138,7 +147,12 @@ Content-Type: application/json
     "label": "My Label",
     "sourceUID": "uyBf2637k",
     "targetUID": "PDDA8E780A17E7EF1",
-    "uid": "J6gn7d31L"
+    "uid": "J6gn7d31L",
+    "config": {
+			"type": "query",
+			"field": "message",
+			"target": {}
+		}
   }
 }
 ```
@@ -146,6 +160,7 @@ Content-Type: application/json
 Status codes:
 
 - **200** – OK
+- **400** – Bad request
 - **401** – Unauthorized
 - **403** – Forbidden, source data source is read-only
 - **404** – Not found, either source or target data source could not be found
@@ -175,7 +190,12 @@ Content-Type: application/json
   "label": "My Label",
   "sourceUID": "uyBf2637k",
   "targetUID": "PDDA8E780A17E7EF1",
-  "uid": "J6gn7d31L"
+  "uid": "J6gn7d31L",
+  "config": {
+    "type": "query",
+    "field": "message",
+    "target": {},
+  }
 }
 ```
 
@@ -211,14 +231,24 @@ Content-Type: application/json
     "label": "My Label",
     "sourceUID": "uyBf2637k",
     "targetUID": "PDDA8E780A17E7EF1",
-    "uid": "J6gn7d31L"
+    "uid": "J6gn7d31L",
+    "config": {
+      "type": "query",
+      "field": "message",
+      "target": {},
+    }
   },
   {
     "description": "Logs to Metrics",
     "label": "Another Label",
     "sourceUID": "uyBf2637k",
     "targetUID": "P15396BDD62B2BE29",
-    "uid": "uWCpURgVk"
+    "uid": "uWCpURgVk",
+    "config": {
+      "type": "query",
+      "field": "message",
+      "target": {},
+    }
   }
 ]
 ```
@@ -255,14 +285,24 @@ Content-Type: application/json
     "label": "My Label",
     "sourceUID": "uyBf2637k",
     "targetUID": "PDDA8E780A17E7EF1",
-    "uid": "J6gn7d31L"
+    "uid": "J6gn7d31L",
+    "config": {
+      "type": "query",
+      "field": "message",
+      "target": {},
+    }
   },
   {
     "description": "Loki to Tempo",
     "label": "Another Label",
     "sourceUID": "PDDA8E780A17E7EF1",
     "targetUID": "P15396BDD62B2BE29",
-    "uid": "uWCpURgVk"
+    "uid": "uWCpURgVk",
+    "config": {
+      "type": "query",
+      "field": "message",
+      "target": {},
+    }
   }
 ]
 ```

@@ -1,4 +1,4 @@
-import { PluggableMap } from 'ol';
+import { Map as OpenLayersMap } from 'ol';
 import { FeatureLike } from 'ol/Feature';
 import { Subject } from 'rxjs';
 
@@ -92,7 +92,7 @@ export async function updateLayer(panel: GeomapPanel, uid: string, newOptions: M
 
 export async function initLayer(
   panel: GeomapPanel,
-  map: PluggableMap,
+  map: OpenLayersMap,
   options: MapLayerOptions,
   isBasemap?: boolean
 ): Promise<MapLayerState> {

@@ -39,6 +39,7 @@ type ImportDashboardResponse struct {
 	Slug             string `json:"slug"`
 	DashboardId      int64  `json:"dashboardId"`
 	FolderId         int64  `json:"folderId"`
+	FolderUID        string `json:"folderUid"`
 	ImportedRevision int64  `json:"importedRevision"`
 	Revision         int64  `json:"revision"`
 	Description      string `json:"description"`

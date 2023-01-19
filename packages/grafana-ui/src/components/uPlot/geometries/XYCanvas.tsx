@@ -10,7 +10,7 @@ interface XYCanvasProps {
  * Renders absolutely positioned element on top of the uPlot's plotting area (axes are not included!).
  * Useful when you want to render some overlay with canvas-independent elements on top of the plot.
  */
-export const XYCanvas: React.FC<XYCanvasProps> = ({ children, left, top }) => {
+export const XYCanvas = ({ children, left, top }: React.PropsWithChildren<XYCanvasProps>) => {
   const className = useMemo(() => {
     return css`
       position: absolute;

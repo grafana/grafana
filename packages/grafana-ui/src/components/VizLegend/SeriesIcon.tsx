@@ -9,8 +9,8 @@ export interface Props extends React.HTMLAttributes<HTMLDivElement> {
   gradient?: string;
 }
 
-export const SeriesIcon = React.forwardRef<HTMLDivElement, Props>(
-  ({ color, className, gradient, ...restProps }, ref) => {
+export const SeriesIcon = React.memo(
+  React.forwardRef<HTMLDivElement, Props>(({ color, className, gradient, ...restProps }, ref) => {
     const theme = useTheme2();
     let cssColor: string;
 
@@ -36,7 +36,7 @@ export const SeriesIcon = React.forwardRef<HTMLDivElement, Props>(
     };
 
     return <div data-testid="series-icon" ref={ref} className={className} style={styles} {...restProps} />;
-  }
+  })
 );
 
 SeriesIcon.displayName = 'SeriesIcon';

@@ -1,13 +1,13 @@
 import { UrlQueryMap } from '@grafana/data';
 
 import { SECTION_STORAGE_KEY } from './constants';
-import { DashboardQuery } from './types';
+import { SearchState } from './types';
 
 /**
  * Check if search query has filters enabled. Excludes folderId
  * @param query
  */
-export const hasFilters = (query: DashboardQuery) => {
+export const hasFilters = (query: SearchState) => {
   if (!query) {
     return false;
   }
@@ -37,7 +37,7 @@ export const parseRouteParams = (params: UrlQueryMap) => {
       return { ...obj, sort: { value: val } };
     }
     return { ...obj, [key]: val };
-  }, {} as Partial<DashboardQuery>);
+  }, {} as Partial<SearchState>);
 
   if (params.folder) {
     const folderStr = `folder:${params.folder}`;

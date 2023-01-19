@@ -16,7 +16,7 @@ package grafanaplugin
 
 import (
 	"github.com/grafana/thema"
-	ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
+	ui "github.com/grafana/grafana/packages/grafana-schema/src/common"
 )
 
 Panel: thema.#Lineage & {
@@ -53,6 +53,8 @@ Panel: thema.#Lineage & {
 						barWidth:   float64 & >= 0 & <= 1 | *0.97
 						// Controls the width of groups. 1 = max with, 0 = min width.
 						groupWidth: float64 & >= 0 & <= 1 | *0.7
+						// Enables mode which highlights the entire bar area and shows tooltip when cursor hovers over highlighted area
+						fullHighlight: bool | *false
 					} @cuetsy(kind="interface")
 					PanelFieldConfig: {
 						ui.AxisConfig
@@ -64,6 +66,8 @@ Panel: thema.#Lineage & {
 						// Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard color scheme field option.
             // Gradient appearance is influenced by the Fill opacity setting.
 						gradientMode?: ui.GraphGradientMode | *"none"
+						// Threshold rendering
+						thresholdsStyle?: ui.GraphThresholdsStyleConfig
 					} @cuetsy(kind="interface")
 				},
 			]

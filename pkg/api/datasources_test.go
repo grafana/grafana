@@ -16,13 +16,15 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -33,7 +35,7 @@ const (
 )
 
 func TestDataSourcesProxy_userLoggedIn(t *testing.T) {
-	mockSQLStore := mockstore.NewSQLStoreMock()
+	mockSQLStore := dbtest.NewFakeDB()
 	mockDatasourcePermissionService := permissions.NewMockDatasourcePermissionService()
 	loggedInUserScenario(t, "When calling GET on", "/api/datasources/", "/api/datasources/", func(sc *scenarioContext) {
 		// Stubs the database query
@@ -112,7 +114,9 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 		DataSourcesService: &dataSourcesServiceMock{
 			expectedDatasource: &datasources.DataSource{},
 		},
-		Cfg: setting.NewCfg(),
+		Cfg:                  setting.NewCfg(),
+		AccessControl:        acimpl.ProvideAccessControl(setting.NewCfg()),
+		accesscontrolService: actest.FakeService{},
 	}
 
 	sc := setupScenarioContext(t, "/api/datasources")
@@ -224,7 +228,9 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 		DataSourcesService: &dataSourcesServiceMock{
 			expectedDatasource: &datasources.DataSource{},
 		},
-		Cfg: setting.NewCfg(),
+		Cfg:                  setting.NewCfg(),
+		AccessControl:        acimpl.ProvideAccessControl(setting.NewCfg()),
+		accesscontrolService: actest.FakeService{},
 	}
 
 	sc := setupScenarioContext(t, "/api/datasources/1234")

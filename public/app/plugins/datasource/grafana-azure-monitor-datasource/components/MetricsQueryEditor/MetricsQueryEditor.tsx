@@ -1,10 +1,10 @@
 import React from 'react';
 
 import { PanelData } from '@grafana/data/src/types';
-import { EditorRows, EditorRow, EditorFieldGroup } from '@grafana/ui';
+import { EditorRows, EditorRow, EditorFieldGroup } from '@grafana/experimental';
 
 import type Datasource from '../../datasource';
-import type { AzureMonitorQuery, AzureMonitorOption, AzureMonitorErrorish, AzureMetricResource } from '../../types';
+import type { AzureMonitorQuery, AzureMonitorOption, AzureMonitorErrorish } from '../../types';
 import ResourceField from '../ResourceField';
 import { ResourceRowType } from '../ResourcePicker/types';
 
@@ -37,12 +37,14 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
   const metricsMetadata = useMetricMetadata(query, datasource, onChange);
   const metricNamespaces = useMetricNamespaces(query, datasource, onChange, setError);
   const metricNames = useMetricNames(query, datasource, onChange, setError);
-  const resource: AzureMetricResource = {
-    subscription: query.subscription,
-    resourceGroup: query.azureMonitor?.resourceGroup,
-    metricNamespace: query.azureMonitor?.metricNamespace,
-    resourceName: query.azureMonitor?.resourceName,
-  };
+  const resources =
+    query.azureMonitor?.resources?.map((r) => ({
+      subscription: query.subscription,
+      resourceGroup: r.resourceGroup,
+      metricNamespace: query.azureMonitor?.metricNamespace,
+      resourceName: r.resourceName,
+      region: query.azureMonitor?.region,
+    })) ?? [];
   return (
     <span data-testid="azure-monitor-metrics-query-editor-with-experimental-ui">
       <EditorRows>
@@ -55,7 +57,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
               onQueryChange={onChange}
               setError={setError}
               selectableEntryTypes={[ResourceRowType.Resource]}
-              resource={resource}
+              resources={resources ?? []}
               queryType={'metrics'}
             />
             <MetricNamespaceField

@@ -5,7 +5,7 @@ import { Group } from '@visx/group';
 import Pie, { PieArcDatum, ProvidedProps } from '@visx/shape/lib/shapes/Pie';
 import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
 import { UseTooltipParams } from '@visx/tooltip/lib/hooks/useTooltip';
-import React, { FC, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import tinycolor from 'tinycolor2';
 
 import {
@@ -46,7 +46,7 @@ interface PieChartProps {
   tooltipOptions: VizTooltipOptions;
 }
 
-export const PieChart: FC<PieChartProps> = ({
+export const PieChart = ({
   fieldDisplayValues,
   pieType,
   width,
@@ -54,7 +54,7 @@ export const PieChart: FC<PieChartProps> = ({
   highlightedTitle,
   displayLabels = [],
   tooltipOptions,
-}) => {
+}: PieChartProps) => {
   const theme = useTheme2();
   const componentInstanceId = useComponentInstanceId('PieChart');
   const styles = useStyles2(getStyles);
@@ -199,7 +199,7 @@ function PieSlice({ arc, pie, highlightState, openMenu, fill, tooltip, tooltipOp
   const { eventBus } = usePanelContext();
 
   const onMouseOut = useCallback(
-    (event: any) => {
+    (event: React.MouseEvent<SVGGElement>) => {
       eventBus?.publish({
         type: DataHoverClearEvent.type,
         payload: {
@@ -215,7 +215,7 @@ function PieSlice({ arc, pie, highlightState, openMenu, fill, tooltip, tooltipOp
   );
 
   const onMouseMoveOverArc = useCallback(
-    (event: any) => {
+    (event: React.MouseEvent<SVGGElement>) => {
       eventBus?.publish({
         type: DataHoverEvent.type,
         payload: {
@@ -226,12 +226,16 @@ function PieSlice({ arc, pie, highlightState, openMenu, fill, tooltip, tooltipOp
         },
       });
 
-      const coords = localPoint(event.target.ownerSVGElement, event);
-      tooltip.showTooltip({
-        tooltipLeft: coords!.x,
-        tooltipTop: coords!.y,
-        tooltipData: getTooltipData(pie, arc, tooltipOptions),
-      });
+      const owner = event.currentTarget.ownerSVGElement;
+
+      if (owner) {
+        const coords = localPoint(owner, event);
+        tooltip.showTooltip({
+          tooltipLeft: coords!.x,
+          tooltipTop: coords!.y,
+          tooltipData: getTooltipData(pie, arc, tooltipOptions),
+        });
+      }
     },
     [eventBus, arc, tooltip, pie, tooltipOptions]
   );

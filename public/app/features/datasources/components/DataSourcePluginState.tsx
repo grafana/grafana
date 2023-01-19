@@ -10,10 +10,10 @@ export type Props = {
 export function DataSourcePluginState({ state }: Props) {
   return (
     <div className="gf-form">
-      <label className="gf-form-label width-10">Plugin state</label>
-      <label className="gf-form-label gf-form-label--transparent">
+      <div className="gf-form-label width-10">Plugin state</div>
+      <div className="gf-form-label gf-form-label--transparent">
         <PluginStateInfo state={state} />
-      </label>
+      </div>
     </div>
   );
 }

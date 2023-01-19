@@ -7,13 +7,13 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
-func ProvideService(sqlStore *sqlstore.SQLStore, routeRegister routing.RouteRegister, ds datasources.DataSourceService, ac accesscontrol.AccessControl, bus bus.Bus) *CorrelationsService {
+func ProvideService(sqlStore db.DB, routeRegister routing.RouteRegister, ds datasources.DataSourceService, ac accesscontrol.AccessControl, bus bus.Bus) *CorrelationsService {
 	s := &CorrelationsService{
 		SQLStore:          sqlStore,
 		RouteRegister:     routeRegister,
@@ -37,7 +37,7 @@ type Service interface {
 }
 
 type CorrelationsService struct {
-	SQLStore          *sqlstore.SQLStore
+	SQLStore          db.DB
 	RouteRegister     routing.RouteRegister
 	log               log.Logger
 	DataSourceService datasources.DataSourceService

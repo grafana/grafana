@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
+import { DraggableProvidedDragHandleProps } from 'react-beautiful-dnd';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, Select, useStyles2, FlexItem } from '@grafana/ui';
+import { FlexItem } from '@grafana/experimental';
+import { Button, Select, useStyles2 } from '@grafana/ui';
 
 import { OperationInfoButton } from './OperationInfoButton';
 import { VisualQueryModeller, QueryBuilderOperation, QueryBuilderOperationDef } from './types';
@@ -12,7 +14,7 @@ export interface Props {
   def: QueryBuilderOperationDef;
   index: number;
   queryModeller: VisualQueryModeller;
-  dragHandleProps: any;
+  dragHandleProps?: DraggableProvidedDragHandleProps;
   onChange: (index: number, update: QueryBuilderOperation) => void;
   onRemove: (index: number) => void;
 }

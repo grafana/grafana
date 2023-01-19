@@ -1,16 +1,17 @@
 import React from 'react';
 import { useToggle } from 'react-use';
 
-import { Drawer, Icon } from '@grafana/ui';
+import { Drawer, ToolbarButton } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { DEFAULT_FEED_URL } from 'app/plugins/panel/news/constants';
 
 import { NewsWrapper } from './NewsWrapper';
 
 interface NewsContainerProps {
-  buttonCss?: string;
+  className?: string;
 }
 
-export function NewsContainer({ buttonCss }: NewsContainerProps) {
+export function NewsContainer({ className }: NewsContainerProps) {
   const [showNewsDrawer, onToggleShowNewsDrawer] = useToggle(false);
 
   const onChildClick = () => {
@@ -19,11 +20,9 @@ export function NewsContainer({ buttonCss }: NewsContainerProps) {
 
   return (
     <>
-      <button className={buttonCss} onClick={onChildClick}>
-        <Icon name="rss" size="lg" />
-      </button>
+      <ToolbarButton className={className} onClick={onChildClick} iconOnly icon="rss" aria-label="News" />
       {showNewsDrawer && (
-        <Drawer title="Latest from the blog" scrollableContent onClose={onToggleShowNewsDrawer}>
+        <Drawer title={t('news.title', 'Latest from the blog')} scrollableContent onClose={onToggleShowNewsDrawer}>
           <NewsWrapper feedUrl={DEFAULT_FEED_URL} />
         </Drawer>
       )}

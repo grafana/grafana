@@ -6,18 +6,21 @@ import (
 	"net/http"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
-	"github.com/grafana/grafana/pkg/util/converter"
 	jsoniter "github.com/json-iterator/go"
+
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata/exemplar"
+	"github.com/grafana/grafana/pkg/util/converter"
 )
 
-func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response) (*backend.DataResponse, error) {
+func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response) (backend.DataResponse, error) {
 	defer func() {
 		if err := res.Body.Close(); err != nil {
-			s.log.Error("Failed to close response body", "err", err)
+			s.log.FromContext(ctx).Error("Failed to close response body", "err", err)
 		}
 	}()
 
@@ -26,11 +29,13 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 		MatrixWideSeries: s.enableWideSeries,
 		VectorWideSeries: s.enableWideSeries,
 	})
-	if r == nil {
-		return nil, fmt.Errorf("received empty response from prometheus")
-	}
 
 	// The ExecutedQueryString can be viewed in QueryInspector in UI
+	// Add frame to attach metadata to it
+	if len(r.Frames) == 0 {
+		r.Frames = append(r.Frames, data.NewFrame(""))
+	}
+
 	for _, frame := range r.Frames {
 		if s.enableWideSeries {
 			addMetadataToWideFrame(q, frame)
@@ -39,7 +44,61 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 		}
 	}
 
+	if r.Error != nil {
+		return r, r.Error
+	}
+
+	r = s.processExemplars(q, r)
 	return r, nil
+}
+
+func (s *QueryData) processExemplars(q *models.Query, dr backend.DataResponse) backend.DataResponse {
+	sampler := s.exemplarSampler()
+	labelTracker := exemplar.NewLabelTracker()
+
+	// we are moving from a multi-frame response returned
+	// by the converter to a single exemplar frame,
+	// so we need to build a new frame array with the
+	// old exemplar frames filtered out
+	framer := exemplar.NewFramer(sampler, labelTracker)
+
+	for _, frame := range dr.Frames {
+		// we don't need to process non-exemplar frames
+		// so they can be added to the response
+		if !isExemplarFrame(frame) {
+			framer.AddFrame(frame)
+			continue
+		}
+
+		// copy the current exemplar frame metadata
+		framer.SetMeta(frame.Meta)
+		framer.SetRefID(frame.RefID)
+
+		step := time.Duration(frame.Fields[0].Config.Interval) * time.Millisecond
+		sampler.SetStep(step)
+
+		seriesLabels := getSeriesLabels(frame)
+		labelTracker.Add(seriesLabels)
+		for rowIdx := 0; rowIdx < frame.Fields[0].Len(); rowIdx++ {
+			row := frame.RowCopy(rowIdx)
+			labels := getLabels(frame, row)
+			labelTracker.Add(labels)
+			ex := models.Exemplar{
+				Labels:       labels,
+				Value:        row[1].(float64),
+				Timestamp:    row[0].(time.Time),
+				SeriesLabels: seriesLabels,
+			}
+			sampler.Add(ex)
+		}
+	}
+
+	frames, err := framer.Frames()
+
+	return backend.DataResponse{
+		Frames: frames,
+		Error:  err,
+	}
 }
 
 func addMetadataToMultiFrame(q *models.Query, frame *data.Frame) {
@@ -67,7 +126,7 @@ func addMetadataToWideFrame(q *models.Query, frame *data.Frame) {
 	}
 	frame.Fields[0].Config = &data.FieldConfig{Interval: float64(q.Step.Milliseconds())}
 	for _, f := range frame.Fields {
-		if f.Name != data.TimeSeriesTimeFieldName {
+		if f.Type() == data.FieldTypeFloat64 || f.Type() == data.FieldTypeNullableFloat64 {
 			f.Name = getName(q, f)
 		}
 	}
@@ -108,11 +167,11 @@ func getName(q *models.Query, field *data.Field) string {
 	labels := field.Labels
 	legend := metricNameFromLabels(field)
 
-	if q.LegendFormat == legendFormatAuto && len(labels) > 0 {
-		return ""
-	}
-
-	if q.LegendFormat != "" {
+	if q.LegendFormat == legendFormatAuto {
+		if len(labels) > 0 {
+			legend = ""
+		}
+	} else if q.LegendFormat != "" {
 		result := legendFormatRegexp.ReplaceAllFunc([]byte(q.LegendFormat), func(in []byte) []byte {
 			labelName := strings.Replace(string(in), "{{", "", 1)
 			labelName = strings.Replace(labelName, "}}", "", 1)
@@ -131,4 +190,22 @@ func getName(q *models.Query, field *data.Field) string {
 	}
 
 	return legend
+}
+
+func isExemplarFrame(frame *data.Frame) bool {
+	rt := models.ResultTypeFromFrame(frame)
+	return rt == models.ResultTypeExemplar
+}
+
+func getSeriesLabels(frame *data.Frame) data.Labels {
+	// series labels are stored on the value field (index 1)
+	return frame.Fields[1].Labels.Copy()
+}
+
+func getLabels(frame *data.Frame, row []interface{}) map[string]string {
+	labels := make(map[string]string)
+	for i := 2; i < len(row); i++ {
+		labels[frame.Fields[i].Name] = row[i].(string)
+	}
+	return labels
 }

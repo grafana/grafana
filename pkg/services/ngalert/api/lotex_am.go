@@ -133,7 +133,7 @@ func (am *LotexAM) RouteCreateSilence(ctx *models.ReqContext, silenceBody apimod
 		"silences",
 		nil,
 		bytes.NewBuffer(blob),
-		jsonExtractor(&apimodels.GettableSilence{}),
+		jsonExtractor(&apimodels.PostSilencesOKBody{}),
 		map[string]string{"Content-Type": "application/json"},
 	)
 }
@@ -254,8 +254,4 @@ func (am *LotexAM) RoutePostAMAlerts(ctx *models.ReqContext, alerts apimodels.Po
 		messageExtractor,
 		nil,
 	)
-}
-
-func (am *LotexAM) RoutePostTestReceivers(ctx *models.ReqContext, config apimodels.TestReceiversConfigBodyParams) response.Response {
-	return NotImplementedResp
 }

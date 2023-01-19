@@ -1,89 +1,67 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
+import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
+import { useOverlay } from '@react-aria/overlays';
 import {
   KBarAnimator,
   KBarPortal,
   KBarPositioner,
   KBarResults,
   KBarSearch,
-  useMatches,
-  Action,
   VisualState,
   useRegisterActions,
   useKBar,
+  ActionImpl,
 } from 'kbar';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction, locationService } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
-import { useGrafana } from 'app/core/context/GrafanaContext';
-import { useSelector } from 'app/types';
+import { t } from 'app/core/internationalization';
 
 import { ResultItem } from './ResultItem';
-import getDashboardNavActions from './actions/dashboard.nav.actions';
-import getGlobalActions from './actions/global.static.actions';
-
-/**
- * Wrap all the components from KBar here.
- * @constructor
- */
+import { useDashboardResults } from './actions/dashboardActions';
+import useActions from './actions/useActions';
+import { CommandPaletteAction } from './types';
+import { useMatches } from './useMatches';
 
 export const CommandPalette = () => {
   const styles = useStyles2(getSearchStyles);
-  const { keybindings } = useGrafana();
-  const [actions, setActions] = useState<Action[]>([]);
-  const [staticActions, setStaticActions] = useState<Action[]>([]);
-  const { query, showing } = useKBar((state) => ({
+
+  const { query, showing, searchQuery } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
+    searchQuery: state.searchQuery,
   }));
-  const isNotLogin = locationService.getLocation().pathname !== '/login';
 
-  const { navBarTree } = useSelector((state) => {
-    return {
-      navBarTree: state.navBarTree,
-    };
-  });
-
-  useEffect(() => {
-    if (isNotLogin) {
-      const staticActionsResp = getGlobalActions(navBarTree);
-      setStaticActions(staticActionsResp);
-      setActions([...staticActionsResp]);
-    }
-  }, [isNotLogin, navBarTree]);
-
-  useEffect(() => {
-    if (showing) {
-      reportInteraction('commandPalette_opened');
-
-      // Do dashboard search on demand
-      getDashboardNavActions('go/dashboard').then((dashAct) => {
-        setActions([...staticActions, ...dashAct]);
-      });
-
-      keybindings.bindGlobal('esc', () => {
-        query.setVisualState(VisualState.animatingOut);
-      });
-    }
-
-    return () => {
-      keybindings.bindGlobal('esc', () => {
-        keybindings.globalEsc();
-      });
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showing]);
-
+  const actions = useActions();
   useRegisterActions(actions, [actions]);
+  const dashboardResults = useDashboardResults(searchQuery, showing);
+
+  const ref = useRef<HTMLDivElement>(null);
+  const { overlayProps } = useOverlay(
+    { isOpen: showing, onClose: () => query.setVisualState(VisualState.animatingOut) },
+    ref
+  );
+  const { dialogProps } = useDialog({}, ref);
+
+  // Report interaction when opened
+  useEffect(() => {
+    showing && reportInteraction('command_palette_opened');
+  }, [showing]);
 
   return actions.length > 0 ? (
     <KBarPortal>
       <KBarPositioner className={styles.positioner}>
         <KBarAnimator className={styles.animator}>
-          <FocusScope contain>
-            <KBarSearch className={styles.search} />
-            <RenderResults />
+          <FocusScope contain autoFocus restoreFocus>
+            <div {...overlayProps} {...dialogProps}>
+              <KBarSearch
+                defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search Grafana')}
+                className={styles.search}
+              />
+              <RenderResults dashboardResults={dashboardResults} />
+            </div>
           </FocusScope>
         </KBarAnimator>
       </KBarPositioner>
@@ -91,23 +69,47 @@ export const CommandPalette = () => {
   ) : null;
 };
 
-const RenderResults = () => {
+interface RenderResultsProps {
+  dashboardResults: CommandPaletteAction[];
+}
+
+const RenderResults = ({ dashboardResults }: RenderResultsProps) => {
   const { results, rootActionId } = useMatches();
   const styles = useStyles2(getSearchStyles);
+  const dashboardsSectionTitle = t('command-palette.section.dashboard-search-results', 'Dashboards');
+  // because dashboard search results aren't registered as actions, we need to manually
+  // convert them to ActionImpls before passing them as items to KBarResults
+  const dashboardResultItems = useMemo(
+    () => dashboardResults.map((dashboard) => new ActionImpl(dashboard, { store: {} })),
+    [dashboardResults]
+  );
+
+  const items = useMemo(
+    () => (dashboardResultItems.length > 0 ? [...results, dashboardsSectionTitle, ...dashboardResultItems] : results),
+    [results, dashboardsSectionTitle, dashboardResultItems]
+  );
 
   return (
-    <div className={styles.resultsContainer}>
-      <KBarResults
-        items={results}
-        onRender={({ item, active }) =>
+    <KBarResults
+      items={items}
+      onRender={({ item, active }) => {
+        // These items are rendered in a container, in a virtual list, so we cannot
+        // use :first/last-child selectors, so we must mimic them in JS
+        const isFirstItem = items[0] === item;
+        const isLastItem = items[items.length - 1] === item;
+
+        const renderedItem =
           typeof item === 'string' ? (
-            <div className={styles.sectionHeader}>{item}</div>
+            <div className={styles.sectionHeader}>
+              <div className={cx(styles.sectionHeaderInner, isFirstItem && styles.sectionHeaderInnerFirst)}>{item}</div>
+            </div>
           ) : (
             <ResultItem action={item} active={active} currentRootActionId={rootActionId!} />
-          )
-        }
-      />
-    </div>
+          );
+
+        return isLastItem ? <div className={styles.lastItem}>{renderedItem}</div> : renderedItem;
+      }}
+    />
   );
 };
 
@@ -144,15 +146,30 @@ const getSearchStyles = (theme: GrafanaTheme2) => ({
     border: 'none',
     background: theme.colors.background.canvas,
     color: theme.colors.text.primary,
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
+    borderBottom: `1px solid ${theme.colors.border.medium}`,
   }),
+
+  // Virtual list measures margin incorrectly, so we need to split padding before/after border
+  // over and inner and outer element
   sectionHeader: css({
-    padding: theme.spacing(1, 2),
+    paddingTop: theme.spacing(2),
     fontSize: theme.typography.h6.fontSize,
     fontWeight: theme.typography.body.fontWeight,
     color: theme.colors.text.secondary,
   }),
-  resultsContainer: css({
-    padding: theme.spacing(2, 0),
+  sectionHeaderInner: css({
+    padding: theme.spacing(1, 2),
+    borderTop: `1px solid ${theme.colors.border.medium}`,
+  }),
+
+  // We don't need the header above the first section
+  sectionHeaderInnerFirst: css({
+    borderTop: 'none',
+    paddingTop: 0,
+  }),
+
+  // Last item gets extra padding so it's not clipped by the rounded corners on the container
+  lastItem: css({
+    paddingBottom: theme.spacing(1),
   }),
 });

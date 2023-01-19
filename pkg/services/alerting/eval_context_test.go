@@ -404,3 +404,18 @@ func TestEvaluateNotificationTemplateFields(t *testing.T) {
 		})
 	}
 }
+
+func TestGetDurationFromEvalContext(t *testing.T) {
+	startTime, err := time.Parse("2006-01-02 15:04:05.999999999 -0700 MST", "2022-10-03 11:33:14.438803 +0200 CEST")
+	require.NoError(t, err)
+
+	endTime, err := time.Parse("2006-01-02 15:04:05.999999999 -0700 MST", "2022-10-03 11:33:15.291075 +0200 CEST")
+	require.NoError(t, err)
+
+	evalContext := EvalContext{
+		StartTime: startTime,
+		EndTime:   endTime,
+	}
+
+	assert.Equal(t, float64(852.272), evalContext.GetDurationMs())
+}

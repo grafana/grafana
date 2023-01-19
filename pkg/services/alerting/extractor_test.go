@@ -11,11 +11,14 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestAlertRuleExtraction(t *testing.T) {
@@ -38,7 +41,8 @@ func TestAlertRuleExtraction(t *testing.T) {
 	}
 
 	dsService := &fakeDatasourceService{ExpectedDatasource: defaultDs}
-	store := mockstore.NewSQLStoreMock()
+	db := dbtest.NewFakeDB()
+	store := ProvideAlertStore(db, localcache.ProvideService(), &setting.Cfg{}, nil)
 	extractor := ProvideDashAlertExtractorService(dsPermissions, dsService, store)
 
 	t.Run("Parsing alert rules from dashboard json", func(t *testing.T) {
@@ -59,7 +63,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 		_, _ = extractor.GetAlerts(context.Background(), DashAlertInfo{
 			User:  nil,
-			Dash:  models.NewDashboardFromJson(dashJSON),
+			Dash:  dashboards.NewDashboardFromJson(dashJSON),
 			OrgID: 1,
 		})
 
@@ -73,7 +77,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dsService.ExpectedDatasource = &datasources.DataSource{Id: 12}
 		alerts, err := extractor.GetAlerts(context.Background(), DashAlertInfo{
 			User:  nil,
-			Dash:  models.NewDashboardFromJson(dashJSON),
+			Dash:  dashboards.NewDashboardFromJson(dashJSON),
 			OrgID: 1,
 		})
 
@@ -125,7 +129,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 		_, err = extractor.GetAlerts(context.Background(), DashAlertInfo{
 			User:  nil,
-			Dash:  models.NewDashboardFromJson(dashJSON),
+			Dash:  dashboards.NewDashboardFromJson(dashJSON),
 			OrgID: 1,
 		})
 
@@ -141,7 +145,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 		_, err = extractor.GetAlerts(context.Background(), DashAlertInfo{
 			User:  nil,
-			Dash:  models.NewDashboardFromJson(dashJSON),
+			Dash:  dashboards.NewDashboardFromJson(dashJSON),
 			OrgID: 1,
 		})
 
@@ -156,7 +160,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 		_, err = extractor.GetAlerts(WithUAEnabled(context.Background(), true), DashAlertInfo{
 			User:  nil,
-			Dash:  models.NewDashboardFromJson(dashJSON),
+			Dash:  dashboards.NewDashboardFromJson(dashJSON),
 			OrgID: 1,
 		})
 		require.Equal(t, "alert validation error: Alert on PanelId: 2 refers to query(B) that cannot be found. Legacy alerting queries are not able to be removed at this time in order to preserve the ability to rollback to previous versions of Grafana", err.Error())
@@ -172,7 +176,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dsService.ExpectedDatasource = &datasources.DataSource{Id: 12}
 		alerts, err := extractor.GetAlerts(context.Background(), DashAlertInfo{
 			User:  nil,
-			Dash:  models.NewDashboardFromJson(dashJSON),
+			Dash:  dashboards.NewDashboardFromJson(dashJSON),
 			OrgID: 1,
 		})
 		require.Nil(t, err)
@@ -191,7 +195,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 		alerts, err := extractor.GetAlerts(context.Background(), DashAlertInfo{
 			User:  nil,
-			Dash:  models.NewDashboardFromJson(dashJSON),
+			Dash:  dashboards.NewDashboardFromJson(dashJSON),
 			OrgID: 1,
 		})
 		require.Nil(t, err)
@@ -218,7 +222,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 		alerts, err := extractor.GetAlerts(context.Background(), DashAlertInfo{
 			User:  nil,
-			Dash:  models.NewDashboardFromJson(dashJSON),
+			Dash:  dashboards.NewDashboardFromJson(dashJSON),
 			OrgID: 1,
 		})
 		require.Nil(t, err)
@@ -242,7 +246,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dashJSON, err := simplejson.NewJson(json)
 		require.Nil(t, err)
 
-		dash := models.NewDashboardFromJson(dashJSON)
+		dash := dashboards.NewDashboardFromJson(dashJSON)
 
 		alerts, err := extractor.GetAlerts(context.Background(), DashAlertInfo{
 			User:  nil,
@@ -263,7 +267,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 		dashAlertInfo := DashAlertInfo{
 			User:  nil,
-			Dash:  models.NewDashboardFromJson(dashJSON),
+			Dash:  dashboards.NewDashboardFromJson(dashJSON),
 			OrgID: 1,
 		}
 
@@ -284,7 +288,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 		dsService.ExpectedDatasource = graphite2Ds
 		dashAlertInfo := DashAlertInfo{
 			User:  nil,
-			Dash:  models.NewDashboardFromJson(dashJSON),
+			Dash:  dashboards.NewDashboardFromJson(dashJSON),
 			OrgID: 1,
 		}
 
@@ -355,7 +359,7 @@ func TestFilterPermissionsErrors(t *testing.T) {
 			dsPermissions.ErrResult = test.err
 			_, err = extractor.GetAlerts(WithUAEnabled(context.Background(), true), DashAlertInfo{
 				User:  nil,
-				Dash:  models.NewDashboardFromJson(dashJSON),
+				Dash:  dashboards.NewDashboardFromJson(dashJSON),
 				OrgID: 1,
 			})
 			assert.Equal(t, err, test.expectedErr)

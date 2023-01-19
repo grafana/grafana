@@ -1,10 +1,10 @@
-import { Trans, t } from '@lingui/macro';
 import { saveAs } from 'file-saver';
 import React, { PureComponent } from 'react';
 
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Field, Modal, Switch } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
+import { t, Trans } from 'app/core/internationalization';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { DashboardExporter } from 'app/features/dashboard/components/DashExportModal';
 import { ShowModalReactEvent } from 'app/types/events';
@@ -135,20 +135,14 @@ export class ShareExport extends PureComponent<Props, State> {
     const { shareExternally } = this.state;
     const { trimDefaults } = this.state;
 
-    const exportExternallyTranslation = t({
-      id: 'share-modal.export.share-externally-label',
-      message: `Export for sharing externally`,
-    });
+    const exportExternallyTranslation = t('share-modal.export.share-externally-label', `Export for sharing externally`);
 
-    const exportDefaultTranslation = t({
-      id: 'share-modal.export.share-default-label',
-      message: `Export with default values removed`,
-    });
+    const exportDefaultTranslation = t('share-modal.export.share-default-label', `Export with default values removed`);
 
     return (
       <>
         <p className="share-modal-info-text">
-          <Trans id="share-modal.export.info-text">Export this dashboard.</Trans>
+          <Trans i18nKey="share-modal.export.info-text">Export this dashboard.</Trans>
         </p>
         <Field label={exportExternallyTranslation}>
           <Switch id="share-externally-toggle" value={shareExternally} onChange={this.onShareExternallyChange} />
@@ -160,13 +154,13 @@ export class ShareExport extends PureComponent<Props, State> {
         )}
         <Modal.ButtonRow>
           <Button variant="secondary" onClick={onDismiss} fill="outline">
-            <Trans id="share-modal.export.cancel-button">Cancel</Trans>
+            <Trans i18nKey="share-modal.export.cancel-button">Cancel</Trans>
           </Button>
           <Button variant="secondary" onClick={this.onViewJson}>
-            <Trans id="share-modal.export.view-button">View JSON</Trans>
+            <Trans i18nKey="share-modal.export.view-button">View JSON</Trans>
           </Button>
           <Button variant="primary" onClick={this.onSaveAsFile}>
-            <Trans id="share-modal.export.save-button">Save to file</Trans>
+            <Trans i18nKey="share-modal.export.save-button">Save to file</Trans>
           </Button>
         </Modal.ButtonRow>
       </>

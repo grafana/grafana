@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC, RefCallback, useCallback, useEffect, useRef } from 'react';
+import React, { RefCallback, useCallback, useEffect, useRef } from 'react';
 import Scrollbars, { positionValues } from 'react-custom-scrollbars-2';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -31,7 +31,7 @@ interface Props {
 /**
  * Wraps component into <Scrollbars> component from `react-custom-scrollbars`
  */
-export const CustomScrollbar: FC<Props> = ({
+export const CustomScrollbar = ({
   autoHide = false,
   autoHideTimeout = 200,
   setScrollTop,
@@ -48,8 +48,8 @@ export const CustomScrollbar: FC<Props> = ({
   scrollTop,
   onScroll,
   children,
-}) => {
-  const ref = useRef<Scrollbars & { view: HTMLDivElement }>(null);
+}: React.PropsWithChildren<Props>) => {
+  const ref = useRef<Scrollbars & { view: HTMLDivElement; update: () => void }>(null);
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -73,7 +73,7 @@ export const CustomScrollbar: FC<Props> = ({
       return;
     }
     setTimeout(() => {
-      const scrollbar = ref.current as any;
+      const scrollbar = ref.current;
       if (scrollbar?.update) {
         scrollbar.update();
       }

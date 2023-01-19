@@ -1,11 +1,10 @@
 import { css, cx } from '@emotion/css';
-import memoizeOne from 'memoize-one';
 import React, { PureComponent } from 'react';
 
-import { Field, LinkModel, LogRowModel, GrafanaTheme2 } from '@grafana/data';
-import { withTheme2, Themeable2, Icon, Tooltip } from '@grafana/ui';
+import { CoreApp, DataFrame, Field, GrafanaTheme2, LinkModel, LogRowModel } from '@grafana/data';
+import { Themeable2, withTheme2 } from '@grafana/ui';
 
-import { calculateFieldStats, calculateLogsLabelStats, calculateStats, getParser } from '../utils';
+import { calculateLogsLabelStats, calculateStats } from '../utils';
 
 import { LogDetailsRow } from './LogDetailsRow';
 import { getLogRowStyles } from './getLogRowStyles';
@@ -20,13 +19,14 @@ export interface Props extends Themeable2 {
   wrapLogMessage: boolean;
   className?: string;
   hasError?: boolean;
+  app?: CoreApp;
 
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
-  getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
-  showDetectedFields?: string[];
-  onClickShowDetectedField?: (key: string) => void;
-  onClickHideDetectedField?: (key: string) => void;
+  getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
+  displayedFields?: string[];
+  onClickShowField?: (key: string) => void;
+  onClickHideField?: (key: string) => void;
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
@@ -49,15 +49,9 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 class UnThemedLogDetails extends PureComponent<Props> {
-  getParser = memoizeOne(getParser);
-
-  getStatsForDetectedField = (key: string) => {
-    const matcher = this.getParser(this.props.row.entry)!.buildMatcher(key);
-    return calculateFieldStats(this.props.getRows(), matcher);
-  };
-
   render() {
     const {
+      app,
       row,
       theme,
       hasError,
@@ -66,9 +60,9 @@ class UnThemedLogDetails extends PureComponent<Props> {
       getRows,
       showDuplicates,
       className,
-      onClickShowDetectedField,
-      onClickHideDetectedField,
-      showDetectedFields,
+      onClickShowField,
+      onClickHideField,
+      displayedFields,
       getFieldLinks,
       wrapLogMessage,
     } = this.props;
@@ -76,8 +70,12 @@ class UnThemedLogDetails extends PureComponent<Props> {
     const styles = getStyles(theme);
     const labels = row.labels ? row.labels : {};
     const labelsAvailable = Object.keys(labels).length > 0;
-    const fields = getAllFields(row, getFieldLinks);
-    const detectedFieldsAvailable = fields && fields.length > 0;
+    const fieldsAndLinks = getAllFields(row, getFieldLinks);
+    const links = fieldsAndLinks.filter((f) => f.links?.length).sort();
+    const fields = fieldsAndLinks.filter((f) => f.links?.length === 0).sort();
+    const fieldsAvailable = fields && fields.length > 0;
+    const linksAvailable = links && links.length > 0;
+
     // If logs with error, we are not showing the level color
     const levelClassName = cx(!hasError && [style.logsRowLevel, styles.logsRowLevelDetails]);
 
@@ -89,10 +87,10 @@ class UnThemedLogDetails extends PureComponent<Props> {
           <div className={style.logDetailsContainer}>
             <table className={style.logDetailsTable}>
               <tbody>
-                {labelsAvailable && (
+                {(labelsAvailable || fieldsAvailable) && (
                   <tr>
-                    <td colSpan={5} className={style.logDetailsHeading} aria-label="Log labels">
-                      Log labels
+                    <td colSpan={100} className={style.logDetailsHeading} aria-label="Fields">
+                      Fields
                     </td>
                   </tr>
                 )}
@@ -109,27 +107,43 @@ class UnThemedLogDetails extends PureComponent<Props> {
                         getStats={() => calculateLogsLabelStats(getRows(), key)}
                         onClickFilterOutLabel={onClickFilterOutLabel}
                         onClickFilterLabel={onClickFilterLabel}
+                        onClickShowField={onClickShowField}
+                        onClickHideField={onClickHideField}
+                        row={row}
+                        app={app}
+                        wrapLogMessage={wrapLogMessage}
+                        displayedFields={displayedFields}
                       />
                     );
                   })}
+                {fields.map((field) => {
+                  const { key, value, fieldIndex } = field;
+                  return (
+                    <LogDetailsRow
+                      key={`${key}=${value}`}
+                      parsedKey={key}
+                      parsedValue={value}
+                      onClickShowField={onClickShowField}
+                      onClickHideField={onClickHideField}
+                      onClickFilterOutLabel={onClickFilterOutLabel}
+                      onClickFilterLabel={onClickFilterLabel}
+                      getStats={() => calculateStats(row.dataFrame.fields[fieldIndex].values.toArray())}
+                      displayedFields={displayedFields}
+                      wrapLogMessage={wrapLogMessage}
+                      row={row}
+                      app={app}
+                    />
+                  );
+                })}
 
-                {detectedFieldsAvailable && (
+                {linksAvailable && (
                   <tr>
-                    <td colSpan={5} className={style.logDetailsHeading} aria-label="Detected fields">
-                      Detected fields
-                      <Tooltip content="Fields that are parsed from log message and detected by Grafana.">
-                        <Icon
-                          name="question-circle"
-                          size="xs"
-                          className={css`
-                            margin-left: 4px;
-                          `}
-                        />
-                      </Tooltip>
+                    <td colSpan={100} className={style.logDetailsHeading} aria-label="Data Links">
+                      Links
                     </td>
                   </tr>
                 )}
-                {fields.sort().map((field) => {
+                {links.map((field) => {
                   const { key, value, links, fieldIndex } = field;
                   return (
                     <LogDetailsRow
@@ -137,21 +151,19 @@ class UnThemedLogDetails extends PureComponent<Props> {
                       parsedKey={key}
                       parsedValue={value}
                       links={links}
-                      onClickShowDetectedField={onClickShowDetectedField}
-                      onClickHideDetectedField={onClickHideDetectedField}
-                      getStats={() =>
-                        fieldIndex === undefined
-                          ? this.getStatsForDetectedField(key)
-                          : calculateStats(row.dataFrame.fields[fieldIndex].values.toArray())
-                      }
-                      showDetectedFields={showDetectedFields}
+                      onClickShowField={onClickShowField}
+                      onClickHideField={onClickHideField}
+                      getStats={() => calculateStats(row.dataFrame.fields[fieldIndex].values.toArray())}
+                      displayedFields={displayedFields}
                       wrapLogMessage={wrapLogMessage}
+                      row={row}
+                      app={app}
                     />
                   );
                 })}
-                {!detectedFieldsAvailable && !labelsAvailable && (
+                {!fieldsAvailable && !labelsAvailable && !linksAvailable && (
                   <tr>
-                    <td colSpan={5} aria-label="No details">
+                    <td colSpan={100} aria-label="No details">
                       No details available
                     </td>
                   </tr>

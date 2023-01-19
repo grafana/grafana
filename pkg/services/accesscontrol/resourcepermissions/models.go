@@ -22,11 +22,12 @@ type SetResourcePermissionsCommand struct {
 }
 
 type GetResourcePermissionsQuery struct {
-	Actions           []string
-	Resource          string
-	ResourceID        string
-	ResourceAttribute string
-	OnlyManaged       bool
-	InheritedScopes   []string
-	User              *user.SignedInUser
+	Actions              []string
+	Resource             string
+	ResourceID           string
+	ResourceAttribute    string
+	OnlyManaged          bool
+	InheritedScopes      []string
+	EnforceAccessControl bool
+	User                 *user.SignedInUser
 }

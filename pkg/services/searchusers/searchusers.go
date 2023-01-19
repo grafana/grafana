@@ -101,7 +101,7 @@ func (s *OSSService) SearchUser(c *models.ReqContext) (*user.SearchUserQueryResu
 	}
 
 	for _, user := range res.Users {
-		user.AvatarUrl = dtos.GetGravatarUrl(user.Email)
+		user.AvatarURL = dtos.GetGravatarUrl(user.Email)
 		user.AuthLabels = make([]string, 0)
 		if user.AuthModule != nil && len(user.AuthModule) > 0 {
 			for _, authModule := range user.AuthModule {

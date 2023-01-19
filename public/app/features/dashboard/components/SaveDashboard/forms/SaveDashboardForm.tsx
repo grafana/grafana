@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { Button, Checkbox, Form, Stack, TextArea } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { Button, Checkbox, Form, TextArea } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state';
 
 import { SaveDashboardData, SaveDashboardOptions } from '../types';

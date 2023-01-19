@@ -1,11 +1,10 @@
 import { css } from '@emotion/css';
-import { useLingui } from '@lingui/react';
 import React from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { toIconName, useStyles2 } from '@grafana/ui';
 
-import menuItemTranslations from '../NavBar/navBarItem-translations';
+import { getNavTitle } from '../NavBar/navBarItem-translations';
 import { isMatchOrChildMatch } from '../NavBar/utils';
 
 import { NavBarMenuItem } from './NavBarMenuItem';
@@ -20,11 +19,10 @@ export function NavBarMenuItemWrapper({
   activeItem?: NavModelItem;
   onClose: () => void;
 }) {
-  const { i18n } = useLingui();
   const styles = useStyles2(getStyles);
 
   if (link.emptyMessageId && !linkHasChildren(link)) {
-    const emptyMessageTranslated = i18n._(menuItemTranslations[link.emptyMessageId]);
+    const emptyMessageTranslated = getNavTitle(link.emptyMessageId);
     return (
       <NavBarMenuSection link={link}>
         <ul className={styles.children}>
@@ -41,7 +39,7 @@ export function NavBarMenuItemWrapper({
           {link.children.map((childLink) => {
             const icon = childLink.icon ? toIconName(childLink.icon) : undefined;
             return (
-              !childLink.divider && (
+              !childLink.isCreateAction && (
                 <NavBarMenuItem
                   key={`${link.text}-${childLink.text}`}
                   isActive={isMatchOrChildMatch(childLink, activeItem)}
@@ -54,7 +52,7 @@ export function NavBarMenuItemWrapper({
                   target={childLink.target}
                   url={childLink.url}
                 >
-                  {childLink.text}
+                  {getNavTitle(childLink.id) ?? childLink.text}
                 </NavBarMenuItem>
               )
             );

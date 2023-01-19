@@ -82,7 +82,7 @@ func (ln *LineNotifier) createAlert(evalContext *alerting.EvalContext) error {
 		form.Add("imageFullsize", evalContext.ImagePublicURL)
 	}
 
-	cmd := &models.SendWebhookSync{
+	cmd := &notifications.SendWebhookSync{
 		Url:        lineNotifyURL,
 		HttpMethod: "POST",
 		HttpHeader: map[string]string{

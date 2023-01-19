@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -8,12 +8,13 @@ export type State = 'good' | 'bad' | 'warning' | 'neutral' | 'info';
 
 type Props = {
   state: State;
+  size?: 'md' | 'sm';
 };
 
-export const StateTag: FC<Props> = ({ children, state }) => {
+export const StateTag = ({ children, state, size = 'md' }: React.PropsWithChildren<Props>) => {
   const styles = useStyles2(getStyles);
 
-  return <span className={cx(styles.common, styles[state])}>{children || state}</span>;
+  return <span className={cx(styles.common, styles[state], styles[size])}>{children || state}</span>;
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -22,10 +23,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: white;
     border-radius: ${theme.shape.borderRadius()};
     font-size: ${theme.typography.size.sm};
-    padding: ${theme.spacing(0.5, 1)};
     text-transform: capitalize;
     line-height: 1.2;
-    min-width: ${theme.spacing(8)};
     text-align: center;
     font-weight: ${theme.typography.fontWeightBold};
   `,
@@ -53,5 +52,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     background-color: ${theme.colors.primary.main};
     border: solid 1px ${theme.colors.primary.main};
     color: ${theme.colors.primary.contrastText};
+  `,
+  md: css`
+    padding: ${theme.spacing(0.5, 1)};
+    min-width: ${theme.spacing(8)};
+  `,
+  sm: css`
+    padding: ${theme.spacing(0.3, 0.5)};
+    min-width: 52px;
   `,
 });

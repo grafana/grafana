@@ -52,7 +52,7 @@ const MonacoMock: Monaco = {
       );
     },
     fromPositions: (start: monacoTypes.IPosition, end?: monacoTypes.IPosition) => {
-      return {} as any as monacoTypes.Range;
+      return {} as unknown as monacoTypes.Range;
     },
   },
   languages: {

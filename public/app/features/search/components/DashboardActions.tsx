@@ -1,19 +1,26 @@
 import React, { FC } from 'react';
 
+import { config } from '@grafana/runtime';
 import { Menu, Dropdown, Button, Icon } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 export interface Props {
-  folderId?: number;
+  folderUid?: string;
   canCreateFolders?: boolean;
   canCreateDashboards?: boolean;
 }
 
-export const DashboardActions: FC<Props> = ({ folderId, canCreateFolders = false, canCreateDashboards = false }) => {
+export const DashboardActions: FC<Props> = ({ folderUid, canCreateFolders = false, canCreateDashboards = false }) => {
   const actionUrl = (type: string) => {
     let url = `dashboard/${type}`;
+    const isTypeNewFolder = type === 'new_folder';
 
-    if (folderId) {
-      url += `?folderId=${folderId}`;
+    if (isTypeNewFolder) {
+      url = `dashboards/folder/new/`;
+    }
+
+    if (folderUid) {
+      url += `?folderUid=${folderUid}`;
     }
 
     return url;
@@ -22,9 +29,15 @@ export const DashboardActions: FC<Props> = ({ folderId, canCreateFolders = false
   const MenuActions = () => {
     return (
       <Menu>
-        {canCreateDashboards && <Menu.Item url={actionUrl('new')} label="New Dashboard" />}
-        {!folderId && canCreateFolders && <Menu.Item url="dashboards/folder/new" label="New Folder" />}
-        {canCreateDashboards && <Menu.Item url={actionUrl('import')} label="Import" />}
+        {canCreateDashboards && (
+          <Menu.Item url={actionUrl('new')} label={t('search.dashboard-actions.new-dashboard', 'New Dashboard')} />
+        )}
+        {canCreateFolders && (config.featureToggles.nestedFolders || !folderUid) && (
+          <Menu.Item url={actionUrl('new_folder')} label={t('search.dashboard-actions.new-folder', 'New Folder')} />
+        )}
+        {canCreateDashboards && (
+          <Menu.Item url={actionUrl('import')} label={t('search.dashboard-actions.import', 'Import')} />
+        )}
       </Menu>
     );
   };
@@ -33,7 +46,7 @@ export const DashboardActions: FC<Props> = ({ folderId, canCreateFolders = false
     <div>
       <Dropdown overlay={MenuActions} placement="bottom-start">
         <Button variant="primary">
-          New
+          {t('search.dashboard-actions.new', 'New')}
           <Icon name="angle-down" />
         </Button>
       </Dropdown>

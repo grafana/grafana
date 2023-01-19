@@ -13,19 +13,19 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/config"
 	pluginClient "github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
-	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web/webtest"
 )
@@ -43,23 +43,10 @@ func (rv *fakePluginRequestValidator) Validate(dsURL string, req *http.Request) 
 	return rv.err
 }
 
-type fakeOAuthTokenService struct {
-	passThruEnabled bool
-	token           *oauth2.Token
-}
-
-func (ts *fakeOAuthTokenService) GetCurrentOAuthToken(context.Context, *user.SignedInUser) *oauth2.Token {
-	return ts.token
-}
-
-func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(*datasources.DataSource) bool {
-	return ts.passThruEnabled
-}
-
 // `/ds/query` endpoint test
 func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 	qds := query.ProvideService(
-		nil,
+		setting.NewCfg(),
 		nil,
 		nil,
 		&fakePluginRequestValidator{},
@@ -68,23 +55,22 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 			QueryDataHandlerFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 				resp := backend.Responses{
 					"A": backend.DataResponse{
-						Error: fmt.Errorf("query failed"),
+						Error: errors.New("query failed"),
 					},
 				}
 				return &backend.QueryDataResponse{Responses: resp}, nil
 			},
 		},
-		&fakeOAuthTokenService{},
 	)
 	serverFeatureEnabled := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
 		hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagDatasourceQueryMultiStatus, true)
-		hs.QuotaService = quotatest.NewQuotaServiceFake()
+		hs.QuotaService = quotatest.New(false, nil)
 	})
 	serverFeatureDisabled := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
 		hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagDatasourceQueryMultiStatus, false)
-		hs.QuotaService = quotatest.NewQuotaServiceFake()
+		hs.QuotaService = quotatest.New(false, nil)
 	})
 
 	t.Run("Status code is 400 when data source response has an error and feature toggle is disabled", func(t *testing.T) {
@@ -108,7 +94,7 @@ func TestAPIEndpoint_Metrics_QueryMetricsV2(t *testing.T) {
 
 func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 	qds := query.ProvideService(
-		nil,
+		setting.NewCfg(),
 		nil,
 		nil,
 		&fakePluginRequestValidator{},
@@ -117,17 +103,16 @@ func TestAPIEndpoint_Metrics_PluginDecryptionFailure(t *testing.T) {
 			QueryDataHandlerFunc: func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 				resp := backend.Responses{
 					"A": backend.DataResponse{
-						Error: fmt.Errorf("query failed"),
+						Error: errors.New("query failed"),
 					},
 				}
 				return &backend.QueryDataResponse{Responses: resp}, nil
 			},
 		},
-		&fakeOAuthTokenService{},
 	)
 	httpServer := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.queryDataService = qds
-		hs.QuotaService = quotatest.NewQuotaServiceFake()
+		hs.QuotaService = quotatest.New(false, nil)
 	})
 
 	t.Run("Status code is 500 and a secrets plugin error is returned if there is a problem getting secrets from the remote plugin", func(t *testing.T) {
@@ -271,15 +256,14 @@ func TestDataSourceQueryError(t *testing.T) {
 				err := r.Add(context.Background(), p)
 				require.NoError(t, err)
 				hs.queryDataService = query.ProvideService(
-					nil,
+					setting.NewCfg(),
 					&fakeDatasources.FakeCacheService{},
 					nil,
 					&fakePluginRequestValidator{},
 					&fakeDatasources.FakeDataSourceService{},
-					pluginClient.ProvideService(r),
-					&fakeOAuthTokenService{},
+					pluginClient.ProvideService(r, &config.Cfg{}),
 				)
-				hs.QuotaService = quotatest.NewQuotaServiceFake()
+				hs.QuotaService = quotatest.New(false, nil)
 			})
 			req := srv.NewPostRequest("/api/ds/query", strings.NewReader(tc.request))
 			webtest.RequestWithSignedInUser(req, &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer})

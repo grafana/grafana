@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/live/model"
 )
 
 type Storage struct {
-	store *sqlstore.SQLStore
+	store db.DB
 	cache *localcache.CacheService
 }
 
-func NewStorage(store *sqlstore.SQLStore, cache *localcache.CacheService) *Storage {
+func NewStorage(store db.DB, cache *localcache.CacheService) *Storage {
 	return &Storage{store: store, cache: cache}
 }
 
@@ -22,9 +22,9 @@ func getLiveMessageCacheKey(orgID int64, channel string) string {
 	return fmt.Sprintf("live_message_%d_%s", orgID, channel)
 }
 
-func (s *Storage) SaveLiveMessage(query *models.SaveLiveMessageQuery) error {
+func (s *Storage) SaveLiveMessage(query *model.SaveLiveMessageQuery) error {
 	// Come back to saving into database after evaluating database structure.
-	//err := s.store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	//err := s.store.WithDbSession(context.Background(), func(sess *db.Session) error {
 	//	params := []interface{}{query.OrgId, query.Channel, query.Data, time.Now()}
 	//	upsertSQL := s.store.Dialect.UpsertSQL(
 	//		"live_message",
@@ -34,7 +34,7 @@ func (s *Storage) SaveLiveMessage(query *models.SaveLiveMessageQuery) error {
 	//	return err
 	//})
 	// return err
-	s.cache.Set(getLiveMessageCacheKey(query.OrgId, query.Channel), models.LiveMessage{
+	s.cache.Set(getLiveMessageCacheKey(query.OrgId, query.Channel), model.LiveMessage{
 		Id:        0, // Not used actually.
 		OrgId:     query.OrgId,
 		Channel:   query.Channel,
@@ -44,11 +44,11 @@ func (s *Storage) SaveLiveMessage(query *models.SaveLiveMessageQuery) error {
 	return nil
 }
 
-func (s *Storage) GetLiveMessage(query *models.GetLiveMessageQuery) (models.LiveMessage, bool, error) {
+func (s *Storage) GetLiveMessage(query *model.GetLiveMessageQuery) (model.LiveMessage, bool, error) {
 	// Come back to saving into database after evaluating database structure.
 	//var msg models.LiveMessage
 	//var exists bool
-	//err := s.store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	//err := s.store.WithDbSession(context.Background(), func(sess *db.Session) error {
 	//	var err error
 	//	exists, err = sess.Where("org_id=? AND channel=?", query.OrgId, query.Channel).Get(&msg)
 	//	return err
@@ -56,11 +56,11 @@ func (s *Storage) GetLiveMessage(query *models.GetLiveMessageQuery) (models.Live
 	//return msg, exists, err
 	m, ok := s.cache.Get(getLiveMessageCacheKey(query.OrgId, query.Channel))
 	if !ok {
-		return models.LiveMessage{}, false, nil
+		return model.LiveMessage{}, false, nil
 	}
-	msg, ok := m.(models.LiveMessage)
+	msg, ok := m.(model.LiveMessage)
 	if !ok {
-		return models.LiveMessage{}, false, fmt.Errorf("unexpected live message type in cache: %T", m)
+		return model.LiveMessage{}, false, fmt.Errorf("unexpected live message type in cache: %T", m)
 	}
 	return msg, true, nil
 }

@@ -5,16 +5,18 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 func TestDatabaseStorageGarbageCollection(t *testing.T) {
-	sqlstore := sqlstore.InitTestDB(t)
+	sqlstore := db.InitTestDB(t)
 
 	db := &databaseCache{
 		SQLStore: sqlstore,
+		codec:    &gobCodec{},
 		log:      log.New("remotecache.database"),
 	}
 
@@ -59,10 +61,11 @@ func TestDatabaseStorageGarbageCollection(t *testing.T) {
 
 func TestSecondSet(t *testing.T) {
 	var err error
-	sqlstore := sqlstore.InitTestDB(t)
+	sqlstore := db.InitTestDB(t)
 
 	db := &databaseCache{
 		SQLStore: sqlstore,
+		codec:    &gobCodec{},
 		log:      log.New("remotecache.database"),
 	}
 

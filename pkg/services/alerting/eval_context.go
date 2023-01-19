@@ -29,7 +29,7 @@ type EvalContext struct {
 	Rule           *Rule
 	Log            log.Logger
 
-	dashboardRef *models.DashboardRef
+	dashboardRef *dashboards.DashboardRef
 
 	ImagePublicURL  string
 	ImageOnDiskPath string
@@ -107,7 +107,7 @@ func (c *EvalContext) shouldUpdateAlertState() bool {
 
 // GetDurationMs returns the duration of the alert evaluation.
 func (c *EvalContext) GetDurationMs() float64 {
-	return float64(c.EndTime.Nanosecond()-c.StartTime.Nanosecond()) / float64(1000000)
+	return float64(c.EndTime.Sub(c.StartTime).Nanoseconds()) / float64(time.Millisecond)
 }
 
 // GetNotificationTitle returns the title of the alert rule including alert state.
@@ -116,13 +116,13 @@ func (c *EvalContext) GetNotificationTitle() string {
 }
 
 // GetDashboardUID returns the dashboard uid for the alert rule.
-func (c *EvalContext) GetDashboardUID() (*models.DashboardRef, error) {
+func (c *EvalContext) GetDashboardUID() (*dashboards.DashboardRef, error) {
 	if c.dashboardRef != nil {
 		return c.dashboardRef, nil
 	}
 
-	uidQuery := &models.GetDashboardRefByIdQuery{Id: c.Rule.DashboardID}
-	if err := c.dashboardService.GetDashboardUIDById(c.Ctx, uidQuery); err != nil {
+	uidQuery := &dashboards.GetDashboardRefByIDQuery{ID: c.Rule.DashboardID}
+	if err := c.dashboardService.GetDashboardUIDByID(c.Ctx, uidQuery); err != nil {
 		return nil, err
 	}
 
@@ -142,7 +142,7 @@ func (c *EvalContext) GetRuleURL() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf(urlFormat, models.GetFullDashboardUrl(ref.Uid, ref.Slug), c.Rule.PanelID, c.Rule.OrgID), nil
+	return fmt.Sprintf(urlFormat, dashboards.GetFullDashboardURL(ref.UID, ref.Slug), c.Rule.PanelID, c.Rule.OrgID), nil
 }
 
 // GetNewState returns the new state from the alert rule evaluation.

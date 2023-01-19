@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { config } from '@grafana/runtime/src';
@@ -15,7 +15,10 @@ interface RuleConfigStatusProps {
 export function RuleConfigStatus({ rule }: RuleConfigStatusProps) {
   const styles = useStyles2(getStyles);
 
-  const { exceedsLimit } = checkEvaluationIntervalGlobalLimit(rule.group.interval);
+  const { exceedsLimit } = useMemo(
+    () => checkEvaluationIntervalGlobalLimit(rule.group.interval),
+    [rule.group.interval]
+  );
 
   if (!exceedsLimit) {
     return null;

@@ -8,7 +8,6 @@ import (
 
 type DashboardMeta struct {
 	IsStarred                  bool                  `json:"isStarred,omitempty"`
-	IsHome                     bool                  `json:"isHome,omitempty"`
 	IsSnapshot                 bool                  `json:"isSnapshot,omitempty"`
 	Type                       string                `json:"type,omitempty"`
 	CanSave                    bool                  `json:"canSave"`

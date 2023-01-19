@@ -15,6 +15,7 @@ func EndToEndTests(c *cli.Context) error {
 		tries = c.Int("tries")
 		suite = c.String("suite")
 		host  = c.String("host")
+		video = c.String("video")
 	)
 
 	log.Printf("Running Grafana e2e tests")
@@ -30,7 +31,7 @@ func EndToEndTests(c *cli.Context) error {
 	for i := 0; i < tries; i++ {
 		log.Printf("Running e2e test suite attempt #%d", i+1)
 		//nolint:gosec
-		cmd := exec.Command("./e2e/run-suite", suite)
+		cmd := exec.Command("./e2e/run-suite", suite, video)
 		cmd.Env = env
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr

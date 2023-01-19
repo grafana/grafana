@@ -15,3 +15,13 @@ export interface DragNode {
 export interface DropNode extends DragNode {
   pos: string;
 }
+
+export enum InlineEditTabs {
+  ElementManagement = 'element-management',
+  SelectedElement = 'selected-element',
+}
+
+export type AnchorPoint = {
+  x: number;
+  y: number;
+};

@@ -10,15 +10,19 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/org/orgimpl"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -32,7 +36,7 @@ type scenarioContext struct {
 	ctx           *web.Context
 	service       *QueryHistoryService
 	reqContext    *models.ReqContext
-	sqlStore      *sqlstore.SQLStore
+	sqlStore      db.DB
 	initialResult QueryHistoryResponse
 }
 
@@ -45,13 +49,17 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			Form:   url.Values{},
 		}}
 		ctx.Req.Header.Add("Content-Type", "application/json")
-		sqlStore := sqlstore.InitTestDB(t)
+		sqlStore := db.InitTestDB(t)
 		service := QueryHistoryService{
-			Cfg:      setting.NewCfg(),
-			SQLStore: sqlStore,
+			Cfg:   setting.NewCfg(),
+			store: sqlStore,
 		}
-
 		service.Cfg.QueryHistoryEnabled = true
+		quotaService := quotatest.New(false, nil)
+		orgSvc, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
+		require.NoError(t, err)
+		usrSvc, err := userimpl.ProvideService(sqlStore, orgSvc, sqlStore.Cfg, nil, nil, quotaService)
+		require.NoError(t, err)
 
 		usr := user.SignedInUser{
 			UserID:     testUserID,
@@ -63,7 +71,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			LastSeenAt: time.Now(),
 		}
 
-		_, err := sqlStore.CreateUser(context.Background(), user.CreateUserCommand{
+		_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{
 			Email: "signed.in.user@test.com",
 			Name:  "Signed In User",
 			Login: "signed_in_user",

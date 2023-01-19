@@ -1,6 +1,7 @@
 import React from 'react';
 
-import { Alert, EditorFieldGroup, EditorRow, EditorRows } from '@grafana/ui';
+import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
+import { Alert } from '@grafana/ui';
 
 import Datasource from '../../datasource';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
@@ -52,7 +53,7 @@ const LogsQueryEditor: React.FC<LogsQueryEditorProps> = ({
                 ResourceRowType.Resource,
                 ResourceRowType.Variable,
               ]}
-              resource={query.azureLogAnalytics?.resource ?? ''}
+              resources={query.azureLogAnalytics?.resources ?? []}
               queryType="logs"
             />
           </EditorFieldGroup>

@@ -36,7 +36,7 @@ export const ColorScale = ({ colorPalette, min, max, display, hoverValue, useSto
 
   const onScaleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
     const divOffset = event.nativeEvent.offsetX;
-    const offsetWidth = (event.target as any).offsetWidth as number;
+    const offsetWidth = event.currentTarget.offsetWidth;
     const normPercentage = Math.floor((divOffset * 100) / offsetWidth + 1);
     const scaleValue = Math.floor(((max - min) * normPercentage) / 100 + min);
 

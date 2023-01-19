@@ -116,7 +116,7 @@ func (moa *MultiOrgAlertmanager) ApplyAlertmanagerConfiguration(ctx context.Cont
 	}
 
 	if err := am.SaveAndApplyConfig(ctx, &config); err != nil {
-		moa.logger.Error("unable to save and apply alertmanager configuration", "err", err)
+		moa.logger.Error("unable to save and apply alertmanager configuration", "error", err)
 		return AlertmanagerConfigRejectedError{err}
 	}
 
@@ -145,7 +145,7 @@ func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config def
 		}
 	}
 
-	tmpl := definitions.MessageTemplate{}
+	tmpl := definitions.NotificationTemplate{}
 	tmplProvs, err := moa.ProvStore.GetProvenances(ctx, org, tmpl.ResourceType())
 	if err != nil {
 		return definitions.GettableUserConfig{}, nil

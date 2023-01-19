@@ -7,7 +7,7 @@ export interface Props {
   item: DashboardAcl;
 }
 
-export default class DisabledPermissionListItem extends Component<Props, any> {
+export default class DisabledPermissionListItem extends Component<Props> {
   render() {
     const { item } = this.props;
     const currentPermissionLevel = dashboardPermissionLevels.find((dp) => dp.value === item.permission);

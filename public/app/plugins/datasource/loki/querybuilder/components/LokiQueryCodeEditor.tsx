@@ -14,7 +14,17 @@ type Props = LokiQueryEditorProps & {
   showExplain: boolean;
 };
 
-export function LokiQueryCodeEditor({ query, datasource, range, onRunQuery, onChange, data, app, showExplain }: Props) {
+export function LokiQueryCodeEditor({
+  query,
+  datasource,
+  range,
+  onRunQuery,
+  onChange,
+  data,
+  app,
+  showExplain,
+  history,
+}: Props) {
   const styles = useStyles2(getStyles);
 
   // the inner QueryField works like this when a blur event happens:
@@ -35,10 +45,10 @@ export function LokiQueryCodeEditor({ query, datasource, range, onRunQuery, onCh
         onRunQuery={onRunQuery}
         onChange={onChange}
         onBlur={onBlur}
-        history={[]}
+        history={history}
         data={data}
-        data-testid={testIds.editor}
         app={app}
+        data-testid={testIds.editor}
       />
       {showExplain && <LokiQueryBuilderExplained query={query.expr} />}
     </div>
@@ -48,6 +58,7 @@ export function LokiQueryCodeEditor({ query, datasource, range, onRunQuery, onCh
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     wrapper: css`
+      max-width: 100%;
       .gf-form {
         margin-bottom: 0.5;
       }

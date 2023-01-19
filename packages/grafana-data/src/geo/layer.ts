@@ -1,4 +1,4 @@
-import { PluggableMap } from 'ol';
+import { Map as OpenLayersMap } from 'ol';
 import BaseLayer from 'ol/layer/Base';
 import { ReactNode } from 'react';
 
@@ -119,7 +119,7 @@ export interface MapLayerRegistryItem<TConfig = MapLayerOptions> extends Registr
    * @param options
    */
   create: (
-    map: PluggableMap,
+    map: OpenLayersMap,
     options: MapLayerOptions<TConfig>,
     eventBus: EventBus,
     theme: GrafanaTheme2

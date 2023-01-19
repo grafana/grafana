@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -14,7 +14,7 @@ interface Props {
   showButton?: boolean;
 }
 
-export const ReceiversSection: FC<Props> = ({
+export const ReceiversSection = ({
   className,
   title,
   description,
@@ -22,7 +22,7 @@ export const ReceiversSection: FC<Props> = ({
   addButtonTo,
   children,
   showButton = true,
-}) => {
+}: React.PropsWithChildren<Props>) => {
   const styles = useStyles2(getStyles);
   return (
     <>

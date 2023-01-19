@@ -14,7 +14,6 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 import { AddRootView } from './AddRootView';
 import { Breadcrumb } from './Breadcrumb';
 import { CreateNewFolderModal } from './CreateNewFolderModal';
-import { ExportView } from './ExportView';
 import { FileView } from './FileView';
 import { FolderView } from './FolderView';
 import { RootView } from './RootView';
@@ -116,13 +115,6 @@ export default function StoragePage(props: Props) {
   const renderView = () => {
     const isRoot = !path?.length || path === '/';
     switch (view) {
-      case StorageView.Export:
-        if (!isRoot) {
-          setPath('');
-          return <Spinner />;
-        }
-        return <ExportView onPathChange={setPath} />;
-
       case StorageView.AddRoot:
         if (!isRoot) {
           setPath('');
@@ -149,7 +141,7 @@ export default function StoragePage(props: Props) {
 
     // Lets only apply permissions to folders (for now)
     if (isFolder) {
-      opts.push({ what: StorageView.Perms, text: 'Permissions' });
+      // opts.push({ what: StorageView.Perms, text: 'Permissions' });
     } else {
       // TODO: only if the file exists in a storage engine with
       opts.push({ what: StorageView.History, text: 'History' });
@@ -181,7 +173,7 @@ export default function StoragePage(props: Props) {
           <Breadcrumb pathName={path} onPathChange={setPath} rootIcon={toIconName(navModel.node.icon ?? '')} />
           <HorizontalGroup>
             {canViewDashboard && (
-              <LinkButton icon="dashboard" href={`g/${path}`}>
+              <LinkButton icon="dashboard" href={`g/${path.substring(path.indexOf('/') + 1)}`}>
                 Dashboard
               </LinkButton>
             )}

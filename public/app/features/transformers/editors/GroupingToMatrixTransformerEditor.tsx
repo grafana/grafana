@@ -7,6 +7,7 @@ import {
   TransformerRegistryItem,
   TransformerUIProps,
   GroupingToMatrixTransformerOptions,
+  SpecialValue,
 } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
 
@@ -49,6 +50,23 @@ export const GroupingToMatrixTransformerEditor: React.FC<TransformerUIProps<Grou
     [onChange, options]
   );
 
+  const specialValueOptions: Array<SelectableValue<SpecialValue>> = [
+    { label: 'Null', value: SpecialValue.Null, description: 'Null value' },
+    { label: 'True', value: SpecialValue.True, description: 'Boolean true value' },
+    { label: 'False', value: SpecialValue.False, description: 'Boolean false value' },
+    { label: 'Empty', value: SpecialValue.Empty, description: 'Empty string' },
+  ];
+
+  const onSelectEmptyValue = useCallback(
+    (value: SelectableValue<SpecialValue>) => {
+      onChange({
+        ...options,
+        emptyValue: value?.value,
+      });
+    },
+    [onChange, options]
+  );
+
   return (
     <>
       <InlineFieldRow>
@@ -60,6 +78,9 @@ export const GroupingToMatrixTransformerEditor: React.FC<TransformerUIProps<Grou
         </InlineField>
         <InlineField label="Cell Value" labelWidth={10}>
           <Select options={fieldNames} value={options.valueField} onChange={onSelectValue} isClearable />
+        </InlineField>
+        <InlineField label="Empty Value">
+          <Select options={specialValueOptions} value={options.emptyValue} onChange={onSelectEmptyValue} isClearable />
         </InlineField>
       </InlineFieldRow>
     </>

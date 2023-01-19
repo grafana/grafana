@@ -1,4 +1,4 @@
-import React, { FC, useCallback } from 'react';
+import React, { useCallback } from 'react';
 
 import {
   FieldNamePickerConfigSettings,
@@ -26,12 +26,13 @@ const dummyStringSettings: StandardEditorsRegistryItem<string, StringFieldConfig
   settings: {},
 } as any;
 
-export const TextDimensionEditor: FC<StandardEditorProps<TextDimensionConfig, TextDimensionOptions, any>> = (props) => {
-  const { value, context, onChange } = props;
+type Props = StandardEditorProps<TextDimensionConfig, TextDimensionOptions, any>;
+
+export const TextDimensionEditor = ({ value, context, onChange }: Props) => {
   const labelWidth = 9;
 
   const onModeChange = useCallback(
-    (mode) => {
+    (mode: TextDimensionMode) => {
       onChange({
         ...value,
         mode,
@@ -41,7 +42,7 @@ export const TextDimensionEditor: FC<StandardEditorProps<TextDimensionConfig, Te
   );
 
   const onFieldChange = useCallback(
-    (field) => {
+    (field?: string) => {
       onChange({
         ...value,
         field,
@@ -51,7 +52,7 @@ export const TextDimensionEditor: FC<StandardEditorProps<TextDimensionConfig, Te
   );
 
   const onFixedChange = useCallback(
-    (fixed) => {
+    (fixed = '') => {
       onChange({
         ...value,
         fixed,

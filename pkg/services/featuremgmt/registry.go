@@ -10,6 +10,16 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
+			Name:        "returnUnameHeader",
+			Description: "Return user login as header for authenticated requests",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "alertingBigTransactions",
+			Description: "Use big transactions for alerting database writes",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "trimDefaults",
 			Description: "Use cue schema to remove values that will be applied automatically",
 			State:       FeatureStateBeta,
@@ -21,7 +31,7 @@ var (
 		},
 		{
 			Name:        "database_metrics",
-			Description: "Add prometheus metrics for database tables",
+			Description: "Add Prometheus metrics for database tables",
 			State:       FeatureStateStable,
 		},
 		{
@@ -41,12 +51,12 @@ var (
 		},
 		{
 			Name:        "live-config",
-			Description: "Save grafana live configuration in SQL tables",
+			Description: "Save Grafana Live configuration in SQL tables",
 			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "live-pipeline",
-			Description: "enable a generic live processing pipeline",
+			Description: "Enable a generic live processing pipeline",
 			State:       FeatureStateAlpha,
 		},
 		{
@@ -57,14 +67,14 @@ var (
 		},
 		{
 			Name:         "queryOverLive",
-			Description:  "Use grafana live websocket to execute backend queries",
+			Description:  "Use Grafana Live WebSocket to execute backend queries",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
 		{
 			Name:        "panelTitleSearch",
 			Description: "Search for dashboards using panel title",
-			State:       FeatureStateAlpha,
+			State:       FeatureStateBeta,
 		},
 		{
 			Name:         "tempoApmTable",
@@ -78,12 +88,6 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:         "influxdbBackendMigration",
-			Description:  "Query InfluxDB InfluxQL without the proxy",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-		},
-		{
 			Name:            "showFeatureFlagsInUI",
 			Description:     "Show feature flags in the settings UI",
 			State:           FeatureStateAlpha,
@@ -91,18 +95,32 @@ var (
 		},
 		{
 			Name:        "publicDashboards",
-			Description: "enables public access to dashboards",
+			Description: "Enables public access to dashboards",
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:            "publicDashboardsEmailSharing",
+			Description:     "Allows public dashboard sharing to be restricted to only allowed emails",
+			State:           FeatureStateAlpha,
+			RequiresLicense: true,
+			RequiresDevMode: true,
+		},
+		{
 			Name:        "lokiLive",
-			Description: "support websocket streaming for loki (early prototype)",
+			Description: "Support WebSocket streaming for loki (early prototype)",
 			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "lokiDataframeApi",
-			Description: "use experimental loki api for websocket streaming (early prototype)",
+			Description: "Use experimental loki api for WebSocket streaming (early prototype)",
 			State:       FeatureStateAlpha,
+		},
+		{
+			Name:         "lokiMonacoEditor",
+			Description:  "Access to Monaco query editor for Loki",
+			State:        FeatureStateStable,
+			Expression:   "true",
+			FrontendOnly: true,
 		},
 		{
 			Name:        "swaggerUi",
@@ -111,7 +129,7 @@ var (
 		},
 		{
 			Name:        "featureHighlights",
-			Description: "Highlight Enterprise features",
+			Description: "Highlight Grafana Enterprise features",
 			State:       FeatureStateStable,
 		},
 		{
@@ -135,6 +153,17 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:            "k8s",
+			Description:     "Explore native k8s integrations",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
+			Name:        "supportBundles",
+			Description: "Support bundles for troubleshooting",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:            "dashboardsFromStorage",
 			Description:     "Load dashboards from the generic storage interface",
 			State:           FeatureStateAlpha,
@@ -154,12 +183,6 @@ var (
 			FrontendOnly:    true,
 		},
 		{
-			Name:         "explore2Dashboard",
-			Description:  "Experimental Explore to Dashboard workflow",
-			State:        FeatureStateBeta,
-			FrontendOnly: true,
-		},
-		{
 			Name:         "exploreMixedDatasource",
 			Description:  "Enable mixed datasource in Explore",
 			State:        FeatureStateAlpha,
@@ -172,9 +195,11 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "commandPalette",
-			Description: "Enable command palette",
-			State:       FeatureStateAlpha,
+			Name:         "commandPalette",
+			Description:  "Enable command palette",
+			State:        FeatureStateStable,
+			Expression:   "true", // enabled by default
+			FrontendOnly: true,
 		},
 		{
 			Name:        "correlations",
@@ -185,6 +210,7 @@ var (
 			Name:        "cloudWatchDynamicLabels",
 			Description: "Use dynamic labels instead of alias patterns in CloudWatch datasource",
 			State:       FeatureStateStable,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "datasourceQueryMultiStatus",
@@ -198,19 +224,14 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "prometheusStreamingJSONParser",
-			Description: "Enable streaming JSON parser for Prometheus datasource",
-			State:       FeatureStateBeta,
-		},
-		{
-			Name:        "prometheusStreamingJSONParserTest",
-			Description: "Run both old and streaming requests and log differences",
+			Name:        "newDBLibrary",
+			Description: "Use jmoiron/sqlx rather than xorm for a few backend services",
 			State:       FeatureStateBeta,
 		},
 		{
 			Name:            "validateDashboardsOnSave",
 			Description:     "Validate dashboard JSON POSTed to api/dashboards/db",
-			State:           FeatureStateAlpha,
+			State:           FeatureStateBeta,
 			RequiresRestart: true,
 		},
 		{
@@ -237,11 +258,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "useLegacyHeatmapPanel",
-			Description: "Continue to use the angular/flot based heatmap panel",
-			State:       FeatureStateStable,
-		},
-		{
 			Name:            "disableSecretsCompatibility",
 			Description:     "Disable duplicated secret storage in legacy tables",
 			State:           FeatureStateAlpha,
@@ -250,16 +266,18 @@ var (
 		{
 			Name:        "logRequestsInstrumentedAsUnknown",
 			Description: "Logs the path for requests that are instrumented as unknown",
+			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "dataConnectionsConsole",
-			Description: "Enables a new top-level page called Data Connections. This page is an experiment for better grouping of installing / configuring data sources and other plugins.",
+			Description: "Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins.",
 			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "internationalization",
-			Description: "Enables work-in-progress internationalization",
-			State:       FeatureStateAlpha,
+			Description: "Enables internationalization",
+			State:       FeatureStateStable,
+			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "topnav",
@@ -267,18 +285,25 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:        "customBranding",
-			Description: "Replaces whitelabeling with the new custom branding feature",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:            "grpcServer",
 			Description:     "Run GRPC server",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
-		}, {
-			Name:        "traceqlEditor",
-			Description: "Show the TraceQL editor in the explore page",
+		},
+		{
+			Name:            "entityStore",
+			Description:     "SQL-based entity store (requires storage flag also)",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
+			Name:        "flameGraph",
+			Description: "Show the flame graph",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "cloudWatchCrossAccountQuerying",
+			Description: "Use cross-account querying in CloudWatch datasource",
 			State:       FeatureStateAlpha,
 		},
 		{
@@ -296,6 +321,91 @@ var (
 		{
 			Name:        "increaseInMemDatabaseQueryCache",
 			Description: "Enable more in memory caching for database queries",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:         "newPanelChromeUI",
+			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
+		{
+			Name:            "queryLibrary",
+			Description:     "Reusable query library",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
+			Name:        "showDashboardValidationWarnings",
+			Description: "Show warnings when dashboards do not validate against the schema",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "mysqlAnsiQuotes",
+			Description: "Use double quotes to escape keyword in a MySQL query",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "datasourceLogger",
+			Description: "Logs all datasource requests",
+			State:       FeatureStateBeta,
+		},
+		{
+			Name:        "accessControlOnCall",
+			Description: "Access control primitives for OnCall",
+			State:       FeatureStateBeta,
+		},
+		{
+			Name:            "nestedFolders",
+			Description:     "Enable folder nesting",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
+			Name:        "accessTokenExpirationCheck",
+			Description: "Enable OAuth access_token expiration check and token refresh using the refresh_token",
+			State:       FeatureStateStable,
+		},
+		{
+			Name:        "elasticsearchBackendMigration",
+			Description: "Use Elasticsearch as backend data source",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "datasourceOnboarding",
+			Description: "Enable data source onboarding page",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "secureSocksDatasourceProxy",
+			Description: "Enable secure socks tunneling for supported core datasources",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "authnService",
+			Description: "Use new auth service to perform authentication",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "sessionRemoteCache",
+			Description: "Enable using remote cache for user sessions",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "disablePrometheusExemplarSampling",
+			Description: "Disable Prometheus examplar sampling",
+			State:       FeatureStateStable,
+		},
+		{
+			Name:        "alertingBacktesting",
+			Description: "Rule backtesting API for alerting",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:            "alertingNoNormalState",
+			Description:     "Stop maintaining state of alerts that are not firing",
+			State:           FeatureStateBeta,
+			RequiresRestart: false,
 		},
 	}
 )

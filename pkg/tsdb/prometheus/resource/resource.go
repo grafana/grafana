@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/utils"
@@ -16,37 +17,6 @@ import (
 type Resource struct {
 	promClient *client.Client
 	log        log.Logger
-}
-
-// Hop-by-hop headers. These are removed when sent to the backend.
-// http://www.w3.org/Protocols/rfc2616/rfc2616-sec13.html
-var hopHeaders = []string{
-	"Connection",
-	"Keep-Alive",
-	"Proxy-Authenticate",
-	"Proxy-Authorization",
-	"Te", // canonicalized version of "TE"
-	"Trailers",
-	"Transfer-Encoding",
-	"Upgrade",
-}
-
-// The following headers will be removed from the request
-var stopHeaders = []string{
-	"cookie",
-	"Cookie",
-}
-
-func delHopHeaders(header http.Header) {
-	for _, h := range hopHeaders {
-		header.Del(h)
-	}
-}
-
-func delStopHeaders(header http.Header) {
-	for _, h := range stopHeaders {
-		header.Del(h)
-	}
 }
 
 func New(
@@ -67,10 +37,7 @@ func New(
 }
 
 func (r *Resource) Execute(ctx context.Context, req *backend.CallResourceRequest) (*backend.CallResourceResponse, error) {
-	delHopHeaders(req.Headers)
-	delStopHeaders(req.Headers)
-
-	r.log.Debug("Sending resource query", "URL", req.URL)
+	r.log.FromContext(ctx).Debug("Sending resource query", "URL", req.URL)
 	resp, err := r.promClient.QueryResource(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("error querying resource: %v", err)
@@ -97,4 +64,24 @@ func (r *Resource) Execute(ctx context.Context, req *backend.CallResourceRequest
 	}
 
 	return callResponse, err
+}
+
+func (r *Resource) DetectVersion(ctx context.Context, req *backend.CallResourceRequest) (*backend.CallResourceResponse, error) {
+	newReq := &backend.CallResourceRequest{
+		PluginContext: req.PluginContext,
+		Path:          "/api/v1/status/buildinfo",
+	}
+
+	resp, err := r.Execute(ctx, newReq)
+
+	if err != nil {
+		return nil, err
+	}
+
+	callResponse := &backend.CallResourceResponse{
+		Status: 200,
+		Body:   resp.Body,
+	}
+
+	return callResponse, nil
 }

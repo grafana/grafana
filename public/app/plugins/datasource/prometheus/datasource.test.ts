@@ -751,6 +751,7 @@ const time = ({ hours = 0, seconds = 0, minutes = 0 }) => dateTime(hours * HOUR 
 describe('PrometheusDatasource2', () => {
   const instanceSettings = {
     url: 'proxied',
+    id: 1,
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
@@ -913,7 +914,9 @@ describe('PrometheusDatasource2', () => {
 
   describe('When querying prometheus with one target and instant = true', () => {
     let results: any;
-    const urlExpected = `proxied/api/v1/query?query=${encodeURIComponent('test{job="testjob"}')}&time=123`;
+    const urlExpected = `/api/datasources/1/resources/api/v1/query?query=${encodeURIComponent(
+      'test{job="testjob"}'
+    )}&time=123`;
     const query = {
       range: { from: time({ seconds: 63 }), to: time({ seconds: 123 }) },
       targets: [{ expr: 'test{job="testjob"}', format: 'time_series', instant: true }],
@@ -1781,7 +1784,7 @@ describe('PrometheusDatasource2', () => {
       targets: [targetA, targetB],
       interval: '1s',
       panelId: '',
-    } as any as DataQueryRequest<PromQuery>;
+    } as unknown as DataQueryRequest<PromQuery>;
 
     const Aexemplars = ds.shouldRunExemplarQuery(targetA, request);
     const BExpemplars = ds.shouldRunExemplarQuery(targetB, request);
@@ -1935,7 +1938,7 @@ function getPrepareTargetsContext({
     panelId,
     app,
     ...queryOptions,
-  } as any as DataQueryRequest<PromQuery>;
+  } as unknown as DataQueryRequest<PromQuery>;
 
   const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
   if (languageProvider) {

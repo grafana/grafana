@@ -1,6 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-import { DataFrameType, Field, FieldType, formattedValueToString, getFieldDisplayName, LinkModel } from '@grafana/data';
+import {
+  DataFrameType,
+  Field,
+  FieldType,
+  formattedValueToString,
+  getFieldDisplayName,
+  LinkModel,
+  TimeRange,
+} from '@grafana/data';
 import { LinkButton, VerticalGroup } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { isHeatmapCellsDense, readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';
@@ -15,11 +23,12 @@ type Props = {
   data: HeatmapData;
   hover: HeatmapHoverEvent;
   showHistogram?: boolean;
+  timeRange: TimeRange;
 };
 
 export const HeatmapHoverView = (props: Props) => {
   if (props.hover.seriesIdx === 2) {
-    return <DataHoverView data={props.data.exemplars} rowIndex={props.hover.dataIdx} />;
+    return <DataHoverView data={props.data.exemplars} rowIndex={props.hover.dataIdx} header={'Exemplar'} />;
   }
   return <HeatmapHoverCell {...props} />;
 };
@@ -48,19 +57,61 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
 
   // labeled buckets
   const meta = readHeatmapRowsCustomMeta(data.heatmap);
-  const yDispSrc = meta.yOrdinalDisplay ?? yVals;
   const yDisp = yField?.display ? (v: any) => formattedValueToString(yField.display!(v)) : (v: any) => `${v}`;
 
   const yValueIdx = index % data.yBucketCount! ?? 0;
 
-  const yMinIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx - 1 : yValueIdx;
-  const yMaxIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx : yValueIdx + 1;
+  let yBucketMin: string;
+  let yBucketMax: string;
 
-  const yBucketMin = yDispSrc?.[yMinIdx];
-  const yBucketMax = yDispSrc?.[yMaxIdx];
+  let nonNumericOrdinalDisplay: string | undefined = undefined;
 
-  const xBucketMin = xVals?.[index];
-  const xBucketMax = xBucketMin + data.xBucketSize;
+  if (meta.yOrdinalDisplay) {
+    const yMinIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx - 1 : yValueIdx;
+    const yMaxIdx = data.yLayout === HeatmapCellLayout.le ? yValueIdx : yValueIdx + 1;
+    yBucketMin = yMinIdx < 0 ? meta.yMinDisplay! : `${meta.yOrdinalDisplay[yMinIdx]}`;
+    yBucketMax = `${meta.yOrdinalDisplay[yMaxIdx]}`;
+
+    // e.g. "pod-xyz123"
+    if (!meta.yOrdinalLabel || Number.isNaN(+meta.yOrdinalLabel[0])) {
+      nonNumericOrdinalDisplay = data.yLayout === HeatmapCellLayout.le ? yBucketMax : yBucketMin;
+    }
+  } else {
+    const value = yVals?.[yValueIdx];
+
+    if (data.yLayout === HeatmapCellLayout.le) {
+      yBucketMax = `${value}`;
+
+      if (data.yLog) {
+        let logFn = data.yLog === 2 ? Math.log2 : Math.log10;
+        let exp = logFn(value) - 1 / data.yLogSplit!;
+        yBucketMin = `${data.yLog ** exp}`;
+      } else {
+        yBucketMin = `${value - data.yBucketSize!}`;
+      }
+    } else {
+      yBucketMin = `${value}`;
+
+      if (data.yLog) {
+        let logFn = data.yLog === 2 ? Math.log2 : Math.log10;
+        let exp = logFn(value) + 1 / data.yLogSplit!;
+        yBucketMax = `${data.yLog ** exp}`;
+      } else {
+        yBucketMax = `${value + data.yBucketSize!}`;
+      }
+    }
+  }
+
+  let xBucketMin: number;
+  let xBucketMax: number;
+
+  if (data.xLayout === HeatmapCellLayout.le) {
+    xBucketMax = xVals?.[index];
+    xBucketMin = xBucketMax - data.xBucketSize!;
+  } else {
+    xBucketMin = xVals?.[index];
+    xBucketMax = xBucketMin + data.xBucketSize!;
+  }
 
   const count = countVals?.[index];
 
@@ -166,7 +217,11 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
     );
   }
 
-  const renderYBuckets = () => {
+  const renderYBucket = () => {
+    if (nonNumericOrdinalDisplay) {
+      return <div>Name: {nonNumericOrdinalDisplay}</div>;
+    }
+
     switch (data.yLayout) {
       case HeatmapCellLayout.unknown:
         return <div>{yDisp(yBucketMin)}</div>;
@@ -193,7 +248,7 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
         />
       )}
       <div>
-        {renderYBuckets()}
+        {renderYBucket()}
         <div>
           {getFieldDisplayName(countField!, data.heatmap)}: {data.display!(count)}
         </div>

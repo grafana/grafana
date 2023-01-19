@@ -5,15 +5,15 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/comments/commentmodel"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/stretchr/testify/require"
 )
 
 func createSqlStorage(t *testing.T) Storage {
 	t.Helper()
-	sqlStore := sqlstore.InitTestDB(t)
+	sqlStore := db.InitTestDB(t)
 	return &sqlStorage{
 		sql: sqlStore,
 	}

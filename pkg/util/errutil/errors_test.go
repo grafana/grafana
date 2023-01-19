@@ -10,8 +10,8 @@ import (
 )
 
 func TestBase_Is(t *testing.T) {
-	baseNotFound := NewBase(StatusNotFound, "test:not-found")
-	baseInternal := NewBase(StatusInternal, "test:internal")
+	baseNotFound := NewBase(StatusNotFound, "test.notFound")
+	baseInternal := NewBase(StatusInternal, "test.internal")
 
 	tests := []struct {
 		Base            Base

@@ -17,7 +17,6 @@ import (
 	"github.com/prometheus/common/model"
 	"gopkg.in/yaml.v3"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/util"
@@ -108,14 +107,6 @@ import (
 //       400: ValidationError
 //       404: NotFound
 
-// swagger:route POST /api/alertmanager/grafana/api/v2/alerts alertmanager RoutePostGrafanaAMAlerts
-//
-// create alertmanager alerts
-//
-//     Responses:
-//       200: Ack
-//       400: ValidationError
-
 // swagger:route POST /api/alertmanager/{DatasourceUID}/api/v2/alerts alertmanager RoutePostAMAlerts
 //
 // create alertmanager alerts
@@ -142,21 +133,14 @@ import (
 //       400: ValidationError
 //       404: NotFound
 
-// swagger:route POST /api/alertmanager/grafana/config/api/v1/receivers/test alertmanager RoutePostTestGrafanaReceivers
+// swagger:route GET /api/alertmanager/grafana/config/api/v1/receivers alertmanager RouteGetGrafanaReceivers
 //
-// Test Grafana managed receivers without saving them.
+// Get a list of all receivers
 //
 //     Responses:
-//
-//       200: Ack
-//       207: MultiStatus
-//       400: ValidationError
-//       403: PermissionDenied
-//       404: NotFound
-//       408: Failure
-//       409: AlertManagerNotReady
+//       200: receiversResponse
 
-// swagger:route POST /api/alertmanager/{DatasourceUID}/config/api/v1/receivers/test alertmanager RoutePostTestReceivers
+// swagger:route POST /api/alertmanager/grafana/config/api/v1/receivers/test alertmanager RoutePostTestGrafanaReceivers
 //
 // Test Grafana managed receivers without saving them.
 //
@@ -192,7 +176,7 @@ import (
 // create silence
 //
 //     Responses:
-//       201: gettableSilence
+//       201: postSilencesOKBody
 //       400: ValidationError
 
 // swagger:route POST /api/alertmanager/{DatasourceUID}/api/v2/silences alertmanager RouteCreateSilence
@@ -200,7 +184,7 @@ import (
 // create silence
 //
 //     Responses:
-//       201: gettableSilence
+//       201: postSilencesOKBody
 //       400: ValidationError
 //       404: NotFound
 
@@ -247,7 +231,7 @@ type AlertManagerNotReady struct{}
 // swagger:model
 type MultiStatus struct{}
 
-// swagger:parameters RoutePostTestReceivers RoutePostTestGrafanaReceivers
+// swagger:parameters RoutePostTestGrafanaReceivers
 type TestReceiversConfigParams struct {
 	// in:body
 	Body TestReceiversConfigBodyParams
@@ -382,6 +366,12 @@ func NewGettableStatus(cfg *PostableApiAlertingConfig) *GettableStatus {
 // swagger:model postableSilence
 type PostableSilence = amv2.PostableSilence
 
+// swagger:model postSilencesOKBody
+type PostSilencesOKBody struct { // vendored from "github.com/prometheus/alertmanager/api/v2/restapi/operations/silence/PostSilencesOKBody" because import brings too many other things
+	// silence ID
+	SilenceID string `json:"silenceID,omitempty"`
+}
+
 // swagger:model gettableSilences
 type GettableSilences = amv2.GettableSilences
 
@@ -402,6 +392,15 @@ type AlertGroup = amv2.AlertGroup
 
 // swagger:model receiver
 type Receiver = amv2.Receiver
+
+// swagger:response receiversResponse
+type ReceiversResponse struct {
+	// in:body
+	Body []amv2.Receiver
+}
+
+// swagger:model integration
+type Integration = amv2.Integration
 
 // swagger:parameters RouteGetAMAlerts RouteGetAMAlertGroups RouteGetGrafanaAMAlerts RouteGetGrafanaAMAlertGroups
 type AlertsParams struct {
@@ -435,7 +434,7 @@ type AlertsParams struct {
 	Receivers string `json:"receiver"`
 }
 
-// swagger:parameters RoutePostAMAlerts RoutePostGrafanaAMAlerts
+// swagger:parameters RoutePostAMAlerts
 type PostableAlerts struct {
 	// in:body
 	PostableAlerts []amv2.PostableAlert `yaml:"" json:""`
@@ -448,7 +447,7 @@ type BodyAlertingConfig struct {
 }
 
 // alertmanager routes
-// swagger:parameters RoutePostAlertingConfig RouteGetAlertingConfig RouteDeleteAlertingConfig RouteGetAMStatus RouteGetAMAlerts RoutePostAMAlerts RouteGetAMAlertGroups RouteGetSilences RouteCreateSilence RouteGetSilence RouteDeleteSilence RoutePostAlertingConfig RoutePostTestReceivers
+// swagger:parameters RoutePostAlertingConfig RouteGetAlertingConfig RouteDeleteAlertingConfig RouteGetAMStatus RouteGetAMAlerts RoutePostAMAlerts RouteGetAMAlertGroups RouteGetSilences RouteCreateSilence RouteGetSilence RouteDeleteSilence RoutePostAlertingConfig
 // testing routes
 // swagger:parameters RouteTestRuleConfig
 // prom routes
@@ -964,12 +963,54 @@ func AllReceivers(route *config.Route) (res []string) {
 	return res
 }
 
+type RawMessage json.RawMessage // This type alias adds YAML marshaling to the json.RawMessage.
+
+// MarshalJSON returns m as the JSON encoding of m.
+func (r RawMessage) MarshalJSON() ([]byte, error) {
+	return json.Marshal(json.RawMessage(r))
+}
+
+func (r *RawMessage) UnmarshalJSON(data []byte) error {
+	var raw json.RawMessage
+	err := json.Unmarshal(data, &raw)
+	if err != nil {
+		return err
+	}
+	*r = RawMessage(raw)
+	return nil
+}
+
+func (r *RawMessage) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var data interface{}
+	if err := unmarshal(&data); err != nil {
+		return err
+	}
+	bytes, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+	*r = bytes
+	return nil
+}
+
+func (r RawMessage) MarshalYAML() (interface{}, error) {
+	if r == nil {
+		return nil, nil
+	}
+	var d interface{}
+	err := json.Unmarshal(r, &d)
+	if err != nil {
+		return nil, err
+	}
+	return d, nil
+}
+
 type GettableGrafanaReceiver struct {
 	UID                   string            `json:"uid"`
 	Name                  string            `json:"name"`
 	Type                  string            `json:"type"`
 	DisableResolveMessage bool              `json:"disableResolveMessage"`
-	Settings              *simplejson.Json  `json:"settings"`
+	Settings              RawMessage        `json:"settings,omitempty"`
 	SecureFields          map[string]bool   `json:"secureFields"`
 	Provenance            models.Provenance `json:"provenance,omitempty"`
 }
@@ -979,7 +1020,7 @@ type PostableGrafanaReceiver struct {
 	Name                  string            `json:"name"`
 	Type                  string            `json:"type"`
 	DisableResolveMessage bool              `json:"disableResolveMessage"`
-	Settings              *simplejson.Json  `json:"settings"`
+	Settings              RawMessage        `json:"settings,omitempty"`
 	SecureSettings        map[string]string `json:"secureSettings"`
 }
 

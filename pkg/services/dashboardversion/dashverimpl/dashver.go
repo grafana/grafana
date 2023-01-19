@@ -3,8 +3,8 @@ package dashverimpl
 import (
 	"context"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
-	"github.com/grafana/grafana/pkg/services/sqlstore/db"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -26,13 +26,15 @@ func ProvideService(db db.DB) dashver.Service {
 	}
 }
 
-func (s *Service) Get(ctx context.Context, query *dashver.GetDashboardVersionQuery) (*dashver.DashboardVersion, error) {
+func (s *Service) Get(ctx context.Context, query *dashver.GetDashboardVersionQuery) (*dashver.DashboardVersionDTO, error) {
 	version, err := s.store.Get(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 	version.Data.Set("id", version.DashboardID)
-	return version, nil
+
+	// FIXME: the next PR will add the dashboardService so we can grab the DashboardUID
+	return version.ToDTO(""), nil
 }
 
 func (s *Service) DeleteExpired(ctx context.Context, cmd *dashver.DeleteExpiredVersionsCommand) error {
@@ -70,5 +72,14 @@ func (s *Service) List(ctx context.Context, query *dashver.ListDashboardVersions
 	if query.Limit == 0 {
 		query.Limit = 1000
 	}
-	return s.store.List(ctx, query)
+	dvs, err := s.store.List(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	dtos := make([]*dashver.DashboardVersionDTO, len(dvs))
+	for i, v := range dvs {
+		// FIXME: the next PR will add the dashboardService so we can grab the DashboardUID
+		dtos[i] = v.ToDTO("")
+	}
+	return dtos, nil
 }

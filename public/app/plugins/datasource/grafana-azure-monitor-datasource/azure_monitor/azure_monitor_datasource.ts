@@ -19,6 +19,9 @@ import {
   GetMetricNamesQuery,
   GetMetricMetadataQuery,
   AzureMetricQuery,
+  AzureMonitorLocations,
+  AzureMonitorProvidersResponse,
+  AzureMonitorLocationsResponse,
 } from '../types';
 import { routeNames } from '../utils/common';
 import migrateQuery from '../utils/migrateQuery';
@@ -36,6 +39,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
   apiVersion = '2018-01-01';
   apiPreviewVersion = '2017-12-01-preview';
   listByResourceGroupApiVersion = '2021-04-01';
+  providerApiVersion = '2021-04-01';
+  locationsApiVersion = '2020-01-01';
   defaultSubscriptionId?: string;
   resourcePath: string;
   azurePortalUrl: string;
@@ -63,13 +68,15 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
 
   filterQuery(item: AzureMonitorQuery): boolean {
     const hasResource =
-      hasValue(item?.azureMonitor?.resourceGroup) &&
-      hasValue(item?.azureMonitor?.resourceName) &&
+      item?.azureMonitor?.resources &&
+      item.azureMonitor.resources.length > 0 &&
+      item.azureMonitor.resources.every((r) => hasValue(r.resourceGroup) && hasValue(r.resourceName)) &&
       hasValue(item?.azureMonitor?.metricDefinition || item?.azureMonitor?.metricNamespace);
+    const hasResourceUri = hasValue(item.azureMonitor?.resourceUri);
 
     return !!(
       item.hide !== true &&
-      hasResource &&
+      (hasResource || hasResourceUri) &&
       hasValue(item?.azureMonitor?.metricName) &&
       hasValue(item?.azureMonitor?.aggregation)
     );
@@ -91,8 +98,10 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     const templateSrv = getTemplateSrv();
 
     const subscriptionId = templateSrv.replace(target.subscription || this.defaultSubscriptionId, scopedVars);
-    const resourceGroup = templateSrv.replace(item.resourceGroup, scopedVars);
-    const resourceName = templateSrv.replace(item.resourceName, scopedVars);
+    const resources = item.resources?.map((r) => ({
+      resourceGroup: templateSrv.replace(r.resourceGroup, scopedVars),
+      resourceName: templateSrv.replace(r.resourceName, scopedVars),
+    }));
     const metricNamespace = templateSrv.replace(item.metricNamespace, scopedVars);
     const customNamespace = templateSrv.replace(item.customNamespace, scopedVars);
     const timeGrain = templateSrv.replace((item.timeGrain || '').toString(), scopedVars);
@@ -111,10 +120,10 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       });
 
     const azMonitorQuery: AzureMetricQuery = {
-      resourceGroup,
+      ...item,
+      resources,
       metricNamespace,
       customNamespace,
-      resourceName,
       timeGrain,
       allowedTimeGrainsMs: item.allowedTimeGrainsMs,
       metricName: templateSrv.replace(item.metricName, scopedVars),
@@ -254,7 +263,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       this.templateSrv
     );
     return this.getResource(url).then((result: AzureMonitorMetricsMetadataResponse) => {
-      return ResponseParser.parseMetadata(result, metricName);
+      return ResponseParser.parseMetadata(result, this.templateSrv.replace(metricName));
     });
   }
 
@@ -294,5 +303,27 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     });
 
     return workingQuery;
+  }
+
+  async getProvider(providerName: string) {
+    return await this.getResource<AzureMonitorProvidersResponse>(
+      `${routeNames.azureMonitor}/providers/${providerName}?api-version=${this.providerApiVersion}`
+    );
+  }
+
+  async getLocations(subscriptions: string[]) {
+    const locationMap = new Map<string, AzureMonitorLocations>();
+    for (const subscription of subscriptions) {
+      const subLocations = ResponseParser.parseLocations(
+        await this.getResource<AzureMonitorLocationsResponse>(
+          `${routeNames.azureMonitor}/subscriptions/${subscription}/locations?api-version=${this.locationsApiVersion}`
+        )
+      );
+      for (const location of subLocations) {
+        locationMap.set(location.name, location);
+      }
+    }
+
+    return locationMap;
   }
 }

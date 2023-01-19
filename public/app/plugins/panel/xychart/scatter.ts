@@ -588,7 +588,8 @@ const prepConfig = (
     isTime: false,
     orientation: ScaleOrientation.Horizontal,
     direction: ScaleDirection.Right,
-    range: (u, min, max) => [min, max],
+    min: xField.config.min,
+    max: xField.config.max,
   });
 
   // why does this fall back to '' instead of null or undef?
@@ -621,7 +622,8 @@ const prepConfig = (
       scaleKey,
       orientation: ScaleOrientation.Vertical,
       direction: ScaleDirection.Up,
-      range: (u, min, max) => [min, max],
+      max: field.config.max,
+      min: field.config.min,
     });
 
     if (field.config.custom?.axisPlacement !== AxisPlacement.Hidden) {

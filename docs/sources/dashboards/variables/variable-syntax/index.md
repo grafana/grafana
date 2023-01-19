@@ -1,8 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/variables/advanced-variable-format-options/
-  - /docs/grafana/latest/reference/templating/
-  - /docs/grafana/latest/variables/syntax/
+  - ../../reference/templating/
+  - ../../variables/advanced-variable-format-options/
+  - ../../variables/syntax/
 keywords:
   - grafana
   - templating

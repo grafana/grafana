@@ -17,6 +17,7 @@ import {
   UrlQueryValue,
 } from '@grafana/data';
 import { RefreshEvent, TimeRangeUpdatedEvent } from '@grafana/runtime';
+import { Dashboard } from '@grafana/schema';
 import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { GRID_CELL_HEIGHT, GRID_CELL_VMARGIN, GRID_COLUMN_COUNT, REPEAT_DIR_VERTICAL } from 'app/core/constants';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -68,9 +69,9 @@ export interface DashboardLink {
 
 export class DashboardModel implements TimeModel {
   id: any;
-  uid: string;
+  // TODO: use propert type and fix all the places where uid is set to null
+  uid: any;
   title: string;
-  autoUpdate: any;
   description: any;
   tags: any;
   style: any;
@@ -125,17 +126,13 @@ export class DashboardModel implements TimeModel {
     lastRefresh: true,
   };
 
-  constructor(data: any, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariablesByKey) {
-    if (!data) {
-      data = {};
-    }
-
+  constructor(data: Dashboard, meta?: DashboardMeta, private getVariablesFromState: GetVariables = getVariablesByKey) {
     this.events = new EventBusSrv();
     this.id = data.id || null;
+    // UID is not there for newly created dashboards
     this.uid = data.uid || null;
-    this.revision = data.revision;
+    this.revision = data.revision || 1;
     this.title = data.title ?? 'No Title';
-    this.autoUpdate = data.autoUpdate;
     this.description = data.description;
     this.tags = data.tags ?? [];
     this.style = data.style ?? 'dark';
@@ -278,6 +275,20 @@ export class DashboardModel implements TimeModel {
           this.isSnapshotTruthy() || !(panel.type === 'add-panel' || panel.repeatPanelId || panel.repeatedByRow)
       )
       .map((panel) => {
+        // Clean libarary panels on save
+        if (panel.libraryPanel) {
+          const { id, title, libraryPanel, gridPos } = panel;
+          return {
+            id,
+            title,
+            gridPos,
+            libraryPanel: {
+              uid: libraryPanel.uid,
+              name: libraryPanel.name,
+            },
+          };
+        }
+
         // If we save while editing we should include the panel in edit mode instead of the
         // unmodified source panel
         if (this.panelInEdit && this.panelInEdit.id === panel.id) {
@@ -483,6 +494,15 @@ export class DashboardModel implements TimeModel {
   updateMeta(updates: Partial<DashboardMeta>) {
     this.meta = { ...this.meta, ...updates };
     this.events.publish(new DashboardMetaChangedEvent());
+  }
+
+  makeEditable() {
+    this.editable = true;
+    this.updateMeta({
+      canMakeEditable: false,
+      canEdit: true,
+      canSave: true,
+    });
   }
 
   sortPanelsByGridPos() {
@@ -1114,10 +1134,14 @@ export class DashboardModel implements TimeModel {
   }
 
   canAddAnnotations() {
-    // If RBAC is enabled there are additional conditions to check.
-    const canAdd = !contextSrv.accessControlEnabled() || Boolean(this.meta.annotationsPermissions?.dashboard.canAdd);
+    // When the builtin annotations are disabled, we should not add any in the UI
+    const found = this.annotations.list.find((item) => item.builtIn === 1);
+    if (found?.enable === false || !this.canEditDashboard()) {
+      return false;
+    }
 
-    return this.canEditDashboard() && canAdd;
+    // If RBAC is enabled there are additional conditions to check.
+    return !contextSrv.accessControlEnabled() || Boolean(this.meta.annotationsPermissions?.dashboard.canAdd);
   }
 
   canEditDashboard() {

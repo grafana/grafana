@@ -240,6 +240,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
       &:hover > small {
         color: ${autoColor(theme, '#000')};
       }
+      text-align: left;
+      background: transparent;
+      border: none;
     `,
     nameDetailExpanded: css`
       label: nameDetailExpanded;
@@ -287,7 +290,7 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   };
 });
 
-type SpanBarRowProps = {
+export type SpanBarRowProps = {
   className?: string;
   theme: GrafanaTheme2;
   color: string;
@@ -325,6 +328,7 @@ type SpanBarRowProps = {
   clippingLeft?: boolean;
   clippingRight?: boolean;
   createSpanLink?: SpanLinkFunc;
+  datasourceType: string;
 };
 
 /**
@@ -374,6 +378,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       clippingRight,
       theme,
       createSpanLink,
+      datasourceType,
     } = this.props;
     const {
       duration,
@@ -437,7 +442,8 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
               addHoverIndentGuideId={addHoverIndentGuideId}
               removeHoverIndentGuideId={removeHoverIndentGuideId}
             />
-            <a
+            <button
+              type="button"
               className={cx(styles.name, { [styles.nameDetailExpanded]: isDetailExpanded })}
               aria-checked={isDetailExpanded}
               title={labelDetail}
@@ -478,7 +484,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
               </span>
               <small className={styles.endpointName}>{rpc ? rpc.operationName : operationName}</small>
               <small className={styles.endpointName}> {this.getSpanBarLabel(span, spanBarOptions, label)}</small>
-            </a>
+            </button>
             {createSpanLink &&
               (() => {
                 const links = createSpanLink(span);
@@ -511,7 +517,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
                     </a>
                   );
                 } else if (links && count > 1) {
-                  return <SpanLinksMenu links={links} />;
+                  return <SpanLinksMenu links={links} datasourceType={datasourceType} />;
                 } else {
                   return null;
                 }

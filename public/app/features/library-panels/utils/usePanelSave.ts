@@ -1,9 +1,9 @@
-import { t } from '@lingui/macro';
 import { useEffect } from 'react';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
 import { isFetchError } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
+import { t } from 'app/core/internationalization';
 import { PanelModel } from 'app/features/dashboard/state';
 import { useDispatch } from 'app/types';
 
@@ -15,9 +15,9 @@ import {
 
 export const usePanelSave = () => {
   const dispatch = useDispatch();
-  const [state, saveLibraryPanel] = useAsyncFn(async (panel: PanelModel, folderId: number) => {
+  const [state, saveLibraryPanel] = useAsyncFn(async (panel: PanelModel, folderUid: string) => {
     try {
-      return await saveAndRefreshLibraryPanel(panel, folderId);
+      return await saveAndRefreshLibraryPanel(panel, folderUid);
     } catch (err) {
       if (isFetchError(err)) {
         err.isHandled = true;
@@ -30,21 +30,18 @@ export const usePanelSave = () => {
   useEffect(() => {
     if (state.error) {
       const errorMsg = state.error.message;
+
       dispatch(
         notifyApp(
           createPanelLibraryErrorNotification(
-            t({ id: 'library-panels.save.error', message: `Error saving library panel: "${errorMsg}"` })
+            t('library-panels.save.error', 'Error saving library panel: "{{errorMsg}}"', { errorMsg })
           )
         )
       );
     }
     if (state.value) {
       dispatch(
-        notifyApp(
-          createPanelLibrarySuccessNotification(
-            t({ id: 'library-panels.save.success', message: 'Library panel saved' })
-          )
-        )
+        notifyApp(createPanelLibrarySuccessNotification(t('library-panels.save.success', 'Library panel saved')))
       );
     }
   }, [dispatch, state]);

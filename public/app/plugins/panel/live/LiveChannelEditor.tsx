@@ -6,7 +6,7 @@ import {
   LiveChannelAddress,
   SelectableValue,
   StandardEditorProps,
-  GrafanaTheme,
+  GrafanaTheme2,
 } from '@grafana/data';
 import { Select, Alert, Label, stylesFactory } from '@grafana/ui';
 import { config } from 'app/core/config';
@@ -86,7 +86,7 @@ export class LiveChannelEditor extends PureComponent<Props, State> {
   render() {
     const { namespaces, paths } = this.state;
     const { scope, namespace, path } = this.props.value;
-    const style = getStyles(config.theme);
+    const style = getStyles(config.theme2);
 
     return (
       <>
@@ -146,8 +146,8 @@ function findPathOption(paths: Array<SelectableValue<string>>, path?: string): S
   return undefined;
 }
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getStyles = stylesFactory((theme: GrafanaTheme2) => ({
   dropWrap: css`
-    margin-bottom: ${theme.spacing.sm};
+    margin-bottom: ${theme.spacing(1)};
   `,
 }));

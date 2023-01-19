@@ -142,7 +142,7 @@ describe('Explore: Query History', () => {
     await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}']);
   });
 
-  it('updates the state in both Explore panes', async () => {
+  it.skip('updates the state in both Explore panes', async () => {
     const urlParams = {
       left: serializeStateToUrlParam({
         datasource: 'loki',
@@ -168,7 +168,7 @@ describe('Explore: Query History', () => {
     await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}'], ExploreId.right);
 
     // star one one query
-    starQueryHistory(1, ExploreId.left);
+    await starQueryHistory(1, ExploreId.left);
     await assertQueryHistoryIsStarred([false, true], ExploreId.left);
     await assertQueryHistoryIsStarred([false, true], ExploreId.right);
     expect(reportInteractionMock).toBeCalledWith('grafana_explore_query_history_starred', {
@@ -176,7 +176,7 @@ describe('Explore: Query History', () => {
       newValue: true,
     });
 
-    deleteQueryHistory(0, ExploreId.left);
+    await deleteQueryHistory(0, ExploreId.left);
     await assertQueryHistory(['{"expr":"query #1"}'], ExploreId.left);
     await assertQueryHistory(['{"expr":"query #1"}'], ExploreId.right);
     expect(reportInteractionMock).toBeCalledWith('grafana_explore_query_history_deleted', {

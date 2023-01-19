@@ -19,7 +19,7 @@ jest.mock('@grafana/runtime', () => ({
 }));
 
 function getDefaultOptions(): DashboardQueryRunnerOptions {
-  const dashboard: any = { id: 'an id', uid: 'a uid' };
+  const dashboard: any = { id: 'an id', uid: 'a uid', meta: { publicDashboardAccessToken: '' } };
   const range = getDefaultTimeRange();
 
   return { dashboard, range };
@@ -46,6 +46,15 @@ describe('UnifiedAlertStatesWorker', () => {
       const options = getDefaultOptions();
 
       expect(worker.canWork(options)).toBe(true);
+    });
+  });
+
+  describe('when canWork is called on a public dashboard view', () => {
+    it('then it should return false', () => {
+      const options = getDefaultOptions();
+      options.dashboard.meta.publicDashboardAccessToken = 'abc123';
+
+      expect(worker.canWork(options)).toBe(false);
     });
   });
 
@@ -114,6 +123,7 @@ describe('UnifiedAlertStatesWorker', () => {
         ...overrides,
       };
     }
+
     it('then it should return the correct results', async () => {
       const getResults: PromRulesResponse = {
         status: 'success',

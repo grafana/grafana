@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { GrafanaContext } from 'app/core/context/GrafanaContext';
+import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { StoreState } from 'app/types';
@@ -26,7 +26,7 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export type Props = GrafanaRouteComponentProps<DashboardPageRouteParams, { panelId: string }> &
+export type Props = GrafanaRouteComponentProps<DashboardPageRouteParams, { panelId: string; timezone?: string }> &
   ConnectedProps<typeof connector>;
 
 export interface State {
@@ -35,6 +35,7 @@ export interface State {
 }
 
 export class SoloPanelPage extends Component<Props, State> {
+  declare context: GrafanaContextType;
   static contextType = GrafanaContext;
 
   state: State = {
@@ -86,6 +87,7 @@ export class SoloPanelPage extends Component<Props, State> {
         notFound={this.state.notFound}
         panel={this.state.panel}
         panelId={this.getPanelId()}
+        timezone={this.props.queryParams.timezone}
       />
     );
   }
@@ -94,9 +96,10 @@ export class SoloPanelPage extends Component<Props, State> {
 export interface SoloPanelProps extends State {
   dashboard: DashboardModel | null;
   panelId: number;
+  timezone?: string;
 }
 
-export const SoloPanel = ({ dashboard, notFound, panel, panelId }: SoloPanelProps) => {
+export const SoloPanel = ({ dashboard, notFound, panel, panelId, timezone }: SoloPanelProps) => {
   if (notFound) {
     return <div className="alert alert-error">Panel with id {panelId} not found</div>;
   }
@@ -122,6 +125,7 @@ export const SoloPanel = ({ dashboard, notFound, panel, panelId }: SoloPanelProp
               isEditing={false}
               isViewing={false}
               lazy={false}
+              timezone={timezone}
             />
           );
         }}

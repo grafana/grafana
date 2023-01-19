@@ -5,9 +5,9 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
+	"github.com/grafana/grafana/pkg/services/star"
 )
 
 type sqlxStore struct {
@@ -39,12 +39,12 @@ func (s *sqlxStore) Insert(ctx context.Context, cmd *playlist.CreatePlaylistComm
 
 		if len(cmd.Items) > 0 {
 			playlistItems := make([]playlist.PlaylistItem, 0)
-			for _, item := range cmd.Items {
+			for order, item := range cmd.Items {
 				playlistItems = append(playlistItems, playlist.PlaylistItem{
 					PlaylistId: p.Id,
-					Type:       string(item.Type),
+					Type:       item.Type,
 					Value:      item.Value,
-					Order:      item.Order,
+					Order:      order + 1,
 					Title:      item.Title,
 				})
 			}
@@ -94,7 +94,7 @@ func (s *sqlxStore) Update(ctx context.Context, cmd *playlist.UpdatePlaylistComm
 		for index, item := range cmd.Items {
 			playlistItems = append(playlistItems, playlist.PlaylistItem{
 				PlaylistId: p.Id,
-				Type:       string(item.Type),
+				Type:       item.Type,
 				Value:      item.Value,
 				Order:      index + 1,
 				Title:      item.Title,
@@ -171,7 +171,7 @@ func (s *sqlxStore) List(ctx context.Context, query *playlist.GetPlaylistsQuery)
 func (s *sqlxStore) GetItems(ctx context.Context, query *playlist.GetPlaylistItemsByUidQuery) ([]playlist.PlaylistItem, error) {
 	var playlistItems = make([]playlist.PlaylistItem, 0)
 	if query.PlaylistUID == "" || query.OrgId == 0 {
-		return playlistItems, models.ErrCommandValidationFailed
+		return playlistItems, star.ErrCommandValidationFailed
 	}
 
 	var p = playlist.Playlist{}
@@ -197,5 +197,5 @@ func newGenerateAndValidateNewPlaylistUid(ctx context.Context, sess *session.Ses
 		}
 	}
 
-	return "", models.ErrPlaylistFailedGenerateUniqueUid
+	return "", playlist.ErrPlaylistFailedGenerateUniqueUid
 }

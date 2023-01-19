@@ -24,7 +24,7 @@ import { AppChromeService } from '../components/AppChrome/AppChromeService';
 import { HelpModal } from '../components/help/HelpModal';
 import { contextSrv } from '../core';
 
-import { toggleTheme } from './toggleTheme';
+import { toggleTheme } from './theme';
 import { withFocusedPanel } from './withFocusedPanelId';
 
 export class KeybindingSrv {
@@ -45,8 +45,8 @@ export class KeybindingSrv {
       this.bindGlobalEsc();
     }
 
-    this.bind('t t', () => toggleTheme(false));
-    this.bind('t r', () => toggleTheme(true));
+    this.bind('c t', () => toggleTheme(false));
+    this.bind('c r', () => toggleTheme(true));
 
     if (process.env.NODE_ENV === 'development') {
       this.bind('t n', () => this.toggleNav());
@@ -58,7 +58,7 @@ export class KeybindingSrv {
   }
 
   globalEsc() {
-    const anyDoc = document as any;
+    const anyDoc = document;
     const activeElement = anyDoc.activeElement;
 
     // typehead needs to handle it
@@ -68,13 +68,13 @@ export class KeybindingSrv {
     }
 
     // second check if we are in an input we can blur
-    if (activeElement && activeElement.blur) {
+    if (activeElement && activeElement instanceof HTMLElement) {
       if (
         activeElement.nodeName === 'INPUT' ||
         activeElement.nodeName === 'TEXTAREA' ||
         activeElement.hasAttribute('data-slate-editor')
       ) {
-        anyDoc.activeElement.blur();
+        activeElement.blur();
         return;
       }
     }

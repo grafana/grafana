@@ -3,14 +3,16 @@ import { uniqueId } from 'lodash';
 import React, { useCallback } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
-import { Button, EditorField, Select, Stack, useStyles2 } from '@grafana/ui';
+import { EditorField, Stack } from '@grafana/experimental';
+import { Button, Select, useStyles2 } from '@grafana/ui';
 
 import { QueryEditorExpressionType, QueryEditorFunctionExpression } from '../../expressions';
-import { SQLExpression } from '../../types';
+import { SQLExpression, QueryFormat } from '../../types';
 import { createFunctionField } from '../../utils/sql.utils';
 
 interface SelectRowProps {
   sql: SQLExpression;
+  format: QueryFormat | undefined;
   onSqlChange: (sql: SQLExpression) => void;
   columns?: Array<SelectableValue<string>>;
   functions?: Array<SelectableValue<string>>;
@@ -18,9 +20,17 @@ interface SelectRowProps {
 
 const asteriskValue = { label: '*', value: '*' };
 
-export function SelectRow({ sql, columns, onSqlChange, functions }: SelectRowProps) {
+export function SelectRow({ sql, format, columns, onSqlChange, functions }: SelectRowProps) {
   const styles = useStyles2(getStyles);
   const columnsWithAsterisk = [asteriskValue, ...(columns || [])];
+  const timeSeriesAliasOpts: Array<SelectableValue<string>> = [];
+
+  // Add necessary alias options for time series format
+  // when that format has been selected
+  if (format === QueryFormat.Timeseries) {
+    timeSeriesAliasOpts.push({ label: 'time', value: 'time' });
+    timeSeriesAliasOpts.push({ label: 'value', value: 'value' });
+  }
 
   const onColumnChange = useCallback(
     (item: QueryEditorFunctionExpression, index: number) => (column: SelectableValue<string>) => {
@@ -59,6 +69,26 @@ export function SelectRow({ sql, columns, onSqlChange, functions }: SelectRowPro
     [onSqlChange, sql]
   );
 
+  const onAliasChange = useCallback(
+    (item: QueryEditorFunctionExpression, index: number) => (alias: SelectableValue<string>) => {
+      let newItem = { ...item };
+
+      if (alias !== null) {
+        newItem = { ...item, alias: `"${alias?.value?.trim()}"` };
+      } else {
+        delete newItem.alias;
+      }
+
+      const newSql: SQLExpression = {
+        ...sql,
+        columns: sql.columns?.map((c, i) => (i === index ? newItem : c)),
+      };
+
+      onSqlChange(newSql);
+    },
+    [onSqlChange, sql]
+  );
+
   const removeColumn = useCallback(
     (index: number) => () => {
       const clone = [...sql.columns!];
@@ -78,7 +108,7 @@ export function SelectRow({ sql, columns, onSqlChange, functions }: SelectRowPro
   }, [onSqlChange, sql]);
 
   return (
-    <Stack gap={2} alignItems="end" wrap direction="column">
+    <Stack gap={2} wrap direction="column">
       {sql.columns?.map((item, index) => (
         <div key={index}>
           <Stack gap={2} alignItems="end">
@@ -102,6 +132,16 @@ export function SelectRow({ sql, columns, onSqlChange, functions }: SelectRowPro
                 allowCustomValue
                 options={functions}
                 onChange={onAggregationChange(item, index)}
+              />
+            </EditorField>
+            <EditorField label="Alias" optional width={15}>
+              <Select
+                value={item.alias ? toOption(item.alias) : null}
+                options={timeSeriesAliasOpts}
+                onChange={onAliasChange(item, index)}
+                isClearable
+                menuShouldPortal
+                allowCustomValue
               />
             </EditorField>
             <Button

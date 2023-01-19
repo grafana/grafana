@@ -9,14 +9,15 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type configReader struct {
-	path     string
-	log      log.Logger
-	orgStore utils.OrgStore
+	path       string
+	log        log.Logger
+	orgService org.Service
 }
 
 func (cr *configReader) parseConfigs(file fs.DirEntry) ([]*config, error) {
@@ -94,7 +95,7 @@ func (cr *configReader) readConfig(ctx context.Context) ([]*config, error) {
 			dashboard.OrgID = 1
 		}
 
-		if err := utils.CheckOrgExists(ctx, cr.orgStore, dashboard.OrgID); err != nil {
+		if err := utils.CheckOrgExists(ctx, cr.orgService, dashboard.OrgID); err != nil {
 			return nil, fmt.Errorf("failed to provision dashboards with %q reader: %w", dashboard.Name, err)
 		}
 

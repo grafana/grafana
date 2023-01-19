@@ -28,7 +28,7 @@ export class GaugePanel extends PureComponent<PanelProps<PanelOptions>> {
         text={options.text}
         showThresholdLabels={options.showThresholdLabels}
         showThresholdMarkers={options.showThresholdMarkers}
-        theme={config.theme}
+        theme={config.theme2}
         onClick={openMenu}
         className={targetClassName}
       />
@@ -41,7 +41,7 @@ export class GaugePanel extends PureComponent<PanelProps<PanelOptions>> {
 
     if (hasLinks && getLinks) {
       return (
-        <DataLinksContextMenu links={getLinks}>
+        <DataLinksContextMenu links={getLinks} style={{ flexGrow: 1 }}>
           {(api) => {
             return this.renderComponent(valueProps, api);
           }}

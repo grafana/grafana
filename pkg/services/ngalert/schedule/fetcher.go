@@ -49,7 +49,7 @@ func (sch *schedule) updateSchedulableAlertRules(ctx context.Context) error {
 			return err
 		}
 		if !sch.schedulableAlertRules.needsUpdate(keys) {
-			sch.log.Info("no changes detected. Skip updating")
+			sch.log.Debug("No changes detected. Skip updating")
 			return nil
 		}
 	}
@@ -60,7 +60,7 @@ func (sch *schedule) updateSchedulableAlertRules(ctx context.Context) error {
 	if err := sch.ruleStore.GetAlertRulesForScheduling(ctx, &q); err != nil {
 		return fmt.Errorf("failed to get alert rules: %w", err)
 	}
-	sch.log.Debug("alert rules fetched", "rules_count", len(q.ResultRules), "folders_count", len(q.ResultFoldersTitles))
+	sch.log.Debug("Alert rules fetched", "rulesCount", len(q.ResultRules), "foldersCount", len(q.ResultFoldersTitles))
 	sch.schedulableAlertRules.set(q.ResultRules, q.ResultFoldersTitles)
 	return nil
 }

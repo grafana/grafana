@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -36,14 +37,12 @@ func (s *searchHTTPService) doQuery(c *models.ReqContext) response.Response {
 			"reason": searchReadinessCheckResp.Reason,
 		}).Inc()
 
-		bytes, err := (&data.Frame{
-			Name: "Loading",
-		}).MarshalJSON()
-
-		if err != nil {
-			return response.Error(500, "error marshalling response", err)
-		}
-		return response.JSON(200, bytes)
+		return response.JSON(200, &backend.DataResponse{
+			Frames: []*data.Frame{{
+				Name: "Loading",
+			}},
+			Error: nil,
+		})
 	}
 
 	body, err := io.ReadAll(c.Req.Body)

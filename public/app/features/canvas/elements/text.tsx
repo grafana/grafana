@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
@@ -9,7 +9,7 @@ import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 
-import { CanvasElementItem, CanvasElementProps, defaultTextColor } from '../element';
+import { CanvasElementItem, CanvasElementProps, defaultThemeTextColor } from '../element';
 import { ElementState } from '../runtime/element';
 import { Align, TextConfig, TextData, VAlign } from '../types';
 
@@ -38,10 +38,14 @@ const TextEdit = (props: CanvasElementProps<TextConfig, TextData>) => {
   let panelData: DataFrame[];
   panelData = context.instanceState?.scene?.data.series;
 
-  const onTextChange = (event: React.SyntheticEvent<HTMLInputElement>) => {
-    const { value: textValue } = event.currentTarget;
-    saveText(textValue);
-  };
+  const textRef = useRef<string>(config.text?.fixed ?? '');
+
+  // Save text on TextEdit unmount
+  useEffect(() => {
+    return () => {
+      saveText(textRef.current);
+    };
+  });
 
   const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter') {
@@ -51,6 +55,10 @@ const TextEdit = (props: CanvasElementProps<TextConfig, TextData>) => {
         scene.editModeEnabled.next(false);
       }
     }
+  };
+
+  const onKeyUp = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    textRef.current = event.currentTarget.value;
   };
 
   const saveText = useCallback(
@@ -80,7 +88,7 @@ const TextEdit = (props: CanvasElementProps<TextConfig, TextData>) => {
   const styles = useStyles2(getStyles(data));
   return (
     <div className={styles.inlineEditorContainer}>
-      {panelData && <Input value={config.text?.fixed ?? ''} onChange={onTextChange} onKeyDown={onKeyDown} autoFocus />}
+      {panelData && <Input defaultValue={config.text?.fixed ?? ''} onKeyDown={onKeyDown} onKeyUp={onKeyUp} autoFocus />}
     </div>
   );
 };
@@ -128,7 +136,7 @@ export const textItem: CanvasElementItem<TextConfig, TextData> = {
       align: Align.Center,
       valign: VAlign.Middle,
       color: {
-        fixed: defaultTextColor,
+        fixed: defaultThemeTextColor,
       },
       size: 16,
     },

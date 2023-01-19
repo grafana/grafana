@@ -15,14 +15,14 @@ import { IndicatorsContainer } from './IndicatorsContainer';
 import { InputControl } from './InputControl';
 import { MultiValueContainer, MultiValueRemove } from './MultiValue';
 import { SelectContainer } from './SelectContainer';
-import { SelectMenu, SelectMenuOptions } from './SelectMenu';
+import { SelectMenu, SelectMenuOptions, VirtualizedSelectMenu } from './SelectMenu';
 import { SelectOptionGroup } from './SelectOptionGroup';
 import { SingleValue } from './SingleValue';
 import { ValueContainer } from './ValueContainer';
 import { getSelectStyles } from './getSelectStyles';
 import { useCustomSelectStyles } from './resetSelectStyles';
 import { ActionMeta, SelectBaseProps } from './types';
-import { cleanValue, findSelectedValue } from './utils';
+import { cleanValue, findSelectedValue, omitDescriptions } from './utils';
 
 interface ExtraValuesIndicatorProps {
   maxVisibleValues?: number | undefined;
@@ -97,6 +97,7 @@ export function SelectBase<T>({
   className,
   closeMenuOnSelect = true,
   components,
+  createOptionPosition = 'last',
   defaultOptions,
   defaultValue,
   disabled = false,
@@ -139,6 +140,7 @@ export function SelectBase<T>({
   showAllSelectedWhenOpen = true,
   tabSelectsValue = true,
   value,
+  virtualized = false,
   width,
   isValidNewOption,
   formatOptionLabel,
@@ -241,7 +243,7 @@ export function SelectBase<T>({
     onFocus,
     formatOptionLabel,
     openMenuOnFocus,
-    options,
+    options: virtualized ? omitDescriptions(options) : options,
     placeholder,
     prefix,
     renderControl,
@@ -255,6 +257,7 @@ export function SelectBase<T>({
     creatableProps.allowCreateWhileLoading = allowCreateWhileLoading;
     creatableProps.formatCreateLabel = formatCreateLabel ?? defaultFormatCreateLabel;
     creatableProps.onCreateOption = onCreateOption;
+    creatableProps.createOptionPosition = createOptionPosition;
     creatableProps.isValidNewOption = isValidNewOption;
   }
 
@@ -268,12 +271,14 @@ export function SelectBase<T>({
     };
   }
 
+  const SelectMenuComponent = virtualized ? VirtualizedSelectMenu : SelectMenu;
+
   return (
     <>
       <ReactSelectComponent
         ref={reactSelectRef}
         components={{
-          MenuList: SelectMenu,
+          MenuList: SelectMenuComponent,
           Group: SelectOptionGroup,
           ValueContainer,
           IndicatorsContainer(props: any) {

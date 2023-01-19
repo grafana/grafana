@@ -1,3 +1,4 @@
+import { SyntaxNode } from '@lezer/common';
 import { sortBy } from 'lodash';
 
 import {
@@ -8,6 +9,7 @@ import {
   LineFilters,
   LogExpr,
   LogRangeExpr,
+  Matcher,
   parser,
   PipelineExpr,
   Selector,
@@ -16,6 +18,7 @@ import {
 
 import { QueryBuilderLabelFilter } from '../prometheus/querybuilder/shared/types';
 
+import { unescapeLabelValue } from './languageUtils';
 import { LokiQueryModeller } from './querybuilder/LokiQueryModeller';
 import { buildVisualQueryFromString } from './querybuilder/parsing';
 
@@ -40,6 +43,13 @@ export function addLabelToQuery(query: string, key: string, operator: string, va
   }
 
   const streamSelectorPositions = getStreamSelectorPositions(query);
+  const hasStreamSelectorMatchers = getMatcherInStreamPositions(query);
+  const everyStreamSelectorHasMatcher = streamSelectorPositions.every((streamSelectorPosition) =>
+    hasStreamSelectorMatchers.some(
+      (matcherPosition) =>
+        matcherPosition.from >= streamSelectorPosition.from && matcherPosition.to <= streamSelectorPosition.to
+    )
+  );
   const parserPositions = getParserPositions(query);
   const labelFilterPositions = getLabelFilterPositions(query);
   if (!streamSelectorPositions.length) {
@@ -47,8 +57,9 @@ export function addLabelToQuery(query: string, key: string, operator: string, va
   }
 
   const filter = toLabelFilter(key, value, operator);
-  // If we have label filters or parser, we want to add new label filter after the last one
-  if (labelFilterPositions.length || parserPositions.length) {
+  // If we have non-empty stream selector and parser/label filter, we want to add a new label filter after the last one.
+  // If some of the stream selectors don't have matchers, we want to add new matcher to the all stream selectors.
+  if (everyStreamSelectorHasMatcher && (labelFilterPositions.length || parserPositions.length)) {
     const positionToAdd = findLastPosition([...labelFilterPositions, ...parserPositions]);
     return addFilterAsLabelFilter(query, [positionToAdd], filter);
   } else {
@@ -117,10 +128,7 @@ export function removeCommentsFromQuery(query: string): string {
   let prev = 0;
 
   for (let lineCommentPosition of lineCommentPositions) {
-    const beforeComment = query.substring(prev, lineCommentPosition.from);
-    const afterComment = query.substring(lineCommentPosition.to);
-
-    newQuery += beforeComment + afterComment;
+    newQuery = newQuery + query.substring(prev, lineCommentPosition.from);
     prev = lineCommentPosition.to;
   }
   return newQuery;
@@ -139,6 +147,19 @@ function getStreamSelectorPositions(query: string): Position[] {
       if (type.id === Selector) {
         positions.push({ from, to });
         return false;
+      }
+    },
+  });
+  return positions;
+}
+
+function getMatcherInStreamPositions(query: string): Position[] {
+  const tree = parser.parse(query);
+  const positions: Position[] = [];
+  tree.iterate({
+    enter: ({ node }): false | void => {
+      if (node.type.id === Selector) {
+        positions.push(...getAllPositionsInNodeByType(query, node, Matcher));
       }
     },
   });
@@ -243,7 +264,7 @@ function getLogQueryPositions(query: string): Position[] {
   return positions;
 }
 
-function toLabelFilter(key: string, value: string, operator: string): QueryBuilderLabelFilter {
+export function toLabelFilter(key: string, value: string, operator: string): QueryBuilderLabelFilter {
   // We need to make sure that we convert the value back to string because it may be a number
   return { label: key, op: operator, value };
 }
@@ -290,7 +311,7 @@ function addFilterToStreamSelector(
  * @param positionsToAddAfter
  * @param filter
  */
-function addFilterAsLabelFilter(
+export function addFilterAsLabelFilter(
   query: string,
   positionsToAddAfter: Position[],
   filter: QueryBuilderLabelFilter
@@ -306,7 +327,9 @@ function addFilterAsLabelFilter(
     const start = query.substring(prev, match.to);
     const end = isLast ? query.substring(match.to) : '';
 
-    const labelFilter = ` | ${filter.label}${filter.op}\`${filter.value}\``;
+    // we now unescape all escaped values again, because we are using backticks which can handle those cases.
+    // we also don't care about the operator here, because we need to unescape for both, regex and equal.
+    const labelFilter = ` | ${filter.label}${filter.op}\`${unescapeLabelValue(filter.value)}\``;
     newQuery += start + labelFilter + end;
     prev = match.to;
   }
@@ -367,6 +390,14 @@ function addLabelFormat(
   return newQuery;
 }
 
+export function addLineFilter(query: string): string {
+  const streamSelectorPositions = getStreamSelectorPositions(query);
+  const streamSelectorEnd = streamSelectorPositions[0].to;
+
+  const newQueryExpr = query.slice(0, streamSelectorEnd) + ' |= ``' + query.slice(streamSelectorEnd);
+  return newQueryExpr;
+}
+
 function getLineCommentPositions(query: string): Position[] {
   const tree = parser.parse(query);
   const positions: Position[] = [];
@@ -394,6 +425,22 @@ function labelExists(labels: QueryBuilderLabelFilter[], filter: QueryBuilderLabe
  * Return the last position based on "to" property
  * @param positions
  */
-function findLastPosition(positions: Position[]): Position {
+export function findLastPosition(positions: Position[]): Position {
   return positions.reduce((prev, current) => (prev.to > current.to ? prev : current));
+}
+
+function getAllPositionsInNodeByType(query: string, node: SyntaxNode, type: number): Position[] {
+  if (node.type.id === type) {
+    return [{ from: node.from, to: node.to }];
+  }
+
+  const positions: Position[] = [];
+  let pos = 0;
+  let child = node.childAfter(pos);
+  while (child) {
+    positions.push(...getAllPositionsInNodeByType(query, child, type));
+    pos = child.to;
+    child = node.childAfter(pos);
+  }
+  return positions;
 }

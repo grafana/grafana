@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { FC } from 'react';
 
-import { useTheme } from '../../themes/ThemeContext';
+import { useTheme2 } from '../../themes/ThemeContext';
 
 export interface Props {
   name: string;
@@ -9,13 +9,13 @@ export interface Props {
 }
 
 export const StoryExample: FC<Props> = ({ name, children }) => {
-  const theme = useTheme();
+  const theme = useTheme2();
   const style = css`
     width: 100%;
     padding: 16px;
   `;
   const heading = css`
-    color: ${theme.colors.textWeak};
+    color: ${theme.colors.text.secondary};
     margin-bottom: 16px;
   `;
 

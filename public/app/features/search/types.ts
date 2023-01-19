@@ -2,6 +2,8 @@ import { Action } from 'redux';
 
 import { SelectableValue, WithAccessControlMetadata } from '@grafana/data';
 
+import { QueryResponse } from './service';
+
 export enum DashboardSearchItemType {
   DashDB = 'dash-db',
   DashHome = 'dash-home',
@@ -52,7 +54,7 @@ export interface DashboardSectionItem {
 }
 
 /**
- * @deprecated - It uses dashboard ID which is depreacted in favor of dashboard UID. Please, use DashboardSearchItem instead.
+ * @deprecated - It uses dashboard ID which is deprecated in favor of dashboard UID. Please, use DashboardSearchItem instead.
  */
 export interface DashboardSearchHit extends DashboardSectionItem, DashboardSection, WithAccessControlMetadata {}
 
@@ -68,7 +70,9 @@ export interface SearchAction extends Action {
   payload?: any;
 }
 
-export interface DashboardQuery {
+export type EventTrackingNamespace = 'manage_dashboards' | 'dashboard_search';
+
+export interface SearchState {
   query: string;
   tag: string[];
   starred: boolean;
@@ -78,6 +82,11 @@ export interface DashboardQuery {
   // Save sorting data between layouts
   prevSort: SelectableValue | null;
   layout: SearchLayout;
+  result?: QueryResponse;
+  loading?: boolean;
+  folderUid?: string;
+  includePanels?: boolean;
+  eventTrackingNamespace: EventTrackingNamespace;
 }
 
 export type OnToggleChecked = (item: DashboardSectionItem | DashboardSection) => void;

@@ -1,4 +1,4 @@
-import React, { FC, memo } from 'react';
+import React, { memo } from 'react';
 
 import { config } from '@grafana/runtime';
 import { useUrlParams } from 'app/core/navigation/hooks';
@@ -6,7 +6,7 @@ import { useUrlParams } from 'app/core/navigation/hooks';
 import { DashboardSearch } from './DashboardSearch';
 import { DashboardSearchModal } from './DashboardSearchModal';
 
-export const SearchWrapper: FC = memo(() => {
+export const SearchWrapper = memo(() => {
   const [params] = useUrlParams();
   const isOpen = params.get('search') === 'open';
   const isTopnav = config.featureToggles.topnav;

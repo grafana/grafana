@@ -9,9 +9,9 @@ import { SegmentAsync, Icon, SegmentSection } from '@grafana/ui';
 import { SegmentAsyncProps } from './SegmentAsync';
 
 const AddButton = (
-  <a className="gf-form-label query-part">
+  <span className="gf-form-label query-part">
     <Icon name="plus" />
-  </a>
+  </span>
 );
 
 const toOption = (value: any) => ({ label: value, value: value });

@@ -1,146 +1,37 @@
 import { renderHook } from '@testing-library/react-hooks';
+import { setupServer } from 'msw/node';
 import React from 'react';
 import { Provider } from 'react-redux';
 
+import 'whatwg-fetch';
+
 import { DataSourceJsonData, DataSourceSettings } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { AlertmanagerChoice, AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
+import { config, setBackendSrv } from '@grafana/runtime';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { AlertManagerDataSourceJsonData } from 'app/plugins/datasource/alertmanager/types';
 
 import { mockDataSource, mockDataSourcesStore, mockStore } from '../mocks';
+import { mockAlertmanagersResponse } from '../mocks/alertmanagerApi';
 
-import { useExternalAmSelector, useExternalDataSourceAlertmanagers } from './useExternalAmSelector';
+import { useExternalDataSourceAlertmanagers } from './useExternalAmSelector';
 
-describe('useExternalAmSelector', () => {
-  it('should have one in pending', () => {
-    const store = createMockStoreState([], [], ['some/url/to/am']);
-    const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
-    const { result } = renderHook(() => useExternalAmSelector(), { wrapper });
-    const alertmanagers = result.current;
+const server = setupServer();
 
-    expect(alertmanagers).toEqual([
-      {
-        url: 'some/url/to/am',
-        status: 'pending',
-        actualUrl: '',
-      },
-    ]);
-  });
+beforeAll(() => {
+  setBackendSrv(backendSrv);
+  server.listen({ onUnhandledRequest: 'error' });
+});
 
-  it('should have one active, one pending', () => {
-    const store = createMockStoreState(
-      [{ url: 'some/url/to/am/api/v2/alerts' }],
-      [],
-      ['some/url/to/am', 'some/url/to/am1']
-    );
-    const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
-    const { result } = renderHook(() => useExternalAmSelector(), { wrapper });
-    const alertmanagers = result.current;
+beforeEach(() => {
+  server.resetHandlers();
+});
 
-    expect(alertmanagers).toEqual([
-      {
-        url: 'some/url/to/am',
-        actualUrl: 'some/url/to/am/api/v2/alerts',
-        status: 'active',
-      },
-      {
-        url: 'some/url/to/am1',
-        actualUrl: '',
-        status: 'pending',
-      },
-    ]);
-  });
-
-  it('should have two active', () => {
-    const store = createMockStoreState(
-      [{ url: 'some/url/to/am/api/v2/alerts' }, { url: 'some/url/to/am1/api/v2/alerts' }],
-      [],
-      ['some/url/to/am', 'some/url/to/am1']
-    );
-    const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
-    const { result } = renderHook(() => useExternalAmSelector(), { wrapper });
-    const alertmanagers = result.current;
-
-    expect(alertmanagers).toEqual([
-      {
-        url: 'some/url/to/am',
-        actualUrl: 'some/url/to/am/api/v2/alerts',
-        status: 'active',
-      },
-      {
-        url: 'some/url/to/am1',
-        actualUrl: 'some/url/to/am1/api/v2/alerts',
-        status: 'active',
-      },
-    ]);
-  });
-
-  it('should have one active, one dropped, one pending', () => {
-    const store = createMockStoreState(
-      [{ url: 'some/url/to/am/api/v2/alerts' }],
-      [{ url: 'some/dropped/url/api/v2/alerts' }],
-      ['some/url/to/am', 'some/url/to/am1']
-    );
-    const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
-
-    const { result } = renderHook(() => useExternalAmSelector(), { wrapper });
-    const alertmanagers = result.current;
-    expect(alertmanagers).toEqual([
-      {
-        url: 'some/url/to/am',
-        actualUrl: 'some/url/to/am/api/v2/alerts',
-        status: 'active',
-      },
-      {
-        url: 'some/url/to/am1',
-        actualUrl: '',
-        status: 'pending',
-      },
-      {
-        url: 'some/dropped/url',
-        actualUrl: 'some/dropped/url/api/v2/alerts',
-        status: 'dropped',
-      },
-    ]);
-  });
-
-  it('The number of alert managers should match config entries when there are multiple entries of the same url', () => {
-    const store = createMockStoreState(
-      [
-        { url: 'same/url/to/am/api/v2/alerts' },
-        { url: 'same/url/to/am/api/v2/alerts' },
-        { url: 'same/url/to/am/api/v2/alerts' },
-      ],
-      [],
-      ['same/url/to/am', 'same/url/to/am', 'same/url/to/am']
-    );
-    const wrapper = ({ children }: React.PropsWithChildren<{}>) => <Provider store={store}>{children}</Provider>;
-
-    const { result } = renderHook(() => useExternalAmSelector(), { wrapper });
-    const alertmanagers = result.current;
-
-    expect(alertmanagers.length).toBe(3);
-    expect(alertmanagers).toEqual([
-      {
-        url: 'same/url/to/am',
-        actualUrl: 'same/url/to/am/api/v2/alerts',
-        status: 'active',
-      },
-      {
-        url: 'same/url/to/am',
-        actualUrl: 'same/url/to/am/api/v2/alerts',
-        status: 'active',
-      },
-      {
-        url: 'same/url/to/am',
-        actualUrl: 'same/url/to/am/api/v2/alerts',
-        status: 'active',
-      },
-    ]);
-  });
+afterAll(() => {
+  server.close();
 });
 
 describe('useExternalDataSourceAlertmanagers', () => {
-  it('Should merge data sources information from config and api responses', () => {
+  it('Should merge data sources information from config and api responses', async () => {
     // Arrange
     const { dsSettings, dsInstanceSettings } = setupAlertmanagerDataSource({ url: 'http://grafana.com' });
 
@@ -152,20 +43,23 @@ describe('useExternalDataSourceAlertmanagers', () => {
       dataSources: [dsSettings],
     });
 
+    mockAlertmanagersResponse(server, { data: { activeAlertManagers: [], droppedAlertManagers: [] } });
+
     const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
 
     // Act
-    const {
-      result: { current },
-    } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
+    const { result, waitForNextUpdate } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
+    await waitForNextUpdate();
 
     // Assert
+    const { current } = result;
+
     expect(current).toHaveLength(1);
     expect(current[0].dataSource.uid).toBe('1');
     expect(current[0].url).toBe('http://grafana.com');
   });
 
-  it('Should have active state if available in the activeAlertManagers', () => {
+  it('Should have active state if available in the activeAlertManagers', async () => {
     // Arrange
     const { dsSettings, dsInstanceSettings } = setupAlertmanagerDataSource({ url: 'http://grafana.com' });
 
@@ -175,28 +69,30 @@ describe('useExternalDataSourceAlertmanagers', () => {
 
     const store = mockStore((state) => {
       state.dataSources.dataSources = [dsSettings];
-      state.unifiedAlerting.externalAlertmanagers.discoveredAlertmanagers.result = {
-        data: {
-          activeAlertManagers: [{ url: 'http://grafana.com/api/v2/alerts' }],
-          droppedAlertManagers: [],
-        },
-      };
+    });
+
+    mockAlertmanagersResponse(server, {
+      data: {
+        activeAlertManagers: [{ url: 'http://grafana.com/api/v2/alerts' }],
+        droppedAlertManagers: [],
+      },
     });
 
     const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
 
     // Act
-    const {
-      result: { current },
-    } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
+    const { result, waitForValueToChange } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
+    await waitForValueToChange(() => result.current[0].status);
 
     // Assert
+    const { current } = result;
+
     expect(current).toHaveLength(1);
     expect(current[0].status).toBe('active');
     expect(current[0].statusInconclusive).toBe(false);
   });
 
-  it('Should have dropped state if available in the droppedAlertManagers', () => {
+  it('Should have dropped state if available in the droppedAlertManagers', async () => {
     // Arrange
     const { dsSettings, dsInstanceSettings } = setupAlertmanagerDataSource({ url: 'http://grafana.com' });
 
@@ -206,28 +102,30 @@ describe('useExternalDataSourceAlertmanagers', () => {
 
     const store = mockStore((state) => {
       state.dataSources.dataSources = [dsSettings];
-      state.unifiedAlerting.externalAlertmanagers.discoveredAlertmanagers.result = {
-        data: {
-          activeAlertManagers: [],
-          droppedAlertManagers: [{ url: 'http://grafana.com/api/v2/alerts' }],
-        },
-      };
+    });
+
+    mockAlertmanagersResponse(server, {
+      data: {
+        activeAlertManagers: [],
+        droppedAlertManagers: [{ url: 'http://grafana.com/api/v2/alerts' }],
+      },
     });
 
     const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
 
     // Act
-    const {
-      result: { current },
-    } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
+    const { result, waitForValueToChange } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
+    await waitForValueToChange(() => result.current[0].status);
 
     // Assert
+    const { current } = result;
+
     expect(current).toHaveLength(1);
     expect(current[0].status).toBe('dropped');
     expect(current[0].statusInconclusive).toBe(false);
   });
 
-  it('Should have pending state if not available neither in dropped nor in active alertManagers', () => {
+  it('Should have pending state if not available neither in dropped nor in active alertManagers', async () => {
     // Arrange
     const { dsSettings, dsInstanceSettings } = setupAlertmanagerDataSource();
 
@@ -237,28 +135,30 @@ describe('useExternalDataSourceAlertmanagers', () => {
 
     const store = mockStore((state) => {
       state.dataSources.dataSources = [dsSettings];
-      state.unifiedAlerting.externalAlertmanagers.discoveredAlertmanagers.result = {
-        data: {
-          activeAlertManagers: [],
-          droppedAlertManagers: [],
-        },
-      };
+    });
+
+    mockAlertmanagersResponse(server, {
+      data: {
+        activeAlertManagers: [],
+        droppedAlertManagers: [],
+      },
     });
 
     const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
 
     // Act
-    const {
-      result: { current },
-    } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
+    const { result, waitForNextUpdate } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
+    await waitForNextUpdate();
 
     // Assert
+    const { current } = result;
+
     expect(current).toHaveLength(1);
     expect(current[0].status).toBe('pending');
     expect(current[0].statusInconclusive).toBe(false);
   });
 
-  it('Should match Alertmanager url when datasource url does not have protocol specified', () => {
+  it('Should match Alertmanager url when datasource url does not have protocol specified', async () => {
     // Arrange
     const { dsSettings, dsInstanceSettings } = setupAlertmanagerDataSource({ url: 'localhost:9093' });
 
@@ -268,29 +168,38 @@ describe('useExternalDataSourceAlertmanagers', () => {
 
     const store = mockStore((state) => {
       state.dataSources.dataSources = [dsSettings];
-      state.unifiedAlerting.externalAlertmanagers.discoveredAlertmanagers.result = {
-        data: {
-          activeAlertManagers: [{ url: 'http://localhost:9093/api/v2/alerts' }],
-          droppedAlertManagers: [],
-        },
-      };
+    });
+
+    mockAlertmanagersResponse(server, {
+      data: {
+        activeAlertManagers: [{ url: 'http://localhost:9093/api/v2/alerts' }],
+        droppedAlertManagers: [],
+      },
     });
 
     const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
 
     // Act
-    const {
-      result: { current },
-    } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
+    const { result, waitForValueToChange } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
+    await waitForValueToChange(() => result.current[0].status);
 
     // Assert
+    const { current } = result;
+
     expect(current).toHaveLength(1);
     expect(current[0].status).toBe('active');
     expect(current[0].url).toBe('localhost:9093');
   });
 
-  it('Should have inconclusive state when there are many Alertmanagers of the same URL', () => {
+  it('Should have inconclusive state when there are many Alertmanagers of the same URL', async () => {
     // Arrange
+    mockAlertmanagersResponse(server, {
+      data: {
+        activeAlertManagers: [{ url: 'http://grafana.com/api/v2/alerts' }, { url: 'http://grafana.com/api/v2/alerts' }],
+        droppedAlertManagers: [],
+      },
+    });
+
     const { dsSettings, dsInstanceSettings } = setupAlertmanagerDataSource({ url: 'http://grafana.com' });
 
     config.datasources = {
@@ -299,28 +208,21 @@ describe('useExternalDataSourceAlertmanagers', () => {
 
     const store = mockStore((state) => {
       state.dataSources.dataSources = [dsSettings];
-      state.unifiedAlerting.externalAlertmanagers.discoveredAlertmanagers.result = {
-        data: {
-          activeAlertManagers: [
-            { url: 'http://grafana.com/api/v2/alerts' },
-            { url: 'http://grafana.com/api/v2/alerts' },
-          ],
-          droppedAlertManagers: [],
-        },
-      };
     });
 
     const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
 
     // Act
-    const {
-      result: { current },
-    } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
+    const { result, waitForValueToChange } = renderHook(() => useExternalDataSourceAlertmanagers(), {
+      wrapper,
+    });
+
+    await waitForValueToChange(() => result.current[0].status);
 
     // Assert
-    expect(current).toHaveLength(1);
-    expect(current[0].status).toBe('active');
-    expect(current[0].statusInconclusive).toBe(true);
+    expect(result.current).toHaveLength(1);
+    expect(result.current[0].status).toBe('active');
+    expect(result.current[0].statusInconclusive).toBe(true);
   });
 });
 
@@ -367,22 +269,3 @@ function mockApiDataSource(partial: Partial<DataSourceSettings<DataSourceJsonDat
 
   return dsSettings;
 }
-
-const createMockStoreState = (
-  activeAlertmanagers: Array<{ url: string }>,
-  droppedAlertmanagers: Array<{ url: string }>,
-  alertmanagerConfig: string[]
-) => {
-  return mockStore((state) => {
-    state.unifiedAlerting.externalAlertmanagers.alertmanagerConfig.result = {
-      alertmanagers: alertmanagerConfig,
-      alertmanagersChoice: AlertmanagerChoice.All,
-    };
-    state.unifiedAlerting.externalAlertmanagers.discoveredAlertmanagers.result = {
-      data: {
-        activeAlertManagers: activeAlertmanagers,
-        droppedAlertManagers: droppedAlertmanagers,
-      },
-    };
-  });
-};

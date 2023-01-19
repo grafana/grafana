@@ -43,6 +43,21 @@ func (repo *fakeAnnotationsRepo) Save(ctx context.Context, item *annotations.Ite
 		item.Id = int64(len(repo.annotations) + 1)
 	}
 	repo.annotations[item.Id] = *item
+
+	return nil
+}
+
+func (repo *fakeAnnotationsRepo) SaveMany(ctx context.Context, items []annotations.Item) error {
+	repo.mtx.Lock()
+	defer repo.mtx.Unlock()
+
+	for _, i := range items {
+		if i.Id == 0 {
+			i.Id = int64(len(repo.annotations) + 1)
+		}
+		repo.annotations[i.Id] = i
+	}
+
 	return nil
 }
 
@@ -78,6 +93,9 @@ func (repo *fakeAnnotationsRepo) Len() int {
 func (repo *fakeAnnotationsRepo) Items() map[int64]annotations.Item {
 	repo.mtx.Lock()
 	defer repo.mtx.Unlock()
-
-	return repo.annotations
+	ret := make(map[int64]annotations.Item)
+	for k, v := range repo.annotations {
+		ret[k] = v
+	}
+	return ret
 }

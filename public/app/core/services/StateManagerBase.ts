@@ -1,15 +1,14 @@
 import { useEffect } from 'react';
-import { Subject } from 'rxjs';
+import { Observer, Subject, Subscription } from 'rxjs';
 
 import { useForceUpdate } from '@grafana/ui';
 
 export class StateManagerBase<TState> {
-  subject = new Subject<TState>();
-  state: TState;
+  private _subject = new Subject<TState>();
+  private _state: TState;
 
   constructor(state: TState) {
-    this.state = state;
-    this.subject.next(state);
+    this._state = state;
   }
 
   useState() {
@@ -17,12 +16,23 @@ export class StateManagerBase<TState> {
     return useLatestState(this);
   }
 
+  get state() {
+    return this._state;
+  }
+
   setState(update: Partial<TState>) {
-    this.state = {
-      ...this.state,
+    this._state = {
+      ...this._state,
       ...update,
     };
-    this.subject.next(this.state);
+    this._subject.next(this._state);
+  }
+
+  /**
+   * Subscribe to the scene state subject
+   **/
+  subscribeToState(observerOrNext?: Partial<Observer<TState>>): Subscription {
+    return this._subject.subscribe(observerOrNext);
   }
 }
 /**
@@ -33,7 +43,7 @@ function useLatestState<TState>(model: StateManagerBase<TState>): TState {
   const forceUpdate = useForceUpdate();
 
   useEffect(() => {
-    const s = model.subject.subscribe(forceUpdate);
+    const s = model.subscribeToState({ next: forceUpdate });
     return () => s.unsubscribe();
   }, [model, forceUpdate]);
 

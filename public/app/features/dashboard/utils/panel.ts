@@ -75,7 +75,7 @@ export const addLibraryPanel = (dashboard: DashboardModel, panel: PanelModel) =>
       component: AddLibraryPanelModal,
       props: {
         panel,
-        initialFolderId: dashboard.meta.folderId,
+        initialFolderUid: dashboard.meta.folderUid,
         isOpen: true,
       },
     })
@@ -87,10 +87,7 @@ export const unlinkLibraryPanel = (panel: PanelModel) => {
     new ShowModalReactEvent({
       component: UnlinkModal,
       props: {
-        onConfirm: () => {
-          delete panel.libraryPanel;
-          panel.render();
-        },
+        onConfirm: () => panel.unlinkLibraryPanel(),
         isOpen: true,
       },
     })

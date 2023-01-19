@@ -1,8 +1,12 @@
 import React from 'react';
 
-import { DataSourcePluginOptionsEditorProps, DataSourceSettings } from '@grafana/data';
-import { AlertingSettings, DataSourceHttpSettings } from '@grafana/ui';
-import { getAllAlertmanagerDataSources } from 'app/features/alerting/unified/utils/alertmanager';
+import {
+  DataSourcePluginOptionsEditorProps,
+  DataSourceSettings,
+  onUpdateDatasourceJsonDataOptionChecked,
+} from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { AlertingSettings, DataSourceHttpSettings, InlineField, InlineSwitch } from '@grafana/ui';
 
 import { LokiOptions } from '../types';
 
@@ -28,7 +32,7 @@ const setDerivedFields = makeJsonUpdater('derivedFields');
 
 export const ConfigEditor = (props: Props) => {
   const { options, onOptionsChange } = props;
-  const alertmanagers = getAllAlertmanagerDataSources();
+  const socksProxy = config.featureToggles.secureSocksDatasourceProxy;
 
   return (
     <>
@@ -39,11 +43,26 @@ export const ConfigEditor = (props: Props) => {
         onChange={onOptionsChange}
       />
 
-      <AlertingSettings<LokiOptions>
-        alertmanagerDataSources={alertmanagers}
-        options={options}
-        onOptionsChange={onOptionsChange}
-      />
+      {socksProxy && (
+        <>
+          <h3 className="page-heading">Secure Socks Proxy</h3>
+          <div className="gf-form-group">
+            <div className="gf-form-inline"></div>
+            <InlineField
+              labelWidth={28}
+              label="Enabled"
+              tooltip="Connect to this datasource via the secure socks proxy."
+            >
+              <InlineSwitch
+                value={options.jsonData.enableSecureSocksProxy ?? false}
+                onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'enableSecureSocksProxy')}
+              />
+            </InlineField>
+          </div>
+        </>
+      )}
+
+      <AlertingSettings<LokiOptions> options={options} onOptionsChange={onOptionsChange} />
 
       <div className="gf-form-group">
         <div className="gf-form-inline">

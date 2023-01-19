@@ -7,7 +7,6 @@ import (
 	"math"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -91,7 +90,7 @@ func ProvideService(cfg *setting.Cfg, remoteCache *remotecache.RemoteCache, rm p
 		perRequestRenderKeyProvider: &perRequestRenderKeyProvider{
 			cache:     remoteCache,
 			log:       logger,
-			keyExpiry: 5 * time.Minute,
+			keyExpiry: cfg.RendererRenderKeyLifeTime,
 		},
 		capabilities: []Capability{
 			{
@@ -169,16 +168,6 @@ func (rs *RenderingService) Run(ctx context.Context) error {
 		rs.renderCSVAction = rs.renderCSVViaPlugin
 		rs.sanitizeSVGAction = rs.sanitizeSVGViaPlugin
 		<-ctx.Done()
-
-		// On Windows, Chromium is generating a debug.log file that breaks signature check on next restart
-		debugFilePath := path.Join(rs.pluginInfo.PluginDir, "chrome-win/debug.log")
-		if _, err := os.Stat(debugFilePath); err == nil {
-			err = os.Remove(debugFilePath)
-			if err != nil {
-				rs.log.Warn("Couldn't remove debug.log file, the renderer plugin will not be able to pass the signature check until this file is deleted",
-					"err", err)
-			}
-		}
 
 		return nil
 	}

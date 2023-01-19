@@ -9,11 +9,11 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -22,7 +22,7 @@ func TestIntegrationDashboardSnapshotDBAccess(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlstore := sqlstore.InitTestDB(t)
+	sqlstore := db.InitTestDB(t)
 	dashStore := ProvideStore(sqlstore)
 
 	origSecret := setting.SecretKey
@@ -153,7 +153,7 @@ func TestIntegrationDeleteExpiredSnapshots(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
-	sqlstore := sqlstore.InitTestDB(t)
+	sqlstore := db.InitTestDB(t)
 	dashStore := ProvideStore(sqlstore)
 
 	t.Run("Testing dashboard snapshots clean up", func(t *testing.T) {
@@ -208,7 +208,7 @@ func createTestSnapshot(t *testing.T, dashStore *DashboardSnapshotStore, key str
 	// Set expiry date manually - to be able to create expired snapshots
 	if expires < 0 {
 		expireDate := time.Now().Add(time.Second * time.Duration(expires))
-		err = dashStore.store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+		err = dashStore.store.WithDbSession(context.Background(), func(sess *db.Session) error {
 			_, err := sess.Exec("UPDATE dashboard_snapshot SET expires = ? WHERE id = ?", expireDate, cmd.Result.Id)
 			return err
 		})

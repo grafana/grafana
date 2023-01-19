@@ -1,7 +1,8 @@
 import React from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { EditorField, Select } from '@grafana/ui';
+import { EditorField } from '@grafana/experimental';
+import { Select } from '@grafana/ui';
 
 import { LOOKBACK_PERIODS } from '../constants';
 

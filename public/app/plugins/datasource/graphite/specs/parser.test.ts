@@ -21,6 +21,28 @@ describe('when parsing', () => {
     expect(rootNode.segments[3].value).toBe('5');
   });
 
+  it('simple metric expression with "true" boolean in segments', () => {
+    const parser = new Parser('metric.15_20.5.true');
+    const rootNode = parser.getAst();
+
+    expect(rootNode.type).toBe('metric');
+    expect(rootNode.segments.length).toBe(4);
+    expect(rootNode.segments[1].value).toBe('15_20');
+    expect(rootNode.segments[2].value).toBe('5');
+    expect(rootNode.segments[3].value).toBe('true');
+  });
+
+  it('simple metric expression with "false" boolean in segments', () => {
+    const parser = new Parser('metric.false.15_20.5');
+    const rootNode = parser.getAst();
+
+    expect(rootNode.type).toBe('metric');
+    expect(rootNode.segments.length).toBe(4);
+    expect(rootNode.segments[1].value).toBe('false');
+    expect(rootNode.segments[2].value).toBe('15_20');
+    expect(rootNode.segments[3].value).toBe('5');
+  });
+
   it('simple metric expression with curly braces', () => {
     const parser = new Parser('metric.se1-{count, max}');
     const rootNode = parser.getAst();

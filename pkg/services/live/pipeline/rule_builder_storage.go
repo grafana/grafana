@@ -58,11 +58,6 @@ func (f *StorageRuleBuilder) extractConverter(config *ConverterConfig) (Converte
 			config.AutoJsonConverterConfig = &AutoJsonConverterConfig{}
 		}
 		return NewAutoJsonConverter(*config.AutoJsonConverterConfig), nil
-	case ConverterTypeJsonExact:
-		if config.ExactJsonConverterConfig == nil {
-			return nil, missingConfiguration
-		}
-		return NewExactJsonConverter(*config.ExactJsonConverterConfig), nil
 	case ConverterTypeJsonFrame:
 		if config.JsonFrameConverterConfig == nil {
 			config.JsonFrameConverterConfig = &JsonFrameConverterConfig{}
@@ -314,7 +309,7 @@ func (f *StorageRuleBuilder) BuildRules(ctx context.Context, orgID int64) ([]*Li
 		return nil, err
 	}
 
-	var rules []*LiveChannelRule
+	rules := make([]*LiveChannelRule, 0, len(channelRules))
 
 	for _, ruleConfig := range channelRules {
 		rule := &LiveChannelRule{

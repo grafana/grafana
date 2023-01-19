@@ -17,6 +17,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { Icon, Tooltip } from '../..';
 import { useStyles2 } from '../../..';
+import { t, Trans } from '../../../utils/i18n';
 import { Button } from '../../Button';
 import { Field } from '../../Forms/Field';
 import { Input } from '../../Input/Input';
@@ -40,8 +41,8 @@ interface InputState {
 }
 
 const ERROR_MESSAGES = {
-  default: 'Please enter a past date or "now"',
-  range: '"From" can\'t be after "To"',
+  default: () => t('time-picker.range-content.default-error', 'Please enter a past date or "now"'),
+  range: () => t('time-picker.range-content.range-error', '"From" can\'t be after "To"'),
 };
 
 export const TimeRangeContent = (props: Props) => {
@@ -95,11 +96,14 @@ export const TimeRangeContent = (props: Props) => {
   };
 
   const fiscalYear = rangeUtil.convertRawToRange({ from: 'now/fy', to: 'now/fy' }, timeZone, fiscalYearStartMonth);
+  const fiscalYearMessage = t('time-picker.range-content.fiscal-year', 'Fiscal year');
 
   const fyTooltip = (
     <div className={style.tooltip}>
       {rangeUtil.isFiscal(value) ? (
-        <Tooltip content={`Fiscal year: ${fiscalYear.from.format('MMM-DD')} - ${fiscalYear.to.format('MMM-DD')}`}>
+        <Tooltip
+          content={`${fiscalYearMessage}: ${fiscalYear.from.format('MMM-DD')} - ${fiscalYear.to.format('MMM-DD')}`}
+        >
           <Icon name="info-circle" />
         </Tooltip>
       ) : null}
@@ -119,7 +123,11 @@ export const TimeRangeContent = (props: Props) => {
   return (
     <div>
       <div className={style.fieldContainer}>
-        <Field label="From" invalid={from.invalid} error={from.errorMessage}>
+        <Field
+          label={t('time-picker.range-content.from-input', 'From')}
+          invalid={from.invalid}
+          error={from.errorMessage}
+        >
           <Input
             onClick={(event) => event.stopPropagation()}
             onChange={(event) => onChange(event.currentTarget.value, to.value)}
@@ -132,7 +140,7 @@ export const TimeRangeContent = (props: Props) => {
         {fyTooltip}
       </div>
       <div className={style.fieldContainer}>
-        <Field label="To" invalid={to.invalid} error={to.errorMessage}>
+        <Field label={t('time-picker.range-content.to-input', 'To')} invalid={to.invalid} error={to.errorMessage}>
           <Input
             onClick={(event) => event.stopPropagation()}
             onChange={(event) => onChange(from.value, event.currentTarget.value)}
@@ -145,7 +153,7 @@ export const TimeRangeContent = (props: Props) => {
         {fyTooltip}
       </div>
       <Button data-testid={selectors.components.TimePicker.applyTimeRange} type="button" onClick={onApply}>
-        Apply time range
+        <Trans i18nKey="time-picker.range-content.apply-button">Apply time range</Trans>
       </Button>
 
       <TimePickerCalendar
@@ -187,9 +195,9 @@ function valueToState(
     {
       value: fromValue,
       invalid: fromInvalid || rangeInvalid,
-      errorMessage: rangeInvalid && !fromInvalid ? ERROR_MESSAGES.range : ERROR_MESSAGES.default,
+      errorMessage: rangeInvalid && !fromInvalid ? ERROR_MESSAGES.range() : ERROR_MESSAGES.default(),
     },
-    { value: toValue, invalid: toInvalid, errorMessage: ERROR_MESSAGES.default },
+    { value: toValue, invalid: toInvalid, errorMessage: ERROR_MESSAGES.default() },
   ];
 }
 

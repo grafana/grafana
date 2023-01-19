@@ -132,6 +132,16 @@ describe('AnnoListPanel', () => {
       expect(screen.getByText(/2021-01-01T00:00:00.000Z/i)).toBeInTheDocument();
     });
 
+    it("renders annotation item's html content", async () => {
+      const { getMock } = await setupTestContext({
+        results: [{ ...defaultResult, text: '<a href="">test link </a> ' }],
+      });
+
+      getMock.mockClear();
+      expect(screen.getByRole('link')).toBeInTheDocument();
+      expect(getMock).not.toHaveBeenCalled();
+    });
+
     describe('and login property is missing in annotation', () => {
       it('then it renders the annotations correctly', async () => {
         await setupTestContext({ results: [{ ...defaultResult, login: undefined }] });
@@ -203,8 +213,8 @@ describe('AnnoListPanel', () => {
         const { getMock, pushSpy } = await setupTestContext();
 
         getMock.mockClear();
-        expect(screen.getByText(/result text/i)).toBeInTheDocument();
-        await userEvent.click(screen.getByText(/result text/i));
+        expect(screen.getByRole('button', { name: /result text/i })).toBeInTheDocument();
+        await userEvent.click(screen.getByRole('button', { name: /result text/i }));
         await waitFor(() => expect(getMock).toHaveBeenCalledTimes(1));
 
         expect(getMock).toHaveBeenCalledWith('/api/search', { dashboardUIDs: '7MeksYbmk' });
@@ -218,8 +228,9 @@ describe('AnnoListPanel', () => {
         const { getMock } = await setupTestContext();
 
         getMock.mockClear();
-        expect(screen.getByText('Result tag B')).toBeInTheDocument();
-        await userEvent.click(screen.getByText('Result tag B'));
+
+        expect(screen.getByRole('button', { name: /result tag b/i })).toBeInTheDocument();
+        await userEvent.click(screen.getByRole('button', { name: /result tag b/i }));
 
         expect(getMock).toHaveBeenCalledTimes(1);
         expect(getMock).toHaveBeenCalledWith(

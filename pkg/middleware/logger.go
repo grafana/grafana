@@ -35,6 +35,8 @@ func Logger(cfg *setting.Cfg) web.Middleware {
 
 			// we have to init the context with the counter here to update the request
 			r = r.WithContext(log.InitCounter(r.Context()))
+			// put the start time on context so we can measure it later.
+			r = r.WithContext(log.InitstartTime(r.Context(), time.Now()))
 
 			rw := web.Rw(w, r)
 			next.ServeHTTP(rw, r)

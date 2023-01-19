@@ -1,10 +1,11 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 
-import { CartesianCoords2D, DataFrame, FieldType, PanelProps } from '@grafana/data';
+import { CartesianCoords2D, DashboardCursorSync, DataFrame, FieldType, PanelProps } from '@grafana/data';
 import {
   Portal,
   TooltipDisplayMode,
   UPlotConfigBuilder,
+  usePanelContext,
   useTheme2,
   VizTooltipContainer,
   ZoomPlugin,
@@ -46,7 +47,9 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
   const [coords, setCoords] = useState<{ viewport: CartesianCoords2D; canvas: CartesianCoords2D } | null>(null);
   const [focusedSeriesIdx, setFocusedSeriesIdx] = useState<number | null>(null);
   const [focusedPointIdx, setFocusedPointIdx] = useState<number | null>(null);
+  const [isActive, setIsActive] = useState<boolean>(false);
   const [shouldDisplayCloseButton, setShouldDisplayCloseButton] = useState<boolean>(false);
+  const { sync } = usePanelContext();
 
   const onCloseToolTip = () => {
     isToolTipOpen.current = false;
@@ -133,6 +136,30 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
     [timeZone, frames, shouldDisplayCloseButton]
   );
 
+  const renderTooltip = (alignedFrame: DataFrame) => {
+    if (options.tooltip.mode === TooltipDisplayMode.None) {
+      return null;
+    }
+
+    if (focusedPointIdx === null || (!isActive && sync && sync() === DashboardCursorSync.Crosshair)) {
+      return null;
+    }
+
+    return (
+      <Portal>
+        {hover && coords && focusedSeriesIdx && (
+          <VizTooltipContainer
+            position={{ x: coords.viewport.x, y: coords.viewport.y }}
+            offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
+            allowPointerEvents={isToolTipOpen.current}
+          >
+            {renderCustomTooltip(alignedFrame, focusedSeriesIdx, focusedPointIdx)}
+          </VizTooltipContainer>
+        )}
+      </Portal>
+    );
+  };
+
   const timezones = useMemo(() => getTimezones(options.timezone, timeZone), [options.timezone, timeZone]);
 
   if (!frames || warn) {
@@ -179,27 +206,15 @@ export const StatusHistoryPanel: React.FC<TimelinePanelProps> = ({
             setCoords,
             setHover,
             isToolTipOpen,
+            isActive,
+            setIsActive,
           });
-        }
-
-        if (options.tooltip.mode === TooltipDisplayMode.None) {
-          return null;
         }
 
         return (
           <>
             <ZoomPlugin config={config} onZoom={onChangeTimeRange} />
-            <Portal>
-              {hover && coords && (
-                <VizTooltipContainer
-                  position={{ x: coords.viewport.x, y: coords.viewport.y }}
-                  offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
-                  allowPointerEvents={isToolTipOpen.current}
-                >
-                  {renderCustomTooltip(alignedFrame, focusedSeriesIdx, focusedPointIdx)}
-                </VizTooltipContainer>
-              )}
-            </Portal>
+            {renderTooltip(alignedFrame)}
             <OutsideRangePlugin config={config} onChangeTimeRange={onChangeTimeRange} />
           </>
         );

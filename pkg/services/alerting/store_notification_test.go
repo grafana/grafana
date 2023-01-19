@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +23,7 @@ func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
 	var store *sqlStore
 	setup := func() {
 		store = &sqlStore{
-			db:    sqlstore.InitTestDB(t),
+			db:    db.InitTestDB(t),
 			log:   log.New(),
 			cache: localcache.New(time.Minute, time.Minute)}
 	}
@@ -285,7 +285,7 @@ func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
 			err := store.UpdateAlertNotification(context.Background(), newCmd)
 			require.Nil(t, err)
 			require.Equal(t, "NewName", newCmd.Result.Name)
-			require.Equal(t, 60*time.Second, newCmd.Result.Frequency)
+			require.Equal(t, time.Minute, newCmd.Result.Frequency)
 			require.True(t, newCmd.Result.DisableResolveMessage)
 		})
 

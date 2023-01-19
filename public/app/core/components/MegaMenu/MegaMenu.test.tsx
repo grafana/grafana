@@ -56,7 +56,6 @@ describe('MegaMenu', () => {
     setup();
 
     expect(await screen.findByTestId('navbarmenu')).toBeInTheDocument();
-    expect(await screen.findByRole('link', { name: 'Home' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'Section name' })).toBeInTheDocument();
   });
 

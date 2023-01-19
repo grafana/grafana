@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React, { PureComponent, ReactElement } from 'react';
 
-import { GrafanaTheme, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import {
   Button,
   ConfirmButton,
@@ -10,11 +10,10 @@ import {
   Icon,
   Modal,
   stylesFactory,
-  Themeable,
+  Themeable2,
   Tooltip,
   useStyles2,
-  useTheme,
-  withTheme,
+  withTheme2,
 } from '@grafana/ui';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { fetchRoleOptions, updateUserRoles } from 'app/core/components/RolePicker/api';
@@ -102,12 +101,12 @@ export class UserOrgs extends PureComponent<Props, State> {
   }
 }
 
-const getOrgRowStyles = stylesFactory((theme: GrafanaTheme) => {
+const getOrgRowStyles = stylesFactory((theme: GrafanaTheme2) => {
   return {
     removeButton: css`
       margin-right: 0.6rem;
       text-decoration: underline;
-      color: ${theme.palette.blue95};
+      color: ${theme.v1.palette.blue95};
     `,
     label: css`
       font-weight: 500;
@@ -119,19 +118,19 @@ const getOrgRowStyles = stylesFactory((theme: GrafanaTheme) => {
       margin-left: 5px;
     `,
     tooltipItemLink: css`
-      color: ${theme.palette.blue95};
+      color: ${theme.v1.palette.blue95};
     `,
     rolePickerWrapper: css`
       display: flex;
     `,
     rolePicker: css`
       flex: auto;
-      margin-right: ${theme.spacing.sm};
+      margin-right: ${theme.spacing(1)};
     `,
   };
 });
 
-interface OrgRowProps extends Themeable {
+interface OrgRowProps extends Themeable2 {
   user?: UserDTO;
   org: UserOrg;
   isExternalUser?: boolean;
@@ -256,7 +255,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
   }
 }
 
-const OrgRow = withTheme(UnThemedOrgRow);
+const OrgRow = withTheme2(UnThemedOrgRow);
 
 const getAddToOrgModalStyles = stylesFactory(() => ({
   modal: css`
@@ -462,9 +461,8 @@ export function ChangeOrgButton({
   );
 }
 
-const ExternalUserTooltip: React.FC = () => {
-  const theme = useTheme();
-  const styles = getTooltipStyles(theme);
+const ExternalUserTooltip = () => {
+  const styles = useStyles2(getTooltipStyles);
 
   return (
     <div className={styles.disabledTooltip}>
@@ -493,11 +491,11 @@ const ExternalUserTooltip: React.FC = () => {
   );
 };
 
-const getTooltipStyles = stylesFactory((theme: GrafanaTheme) => ({
+const getTooltipStyles = (theme: GrafanaTheme2) => ({
   disabledTooltip: css`
     display: flex;
   `,
   tooltipItemLink: css`
-    color: ${theme.palette.blue95};
+    color: ${theme.v1.palette.blue95};
   `,
-}));
+});

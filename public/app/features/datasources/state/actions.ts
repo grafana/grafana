@@ -1,5 +1,6 @@
 import { DataSourcePluginMeta, DataSourceSettings, locationUtil } from '@grafana/data';
 import {
+  config,
   DataSourceWithBackend,
   getDataSourceSrv,
   HealthCheckError,
@@ -17,7 +18,8 @@ import { DataSourcePluginCategory, ThunkDispatch, ThunkResult } from 'app/types'
 
 import * as api from '../api';
 import { DATASOURCES_ROUTES } from '../constants';
-import { nameExits, findNewName } from '../utils';
+import { trackDataSourceCreated, trackDataSourceTested } from '../tracking';
+import { findNewName, nameExits } from '../utils';
 
 import { buildCategories } from './buildCategories';
 import { buildNavModel } from './navModel';
@@ -107,6 +109,12 @@ export const testDataSource = (
         const result = await dsApi.testDatasource();
 
         dispatch(testDataSourceSucceeded(result));
+        trackDataSourceTested({
+          grafana_version: config.buildInfo.version,
+          plugin_id: dsApi.type,
+          datasource_uid: dsApi.uid,
+          success: true,
+        });
       } catch (err) {
         let message: string | undefined;
         let details: HealthCheckResultDetails;
@@ -121,6 +129,12 @@ export const testDataSource = (
         }
 
         dispatch(testDataSourceFailed({ message, details }));
+        trackDataSourceTested({
+          grafana_version: config.buildInfo.version,
+          plugin_id: dsApi.type,
+          datasource_uid: dsApi.uid,
+          success: false,
+        });
       }
     });
   };
@@ -197,6 +211,13 @@ export function addDataSource(plugin: DataSourcePluginMeta, editLink = DATASOURC
     await getDatasourceSrv().reload();
     await contextSrv.fetchUserPermissions();
 
+    trackDataSourceCreated({
+      grafana_version: config.buildInfo.version,
+      plugin_id: plugin.id,
+      datasource_uid: result.datasource.uid,
+      plugin_version: result.meta?.info?.version,
+    });
+
     locationService.push(editLink.replace(/:uid/gi, result.datasource.uid));
   };
 }
@@ -210,8 +231,8 @@ export function loadDataSourcePlugins(): ThunkResult<void> {
   };
 }
 
-export function updateDataSource(dataSource: DataSourceSettings): ThunkResult<void> {
-  return async (dispatch) => {
+export function updateDataSource(dataSource: DataSourceSettings) {
+  return async (dispatch: (dataSourceSettings: ThunkResult<Promise<DataSourceSettings>>) => DataSourceSettings) => {
     await api.updateDataSource(dataSource);
     await getDatasourceSrv().reload();
     return dispatch(loadDataSource(dataSource.uid));

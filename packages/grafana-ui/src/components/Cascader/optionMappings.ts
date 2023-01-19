@@ -29,6 +29,6 @@ const fromRCOptions = (options: RCCascaderOption[]): CascaderOption[] => {
 const fromRCOption = (option: RCCascaderOption): CascaderOption => {
   return {
     value: option.value ?? '',
-    label: option.label as unknown as string,
+    label: option.label,
   };
 };

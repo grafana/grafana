@@ -18,8 +18,8 @@ export function Breadcrumb({ pathName, onPathChange, rootIcon }: Props) {
   return (
     <ul className={styles.breadCrumb}>
       {rootIcon && (
-        <li onClick={() => onPathChange('')}>
-          <Icon name={rootIcon} />
+        <li>
+          <Icon name={rootIcon} onClick={() => onPathChange('')} />
         </li>
       )}
       {paths.map((path, index) => {

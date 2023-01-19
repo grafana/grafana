@@ -76,6 +76,10 @@ func IsEnabled() bool {
 	return setting.LDAPEnabled
 }
 
+func SkipOrgRoleSync() bool {
+	return setting.LDAPSkipOrgRoleSync
+}
+
 // ReloadConfig reads the config from the disk and caches it.
 func ReloadConfig() error {
 	if !IsEnabled() {

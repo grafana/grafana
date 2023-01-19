@@ -14,7 +14,10 @@ import (
 
 const testAlertingIntervalSeconds = 10
 
-func TestProvisioningStore(t *testing.T) {
+func TestIntegrationProvisioningStore(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	store := createProvisioningStoreSut(tests.SetupTestEnv(t, testAlertingIntervalSeconds))
 
 	t.Run("Default provenance of a known type is None", func(t *testing.T) {

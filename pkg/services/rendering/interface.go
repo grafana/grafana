@@ -7,11 +7,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var ErrTimeout = errors.New("timeout error - you can set timeout in seconds with &timeout url parameter")
 var ErrConcurrentLimitReached = errors.New("rendering concurrent limit reached")
 var ErrRenderUnavailable = errors.New("rendering plugin not available")
+var ErrServerTimeout = errutil.NewBase(errutil.StatusUnknown, "rendering.serverTimeout", errutil.WithPublicMessage("error trying to connect to image-renderer service"))
 
 type RenderType string
 

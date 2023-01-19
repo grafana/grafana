@@ -17,7 +17,7 @@ export interface DashboardRowProps {
   dashboard: DashboardModel;
 }
 
-export class DashboardRow extends React.Component<DashboardRowProps, any> {
+export class DashboardRow extends React.Component<DashboardRowProps> {
   sub?: Unsubscribable;
 
   componentDidMount() {
@@ -76,8 +76,9 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
 
     return (
       <div className={classes} data-testid="dashboard-row-container">
-        <a
+        <button
           className="dashboard-row__title pointer"
+          type="button"
           data-testid={selectors.components.DashboardRow.title(title)}
           onClick={this.onToggle}
         >
@@ -86,7 +87,7 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
           <span className="dashboard-row__panel_count">
             ({count} {panels})
           </span>
-        </a>
+        </button>
         {canEdit && (
           <div className="dashboard-row__actions">
             <RowOptionsButton
@@ -94,9 +95,9 @@ export class DashboardRow extends React.Component<DashboardRowProps, any> {
               repeat={this.props.panel.repeat}
               onUpdate={this.onUpdate}
             />
-            <a className="pointer" onClick={this.onDelete} role="button" aria-label="Delete row">
+            <button type="button" className="pointer" onClick={this.onDelete} aria-label="Delete row">
               <Icon name="trash-alt" />
-            </a>
+            </button>
           </div>
         )}
         {this.props.panel.collapsed === true && (

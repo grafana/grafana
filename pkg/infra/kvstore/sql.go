@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 // kvStoreSQL provides a key/value store backed by the Grafana database
 type kvStoreSQL struct {
 	log      log.Logger
-	sqlStore sqlstore.Store
+	sqlStore db.DB
 }
 
 // Get an item from the store
@@ -24,7 +24,7 @@ func (kv *kvStoreSQL) Get(ctx context.Context, orgId int64, namespace string, ke
 	}
 	var itemFound bool
 
-	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		has, err := dbSession.Get(&item)
 		if err != nil {
 			kv.log.Debug("error getting kvstore value", "orgId", orgId, "namespace", namespace, "key", key, "err", err)
@@ -44,7 +44,7 @@ func (kv *kvStoreSQL) Get(ctx context.Context, orgId int64, namespace string, ke
 
 // Set an item in the store
 func (kv *kvStoreSQL) Set(ctx context.Context, orgId int64, namespace string, key string, value string) error {
-	return kv.sqlStore.WithTransactionalDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	return kv.sqlStore.WithTransactionalDbSession(ctx, func(dbSession *db.Session) error {
 		item := Item{
 			OrgId:     &orgId,
 			Namespace: &namespace,
@@ -88,8 +88,8 @@ func (kv *kvStoreSQL) Set(ctx context.Context, orgId int64, namespace string, ke
 
 // Del deletes an item from the store.
 func (kv *kvStoreSQL) Del(ctx context.Context, orgId int64, namespace string, key string) error {
-	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		query := fmt.Sprintf("DELETE FROM kv_store WHERE org_id=? and namespace=? and %s=?", kv.sqlStore.Quote("key"))
+	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
+		query := fmt.Sprintf("DELETE FROM kv_store WHERE org_id=? and namespace=? and %s=?", kv.sqlStore.GetDialect().Quote("key"))
 		_, err := dbSession.Exec(query, orgId, namespace, key)
 		return err
 	})
@@ -100,8 +100,8 @@ func (kv *kvStoreSQL) Del(ctx context.Context, orgId int64, namespace string, ke
 // organizations the constant 'kvstore.AllOrganizations' can be passed as orgId.
 func (kv *kvStoreSQL) Keys(ctx context.Context, orgId int64, namespace string, keyPrefix string) ([]Key, error) {
 	var keys []Key
-	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
-		query := dbSession.Where("namespace = ?", namespace).And(fmt.Sprintf("%s LIKE ?", kv.sqlStore.Quote("key")), keyPrefix+"%")
+	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
+		query := dbSession.Where("namespace = ?", namespace).And(fmt.Sprintf("%s LIKE ?", kv.sqlStore.GetDialect().Quote("key")), keyPrefix+"%")
 		if orgId != AllOrganizations {
 			query.And("org_id = ?", orgId)
 		}
@@ -115,7 +115,7 @@ func (kv *kvStoreSQL) Keys(ctx context.Context, orgId int64, namespace string, k
 // The map result is like map[orgId]map[key]value
 func (kv *kvStoreSQL) GetAll(ctx context.Context, orgId int64, namespace string) (map[int64]map[string]string, error) {
 	var results []Item
-	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *sqlstore.DBSession) error {
+	err := kv.sqlStore.WithDbSession(ctx, func(dbSession *db.Session) error {
 		query := dbSession.Where("namespace = ?", namespace)
 		if orgId != AllOrganizations {
 			query.And("org_id = ?", orgId)

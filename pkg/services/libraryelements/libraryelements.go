@@ -4,14 +4,14 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func ProvideService(cfg *setting.Cfg, sqlStore *sqlstore.SQLStore, routeRegister routing.RouteRegister, folderService dashboards.FolderService) *LibraryElementService {
+func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.RouteRegister, folderService folder.Service) *LibraryElementService {
 	l := &LibraryElementService{
 		Cfg:           cfg,
 		SQLStore:      sqlStore,
@@ -36,9 +36,9 @@ type Service interface {
 // LibraryElementService is the service for the Library Element feature.
 type LibraryElementService struct {
 	Cfg           *setting.Cfg
-	SQLStore      *sqlstore.SQLStore
+	SQLStore      db.DB
 	RouteRegister routing.RouteRegister
-	folderService dashboards.FolderService
+	folderService folder.Service
 	log           log.Logger
 }
 

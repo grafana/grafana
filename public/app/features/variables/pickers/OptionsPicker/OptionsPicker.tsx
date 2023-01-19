@@ -16,7 +16,7 @@ import { VariableOption, VariableWithMultiSupport, VariableWithOptions } from '.
 import { toKeyedVariableIdentifier } from '../../utils';
 import { VariableInput } from '../shared/VariableInput';
 import { VariableLink } from '../shared/VariableLink';
-import { VariableOptions } from '../shared/VariableOptions';
+import VariableOptions from '../shared/VariableOptions';
 import { NavigationKey, VariablePickerProps } from '../types';
 
 import { commitChangesToVariable, filterOrSearchOptions, navigateOptions, openOptions } from './actions';
@@ -150,6 +150,7 @@ export const optionPickerFactory = <Model extends VariableWithOptions | Variable
             onNavigate={this.onNavigate}
             aria-expanded={true}
             aria-controls={`options-${id}`}
+            currenthighlightindex={picker.highlightIndex}
           />
           <VariableOptions
             values={picker.options}

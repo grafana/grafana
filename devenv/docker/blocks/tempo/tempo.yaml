@@ -41,6 +41,10 @@ metrics_generator:
       - url: http://prometheus:9090/api/v1/write
         send_exemplars: true
 
+query_frontend:
+  search:
+    max_duration: 0 # allow searches >1h
+
 storage:
   trace:
     backend: local                     # backend configuration to use
@@ -48,6 +52,7 @@ storage:
       bloom_filter_false_positive: .05 # bloom filter false positive rate.  lower values create larger filters but fewer false positives
       index_downsample_bytes: 1000     # number of bytes per index record
       encoding: zstd                   # block encoding/compression.  options: none, gzip, lz4-64k, lz4-256k, lz4-1M, lz4, snappy, zstd, s2
+      version: vParquet
     wal:
       path: /tmp/tempo/wal             # where to store the the wal locally
       encoding: snappy                 # wal encoding/compression.  options: none, gzip, lz4-64k, lz4-256k, lz4-1M, lz4, snappy, zstd, s2

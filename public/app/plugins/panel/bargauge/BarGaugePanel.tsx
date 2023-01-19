@@ -111,7 +111,7 @@ export class BarGaugePanel extends PureComponent<BarGaugePanelProps> {
 }
 export type BarGaugePanelProps = PanelProps<PanelOptions>;
 
-export function clearNameForSingleSeries(count: number, field: FieldConfig<any>, display: DisplayValue): DisplayValue {
+export function clearNameForSingleSeries(count: number, field: FieldConfig, display: DisplayValue): DisplayValue {
   if (count === 1 && !field.displayName) {
     return {
       ...display,

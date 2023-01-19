@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
-import React, { FC, MouseEvent } from 'react';
+import React, { MouseEvent, useCallback } from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
-import { Icon, stylesFactory, useTheme } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Icon, useStyles2 } from '@grafana/ui';
 import store from 'app/core/store';
 
 import { TutorialCardType } from '../types';
@@ -13,18 +13,24 @@ interface Props {
   card: TutorialCardType;
 }
 
-export const TutorialCard: FC<Props> = ({ card }) => {
-  const theme = useTheme();
-  const styles = getStyles(theme, card.done);
+export const TutorialCard = ({ card }: Props) => {
+  const styles = useStyles2(useCallback((theme: GrafanaTheme2) => getStyles(theme, card.done), [card.done]));
+  const iconStyles = useStyles2(useCallback((theme: GrafanaTheme2) => iconStyle(theme, card.done), [card.done]));
 
   return (
-    <a className={styles.card} onClick={(event: MouseEvent<HTMLAnchorElement>) => handleTutorialClick(event, card)}>
+    <a
+      className={styles.card}
+      target="_blank"
+      rel="noreferrer"
+      href={`${card.href}?utm_source=grafana_gettingstarted`}
+      onClick={(event: MouseEvent<HTMLAnchorElement>) => handleTutorialClick(event, card)}
+    >
       <div className={cardContent}>
         <div className={styles.type}>{card.type}</div>
         <div className={styles.heading}>{card.done ? 'complete' : card.heading}</div>
         <h4 className={styles.cardTitle}>{card.title}</h4>
         <div className={styles.info}>{card.info}</div>
-        <Icon className={iconStyle(theme, card.done)} name={card.icon} size="xxl" />
+        <Icon className={iconStyles} name={card.icon} size="xxl" />
       </div>
     </a>
   );
@@ -36,42 +42,41 @@ const handleTutorialClick = (event: MouseEvent<HTMLAnchorElement>, card: Tutoria
   if (!isSet) {
     store.set(card.key, true);
   }
-  window.open(`${card.href}?utm_source=grafana_gettingstarted`, '_blank');
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme, complete: boolean) => {
+const getStyles = (theme: GrafanaTheme2, complete: boolean) => {
   return {
     card: css`
       ${cardStyle(theme, complete)}
       width: 460px;
       min-width: 460px;
 
-      @media only screen and (max-width: ${theme.breakpoints.xl}) {
+      ${theme.breakpoints.down('xl')} {
         min-width: 368px;
       }
 
-      @media only screen and (max-width: ${theme.breakpoints.lg}) {
+      ${theme.breakpoints.down('lg')} {
         min-width: 272px;
       }
     `,
     type: css`
-      color: ${theme.colors.textBlue};
+      color: ${theme.colors.primary.text};
       text-transform: uppercase;
     `,
     heading: css`
       text-transform: uppercase;
-      color: ${theme.colors.textBlue};
-      margin-bottom: ${theme.spacing.sm};
+      color: ${theme.colors.primary.text};
+      margin-bottom: ${theme.spacing(1)};
     `,
     cardTitle: css`
-      margin-bottom: ${theme.spacing.md};
+      margin-bottom: ${theme.spacing(2)};
     `,
     info: css`
-      margin-bottom: ${theme.spacing.md};
+      margin-bottom: ${theme.spacing(2)};
     `,
     status: css`
       display: flex;
       justify-content: flex-end;
     `,
   };
-});
+};

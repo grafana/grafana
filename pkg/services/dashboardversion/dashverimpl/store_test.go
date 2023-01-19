@@ -5,50 +5,50 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/dashboards"
+	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
+	"github.com/grafana/grafana/pkg/util"
 )
 
-type getStore func(*sqlstore.SQLStore) store
+type getStore func(db.DB) store
 
 func testIntegrationGetDashboardVersion(t *testing.T, fn getStore) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	ss := sqlstore.InitTestDB(t)
+	t.Helper()
+
+	ss := db.InitTestDB(t)
 	dashVerStore := fn(ss)
 
 	t.Run("Get a Dashboard ID and version ID", func(t *testing.T) {
 		savedDash := insertTestDashboard(t, ss, "test dash 26", 1, 0, false, "diff")
 
 		query := dashver.GetDashboardVersionQuery{
-			DashboardID: savedDash.Id,
+			DashboardID: savedDash.ID,
 			Version:     savedDash.Version,
 			OrgID:       1,
 		}
 
 		res, err := dashVerStore.Get(context.Background(), &query)
 		require.Nil(t, err)
-		assert.Equal(t, query.DashboardID, savedDash.Id)
+		assert.Equal(t, query.DashboardID, savedDash.ID)
 		assert.Equal(t, query.Version, savedDash.Version)
+		assert.Equal(t, createdById, res.CreatedBy)
 
-		dashCmd := &models.Dashboard{
-			Id:    res.ID,
-			Uid:   savedDash.Uid,
-			OrgId: savedDash.OrgId,
+		dashCmd := &dashboards.Dashboard{
+			ID:    res.ID,
+			UID:   savedDash.UID,
+			OrgID: savedDash.OrgID,
 		}
 		err = getDashboard(t, ss, dashCmd)
 		require.Nil(t, err)
 
 		assert.EqualValues(t, dashCmd.Data.Get("uid"), res.Data.Get("uid"))
 		assert.EqualValues(t, dashCmd.Data.Get("orgId"), res.Data.Get("orgId"))
+		assert.Equal(t, createdById, res.CreatedBy)
 	})
 
 	t.Run("Attempt to get a version that doesn't exist", func(t *testing.T) {
@@ -81,7 +81,7 @@ func testIntegrationGetDashboardVersion(t *testing.T, fn getStore) {
 	savedDash := insertTestDashboard(t, ss, "test dash 43", 1, 0, false, "diff-all")
 	t.Run("Get all versions for a given Dashboard ID", func(t *testing.T) {
 		query := dashver.ListDashboardVersionsQuery{
-			DashboardID: savedDash.Id,
+			DashboardID: savedDash.ID,
 			OrgID:       1,
 			Limit:       1000,
 		}
@@ -104,7 +104,7 @@ func testIntegrationGetDashboardVersion(t *testing.T, fn getStore) {
 		updateTestDashboard(t, ss, savedDash, map[string]interface{}{
 			"tags": "different-tag",
 		})
-		query := dashver.ListDashboardVersionsQuery{DashboardID: savedDash.Id, OrgID: 1, Limit: 1000}
+		query := dashver.ListDashboardVersionsQuery{DashboardID: savedDash.ID, OrgID: 1, Limit: 1000}
 		res, err := dashVerStore.List(context.Background(), &query)
 
 		require.Nil(t, err)
@@ -112,9 +112,9 @@ func testIntegrationGetDashboardVersion(t *testing.T, fn getStore) {
 	})
 }
 
-func getDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, dashboard *models.Dashboard) error {
+func getDashboard(t *testing.T, sqlStore db.DB, dashboard *dashboards.Dashboard) error {
 	t.Helper()
-	return sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	return sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		has, err := sess.Get(dashboard)
 
 		if err != nil {
@@ -123,45 +123,50 @@ func getDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, dashboard *models.D
 			return dashboards.ErrDashboardNotFound
 		}
 
-		dashboard.SetId(dashboard.Id)
-		dashboard.SetUid(dashboard.Uid)
+		dashboard.SetID(dashboard.ID)
+		dashboard.SetUID(dashboard.UID)
 		return nil
 	})
 }
 
-func insertTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, title string, orgId int64,
-	folderId int64, isFolder bool, tags ...interface{}) *models.Dashboard {
+var (
+	createdById = int64(3)
+)
+
+func insertTestDashboard(t *testing.T, sqlStore db.DB, title string, orgId int64,
+	folderId int64, isFolder bool, tags ...interface{}) *dashboards.Dashboard {
 	t.Helper()
-	cmd := models.SaveDashboardCommand{
-		OrgId:    orgId,
-		FolderId: folderId,
+	cmd := dashboards.SaveDashboardCommand{
+		OrgID:    orgId,
+		FolderID: folderId,
 		IsFolder: isFolder,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
 			"id":    nil,
 			"title": title,
 			"tags":  tags,
 		}),
+		UserID: createdById,
 	}
 
-	var dash *models.Dashboard
-	err := sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	var dash *dashboards.Dashboard
+	err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		dash = cmd.GetDashboardModel()
 		dash.SetVersion(1)
 		dash.Created = time.Now()
 		dash.Updated = time.Now()
-		dash.Uid = util.GenerateShortUID()
+		dash.UID = util.GenerateShortUID()
 		_, err := sess.Insert(dash)
 		return err
 	})
 
 	require.NoError(t, err)
 	require.NotNil(t, dash)
-	dash.Data.Set("id", dash.Id)
-	dash.Data.Set("uid", dash.Uid)
+	dash.Data.Set("id", dash.ID)
+	dash.Data.Set("uid", dash.UID)
 
-	err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		dashVersion := &dashver.DashboardVersion{
-			DashboardID:   dash.Id,
+			DashboardID:   dash.ID,
 			ParentVersion: dash.Version,
 			RestoredFrom:  cmd.RestoredFrom,
 			Version:       dash.Version,
@@ -184,23 +189,23 @@ func insertTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 	return dash
 }
 
-func updateTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, dashboard *models.Dashboard, data map[string]interface{}) {
+func updateTestDashboard(t *testing.T, sqlStore db.DB, dashboard *dashboards.Dashboard, data map[string]interface{}) {
 	t.Helper()
 
-	data["id"] = dashboard.Id
+	data["id"] = dashboard.ID
 
 	parentVersion := dashboard.Version
 
-	cmd := models.SaveDashboardCommand{
-		OrgId:     dashboard.OrgId,
+	cmd := dashboards.SaveDashboardCommand{
+		OrgID:     dashboard.OrgID,
 		Overwrite: true,
 		Dashboard: simplejson.NewFromAny(data),
 	}
-	var dash *models.Dashboard
-	err := sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		var existing models.Dashboard
+	var dash *dashboards.Dashboard
+	err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+		var existing dashboards.Dashboard
 		dash = cmd.GetDashboardModel()
-		dashWithIdExists, err := sess.Where("id=? AND org_id=?", dash.Id, dash.OrgId).Get(&existing)
+		dashWithIdExists, err := sess.Where("id=? AND org_id=?", dash.ID, dash.OrgID).Get(&existing)
 		require.NoError(t, err)
 		require.True(t, dashWithIdExists)
 
@@ -212,18 +217,18 @@ func updateTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, dashboard *m
 		dash.SetVersion(dash.Version + 1)
 		dash.Created = time.Now()
 		dash.Updated = time.Now()
-		dash.Id = dashboard.Id
-		dash.Uid = util.GenerateShortUID()
+		dash.ID = dashboard.ID
+		dash.UID = util.GenerateShortUID()
 
-		_, err = sess.MustCols("folder_id").ID(dash.Id).Update(dash)
+		_, err = sess.MustCols("folder_id").ID(dash.ID).Update(dash)
 		return err
 	})
 
 	require.Nil(t, err)
 
-	err = sqlStore.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+	err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 		dashVersion := &dashver.DashboardVersion{
-			DashboardID:   dash.Id,
+			DashboardID:   dash.ID,
 			ParentVersion: parentVersion,
 			RestoredFrom:  cmd.RestoredFrom,
 			Version:       dash.Version,

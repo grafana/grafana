@@ -1,9 +1,9 @@
-import { t } from '@lingui/macro';
-
 import { PanelMenuItem } from '@grafana/data';
 import { AngularComponent, getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
+import { LoadingState } from '@grafana/schema';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
+import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getExploreUrl } from 'app/core/utils/explore';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
@@ -27,6 +27,7 @@ import { getTimeSrv } from '../services/TimeSrv';
 export function getPanelMenu(
   dashboard: DashboardModel,
   panel: PanelModel,
+  loadingState?: LoadingState,
   angularComponent?: AngularComponent | null
 ): PanelMenuItem[] {
   const onViewPanel = (event: React.MouseEvent<any>) => {
@@ -99,15 +100,17 @@ export function getPanelMenu(
     event.preventDefault();
     toggleLegend(panel);
   };
+
+  const onCancelStreaming = (event: React.MouseEvent) => {
+    event.preventDefault();
+    panel.getQueryRunner().cancelQuery();
+  };
+
   const menu: PanelMenuItem[] = [];
 
   if (!panel.isEditing) {
-    const viewTextTranslation = t({
-      id: 'panel.header-menu.view',
-      message: `View`,
-    });
     menu.push({
-      text: viewTextTranslation,
+      text: t('panel.header-menu.view', `View`),
       iconClassName: 'eye',
       onClick: onViewPanel,
       shortcut: 'v',
@@ -116,20 +119,26 @@ export function getPanelMenu(
 
   if (dashboard.canEditPanel(panel) && !panel.isEditing) {
     menu.push({
-      text: 'Edit',
+      text: t('panel.header-menu.edit', `Edit`),
       iconClassName: 'edit',
       onClick: onEditPanel,
       shortcut: 'e',
     });
   }
 
-  const shareTextTranslation = t({
-    id: 'panel.header-menu.share',
-    message: `Share`,
-  });
+  if (
+    dashboard.canEditPanel(panel) &&
+    (loadingState === LoadingState.Streaming || loadingState === LoadingState.Loading)
+  ) {
+    menu.push({
+      text: 'Stop query',
+      iconClassName: 'circle',
+      onClick: onCancelStreaming,
+    });
+  }
 
   menu.push({
-    text: shareTextTranslation,
+    text: t('panel.header-menu.share', `Share`),
     iconClassName: 'share-alt',
     onClick: onSharePanel,
     shortcut: 'p s',
@@ -137,7 +146,7 @@ export function getPanelMenu(
 
   if (contextSrv.hasAccessToExplore() && !(panel.plugin && panel.plugin.meta.skipDataQuery)) {
     menu.push({
-      text: 'Explore',
+      text: t('panel.header-menu.explore', `Explore`),
       iconClassName: 'compass',
       onClick: onNavigateToExplore,
       shortcut: 'x',
@@ -148,42 +157,27 @@ export function getPanelMenu(
 
   // Only show these inspect actions for data plugins
   if (panel.plugin && !panel.plugin.meta.skipDataQuery) {
-    const dataTextTranslation = t({
-      id: 'panel.header-menu.inspect-data',
-      message: `Data`,
-    });
-
     inspectMenu.push({
-      text: dataTextTranslation,
+      text: t('panel.header-menu.inspect-data', `Data`),
       onClick: (e: React.MouseEvent<any>) => onInspectPanel(InspectTab.Data),
     });
 
     if (dashboard.meta.canEdit) {
       inspectMenu.push({
-        text: 'Query',
+        text: t('panel.header-menu.query', `Query`),
         onClick: (e: React.MouseEvent<any>) => onInspectPanel(InspectTab.Query),
       });
     }
   }
 
-  const jsonTextTranslation = t({
-    id: 'panel.header-menu.inspect-json',
-    message: `Panel JSON`,
-  });
-
   inspectMenu.push({
-    text: jsonTextTranslation,
+    text: t('panel.header-menu.inspect-json', `Panel JSON`),
     onClick: (e: React.MouseEvent<any>) => onInspectPanel(InspectTab.JSON),
-  });
-
-  const inspectTextTranslation = t({
-    id: 'panel.header-menu.inspect',
-    message: `Inspect`,
   });
 
   menu.push({
     type: 'submenu',
-    text: inspectTextTranslation,
+    text: t('panel.header-menu.inspect', `Inspect`),
     iconClassName: 'info-circle',
     onClick: (e: React.MouseEvent<any>) => onInspectPanel(),
     shortcut: 'i',
@@ -195,24 +189,24 @@ export function getPanelMenu(
 
   if (canEdit && !(panel.isViewing || panel.isEditing)) {
     subMenu.push({
-      text: 'Duplicate',
+      text: t('panel.header-menu.duplicate', `Duplicate`),
       onClick: onDuplicatePanel,
       shortcut: 'p d',
     });
 
     subMenu.push({
-      text: 'Copy',
+      text: t('panel.header-menu.copy', `Copy`),
       onClick: onCopyPanel,
     });
 
     if (isPanelModelLibraryPanel(panel)) {
       subMenu.push({
-        text: 'Unlink library panel',
+        text: t('panel.header-menu.unlink-library-panel', `Unlink library panel`),
         onClick: onUnlinkLibraryPanel,
       });
     } else {
       subMenu.push({
-        text: 'Create library panel',
+        text: t('panel.header-menu.create-library-panel', `Create library panel`),
         onClick: onAddLibraryPanel,
       });
     }
@@ -243,7 +237,9 @@ export function getPanelMenu(
 
   if (panel.options.legend) {
     subMenu.push({
-      text: panel.options.legend.showLegend ? 'Hide legend' : 'Show legend',
+      text: panel.options.legend.showLegend
+        ? t('panel.header-menu.hide-legend', 'Hide legend')
+        : t('panel.header-menu.show-legend', 'Show legend'),
       onClick: onToggleLegend,
       shortcut: 'p l',
     });
@@ -256,19 +252,15 @@ export function getPanelMenu(
 
   if (canEdit && panel.plugin && !panel.plugin.meta.skipDataQuery) {
     subMenu.push({
-      text: 'Get help',
+      text: t('panel.header-menu.get-help', 'Get help'),
       onClick: (e: React.MouseEvent) => onInspectPanel(InspectTab.Help),
     });
   }
 
   if (subMenu.length) {
-    const moreTextTranslation = t({
-      id: 'panel.header-menu.more',
-      message: `More...`,
-    });
     menu.push({
       type: 'submenu',
-      text: moreTextTranslation,
+      text: t('panel.header-menu.more', `More...`),
       iconClassName: 'cube',
       subMenu,
       onClick: onMore,
@@ -279,7 +271,7 @@ export function getPanelMenu(
     menu.push({ type: 'divider', text: '' });
 
     menu.push({
-      text: 'Remove',
+      text: t('panel.header-menu.remove', `Remove`),
       iconClassName: 'trash-alt',
       onClick: onRemovePanel,
       shortcut: 'p r',

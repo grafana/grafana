@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { ReactElement, useRef } from 'react';
+import React, { CSSProperties, ReactElement, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -23,11 +23,13 @@ export interface SubMenuProps {
   setOpenedWithArrow: (openedWithArrow: boolean) => void;
   /** Closes the subMenu */
   close: () => void;
+  /** Custom style */
+  customStyle?: CSSProperties;
 }
 
 /** @internal */
 export const SubMenu: React.FC<SubMenuProps> = React.memo(
-  ({ items, isOpen, openedWithArrow, setOpenedWithArrow, close }) => {
+  ({ items, isOpen, openedWithArrow, setOpenedWithArrow, close, customStyle }) => {
     const styles = useStyles2(getStyles);
     const localRef = useRef<HTMLDivElement>(null);
     const [handleKeys] = useMenuFocus({
@@ -48,8 +50,9 @@ export const SubMenu: React.FC<SubMenuProps> = React.memo(
             ref={localRef}
             className={styles.subMenu(localRef.current)}
             aria-label={selectors.components.Menu.SubMenu.container}
+            style={customStyle}
           >
-            <div className={styles.itemsWrapper} role="menu" onKeyDown={handleKeys}>
+            <div tabIndex={-1} className={styles.itemsWrapper} role="menu" onKeyDown={handleKeys}>
               {items}
             </div>
           </div>

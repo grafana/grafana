@@ -7,9 +7,9 @@ import { Segment, Icon, SegmentSection } from '@grafana/ui';
 import { SegmentSyncProps } from './Segment';
 
 const AddButton = (
-  <a className="gf-form-label query-part">
+  <span className="gf-form-label query-part">
     <Icon name="plus-circle" />
-  </a>
+  </span>
 );
 
 const toOption = (value: any) => ({ label: value, value: value });

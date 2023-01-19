@@ -69,6 +69,10 @@ func TestParseTreeTestdata(t *testing.T) {
 			rootid:  "test-datasource",
 			subpath: "plugin",
 		},
+		"renderer-added-file": {
+			rootid:  "test-renderer",
+			subpath: "plugin",
+		},
 		"symbolic-plugin-dirs": {
 			skip: "io/fs-based scanner will not traverse symlinks; caller of ParsePluginFS() must do it",
 		},
@@ -79,6 +83,9 @@ func TestParseTreeTestdata(t *testing.T) {
 		"test-app-with-includes": {
 			rootid: "test-app",
 			skip:   "has a 'page'-type include which isn't a known part of spec",
+		},
+		"test-app-with-roles": {
+			rootid: "test-app",
 		},
 		"unsigned-datasource": {
 			rootid:  "test-datasource",
@@ -108,9 +115,7 @@ func TestParseTreeTestdata(t *testing.T) {
 		"wrong-slot-panel": {
 			err: ErrImplementedSlots,
 		},
-		"missing-slot-impl": {
-			err: ErrImplementedSlots,
-		},
+		"missing-kind-datasource": {},
 		"panel-conflicting-joinschema": {
 			err:  ErrInvalidLineage,
 			skip: "TODO implement BindOption in thema, SatisfiesJoinSchema, then use it here",
@@ -157,7 +162,7 @@ func TestParseTreeTestdata(t *testing.T) {
 		tab[ent.Name()] = tst
 	}
 
-	lib := cuectx.ProvideThemaLibrary()
+	lib := cuectx.GrafanaThemaRuntime()
 	for name, otst := range tab {
 		tst := otst // otherwise var is shadowed within func by looping
 		t.Run(name, func(t *testing.T) {
@@ -169,6 +174,7 @@ func TestParseTreeTestdata(t *testing.T) {
 			if tst.err == nil {
 				require.NoError(t, err, "unexpected error while parsing plugin tree")
 			} else {
+				require.Error(t, err)
 				require.ErrorIs(t, err, tst.err, "unexpected error type while parsing plugin tree")
 				return
 			}
@@ -256,7 +262,7 @@ func TestParseTreeZips(t *testing.T) {
 		tab[ent.Name()] = tst
 	}
 
-	lib := cuectx.ProvideThemaLibrary()
+	lib := cuectx.GrafanaThemaRuntime()
 	for name, otst := range tab {
 		tst := otst // otherwise var is shadowed within func by looping
 		t.Run(name, func(t *testing.T) {

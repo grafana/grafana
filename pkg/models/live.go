@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -64,22 +65,6 @@ type ChannelHandlerFactory interface {
 	// GetHandlerForPath gets a ChannelHandler for a path.
 	// This is called fast and often -- it must be synchronized
 	GetHandlerForPath(path string) (ChannelHandler, error)
-}
-
-// DashboardActivityChannel is a service to advertise dashboard activity
-type DashboardActivityChannel interface {
-	// Called when a dashboard is saved -- this includes the error so we can support a
-	// gitops workflow that knows if the value was saved to the local database or not
-	// in many cases all direct save requests will fail, but the request should be forwarded
-	// to any gitops observers
-	DashboardSaved(orgID int64, user *user.UserDisplayDTO, message string, dashboard *Dashboard, err error) error
-
-	// Called when a dashboard is deleted
-	DashboardDeleted(orgID int64, user *user.UserDisplayDTO, uid string) error
-
-	// Experimental! Indicate is GitOps is active.  This really means
-	// someone is subscribed to the `grafana/dashboards/gitops` channel
-	HasGitOpsObserver(orgID int64) bool
 }
 
 type LiveMessage struct {

@@ -33,6 +33,10 @@ func newApi(ac accesscontrol.AccessControl, router routing.RouteRegister, manage
 func (a *api) registerEndpoints() {
 	auth := accesscontrol.Middleware(a.ac)
 	disable := disableMiddleware(a.ac.IsDisabled())
+	licenseMW := a.service.options.LicenseMW
+	if licenseMW == nil {
+		licenseMW = nopMiddleware
+	}
 
 	a.router.Group(fmt.Sprintf("/api/access-control/%s", a.service.options.Resource), func(r routing.RouteRegister) {
 		actionRead := fmt.Sprintf("%s.permissions:read", a.service.options.Resource)
@@ -40,14 +44,15 @@ func (a *api) registerEndpoints() {
 		scope := accesscontrol.Scope(a.service.options.Resource, a.service.options.ResourceAttribute, accesscontrol.Parameter(":resourceID"))
 		r.Get("/description", auth(disable, accesscontrol.EvalPermission(actionRead)), routing.Wrap(a.getDescription))
 		r.Get("/:resourceID", auth(disable, accesscontrol.EvalPermission(actionRead, scope)), routing.Wrap(a.getPermissions))
+		r.Post("/:resourceID", licenseMW, auth(disable, accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setPermissions))
 		if a.service.options.Assignments.Users {
-			r.Post("/:resourceID/users/:userID", auth(disable, accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setUserPermission))
+			r.Post("/:resourceID/users/:userID", licenseMW, auth(disable, accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setUserPermission))
 		}
 		if a.service.options.Assignments.Teams {
-			r.Post("/:resourceID/teams/:teamID", auth(disable, accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setTeamPermission))
+			r.Post("/:resourceID/teams/:teamID", licenseMW, auth(disable, accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setTeamPermission))
 		}
 		if a.service.options.Assignments.BuiltInRoles {
-			r.Post("/:resourceID/builtInRoles/:builtInRole", auth(disable, accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setBuiltinRolePermission))
+			r.Post("/:resourceID/builtInRoles/:builtInRole", licenseMW, auth(disable, accesscontrol.EvalPermission(actionWrite, scope)), routing.Wrap(a.setBuiltinRolePermission))
 		}
 	})
 }
@@ -135,6 +140,10 @@ type setPermissionCommand struct {
 	Permission string `json:"permission"`
 }
 
+type setPermissionsCommand struct {
+	Permissions []accesscontrol.SetResourcePermissionCommand `json:"permissions"`
+}
+
 func (a *api) setUserPermission(c *models.ReqContext) response.Response {
 	userID, err := strconv.ParseInt(web.Params(c.Req)[":userID"], 10, 64)
 	if err != nil {
@@ -190,6 +199,22 @@ func (a *api) setBuiltinRolePermission(c *models.ReqContext) response.Response {
 	}
 
 	return permissionSetResponse(cmd)
+}
+
+func (a *api) setPermissions(c *models.ReqContext) response.Response {
+	resourceID := web.Params(c.Req)[":resourceID"]
+
+	cmd := setPermissionsCommand{}
+	if err := web.Bind(c.Req, &cmd); err != nil {
+		return response.Error(http.StatusBadRequest, "bad request data", err)
+	}
+
+	_, err := a.service.SetPermissions(c.Req.Context(), c.OrgID, resourceID, cmd.Permissions...)
+	if err != nil {
+		return response.Error(http.StatusBadRequest, "failed to set permissions", err)
+	}
+
+	return response.Success("Permissions updated")
 }
 
 func permissionSetResponse(cmd setPermissionCommand) response.Response {

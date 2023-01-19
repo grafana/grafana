@@ -1,8 +1,8 @@
-import { t, Trans } from '@lingui/macro';
 import React, { FormEvent, PureComponent } from 'react';
 
 import { reportInteraction } from '@grafana/runtime/src';
 import { ClipboardButton, Field, Modal, Switch, TextArea } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { ThemePicker } from './ThemePicker';
 import { ShareModalTabProps } from './types';
@@ -65,21 +65,18 @@ export class ShareEmbed extends PureComponent<Props, State> {
     const isRelativeTime = this.props.dashboard ? this.props.dashboard.time.to === 'now' : false;
 
     const timeRangeDescription = isRelativeTime
-      ? t({
-          id: 'share-modal.embed.time-range-description',
-          message: 'Transforms the current relative time range to an absolute time range',
-        })
+      ? t(
+          'share-modal.embed.time-range-description',
+          'Transforms the current relative time range to an absolute time range'
+        )
       : '';
 
     return (
       <>
         <p className="share-modal-info-text">
-          <Trans id="share-modal.embed.info">Generate HTML for embedding an iframe with this panel.</Trans>
+          <Trans i18nKey="share-modal.embed.info">Generate HTML for embedding an iframe with this panel.</Trans>
         </p>
-        <Field
-          label={t({ id: 'share-modal.embed.time-range', message: 'Current time range' })}
-          description={timeRangeDescription}
-        >
+        <Field label={t('share-modal.embed.time-range', 'Current time range')} description={timeRangeDescription}>
           <Switch
             id="share-current-time-range"
             value={useCurrentTimeRange}
@@ -88,13 +85,11 @@ export class ShareEmbed extends PureComponent<Props, State> {
         </Field>
         <ThemePicker selectedTheme={selectedTheme} onChange={this.onThemeChange} />
         <Field
-          label={t({ id: 'share-modal.embed.html', message: 'Embed HTML' })}
-          description={
-            <Trans id="share-modal.embed.html-description">
-              The HTML code below can be pasted and included in another web page. Unless anonymous access is enabled,
-              the user viewing that page need to be signed into Grafana for the graph to load.
-            </Trans>
-          }
+          label={t('share-modal.embed.html', 'Embed HTML')}
+          description={t(
+            'share-modal.embed.html-description',
+            'The HTML code below can be pasted and included in another web page. Unless anonymous access is enabled, the user viewing that page need to be signed into Grafana for the graph to load.'
+          )}
         >
           <TextArea
             data-testid="share-embed-html"
@@ -106,7 +101,7 @@ export class ShareEmbed extends PureComponent<Props, State> {
         </Field>
         <Modal.ButtonRow>
           <ClipboardButton icon="copy" variant="primary" getText={this.getIframeHtml}>
-            <Trans id="share-modal.embed.copy">Copy to clipboard</Trans>
+            <Trans i18nKey="share-modal.embed.copy">Copy to clipboard</Trans>
           </ClipboardButton>
         </Modal.ButtonRow>
       </>

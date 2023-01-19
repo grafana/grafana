@@ -1,21 +1,38 @@
 import createMockQuery from '../../__mocks__/query';
 
 import { ResourceRowGroup, ResourceRowType } from './types';
-import { findRow, parseResourceURI, setResource } from './utils';
+import {
+  findRow,
+  findRows,
+  parseMultipleResourceDetails,
+  parseResourceDetails,
+  parseResourceURI,
+  resourcesToStrings,
+  setResources,
+} from './utils';
+
+jest.mock('@grafana/runtime', () => ({
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  getTemplateSrv: () => ({
+    replace: (val: string) => {
+      return val;
+    },
+  }),
+}));
 
 describe('AzureMonitor ResourcePicker utils', () => {
   describe('parseResourceURI', () => {
     it('should parse subscription URIs', () => {
-      expect(parseResourceURI('/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572')).toEqual({
-        subscription: '44693801-6ee6-49de-9b2d-9106972f9572',
+      expect(parseResourceURI('/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')).toEqual({
+        subscription: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
       });
     });
 
     it('should parse resource group URIs', () => {
       expect(
-        parseResourceURI('/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/cloud-datasources')
+        parseResourceURI('/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources')
       ).toEqual({
-        subscription: '44693801-6ee6-49de-9b2d-9106972f9572',
+        subscription: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
         resourceGroup: 'cloud-datasources',
       });
     });
@@ -23,10 +40,10 @@ describe('AzureMonitor ResourcePicker utils', () => {
     it('should parse resource URIs', () => {
       expect(
         parseResourceURI(
-          '/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/cloud-datasources/providers/Microsoft.Compute/virtualMachines/GithubTestDataVM'
+          '/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.Compute/virtualMachines/GithubTestDataVM'
         )
       ).toEqual({
-        subscription: '44693801-6ee6-49de-9b2d-9106972f9572',
+        subscription: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
         resourceGroup: 'cloud-datasources',
         metricNamespace: 'Microsoft.Compute/virtualMachines',
         resourceName: 'GithubTestDataVM',
@@ -36,10 +53,10 @@ describe('AzureMonitor ResourcePicker utils', () => {
     it('should parse resource URIs with a subresource', () => {
       expect(
         parseResourceURI(
-          '/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/cloud-datasources/providers/Microsoft.Storage/storageAccounts/csb100320016c43d2d0/fileServices/default'
+          '/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.Storage/storageAccounts/csb100320016c43d2d0/fileServices/default'
         )
       ).toEqual({
-        subscription: '44693801-6ee6-49de-9b2d-9106972f9572',
+        subscription: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
         resourceGroup: 'cloud-datasources',
         metricNamespace: 'Microsoft.Storage/storageAccounts/fileServices',
         resourceName: 'csb100320016c43d2d0/default',
@@ -47,30 +64,30 @@ describe('AzureMonitor ResourcePicker utils', () => {
     });
 
     it('returns undefined for invalid input', () => {
-      expect(parseResourceURI('44693801-6ee6-49de-9b2d-9106972f9572')).toEqual({});
+      expect(parseResourceURI('aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee')).toEqual({});
     });
 
     it('returns a valid response with a missing element in the metric namespace and name', () => {
       expect(
         parseResourceURI(
-          '/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/cloud-datasources/providers/foo'
+          '/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/foo'
         )
       ).toEqual({
         metricNamespace: 'foo',
         resourceGroup: 'cloud-datasources',
         resourceName: '',
-        subscription: '44693801-6ee6-49de-9b2d-9106972f9572',
+        subscription: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
       });
 
       expect(
         parseResourceURI(
-          '/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/cloud-datasources/providers/foo/bar'
+          '/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/foo/bar'
         )
       ).toEqual({
         metricNamespace: 'foo/bar',
         resourceGroup: 'cloud-datasources',
         resourceName: '',
-        subscription: '44693801-6ee6-49de-9b2d-9106972f9572',
+        subscription: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
       });
     });
   });
@@ -87,7 +104,7 @@ describe('AzureMonitor ResourcePicker utils', () => {
       const rows: ResourceRowGroup = [
         {
           id: '',
-          uri: '/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/cloud-datasources/providers/Microsoft.Storage/storageAccounts/csb100320016c43d2d0',
+          uri: '/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.Storage/storageAccounts/csb100320016c43d2d0',
           name: '',
           type: ResourceRowType.Resource,
           typeLabel: '',
@@ -96,7 +113,7 @@ describe('AzureMonitor ResourcePicker utils', () => {
       expect(
         findRow(
           rows,
-          '/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/cloud-datasources/providers/Microsoft.Storage/storageAccounts/csb100320016c43d2d0/fileServices/default'
+          '/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.Storage/storageAccounts/csb100320016c43d2d0/fileServices/default'
         )
       ).toEqual(rows[0]);
     });
@@ -105,7 +122,7 @@ describe('AzureMonitor ResourcePicker utils', () => {
       const rows: ResourceRowGroup = [
         {
           id: '',
-          uri: '/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/cloud-datasources/providers/microsoft.storage/storageaccounts/csb100320016c43d2d0',
+          uri: '/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/microsoft.storage/storageaccounts/csb100320016c43d2d0',
           name: '',
           type: ResourceRowType.Resource,
           typeLabel: '',
@@ -114,7 +131,7 @@ describe('AzureMonitor ResourcePicker utils', () => {
       expect(
         findRow(
           rows,
-          '/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/cloud-datasources/providers/Microsoft.Storage/storageAccounts/csb100320016c43d2d0'
+          '/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.Storage/storageAccounts/csb100320016c43d2d0'
         )
       ).toEqual(rows[0]);
     });
@@ -123,7 +140,7 @@ describe('AzureMonitor ResourcePicker utils', () => {
       const rows: ResourceRowGroup = [
         {
           id: '',
-          uri: '/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/CLOUD-DATASOURCES/providers/microsoft.storage/storageaccounts/csb100320016c43d2d0',
+          uri: '/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/CLOUD-DATASOURCES/providers/microsoft.storage/storageaccounts/csb100320016c43d2d0',
           name: '',
           type: ResourceRowType.Resource,
           typeLabel: '',
@@ -132,37 +149,145 @@ describe('AzureMonitor ResourcePicker utils', () => {
       expect(
         findRow(
           rows,
-          '/subscriptions/44693801-6ee6-49de-9b2d-9106972f9572/resourceGroups/cloud-datasources/providers/Microsoft.Storage/storageAccounts/csb100320016c43d2d0'
+          '/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.Storage/storageAccounts/csb100320016c43d2d0'
         )
       ).toEqual(rows[0]);
     });
+
+    it('should find a row matching the right subresource', () => {
+      const rows: ResourceRowGroup = [
+        {
+          id: '',
+          uri: '/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.Sql/servers/foo',
+          name: '',
+          type: ResourceRowType.Resource,
+          typeLabel: '',
+        },
+        {
+          id: '',
+          uri: '/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.Sql/servers/foo/databases/bar',
+          name: '',
+          type: ResourceRowType.Resource,
+          typeLabel: '',
+        },
+      ];
+      expect(
+        findRow(
+          rows,
+          '/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.Sql/servers/foo/databases/bar'
+        )
+      ).toEqual(rows[1]);
+    });
   });
 
-  describe('setResource', () => {
+  describe('findRows', () => {
+    it('should find multiple rows', () => {
+      const rows: ResourceRowGroup = [
+        { id: 'sub1', uri: '/subscriptions/sub1', name: '', type: ResourceRowType.Subscription, typeLabel: '' },
+        { id: 'sub2', uri: '/subscriptions/sub2', name: '', type: ResourceRowType.Subscription, typeLabel: '' },
+        { id: 'sub3', uri: '/subscriptions/sub3', name: '', type: ResourceRowType.Subscription, typeLabel: '' },
+      ];
+      expect(findRows(rows, ['/subscriptions/sub1', '/subscriptions/sub2'])).toEqual([rows[0], rows[1]]);
+    });
+  });
+
+  describe('setResources', () => {
     it('updates a resource with a resource URI for Log Analytics', () => {
-      expect(setResource(createMockQuery(), '/subscription/sub')).toMatchObject({
-        azureLogAnalytics: { resource: '/subscription/sub' },
+      expect(setResources(createMockQuery(), 'logs', ['/subscription/sub'])).toMatchObject({
+        azureLogAnalytics: { resources: ['/subscription/sub'] },
       });
     });
 
     it('updates a resource with a resource parameters for Metrics', () => {
       expect(
-        setResource(createMockQuery(), {
-          subscription: 'sub',
-          resourceGroup: 'rg',
-          metricNamespace: 'Microsoft.Storage/storageAccounts',
-          resourceName: 'testacct',
-        })
+        setResources(createMockQuery(), 'metrics', [
+          {
+            subscription: 'sub',
+            resourceGroup: 'rg',
+            metricNamespace: 'Microsoft.Storage/storageAccounts',
+            resourceName: 'testacct',
+            region: 'westus',
+          },
+        ])
       ).toMatchObject({
         subscription: 'sub',
         azureMonitor: {
           aggregation: undefined,
           metricName: undefined,
           metricNamespace: 'microsoft.storage/storageaccounts',
-          resourceGroup: 'rg',
-          resourceName: 'testacct',
+          region: 'westus',
+          resources: [
+            {
+              resourceGroup: 'rg',
+              resourceName: 'testacct',
+            },
+          ],
         },
       });
+    });
+  });
+
+  describe('parseResourceDetails', () => {
+    it('parses a string resource', () => {
+      expect(
+        parseResourceDetails(
+          '/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.Sql/servers/foo/databases/bar',
+          'useast'
+        )
+      ).toEqual({
+        metricNamespace: 'Microsoft.Sql/servers/databases',
+        resourceGroup: 'cloud-datasources',
+        resourceName: 'foo/bar',
+        subscription: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+        region: 'useast',
+      });
+    });
+  });
+
+  describe('parseMultipleResourceDetails', () => {
+    it('parses multiple string resources', () => {
+      expect(
+        parseMultipleResourceDetails(
+          [
+            '/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.Sql/servers/foo/databases/bar',
+            '/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.Sql/servers/other/databases/resource',
+          ],
+          'useast'
+        )
+      ).toEqual([
+        {
+          metricNamespace: 'Microsoft.Sql/servers/databases',
+          resourceGroup: 'cloud-datasources',
+          resourceName: 'foo/bar',
+          subscription: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+          region: 'useast',
+        },
+        {
+          metricNamespace: 'Microsoft.Sql/servers/databases',
+          resourceGroup: 'cloud-datasources',
+          resourceName: 'other/resource',
+          subscription: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+          region: 'useast',
+        },
+      ]);
+    });
+  });
+
+  describe('resourcesToStrings', () => {
+    it('converts a resource to a string', () => {
+      expect(
+        resourcesToStrings([
+          {
+            metricNamespace: 'Microsoft.Sql/servers/databases',
+            resourceGroup: 'cloud-datasources',
+            resourceName: 'foo/bar',
+            subscription: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+            region: 'useast',
+          },
+        ])
+      ).toEqual([
+        '/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.Sql/servers/foo/databases/bar',
+      ]);
     });
   });
 });

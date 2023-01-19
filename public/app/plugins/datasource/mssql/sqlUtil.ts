@@ -79,8 +79,6 @@ export function getRAQBType(type: string): RAQBFieldTypes {
   }
 }
 
-export const SCHEMA_NAME = 'dbo';
-
 export function toRawSql({ sql, dataset, table }: SQLQuery): string {
   let rawQuery = '';
 
@@ -92,7 +90,7 @@ export function toRawSql({ sql, dataset, table }: SQLQuery): string {
   rawQuery += createSelectClause(sql.columns, sql.limit);
 
   if (dataset && table) {
-    rawQuery += `FROM ${dataset}.${SCHEMA_NAME}.${table} `;
+    rawQuery += `FROM ${dataset}.${table} `;
   }
 
   if (sql.whereString) {
@@ -118,8 +116,12 @@ export function toRawSql({ sql, dataset, table }: SQLQuery): string {
 function createSelectClause(sqlColumns: NonNullable<SQLExpression['columns']>, limit?: number): string {
   const columns = sqlColumns.map((c) => {
     let rawColumn = '';
-    if (c.name) {
+    if (c.name && c.alias) {
+      rawColumn += `${c.name}(${c.parameters?.map((p) => `${p.name}`)}) AS ${c.alias}`;
+    } else if (c.name) {
       rawColumn += `${c.name}(${c.parameters?.map((p) => `${p.name}`)})`;
+    } else if (c.alias) {
+      rawColumn += `${c.parameters?.map((p) => `${p.name}`)} AS ${c.alias}`;
     } else {
       rawColumn += `${c.parameters?.map((p) => `${p.name}`)}`;
     }

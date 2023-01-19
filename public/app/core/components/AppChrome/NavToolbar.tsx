@@ -2,7 +2,10 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { Components } from '@grafana/e2e-selectors';
 import { Icon, IconButton, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { HOME_NAV_ID } from 'app/core/reducers/navModel';
+import { useSelector } from 'app/types';
 
 import { Breadcrumbs } from '../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../Breadcrumbs/utils';
@@ -29,11 +32,12 @@ export function NavToolbar({
   onToggleSearchBar,
   onToggleKioskMode,
 }: Props) {
+  const homeNav = useSelector((state) => state.navIndex)[HOME_NAV_ID];
   const styles = useStyles2(getStyles);
-  const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav);
+  const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
 
   return (
-    <div className={styles.pageToolbar}>
+    <div data-testid={Components.NavToolbar.container} className={styles.pageToolbar}>
       <div className={styles.menuButton}>
         <IconButton name="bars" tooltip="Toggle menu" tooltipPlacement="bottom" size="xl" onClick={onToggleMegaMenu} />
       </div>

@@ -6,6 +6,7 @@ import { colorManipulator, DataFrame, getDisplayProcessor, GrafanaTheme2, TimeZo
 import { PlotSelection, useStyles2, useTheme2, Portal, DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 
 import { getCommonAnnotationStyles } from '../styles';
+import { AnnotationsDataFrameViewDTO } from '../types';
 
 import { AnnotationEditorForm } from './AnnotationEditorForm';
 

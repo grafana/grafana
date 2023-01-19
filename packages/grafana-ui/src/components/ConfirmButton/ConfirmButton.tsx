@@ -36,7 +36,7 @@ interface State {
   showConfirm: boolean;
 }
 
-class UnThemedConfirmButton extends PureComponent<Props, State> {
+class UnThemedConfirmButton extends PureComponent<React.PropsWithChildren<Props>, State> {
   mainButtonRef = React.createRef<HTMLButtonElement>();
   confirmButtonRef = React.createRef<HTMLButtonElement>();
   state: State = {

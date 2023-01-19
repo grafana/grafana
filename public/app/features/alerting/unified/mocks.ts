@@ -58,7 +58,7 @@ export function mockDataSource<T extends DataSourceJsonData = DataSourceJsonData
         },
       },
       ...meta,
-    } as any as DataSourcePluginMeta,
+    } as unknown as DataSourcePluginMeta,
     readOnly: false,
     ...partial,
   };
@@ -121,6 +121,7 @@ export const mockRulerAlertingRule = (partial: Partial<RulerAlertingRuleDTO> = {
   annotations: {
     summary: 'test alert',
   },
+  ...partial,
 });
 
 export const mockRulerRuleGroup = (partial: Partial<RulerRuleGroupDTO> = {}): RulerRuleGroupDTO => ({
@@ -514,4 +515,27 @@ export function mockStore(recipe: (state: StoreState) => void) {
   const defaultState = configureStore().getState();
 
   return configureStore(produce(defaultState, recipe));
+}
+
+export function getGrafanaRule(override?: Partial<CombinedRule>) {
+  return mockCombinedRule({
+    namespace: {
+      groups: [],
+      name: 'Grafana',
+      rulesSource: 'grafana',
+    },
+    ...override,
+  });
+}
+export function getCloudRule(override?: Partial<CombinedRule>) {
+  return mockCombinedRule({
+    namespace: {
+      groups: [],
+      name: 'Cortex',
+      rulesSource: mockDataSource(),
+    },
+    promRule: mockPromAlertingRule(),
+    rulerRule: mockRulerAlertingRule(),
+    ...override,
+  });
 }

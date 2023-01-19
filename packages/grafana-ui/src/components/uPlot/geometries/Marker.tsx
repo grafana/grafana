@@ -9,7 +9,7 @@ interface MarkerProps {
 
 // An abstraction over a component rendered within a chart canvas.
 // Marker is rendered with DOM coords of the chart bounding box.
-export const Marker: React.FC<MarkerProps> = ({ x, y, children }) => {
+export const Marker = ({ x, y, children }: React.PropsWithChildren<MarkerProps>) => {
   return (
     <div
       style={{

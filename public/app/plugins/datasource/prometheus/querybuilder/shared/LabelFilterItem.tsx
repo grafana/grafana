@@ -1,10 +1,10 @@
-import { css } from '@emotion/css';
 import { uniqBy } from 'lodash';
 import React, { useState } from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AccessoryButton, InputGroup, Select } from '@grafana/ui';
+import { AccessoryButton, InputGroup } from '@grafana/experimental';
+import { Select } from '@grafana/ui';
 
 import { QueryBuilderLabelFilter } from './types';
 
@@ -36,8 +36,8 @@ export function LabelFilterItem({
     isLoadingLabelValues?: boolean;
   }>({});
 
-  const isMultiSelect = () => {
-    return operators.find((op) => op.label === item.op)?.isMultiValue;
+  const isMultiSelect = (operator = item.op) => {
+    return operators.find((op) => op.label === operator)?.isMultiValue;
   };
 
   const getSelectOptionsFromString = (item?: string): string[] => {
@@ -57,16 +57,6 @@ export function LabelFilterItem({
     // Remove possible duplicated values
     return uniqBy([...selectedOptions, ...labelValues], 'value');
   };
-
-  /**
-   * !important here is necessary to show invalid border on all 4 sides of select.
-   * Without it, the invalid state is only visible on 3 sides as the right side is overridden in InputGroup.
-   */
-  const invalidClassNameOverride = invalidLabel
-    ? css`
-        margin-left: 0 !important;
-      `
-    : '';
 
   return (
     <div data-testid="prometheus-dimensions-filter-item">
@@ -91,7 +81,7 @@ export function LabelFilterItem({
                 ...item,
                 op: item.op ?? defaultOp,
                 label: change.label,
-              } as any as QueryBuilderLabelFilter);
+              } as unknown as QueryBuilderLabelFilter);
             }
           }}
           invalid={invalidLabel}
@@ -104,10 +94,13 @@ export function LabelFilterItem({
           width="auto"
           onChange={(change) => {
             if (change.value != null) {
-              onChange({ ...item, op: change.value } as any as QueryBuilderLabelFilter);
+              onChange({
+                ...item,
+                op: change.value,
+                value: isMultiSelect(change.value) ? item.value : getSelectOptionsFromString(item?.value)[0],
+              } as unknown as QueryBuilderLabelFilter);
             }
           }}
-          className={invalidClassNameOverride}
         />
 
         <Select
@@ -135,14 +128,18 @@ export function LabelFilterItem({
           options={getOptions()}
           onChange={(change) => {
             if (change.value) {
-              onChange({ ...item, value: change.value, op: item.op ?? defaultOp } as any as QueryBuilderLabelFilter);
+              onChange({
+                ...item,
+                value: change.value,
+                op: item.op ?? defaultOp,
+              } as unknown as QueryBuilderLabelFilter);
             } else {
               const changes = change
                 .map((change: any) => {
                   return change.label;
                 })
                 .join('|');
-              onChange({ ...item, value: changes, op: item.op ?? defaultOp } as any as QueryBuilderLabelFilter);
+              onChange({ ...item, value: changes, op: item.op ?? defaultOp } as unknown as QueryBuilderLabelFilter);
             }
           }}
           invalid={invalidValue}

@@ -110,7 +110,7 @@ export function getQueryHints(query: string, series?: any[], datasource?: Promet
             query,
             options: mappingForQuery,
           },
-        } as any as QueryFix,
+        } as unknown as QueryFix,
       });
     }
   }

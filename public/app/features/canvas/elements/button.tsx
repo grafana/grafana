@@ -1,5 +1,6 @@
 import React, { PureComponent } from 'react';
 
+import { PluginState } from '@grafana/data/src';
 import { Button } from '@grafana/ui';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
@@ -39,6 +40,7 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
   id: 'button',
   name: 'Button',
   description: 'Button',
+  state: PluginState.alpha,
 
   display: ButtonDisplay,
 

@@ -58,6 +58,7 @@ export const Tooltip = React.memo(({ children, theme, interactive, show, placeme
     <>
       {React.cloneElement(children, {
         ref: setTriggerRef,
+        tabIndex: 0, // tooltip should be keyboard focusable
       })}
       {visible && (
         <Portal>
@@ -66,8 +67,9 @@ export const Tooltip = React.memo(({ children, theme, interactive, show, placeme
             {typeof content === 'string' && content}
             {React.isValidElement(content) && React.cloneElement(content)}
             {typeof content === 'function' &&
+              update &&
               content({
-                updatePopperPosition: update as any,
+                updatePopperPosition: update,
               })}
           </div>
         </Portal>

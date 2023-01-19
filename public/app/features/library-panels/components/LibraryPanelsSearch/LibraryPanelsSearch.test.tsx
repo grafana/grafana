@@ -28,9 +28,9 @@ jest.mock('debounce-promise', () => {
   const debounce = (fn: any) => {
     const debounced = () =>
       Promise.resolve([
-        { label: 'General', value: { id: 0, title: 'General' } },
-        { label: 'Folder1', value: { id: 1, title: 'Folder1' } },
-        { label: 'Folder2', value: { id: 2, title: 'Folder2' } },
+        { label: 'General', value: { uid: '', title: 'General' } },
+        { label: 'Folder1', value: { id: 'xMsQdBfWz', title: 'Folder1' } },
+        { label: 'Folder2', value: { id: 'wfTJJL5Wz', title: 'Folder2' } },
       ]);
     return debounced;
   };
@@ -100,7 +100,7 @@ describe('LibraryPanelsSearch', () => {
         await waitFor(() =>
           expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
             searchString: 'a',
-            folderFilter: [],
+            folderFilterUIDs: [],
             page: 0,
             typeFilter: [],
             perPage: 40,
@@ -128,7 +128,7 @@ describe('LibraryPanelsSearch', () => {
           expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
             searchString: '',
             sortDirection: 'alpha-desc',
-            folderFilter: [],
+            folderFilterUIDs: [],
             page: 0,
             typeFilter: [],
             perPage: 40,
@@ -156,7 +156,7 @@ describe('LibraryPanelsSearch', () => {
         await waitFor(() =>
           expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
             searchString: '',
-            folderFilter: [],
+            folderFilterUIDs: [],
             page: 0,
             typeFilter: ['graph', 'timeseries'],
             perPage: 40,
@@ -177,21 +177,52 @@ describe('LibraryPanelsSearch', () => {
 
     describe('and user changes folder filter', () => {
       it('should call api with correct params', async () => {
-        const { getLibraryPanelsSpy } = await getTestContext({ showFolderFilter: true });
+        const { getLibraryPanelsSpy } = await getTestContext(
+          { showFolderFilter: true, currentFolderUID: 'wXyZ1234' },
+          {
+            elements: [
+              {
+                id: 1,
+                name: 'Library Panel Name',
+                kind: LibraryElementKind.Panel,
+                uid: 'uid',
+                description: 'Library Panel Description',
+                folderUid: '',
+                model: { type: 'timeseries', title: 'A title' },
+                type: 'timeseries',
+                orgId: 1,
+                version: 1,
+                meta: {
+                  folderName: 'General',
+                  folderUid: '',
+                  connectedDashboards: 0,
+                  created: '2021-01-01 12:00:00',
+                  createdBy: { id: 1, name: 'Admin', avatarUrl: '' },
+                  updated: '2021-01-01 12:00:00',
+                  updatedBy: { id: 1, name: 'Admin', avatarUrl: '' },
+                },
+              },
+            ],
+            perPage: 40,
+            page: 1,
+            totalCount: 0,
+          }
+        );
 
         await userEvent.click(screen.getByRole('combobox', { name: /folder filter/i }));
-        await userEvent.type(screen.getByRole('combobox', { name: /folder filter/i }), '{enter}', {
+        await userEvent.type(screen.getByRole('combobox', { name: /folder filter/i }), 'library', {
           skipClick: true,
         });
-        await waitFor(() =>
+
+        await waitFor(() => {
           expect(getLibraryPanelsSpy).toHaveBeenCalledWith({
             searchString: '',
-            folderFilter: ['0'],
+            folderFilterUIDs: ['wXyZ1234'],
             page: 0,
             typeFilter: [],
             perPage: 40,
-          })
-        );
+          });
+        });
       });
     });
   });
@@ -211,7 +242,7 @@ describe('LibraryPanelsSearch', () => {
               kind: LibraryElementKind.Panel,
               uid: 'uid',
               description: 'Library Panel Description',
-              folderId: 0,
+              folderUid: '',
               model: { type: 'timeseries', title: 'A title' },
               type: 'timeseries',
               orgId: 1,
@@ -255,7 +286,7 @@ describe('LibraryPanelsSearch', () => {
               kind: LibraryElementKind.Panel,
               uid: 'uid',
               description: 'Library Panel Description',
-              folderId: 0,
+              folderUid: '',
               model: { type: 'timeseries', title: 'A title' },
               type: 'timeseries',
               orgId: 1,
