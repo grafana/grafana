@@ -9,7 +9,7 @@ type Config struct {
 	Retries uint
 	Timeout time.Duration
 
-	TLSEnabled bool
+	TLSDisabled bool
 
 	TenantID string
 }

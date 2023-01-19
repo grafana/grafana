@@ -3,6 +3,7 @@ package lokigrpc
 import (
 	"context"
 	"errors"
+
 	"google.golang.org/grpc/metadata"
 )
 
@@ -15,25 +16,15 @@ var (
 	ErrTooManyOrgIDs         = errors.New("multiple org IDs present")
 )
 
-func injectOrgID(ctx context.Context, tenantID string) (context.Context, error) {
+func injectOrgID(ctx context.Context, tenantID string) context.Context {
 	md, ok := metadata.FromOutgoingContext(ctx)
-	if !ok {
+	if ok {
+		md = md.Copy()
+	} else {
 		md = metadata.New(map[string]string{})
 	}
-	newCtx := ctx
-	if orgIDs, ok := md[lowerOrgIDHeaderName]; ok {
-		if len(orgIDs) == 1 {
-			if orgIDs[0] != tenantID {
-				return ctx, ErrDifferentOrgIDPresent
-			}
-		} else {
-			return ctx, ErrTooManyOrgIDs
-		}
-	} else {
-		md = md.Copy()
-		md[lowerOrgIDHeaderName] = []string{tenantID}
-		newCtx = metadata.NewOutgoingContext(ctx, md)
-	}
 
-	return newCtx, nil
+	md[lowerOrgIDHeaderName] = []string{tenantID}
+	newCtx := metadata.NewOutgoingContext(ctx, md)
+	return newCtx
 }

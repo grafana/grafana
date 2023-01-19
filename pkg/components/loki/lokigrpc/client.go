@@ -42,10 +42,7 @@ func (c *Client) Write(streams []logproto.Stream) (err error) {
 	defer cancel()
 
 	if len(c.cfg.TenantID) > 0 {
-		ctx, err = injectOrgID(ctx, c.cfg.TenantID)
-		if err != nil {
-			return
-		}
+		ctx = injectOrgID(ctx, c.cfg.TenantID)
 	}
 
 	_, err = c.client.Push(ctx, pushRequest)
@@ -74,7 +71,7 @@ func (c *Client) init() error {
 }
 
 func (c *Client) grpcTLSOption() grpc.DialOption {
-	if !c.cfg.TLSEnabled {
+	if c.cfg.TLSDisabled {
 		return grpc.WithTransportCredentials(insecure.NewCredentials())
 	}
 
