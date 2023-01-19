@@ -49,7 +49,8 @@ authentication:
 ```bash
 [auth.gitlab]
 enabled = true
-allow_sign_up = false
+allow_sign_up = true
+auto_login = false
 client_id = GITLAB_APPLICATION_ID
 client_secret = GITLAB_SECRET
 scopes = read_api
@@ -128,6 +129,7 @@ the `example` and `foo/bar` groups. The example also promotes all GitLab Admins 
 [auth.gitlab]
 enabled = true
 allow_sign_up = true
+auto_login = false
 client_id = GITLAB_APPLICATION_ID
 client_secret = GITLAB_SECRET
 scopes = read_api
@@ -138,6 +140,15 @@ allowed_groups = example, foo/bar
 role_attribute_path = is_admin && 'Admin' || 'Viewer'
 role_attribute_strict = true
 allow_assign_grafana_admin = false
+```
+
+### Configure automatic login
+
+Set `auto_login` option to true to attempt login automatically, skipping the login screen.
+This setting is ignored if multiple auth providers are configured to use auto login.
+
+```
+auto_login = true
 ```
 
 ### Map roles

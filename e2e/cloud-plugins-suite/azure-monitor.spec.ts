@@ -234,14 +234,17 @@ e2e.scenario({
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('resourceGroups')
       .parent()
       .find('input')
-      .type('cloud-plugins-e2e-test{enter}');
+      .type('cloud-plugins-e2e-test{downArrow}{enter}');
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('namespaces').parent().find('button').click();
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('namespaces')
       .parent()
       .find('input')
-      .type('microsoft.storage/storageaccounts{enter}');
+      .type('microsoft.storage/storageaccounts{downArrow}{enter}');
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('resource').parent().find('button').click();
-    e2e.pages.Dashboard.SubMenu.submenuItemLabels('resource').parent().find('input').type('azmonmetricstest{enter}');
+    e2e.pages.Dashboard.SubMenu.submenuItemLabels('resource')
+      .parent()
+      .find('input')
+      .type('azmonmetricstest{downArrow}{enter}');
     e2e.flows.addPanel({
       dataSourceName,
       visitDashboardAtStart: false,
