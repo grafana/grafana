@@ -82,6 +82,17 @@ export interface QueryResultMeta {
   pathSeparator?: string;
 
   /**
+   * TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane
+   * contract documentation https://github.com/grafana/grafana-plugin-sdk-go/tree/main/data/contract_docs.
+   */
+  typeVersion?: string;
+
+  /**
+   * FrameType is a 2 number version (Major / Minor)
+   */
+  frameTypeVersion?: string;
+
+  /**
    * Legacy data source specific, should be moved to custom
    * */
   searchWords?: string[]; // used by log models and loki
