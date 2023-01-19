@@ -4,9 +4,13 @@ package dashboards
 
 import (
 	context "context"
-	alerts "github.com/grafana/grafana/pkg/services/alerting/models"
+
+	alertingmodels "github.com/grafana/grafana/pkg/services/alerting/models"
+
 	mock "github.com/stretchr/testify/mock"
+
 	models "github.com/grafana/grafana/pkg/models"
+
 	quota "github.com/grafana/grafana/pkg/services/quota"
 )
 
@@ -314,13 +318,13 @@ func (_m *FakeDashboardStore) HasEditPermissionInFolders(ctx context.Context, qu
 	return r0
 }
 
-// SaveAlerts provides a mock function with given fields: ctx, dashID, alertsToSave
-func (_m *FakeDashboardStore) SaveAlerts(ctx context.Context, dashID int64, alertsToSave []*alerts.Alert) error {
-	ret := _m.Called(ctx, dashID, alertsToSave)
+// SaveAlerts provides a mock function with given fields: ctx, dashID, alerts
+func (_m *FakeDashboardStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*alertingmodels.Alert) error {
+	ret := _m.Called(ctx, dashID, alerts)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, []*alerts.Alert) error); ok {
-		r0 = rf(ctx, dashID, alertsToSave)
+	if rf, ok := ret.Get(0).(func(context.Context, int64, []*alertingmodels.Alert) error); ok {
+		r0 = rf(ctx, dashID, alerts)
 	} else {
 		r0 = ret.Error(0)
 	}
