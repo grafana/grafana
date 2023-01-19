@@ -2,6 +2,7 @@ package loader
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"path"
@@ -49,7 +50,7 @@ func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLo
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
 	processManager process.Service, pluginStorage storage.Manager, roleRegistry plugins.RoleRegistry) *Loader {
 	return &Loader{
-		pluginFinder:       finder.New(),
+		pluginFinder:       finder.NewRemote(),
 		pluginRegistry:     pluginRegistry,
 		pluginInitializer:  initializer.New(cfg, backendProvider, license),
 		signatureValidator: signature.NewValidator(authorizer),
@@ -62,7 +63,7 @@ func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLo
 }
 
 func (l *Loader) Load(ctx context.Context, class plugins.Class, paths []string) ([]*plugins.Plugin, error) {
-	found, err := l.pluginFinder.Find(paths...)
+	found, err := l.pluginFinder.Find(ctx, paths...)
 	if err != nil {
 		return nil, err
 	}
@@ -126,16 +127,15 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, found []*
 
 		// verify module.js exists for SystemJS to load
 		if !plugin.IsRenderer() && !plugin.IsCorePlugin() {
-			moduleExists := false
-			for _, f := range plugin.FS.Files() {
-				if f == "module.js" {
-					moduleExists = true
-					break
+			_, err := plugin.FS.Open("module.js")
+			if err != nil {
+				if errors.Is(err, plugins.ErrFileNotExist) {
+					l.log.Warn("Plugin missing module.js", "pluginID", plugin.ID,
+						"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.")
 				}
-			}
-			if !moduleExists {
-				l.log.Warn("Plugin missing module.js", "pluginID", plugin.ID,
-					"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.")
+				if errors.Is(err, plugins.ErrPluginFileRead) {
+					l.log.Warn("Could not verify module.js", "pluginID", plugin.ID)
+				}
 			}
 		}
 

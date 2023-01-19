@@ -120,11 +120,12 @@ func (s *Service) Routes() []*plugins.StaticRoute {
 	return staticRoutes
 }
 
-func pluginSources(gCfg *setting.Cfg, cfg *config.Cfg) []plugins.PluginSource {
+func pluginSources(_ *setting.Cfg, cfg *config.Cfg) []plugins.PluginSource {
 	return []plugins.PluginSource{
-		{Class: plugins.Core, Paths: corePluginPaths(gCfg.StaticRootPath)},
-		{Class: plugins.Bundled, Paths: []string{gCfg.BundledPluginsPath}},
-		{Class: plugins.External, Paths: append([]string{cfg.PluginsPath}, pluginSettingPaths(cfg.PluginSettings)...)},
+		//{Class: plugins.Core, Paths: corePluginPaths(gCfg.StaticRootPath)},
+		//{Class: plugins.Bundled, Paths: []string{gCfg.BundledPluginsPath}},
+		//{Class: plugins.External, Paths: append([]string{cfg.PluginsPath}, pluginSettingPaths(cfg.PluginSettings)...)},
+		{Class: plugins.CDN, Paths: pluginSettingSourcePaths(cfg.PluginSettings)},
 	}
 }
 
@@ -140,6 +141,19 @@ func pluginSettingPaths(ps map[string]map[string]string) []string {
 	var pluginSettingDirs []string
 	for _, s := range ps {
 		path, exists := s["path"]
+		if !exists || path == "" {
+			continue
+		}
+		pluginSettingDirs = append(pluginSettingDirs, path)
+	}
+	return pluginSettingDirs
+}
+
+// pluginSettingPaths provides a plugin paths defined in cfg.PluginSettings which need to be scanned on init()
+func pluginSettingSourcePaths(ps map[string]map[string]string) []string {
+	var pluginSettingDirs []string
+	for _, s := range ps {
+		path, exists := s["source_path"]
 		if !exists || path == "" {
 			continue
 		}

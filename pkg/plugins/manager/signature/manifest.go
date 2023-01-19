@@ -98,7 +98,7 @@ func ReadPluginManifest(body []byte) (*PluginManifest, error) {
 }
 
 func Calculate(mlog log.Logger, class plugins.Class, plugin plugins.FoundPlugin) (plugins.Signature, error) {
-	if class == plugins.Core {
+	if class == plugins.Core || class == plugins.CDN {
 		return plugins.Signature{
 			Status: plugins.SignatureInternal,
 		}, nil

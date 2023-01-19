@@ -1,6 +1,7 @@
 package finder
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -277,8 +278,8 @@ func TestFinder_Find(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			f := New()
-			pluginBundles, err := f.Find(tc.pluginDirs...)
+			f := NewFS()
+			pluginBundles, err := f.Find(context.Background(), tc.pluginDirs...)
 			if (err != nil) && !errors.Is(err, tc.err) {
 				t.Errorf("Find() error = %v, expected error %v", err, tc.err)
 				return
@@ -301,7 +302,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 			walk = origWalk
 		})
 
-		finder := &Finder{
+		finder := &FS{
 			log: log.New(),
 		}
 
@@ -319,7 +320,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 			walk = origWalk
 		})
 
-		finder := &Finder{
+		finder := &FS{
 			log: log.New(),
 		}
 
@@ -337,7 +338,7 @@ func TestFinder_getAbsPluginJSONPaths(t *testing.T) {
 			walk = origWalk
 		})
 
-		finder := &Finder{
+		finder := &FS{
 			log: log.New(),
 		}
 
@@ -457,7 +458,7 @@ func TestFinder_readPluginJSON(t *testing.T) {
 		},
 	}
 
-	f := New()
+	f := NewFS()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := f.readPluginJSON(tt.pluginPath)

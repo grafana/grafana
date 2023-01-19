@@ -107,7 +107,7 @@ func (p PluginDTO) File(name string) (fs.File, error) {
 		return nil, err
 	}
 
-	if p.fs == nil || len(p.fs.Files()) == 0 {
+	if p.fs == nil {
 		return nil, ErrFileNotExist
 	}
 
@@ -421,6 +421,10 @@ func (p *Plugin) IsBundledPlugin() bool {
 	return p.Class == Bundled
 }
 
+func (p *Plugin) IsCDNPlugin() bool {
+	return p.Class == CDN
+}
+
 func (p *Plugin) IsExternalPlugin() bool {
 	return p.Class == External
 }
@@ -431,6 +435,7 @@ const (
 	Core     Class = "core"
 	Bundled  Class = "bundled"
 	External Class = "external"
+	CDN      Class = "cdn"
 )
 
 var PluginTypes = []Type{

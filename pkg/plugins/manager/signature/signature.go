@@ -41,7 +41,7 @@ func (s *Validator) Validate(plugin *plugins.Plugin) *plugins.SignatureError {
 		}
 	}
 
-	if plugin.IsCorePlugin() || plugin.IsBundledPlugin() {
+	if plugin.IsCorePlugin() || plugin.IsBundledPlugin() || plugin.IsCDNPlugin() {
 		return nil
 	}
 

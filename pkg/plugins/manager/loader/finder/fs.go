@@ -1,6 +1,7 @@
 package finder
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -23,15 +24,15 @@ var (
 	ErrInvalidPluginJSONFilePath = errors.New("invalid plugin.json filepath was provided")
 )
 
-type Finder struct {
+type FS struct {
 	log log.Logger
 }
 
-func New() Finder {
-	return Finder{log: log.New("plugin.finder")}
+func NewFS() FS {
+	return FS{log: log.New("plugin.fs.finder")}
 }
 
-func (f *Finder) Find(pluginPaths ...string) ([]*plugins.FoundBundle, error) {
+func (f *FS) Find(_ context.Context, pluginPaths ...string) ([]*plugins.FoundBundle, error) {
 	if len(pluginPaths) == 0 {
 		return []*plugins.FoundBundle{}, nil
 	}
@@ -119,7 +120,7 @@ func (f *Finder) Find(pluginPaths ...string) ([]*plugins.FoundBundle, error) {
 	return result, nil
 }
 
-func (f *Finder) getAbsPluginJSONPaths(path string) ([]string, error) {
+func (f *FS) getAbsPluginJSONPaths(path string) ([]string, error) {
 	var pluginJSONPaths []string
 
 	var err error
@@ -164,7 +165,7 @@ func (f *Finder) getAbsPluginJSONPaths(path string) ([]string, error) {
 	return pluginJSONPaths, nil
 }
 
-func (f *Finder) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error) {
+func (f *FS) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error) {
 	f.log.Debug("Loading plugin", "path", pluginJSONPath)
 
 	if !strings.EqualFold(filepath.Ext(pluginJSONPath), ".json") {
