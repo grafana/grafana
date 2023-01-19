@@ -24,7 +24,6 @@ func TestService_Authenticate(t *testing.T) {
 	type TestCase struct {
 		desc             string
 		clients          []authn.Client
-		clientErr        error
 		expectedIdentity *authn.Identity
 		expectedErr      error
 	}
