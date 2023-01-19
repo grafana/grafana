@@ -8,12 +8,13 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/oauth2"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
-	"golang.org/x/oauth2"
 )
 
 const (
@@ -23,9 +24,16 @@ const (
 	ClientJWT       = "auth.client.jwt"
 	ClientRender    = "auth.client.render"
 	ClientSession   = "auth.client.session"
+	ClientForm      = "auth.client.form"
+	ClientProxy     = "auth.client.proxy"
 )
 
-// ClientParams are hints to the auth service about how to handle the identity management
+const (
+	MetaKeyUsername   = "username"
+	MetaKeyAuthModule = "authModule"
+)
+
+// ClientParams are hints to the auth serviAuthN: Post login hooksce about how to handle the identity management
 // from the authenticating client.
 type ClientParams struct {
 	// Update the internal representation of the entity from the identity provided
@@ -41,14 +49,17 @@ type ClientParams struct {
 }
 
 type PostAuthHookFn func(ctx context.Context, identity *Identity, r *Request) error
+type PostLoginHookFn func(ctx context.Context, identity *Identity, r *Request, err error)
 
 type Service interface {
 	// Authenticate authenticates a request using the specified client.
 	Authenticate(ctx context.Context, client string, r *Request) (*Identity, bool, error)
-	// Login authenticates a request and creates a session on successful authentication.
-	Login(ctx context.Context, client string, r *Request) (*Identity, error)
 	// RegisterPostAuthHook registers a hook that is called after a successful authentication.
 	RegisterPostAuthHook(hook PostAuthHookFn)
+	// Login authenticates a request and creates a session on successful authentication.
+	Login(ctx context.Context, client string, r *Request) (*Identity, error)
+	// RegisterPostLoginHook registers a hook that that is called after a login request.
+	RegisterPostLoginHook(hook PostLoginHookFn)
 }
 
 type Client interface {
@@ -59,7 +70,11 @@ type Client interface {
 }
 
 type PasswordClient interface {
-	AuthenticatePassword(ctx context.Context, orgID int64, username, password string) (*Identity, error)
+	AuthenticatePassword(ctx context.Context, r *Request, username, password string) (*Identity, error)
+}
+
+type ProxyClient interface {
+	AuthenticateProxy(ctx context.Context, r *Request, username string, additional map[string]string) (*Identity, error)
 }
 
 type Request struct {
@@ -71,6 +86,23 @@ type Request struct {
 	// Resp is the response writer to use for the request
 	// Used to set cookies and headers
 	Resp web.ResponseWriter
+
+	// metadata is additional information about the auth request
+	metadata map[string]string
+}
+
+func (r *Request) SetMeta(k, v string) {
+	if r.metadata == nil {
+		r.metadata = map[string]string{}
+	}
+	r.metadata[k] = v
+}
+
+func (r *Request) GetMeta(k string) string {
+	if r.metadata == nil {
+		r.metadata = map[string]string{}
+	}
+	return r.metadata[k]
 }
 
 const (
@@ -199,6 +231,23 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 	}
 
 	return u
+}
+
+func (i *Identity) ExternalUserInfo() models.ExternalUserInfo {
+	_, id := i.NamespacedID()
+	return models.ExternalUserInfo{
+		OAuthToken:     i.OAuthToken,
+		AuthModule:     i.AuthModule,
+		AuthId:         i.AuthID,
+		UserId:         id,
+		Email:          i.Email,
+		Login:          i.Login,
+		Name:           i.Name,
+		Groups:         i.Groups,
+		OrgRoles:       i.OrgRoles,
+		IsGrafanaAdmin: i.IsGrafanaAdmin,
+		IsDisabled:     i.IsDisabled,
+	}
 }
 
 // IdentityFromSignedInUser creates an identity from a SignedInUser.

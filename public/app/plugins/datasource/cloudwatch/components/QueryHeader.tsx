@@ -32,7 +32,7 @@ const QueryHeader: React.FC<Props> = ({
   onRunQuery,
 }) => {
   const { queryMode, region } = query;
-  const isMonitoringAccount = useIsMonitoringAccount(datasource.api, query.region);
+  const isMonitoringAccount = useIsMonitoringAccount(datasource.resources, query.region);
   const [regions, regionIsLoading] = useRegions(datasource);
 
   const onQueryModeChange = ({ value }: SelectableValue<CloudWatchQueryMode>) => {
@@ -46,7 +46,7 @@ const QueryHeader: React.FC<Props> = ({
   };
   const onRegionChange = async (region: string) => {
     if (config.featureToggles.cloudWatchCrossAccountQuerying && isCloudWatchMetricsQuery(query)) {
-      const isMonitoringAccount = await datasource.api.isMonitoringAccount(region);
+      const isMonitoringAccount = await datasource.resources.isMonitoringAccount(region);
       onChange({ ...query, region, accountId: isMonitoringAccount ? query.accountId : undefined });
     } else {
       onChange({ ...query, region });

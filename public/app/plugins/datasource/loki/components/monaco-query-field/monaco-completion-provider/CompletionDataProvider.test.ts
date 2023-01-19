@@ -50,6 +50,7 @@ const otherLabels: Label[] = [
 const seriesLabels = { place: ['series', 'labels'], source: [], other: [] };
 const parserAndLabelKeys = {
   extractedLabelKeys: ['extracted', 'label', 'keys'],
+  unwrapLabelKeys: ['unwrap', 'labels'],
   hasJSON: true,
   hasLogfmt: false,
 };

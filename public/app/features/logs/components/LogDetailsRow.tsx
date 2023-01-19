@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
+import memoizeOne from 'memoize-one';
 import React, { PureComponent } from 'react';
 
-import { Field, LinkModel, LogLabelStatsModel, GrafanaTheme2, LogRowModel, CoreApp } from '@grafana/data';
+import { CoreApp, Field, GrafanaTheme2, LinkModel, LogLabelStatsModel, LogRowModel } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { withTheme2, Themeable2, ClipboardButton, DataLinkButton, IconButton } from '@grafana/ui';
+import { ClipboardButton, DataLinkButton, Themeable2, ToolbarButton, ToolbarButtonRow, withTheme2 } from '@grafana/ui';
 
 import { LogLabelStats } from './LogLabelStats';
 import { getLogRowStyles } from './getLogRowStyles';
@@ -19,9 +20,9 @@ export interface Props extends Themeable2 {
   onClickFilterOutLabel?: (key: string, value: string) => void;
   links?: Array<LinkModel<Field>>;
   getStats: () => LogLabelStatsModel[] | null;
-  showDetectedFields?: string[];
-  onClickShowDetectedField?: (key: string) => void;
-  onClickHideDetectedField?: (key: string) => void;
+  displayedFields?: string[];
+  onClickShowField?: (key: string) => void;
+  onClickHideField?: (key: string) => void;
   row: LogRowModel;
   app?: CoreApp;
 }
@@ -30,10 +31,43 @@ interface State {
   showFieldsStats: boolean;
   fieldCount: number;
   fieldStats: LogLabelStatsModel[] | null;
-  mouseOver: boolean;
 }
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = memoizeOne((theme: GrafanaTheme2, activeButton: boolean) => {
+  // those styles come from ToolbarButton. Unfortunately this is needed because we can not control the variant of the menu-button in a ToolbarButtonRow.
+  const defaultOld = css`
+    color: ${theme.colors.text.secondary};
+    background-color: ${theme.colors.background.primary};
+
+    &:hover {
+      color: ${theme.colors.text.primary};
+      background: ${theme.colors.background.secondary};
+    }
+  `;
+
+  const defaultTopNav = css`
+    color: ${theme.colors.text.secondary};
+    background-color: transparent;
+    border-color: transparent;
+
+    &:hover {
+      color: ${theme.colors.text.primary};
+      background: ${theme.colors.background.secondary};
+    }
+  `;
+
+  const active = css`
+    color: ${theme.v1.palette.orangeDark};
+    border-color: ${theme.v1.palette.orangeDark};
+    background-color: transparent;
+
+    &:hover {
+      color: ${theme.colors.text.primary};
+      background: ${theme.colors.emphasize(theme.colors.background.canvas, 0.03)};
+    }
+  `;
+
+  const defaultToolbarButtonStyle = theme.flags.topnav ? defaultTopNav : defaultOld;
   return {
     noHoverBackground: css`
       label: noHoverBackground;
@@ -52,32 +86,83 @@ const getStyles = (theme: GrafanaTheme2) => {
     showingField: css`
       color: ${theme.colors.primary.text};
     `,
-    hoverValueCopy: css`
-      margin: ${theme.spacing(0, 0, 0, 1.2)};
-      position: absolute;
-      top: 0px;
-      justify-content: center;
-      border-radius: ${theme.shape.borderRadius(10)};
-      width: ${theme.spacing(3.25)};
-      height: ${theme.spacing(3.25)};
+    copyButton: css`
+      & > button {
+        color: ${theme.colors.text.secondary};
+        padding: 0;
+        justify-content: center;
+        border-radius: 50%;
+        height: ${theme.spacing(theme.components.height.sm)};
+        width: ${theme.spacing(theme.components.height.sm)};
+        svg {
+          margin: 0;
+        }
+
+        span > div {
+          top: -5px;
+          & button {
+            color: ${theme.colors.success.main};
+          }
+        }
+      }
     `,
     wrapLine: css`
       label: wrapLine;
       white-space: pre-wrap;
     `,
+    toolbarButtonRow: css`
+      label: toolbarButtonRow;
+      gap: ${theme.spacing(0.5)};
+
+      max-width: calc(3 * ${theme.spacing(theme.components.height.sm)});
+      & > div {
+        height: ${theme.spacing(theme.components.height.sm)};
+        width: ${theme.spacing(theme.components.height.sm)};
+        & > button {
+          border: 0;
+          background-color: transparent;
+          height: inherit;
+
+          &:hover {
+            box-shadow: none;
+            border-radius: 50%;
+          }
+        }
+      }
+      & div:last-child > button:not(.stats-button) {
+        ${activeButton ? active : defaultToolbarButtonStyle};
+      }
+    `,
+    logDetailsStats: css`
+      padding: 0 ${theme.spacing(1)};
+    `,
+    logDetailsValue: css`
+      display: table-cell;
+      vertical-align: middle;
+      line-height: 22px;
+
+      .show-on-hover {
+        display: inline;
+        visibility: hidden;
+      }
+      &:hover {
+        .show-on-hover {
+          visibility: visible;
+        }
+      }
+    `,
   };
-};
+});
 
 class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   state: State = {
     showFieldsStats: false,
     fieldCount: 0,
     fieldStats: null,
-    mouseOver: false,
   };
 
   showField = () => {
-    const { onClickShowDetectedField, parsedKey, row } = this.props;
+    const { onClickShowField: onClickShowDetectedField, parsedKey, row } = this.props;
     if (onClickShowDetectedField) {
       onClickShowDetectedField(parsedKey);
     }
@@ -90,7 +175,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
   };
 
   hideField = () => {
-    const { onClickHideDetectedField, parsedKey, row } = this.props;
+    const { onClickHideField: onClickHideDetectedField, parsedKey, row } = this.props;
     if (onClickHideDetectedField) {
       onClickHideDetectedField(parsedKey);
     }
@@ -155,11 +240,6 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     });
   }
 
-  hoverValueCopy() {
-    const mouseOver = !this.state.mouseOver;
-    this.setState({ mouseOver });
-  }
-
   render() {
     const {
       theme,
@@ -167,87 +247,120 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       parsedValue,
       isLabel,
       links,
-      showDetectedFields,
+      displayedFields,
       wrapLogMessage,
-      onClickShowDetectedField,
-      onClickHideDetectedField,
       onClickFilterLabel,
       onClickFilterOutLabel,
     } = this.props;
-    const { showFieldsStats, fieldStats, fieldCount, mouseOver } = this.state;
-    const styles = getStyles(theme);
+    const { showFieldsStats, fieldStats, fieldCount } = this.state;
+    const activeButton = displayedFields?.includes(parsedKey) || showFieldsStats;
+    const styles = getStyles(theme, activeButton);
     const style = getLogRowStyles(theme);
-
-    const hasDetectedFieldsFunctionality = onClickShowDetectedField && onClickHideDetectedField;
     const hasFilteringFunctionality = onClickFilterLabel && onClickFilterOutLabel;
 
     const toggleFieldButton =
-      !isLabel && showDetectedFields && showDetectedFields.includes(parsedKey) ? (
-        <IconButton name="eye" className={styles.showingField} title="Hide this field" onClick={this.hideField} />
+      displayedFields && displayedFields.includes(parsedKey) ? (
+        <ToolbarButton variant="active" tooltip="Hide this field" iconOnly narrow icon="eye" onClick={this.hideField} />
       ) : (
-        <IconButton name="eye" title="Show this field instead of the message" onClick={this.showField} />
+        <ToolbarButton
+          tooltip="Show this field instead of the message"
+          iconOnly
+          narrow
+          icon="eye"
+          onClick={this.showField}
+        />
       );
 
     return (
-      <tr className={cx(style.logDetailsValue, { [styles.noHoverBackground]: showFieldsStats })}>
-        {/* Action buttons - show stats/filter results */}
-        <td className={style.logsDetailsIcon}>
-          <IconButton name="signal" title={'Ad-hoc statistics'} onClick={this.showStats} />
-        </td>
-
-        {hasFilteringFunctionality && isLabel && (
-          <>
-            <td className={style.logsDetailsIcon}>
-              <IconButton name="search-plus" title="Filter for value" onClick={this.filterLabel} />
-            </td>
-            <td className={style.logsDetailsIcon}>
-              <IconButton name="search-minus" title="Filter out value" onClick={this.filterOutLabel} />
-            </td>
-          </>
-        )}
-
-        {hasDetectedFieldsFunctionality && !isLabel && (
-          <td className={style.logsDetailsIcon} colSpan={2}>
-            {toggleFieldButton}
+      <>
+        <tr className={cx(style.logDetailsValue)}>
+          <td className={style.logsDetailsIcon}>
+            <ToolbarButtonRow alignment="left" className={styles.toolbarButtonRow}>
+              {hasFilteringFunctionality && (
+                <ToolbarButton
+                  iconOnly
+                  narrow
+                  icon="search-plus"
+                  tooltip="Filter for value"
+                  onClick={this.filterLabel}
+                />
+              )}
+              {hasFilteringFunctionality && (
+                <ToolbarButton
+                  iconOnly
+                  narrow
+                  icon="search-minus"
+                  tooltip="Filter out value"
+                  onClick={this.filterOutLabel}
+                />
+              )}
+              {displayedFields && toggleFieldButton}
+              <ToolbarButton
+                iconOnly
+                variant={showFieldsStats ? 'active' : 'default'}
+                narrow
+                icon="signal"
+                tooltip="Ad-hoc statistics"
+                className="stats-button"
+                onClick={this.showStats}
+              />
+            </ToolbarButtonRow>
           </td>
-        )}
 
-        {/* Key - value columns */}
-        <td className={style.logDetailsLabel}>{parsedKey}</td>
-        <td
-          className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}
-          onMouseEnter={this.hoverValueCopy.bind(this)}
-          onMouseLeave={this.hoverValueCopy.bind(this)}
-        >
-          {parsedValue}
-          {mouseOver && (
-            <ClipboardButton
-              getText={() => parsedValue}
-              title="Copy value to clipboard"
-              fill="text"
-              variant="secondary"
-              icon="copy"
-              size="sm"
-              className={styles.hoverValueCopy}
-            />
-          )}
-          {links?.map((link) => (
-            <span key={link.title}>
-              &nbsp;
-              <DataLinkButton link={link} />
-            </span>
-          ))}
-          {showFieldsStats && (
-            <LogLabelStats
-              stats={fieldStats!}
-              label={parsedKey}
-              value={parsedValue}
-              rowCount={fieldCount}
-              isLabel={isLabel}
-            />
-          )}
-        </td>
-      </tr>
+          {/* Key - value columns */}
+          <td className={style.logDetailsLabel}>{parsedKey}</td>
+          <td className={cx(styles.wordBreakAll, wrapLogMessage && styles.wrapLine)}>
+            <div className={styles.logDetailsValue}>
+              {parsedValue}
+
+              <div className={cx('show-on-hover', styles.copyButton)}>
+                <ClipboardButton
+                  getText={() => parsedValue}
+                  title="Copy value to clipboard"
+                  fill="text"
+                  variant="secondary"
+                  icon="copy"
+                  size="md"
+                />
+              </div>
+
+              {links?.map((link) => (
+                <span key={link.title}>
+                  &nbsp;
+                  <DataLinkButton link={link} />
+                </span>
+              ))}
+            </div>
+          </td>
+        </tr>
+        {showFieldsStats && (
+          <tr>
+            <td>
+              <ToolbarButtonRow alignment="left" className={styles.toolbarButtonRow}>
+                <ToolbarButton
+                  iconOnly
+                  variant={showFieldsStats ? 'active' : 'default'}
+                  narrow
+                  icon="signal"
+                  tooltip="Hide ad-hoc statistics"
+                  onClick={this.showStats}
+                />
+              </ToolbarButtonRow>
+            </td>
+            <td colSpan={2}>
+              <div className={styles.logDetailsStats}>
+                <LogLabelStats
+                  stats={fieldStats!}
+                  label={parsedKey}
+                  value={parsedValue}
+                  rowCount={fieldCount}
+                  isLabel={isLabel}
+                />
+              </div>
+            </td>
+          </tr>
+        )}
+      </>
     );
   }
 }

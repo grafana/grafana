@@ -1,11 +1,11 @@
 import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
-import { CloudWatchAPI } from '../../api';
 import { CompletionItemProvider } from '../../monarch/CompletionItemProvider';
 import { LinkedToken } from '../../monarch/LinkedToken';
 import { TRIGGER_SUGGEST } from '../../monarch/commands';
 import { SuggestionKind, CompletionItemPriority, StatementPosition } from '../../monarch/types';
+import { ResourcesAPI } from '../../resources/ResourcesAPI';
 import {
   METRIC_MATH_FNS,
   METRIC_MATH_KEYWORDS,
@@ -21,8 +21,8 @@ import { MetricMathTokenTypes } from './types';
 type CompletionItem = monacoTypes.languages.CompletionItem;
 
 export class MetricMathCompletionItemProvider extends CompletionItemProvider {
-  constructor(api: CloudWatchAPI, templateSrv: TemplateSrv = getTemplateSrv()) {
-    super(api, templateSrv);
+  constructor(resources: ResourcesAPI, templateSrv: TemplateSrv = getTemplateSrv()) {
+    super(resources, templateSrv);
     this.getStatementPosition = getStatementPosition;
     this.getSuggestionKinds = getSuggestionKinds;
     this.tokenTypes = MetricMathTokenTypes;

@@ -12,18 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { shallow, ShallowWrapper } from 'enzyme';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import { createTheme } from '@grafana/data';
-
-import { ViewRangeTime } from '../../TraceTimelineViewer/types';
-import DraggableManager, { DraggingUpdate, EUpdateTypes } from '../../utils/DraggableManager';
 import { polyfill as polyfillAnimationFrame } from '../../utils/test/requestAnimationFrame';
 
-import GraphTicks from './GraphTicks';
-import Scrubber, { ScrubberProps } from './Scrubber';
-import ViewingLayer, { dragTypes, getStyles, ViewingLayerProps, UnthemedViewingLayer } from './ViewingLayer';
+import ViewingLayer, { ViewingLayerProps } from './ViewingLayer';
 
 function getViewRange(viewStart: number, viewEnd: number) {
   return {
@@ -33,11 +28,10 @@ function getViewRange(viewStart: number, viewEnd: number) {
   };
 }
 
-describe('<SpanGraph>', () => {
+describe('<UnthemedViewingLayer>', () => {
   polyfillAnimationFrame(window);
 
   let props: ViewingLayerProps;
-  let wrapper: ShallowWrapper<ViewingLayerProps, {}, UnthemedViewingLayer>;
 
   beforeEach(() => {
     props = {
@@ -47,302 +41,74 @@ describe('<SpanGraph>', () => {
       updateViewRangeTime: jest.fn(),
       viewRange: getViewRange(0, 1),
     } as unknown as ViewingLayerProps;
-
-    wrapper = shallow(<ViewingLayer {...props} />)
-      .dive()
-      .dive();
   });
 
-  describe('_getDraggingBounds()', () => {
-    beforeEach(() => {
-      props = { ...props, viewRange: getViewRange(0.1, 0.9) };
-      wrapper = shallow(<ViewingLayer {...props} />)
-        .dive()
-        .dive();
-
-      wrapper.instance()._setRoot({
-        getBoundingClientRect() {
-          return { left: 10, width: 100 };
-        },
-      } as SVGElement);
-    });
-
-    it('throws if _root is not set', () => {
-      const instance = wrapper.instance();
-      instance._root = null;
-      expect(() => instance._getDraggingBounds(dragTypes.REFRAME)).toThrow();
-    });
-
-    it('returns the correct bounds for reframe', () => {
-      const bounds = wrapper.instance()._getDraggingBounds(dragTypes.REFRAME);
-      expect(bounds).toEqual({
-        clientXLeft: 10,
-        width: 100,
-        maxValue: 1,
-        minValue: 0,
-      });
-    });
-
-    it('returns the correct bounds for shiftStart', () => {
-      const bounds = wrapper.instance()._getDraggingBounds(dragTypes.SHIFT_START);
-      expect(bounds).toEqual({
-        clientXLeft: 10,
-        width: 100,
-        maxValue: 0.9,
-        minValue: 0,
-      });
-    });
-
-    it('returns the correct bounds for shiftEnd', () => {
-      const bounds = wrapper.instance()._getDraggingBounds(dragTypes.SHIFT_END);
-      expect(bounds).toEqual({
-        clientXLeft: 10,
-        width: 100,
-        maxValue: 1,
-        minValue: 0.1,
-      });
-    });
+  it('does not render ViewingLayerCursorGuide if the cursor position is not defined', () => {
+    render(<ViewingLayer {...props} />);
+    expect(screen.queryByTestId('ViewingLayerCursorGuide')).toBeNull();
   });
 
-  describe('DraggableManager callbacks', () => {
-    describe('reframe', () => {
-      it('handles mousemove', () => {
-        const value = 0.5;
-        wrapper.instance()._handleReframeMouseMove({ value } as DraggingUpdate);
-        const calls = jest.mocked(props.updateNextViewRangeTime).mock.calls;
-        expect(calls).toEqual([[{ cursor: value }]]);
-      });
-
-      it('handles mouseleave', () => {
-        wrapper.instance()._handleReframeMouseLeave();
-        const calls = jest.mocked(props.updateNextViewRangeTime).mock.calls;
-        expect(calls).toEqual([[{ cursor: null }]]);
-      });
-
-      describe('drag update', () => {
-        it('handles sans anchor', () => {
-          const value = 0.5;
-          wrapper.instance()._handleReframeDragUpdate({ value } as DraggingUpdate);
-          const calls = jest.mocked(props.updateNextViewRangeTime).mock.calls;
-          expect(calls).toEqual([[{ reframe: { anchor: value, shift: value } }]]);
-        });
-
-        it('handles the existing anchor', () => {
-          const value = 0.5;
-          const anchor = 0.1;
-          const time = { ...props.viewRange.time, reframe: { anchor } } as ViewRangeTime;
-          props = { ...props, viewRange: { time } };
-          wrapper = shallow(<ViewingLayer {...props} />)
-            .dive()
-            .dive();
-          wrapper.instance()._handleReframeDragUpdate({ value } as DraggingUpdate);
-          const calls = jest.mocked(props.updateNextViewRangeTime).mock.calls;
-          expect(calls).toEqual([[{ reframe: { anchor, shift: value } }]]);
-        });
-      });
-
-      describe('drag end', () => {
-        let manager: DraggableManager;
-
-        beforeEach(() => {
-          manager = { resetBounds: jest.fn() } as unknown as DraggableManager;
-        });
-
-        it('handles sans anchor', () => {
-          const value = 0.5;
-          wrapper.instance()._handleReframeDragEnd({ manager, value } as DraggingUpdate);
-          expect((manager.resetBounds as jest.Mock).mock.calls).toEqual([[]]);
-          const calls = (props.updateViewRangeTime as jest.Mock).mock.calls;
-          expect(calls).toEqual([[value, value, 'minimap']]);
-        });
-
-        it('handles dragged left (anchor is greater)', () => {
-          const value = 0.5;
-          const anchor = 0.6;
-          const time = { ...props.viewRange.time, reframe: { anchor } } as ViewRangeTime;
-          props = { ...props, viewRange: { time } };
-          wrapper = shallow(<ViewingLayer {...props} />)
-            .dive()
-            .dive();
-          wrapper.instance()._handleReframeDragEnd({ manager, value } as DraggingUpdate);
-
-          expect((manager.resetBounds as jest.Mock).mock.calls).toEqual([[]]);
-          const calls = (props.updateViewRangeTime as jest.Mock).mock.calls;
-          expect(calls).toEqual([[value, anchor, 'minimap']]);
-        });
-
-        it('handles dragged right (anchor is less)', () => {
-          const value = 0.5;
-          const anchor = 0.4;
-          const time = { ...props.viewRange.time, reframe: { anchor } } as ViewRangeTime;
-          props = { ...props, viewRange: { time } };
-          wrapper = shallow(<ViewingLayer {...props} />)
-            .dive()
-            .dive();
-          wrapper.instance()._handleReframeDragEnd({ manager, value } as DraggingUpdate);
-
-          expect((manager.resetBounds as jest.Mock).mock.calls).toEqual([[]]);
-          const calls = (props.updateViewRangeTime as jest.Mock).mock.calls;
-          expect(calls).toEqual([[anchor, value, 'minimap']]);
-        });
-      });
-    });
-
-    describe('scrubber', () => {
-      it('prevents the cursor from being drawn on scrubber mouseover', () => {
-        wrapper.instance()._handleScrubberEnterLeave({ type: EUpdateTypes.MouseEnter } as DraggingUpdate);
-        expect(wrapper.state('preventCursorLine')).toBe(true);
-      });
-
-      it('prevents the cursor from being drawn on scrubber mouseleave', () => {
-        wrapper.instance()._handleScrubberEnterLeave({ type: EUpdateTypes.MouseLeave } as DraggingUpdate);
-        expect(wrapper.state('preventCursorLine')).toBe(false);
-      });
-
-      describe('drag start and update', () => {
-        it('stops propagation on drag start', () => {
-          const stopPropagation = jest.fn();
-          const update = {
-            event: { stopPropagation },
-            type: EUpdateTypes.DragStart,
-          };
-          wrapper.instance()._handleScrubberDragUpdate(update as unknown as DraggingUpdate);
-          expect(stopPropagation.mock.calls).toEqual([[]]);
-        });
-
-        it('updates the viewRange for shiftStart and shiftEnd', () => {
-          const instance = wrapper.instance();
-          const value = 0.5;
-          const cases = [
-            {
-              dragUpdate: {
-                value,
-                tag: dragTypes.SHIFT_START,
-                type: EUpdateTypes.DragMove,
-              },
-              viewRangeUpdate: { shiftStart: value },
-            },
-            {
-              dragUpdate: {
-                value,
-                tag: dragTypes.SHIFT_END,
-                type: EUpdateTypes.DragMove,
-              },
-              viewRangeUpdate: { shiftEnd: value },
-            },
-          ];
-          cases.forEach((_case) => {
-            instance._handleScrubberDragUpdate(_case.dragUpdate as DraggingUpdate);
-            expect(props.updateNextViewRangeTime).lastCalledWith(_case.viewRangeUpdate);
-          });
-        });
-      });
-
-      it('updates the view on drag end', () => {
-        const instance = wrapper.instance();
-        const [viewStart, viewEnd] = props.viewRange.time.current;
-        const value = 0.5;
-        const cases = [
-          {
-            dragUpdate: {
-              value,
-              manager: { resetBounds: jest.fn() },
-              tag: dragTypes.SHIFT_START,
-            },
-            viewRangeUpdate: [value, viewEnd],
-          },
-          {
-            dragUpdate: {
-              value,
-              manager: { resetBounds: jest.fn() },
-              tag: dragTypes.SHIFT_END,
-            },
-            viewRangeUpdate: [viewStart, value],
-          },
-        ];
-        cases.forEach((_case) => {
-          const { manager } = _case.dragUpdate;
-          wrapper.setState({ preventCursorLine: true });
-          expect(wrapper.state('preventCursorLine')).toBe(true);
-          instance._handleScrubberDragEnd(_case.dragUpdate as unknown as DraggingUpdate);
-          expect(wrapper.state('preventCursorLine')).toBe(false);
-          expect((manager.resetBounds as jest.Mock).mock.calls).toEqual([[]]);
-          expect(props.updateViewRangeTime).lastCalledWith(..._case.viewRangeUpdate, 'minimap');
-        });
-      });
-    });
-
-    describe('.ViewingLayer--resetZoom', () => {
-      it('should not render .ViewingLayer--resetZoom if props.viewRange.time.current = [0,1]', () => {
-        expect(wrapper.find(`.${getStyles(createTheme()).ViewingLayerResetZoom}`).length).toBe(0);
-        wrapper.setProps({ viewRange: { time: { current: [0, 1] } } });
-        expect(wrapper.find(`.${getStyles(createTheme()).ViewingLayerResetZoom}`).length).toBe(0);
-      });
-
-      it('should render ViewingLayer--resetZoom if props.viewRange.time.current[0] !== 0', () => {
-        // If the test fails on the following expect statement, this may be a false negative
-        expect(wrapper.find(`.${getStyles(createTheme()).ViewingLayerResetZoom}`).length).toBe(0);
-        wrapper.setProps({ viewRange: { time: { current: [0.1, 1] } } });
-        expect(wrapper.find(`.${getStyles(createTheme()).ViewingLayerResetZoom}`).length).toBe(1);
-      });
-
-      it('should render ViewingLayer--resetZoom if props.viewRange.time.current[1] !== 1', () => {
-        // If the test fails on the following expect statement, this may be a false negative
-        expect(wrapper.find(`.${getStyles(createTheme()).ViewingLayerResetZoom}`).length).toBe(0);
-        wrapper.setProps({ viewRange: { time: { current: [0, 0.9] } } });
-        expect(wrapper.find(`.${getStyles(createTheme()).ViewingLayerResetZoom}`).length).toBe(1);
-      });
-
-      it('should call props.updateViewRangeTime when clicked', () => {
-        wrapper.setProps({ viewRange: { time: { current: [0.1, 0.9] } } });
-        const resetZoomButton = wrapper.find(`.${getStyles(createTheme()).ViewingLayerResetZoom}`);
-        // If the test fails on the following expect statement, this may be a false negative caused
-        // by a regression to rendering.
-        expect(resetZoomButton.length).toBe(1);
-
-        resetZoomButton.simulate('click');
-        expect(props.updateViewRangeTime).lastCalledWith(0, 1);
-      });
-    });
+  it('renders ViewingLayerCursorGuide when the cursor position is defined', () => {
+    props = { ...props, viewRange: { time: { current: [0.1, 1], cursor: 0.5 } } };
+    render(<ViewingLayer {...props} />);
+    expect(screen.getByTestId('ViewingLayerCursorGuide')).toBeTruthy();
   });
 
-  it('renders a <GraphTicks />', () => {
-    expect(wrapper.find(GraphTicks).length).toBe(1);
+  it('renders <GraphTicks />', () => {
+    render(<ViewingLayer {...props} />);
+    expect(screen.getByTestId('ticks')).toBeTruthy();
+  });
+
+  it('renders the scrubber component lines in the correct locations when an area of the minimap is selected', () => {
+    props = { ...props, viewRange: { time: { current: [0.3, 0.7] } } };
+    render(<ViewingLayer {...props} />);
+    expect(screen.getAllByTestId('scrubber-component-line')[0]).toHaveAttribute('x1', '30%');
+    expect(screen.getAllByTestId('scrubber-component-line')[1]).toHaveAttribute('x1', '70%');
+  });
+
+  it('renders the scrubbers', () => {
+    render(<ViewingLayer {...props} />);
+    expect(screen.getAllByTestId('scrubber-component')).toBeTruthy();
   });
 
   it('renders a filtering box if leftBound exists', () => {
-    const _props = { ...props, viewRange: getViewRange(0.2, 1) };
-    wrapper = shallow(<ViewingLayer {..._props} />)
-      .dive()
-      .dive();
-
-    const leftBox = wrapper.find(`.${getStyles(createTheme()).ViewingLayerInactive}`);
-    expect(leftBox.length).toBe(1);
-    const width = Number(leftBox.prop('width')?.toString().slice(0, -1));
-    const x = leftBox.prop('x');
-    expect(Math.round(width)).toBe(20);
-    expect(x).toBe(0);
+    props = { ...props, viewRange: { time: { current: [0.1, 0.9] } } };
+    render(<ViewingLayer {...props} />);
+    expect(screen.getByTestId('left-ViewingLayerInactive')).toHaveAttribute('width', '10%');
+    expect(screen.getByTestId('left-ViewingLayerInactive')).toHaveAttribute('x', '0');
   });
 
   it('renders a filtering box if rightBound exists', () => {
-    const _props = { ...props, viewRange: getViewRange(0, 0.8) };
-    wrapper = shallow(<ViewingLayer {..._props} />)
-      .dive()
-      .dive();
-
-    const rightBox = wrapper.find(`.${getStyles(createTheme()).ViewingLayerInactive}`);
-    expect(rightBox.length).toBe(1);
-    const width = Number(rightBox.prop('width')?.toString().slice(0, -1));
-    const x = Number(rightBox.prop('x')?.toString().slice(0, -1));
-    expect(Math.round(width)).toBe(20);
-    expect(x).toBe(80);
+    props = { ...props, viewRange: { time: { current: [0, 0.8] } } };
+    render(<ViewingLayer {...props} />);
+    expect(screen.getByTestId('right-ViewingLayerInactive')).toHaveAttribute('width', '20%');
+    expect(screen.getByTestId('right-ViewingLayerInactive')).toHaveAttribute('x', '80%');
   });
 
-  it('renders handles for the timeRangeFilter', () => {
-    const [viewStart, viewEnd] = props.viewRange.time.current;
-    let scrubber = <Scrubber {...({ position: viewStart } as ScrubberProps)} />;
-    expect(wrapper.containsMatchingElement(scrubber)).toBeTruthy();
-    scrubber = <Scrubber {...({ position: viewEnd } as ScrubberProps)} />;
-    expect(wrapper.containsMatchingElement(scrubber)).toBeTruthy();
+  describe('reset selection button', () => {
+    it('should not render the reset selection button if props.viewRange.time.current = [0,1]', () => {
+      render(<ViewingLayer {...props} />);
+      expect(screen.queryByRole('button', { hidden: true })).toBeNull();
+    });
+
+    it('should render the reset selection button if props.viewRange.time.current[0] !== 0', () => {
+      props = { ...props, viewRange: { time: { current: [0.1, 1] } } };
+      render(<ViewingLayer {...props} />);
+      expect(screen.queryByRole('button', { hidden: true })).toBeInTheDocument();
+    });
+
+    it('should render the reset selection button if props.viewRange.time.current[1] !== 1', () => {
+      props = { ...props, viewRange: { time: { current: [0, 0.9] } } };
+      render(<ViewingLayer {...props} />);
+      expect(screen.queryByRole('button', { hidden: true })).toBeInTheDocument();
+    });
+
+    it('should call props.updateViewRangeTime when clicked', async () => {
+      props = { ...props, viewRange: { time: { current: [0.1, 0.9] } } };
+      render(<ViewingLayer {...props} />);
+      const button = screen.queryByRole('button', { hidden: true })!;
+      await userEvent.click(button);
+      expect(props.updateViewRangeTime).toHaveBeenCalledWith(0, 1);
+    });
   });
 });

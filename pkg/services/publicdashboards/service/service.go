@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -62,7 +61,7 @@ func ProvideService(
 }
 
 // FindDashboard Gets a dashboard by Uid
-func (pd *PublicDashboardServiceImpl) FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (*models.Dashboard, error) {
+func (pd *PublicDashboardServiceImpl) FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (*dashboards.Dashboard, error) {
 	dash, err := pd.store.FindDashboard(ctx, orgId, dashboardUid)
 	if err != nil {
 		return nil, ErrInternalServerError.Errorf("FindDashboard: failed to find dashboard by orgId: %d and dashboardUid: %s: %w", orgId, dashboardUid, err)
@@ -75,15 +74,25 @@ func (pd *PublicDashboardServiceImpl) FindDashboard(ctx context.Context, orgId i
 	return dash, nil
 }
 
-// FindPublicDashboardAndDashboardByAccessToken Gets public dashboard and a dashboard by access token
-func (pd *PublicDashboardServiceImpl) FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error) {
+// FindByAccessToken Gets public dashboard by access token
+func (pd *PublicDashboardServiceImpl) FindByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, error) {
 	pubdash, err := pd.store.FindByAccessToken(ctx, accessToken)
 	if err != nil {
-		return nil, nil, ErrInternalServerError.Errorf("FindPublicDashboardAndDashboardByAccessToken: failed to find a public dashboard: %w", err)
+		return nil, ErrInternalServerError.Errorf("FindByAccessToken: failed to find a public dashboard: %w", err)
 	}
 
 	if pubdash == nil {
-		return nil, nil, ErrPublicDashboardNotFound.Errorf("FindPublicDashboardAndDashboardByAccessToken: Public dashboard not found accessToken: %s", accessToken)
+		return nil, ErrPublicDashboardNotFound.Errorf("FindByAccessToken: Public dashboard not found accessToken: %s", accessToken)
+	}
+
+	return pubdash, nil
+}
+
+// FindPublicDashboardAndDashboardByAccessToken Gets public dashboard and a dashboard by access token
+func (pd *PublicDashboardServiceImpl) FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, *dashboards.Dashboard, error) {
+	pubdash, err := pd.FindByAccessToken(ctx, accessToken)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	if !pubdash.IsEnabled {
@@ -156,15 +165,16 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 
 	cmd := SavePublicDashboardCommand{
 		PublicDashboard: PublicDashboard{
-			Uid:                uid,
-			DashboardUid:       dto.DashboardUid,
-			OrgId:              dto.OrgId,
-			IsEnabled:          dto.PublicDashboard.IsEnabled,
-			AnnotationsEnabled: dto.PublicDashboard.AnnotationsEnabled,
-			TimeSettings:       dto.PublicDashboard.TimeSettings,
-			CreatedBy:          dto.UserId,
-			CreatedAt:          time.Now(),
-			AccessToken:        accessToken,
+			Uid:                  uid,
+			DashboardUid:         dto.DashboardUid,
+			OrgId:                dto.OrgId,
+			IsEnabled:            dto.PublicDashboard.IsEnabled,
+			AnnotationsEnabled:   dto.PublicDashboard.AnnotationsEnabled,
+			TimeSelectionEnabled: dto.PublicDashboard.TimeSelectionEnabled,
+			TimeSettings:         dto.PublicDashboard.TimeSettings,
+			CreatedBy:            dto.UserId,
+			CreatedAt:            time.Now(),
+			AccessToken:          accessToken,
 		},
 	}
 
