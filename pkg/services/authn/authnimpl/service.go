@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/hashicorp/go-multierror"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -149,13 +150,13 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 	ctx, span := s.tracer.Start(ctx, "authn.Authenticate")
 	defer span.End()
 
-	var latestErr error
+	var authErr error
 	for _, c := range s.clientQueue.items {
 		if c.Test(ctx, r) {
 			identity, err := s.authenticate(ctx, c, r)
 			if err != nil {
 				s.log.Warn("failed to authenticate", "client", c.Name(), "err", err)
-				latestErr = err
+				authErr = multierror.Append(authErr, err)
 				// try next
 				continue
 			}
@@ -166,8 +167,8 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 		}
 	}
 
-	if latestErr != nil {
-		return nil, latestErr
+	if authErr != nil {
+		return nil, authErr
 	}
 
 	return nil, errCantAuthenticateReq.Errorf("cannot authenticate request")

@@ -25,7 +25,7 @@ func TestService_Authenticate(t *testing.T) {
 		desc             string
 		clients          []authn.Client
 		expectedIdentity *authn.Identity
-		expectedErr      error
+		expectedErrors   []error
 	}
 
 	var (
@@ -65,23 +65,23 @@ func TestService_Authenticate(t *testing.T) {
 				&authntest.FakeClient{ExpectedName: "2", ExpectedPriority: 1, ExpectedTest: false},
 				&authntest.FakeClient{ExpectedName: "3", ExpectedPriority: 3, ExpectedTest: false},
 			},
-			expectedErr: errCantAuthenticateReq,
+			expectedErrors: []error{errCantAuthenticateReq},
 		},
 		{
-			desc: "should return latest error",
+			desc: "should return all errors in chain",
 			clients: []authn.Client{
 				&authntest.FakeClient{ExpectedName: "1", ExpectedPriority: 2, ExpectedTest: false},
 				&authntest.FakeClient{ExpectedName: "2", ExpectedPriority: 1, ExpectedTest: true, ExpectedErr: firstErr},
 				&authntest.FakeClient{ExpectedName: "3", ExpectedPriority: 3, ExpectedTest: true, ExpectedErr: lastErr},
 			},
-			expectedErr: lastErr,
+			expectedErrors: []error{firstErr, lastErr},
 		},
 		{
 			desc: "should return error on disabled identity",
 			clients: []authn.Client{
 				&authntest.FakeClient{ExpectedName: "1", ExpectedTest: true, ExpectedIdentity: &authn.Identity{IsDisabled: true}},
 			},
-			expectedErr: errDisabledIdentity,
+			expectedErrors: []error{errDisabledIdentity},
 		},
 	}
 
@@ -94,8 +94,15 @@ func TestService_Authenticate(t *testing.T) {
 			})
 
 			identity, err := svc.Authenticate(context.Background(), &authn.Request{})
-			assert.ErrorIs(t, err, tt.expectedErr)
-			assert.EqualValues(t, tt.expectedIdentity, identity)
+			if len(tt.expectedErrors) == 0 {
+				assert.NoError(t, err)
+				assert.EqualValues(t, tt.expectedIdentity, identity)
+			} else {
+				for _, e := range tt.expectedErrors {
+					assert.ErrorIs(t, err, e)
+				}
+				assert.Nil(t, identity)
+			}
 		})
 	}
 }
