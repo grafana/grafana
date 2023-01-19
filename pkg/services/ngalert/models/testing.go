@@ -356,7 +356,7 @@ func AlertInstanceGen(mutators ...AlertInstanceMutator) *AlertInstance {
 			InstanceStateNoData,
 			InstanceStateError,
 		}
-		return s[rand.Intn(len(s)-1)]
+		return s[rand.Intn(len(s))]
 	}
 
 	currentStateSince := time.Now().Add(-time.Duration(rand.Intn(100) + 1))
