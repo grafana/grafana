@@ -541,7 +541,6 @@ embed.go @grafana/grafana-as-code
 /pkg/kinds/ @grafana/grafana-as-code
 /pkg/cuectx/ @grafana/grafana-as-code
 /pkg/registry/ @grafana/grafana-as-code
-/pkg/framework/coremodel/ @grafana/grafana-as-code
 /pkg/codegen/ @grafana/grafana-as-code
 /pkg/kindsys/ @grafana/grafana-as-code
 /pkg/kindsys/kindcat_custom.cue @grafana/apps-platform-core
