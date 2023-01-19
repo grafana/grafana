@@ -315,9 +315,9 @@
     "comlink": "4.3.1",
     "common-tags": "1.8.2",
     "core-js": "3.27.1",
-    "d3": "5.15.0",
+    "d3": "^7.8.2",
     "d3-force": "^2.1.1",
-    "d3-scale-chromatic": "1.5.0",
+    "d3-scale-chromatic": "^3.0.0",
     "dangerously-set-html-content": "1.0.9",
     "date-fns": "2.29.3",
     "debounce-promise": "3.1.2",
@@ -429,7 +429,6 @@
     "@storybook/manager-webpack5/webpack": "5.74.0",
     "ngtemplate-loader/loader-utils": "^2.0.0",
     "node-fetch": "2.6.7",
-    "d3-color": "3.1.0",
     "slate-dev-environment@^0.2.2": "patch:slate-dev-environment@npm:0.2.5#.yarn/patches/slate-dev-environment-npm-0.2.5-9aeb7da7b5.patch"
   },
   "workspaces": {

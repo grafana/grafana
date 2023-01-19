@@ -3,6 +3,8 @@
 // 2. Any wrong timezone handling could be hidden if we use UTC/GMT local time (which would happen in CI).
 process.env.TZ = 'Pacific/Easter';
 
+const esModules = ['ol', 'd3', 'd3-color', 'd3-interpolate'].join('|');
+
 module.exports = {
   verbose: false,
   testEnvironment: 'jsdom',
@@ -10,7 +12,7 @@ module.exports = {
     '^.+\\.(ts|tsx|js|jsx)$': [require.resolve('ts-jest'), { isolatedModules: true }],
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(ol|d3-color)/)', // <- exclude es modules so they are compiled
+    `/node_modules/(?!${esModules})`, // exclude es modules to prevent TS complaining
   ],
   moduleDirectories: ['public'],
   roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages'],

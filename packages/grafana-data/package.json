@@ -38,7 +38,7 @@
     "@braintree/sanitize-url": "6.0.1",
     "@grafana/schema": "9.4.0-pre",
     "@types/d3-interpolate": "^1.4.0",
-    "d3-interpolate": "1.4.0",
+    "d3-interpolate": "3.0.1",
     "date-fns": "2.29.3",
     "eventemitter3": "4.0.7",
     "fast_array_intersect": "1.1.0",
