@@ -16,7 +16,7 @@ Each data source comes with a _query editor_, which formulates custom queries ac
 After you add a data source, you can use it as an input for many operations:
 - Query the data with [Explore]({{< relref "../explore" >}}).
 - Visualize it in [panels]({{< relref "../panels-visualizations" >}}).
-- Make criteria for [alerts]({{< relref "../alerting" >}}).
+- Create rules for [alerts]({{< relref "../alerting" >}}).
 
 In this documentation, read about how to add and query a particular data source, or about how to manage your data sources in general.
 
