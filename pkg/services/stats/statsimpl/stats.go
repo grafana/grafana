@@ -21,28 +21,28 @@ func ProvideService(db db.DB) stats.Service {
 
 type sqlStatsService struct{ db db.DB }
 
-func (ss *sqlStatsService) GetAlertNotifiersUsageStats(ctx context.Context, query *models.GetAlertNotifierUsageStatsQuery) error {
+func (ss *sqlStatsService) GetAlertNotifiersUsageStats(ctx context.Context, query *stats.GetAlertNotifierUsageStatsQuery) error {
 	return ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		var rawSQL = `SELECT COUNT(*) AS count, type FROM ` + ss.db.GetDialect().Quote("alert_notification") + ` GROUP BY type`
-		query.Result = make([]*models.NotifierUsageStats, 0)
+		query.Result = make([]*stats.NotifierUsageStats, 0)
 		err := dbSession.SQL(rawSQL).Find(&query.Result)
 		return err
 	})
 }
 
-func (ss *sqlStatsService) GetDataSourceStats(ctx context.Context, query *models.GetDataSourceStatsQuery) error {
+func (ss *sqlStatsService) GetDataSourceStats(ctx context.Context, query *stats.GetDataSourceStatsQuery) error {
 	return ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		var rawSQL = `SELECT COUNT(*) AS count, type FROM ` + ss.db.GetDialect().Quote("data_source") + ` GROUP BY type`
-		query.Result = make([]*models.DataSourceStats, 0)
+		query.Result = make([]*stats.DataSourceStats, 0)
 		err := dbSession.SQL(rawSQL).Find(&query.Result)
 		return err
 	})
 }
 
-func (ss *sqlStatsService) GetDataSourceAccessStats(ctx context.Context, query *models.GetDataSourceAccessStatsQuery) error {
+func (ss *sqlStatsService) GetDataSourceAccessStats(ctx context.Context, query *stats.GetDataSourceAccessStatsQuery) error {
 	return ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		var rawSQL = `SELECT COUNT(*) AS count, type, access FROM ` + ss.db.GetDialect().Quote("data_source") + ` GROUP BY type, access`
-		query.Result = make([]*models.DataSourceAccessStats, 0)
+		query.Result = make([]*stats.DataSourceAccessStats, 0)
 		err := dbSession.SQL(rawSQL).Find(&query.Result)
 		return err
 	})
@@ -53,7 +53,7 @@ func notServiceAccount(dialect migrator.Dialect) string {
 		dialect.BooleanStr(false)
 }
 
-func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *models.GetSystemStatsQuery) error {
+func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetSystemStatsQuery) error {
 	return ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		sb := &db.SQLBuilder{}
 		sb.Write("SELECT ")
@@ -120,7 +120,7 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *models.Get
 
 		sb.Write(ss.roleCounterSQL(ctx))
 
-		var stats models.SystemStats
+		var stats stats.SystemStats
 		_, err := dbSession.SQL(sb.GetSQLString(), sb.GetParams()...).Get(&stats)
 		if err != nil {
 			return err
@@ -164,7 +164,7 @@ func viewersPermissionsCounterSQL(db db.DB, statName string, isFolder bool, perm
 	) AS ` + statName + `, `
 }
 
-func (ss *sqlStatsService) GetAdminStats(ctx context.Context, query *models.GetAdminStatsQuery) error {
+func (ss *sqlStatsService) GetAdminStats(ctx context.Context, query *stats.GetAdminStatsQuery) error {
 	return ss.db.WithDbSession(ctx, func(dbSession *db.Session) error {
 		dialect := ss.db.GetDialect()
 		now := time.Now()
@@ -231,7 +231,7 @@ func (ss *sqlStatsService) GetAdminStats(ctx context.Context, query *models.GetA
 			FROM ` + dialect.Quote("user_auth_token") + ` WHERE rotated_at > ?
 		) AS daily_active_sessions`
 
-		var stats models.AdminStats
+		var stats stats.AdminStats
 		_, err := dbSession.SQL(rawSQL, activeEndDate, dailyActiveEndDate, monthlyActiveEndDate, activeEndDate.Unix(), dailyActiveEndDate.Unix()).Get(&stats)
 		if err != nil {
 			return err
@@ -242,10 +242,10 @@ func (ss *sqlStatsService) GetAdminStats(ctx context.Context, query *models.GetA
 	})
 }
 
-func (ss *sqlStatsService) GetSystemUserCountStats(ctx context.Context, query *models.GetSystemUserCountStatsQuery) error {
+func (ss *sqlStatsService) GetSystemUserCountStats(ctx context.Context, query *stats.GetSystemUserCountStatsQuery) error {
 	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		var rawSQL = `SELECT COUNT(id) AS Count FROM ` + ss.db.GetDialect().Quote("user")
-		var stats models.SystemUserCountStats
+		var stats stats.SystemUserCountStats
 		_, err := sess.SQL(rawSQL).Get(&stats)
 		if err != nil {
 			return err
@@ -269,9 +269,9 @@ func (ss *sqlStatsService) updateUserRoleCountsIfNecessary(ctx context.Context, 
 }
 
 type memoUserStats struct {
-	active      models.UserStats
-	dailyActive models.UserStats
-	total       models.UserStats
+	active      stats.UserStats
+	dailyActive stats.UserStats
+	total       stats.UserStats
 
 	memoized time.Time
 }
@@ -338,7 +338,7 @@ GROUP BY active, daily_active, role;`
 	})
 }
 
-func addToStats(base models.UserStats, role org.RoleType, count int64) models.UserStats {
+func addToStats(base stats.UserStats, role org.RoleType, count int64) stats.UserStats {
 	base.Users += count
 
 	switch role {

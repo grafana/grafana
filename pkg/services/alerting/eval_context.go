@@ -142,7 +142,7 @@ func (c *EvalContext) GetRuleURL() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf(urlFormat, models.GetFullDashboardUrl(ref.UID, ref.Slug), c.Rule.PanelID, c.Rule.OrgID), nil
+	return fmt.Sprintf(urlFormat, dashboards.GetFullDashboardURL(ref.UID, ref.Slug), c.Rule.PanelID, c.Rule.OrgID), nil
 }
 
 // GetNewState returns the new state from the alert rule evaluation.
