@@ -3,11 +3,11 @@ import { uniq } from 'lodash';
 import { getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import type { Monaco, monacoTypes } from '@grafana/ui';
 
+import { ResourcesAPI } from '../../../resources/ResourcesAPI';
 import { CompletionItemProvider } from '../../monarch/CompletionItemProvider';
 import { LinkedToken } from '../../monarch/LinkedToken';
 import { TRIGGER_SUGGEST } from '../../monarch/commands';
 import { SuggestionKind, CompletionItemPriority, StatementPosition } from '../../monarch/types';
-import { ResourcesAPI } from '../../resources/ResourcesAPI';
 import {
   BY,
   FROM,

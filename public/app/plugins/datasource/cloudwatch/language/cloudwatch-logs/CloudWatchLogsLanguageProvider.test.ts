@@ -3,9 +3,11 @@ import { Value } from 'slate';
 
 import { TypeaheadOutput } from '@grafana/ui';
 
-import { CloudWatchDatasource } from './datasource';
-import { CloudWatchLanguageProvider } from './language_provider';
-import { ResourceResponse } from './resources/types';
+import { CloudWatchDatasource } from '../../datasource';
+import { ResourceResponse } from '../../resources/types';
+import { LogGroupField } from '../../types';
+
+import { CloudWatchLogsLanguageProvider } from './CloudWatchLogsLanguageProvider';
 import {
   AGGREGATION_FUNCTIONS_STATS,
   BOOLEAN_FUNCTIONS,
@@ -16,88 +18,87 @@ import {
   STRING_FUNCTIONS,
   FIELD_AND_FILTER_FUNCTIONS,
 } from './syntax';
-import { LogGroupField } from './types';
 
 const fields = ['field1', '@message'];
 
-describe('CloudWatchLanguageProvider', () => {
+describe('CloudWatchLogsLanguageProvider', () => {
   it('should suggest ', async () => {
-    await runSuggestionTest('stats count(\\)', [fields]);
+    await runSuggestionTest('stats count(^)', [fields]);
     // Make sure having a field prefix does not brake anything
-    await runSuggestionTest('stats count(@mess\\)', [fields]);
+    await runSuggestionTest('stats count(@mess^)', [fields]);
   });
 
   it('should suggest query commands on start of query', async () => {
-    await runSuggestionTest('\\', [QUERY_COMMANDS.map((v) => v.label)]);
+    await runSuggestionTest('^', [QUERY_COMMANDS.map((v) => v.label)]);
   });
 
   it('should suggest query commands after pipe', async () => {
-    await runSuggestionTest('fields f | \\', [QUERY_COMMANDS.map((v) => v.label)]);
+    await runSuggestionTest('fields f | ^', [QUERY_COMMANDS.map((v) => v.label)]);
   });
 
   it('should suggest fields and functions after field command', async () => {
-    await runSuggestionTest('fields \\', [fields, FIELD_AND_FILTER_FUNCTIONS.map((v) => v.label)]);
+    await runSuggestionTest('fields ^', [fields, FIELD_AND_FILTER_FUNCTIONS.map((v) => v.label)]);
   });
 
   it('should suggest fields and functions after comma', async () => {
-    await runSuggestionTest('fields field1, \\', [fields, FIELD_AND_FILTER_FUNCTIONS.map((v) => v.label)]);
+    await runSuggestionTest('fields field1, ^', [fields, FIELD_AND_FILTER_FUNCTIONS.map((v) => v.label)]);
   });
 
   it('should suggest fields and functions after comma with prefix', async () => {
-    await runSuggestionTest('fields field1, @mess\\', [fields, FIELD_AND_FILTER_FUNCTIONS.map((v) => v.label)]);
+    await runSuggestionTest('fields field1, @mess^', [fields, FIELD_AND_FILTER_FUNCTIONS.map((v) => v.label)]);
   });
 
   it('should suggest fields and functions after display command', async () => {
-    await runSuggestionTest('display \\', [fields, FIELD_AND_FILTER_FUNCTIONS.map((v) => v.label)]);
+    await runSuggestionTest('display ^', [fields, FIELD_AND_FILTER_FUNCTIONS.map((v) => v.label)]);
   });
 
   it('should suggest functions after stats command', async () => {
-    await runSuggestionTest('stats \\', [AGGREGATION_FUNCTIONS_STATS.map((v) => v.label)]);
+    await runSuggestionTest('stats ^', [AGGREGATION_FUNCTIONS_STATS.map((v) => v.label)]);
   });
 
   it('should suggest fields and some functions after `by` command', async () => {
-    await runSuggestionTest('stats count(something) by \\', [
+    await runSuggestionTest('stats count(something) by ^', [
       fields,
       STRING_FUNCTIONS.concat(DATETIME_FUNCTIONS, IP_FUNCTIONS).map((v) => v.label),
     ]);
   });
 
   it('should suggest fields and some functions after comparison operator', async () => {
-    await runSuggestionTest('filter field1 >= \\', [
+    await runSuggestionTest('filter field1 >= ^', [
       fields,
       [...NUMERIC_OPERATORS.map((v) => v.label), ...BOOLEAN_FUNCTIONS.map((v) => v.label)],
     ]);
   });
 
   it('should suggest fields directly after sort', async () => {
-    await runSuggestionTest('sort \\', [fields]);
+    await runSuggestionTest('sort ^', [fields]);
   });
 
   it('should suggest fields directly after sort after a pipe', async () => {
-    await runSuggestionTest('fields field1 | sort \\', [fields]);
+    await runSuggestionTest('fields field1 | sort ^', [fields]);
   });
 
   it('should suggest sort order after sort command and field', async () => {
-    await runSuggestionTest('sort field1 \\', [['asc', 'desc']]);
+    await runSuggestionTest('sort field1 ^', [['asc', 'desc']]);
   });
 
   it('should suggest fields directly after parse', async () => {
-    await runSuggestionTest('parse \\', [fields]);
+    await runSuggestionTest('parse ^', [fields]);
   });
 
   it('should suggest fields and bool functions after filter', async () => {
-    await runSuggestionTest('filter \\', [fields, BOOLEAN_FUNCTIONS.map((v) => v.label)]);
+    await runSuggestionTest('filter ^', [fields, BOOLEAN_FUNCTIONS.map((v) => v.label)]);
   });
 
   it('should suggest fields and functions after filter bin() function', async () => {
-    await runSuggestionTest('stats count(@message) by bin(30m), \\', [
+    await runSuggestionTest('stats count(@message) by bin(30m), ^', [
       fields,
       STRING_FUNCTIONS.concat(DATETIME_FUNCTIONS, IP_FUNCTIONS).map((v) => v.label),
     ]);
   });
 
   it('should not suggest anything if not after comma in by expression', async () => {
-    await runSuggestionTest('stats count(@message) by bin(30m) \\', []);
+    await runSuggestionTest('stats count(@message) by bin(30m) ^', []);
   });
 });
 
@@ -115,22 +116,24 @@ function makeDatasource(): CloudWatchDatasource {
         return Promise.resolve([{ value: { name: 'field1' } }, { value: { name: '@message' } }]);
       },
     },
+    /* eslint-disable @typescript-eslint/no-explicit-any */
   } as any;
 }
 
 /**
- * Get suggestion items based on query. Use `\\` to mark position of the cursor.
+ * Get suggestion items based on query. Use `^` to mark position of the cursor.
  */
 function getProvideCompletionItems(query: string): Promise<TypeaheadOutput> {
-  const provider = new CloudWatchLanguageProvider(makeDatasource());
-  const cursorOffset = query.indexOf('\\');
-  const queryWithoutCursor = query.replace('\\', '');
+  const provider = new CloudWatchLogsLanguageProvider(makeDatasource());
+  const cursorOffset = query.indexOf('^');
+  const queryWithoutCursor = query.replace('^', '');
   let tokens: Token[] = Prism.tokenize(queryWithoutCursor, provider.getSyntax()) as any;
   tokens = addTokenMetadata(tokens);
   const value = new ValueMock(tokens, cursorOffset);
   return provider.provideCompletionItems(
     {
       value,
+      /* eslint-disable @typescript-eslint/no-explicit-any */
     } as any,
     { logGroups: [{ name: 'logGroup1', arn: 'logGroup1' }], region: 'custom' }
   );
@@ -145,12 +148,14 @@ class ValueMock {
       start: {
         offset: cursorOffset,
       },
+      /* eslint-disable @typescript-eslint/no-explicit-any */
     } as any;
 
     this.data = {
       get() {
         return tokens;
       },
+      /* eslint-disable @typescript-eslint/no-explicit-any */
     } as any;
   }
 }
@@ -160,9 +165,11 @@ class ValueMock {
  * @param tokens
  */
 function addTokenMetadata(tokens: Array<string | Token>): Token[] {
+  /* eslint-disable @typescript-eslint/no-explicit-any */
   let prev = undefined as any;
   let offset = 0;
   return tokens.reduce((acc, token) => {
+    /* eslint-disable @typescript-eslint/no-explicit-any */
     let newToken: any;
     if (typeof token === 'string') {
       newToken = {
