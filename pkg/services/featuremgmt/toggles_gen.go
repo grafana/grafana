@@ -27,10 +27,6 @@ const (
 	// Add Prometheus metrics for database tables
 	FlagDatabaseMetrics = "database_metrics"
 
-	// FlagNewDBLibrary
-	// Use SQLx library for interacting with the database. Supported only by specific services.
-	FlagNewDBLibrary = "newDBLibrary"
-
 	// FlagDashboardPreviews
 	// Create and show thumbnails for dashboard search results
 	FlagDashboardPreviews = "dashboardPreviews"
