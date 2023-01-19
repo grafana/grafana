@@ -511,7 +511,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		case <-grafanaCtx.Done():
 			// We need to use context.Background() here because grafanaCtx is being canceled, and we need a valid context
 			// in clearState function to do DB operations.
-			ctx, cancelFunc := context.WithTimeout(context.Background(), 5 * time.Second)
+			ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancelFunc()
 			clearState(ctx, grafanaCtx.Err())
 			logger.Debug("Stopping alert rule routine")
