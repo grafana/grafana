@@ -3,7 +3,7 @@
 // 2. Any wrong timezone handling could be hidden if we use UTC/GMT local time (which would happen in CI).
 process.env.TZ = 'Pacific/Easter';
 
-const esModules = ['ol', 'd3', 'd3-color', 'd3-interpolate'].join('|');
+const esModules = ['ol', 'd3', 'd3-color', 'd3-interpolate', 'delaunator', 'internmap', 'robust-predicates'].join('|');
 
 module.exports = {
   verbose: false,
