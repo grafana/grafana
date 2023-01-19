@@ -114,8 +114,7 @@ export function getCredentials(options: AzureDataSourceSettings): AzureCredentia
 
 export function updateCredentials(
   options: AzureDataSourceSettings,
-  credentials: AzureCredentials,
-  subscriptionId?: string
+  credentials: AzureCredentials
 ): AzureDataSourceSettings {
   switch (credentials.authType) {
     case 'msi':
@@ -128,7 +127,6 @@ export function updateCredentials(
         jsonData: {
           ...options.jsonData,
           azureAuthType: 'msi',
-          subscriptionId,
         },
       };
 
@@ -143,7 +141,6 @@ export function updateCredentials(
           cloudName: credentials.azureCloud || getDefaultAzureCloud(),
           tenantId: credentials.tenantId,
           clientId: credentials.clientId,
-          subscriptionId,
         },
         secureJsonData: {
           ...options.secureJsonData,

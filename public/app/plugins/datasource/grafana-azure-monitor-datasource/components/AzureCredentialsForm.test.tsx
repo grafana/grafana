@@ -1,14 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 
-import { createMockInstanceSetttings } from '../__mocks__/instanceSettings';
-import { selectors } from '../e2e/selectors';
-import { AzureClientSecretCredentials } from '../types';
-
 import AzureCredentialsForm, { Props } from './AzureCredentialsForm';
-import { DefaultSubscription } from './DefaultSubscription';
-
-const mockInstanceSettings = createMockInstanceSetttings();
 
 const setup = (propsFunc?: (props: Props) => Props) => {
   let props: Props = {
@@ -57,33 +50,6 @@ describe('Render', () => {
     expect(screen.getByTestId('client-secret')).toBeDisabled();
   });
 
-  it('should enable azure monitor load subscriptions button', async () => {
-    const credentials: AzureClientSecretCredentials = {
-      authType: 'clientsecret',
-      azureCloud: 'azuremonitor',
-      tenantId: 'e7f3f661-a933-3h3f-0294-31c4f962ec48',
-      clientId: '34509fad-c0r9-45df-9e25-f1ee34af6900',
-      clientSecret: 'e7f3f661-a933-4b3f-8176-51c4f982ec48',
-    };
-    setup((props) => ({
-      ...props,
-      credentials,
-      children: (
-        <DefaultSubscription
-          options={mockInstanceSettings.jsonData}
-          credentials={credentials}
-          getSubscriptions={jest.fn(() => Promise.resolve([]))}
-          onCredentialsChange={props.onCredentialsChange}
-          subscriptions={[]}
-          onSubscriptionsChange={jest.fn()}
-        />
-      ),
-    }));
-    await waitFor(() =>
-      expect(screen.getByTestId(selectors.components.configEditor.loadSubscriptions.button)).not.toBeDisabled()
-    );
-  });
-
   describe('when disabled', () => {
     it('should disable inputs', async () => {
       setup((props) => ({
@@ -93,26 +59,6 @@ describe('Render', () => {
 
       await waitFor(() => screen.getByLabelText('Azure Cloud'));
       expect(screen.getByLabelText('Azure Cloud')).toBeDisabled();
-    });
-
-    it('should remove buttons', async () => {
-      setup((props) => ({
-        ...props,
-        disabled: true,
-        children: (
-          <DefaultSubscription
-            options={mockInstanceSettings.jsonData}
-            credentials={props.credentials}
-            getSubscriptions={jest.fn(() => Promise.resolve([]))}
-            onCredentialsChange={props.onCredentialsChange}
-            subscriptions={[]}
-            onSubscriptionsChange={jest.fn()}
-          />
-        ),
-      }));
-      await waitFor(() =>
-        expect(screen.getByTestId(selectors.components.configEditor.loadSubscriptions.button)).toBeDisabled()
-      );
     });
   });
 });

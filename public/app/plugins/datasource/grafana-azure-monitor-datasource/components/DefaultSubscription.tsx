@@ -9,25 +9,25 @@ import { AzureCredentials, AzureDataSourceJsonData } from '../types';
 
 const LABEL_WIDTH = 18;
 
-interface Props {
+export interface Props {
   options: AzureDataSourceJsonData;
   credentials: AzureCredentials;
   getSubscriptions?: () => Promise<SelectableValue[]>;
-  onCredentialsChange?: (updatedCredentials: AzureCredentials, subscriptionId?: string) => void;
   subscriptions: Array<SelectableValue<string>>;
   onSubscriptionsChange: (receivedSubscriptions: Array<SelectableValue<string>>) => void;
+  onSubscriptionChange: (subscriptionId?: string) => void;
   disabled?: boolean;
 }
 
 export const DefaultSubscription: FunctionComponent<Props> = (props: Props) => {
   const {
     credentials,
-    onCredentialsChange,
-    getSubscriptions,
     disabled,
-    subscriptions,
-    onSubscriptionsChange,
     options,
+    subscriptions,
+    getSubscriptions,
+    onSubscriptionChange,
+    onSubscriptionsChange,
   } = props;
   const hasRequiredFields = isCredentialsComplete(credentials);
   const [loadSubscriptionsClicked, onLoadSubscriptions] = useReducer((val) => val + 1, 0);
@@ -55,25 +55,19 @@ export const DefaultSubscription: FunctionComponent<Props> = (props: Props) => {
     if (getSubscriptions) {
       if (autoSelect && !options.subscriptionId && received.length > 0) {
         // Selecting the default subscription if subscriptions received but no default subscription selected
-        onSubscriptionChange(received[0]);
+        onChange(received[0]);
       } else if (options.subscriptionId) {
         const found = received.find((opt) => opt.value === options.subscriptionId);
         if (!found) {
           // Unselecting the default subscription if it isn't found among the received subscriptions
-          onSubscriptionChange(undefined);
+          onChange(undefined);
         }
       }
     }
   };
 
-  const onSubscriptionChange = (selected: SelectableValue<string> | undefined) => {
-    if (onCredentialsChange) {
-      const updated: AzureCredentials = {
-        ...credentials,
-      };
-      onCredentialsChange(updated, selected?.value);
-    }
-  };
+  const onChange = (selected: SelectableValue<string> | undefined) => onSubscriptionChange(selected?.value);
+
   return (
     <>
       <InlineField
@@ -90,7 +84,7 @@ export const DefaultSubscription: FunctionComponent<Props> = (props: Props) => {
               options.subscriptionId ? subscriptions.find((opt) => opt.value === options.subscriptionId) : undefined
             }
             options={subscriptions}
-            onChange={onSubscriptionChange}
+            onChange={onChange}
             disabled={disabled}
           />
           <Button

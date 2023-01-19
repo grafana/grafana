@@ -30,11 +30,16 @@ export const MonitorConfig: FunctionComponent<Props> = (props: Props) => {
     if (!subscriptionId) {
       setSubscriptions([]);
     }
-    updateOptions((options) => updateCredentials(options, credentials, subscriptionId));
+    updateOptions((options) =>
+      updateCredentials({ ...options, jsonData: { ...options.jsonData, subscriptionId } }, credentials)
+    );
   };
 
   const onSubscriptionsChange = (receivedSubscriptions: Array<SelectableValue<string>>) =>
     setSubscriptions(receivedSubscriptions);
+
+  const onSubscriptionChange = (subscriptionId?: string) =>
+    updateOptions((options) => ({ ...options, jsonData: { ...options.jsonData, subscriptionId } }));
 
   return (
     <>
@@ -50,9 +55,9 @@ export const MonitorConfig: FunctionComponent<Props> = (props: Props) => {
           subscriptions={subscriptions}
           credentials={credentials}
           getSubscriptions={getSubscriptions}
-          onCredentialsChange={onCredentialsChange}
           disabled={props.options.readOnly}
           onSubscriptionsChange={onSubscriptionsChange}
+          onSubscriptionChange={onSubscriptionChange}
           options={options.jsonData}
         />
       </AzureCredentialsForm>
