@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
 type LDAPMock struct {
@@ -514,7 +515,14 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
 // ***
 
 func TestLDAP_AccessControl(t *testing.T) {
-	tests := []accessControlTestCase{
+	type testCase struct {
+		desc         string
+		method       string
+		url          string
+		expectedCode int
+		permissions  []accesscontrol.Permission
+	}
+	tests := []testCase{
 		{
 			url:          "/api/admin/ldap/reload",
 			method:       http.MethodPost,
@@ -589,8 +597,8 @@ func TestLDAP_AccessControl(t *testing.T) {
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
 			enabled := setting.LDAPEnabled
 			configFile := setting.LDAPConfigFile
 
@@ -604,18 +612,17 @@ func TestLDAP_AccessControl(t *testing.T) {
 			assert.NoError(t, err)
 			setting.LDAPConfigFile = path
 
-			cfg := setting.NewCfg()
-			cfg.LDAPEnabled = true
-			sc, hs := setupAccessControlScenarioContext(t, cfg, test.url, test.permissions)
-			hs.SQLStore = dbtest.NewFakeDB()
-			hs.userService = &usertest.FakeUserService{ExpectedUser: &user.User{}}
-			hs.authInfoService = &logintest.AuthInfoServiceFake{}
-			hs.Login = &loginservice.LoginServiceMock{}
-			hs.orgService = &orgtest.FakeOrgService{}
-			sc.resp = httptest.NewRecorder()
-			sc.req, err = http.NewRequest(test.method, test.url, nil)
-			assert.NoError(t, err)
-
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				cfg := setting.NewCfg()
+				cfg.LDAPEnabled = true
+				hs.Cfg = cfg
+				hs.SQLStore = dbtest.NewFakeDB()
+				hs.orgService = orgtest.NewOrgServiceFake()
+				hs.userService = &usertest.FakeUserService{ExpectedUser: &user.User{}}
+				hs.ldapGroups = &ldap.OSSGroups{}
+				hs.Login = &loginservice.LoginServiceMock{}
+				hs.authInfoService = &logintest.AuthInfoServiceFake{}
+			})
 			// Add minimal setup to pass handler
 			userSearchResult = &models.ExternalUserInfo{}
 			userSearchError = nil
@@ -623,8 +630,10 @@ func TestLDAP_AccessControl(t *testing.T) {
 				return &LDAPMock{}
 			}
 
-			sc.exec()
-			assert.Equal(t, test.expectedCode, sc.resp.Code)
+			res, err := server.Send(webtest.RequestWithSignedInUser(server.NewRequest(tt.method, tt.url, nil), userWithPermissions(1, tt.permissions)))
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }
