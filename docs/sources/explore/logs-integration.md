@@ -114,7 +114,7 @@ Explore replaces these sequences. When it does so, the option will change from "
 
 #### Data links
 
-By using Data links, you can turn any part of a log message into an internal or external link. The created link is visible as a button in the Links section inside the Log details view.
+By using data links, you can turn any part of a log message into an internal or external link. The created link is visible as a button in the **Links** section inside the **Log details** view.
 {{< figure src="/static/img/docs/explore/data-link-9-4.png" max-width="800px" caption="Data link in Explore" >}}
 
 #### Toggle field visibility
