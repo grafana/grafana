@@ -6,9 +6,12 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -16,8 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-
-	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -150,7 +151,7 @@ func TestNotificationAsConfig(t *testing.T) {
 			t.Run("no notification in database", func(t *testing.T) {
 				setup()
 				fakeAlertNotification := &fakeAlertNotification{}
-				fakeAlertNotification.ExpectedAlertNotification = &alerting.AlertNotification{OrgId: 1}
+				fakeAlertNotification.ExpectedAlertNotification = &models.AlertNotification{OrgId: 1}
 				dc := newNotificationProvisioner(orgService, fakeAlertNotification, encryptionService, nil, logger)
 
 				err := dc.applyChanges(context.Background(), twoNotificationsConfig)
@@ -161,7 +162,7 @@ func TestNotificationAsConfig(t *testing.T) {
 
 			t.Run("One notification in database with same name and uid", func(t *testing.T) {
 				setup()
-				existingNotificationCmd := alerting.CreateAlertNotificationCommand{
+				existingNotificationCmd := models.CreateAlertNotificationCommand{
 					Name:  "channel1",
 					OrgId: 1,
 					Uid:   "notifier1",
@@ -170,7 +171,7 @@ func TestNotificationAsConfig(t *testing.T) {
 				err := ns.SQLStore.CreateAlertNotificationCommand(context.Background(), &existingNotificationCmd)
 				require.NoError(t, err)
 				require.NotNil(t, existingNotificationCmd.Result)
-				notificationsQuery := alerting.GetAllAlertNotificationsQuery{OrgId: 1}
+				notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: 1}
 				err = ns.SQLStore.GetAllAlertNotifications(context.Background(), &notificationsQuery)
 				require.NoError(t, err)
 				require.NotNil(t, notificationsQuery.Result)
@@ -198,7 +199,7 @@ func TestNotificationAsConfig(t *testing.T) {
 		t.Run("Two configured notification", func(t *testing.T) {
 			t.Run("two other notifications in database", func(t *testing.T) {
 				setup()
-				existingNotificationCmd := alerting.CreateAlertNotificationCommand{
+				existingNotificationCmd := models.CreateAlertNotificationCommand{
 					Name:  "channel0",
 					OrgId: 1,
 					Uid:   "notifier0",
@@ -206,7 +207,7 @@ func TestNotificationAsConfig(t *testing.T) {
 				}
 				err := ns.SQLStore.CreateAlertNotificationCommand(context.Background(), &existingNotificationCmd)
 				require.NoError(t, err)
-				existingNotificationCmd = alerting.CreateAlertNotificationCommand{
+				existingNotificationCmd = models.CreateAlertNotificationCommand{
 					Name:  "channel3",
 					OrgId: 1,
 					Uid:   "notifier3",
@@ -215,7 +216,7 @@ func TestNotificationAsConfig(t *testing.T) {
 				err = ns.SQLStore.CreateAlertNotificationCommand(context.Background(), &existingNotificationCmd)
 				require.NoError(t, err)
 
-				notificationsQuery := alerting.GetAllAlertNotificationsQuery{OrgId: 1}
+				notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: 1}
 				err = ns.GetAllAlertNotifications(context.Background(), &notificationsQuery)
 				require.NoError(t, err)
 				require.NotNil(t, notificationsQuery.Result)
@@ -234,7 +235,7 @@ func TestNotificationAsConfig(t *testing.T) {
 		t.Run("Can read correct properties with orgName instead of orgId", func(t *testing.T) {
 			setup()
 
-			existingNotificationCmd := alerting.CreateAlertNotificationCommand{
+			existingNotificationCmd := models.CreateAlertNotificationCommand{
 				Name:  "default-notification-delete",
 				OrgId: 1,
 				Uid:   "notifier2",
@@ -271,7 +272,7 @@ func TestNotificationAsConfig(t *testing.T) {
 				if err != nil {
 					t.Fatalf("applyChanges return an error %v", err)
 				}
-				notificationsQuery := alerting.GetAllAlertNotificationsQuery{OrgId: 1}
+				notificationsQuery := models.GetAllAlertNotificationsQuery{OrgId: 1}
 				err = ns.GetAllAlertNotifications(context.Background(), &notificationsQuery)
 				require.NoError(t, err)
 				require.Empty(t, notificationsQuery.Result)
@@ -328,44 +329,44 @@ func TestNotificationAsConfig(t *testing.T) {
 }
 
 type fakeAlertNotification struct {
-	ExpectedAlertNotification *alerting.AlertNotification
+	ExpectedAlertNotification *models.AlertNotification
 }
 
-func (f *fakeAlertNotification) GetAlertNotifications(ctx context.Context, query *alerting.GetAlertNotificationsQuery) error {
+func (f *fakeAlertNotification) GetAlertNotifications(ctx context.Context, query *models.GetAlertNotificationsQuery) error {
 	query.Result = f.ExpectedAlertNotification
 	return nil
 }
-func (f *fakeAlertNotification) CreateAlertNotificationCommand(ctx context.Context, cmd *alerting.CreateAlertNotificationCommand) error {
+func (f *fakeAlertNotification) CreateAlertNotificationCommand(ctx context.Context, cmd *models.CreateAlertNotificationCommand) error {
 	return nil
 }
-func (f *fakeAlertNotification) UpdateAlertNotification(ctx context.Context, cmd *alerting.UpdateAlertNotificationCommand) error {
+func (f *fakeAlertNotification) UpdateAlertNotification(ctx context.Context, cmd *models.UpdateAlertNotificationCommand) error {
 	return nil
 }
-func (f *fakeAlertNotification) DeleteAlertNotification(ctx context.Context, cmd *alerting.DeleteAlertNotificationCommand) error {
+func (f *fakeAlertNotification) DeleteAlertNotification(ctx context.Context, cmd *models.DeleteAlertNotificationCommand) error {
 	return nil
 }
-func (f *fakeAlertNotification) GetAllAlertNotifications(ctx context.Context, query *alerting.GetAllAlertNotificationsQuery) error {
+func (f *fakeAlertNotification) GetAllAlertNotifications(ctx context.Context, query *models.GetAllAlertNotificationsQuery) error {
 	return nil
 }
-func (f *fakeAlertNotification) GetOrCreateAlertNotificationState(ctx context.Context, cmd *alerting.GetOrCreateNotificationStateQuery) error {
+func (f *fakeAlertNotification) GetOrCreateAlertNotificationState(ctx context.Context, cmd *models.GetOrCreateNotificationStateQuery) error {
 	return nil
 }
-func (f *fakeAlertNotification) SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *alerting.SetAlertNotificationStateToCompleteCommand) error {
+func (f *fakeAlertNotification) SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToCompleteCommand) error {
 	return nil
 }
-func (f *fakeAlertNotification) SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *alerting.SetAlertNotificationStateToPendingCommand) error {
+func (f *fakeAlertNotification) SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToPendingCommand) error {
 	return nil
 }
-func (f *fakeAlertNotification) GetAlertNotificationsWithUid(ctx context.Context, query *alerting.GetAlertNotificationsWithUidQuery) error {
+func (f *fakeAlertNotification) GetAlertNotificationsWithUid(ctx context.Context, query *models.GetAlertNotificationsWithUidQuery) error {
 	return nil
 }
-func (f *fakeAlertNotification) DeleteAlertNotificationWithUid(ctx context.Context, cmd *alerting.DeleteAlertNotificationWithUidCommand) error {
+func (f *fakeAlertNotification) DeleteAlertNotificationWithUid(ctx context.Context, cmd *models.DeleteAlertNotificationWithUidCommand) error {
 	return nil
 }
-func (f *fakeAlertNotification) GetAlertNotificationsWithUidToSend(ctx context.Context, query *alerting.GetAlertNotificationsWithUidToSendQuery) error {
+func (f *fakeAlertNotification) GetAlertNotificationsWithUidToSend(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error {
 	return nil
 }
 
-func (f *fakeAlertNotification) UpdateAlertNotificationWithUid(ctx context.Context, cmd *alerting.UpdateAlertNotificationWithUidCommand) error {
+func (f *fakeAlertNotification) UpdateAlertNotificationWithUid(ctx context.Context, cmd *models.UpdateAlertNotificationWithUidCommand) error {
 	return nil
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
@@ -28,11 +29,11 @@ func ProvideService(store db.DB, encryptionService encryption.Internal,
 	return s
 }
 
-func (s *AlertNotificationService) GetAlertNotifications(ctx context.Context, query *GetAlertNotificationsQuery) error {
+func (s *AlertNotificationService) GetAlertNotifications(ctx context.Context, query *models.GetAlertNotificationsQuery) error {
 	return s.SQLStore.GetAlertNotifications(ctx, query)
 }
 
-func (s *AlertNotificationService) CreateAlertNotificationCommand(ctx context.Context, cmd *CreateAlertNotificationCommand) error {
+func (s *AlertNotificationService) CreateAlertNotificationCommand(ctx context.Context, cmd *models.CreateAlertNotificationCommand) error {
 	if util.IsShortUIDTooLong(cmd.Uid) {
 		return ValidationError{Reason: "Invalid UID: Must be 40 characters or less"}
 	}
@@ -43,7 +44,7 @@ func (s *AlertNotificationService) CreateAlertNotificationCommand(ctx context.Co
 		return err
 	}
 
-	model := AlertNotification{
+	model := models.AlertNotification{
 		Name:     cmd.Name,
 		Type:     cmd.Type,
 		Settings: cmd.Settings,
@@ -56,7 +57,7 @@ func (s *AlertNotificationService) CreateAlertNotificationCommand(ctx context.Co
 	return s.SQLStore.CreateAlertNotificationCommand(ctx, cmd)
 }
 
-func (s *AlertNotificationService) UpdateAlertNotification(ctx context.Context, cmd *UpdateAlertNotificationCommand) error {
+func (s *AlertNotificationService) UpdateAlertNotification(ctx context.Context, cmd *models.UpdateAlertNotificationCommand) error {
 	if util.IsShortUIDTooLong(cmd.Uid) {
 		return ValidationError{Reason: "Invalid UID: Must be 40 characters or less"}
 	}
@@ -67,7 +68,7 @@ func (s *AlertNotificationService) UpdateAlertNotification(ctx context.Context, 
 		return err
 	}
 
-	model := AlertNotification{
+	model := models.AlertNotification{
 		Id:       cmd.Id,
 		OrgId:    cmd.OrgId,
 		Name:     cmd.Name,
@@ -82,31 +83,31 @@ func (s *AlertNotificationService) UpdateAlertNotification(ctx context.Context, 
 	return s.SQLStore.UpdateAlertNotification(ctx, cmd)
 }
 
-func (s *AlertNotificationService) DeleteAlertNotification(ctx context.Context, cmd *DeleteAlertNotificationCommand) error {
+func (s *AlertNotificationService) DeleteAlertNotification(ctx context.Context, cmd *models.DeleteAlertNotificationCommand) error {
 	return s.SQLStore.DeleteAlertNotification(ctx, cmd)
 }
 
-func (s *AlertNotificationService) GetAllAlertNotifications(ctx context.Context, query *GetAllAlertNotificationsQuery) error {
+func (s *AlertNotificationService) GetAllAlertNotifications(ctx context.Context, query *models.GetAllAlertNotificationsQuery) error {
 	return s.SQLStore.GetAllAlertNotifications(ctx, query)
 }
 
-func (s *AlertNotificationService) GetOrCreateAlertNotificationState(ctx context.Context, cmd *GetOrCreateNotificationStateQuery) error {
+func (s *AlertNotificationService) GetOrCreateAlertNotificationState(ctx context.Context, cmd *models.GetOrCreateNotificationStateQuery) error {
 	return s.SQLStore.GetOrCreateAlertNotificationState(ctx, cmd)
 }
 
-func (s *AlertNotificationService) SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *SetAlertNotificationStateToCompleteCommand) error {
+func (s *AlertNotificationService) SetAlertNotificationStateToCompleteCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToCompleteCommand) error {
 	return s.SQLStore.SetAlertNotificationStateToCompleteCommand(ctx, cmd)
 }
 
-func (s *AlertNotificationService) SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *SetAlertNotificationStateToPendingCommand) error {
+func (s *AlertNotificationService) SetAlertNotificationStateToPendingCommand(ctx context.Context, cmd *models.SetAlertNotificationStateToPendingCommand) error {
 	return s.SQLStore.SetAlertNotificationStateToPendingCommand(ctx, cmd)
 }
 
-func (s *AlertNotificationService) GetAlertNotificationsWithUid(ctx context.Context, query *GetAlertNotificationsWithUidQuery) error {
+func (s *AlertNotificationService) GetAlertNotificationsWithUid(ctx context.Context, query *models.GetAlertNotificationsWithUidQuery) error {
 	return s.SQLStore.GetAlertNotificationsWithUid(ctx, query)
 }
 
-func (s *AlertNotificationService) UpdateAlertNotificationWithUid(ctx context.Context, cmd *UpdateAlertNotificationWithUidCommand) error {
+func (s *AlertNotificationService) UpdateAlertNotificationWithUid(ctx context.Context, cmd *models.UpdateAlertNotificationWithUidCommand) error {
 	if util.IsShortUIDTooLong(cmd.Uid) || util.IsShortUIDTooLong(cmd.NewUid) {
 		return ValidationError{Reason: "Invalid UID: Must be 40 characters or less"}
 	}
@@ -114,19 +115,19 @@ func (s *AlertNotificationService) UpdateAlertNotificationWithUid(ctx context.Co
 	return s.SQLStore.UpdateAlertNotificationWithUid(ctx, cmd)
 }
 
-func (s *AlertNotificationService) DeleteAlertNotificationWithUid(ctx context.Context, cmd *DeleteAlertNotificationWithUidCommand) error {
+func (s *AlertNotificationService) DeleteAlertNotificationWithUid(ctx context.Context, cmd *models.DeleteAlertNotificationWithUidCommand) error {
 	return s.SQLStore.DeleteAlertNotificationWithUid(ctx, cmd)
 }
 
-func (s *AlertNotificationService) GetAlertNotificationsWithUidToSend(ctx context.Context, query *GetAlertNotificationsWithUidToSendQuery) error {
+func (s *AlertNotificationService) GetAlertNotificationsWithUidToSend(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error {
 	return s.SQLStore.GetAlertNotificationsWithUidToSend(ctx, query)
 }
 
-func (s *AlertNotificationService) createNotifier(ctx context.Context, model *AlertNotification, secureSettings map[string]string) (Notifier, error) {
+func (s *AlertNotificationService) createNotifier(ctx context.Context, model *models.AlertNotification, secureSettings map[string]string) (Notifier, error) {
 	secureSettingsMap := map[string]string{}
 
 	if model.Id > 0 {
-		query := &GetAlertNotificationsQuery{
+		query := &models.GetAlertNotificationsQuery{
 			OrgId: model.OrgId,
 			Id:    model.Id,
 		}
@@ -166,7 +167,7 @@ func (s *AlertNotificationService) createNotifier(ctx context.Context, model *Al
 	return notifier, nil
 }
 
-func (s *AlertNotificationService) validateAlertNotification(ctx context.Context, model *AlertNotification, secureSettings map[string]string) error {
+func (s *AlertNotificationService) validateAlertNotification(ctx context.Context, model *models.AlertNotification, secureSettings map[string]string) error {
 	_, err := s.createNotifier(ctx, model, secureSettings)
 	return err
 }

@@ -1,4 +1,4 @@
-package alerting
+package models
 
 import (
 	"errors"

@@ -23,11 +23,11 @@ type AlertStore interface {
 	GetAllAlertQueryHandler(context.Context, *alertmodels.GetAllAlertsQuery) error
 	GetAlertStatesForDashboard(context.Context, *alertmodels.GetAlertStatesForDashboardQuery) error
 	HandleAlertsQuery(context.Context, *alertmodels.GetAlertsQuery) error
-	SetAlertNotificationStateToCompleteCommand(context.Context, *SetAlertNotificationStateToCompleteCommand) error
-	SetAlertNotificationStateToPendingCommand(context.Context, *SetAlertNotificationStateToPendingCommand) error
-	GetAlertNotificationUidWithId(context.Context, *GetAlertNotificationUidQuery) error
-	GetAlertNotificationsWithUidToSend(context.Context, *GetAlertNotificationsWithUidToSendQuery) error
-	GetOrCreateAlertNotificationState(context.Context, *GetOrCreateNotificationStateQuery) error
+	SetAlertNotificationStateToCompleteCommand(context.Context, *alertmodels.SetAlertNotificationStateToCompleteCommand) error
+	SetAlertNotificationStateToPendingCommand(context.Context, *alertmodels.SetAlertNotificationStateToPendingCommand) error
+	GetAlertNotificationUidWithId(context.Context, *alertmodels.GetAlertNotificationUidQuery) error
+	GetAlertNotificationsWithUidToSend(context.Context, *alertmodels.GetAlertNotificationsWithUidToSendQuery) error
+	GetOrCreateAlertNotificationState(context.Context, *alertmodels.GetOrCreateNotificationStateQuery) error
 	SetAlertState(context.Context, *alertmodels.SetAlertStateCommand) error
 	PauseAlert(context.Context, *alertmodels.PauseAlertCommand) error
 	PauseAllAlerts(context.Context, *alertmodels.PauseAllAlertCommand) error

@@ -3,12 +3,12 @@ package notifiers
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/alerting"
-	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
+	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 )
 
 func TestWebhookNotifier_parsingFromSettings(t *testing.T) {
@@ -19,7 +19,7 @@ func TestWebhookNotifier_parsingFromSettings(t *testing.T) {
 
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.NoError(t, err)
-		model := &alerting.AlertNotification{
+		model := &models.AlertNotification{
 			Name:     "ops",
 			Type:     "webhook",
 			Settings: settingsJSON,
@@ -34,7 +34,7 @@ func TestWebhookNotifier_parsingFromSettings(t *testing.T) {
 
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.NoError(t, err)
-		model := &alerting.AlertNotification{
+		model := &models.AlertNotification{
 			Name:     "ops",
 			Type:     "webhook",
 			Settings: settingsJSON,

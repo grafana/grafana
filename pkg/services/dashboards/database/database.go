@@ -634,14 +634,14 @@ func saveProvisionedData(sess *db.Session, provisioning *dashboards.DashboardPro
 }
 
 func GetAlertsByDashboardId2(dashboardId int64, sess *db.Session) ([]*alertmodels.Alert, error) {
-	ret := make([]*alertmodels.Alert, 0)
-	err := sess.Where("dashboard_id = ?", dashboardId).Find(&ret)
+	alerts := make([]*alertmodels.Alert, 0)
+	err := sess.Where("dashboard_id = ?", dashboardId).Find(&alerts)
 
 	if err != nil {
 		return []*alertmodels.Alert{}, err
 	}
 
-	return ret, nil
+	return alerts, nil
 }
 
 func (d *DashboardStore) updateAlerts(ctx context.Context, existingAlerts []*alertmodels.Alert, alertsIn []*alertmodels.Alert, log log.Logger) error {

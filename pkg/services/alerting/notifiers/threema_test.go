@@ -4,11 +4,12 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestThreemaNotifier(t *testing.T) {
@@ -19,7 +20,7 @@ func TestThreemaNotifier(t *testing.T) {
 			json := `{ }`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &alerting.AlertNotification{
+			model := &models.AlertNotification{
 				Name:     "threema_testing",
 				Type:     "threema",
 				Settings: settingsJSON,
@@ -38,7 +39,7 @@ func TestThreemaNotifier(t *testing.T) {
 				}`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &alerting.AlertNotification{
+			model := &models.AlertNotification{
 				Name:     "threema_testing",
 				Type:     "threema",
 				Settings: settingsJSON,
@@ -65,7 +66,7 @@ func TestThreemaNotifier(t *testing.T) {
 				}`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &alerting.AlertNotification{
+			model := &models.AlertNotification{
 				Name:     "threema_testing",
 				Type:     "threema",
 				Settings: settingsJSON,
@@ -87,7 +88,7 @@ func TestThreemaNotifier(t *testing.T) {
 				}`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &alerting.AlertNotification{
+			model := &models.AlertNotification{
 				Name:     "threema_testing",
 				Type:     "threema",
 				Settings: settingsJSON,
@@ -109,7 +110,7 @@ func TestThreemaNotifier(t *testing.T) {
 				}`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &alerting.AlertNotification{
+			model := &models.AlertNotification{
 				Name:     "threema_testing",
 				Type:     "threema",
 				Settings: settingsJSON,

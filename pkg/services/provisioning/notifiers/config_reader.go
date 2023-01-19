@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -174,7 +175,7 @@ func (cr *configReader) validateNotifications(notifications []*notificationsAsCo
 				return err
 			}
 
-			_, err = alerting.InitNotifier(&alerting.AlertNotification{
+			_, err = alerting.InitNotifier(&models.AlertNotification{
 				Name:           notification.Name,
 				Settings:       notification.SettingsToJSON(),
 				SecureSettings: encryptedSecureSettings,

@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -24,7 +24,7 @@ func TestSlackNotifier(t *testing.T) {
 
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.NoError(t, err)
-		model := &alerting.AlertNotification{
+		model := &models.AlertNotification{
 			Name:     "ops",
 			Type:     "slack",
 			Settings: settingsJSON,
@@ -42,7 +42,7 @@ func TestSlackNotifier(t *testing.T) {
 
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.NoError(t, err)
-		model := &alerting.AlertNotification{
+		model := &models.AlertNotification{
 			Name:     "ops",
 			Type:     "slack",
 			Settings: settingsJSON,
@@ -80,7 +80,7 @@ func TestSlackNotifier(t *testing.T) {
 
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.NoError(t, err)
-		model := &alerting.AlertNotification{
+		model := &models.AlertNotification{
 			Name:     "ops",
 			Type:     "slack",
 			Settings: settingsJSON,
@@ -127,7 +127,7 @@ func TestSlackNotifier(t *testing.T) {
 			}, setting.SecretKey)
 		require.NoError(t, err)
 
-		model := &alerting.AlertNotification{
+		model := &models.AlertNotification{
 			Name:           "ops",
 			Type:           "slack",
 			Settings:       settingsJSON,
@@ -159,7 +159,7 @@ func TestSlackNotifier(t *testing.T) {
 
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.NoError(t, err)
-		model := &alerting.AlertNotification{
+		model := &models.AlertNotification{
 			Name:     "ops",
 			Type:     "slack",
 			Settings: settingsJSON,
@@ -252,7 +252,7 @@ func TestSendSlackRequest(t *testing.T) {
 
 			settingsJSON, err := simplejson.NewJson([]byte(fmt.Sprintf(`{"url": %q}`, server.URL)))
 			require.NoError(t, err)
-			model := &alerting.AlertNotification{
+			model := &models.AlertNotification{
 				Settings: settingsJSON,
 			}
 

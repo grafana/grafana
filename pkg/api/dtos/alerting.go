@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/alerting/models"
 )
 
@@ -33,7 +32,7 @@ func formatShort(interval time.Duration) string {
 	return result
 }
 
-func NewAlertNotification(notification *alerting.AlertNotification) *AlertNotification {
+func NewAlertNotification(notification *models.AlertNotification) *AlertNotification {
 	dto := &AlertNotification{
 		Id:                    notification.Id,
 		Uid:                   notification.Uid,
@@ -73,7 +72,7 @@ type AlertNotification struct {
 	SecureFields          map[string]bool  `json:"secureFields"`
 }
 
-func NewAlertNotificationLookup(notification *alerting.AlertNotification) *AlertNotificationLookup {
+func NewAlertNotificationLookup(notification *models.AlertNotification) *AlertNotificationLookup {
 	return &AlertNotificationLookup{
 		Id:        notification.Id,
 		Uid:       notification.Uid,

@@ -296,8 +296,8 @@ func (hs *HTTPServer) GetAlertNotifications(c *models.ReqContext) response.Respo
 	return response.JSON(http.StatusOK, result)
 }
 
-func (hs *HTTPServer) getAlertNotificationsInternal(c *models.ReqContext) ([]*alerting.AlertNotification, error) {
-	query := &alerting.GetAllAlertNotificationsQuery{OrgId: c.OrgID}
+func (hs *HTTPServer) getAlertNotificationsInternal(c *models.ReqContext) ([]*alertmodels.AlertNotification, error) {
+	query := &alertmodels.GetAllAlertNotificationsQuery{OrgId: c.OrgID}
 
 	if err := hs.AlertNotificationService.GetAllAlertNotifications(c.Req.Context(), query); err != nil {
 		return nil, err
@@ -323,7 +323,7 @@ func (hs *HTTPServer) GetAlertNotificationByID(c *models.ReqContext) response.Re
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "notificationId is invalid", err)
 	}
-	query := &alerting.GetAlertNotificationsQuery{
+	query := &alertmodels.GetAlertNotificationsQuery{
 		OrgId: c.OrgID,
 		Id:    notificationId,
 	}
@@ -356,7 +356,7 @@ func (hs *HTTPServer) GetAlertNotificationByID(c *models.ReqContext) response.Re
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetAlertNotificationByUID(c *models.ReqContext) response.Response {
-	query := &alerting.GetAlertNotificationsWithUidQuery{
+	query := &alertmodels.GetAlertNotificationsWithUidQuery{
 		OrgId: c.OrgID,
 		Uid:   web.Params(c.Req)[":uid"],
 	}
@@ -389,14 +389,14 @@ func (hs *HTTPServer) GetAlertNotificationByUID(c *models.ReqContext) response.R
 // 409: conflictError
 // 500: internalServerError
 func (hs *HTTPServer) CreateAlertNotification(c *models.ReqContext) response.Response {
-	cmd := alerting.CreateAlertNotificationCommand{}
+	cmd := alertmodels.CreateAlertNotificationCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
 	cmd.OrgId = c.OrgID
 
 	if err := hs.AlertNotificationService.CreateAlertNotificationCommand(c.Req.Context(), &cmd); err != nil {
-		if errors.Is(err, alerting.ErrAlertNotificationWithSameNameExists) || errors.Is(err, alerting.ErrAlertNotificationWithSameUIDExists) {
+		if errors.Is(err, alertmodels.ErrAlertNotificationWithSameNameExists) || errors.Is(err, alertmodels.ErrAlertNotificationWithSameUIDExists) {
 			return response.Error(409, "Failed to create alert notification", err)
 		}
 		var alertingErr alerting.ValidationError
@@ -422,7 +422,7 @@ func (hs *HTTPServer) CreateAlertNotification(c *models.ReqContext) response.Res
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) UpdateAlertNotification(c *models.ReqContext) response.Response {
-	cmd := alerting.UpdateAlertNotificationCommand{}
+	cmd := alertmodels.UpdateAlertNotificationCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -434,7 +434,7 @@ func (hs *HTTPServer) UpdateAlertNotification(c *models.ReqContext) response.Res
 	}
 
 	if err := hs.AlertNotificationService.UpdateAlertNotification(c.Req.Context(), &cmd); err != nil {
-		if errors.Is(err, alerting.ErrAlertNotificationNotFound) {
+		if errors.Is(err, alertmodels.ErrAlertNotificationNotFound) {
 			return response.Error(404, err.Error(), err)
 		}
 		var alertingErr alerting.ValidationError
@@ -444,7 +444,7 @@ func (hs *HTTPServer) UpdateAlertNotification(c *models.ReqContext) response.Res
 		return response.Error(500, "Failed to update alert notification", err)
 	}
 
-	query := alerting.GetAlertNotificationsQuery{
+	query := alertmodels.GetAlertNotificationsQuery{
 		OrgId: c.OrgID,
 		Id:    cmd.Id,
 	}
@@ -469,7 +469,7 @@ func (hs *HTTPServer) UpdateAlertNotification(c *models.ReqContext) response.Res
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) UpdateAlertNotificationByUID(c *models.ReqContext) response.Response {
-	cmd := alerting.UpdateAlertNotificationWithUidCommand{}
+	cmd := alertmodels.UpdateAlertNotificationWithUidCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -482,13 +482,13 @@ func (hs *HTTPServer) UpdateAlertNotificationByUID(c *models.ReqContext) respons
 	}
 
 	if err := hs.AlertNotificationService.UpdateAlertNotificationWithUid(c.Req.Context(), &cmd); err != nil {
-		if errors.Is(err, alerting.ErrAlertNotificationNotFound) {
+		if errors.Is(err, alertmodels.ErrAlertNotificationNotFound) {
 			return response.Error(404, err.Error(), nil)
 		}
 		return response.Error(500, "Failed to update alert notification", err)
 	}
 
-	query := alerting.GetAlertNotificationsWithUidQuery{
+	query := alertmodels.GetAlertNotificationsWithUidQuery{
 		OrgId: cmd.OrgId,
 		Uid:   cmd.Uid,
 	}
@@ -500,12 +500,12 @@ func (hs *HTTPServer) UpdateAlertNotificationByUID(c *models.ReqContext) respons
 	return response.JSON(http.StatusOK, dtos.NewAlertNotification(query.Result))
 }
 
-func (hs *HTTPServer) fillWithSecureSettingsData(ctx context.Context, cmd *alerting.UpdateAlertNotificationCommand) error {
+func (hs *HTTPServer) fillWithSecureSettingsData(ctx context.Context, cmd *alertmodels.UpdateAlertNotificationCommand) error {
 	if len(cmd.SecureSettings) == 0 {
 		return nil
 	}
 
-	query := &alerting.GetAlertNotificationsQuery{
+	query := &alertmodels.GetAlertNotificationsQuery{
 		OrgId: cmd.OrgId,
 		Id:    cmd.Id,
 	}
@@ -528,12 +528,12 @@ func (hs *HTTPServer) fillWithSecureSettingsData(ctx context.Context, cmd *alert
 	return nil
 }
 
-func (hs *HTTPServer) fillWithSecureSettingsDataByUID(ctx context.Context, cmd *alerting.UpdateAlertNotificationWithUidCommand) error {
+func (hs *HTTPServer) fillWithSecureSettingsDataByUID(ctx context.Context, cmd *alertmodels.UpdateAlertNotificationWithUidCommand) error {
 	if len(cmd.SecureSettings) == 0 {
 		return nil
 	}
 
-	query := &alerting.GetAlertNotificationsWithUidQuery{
+	query := &alertmodels.GetAlertNotificationsWithUidQuery{
 		OrgId: cmd.OrgId,
 		Uid:   cmd.Uid,
 	}
@@ -574,13 +574,13 @@ func (hs *HTTPServer) DeleteAlertNotification(c *models.ReqContext) response.Res
 		return response.Error(http.StatusBadRequest, "notificationId is invalid", err)
 	}
 
-	cmd := alerting.DeleteAlertNotificationCommand{
+	cmd := alertmodels.DeleteAlertNotificationCommand{
 		OrgId: c.OrgID,
 		Id:    notificationId,
 	}
 
 	if err := hs.AlertNotificationService.DeleteAlertNotification(c.Req.Context(), &cmd); err != nil {
-		if errors.Is(err, alerting.ErrAlertNotificationNotFound) {
+		if errors.Is(err, alertmodels.ErrAlertNotificationNotFound) {
 			return response.Error(404, err.Error(), nil)
 		}
 		return response.Error(500, "Failed to delete alert notification", err)
@@ -602,13 +602,13 @@ func (hs *HTTPServer) DeleteAlertNotification(c *models.ReqContext) response.Res
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) DeleteAlertNotificationByUID(c *models.ReqContext) response.Response {
-	cmd := alerting.DeleteAlertNotificationWithUidCommand{
+	cmd := alertmodels.DeleteAlertNotificationWithUidCommand{
 		OrgId: c.OrgID,
 		Uid:   web.Params(c.Req)[":uid"],
 	}
 
 	if err := hs.AlertNotificationService.DeleteAlertNotificationWithUid(c.Req.Context(), &cmd); err != nil {
-		if errors.Is(err, alerting.ErrAlertNotificationNotFound) {
+		if errors.Is(err, alertmodels.ErrAlertNotificationNotFound) {
 			return response.Error(404, err.Error(), nil)
 		}
 		return response.Error(500, "Failed to delete alert notification", err)
@@ -837,14 +837,14 @@ type NotificationChannelTestParams struct {
 type CreateAlertNotificationChannelParams struct {
 	// in:body
 	// required:true
-	Body alerting.CreateAlertNotificationCommand `json:"body"`
+	Body alertmodels.CreateAlertNotificationCommand `json:"body"`
 }
 
 // swagger:parameters updateAlertNotificationChannel
 type UpdateAlertNotificationChannelParams struct {
 	// in:body
 	// required:true
-	Body alerting.UpdateAlertNotificationCommand `json:"body"`
+	Body alertmodels.UpdateAlertNotificationCommand `json:"body"`
 	// in:path
 	// required:true
 	NotificationID int64 `json:"notification_channel_id"`
@@ -854,7 +854,7 @@ type UpdateAlertNotificationChannelParams struct {
 type UpdateAlertNotificationChannelByUIDParams struct {
 	// in:body
 	// required:true
-	Body alerting.UpdateAlertNotificationWithUidCommand `json:"body"`
+	Body alertmodels.UpdateAlertNotificationWithUidCommand `json:"body"`
 	// in:path
 	// required:true
 	NotificationUID string `json:"notification_channel_uid"`

@@ -3,11 +3,11 @@ package notifiers
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/alerting"
-	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
-
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
+	encryptionservice "github.com/grafana/grafana/pkg/services/encryption/service"
 )
 
 func TestDiscordNotifier(t *testing.T) {
@@ -18,7 +18,7 @@ func TestDiscordNotifier(t *testing.T) {
 			json := `{ }`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &alerting.AlertNotification{
+			model := &models.AlertNotification{
 				Name:     "discord_testing",
 				Type:     "discord",
 				Settings: settingsJSON,
@@ -37,7 +37,7 @@ func TestDiscordNotifier(t *testing.T) {
 				}`
 
 			settingsJSON, _ := simplejson.NewJson([]byte(json))
-			model := &alerting.AlertNotification{
+			model := &models.AlertNotification{
 				Name:     "discord_testing",
 				Type:     "discord",
 				Settings: settingsJSON,

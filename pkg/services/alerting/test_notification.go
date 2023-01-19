@@ -32,7 +32,7 @@ var (
 func (s *AlertNotificationService) HandleNotificationTestCommand(ctx context.Context, cmd *NotificationTestCommand) error {
 	notificationSvc := newNotificationService(nil, nil, nil, nil)
 
-	model := AlertNotification{
+	model := models.AlertNotification{
 		Id:       cmd.ID,
 		OrgId:    cmd.OrgID,
 		Name:     cmd.Name,

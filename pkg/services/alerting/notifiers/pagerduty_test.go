@@ -37,7 +37,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.Nil(t, err)
 
-		model := &alerting.AlertNotification{
+		model := &models.AlertNotification{
 			Name:     "pageduty_testing",
 			Type:     "pagerduty",
 			Settings: settingsJSON,
@@ -53,7 +53,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.Nil(t, err)
 
-		model := &alerting.AlertNotification{
+		model := &models.AlertNotification{
 			Name:     "pagerduty_testing",
 			Type:     "pagerduty",
 			Settings: settingsJSON,
@@ -76,7 +76,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.Nil(t, err)
 
-		model := &alerting.AlertNotification{
+		model := &models.AlertNotification{
 			Name:     "pagerduty_testing",
 			Type:     "pagerduty",
 			Settings: settingsJSON,
@@ -103,7 +103,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.Nil(t, err)
 
-		model := &alerting.AlertNotification{
+		model := &models.AlertNotification{
 			Name:     "pagerduty_testing",
 			Type:     "pagerduty",
 			Settings: settingsJSON,
@@ -128,7 +128,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.Nil(t, err)
 
-		model := &alerting.AlertNotification{
+		model := &models.AlertNotification{
 			Name:     "pagerduty_testing",
 			Type:     "pagerduty",
 			Settings: settingsJSON,
@@ -185,7 +185,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.Nil(t, err)
 
-		model := &alerting.AlertNotification{
+		model := &models.AlertNotification{
 			Name:     "pagerduty_testing",
 			Type:     "pagerduty",
 			Settings: settingsJSON,
@@ -242,7 +242,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.Nil(t, err)
 
-		model := &alerting.AlertNotification{
+		model := &models.AlertNotification{
 			Name:     "pagerduty_testing",
 			Type:     "pagerduty",
 			Settings: settingsJSON,
@@ -312,7 +312,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.NoError(t, err)
 
-		model := &alerting.AlertNotification{
+		model := &models.AlertNotification{
 			Name:     "pagerduty_testing",
 			Type:     "pagerduty",
 			Settings: settingsJSON,
@@ -392,7 +392,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.NoError(t, err)
 
-		model := &alerting.AlertNotification{
+		model := &models.AlertNotification{
 			Name:     "pagerduty_testing",
 			Type:     "pagerduty",
 			Settings: settingsJSON,
@@ -471,7 +471,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 		settingsJSON, err := simplejson.NewJson([]byte(json))
 		require.NoError(t, err)
 
-		model := &alerting.AlertNotification{
+		model := &models.AlertNotification{
 			Name:     "pagerduty_testing",
 			Type:     "pagerduty",
 			Settings: settingsJSON,
