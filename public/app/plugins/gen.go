@@ -83,7 +83,7 @@ func main() {
 func adaptToPipeline(j codejen.OneToOne[corecodegen.SchemaForGen]) codejen.OneToOne[*pfs.PluginDecl] {
 	return codejen.AdaptOneToOne(j, func(pd *pfs.PluginDecl) corecodegen.SchemaForGen {
 		return corecodegen.SchemaForGen{
-			Name:    pd.PluginMeta.Name,
+			Name:    pd.Lineage.Name(),
 			Schema:  pd.Lineage.Latest(),
 			IsGroup: pd.SchemaInterface.IsGroup(),
 		}

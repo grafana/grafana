@@ -116,12 +116,12 @@ func loadStoredQuery(fileName string) (*backend.QueryDataRequest, error) {
 	}
 
 	qm := models.QueryModel{
-		RangeQuery:    sq.RangeQuery,
-		ExemplarQuery: sq.ExemplarQuery,
-		Expr:          sq.Expr,
-		Interval:      fmt.Sprintf("%ds", sq.Step),
-		IntervalMS:    sq.Step * 1000,
-		LegendFormat:  sq.LegendFormat,
+		Range:        sq.RangeQuery,
+		Exemplar:     sq.ExemplarQuery,
+		Expr:         sq.Expr,
+		Interval:     fmt.Sprintf("%ds", sq.Step),
+		IntervalMS:   sq.Step * 1000,
+		LegendFormat: sq.LegendFormat,
 	}
 
 	data, err := json.Marshal(&qm)

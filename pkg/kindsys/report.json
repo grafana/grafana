@@ -703,7 +703,7 @@
       "machineName": "prometheusdataquery",
       "pluralMachineName": "prometheusdataquerys",
       "lineageIsGroup": false,
-      "maturity": "planned",
+      "maturity": "merged",
       "currentVersion": [
         0,
         0
@@ -1068,9 +1068,10 @@
         "name": "merged",
         "items": [
           "playlist",
+          "prometheusdataquery",
           "team"
         ],
-        "count": 2
+        "count": 3
       },
       "planned": {
         "name": "planned",
@@ -1119,7 +1120,6 @@
           "phlaredatasourcecfg",
           "postgresqldataquery",
           "postgresqldatasourcecfg",
-          "prometheusdataquery",
           "prometheusdatasourcecfg",
           "query",
           "queryhistory",
@@ -1137,7 +1137,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 61
+        "count": 60
       },
       "stable": {
         "name": "stable",

@@ -120,8 +120,8 @@ func createJsonTestData(start int64, step int64, timestampCount int, seriesCount
 	bytes := []byte(fmt.Sprintf(`{"status":"success","data":{"resultType":"matrix","result":[%v]}}`, strings.Join(allSeries, ",")))
 
 	qm := models.QueryModel{
-		RangeQuery: true,
-		Expr:       "test",
+		Range: true,
+		Expr:  "test",
 	}
 
 	data, err := json.Marshal(&qm)

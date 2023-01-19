@@ -15,7 +15,7 @@
 package grafanaplugin
 
 import (
-	ui "github.com/grafana/grafana/packages/grafana-schema/src/schema"
+	ui "github.com/grafana/grafana/packages/grafana-schema/src/common"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
 
@@ -57,11 +57,15 @@ composableKinds: DataQuery: {
 						editorMode?: #QueryEditorMode
 
 						// TODO docs
-						range: bool & queryType == "range" @cuetsy(asPrimitive)
+						range: bool
 						// TODO docs
-						exemplar: bool & queryType == "exemplar"
+						exemplar: bool
 						// TODO docs
-						instant: bool & queryType == "instant"
+						instant: bool
+
+//						range: bool & queryType == "range" @cuetsy(asPrimitive)
+//						exemplar: bool & queryType == "exemplar"
+//						instant: bool & queryType == "instant"
 
 						// TODO docs
 						queryType: "range" | "instant" | "exemplar" | *"unknown"
@@ -79,17 +83,3 @@ composableKinds: DataQuery: {
 		]
 	}
 }
-
-// composableKinds: DataSourceCfg: {
-// 	maturity: "merged"
-
-// 	lineage: {
-// 		seqs: [
-// 			{
-// 				schemas: [
-// 					{},
-// 				]
-// 			},
-// 		]
-// 	}
-// }

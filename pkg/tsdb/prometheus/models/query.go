@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	prometheus "github.com/grafana/grafana/pkg/tsdb/prometheus/kinds"
 )
 
 // Internal interval and range variables
@@ -32,29 +33,31 @@ const (
 	varRateIntervalAlt = "${__rate_interval}"
 )
 
-type TimeSeriesQueryType string
+type TimeSeriesQueryType = prometheus.QueryType
 
 const (
-	RangeQueryType    TimeSeriesQueryType = "range"
-	InstantQueryType  TimeSeriesQueryType = "instant"
-	ExemplarQueryType TimeSeriesQueryType = "exemplar"
-	UnknownQueryType  TimeSeriesQueryType = "unknown"
+	RangeQueryType    TimeSeriesQueryType = prometheus.QueryTypeRange
+	InstantQueryType  TimeSeriesQueryType = prometheus.QueryTypeInstant
+	ExemplarQueryType TimeSeriesQueryType = prometheus.QueryTypeExemplar
+	UnknownQueryType  TimeSeriesQueryType = prometheus.QueryTypeUnknown
 )
 
 var safeResolution = 11000
 
-type QueryModel struct {
-	Expr           string `json:"expr"`
-	LegendFormat   string `json:"legendFormat"`
-	Interval       string `json:"interval"`
-	IntervalMS     int64  `json:"intervalMS"`
-	StepMode       string `json:"stepMode"`
-	RangeQuery     bool   `json:"range"`
-	InstantQuery   bool   `json:"instant"`
-	ExemplarQuery  bool   `json:"exemplar"`
-	IntervalFactor int64  `json:"intervalFactor"`
-	UtcOffsetSec   int64  `json:"utcOffsetSec"`
-}
+type QueryModel = prometheus.PrometheusDataQuery
+
+// type QueryModel struct {
+// 	Expr           string `json:"expr"`
+// 	LegendFormat   string `json:"legendFormat"`
+// 	Interval       string `json:"interval"`
+// 	IntervalMS     int64  `json:"intervalMS"`
+// 	StepMode string `json:"stepMode"`
+// 	Range    bool   `json:"range"`
+// 	Instant  bool   `json:"instant"`
+// 	Exemplar       bool  `json:"exemplar"`
+// 	IntervalFactor int64 `json:"intervalFactor"`
+// 	UtcOffsetSec   int64  `json:"utcOffsetSec"`
+// }
 
 type TimeRange struct {
 	Start time.Time
@@ -81,7 +84,7 @@ func Parse(query backend.DataQuery, timeInterval string, intervalCalculator inte
 		return nil, err
 	}
 
-	//Final interval value
+	// Final interval value
 	interval, err := calculatePrometheusInterval(model, timeInterval, query, intervalCalculator)
 	if err != nil {
 		return nil, err
@@ -90,14 +93,14 @@ func Parse(query backend.DataQuery, timeInterval string, intervalCalculator inte
 	// Interpolate variables in expr
 	timeRange := query.TimeRange.To.Sub(query.TimeRange.From)
 	expr := interpolateVariables(model, interval, timeRange, intervalCalculator, timeInterval)
-	rangeQuery := model.RangeQuery
-	if !model.InstantQuery && !model.RangeQuery {
+	rangeQuery := model.Range
+	if !model.Instant && !model.Range {
 		// In older dashboards, we were not setting range query param and !range && !instant was run as range query
 		rangeQuery = true
 	}
 
 	// We never want to run exemplar query for alerting
-	exemplarQuery := model.ExemplarQuery
+	exemplarQuery := model.Exemplar
 	if fromAlert {
 		exemplarQuery = false
 	}
@@ -109,7 +112,7 @@ func Parse(query backend.DataQuery, timeInterval string, intervalCalculator inte
 		Start:         query.TimeRange.From,
 		End:           query.TimeRange.To,
 		RefId:         query.RefID,
-		InstantQuery:  model.InstantQuery,
+		InstantQuery:  model.Instant,
 		RangeQuery:    rangeQuery,
 		ExemplarQuery: exemplarQuery,
 		UtcOffsetSec:  model.UtcOffsetSec,
@@ -141,7 +144,7 @@ func (query *Query) TimeRange() TimeRange {
 func calculatePrometheusInterval(model *QueryModel, timeInterval string, query backend.DataQuery, intervalCalculator intervalv2.Calculator) (time.Duration, error) {
 	queryInterval := model.Interval
 
-	//If we are using variable for interval/step, we will replace it with calculated interval
+	// If we are using variable for interval/step, we will replace it with calculated interval
 	if isVariableInterval(queryInterval) {
 		queryInterval = ""
 	}
@@ -218,7 +221,7 @@ func isVariableInterval(interval string) bool {
 	if interval == varInterval || interval == varIntervalMs || interval == varRateInterval {
 		return true
 	}
-	//Repetitive code, we should have functionality to unify these
+	// Repetitive code, we should have functionality to unify these
 	if interval == varIntervalAlt || interval == varIntervalMsAlt || interval == varRateIntervalAlt {
 		return true
 	}

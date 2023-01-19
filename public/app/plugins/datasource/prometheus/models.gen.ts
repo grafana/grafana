@@ -17,7 +17,7 @@ export enum QueryEditorMode {
   Code = 'code',
 }
 
-export interface Prometheus extends ui.DataQuery {
+export interface PrometheusDataQuery extends ui.DataQuery {
   /**
    * TODO docs
    */
@@ -25,7 +25,7 @@ export interface Prometheus extends ui.DataQuery {
   /**
    * TODO docs
    */
-  exemplar: false;
+  exemplar: boolean;
   /**
    * TODO docs
    */
@@ -41,7 +41,7 @@ export interface Prometheus extends ui.DataQuery {
   /**
    * TODO docs
    */
-  instant: false;
+  instant: boolean;
   /**
    * TODO docs
    */
@@ -70,7 +70,7 @@ export interface Prometheus extends ui.DataQuery {
   /**
    * TODO docs
    */
-  range: false;
+  range: boolean;
   /**
    * TODO docs
    */
@@ -97,6 +97,6 @@ export interface Prometheus extends ui.DataQuery {
   valueWithRefId?: boolean;
 }
 
-export const defaultPrometheus: Partial<Prometheus> = {
+export const defaultPrometheusDataQuery: Partial<PrometheusDataQuery> = {
   queryType: 'unknown',
 };

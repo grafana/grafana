@@ -65,9 +65,9 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		require.NoError(t, err)
 
 		qm := models.QueryModel{
-			LegendFormat:  "legend {{app}}",
-			UtcOffsetSec:  0,
-			ExemplarQuery: true,
+			LegendFormat: "legend {{app}}",
+			UtcOffsetSec: 0,
+			Exemplar:     true,
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -112,7 +112,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		qm := models.QueryModel{
 			LegendFormat: "legend {{app}}",
 			UtcOffsetSec: 0,
-			RangeQuery:   true,
+			Range:        true,
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -159,7 +159,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		qm := models.QueryModel{
 			LegendFormat: "",
 			UtcOffsetSec: 0,
-			RangeQuery:   true,
+			Range:        true,
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -202,7 +202,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		qm := models.QueryModel{
 			LegendFormat: "",
 			UtcOffsetSec: 0,
-			RangeQuery:   true,
+			Range:        true,
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -243,7 +243,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		qm := models.QueryModel{
 			LegendFormat: "",
 			UtcOffsetSec: 0,
-			RangeQuery:   true,
+			Range:        true,
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -278,7 +278,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		qm := models.QueryModel{
 			LegendFormat: "legend {{app}}",
 			UtcOffsetSec: 0,
-			InstantQuery: true,
+			Instant:      true,
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
@@ -317,7 +317,7 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 		qm := models.QueryModel{
 			LegendFormat: "",
 			UtcOffsetSec: 0,
-			InstantQuery: true,
+			Instant:      true,
 		}
 		b, err := json.Marshal(&qm)
 		require.NoError(t, err)
