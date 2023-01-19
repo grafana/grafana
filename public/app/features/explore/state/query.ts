@@ -19,6 +19,7 @@ import {
   PanelEvents,
   QueryFixAction,
   toLegacyResponseData,
+  hasLogsVolumeSupport,
 } from '@grafana/data';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
 import {
@@ -474,7 +475,8 @@ export const runQueries = (
               queries,
               correlations,
               datasourceInstance != null &&
-                hasSupplementaryQuerySupport(datasourceInstance, SupplementaryQueryType.LogsVolume)
+                (hasSupplementaryQuerySupport(datasourceInstance, SupplementaryQueryType.LogsVolume) ||
+                  hasLogsVolumeSupport(datasourceInstance))
             )
           )
         )
@@ -538,7 +540,8 @@ export const runQueries = (
               queries,
               correlations,
               datasourceInstance != null &&
-                hasSupplementaryQuerySupport(datasourceInstance, SupplementaryQueryType.LogsVolume)
+                (hasSupplementaryQuerySupport(datasourceInstance, SupplementaryQueryType.LogsVolume) ||
+                  hasLogsVolumeSupport(datasourceInstance))
             )
           )
         )
@@ -594,6 +597,27 @@ export const runQueries = (
           // enables the query, we need to load the data, so we need the provider
           if (hasSupplementaryQuerySupport(datasourceInstance, type)) {
             const dataProvider = datasourceInstance.getDataProvider(type, {
+              ...transaction.request,
+              requestId: `${transaction.request.requestId}_${snakeCase(type)}`,
+            });
+            dispatch(
+              storeSupplementaryQueryDataProviderAction({
+                exploreId,
+                type,
+                dataProvider,
+              })
+            );
+
+            if (!canReuseSupplementaryQueryData(supplementaryQueries[type].data, queries, absoluteRange)) {
+              dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
+              if (supplementaryQueries[type].enabled) {
+                dispatch(loadSupplementaryQueryData(exploreId, type));
+              }
+            }
+            // Code below (else if scenario) is for backward compatibility with data sources that don't support supplementary queries
+            // TODO: Remove after v10 (#61298)
+          } else if (hasLogsVolumeSupport(datasourceInstance) && type === SupplementaryQueryType.LogsVolume) {
+            const dataProvider = datasourceInstance.getLogsVolumeDataProvider({
               ...transaction.request,
               requestId: `${transaction.request.requestId}_${snakeCase(type)}`,
             });
