@@ -7,7 +7,7 @@ title: Dashboard kind
 
 # Dashboard kind
 
-### Maturity: merged
+### Maturity: experimental
 ### Version: 0.0
 
 ## Properties

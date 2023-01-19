@@ -942,7 +942,7 @@
           "application/json": {
             "schema": {
               "items": {
-                "$ref": "#/components/schemas/PlaylistItem"
+                "$ref": "#/components/schemas/Item"
               },
               "type": "array"
             }
@@ -1582,6 +1582,16 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/SearchOrgServiceAccountsResult"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "searchOrgUsersResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SearchOrgUsersQueryResult"
             }
           }
         },
@@ -2648,6 +2658,60 @@
         "title": "Authorization contains HTTP authorization credentials.",
         "type": "object"
       },
+      "BacktestConfig": {
+        "properties": {
+          "annotations": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "condition": {
+            "type": "string"
+          },
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AlertQuery"
+            },
+            "type": "array"
+          },
+          "for": {
+            "$ref": "#/components/schemas/Duration"
+          },
+          "from": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "interval": {
+            "$ref": "#/components/schemas/Duration"
+          },
+          "labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "no_data_state": {
+            "enum": [
+              "Alerting",
+              "NoData",
+              "OK"
+            ],
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "to": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "BacktestResult": {
+        "$ref": "#/components/schemas/Frame"
+      },
       "BasicAuth": {
         "properties": {
           "password": {
@@ -3662,8 +3726,8 @@
             "type": "string"
           },
           "createdBy": {
-            "description": "Since we get created by with left join user table, this can be null technically,\nbut in reality it will always be set, when database is not corrupted.",
-            "type": "string"
+            "format": "int64",
+            "type": "integer"
           },
           "dashboardId": {
             "format": "int64",
@@ -3671,6 +3735,9 @@
           },
           "dashboardUid": {
             "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/Json"
           },
           "id": {
             "format": "int64",
@@ -3695,7 +3762,7 @@
         "type": "object"
       },
       "DashboardVersionMeta": {
-        "description": "DashboardVersionMeta extends the dashboard version model with the names\nassociated with the UserIds, overriding the field with the same name from\nthe DashboardVersion model.",
+        "description": "DashboardVersionMeta extends the DashboardVersionDTO with the names\nassociated with the UserIds, overriding the field with the same name from\nthe DashboardVersionDTO model.",
         "properties": {
           "created": {
             "format": "date-time",
@@ -3972,6 +4039,7 @@
         "type": "object"
       },
       "DataTopic": {
+        "description": "nolint:revive",
         "title": "DataTopic is used to identify which topic the frame should be assigned to.",
         "type": "string"
       },
@@ -5247,6 +5315,23 @@
         "title": "InspectType is a type for the Inspect property of a Notice.",
         "type": "integer"
       },
+      "Item": {
+        "properties": {
+          "title": {
+            "description": "Title is an unused property -- it will be removed in the future",
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/ItemType"
+          },
+          "value": {
+            "description": "Value depends on type and describes the playlist item.\n\ndashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future. (deprecated)\ndashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.\ndashboard_by_uid: The value is the dashboard UID",
+            "type": "string"
+          }
+        },
+        "title": "Item defines model for Item.",
+        "type": "object"
+      },
       "ItemDTO": {
         "properties": {
           "alertId": {
@@ -5320,6 +5405,10 @@
           }
         },
         "type": "object"
+      },
+      "ItemType": {
+        "title": "Type of the item.",
+        "type": "string"
       },
       "Json": {
         "type": "object"
@@ -5675,7 +5764,7 @@
         },
         "type": "array"
       },
-      "MessageTemplate": {
+      "NotificationTemplate": {
         "properties": {
           "name": {
             "type": "string"
@@ -5689,7 +5778,7 @@
         },
         "type": "object"
       },
-      "MessageTemplateContent": {
+      "NotificationTemplateContent": {
         "properties": {
           "template": {
             "type": "string"
@@ -5697,9 +5786,9 @@
         },
         "type": "object"
       },
-      "MessageTemplates": {
+      "NotificationTemplates": {
         "items": {
-          "$ref": "#/components/schemas/MessageTemplate"
+          "$ref": "#/components/schemas/NotificationTemplate"
         },
         "type": "array"
       },
@@ -6070,6 +6159,12 @@
             },
             "type": "object"
           },
+          "authLabels": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "avatarUrl": {
             "type": "string"
           },
@@ -6195,6 +6290,9 @@
       },
       "PatchAnnotationsCmd": {
         "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Json"
+          },
           "id": {
             "format": "int64",
             "type": "integer"
@@ -6411,24 +6509,29 @@
       },
       "PlaylistItem": {
         "properties": {
+          "Id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "PlaylistId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "order": {
+            "format": "int64",
+            "type": "integer"
+          },
           "title": {
-            "description": "Title is an unused property -- it will be removed in the future",
             "type": "string"
           },
           "type": {
-            "$ref": "#/components/schemas/PlaylistItemType"
+            "type": "string"
           },
           "value": {
-            "description": "Value depends on type and describes the playlist item.\n\ndashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future. (deprecated)\ndashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.\ndashboard_by_uid: The value is the dashboard UID",
             "type": "string"
           }
         },
-        "title": "PlaylistItem defines model for playlist.Item.",
         "type": "object"
-      },
-      "PlaylistItemType": {
-        "title": "Type of the item.",
-        "type": "string"
       },
       "Playlists": {
         "items": {
@@ -7868,6 +7971,29 @@
         },
         "type": "object"
       },
+      "SearchOrgUsersQueryResult": {
+        "properties": {
+          "orgUsers": {
+            "items": {
+              "$ref": "#/components/schemas/OrgUserDTO"
+            },
+            "type": "array"
+          },
+          "page": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "perPage": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "totalCount": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "SearchTeamQueryResult": {
         "properties": {
           "page": {
@@ -9034,6 +9160,9 @@
       },
       "UpdateAnnotationsCmd": {
         "properties": {
+          "data": {
+            "$ref": "#/components/schemas/Json"
+          },
           "id": {
             "format": "int64",
             "type": "integer"
@@ -9356,7 +9485,7 @@
           "Email": {
             "type": "string"
           },
-          "Id": {
+          "ID": {
             "format": "int64",
             "type": "integer"
           },
@@ -13588,17 +13717,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MessageTemplates"
+                  "$ref": "#/components/schemas/NotificationTemplates"
                 }
               }
             },
-            "description": "MessageTemplates"
+            "description": "NotificationTemplates"
           },
           "404": {
             "description": " Not found."
           }
         },
-        "summary": "Get all message templates.",
+        "summary": "Get all notification templates.",
         "tags": [
           "provisioning"
         ]
@@ -13646,17 +13775,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MessageTemplate"
+                  "$ref": "#/components/schemas/NotificationTemplate"
                 }
               }
             },
-            "description": "MessageTemplate"
+            "description": "NotificationTemplate"
           },
           "404": {
             "description": " Not found."
           }
         },
-        "summary": "Get a message template.",
+        "summary": "Get a notification template.",
         "tags": [
           "provisioning"
         ]
@@ -13678,7 +13807,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/MessageTemplateContent"
+                "$ref": "#/components/schemas/NotificationTemplateContent"
               }
             }
           },
@@ -13689,11 +13818,11 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MessageTemplate"
+                  "$ref": "#/components/schemas/NotificationTemplate"
                 }
               }
             },
-            "description": "MessageTemplate"
+            "description": "NotificationTemplate"
           },
           "400": {
             "content": {
@@ -17885,6 +18014,46 @@
           }
         },
         "summary": "Add a new user to the current organization.",
+        "tags": [
+          "orgs"
+        ]
+      }
+    },
+    "/orgs/{org_id}/users/search": {
+      "get": {
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users:read` with scope `users:*`.",
+        "operationId": "searchOrgUsers",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "org_id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/searchOrgUsersResponse"
+          },
+          "401": {
+            "$ref": "#/components/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "summary": "Search Users in Organization.",
         "tags": [
           "orgs"
         ]

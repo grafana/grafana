@@ -1,7 +1,7 @@
 {
   "extends": ["@grafana/eslint-config"],
   "root": true,
-  "plugins": ["@emotion", "lodash", "jest", "import", "jsx-a11y"],
+  "plugins": ["@emotion", "lodash", "jest", "import", "jsx-a11y", "@grafana"],
   "settings": {
     "import/internal-regex": "^(app/)|(@grafana)",
     "import/external-module-folders": ["node_modules", ".yarn"]
@@ -88,10 +88,13 @@
           }
         ],
         "jsx-a11y/no-static-element-interactions": "off",
-        "jsx-a11y/label-has-associated-control": [ "error", {
-          "controlComponents": ["NumberInput"],
-          "depth": 2
-        }]
+        "jsx-a11y/label-has-associated-control": [
+          "error",
+          {
+            "controlComponents": ["NumberInput"],
+            "depth": 2
+          }
+        ]
       }
     }
   ]
