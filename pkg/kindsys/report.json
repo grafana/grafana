@@ -135,7 +135,7 @@
       "machineName": "cloudwatchdataquery",
       "pluralMachineName": "cloudwatchdataquerys",
       "lineageIsGroup": false,
-      "maturity": "planned",
+      "maturity": "merged",
       "currentVersion": [
         0,
         0
@@ -1067,10 +1067,11 @@
       "merged": {
         "name": "merged",
         "items": [
+          "cloudwatchdataquery",
           "playlist",
           "team"
         ],
-        "count": 2
+        "count": 3
       },
       "planned": {
         "name": "planned",
@@ -1082,7 +1083,6 @@
           "apikey",
           "azuremonitordataquery",
           "azuremonitordatasourcecfg",
-          "cloudwatchdataquery",
           "cloudwatchdatasourcecfg",
           "dashboarddataquery",
           "dashboarddatasourcecfg",
@@ -1137,7 +1137,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 61
+        "count": 60
       },
       "stable": {
         "name": "stable",
