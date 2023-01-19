@@ -25,7 +25,7 @@ For more information, refer to [Enable debug logging in Grafana CLI]({{< relref 
 
 ## Troubleshoot with Dashboards Panels
 
-If you have an issue with your Dashboard panel, then simply send us the debug information using the following steps.
+If you have an issue with your Dashboard panel, you can send us debug information. For more information, refer to [Send a panel to Grafana Labs support]({{< relref "./send-panel-to-grafana-support/" >}}).
 
 Open the dropdown menu by clicking on your panel title -> Hover mouse to **More** -> Then select **Get Help**
 
