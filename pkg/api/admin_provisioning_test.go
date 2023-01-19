@@ -182,7 +182,6 @@ func TestAPI_AdminProvisioningReload_AccessControl(t *testing.T) {
 				// Check we actually called the provisioning service
 				tt.checkCall(*pService)
 			}
-
 		})
 	}
 }
