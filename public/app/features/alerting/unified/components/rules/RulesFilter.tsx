@@ -46,8 +46,9 @@ interface RulesFilerProps {
   onFilterCleared?: () => void;
 }
 
-const RulesFilter = ({ onFilterCleared }: RulesFilerProps) => {
-  const [queryParams, setQueryParams] = useQueryParams(); // TODO Limit scope of query params
+const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => {
+  const [queryParams, setQueryParams] = useQueryParams();
+
   // This key is used to force a rerender on the inputs when the filters are cleared
   const [filterKey, setFilterKey] = useState<number>(Math.floor(Math.random() * 100));
   const dataSourceKey = `dataSource-${filterKey}`;
@@ -93,10 +94,7 @@ const RulesFilter = ({ onFilterCleared }: RulesFilerProps) => {
 
   const handleClearFiltersClick = () => {
     setSearchQuery(undefined);
-
-    if (onFilterCleared) {
-      onFilterCleared();
-    }
+    onFilterCleared();
 
     setTimeout(() => setFilterKey(filterKey + 1), 100);
   };

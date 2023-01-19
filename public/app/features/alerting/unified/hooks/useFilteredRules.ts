@@ -1,5 +1,5 @@
 import produce from 'immer';
-import { compact } from 'lodash';
+import { compact, isEmpty } from 'lodash';
 import { useCallback, useEffect, useMemo } from 'react';
 
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -19,7 +19,7 @@ export function useRulesFilter() {
   const searchQuery = queryParams.get('search') ?? '';
 
   const filterState = getSearchFilterFromQuery(searchQuery);
-  const hasActiveFilters = Object.values(filterState).some((fs) => (Array.isArray(fs) ? fs.length > 0 : !!fs));
+  const hasActiveFilters = Object.values(filterState).some((filter) => !isEmpty(filter));
 
   const updateFilters = useCallback(
     (newFilter: SearchFilterState) => {
@@ -45,7 +45,7 @@ export function useRulesFilter() {
       labels: parseMatchers(queryParams.get('queryString') ?? '').map(matcherToMatcherField),
     };
 
-    const hasLegacyFilters = Object.values(legacyFilters).some((lf) => (Array.isArray(lf) ? lf.length > 0 : !!lf));
+    const hasLegacyFilters = Object.values(legacyFilters).some((legacyFilter) => !isEmpty(legacyFilter));
     if (hasLegacyFilters) {
       updateQueryParams({ dataSource: undefined, alertState: undefined, ruleType: undefined, queryString: undefined });
       // Existing query filters takes precedence over legacy ones
@@ -78,26 +78,30 @@ export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterStat
 
 export const filterRules = (
   namespaces: CombinedRuleNamespace[],
-  ngFilters: SearchFilterState = { labels: [], freeFormWords: [] }
+  filterState: SearchFilterState = { labels: [], freeFormWords: [] }
 ): CombinedRuleNamespace[] => {
   return (
     namespaces
-      .filter((ns) => (ngFilters.namespace ? ns.name.toLowerCase().includes(ngFilters.namespace.toLowerCase()) : true))
+      .filter((ns) =>
+        filterState.namespace ? ns.name.toLowerCase().includes(filterState.namespace.toLowerCase()) : true
+      )
       .filter(({ rulesSource }) =>
-        ngFilters.dataSourceName && isCloudRulesSource(rulesSource)
-          ? rulesSource.name === ngFilters.dataSourceName
+        filterState.dataSourceName && isCloudRulesSource(rulesSource)
+          ? rulesSource.name === filterState.dataSourceName
           : true
       )
       // If a namespace and group have rules that match the rules filters then keep them.
-      .reduce(reduceNamespaces(ngFilters), [] as CombinedRuleNamespace[])
+      .reduce(reduceNamespaces(filterState), [] as CombinedRuleNamespace[])
   );
 };
 
-const reduceNamespaces = (ngFilters: SearchFilterState) => {
+const reduceNamespaces = (filterStateFilters: SearchFilterState) => {
   return (namespaceAcc: CombinedRuleNamespace[], namespace: CombinedRuleNamespace) => {
     const groups = namespace.groups
-      .filter((g) => (ngFilters.groupName ? g.name.toLowerCase().includes(ngFilters.groupName.toLowerCase()) : true))
-      .reduce(reduceGroups(ngFilters), [] as CombinedRuleGroup[]);
+      .filter((g) =>
+        filterStateFilters.groupName ? g.name.toLowerCase().includes(filterStateFilters.groupName.toLowerCase()) : true
+      )
+      .reduce(reduceGroups(filterStateFilters), [] as CombinedRuleGroup[]);
 
     if (groups.length) {
       namespaceAcc.push({
@@ -111,36 +115,34 @@ const reduceNamespaces = (ngFilters: SearchFilterState) => {
 };
 
 // Reduces groups to only groups that have rules matching the filters
-const reduceGroups = (ngFilters: SearchFilterState) => {
+const reduceGroups = (filterState: SearchFilterState) => {
   return (groupAcc: CombinedRuleGroup[], group: CombinedRuleGroup) => {
     const rules = group.rules.filter((rule) => {
-      if (ngFilters.ruleType && ngFilters.ruleType !== rule.promRule?.type) {
+      if (filterState.ruleType && filterState.ruleType !== rule.promRule?.type) {
         return false;
       }
-      if (
-        ngFilters.dataSourceName &&
-        isGrafanaRulerRule(rule.rulerRule) &&
-        !isQueryingDataSource(rule.rulerRule, ngFilters)
-      ) {
+
+      const doesNotQueryDs = isGrafanaRulerRule(rule.rulerRule) && !isQueryingDataSource(rule.rulerRule, filterState);
+      if (filterState.dataSourceName && doesNotQueryDs) {
         return false;
       }
 
       const ruleNameLc = rule.name?.toLocaleLowerCase();
       // Free Form Query is used to filter by rule name
       if (
-        ngFilters.freeFormWords.length > 0 &&
-        !ngFilters.freeFormWords.every((w) => ruleNameLc.includes(w.toLocaleLowerCase()))
+        filterState.freeFormWords.length > 0 &&
+        !filterState.freeFormWords.every((w) => ruleNameLc.includes(w.toLocaleLowerCase()))
       ) {
         return false;
       }
 
-      if (ngFilters.ruleName && !rule.name?.toLocaleLowerCase().includes(ngFilters.ruleName.toLocaleLowerCase())) {
+      if (filterState.ruleName && !rule.name?.toLocaleLowerCase().includes(filterState.ruleName.toLocaleLowerCase())) {
         return false;
       }
       // Query strings can match alert name, label keys, and label values
-      if (ngFilters.labels.length > 0) {
+      if (filterState.labels.length > 0) {
         // const matchers = parseMatchers(filters.queryString);
-        const matchers = compact(ngFilters.labels.map(looseParseMatcher));
+        const matchers = compact(filterState.labels.map(looseParseMatcher));
 
         const doRuleLabelsMatchQuery = matchers.length > 0 && labelsMatchMatchers(rule.labels, matchers);
         const doAlertsContainMatchingLabels =
@@ -155,8 +157,8 @@ const reduceGroups = (ngFilters: SearchFilterState) => {
         }
       }
       if (
-        ngFilters.ruleState &&
-        !(rule.promRule && isAlertingRule(rule.promRule) && rule.promRule.state === ngFilters.ruleState)
+        filterState.ruleState &&
+        !(rule.promRule && isAlertingRule(rule.promRule) && rule.promRule.state === filterState.ruleState)
       ) {
         return false;
       }
@@ -182,8 +184,8 @@ function looseParseMatcher(matcherQuery: string): Matcher | undefined {
   }
 }
 
-const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, ngFilter: SearchFilterState): boolean => {
-  if (!ngFilter.dataSourceName) {
+const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filterState: SearchFilterState): boolean => {
+  if (!filterState.dataSourceName) {
     return true;
   }
 
@@ -192,6 +194,6 @@ const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, ngFilter: SearchFi
       return false;
     }
     const ds = getDataSourceSrv().getInstanceSettings(query.datasourceUid);
-    return ds?.name === ngFilter.dataSourceName;
+    return ds?.name === filterState.dataSourceName;
   });
 };

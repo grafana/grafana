@@ -2,7 +2,9 @@
 
 Alerting uses [Lezer](https://lezer.codemirror.net/) parser system to create a search syntax grammar.
 
-The grammar file `search.grammar` needs to be built by the `@lezer/generator` package to generate the grammar parser.
+File [search.grammar](search.grammar) describes the search grammar.
+
+`@lezer/generator` package is used to generate [search.js](search.js) and [search.terms.js](search.terms.js) files which includes a JS grammar parser.
 
 ## Changing the grammar
 
