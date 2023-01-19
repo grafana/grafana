@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/prometheus/client_golang/prometheus"
 	"io"
 	"net/http"
 	"path"
@@ -386,13 +388,18 @@ func (hs *HTTPServer) redirectCDNPluginAsset(c *models.ReqContext, plugin plugin
 		c.JsonApiErr(500, "Failed to get CDN plugin asset remote URL", err)
 		return
 	}
-	hs.log.Info(
+	hs.log.Warn(
 		"plugin cdn redirect hit",
 		"pluginID", plugin.ID,
 		"pluginVersion", plugin.Info.Version,
 		"assetPath", assetPath,
 		"remoteURL", remoteURL,
 	)
+	metrics.MPluginsCDNFallbackRedirectRequests.With(prometheus.Labels{
+		"plugin_id":      plugin.ID,
+		"plugin_version": plugin.Info.Version,
+		"asset_path":     assetPath,
+	}).Inc()
 	http.Redirect(c.Resp, c.Req, remoteURL, http.StatusFound)
 }
 
