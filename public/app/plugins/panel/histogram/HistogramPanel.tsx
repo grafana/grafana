@@ -16,6 +16,20 @@ export const HistogramPanel = ({ data, options, width, height }: Props) => {
     if (!data?.series?.length) {
       return undefined;
     }
+
+    // stamp origins for legend's calcs (from raw values)
+    data.series.forEach((frame, frameIndex) => {
+      frame.fields.forEach((field, fieldIndex) => {
+        field.state = {
+          ...field.state,
+          origin: {
+            frameIndex,
+            fieldIndex,
+          },
+        };
+      });
+    });
+
     if (data.series.length === 1) {
       const info = getHistogramFields(data.series[0]);
       if (info) {

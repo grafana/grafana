@@ -108,6 +108,7 @@ describe('BarChart utils', () => {
       text: {
         valueSize: 10,
       },
+      fullHighlight: false,
       rawValue: (seriesIdx: number, valueIdx: number) => frame.fields[seriesIdx].values.get(valueIdx),
     };
 

@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/converter"
 )
 
-func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response) (*backend.DataResponse, error) {
+func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *http.Response) (backend.DataResponse, error) {
 	defer func() {
 		if err := res.Body.Close(); err != nil {
 			s.log.FromContext(ctx).Error("Failed to close response body", "err", err)
@@ -29,11 +29,13 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 		MatrixWideSeries: s.enableWideSeries,
 		VectorWideSeries: s.enableWideSeries,
 	})
-	if r == nil {
-		return nil, fmt.Errorf("received empty response from prometheus")
-	}
 
 	// The ExecutedQueryString can be viewed in QueryInspector in UI
+	// Add frame to attach metadata to it
+	if len(r.Frames) == 0 {
+		r.Frames = append(r.Frames, data.NewFrame(""))
+	}
+
 	for _, frame := range r.Frames {
 		if s.enableWideSeries {
 			addMetadataToWideFrame(q, frame)
@@ -42,19 +44,23 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 		}
 	}
 
+	if r.Error != nil {
+		return r, r.Error
+	}
+
 	r = s.processExemplars(q, r)
 	return r, nil
 }
 
-func (s *QueryData) processExemplars(q *models.Query, dr *backend.DataResponse) *backend.DataResponse {
-	s.exemplarSampler.Reset()
+func (s *QueryData) processExemplars(q *models.Query, dr backend.DataResponse) backend.DataResponse {
+	sampler := s.exemplarSampler()
 	labelTracker := exemplar.NewLabelTracker()
 
 	// we are moving from a multi-frame response returned
 	// by the converter to a single exemplar frame,
 	// so we need to build a new frame array with the
 	// old exemplar frames filtered out
-	framer := exemplar.NewFramer(s.exemplarSampler, labelTracker)
+	framer := exemplar.NewFramer(sampler, labelTracker)
 
 	for _, frame := range dr.Frames {
 		// we don't need to process non-exemplar frames
@@ -69,7 +75,7 @@ func (s *QueryData) processExemplars(q *models.Query, dr *backend.DataResponse) 
 		framer.SetRefID(frame.RefID)
 
 		step := time.Duration(frame.Fields[0].Config.Interval) * time.Millisecond
-		s.exemplarSampler.SetStep(step)
+		sampler.SetStep(step)
 
 		seriesLabels := getSeriesLabels(frame)
 		labelTracker.Add(seriesLabels)
@@ -83,13 +89,13 @@ func (s *QueryData) processExemplars(q *models.Query, dr *backend.DataResponse) 
 				Timestamp:    row[0].(time.Time),
 				SeriesLabels: seriesLabels,
 			}
-			s.exemplarSampler.Add(ex)
+			sampler.Add(ex)
 		}
 	}
 
 	frames, err := framer.Frames()
 
-	return &backend.DataResponse{
+	return backend.DataResponse{
 		Frames: frames,
 		Error:  err,
 	}

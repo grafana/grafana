@@ -12,6 +12,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -45,6 +46,7 @@ type NavigationAppConfig struct {
 	SectionID  string
 	SortWeight int64
 	Text       string
+	Icon       string
 }
 
 func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore plugins.Store, pluginSettings pluginsettings.Service, starService star.Service, features *featuremgmt.FeatureManager, dashboardService dashboards.DashboardService, accesscontrolService ac.Service, kvStore kvstore.KVStore, apiKeyService apikey.Service, queryLibraryService querylibrary.HTTPService) navtree.Service {
@@ -155,7 +157,9 @@ func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	}
 
 	if s.features.IsEnabled(featuremgmt.FlagDataConnectionsConsole) {
-		treeRoot.AddSection(s.buildDataConnectionsNavLink(c))
+		if connectionsSection := s.buildDataConnectionsNavLink(c); connectionsSection != nil {
+			treeRoot.AddSection(connectionsSection)
+		}
 	}
 
 	if s.features.IsEnabled(featuremgmt.FlagLivePipeline) {
@@ -215,10 +219,10 @@ func (s *ServiceImpl) getHomeNode(c *models.ReqContext, prefs *pref.Preference) 
 	}
 
 	if prefs.HomeDashboardID != 0 {
-		slugQuery := models.GetDashboardRefByIdQuery{Id: prefs.HomeDashboardID}
-		err := s.dashboardService.GetDashboardUIDById(c.Req.Context(), &slugQuery)
+		slugQuery := dashboards.GetDashboardRefByIDQuery{ID: prefs.HomeDashboardID}
+		err := s.dashboardService.GetDashboardUIDByID(c.Req.Context(), &slugQuery)
 		if err == nil {
-			homeUrl = models.GetDashboardUrl(slugQuery.Result.Uid, slugQuery.Result.Slug)
+			homeUrl = dashboards.GetDashboardURL(slugQuery.Result.UID, slugQuery.Result.Slug)
 		}
 	}
 
@@ -327,7 +331,7 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *models.ReqContext) ([]*navtre
 		return nil, err
 	}
 
-	starredDashboards := []*models.Dashboard{}
+	starredDashboards := []*dashboards.Dashboard{}
 	starredDashboardsCounter := 0
 	for dashboardId := range starredDashboardResult.UserStars {
 		// Set a loose limit to the first 50 starred dashboards found
@@ -335,9 +339,9 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *models.ReqContext) ([]*navtre
 			break
 		}
 		starredDashboardsCounter++
-		query := &models.GetDashboardQuery{
-			Id:    dashboardId,
-			OrgId: c.OrgID,
+		query := &dashboards.GetDashboardQuery{
+			ID:    dashboardId,
+			OrgID: c.OrgID,
 		}
 		err := s.dashboardService.GetDashboard(c.Req.Context(), query)
 		if err == nil {
@@ -351,9 +355,9 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *models.ReqContext) ([]*navtre
 		})
 		for _, starredItem := range starredDashboards {
 			starredItemsChildNavs = append(starredItemsChildNavs, &navtree.NavLink{
-				Id:   "starred/" + starredItem.Uid,
+				Id:   "starred/" + starredItem.UID,
 				Text: starredItem.Title,
-				Url:  starredItem.GetUrl(),
+				Url:  starredItem.GetURL(),
 			})
 		}
 	}
@@ -558,45 +562,53 @@ func (s *ServiceImpl) buildAlertNavLinks(c *models.ReqContext, hasEditPerm bool)
 }
 
 func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree.NavLink {
+	hasAccess := ac.HasAccess(s.accessControl, c)
+
 	var children []*navtree.NavLink
 	var navLink *navtree.NavLink
 
 	baseUrl := s.cfg.AppSubURL + "/connections"
 
-	// Your connections
-	children = append(children, &navtree.NavLink{
-		Id:       "connections-your-connections",
-		Text:     "Your connections",
-		SubTitle: "Manage your existing connections",
-		Url:      baseUrl + "/your-connections",
-		// Datasources
-		Children: []*navtree.NavLink{{
-			Id:       "connections-your-connections-datasources",
-			Text:     "Data sources",
-			SubTitle: "View and manage your connected data source connections",
-			Url:      baseUrl + "/your-connections/datasources",
-		}},
-	})
+	if hasAccess(ac.ReqOrgAdmin, datasources.ConfigurationPageAccess) {
+		// Connect data
+		children = append(children, &navtree.NavLink{
+			Id:        "connections-connect-data",
+			Text:      "Connect data",
+			SubTitle:  "Browse and create new connections",
+			IsSection: true,
+			Url:       s.cfg.AppSubURL + "/connections/connect-data",
+			Children:  []*navtree.NavLink{},
+		})
 
-	// Connect data
-	children = append(children, &navtree.NavLink{
-		Id:       "connections-connect-data",
-		Text:     "Connect data",
-		SubTitle: "Browse and create new connections",
-		Url:      s.cfg.AppSubURL + "/connections/connect-data",
-		Children: []*navtree.NavLink{},
-	})
-
-	// Connections (main)
-	navLink = &navtree.NavLink{
-		Text:       "Connections",
-		Icon:       "link",
-		Id:         "connections",
-		Url:        baseUrl,
-		Children:   children,
-		Section:    navtree.NavSectionCore,
-		SortWeight: navtree.WeightDataConnections,
+		// Your connections
+		children = append(children, &navtree.NavLink{
+			Id:       "connections-your-connections",
+			Text:     "Your connections",
+			SubTitle: "Manage your existing connections",
+			Url:      baseUrl + "/your-connections",
+			// Datasources
+			Children: []*navtree.NavLink{{
+				Id:       "connections-your-connections-datasources",
+				Text:     "Data sources",
+				SubTitle: "View and manage your connected data source connections",
+				Url:      baseUrl + "/your-connections/datasources",
+			}},
+		})
 	}
 
-	return navLink
+	if len(children) > 0 {
+		// Connections (main)
+		navLink = &navtree.NavLink{
+			Text:       "Connections",
+			Icon:       "adjust-circle",
+			Id:         "connections",
+			Url:        baseUrl,
+			Children:   children,
+			Section:    navtree.NavSectionCore,
+			SortWeight: navtree.WeightDataConnections,
+		}
+
+		return navLink
+	}
+	return nil
 }
