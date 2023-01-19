@@ -50,7 +50,7 @@ func buildTestInstanceStateTypeIsValidName(instanceType InstanceStateType, expec
 	if expectedValidity {
 		return fmt.Sprintf("%q should be valid", instanceType)
 	}
-	return fmt.Sprintf("\"%s\" should not be valid", instanceType)
+	return fmt.Sprintf("%q should not be valid", instanceType)
 }
 
 func TestValidateAlertInstance(t *testing.T) {
