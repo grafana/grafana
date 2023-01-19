@@ -27,9 +27,6 @@ For more information, refer to [Enable debug logging in Grafana CLI]({{< relref 
 
 If you have an issue with your Dashboard panel, you can send us debug information. For more information, refer to [Send a panel to Grafana Labs support]({{< relref "./send-panel-to-grafana-support/" >}}).
 
-Open the dropdown menu by clicking on your panel title -> Hover mouse to **More** -> Then select **Get Help**
-
-Then it will open a new page and ask you to send the snapshot data. You can simply click the button **Dashobard** to Download it and then send it for debugging. Also if you have any sensitive data then you can use the **Randomize data** option which will hide the original data.
 
 
 
