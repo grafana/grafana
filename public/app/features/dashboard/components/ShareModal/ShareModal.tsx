@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { getBackendSrv, reportInteraction } from '@grafana/runtime/src';
-import { Modal, ModalTabsHeader, TabContent } from '@grafana/ui';
+import { Modal, ModalTabsHeader, TabContent, Spinner } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { t } from 'app/core/internationalization';
@@ -27,16 +27,9 @@ export function addPanelShareTab(tab: ShareModalTabModel) {
   customPanelTabs.push(tab);
 }
 
-function getTabs(props: Props, snapshotEnabled: boolean) {
-  const { panel, activeTab } = props;
-
+function getTabs(snapshotEnabled: boolean, panel?: PanelModel, activeTab?: string) {
   const linkLabel = t('share-modal.tab-title.link', 'Link');
   const tabs: ShareModalTabModel[] = [{ label: linkLabel, value: 'link', component: ShareLink }];
-
-  if (contextSrv.isSignedIn && snapshotEnabled) {
-    const snapshotLabel = t('share-modal.tab-title.snapshot', 'Snapshot');
-    tabs.push({ label: snapshotLabel, value: 'snapshot', component: ShareSnapshot });
-  }
 
   if (panel) {
     const embedLabel = t('share-modal.tab-title.embed', 'Embed');
@@ -55,6 +48,11 @@ function getTabs(props: Props, snapshotEnabled: boolean) {
 
   if (Boolean(config.featureToggles['publicDashboards'])) {
     tabs.push({ label: 'Public dashboard', value: 'share', component: SharePublicDashboard });
+  }
+
+  if (contextSrv.isSignedIn && snapshotEnabled) {
+    const snapshotLabel = t('share-modal.tab-title.snapshot', 'Snapshot');
+    tabs.push({ label: snapshotLabel, value: 'snapshot', component: ShareSnapshot });
   }
 
   const at = tabs.find((t) => t.value === activeTab);
@@ -77,10 +75,11 @@ interface State {
   tabs: ShareModalTabModel[];
   activeTab: string;
   snapshotEnabled: boolean;
+  isLoading: boolean;
 }
 
-function getInitialState(props: Props, snapshotEnabled: boolean): State {
-  const { tabs, activeTab } = getTabs(props, snapshotEnabled);
+function getInitialState(props: Props, snapshotEnabled: boolean): Omit<State, 'isLoading'> {
+  const { tabs, activeTab } = getTabs(snapshotEnabled, props.panel, props.activeTab);
 
   return {
     tabs,
@@ -96,7 +95,7 @@ export class ShareModal extends React.Component<Props, State> {
   constructor(props: Props) {
     super(props);
     // this is used to about null problems on the state, it will be called again on "componentDidMount"
-    this.state = getInitialState(props, DEFAULT_SNAPSHOT_ENABLED);
+    this.state = { ...getInitialState(props, DEFAULT_SNAPSHOT_ENABLED), isLoading: false };
   }
 
   async getSnapshotEnabledOption(): Promise<boolean> {
@@ -107,18 +106,19 @@ export class ShareModal extends React.Component<Props, State> {
   async componentDidMount() {
     reportInteraction('grafana_dashboards_share_modal_viewed');
 
+    this.setState((prevState) => ({ ...prevState, isLoading: true }));
     const snapshotEnabled = await this.getSnapshotEnabledOption();
 
-    this.setState(getInitialState(this.props, snapshotEnabled));
+    this.setState({
+      ...getTabs(snapshotEnabled, this.props.panel, this.state.activeTab),
+      isLoading: false,
+      snapshotEnabled: snapshotEnabled,
+    });
   }
 
   onSelectTab = (t: any) => {
-    this.setState({ activeTab: t.value });
+    this.setState((prevState) => ({ ...prevState, activeTab: t.value }));
   };
-
-  getTabs() {
-    return getTabs(this.props, this.state.snapshotEnabled).tabs;
-  }
 
   getActiveTab() {
     const { tabs, activeTab } = this.state;
@@ -129,15 +129,19 @@ export class ShareModal extends React.Component<Props, State> {
     const { panel } = this.props;
     const { activeTab } = this.state;
     const title = panel ? t('share-modal.panel.title', 'Share Panel') : t('share-modal.dashboard.title', 'Share');
+    const tabs = getTabs(this.state.snapshotEnabled, this.props.panel, this.state.activeTab).tabs;
 
     return (
-      <ModalTabsHeader
-        title={title}
-        icon="share-alt"
-        tabs={this.getTabs()}
-        activeTab={activeTab}
-        onChangeTab={this.onSelectTab}
-      />
+      <>
+        <ModalTabsHeader
+          title={title}
+          icon="share-alt"
+          tabs={tabs}
+          activeTab={activeTab}
+          onChangeTab={this.onSelectTab}
+        />
+        {this.state.isLoading && <Spinner />}
+      </>
     );
   }
 

@@ -38,6 +38,7 @@ const renderSharePublicDashboard = async (props: React.ComponentProps<typeof Sha
   );
 
   await waitFor(() => screen.getByText('Link'));
+  await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
   isEnabled && fireEvent.click(screen.getByText('Public dashboard'));
 };
 
@@ -68,13 +69,21 @@ beforeAll(() => {
     ],
   } as BootData;
 
-  server.listen({ onUnhandledRequest: 'bypass' });
+  server.listen({ onUnhandledRequest: 'error' });
 });
 
 beforeEach(() => {
   server.use(
     rest.get('/api/snapshot/shared-options', (req, res, ctx) => {
-      return res(ctx.status(200), ctx.json({ snapshotEnabled: true }));
+      return res(
+        ctx.status(200),
+        ctx.json({
+          externalEnabled: false,
+          externalSnapshotName: 'Publish to snapshots.raintank.io',
+          externalSnapshotURL: 'https://snapshots.raintank.io',
+          snapshotEnabled: true,
+        })
+      );
     })
   );
 
@@ -351,7 +360,6 @@ describe('SharePublic - Already persisted', () => {
     expect(enableTimeRangeSwitch).toBeEnabled();
     expect(enableTimeRangeSwitch).toBeChecked();
   });
-
   it('when modal is opened, then time range switch is enabled and not checked when its not checked in the db', async () => {
     server.use(
       rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (req, res, ctx) => {
