@@ -127,6 +127,19 @@ export const getFieldLinksForExplore = (options: {
         }
         return linkModel;
       } else {
+        if (link.internal.transformations) {
+          const fieldValue = field.values.get(rowIndex);
+          link.internal.transformations.forEach((transformation) => {
+            if (transformation.type === 'regex' && transformation.expression) {
+              const regexp = new RegExp(transformation.expression, 'g');
+              const matches = fieldValue.match(regexp);
+              scopedVars[transformation.variable || field.name] = {
+                value: matches[0],
+              };
+            }
+          });
+        }
+
         return mapInternalLinkToExplore({
           link,
           internalLink: link.internal,

@@ -53,6 +53,10 @@ type CorrelationConfig struct {
 		UPDATE correlation
 		SET config='{"type":"query","field":"name","transformations":[{"type":"regex","expression":"\\(?:msg\\)="}],"target":{"editorMode":"code","format":"table","rawQuery":true,"rawSql":"SELECT * FROM superhero WHERE name=${__data.fields.name}","refId":"A","sql":{"columns":[{"parameters":[],"type":"function"}],"groupBy":[{"property":{"type":"string"},"type":"groupBy"}],"limit":50}}}'
 		WHERE id = 425
+
+		UPDATE correlation
+		SET config='{"type":"query","field":"text","target":{"editorMode":"code","format":"table","rawQuery":true,"rawSql":"SELECT * FROM superhero WHERE name=${name}","refId":"A","sql":{"columns":[{"parameters":[],"type":"function"}],"groupBy":[{"property":{"type":"string"},"type":"groupBy"}],"limit":50}},"transformations":[{"type":"regex","expression":"(Superman|Batman)", "variable":"name"}]}'
+		WHERE id = 637
 	*/
 	Transformations []Transformation `json:"transformations"`
 }
