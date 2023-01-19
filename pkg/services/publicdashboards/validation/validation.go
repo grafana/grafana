@@ -1,8 +1,8 @@
 package validation
 
 import (
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/google/uuid"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util"
