@@ -21,6 +21,13 @@ export const addStandardCanvasEditorOptions = (builder: PanelOptionsEditorBuilde
     description: '',
     defaultValue: false,
   });
+
+  builder.addBooleanSwitch({
+    path: 'enableConnections',
+    name: 'Connection points',
+    description: '',
+    defaultValue: true,
+  });
 };
 
 export const plugin = new PanelPlugin<PanelOptions>(CanvasPanel)

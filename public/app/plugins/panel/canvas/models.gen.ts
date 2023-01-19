@@ -10,12 +10,14 @@ export const modelVersion = Object.freeze([1, 0]);
 export interface PanelOptions {
   inlineEditing: boolean;
   showAdvancedTypes: boolean;
+  enableConnections: boolean,
   root: CanvasFrameOptions;
 }
 
 export const defaultPanelOptions: PanelOptions = {
   inlineEditing: true,
   showAdvancedTypes: false,
+  enableConnections: true,
   root: {
     elements: [
       {

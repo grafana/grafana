@@ -64,6 +64,7 @@ export class CanvasPanel extends Component<Props, State> {
       this.props.options.root,
       this.props.options.inlineEditing,
       this.props.options.showAdvancedTypes,
+      this.props.options.enableConnections,
       this.onUpdateScene,
       this
     );
@@ -88,7 +89,8 @@ export class CanvasPanel extends Component<Props, State> {
           this.scene.load(
             this.props.options.root,
             this.props.options.inlineEditing,
-            this.props.options.showAdvancedTypes
+            this.props.options.showAdvancedTypes,
+            this.props.options.enableConnections
           );
         }
       })
@@ -181,16 +183,28 @@ export class CanvasPanel extends Component<Props, State> {
     // After editing, the options are valid, but the scene was in a different panel or inline editing mode has changed
     const shouldUpdateSceneAndPanel = this.needsReload && this.props.options !== nextProps.options;
     const inlineEditingSwitched = this.props.options.inlineEditing !== nextProps.options.inlineEditing;
+    const shouldEnableConnectionsSwitched =
+      this.props.options.enableConnections !== nextProps.options.enableConnections;
     const shouldShowAdvancedTypesSwitched =
       this.props.options.showAdvancedTypes !== nextProps.options.showAdvancedTypes;
-    if (shouldUpdateSceneAndPanel || inlineEditingSwitched || shouldShowAdvancedTypesSwitched) {
+    if (
+      shouldUpdateSceneAndPanel ||
+      inlineEditingSwitched ||
+      shouldShowAdvancedTypesSwitched ||
+      shouldEnableConnectionsSwitched
+    ) {
       if (inlineEditingSwitched) {
         // Replace scene div to prevent selecto instance leaks
         this.scene.revId++;
       }
 
       this.needsReload = false;
-      this.scene.load(nextProps.options.root, nextProps.options.inlineEditing, nextProps.options.showAdvancedTypes);
+      this.scene.load(
+        nextProps.options.root,
+        nextProps.options.inlineEditing,
+        nextProps.options.showAdvancedTypes,
+        nextProps.options.enableConnections
+      );
       this.scene.updateSize(nextProps.width, nextProps.height);
       this.scene.updateData(nextProps.data);
       changed = true;

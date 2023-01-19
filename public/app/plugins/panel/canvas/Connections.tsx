@@ -192,7 +192,9 @@ export class Connections {
   render() {
     return (
       <>
-        <ConnectionAnchors setRef={this.setConnectionAnchorRef} handleMouseLeave={this.handleMouseLeave} />
+        {this.scene.shouldEnableConnections && (
+          <ConnectionAnchors setRef={this.setConnectionAnchorRef} handleMouseLeave={this.handleMouseLeave} />
+        )}
         <ConnectionSVG setSVGRef={this.setConnectionSVGRef} setLineRef={this.setConnectionLineRef} scene={this.scene} />
       </>
     );
