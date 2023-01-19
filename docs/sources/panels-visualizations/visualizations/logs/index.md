@@ -34,7 +34,7 @@ Each log row has an extendable area with its labels and detected fields, for mor
 
 ### Data links
 
-By using Data links, you can turn any part of a log message into an internal or external link. The created link is visible as a button in the Links section inside the Log details view.
+By using data links, you can turn any part of a log message into an internal or external link. The created link is visible as a button in the **Links** section inside the **Log details** view.
 
 ### Display options
 
