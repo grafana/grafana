@@ -8,7 +8,7 @@ weight: 60
 
 # Data sources
 
-Grafana has built-in support for a wide range of _data sources_.
+Grafana supports a wide range of _data sources_.
 These data sources might be files, services, or databases.
 You can also extend the supported data sources through one of the many [Plugins](/grafana/plugins/) (or [build your own](/docs/grafana/latest/developers/plugins/).
 
