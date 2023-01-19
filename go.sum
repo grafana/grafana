@@ -1393,8 +1393,8 @@ github.com/gorilla/websocket v1.4.1/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/ad
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/gorilla/websocket v1.5.0 h1:PPwGk2jz7EePpoHN/+ClbZu8SPxiqlu12wZP/3sWmnc=
 github.com/gorilla/websocket v1.5.0/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
-github.com/grafana/alerting v0.0.0-20230113220341-b9b3de89bca2 h1:XkzN0dBir+oso3XjGOV2HLGSCjyyYHLL5AuUqI/LIXY=
-github.com/grafana/alerting v0.0.0-20230113220341-b9b3de89bca2/go.mod h1:w5jcmHYPAfju/QcI69SwFs0+qMcm8jvW6fsqSc2tJtc=
+github.com/grafana/alerting v0.0.0-20230119191910-5ebb70a85264 h1:ApQsGfr05Yma0dpd1+ib11cJQcpmet+E/Ke/aQkdT1Y=
+github.com/grafana/alerting v0.0.0-20230119191910-5ebb70a85264/go.mod h1:NoSLbfmUwE+omWFReFrLtbtOItmvTbuQERJ6XFYp9ME=
 github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw=
 github.com/grafana/codejen v0.0.3/go.mod h1:zmwwM/DRyQB7pfuBjTWII3CWtxcXh8LTwAYGfDfpR6s=
 github.com/grafana/cuetsy v0.1.5 h1:mnFwAXdbqCsyL8r7kkdUMJ4kOAR26cxIPmrZj7JzTeY=
@@ -1414,8 +1414,8 @@ github.com/grafana/grafana-plugin-sdk-go v0.147.0 h1:VavvJOa/Ubs+wzalzWIl+FQmdaD
 github.com/grafana/grafana-plugin-sdk-go v0.147.0/go.mod h1:NMgO3t2gR5wyLx8bWZ9CTmpDk5Txp4wYFccFLHdYn3Q=
 github.com/grafana/phlare/api v0.1.2 h1:1jrwd3KnsXMzj/tJih9likx5EvbY3pbvLbDqAAYem30=
 github.com/grafana/phlare/api v0.1.2/go.mod h1:29vcLwFDmZBDce2jwFIMtzvof7fzPadT8VMKw9ks7FU=
-github.com/grafana/prometheus-alertmanager v0.25.1-0.20230109182643-002d8ba820f6 h1:teookZDfQHNJWhsXujYZLhIeLFWzZZtqeqqfkQwOcLI=
-github.com/grafana/prometheus-alertmanager v0.25.1-0.20230109182643-002d8ba820f6/go.mod h1:MnBfDPXJqXmmfPwQlCLvVUdqfnvrAw+hSPtDeaaFwj4=
+github.com/grafana/prometheus-alertmanager v0.25.1-0.20230119183635-ec19b0a443b7 h1:ma1CfisUaAXQzL24tCao9yMleZYsFJ853m2l0rgahyE=
+github.com/grafana/prometheus-alertmanager v0.25.1-0.20230119183635-ec19b0a443b7/go.mod h1:MnBfDPXJqXmmfPwQlCLvVUdqfnvrAw+hSPtDeaaFwj4=
 github.com/grafana/saml v0.4.9-0.20220727151557-61cd9c9353fc h1:1PY8n+rXuBNr3r1JQhoytWDCpc+pq+BibxV0SZv+Cr4=
 github.com/grafana/saml v0.4.9-0.20220727151557-61cd9c9353fc/go.mod h1:9Zh6dWPtB3MSzTRt8fIFH60Z351QQ+s7hCU3J/tTlA4=
 github.com/grafana/thema v0.0.0-20230113164405-e0e8893756cf h1:jl1iWUlJt5GJWaafOqtaEp46MDFBCni7bmv75VGFkq0=
