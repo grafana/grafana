@@ -154,7 +154,7 @@ export class CanvasPanel extends Component<Props, State> {
   };
 
   shouldComponentUpdate(nextProps: Props, nextState: State) {
-    const { width, height, data } = this.props;
+    const { width, height, data, options } = this.props;
     let changed = false;
 
     if (width !== nextProps.width || height !== nextProps.height) {
@@ -163,6 +163,11 @@ export class CanvasPanel extends Component<Props, State> {
     }
 
     if (data !== nextProps.data && !this.scene.ignoreDataUpdate) {
+      this.scene.updateData(nextProps.data);
+      changed = true;
+    }
+
+    if (options !== nextProps.options && !this.scene.ignoreDataUpdate) {
       this.scene.updateData(nextProps.data);
       changed = true;
     }

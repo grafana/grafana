@@ -79,13 +79,13 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 	dashboardPermissions := acmock.NewMockedPermissionsService()
 
 	dashboardService := dashboardservice.ProvideDashboardService(
-		cfg, dashboardStore, nil,
+		cfg, dashboardStore, dashboardStore, nil,
 		features, folderPermissions, dashboardPermissions, ac,
 	)
 
 	tracer := tracing.InitializeTracerForTest()
 	bus := bus.ProvideBus(tracer)
-	folderService := folderimpl.ProvideService(ac, bus, cfg, dashboardStore, nil, features, folderPermissions, nil)
+	folderService := folderimpl.ProvideService(ac, bus, cfg, dashboardStore, dashboardStore, nil, features, folderPermissions, nil)
 
 	ng, err := ngalert.ProvideService(
 		cfg, featuremgmt.WithFeatures(), nil, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, quotatest.New(false, nil),

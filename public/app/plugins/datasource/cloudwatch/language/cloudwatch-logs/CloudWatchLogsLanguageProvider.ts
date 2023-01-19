@@ -5,7 +5,10 @@ import { AbsoluteTimeRange, HistoryItem, LanguageProvider } from '@grafana/data'
 import { CompletionItemGroup, SearchFunctionType, Token, TypeaheadInput, TypeaheadOutput } from '@grafana/ui';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
 
-import { CloudWatchDatasource } from './datasource';
+import { CloudWatchDatasource } from '../../datasource';
+import { CloudWatchQuery, LogGroup, TSDBResponse } from '../../types';
+import { interpolateStringArrayUsingSingleOrMultiValuedVariable } from '../../utils/templateVariableUtils';
+
 import syntax, {
   AGGREGATION_FUNCTIONS_STATS,
   BOOLEAN_FUNCTIONS,
@@ -16,8 +19,6 @@ import syntax, {
   QUERY_COMMANDS,
   STRING_FUNCTIONS,
 } from './syntax';
-import { CloudWatchQuery, LogGroup, TSDBResponse } from './types';
-import { interpolateStringArrayUsingSingleOrMultiValuedVariable } from './utils/templateVariableUtils';
 
 export type CloudWatchHistoryItem = HistoryItem<CloudWatchQuery>;
 
@@ -28,7 +29,7 @@ type TypeaheadContext = {
   region: string;
 };
 
-export class CloudWatchLanguageProvider extends LanguageProvider {
+export class CloudWatchLogsLanguageProvider extends LanguageProvider {
   started = false;
   declare initialRange: AbsoluteTimeRange;
   datasource: CloudWatchDatasource;

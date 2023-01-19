@@ -7,8 +7,8 @@ import {
   QueryEditorFunctionExpression,
   QueryEditorOperatorExpression,
   QueryEditorPropertyExpression,
-} from '../expressions';
-import { SQLExpression } from '../types';
+} from '../../expressions';
+import { SQLExpression } from '../../types';
 
 export default class SQLGenerator {
   constructor(private templateSrv: TemplateSrv = getTemplateSrv()) {}

@@ -5,7 +5,7 @@ import {
   labelsVariable,
   metricVariable,
   namespaceVariable,
-} from '../__mocks__/CloudWatchDataSource';
+} from '../../__mocks__/CloudWatchDataSource';
 import {
   createFunctionWithParameter,
   createArray,
@@ -13,9 +13,9 @@ import {
   createGroupBy,
   createFunction,
   createProperty,
-} from '../__mocks__/sqlUtils';
-import { QueryEditorExpressionType } from '../expressions';
-import { SQLExpression } from '../types';
+} from '../../__mocks__/sqlUtils';
+import { QueryEditorExpressionType } from '../../expressions';
+import { SQLExpression } from '../../types';
 
 import SQLGenerator from './SQLGenerator';
 
