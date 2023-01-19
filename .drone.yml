@@ -5585,13 +5585,31 @@ kind: secret
 name: gcp_upload_artifacts_key
 ---
 get:
-  name: public-key
+  name: application_id
+  path: infra/data/ci/datasources/cpp-azure-resourcemanager-credentials
+kind: secret
+name: azure_sp_app_id
+---
+get:
+  name: application_secret
+  path: infra/data/ci/datasources/cpp-azure-resourcemanager-credentials
+kind: secret
+name: azure_sp_app_pw
+---
+get:
+  name: tenant_id
+  path: infra/data/ci/datasources/cpp-azure-resourcemanager-credentials
+kind: secret
+name: azure_tenant
+---
+get:
+  name: public-key-b64
   path: infra/data/ci/packages-publish/gpg
 kind: secret
 name: packages_gpg_public_key
 ---
 get:
-  name: private-key
+  name: private-key-b64
   path: infra/data/ci/packages-publish/gpg
 kind: secret
 name: packages_gpg_private_key
@@ -5620,7 +5638,25 @@ get:
 kind: secret
 name: packages_secret_access_key
 ---
+get:
+  name: aws_region
+  path: secret/data/common/aws-marketplace
+kind: secret
+name: aws_region
+---
+get:
+  name: aws_access_key_id
+  path: secret/data/common/aws-marketplace
+kind: secret
+name: aws_access_key_id
+---
+get:
+  name: aws_secret_access_key
+  path: secret/data/common/aws-marketplace
+kind: secret
+name: aws_secret_access_key
+---
 kind: signature
-hmac: 2926632c20b97a9cf06e0315a309853a386b889711f4c61d29e6caf46842d27e
+hmac: 4cd9c45598335fad9a2d337ada7b09c6620038bbd878683bb78281cf2de6d1de
 
 ...
