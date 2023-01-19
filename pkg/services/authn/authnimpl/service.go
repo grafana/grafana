@@ -151,11 +151,11 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 	defer span.End()
 
 	var authErr error
-	for _, c := range s.clientQueue.items {
-		if c.Test(ctx, r) {
-			identity, err := s.authenticate(ctx, c, r)
+	for _, item := range s.clientQueue.items {
+		if item.v.Test(ctx, r) {
+			identity, err := s.authenticate(ctx, item.v, r)
 			if err != nil {
-				s.log.Warn("failed to authenticate", "client", c.Name(), "err", err)
+				s.log.Warn("failed to authenticate", "client", item.v.Name(), "err", err)
 				authErr = multierror.Append(authErr, err)
 				// try next
 				continue
@@ -264,7 +264,7 @@ func (s *Service) RedirectURL(ctx context.Context, client string, r *authn.Reque
 func (s *Service) RegisterClient(c authn.Client) {
 	s.clients[c.Name()] = c
 	if cac, ok := c.(authn.ContextAwareClient); ok {
-		s.clientQueue.insert(cac)
+		s.clientQueue.insert(cac, cac.Priority())
 	}
 }
 

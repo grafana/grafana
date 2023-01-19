@@ -19,7 +19,7 @@ func TestQueue(t *testing.T) {
 
 	tests := []testCase{
 		{
-			desc: "",
+			desc: "expect correct order",
 			clients: []authn.ContextAwareClient{
 				&authntest.FakeClient{ExpectedName: "1", ExpectedPriority: 1},
 				&authntest.FakeClient{ExpectedName: "5", ExpectedPriority: 5},
@@ -35,13 +35,13 @@ func TestQueue(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			q := newQueue[authn.ContextAwareClient]()
 			for _, c := range tt.clients {
-				q.insert(c)
+				q.insert(c, c.Priority())
 			}
 
 			require.Len(t, q.items, len(tt.expectedOrder))
 
 			for i := range q.items {
-				assert.Equal(t, q.items[i].Name(), tt.expectedOrder[i])
+				assert.Equal(t, q.items[i].v.Name(), tt.expectedOrder[i])
 			}
 		})
 	}
