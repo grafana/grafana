@@ -174,7 +174,7 @@ const jsonDataSwitchChangeHandler =
       ...value,
       jsonData: {
         ...value.jsonData,
-        [key]: event.currentTarget.value,
+        [key]: event.currentTarget.checked,
       },
     });
   };
