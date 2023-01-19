@@ -1,5 +1,5 @@
-import * as raw from '../raw/dashboard/x/dashboard_types.gen';
 import { DataSourceRef as CommonDataSourceRef } from '../common/common.gen';
+import * as raw from '../raw/dashboard/x/dashboard_types.gen';
 
 export type { CommonDataSourceRef as DataSourceRef };
 
