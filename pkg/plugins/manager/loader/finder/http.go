@@ -102,13 +102,13 @@ func (h *HTTP) fetchPlugin(path string) (plugins.JSONData, error) {
 		return plugins.JSONData{}, errSkipPlugin
 	}
 
-	path, err = url.JoinPath(path, "plugin.json")
+	u, err := url.JoinPath(path, "plugin.json")
 	if err != nil {
 		h.log.Warn("Skipping finding plugins as path is invalid URL", "path", path)
 		return plugins.JSONData{}, errSkipPlugin
 	}
 
-	resp, err := http.Get(path)
+	resp, err := http.Get(u)
 	if err != nil {
 		h.log.Warn("Error occurred when fetching plugin.json", "path", path, "err", err)
 		return plugins.JSONData{}, errSkipPlugin
