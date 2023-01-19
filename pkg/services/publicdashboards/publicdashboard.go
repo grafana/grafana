@@ -21,6 +21,7 @@ type Service interface {
 	FindAnnotations(ctx context.Context, reqDTO AnnotationsQueryDTO, accessToken string) ([]AnnotationEvent, error)
 	FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (*dashboards.Dashboard, error)
 	FindAll(ctx context.Context, u *user.SignedInUser, orgId int64) ([]PublicDashboardListResponse, error)
+	Find(ctx context.Context, uid string) (*PublicDashboard, error)
 	Create(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardDTO) (*PublicDashboard, error)
 	Update(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardDTO) (*PublicDashboard, error)
 	Delete(ctx context.Context, orgId int64, uid string) error
