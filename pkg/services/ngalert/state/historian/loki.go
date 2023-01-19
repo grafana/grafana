@@ -143,11 +143,6 @@ func buildDataBlob(state *state.State) *simplejson.Json {
 			keys = append(keys, k)
 		}
 		sort.Strings(keys)
-
-		var values []string
-		for _, k := range keys {
-			values = append(values, fmt.Sprintf("%s=%f", k, state.Values[k]))
-		}
 		jsonData.Set("values", simplejson.NewFromAny(state.Values))
 	}
 	return jsonData
