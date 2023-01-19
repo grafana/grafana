@@ -382,7 +382,7 @@ export const getAllStandardFieldConfigs = () => {
     getItemsCount: (value) => (value ? value.steps.length : 0),
   };
 
-  const filterable: FieldConfigPropertyItem<any, boolean | undefined, {}> = {
+  const filterable: FieldConfigPropertyItem<{}, boolean | undefined, {}> = {
     id: 'filterable',
     path: 'filterable',
     name: 'Ad-hoc filterable',
