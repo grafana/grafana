@@ -128,9 +128,9 @@ export const getFieldLinksForExplore = (options: {
         return linkModel;
       } else {
         const internalLinkSpecificVars: ScopedVars = {};
-        if (link.internal.transformations) {
+        if (link.internal?.transformationData?.transformations) {
           const fieldValue = field.values.get(rowIndex);
-          link.internal.transformations.forEach((transformation) => {
+          link.internal?.transformationData?.transformations.forEach((transformation) => {
             if (transformation.type === 'regex' && transformation.expression) {
               const regexp = new RegExp(transformation.expression, 'g');
               const matches = fieldValue.match(regexp);
@@ -139,6 +139,8 @@ export const getFieldLinksForExplore = (options: {
                   value: matches[0],
                 };
               }
+            } else if (transformation.type === 'logfmt') {
+              // TODO what do we do with logs fieldValue
             }
           });
         }

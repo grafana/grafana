@@ -39,7 +39,10 @@ const decorateDataFrameWithInternalDataLinks = (dataFrame: DataFrame, correlatio
             query: correlation.config?.target,
             datasourceUid: correlation.target.uid,
             datasourceName: correlation.target.name,
-            transformations: correlation.config?.transformations,
+            transformationData: {
+              transformations: correlation.config?.transformations,
+              mappings: correlation.config?.mappings,
+            },
           },
           url: '',
           title: correlation.label || correlation.target.name,

@@ -54,7 +54,7 @@ export interface InternalDataLink<T extends DataQuery = any> {
   datasourceUid: string;
   datasourceName: string; // used as a title if `DataLink.title` is empty
   panelsState?: ExplorePanelsState;
-  transformations?: Transformation[];
+  transformationData?: { transformations?: Transformation[]; mappings?: object };
 }
 
 export type LinkTarget = '_blank' | '_self' | undefined;
