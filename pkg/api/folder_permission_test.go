@@ -122,12 +122,12 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
 			CanAdminValue:                    true,
 			CheckPermissionBeforeUpdateValue: true,
-			GetACLValue: []*models.DashboardACLInfoDTO{
-				{OrgId: 1, DashboardId: 1, UserId: 2, Permission: models.PERMISSION_VIEW},
-				{OrgId: 1, DashboardId: 1, UserId: 3, Permission: models.PERMISSION_EDIT},
-				{OrgId: 1, DashboardId: 1, UserId: 4, Permission: models.PERMISSION_ADMIN},
-				{OrgId: 1, DashboardId: 1, TeamId: 1, Permission: models.PERMISSION_VIEW},
-				{OrgId: 1, DashboardId: 1, TeamId: 2, Permission: models.PERMISSION_ADMIN},
+			GetACLValue: []*dashboards.DashboardACLInfoDTO{
+				{OrgID: 1, DashboardID: 1, UserID: 2, Permission: models.PERMISSION_VIEW},
+				{OrgID: 1, DashboardID: 1, UserID: 3, Permission: models.PERMISSION_EDIT},
+				{OrgID: 1, DashboardID: 1, UserID: 4, Permission: models.PERMISSION_ADMIN},
+				{OrgID: 1, DashboardID: 1, TeamID: 1, Permission: models.PERMISSION_VIEW},
+				{OrgID: 1, DashboardID: 1, TeamID: 2, Permission: models.PERMISSION_ADMIN},
 			},
 		})
 
@@ -139,12 +139,12 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 			callGetFolderPermissions(sc, hs)
 			assert.Equal(t, 200, sc.resp.Code)
 
-			var resp []*models.DashboardACLInfoDTO
+			var resp []*dashboards.DashboardACLInfoDTO
 			err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 			require.NoError(t, err)
 
 			assert.Len(t, resp, 5)
-			assert.Equal(t, int64(2), resp[0].UserId)
+			assert.Equal(t, int64(2), resp[0].UserID)
 			assert.Equal(t, models.PERMISSION_VIEW, resp[0].Permission)
 		}, mockSQLStore)
 
@@ -286,24 +286,24 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 		guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
 			CanAdminValue:                    true,
 			CheckPermissionBeforeUpdateValue: true,
-			GetACLValue: []*models.DashboardACLInfoDTO{
-				{OrgId: 1, DashboardId: 1, UserId: 2, UserLogin: "hiddenUser", Permission: models.PERMISSION_VIEW},
-				{OrgId: 1, DashboardId: 1, UserId: 3, UserLogin: testUserLogin, Permission: models.PERMISSION_EDIT},
-				{OrgId: 1, DashboardId: 1, UserId: 4, UserLogin: "user_1", Permission: models.PERMISSION_ADMIN},
+			GetACLValue: []*dashboards.DashboardACLInfoDTO{
+				{OrgID: 1, DashboardID: 1, UserID: 2, UserLogin: "hiddenUser", Permission: models.PERMISSION_VIEW},
+				{OrgID: 1, DashboardID: 1, UserID: 3, UserLogin: testUserLogin, Permission: models.PERMISSION_EDIT},
+				{OrgID: 1, DashboardID: 1, UserID: 4, UserLogin: "user_1", Permission: models.PERMISSION_ADMIN},
 			},
-			GetHiddenACLValue: []*models.DashboardACL{
+			GetHiddenACLValue: []*dashboards.DashboardACL{
 				{OrgID: 1, DashboardID: 1, UserID: 2, Permission: models.PERMISSION_VIEW},
 			},
 		})
 
-		var gotItems []*models.DashboardACL
+		var gotItems []*dashboards.DashboardACL
 
 		folderService.ExpectedFolder = &folder.Folder{ID: 1, UID: "uid", Title: "Folder"}
 		dashboardStore.On("UpdateDashboardACL", mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-			gotItems = args.Get(2).([]*models.DashboardACL)
+			gotItems = args.Get(2).([]*dashboards.DashboardACL)
 		}).Return(nil).Once()
 
-		var resp []*models.DashboardACLInfoDTO
+		var resp []*dashboards.DashboardACLInfoDTO
 		mockSQLStore := dbtest.NewFakeDB()
 		loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/folders/uid/permissions", "/api/folders/:uid/permissions", org.RoleAdmin, func(sc *scenarioContext) {
 			callGetFolderPermissions(sc, hs)
@@ -313,9 +313,9 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 			require.NoError(t, err)
 
 			assert.Len(t, resp, 2)
-			assert.Equal(t, int64(3), resp[0].UserId)
+			assert.Equal(t, int64(3), resp[0].UserID)
 			assert.Equal(t, models.PERMISSION_EDIT, resp[0].Permission)
-			assert.Equal(t, int64(4), resp[1].UserId)
+			assert.Equal(t, int64(4), resp[1].UserID)
 			assert.Equal(t, models.PERMISSION_ADMIN, resp[1].Permission)
 		}, mockSQLStore)
 
@@ -326,7 +326,7 @@ func TestFolderPermissionAPIEndpoint(t *testing.T) {
 		}
 		for _, acl := range resp {
 			cmd.Items = append(cmd.Items, dtos.DashboardACLUpdateItem{
-				UserID:     acl.UserId,
+				UserID:     acl.UserID,
 				Permission: acl.Permission,
 			})
 		}

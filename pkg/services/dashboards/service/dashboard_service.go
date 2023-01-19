@@ -183,7 +183,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	return cmd, nil
 }
 
-func (dr *DashboardServiceImpl) UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardACL) error {
+func (dr *DashboardServiceImpl) UpdateDashboardACL(ctx context.Context, uid int64, items []*dashboards.DashboardACL) error {
 	return dr.dashboardStore.UpdateDashboardACL(ctx, uid, items)
 }
 
@@ -390,7 +390,7 @@ func (dr *DashboardServiceImpl) MakeUserAdmin(ctx context.Context, orgID int64, 
 	rtEditor := org.RoleEditor
 	rtViewer := org.RoleViewer
 
-	items := []*models.DashboardACL{
+	items := []*dashboards.DashboardACL{
 		{
 			OrgID:       orgID,
 			DashboardID: dashboardID,
@@ -403,7 +403,7 @@ func (dr *DashboardServiceImpl) MakeUserAdmin(ctx context.Context, orgID int64, 
 
 	if setViewAndEditPermissions {
 		items = append(items,
-			&models.DashboardACL{
+			&dashboards.DashboardACL{
 				OrgID:       orgID,
 				DashboardID: dashboardID,
 				Role:        &rtEditor,
@@ -411,7 +411,7 @@ func (dr *DashboardServiceImpl) MakeUserAdmin(ctx context.Context, orgID int64, 
 				Created:     time.Now(),
 				Updated:     time.Now(),
 			},
-			&models.DashboardACL{
+			&dashboards.DashboardACL{
 				OrgID:       orgID,
 				DashboardID: dashboardID,
 				Role:        &rtViewer,
@@ -597,7 +597,7 @@ func makeQueryResult(query *models.FindPersistedDashboardsQuery, res []dashboard
 	}
 }
 
-func (dr *DashboardServiceImpl) GetDashboardACLInfoList(ctx context.Context, query *models.GetDashboardACLInfoListQuery) error {
+func (dr *DashboardServiceImpl) GetDashboardACLInfoList(ctx context.Context, query *dashboards.GetDashboardACLInfoListQuery) error {
 	return dr.dashboardStore.GetDashboardACLInfoList(ctx, query)
 }
 
