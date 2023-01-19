@@ -18,6 +18,7 @@ import {
   systemDateFormats,
   SystemDateFormatSettings,
   NewThemeOptions,
+  PluginExtensions,
 } from '@grafana/data';
 
 export interface AzureSettings {
@@ -143,6 +144,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   rudderstackConfigUrl: undefined;
 
   tokenExpirationDayLimit: undefined;
+  pluginExtensions: Record<string, PluginExtensions> = {};
 
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;
