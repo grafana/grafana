@@ -14,7 +14,7 @@ If the plugin you need doesn't exist, you can also create your own custom plugin
 
 Each data source comes with a _query editor_,
 which formulates custom queries according to the source's particular structure.
-After you add a data source, you can use it as an input for many operations:
+After you add and configure a data source, you can use it as an input for many operations:
 - Query the data with [Explore]({{< relref "../explore" >}}).
 - Visualize it in [panels]({{< relref "../panels-visualizations" >}}).
 - Create rules for [alerts]({{< relref "../alerting" >}}).
