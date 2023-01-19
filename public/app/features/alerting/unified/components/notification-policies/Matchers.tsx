@@ -1,11 +1,13 @@
 import { css } from '@emotion/css';
-import { take, uniqueId } from 'lodash';
+import { take, takeRight, uniqueId } from 'lodash';
 import React, { FC } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { getTagColorsFromName, useStyles2 } from '@grafana/ui';
 import { ObjectMatcher } from 'app/plugins/datasource/alertmanager/types';
+
+import { HoverCard } from '../HoverCard';
 
 type MatchersProps = { matchers: ObjectMatcher[] };
 
@@ -16,8 +18,8 @@ const Matchers: FC<MatchersProps> = ({ matchers }) => {
   const NUM_MATCHERS = 5;
 
   const firstFew = take(matchers, NUM_MATCHERS);
-  const rest = matchers.length - NUM_MATCHERS;
-  const hasMoreMatchers = rest > 0;
+  const rest = takeRight(matchers, matchers.length - NUM_MATCHERS);
+  const hasMoreMatchers = rest.length > 0;
 
   return (
     <Stack direction="row" gap={1} alignItems="center">
@@ -25,7 +27,24 @@ const Matchers: FC<MatchersProps> = ({ matchers }) => {
         <MatcherBadge key={uniqueId()} matcher={matcher} />
       ))}
       {/* TODO hover state to show all matchers we're not showing */}
-      {hasMoreMatchers && <div className={styles.metadata}>{`and ${rest} more`}</div>}
+      {hasMoreMatchers && (
+        <HoverCard
+          arrow
+          placement="top"
+          showAfter={100}
+          content={
+            <>
+              {rest.map((matcher) => (
+                <MatcherBadge key={uniqueId()} matcher={matcher} />
+              ))}
+            </>
+          }
+        >
+          <span>
+            <div className={styles.metadata}>{`and ${rest.length} more`}</div>
+          </span>
+        </HoverCard>
+      )}
     </Stack>
   );
 };
