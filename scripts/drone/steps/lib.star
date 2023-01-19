@@ -649,9 +649,9 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None):
         sign_args = ' --sign'
         env = {
             'GRAFANA_API_KEY': from_secret('grafana_api_key'),
-            'GPG_PRIV_KEY': from_secret('gpg_priv_key'),
-            'GPG_PUB_KEY': from_secret('gpg_pub_key'),
-            'GPG_KEY_PASSWORD': from_secret('gpg_key_password'),
+            'GPG_PRIV_KEY': from_secret('packages_gpg_private_key'),
+            'GPG_PUB_KEY': from_secret('packages_gpg_public_key'),
+            'GPG_KEY_PASSWORD': from_secret('packages_gpg_passphrase'),
         }
         test_args = ''
     else:
