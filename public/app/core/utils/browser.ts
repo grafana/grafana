@@ -32,3 +32,12 @@ export function checkBrowserCompatibility() {
 
   return true;
 }
+
+export function userAgentIsApple() {
+  const appleRe = /(iPhone|iPad|Mac)/;
+  return appleRe.test(navigator.platform);
+}
+
+export function getShortcutKey() {
+  return userAgentIsApple() ? 'Cmd' : 'Ctrl';
+}

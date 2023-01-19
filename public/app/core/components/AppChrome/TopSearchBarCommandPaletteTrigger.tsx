@@ -1,12 +1,13 @@
 import { css } from '@emotion/css';
 import { useKBar, VisualState } from 'kbar';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { getInputStyles, Icon, ToolbarButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { focusCss } from '@grafana/ui/src/themes/mixins';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { t } from 'app/core/internationalization';
+import { getShortcutKey } from 'app/core/utils/browser';
 
 export function TopSearchBarCommandPaletteTrigger() {
   const theme = useTheme2();
@@ -44,8 +45,13 @@ export function TopSearchBarCommandPaletteTrigger() {
   return <PretendTextInput onClick={onOpenSearch} />;
 }
 
-function PretendTextInput({ onClick }: { onClick: () => void }) {
+interface PretendTextInputProps {
+  onClick: () => void;
+}
+
+function PretendTextInput({ onClick }: PretendTextInputProps) {
   const styles = useStyles2(getStyles);
+  const shortcutKey = useMemo(() => getShortcutKey(), []);
 
   // We want the desktop command palette trigger to look like a search box,
   // but it actually behaves like a button - you active it and it performs an
@@ -61,6 +67,10 @@ function PretendTextInput({ onClick }: { onClick: () => void }) {
         <button className={styles.fakeInput} onClick={onClick}>
           {t('nav.search.placeholder', 'Search Grafana')}
         </button>
+
+        <div className={styles.suffix}>
+          <span className={styles.shortcut}>{shortcutKey} + K</span>
+        </div>
       </div>
     </div>
   );
@@ -73,6 +83,10 @@ const getStyles = (theme: GrafanaTheme2) => {
     wrapper: baseStyles.wrapper,
     inputWrapper: baseStyles.inputWrapper,
     prefix: baseStyles.prefix,
+    suffix: baseStyles.suffix,
+    shortcut: css({
+      fontSize: theme.typography.bodySmall.fontSize,
+    }),
     fakeInput: css([
       baseStyles.input,
       {
