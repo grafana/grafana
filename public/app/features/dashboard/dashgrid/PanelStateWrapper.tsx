@@ -657,6 +657,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           titleItems={titleItems}
           menu={menu}
           dragClass={dragClass}
+          dragClassCancel="grid-drag-cancel"
           padding={padding}
         >
           {(innerWidth, innerHeight) => (
