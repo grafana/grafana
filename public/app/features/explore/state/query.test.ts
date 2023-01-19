@@ -68,7 +68,7 @@ jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   }),
 }));
 
-const useFeatToggles = {
+let useFeatToggles = {
   exploreMixedDatasource: false,
 };
 
@@ -335,7 +335,88 @@ describe('reducer', () => {
         expect(getState().explore[exploreId].queryKeys).toEqual(['ds1-0']);
       });
 
-      it('should add query row if there is one row already', async () => {
+      it('should add another query row if there are two rows already', async () => {
+        const exploreId = ExploreId.left;
+        let dispatch: ThunkDispatch, getState: () => StoreState;
+
+        const store: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+          ...defaultInitialState,
+          explore: {
+            [exploreId]: {
+              ...defaultInitialState.explore[exploreId],
+              queries: [
+                {
+                  datasource: { type: 'loki', uid: 'ds3' },
+                  refId: 'C',
+                },
+                {
+                  datasource: { type: 'loki', uid: 'ds4' },
+                  refId: 'D',
+                },
+              ],
+              datasourceInstance: {
+                query: jest.fn(),
+                getRef: jest.fn(),
+                meta: {
+                  id: 'loki',
+                },
+              },
+            },
+          },
+        } as unknown as Partial<StoreState>);
+
+        dispatch = store.dispatch;
+        getState = store.getState;
+
+        setupQueryResponse(getState());
+
+        await dispatch(addQueryRow(exploreId, 1));
+
+        expect(getState().explore[exploreId].datasourceInstance.meta.id).toBe('loki');
+        expect(getState().explore[exploreId].queries).toHaveLength(3);
+        expect(getState().explore[exploreId].queryKeys).toEqual(['ds3-0', 'ds4-1', 'ds4-2']);
+      });
+    });
+    describe('addQueryRow with mixed datasources enabled', () => {
+      useFeatToggles = {
+        exploreMixedDatasource: true,
+      };
+
+      it('should add query row whith rootdatasource when there is not yet a row', async () => {
+        const exploreId = ExploreId.left;
+        let dispatch: ThunkDispatch, getState: () => StoreState;
+
+        const store: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+          ...defaultInitialState,
+          explore: {
+            [exploreId]: {
+              ...defaultInitialState.explore[exploreId],
+              queries: [],
+              datasourceInstance: {
+                query: jest.fn(),
+                getRef: jest.fn(),
+                meta: {
+                  id: 'mixed',
+                },
+              },
+            },
+          },
+        } as unknown as Partial<StoreState>);
+
+        dispatch = store.dispatch;
+        getState = store.getState;
+
+        setupQueryResponse(getState());
+
+        await dispatch(addQueryRow(exploreId, 1));
+
+        expect(getState().explore[exploreId].datasourceInstance.meta.id).toBe('mixed');
+        expect(getState().explore[exploreId].queries).toHaveLength(1);
+        expect(getState().explore[exploreId].queries[0].datasource.type).toBe('postgres');
+        expect(getState().explore[exploreId].queryKeys).toEqual(['ds1-0']);
+      });
+
+      it('should add another query row if there are two rows already', async () => {
         const exploreId = ExploreId.left;
         let dispatch: ThunkDispatch, getState: () => StoreState;
 
@@ -348,6 +429,10 @@ describe('reducer', () => {
                 {
                   datasource: { type: 'postgres', uid: 'ds3' },
                   refId: 'C',
+                },
+                {
+                  datasource: { type: 'loki', uid: 'ds4' },
+                  refId: 'D',
                 },
               ],
               datasourceInstance: {
@@ -369,8 +454,9 @@ describe('reducer', () => {
         await dispatch(addQueryRow(exploreId, 1));
 
         expect(getState().explore[exploreId].datasourceInstance.meta.id).toBe('postgres');
-        expect(getState().explore[exploreId].queries).toHaveLength(2);
-        expect(getState().explore[exploreId].queryKeys).toEqual(['ds3-0', 'ds3-1']);
+        expect(getState().explore[exploreId].queries).toHaveLength(3);
+        expect(getState().explore[exploreId].queries[2].datasource.type).toBe('loki');
+        expect(getState().explore[exploreId].queryKeys).toEqual(['ds3-0', 'ds4-1', 'ds4-2']);
       });
     });
   });
