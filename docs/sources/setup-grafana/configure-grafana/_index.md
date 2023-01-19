@@ -894,8 +894,6 @@ Upon the first login from a user, we set the organization roles from the setting
 
 > **Note:** There is a separate setting called `oauth_skip_org_role_update_sync` which has a different scope. While `skip_org_role_sync` only applies to the specific OAuth provider, `oauth_skip_org_role_update_sync` is a generic setting that affects all configured OAuth providers.
 
-The setting `oauth_skip_org_role_update_sync` will be deprecated in favor of provider-specific settings.
-
 The following table shows the OAuth provider's setting with the default value and the skip org role sync setting.
 | OAuth Provider | `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | Behavior |
 | --- | --- | --- | --- |
