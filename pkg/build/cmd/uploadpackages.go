@@ -103,19 +103,6 @@ func UploadPackages(c *cli.Context) error {
 		}
 	}
 
-	// Corner case for custom enterprise2 mode
-	event, err := droneutil.GetDroneEventFromEnv()
-	if err != nil {
-		return err
-	}
-	if event == config.Custom && cfg.edition == config.EditionEnterprise2 {
-		buildConfig, err := config.GetBuildConfig(config.ReleaseBranchMode)
-		if err != nil {
-			return err
-		}
-		cfg.Bucket = buildConfig.Buckets.ArtifactsEnterprise2
-	}
-
 	if err := uploadPackages(cfg); err != nil {
 		return cli.Exit(err.Error(), 1)
 	}
@@ -160,6 +147,19 @@ func uploadPackages(cfg uploadConfig) error {
 		fpaths = append(fpaths, fpath)
 	}
 
+	// Corner case for custom enterprise2 mode
+	event, err := droneutil.GetDroneEventFromEnv()
+	if err != nil {
+		return err
+	}
+	if event == config.Custom && cfg.edition == config.EditionEnterprise2 {
+		buildConfig, err := config.GetBuildConfig(config.ReleaseBranchMode)
+		if err != nil {
+			return err
+		}
+		cfg.Bucket = buildConfig.Buckets.ArtifactsEnterprise2
+	}
+
 	var versionFolder string
 	switch cfg.versionMode {
 	case config.TagMode:
@@ -169,6 +169,11 @@ func uploadPackages(cfg uploadConfig) error {
 	case config.ReleaseBranchMode:
 		versionFolder = releaseBranchFolder
 	default:
+		// Corner case for custom enterprise2 mode
+		if event == config.Custom && cfg.versionMode == config.Enterprise2Mode {
+			versionFolder = releaseFolder
+			break
+		}
 		panic(fmt.Sprintf("Unrecognized version mode: %s", cfg.versionMode))
 	}
 
