@@ -160,7 +160,8 @@ func (hs *HTTPServer) tryAutoLogin(c *models.ReqContext) bool {
 	if autoLoginProvidersLen > 1 {
 		c.Logger.Warn("Skipping auto login because multiple auth providers are configured with auto_login option")
 		return false
-	} else if autoLoginProvidersLen == 0 && setting.OAuthAutoLogin {
+	}
+	if autoLoginProvidersLen == 0 && setting.OAuthAutoLogin {
 		c.Logger.Warn("Skipping auto login because no auth providers are configured")
 		return false
 	}
