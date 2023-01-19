@@ -8,17 +8,21 @@ weight: 60
 
 # Data sources
 
-Grafana supports a wide range of _data sources_.
-These data sources might be files, services, or databases.
-You can also extend the supported data sources through one of the many [Plugins](/grafana/plugins/) (or [build your own]({{< relref "../developers/plugins/" >}})).
+Grafana comes with built-in support for many _data sources_.
+If you need other data sources, you can also install one of the many data source plugins.
+If the plugin you need doesn't exist, you can also create your own custom plugin.
 
-Each data source comes with a _query editor_, which formulates custom queries according to the source's particular structure.
+Each data source comes with a _query editor_,
+which formulates custom queries according to the source's particular structure.
 After you add a data source, you can use it as an input for many operations:
 - Query the data with [Explore]({{< relref "../explore" >}}).
 - Visualize it in [panels]({{< relref "../panels-visualizations" >}}).
 - Create rules for [alerts]({{< relref "../alerting" >}}).
 
-In this documentation, read about how to add and query a particular data source, or about how to manage your data sources in general.
+This documentation goes over how to manage data sources in general,
+and how to configure or query the built-in data sources.
+For other data sources, refer to the list of [datasource plugins](/grafana/plugins/).
+To make a custom plugin, refer to [Build a plugin]({{< relref "../developers/plugins/" >}}).
 
 ## Manage data sources
 
