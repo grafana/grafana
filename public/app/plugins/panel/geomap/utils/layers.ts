@@ -115,7 +115,10 @@ export async function initLayer(
   }
 
   const handler = await item.create(map, options, panel.props.eventBus, config.theme2);
-  const layer = handler.init(); // eslint-disable-line
+  let layer = handler.init(); // eslint-disable-line
+  // Check if layer is an array
+  layer = layer.getLayersArray()[0];
+
   if (options.opacity != null) {
     layer.setOpacity(options.opacity);
   }
@@ -152,4 +155,5 @@ export async function initLayer(
 
 export const getMapLayerState = (l: any) => {
   return l?.__state as MapLayerState;
+  // mouseEvents inside here
 };
