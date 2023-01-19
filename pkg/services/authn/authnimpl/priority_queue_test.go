@@ -3,40 +3,46 @@ package authnimpl
 import (
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/authn/clients"
 )
 
 func TestQueue(t *testing.T) {
-	q := newQueue[authn.ContextAwareClient]()
-
-	anonymous := &clients.Anonymous{}
-	q.insert(anonymous)
-	session := &clients.Session{}
-	q.insert(session)
-	proxy := &clients.Proxy{}
-	q.insert(proxy)
-	render := &clients.Render{}
-	q.insert(render)
-	basic := &clients.Basic{}
-	q.insert(basic)
-	jwt := &clients.JWT{}
-	q.insert(jwt)
-
-	expectedOrder := []string{
-		authn.ClientRender,
-		authn.ClientJWT,
-		authn.ClientBasic,
-		authn.ClientProxy,
-		authn.ClientSession,
-		authn.ClientAnonymous,
+	type testCase struct {
+		desc          string
+		clients       []authn.ContextAwareClient
+		expectedOrder []string
 	}
 
-	require.Len(t, q.items, len(expectedOrder))
-	for i := range q.items {
-		assert.Equal(t, q.items[i].Name(), expectedOrder[i])
+	tests := []testCase{
+		{
+			desc: "",
+			clients: []authn.ContextAwareClient{
+				&authntest.FakeClient{ExpectedName: "1", ExpectedPriority: 1},
+				&authntest.FakeClient{ExpectedName: "5", ExpectedPriority: 5},
+				&authntest.FakeClient{ExpectedName: "3", ExpectedPriority: 3},
+				&authntest.FakeClient{ExpectedName: "2", ExpectedPriority: 2},
+				&authntest.FakeClient{ExpectedName: "4", ExpectedPriority: 4},
+			},
+			expectedOrder: []string{"1", "2", "3", "4", "5"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			q := newQueue[authn.ContextAwareClient]()
+			for _, c := range tt.clients {
+				q.insert(c)
+			}
+
+			require.Len(t, q.items, len(tt.expectedOrder))
+
+			for i := range q.items {
+				assert.Equal(t, q.items[i].Name(), tt.expectedOrder[i])
+			}
+		})
 	}
 }

@@ -8,7 +8,6 @@ func newQueue[T priority]() *queue[T] {
 	return &queue[T]{items: []T{}}
 }
 
-
 type queue[T priority] struct {
 	items []T
 }
@@ -21,9 +20,9 @@ func (q *queue[T]) insert(c T) {
 	}
 
 	// find the position in the queue the client should be placed based on priority
-	for i, client := range q.items{
+	for i, client := range q.items {
 		if c.Priority() < client.Priority() {
-			q.items= append(q.items[:i+1], q.items[i:]...)
+			q.items = append(q.items[:i+1], q.items[i:]...)
 			q.items[i] = c
 			return
 		}
