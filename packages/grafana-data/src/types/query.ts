@@ -1,4 +1,4 @@
-import { SchemaDataQuery, SchemaDataSourceRef } from '@grafana/schema';
+import { DataQuery as SchemaDataQuery, DataSourceRef as SchemaDataSourceRef } from '@grafana/schema';
 
 /**
  * @deprecated use the type from @grafana/schema
