@@ -581,7 +581,10 @@ func (s *sqlEntityServer) writeSearchInfo(
 				return err
 			}
 
-			s.writeSearchInfo(ctx, tx, grn, child)
+			err = s.writeSearchInfo(ctx, tx, grn, child)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
