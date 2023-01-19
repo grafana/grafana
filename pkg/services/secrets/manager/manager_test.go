@@ -286,9 +286,9 @@ func TestSecretsService_Run(t *testing.T) {
 		encrypted, err := svc.Encrypt(ctx, []byte("grafana"), secrets.WithoutScope())
 		require.NoError(t, err)
 
-		// Five minutes later (after caution period)
+		// Ten minutes later (after caution period)
 		// Look SecretsService.cacheDataKey for more details.
-		now = func() time.Time { return time.Now().Add(5 * time.Minute) }
+		now = func() time.Time { return time.Now().Add(10 * time.Minute) }
 
 		// Decrypt to ensure data encryption key is cached
 		_, err = svc.Decrypt(ctx, encrypted)
@@ -298,8 +298,8 @@ func TestSecretsService_Run(t *testing.T) {
 		require.Len(t, svc.dataKeyCache.byId, 1)
 		require.Len(t, svc.dataKeyCache.byLabel, 1)
 
-		// Ten minutes later (after cache ttl)
-		now = func() time.Time { return time.Now().Add(10 * time.Minute) }
+		// Twenty minutes later (after caution period + cache ttl)
+		now = func() time.Time { return time.Now().Add(20 * time.Minute) }
 
 		ctx, cancel := context.WithTimeout(ctx, 1*time.Second)
 		defer cancel()
@@ -344,9 +344,9 @@ func TestSecretsService_ReEncryptDataKeys(t *testing.T) {
 	t.Run("data keys cache should be invalidated", func(t *testing.T) {
 		restoreTimeNowAfterTestExec(t)
 
-		// Five minutes later (after caution period)
+		// Ten minutes later (after caution period)
 		// Look SecretsService.cacheDataKey for more details.
-		now = func() time.Time { return time.Now().Add(5 * time.Minute) }
+		now = func() time.Time { return time.Now().Add(10 * time.Minute) }
 
 		// Decrypt to ensure data key is cached
 		_, err := svc.Decrypt(ctx, ciphertext)

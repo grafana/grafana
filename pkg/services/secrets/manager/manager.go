@@ -228,7 +228,7 @@ func (s *SecretsService) currentDataKey(ctx context.Context, label string, scope
 	return id, dataKey, nil
 }
 
-// dataKeyByLabel looks up for data key in cache.
+// dataKeyByLabel looks up for data key in cache by label.
 // Otherwise, it fetches it from database, decrypts it and caches it decrypted.
 func (s *SecretsService) dataKeyByLabel(ctx context.Context, label string) (string, []byte, error) {
 	// 0. Get data key from in-memory cache.
@@ -524,25 +524,50 @@ func (s *SecretsService) Run(ctx context.Context) error {
 	}
 }
 
-// We only cache those data keys with more than 5m of life, because we cannot
-// guarantee a data key read/write isn't happening within a database transaction
-// that could later be rolled back, and cause issues because other operations
-// using a non-persisted-but-cached data key for encryption operations.
+// Caching a data key is tricky, because at SecretsService level we cannot guarantee
+// that a newly created data key has actually been persisted, depending on the different
+// use cases that rely on SecretsService encryption and different database engines that
+// we have support for, because the data key creation may have happened within a DB TX,
+// that may fail afterwards.
 //
-// Look https://github.com/grafana/grafana-enterprise/issues/4252 for details.
+// Therefore, if we cache a data key that hasn't been persisted with success (and won't),
+// and later that one is used for a encryption operation (aside from the DB TX that created
+// it), we may end up with data encrypted by a non-persisted data key, which could end up
+// in (unrecoverable) data corruption.
+//
+// So, we cache the data key by id and/or by label, depending on the data key's lifetime,
+// assuming that a data key older than a "caution period" should have been persisted.
+//
+// Look at the comments inline for further details.
+// You can also take a look at the issue below for more context:
+// https://github.com/grafana/grafana-enterprise/issues/4252
 func (s *SecretsService) cacheDataKey(dataKey *secrets.DataKey, decrypted []byte) {
-	// We consider a "caution period" of 5m long enough to reduce chances of
-	// aforementioned issue to happen.
-	const cautionPeriod = 5 * time.Minute
+	// First, we cache the data key by id, because cache "by id" is
+	// only used by decrypt operations, so no risk of corrupting data.
+	entry := &dataKeyCacheEntry{
+		id:      dataKey.Id,
+		label:   dataKey.Label,
+		dataKey: decrypted,
+		active:  dataKey.Active,
+	}
+
+	s.dataKeyCache.addById(entry)
+
+	// Then, we cache the data key by label, ONLY if data key's lifetime
+	// is longer than a certain "caution period", because cache "by label"
+	// is used (only) by encrypt operations, and we want to ensure that
+	// no data key is cached for encryption ops before being persisted.
+
+	const cautionPeriod = 10 * time.Minute
+	// We consider a "caution period" of 10m to be long enough for any database
+	// transaction that implied a data key creation to have finished successfully.
+	//
+	// Therefore, we consider that if we fetch a data key from the database,
+	// more than 10m later than its creation, it should have been actually
+	// persisted - i.e. the transaction that created it is no longer running.
 
 	nowMinusCautionPeriod := now().Add(-cautionPeriod)
-
 	if dataKey.Created.Before(nowMinusCautionPeriod) {
-		s.dataKeyCache.add(&dataKeyCacheEntry{
-			id:      dataKey.Id,
-			label:   dataKey.Label,
-			dataKey: decrypted,
-			active:  dataKey.Active,
-		})
+		s.dataKeyCache.addByLabel(entry)
 	}
 }
