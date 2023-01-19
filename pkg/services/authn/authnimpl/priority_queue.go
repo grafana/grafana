@@ -12,7 +12,7 @@ type queue[T priority] struct {
 	items []T
 }
 
-func (q *queue[T]) insert(c T) {
+func (q *queue[T]) insert(c T, priority int) {
 	// no clients in the queue so we just add it
 	if len(q.items) == 0 {
 		q.items = append(q.items, c)
