@@ -117,7 +117,7 @@ func TestJWTClaimConfig(t *testing.T) {
 	type testCase struct {
 		desc                 string
 		claimsConfigurations []Dictionary
-		want                 bool
+		valid                bool
 	}
 
 	testCases := []testCase{
@@ -129,7 +129,7 @@ func TestJWTClaimConfig(t *testing.T) {
 					"JWTAuthUsernameClaim": true,
 				},
 			},
-			want: true,
+			valid: true,
 		},
 		{
 			desc: "JWT configuration with email claim",
@@ -139,7 +139,7 @@ func TestJWTClaimConfig(t *testing.T) {
 					"JWTAuthUsernameClaim": false,
 				},
 			},
-			want: true,
+			valid: true,
 		},
 		{
 			desc: "JWT configuration with username claim",
@@ -149,7 +149,7 @@ func TestJWTClaimConfig(t *testing.T) {
 					"JWTAuthUsernameClaim": true,
 				},
 			},
-			want: true,
+			valid: true,
 		},
 		{
 			desc: "JWT configuration without email and username claims",
@@ -159,7 +159,7 @@ func TestJWTClaimConfig(t *testing.T) {
 					"JWTAuthUsernameClaim": false,
 				},
 			},
-			want: true,
+			valid: true,
 		},
 	}
 
@@ -180,12 +180,16 @@ func TestJWTClaimConfig(t *testing.T) {
 				jwtHeaderName: {token}},
 		}
 		jwtClient := ProvideJWT(jwtService, cfg)
-		got := jwtClient.Test(context.Background(), &authn.Request{
+		_, err := jwtClient.Authenticate(context.Background(), &authn.Request{
 			OrgID:       1,
 			HTTPRequest: httpReq,
 			Resp:        nil,
 		})
-		require.Equal(t, tc.want, got)
+		if tc.valid {
+			require.NoError(t, err)
+		} else {
+			require.Error(t, err)
+		}
 	}
 }
 
