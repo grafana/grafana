@@ -9,9 +9,6 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	pref "github.com/grafana/grafana/pkg/services/preference"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
@@ -23,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	loginService "github.com/grafana/grafana/pkg/services/login"
+	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"

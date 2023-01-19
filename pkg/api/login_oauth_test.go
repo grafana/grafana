@@ -26,14 +26,16 @@ import (
 
 func setupSocialHTTPServerWithConfig(t *testing.T, cfg *setting.Cfg) *HTTPServer {
 	sqlStore := db.InitTestDB(t)
+	features := featuremgmt.WithFeatures()
 
 	return &HTTPServer{
 		Cfg:            cfg,
 		License:        &licensing.OSSLicensingService{Cfg: cfg},
 		SQLStore:       sqlStore,
-		SocialService:  social.ProvideService(cfg, featuremgmt.WithFeatures()),
+		SocialService:  social.ProvideService(cfg, features),
 		HooksService:   hooks.ProvideService(),
 		SecretsService: fakes.NewFakeSecretsService(),
+		Features:       features,
 	}
 }
 
