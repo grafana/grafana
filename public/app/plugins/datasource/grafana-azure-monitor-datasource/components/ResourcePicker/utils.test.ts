@@ -1,7 +1,24 @@
 import createMockQuery from '../../__mocks__/query';
 
 import { ResourceRowGroup, ResourceRowType } from './types';
-import { findRow, parseResourceURI, setResource } from './utils';
+import {
+  findRow,
+  findRows,
+  parseMultipleResourceDetails,
+  parseResourceDetails,
+  parseResourceURI,
+  resourcesToStrings,
+  setResource,
+} from './utils';
+
+jest.mock('@grafana/runtime', () => ({
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  getTemplateSrv: () => ({
+    replace: (val: string) => {
+      return val;
+    },
+  }),
+}));
 
 describe('AzureMonitor ResourcePicker utils', () => {
   describe('parseResourceURI', () => {
@@ -163,6 +180,17 @@ describe('AzureMonitor ResourcePicker utils', () => {
     });
   });
 
+  describe('findRows', () => {
+    it('should find multiple rows', () => {
+      const rows: ResourceRowGroup = [
+        { id: 'sub1', uri: '/subscriptions/sub1', name: '', type: ResourceRowType.Subscription, typeLabel: '' },
+        { id: 'sub2', uri: '/subscriptions/sub2', name: '', type: ResourceRowType.Subscription, typeLabel: '' },
+        { id: 'sub3', uri: '/subscriptions/sub3', name: '', type: ResourceRowType.Subscription, typeLabel: '' },
+      ];
+      expect(findRows(rows, ['/subscriptions/sub1', '/subscriptions/sub2'])).toEqual([rows[0], rows[1]]);
+    });
+  });
+
   describe('setResource', () => {
     it('updates a resource with a resource URI for Log Analytics', () => {
       expect(setResource(createMockQuery(), '/subscription/sub')).toMatchObject({
@@ -194,6 +222,70 @@ describe('AzureMonitor ResourcePicker utils', () => {
           ],
         },
       });
+    });
+  });
+
+  describe('parseResourceDetails', () => {
+    it('parses a string resource', () => {
+      expect(
+        parseResourceDetails(
+          '/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.Sql/servers/foo/databases/bar',
+          'useast'
+        )
+      ).toEqual({
+        metricNamespace: 'Microsoft.Sql/servers/databases',
+        resourceGroup: 'cloud-datasources',
+        resourceName: 'foo/bar',
+        subscription: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+        region: 'useast',
+      });
+    });
+  });
+
+  describe('parseMultipleResourceDetails', () => {
+    it('parses multiple string resources', () => {
+      expect(
+        parseMultipleResourceDetails(
+          [
+            '/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.Sql/servers/foo/databases/bar',
+            '/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.Sql/servers/other/databases/resource',
+          ],
+          'useast'
+        )
+      ).toEqual([
+        {
+          metricNamespace: 'Microsoft.Sql/servers/databases',
+          resourceGroup: 'cloud-datasources',
+          resourceName: 'foo/bar',
+          subscription: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+          region: 'useast',
+        },
+        {
+          metricNamespace: 'Microsoft.Sql/servers/databases',
+          resourceGroup: 'cloud-datasources',
+          resourceName: 'other/resource',
+          subscription: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+          region: 'useast',
+        },
+      ]);
+    });
+  });
+
+  describe('resourcesToStrings', () => {
+    it('converts a resource to a string', () => {
+      expect(
+        resourcesToStrings([
+          {
+            metricNamespace: 'Microsoft.Sql/servers/databases',
+            resourceGroup: 'cloud-datasources',
+            resourceName: 'foo/bar',
+            subscription: 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+            region: 'useast',
+          },
+        ])
+      ).toEqual([
+        '/subscriptions/aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee/resourceGroups/cloud-datasources/providers/Microsoft.Sql/servers/foo/databases/bar',
+      ]);
     });
   });
 });

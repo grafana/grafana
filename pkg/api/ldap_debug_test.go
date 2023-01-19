@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
@@ -22,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
@@ -607,7 +607,7 @@ func TestLDAP_AccessControl(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.LDAPEnabled = true
 			sc, hs := setupAccessControlScenarioContext(t, cfg, test.url, test.permissions)
-			hs.SQLStore = &mockstore.SQLStoreMock{ExpectedUser: &user.User{}}
+			hs.SQLStore = dbtest.NewFakeDB()
 			hs.userService = &usertest.FakeUserService{ExpectedUser: &user.User{}}
 			hs.authInfoService = &logintest.AuthInfoServiceFake{}
 			hs.Login = &loginservice.LoginServiceMock{}

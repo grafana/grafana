@@ -5,8 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 )
@@ -148,7 +148,7 @@ func TestAdmin_AccessControl(t *testing.T) {
 			sc, hs := setupAccessControlScenarioContext(t, cfg, test.url, test.permissions)
 			sc.resp = httptest.NewRecorder()
 			hs.SettingsProvider = &setting.OSSImpl{Cfg: cfg}
-			hs.SQLStore = mockstore.NewSQLStoreMock()
+			hs.SQLStore = dbtest.NewFakeDB()
 
 			var err error
 			sc.req, err = http.NewRequest(test.method, test.url, nil)

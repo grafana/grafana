@@ -43,6 +43,12 @@ export function parseResourceURI(resourceURI: string): AzureMetricResource {
   return { subscription, resourceGroup, metricNamespace, resourceName };
 }
 
+export function parseMultipleResourceDetails(resources: Array<string | AzureMetricResource>, location?: string) {
+  return resources.map((resource) => {
+    return parseResourceDetails(resource, location);
+  });
+}
+
 export function parseResourceDetails(resource: string | AzureMetricResource, location?: string) {
   if (typeof resource === 'string') {
     const res = parseResourceURI(resource);
@@ -52,6 +58,10 @@ export function parseResourceDetails(resource: string | AzureMetricResource, loc
     return res;
   }
   return resource;
+}
+
+export function resourcesToStrings(resources: Array<string | AzureMetricResource>) {
+  return resources.map((resource) => resourceToString(resource));
 }
 
 export function resourceToString(resource?: string | AzureMetricResource) {
@@ -82,7 +92,7 @@ function compareNamespaceAndName(
   return rowNamespace === resourceNamespace && rowName === resourceName;
 }
 
-function matchURI(rowURI: string, resourceURI: string) {
+export function matchURI(rowURI: string, resourceURI: string) {
   const targetParams = parseResourceDetails(resourceURI);
   const rowParams = parseResourceDetails(rowURI);
 
@@ -96,6 +106,17 @@ function matchURI(rowURI: string, resourceURI: string) {
       targetParams?.resourceName
     )
   );
+}
+
+export function findRows(rows: ResourceRowGroup, uris: string[]): ResourceRow[] {
+  const result: ResourceRow[] = [];
+  uris.forEach((uri) => {
+    const row = findRow(rows, uri);
+    if (row) {
+      result.push(row);
+    }
+  });
+  return result;
 }
 
 export function findRow(rows: ResourceRowGroup, uri: string): ResourceRow | undefined {

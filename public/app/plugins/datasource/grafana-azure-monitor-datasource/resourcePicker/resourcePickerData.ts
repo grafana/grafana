@@ -6,7 +6,13 @@ import { DataSourceWithBackend } from '@grafana/runtime';
 import { logsResourceTypes, resourceTypeDisplayNames } from '../azureMetadata';
 import AzureMonitorDatasource from '../azure_monitor/azure_monitor_datasource';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../components/ResourcePicker/types';
-import { addResources, parseResourceDetails, parseResourceURI } from '../components/ResourcePicker/utils';
+import {
+  addResources,
+  findRow,
+  parseResourceDetails,
+  parseResourceURI,
+  resourceToString,
+} from '../components/ResourcePicker/utils';
 import {
   AzureDataSourceJsonData,
   AzureGraphResponse,
@@ -46,7 +52,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
 
   async fetchInitialRows(
     type: ResourcePickerQueryType,
-    currentSelection?: AzureMetricResource
+    currentSelection?: AzureMetricResource[]
   ): Promise<ResourceRowGroup> {
     const subscriptions = await this.getSubscriptions();
 
@@ -60,19 +66,29 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     }
 
     let resources = subscriptions;
-    if (currentSelection.subscription) {
-      const resourceGroupURI = `/subscriptions/${currentSelection.subscription}/resourceGroups/${currentSelection.resourceGroup}`;
+    const promises = currentSelection.map((selection) => async () => {
+      if (selection.subscription) {
+        const resourceGroupURI = `/subscriptions/${selection.subscription}/resourceGroups/${selection.resourceGroup}`;
 
-      if (currentSelection.resourceGroup) {
-        const resourceGroups = await this.getResourceGroupsBySubscriptionId(currentSelection.subscription, type);
-        resources = addResources(resources, `/subscriptions/${currentSelection.subscription}`, resourceGroups);
-      }
+        if (selection.resourceGroup && !findRow(resources, resourceGroupURI)) {
+          const resourceGroups = await this.getResourceGroupsBySubscriptionId(selection.subscription, type);
+          resources = addResources(resources, `/subscriptions/${selection.subscription}`, resourceGroups);
+        }
 
-      if (currentSelection.resourceName) {
-        const resourcesForResourceGroup = await this.getResourcesForResourceGroup(resourceGroupURI, type);
-        resources = addResources(resources, resourceGroupURI, resourcesForResourceGroup);
+        const resourceURI = resourceToString(selection);
+        if (selection.resourceName && !findRow(resources, resourceURI)) {
+          const resourcesForResourceGroup = await this.getResourcesForResourceGroup(resourceGroupURI, type);
+          resources = addResources(resources, resourceGroupURI, resourcesForResourceGroup);
+        }
       }
+    });
+
+    for (const promise of promises) {
+      // Fetch resources one by one, avoiding re-fetching the same resource
+      // and race conditions updating the resources array
+      await promise();
     }
+
     return resources;
   }
 

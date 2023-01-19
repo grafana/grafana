@@ -203,16 +203,20 @@ func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) 
 
 func actionsToCheck(actions []string, permissions map[string][]string, wildcards ...accesscontrol.Wildcards) []interface{} {
 	toCheck := make([]interface{}, 0, len(actions))
+
 	for _, a := range actions {
 		var hasWildcard bool
+
+	outer:
 		for _, scope := range permissions[a] {
 			for _, w := range wildcards {
 				if w.Contains(scope) {
 					hasWildcard = true
-					break
+					break outer
 				}
 			}
 		}
+
 		if !hasWildcard {
 			toCheck = append(toCheck, a)
 		}

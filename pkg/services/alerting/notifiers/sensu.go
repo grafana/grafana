@@ -138,7 +138,7 @@ func (sn *SensuNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	body, _ := bodyJSON.MarshalJSON()
 
-	cmd := &models.SendWebhookSync{
+	cmd := &notifications.SendWebhookSync{
 		Url:        sn.URL,
 		User:       sn.User,
 		Password:   sn.Password,

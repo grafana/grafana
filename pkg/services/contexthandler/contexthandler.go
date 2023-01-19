@@ -34,7 +34,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -180,11 +179,14 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 				{Num: reqContext.UserID}},
 		)
 
-		// update last seen every 5min
-		if reqContext.ShouldUpdateLastSeenAt() {
-			reqContext.Logger.Debug("Updating last user_seen_at", "user_id", reqContext.UserID)
-			if err := h.userService.UpdateLastSeenAt(mContext.Req.Context(), &user.UpdateUserLastSeenAtCommand{UserID: reqContext.UserID}); err != nil {
-				reqContext.Logger.Error("Failed to update last_seen_at", "error", err)
+		// when using authn service this is implemented as a post auth hook
+		if !h.features.IsEnabled(featuremgmt.FlagAuthnService) {
+			// update last seen every 5min
+			if reqContext.ShouldUpdateLastSeenAt() {
+				reqContext.Logger.Debug("Updating last user_seen_at", "user_id", reqContext.UserID)
+				if err := h.userService.UpdateLastSeenAt(mContext.Req.Context(), &user.UpdateUserLastSeenAtCommand{UserID: reqContext.UserID}); err != nil {
+					reqContext.Logger.Error("Failed to update last_seen_at", "error", err)
+				}
 			}
 		}
 
@@ -284,7 +286,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 		*reqContext.Req = *reqContext.Req.WithContext(ctx)
 
 		if err != nil {
-			writeErr(reqContext, err)
+			reqContext.WriteErr(err)
 			return true
 		}
 
@@ -413,7 +415,7 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 		*reqContext.Req = *reqContext.Req.WithContext(ctx)
 
 		if err != nil {
-			writeErr(reqContext, err)
+			reqContext.WriteErr(err)
 			return true
 		}
 
@@ -637,7 +639,7 @@ func (h *ContextHandler) initContextWithRenderAuth(reqContext *models.ReqContext
 		}
 
 		if err != nil {
-			writeErr(reqContext, err)
+			reqContext.WriteErr(err)
 			return true
 		}
 
@@ -721,7 +723,8 @@ func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext,
 		}
 
 		if err != nil {
-			writeErr(reqContext, err)
+			reqContext.WriteErr(err)
+			return true
 		}
 
 		ctx := WithAuthHTTPHeader(reqContext.Req.Context(), h.Cfg.AuthProxyHeaderName)
@@ -824,16 +827,6 @@ func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext,
 	}
 
 	return true
-}
-
-// writeErr will write error response based on errutil.Error.
-func writeErr(c *models.ReqContext, err error) {
-	grfErr := &errutil.Error{}
-	if !errors.As(err, grfErr) {
-		c.JsonApiErr(http.StatusInternalServerError, "", err)
-		return
-	}
-	c.JsonApiErr(grfErr.Reason.Status().HTTPStatus(), grfErr.Public().Message, err)
 }
 
 type authHTTPHeaderListContextKey struct{}

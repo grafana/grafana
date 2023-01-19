@@ -82,8 +82,8 @@ func (en *EmailNotifier) Notify(evalContext *alerting.EvalContext) error {
 		error = evalContext.Error.Error()
 	}
 
-	cmd := &models.SendEmailCommandSync{
-		SendEmailCommand: models.SendEmailCommand{
+	cmd := &notifications.SendEmailCommandSync{
+		SendEmailCommand: notifications.SendEmailCommand{
 			Subject: evalContext.GetNotificationTitle(),
 			Data: map[string]interface{}{
 				"Title":         evalContext.GetNotificationTitle(),
