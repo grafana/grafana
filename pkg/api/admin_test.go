@@ -93,7 +93,6 @@ func TestAPI_AdminGetSettings(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, tt.expectedBody, string(body))
 			require.NoError(t, res.Body.Close())
-
 		})
 	}
 }
