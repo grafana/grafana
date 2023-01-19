@@ -2,15 +2,21 @@ package es
 
 import (
 	"strings"
+	"time"
+)
 
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+const (
+	highlightPreTagsString  = "@HIGHLIGHT@"
+	highlightPostTagsString = "@/HIGHLIGHT@"
+	highlightFragmentSize   = 2147483647
 )
 
 // SearchRequestBuilder represents a builder which can build a search request
 type SearchRequestBuilder struct {
-	interval     intervalv2.Interval
-	index        string
-	size         int
+	interval time.Duration
+	index    string
+	size     int
+	// Currently sort is map, but based in examples it should be an array https://www.elastic.co/guide/en/elasticsearch/reference/current/sort-search-results.html
 	sort         map[string]interface{}
 	queryBuilder *QueryBuilder
 	aggBuilders  []AggBuilder
@@ -18,7 +24,7 @@ type SearchRequestBuilder struct {
 }
 
 // NewSearchRequestBuilder create a new search request builder
-func NewSearchRequestBuilder(interval intervalv2.Interval) *SearchRequestBuilder {
+func NewSearchRequestBuilder(interval time.Duration) *SearchRequestBuilder {
 	builder := &SearchRequestBuilder{
 		interval:    interval,
 		sort:        make(map[string]interface{}),
@@ -91,6 +97,19 @@ func (b *SearchRequestBuilder) AddDocValueField(field string) *SearchRequestBuil
 	return b
 }
 
+// Add highlights to the search request for log queries
+func (b *SearchRequestBuilder) AddHighlight() *SearchRequestBuilder {
+	b.customProps["highlight"] = map[string]interface{}{
+		"fields": map[string]interface{}{
+			"*": map[string]interface{}{},
+		},
+		"pre_tags":      []string{highlightPreTagsString},
+		"post_tags":     []string{highlightPostTagsString},
+		"fragment_size": highlightFragmentSize,
+	}
+	return b
+}
+
 // Query creates and return a query builder
 func (b *SearchRequestBuilder) Query() *QueryBuilder {
 	if b.queryBuilder == nil {
@@ -117,7 +136,7 @@ func NewMultiSearchRequestBuilder() *MultiSearchRequestBuilder {
 }
 
 // Search initiates and returns a new search request builder
-func (m *MultiSearchRequestBuilder) Search(interval intervalv2.Interval) *SearchRequestBuilder {
+func (m *MultiSearchRequestBuilder) Search(interval time.Duration) *SearchRequestBuilder {
 	b := NewSearchRequestBuilder(interval)
 	m.requestBuilders = append(m.requestBuilders, b)
 	return b

@@ -12,6 +12,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 
+	alertingModels "github.com/grafana/alerting/alerting/models"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
@@ -88,17 +90,9 @@ const (
 )
 
 const (
-	RuleUIDLabel      = "__alert_rule_uid__"
-	NamespaceUIDLabel = "__alert_rule_namespace_uid__"
-
 	// Annotations are actually a set of labels, so technically this is the label name of an annotation.
 	DashboardUIDAnnotation = "__dashboardUid__"
 	PanelIDAnnotation      = "__panelId__"
-	OrgIDAnnotation        = "__orgId__"
-
-	// This isn't a hard-coded secret token, hence the nolint.
-	//nolint:gosec
-	ImageTokenAnnotation = "__alertImageToken__"
 
 	// GrafanaReservedLabelPrefix contains the prefix for Grafana reserved labels. These differ from "__<label>__" labels
 	// in that they are not meant for internal-use only and will be passed-through to AMs and available to users in the same
@@ -110,25 +104,23 @@ const (
 
 	// StateReasonAnnotation is the name of the annotation that explains the difference between evaluation state and alert state (i.e. changing state when NoData or Error).
 	StateReasonAnnotation = GrafanaReservedLabelPrefix + "state_reason"
-
-	ValuesAnnotation      = "__values__"
-	ValueStringAnnotation = "__value_string__"
 )
 
-var (
+const (
 	StateReasonMissingSeries = "MissingSeries"
+	StateReasonError         = "Error"
 )
 
 var (
 	// InternalLabelNameSet are labels that grafana automatically include as part of the labelset.
 	InternalLabelNameSet = map[string]struct{}{
-		RuleUIDLabel:      {},
-		NamespaceUIDLabel: {},
+		alertingModels.RuleUIDLabel:      {},
+		alertingModels.NamespaceUIDLabel: {},
 	}
 	InternalAnnotationNameSet = map[string]struct{}{
-		DashboardUIDAnnotation: {},
-		PanelIDAnnotation:      {},
-		ImageTokenAnnotation:   {},
+		DashboardUIDAnnotation:              {},
+		PanelIDAnnotation:                   {},
+		alertingModels.ImageTokenAnnotation: {},
 	}
 )
 
@@ -164,6 +156,22 @@ type AlertRule struct {
 	For         time.Duration
 	Annotations map[string]string
 	Labels      map[string]string
+}
+
+// GetDashboardUID returns the DashboardUID or "".
+func (alertRule *AlertRule) GetDashboardUID() string {
+	if alertRule.DashboardUID != nil {
+		return *alertRule.DashboardUID
+	}
+	return ""
+}
+
+// GetPanelID returns the Panel ID or -1.
+func (alertRule *AlertRule) GetPanelID() int64 {
+	if alertRule.PanelID != nil {
+		return *alertRule.PanelID
+	}
+	return -1
 }
 
 type LabelOption func(map[string]string)
@@ -214,10 +222,9 @@ func (alertRule *AlertRule) Diff(rule *AlertRule, ignore ...string) cmputil.Diff
 	return reporter.Diffs
 }
 
-// SetDashboardAndPanel will set the DashboardUID and PanlID
-// field be doing a lookup in the annotations. Errors when
-// the found annotations are not valid.
-func (alertRule *AlertRule) SetDashboardAndPanel() error {
+// SetDashboardAndPanelFromAnnotations will set the DashboardUID and PanelID field by doing a lookup in the annotations.
+// Errors when the found annotations are not valid.
+func (alertRule *AlertRule) SetDashboardAndPanelFromAnnotations() error {
 	if alertRule.Annotations == nil {
 		return nil
 	}
@@ -472,6 +479,11 @@ func (g RulesGroup) SortByGroupIndex() {
 		return g[i].RuleGroupIndex < g[j].RuleGroupIndex
 	})
 }
+
+const (
+	QuotaTargetSrv quota.TargetSrv = "ngalert"
+	QuotaTarget    quota.Target    = "alert_rule"
+)
 
 type ruleKeyContextKey struct{}
 

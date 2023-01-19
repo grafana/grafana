@@ -1,7 +1,16 @@
 import memoizeOne from 'memoize-one';
 import React, { PureComponent } from 'react';
 
-import { TimeZone, LogsDedupStrategy, LogRowModel, Field, LinkModel, LogsSortOrder, CoreApp } from '@grafana/data';
+import {
+  TimeZone,
+  LogsDedupStrategy,
+  LogRowModel,
+  Field,
+  LinkModel,
+  LogsSortOrder,
+  CoreApp,
+  DataFrame,
+} from '@grafana/data';
 import { withTheme2, Themeable2 } from '@grafana/ui';
 
 import { sortLogRows } from '../utils';
@@ -26,16 +35,16 @@ export interface Props extends Themeable2 {
   logsSortOrder?: LogsSortOrder | null;
   previewLimit?: number;
   forceEscape?: boolean;
-  showDetectedFields?: string[];
+  displayedFields?: string[];
   app?: CoreApp;
   scrollElement?: HTMLDivElement;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
-  getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
-  onClickShowDetectedField?: (key: string) => void;
-  onClickHideDetectedField?: (key: string) => void;
+  getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
+  onClickShowField?: (key: string) => void;
+  onClickHideField?: (key: string) => void;
   onLogRowHover?: (row?: LogRowModel) => void;
 }
 
@@ -112,9 +121,9 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       previewLimit,
       getFieldLinks,
       logsSortOrder,
-      showDetectedFields,
-      onClickShowDetectedField,
-      onClickHideDetectedField,
+      displayedFields,
+      onClickShowField,
+      onClickHideField,
       forceEscape,
       onLogRowHover,
       app,
@@ -153,15 +162,15 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 showDuplicates={showDuplicates}
                 showLabels={showLabels}
                 showTime={showTime}
-                showDetectedFields={showDetectedFields}
+                displayedFields={displayedFields}
                 wrapLogMessage={wrapLogMessage}
                 prettifyLogMessage={prettifyLogMessage}
                 timeZone={timeZone}
                 enableLogDetails={enableLogDetails}
                 onClickFilterLabel={onClickFilterLabel}
                 onClickFilterOutLabel={onClickFilterOutLabel}
-                onClickShowDetectedField={onClickShowDetectedField}
-                onClickHideDetectedField={onClickHideDetectedField}
+                onClickShowField={onClickShowField}
+                onClickHideField={onClickHideField}
                 getFieldLinks={getFieldLinks}
                 logsSortOrder={logsSortOrder}
                 forceEscape={forceEscape}
@@ -184,15 +193,15 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 showDuplicates={showDuplicates}
                 showLabels={showLabels}
                 showTime={showTime}
-                showDetectedFields={showDetectedFields}
+                displayedFields={displayedFields}
                 wrapLogMessage={wrapLogMessage}
                 prettifyLogMessage={prettifyLogMessage}
                 timeZone={timeZone}
                 enableLogDetails={enableLogDetails}
                 onClickFilterLabel={onClickFilterLabel}
                 onClickFilterOutLabel={onClickFilterOutLabel}
-                onClickShowDetectedField={onClickShowDetectedField}
-                onClickHideDetectedField={onClickHideDetectedField}
+                onClickShowField={onClickShowField}
+                onClickHideField={onClickHideField}
                 getFieldLinks={getFieldLinks}
                 logsSortOrder={logsSortOrder}
                 forceEscape={forceEscape}

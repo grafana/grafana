@@ -14,18 +14,18 @@ export enum MapCenterID {
 
 export const centerPointRegistry = new Registry<MapCenterItems>(() => [
   {
-    id: MapCenterID.Fit as string,
+    id: MapCenterID.Fit,
     name: 'Fit to data',
     zoom: 15, // max zoom
   },
   {
-    id: MapCenterID.Zero as string,
+    id: MapCenterID.Zero,
     name: '(0°, 0°)',
     lat: 0,
     lon: 0,
   },
   {
-    id: MapCenterID.Coordinates as string,
+    id: MapCenterID.Coordinates,
     name: 'Coordinates',
   },
   {

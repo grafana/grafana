@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/auth/github/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/github/
+  - ../../../auth/github/
 description: Grafana OAuthentication Guide
 keywords:
   - grafana
@@ -40,6 +39,7 @@ example:
 [auth.github]
 enabled = true
 allow_sign_up = true
+auto_login = false
 client_id = YOUR_GITHUB_APP_CLIENT_ID
 client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
 scopes = user:email,read:org
@@ -64,6 +64,14 @@ automatically signed up.
 
 You can also use [variable expansion]({{< relref "../../../configure-grafana/#variable-expansion" >}}) to reference environment variables and local files in your GitHub auth configuration.
 
+### GitHub refresh token
+
+> Available in Grafana v9.3 and later versions.
+
+> **Note:** This feature is behind the `accessTokenExpirationCheck` feature toggle.
+
+GitHub OAuth applications do not support refresh tokens because the provided access tokens do not expire.
+
 ### team_ids
 
 Require an active team membership for at least one of the given teams on
@@ -74,6 +82,8 @@ Grafana instance. For example:
 ```bash
 [auth.github]
 enabled = true
+allow_sign_up = true
+auto_login = false
 client_id = YOUR_GITHUB_APP_CLIENT_ID
 client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
 scopes = user:email,read:org
@@ -81,7 +91,6 @@ team_ids = 150,300
 auth_url = https://github.com/login/oauth/authorize
 token_url = https://github.com/login/oauth/access_token
 api_url = https://api.github.com/user
-allow_sign_up = true
 ```
 
 ### allowed_organizations
@@ -94,15 +103,25 @@ your Grafana instance. For example
 ```bash
 [auth.github]
 enabled = true
+allow_sign_up = true
+auto_login = false
 client_id = YOUR_GITHUB_APP_CLIENT_ID
 client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
 scopes = user:email,read:org
 auth_url = https://github.com/login/oauth/authorize
 token_url = https://github.com/login/oauth/access_token
 api_url = https://api.github.com/user
-allow_sign_up = true
 # space-delimited organization names
 allowed_organizations = github google
+```
+
+### Configure automatic login
+
+Set `auto_login` option to true to attempt login automatically, skipping the login screen.
+This setting is ignored if multiple auth providers are configured to use auto login.
+
+```
+auto_login = true
 ```
 
 ### Map roles

@@ -17,9 +17,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardStore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourcesService "github.com/grafana/grafana/pkg/services/datasources/service"
@@ -28,6 +28,7 @@ import (
 	publicdashboardsStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	publicdashboardsService "github.com/grafana/grafana/pkg/services/publicdashboards/service"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -45,7 +46,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 		Name                 string
 		AccessToken          string
 		ExpectedHttpResponse int
-		DashboardResult      *models.Dashboard
+		DashboardResult      *dashboards.Dashboard
 		Err                  error
 		FixedErrorResponse   string
 	}{
@@ -53,7 +54,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 			Name:                 "It gets a public dashboard",
 			AccessToken:          validAccessToken,
 			ExpectedHttpResponse: http.StatusOK,
-			DashboardResult: &models.Dashboard{
+			DashboardResult: &dashboards.Dashboard{
 				Data: simplejson.NewFromAny(map[string]interface{}{
 					"Uid": DashboardUid,
 				}),
@@ -83,7 +84,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 		t.Run(test.Name, func(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
 			service.On("FindPublicDashboardAndDashboardByAccessToken", mock.Anything, mock.AnythingOfType("string")).
-				Return(&PublicDashboard{}, test.DashboardResult, test.Err).Maybe()
+				Return(&PublicDashboard{Uid: "pubdashuid"}, test.DashboardResult, test.Err).Maybe()
 
 			cfg := setting.NewCfg()
 			cfg.RBACEnabled = false
@@ -114,6 +115,9 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 				assert.Equal(t, false, dashResp.Meta.CanEdit)
 				assert.Equal(t, false, dashResp.Meta.CanDelete)
 				assert.Equal(t, false, dashResp.Meta.CanSave)
+
+				// publicDashboardUID should be always empty
+				assert.Equal(t, "", dashResp.Meta.PublicDashboardUID)
 			} else if test.FixedErrorResponse != "" {
 				require.Equal(t, test.ExpectedHttpResponse, response.Code)
 				require.JSONEq(t, "{\"message\":\"Invalid access token\", \"messageId\":\"publicdashboards.invalidAccessToken\", \"statusCode\":400, \"traceID\":\"\"}", response.Body.String())
@@ -275,9 +279,9 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	})
 
 	// Create Dashboard
-	saveDashboardCmd := models.SaveDashboardCommand{
-		OrgId:    1,
-		FolderId: 1,
+	saveDashboardCmd := dashboards.SaveDashboardCommand{
+		OrgID:    1,
+		FolderID: 1,
 		IsFolder: false,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
 			"id":    nil,
@@ -300,14 +304,15 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	}
 
 	// create dashboard
-	dashboardStoreService := dashboardStore.ProvideDashboardStore(db, db.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db, db.Cfg))
+	dashboardStoreService, err := dashboardStore.ProvideDashboardStore(db, db.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db, db.Cfg), quotatest.New(false, nil))
+	require.NoError(t, err)
 	dashboard, err := dashboardStoreService.SaveDashboard(context.Background(), saveDashboardCmd)
 	require.NoError(t, err)
 
 	// Create public dashboard
 	savePubDashboardCmd := &SavePublicDashboardDTO{
-		DashboardUid: dashboard.Uid,
-		OrgId:        dashboard.OrgId,
+		DashboardUid: dashboard.UID,
+		OrgId:        dashboard.OrgID,
 		PublicDashboard: &PublicDashboard{
 			IsEnabled: true,
 		},

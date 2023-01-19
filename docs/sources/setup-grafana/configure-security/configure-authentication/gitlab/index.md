@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/auth/gitlab/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/gitlab/
+  - ../../../auth/gitlab/
 description: Grafana OAuthentication Guide
 keywords:
   - grafana
@@ -50,7 +49,8 @@ authentication:
 ```bash
 [auth.gitlab]
 enabled = true
-allow_sign_up = false
+allow_sign_up = true
+auto_login = false
 client_id = GITLAB_APPLICATION_ID
 client_secret = GITLAB_SECRET
 scopes = read_api
@@ -81,6 +81,18 @@ to login on your Grafana instance.
 You can limit access to only members of a given group or list of
 groups by setting the `allowed_groups` option.
 
+### Configure refresh token
+
+> Available in Grafana v9.3 and later versions.
+
+> **Note:** This feature is behind the `accessTokenExpirationCheck` feature toggle.
+
+When a user logs in using an OAuth provider, Grafana verifies that the access token has not expired. When an access token expires, Grafana uses the provided refresh token (if any exists) to obtain a new access token.
+
+Grafana uses a refresh token to obtain a new access token without requiring the user to log in again. If a refresh token doesn't exist, Grafana logs the user out of the system after the access token has expired.
+
+By default, GitLab provides a refresh token.
+
 ### allowed_groups
 
 To limit access to authenticated users that are members of one or more [GitLab
@@ -99,6 +111,12 @@ the group `foo`, set
 allowed_groups = example, foo/bar
 ```
 
+To put values containing spaces in the list, use the following JSON syntax:
+
+```ini
+allowed_groups = ["Admins", "Software Engineers"]
+```
+
 Note that in GitLab, the group or subgroup name doesn't always match its
 display name, especially if the display name contains spaces or special
 characters. Make sure you always use the group or subgroup name as it appears
@@ -111,6 +129,7 @@ the `example` and `foo/bar` groups. The example also promotes all GitLab Admins 
 [auth.gitlab]
 enabled = true
 allow_sign_up = true
+auto_login = false
 client_id = GITLAB_APPLICATION_ID
 client_secret = GITLAB_SECRET
 scopes = read_api
@@ -121,6 +140,15 @@ allowed_groups = example, foo/bar
 role_attribute_path = is_admin && 'Admin' || 'Viewer'
 role_attribute_strict = true
 allow_assign_grafana_admin = false
+```
+
+### Configure automatic login
+
+Set `auto_login` option to true to attempt login automatically, skipping the login screen.
+This setting is ignored if multiple auth providers are configured to use auto login.
+
+```
+auto_login = true
 ```
 
 ### Map roles

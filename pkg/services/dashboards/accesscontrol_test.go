@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -29,9 +29,7 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 		orgId := rand.Int63()
 		title := "Very complex :title with: and /" + util.GenerateShortUID()
 
-		db := models.NewFolder(title)
-		db.Id = rand.Int63()
-		db.Uid = util.GenerateShortUID()
+		db := &folder.Folder{Title: title, ID: rand.Int63(), UID: util.GenerateShortUID()}
 		dashboardStore.On("GetFolderByTitle", mock.Anything, mock.Anything, mock.Anything).Return(db, nil).Once()
 
 		scope := "folders:name:" + title
@@ -40,7 +38,7 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, resolvedScopes, 1)
 
-		require.Equal(t, fmt.Sprintf("folders:uid:%v", db.Uid), resolvedScopes[0])
+		require.Equal(t, fmt.Sprintf("folders:uid:%v", db.UID), resolvedScopes[0])
 
 		dashboardStore.AssertCalled(t, "GetFolderByTitle", mock.Anything, orgId, title)
 	})
@@ -88,17 +86,17 @@ func TestNewFolderIDScopeResolver(t *testing.T) {
 		orgId := rand.Int63()
 		uid := util.GenerateShortUID()
 
-		db := &models.Folder{Id: rand.Int63(), Uid: uid}
+		db := &folder.Folder{ID: rand.Int63(), UID: uid}
 		dashboardStore.On("GetFolderByID", mock.Anything, mock.Anything, mock.Anything).Return(db, nil).Once()
 
-		scope := "folders:id:" + strconv.FormatInt(db.Id, 10)
+		scope := "folders:id:" + strconv.FormatInt(db.ID, 10)
 
 		resolvedScopes, err := resolver.Resolve(context.Background(), orgId, scope)
 		require.NoError(t, err)
 		require.Len(t, resolvedScopes, 1)
-		require.Equal(t, fmt.Sprintf("folders:uid:%v", db.Uid), resolvedScopes[0])
+		require.Equal(t, fmt.Sprintf("folders:uid:%v", db.UID), resolvedScopes[0])
 
-		dashboardStore.AssertCalled(t, "GetFolderByID", mock.Anything, orgId, db.Id)
+		dashboardStore.AssertCalled(t, "GetFolderByID", mock.Anything, orgId, db.ID)
 	})
 	t.Run("resolver should fail if input scope is not expected", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
@@ -157,18 +155,18 @@ func TestNewDashboardIDScopeResolver(t *testing.T) {
 		_, resolver := NewDashboardIDScopeResolver(store)
 
 		orgID := rand.Int63()
-		folder := &models.Folder{Id: 2, Uid: "2"}
-		dashboard := &models.Dashboard{Id: 1, FolderId: folder.Id, Uid: "1"}
+		folder := &folder.Folder{ID: 2, UID: "2"}
+		dashboard := &Dashboard{ID: 1, FolderID: folder.ID, UID: "1"}
 
 		store.On("GetDashboard", mock.Anything, mock.Anything).Return(dashboard, nil).Once()
-		store.On("GetFolderByID", mock.Anything, orgID, folder.Id).Return(folder, nil).Once()
+		store.On("GetFolderByID", mock.Anything, orgID, folder.ID).Return(folder, nil).Once()
 
-		scope := ac.Scope("dashboards", "id", strconv.FormatInt(dashboard.Id, 10))
+		scope := ac.Scope("dashboards", "id", strconv.FormatInt(dashboard.ID, 10))
 		resolvedScopes, err := resolver.Resolve(context.Background(), orgID, scope)
 		require.NoError(t, err)
 		require.Len(t, resolvedScopes, 2)
-		require.Equal(t, fmt.Sprintf("dashboards:uid:%s", dashboard.Uid), resolvedScopes[0])
-		require.Equal(t, fmt.Sprintf("folders:uid:%s", folder.Uid), resolvedScopes[1])
+		require.Equal(t, fmt.Sprintf("dashboards:uid:%s", dashboard.UID), resolvedScopes[0])
+		require.Equal(t, fmt.Sprintf("folders:uid:%s", folder.UID), resolvedScopes[1])
 	})
 
 	t.Run("resolver should fail if input scope is not expected", func(t *testing.T) {
@@ -181,7 +179,7 @@ func TestNewDashboardIDScopeResolver(t *testing.T) {
 		store := &FakeDashboardStore{}
 		_, resolver := NewDashboardIDScopeResolver(store)
 
-		dashboard := &models.Dashboard{Id: 1, FolderId: 0, Uid: "1"}
+		dashboard := &Dashboard{ID: 1, FolderID: 0, UID: "1"}
 		store.On("GetDashboard", mock.Anything, mock.Anything).Return(dashboard, nil)
 		resolved, err := resolver.Resolve(context.Background(), 1, ac.Scope("dashboards", "id", "1"))
 		require.NoError(t, err)
@@ -203,18 +201,18 @@ func TestNewDashboardUIDScopeResolver(t *testing.T) {
 		_, resolver := NewDashboardUIDScopeResolver(store)
 
 		orgID := rand.Int63()
-		folder := &models.Folder{Id: 2, Uid: "2"}
-		dashboard := &models.Dashboard{Id: 1, FolderId: folder.Id, Uid: "1"}
+		folder := &folder.Folder{ID: 2, UID: "2"}
+		dashboard := &Dashboard{ID: 1, FolderID: folder.ID, UID: "1"}
 
 		store.On("GetDashboard", mock.Anything, mock.Anything).Return(dashboard, nil).Once()
-		store.On("GetFolderByID", mock.Anything, orgID, folder.Id).Return(folder, nil).Once()
+		store.On("GetFolderByID", mock.Anything, orgID, folder.ID).Return(folder, nil).Once()
 
-		scope := ac.Scope("dashboards", "uid", dashboard.Uid)
+		scope := ac.Scope("dashboards", "uid", dashboard.UID)
 		resolvedScopes, err := resolver.Resolve(context.Background(), orgID, scope)
 		require.NoError(t, err)
 		require.Len(t, resolvedScopes, 2)
-		require.Equal(t, fmt.Sprintf("dashboards:uid:%s", dashboard.Uid), resolvedScopes[0])
-		require.Equal(t, fmt.Sprintf("folders:uid:%s", folder.Uid), resolvedScopes[1])
+		require.Equal(t, fmt.Sprintf("dashboards:uid:%s", dashboard.UID), resolvedScopes[0])
+		require.Equal(t, fmt.Sprintf("folders:uid:%s", folder.UID), resolvedScopes[1])
 	})
 
 	t.Run("resolver should fail if input scope is not expected", func(t *testing.T) {
@@ -227,7 +225,7 @@ func TestNewDashboardUIDScopeResolver(t *testing.T) {
 		store := &FakeDashboardStore{}
 		_, resolver := NewDashboardUIDScopeResolver(store)
 
-		dashboard := &models.Dashboard{Id: 1, FolderId: 0, Uid: "1"}
+		dashboard := &Dashboard{ID: 1, FolderID: 0, UID: "1"}
 		store.On("GetDashboard", mock.Anything, mock.Anything).Return(dashboard, nil)
 		resolved, err := resolver.Resolve(context.Background(), 1, ac.Scope("dashboards", "uid", "1"))
 		require.NoError(t, err)

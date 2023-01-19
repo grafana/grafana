@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -28,8 +29,8 @@ func (hs *HTTPServer) SendResetPasswordEmail(c *models.ReqContext) response.Resp
 
 	usr, err := hs.userService.GetByLogin(c.Req.Context(), &userQuery)
 	if err != nil {
-		c.Logger.Info("Requested password reset for user that was not found", "user", userQuery.LoginOrEmail)
-		return response.Error(http.StatusOK, "Email sent", err)
+		c.Logger.Info("Requested password reset for user that was not found", "user", userQuery.LoginOrEmail, "error", err)
+		return response.Error(http.StatusOK, "Email sent", nil)
 	}
 
 	if usr.IsDisabled {
@@ -45,7 +46,7 @@ func (hs *HTTPServer) SendResetPasswordEmail(c *models.ReqContext) response.Resp
 		}
 	}
 
-	emailCmd := models.SendResetPasswordEmailCommand{User: usr}
+	emailCmd := notifications.SendResetPasswordEmailCommand{User: usr}
 	if err := hs.NotificationService.SendResetPasswordEmail(c.Req.Context(), &emailCmd); err != nil {
 		return response.Error(500, "Failed to send email", err)
 	}
@@ -58,16 +59,20 @@ func (hs *HTTPServer) ResetPassword(c *models.ReqContext) response.Response {
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	query := models.ValidateResetPasswordCodeQuery{Code: form.Code}
+	query := notifications.ValidateResetPasswordCodeQuery{Code: form.Code}
 
+	// For now the only way to know the username to clear login attempts for is
+	// to set it in the function provided to NotificationService
+	var username string
 	getUserByLogin := func(ctx context.Context, login string) (*user.User, error) {
+		username = login
 		userQuery := user.GetUserByLoginQuery{LoginOrEmail: login}
 		usr, err := hs.userService.GetByLogin(ctx, &userQuery)
 		return usr, err
 	}
 
 	if err := hs.NotificationService.ValidateResetPasswordCode(c.Req.Context(), &query, getUserByLogin); err != nil {
-		if errors.Is(err, models.ErrInvalidEmailCode) {
+		if errors.Is(err, notifications.ErrInvalidEmailCode) {
 			return response.Error(400, "Invalid or expired reset password code", nil)
 		}
 		return response.Error(500, "Unknown error validating email code", err)
@@ -92,6 +97,10 @@ func (hs *HTTPServer) ResetPassword(c *models.ReqContext) response.Response {
 
 	if err := hs.userService.ChangePassword(c.Req.Context(), &cmd); err != nil {
 		return response.Error(500, "Failed to change user password", err)
+	}
+
+	if err := hs.loginAttemptService.Reset(c.Req.Context(), username); err != nil {
+		c.Logger.Warn("could not reset login attempts", "err", err, "username", username)
 	}
 
 	return response.Success("User password changed")

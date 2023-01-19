@@ -16,6 +16,9 @@ import (
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	loginService "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -91,19 +94,6 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		return
 	}
 
-	enabledOAuths := make(map[string]interface{})
-	providers := hs.SocialService.GetOAuthInfoProviders()
-	for key, oauth := range providers {
-		enabledOAuths[key] = map[string]string{
-			"name": oauth.Name,
-			"icon": oauth.Icon,
-		}
-	}
-
-	viewData.Settings["oauth"] = enabledOAuths
-	viewData.Settings["samlEnabled"] = hs.samlEnabled()
-	viewData.Settings["samlName"] = hs.samlName()
-
 	if loginError, ok := hs.tryGetEncryptedCookie(c, loginErrorCookieName); ok {
 		// this cookie is only set whenever an OAuth login fails
 		// therefore the loginError should be passed to the view data
@@ -115,7 +105,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		return
 	}
 
-	if hs.tryOAuthAutoLogin(c) {
+	if hs.tryAutoLogin(c) {
 		return
 	}
 
@@ -149,21 +139,49 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	c.HTML(http.StatusOK, getViewIndex(), viewData)
 }
 
-func (hs *HTTPServer) tryOAuthAutoLogin(c *models.ReqContext) bool {
-	if !setting.OAuthAutoLogin {
-		return false
-	}
+func (hs *HTTPServer) tryAutoLogin(c *models.ReqContext) bool {
+	samlAutoLogin := hs.samlAutoLoginEnabled()
 	oauthInfos := hs.SocialService.GetOAuthInfoProviders()
-	if len(oauthInfos) != 1 {
-		c.Logger.Warn("Skipping OAuth auto login because multiple OAuth providers are configured")
+
+	autoLoginProvidersLen := 0
+	for _, provider := range oauthInfos {
+		if provider.AutoLogin {
+			autoLoginProvidersLen++
+		}
+	}
+	// If no auto_login option configured for specific OAuth, use legacy option
+	if setting.OAuthAutoLogin && autoLoginProvidersLen == 0 {
+		autoLoginProvidersLen = len(oauthInfos)
+	}
+	if samlAutoLogin {
+		autoLoginProvidersLen++
+	}
+
+	if autoLoginProvidersLen > 1 {
+		c.Logger.Warn("Skipping auto login because multiple auth providers are configured with auto_login option")
 		return false
 	}
-	for key := range oauthInfos {
-		redirectUrl := hs.Cfg.AppSubURL + "/login/" + key
-		c.Logger.Info("OAuth auto login enabled. Redirecting to " + redirectUrl)
+	if autoLoginProvidersLen == 0 && setting.OAuthAutoLogin {
+		c.Logger.Warn("Skipping auto login because no auth providers are configured")
+		return false
+	}
+
+	for providerName, provider := range oauthInfos {
+		if provider.AutoLogin || setting.OAuthAutoLogin {
+			redirectUrl := hs.Cfg.AppSubURL + "/login/" + providerName
+			c.Logger.Info("OAuth auto login enabled. Redirecting to " + redirectUrl)
+			c.Redirect(redirectUrl, 307)
+			return true
+		}
+	}
+
+	if samlAutoLogin {
+		redirectUrl := hs.Cfg.AppSubURL + "/login/saml"
+		c.Logger.Info("SAML auto login enabled. Redirecting to " + redirectUrl)
 		c.Redirect(redirectUrl, 307)
 		return true
 	}
+
 	return false
 }
 
@@ -176,6 +194,34 @@ func (hs *HTTPServer) LoginAPIPing(c *models.ReqContext) response.Response {
 }
 
 func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
+	if hs.Features.IsEnabled(featuremgmt.FlagAuthnService) {
+		identity, err := hs.authnService.Login(c.Req.Context(), authn.ClientForm, &authn.Request{HTTPRequest: c.Req, Resp: c.Resp})
+		if err != nil {
+			tokenErr := &auth.CreateTokenErr{}
+			if errors.As(err, &tokenErr) {
+				return response.Error(tokenErr.StatusCode, tokenErr.ExternalErr, tokenErr.InternalErr)
+			}
+			return response.Err(err)
+		}
+
+		cookies.WriteSessionCookie(c, hs.Cfg, identity.SessionToken.UnhashedToken, hs.Cfg.LoginMaxLifetime)
+		result := map[string]interface{}{
+			"message": "Logged in",
+		}
+
+		if redirectTo := c.GetCookie("redirect_to"); len(redirectTo) > 0 {
+			if err := hs.ValidateRedirectTo(redirectTo); err == nil {
+				result["redirectUrl"] = redirectTo
+			} else {
+				c.Logger.Info("Ignored invalid redirect_to cookie value.", "url", redirectTo)
+			}
+			cookies.DeleteCookie(c.Resp, "redirect_to", hs.CookieOptionsFromCfg)
+		}
+
+		metrics.MApiLoginPost.Inc()
+		return response.JSON(http.StatusOK, result)
+	}
+
 	cmd := dtos.LoginCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad login data", err)
@@ -207,7 +253,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 		ReqContext: c,
 		Username:   cmd.User,
 		Password:   cmd.Password,
-		IpAddress:  c.Req.RemoteAddr,
+		IpAddress:  c.RemoteAddr(),
 		Cfg:        hs.Cfg,
 	}
 
@@ -240,7 +286,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 
 	err = hs.loginUserWithUser(usr, c)
 	if err != nil {
-		var createTokenErr *models.CreateTokenErr
+		var createTokenErr *auth.CreateTokenErr
 		if errors.As(err, &createTokenErr) {
 			resp = response.Error(createTokenErr.StatusCode, createTokenErr.ExternalErr, createTokenErr.InternalErr)
 		} else {
@@ -312,7 +358,7 @@ func (hs *HTTPServer) Logout(c *models.ReqContext) {
 	}
 
 	err := hs.AuthTokenService.RevokeToken(c.Req.Context(), c.UserToken, false)
-	if err != nil && !errors.Is(err, models.ErrUserTokenNotFound) {
+	if err != nil && !errors.Is(err, auth.ErrUserTokenNotFound) {
 		hs.log.Error("failed to revoke auth token", "error", err)
 	}
 
@@ -382,8 +428,12 @@ func (hs *HTTPServer) samlSingleLogoutEnabled() bool {
 	return hs.samlEnabled() && hs.SettingsProvider.KeyValue("auth.saml", "single_logout").MustBool(false) && hs.samlEnabled()
 }
 
+func (hs *HTTPServer) samlAutoLoginEnabled() bool {
+	return hs.samlEnabled() && hs.SettingsProvider.KeyValue("auth.saml", "auto_login").MustBool(false)
+}
+
 func getLoginExternalError(err error) string {
-	var createTokenErr *models.CreateTokenErr
+	var createTokenErr *auth.CreateTokenErr
 	if errors.As(err, &createTokenErr) {
 		return createTokenErr.ExternalErr
 	}

@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/features/datasources/tempo/
-  - /docs/grafana/latest/datasources/tempo/
-  - /docs/grafana/latest/data-sources/tempo/
+  - ../data-sources/tempo/
+  - ../features/datasources/tempo/
 description: Guide for using Tempo in Grafana
 keywords:
   - grafana
@@ -54,12 +53,22 @@ You can also configure settings specific to the Tempo data source:
 > **Note:** Available in Grafana v7.4 and higher.
 > If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
 
-The **Trace to logs** setting configures the [trace to logs feature]({{< relref "../../explore/trace-integration" >}}) available when integrating Grafana with Tempo.
+The **Trace to logs** setting configures the [trace to logs feature]({{< relref "../../explore/trace-integration" >}}) that is available when you integrate Grafana with Tempo.
 
 **To configure trace to logs:**
 
 1. Select the target data source.
-1. Select which tags to use in the logs query.
+1. Select which tags to use in the logs query. The tags you configure must be present in the spans attributes or resources for a trace to logs span link to appear.
+
+   - **Single tag**
+     - Configuring `job` as a tag and clicking on a span link will take you to your configured logs datasource with the query `{job='value from clicked span'}`.
+   - **Multiple tags**
+     - If multiple tags are used they will be concatenated so the logs query would look like `{job='value from clicked span', service='value from clicked span'}`.
+   - **Mapped tags**
+     - For a mapped tag `service.name` with value `service`, clicking on a span link will take you to your configured logs datasource with the query `{service='value from clicked span'}` instead of `{service.name='value from clicked span'}`.
+     - This is useful for instances where your tracing datasource tags and your logs datasource tags don't match one-to-one.
+
+The following table describes the ways in which you can configure your trace to logs settings:
 
 | Setting name              | Description                                                                                                                                                                                     |
 | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -111,7 +120,7 @@ Optionally configure the **Hide search** setting to hide the search query option
 
 ### Enable Node Graph
 
-The **Node Graph** setting enables the beta [Node Graph visualization]({{< relref "../../panels-visualizations/visualizations/node-graph/" >}}), which is disabled by default.
+The **Node Graph** setting enables the [Node Graph visualization]({{< relref "../../panels-visualizations/visualizations/node-graph/" >}}), which is disabled by default.
 
 Once enabled, Grafana displays the Node Graph after loading the trace view.
 

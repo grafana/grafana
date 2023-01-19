@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -131,13 +130,12 @@ func buildQueryDataService(t *testing.T, cs datasources.CacheService, fpc *fakeP
 	}
 
 	return query.ProvideService(
-		nil,
+		setting.NewCfg(),
 		cs,
 		nil,
 		&fakePluginRequestValidator{},
 		&fakeDatasources.FakeDataSourceService{},
 		fpc,
-		&fakeOAuthTokenService{},
 	)
 }
 
@@ -148,31 +146,6 @@ type fakePluginRequestValidator struct {
 
 func (rv *fakePluginRequestValidator) Validate(dsURL string, req *http.Request) error {
 	return rv.err
-}
-
-type fakeOAuthTokenService struct {
-	passThruEnabled bool
-	token           *oauth2.Token
-}
-
-func (ts *fakeOAuthTokenService) GetCurrentOAuthToken(context.Context, *user.SignedInUser) *oauth2.Token {
-	return ts.token
-}
-
-func (ts *fakeOAuthTokenService) IsOAuthPassThruEnabled(*datasources.DataSource) bool {
-	return ts.passThruEnabled
-}
-
-func (ts *fakeOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUser) (*models.UserAuth, bool, error) {
-	return nil, false, nil
-}
-
-func (ts *fakeOAuthTokenService) TryTokenRefresh(ctx context.Context, usr *models.UserAuth) error {
-	return nil
-}
-
-func (ts *fakeOAuthTokenService) InvalidateOAuthTokens(ctx context.Context, usr *models.UserAuth) error {
-	return nil
 }
 
 // copied from pkg/api/plugins_test.go

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -26,6 +27,7 @@ const (
 	DS_ACCESS_PROXY   = "proxy"
 	DS_ES_OPEN_DISTRO = "grafana-es-open-distro-datasource"
 	DS_ES_OPENSEARCH  = "grafana-opensearch-datasource"
+	DS_AZURE_MONITOR  = "grafana-azure-monitor-datasource"
 )
 
 type DsAccess string
@@ -193,3 +195,8 @@ type DatasourcesPermissionFilterQuery struct {
 	Datasources []*DataSource
 	Result      []*DataSource
 }
+
+const (
+	QuotaTargetSrv quota.TargetSrv = "data_source"
+	QuotaTarget    quota.Target    = "data_source"
+)

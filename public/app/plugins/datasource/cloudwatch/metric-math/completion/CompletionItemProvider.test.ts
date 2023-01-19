@@ -4,7 +4,7 @@ import { setupMockedTemplateService } from '../../__mocks__/CloudWatchDataSource
 import * as MetricMathTestData from '../../__mocks__/metric-math-test-data';
 import MonacoMock from '../../__mocks__/monarch/Monaco';
 import TextModel from '../../__mocks__/monarch/TextModel';
-import { CloudWatchAPI } from '../../api';
+import { ResourcesAPI } from '../../resources/ResourcesAPI';
 import cloudWatchMetricMathLanguageDefinition from '../definition';
 import {
   METRIC_MATH_FNS,
@@ -20,7 +20,7 @@ const getSuggestions = async (value: string, position: monacoTypes.IPosition) =>
   const setup = new MetricMathCompletionItemProvider(
     {
       getActualRegion: () => 'us-east-2',
-    } as CloudWatchAPI,
+    } as ResourcesAPI,
     setupMockedTemplateService([])
   );
   const monaco = MonacoMock as Monaco;
@@ -66,7 +66,9 @@ describe('MetricMath: CompletionItemProvider', () => {
     it('returns a suggestion for every period if the third arg of a search function', async () => {
       const { query, position } = MetricMathTestData.thirdArgAfterSearchQuery;
       const suggestions = await getSuggestions(query, position);
-      expect(suggestions.length).toEqual(METRIC_MATH_PERIODS.length);
+      // +1 because one suggestion is also added for the  $__period_auto macro
+      const expectedSuggestionsLength = METRIC_MATH_PERIODS.length + 1;
+      expect(suggestions.length).toEqual(expectedSuggestionsLength);
     });
   });
 });

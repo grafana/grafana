@@ -127,6 +127,7 @@ export interface CurrentUserDTO {
   timezone: string;
   weekStart: string;
   locale: string;
+  language: string;
   permissions?: Record<string, boolean>;
 }
 
@@ -222,5 +223,9 @@ export interface AuthSettings {
   OAuthSkipOrgRoleUpdateSync?: boolean;
   SAMLSkipOrgRoleSync?: boolean;
   LDAPSkipOrgRoleSync?: boolean;
+  JWTAuthSkipOrgRoleSync?: boolean;
+  GrafanaComSkipOrgRoleSync?: boolean;
+  AzureADSkipOrgRoleSync?: boolean;
+  GoogleSkipOrgRoleSync?: boolean;
   DisableSyncLock?: boolean;
 }

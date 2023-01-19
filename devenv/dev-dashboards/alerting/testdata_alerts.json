@@ -90,13 +90,7 @@
       "id": 4,
       "isNew": true,
       "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
+        "show": true
       },
       "lines": true,
       "linewidth": 2,
@@ -106,7 +100,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.3.0-pre",
+      "pluginVersion": "9.4.0-pre",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -233,13 +227,7 @@
       "id": 7,
       "isNew": true,
       "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
+        "show": true
       },
       "lines": true,
       "linewidth": 2,
@@ -399,13 +387,7 @@
       "id": 6,
       "isNew": true,
       "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
+        "show": true
       },
       "lines": true,
       "linewidth": 2,
@@ -415,7 +397,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.3.0-pre",
+      "pluginVersion": "9.4.0-pre",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -537,13 +519,7 @@
       "id": 3,
       "isNew": true,
       "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
+        "show": true
       },
       "lines": true,
       "linewidth": 2,
@@ -553,7 +529,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.3.0-pre",
+      "pluginVersion": "9.4.0-pre",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -679,13 +655,7 @@
       "id": 5,
       "isNew": true,
       "legend": {
-        "avg": false,
-        "current": false,
-        "max": false,
-        "min": false,
-        "show": true,
-        "total": false,
-        "values": false
+        "show": true
       },
       "lines": true,
       "linewidth": 2,
@@ -695,7 +665,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "9.3.0-pre",
+      "pluginVersion": "9.4.0-pre",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",

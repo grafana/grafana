@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestCustomHeadersMiddleware(t *testing.T) {
+func TestSetUserAgentMiddleware(t *testing.T) {
 	t.Run("Without user agent set should return next http.RoundTripper", func(t *testing.T) {
 		ctx := &testContext{}
 		finalRoundTripper := ctx.createRoundTripper("finalrt")

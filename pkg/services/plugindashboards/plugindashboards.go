@@ -3,7 +3,7 @@ package plugindashboards
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
 // PluginDashboard plugin dashboard model..
@@ -43,7 +43,7 @@ type LoadPluginDashboardRequest struct {
 
 // LoadPluginDashboardResponse response object for loading a plugin dashboard.
 type LoadPluginDashboardResponse struct {
-	Dashboard *models.Dashboard
+	Dashboard *dashboards.Dashboard
 }
 
 // Service interface for listing plugin dashboards.

@@ -3,6 +3,7 @@ import produce from 'immer';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import UrlBuilder from '../../azure_monitor/url_builder';
+import { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
 import { AzureMetricResource, AzureMonitorQuery } from '../../types';
 
 import { ResourceRow, ResourceRowGroup } from './types';
@@ -34,7 +35,7 @@ function parseNamespaceAndName(metricNamespaceAndName?: string) {
   return { metricNamespace: namespaceArray.join('/'), resourceName: resourceNameArray.join('/') };
 }
 
-export function parseResourceURI(resourceURI: string) {
+export function parseResourceURI(resourceURI: string): AzureMetricResource {
   const matches = RESOURCE_URI_REGEX.exec(resourceURI);
   const groups: RegexGroups = matches?.groups ?? {};
   const { subscription, resourceGroup, metricNamespaceAndResource } = groups;
@@ -43,11 +44,25 @@ export function parseResourceURI(resourceURI: string) {
   return { subscription, resourceGroup, metricNamespace, resourceName };
 }
 
-export function parseResourceDetails(resource: string | AzureMetricResource) {
+export function parseMultipleResourceDetails(resources: Array<string | AzureMetricResource>, location?: string) {
+  return resources.map((resource) => {
+    return parseResourceDetails(resource, location);
+  });
+}
+
+export function parseResourceDetails(resource: string | AzureMetricResource, location?: string) {
   if (typeof resource === 'string') {
-    return parseResourceURI(resource);
+    const res = parseResourceURI(resource);
+    if (location) {
+      res.region = location;
+    }
+    return res;
   }
   return resource;
+}
+
+export function resourcesToStrings(resources: Array<string | AzureMetricResource>) {
+  return resources.map((resource) => resourceToString(resource));
 }
 
 export function resourceToString(resource?: string | AzureMetricResource) {
@@ -62,19 +77,47 @@ export function isGUIDish(input: string) {
   return !!input.match(/^[A-Z0-9]+/i);
 }
 
-function matchURI(rowURI: string, resourceURI: string) {
+function compareNamespaceAndName(
+  rowNamespace?: string,
+  rowName?: string,
+  resourceNamespace?: string,
+  resourceName?: string
+) {
+  // StorageAccounts subresources are not listed independently
+  if (resourceNamespace?.startsWith('microsoft.storage/storageaccounts')) {
+    resourceNamespace = 'microsoft.storage/storageaccounts';
+    if (resourceName?.endsWith('/default')) {
+      resourceName = resourceName.slice(0, -'/default'.length);
+    }
+  }
+  return rowNamespace === resourceNamespace && rowName === resourceName;
+}
+
+export function matchURI(rowURI: string, resourceURI: string) {
   const targetParams = parseResourceDetails(resourceURI);
   const rowParams = parseResourceDetails(rowURI);
 
   return (
     rowParams?.subscription === targetParams?.subscription &&
     rowParams?.resourceGroup?.toLowerCase() === targetParams?.resourceGroup?.toLowerCase() &&
-    // metricNamespace may include a subresource that we don't need to compare
-    rowParams?.metricNamespace?.toLowerCase().split('/')[0] ===
-      targetParams?.metricNamespace?.toLowerCase().split('/')[0] &&
-    // resourceName may include a subresource that we don't need to compare
-    rowParams?.resourceName?.split('/')[0] === targetParams?.resourceName?.split('/')[0]
+    compareNamespaceAndName(
+      rowParams?.metricNamespace?.toLowerCase(),
+      rowParams?.resourceName,
+      targetParams?.metricNamespace?.toLowerCase(),
+      targetParams?.resourceName
+    )
   );
+}
+
+export function findRows(rows: ResourceRowGroup, uris: string[]): ResourceRow[] {
+  const result: ResourceRow[] = [];
+  uris.forEach((uri) => {
+    const row = findRow(rows, uri);
+    if (row) {
+      result.push(row);
+    }
+  });
+  return result;
 }
 
 export function findRow(rows: ResourceRowGroup, uri: string): ResourceRow | undefined {
@@ -111,26 +154,31 @@ export function addResources(rows: ResourceRowGroup, targetParentId: string, new
   });
 }
 
-export function setResource(query: AzureMonitorQuery, resource?: string | AzureMetricResource): AzureMonitorQuery {
-  if (typeof resource === 'string') {
+export function setResources(
+  query: AzureMonitorQuery,
+  type: ResourcePickerQueryType,
+  resources: Array<string | AzureMetricResource>
+): AzureMonitorQuery {
+  if (type === 'logs') {
     // Resource URI for LogAnalytics
     return {
       ...query,
       azureLogAnalytics: {
         ...query.azureLogAnalytics,
-        resource,
+        resources: resourcesToStrings(resources),
       },
     };
   }
   // Resource object for metrics
+  const parsedResource = resources.length ? parseResourceDetails(resources[0]) : {};
   return {
     ...query,
-    subscription: resource?.subscription,
+    subscription: parsedResource.subscription,
     azureMonitor: {
       ...query.azureMonitor,
-      resourceGroup: resource?.resourceGroup,
-      metricNamespace: resource?.metricNamespace?.toLocaleLowerCase(),
-      resourceName: resource?.resourceName,
+      metricNamespace: parsedResource.metricNamespace?.toLocaleLowerCase(),
+      region: parsedResource.region,
+      resources: parseMultipleResourceDetails(resources),
       metricName: undefined,
       aggregation: undefined,
       timeGrain: '',

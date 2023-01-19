@@ -43,8 +43,12 @@ function provisionAzureMonitorDatasources(datasources: AzureMonitorProvision[]) 
         .type(datasource.secureJsonData.clientSecret, { log: false });
       e2eSelectors.configEditor.loadSubscriptions.button().click().wait('@subscriptions').wait(500);
       e2eSelectors.configEditor.defaultSubscription.input().find('input').type('datasources{enter}');
+      // Wait for 15s so that credentials are ready. 5s has been tested locally before and seemed insufficient.
+      e2e().wait(15000);
     },
     expectedAlertMessage: 'Successfully connected to all Azure Monitor endpoints',
+    // Reduce the timeout from 30s to error faster when an invalid alert message is presented
+    timeout: 10000,
   });
 }
 
@@ -140,11 +144,14 @@ e2e.scenario({
         zone: 'Coordinated Universal Time',
       },
     });
+    e2e()
+      .intercept(/locations/)
+      .as('locations');
     e2e.flows.addPanel({
       dataSourceName,
       visitDashboardAtStart: false,
       queriesForm: () => {
-        e2eSelectors.queryEditor.resourcePicker.select.button().click();
+        e2eSelectors.queryEditor.resourcePicker.select.button().click().wait('@locations');
         e2eSelectors.queryEditor.resourcePicker.search
           .input()
           .wait(100)
@@ -227,14 +234,17 @@ e2e.scenario({
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('resourceGroups')
       .parent()
       .find('input')
-      .type('cloud-plugins-e2e-test{enter}');
+      .type('cloud-plugins-e2e-test{downArrow}{enter}');
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('namespaces').parent().find('button').click();
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('namespaces')
       .parent()
       .find('input')
-      .type('microsoft.storage/storageaccounts{enter}');
+      .type('microsoft.storage/storageaccounts{downArrow}{enter}');
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('resource').parent().find('button').click();
-    e2e.pages.Dashboard.SubMenu.submenuItemLabels('resource').parent().find('input').type('azmonmetricstest{enter}');
+    e2e.pages.Dashboard.SubMenu.submenuItemLabels('resource')
+      .parent()
+      .find('input')
+      .type('azmonmetricstest{downArrow}{enter}');
     e2e.flows.addPanel({
       dataSourceName,
       visitDashboardAtStart: false,

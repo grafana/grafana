@@ -5,6 +5,9 @@ import { config } from '@grafana/runtime';
 
 export const initialState: NavModelItem[] = config.bootData?.navTree ?? [];
 
+// this matches the prefix set in the backend navtree
+export const ID_PREFIX = 'starred/';
+
 const navTreeSlice = createSlice({
   name: 'navBarTree',
   initialState,
@@ -18,14 +21,14 @@ const navTreeSlice = createSlice({
             starredItems.children = [];
           }
           const newStarredItem: NavModelItem = {
-            id,
+            id: ID_PREFIX + id,
             text: title,
             url,
           };
           starredItems.children.push(newStarredItem);
           starredItems.children.sort((a, b) => a.text.localeCompare(b.text));
         } else {
-          const index = starredItems.children?.findIndex((item) => item.id === id) ?? -1;
+          const index = starredItems.children?.findIndex((item) => item.id === ID_PREFIX + id) ?? -1;
           if (index > -1) {
             starredItems?.children?.splice(index, 1);
           }

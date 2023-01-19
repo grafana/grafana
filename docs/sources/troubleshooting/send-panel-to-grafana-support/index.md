@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/troubleshooting/send-panel-to-grafana-support/
 description: Learn how to send a panel to Grafana Labs support for troubleshooting
 keywords:
   - grafana

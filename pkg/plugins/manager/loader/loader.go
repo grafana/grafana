@@ -12,12 +12,10 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/gosimple/slug"
-
 	"github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/logger"
@@ -51,14 +49,14 @@ type Loader struct {
 	errs map[string]*plugins.SignatureError
 }
 
-func ProvideService(cfg *config.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
+func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
 	roleRegistry plugins.RoleRegistry) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
 		storage.FileSystem(logger.NewLogger("loader.fs"), cfg.PluginsPath), roleRegistry)
 }
 
-func New(cfg *config.Cfg, license models.Licensing, authorizer plugins.PluginLoaderAuthorizer,
+func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
 	processManager process.Service, pluginStorage storage.Manager, roleRegistry plugins.RoleRegistry) *Loader {
 	return &Loader{
@@ -128,7 +126,6 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 		plugin.Signature = sig.Status
 		plugin.SignatureType = sig.Type
 		plugin.SignatureOrg = sig.SigningOrg
-		plugin.SignedFiles = sig.Files
 
 		loadedPlugins[plugin.PluginDir] = plugin
 	}
@@ -186,7 +183,7 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 		}
 
 		if plugin.Parent != nil && plugin.Parent.IsApp() {
-			configureAppChildOPlugin(plugin.Parent, plugin)
+			configureAppChildPlugin(plugin.Parent, plugin)
 		}
 
 		verifiedPlugins = append(verifiedPlugins, plugin)
@@ -343,7 +340,7 @@ func setDefaultNavURL(p *plugins.Plugin) {
 	// slugify pages
 	for _, include := range p.Includes {
 		if include.Slug == "" {
-			include.Slug = slug.Make(include.Name)
+			include.Slug = slugify.Slugify(include.Name)
 		}
 
 		if !include.DefaultNav {
@@ -365,7 +362,7 @@ func setDefaultNavURL(p *plugins.Plugin) {
 	}
 }
 
-func configureAppChildOPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
+func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 	if !parent.IsApp() {
 		return
 	}

@@ -17,8 +17,7 @@
   "roles": [
     {
       "role": {
-        "name": "plugins.app:test-app:reader",
-        "displayName": "test-app reader",
+        "name": "Reader",
         "description": "View everything in the test-app plugin",
         "permissions": [
           {

@@ -6,10 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 	ptr "github.com/xorcare/pointer"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 )
 
@@ -20,181 +20,61 @@ func TestConditionsCmd(t *testing.T) {
 		vars     mathexp.Vars
 		expected func() mathexp.Results
 	}{{
-		name: "single query and single condition",
+		// This test asserts that a single query with condition returns 0 and no matches as the condition
+		// is not met
+		name: "single query with condition when condition is not met",
 		vars: mathexp.Vars{
 			"A": mathexp.Results{
 				Values: []mathexp.Value{
-					valBasedSeries(ptr.Float64(30), ptr.Float64(40)),
+					newSeries(ptr.Float64(1), ptr.Float64(5)),
 				},
 			},
 		},
 		cmd: &ConditionsCmd{
 			Conditions: []condition{
-				{
-					InputRefID: "A",
-					Reducer:    reducer("avg"),
-					Operator:   "and",
-					Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 34},
-				},
-			}},
-		expected: func() mathexp.Results {
-			v := valBasedNumber(ptr.Float64(1))
-			v.SetMeta([]EvalMatch{{Value: ptr.Float64(35)}})
-			return mathexp.NewResults(v)
-		},
-	}, {
-		name: "single query and single condition - empty series",
-		vars: mathexp.Vars{
-			"A": mathexp.Results{
-				Values: []mathexp.Value{
-					valBasedSeries(),
-				},
-			},
-		},
-		cmd: &ConditionsCmd{
-			Conditions: []condition{
-				{
-					InputRefID: "A",
-					Reducer:    reducer("avg"),
-					Operator:   "and",
-					Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 34},
-				},
-			}},
-		expected: func() mathexp.Results {
-			v := valBasedNumber(nil)
-			v.SetMeta([]EvalMatch{{Metric: "NoData"}})
-			return mathexp.NewResults(v)
-		},
-	}, {
-		name: "single query and single condition - empty series and not empty series",
-		vars: mathexp.Vars{
-			"A": mathexp.Results{
-				Values: []mathexp.Value{
-					valBasedSeries(),
-					valBasedSeries(ptr.Float64(3)),
-				},
-			},
-		},
-		cmd: &ConditionsCmd{
-			Conditions: []condition{
-				{
-					InputRefID: "A",
-					Reducer:    reducer("avg"),
-					Operator:   "and",
-					Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: .5},
-				},
-			}},
-		expected: func() mathexp.Results {
-			v := valBasedNumber(ptr.Float64(1))
-			v.SetMeta([]EvalMatch{{Value: ptr.Float64(3)}})
-			return mathexp.NewResults(v)
-		},
-	}, {
-		name: "single query and two conditions",
-		vars: mathexp.Vars{
-			"A": mathexp.Results{
-				Values: []mathexp.Value{
-					valBasedSeries(ptr.Float64(30), ptr.Float64(40)),
-				},
-			},
-		},
-		cmd: &ConditionsCmd{
-			Conditions: []condition{
-				{
-					InputRefID: "A",
-					Reducer:    reducer("max"),
-					Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 34},
-				},
 				{
 					InputRefID: "A",
 					Reducer:    reducer("min"),
-					Operator:   "or",
-					Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 12},
-				},
-			}},
-		expected: func() mathexp.Results {
-			v := valBasedNumber(ptr.Float64(1))
-			v.SetMeta([]EvalMatch{{Value: ptr.Float64(40)}, {Value: ptr.Float64(30)}})
-			return mathexp.NewResults(v)
-		},
-	}, {
-		name: "single query and single condition - multiple series (one true, one not == true)",
-		vars: mathexp.Vars{
-			"A": mathexp.Results{
-				Values: []mathexp.Value{
-					valBasedSeriesWithLabels(data.Labels{"h": "1"}, ptr.Float64(30), ptr.Float64(40)),
-					valBasedSeries(ptr.Float64(0), ptr.Float64(10)),
-				},
-			},
-		},
-		cmd: &ConditionsCmd{
-			Conditions: []condition{
-				{
-					InputRefID: "A",
-					Reducer:    reducer("avg"),
 					Operator:   "and",
-					Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 34},
+					Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 2},
 				},
 			}},
 		expected: func() mathexp.Results {
-			v := valBasedNumber(ptr.Float64(1))
-			v.SetMeta([]EvalMatch{{Value: ptr.Float64(35), Labels: data.Labels{"h": "1"}}})
-			return mathexp.NewResults(v)
-		},
-	}, {
-		name: "single query and single condition - multiple series (one not true, one true == true)",
-		vars: mathexp.Vars{
-			"A": mathexp.Results{
-				Values: []mathexp.Value{
-					valBasedSeries(ptr.Float64(0), ptr.Float64(10)),
-					valBasedSeries(ptr.Float64(30), ptr.Float64(40)),
-				},
-			},
-		},
-		cmd: &ConditionsCmd{
-			Conditions: []condition{
-				{
-					InputRefID: "A",
-					Reducer:    reducer("avg"),
-					Operator:   "and",
-					Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 34},
-				},
-			}},
-		expected: func() mathexp.Results {
-			v := valBasedNumber(ptr.Float64(1))
-			v.SetMeta([]EvalMatch{{Value: ptr.Float64(35)}})
-			return mathexp.NewResults(v)
-		},
-	}, {
-		name: "single query and single condition - multiple series (2 not true == false)",
-		vars: mathexp.Vars{
-			"A": mathexp.Results{
-				Values: []mathexp.Value{
-					valBasedSeries(ptr.Float64(0), ptr.Float64(10)),
-					valBasedSeries(ptr.Float64(20), ptr.Float64(30)),
-				},
-			},
-		},
-		cmd: &ConditionsCmd{
-			Conditions: []condition{
-				{
-					InputRefID: "A",
-					Reducer:    reducer("avg"),
-					Operator:   "and",
-					Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 34},
-				},
-			}},
-		expected: func() mathexp.Results {
-			v := valBasedNumber(ptr.Float64(0))
+			v := newNumber(ptr.Float64(0))
 			v.SetMeta([]EvalMatch{})
-			return mathexp.Results{Values: mathexp.Values{v}}
+			return newResults(v)
 		},
 	}, {
-		name: "single query and single ranged condition",
+		// This test asserts that a single query with condition returns 1 and the average in the meta as
+		// the condition is met
+		name: "single query with condition when condition is met",
 		vars: mathexp.Vars{
 			"A": mathexp.Results{
 				Values: []mathexp.Value{
-					valBasedSeries(ptr.Float64(30), ptr.Float64(40)),
+					newSeries(ptr.Float64(1), ptr.Float64(5)),
+				},
+			},
+		},
+		cmd: &ConditionsCmd{
+			Conditions: []condition{
+				{
+					InputRefID: "A",
+					Reducer:    reducer("avg"),
+					Operator:   "and",
+					Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 2},
+				},
+			}},
+		expected: func() mathexp.Results {
+			v := newNumber(ptr.Float64(1))
+			v.SetMeta([]EvalMatch{{Value: ptr.Float64(3)}})
+			return newResults(v)
+		},
+	}, {
+		name: "single query with ranged condition when condition is not met",
+		vars: mathexp.Vars{
+			"A": mathexp.Results{
+				Values: []mathexp.Value{
+					newSeries(ptr.Float64(1), ptr.Float64(5)),
 				},
 			},
 		},
@@ -204,17 +84,41 @@ func TestConditionsCmd(t *testing.T) {
 					InputRefID: "A",
 					Reducer:    reducer("diff"),
 					Operator:   "and",
-					Evaluator:  &rangedEvaluator{Type: "within_range", Lower: 2, Upper: 3},
+					Evaluator:  &rangedEvaluator{Type: "within_range", Lower: 2, Upper: 4},
 				},
 			},
 		},
 		expected: func() mathexp.Results {
-			v := valBasedNumber(ptr.Float64(0))
+			v := newNumber(ptr.Float64(0))
 			v.SetMeta([]EvalMatch{})
-			return mathexp.NewResults(v)
+			return newResults(v)
 		},
 	}, {
-		name: "single query with no data",
+		name: "single query with ranged condition when condition is met",
+		vars: mathexp.Vars{
+			"A": mathexp.Results{
+				Values: []mathexp.Value{
+					newSeries(ptr.Float64(1), ptr.Float64(5)),
+				},
+			},
+		},
+		cmd: &ConditionsCmd{
+			Conditions: []condition{
+				{
+					InputRefID: "A",
+					Reducer:    reducer("diff"),
+					Operator:   "and",
+					Evaluator:  &rangedEvaluator{Type: "within_range", Lower: 0, Upper: 10},
+				},
+			},
+		},
+		expected: func() mathexp.Results {
+			v := newNumber(ptr.Float64(1))
+			v.SetMeta([]EvalMatch{{Value: ptr.Float64(4)}})
+			return newResults(v)
+		},
+	}, {
+		name: "single no data query with condition is No Data",
 		vars: mathexp.Vars{
 			"A": mathexp.Results{
 				Values: []mathexp.Value{mathexp.NoData{}.New()},
@@ -224,19 +128,19 @@ func TestConditionsCmd(t *testing.T) {
 			Conditions: []condition{
 				{
 					InputRefID: "A",
-					Reducer:    reducer("avg"),
+					Reducer:    reducer("min"),
 					Operator:   "and",
 					Evaluator:  &thresholdEvaluator{"gt", 1},
 				},
 			},
 		},
 		expected: func() mathexp.Results {
-			v := valBasedNumber(nil)
+			v := newNumber(nil)
 			v.SetMeta([]EvalMatch{{Metric: "NoData"}})
-			return mathexp.NewResults(v)
+			return newResults(v)
 		},
 	}, {
-		name: "single query with no values",
+		name: "single no values query with condition is No Data",
 		vars: mathexp.Vars{
 			"A": mathexp.Results{
 				Values: []mathexp.Value{},
@@ -246,25 +150,304 @@ func TestConditionsCmd(t *testing.T) {
 			Conditions: []condition{
 				{
 					InputRefID: "A",
-					Reducer:    reducer("avg"),
+					Reducer:    reducer("min"),
 					Operator:   "and",
 					Evaluator:  &thresholdEvaluator{"gt", 1},
 				},
 			},
 		},
 		expected: func() mathexp.Results {
-			v := valBasedNumber(nil)
+			v := newNumber(nil)
 			v.SetMeta([]EvalMatch{{Metric: "NoData"}})
-			return mathexp.NewResults(v)
+			return newResults(v)
 		},
 	}, {
-		name: "should accept numbers",
+		name: "single series no points query with condition returns No Data",
 		vars: mathexp.Vars{
 			"A": mathexp.Results{
 				Values: []mathexp.Value{
-					valBasedNumber(ptr.Float64(5)),
-					valBasedNumber(ptr.Float64(10)),
-					valBasedNumber(ptr.Float64(15)),
+					newSeries(nil),
+				},
+			},
+		},
+		cmd: &ConditionsCmd{
+			Conditions: []condition{
+				{
+					InputRefID: "A",
+					Reducer:    reducer("min"),
+					Operator:   "and",
+					Evaluator:  &thresholdEvaluator{"gt", 1},
+				},
+			},
+		},
+		expected: func() mathexp.Results {
+			v := newNumber(nil)
+			v.SetMeta([]EvalMatch{{Metric: "NoData"}})
+			return newResults(v)
+		},
+	}, {
+		name: "single no data query with condition is met has no value",
+		vars: mathexp.Vars{
+			"A": mathexp.Results{
+				Values: []mathexp.Value{mathexp.NoData{}.New()},
+			},
+		},
+		cmd: &ConditionsCmd{
+			Conditions: []condition{
+				{
+					InputRefID: "A",
+					Reducer:    reducer("min"),
+					Operator:   "and",
+					Evaluator:  &noValueEvaluator{},
+				},
+			},
+		},
+		expected: func() mathexp.Results {
+			v := newNumber(ptr.Float64(1))
+			v.SetMeta([]EvalMatch{{Value: nil}})
+			return newResults(v)
+		},
+	}, {
+		name: "single no values query with condition is met has no value",
+		vars: mathexp.Vars{
+			"A": mathexp.Results{
+				Values: []mathexp.Value{},
+			},
+		},
+		cmd: &ConditionsCmd{
+			Conditions: []condition{
+				{
+					InputRefID: "A",
+					Reducer:    reducer("min"),
+					Operator:   "and",
+					Evaluator:  &noValueEvaluator{},
+				},
+			},
+		},
+		expected: func() mathexp.Results {
+			v := newNumber(ptr.Float64(1))
+			v.SetMeta([]EvalMatch{{Value: nil}})
+			return newResults(v)
+		},
+	}, {
+		name: "single series no points query with condition is met has no value",
+		vars: mathexp.Vars{
+			"A": mathexp.Results{
+				Values: []mathexp.Value{
+					newSeries(nil),
+				},
+			},
+		},
+		cmd: &ConditionsCmd{
+			Conditions: []condition{
+				{
+					InputRefID: "A",
+					Reducer:    reducer("min"),
+					Operator:   "and",
+					Evaluator:  &noValueEvaluator{},
+				},
+			},
+		},
+		expected: func() mathexp.Results {
+			v := newNumber(ptr.Float64(1))
+			v.SetMeta([]EvalMatch{{Value: nil}})
+			return newResults(v)
+		},
+	}, {
+		// This test asserts that a single query with condition returns 1 and the average of the second
+		// series in the meta because while the first series is No Data the second series contains valid points
+		name: "single query with condition returns average when one series is no data and the other contains valid points",
+		vars: mathexp.Vars{
+			"A": mathexp.Results{
+				Values: []mathexp.Value{
+					newSeries(),
+					newSeries(ptr.Float64(2)),
+				},
+			},
+		},
+		cmd: &ConditionsCmd{
+			Conditions: []condition{
+				{
+					InputRefID: "A",
+					Reducer:    reducer("min"),
+					Operator:   "and",
+					Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 1},
+				},
+			}},
+		expected: func() mathexp.Results {
+			v := newNumber(ptr.Float64(1))
+			v.SetMeta([]EvalMatch{{Value: ptr.Float64(2)}})
+			return newResults(v)
+		},
+	}, {
+		name: "single query with condition and no series matches condition",
+		vars: mathexp.Vars{
+			"A": mathexp.Results{
+				Values: []mathexp.Value{
+					newSeries(ptr.Float64(1), ptr.Float64(5)),
+					newSeries(ptr.Float64(2), ptr.Float64(10)),
+				},
+			},
+		},
+		cmd: &ConditionsCmd{
+			Conditions: []condition{
+				{
+					InputRefID: "A",
+					Reducer:    reducer("min"),
+					Operator:   "and",
+					Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 15},
+				},
+			}},
+		expected: func() mathexp.Results {
+			v := newNumber(ptr.Float64(0))
+			v.SetMeta([]EvalMatch{})
+			return mathexp.Results{Values: mathexp.Values{v}}
+		},
+	}, {
+		name: "single query with condition and one of two series matches condition",
+		vars: mathexp.Vars{
+			"A": mathexp.Results{
+				Values: []mathexp.Value{
+					newSeries(ptr.Float64(1), ptr.Float64(5)),
+					newSeriesWithLabels(data.Labels{"foo": "bar"}, ptr.Float64(2), ptr.Float64(10)),
+				},
+			},
+		},
+		cmd: &ConditionsCmd{
+			Conditions: []condition{
+				{
+					InputRefID: "A",
+					Reducer:    reducer("min"),
+					Operator:   "and",
+					Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 1},
+				},
+			}},
+		expected: func() mathexp.Results {
+			v := newNumber(ptr.Float64(1))
+			v.SetMeta([]EvalMatch{{Value: ptr.Float64(2), Labels: data.Labels{"foo": "bar"}}})
+			return newResults(v)
+		},
+	}, {
+		name: "single query with condition and both series matches condition",
+		vars: mathexp.Vars{
+			"A": mathexp.Results{
+				Values: []mathexp.Value{
+					newSeries(ptr.Float64(1), ptr.Float64(5)),
+					newSeriesWithLabels(data.Labels{"foo": "bar"}, ptr.Float64(2), ptr.Float64(10)),
+				},
+			},
+		},
+		cmd: &ConditionsCmd{
+			Conditions: []condition{
+				{
+					InputRefID: "A",
+					Reducer:    reducer("min"),
+					Operator:   "and",
+					Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 0},
+				},
+			}},
+		expected: func() mathexp.Results {
+			v := newNumber(ptr.Float64(1))
+			v.SetMeta([]EvalMatch{{
+				Value: ptr.Float64(1),
+			}, {
+				Value:  ptr.Float64(2),
+				Labels: data.Labels{"foo": "bar"},
+			}})
+			return newResults(v)
+		},
+	}, {
+		name: "single query with two conditions where left hand side is met",
+		vars: mathexp.Vars{
+			"A": mathexp.Results{
+				Values: []mathexp.Value{
+					newSeries(ptr.Float64(1), ptr.Float64(5)),
+				},
+			},
+		},
+		cmd: &ConditionsCmd{
+			Conditions: []condition{
+				{
+					InputRefID: "A",
+					Reducer:    reducer("max"),
+					Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 2},
+				},
+				{
+					InputRefID: "A",
+					Reducer:    reducer("min"),
+					Operator:   "or",
+					Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 1},
+				},
+			}},
+		expected: func() mathexp.Results {
+			v := newNumber(ptr.Float64(1))
+			v.SetMeta([]EvalMatch{{Value: ptr.Float64(5)}})
+			return newResults(v)
+		},
+	}, {
+		name: "single query with two conditions where right hand side is met",
+		vars: mathexp.Vars{
+			"A": mathexp.Results{
+				Values: []mathexp.Value{
+					newSeries(ptr.Float64(1), ptr.Float64(5)),
+				},
+			},
+		},
+		cmd: &ConditionsCmd{
+			Conditions: []condition{
+				{
+					InputRefID: "A",
+					Reducer:    reducer("max"),
+					Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 10},
+				},
+				{
+					InputRefID: "A",
+					Reducer:    reducer("min"),
+					Operator:   "or",
+					Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 0},
+				},
+			}},
+		expected: func() mathexp.Results {
+			v := newNumber(ptr.Float64(1))
+			v.SetMeta([]EvalMatch{{Value: ptr.Float64(1)}})
+			return newResults(v)
+		},
+	}, {
+		name: "single query with two conditions where both are met",
+		vars: mathexp.Vars{
+			"A": mathexp.Results{
+				Values: []mathexp.Value{
+					newSeries(ptr.Float64(1), ptr.Float64(5)),
+				},
+			},
+		},
+		cmd: &ConditionsCmd{
+			Conditions: []condition{
+				{
+					InputRefID: "A",
+					Reducer:    reducer("max"),
+					Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 2},
+				},
+				{
+					InputRefID: "A",
+					Reducer:    reducer("min"),
+					Operator:   "or",
+					Evaluator:  &thresholdEvaluator{Type: "gt", Threshold: 0},
+				},
+			}},
+		expected: func() mathexp.Results {
+			v := newNumber(ptr.Float64(1))
+			v.SetMeta([]EvalMatch{{Value: ptr.Float64(5)}, {Value: ptr.Float64(1)}})
+			return newResults(v)
+		},
+	}, {
+		name: "single instant query with condition where condition is met",
+		vars: mathexp.Vars{
+			"A": mathexp.Results{
+				Values: []mathexp.Value{
+					newNumber(ptr.Float64(5)),
+					newNumber(ptr.Float64(10)),
+					newNumber(ptr.Float64(15)),
 				},
 			},
 		},
@@ -279,13 +462,137 @@ func TestConditionsCmd(t *testing.T) {
 			},
 		},
 		expected: func() mathexp.Results {
-			v := valBasedNumber(ptr.Float64(1))
+			v := newNumber(ptr.Float64(1))
 			v.SetMeta([]EvalMatch{
 				{Value: ptr.Float64(5)},
 				{Value: ptr.Float64(10)},
 				{Value: ptr.Float64(15)},
 			})
-			return mathexp.NewResults(v)
+			return newResults(v)
+		},
+	}, {
+		name: "two queries with two conditions using and operator and first is No Data",
+		vars: mathexp.Vars{
+			"A": mathexp.Results{
+				Values: []mathexp.Value{mathexp.NoData{}.New()},
+			},
+			"B": mathexp.Results{
+				Values: []mathexp.Value{newSeries(ptr.Float64(5))},
+			},
+		},
+		cmd: &ConditionsCmd{
+			Conditions: []condition{
+				{
+					InputRefID: "A",
+					Reducer:    reducer("min"),
+					Operator:   "and",
+					Evaluator:  &thresholdEvaluator{"gt", 1},
+				},
+				{
+					InputRefID: "B",
+					Reducer:    reducer("min"),
+					Operator:   "and",
+					Evaluator:  &thresholdEvaluator{"gt", 1},
+				},
+			},
+		},
+		expected: func() mathexp.Results {
+			v := newNumber(ptr.Float64(0))
+			v.SetMeta([]EvalMatch{{Metric: "NoData"}, {Value: ptr.Float64(5)}})
+			return newResults(v)
+		},
+	}, {
+		name: "two queries with two conditions using and operator and last is No Data",
+		vars: mathexp.Vars{
+			"A": mathexp.Results{
+				Values: []mathexp.Value{newSeries(ptr.Float64(5))},
+			},
+			"B": mathexp.Results{
+				Values: []mathexp.Value{mathexp.NoData{}.New()},
+			},
+		},
+		cmd: &ConditionsCmd{
+			Conditions: []condition{
+				{
+					InputRefID: "A",
+					Reducer:    reducer("min"),
+					Operator:   "and",
+					Evaluator:  &thresholdEvaluator{"gt", 1},
+				},
+				{
+					InputRefID: "B",
+					Reducer:    reducer("min"),
+					Operator:   "and",
+					Evaluator:  &thresholdEvaluator{"gt", 1},
+				},
+			},
+		},
+		expected: func() mathexp.Results {
+			v := newNumber(ptr.Float64(0))
+			v.SetMeta([]EvalMatch{{Value: ptr.Float64(5)}, {Metric: "NoData"}})
+			return newResults(v)
+		},
+	}, {
+		name: "two queries with two conditions using or operator and first is No Data",
+		vars: mathexp.Vars{
+			"A": mathexp.Results{
+				Values: []mathexp.Value{mathexp.NoData{}.New()},
+			},
+			"B": mathexp.Results{
+				Values: []mathexp.Value{newSeries(ptr.Float64(5))},
+			},
+		},
+		cmd: &ConditionsCmd{
+			Conditions: []condition{
+				{
+					InputRefID: "A",
+					Reducer:    reducer("min"),
+					Operator:   "or",
+					Evaluator:  &thresholdEvaluator{"gt", 1},
+				},
+				{
+					InputRefID: "B",
+					Reducer:    reducer("min"),
+					Operator:   "or",
+					Evaluator:  &thresholdEvaluator{"gt", 1},
+				},
+			},
+		},
+		expected: func() mathexp.Results {
+			v := newNumber(nil)
+			v.SetMeta([]EvalMatch{{Metric: "NoData"}, {Value: ptr.Float64(5)}})
+			return newResults(v)
+		},
+	}, {
+		name: "two queries with two conditions using or operator and last is No Data",
+		vars: mathexp.Vars{
+			"A": mathexp.Results{
+				Values: []mathexp.Value{newSeries(ptr.Float64(5))},
+			},
+			"B": mathexp.Results{
+				Values: []mathexp.Value{mathexp.NoData{}.New()},
+			},
+		},
+		cmd: &ConditionsCmd{
+			Conditions: []condition{
+				{
+					InputRefID: "A",
+					Reducer:    reducer("min"),
+					Operator:   "or",
+					Evaluator:  &thresholdEvaluator{"gt", 1},
+				},
+				{
+					InputRefID: "B",
+					Reducer:    reducer("min"),
+					Operator:   "or",
+					Evaluator:  &thresholdEvaluator{"gt", 1},
+				},
+			},
+		},
+		expected: func() mathexp.Results {
+			v := newNumber(nil)
+			v.SetMeta([]EvalMatch{{Value: ptr.Float64(5)}, {Metric: "NoData"}})
+			return newResults(v)
 		},
 	}}
 
@@ -293,9 +600,6 @@ func TestConditionsCmd(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			res, err := tt.cmd.Execute(context.Background(), time.Now(), tt.vars)
 			require.NoError(t, err)
-
-			require.Equal(t, 1, len(res.Values))
-
 			require.Equal(t, tt.expected(), res)
 		})
 	}

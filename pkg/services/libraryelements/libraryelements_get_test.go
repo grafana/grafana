@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
@@ -49,7 +50,7 @@ func TestGetLibraryElement(t *testing.T) {
 						Version: 1,
 						Meta: LibraryElementDTOMeta{
 							FolderName:          "ScenarioFolder",
-							FolderUID:           sc.folder.Uid,
+							FolderUID:           sc.folder.UID,
 							ConnectedDashboards: 0,
 							Created:             res.Result.Meta.Created,
 							Updated:             res.Result.Meta.Updated,
@@ -115,12 +116,12 @@ func TestGetLibraryElement(t *testing.T) {
 					},
 				},
 			}
-			dash := models.Dashboard{
+			dash := dashboards.Dashboard{
 				Title: "Testing getHandler",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.Id)
-			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.Id)
+			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID)
+			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.ID)
 			require.NoError(t, err)
 
 			expected := func(res libraryElementResult) libraryElementResult {
@@ -144,7 +145,7 @@ func TestGetLibraryElement(t *testing.T) {
 						Version: 1,
 						Meta: LibraryElementDTOMeta{
 							FolderName:          "ScenarioFolder",
-							FolderUID:           sc.folder.Uid,
+							FolderUID:           sc.folder.UID,
 							ConnectedDashboards: 1,
 							Created:             res.Result.Meta.Created,
 							Updated:             res.Result.Meta.Updated,

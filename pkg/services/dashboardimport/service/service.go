@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
@@ -45,7 +44,7 @@ type ImportDashboardService struct {
 }
 
 func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error) {
-	var draftDashboard *models.Dashboard
+	var draftDashboard *dashboards.Dashboard
 	if req.PluginId != "" {
 		loadReq := &plugindashboards.LoadPluginDashboardRequest{
 			PluginID:  req.PluginId,
@@ -57,7 +56,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 			draftDashboard = resp.Dashboard
 		}
 	} else {
-		draftDashboard = models.NewDashboardFromJson(req.Dashboard)
+		draftDashboard = dashboards.NewDashboardFromJson(req.Dashboard)
 	}
 
 	evaluator := utils.NewDashTemplateEvaluator(draftDashboard.Data, req.Inputs)
@@ -85,30 +84,38 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 
 	// here we need to get FolderId from FolderUID if it present in the request, if both exist, FolderUID would overwrite FolderID
 	if req.FolderUid != "" {
-		folder, err := s.folderService.GetFolderByUID(ctx, req.User, req.User.OrgID, req.FolderUid)
+		folder, err := s.folderService.Get(ctx, &folder.GetFolderQuery{
+			OrgID:        req.User.OrgID,
+			UID:          &req.FolderUid,
+			SignedInUser: req.User,
+		})
 		if err != nil {
 			return nil, err
 		}
-		req.FolderId = folder.Id
+		req.FolderId = folder.ID
 	} else {
-		folder, err := s.folderService.GetFolderByID(ctx, req.User, req.FolderId, req.User.OrgID)
+		folder, err := s.folderService.Get(ctx, &folder.GetFolderQuery{
+			ID:           &req.FolderId,
+			OrgID:        req.User.OrgID,
+			SignedInUser: req.User,
+		})
 		if err != nil {
 			return nil, err
 		}
-		req.FolderUid = folder.Uid
+		req.FolderUid = folder.UID
 	}
 
-	saveCmd := models.SaveDashboardCommand{
+	saveCmd := dashboards.SaveDashboardCommand{
 		Dashboard: generatedDash,
-		OrgId:     req.User.OrgID,
-		UserId:    req.User.UserID,
+		OrgID:     req.User.OrgID,
+		UserID:    req.User.UserID,
 		Overwrite: req.Overwrite,
-		PluginId:  req.PluginId,
-		FolderId:  req.FolderId,
+		PluginID:  req.PluginId,
+		FolderID:  req.FolderId,
 	}
 
 	dto := &dashboards.SaveDashboardDTO{
-		OrgId:     saveCmd.OrgId,
+		OrgID:     saveCmd.OrgID,
 		Dashboard: saveCmd.GetDashboardModel(),
 		Overwrite: saveCmd.Overwrite,
 		User:      req.User,
@@ -130,18 +137,18 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 	}
 
 	return &dashboardimport.ImportDashboardResponse{
-		UID:              savedDashboard.Uid,
+		UID:              savedDashboard.UID,
 		PluginId:         req.PluginId,
 		Title:            savedDashboard.Title,
 		Path:             req.Path,
 		Revision:         savedDashboard.Data.Get("revision").MustInt64(1),
-		FolderId:         savedDashboard.FolderId,
+		FolderId:         savedDashboard.FolderID,
 		FolderUID:        req.FolderUid,
 		ImportedUri:      "db/" + savedDashboard.Slug,
-		ImportedUrl:      savedDashboard.GetUrl(),
+		ImportedUrl:      savedDashboard.GetURL(),
 		ImportedRevision: savedDashboard.Data.Get("revision").MustInt64(1),
 		Imported:         true,
-		DashboardId:      savedDashboard.Id,
+		DashboardId:      savedDashboard.ID,
 		Slug:             savedDashboard.Slug,
 	}, nil
 }

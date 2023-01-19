@@ -25,7 +25,9 @@ func ProvideAuthInfoService(userProtectionService login.UserProtectionService, a
 		authInfoStore:         authInfoStore,
 		logger:                log.New("login.authinfo"),
 	}
-	usageStats.RegisterMetricsFunc(authInfoStore.CollectLoginStats)
+	// FIXME: disabled metrics until further notice
+	// query performance is slow for more than 20000 users
+	// usageStats.RegisterMetricsFunc(authInfoStore.CollectLoginStats)
 	return s
 }
 
@@ -185,6 +187,13 @@ func (s *Implementation) GetAuthInfo(ctx context.Context, query *models.GetAuthI
 	return s.authInfoStore.GetAuthInfo(ctx, query)
 }
 
+func (s *Implementation) GetUserLabels(ctx context.Context, query models.GetUserLabelsQuery) (map[int64]string, error) {
+	if len(query.UserIDs) == 0 {
+		return map[int64]string{}, nil
+	}
+	return s.authInfoStore.GetUserLabels(ctx, query)
+}
+
 func (s *Implementation) UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error {
 	return s.authInfoStore.UpdateAuthInfo(ctx, cmd)
 }
@@ -195,6 +204,10 @@ func (s *Implementation) SetAuthInfo(ctx context.Context, cmd *models.SetAuthInf
 
 func (s *Implementation) GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error {
 	return s.authInfoStore.GetExternalUserInfoByLogin(ctx, query)
+}
+
+func (s *Implementation) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
+	return nil
 }
 
 func (s *Implementation) Run(ctx context.Context) error {

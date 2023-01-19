@@ -84,6 +84,15 @@ func createExternalDashboardSnapshot(cmd dashboardsnapshots.CreateDashboardSnaps
 	return &createSnapshotResponse, nil
 }
 
+func createOriginalDashboardURL(appURL string, cmd *dashboardsnapshots.CreateDashboardSnapshotCommand) (string, error) {
+	dashUID := cmd.Dashboard.Get("uid").MustString("")
+	if ok := util.IsValidShortUID(dashUID); !ok {
+		return "", fmt.Errorf("invalid dashboard UID")
+	}
+
+	return fmt.Sprintf("/d/%v", dashUID), nil
+}
+
 // swagger:route POST /snapshots snapshots createDashboardSnapshot
 //
 // When creating a snapshot using the API, you have to provide the full dashboard payload including the snapshot data. This endpoint is designed for the Grafana UI.
@@ -104,10 +113,14 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Res
 		cmd.Name = "Unnamed snapshot"
 	}
 
-	var url string
+	var snapshotUrl string
 	cmd.ExternalUrl = ""
 	cmd.OrgId = c.OrgID
 	cmd.UserId = c.UserID
+	originalDashboardURL, err := createOriginalDashboardURL(hs.Cfg.AppURL, &cmd)
+	if err != nil {
+		return response.Error(http.StatusInternalServerError, "Invalid app URL", err)
+	}
 
 	if cmd.External {
 		if !setting.ExternalEnabled {
@@ -121,7 +134,7 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Res
 			return nil
 		}
 
-		url = response.Url
+		snapshotUrl = response.Url
 		cmd.Key = response.Key
 		cmd.DeleteKey = response.DeleteKey
 		cmd.ExternalUrl = response.Url
@@ -130,10 +143,7 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Res
 
 		metrics.MApiDashboardSnapshotExternal.Inc()
 	} else {
-		if cmd.Dashboard.Get("id").MustInt64() == 0 {
-			c.JSON(http.StatusBadRequest, "Creating a local snapshot requires a dashboard")
-			return nil
-		}
+		cmd.Dashboard.SetPath([]string{"snapshot", "originalUrl"}, originalDashboardURL)
 
 		if cmd.Key == "" {
 			var err error
@@ -153,7 +163,7 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Res
 			}
 		}
 
-		url = setting.ToAbsUrl("dashboard/snapshot/" + cmd.Key)
+		snapshotUrl = setting.ToAbsUrl("dashboard/snapshot/" + cmd.Key)
 
 		metrics.MApiDashboardSnapshotCreate.Inc()
 	}
@@ -166,7 +176,7 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Res
 	c.JSON(http.StatusOK, util.DynMap{
 		"key":       cmd.Key,
 		"deleteKey": cmd.DeleteKey,
-		"url":       url,
+		"url":       snapshotUrl,
 		"deleteUrl": setting.ToAbsUrl("api/snapshots-delete/" + cmd.DeleteKey),
 		"id":        cmd.Result.Id,
 	})
@@ -206,7 +216,7 @@ func (hs *HTTPServer) GetDashboardSnapshot(c *models.ReqContext) response.Respon
 	dto := dtos.DashboardFullWithMeta{
 		Dashboard: snapshot.Dashboard,
 		Meta: dtos.DashboardMeta{
-			Type:       models.DashTypeSnapshot,
+			Type:       dashboards.DashTypeSnapshot,
 			IsSnapshot: true,
 			Created:    snapshot.Created,
 			Expires:    snapshot.Expires,
@@ -332,7 +342,11 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *models.ReqContext) response.Res
 	dashboardID := query.Result.Dashboard.Get("id").MustInt64()
 
 	if dashboardID != 0 {
-		guardian := guardian.New(c.Req.Context(), dashboardID, c.OrgID, c.SignedInUser)
+		guardian, err := guardian.New(c.Req.Context(), dashboardID, c.OrgID, c.SignedInUser)
+		if err != nil {
+			return response.Err(err)
+		}
+
 		canEdit, err := guardian.CanEdit()
 		// check for permissions only if the dashboard is found
 		if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {

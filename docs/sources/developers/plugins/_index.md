@@ -1,9 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/plugins/
-  - /docs/grafana/latest/plugins/developing/
-title: Build a plugin
+  - ../plugins/developing/
 description: Resources for creating Grafana plugins
+title: Build a plugin
 weight: 200
 ---
 
@@ -73,20 +72,10 @@ Explore the many UI components in our [Grafana UI library](https://developers.gr
 
 For inspiration, check out our [plugin examples](https://github.com/grafana/grafana-plugin-examples).
 
-### API reference
-
-Learn more about Grafana options and packages.
-
-#### Metadata
+### Metadata
 
 - [Plugin metadata]({{< relref "metadata/" >}})
 
-#### Typescript
-
-- Grafana Data
-- Grafana Runtime
-- Grafana UI
-
-#### Go
+### SDK
 
 - [Grafana Plugin SDK for Go]({{< relref "backend/grafana-plugin-sdk-for-go/" >}})

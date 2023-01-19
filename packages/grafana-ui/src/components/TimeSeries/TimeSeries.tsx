@@ -10,7 +10,7 @@ import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
 
 import { preparePlotConfigBuilder } from './utils';
 
-const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options'];
+const propsToDiff: Array<string | PropDiffFn> = ['legend', 'options', 'theme'];
 
 type TimeSeriesProps = Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'>;
 

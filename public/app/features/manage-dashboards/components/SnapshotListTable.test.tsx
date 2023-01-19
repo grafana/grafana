@@ -38,15 +38,15 @@ describe('getSnapshots', () => {
     const results = await getSnapshots();
 
     expect(results).toMatchInlineSnapshot(`
-      Array [
-        Object {
+      [
+        {
           "external": true,
           "externalUrl": "https://www.externalSnapshotUrl.com",
           "key": "JRXqfKihKZek70FM6Xaq502NxH7OyyEs",
           "name": "Snap 1",
           "url": "/dashboard/snapshot/JRXqfKihKZek70FM6Xaq502NxH7OyyEs",
         },
-        Object {
+        {
           "external": false,
           "externalUrl": "",
           "id": 3,

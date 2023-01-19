@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/auth/jwt/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/jwt/
+  - ../../../auth/jwt/
 description: Grafana JWT Authentication
 title: Configure JWT Authentication
 weight: 500
@@ -73,6 +72,17 @@ Grafana instance to include the JWT in the request's headers.
 
 In a scenario where it is not possible to rewrite the request headers you
 can use URL login instead.
+
+## Skip organization role
+
+To skip the assignment of roles and permissions upon login via JWT and handle them via other mechanisms like the user interface, we can skip the organization role synchronization with the following configuration.
+
+```ini
+[auth.jwt]
+# ...
+
+skip_org_role_sync = true
+```
 
 ### URL login
 

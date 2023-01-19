@@ -10,6 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -42,7 +44,7 @@ func notAuthorized(c *models.ReqContext) {
 	c.Redirect(setting.AppSubUrl + "/login")
 }
 
-func tokenRevoked(c *models.ReqContext, err *models.TokenRevokedError) {
+func tokenRevoked(c *models.ReqContext, err *auth.TokenRevokedError) {
 	if c.IsApiRequest() {
 		c.JSON(401, map[string]interface{}{
 			"message": "Token revoked",
@@ -85,6 +87,15 @@ func EnsureEditorOrViewerCanEdit(c *models.ReqContext) {
 	}
 }
 
+func CanAdminPlugins(cfg *setting.Cfg) func(c *models.ReqContext) {
+	return func(c *models.ReqContext) {
+		if !plugins.ReqCanAdminPlugins(cfg)(c) {
+			accessForbidden(c)
+			return
+		}
+	}
+}
+
 func RoleAuth(roles ...org.RoleType) web.Handler {
 	return func(c *models.ReqContext) {
 		ok := false
@@ -117,7 +128,7 @@ func Auth(options *AuthOptions) web.Handler {
 		requireLogin := !c.AllowAnonymous || forceLogin || options.ReqNoAnonynmous
 
 		if !c.IsSignedIn && options.ReqSignedIn && requireLogin {
-			var revokedErr *models.TokenRevokedError
+			var revokedErr *auth.TokenRevokedError
 			if errors.As(c.LookupTokenErr, &revokedErr) {
 				tokenRevoked(c, revokedErr)
 				return
@@ -212,12 +223,13 @@ func OrgAdminDashOrFolderAdminOrTeamAdmin(ss db.DB, ds dashboards.DashboardServi
 			return
 		}
 
-		isAdminOfTeamsQuery := models.IsAdminOfTeamsQuery{SignedInUser: c.SignedInUser}
-		if err := ts.IsAdminOfTeams(c.Req.Context(), &isAdminOfTeamsQuery); err != nil {
+		isAdminOfTeamsQuery := team.IsAdminOfTeamsQuery{SignedInUser: c.SignedInUser}
+		isAdminOfTeamsQueryResult, err := ts.IsAdminOfTeams(c.Req.Context(), &isAdminOfTeamsQuery)
+		if err != nil {
 			c.JsonApiErr(500, "Failed to check if user is a team admin", err)
 		}
 
-		if isAdminOfTeamsQuery.Result {
+		if isAdminOfTeamsQueryResult {
 			return
 		}
 

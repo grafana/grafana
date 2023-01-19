@@ -17,17 +17,19 @@ export const PluginActions = ({ plugin }: Props) => {
   const isRemotePluginsAvailable = useIsRemotePluginsAvailable();
   const latestCompatibleVersion = getLatestCompatibleVersion(plugin?.details?.versions);
 
-  if (!plugin || hasInstallControlWarning(plugin, isRemotePluginsAvailable, latestCompatibleVersion)) {
+  if (!plugin) {
     return null;
   }
 
+  const hasInstallWarning = hasInstallControlWarning(plugin, isRemotePluginsAvailable, latestCompatibleVersion);
   const isExternallyManaged = config.pluginAdminExternalManageEnabled;
   const pluginStatus = plugin.isInstalled
     ? plugin.hasUpdate
       ? PluginStatus.UPDATE
       : PluginStatus.UNINSTALL
     : PluginStatus.INSTALL;
-  const isInstallControlsDisabled = plugin.isCore || plugin.isDisabled || !isInstallControlsEnabled();
+  const isInstallControlsDisabled =
+    plugin.isCore || plugin.isDisabled || !isInstallControlsEnabled() || hasInstallWarning;
 
   return (
     <>

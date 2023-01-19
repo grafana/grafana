@@ -4,7 +4,7 @@ import { getNavTitle } from '../NavBar/navBarItem-translations';
 
 import { Breadcrumb } from './types';
 
-export function buildBreadcrumbs(homeNav: NavModelItem, sectionNav: NavModelItem, pageNav?: NavModelItem) {
+export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelItem, homeNav?: NavModelItem) {
   const crumbs: Breadcrumb[] = [];
   let foundHome = false;
 
@@ -17,7 +17,7 @@ export function buildBreadcrumbs(homeNav: NavModelItem, sectionNav: NavModelItem
       urlToMatch += `?editview=${urlSearchParams.get('editview')}`;
     }
     if (!foundHome && !node.hideFromBreadcrumbs) {
-      if (urlToMatch === homeNav.url) {
+      if (homeNav && urlToMatch === homeNav.url) {
         crumbs.unshift({ text: getNavTitle(homeNav.id) ?? homeNav.text, href: node.url ?? '' });
         foundHome = true;
       } else {

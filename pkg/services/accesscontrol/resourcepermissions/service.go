@@ -53,7 +53,7 @@ func New(
 	ac accesscontrol.AccessControl, service accesscontrol.Service, sqlStore db.DB,
 	teamService team.Service, userService user.Service,
 ) (*Service, error) {
-	var permissions []string
+	permissions := make([]string, 0, len(options.PermissionsToActions))
 	actionSet := make(map[string]struct{})
 	for permission, actions := range options.PermissionsToActions {
 		permissions = append(permissions, permission)
@@ -298,7 +298,7 @@ func (s *Service) validateTeam(ctx context.Context, orgID, teamID int64) error {
 		return ErrInvalidAssignment
 	}
 
-	if err := s.teamService.GetTeamById(ctx, &models.GetTeamByIdQuery{OrgId: orgID, Id: teamID}); err != nil {
+	if _, err := s.teamService.GetTeamByID(ctx, &team.GetTeamByIDQuery{OrgID: orgID, ID: teamID}); err != nil {
 		return err
 	}
 	return nil

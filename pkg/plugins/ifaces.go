@@ -75,7 +75,32 @@ type PluginLoaderAuthorizer interface {
 	CanLoadPlugin(plugin *Plugin) bool
 }
 
+type Licensing interface {
+	Environment() []string
+
+	Edition() string
+
+	Path() string
+}
+
 // RoleRegistry handles the plugin RBAC roles and their assignments
 type RoleRegistry interface {
 	DeclarePluginRoles(ctx context.Context, ID, name string, registrations []RoleRegistration) error
+}
+
+// ClientMiddleware is an interface representing the ability to create a middleware
+// that implements the Client interface.
+type ClientMiddleware interface {
+	// CreateClientMiddleware creates a new client middleware.
+	CreateClientMiddleware(next Client) Client
+}
+
+// The ClientMiddlewareFunc type is an adapter to allow the use of ordinary
+// functions as ClientMiddleware's. If f is a function with the appropriate
+// signature, ClientMiddlewareFunc(f) is a ClientMiddleware that calls f.
+type ClientMiddlewareFunc func(next Client) Client
+
+// CreateClientMiddleware implements the ClientMiddleware interface.
+func (fn ClientMiddlewareFunc) CreateClientMiddleware(next Client) Client {
+	return fn(next)
 }

@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/http_api/alerting_provisioning/
-  - /docs/grafana/latest/http_api/alerting_provisioning/
+  - ../../http_api/alerting_provisioning/
 description: Grafana Alerts HTTP API
 keywords:
   - grafana
@@ -71,12 +70,12 @@ title: 'Alerting Provisioning HTTP API '
 
 ### Templates
 
-| Method | URI                                   | Name                                            | Summary                        |
-| ------ | ------------------------------------- | ----------------------------------------------- | ------------------------------ |
-| GET    | /api/v1/provisioning/templates        | [route get templates](#route-get-templates)     | Get all message templates.     |
-| GET    | /api/v1/provisioning/templates/{name} | [route get template](#route-get-template)       | Get a message template.        |
-| PUT    | /api/v1/provisioning/templates/{name} | [route put template](#route-put-template)       | Creates or updates a template. |
-| DELETE | /api/v1/provisioning/templates/{name} | [route delete template](#route-delete-template) | Delete a template.             |
+| Method | URI                                   | Name                                            | Summary                         |
+| ------ | ------------------------------------- | ----------------------------------------------- | ------------------------------- |
+| GET    | /api/v1/provisioning/templates        | [route get templates](#route-get-templates)     | Get all notification templates. |
+| GET    | /api/v1/provisioning/templates/{name} | [route get template](#route-get-template)       | Get a notification template.    |
+| PUT    | /api/v1/provisioning/templates/{name} | [route put template](#route-put-template)       | Creates or updates a template.  |
+| DELETE | /api/v1/provisioning/templates/{name} | [route delete template](#route-delete-template) | Delete a template.              |
 
 ## Paths
 
@@ -379,7 +378,7 @@ Status: Bad Request
 
 [ValidationError](#validation-error)
 
-### <span id="route-get-template"></span> Get a message template. (_RouteGetTemplate_)
+### <span id="route-get-template"></span> Get a notification template. (_RouteGetTemplate_)
 
 ```
 GET /api/v1/provisioning/templates/{name}
@@ -393,20 +392,20 @@ GET /api/v1/provisioning/templates/{name}
 
 #### All responses
 
-| Code                           | Status    | Description     | Has headers | Schema                                   |
-| ------------------------------ | --------- | --------------- | :---------: | ---------------------------------------- |
-| [200](#route-get-template-200) | OK        | MessageTemplate |             | [schema](#route-get-template-200-schema) |
-| [404](#route-get-template-404) | Not Found | NotFound        |             | [schema](#route-get-template-404-schema) |
+| Code                           | Status    | Description          | Has headers | Schema                                   |
+| ------------------------------ | --------- | -------------------- | :---------: | ---------------------------------------- |
+| [200](#route-get-template-200) | OK        | NotificationTemplate |             | [schema](#route-get-template-200-schema) |
+| [404](#route-get-template-404) | Not Found | NotFound             |             | [schema](#route-get-template-404-schema) |
 
 #### Responses
 
-##### <span id="route-get-template-200"></span> 200 - MessageTemplate
+##### <span id="route-get-template-200"></span> 200 - NotificationTemplate
 
 Status: OK
 
 ###### <span id="route-get-template-200-schema"></span> Schema
 
-[MessageTemplate](#message-template)
+[NotificationTemplate](#message-template)
 
 ##### <span id="route-get-template-404"></span> 404 - NotFound
 
@@ -416,7 +415,7 @@ Status: Not Found
 
 [NotFound](#not-found)
 
-### <span id="route-get-templates"></span> Get all message templates. (_RouteGetTemplates_)
+### <span id="route-get-templates"></span> Get all notification templates. (_RouteGetTemplates_)
 
 ```
 GET /api/v1/provisioning/templates
@@ -424,20 +423,20 @@ GET /api/v1/provisioning/templates
 
 #### All responses
 
-| Code                            | Status      | Description     | Has headers | Schema                                    |
-| ------------------------------- | ----------- | --------------- | :---------: | ----------------------------------------- |
-| [200](#route-get-templates-200) | OK          | MessageTemplate |             | [schema](#route-get-templates-200-schema) |
-| [400](#route-get-templates-400) | Bad Request | ValidationError |             | [schema](#route-get-templates-400-schema) |
+| Code                            | Status      | Description          | Has headers | Schema                                    |
+| ------------------------------- | ----------- | -------------------- | :---------: | ----------------------------------------- |
+| [200](#route-get-templates-200) | OK          | NotificationTemplate |             | [schema](#route-get-templates-200-schema) |
+| [400](#route-get-templates-400) | Bad Request | ValidationError      |             | [schema](#route-get-templates-400-schema) |
 
 #### Responses
 
-##### <span id="route-get-templates-200"></span> 200 - MessageTemplate
+##### <span id="route-get-templates-200"></span> 200 - NotificationTemplate
 
 Status: OK
 
 ###### <span id="route-get-templates-200-schema"></span> Schema
 
-[MessageTemplate](#message-template)
+[NotificationTemplate](#message-template)
 
 ##### <span id="route-get-templates-400"></span> 400 - ValidationError
 
@@ -788,10 +787,10 @@ PUT /api/v1/provisioning/templates/{name}
 
 #### Parameters
 
-| Name | Source | Type                                                | Go type                         | Separator | Required | Default | Description   |
-| ---- | ------ | --------------------------------------------------- | ------------------------------- | --------- | :------: | ------- | ------------- |
-| name | `path` | string                                              | `string`                        |           |    ✓     |         | Template Name |
-| Body | `body` | [MessageTemplateContent](#message-template-content) | `models.MessageTemplateContent` |           |          |         |               |
+| Name | Source | Type                                                     | Go type                              | Separator | Required | Default | Description   |
+| ---- | ------ | -------------------------------------------------------- | ------------------------------------ | --------- | :------: | ------- | ------------- |
+| name | `path` | string                                                   | `string`                             |           |    ✓     |         | Template Name |
+| Body | `body` | [NotificationTemplateContent](#message-template-content) | `models.NotificationTemplateContent` |           |          |         |               |
 
 #### All responses
 
@@ -878,7 +877,7 @@ Status: Bad Request
 
 ### <span id="embedded-contact-point"></span> EmbeddedContactPoint
 
-> EmbeddedContactPoint is the contact point type that is used
+> EmbeddedContactPoint is the contact point integration that is used
 > by grafanas embedded alertmanager implementation.
 
 **Properties**
@@ -916,7 +915,7 @@ Status: Bad Request
 
 [][matcher](#matcher)
 
-### <span id="message-template"></span> MessageTemplate
+### <span id="message-template"></span> NotificationTemplate
 
 **Properties**
 
@@ -926,7 +925,7 @@ Status: Bad Request
 | Template   | string | `string`     |          |         |             |         |
 | provenance | string | `Provenance` |          |         |             |         |
 
-### <span id="message-template-content"></span> MessageTemplateContent
+### <span id="message-template-content"></span> NotificationTemplateContent
 
 **Properties**
 

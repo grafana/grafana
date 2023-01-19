@@ -11,10 +11,6 @@ type Results struct {
 	Values Values
 }
 
-func NewResults(values ...Value) Results {
-	return Results{Values: values}
-}
-
 // Values is a slice of Value interfaces
 type Values []Value
 
