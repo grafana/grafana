@@ -1,7 +1,6 @@
 package grafanaplugin
 
 composableKinds: DataSourceCfg: lineage: {
-	name: "valid-model-datasource"
 	seqs: [
 		{
 			schemas: [

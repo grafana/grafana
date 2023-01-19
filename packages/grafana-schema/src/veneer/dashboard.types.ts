@@ -1,4 +1,7 @@
 import * as raw from '../raw/dashboard/x/dashboard_types.gen';
+import { DataSourceRef as CommonDataSourceRef } from '../common/common.gen';
+
+export type { CommonDataSourceRef as DataSourceRef };
 
 export interface Panel<TOptions = Record<string, unknown>, TCustomFieldConfig = Record<string, unknown>>
   extends raw.Panel {
@@ -18,7 +21,7 @@ export interface VariableModel
   error: any | null;
   description: string | null;
   hide: VariableHide;
-  datasource: raw.DataSourceRef | null;
+  datasource: CommonDataSourceRef | null;
 }
 
 export interface Dashboard extends Omit<raw.Dashboard, 'templating'> {

@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestParseTreeTestdata(t *testing.T) {
+func TestParsePluginTestdata(t *testing.T) {
 	type tt struct {
 		tfs fs.FS
 		// TODO could remove this by getting rid of inconsistent subdirs
