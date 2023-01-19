@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
@@ -45,7 +44,7 @@ type ImportDashboardService struct {
 }
 
 func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashboardimport.ImportDashboardRequest) (*dashboardimport.ImportDashboardResponse, error) {
-	var draftDashboard *models.Dashboard
+	var draftDashboard *dashboards.Dashboard
 	if req.PluginId != "" {
 		loadReq := &plugindashboards.LoadPluginDashboardRequest{
 			PluginID:  req.PluginId,
@@ -57,7 +56,7 @@ func (s *ImportDashboardService) ImportDashboard(ctx context.Context, req *dashb
 			draftDashboard = resp.Dashboard
 		}
 	} else {
-		draftDashboard = models.NewDashboardFromJson(req.Dashboard)
+		draftDashboard = dashboards.NewDashboardFromJson(req.Dashboard)
 	}
 
 	evaluator := utils.NewDashTemplateEvaluator(draftDashboard.Data, req.Inputs)

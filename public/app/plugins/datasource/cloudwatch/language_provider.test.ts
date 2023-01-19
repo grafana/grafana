@@ -5,6 +5,7 @@ import { TypeaheadOutput } from '@grafana/ui';
 
 import { CloudWatchDatasource } from './datasource';
 import { CloudWatchLanguageProvider } from './language_provider';
+import { ResourceResponse } from './resources/types';
 import {
   AGGREGATION_FUNCTIONS_STATS,
   BOOLEAN_FUNCTIONS,
@@ -15,7 +16,7 @@ import {
   STRING_FUNCTIONS,
   FIELD_AND_FILTER_FUNCTIONS,
 } from './syntax';
-import { LogGroupField, ResourceResponse } from './types';
+import { LogGroupField } from './types';
 
 const fields = ['field1', '@message'];
 
@@ -109,7 +110,7 @@ async function runSuggestionTest(query: string, expectedItems: string[][]) {
 
 function makeDatasource(): CloudWatchDatasource {
   return {
-    api: {
+    resources: {
       getLogGroupFields(): Promise<Array<ResourceResponse<LogGroupField>>> {
         return Promise.resolve([{ value: { name: 'field1' } }, { value: { name: '@message' } }]);
       },
