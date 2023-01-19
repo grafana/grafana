@@ -205,7 +205,7 @@ func (ng *AlertNG) init() error {
 		Tracer:               ng.tracer,
 	}
 
-	history, err := configureHistorianBackend(ng.Cfg.UnifiedAlerting.StateHistory, ng.annotationsRepo, ng.dashboardService)
+	history, err := configureHistorianBackend(ng.Cfg.UnifiedAlerting.StateHistory, ng.annotationsRepo, ng.dashboardService, ng.store)
 	if err != nil {
 		return err
 	}
@@ -378,20 +378,25 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	return limits, nil
 }
 
-func configureHistorianBackend(cfg setting.UnifiedAlertingStateHistorySettings, ar annotations.Repository, ds dashboards.DashboardService) (state.Historian, error) {
+func configureHistorianBackend(cfg setting.UnifiedAlertingStateHistorySettings, ar annotations.Repository, ds dashboards.DashboardService, rs historian.RuleStore) (state.Historian, error) {
 	if !cfg.Enabled {
 		return historian.NewNopHistorian(), nil
 	}
 
 	if cfg.Backend == "annotations" {
-		return historian.NewAnnotationBackend(ar, ds), nil
+		return historian.NewAnnotationBackend(ar, ds, rs), nil
 	}
 	if cfg.Backend == "loki" {
 		baseURL, err := url.Parse(cfg.LokiRemoteURL)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse remote loki URL: %w", err)
 		}
-		backend := historian.NewRemoteLokiBackend(baseURL)
+		backend := historian.NewRemoteLokiBackend(historian.LokiConfig{
+			Url:               baseURL,
+			BasicAuthUser:     cfg.LokiBasicAuthUsername,
+			BasicAuthPassword: cfg.LokiBasicAuthPassword,
+			TenantID:          cfg.LokiTenantID,
+		})
 		if err := backend.TestConnection(); err != nil {
 			return nil, fmt.Errorf("failed to ping the remote loki historian: %w", err)
 		}

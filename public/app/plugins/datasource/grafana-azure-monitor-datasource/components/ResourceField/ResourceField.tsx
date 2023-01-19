@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { Button, Icon, Modal, useStyles2 } from '@grafana/ui';
+import { Button, Icon, Modal, useStyles2, IconName } from '@grafana/ui';
 
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
@@ -11,12 +11,12 @@ import { Field } from '../Field';
 import ResourcePicker from '../ResourcePicker';
 import getStyles from '../ResourcePicker/styles';
 import { ResourceRowType } from '../ResourcePicker/types';
-import { parseResourceDetails, setResource } from '../ResourcePicker/utils';
+import { parseMultipleResourceDetails, setResources } from '../ResourcePicker/utils';
 
 interface ResourceFieldProps<T> extends AzureQueryEditorFieldProps {
   selectableEntryTypes: ResourceRowType[];
   queryType: ResourcePickerQueryType;
-  resource: T;
+  resources: T[];
   inlineField?: boolean;
   labelWidth?: number;
 }
@@ -27,7 +27,7 @@ const ResourceField: React.FC<ResourceFieldProps<string | AzureMetricResource>> 
   onQueryChange,
   selectableEntryTypes,
   queryType,
-  resource,
+  resources,
   inlineField,
   labelWidth,
 }) => {
@@ -43,11 +43,11 @@ const ResourceField: React.FC<ResourceFieldProps<string | AzureMetricResource>> 
   }, []);
 
   const handleApply = useCallback(
-    (resource: string | AzureMetricResource | undefined) => {
-      onQueryChange(setResource(query, resource));
+    (resources: Array<string | AzureMetricResource>) => {
+      onQueryChange(setResources(query, queryType, resources));
       closePicker();
     },
-    [closePicker, onQueryChange, query]
+    [closePicker, onQueryChange, query, queryType]
   );
 
   return (
@@ -63,9 +63,8 @@ const ResourceField: React.FC<ResourceFieldProps<string | AzureMetricResource>> 
       >
         <ResourcePicker
           resourcePickerData={datasource.resourcePickerData}
-          // TODO: This should be a list of resources, not a single resource
-          resources={[resource]}
-          onApply={(resources) => resources && handleApply(resources[0])}
+          resources={resources}
+          onApply={handleApply}
           onCancel={closePicker}
           selectableEntryTypes={selectableEntryTypes}
           queryType={queryType}
@@ -73,7 +72,7 @@ const ResourceField: React.FC<ResourceFieldProps<string | AzureMetricResource>> 
       </Modal>
       <Field label="Resource" inlineField={inlineField} labelWidth={labelWidth}>
         <Button className={styles.resourceFieldButton} variant="secondary" onClick={handleOpenPicker} type="button">
-          <ResourceLabel resource={resource} datasource={datasource} />
+          <ResourceLabel resources={resources} datasource={datasource} />
         </Button>
       </Field>
     </span>
@@ -81,58 +80,53 @@ const ResourceField: React.FC<ResourceFieldProps<string | AzureMetricResource>> 
 };
 
 interface ResourceLabelProps<T> {
-  resource: T;
+  resources: T[];
   datasource: Datasource;
 }
 
-const ResourceLabel = ({ resource, datasource }: ResourceLabelProps<string | AzureMetricResource>) => {
-  const [resourceComponents, setResourceComponents] = useState(parseResourceDetails(resource ?? ''));
+const ResourceLabel = ({ resources, datasource }: ResourceLabelProps<string | AzureMetricResource>) => {
+  const [resourcesComponents, setResourcesComponents] = useState(parseMultipleResourceDetails(resources));
 
   useEffect(() => {
-    if (resource && parseResourceDetails(resource)) {
-      typeof resource === 'string'
-        ? datasource.resourcePickerData.getResourceURIDisplayProperties(resource).then(setResourceComponents)
-        : setResourceComponents(resource);
-    } else {
-      setResourceComponents({});
-    }
-  }, [datasource.resourcePickerData, resource]);
+    setResourcesComponents(parseMultipleResourceDetails(resources));
+  }, [resources]);
 
-  if (!resource || (typeof resource === 'object' && !resource.subscription)) {
+  if (!resources.length) {
     return <>Select a resource</>;
   }
 
-  if (resourceComponents) {
-    return <FormattedResource resource={resourceComponents} />;
-  }
-
-  return <>{resource}</>;
+  return <FormattedResource resources={resourcesComponents} />;
 };
 
 interface FormattedResourceProps {
-  resource: AzureMetricResource;
+  resources: AzureMetricResource[];
 }
 
-const FormattedResource = ({ resource }: FormattedResourceProps) => {
+const FormattedResource = ({ resources }: FormattedResourceProps) => {
   const styles = useStyles2(getStyles);
 
-  if (resource.resourceName) {
-    return (
-      <span className={cx(styles.truncated, styles.resourceField)}>
-        <Icon name="cube" /> {resource.resourceName.split('/')[0]}
-      </span>
-    );
-  }
-  if (resource.resourceGroup) {
-    return (
-      <span>
-        <Icon name="folder" /> {resource.resourceGroup}
-      </span>
-    );
-  }
+  let icon: IconName = 'cube';
+  const items: string[] = [];
+  resources.forEach((resource) => {
+    if (resource.resourceName) {
+      items.push(resource.resourceName.split('/')[0]);
+      return;
+    }
+    if (resource.resourceGroup) {
+      icon = 'folder';
+      items.push(resource.resourceGroup);
+      return;
+    }
+    if (resource.subscription) {
+      icon = 'layer-group';
+      items.push(resource.subscription);
+      return;
+    }
+  });
   return (
-    <span>
-      <Icon name="layer-group" /> {resource.subscription}
+    <span className={cx(styles.truncated, styles.resourceField)}>
+      <Icon name={icon} />
+      {items.join(', ')}
     </span>
   );
 };
