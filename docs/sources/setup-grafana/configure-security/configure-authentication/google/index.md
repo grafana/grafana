@@ -32,13 +32,14 @@ Specify the Client ID and Secret in the [Grafana configuration file]({{< relref 
 ```bash
 [auth.google]
 enabled = true
+allow_sign_up = true
+auto_login = false
 client_id = CLIENT_ID
 client_secret = CLIENT_SECRET
 scopes = https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email
 auth_url = https://accounts.google.com/o/oauth2/auth
 token_url = https://accounts.google.com/o/oauth2/token
 allowed_domains = mycompany.com mycompany.org
-allow_sign_up = true
 hosted_domain = mycompany.com
 ```
 
@@ -68,3 +69,12 @@ When a user logs in using an OAuth provider, Grafana verifies that the access to
 Grafana uses a refresh token to obtain a new access token without requiring the user to log in again. If a refresh token doesn't exist, Grafana logs the user out of the system after the access token has expired.
 
 By default, Grafana includes the `access_type=offline` parameter in the authorization request to request a refresh token.
+
+### Configure automatic login
+
+Set `auto_login` option to true to attempt login automatically, skipping the login screen.
+This setting is ignored if multiple auth providers are configured to use auto login.
+
+```
+auto_login = true
+```

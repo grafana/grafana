@@ -839,6 +839,8 @@ URL to redirect the user to after they sign out.
 
 ### oauth_auto_login
 
+> **Note**: This option is deprecated - use `auto_login` option for specific OAuth provider instead.
+
 Set to `true` to attempt login with OAuth automatically, skipping the login screen.
 This setting is ignored if multiple OAuth providers are configured. Default is `false`.
 
