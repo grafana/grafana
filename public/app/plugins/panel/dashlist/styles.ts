@@ -21,6 +21,7 @@ export const getStyles = (theme: GrafanaTheme2) => ({
     &:hover {
       a {
         color: ${theme.colors.text.link};
+        text-decoration: underline;
       }
     }
   `,
