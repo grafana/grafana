@@ -3,6 +3,7 @@ import produce from 'immer';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import UrlBuilder from '../../azure_monitor/url_builder';
+import { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
 import { AzureMetricResource, AzureMonitorQuery } from '../../types';
 
 import { ResourceRow, ResourceRowGroup } from './types';
@@ -153,26 +154,31 @@ export function addResources(rows: ResourceRowGroup, targetParentId: string, new
   });
 }
 
-export function setResource(query: AzureMonitorQuery, resource?: string | AzureMetricResource): AzureMonitorQuery {
-  if (typeof resource === 'string') {
+export function setResources(
+  query: AzureMonitorQuery,
+  type: ResourcePickerQueryType,
+  resources: Array<string | AzureMetricResource>
+): AzureMonitorQuery {
+  if (type === 'logs') {
     // Resource URI for LogAnalytics
     return {
       ...query,
       azureLogAnalytics: {
         ...query.azureLogAnalytics,
-        resources: [resource],
+        resources: resourcesToStrings(resources),
       },
     };
   }
   // Resource object for metrics
+  const parsedResource = resources.length ? parseResourceDetails(resources[0]) : {};
   return {
     ...query,
-    subscription: resource?.subscription,
+    subscription: parsedResource.subscription,
     azureMonitor: {
       ...query.azureMonitor,
-      metricNamespace: resource?.metricNamespace?.toLocaleLowerCase(),
-      region: resource?.region,
-      resources: [{ resourceGroup: resource?.resourceGroup, resourceName: resource?.resourceName }],
+      metricNamespace: parsedResource.metricNamespace?.toLocaleLowerCase(),
+      region: parsedResource.region,
+      resources: parseMultipleResourceDetails(resources),
       metricName: undefined,
       aggregation: undefined,
       timeGrain: '',
