@@ -73,7 +73,11 @@ const PublicDashboardPage = (props: Props) => {
       const prevUrlParams = prevProps?.queryParams;
       const urlParams = props.queryParams;
 
-      if (urlParams?.from !== prevUrlParams?.from || urlParams?.to !== prevUrlParams?.to) {
+      const updateTimeRangeFromUrl =
+        (urlParams?.from !== prevUrlParams?.from || urlParams?.to !== prevUrlParams?.to) &&
+        !dashboard?.timepicker.hidden;
+
+      if (updateTimeRangeFromUrl) {
         getTimeSrv().updateTimeRangeFromUrl();
       }
 
@@ -81,7 +85,7 @@ const PublicDashboardPage = (props: Props) => {
         getTimeSrv().setAutoRefresh(urlParams.refresh);
       }
     }
-  }, [prevProps, location.search, props.queryParams]);
+  }, [prevProps, location.search, props.queryParams, dashboard?.timepicker.hidden]);
 
   if (!dashboard) {
     return <DashboardLoading initPhase={dashboardState.initPhase} />;

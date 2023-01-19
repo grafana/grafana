@@ -101,7 +101,6 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	}
 
 	var (
-		hasPublicDashboard     = false
 		publicDashboardEnabled = false
 		err                    error
 	)
@@ -115,7 +114,6 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		}
 
 		if publicDashboard != nil {
-			hasPublicDashboard = true
 			publicDashboardEnabled = publicDashboard.IsEnabled
 		}
 	}
@@ -187,7 +185,6 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 		FolderTitle:            "General",
 		AnnotationsPermissions: annotationPermissions,
 		PublicDashboardEnabled: publicDashboardEnabled,
-		HasPublicDashboard:     hasPublicDashboard,
 	}
 
 	// lookup folder title
