@@ -11,9 +11,11 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -146,7 +148,7 @@ func (hs *HTTPServer) GetAlerts(c *models.ReqContext) response.Response {
 	}
 
 	for _, alert := range query.Result {
-		alert.Url = models.GetDashboardUrl(alert.DashboardUid, alert.DashboardSlug)
+		alert.Url = dashboards.GetDashboardURL(alert.DashboardUid, alert.DashboardSlug)
 	}
 
 	return response.JSON(http.StatusOK, query.Result)
@@ -645,7 +647,7 @@ func (hs *HTTPServer) NotificationTest(c *models.ReqContext) response.Response {
 	}
 
 	if err := hs.AlertNotificationService.HandleNotificationTestCommand(c.Req.Context(), cmd); err != nil {
-		if errors.Is(err, models.ErrSmtpNotEnabled) {
+		if errors.Is(err, notifications.ErrSmtpNotEnabled) {
 			return response.Error(412, err.Error(), err)
 		}
 		var alertingErr alerting.ValidationError
@@ -693,7 +695,10 @@ func (hs *HTTPServer) PauseAlert(legacyAlertingEnabled *bool) func(c *models.Req
 			return response.Error(500, "Get Alert failed", err)
 		}
 
-		guardian := guardian.New(c.Req.Context(), query.Result.DashboardId, c.OrgID, c.SignedInUser)
+		guardian, err := guardian.New(c.Req.Context(), query.Result.DashboardId, c.OrgID, c.SignedInUser)
+		if err != nil {
+			return response.ErrOrFallback(http.StatusInternalServerError, "Error while creating permission guardian", err)
+		}
 		if canEdit, err := guardian.CanEdit(); err != nil || !canEdit {
 			if err != nil {
 				return response.Error(500, "Error while checking permissions for Alert", err)

@@ -4,18 +4,22 @@ import (
 	"crypto/md5"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"regexp"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/util"
+)
+
+const (
+	// DisabledRepeatInterval is a large duration that will be used as a pseudo-disable in case a legacy channel doesn't have SendReminders enabled.
+	DisabledRepeatInterval = model.Duration(time.Duration(8736) * time.Hour) // 1y
 )
 
 type notificationChannel struct {
@@ -28,6 +32,8 @@ type notificationChannel struct {
 	IsDefault             bool             `xorm:"is_default"`
 	Settings              *simplejson.Json `xorm:"settings"`
 	SecureSettings        SecureJsonData   `xorm:"secure_settings"`
+	SendReminder          bool             `xorm:"send_reminder"`
+	Frequency             model.Duration   `xorm:"frequency"`
 }
 
 // channelsPerOrg maps notification channels per organisation
@@ -38,6 +44,12 @@ type defaultChannelsPerOrg map[int64][]*notificationChannel
 
 // uidOrID for both uid and ID, primarily used for mapping legacy channel to migrated receiver.
 type uidOrID interface{}
+
+// channelReceiver is a convenience struct that contains a notificationChannel and its corresponding migrated PostableApiReceiver.
+type channelReceiver struct {
+	channel  *notificationChannel
+	receiver *PostableApiReceiver
+}
 
 // setupAlertmanagerConfigs creates Alertmanager configs with migrated receivers and routes.
 func (m *migration) setupAlertmanagerConfigs(rulesPerOrg map[int64]map[*alertRule][]uidOrID) (amConfigsPerOrg, error) {
@@ -68,7 +80,9 @@ func (m *migration) setupAlertmanagerConfigs(rulesPerOrg map[int64]map[*alertRul
 			continue
 		}
 
-		amConfig.AlertmanagerConfig.Receivers = receivers
+		for _, cr := range receivers {
+			amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, cr.receiver)
+		}
 
 		defaultReceivers := make(map[string]struct{})
 		defaultChannels, ok := defaultChannelsPerOrg[orgID]
@@ -87,10 +101,10 @@ func (m *migration) setupAlertmanagerConfigs(rulesPerOrg map[int64]map[*alertRul
 			amConfig.AlertmanagerConfig.Receivers = append(amConfig.AlertmanagerConfig.Receivers, defaultReceiver)
 		}
 
-		for _, recv := range receivers {
-			route, err := createRoute(recv)
+		for _, cr := range receivers {
+			route, err := createRoute(cr)
 			if err != nil {
-				return nil, fmt.Errorf("failed to create route for receiver %s in orgId %d: %w", recv.Name, orgID, err)
+				return nil, fmt.Errorf("failed to create route for receiver %s in orgId %d: %w", cr.receiver.Name, orgID, err)
 			}
 
 			amConfigPerOrg[orgID].AlertmanagerConfig.Route.Routes = append(amConfigPerOrg[orgID].AlertmanagerConfig.Route.Routes, route)
@@ -143,7 +157,9 @@ func (m *migration) getNotificationChannelMap() (channelsPerOrg, defaultChannels
 		disable_resolve_message,
 		is_default,
 		settings,
-		secure_settings
+		secure_settings,
+        send_reminder,
+		frequency
 	FROM
 		alert_notification
 	`
@@ -177,22 +193,9 @@ func (m *migration) getNotificationChannelMap() (channelsPerOrg, defaultChannels
 
 // Create a notifier (PostableGrafanaReceiver) from a legacy notification channel
 func (m *migration) createNotifier(c *notificationChannel) (*PostableGrafanaReceiver, error) {
-	uid := c.Uid
-	if uid == "" {
-		new, err := m.generateChannelUID()
-		if err != nil {
-			return nil, err
-		}
-		m.mg.Logger.Info("Legacy notification had an empty uid, generating a new one", "id", c.ID, "uid", new)
-		uid = new
-	}
-	if _, seen := m.seenChannelUIDs[uid]; seen {
-		new, err := m.generateChannelUID()
-		if err != nil {
-			return nil, err
-		}
-		m.mg.Logger.Warn("Legacy notification had a UID that collides with a migrated record, generating a new one", "id", c.ID, "old", uid, "new", new)
-		uid = new
+	uid, err := m.determineChannelUid(c)
+	if err != nil {
+		return nil, err
 	}
 
 	settings, secureSettings, err := migrateSettingsToSecureSettings(c.Type, c.Settings, c.SecureSettings)
@@ -211,8 +214,8 @@ func (m *migration) createNotifier(c *notificationChannel) (*PostableGrafanaRece
 }
 
 // Create one receiver for every unique notification channel.
-func (m *migration) createReceivers(allChannels []*notificationChannel) (map[uidOrID]*PostableApiReceiver, []*PostableApiReceiver, error) {
-	receivers := make([]*PostableApiReceiver, 0, len(allChannels))
+func (m *migration) createReceivers(allChannels []*notificationChannel) (map[uidOrID]*PostableApiReceiver, []channelReceiver, error) {
+	receivers := make([]channelReceiver, 0, len(allChannels))
 	receiversMap := make(map[uidOrID]*PostableApiReceiver)
 
 	set := make(map[string]struct{}) // Used to deduplicate sanitized names.
@@ -233,20 +236,23 @@ func (m *migration) createReceivers(allChannels []*notificationChannel) (map[uid
 
 		set[sanitizedName] = struct{}{}
 
-		recv := &PostableApiReceiver{
-			Name:                    sanitizedName, // Channel name is unique within an Org.
-			GrafanaManagedReceivers: []*PostableGrafanaReceiver{notifier},
+		cr := channelReceiver{
+			channel: c,
+			receiver: &PostableApiReceiver{
+				Name:                    sanitizedName, // Channel name is unique within an Org.
+				GrafanaManagedReceivers: []*PostableGrafanaReceiver{notifier},
+			},
 		}
 
-		receivers = append(receivers, recv)
+		receivers = append(receivers, cr)
 
 		// Store receivers for creating routes from alert rules later.
 		if c.Uid != "" {
-			receiversMap[c.Uid] = recv
+			receiversMap[c.Uid] = cr.receiver
 		}
 		if c.ID != 0 {
 			// In certain circumstances, the alert rule uses ID instead of uid. So, we add this to be able to lookup by ID in case.
-			receiversMap[c.ID] = recv
+			receiversMap[c.ID] = cr.receiver
 		}
 	}
 
@@ -255,17 +261,27 @@ func (m *migration) createReceivers(allChannels []*notificationChannel) (map[uid
 
 // Create the root-level route with the default receiver. If no new receiver is created specifically for the root-level route, the returned receiver will be nil.
 func (m *migration) createDefaultRouteAndReceiver(defaultChannels []*notificationChannel) (*PostableApiReceiver, *Route, error) {
-	var defaultReceiver *PostableApiReceiver
-
 	defaultReceiverName := "autogen-contact-point-default"
-	if len(defaultChannels) != 1 {
-		// If there are zero or more than one default channels we create a separate contact group that is used only in the root policy. This is to simplify the migrated notification policy structure.
-		// If we ever allow more than one receiver per route this won't be necessary.
-		defaultReceiver = &PostableApiReceiver{
-			Name:                    defaultReceiverName,
-			GrafanaManagedReceivers: []*PostableGrafanaReceiver{},
-		}
+	defaultRoute := &Route{
+		Receiver:       defaultReceiverName,
+		Routes:         make([]*Route, 0),
+		GroupByStr:     []string{ngModels.FolderTitleLabel, model.AlertNameLabel}, // To keep parity with pre-migration notifications.
+		RepeatInterval: nil,
+	}
+	newDefaultReceiver := &PostableApiReceiver{
+		Name:                    defaultReceiverName,
+		GrafanaManagedReceivers: []*PostableGrafanaReceiver{},
+	}
 
+	// Return early if there are no default channels
+	if len(defaultChannels) == 0 {
+		return newDefaultReceiver, defaultRoute, nil
+	}
+
+	repeatInterval := DisabledRepeatInterval // If no channels have SendReminders enabled, we will use this large value as a pseudo-disable.
+	if len(defaultChannels) > 1 {
+		// If there are more than one default channels we create a separate contact group that is used only in the root policy. This is to simplify the migrated notification policy structure.
+		// If we ever allow more than one receiver per route this won't be necessary.
 		for _, c := range defaultChannels {
 			// Need to create a new notifier to prevent uid conflict.
 			defaultNotifier, err := m.createNotifier(c)
@@ -273,39 +289,51 @@ func (m *migration) createDefaultRouteAndReceiver(defaultChannels []*notificatio
 				return nil, nil, err
 			}
 
-			defaultReceiver.GrafanaManagedReceivers = append(defaultReceiver.GrafanaManagedReceivers, defaultNotifier)
+			newDefaultReceiver.GrafanaManagedReceivers = append(newDefaultReceiver.GrafanaManagedReceivers, defaultNotifier)
+
+			// Choose the lowest send reminder duration from all the notifiers to use for default route.
+			if c.SendReminder && c.Frequency < repeatInterval {
+				repeatInterval = c.Frequency
+			}
 		}
 	} else {
 		// If there is only a single default channel, we don't need a separate receiver to hold it. We can reuse the existing receiver for that single notifier.
-		defaultReceiverName = defaultChannels[0].Name
-	}
+		defaultRoute.Receiver = defaultChannels[0].Name
+		if defaultChannels[0].SendReminder {
+			repeatInterval = defaultChannels[0].Frequency
+		}
 
-	defaultRoute := &Route{
-		Receiver:   defaultReceiverName,
-		Routes:     make([]*Route, 0),
-		GroupByStr: []string{ngModels.FolderTitleLabel, model.AlertNameLabel}, // To keep parity with pre-migration notifications.
+		// No need to create a new receiver.
+		newDefaultReceiver = nil
 	}
+	defaultRoute.RepeatInterval = &repeatInterval
 
-	return defaultReceiver, defaultRoute, nil
+	return newDefaultReceiver, defaultRoute, nil
 }
 
 // Create one route per contact point, matching based on ContactLabel.
-func createRoute(recv *PostableApiReceiver) (*Route, error) {
+func createRoute(cr channelReceiver) (*Route, error) {
 	// We create a regex matcher so that each alert rule need only have a single ContactLabel entry for all contact points it sends to.
 	// For example, if an alert needs to send to contact1 and contact2 it will have ContactLabel=`"contact1","contact2"` and will match both routes looking
 	// for `.*"contact1".*` and `.*"contact2".*`.
 
 	// We quote and escape here to ensure the regex will correctly match the ContactLabel on the alerts.
-	name := fmt.Sprintf(`.*%s.*`, regexp.QuoteMeta(quote(recv.Name)))
+	name := fmt.Sprintf(`.*%s.*`, regexp.QuoteMeta(quote(cr.receiver.Name)))
 	mat, err := labels.NewMatcher(labels.MatchRegexp, ContactLabel, name)
 	if err != nil {
 		return nil, err
 	}
 
+	repeatInterval := DisabledRepeatInterval
+	if cr.channel.SendReminder {
+		repeatInterval = cr.channel.Frequency
+	}
+
 	return &Route{
-		Receiver:       recv.Name,
+		Receiver:       cr.receiver.Name,
 		ObjectMatchers: ObjectMatchers{mat},
 		Continue:       true, // We continue so that each sibling contact point route can separately match.
+		RepeatInterval: &repeatInterval,
 	}, nil
 }
 
@@ -350,16 +378,27 @@ func (m *migration) filterReceiversForAlert(name string, channelIDs []uidOrID, r
 	return filteredReceiverNames
 }
 
-func (m *migration) generateChannelUID() (string, error) {
-	for i := 0; i < 5; i++ {
-		gen := util.GenerateShortUID()
-		if _, ok := m.seenChannelUIDs[gen]; !ok {
-			m.seenChannelUIDs[gen] = struct{}{}
-			return gen, nil
+func (m *migration) determineChannelUid(c *notificationChannel) (string, error) {
+	legacyUid := c.Uid
+	if legacyUid == "" {
+		newUid, err := m.seenUIDs.generateUid()
+		if err != nil {
+			return "", err
 		}
+		m.mg.Logger.Info("Legacy notification had an empty uid, generating a new one", "id", c.ID, "uid", newUid)
+		return newUid, nil
 	}
 
-	return "", errors.New("failed to generate UID for notification channel")
+	if m.seenUIDs.contains(legacyUid) {
+		newUid, err := m.seenUIDs.generateUid()
+		if err != nil {
+			return "", err
+		}
+		m.mg.Logger.Warn("Legacy notification had a UID that collides with a migrated record, generating a new one", "id", c.ID, "old", legacyUid, "new", newUid)
+		return newUid, nil
+	}
+
+	return legacyUid, nil
 }
 
 // Some settings were migrated from settings to secure settings in between.
@@ -434,11 +473,12 @@ type PostableApiAlertingConfig struct {
 }
 
 type Route struct {
-	Receiver       string         `yaml:"receiver,omitempty" json:"receiver,omitempty"`
-	ObjectMatchers ObjectMatchers `yaml:"object_matchers,omitempty" json:"object_matchers,omitempty"`
-	Routes         []*Route       `yaml:"routes,omitempty" json:"routes,omitempty"`
-	Continue       bool           `yaml:"continue,omitempty" json:"continue,omitempty"`
-	GroupByStr     []string       `yaml:"group_by,omitempty" json:"group_by,omitempty"`
+	Receiver       string          `yaml:"receiver,omitempty" json:"receiver,omitempty"`
+	ObjectMatchers ObjectMatchers  `yaml:"object_matchers,omitempty" json:"object_matchers,omitempty"`
+	Routes         []*Route        `yaml:"routes,omitempty" json:"routes,omitempty"`
+	Continue       bool            `yaml:"continue,omitempty" json:"continue,omitempty"`
+	GroupByStr     []string        `yaml:"group_by,omitempty" json:"group_by,omitempty"`
+	RepeatInterval *model.Duration `yaml:"repeat_interval,omitempty" json:"repeat_interval,omitempty"`
 }
 
 type ObjectMatchers labels.Matchers

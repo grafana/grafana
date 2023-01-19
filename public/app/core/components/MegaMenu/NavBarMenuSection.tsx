@@ -56,7 +56,7 @@ export function NavBarMenuSection({
             {getNavTitle(link.id) ?? link.text}
           </div>
         </NavBarMenuItem>
-        {Boolean(link.children?.length) && (
+        {children && (
           <Button
             aria-label={`${sectionExpanded ? 'Collapse' : 'Expand'} section`}
             variant="secondary"

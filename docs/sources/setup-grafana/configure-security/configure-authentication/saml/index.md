@@ -20,7 +20,7 @@ SAML authentication integration allows your Grafana users to log in by using an 
 
 The SAML single sign-on (SSO) standard is varied and flexible. Our implementation contains a subset of features needed to provide a smooth authentication experience into Grafana.
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced]({{< ref "/docs/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Pro and Advanced](/docs/grafana-cloud).
 
 ## Supported SAML
 
@@ -389,6 +389,12 @@ You can use `*` as the Grafana organization in the mapping if you want all users
 > **Note:** Available in Grafana version 7.0 and later.
 
 With the [`allowed_organizations`]({{< relref "../../../configure-grafana/enterprise-configuration/#allowed-organizations" >}}) option you can specify a list of organizations where the user must be a member of at least one of them to be able to log in to Grafana.
+
+To put values containing spaces in the list, use the following JSON syntax:
+
+```ini
+allowed_organizations = ["org 1", "second org"]
+```
 
 ### Example SAML configuration
 

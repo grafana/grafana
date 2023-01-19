@@ -173,8 +173,13 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	}
 
 	for _, f := range frames {
-		result.Responses[f.Name] = backend.DataResponse{
-			Frames: data.Frames{f},
+		if resp, ok := result.Responses[f.Name]; ok {
+			resp.Frames = append(resp.Frames, f)
+			result.Responses[f.Name] = resp
+		} else {
+			result.Responses[f.Name] = backend.DataResponse{
+				Frames: data.Frames{f},
+			}
 		}
 	}
 

@@ -34,7 +34,10 @@ func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) response.Res
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
+	g, err := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
+	if err != nil {
+		return response.Err(err)
+	}
 
 	if canAdmin, err := g.CanAdmin(); err != nil || !canAdmin {
 		return apierrors.ToFolderErrorResponse(dashboards.ErrFolderAccessDenied)
@@ -61,7 +64,7 @@ func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) response.Res
 		}
 
 		if perm.Slug != "" {
-			perm.Url = models.GetDashboardFolderUrl(perm.IsFolder, perm.Uid, perm.Slug)
+			perm.Url = dashboards.GetDashboardFolderURL(perm.IsFolder, perm.Uid, perm.Slug)
 		}
 
 		filteredACLs = append(filteredACLs, perm)
@@ -95,7 +98,11 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext) response.Res
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
+	g, err := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
+	if err != nil {
+		return response.Err(err)
+	}
+
 	canAdmin, err := g.CanAdmin()
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)

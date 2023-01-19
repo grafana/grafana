@@ -1,17 +1,18 @@
 package elasticsearch
 
 import (
+	"time"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 // Query represents the time series query model of the datasource
 type Query struct {
-	TimeField     string       `json:"timeField"`
 	RawQuery      string       `json:"query"`
 	BucketAggs    []*BucketAgg `json:"bucketAggs"`
 	Metrics       []*MetricAgg `json:"metrics"`
 	Alias         string       `json:"alias"`
-	Interval      string
+	Interval      time.Duration
 	IntervalMs    int64
 	RefID         string
 	MaxDataPoints int64
@@ -56,6 +57,7 @@ var metricAggType = map[string]string{
 	"raw_document":   "Raw Document",
 	"raw_data":       "Raw Data",
 	"rate":           "Rate",
+	"logs":           "Logs",
 }
 
 var extendedStats = map[string]string{
