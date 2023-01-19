@@ -28,6 +28,8 @@ export function GetStartedWithApp({ plugin }: Props): React.ReactElement | null 
 
   const { enabled, jsonData } = pluginConfig?.meta;
 
+  console.log(jsonData);
+
   const enable = () =>
     updatePluginSettingsAndReload(plugin.id, {
       enabled: true,

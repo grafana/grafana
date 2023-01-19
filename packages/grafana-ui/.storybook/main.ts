@@ -1,8 +1,8 @@
 import path from 'path';
 import type { StorybookConfig } from '@storybook/react/types';
-// import { IconName } from '../src/types/icon';
-// import { getIconSubDir } from '../src/components/Icon/utils';
-import availableIcons from '../src/components/Icon/cached.json';
+// avoid importing from @grafana/data to prevent node error: ERR_REQUIRE_ESM
+import { availableIconsIndex, IconName } from '../../grafana-data/src/types/icon';
+import { getIconSubDir } from '../src/components/Icon/utils';
 
 const stories = ['../src/**/*.story.@(tsx|mdx)'];
 
@@ -12,12 +12,15 @@ if (process.env.NODE_ENV !== 'production') {
 
 // We limit icon paths to only the available icons so publishing
 // doesn't require uploading 1000s of unused assets.
-const iconPaths = availableIcons.map((iconName) => {
-  return {
-    from: `../../../public/img/icons/${iconName}.svg`,
-    to: `/public/img/icons/${iconName}.svg`,
-  };
-});
+const iconPaths = Object.keys(availableIconsIndex)
+  .filter((iconName) => !iconName.includes('fa'))
+  .map((iconName) => {
+    const subDir = getIconSubDir(iconName as IconName, 'default');
+    return {
+      from: `../../../public/img/icons/${subDir}/${iconName}.svg`,
+      to: `/public/img/icons/${subDir}/${iconName}.svg`,
+    };
+  });
 
 const mainConfig: StorybookConfig = {
   stories,
