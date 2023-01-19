@@ -15,7 +15,7 @@ import (
 // not present in the list are not not allowed, and code generation will fail.
 var importMap = map[string]string{
 	"github.com/grafana/thema":                                      "",
-	"github.com/grafana/grafana/packages/grafana-schema/src/schema": "@grafana/schema",
+	"github.com/grafana/grafana/packages/grafana-schema/src/common": "@grafana/schema",
 }
 
 func init() {
