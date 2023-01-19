@@ -1,9 +1,5 @@
 package authnimpl
 
-type priority interface {
-	Priority() uint
-}
-
 func newQueue[T any]() *queue[T] {
 	return &queue[T]{items: []queueItem[T]{}}
 }
