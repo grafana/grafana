@@ -30,7 +30,6 @@ const defaultHGPluginsCDNURLTemplate = "https://grafana-assets.grafana.net/plugi
 
 func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	pluginsSection := iniFile.Section("plugins")
-	pluginsCDNSection := iniFile.Section("plugins_cdn")
 
 	cfg.PluginsEnableAlpha = pluginsSection.Key("enable_alpha").MustBool(false)
 	cfg.PluginsAppsSkipVerifyTLS = pluginsSection.Key("app_tls_skip_verify_insecure").MustBool(false)
@@ -54,7 +53,7 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	}
 
 	// Plugins CDN settings
-	cfg.PluginsCDNURLTemplate = strings.TrimRight(pluginsCDNSection.Key("url").MustString(defaultHGPluginsCDNURLTemplate), "/")
+	cfg.PluginsCDNURLTemplate = strings.TrimRight(pluginsSection.Key("plugins_cdn_base_url").MustString(defaultHGPluginsCDNURLTemplate), "/")
 
 	return nil
 }
