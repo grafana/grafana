@@ -3,6 +3,7 @@ package cloudmonitoring
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 	"strings"
 	"time"
 
@@ -17,15 +18,9 @@ type annotationEvent struct {
 	Text  string
 }
 
-func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo) (
+func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.QueryDataRequest, dsInfo datasourceInfo, queries []cloudMonitoringQueryExecutor) (
 	*backend.QueryDataResponse, error) {
 	resp := backend.NewQueryDataResponse()
-
-	queries, err := s.buildQueryExecutors(req)
-	if err != nil {
-		return resp, err
-	}
-
 	queryRes, dr, _, err := queries[0].run(ctx, req, s, dsInfo, s.tracer)
 	if err != nil {
 		return resp, err
@@ -43,24 +38,46 @@ func (s *Service) executeAnnotationQuery(ctx context.Context, req *backend.Query
 	if err != nil {
 		return resp, nil
 	}
-	err = queries[0].parseToAnnotations(queryRes, dr, mq.MetricQuery.Title, mq.MetricQuery.Text)
+	err = parseToAnnotations(req.Queries[0].RefID, queryRes, dr, mq.MetricQuery.Title, mq.MetricQuery.Text)
 	resp.Responses[firstQuery.RefID] = *queryRes
 
 	return resp, err
 }
 
-func (timeSeriesQuery cloudMonitoringTimeSeriesQuery) transformAnnotationToFrame(annotations []*annotationEvent, result *backend.DataResponse) {
-	frame := data.NewFrame(timeSeriesQuery.RefID,
+func parseToAnnotations(refID string, dr *backend.DataResponse,
+	response cloudMonitoringResponse, title, text string) error {
+	frame := data.NewFrame(refID,
 		data.NewField("time", nil, []time.Time{}),
 		data.NewField("title", nil, []string{}),
 		data.NewField("tags", nil, []string{}),
 		data.NewField("text", nil, []string{}),
 	)
-	for _, a := range annotations {
-		frame.AppendRow(a.Time, a.Title, a.Tags, a.Text)
+
+	for _, series := range response.TimeSeries {
+		if len(series.Points) == 0 {
+			continue
+		}
+
+		for i := len(series.Points) - 1; i >= 0; i-- {
+			point := series.Points[i]
+			value := strconv.FormatFloat(point.Value.DoubleValue, 'f', 6, 64)
+			if series.ValueType == "STRING" {
+				value = point.Value.StringValue
+			}
+			annotation := &annotationEvent{
+				Time: point.Interval.EndTime,
+				Title: formatAnnotationText(title, value, series.Metric.Type,
+					series.Metric.Labels, series.Resource.Labels),
+				Tags: "",
+				Text: formatAnnotationText(text, value, series.Metric.Type,
+					series.Metric.Labels, series.Resource.Labels),
+			}
+			frame.AppendRow(annotation.Time, annotation.Title, annotation.Tags, annotation.Text)
+		}
 	}
-	result.Frames = append(result.Frames, frame)
-	slog.Info("anno", "len", len(annotations))
+	dr.Frames = append(dr.Frames, frame)
+
+	return nil
 }
 
 func formatAnnotationText(annotationText string, pointValue string, metricType string, metricLabels map[string]string, resourceLabels map[string]string) string {

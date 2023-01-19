@@ -13,11 +13,12 @@ import { config, locationService, setDataSourceSrv } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
+import { HOME_NAV_ID } from 'app/core/reducers/navModel';
 import { DashboardInitPhase, DashboardMeta, DashboardRoutes } from 'app/types';
 
 import { configureStore } from '../../../store/configureStore';
 import { Props as LazyLoaderProps } from '../dashgrid/LazyLoader';
-import { setDashboardSrv } from '../services/DashboardSrv';
+import { DashboardSrv, setDashboardSrv } from '../services/DashboardSrv';
 import { DashboardModel } from '../state';
 
 import { Props, UnthemedDashboardPage } from './DashboardPage';
@@ -105,7 +106,10 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
         setupFn = fn;
       },
       mount: (propOverrides?: Partial<Props>) => {
-        config.bootData.navTree = [{ text: 'Dashboards', id: 'dashboards' }];
+        config.bootData.navTree = [
+          { text: 'Dashboards', id: 'dashboards' },
+          { text: 'Home', id: HOME_NAV_ID },
+        ];
 
         const store = configureStore();
         const props: Props = {
@@ -114,7 +118,8 @@ function dashboardPageScenario(description: string, scenarioFn: (ctx: ScenarioCo
             route: { routeName: DashboardRoutes.Normal } as any,
           }),
           navIndex: {
-            dashboards: { text: 'Dashboards' },
+            dashboards: { text: 'Dashboards', id: 'dashboards', parentItem: { text: 'Home', id: HOME_NAV_ID } },
+            [HOME_NAV_ID]: { text: 'Home', id: HOME_NAV_ID },
           },
           initPhase: DashboardInitPhase.NotStarted,
           initError: null,
@@ -217,7 +222,7 @@ describe('DashboardPage', () => {
       });
       setDashboardSrv({
         getCurrent: () => getTestDashboard(),
-      } as any);
+      } as DashboardSrv);
       ctx.mount({
         dashboard: getTestDashboard(),
         queryParams: { viewPanel: '1' },
@@ -308,22 +313,6 @@ describe('DashboardPage', () => {
         dashboard: getTestDashboard(),
       });
       ctx.rerender({ dashboard: ctx.dashboard });
-    });
-
-    it('should not render page toolbar and submenu', () => {
-      expect(screen.queryAllByTestId(selectors.pages.Dashboard.DashNav.navV2)).toHaveLength(0);
-      expect(screen.queryAllByLabelText(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(0);
-    });
-  });
-
-  dashboardPageScenario('When dashboard is public', (ctx) => {
-    ctx.setup(() => {
-      locationService.partial({ kiosk: false });
-      ctx.mount({
-        queryParams: {},
-        dashboard: getTestDashboard(),
-      });
-      ctx.rerender({ dashboard: ctx.dashboard, isPublic: true });
     });
 
     it('should not render page toolbar and submenu', () => {

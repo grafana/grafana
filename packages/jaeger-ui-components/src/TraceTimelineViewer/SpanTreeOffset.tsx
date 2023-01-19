@@ -67,7 +67,7 @@ export const getStyles = stylesFactory((theme: GrafanaTheme2) => {
   };
 });
 
-type TProps = {
+export type TProps = {
   childrenVisible?: boolean;
   onClick?: () => void;
   span: TraceSpan;
@@ -138,7 +138,14 @@ export class UnthemedSpanTreeOffset extends React.PureComponent<TProps> {
     const { childrenVisible, onClick, showChildrenIcon, span, theme } = this.props;
     const { hasChildren, spanID } = span;
     const wrapperProps = hasChildren ? { onClick, role: 'switch', 'aria-checked': childrenVisible } : null;
-    const icon = showChildrenIcon && hasChildren && (childrenVisible ? <IoIosArrowDown /> : <IoChevronRight />);
+    const icon =
+      showChildrenIcon &&
+      hasChildren &&
+      (childrenVisible ? (
+        <IoIosArrowDown data-testid="icon-arrow-down" />
+      ) : (
+        <IoChevronRight data-testid="icon-arrow-right" />
+      ));
     const styles = getStyles(theme);
     return (
       <span className={cx(styles.SpanTreeOffset, { [styles.SpanTreeOffsetParent]: hasChildren })} {...wrapperProps}>

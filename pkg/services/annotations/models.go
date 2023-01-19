@@ -62,7 +62,7 @@ type DeleteParams struct {
 }
 
 type Item struct {
-	Id          int64            `json:"id"`
+	Id          int64            `json:"id" xorm:"pk autoincr 'id'"`
 	OrgId       int64            `json:"orgId"`
 	UserId      int64            `json:"userId"`
 	DashboardId int64            `json:"dashboardId"`

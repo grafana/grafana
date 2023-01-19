@@ -27,7 +27,7 @@ export function InlineEdit({ onClose, id, scene }: Props) {
   const styles = useStyles2(getStyles);
   const inlineEditKey = 'inlineEditPanel' + id.toString();
 
-  const defaultMeasurements = { width: 350, height: 400 };
+  const defaultMeasurements = { width: 400, height: 400 };
   const widthOffset = root?.width ?? defaultMeasurements.width + OFFSET_X * 2;
   const defaultX = root?.x ?? 0 + widthOffset - defaultMeasurements.width - OFFSET_X;
   const defaultY = root?.y ?? 0 + OFFSET_Y;
@@ -108,6 +108,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     box-shadow: 5px 5px 20px -5px #000000;
     z-index: 1000;
     opacity: 1;
+    min-width: 400px;
   `,
   draggableWrapper: css`
     width: 0;

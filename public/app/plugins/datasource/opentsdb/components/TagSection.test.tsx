@@ -48,7 +48,7 @@ describe('Tag Section', () => {
   describe('tag editor', () => {
     it('open the editor on clicking +', () => {
       setup();
-      fireEvent.click(screen.getByTestId(testIds.open));
+      fireEvent.click(screen.getByRole('button', { name: /Add tag/ }));
       expect(screen.getByText('add tag')).toBeInTheDocument();
     });
 
@@ -59,7 +59,7 @@ describe('Tag Section', () => {
 
     it('should call runQuery on adding a tag', () => {
       setup();
-      fireEvent.click(screen.getByTestId(testIds.open));
+      fireEvent.click(screen.getByRole('button', { name: /Add tag/ }));
       fireEvent.click(screen.getByText('add tag'));
       expect(onRunQuery).toHaveBeenCalled();
     });
@@ -80,7 +80,7 @@ describe('Tag Section', () => {
         ],
       };
       setup({ query });
-      fireEvent.click(screen.getByTestId(testIds.open));
+      fireEvent.click(screen.getByRole('button', { name: /Add tag/ }));
       fireEvent.click(screen.getByText('add tag'));
       expect(screen.getByTestId(testIds.error)).toBeInTheDocument();
     });

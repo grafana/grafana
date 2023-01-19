@@ -110,8 +110,11 @@ export interface PluginInclude {
   path?: string;
   icon?: string;
 
-  role?: string; // "Viewer", Admin, editor???
-  addToNav?: boolean; // Show in the sidebar... only if type=page?
+  // "Admin", "Editor" or "Viewer". If set then the include will only show up in the navigation if the user has the required roles.
+  role?: string;
+
+  // Adds the "page" or "dashboard" type includes to the navigation if set to `true`.
+  addToNav?: boolean;
 
   // Angular app pages
   component?: string;

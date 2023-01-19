@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/auth/overview/
-  - /docs/grafana/latest/auth/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/
+  - ../../auth/
+  - ../../auth/overview/
 description: Learn about all the ways in which you can configure Grafana to authenticate
   users.
 title: Configure authentication
@@ -117,13 +116,13 @@ disable_login_form = true
 
 ### Automatic OAuth login
 
-Set to true to attempt login with OAuth automatically, skipping the login screen.
-This setting is ignored if multiple OAuth providers are configured.
+Set to true to attempt login with specific OAuth provider automatically, skipping the login screen.
+This setting is ignored if multiple auth providers are configured to use auto login.
 Defaults to `false`.
 
 ```bash
-[auth]
-oauth_auto_login = true
+[auth.generic_oauth]
+auto_login = true
 ```
 
 ### Avoid automatic OAuth login

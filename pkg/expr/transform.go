@@ -35,6 +35,7 @@ type Request struct {
 	Debug   bool
 	OrgId   int64
 	Queries []Query
+	User    *backend.User
 }
 
 // Query is like plugins.DataSubQuery, but with a a time range, and only the UID

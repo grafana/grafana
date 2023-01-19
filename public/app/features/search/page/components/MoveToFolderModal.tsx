@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import React, { FC, useState } from 'react';
 
-import { GrafanaTheme } from '@grafana/data';
-import { Button, HorizontalGroup, Modal, stylesFactory, useTheme } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Button, HorizontalGroup, Modal, useStyles2 } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { moveDashboards } from 'app/features/manage-dashboards/state/actions';
@@ -19,8 +19,7 @@ interface Props {
 
 export const MoveToFolderModal: FC<Props> = ({ results, onMoveItems, isOpen, onDismiss }) => {
   const [folder, setFolder] = useState<FolderInfo | null>(null);
-  const theme = useTheme();
-  const styles = getStyles(theme);
+  const styles = useStyles2(getStyles);
   const notifyApp = useAppNotification();
   const selectedDashboards = Array.from(results.get('dashboard') ?? []);
   const [moving, setMoving] = useState(false);
@@ -64,7 +63,7 @@ export const MoveToFolderModal: FC<Props> = ({ results, onMoveItems, isOpen, onD
             Move the {selectedDashboards.length} selected dashboard{selectedDashboards.length === 1 ? '' : 's'} to the
             following folder:
           </p>
-          <FolderPicker onChange={(f) => setFolder(f as FolderInfo)} />
+          <FolderPicker onChange={(f) => setFolder(f)} />
         </div>
 
         <HorizontalGroup justify="center">
@@ -80,13 +79,13 @@ export const MoveToFolderModal: FC<Props> = ({ results, onMoveItems, isOpen, onD
   ) : null;
 };
 
-const getStyles = stylesFactory((theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     modal: css`
       width: 500px;
     `,
     content: css`
-      margin-bottom: ${theme.spacing.lg};
+      margin-bottom: ${theme.spacing(3)};
     `,
   };
-});
+};

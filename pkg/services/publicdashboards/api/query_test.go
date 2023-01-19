@@ -17,9 +17,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardStore "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	datasourcesService "github.com/grafana/grafana/pkg/services/datasources/service"
@@ -28,9 +28,11 @@ import (
 	publicdashboardsStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	publicdashboardsService "github.com/grafana/grafana/pkg/services/publicdashboards/service"
+	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -44,7 +46,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 		Name                 string
 		AccessToken          string
 		ExpectedHttpResponse int
-		DashboardResult      *models.Dashboard
+		DashboardResult      *dashboards.Dashboard
 		Err                  error
 		FixedErrorResponse   string
 	}{
@@ -52,7 +54,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 			Name:                 "It gets a public dashboard",
 			AccessToken:          validAccessToken,
 			ExpectedHttpResponse: http.StatusOK,
-			DashboardResult: &models.Dashboard{
+			DashboardResult: &dashboards.Dashboard{
 				Data: simplejson.NewFromAny(map[string]interface{}{
 					"Uid": DashboardUid,
 				}),
@@ -65,7 +67,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 			AccessToken:          validAccessToken,
 			ExpectedHttpResponse: http.StatusNotFound,
 			DashboardResult:      nil,
-			Err:                  ErrPublicDashboardNotFound,
+			Err:                  ErrPublicDashboardNotFound.Errorf(""),
 			FixedErrorResponse:   "",
 		},
 		{
@@ -74,7 +76,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 			ExpectedHttpResponse: http.StatusBadRequest,
 			DashboardResult:      nil,
 			Err:                  nil,
-			FixedErrorResponse:   "{\"message\":\"Invalid Access Token\"}",
+			FixedErrorResponse:   "{\"message\":\"Invalid access token\", \"messageId\":\"publicdashboards.invalidAccessToken\", \"statusCode\":400, \"traceID\":\"\"}",
 		},
 	}
 
@@ -82,7 +84,7 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 		t.Run(test.Name, func(t *testing.T) {
 			service := publicdashboards.NewFakePublicDashboardService(t)
 			service.On("FindPublicDashboardAndDashboardByAccessToken", mock.Anything, mock.AnythingOfType("string")).
-				Return(&PublicDashboard{}, test.DashboardResult, test.Err).Maybe()
+				Return(&PublicDashboard{Uid: "pubdashuid"}, test.DashboardResult, test.Err).Maybe()
 
 			cfg := setting.NewCfg()
 			cfg.RBACEnabled = false
@@ -113,14 +115,18 @@ func TestAPIViewPublicDashboard(t *testing.T) {
 				assert.Equal(t, false, dashResp.Meta.CanEdit)
 				assert.Equal(t, false, dashResp.Meta.CanDelete)
 				assert.Equal(t, false, dashResp.Meta.CanSave)
+
+				// publicDashboardUID should be always empty
+				assert.Equal(t, "", dashResp.Meta.PublicDashboardUID)
 			} else if test.FixedErrorResponse != "" {
 				require.Equal(t, test.ExpectedHttpResponse, response.Code)
-				require.JSONEq(t, "{\"message\":\"Invalid Access Token\"}", response.Body.String())
+				require.JSONEq(t, "{\"message\":\"Invalid access token\", \"messageId\":\"publicdashboards.invalidAccessToken\", \"statusCode\":400, \"traceID\":\"\"}", response.Body.String())
 			} else {
-				var errResp JsonErrResponse
+				var errResp errutil.PublicError
 				err := json.Unmarshal(response.Body.Bytes(), &errResp)
 				require.NoError(t, err)
-				assert.Equal(t, test.Err.Error(), errResp.Error)
+				assert.Equal(t, "Public dashboard not found", errResp.Message)
+				assert.Equal(t, "publicdashboards.notFound", errResp.MessageID)
 			}
 		})
 	}
@@ -149,6 +155,7 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 	expectedResponse := `{
     "results": {
         "test": {
+			"status": 200,
             "frames": [
                 {
                     "schema": {
@@ -207,19 +214,19 @@ func TestAPIQueryPublicDashboard(t *testing.T) {
 		server, _ := setup(true)
 		resp := callAPI(server, http.MethodPost, getValidQueryPath("SomeInvalidAccessToken"), strings.NewReader("{}"), t)
 		require.Equal(t, http.StatusBadRequest, resp.Code)
-		require.JSONEq(t, "{\"message\":\"Invalid Access Token\"}", resp.Body.String())
+		require.JSONEq(t, "{\"message\":\"Invalid access token\", \"messageId\":\"publicdashboards.invalidAccessToken\", \"statusCode\":400, \"traceID\":\"\"}", resp.Body.String())
 	})
 
 	t.Run("Status code is 400 when the intervalMS is lesser than 0", func(t *testing.T) {
 		server, fakeDashboardService := setup(true)
-		fakeDashboardService.On("GetQueryDataResponse", mock.Anything, true, mock.Anything, int64(2), validAccessToken).Return(&backend.QueryDataResponse{}, ErrPublicDashboardBadRequest)
+		fakeDashboardService.On("GetQueryDataResponse", mock.Anything, true, mock.Anything, int64(2), validAccessToken).Return(&backend.QueryDataResponse{}, ErrBadRequest.Errorf(""))
 		resp := callAPI(server, http.MethodPost, getValidQueryPath(validAccessToken), strings.NewReader(`{"intervalMs":-100,"maxDataPoints":1000}`), t)
 		require.Equal(t, http.StatusBadRequest, resp.Code)
 	})
 
 	t.Run("Status code is 400 when the maxDataPoints is lesser than 0", func(t *testing.T) {
 		server, fakeDashboardService := setup(true)
-		fakeDashboardService.On("GetQueryDataResponse", mock.Anything, true, mock.Anything, int64(2), validAccessToken).Return(&backend.QueryDataResponse{}, ErrPublicDashboardBadRequest)
+		fakeDashboardService.On("GetQueryDataResponse", mock.Anything, true, mock.Anything, int64(2), validAccessToken).Return(&backend.QueryDataResponse{}, ErrBadRequest.Errorf(""))
 		resp := callAPI(server, http.MethodPost, getValidQueryPath(validAccessToken), strings.NewReader(`{"intervalMs":100,"maxDataPoints":-1000}`), t)
 		require.Equal(t, http.StatusBadRequest, resp.Code)
 	})
@@ -252,6 +259,9 @@ func getValidQueryPath(accessToken string) string {
 }
 
 func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
 	db := db.InitTestDB(t)
 
 	cacheService := datasourcesService.ProvideCacheService(localcache.ProvideService(), db)
@@ -269,9 +279,9 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	})
 
 	// Create Dashboard
-	saveDashboardCmd := models.SaveDashboardCommand{
-		OrgId:    1,
-		FolderId: 1,
+	saveDashboardCmd := dashboards.SaveDashboardCommand{
+		OrgID:    1,
+		FolderID: 1,
 		IsFolder: false,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
 			"id":    nil,
@@ -294,14 +304,15 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	}
 
 	// create dashboard
-	dashboardStoreService := dashboardStore.ProvideDashboardStore(db, db.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db, db.Cfg))
+	dashboardStoreService, err := dashboardStore.ProvideDashboardStore(db, db.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(db, db.Cfg), quotatest.New(false, nil))
+	require.NoError(t, err)
 	dashboard, err := dashboardStoreService.SaveDashboard(context.Background(), saveDashboardCmd)
 	require.NoError(t, err)
 
 	// Create public dashboard
 	savePubDashboardCmd := &SavePublicDashboardDTO{
-		DashboardUid: dashboard.Uid,
-		OrgId:        dashboard.OrgId,
+		DashboardUid: dashboard.UID,
+		OrgId:        dashboard.OrgID,
 		PublicDashboard: &PublicDashboard{
 			IsEnabled: true,
 		},
@@ -315,7 +326,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	ac := acmock.New()
 	cfg.RBACEnabled = false
 	service := publicdashboardsService.ProvideService(cfg, store, qds, annotationsService, ac)
-	pubdash, err := service.Save(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
+	pubdash, err := service.Create(context.Background(), &user.SignedInUser{}, savePubDashboardCmd)
 	require.NoError(t, err)
 
 	// setup test server
@@ -339,6 +350,7 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 		`{
         "results": {
           "A": {
+			"status": 200,
             "frames": [
               {
                 "data": {

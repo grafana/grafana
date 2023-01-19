@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/auth/generic-oauth/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/generic-oauth/
+  - ../../../auth/generic-oauth/
 description: Grafana OAuthentication Guide
 keywords:
   - grafana
@@ -36,6 +35,8 @@ Example config:
 name = OAuth
 icon = signin
 enabled = true
+allow_sign_up = true
+auto_login = false
 client_id = YOUR_APP_CLIENT_ID
 client_secret = YOUR_APP_CLIENT_SECRET
 scopes =
@@ -44,7 +45,6 @@ auth_url =
 token_url =
 api_url =
 allowed_domains = mycompany.com mycompany.org
-allow_sign_up = true
 tls_skip_verify_insecure = false
 tls_client_cert =
 tls_client_key =
@@ -116,9 +116,33 @@ use_pkce = true
 
 Grafana always uses the SHA256 based `S256` challenge method and a 128 bytes (base64url encoded) code verifier.
 
+### Configure refresh token
+
+> Available in Grafana v9.3 and later versions.
+
+> **Note:** This feature is behind the `accessTokenExpirationCheck` feature toggle.
+
+When a user logs in using an OAuth provider, Grafana verifies that the access token has not expired. When an access token expires, Grafana uses the provided refresh token (if any exists) to obtain a new access token.
+
+Grafana uses a refresh token to obtain a new access token without requiring the user to log in again. If a refresh token doesn't exist, Grafana logs the user out of the system after the access token has expired.
+
+To configure Generic OAuth to use a refresh token, perform one or both of the following tasks, if required:
+
+- Extend the `[auth.generic_oauth]` section with additional scopes
+- Enable the refresh token on the provider
+
+### Configure automatic login
+
+Set `auto_login` option to true to attempt login automatically, skipping the login screen.
+This setting is ignored if multiple auth providers are configured to use auto login.
+
+```
+auto_login = true
+```
+
 ## Set up OAuth2 with Auth0
 
-1. Create a new Client in Auth0
+1. Use the following parameters to create a client in Auth0:
 
    - Name: Grafana
    - Type: Regular Web Application
@@ -133,12 +157,13 @@ Grafana always uses the SHA256 based `S256` challenge method and a 128 bytes (ba
    [auth.generic_oauth]
    enabled = true
    allow_sign_up = true
+   auto_login = false
    team_ids =
    allowed_organizations =
    name = Auth0
    client_id = <client id>
    client_secret = <client secret>
-   scopes = openid profile email
+   scopes = openid profile email offline_access
    auth_url = https://<domain>/authorize
    token_url = https://<domain>/oauth/token
    api_url = https://<domain>/userinfo
@@ -152,6 +177,7 @@ Grafana always uses the SHA256 based `S256` challenge method and a 128 bytes (ba
 name = BitBucket
 enabled = true
 allow_sign_up = true
+auto_login = false
 client_id = <client id>
 client_secret = <client secret>
 scopes = account email
@@ -163,6 +189,8 @@ team_ids_attribute_path = values[*].workspace.slug
 team_ids =
 allowed_organizations =
 ```
+
+By default, a refresh token is included in the response for the **Authorization Code Grant**.
 
 ## Set up OAuth2 with Centrify
 
@@ -187,6 +215,7 @@ allowed_organizations =
    name = Centrify
    enabled = true
    allow_sign_up = true
+   auto_login = false
    client_id = <OpenID Connect Client ID from Centrify>
    client_secret = <your generated OpenID Connect Client Secret"
    scopes = openid profile email
@@ -194,6 +223,8 @@ allowed_organizations =
    token_url = https://<your domain>.my.centrify.com/OAuth2/Token/<Application ID>
    api_url = https://<your domain>.my.centrify.com/OAuth2/UserInfo/<Application ID>
    ```
+
+By default, a refresh token is included in the response for the **Authorization Code Grant**.
 
 ## Set up OAuth2 with OneLogin
 
@@ -224,6 +255,7 @@ allowed_organizations =
    name = OneLogin
    enabled = true
    allow_sign_up = true
+   auto_login = false
    client_id = <client id>
    client_secret = <client secret>
    scopes = openid email name

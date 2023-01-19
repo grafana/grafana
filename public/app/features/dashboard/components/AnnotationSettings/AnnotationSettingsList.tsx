@@ -57,7 +57,7 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
   return (
     <VerticalGroup>
       {annotations.length > 0 && (
-        <table className="filter-table filter-table--hover">
+        <table role="grid" className="filter-table filter-table--hover">
           <thead>
             <tr>
               <th>Query name</th>
@@ -69,26 +69,26 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
             {dashboard.annotations.list.map((annotation, idx) => (
               <tr key={`${annotation.name}-${idx}`}>
                 {annotation.builtIn ? (
-                  <td style={{ width: '90%' }} className="pointer" onClick={() => onEdit(idx)}>
+                  <td role="gridcell" style={{ width: '90%' }} className="pointer" onClick={() => onEdit(idx)}>
                     {getAnnotationName(annotation)}
                   </td>
                 ) : (
-                  <td className="pointer" onClick={() => onEdit(idx)}>
+                  <td role="gridcell" className="pointer" onClick={() => onEdit(idx)}>
                     {getAnnotationName(annotation)}
                   </td>
                 )}
-                <td className="pointer" onClick={() => onEdit(idx)}>
+                <td role="gridcell" className="pointer" onClick={() => onEdit(idx)}>
                   {dataSourceSrv.getInstanceSettings(annotation.datasource)?.name || annotation.datasource?.uid}
                 </td>
-                <td style={{ width: '1%' }}>
+                <td role="gridcell" style={{ width: '1%' }}>
                   {idx !== 0 && <IconButton name="arrow-up" aria-label="arrow-up" onClick={() => onMove(idx, -1)} />}
                 </td>
-                <td style={{ width: '1%' }}>
+                <td role="gridcell" style={{ width: '1%' }}>
                   {dashboard.annotations.list.length > 1 && idx !== dashboard.annotations.list.length - 1 ? (
                     <IconButton name="arrow-down" aria-label="arrow-down" onClick={() => onMove(idx, 1)} />
                   ) : null}
                 </td>
-                <td style={{ width: '1%' }}>
+                <td role="gridcell" style={{ width: '1%' }}>
                   {!annotation.builtIn && (
                     <DeleteButton
                       size="sm"

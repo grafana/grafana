@@ -93,7 +93,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   };
 };
 
-type Props = {
+export type Props = {
   color: string;
   onClick?: (evt: React.MouseEvent<any>) => void;
   viewEnd: number;
@@ -147,8 +147,10 @@ function SpanBar({
   return (
     <div
       className={cx(styles.wrapper, className)}
+      onBlur={setShortLabel}
       onClick={onClick}
-      onMouseLeave={setShortLabel}
+      onFocus={setLongLabel}
+      onMouseOut={setShortLabel}
       onMouseOver={setLongLabel}
       aria-hidden
       data-testid={selectors.components.TraceViewer.spanBar}

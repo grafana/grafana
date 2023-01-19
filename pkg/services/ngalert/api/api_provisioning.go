@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const disableProvenanceHeaderName = "X-Disable-Provenance"
+
 type ProvisioningSrv struct {
 	log                 log.Logger
 	policies            NotificationPolicyService
@@ -33,7 +35,7 @@ type ContactPointService interface {
 
 type TemplateService interface {
 	GetTemplates(ctx context.Context, orgID int64) (map[string]string, error)
-	SetTemplate(ctx context.Context, orgID int64, tmpl definitions.MessageTemplate) (definitions.MessageTemplate, error)
+	SetTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error)
 	DeleteTemplate(ctx context.Context, orgID int64, name string) error
 }
 
@@ -51,6 +53,7 @@ type MuteTimingService interface {
 }
 
 type AlertRuleService interface {
+	GetAlertRules(ctx context.Context, orgID int64) ([]*alerting_models.AlertRule, error)
 	GetAlertRule(ctx context.Context, orgID int64, ruleUID string) (alerting_models.AlertRule, alerting_models.Provenance, error)
 	CreateAlertRule(ctx context.Context, rule alerting_models.AlertRule, provenance alerting_models.Provenance, userID int64) (alerting_models.AlertRule, error)
 	UpdateAlertRule(ctx context.Context, rule alerting_models.AlertRule, provenance alerting_models.Provenance) (alerting_models.AlertRule, error)
@@ -146,9 +149,9 @@ func (srv *ProvisioningSrv) RouteGetTemplates(c *models.ReqContext) response.Res
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	result := make([]definitions.MessageTemplate, 0, len(templates))
+	result := make([]definitions.NotificationTemplate, 0, len(templates))
 	for k, v := range templates {
-		result = append(result, definitions.MessageTemplate{Name: k, Template: v})
+		result = append(result, definitions.NotificationTemplate{Name: k, Template: v})
 	}
 	return response.JSON(http.StatusOK, result)
 }
@@ -159,13 +162,13 @@ func (srv *ProvisioningSrv) RouteGetTemplate(c *models.ReqContext, name string) 
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	if tmpl, ok := templates[name]; ok {
-		return response.JSON(http.StatusOK, definitions.MessageTemplate{Name: name, Template: tmpl})
+		return response.JSON(http.StatusOK, definitions.NotificationTemplate{Name: name, Template: tmpl})
 	}
 	return response.Empty(http.StatusNotFound)
 }
 
-func (srv *ProvisioningSrv) RoutePutTemplate(c *models.ReqContext, body definitions.MessageTemplateContent, name string) response.Response {
-	tmpl := definitions.MessageTemplate{
+func (srv *ProvisioningSrv) RoutePutTemplate(c *models.ReqContext, body definitions.NotificationTemplateContent, name string) response.Response {
+	tmpl := definitions.NotificationTemplate{
 		Name:       name,
 		Template:   body.Template,
 		Provenance: alerting_models.ProvenanceAPI,
@@ -245,6 +248,14 @@ func (srv *ProvisioningSrv) RouteDeleteMuteTiming(c *models.ReqContext, name str
 	return response.JSON(http.StatusNoContent, nil)
 }
 
+func (srv *ProvisioningSrv) RouteGetAlertRules(c *models.ReqContext) response.Response {
+	rules, err := srv.alertRules.GetAlertRules(c.Req.Context(), c.OrgID)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+	return response.JSON(http.StatusOK, definitions.NewAlertRules(rules))
+}
+
 func (srv *ProvisioningSrv) RouteRouteGetAlertRule(c *models.ReqContext, UID string) response.Response {
 	rule, provenace, err := srv.alertRules.GetAlertRule(c.Req.Context(), c.OrgID, UID)
 	if err != nil {
@@ -257,9 +268,10 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar definiti
 	upstreamModel, err := ar.UpstreamModel()
 	upstreamModel.OrgID = c.OrgID
 	if err != nil {
-		ErrResp(http.StatusBadRequest, err, "")
+		return ErrResp(http.StatusBadRequest, err, "")
 	}
-	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), upstreamModel, alerting_models.ProvenanceAPI, c.UserID)
+	provenance := determineProvenance(c)
+	createdAlertRule, err := srv.alertRules.CreateAlertRule(c.Req.Context(), upstreamModel, provenance, c.UserID)
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
@@ -273,7 +285,7 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *models.ReqContext, ar definiti
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	resp := definitions.NewAlertRule(createdAlertRule, alerting_models.ProvenanceAPI)
+	resp := definitions.NewAlertRule(createdAlertRule, provenance)
 	return response.JSON(http.StatusCreated, resp)
 }
 
@@ -284,7 +296,8 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar definitio
 	}
 	updated.OrgID = c.OrgID
 	updated.UID = UID
-	updatedAlertRule, err := srv.alertRules.UpdateAlertRule(c.Req.Context(), updated, alerting_models.ProvenanceAPI)
+	provenance := determineProvenance(c)
+	updatedAlertRule, err := srv.alertRules.UpdateAlertRule(c.Req.Context(), updated, provenance)
 	if errors.Is(err, alerting_models.ErrAlertRuleNotFound) {
 		return response.Empty(http.StatusNotFound)
 	}
@@ -298,7 +311,7 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *models.ReqContext, ar definitio
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 
-	resp := definitions.NewAlertRule(updatedAlertRule, alerting_models.ProvenanceAPI)
+	resp := definitions.NewAlertRule(updatedAlertRule, provenance)
 	return response.JSON(http.StatusOK, resp)
 }
 
@@ -339,4 +352,11 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *models.ReqContext, ag defi
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	return response.JSON(http.StatusOK, ag)
+}
+
+func determineProvenance(ctx *models.ReqContext) alerting_models.Provenance {
+	if _, disabled := ctx.Req.Header[disableProvenanceHeaderName]; disabled {
+		return alerting_models.ProvenanceNone
+	}
+	return alerting_models.ProvenanceAPI
 }

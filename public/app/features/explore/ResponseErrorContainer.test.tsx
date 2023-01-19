@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 
-import { DataQueryError, LoadingState } from '@grafana/data';
+import { DataQueryError, LoadingState, getDefaultTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { configureStore } from '../../store/configureStore';
@@ -47,7 +47,7 @@ describe('ResponseErrorContainer', () => {
 function setup(error: DataQueryError) {
   const store = configureStore();
   store.getState().explore[ExploreId.left].queryResponse = {
-    timeRange: {} as any,
+    timeRange: getDefaultTimeRange(),
     series: [],
     state: LoadingState.Error,
     error,
@@ -56,10 +56,12 @@ function setup(error: DataQueryError) {
     tableFrames: [],
     traceFrames: [],
     nodeGraphFrames: [],
+    rawPrometheusFrames: [],
     flameGraphFrames: [],
     graphResult: null,
     logsResult: null,
     tableResult: null,
+    rawPrometheusResult: null,
   };
   render(
     <Provider store={store}>

@@ -19,7 +19,7 @@ export const AnnotationsHelp = () => {
         <p>
           Example Result: <code>monitoring.googleapis.com/uptime_check/http_status has this value: 502</code>
         </p>
-        <label>Patterns:</label>
+        <span>Patterns:</span>
         <p>
           <code>{`${'{{metric.value}}'}`}</code> = value of the metric/point
         </p>

@@ -1,12 +1,11 @@
 ---
 aliases:
-  - /docs/grafana/latest/live/
-  - /docs/grafana/latest/live/configure-grafana-live/
-  - /docs/grafana/latest/live/live-channel/
-  - /docs/grafana/latest/live/live-feature-overview/
-  - /docs/grafana/latest/live/live-ha-setup/
-  - /docs/grafana/latest/live/set-up-grafana-live/
-  - /docs/grafana/latest/setup-grafana/set-up-grafana-live/
+  - ../live/
+  - ../live/configure-grafana-live/
+  - ../live/live-channel/
+  - ../live/live-feature-overview/
+  - ../live/live-ha-setup/
+  - ../live/set-up-grafana-live/
 description: Grafana Live is a real-time messaging engine that pushes event data to
   a frontend when an event occurs.
 menuTitle: Set up Grafana Live

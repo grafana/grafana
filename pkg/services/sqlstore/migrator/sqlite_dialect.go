@@ -40,6 +40,12 @@ func (db *SQLite3) BooleanStr(value bool) string {
 	return "0"
 }
 
+func (db *SQLite3) BatchSize() int {
+	// SQLite has a maximum parameter count per statement of 100.
+	// So, we use a small batch size to support write operations.
+	return 10
+}
+
 func (db *SQLite3) DateTimeFunc(value string) string {
 	return "datetime(" + value + ")"
 }

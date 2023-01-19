@@ -3,6 +3,7 @@
 package eval
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"runtime/debug"
@@ -14,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/expr/classic"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -24,30 +26,82 @@ import (
 
 var logger = log.New("ngalert.eval")
 
-//go:generate mockery --name Evaluator --structname FakeEvaluator --inpackage --filename evaluator_mock.go --with-expecter
-type Evaluator interface {
-	// ConditionEval executes conditions and evaluates the result.
-	ConditionEval(ctx EvaluationContext, condition models.Condition) Results
-	// QueriesAndExpressionsEval executes queries and expressions and returns the result.
-	QueriesAndExpressionsEval(ctx EvaluationContext, data []models.AlertQuery) (*backend.QueryDataResponse, error)
+type EvaluatorFactory interface {
 	// Validate validates that the condition is correct. Returns nil if the condition is correct. Otherwise, error that describes the failure
 	Validate(ctx EvaluationContext, condition models.Condition) error
+	// BuildRuleEvaluator build an evaluator pipeline ready to evaluate a rule's query
+	Create(ctx EvaluationContext, condition models.Condition) (ConditionEvaluator, error)
+}
+
+//go:generate mockery --name ConditionEvaluator --structname ConditionEvaluatorMock --with-expecter --output eval_mocks --outpkg eval_mocks
+type ConditionEvaluator interface {
+	// EvaluateRaw evaluates the condition and returns raw backend response backend.QueryDataResponse
+	EvaluateRaw(ctx context.Context, now time.Time) (resp *backend.QueryDataResponse, err error)
+	// Evaluate evaluates the condition and converts the response to Results
+	Evaluate(ctx context.Context, now time.Time) (Results, error)
+}
+
+type expressionService interface {
+	ExecutePipeline(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error)
+}
+
+type conditionEvaluator struct {
+	pipeline          expr.DataPipeline
+	expressionService expressionService
+	condition         models.Condition
+	evalTimeout       time.Duration
+}
+
+func (r *conditionEvaluator) EvaluateRaw(ctx context.Context, now time.Time) (resp *backend.QueryDataResponse, err error) {
+	defer func() {
+		if e := recover(); e != nil {
+			logger.FromContext(ctx).Error("alert rule panic", "error", e, "stack", string(debug.Stack()))
+			panicErr := fmt.Errorf("alert rule panic; please check the logs for the full stack")
+			if err != nil {
+				err = fmt.Errorf("queries and expressions execution failed: %w; %v", err, panicErr.Error())
+			} else {
+				err = panicErr
+			}
+		}
+	}()
+
+	execCtx := ctx
+	if r.evalTimeout >= 0 {
+		timeoutCtx, cancel := context.WithTimeout(ctx, r.evalTimeout)
+		defer cancel()
+		execCtx = timeoutCtx
+	}
+	return r.expressionService.ExecutePipeline(execCtx, now, r.pipeline)
+}
+
+// Evaluate evaluates the condition and converts the response to Results
+func (r *conditionEvaluator) Evaluate(ctx context.Context, now time.Time) (Results, error) {
+	response, err := r.EvaluateRaw(ctx, now)
+	if err != nil {
+		return nil, err
+	}
+	execResults := queryDataResponseToExecutionResults(r.condition, response)
+	return evaluateExecutionResult(execResults, now), nil
 }
 
 type evaluatorImpl struct {
-	cfg               *setting.Cfg
+	evaluationTimeout time.Duration
 	dataSourceCache   datasources.CacheService
 	expressionService *expr.Service
+	pluginsStore      plugins.Store
 }
 
-func NewEvaluator(
-	cfg *setting.Cfg,
+func NewEvaluatorFactory(
+	cfg setting.UnifiedAlertingSettings,
 	datasourceCache datasources.CacheService,
-	expressionService *expr.Service) Evaluator {
+	expressionService *expr.Service,
+	pluginsStore plugins.Store,
+) EvaluatorFactory {
 	return &evaluatorImpl{
-		cfg:               cfg,
+		evaluationTimeout: cfg.EvaluationTimeout,
 		dataSourceCache:   datasourceCache,
 		expressionService: expressionService,
+		pluginsStore:      pluginsStore,
 	}
 }
 
@@ -122,6 +176,15 @@ type Result struct {
 	EvaluationString string
 }
 
+func NewResultFromError(err error, evaluatedAt time.Time, duration time.Duration) Result {
+	return Result{
+		State:              Error,
+		Error:              err,
+		EvaluatedAt:        evaluatedAt,
+		EvaluationDuration: duration,
+	}
+}
+
 // State is an enum of the evaluation State for an alert instance.
 type State int
 
@@ -164,13 +227,15 @@ func buildDatasourceHeaders(ctx EvaluationContext) map[string]string {
 		// Note: The spelling of this headers is intentionally degenerate from the others for compatibility reasons.
 		// When sent over a network, the key of this header is canonicalized to "Fromalert".
 		// However, some datasources still compare against the string "FromAlert".
-		"FromAlert": "true",
+		models.FromAlertHeaderName: "true",
 
-		"X-Cache-Skip": "true",
+		models.CacheSkipHeaderName: "true",
 	}
 
-	if ctx.RuleUID != "" {
-		headers["X-Rule-Uid"] = ctx.RuleUID
+	key, ok := models.RuleKeyFromContext(ctx.Ctx)
+	if ok {
+		headers["X-Rule-Uid"] = key.UID
+		headers["X-Grafana-Org-Id"] = strconv.FormatInt(key.OrgID, 10)
 	}
 
 	return headers
@@ -205,7 +270,7 @@ func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheServ
 			if expr.IsDataSource(q.DatasourceUID) {
 				ds = expr.DataSourceModel()
 			} else {
-				ds, err = dsCacheService.GetDatasourceByUID(ctx.Ctx, q.DatasourceUID, ctx.User, true)
+				ds, err = dsCacheService.GetDatasourceByUID(ctx.Ctx, q.DatasourceUID, ctx.User, false /*skipCache*/)
 				if err != nil {
 					return nil, fmt.Errorf("failed to build query '%s': %w", q.RefID, err)
 				}
@@ -312,27 +377,6 @@ func queryDataResponseToExecutionResults(c models.Condition, execResp *backend.Q
 	return result
 }
 
-func executeQueriesAndExpressions(ctx EvaluationContext, data []models.AlertQuery, exprService *expr.Service, dsCacheService datasources.CacheService) (resp *backend.QueryDataResponse, err error) {
-	defer func() {
-		if e := recover(); e != nil {
-			logger.FromContext(ctx.Ctx).Error("alert rule panic", "error", e, "stack", string(debug.Stack()))
-			panicErr := fmt.Errorf("alert rule panic; please check the logs for the full stack")
-			if err != nil {
-				err = fmt.Errorf("queries and expressions execution failed: %w; %v", err, panicErr.Error())
-			} else {
-				err = panicErr
-			}
-		}
-	}()
-
-	queryDataReq, err := getExprRequest(ctx, data, dsCacheService)
-	if err != nil {
-		return nil, err
-	}
-
-	return exprService.TransformData(ctx.Ctx, ctx.At, queryDataReq)
-}
-
 // datasourceUIDsToRefIDs returns a sorted slice of Ref IDs for each Datasource UID.
 //
 // If refIDsToDatasourceUIDs is nil then this function also returns nil. Likewise,
@@ -399,12 +443,7 @@ func evaluateExecutionResult(execResults ExecutionResults, ts time.Time) Results
 	evalResults := make([]Result, 0)
 
 	appendErrRes := func(e error) {
-		evalResults = append(evalResults, Result{
-			State:              Error,
-			Error:              e,
-			EvaluatedAt:        ts,
-			EvaluationDuration: time.Since(ts),
-		})
+		evalResults = append(evalResults, NewResultFromError(e, ts, time.Since(ts)))
 	}
 
 	appendNoData := func(labels data.Labels) {
@@ -560,55 +599,57 @@ func (evalResults Results) AsDataFrame() data.Frame {
 	return *frame
 }
 
-// ConditionEval executes conditions and evaluates the result.
-func (e *evaluatorImpl) ConditionEval(ctx EvaluationContext, condition models.Condition) Results {
-	execResp, err := e.QueriesAndExpressionsEval(ctx, condition.Data)
-	var execResults ExecutionResults
-	if err != nil {
-		execResults = ExecutionResults{Error: err}
-	} else {
-		execResults = queryDataResponseToExecutionResults(condition, execResp)
-	}
-	return evaluateExecutionResult(execResults, ctx.At)
-}
-
-// QueriesAndExpressionsEval executes queries and expressions and returns the result.
-func (e *evaluatorImpl) QueriesAndExpressionsEval(ctx EvaluationContext, data []models.AlertQuery) (*backend.QueryDataResponse, error) {
-	timeoutCtx, cancelFn := ctx.WithTimeout(e.cfg.UnifiedAlerting.EvaluationTimeout)
-	defer cancelFn()
-
-	execResult, err := executeQueriesAndExpressions(timeoutCtx, data, e.expressionService, e.dataSourceCache)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute conditions: %w", err)
-	}
-
-	return execResult, nil
-}
-
 func (e *evaluatorImpl) Validate(ctx EvaluationContext, condition models.Condition) error {
-	if len(condition.Data) == 0 {
-		return errors.New("expression list is empty. must be at least 1 expression")
-	}
-	if len(condition.Condition) == 0 {
-		return errors.New("condition must not be empty")
-	}
-
-	ctx.At = time.Now()
-
 	req, err := getExprRequest(ctx, condition.Data, e.dataSourceCache)
 	if err != nil {
 		return err
 	}
+	for _, query := range req.Queries {
+		if query.DataSource == nil || expr.IsDataSource(query.DataSource.Uid) {
+			continue
+		}
+		p, found := e.pluginsStore.Plugin(ctx.Ctx, query.DataSource.Type)
+		if !found { // technically this should fail earlier during datasource resolution phase.
+			return fmt.Errorf("datasource refID %s could not be found: %w", query.RefID, plugins.ErrPluginUnavailable)
+		}
+		if !p.Backend {
+			return fmt.Errorf("datasource refID %s is not a backend datasource", query.RefID)
+		}
+	}
+	_, err = e.create(condition, req)
+	return err
+}
+
+func (e *evaluatorImpl) Create(ctx EvaluationContext, condition models.Condition) (ConditionEvaluator, error) {
+	if len(condition.Data) == 0 {
+		return nil, errors.New("expression list is empty. must be at least 1 expression")
+	}
+	if len(condition.Condition) == 0 {
+		return nil, errors.New("condition must not be empty")
+	}
+	req, err := getExprRequest(ctx, condition.Data, e.dataSourceCache)
+	if err != nil {
+		return nil, err
+	}
+	return e.create(condition, req)
+}
+
+func (e *evaluatorImpl) create(condition models.Condition, req *expr.Request) (ConditionEvaluator, error) {
 	pipeline, err := e.expressionService.BuildPipeline(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	conditions := make([]string, 0, len(pipeline))
 	for _, node := range pipeline {
 		if node.RefID() == condition.Condition {
-			return nil
+			return &conditionEvaluator{
+				pipeline:          pipeline,
+				expressionService: e.expressionService,
+				condition:         condition,
+				evalTimeout:       e.evaluationTimeout,
+			}, nil
 		}
 		conditions = append(conditions, node.RefID())
 	}
-	return fmt.Errorf("condition %s does not exist, must be one of %v", condition.Condition, conditions)
+	return nil, fmt.Errorf("condition %s does not exist, must be one of %v", condition.Condition, conditions)
 }

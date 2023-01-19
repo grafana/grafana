@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/org"
 
 	"golang.org/x/oauth2"
@@ -19,6 +19,7 @@ type SocialAzureAD struct {
 	*SocialBase
 	allowedGroups    []string
 	forceUseGraphAPI bool
+	skipOrgRoleSync  bool
 }
 
 type azureClaims struct {
@@ -31,6 +32,7 @@ type azureClaims struct {
 	ClaimNames        claimNames             `json:"_claim_names,omitempty"`
 	ClaimSources      map[string]claimSource `json:"_claim_sources,omitempty"`
 	TenantID          string                 `json:"tid,omitempty"`
+	OAuthVersion      string                 `json:"ver,omitempty"`
 }
 
 type claimNames struct {
@@ -43,10 +45,6 @@ type claimSource struct {
 
 type azureAccessClaims struct {
 	TenantID string `json:"tid"`
-}
-
-func (s *SocialAzureAD) Type() int {
-	return int(models.AZUREAD)
 }
 
 func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*BasicUserInfo, error) {
@@ -65,23 +63,30 @@ func (s *SocialAzureAD) UserInfo(client *http.Client, token *oauth2.Token) (*Bas
 		return nil, fmt.Errorf("error getting claims from id token: %w", err)
 	}
 
+	if claims.OAuthVersion == "1.0" {
+		return nil, &Error{"AzureAD OAuth: version 1.0 is not supported. Please ensure the auth_url and token_url are set to the v2.0 endpoints."}
+	}
+
 	email := claims.extractEmail()
 	if email == "" {
 		return nil, ErrEmailNotFound
 	}
 
-	role, grafanaAdmin := s.extractRoleAndAdmin(&claims)
+	// setting the role, grafanaAdmin to empty to reflect that we are not syncronizing with the external provider
+	var role roletype.RoleType
+	var grafanaAdmin bool
+	if !s.skipOrgRoleSync {
+		role, grafanaAdmin = s.extractRoleAndAdmin(&claims)
+	}
 	if s.roleAttributeStrict && !role.IsValid() {
 		return nil, &InvalidBasicRoleError{idP: "Azure", assignedRole: string(role)}
 	}
-
 	logger.Debug("AzureAD OAuth: extracted role", "email", email, "role", role)
 
 	groups, err := s.extractGroups(client, claims, token)
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract groups: %w", err)
 	}
-
 	logger.Debug("AzureAD OAuth: extracted groups", "email", email, "groups", fmt.Sprintf("%v", groups))
 	if !s.IsGroupMember(groups) {
 		return nil, errMissingGroupMembership

@@ -53,7 +53,7 @@ describe('FilterSection', () => {
   describe('filter editor', () => {
     it('open the editor on clicking +', () => {
       setup();
-      fireEvent.click(screen.getByTestId(testIds.open));
+      fireEvent.click(screen.getByRole('button', { name: /Add filter/ }));
       expect(screen.getByText('Group by')).toBeInTheDocument();
     });
 
@@ -64,7 +64,7 @@ describe('FilterSection', () => {
 
     it('should call runQuery on adding a filter', () => {
       setup();
-      fireEvent.click(screen.getByTestId(testIds.open));
+      fireEvent.click(screen.getByRole('button', { name: /Add filter/ }));
       fireEvent.click(screen.getByText('add filter'));
       expect(onRunQuery).toHaveBeenCalled();
     });
@@ -78,7 +78,7 @@ describe('FilterSection', () => {
         tags: [{}],
       };
       setup({ query });
-      fireEvent.click(screen.getByTestId(testIds.open));
+      fireEvent.click(screen.getByRole('button', { name: /Add filter/ }));
       fireEvent.click(screen.getByText('add filter'));
       expect(screen.getByTestId(testIds.error)).toBeInTheDocument();
     });

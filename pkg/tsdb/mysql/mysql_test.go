@@ -72,9 +72,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		RowLimit:          1000000,
 	}
 
-	rowTransformer := mysqlQueryResultTransformer{
-		log: logger,
-	}
+	rowTransformer := mysqlQueryResultTransformer{}
 
 	exe, err := sqleng.NewQueryDataHandler(config, &rowTransformer, newMysqlMacroEngine(logger), logger)
 
@@ -907,7 +905,7 @@ func TestIntegrationMySQL(t *testing.T) {
 		require.NoError(t, err)
 
 		events := []*event{}
-		for _, t := range genTimeRangeByInterval(fromStart.Add(-20*time.Minute), 60*time.Minute, 25*time.Minute) {
+		for _, t := range genTimeRangeByInterval(fromStart.Add(-20*time.Minute), time.Hour, 25*time.Minute) {
 			events = append(events, &event{
 				TimeSec:     t.Unix(),
 				Description: "Someone deployed something",
@@ -1165,9 +1163,7 @@ func TestIntegrationMySQL(t *testing.T) {
 				RowLimit:          1,
 			}
 
-			queryResultTransformer := mysqlQueryResultTransformer{
-				log: logger,
-			}
+			queryResultTransformer := mysqlQueryResultTransformer{}
 
 			handler, err := sqleng.NewQueryDataHandler(config, &queryResultTransformer, newMysqlMacroEngine(logger), logger)
 			require.NoError(t, err)

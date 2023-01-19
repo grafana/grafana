@@ -4,11 +4,12 @@ import { locationService } from '@grafana/runtime';
 import { FilterInput, ToolbarButton, useTheme2 } from '@grafana/ui';
 import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
 import { t } from 'app/core/internationalization';
-import { useSearchQuery } from 'app/features/search/hooks/useSearchQuery';
+import { getSearchStateManager } from 'app/features/search/state/SearchStateManager';
 
 export function TopSearchBarInput() {
   const theme = useTheme2();
-  const { query, onQueryChange } = useSearchQuery({});
+  const stateManager = getSearchStateManager();
+  const state = stateManager.useState();
   const breakpoint = theme.breakpoints.values.sm;
 
   const [isSmallScreen, setIsSmallScreen] = useState(window.matchMedia(`(max-width: ${breakpoint}px)`).matches);
@@ -25,7 +26,7 @@ export function TopSearchBarInput() {
   };
 
   const onSearchChange = (value: string) => {
-    onQueryChange(value);
+    stateManager.onQueryChange(value);
     if (value) {
       onOpenSearch();
     }
@@ -39,7 +40,7 @@ export function TopSearchBarInput() {
     <FilterInput
       onClick={onOpenSearch}
       placeholder={t('nav.search.placeholder', 'Search Grafana')}
-      value={query.query ?? ''}
+      value={state.query ?? ''}
       onChange={onSearchChange}
     />
   );

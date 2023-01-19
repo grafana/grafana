@@ -1,12 +1,11 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/visualizations/
-  - /docs/grafana/latest/visualizations/
-  - /docs/grafana/latest/panels-visualizations/visualizations/
-  - /docs/grafana/latest/features/panels/graph/
-  - /docs/grafana/latest/panels/visualizations/graph-panel/
-  - /docs/grafana/latest/reference/graph/
-  - /docs/grafana/latest/visualizations/graph-panel/
+  - ../features/panels/graph/
+  - ../panels/visualizations/
+  - ../panels/visualizations/graph-panel/
+  - ../reference/graph/
+  - ../visualizations/
+  - ../visualizations/graph-panel/
 title: Visualizations
 weight: 75
 ---
@@ -34,6 +33,7 @@ Grafana offers a variety of visualizations to support different use cases. This 
   - [Logs]({{< relref "logs/" >}}) is the main visualization for logs.
   - [Node Graph]({{< relref "node-graph/" >}}) for directed graphs or networks.
   - [Traces]({{< relref "traces/" >}}) is the main visualization for traces.
+  - [Flame Graph]({{< relref "flame-graph/" >}}) is the main visualization for profiling.
 - Widgets
   - [Dashboard list]({{< relref "dashboard-list/" >}}) can list dashboards.
   - [Alert list]({{< relref "alert-list/" >}}) can list alerts.

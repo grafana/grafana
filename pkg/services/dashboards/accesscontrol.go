@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
@@ -53,7 +52,7 @@ func NewFolderNameScopeResolver(db Store) (string, ac.ScopeAttributeResolver) {
 		if err != nil {
 			return nil, err
 		}
-		return []string{ScopeFoldersProvider.GetResourceScopeUID(folder.Uid)}, nil
+		return []string{ScopeFoldersProvider.GetResourceScopeUID(folder.UID)}, nil
 	})
 }
 
@@ -79,7 +78,7 @@ func NewFolderIDScopeResolver(db Store) (string, ac.ScopeAttributeResolver) {
 			return nil, err
 		}
 
-		return []string{ScopeFoldersProvider.GetResourceScopeUID(folder.Uid)}, nil
+		return []string{ScopeFoldersProvider.GetResourceScopeUID(folder.UID)}, nil
 	})
 }
 
@@ -97,7 +96,7 @@ func NewDashboardIDScopeResolver(db Store) (string, ac.ScopeAttributeResolver) {
 			return nil, err
 		}
 
-		dashboard, err := db.GetDashboard(ctx, &models.GetDashboardQuery{Id: id, OrgId: orgID})
+		dashboard, err := db.GetDashboard(ctx, &GetDashboardQuery{ID: id, OrgID: orgID})
 		if err != nil {
 			return nil, err
 		}
@@ -120,7 +119,7 @@ func NewDashboardUIDScopeResolver(db Store) (string, ac.ScopeAttributeResolver) 
 			return nil, err
 		}
 
-		dashboard, err := db.GetDashboard(ctx, &models.GetDashboardQuery{Uid: uid, OrgId: orgID})
+		dashboard, err := db.GetDashboard(ctx, &GetDashboardQuery{UID: uid, OrgID: orgID})
 		if err != nil {
 			return nil, err
 		}
@@ -129,24 +128,24 @@ func NewDashboardUIDScopeResolver(db Store) (string, ac.ScopeAttributeResolver) 
 	})
 }
 
-func resolveDashboardScope(ctx context.Context, db Store, orgID int64, dashboard *models.Dashboard) ([]string, error) {
+func resolveDashboardScope(ctx context.Context, db Store, orgID int64, dashboard *Dashboard) ([]string, error) {
 	var folderUID string
-	if dashboard.FolderId < 0 {
-		return []string{ScopeDashboardsProvider.GetResourceScopeUID(dashboard.Uid)}, nil
+	if dashboard.FolderID < 0 {
+		return []string{ScopeDashboardsProvider.GetResourceScopeUID(dashboard.UID)}, nil
 	}
 
-	if dashboard.FolderId == 0 {
+	if dashboard.FolderID == 0 {
 		folderUID = ac.GeneralFolderUID
 	} else {
-		folder, err := db.GetFolderByID(ctx, orgID, dashboard.FolderId)
+		folder, err := db.GetFolderByID(ctx, orgID, dashboard.FolderID)
 		if err != nil {
 			return nil, err
 		}
-		folderUID = folder.Uid
+		folderUID = folder.UID
 	}
 
 	return []string{
-		ScopeDashboardsProvider.GetResourceScopeUID(dashboard.Uid),
+		ScopeDashboardsProvider.GetResourceScopeUID(dashboard.UID),
 		ScopeFoldersProvider.GetResourceScopeUID(folderUID),
 	}, nil
 }

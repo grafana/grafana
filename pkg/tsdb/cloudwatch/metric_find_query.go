@@ -7,18 +7,15 @@ import (
 	"net/url"
 	"reflect"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/constants"
-	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/cwlog"
 )
 
 type suggestData struct {
@@ -66,7 +63,7 @@ func (e *cloudWatchExecutor) handleGetRegions(pluginCtx backend.PluginContext, p
 	r, err := client.DescribeRegions(&ec2.DescribeRegionsInput{})
 	if err != nil {
 		// ignore error for backward compatibility
-		cwlog.Error("Failed to get regions", "error", err)
+		logger.Error("Failed to get regions", "error", err)
 	} else {
 		for _, region := range r.Regions {
 			exists := false
@@ -289,75 +286,4 @@ func (e *cloudWatchExecutor) resourceGroupsGetResources(pluginCtx backend.Plugin
 	}
 
 	return &resp, nil
-}
-
-func (e *cloudWatchExecutor) handleGetLogGroups(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
-	region := parameters.Get("region")
-	limit := parameters.Get("limit")
-	logGroupNamePrefix := parameters.Get("logGroupNamePrefix")
-
-	logsClient, err := e.getCWLogsClient(pluginCtx, region)
-	if err != nil {
-		return nil, err
-	}
-
-	logGroupLimit := defaultLogGroupLimit
-	intLimit, err := strconv.ParseInt(limit, 10, 64)
-	if err == nil && intLimit > 0 {
-		logGroupLimit = intLimit
-	}
-
-	var response *cloudwatchlogs.DescribeLogGroupsOutput = nil
-	input := &cloudwatchlogs.DescribeLogGroupsInput{Limit: aws.Int64(logGroupLimit)}
-	if len(logGroupNamePrefix) > 0 {
-		input.LogGroupNamePrefix = aws.String(logGroupNamePrefix)
-	}
-	response, err = logsClient.DescribeLogGroups(input)
-	if err != nil || response == nil {
-		return nil, err
-	}
-
-	result := make([]suggestData, 0)
-	for _, logGroup := range response.LogGroups {
-		logGroupName := *logGroup.LogGroupName
-		result = append(result, suggestData{Text: logGroupName, Value: logGroupName, Label: logGroupName})
-	}
-
-	return result, nil
-}
-func (e *cloudWatchExecutor) handleGetAllLogGroups(pluginCtx backend.PluginContext, parameters url.Values) ([]suggestData, error) {
-	var nextToken *string
-
-	logGroupNamePrefix := parameters.Get("logGroupNamePrefix")
-
-	var err error
-	logsClient, err := e.getCWLogsClient(pluginCtx, parameters.Get("region"))
-	if err != nil {
-		return nil, err
-	}
-
-	var response *cloudwatchlogs.DescribeLogGroupsOutput
-	result := make([]suggestData, 0)
-	for {
-		response, err = logsClient.DescribeLogGroups(&cloudwatchlogs.DescribeLogGroupsInput{
-			LogGroupNamePrefix: aws.String(logGroupNamePrefix),
-			NextToken:          nextToken,
-			Limit:              aws.Int64(defaultLogGroupLimit),
-		})
-		if err != nil || response == nil {
-			return nil, err
-		}
-
-		for _, logGroup := range response.LogGroups {
-			logGroupName := *logGroup.LogGroupName
-			result = append(result, suggestData{Text: logGroupName, Value: logGroupName, Label: logGroupName})
-		}
-
-		if response.NextToken == nil {
-			break
-		}
-		nextToken = response.NextToken
-	}
-
-	return result, nil
 }

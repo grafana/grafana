@@ -1,5 +1,28 @@
 {
   "_comment": "Do not manually edit this file, or update these source phrases in Crowdin. The source of truth for English strings are in the code source",
+  "clipboard-button": {
+    "inline-toast": {
+      "success": "Copied"
+    }
+  },
+  "command-palette": {
+    "action": {
+      "change-theme": "Change theme...",
+      "dark-theme": "Dark",
+      "light-theme": "Light",
+      "search": "Search"
+    },
+    "search-box": {
+      "placeholder": "Search Grafana"
+    },
+    "section": {
+      "actions": "Actions",
+      "dashboard-search-results": "Dashboards",
+      "pages": "Pages",
+      "preferences": "Preferences",
+      "recent-dashboards": "Recent dashboards"
+    }
+  },
   "common": {
     "locale": {
       "default": "Default"
@@ -59,12 +82,6 @@
       "rows": "Total number rows",
       "table-title": "Stats"
     },
-    "refresh-picker": {
-      "off-arialabel": "Turn off auto refresh",
-      "off-description": "Auto refresh turned off. Choose refresh time interval",
-      "off-label": "Off",
-      "on-description": ""
-    },
     "toolbar": {
       "add-panel": "Add panel",
       "comments-show": "Show dashboard comments",
@@ -80,6 +97,15 @@
       "tv-button": "Cycle view mode",
       "unmark-favorite": "Unmark as favorite"
     }
+  },
+  "datasource-onboarding": {
+    "contact-admin": "Please contact your administrator to configure data sources.",
+    "explanation": "To visualize your data, you'll need to connect it first.",
+    "new-dashboard": "New dashboard",
+    "preferred": "Connect your preferred data source:",
+    "sampleData": "Or set up a new dashboard with sample data",
+    "viewAll": "View all",
+    "welcome": "Welcome to Grafana dashboards!"
   },
   "folder-picker": {
     "loading": "Loading folders..."
@@ -122,6 +148,9 @@
     "alerting-groups": {
       "subtitle": "See grouped alerts from an Alertmanager instance",
       "title": "Groups"
+    },
+    "alerting-home": {
+      "title": "Home"
     },
     "alerting-legacy": {
       "title": "Alerting (legacy)"
@@ -189,8 +218,9 @@
       "title": "Organizations"
     },
     "global-users": {
-      "subtitle": "Manage and create users across the whole Grafana server",
-      "title": "Users"
+      "subtitle": "Manage users in Grafana",
+      "title": "Users",
+      "titleBeforeTopnav": "Users"
     },
     "help": {
       "title": "Help"
@@ -199,6 +229,7 @@
     "help/documentation": "Documentation",
     "help/keyboard-shortcuts": "Keyboard shortcuts",
     "help/support": "Support",
+    "help/support-bundle": "Support Bundles",
     "home": {
       "title": "Home"
     },
@@ -225,6 +256,9 @@
       "subtitle": "Monitoring and infrastructure apps",
       "title": "Monitoring"
     },
+    "new": {
+      "title": "New"
+    },
     "new-dashboard": {
       "title": "New dashboard"
     },
@@ -233,7 +267,8 @@
     },
     "org-settings": {
       "subtitle": "Manage preferences across an organization",
-      "title": "Preferences"
+      "title": "Default preferences",
+      "titleBeforeTopnav": "Preferences"
     },
     "playlists": {
       "subtitle": "Groups of dashboards that are displayed in a sequence",
@@ -258,6 +293,9 @@
     },
     "search": {
       "placeholder": "Search Grafana"
+    },
+    "search-dashboards": {
+      "title": "Search dashboards"
     },
     "server-settings": {
       "subtitle": "View the settings defined in your Grafana config",
@@ -285,6 +323,10 @@
       "subtitle": "Manage file storage",
       "title": "Storage"
     },
+    "support-bundles": {
+      "subtitle": "Download support bundles",
+      "title": "Support bundles"
+    },
     "teams": {
       "subtitle": "Groups of users that have common dashboard and permission needs",
       "title": "Teams"
@@ -305,14 +347,54 @@
   "news": {
     "title": "Latest from the blog"
   },
+  "notifications": {
+    "starred-dashboard": "Dashboard starred",
+    "unstarred-dashboard": "Dashboard unstarred"
+  },
   "panel": {
     "header-menu": {
+      "copy": "Copy",
+      "create-library-panel": "Create library panel",
+      "duplicate": "Duplicate",
+      "edit": "Edit",
+      "explore": "Explore",
+      "get-help": "Get help",
+      "hide-legend": "Hide legend",
       "inspect": "Inspect",
       "inspect-data": "Data",
       "inspect-json": "Panel JSON",
       "more": "More...",
+      "query": "Query",
+      "remove": "Remove",
       "share": "Share",
+      "show-legend": "Show legend",
+      "unlink-library-panel": "Unlink library panel",
       "view": "View"
+    }
+  },
+  "refresh-picker": {
+    "aria-label": {
+      "choose-interval": "Auto refresh turned off. Choose refresh time interval",
+      "duration-selected": "Choose refresh time interval with current interval {{durationAriaLabel}} selected"
+    },
+    "live-option": {
+      "aria-label": "Turn on live streaming",
+      "label": "Live"
+    },
+    "off-option": {
+      "aria-label": "Turn off auto refresh",
+      "label": "Off"
+    },
+    "select-button": {
+      "auto-refresh": "Set auto refresh interval"
+    }
+  },
+  "search": {
+    "dashboard-actions": {
+      "import": "Import",
+      "new": "New",
+      "new-dashboard": "New Dashboard",
+      "new-folder": "New Folder"
     }
   },
   "share-modal": {
@@ -370,7 +452,8 @@
       "mistake-message": "Did you make a mistake? ",
       "name": "Snapshot name",
       "timeout": "Timeout (seconds)",
-      "timeout-description": "You might need to configure the timeout value if it takes a long time to collect your dashboard metrics."
+      "timeout-description": "You might need to configure the timeout value if it takes a long time to collect your dashboard metrics.",
+      "url-label": "Snapshot URL"
     },
     "tab-title": {
       "embed": "Embed",
@@ -384,6 +467,9 @@
       "dark": "Dark",
       "field-name": "Theme",
       "light": "Light"
+    },
+    "view-json": {
+      "copy-button": "Copy to Clipboard"
     }
   },
   "shared-dashboard": {
@@ -411,6 +497,48 @@
     "absolute": {
       "recent-title": "Recently used absolute ranges",
       "title": "Absolute time range"
+    },
+    "calendar": {
+      "apply-button": "Apply time range",
+      "cancel-button": "Cancel",
+      "select-time": "Select a time range"
+    },
+    "content": {
+      "empty-recent-list": "<0><0>It looks like you haven&apos;t used this time picker before. As soon as you enter some time intervals, recently used intervals will appear here.</0></0><1><0>Read the documentation</0><1> to find out more about how to enter custom time ranges.</1></1>",
+      "filter-placeholder": "Search quick ranges"
+    },
+    "footer": {
+      "change-settings-button": "Change time settings",
+      "fiscal-year-option": "Fiscal year",
+      "fiscal-year-start": "Fiscal year start month",
+      "time-zone-option": "Time zone",
+      "time-zone-selection": "Time zone selection"
+    },
+    "range-content": {
+      "apply-button": "Apply time range",
+      "default-error": "Please enter a past date or \"now\"",
+      "fiscal-year": "Fiscal year",
+      "from-input": "From",
+      "range-error": "\"From\" can't be after \"To\"",
+      "to-input": "To"
+    },
+    "range-picker": {
+      "backwards-time-aria-label": "Move time range backwards",
+      "current-time-selected": "Time range selected: {{currentTimeRange}}",
+      "forwards-time-aria-label": "Move time range forwards",
+      "to": "to",
+      "zoom-out-button": "Zoom out time range",
+      "zoom-out-tooltip": "Time range zoom out <1></1> CTRL+Z"
+    },
+    "time-range": {
+      "aria-role": "Time range selection",
+      "default-title": "Time ranges",
+      "example-title": "Example time ranges",
+      "specify": "Specify time range <1></1>"
+    },
+    "zone": {
+      "select-aria-label": "Time zone picker",
+      "select-search-input": "Type to search (country, city, abbreviation)"
     }
   },
   "user-orgs": {
@@ -428,7 +556,7 @@
       "name-label": "Name",
       "username-label": "Username"
     },
-    "title": "Edit profile"
+    "title": "Profile"
   },
   "user-session": {
     "browser-column": "Browser & OS",
@@ -439,5 +567,14 @@
   },
   "user-sessions": {
     "loading": "Loading sessions..."
+  },
+  "variable": {
+    "picker": {
+      "input": "Enter variable value",
+      "link-all": "All",
+      "option-all": "All",
+      "option-selected-values": "Selected",
+      "option-tooltip": "Clear selections"
+    }
   }
 }

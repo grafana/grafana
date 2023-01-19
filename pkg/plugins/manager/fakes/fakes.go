@@ -3,6 +3,7 @@ package fakes
 import (
 	"archive/zip"
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -317,41 +318,35 @@ func (pr *FakeBackendProcessProvider) BackendFactory(_ context.Context, p *plugi
 }
 
 type FakeLicensingService struct {
-	TokenRaw string
+	LicenseEdition string
+	TokenRaw       string
+	LicensePath    string
 }
 
 func NewFakeLicensingService() *FakeLicensingService {
 	return &FakeLicensingService{}
 }
 
-func (t *FakeLicensingService) Expiry() int64 {
-	return 0
+func (s *FakeLicensingService) Edition() string {
+	return s.LicenseEdition
 }
 
-func (t *FakeLicensingService) Edition() string {
-	return ""
+func (s *FakeLicensingService) Path() string {
+	return s.LicensePath
 }
 
-func (t *FakeLicensingService) StateInfo() string {
-	return ""
+func (s *FakeLicensingService) Environment() []string {
+	return []string{fmt.Sprintf("GF_ENTERPRISE_LICENSE_TEXT=%s", s.TokenRaw)}
 }
 
-func (t *FakeLicensingService) ContentDeliveryPrefix() string {
-	return ""
+type FakeRoleRegistry struct {
+	ExpectedErr error
 }
 
-func (t *FakeLicensingService) LicenseURL(_ bool) string {
-	return ""
+func NewFakeRoleRegistry() *FakeRoleRegistry {
+	return &FakeRoleRegistry{}
 }
 
-func (t *FakeLicensingService) Environment() map[string]string {
-	return map[string]string{"GF_ENTERPRISE_LICENSE_TEXT": t.TokenRaw}
-}
-
-func (*FakeLicensingService) EnabledFeatures() map[string]bool {
-	return map[string]bool{}
-}
-
-func (*FakeLicensingService) FeatureEnabled(_ string) bool {
-	return false
+func (f *FakeRoleRegistry) DeclarePluginRoles(_ context.Context, _ string, _ string, _ []plugins.RoleRegistration) error {
+	return f.ExpectedErr
 }

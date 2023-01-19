@@ -304,6 +304,7 @@ func (m *MockSocialConnector) TokenSource(ctx context.Context, t *oauth2.Token) 
 }
 
 type FakeAuthInfoStore struct {
+	login.Store
 	ExpectedError                   error
 	ExpectedUser                    *user.User
 	ExpectedOAuth                   *models.UserAuth

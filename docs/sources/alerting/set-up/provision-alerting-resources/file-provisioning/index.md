@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/alerting/provision-alerting-resources/file-provisioning
-  - /docs/grafana/latest/alerting/provision-alerting-resources/file-provisioning
+  - ../../provision-alerting-resources/file-provisioning/
 description: Create and manage resources using file provisioning
 keywords:
   - grafana
@@ -177,7 +176,7 @@ deleteContactPoints:
 #### Settings
 
 Here are some examples of settings you can use for the different
-contact point types.
+contact point integrations.
 
 ##### Alertmanager
 
@@ -517,10 +516,17 @@ policies:
     #        a very low alert volume or your upstream notification system performs
     #        its own grouping.
     group_by: ['...']
-    # <list> a list of matchers that an alert has to fulfill to match the node
+    # <list> a list of prometheus-like matchers that an alert rule has to fulfill to match the node (allowed chars
+    #        [a-zA-Z_:])
     matchers:
       - alertname = Watchdog
+      - service_id_X = serviceX
       - severity =~ "warning|critical"
+    # <list> a list of grafana-like matchers that an alert rule has to fulfill to match the node
+    object_matchers:
+      - ['alertname', '=', 'CPUUsage']
+      - ['service_id-X', '=', 'serviceX']
+      - ['severity', '=~', 'warning|critical']
     # <list> Times when the route should be muted. These must match the name of a
     #        mute time interval.
     #        Additionally, the root node cannot have any mute times.
@@ -536,7 +542,7 @@ policies:
     # <duration> How long to wait before sending a notification about new alerts that
     #            are added to a group of alerts for which an initial notification has
     #            already been sent. (Usually ~5m or more), default = 5m
-    group_internval: 5m
+    group_interval: 5m
     # <duration>  How long to wait before sending a notification again if it has already
     #             been sent successfully for an alert. (Usually ~3h or more), default = 4h
     repeat_interval: 4h

@@ -11,6 +11,7 @@ import {
   dateTimeFormat,
   GrafanaTheme2,
   CoreApp,
+  DataFrame,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { styleMixins, withTheme2, Themeable2, Icon, Tooltip } from '@grafana/ui';
@@ -27,7 +28,7 @@ import {
   RowContextOptions,
 } from './LogRowContextProvider';
 import { LogRowMessage } from './LogRowMessage';
-import { LogRowMessageDetectedFields } from './LogRowMessageDetectedFields';
+import { LogRowMessageDisplayedFields } from './LogRowMessageDisplayedFields';
 import { getLogRowStyles } from './getLogRowStyles';
 
 //Components
@@ -43,19 +44,19 @@ interface Props extends Themeable2 {
   enableLogDetails: boolean;
   logsSortOrder?: LogsSortOrder | null;
   forceEscape?: boolean;
-  showDetectedFields?: string[];
   scrollElement?: HTMLDivElement;
   showRowMenu?: boolean;
   app?: CoreApp;
+  displayedFields?: string[];
   getRows: () => LogRowModel[];
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   onContextClick?: () => void;
   getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
-  getFieldLinks?: (field: Field, rowIndex: number) => Array<LinkModel<Field>>;
+  getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   showContextToggle?: (row?: LogRowModel) => boolean;
-  onClickShowDetectedField?: (key: string) => void;
-  onClickHideDetectedField?: (key: string) => void;
+  onClickShowField?: (key: string) => void;
+  onClickHideField?: (key: string) => void;
   onLogRowHover?: (row?: LogRowModel) => void;
   toggleContextIsOpen?: () => void;
 }
@@ -148,8 +149,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       getRows,
       onClickFilterLabel,
       onClickFilterOutLabel,
-      onClickShowDetectedField,
-      onClickHideDetectedField,
+      onClickShowField,
+      onClickHideField,
       enableLogDetails,
       row,
       showDuplicates,
@@ -157,7 +158,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       showRowMenu,
       showLabels,
       showTime,
-      showDetectedFields,
+      displayedFields,
       wrapLogMessage,
       prettifyLogMessage,
       theme,
@@ -216,10 +217,10 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               <LogLabels labels={processedRow.uniqueLabels} />
             </td>
           )}
-          {showDetectedFields && showDetectedFields.length > 0 ? (
-            <LogRowMessageDetectedFields
+          {displayedFields && displayedFields.length > 0 ? (
+            <LogRowMessageDisplayedFields
               row={processedRow}
-              showDetectedFields={showDetectedFields!}
+              showDetectedFields={displayedFields!}
               getFieldLinks={getFieldLinks}
               wrapLogMessage={wrapLogMessage}
             />
@@ -250,13 +251,13 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             getFieldLinks={getFieldLinks}
             onClickFilterLabel={onClickFilterLabel}
             onClickFilterOutLabel={onClickFilterOutLabel}
-            onClickShowDetectedField={onClickShowDetectedField}
-            onClickHideDetectedField={onClickHideDetectedField}
+            onClickShowField={onClickShowField}
+            onClickHideField={onClickHideField}
             getRows={getRows}
             row={processedRow}
             wrapLogMessage={wrapLogMessage}
             hasError={hasError}
-            showDetectedFields={showDetectedFields}
+            displayedFields={displayedFields}
             app={app}
           />
         )}

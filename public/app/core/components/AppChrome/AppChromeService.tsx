@@ -21,8 +21,6 @@ export interface AppChromeState {
   kioskMode: KioskMode | null;
 }
 
-const defaultSection: NavModelItem = { text: 'Grafana' };
-
 export class AppChromeService {
   searchBarStorageKey = 'SearchBar_Hidden';
   private currentRoute?: RouteDescriptor;
@@ -30,7 +28,7 @@ export class AppChromeService {
 
   readonly state = new BehaviorSubject<AppChromeState>({
     chromeless: true, // start out hidden to not flash it on pages without chrome
-    sectionNav: defaultSection,
+    sectionNav: { text: t('nav.home.title', 'Home') },
     searchBarHidden: store.getBool(this.searchBarStorageKey, false),
     kioskMode: null,
   });
@@ -52,15 +50,15 @@ export class AppChromeService {
     if (!this.routeChangeHandled) {
       newState.actions = undefined;
       newState.pageNav = undefined;
-      newState.sectionNav = defaultSection;
+      newState.sectionNav = { text: t('nav.home.title', 'Home') };
       newState.chromeless = this.currentRoute?.chromeless;
       this.routeChangeHandled = true;
     }
 
+    Object.assign(newState, update);
+
     // KioskMode overrides chromeless state
     newState.chromeless = newState.kioskMode === KioskMode.Full || this.currentRoute?.chromeless;
-
-    Object.assign(newState, update);
 
     if (!isShallowEqual(current, newState)) {
       this.state.next(newState);

@@ -29,7 +29,9 @@ func ProvideAuthInfoStore(sqlStore db.DB, secretsService secrets.Service, userSe
 		logger:         log.New("login.authinfo.store"),
 		userService:    userService,
 	}
-	InitMetrics()
+	// FIXME: disabled the metric collection for duplicate user entries
+	// due to query performance issues that is clogging the users Grafana instance
+	// InitDuplicateUserMetrics()
 	return store
 }
 
@@ -106,6 +108,30 @@ func (s *AuthInfoStore) GetAuthInfo(ctx context.Context, query *models.GetAuthIn
 
 	query.Result = userAuth
 	return nil
+}
+
+func (s *AuthInfoStore) GetUserLabels(ctx context.Context, query models.GetUserLabelsQuery) (map[int64]string, error) {
+	userAuths := []models.UserAuth{}
+	params := make([]interface{}, 0, len(query.UserIDs))
+	for _, id := range query.UserIDs {
+		params = append(params, id)
+	}
+
+	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		return sess.Table("user_auth").In("user_id", params).OrderBy("created").Find(&userAuths)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	labelMap := make(map[int64]string, len(userAuths))
+
+	for i := range userAuths {
+		labelMap[userAuths[i].UserId] = userAuths[i].AuthModule
+	}
+
+	return labelMap, nil
 }
 
 func (s *AuthInfoStore) SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfoCommand) error {
@@ -214,6 +240,14 @@ func (s *AuthInfoStore) UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAu
 func (s *AuthInfoStore) DeleteAuthInfo(ctx context.Context, cmd *models.DeleteAuthInfoCommand) error {
 	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.Delete(cmd.UserAuth)
+		return err
+	})
+}
+
+func (s *AuthInfoStore) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
+	return s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		var rawSQL = "DELETE FROM user_auth WHERE user_id = ?"
+		_, err := sess.Exec(rawSQL, userID)
 		return err
 	})
 }

@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	dashmodels "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -17,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 )
 
-// GetAnnotations returns annotations for a public dashboard
+// FindAnnotations returns annotations for a public dashboard
 func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDTO models.AnnotationsQueryDTO, accessToken string) ([]models.AnnotationEvent, error) {
 	pub, dash, err := pd.FindPublicDashboardAndDashboardByAccessToken(ctx, accessToken)
 	if err != nil {
@@ -30,7 +29,7 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 
 	annoDto, err := UnmarshalDashboardAnnotations(dash.Data)
 	if err != nil {
-		return nil, err
+		return nil, models.ErrInternalServerError.Errorf("FindAnnotations: failed to unmarshal dashboard annotations: %w", err)
 	}
 
 	anonymousUser := buildAnonymousUser(ctx, dash)
@@ -44,9 +43,9 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 		annoQuery := &annotations.ItemQuery{
 			From:         reqDTO.From,
 			To:           reqDTO.To,
-			OrgId:        dash.OrgId,
-			DashboardId:  dash.Id,
-			DashboardUid: dash.Uid,
+			OrgId:        dash.OrgID,
+			DashboardId:  dash.ID,
+			DashboardUid: dash.UID,
 			Limit:        anno.Target.Limit,
 			MatchAny:     anno.Target.MatchAny,
 			SignedInUser: anonymousUser,
@@ -59,7 +58,7 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 
 		annotationItems, err := pd.AnnotationsRepo.Find(ctx, annoQuery)
 		if err != nil {
-			return nil, err
+			return nil, models.ErrInternalServerError.Errorf("FindAnnotations: failed to find annotations: %w", err)
 		}
 
 		for _, item := range annotationItems {
@@ -89,7 +88,7 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 		}
 	}
 
-	var results []models.AnnotationEvent
+	results := make([]models.AnnotationEvent, 0, len(uniqueEvents))
 	for _, result := range uniqueEvents {
 		results = append(results, result)
 	}
@@ -98,8 +97,8 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 }
 
 // GetMetricRequest returns a metric request for the given panel and query
-func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dashboard *dashmodels.Dashboard, publicDashboard *models.PublicDashboard, panelId int64, queryDto models.PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
-	err := validation.ValidateQueryPublicDashboardRequest(queryDto)
+func (pd *PublicDashboardServiceImpl) GetMetricRequest(ctx context.Context, dashboard *dashboards.Dashboard, publicDashboard *models.PublicDashboard, panelId int64, queryDto models.PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
+	err := validation.ValidateQueryPublicDashboardRequest(queryDto, publicDashboard)
 	if err != nil {
 		return dtos.MetricRequest{}, err
 	}
@@ -131,7 +130,7 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 	}
 
 	if len(metricReq.Queries) == 0 {
-		return nil, models.ErrNoPanelQueriesFound
+		return nil, models.ErrPanelQueriesNotFound.Errorf("GetQueryDataResponse: failed to extract queries from panel")
 	}
 
 	anonymousUser := buildAnonymousUser(ctx, dashboard)
@@ -150,15 +149,15 @@ func (pd *PublicDashboardServiceImpl) GetQueryDataResponse(ctx context.Context, 
 }
 
 // buildMetricRequest merges public dashboard parameters with dashboard and returns a metrics request to be sent to query backend
-func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, dashboard *dashmodels.Dashboard, publicDashboard *models.PublicDashboard, panelId int64, reqDTO models.PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
+func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, dashboard *dashboards.Dashboard, publicDashboard *models.PublicDashboard, panelId int64, reqDTO models.PublicDashboardQueryDTO) (dtos.MetricRequest, error) {
 	// group queries by panel
 	queriesByPanel := groupQueriesByPanelId(dashboard.Data)
 	queries, ok := queriesByPanel[panelId]
 	if !ok {
-		return dtos.MetricRequest{}, models.ErrPublicDashboardPanelNotFound
+		return dtos.MetricRequest{}, models.ErrPanelNotFound.Errorf("buildMetricRequest: public dashboard panel not found")
 	}
 
-	ts := publicDashboard.BuildTimeSettings(dashboard)
+	ts := publicDashboard.BuildTimeSettings(dashboard, reqDTO)
 
 	// determine safe resolution to query data at
 	safeInterval, safeResolution := pd.getSafeIntervalAndMaxDataPoints(reqDTO, ts)
@@ -175,11 +174,11 @@ func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, da
 }
 
 // buildAnonymousUser creates a user with permissions to read from all datasources used in the dashboard
-func buildAnonymousUser(ctx context.Context, dashboard *dashmodels.Dashboard) *user.SignedInUser {
+func buildAnonymousUser(ctx context.Context, dashboard *dashboards.Dashboard) *user.SignedInUser {
 	datasourceUids := getUniqueDashboardDatasourceUids(dashboard.Data)
 
 	// Create a user with blank permissions
-	anonymousUser := &user.SignedInUser{OrgID: dashboard.OrgId, Permissions: make(map[int64]map[string][]string)}
+	anonymousUser := &user.SignedInUser{OrgID: dashboard.OrgID, Permissions: make(map[int64]map[string][]string)}
 
 	// Scopes needed for Annotation queries
 	annotationScopes := []string{accesscontrol.ScopeAnnotationsTypeDashboard}
@@ -202,7 +201,7 @@ func buildAnonymousUser(ctx context.Context, dashboard *dashmodels.Dashboard) *u
 	permissions[accesscontrol.ActionAnnotationsRead] = annotationScopes
 	permissions[dashboards.ActionDashboardsRead] = dashboardScopes
 
-	anonymousUser.Permissions[dashboard.OrgId] = permissions
+	anonymousUser.Permissions[dashboard.OrgID] = permissions
 
 	return anonymousUser
 }

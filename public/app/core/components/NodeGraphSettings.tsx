@@ -4,10 +4,9 @@ import React from 'react';
 import {
   DataSourceJsonData,
   DataSourcePluginOptionsEditorProps,
-  GrafanaTheme,
   updateDatasourcePluginJsonDataOption,
 } from '@grafana/data';
-import { InlineField, InlineFieldRow, InlineSwitch, useStyles } from '@grafana/ui';
+import { InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
 
 export interface NodeGraphOptions {
   enabled?: boolean;
@@ -20,8 +19,6 @@ export interface NodeGraphData extends DataSourceJsonData {
 interface Props extends DataSourcePluginOptionsEditorProps<NodeGraphData> {}
 
 export function NodeGraphSettings({ options, onOptionsChange }: Props) {
-  const styles = useStyles(getStyles);
-
   return (
     <div className={styles.container}>
       <h3 className="page-heading">Node Graph</h3>
@@ -47,7 +44,7 @@ export function NodeGraphSettings({ options, onOptionsChange }: Props) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme) => ({
+const styles = {
   container: css`
     label: container;
     width: 100%;
@@ -56,4 +53,4 @@ const getStyles = (theme: GrafanaTheme) => ({
     label: row;
     align-items: baseline;
   `,
-});
+};

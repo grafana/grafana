@@ -8,8 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 )
 
-func GetObjectKindInfo(kind string) models.ObjectKindInfo {
-	return models.ObjectKindInfo{
+func GetEntityKindInfo(kind string) models.EntityKindInfo {
+	return models.EntityKindInfo{
 		ID:          kind,
 		Name:        kind,
 		Description: "Dummy kind used for testing.",
@@ -17,9 +17,9 @@ func GetObjectKindInfo(kind string) models.ObjectKindInfo {
 	}
 }
 
-func GetObjectSummaryBuilder(kind string) models.ObjectSummaryBuilder {
-	return func(ctx context.Context, uid string, body []byte) (*models.ObjectSummary, []byte, error) {
-		summary := &models.ObjectSummary{
+func GetEntitySummaryBuilder(kind string) models.EntitySummaryBuilder {
+	return func(ctx context.Context, uid string, body []byte) (*models.EntitySummary, []byte, error) {
+		summary := &models.EntitySummary{
 			Name:        fmt.Sprintf("Dummy: %s", kind),
 			Kind:        kind,
 			Description: fmt.Sprintf("Wrote at %s", time.Now().Local().String()),
@@ -35,7 +35,7 @@ func GetObjectSummaryBuilder(kind string) models.ObjectSummaryBuilder {
 			},
 			Error:  nil, // ignore for now
 			Nested: nil, // ignore for now
-			References: []*models.ObjectExternalReference{
+			References: []*models.EntityExternalReference{
 				{
 					Kind: "ds",
 					Type: "influx",

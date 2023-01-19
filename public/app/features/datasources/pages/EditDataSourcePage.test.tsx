@@ -21,6 +21,18 @@ jest.mock('app/core/services/context_srv', () => ({
     hasPermissionInMetadata: () => true,
   },
 }));
+jest.mock('@grafana/runtime', () => {
+  const original = jest.requireActual('@grafana/runtime');
+  return {
+    ...original,
+    getDataSourceSrv: jest.fn(() => ({
+      getInstanceSettings: (uid: string) => ({
+        uid,
+        meta: getMockDataSourceMeta(),
+      }),
+    })),
+  };
+});
 
 const setup = (uid: string, store: Store) =>
   render(

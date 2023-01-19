@@ -156,6 +156,27 @@ func (rs *ruleStates) expandRuleLabelsAndAnnotations(ctx context.Context, log lo
 	return expand(alertRule.Labels), expand(alertRule.Annotations)
 }
 
+func (rs *ruleStates) deleteStates(predicate func(s *State) bool) []*State {
+	deleted := make([]*State, 0)
+	for id, state := range rs.states {
+		if predicate(state) {
+			delete(rs.states, id)
+			deleted = append(deleted, state)
+		}
+	}
+	return deleted
+}
+
+func (c *cache) deleteRuleStates(ruleKey ngModels.AlertRuleKey, predicate func(s *State) bool) []*State {
+	c.mtxStates.Lock()
+	defer c.mtxStates.Unlock()
+	ruleStates, ok := c.states[ruleKey.OrgID][ruleKey.UID]
+	if ok {
+		return ruleStates.deleteStates(predicate)
+	}
+	return nil
+}
+
 func (c *cache) setAllStates(newStates map[int64]map[string]*ruleStates) {
 	c.mtxStates.Lock()
 	defer c.mtxStates.Unlock()
@@ -188,20 +209,22 @@ func (c *cache) get(orgID int64, alertRuleUID, stateId string) *State {
 	return nil
 }
 
-func (c *cache) getAll(orgID int64) []*State {
+func (c *cache) getAll(orgID int64, skipNormalState bool) []*State {
 	var states []*State
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
 	for _, v1 := range c.states[orgID] {
 		for _, v2 := range v1.states {
+			if skipNormalState && IsNormalStateWithNoReason(v2) {
+				continue
+			}
 			states = append(states, v2)
 		}
 	}
 	return states
 }
 
-func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
-	var result []*State
+func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string, skipNormalState bool) []*State {
 	c.mtxStates.RLock()
 	defer c.mtxStates.RUnlock()
 	orgRules, ok := c.states[orgID]
@@ -212,7 +235,11 @@ func (c *cache) getStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
 	if !ok {
 		return nil
 	}
+	result := make([]*State, 0, len(rs.states))
 	for _, state := range rs.states {
+		if skipNormalState && IsNormalStateWithNoReason(state) {
+			continue
+		}
 		result = append(result, state)
 	}
 	return result
@@ -282,14 +309,4 @@ func mergeLabels(a, b data.Labels) data.Labels {
 		}
 	}
 	return newLbs
-}
-
-func (c *cache) deleteEntry(orgID int64, alertRuleUID, cacheID string) {
-	c.mtxStates.Lock()
-	defer c.mtxStates.Unlock()
-	ruleStates, ok := c.states[orgID][alertRuleUID]
-	if !ok {
-		return
-	}
-	delete(ruleStates.states, cacheID)
 }

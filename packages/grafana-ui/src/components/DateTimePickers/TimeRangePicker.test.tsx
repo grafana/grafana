@@ -27,6 +27,6 @@ describe('TimePicker', () => {
       />
     );
 
-    expect(container.queryByLabelText(/Time range picker/i)).toBeInTheDocument();
+    expect(container.queryByLabelText(/Time range selected/i)).toBeInTheDocument();
   });
 });

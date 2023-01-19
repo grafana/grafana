@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -45,9 +46,9 @@ func (hs *HTTPServer) AdminGetSettings(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) AdminGetStats(c *models.ReqContext) response.Response {
-	statsQuery := models.GetAdminStatsQuery{}
+	statsQuery := stats.GetAdminStatsQuery{}
 
-	if err := hs.SQLStore.GetAdminStats(c.Req.Context(), &statsQuery); err != nil {
+	if err := hs.statsService.GetAdminStats(c.Req.Context(), &statsQuery); err != nil {
 		return response.Error(500, "Failed to get admin stats from database", err)
 	}
 
@@ -108,5 +109,5 @@ type GetSettingsResponse struct {
 // swagger:response adminGetStatsResponse
 type GetStatsResponse struct {
 	// in:body
-	Body models.AdminStats `json:"body"`
+	Body stats.AdminStats `json:"body"`
 }

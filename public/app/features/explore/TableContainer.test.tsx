@@ -1,7 +1,7 @@
-import { screen, render, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import React from 'react';
 
-import { DataFrame, toDataFrame, FieldType, InternalTimeZones } from '@grafana/data';
+import { DataFrame, FieldType, getDefaultTimeRange, InternalTimeZones, toDataFrame } from '@grafana/data';
 import { ExploreId } from 'app/types/explore';
 
 import { TableContainer } from './TableContainer';
@@ -48,13 +48,13 @@ const dataFrame = toDataFrame({
 });
 
 const defaultProps = {
-  exploreId: ExploreId.left as ExploreId,
+  exploreId: ExploreId.left,
   loading: false,
   width: 800,
   onCellFilterAdded: jest.fn(),
-  tableResult: dataFrame,
-  splitOpen: (() => {}) as any,
-  range: {} as any,
+  tableResult: [dataFrame],
+  splitOpenFn: () => {},
+  range: getDefaultTimeRange(),
   timeZone: InternalTimeZones.utc,
 };
 
@@ -73,11 +73,13 @@ describe('TableContainer', () => {
   });
 
   it('should render 0 series returned on no items', () => {
-    const emptyFrames = {
-      name: 'TableResultName',
-      fields: [],
-      length: 0,
-    } as DataFrame;
+    const emptyFrames: DataFrame[] = [
+      {
+        name: 'TableResultName',
+        fields: [],
+        length: 0,
+      },
+    ];
     render(<TableContainer {...defaultProps} tableResult={emptyFrames} />);
     expect(screen.getByText('0 series returned')).toBeInTheDocument();
   });

@@ -10,6 +10,8 @@ import {
   CoreApp,
 } from '@grafana/data';
 
+import { AdHocFilterItem } from '../Table/types';
+
 import { SeriesVisibilityChangeMode } from '.';
 
 /** @alpha */
@@ -39,11 +41,23 @@ export interface PanelContext {
   onAnnotationDelete?: (id: string) => void;
 
   /**
+   * Used from visualizations like Table to add ad-hoc filters from cell values
+   */
+  onAddAdHocFilter?: (item: AdHocFilterItem) => void;
+
+  /**
    * Enables modifying thresholds directly from the panel
    *
    * @alpha -- experimental
    */
   canEditThresholds?: boolean;
+
+  /**
+   * Shows threshold indicators on the right-hand side of the panel
+   *
+   * @alpha -- experimental
+   */
+  showThresholds?: boolean;
 
   /**
    * Called when a panel wants to change default thresholds configuration

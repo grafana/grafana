@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
+	v1alpha1 "buf.build/gen/go/parca-dev/parca/protocolbuffers/go/parca/query/v1alpha1"
 	"github.com/bufbuild/connect-go"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	v1alpha1 "github.com/parca-dev/parca/gen/proto/go/parca/query/v1alpha1"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -24,7 +24,7 @@ const queryTypeProfile = "profile"
 const queryTypeMetrics = "metrics"
 const queryTypeBoth = "both"
 
-// query processes single Fire query transforming the response to data.Frame packaged in DataResponse
+// query processes single Parca query transforming the response to data.Frame packaged in DataResponse
 func (d *ParcaDatasource) query(ctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
 	var qm queryModel
 	response := backend.DataResponse{}
@@ -73,6 +73,8 @@ func makeProfileRequest(qm queryModel, query backend.DataQuery) *connect.Request
 					},
 				},
 			},
+			// We should change this to QueryRequest_REPORT_TYPE_FLAMEGRAPH_TABLE later on
+			// nolint:staticcheck
 			ReportType: v1alpha1.QueryRequest_REPORT_TYPE_FLAMEGRAPH_UNSPECIFIED,
 		},
 	}
@@ -97,7 +99,7 @@ type CustomMeta struct {
 	ProfileTypeID string
 }
 
-// responseToDataFrames turns fire response to data.Frame. We encode the data into a nested set format where we have
+// responseToDataFrames turns Parca response to data.Frame. We encode the data into a nested set format where we have
 // [level, value, label] columns and by ordering the items in a depth first traversal order we can recreate the whole
 // tree back.
 func responseToDataFrames(resp *connect.Response[v1alpha1.QueryResponse]) *data.Frame {

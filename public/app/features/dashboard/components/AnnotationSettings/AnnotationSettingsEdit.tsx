@@ -27,6 +27,8 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
     return getDataSourceSrv().get(annotation.datasource);
   }, [annotation.datasource]);
 
+  const dsi = getDataSourceSrv().getInstanceSettings(annotation.datasource);
+
   const onUpdate = (annotation: AnnotationQuery) => {
     const list = [...dashboard.annotations.list];
     list.splice(editIdx, 1, annotation);
@@ -115,8 +117,13 @@ export const AnnotationSettingsEdit = ({ editIdx, dashboard }: Props) => {
           </HorizontalGroup>
         </Field>
         <h3 className="page-heading">Query</h3>
-        {ds?.annotations && (
-          <StandardAnnotationQueryEditor datasource={ds} annotation={annotation} onChange={onUpdate} />
+        {ds?.annotations && dsi && (
+          <StandardAnnotationQueryEditor
+            datasource={ds}
+            datasourceInstanceSettings={dsi}
+            annotation={annotation}
+            onChange={onUpdate}
+          />
         )}
         {ds && !ds.annotations && <AngularEditorLoader datasource={ds} annotation={annotation} onChange={onUpdate} />}
       </FieldSet>

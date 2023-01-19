@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acMock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -382,7 +383,7 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		ruleStore := fakes.NewRuleStore(t)
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 		groupKey := models.GenerateGroupKey(orgID)
-		groupKey.NamespaceUID = folder.Uid
+		groupKey.NamespaceUID = folder.UID
 
 		expectedRules := models.GenerateAlertRules(rand.Intn(5)+5, models.AlertRuleGen(withGroupKey(groupKey), models.WithUniqueGroupIndex()))
 		ruleStore.PutRule(context.Background(), expectedRules...)
@@ -426,12 +427,12 @@ func TestRouteGetRulesConfig(t *testing.T) {
 			ruleStore := fakes.NewRuleStore(t)
 			folder1 := randFolder()
 			folder2 := randFolder()
-			ruleStore.Folders[orgID] = []*models2.Folder{folder1, folder2}
+			ruleStore.Folders[orgID] = []*folder.Folder{folder1, folder2}
 
 			group1Key := models.GenerateGroupKey(orgID)
-			group1Key.NamespaceUID = folder1.Uid
+			group1Key.NamespaceUID = folder1.UID
 			group2Key := models.GenerateGroupKey(orgID)
-			group2Key.NamespaceUID = folder2.Uid
+			group2Key.NamespaceUID = folder2.UID
 
 			group1 := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withGroupKey(group1Key)))
 			group2 := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withGroupKey(group2Key)))
@@ -464,7 +465,7 @@ func TestRouteGetRulesConfig(t *testing.T) {
 		ruleStore := fakes.NewRuleStore(t)
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 		groupKey := models.GenerateGroupKey(orgID)
-		groupKey.NamespaceUID = folder.Uid
+		groupKey.NamespaceUID = folder.UID
 
 		expectedRules := models.GenerateAlertRules(rand.Intn(5)+5, models.AlertRuleGen(withGroupKey(groupKey), models.WithUniqueGroupIndex()))
 		ruleStore.PutRule(context.Background(), expectedRules...)
@@ -509,7 +510,7 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 			ruleStore := fakes.NewRuleStore(t)
 			ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 			groupKey := models.GenerateGroupKey(orgID)
-			groupKey.NamespaceUID = folder.Uid
+			groupKey.NamespaceUID = folder.UID
 
 			expectedRules := models.GenerateAlertRules(rand.Intn(4)+2, models.AlertRuleGen(withGroupKey(groupKey)))
 			ruleStore.PutRule(context.Background(), expectedRules...)
@@ -544,7 +545,7 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 		ruleStore := fakes.NewRuleStore(t)
 		ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 		groupKey := models.GenerateGroupKey(orgID)
-		groupKey.NamespaceUID = folder.Uid
+		groupKey.NamespaceUID = folder.UID
 
 		expectedRules := models.GenerateAlertRules(rand.Intn(5)+5, models.AlertRuleGen(withGroupKey(groupKey), models.WithUniqueGroupIndex()))
 		ruleStore.PutRule(context.Background(), expectedRules...)
@@ -699,9 +700,9 @@ func withGroup(groupName string) func(rule *models.AlertRule) {
 	}
 }
 
-func withNamespace(namespace *models2.Folder) func(rule *models.AlertRule) {
+func withNamespace(namespace *folder.Folder) func(rule *models.AlertRule) {
 	return func(rule *models.AlertRule) {
-		rule.NamespaceUID = namespace.Uid
+		rule.NamespaceUID = namespace.UID
 	}
 }
 

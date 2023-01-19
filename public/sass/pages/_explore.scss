@@ -139,7 +139,11 @@
 
 .cheat-sheet-item__example {
   margin: $space-xs 0;
-  cursor: pointer;
+  // element is interactive, clear button styles
+  text-align: left;
+  border: none;
+  background: transparent;
+  display: block;
 }
 
 .query-type-toggle {

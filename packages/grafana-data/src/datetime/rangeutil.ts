@@ -86,11 +86,11 @@ const hiddenRangeOptions: TimeOption[] = [
   { from: 'now', to: 'now+5y', display: 'Next 5 years' },
 ];
 
-const rangeIndex: any = {};
-each(rangeOptions, (frame: any) => {
+const rangeIndex: Record<string, any> = {};
+each(rangeOptions, (frame) => {
   rangeIndex[frame.from + ' to ' + frame.to] = frame;
 });
-each(hiddenRangeOptions, (frame: any) => {
+each(hiddenRangeOptions, (frame) => {
   rangeIndex[frame.from + ' to ' + frame.to] = frame;
 });
 
@@ -100,7 +100,7 @@ each(hiddenRangeOptions, (frame: any) => {
 // now/d to now
 // now/d
 // if no to <expr> then to now is assumed
-export function describeTextRange(expr: any) {
+export function describeTextRange(expr: string) {
   const isLast = expr.indexOf('+') !== 0;
   if (expr.indexOf('now') === -1) {
     expr = (isLast ? 'now-' : 'now') + expr;
@@ -211,7 +211,7 @@ export const convertRawToRange = (raw: RawTimeRange, timeZone?: TimeZone, fiscal
 
 function isRelativeTime(v: DateTime | string) {
   if (typeof v === 'string') {
-    return (v as string).indexOf('now') >= 0;
+    return v.indexOf('now') >= 0;
   }
   return false;
 }

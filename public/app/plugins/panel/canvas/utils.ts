@@ -2,10 +2,19 @@ import { AppEvents, PluginState, SelectableValue } from '@grafana/data';
 import { hasAlphaPanels } from 'app/core/config';
 
 import appEvents from '../../../core/app_events';
-import { advancedElementItems, CanvasElementItem, defaultElementItems } from '../../../features/canvas';
+import {
+  advancedElementItems,
+  CanvasElementItem,
+  CanvasElementOptions,
+  canvasElementRegistry,
+  defaultElementItems,
+} from '../../../features/canvas';
+import { notFoundItem } from '../../../features/canvas/elements/notFound';
 import { ElementState } from '../../../features/canvas/runtime/element';
 import { FrameState } from '../../../features/canvas/runtime/frame';
 import { Scene, SelectionParams } from '../../../features/canvas/runtime/scene';
+
+import { AnchorPoint } from './types';
 
 export function doSelect(scene: Scene, element: ElementState | FrameState) {
   try {
@@ -39,10 +48,7 @@ interface RegistrySelectInfo {
   current: Array<SelectableValue<string>>;
 }
 
-export function getElementTypesOptions(
-  items: Array<CanvasElementItem<any>>,
-  current: string | undefined
-): RegistrySelectInfo {
+export function getElementTypesOptions(items: CanvasElementItem[], current: string | undefined): RegistrySelectInfo {
   const selectables: RegistrySelectInfo = { options: [], current: [] };
   const alpha: Array<SelectableValue<string>> = [];
 
@@ -68,4 +74,28 @@ export function getElementTypesOptions(
   }
 
   return selectables;
+}
+
+export function onAddItem(sel: SelectableValue<string>, rootLayer: FrameState | undefined, anchorPoint?: AnchorPoint) {
+  const newItem = canvasElementRegistry.getIfExists(sel.value) ?? notFoundItem;
+  const newElementOptions = newItem.getNewOptions() as CanvasElementOptions;
+  newElementOptions.type = newItem.id;
+
+  if (anchorPoint) {
+    newElementOptions.placement = { ...newElementOptions.placement, top: anchorPoint.y, left: anchorPoint.x };
+  }
+
+  if (newItem.defaultSize) {
+    newElementOptions.placement = { ...newElementOptions.placement, ...newItem.defaultSize };
+  }
+
+  if (rootLayer) {
+    const newElement = new ElementState(newItem, newElementOptions, rootLayer);
+    newElement.updateData(rootLayer.scene.context);
+    rootLayer.elements.push(newElement);
+    rootLayer.scene.save();
+    rootLayer.reinitializeMoveable();
+
+    setTimeout(() => doSelect(rootLayer.scene, newElement));
+  }
 }

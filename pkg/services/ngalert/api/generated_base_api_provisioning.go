@@ -25,6 +25,7 @@ type ProvisioningApi interface {
 	RouteDeleteTemplate(*models.ReqContext) response.Response
 	RouteGetAlertRule(*models.ReqContext) response.Response
 	RouteGetAlertRuleGroup(*models.ReqContext) response.Response
+	RouteGetAlertRules(*models.ReqContext) response.Response
 	RouteGetContactpoints(*models.ReqContext) response.Response
 	RouteGetMuteTiming(*models.ReqContext) response.Response
 	RouteGetMuteTimings(*models.ReqContext) response.Response
@@ -73,6 +74,9 @@ func (f *ProvisioningApiHandler) RouteGetAlertRuleGroup(ctx *models.ReqContext) 
 	folderUIDParam := web.Params(ctx.Req)[":FolderUID"]
 	groupParam := web.Params(ctx.Req)[":Group"]
 	return f.handleRouteGetAlertRuleGroup(ctx, folderUIDParam, groupParam)
+}
+func (f *ProvisioningApiHandler) RouteGetAlertRules(ctx *models.ReqContext) response.Response {
+	return f.handleRouteGetAlertRules(ctx)
 }
 func (f *ProvisioningApiHandler) RouteGetContactpoints(ctx *models.ReqContext) response.Response {
 	return f.handleRouteGetContactpoints(ctx)
@@ -173,7 +177,7 @@ func (f *ProvisioningApiHandler) RoutePutTemplate(ctx *models.ReqContext) respon
 	// Parse Path Parameters
 	nameParam := web.Params(ctx.Req)[":name"]
 	// Parse Request Body
-	conf := apimodels.MessageTemplateContent{}
+	conf := apimodels.NotificationTemplateContent{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -242,6 +246,16 @@ func (api *API) RegisterProvisioningApiEndpoints(srv ProvisioningApi, m *metrics
 				http.MethodGet,
 				"/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}",
 				srv.RouteGetAlertRuleGroup,
+				m,
+			),
+		)
+		group.Get(
+			toMacaronPath("/api/v1/provisioning/alert-rules"),
+			api.authorize(http.MethodGet, "/api/v1/provisioning/alert-rules"),
+			metrics.Instrument(
+				http.MethodGet,
+				"/api/v1/provisioning/alert-rules",
+				srv.RouteGetAlertRules,
 				m,
 			),
 		)

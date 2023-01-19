@@ -105,6 +105,7 @@ debug.test
 /packaging/**/*.tar.gz
 /packaging/**/*.tar.gz.sha256
 pkg/cmd/grafana-server/__debug_bin
+pkg/services/quota/quotaimpl/storage/storage.json
 
 # Ignore OSX indexing
 .DS_Store
@@ -170,13 +171,8 @@ compilation-stats.json
 # auto generated frontend docs
 /docs/sources/packages_api
 
-# auto generated Go files
-*_gen.go
-!pkg/services/featuremgmt/toggles_gen.go
-!pkg/coremodel/**/*_gen.go
-!pkg/framework/**/*_gen.go
-!pkg/plugins/pfs/**/*_gen.go
-!public/app/plugins/**/*_gen.go
+# wire generated files
+**/wire_gen.go
 
 # Auto-generated internationalization files
 public/locales/_build/

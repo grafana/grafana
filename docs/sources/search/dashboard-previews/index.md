@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/dashboards/previews/
-  - /docs/grafana/latest/reference/previews/
-  - /docs/grafana/latest/search/dashboard-previews/
+  - ../dashboards/previews/
+  - ../reference/previews/
 keywords:
   - grafana
   - dashboard

@@ -101,6 +101,46 @@ describe('field convert type', () => {
   });
 });
 
+it('can convert strings with commas to numbers', () => {
+  const options = { targetField: 'stringy nums', destinationType: FieldType.number };
+
+  const stringyNumbers = {
+    name: 'stringy nums',
+    type: FieldType.string,
+    values: new ArrayVector(['1,000', '1,000,000']),
+    config: {},
+  };
+
+  const numbers = convertFieldType(stringyNumbers, options);
+
+  expect(numbers).toEqual({
+    name: 'stringy nums',
+    type: FieldType.number,
+    values: new ArrayVector([1000, 1000000]),
+    config: {},
+  });
+});
+
+it('converts booleans to numbers', () => {
+  const options = { targetField: 'booleans', destinationType: FieldType.number };
+
+  const stringyNumbers = {
+    name: 'booleans',
+    type: FieldType.boolean,
+    values: new ArrayVector([true, false]),
+    config: {},
+  };
+
+  const numbers = convertFieldType(stringyNumbers, options);
+
+  expect(numbers).toEqual({
+    name: 'booleans',
+    type: FieldType.number,
+    values: new ArrayVector([1, 0]),
+    config: {},
+  });
+});
+
 describe('field convert types transformer', () => {
   beforeAll(() => {
     mockTransformationsRegistry([convertFieldTypeTransformer]);

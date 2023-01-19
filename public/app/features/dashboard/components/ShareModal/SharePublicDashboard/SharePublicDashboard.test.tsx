@@ -5,32 +5,23 @@ import React from 'react';
 import { Provider } from 'react-redux';
 
 import 'whatwg-fetch';
-import { BootData } from '@grafana/data/src';
+import { BootData, DataQuery } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { setEchoSrv } from '@grafana/runtime/src';
+import { Panel } from '@grafana/schema';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
+import { createDashboardModelFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 import { configureStore } from 'app/store/configureStore';
 
 import { ShareModal } from '../ShareModal';
 
-const server = setupServer(
-  rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (_, res, ctx) => {
-    return res(
-      ctx.status(200),
-      ctx.json({
-        isEnabled: false,
-        annotationsEnabled: false,
-        uid: undefined,
-        dashboardUid: undefined,
-        accessToken: 'an-access-token',
-      })
-    );
-  })
-);
+import { PublicDashboard } from './SharePublicDashboardUtils';
+
+const server = setupServer();
 
 jest.mock('@grafana/runtime', () => ({
   ...(jest.requireActual('@grafana/runtime') as unknown as object),
@@ -75,14 +66,14 @@ beforeAll(() => {
         ],
       },
     ],
-  } as any;
+  } as BootData;
 
   server.listen({ onUnhandledRequest: 'bypass' });
 });
 
 beforeEach(() => {
   config.featureToggles.publicDashboards = true;
-  mockDashboard = new DashboardModel({
+  mockDashboard = createDashboardModelFixture({
     uid: 'mockDashboardUid',
   });
 
@@ -106,6 +97,29 @@ afterEach(() => {
 });
 
 describe('SharePublic', () => {
+  const pubdashResponse: PublicDashboard = {
+    isEnabled: true,
+    annotationsEnabled: true,
+    timeSelectionEnabled: true,
+    uid: 'a-uid',
+    dashboardUid: '',
+    accessToken: 'an-access-token',
+  };
+
+  beforeEach(() => {
+    server.use(
+      rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (req, res, ctx) => {
+        return res(
+          ctx.status(200),
+          ctx.json({
+            ...pubdashResponse,
+            dashboardUid: req.params.dashboardUid,
+          })
+        );
+      })
+    );
+  });
+
   it('does not render share panel when public dashboards feature is disabled', async () => {
     config.featureToggles.publicDashboards = false;
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} }, false);
@@ -113,7 +127,6 @@ describe('SharePublic', () => {
     expect(screen.getByRole('tablist')).toHaveTextContent('Link');
     expect(screen.getByRole('tablist')).not.toHaveTextContent('Public dashboard');
   });
-
   it('renders share panel when public dashboards feature is enabled', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
 
@@ -123,8 +136,23 @@ describe('SharePublic', () => {
     fireEvent.click(screen.getByText('Public dashboard'));
 
     await screen.findByText('Welcome to Grafana public dashboards alpha!');
+    expect(screen.getByText('Create public dashboard')).toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.DeleteButton)).not.toBeInTheDocument();
   });
+  it('renders public dashboard modal without delete button because no public dashboard was already created', async () => {
+    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
+    await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
 
+    expect(screen.getByRole('tablist')).toHaveTextContent('Link');
+    expect(screen.getByRole('tablist')).toHaveTextContent('Public dashboard');
+
+    fireEvent.click(screen.getByText('Public dashboard'));
+
+    await screen.findByText('Welcome to Grafana public dashboards alpha!');
+
+    expect(screen.getByText('Create public dashboard')).toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.DeleteButton)).not.toBeInTheDocument();
+  });
   it('renders default relative time in input', async () => {
     expect(mockDashboard.time).toEqual({ from: 'now-6h', to: 'now' });
 
@@ -149,13 +177,16 @@ describe('SharePublic', () => {
   it('when modal is opened, then loader spinner appears and inputs are disabled', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
 
-    expect(await screen.findByTestId('Spinner')).toBeInTheDocument();
+    screen.getAllByTestId('Spinner');
 
+    expect(screen.getByText('Create public dashboard')).toBeInTheDocument();
     expect(screen.getByTestId(selectors.WillBePublicCheckbox)).toBeDisabled();
     expect(screen.getByTestId(selectors.LimitedDSCheckbox)).toBeDisabled();
     expect(screen.getByTestId(selectors.CostIncreaseCheckbox)).toBeDisabled();
+    expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).toBeDisabled();
     expect(screen.getByTestId(selectors.EnableSwitch)).toBeDisabled();
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeDisabled();
+    expect(screen.queryByTestId(selectors.DeleteButton)).not.toBeInTheDocument();
   });
   it('when fetch errors happen, then all inputs remain disabled', async () => {
     server.use(
@@ -165,48 +196,86 @@ describe('SharePublic', () => {
     );
 
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
-    await waitForElementToBeRemoved(screen.getByTestId('Spinner'), { timeout: 7000 });
+    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
     expect(screen.getByTestId(selectors.WillBePublicCheckbox)).toBeDisabled();
     expect(screen.getByTestId(selectors.LimitedDSCheckbox)).toBeDisabled();
     expect(screen.getByTestId(selectors.CostIncreaseCheckbox)).toBeDisabled();
     expect(screen.getByTestId(selectors.EnableSwitch)).toBeDisabled();
+    expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).toBeDisabled();
     expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).toBeDisabled();
+    expect(screen.getByText('Create public dashboard')).toBeInTheDocument();
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeDisabled();
+    expect(screen.queryByTestId(selectors.DeleteButton)).not.toBeInTheDocument();
   });
-  // test checking if current version of dashboard in state is persisted to db
 });
 
 describe('SharePublic - New config setup', () => {
+  beforeEach(() => {
+    server.use(
+      rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (req, res, ctx) => {
+        return res(
+          ctx.status(404),
+          ctx.json({
+            message: 'Public dashboard not found',
+            messageId: 'publicdashboards.notFound',
+            statusCode: 404,
+            traceID: '',
+          })
+        );
+      })
+    );
+  });
   it('when modal is opened, then save button is disabled', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeDisabled();
   });
-  it('when fetch is done, then loader spinner is gone, inputs are enabled and save button is disabled', async () => {
+  it('when dashboard has unsupported datasources, warning is shown', async () => {
+    const panelModel = {
+      targets: [
+        {
+          datasource: { type: 'notSupportedDatasource', uid: 'abc123' },
+        } as DataQuery,
+      ] as DataQuery[],
+    } as unknown as Panel;
+    const dashboard = createDashboardModelFixture({
+      id: 1,
+      panels: [panelModel],
+    });
+
+    await renderSharePublicDashboard({ panel: mockPanel, dashboard, onDismiss: () => {} });
+
+    expect(screen.queryByTestId(selectors.UnsupportedDatasourcesWarningAlert)).toBeInTheDocument();
+  });
+  it('when fetch is done, then no loader spinner appears, inputs are enabled and save button is disabled', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
-    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
+    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
     expect(screen.getByTestId(selectors.WillBePublicCheckbox)).toBeEnabled();
     expect(screen.getByTestId(selectors.LimitedDSCheckbox)).toBeEnabled();
     expect(screen.getByTestId(selectors.CostIncreaseCheckbox)).toBeEnabled();
     expect(screen.getByTestId(selectors.EnableSwitch)).toBeEnabled();
     expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).toBeEnabled();
+    expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).toBeEnabled();
+    expect(screen.queryByTestId(selectors.DeleteButton)).not.toBeInTheDocument();
 
+    expect(screen.getByText('Create public dashboard')).toBeInTheDocument();
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeDisabled();
   });
   it('when checkboxes are filled, then save button remains disabled', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
-    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
+    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
     fireEvent.click(screen.getByTestId(selectors.WillBePublicCheckbox));
     fireEvent.click(screen.getByTestId(selectors.LimitedDSCheckbox));
     fireEvent.click(screen.getByTestId(selectors.CostIncreaseCheckbox));
 
+    expect(screen.getByText('Create public dashboard')).toBeInTheDocument();
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeDisabled();
   });
   it('when checkboxes and switch are filled, then save button is enabled', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
-    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
+    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
     fireEvent.click(screen.getByTestId(selectors.WillBePublicCheckbox));
     fireEvent.click(screen.getByTestId(selectors.LimitedDSCheckbox));
@@ -215,53 +284,104 @@ describe('SharePublic - New config setup', () => {
 
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeEnabled();
   });
+  it('when hasPublicDashboard flag is false, then button text is Create', async () => {
+    await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
+    expect(screen.getByText('Create public dashboard')).toBeInTheDocument();
+  });
 });
 
 describe('SharePublic - Already persisted', () => {
+  const pubdashResponse: PublicDashboard = {
+    isEnabled: true,
+    annotationsEnabled: true,
+    timeSelectionEnabled: true,
+    uid: 'a-uid',
+    dashboardUid: '',
+    accessToken: 'an-access-token',
+  };
+
   beforeEach(() => {
     server.use(
       rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (req, res, ctx) => {
         return res(
           ctx.status(200),
           ctx.json({
-            isEnabled: true,
-            annotationsEnabled: true,
-            uid: 'a-uid',
+            ...pubdashResponse,
             dashboardUid: req.params.dashboardUid,
-            accessToken: 'an-access-token',
           })
         );
       })
     );
   });
 
-  it('when modal is opened, then save button is enabled', async () => {
+  it('when modal is opened, then save button and delete button are enabled', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
-    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
+    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
+    expect(screen.getByTestId(selectors.DeleteButton)).toBeEnabled();
+    expect(screen.getByText('Save public dashboard')).toBeInTheDocument();
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeEnabled();
+  });
+  it('delete button is not rendered because lack of permissions', async () => {
+    jest.spyOn(contextSrv, 'hasAccess').mockReturnValue(false);
+    await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
+    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
+
+    expect(screen.queryByTestId(selectors.DeleteButton)).not.toBeInTheDocument();
   });
   it('when modal is opened, then annotations toggle is enabled and checked when its enabled in the db', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
-    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
+    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
     expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).toBeEnabled();
     expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).toBeChecked();
   });
+  it('when modal is opened, then time range switch is enabled and checked when its checked in the db', async () => {
+    await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
+    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
+
+    const enableTimeRangeSwitch = screen.getByTestId(selectors.EnableTimeRangeSwitch);
+    expect(enableTimeRangeSwitch).toBeEnabled();
+    expect(enableTimeRangeSwitch).toBeChecked();
+  });
+
+  it('when modal is opened, then time range switch is enabled and not checked when its not checked in the db', async () => {
+    server.use(
+      rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (req, res, ctx) => {
+        return res(
+          ctx.status(200),
+          ctx.json({
+            ...pubdashResponse,
+            timeSelectionEnabled: false,
+          })
+        );
+      })
+    );
+
+    await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
+    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
+
+    const enableTimeRangeSwitch = screen.getByTestId(selectors.EnableTimeRangeSwitch);
+    expect(enableTimeRangeSwitch).toBeEnabled();
+    expect(enableTimeRangeSwitch).not.toBeChecked();
+  });
   it('when fetch is done, then loader spinner is gone, inputs are disabled and save button is enabled', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
-    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
+    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
     expect(screen.getByTestId(selectors.WillBePublicCheckbox)).toBeDisabled();
     expect(screen.getByTestId(selectors.LimitedDSCheckbox)).toBeDisabled();
     expect(screen.getByTestId(selectors.CostIncreaseCheckbox)).toBeDisabled();
 
     expect(screen.getByTestId(selectors.EnableSwitch)).toBeEnabled();
+    expect(screen.getByTestId(selectors.EnableTimeRangeSwitch)).toBeEnabled();
+    expect(screen.getByText('Save public dashboard')).toBeInTheDocument();
     expect(screen.getByTestId(selectors.SaveConfigButton)).toBeEnabled();
+    expect(screen.getByTestId(selectors.DeleteButton)).toBeEnabled();
   });
   it('when pubdash is enabled, then link url is available', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
-    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
+    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
     expect(screen.getByTestId(selectors.CopyUrlInput)).toBeInTheDocument();
   });
   it('when pubdash is disabled in the db, then link url is not available and annotations toggle is disabled', async () => {
@@ -281,16 +401,21 @@ describe('SharePublic - Already persisted', () => {
     );
 
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
-    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
+    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
     expect(screen.queryByTestId(selectors.CopyUrlInput)).not.toBeInTheDocument();
     expect(screen.getByTestId(selectors.EnableAnnotationsSwitch)).not.toBeChecked();
   });
   it('when pubdash is disabled by the user, then link url is not available', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
-    await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
+    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
     fireEvent.click(screen.getByTestId(selectors.EnableSwitch));
     expect(screen.queryByTestId(selectors.CopyUrlInput)).not.toBeInTheDocument();
+  });
+  it('when hasPublicDashboard flag is true, then button text is Save', async () => {
+    await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });
+    await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
+    expect(screen.getByText('Save public dashboard')).toBeInTheDocument();
   });
 });

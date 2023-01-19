@@ -16,9 +16,8 @@ import (
 type getStore func(db.DB) store
 
 func testIntegrationPreferencesDataAccess(t *testing.T, fn getStore) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
+	t.Helper()
+	weekStartOne := "1"
 	ss := db.InitTestDB(t)
 	prefStore := fn(ss)
 	orgNavbarPreferences := pref.NavbarPreference{
@@ -124,7 +123,7 @@ func testIntegrationPreferencesDataAccess(t *testing.T, fn getStore) {
 			Theme:           "dark",
 			Timezone:        "browser",
 			HomeDashboardID: 5,
-			WeekStart:       "1",
+			WeekStart:       &weekStartOne,
 			JSONData:        &pref.PreferenceJSONData{Navbar: orgNavbarPreferences},
 			Created:         time.Now(),
 			Updated:         time.Now(),
@@ -136,7 +135,7 @@ func testIntegrationPreferencesDataAccess(t *testing.T, fn getStore) {
 			Theme:           "dark",
 			HomeDashboardID: 5,
 			Timezone:        "browser",
-			WeekStart:       "1",
+			WeekStart:       &weekStartOne,
 			Created:         time.Now(),
 			Updated:         time.Now(),
 			JSONData:        &pref.PreferenceJSONData{},
@@ -150,7 +149,7 @@ func testIntegrationPreferencesDataAccess(t *testing.T, fn getStore) {
 			Version:         prefs[0].Version,
 			HomeDashboardID: 5,
 			Timezone:        "browser",
-			WeekStart:       "1",
+			WeekStart:       &weekStartOne,
 			Theme:           "dark",
 			JSONData:        prefs[0].JSONData,
 			Created:         prefs[0].Created,

@@ -4,6 +4,7 @@ This folder contains useful scripts and configuration so you can:
 
 - Configure data sources in Grafana for development.
 - Configure dashboards for development and test scenarios.
+- Set up an SMTP Server + Web Interface for viewing and testing emails.
 - Create docker-compose file with databases and fake data.
 
 ## Install Docker
@@ -57,6 +58,21 @@ Jaeger block runs both Jaeger and Loki container. Loki container sends traces to
 | 1.1     | graphite    | 8180              | 2103           | 2103        |
 | 1.0     | graphite1   | 8280              | 2203           | 2203        |
 | 0.9     | graphite09  | 8380              | 2303           | 2303        |
+
+#### MailDev
+
+MailDev block runs an SMTP server and a web UI to test and view emails. This is useful for testing your email notifications locally.
+
+Make sure you configure your .ini file with the following settings:
+
+```ini
+[smtp]
+enabled = true
+skip_verify = true
+host = "localhost:1025"
+```
+
+You can access the web UI at http://localhost:12080/#/
 
 ## Debugging setup in VS Code
 An example of launch.json is provided in `devenv/vscode/launch.json`. It basically does what Makefile and .bra.toml do. The 'program' field is set to the folder name so VS Code loads all *.go files in it instead of just main.go.

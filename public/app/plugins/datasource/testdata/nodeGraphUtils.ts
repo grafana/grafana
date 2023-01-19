@@ -13,7 +13,7 @@ export function generateRandomNodes(count = 10) {
   const nodes = [];
 
   const root = {
-    id: '0',
+    id: 'root',
     title: 'root',
     subTitle: 'client',
     success: 1,
@@ -44,17 +44,30 @@ export function generateRandomNodes(count = 10) {
   for (let i = 0; i <= additionalEdges; i++) {
     const sourceIndex = Math.floor(Math.random() * Math.floor(nodes.length - 1));
     const targetIndex = Math.floor(Math.random() * Math.floor(nodes.length - 1));
-    if (sourceIndex === targetIndex || nodes[sourceIndex].id === '0' || nodes[sourceIndex].id === '0') {
+    if (sourceIndex === targetIndex || nodes[sourceIndex].id === '0' || nodes[targetIndex].id === '0') {
       continue;
     }
 
-    nodes[sourceIndex].edges.push(nodes[sourceIndex].id);
+    nodes[sourceIndex].edges.push(nodes[targetIndex].id);
   }
 
   const nodeFields: Record<string, Omit<FieldDTO, 'name'> & { values: ArrayVector }> = {
     [NodeGraphDataFrameFieldNames.id]: {
       values: new ArrayVector(),
       type: FieldType.string,
+      config: {
+        links: [
+          {
+            title: 'test data link',
+            url: '',
+            internal: {
+              query: { scenarioId: 'logs', alias: 'from service graph', stringInput: 'tes' },
+              datasourceUid: 'gdev-testdata',
+              datasourceName: 'gdev-testdata',
+            },
+          },
+        ],
+      },
     },
     [NodeGraphDataFrameFieldNames.title]: {
       values: new ArrayVector(),
@@ -95,27 +108,14 @@ export function generateRandomNodes(count = 10) {
     meta: { preferredVisualisationType: 'nodeGraph' },
   });
 
-  const edgeFields: any = {
-    [NodeGraphDataFrameFieldNames.id]: {
-      values: new ArrayVector(),
-      type: FieldType.string,
-    },
-    [NodeGraphDataFrameFieldNames.source]: {
-      values: new ArrayVector(),
-      type: FieldType.string,
-    },
-    [NodeGraphDataFrameFieldNames.target]: {
-      values: new ArrayVector(),
-      type: FieldType.string,
-    },
-  };
-
   const edgesFrame = new MutableDataFrame({
     name: 'edges',
-    fields: Object.keys(edgeFields).map((key) => ({
-      ...edgeFields[key],
-      name: key,
-    })),
+    fields: [
+      { name: NodeGraphDataFrameFieldNames.id, values: new ArrayVector(), type: FieldType.string },
+      { name: NodeGraphDataFrameFieldNames.source, values: new ArrayVector(), type: FieldType.string },
+      { name: NodeGraphDataFrameFieldNames.target, values: new ArrayVector(), type: FieldType.string },
+      { name: NodeGraphDataFrameFieldNames.mainStat, values: new ArrayVector(), type: FieldType.number },
+    ],
     meta: { preferredVisualisationType: 'nodeGraph' },
   });
 
@@ -135,9 +135,10 @@ export function generateRandomNodes(count = 10) {
         continue;
       }
       edgesSet.add(id);
-      edgeFields.id.values.add(`${node.id}--${edge}`);
-      edgeFields.source.values.add(node.id);
-      edgeFields.target.values.add(edge);
+      edgesFrame.fields[0].values.add(`${node.id}--${edge}`);
+      edgesFrame.fields[1].values.add(node.id);
+      edgesFrame.fields[2].values.add(edge);
+      edgesFrame.fields[3].values.add(Math.random() * 100);
     }
   }
 
@@ -148,7 +149,7 @@ function makeRandomNode(index: number) {
   const success = Math.random();
   const error = 1 - success;
   return {
-    id: index.toString(),
+    id: `service:${index}`,
     title: `service:${index}`,
     subTitle: 'service',
     success,
@@ -161,4 +162,9 @@ function makeRandomNode(index: number) {
 
 export function savedNodesResponse(): any {
   return [new MutableDataFrame(nodes), new MutableDataFrame(edges)];
+}
+
+// Generates node graph data but only returns the edges
+export function generateRandomEdges(count = 10) {
+  return generateRandomNodes(count)[1];
 }

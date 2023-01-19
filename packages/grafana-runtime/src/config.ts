@@ -136,10 +136,13 @@ export class GrafanaBootConfig implements GrafanaConfig {
   };
   googleAnalyticsId: undefined;
   googleAnalytics4Id: undefined;
+  googleAnalytics4SendManualPageViews = false;
   rudderstackWriteKey: undefined;
   rudderstackDataPlaneUrl: undefined;
   rudderstackSdkUrl: undefined;
   rudderstackConfigUrl: undefined;
+
+  tokenExpirationDayLimit: undefined;
 
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;
@@ -174,7 +177,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
 
     overrideFeatureTogglesFromUrl(this);
 
-    // Creating theme after apply feature toggle overrides as the code below is checking a feature toggle right now
+    // Creating theme after applying feature toggle overrides in case we need to toggle anything
     this.theme2 = createTheme(getThemeCustomizations(this));
 
     this.theme = this.theme2.v1;
@@ -188,10 +191,6 @@ function getThemeCustomizations(config: GrafanaBootConfig) {
   const themeOptions: NewThemeOptions = {
     colors: { mode },
   };
-
-  if (config.featureToggles.interFont) {
-    themeOptions.typography = { fontFamily: '"Inter", "Helvetica", "Arial", sans-serif' };
-  }
 
   return themeOptions;
 }

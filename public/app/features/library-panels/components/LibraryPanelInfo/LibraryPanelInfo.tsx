@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { DateTimeInput, GrafanaTheme } from '@grafana/data';
-import { useStyles } from '@grafana/ui';
+import { DateTimeInput, GrafanaTheme2 } from '@grafana/data';
+import { useStyles2 } from '@grafana/ui';
 
 import { PanelModelWithLibraryPanel } from '../../types';
 
@@ -12,7 +12,7 @@ interface Props {
 }
 
 export const LibraryPanelInformation = ({ panel, formatDate }: Props) => {
-  const styles = useStyles(getStyles);
+  const styles = useStyles2(getStyles);
 
   const meta = panel.libraryPanel?.meta;
   if (!meta) {
@@ -42,22 +42,22 @@ export const LibraryPanelInformation = ({ panel, formatDate }: Props) => {
   );
 };
 
-const getStyles = (theme: GrafanaTheme) => {
+const getStyles = (theme: GrafanaTheme2) => {
   return {
     info: css`
       line-height: 1;
     `,
     libraryPanelInfo: css`
-      color: ${theme.colors.textSemiWeak};
-      font-size: ${theme.typography.size.sm};
+      color: ${theme.colors.text.secondary};
+      font-size: ${theme.typography.bodySmall.fontSize};
     `,
     userAvatar: css`
       border-radius: 50%;
       box-sizing: content-box;
       width: 22px;
       height: 22px;
-      padding-left: ${theme.spacing.sm};
-      padding-right: ${theme.spacing.sm};
+      padding-left: ${theme.spacing(1)};
+      padding-right: ${theme.spacing(1)};
     `,
   };
 };

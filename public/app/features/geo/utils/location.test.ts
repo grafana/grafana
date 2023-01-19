@@ -11,6 +11,10 @@ const geohash = ['9q94r', 'dr5rs'];
 const names = ['A', 'B'];
 
 describe('handle location parsing', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'warn').mockImplementation();
+  });
+
   it('auto should find geohash field', async () => {
     const frame = toDataFrame({
       name: 'simple',
@@ -20,7 +24,7 @@ describe('handle location parsing', () => {
       ],
     });
 
-    const matchers = await getLocationMatchers();
+    const matchers = await getLocationMatchers({ mode: FrameGeometrySourceMode.Auto });
     const fields = getLocationFields(frame, matchers);
     expect(fields.mode).toEqual(FrameGeometrySourceMode.Geohash);
     expect(fields.geohash).toBeDefined();
@@ -29,17 +33,17 @@ describe('handle location parsing', () => {
     const info = getGeometryField(frame, matchers);
     expect(info.field!.type).toBe(FieldType.geo);
     expect(info.field!.values.toArray().map((p) => toLonLat((p as Point).getCoordinates()))).toMatchInlineSnapshot(`
-        Array [
-          Array [
-            -122.01416015625001,
-            36.979980468750014,
-          ],
-          Array [
-            -73.98193359375,
-            40.71533203125,
-          ],
-        ]
-      `);
+      [
+        [
+          -122.01416015625001,
+          36.979980468750014,
+        ],
+        [
+          -73.98193359375,
+          40.71533203125,
+        ],
+      ]
+    `);
   });
 
   it('auto should find coordinate fields', async () => {
@@ -55,12 +59,12 @@ describe('handle location parsing', () => {
     const matchers = await getLocationMatchers();
     const geo = getGeometryField(frame, matchers).field!;
     expect(geo.values.toArray().map((p) => toLonLat((p as Point).getCoordinates()))).toMatchInlineSnapshot(`
-      Array [
-        Array [
+      [
+        [
           0,
           0,
         ],
-        Array [
+        [
           -74.1,
           40.69999999999999,
         ],
@@ -78,16 +82,16 @@ describe('handle location parsing', () => {
     });
 
     const matchers = await getLocationMatchers({
-      mode: FrameGeometrySourceMode.Geohash,
+      mode: FrameGeometrySourceMode.Auto,
     });
     const geo = getGeometryField(frame, matchers).field!;
     expect(geo.values.toArray().map((p) => toLonLat((p as Point).getCoordinates()))).toMatchInlineSnapshot(`
-      Array [
-        Array [
+      [
+        [
           -122.01416015625001,
           36.979980468750014,
         ],
-        Array [
+        [
           -73.98193359375,
           40.71533203125,
         ],
