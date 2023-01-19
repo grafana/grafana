@@ -1289,11 +1289,11 @@ steps:
   - build-frontend-packages
   environment:
     GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
+      from_secret: packages_gpg_passphrase
     GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
+      from_secret: packages_gpg_private_key
     GPG_PUB_KEY:
-      from_secret: gpg_pub_key
+      from_secret: packages_gpg_public_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   image: grafana/build-container:1.6.6
@@ -2001,11 +2001,11 @@ steps:
   - build-frontend-packages
   environment:
     GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
+      from_secret: packages_gpg_passphrase
     GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
+      from_secret: packages_gpg_private_key
     GPG_PUB_KEY:
-      from_secret: gpg_pub_key
+      from_secret: packages_gpg_public_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   image: grafana/build-container:1.6.6
@@ -2663,11 +2663,11 @@ steps:
   - build-backend-enterprise2
   environment:
     GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
+      from_secret: packages_gpg_passphrase
     GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
+      from_secret: packages_gpg_private_key
     GPG_PUB_KEY:
-      from_secret: gpg_pub_key
+      from_secret: packages_gpg_public_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   image: grafana/build-container:1.6.6
@@ -2818,11 +2818,11 @@ steps:
   - build-backend-enterprise2
   environment:
     GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
+      from_secret: packages_gpg_passphrase
     GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
+      from_secret: packages_gpg_private_key
     GPG_PUB_KEY:
-      from_secret: gpg_pub_key
+      from_secret: packages_gpg_public_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   image: grafana/build-container:1.6.6
@@ -4143,11 +4143,11 @@ steps:
   - build-frontend-packages
   environment:
     GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
+      from_secret: packages_gpg_passphrase
     GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
+      from_secret: packages_gpg_private_key
     GPG_PUB_KEY:
-      from_secret: gpg_pub_key
+      from_secret: packages_gpg_public_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   image: grafana/build-container:1.6.6
@@ -4764,11 +4764,11 @@ steps:
   - build-backend-enterprise2
   environment:
     GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
+      from_secret: packages_gpg_passphrase
     GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
+      from_secret: packages_gpg_private_key
     GPG_PUB_KEY:
-      from_secret: gpg_pub_key
+      from_secret: packages_gpg_public_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   image: grafana/build-container:1.6.6
@@ -4926,11 +4926,11 @@ steps:
   - build-backend-enterprise2
   environment:
     GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
+      from_secret: packages_gpg_passphrase
     GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
+      from_secret: packages_gpg_private_key
     GPG_PUB_KEY:
-      from_secret: gpg_pub_key
+      from_secret: packages_gpg_public_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   image: grafana/build-container:1.6.6
@@ -5636,6 +5636,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: c8ae1822af69edd544907ca4adcb5b3e47043b9e94faad91e96193c978cf5e8d
+hmac: 7b6f6906fff47ab3bfcc9fde3c30428766c935d1a8b0d80fde012bec248b7951
 
 ...
