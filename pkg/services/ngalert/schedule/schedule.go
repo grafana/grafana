@@ -509,10 +509,10 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 				}
 			}()
 		case <-grafanaCtx.Done():
-			// We need to use context.Background() here because grafanaCtx is being canceled, and we need a valid context
-			// in clearState function to do DB operations.
-			ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
-			defer cancelFunc()
+			// The context deadline is 5 seconds which should be enough time for the state to be deleted from the database
+			// and the historian to record the state changes async. Do not cancel the context with defer as otherwise
+			// the context will be canceled before the historian can write any state changes.
+			ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
 			clearState(ctx, grafanaCtx.Err())
 			logger.Debug("Stopping alert rule routine")
 			return nil
