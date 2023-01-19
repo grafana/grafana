@@ -1,6 +1,6 @@
 // @internal
 export type PluginExtensions = {
-  links: Record<string, PluginExtensionsLink>;
+  links: PluginExtensionsLink[];
 };
 
 // @internal
