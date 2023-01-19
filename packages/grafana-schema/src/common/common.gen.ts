@@ -8,6 +8,43 @@
 // Run 'make gen-cue' from repository root to regenerate.
 
 
+export interface MapLayerOptions {
+  /**
+   * Custom options depending on the type
+   */
+  config?: unknown;
+  /**
+   * Defines which data query refId is associated with the layer
+   */
+  filterData?: unknown;
+  /**
+   * Common method to define geometry fields
+   */
+  location?: FrameGeometrySource;
+  /**
+   * configured unique display name
+   */
+  name: string;
+  /**
+   * Common properties:
+   * https://openlayers.org/en/latest/apidoc/module-ol_layer_Base-BaseLayer.html
+   * Layer opacity (0-1)
+   */
+  opacity?: number;
+  /**
+   * Check tooltip (defaults to true)
+   */
+  tooltip?: boolean;
+  type: string;
+}
+
+export enum FrameGeometrySourceMode {
+  Auto = 'auto',
+  Coords = 'coords',
+  Geohash = 'geohash',
+  Lookup = 'lookup',
+}
+
 /**
  * TODO docs
  */
@@ -552,6 +589,23 @@ export type TimeZoneUtc = 'utc';
  */
 export type TimeZoneBrowser = 'browser';
 
+export interface FrameGeometrySource {
+  /**
+   * Path to Gazetteer
+   */
+  gazetteer?: string;
+  /**
+   * Field mappings
+   */
+  geohash?: string;
+  h3?: string;
+  latitude?: string;
+  longitude?: string;
+  lookup?: string;
+  mode: FrameGeometrySourceMode;
+  wkt?: string;
+}
+
 /**
  * TODO docs
  */
@@ -589,57 +643,3 @@ export const defaultTableFieldOptions: Partial<TableFieldOptions> = {
 export type TimeZone = (TimeZoneUtc | TimeZoneBrowser | string);
 
 export const defaultTimeZone: TimeZone = 'browser';
-
-export interface MapLayerOptions {
-  /**
-   * Custom options depending on the type
-   */
-  config?: unknown;
-  /**
-   * Defines which data query refId is associated with the layer
-   */
-  filterData?: unknown;
-  /**
-   * Common method to define geometry fields
-   */
-  location?: FrameGeometrySource;
-  /**
-   * configured unique display name
-   */
-  name: string;
-  /**
-   * Common properties:
-   * https://openlayers.org/en/latest/apidoc/module-ol_layer_Base-BaseLayer.html
-   * Layer opacity (0-1)
-   */
-  opacity?: number;
-  /**
-   * Check tooltip (defaults to true)
-   */
-  tooltip?: boolean;
-  type: string;
-}
-
-export enum FrameGeometrySourceMode {
-  Auto = 'auto',
-  Coords = 'coords',
-  Geohash = 'geohash',
-  Lookup = 'lookup',
-}
-
-export interface FrameGeometrySource {
-  /**
-   * Path to Gazetteer
-   */
-  gazetteer?: string;
-  /**
-   * Field mappings
-   */
-  geohash?: string;
-  h3?: string;
-  latitude?: string;
-  longitude?: string;
-  lookup?: string;
-  mode: FrameGeometrySourceMode;
-  wkt?: string;
-}

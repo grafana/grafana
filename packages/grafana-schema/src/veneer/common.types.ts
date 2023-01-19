@@ -1,4 +1,4 @@
-import * as raw from '../schema/mudball.gen';
+import * as raw from '../common/common.gen';
 
 import { MatcherConfig } from './dashboard.types';
 
@@ -8,4 +8,4 @@ export interface MapLayerOptions<TConfig = any> extends raw.MapLayerOptions {
   filterData?: MatcherConfig;
 }
 
-export * from '../schema/mudball.gen';
+export * from '../common/common.gen';
