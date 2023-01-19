@@ -580,19 +580,15 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
  * as this data model is available to every user who has access to a data source (Viewers+).  This is loaded
  * in bootData (on page load), or from: /api/frontend/settings
  */
-// interesting/weird things here
-// some of the fields are config, like readOnly
-// rather than taking core plugin definition and just having plugin
-// fill in children,
 export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataSourceJsonData> {
-  id: number; // persistent
-  uid: string; // persistent
-  type: string; // persistent
-  name: string; // persistent
-  meta: DataSourcePluginMeta; // runtime, from plugin.json
-  readOnly: boolean; // runtime
-  url?: string; //
-  jsonData: T; // this is what's plugin-specified
+  id: number;
+  uid: string;
+  type: string;
+  name: string;
+  meta: DataSourcePluginMeta;
+  readOnly: boolean;
+  url?: string;
+  jsonData: T;
   username?: string;
   password?: string; // when access is direct, for some legacy datasources
   /**

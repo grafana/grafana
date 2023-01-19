@@ -46,19 +46,6 @@ var safeResolution = 11000
 
 type QueryModel = prometheus.PrometheusDataQuery
 
-// type QueryModel struct {
-// 	Expr           string `json:"expr"`
-// 	LegendFormat   string `json:"legendFormat"`
-// 	Interval       string `json:"interval"`
-// 	IntervalMS     int64  `json:"intervalMS"`
-// 	StepMode string `json:"stepMode"`
-// 	Range    bool   `json:"range"`
-// 	Instant  bool   `json:"instant"`
-// 	Exemplar       bool  `json:"exemplar"`
-// 	IntervalFactor int64 `json:"intervalFactor"`
-// 	UtcOffsetSec   int64  `json:"utcOffsetSec"`
-// }
-
 type TimeRange struct {
 	Start time.Time
 	End   time.Time
@@ -108,14 +95,14 @@ func Parse(query backend.DataQuery, timeInterval string, intervalCalculator inte
 	return &Query{
 		Expr:          expr,
 		Step:          interval,
-		LegendFormat:  model.LegendFormat,
+		LegendFormat:  *model.LegendFormat,
 		Start:         query.TimeRange.From,
 		End:           query.TimeRange.To,
 		RefId:         query.RefID,
 		InstantQuery:  model.Instant,
 		RangeQuery:    rangeQuery,
 		ExemplarQuery: exemplarQuery,
-		UtcOffsetSec:  model.UtcOffsetSec,
+		UtcOffsetSec:  *model.UtcOffsetSec,
 	}, nil
 }
 
@@ -142,14 +129,14 @@ func (query *Query) TimeRange() TimeRange {
 }
 
 func calculatePrometheusInterval(model *QueryModel, timeInterval string, query backend.DataQuery, intervalCalculator intervalv2.Calculator) (time.Duration, error) {
-	queryInterval := model.Interval
+	queryInterval := *model.Interval
 
 	// If we are using variable for interval/step, we will replace it with calculated interval
 	if isVariableInterval(queryInterval) {
 		queryInterval = ""
 	}
 
-	minInterval, err := intervalv2.GetIntervalFrom(timeInterval, queryInterval, model.IntervalMS, 15*time.Second)
+	minInterval, err := intervalv2.GetIntervalFrom(timeInterval, queryInterval, *model.IntervalMS, 15*time.Second)
 	if err != nil {
 		return time.Duration(0), err
 	}
