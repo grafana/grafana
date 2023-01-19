@@ -1,5 +1,6 @@
 import { Map as OpenLayersMap } from 'ol';
 import { FeatureLike } from 'ol/Feature';
+import LayerGroup from 'ol/layer/Group';
 import { Subject } from 'rxjs';
 
 import { getFrameMatchers, MapLayerHandler, MapLayerOptions, PanelData } from '@grafana/data/src';
@@ -115,9 +116,7 @@ export async function initLayer(
   }
 
   const handler = await item.create(map, options, panel.props.eventBus, config.theme2);
-  let layer = handler.init(); // eslint-disable-line
-  // Check if layer is an array
-  layer = layer.getLayersArray()[0];
+  const layer = handler.init(); // eslint-disable-line
 
   if (options.opacity != null) {
     layer.setOpacity(options.opacity);
@@ -147,6 +146,14 @@ export async function initLayer(
   panel.byName.set(UID, state);
   // eslint-disable-next-line
   (state.layer as any).__state = state;
+
+  // if layer is a group layer, recursively apply state to all layers
+  if (layer instanceof LayerGroup) {
+    layer.getLayersArray().forEach((v) => {
+      // eslint-disable-next-line
+      (v as any).__state = state;
+    });
+  }
 
   applyLayerFilter(handler, options, panel.props.data);
 
