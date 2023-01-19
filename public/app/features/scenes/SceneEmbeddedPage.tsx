@@ -10,15 +10,16 @@ import { getSceneByTitle } from './scenes';
 export interface Props extends GrafanaRouteComponentProps<{ name: string }> {}
 
 export const SceneEmbeddedPage = (props: Props) => {
-  const scene = getSceneByTitle(props.match.params.name, false);
+  const scene = getSceneByTitle(props.match.params.name);
 
   if (!scene) {
     return <h2>Scene not found</h2>;
   }
 
   const pageNav: NavModelItem = {
-    text: scene.state.title,
+    text: 'Embedded Scene',
   };
+
   return (
     <Page navId="scenes" pageNav={pageNav}>
       <Page.Contents>
