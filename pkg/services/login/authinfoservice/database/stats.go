@@ -10,7 +10,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/login"
 )
 
-func InitMetrics() {
+// Should be in use in ProvideAuthInfoStore
+// due to query performance for big user tables
+// we have disabled these metrics from Grafana for now
+func InitDuplicateUserMetrics() {
 	login.Once.Do(func() {
 		login.MStatDuplicateUserEntries = prometheus.NewGauge(prometheus.GaugeOpts{
 			Name:      "stat_users_total_duplicate_user_entries",
@@ -39,18 +42,18 @@ func InitMetrics() {
 }
 
 func (s *AuthInfoStore) RunMetricsCollection(ctx context.Context) error {
-	if _, err := s.GetLoginStats(ctx); err != nil {
-		s.logger.Warn("Failed to get authinfo metrics", "error", err.Error())
-	}
+	// 	if _, err := s.GetLoginStats(ctx); err != nil {
+	// 		s.logger.Warn("Failed to get authinfo metrics", "error", err.Error())
+	// 	}
 	updateStatsTicker := time.NewTicker(login.MetricsCollectionInterval)
 	defer updateStatsTicker.Stop()
 
 	for {
 		select {
 		case <-updateStatsTicker.C:
-			if _, err := s.GetLoginStats(ctx); err != nil {
-				s.logger.Warn("Failed to get authinfo metrics", "error", err.Error())
-			}
+			// if _, err := s.GetLoginStats(ctx); err != nil {
+			// s.logger.Warn("Failed to get authinfo metrics", "error", nil)
+			// }
 		case <-ctx.Done():
 			return ctx.Err()
 		}

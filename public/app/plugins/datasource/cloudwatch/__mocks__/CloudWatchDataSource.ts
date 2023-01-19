@@ -80,12 +80,12 @@ export function setupMockedDataSource({
   const timeSrv = getTimeSrv();
   const datasource = new CloudWatchDatasource(customInstanceSettings, templateService, timeSrv);
   datasource.getVariables = () => ['test'];
-  datasource.api.getNamespaces = jest.fn().mockResolvedValue([]);
-  datasource.api.getRegions = jest.fn().mockResolvedValue([]);
-  datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([]);
-  datasource.api.getMetrics = jest.fn().mockResolvedValue([]);
-  datasource.api.getAccounts = jest.fn().mockResolvedValue([]);
-  datasource.api.getLogGroups = jest.fn().mockResolvedValue([]);
+  datasource.resources.getNamespaces = jest.fn().mockResolvedValue([]);
+  datasource.resources.getRegions = jest.fn().mockResolvedValue([]);
+  datasource.resources.getDimensionKeys = jest.fn().mockResolvedValue([]);
+  datasource.resources.getMetrics = jest.fn().mockResolvedValue([]);
+  datasource.resources.getAccounts = jest.fn().mockResolvedValue([]);
+  datasource.resources.getLogGroups = jest.fn().mockResolvedValue([]);
   const fetchMock = jest.fn().mockReturnValue(of({}));
   setBackendSrv({
     ...getBackendSrv(),

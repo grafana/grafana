@@ -178,7 +178,7 @@ func TestProvisioningApi(t *testing.T) {
 			t.Run("PUT returns 400", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
-				tmpl := definitions.MessageTemplateContent{Template: ""}
+				tmpl := definitions.NotificationTemplateContent{Template: ""}
 
 				response := sut.RoutePutTemplate(&rc, tmpl, "test")
 
