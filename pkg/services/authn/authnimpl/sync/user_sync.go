@@ -1,4 +1,4 @@
-package usersync
+package sync
 
 import (
 	"context"
@@ -16,8 +16,12 @@ import (
 )
 
 var (
+	errSyncUserForbidden = errutil.NewBase(errutil.StatusForbidden,
+		"user.sync.forbidden", errutil.WithPublicMessage("User sync forbidden"))
+	errSyncUserInternal = errutil.NewBase(errutil.StatusInternal,
+		"user.sync.forbidden", errutil.WithPublicMessage("User sync failed"))
 	errUserProtection = errutil.NewBase(errutil.StatusForbidden,
-		"user.sync.protected role", errutil.WithPublicMessage("Unable to sync due to protected role"))
+		"user.sync.protectedrole", errutil.WithPublicMessage("Unable to sync due to protected role"))
 )
 
 func ProvideUserSync(userService user.Service,
@@ -49,14 +53,18 @@ func (s *UserSync) SyncUser(ctx context.Context, id *authn.Identity, _ *authn.Re
 	// Does user exist in the database?
 	usr, errUserInDB := s.UserInDB(ctx, &id.AuthModule, &id.AuthID, id.ClientParams.LookUpParams)
 	if errUserInDB != nil && !errors.Is(errUserInDB, user.ErrUserNotFound) {
-		return errUserInDB
+		s.log.Error("error retrieving user", "error", errUserInDB,
+			"auth_module", id.AuthModule, "auth_id", id.AuthID,
+			"lookup_params", id.ClientParams.LookUpParams,
+		)
+		return errSyncUserInternal.Errorf("unable to retrieve user")
 	}
 
 	if errors.Is(errUserInDB, user.ErrUserNotFound) {
 		if !id.ClientParams.AllowSignUp {
-			s.log.Warn("Not allowing login, user not found in internal user database and allow signup = false",
+			s.log.Warn("not allowing login, user not found in internal user database and allow signup = false",
 				"auth_module", id.AuthModule)
-			return login.ErrSignupNotAllowed
+			return errSyncUserForbidden.Errorf("%w", login.ErrSignupNotAllowed)
 		}
 
 		// quota check (FIXME: (jguer) this should be done in the user service)
@@ -65,11 +73,11 @@ func (s *UserSync) SyncUser(ctx context.Context, id *authn.Identity, _ *authn.Re
 		for _, srv := range []string{user.QuotaTargetSrv, org.QuotaTargetSrv} {
 			limitReached, errLimit := s.quotaService.CheckQuotaReached(ctx, quota.TargetSrv(srv), nil)
 			if errLimit != nil {
-				s.log.Warn("error getting user quota.", "error", errLimit)
-				return login.ErrGettingUserQuota
+				s.log.Error("error getting user quota", "error", errLimit)
+				return errSyncUserInternal.Errorf("%w", login.ErrGettingUserQuota)
 			}
 			if limitReached {
-				return login.ErrUsersQuotaReached
+				return errSyncUserForbidden.Errorf("%w", login.ErrUsersQuotaReached)
 			}
 		}
 
@@ -77,7 +85,11 @@ func (s *UserSync) SyncUser(ctx context.Context, id *authn.Identity, _ *authn.Re
 		var errCreate error
 		usr, errCreate = s.createUser(ctx, id)
 		if errCreate != nil {
-			return errCreate
+			s.log.Error("error creating user", "error", errCreate,
+				"auth_module", id.AuthModule, "auth_id", id.AuthID,
+				"id_login", id.Login, "id_email", id.Email,
+			)
+			return errSyncUserInternal.Errorf("unable to create user")
 		}
 	}
 
@@ -87,14 +99,22 @@ func (s *UserSync) SyncUser(ctx context.Context, id *authn.Identity, _ *authn.Re
 
 	// update user
 	if errUpdate := s.updateUserAttributes(ctx, usr, id); errUpdate != nil {
-		return errUpdate
+		s.log.Error("error creating user", "error", errUpdate,
+			"auth_module", id.AuthModule, "auth_id", id.AuthID,
+			"login", usr.Login, "email", usr.Email,
+			"id_login", id.Login, "id_email", id.Email,
+		)
+		return errSyncUserInternal.Errorf("unable to update user")
 	}
 
 	syncUserToIdentity(usr, id)
 
 	// persist latest auth info token
 	if errAuthInfo := s.updateAuthInfo(ctx, id); errAuthInfo != nil {
-		return errAuthInfo
+		s.log.Error("error creating user", "error", errAuthInfo,
+			"auth_module", id.AuthModule, "auth_id", id.AuthID,
+		)
+		return errSyncUserInternal.Errorf("unable to update auth info")
 	}
 
 	return nil

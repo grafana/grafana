@@ -149,7 +149,7 @@ func (e *DashAlertExtractorService) getAlertFromPanels(ctx context.Context, json
 					PanelID: panelID,
 				}
 				if dashAlertInfo.Dash != nil {
-					ve.DashboardID = dashAlertInfo.Dash.Id
+					ve.DashboardID = dashAlertInfo.Dash.ID
 				}
 				return ve
 			}
@@ -175,7 +175,7 @@ func (e *DashAlertExtractorService) getAlertFromPanels(ctx context.Context, json
 		}
 
 		alert := &models.Alert{
-			DashboardId: dashAlertInfo.Dash.Id,
+			DashboardId: dashAlertInfo.Dash.ID,
 			OrgId:       dashAlertInfo.OrgID,
 			PanelId:     panelID,
 			Id:          jsonAlert.Get("id").MustInt64(),

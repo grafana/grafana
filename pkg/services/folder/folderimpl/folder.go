@@ -293,15 +293,15 @@ func (s *Service) getFolderByTitle(ctx context.Context, user *user.SignedInUser,
 func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
 	logger := s.log.FromContext(ctx)
 
-	dashFolder := models.NewDashboardFolder(cmd.Title)
-	dashFolder.OrgId = cmd.OrgID
+	dashFolder := dashboards.NewDashboardFolder(cmd.Title)
+	dashFolder.OrgID = cmd.OrgID
 
 	trimmedUID := strings.TrimSpace(cmd.UID)
 	if trimmedUID == accesscontrol.GeneralFolderUID {
 		return nil, dashboards.ErrFolderInvalidUID
 	}
 
-	dashFolder.SetUid(trimmedUID)
+	dashFolder.SetUID(trimmedUID)
 
 	if cmd.SignedInUser == nil {
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
@@ -317,7 +317,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 
 	dto := &dashboards.SaveDashboardDTO{
 		Dashboard: dashFolder,
-		OrgId:     cmd.OrgID,
+		OrgID:     cmd.OrgID,
 		User:      user,
 	}
 
@@ -332,7 +332,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 	}
 
 	var createdFolder *folder.Folder
-	createdFolder, err = s.dashboardStore.GetFolderByID(ctx, cmd.OrgID, dash.Id)
+	createdFolder, err = s.dashboardStore.GetFolderByID(ctx, cmd.OrgID, dash.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -366,7 +366,7 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 			// TODO: Today, if a UID isn't specified, the dashboard store
 			// generates a new UID. The new folder store will need to do this as
 			// well, but for now we take the UID from the newly created folder.
-			UID:         dash.Uid,
+			UID:         dash.UID,
 			OrgID:       cmd.OrgID,
 			Title:       cmd.Title,
 			Description: cmd.Description,
@@ -378,17 +378,17 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 			// (legacy) folder.
 			logger.Error("error saving folder to nested folder store", "error", err)
 			// do not shallow create error if the legacy folder delete fails
-			if deleteErr := s.dashboardStore.DeleteDashboard(ctx, &models.DeleteDashboardCommand{
-				Id:    createdFolder.ID,
-				OrgId: createdFolder.OrgID,
+			if deleteErr := s.dashboardStore.DeleteDashboard(ctx, &dashboards.DeleteDashboardCommand{
+				ID:    createdFolder.ID,
+				OrgID: createdFolder.OrgID,
 			}); deleteErr != nil {
 				logger.Error("error deleting folder after failed save to nested folder store", "error", err)
 			}
-			return folder.FromDashboard(dash), err
+			return dashboards.FromDashboard(dash), err
 		}
 	}
 
-	f := folder.FromDashboard(dash)
+	f := dashboards.FromDashboard(dash)
 	if nestedFolder != nil && nestedFolder.ParentUID != "" {
 		f.ParentUID = nestedFolder.ParentUID
 	}
@@ -439,7 +439,7 @@ func (s *Service) Update(ctx context.Context, cmd *folder.UpdateFolderCommand) (
 func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderCommand) (*folder.Folder, error) {
 	logger := s.log.FromContext(ctx)
 
-	query := models.GetDashboardQuery{OrgId: cmd.OrgID, Uid: cmd.UID}
+	query := dashboards.GetDashboardQuery{OrgID: cmd.OrgID, UID: cmd.UID}
 	_, err := s.dashboardStore.GetDashboard(ctx, &query)
 	if err != nil {
 		return nil, toFolderError(err)
@@ -461,7 +461,7 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 
 	dto := &dashboards.SaveDashboardDTO{
 		Dashboard: dashFolder,
-		OrgId:     cmd.OrgID,
+		OrgID:     cmd.OrgID,
 		User:      cmd.SignedInUser,
 		Overwrite: cmd.Overwrite,
 	}
@@ -477,7 +477,7 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 	}
 
 	var foldr *folder.Folder
-	foldr, err = s.dashboardStore.GetFolderByID(ctx, cmd.OrgID, dash.Id)
+	foldr, err = s.dashboardStore.GetFolderByID(ctx, cmd.OrgID, dash.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -486,8 +486,8 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 		if err := s.bus.Publish(ctx, &events.FolderTitleUpdated{
 			Timestamp: foldr.Updated,
 			Title:     foldr.Title,
-			ID:        dash.Id,
-			UID:       dash.Uid,
+			ID:        dash.ID,
+			UID:       dash.UID,
 			OrgID:     cmd.OrgID,
 		}); err != nil {
 			logger.Error("failed to publish FolderTitleUpdated event", "folder", foldr.Title, "user", user.UserID, "error", err)
@@ -497,8 +497,8 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 }
 
 // prepareForUpdate updates an existing dashboard model from command into model for folder update
-func prepareForUpdate(dashFolder *models.Dashboard, orgId int64, userId int64, cmd *folder.UpdateFolderCommand) {
-	dashFolder.OrgId = orgId
+func prepareForUpdate(dashFolder *dashboards.Dashboard, orgId int64, userId int64, cmd *folder.UpdateFolderCommand) {
+	dashFolder.OrgID = orgId
 
 	title := dashFolder.Title
 	if cmd.NewTitle != nil && *cmd.NewTitle != "" {
@@ -508,7 +508,7 @@ func prepareForUpdate(dashFolder *models.Dashboard, orgId int64, userId int64, c
 	dashFolder.Data.Set("title", dashFolder.Title)
 
 	if cmd.NewUID != nil && *cmd.NewUID != "" {
-		dashFolder.SetUid(*cmd.NewUID)
+		dashFolder.SetUID(*cmd.NewUID)
 	}
 
 	dashFolder.SetVersion(cmd.Version)
@@ -557,7 +557,7 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 }
 
 func (s *Service) legacyDelete(ctx context.Context, cmd *folder.DeleteFolderCommand, dashFolder *folder.Folder) error {
-	deleteCmd := models.DeleteDashboardCommand{OrgId: cmd.OrgID, Id: dashFolder.ID, ForceDeleteFolderRules: cmd.ForceDeleteRules}
+	deleteCmd := dashboards.DeleteDashboardCommand{OrgID: cmd.OrgID, ID: dashFolder.ID, ForceDeleteFolderRules: cmd.ForceDeleteRules}
 
 	if err := s.dashboardStore.DeleteDashboard(ctx, &deleteCmd); err != nil {
 		return toFolderError(err)
