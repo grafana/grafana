@@ -531,6 +531,7 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 	}
 
 	hs.registerRoutes()
+
 	s := webtest.NewServer(t, hs.RouteRegister)
 	return s
 }
