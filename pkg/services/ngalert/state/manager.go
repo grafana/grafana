@@ -173,6 +173,9 @@ func (st *Manager) ResetStateByPausedRuleUID(ctx context.Context, ruleKey ngMode
 	return st.resetStateByRuleUID(ctx, ruleKey, rule, ngModels.StateReasonPaused)
 }
 
+// resetStateByRuleUID removes the rule instances from cache and instanceStore. If reason is ngModels.StateReasonPaused
+// also adds an entry to state history. rule argument must not be nil when the reason is ngModels.StateReasonPaused as
+// it is needed to add the entry to the state history, otherwise it can be nil.
 func (st *Manager) resetStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey, rule *ngModels.AlertRule, reason string) []*State {
 	logger := st.log.New(ruleKey.LogContext()...)
 	logger.Debug("Resetting state of the rule")
