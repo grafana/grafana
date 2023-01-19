@@ -20,7 +20,7 @@ export function HttpHandlerDetailsPage() {
   const tab = routeMatch.params.tab ?? 'metrics';
 
   const pageNav: NavModelItem = {
-    text: metricsScene.state.title,
+    text: handler,
     url: getLinkUrlWithAppUrlState(baseUrl, params),
     parentItem: { text: parent.text, url: getLinkUrlWithAppUrlState(parent.url, params) },
     children: [],

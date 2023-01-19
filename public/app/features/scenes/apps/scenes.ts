@@ -3,7 +3,6 @@ import { locationService } from '@grafana/runtime';
 import {
   SceneFlexLayout,
   SceneByFrameRepeater,
-  SceneSubMenu,
   SceneTimePicker,
   VizPanel,
   EmbeddedScene,
@@ -13,7 +12,7 @@ import {
   SceneQueryRunner,
   SceneVariableSet,
   QueryVariable,
-  SceneSubMenuSpacer,
+  SceneControlsSpacer,
 } from '@grafana/scenes';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
@@ -185,19 +184,16 @@ export function getHttpHandlerListScene(): EmbeddedScene {
   });
 
   const scene = new EmbeddedScene({
-    title: 'Grafana Monitoring',
     $variables: getVariablesDefinitions(),
     $data: httpHandlerQueries,
     $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
-    subMenu: new SceneSubMenu({
-      children: [
-        new VariableValueSelectors({}),
-        searchBox,
-        new SceneSubMenuSpacer(),
-        sceneToggle,
-        new SceneTimePicker({ isOnCanvas: true }),
-      ],
-    }),
+    controls: [
+      new VariableValueSelectors({}),
+      searchBox,
+      new SceneControlsSpacer(),
+      sceneToggle,
+      new SceneTimePicker({ isOnCanvas: true }),
+    ],
     body: layout,
   });
 
@@ -223,12 +219,9 @@ export function getHandlerDetailsScene(handler: string): EmbeddedScene {
   });
 
   const scene = new EmbeddedScene({
-    title: `${handler}`,
     $variables: getVariablesDefinitions(),
     $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
-    subMenu: new SceneSubMenu({
-      children: [new VariableValueSelectors({}), new SceneSubMenuSpacer(), new SceneTimePicker({ isOnCanvas: true })],
-    }),
+    controls: [new VariableValueSelectors({}), new SceneControlsSpacer(), new SceneTimePicker({ isOnCanvas: true })],
     body: new SceneFlexLayout({
       direction: 'column',
       children: [
@@ -293,12 +286,9 @@ export function getOverviewScene(): EmbeddedScene {
   }
 
   const scene = new EmbeddedScene({
-    title: '',
     $variables: getVariablesDefinitions(),
     $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
-    subMenu: new SceneSubMenu({
-      children: [new VariableValueSelectors({}), new SceneSubMenuSpacer(), new SceneTimePicker({ isOnCanvas: true })],
-    }),
+    controls: [new VariableValueSelectors({}), new SceneControlsSpacer(), new SceneTimePicker({ isOnCanvas: true })],
     body: new SceneFlexLayout({
       direction: 'column',
       children: [
@@ -431,12 +421,9 @@ export function getHandlerLogsScene(handler: string): EmbeddedScene {
   });
 
   const scene = new EmbeddedScene({
-    title: `Http handler: ${handler}`,
     $variables: getVariablesDefinitions(),
     $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
-    subMenu: new SceneSubMenu({
-      children: [new VariableValueSelectors({}), new SceneSubMenuSpacer(), new SceneTimePicker({ isOnCanvas: true })],
-    }),
+    controls: [new VariableValueSelectors({}), new SceneControlsSpacer(), new SceneTimePicker({ isOnCanvas: true })],
     body: new SceneFlexLayout({
       direction: 'column',
       children: [
@@ -483,12 +470,9 @@ export function getOverviewLogsScene(): EmbeddedScene {
   });
 
   const scene = new EmbeddedScene({
-    title: `Http handler`,
     $variables: getVariablesDefinitions(),
     $timeRange: new SceneTimeRange({ from: 'now-1h', to: 'now' }),
-    subMenu: new SceneSubMenu({
-      children: [new VariableValueSelectors({}), new SceneSubMenuSpacer(), new SceneTimePicker({ isOnCanvas: true })],
-    }),
+    controls: [new VariableValueSelectors({}), new SceneControlsSpacer(), new SceneTimePicker({ isOnCanvas: true })],
     body: new SceneFlexLayout({
       direction: 'column',
       children: [

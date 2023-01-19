@@ -8,12 +8,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { getLinkUrlWithAppUrlState, useAppQueryParams } from '../../apps/utils';
 
 export interface SceneAppState extends SceneObjectStatePlain {
-  routes: SceneAppRoute[];
-}
-
-export interface SceneAppRoute {
-  path: string;
-  getScene: (routeMatch: SceneRouteMatch<any>) => SceneObject;
+  pages: SceneAppPage[];
 }
 
 export interface SceneRouteMatch<Params extends { [K in keyof Params]?: string } = {}> {
@@ -23,15 +18,49 @@ export interface SceneRouteMatch<Params extends { [K in keyof Params]?: string }
   url: string;
 }
 
+export interface SceneAppRoute {
+  path: string;
+  page?: SceneAppPage;
+  drilldown?: SceneAppDrilldownView;
+}
+
 export class SceneApp extends SceneObjectBase<SceneAppState> {
+  private collectRoutes(pages: SceneAppPage[], routes: SceneAppRoute[]) {
+    for (const page of pages) {
+      const { tabs, drilldowns } = page.state;
+
+      if (tabs) {
+        this.collectRoutes(tabs, routes);
+      }
+
+      if (drilldowns) {
+        for (const drilldown of drilldowns) {
+          routes.push({
+            path: drilldown.state.routePath,
+            drilldown,
+          });
+        }
+      }
+
+      routes.push({
+        path: page.state.url,
+        page,
+      });
+    }
+
+    return routes;
+  }
+
   public static Component = ({ model }: SceneComponentProps<SceneApp>) => {
-    const { routes } = model.useState();
+    const { pages } = model.useState();
+    const routes = model.collectRoutes(pages, []);
 
     return (
       <Switch>
         {routes.map((route) => (
           <Route key={route.path} exact={true} path={route.path}>
-            <SceneRouteComponent route={route} />
+            {route.page && <route.page.Component model={route.page} />}
+            {route.drilldown && <route.drilldown.Component model={route.drilldown} />}
           </Route>
         ))}
       </Switch>
@@ -39,56 +68,125 @@ export class SceneApp extends SceneObjectBase<SceneAppState> {
   };
 }
 
-function SceneRouteComponent({ route }: { route: SceneAppRoute }) {
-  const routeMatch = useRouteMatch();
-  const scene = route.getScene(routeMatch);
-  return <scene.Component model={scene} />;
-}
-
 export interface SceneAppPageState extends SceneObjectStatePlain {
   title: string;
+  url: string;
   subTitle?: string;
-  tabs: SceneAppTab[];
+  tabs?: SceneAppPage[];
+  getScene: (routeMatch: SceneRouteMatch) => SceneObject;
+  drilldowns?: SceneAppDrilldownView[];
+  drilldownParent?: SceneAppPage | SceneAppDrilldownView;
+  preserveUrlKeys?: string[];
 }
 
-export interface SceneAppTab {
-  text: string;
-  url: string;
-  getScene: (routeMatch: SceneRouteMatch) => SceneObject;
-  preserveUrlKeys: string[];
+export interface SceneAppDrilldownViewState extends SceneObjectStatePlain {
+  routePath: string;
+  getPage: (routeMatch: SceneRouteMatch<any>, parent: SceneObject) => SceneAppPage;
+  drilldowns?: SceneAppDrilldownView[];
+}
+
+export class SceneAppDrilldownView extends SceneObjectBase<SceneAppDrilldownViewState> {
+  public static Component = ({ model }: SceneComponentProps<SceneAppDrilldownView>) => {
+    const { getPage } = model.useState();
+    const routeMatch = useRouteMatch();
+    const scene = getPage(routeMatch, model.parent!);
+    return <scene.Component model={scene} />;
+  };
 }
 
 export class SceneAppPage extends SceneObjectBase<SceneAppPageState> {
   public static Component = ({ model }: SceneComponentProps<SceneAppPage>) => {
-    const { title, subTitle, tabs } = model.state;
+    const { title, subTitle, drilldownParent, tabs } = model.state;
 
     const params = useAppQueryParams();
     const routeMatch = useRouteMatch();
-    const activeTab = tabs.find((tab) => tab.url === routeMatch.url);
 
-    if (!activeTab) {
-      return <div>Not found</div>;
+    // if parent is a SceneAppPage we are a tab
+    if (model.parent instanceof SceneAppPage) {
+      const scene = model.state.getScene(routeMatch);
+
+      return (
+        <PageRenderer
+          page={model}
+          scene={scene}
+          parent={model.parent}
+          activeTab={model}
+          tabs={model.parent.state.tabs}
+        />
+      );
     }
 
-    const scene = activeTab.getScene(routeMatch);
-
-    const pageNav: NavModelItem = {
-      text: title,
-      subTitle: subTitle,
-      hideFromBreadcrumbs: true,
-      children: tabs.map((tab) => ({
-        text: tab.text,
-        active: activeTab === tab,
-        url: getLinkUrlWithAppUrlState(tab.url, params),
-      })),
-    };
-
-    return (
-      <Page navId="grafana-monitoring" pageNav={pageNav} hideFooter={true}>
-        <Page.Contents>
-          <scene.Component model={scene} />
-        </Page.Contents>
-      </Page>
-    );
+    if (drilldownParent) {
+      if (tabs) {
+        const activeTab = tabs.find((tab) => tab.url === routeMatch.url);
+      }
+    }
   };
 }
+
+interface ScenePageRenderProps {
+  page: SceneAppPage;
+  tabs?: SceneAppPage[];
+  activeTab?: SceneAppPage;
+  scene: SceneObject;
+  parent: SceneAppPage | SceneAppDrilldownView;
+}
+
+function PageRenderer({ page, tabs, activeTab, scene, parent }: ScenePageRenderProps) {
+  const params = useAppQueryParams();
+
+  const pageNav: NavModelItem = {
+    text: page.state.title,
+    subTitle: page.state.subTitle,
+    hideFromBreadcrumbs: true,
+  };
+
+  if (tabs) {
+    pageNav.children = tabs.map((tab) => ({
+      text: tab.state.title,
+      active: activeTab === tab,
+      url: getLinkUrlWithAppUrlState(tab.state.url, params),
+    }));
+  }
+
+  return (
+    <Page navId="grafana-monitoring" pageNav={pageNav} hideFooter={true}>
+      <Page.Contents>
+        <scene.Component model={scene} />
+      </Page.Contents>
+    </Page>
+  );
+}
+
+// public static Component = ({ model }: SceneComponentProps<SceneAppPage>) => {
+//   const { title, subTitle, tabs } = model.state;
+
+//   const params = useAppQueryParams();
+//   const routeMatch = useRouteMatch();
+//   const activeTab = tabs.find((tab) => tab.url === routeMatch.url);
+
+//   if (!activeTab) {
+//     return <div>Not found</div>;
+//   }
+
+//   const scene = activeTab.getScene(routeMatch);
+
+//   const pageNav: NavModelItem = {
+//     text: title,
+//     subTitle: subTitle,
+//     hideFromBreadcrumbs: true,
+//     children: tabs.map((tab) => ({
+//       text: tab.text,
+//       active: activeTab === tab,
+//       url: getLinkUrlWithAppUrlState(tab.url, params),
+//     })),
+//   };
+
+//   return (
+//     <Page navId="grafana-monitoring" pageNav={pageNav} hideFooter={true}>
+//       <Page.Contents>
+//         <scene.Component model={scene} />
+//       </Page.Contents>
+//     </Page>
+//   );
+// };

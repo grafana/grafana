@@ -1,7 +1,7 @@
 // Libraries
 import React from 'react';
 
-import { SceneApp, SceneAppPage, SceneRouteMatch } from '../components/app/SceneApp';
+import { SceneApp, SceneAppDrilldownView, SceneAppPage, SceneRouteMatch } from '../components/app/SceneApp';
 
 import {
   getOverviewScene,
@@ -13,13 +13,14 @@ import {
 
 export function GrafanaMonitoringApp2() {
   const appScene = new SceneApp({
-    routes: [
-      { path: '/scenes/grafana-monitoring', getScene: getMainPageScene },
-      { path: '/scenes/grafana-monitoring/handlers', getScene: getMainPageScene },
-      { path: '/scenes/grafana-monitoring/logs', getScene: getMainPageScene },
-      { path: '/scenes/grafana-monitoring/handlers/:handler', getScene: getDrilldownPageScene },
-      { path: '/scenes/grafana-monitoring/handlers/:handler/:tab', getScene: getDrilldownPageScene },
-    ],
+    pages: [getMainPageScene()],
+    // routes: [
+    //   { path: '/scenes/grafana-monitoring', getScene: getMainPageScene },
+    //   { path: '/scenes/grafana-monitoring/handlers', getScene: getMainPageScene },
+    //   { path: '/scenes/grafana-monitoring/logs', getScene: getMainPageScene },
+    //   { path: '/scenes/grafana-monitoring/handlers/:handler', getScene: getDrilldownPageScene },
+    //   { path: '/scenes/grafana-monitoring/handlers/:handler/:tab', getScene: getDrilldownPageScene },
+    // ],
   });
 
   return <appScene.Component model={appScene} />;
@@ -29,25 +30,33 @@ export function getMainPageScene() {
   return new SceneAppPage({
     title: 'Grafana Monitoring',
     subTitle: 'A custom app with embedded scenes to monitor your Grafana server',
+    url: '/scenes/grafana-monitoring',
+    getScene: getOverviewScene,
     tabs: [
-      {
-        text: 'Overview',
+      new SceneAppPage({
+        title: 'Overview',
         url: '/scenes/grafana-monitoring',
         getScene: getOverviewScene,
         preserveUrlKeys: ['from', 'to', 'var-instance'],
-      },
-      {
-        text: 'HTTP handlers',
+      }),
+      new SceneAppPage({
+        title: 'HTTP handlers',
         url: '/scenes/grafana-monitoring/handlers',
         getScene: getHttpHandlerListScene,
         preserveUrlKeys: ['from', 'to', 'var-instance'],
-      },
-      {
-        text: 'Logs',
+        drilldowns: [
+          new SceneAppDrilldownView({
+            routePath: '/scenes/grafana-monitoring/handlers/:handler',
+            getPage: getDrilldownPageScene,
+          }),
+        ],
+      }),
+      new SceneAppPage({
+        title: 'Logs',
         url: '/scenes/grafana-monitoring/logs',
         getScene: getOverviewLogsScene,
         preserveUrlKeys: ['from', 'to', 'var-instance'],
-      },
+      }),
     ],
   });
 }
@@ -59,19 +68,21 @@ export function getDrilldownPageScene(match: SceneRouteMatch<{ handler: string; 
   return new SceneAppPage({
     title: handler,
     subTitle: 'A grafana http handler is responsible for service a specific API request',
+    url: baseUrl,
+    getScene: () => getHandlerDetailsScene(handler),
     tabs: [
-      {
-        text: 'Metrics',
+      new SceneAppPage({
+        title: 'Metrics',
         url: baseUrl,
         getScene: () => getHandlerDetailsScene(handler),
         preserveUrlKeys: ['from', 'to', 'var-instance'],
-      },
-      {
-        text: 'Logs',
+      }),
+      new SceneAppPage({
+        title: 'Logs',
         url: baseUrl + '/logs',
         getScene: () => getHandlerLogsScene(handler),
         preserveUrlKeys: ['from', 'to', 'var-instance'],
-      },
+      }),
     ],
   });
 }
