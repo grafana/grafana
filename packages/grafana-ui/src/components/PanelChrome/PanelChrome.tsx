@@ -103,12 +103,12 @@ export function PanelChrome({
   const ariaLabel = title ? selectors.components.Panels.Panel.containerByTitle(title) : 'Panel';
 
   return (
-    <div className={cx(styles.container, dragClass)} style={containerStyles} aria-label={ariaLabel}>
+    <div className={styles.container} style={containerStyles} aria-label={ariaLabel}>
       <div className={styles.loadingBarContainer}>
         {loadingState === LoadingState.Loading ? <LoadingBar width={'28%'} height={'2px'} /> : null}
       </div>
 
-      <div className={styles.headerContainer} style={headerStyles} data-testid="header-container">
+      <div className={cx(styles.headerContainer, dragClass)} style={headerStyles} data-testid="header-container">
         {title && (
           <h6 title={title} className={styles.title}>
             {title}
