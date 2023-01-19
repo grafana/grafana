@@ -4,7 +4,7 @@ type priority interface {
 	Priority() uint
 }
 
-func newQueue[T priority]() *queue[T] {
+func newQueue[T any]() *queue[T] {
 	return &queue[T]{items: []T{}}
 }
 
