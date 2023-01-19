@@ -159,13 +159,16 @@ func TestJWTClaimConfig(t *testing.T) {
 					"JWTAuthUsernameClaim": false,
 				},
 			},
-			valid: true,
+			valid: false,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			for _, claims := range tc.claimsConfigurations {
+				cfg.JWTAuthEmailClaim = ""
+				cfg.JWTAuthUsernameClaim = ""
+
 				if claims["JWTAuthEmailClaim"] == true {
 					cfg.JWTAuthEmailClaim = "email"
 				}
