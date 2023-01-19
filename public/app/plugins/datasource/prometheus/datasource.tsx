@@ -99,7 +99,11 @@ export class PrometheusDatasource
   rulerEnabled: boolean;
 
   // Record with string index of "super" dataframe to which we keep appending new records
-  prometheusDataFrameStorage: Record<string, DataFrameDTO>;
+  // Each dataframe has two indicies: the concatenation of query expression/step interval and the name of each series
+  // When reading we should assume that everything that's been populated in this storage has the same durations, otherwise we would purge when receiving the response
+  // @todo implement merging new series into old dataframe, and backfilling missing data?
+  // @todo make this a class and provide some abstraction? It's kinda hard to deal with and easy to make mistakes rn
+  prometheusDataFrameStorage: Record<string, Record<string, DataFrameDTO>>;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -444,7 +448,7 @@ export class PrometheusDatasource
     return processedTargets;
   }
 
-  streamTargets(target: PromQuery, request: DataQueryRequest<PromQuery>): PromQuery {
+  streamTargets(target: PromQuery, request: DataQueryRequest<PromQuery>): PromQuery | undefined {
     // const storageKey = request.f
     const from = request.range.raw.from
     const to = request.range.raw.to;
@@ -458,37 +462,61 @@ export class PrometheusDatasource
 
     console.log('the CURRENT CACHE', this.prometheusDataFrameStorage)
     // request.targets[index].expr + request.targets[index].interval
-    const cacheKey: string = target.expr + target.interval;
+    const cacheKey: string | undefined = this.createPrometheusStorageIndexFromRequestTarget(target, request);
     console.log('THE CACHE KEY', cacheKey);
-    console.log('the CURRENT HIT?', this.prometheusDataFrameStorage[cacheKey])
+    if(!cacheKey){
+      console.warn('No Cache key was generated, targets cannot be streamed')
+      return;
+    }
+
     const previousResultForThisQuery = this.prometheusDataFrameStorage[cacheKey];
+    console.log('the CURRENT HIT?', previousResultForThisQuery);
 
-    if(previousResultForThisQuery){
-      const time = previousResultForThisQuery.fields.find(field => field.name === TIME_SERIES_TIME_FIELD_NAME);
-      const values = previousResultForThisQuery?.fields.find(field => field.name === TIME_SERIES_VALUE_FIELD_NAME)
+    if(previousResultForThisQuery) {
+      debugger;
+      const timeValues = Object.values(previousResultForThisQuery)[0].fields.find(field => field.name === TIME_SERIES_TIME_FIELD_NAME);
+      // Assume that the added fields are contigious, and every series always has the most recent samples
+      if (timeValues) {
+        const first = timeValues?.values?.get(0)
+        const last = timeValues?.values?.get(timeValues?.values?.length);
 
-      console.log('cached time', time)
-      console.log('cached values', values)
+        console.log('First in storage', first);
+        console.log('Last in storage', last);
+      }
     }
 
     //calculate new from/tos
-
-
     return { ...target };
   }
 
-  createPrometheusStorageIndexFromRequestTarget = (target: PromQuery): string => {
-    return target?.expr + '__' + target?.interval;
-    // return target?.expr + target?.interval + Object.keys(labels).join() + Object.values(labels).join()
+  createPrometheusStorageIndexFromRequestTarget = (target: PromQuery, request: DataQueryRequest<PromQuery>): string | undefined => {
+    console.log('createPrometheusStorageIndexFromRequestTarget', target?.expr + '__' + request.interval)
+    if(!target){
+      console.log('target', target)
+      console.log('request', request)
+      console.error('Request target is required to build storage index')
+      return;
+    }
+    if(!target?.expr){
+      console.error('Request expression is required to build storage index')
+      return;
+    }
+
+    if(!request.interval){
+      console.error('Request interval is required to build storage index')
+      return;
+    }
+
+    return target?.expr + '__' + request.interval;
   }
 
   appendQueryResultToDataFrameStorage = (
-    request: DataQueryRequest<PromQuery>,
+    queries: DataQueryRequest<PromQuery>,
     response: DataQueryResponse,
     dataFrames: { data: DataFrame[] }
   ) => {
-    const start = this.getPrometheusTime(request.range.from, false);
-    const end = this.getPrometheusTime(request.range.to, true);
+    const start = this.getPrometheusTime(queries.range.from, false);
+    const end = this.getPrometheusTime(queries.range.to, true);
     const data: DataFrame[] | DataFrameDTO[] = response.data;
     const timeSeriesResponses = data.filter((dataFrame) => dataFrame?.meta?.custom?.resultType === 'matrix');
 
@@ -496,70 +524,109 @@ export class PrometheusDatasource
     console.log('start', start);
     console.log('end', end);
     console.log('response', response);
-    console.log('request', request);
+    console.log('request', queries);
 
-    if (!timeSeriesResponses) {
-      return;
-    }
+    console.log('timeSeriesResponses', timeSeriesResponses)
     // Iterate through all the different queries
-    timeSeriesResponses.forEach((response, index) => {
+    console.warn('INITIAL RESPONSE', response)
 
-      // For each query response get the time and the values
-      const timeField = response.fields.find(field => field.name === TIME_SERIES_TIME_FIELD_NAME);
-      const valueField = response.fields.find(field => field.name === TIME_SERIES_VALUE_FIELD_NAME);
+    queries.targets.forEach(target => {
+      const timeSeriesForThisQuery = timeSeriesResponses.filter(response => response.refId === target.refId)
+      timeSeriesForThisQuery.forEach((response) => {
 
-      // Get the querystring that was executed on the prometheus server, this string contains the step time as well so we can use this as our "key" in the prometheus data frame storage
-      const responseQueryExpressionAndStepString = this.createPrometheusStorageIndexFromRequestTarget(request.targets[index]);
+        // Not needed, please remove
+        if(!response?.meta?.executedQueryString ?? ''.includes(target?.expr)){
+          console.log('response', response);
+          console.log('target', target);
+          console.warn('This expression is not for this query')
+          return;
+        }
 
-      const thisQueryHasNeverBeenDoneBefore =
-        !this.prometheusDataFrameStorage || !(responseQueryExpressionAndStepString in this.prometheusDataFrameStorage);
-      const thisQueryHasBeenDoneBefore = !thisQueryHasNeverBeenDoneBefore;
+        // For each query response get the time and the values
+        const timeField = response.fields.find(field => field.name === TIME_SERIES_TIME_FIELD_NAME);
+        const valueField = response.fields.find(field => field.name === TIME_SERIES_VALUE_FIELD_NAME);
 
-      //@todo types
-      const timeFrames = timeField?.values;
-      const valueFrames = valueField?.values;
+        // debugger;
+        // Get the querystring that was executed on the prometheus server, this string contains the step time as well so we can use this as our "key" in the prometheus data frame storage
+        const responseQueryExpressionAndStepString = this.createPrometheusStorageIndexFromRequestTarget(target, queries) ?? '';
 
-      if (thisQueryHasNeverBeenDoneBefore) {
-        // Store the response if it's new
-        this.prometheusDataFrameStorage[responseQueryExpressionAndStepString] = response;
-      }
-       else if (thisQueryHasBeenDoneBefore && responseQueryExpressionAndStepString in this.prometheusDataFrameStorage) {
+        if(!responseQueryExpressionAndStepString){
+          return;
+        }
 
-         // Check to see if the labels have changed
-        // @todo
-        // If the labels are the same as saved, append any new values, making sure that any additional data is taken from the newest response
-        // @todo
-        // @todo if the query is the last 10 minutes (or 2 hours)
-        const previousQueryValues = this.prometheusDataFrameStorage[responseQueryExpressionAndStepString]
+        const previousDataFrames = responseQueryExpressionAndStepString in this.prometheusDataFrameStorage ? this.prometheusDataFrameStorage[responseQueryExpressionAndStepString] : false
 
-        const existingTimeValues = previousQueryValues.fields.find(field => field.name === TIME_SERIES_TIME_FIELD_NAME);
-        const existingValues = previousQueryValues.fields.find(field => field.name === TIME_SERIES_VALUE_FIELD_NAME);
+        // We're about to populate the cache if it doesn't exist, so let's prime the main object
+        if(!(responseQueryExpressionAndStepString in this.prometheusDataFrameStorage)){
+          this.prometheusDataFrameStorage[responseQueryExpressionAndStepString] = {};
+        }
+        if(!response.name){
+          console.error('MISSING NAME', response);
+          throw new Error('Ded')
+        }
 
-        // HERE <-- This is all messed up, need to get to actual dataframe values with new format of the saved values
-        debugger;
-        const newDataIndexStartInOldData = existingTimeValues.indexOf(timeFrames[0]);
+        const thisQueryHasNeverBeenDoneBefore = !this.prometheusDataFrameStorage || !previousDataFrames || !previousDataFrames[response.name];
+        const thisQueryHasBeenDoneBefore = !thisQueryHasNeverBeenDoneBefore;
 
-        // Naive splice of new data onto old data
-        existingTimeValues.splice(
-          newDataIndexStartInOldData,
-          existingTimeValues.length - newDataIndexStartInOldData,
-          ...timeFrames
-        );
-        existingValues.splice(
-          newDataIndexStartInOldData,
-          existingValues.length - newDataIndexStartInOldData,
-          ...valueFrames
-        );
+        //@todo types
+        const timeFrames = timeField?.values;
+        const valueFrames = valueField?.values;
 
-        console.log('timeValuesAfterSplicedInNewValues', existingTimeValues);
-        console.log('ValuesAfterSplicedInNewValues', existingValues);
+        if(this.prometheusDataFrameStorage[responseQueryExpressionAndStepString])
 
-        this.prometheusDataFrameStorage[responseQueryExpressionAndStepString] = {
-          time: existingTimeValues,
-          values: existingValues,
-        };
-      }
-    });
+        if (thisQueryHasNeverBeenDoneBefore && response?.name) {
+          // Store the response if it's new
+          console.warn('INITIAL RESPONSE STATE', response)
+
+          this.prometheusDataFrameStorage[responseQueryExpressionAndStepString][response.name] = response;
+        }
+        else if (thisQueryHasBeenDoneBefore && response.name) {
+
+          // Check to see if the labels have changed
+          // @todo
+          // If the labels are the same as saved, append any new values, making sure that any additional data is taken from the newest response
+          // @todo
+          // @todo if the query is the last 10 minutes (or 2 hours)
+          const previousQueryValues = this.prometheusDataFrameStorage[responseQueryExpressionAndStepString][response.name]
+          // debugger;
+
+          const existingTimeFrames = previousQueryValues.fields.find(field => field.name === TIME_SERIES_TIME_FIELD_NAME);
+          const existingValues = previousQueryValues.fields.find(field => field.name === TIME_SERIES_VALUE_FIELD_NAME);
+
+          // HERE <-- This is all messed up, need to get to actual dataframe values with new format of the saved values
+
+          if(existingValues && existingTimeFrames && timeFrames){
+            const newDataIndexStartInOldData = [...existingTimeFrames.values].indexOf(timeFrames?.get(0));
+            console.log('newDataIndexStartInOldData', newDataIndexStartInOldData)
+
+            // Naive splice of new data onto old data
+            existingTimeFrames?.values?.buffer.splice(
+              newDataIndexStartInOldData,
+              existingTimeFrames?.values?.length - newDataIndexStartInOldData,
+              ...timeFrames.buffer
+            );
+            existingValues.values.buffer.splice(
+              newDataIndexStartInOldData,
+              existingValues.values.length - newDataIndexStartInOldData,
+              ...valueFrames.buffer
+            );
+
+            // console.log('timeValuesAfterSplicedInNewValues', existingTimeFrames.values.length);
+            // console.log('ValuesAfterSplicedInNewValues', existingValues.values.length);
+            previousQueryValues.fields = [existingTimeFrames, existingValues]
+
+            console.warn('STORAGE STATE', this.prometheusDataFrameStorage[responseQueryExpressionAndStepString]);
+            this.prometheusDataFrameStorage[responseQueryExpressionAndStepString][response.name] = previousQueryValues;
+            console.warn('UPDATED STORAGE STATE', this.prometheusDataFrameStorage[responseQueryExpressionAndStepString])
+          }else{
+            console.warn('no existing values found')
+          }
+        }
+      });
+    })
+
+
+
   };
 
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
