@@ -127,6 +127,7 @@ export const getFieldLinksForExplore = (options: {
         }
         return linkModel;
       } else {
+        //TODO some sort of global use of transformationData.mappings
         const internalLinkSpecificVars: ScopedVars = {};
         if (link.internal?.transformationData?.transformations) {
           const fieldValue = field.values.get(rowIndex);
