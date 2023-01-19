@@ -6,7 +6,7 @@ import {
   FrameGeometrySourceMode,
   FrameGeometrySource as SchemaFrameGeometrySource,
   MapLayerOptions as SchemaMapLayerOptions,
-} from '@grafana/schema/';
+} from '@grafana/schema';
 
 import { EventBus } from '../events';
 import { GrafanaTheme2 } from '../themes';

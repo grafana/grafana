@@ -7,7 +7,7 @@ import {
   FieldType,
   Field,
 } from '@grafana/data';
-import { FrameGeometrySourceMode, MapLayerOptions } from '@grafana/schema/';
+import { FrameGeometrySourceMode, MapLayerOptions } from '@grafana/schema';
 import Map from 'ol/Map';
 import { FeatureLike } from 'ol/Feature';
 import { getLocationMatchers } from 'app/features/geo/utils/location';
