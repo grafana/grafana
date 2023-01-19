@@ -1,12 +1,17 @@
 import { Property } from 'csstype';
 import { FC } from 'react';
-import { CellProps, Column, Row } from 'react-table';
+import { CellProps, Column, Row, TableState, UseExpandedRowProps } from 'react-table';
 
-import { Field, KeyValue, SelectableValue } from '@grafana/data';
+import { DataFrame, Field, KeyValue, SelectableValue } from '@grafana/data';
 
 import { TableStyles } from './styles';
 
-export { type TableFieldOptions, TableCellDisplayMode, type FieldTextAlignment } from '@grafana/schema';
+export {
+  type TableFieldOptions,
+  TableCellDisplayMode,
+  type FieldTextAlignment,
+  TableCellBackgroundDisplayMode,
+} from '@grafana/schema';
 
 export interface TableRow {
   [x: string]: any;
@@ -51,4 +56,33 @@ export interface TableFooterCalc {
   fields?: string[];
   enablePagination?: boolean;
   countRows?: boolean;
+}
+
+export interface GrafanaTableState extends TableState {
+  lastExpandedIndex?: number;
+  toggleRowExpandedCounter: number;
+}
+
+export interface GrafanaTableRow extends Row, UseExpandedRowProps<{}> {}
+
+export interface Props {
+  ariaLabel?: string;
+  data: DataFrame;
+  width: number;
+  height: number;
+  maxHeight?: number;
+  /** Minimal column width specified in pixels */
+  columnMinWidth?: number;
+  noHeader?: boolean;
+  showTypeIcons?: boolean;
+  resizable?: boolean;
+  initialSortBy?: TableSortByFieldState[];
+  onColumnResize?: TableColumnResizeActionCallback;
+  onSortByChange?: TableSortByActionCallback;
+  onCellFilterAdded?: TableFilterActionCallback;
+  footerOptions?: TableFooterCalc;
+  footerValues?: FooterItem[];
+  enablePagination?: boolean;
+  /** @alpha */
+  subData?: DataFrame[];
 }

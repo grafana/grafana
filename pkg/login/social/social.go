@@ -171,6 +171,7 @@ func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager) *Soc
 				SocialBase:       newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 				allowedGroups:    util.SplitString(sec.Key("allowed_groups").String()),
 				forceUseGraphAPI: sec.Key("force_use_graph_api").MustBool(false),
+				skipOrgRoleSync:  cfg.AzureADSkipOrgRoleSync,
 			}
 		}
 
@@ -218,6 +219,7 @@ func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager) *Soc
 				SocialBase:           newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
 				url:                  cfg.GrafanaComURL,
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
+				skipOrgRoleSync:      cfg.GrafanaComSkipOrgRoleSync,
 			}
 		}
 	}

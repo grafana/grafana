@@ -1,27 +1,28 @@
 import {
-  Scene,
-  SceneCanvasText,
-  ScenePanelRepeater,
-  SceneTimePicker,
-  SceneToolbarInput,
   SceneFlexLayout,
+  SceneTimeRange,
+  SceneTimePicker,
+  SceneByFrameRepeater,
   VizPanel,
-} from '../components';
-import { EmbeddedScene } from '../components/Scene';
-import { panelBuilders } from '../components/VizPanel/panelBuilders';
-import { SceneTimeRange } from '../core/SceneTimeRange';
+  SceneCanvasText,
+  SceneToolbarInput,
+  SceneDataNode,
+} from '@grafana/scenes';
+
+import { panelBuilders } from '../builders/panelBuilders';
+import { DashboardScene } from '../dashboard/DashboardScene';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getFlexLayoutTest(standalone: boolean): Scene {
-  const state = {
+export function getFlexLayoutTest(): DashboardScene {
+  return new DashboardScene({
     title: 'Flex layout test',
-    layout: new SceneFlexLayout({
+    body: new SceneFlexLayout({
       direction: 'row',
       children: [
         panelBuilders.newGraph({
-          size: { minWidth: '70%' },
+          placement: { minWidth: '70%' },
           title: 'Dynamic height and width',
           $data: getQueryRunnerWithRandomWalkQuery({}, { maxDataPointsFromWidth: true }),
         }),
@@ -44,14 +45,14 @@ export function getFlexLayoutTest(standalone: boolean): Scene {
               title: 'Fill height',
             }),
             new SceneCanvasText({
-              size: { ySizing: 'content' },
+              placement: { ySizing: 'content' },
               text: 'Size to content',
               fontSize: 20,
               align: 'center',
             }),
             panelBuilders.newGraph({
               title: 'Fixed height',
-              size: { height: 300 },
+              placement: { height: 300 },
             }),
           ],
         }),
@@ -61,47 +62,53 @@ export function getFlexLayoutTest(standalone: boolean): Scene {
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
-  };
-
-  return standalone ? new Scene(state) : new EmbeddedScene(state);
+  });
 }
 
-export function getScenePanelRepeaterTest(standalone: boolean): Scene {
+export function getScenePanelRepeaterTest(): DashboardScene {
   const queryRunner = getQueryRunnerWithRandomWalkQuery({
     seriesCount: 2,
     alias: '__server_names',
     scenarioId: 'random_walk',
   });
 
-  const state = {
+  return new DashboardScene({
     title: 'Panel repeater test',
-    layout: new ScenePanelRepeater({
-      layout: new SceneFlexLayout({
+    body: new SceneByFrameRepeater({
+      body: new SceneFlexLayout({
         direction: 'column',
-        children: [
-          new SceneFlexLayout({
-            direction: 'row',
-            size: { minHeight: 200 },
-            children: [
-              new VizPanel({
-                pluginId: 'timeseries',
-                title: 'Title',
-                options: {
-                  legend: { displayMode: 'hidden' },
-                },
-              }),
-              new VizPanel({
-                size: { width: 300 },
-                pluginId: 'stat',
-                fieldConfig: { defaults: { displayName: 'Last' }, overrides: [] },
-                options: {
-                  graphMode: 'none',
-                },
-              }),
-            ],
-          }),
-        ],
+        children: [],
       }),
+      getLayoutChild: (data, frame, frameIndex) => {
+        return new SceneFlexLayout({
+          key: `panel-${frameIndex}`,
+          $data: new SceneDataNode({
+            data: {
+              ...data,
+              series: [frame],
+            },
+          }),
+          direction: 'row',
+          placement: { minHeight: 200 },
+          children: [
+            new VizPanel({
+              pluginId: 'timeseries',
+              title: 'Title',
+              options: {
+                legend: { displayMode: 'hidden' },
+              },
+            }),
+            new VizPanel({
+              placement: { width: 300 },
+              pluginId: 'stat',
+              fieldConfig: { defaults: { displayName: 'Last' }, overrides: [] },
+              options: {
+                graphMode: 'none',
+              },
+            }),
+          ],
+        });
+      },
     }),
     $editor: new SceneEditManager({}),
     $timeRange: new SceneTimeRange(),
@@ -123,7 +130,5 @@ export function getScenePanelRepeaterTest(standalone: boolean): Scene {
       }),
       new SceneTimePicker({}),
     ],
-  };
-
-  return standalone ? new Scene(state) : new EmbeddedScene(state);
+  });
 }

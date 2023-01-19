@@ -34,14 +34,8 @@ export const Configuration = ({
       <FieldSet disabled={disabled} className={styles.dashboardConfig}>
         <VerticalGroup spacing="md">
           <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">
-            <Label description="The public dashboard uses the default time settings of the dashboard">
-              Default time range
-            </Label>
+            <Label description="The public dashboard uses the default time settings of the dashboard">Time range</Label>
             <TimeRangeInput value={timeRange} disabled onChange={() => {}} />
-          </Layout>
-          <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">
-            <Label description="Allow viewers to change time range">Time range picker enabled</Label>
-            <Switch {...register('isTimeRangeEnabled')} data-testid={selectors.EnableTimeRangeSwitch} />
           </Layout>
           <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">
             <Label description="Show annotations on public dashboard">Show annotations</Label>
