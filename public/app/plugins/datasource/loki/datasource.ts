@@ -33,7 +33,7 @@ import {
   TimeRange,
   toUtc,
 } from '@grafana/data';
-import { config, DataSourceWithBackend, FetchError } from '@grafana/runtime';
+import { config, DataSourceWithBackend, FetchError, getBackendSrv } from '@grafana/runtime';
 import { queryLogsVolume } from 'app/core/logsModel';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -49,6 +49,7 @@ import LanguageProvider from './LanguageProvider';
 import { LiveStreams, LokiLiveTarget } from './LiveStreams';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
+import { QueryStats } from './components/types';
 import { escapeLabelValueInExactSelector, escapeLabelValueInSelector, isRegexSelector } from './languageUtils';
 import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
 import {
@@ -334,6 +335,22 @@ export class LokiDatasource
 
     const res = await this.getResource(url, params);
     return res.data || [];
+  }
+
+  async queryStatsRequest(query: LokiQuery): Promise<QueryStats> {
+    const labelMatcher = query.expr.split('}')[0] + '}';
+    const { start, end } = this.getTimeRangeParams();
+
+    const { data } = await lastValueFrom(
+      getBackendSrv().fetch({
+        method: 'GET',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        params: { query: labelMatcher, start, end },
+        url: `${this.instanceSettings.url}/loki/api/v1/index/stats`,
+      })
+    );
+
+    return data as QueryStats;
   }
 
   async metricFindQuery(query: LokiVariableQuery | string) {
