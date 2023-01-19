@@ -1,17 +1,18 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React, { CSSProperties, ReactElement, ReactNode } from 'react';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { GridPos } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../themes';
-import { Dropdown } from '../Dropdown/Dropdown';
 import { Icon } from '../Icon/Icon';
 import { LoadingBar } from '../LoadingBar/LoadingBar';
-import { ToolbarButton } from '../ToolbarButton';
 import { Tooltip } from '../Tooltip';
 
+import { HoverWidget } from './HoverWidget';
 import { PanelDescription } from './PanelDescription';
+import { PanelMenu } from './PanelMenu';
 import { PanelStatus } from './PanelStatus';
 
 /**
@@ -22,6 +23,7 @@ export interface PanelChromeProps {
   height: number;
   children: (innerWidth: number, innerHeight: number) => ReactNode;
   padding?: PanelPadding;
+  gridPos?: GridPos;
   title?: string;
   description?: string | (() => string);
   titleItems?: ReactNode[];
@@ -67,6 +69,7 @@ export function PanelChrome({
   hoverHeader = false,
   loadingState,
   statusMessage,
+  gridPos,
   statusMessageOnClick,
   leftItems,
 }: PanelChromeProps) {
@@ -101,14 +104,19 @@ export function PanelChrome({
   const containerStyles: CSSProperties = { width, height };
   const ariaLabel = title ? selectors.components.Panels.Panel.containerByTitle(title) : 'Panel';
 
+  // Shift the hover menu down if it's on the top row so it doesn't get clipped by topnav
+  const yOffset = (gridPos?.y ?? 0) === 0 ? -16 : undefined;
+
   return (
     <div className={styles.container} style={containerStyles} aria-label={ariaLabel}>
+      {!hasHeader && menu && <HoverWidget menu={menu} title={title} offset={yOffset} />}
+
       <div className={styles.loadingBarContainer}>
         {loadingState === LoadingState.Loading ? <LoadingBar width={'28%'} height={'2px'} /> : null}
       </div>
 
       <div className={styles.headerContainer} style={headerStyles} data-testid="header-container">
-        {title && (
+        {title && hasHeader && (
           <h6 title={title} className={styles.title}>
             {title}
           </h6>
@@ -130,22 +138,13 @@ export function PanelChrome({
           </div>
         )}
 
-        <div className={styles.rightAligned}>
-          {menu && (
-            <Dropdown overlay={menu} placement="bottom">
-              <ToolbarButton
-                aria-label={`Menu for panel with ${title ? `title ${title}` : 'no title'}`}
-                title="Menu"
-                icon="ellipsis-v"
-                narrow
-                data-testid="panel-menu-button"
-                className={cx(styles.menuItem, 'menu-icon')}
-              />
-            </Dropdown>
-          )}
+        {hasHeader && (
+          <div className={styles.rightAligned}>
+            {menu && <PanelMenu menu={menu} title={title} menuButtonClass={styles.menuItem} />}
 
-          {leftItems && <div className={styles.items}>{itemsRenderer(leftItems, (item) => item)}</div>}
-        </div>
+            {leftItems && <div className={styles.items}>{itemsRenderer(leftItems, (item) => item)}</div>}
+          </div>
+        )}
 
         {statusMessage && (
           <div className={styles.errorContainer}>
@@ -211,10 +210,15 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       flex: '1 1 0',
 
+      '.show-on-hover': {
+        visibility: 'hidden',
+        opacity: '0',
+      },
       '&:focus-visible, &:hover': {
         // only show menu icon on hover or focused panel
-        '.menu-icon': {
+        '.show-on-hover': {
           visibility: 'visible',
+          opacity: '1',
         },
       },
 

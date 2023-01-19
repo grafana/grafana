@@ -12,9 +12,11 @@ export interface Props {
   overlay: React.ReactElement | (() => React.ReactElement);
   placement?: TooltipPlacement;
   children: React.ReactElement | ((isOpen: boolean) => React.ReactElement);
+  /** Amount in pixels to nudge the dropdown vertically and horizontally, respectively. */
+  offset?: [number, number];
 }
 
-export const Dropdown = React.memo(({ children, overlay, placement }: Props) => {
+export const Dropdown = React.memo(({ children, overlay, placement, offset }: Props) => {
   const [show, setShow] = useState(false);
   const transitionRef = useRef(null);
 
@@ -25,7 +27,7 @@ export const Dropdown = React.memo(({ children, overlay, placement }: Props) => 
     interactive: true,
     delayHide: 0,
     delayShow: 0,
-    offset: [0, 8],
+    offset: offset ?? [0, 8],
     trigger: ['click'],
   });
 

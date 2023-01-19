@@ -18,9 +18,7 @@ interface Props {
 export function PanelHeaderMenuWrapper({ style, panel, dashboard, loadingState }: Props) {
   return (
     <PanelHeaderMenuProvider panel={panel} dashboard={dashboard} loadingState={loadingState}>
-      {({ items }) => {
-        return <PanelHeaderMenu style={style} items={items} />;
-      }}
+      {({ items }) => <PanelHeaderMenu style={style} items={items} />}
     </PanelHeaderMenuProvider>
   );
 }

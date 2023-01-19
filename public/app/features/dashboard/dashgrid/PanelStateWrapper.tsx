@@ -655,6 +655,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           titleItems={titleItems}
           menu={menu}
           padding={padding}
+          gridPos={panel.gridPos}
         >
           {(innerWidth, innerHeight) => (
             <>
