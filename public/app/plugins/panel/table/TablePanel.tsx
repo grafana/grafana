@@ -3,9 +3,8 @@ import React from 'react';
 
 import { DataFrame, FieldMatcherID, getFrameDisplayName, PanelProps, SelectableValue } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { Select, Table, usePanelContext } from '@grafana/ui';
+import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
-import { config } from 'app/core/config';
 
 import { PanelOptions } from './models.gen';
 
@@ -14,6 +13,7 @@ interface Props extends PanelProps<PanelOptions> {}
 export function TablePanel(props: Props) {
   const { data, height, width, options, fieldConfig, id } = props;
 
+  const theme = useTheme2();
   const panelContext = usePanelContext();
   const frames = data.series;
   const mainFrames = frames.filter((f) => f.meta?.custom?.parentRowIndex === undefined);
@@ -22,17 +22,18 @@ export function TablePanel(props: Props) {
   const hasFields = mainFrames[0]?.fields.length;
   const currentIndex = getCurrentFrameIndex(mainFrames, options);
   const main = mainFrames[currentIndex];
+
+  let tableHeight = height;
   let subData = subFrames;
 
   if (!count || !hasFields) {
     return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
   }
 
-  let tableHeight = height;
-
   if (count > 1) {
-    const inputHeight = config.theme2.spacing.gridSize * config.theme2.components.height.md;
-    const padding = 8 * 2;
+    const inputHeight = theme.spacing.gridSize * theme.components.height.md;
+    const padding = theme.spacing.gridSize;
+
     tableHeight = height - inputHeight - padding;
     subData = subFrames.filter((f) => f.refId === main.refId);
   }
