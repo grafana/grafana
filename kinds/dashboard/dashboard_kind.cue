@@ -3,7 +3,7 @@ package kind
 import "strings"
 
 name:     "Dashboard"
-maturity: "merged"
+maturity: "experimental"
 
 lineage: seqs: [
 	{

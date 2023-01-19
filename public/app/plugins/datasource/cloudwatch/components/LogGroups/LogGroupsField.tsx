@@ -3,7 +3,8 @@ import React, { useEffect, useState } from 'react';
 
 import { CloudWatchDatasource } from '../../datasource';
 import { useAccountOptions } from '../../hooks';
-import { DescribeLogGroupsRequest, LogGroup } from '../../types';
+import { DescribeLogGroupsRequest } from '../../resources/types';
+import { LogGroup } from '../../types';
 import { isTemplateVariable } from '../../utils/templateVariableUtils';
 
 import { LogGroupsSelector } from './LogGroupsSelector';
@@ -32,7 +33,7 @@ export const LogGroupsField = ({
   maxNoOfVisibleLogGroups,
   onBeforeOpen,
 }: Props) => {
-  const accountState = useAccountOptions(datasource?.api, region);
+  const accountState = useAccountOptions(datasource?.resources, region);
   const [loadingLogGroupsStarted, setLoadingLogGroupsStarted] = useState(false);
 
   useEffect(() => {
@@ -41,13 +42,15 @@ export const LogGroupsField = ({
       setLoadingLogGroupsStarted(true);
 
       // there's no need to migrate variables, they will be taken care of in the logs query runner
-      const variables = legacyLogGroupNames.filter((lgn) => isTemplateVariable(datasource.api.templateSrv, lgn));
+      const variables = legacyLogGroupNames.filter((lgn) => isTemplateVariable(datasource.resources.templateSrv, lgn));
       const legacyLogGroupNameValues = legacyLogGroupNames.filter(
-        (lgn) => !isTemplateVariable(datasource.api.templateSrv, lgn)
+        (lgn) => !isTemplateVariable(datasource.resources.templateSrv, lgn)
       );
 
       Promise.all(
-        legacyLogGroupNameValues.map((lg) => datasource.api.getLogGroups({ region: region, logGroupNamePrefix: lg }))
+        legacyLogGroupNameValues.map((lg) =>
+          datasource.resources.getLogGroups({ region: region, logGroupNamePrefix: lg })
+        )
       )
         .then((results) => {
           const logGroups = results.flatMap((r) =>
@@ -70,7 +73,7 @@ export const LogGroupsField = ({
     <div className={`gf-form gf-form--grow flex-grow-1 ${rowGap}`}>
       <LogGroupsSelector
         fetchLogGroups={async (params: Partial<DescribeLogGroupsRequest>) =>
-          datasource?.api.getLogGroups({ region: region, ...params }) ?? []
+          datasource?.resources.getLogGroups({ region: region, ...params }) ?? []
         }
         onChange={onChange}
         accountOptions={accountState.value}

@@ -148,6 +148,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"OAuthSkipOrgRoleUpdateSync": hs.Cfg.OAuthSkipOrgRoleUpdateSync,
 			"SAMLSkipOrgRoleSync":        hs.Cfg.SectionWithEnvOverrides("auth.saml").Key("skip_org_role_sync").MustBool(false),
 			"LDAPSkipOrgRoleSync":        hs.Cfg.LDAPSkipOrgRoleSync,
+			"GoogleSkipOrgRoleSync":      hs.Cfg.GoogleSkipOrgRoleSync,
+			"JWTAuthSkipOrgRoleSync":     hs.Cfg.JWTAuthSkipOrgRoleSync,
 			"GrafanaComSkipOrgRoleSync":  hs.Cfg.GrafanaComSkipOrgRoleSync,
 			"AzureADSkipOrgRoleSync":     hs.Cfg.AzureADSkipOrgRoleSync,
 			"DisableSyncLock":            hs.Cfg.DisableSyncLock,
