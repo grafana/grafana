@@ -216,6 +216,7 @@ export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, Sta
           currentViewRangeTime={viewRange.time.current}
           topOfViewRef={topOfViewRef}
           focusedSpanIdForSearch={focusedSpanIdForSearch}
+          datasourceType={this.props.datasourceType}
         />
       </div>
     );

@@ -4,8 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
-
+	"github.com/grafana/grafana/pkg/services/live/model"
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,7 +14,7 @@ func TestIntegrationLiveMessage(t *testing.T) {
 	}
 	storage := SetupTestStorage(t)
 
-	getQuery := &models.GetLiveMessageQuery{
+	getQuery := &model.GetLiveMessageQuery{
 		OrgId:   1,
 		Channel: "test_channel",
 	}
@@ -23,7 +22,7 @@ func TestIntegrationLiveMessage(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, ok)
 
-	saveQuery := &models.SaveLiveMessageQuery{
+	saveQuery := &model.SaveLiveMessageQuery{
 		OrgId:   1,
 		Channel: "test_channel",
 		Data:    []byte(`{}`),
@@ -40,7 +39,7 @@ func TestIntegrationLiveMessage(t *testing.T) {
 	require.NotZero(t, msg.Published)
 
 	// try saving again, should be replaced.
-	saveQuery2 := &models.SaveLiveMessageQuery{
+	saveQuery2 := &model.SaveLiveMessageQuery{
 		OrgId:   1,
 		Channel: "test_channel",
 		Data:    []byte(`{"input": "hello"}`),
@@ -48,7 +47,7 @@ func TestIntegrationLiveMessage(t *testing.T) {
 	err = storage.SaveLiveMessage(saveQuery2)
 	require.NoError(t, err)
 
-	getQuery2 := &models.GetLiveMessageQuery{
+	getQuery2 := &model.GetLiveMessageQuery{
 		OrgId:   1,
 		Channel: "test_channel",
 	}

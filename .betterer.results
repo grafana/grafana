@@ -1,5 +1,5 @@
 // BETTERER RESULTS V2.
-// 
+//
 // If this file contains merge conflicts, use `betterer merge` to automatically resolve them:
 // https://phenomnomnominal.github.io/betterer/docs/results-file/#merge
 //
@@ -7,18 +7,6 @@ exports[`no enzyme tests`] = {
   value: `{
     "packages/grafana-ui/src/components/QueryField/QueryField.test.tsx:2976628669": [
       [0, 26, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/jaeger-ui-components/src/TracePageHeader/SpanGraph/ViewingLayer.test.tsx:793800575": [
-      [14, 35, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/ListView/index.test.tsx:3266788928": [
-      [14, 56, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/TimelineHeaderRow/TimelineViewingLayer.test.tsx:3450948735": [
-      [15, 31, 13, "RegExp match", "2409514259"]
-    ],
-    "packages/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView.test.tsx:3891071965": [
-      [13, 42, 13, "RegExp match", "2409514259"]
     ]
   }`
 };
@@ -921,6 +909,10 @@ exports[`better eslint`] = {
     "packages/grafana-runtime/src/analytics/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "packages/grafana-runtime/src/components/DataSourcePicker.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
+    ],
     "packages/grafana-runtime/src/components/PanelRenderer.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -1119,10 +1111,16 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Do not use any type assertions.", "3"]
     ],
+    "packages/grafana-ui/src/components/ConfirmModal/ConfirmModal.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
     "packages/grafana-ui/src/components/DataLinks/DataLinkInput.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+    ],
+    "packages/grafana-ui/src/components/DataLinks/DataLinksContextMenu.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "packages/grafana-ui/src/components/DataSourceSettings/CustomHeadersSettings.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -1134,7 +1132,8 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-ui/src/components/DataSourceSettings/DataSourceHttpSettings.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"]
     ],
     "packages/grafana-ui/src/components/DataSourceSettings/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -1148,6 +1147,28 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-ui/src/components/DateTimePickers/TimeOfDayPicker.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-ui/src/components/DateTimePickers/TimeRangeInput.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
+    "packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker/CalendarHeader.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
+    "packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker/TimePickerCalendar.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
+    "packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker/TimePickerFooter.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
+    "packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker/TimeRangeContent.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"]
+    ],
+    "packages/grafana-ui/src/components/Drawer/Drawer.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"]
     ],
     "packages/grafana-ui/src/components/Dropdown/ButtonSelect.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -1259,6 +1280,10 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/Menu/MenuItem.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "packages/grafana-ui/src/components/Menu/SubMenu.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
+    ],
     "packages/grafana-ui/src/components/Modal/ModalsContext.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
@@ -1266,6 +1291,15 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
+    ],
+    "packages/grafana-ui/src/components/Monaco/CodeEditor.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
+    "packages/grafana-ui/src/components/PageLayout/PageToolbar.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
+    "packages/grafana-ui/src/components/PanelChrome/LoadingIndicator.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "packages/grafana-ui/src/components/PanelChrome/PanelContext.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -1285,7 +1319,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
     "packages/grafana-ui/src/components/QueryField/QueryField.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
     ],
     "packages/grafana-ui/src/components/Segment/Segment.story.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -1494,7 +1529,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "14"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
+      [0, 0, 0, "Do not use any type assertions.", "15"]
     ],
     "packages/grafana-ui/src/components/Tags/Tag.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -1511,6 +1547,13 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+    ],
+    "packages/grafana-ui/src/components/ValuePicker/ValuePicker.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
+    ],
+    "packages/grafana-ui/src/components/VizLegend/VizLegendListItem.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "packages/grafana-ui/src/components/VizLegend/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -2292,8 +2335,15 @@ exports[`better eslint`] = {
     "public/app/core/components/DynamicImports/SafeDynamicImport.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "public/app/core/components/ForgottenPassword/ChangePassword.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
     "public/app/core/components/Login/LoginCtrl.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/core/components/Login/LoginForm.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
     ],
     "public/app/core/components/NavBar/NavBarItem.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -2395,9 +2445,21 @@ exports[`better eslint`] = {
     "public/app/core/components/OptionsUI/strings.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/core/components/PageNew/SectionNavItem.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
     "public/app/core/components/PanelTypeFilter/PanelTypeFilter.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
+    "public/app/core/components/PasswordField/PasswordField.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
+    "public/app/core/components/QueryOperationRow/QueryOperationAction.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
+    "public/app/core/components/Select/FolderPicker.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "public/app/core/components/Select/ReadonlyFolderPicker/api.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -2696,7 +2758,8 @@ exports[`better eslint`] = {
     ],
     "public/app/features/alerting/AlertTab.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"]
     ],
     "public/app/features/alerting/AlertTabCtrl.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -2825,6 +2888,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
+    "public/app/features/alerting/unified/PanelAlertTabContent.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
     "public/app/features/alerting/unified/RuleList.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -2916,6 +2982,9 @@ exports[`better eslint`] = {
     ],
     "public/app/features/alerting/unified/components/rule-editor/RuleInspector.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/features/alerting/unified/components/rule-editor/query-and-alert-condition/QueryAndExpressionsStep.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "public/app/features/alerting/unified/components/rules/RuleDetailsDataSources.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -3085,7 +3154,14 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "7"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "8"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "9"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "10"]
+    ],
+    "public/app/features/dashboard/components/AnnotationSettings/AnnotationSettingsEdit.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "public/app/features/dashboard/components/DashExportModal/DashboardExporter.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -3157,9 +3233,17 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
+    "public/app/features/dashboard/components/PanelEditor/OptionsPane.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
+    "public/app/features/dashboard/components/PanelEditor/OptionsPaneCategory.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
+    ],
     "public/app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"]
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
     "public/app/features/dashboard/components/PanelEditor/OptionsPaneOptions.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -3170,7 +3254,17 @@ exports[`better eslint`] = {
     "public/app/features/dashboard/components/PanelEditor/PanelEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "3"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "4"],
+      [0, 0, 0, "Do not use any type assertions.", "5"]
+    ],
+    "public/app/features/dashboard/components/PanelEditor/VisualizationButton.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
+    ],
+    "public/app/features/dashboard/components/PanelEditor/VisualizationSelectPane.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "public/app/features/dashboard/components/PanelEditor/getFieldOverrideElements.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -3215,6 +3309,10 @@ exports[`better eslint`] = {
     "public/app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "public/app/features/dashboard/components/SaveDashboard/SaveDashboardButton.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
+    ],
     "public/app/features/dashboard/components/SaveDashboard/SaveDashboardErrorProxy.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -3232,7 +3330,15 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
     ],
     "public/app/features/dashboard/components/SaveDashboard/forms/SaveDashboardForm.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "3"]
+    ],
+    "public/app/features/dashboard/components/SaveDashboard/forms/SaveToStorageForm.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"]
     ],
     "public/app/features/dashboard/components/SaveDashboard/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -3265,7 +3371,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/features/dashboard/components/TransformationsEditor/TransformationEditor.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"]
     ],
     "public/app/features/dashboard/components/TransformationsEditor/TransformationOperationRow.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -3273,7 +3381,10 @@ exports[`better eslint`] = {
     ],
     "public/app/features/dashboard/components/TransformationsEditor/TransformationsEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "4"]
     ],
     "public/app/features/dashboard/components/VersionHistory/__mocks__/dashboardHistoryMocks.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -3302,7 +3413,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "4"]
     ],
     "public/app/features/dashboard/containers/SoloPanelPage.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -3326,10 +3438,17 @@ exports[`better eslint`] = {
     "public/app/features/dashboard/dashgrid/LazyLoader.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/features/dashboard/dashgrid/PanelChromeAngular.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
+    "public/app/features/dashboard/dashgrid/PanelHeader/PanelHeaderMenuItem.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
     "public/app/features/dashboard/dashgrid/PanelStateWrapper.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "3"]
     ],
     "public/app/features/dashboard/dashgrid/SeriesVisibilityConfigFactory.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -3606,8 +3725,22 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "11"]
     ],
+    "public/app/features/datasources/components/BasicSettings.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
     "public/app/features/datasources/components/ButtonRow.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"]
+    ],
+    "public/app/features/datasources/components/DataSourceReadOnlyMessage.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
+    "public/app/features/datasources/components/DataSourceTestingStatus.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
+    "public/app/features/datasources/components/DataSourceTypeCard.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "public/app/features/datasources/state/actions.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -3869,17 +4002,26 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "2"],
       [0, 0, 0, "Do not use any type assertions.", "3"]
     ],
+    "public/app/features/inspector/InspectDataTab.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
     "public/app/features/inspector/InspectErrorTab.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/inspector/InspectJSONTab.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
+    "public/app/features/inspector/InspectStatsTab.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "public/app/features/inspector/QueryInspector.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "4"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "5"]
     ],
     "public/app/features/invites/SignupInvited.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -4069,6 +4211,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
+    "public/app/features/panel/components/VizTypePicker/PanelTypeCard.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
     "public/app/features/panel/components/VizTypePicker/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -4115,12 +4260,19 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
+    "public/app/features/playlist/PlaylistForm.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
+    ],
     "public/app/features/playlist/PlaylistSrv.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
+    ],
+    "public/app/features/playlist/PlaylistTableRows.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "public/app/features/plugins/admin/components/AppConfigWrapper.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -4136,8 +4288,14 @@ exports[`better eslint`] = {
     "public/app/features/plugins/admin/components/PluginDetailsBody.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/features/plugins/admin/components/PluginDetailsDisabledError.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
     "public/app/features/plugins/admin/components/PluginDetailsPage.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/features/plugins/admin/components/PluginDetailsSignature.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "public/app/features/plugins/admin/components/SearchField.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -4174,6 +4332,9 @@ exports[`better eslint`] = {
     ],
     "public/app/features/plugins/components/AppRootPage.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/features/plugins/components/PluginsErrorsInfo.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "public/app/features/plugins/datasource_srv.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -4245,21 +4406,37 @@ exports[`better eslint`] = {
     "public/app/features/profile/state/reducers.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "public/app/features/query-library/components/DatasourceTypePicker.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
+    ],
+    "public/app/features/query-library/components/SaveQueryWorkflowModal.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
     "public/app/features/query/components/QueryEditorRow.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"]
+      [0, 0, 0, "Do not use any type assertions.", "3"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "4"]
     ],
     "public/app/features/query/components/QueryEditorRowHeader.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"]
     ],
     "public/app/features/query/components/QueryGroup.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "3"]
     ],
     "public/app/features/query/components/QueryGroupOptions.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/features/query/components/SavedQueryPicker.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
     ],
     "public/app/features/query/state/DashboardQueryRunner/AlertStatesWorker.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -4560,7 +4737,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/transformers/editors/ReduceTransformerEditor.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
     "public/app/features/transformers/editors/SortByTransformerEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -4679,15 +4858,32 @@ exports[`better eslint`] = {
     "public/app/features/variables/datasource/reducer.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/features/variables/editor/LegacyVariableQueryEditor.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
     "public/app/features/variables/editor/VariableEditorContainer.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "public/app/features/variables/editor/VariableEditorEditor.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
+    ],
+    "public/app/features/variables/editor/VariableEditorList.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"]
+    ],
+    "public/app/features/variables/editor/VariableEditorListRow.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "1"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "3"]
     ],
     "public/app/features/variables/editor/VariableSelectField.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/features/variables/editor/VariableValuesPreview.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "public/app/features/variables/editor/getVariableQueryEditor.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -4820,6 +5016,12 @@ exports[`better eslint`] = {
     ],
     "public/app/features/variables/pickers/shared/VariableInput.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/features/variables/pickers/shared/VariableLink.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
+    "public/app/features/variables/pickers/shared/VariableOptions.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "public/app/features/variables/query/QueryVariableEditor.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -5062,9 +5264,6 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/cloud-monitoring/components/MQLQueryEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/plugins/datasource/cloud-monitoring/components/Metrics.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "public/app/plugins/datasource/cloud-monitoring/components/VariableQueryEditor.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
@@ -5158,8 +5357,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/plugins/datasource/cloudwatch/query-runner/CloudWatchLogsQueryRunner.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/plugins/datasource/cloudwatch/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -5725,19 +5923,19 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/plugins/datasource/influxdb/datasource.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Do not use any type assertions.", "6"],
+      [0, 0, 0, "Do not use any type assertions.", "5"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
+      [0, 0, 0, "Do not use any type assertions.", "12"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "15"],
@@ -5747,18 +5945,13 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "19"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "20"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "21"],
-      [0, 0, 0, "Do not use any type assertions.", "22"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "22"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "23"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "24"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "25"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "26"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "27"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "28"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "29"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "30"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "31"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "32"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "33"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "28"]
     ],
     "public/app/plugins/datasource/influxdb/influx_query_model.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -5782,27 +5975,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "18"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "19"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "20"]
-    ],
-    "public/app/plugins/datasource/influxdb/influx_series.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "7"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "8"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "10"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "11"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "12"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "15"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "16"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "17"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "18"]
     ],
     "public/app/plugins/datasource/influxdb/migrations.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -5928,9 +6100,15 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
+    "public/app/plugins/datasource/loki/components/LokiQueryEditor.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
     "public/app/plugins/datasource/loki/components/LokiQueryField.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
+    ],
+    "public/app/plugins/datasource/loki/components/monaco-query-field/MonacoQueryField.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "public/app/plugins/datasource/loki/configuration/ConfigEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -6096,6 +6274,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
+    "public/app/plugins/datasource/prometheus/components/monaco-query-field/MonacoQueryField.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
     "public/app/plugins/datasource/prometheus/configuration/AzureCredentials.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -6125,6 +6306,12 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
+    ],
+    "public/app/plugins/datasource/prometheus/configuration/ExemplarSetting.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
+    "public/app/plugins/datasource/prometheus/configuration/ExemplarsSettings.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "public/app/plugins/datasource/prometheus/configuration/PromSettings.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -6326,10 +6513,13 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/plugins/datasource/prometheus/querybuilder/components/LabelFilterItem.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"]
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"],
+      [0, 0, 0, "Do not use any type assertions.", "3"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "4"],
+      [0, 0, 0, "Do not use any type assertions.", "5"],
+      [0, 0, 0, "Do not use any type assertions.", "6"]
     ],
     "public/app/plugins/datasource/prometheus/querybuilder/components/LabelParamEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -6355,19 +6545,24 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryEditorSelector.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
+    "public/app/plugins/datasource/prometheus/querybuilder/components/PromQueryEditorSelector.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "public/app/plugins/datasource/prometheus/querybuilder/shared/LabelFilterItem.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Do not use any type assertions.", "3"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "3"],
       [0, 0, 0, "Do not use any type assertions.", "4"],
       [0, 0, 0, "Do not use any type assertions.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"],
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "6"],
       [0, 0, 0, "Do not use any type assertions.", "7"],
-      [0, 0, 0, "Do not use any type assertions.", "8"]
+      [0, 0, 0, "Do not use any type assertions.", "8"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "9"],
+      [0, 0, 0, "Do not use any type assertions.", "10"],
+      [0, 0, 0, "Do not use any type assertions.", "11"]
     ],
     "public/app/plugins/datasource/prometheus/querybuilder/shared/LabelFilters.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -6884,7 +7079,8 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "6"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "7"]
     ],
     "public/app/plugins/panel/graph/align_yaxes.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -7321,6 +7517,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
+    "public/app/plugins/panel/piechart/PieChart.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
+    ],
     "public/app/plugins/panel/piechart/migrations.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
@@ -7577,6 +7776,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "15"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "16"]
+    ],
+    "public/app/plugins/panel/timeseries/plugins/ExemplarMarker.tsx:5381": [
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "public/app/plugins/panel/timeseries/plugins/annotations/AnnotationEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]

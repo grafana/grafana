@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/web"
@@ -30,7 +31,7 @@ func (api *Api) ViewPublicDashboard(c *models.ReqContext) response.Response {
 
 	meta := dtos.DashboardMeta{
 		Slug:                       dash.Slug,
-		Type:                       models.DashTypeDB,
+		Type:                       dashboards.DashTypeDB,
 		CanStar:                    false,
 		CanSave:                    false,
 		CanEdit:                    false,
@@ -40,7 +41,7 @@ func (api *Api) ViewPublicDashboard(c *models.ReqContext) response.Response {
 		Updated:                    dash.Updated,
 		Version:                    dash.Version,
 		IsFolder:                   false,
-		FolderId:                   dash.FolderId,
+		FolderId:                   dash.FolderID,
 		PublicDashboardAccessToken: pubdash.AccessToken,
 	}
 	dash.Data.Get("timepicker").Set("hidden", !pubdash.TimeSelectionEnabled)
