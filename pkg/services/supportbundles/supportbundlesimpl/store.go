@@ -31,7 +31,7 @@ type bundleStore interface {
 	Get(ctx context.Context, uid string) (*supportbundles.Bundle, error)
 	List() ([]supportbundles.Bundle, error)
 	Remove(ctx context.Context, uid string) error
-	Update(ctx context.Context, uid string, state supportbundles.State, filePath string) error
+	Update(ctx context.Context, uid string, state supportbundles.State, tarBytes []byte) error
 }
 
 func (s *store) Create(ctx context.Context, usr *user.SignedInUser) (*supportbundles.Bundle, error) {
@@ -54,14 +54,14 @@ func (s *store) Create(ctx context.Context, usr *user.SignedInUser) (*supportbun
 	return &bundle, nil
 }
 
-func (s *store) Update(ctx context.Context, uid string, state supportbundles.State, filePath string) error {
+func (s *store) Update(ctx context.Context, uid string, state supportbundles.State, tarBytes []byte) error {
 	bundle, err := s.Get(ctx, uid)
 	if err != nil {
 		return err
 	}
 
 	bundle.State = state
-	bundle.FilePath = filePath
+	bundle.TarBytes = tarBytes
 
 	return s.set(ctx, bundle)
 }
@@ -101,13 +101,15 @@ func (s *store) List() ([]supportbundles.Bundle, error) {
 		return nil, err
 	}
 
-	var res []supportbundles.Bundle
+	res := make([]supportbundles.Bundle, 0)
 	for _, items := range data {
 		for _, s := range items {
 			var b supportbundles.Bundle
 			if err := json.NewDecoder(strings.NewReader(s)).Decode(&b); err != nil {
 				return nil, err
 			}
+
+			b.TarBytes = nil
 			res = append(res, b)
 		}
 	}

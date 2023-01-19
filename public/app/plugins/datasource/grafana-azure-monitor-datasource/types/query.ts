@@ -92,9 +92,12 @@ export interface AzureMetricQuery {
 export interface AzureLogsQuery {
   query?: string;
   resultFormat?: string;
-  resource?: string;
+  resources?: string[];
 
   workspace?: string;
+
+  /** @deprecated Use resources instead */
+  resource?: string;
 }
 
 /**

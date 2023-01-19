@@ -16,90 +16,98 @@ export interface Props {
   onChange: (update: LokiQuery) => void;
   onRunQuery: () => void;
   datasource: LokiDatasource;
+  maxLines: number;
   app?: CoreApp;
 }
 
-export const LokiQueryBuilderOptions = React.memo<Props>(({ app, query, onChange, onRunQuery, datasource }) => {
-  const onQueryTypeChange = (value: LokiQueryType) => {
-    onChange({ ...query, queryType: value });
-    onRunQuery();
-  };
-
-  const onResolutionChange = (option: SelectableValue<number>) => {
-    reportInteraction('grafana_loki_resolution_clicked', {
-      app,
-      resolution: option.value,
-    });
-    onChange({ ...query, resolution: option.value });
-    onRunQuery();
-  };
-
-  const onLegendFormatChanged = (evt: React.FormEvent<HTMLInputElement>) => {
-    onChange({ ...query, legendFormat: evt.currentTarget.value });
-    onRunQuery();
-  };
-
-  function onMaxLinesChange(e: React.SyntheticEvent<HTMLInputElement>) {
-    const newMaxLines = preprocessMaxLines(e.currentTarget.value);
-    if (query.maxLines !== newMaxLines) {
-      onChange({ ...query, maxLines: newMaxLines });
+export const LokiQueryBuilderOptions = React.memo<Props>(
+  ({ app, query, onChange, onRunQuery, datasource, maxLines }) => {
+    const onQueryTypeChange = (value: LokiQueryType) => {
+      onChange({ ...query, queryType: value });
       onRunQuery();
+    };
+
+    const onResolutionChange = (option: SelectableValue<number>) => {
+      reportInteraction('grafana_loki_resolution_clicked', {
+        app,
+        resolution: option.value,
+      });
+      onChange({ ...query, resolution: option.value });
+      onRunQuery();
+    };
+
+    const onLegendFormatChanged = (evt: React.FormEvent<HTMLInputElement>) => {
+      onChange({ ...query, legendFormat: evt.currentTarget.value });
+      onRunQuery();
+    };
+
+    function onMaxLinesChange(e: React.SyntheticEvent<HTMLInputElement>) {
+      const newMaxLines = preprocessMaxLines(e.currentTarget.value);
+      if (query.maxLines !== newMaxLines) {
+        onChange({ ...query, maxLines: newMaxLines });
+        onRunQuery();
+      }
     }
-  }
 
-  let queryType = query.queryType ?? (query.instant ? LokiQueryType.Instant : LokiQueryType.Range);
-  let showMaxLines = isLogsQuery(query.expr);
+    let queryType = query.queryType ?? (query.instant ? LokiQueryType.Instant : LokiQueryType.Range);
+    let showMaxLines = isLogsQuery(query.expr);
 
-  return (
-    <EditorRow>
-      <QueryOptionGroup
-        title="Options"
-        collapsedInfo={getCollapsedInfo(query, queryType, showMaxLines)}
-        datasource={datasource}
-      >
-        <EditorField
-          label="Legend"
-          tooltip="Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname."
+    return (
+      <EditorRow>
+        <QueryOptionGroup
+          title="Options"
+          collapsedInfo={getCollapsedInfo(query, queryType, showMaxLines, maxLines)}
+          datasource={datasource}
         >
-          <AutoSizeInput
-            placeholder="{{label}}"
-            id="loki-query-editor-legend-format"
-            type="string"
-            minWidth={14}
-            defaultValue={query.legendFormat}
-            onCommitChange={onLegendFormatChanged}
-          />
-        </EditorField>
-        <EditorField label="Type">
-          <RadioButtonGroup options={queryTypeOptions} value={queryType} onChange={onQueryTypeChange} />
-        </EditorField>
-        {showMaxLines && (
-          <EditorField label="Line limit" tooltip="Upper limit for number of log lines returned by query.">
+          <EditorField
+            label="Legend"
+            tooltip="Series name override or template. Ex. {{hostname}} will be replaced with label value for hostname."
+          >
             <AutoSizeInput
-              className="width-4"
-              placeholder="auto"
-              type="number"
-              min={0}
-              defaultValue={query.maxLines?.toString() ?? ''}
-              onCommitChange={onMaxLinesChange}
+              placeholder="{{label}}"
+              id="loki-query-editor-legend-format"
+              type="string"
+              minWidth={14}
+              defaultValue={query.legendFormat}
+              onCommitChange={onLegendFormatChanged}
             />
           </EditorField>
-        )}
-        <EditorField label="Resolution">
-          <Select
-            isSearchable={false}
-            onChange={onResolutionChange}
-            options={RESOLUTION_OPTIONS}
-            value={query.resolution || 1}
-            aria-label="Select resolution"
-          />
-        </EditorField>
-      </QueryOptionGroup>
-    </EditorRow>
-  );
-});
+          <EditorField label="Type">
+            <RadioButtonGroup options={queryTypeOptions} value={queryType} onChange={onQueryTypeChange} />
+          </EditorField>
+          {showMaxLines && (
+            <EditorField label="Line limit" tooltip="Upper limit for number of log lines returned by query.">
+              <AutoSizeInput
+                className="width-4"
+                placeholder={maxLines.toString()}
+                type="number"
+                min={0}
+                defaultValue={query.maxLines?.toString() ?? ''}
+                onCommitChange={onMaxLinesChange}
+              />
+            </EditorField>
+          )}
+          <EditorField label="Resolution">
+            <Select
+              isSearchable={false}
+              onChange={onResolutionChange}
+              options={RESOLUTION_OPTIONS}
+              value={query.resolution || 1}
+              aria-label="Select resolution"
+            />
+          </EditorField>
+        </QueryOptionGroup>
+      </EditorRow>
+    );
+  }
+);
 
-function getCollapsedInfo(query: LokiQuery, queryType: LokiQueryType, showMaxLines: boolean): string[] {
+function getCollapsedInfo(
+  query: LokiQuery,
+  queryType: LokiQueryType,
+  showMaxLines: boolean,
+  maxLines: number
+): string[] {
   const queryTypeLabel = queryTypeOptions.find((x) => x.value === queryType);
   const resolutionLabel = RESOLUTION_OPTIONS.find((x) => x.value === (query.resolution ?? 1));
 
@@ -115,8 +123,8 @@ function getCollapsedInfo(query: LokiQuery, queryType: LokiQueryType, showMaxLin
 
   items.push(`Type: ${queryTypeLabel?.label}`);
 
-  if (showMaxLines && query.maxLines) {
-    items.push(`Line limit: ${query.maxLines}`);
+  if (showMaxLines) {
+    items.push(`Line limit: ${query.maxLines ?? maxLines}`);
   }
 
   return items;

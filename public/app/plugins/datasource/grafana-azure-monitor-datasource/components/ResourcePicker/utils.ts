@@ -3,6 +3,7 @@ import produce from 'immer';
 import { getTemplateSrv } from '@grafana/runtime';
 
 import UrlBuilder from '../../azure_monitor/url_builder';
+import { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
 import { AzureMetricResource, AzureMonitorQuery } from '../../types';
 
 import { ResourceRow, ResourceRowGroup } from './types';
@@ -43,6 +44,12 @@ export function parseResourceURI(resourceURI: string): AzureMetricResource {
   return { subscription, resourceGroup, metricNamespace, resourceName };
 }
 
+export function parseMultipleResourceDetails(resources: Array<string | AzureMetricResource>, location?: string) {
+  return resources.map((resource) => {
+    return parseResourceDetails(resource, location);
+  });
+}
+
 export function parseResourceDetails(resource: string | AzureMetricResource, location?: string) {
   if (typeof resource === 'string') {
     const res = parseResourceURI(resource);
@@ -52,6 +59,10 @@ export function parseResourceDetails(resource: string | AzureMetricResource, loc
     return res;
   }
   return resource;
+}
+
+export function resourcesToStrings(resources: Array<string | AzureMetricResource>) {
+  return resources.map((resource) => resourceToString(resource));
 }
 
 export function resourceToString(resource?: string | AzureMetricResource) {
@@ -82,7 +93,7 @@ function compareNamespaceAndName(
   return rowNamespace === resourceNamespace && rowName === resourceName;
 }
 
-function matchURI(rowURI: string, resourceURI: string) {
+export function matchURI(rowURI: string, resourceURI: string) {
   const targetParams = parseResourceDetails(resourceURI);
   const rowParams = parseResourceDetails(rowURI);
 
@@ -96,6 +107,17 @@ function matchURI(rowURI: string, resourceURI: string) {
       targetParams?.resourceName
     )
   );
+}
+
+export function findRows(rows: ResourceRowGroup, uris: string[]): ResourceRow[] {
+  const result: ResourceRow[] = [];
+  uris.forEach((uri) => {
+    const row = findRow(rows, uri);
+    if (row) {
+      result.push(row);
+    }
+  });
+  return result;
 }
 
 export function findRow(rows: ResourceRowGroup, uri: string): ResourceRow | undefined {
@@ -132,26 +154,31 @@ export function addResources(rows: ResourceRowGroup, targetParentId: string, new
   });
 }
 
-export function setResource(query: AzureMonitorQuery, resource?: string | AzureMetricResource): AzureMonitorQuery {
-  if (typeof resource === 'string') {
+export function setResources(
+  query: AzureMonitorQuery,
+  type: ResourcePickerQueryType,
+  resources: Array<string | AzureMetricResource>
+): AzureMonitorQuery {
+  if (type === 'logs') {
     // Resource URI for LogAnalytics
     return {
       ...query,
       azureLogAnalytics: {
         ...query.azureLogAnalytics,
-        resource,
+        resources: resourcesToStrings(resources),
       },
     };
   }
   // Resource object for metrics
+  const parsedResource = resources.length ? parseResourceDetails(resources[0]) : {};
   return {
     ...query,
-    subscription: resource?.subscription,
+    subscription: parsedResource.subscription,
     azureMonitor: {
       ...query.azureMonitor,
-      metricNamespace: resource?.metricNamespace?.toLocaleLowerCase(),
-      region: resource?.region,
-      resources: [{ resourceGroup: resource?.resourceGroup, resourceName: resource?.resourceName }],
+      metricNamespace: parsedResource.metricNamespace?.toLocaleLowerCase(),
+      region: parsedResource.region,
+      resources: parseMultipleResourceDetails(resources),
       metricName: undefined,
       aggregation: undefined,
       timeGrain: '',
