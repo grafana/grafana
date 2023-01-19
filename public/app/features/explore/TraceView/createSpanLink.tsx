@@ -9,7 +9,6 @@ import {
   DataSourceJsonData,
   dateTime,
   Field,
-  KeyValue,
   LinkModel,
   mapInternalLinkToExplore,
   rangeUtil,
@@ -26,7 +25,7 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
-import { getFieldLinksForExplore } from '../utils/links';
+import { dataLinkHasAllVariablesDefined, getFieldLinksForExplore } from '../utils/links';
 
 /**
  * This is a factory for the link creator. It returns the function mainly so it can return undefined in which case
@@ -150,6 +149,8 @@ function legacyCreateSpanLinkFactory(
           break;
       }
 
+      // query can be false in case the simple UI tag mapping is used but none of them are present in the span.
+      // For custom query, this is always defined and we check if the interpolation matched all variables later on.
       if (query) {
         const dataLink: DataLink = {
           title: logsDataSourceSettings.name,
@@ -169,34 +170,38 @@ function legacyCreateSpanLinkFactory(
           },
         };
 
-        const link = mapInternalLinkToExplore({
-          link: dataLink,
-          internalLink: dataLink.internal!,
-          scopedVars: scopedVars,
-          range: getTimeRangeFromSpan(
-            span,
-            {
-              startMs: traceToLogsOptions.spanStartTimeShift
-                ? rangeUtil.intervalToMs(traceToLogsOptions.spanStartTimeShift)
-                : 0,
-              endMs: traceToLogsOptions.spanEndTimeShift
-                ? rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift)
-                : 0,
-            },
-            isSplunkDS
-          ),
-          field: {} as Field,
-          onClickFn: splitOpenFn,
-          replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
-        });
+        // Check if all variables are defined and don't show if they aren't. This is usually handled by the
+        // getQueryFor* functions but this is for case of custom query supplied by the user.
+        if (dataLinkHasAllVariablesDefined(dataLink, scopedVars)) {
+          const link = mapInternalLinkToExplore({
+            link: dataLink,
+            internalLink: dataLink.internal!,
+            scopedVars: scopedVars,
+            range: getTimeRangeFromSpan(
+              span,
+              {
+                startMs: traceToLogsOptions.spanStartTimeShift
+                  ? rangeUtil.intervalToMs(traceToLogsOptions.spanStartTimeShift)
+                  : 0,
+                endMs: traceToLogsOptions.spanEndTimeShift
+                  ? rangeUtil.intervalToMs(traceToLogsOptions.spanEndTimeShift)
+                  : 0,
+              },
+              isSplunkDS
+            ),
+            field: {} as Field,
+            onClickFn: splitOpenFn,
+            replaceVariables: getTemplateSrv().replace.bind(getTemplateSrv()),
+          });
 
-        links.logLinks = [
-          {
-            href: link.href,
-            onClick: link.onClick,
-            content: <Icon name="gf-logs" title="Explore the logs for this in split view" />,
-          },
-        ];
+          links.logLinks = [
+            {
+              href: link.href,
+              onClick: link.onClick,
+              content: <Icon name="gf-logs" title="Explore the logs for this in split view" />,
+            },
+          ];
+        }
       }
     }
 
@@ -204,7 +209,7 @@ function legacyCreateSpanLinkFactory(
     if (metricsDataSourceSettings && traceToMetricsOptions?.queries) {
       links.metricLinks = [];
       for (const query of traceToMetricsOptions.queries) {
-        const expr = buildMetricsQuery(query, traceToMetricsOptions?.tags, span);
+        const expr = buildMetricsQuery(query, traceToMetricsOptions?.tags || [], span);
         const dataLink: DataLink<PromQuery> = {
           title: metricsDataSourceSettings.name,
           url: '',
@@ -383,14 +388,14 @@ function getQueryForSplunk(span: TraceSpan, options: TraceToLogsOptionsV2, tags:
  */
 function getFormattedTags(
   span: TraceSpan,
-  tags: Array<KeyValue<string>>,
+  tags: Array<{ key: string; value?: string }>,
   { labelValueSign = '=', joinBy = ', ' }: { labelValueSign?: string; joinBy?: string } = {}
 ) {
   // In order, try to use mapped tags -> tags -> default tags
   // Build tag portion of query
   return [...span.process.tags, ...span.tags]
     .map((tag) => {
-      const keyValue = tags.find((keyValue: KeyValue) => keyValue.key === tag.key);
+      const keyValue = tags.find((keyValue) => keyValue.key === tag.key);
       if (keyValue) {
         return `${keyValue.value ? keyValue.value : keyValue.key}${labelValueSign}"${tag.value}"`;
       }
@@ -436,7 +441,11 @@ function getTimeRangeFromSpan(
 }
 
 // Interpolates span attributes into trace to metric query, or returns default query
-function buildMetricsQuery(query: TraceToMetricQuery, tags: Array<KeyValue<string>> = [], span: TraceSpan): string {
+function buildMetricsQuery(
+  query: TraceToMetricQuery,
+  tags: Array<{ key: string; value?: string }> = [],
+  span: TraceSpan
+): string {
   if (!query.query) {
     return `histogram_quantile(0.5, sum(rate(tempo_spanmetrics_latency_bucket{operation="${span.operationName}"}[5m])) by (le))`;
   }

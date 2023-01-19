@@ -23,7 +23,13 @@ const dataLinkHasRequiredPermissions = (link: DataLink) => {
   return !link.internal || contextSrv.hasAccessToExplore();
 };
 
-const dataLinkHasAllVariablesDefined = (link: DataLink, scopedVars: ScopedVars) => {
+/**
+ * Check if every variable in the link has a value. If not this returns false. If there are no variables in the link
+ * this will return true.
+ * @param link
+ * @param scopedVars
+ */
+export const dataLinkHasAllVariablesDefined = (link: DataLink, scopedVars: ScopedVars) => {
   let hasAllRequiredVarDefined = true;
 
   if (link.internal) {

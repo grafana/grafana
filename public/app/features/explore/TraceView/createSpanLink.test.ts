@@ -808,6 +808,17 @@ describe('createSpanLinkFactory', () => {
           JSON.stringify([{ expr: '{service="serviceName", pod="podName"} |="serviceName" |="trace1"', refId: '' }])
       );
     });
+
+    it('does not return a link if variables are not matched', () => {
+      const createLink = setupSpanLinkFactory({
+        tags: [{ key: 'service.name', value: 'service' }],
+        customQuery: true,
+        query: '{${__tags}} |="${__span.tags["service.name"]}" |="${__trace.id}"',
+      });
+      expect(createLink).toBeDefined();
+      const links = createLink!(createTraceSpan());
+      expect(links?.logLinks).toBeUndefined();
+    });
   });
 });
 
