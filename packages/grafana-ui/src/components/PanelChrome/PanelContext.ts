@@ -10,6 +10,8 @@ import {
   CoreApp,
 } from '@grafana/data';
 
+import { AdHocFilterItem } from '../Table/types';
+
 import { SeriesVisibilityChangeMode } from '.';
 
 /** @alpha */
@@ -37,6 +39,11 @@ export interface PanelContext {
   onAnnotationCreate?: (annotation: AnnotationEventUIModel) => void;
   onAnnotationUpdate?: (annotation: AnnotationEventUIModel) => void;
   onAnnotationDelete?: (id: string) => void;
+
+  /**
+   * Used from visualizations like Table to add ad-hoc filters from cell values
+   */
+  onAddAdHocFilter?: (item: AdHocFilterItem) => void;
 
   /**
    * Enables modifying thresholds directly from the panel
