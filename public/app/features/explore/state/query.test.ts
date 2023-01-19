@@ -305,7 +305,32 @@ describe('reducer', () => {
       });
     });
     describe('addQueryRow with mixed datasources disabled', () => {
-      it('should add query row', async () => {
+      it('should add query row when there is not yet a row', async () => {
+        const exploreId = ExploreId.left;
+        let dispatch: ThunkDispatch, getState: () => StoreState;
+
+        const store: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
+          ...defaultInitialState,
+          explore: {
+            [exploreId]: {
+              ...defaultInitialState.explore[exploreId],
+              queries: [],
+            },
+          },
+        } as unknown as Partial<StoreState>);
+
+        dispatch = store.dispatch;
+        getState = store.getState;
+
+        setupQueryResponse(getState());
+
+        await dispatch(addQueryRow(exploreId, 1));
+
+        expect(getState().explore[exploreId].queries).toHaveLength(1);
+        expect(getState().explore[exploreId].queryKeys).toEqual(['ds1-0']);
+      });
+
+      it('should add query row if there is one row already', async () => {
         const exploreId = ExploreId.left;
         let dispatch: ThunkDispatch, getState: () => StoreState;
 
@@ -316,7 +341,7 @@ describe('reducer', () => {
               ...defaultInitialState.explore[exploreId],
               queries: [
                 {
-                  datasource: { type: 'postgres', uid: 'ds1' },
+                  datasource: { type: 'postgres', uid: 'ds3' },
                   refId: 'C',
                 },
               ],
@@ -332,7 +357,7 @@ describe('reducer', () => {
         await dispatch(addQueryRow(exploreId, 1));
 
         expect(getState().explore[exploreId].queries).toHaveLength(2);
-        expect(getState().explore[exploreId].queryKeys).toEqual(['ds1-0', 'ds1-1']);
+        expect(getState().explore[exploreId].queryKeys).toEqual(['ds3-0', 'ds1-1']);
       });
     });
   });
