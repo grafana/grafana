@@ -37,11 +37,14 @@ type Token struct {
 	ReportedAt string `json:"reported_at"` //nolint
 }
 
-var ErrInvalidStatusCode = errors.New("invalid status code")
+var (
+	ErrInvalidStatusCode = errors.New("invalid status code")
+	errSecretScanURL     = errors.New("secretscan url must be https")
+)
 
 func newClient(url, version string, dev bool) (*client, error) {
 	if !strings.HasPrefix(url, "https://") && !dev {
-		return nil, errors.New("secretscan url must be https")
+		return nil, errSecretScanURL
 	}
 
 	return &client{

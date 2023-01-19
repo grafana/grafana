@@ -15,6 +15,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+var errWebHookURL = errors.New("webhook url must be https")
+
 // webHookClient is a client for sending leak notifications.
 type webHookClient struct {
 	httpClient *http.Client
@@ -26,7 +28,7 @@ var ErrInvalidWebHookStatusCode = errors.New("invalid webhook status code")
 
 func newWebHookClient(url, version string, dev bool) (*webHookClient, error) {
 	if !strings.HasPrefix(url, "https://") && !dev {
-		return nil, errors.New("webhook url must be https")
+		return nil, errWebHookURL
 	}
 
 	return &webHookClient{
