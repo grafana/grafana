@@ -108,6 +108,9 @@ func (h *HTTP) fetchPlugin(path string) (plugins.JSONData, error) {
 		return plugins.JSONData{}, errSkipPlugin
 	}
 
+	// It's safe to ignore gosec warning G107 since the path comes from the Grafana configuration and is also
+	// suffixed above with "plugin.json"
+	// nolint:gosec
 	resp, err := http.Get(u)
 	if err != nil {
 		h.log.Warn("Error occurred when fetching plugin.json", "path", path, "err", err)
