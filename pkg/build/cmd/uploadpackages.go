@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/grafana/grafana/pkg/build/droneutil"
 	"log"
 	"os"
 	"os/exec"
@@ -100,6 +101,19 @@ func UploadPackages(c *cli.Context) error {
 		} else {
 			return fmt.Errorf("enterprise2 bucket var doesn't exist")
 		}
+	}
+
+	// Corner case for custom enterprise2 mode
+	event, err := droneutil.GetDroneEventFromEnv()
+	if err != nil {
+		return err
+	}
+	if event == config.Custom && cfg.edition == config.EditionEnterprise2 {
+		buildConfig, err := config.GetBuildConfig(config.ReleaseBranchMode)
+		if err != nil {
+			return err
+		}
+		cfg.Bucket = buildConfig.Buckets.ArtifactsEnterprise2
 	}
 
 	if err := uploadPackages(cfg); err != nil {
