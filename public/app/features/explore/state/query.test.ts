@@ -330,7 +330,7 @@ describe('reducer', () => {
 
         await dispatch(addQueryRow(exploreId, 1));
 
-        expect(getState().explore[exploreId].datasourceInstance.meta.id).toBe('postgres');
+        expect(getState().explore[exploreId].datasourceInstance?.meta?.id).toBe('postgres');
         expect(getState().explore[exploreId].queries).toHaveLength(1);
         expect(getState().explore[exploreId].queryKeys).toEqual(['ds1-0']);
       });
@@ -372,7 +372,7 @@ describe('reducer', () => {
 
         await dispatch(addQueryRow(exploreId, 1));
 
-        expect(getState().explore[exploreId].datasourceInstance.meta.id).toBe('loki');
+        expect(getState().explore[exploreId].datasourceInstance?.meta?.id).toBe('loki');
         expect(getState().explore[exploreId].queries).toHaveLength(3);
         expect(getState().explore[exploreId].queryKeys).toEqual(['ds3-0', 'ds4-1', 'ds4-2']);
       });
@@ -410,9 +410,9 @@ describe('reducer', () => {
 
         await dispatch(addQueryRow(exploreId, 1));
 
-        expect(getState().explore[exploreId].datasourceInstance.meta.id).toBe('mixed');
+        expect(getState().explore[exploreId].datasourceInstance?.meta?.id).toBe('mixed');
         expect(getState().explore[exploreId].queries).toHaveLength(1);
-        expect(getState().explore[exploreId].queries[0].datasource.type).toBe('postgres');
+        expect(getState().explore[exploreId].queries[0]?.datasource?.type).toBe('postgres');
         expect(getState().explore[exploreId].queryKeys).toEqual(['ds1-0']);
       });
 
@@ -453,9 +453,9 @@ describe('reducer', () => {
 
         await dispatch(addQueryRow(exploreId, 1));
 
-        expect(getState().explore[exploreId].datasourceInstance.meta.id).toBe('postgres');
+        expect(getState().explore[exploreId].datasourceInstance?.meta?.id).toBe('postgres');
         expect(getState().explore[exploreId].queries).toHaveLength(3);
-        expect(getState().explore[exploreId].queries[2].datasource.type).toBe('loki');
+        expect(getState().explore[exploreId].queries[2]?.datasource?.type).toBe('loki');
         expect(getState().explore[exploreId].queryKeys).toEqual(['ds3-0', 'ds4-1', 'ds4-2']);
       });
     });
