@@ -5,22 +5,30 @@ import { useToggle } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Icon, useStyles2 } from '@grafana/ui';
+import { QueryStats } from 'app/plugins/datasource/loki/components/types';
 
 export interface Props {
   title: string;
   collapsedInfo: string[];
   children: React.ReactNode;
+  queryStats?: QueryStats;
   datasource?: any;
 }
 
-export function QueryOptionGroup({ title, children, collapsedInfo, datasource }: Props) {
+export function QueryOptionGroup({ title, children, collapsedInfo, queryStats, datasource }: Props) {
   const [isOpen, toggleOpen] = useToggle(false);
+  const styles = useStyles2(getStyles(queryStats?.bytes));
 
-  // this will determine the color of the query size indicator
-  // 0/1 is a temporary placeholder until we have a discussion about the threshold
-  const querySizeInBytes = 0;
+  const bytesToUnit = (bytes: number) => {
+    let units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+    let i = 0;
 
-  const styles = useStyles2(getStyles(querySizeInBytes));
+    for (i; bytes > 1024; i++) {
+      bytes /= 1024;
+    }
+
+    return bytes.toFixed(1) + ' ' + units[i];
+  };
 
   return (
     <div className={styles.wrapper}>
@@ -40,15 +48,14 @@ export function QueryOptionGroup({ title, children, collapsedInfo, datasource }:
         </div>
         {isOpen && <div className={styles.body}>{children}</div>}
       </Stack>
-      {datasource?.type === 'loki' && (
-        // this message will only display after the api request to get the query size
-        <p className={styles.sizeIndicator}>This query will process approximately X units.</p>
-      )}
+      {datasource?.type === 'loki' && queryStats?.bytes ? (
+        <p className={styles.sizeIndicator}>This query will process approximately {bytesToUnit(queryStats?.bytes)}.</p>
+      ) : null}
     </div>
   );
 }
 
-const getStyles = (querySizeInBytes: number) => (theme: GrafanaTheme2) => {
+const getStyles = (querySizeInBytes?: number) => (theme: GrafanaTheme2) => {
   return {
     wrapper: css({
       width: '100%',
@@ -99,8 +106,7 @@ const getStyles = (querySizeInBytes: number) => (theme: GrafanaTheme2) => {
     }),
     sizeIndicator: css({
       margin: '0px',
-      // we need to have a discussion here to decide on a byte threshold before we change the color
-      color: querySizeInBytes > 0 ? '#FF5286' : '#6CCF8E',
+      color: querySizeInBytes! > 50000 ? '#FF5286' : '#6CCF8E',
       fontSize: theme.typography.bodySmall.fontSize,
     }),
   };
