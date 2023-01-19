@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
+import config from 'app/core/config';
+
 import createMockDatasource from '../../__mocks__/datasource';
 import { createMockInstanceSetttings } from '../../__mocks__/instanceSettings';
 import createMockPanelData from '../../__mocks__/panelData';
@@ -30,6 +32,10 @@ const variableOptionGroup = {
   label: 'Template variables',
   options: [],
 };
+
+beforeEach(() => {
+  config.featureToggles.azureMultipleResourcePicker = true;
+});
 
 export function createMockResourcePickerData() {
   const mockDatasource = createMockDatasource();
@@ -163,6 +169,68 @@ describe('MetricsQueryEditor', () => {
             expect.objectContaining({
               resourceGroup: 'dev-3',
               resourceName: 'web-server',
+            }),
+          ],
+        }),
+      })
+    );
+  });
+
+  it('should select multiple resources', async () => {
+    const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
+    const query = createMockQuery();
+    delete query?.subscription;
+    delete query?.azureMonitor?.resources;
+    delete query?.azureMonitor?.metricNamespace;
+    const onChange = jest.fn();
+
+    render(
+      <MetricsQueryEditor
+        data={mockPanelData}
+        query={query}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={onChange}
+        setError={() => {}}
+      />
+    );
+
+    const resourcePickerButton = await screen.findByRole('button', { name: 'Select a resource' });
+    resourcePickerButton.click();
+
+    const subscriptionButton = await screen.findByRole('button', { name: 'Expand Primary Subscription' });
+    subscriptionButton.click();
+
+    const resourceGroupButton = await screen.findByRole('button', { name: 'Expand A Great Resource Group' });
+    resourceGroupButton.click();
+
+    const checkbox = await screen.findByLabelText('web-server');
+    await userEvent.click(checkbox);
+    expect(checkbox).toBeChecked();
+
+    // it should disable other resource types
+    expect(await screen.findByLabelText('web-server_DataDisk')).toBeDisabled();
+
+    const checkbox2 = await screen.findByLabelText('db-server');
+    await userEvent.click(checkbox2);
+    expect(checkbox2).toBeChecked();
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Apply' }));
+
+    expect(onChange).toBeCalledTimes(1);
+    expect(onChange).toBeCalledWith(
+      expect.objectContaining({
+        subscription: 'def-456',
+        azureMonitor: expect.objectContaining({
+          metricNamespace: 'microsoft.compute/virtualmachines',
+          resources: [
+            expect.objectContaining({
+              resourceGroup: 'dev-3',
+              resourceName: 'web-server',
+            }),
+            expect.objectContaining({
+              resourceGroup: 'dev-3',
+              resourceName: 'db-server',
             }),
           ],
         }),
