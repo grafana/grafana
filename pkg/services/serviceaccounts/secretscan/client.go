@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -38,7 +39,11 @@ type Token struct {
 
 var ErrInvalidStatusCode = errors.New("invalid status code")
 
-func newClient(url, version string) (*client, error) {
+func newClient(url, version string, dev bool) (*client, error) {
+	if !strings.HasPrefix(url, "https://") && !dev {
+		return nil, errors.New("secretscan url must be https")
+	}
+
 	return &client{
 		version: version,
 		baseURL: url,

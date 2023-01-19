@@ -46,7 +46,7 @@ func NewService(store SATokenRetriever, cfg *setting.Cfg) (*Service, error) {
 	oncallURL := cfg.SectionWithEnvOverrides("secretscan").Key("oncall_url").MustString("")
 	revoke := cfg.SectionWithEnvOverrides("secretscan").Key("revoke").MustBool(true)
 
-	client, err := newClient(secretscanBaseURL, cfg.BuildVersion)
+	client, err := newClient(secretscanBaseURL, cfg.BuildVersion, cfg.Env == setting.Dev)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create secretscan client: %w", err)
 	}
@@ -54,7 +54,7 @@ func NewService(store SATokenRetriever, cfg *setting.Cfg) (*Service, error) {
 	var webHookClient WebHookClient
 	if oncallURL != "" {
 		var errWebhook error
-		webHookClient, errWebhook = newWebHookClient(oncallURL, cfg.BuildVersion)
+		webHookClient, errWebhook = newWebHookClient(oncallURL, cfg.BuildVersion, cfg.Env == setting.Dev)
 		if errWebhook != nil {
 			return nil, fmt.Errorf("failed to create secretscan webhook client: %w", errWebhook)
 		}

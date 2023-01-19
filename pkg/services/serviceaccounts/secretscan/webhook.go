@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -23,7 +24,11 @@ type webHookClient struct {
 
 var ErrInvalidWebHookStatusCode = errors.New("invalid webhook status code")
 
-func newWebHookClient(url, version string) (*webHookClient, error) {
+func newWebHookClient(url, version string, dev bool) (*webHookClient, error) {
+	if !strings.HasPrefix(url, "https://") && !dev {
+		return nil, errors.New("webhook url must be https")
+	}
+
 	return &webHookClient{
 		version: version,
 		url:     url,
