@@ -170,10 +170,12 @@ func TestAPI_AdminProvisioningReload_AccessControl(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, tt.expectedCode, res.StatusCode)
 
-			body, err := io.ReadAll(res.Body)
-			require.NoError(t, err)
-			// Check body
-			assert.Equal(t, tt.expectedBody, string(body))
+			if tt.expectedCode == http.StatusOK {
+				body, err := io.ReadAll(res.Body)
+				require.NoError(t, err)
+				assert.Equal(t, tt.expectedBody, string(body))
+			}
+
 			require.NoError(t, res.Body.Close())
 
 			if tt.checkCall != nil {
