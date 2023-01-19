@@ -1,6 +1,8 @@
 // Libraries
 import React from 'react';
 
+import { SceneCanvasText, SceneFlexLayout } from '@grafana/scenes';
+
 import { SceneApp, SceneAppDrilldownView, SceneAppPage, SceneRouteMatch } from '../components/app/SceneApp';
 
 import {
@@ -82,8 +84,35 @@ export function getDrilldownPageScene(match: SceneRouteMatch<{ handler: string; 
         url: baseUrl + '/logs',
         getScene: () => getHandlerLogsScene(handler),
         preserveUrlKeys: ['from', 'to', 'var-instance'],
+        drilldowns: [
+          new SceneAppDrilldownView({
+            routePath: '/scenes/grafana-monitoring/handlers/:handler/logs/:drilldown',
+            getPage: getHandlerDrilldown,
+          }),
+        ],
       }),
     ],
+  });
+}
+
+export function getHandlerDrilldown(match: SceneRouteMatch<{ handler: string; drilldown: string }>) {
+  const handler = decodeURIComponent(match.params.handler);
+  const drilldown = decodeURIComponent(match.params.drilldown);
+  const baseUrl = `/scenes/grafana-monitoring/handlers/${encodeURIComponent(handler)}/logs/${drilldown}`;
+
+  return new SceneAppPage({
+    title: handler + ' ' + drilldown,
+    subTitle: 'A grafana http handler is responsible for service a specific API request',
+    url: baseUrl,
+    getScene: () => {
+      return new SceneFlexLayout({
+        children: [
+          new SceneCanvasText({
+            text: 'Drilldown: ' + drilldown,
+          }),
+        ],
+      });
+    },
   });
 }
 

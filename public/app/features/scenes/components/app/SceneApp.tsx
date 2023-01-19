@@ -25,42 +25,40 @@ export interface SceneAppRoute {
 }
 
 export class SceneApp extends SceneObjectBase<SceneAppState> {
-  private collectRoutes(pages: SceneAppPage[], routes: SceneAppRoute[]) {
-    for (const page of pages) {
-      const { tabs, drilldowns } = page.state;
+  // private collectRoutes(pages: SceneAppPage[], routes: SceneAppRoute[]) {
+  //   for (const page of pages) {
+  //     const { tabs, drilldowns } = page.state;
 
-      if (tabs) {
-        this.collectRoutes(tabs, routes);
-      }
+  //     if (tabs) {
+  //       this.collectRoutes(tabs, routes);
+  //     }
 
-      if (drilldowns) {
-        for (const drilldown of drilldowns) {
-          routes.push({
-            path: drilldown.state.routePath,
-            drilldown,
-          });
-        }
-      }
+  //     if (drilldowns) {
+  //       for (const drilldown of drilldowns) {
+  //         routes.push({
+  //           path: drilldown.state.routePath,
+  //           drilldown,
+  //         });
+  //       }
+  //     }
 
-      routes.push({
-        path: page.state.url,
-        page,
-      });
-    }
+  //     routes.push({
+  //       path: page.state.url,
+  //       page,
+  //     });
+  //   }
 
-    return routes;
-  }
+  //   return routes;
+  // }
 
   public static Component = ({ model }: SceneComponentProps<SceneApp>) => {
     const { pages } = model.useState();
-    const routes = model.collectRoutes(pages, []);
 
     return (
       <Switch>
-        {routes.map((route) => (
-          <Route key={route.path} exact={true} path={route.path}>
-            {route.page && <route.page.Component model={route.page} />}
-            {route.drilldown && <route.drilldown.Component model={route.drilldown} />}
+        {pages.map((page) => (
+          <Route key={page.state.url} exact={false} path={page.state.url}>
+            {page && <page.Component model={page} />}
           </Route>
         ))}
       </Switch>
@@ -90,24 +88,50 @@ export class SceneAppDrilldownView extends SceneObjectBase<SceneAppDrilldownView
     const { getPage } = model.useState();
     const routeMatch = useRouteMatch();
     const scene = getPage(routeMatch, model.parent!);
+    console.log('drilldown!');
     return <scene.Component model={scene} />;
   };
 }
 
 export class SceneAppPage extends SceneObjectBase<SceneAppPageState> {
   public static Component = ({ model }: SceneComponentProps<SceneAppPage>) => {
-    const { title, subTitle, drilldownParent, tabs } = model.state;
+    const { title, subTitle, drilldownParent, tabs, drilldowns } = model.state;
 
-    const params = useAppQueryParams();
+    if (tabs) {
+      const routes: React.ReactNode[] = [];
+
+      for (const page of tabs) {
+        routes.push(
+          <Route key={page.state.url} exact={true} path={page.state.url}>
+            <page.Component model={page} />
+          </Route>
+        );
+
+        if (page.state.drilldowns) {
+          for (const drilldown of page.state.drilldowns) {
+            console.log('registering drilldown route', drilldown.state.routePath);
+            routes.push(
+              <Route key={drilldown.state.routePath} exact={false} path={drilldown.state.routePath}>
+                <drilldown.Component model={drilldown} />
+              </Route>
+            );
+          }
+        }
+      }
+
+      return <Switch>{routes}</Switch>;
+    }
+
     const routeMatch = useRouteMatch();
+    const scene = model.state.getScene(routeMatch);
+
+    console.log('rendering page!', model.state.url);
 
     // if parent is a SceneAppPage we are a tab
     if (model.parent instanceof SceneAppPage) {
-      const scene = model.state.getScene(routeMatch);
-
       return (
         <PageRenderer
-          page={model}
+          page={model.parent}
           scene={scene}
           parent={model.parent}
           activeTab={model}
@@ -116,11 +140,7 @@ export class SceneAppPage extends SceneObjectBase<SceneAppPageState> {
       );
     }
 
-    if (drilldownParent) {
-      if (tabs) {
-        const activeTab = tabs.find((tab) => tab.url === routeMatch.url);
-      }
-    }
+    return <PageRenderer page={model} scene={scene} parent={drilldownParent || model} />;
   };
 }
 

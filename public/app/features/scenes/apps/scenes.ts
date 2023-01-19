@@ -13,6 +13,7 @@ import {
   SceneVariableSet,
   QueryVariable,
   SceneControlsSpacer,
+  SceneCanvasText,
 } from '@grafana/scenes';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
@@ -427,6 +428,17 @@ export function getHandlerLogsScene(handler: string): EmbeddedScene {
     body: new SceneFlexLayout({
       direction: 'column',
       children: [
+        new VizPanel({
+          pluginId: 'text',
+          title: '',
+          options: {
+            mode: 'markdown',
+            content: `
+[mupp](/scenes/grafana-monitoring/handlers/${encodeURIComponent(handler)}/logs/mupp)
+[mapp](/scenes/grafana-monitoring/handlers/${encodeURIComponent(handler)}/logs/mapp)
+`,
+          },
+        }),
         new VizPanel({
           $data: logsQuery,
           pluginId: 'logs',
