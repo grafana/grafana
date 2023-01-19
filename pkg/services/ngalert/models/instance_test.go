@@ -48,7 +48,7 @@ func TestInstanceStateType_IsValid(t *testing.T) {
 
 func buildTestInstanceStateTypeIsValidName(instanceType InstanceStateType, expectedValidity bool) string {
 	if expectedValidity {
-		return fmt.Sprintf("\"%s\" should be valid", instanceType)
+		return fmt.Sprintf("%q should be valid", instanceType)
 	}
 	return fmt.Sprintf("\"%s\" should not be valid", instanceType)
 }
