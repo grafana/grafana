@@ -68,10 +68,9 @@ jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   }),
 }));
 
-// TODO: need to be used in line 98, occasionally change for my tests
-// const featToggles = {
-//   exploreMixedDatasource: false,
-// };
+const useFeatToggles = {
+  exploreMixedDatasource: false,
+};
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -84,9 +83,7 @@ jest.mock('@grafana/runtime', () => ({
     };
   },
   config: {
-    featureToggles: {
-      exploreMixedDatasource: false,
-    },
+    featureToggles: () => useFeatToggles,
   },
 }));
 
@@ -315,6 +312,13 @@ describe('reducer', () => {
             [exploreId]: {
               ...defaultInitialState.explore[exploreId],
               queries: [],
+              datasourceInstance: {
+                query: jest.fn(),
+                getRef: jest.fn(),
+                meta: {
+                  id: 'postgres',
+                },
+              },
             },
           },
         } as unknown as Partial<StoreState>);
@@ -326,6 +330,7 @@ describe('reducer', () => {
 
         await dispatch(addQueryRow(exploreId, 1));
 
+        expect(getState().explore[exploreId].datasourceInstance.meta.id).toBe('postgres');
         expect(getState().explore[exploreId].queries).toHaveLength(1);
         expect(getState().explore[exploreId].queryKeys).toEqual(['ds1-0']);
       });
@@ -345,6 +350,13 @@ describe('reducer', () => {
                   refId: 'C',
                 },
               ],
+              datasourceInstance: {
+                query: jest.fn(),
+                getRef: jest.fn(),
+                meta: {
+                  id: 'postgres',
+                },
+              },
             },
           },
         } as unknown as Partial<StoreState>);
@@ -356,8 +368,9 @@ describe('reducer', () => {
 
         await dispatch(addQueryRow(exploreId, 1));
 
+        expect(getState().explore[exploreId].datasourceInstance.meta.id).toBe('postgres');
         expect(getState().explore[exploreId].queries).toHaveLength(2);
-        expect(getState().explore[exploreId].queryKeys).toEqual(['ds3-0', 'ds1-1']);
+        expect(getState().explore[exploreId].queryKeys).toEqual(['ds3-0', 'ds3-1']);
       });
     });
   });
