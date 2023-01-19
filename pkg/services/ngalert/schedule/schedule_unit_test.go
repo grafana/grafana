@@ -241,7 +241,7 @@ func TestProcessTicks(t *testing.T) {
 		require.Contains(t, keys, alertRule2.GetKey())
 		require.Contains(t, keys, alertRule3.GetKey())
 
-		require.Emptyf(t, stopped, "None rules are expected to be stopped")
+		require.Emptyf(t, stopped, "No rules are expected to be stopped")
 		require.Emptyf(t, paused, "No rules are expected to be paused")
 
 		assertEvalRun(t, evalAppliedCh, tick, keys...)
