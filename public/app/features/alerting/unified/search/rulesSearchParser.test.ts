@@ -50,6 +50,13 @@ describe('Alert rules searchParser', () => {
       expect(filter.freeFormWords).toContain('rule');
     });
 
+    it('should parse free words with quotes', () => {
+      const query = '"hello world" hello world';
+      const filter = getSearchFilterFromQuery(query);
+
+      expect(filter.freeFormWords).toEqual(['hello world', 'hello', 'world']);
+    });
+
     it('should parse filter values with whitespaces when in quotes', () => {
       const query = 'ds:"prom dev" ns:"node one" label:"team=frontend us" group:"cpu alerts" rule:"cpu failure"';
       const filter = getSearchFilterFromQuery(query);

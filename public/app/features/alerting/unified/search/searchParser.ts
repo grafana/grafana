@@ -63,7 +63,7 @@ function getFilterFromSyntaxNode(query: string, filterExpressionNode: SyntaxNode
 }
 
 function getNodeContent(query: string, node: SyntaxNode) {
-  return query.slice(node.from, node.to).trim();
+  return query.slice(node.from, node.to).trim().replace(/\"/g, '');
 }
 
 export interface FilterExpr {
