@@ -130,7 +130,7 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
         <InlineField label="X-Pack enabled" labelWidth={26}>
           <InlineSwitch
             id="es_config_xpackEnabled"
-            checked={value.jsonData.xpack || false}
+            value={value.jsonData.xpack || false}
             onChange={jsonDataSwitchChangeHandler('xpack', value, onChange)}
           />
         </InlineField>
@@ -139,7 +139,7 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
           <InlineField label="Include Frozen Indices" labelWidth={26}>
             <InlineSwitch
               id="es_config_frozenIndices"
-              checked={value.jsonData.includeFrozen ?? false}
+              value={value.jsonData.includeFrozen ?? false}
               onChange={jsonDataSwitchChangeHandler('includeFrozen', value, onChange)}
             />
           </InlineField>
