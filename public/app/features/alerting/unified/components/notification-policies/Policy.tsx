@@ -420,32 +420,38 @@ const Policy: FC<PolicyComponentProps> = ({
   );
 };
 
-const TimingOptionsMeta = ({ timingOptions }: { timingOptions: TimingOptions }) => (
-  <MetaText icon="hourglass">
-    <span>Wait</span>
-    {timingOptions.group_wait && (
+const TIMING_OPTIONS_DEFAULTS = {
+  group_wait: '30s',
+  group_interval: '5m',
+  repeat_interval: '4h',
+};
+
+const TimingOptionsMeta = ({ timingOptions }: { timingOptions: TimingOptions }) => {
+  const groupWait = timingOptions.group_wait ?? TIMING_OPTIONS_DEFAULTS.group_wait;
+  const groupInterval = timingOptions.group_interval ?? TIMING_OPTIONS_DEFAULTS.group_interval;
+
+  return (
+    <MetaText icon="hourglass">
+      <span>Wait</span>
       <Tooltip
         placement="top"
         content="How long to initially wait to send a notification for a group of alert instances."
       >
         <span>
-          <Strong>{timingOptions.group_wait}</Strong> <span>to group instances</span>
-          {timingOptions.group_interval && ', '}
+          <Strong>{groupWait}</Strong> <span>to group instances</span>,
         </span>
       </Tooltip>
-    )}
-    {timingOptions.group_interval && (
       <Tooltip
         placement="top"
         content="How long to wait before sending a notification about new alerts that are added to a group of alerts for which an initial notification has already been sent."
       >
         <span>
-          <Strong>{timingOptions.group_interval}</Strong> <span>before sending updates</span>
+          <Strong>{groupInterval}</Strong> <span>before sending updates</span>
         </span>
       </Tooltip>
-    )}
-  </MetaText>
-);
+    </MetaText>
+  );
+};
 
 interface ContactPointDetailsProps {
   alertManagerSourceName: string;
