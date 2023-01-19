@@ -10,7 +10,7 @@ weight: 60
 
 Grafana has built-in support for a wide range of _data sources_.
 These data sources might be files, services, or databases.
-You can also extend the supported data sources through one of the many [Plugins](/grafana/plugins/) (or build your own).
+You can also extend the supported data sources through one of the many [Plugins](/grafana/plugins/) (or [build your own](/docs/grafana/latest/developers/plugins/).
 
 For each data source that you add, Grafana provides a _query editor_, which formulates custom queries according to the source's particular data structure.
 After you add a data source, you can use it as an input to explore, visualize, set up alerts, and more.
