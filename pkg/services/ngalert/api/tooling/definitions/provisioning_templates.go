@@ -6,29 +6,29 @@ import (
 
 // swagger:route GET /api/v1/provisioning/templates provisioning stable RouteGetTemplates
 //
-// Get all message templates.
+// Get all notification templates.
 //
 //     Responses:
-//       200: MessageTemplates
+//       200: NotificationTemplates
 //       404: description: Not found.
 
 // swagger:route GET /api/v1/provisioning/templates/{name} provisioning stable RouteGetTemplate
 //
-// Get a message template.
+// Get a notification template.
 //
 //     Responses:
-//       200: MessageTemplate
+//       200: NotificationTemplate
 //       404: description: Not found.
 
 // swagger:route PUT /api/v1/provisioning/templates/{name} provisioning stable RoutePutTemplate
 //
-// Updates an existing template.
+// Updates an existing notification template.
 //
 //     Consumes:
 //     - application/json
 //
 //     Responses:
-//       202: MessageTemplate
+//       202: NotificationTemplate
 //       400: ValidationError
 
 // swagger:route DELETE /api/v1/provisioning/templates/{name} provisioning stable RouteDeleteTemplate
@@ -46,29 +46,29 @@ type RouteGetTemplateParam struct {
 }
 
 // swagger:model
-type MessageTemplate struct {
+type NotificationTemplate struct {
 	Name       string            `json:"name"`
 	Template   string            `json:"template"`
 	Provenance models.Provenance `json:"provenance,omitempty"`
 }
 
 // swagger:model
-type MessageTemplates []MessageTemplate
+type NotificationTemplates []NotificationTemplate
 
-type MessageTemplateContent struct {
+type NotificationTemplateContent struct {
 	Template string `json:"template"`
 }
 
 // swagger:parameters RoutePutTemplate
-type MessageTemplatePayload struct {
+type NotificationTemplatePayload struct {
 	// in:body
-	Body MessageTemplateContent
+	Body NotificationTemplateContent
 }
 
-func (t *MessageTemplate) ResourceType() string {
+func (t *NotificationTemplate) ResourceType() string {
 	return "template"
 }
 
-func (t *MessageTemplate) ResourceID() string {
+func (t *NotificationTemplate) ResourceID() string {
 	return t.Name
 }

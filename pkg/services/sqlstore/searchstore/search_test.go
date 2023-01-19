@@ -173,11 +173,11 @@ func createDashboards(t *testing.T, store db.DB, startID, endID int, orgID int64
 		}`))
 		require.NoError(t, err)
 
-		var dash *models.Dashboard
+		var dash *dashboards.Dashboard
 		err = store.WithDbSession(context.Background(), func(sess *db.Session) error {
-			dash = models.NewDashboardFromJson(dashboard)
-			dash.OrgId = orgID
-			dash.Uid = util.GenerateShortUID()
+			dash = dashboards.NewDashboardFromJson(dashboard)
+			dash.OrgID = orgID
+			dash.UID = util.GenerateShortUID()
 			dash.CreatedBy = 1
 			dash.UpdatedBy = 1
 			_, err := sess.Insert(dash)
@@ -186,7 +186,7 @@ func createDashboards(t *testing.T, store db.DB, startID, endID int, orgID int64
 			tags := dash.GetTags()
 			if len(tags) > 0 {
 				for _, tag := range tags {
-					if _, err := sess.Insert(&DashboardTag{DashboardId: dash.Id, Term: tag}); err != nil {
+					if _, err := sess.Insert(&DashboardTag{DashboardId: dash.ID, Term: tag}); err != nil {
 						return err
 					}
 				}
@@ -196,7 +196,7 @@ func createDashboards(t *testing.T, store db.DB, startID, endID int, orgID int64
 		})
 		require.NoError(t, err)
 
-		createdIds = append(createdIds, dash.Id)
+		createdIds = append(createdIds, dash.ID)
 	}
 
 	return createdIds

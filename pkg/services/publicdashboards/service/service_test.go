@@ -141,11 +141,12 @@ func TestCreatePublicDashboard(t *testing.T) {
 			OrgId:        dashboard.OrgID,
 			UserId:       7,
 			PublicDashboard: &PublicDashboard{
-				IsEnabled:          true,
-				AnnotationsEnabled: false,
-				DashboardUid:       "NOTTHESAME",
-				OrgId:              9999999,
-				TimeSettings:       timeSettings,
+				IsEnabled:            true,
+				AnnotationsEnabled:   false,
+				TimeSelectionEnabled: true,
+				DashboardUid:         "NOTTHESAME",
+				OrgId:                9999999,
+				TimeSettings:         timeSettings,
 			},
 		}
 
@@ -160,6 +161,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 		assert.Equal(t, dashboard.OrgID, pubdash.OrgId)
 		assert.Equal(t, dto.UserId, pubdash.CreatedBy)
 		assert.Equal(t, dto.PublicDashboard.AnnotationsEnabled, pubdash.AnnotationsEnabled)
+		assert.Equal(t, dto.PublicDashboard.TimeSelectionEnabled, pubdash.TimeSelectionEnabled)
 		// ExistsEnabledByDashboardUid set by parameters
 		assert.Equal(t, dto.PublicDashboard.IsEnabled, pubdash.IsEnabled)
 		// CreatedAt set to non-zero time
@@ -339,9 +341,10 @@ func TestUpdatePublicDashboard(t *testing.T) {
 			OrgId:        dashboard.OrgID,
 			UserId:       7,
 			PublicDashboard: &PublicDashboard{
-				AnnotationsEnabled: false,
-				IsEnabled:          true,
-				TimeSettings:       timeSettings,
+				AnnotationsEnabled:   false,
+				IsEnabled:            true,
+				TimeSelectionEnabled: false,
+				TimeSettings:         timeSettings,
 			},
 		}
 
@@ -361,10 +364,11 @@ func TestUpdatePublicDashboard(t *testing.T) {
 				CreatedBy:    9,
 				CreatedAt:    time.Time{},
 
-				IsEnabled:          true,
-				AnnotationsEnabled: true,
-				TimeSettings:       timeSettings,
-				AccessToken:        "NOTAREALUUID",
+				IsEnabled:            true,
+				AnnotationsEnabled:   true,
+				TimeSelectionEnabled: true,
+				TimeSettings:         timeSettings,
+				AccessToken:          "NOTAREALUUID",
 			},
 		}
 		updatedPubdash, err := service.Update(context.Background(), SignedInUser, dto)
@@ -380,6 +384,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		// gets updated
 		assert.Equal(t, dto.PublicDashboard.IsEnabled, updatedPubdash.IsEnabled)
 		assert.Equal(t, dto.PublicDashboard.AnnotationsEnabled, updatedPubdash.AnnotationsEnabled)
+		assert.Equal(t, dto.PublicDashboard.TimeSelectionEnabled, updatedPubdash.TimeSelectionEnabled)
 		assert.Equal(t, dto.PublicDashboard.TimeSettings, updatedPubdash.TimeSettings)
 		assert.Equal(t, dto.UserId, updatedPubdash.UpdatedBy)
 		assert.NotEqual(t, &time.Time{}, updatedPubdash.UpdatedAt)
