@@ -15,7 +15,7 @@ You can also extend the supported data sources through one of the many [Plugins]
 Each data source comes with a _query editor_, which formulates custom queries according to the source's particular structure.
 After you add a data source, you can use it as an input for many operations:
 - Query the data with [Explore]({{< relref "../explore" >}}).
-- Visualize it in in [panels]({{< relref "../panels-visualizations" >}}).
+- Visualize it in [panels]({{< relref "../panels-visualizations" >}}).
 - Make criteria for [alerts]({{< relref "../alerting" >}}).
 
 In this documentation, read about how to add and query a particular data source, or about how to manage your data sources in general.
