@@ -7,7 +7,7 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-package kindsys
+package common
 
 // Canonically defined in pkg/kindsys/dataquery.cue FOR NOW to avoid having any external imports
 // in kindsys. Code generation copies this file to the common schemas in packages/grafana-schema/src/common.

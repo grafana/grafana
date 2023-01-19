@@ -9,6 +9,37 @@
 
 
 /**
+ * These are the common properties available to all queries in all datasources.
+ * Specific implementations will *extend* this interface, adding the required
+ * properties for the given context.
+ */
+export interface DataQuery {
+  /**
+   * For mixed data sources the selected datasource is on the query level.
+   * For non mixed scenarios this is undefined.
+   * TODO find a better way to do this ^ that's friendly to schema
+   */
+  datasource?: DataSourceRef;
+  /**
+   * true if query is disabled (ie should not be returned to the dashboard)
+   */
+  hide?: boolean;
+  /**
+   * Unique, guid like, string used in explore mode
+   */
+  key?: string;
+  /**
+   * Specify the query flavor
+   * TODO make this required and give it a default
+   */
+  queryType?: string;
+  /**
+   * A - Z
+   */
+  refId: string;
+}
+
+/**
  * TODO docs
  */
 export enum AxisPlacement {
@@ -551,6 +582,17 @@ export type TimeZoneUtc = 'utc';
  * Use the timezone defined by end user web browser
  */
 export type TimeZoneBrowser = 'browser';
+
+export interface DataSourceRef {
+  /**
+   * The plugin type-id
+   */
+  type?: string;
+  /**
+   * Specific datasource instance
+   */
+  uid?: string;
+}
 
 /**
  * TODO docs

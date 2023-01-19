@@ -153,7 +153,7 @@ func (j dummyCommonJenny) Generate(dummy any) ([]codejen.File, error) {
 	return nil, nil
 }
 
-var pkgReplace = regexp.MustCompile("^package kindsys$")
+var pkgReplace = regexp.MustCompile("^package kindsys")
 
 func packageMapper(f codejen.File) (codejen.File, error) {
 	f.Data = pkgReplace.ReplaceAllLiteral(f.Data, []byte("package common"))
