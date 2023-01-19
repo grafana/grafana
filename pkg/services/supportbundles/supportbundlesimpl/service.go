@@ -71,7 +71,7 @@ func ProvideService(cfg *setting.Cfg,
 	}
 
 	if !accessControl.IsDisabled() {
-		if err := declareFixedRoles(accesscontrolService); err != nil {
+		if err := s.declareFixedRoles(accesscontrolService); err != nil {
 			return nil, err
 		}
 	}
