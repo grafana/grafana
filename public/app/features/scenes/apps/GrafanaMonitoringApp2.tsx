@@ -3,7 +3,7 @@ import React from 'react';
 
 import { SceneCanvasText, SceneFlexLayout } from '@grafana/scenes';
 
-import { SceneApp, SceneAppDrilldownView, SceneAppPage, SceneRouteMatch } from '../components/app/SceneApp';
+import { SceneApp, SceneAppPage, SceneRouteMatch } from '../components/app/SceneApp';
 
 import {
   getOverviewScene,
@@ -41,10 +41,10 @@ export function getMainPageScene() {
         getScene: getHttpHandlerListScene,
         preserveUrlKeys: ['from', 'to', 'var-instance'],
         drilldowns: [
-          new SceneAppDrilldownView({
+          {
             routePath: '/scenes/grafana-monitoring/handlers/:handler',
             getPage: getHandlerDrilldownPage,
-          }),
+          },
         ],
       }),
       new SceneAppPage({
@@ -85,10 +85,10 @@ export function getHandlerDrilldownPage(
         getScene: () => getHandlerLogsScene(handler),
         preserveUrlKeys: ['from', 'to', 'var-instance'],
         drilldowns: [
-          new SceneAppDrilldownView({
+          {
             routePath: '/scenes/grafana-monitoring/handlers/:handler/logs/:secondLevel',
             getPage: getSecondLevelDrilldown,
-          }),
+          },
         ],
       }),
     ],

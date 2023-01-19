@@ -53,22 +53,6 @@ export interface SceneAppPageState extends SceneObjectStatePlain {
   preserveUrlKeys?: string[];
 }
 
-export interface SceneAppDrilldownViewState extends SceneObjectStatePlain {
-  routePath: string;
-  getPage: (routeMatch: SceneRouteMatch<any>, parent: SceneAppPage) => SceneAppPage;
-  drilldowns?: SceneAppDrilldownView[];
-}
-
-export class SceneAppDrilldownView extends SceneObjectBase<SceneAppDrilldownViewState> {
-  public static Component = ({ model }: SceneComponentProps<SceneAppDrilldownView>) => {
-    const { getPage } = model.useState();
-    const routeMatch = useRouteMatch();
-    const scene = getPage(routeMatch, model.parent as SceneAppPage);
-    console.log('drilldown!');
-    return <scene.Component model={scene} />;
-  };
-}
-
 const sceneCache = new Map<string, SceneObject>();
 
 export class SceneAppPage extends SceneObjectBase<SceneAppPageState> {
@@ -87,10 +71,10 @@ export class SceneAppPage extends SceneObjectBase<SceneAppPageState> {
 
         if (page.state.drilldowns) {
           for (const drilldown of page.state.drilldowns) {
-            console.log('registering drilldown route', drilldown.state.routePath);
+            console.log('registering drilldown route', drilldown.routePath);
             routes.push(
-              <Route key={drilldown.state.routePath} exact={false} path={drilldown.state.routePath}>
-                <drilldown.Component model={drilldown} />
+              <Route key={drilldown.routePath} exact={false} path={drilldown.routePath}>
+                <SceneAppDrilldownViewRender drilldown={drilldown} parent={page} />
               </Route>
             );
           }
@@ -168,4 +152,16 @@ function getParentBreadcrumbs(parent: SceneObject | undefined): NavModelItem | u
   }
 
   return undefined;
+}
+
+export interface SceneAppDrilldownView {
+  routePath: string;
+  getPage: (routeMatch: SceneRouteMatch<any>, parent: SceneAppPage) => SceneAppPage;
+}
+
+export function SceneAppDrilldownViewRender(props: { drilldown: SceneAppDrilldownView; parent: SceneAppPage }) {
+  const routeMatch = useRouteMatch();
+  const scene = props.drilldown.getPage(routeMatch, props.parent);
+  console.log('drilldown!');
+  return <scene.Component model={scene} />;
 }
