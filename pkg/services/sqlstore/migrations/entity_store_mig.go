@@ -33,7 +33,7 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 			{Name: "kind", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "uid", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
 			{Name: "folder", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
-			{Name: "slug", Type: migrator.DB_NVarchar, Length: 189, Nullable: false}, // from title
+			{Name: "access", Type: migrator.DB_Text, Nullable: true}, // JSON object
 
 			// The raw entity body (any byte array)
 			{Name: "body", Type: migrator.DB_LongBlob, Nullable: false},
@@ -55,9 +55,10 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 			// Summary data (always extracted from the `body` column)
 			{Name: "name", Type: migrator.DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "description", Type: migrator.DB_NVarchar, Length: 255, Nullable: true},
-			{Name: "labels", Type: migrator.DB_Text, Nullable: true}, // JSON object
-			{Name: "fields", Type: migrator.DB_Text, Nullable: true}, // JSON object
-			{Name: "errors", Type: migrator.DB_Text, Nullable: true}, // JSON object
+			{Name: "slug", Type: migrator.DB_NVarchar, Length: 189, Nullable: false}, // from title
+			{Name: "labels", Type: migrator.DB_Text, Nullable: true},                 // JSON object
+			{Name: "fields", Type: migrator.DB_Text, Nullable: true},                 // JSON object
+			{Name: "errors", Type: migrator.DB_Text, Nullable: true},                 // JSON object
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"kind"}},
@@ -130,6 +131,8 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 			{Name: "version", Type: migrator.DB_NVarchar, Length: 128, Nullable: false},
 
 			// Raw bytes
+			{Name: "folder", Type: migrator.DB_NVarchar, Length: 40, Nullable: false},
+			{Name: "access", Type: migrator.DB_Text, Nullable: true}, // JSON object
 			{Name: "body", Type: migrator.DB_LongBlob, Nullable: false},
 			{Name: "size", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "etag", Type: migrator.DB_NVarchar, Length: 32, Nullable: false, IsLatin: true}, // md5(body)
@@ -144,6 +147,18 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 		Indices: []*migrator.Index{
 			{Cols: []string{"grn", "version"}, Type: migrator.UniqueIndex},
 			{Cols: []string{"updated_by"}, Type: migrator.IndexType},
+		},
+	})
+
+	tables = append(tables, migrator.Table{
+		Name: "entity_access",
+		Columns: []*migrator.Column{
+			{Name: "grn", Type: migrator.DB_NVarchar, Length: grnLength, Nullable: false},
+			{Name: "role", Type: migrator.DB_NVarchar, Length: 32, Nullable: false},
+			{Name: "action", Type: migrator.DB_NVarchar, Length: 32, Nullable: false},
+		},
+		Indices: []*migrator.Index{
+			{Cols: []string{"grn", "role", "action"}, Type: migrator.UniqueIndex},
 		},
 	})
 
