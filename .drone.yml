@@ -1379,11 +1379,11 @@ steps:
   - build-frontend-packages
   environment:
     GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
+      from_secret: packages_gpg_passphrase
     GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
+      from_secret: packages_gpg_private_key
     GPG_PUB_KEY:
-      from_secret: gpg_pub_key
+      from_secret: packages_gpg_public_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   image: grafana/build-container:713aa108d15
@@ -2097,11 +2097,11 @@ steps:
   - build-frontend-packages
   environment:
     GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
+      from_secret: packages_gpg_passphrase
     GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
+      from_secret: packages_gpg_private_key
     GPG_PUB_KEY:
-      from_secret: gpg_pub_key
+      from_secret: packages_gpg_public_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   image: grafana/build-container:713aa108d15
@@ -2753,11 +2753,11 @@ steps:
   - build-frontend-packages
   environment:
     GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
+      from_secret: packages_gpg_passphrase
     GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
+      from_secret: packages_gpg_private_key
     GPG_PUB_KEY:
-      from_secret: gpg_pub_key
+      from_secret: packages_gpg_public_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   image: grafana/build-container:713aa108d15
@@ -3488,11 +3488,11 @@ steps:
   - build-frontend-packages
   environment:
     GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
+      from_secret: packages_gpg_passphrase
     GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
+      from_secret: packages_gpg_private_key
     GPG_PUB_KEY:
-      from_secret: gpg_pub_key
+      from_secret: packages_gpg_public_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   image: grafana/build-container:713aa108d15
@@ -3738,11 +3738,11 @@ steps:
   - build-frontend-packages
   environment:
     GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
+      from_secret: packages_gpg_passphrase
     GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
+      from_secret: packages_gpg_private_key
     GPG_PUB_KEY:
-      from_secret: gpg_pub_key
+      from_secret: packages_gpg_public_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   image: grafana/build-container:713aa108d15
@@ -4790,11 +4790,11 @@ steps:
   - build-frontend-packages
   environment:
     GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
+      from_secret: packages_gpg_passphrase
     GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
+      from_secret: packages_gpg_private_key
     GPG_PUB_KEY:
-      from_secret: gpg_pub_key
+      from_secret: packages_gpg_public_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   image: grafana/build-container:713aa108d15
@@ -5404,11 +5404,11 @@ steps:
   - build-frontend-packages
   environment:
     GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
+      from_secret: packages_gpg_passphrase
     GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
+      from_secret: packages_gpg_private_key
     GPG_PUB_KEY:
-      from_secret: gpg_pub_key
+      from_secret: packages_gpg_public_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   image: grafana/build-container:713aa108d15
@@ -6124,11 +6124,11 @@ steps:
   - build-frontend-packages
   environment:
     GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
+      from_secret: packages_gpg_passphrase
     GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
+      from_secret: packages_gpg_private_key
     GPG_PUB_KEY:
-      from_secret: gpg_pub_key
+      from_secret: packages_gpg_public_key
     GRAFANA_API_KEY:
       from_secret: grafana_api_key
   image: grafana/build-container:713aa108d15
@@ -6448,13 +6448,13 @@ kind: secret
 name: azure_tenant
 ---
 get:
-  name: public-key
+  name: public-key-b64
   path: infra/data/ci/packages-publish/gpg
 kind: secret
 name: packages_gpg_public_key
 ---
 get:
-  name: private-key
+  name: private-key-b64
   path: infra/data/ci/packages-publish/gpg
 kind: secret
 name: packages_gpg_private_key
@@ -6502,6 +6502,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: ded97147c00a75d95016dd056ba4487cbc1805da763190d95cc0f2c3db631e88
+hmac: 94aa371c0930af1137ba10295ddd3acd211b5dac08e0c84b6cef46c178eeda6e
 
 ...

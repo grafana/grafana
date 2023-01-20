@@ -48,7 +48,7 @@ func (f *ProvisioningApiHandler) handleRouteGetTemplate(ctx *models.ReqContext, 
 	return f.svc.RouteGetTemplate(ctx, name)
 }
 
-func (f *ProvisioningApiHandler) handleRoutePutTemplate(ctx *models.ReqContext, body apimodels.MessageTemplateContent, name string) response.Response {
+func (f *ProvisioningApiHandler) handleRoutePutTemplate(ctx *models.ReqContext, body apimodels.NotificationTemplateContent, name string) response.Response {
 	return f.svc.RoutePutTemplate(ctx, body, name)
 }
 
