@@ -110,6 +110,10 @@ async function main() {
 
       const numberOfIssues = filteredDetails.length;
 
+      if (numberOfIssues === 0) {
+        continue;
+      }
+
       for (const owner of ownersForFile) {
         if (!filesByOwner[owner]) {
           filesByOwner[owner] = [];
