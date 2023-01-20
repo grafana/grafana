@@ -39,7 +39,7 @@ interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {
   error?: UserAdminError;
 }
 
-const SyncedOAuthLabels: string[] = ['GitHub', 'GitLab', 'OAuth'];
+const SyncedOAuthLabels: string[] = ['GitLab', 'OAuth'];
 
 export class UserAdminPage extends PureComponent<Props> {
   async componentDidMount() {
@@ -112,7 +112,7 @@ export class UserAdminPage extends PureComponent<Props> {
       user?.isExternal && user?.authLabels?.some((r) => SyncedOAuthLabels.includes(r));
     const isSAMLUser = user?.isExternal && user?.authLabels?.includes('SAML');
     const isGoogleUser = user?.isExternal && user?.authLabels?.includes('Google');
-    const isGithubUser = user?.isExternal && user?.authLabels?.includes('Github');
+    const isGithubUser = user?.isExternal && user?.authLabels?.includes('GitHub');
     const isAuthProxyUser = user?.isExternal && user?.authLabels?.includes('Auth Proxy');
     const isAzureADUser = user?.isExternal && user?.authLabels?.includes('AzureAD');
     const isGrafanaComUser = user?.isExternal && user?.authLabels?.includes('grafana.com');
@@ -125,6 +125,7 @@ export class UserAdminPage extends PureComponent<Props> {
           isOAuthUserWithSkippableSync ||
           isSAMLUser ||
           isLDAPUser ||
+          isGithubUser ||
           isAzureADUser ||
           isGrafanaComUser
         )) ||
