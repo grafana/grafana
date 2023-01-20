@@ -50,7 +50,9 @@ import { expandRecordingRules } from './language_utils';
 import { renderLegendFormat } from './legend';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { getInitHints, getQueryHints } from './query_hints';
+import { QueryEditorMode } from './querybuilder/shared/types';
 import { getOriginalMetricName, transform, transformV2 } from './result_transformer';
+import { trackQuery } from './tracking';
 import {
   ExemplarTraceIdDestination,
   PromDataErrorResponse,
@@ -91,6 +93,7 @@ export class PrometheusDatasource
   customQueryParameters: any;
   datasourceConfigurationPrometheusFlavor?: PromApplication;
   datasourceConfigurationPrometheusVersion?: string;
+  defaultEditor?: QueryEditorMode;
   exemplarsAvailable: boolean;
   subType: PromApplication;
   rulerEnabled: boolean;
@@ -125,6 +128,7 @@ export class PrometheusDatasource
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
     this.datasourceConfigurationPrometheusFlavor = instanceSettings.jsonData.prometheusType;
     this.datasourceConfigurationPrometheusVersion = instanceSettings.jsonData.prometheusVersion;
+    this.defaultEditor = instanceSettings.jsonData.defaultEditor;
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
 
@@ -440,14 +444,15 @@ export class PrometheusDatasource
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     if (this.access === 'proxy') {
       const targets = request.targets.map((target) => this.processTargetV2(target, request));
-
-      return super
-        .query({ ...request, targets: targets.flat() })
-        .pipe(
-          map((response) =>
-            transformV2(response, request, { exemplarTraceIdDestinations: this.exemplarTraceIdDestinations })
-          )
-        );
+      const startTime = new Date();
+      return super.query({ ...request, targets: targets.flat() }).pipe(
+        map((response) =>
+          transformV2(response, request, { exemplarTraceIdDestinations: this.exemplarTraceIdDestinations })
+        ),
+        tap((response: DataQueryResponse) => {
+          trackQuery(response, request, startTime);
+        })
+      );
       // Run queries trough browser/proxy
     } else {
       const start = this.getPrometheusTime(request.range.from, false);
@@ -607,6 +612,7 @@ export class PrometheusDatasource
         ...this.getRangeScopedVars(options.range),
       });
     }
+
     query.step = interval;
 
     let expr = target.expr;

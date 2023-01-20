@@ -4,7 +4,9 @@ import React from 'react';
 import { setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { createBridgeURL, PluginBridge, SupportedPlugin } from './PluginBridge';
+import { SupportedPlugin } from '../types/pluginBridges';
+
+import { createBridgeURL, PluginBridge } from './PluginBridge';
 import { server, NON_EXISTING_PLUGIN } from './PluginBridge.mock';
 
 beforeAll(() => {
