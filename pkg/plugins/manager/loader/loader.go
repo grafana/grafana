@@ -355,15 +355,15 @@ func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, pluginDi
 	return plugin, nil
 }
 
-func setImages(p *plugins.Plugin, cdnBaseURL string) error {
-	if p.CDN {
-		u, err := cdnPluginLogoURL(p.Type, p.Info.Logos.Small, cdnBaseURL, p.ID, p.Info.Version)
+func setImages(p *plugins.Plugin, cdnURLTemplate string) error {
+	if cdnURLTemplate != "" && p.CDN {
+		u, err := cdnPluginLogoURL(p.Type, p.Info.Logos.Small, cdnURLTemplate, p.ID, p.Info.Version)
 		if err != nil {
 			return fmt.Errorf("cdn plugin small logo url: %w", err)
 		}
 		p.Info.Logos.Small = u
 
-		u, err = cdnPluginLogoURL(p.Type, p.Info.Logos.Large, cdnBaseURL, p.ID, p.Info.Version)
+		u, err = cdnPluginLogoURL(p.Type, p.Info.Logos.Large, cdnURLTemplate, p.ID, p.Info.Version)
 		if err != nil {
 			return fmt.Errorf("cdn plugin large logo url: %w", err)
 		}
@@ -377,8 +377,8 @@ func setImages(p *plugins.Plugin, cdnBaseURL string) error {
 		var path string
 		var err error
 		screenshot := &p.Info.Screenshots[i]
-		if p.CDN {
-			path, err = evalCDNPluginURLPath(screenshot.Path, cdnBaseURL, p.ID, p.Info.Version)
+		if cdnURLTemplate != "" && p.CDN {
+			path, err = evalCDNPluginURLPath(screenshot.Path, cdnURLTemplate, p.ID, p.Info.Version)
 			if err != nil {
 				return fmt.Errorf("screenshot %d eval cdn plugin path: %w", i, err)
 			}
@@ -461,15 +461,15 @@ func evalRelativePluginURLPath(pathStr, baseURL string, pluginType plugins.Type)
 	return path.Join(baseURL, pathStr)
 }
 
-func cdnPluginLogoURL(pluginType plugins.Type, path, cdnBaseURL, pluginID, pluginVersion string) (string, error) {
+func cdnPluginLogoURL(pluginType plugins.Type, path, cdnURLTemplate, pluginID, pluginVersion string) (string, error) {
 	if path == "" {
 		return defaultLogoPath(pluginType), nil
 	}
-	return evalCDNPluginURLPath(path, cdnBaseURL, pluginID, pluginVersion)
+	return evalCDNPluginURLPath(path, cdnURLTemplate, pluginID, pluginVersion)
 }
 
-func evalCDNPluginURLPath(path string, cdnBaseURL, pluginID, pluginVersion string) (string, error) {
-	return pluginscdn.NewCDNURLConstructor(cdnBaseURL, pluginID, pluginVersion).StringURLFor(path)
+func evalCDNPluginURLPath(path string, cdnURLTemplate, pluginID, pluginVersion string) (string, error) {
+	return pluginscdn.NewCDNURLConstructor(cdnURLTemplate, pluginID, pluginVersion).StringURLFor(path)
 }
 
 const systemJSCDNKeyword = "plugin-cdn"
@@ -506,7 +506,7 @@ func module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string, 
 	if class == plugins.Core {
 		return path.Join("app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir), "module"), nil
 	}
-	if isCDN {
+	if cdnURLTemplate != "" && isCDN {
 		u, err := pluginscdn.NewCDNURLConstructor(
 			cdnURLTemplate, pluginJSON.ID, pluginJSON.Info.Version,
 		).URLFor("module")
