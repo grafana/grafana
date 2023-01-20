@@ -59,20 +59,26 @@ function()`)
 			ctx := context.Background()
 			workspace := t.TempDir()
 
-			invalidContent := []byte(`"""
+			content := []byte(`"""
 This module does nothing.
 """
+
 load("scripts/drone/other.star", "function")
 
-function()`)
-			require.NoError(t, os.WriteFile(filepath.Join(workspace, "no-lint.star"), invalidContent, os.ModePerm))
+function()
+`)
+			require.NoError(t, os.WriteFile(filepath.Join(workspace, "no-lint.star"), content, os.ModePerm))
 
 			verificationErrs, executionErr := verifyStarlark(ctx, workspace, buildifierLintCommand)
 			if executionErr != nil {
 				t.Fatalf("Unexpected execution error: %v", executionErr)
 			}
 			if len(verificationErrs) != 0 {
-				t.Fatalf(`"no-lint.star" has no lint but the verifyStarlark function provided an error`)
+				t.Log(`"no-lint.star" has no lint but the verifyStarlark function provided at least one error`)
+				for _, err := range verificationErrs {
+					t.Log(err)
+				}
+				t.FailNow()
 			}
 		})
 
