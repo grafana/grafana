@@ -6,29 +6,13 @@ import path from 'path';
 import { hideBin } from 'yargs/helpers';
 import yargs from 'yargs/yargs';
 
-/*
-
-Create an issue template by using the lodash template syntax https://lodash.com/docs/4.17.15#template. You don't need
-to commit this file or put it in the grafana codebase, this tool should be able to handle it being anywhere on your fs.
-
-For example:
-
-
-The following files are using enzyme which are blocking our upgrade to React 18. When you have a moment, please work
-on migrating these to React Testing Library
-
-There are <%= totalIssueCount %> <%= plural('issue', totalIssueCount) %> over <%= fileCount %> <%= plural('file', fileCount) %>:
-<% files.forEach((file) => { %>
-  - [ ] <%= file.issueCount %> <%= plural('issue', file.issueCount) %> in `<%= file.fileName %>` <% }) %>
-
-*/
-
 const argv = yargs(hideBin(process.argv))
   .option('template', {
     demandOption: true,
     alias: 't',
     describe: 'Path to a template to use for each issue. See source of generateBettererIssues.ts for an example',
     type: 'string',
+    default: './scripts/cli/bettererIssueTemplate.md',
   })
   .option('output', {
     demandOption: true,
@@ -137,6 +121,8 @@ async function main() {
       files,
       fileCount,
       totalIssueCount,
+      issueFilter: args.test,
+      issueMessageFilter: args.testMessage,
     };
   });
 
