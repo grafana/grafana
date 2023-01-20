@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -24,7 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -76,7 +76,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 						assert.Equal(t, 403, sc.resp.Code)
 					})
 
-				mock := mockstore.NewSQLStoreMock()
+				mock := dbtest.NewFakeDB()
 				loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/annotations/1",
 					"/api/annotations/:annotationId", role, func(sc *scenarioContext) {
 						sc.handlerFunc = hs.DeleteAnnotationByID
@@ -104,7 +104,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 					sc.fakeReqWithParams("PATCH", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 200, sc.resp.Code)
 				})
-				mock := mockstore.NewSQLStoreMock()
+				mock := dbtest.NewFakeDB()
 				loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/annotations/1",
 					"/api/annotations/:annotationId", role, func(sc *scenarioContext) {
 						sc.handlerFunc = hs.DeleteAnnotationByID
@@ -177,7 +177,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 					sc.fakeReqWithParams("PATCH", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 403, sc.resp.Code)
 				})
-				mock := mockstore.NewSQLStoreMock()
+				mock := dbtest.NewFakeDB()
 				loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/annotations/1",
 					"/api/annotations/:annotationId", role, func(sc *scenarioContext) {
 						setUpACL()
@@ -209,7 +209,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 					sc.fakeReqWithParams("PATCH", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 200, sc.resp.Code)
 				})
-				mock := mockstore.NewSQLStoreMock()
+				mock := dbtest.NewFakeDB()
 				loggedInUserScenarioWithRole(t, "When calling DELETE on", "DELETE", "/api/annotations/1",
 					"/api/annotations/:annotationId", role, func(sc *scenarioContext) {
 						setUpACL()
@@ -223,15 +223,15 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 		t.Run("When user is an Admin", func(t *testing.T) {
 			role := org.RoleAdmin
 
-			mockStore := mockstore.NewSQLStoreMock()
+			mockStore := dbtest.NewFakeDB()
 
 			t.Run("Should be able to do anything", func(t *testing.T) {
 				dashSvc := dashboards.NewFakeDashboardService(t)
-				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
-					q := args.Get(1).(*models.GetDashboardQuery)
-					q.Result = &models.Dashboard{
-						Id:  q.Id,
-						Uid: q.Uid,
+				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
+					q := args.Get(1).(*dashboards.GetDashboardQuery)
+					q.Result = &dashboards.Dashboard{
+						ID:  q.ID,
+						UID: q.UID,
 					}
 				}).Return(nil)
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, store, dashSvc, func(sc *scenarioContext) {
@@ -244,7 +244,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 					setUpACL()
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 					assert.Equal(t, 200, sc.resp.Code)
-					dashSvc.AssertCalled(t, "GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery"))
+					dashSvc.AssertCalled(t, "GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery"))
 				})
 
 				putAnnotationScenario(t, "When calling PUT on", "/api/annotations/1", "/api/annotations/:annotationId", role, updateCmd, func(sc *scenarioContext) {
@@ -267,11 +267,11 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 					})
 
 				dashSvc = dashboards.NewFakeDashboardService(t)
-				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
-					q := args.Get(1).(*models.GetDashboardQuery)
-					q.Result = &models.Dashboard{
-						Id:  1,
-						Uid: deleteWithDashboardUIDCmd.DashboardUID,
+				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
+					q := args.Get(1).(*dashboards.GetDashboardQuery)
+					q.Result = &dashboards.Dashboard{
+						ID:  1,
+						UID: deleteWithDashboardUIDCmd.DashboardUID,
 					}
 				}).Return(nil)
 				deleteAnnotationsScenario(t, "When calling POST with dashboardUID on", "/api/annotations/mass-delete",
@@ -279,7 +279,7 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 						setUpACL()
 						sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 						assert.Equal(t, 200, sc.resp.Code)
-						dashSvc.AssertCalled(t, "GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery"))
+						dashSvc.AssertCalled(t, "GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery"))
 					})
 			})
 		})
@@ -677,21 +677,21 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 func setUpACL() {
 	viewerRole := org.RoleViewer
 	editorRole := org.RoleEditor
-	store := mockstore.NewSQLStoreMock()
+	store := dbtest.NewFakeDB()
 	teamSvc := &teamtest.FakeService{}
 	dashSvc := &dashboards.FakeDashboardService{}
-	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
-		q.Result = []*models.DashboardACLInfoDTO{
+	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*dashboards.GetDashboardACLInfoListQuery)
+		q.Result = []*dashboards.DashboardACLInfoDTO{
 			{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
 			{Role: &editorRole, Permission: models.PERMISSION_EDIT},
 		}
 	}).Return(nil)
-	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*models.GetDashboardQuery)
-		q.Result = &models.Dashboard{
-			Id:  q.Id,
-			Uid: q.Uid,
+	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*dashboards.GetDashboardQuery)
+		q.Result = &dashboards.Dashboard{
+			ID:  q.ID,
+			UID: q.UID,
 		}
 	}).Return(nil)
 

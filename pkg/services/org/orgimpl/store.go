@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -357,7 +356,7 @@ func (ss *sqlStore) AddOrgUser(ctx context.Context, cmd *org.AddOrgUserCommand) 
 		if res, err := sess.Query("SELECT 1 from org_user WHERE org_id=? and user_id=?", cmd.OrgID, usr.ID); err != nil {
 			return err
 		} else if len(res) == 1 {
-			return models.ErrOrgUserAlreadyAdded
+			return org.ErrOrgUserAlreadyAdded
 		}
 
 		if res, err := sess.Query("SELECT 1 from org WHERE id=?", cmd.OrgID); err != nil {
@@ -421,7 +420,7 @@ func (ss *sqlStore) Count(ctx context.Context, scopeParams *quota.ScopeParameter
 		u.Set(tag, r.Count)
 	}
 
-	if scopeParams.OrgID != 0 {
+	if scopeParams != nil && scopeParams.OrgID != 0 {
 		if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 			rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM (SELECT user_id FROM org_user WHERE org_id=? AND user_id IN (SELECT id AS user_id FROM %s WHERE is_service_account=%s)) as subq",
 				ss.db.GetDialect().Quote("user"),
@@ -442,7 +441,7 @@ func (ss *sqlStore) Count(ctx context.Context, scopeParams *quota.ScopeParameter
 		}
 	}
 
-	if scopeParams.UserID != 0 {
+	if scopeParams != nil && scopeParams.UserID != 0 {
 		if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 			// should we exclude service accounts?
 			rawSQL := "SELECT COUNT(*) AS count FROM org_user WHERE user_id=?"
@@ -483,7 +482,7 @@ func (ss *sqlStore) UpdateOrgUser(ctx context.Context, cmd *org.UpdateOrgUserCom
 		}
 
 		if !exists {
-			return models.ErrOrgUserNotFound
+			return org.ErrOrgUserNotFound
 		}
 
 		orgUser.Role = cmd.Role
@@ -505,7 +504,7 @@ func validateOneAdminLeftInOrg(orgID int64, sess *db.Session) error {
 	}
 
 	if len(res) == 0 {
-		return models.ErrLastOrgAdmin
+		return org.ErrLastOrgAdmin
 	}
 
 	return err

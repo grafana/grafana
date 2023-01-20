@@ -5,22 +5,26 @@ import {
   QueryVariableModel,
   VariableModel,
 } from '@grafana/data';
+import {
+  VizPanel,
+  SceneTimePicker,
+  SceneGridLayout,
+  SceneGridRow,
+  SceneTimeRange,
+  SceneObject,
+  SceneQueryRunner,
+  SceneVariableSet,
+  VariableValueSelectors,
+  SceneVariable,
+  CustomVariable,
+  DataSourceVariable,
+  QueryVariable,
+  ConstantVariable,
+} from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
-
-import { VizPanel, SceneTimePicker, SceneGridLayout, SceneGridRow, SceneSubMenu } from '../components';
-import { SceneTimeRange } from '../core/SceneTimeRange';
-import { SceneObject } from '../core/types';
-import { SceneQueryRunner } from '../querying/SceneQueryRunner';
-import { VariableValueSelectors } from '../variables/components/VariableValueSelectors';
-import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
-import { SceneVariable } from '../variables/types';
-import { ConstantVariable } from '../variables/variants/ConstantVariable';
-import { CustomVariable } from '../variables/variants/CustomVariable';
-import { DataSourceVariable } from '../variables/variants/DataSourceVariable';
-import { QueryVariable } from '../variables/variants/query/QueryVariable';
 
 import { DashboardScene } from './DashboardScene';
 
@@ -145,7 +149,6 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneObjec
 }
 
 export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel) {
-  let subMenu: SceneSubMenu | undefined = undefined;
   let variables: SceneVariableSet | undefined = undefined;
 
   if (oldModel.templating.list.length) {
@@ -161,9 +164,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       // TODO: Remove filter
       // Added temporarily to allow skipping non-compatible variables
       .filter((v): v is SceneVariable => Boolean(v));
-    subMenu = new SceneSubMenu({
-      children: [new VariableValueSelectors({})],
-    });
+
     variables = new SceneVariableSet({
       variables: variableObjects,
     });
@@ -178,7 +179,9 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     $timeRange: new SceneTimeRange(oldModel.time),
     actions: [new SceneTimePicker({})],
     $variables: variables,
-    subMenu,
+    ...(variables && {
+      controls: [new VariableValueSelectors({})],
+    }),
   });
 }
 

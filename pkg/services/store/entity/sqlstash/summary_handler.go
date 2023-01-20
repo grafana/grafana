@@ -11,7 +11,6 @@ type summarySupport struct {
 	name        string
 	description *string // null or empty
 	slug        *string // null or empty
-	folder      *string // null or empty
 	labels      *string
 	fields      *string
 	errors      *string // should not allow saving with this!
@@ -36,9 +35,6 @@ func newSummarySupport(summary *models.EntitySummary) (*summarySupport, error) {
 		}
 		if summary.Slug != "" {
 			s.slug = &summary.Slug
-		}
-		if summary.Folder != "" {
-			s.folder = &summary.Folder
 		}
 		if len(summary.Labels) > 0 {
 			js, err = json.Marshal(summary.Labels)
@@ -80,9 +76,6 @@ func (s summarySupport) toEntitySummary() (*models.EntitySummary, error) {
 	}
 	if s.slug != nil {
 		summary.Slug = *s.slug
-	}
-	if s.folder != nil {
-		summary.Folder = *s.folder
 	}
 	if s.labels != nil {
 		b := []byte(*s.labels)

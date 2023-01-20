@@ -84,12 +84,6 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:         "influxdbBackendMigration",
-			Description:  "Query InfluxDB InfluxQL without the proxy",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-		},
-		{
 			Name:            "showFeatureFlagsInUI",
 			Description:     "Show feature flags in the settings UI",
 			State:           FeatureStateAlpha,
@@ -408,6 +402,12 @@ var (
 			Description:  "Enable drag and drop csv, excel files for edit panel",
 			FrontendOnly: true,
 			State:        FeatureStateAlpha,
+		},
+		{
+			Name:            "alertingNoNormalState",
+			Description:     "Stop maintaining state of alerts that are not firing",
+			State:           FeatureStateBeta,
+			RequiresRestart: false,
 		},
 	}
 )

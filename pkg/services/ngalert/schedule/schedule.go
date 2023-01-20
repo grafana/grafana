@@ -11,6 +11,7 @@ import (
 	prometheusModel "github.com/prometheus/common/model"
 	"go.opentelemetry.io/otel/attribute"
 
+	alertingModels "github.com/grafana/alerting/alerting/models"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -305,10 +306,11 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	}
 
 	// unregister and stop routines of the deleted alert rules
+	toDelete := make([]ngmodels.AlertRuleKey, 0, len(registeredDefinitions))
 	for key := range registeredDefinitions {
-		sch.DeleteAlertRule(key)
+		toDelete = append(toDelete, key)
 	}
-
+	sch.DeleteAlertRule(toDelete...)
 	return readyToRun, registeredDefinitions
 }
 
@@ -516,9 +518,9 @@ func (sch *schedule) stopApplied(alertDefKey ngmodels.AlertRuleKey) {
 func (sch *schedule) getRuleExtraLabels(evalCtx *evaluation) map[string]string {
 	extraLabels := make(map[string]string, 4)
 
-	extraLabels[ngmodels.NamespaceUIDLabel] = evalCtx.rule.NamespaceUID
+	extraLabels[alertingModels.NamespaceUIDLabel] = evalCtx.rule.NamespaceUID
 	extraLabels[prometheusModel.AlertNameLabel] = evalCtx.rule.Title
-	extraLabels[ngmodels.RuleUIDLabel] = evalCtx.rule.UID
+	extraLabels[alertingModels.RuleUIDLabel] = evalCtx.rule.UID
 
 	if !sch.disableGrafanaFolder {
 		extraLabels[ngmodels.FolderTitleLabel] = evalCtx.folderTitle

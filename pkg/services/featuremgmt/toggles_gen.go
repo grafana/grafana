@@ -63,10 +63,6 @@ const (
 	// Experimental. Allow override default AAD audience for Azure Prometheus endpoint
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
 
-	// FlagInfluxdbBackendMigration
-	// Query InfluxDB InfluxQL without the proxy
-	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
-
 	// FlagShowFeatureFlagsInUI
 	// Show feature flags in the settings UI
 	FlagShowFeatureFlagsInUI = "showFeatureFlagsInUI"
@@ -298,4 +294,8 @@ const (
 	// FlagEditPanelCSVDragAndDrop
 	// Enable drag and drop csv, excel files for edit panel
 	FlagEditPanelCSVDragAndDrop = "editPanelCSVDragAndDrop"
+
+	// FlagAlertingNoNormalState
+	// Stop maintaining state of alerts that are not firing
+	FlagAlertingNoNormalState = "alertingNoNormalState"
 )

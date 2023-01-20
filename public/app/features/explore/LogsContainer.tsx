@@ -11,6 +11,7 @@ import {
   EventBus,
   SplitOpen,
   DataFrame,
+  SupplementaryQueryType,
 } from '@grafana/data';
 import { Collapse } from '@grafana/ui';
 import { StoreState } from 'app/types';
@@ -20,7 +21,7 @@ import { getTimeZone } from '../profile/state/selectors';
 
 import { LiveLogsWithTheme } from './LiveLogs';
 import { Logs } from './Logs';
-import { addResultsToCache, clearCache, loadLogsVolumeData, setLogsVolumeEnabled } from './state/query';
+import { addResultsToCache, clearCache, loadSupplementaryQueryData, setSupplementaryQueryEnabled } from './state/query';
 import { updateTimeRange } from './state/time';
 import { LiveTailControls } from './useLiveTailControls';
 import { LogsCrossFadeTransition } from './utils/LogsCrossFadeTransition';
@@ -33,8 +34,8 @@ interface LogsContainerProps extends PropsFromRedux {
   syncedTimes: boolean;
   loadingState: LoadingState;
   scrollElement?: HTMLDivElement;
-  onClickFilterLabel?: (key: string, value: string) => void;
-  onClickFilterOutLabel?: (key: string, value: string) => void;
+  onClickFilterLabel: (key: string, value: string) => void;
+  onClickFilterOutLabel: (key: string, value: string) => void;
   onStartScanning: () => void;
   onStopScanning: () => void;
   eventBus: EventBus;
@@ -85,8 +86,8 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
       logsMeta,
       logsSeries,
       logsQueries,
-      logsVolumeData,
-      loadLogsVolumeData,
+      loadSupplementaryQueryData,
+      setSupplementaryQueryEnabled,
       onClickFilterLabel,
       onClickFilterOutLabel,
       onStartScanning,
@@ -103,6 +104,7 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
       addResultsToCache,
       clearCache,
       scrollElement,
+      logsVolume,
     } = this.props;
 
     if (!logRows) {
@@ -134,15 +136,17 @@ class LogsContainer extends PureComponent<LogsContainerProps> {
             logRows={logRows}
             logsMeta={logsMeta}
             logsSeries={logsSeries}
-            logsVolumeEnabled={this.props.logsVolumeEnabled}
-            onSetLogsVolumeEnabled={(enabled) => this.props.setLogsVolumeEnabled(exploreId, enabled)}
-            logsVolumeData={logsVolumeData}
+            logsVolumeEnabled={logsVolume.enabled}
+            onSetLogsVolumeEnabled={(enabled) =>
+              setSupplementaryQueryEnabled(exploreId, enabled, SupplementaryQueryType.LogsVolume)
+            }
+            logsVolumeData={logsVolume.data}
             logsQueries={logsQueries}
             width={width}
             splitOpen={splitOpenFn}
             loading={loading}
             loadingState={loadingState}
-            loadLogsVolumeData={loadLogsVolumeData}
+            loadLogsVolumeData={() => loadSupplementaryQueryData(exploreId, SupplementaryQueryType.LogsVolume)}
             onChangeTime={this.onChangeTime}
             onClickFilterLabel={onClickFilterLabel}
             onClickFilterOutLabel={onClickFilterOutLabel}
@@ -180,11 +184,10 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
-    logsVolumeEnabled,
-    logsVolumeDataProvider,
-    logsVolumeData,
+    supplementaryQueries,
   } = item;
   const timeZone = getTimeZone(state.user);
+  const logsVolume = supplementaryQueries[SupplementaryQueryType.LogsVolume];
 
   return {
     loading,
@@ -200,9 +203,7 @@ function mapStateToProps(state: StoreState, { exploreId }: { exploreId: string }
     isPaused,
     range,
     absoluteRange,
-    logsVolumeEnabled,
-    logsVolumeDataProvider,
-    logsVolumeData,
+    logsVolume,
   };
 }
 
@@ -210,8 +211,8 @@ const mapDispatchToProps = {
   updateTimeRange,
   addResultsToCache,
   clearCache,
-  loadLogsVolumeData,
-  setLogsVolumeEnabled,
+  loadSupplementaryQueryData,
+  setSupplementaryQueryEnabled,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

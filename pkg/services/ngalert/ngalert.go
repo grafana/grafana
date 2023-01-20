@@ -205,11 +205,20 @@ func (ng *AlertNG) init() error {
 		Tracer:               ng.tracer,
 	}
 
-	history, err := configureHistorianBackend(ng.Cfg.UnifiedAlerting.StateHistory, ng.annotationsRepo, ng.dashboardService)
+	history, err := configureHistorianBackend(ng.Cfg.UnifiedAlerting.StateHistory, ng.annotationsRepo, ng.dashboardService, ng.store)
 	if err != nil {
 		return err
 	}
-	stateManager := state.NewManager(ng.Metrics.GetStateMetrics(), appUrl, store, ng.imageService, clk, history)
+	cfg := state.ManagerCfg{
+		Metrics:              ng.Metrics.GetStateMetrics(),
+		ExternalURL:          appUrl,
+		InstanceStore:        store,
+		Images:               ng.imageService,
+		Clock:                clk,
+		Historian:            history,
+		DoNotSaveNormalState: ng.FeatureToggles.IsEnabled(featuremgmt.FlagAlertingNoNormalState),
+	}
+	stateManager := state.NewManager(cfg)
 	scheduler := schedule.NewScheduler(schedCfg, stateManager)
 
 	// if it is required to include folder title to the alerts, we need to subscribe to changes of alert title
@@ -369,16 +378,29 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	return limits, nil
 }
 
-func configureHistorianBackend(cfg setting.UnifiedAlertingStateHistorySettings, ar annotations.Repository, ds dashboards.DashboardService) (state.Historian, error) {
+func configureHistorianBackend(cfg setting.UnifiedAlertingStateHistorySettings, ar annotations.Repository, ds dashboards.DashboardService, rs historian.RuleStore) (state.Historian, error) {
 	if !cfg.Enabled {
 		return historian.NewNopHistorian(), nil
 	}
 
 	if cfg.Backend == "annotations" {
-		return historian.NewAnnotationBackend(ar, ds), nil
+		return historian.NewAnnotationBackend(ar, ds, rs), nil
 	}
 	if cfg.Backend == "loki" {
-		return historian.NewRemoteLokiBackend(), nil
+		baseURL, err := url.Parse(cfg.LokiRemoteURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse remote loki URL: %w", err)
+		}
+		backend := historian.NewRemoteLokiBackend(historian.LokiConfig{
+			Url:               baseURL,
+			BasicAuthUser:     cfg.LokiBasicAuthUsername,
+			BasicAuthPassword: cfg.LokiBasicAuthPassword,
+			TenantID:          cfg.LokiTenantID,
+		})
+		if err := backend.TestConnection(); err != nil {
+			return nil, fmt.Errorf("failed to ping the remote loki historian: %w", err)
+		}
+		return backend, nil
 	}
 	if cfg.Backend == "sql" {
 		return historian.NewSqlBackend(), nil

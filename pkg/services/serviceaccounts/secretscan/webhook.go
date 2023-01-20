@@ -3,13 +3,19 @@ package secretscan
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 )
+
+var errWebHookURL = errors.New("webhook url must be https")
 
 // webHookClient is a client for sending leak notifications.
 type webHookClient struct {
@@ -20,17 +26,32 @@ type webHookClient struct {
 
 var ErrInvalidWebHookStatusCode = errors.New("invalid webhook status code")
 
-func newWebHookClient(url, version string) *webHookClient {
+func newWebHookClient(url, version string, dev bool) (*webHookClient, error) {
+	if !strings.HasPrefix(url, "https://") && !dev {
+		return nil, errWebHookURL
+	}
+
 	return &webHookClient{
 		version: version,
 		url:     url,
 		httpClient: &http.Client{
-			Transport:     nil,
-			CheckRedirect: nil,
-			Jar:           nil,
-			Timeout:       timeout,
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					Renegotiation: tls.RenegotiateFreelyAsClient,
+				},
+				Proxy: http.ProxyFromEnvironment,
+				DialContext: (&net.Dialer{
+					Timeout:   timeout,
+					KeepAlive: 15 * time.Second,
+				}).DialContext,
+				TLSHandshakeTimeout:   10 * time.Second,
+				ExpectContinueTimeout: 1 * time.Second,
+				MaxIdleConns:          100,
+				IdleConnTimeout:       30 * time.Second,
+			},
+			Timeout: time.Second * 30,
 		},
-	}
+	}, nil
 }
 
 func (wClient *webHookClient) Notify(ctx context.Context,
@@ -45,7 +66,6 @@ func (wClient *webHookClient) Notify(ctx context.Context,
 	values := map[string]interface{}{
 		"alert_uid":                uuid.NewString(),
 		"title":                    "SecretScan Alert: Grafana Token leaked",
-		"image_url":                "https://images.pexels.com/photos/5119737/pexels-photo-5119737.jpeg?auto=compress&cs=tinysrgb&w=300", //nolint
 		"state":                    "alerting",
 		"link_to_upstream_details": token.URL,
 		"message": "Token of type " +
