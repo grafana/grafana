@@ -6,8 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/prometheus/client_golang/prometheus"
 	"io"
 	"net/http"
 	"path"
@@ -15,6 +13,9 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/api/dtos"
