@@ -404,6 +404,63 @@ func TestLoader_Load(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:  "Load an app with link extensions",
+			class: plugins.External,
+			cfg: &config.Cfg{
+				PluginsAllowUnsigned: []string{"test-app"},
+			},
+			pluginPaths: []string{"../testdata/test-app-with-link-extensions"},
+			want: []*plugins.Plugin{
+				{JSONData: plugins.JSONData{
+					ID:   "test-app",
+					Type: "app",
+					Name: "Test App",
+					Info: plugins.Info{
+						Author: plugins.InfoLink{
+							Name: "Test Inc.",
+							URL:  "http://test.com",
+						},
+						Description: "Official Grafana Test App & Dashboard bundle",
+						Version:     "1.0.0",
+						Links: []plugins.InfoLink{
+							{Name: "Project site", URL: "http://project.com"},
+							{Name: "License & Terms", URL: "http://license.com"},
+						},
+						Logos: plugins.Logos{
+							Small: "public/img/icn-app.svg",
+							Large: "public/img/icn-app.svg",
+						},
+						Updated: "2015-02-10",
+					},
+					Dependencies: plugins.Dependencies{
+						GrafanaDependency: ">=8.0.0",
+						GrafanaVersion:    "*",
+						Plugins:           []plugins.Dependency{},
+					},
+					Includes: []*plugins.Includes{
+						{Name: "Root Page (react)", Type: "page", Role: "Viewer", Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
+					},
+					Extensions: &plugins.Extensions{
+						Links: []plugins.ExtensionsLink{
+							{
+								Id:          "root",
+								Description: "Link to the plugin root",
+								Path:        "/my-simple-app",
+							},
+						},
+					},
+					Backend: false,
+				},
+					DefaultNavURL: "/plugins/test-app/page/root-page-react",
+					PluginDir:     filepath.Join(parentDir, "testdata/test-app-with-link-extensions"),
+					Class:         plugins.External,
+					Signature:     plugins.SignatureUnsigned,
+					Module:        "plugins/test-app/module",
+					BaseURL:       "public/plugins/test-app",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		reg := fakes.NewFakePluginRegistry()
