@@ -49,13 +49,13 @@ Use these options to refine your visualization.
 - **Horizontal** - Will make the X axis the category axis.
 - **Vertical** - Will make the Y axis the category axis.
 
-### Rotate X tick labels
+### Rotate x-axis tick labels
 
-When the graph is in vertical orientation you can use this setting to rotate the labels under the bars. Useful if the labels are long and overlap.
+When the graph is vertically oriented, this setting rotates the labels under the bars. This setting is useful when bar chart labels are long and overlap.
 
-### X tick label max length
+### X-axis tick label maximum length
 
-Sets the max length of the bar label. Labels longer than the max length will be truncated and `...` will be appended to the end.
+Sets the maximum length of bar chart labels. Labels longer than the maximum length are truncated, and appended with `...`.
 
 ### Bar labels minimum spacing
 
@@ -71,11 +71,11 @@ This controls whether values are shown on top or to the left of bars.
 
 ### Stacking
 
-Controls if bars are stacked and how they are stacked.
+Controls bar chart stacking.
 
-- **Off** Bars will not be stacked.
-- **Normal** Bars will be stacked on top of each other.
-- **Percent** Bars will be stacked on top of each other and the height of each bar will be the percentage of the total height of the stack.
+- **Off**: Bars will not be stacked.
+- **Normal**: Bars will be stacked on each other.
+- **Percent**: Bars will be stacked on each other, and the height of each bar is the percentage of the total height of the stack.
 
 ### Group width
 
@@ -87,15 +87,14 @@ Controls the width of bars. 1 = Max width, 0 = Min width.
 
 ### Bar radius
 
-Controls the radius of the bars. 0.5 = Max radius, 0 = Min radius.
+Controls the radius of the bars.
+
+- 0 = Minimum radius
+- 0.5 = Maximum radius
 
 ### Highlight full area on cover
 
-Controls if the full surrounding area of the bar is highlighted when hovering over the bar.
-
-### Color by field
-
-Controls whether the bars are colored by a sibling field.
+Controls if the entire surrounding area of the bar is highlighted when you hover over the bar.
 
 ### Line width
 
