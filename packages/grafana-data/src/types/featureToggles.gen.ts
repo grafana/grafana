@@ -88,5 +88,4 @@ export interface FeatureToggles {
   disablePrometheusExemplarSampling?: boolean;
   alertingBacktesting?: boolean;
   alertingNoNormalState?: boolean;
-  azureMultipleResourcePicker?: boolean;
 }
