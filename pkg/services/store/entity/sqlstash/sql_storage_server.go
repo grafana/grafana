@@ -544,7 +544,7 @@ func (s *sqlEntityServer) writeSearchInfo(
 		}
 	}
 
-	// Recursive updates
+	// Traverse entities and insert refs
 	if summary.model.Nested != nil {
 		for _, childModel := range summary.model.Nested {
 			grn = (&entity.GRN{
