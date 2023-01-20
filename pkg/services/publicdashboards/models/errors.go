@@ -14,6 +14,7 @@ var (
 	ErrInvalidAccessToken   = errutil.NewBase(errutil.StatusBadRequest, "publicdashboards.invalidAccessToken", errutil.WithPublicMessage("Invalid access token"))
 	ErrInvalidPanelId       = errutil.NewBase(errutil.StatusBadRequest, "publicdashboards.invalidPanelId", errutil.WithPublicMessage("Invalid panel id"))
 	ErrInvalidUid           = errutil.NewBase(errutil.StatusBadRequest, "publicdashboards.invalidUid", errutil.WithPublicMessage("Invalid Uid"))
+	ErrInvalidEmail         = errutil.NewBase(errutil.StatusBadRequest, "publicdashboards.invalidEmail", errutil.WithPublicMessage("Invalid Email"))
 
 	ErrPublicDashboardIdentifierNotSet     = errutil.NewBase(errutil.StatusBadRequest, "publicdashboards.identifierNotSet", errutil.WithPublicMessage("No Uid for public dashboard specified"))
 	ErrPublicDashboardHasTemplateVariables = errutil.NewBase(errutil.StatusBadRequest, "publicdashboards.hasTemplateVariables", errutil.WithPublicMessage("Public dashboard has template variables"))
