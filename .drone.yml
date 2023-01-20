@@ -2839,17 +2839,6 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.3
   name: upload-cdn-assets-enterprise2
 - commands:
-  - ./bin/grabpl artifacts npm store --tag ${DRONE_TAG}
-  depends_on:
-  - build-frontend-packages
-  environment:
-    GCP_KEY:
-      from_secret: gcp_key
-    PRERELEASE_BUCKET:
-      from_secret: prerelease_bucket
-  image: grafana/build-container:1.6.6
-  name: store-npm-packages
-- commands:
   - ./bin/grabpl upload-packages --edition enterprise2
   depends_on:
   - package-enterprise2
@@ -5636,6 +5625,6 @@ kind: secret
 name: packages_secret_access_key
 ---
 kind: signature
-hmac: 7b6f6906fff47ab3bfcc9fde3c30428766c935d1a8b0d80fde012bec248b7951
+hmac: 484a60c2bddc31ee390456bae87bf13d2cd1c3eef0b4b07460d84c0978b14340
 
 ...
