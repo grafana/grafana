@@ -28,8 +28,6 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
   const currentMode = cellDisplayModeOptions.find((o) => o.value!.type === cellType)!;
   let [settingCache, setSettingCache] = useState<Record<string, TableCellOptions>>({});
 
-  console.log(value);
-
   // Update display mode on change
   const onCellTypeChange = (v: SelectableValue<TableCellOptions>) => {
     if (v.value !== undefined) {
