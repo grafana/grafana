@@ -92,8 +92,8 @@ const ui = {
 
   editRouteButton: byLabelText('Edit route'),
   deleteRouteButton: byLabelText('Delete route'),
-  newPolicyButton: byRole('button', { name: /New policy/ }),
-  newPolicyCTAButton: byRole('button', { name: /New specific policy/ }),
+  newPolicyButton: byRole('button', { name: /Add policy/ }),
+  newPolicyCTAButton: byRole('button', { name: /Add specific policy/ }),
   savePolicyButton: byRole('button', { name: /save policy/i }),
 
   receiverSelect: byTestId('am-receiver-select'),

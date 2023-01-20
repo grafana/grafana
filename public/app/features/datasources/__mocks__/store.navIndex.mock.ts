@@ -418,7 +418,7 @@ export const navIndex: NavIndex = {
         },
         {
           id: 'alert',
-          text: 'New alert rule',
+          text: 'Create alert rule',
           subTitle: 'Create an alert rule',
           icon: 'plus',
           url: '/alerting/new',
@@ -722,7 +722,7 @@ export const navIndex: NavIndex = {
       },
       {
         id: 'alert',
-        text: 'New alert rule',
+        text: 'Create alert rule',
         subTitle: 'Create an alert rule',
         icon: 'plus',
         url: '/alerting/new',
@@ -789,7 +789,7 @@ export const navIndex: NavIndex = {
         },
         {
           id: 'alert',
-          text: 'New alert rule',
+          text: 'Create alert rule',
           subTitle: 'Create an alert rule',
           icon: 'plus',
           url: '/alerting/new',
@@ -857,7 +857,7 @@ export const navIndex: NavIndex = {
         },
         {
           id: 'alert',
-          text: 'New alert rule',
+          text: 'Create alert rule',
           subTitle: 'Create an alert rule',
           icon: 'plus',
           url: '/alerting/new',
@@ -925,7 +925,7 @@ export const navIndex: NavIndex = {
         },
         {
           id: 'alert',
-          text: 'New alert rule',
+          text: 'Create alert rule',
           subTitle: 'Create an alert rule',
           icon: 'plus',
           url: '/alerting/new',
@@ -993,7 +993,7 @@ export const navIndex: NavIndex = {
         },
         {
           id: 'alert',
-          text: 'New alert rule',
+          text: 'Create alert rule',
           subTitle: 'Create an alert rule',
           icon: 'plus',
           url: '/alerting/new',
@@ -1061,7 +1061,7 @@ export const navIndex: NavIndex = {
         },
         {
           id: 'alert',
-          text: 'New alert rule',
+          text: 'Create alert rule',
           subTitle: 'Create an alert rule',
           icon: 'plus',
           url: '/alerting/new',
@@ -1129,7 +1129,7 @@ export const navIndex: NavIndex = {
         },
         {
           id: 'alert',
-          text: 'New alert rule',
+          text: 'Create alert rule',
           subTitle: 'Create an alert rule',
           icon: 'plus',
           url: '/alerting/new',
@@ -1141,7 +1141,7 @@ export const navIndex: NavIndex = {
   },
   alert: {
     id: 'alert',
-    text: 'New alert rule',
+    text: 'Create alert rule',
     subTitle: 'Create an alert rule',
     icon: 'plus',
     url: '/alerting/new',
@@ -1200,7 +1200,7 @@ export const navIndex: NavIndex = {
         },
         {
           id: 'alert',
-          text: 'New alert rule',
+          text: 'Create alert rule',
           subTitle: 'Create an alert rule',
           icon: 'plus',
           url: '/alerting/new',

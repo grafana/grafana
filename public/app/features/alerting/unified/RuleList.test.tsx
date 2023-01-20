@@ -122,7 +122,7 @@ const ui = {
   moreErrorsButton: byRole('button', { name: /more errors/ }),
   editCloudGroupIcon: byTestId('edit-group'),
 
-  newRuleButton: byRole('link', { name: 'New alert rule' }),
+  newRuleButton: byRole('link', { name: 'Create alert rule' }),
 
   editGroupModal: {
     namespaceInput: byRole('textbox', { hidden: true, name: /namespace/i }),
@@ -800,7 +800,7 @@ describe('RuleList', () => {
 
       await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(1));
 
-      const button = screen.getByText('New alert rule');
+      const button = screen.getByText('Create alert rule');
 
       button.addEventListener('click', (event) => event.preventDefault(), false);
 
