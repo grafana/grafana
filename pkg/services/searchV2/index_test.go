@@ -446,9 +446,8 @@ var dashboardsWithFolders = []dashboard{
 		},
 	},
 	{
-		id:       4,
-		uid:      "4",
-		folderID: 0,
+		id:  4,
+		uid: "4",
 		summary: &models.EntitySummary{
 			Name: "One more dash",
 			Nested: []*models.EntitySummary{
@@ -504,9 +503,8 @@ func TestDashboardIndex_Folders(t *testing.T) {
 
 var dashboardsWithPanels = []dashboard{
 	{
-		id:       1,
-		uid:      "1",
-		folderID: 0,
+		id:  1,
+		uid: "1",
 		summary: &models.EntitySummary{
 			Name: "My Dash",
 			Nested: []*models.EntitySummary{
