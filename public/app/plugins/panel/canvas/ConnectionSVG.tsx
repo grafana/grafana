@@ -6,6 +6,7 @@ import { useStyles2 } from '@grafana/ui';
 import { CanvasConnection } from 'app/features/canvas/element';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
+import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
 
 type Props = {
   setSVGRef: (anchorElement: SVGSVGElement) => void;
@@ -23,7 +24,9 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
   const styles = useStyles2(getStyles);
 
   const CONNECTION_LINE_ID = 'connectionLineId';
-  const CONNECTION_HEAD_ID = 'head';
+
+  const id = useUniqueId();
+  const CONNECTION_HEAD_ID = `head-${id}`;
 
   const [selectedConnection, setSelectedConnection] = useState<CanvasConnection | undefined>(undefined);
 
