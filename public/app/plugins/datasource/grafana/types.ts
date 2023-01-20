@@ -30,7 +30,7 @@ export interface GrafanaQuery extends DataQuery {
 }
 
 export interface GrafanaQueryFile {
-  name: String;
+  name: string;
   size: number;
 }
 
