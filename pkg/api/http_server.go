@@ -16,12 +16,14 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/querylibrary"
 	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/store/entity/httpentitystore"
+	"github.com/grafana/grafana/pkg/services/store/k8saccess"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -30,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -150,7 +153,7 @@ type HTTPServer struct {
 	QueryLibraryHTTPService      querylibrary.HTTPService
 	QueryLibraryService          querylibrary.Service
 	ContextHandler               *contexthandler.ContextHandler
-	SQLStore                     sqlstore.Store
+	SQLStore                     db.DB
 	AlertEngine                  *alerting.AlertEngine
 	AlertNG                      *ngalert.AlertNG
 	LibraryPanelService          librarypanels.Service
@@ -209,6 +212,7 @@ type HTTPServer struct {
 	tagService             tag.Service
 	oauthTokenService      oauthtoken.OAuthTokenService
 	statsService           stats.Service
+	authnService           authn.Service
 }
 
 type ServerOptions struct {
@@ -251,7 +255,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	accesscontrolService accesscontrol.Service, dashboardThumbsService thumbs.DashboardThumbService, navTreeService navtree.Service,
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService,
 	queryLibraryHTTPService querylibrary.HTTPService, queryLibraryService querylibrary.Service, oauthTokenService oauthtoken.OAuthTokenService,
-	statsService stats.Service,
+	statsService stats.Service, authnService authn.Service,
+	k8saccess k8saccess.K8SAccess, // required so that the router is registered
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -357,6 +362,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		QueryLibraryService:          queryLibraryService,
 		oauthTokenService:            oauthTokenService,
 		statsService:                 statsService,
+		authnService:                 authnService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")

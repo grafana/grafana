@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardsDB "github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -44,7 +43,7 @@ func TestLogPrefix(t *testing.T) {
 func TestGetPublicDashboard(t *testing.T) {
 	type storeResp struct {
 		pd  *PublicDashboard
-		d   *models.Dashboard
+		d   *dashboards.Dashboard
 		err error
 	}
 
@@ -53,25 +52,25 @@ func TestGetPublicDashboard(t *testing.T) {
 		AccessToken string
 		StoreResp   *storeResp
 		ErrResp     error
-		DashResp    *models.Dashboard
+		DashResp    *dashboards.Dashboard
 	}{
 		{
 			Name:        "returns a dashboard",
 			AccessToken: "abc123",
 			StoreResp: &storeResp{
 				pd:  &PublicDashboard{AccessToken: "abcdToken", IsEnabled: true},
-				d:   &models.Dashboard{Uid: "mydashboard", Data: dashboardData},
+				d:   &dashboards.Dashboard{UID: "mydashboard", Data: dashboardData},
 				err: nil,
 			},
 			ErrResp:  nil,
-			DashResp: &models.Dashboard{Uid: "mydashboard", Data: dashboardData},
+			DashResp: &dashboards.Dashboard{UID: "mydashboard", Data: dashboardData},
 		},
 		{
 			Name:        "returns ErrPublicDashboardNotFound when isEnabled is false",
 			AccessToken: "abc123",
 			StoreResp: &storeResp{
 				pd:  &PublicDashboard{AccessToken: "abcdToken", IsEnabled: false},
-				d:   &models.Dashboard{Uid: "mydashboard"},
+				d:   &dashboards.Dashboard{UID: "mydashboard"},
 				err: nil,
 			},
 			ErrResp:  ErrPublicDashboardNotFound,
@@ -138,29 +137,31 @@ func TestCreatePublicDashboard(t *testing.T) {
 		}
 
 		dto := &SavePublicDashboardDTO{
-			DashboardUid: dashboard.Uid,
-			OrgId:        dashboard.OrgId,
+			DashboardUid: dashboard.UID,
+			OrgId:        dashboard.OrgID,
 			UserId:       7,
 			PublicDashboard: &PublicDashboard{
-				IsEnabled:          true,
-				AnnotationsEnabled: false,
-				DashboardUid:       "NOTTHESAME",
-				OrgId:              9999999,
-				TimeSettings:       timeSettings,
+				IsEnabled:            true,
+				AnnotationsEnabled:   false,
+				TimeSelectionEnabled: true,
+				DashboardUid:         "NOTTHESAME",
+				OrgId:                9999999,
+				TimeSettings:         timeSettings,
 			},
 		}
 
 		_, err = service.Create(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
-		pubdash, err := service.FindByDashboardUid(context.Background(), dashboard.OrgId, dashboard.Uid)
+		pubdash, err := service.FindByDashboardUid(context.Background(), dashboard.OrgID, dashboard.UID)
 		require.NoError(t, err)
 
 		// DashboardUid/OrgId/CreatedBy set by the command, not parameters
-		assert.Equal(t, dashboard.Uid, pubdash.DashboardUid)
-		assert.Equal(t, dashboard.OrgId, pubdash.OrgId)
+		assert.Equal(t, dashboard.UID, pubdash.DashboardUid)
+		assert.Equal(t, dashboard.OrgID, pubdash.OrgId)
 		assert.Equal(t, dto.UserId, pubdash.CreatedBy)
 		assert.Equal(t, dto.PublicDashboard.AnnotationsEnabled, pubdash.AnnotationsEnabled)
+		assert.Equal(t, dto.PublicDashboard.TimeSelectionEnabled, pubdash.TimeSelectionEnabled)
 		// ExistsEnabledByDashboardUid set by parameters
 		assert.Equal(t, dto.PublicDashboard.IsEnabled, pubdash.IsEnabled)
 		// CreatedAt set to non-zero time
@@ -186,8 +187,8 @@ func TestCreatePublicDashboard(t *testing.T) {
 		}
 
 		dto := &SavePublicDashboardDTO{
-			DashboardUid: dashboard.Uid,
-			OrgId:        dashboard.OrgId,
+			DashboardUid: dashboard.UID,
+			OrgId:        dashboard.OrgID,
 			UserId:       7,
 			PublicDashboard: &PublicDashboard{
 				IsEnabled:    true,
@@ -199,7 +200,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 		_, err = service.Create(context.Background(), SignedInUser, dto)
 		require.NoError(t, err)
 
-		pubdash, err := service.FindByDashboardUid(context.Background(), dashboard.OrgId, dashboard.Uid)
+		pubdash, err := service.FindByDashboardUid(context.Background(), dashboard.OrgID, dashboard.UID)
 		require.NoError(t, err)
 		assert.Equal(t, defaultPubdashTimeSettings, pubdash.TimeSettings)
 	})
@@ -219,8 +220,8 @@ func TestCreatePublicDashboard(t *testing.T) {
 		}
 
 		dto := &SavePublicDashboardDTO{
-			DashboardUid: dashboard.Uid,
-			OrgId:        dashboard.OrgId,
+			DashboardUid: dashboard.UID,
+			OrgId:        dashboard.OrgID,
 			UserId:       7,
 			PublicDashboard: &PublicDashboard{
 				IsEnabled:    true,
@@ -234,7 +235,7 @@ func TestCreatePublicDashboard(t *testing.T) {
 	})
 
 	t.Run("Throws an error when pubdash with generated access token already exists", func(t *testing.T) {
-		dashboard := models.NewDashboard("testDashie")
+		dashboard := dashboards.NewDashboard("testDashie")
 		pubdash := &PublicDashboard{
 			IsEnabled:          true,
 			AnnotationsEnabled: false,
@@ -283,8 +284,8 @@ func TestCreatePublicDashboard(t *testing.T) {
 		}
 
 		dto := &SavePublicDashboardDTO{
-			DashboardUid: dashboard.Uid,
-			OrgId:        dashboard.OrgId,
+			DashboardUid: dashboard.UID,
+			OrgId:        dashboard.OrgID,
 			UserId:       7,
 			PublicDashboard: &PublicDashboard{
 				AnnotationsEnabled: false,
@@ -298,8 +299,8 @@ func TestCreatePublicDashboard(t *testing.T) {
 
 		// attempt to overwrite settings
 		dto = &SavePublicDashboardDTO{
-			DashboardUid: dashboard.Uid,
-			OrgId:        dashboard.OrgId,
+			DashboardUid: dashboard.UID,
+			OrgId:        dashboard.OrgID,
 			UserId:       8,
 			PublicDashboard: &PublicDashboard{
 				Uid:          savedPubdash.Uid,
@@ -336,13 +337,14 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		}
 
 		dto := &SavePublicDashboardDTO{
-			DashboardUid: dashboard.Uid,
-			OrgId:        dashboard.OrgId,
+			DashboardUid: dashboard.UID,
+			OrgId:        dashboard.OrgID,
 			UserId:       7,
 			PublicDashboard: &PublicDashboard{
-				AnnotationsEnabled: false,
-				IsEnabled:          true,
-				TimeSettings:       timeSettings,
+				AnnotationsEnabled:   false,
+				IsEnabled:            true,
+				TimeSelectionEnabled: false,
+				TimeSettings:         timeSettings,
 			},
 		}
 
@@ -352,8 +354,8 @@ func TestUpdatePublicDashboard(t *testing.T) {
 
 		// attempt to overwrite settings
 		dto = &SavePublicDashboardDTO{
-			DashboardUid: dashboard.Uid,
-			OrgId:        dashboard.OrgId,
+			DashboardUid: dashboard.UID,
+			OrgId:        dashboard.OrgID,
 			UserId:       8,
 			PublicDashboard: &PublicDashboard{
 				Uid:          savedPubdash.Uid,
@@ -362,10 +364,11 @@ func TestUpdatePublicDashboard(t *testing.T) {
 				CreatedBy:    9,
 				CreatedAt:    time.Time{},
 
-				IsEnabled:          true,
-				AnnotationsEnabled: true,
-				TimeSettings:       timeSettings,
-				AccessToken:        "NOTAREALUUID",
+				IsEnabled:            true,
+				AnnotationsEnabled:   true,
+				TimeSelectionEnabled: true,
+				TimeSettings:         timeSettings,
+				AccessToken:          "NOTAREALUUID",
 			},
 		}
 		updatedPubdash, err := service.Update(context.Background(), SignedInUser, dto)
@@ -381,6 +384,7 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		// gets updated
 		assert.Equal(t, dto.PublicDashboard.IsEnabled, updatedPubdash.IsEnabled)
 		assert.Equal(t, dto.PublicDashboard.AnnotationsEnabled, updatedPubdash.AnnotationsEnabled)
+		assert.Equal(t, dto.PublicDashboard.TimeSelectionEnabled, updatedPubdash.TimeSelectionEnabled)
 		assert.Equal(t, dto.PublicDashboard.TimeSettings, updatedPubdash.TimeSettings)
 		assert.Equal(t, dto.UserId, updatedPubdash.UpdatedBy)
 		assert.NotEqual(t, &time.Time{}, updatedPubdash.UpdatedAt)
@@ -400,8 +404,8 @@ func TestUpdatePublicDashboard(t *testing.T) {
 		}
 
 		dto := &SavePublicDashboardDTO{
-			DashboardUid: dashboard.Uid,
-			OrgId:        dashboard.OrgId,
+			DashboardUid: dashboard.UID,
+			OrgId:        dashboard.OrgID,
 			UserId:       7,
 			PublicDashboard: &PublicDashboard{
 				IsEnabled:    true,
@@ -414,8 +418,8 @@ func TestUpdatePublicDashboard(t *testing.T) {
 
 		// attempt to overwrite settings
 		dto = &SavePublicDashboardDTO{
-			DashboardUid: dashboard.Uid,
-			OrgId:        dashboard.OrgId,
+			DashboardUid: dashboard.UID,
+			OrgId:        dashboard.OrgID,
 			UserId:       8,
 			PublicDashboard: &PublicDashboard{
 				Uid:          savedPubdash.Uid,
@@ -933,7 +937,7 @@ func CreateDatasource(dsType string, uid string) struct {
 	}
 }
 
-func AddAnnotationsToDashboard(t *testing.T, dash *models.Dashboard, annotations []DashAnnotation) *models.Dashboard {
+func AddAnnotationsToDashboard(t *testing.T, dash *dashboards.Dashboard, annotations []DashAnnotation) *dashboards.Dashboard {
 	type annotationsDto struct {
 		List []DashAnnotation `json:"list"`
 	}
@@ -951,7 +955,7 @@ func AddAnnotationsToDashboard(t *testing.T, dash *models.Dashboard, annotations
 }
 
 func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardStore, title string, orgId int64,
-	folderId int64, isFolder bool, templateVars []map[string]interface{}, customPanels []interface{}, tags ...interface{}) *models.Dashboard {
+	folderId int64, isFolder bool, templateVars []map[string]interface{}, customPanels []interface{}, tags ...interface{}) *dashboards.Dashboard {
 	t.Helper()
 
 	var dashboardPanels []interface{}
@@ -999,9 +1003,9 @@ func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardSto
 		}
 	}
 
-	cmd := models.SaveDashboardCommand{
-		OrgId:    orgId,
-		FolderId: folderId,
+	cmd := dashboards.SaveDashboardCommand{
+		OrgID:    orgId,
+		FolderID: folderId,
 		IsFolder: isFolder,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
 			"id":     nil,
@@ -1020,7 +1024,7 @@ func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardSto
 	dash, err := dashboardStore.SaveDashboard(context.Background(), cmd)
 	require.NoError(t, err)
 	require.NotNil(t, dash)
-	dash.Data.Set("id", dash.Id)
-	dash.Data.Set("uid", dash.Uid)
+	dash.Data.Set("id", dash.ID)
+	dash.Data.Set("uid", dash.UID)
 	return dash
 }

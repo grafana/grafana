@@ -5,15 +5,15 @@ load(
     'pull_secret',
 )
 
-grabpl_version = 'v3.0.17'
-build_image = 'grafana/build-container:1.6.4'
+grabpl_version = 'v3.0.20'
+build_image = 'grafana/build-container:1.6.6'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.15.6'
 curl_image = 'byrnedo/alpine-curl:0.1.8'
 windows_image = 'mcr.microsoft.com/windows:1809'
 wix_image = 'grafana/ci-wix:0.1.1'
-go_image = 'golang:1.19.3'
+go_image = 'golang:1.19.4'
 
 trigger_oss = {
     'repo': [
@@ -628,7 +628,7 @@ def codespell_step():
     }
 
 
-def package_step(edition, ver_mode, include_enterprise2=False, variants=None):
+def package_step(edition, ver_mode, variants=None):
     deps = [
         'build-plugins',
         'build-backend' + enterprise2_suffix(edition),
@@ -644,9 +644,9 @@ def package_step(edition, ver_mode, include_enterprise2=False, variants=None):
         sign_args = ' --sign'
         env = {
             'GRAFANA_API_KEY': from_secret('grafana_api_key'),
-            'GPG_PRIV_KEY': from_secret('gpg_priv_key'),
-            'GPG_PUB_KEY': from_secret('gpg_pub_key'),
-            'GPG_KEY_PASSWORD': from_secret('gpg_key_password'),
+            'GPG_PRIV_KEY': from_secret('packages_gpg_private_key'),
+            'GPG_PUB_KEY': from_secret('packages_gpg_public_key'),
+            'GPG_KEY_PASSWORD': from_secret('packages_gpg_passphrase'),
         }
         test_args = ''
     else:
@@ -739,6 +739,7 @@ def cloud_plugins_e2e_tests_step(suite, cloud, port=3001, video="false", trigger
                 'include': [
                     'pkg/tsdb/azuremonitor/**',
                     'public/app/plugins/datasource/grafana-azure-monitor-datasource/**',
+                    'e2e/cloud-plugins-suite/azure-monitor.spec.ts',
                 ]
             },
         )

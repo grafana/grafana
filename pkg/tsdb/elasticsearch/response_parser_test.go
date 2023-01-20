@@ -21,7 +21,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("Simple query and count", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [{ "type": "count", "id": "1" }],
           "bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "2" }]
 				}`,
@@ -46,9 +45,7 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -70,7 +67,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("Simple query count & avg aggregation", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [{ "type": "count", "id": "1" }, {"type": "avg", "field": "value", "id": "2" }],
           "bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "3" }]
 				}`,
@@ -97,9 +93,7 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -131,7 +125,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("Single group by query one metric", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [{ "type": "count", "id": "1" }],
           "bucketAggs": [
 						{ "type": "terms", "field": "host", "id": "2" },
@@ -165,9 +158,7 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 
 			queryRes := result.Responses["A"]
@@ -196,7 +187,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("Single group by query two metrics", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [{ "type": "count", "id": "1" }, { "type": "avg", "field": "@value", "id": "4" }],
           "bucketAggs": [
 						{ "type": "terms", "field": "host", "id": "2" },
@@ -236,9 +226,7 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -284,7 +272,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("With percentiles", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [{ "type": "percentiles", "settings": { "percents": [75, 90] }, "id": "1" }],
           "bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "3" }]
 				}`,
@@ -311,9 +298,7 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -343,7 +328,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("With extended stats", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [{ "type": "extended_stats", "meta": { "max": true, "std_deviation_bounds_upper": true, "std_deviation_bounds_lower": true }, "id": "1" }],
           "bucketAggs": [
 						{ "type": "terms", "field": "host", "id": "3" },
@@ -395,9 +379,7 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -459,7 +441,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("Single group by with alias pattern", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"alias": "{{term @host}} {{metric}} and {{not_exist}} {{@host}}",
 					"metrics": [{ "type": "count", "id": "1" }],
           "bucketAggs": [
@@ -501,9 +482,7 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -541,7 +520,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("Histogram response", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [{ "type": "count", "id": "1" }],
          "bucketAggs": [{ "type": "histogram", "field": "bytes", "id": "3" }]
 				}`,
@@ -557,9 +535,7 @@ func TestResponseParser(t *testing.T) {
          }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -573,7 +549,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("With two filters agg", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [{ "type": "count", "id": "1" }],
           "bucketAggs": [
 						{
@@ -609,9 +584,7 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -641,7 +614,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("With drop first and last aggregation (numeric)", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [{ "type": "avg", "id": "1" }, { "type": "count" }],
           "bucketAggs": [
 						{
@@ -680,9 +652,7 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -712,7 +682,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("With drop first and last aggregation (string)", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [{ "type": "avg", "id": "1" }, { "type": "count" }],
           "bucketAggs": [
 						{
@@ -751,9 +720,7 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -783,7 +750,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("Larger trimEdges value", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [{ "type": "count" }],
           "bucketAggs": [
 						{
@@ -816,10 +782,8 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
+			result, err := parseTestResponse(targets, response)
 
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -832,7 +796,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("No group by time", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [{ "type": "avg", "id": "1" }, { "type": "count" }],
          "bucketAggs": [{ "type": "terms", "field": "host", "id": "2" }]
 				}`,
@@ -859,9 +822,7 @@ func TestResponseParser(t *testing.T) {
          }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -879,13 +840,12 @@ func TestResponseParser(t *testing.T) {
 			require.Equal(t, frame.Fields[1].Len(), 2)
 			require.Equal(t, frame.Fields[2].Name, "Count")
 			require.Equal(t, frame.Fields[2].Len(), 2)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "")
+			require.Nil(t, frame.Fields[1].Config)
 		})
 
 		t.Run("Multiple metrics of same type", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [{ "type": "avg", "field": "test", "id": "1" }, { "type": "avg", "field": "test2", "id": "2" }],
           "bucketAggs": [{ "type": "terms", "field": "host", "id": "2" }]
 				}`,
@@ -908,9 +868,7 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -928,19 +886,17 @@ func TestResponseParser(t *testing.T) {
 			require.Equal(t, frame.Fields[1].Len(), 1)
 			require.Equal(t, frame.Fields[2].Name, "Average test2")
 			require.Equal(t, frame.Fields[2].Len(), 1)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "")
+			require.Nil(t, frame.Fields[1].Config)
 		})
 
 		t.Run("With bucket_script", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [
 						{ "id": "1", "type": "sum", "field": "@value" },
             { "id": "3", "type": "max", "field": "@value" },
             {
               "id": "4",
-              "field": "select field",
               "pipelineVariables": [{ "name": "var1", "pipelineAgg": "1" }, { "name": "var2", "pipelineAgg": "3" }],
               "settings": { "script": "params.var1 * params.var2" },
               "type": "bucket_script"
@@ -975,9 +931,7 @@ func TestResponseParser(t *testing.T) {
           }
         ]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -1015,20 +969,17 @@ func TestResponseParser(t *testing.T) {
 		t.Run("Terms with two bucket_script", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [
 						{ "id": "1", "type": "sum", "field": "@value" },
             			{ "id": "3", "type": "max", "field": "@value" },
             			{
               				"id": "4",
-              				"field": "select field",
               				"pipelineVariables": [{ "name": "var1", "pipelineAgg": "1" }, { "name": "var2", "pipelineAgg": "3" }],
               				"settings": { "script": "params.var1 * params.var2" },
               				"type": "bucket_script"
 						},
             			{
 							"id": "5",
-							"field": "select field",
 							"pipelineVariables": [{ "name": "var1", "pipelineAgg": "1" }, { "name": "var2", "pipelineAgg": "3" }],
 							"settings": { "script": "params.var1 * params.var2 * 2" },
 							"type": "bucket_script"
@@ -1065,9 +1016,7 @@ func TestResponseParser(t *testing.T) {
 					}
 				]
 			}`
-			rp, err := newResponseParserForTest(targets, response)
-			require.NoError(t, err)
-			result, err := rp.getTimeSeries()
+			result, err := parseTestResponse(targets, response)
 			require.NoError(t, err)
 			require.Len(t, result.Responses, 1)
 
@@ -1089,14 +1038,13 @@ func TestResponseParser(t *testing.T) {
 			require.Equal(t, frame.Fields[3].Len(), 2)
 			require.Equal(t, frame.Fields[4].Name, "params.var1 * params.var2 * 2")
 			require.Equal(t, frame.Fields[4].Len(), 2)
-			assert.Equal(t, frame.Fields[1].Config.DisplayNameFromDS, "")
+			require.Nil(t, frame.Fields[1].Config)
 		})
 	})
 
 	t.Run("With top_metrics", func(t *testing.T) {
 		targets := map[string]string{
 			"A": `{
-				"timeField": "@timestamp",
 				"metrics": [
 					{
 						"type": "top_metrics",
@@ -1139,9 +1087,7 @@ func TestResponseParser(t *testing.T) {
 				}
 			}]
 		}`
-		rp, err := newResponseParserForTest(targets, response)
-		assert.Nil(t, err)
-		result, err := rp.getTimeSeries()
+		result, err := parseTestResponse(targets, response)
 		assert.Nil(t, err)
 		assert.Len(t, result.Responses, 1)
 
@@ -1185,7 +1131,7 @@ func TestResponseParser(t *testing.T) {
 	})
 }
 
-func newResponseParserForTest(tsdbQueries map[string]string, responseBody string) (*responseParser, error) {
+func parseTestResponse(tsdbQueries map[string]string, responseBody string) (*backend.QueryDataResponse, error) {
 	from := time.Date(2018, 5, 15, 17, 50, 0, 0, time.UTC)
 	to := time.Date(2018, 5, 15, 17, 55, 0, 0, time.UTC)
 	timeRange := backend.TimeRange{
@@ -1210,11 +1156,10 @@ func newResponseParserForTest(tsdbQueries map[string]string, responseBody string
 		return nil, err
 	}
 
-	tsQueryParser := newTimeSeriesQueryParser()
-	queries, err := tsQueryParser.parse(tsdbQuery.Queries)
+	queries, err := parseQuery(tsdbQuery.Queries)
 	if err != nil {
 		return nil, err
 	}
 
-	return newResponseParser(response.Responses, queries), nil
+	return parseResponse(response.Responses, queries)
 }

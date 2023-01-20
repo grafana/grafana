@@ -110,20 +110,32 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 		filterInBody := true
 		if azJSONModel.Region != "" {
 			params.Add("region", azJSONModel.Region)
-		} else {
-			// Deprecated, if no region is specified, only one resource group and name is supported
+		}
+		resourceIDs := []string{}
+		if hasOne, resourceGroup, resourceName := hasOneResource(queryJSONModel); hasOne {
 			ub := urlBuilder{
 				ResourceURI: azJSONModel.ResourceURI,
 				// Alternative, used to reconstruct resource URI if it's not present
 				DefaultSubscription: dsInfo.Settings.SubscriptionId,
 				Subscription:        queryJSONModel.Subscription,
-				ResourceGroup:       azJSONModel.ResourceGroup,
+				ResourceGroup:       resourceGroup,
 				MetricNamespace:     azJSONModel.MetricNamespace,
-				ResourceName:        azJSONModel.ResourceName,
+				ResourceName:        resourceName,
 			}
 			azureURL = ub.BuildMetricsURL()
 			// POST requests are only supported at the subscription level
 			filterInBody = false
+		} else {
+			for _, r := range azJSONModel.Resources {
+				ub := urlBuilder{
+					DefaultSubscription: dsInfo.Settings.SubscriptionId,
+					Subscription:        queryJSONModel.Subscription,
+					ResourceGroup:       r.ResourceGroup,
+					MetricNamespace:     azJSONModel.MetricNamespace,
+					ResourceName:        r.ResourceName,
+				}
+				resourceIDs = append(resourceIDs, fmt.Sprintf("Microsoft.ResourceId eq '%s'", ub.buildResourceURI()))
+			}
 		}
 
 		// old model
@@ -147,17 +159,6 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 			}
 		}
 
-		resourceIDs := []string{}
-		for _, r := range azJSONModel.Resources {
-			ub := urlBuilder{
-				DefaultSubscription: dsInfo.Settings.SubscriptionId,
-				Subscription:        queryJSONModel.Subscription,
-				ResourceGroup:       r.ResourceGroup,
-				MetricNamespace:     azJSONModel.MetricNamespace,
-				ResourceName:        r.ResourceName,
-			}
-			resourceIDs = append(resourceIDs, fmt.Sprintf("Microsoft.ResourceId eq '%s'", ub.buildResourceURI()))
-		}
 		filterString := strings.Join(resourceIDs, " or ")
 
 		if dimSB.String() != "" {
@@ -178,12 +179,13 @@ func (e *AzureMonitorDatasource) buildQueries(logger log.Logger, queries []backe
 		}
 
 		query := &types.AzureMonitorQuery{
-			URL:       azureURL,
-			Target:    target,
-			Params:    params,
-			RefID:     query.RefID,
-			Alias:     alias,
-			TimeRange: query.TimeRange,
+			URL:        azureURL,
+			Target:     target,
+			Params:     params,
+			RefID:      query.RefID,
+			Alias:      alias,
+			TimeRange:  query.TimeRange,
+			Dimensions: azJSONModel.DimensionFilters,
 		}
 		if filterString != "" {
 			if filterInBody {
@@ -397,24 +399,74 @@ func getQueryUrl(query *types.AzureMonitorQuery, azurePortalUrl, resourceID, res
 	}
 	escapedTime := url.QueryEscape(string(timespan))
 
-	chartDef, err := json.Marshal(map[string]interface{}{
-		"v2charts": []interface{}{
-			map[string]interface{}{
-				"metrics": []types.MetricChartDefinition{
-					{
-						ResourceMetadata: map[string]string{
-							"id": resourceID,
-						},
-						Name:            query.Params.Get("metricnames"),
-						AggregationType: aggregationType,
-						Namespace:       query.Params.Get("metricnamespace"),
-						MetricVisualization: types.MetricVisualization{
-							DisplayName:         query.Params.Get("metricnames"),
-							ResourceDisplayName: resourceName,
-						},
-					},
+	var filters []types.AzureMonitorDimensionFilterBackend
+	var grouping map[string]interface{}
+
+	if len(query.Dimensions) > 0 {
+		for _, dimension := range query.Dimensions {
+			var dimensionInt int
+			dimensionFilters := dimension.Filters
+
+			// Only the first dimension determines the splitting shown in the Azure Portal
+			if grouping == nil {
+				grouping = map[string]interface{}{
+					"dimension": dimension.Dimension,
+					"sort":      2,
+					"top":       10,
+				}
+			}
+
+			if len(dimension.Filters) == 0 {
+				continue
+			}
+
+			switch dimension.Operator {
+			case "eq":
+				dimensionInt = 0
+			case "ne":
+				dimensionInt = 1
+			case "sw":
+				dimensionInt = 3
+			}
+
+			filter := types.AzureMonitorDimensionFilterBackend{
+				Key:      dimension.Dimension,
+				Operator: dimensionInt,
+				Values:   dimensionFilters,
+			}
+			filters = append(filters, filter)
+		}
+	}
+
+	chart := map[string]interface{}{
+		"metrics": []types.MetricChartDefinition{
+			{
+				ResourceMetadata: map[string]string{
+					"id": resourceID,
+				},
+				Name:            query.Params.Get("metricnames"),
+				AggregationType: aggregationType,
+				Namespace:       query.Params.Get("metricnamespace"),
+				MetricVisualization: types.MetricVisualization{
+					DisplayName:         query.Params.Get("metricnames"),
+					ResourceDisplayName: resourceName,
 				},
 			},
+		},
+	}
+
+	if filters != nil {
+		chart["filterCollection"] = map[string]interface{}{
+			"filters": filters,
+		}
+	}
+	if grouping != nil {
+		chart["grouping"] = grouping
+	}
+
+	chartDef, err := json.Marshal(map[string]interface{}{
+		"v2charts": []interface{}{
+			chart,
 		},
 	})
 	if err != nil {
@@ -543,4 +595,19 @@ func extractResourceNameFromMetricsURL(url string) string {
 
 func extractResourceIDFromMetricsURL(url string) string {
 	return strings.Split(url, "/providers/microsoft.insights/metrics")[0]
+}
+
+func hasOneResource(query types.AzureMonitorJSONQuery) (bool, string, string) {
+	azJSONModel := query.AzureMonitor
+	if len(azJSONModel.Resources) > 1 {
+		return false, "", ""
+	}
+	if len(azJSONModel.Resources) == 1 {
+		return true, azJSONModel.Resources[0].ResourceGroup, azJSONModel.Resources[0].ResourceName
+	}
+	if azJSONModel.ResourceGroup != "" || azJSONModel.ResourceName != "" {
+		// Deprecated, Resources should be used instead
+		return true, azJSONModel.ResourceGroup, azJSONModel.ResourceName
+	}
+	return false, "", ""
 }

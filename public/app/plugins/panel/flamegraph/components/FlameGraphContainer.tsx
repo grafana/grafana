@@ -54,6 +54,12 @@ const FlameGraphContainer = (props: Props) => {
     }
   }, [selectedView, setSelectedView, containerWidth]);
 
+  useEffect(() => {
+    setTopLevelIndex(0);
+    setRangeMin(0);
+    setRangeMax(1);
+  }, [props.data]);
+
   return (
     <div ref={sizeRef} className={styles.container}>
       <FlameGraphHeader

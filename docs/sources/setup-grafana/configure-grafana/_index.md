@@ -546,7 +546,7 @@ If you want to track Grafana usage via Azure Application Insights, then specify 
 
 ### application_insights_endpoint_url
 
-    	Optionally, use this option to override the default endpoint address for Application Insights data collecting. For details, refer to the [Azure documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/app/custom-endpoints?tabs=js).
+Optionally, use this option to override the default endpoint address for Application Insights data collecting. For details, refer to the [Azure documentation](https://docs.microsoft.com/en-us/azure/azure-monitor/app/custom-endpoints?tabs=js).
 
 <hr />
 
@@ -839,6 +839,8 @@ URL to redirect the user to after they sign out.
 
 ### oauth_auto_login
 
+> **Note**: This option is deprecated - use `auto_login` option for specific OAuth provider instead.
+
 Set to `true` to attempt login with OAuth automatically, skipping the login screen.
 This setting is ignored if multiple OAuth providers are configured. Default is `false`.
 
@@ -849,6 +851,8 @@ Administrators can increase this if they experience OAuth login state mismatch e
 
 ### oauth_skip_org_role_update_sync
 
+> **Note**: This option will soon be a legacy option in favor of OAuth provider specific `skip_org_role_sync` settings. The following sections explain settings for each provider.
+
 Skip forced assignment of OrgID `1` or `auto_assign_org_id` for external logins. Default is `false`.
 Use this setting to allow users with external login to be manually assigned to multiple organizations.
 
@@ -857,6 +861,48 @@ By default, the users' organization and role is reset on every new login.
 > **Warning**: Currently if no organization role mapping is found for a user, Grafana doesn't update the user's organization role.
 > With Grafana 10, if `oauth_skip_org_role_update_sync` option is set to `false`, users with no mapping will be
 > reset to the default organization role on every login. [See `auto_assign_org_role` option]({{< relref ".#auto_assign_org_role" >}}).
+
+### [auth.grafana_com] skip_org_role_sync
+
+To prevent synchronization of organization roles for a specific OAuth integration, you can set the `skip_org_role_sync` option to `true`. Please note that there is also a separate setting called `oauth_skip_org_role_update_sync` which has a different scope. While `skip_org_role_sync` only applies to the specific OAuth provider, `oauth_skip_org_role_update_sync` is a generic setting that affects all configured OAuth providers.
+
+The setting `oauth_skip_org_role_update_sync` will be deprecated in favor of provider-specific settings.
+
+The table below show the OAuth provider and their setting with the default value and the skip org role sync setting.
+| OAuth Provider | `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | Behavior |
+| --- | --- | --- | --- |
+| Grafana.com | false | false | will sync with Grafana.com roles |
+| Grafana.com | true | false | skip org role sync for OAuth providers including Grafana.com users |
+| Grafana.com | false | true | skip org role sync for grafana.com users |
+| Grafana.com | true | true | skip org role sync for Grafana.com users and all other OAuth providers |
+
+### [auth.azuread] skip_org_role_sync
+
+To prevent synchronization of organization roles for a specific OAuth integration, you can set the `skip_org_role_sync` option to `true`. Please note that there is also a separate setting called `oauth_skip_org_role_update_sync` which has a different scope. While `skip_org_role_sync` only applies to the specific OAuth provider, `oauth_skip_org_role_update_sync` is a generic setting that affects all configured OAuth providers.
+
+The setting `oauth_skip_org_role_update_sync` will be deprecated in favor of provider-specific settings.
+
+The following table shows the OAuth provider's setting with the default value and the skip org role sync setting.
+| OAuth Provider | `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | Behavior |
+| --- | --- | --- | --- |
+| AzureAD | false | false | will sync with AzureAD roles |
+| AzureAD | true | false | skip org role sync for OAuth providers including AzureAD users |
+| AzureAD | false | true | skip org role sync for AzureAD users |
+| AzureAD | true | true | skip org role sync for AzureAD users and all other OAuth providers |
+
+### [auth.google] skip_org_role_sync
+
+Upon the first login from a user, we set the organization roles from the setting `AutoAssignOrgRole`. If you want to manage organizational roles, set the `skip_org_role_sync` option to `true`.
+
+> **Note:** There is a separate setting called `oauth_skip_org_role_update_sync` which has a different scope. While `skip_org_role_sync` only applies to the specific OAuth provider, `oauth_skip_org_role_update_sync` is a generic setting that affects all configured OAuth providers.
+
+The following table shows the OAuth provider's setting with the default value and the skip org role sync setting.
+| OAuth Provider | `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | Behavior |
+| --- | --- | --- | --- |
+| Google | false | false | User organization roles are set with `defaultRole` and cannot be changed |
+| Google | true | false | User organization roles are set with `defaultRole` for Google. For other providers, the synchronization will be skipped, and the org role can be changed, along with other OAuth provider users' org roles. |
+| Google | false | true | User organization roles are set with `defaultRole` and the org role can be changed for Google synced users. |
+| Google | true | true | User organization roles are set with `defaultRole` for Google. For other providers, the synchronization will be skipped, and the org role can be changed, along with other OAuth provider users' org roles. |
 
 ### api_key_max_seconds_to_live
 
@@ -1383,7 +1429,7 @@ For example: `disabled_labels=grafana_folder`
 
 ## [alerting]
 
-For more information about the legacy dashboard alerting feature in Grafana, refer to [the legacy Grafana alerts]({{< relref "https://grafana.com/docs/grafana/v8.5/alerting/old-alerting/" >}}).
+For more information about the legacy dashboard alerting feature in Grafana, refer to [the legacy Grafana alerts](https://grafana.com/docs/grafana/v8.5/alerting/old-alerting/).
 
 ### enabled
 
@@ -1804,6 +1850,12 @@ This option does not require any configuration.
 ## [rendering]
 
 Options to configure a remote HTTP image rendering service, e.g. using https://github.com/grafana/grafana-image-renderer.
+
+#### renderer_token
+
+> **Note**: Available in Grafana v9.1.2 and Image Renderer v3.6.1 or later.
+
+An auth token will be sent to and verified by the renderer. The renderer will deny any request without an auth token matching the one configured on the renderer.
 
 ### server_url
 

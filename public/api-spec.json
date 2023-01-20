@@ -4568,7 +4568,7 @@
     },
     "/folders": {
       "get": {
-        "description": "Returns all folders that the authenticated user has permission to view.",
+        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID.",
         "tags": [
           "folders"
         ],
@@ -4589,6 +4589,12 @@
             "default": 1,
             "description": "Page index for starting fetching folders",
             "name": "page",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "description": "The parent folder UID",
+            "name": "parent_uid",
             "in": "query"
           }
         ],
@@ -6320,6 +6326,44 @@
         "responses": {
           "200": {
             "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/orgs/{org_id}/users/search": {
+      "get": {
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users:read` with scope `users:*`.",
+        "tags": [
+          "orgs"
+        ],
+        "summary": "Search Users in Organization.",
+        "operationId": "searchOrgUsers",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "org_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/searchOrgUsersResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -11307,8 +11351,8 @@
           "format": "date-time"
         },
         "createdBy": {
-          "description": "Since we get created by with left join user table, this can be null technically,\nbut in reality it will always be set, when database is not corrupted.",
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "dashboardId": {
           "type": "integer",
@@ -11316,6 +11360,9 @@
         },
         "dashboardUid": {
           "type": "string"
+        },
+        "data": {
+          "$ref": "#/definitions/Json"
         },
         "id": {
           "type": "integer",
@@ -11339,7 +11386,7 @@
       }
     },
     "DashboardVersionMeta": {
-      "description": "DashboardVersionMeta extends the dashboard version model with the names\nassociated with the UserIds, overriding the field with the same name from\nthe DashboardVersion model.",
+      "description": "DashboardVersionMeta extends the DashboardVersionDTO with the names\nassociated with the UserIds, overriding the field with the same name from\nthe DashboardVersionDTO model.",
       "type": "object",
       "properties": {
         "created": {
@@ -11616,6 +11663,7 @@
       }
     },
     "DataTopic": {
+      "description": "nolint:revive",
       "type": "string",
       "title": "DataTopic is used to identify which topic the frame should be assigned to."
     },
@@ -11870,6 +11918,9 @@
         "id": {
           "type": "integer",
           "format": "int64"
+        },
+        "parent_uid": {
+          "type": "string"
         },
         "title": {
           "type": "string"
@@ -12179,6 +12230,23 @@
       "format": "int64",
       "title": "InspectType is a type for the Inspect property of a Notice."
     },
+    "Item": {
+      "type": "object",
+      "title": "Item defines model for Item.",
+      "properties": {
+        "title": {
+          "description": "Title is an unused property -- it will be removed in the future",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/ItemType"
+        },
+        "value": {
+          "description": "Value depends on type and describes the playlist item.\n\ndashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future. (deprecated)\ndashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.\ndashboard_by_uid: The value is the dashboard UID",
+          "type": "string"
+        }
+      }
+    },
     "ItemDTO": {
       "type": "object",
       "properties": {
@@ -12252,6 +12320,10 @@
           "format": "int64"
         }
       }
+    },
+    "ItemType": {
+      "type": "string",
+      "title": "Type of the item."
     },
     "Json": {
       "type": "object"
@@ -12740,6 +12812,12 @@
             "type": "boolean"
           }
         },
+        "authLabels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "avatarUrl": {
           "type": "string"
         },
@@ -12778,6 +12856,9 @@
     "PatchAnnotationsCmd": {
       "type": "object",
       "properties": {
+        "data": {
+          "$ref": "#/definitions/Json"
+        },
         "id": {
           "type": "integer",
           "format": "int64"
@@ -12990,24 +13071,29 @@
     },
     "PlaylistItem": {
       "type": "object",
-      "title": "PlaylistItem defines model for playlist.Item.",
       "properties": {
+        "Id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "PlaylistId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "order": {
+          "type": "integer",
+          "format": "int64"
+        },
         "title": {
-          "description": "Title is an unused property -- it will be removed in the future",
           "type": "string"
         },
         "type": {
-          "$ref": "#/definitions/PlaylistItemType"
+          "type": "string"
         },
         "value": {
-          "description": "Value depends on type and describes the playlist item.\n\ndashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future. (deprecated)\ndashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.\ndashboard_by_uid: The value is the dashboard UID",
           "type": "string"
         }
       }
-    },
-    "PlaylistItemType": {
-      "type": "string",
-      "title": "Type of the item."
     },
     "Playlists": {
       "type": "array",
@@ -13609,7 +13695,7 @@
         }
       }
     },
-    "SearchServiceAccountsResult": {
+    "SearchOrgServiceAccountsResult": {
       "description": "swagger: model",
       "type": "object",
       "properties": {
@@ -13629,6 +13715,29 @@
         },
         "totalCount": {
           "description": "It can be used for pagination of the user list\nE.g. if totalCount is equal to 100 users and\nthe perpage parameter is set to 10 then there are 10 pages of users.",
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "SearchOrgUsersQueryResult": {
+      "type": "object",
+      "properties": {
+        "orgUsers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OrgUserDTO"
+          }
+        },
+        "page": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "perPage": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "totalCount": {
           "type": "integer",
           "format": "int64"
         }
@@ -14366,6 +14475,9 @@
     "UpdateAnnotationsCmd": {
       "type": "object",
       "properties": {
+        "data": {
+          "$ref": "#/definitions/Json"
+        },
         "id": {
           "type": "integer",
           "format": "int64"
@@ -14484,21 +14596,27 @@
       }
     },
     "UpdateFolderCommand": {
+      "description": "UpdateFolderCommand captures the information required by the folder service\nto update a folder. Use Move to update a folder's parent folder.",
       "type": "object",
       "properties": {
         "description": {
+          "description": "NewDescription it's an optional parameter used for overriding the existing folder description",
           "type": "string"
         },
         "overwrite": {
+          "description": "Overwrite only used by the legacy folder implementation",
           "type": "boolean"
         },
         "title": {
+          "description": "NewTitle it's an optional parameter used for overriding the existing folder title",
           "type": "string"
         },
         "uid": {
+          "description": "NewUID it's an optional parameter used for overriding the existing folder UID",
           "type": "string"
         },
         "version": {
+          "description": "Version only used by the legacy folder implementation",
           "type": "integer",
           "format": "int64"
         }
@@ -14669,6 +14787,10 @@
             "Editor",
             "Admin"
           ]
+        },
+        "serviceAccountId": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     },
@@ -14678,7 +14800,7 @@
         "Email": {
           "type": "string"
         },
-        "Id": {
+        "ID": {
           "type": "integer",
           "format": "int64"
         },
@@ -15593,7 +15715,7 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/PlaylistItem"
+          "$ref": "#/definitions/Item"
         }
       }
     },
@@ -16038,7 +16160,13 @@
     "searchOrgServiceAccountsWithPagingResponse": {
       "description": "",
       "schema": {
-        "$ref": "#/definitions/SearchServiceAccountsResult"
+        "$ref": "#/definitions/SearchOrgServiceAccountsResult"
+      }
+    },
+    "searchOrgUsersResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/SearchOrgUsersQueryResult"
       }
     },
     "searchOrgsResponse": {

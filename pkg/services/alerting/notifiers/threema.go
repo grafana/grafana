@@ -152,7 +152,7 @@ func (notifier *ThreemaNotifier) Notify(evalContext *alerting.EvalContext) error
 	headers := map[string]string{
 		"Content-Type": "application/x-www-form-urlencoded",
 	}
-	cmd := &models.SendWebhookSync{
+	cmd := &notifications.SendWebhookSync{
 		Url:        url,
 		Body:       body,
 		HttpMethod: "POST",

@@ -8,7 +8,7 @@ interface AlertConditionProps {
   enabled?: boolean;
   error?: Error;
   warning?: Error;
-  onSetCondition: () => void;
+  onSetCondition?: () => void;
 }
 
 export const AlertConditionIndicator: FC<AlertConditionProps> = ({
@@ -33,7 +33,7 @@ export const AlertConditionIndicator: FC<AlertConditionProps> = ({
 
   if (!enabled) {
     return (
-      <div className={styles.actionLink} onClick={() => onSetCondition()}>
+      <div className={styles.actionLink} onClick={() => onSetCondition && onSetCondition()}>
         Make this the alert condition
       </div>
     );

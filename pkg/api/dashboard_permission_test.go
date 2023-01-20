@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/models"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -19,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -27,11 +27,17 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 	t.Run("Dashboard permissions test", func(t *testing.T) {
 		settings := setting.NewCfg()
 		dashboardStore := &dashboards.FakeDashboardStore{}
-		dashboardStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Return(nil, nil)
+		dashboardStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
+			q := args.Get(1).(*dashboards.GetDashboardQuery)
+			q.Result = &dashboards.Dashboard{
+				ID:  q.ID,
+				UID: q.UID,
+			}
+		}).Return(nil, nil)
 		defer dashboardStore.AssertExpectations(t)
 
 		features := featuremgmt.WithFeatures()
-		mockSQLStore := mockstore.NewSQLStoreMock()
+		mockSQLStore := dbtest.NewFakeDB()
 		ac := accesscontrolmock.New()
 		folderPermissions := accesscontrolmock.NewMockedPermissionsService()
 		dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
@@ -41,7 +47,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			SQLStore: mockSQLStore,
 			Features: features,
 			DashboardService: dashboardservice.ProvideDashboardService(
-				settings, dashboardStore, nil, features, folderPermissions, dashboardPermissions, ac,
+				settings, dashboardStore, dashboards.NewFakeFolderStore(t), nil, features, folderPermissions, dashboardPermissions, ac,
 			),
 			AccessControl: accesscontrolmock.New().WithDisabled(),
 		}
@@ -262,7 +268,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				settings.HiddenUsers = make(map[string]struct{})
 			})
 
-			mockSQLStore := mockstore.NewSQLStoreMock()
+			mockSQLStore := dbtest.NewFakeDB()
 			var resp []*models.DashboardACLInfoDTO
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
 				"/api/dashboards/id/:dashboardId/permissions", org.RoleAdmin, func(sc *scenarioContext) {

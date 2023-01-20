@@ -7,6 +7,26 @@
   "Ack": {
    "type": "object"
   },
+  "AddCommand": {
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "role": {
+     "enum": [
+      "Viewer",
+      "Editor",
+      "Admin"
+     ],
+     "type": "string"
+    },
+    "secondsToLive": {
+     "format": "int64",
+     "type": "integer"
+    }
+   },
+   "type": "object"
+  },
   "Alert": {
    "properties": {
     "activeAt": {
@@ -288,6 +308,60 @@
    },
    "title": "Authorization contains HTTP authorization credentials.",
    "type": "object"
+  },
+  "BacktestConfig": {
+   "properties": {
+    "annotations": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "condition": {
+     "type": "string"
+    },
+    "data": {
+     "items": {
+      "$ref": "#/definitions/AlertQuery"
+     },
+     "type": "array"
+    },
+    "for": {
+     "$ref": "#/definitions/Duration"
+    },
+    "from": {
+     "format": "date-time",
+     "type": "string"
+    },
+    "interval": {
+     "$ref": "#/definitions/Duration"
+    },
+    "labels": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "no_data_state": {
+     "enum": [
+      "Alerting",
+      "NoData",
+      "OK"
+     ],
+     "type": "string"
+    },
+    "title": {
+     "type": "string"
+    },
+    "to": {
+     "format": "date-time",
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "BacktestResult": {
+   "$ref": "#/definitions/Frame"
   },
   "BasicAuth": {
    "properties": {
@@ -1437,34 +1511,6 @@
    },
    "type": "array"
   },
-  "MessageTemplate": {
-   "properties": {
-    "name": {
-     "type": "string"
-    },
-    "provenance": {
-     "$ref": "#/definitions/Provenance"
-    },
-    "template": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
-  "MessageTemplateContent": {
-   "properties": {
-    "template": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
-  "MessageTemplates": {
-   "items": {
-    "$ref": "#/definitions/MessageTemplate"
-   },
-   "type": "array"
-  },
   "MultiStatus": {
    "type": "object"
   },
@@ -1525,6 +1571,34 @@
    "format": "int64",
    "title": "NoticeSeverity is a type for the Severity property of a Notice.",
    "type": "integer"
+  },
+  "NotificationTemplate": {
+   "properties": {
+    "name": {
+     "type": "string"
+    },
+    "provenance": {
+     "$ref": "#/definitions/Provenance"
+    },
+    "template": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "NotificationTemplateContent": {
+   "properties": {
+    "template": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  },
+  "NotificationTemplates": {
+   "items": {
+    "$ref": "#/definitions/NotificationTemplate"
+   },
+   "type": "array"
   },
   "NotifierConfig": {
    "properties": {
@@ -2163,6 +2237,12 @@
     "for"
    ],
    "type": "object"
+  },
+  "ProvisionedAlertRules": {
+   "items": {
+    "$ref": "#/definitions/ProvisionedAlertRule"
+   },
+   "type": "array"
   },
   "PushoverConfig": {
    "properties": {
@@ -3077,7 +3157,6 @@
    "type": "object"
   },
   "URL": {
-   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -3087,6 +3166,9 @@
     },
     "Host": {
      "type": "string"
+    },
+    "OmitHost": {
+     "type": "boolean"
     },
     "Opaque": {
      "type": "string"
@@ -3110,7 +3192,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "A URL represents a parsed URL (technically, a URI reference).",
+   "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object"
   },
   "Userinfo": {
@@ -3290,7 +3372,6 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -3395,6 +3476,7 @@
    "type": "object"
   },
   "gettableAlert": {
+   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -3450,14 +3532,12 @@
    "type": "object"
   },
   "gettableAlerts": {
-   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
    "type": "array"
   },
   "gettableSilence": {
-   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3506,14 +3586,12 @@
    "type": "object"
   },
   "gettableSilences": {
-   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
    "type": "array"
   },
   "integration": {
-   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -3657,7 +3735,6 @@
    "type": "array"
   },
   "postableSilence": {
-   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3695,6 +3772,7 @@
    "type": "object"
   },
   "receiver": {
+   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
@@ -3815,6 +3893,21 @@
  },
  "paths": {
   "/api/v1/provisioning/alert-rules": {
+   "get": {
+    "operationId": "RouteGetAlertRules",
+    "responses": {
+     "200": {
+      "description": "ProvisionedAlertRules",
+      "schema": {
+       "$ref": "#/definitions/ProvisionedAlertRules"
+      }
+     }
+    },
+    "summary": "Get all the alert rules.",
+    "tags": [
+     "provisioning"
+    ]
+   },
    "post": {
     "consumes": [
      "application/json"
@@ -4366,16 +4459,16 @@
     "operationId": "RouteGetTemplates",
     "responses": {
      "200": {
-      "description": "MessageTemplates",
+      "description": "NotificationTemplates",
       "schema": {
-       "$ref": "#/definitions/MessageTemplates"
+       "$ref": "#/definitions/NotificationTemplates"
       }
      },
      "404": {
       "description": " Not found."
      }
     },
-    "summary": "Get all message templates.",
+    "summary": "Get all notification templates.",
     "tags": [
      "provisioning"
     ]
@@ -4416,16 +4509,16 @@
     ],
     "responses": {
      "200": {
-      "description": "MessageTemplate",
+      "description": "NotificationTemplate",
       "schema": {
-       "$ref": "#/definitions/MessageTemplate"
+       "$ref": "#/definitions/NotificationTemplate"
       }
      },
      "404": {
       "description": " Not found."
      }
     },
-    "summary": "Get a message template.",
+    "summary": "Get a notification template.",
     "tags": [
      "provisioning"
     ]
@@ -4447,15 +4540,15 @@
       "in": "body",
       "name": "Body",
       "schema": {
-       "$ref": "#/definitions/MessageTemplateContent"
+       "$ref": "#/definitions/NotificationTemplateContent"
       }
      }
     ],
     "responses": {
      "202": {
-      "description": "MessageTemplate",
+      "description": "NotificationTemplate",
       "schema": {
-       "$ref": "#/definitions/MessageTemplate"
+       "$ref": "#/definitions/NotificationTemplate"
       }
      },
      "400": {
@@ -4465,7 +4558,7 @@
       }
      }
     },
-    "summary": "Updates an existing template.",
+    "summary": "Updates an existing notification template.",
     "tags": [
      "provisioning"
     ]

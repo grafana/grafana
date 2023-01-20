@@ -13,17 +13,12 @@ export interface PublicDashboard {
   uid: string;
   dashboardUid: string;
   timeSettings?: object;
+  timeSelectionEnabled: boolean;
 }
 
 export interface DashboardResponse {
   dashboard: DashboardDataDTO;
   meta: DashboardMeta;
-}
-
-export interface Acknowledgements {
-  public: boolean;
-  datasources: boolean;
-  usage: boolean;
 }
 
 // Instance methods

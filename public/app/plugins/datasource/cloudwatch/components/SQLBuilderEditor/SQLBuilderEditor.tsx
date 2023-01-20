@@ -3,8 +3,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { EditorField, EditorRow, EditorRows } from '@grafana/experimental';
 import { Input } from '@grafana/ui';
 
-import SQLGenerator from '../../cloudwatch-sql/SQLGenerator';
 import { CloudWatchDatasource } from '../../datasource';
+import SQLGenerator from '../../language/cloudwatch-sql/SQLGenerator';
 import { CloudWatchMetricsQuery } from '../../types';
 
 import SQLBuilderSelectRow from './SQLBuilderSelectRow';
@@ -17,10 +17,9 @@ export type Props = {
   query: CloudWatchMetricsQuery;
   datasource: CloudWatchDatasource;
   onChange: (value: CloudWatchMetricsQuery) => void;
-  onRunQuery: () => void;
 };
 
-export function SQLBuilderEditor({ query, datasource, onChange, onRunQuery }: React.PropsWithChildren<Props>) {
+export function SQLBuilderEditor({ query, datasource, onChange }: React.PropsWithChildren<Props>) {
   const sql = query.sql ?? {};
 
   const onQueryChange = useCallback(
@@ -33,9 +32,8 @@ export function SQLBuilderEditor({ query, datasource, onChange, onRunQuery }: Re
       };
 
       onChange(fullQuery);
-      onRunQuery();
     },
-    [onChange, onRunQuery]
+    [onChange]
   );
 
   const [sqlPreview, setSQLPreview] = useState<string | undefined>();

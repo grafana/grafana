@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -28,7 +29,7 @@ func ProvideService(cfg *setting.Cfg, sqlStore db.DB, routeRegister routing.Rout
 
 // Service is a service for operating on library panels.
 type Service interface {
-	ConnectLibraryPanelsForDashboard(c context.Context, signedInUser *user.SignedInUser, dash *models.Dashboard) error
+	ConnectLibraryPanelsForDashboard(c context.Context, signedInUser *user.SignedInUser, dash *dashboards.Dashboard) error
 	ImportLibraryPanelsForDashboard(c context.Context, signedInUser *user.SignedInUser, libraryPanels *simplejson.Json, panels []interface{}, folderID int64) error
 }
 
@@ -47,7 +48,7 @@ type LibraryPanelService struct {
 }
 
 // ConnectLibraryPanelsForDashboard loops through all panels in dashboard JSON and connects any library panels to the dashboard.
-func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c context.Context, signedInUser *user.SignedInUser, dash *models.Dashboard) error {
+func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c context.Context, signedInUser *user.SignedInUser, dash *dashboards.Dashboard) error {
 	panels := dash.Data.Get("panels").MustArray()
 	libraryPanels := make(map[string]string)
 	err := connectLibraryPanelsRecursively(c, panels, libraryPanels)
@@ -60,7 +61,7 @@ func (lps *LibraryPanelService) ConnectLibraryPanelsForDashboard(c context.Conte
 		elementUIDs = append(elementUIDs, libraryPanel)
 	}
 
-	return lps.LibraryElementService.ConnectElementsToDashboard(c, signedInUser, elementUIDs, dash.Id)
+	return lps.LibraryElementService.ConnectElementsToDashboard(c, signedInUser, elementUIDs, dash.ID)
 }
 
 func isLibraryPanelOrRow(panel *simplejson.Json, panelType string) bool {

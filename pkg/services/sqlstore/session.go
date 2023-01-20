@@ -7,13 +7,16 @@ import (
 	"reflect"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
 	"xorm.io/xorm"
 
+	"github.com/mattn/go-sqlite3"
+
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/util/retryer"
-	"github.com/mattn/go-sqlite3"
 )
 
 var sessionLogger = log.New("sqlstore.session")
@@ -35,7 +38,7 @@ func (sess *DBSession) PublishAfterCommit(msg interface{}) {
 	sess.events = append(sess.events, msg)
 }
 
-func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTran bool) (*DBSession, bool, error) {
+func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTran bool, tracer tracing.Tracer) (*DBSession, bool, tracing.Span, error) {
 	value := ctx.Value(ContextSessionKey{})
 	var sess *DBSession
 	sess, ok := value.(*DBSession)
@@ -44,20 +47,23 @@ func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTr
 		ctxLogger := sessionLogger.FromContext(ctx)
 		ctxLogger.Debug("reusing existing session", "transaction", sess.transactionOpen)
 		sess.Session = sess.Session.Context(ctx)
-		return sess, false, nil
+		return sess, false, nil, nil
 	}
 
+	tctx, span := tracer.Start(ctx, "open session")
+	span.SetAttributes("transaction", beginTran, attribute.Key("transaction").Bool(beginTran))
+
 	newSess := &DBSession{Session: engine.NewSession(), transactionOpen: beginTran}
+
 	if beginTran {
 		err := newSess.Begin()
 		if err != nil {
-			return nil, false, err
+			return nil, false, span, err
 		}
 	}
+	newSess.Session = newSess.Session.Context(tctx)
 
-	newSess.Session = newSess.Session.Context(ctx)
-
-	return newSess, true, nil
+	return newSess, true, span, nil
 }
 
 // WithDbSession calls the callback with the session in the context (if exists).
@@ -105,18 +111,23 @@ func (ss *SQLStore) retryOnLocks(ctx context.Context, callback DBTransactionFunc
 }
 
 func (ss *SQLStore) withDbSession(ctx context.Context, engine *xorm.Engine, callback DBTransactionFunc) error {
-	sess, isNew, err := startSessionOrUseExisting(ctx, engine, false)
+	sess, isNew, span, err := startSessionOrUseExisting(ctx, engine, false, ss.tracer)
 	if err != nil {
 		return err
 	}
 	if isNew {
-		defer sess.Close()
+		defer func() {
+			if span != nil {
+				span.End()
+			}
+			sess.Close()
+		}()
 	}
 	retry := 0
 	return retryer.Retry(ss.retryOnLocks(ctx, callback, sess, retry), ss.dbCfg.QueryRetries, time.Millisecond*time.Duration(10), time.Second)
 }
 
-func (sess *DBSession) InsertId(bean interface{}) (int64, error) {
+func (sess *DBSession) InsertId(bean interface{}, dialect migrator.Dialect) (int64, error) {
 	table := sess.DB().Mapper.Obj2Table(getTypeName(bean))
 
 	if err := dialect.PreInsertId(table, sess.Session); err != nil {

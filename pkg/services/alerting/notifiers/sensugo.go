@@ -188,7 +188,7 @@ func (sn *SensuGoNotifier) Notify(evalContext *alerting.EvalContext) error {
 		return err
 	}
 
-	cmd := &models.SendWebhookSync{
+	cmd := &notifications.SendWebhookSync{
 		Url:        fmt.Sprintf("%s/api/core/v2/namespaces/%s/events", strings.TrimSuffix(sn.URL, "/"), namespace),
 		Body:       string(body),
 		HttpMethod: "POST",

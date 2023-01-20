@@ -1,19 +1,20 @@
 import { VariableRefresh } from '@grafana/data';
+import {
+  SceneCanvasText,
+  SceneTimePicker,
+  SceneFlexLayout,
+  SceneTimeRange,
+  VariableValueSelectors,
+  SceneVariableSet,
+  CustomVariable,
+  DataSourceVariable,
+  QueryVariable,
+} from '@grafana/scenes';
 
-import { Scene, EmbeddedScene } from '../components/Scene';
-import { SceneCanvasText } from '../components/SceneCanvasText';
-import { SceneSubMenu } from '../components/SceneSubMenu';
-import { SceneTimePicker } from '../components/SceneTimePicker';
-import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
-import { SceneTimeRange } from '../core/SceneTimeRange';
-import { VariableValueSelectors } from '../variables/components/VariableValueSelectors';
-import { SceneVariableSet } from '../variables/sets/SceneVariableSet';
-import { CustomVariable } from '../variables/variants/CustomVariable';
-import { DataSourceVariable } from '../variables/variants/DataSourceVariable';
-import { QueryVariable } from '../variables/variants/query/QueryVariable';
+import { DashboardScene } from '../dashboard/DashboardScene';
 
-export function getQueryVariableDemo(standalone: boolean): Scene {
-  const state = {
+export function getQueryVariableDemo(): DashboardScene {
+  return new DashboardScene({
     title: 'Query variable',
     $variables: new SceneVariableSet({
       variables: [
@@ -45,13 +46,13 @@ export function getQueryVariableDemo(standalone: boolean): Scene {
         }),
       ],
     }),
-    layout: new SceneFlexLayout({
+    body: new SceneFlexLayout({
       direction: 'row',
       children: [
         new SceneFlexLayout({
           children: [
             new SceneCanvasText({
-              size: { width: '40%' },
+              placement: { width: '40%' },
               text: 'metric: ${metric}',
               fontSize: 20,
               align: 'center',
@@ -62,10 +63,6 @@ export function getQueryVariableDemo(standalone: boolean): Scene {
     }),
     $timeRange: new SceneTimeRange(),
     actions: [new SceneTimePicker({})],
-    subMenu: new SceneSubMenu({
-      children: [new VariableValueSelectors({})],
-    }),
-  };
-
-  return standalone ? new Scene(state) : new EmbeddedScene(state);
+    controls: [new VariableValueSelectors({})],
+  });
 }

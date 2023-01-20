@@ -18,7 +18,6 @@ export interface FeatureToggles {
 
   returnUnameHeader?: boolean;
   alertingBigTransactions?: boolean;
-  promQueryBuilder?: boolean;
   trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
   database_metrics?: boolean;
@@ -31,9 +30,9 @@ export interface FeatureToggles {
   panelTitleSearch?: boolean;
   tempoApmTable?: boolean;
   prometheusAzureOverrideAudience?: boolean;
-  influxdbBackendMigration?: boolean;
   showFeatureFlagsInUI?: boolean;
   publicDashboards?: boolean;
+  publicDashboardsEmailSharing?: boolean;
   lokiLive?: boolean;
   lokiDataframeApi?: boolean;
   lokiMonacoEditor?: boolean;
@@ -43,6 +42,8 @@ export interface FeatureToggles {
   annotationComments?: boolean;
   migrationLocking?: boolean;
   storage?: boolean;
+  k8s?: boolean;
+  supportBundles?: boolean;
   dashboardsFromStorage?: boolean;
   export?: boolean;
   azureMonitorResourcePickerForMetrics?: boolean;
@@ -53,7 +54,6 @@ export interface FeatureToggles {
   cloudWatchDynamicLabels?: boolean;
   datasourceQueryMultiStatus?: boolean;
   traceToMetrics?: boolean;
-  prometheusBufferedClient?: boolean;
   newDBLibrary?: boolean;
   validateDashboardsOnSave?: boolean;
   autoMigrateGraphPanels?: boolean;
@@ -67,7 +67,6 @@ export interface FeatureToggles {
   topnav?: boolean;
   grpcServer?: boolean;
   entityStore?: boolean;
-  traceqlEditor?: boolean;
   flameGraph?: boolean;
   cloudWatchCrossAccountQuerying?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
@@ -86,4 +85,7 @@ export interface FeatureToggles {
   secureSocksDatasourceProxy?: boolean;
   authnService?: boolean;
   sessionRemoteCache?: boolean;
+  disablePrometheusExemplarSampling?: boolean;
+  alertingBacktesting?: boolean;
+  alertingNoNormalState?: boolean;
 }
