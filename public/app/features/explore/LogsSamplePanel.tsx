@@ -1,8 +1,17 @@
+import { css } from '@emotion/css';
 import React from 'react';
 
-import { CoreApp, DataQueryResponse, DataSourceApi, LoadingState, LogsDedupStrategy, TimeZone } from '@grafana/data';
+import {
+  CoreApp,
+  DataQueryResponse,
+  DataSourceApi,
+  GrafanaTheme2,
+  LoadingState,
+  LogsDedupStrategy,
+  TimeZone,
+} from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Collapse } from '@grafana/ui';
+import { Collapse, IconButton, useStyles2 } from '@grafana/ui';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
 import store from 'app/core/store';
 
@@ -21,6 +30,8 @@ type Props = {
 
 export function LogsSamplePanel(props: Props) {
   const { data, timeZone, enabled, setLogsSampleEnabled, datasourceInstance } = props;
+
+  const styles = useStyles2(getStyles);
 
   const onToggleLogsSampleCollapse = (isOpen: boolean) => {
     setLogsSampleEnabled(isOpen);
@@ -58,9 +69,34 @@ export function LogsSamplePanel(props: Props) {
       />
     );
   }
+
+  const label = (
+    <div className={styles.label}>
+      <span>Log samples </span>
+      <IconButton
+        name="info-circle"
+        tooltip="Sample of log lines that contributed to visualized metrics"
+        type="button"
+        size="sm"
+        className={styles.iconButton}
+      />
+    </div>
+  );
   return (
-    <Collapse label="Logs sample" isOpen={enabled} collapsible={true} onToggle={onToggleLogsSampleCollapse}>
+    <Collapse label={label} isOpen={enabled} collapsible={true} onToggle={onToggleLogsSampleCollapse}>
       {LogsSamplePanelContent}
     </Collapse>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => {
+  return {
+    label: css`
+      display: flex;
+      align-items: center;
+    `,
+    iconButton: css`
+      margin-left: ${theme.spacing(1)};
+    `,
+  };
+};
