@@ -112,18 +112,16 @@ To automatically fix incorrectly escaped sequences that Explore has detected:
 
 Explore replaces these sequences. When it does so, the option will change from "Escape newlines" to "Remove escaping". Evaluate the changes as the parsing may not be accurate based on the input received. You can revert the replacements by clicking "Remove escaping".
 
-#### Derived fields links
+#### Data links
 
-By using Derived fields, you can turn any part of a log message into an internal or external link. The created link is visible as a button next to the Detected field in the Log details view.
-{{< figure src="/static/img/docs/explore/detected-fields-link-7-4.png" max-width="800px" caption="Detected fields link in Explore" >}}
+By using data links, you can turn any part of a log message into an internal or external link. The created link is visible as a button in the **Links** section inside the **Log details** view.
+{{< figure src="/static/img/docs/explore/data-link-9-4.png" max-width="800px" caption="Data link in Explore" >}}
 
-#### Toggle detected fields
+#### Toggle field visibility
 
-> **Note:** Available in Grafana 7.2 and later versions.
+Expand a log line and click the eye icon to show or hide fields.
 
-If your logs are structured in `json` or `logfmt`, then you can show or hide detected fields. Expand a log line and then click the eye icon to show or hide fields.
-
-{{< figure src="/static/img/docs/explore/parsed-fields-7-2.gif" max-width="800px" caption="Toggling detected fields in Explore" >}}
+{{< figure src="/static/img/docs/explore/toggle-fields-9-4.gif" max-width="800px" caption="Toggling detected fields in Explore" >}}
 
 ### Loki-specific features
 
