@@ -171,7 +171,8 @@ func (on *OpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, alerts mod
 		return nil, "", nil
 	}
 
-	ruleURL := ToLogzioAppPath(joinUrlPath(on.tmpl.ExternalURL.String(), "/alerting/list", on.log)) // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
+	basePath := ToBasePathWithAccountRedirect(on.tmpl.ExternalURL, alerts)      //LOGZ.IO GRAFANA CHANGE :: DEV-37746: Add switch to account query param
+	ruleURL := ToLogzioAppPath(joinUrlPath(basePath, "/alerting/list", on.log)) // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
 
 	var tmplErr error
 	tmpl, data := TmplText(ctx, on.tmpl, as, on.log, &tmplErr)

@@ -87,9 +87,12 @@ func (en *EmailNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 
 	title := tmpl(DefaultMessageTitleEmbed)
 
-	alertPageURL := en.tmpl.ExternalURL.String()
-	ruleURL := en.tmpl.ExternalURL.String()
-	u, err := url.Parse(en.tmpl.ExternalURL.String())
+	//LOGZ.IO GRAFANA CHANGE :: DEV-37746: Add switch to account query param
+	basePath := ToBasePathWithAccountRedirect(en.tmpl.ExternalURL, types.Alerts(as...))
+	alertPageURL := basePath
+	ruleURL := basePath
+	u, err := url.Parse(basePath)
+	//LOGZ.IO GRAFANA CHANGE :: end
 	if err == nil {
 		basePath := u.Path
 		u.Path = path.Join(basePath, "/alerting/list")

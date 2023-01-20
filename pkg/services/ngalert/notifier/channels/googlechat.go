@@ -97,7 +97,10 @@ func (gcn *GoogleChatNotifier) Notify(ctx context.Context, as ...*types.Alert) (
 		tmplErr = nil
 	}
 
-	ruleURL := joinUrlPath(gcn.tmpl.ExternalURL.String(), "/alerting/list", gcn.log)
+	//LOGZ.IO GRAFANA CHANGE :: DEV-37746: Add switch to account query param
+	basePath := ToBasePathWithAccountRedirect(gcn.tmpl.ExternalURL, types.Alerts(as...))
+	ruleURL := joinUrlPath(basePath, "/alerting/list", gcn.log)
+	//LOGZ.IO GRAFANA CHANGE :: end
 	// Add a button widget (link to Grafana).
 	widgets = append(widgets, buttonWidget{
 		Buttons: []button{

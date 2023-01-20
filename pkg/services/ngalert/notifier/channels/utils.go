@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"io"
 	"net"
 	"net/http"
@@ -168,7 +169,37 @@ func ReplaceEncodedSpace(path string) string {
 	return strings.Replace(path, "+", EncodedSpaceSymbol, -1)
 }
 
-// LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
+//LOGZ.IO GRAFANA CHANGE :: DEV-37746: Add switch to account query param
+func AppendSwitchToAccountQueryParam(u *url.URL, accountId string) *url.URL {
+	updatedUrl := *u
+	builder := strings.Builder{}
+
+	builder.WriteString(u.RawQuery)
+
+	if accountId != "" {
+		if builder.Len() > 0 {
+			builder.WriteString("&")
+		}
+
+		builder.WriteString(LogzioSwitchToAccountQueryParamName)
+		builder.WriteString("=")
+		builder.WriteString(accountId)
+	}
+
+	updatedUrl.RawQuery = builder.String()
+	return &updatedUrl
+}
+
+func ToBasePathWithAccountRedirect(path *url.URL, as model.Alerts) string {
+	var accountId = ""
+	if len(as) > 0 {
+		accountId = string(as[0].Annotations[ngmodels.LogzioAccountIdAnnotation])
+	}
+
+	return AppendSwitchToAccountQueryParam(path, accountId).String()
+}
+
+// LOGZ.IO GRAFANA CHANGE :: end
 
 // GetBoundary is used for overriding the behaviour for tests
 // and set a boundary for multipart body. DO NOT set this outside tests.

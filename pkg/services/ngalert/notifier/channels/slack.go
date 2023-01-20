@@ -273,7 +273,8 @@ func (sn *SlackNotifier) buildSlackMessage(ctx context.Context, as []*types.Aler
 	var tmplErr error
 	tmpl, _ := TmplText(ctx, sn.tmpl, as, sn.log, &tmplErr)
 
-	ruleURL := ToLogzioAppPath(joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list", sn.log)) // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
+	basePath := ToBasePathWithAccountRedirect(sn.tmpl.ExternalURL, alerts)      //LOGZ.IO GRAFANA CHANGE :: DEV-37746: Add switch to account query param
+	ruleURL := ToLogzioAppPath(joinUrlPath(basePath, "/alerting/list", sn.log)) // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
 
 	//LOGZ.IO GRAFANA CHANGE :: DEV-31356: Change grafana default username, footer URL,text to logzio ones
 	req := &slackMessage{

@@ -128,7 +128,11 @@ func (srv *LogzioAlertingService) RouteProcessAlert(httpReq http.Request, reques
 	if shouldCreateAnnotationsAndAlertInstances {
 		srv.saveAlertStates(processedStates)
 	}
+
 	alerts := schedule.FromAlertStateToPostableAlerts(processedStates, srv.StateManager, srv.AppUrl)
+	for _, alert := range alerts.PostableAlerts {
+		alert.Annotations[ngmodels.LogzioAccountIdAnnotation] = request.AccountId
+	}
 
 	if len(alerts.PostableAlerts) > 0 {
 		n, err := srv.MultiOrgAlertmanager.AlertmanagerFor(alertRule.OrgID)

@@ -113,7 +113,10 @@ func (d DiscordNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	color, _ := strconv.ParseInt(strings.TrimLeft(getAlertStatusColor(alerts.Status()), "#"), 16, 0)
 	embed.Set("color", color)
 
-	ruleURL := joinUrlPath(d.tmpl.ExternalURL.String(), "/alerting/list", d.log)
+	//LOGZ.IO GRAFANA CHANGE :: DEV-37746: Add switch to account query param
+	basePath := ToBasePathWithAccountRedirect(d.tmpl.ExternalURL, alerts)
+	ruleURL := joinUrlPath(basePath, "/alerting/list", d.log)
+	//LOGZ.IO GRAFANA CHANGE :: end
 	embed.Set("url", ToLogzioAppPath(ruleURL)) // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
 
 	bodyJSON.Set("embeds", []interface{}{embed})

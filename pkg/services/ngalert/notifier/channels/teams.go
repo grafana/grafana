@@ -75,7 +75,8 @@ func (tn *TeamsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool, 
 	var tmplErr error
 	tmpl, _ := TmplText(ctx, tn.tmpl, as, tn.log, &tmplErr)
 
-	ruleURL := ToLogzioAppPath(joinUrlPath(tn.tmpl.ExternalURL.String(), "/alerting/list", tn.log)) // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
+	basePath := ToBasePathWithAccountRedirect(tn.tmpl.ExternalURL, types.Alerts(as...)) //LOGZ.IO GRAFANA CHANGE :: DEV-37746: Add switch to account query param
+	ruleURL := ToLogzioAppPath(joinUrlPath(basePath, "/alerting/list", tn.log))         // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
 
 	title := tmpl(DefaultMessageTitleEmbed)
 	body := map[string]interface{}{

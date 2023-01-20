@@ -133,7 +133,8 @@ func (sn *SensuGoNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		handlers = []string{tmpl(sn.Handler)}
 	}
 
-	ruleURL := ToLogzioAppPath(joinUrlPath(sn.tmpl.ExternalURL.String(), "/alerting/list", sn.log)) // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
+	basePath := ToBasePathWithAccountRedirect(sn.tmpl.ExternalURL, alerts)      //LOGZ.IO GRAFANA CHANGE :: DEV-37746: Add switch to account query param
+	ruleURL := ToLogzioAppPath(joinUrlPath(basePath, "/alerting/list", sn.log)) // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
 	bodyMsgType := map[string]interface{}{
 		"entity": map[string]interface{}{
 			"metadata": map[string]interface{}{

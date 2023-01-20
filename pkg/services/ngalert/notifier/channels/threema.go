@@ -119,12 +119,13 @@ func (tn *ThreemaNotifier) Notify(ctx context.Context, as ...*types.Alert) (bool
 		stateEmoji = "\u2705 " // Check Mark Button
 	}
 
+	basePath := ToBasePathWithAccountRedirect(tn.tmpl.ExternalURL, alerts) //LOGZ.IO GRAFANA CHANGE :: DEV-37746: Add switch to account query param
 	// Build message
 	message := fmt.Sprintf("%s%s\n\n*Message:*\n%s\n*URL:* %s\n",
 		stateEmoji,
 		tmpl(DefaultMessageTitleEmbed),
 		tmpl(`{{ template "default.message" . }}`),
-		ToLogzioAppPath(path.Join(tn.tmpl.ExternalURL.String(), "/alerting/list")), // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
+		ToLogzioAppPath(path.Join(basePath, "/alerting/list")), // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
 	)
 	data.Set("text", message)
 
