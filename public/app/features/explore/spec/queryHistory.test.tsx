@@ -7,6 +7,7 @@ import { config } from '@grafana/runtime';
 import { silenceConsoleOutput } from '../../../../test/core/utils/silenceConsoleOutput';
 import { ExploreId } from '../../../types';
 
+/* eslint-disable no-console */
 import {
   assertDataSourceFilterVisibility,
   assertLoadMoreQueryHistoryNotVisible,
@@ -96,6 +97,7 @@ describe('Explore: Query History', () => {
   });
 
   it('adds new query history items after the query is run.', async () => {
+    console.time('add');
     // when Explore is opened
     const { datasources, unmount } = setupExplore();
     (datasources.loki.query as jest.Mock).mockReturnValueOnce(makeLogsQueryResponse());
@@ -121,6 +123,7 @@ describe('Explore: Query History', () => {
     expect(reportInteractionMock).toBeCalledWith('grafana_explore_query_history_opened', {
       queryHistoryEnabled: false,
     });
+    console.timeEnd('add');
   });
 
   it('adds recently added query if the query history panel is already open', async () => {
@@ -142,7 +145,8 @@ describe('Explore: Query History', () => {
     await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}']);
   });
 
-  it.skip('updates the state in both Explore panes', async () => {
+  it('updates the state in both Explore panes', async () => {
+    console.time('test');
     const urlParams = {
       left: serializeStateToUrlParam({
         datasource: 'loki',
@@ -156,18 +160,36 @@ describe('Explore: Query History', () => {
       }),
     };
 
+    console.time('setup');
     const { datasources } = setupExplore({ urlParams });
     (datasources.loki.query as jest.Mock).mockReturnValue(makeLogsQueryResponse());
     await waitForExplore();
     await waitForExplore(ExploreId.right);
+    console.timeEnd('setup');
 
     // queries in history
+    console.time('open');
+
+    console.time('openQueryHistory');
     await openQueryHistory(ExploreId.left);
+    console.timeEnd('openQueryHistory');
+
+    console.time('assertQueryHistory');
     await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}'], ExploreId.left);
+    console.timeEnd('assertQueryHistory');
+
+    console.time('openQueryHistory right');
     await openQueryHistory(ExploreId.right);
+    console.timeEnd('openQueryHistory right');
+
+    console.time('assertQueryHistory right');
     await assertQueryHistory(['{"expr":"query #2"}', '{"expr":"query #1"}'], ExploreId.right);
+    console.timeEnd('assertQueryHistory right');
+
+    console.timeEnd('open');
 
     // star one one query
+    console.time('star');
     await starQueryHistory(1, ExploreId.left);
     await assertQueryHistoryIsStarred([false, true], ExploreId.left);
     await assertQueryHistoryIsStarred([false, true], ExploreId.right);
@@ -175,13 +197,18 @@ describe('Explore: Query History', () => {
       queryHistoryEnabled: false,
       newValue: true,
     });
+    console.timeEnd('star');
 
+    console.time('delete');
     await deleteQueryHistory(0, ExploreId.left);
     await assertQueryHistory(['{"expr":"query #1"}'], ExploreId.left);
     await assertQueryHistory(['{"expr":"query #1"}'], ExploreId.right);
     expect(reportInteractionMock).toBeCalledWith('grafana_explore_query_history_deleted', {
       queryHistoryEnabled: false,
     });
+    console.timeEnd('delete');
+
+    console.timeEnd('test');
   });
 
   it('add comments to query history', async () => {
@@ -294,3 +321,4 @@ describe('Explore: Query History', () => {
     assertLoadMoreQueryHistoryNotVisible();
   });
 });
+/* eslint-enable no-console */
