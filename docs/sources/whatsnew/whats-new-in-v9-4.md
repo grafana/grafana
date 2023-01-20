@@ -41,3 +41,17 @@ The details section of a log line has been updated. Previously some of the inter
 We have included a new configuration option, disabled by default. This will allow us to require an expiration date limit for all newly created service account tokens.
 
 This will not affect existing tokens, however newly created tokens will require an expiration date that doesn't exceed the configuration option `token_expiration_day_limit`.
+
+## RBAC support for Grafana OnCall plugin
+
+We're rolling out RBAC support to Grafana plugins, with Grafana OnCall being the first plugin to fully support RBAC.
+Previously Grafana OnCall relied on the Grafana basic roles (eg. Viewer, Editor, and Admin) for authorization within
+the plugin.
+
+Before RBAC support in Grafana OnCall, it was only possible to allow your organization's users to either view everything,
+edit everything, or be an admin (which allowed edit access plus a few additional behaviours). With this new functionality,
+organizations will be able to harness fine-grained access control within Grafana OnCall.
+
+For example, you could assign a user in your organization, whom has the Viewer basic role (note that a user must still
+have a basic role assigned) the new Grafana OnCall RBAC role of "Schedules Editor". This would allow the user to view
+everything in Grafana OnCall, and also allow them to edit OnCall Schedules
