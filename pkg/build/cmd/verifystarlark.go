@@ -68,7 +68,7 @@ func VerifyStarlark(c *cli.Context) error {
 type commandFunc = func(path string) (command string, args []string)
 
 func buildifierLintCommand(path string) (string, []string) {
-	return "buildifier", []string{"-lint", "warn", path}
+	return "buildifier", []string{"-lint", "warn", "-mode", "check", path}
 }
 
 // verifyStarlark walks all directories starting at provided workspace path and
