@@ -10,7 +10,6 @@ import (
 	"github.com/blugelabs/bluge/search/similarity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/folder"
 )
 
 type PermissionFilter struct {
@@ -75,16 +74,8 @@ func (q *PermissionFilter) canAccess(kind entityKind, id, location string) bool 
 	// TODO add `kind` to the `ResourceFilter` interface so that we can move the switch out of here
 	//
 	switch kind {
-	case entityKindFolder:
-		if id == folder.GeneralFolderUID {
-			q.logAccessDecision(true, kind, id, "generalFolder")
-			return true
-		}
-		decision := q.filter(entityKindFolder, id, "")
-		q.logAccessDecision(decision, kind, id, "resourceFilter")
-		return decision
-	case entityKindDashboard:
-		decision := q.filter(entityKindDashboard, id, location)
+	case entityKindFolder, entityKindDashboard:
+		decision := q.filter(kind, id, location)
 		q.logAccessDecision(decision, kind, id, "resourceFilter")
 		return decision
 	case entityKindPanel:
