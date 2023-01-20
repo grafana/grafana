@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -82,7 +83,7 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *models.ReqContext) response.
 			perm.TeamAvatarUrl = dtos.GetGravatarUrlWithDefault(perm.TeamEmail, perm.Team)
 		}
 		if perm.Slug != "" {
-			perm.Url = models.GetDashboardFolderUrl(perm.IsFolder, perm.Uid, perm.Slug)
+			perm.Url = dashboards.GetDashboardFolderURL(perm.IsFolder, perm.Uid, perm.Slug)
 		}
 
 		filteredACLs = append(filteredACLs, perm)
@@ -192,7 +193,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 		if err != nil {
 			return response.Error(500, "Error while checking dashboard permissions", err)
 		}
-		if err := hs.updateDashboardAccessControl(c.Req.Context(), dash.OrgId, dash.Uid, false, items, old); err != nil {
+		if err := hs.updateDashboardAccessControl(c.Req.Context(), dash.OrgID, dash.UID, false, items, old); err != nil {
 			return response.Error(500, "Failed to update permissions", err)
 		}
 		return response.Success("Dashboard permissions updated")
