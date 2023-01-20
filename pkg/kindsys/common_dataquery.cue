@@ -25,7 +25,8 @@ DataQuery: {
     // For mixed data sources the selected datasource is on the query level.
     // For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
-	datasource?: DataSourceRef
+	// TODO this shouldn't be unknown but DataSourceRef | null
+	datasource?: _
 } @cuetsy(kind="interface")
 
 DataSourceRef: {
