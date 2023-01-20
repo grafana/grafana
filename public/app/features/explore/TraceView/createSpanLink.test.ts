@@ -665,6 +665,34 @@ describe('createSpanLinkFactory', () => {
       );
     });
 
+    it('formats query correctly if only filterByTraceID is true', () => {
+      const createLink = setupSpanLinkFactory(
+        {
+          datasourceUid: searchUID,
+          filterByTraceID: true,
+        },
+        searchUID
+      );
+
+      expect(createLink).toBeDefined();
+      const links = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'service',
+            tags: [],
+          },
+        })
+      );
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"searchUID","queries":[{"query":"\\"7946b05c2e2e4e5a\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}],"panelsState":{}}`
+        )}`
+      );
+    });
+
     it('should format one tag correctly', () => {
       const createLink = setupSpanLinkFactory(
         {
