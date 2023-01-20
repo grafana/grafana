@@ -301,7 +301,7 @@
       "machineName": "geomappanelcfg",
       "pluralMachineName": "geomappanelcfgs",
       "lineageIsGroup": true,
-      "maturity": "merged",
+      "maturity": "planned",
       "currentVersion": [
         0,
         0
@@ -1067,15 +1067,6 @@
       "merged": {
         "name": "merged",
         "items": [
-          "annolist_panel",
-          "barchart_panel",
-          "bargauge_panel",
-          "dashlist_panel",
-          "gauge_panel",
-          "geomap_panel",
-          "histogram_panel",
-          "news_panel",
-          "piechart_panel",
           "playlist",
           "team"
         ],
@@ -1146,7 +1137,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 60
+        "count": 61
       },
       "stable": {
         "name": "stable",
