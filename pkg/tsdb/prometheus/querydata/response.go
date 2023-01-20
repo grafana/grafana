@@ -167,12 +167,17 @@ func getName(q *models.Query, field *data.Field) string {
 	labels := field.Labels
 	legend := metricNameFromLabels(field)
 
-	if q.LegendFormat == legendFormatAuto {
+	if q.LegendFormat == nil {
+		legend = ""
+		return legend
+	}
+
+	if *q.LegendFormat == legendFormatAuto {
 		if len(labels) > 0 {
 			legend = ""
 		}
-	} else if q.LegendFormat != "" {
-		result := legendFormatRegexp.ReplaceAllFunc([]byte(q.LegendFormat), func(in []byte) []byte {
+	} else if *q.LegendFormat != "" {
+		result := legendFormatRegexp.ReplaceAllFunc([]byte(*q.LegendFormat), func(in []byte) []byte {
 			labelName := strings.Replace(string(in), "{{", "", 1)
 			labelName = strings.Replace(labelName, "}}", "", 1)
 			labelName = strings.TrimSpace(labelName)

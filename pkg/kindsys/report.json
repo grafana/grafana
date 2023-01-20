@@ -703,7 +703,7 @@
       "machineName": "prometheusdataquery",
       "pluralMachineName": "prometheusdataquerys",
       "lineageIsGroup": false,
-      "maturity": "planned",
+      "maturity": "experimental",
       "currentVersion": [
         0,
         0
@@ -1054,10 +1054,11 @@
           "histogrampanelcfg",
           "newspanelcfg",
           "piechartpanelcfg",
+          "prometheusdataquery",
           "statpanelcfg",
           "textpanelcfg"
         ],
-        "count": 11
+        "count": 12
       },
       "mature": {
         "name": "mature",
@@ -1119,7 +1120,6 @@
           "phlaredatasourcecfg",
           "postgresqldataquery",
           "postgresqldatasourcecfg",
-          "prometheusdataquery",
           "prometheusdatasourcecfg",
           "query",
           "queryhistory",
@@ -1137,7 +1137,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 61
+        "count": 60
       },
       "stable": {
         "name": "stable",
