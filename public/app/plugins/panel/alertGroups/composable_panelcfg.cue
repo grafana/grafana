@@ -14,26 +14,23 @@
 
 package grafanaplugin
 
-import (
-	"github.com/grafana/thema"
-)
-
-Panel: thema.#Lineage & {
-	name: "alertGroups"
-	seqs: [
-		{
-			schemas: [
-				{
-					PanelOptions: {
+composableKinds: PanelCfg: {
+	lineage: {
+		seqs: [
+			{
+				schemas: [
+					{
+						PanelOptions: {
 						  // Comma-separated list of values used to filter alert results
 						  labels: string
 						  // Name of the alertmanager used as a source for alerts
 							alertmanager: string
 							// Expand all alert groups by default
 							expandAll: bool
-					} @cuetsy(kind="interface")
-				},
-			]
-		},
-	]
+						} @cuetsy(kind="interface")
+					},
+				]
+			},
+		]
+	}
 }
