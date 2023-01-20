@@ -135,7 +135,8 @@ export class UserAdminPage extends PureComponent<Props> {
         (!config.auth.JWTAuthSkipOrgRoleSync && isJWTUser) ||
         // both OAuthSkipOrgRoleUpdateSync and specific provider settings needs to be false for a user to be synced
         (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.GrafanaComSkipOrgRoleSync && isGrafanaComUser) ||
-        (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.AzureADSkipOrgRoleSync && isAzureADUser));
+        (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.AzureADSkipOrgRoleSync && isAzureADUser) ||
+        (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.GoogleSkipOrgRoleSync && isGoogleUser));
 
     const pageNav: NavModelItem = {
       text: user?.login ?? '',

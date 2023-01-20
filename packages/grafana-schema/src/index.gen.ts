@@ -11,7 +11,6 @@
 export type {
   AnnotationTarget,
   AnnotationQuery,
-  DataSourceRef,
   DashboardLink,
   DashboardLinkType,
   VariableType,
@@ -61,6 +60,7 @@ export {
 export type {
   Dashboard,
   VariableModel,
+  DataSourceRef,
   Panel,
   FieldConfigSource,
   MatcherConfig,

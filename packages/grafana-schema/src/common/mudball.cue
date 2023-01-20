@@ -244,3 +244,5 @@ VizTooltipOptions: {
 	mode: TooltipDisplayMode
 	sort: SortOrder
 } @cuetsy(kind="interface")
+
+

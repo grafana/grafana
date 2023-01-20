@@ -8,4 +8,9 @@ export interface MapLayerOptions<TConfig = any> extends raw.MapLayerOptions {
   filterData?: MatcherConfig;
 }
 
+export interface DataQuery extends raw.DataQuery {
+  // TODO remove explicit nulls
+  datasource?: raw.DataSourceRef | null;
+}
+
 export * from '../common/common.gen';
