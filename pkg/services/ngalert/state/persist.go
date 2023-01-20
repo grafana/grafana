@@ -23,7 +23,7 @@ type RuleReader interface {
 // Historian maintains an audit log of alert state history.
 type Historian interface {
 	// RecordStates writes a number of state transitions for a given rule to state history.
-	RecordStatesAsync(ctx context.Context, rule *models.AlertRule, states []StateTransition)
+	RecordStatesAsync(ctx context.Context, rule *models.AlertRule, states []StateTransition) <-chan error
 }
 
 // ImageCapturer captures images.
