@@ -4,9 +4,7 @@ keywords:
   - schema
 title: NewsPanelCfg kind
 ---
-> Documentation generation is still in active development and is subject to further improvements.
-
-> Kinds **schema** is also subject to active development, and could change without prior notice.
+> Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
 # NewsPanelCfg kind
 
