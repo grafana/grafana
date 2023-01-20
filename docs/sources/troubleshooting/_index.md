@@ -27,6 +27,12 @@ For more information, refer to [Enable debug logging in Grafana CLI]({{< relref 
 
 If you have an issue with your Dashboard panel, you can send us debug information. For more information, refer to [Send a panel to Grafana Labs support]({{< relref "./send-panel-to-grafana-support/" >}}).
 
+## Troubleshoot with support bundles
+
+If you have an issue with your Grafana instance, you can generate an archive containing information concerning the state and the configuration of the instance.
+
+You can send us this bundle for advanced support, refer to [Send a support bundle to Grafana Labs support]({{< relref "./support-bundles/" >}}).
+
 ## Troubleshoot transformations
 
 Order of transformations matters. If the final data output from multiple transformations looks wrong, try changing the transformation order. Each transformation transforms data returned by the previous transformation, not the original raw data.
