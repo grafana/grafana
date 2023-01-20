@@ -103,8 +103,10 @@ export function PanelChrome({
 
   return (
     <div className={styles.container} style={containerStyles} aria-label={ariaLabel}>
-      <div className={styles.loadingBarContainer} data-testid="panel-loading-wrapper">
-        {loadingState === LoadingState.Loading ? <LoadingBar width={'28%'} height={'2px'} /> : null}
+      <div className={styles.loadingBarContainer}>
+        {loadingState === LoadingState.Loading ? (
+          <LoadingBar width={'28%'} height={'2px'} ariaLabel="Panel loading bar" />
+        ) : null}
       </div>
 
       <div className={styles.headerContainer} style={headerStyles} data-testid="header-container">
@@ -123,7 +125,7 @@ export function PanelChrome({
         )}
 
         {loadingState === LoadingState.Streaming && (
-          <div className={styles.item} style={itemStyles} data-testid="panel-streaming-wrapper">
+          <div className={styles.item} style={itemStyles} data-testid="panel-streaming">
             <Tooltip content="Streaming">
               <Icon name="circle-mono" size="sm" className={styles.streaming} />
             </Tooltip>
@@ -148,7 +150,7 @@ export function PanelChrome({
         </div>
 
         {statusMessage && (
-          <div className={styles.errorContainer} data-testid="panel-status-wrapper">
+          <div className={styles.errorContainer} data-testid="panel-status">
             <PanelStatus message={statusMessage} onClick={statusMessageOnClick} />
           </div>
         )}
@@ -223,6 +225,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     loadingBarContainer: css({
+      label: 'panel-loading-bar-container',
       position: 'absolute',
       top: 0,
       width: '100%',
@@ -240,6 +243,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(0, 0, 0, 1),
     }),
     streaming: css({
+      label: 'panel-streaming',
       marginRight: 0,
       color: theme.colors.success.text,
 
@@ -248,6 +252,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     title: css({
+      label: 'panel-title',
       marginBottom: 0, // override default h6 margin-bottom
       textOverflow: 'ellipsis',
       overflow: 'hidden',
@@ -264,6 +269,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
     }),
     menuItem: css({
+      label: 'panel-menu',
       visibility: 'hidden',
       border: 'none',
     }),

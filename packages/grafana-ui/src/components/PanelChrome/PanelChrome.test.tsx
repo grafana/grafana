@@ -113,35 +113,35 @@ it('renders panel with a show-on-hover menu icon if prop menu', () => {
 it('renders error status in the panel header if any given', () => {
   setup({ statusMessage: 'Error test' });
 
-  expect(screen.getByTestId('panel-status-wrapper')).toBeInTheDocument();
+  expect(screen.getByTestId('panel-status')).toBeInTheDocument();
 });
 
 it('does not render error status in the panel header if loadingState is error, but no statusMessage', () => {
   setup({ loadingState: LoadingState.Error, statusMessage: '' });
 
-  expect(screen.queryByTestId('panel-status-wrapper')).not.toBeInTheDocument();
+  expect(screen.queryByTestId('panel-status')).not.toBeInTheDocument();
 });
 
 it('renders loading indicator in the panel header if loadingState is loading', () => {
   setup({ loadingState: LoadingState.Loading });
 
-  expect(screen.getByTestId('panel-loading-wrapper')).toBeInTheDocument();
+  expect(screen.getByLabelText('Panel loading bar')).toBeInTheDocument();
 });
 
 it('renders loading indicator in the panel header if loadingState is loading regardless of not having a header', () => {
   setup({ loadingState: LoadingState.Loading, hoverHeader: true });
 
-  expect(screen.getByTestId('panel-loading-wrapper')).toBeInTheDocument();
+  expect(screen.getByLabelText('Panel loading bar')).toBeInTheDocument();
 });
 
 it('renders loading indicator in the panel header if loadingState is loading regardless of having a header', () => {
   setup({ loadingState: LoadingState.Loading, hoverHeader: false });
 
-  expect(screen.getByTestId('panel-loading-wrapper')).toBeInTheDocument();
+  expect(screen.getByLabelText('Panel loading bar')).toBeInTheDocument();
 });
 
 it('renders streaming indicator in the panel header if loadingState is streaming', () => {
   setup({ loadingState: LoadingState.Streaming });
 
-  expect(screen.getByTestId('panel-streaming-wrapper')).toBeInTheDocument();
+  expect(screen.getByTestId('panel-streaming')).toBeInTheDocument();
 });
