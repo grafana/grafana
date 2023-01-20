@@ -14,7 +14,8 @@ const (
 )
 // relevant scope stuff
 const (
-    Scope{{.Name | Title}}All = "{{.Name }}:{{.Attribute}}:*"
-    Scope{{.Name | Title}}Prefix = "{{.Name }}:{{.Attribute}}:"
+    Scope{{.Name | Title}}Root = "{{.Name}}"
+    Scope{{.Name | Title}}All = "{{.Name}}:{{.Attribute}}:*"
+    Scope{{.Name | Title}}Prefix = "{{.Name}}:{{.Attribute}}:"
 )
 {{end}}

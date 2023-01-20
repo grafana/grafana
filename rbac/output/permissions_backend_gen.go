@@ -15,6 +15,7 @@ const (
 
 // relevant scope stuff
 const (
+	ScopeDashboardsRoot   = "dashboards"
 	ScopeDashboardsAll    = "dashboards:uid:*"
 	ScopeDashboardsPrefix = "dashboards:uid:"
 )
@@ -37,6 +38,7 @@ const (
 
 // relevant scope stuff
 const (
+	ScopeDatasourcesRoot   = "datasources"
 	ScopeDatasourcesAll    = "datasources:uid:*"
 	ScopeDatasourcesPrefix = "datasources:uid:"
 )
@@ -53,6 +55,7 @@ const (
 
 // relevant scope stuff
 const (
+	ScopeFoldersRoot   = "folders"
 	ScopeFoldersAll    = "folders:uid:*"
 	ScopeFoldersPrefix = "folders:uid:"
 )
