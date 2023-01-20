@@ -36,9 +36,9 @@ var (
 )
 
 func (s *Service) declareFixedRoles(ac accesscontrol.Service) error {
-	grants := []string{string(org.RoleAdmin), string(accesscontrol.RoleGrafanaAdmin)}
+	grants := []string{string(org.RoleAdmin), accesscontrol.RoleGrafanaAdmin}
 	if s.serverAdminOnly {
-		grants = []string{string(accesscontrol.RoleGrafanaAdmin)}
+		grants = []string{accesscontrol.RoleGrafanaAdmin}
 	}
 
 	bundleReader := accesscontrol.RoleRegistration{
