@@ -112,7 +112,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 	// store implementation without impacting any grafana instances built off
 	// main.
 	//
-	addFolderMigrations(mg)
+	// addFolderMigrations(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {
