@@ -26,6 +26,12 @@ export interface GrafanaQuery extends DataQuery {
   path?: string; // for list and read
   search?: SearchQuery;
   snapshot?: DataFrameJSON[];
+  file?: GrafanaQueryFile;
+}
+
+export interface GrafanaQueryFile {
+  name: String;
+  size: number;
 }
 
 export const defaultQuery: GrafanaQuery = {

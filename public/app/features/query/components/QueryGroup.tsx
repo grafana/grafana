@@ -1,12 +1,9 @@
 import { css } from '@emotion/css';
 import React, { PureComponent } from 'react';
-import DropZone, { FileRejection } from 'react-dropzone';
 import { Unsubscribable } from 'rxjs';
 
 import {
   CoreApp,
-  DataFrameJSON,
-  dataFrameToJSON,
   DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
@@ -22,10 +19,8 @@ import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { addQuery, queryIsEmpty } from 'app/core/utils/query';
-import { readSpreadsheet } from 'app/core/utils/sheet';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { DashboardQueryEditor, isSharedDashboardQuery } from 'app/plugins/datasource/dashboard';
-import { GrafanaQuery, GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 import { QueryGroupDataSource, QueryGroupOptions } from 'app/types';
 
 import { isQueryWithMixedDatasource } from '../../query-library/api/SavedQueriesApi';
@@ -458,96 +453,24 @@ class UnThemedQueryGroup extends PureComponent<Props, State> {
     this.setState({ scrollElement });
   };
 
-  onFileDrop = (files: File[], rejectedFiles: FileRejection[]) => {
-    const snapshot: DataFrameJSON[] = [];
-
-    files.forEach((file) => {
-      const reader = new FileReader();
-      reader.readAsArrayBuffer(file);
-      // TODO Add error and progress handling
-      reader.onload = () => {
-        const result = reader.result;
-        if (result) {
-          if (typeof result === 'string') {
-            return;
-          }
-          const dataFrames = readSpreadsheet(result);
-          dataFrames.forEach((df) => {
-            const dataframeJson = dataFrameToJSON(df);
-            snapshot.push(dataframeJson);
-          });
-        }
-        // TODO only update state when all the files are loaded
-        this.props.onRunQueries();
-      };
-    });
-
-    // RejectedFiles only going to be files that are exceeds the maxSize
-    if (rejectedFiles.length) {
-      this.onPanelDataUpdate({
-        ...this.state.data,
-        state: LoadingState.Error,
-        error: {
-          message: `File size exceeded for ${rejectedFiles
-            .map((rf) => {
-              return rf.file.name;
-            })
-            .join(',')}.`,
-        },
-      });
-    }
-
-    const grafanaDS = {
-      type: 'grafana',
-      uid: 'grafana',
-    };
-    const query: GrafanaQuery = {
-      refId: 'A',
-      queryType: GrafanaQueryType.Snapshot,
-      snapshot,
-      datasource: grafanaDS,
-    };
-    this.onChange({
-      dataSource: grafanaDS,
-      queries: [query],
-    });
-
-    this.setState({
-      queries: [query],
-    });
-  };
-
   render() {
     const { isHelpOpen, dsSettings } = this.state;
+    const styles = getStyles(this.props.theme);
 
     return (
       <CustomScrollbar autoHeightMin="100%" scrollRefCallback={this.setScrollRef}>
-        <DropZone
-          onDrop={this.onFileDrop}
-          noClick
-          maxSize={200000}
-          disabled={!config.featureToggles.editPanelCSVDragAndDrop}
-        >
-          {({ getRootProps, isDragActive }) => {
-            const styles = getStyles(this.props.theme, isDragActive);
-            return (
-              <div {...getRootProps({ className: styles.dropzone })}>
-                {this.renderTopSection(styles)}
-                {dsSettings && (
-                  <>
-                    <div className={styles.queriesWrapper}>{this.renderQueries(dsSettings)}</div>
-                    {this.renderAddQueryRow(dsSettings, styles)}
-                    {isHelpOpen && (
-                      <Modal title="Data source help" isOpen={true} onDismiss={this.onCloseHelp}>
-                        <PluginHelp pluginId={dsSettings.meta.id} />
-                      </Modal>
-                    )}
-                  </>
-                )}
-              </div>
-            );
-          }}
-        </DropZone>
+        {this.renderTopSection(styles)}
+        {dsSettings && (
+          <>
+            <div className={styles.queriesWrapper}>{this.renderQueries(dsSettings)}</div>
+            {this.renderAddQueryRow(dsSettings, styles)}
+            {isHelpOpen && (
+              <Modal title="Data source help" isOpen={true} onDismiss={this.onCloseHelp}>
+                <PluginHelp pluginId={dsSettings.meta.id} />
+              </Modal>
+            )}
+          </>
+        )}
       </CustomScrollbar>
     );
   }
