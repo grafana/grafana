@@ -1,0 +1,14 @@
+// NOTE: This file was auto generated.  DO NOT EDIT DIRECTLY!
+
+export enum AccessControlAction {
+{{- range $i, $data := .}}
+{{- range $data.Verbs}}
+    {{$data.Name | Title }}{{.Name | Title}} = "{{$data.Name}}:{{.Name}}",
+{{- end -}}
+{{- range $y, $sub := $data.SubResources}}
+{{- range $sub.Verbs}}
+    {{$data.Name | Title}}{{$sub.Name | Title}}{{.Name | Title}} = "{{$data.Name}}.{{$sub.Name}}:{{.Name}}",
+{{- end -}}
+{{- end}}
+{{end -}}
+}

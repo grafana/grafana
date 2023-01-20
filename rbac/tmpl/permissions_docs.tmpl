@@ -1,0 +1,12 @@
+| Action | Applicable scope | Description |
+| ------ | ---------------- | ------------|
+{{- range $i, $data := . -}}
+{{- range $data.Verbs}}
+| `{{$data.Name}}:{{.Name}}` | {{ ScopeDocs $data . }} | {{.Desc}} |
+{{- end -}}
+{{- range $y, $sub := $data.SubResources}}
+{{- range $sub.Verbs}}
+| `{{$data.Name}}.{{$sub.Name}}:{{.Name}}` | {{ScopeDocs $data .}} | {{.Desc}} |
+{{- end -}}
+{{- end -}}
+{{- end -}}

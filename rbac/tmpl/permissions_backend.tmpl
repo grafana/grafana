@@ -1,0 +1,20 @@
+// NOTE: This file was auto generated.  DO NOT EDIT DIRECTLY!
+package accesscontrol
+{{range $i, $data := .}}
+// all available actions for {{$data.Name}}
+const (
+{{range $data.Verbs}}
+    {{- $data.Name | Title | Action}}{{.Name | Title}} = "{{$data.Name}}:{{.Name}}"
+{{end -}}
+{{ range $y, $sub := $data.SubResources}}
+    {{- range $sub.Verbs}}
+    {{- $data.Name | Title | Action}}{{$sub.Name | Title}}{{.Name | Title}} = "{{$data.Name}}.{{$sub.Name}}:{{.Name}}"
+    {{end -}}
+{{end -}}
+)
+// relevant scope stuff
+const (
+    Scope{{.Name | Title}}All = "{{.Name }}:{{.Attribute}}:*"
+    Scope{{.Name | Title}}Prefix = "{{.Name }}:{{.Attribute}}:"
+)
+{{end}}

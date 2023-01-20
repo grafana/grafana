@@ -78,6 +78,13 @@ gen-go: $(WIRE) gen-cue
 gen-jsonnet:
 	go generate ./devenv/jsonnet
 
+gen-rbac:
+	mkdir -p rbac/output
+	go run rbac/main.go rbac/registry.go -type permissions_backend | goimports > rbac/output/permissions_backend_gen.go
+	go run rbac/main.go rbac/registry.go -type permissions_frontend > rbac/output/permissions_frontend_gen.ts
+	go run rbac/main.go rbac/registry.go -type permissions_docs > rbac/output/permissions_docs_gen.md
+
+
 build-go: $(MERGED_SPEC_TARGET) gen-go ## Build all Go binaries.
 	@echo "build go files"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build
