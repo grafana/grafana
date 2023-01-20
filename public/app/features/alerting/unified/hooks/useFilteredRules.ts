@@ -7,7 +7,7 @@ import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { isPromAlertingRuleState, PromRuleType, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { getSearchFilterFromQuery, SearchFilterState, applySearchFilterToQuery } from '../search/searchParser';
+import { getSearchFilterFromQuery, RulesFilter, applySearchFilterToQuery } from '../search/rulesSearchParser';
 import { labelsMatchMatchers, matcherToMatcherField, parseMatcher, parseMatchers } from '../utils/alertmanager';
 import { isCloudRulesSource } from '../utils/datasource';
 import { isAlertingRule, isGrafanaRulerRule, isPromRuleType } from '../utils/rules';
@@ -22,7 +22,7 @@ export function useRulesFilter() {
   const hasActiveFilters = Object.values(filterState).some((filter) => !isEmpty(filter));
 
   const updateFilters = useCallback(
-    (newFilter: SearchFilterState) => {
+    (newFilter: RulesFilter) => {
       const newSearchQuery = applySearchFilterToQuery(searchQuery, newFilter);
       updateQueryParams({ search: newSearchQuery });
     },
@@ -72,13 +72,13 @@ export function useRulesFilter() {
   return { filterState, hasActiveFilters, searchQuery, setSearchQuery, updateFilters };
 }
 
-export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterState: SearchFilterState) => {
+export const useFilteredRules = (namespaces: CombinedRuleNamespace[], filterState: RulesFilter) => {
   return useMemo(() => filterRules(namespaces, filterState), [namespaces, filterState]);
 };
 
 export const filterRules = (
   namespaces: CombinedRuleNamespace[],
-  filterState: SearchFilterState = { labels: [], freeFormWords: [] }
+  filterState: RulesFilter = { labels: [], freeFormWords: [] }
 ): CombinedRuleNamespace[] => {
   return (
     namespaces
@@ -95,7 +95,7 @@ export const filterRules = (
   );
 };
 
-const reduceNamespaces = (filterStateFilters: SearchFilterState) => {
+const reduceNamespaces = (filterStateFilters: RulesFilter) => {
   return (namespaceAcc: CombinedRuleNamespace[], namespace: CombinedRuleNamespace) => {
     const groups = namespace.groups
       .filter((g) =>
@@ -115,7 +115,7 @@ const reduceNamespaces = (filterStateFilters: SearchFilterState) => {
 };
 
 // Reduces groups to only groups that have rules matching the filters
-const reduceGroups = (filterState: SearchFilterState) => {
+const reduceGroups = (filterState: RulesFilter) => {
   return (groupAcc: CombinedRuleGroup[], group: CombinedRuleGroup) => {
     const rules = group.rules.filter((rule) => {
       if (filterState.ruleType && filterState.ruleType !== rule.promRule?.type) {
@@ -184,7 +184,7 @@ function looseParseMatcher(matcherQuery: string): Matcher | undefined {
   }
 }
 
-const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filterState: SearchFilterState): boolean => {
+const isQueryingDataSource = (rulerRule: RulerGrafanaRuleDTO, filterState: RulesFilter): boolean => {
   if (!filterState.dataSourceName) {
     return true;
   }

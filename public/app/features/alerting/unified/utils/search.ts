@@ -1,6 +1,6 @@
-import { SearchFilterState } from '../search/searchParser';
+import { RulesFilter } from '../search/rulesSearchParser';
 
-export function getFilter(filter: Partial<SearchFilterState>): SearchFilterState {
+export function getFilter(filter: Partial<RulesFilter>): RulesFilter {
   return {
     freeFormWords: [],
     labels: [],

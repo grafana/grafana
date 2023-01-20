@@ -1,28 +1,22 @@
 @top AlertRuleSearch { expression+ }
 
+@dialects { dsFilter, nsFilter, labelFilter, groupFilter, ruleFilter, stateFilter, typeFilter }
+
 expression { (FilterExpression | FreeFormExpression) expression }
 
+FreeFormExpression { word (colon word)* }
+
 FilterExpression {
- DataSourceFilter |
- NameSpaceFilter |
- LabelFilter |
- GroupFilter |
- RuleFilter |
- StateFilter |
- TypeFilter
+ filter<DsToken> |
+ filter<NsToken> |
+ filter<LabelToken> |
+ filter<GroupToken> |
+ filter<RuleToken> |
+ filter<StateToken> |
+ filter<TypeToken>
 }
 
-DataSourceFilter { filter<"ds"> }
-NameSpaceFilter { filter<"ns"> }
-LabelFilter { filter<"label"> }
-GroupFilter { filter<"group"> }
-RuleFilter { filter<"rule"> }
-StateFilter { filter<"state"> }
-TypeFilter { filter<"type"> }
-
-filter<type> { filterToken<type> FilterValue }
-
-FreeFormExpression { word (colon word)* }
+filter<token> { token FilterValue }
 
 @tokens {
   colon { ":" }
@@ -34,8 +28,23 @@ FreeFormExpression { word (colon word)* }
   filterNoBracketChars { allowedInputChar | ":" }
   filterWithBracketChars { filterNoBracketChars | " " }
 
-  filterToken<type> { type colon }
   FilterValue { filterNoBracketChars+ | ("\"" filterWithBracketChars+ "\"") }
+  filterToken<type> { type colon }
 
-  @precedence { filterToken, word }
+  DsToken[@dialect=dsFilter] { filterToken<"ds"> }
+  NsToken[@dialect=nsFilter] { filterToken<"ns"> }
+  LabelToken[@dialect=labelFilter] { filterToken<"label"> }
+  GroupToken[@dialect=groupFilter] { filterToken<"group"> }
+  RuleToken[@dialect=ruleFilter] { filterToken<"rule"> }
+  StateToken[@dialect=stateFilter] { filterToken<"state"> }
+  TypeToken[@dialect=typeFilter] { filterToken<"type"> }
+
+  @precedence { DsToken, word }
+  @precedence { NsToken, word }
+  @precedence { LabelToken, word }
+  @precedence { GroupToken, word }
+  @precedence { RuleToken, word }
+  @precedence { StateToken, word }
+  @precedence { TypeToken, word }
 }
+
