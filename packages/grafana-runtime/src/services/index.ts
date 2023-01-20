@@ -8,3 +8,6 @@ export * from './legacyAngularInjector';
 export * from './live';
 export * from './LocationService';
 export * from './appEvents';
+export { setExtensionsRegistry } from './pluginExtensions/registry';
+export { getPluginLink } from './pluginExtensions/pluginLinks';
+export type { PluginLinkOptions, PluginLinkResult } from './pluginExtensions/pluginLinks';
