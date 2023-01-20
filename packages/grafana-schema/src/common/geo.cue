@@ -8,7 +8,7 @@ MapLayerOptions: {
   	config?: _
 		// Common method to define geometry fields
 		location?: FrameGeometrySource
-		// Defines which data query refId is associated with the layer
+		// Defines a frame MatcherConfig that may filter data for the given layer
 		filterData?: _
 		// Common properties:
 		// https://openlayers.org/en/latest/apidoc/module-ol_layer_Base-BaseLayer.html
