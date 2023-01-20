@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -602,11 +603,11 @@ func (dr *DashboardServiceImpl) GetDashboardACLInfoList(ctx context.Context, que
 	return dr.dashboardStore.GetDashboardACLInfoList(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *models.HasAdminPermissionInDashboardsOrFoldersQuery) error {
+func (dr *DashboardServiceImpl) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *folder.HasAdminPermissionInDashboardsOrFoldersQuery) (bool, error) {
 	return dr.dashboardStore.HasAdminPermissionInDashboardsOrFolders(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
+func (dr *DashboardServiceImpl) HasEditPermissionInFolders(ctx context.Context, query *folder.HasEditPermissionInFoldersQuery) (bool, error) {
 	return dr.dashboardStore.HasEditPermissionInFolders(ctx, query)
 }
 

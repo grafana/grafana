@@ -335,7 +335,7 @@ func FromDashboard(dash *Dashboard) *folder.Folder {
 		UID:       dash.UID,
 		Title:     dash.Title,
 		HasACL:    dash.HasACL,
-		Url:       GetFolderURL(dash.UID, dash.Slug),
+		URL:       GetFolderURL(dash.UID, dash.Slug),
 		Version:   dash.Version,
 		Created:   dash.Created,
 		CreatedBy: dash.CreatedBy,

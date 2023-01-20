@@ -161,16 +161,16 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 
 func (hs *HTTPServer) MoveFolder(c *models.ReqContext) response.Response {
 	if hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		cmd := models.MoveFolderCommand{}
+		cmd := folder.MoveFolderCommand{}
 		if err := web.Bind(c.Req, &cmd); err != nil {
 			return response.Error(http.StatusBadRequest, "bad request data", err)
 		}
 		var theFolder *folder.Folder
 		var err error
-		if cmd.ParentUID != nil {
+		if cmd.NewParentUID != "" {
 			moveCommand := folder.MoveFolderCommand{
 				UID:          web.Params(c.Req)[":uid"],
-				NewParentUID: *cmd.ParentUID,
+				NewParentUID: cmd.NewParentUID,
 				OrgID:        c.OrgID,
 			}
 			theFolder, err = hs.folderService.Move(c.Req.Context(), &moveCommand)
@@ -272,7 +272,7 @@ func (hs *HTTPServer) newToFolderDto(c *models.ReqContext, g guardian.DashboardG
 		Id:            folder.ID,
 		Uid:           folder.UID,
 		Title:         folder.Title,
-		Url:           folder.Url,
+		Url:           folder.URL,
 		HasACL:        folder.HasACL,
 		CanSave:       canSave,
 		CanEdit:       canEdit,
