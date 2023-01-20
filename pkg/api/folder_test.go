@@ -235,11 +235,11 @@ func createFolderScenario(t *testing.T, desc string, url string, routePattern st
 	cmd models.CreateFolderCommand, fn scenarioFunc) {
 	setUpRBACGuardian(t)
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
-		aclMockResp := []*models.DashboardACLInfoDTO{}
+		aclMockResp := []*dashboards.DashboardACLInfoDTO{}
 		teamSvc := &teamtest.FakeService{}
 		dashSvc := &dashboards.FakeDashboardService{}
-		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
-			q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
+		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
+			q := args.Get(1).(*dashboards.GetDashboardACLInfoListQuery)
 			q.Result = aclMockResp
 		}).Return(nil)
 		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {

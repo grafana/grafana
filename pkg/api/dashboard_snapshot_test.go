@@ -79,7 +79,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 						UID: q.UID,
 					}
 				}).Return(nil).Maybe()
-				dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Return(nil).Maybe()
+				dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(nil).Maybe()
 				hs.DashboardService = dashSvc
 
 				guardian.InitLegacyGuardian(sc.sqlStore, dashSvc, teamSvc)
@@ -118,9 +118,9 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 	t.Run("When user is editor and dashboard has default ACL", func(t *testing.T) {
 		teamSvc := &teamtest.FakeService{}
 		dashSvc := &dashboards.FakeDashboardService{}
-		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
-			q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
-			q.Result = []*models.DashboardACLInfoDTO{
+		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
+			q := args.Get(1).(*dashboards.GetDashboardACLInfoListQuery)
+			q.Result = []*dashboards.DashboardACLInfoDTO{
 				{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
 				{Role: &editorRole, Permission: models.PERMISSION_EDIT},
 			}
@@ -141,9 +141,9 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 						OrgID: q.OrgID,
 					}
 				}).Return(nil).Maybe()
-				dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
-					q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
-					q.Result = []*models.DashboardACLInfoDTO{
+				dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
+					q := args.Get(1).(*dashboards.GetDashboardACLInfoListQuery)
+					q.Result = []*dashboards.DashboardACLInfoDTO{
 						{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
 						{Role: &editorRole, Permission: models.PERMISSION_EDIT},
 					}

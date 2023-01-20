@@ -14,7 +14,10 @@ import (
 // indicates the import path should be dropped in the conversion to TS. Imports
 // not present in the list are not not allowed, and code generation will fail.
 var importMap = map[string]string{
-	"github.com/grafana/thema":                                      "",
+	"github.com/grafana/thema": "",
+
+	"github.com/grafana/grafana/pkg/kindsys":                        "",
+	"github.com/grafana/grafana/pkg/plugins/pfs":                    "",
 	"github.com/grafana/grafana/packages/grafana-schema/src/common": "@grafana/schema",
 }
 
