@@ -20,6 +20,7 @@ import {
   RadioButtonGroup,
   stylesFactory,
   IconButton,
+  useTheme2,
 } from '@grafana/ui';
 
 const modes: Array<SelectableValue<ThresholdsMode>> = [
@@ -151,7 +152,12 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
     });
   };
 
-  renderInput(threshold: ThresholdWithKey, styles: ThresholdStyles, idx: number) {
+  renderInput(
+    threshold: ThresholdWithKey,
+    prevThreshold: ThresholdWithKey | undefined,
+    styles: ThresholdStyles,
+    idx: number
+  ) {
     const isPercent = this.props.thresholds.mode === ThresholdsMode.Percentage;
 
     const ariaLabel = `Threshold ${idx + 1}`;
@@ -171,9 +177,27 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
               />
             </div>
           }
+          suffix={
+            prevThreshold && (
+              <span style={{ paddingRight: `calc(16px + .5ch)`, fontVariantNumeric: 'proportional-nums' }}>
+                less than <VizColor color={prevThreshold.color}>{prevThreshold.value}</VizColor>
+              </span>
+            )
+          }
         />
       );
     }
+
+    const thresholdRange = prevThreshold ? (
+      <>
+        <VizColor color={threshold.color}>{threshold.value}</VizColor> to{' '}
+        <VizColor color={prevThreshold.color}>{prevThreshold.value}</VizColor>
+      </>
+    ) : (
+      <>
+        greater than <VizColor color={threshold.color}>{threshold.value}</VizColor>
+      </>
+    );
 
     return (
       <Input
@@ -198,12 +222,15 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
           </div>
         }
         suffix={
-          <IconButton
-            aria-label={`Remove ${ariaLabel}`}
-            className={styles.trashIcon}
-            name="trash-alt"
-            onClick={() => this.onRemoveThreshold(threshold)}
-          />
+          <>
+            <span style={{ paddingRight: `.5ch`, fontVariantNumeric: 'proportional-nums' }}>{thresholdRange}</span>
+            <IconButton
+              aria-label={`Remove ${ariaLabel}`}
+              className={styles.trashIcon}
+              name="trash-alt"
+              onClick={() => this.onRemoveThreshold(threshold)}
+            />
+          </>
         }
       />
     );
@@ -212,6 +239,7 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
   render() {
     const { thresholds } = this.props;
     const { steps } = this.state;
+    const reversedSteps = steps.slice(0).reverse();
 
     return (
       <ThemeContext.Consumer>
@@ -230,14 +258,15 @@ export class ThresholdsEditor extends PureComponent<Props, State> {
                 Add threshold
               </Button>
               <div className={styles.thresholds}>
-                {steps
-                  .slice(0)
-                  .reverse()
-                  .map((threshold, idx) => (
-                    <div className={styles.item} key={`${threshold.key}`}>
-                      {this.renderInput(threshold, styles, idx)}
+                {reversedSteps.map((threshold, idx) => {
+                  const prevThreshold = reversedSteps[idx - 1];
+
+                  return (
+                    <div className={styles.item} key={threshold.key}>
+                      {this.renderInput(threshold, prevThreshold, styles, idx)}
                     </div>
-                  ))}
+                  );
+                })}
               </div>
 
               <div>
@@ -339,3 +368,9 @@ const getStyles = stylesFactory((theme: GrafanaTheme2): ThresholdStyles => {
     `,
   };
 });
+
+function VizColor({ color, children }: { color: string; children: React.ReactNode }) {
+  // const theme = useTheme2();
+
+  return <span /*style={{ color: theme.visualization.getColorByName(color) }}*/>{children}</span>;
+}
