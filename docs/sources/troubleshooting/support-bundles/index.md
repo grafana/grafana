@@ -10,7 +10,7 @@ menutitle: Send a support bundle to support
 weight: 100
 ---
 
-# Send a panel to Grafana Labs support
+# Send a support bundle to Grafana Labs support
 
 When you encounter problems with your Grafana instance, you can send us a support bundle. This bundle contains information about your Grafana instance, such as:
 
