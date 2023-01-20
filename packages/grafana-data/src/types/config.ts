@@ -5,7 +5,7 @@ import { GrafanaTheme2 } from '../themes';
 import { DataSourceInstanceSettings } from './datasource';
 import { FeatureToggles } from './featureToggles.gen';
 import { PanelPluginMeta } from './panel';
-import { PluginExtensions } from './pluginExtensions';
+import { PluginExtensionsConfig } from './pluginExtensions';
 
 import { GrafanaTheme, IconName, NavLinkDTO, OrgRole } from '.';
 
@@ -152,7 +152,7 @@ export interface BootData {
  * @internal
  */
 export interface GrafanaConfig {
-  pluginExtensions: Record<string, PluginExtensions>;
+  pluginExtensions: Record<string, PluginExtensionsConfig>;
   isPublicDashboardView: boolean;
   datasources: { [str: string]: DataSourceInstanceSettings };
   panels: { [key: string]: PanelPluginMeta };
