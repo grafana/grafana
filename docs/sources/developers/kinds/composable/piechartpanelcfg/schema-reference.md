@@ -4,6 +4,9 @@ keywords:
   - schema
 title: PieChartPanelCfg kind
 ---
+> Documentation generation is still in active development and is subject to further improvements.
+
+> Kinds **schema** is also subject to active development, and could change without prior notice.
 
 # PieChartPanelCfg kind
 
