@@ -6,9 +6,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/logger"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 )
 
@@ -18,7 +18,7 @@ type Manager struct {
 	pluginRegistry registry.Service
 
 	mu  sync.Mutex
-	log log.Logger
+	log logger.Logger
 }
 
 func ProvideService(pluginRegistry registry.Service) *Manager {
@@ -28,7 +28,7 @@ func ProvideService(pluginRegistry registry.Service) *Manager {
 func NewManager(pluginRegistry registry.Service) *Manager {
 	return &Manager{
 		pluginRegistry: pluginRegistry,
-		log:            log.New("plugin.process.manager"),
+		log:            logger.New("plugin.process.manager"),
 	}
 }
 

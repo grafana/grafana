@@ -4,13 +4,14 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/infra/log"
+
+	"github.com/grafana/grafana/pkg/plugins/logger"
 )
 
 // Plugin is the backend plugin interface.
 type Plugin interface {
 	PluginID() string
-	Logger() log.Logger
+	Logger() logger.Logger
 	Start(ctx context.Context) error
 	Stop(ctx context.Context) error
 	IsManaged() bool

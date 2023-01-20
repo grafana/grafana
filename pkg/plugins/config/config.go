@@ -5,13 +5,13 @@ import (
 
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins/logger"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Cfg struct {
-	log log.Logger
+	log logger.Logger
 
 	DevMode bool
 
@@ -37,7 +37,7 @@ func ProvideConfig(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *C
 }
 
 func NewCfg(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
-	logger := log.New("plugin.cfg")
+	logger := logger.New("plugin.cfg")
 
 	aws := settingProvider.Section("aws")
 	plugins := settingProvider.Section("plugins")

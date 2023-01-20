@@ -6,10 +6,11 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/hashicorp/go-plugin"
+
 	"github.com/grafana/grafana/pkg/infra/process"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/hashicorp/go-plugin"
+	"github.com/grafana/grafana/pkg/plugins/logger"
 )
 
 type pluginClient interface {
@@ -25,14 +26,14 @@ type grpcPlugin struct {
 	clientFactory  func() *plugin.Client
 	client         *plugin.Client
 	pluginClient   pluginClient
-	logger         log.Logger
+	logger         logger.Logger
 	mutex          sync.RWMutex
 	decommissioned bool
 }
 
 // newPlugin allocates and returns a new gRPC (external) backendplugin.Plugin.
 func newPlugin(descriptor PluginDescriptor) backendplugin.PluginFactoryFunc {
-	return func(pluginID string, logger log.Logger, env []string) (backendplugin.Plugin, error) {
+	return func(pluginID string, logger logger.Logger, env []string) (backendplugin.Plugin, error) {
 		return &grpcPlugin{
 			descriptor: descriptor,
 			logger:     logger,
@@ -47,7 +48,7 @@ func (p *grpcPlugin) PluginID() string {
 	return p.descriptor.pluginID
 }
 
-func (p *grpcPlugin) Logger() log.Logger {
+func (p *grpcPlugin) Logger() logger.Logger {
 	return p.logger
 }
 

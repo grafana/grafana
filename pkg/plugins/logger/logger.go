@@ -1,57 +1,95 @@
 package logger
 
-import (
-	"fmt"
+import "context"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-)
-
-type InfraLogWrapper struct {
-	log log.Logger
+// New is...
+func New(_ ...interface{}) Logger {
+	return &DefaultLogger{}
 }
 
-func NewLogger(name string) *InfraLogWrapper {
-	return &InfraLogWrapper{
-		log: log.New(name),
-	}
+type DefaultLogger struct{}
+
+func (d DefaultLogger) New(ctx ...interface{}) Logger {
+	return d
 }
 
-func (l *InfraLogWrapper) Successf(format string, args ...interface{}) {
-	l.log.Info(fmt.Sprintf(format, args...))
+func (d DefaultLogger) Log(keyvals ...interface{}) error {
+	return nil
 }
 
-func (l *InfraLogWrapper) Failuref(format string, args ...interface{}) {
-	l.log.Error(fmt.Sprintf(format, args...))
+func (d DefaultLogger) Debug(msg string, ctx ...interface{}) {
 }
 
-func (l *InfraLogWrapper) Info(args ...interface{}) {
-	l.log.Info(fmt.Sprint(args...))
+func (d DefaultLogger) Info(msg string, ctx ...interface{}) {
 }
 
-func (l *InfraLogWrapper) Infof(format string, args ...interface{}) {
-	l.log.Info(fmt.Sprintf(format, args...))
+func (d DefaultLogger) Warn(msg string, ctx ...interface{}) {
 }
 
-func (l *InfraLogWrapper) Debug(args ...interface{}) {
-	l.log.Debug(fmt.Sprint(args...))
+func (d DefaultLogger) Error(msg string, ctx ...interface{}) {
 }
 
-func (l *InfraLogWrapper) Debugf(format string, args ...interface{}) {
-	l.log.Debug(fmt.Sprintf(format, args...))
+func (d DefaultLogger) FromContext(ctx context.Context) Logger {
+	return d
 }
 
-func (l *InfraLogWrapper) Warn(args ...interface{}) {
-	l.log.Warn(fmt.Sprint(args...))
+// NewNopLogger is...
+func NewNopLogger() Logger {
+	return &DefaultLogger{} //TODO
 }
 
-func (l *InfraLogWrapper) Warnf(format string, args ...interface{}) {
-	l.log.Warn(fmt.Sprintf(format, args...))
+// NewTestLogger is...
+func NewTestLogger() *TestLogger {
+	return &TestLogger{}
 }
 
-func (l *InfraLogWrapper) Error(args ...interface{}) {
-	l.log.Error(fmt.Sprint(args...))
+type TestLogger struct {
+	DebugLogs Logs
+	InfoLogs  Logs
+	WarnLogs  Logs
+	ErrorLogs Logs
 }
 
-func (l *InfraLogWrapper) Errorf(format string, args ...interface{}) {
-	l.log.Error(fmt.Sprintf(format, args...))
+func (t TestLogger) New(_ ...interface{}) Logger {
+	return NewNopLogger()
 }
+
+func (t TestLogger) Log(_ ...interface{}) error {
+	return nil
+}
+
+func (t TestLogger) Info(msg string, ctx ...interface{}) {
+	t.InfoLogs.Calls++
+	t.InfoLogs.Message = msg
+	t.InfoLogs.Ctx = ctx
+}
+
+func (t TestLogger) Warn(msg string, ctx ...interface{}) {
+	t.WarnLogs.Calls++
+	t.WarnLogs.Message = msg
+	t.WarnLogs.Ctx = ctx
+}
+
+func (t TestLogger) Debug(msg string, ctx ...interface{}) {
+	t.DebugLogs.Calls++
+	t.DebugLogs.Message = msg
+	t.DebugLogs.Ctx = ctx
+}
+
+func (t TestLogger) Error(msg string, ctx ...interface{}) {
+	t.ErrorLogs.Calls++
+	t.ErrorLogs.Message = msg
+	t.ErrorLogs.Ctx = ctx
+}
+
+func (t TestLogger) FromContext(_ context.Context) Logger {
+	return NewNopLogger()
+}
+
+type Logs struct {
+	Calls   int
+	Message string
+	Ctx     []interface{}
+}
+
+var _ Logger = (*TestLogger)(nil)

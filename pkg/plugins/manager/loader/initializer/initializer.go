@@ -9,16 +9,16 @@ import (
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/logger"
 )
 
 type Initializer struct {
 	cfg             *config.Cfg
 	license         plugins.Licensing
 	backendProvider plugins.BackendFactoryProvider
-	log             log.Logger
+	log             logger.Logger
 }
 
 func New(cfg *config.Cfg, backendProvider plugins.BackendFactoryProvider, license plugins.Licensing) Initializer {
@@ -26,7 +26,7 @@ func New(cfg *config.Cfg, backendProvider plugins.BackendFactoryProvider, licens
 		cfg:             cfg,
 		license:         license,
 		backendProvider: backendProvider,
-		log:             log.New("plugin.initializer"),
+		log:             logger.New("plugin.initializer"),
 	}
 }
 

@@ -3,13 +3,13 @@ package provider
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/coreplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/grpcplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
+	"github.com/grafana/grafana/pkg/plugins/logger"
 )
 
 // PluginBackendProvider is a function type for initializing a Plugin backend.
@@ -46,7 +46,7 @@ var RendererProvider PluginBackendProvider = func(_ context.Context, p *plugins.
 		return nil
 	}
 	return grpcplugin.NewRendererPlugin(p.ID, p.ExecutablePath(),
-		func(pluginID string, renderer pluginextensionv2.RendererPlugin, logger log.Logger) error {
+		func(pluginID string, renderer pluginextensionv2.RendererPlugin, logger logger.Logger) error {
 			p.Renderer = renderer
 			return nil
 		},
@@ -58,7 +58,7 @@ var SecretsManagerProvider PluginBackendProvider = func(_ context.Context, p *pl
 		return nil
 	}
 	return grpcplugin.NewSecretsManagerPlugin(p.ID, p.ExecutablePath(),
-		func(pluginID string, secretsmanager secretsmanagerplugin.SecretsManagerPlugin, logger log.Logger) error {
+		func(pluginID string, secretsmanager secretsmanagerplugin.SecretsManagerPlugin, logger logger.Logger) error {
 			p.SecretsManager = secretsmanager
 			return nil
 		},

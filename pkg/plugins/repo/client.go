@@ -23,10 +23,10 @@ type Client struct {
 	httpClientNoTimeout http.Client
 	retryCount          int
 
-	log logger.Logger
+	log logger.PrettyLogger
 }
 
-func newClient(skipTLSVerify bool, logger logger.Logger) *Client {
+func newClient(skipTLSVerify bool, logger logger.PrettyLogger) *Client {
 	return &Client{
 		httpClient:          makeHttpClient(skipTLSVerify, 10*time.Second),
 		httpClientNoTimeout: makeHttpClient(skipTLSVerify, 0),

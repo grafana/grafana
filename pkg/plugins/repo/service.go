@@ -15,15 +15,15 @@ type Manager struct {
 	client  *Client
 	baseURL string
 
-	log logger.Logger
+	log logger.PrettyLogger
 }
 
 func ProvideService() *Manager {
 	defaultBaseURL := "https://grafana.com/api/plugins"
-	return New(false, defaultBaseURL, logger.NewLogger("plugin.repository"))
+	return New(false, defaultBaseURL, logger.OldyLogger("plugin.repository"))
 }
 
-func New(skipTLSVerify bool, baseURL string, logger logger.Logger) *Manager {
+func New(skipTLSVerify bool, baseURL string, logger logger.PrettyLogger) *Manager {
 	return &Manager{
 		client:  newClient(skipTLSVerify, logger),
 		baseURL: baseURL,

@@ -6,11 +6,12 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 var (
@@ -28,7 +29,7 @@ var (
 	}, []string{"plugin_id", "endpoint"})
 )
 
-var logger log.Logger = log.New("plugin.instrumentation")
+var logger = log.New("plugin.instrumentation")
 
 // instrumentPluginRequest instruments success rate and latency of `fn`
 func instrumentPluginRequest(ctx context.Context, cfg *config.Cfg, pluginCtx *backend.PluginContext, endpoint string, fn func() error) error {

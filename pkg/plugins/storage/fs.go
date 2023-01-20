@@ -30,10 +30,10 @@ type FS struct {
 	store      map[string]string
 	mu         sync.RWMutex
 	pluginsDir string
-	log        logger.Logger
+	log        logger.PrettyLogger
 }
 
-func FileSystem(logger logger.Logger, pluginsDir string) *FS {
+func FileSystem(logger logger.PrettyLogger, pluginsDir string) *FS {
 	return &FS{
 		store:      make(map[string]string),
 		pluginsDir: pluginsDir,

@@ -12,18 +12,19 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/oauth2"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
+	"github.com/grafana/grafana/pkg/plugins/logger"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/stretchr/testify/require"
-	"golang.org/x/oauth2"
 )
 
 const loginCookieName = "grafana_session"
@@ -580,7 +581,7 @@ func createTestPlugin(id string) (*plugins.Plugin, *testPlugin) {
 		Class: plugins.Core,
 	}
 
-	p.SetLogger(log.New("test-plugin"))
+	p.SetLogger(logger.New("test-plugin"))
 	tp := &testPlugin{
 		pluginID: id,
 		logger:   p.Logger(),
@@ -595,7 +596,7 @@ func createTestPlugin(id string) (*plugins.Plugin, *testPlugin) {
 
 type testPlugin struct {
 	pluginID string
-	logger   log.Logger
+	logger   logger.Logger
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
 	backend.QueryDataHandler
@@ -606,7 +607,7 @@ func (tp *testPlugin) PluginID() string {
 	return tp.pluginID
 }
 
-func (tp *testPlugin) Logger() log.Logger {
+func (tp *testPlugin) Logger() logger.Logger {
 	return tp.logger
 }
 
