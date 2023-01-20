@@ -4,5 +4,4 @@ export const SETTINGS_KEYS = {
   wrapLogMessage: 'grafana.explore.logs.wrapLogMessage',
   prettifyLogMessage: 'grafana.explore.logs.prettifyLogMessage',
   logsSortOrder: 'grafana.explore.logs.sortOrder',
-  enableVolumeHistogram: 'grafana.explore.logs.enableVolumeHistogram',
 };

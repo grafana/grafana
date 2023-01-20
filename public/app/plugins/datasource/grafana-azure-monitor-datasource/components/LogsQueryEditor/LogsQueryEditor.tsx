@@ -1,12 +1,14 @@
 import React from 'react';
 
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
+import { config } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 
 import Datasource from '../../datasource';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
 import ResourceField from '../ResourceField';
-import { ResourceRowType } from '../ResourcePicker/types';
+import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
+import { parseResourceDetails } from '../ResourcePicker/utils';
 
 import FormatAsField from './FormatAsField';
 import QueryField from './QueryField';
@@ -32,6 +34,23 @@ const LogsQueryEditor: React.FC<LogsQueryEditorProps> = ({
   hideFormatAs,
 }) => {
   const migrationError = useMigrations(datasource, query, onChange);
+  const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) => {
+    if (selectedRows.length === 0) {
+      // Only if there is some resource(s) selected we should disable rows
+      return false;
+    }
+    // Disable multiple selection until the feature is ready
+    if (!config.featureToggles.azureMultipleResourcePicker) {
+      return true;
+    }
+    const rowResourceNS = parseResourceDetails(row.uri, row.location).metricNamespace?.toLowerCase();
+    const selectedRowSampleNs = parseResourceDetails(
+      selectedRows[0].uri,
+      selectedRows[0].location
+    ).metricNamespace?.toLowerCase();
+    // Only resources with the same metricNamespace can be selected
+    return rowResourceNS !== selectedRowSampleNs;
+  };
 
   return (
     <span data-testid="azure-monitor-logs-query-editor-with-experimental-ui">
@@ -55,6 +74,7 @@ const LogsQueryEditor: React.FC<LogsQueryEditorProps> = ({
               ]}
               resources={query.azureLogAnalytics?.resources ?? []}
               queryType="logs"
+              disableRow={disableRow}
             />
           </EditorFieldGroup>
         </EditorRow>
