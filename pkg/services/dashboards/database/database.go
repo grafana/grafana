@@ -227,7 +227,7 @@ func (d *DashboardStore) SaveDashboard(ctx context.Context, cmd dashboards.SaveD
 	return cmd.Result, err
 }
 
-func (d *DashboardStore) UpdateDashboardACL(ctx context.Context, dashboardID int64, items []*models.DashboardACL) error {
+func (d *DashboardStore) UpdateDashboardACL(ctx context.Context, dashboardID int64, items []*dashboards.DashboardACL) error {
 	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		// delete existing items
 		_, err := sess.Exec("DELETE FROM dashboard_acl WHERE dashboard_id=?", dashboardID)

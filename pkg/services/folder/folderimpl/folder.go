@@ -654,7 +654,7 @@ func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folder
 	rtEditor := org.RoleEditor
 	rtViewer := org.RoleViewer
 
-	items := []*models.DashboardACL{
+	items := []*dashboards.DashboardACL{
 		{
 			OrgID:       orgID,
 			DashboardID: folderID,
@@ -667,7 +667,7 @@ func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folder
 
 	if setViewAndEditPermissions {
 		items = append(items,
-			&models.DashboardACL{
+			&dashboards.DashboardACL{
 				OrgID:       orgID,
 				DashboardID: folderID,
 				Role:        &rtEditor,
@@ -675,7 +675,7 @@ func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folder
 				Created:     time.Now(),
 				Updated:     time.Now(),
 			},
-			&models.DashboardACL{
+			&dashboards.DashboardACL{
 				OrgID:       orgID,
 				DashboardID: folderID,
 				Role:        &rtViewer,
