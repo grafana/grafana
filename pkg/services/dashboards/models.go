@@ -351,7 +351,6 @@ func FromDashboard(dash *Dashboard) *folder.Folder {
 
 // Dashboard ACL model
 type DashboardACL struct {
-	// nolint:stylecheck
 	ID          int64 `xorm:"pk autoincr 'id'"`
 	OrgID       int64 `xorm:"org_id"`
 	DashboardID int64 `xorm:"dashboard_id"`
