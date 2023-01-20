@@ -9,6 +9,149 @@
 
 
 /**
+ *  See also:
+ *  https://github.com/grafana/grafana-plugin-sdk-go/blob/main/data/frame_type.go
+ */
+export enum DataFrameType {
+  DirectoryListing = 'directory-listing',
+  HeatmapCells = 'heatmap-cells',
+  HeatmapRows = 'heatmap-rows',
+  Histogram = 'histogram',
+  TimeSeriesLong = 'timeseries-long',
+  TimeSeriesMany = 'timeseries-many',
+  TimeSeriesMulti = 'timeseries-multi',
+  TimeSeriesWide = 'timeseries-wide',
+}
+
+export enum FieldType {
+  bool = 'bool',
+  geo = 'geo',
+  number = 'number',
+  other = 'other',
+  string = 'string',
+  time = 'time',
+  trace = 'trace',
+}
+
+/**
+ * TODO | null
+ */
+export type DecimalCount = number;
+
+/**
+ * TODO Duplicate declaration
+ */
+export interface ThresholdsConfig {
+  mode: ThresholdsMode;
+  /**
+   * Must be sorted by 'value', first value is always -Infinity
+   */
+  steps: Array<Threshold>;
+}
+
+export const defaultThresholdsConfig: Partial<ThresholdsConfig> = {
+  steps: [],
+};
+
+/**
+ * TODO Duplicate declaration
+ */
+export interface Threshold {
+  /**
+   * TODO docs
+   */
+  color: string;
+  /**
+   * TODO docs
+   * TODO are the values here enumerable into a disjunction?
+   * Some seem to be listed in typescript comment
+   */
+  state?: string;
+  /**
+   * TODO docs
+   * FIXME the corresponding typescript field is required/non-optional, but nulls currently appear here when serializing -Infinity to JSON
+   */
+  value?: number;
+}
+
+/**
+ * TODO Duplicate declaration
+ */
+export enum ThresholdsMode {
+  Absolute = 'absolute',
+  Percentage = 'percentage',
+}
+
+/**
+ * TODO docs | Duplicate declaration
+ */
+export type ValueMapping = (ValueMap | RangeMap | RegexMap | SpecialValueMap);
+
+/**
+ * TODO docs | Duplicate declaration
+ */
+export enum MappingType {
+  RangeToText = 'range',
+  RegexToText = 'regex',
+  SpecialValue = 'special',
+  ValueToText = 'value',
+}
+
+/**
+ * TODO docs | Duplicate declaration
+ */
+export interface ValueMap {
+  options: Record<string, ValueMappingResult>;
+  type: MappingType.ValueToText;
+}
+
+/**
+ * TODO docs | Duplicate declaration
+ */
+export interface RangeMap {
+  options: {
+    /**
+     * to and from are `number | null` in current ts, really not sure what to do
+     */
+    from: number;
+    to: number;
+    result: ValueMappingResult;
+  };
+  type: MappingType.RangeToText;
+}
+
+/**
+ * TODO docs | Duplicate declaration
+ */
+export interface RegexMap {
+  options: {
+    pattern: string;
+    result: ValueMappingResult;
+  };
+  type: MappingType.RegexToText;
+}
+
+/**
+ * TODO docs | Duplicate declaration
+ */
+export interface SpecialValueMap {
+  options: {
+    match: ('true' | 'false');
+    pattern: string;
+    result: ValueMappingResult;
+  };
+  type: MappingType.SpecialValue;
+}
+
+export interface DataSourceJsonData {
+  alertmanagerUid?: string;
+  authType?: string;
+  defaultRegion?: string;
+  manageAlerts?: boolean;
+  profile?: string;
+}
+
+/**
  * These are the common properties available to all queries in all datasources.
  * Specific implementations will *extend* this interface, adding the required
  * properties for the given context.
@@ -38,29 +181,6 @@ export interface DataQuery {
    * A - Z
    */
   refId: string;
-}
-
-/**
- *  See also:
- *  https://github.com/grafana/grafana-plugin-sdk-go/blob/main/data/frame_type.go
- */
-export enum DataFrameType {
-  DirectoryListing = 'directory-listing',
-  HeatmapCells = 'heatmap-cells',
-  HeatmapRows = 'heatmap-rows',
-  Histogram = 'histogram',
-  TimeSeriesLong = 'timeseries-long',
-  TimeSeriesMany = 'timeseries-many',
-  TimeSeriesMulti = 'timeseries-multi',
-  TimeSeriesWide = 'timeseries-wide',
-}
-
-export interface DataSourceJsonData {
-  alertmanagerUid?: string;
-  authType?: string;
-  defaultRegion?: string;
-  manageAlerts?: boolean;
-  profile?: string;
 }
 
 /**
@@ -510,28 +630,12 @@ export enum BarGaugeDisplayMode {
   Lcd = 'lcd',
 }
 
-export interface DataQuery {
-  /**
-   * For mixed data sources the selected datasource is on the query level.
-   * For non mixed scenarios this is undefined.
-   */
-  datasource?: DataSourceRef;
-  /**
-   * true if query is disabled (ie should not be returned to the dashboard)
-   */
-  hide?: boolean;
-  /**
-   * Unique, guid like, string used in explore mode
-   */
-  key?: string;
-  /**
-   * Specify the query flavor
-   */
-  queryType?: string;
-  /**
-   * A - Z
-   */
-  refId: string;
+/**
+ * TODO docs
+ */
+export interface VizTooltipOptions {
+  mode: TooltipDisplayMode;
+  sort: SortOrder;
 }
 
 /**
@@ -631,29 +735,16 @@ export type TimeZoneUtc = 'utc';
  */
 export type TimeZoneBrowser = 'browser';
 
-export interface DataSourceRef {
-  /**
-   * The plugin type-id
-   */
-  type?: string;
-  /**
-   * Specific datasource instance
-   */
-  uid?: string;
+/**
+ * TODO duplicate
+ */
+export interface ValueMappingResult {
+  color?: string;
+  icon?: string;
+  index?: number;
+  text?: string;
 }
 
-/**
- * TODO docs
- */
-export interface VizTooltipOptions {
-  mode: TooltipDisplayMode;
-  sort: SortOrder;
-}
-
-/**
- * Ref to a DataSource instance
- * TODO Fix, duplicate type
- */
 export interface DataSourceRef {
   /**
    * The plugin type-id

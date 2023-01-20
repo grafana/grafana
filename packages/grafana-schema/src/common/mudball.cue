@@ -247,4 +247,18 @@ VizTooltipOptions: {
 	sort: SortOrder
 } @cuetsy(kind="interface")
 
+Labels: {
+	[string]: string
+} @cuetsy(kind="interface")
 
+// TODO docs | generic type
+ScopedVar: {
+  text: _
+  value: _
+  [string]: _
+} @cuetsy(kind="interface")
+
+// TODO docs
+ScopedVars: {
+	[string]: ScopedVar
+} @cuetsy(kind="interface")
