@@ -446,14 +446,6 @@ var dashboardsWithFolders = []dashboard{
 		},
 	},
 	{
-		id:       0,
-		uid:      "general",
-		isFolder: true,
-		summary: &models.EntitySummary{
-			Name: "General",
-		},
-	},
-	{
 		id:       4,
 		uid:      "4",
 		folderID: 0,
@@ -511,14 +503,6 @@ func TestDashboardIndex_Folders(t *testing.T) {
 }
 
 var dashboardsWithPanels = []dashboard{
-	{
-		id:       0,
-		uid:      "general",
-		isFolder: true,
-		summary: &models.EntitySummary{
-			Name: "General",
-		},
-	},
 	{
 		id:       1,
 		uid:      "1",

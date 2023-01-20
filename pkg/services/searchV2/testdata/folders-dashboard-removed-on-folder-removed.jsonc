@@ -3,14 +3,7 @@
 //  Frame[0] {
 //      "type": "search-results",
 //      "custom": {
-//          "count": 1,
-//          "locationInfo": {
-//              "general": {
-//                  "name": "General",
-//                  "kind": "folder",
-//                  "url": "/dashboards/f/general/"
-//              }
-//          }
+//          "count": 1
 //      }
 //  }
 //  Name: Query results
@@ -34,14 +27,7 @@
         "meta": {
           "type": "search-results",
           "custom": {
-            "count": 1,
-            "locationInfo": {
-              "general": {
-                "name": "General",
-                "kind": "folder",
-                "url": "/dashboards/f/general/"
-              }
-            }
+            "count": 1
           }
         },
         "fields": [

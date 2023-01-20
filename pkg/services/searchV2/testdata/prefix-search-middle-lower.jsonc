@@ -13,7 +13,7 @@
 //  | Labels:        | Labels:        | Labels:            | Labels:          | Labels:        | Labels:                  | Labels:                 | Labels:        |
 //  | Type: []string | Type: []string | Type: []string     | Type: []string   | Type: []string | Type: []*json.RawMessage | Type: []json.RawMessage | Type: []string |
 //  +----------------+----------------+--------------------+------------------+----------------+--------------------------+-------------------------+----------------+
-//  | dashboard      | 2              | Document Sync repo |                  | /pfix/d/2/     | null                     | []                      |                |
+//  | dashboard      | 2              | Document Sync repo |                  | /pfix/d/2/     | null                     | []                      | general        |
 //  +----------------+----------------+--------------------+------------------+----------------+--------------------------+-------------------------+----------------+
 //  
 //  
@@ -122,7 +122,7 @@
             []
           ],
           [
-            ""
+            "general"
           ]
         ]
       }
