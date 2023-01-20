@@ -24,7 +24,7 @@ For versions of Grafana prior to v9.2, we published additional information in th
 
 When available, we list all changes with links to pull requests or issues in the [Changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
 
-> **Note:** When possible, we recommend that you test the Grafana upgrade process in a test of development environment.
+> **Note:** When possible, we recommend that you test the Grafana upgrade process in a test or development environment.
 
 ## Back up the Grafana database
 
