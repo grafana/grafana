@@ -156,7 +156,7 @@ export class GeomapPanel extends Component<Props, State> {
     }
 
     if (options.controls !== oldOptions.controls) {
-      this.initControls(options.controls ?? { showZoom: true, showAttribution: true, scaleUnits: 'degrees' });
+      this.initControls(options.controls ?? { showZoom: true, showAttribution: true });
     }
   }
 
