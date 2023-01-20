@@ -7,10 +7,10 @@ const (
 	ActionDashboardsWrite            = "dashboards:write"
 	ActionDashboardsCreate           = "dashboards:create"
 	ActionDashboardsDelete           = "dashboards:delete"
+	ActionDashboardsInsightsRead     = "dashboards.insights:read"
 	ActionDashboardsPermissionsRead  = "dashboards.permissions:read"
 	ActionDashboardsPermissionsWrite = "dashboards.permissions:write"
 	ActionDashboardsPublicWrite      = "dashboards.public:write"
-	ActionDashboardsInsightsRead     = "dashboards.insights:read"
 )
 
 // relevant scope stuff
@@ -28,12 +28,12 @@ const (
 	ActionDatasourcesWrite            = "datasources:write"
 	ActionDatasourcesDelete           = "datasources:delete"
 	ActionDatasourcesExplore          = "datasources:explore"
-	ActionDatasourcesPermissionsRead  = "datasources.permissions:read"
-	ActionDatasourcesPermissionsWrite = "datasources.permissions:write"
-	ActionDatasourcesIdRead           = "datasources.id:read"
 	ActionDatasourcesCachingRead      = "datasources.caching:read"
 	ActionDatasourcesCachingWrite     = "datasources.caching:write"
+	ActionDatasourcesIdRead           = "datasources.id:read"
 	ActionDatasourcesInsightsRead     = "datasources.insights:read"
+	ActionDatasourcesPermissionsRead  = "datasources.permissions:read"
+	ActionDatasourcesPermissionsWrite = "datasources.permissions:write"
 )
 
 // relevant scope stuff

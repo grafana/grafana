@@ -63,6 +63,12 @@ func main() {
 		return registry[i].Name < registry[j].Name
 	})
 
+	for _, r := range registry {
+		sort.Slice(r.SubResources, func(i, j int) bool {
+			return r.SubResources[i].Name < r.SubResources[j].Name
+		})
+	}
+
 	if err := tmpl.ExecuteTemplate(os.Stdout, t+".tmpl", registry); err != nil {
 		panic(err)
 	}
