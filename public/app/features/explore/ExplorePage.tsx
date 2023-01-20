@@ -54,7 +54,7 @@ export function ExplorePage(props: GrafanaRouteComponentProps<{}, ExploreQueryPa
 
   useEffect(() => {
     keybindings.setupTimeRangeBindings(false);
-  }, [keybindings]);
+  }, [keybindings, keybindings.bindings]);
 
   useEffect(() => {
     if (!config.featureToggles.correlations) {
