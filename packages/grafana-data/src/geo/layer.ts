@@ -2,11 +2,7 @@ import { Map as OpenLayersMap } from 'ol';
 import BaseLayer from 'ol/layer/Base';
 import { ReactNode } from 'react';
 
-import {
-  FrameGeometrySourceMode,
-  FrameGeometrySource as SchemaFrameGeometrySource,
-  MapLayerOptions as SchemaMapLayerOptions,
-} from '@grafana/schema';
+import { MapLayerOptions, FrameGeometrySourceMode } from '@grafana/schema';
 
 import { EventBus } from '../events';
 import { GrafanaTheme2 } from '../themes';
@@ -22,12 +18,7 @@ export { FrameGeometrySourceMode };
 /**
  * @deprecated use the type from schema
  */
-export interface FrameGeometrySource extends SchemaFrameGeometrySource {}
-
-/**
- * @deprecated use the type from schema
- */
-export interface MapLayerOptions<TConfig = any> extends SchemaMapLayerOptions<TConfig> {}
+export type { FrameGeometrySource, MapLayerOptions } from '@grafana/schema';
 
 /**
  * @alpha
@@ -39,7 +30,7 @@ export interface MapLayerHandler<TConfig = any> {
    */
   update?: (data: PanelData) => void;
 
-  /** Optional callback to cleaup before getting removed */
+  /** Optional callback for cleanup before getting removed */
   dispose?: () => void;
 
   /** return react node for the legend */
