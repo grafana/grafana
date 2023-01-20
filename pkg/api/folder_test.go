@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -23,7 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -242,14 +242,14 @@ func createFolderScenario(t *testing.T, desc string, url string, routePattern st
 			q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
 			q.Result = aclMockResp
 		}).Return(nil)
-		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Run(func(args mock.Arguments) {
-			q := args.Get(1).(*models.GetDashboardQuery)
-			q.Result = &models.Dashboard{
-				Id:  q.Id,
-				Uid: q.Uid,
+		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
+			q := args.Get(1).(*dashboards.GetDashboardQuery)
+			q.Result = &dashboards.Dashboard{
+				ID:  q.ID,
+				UID: q.UID,
 			}
 		}).Return(nil)
-		store := mockstore.NewSQLStoreMock()
+		store := dbtest.NewFakeDB()
 		guardian.InitLegacyGuardian(store, dashSvc, teamSvc)
 		hs := HTTPServer{
 			AccessControl:        acmock.New(),

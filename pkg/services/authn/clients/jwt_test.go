@@ -7,12 +7,13 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func stringPtr(s string) *string {
@@ -84,11 +85,127 @@ func TestAuthenticateJWT(t *testing.T) {
 	assert.EqualValues(t, wantID, id, fmt.Sprintf("%+v", id))
 }
 
+func TestJWTClaimConfig(t *testing.T) {
+	jwtService := &models.FakeJWTService{
+		VerifyProvider: func(context.Context, string) (models.JWTClaims, error) {
+			return models.JWTClaims{
+				"sub":                "1234567890",
+				"email":              "eai.doe@cor.po",
+				"preferred_username": "eai-doe",
+				"name":               "Eai Doe",
+				"roles":              "Admin",
+			}, nil
+		},
+	}
+
+	jwtHeaderName := "X-Forwarded-User"
+
+	cfg := &setting.Cfg{
+		JWTAuthEnabled:                 true,
+		JWTAuthHeaderName:              jwtHeaderName,
+		JWTAuthAutoSignUp:              true,
+		JWTAuthAllowAssignGrafanaAdmin: true,
+		JWTAuthRoleAttributeStrict:     true,
+		JWTAuthRoleAttributePath:       "roles",
+	}
+
+	// #nosec G101 -- This is a dummy/test token
+	token := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.XbPfbIHMI6arZ3Y922BhjWgQzWXcXNrz0ogtVhfEd2o"
+
+	type Dictionary map[string]interface{}
+
+	type testCase struct {
+		desc                 string
+		claimsConfigurations []Dictionary
+		valid                bool
+	}
+
+	testCases := []testCase{
+		{
+			desc: "JWT configuration with email and username claims",
+			claimsConfigurations: []Dictionary{
+				{
+					"JWTAuthEmailClaim":    true,
+					"JWTAuthUsernameClaim": true,
+				},
+			},
+			valid: true,
+		},
+		{
+			desc: "JWT configuration with email claim",
+			claimsConfigurations: []Dictionary{
+				{
+					"JWTAuthEmailClaim":    true,
+					"JWTAuthUsernameClaim": false,
+				},
+			},
+			valid: true,
+		},
+		{
+			desc: "JWT configuration with username claim",
+			claimsConfigurations: []Dictionary{
+				{
+					"JWTAuthEmailClaim":    false,
+					"JWTAuthUsernameClaim": true,
+				},
+			},
+			valid: true,
+		},
+		{
+			desc: "JWT configuration without email and username claims",
+			claimsConfigurations: []Dictionary{
+				{
+					"JWTAuthEmailClaim":    false,
+					"JWTAuthUsernameClaim": false,
+				},
+			},
+			valid: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			for _, claims := range tc.claimsConfigurations {
+				cfg.JWTAuthEmailClaim = ""
+				cfg.JWTAuthUsernameClaim = ""
+
+				if claims["JWTAuthEmailClaim"] == true {
+					cfg.JWTAuthEmailClaim = "email"
+				}
+				if claims["JWTAuthUsernameClaim"] == true {
+					cfg.JWTAuthUsernameClaim = "preferred_username"
+				}
+			}
+		})
+		httpReq := &http.Request{
+			URL: &url.URL{RawQuery: "auth_token=" + token},
+			Header: map[string][]string{
+				jwtHeaderName: {token}},
+		}
+		jwtClient := ProvideJWT(jwtService, cfg)
+		_, err := jwtClient.Authenticate(context.Background(), &authn.Request{
+			OrgID:       1,
+			HTTPRequest: httpReq,
+			Resp:        nil,
+		})
+		if tc.valid {
+			require.NoError(t, err)
+		} else {
+			require.Error(t, err)
+		}
+	}
+}
+
 func TestJWTTest(t *testing.T) {
 	jwtService := &models.FakeJWTService{}
 	jwtHeaderName := "X-Forwarded-User"
-	validFormatToken := "sample.token.valid"
+	// #nosec G101 -- This is dummy/test token
+	validFormatToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.XbPfbIHMI6arZ3Y922BhjWgQzWXcXNrz0ogtVhfEd2o"
 	invalidFormatToken := "sampletokeninvalid"
+	// #nosec G101 -- This is dummy/test token
+	missingSubToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSm9obiBEb2UiLCJpYXQiOjE1MTYyMzkwMjJ9.8nYFUX869Y1mnDDDU4yL11aANgVRuifoxrE8BHZY1iE"
+	// #nosec G101 -- This is dummy/test token
+	emptySubToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSm9obiBEb2UiLCJzdWIiOiIiLCJpYXQiOjE1MTYyMzkwMjJ9.tnwtOHK58d47dO4DHW4b9MzeToxa1kGiko5Oo887Rqc"
 
 	type testCase struct {
 		desc          string
@@ -142,6 +259,20 @@ func TestJWTTest(t *testing.T) {
 			cfgHeaderName: jwtHeaderName,
 			urlLogin:      false,
 			token:         validFormatToken,
+			want:          false,
+		},
+		{
+			desc:          "token without a sub claim",
+			reqHeaderName: "Authorization",
+			cfgHeaderName: "Authorization",
+			token:         missingSubToken,
+			want:          false,
+		},
+		{
+			desc:          "token with an empty sub claim",
+			reqHeaderName: "Authorization",
+			cfgHeaderName: "Authorization",
+			token:         emptySubToken,
 			want:          false,
 		},
 	}

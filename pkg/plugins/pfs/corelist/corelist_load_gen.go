@@ -18,63 +18,63 @@ import (
 	"github.com/grafana/thema"
 )
 
-func makeTreeOrPanic(path string, pkgname string, rt *thema.Runtime) *pfs.Tree {
+func parsePluginOrPanic(path string, pkgname string, rt *thema.Runtime) pfs.ParsedPlugin {
 	sub, err := fs.Sub(grafana.CueSchemaFS, path)
 	if err != nil {
 		panic("could not create fs sub to " + path)
 	}
-	tree, err := pfs.ParsePluginFS(sub, rt)
+	pp, err := pfs.ParsePluginFS(sub, rt)
 	if err != nil {
 		panic(fmt.Sprintf("error parsing plugin metadata for %s: %s", pkgname, err))
 	}
-	return tree
+	return pp
 }
 
-func coreTreeList(rt *thema.Runtime) pfs.TreeList {
-	return pfs.TreeList{
-		makeTreeOrPanic("public/app/plugins/datasource/alertmanager", "alertmanager", rt),
-		makeTreeOrPanic("public/app/plugins/datasource/cloud-monitoring", "stackdriver", rt),
-		makeTreeOrPanic("public/app/plugins/datasource/cloudwatch", "cloudwatch", rt),
-		makeTreeOrPanic("public/app/plugins/datasource/dashboard", "dashboard", rt),
-		makeTreeOrPanic("public/app/plugins/datasource/elasticsearch", "elasticsearch", rt),
-		makeTreeOrPanic("public/app/plugins/datasource/grafana", "grafana", rt),
-		makeTreeOrPanic("public/app/plugins/datasource/grafana-azure-monitor-datasource", "grafana_azure_monitor_datasource", rt),
-		makeTreeOrPanic("public/app/plugins/datasource/graphite", "graphite", rt),
-		makeTreeOrPanic("public/app/plugins/datasource/jaeger", "jaeger", rt),
-		makeTreeOrPanic("public/app/plugins/datasource/loki", "loki", rt),
-		makeTreeOrPanic("public/app/plugins/datasource/mssql", "mssql", rt),
-		makeTreeOrPanic("public/app/plugins/datasource/mysql", "mysql", rt),
-		makeTreeOrPanic("public/app/plugins/datasource/parca", "parca", rt),
-		makeTreeOrPanic("public/app/plugins/datasource/phlare", "phlare", rt),
-		makeTreeOrPanic("public/app/plugins/datasource/postgres", "postgres", rt),
-		makeTreeOrPanic("public/app/plugins/datasource/prometheus", "prometheus", rt),
-		makeTreeOrPanic("public/app/plugins/datasource/tempo", "tempo", rt),
-		makeTreeOrPanic("public/app/plugins/datasource/testdata", "testdata", rt),
-		makeTreeOrPanic("public/app/plugins/datasource/zipkin", "zipkin", rt),
-		makeTreeOrPanic("public/app/plugins/panel/alertGroups", "alertGroups", rt),
-		makeTreeOrPanic("public/app/plugins/panel/alertlist", "alertlist", rt),
-		makeTreeOrPanic("public/app/plugins/panel/annolist", "annolist", rt),
-		makeTreeOrPanic("public/app/plugins/panel/barchart", "barchart", rt),
-		makeTreeOrPanic("public/app/plugins/panel/bargauge", "bargauge", rt),
-		makeTreeOrPanic("public/app/plugins/panel/dashlist", "dashlist", rt),
-		makeTreeOrPanic("public/app/plugins/panel/debug", "debug", rt),
-		makeTreeOrPanic("public/app/plugins/panel/flamegraph", "flamegraph", rt),
-		makeTreeOrPanic("public/app/plugins/panel/gauge", "gauge", rt),
-		makeTreeOrPanic("public/app/plugins/panel/geomap", "geomap", rt),
-		makeTreeOrPanic("public/app/plugins/panel/gettingstarted", "gettingstarted", rt),
-		makeTreeOrPanic("public/app/plugins/panel/graph", "graph", rt),
-		makeTreeOrPanic("public/app/plugins/panel/histogram", "histogram", rt),
-		makeTreeOrPanic("public/app/plugins/panel/icon", "icon", rt),
-		makeTreeOrPanic("public/app/plugins/panel/live", "live", rt),
-		makeTreeOrPanic("public/app/plugins/panel/logs", "logs", rt),
-		makeTreeOrPanic("public/app/plugins/panel/news", "news", rt),
-		makeTreeOrPanic("public/app/plugins/panel/nodeGraph", "nodeGraph", rt),
-		makeTreeOrPanic("public/app/plugins/panel/piechart", "piechart", rt),
-		makeTreeOrPanic("public/app/plugins/panel/stat", "stat", rt),
-		makeTreeOrPanic("public/app/plugins/panel/table-old", "table_old", rt),
-		makeTreeOrPanic("public/app/plugins/panel/text", "text", rt),
-		makeTreeOrPanic("public/app/plugins/panel/traces", "traces", rt),
-		makeTreeOrPanic("public/app/plugins/panel/welcome", "welcome", rt),
-		makeTreeOrPanic("public/app/plugins/panel/xychart", "xychart", rt),
+func corePlugins(rt *thema.Runtime) []pfs.ParsedPlugin {
+	return []pfs.ParsedPlugin{
+		parsePluginOrPanic("public/app/plugins/datasource/alertmanager", "alertmanager", rt),
+		parsePluginOrPanic("public/app/plugins/datasource/cloud-monitoring", "stackdriver", rt),
+		parsePluginOrPanic("public/app/plugins/datasource/cloudwatch", "cloudwatch", rt),
+		parsePluginOrPanic("public/app/plugins/datasource/dashboard", "dashboard", rt),
+		parsePluginOrPanic("public/app/plugins/datasource/elasticsearch", "elasticsearch", rt),
+		parsePluginOrPanic("public/app/plugins/datasource/grafana", "grafana", rt),
+		parsePluginOrPanic("public/app/plugins/datasource/grafana-azure-monitor-datasource", "grafana_azure_monitor_datasource", rt),
+		parsePluginOrPanic("public/app/plugins/datasource/graphite", "graphite", rt),
+		parsePluginOrPanic("public/app/plugins/datasource/jaeger", "jaeger", rt),
+		parsePluginOrPanic("public/app/plugins/datasource/loki", "loki", rt),
+		parsePluginOrPanic("public/app/plugins/datasource/mssql", "mssql", rt),
+		parsePluginOrPanic("public/app/plugins/datasource/mysql", "mysql", rt),
+		parsePluginOrPanic("public/app/plugins/datasource/parca", "parca", rt),
+		parsePluginOrPanic("public/app/plugins/datasource/phlare", "phlare", rt),
+		parsePluginOrPanic("public/app/plugins/datasource/postgres", "postgres", rt),
+		parsePluginOrPanic("public/app/plugins/datasource/prometheus", "prometheus", rt),
+		parsePluginOrPanic("public/app/plugins/datasource/tempo", "tempo", rt),
+		parsePluginOrPanic("public/app/plugins/datasource/testdata", "testdata", rt),
+		parsePluginOrPanic("public/app/plugins/datasource/zipkin", "zipkin", rt),
+		parsePluginOrPanic("public/app/plugins/panel/alertGroups", "alertGroups", rt),
+		parsePluginOrPanic("public/app/plugins/panel/alertlist", "alertlist", rt),
+		parsePluginOrPanic("public/app/plugins/panel/annolist", "annolist", rt),
+		parsePluginOrPanic("public/app/plugins/panel/barchart", "barchart", rt),
+		parsePluginOrPanic("public/app/plugins/panel/bargauge", "bargauge", rt),
+		parsePluginOrPanic("public/app/plugins/panel/dashlist", "dashlist", rt),
+		parsePluginOrPanic("public/app/plugins/panel/debug", "debug", rt),
+		parsePluginOrPanic("public/app/plugins/panel/flamegraph", "flamegraph", rt),
+		parsePluginOrPanic("public/app/plugins/panel/gauge", "gauge", rt),
+		parsePluginOrPanic("public/app/plugins/panel/geomap", "geomap", rt),
+		parsePluginOrPanic("public/app/plugins/panel/gettingstarted", "gettingstarted", rt),
+		parsePluginOrPanic("public/app/plugins/panel/graph", "graph", rt),
+		parsePluginOrPanic("public/app/plugins/panel/histogram", "histogram", rt),
+		parsePluginOrPanic("public/app/plugins/panel/icon", "icon", rt),
+		parsePluginOrPanic("public/app/plugins/panel/live", "live", rt),
+		parsePluginOrPanic("public/app/plugins/panel/logs", "logs", rt),
+		parsePluginOrPanic("public/app/plugins/panel/news", "news", rt),
+		parsePluginOrPanic("public/app/plugins/panel/nodeGraph", "nodeGraph", rt),
+		parsePluginOrPanic("public/app/plugins/panel/piechart", "piechart", rt),
+		parsePluginOrPanic("public/app/plugins/panel/stat", "stat", rt),
+		parsePluginOrPanic("public/app/plugins/panel/table-old", "table_old", rt),
+		parsePluginOrPanic("public/app/plugins/panel/text", "text", rt),
+		parsePluginOrPanic("public/app/plugins/panel/traces", "traces", rt),
+		parsePluginOrPanic("public/app/plugins/panel/welcome", "welcome", rt),
+		parsePluginOrPanic("public/app/plugins/panel/xychart", "xychart", rt),
 	}
 }

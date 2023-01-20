@@ -430,7 +430,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 			}
 			expectedToBeSent++
 		}
-		require.Greaterf(t, expectedToBeSent, 0, "State manger was expected to return at least one state that can be expired")
+		require.Greaterf(t, expectedToBeSent, 0, "State manager was expected to return at least one state that can be expired")
 
 		t.Run("should do nothing if version in channel is the same", func(t *testing.T) {
 			updateChan <- ruleVersion(rule.Version - 1)

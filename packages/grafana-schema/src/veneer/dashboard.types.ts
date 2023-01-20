@@ -1,4 +1,7 @@
+import { DataSourceRef as CommonDataSourceRef } from '../common/common.gen';
 import * as raw from '../raw/dashboard/x/dashboard_types.gen';
+
+export type { CommonDataSourceRef as DataSourceRef };
 
 export interface Panel<TOptions = Record<string, unknown>, TCustomFieldConfig = Record<string, unknown>>
   extends raw.Panel {
@@ -14,11 +17,15 @@ export enum VariableHide {
 export interface VariableModel
   extends Omit<raw.VariableModel, 'rootStateKey' | 'error' | 'description' | 'hide' | 'datasource'> {
   // Overrides nullable properties because CUE doesn't support null values
+  // TODO remove explicit nulls
   rootStateKey: string | null;
+  // TODO remove explicit nulls
   error: any | null;
+  // TODO remove explicit nulls
   description: string | null;
   hide: VariableHide;
-  datasource: raw.DataSourceRef | null;
+  // TODO remove explicit nulls
+  datasource: CommonDataSourceRef | null;
 }
 
 export interface Dashboard extends Omit<raw.Dashboard, 'templating'> {
@@ -39,11 +46,15 @@ export interface FieldConfigSource<TOptions = Record<string, unknown>> extends r
 export const defaultDashboard = raw.defaultDashboard as Dashboard;
 export const defaultVariableModel = {
   ...raw.defaultVariableModel,
+  // TODO remove explicit nulls
   rootStateKey: null,
+  // TODO remove explicit nulls
   error: null,
+  // TODO remove explicit nulls
   description: null,
   hide: VariableHide.dontHide,
   state: raw.LoadingState.NotStarted,
+  // TODO remove explicit nulls
   datasource: null,
 } as VariableModel;
 export const defaultPanel: Partial<Panel> = raw.defaultPanel;
