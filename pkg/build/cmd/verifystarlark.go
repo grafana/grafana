@@ -35,15 +35,16 @@ func VerifyStarlark(c *cli.Context) error {
 		}
 
 		if err := cli.ShowSubcommandHelp(c); err != nil {
-			return cli.Exit(err.Error(), 1)
+			return err
 		}
+
 		return cli.Exit(message, 1)
 	}
 
 	workspace := c.Args().Get(0)
 	verificationErrs, executionErr := verifyStarlark(c.Context, workspace, buildifierLintCommand)
 	if executionErr != nil {
-		return cli.Exit(executionErr.Error(), 1)
+		return executionErr
 	}
 
 	if len(verificationErrs) == 0 {
@@ -54,6 +55,7 @@ func VerifyStarlark(c *cli.Context) error {
 	if len(verificationErrs) > 1 {
 		noun += "s"
 	}
+
 	return fmt.Errorf("verification failed for %d %s:\n%s",
 		len(verificationErrs),
 		noun,
