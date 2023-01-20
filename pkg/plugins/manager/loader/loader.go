@@ -84,6 +84,39 @@ func (l *Loader) Load(ctx context.Context, class plugins.Class, paths []string) 
 	return l.loadPlugins(ctx, class, pluginJSONPaths)
 }
 
+func (l *Loader) createPluginsForLoading(class plugins.Class, foundPlugins foundPlugins) map[string]*plugins.Plugin {
+	loadedPlugins := make(map[string]*plugins.Plugin)
+	for pluginDir, pluginJSON := range foundPlugins {
+		// Make sure that load CDN plugins only if they are external, otherwise disable CDN for this plugin
+		isCDN := l.cfg.PluginSettings[pluginJSON.ID]["cdn"] != ""
+		if class != plugins.External && isCDN {
+			l.log.Warn(
+				"Tried to load a non-external plugin as CDN, disabling CDN for this plugin",
+				"pluginID", pluginJSON.ID, "class", class,
+			)
+			isCDN = false
+		}
+		plugin, err := createPluginBase(pluginJSON, class, pluginDir, isCDN, l.cfg.PluginsCDNURLTemplate)
+		if err != nil {
+			l.log.Warn("Could not create plugin base", "pluginID", pluginJSON.Info)
+			continue
+		}
+
+		// calculate initial signature state
+		sig, err := signature.Calculate(l.log, plugin)
+		if err != nil {
+			l.log.Warn("Could not calculate plugin signature state", "pluginID", plugin.ID, "err", err)
+			continue
+		}
+		plugin.Signature = sig.Status
+		plugin.SignatureType = sig.Type
+		plugin.SignatureOrg = sig.SigningOrg
+
+		loadedPlugins[plugin.PluginDir] = plugin
+	}
+	return loadedPlugins
+}
+
 func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSONPaths []string) ([]*plugins.Plugin, error) {
 	var foundPlugins = foundPlugins{}
 
@@ -116,35 +149,8 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 
 	foundPlugins.stripDuplicates(registeredPlugins, l.log)
 
-	loadedPlugins := make(map[string]*plugins.Plugin)
-	for pluginDir, pluginJSON := range foundPlugins {
-		// Make sure that load CDN plugins only if they are external, otherwise disable CDN for this plugin
-		isCDN := l.cfg.PluginSettings[pluginJSON.ID]["cdn"] != ""
-		if class != plugins.External && isCDN {
-			l.log.Warn(
-				"Tried to load a non-external plugin as CDN, disabling CDN for this plugin",
-				"pluginID", pluginJSON.ID, "class", class,
-			)
-			isCDN = false
-		}
-		plugin, err := createPluginBase(pluginJSON, class, pluginDir, isCDN, l.cfg.PluginsCDNURLTemplate)
-		if err != nil {
-			l.log.Warn("Could not create plugin base", "pluginID", pluginJSON.Info)
-			continue
-		}
-
-		// calculate initial signature state
-		sig, err := signature.Calculate(l.log, plugin)
-		if err != nil {
-			l.log.Warn("Could not calculate plugin signature state", "pluginID", plugin.ID, "err", err)
-			continue
-		}
-		plugin.Signature = sig.Status
-		plugin.SignatureType = sig.Type
-		plugin.SignatureOrg = sig.SigningOrg
-
-		loadedPlugins[plugin.PluginDir] = plugin
-	}
+	// create plugins structs and calculate signatures
+	loadedPlugins := l.createPluginsForLoading(class, foundPlugins)
 
 	// wire up plugin dependencies
 	for _, plugin := range loadedPlugins {
