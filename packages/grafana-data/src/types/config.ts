@@ -226,5 +226,6 @@ export interface AuthSettings {
   JWTAuthSkipOrgRoleSync?: boolean;
   GrafanaComSkipOrgRoleSync?: boolean;
   AzureADSkipOrgRoleSync?: boolean;
+  GoogleSkipOrgRoleSync?: boolean;
   DisableSyncLock?: boolean;
 }

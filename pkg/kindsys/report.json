@@ -135,6 +135,19 @@
       "machineName": "cloudwatchdataquery",
       "pluralMachineName": "cloudwatchdataquerys",
       "lineageIsGroup": false,
+      "maturity": "experimental",
+      "currentVersion": [
+        0,
+        0
+      ],
+      "schemaInterface": "PanelCfg"
+    },
+    "cloudwatchdataquery": {
+      "name": "CloudWatchDataQuery",
+      "pluralName": "CloudWatchDataQuerys",
+      "machineName": "cloudwatchdataquery",
+      "pluralMachineName": "cloudwatchdataquerys",
+      "lineageIsGroup": false,
       "maturity": "merged",
       "currentVersion": [
         0,
@@ -1083,6 +1096,7 @@
           "apikey",
           "azuremonitordataquery",
           "azuremonitordatasourcecfg",
+          "cloudwatchdataquery",
           "cloudwatchdatasourcecfg",
           "dashboarddataquery",
           "dashboarddatasourcecfg",

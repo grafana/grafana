@@ -105,7 +105,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		return
 	}
 
-	if hs.tryOAuthAutoLogin(c) {
+	if hs.tryAutoLogin(c) {
 		return
 	}
 
@@ -139,24 +139,49 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	c.HTML(http.StatusOK, getViewIndex(), viewData)
 }
 
-func (hs *HTTPServer) tryOAuthAutoLogin(c *models.ReqContext) bool {
-	if !setting.OAuthAutoLogin {
-		return false
-	}
+func (hs *HTTPServer) tryAutoLogin(c *models.ReqContext) bool {
+	samlAutoLogin := hs.samlAutoLoginEnabled()
 	oauthInfos := hs.SocialService.GetOAuthInfoProviders()
-	if len(oauthInfos) > 1 {
-		c.Logger.Warn("Skipping OAuth auto login because multiple OAuth providers are configured")
-		return false
-	} else if len(oauthInfos) == 0 {
-		c.Logger.Warn("Skipping OAuth auto login because no OAuth providers are configured")
+
+	autoLoginProvidersLen := 0
+	for _, provider := range oauthInfos {
+		if provider.AutoLogin {
+			autoLoginProvidersLen++
+		}
+	}
+	// If no auto_login option configured for specific OAuth, use legacy option
+	if setting.OAuthAutoLogin && autoLoginProvidersLen == 0 {
+		autoLoginProvidersLen = len(oauthInfos)
+	}
+	if samlAutoLogin {
+		autoLoginProvidersLen++
+	}
+
+	if autoLoginProvidersLen > 1 {
+		c.Logger.Warn("Skipping auto login because multiple auth providers are configured with auto_login option")
 		return false
 	}
-	for key := range oauthInfos {
-		redirectUrl := hs.Cfg.AppSubURL + "/login/" + key
-		c.Logger.Info("OAuth auto login enabled. Redirecting to " + redirectUrl)
+	if autoLoginProvidersLen == 0 && setting.OAuthAutoLogin {
+		c.Logger.Warn("Skipping auto login because no auth providers are configured")
+		return false
+	}
+
+	for providerName, provider := range oauthInfos {
+		if provider.AutoLogin || setting.OAuthAutoLogin {
+			redirectUrl := hs.Cfg.AppSubURL + "/login/" + providerName
+			c.Logger.Info("OAuth auto login enabled. Redirecting to " + redirectUrl)
+			c.Redirect(redirectUrl, 307)
+			return true
+		}
+	}
+
+	if samlAutoLogin {
+		redirectUrl := hs.Cfg.AppSubURL + "/login/saml"
+		c.Logger.Info("SAML auto login enabled. Redirecting to " + redirectUrl)
 		c.Redirect(redirectUrl, 307)
 		return true
 	}
+
 	return false
 }
 
@@ -401,6 +426,10 @@ func (hs *HTTPServer) samlName() string {
 
 func (hs *HTTPServer) samlSingleLogoutEnabled() bool {
 	return hs.samlEnabled() && hs.SettingsProvider.KeyValue("auth.saml", "single_logout").MustBool(false) && hs.samlEnabled()
+}
+
+func (hs *HTTPServer) samlAutoLoginEnabled() bool {
+	return hs.samlEnabled() && hs.SettingsProvider.KeyValue("auth.saml", "auto_login").MustBool(false)
 }
 
 func getLoginExternalError(err error) string {
