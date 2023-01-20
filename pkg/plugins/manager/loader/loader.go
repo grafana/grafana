@@ -187,7 +187,7 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 			module := filepath.Join(plugin.PluginDir, "module.js")
 			if exists, err := fs.Exists(module); err != nil {
 				return nil, err
-			} else if !exists {
+			} else if !exists && !plugin.CDN {
 				l.log.Warn("Plugin missing module.js",
 					"pluginID", plugin.ID,
 					"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.",
