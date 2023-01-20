@@ -14,7 +14,7 @@ export interface MapLayerOptions {
    */
   config?: unknown;
   /**
-   * Defines which data query refId is associated with the layer
+   * Defines a frame MatcherConfig that may filter data for the given layer
    */
   filterData?: unknown;
   /**
@@ -598,7 +598,6 @@ export interface FrameGeometrySource {
    * Field mappings
    */
   geohash?: string;
-  h3?: string;
   latitude?: string;
   longitude?: string;
   lookup?: string;
