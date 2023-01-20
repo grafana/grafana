@@ -64,7 +64,7 @@ describe('LogsSamplePanel', () => {
 
   it('shows no data message', () => {
     render(<LogsSamplePanel {...createProps({ data: { data: [], state: LoadingState.Done } })} />);
-    expect(screen.getByText('No log sample data.')).toBeInTheDocument();
+    expect(screen.getByText('No logs sample data.')).toBeInTheDocument();
   });
 
   it('shows logs sample data', () => {
