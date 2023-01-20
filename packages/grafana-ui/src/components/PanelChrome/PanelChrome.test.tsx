@@ -113,7 +113,7 @@ it('renders panel with a show-on-hover menu icon if prop menu', () => {
 it('renders error status in the panel header if any given', () => {
   setup({ statusMessage: 'Error test' });
 
-  expect(screen.getByTestId('panel-status')).toBeInTheDocument();
+  expect(screen.getByLabelText('Panel status')).toBeInTheDocument();
 });
 
 it('does not render error status in the panel header if loadingState is error, but no statusMessage', () => {
