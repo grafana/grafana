@@ -126,7 +126,7 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 	}, err
 }
 
-func (am *Alertmanager) GetReceivers(ctx context.Context) []apimodels.Receiver {
+func (am *Alertmanager) GetReceivers(_ context.Context) []apimodels.Receiver {
 	am.reloadConfigMtx.RLock()
 	defer am.reloadConfigMtx.RUnlock()
 
