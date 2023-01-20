@@ -38,7 +38,7 @@ export const publicDashboardApi = createApi({
   tagTypes: ['PublicDashboard', 'AuditTablePublicDashboard'],
   refetchOnMountOrArgChange: true,
   endpoints: (builder) => ({
-    getPublicDashboard: builder.query<PublicDashboard, string>({
+    getPublicDashboard: builder.query<PublicDashboard | undefined, string>({
       query: (dashboardUid) => ({
         url: `/uid/${dashboardUid}/public-dashboards`,
         manageError: getConfigError,
@@ -67,7 +67,6 @@ export const publicDashboardApi = createApi({
 
         // Update runtime meta flag
         dashboard.updateMeta({
-          hasPublicDashboard: true,
           publicDashboardUid: data.uid,
           publicDashboardEnabled: data.isEnabled,
         });
@@ -87,7 +86,6 @@ export const publicDashboardApi = createApi({
 
         // Update runtime meta flag
         dashboard.updateMeta({
-          hasPublicDashboard: true,
           publicDashboardUid: data.uid,
           publicDashboardEnabled: data.isEnabled,
         });
@@ -110,7 +108,6 @@ export const publicDashboardApi = createApi({
         dispatch(notifyApp(createSuccessNotification('Public dashboard deleted!')));
 
         dashboard?.updateMeta({
-          hasPublicDashboard: false,
           publicDashboardUid: uid,
           publicDashboardEnabled: false,
         });

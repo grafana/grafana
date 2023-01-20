@@ -30,13 +30,13 @@ type Team struct {
 	AccessControl map[string]bool `json:"accessControl,omitempty"`
 
 	// AvatarUrl is the team's avatar URL.
-	AvatarUrl string `json:"avatarUrl,omitempty"`
+	AvatarUrl *string `json:"avatarUrl,omitempty"`
 
 	// Created indicates when the team was created.
 	Created int64 `json:"created"`
 
 	// Email of the team.
-	Email string `json:"email,omitempty"`
+	Email *string `json:"email,omitempty"`
 
 	// MemberCount is the number of the team members.
 	MemberCount int64 `json:"memberCount"`

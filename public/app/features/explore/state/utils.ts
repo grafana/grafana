@@ -12,21 +12,13 @@ import {
   PanelData,
 } from '@grafana/data';
 import { ExplorePanelData } from 'app/types';
-import { ExploreItemState, SupplementaryQueries, SupplementaryQueryType } from 'app/types/explore';
+import { ExploreItemState } from 'app/types/explore';
 
 import store from '../../../core/store';
 import { clearQueryKeys, lastUsedDatasourceKeyForOrgId } from '../../../core/utils/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
-import { SETTINGS_KEYS } from '../utils/logs';
+import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
 import { toRawTimeRange } from '../utils/time';
-
-export const SUPPLEMENTARY_QUERY_TYPES: SupplementaryQueryType[] = [SupplementaryQueryType.LogsVolume];
-
-// Used to match supplementaryQueryType to corresponding local storage key
-// TODO: Remove this and unify enum values with SETTINGS_KEYS.enableVolumeHistogram
-const supplementaryQuerySettings: { [key in SupplementaryQueryType]: string } = {
-  [SupplementaryQueryType.LogsVolume]: SETTINGS_KEYS.enableVolumeHistogram,
-};
 
 export const DEFAULT_RANGE = {
   from: 'now-6h',
@@ -36,27 +28,6 @@ export const DEFAULT_RANGE = {
 const GRAPH_STYLE_KEY = 'grafana.explore.style.graph';
 export const storeGraphStyle = (graphStyle: string): void => {
   store.set(GRAPH_STYLE_KEY, graphStyle);
-};
-
-export const storeSupplementaryQueryEnabled = (enabled: boolean, type: SupplementaryQueryType): void => {
-  if (supplementaryQuerySettings[type]) {
-    store.set(supplementaryQuerySettings[type], enabled ? 'true' : 'false');
-  }
-};
-
-export const loadSupplementaryQueries = (): SupplementaryQueries => {
-  // We default to true for all supp queries
-  let supplementaryQueries: SupplementaryQueries = {
-    [SupplementaryQueryType.LogsVolume]: { enabled: true },
-  };
-
-  for (const type of SUPPLEMENTARY_QUERY_TYPES) {
-    // Only if "false" value in local storage, we disable it
-    if (store.get(supplementaryQuerySettings[type]) === 'false') {
-      supplementaryQueries[type] = { enabled: false };
-    }
-  }
-  return supplementaryQueries;
 };
 
 /**

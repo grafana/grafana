@@ -22,7 +22,7 @@ const (
 // Item defines model for Item.
 type Item struct {
 	// Title is an unused property -- it will be removed in the future
-	Title string `json:"title,omitempty"`
+	Title *string `json:"title,omitempty"`
 
 	// Type of the item.
 	Type ItemType `json:"type"`
@@ -49,7 +49,7 @@ type Playlist struct {
 
 	// The ordered list of items that the playlist will iterate over.
 	// FIXME! This should not be optional, but changing it makes the godegen awkward
-	Items []Item `json:"items,omitempty"`
+	Items *[]Item `json:"items,omitempty"`
 
 	// Name of the playlist.
 	Name string `json:"name"`
