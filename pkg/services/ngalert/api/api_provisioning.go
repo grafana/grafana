@@ -35,7 +35,7 @@ type ContactPointService interface {
 
 type TemplateService interface {
 	GetTemplates(ctx context.Context, orgID int64) (map[string]string, error)
-	SetTemplate(ctx context.Context, orgID int64, tmpl definitions.MessageTemplate) (definitions.MessageTemplate, error)
+	SetTemplate(ctx context.Context, orgID int64, tmpl definitions.NotificationTemplate) (definitions.NotificationTemplate, error)
 	DeleteTemplate(ctx context.Context, orgID int64, name string) error
 }
 
@@ -149,9 +149,9 @@ func (srv *ProvisioningSrv) RouteGetTemplates(c *models.ReqContext) response.Res
 	if err != nil {
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
-	result := make([]definitions.MessageTemplate, 0, len(templates))
+	result := make([]definitions.NotificationTemplate, 0, len(templates))
 	for k, v := range templates {
-		result = append(result, definitions.MessageTemplate{Name: k, Template: v})
+		result = append(result, definitions.NotificationTemplate{Name: k, Template: v})
 	}
 	return response.JSON(http.StatusOK, result)
 }
@@ -162,13 +162,13 @@ func (srv *ProvisioningSrv) RouteGetTemplate(c *models.ReqContext, name string) 
 		return ErrResp(http.StatusInternalServerError, err, "")
 	}
 	if tmpl, ok := templates[name]; ok {
-		return response.JSON(http.StatusOK, definitions.MessageTemplate{Name: name, Template: tmpl})
+		return response.JSON(http.StatusOK, definitions.NotificationTemplate{Name: name, Template: tmpl})
 	}
 	return response.Empty(http.StatusNotFound)
 }
 
-func (srv *ProvisioningSrv) RoutePutTemplate(c *models.ReqContext, body definitions.MessageTemplateContent, name string) response.Response {
-	tmpl := definitions.MessageTemplate{
+func (srv *ProvisioningSrv) RoutePutTemplate(c *models.ReqContext, body definitions.NotificationTemplateContent, name string) response.Response {
+	tmpl := definitions.NotificationTemplate{
 		Name:       name,
 		Template:   body.Template,
 		Provenance: alerting_models.ProvenanceAPI,
