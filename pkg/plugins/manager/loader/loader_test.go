@@ -404,6 +404,62 @@ func TestLoader_Load(t *testing.T) {
 				},
 			},
 		},
+		{
+			name:  "Load CDN plugin",
+			class: plugins.External,
+			cfg: &config.Cfg{
+				PluginsCDNURLTemplate: "https://cdn.example.com/{id}/{version}/public/plugins/{id}/{assetPath}",
+				PluginSettings: setting.PluginSettings{
+					"grafana-worldmap-panel": map[string]string{"cdn": "true"},
+				},
+			},
+			pluginPaths: []string{"../testdata/cdn"},
+			want: []*plugins.Plugin{
+				{
+					JSONData: plugins.JSONData{
+						ID:   "grafana-worldmap-panel",
+						Type: "panel",
+						Name: "Worldmap Panel",
+						Info: plugins.Info{
+							Version: "0.3.3",
+							Links: []plugins.InfoLink{
+								{Name: "Project site", URL: "https://github.com/grafana/worldmap-panel"},
+								{Name: "MIT License", URL: "https://github.com/grafana/worldmap-panel/blob/master/LICENSE"},
+							},
+							Logos: plugins.Logos{
+								// Path substitution
+								Small: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap_logo.svg",
+								Large: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap_logo.svg",
+							},
+							Screenshots: []plugins.Screenshots{
+								{
+									Name: "World",
+									Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-world.png",
+								},
+								{
+									Name: "USA",
+									Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-usa.png",
+								},
+								{
+									Name: "Light Theme",
+									Path: "https://cdn.example.com/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/images/worldmap-light-theme.png",
+								},
+							},
+						},
+						Dependencies: plugins.Dependencies{
+							GrafanaVersion: "3.x.x",
+							Plugins:        []plugins.Dependency{},
+						},
+					},
+					PluginDir: filepath.Join(parentDir, "testdata/cdn/grafana-worldmap-panel"),
+					Class:     plugins.External,
+					CDN:       true,
+					Signature: plugins.SignatureCDN,
+					BaseURL:   "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel",
+					Module:    "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module",
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		reg := fakes.NewFakePluginRegistry()
