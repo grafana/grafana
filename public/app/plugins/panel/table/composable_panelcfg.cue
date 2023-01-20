@@ -29,8 +29,13 @@ composableKinds: PanelCfg: {
 							showHeader:    bool | *true
 							showTypeIcons: bool | *false
 							sortBy?: [...ui.TableSortByFieldState]
+							// TODO: should be array (options builder is limited)
+							footer?: ui.TableFooterCalc | *{
+								show: false
+								countRows: false
+								reducer: []
+							}
 						} @cuetsy(kind="interface")
-						PanelFieldConfig: ui.TableFieldOptions & {} @cuetsy(kind="interface")
 					},
 				]
 			},

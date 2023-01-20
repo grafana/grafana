@@ -17,6 +17,15 @@ TableSortByFieldState: {
 	desc?:       bool
 } @cuetsy(kind="interface")
 
+// TODO docs
+TableFooterCalc: {
+	show: bool
+  reducer: [...string] // actually 1 value
+  fields?: [...string]
+  enablePagination?: bool
+  countRows?: bool
+} @cuetsy(kind="interface")
+
 // Auto mode table cell options
 TableAutoCellOptions: {
 	type: TableCellDisplayMode & "auto"
@@ -61,7 +70,7 @@ TableFieldOptions: {
 	align: FieldTextAlignment | *"auto"
 	// This field is deprecated in favor of using cellOptions
 	displayMode?: TableCellDisplayMode
-	cellOptions: TableCellOptions
+	cellOptions: TableCellOptions | *{ type: TableCellDisplayMode | *"auto" }
 	hidden?:     bool // ?? default is missing or false ??
 	inspect: bool | *false
 	filterable?: bool
