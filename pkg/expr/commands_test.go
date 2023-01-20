@@ -169,7 +169,7 @@ func TestReduceExecute(t *testing.T) {
 
 func randomReduceFunc() string {
 	res := mathexp.GetSupportedReduceFuncs()
-	return res[rand.Intn(len(res)-1)]
+	return res[rand.Intn(len(res))]
 }
 
 func TestResampleCommand_Execute(t *testing.T) {
