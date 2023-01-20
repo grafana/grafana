@@ -72,7 +72,7 @@ export function LogsSamplePanel(props: Props) {
 
   const label = (
     <div className={styles.label}>
-      <span>Log samples </span>
+      <span>Logs sample</span>
       <IconButton
         name="info-circle"
         tooltip="Sample of log lines that contributed to visualized metrics"
