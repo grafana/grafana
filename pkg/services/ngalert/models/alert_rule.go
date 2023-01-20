@@ -264,6 +264,11 @@ type AlertRuleKeyWithVersion struct {
 	AlertRuleKey `xorm:"extends"`
 }
 
+type AlertRuleKeyWithVersionAndPauseStatus struct {
+	IsPaused                bool
+	AlertRuleKeyWithVersion `xorm:"extends"`
+}
+
 // AlertRuleGroupKey is the identifier of a group of alerts
 type AlertRuleGroupKey struct {
 	OrgID        int64

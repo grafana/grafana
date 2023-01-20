@@ -36,8 +36,8 @@ func (_m *FakeScheduleService) Run(_a0 context.Context) error {
 }
 
 // UpdateAlertRule provides a mock function with given fields: key, lastVersion
-func (_m *FakeScheduleService) UpdateAlertRule(key models.AlertRuleKey, lastVersion int64) {
-	_m.Called(key, lastVersion)
+func (_m *FakeScheduleService) UpdateAlertRule(key models.AlertRuleKey, lastVersion int64, isPaused bool) {
+	_m.Called(key, lastVersion, isPaused)
 }
 
 // evalApplied provides a mock function with given fields: _a0, _a1
