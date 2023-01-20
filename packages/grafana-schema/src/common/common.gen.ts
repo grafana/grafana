@@ -9,6 +9,29 @@
 
 
 /**
+ *  See also:
+ *  https://github.com/grafana/grafana-plugin-sdk-go/blob/main/data/frame_type.go
+ */
+export enum DataFrameType {
+  DirectoryListing = 'directory-listing',
+  HeatmapCells = 'heatmap-cells',
+  HeatmapRows = 'heatmap-rows',
+  Histogram = 'histogram',
+  TimeSeriesLong = 'timeseries-long',
+  TimeSeriesMany = 'timeseries-many',
+  TimeSeriesMulti = 'timeseries-multi',
+  TimeSeriesWide = 'timeseries-wide',
+}
+
+export interface DataSourceJsonData {
+  alertmanagerUid?: string;
+  authType?: string;
+  defaultRegion?: string;
+  manageAlerts?: boolean;
+  profile?: string;
+}
+
+/**
  * TODO docs
  */
 export enum AxisPlacement {
@@ -455,6 +478,30 @@ export enum BarGaugeDisplayMode {
   Lcd = 'lcd',
 }
 
+export interface DataQuery {
+  /**
+   * For mixed data sources the selected datasource is on the query level.
+   * For non mixed scenarios this is undefined.
+   */
+  datasource?: DataSourceRef;
+  /**
+   * true if query is disabled (ie should not be returned to the dashboard)
+   */
+  hide?: boolean;
+  /**
+   * Unique, guid like, string used in explore mode
+   */
+  key?: string;
+  /**
+   * Specify the query flavor
+   */
+  queryType?: string;
+  /**
+   * A - Z
+   */
+  refId: string;
+}
+
 /**
  * Internally, this is the "type" of cell that's being displayed
  * in the table such as colored text, JSON, gauge, etc.
@@ -558,6 +605,21 @@ export type TimeZoneBrowser = 'browser';
 export interface VizTooltipOptions {
   mode: TooltipDisplayMode;
   sort: SortOrder;
+}
+
+/**
+ * Ref to a DataSource instance
+ * TODO Fix, duplicate type
+ */
+export interface DataSourceRef {
+  /**
+   * The plugin type-id
+   */
+  type?: string;
+  /**
+   * Specific datasource instance
+   */
+  uid?: string;
 }
 
 /**
