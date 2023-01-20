@@ -7,18 +7,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/url"
 	"path/filepath"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/grafana/alerting/alerting"
 	"github.com/grafana/alerting/alerting/notifier/channels"
-	amv2 "github.com/prometheus/alertmanager/api/v2/models"
-	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/timeinterval"
-
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -28,6 +22,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
+
+	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 )
 
 const (
@@ -35,7 +31,7 @@ const (
 	silencesFilename        = "silences"
 
 	workingDir = "alerting"
-	// maintenanceNotificationAndSilences how often should we flush and gargabe collect notifications
+	// maintenanceNotificationAndSilences how often should we flush and garbage collect notifications
 	notificationLogMaintenanceInterval = 15 * time.Minute
 )
 
@@ -55,27 +51,10 @@ type Alertmanager struct {
 	Settings            *setting.Cfg
 	Store               AlertingStore
 	fileStore           *FileStore
-	Metrics             *metrics.Alertmanager
 	NotificationService notifications.Service
 
-	peer alerting.ClusterPeer
-	// wg is for dispatcher, inhibitor, silences and notifications
-	// Across configuration changes dispatcher and inhibitor are completely replaced, however, silences, notification log and alerts remain the same.
-	// stopc is used to let silences and notifications know we are done.
-	stopc chan struct{}
-
-	receivers []*alerting.Receiver
-
-	// muteTimes is a map where the key is the name of the mute_time_interval
-	// and the value represents all configured time_interval(s)
-	muteTimes map[string][]timeinterval.TimeInterval
-
-	reloadConfigMtx sync.RWMutex
-	config          *apimodels.PostableUserConfig
-	configHash      [16]byte
-	orgID           int64
-
 	decryptFn channels.GetDecryptedValueFn
+	orgID     int64
 }
 
 // maintenanceOptions represent the options for components that need maintenance on a frequency within the Alertmanager.
@@ -171,10 +150,6 @@ func (am *Alertmanager) Ready() bool {
 	return am.Base.Ready()
 }
 
-func (am *Alertmanager) ready() bool {
-	return am.config != nil
-}
-
 func (am *Alertmanager) StopAndWait() {
 	am.Base.StopAndWait()
 }
@@ -262,40 +237,6 @@ func (am *Alertmanager) ApplyConfig(dbCfg *ngmodels.AlertConfiguration) error {
 	return outerErr
 }
 
-func (am *Alertmanager) getTemplate() (*alerting.Template, error) {
-	am.reloadConfigMtx.RLock()
-	defer am.reloadConfigMtx.RUnlock()
-	if !am.ready() {
-		return nil, errors.New("alertmanager is not initialized")
-	}
-	paths := make([]string, 0, len(am.config.TemplateFiles))
-	for name := range am.config.TemplateFiles {
-		paths = append(paths, filepath.Join(am.WorkingDirPath(), name))
-	}
-	return am.templateFromPaths(paths...)
-}
-
-func (am *Alertmanager) templateFromPaths(paths ...string) (*alerting.Template, error) {
-	tmpl, err := alerting.FromGlobs(paths)
-	if err != nil {
-		return nil, err
-	}
-	externalURL, err := url.Parse(am.Settings.AppURL)
-	if err != nil {
-		return nil, err
-	}
-	tmpl.ExternalURL = externalURL
-	return tmpl, nil
-}
-
-func (am *Alertmanager) buildMuteTimesMap(muteTimeIntervals []config.MuteTimeInterval) map[string][]timeinterval.TimeInterval {
-	muteTimes := make(map[string][]timeinterval.TimeInterval, len(muteTimeIntervals))
-	for _, ti := range muteTimeIntervals {
-		muteTimes[ti.Name] = ti.TimeIntervals
-	}
-	return muteTimes
-}
-
 // applyConfig applies a new configuration by re-initializing all components using the configuration provided.
 // It is not safe to call concurrently.
 func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig []byte) (err error) {
@@ -348,7 +289,6 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 		return err
 	}
 
-	am.configHash = am.Base.ConfigHash()
 	return nil
 }
 
