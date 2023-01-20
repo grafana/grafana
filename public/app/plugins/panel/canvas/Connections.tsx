@@ -33,11 +33,18 @@ export class Connections {
   };
 
   handleMouseEnter = (event: React.MouseEvent) => {
-    if (!(event.target instanceof HTMLElement) || !this.scene.isEditingEnabled) {
+    if (!(event.target instanceof HTMLElement || event.target instanceof SVGElement) || !this.scene.isEditingEnabled) {
       return;
     }
 
-    const element = event.target.parentElement?.parentElement;
+    let element: HTMLElement | null = null;
+
+    if (event.target instanceof HTMLElement && event.target.parentElement) {
+      element = event.target.parentElement?.parentElement;
+    } else if (event.target instanceof SVGElement) {
+      element = event.target.parentElement;
+    }
+
     if (!element) {
       console.log('no element');
       return;
