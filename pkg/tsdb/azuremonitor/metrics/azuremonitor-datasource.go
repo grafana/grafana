@@ -335,7 +335,6 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 		if query.Alias != "" {
 			displayName = formatAzureMonitorLegendKey(query.Alias, resourceName,
 				amr.Value[0].Name.LocalizedValue, "", "", amr.Namespace, amr.Value[0].ID, labels)
-
 		} else if len(labels) > 0 {
 			// If labels are set, it will be used as the legend so we need to set a more user-friendly name
 			displayName = amr.Value[0].Name.LocalizedValue
