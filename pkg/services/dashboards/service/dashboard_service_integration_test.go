@@ -109,7 +109,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					assert.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, "", sc.dashboardGuardianMock.DashUID)
-					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgID)
 					assert.Equal(t, cmd.UserID, sc.dashboardGuardianMock.User.UserID)
 				})
 
@@ -129,7 +129,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.otherSavedFolder.ID, sc.dashboardGuardianMock.DashID)
-					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgID)
 					assert.Equal(t, cmd.UserID, sc.dashboardGuardianMock.User.UserID)
 				})
 
@@ -149,7 +149,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInFolder.UID, sc.dashboardGuardianMock.DashUID)
-					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgID)
 					assert.Equal(t, cmd.UserID, sc.dashboardGuardianMock.User.UserID)
 				})
 
@@ -170,7 +170,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInFolder.UID, sc.dashboardGuardianMock.DashUID)
-					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgID)
 					assert.Equal(t, cmd.UserID, sc.dashboardGuardianMock.User.UserID)
 				})
 
@@ -191,7 +191,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					assert.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInGeneralFolder.UID, sc.dashboardGuardianMock.DashUID)
-					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgID)
 					assert.Equal(t, cmd.UserID, sc.dashboardGuardianMock.User.UserID)
 				})
 
@@ -212,7 +212,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInFolder.UID, sc.dashboardGuardianMock.DashUID)
-					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgID)
 					assert.Equal(t, cmd.UserID, sc.dashboardGuardianMock.User.UserID)
 				})
 
@@ -233,7 +233,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInGeneralFolder.UID, sc.dashboardGuardianMock.DashUID)
-					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgID)
 					assert.Equal(t, cmd.UserID, sc.dashboardGuardianMock.User.UserID)
 				})
 
@@ -254,7 +254,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					assert.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInFolder.UID, sc.dashboardGuardianMock.DashUID)
-					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgID)
 					assert.Equal(t, cmd.UserID, sc.dashboardGuardianMock.User.UserID)
 				})
 
@@ -275,7 +275,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInGeneralFolder.UID, sc.dashboardGuardianMock.DashUID)
-					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgID)
 					assert.Equal(t, cmd.UserID, sc.dashboardGuardianMock.User.UserID)
 				})
 
@@ -296,7 +296,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInFolder.UID, sc.dashboardGuardianMock.DashUID)
-					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgID)
 					assert.Equal(t, cmd.UserID, sc.dashboardGuardianMock.User.UserID)
 				})
 		})
