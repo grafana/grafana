@@ -1,6 +1,8 @@
+// Libraries
 import { defaults } from 'lodash';
 import Papa, { ParseConfig, Parser, ParseResult } from 'papaparse';
 
+// Types
 import { MutableDataFrame } from '../dataframe/MutableDataFrame';
 import { guessFieldTypeFromValue } from '../dataframe/processDataFrame';
 import { getFieldDisplayName } from '../field';
@@ -40,7 +42,7 @@ export interface CSVOptions {
   callback?: CSVParseCallbacks;
 }
 
-export function readCSV(csv: string, options?: CSVOptions): MutableDataFrame[] {
+export function readCSV(csv: string, options?: CSVOptions): DataFrame[] {
   return new CSVReader(options).readCSV(csv);
 }
 

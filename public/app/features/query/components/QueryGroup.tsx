@@ -459,18 +459,20 @@ class UnThemedQueryGroup extends PureComponent<Props, State> {
 
     return (
       <CustomScrollbar autoHeightMin="100%" scrollRefCallback={this.setScrollRef}>
-        {this.renderTopSection(styles)}
-        {dsSettings && (
-          <>
-            <div className={styles.queriesWrapper}>{this.renderQueries(dsSettings)}</div>
-            {this.renderAddQueryRow(dsSettings, styles)}
-            {isHelpOpen && (
-              <Modal title="Data source help" isOpen={true} onDismiss={this.onCloseHelp}>
-                <PluginHelp pluginId={dsSettings.meta.id} />
-              </Modal>
-            )}
-          </>
-        )}
+        <div className={styles.innerWrapper}>
+          {this.renderTopSection(styles)}
+          {dsSettings && (
+            <>
+              <div className={styles.queriesWrapper}>{this.renderQueries(dsSettings)}</div>
+              {this.renderAddQueryRow(dsSettings, styles)}
+              {isHelpOpen && (
+                <Modal title="Data source help" isOpen={true} onDismiss={this.onCloseHelp}>
+                  <PluginHelp pluginId={dsSettings.meta.id} />
+                </Modal>
+              )}
+            </>
+          )}
+        </div>
       </CustomScrollbar>
     );
   }
@@ -480,12 +482,10 @@ export const QueryGroup = withTheme2(UnThemedQueryGroup);
 
 function getStyles(theme: GrafanaTheme2, isDragActive?: boolean) {
   return {
-    dropzone: css`
+    innerWrapper: css`
       display: flex;
       flex-direction: column;
       padding: ${theme.spacing(2)};
-      border: ${isDragActive ? `2px dashed ${theme.colors.border.medium}` : 0};
-      background-color: ${isDragActive ? theme.colors.action.hover : theme.colors.background.primary};
     `,
     dataSourceRow: css`
       display: flex;

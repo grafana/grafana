@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import pluralize from 'pluralize';
 import React, { PureComponent } from 'react';
 
@@ -401,7 +401,7 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
               onLoad={this.onFileDrop}
             ></FileDropzone>
             {file && (
-              <div className={cx(styles.file)}>
+              <div className={styles.file}>
                 <span>{file?.name}</span>
                 <span>
                   <span>{formattedValueToString(fileSize)}</span>
