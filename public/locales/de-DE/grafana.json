@@ -5,6 +5,24 @@
       "success": "Kopiert"
     }
   },
+  "command-palette": {
+    "action": {
+      "change-theme": "",
+      "dark-theme": "",
+      "light-theme": "",
+      "search": ""
+    },
+    "search-box": {
+      "placeholder": ""
+    },
+    "section": {
+      "actions": "",
+      "dashboard-search-results": "",
+      "pages": "",
+      "preferences": "",
+      "recent-dashboards": ""
+    }
+  },
   "common": {
     "locale": {
       "default": "Standard"
@@ -83,7 +101,6 @@
   "datasource-onboarding": {
     "contact-admin": "Bitte wenden Sie sich an Ihren Administrator, um die Datenquellen zu konfigurieren.",
     "explanation": "Um Ihre Daten zu visualisieren, müssen Sie sie zunächst verknüpfen.",
-    "logo": "Logo für die Datenquelle {{datasourceName}}",
     "new-dashboard": "Neues Dashboard",
     "preferred": "Verbinden Sie Ihre bevorzugte Datenquelle:",
     "sampleData": "Oder erstellen Sie ein neues Dashboard mit Beispieldaten",
@@ -113,15 +130,6 @@
     "admin": {
       "subtitle": "Serverweite Einstellungen und Zugriff auf Ressourcen wie Organisationen, Benutzer und Lizenzen verwalten",
       "title": "Server-Administrator"
-    },
-    "admin-access": {
-      "title": "Benutzer und Zugriff"
-    },
-    "admin-general": {
-      "title": "Allgemein"
-    },
-    "admin-plugins": {
-      "title": "Plugins und Daten"
     },
     "alerting": {
       "subtitle": "Informiere dich über Probleme in deinen Systemen kurz nach deren Auftreten",
@@ -248,6 +256,9 @@
       "subtitle": "Überwachungs- und Infrastruktur-Apps",
       "title": "Überwachung"
     },
+    "new": {
+      "title": ""
+    },
     "new-dashboard": {
       "title": "Neues Dashboard"
     },
@@ -342,13 +353,22 @@
   },
   "panel": {
     "header-menu": {
+      "copy": "",
+      "create-library-panel": "",
+      "duplicate": "",
+      "edit": "",
+      "explore": "",
+      "get-help": "",
       "hide-legend": "Legende ausblenden",
       "inspect": "Überprüfen",
       "inspect-data": "Daten",
       "inspect-json": "Panel-JSON",
       "more": "Mehr …",
+      "query": "",
+      "remove": "",
       "share": "Teilen",
       "show-legend": "Legende anzeigen",
+      "unlink-library-panel": "",
       "view": "Anzeigen"
     }
   },
@@ -367,6 +387,14 @@
     },
     "select-button": {
       "auto-refresh": "Automatisches Aktualisierungsintervall festlegen"
+    }
+  },
+  "search": {
+    "dashboard-actions": {
+      "import": "",
+      "new": "",
+      "new-dashboard": "",
+      "new-folder": ""
     }
   },
   "share-modal": {
@@ -528,7 +556,7 @@
       "name-label": "Name",
       "username-label": "Benutzername"
     },
-    "title": "Profil bearbeiten"
+    "title": "Profil"
   },
   "user-session": {
     "browser-column": "Browser & Betriebssystem",

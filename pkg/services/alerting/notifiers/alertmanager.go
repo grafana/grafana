@@ -175,7 +175,7 @@ func (am *AlertmanagerNotifier) Notify(evalContext *alerting.EvalContext) error 
 	errCnt := 0
 
 	for _, url := range am.URL {
-		cmd := &models.SendWebhookSync{
+		cmd := &notifications.SendWebhookSync{
 			Url:        strings.TrimSuffix(url, "/") + "/api/v1/alerts",
 			User:       am.BasicAuthUser,
 			Password:   am.BasicAuthPassword,

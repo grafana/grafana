@@ -3,7 +3,7 @@ package kind
 import "strings"
 
 name:     "Dashboard"
-maturity: "merged"
+maturity: "experimental"
 
 lineage: seqs: [
 	{
@@ -151,7 +151,7 @@ lineage: seqs: [
 
 					// Specific datasource instance
 					uid?: string @grafanamaturity(NeedsExpertReview)
-				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
+				} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
 				// FROM public/app/features/dashboard/state/DashboardModels.ts - ish
 				// TODO docs

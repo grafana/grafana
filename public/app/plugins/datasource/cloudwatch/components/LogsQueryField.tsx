@@ -18,8 +18,7 @@ import { ExploreId } from 'app/types';
 // Utils & Services
 // dom also includes Element polyfills
 import { CloudWatchDatasource } from '../datasource';
-import { CloudWatchLanguageProvider } from '../language_provider';
-import syntax from '../syntax';
+import syntax from '../language/cloudwatch-logs/syntax';
 import { CloudWatchJsonData, CloudWatchLogsQuery, CloudWatchQuery } from '../types';
 import { getStatsGroups } from '../utils/query/getStatsGroups';
 
@@ -61,22 +60,22 @@ export const CloudWatchLogsQueryField = (props: CloudWatchLogsQueryFieldProps) =
   };
 
   const onTypeahead = async (typeahead: TypeaheadInput): Promise<TypeaheadOutput> => {
-    const { logGroupNames } = query;
+    const { datasource, query } = props;
+    const { logGroups } = query;
 
     if (!datasource.languageProvider) {
       return { suggestions: [] };
     }
 
-    const cloudwatchLanguageProvider = datasource.languageProvider as CloudWatchLanguageProvider;
     const { history, absoluteRange } = props;
     const { prefix, text, value, wrapperClasses, labelKey, editor } = typeahead;
 
-    return await cloudwatchLanguageProvider.provideCompletionItems(
+    return await datasource.languageProvider.provideCompletionItems(
       { text, value, prefix, wrapperClasses, labelKey, editor },
       {
         history,
         absoluteRange,
-        logGroupNames,
+        logGroups: logGroups,
         region: query.region,
       }
     );

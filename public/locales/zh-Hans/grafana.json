@@ -5,6 +5,24 @@
       "success": ""
     }
   },
+  "command-palette": {
+    "action": {
+      "change-theme": "",
+      "dark-theme": "",
+      "light-theme": "",
+      "search": ""
+    },
+    "search-box": {
+      "placeholder": ""
+    },
+    "section": {
+      "actions": "",
+      "dashboard-search-results": "",
+      "pages": "",
+      "preferences": "",
+      "recent-dashboards": ""
+    }
+  },
   "common": {
     "locale": {
       "default": "默认"
@@ -83,7 +101,6 @@
   "datasource-onboarding": {
     "contact-admin": "",
     "explanation": "",
-    "logo": "",
     "new-dashboard": "",
     "preferred": "",
     "sampleData": "",
@@ -113,15 +130,6 @@
     "admin": {
       "subtitle": "管理整个服务器范围的设置，以及对组织、用户和许可证等资源的访问权限",
       "title": "服务器管理员"
-    },
-    "admin-access": {
-      "title": ""
-    },
-    "admin-general": {
-      "title": ""
-    },
-    "admin-plugins": {
-      "title": ""
     },
     "alerting": {
       "subtitle": "在系统发生问题后立即获悉",
@@ -248,6 +256,9 @@
       "subtitle": "监控和基础设施应用",
       "title": "正在监控"
     },
+    "new": {
+      "title": ""
+    },
     "new-dashboard": {
       "title": "新建仪表板"
     },
@@ -342,13 +353,22 @@
   },
   "panel": {
     "header-menu": {
+      "copy": "",
+      "create-library-panel": "",
+      "duplicate": "",
+      "edit": "",
+      "explore": "",
+      "get-help": "",
       "hide-legend": "",
       "inspect": "检查",
       "inspect-data": "数据",
       "inspect-json": "面板 JSON",
       "more": "更多...",
+      "query": "",
+      "remove": "",
       "share": "分享",
       "show-legend": "",
+      "unlink-library-panel": "",
       "view": "查看"
     }
   },
@@ -367,6 +387,14 @@
     },
     "select-button": {
       "auto-refresh": ""
+    }
+  },
+  "search": {
+    "dashboard-actions": {
+      "import": "",
+      "new": "",
+      "new-dashboard": "",
+      "new-folder": ""
     }
   },
   "share-modal": {
@@ -528,7 +556,7 @@
       "name-label": "姓名",
       "username-label": "用户名"
     },
-    "title": "编辑简介"
+    "title": "用户资料"
   },
   "user-session": {
     "browser-column": "浏览器和操作系统",

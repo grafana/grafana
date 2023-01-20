@@ -8,36 +8,58 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/oauth2"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
-	"golang.org/x/oauth2"
 )
 
 const (
 	ClientAPIKey    = "auth.client.api-key" // #nosec G101
-	ClientSession   = "auth.client.session"
 	ClientAnonymous = "auth.client.anonymous"
 	ClientBasic     = "auth.client.basic"
+	ClientJWT       = "auth.client.jwt"
 	ClientRender    = "auth.client.render"
+	ClientSession   = "auth.client.session"
+	ClientForm      = "auth.client.form"
+	ClientProxy     = "auth.client.proxy"
 )
 
+const (
+	MetaKeyUsername   = "username"
+	MetaKeyAuthModule = "authModule"
+)
+
+// ClientParams are hints to the auth serviAuthN: Post login hooksce about how to handle the identity management
+// from the authenticating client.
 type ClientParams struct {
-	SyncUser            bool
-	SyncTeamMembers     bool
-	AllowSignUp         bool
+	// Update the internal representation of the entity from the identity provided
+	SyncUser bool
+	// Add entity to teams
+	SyncTeamMembers bool
+	// Create entity in the DB if it doesn't exist
+	AllowSignUp bool
+	// EnableDisabledUsers is a hint to the auth service that it should reenable disabled users
 	EnableDisabledUsers bool
+	// LookUpParams are the arguments used to look up the entity in the DB.
+	LookUpParams models.UserLookupParams
 }
 
 type PostAuthHookFn func(ctx context.Context, identity *Identity, r *Request) error
+type PostLoginHookFn func(ctx context.Context, identity *Identity, r *Request, err error)
 
 type Service interface {
-	// RegisterPostAuthHook registers a hook that is called after a successful authentication.
-	RegisterPostAuthHook(hook PostAuthHookFn)
 	// Authenticate authenticates a request using the specified client.
 	Authenticate(ctx context.Context, client string, r *Request) (*Identity, bool, error)
+	// RegisterPostAuthHook registers a hook that is called after a successful authentication.
+	RegisterPostAuthHook(hook PostAuthHookFn)
+	// Login authenticates a request and creates a session on successful authentication.
+	Login(ctx context.Context, client string, r *Request) (*Identity, error)
+	// RegisterPostLoginHook registers a hook that that is called after a login request.
+	RegisterPostLoginHook(hook PostLoginHookFn)
 }
 
 type Client interface {
@@ -48,7 +70,11 @@ type Client interface {
 }
 
 type PasswordClient interface {
-	AuthenticatePassword(ctx context.Context, orgID int64, username, password string) (*Identity, error)
+	AuthenticatePassword(ctx context.Context, r *Request, username, password string) (*Identity, error)
+}
+
+type ProxyClient interface {
+	AuthenticateProxy(ctx context.Context, r *Request, username string, additional map[string]string) (*Identity, error)
 }
 
 type Request struct {
@@ -60,6 +86,23 @@ type Request struct {
 	// Resp is the response writer to use for the request
 	// Used to set cookies and headers
 	Resp web.ResponseWriter
+
+	// metadata is additional information about the auth request
+	metadata map[string]string
+}
+
+func (r *Request) SetMeta(k, v string) {
+	if r.metadata == nil {
+		r.metadata = map[string]string{}
+	}
+	r.metadata[k] = v
+}
+
+func (r *Request) GetMeta(k string) string {
+	if r.metadata == nil {
+		r.metadata = map[string]string{}
+	}
+	return r.metadata[k]
 }
 
 const (
@@ -96,9 +139,6 @@ type Identity struct {
 	// AuthId is the unique identifier for the entity in the external system.
 	// Empty if the identity is provided by Grafana.
 	AuthID string
-	// LookUpParams are the arguments used to look up the entity in the DB.
-	// Empty if the identity is provided by Grafana. TODO: move to client params
-	LookUpParams models.UserLookupParams
 	// IsDisabled is true if the entity is disabled.
 	IsDisabled bool
 	// HelpFlags1 is the help flags for the entity.
@@ -191,6 +231,23 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 	}
 
 	return u
+}
+
+func (i *Identity) ExternalUserInfo() models.ExternalUserInfo {
+	_, id := i.NamespacedID()
+	return models.ExternalUserInfo{
+		OAuthToken:     i.OAuthToken,
+		AuthModule:     i.AuthModule,
+		AuthId:         i.AuthID,
+		UserId:         id,
+		Email:          i.Email,
+		Login:          i.Login,
+		Name:           i.Name,
+		Groups:         i.Groups,
+		OrgRoles:       i.OrgRoles,
+		IsGrafanaAdmin: i.IsGrafanaAdmin,
+		IsDisabled:     i.IsDisabled,
+	}
 }
 
 // IdentityFromSignedInUser creates an identity from a SignedInUser.

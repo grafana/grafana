@@ -29,13 +29,14 @@ export function TraceViewContainer(props: Props) {
   const datasource = useSelector(
     (state: StoreState) => state.explore[props.exploreId!]?.datasourceInstance ?? undefined
   );
+  const datasourceType = datasource ? datasource?.type : 'unknown';
 
   if (!traceProp) {
     return null;
   }
 
   return (
-    <>
+    <Collapse label="Trace View" isOpen>
       <TracePageSearchBar
         navigable={true}
         searchValue={search}
@@ -45,24 +46,22 @@ export function TraceViewContainer(props: Props) {
         setSearchBarSuffix={setSearchBarSuffix}
         focusedSpanIdForSearch={focusedSpanIdForSearch}
         setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
+        datasourceType={datasourceType}
       />
-
-      <Collapse label="Trace View" isOpen>
-        <TraceView
-          exploreId={exploreId}
-          dataFrames={dataFrames}
-          splitOpenFn={splitOpenFn}
-          scrollElement={scrollElement}
-          traceProp={traceProp}
-          spanFindMatches={spanFindMatches}
-          search={search}
-          focusedSpanIdForSearch={focusedSpanIdForSearch}
-          queryResponse={queryResponse}
-          datasource={datasource}
-          topOfViewRef={topOfViewRef}
-          topOfViewRefType={TopOfViewRefType.Explore}
-        />
-      </Collapse>
-    </>
+      <TraceView
+        exploreId={exploreId}
+        dataFrames={dataFrames}
+        splitOpenFn={splitOpenFn}
+        scrollElement={scrollElement}
+        traceProp={traceProp}
+        spanFindMatches={spanFindMatches}
+        search={search}
+        focusedSpanIdForSearch={focusedSpanIdForSearch}
+        queryResponse={queryResponse}
+        datasource={datasource}
+        topOfViewRef={topOfViewRef}
+        topOfViewRefType={TopOfViewRefType.Explore}
+      />
+    </Collapse>
   );
 }
