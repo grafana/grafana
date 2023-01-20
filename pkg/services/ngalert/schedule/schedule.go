@@ -230,7 +230,7 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
 
 	readyToRun := make([]readyToRunItem, 0)
-	pausedAlertRuleKeys := make(map[ngmodels.AlertRuleKey]struct{}, 0)
+	pausedAlertRuleKeys := make(map[ngmodels.AlertRuleKey]struct{})
 	missingFolder := make(map[string][]string)
 	for _, item := range alertRules {
 		key := item.GetKey()
