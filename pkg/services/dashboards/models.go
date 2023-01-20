@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -342,4 +343,80 @@ func FromDashboard(dash *Dashboard) *folder.Folder {
 		Updated:   dash.Updated,
 		UpdatedBy: dash.UpdatedBy,
 	}
+}
+
+//
+// DASHBOARD ACL
+//
+
+// Dashboard ACL model
+type DashboardACL struct {
+	ID          int64 `xorm:"pk autoincr 'id'"`
+	OrgID       int64 `xorm:"org_id"`
+	DashboardID int64 `xorm:"dashboard_id"`
+
+	UserID     int64         `xorm:"user_id"`
+	TeamID     int64         `xorm:"team_id"`
+	Role       *org.RoleType // pointer to be nullable
+	Permission models.PermissionType
+
+	Created time.Time
+	Updated time.Time
+}
+
+func (p DashboardACL) TableName() string { return "dashboard_acl" }
+
+type DashboardACLInfoDTO struct {
+	OrgID       int64 `json:"-" xorm:"org_id"`
+	DashboardID int64 `json:"dashboardId,omitempty" xorm:"dashboard_id"`
+	FolderID    int64 `json:"folderId,omitempty" xorm:"folder_id"`
+
+	Created time.Time `json:"created"`
+	Updated time.Time `json:"updated"`
+
+	UserID         int64                 `json:"userId" xorm:"user_id"`
+	UserLogin      string                `json:"userLogin"`
+	UserEmail      string                `json:"userEmail"`
+	UserAvatarURL  string                `json:"userAvatarUrl" xorm:"user_avatar_url"`
+	TeamID         int64                 `json:"teamId" xorm:"team_id"`
+	TeamEmail      string                `json:"teamEmail"`
+	TeamAvatarURL  string                `json:"teamAvatarUrl" xorm:"team_avatar_url"`
+	Team           string                `json:"team"`
+	Role           *org.RoleType         `json:"role,omitempty"`
+	Permission     models.PermissionType `json:"permission"`
+	PermissionName string                `json:"permissionName"`
+	UID            string                `json:"uid" xorm:"uid"`
+	Title          string                `json:"title"`
+	Slug           string                `json:"slug"`
+	IsFolder       bool                  `json:"isFolder"`
+	URL            string                `json:"url" xorm:"url"`
+	Inherited      bool                  `json:"inherited"`
+}
+
+func (dto *DashboardACLInfoDTO) hasSameRoleAs(other *DashboardACLInfoDTO) bool {
+	if dto.Role == nil || other.Role == nil {
+		return false
+	}
+
+	return dto.UserID <= 0 && dto.TeamID <= 0 && dto.UserID == other.UserID && dto.TeamID == other.TeamID && *dto.Role == *other.Role
+}
+
+func (dto *DashboardACLInfoDTO) hasSameUserAs(other *DashboardACLInfoDTO) bool {
+	return dto.UserID > 0 && dto.UserID == other.UserID
+}
+
+func (dto *DashboardACLInfoDTO) hasSameTeamAs(other *DashboardACLInfoDTO) bool {
+	return dto.TeamID > 0 && dto.TeamID == other.TeamID
+}
+
+// IsDuplicateOf returns true if other item has same role, same user or same team
+func (dto *DashboardACLInfoDTO) IsDuplicateOf(other *DashboardACLInfoDTO) bool {
+	return dto.hasSameRoleAs(other) || dto.hasSameUserAs(other) || dto.hasSameTeamAs(other)
+}
+
+// QUERIES
+type GetDashboardACLInfoListQuery struct {
+	DashboardID int64
+	OrgID       int64
+	Result      []*DashboardACLInfoDTO
 }
