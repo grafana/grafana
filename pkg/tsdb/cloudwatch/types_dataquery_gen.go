@@ -220,13 +220,8 @@ type DataQuery struct {
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
-	Datasource *struct {
-		// The plugin type-id
-		Type *string `json:"type,omitempty"`
-
-		// Specific datasource instance
-		Uid *string `json:"uid,omitempty"`
-	} `json:"datasource,omitempty"`
+	// TODO this shouldn't be unknown but DataSourceRef | null
+	Datasource *interface{} `json:"datasource,omitempty"`
 
 	// true if query is disabled (ie should not be returned to the dashboard)
 	Hide *bool `json:"hide,omitempty"`
