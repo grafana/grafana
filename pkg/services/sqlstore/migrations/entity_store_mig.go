@@ -79,6 +79,8 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 			getLatinPathColumn("slug_path"),                             ///slug/slug/slug/
 			{Name: "tree", Type: migrator.DB_Text, Nullable: false},     // JSON []{uid, title}
 			{Name: "depth", Type: migrator.DB_Int, Nullable: false},     // starts at 1
+			{Name: "left", Type: migrator.DB_Int, Nullable: false},      // MPTT
+			{Name: "right", Type: migrator.DB_Int, Nullable: false},     // MPTT
 			{Name: "detached", Type: migrator.DB_Bool, Nullable: false}, // a parent folder was not found
 		},
 		Indices: []*migrator.Index{
@@ -190,7 +192,7 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 	// Migration cleanups: given that this is a complex setup
 	// that requires a lot of testing before we are ready to push out of dev
 	// this script lets us easy wipe previous changes and initialize clean tables
-	suffix := " (v666)" // change this when we want to wipe and reset the object tables
+	suffix := " (v31)" // change this when we want to wipe and reset the object tables
 	mg.AddMigration("EntityStore init: cleanup"+suffix, migrator.NewRawSQLMigration(strings.TrimSpace(`
 		DELETE FROM migration_log WHERE migration_id LIKE 'EntityStore init%';
 	`)))
