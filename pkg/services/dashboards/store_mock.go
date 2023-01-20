@@ -5,10 +5,8 @@ package dashboards
 import (
 	context "context"
 
-	folder "github.com/grafana/grafana/pkg/services/folder"
-	mock "github.com/stretchr/testify/mock"
-
 	models "github.com/grafana/grafana/pkg/models"
+	mock "github.com/stretchr/testify/mock"
 
 	quota "github.com/grafana/grafana/pkg/services/quota"
 )
@@ -151,11 +149,11 @@ func (_m *FakeDashboardStore) GetDashboard(ctx context.Context, query *GetDashbo
 }
 
 // GetDashboardACLInfoList provides a mock function with given fields: ctx, query
-func (_m *FakeDashboardStore) GetDashboardACLInfoList(ctx context.Context, query *models.GetDashboardACLInfoListQuery) error {
+func (_m *FakeDashboardStore) GetDashboardACLInfoList(ctx context.Context, query *GetDashboardACLInfoListQuery) error {
 	ret := _m.Called(ctx, query)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.GetDashboardACLInfoListQuery) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *GetDashboardACLInfoListQuery) error); ok {
 		r0 = rf(ctx, query)
 	} else {
 		r0 = ret.Error(0)
@@ -218,75 +216,6 @@ func (_m *FakeDashboardStore) GetDashboardsByPluginID(ctx context.Context, query
 	}
 
 	return r0
-}
-
-// GetFolderByID provides a mock function with given fields: ctx, orgID, id
-func (_m *FakeDashboardStore) GetFolderByID(ctx context.Context, orgID int64, id int64) (*folder.Folder, error) {
-	ret := _m.Called(ctx, orgID, id)
-
-	var r0 *folder.Folder
-	if rf, ok := ret.Get(0).(func(context.Context, int64, int64) *folder.Folder); ok {
-		r0 = rf(ctx, orgID, id)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*folder.Folder)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, int64, int64) error); ok {
-		r1 = rf(ctx, orgID, id)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetFolderByTitle provides a mock function with given fields: ctx, orgID, title
-func (_m *FakeDashboardStore) GetFolderByTitle(ctx context.Context, orgID int64, title string) (*folder.Folder, error) {
-	ret := _m.Called(ctx, orgID, title)
-
-	var r0 *folder.Folder
-	if rf, ok := ret.Get(0).(func(context.Context, int64, string) *folder.Folder); ok {
-		r0 = rf(ctx, orgID, title)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*folder.Folder)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, int64, string) error); ok {
-		r1 = rf(ctx, orgID, title)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// GetFolderByUID provides a mock function with given fields: ctx, orgID, uid
-func (_m *FakeDashboardStore) GetFolderByUID(ctx context.Context, orgID int64, uid string) (*folder.Folder, error) {
-	ret := _m.Called(ctx, orgID, uid)
-
-	var r0 *folder.Folder
-	if rf, ok := ret.Get(0).(func(context.Context, int64, string) *folder.Folder); ok {
-		r0 = rf(ctx, orgID, uid)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*folder.Folder)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, int64, string) error); ok {
-		r1 = rf(ctx, orgID, uid)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
 }
 
 // GetProvisionedDashboardData provides a mock function with given fields: ctx, name
@@ -461,11 +390,11 @@ func (_m *FakeDashboardStore) UnprovisionDashboard(ctx context.Context, id int64
 }
 
 // UpdateDashboardACL provides a mock function with given fields: ctx, uid, items
-func (_m *FakeDashboardStore) UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardACL) error {
+func (_m *FakeDashboardStore) UpdateDashboardACL(ctx context.Context, uid int64, items []*DashboardACL) error {
 	ret := _m.Called(ctx, uid, items)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, []*models.DashboardACL) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int64, []*DashboardACL) error); ok {
 		r0 = rf(ctx, uid, items)
 	} else {
 		r0 = ret.Error(0)
