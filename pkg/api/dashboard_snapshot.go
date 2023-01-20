@@ -216,7 +216,7 @@ func (hs *HTTPServer) GetDashboardSnapshot(c *models.ReqContext) response.Respon
 	dto := dtos.DashboardFullWithMeta{
 		Dashboard: snapshot.Dashboard,
 		Meta: dtos.DashboardMeta{
-			Type:       models.DashTypeSnapshot,
+			Type:       dashboards.DashTypeSnapshot,
 			IsSnapshot: true,
 			Created:    snapshot.Created,
 			Expires:    snapshot.Expires,

@@ -78,7 +78,13 @@ func ProvideServiceAccountsService(
 	s.secretScanInterval = cfg.SectionWithEnvOverrides("secretscan").
 		Key("interval").MustDuration(defaultSecretScanInterval)
 	if s.secretScanEnabled {
-		s.secretScanService = secretscan.NewService(s.store, cfg)
+		var errSecret error
+		s.secretScanService, errSecret = secretscan.NewService(s.store, cfg)
+		if errSecret != nil {
+			s.secretScanEnabled = false
+			s.log.Warn("failed to initialize secret scan service. secret scan is disabled",
+				"error", errSecret.Error())
+		}
 	}
 
 	return s, nil

@@ -839,6 +839,8 @@ URL to redirect the user to after they sign out.
 
 ### oauth_auto_login
 
+> **Note**: This option is deprecated - use `auto_login` option for specific OAuth provider instead.
+
 Set to `true` to attempt login with OAuth automatically, skipping the login screen.
 This setting is ignored if multiple OAuth providers are configured. Default is `false`.
 
@@ -880,13 +882,27 @@ To prevent synchronization of organization roles for a specific OAuth integratio
 
 The setting `oauth_skip_org_role_update_sync` will be deprecated in favor of provider-specific settings.
 
-The following table shows the OAuth providers, the default value setting, and the skip org role sync setting.
+The following table shows the OAuth provider's setting with the default value and the skip org role sync setting.
 | OAuth Provider | `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | Behavior |
 | --- | --- | --- | --- |
 | AzureAD | false | false | will sync with AzureAD roles |
 | AzureAD | true | false | skip org role sync for OAuth providers including AzureAD users |
 | AzureAD | false | true | skip org role sync for AzureAD users |
 | AzureAD | true | true | skip org role sync for AzureAD users and all other OAuth providers |
+
+### [auth.google] skip_org_role_sync
+
+Upon the first login from a user, we set the organization roles from the setting `AutoAssignOrgRole`. If you want to manage organizational roles, set the `skip_org_role_sync` option to `true`.
+
+> **Note:** There is a separate setting called `oauth_skip_org_role_update_sync` which has a different scope. While `skip_org_role_sync` only applies to the specific OAuth provider, `oauth_skip_org_role_update_sync` is a generic setting that affects all configured OAuth providers.
+
+The following table shows the OAuth provider's setting with the default value and the skip org role sync setting.
+| OAuth Provider | `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | Behavior |
+| --- | --- | --- | --- |
+| Google | false | false | User organization roles are set with `defaultRole` and cannot be changed |
+| Google | true | false | User organization roles are set with `defaultRole` for Google. For other providers, the synchronization will be skipped, and the org role can be changed, along with other OAuth provider users' org roles. |
+| Google | false | true | User organization roles are set with `defaultRole` and the org role can be changed for Google synced users. |
+| Google | true | true | User organization roles are set with `defaultRole` for Google. For other providers, the synchronization will be skipped, and the org role can be changed, along with other OAuth provider users' org roles. |
 
 ### api_key_max_seconds_to_live
 
@@ -1834,6 +1850,12 @@ This option does not require any configuration.
 ## [rendering]
 
 Options to configure a remote HTTP image rendering service, e.g. using https://github.com/grafana/grafana-image-renderer.
+
+#### renderer_token
+
+> **Note**: Available in Grafana v9.1.2 and Image Renderer v3.6.1 or later.
+
+An auth token will be sent to and verified by the renderer. The renderer will deny any request without an auth token matching the one configured on the renderer.
 
 ### server_url
 
