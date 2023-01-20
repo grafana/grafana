@@ -95,7 +95,7 @@ DataFrame: {
 		// Convert input values into a display string
 		mappings?: [...#ValueMapping]
 		// Map numeric values to states
-		thresholds?: [#ThresholdsConfig]
+		thresholds?: [...#ThresholdsConfig]
 } @cuetsy(kind="interface")
 
 // TODO | null
