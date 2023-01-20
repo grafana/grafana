@@ -182,7 +182,8 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 		// clear plugin error if a pre-existing error has since been resolved
 		delete(l.errs, plugin.ID)
 
-		// verify module.js exists for SystemJS to load
+		// verify module.js exists for SystemJS to load.
+		// CDN plugins can be loaded with plugin.json only, so do not warn for those.
 		if !plugin.IsRenderer() && !plugin.IsCorePlugin() {
 			module := filepath.Join(plugin.PluginDir, "module.js")
 			if exists, err := fs.Exists(module); err != nil {

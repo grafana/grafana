@@ -38,7 +38,6 @@ function getSignatureDisplayModel(signature?: PluginSignatureStatus): BadgeProps
     case PluginSignatureStatus.internal:
       return { text: 'Core', color: 'blue', tooltip: 'Core plugin that is bundled with Grafana' };
     case PluginSignatureStatus.valid:
-    case PluginSignatureStatus.cdn:
       return { text: 'Signed', icon: 'lock', color: 'green', tooltip: 'Signed and verified plugin' };
     case PluginSignatureStatus.invalid:
       return {

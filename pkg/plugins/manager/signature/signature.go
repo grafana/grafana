@@ -18,7 +18,7 @@ func NewValidator(authorizer plugins.PluginLoaderAuthorizer) Validator {
 }
 
 func (s *Validator) Validate(plugin *plugins.Plugin) *plugins.SignatureError {
-	if plugin.Signature.IsValid() || plugin.Signature.IsCDN() {
+	if plugin.Signature.IsValid() {
 		s.log.Debug("Plugin has valid signature", "id", plugin.ID)
 		return nil
 	}

@@ -454,7 +454,7 @@ func TestLoader_Load(t *testing.T) {
 					PluginDir: filepath.Join(parentDir, "testdata/cdn/grafana-worldmap-panel"),
 					Class:     plugins.External,
 					CDN:       true,
-					Signature: plugins.SignatureCDN,
+					Signature: plugins.SignatureValid,
 					BaseURL:   "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel",
 					Module:    "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module",
 				},

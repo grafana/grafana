@@ -108,7 +108,7 @@ func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, erro
 
 	if plugin.CDN {
 		return plugins.Signature{
-			Status: plugins.SignatureCDN,
+			Status: plugins.SignatureValid,
 		}, nil
 	}
 
