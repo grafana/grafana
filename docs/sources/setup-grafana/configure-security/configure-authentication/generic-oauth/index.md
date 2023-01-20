@@ -35,6 +35,8 @@ Example config:
 name = OAuth
 icon = signin
 enabled = true
+allow_sign_up = true
+auto_login = false
 client_id = YOUR_APP_CLIENT_ID
 client_secret = YOUR_APP_CLIENT_SECRET
 scopes =
@@ -43,7 +45,6 @@ auth_url =
 token_url =
 api_url =
 allowed_domains = mycompany.com mycompany.org
-allow_sign_up = true
 tls_skip_verify_insecure = false
 tls_client_cert =
 tls_client_key =
@@ -130,6 +131,15 @@ To configure Generic OAuth to use a refresh token, perform one or both of the fo
 - Extend the `[auth.generic_oauth]` section with additional scopes
 - Enable the refresh token on the provider
 
+### Configure automatic login
+
+Set `auto_login` option to true to attempt login automatically, skipping the login screen.
+This setting is ignored if multiple auth providers are configured to use auto login.
+
+```
+auto_login = true
+```
+
 ## Set up OAuth2 with Auth0
 
 1. Use the following parameters to create a client in Auth0:
@@ -147,6 +157,7 @@ To configure Generic OAuth to use a refresh token, perform one or both of the fo
    [auth.generic_oauth]
    enabled = true
    allow_sign_up = true
+   auto_login = false
    team_ids =
    allowed_organizations =
    name = Auth0
@@ -166,6 +177,7 @@ To configure Generic OAuth to use a refresh token, perform one or both of the fo
 name = BitBucket
 enabled = true
 allow_sign_up = true
+auto_login = false
 client_id = <client id>
 client_secret = <client secret>
 scopes = account email
@@ -203,6 +215,7 @@ By default, a refresh token is included in the response for the **Authorization 
    name = Centrify
    enabled = true
    allow_sign_up = true
+   auto_login = false
    client_id = <OpenID Connect Client ID from Centrify>
    client_secret = <your generated OpenID Connect Client Secret"
    scopes = openid profile email
@@ -242,6 +255,7 @@ By default, a refresh token is included in the response for the **Authorization 
    name = OneLogin
    enabled = true
    allow_sign_up = true
+   auto_login = false
    client_id = <client id>
    client_secret = <client secret>
    scopes = openid email name
