@@ -1,4 +1,4 @@
-import { getPluginLink, PluginLinkMissingError } from './pluginLinks';
+import { getPluginLink, PluginLinkMissingError } from './links';
 import { setExtensionsRegistry } from './registry';
 
 describe('getPluginLink', () => {
