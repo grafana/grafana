@@ -6385,13 +6385,13 @@ kind: secret
 name: azure_tenant
 ---
 get:
-  name: public-key
+  name: public-key-b64
   path: infra/data/ci/packages-publish/gpg
 kind: secret
 name: packages_gpg_public_key
 ---
 get:
-  name: private-key
+  name: private-key-b64
   path: infra/data/ci/packages-publish/gpg
 kind: secret
 name: packages_gpg_private_key
@@ -6439,6 +6439,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: b00c47739d5af79f368c649765e1ac22d89ef4e4539166ad54650642ffc163e0
+hmac: 7f74588652e48e6c51cd54fb9973289c144f09d2f232fe30fe66b5d51b9b317e
 
 ...
