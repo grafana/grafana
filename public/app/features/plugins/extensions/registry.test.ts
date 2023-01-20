@@ -1,46 +1,42 @@
-import { PluginExtensions } from '@grafana/data';
-
 import { configurePluginExtensions, getRegistry } from './registry';
 
 describe('Plugin registry', () => {
   describe('configurePluginExtensions function', () => {
-    const bootRegistry: Record<string, PluginExtensions> = {
-      'belugacdn-app': {
-        links: [
-          {
-            id: 'declare-incident',
-            description: 'Incidents are occurring!',
-            path: '/incidents/declare',
-          },
-        ],
-      },
-      'strava-app': {
-        links: [
-          {
-            id: 'declare-incident',
-            description: 'Incidents are occurring!',
-            path: '/incidents/declare',
-          },
-        ],
-      },
-      'duplicate-links-app': {
-        links: [
-          {
-            id: 'declare-incident',
-            description: 'Incidents are occurring!',
-            path: '/incidents/declare',
-          },
-          {
-            id: 'declare-incident',
-            description: 'Incidents are occurring!',
-            path: '/incidents/declare2',
-          },
-        ],
-      },
-    };
-
-    beforeEach(() => {
-      configurePluginExtensions(bootRegistry);
+    beforeAll(() => {
+      configurePluginExtensions({
+        'belugacdn-app': {
+          links: [
+            {
+              id: 'declare-incident',
+              description: 'Incidents are occurring!',
+              path: '/incidents/declare',
+            },
+          ],
+        },
+        'strava-app': {
+          links: [
+            {
+              id: 'declare-incident',
+              description: 'Incidents are occurring!',
+              path: '/incidents/declare',
+            },
+          ],
+        },
+        'duplicate-links-app': {
+          links: [
+            {
+              id: 'declare-incident',
+              description: 'Incidents are occurring!',
+              path: '/incidents/declare',
+            },
+            {
+              id: 'declare-incident',
+              description: 'Incidents are occurring!',
+              path: '/incidents/declare2',
+            },
+          ],
+        },
+      });
     });
 
     it('should configure a registry link', () => {

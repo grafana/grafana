@@ -1,6 +1,4 @@
-import { error } from 'jquery';
-
-import type { PluginExtensions, PluginExtensionsLink } from '@grafana/data';
+import { type PluginExtensions, type PluginExtensionsLink, type UrlQueryMap, urlUtil } from '@grafana/data';
 
 type PluginExtensionsRegistryLink = {
   description: string;
@@ -11,12 +9,12 @@ type PluginExtensionsRegistry = {
   links: Record<string, PluginExtensionsRegistryLink>;
 };
 
-let extensionsRegistry: PluginExtensionsRegistry = {
+let registry: PluginExtensionsRegistry = {
   links: {},
 };
 
 export function getRegistry() {
-  return extensionsRegistry;
+  return registry;
 }
 
 function getRegistryLinks(pluginId: string, links: PluginExtensionsLink[]) {
@@ -36,7 +34,7 @@ function getRegistryLinks(pluginId: string, links: PluginExtensionsLink[]) {
 }
 
 export function configurePluginExtensions(pluginExtensions: Record<string, PluginExtensions>): void {
-  const registry = Object.entries(pluginExtensions).reduce<PluginExtensionsRegistry>(
+  registry = Object.entries(pluginExtensions).reduce<PluginExtensionsRegistry>(
     (registry, [pluginId, pluginExtension]) => {
       const links = getRegistryLinks(pluginId, pluginExtension.links);
 
@@ -46,19 +44,41 @@ export function configurePluginExtensions(pluginExtensions: Record<string, Plugi
     { links: {} }
   );
 
-  extensionsRegistry = registry;
+  Object.freeze(registry);
 }
 
 type PluginLinkOptions = {
   id: string;
-  queryParams?: Record<string, unknown>;
+  queryParams?: UrlQueryMap;
 };
 
-export function getPluginLink({ id, queryParams }: PluginLinkOptions) {
-  // belugacdn-app.declare-incident
-  const href = '';
+type PluginLinkResult = {
+  href?: string;
+  error?: Error;
+  description?: string;
+};
+
+export class PluginLinkMissingError extends Error {
+  readonly id: string;
+
+  constructor(id: string) {
+    super(`Could not find link for '${id}'`);
+    this.id = id;
+    this.name = PluginLinkMissingError.name;
+  }
+}
+
+export function getPluginLink({ id, queryParams }: PluginLinkOptions): PluginLinkResult {
+  const extension = registry.links[id];
+
+  if (!extension) {
+    return {
+      error: new PluginLinkMissingError(id),
+    };
+  }
+
   return {
-    href, // this will always be a string | undefined
-    error, // this will be Error | undefined
+    description: extension.description,
+    href: urlUtil.renderUrl(extension.href, queryParams),
   };
 }
