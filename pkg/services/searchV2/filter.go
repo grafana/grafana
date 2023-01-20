@@ -2,6 +2,7 @@ package searchV2
 
 import (
 	"regexp"
+	"strings"
 
 	"github.com/blugelabs/bluge"
 	"github.com/blugelabs/bluge/search"
