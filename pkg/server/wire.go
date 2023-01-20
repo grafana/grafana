@@ -6,6 +6,7 @@ package server
 import (
 	"github.com/google/wire"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -27,7 +28,6 @@ import (
 	loginpkg "github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
-	"github.com/grafana/grafana/pkg/models"
 	pluginDashboards "github.com/grafana/grafana/pkg/plugins/manager/dashboards"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -230,7 +230,7 @@ var wireBasicSet = wire.NewSet(
 	pushhttp.ProvideService,
 	contexthandler.ProvideService,
 	jwt.ProvideService,
-	wire.Bind(new(models.JWTService), new(*jwt.AuthService)),
+	wire.Bind(new(jwt.JWTService), new(*jwt.AuthService)),
 	ngstore.ProvideDBStore,
 	ngimage.ProvideDeleteExpiredService,
 	ngalert.ProvideService,
