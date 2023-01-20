@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/store"
 	kdash "github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/setting"
@@ -761,7 +762,7 @@ func (i *searchIndex) updateDashboard(ctx context.Context, orgID int64, index *o
 
 	var folderUID string
 	if dash.folderID == 0 {
-		folderUID = "general"
+		folderUID = folder.GeneralFolderUID
 	} else {
 		var err error
 		folderUID, err = i.folderIdLookup(ctx, dash.folderID)
@@ -900,23 +901,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 	limit := 1
 
 	if dashboardUID == "" {
-		limit = l.settings.DashboardLoadingBatchSize
-		dashboards = make([]dashboard, 0, limit+1)
-
-		// Add the root folder ID (does not exist in SQL).
-		dashboards = append(dashboards, dashboard{
-			id:       0,
-			uid:      "",
-			isFolder: true,
-			folderID: 0,
-			slug:     "",
-			created:  time.Now(),
-			updated:  time.Now(),
-			summary: &models.EntitySummary{
-				//ID:    0,
-				Name: "General",
-			},
-		})
+		dashboards = make([]dashboard, 0, l.settings.DashboardLoadingBatchSize)
 	}
 
 	loadDatasourceCtx, loadDatasourceSpan := l.tracer.Start(ctx, "sqlDashboardLoader LoadDatasourceLookup")

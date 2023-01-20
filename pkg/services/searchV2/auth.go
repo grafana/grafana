@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -72,8 +71,6 @@ func (a *simpleAuthService) GetDashboardReadFilter(user *user.SignedInUser) (Res
 	}
 
 	uids := make(map[string]bool, len(rows)+1)
-	// Everyone can read the general folder
-	uids[folder.GeneralFolderUID] = true
 	for i := 0; i < len(rows); i++ {
 		uids[rows[i].UID] = true
 	}

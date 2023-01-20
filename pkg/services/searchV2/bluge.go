@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/folder"
 )
 
 const (
@@ -68,6 +69,7 @@ func initOrgIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDas
 
 	// First index the folders to construct folderIdLookup.
 	folderIdLookup := make(map[int64]string, 50)
+	folderIdLookup[0] = folder.GeneralFolderUID
 	for _, dash := range dashboards {
 		if !dash.isFolder {
 			continue
@@ -81,9 +83,6 @@ func initOrgIndex(dashboards []dashboard, logger log.Logger, extendDoc ExtendDas
 			return nil, err
 		}
 		uid := dash.uid
-		if uid == "" {
-			uid = "general"
-		}
 		folderIdLookup[dash.id] = uid
 	}
 
