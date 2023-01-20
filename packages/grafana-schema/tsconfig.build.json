@@ -1,5 +1,4 @@
 {
-  // dashboard_experimental.gen.ts needs ignoring as isolatedModules requires it to contain an import or export statement.
-  "exclude": ["dist/**/*", "src/schema/dashboard/dashboard_experimental.gen.ts", "**/*.test.ts*"],
+  "exclude": ["dist/**/*", "**/*.test.ts*"],
   "extends": "./tsconfig.json"
 }

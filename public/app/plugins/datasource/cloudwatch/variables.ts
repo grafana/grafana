@@ -9,16 +9,16 @@ import {
   SelectableValue,
 } from '@grafana/data';
 
-import { CloudWatchAPI } from './api';
 import { ALL_ACCOUNTS_OPTION } from './components/Account';
 import { VariableQueryEditor } from './components/VariableQueryEditor/VariableQueryEditor';
 import { CloudWatchDatasource } from './datasource';
 import { migrateVariableQuery } from './migrations/variableQueryMigrations';
+import { ResourcesAPI } from './resources/ResourcesAPI';
 import { standardStatistics } from './standardStatistics';
 import { VariableQuery, VariableQueryType } from './types';
 
 export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchDatasource, VariableQuery> {
-  constructor(private readonly api: CloudWatchAPI) {
+  constructor(private readonly resources: ResourcesAPI) {
     super();
     this.query = this.query.bind(this);
   }
@@ -62,7 +62,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
     }
   }
   async handleLogGroupsQuery({ region, logGroupPrefix }: VariableQuery) {
-    return this.api
+    return this.resources
       .getLogGroups({
         region,
         logGroupNamePrefix: logGroupPrefix,
@@ -80,26 +80,30 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
   }
 
   async handleRegionsQuery() {
-    return this.api.getRegions().then((regions) => regions.map(selectableValueToMetricFindOption));
+    return this.resources.getRegions().then((regions) => regions.map(selectableValueToMetricFindOption));
   }
 
   async handleNamespacesQuery() {
-    return this.api.getNamespaces().then((namespaces) => namespaces.map(selectableValueToMetricFindOption));
+    return this.resources.getNamespaces().then((namespaces) => namespaces.map(selectableValueToMetricFindOption));
   }
 
   async handleMetricsQuery({ namespace, region }: VariableQuery) {
-    return this.api.getMetrics({ namespace, region }).then((metrics) => metrics.map(selectableValueToMetricFindOption));
+    return this.resources
+      .getMetrics({ namespace, region })
+      .then((metrics) => metrics.map(selectableValueToMetricFindOption));
   }
 
   async handleDimensionKeysQuery({ namespace, region }: VariableQuery) {
-    return this.api.getDimensionKeys({ namespace, region }).then((keys) => keys.map(selectableValueToMetricFindOption));
+    return this.resources
+      .getDimensionKeys({ namespace, region })
+      .then((keys) => keys.map(selectableValueToMetricFindOption));
   }
 
   async handleDimensionValuesQuery({ namespace, region, dimensionKey, metricName, dimensionFilters }: VariableQuery) {
     if (!dimensionKey || !metricName) {
       return [];
     }
-    return this.api
+    return this.resources
       .getDimensionValues({
         region,
         namespace,
@@ -114,14 +118,14 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
     if (!instanceID) {
       return [];
     }
-    return this.api.getEbsVolumeIds(region, instanceID).then((ids) => ids.map(selectableValueToMetricFindOption));
+    return this.resources.getEbsVolumeIds(region, instanceID).then((ids) => ids.map(selectableValueToMetricFindOption));
   }
 
   async handleEc2InstanceAttributeQuery({ region, attributeName, ec2Filters }: VariableQuery) {
     if (!attributeName) {
       return [];
     }
-    return this.api
+    return this.resources
       .getEc2InstanceAttribute(region, attributeName, ec2Filters ?? {})
       .then((values) => values.map(selectableValueToMetricFindOption));
   }
@@ -130,7 +134,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
     if (!resourceType) {
       return [];
     }
-    const keys = await this.api.getResourceARNs(region, resourceType, tags ?? {});
+    const keys = await this.resources.getResourceARNs(region, resourceType, tags ?? {});
     return keys.map(selectableValueToMetricFindOption);
   }
 
@@ -144,7 +148,7 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
 
   allMetricFindValue: MetricFindValue = { text: 'All', value: ALL_ACCOUNTS_OPTION.value, expandable: true };
   async handleAccountsQuery({ region }: VariableQuery) {
-    return this.api.getAccounts({ region }).then((accounts) => {
+    return this.resources.getAccounts({ region }).then((accounts) => {
       const metricFindOptions = accounts.map((account) => ({
         text: account.label,
         value: account.id,

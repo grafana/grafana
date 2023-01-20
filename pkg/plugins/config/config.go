@@ -20,8 +20,6 @@ type Cfg struct {
 	PluginSettings       setting.PluginSettings
 	PluginsAllowUnsigned []string
 
-	EnterpriseLicensePath string
-
 	// AWS Plugin Auth
 	AWSAllowedAuthProviders []string
 	AWSAssumeRoleEnabled    bool
@@ -61,7 +59,6 @@ func NewCfg(settingProvider setting.Provider, grafanaCfg *setting.Cfg) *Cfg {
 		PluginsPath:             grafanaCfg.PluginsPath,
 		BuildVersion:            grafanaCfg.BuildVersion,
 		DevMode:                 settingProvider.KeyValue("", "app_mode").MustBool(grafanaCfg.Env == setting.Dev),
-		EnterpriseLicensePath:   settingProvider.KeyValue("enterprise", "license_path").MustString(grafanaCfg.EnterpriseLicensePath),
 		PluginSettings:          extractPluginSettings(settingProvider),
 		PluginsAllowUnsigned:    allowedUnsigned,
 		AWSAllowedAuthProviders: allowedAuth,

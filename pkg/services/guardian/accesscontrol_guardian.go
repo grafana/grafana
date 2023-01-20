@@ -233,13 +233,13 @@ func (a *AccessControlDashboardGuardian) evaluate(evaluator accesscontrol.Evalua
 	return ok, err
 }
 
-func (a *AccessControlDashboardGuardian) CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*models.DashboardACL) (bool, error) {
+func (a *AccessControlDashboardGuardian) CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*dashboards.DashboardACL) (bool, error) {
 	// always true for access control
 	return true, nil
 }
 
 // GetACL translate access control permissions to dashboard acl info
-func (a *AccessControlDashboardGuardian) GetACL() ([]*models.DashboardACLInfoDTO, error) {
+func (a *AccessControlDashboardGuardian) GetACL() ([]*dashboards.DashboardACLInfoDTO, error) {
 	if a.dashboard == nil {
 		return nil, ErrGuardianGetDashboardFailure
 	}
@@ -256,7 +256,7 @@ func (a *AccessControlDashboardGuardian) GetACL() ([]*models.DashboardACLInfoDTO
 		return nil, err
 	}
 
-	acl := make([]*models.DashboardACLInfoDTO, 0, len(permissions))
+	acl := make([]*dashboards.DashboardACLInfoDTO, 0, len(permissions))
 	for _, p := range permissions {
 		if !p.IsManaged {
 			continue
@@ -268,26 +268,26 @@ func (a *AccessControlDashboardGuardian) GetACL() ([]*models.DashboardACLInfoDTO
 			role = &tmp
 		}
 
-		acl = append(acl, &models.DashboardACLInfoDTO{
-			OrgId:          a.dashboard.OrgID,
-			DashboardId:    a.dashboard.ID,
-			FolderId:       a.dashboard.FolderID,
+		acl = append(acl, &dashboards.DashboardACLInfoDTO{
+			OrgID:          a.dashboard.OrgID,
+			DashboardID:    a.dashboard.ID,
+			FolderID:       a.dashboard.FolderID,
 			Created:        p.Created,
 			Updated:        p.Updated,
-			UserId:         p.UserId,
+			UserID:         p.UserId,
 			UserLogin:      p.UserLogin,
 			UserEmail:      p.UserEmail,
-			TeamId:         p.TeamId,
+			TeamID:         p.TeamId,
 			TeamEmail:      p.TeamEmail,
 			Team:           p.Team,
 			Role:           role,
 			Permission:     permissionMap[svc.MapActions(p)],
 			PermissionName: permissionMap[svc.MapActions(p)].String(),
-			Uid:            a.dashboard.UID,
+			UID:            a.dashboard.UID,
 			Title:          a.dashboard.Title,
 			Slug:           a.dashboard.Slug,
 			IsFolder:       a.dashboard.IsFolder,
-			Url:            a.dashboard.GetURL(),
+			URL:            a.dashboard.GetURL(),
 			Inherited:      false,
 		})
 	}
@@ -295,12 +295,12 @@ func (a *AccessControlDashboardGuardian) GetACL() ([]*models.DashboardACLInfoDTO
 	return acl, nil
 }
 
-func (a *AccessControlDashboardGuardian) GetACLWithoutDuplicates() ([]*models.DashboardACLInfoDTO, error) {
+func (a *AccessControlDashboardGuardian) GetACLWithoutDuplicates() ([]*dashboards.DashboardACLInfoDTO, error) {
 	return a.GetACL()
 }
 
-func (a *AccessControlDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*models.DashboardACL, error) {
-	var hiddenACL []*models.DashboardACL
+func (a *AccessControlDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*dashboards.DashboardACL, error) {
+	var hiddenACL []*dashboards.DashboardACL
 	if a.user.IsGrafanaAdmin {
 		return hiddenACL, nil
 	}
@@ -316,11 +316,11 @@ func (a *AccessControlDashboardGuardian) GetHiddenACL(cfg *setting.Cfg) ([]*mode
 		}
 
 		if _, hidden := cfg.HiddenUsers[item.UserLogin]; hidden {
-			hiddenACL = append(hiddenACL, &models.DashboardACL{
-				OrgID:       item.OrgId,
-				DashboardID: item.DashboardId,
-				UserID:      item.UserId,
-				TeamID:      item.TeamId,
+			hiddenACL = append(hiddenACL, &dashboards.DashboardACL{
+				OrgID:       item.OrgID,
+				DashboardID: item.DashboardID,
+				UserID:      item.UserID,
+				TeamID:      item.TeamID,
 				Role:        item.Role,
 				Permission:  item.Permission,
 				Created:     item.Created,

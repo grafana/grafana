@@ -1,29 +1,11 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { useAsyncFn } from 'react-use';
+import React, { useEffect } from 'react';
+import { connect, ConnectedProps } from 'react-redux';
 
-import { getBackendSrv, locationService } from '@grafana/runtime';
-import { Form, Button, Field, Checkbox } from '@grafana/ui';
+import { Form, Button, Field, Checkbox, LinkButton, HorizontalGroup, Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { StoreState } from 'app/types';
 
-// move to types
-export interface SupportBundleCreateRequest {
-  collectors: string[];
-}
-
-export interface SupportBundleCollector {
-  uid: string;
-  displayName: string;
-  description: string;
-  includedByDefault: boolean;
-  default: boolean;
-}
-
-export interface Props {}
-
-const createSupportBundle = async (data: SupportBundleCreateRequest) => {
-  const result = await getBackendSrv().post('/api/support-bundles', data);
-  return result;
-};
+import { loadSupportBundleCollectors, createSupportBundle } from './state/actions';
 
 const subTitle = (
   <span>
@@ -31,50 +13,60 @@ const subTitle = (
   </span>
 );
 
-export const SupportBundlesCreate = ({}: Props): JSX.Element => {
-  const onSubmit = useCallback(async (data) => {
-    try {
-      const selectedLabelsArray = Object.keys(data).filter((key) => data[key]);
-      const response = await createSupportBundle({ collectors: selectedLabelsArray });
-      console.info(response);
-    } catch (e) {
-      console.error(e);
-    }
+const mapStateToProps = (state: StoreState) => {
+  return {
+    collectors: state.supportBundles.supportBundleCollectors,
+    isLoading: state.supportBundles.createBundlePageLoading,
+    loadCollectorsError: state.supportBundles.loadBundlesError,
+    createBundleError: state.supportBundles.createBundleError,
+  };
+};
 
-    locationService.push('/admin/support-bundles');
-  }, []);
+const mapDispatchToProps = {
+  loadSupportBundleCollectors,
+  createSupportBundle,
+};
 
-  const [components, setComponents] = useState<SupportBundleCollector[]>([]);
-  // populate components from the backend
-  const populateComponents = async () => {
-    return await getBackendSrv().get('/api/support-bundles/collectors');
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type Props = ConnectedProps<typeof connector>;
+
+export const SupportBundlesCreateUnconnected = ({
+  collectors,
+  isLoading,
+  loadCollectorsError,
+  createBundleError,
+  loadSupportBundleCollectors,
+  createSupportBundle,
+}: Props): JSX.Element => {
+  const onSubmit = (data: Record<string, boolean>) => {
+    const selectedLabelsArray = Object.keys(data).filter((key) => data[key]);
+    createSupportBundle({ collectors: selectedLabelsArray });
   };
 
-  const [state, fetchComponents] = useAsyncFn(populateComponents);
   useEffect(() => {
-    fetchComponents().then((res) => {
-      setComponents(res);
-    });
-  }, [fetchComponents]);
+    loadSupportBundleCollectors();
+  }, [loadSupportBundleCollectors]);
 
   // turn components into a uuid -> enabled map
-  const values: Record<string, boolean> = components.reduce((acc, curr) => {
+  const values: Record<string, boolean> = collectors.reduce((acc, curr) => {
     return { ...acc, [curr.uid]: curr.default };
   }, {});
 
   return (
     <Page navId="support-bundles" pageNav={{ text: 'Create support bundle' }} subTitle={subTitle}>
-      <Page.Contents>
+      <Page.Contents isLoading={isLoading}>
         <Page.OldNavOnly>
           <h3 className="page-sub-heading">Create support bundle</h3>
         </Page.OldNavOnly>
-        {state.error && <p>{state.error}</p>}
-        {!!components.length && (
+        {loadCollectorsError && <Alert title={loadCollectorsError} severity="error" />}
+        {createBundleError && <Alert title={createBundleError} severity="error" />}
+        {!!collectors.length && (
           <Form defaultValues={values} onSubmit={onSubmit} validateOn="onSubmit">
             {({ register, errors }) => {
               return (
                 <>
-                  {components.map((component) => {
+                  {collectors.map((component) => {
                     return (
                       <Field key={component.uid}>
                         <Checkbox
@@ -88,7 +80,12 @@ export const SupportBundlesCreate = ({}: Props): JSX.Element => {
                       </Field>
                     );
                   })}
-                  <Button type="submit">Create</Button>
+                  <HorizontalGroup>
+                    <Button type="submit">Create</Button>
+                    <LinkButton href="/admin/support-bundles" variant="secondary">
+                      Cancel
+                    </LinkButton>
+                  </HorizontalGroup>
                 </>
               );
             }}
@@ -99,4 +96,4 @@ export const SupportBundlesCreate = ({}: Props): JSX.Element => {
   );
 };
 
-export default SupportBundlesCreate;
+export default connector(SupportBundlesCreateUnconnected);

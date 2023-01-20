@@ -219,7 +219,7 @@ func TestDashboardAnnotations(t *testing.T) {
 	_, dbstore := tests.SetupTestEnv(t, 1)
 
 	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
-	hist := historian.NewAnnotationBackend(fakeAnnoRepo, &dashboards.FakeDashboardService{})
+	hist := historian.NewAnnotationBackend(fakeAnnoRepo, &dashboards.FakeDashboardService{}, nil)
 	cfg := state.ManagerCfg{
 		Metrics:       testMetrics.GetStateMetrics(),
 		ExternalURL:   nil,
@@ -2208,7 +2208,7 @@ func TestProcessEvalResults(t *testing.T) {
 
 	for _, tc := range testCases {
 		fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
-		hist := historian.NewAnnotationBackend(fakeAnnoRepo, &dashboards.FakeDashboardService{})
+		hist := historian.NewAnnotationBackend(fakeAnnoRepo, &dashboards.FakeDashboardService{}, nil)
 		cfg := state.ManagerCfg{
 			Metrics:       testMetrics.GetStateMetrics(),
 			ExternalURL:   nil,

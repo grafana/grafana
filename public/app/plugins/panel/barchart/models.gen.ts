@@ -10,7 +10,7 @@
 
 import * as ui from '@grafana/schema';
 
-export const PanelModelVersion = Object.freeze([0, 0]);
+export const PanelCfgModelVersion = Object.freeze([0, 0]);
 
 export interface PanelOptions extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui.OptionsWithTextFormatting {
   /**
@@ -26,7 +26,8 @@ export interface PanelOptions extends ui.OptionsWithLegend, ui.OptionsWithToolti
    */
   colorByField?: string;
   /**
-   * Enables mode which highlights the entire bar area and shows tooltip when cursor hovers over highlighted area
+   * Enables mode which highlights the entire bar area and shows tooltip when cursor
+   * hovers over highlighted area
    */
   fullHighlight: boolean;
   /**

@@ -1,10 +1,13 @@
 import React, { useEffect } from 'react';
-import { useAsyncFn } from 'react-use';
+import { connect, ConnectedProps } from 'react-redux';
 
 import { dateTimeFormat } from '@grafana/data';
-import { config, getBackendSrv } from '@grafana/runtime';
-import { LinkButton } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { LinkButton, Spinner, IconButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { StoreState } from 'app/types';
+
+import { loadBundles, removeBundle, checkBundles } from './state/actions';
 
 const subTitle = (
   <span>
@@ -13,39 +16,48 @@ const subTitle = (
   </span>
 );
 
-const newButton = (
+const NewBundleButton = (
   <LinkButton icon="plus" href="admin/support-bundles/create" variant="primary">
     New support bundle
   </LinkButton>
 );
 
-type SupportBundleState = 'complete' | 'error' | 'timeout' | 'pending';
-
-interface SupportBundle {
-  uid: string;
-  state: SupportBundleState;
-  creator: string;
-  createdAt: number;
-  expiresAt: number;
-}
-
-const getBundles = () => {
-  return getBackendSrv().get<SupportBundle[]>('/api/support-bundles');
+const mapStateToProps = (state: StoreState) => {
+  return {
+    supportBundles: state.supportBundles.supportBundles,
+    isLoading: state.supportBundles.isLoading,
+  };
 };
 
-function SupportBundles() {
-  const [bundlesState, fetchBundles] = useAsyncFn(getBundles, []);
+const mapDispatchToProps = {
+  loadBundles,
+  removeBundle,
+  checkBundles,
+};
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+type Props = ConnectedProps<typeof connector>;
+
+const SupportBundlesUnconnected = ({ supportBundles, isLoading, loadBundles, removeBundle, checkBundles }: Props) => {
+  const isPending = supportBundles.some((b) => b.state === 'pending');
 
   useEffect(() => {
-    fetchBundles();
-  }, [fetchBundles]);
+    loadBundles();
+  }, [loadBundles]);
 
-  const actions = config.featureToggles.topnav ? newButton : undefined;
+  useEffect(() => {
+    if (isPending) {
+      checkBundles();
+    }
+  });
+
+  const actions = config.featureToggles.topnav ? NewBundleButton : undefined;
 
   return (
     <Page navId="support-bundles" subTitle={subTitle} actions={actions}>
-      <Page.Contents isLoading={bundlesState.loading}>
-        {!config.featureToggles.topnav && newButton}
+      <Page.Contents isLoading={isLoading}>
+        {!config.featureToggles.topnav && NewBundleButton}
 
         <table className="filter-table form-inline">
           <thead>
@@ -53,24 +65,30 @@ function SupportBundles() {
               <th>Created on</th>
               <th>Requested by</th>
               <th>Expires</th>
+              <th style={{ width: '32px' }} />
+              <th style={{ width: '1%' }} />
               <th style={{ width: '1%' }} />
             </tr>
           </thead>
           <tbody>
-            {bundlesState?.value?.map((b) => (
-              <tr key={b.uid}>
-                <th>{dateTimeFormat(b.createdAt * 1000)}</th>
-                <th>{b.creator}</th>
-                <th>{dateTimeFormat(b.expiresAt * 1000)}</th>
+            {supportBundles?.map((bundle) => (
+              <tr key={bundle.uid}>
+                <th>{dateTimeFormat(bundle.createdAt * 1000)}</th>
+                <th>{bundle.creator}</th>
+                <th>{dateTimeFormat(bundle.expiresAt * 1000)}</th>
+                <th>{bundle.state === 'pending' && <Spinner />}</th>
                 <th>
                   <LinkButton
                     fill="outline"
-                    disabled={b.state !== 'complete'}
+                    disabled={bundle.state !== 'complete'}
                     target={'_self'}
-                    href={'/api/support-bundles/' + b.uid}
+                    href={`/api/support-bundles/${bundle.uid}`}
                   >
                     Download
                   </LinkButton>
+                </th>
+                <th>
+                  <IconButton onClick={() => removeBundle(bundle.uid)} name="trash-alt" variant="destructive" />
                 </th>
               </tr>
             ))}
@@ -79,6 +97,6 @@ function SupportBundles() {
       </Page.Contents>
     </Page>
   );
-}
+};
 
-export default SupportBundles;
+export default connector(SupportBundlesUnconnected);
