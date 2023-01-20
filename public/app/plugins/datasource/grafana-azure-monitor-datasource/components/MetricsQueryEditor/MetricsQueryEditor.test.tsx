@@ -208,9 +208,6 @@ describe('MetricsQueryEditor', () => {
     await userEvent.click(checkbox);
     expect(checkbox).toBeChecked();
 
-    // it should disable other resource types
-    expect(await screen.findByLabelText('web-server_DataDisk')).toBeDisabled();
-
     const checkbox2 = await screen.findByLabelText('db-server');
     await userEvent.click(checkbox2);
     expect(checkbox2).toBeChecked();
@@ -236,6 +233,41 @@ describe('MetricsQueryEditor', () => {
         }),
       })
     );
+  });
+
+  it('should disable other resource types when selecting multiple resources', async () => {
+    const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
+    const query = createMockQuery();
+    delete query?.subscription;
+    delete query?.azureMonitor?.resources;
+    delete query?.azureMonitor?.metricNamespace;
+    const onChange = jest.fn();
+
+    render(
+      <MetricsQueryEditor
+        data={mockPanelData}
+        query={query}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={onChange}
+        setError={() => {}}
+      />
+    );
+
+    const resourcePickerButton = await screen.findByRole('button', { name: 'Select a resource' });
+    resourcePickerButton.click();
+
+    const subscriptionButton = await screen.findByRole('button', { name: 'Expand Primary Subscription' });
+    subscriptionButton.click();
+
+    const resourceGroupButton = await screen.findByRole('button', { name: 'Expand A Great Resource Group' });
+    resourceGroupButton.click();
+
+    const checkbox = await screen.findByLabelText('web-server');
+    await userEvent.click(checkbox);
+    expect(checkbox).toBeChecked();
+
+    expect(await screen.findByLabelText('web-server_DataDisk')).toBeDisabled();
   });
 
   it('should change the metric name when selected', async () => {
