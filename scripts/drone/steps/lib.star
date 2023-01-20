@@ -9,7 +9,7 @@ load(
 )
 
 grabpl_version = "v3.0.20"
-build_image = "grafana/build-container:1.6.6"
+build_image = "grafana/build-container:713aa108d15"
 publish_image = "grafana/grafana-ci-deploy:1.3.3"
 deploy_docker_image = "us.gcr.io/kubernetes-dev/drone/plugins/deploy-image"
 alpine_image = "alpine:3.15.6"
