@@ -19,7 +19,7 @@ interface ConnectionInfo {
   info: CanvasConnection;
 }
 
-let idCounter = 100;
+let idCounter = 0;
 export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
   const styles = useStyles2(getStyles);
 
