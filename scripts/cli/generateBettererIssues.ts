@@ -10,7 +10,7 @@ const argv = yargs(hideBin(process.argv))
   .option('template', {
     demandOption: true,
     alias: 't',
-    describe: 'Path to a template to use for each issue. See source of generateBettererIssues.ts for an example',
+    describe: 'Path to a template to use for each issue. See source bettererIssueTemplate.md for an example',
     type: 'string',
     default: './scripts/cli/bettererIssueTemplate.md',
   })
