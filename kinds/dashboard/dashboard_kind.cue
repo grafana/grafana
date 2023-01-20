@@ -151,7 +151,7 @@ lineage: seqs: [
 
 					// Specific datasource instance
 					uid?: string @grafanamaturity(NeedsExpertReview)
-				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
+				} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
 
 				// FROM public/app/features/dashboard/state/DashboardModels.ts - ish
 				// TODO docs

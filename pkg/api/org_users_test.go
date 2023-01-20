@@ -219,7 +219,7 @@ func TestOrgUsersAPIEndpoint_LegacyAccessControl_FolderAdmin(t *testing.T) {
 	require.NotNil(t, folder)
 
 	// Grant our test Viewer with permission to admin the folder
-	acls := []*models.DashboardACL{
+	acls := []*dashboards.DashboardACL{
 		{
 			DashboardID: folder.ID,
 			OrgID:       testOrgID,
