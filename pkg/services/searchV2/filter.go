@@ -96,7 +96,7 @@ func (q *PermissionFilter) canAccess(kind entityKind, id, location string) bool 
 		dashboardUid := matches[panelIdFieldDashboardUidSubmatchIndex]
 
 		// Location is <folder_uid>/<dashboard_uid>
-		if len(location) <= len(dashboardUid)+1 {
+		if !strings.HasSuffix(location, "/"+dashboardUid) {
 			q.logAccessDecision(false, kind, id, "invalidLocation", "location", location, "dashboardUid", dashboardUid)
 			return false
 		}

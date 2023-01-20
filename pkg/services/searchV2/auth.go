@@ -12,7 +12,7 @@ import (
 )
 
 // ResourceFilter checks if a given a uid (resource identifier) check if we have the requested permission
-type ResourceFilter func(kind entityKind, uid, parent string) bool
+type ResourceFilter func(kind entityKind, uid, parentUID string) bool
 
 // FutureAuthService eventually implemented by the security service
 type FutureAuthService interface {
