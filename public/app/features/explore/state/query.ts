@@ -615,7 +615,7 @@ export const runQueries = (
               }
             }
             // Code below (else if scenario) is for backward compatibility with data sources that don't support supplementary queries
-            // TODO: Remove after v10 (#61298)
+            // TODO: Remove in next major version - v10 (https://github.com/grafana/grafana/issues/61845)
           } else if (hasLogsVolumeSupport(datasourceInstance) && type === SupplementaryQueryType.LogsVolume) {
             const dataProvider = datasourceInstance.getLogsVolumeDataProvider({
               ...transaction.request,
