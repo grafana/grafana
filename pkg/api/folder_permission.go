@@ -48,23 +48,23 @@ func (hs *HTTPServer) GetFolderPermissionList(c *models.ReqContext) response.Res
 		return response.Error(500, "Failed to get folder permissions", err)
 	}
 
-	filteredACLs := make([]*models.DashboardACLInfoDTO, 0, len(acl))
+	filteredACLs := make([]*dashboards.DashboardACLInfoDTO, 0, len(acl))
 	for _, perm := range acl {
-		if perm.UserId > 0 && dtos.IsHiddenUser(perm.UserLogin, c.SignedInUser, hs.Cfg) {
+		if perm.UserID > 0 && dtos.IsHiddenUser(perm.UserLogin, c.SignedInUser, hs.Cfg) {
 			continue
 		}
 
-		perm.FolderId = folder.ID
-		perm.DashboardId = 0
+		perm.FolderID = folder.ID
+		perm.DashboardID = 0
 
-		perm.UserAvatarUrl = dtos.GetGravatarUrl(perm.UserEmail)
+		perm.UserAvatarURL = dtos.GetGravatarUrl(perm.UserEmail)
 
-		if perm.TeamId > 0 {
-			perm.TeamAvatarUrl = dtos.GetGravatarUrlWithDefault(perm.TeamEmail, perm.Team)
+		if perm.TeamID > 0 {
+			perm.TeamAvatarURL = dtos.GetGravatarUrlWithDefault(perm.TeamEmail, perm.Team)
 		}
 
 		if perm.Slug != "" {
-			perm.Url = dashboards.GetDashboardFolderURL(perm.IsFolder, perm.Uid, perm.Slug)
+			perm.URL = dashboards.GetDashboardFolderURL(perm.IsFolder, perm.UID, perm.Slug)
 		}
 
 		filteredACLs = append(filteredACLs, perm)
@@ -112,9 +112,9 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *models.ReqContext) response.Res
 		return apierrors.ToFolderErrorResponse(dashboards.ErrFolderAccessDenied)
 	}
 
-	items := make([]*models.DashboardACL, 0, len(apiCmd.Items))
+	items := make([]*dashboards.DashboardACL, 0, len(apiCmd.Items))
 	for _, item := range apiCmd.Items {
-		items = append(items, &models.DashboardACL{
+		items = append(items, &dashboards.DashboardACL{
 			OrgID:       c.OrgID,
 			DashboardID: folder.ID,
 			UserID:      item.UserID,
@@ -198,5 +198,5 @@ type UpdateFolderPermissionsParams struct {
 // swagger:response getFolderPermissionListResponse
 type GetFolderPermissionsResponse struct {
 	// in: body
-	Body []*models.DashboardACLInfoDTO `json:"body"`
+	Body []*dashboards.DashboardACLInfoDTO `json:"body"`
 }

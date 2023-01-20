@@ -293,6 +293,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(dashboards.DashboardProvisioningService), new(*dashboardservice.DashboardServiceImpl)),
 	wire.Bind(new(dashboards.PluginService), new(*dashboardservice.DashboardServiceImpl)),
 	wire.Bind(new(dashboards.Store), new(*dashboardstore.DashboardStore)),
+	wire.Bind(new(dashboards.FolderStore), new(*dashboardstore.DashboardStore)),
 	dashboardimportservice.ProvideService,
 	wire.Bind(new(dashboardimport.Service), new(*dashboardimportservice.ImportDashboardService)),
 	plugindashboardsservice.ProvideService,

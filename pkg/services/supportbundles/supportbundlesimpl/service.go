@@ -34,6 +34,9 @@ type Service struct {
 
 	log log.Logger
 
+	enabled         bool
+	serverAdminOnly bool
+
 	collectors map[string]supportbundles.Collector
 }
 
@@ -49,23 +52,26 @@ func ProvideService(cfg *setting.Cfg,
 	pluginSettings pluginsettings.Service,
 	features *featuremgmt.FeatureManager,
 	usageStats usagestats.Service) (*Service, error) {
+	section := cfg.SectionWithEnvOverrides("support_bundles")
 	s := &Service{
-		cfg:            cfg,
-		store:          newStore(kvStore),
-		pluginStore:    pluginStore,
-		pluginSettings: pluginSettings,
-		accessControl:  accessControl,
-		features:       features,
-		log:            log.New("supportbundle.service"),
-		collectors:     make(map[string]supportbundles.Collector),
+		cfg:             cfg,
+		store:           newStore(kvStore),
+		pluginStore:     pluginStore,
+		pluginSettings:  pluginSettings,
+		accessControl:   accessControl,
+		features:        features,
+		log:             log.New("supportbundle.service"),
+		enabled:         section.Key("enabled").MustBool(true),
+		serverAdminOnly: section.Key("server_admin_only").MustBool(true),
+		collectors:      make(map[string]supportbundles.Collector),
 	}
 
-	if !features.IsEnabled(featuremgmt.FlagSupportBundles) {
+	if !features.IsEnabled(featuremgmt.FlagSupportBundles) || !s.enabled {
 		return s, nil
 	}
 
 	if !accessControl.IsDisabled() {
-		if err := declareFixedRoles(accesscontrolService); err != nil {
+		if err := s.declareFixedRoles(accesscontrolService); err != nil {
 			return nil, err
 		}
 	}
