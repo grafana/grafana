@@ -19,23 +19,23 @@ const getStyles = (theme: GrafanaTheme2) => ({
     }
   `,
   description: css`
-    margin-bottom: ${theme.spacing.gridSize * 2}px;
+    margin-bottom: ${theme.spacing(2)};
   `,
   bottomSection: css`
     display: flex;
     border-top: 1px solid ${theme.colors.border.weak};
-    padding-top: ${theme.spacing.gridSize * 3}px;
-    margin-top: ${theme.spacing.gridSize * 3}px;
+    padding-top: ${theme.spacing(3)};
+    margin-top: ${theme.spacing(3)};
   `,
   actionsSection: css`
     display: flex;
     justify-content: end;
-    margin-top: ${theme.spacing.gridSize * 3}px;
+    margin-top: ${theme.spacing(3)};
   `,
   warningIcon: css`
     color: ${theme.colors.warning.main};
-    padding-right: ${theme.spacing.gridSize}px;
-    margin-top: ${theme.spacing.gridSize / 4}px;
+    padding-right: ${theme.spacing()};
+    margin-top: ${theme.spacing(0.25)};
   `,
   header: css`
     display: flex;
@@ -45,7 +45,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin: 0;
   `,
   headerLogo: css`
-    margin-right: ${theme.spacing.gridSize * 2}px;
+    margin-right: ${theme.spacing(2)};
     width: 32px;
     height: 32px;
   `,

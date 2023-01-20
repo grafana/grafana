@@ -11,12 +11,13 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
+	"strings"
 
 	"cuelang.org/go/cue/errors"
 	"github.com/grafana/codejen"
 	"github.com/grafana/cuetsy"
-
 	"github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/kindsys"
@@ -83,11 +84,10 @@ func main() {
 	if err != nil {
 		die(fmt.Errorf("core kinddirs codegen failed: %w", err))
 	}
-	sharedf, err := dummyCommonJenny{}.Generate(nil)
-	if err != nil {
-		die(fmt.Errorf("common schemas failed"))
-	}
-	if err = jfs.Add(elsedie(header(*sharedf))("couldn't inject header")); err != nil {
+
+	commfsys := elsedie(genCommon(filepath.Join(groot, "pkg", "kindsys")))("common schemas failed")
+	commfsys = elsedie(commfsys.Map(header))("failed gen header on common fsys")
+	if err = jfs.Merge(commfsys); err != nil {
 		die(err)
 	}
 
@@ -116,25 +116,48 @@ func nameFor(m kindsys.SomeKindProperties) string {
 
 type dummyCommonJenny struct{}
 
-func (j dummyCommonJenny) JennyName() string {
-	return "CommonSchemaJenny"
-}
+func genCommon(kp string) (*codejen.FS, error) {
+	fsys := codejen.NewFS()
 
-func (j dummyCommonJenny) Generate(dummy any) (*codejen.File, error) {
+	// kp := filepath.Join("pkg", "kindsys")
 	path := filepath.Join("packages", "grafana-schema", "src", "common")
+	// Grab all the common_* files from kindsys and load them in
+	dfsys := os.DirFS(kp)
+	matches := elsedie(fs.Glob(dfsys, "common_*.cue"))("could not glob kindsys cue files")
+	for _, fname := range matches {
+		fpath := filepath.Join(path, strings.TrimPrefix(fname, "common_"))
+		fpath = fpath[:len(fpath)-4] + "_gen.cue"
+		data := elsedie(fs.ReadFile(dfsys, fname))("error reading " + fname)
+		_ = fsys.Add(*codejen.NewFile(fpath, data, dummyCommonJenny{}))
+	}
+	fsys = elsedie(fsys.Map(packageMapper))("failed remapping fs")
+
 	v, err := cuectx.BuildGrafanaInstance(nil, path, "", nil)
 	if err != nil {
 		return nil, err
 	}
 
-	b, err := cuetsy.Generate(v, cuetsy.Config{
+	b := elsedie(cuetsy.Generate(v, cuetsy.Config{
 		Export: true,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate TS: %w", err)
-	}
+	}))("failed to generate common schema TS")
 
-	return codejen.NewFile(filepath.Join(path, "common.gen.ts"), b, dummyCommonJenny{}), nil
+	_ = fsys.Add(*codejen.NewFile(filepath.Join(path, "common.gen.ts"), b, dummyCommonJenny{}))
+	return fsys, nil
+}
+
+func (j dummyCommonJenny) JennyName() string {
+	return "CommonSchemaJenny"
+}
+
+func (j dummyCommonJenny) Generate(dummy any) ([]codejen.File, error) {
+	return nil, nil
+}
+
+var pkgReplace = regexp.MustCompile("^package kindsys")
+
+func packageMapper(f codejen.File) (codejen.File, error) {
+	f.Data = pkgReplace.ReplaceAllLiteral(f.Data, []byte("package common"))
+	return f, nil
 }
 
 func elsedie[T any](t T, err error) func(msg string) T {
