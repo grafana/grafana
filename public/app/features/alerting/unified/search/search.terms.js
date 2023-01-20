@@ -16,4 +16,5 @@ export const AlertRuleSearch = 1,
   Dialect_groupFilter = 3,
   Dialect_ruleFilter = 4,
   Dialect_stateFilter = 5,
-  Dialect_typeFilter = 6;
+  Dialect_typeFilter = 6,
+  Dialect_rules = 7;

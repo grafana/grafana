@@ -1,10 +1,10 @@
 @top AlertRuleSearch { expression+ }
 
-@dialects { dsFilter, nsFilter, labelFilter, groupFilter, ruleFilter, stateFilter, typeFilter }
+@dialects { dsFilter, nsFilter, labelFilter, groupFilter, ruleFilter, stateFilter, typeFilter, rules }
 
 expression { (FilterExpression | FreeFormExpression) expression }
 
-FreeFormExpression { word (colon word)* }
+FreeFormExpression { word (colon word)* | stringWithQuotes }
 
 FilterExpression {
  filter<DsToken> |
@@ -25,10 +25,11 @@ filter<token> { token FilterValue }
   allowedInputChar { $[!#$%&'()*+,-./] | $[\u{0030}-\u{0039}] | $[\u{003b}-\u{1eff}] | $[\u{2030}-\u{1faff}] }
   word { allowedInputChar+ }
 
-  filterNoBracketChars { allowedInputChar | ":" }
-  filterWithBracketChars { filterNoBracketChars | " " }
+  allowedInputCharOrColon { allowedInputChar | colon }
+  allowedInputCharOrColonOrWhitespace { allowedInputCharOrColon | @whitespace }
+  stringWithQuotes { ("\"" allowedInputCharOrColonOrWhitespace+ "\"") }
 
-  FilterValue { filterNoBracketChars+ | ("\"" filterWithBracketChars+ "\"") }
+  FilterValue { allowedInputCharOrColon+ | stringWithQuotes }
   filterToken<type> { type colon }
 
   DsToken[@dialect=dsFilter] { filterToken<"ds"> }
