@@ -26,7 +26,6 @@ FrameGeometrySource: {
 		geohash?: string
 		latitude?: string
 		longitude?: string
-		h3?: string
 		wkt?: string
 		lookup?: string
 		// Path to Gazetteer
