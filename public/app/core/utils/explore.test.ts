@@ -1,11 +1,10 @@
-import { dateTime, ExploreUrlState, LogsSortOrder } from '@grafana/data';
+import { DataSourceApi, dateTime, ExploreUrlState, LogsSortOrder } from '@grafana/data';
 import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 import { setDataSourceSrv } from '@grafana/runtime';
 import { RefreshPicker } from '@grafana/ui';
 import store from 'app/core/store';
 
-import { mockDataSource, MockDataSourceSrv } from '../../features/alerting/unified/mocks';
-import { DataSourceType } from '../../features/alerting/unified/utils/datasource';
+import { DatasourceSrvMock, MockDataSourceApi } from '../../../test/mocks/datasource_srv';
 import { ExploreId } from '../../types';
 
 import {
@@ -31,22 +30,15 @@ const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   range: DEFAULT_RANGE,
 };
 
-const dataSources = {
-  prom: mockDataSource({
-    name: 'Prometheus',
-    type: DataSourceType.Prometheus,
-  }),
-  loki: mockDataSource({
-    name: 'Loki',
-    type: DataSourceType.Loki,
-  }),
+const defaultDs = new MockDataSourceApi('default datasource', [{ data: ['default data'] }]);
+const datasources: DataSourceApi = {
+  ds1: {
+    name: 'testDs',
+    type: 'loki',
+  } as MockDataSourceApi,
 };
 
-// TODO: needed????
-// const dsServer = new MockDataSourceSrv(dataSources);
-// dsServer.get = getHandler;
-//
-// setDataSourceSrv(dsServer);
+setDataSourceSrv(new DatasourceSrvMock(defaultDs, datasources));
 
 describe('state functions', () => {
   describe('parseUrlState', () => {
@@ -464,20 +456,14 @@ describe('when buildQueryTransaction', () => {
 
 describe('generateEmptyQuery', () => {
   it('should generate an empty query without dataSourceOverride', async () => {
-    setDataSourceSrv(new MockDataSourceSrv(dataSources));
-
     const queries = [
       {
         datasource: { type: 'loki', uid: 'ds1' },
         refId: 'A',
       },
-      {
-        datasource: { type: 'loki', uid: 'ds2' },
-        refId: 'B',
-      },
     ];
     const query = await generateEmptyQuery(queries, 1);
 
-    expect(query.datasource).toBe('loki');
+    expect(query.datasource.uid).toBe('ds1');
   });
 });
