@@ -1,10 +1,10 @@
 // @internal
-export type PluginExtensions = {
-  links: PluginExtensionsLink[];
+export type PluginExtensionsConfig = {
+  links: PluginExtensionsLinkConfig[];
 };
 
 // @internal
-export type PluginExtensionsLink = {
+export type PluginExtensionsLinkConfig = {
   id: string;
   description: string;
   path: string;

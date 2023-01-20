@@ -1,4 +1,5 @@
-import { configurePluginExtensions, getPluginLink, PluginLinkMissingError } from './registry';
+import { getPluginLink, PluginLinkMissingError } from './pluginLinks';
+import { setExtensionsRegistry } from './registry';
 
 describe('getPluginLink', () => {
   describe('when getting a registered extension link', () => {
@@ -6,15 +7,12 @@ describe('getPluginLink', () => {
     const linkId = 'declare-incident';
 
     beforeAll(() => {
-      configurePluginExtensions({
-        [pluginId]: {
-          links: [
-            {
-              id: linkId,
-              description: 'Declaring an incident in the app',
-              path: '/declare-incident',
-            },
-          ],
+      setExtensionsRegistry({
+        links: {
+          [`${pluginId}.${linkId}`]: {
+            description: 'Declaring an incident in the app',
+            href: `/a/${pluginId}/declare-incident`,
+          },
         },
       });
     });
