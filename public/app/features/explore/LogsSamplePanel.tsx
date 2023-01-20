@@ -1,14 +1,6 @@
 import React from 'react';
 
-import {
-  CoreApp,
-  DataQueryResponse,
-  DataSourceApi,
-  LoadingState,
-  LogsDedupStrategy,
-  SplitOpen,
-  TimeZone,
-} from '@grafana/data';
+import { CoreApp, DataQueryResponse, DataSourceApi, LoadingState, LogsDedupStrategy, TimeZone } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { Collapse } from '@grafana/ui';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
@@ -22,14 +14,13 @@ import { SETTINGS_KEYS } from './utils/logs';
 type Props = {
   data: DataQueryResponse | undefined;
   enabled: boolean;
-  setLogsSampleEnabled: (enabled: boolean) => void;
   timeZone: TimeZone;
-  splitOpen: SplitOpen;
-  datasourceInstance: DataSourceApi | null;
+  datasourceInstance: DataSourceApi | null | undefined;
+  setLogsSampleEnabled: (enabled: boolean) => void;
 };
 
 export function LogsSamplePanel(props: Props) {
-  const { data, timeZone, enabled, setLogsSampleEnabled, datasourceInstance, splitOpen } = props;
+  const { data, timeZone, enabled, setLogsSampleEnabled, datasourceInstance } = props;
 
   const onToggleLogsSampleCollapse = (isOpen: boolean) => {
     setLogsSampleEnabled(isOpen);
@@ -53,7 +44,6 @@ export function LogsSamplePanel(props: Props) {
     LogsSamplePanelContent = <span>No log sample data.</span>;
   } else {
     const logs = dataFrameToLogsModel(data.data, undefined);
-    console.log(logs);
     LogsSamplePanelContent = (
       <LogRows
         logRows={logs.rows}

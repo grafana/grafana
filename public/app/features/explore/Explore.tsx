@@ -373,7 +373,6 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       <LogsSamplePanel
         data={logsSample.data}
         timeZone={timeZone}
-        splitOpen={this.onSplitOpen('logs')}
         enabled={logsSample.enabled}
         datasourceInstance={datasourceInstance}
         setLogsSampleEnabled={(enabled) =>
@@ -573,8 +572,8 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
   } = item;
 
   const logsSample = supplementaryQueries[SupplementaryQueryType.LogsSample];
-  // We want to show log samples only if there is there is already graph or table result
-  const showLogsSample = !!(logsSample.dataProvider !== undefined && (graphResult || tableResult));
+  // We want to show log samples only if there are no log results and if there is already graph or table result
+  const showLogsSample = !!(logsSample.dataProvider !== undefined && !logsResult && (graphResult || tableResult));
 
   return {
     datasourceInstance,
