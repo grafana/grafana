@@ -785,6 +785,19 @@
       ],
       "schemaInterface": "PanelCfg"
     },
+    "tablepanelcfg": {
+      "name": "TablePanelCfg",
+      "pluralName": "TablePanelCfgs",
+      "machineName": "tablepanelcfg",
+      "pluralMachineName": "tablepanelcfgs",
+      "lineageIsGroup": true,
+      "maturity": "merged",
+      "currentVersion": [
+        0,
+        0
+      ],
+      "schemaInterface": "PanelCfg"
+    },
     "team": {
       "name": "Team",
       "pluralName": "Teams",
@@ -1010,6 +1023,7 @@
           "prometheusdatasourcecfg",
           "statpanelcfg",
           "tableoldpanelcfg",
+          "tablepanelcfg",
           "tempodataquery",
           "tempodatasourcecfg",
           "testdatadbdataquery",
@@ -1021,7 +1035,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 63
+        "count": 64
       },
       "core": {
         "name": "core",
@@ -1068,9 +1082,10 @@
         "name": "merged",
         "items": [
           "playlist",
+          "tablepanelcfg",
           "team"
         ],
-        "count": 2
+        "count": 3
       },
       "planned": {
         "name": "planned",

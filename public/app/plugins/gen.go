@@ -26,7 +26,6 @@ var skipPlugins = map[string]bool{
 	"candlestick":    true,
 	"state-timeline": true,
 	"status-history": true,
-	"table":          true,
 	"timeseries":     true,
 	"influxdb":       true, // plugin.json fails validation (defaultMatchFormat)
 	"mixed":          true, // plugin.json fails validation (mixed)
