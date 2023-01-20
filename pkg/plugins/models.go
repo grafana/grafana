@@ -290,7 +290,7 @@ type Permission struct {
 }
 
 type Extensions struct {
-	Links []ExtensionsLink `json:"links"`
+	Links []*ExtensionsLink `json:"links"`
 }
 
 type ExtensionsLink struct {

@@ -33,7 +33,7 @@ import {
   setQueryRunnerFactory,
   setRunRequest,
   setPluginImportUtils,
-  setExtensionsRegistry,
+  setPluginsExtensionRegistry,
 } from '@grafana/runtime';
 import { setPanelDataErrorView } from '@grafana/runtime/src/components/PanelDataErrorView';
 import { setPanelRenderer } from '@grafana/runtime/src/components/PanelRenderer';
@@ -171,7 +171,7 @@ export class GrafanaApp {
       initWindowRuntime();
 
       const pluginExtensionRegistry = configurePluginExtensions(config.pluginExtensions);
-      setExtensionsRegistry(pluginExtensionRegistry);
+      setPluginsExtensionRegistry(pluginExtensionRegistry);
 
       // init modal manager
       const modalManager = new ModalManager();

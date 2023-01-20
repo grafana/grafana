@@ -442,10 +442,15 @@ func TestLoader_Load(t *testing.T) {
 						{Name: "Root Page (react)", Type: "page", Role: "Viewer", Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
 					},
 					Extensions: &plugins.Extensions{
-						Links: []plugins.ExtensionsLink{
+						Links: []*plugins.ExtensionsLink{
 							{
 								Id:          "root",
 								Description: "Link to the plugin root",
+								Path:        "/my-simple-app",
+							},
+							{
+								Id:          "root2",
+								Description: "Link to the plugin root without backslash",
 								Path:        "/my-simple-app",
 							},
 						},

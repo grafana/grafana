@@ -1,6 +1,6 @@
 import { UrlQueryMap, urlUtil } from '@grafana/data';
 
-import { getExtensionsRegistry } from './registry';
+import { getPluginsExtensionRegistry } from './registry';
 
 export type PluginLinkOptions = {
   id: string;
@@ -8,9 +8,13 @@ export type PluginLinkOptions = {
 };
 
 export type PluginLinkResult = {
-  href?: string;
+  link?: PluginLink;
   error?: Error;
-  description?: string;
+};
+
+export type PluginLink = {
+  href: string;
+  description: string;
 };
 
 export class PluginLinkMissingError extends Error {
@@ -24,7 +28,7 @@ export class PluginLinkMissingError extends Error {
 }
 
 export function getPluginLink({ id, queryParams }: PluginLinkOptions): PluginLinkResult {
-  const registry = getExtensionsRegistry();
+  const registry = getPluginsExtensionRegistry();
   const extension = registry.links[id];
 
   if (!extension) {
@@ -34,7 +38,9 @@ export function getPluginLink({ id, queryParams }: PluginLinkOptions): PluginLin
   }
 
   return {
-    description: extension.description,
-    href: urlUtil.renderUrl(extension.href, queryParams),
+    link: {
+      description: extension.description,
+      href: urlUtil.renderUrl(extension.href, queryParams),
+    },
   };
 }

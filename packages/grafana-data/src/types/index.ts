@@ -35,7 +35,7 @@ export * from './legacyEvents';
 export * from './live';
 export * from './variables';
 export * from './geometry';
-export type { PluginExtensionsConfig, PluginExtensionsLinkConfig } from './pluginExtensions';
+export type { PluginsExtensionConfig, PluginsExtensionLinkConfig } from './pluginExtensions';
 export { isUnsignedPluginSignature } from './pluginSignature';
 export type {
   CurrentUserDTO,

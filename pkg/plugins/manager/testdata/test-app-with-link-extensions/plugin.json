@@ -40,6 +40,11 @@
         "id": "root",
         "description": "Link to the plugin root",
         "path": "/my-simple-app"
+      },
+      {
+        "id": "root2",
+        "description": "Link to the plugin root without backslash",
+        "path": "my-simple-app"
       }
     ]
   },

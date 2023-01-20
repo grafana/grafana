@@ -1,9 +1,25 @@
-import type { PluginExtensionsConfig, PluginExtensionsLinkConfig } from '@grafana/data';
-import type { PluginExtensionsRegistry, PluginExtensionsRegistryLink } from '@grafana/runtime';
+import type { PluginsExtensionConfig, PluginsExtensionLinkConfig } from '@grafana/data';
+import type { PluginsExtensionRegistry, PluginsExtensionRegistryLink } from '@grafana/runtime';
 
-function getRegistryLinks(pluginId: string, links: PluginExtensionsLinkConfig[]) {
+export function configurePluginExtensions(
+  pluginExtensions: Record<string, PluginsExtensionConfig>
+): PluginsExtensionRegistry {
+  const registry = Object.entries(pluginExtensions).reduce<PluginsExtensionRegistry>(
+    (registry, [pluginId, pluginExtension]) => {
+      const links = createLinks(pluginId, pluginExtension.links);
+      registry.links = { ...links, ...registry.links };
+
+      return registry;
+    },
+    { links: {} }
+  );
+
+  return Object.freeze(registry);
+}
+
+function createLinks(pluginId: string, links: PluginsExtensionLinkConfig[]) {
   return Object.freeze(
-    links.reduce<Record<string, PluginExtensionsRegistryLink>>((registryLinks, linkExtension) => {
+    links.reduce<Record<string, PluginsExtensionRegistryLink>>((registryLinks, linkExtension) => {
       const linkId = `${pluginId}.${linkExtension.id}`;
 
       if (registryLinks[linkId]) {
@@ -17,21 +33,4 @@ function getRegistryLinks(pluginId: string, links: PluginExtensionsLinkConfig[])
       return registryLinks;
     }, {})
   );
-}
-
-export function configurePluginExtensions(
-  pluginExtensions: Record<string, PluginExtensionsConfig>
-): PluginExtensionsRegistry {
-  const registry = Object.entries(pluginExtensions).reduce<PluginExtensionsRegistry>(
-    (registry, [pluginId, pluginExtension]) => {
-      const links = getRegistryLinks(pluginId, pluginExtension.links);
-
-      registry.links = { ...links, ...registry.links };
-      return registry;
-    },
-    { links: {} }
-  );
-
-  Object.freeze(registry);
-  return registry;
 }

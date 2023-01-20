@@ -1,24 +1,24 @@
-export type PluginExtensionsRegistryLink = {
+export type PluginsExtensionRegistryLink = {
   description: string;
   href: string;
 };
 
-export type PluginExtensionsRegistry = {
-  links: Record<string, PluginExtensionsRegistryLink>;
+export type PluginsExtensionRegistry = {
+  links: Record<string, PluginsExtensionRegistryLink>;
 };
 
-let registry: PluginExtensionsRegistry | undefined;
+let registry: PluginsExtensionRegistry | undefined;
 
-export function setExtensionsRegistry(instance: PluginExtensionsRegistry): void {
+export function setPluginsExtensionRegistry(instance: PluginsExtensionRegistry): void {
   if (registry) {
-    throw new Error('setExtensionsRegistry function should only be set once, when Grafana is starting.');
+    throw new Error('setPluginsExtensionRegistry function should only be set once, when Grafana is starting.');
   }
   registry = instance;
 }
 
-export function getExtensionsRegistry(): PluginExtensionsRegistry {
+export function getPluginsExtensionRegistry(): PluginsExtensionRegistry {
   if (!registry) {
-    throw new Error('getExtensionsRegistry can only be used after Grafana instance has started.');
+    throw new Error('getPluginsExtensionRegistry can only be used after Grafana instance has started.');
   }
   return registry;
 }
