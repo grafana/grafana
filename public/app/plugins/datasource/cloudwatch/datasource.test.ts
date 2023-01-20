@@ -14,10 +14,10 @@ import { setupForLogs } from './__mocks__/logsTestContext';
 import { validLogsQuery, validMetricSearchBuilderQuery } from './__mocks__/queries';
 import { TimeRangeMock } from './__mocks__/timeRange';
 import {
+  CloudWatchDefaultQuery,
   CloudWatchLogsQuery,
   CloudWatchMetricsQuery,
   CloudWatchQuery,
-  CloudWatchDefaultQuery,
   MetricEditorMode,
   MetricQueryType,
 } from './types';

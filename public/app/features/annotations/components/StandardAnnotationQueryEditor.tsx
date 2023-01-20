@@ -186,7 +186,11 @@ export default class StandardAnnotationQueryEditor extends PureComponent<Props, 
       return <div>Annotations are not supported. This datasource needs to export a QueryEditor</div>;
     }
 
-    const query = annotation.target ?? { refId: 'Anno' };
+    const query = {
+      ...datasource.annotations?.getDefaultQuery?.(),
+      ...(annotation.target ?? { refId: 'Anno' }),
+    };
+
     return (
       <>
         <DataSourcePluginContextProvider instanceSettings={datasourceInstanceSettings}>
