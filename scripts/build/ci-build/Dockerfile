@@ -91,7 +91,7 @@ ARG BUILDIFIER_VERSION=5.1.0
 ARG BUILDIFIER_CHKSUM=52bf6b102cb4f88464e197caac06d69793fa2b05f5ad50a7e7bf6fbd656648a3
 RUN curl -fLO https://github.com/bazelbuild/buildtools/releases/download/${BUILDIFIER_VERSION}/buildifier-linux-amd64
 RUN echo $BUILDIFIER_CHKSUM buildifier-linux-amd64 | sha256sum --check --strict --status
-RUN mv buildifier-linux-amd64 /tmp
+RUN mv buildifier-linux-amd64 /tmp/buildifier
 
 ARG CUE_VERSION=0.3.0-alpha5
 ARG CUE_CHKSUM=9d3131e470cdb5182afd9966688f1c052d383145cce005a947156b5591da39b7
