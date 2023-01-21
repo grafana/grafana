@@ -75,6 +75,10 @@ gen-go: $(WIRE) gen-cue
 	@echo "generate go files"
 	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server ./pkg/cmd/grafana-cli/runner
 
+fix-cue: $(CUE)
+	@echo "formatting cue files"
+	$(CUE) fix kinds/*/**
+
 gen-jsonnet:
 	go generate ./devenv/jsonnet
 
