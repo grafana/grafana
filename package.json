@@ -71,6 +71,9 @@
     ],
     "*pkg/**/*.go": [
       "gofmt -w -s"
+    ],
+    "*kinds/**/*.cue": [
+      "make fix-cue"
     ]
   },
   "devDependencies": {
