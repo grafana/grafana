@@ -2,6 +2,7 @@ package entity
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -22,14 +23,14 @@ func TestRawEncoders(t *testing.T) {
 		Version: "c",
 		ETag:    "d",
 		Body:    body,
+		Folder:  "f0",
+		Access: []*EntityAccess{
+			{Role: "viewer", Action: "read"},
+			{Role: "aaa", Action: "read"},
+		},
 	}
 
-	b, err := json.MarshalIndent(raw, "", "  ")
-	require.NoError(t, err)
-
-	str := string(b)
-
-	require.JSONEq(t, `{
+	expect := `{
 		"GRN": {
 		  "kind": "b",
 		  "UID": "a"
@@ -39,10 +40,33 @@ func TestRawEncoders(t *testing.T) {
 		  "field": 1.23,
 		  "hello": "world"
 		},
-		"etag": "d"
-	  }`, str)
+		"etag": "d",
+		"folder": "f0",
+		"access": [
+		  {
+			"role": "viewer",
+			"action": "read"
+		  },
+		  {
+			"role": "aaa",
+			"action": "read"
+		  }
+		]
+	  }`
+
+	b, err := json.MarshalIndent(raw, "", "  ")
+	require.NoError(t, err)
+
+	str := string(b)
+	fmt.Println(str)
+	require.JSONEq(t, expect, str)
 
 	copy := &Entity{}
 	err = json.Unmarshal(b, copy)
 	require.NoError(t, err)
+
+	b, err = json.MarshalIndent(copy, "", "  ")
+	require.NoError(t, err)
+	str = string(b)
+	require.JSONEq(t, expect, str)
 }

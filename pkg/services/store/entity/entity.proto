@@ -52,7 +52,7 @@ message Entity {
   bytes summary_json = 11;
 
   // Access information (attached to the single instance)
-  EntityAccess access = 12;
+  repeated EntityAccess access = 12;
 
   // External location info
   EntityOriginInfo origin = 13;
