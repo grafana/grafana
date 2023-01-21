@@ -148,9 +148,7 @@ export function PanelChrome({
         </div>
 
         {statusMessage && (
-          <div className={styles.errorContainer}>
-            <PanelStatus message={statusMessage} onClick={statusMessageOnClick} />
-          </div>
+          <PanelStatus className={styles.errorContainer} message={statusMessage} onClick={statusMessageOnClick} />
         )}
       </div>
 
@@ -270,10 +268,8 @@ const getStyles = (theme: GrafanaTheme2) => {
     errorContainer: css({
       label: 'error-container',
       position: 'absolute',
-      width: '100%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
+      left: '50%',
+      transform: 'translateX(-50%)',
     }),
     rightAligned: css({
       label: 'right-aligned-container',
