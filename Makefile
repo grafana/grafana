@@ -13,6 +13,7 @@ GO = go
 GO_FILES ?= ./pkg/...
 SH_FILES ?= $(shell find ./scripts -name *.sh)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
+GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 
 all: deps build
@@ -77,7 +78,7 @@ gen-go: $(WIRE) gen-cue
 
 fix-cue: $(CUE)
 	@echo "formatting cue files"
-	$(CUE) fix kinds/*/**
+	$(CUE) fix kinds/**/*.cue
 
 gen-jsonnet:
 	go generate ./devenv/jsonnet
