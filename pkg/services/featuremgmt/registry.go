@@ -410,7 +410,7 @@ var (
 		},
 		{
 			Name:         "topNavCommandPalette",
-			Description:  "Launch the Command Palette from top nav search box",
+			Description:  "Launch the Command Palette from the top navigation search box",
 			State:        FeatureStateBeta,
 			FrontendOnly: true,
 		},
