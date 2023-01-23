@@ -38,7 +38,7 @@ func (h *RemoteLokiBackend) TestConnection() error {
 
 func (h *RemoteLokiBackend) RecordStatesAsync(ctx context.Context, rule *models.AlertRule, states []state.StateTransition) {
 	logger := h.log.FromContext(ctx)
-	streams := h.buildStreams(rule, states, logger)
+	streams := h.statesToStreams(rule, states, logger)
 	h.recordStreamsAsync(ctx, streams, logger)
 }
 
@@ -46,7 +46,7 @@ func (h *RemoteLokiBackend) QueryStates(ctx context.Context, query models.Histor
 	return data.NewFrame("states"), nil
 }
 
-func (h *RemoteLokiBackend) buildStreams(rule *models.AlertRule, states []state.StateTransition, logger log.Logger) []stream {
+func (h *RemoteLokiBackend) statesToStreams(rule *models.AlertRule, states []state.StateTransition, logger log.Logger) []stream {
 	buckets := make(map[string][]row) // label repr -> entries
 	for _, state := range states {
 		if !shouldRecord(state) {
@@ -115,7 +115,7 @@ func lokiRepresentation(state state.StateTransition) (string, error) {
 		SchemaVersion: 1,
 		Previous:      state.PreviousFormatted(),
 		Current:       state.Formatted(),
-		Values:        buildDataBlob(state.State),
+		Values:        valuesAsDataBlob(state.State),
 	}
 	js, err := json.Marshal(entry)
 	if err != nil {
@@ -124,7 +124,7 @@ func lokiRepresentation(state state.StateTransition) (string, error) {
 	return string(js), nil
 }
 
-func buildDataBlob(state *state.State) *simplejson.Json {
+func valuesAsDataBlob(state *state.State) *simplejson.Json {
 	jsonData := simplejson.New()
 
 	switch state.State {
