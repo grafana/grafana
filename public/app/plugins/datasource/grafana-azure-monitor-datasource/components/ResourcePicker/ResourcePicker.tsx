@@ -25,6 +25,7 @@ interface ResourcePickerProps<T> {
 
   onApply: (resources: T[]) => void;
   onCancel: () => void;
+  disableRow: (row: ResourceRow, selectedRows: ResourceRowGroup) => boolean;
 }
 
 const ResourcePicker = ({
@@ -34,6 +35,7 @@ const ResourcePicker = ({
   onCancel,
   selectableEntryTypes,
   queryType,
+  disableRow,
 }: ResourcePickerProps<string | AzureMetricResource>) => {
   const styles = useStyles2(getStyles);
 
@@ -203,6 +205,7 @@ const ResourcePicker = ({
                   onRowSelectedChange={handleSelectionChanged}
                   selectableEntryTypes={selectableEntryTypes}
                   scrollIntoView={true}
+                  disableRow={disableRow}
                 />
               ))}
           </tbody>
@@ -226,6 +229,7 @@ const ResourcePicker = ({
                       requestNestedRows={requestNestedRows}
                       onRowSelectedChange={handleSelectionChanged}
                       selectableEntryTypes={selectableEntryTypes}
+                      disableRow={() => false}
                     />
                   ))}
                 </tbody>

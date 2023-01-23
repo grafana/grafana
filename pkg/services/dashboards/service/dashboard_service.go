@@ -37,6 +37,7 @@ type DashboardServiceImpl struct {
 	cfg                  *setting.Cfg
 	log                  log.Logger
 	dashboardStore       dashboards.Store
+	folderStore          dashboards.FolderStore
 	dashAlertExtractor   alerting.DashAlertExtractor
 	features             featuremgmt.FeatureToggles
 	folderPermissions    accesscontrol.FolderPermissionsService
@@ -45,17 +46,17 @@ type DashboardServiceImpl struct {
 }
 
 func ProvideDashboardService(
-	cfg *setting.Cfg, store dashboards.Store, dashAlertExtractor alerting.DashAlertExtractor,
+	cfg *setting.Cfg, dashboardStore dashboards.Store, folderStore dashboards.FolderStore, dashAlertExtractor alerting.DashAlertExtractor,
 	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, ac accesscontrol.AccessControl,
 ) *DashboardServiceImpl {
-	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(store))
-	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(store))
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(dashboardStore, folderStore))
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(dashboardStore, folderStore))
 
 	return &DashboardServiceImpl{
 		cfg:                  cfg,
 		log:                  log.New("dashboard-service"),
-		dashboardStore:       store,
+		dashboardStore:       dashboardStore,
 		dashAlertExtractor:   dashAlertExtractor,
 		features:             features,
 		folderPermissions:    folderPermissionsService,
@@ -183,7 +184,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	return cmd, nil
 }
 
-func (dr *DashboardServiceImpl) UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardACL) error {
+func (dr *DashboardServiceImpl) UpdateDashboardACL(ctx context.Context, uid int64, items []*dashboards.DashboardACL) error {
 	return dr.dashboardStore.UpdateDashboardACL(ctx, uid, items)
 }
 
@@ -390,7 +391,7 @@ func (dr *DashboardServiceImpl) MakeUserAdmin(ctx context.Context, orgID int64, 
 	rtEditor := org.RoleEditor
 	rtViewer := org.RoleViewer
 
-	items := []*models.DashboardACL{
+	items := []*dashboards.DashboardACL{
 		{
 			OrgID:       orgID,
 			DashboardID: dashboardID,
@@ -403,7 +404,7 @@ func (dr *DashboardServiceImpl) MakeUserAdmin(ctx context.Context, orgID int64, 
 
 	if setViewAndEditPermissions {
 		items = append(items,
-			&models.DashboardACL{
+			&dashboards.DashboardACL{
 				OrgID:       orgID,
 				DashboardID: dashboardID,
 				Role:        &rtEditor,
@@ -411,7 +412,7 @@ func (dr *DashboardServiceImpl) MakeUserAdmin(ctx context.Context, orgID int64, 
 				Created:     time.Now(),
 				Updated:     time.Now(),
 			},
-			&models.DashboardACL{
+			&dashboards.DashboardACL{
 				OrgID:       orgID,
 				DashboardID: dashboardID,
 				Role:        &rtViewer,
@@ -597,7 +598,7 @@ func makeQueryResult(query *models.FindPersistedDashboardsQuery, res []dashboard
 	}
 }
 
-func (dr *DashboardServiceImpl) GetDashboardACLInfoList(ctx context.Context, query *models.GetDashboardACLInfoListQuery) error {
+func (dr *DashboardServiceImpl) GetDashboardACLInfoList(ctx context.Context, query *dashboards.GetDashboardACLInfoListQuery) error {
 	return dr.dashboardStore.GetDashboardACLInfoList(ctx, query)
 }
 
@@ -623,7 +624,7 @@ func (dr DashboardServiceImpl) CountDashboardsInFolder(ctx context.Context, quer
 		return 0, err
 	}
 
-	folder, err := dr.dashboardStore.GetFolderByUID(ctx, u.OrgID, query.FolderUID)
+	folder, err := dr.folderStore.GetFolderByUID(ctx, u.OrgID, query.FolderUID)
 	if err != nil {
 		return 0, err
 	}
