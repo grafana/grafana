@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -168,7 +170,36 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *contextmodel.ReqContext)
 		})
 	}
 
+	if !c.SignedInUser.IsGrafanaAdmin {
+		result = filterAdminUsers(result)
+	}
+
 	return response.JSON(http.StatusOK, result)
+}
+
+func filterAdminUsers(inDTOs []*dtos.UserLookupDTO) []*dtos.UserLookupDTO {
+
+	outDTOs := make([]*dtos.UserLookupDTO, 0)
+	for _, dto := range inDTOs {
+		if isSoracomAdminUser(dto.Login) {
+			continue
+		}
+		outDTOs = append(outDTOs, dto)
+	}
+	return outDTOs
+}
+
+var adminUsers = os.Getenv("LAGOON_ADMIN_USERNAMES")
+
+func isSoracomAdminUser(user string) bool {
+	users := strings.Split(adminUsers, ",")
+
+	for _, adminName := range users {
+		if user == adminName {
+			return true
+		}
+	}
+	return false
 }
 
 // swagger:route GET /orgs/{org_id}/users orgs getOrgUsers
