@@ -6,6 +6,7 @@ import { useEffectOnce } from 'react-use';
 import { AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { locationService } from '@grafana/runtime';
 import { Dashboard, DashboardCursorSync } from '@grafana/schema/src';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
@@ -47,6 +48,18 @@ jest.mock('app/types', () => ({
   useDispatch: () => jest.fn(),
 }));
 
+interface ScenarioContext {
+  mount: () => void;
+  rerender: ({
+    propOverrides,
+    newState,
+  }: {
+    propOverrides?: Partial<Props>;
+    newState?: Partial<appTypes.StoreState>;
+  }) => void;
+  setup: (fn: () => void) => void;
+}
+
 const renderWithProvider = ({
   props,
   initialState,
@@ -68,17 +81,7 @@ const renderWithProvider = ({
   );
 };
 
-interface ScenarioContext {
-  mount: () => void;
-  rerender: ({
-    propOverrides,
-    newState,
-  }: {
-    propOverrides?: Partial<Props>;
-    newState?: Partial<appTypes.StoreState>;
-  }) => void;
-  setup: (fn: () => void) => void;
-}
+const selectors = e2eSelectors.components;
 
 const getTestDashboard = (overrides?: Partial<Dashboard>, metaOverrides?: Partial<DashboardMeta>): DashboardModel => {
   const data: Dashboard = Object.assign(
@@ -89,6 +92,7 @@ const getTestDashboard = (overrides?: Partial<Dashboard>, metaOverrides?: Partia
       graphTooltip: DashboardCursorSync.Off,
       schemaVersion: 1,
       style: 'dark',
+      timepicker: { hidden: true },
       panels: [
         {
           id: 1,
@@ -181,7 +185,7 @@ describe('PublicDashboardPage', () => {
     });
   });
 
-  dashboardPageScenario('Given a simple dashboard', (ctx) => {
+  dashboardPageScenario('Given a simple public dashboard', (ctx) => {
     ctx.setup(() => {
       ctx.mount();
       ctx.rerender({
@@ -202,6 +206,37 @@ describe('PublicDashboardPage', () => {
 
     it('Should update title', () => {
       expect(document.title).toBe('My dashboard - Grafana');
+    });
+
+    it('Should not render neither time range nor refresh picker buttons', () => {
+      expect(screen.queryByTestId(selectors.TimePicker.openButton)).not.toBeInTheDocument();
+      expect(screen.queryByTestId(selectors.RefreshPicker.runButtonV2)).not.toBeInTheDocument();
+      expect(screen.queryByTestId(selectors.RefreshPicker.intervalButtonV2)).not.toBeInTheDocument();
+    });
+  });
+
+  dashboardPageScenario('Given a public dashboard with time range enabled', (ctx) => {
+    ctx.setup(() => {
+      ctx.mount();
+      ctx.rerender({
+        newState: {
+          dashboard: {
+            getModel: () =>
+              getTestDashboard({
+                timepicker: { hidden: false, collapse: false, enable: true, refresh_intervals: [], time_options: [] },
+              }),
+            initError: null,
+            initPhase: DashboardInitPhase.Completed,
+            permissions: [],
+          },
+        },
+      });
+    });
+
+    it('Should render time range and refresh picker buttons', () => {
+      expect(screen.getByTestId(selectors.TimePicker.openButton)).toBeInTheDocument();
+      expect(screen.getByTestId(selectors.RefreshPicker.runButtonV2)).toBeInTheDocument();
+      expect(screen.getByTestId(selectors.RefreshPicker.intervalButtonV2)).toBeInTheDocument();
     });
   });
 });

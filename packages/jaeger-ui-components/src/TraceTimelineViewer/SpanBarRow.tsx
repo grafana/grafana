@@ -328,6 +328,7 @@ export type SpanBarRowProps = {
   clippingLeft?: boolean;
   clippingRight?: boolean;
   createSpanLink?: SpanLinkFunc;
+  datasourceType: string;
 };
 
 /**
@@ -377,6 +378,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
       clippingRight,
       theme,
       createSpanLink,
+      datasourceType,
     } = this.props;
     const {
       duration,
@@ -515,7 +517,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
                     </a>
                   );
                 } else if (links && count > 1) {
-                  return <SpanLinksMenu links={links} />;
+                  return <SpanLinksMenu links={links} datasourceType={datasourceType} />;
                 } else {
                   return null;
                 }

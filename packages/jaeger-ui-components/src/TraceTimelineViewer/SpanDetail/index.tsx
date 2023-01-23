@@ -18,6 +18,7 @@ import React from 'react';
 import IoLink from 'react-icons/lib/io/link';
 
 import { dateTimeFormat, GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { Button, DataLinkButton, TextArea, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
@@ -121,6 +122,7 @@ export type SpanDetailProps = {
   focusedSpanId?: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   topOfViewRefType?: TopOfViewRefType;
+  datasourceType: string;
 };
 
 export default function SpanDetail(props: SpanDetailProps) {
@@ -140,6 +142,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     createSpanLink,
     createFocusSpanLink,
     topOfViewRefType,
+    datasourceType,
   } = props;
   const {
     isTagsOpen,
@@ -203,6 +206,14 @@ export default function SpanDetail(props: SpanDetailProps) {
             title: 'Logs for this span',
             target: '_blank',
             origin: links.logLinks[0].field,
+            onClick: (event: React.MouseEvent) => {
+              reportInteraction('grafana_traces_trace_view_span_link_clicked', {
+                datasourceType: datasourceType,
+                type: 'log',
+                location: 'spanDetails',
+              });
+              links.logLinks[0].onClick!(event);
+            },
           }}
           buttonProps={{ icon: 'gf-logs' }}
         />
@@ -225,6 +236,19 @@ export default function SpanDetail(props: SpanDetailProps) {
   }
 
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
+  const logLink = links?.logLinks?.[0]
+    ? {
+        ...links?.logLinks?.[0],
+        onClick: (event: React.MouseEvent) => {
+          reportInteraction('grafana_traces_trace_view_span_link_clicked', {
+            datasourceType: datasourceType,
+            type: 'log',
+            location: 'spanDetails',
+          });
+          links?.logLinks?.[0].onClick!(event);
+        },
+      }
+    : undefined;
 
   return (
     <div data-testid="span-detail-component">

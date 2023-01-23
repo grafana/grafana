@@ -210,8 +210,8 @@ func TestDashboardUpdater(t *testing.T) {
 				require.NoError(t, err)
 
 				require.Len(t, ctx.dashboardPluginService.args, 1)
-				require.Equal(t, int64(2), ctx.dashboardPluginService.args[0].OrgId)
-				require.Equal(t, "test", ctx.dashboardPluginService.args[0].PluginId)
+				require.Equal(t, int64(2), ctx.dashboardPluginService.args[0].OrgID)
+				require.Equal(t, "test", ctx.dashboardPluginService.args[0].PluginID)
 				require.Empty(t, ctx.dashboardService.deleteDashboardArgs)
 			})
 	})
@@ -258,8 +258,8 @@ func TestDashboardUpdater(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Len(t, ctx.dashboardPluginService.args, 1)
-			require.Equal(t, int64(2), ctx.dashboardPluginService.args[0].OrgId)
-			require.Equal(t, "test", ctx.dashboardPluginService.args[0].PluginId)
+			require.Equal(t, int64(2), ctx.dashboardPluginService.args[0].OrgID)
+			require.Equal(t, "test", ctx.dashboardPluginService.args[0].PluginID)
 			require.Len(t, ctx.dashboardService.deleteDashboardArgs, 3)
 		})
 
@@ -458,7 +458,7 @@ func (s *dashboardServiceMock) DeleteDashboard(_ context.Context, dashboardId in
 	return nil
 }
 
-func (s *dashboardServiceMock) GetDashboardByPublicUid(ctx context.Context, dashboardPublicUid string) (*models.Dashboard, error) {
+func (s *dashboardServiceMock) GetDashboardByPublicUid(ctx context.Context, dashboardPublicUid string) (*dashboards.Dashboard, error) {
 	return nil, nil
 }
 
@@ -514,14 +514,14 @@ func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenar
 		pluginFunc: getPlugin,
 	}
 
-	pluginDashboards := map[string][]*models.Dashboard{}
+	pluginDashboards := map[string][]*dashboards.Dashboard{}
 	for _, pluginDashboard := range input.pluginDashboards {
 		if _, exists := pluginDashboards[pluginDashboard.PluginId]; !exists {
-			pluginDashboards[pluginDashboard.PluginId] = []*models.Dashboard{}
+			pluginDashboards[pluginDashboard.PluginId] = []*dashboards.Dashboard{}
 		}
 
-		pluginDashboards[pluginDashboard.PluginId] = append(pluginDashboards[pluginDashboard.PluginId], &models.Dashboard{
-			PluginId: pluginDashboard.PluginId,
+		pluginDashboards[pluginDashboard.PluginId] = append(pluginDashboards[pluginDashboard.PluginId], &dashboards.Dashboard{
+			PluginID: pluginDashboard.PluginId,
 		})
 	}
 
@@ -554,7 +554,7 @@ func scenario(t *testing.T, desc string, input scenarioInput, f func(ctx *scenar
 		for _, d := range input.pluginDashboards {
 			if d.PluginId == req.PluginID && req.Reference == d.Reference {
 				return &plugindashboards.LoadPluginDashboardResponse{
-					Dashboard: &models.Dashboard{},
+					Dashboard: &dashboards.Dashboard{},
 				}, nil
 			}
 		}

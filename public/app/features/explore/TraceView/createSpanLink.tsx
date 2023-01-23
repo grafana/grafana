@@ -360,19 +360,21 @@ function getQueryForElasticsearchOrOpensearch(
     };
   }
 
-  let query = '';
-  if (tags) {
-    query += '${__tags}';
-  }
-  if (filterByTraceID && span.traceID) {
-    query = '"${__span.traceId}" AND ' + query;
-  }
+  let queryArr = [];
   if (filterBySpanID && span.spanID) {
-    query = '"${__span.spanId}" AND ' + query;
+    queryArr.push('"${__span.spanId}"');
+  }
+
+  if (filterByTraceID && span.traceID) {
+    queryArr.push('"${__span.traceId}"');
+  }
+
+  if (tags) {
+    queryArr.push('${__tags}');
   }
 
   return {
-    query: query,
+    query: queryArr.join(' AND '),
     refId: '',
     metrics: [{ id: '1', type: 'logs' }],
   };

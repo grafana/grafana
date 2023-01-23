@@ -1,19 +1,12 @@
-import {
-  VizPanel,
-  SceneTimePicker,
-  SceneFlexLayout,
-  SceneGridLayout,
-  SceneTimeRange,
-  EmbeddedScene,
-} from '@grafana/scenes';
+import { VizPanel, SceneTimePicker, SceneFlexLayout, SceneGridLayout, SceneTimeRange } from '@grafana/scenes';
 
-import { Scene } from '../components/Scene';
+import { DashboardScene } from '../dashboard/DashboardScene';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getGridLayoutTest(standalone: boolean): Scene | EmbeddedScene {
-  const state = {
+export function getGridLayoutTest(): DashboardScene {
+  return new DashboardScene({
     title: 'Grid layout test',
     body: new SceneGridLayout({
       children: [
@@ -58,7 +51,5 @@ export function getGridLayoutTest(standalone: boolean): Scene | EmbeddedScene {
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
-  };
-
-  return standalone ? new Scene(state) : new EmbeddedScene(state);
+  });
 }
