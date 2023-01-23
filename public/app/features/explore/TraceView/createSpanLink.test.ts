@@ -253,6 +253,16 @@ describe('createSpanLinkFactory', () => {
       );
       expect(links?.logLinks).toBeUndefined();
     });
+
+    it('interpolates span intrinsics', () => {
+      const createLink = setupSpanLinkFactory({
+        tags: [{ key: 'name', value: 'spanName' }],
+      });
+      expect(createLink).toBeDefined();
+      const links = createLink!(createTraceSpan());
+      expect(links?.logLinks).toBeDefined();
+      expect(decodeURIComponent(links!.logLinks![0].href)).toContain('spanName=\\"operation\\"');
+    });
   });
 
   describe('should return splunk link', () => {

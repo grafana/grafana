@@ -413,7 +413,14 @@ function getFormattedTags(
 ) {
   // In order, try to use mapped tags -> tags -> default tags
   // Build tag portion of query
-  return [...span.process.tags, ...span.tags]
+  return [
+    ...span.process.tags,
+    ...span.tags,
+    { key: 'spanId', value: span.spanID },
+    { key: 'traceId', value: span.traceID },
+    { key: 'name', value: span.operationName },
+    { key: 'duration', value: span.duration },
+  ]
     .map((tag) => {
       const keyValue = tags.find((keyValue) => keyValue.key === tag.key);
       if (keyValue) {
