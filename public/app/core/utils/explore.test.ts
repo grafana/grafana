@@ -460,14 +460,21 @@ describe('when buildQueryTransaction', () => {
 });
 
 describe('generateEmptyQuery', () => {
-  it('should generate an empty query without dataSourceOverride', async () => {
-    const queries = [
-      {
-        datasource: { type: 'loki', uid: 'ds1' },
-        refId: 'A',
-      },
-    ];
-    const query = await generateEmptyQuery(queries, 1);
+  it('should generate query with dataSourceOverride and without queries', async () => {
+    const query = await generateEmptyQuery([], 1, { type: 'loki', uid: 'ds1' });
+
+    expect(query.datasource?.uid).toBe('ds1');
+  });
+  it('should generate query without dataSourceOverride and with queries', async () => {
+    const query = await generateEmptyQuery(
+      [
+        {
+          datasource: { type: 'loki', uid: 'ds1' },
+          refId: 'A',
+        },
+      ],
+      1
+    );
 
     expect(query.datasource?.uid).toBe('ds1');
   });
