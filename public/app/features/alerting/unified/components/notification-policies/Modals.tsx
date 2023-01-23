@@ -1,10 +1,15 @@
-import { sumBy } from 'lodash';
-import pluralize from 'pluralize';
+import { groupBy } from 'lodash';
 import React, { FC, useCallback, useMemo, useState } from 'react';
 
 import { Stack } from '@grafana/experimental';
 import { Button, Icon, Modal, ModalProps, Spinner } from '@grafana/ui';
-import { AlertmanagerGroup, ObjectMatcher, Receiver, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+import {
+  AlertmanagerGroup,
+  AlertState,
+  ObjectMatcher,
+  Receiver,
+  RouteWithID,
+} from 'app/plugins/datasource/alertmanager/types';
 
 import { FormAmRoute } from '../../types/amroutes';
 import { AlertGroup } from '../alert-groups/AlertGroup';
@@ -12,6 +17,7 @@ import { AmRootRouteForm } from '../amroutes/AmRootRouteForm';
 import { AmRoutesExpandedForm } from '../amroutes/AmRoutesExpandedForm';
 import { useGetAmRouteReceiverWithGrafanaAppTypes } from '../receivers/grafanaAppReceivers/grafanaApp';
 
+import { AlertGroupsSummary } from './AlertGroupsSummary';
 import { Matchers } from './Matchers';
 
 type ModalHook<T = undefined> = [JSX.Element, (item: T) => void, () => void];
@@ -214,8 +220,9 @@ const useAlertGroupsModal = (): [
     setShowModal(true);
   }, []);
 
-  const totalNumberOfInstances = useMemo(() => {
-    return sumBy(alertGroups, (group) => group.alerts.length);
+  const instancesByState = useMemo(() => {
+    const instances = alertGroups.flatMap((group) => group.alerts);
+    return groupBy(instances, (instance) => instance.status.state);
   }, [alertGroups]);
 
   const modalElement = useMemo(
@@ -234,11 +241,18 @@ const useAlertGroupsModal = (): [
           </Stack>
         }
       >
-        <span>{pluralize('instance', totalNumberOfInstances, true)}</span>
-        {alertGroups.map((group, index) => (
-          <AlertGroup key={index} alertManagerSourceName={''} group={group} />
-        ))}
-
+        <Stack direction="column">
+          <AlertGroupsSummary
+            active={instancesByState[AlertState.Active]?.length}
+            suppressed={instancesByState[AlertState.Suppressed]?.length}
+            unprocessed={instancesByState[AlertState.Unprocessed]?.length}
+          />
+          <div>
+            {alertGroups.map((group, index) => (
+              <AlertGroup key={index} alertManagerSourceName={''} group={group} />
+            ))}
+          </div>
+        </Stack>
         <Modal.ButtonRow>
           <Button type="button" variant="secondary" onClick={handleDismiss}>
             Cancel
@@ -246,7 +260,7 @@ const useAlertGroupsModal = (): [
         </Modal.ButtonRow>
       </Modal>
     ),
-    [alertGroups, handleDismiss, matchers, showModal, totalNumberOfInstances]
+    [alertGroups, handleDismiss, instancesByState, matchers, showModal]
   );
 
   return [modalElement, handleShow, handleDismiss];
