@@ -5,7 +5,6 @@ import { UseFormRegister } from 'react-hook-form';
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { Checkbox, FieldSet, HorizontalGroup, LinkButton, useStyles2, VerticalGroup } from '@grafana/ui/src';
-import { Align } from '@grafana/ui/src/components/Layout/Layout';
 
 import { SharePublicDashboardAcknowledgmentInputs, SharePublicDashboardInputs } from './SharePublicDashboard';
 
@@ -13,7 +12,6 @@ type Acknowledge = {
   type: keyof SharePublicDashboardAcknowledgmentInputs;
   description: string;
   testId: string;
-  align?: Align;
   info: {
     href: string;
     tooltip: string;
@@ -42,10 +40,8 @@ const ACKNOWLEDGES: Acknowledge[] = [
   },
   {
     type: 'usageAcknowledgment',
-    description:
-      'Making your dashboard public will cause queries to run each time the dashboard is viewed which may increase costs',
+    description: 'Making a dashboard public causes queries to run each time it is viewed, which may increase costs',
     testId: selectors.CostIncreaseCheckbox,
-    align: 'flex-start',
     info: {
       href: 'https://grafana.com/docs/grafana/latest/enterprise/query-caching/',
       tooltip: 'Learn more about query caching',
@@ -68,7 +64,7 @@ export const AcknowledgeCheckboxes = ({
       <FieldSet disabled={disabled}>
         <VerticalGroup spacing="md">
           {ACKNOWLEDGES.map((acknowledge) => (
-            <HorizontalGroup key={acknowledge.type} spacing="none" align={acknowledge.align || 'flex-end'}>
+            <HorizontalGroup key={acknowledge.type} spacing="none" align="center">
               <Checkbox
                 {...register(acknowledge.type)}
                 label={acknowledge.description}
@@ -102,5 +98,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     white-space: break-spaces;
     max-width: fit-content;
     line-height: ${theme.typography.bodySmall.lineHeight};
+    margin-bottom: 0;
   `,
 });

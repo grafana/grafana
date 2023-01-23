@@ -11,7 +11,7 @@ enum Orientation {
 }
 type Spacing = 'none' | 'xs' | 'sm' | 'md' | 'lg';
 type Justify = 'flex-start' | 'flex-end' | 'space-between' | 'center';
-export type Align = 'normal' | 'flex-start' | 'flex-end' | 'center';
+type Align = 'normal' | 'flex-start' | 'flex-end' | 'center';
 
 export interface LayoutProps extends Omit<HTMLProps<HTMLDivElement>, 'align' | 'children' | 'wrap'> {
   children: React.ReactNode[] | React.ReactNode;
