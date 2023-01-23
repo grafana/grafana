@@ -1,13 +1,9 @@
 package logger
 
-import "context"
-
 // Logger is the default logger
 type Logger interface {
 	// New returns a new contextual Logger that has this logger's context plus the given context.
 	New(ctx ...interface{}) Logger
-
-	Log(keyvals ...interface{}) error
 
 	// Debug logs a message with debug level and key/value pairs, if any.
 	Debug(msg string, ctx ...interface{})
@@ -20,9 +16,6 @@ type Logger interface {
 
 	// Error logs a message with error level and key/value pairs, if any.
 	Error(msg string, ctx ...interface{})
-
-	// FromContext returns a new contextual Logger that has this logger's context plus the given context.
-	FromContext(ctx context.Context) Logger
 }
 
 // PrettyLogger is used primarily to facilitate logging/user feedback for both
