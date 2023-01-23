@@ -8,7 +8,7 @@ title: Team kind
 
 # Team kind
 
-### Maturity: merged
+### Maturity: [merged](../../../maturity/#merged)
 ### Version: 0.0
 
 ## Properties

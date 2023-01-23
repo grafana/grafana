@@ -65,7 +65,7 @@ func (j docsJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
 	data := templateData{
 		KindName:     kindProps.Name,
 		KindVersion:  decl.Lineage().Latest().Version().String(),
-		KindMaturity: string(kindProps.Maturity),
+		KindMaturity: fmt.Sprintf("[%s](../../../maturity/#%[1]s)", kindProps.Maturity),
 		Markdown:     "{{ .Markdown 1 }}",
 	}
 

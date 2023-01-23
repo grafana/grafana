@@ -8,7 +8,7 @@ title: BarGaugePanelCfg kind
 
 # BarGaugePanelCfg kind
 
-### Maturity: experimental
+### Maturity: [experimental](../../../maturity/#experimental)
 ### Version: 0.0
 
 ## Properties
