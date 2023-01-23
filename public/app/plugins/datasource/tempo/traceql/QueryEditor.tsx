@@ -28,7 +28,7 @@ export function QueryEditor(props: Props) {
         <a
           rel="noreferrer"
           target="_blank"
-          href="https://github.com/grafana/tempo/blob/main/docs/design-proposals/2022-04%20TraceQL%20Concepts.md"
+          href="https://grafana.com/docs/tempo/latest/traceql/"
         >
           Documentation
         </a>
