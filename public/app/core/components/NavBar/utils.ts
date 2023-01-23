@@ -4,6 +4,7 @@ import { locationUtil, NavModelItem, NavSection } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types';
 
 import { ShowModalReactEvent } from '../../../types/events';
 import appEvents from '../../app_events';
@@ -79,7 +80,11 @@ export const enrichConfigItems = (items: NavModelItem[], location: Location<unkn
 };
 
 export let getSupportBundleFooterLinks = (cfg = config): FooterLink[] => {
-  if (!cfg.featureToggles.supportBundles) {
+  const hasAccess =
+    contextSrv.hasAccess(AccessControlAction.ActionSupportBundlesCreate, contextSrv.isGrafanaAdmin) ||
+    contextSrv.hasAccess(AccessControlAction.ActionSupportBundlesRead, contextSrv.isGrafanaAdmin);
+
+  if (!cfg.supportBundlesEnabled || !hasAccess) {
     return [];
   }
 
@@ -89,7 +94,7 @@ export let getSupportBundleFooterLinks = (cfg = config): FooterLink[] => {
       id: 'support-bundle',
       text: t('nav.help/support-bundle', 'Support Bundles'),
       icon: 'question-circle',
-      url: '/admin/support-bundles',
+      url: '/support-bundles',
     },
   ];
 };
