@@ -155,7 +155,7 @@ func (am *Alertmanager) StopAndWait() {
 }
 
 // SaveAndApplyDefaultConfig saves the default configuration the database and applies the configuration to the Alertmanager.
-// It rollsback the save if we fail to apply the configuration.
+// It rolls back the save if we fail to apply the configuration.
 func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 	var outerErr error
 	am.Base.WithLock(func() {
