@@ -60,7 +60,7 @@ func (h *RemoteLokiBackend) buildStreams(rule *models.AlertRule, states []state.
 		labels["folderUID"] = fmt.Sprint(rule.NamespaceUID)
 		repr := labels.String()
 
-		entry, err := lokiRepresentation(rule, state)
+		entry, err := lokiRepresentation(state)
 		if err != nil {
 			logger.Error("Failed to construct history record for state, skipping", "error", err)
 			continue
@@ -110,7 +110,7 @@ type lokiEntry struct {
 	Values        *simplejson.Json `json:"values"`
 }
 
-func lokiRepresentation(rule *models.AlertRule, state state.StateTransition) (string, error) {
+func lokiRepresentation(state state.StateTransition) (string, error) {
 	entry := lokiEntry{
 		SchemaVersion: 1,
 		Previous:      state.PreviousFormatted(),
