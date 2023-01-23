@@ -14,6 +14,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 )
 
+const (
+	OrgIDLabel     = "orgID"
+	RuleUIDLabel   = "ruleUID"
+	GroupLabel     = "group"
+	FolderUIDLabel = "folderUID"
+)
+
 type remoteLokiClient interface {
 	ping() error
 	push([]stream) error
@@ -54,10 +61,10 @@ func (h *RemoteLokiBackend) statesToStreams(rule *models.AlertRule, states []sta
 		}
 
 		labels := removePrivateLabels(state.State.Labels)
-		labels["orgID"] = fmt.Sprint(rule.OrgID)
-		labels["ruleUID"] = fmt.Sprint(rule.UID)
-		labels["group"] = fmt.Sprint(rule.RuleGroup)
-		labels["folderUID"] = fmt.Sprint(rule.NamespaceUID)
+		labels[OrgIDLabel] = fmt.Sprint(rule.OrgID)
+		labels[RuleUIDLabel] = fmt.Sprint(rule.UID)
+		labels[GroupLabel] = fmt.Sprint(rule.RuleGroup)
+		labels[FolderUIDLabel] = fmt.Sprint(rule.NamespaceUID)
 		repr := labels.String()
 
 		entry, err := lokiRepresentation(state)
