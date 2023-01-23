@@ -24,31 +24,31 @@ DataFrame: {
 	QueryResultBase
   name?: string
   // All fields of equal length
-  fields: [...#Field]
+  fields: [...Field]
   // The number of rows
   length: int64
 } @cuetsy(kind="interface")
 
 // TODO Field<T = any, V = Vector<T>>
-#Field: {
+Field: {
 		//Name of the field (column)
 		name: string
 		// Field value type (string, number, etc)
-		type: #FieldType
+		type: FieldType
 		// Meta info about how field and how to display it
-		config: #FieldConfig
+		config: FieldConfig
 		// The raw field values. Extended in veneer
 		values: {...}
 		labels?: Labels
 		// Cached values with appropriate display and id values TODO | null
-		state?: #FieldState
+		state?: FieldState
 		// Convert a value for display TODO extend in veneer
 		display?: _
 		// Get value data links with variables interpolated. Extended in veneer
 		getLinks?: _
 } @cuetsy(kind="interface")
 
-#FieldType:
+FieldType:
 		// Or date
 		"time" |
 		"number" |
@@ -62,7 +62,7 @@ DataFrame: {
 
 // Every property is optional
 // Plugins may extend this with additional properties. Something like series overrides
-#FieldConfig: {
+FieldConfig: {
 		// The display value for this field.  This supports template variables blank is auto
 		displayName?: string
 		// This can be used by data sources that return and explicit naming structure for values and labels
@@ -94,23 +94,23 @@ DataFrame: {
 		// TODO | null
 		interval?: int64
 		// Convert input values into a display string
-		mappings?: [...#ValueMapping]
+		mappings?: [...ValueMapping]
 		// Map numeric values to states
-		thresholds?: [...#ThresholdsConfig]
+		thresholds?: [...ThresholdsConfig]
 } @cuetsy(kind="interface")
 
 // TODO this doesn't work
-//#DecimalCount?: int64 | null @cuetsy(kind="type")
+//DecimalCount?: int64 | null @cuetsy(kind="type")
 
-#FieldState: {
+FieldState: {
 		// An appropriate name for the field (does not include frame info) TODO | null
 		displayName?: string
 		//Cache of reduced values
-		calcs?: #FieldCalcs
+		calcs?: FieldCalcs
 		// The numeric range for values in this field.  This value will respect the min/max
 		// set in field config, or when set to `auto` this will have the min/max for all data
 		// in the response
-		range?: #NumericRange
+		range?: NumericRange
 		// Appropriate values for templating
 		scopedVars?: ScopedVars
 		// Series index is index for this field in a larger data set that can span multiple DataFrames
@@ -118,7 +118,7 @@ DataFrame: {
 		seriesIndex?: int64
 		// Location of this field within the context frames results
 		// @internal -- we will try to make this unnecessary
-		origin?: #DataFrameFieldIndex
+		origin?: DataFrameFieldIndex
 		// Boolean value is true if field is in a larger data set with multiple frames.
 		// This is only related to the cached displayName property above.
 		multipleFrames?: bool
@@ -129,29 +129,29 @@ DataFrame: {
 } @cuetsy(kind="interface")
 
 // TODO Docs
-#FieldCalcs: {...}
+FieldCalcs: {...}
 
 // TODO docs
-#NumericRange: {
+NumericRange: {
 		min?: int64 // TODO | null
 		max?: int64 // TODO | null
 		delta: int64
 } @cuetsy(kind="interface")
 
-#DataFrameFieldIndex: {
+DataFrameFieldIndex: {
 		frameIndex: int64
 		fieldIndex: int64
 } @cuetsy(kind="interface")
 
 // TODO Duplicate declaration
-#ThresholdsConfig: {
-	mode: #ThresholdsMode @grafanamaturity(NeedsExpertReview)
+ThresholdsConfig: {
+	mode: ThresholdsMode @grafanamaturity(NeedsExpertReview)
 	// Must be sorted by 'value', first value is always -Infinity
-	steps: [...#Threshold] @grafanamaturity(NeedsExpertReview)
+	steps: [...Threshold] @grafanamaturity(NeedsExpertReview)
 } @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
 // TODO Duplicate declaration
-#Threshold: {
+Threshold: {
 	// TODO docs
 	// FIXME the corresponding typescript field is required/non-optional, but nulls currently appear here when serializing -Infinity to JSON
 	value?: int64 @grafanamaturity(NeedsExpertReview)
@@ -164,52 +164,52 @@ DataFrame: {
 } @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
 // TODO Duplicate declaration
-#ThresholdsMode: "absolute" | "percentage" @cuetsy(kind="enum") @grafanamaturity(NeedsExpertReview)
+ThresholdsMode: "absolute" | "percentage" @cuetsy(kind="enum") @grafanamaturity(NeedsExpertReview)
 
 // TODO docs | Duplicate declaration
-#ValueMapping: #ValueMap | #RangeMap | #RegexMap | #SpecialValueMap @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
+ValueMapping: ValueMap | RangeMap | RegexMap | SpecialValueMap @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
 
 // TODO docs | Duplicate declaration
-#MappingType: "value" | "range" | "regex" | "special" @cuetsy(kind="enum",memberNames="ValueToText|RangeToText|RegexToText|SpecialValue") @grafanamaturity(NeedsExpertReview)
+MappingType: "value" | "range" | "regex" | "special" @cuetsy(kind="enum",memberNames="ValueToText|RangeToText|RegexToText|SpecialValue") @grafanamaturity(NeedsExpertReview)
 
 // TODO docs | Duplicate declaration
-#ValueMap: {
-	type: #MappingType & "value"
-	options: [string]: #ValueMappingResult
+ValueMap: {
+	type: MappingType & "value"
+	options: [string]: ValueMappingResult
 } @cuetsy(kind="interface")
 
 // TODO docs | Duplicate declaration
-#RangeMap: {
-		type: #MappingType & "range"
+RangeMap: {
+		type: MappingType & "range"
 		options: {
 				// to and from are `number | null` in current ts, really not sure what to do
 				from:   float64 @grafanamaturity(NeedsExpertReview)
 				to:     float64 @grafanamaturity(NeedsExpertReview)
-				result: #ValueMappingResult
+				result: ValueMappingResult
 		}
 } @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
 // TODO docs | Duplicate declaration
-#RegexMap: {
-		type: #MappingType & "regex"
+RegexMap: {
+		type: MappingType & "regex"
 		options: {
 				pattern: string
-				result:  #ValueMappingResult
+				result:  ValueMappingResult
 		}
 } @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
 // TODO docs | Duplicate declaration
-#SpecialValueMap: {
-		type: #MappingType & "special"
+SpecialValueMap: {
+		type: MappingType & "special"
 		options: {
 		match:   "true" | "false"
 		pattern: string
-		result:  #ValueMappingResult
+		result:  ValueMappingResult
 		}
 } @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
 //TODO duplicate
-#ValueMappingResult: {
+ValueMappingResult: {
 		text?:  string
 		color?: string
 		icon?:  string

@@ -24,7 +24,7 @@ export enum DataFrameType {
 }
 
 /**
- * TODO extends #QueryResultBase
+ * TODO docs
  */
 export interface DataFrame extends QueryResultBase {
   /**
@@ -319,6 +319,107 @@ export interface SpecialValueMap {
   };
   type: MappingType.SpecialValue;
 }
+
+/**
+ * The JSON transfer object for DataFrames. Values are stored in simple JSON
+ */
+export interface DataFrameJSON {
+  /**
+   * The field data
+   */
+  data?: DataFrameData;
+  /**
+   * The schema defines the field type and configuration.
+   */
+  schema?: DataFrameSchema;
+}
+
+export type FieldValues = Array<unknown>;
+
+export const defaultFieldValues: FieldValues = [];
+
+export interface DataFrameData {
+  /**
+   * Holds value bases per field so we can encode numbers from fixed points
+   * e.g. [1612900958, 1612900959, 1612900960] -> 1612900958 + [0, 1, 2]
+   */
+  bases?: Array<number>;
+  /**
+   * Since JSON cannot encode NaN, Inf, -Inf, and undefined, these entities
+   * are decoded after JSON.parse() using this struct
+   * TODO | null
+   */
+  entities?: Array<FieldValueEntityLookup>;
+  /**
+   * Holds enums per field so we can encode recurring string values as ints
+   * e.g. ["foo", "foo", "baz", "foo"] -> ["foo", "baz"] + [0,0,1,0]
+   * NOTE: currently only decoding is implemented
+   * TODO | null
+   */
+  enums?: Array<Array<string>>;
+  /**
+   * Holds value multipliers per field so we can encode large numbers concisely
+   * e.g. [4900000000, 35000000000] -> 1e9 + [4.9, 35]
+   */
+  factors?: Array<number>;
+  /**
+   * A columnar store that matches fields defined by schema.
+   */
+  values: Array<FieldValues>;
+}
+
+export const defaultDataFrameData: Partial<DataFrameData> = {
+  bases: [],
+  entities: [],
+  enums: [],
+  factors: [],
+  values: [],
+};
+
+/**
+ * Since JSON cannot encode NaN, Inf, -Inf, and undefined, the locations
+ * of these entities in field value arrays are stored here for restoration
+ * after JSON.parse()
+ */
+export interface FieldValueEntityLookup {
+  Inf?: Array<number>;
+  NaN?: Array<number>;
+  NegInf?: Array<number>;
+  /**
+   * Missing because of absence or join
+   */
+  Undef?: Array<number>;
+}
+
+export const defaultFieldValueEntityLookup: Partial<FieldValueEntityLookup> = {
+  Inf: [],
+  NaN: [],
+  NegInf: [],
+  Undef: [],
+};
+
+export interface DataFrameSchema {
+  /**
+   * Field definition without any metadata
+   */
+  fields: Array<FieldSchema>;
+  /**
+   * Initial response global metadata
+   */
+  meta?: QueryResultMeta;
+  /**
+   * Frame name
+   */
+  name?: string;
+  /**
+   * Matches the query target refId
+   */
+  refId?: string;
+}
+
+export const defaultDataFrameSchema: Partial<DataFrameSchema> = {
+  fields: [],
+};
 
 export interface DataSourceJsonData {
   alertmanagerUid?: string;
@@ -1057,6 +1158,16 @@ export interface ValueMappingResult {
   icon?: string;
   index?: number;
   text?: string;
+}
+
+export interface FieldSchema {
+  config?: FieldConfig;
+  labels?: Labels;
+  /**
+   * The column name
+   */
+  name: string;
+  type?: FieldType;
 }
 
 export interface DataSourceRef {
