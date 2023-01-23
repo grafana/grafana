@@ -6,7 +6,6 @@ package runner
 import (
 	"github.com/google/wire"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/server/usagestatssvcs"
@@ -56,7 +55,7 @@ var wireExtsSet = wire.NewSet(
 	thumbs.ProvideCrawlerAuthSetupService,
 	wire.Bind(new(thumbs.CrawlerAuthSetupService), new(*thumbs.OSSCrawlerAuthSetupService)),
 	validations.ProvideValidator,
-	wire.Bind(new(models.PluginRequestValidator), new(*validations.OSSPluginRequestValidator)),
+	wire.Bind(new(validations.PluginRequestValidator), new(*validations.OSSPluginRequestValidator)),
 	provisioning.ProvideService,
 	wire.Bind(new(provisioning.ProvisioningService), new(*provisioning.ProvisioningServiceImpl)),
 	backgroundsvcs.ProvideBackgroundServiceRegistry,

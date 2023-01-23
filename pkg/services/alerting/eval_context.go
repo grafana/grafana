@@ -7,11 +7,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -37,7 +37,7 @@ type EvalContext struct {
 	NoDataFound     bool
 	PrevAlertState  alertmodels.AlertStateType
 
-	RequestValidator models.PluginRequestValidator
+	RequestValidator validations.PluginRequestValidator
 
 	Ctx context.Context
 
@@ -48,7 +48,7 @@ type EvalContext struct {
 }
 
 // NewEvalContext is the EvalContext constructor.
-func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator models.PluginRequestValidator,
+func NewEvalContext(alertCtx context.Context, rule *Rule, requestValidator validations.PluginRequestValidator,
 	alertStore AlertStore, dashboardService dashboards.DashboardService, dsService datasources.DataSourceService, annotationRepo annotations.Repository) *EvalContext {
 	return &EvalContext{
 		Ctx:               alertCtx,
