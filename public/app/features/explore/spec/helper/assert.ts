@@ -44,7 +44,8 @@ export const assertQueryHistoryIsStarred = async (expectedStars: boolean[], expl
   const selector = withinExplore(exploreId);
   console.timeEnd('select explore');
   console.time('get all buttons');
-  const starButtons = selector.getAllByRole('button', { name: /Star query|Unstar query/ });
+  const starButtons = selector.getAllByTestId('test-explore-star-button');
+  // const starButtons = selector.getAllByRole('button', { name: /Star query|Unstar query/ });
   console.timeEnd('get all buttons');
   console.time('main assert');
   await waitFor(() =>
