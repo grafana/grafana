@@ -64,7 +64,7 @@ export function createSupportBundle(data: SupportBundleCreateRequest): ThunkResu
   return async (dispatch) => {
     try {
       await getBackendSrv().post('/api/support-bundles', data);
-      locationService.push('/admin/support-bundles');
+      locationService.push('/support-bundles');
     } catch (err) {
       dispatch(setCreateBundleError('Error creating support bundle'));
     }
