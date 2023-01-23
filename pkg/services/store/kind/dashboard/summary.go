@@ -4,10 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 )
@@ -58,10 +56,8 @@ func NewStaticDashboardSummaryBuilder(lookup DatasourceLookup, sanitize bool) mo
 		}
 
 		dashboardRefs := NewReferenceAccumulator()
-		url := fmt.Sprintf("/d/%s/%s", uid, slugify.Slugify(dash.Title))
 		summary.Name = dash.Title
 		summary.Description = dash.Description
-		summary.URL = url
 		for _, v := range dash.Tags {
 			summary.Labels[v] = ""
 		}
@@ -78,7 +74,6 @@ func NewStaticDashboardSummaryBuilder(lookup DatasourceLookup, sanitize bool) mo
 			}
 			p.Name = panel.Title
 			p.Description = panel.Description
-			p.URL = fmt.Sprintf("%s?viewPanel=%d", url, panel.ID)
 			p.Fields = make(map[string]interface{}, 0)
 			p.Fields["type"] = panel.Type
 

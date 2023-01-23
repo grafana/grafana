@@ -27,7 +27,8 @@ export interface PanelChromeProps {
   titleItems?: ReactNode[];
   menu?: ReactElement | (() => ReactElement);
   /** dragClass, hoverHeader not yet implemented */
-  // dragClass?: string;
+  dragClass?: string;
+  dragClassCancel?: string;
   hoverHeader?: boolean;
   loadingState?: LoadingState;
   /**
@@ -69,6 +70,8 @@ export function PanelChrome({
   statusMessage,
   statusMessageOnClick,
   leftItems,
+  dragClass,
+  dragClassCancel,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -91,6 +94,7 @@ export function PanelChrome({
 
   const headerStyles: CSSProperties = {
     height: headerHeight,
+    cursor: dragClass ? 'move' : 'auto',
   };
 
   const itemStyles: CSSProperties = {
@@ -107,17 +111,17 @@ export function PanelChrome({
         {loadingState === LoadingState.Loading ? <LoadingBar width={'28%'} height={'2px'} /> : null}
       </div>
 
-      <div className={styles.headerContainer} style={headerStyles} data-testid="header-container">
+      <div className={cx(styles.headerContainer, dragClass)} style={headerStyles} data-testid="header-container">
         {title && (
           <h6 title={title} className={styles.title}>
             {title}
           </h6>
         )}
 
-        <PanelDescription description={description} />
+        <PanelDescription description={description} className={dragClassCancel} />
 
         {titleItems.length > 0 && (
-          <div className={styles.titleItems} data-testid="title-items-container">
+          <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
             {titleItems.map((item) => item)}
           </div>
         )}
@@ -139,7 +143,7 @@ export function PanelChrome({
                 icon="ellipsis-v"
                 narrow
                 data-testid="panel-menu-button"
-                className={cx(styles.menuItem, 'menu-icon')}
+                className={cx(styles.menuItem, dragClassCancel, 'menu-icon')}
               />
             </Dropdown>
           )}
@@ -148,7 +152,11 @@ export function PanelChrome({
         </div>
 
         {statusMessage && (
-          <PanelStatus className={styles.errorContainer} message={statusMessage} onClick={statusMessageOnClick} />
+          <PanelStatus
+            className={cx(styles.errorContainer, dragClassCancel)}
+            message={statusMessage}
+            onClick={statusMessageOnClick}
+          />
         )}
       </div>
 

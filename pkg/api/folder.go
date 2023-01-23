@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
+	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -22,7 +23,8 @@ import (
 // Get all folders.
 //
 // Returns all folders that the authenticated user has permission to view.
-// If nested folders are enabled, it expects an additional query parameter with the parent folder UID.
+// If nested folders are enabled, it expects an additional query parameter with the parent folder UID
+// and returns the immediate subfolders.
 //
 // Responses:
 // 200: getFoldersResponse
@@ -30,13 +32,19 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
-	folders, err := hs.folderService.GetChildren(c.Req.Context(), &folder.GetChildrenQuery{
-		OrgID:        c.OrgID,
-		Limit:        c.QueryInt64("limit"),
-		Page:         c.QueryInt64("page"),
-		UID:          c.Query("parent_uid"),
-		SignedInUser: c.SignedInUser,
-	})
+	var folders []*folder.Folder
+	var err error
+	if hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		folders, err = hs.folderService.GetChildren(c.Req.Context(), &folder.GetChildrenQuery{
+			OrgID:        c.OrgID,
+			Limit:        c.QueryInt64("limit"),
+			Page:         c.QueryInt64("page"),
+			UID:          c.Query("parent_uid"),
+			SignedInUser: c.SignedInUser,
+		})
+	} else {
+		folders, err = hs.searchFolders(c)
+	}
 
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
@@ -286,6 +294,35 @@ func (hs *HTTPServer) newToFolderDto(c *models.ReqContext, g guardian.DashboardG
 		AccessControl: hs.getAccessControlMetadata(c, c.OrgID, dashboards.ScopeFoldersPrefix, folder.UID),
 		ParentUID:     folder.ParentUID,
 	}
+}
+
+func (hs *HTTPServer) searchFolders(c *models.ReqContext) ([]*folder.Folder, error) {
+	searchQuery := search.Query{
+		SignedInUser: c.SignedInUser,
+		DashboardIds: make([]int64, 0),
+		FolderIds:    make([]int64, 0),
+		Limit:        c.QueryInt64("limit"),
+		OrgId:        c.OrgID,
+		Type:         "dash-folder",
+		Permission:   models.PERMISSION_VIEW,
+		Page:         c.QueryInt64("page"),
+	}
+
+	if err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery); err != nil {
+		return nil, err
+	}
+
+	folders := make([]*folder.Folder, 0)
+
+	for _, hit := range searchQuery.Result {
+		folders = append(folders, &folder.Folder{
+			ID:    hit.ID,
+			UID:   hit.UID,
+			Title: hit.Title,
+		})
+	}
+
+	return folders, nil
 }
 
 // swagger:parameters getFolders

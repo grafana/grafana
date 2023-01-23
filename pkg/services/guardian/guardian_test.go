@@ -188,7 +188,7 @@ func (sc *scenarioContext) defaultPermissionScenario(pt permissionType, flag per
 	_, callerFile, callerLine, _ := runtime.Caller(1)
 	sc.callerFile = callerFile
 	sc.callerLine = callerLine
-	existingPermissions := []*models.DashboardACLInfoDTO{
+	existingPermissions := []*dashboards.DashboardACLInfoDTO{
 		toDto(newEditorRolePermission(defaultDashboardID, models.PERMISSION_EDIT)),
 		toDto(newViewerRolePermission(defaultDashboardID, models.PERMISSION_VIEW)),
 	}
@@ -207,17 +207,17 @@ func (sc *scenarioContext) dashboardPermissionScenario(pt permissionType, permis
 	_, callerFile, callerLine, _ := runtime.Caller(1)
 	sc.callerFile = callerFile
 	sc.callerLine = callerLine
-	var existingPermissions []*models.DashboardACLInfoDTO
+	var existingPermissions []*dashboards.DashboardACLInfoDTO
 
 	switch pt {
 	case USER:
-		existingPermissions = []*models.DashboardACLInfoDTO{{OrgId: orgID, DashboardId: dashboardID, UserId: userID, Permission: permission}}
+		existingPermissions = []*dashboards.DashboardACLInfoDTO{{OrgID: orgID, DashboardID: dashboardID, UserID: userID, Permission: permission}}
 	case TEAM:
-		existingPermissions = []*models.DashboardACLInfoDTO{{OrgId: orgID, DashboardId: dashboardID, TeamId: teamID, Permission: permission}}
+		existingPermissions = []*dashboards.DashboardACLInfoDTO{{OrgID: orgID, DashboardID: dashboardID, TeamID: teamID, Permission: permission}}
 	case EDITOR:
-		existingPermissions = []*models.DashboardACLInfoDTO{{OrgId: orgID, DashboardId: dashboardID, Role: &editorRole, Permission: permission}}
+		existingPermissions = []*dashboards.DashboardACLInfoDTO{{OrgID: orgID, DashboardID: dashboardID, Role: &editorRole, Permission: permission}}
 	case VIEWER:
-		existingPermissions = []*models.DashboardACLInfoDTO{{OrgId: orgID, DashboardId: dashboardID, Role: &viewerRole, Permission: permission}}
+		existingPermissions = []*dashboards.DashboardACLInfoDTO{{OrgID: orgID, DashboardID: dashboardID, Role: &viewerRole, Permission: permission}}
 	}
 
 	permissionScenario(fmt.Sprintf("and %s has permission to %s dashboard", pt.String(), permission.String()),
@@ -234,20 +234,20 @@ func (sc *scenarioContext) parentFolderPermissionScenario(pt permissionType, per
 	_, callerFile, callerLine, _ := runtime.Caller(1)
 	sc.callerFile = callerFile
 	sc.callerLine = callerLine
-	var folderPermissionList []*models.DashboardACLInfoDTO
+	var folderPermissionList []*dashboards.DashboardACLInfoDTO
 
 	switch pt {
 	case USER:
-		folderPermissionList = []*models.DashboardACLInfoDTO{{OrgId: orgID, DashboardId: parentFolderID,
-			UserId: userID, Permission: permission, Inherited: true}}
+		folderPermissionList = []*dashboards.DashboardACLInfoDTO{{OrgID: orgID, DashboardID: parentFolderID,
+			UserID: userID, Permission: permission, Inherited: true}}
 	case TEAM:
-		folderPermissionList = []*models.DashboardACLInfoDTO{{OrgId: orgID, DashboardId: parentFolderID, TeamId: teamID,
+		folderPermissionList = []*dashboards.DashboardACLInfoDTO{{OrgID: orgID, DashboardID: parentFolderID, TeamID: teamID,
 			Permission: permission, Inherited: true}}
 	case EDITOR:
-		folderPermissionList = []*models.DashboardACLInfoDTO{{OrgId: orgID, DashboardId: parentFolderID,
+		folderPermissionList = []*dashboards.DashboardACLInfoDTO{{OrgID: orgID, DashboardID: parentFolderID,
 			Role: &editorRole, Permission: permission, Inherited: true}}
 	case VIEWER:
-		folderPermissionList = []*models.DashboardACLInfoDTO{{OrgId: orgID, DashboardId: parentFolderID,
+		folderPermissionList = []*dashboards.DashboardACLInfoDTO{{OrgID: orgID, DashboardID: parentFolderID,
 			Role: &viewerRole, Permission: permission, Inherited: true}}
 	}
 
@@ -312,7 +312,7 @@ func (sc *scenarioContext) verifyDuplicatePermissionsShouldNotBeAllowed() {
 
 	tc := "When updating dashboard permissions with duplicate permission for user should not be allowed"
 	sc.t.Run(tc, func(t *testing.T) {
-		p := []*models.DashboardACL{
+		p := []*dashboards.DashboardACL{
 			newDefaultUserPermission(dashboardID, models.PERMISSION_VIEW),
 			newDefaultUserPermission(dashboardID, models.PERMISSION_ADMIN),
 		}
@@ -327,7 +327,7 @@ func (sc *scenarioContext) verifyDuplicatePermissionsShouldNotBeAllowed() {
 
 	tc = "When updating dashboard permissions with duplicate permission for team should not be allowed"
 	sc.t.Run(tc, func(t *testing.T) {
-		p := []*models.DashboardACL{
+		p := []*dashboards.DashboardACL{
 			newDefaultTeamPermission(dashboardID, models.PERMISSION_VIEW),
 			newDefaultTeamPermission(dashboardID, models.PERMISSION_ADMIN),
 		}
@@ -341,7 +341,7 @@ func (sc *scenarioContext) verifyDuplicatePermissionsShouldNotBeAllowed() {
 
 	tc = "When updating dashboard permissions with duplicate permission for editor role should not be allowed"
 	sc.t.Run(tc, func(t *testing.T) {
-		p := []*models.DashboardACL{
+		p := []*dashboards.DashboardACL{
 			newEditorRolePermission(dashboardID, models.PERMISSION_VIEW),
 			newEditorRolePermission(dashboardID, models.PERMISSION_ADMIN),
 		}
@@ -356,7 +356,7 @@ func (sc *scenarioContext) verifyDuplicatePermissionsShouldNotBeAllowed() {
 
 	tc = "When updating dashboard permissions with duplicate permission for viewer role should not be allowed"
 	sc.t.Run(tc, func(t *testing.T) {
-		p := []*models.DashboardACL{
+		p := []*dashboards.DashboardACL{
 			newViewerRolePermission(dashboardID, models.PERMISSION_VIEW),
 			newViewerRolePermission(dashboardID, models.PERMISSION_ADMIN),
 		}
@@ -370,7 +370,7 @@ func (sc *scenarioContext) verifyDuplicatePermissionsShouldNotBeAllowed() {
 
 	tc = "When updating dashboard permissions with duplicate permission for admin role should not be allowed"
 	sc.t.Run(tc, func(t *testing.T) {
-		p := []*models.DashboardACL{
+		p := []*dashboards.DashboardACL{
 			newAdminRolePermission(dashboardID, models.PERMISSION_ADMIN),
 		}
 		sc.updatePermissions = p
@@ -390,24 +390,24 @@ func (sc *scenarioContext) verifyUpdateDashboardPermissionsShouldBeAllowed(pt pe
 	for _, p := range []models.PermissionType{models.PERMISSION_ADMIN, models.PERMISSION_EDIT, models.PERMISSION_VIEW} {
 		tc := fmt.Sprintf("When updating dashboard permissions with %s permissions should be allowed", p.String())
 		sc.t.Run(tc, func(t *testing.T) {
-			permissionList := []*models.DashboardACL{}
+			permissionList := []*dashboards.DashboardACL{}
 			switch pt {
 			case USER:
-				permissionList = []*models.DashboardACL{
+				permissionList = []*dashboards.DashboardACL{
 					newEditorRolePermission(dashboardID, p),
 					newViewerRolePermission(dashboardID, p),
 					newCustomUserPermission(dashboardID, otherUserID, p),
 					newDefaultTeamPermission(dashboardID, p),
 				}
 			case TEAM:
-				permissionList = []*models.DashboardACL{
+				permissionList = []*dashboards.DashboardACL{
 					newEditorRolePermission(dashboardID, p),
 					newViewerRolePermission(dashboardID, p),
 					newDefaultUserPermission(dashboardID, p),
 					newCustomTeamPermission(dashboardID, otherTeamID, p),
 				}
 			case EDITOR, VIEWER:
-				permissionList = []*models.DashboardACL{
+				permissionList = []*dashboards.DashboardACL{
 					newEditorRolePermission(dashboardID, p),
 					newViewerRolePermission(dashboardID, p),
 					newDefaultUserPermission(dashboardID, p),
@@ -436,18 +436,18 @@ func (sc *scenarioContext) verifyUpdateDashboardPermissionsShouldNotBeAllowed(pt
 	for _, p := range []models.PermissionType{models.PERMISSION_ADMIN, models.PERMISSION_EDIT, models.PERMISSION_VIEW} {
 		tc := fmt.Sprintf("When updating dashboard permissions with %s permissions should NOT be allowed", p.String())
 		sc.t.Run(tc, func(t *testing.T) {
-			permissionList := []*models.DashboardACL{
+			permissionList := []*dashboards.DashboardACL{
 				newEditorRolePermission(dashboardID, p),
 				newViewerRolePermission(dashboardID, p),
 			}
 			switch pt {
 			case USER:
-				permissionList = append(permissionList, []*models.DashboardACL{
+				permissionList = append(permissionList, []*dashboards.DashboardACL{
 					newCustomUserPermission(dashboardID, otherUserID, p),
 					newDefaultTeamPermission(dashboardID, p),
 				}...)
 			case TEAM:
-				permissionList = append(permissionList, []*models.DashboardACL{
+				permissionList = append(permissionList, []*dashboards.DashboardACL{
 					newDefaultUserPermission(dashboardID, p),
 					newCustomTeamPermission(dashboardID, otherTeamID, p),
 				}...)
@@ -476,24 +476,24 @@ func (sc *scenarioContext) verifyUpdateChildDashboardPermissionsShouldBeAllowed(
 	for _, p := range []models.PermissionType{models.PERMISSION_ADMIN, models.PERMISSION_EDIT, models.PERMISSION_VIEW} {
 		tc := fmt.Sprintf("When updating child dashboard permissions with %s permissions should be allowed", p.String())
 		sc.t.Run(tc, func(t *testing.T) {
-			permissionList := []*models.DashboardACL{}
+			permissionList := []*dashboards.DashboardACL{}
 			switch pt {
 			case USER:
-				permissionList = []*models.DashboardACL{
+				permissionList = []*dashboards.DashboardACL{
 					newEditorRolePermission(childDashboardID, p),
 					newViewerRolePermission(childDashboardID, p),
 					newCustomUserPermission(childDashboardID, otherUserID, p),
 					newDefaultTeamPermission(childDashboardID, p),
 				}
 			case TEAM:
-				permissionList = []*models.DashboardACL{
+				permissionList = []*dashboards.DashboardACL{
 					newEditorRolePermission(childDashboardID, p),
 					newViewerRolePermission(childDashboardID, p),
 					newDefaultUserPermission(childDashboardID, p),
 					newCustomTeamPermission(childDashboardID, otherTeamID, p),
 				}
 			case EDITOR:
-				permissionList = []*models.DashboardACL{
+				permissionList = []*dashboards.DashboardACL{
 					newViewerRolePermission(childDashboardID, p),
 					newDefaultUserPermission(childDashboardID, p),
 					newDefaultTeamPermission(childDashboardID, p),
@@ -504,7 +504,7 @@ func (sc *scenarioContext) verifyUpdateChildDashboardPermissionsShouldBeAllowed(
 					permissionList = append(permissionList, newEditorRolePermission(childDashboardID, p))
 				}
 			case VIEWER:
-				permissionList = []*models.DashboardACL{
+				permissionList = []*dashboards.DashboardACL{
 					newEditorRolePermission(childDashboardID, p),
 					newDefaultUserPermission(childDashboardID, p),
 					newDefaultTeamPermission(childDashboardID, p),
@@ -537,24 +537,24 @@ func (sc *scenarioContext) verifyUpdateChildDashboardPermissionsShouldNotBeAllow
 	for _, p := range []models.PermissionType{models.PERMISSION_ADMIN, models.PERMISSION_EDIT, models.PERMISSION_VIEW} {
 		tc := fmt.Sprintf("When updating child dashboard permissions with %s permissions should NOT be allowed", p.String())
 		sc.t.Run(tc, func(t *testing.T) {
-			permissionList := []*models.DashboardACL{}
+			permissionList := []*dashboards.DashboardACL{}
 			switch pt {
 			case USER:
-				permissionList = []*models.DashboardACL{
+				permissionList = []*dashboards.DashboardACL{
 					newEditorRolePermission(childDashboardID, p),
 					newViewerRolePermission(childDashboardID, p),
 					newCustomUserPermission(childDashboardID, otherUserID, p),
 					newDefaultTeamPermission(childDashboardID, p),
 				}
 			case TEAM:
-				permissionList = []*models.DashboardACL{
+				permissionList = []*dashboards.DashboardACL{
 					newEditorRolePermission(childDashboardID, p),
 					newViewerRolePermission(childDashboardID, p),
 					newDefaultUserPermission(childDashboardID, p),
 					newCustomTeamPermission(childDashboardID, otherTeamID, p),
 				}
 			case EDITOR:
-				permissionList = []*models.DashboardACL{
+				permissionList = []*dashboards.DashboardACL{
 					newViewerRolePermission(childDashboardID, p),
 					newDefaultUserPermission(childDashboardID, p),
 					newDefaultTeamPermission(childDashboardID, p),
@@ -565,7 +565,7 @@ func (sc *scenarioContext) verifyUpdateChildDashboardPermissionsShouldNotBeAllow
 					permissionList = append(permissionList, newEditorRolePermission(childDashboardID, p))
 				}
 			case VIEWER:
-				permissionList = []*models.DashboardACL{
+				permissionList = []*dashboards.DashboardACL{
 					newEditorRolePermission(childDashboardID, p),
 					newDefaultUserPermission(childDashboardID, p),
 					newDefaultTeamPermission(childDashboardID, p),
@@ -603,22 +603,22 @@ func (sc *scenarioContext) verifyUpdateChildDashboardPermissionsWithOverrideShou
 
 		tc := fmt.Sprintf("When updating child dashboard permissions overriding parent %s permission with %s permission should NOT be allowed", pt.String(), p.String())
 		sc.t.Run(tc, func(t *testing.T) {
-			permissionList := []*models.DashboardACL{}
+			permissionList := []*dashboards.DashboardACL{}
 			switch pt {
 			case USER:
-				permissionList = []*models.DashboardACL{
+				permissionList = []*dashboards.DashboardACL{
 					newDefaultUserPermission(childDashboardID, p),
 				}
 			case TEAM:
-				permissionList = []*models.DashboardACL{
+				permissionList = []*dashboards.DashboardACL{
 					newDefaultTeamPermission(childDashboardID, p),
 				}
 			case EDITOR:
-				permissionList = []*models.DashboardACL{
+				permissionList = []*dashboards.DashboardACL{
 					newEditorRolePermission(childDashboardID, p),
 				}
 			case VIEWER:
-				permissionList = []*models.DashboardACL{
+				permissionList = []*dashboards.DashboardACL{
 					newViewerRolePermission(childDashboardID, p),
 				}
 			}
@@ -649,22 +649,22 @@ func (sc *scenarioContext) verifyUpdateChildDashboardPermissionsWithOverrideShou
 			pt.String(), p.String(),
 		)
 		sc.t.Run(tc, func(t *testing.T) {
-			permissionList := []*models.DashboardACL{}
+			permissionList := []*dashboards.DashboardACL{}
 			switch pt {
 			case USER:
-				permissionList = []*models.DashboardACL{
+				permissionList = []*dashboards.DashboardACL{
 					newDefaultUserPermission(childDashboardID, p),
 				}
 			case TEAM:
-				permissionList = []*models.DashboardACL{
+				permissionList = []*dashboards.DashboardACL{
 					newDefaultTeamPermission(childDashboardID, p),
 				}
 			case EDITOR:
-				permissionList = []*models.DashboardACL{
+				permissionList = []*dashboards.DashboardACL{
 					newEditorRolePermission(childDashboardID, p),
 				}
 			case VIEWER:
-				permissionList = []*models.DashboardACL{
+				permissionList = []*dashboards.DashboardACL{
 					newViewerRolePermission(childDashboardID, p),
 				}
 			}
@@ -690,12 +690,12 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 	t.Run("Get hidden ACL tests", func(t *testing.T) {
 		store := dbtest.NewFakeDB()
 		dashSvc := dashboards.NewFakeDashboardService(t)
-		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
-			q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
-			q.Result = []*models.DashboardACLInfoDTO{
-				{Inherited: false, UserId: 1, UserLogin: "user1", Permission: models.PERMISSION_EDIT},
-				{Inherited: false, UserId: 2, UserLogin: "user2", Permission: models.PERMISSION_ADMIN},
-				{Inherited: true, UserId: 3, UserLogin: "user3", Permission: models.PERMISSION_VIEW},
+		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
+			q := args.Get(1).(*dashboards.GetDashboardACLInfoListQuery)
+			q.Result = []*dashboards.DashboardACLInfoDTO{
+				{Inherited: false, UserID: 1, UserLogin: "user1", Permission: models.PERMISSION_EDIT},
+				{Inherited: false, UserID: 2, UserLogin: "user2", Permission: models.PERMISSION_ADMIN},
+				{Inherited: true, UserID: 3, UserLogin: "user3", Permission: models.PERMISSION_VIEW},
 			}
 		}).Return(nil)
 		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
@@ -756,17 +756,17 @@ func TestGuardianGetACLWithoutDuplicates(t *testing.T) {
 	t.Run("Get hidden ACL tests", func(t *testing.T) {
 		store := dbtest.NewFakeDB()
 		dashSvc := dashboards.NewFakeDashboardService(t)
-		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
-			q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
-			q.Result = []*models.DashboardACLInfoDTO{
-				{Inherited: true, UserId: 3, UserLogin: "user3", Permission: models.PERMISSION_EDIT},
-				{Inherited: false, UserId: 3, UserLogin: "user3", Permission: models.PERMISSION_VIEW},
-				{Inherited: false, UserId: 2, UserLogin: "user2", Permission: models.PERMISSION_ADMIN},
-				{Inherited: true, UserId: 4, UserLogin: "user4", Permission: models.PERMISSION_ADMIN},
-				{Inherited: false, UserId: 4, UserLogin: "user4", Permission: models.PERMISSION_ADMIN},
-				{Inherited: false, UserId: 5, UserLogin: "user5", Permission: models.PERMISSION_EDIT},
-				{Inherited: true, UserId: 6, UserLogin: "user6", Permission: models.PERMISSION_VIEW},
-				{Inherited: false, UserId: 6, UserLogin: "user6", Permission: models.PERMISSION_EDIT},
+		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
+			q := args.Get(1).(*dashboards.GetDashboardACLInfoListQuery)
+			q.Result = []*dashboards.DashboardACLInfoDTO{
+				{Inherited: true, UserID: 3, UserLogin: "user3", Permission: models.PERMISSION_EDIT},
+				{Inherited: false, UserID: 3, UserLogin: "user3", Permission: models.PERMISSION_VIEW},
+				{Inherited: false, UserID: 2, UserLogin: "user2", Permission: models.PERMISSION_ADMIN},
+				{Inherited: true, UserID: 4, UserLogin: "user4", Permission: models.PERMISSION_ADMIN},
+				{Inherited: false, UserID: 4, UserLogin: "user4", Permission: models.PERMISSION_ADMIN},
+				{Inherited: false, UserID: 5, UserLogin: "user5", Permission: models.PERMISSION_EDIT},
+				{Inherited: true, UserID: 6, UserLogin: "user6", Permission: models.PERMISSION_VIEW},
+				{Inherited: false, UserID: 6, UserLogin: "user6", Permission: models.PERMISSION_EDIT},
 			}
 		}).Return(nil)
 		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
@@ -791,13 +791,13 @@ func TestGuardianGetACLWithoutDuplicates(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, acl)
 			require.Len(t, acl, 6)
-			require.ElementsMatch(t, []*models.DashboardACLInfoDTO{
-				{Inherited: true, UserId: 3, UserLogin: "user3", Permission: models.PERMISSION_EDIT},
-				{Inherited: true, UserId: 4, UserLogin: "user4", Permission: models.PERMISSION_ADMIN},
-				{Inherited: true, UserId: 6, UserLogin: "user6", Permission: models.PERMISSION_VIEW},
-				{Inherited: false, UserId: 2, UserLogin: "user2", Permission: models.PERMISSION_ADMIN},
-				{Inherited: false, UserId: 5, UserLogin: "user5", Permission: models.PERMISSION_EDIT},
-				{Inherited: false, UserId: 6, UserLogin: "user6", Permission: models.PERMISSION_EDIT},
+			require.ElementsMatch(t, []*dashboards.DashboardACLInfoDTO{
+				{Inherited: true, UserID: 3, UserLogin: "user3", Permission: models.PERMISSION_EDIT},
+				{Inherited: true, UserID: 4, UserLogin: "user4", Permission: models.PERMISSION_ADMIN},
+				{Inherited: true, UserID: 6, UserLogin: "user6", Permission: models.PERMISSION_VIEW},
+				{Inherited: false, UserID: 2, UserLogin: "user2", Permission: models.PERMISSION_ADMIN},
+				{Inherited: false, UserID: 5, UserLogin: "user5", Permission: models.PERMISSION_EDIT},
+				{Inherited: false, UserID: 6, UserLogin: "user6", Permission: models.PERMISSION_EDIT},
 			}, acl)
 		})
 	})

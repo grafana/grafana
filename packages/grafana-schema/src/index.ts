@@ -3,5 +3,5 @@
  *
  * @packageDocumentation
  */
-export * from './common/common.gen';
+export * from './veneer/common.types';
 export * from './index.gen';
