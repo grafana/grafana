@@ -24,6 +24,8 @@ const (
 	ClientJWT       = "auth.client.jwt"
 	ClientRender    = "auth.client.render"
 	ClientSession   = "auth.client.session"
+	ClientForm      = "auth.client.form"
+	ClientProxy     = "auth.client.proxy"
 )
 
 const (
@@ -58,6 +60,8 @@ type Service interface {
 	Login(ctx context.Context, client string, r *Request) (*Identity, error)
 	// RegisterPostLoginHook registers a hook that that is called after a login request.
 	RegisterPostLoginHook(hook PostLoginHookFn)
+	// RedirectURL will generate url that we can use to initiate auth flow for supported clients.
+	RedirectURL(ctx context.Context, client string, r *Request) (string, error)
 }
 
 type Client interface {
@@ -67,8 +71,17 @@ type Client interface {
 	Test(ctx context.Context, r *Request) bool
 }
 
+type RedirectClient interface {
+	Client
+	RedirectURL(ctx context.Context, r *Request) (string, error)
+}
+
 type PasswordClient interface {
 	AuthenticatePassword(ctx context.Context, r *Request, username, password string) (*Identity, error)
+}
+
+type ProxyClient interface {
+	AuthenticateProxy(ctx context.Context, r *Request, username string, additional map[string]string) (*Identity, error)
 }
 
 type Request struct {

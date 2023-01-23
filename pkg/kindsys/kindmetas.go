@@ -47,7 +47,8 @@ func (m CustomProperties) Common() CommonProperties {
 // excludes Thema schemas.
 type ComposableProperties struct {
 	CommonProperties
-	CurrentVersion thema.SyntacticVersion `json:"currentVersion"`
+	CurrentVersion  thema.SyntacticVersion `json:"currentVersion"`
+	SchemaInterface string                 `json:"schemaInterface"`
 }
 
 func (m ComposableProperties) _private() {}

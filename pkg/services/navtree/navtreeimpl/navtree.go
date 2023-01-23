@@ -323,7 +323,7 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *models.ReqContext) ([]*navtre
 		return nil, err
 	}
 
-	starredDashboards := []*models.Dashboard{}
+	starredDashboards := []*dashboards.Dashboard{}
 	starredDashboardsCounter := 0
 	for dashboardId := range starredDashboardResult.UserStars {
 		// Set a loose limit to the first 50 starred dashboards found
@@ -331,9 +331,9 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *models.ReqContext) ([]*navtre
 			break
 		}
 		starredDashboardsCounter++
-		query := &models.GetDashboardQuery{
-			Id:    dashboardId,
-			OrgId: c.OrgID,
+		query := &dashboards.GetDashboardQuery{
+			ID:    dashboardId,
+			OrgID: c.OrgID,
 		}
 		err := s.dashboardService.GetDashboard(c.Req.Context(), query)
 		if err == nil {
@@ -347,9 +347,9 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *models.ReqContext) ([]*navtre
 		})
 		for _, starredItem := range starredDashboards {
 			starredItemsChildNavs = append(starredItemsChildNavs, &navtree.NavLink{
-				Id:   "starred/" + starredItem.Uid,
+				Id:   "starred/" + starredItem.UID,
 				Text: starredItem.Title,
-				Url:  starredItem.GetUrl(),
+				Url:  starredItem.GetURL(),
 			})
 		}
 	}
@@ -561,9 +561,8 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree
 
 	baseUrl := s.cfg.AppSubURL + "/connections"
 
-	// Connect data
-	// FIXME: while we don't have a permissions for listing plugins the legacy check has to stay as a default
-	if plugins.ReqCanAdminPlugins(s.cfg)(c) || hasAccess(plugins.ReqCanAdminPlugins(s.cfg), plugins.AdminAccessEvaluator) {
+	if hasAccess(ac.ReqOrgAdmin, datasources.ConfigurationPageAccess) {
+		// Connect data
 		children = append(children, &navtree.NavLink{
 			Id:        "connections-connect-data",
 			Text:      "Connect data",
@@ -572,9 +571,7 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree
 			Url:       s.cfg.AppSubURL + "/connections/connect-data",
 			Children:  []*navtree.NavLink{},
 		})
-	}
 
-	if hasAccess(ac.ReqOrgAdmin, datasources.ConfigurationPageAccess) {
 		// Your connections
 		children = append(children, &navtree.NavLink{
 			Id:       "connections-your-connections",

@@ -10,7 +10,7 @@ import {
   DataSourceInstanceSettings,
   DataSourceWithLogsContextSupport,
   DataSourceWithQueryImportSupport,
-  DataSourceWithLogsVolumeSupport,
+  DataSourceWithSupplementaryQueriesSupport,
   DateTime,
   dateTime,
   Field,
@@ -24,6 +24,7 @@ import {
   toUtc,
   QueryFixAction,
   CoreApp,
+  SupplementaryQueryType,
 } from '@grafana/data';
 import { BackendSrvRequest, DataSourceWithBackend, getBackendSrv, getDataSourceSrv, config } from '@grafana/runtime';
 import { queryLogsVolume } from 'app/core/logsModel';
@@ -74,7 +75,7 @@ export class ElasticDatasource
   implements
     DataSourceWithLogsContextSupport,
     DataSourceWithQueryImportSupport<ElasticsearchQuery>,
-    DataSourceWithLogsVolumeSupport<ElasticsearchQuery>
+    DataSourceWithSupplementaryQueriesSupport<ElasticsearchQuery>
 {
   basicAuth?: string;
   withCredentials?: boolean;
@@ -579,6 +580,25 @@ export class ElasticDatasource
     }
     return logResponse;
   };
+
+  getDataProvider(
+    type: SupplementaryQueryType,
+    request: DataQueryRequest<ElasticsearchQuery>
+  ): Observable<DataQueryResponse> | undefined {
+    if (!this.getSupportedSupplementaryQueryTypes().includes(type)) {
+      return undefined;
+    }
+    switch (type) {
+      case SupplementaryQueryType.LogsVolume:
+        return this.getLogsVolumeDataProvider(request);
+      default:
+        return undefined;
+    }
+  }
+
+  getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[] {
+    return [SupplementaryQueryType.LogsVolume];
+  }
 
   getLogsVolumeDataProvider(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> | undefined {
     const isLogsVolumeAvailable = request.targets.some((target) => {
