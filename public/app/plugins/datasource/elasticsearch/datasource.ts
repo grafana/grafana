@@ -600,6 +600,64 @@ export class ElasticDatasource
     return [SupplementaryQueryType.LogsVolume];
   }
 
+  getSupplementaryQuery(type: SupplementaryQueryType, query: ElasticsearchQuery): ElasticsearchQuery | undefined {
+    if (!this.getSupportedSupplementaryQueryTypes().includes(type)) {
+      return undefined;
+    }
+
+    let isQuerySuitable = false;
+    let supplementaryQuery: ElasticsearchQuery | undefined = undefined;
+
+    switch (type) {
+      case SupplementaryQueryType.LogsVolume:
+        // it has to be a logs-producing range-query
+        isQuerySuitable = !!(query.metrics?.length === 1 && query.metrics[0].type === 'logs');
+        if (isQuerySuitable) {
+          const bucketAggs: BucketAggregation[] = [];
+          const timeField = this.timeField ?? '@timestamp';
+
+          if (this.logLevelField) {
+            bucketAggs.push({
+              id: '2',
+              type: 'terms',
+              settings: {
+                min_doc_count: '0',
+                size: '0',
+                order: 'desc',
+                orderBy: '_count',
+                missing: LogLevel.unknown,
+              },
+              field: this.logLevelField,
+            });
+          }
+          bucketAggs.push({
+            id: '3',
+            type: 'date_histogram',
+            settings: {
+              interval: 'auto',
+              min_doc_count: '0',
+              trimEdges: '0',
+            },
+            field: timeField,
+          });
+
+          supplementaryQuery = {
+            refId: `${REF_ID_STARTER_LOG_VOLUME}${query.refId}`,
+            query: query.query,
+            metrics: [{ type: 'count', id: '1' }],
+            timeField,
+            bucketAggs,
+          };
+        }
+        break;
+
+      default:
+        supplementaryQuery = undefined;
+    }
+
+    return supplementaryQuery;
+  }
+
   getLogsVolumeDataProvider(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> | undefined {
     const isLogsVolumeAvailable = request.targets.some((target) => {
       return target.metrics?.length === 1 && target.metrics[0].type === 'logs';
