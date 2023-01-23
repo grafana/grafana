@@ -15,7 +15,7 @@
 package grafanaplugin
 
 import (
-	ui "github.com/grafana/grafana/packages/grafana-schema/src/common"
+	"github.com/grafana/grafana/packages/grafana-schema/src/common"
 )
 
 composableKinds: PanelCfg: {
@@ -26,19 +26,18 @@ composableKinds: PanelCfg: {
 				schemas: [
 					{
 						PanelOptions: {
-							ui.OptionsWithLegend
-							ui.OptionsWithTooltip
-							ui.OptionsWithTimezones
-
-							//Show values on the columns
-							showValue: ui.VisibilityMode | *"auto"
-							//Controls the column width
-							colWidth?: float & <=1 | *0.9
+							common.OptionsWithLegend
+							common.OptionsWithTooltip
+							common.OptionsWithTimezones
+							showValue:  common.VisibilityMode
+							rowHeight:  number
+							colWidth?:  number
+							alignValue: "center" | *"left" | "right"
 						} @cuetsy(kind="interface")
 						PanelFieldConfig: {
-							ui.HideableFieldConfig
-							lineWidth?:   uint32 & <=10 | *1
-							fillOpacity?: uint32 & <=100 | *70
+							common.HideableFieldConfig
+							lineWidth?:   number | *1
+							fillOpacity?: number | *70
 						} @cuetsy(kind="interface")
 					},
 				]
