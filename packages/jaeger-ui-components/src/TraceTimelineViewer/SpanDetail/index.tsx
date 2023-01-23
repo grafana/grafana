@@ -212,7 +212,7 @@ export default function SpanDetail(props: SpanDetailProps) {
                 type: 'log',
                 location: 'spanDetails',
               });
-              links.logLinks[0].onClick!(event);
+              links?.logLinks?.[0].onClick?.(event);
             },
           }}
           buttonProps={{ icon: 'gf-logs' }}
@@ -236,20 +236,6 @@ export default function SpanDetail(props: SpanDetailProps) {
   }
 
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
-  const logLink = links?.logLinks?.[0]
-    ? {
-        ...links?.logLinks?.[0],
-        onClick: (event: React.MouseEvent) => {
-          reportInteraction('grafana_traces_trace_view_span_link_clicked', {
-            datasourceType: datasourceType,
-            type: 'log',
-            location: 'spanDetails',
-          });
-          links?.logLinks?.[0].onClick!(event);
-        },
-      }
-    : undefined;
-
   return (
     <div data-testid="span-detail-component">
       <div className={styles.header}>
