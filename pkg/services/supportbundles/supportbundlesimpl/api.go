@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/web"
@@ -28,9 +27,9 @@ func (s *Service) registerAPIEndpoints(httpServer *grafanaApi.HTTPServer, routeR
 		orgRoleMiddleware = middleware.RoleAuth(roletype.RoleAdmin)
 	}
 
-	supportBundlePageAccess := accesscontrol.EvalAny(
-		accesscontrol.EvalPermission(ActionRead),
-		accesscontrol.EvalPermission(ActionCreate),
+	supportBundlePageAccess := ac.EvalAny(
+		ac.EvalPermission(ActionRead),
+		ac.EvalPermission(ActionCreate),
 	)
 
 	routeRegister.Get("/support-bundles", authorize(orgRoleMiddleware, supportBundlePageAccess), httpServer.Index)
