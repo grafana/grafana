@@ -133,7 +133,6 @@ func bucketForEnterprise2(releaseModeConfig *config.BuildConfig, event string) (
 	}
 
 	return "", fmt.Errorf("enterprise2 bucket var doesn't exist")
-
 }
 
 func getVersionFolder(cfg uploadConfig, event string) string {
@@ -151,7 +150,6 @@ func getVersionFolder(cfg uploadConfig, event string) string {
 		}
 		panic(fmt.Sprintf("Unrecognized version mode: %s", cfg.versionMode))
 	}
-	return ""
 }
 
 func uploadPackages(cfg uploadConfig) error {
