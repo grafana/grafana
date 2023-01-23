@@ -4,6 +4,7 @@ keywords:
   - schema
 title: Preferences kind
 ---
+> Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
 # Preferences kind
 
