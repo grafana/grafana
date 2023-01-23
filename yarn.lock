@@ -4595,7 +4595,6 @@ __metadata:
     "@rollup/plugin-commonjs": 23.0.2
     "@rollup/plugin-json": 5.0.1
     "@rollup/plugin-node-resolve": 15.0.1
-    "@swc/helpers": 0.4.12
     "@testing-library/dom": 8.19.0
     "@testing-library/jest-dom": 5.16.5
     "@testing-library/react": 12.1.4
@@ -4921,7 +4920,6 @@ __metadata:
     "@rollup/plugin-commonjs": 23.0.2
     "@rollup/plugin-json": 5.0.1
     "@rollup/plugin-node-resolve": 15.0.1
-    "@swc/helpers": 0.4.12
     esbuild: 0.16.17
     rimraf: 3.0.2
     rollup: 2.79.1
@@ -5073,7 +5071,6 @@ __metadata:
     "@storybook/preset-scss": 1.0.3
     "@storybook/react": 6.5.14
     "@storybook/theming": 6.5.14
-    "@swc/helpers": 0.4.12
     "@testing-library/dom": 8.19.0
     "@testing-library/jest-dom": 5.16.5
     "@testing-library/react": 12.1.4
