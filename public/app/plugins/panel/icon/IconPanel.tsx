@@ -57,6 +57,7 @@ export class IconPanel extends Component<Props> {
     getScalar: (scalar: ScalarDimensionConfig) => getScalarDimensionFromData(this.props.data, scalar),
     getText: (text: TextDimensionConfig) => getTextDimensionFromData(this.props.data, text),
     getResource: (res: ResourceDimensionConfig) => getResourceDimensionFromData(this.props.data, res),
+    getPanelData: () => this.props.data,
   };
 
   shouldComponentUpdate(nextProps: Props) {
