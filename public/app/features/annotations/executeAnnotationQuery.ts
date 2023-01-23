@@ -24,7 +24,7 @@ export function executeAnnotationQuery(
   };
 
   const annotationWithDefaults = {
-    ...processor.getDefaultQuery?.(CoreApp.Dashboard),
+    ...processor.getDefaultQuery?.(),
     ...savedJsonAnno,
   };
   const annotation = processor.prepareAnnotation!(annotationWithDefaults);
