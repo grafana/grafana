@@ -1,5 +1,4 @@
 import { chain, difference, once } from 'lodash';
-import LRU from 'lru-cache';
 import Prism from 'prismjs';
 import { Value } from 'slate';
 
@@ -92,16 +91,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   datasource: PrometheusDatasource;
   labelKeys: string[] = [];
   declare labelFetchTs: number;
-
-  /**
-   *  Cache for labels of series. This is bit simplistic in the sense that it just counts responses each as a 1 and does
-   *  not account for different size of a response. If that is needed a `length` function can be added in the options.
-   *  10 as a max size is totally arbitrary right now.
-   */
-  private keysCache;
-  private labelsCache;
-  private labelValuesCache;
-
   constructor(datasource: PrometheusDatasource, initialValues?: Partial<PromQlLanguageProvider>) {
     super();
 
@@ -109,10 +98,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     this.histogramMetrics = [];
     this.timeRange = { start: 0, end: 0 };
     this.metrics = [];
-
-    this.keysCache = new LRU<string, string[]>({ max: this.datasource.getCacheLength() });
-    this.labelsCache = new LRU<string, Record<string, string[]>>({ max: this.datasource.getCacheLength() });
-    this.labelValuesCache = new LRU<string, string[]>({ max: this.datasource.getCacheLength() });
 
     Object.assign(this, initialValues);
   }
@@ -144,10 +129,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       return [];
     }
 
-    // TODO #33976: make those requests parallel
-    // await this.fetchLabels();
     this.metrics = (await this.fetchLabelValues('__name__')) || [];
-    // await this.loadMetricsMetadata();
     this.histogramMetrics = processHistogramMetrics(this.metrics).sort();
     return Promise.all([this.loadMetricsMetadata(), this.fetchLabels()]);
   };
@@ -485,24 +467,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const params = this.datasource.getQuantizedTimeRangeParams();
     const interpolatedName = this.datasource.interpolateString(key);
     const url = `/api/v1/label/${interpolatedName}/values`;
-
-    const cacheParams = new URLSearchParams({
-      'match[]': interpolatedName ?? '',
-      start: params.start,
-      end: params.end,
-      name: key,
-    });
-
-    const cacheKey = `/api/v1/label/?${cacheParams.toString()}/values`;
-    let value = this.labelValuesCache.get(cacheKey);
-
-    if (!value) {
-      value = await this.request(url, [], params);
-      if (value) {
-        this.labelValuesCache.set(cacheKey, value);
-      }
-    }
-
+    const value = await this.request(url, [], params);
     return value ?? [];
   };
 
@@ -518,21 +483,9 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const params = this.datasource.getQuantizedTimeRangeParams();
     this.labelFetchTs = Date.now().valueOf();
 
-    const cacheParams = new URLSearchParams({
-      start: params.start,
-      end: params.end,
-    });
-
-    const cacheKey = `${url}?${cacheParams.toString()}`;
-    let value = this.keysCache.get(cacheKey);
-    if (!value) {
-      const res = await this.request(url, [], params);
-      if (Array.isArray(res)) {
-        this.labelKeys = res.slice().sort();
-        this.keysCache.set(cacheKey, this.labelKeys);
-      }
-    } else {
-      this.labelKeys = value;
+    const res = await this.request(url, [], params);
+    if (Array.isArray(res)) {
+      this.labelKeys = res.slice().sort();
     }
 
     return [];
@@ -565,22 +518,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       ...range,
       ...(match && { 'match[]': match }),
     };
-
-    const cacheParams = new URLSearchParams({
-      'match[]': match ?? '',
-      start: range.start,
-      end: range.end,
-      name: interpolatedName ?? '',
-    });
-
-    const cacheKey = `/api/v1/label/?${cacheParams.toString()}/values`;
-    let value: string[] | undefined = this.labelValuesCache.get(cacheKey);
-    if (!value) {
-      value = await this.request(`/api/v1/label/${interpolatedName}/values`, [], urlParams);
-      if (value) {
-        this.labelValuesCache.set(cacheKey, value);
-      }
-    }
+    const value = await this.request(`/api/v1/label/${interpolatedName}/values`, [], urlParams);
     return value ?? [];
   };
 
@@ -624,26 +562,9 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       'match[]': interpolatedName,
     };
     const url = `/api/v1/series`;
-    // Cache key is a bit different here. We add the `withName` param and also round up to a minute the intervals.
-    // The rounding may seem strange but makes relative intervals like now-1h less prone to need separate request every
-    // millisecond while still actually getting all the keys for the correct interval. This still can create problems
-    // when user does not the newest values for a minute if already cached.
-    const cacheParams = new URLSearchParams({
-      'match[]': interpolatedName,
-      start: range.start,
-      end: range.end,
-      withName: withName ? 'true' : 'false',
-    });
-
-    const cacheKey = `/api/v1/series?${cacheParams.toString()}`;
-    let value = this.labelsCache.get(cacheKey);
-    if (!value) {
-      const data = await this.request(url, [], urlParams);
-      const { values } = processLabels(data, withName);
-      value = values;
-      this.labelsCache.set(cacheKey, value);
-    }
-    return value;
+    const data = await this.request(url, [], urlParams);
+    const { values } = processLabels(data, withName);
+    return values;
   };
 
   /**
@@ -660,26 +581,9 @@ export default class PromQlLanguageProvider extends LanguageProvider {
       'match[]': interpolatedName,
     };
     const url = `/api/v1/labels`;
-    // Cache key is a bit different here. We add the `withName` param and also round up to a minute the intervals.
-    // The rounding may seem strange but makes relative intervals like now-1h less prone to need separate request every
-    // millisecond while still actually getting all the keys for the correct interval. This still can create problems
-    // when user does not the newest values for a minute if already cached.
-    const cacheParams = new URLSearchParams({
-      'match[]': interpolatedName,
-      start: range.start,
-      end: range.end,
-      withName: withName ? 'true' : 'false',
-    });
-
-    const cacheKey = `${url}?${cacheParams.toString()}`;
-    let value = this.labelsCache.get(cacheKey);
-    if (!value) {
-      const data: string[] = await this.request(url, [], urlParams);
-      // Convert string array to Record<string , []>
-      value = data.reduce((ac, a) => ({ ...ac, [a]: '' }), {});
-      this.labelsCache.set(cacheKey, value);
-    }
-    return value;
+    const data: string[] = await this.request(url, [], urlParams);
+    // Convert string array to Record<string , []>
+    return data.reduce((ac, a) => ({ ...ac, [a]: '' }), {});
   };
 
   /**
