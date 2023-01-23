@@ -11,6 +11,7 @@ lineage: seqs: [
 				homeDashboardUID?: string
 
 				// The timezone selection
+				// TODO: this should use the timezone defined in common
 				timezone?: string
 
 				// day of the week (sunday, monday, etc)
