@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/apikey/apikeytest"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
@@ -37,7 +38,7 @@ type scenarioContext struct {
 	defaultHandler       web.Handler
 	url                  string
 	userAuthTokenService *authtest.FakeUserAuthTokenService
-	jwtAuthService       *models.FakeJWTService
+	jwtAuthService       *jwt.FakeJWTService
 	remoteCacheService   *remotecache.RemoteCache
 	cfg                  *setting.Cfg
 	sqlStore             db.DB
