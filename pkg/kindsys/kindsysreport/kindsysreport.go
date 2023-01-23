@@ -1,8 +1,6 @@
 package kindsysreport
 
 import (
-	"reflect"
-
 	"cuelang.org/go/cue"
 )
 
@@ -30,7 +28,7 @@ func (w *AttributeWalker) walk(p cue.Path, v cue.Value) {
 
 	w.seen[v] = true
 
-	isRef := !reflect.DeepEqual(v, cue.Dereference(v))
+	isRef := v != cue.Dereference(v)
 
 	for attr := range w.count {
 		if found := v.Attribute(attr); found.Err() == nil {
