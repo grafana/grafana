@@ -74,6 +74,9 @@
     ],
     "*kinds/**/*.cue": [
       "make fix-cue"
+    ],
+    "*public/app/plugins/**/**/*.cue": [
+      "make fix-cue"
     ]
   },
   "devDependencies": {
