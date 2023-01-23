@@ -7,7 +7,6 @@ package main
 
 import (
 	"context"
-	"cuelang.org/go/cue"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -15,6 +14,8 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+
+	"cuelang.org/go/cue"
 
 	"github.com/grafana/codejen"
 	"github.com/grafana/grafana/pkg/kindsys"

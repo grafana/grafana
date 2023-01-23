@@ -34,6 +34,7 @@ func (w *AttributeWalker) walk(p cue.Path, v cue.Value) {
 		}
 	}
 
+	// nolint: exhaustive
 	switch v.Kind() {
 	case cue.StructKind:
 		// If current cue.Value is a reference to another
