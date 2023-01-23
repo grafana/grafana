@@ -1,5 +1,6 @@
 package common
 
+// TODO docs
 DataSourceJsonData: {
   authType?: string
   defaultRegion?: string
@@ -11,7 +12,6 @@ DataSourceJsonData: {
 // Frontend settings model that is passed to Datasource constructor. This differs a bit from the model above
 // as this data model is available to every user who has access to a data source (Viewers+).  This is loaded
 // in bootData (on page load), or from: /api/frontend/settings
-// TODO <T extends DataSourceJsonData = DataSourceJsonData>
 DataSourceInstanceSettings: {
 	id: int64
   uid: string
@@ -20,6 +20,7 @@ DataSourceInstanceSettings: {
   meta: DataSourcePluginMeta
   readOnly: bool
   url?: string
+  // Extended in veneer
   jsonData: _
   username?: string
   // when access is direct, for some legacy datasources
@@ -40,7 +41,7 @@ DataSourceInstanceSettings: {
   rawRef?: DataSourceRef
 } @cuetsy(kind="interface")
 
-// TODO docs | <T extends KeyValue = {}> extends PluginMeta<T>
+// TODO docs
 DataSourcePluginMeta: {
 	builtIn?: bool
   metrics?: bool
@@ -59,6 +60,7 @@ DataSourcePluginMeta: {
   isBackend?: bool
 } @cuetsy(kind="interface")
 
+// TODO docs
 PluginMetaQueryOptions: {
   cacheTimeout?: bool
   maxDataPoints?: bool

@@ -421,6 +421,9 @@ export const defaultDataFrameSchema: Partial<DataFrameSchema> = {
   fields: [],
 };
 
+/**
+ * TODO docs
+ */
 export interface DataSourceJsonData {
   alertmanagerUid?: string;
   authType?: string;
@@ -433,7 +436,6 @@ export interface DataSourceJsonData {
  * Frontend settings model that is passed to Datasource constructor. This differs a bit from the model above
  * as this data model is available to every user who has access to a data source (Viewers+).  This is loaded
  * in bootData (on page load), or from: /api/frontend/settings
- * TODO <T extends DataSourceJsonData = DataSourceJsonData>
  */
 export interface DataSourceInstanceSettings {
   /**
@@ -454,6 +456,9 @@ export interface DataSourceInstanceSettings {
   database?: string;
   id: number;
   isDefault?: boolean;
+  /**
+   * Extended in veneer
+   */
   jsonData: unknown;
   meta: DataSourcePluginMeta;
   name: string;
@@ -474,7 +479,7 @@ export interface DataSourceInstanceSettings {
 }
 
 /**
- * TODO docs | <T extends KeyValue = {}> extends PluginMeta<T>
+ * TODO docs
  */
 export interface DataSourcePluginMeta {
   alerting?: boolean;
@@ -1091,7 +1096,7 @@ export const defaultQueryResultMeta: Partial<QueryResultMeta> = {
 export type DataTopic = 'annotations';
 
 /**
- * TODO extends FieldConfig
+ * TODO docs
  */
 export interface QueryResultMetaStat extends FieldConfig {
   /**
@@ -1119,6 +1124,176 @@ export interface QueryResultMetaNotice {
    * Notice descriptive text
    */
   text: string;
+}
+
+/**
+ * TODO docs
+ */
+export interface PluginMeta {
+  baseUrl: string;
+  defaultNavUrl?: string;
+  /**
+   * Define plugin requirements
+   */
+  dependencies?: PluginDependencies;
+  enabled?: boolean;
+  enterprise?: boolean;
+  hasUpdate?: boolean;
+  id: string;
+  includes?: Array<PluginInclude>;
+  info: {
+    author: {
+      name: string;
+      url?: string;
+    };
+    description: string;
+    links: Array<PluginMetaInfoLink>;
+    logos: {
+      large: string;
+      small: string;
+    };
+    build?: Array<PluginBuildInfo>;
+    screenshots: Array<ScreenshotInfo>;
+    updated: string;
+    version: string;
+  };
+  /**
+   * Filled in by the backend
+   */
+  jsonData?: unknown;
+  latestVersion?: string;
+  live?: boolean;
+  /**
+   * System.load & relative URLS
+   */
+  module: string;
+  name: string;
+  pinned?: boolean;
+  secureJsonData?: Record<string, unknown>;
+  secureJsonFields?: Record<string, boolean>;
+  signature?: PluginSignatureStatus;
+  signatureOrg?: string;
+  signatureType?: PluginSignatureType;
+  state?: PluginState;
+  type: PluginType;
+}
+
+export const defaultPluginMeta: Partial<PluginMeta> = {
+  includes: [],
+};
+
+/**
+ * Describes {@link https://grafana.com/docs/grafana/latest/plugins | type of plugin}
+ */
+export enum PluginType {
+  app = 'app',
+  datasource = 'datasource',
+  panel = 'panel',
+  renderer = 'renderer',
+  secretsmanager = 'secretsmanager',
+}
+
+export interface PluginMetaInfoLink {
+  name: string;
+  url: string;
+}
+
+export interface PluginBuildInfo {
+  branch?: string;
+  hash?: string;
+  number?: number;
+  pr?: number;
+  repo?: string;
+  time?: number;
+}
+
+export interface ScreenshotInfo {
+  name: string;
+  path: string;
+}
+
+/**
+ * TODO docs
+ */
+export enum PluginIncludeType {
+  dashboard = 'dashboard',
+  datasource = 'datasource',
+  page = 'page',
+  panel = 'panel',
+}
+
+/**
+ * TODO docs
+ */
+export interface PluginInclude {
+  /**
+   * Adds the "page" or "dashboard" type includes to the navigation if set to `true`.
+   */
+  addToNav?: boolean;
+  /**
+   * Angular app pages
+   */
+  component?: string;
+  icon?: string;
+  name: string;
+  path?: string;
+  /**
+   * "Admin", "Editor" or "Viewer". If set then the include will only show up in the navigation if the user has the required roles.
+   */
+  role?: string;
+  type: PluginIncludeType;
+}
+
+/**
+ * alpha - Only included if `enable_alpha` config option is true
+ * beta - Will show a warning banner
+ * stable - Will not show anything
+ * deprecated - Will continue to work -- but not show up in the options to add
+ */
+export enum PluginState {
+  alpha = 'alpha',
+  beta = 'beta',
+  deprecated = 'deprecated',
+  stable = 'stable',
+}
+
+/**
+ * TODO docs
+ */
+export interface PluginDependencies {
+  grafanaDependency?: string;
+  grafanaVersion: string;
+  plugins: Array<PluginDependencyInfo>;
+}
+
+export const defaultPluginDependencies: Partial<PluginDependencies> = {
+  plugins: [],
+};
+
+/**
+ * TODO docs
+ */
+export interface PluginDependencyInfo {
+  id: string;
+  name: string;
+  type: PluginType;
+  version: string;
+}
+
+/**
+ * Describes status of {@link https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/ | plugin signature}
+ * internal - core plugin, no signature
+ * valid - signed and accurate MANIFEST
+ * invalid - invalid signature
+ * modified - valid signature, but content mismatch
+ * missing - missing signature file
+ */
+export enum PluginSignatureStatus {
+  internal = 'internal',
+  invalid = 'invalid',
+  missing = 'missing',
+  modified = 'modified',
+  valid = 'valid',
 }
 
 /**
@@ -1238,6 +1413,9 @@ export interface FieldSchema {
   type?: FieldType;
 }
 
+/**
+ * TODO docs
+ */
 export interface PluginMetaQueryOptions {
   cacheTimeout?: boolean;
   maxDataPoints?: boolean;
@@ -1256,6 +1434,17 @@ export interface DataSourceRef {
 }
 
 export type PreferredVisualisationType = ('graph' | 'table' | 'logs' | 'trace' | 'nodeGraph' | 'flamegraph' | 'rawPrometheus');
+
+/**
+ * Describes level of {@link https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/#plugin-signature-levels/ | plugin signature level}
+ */
+export enum PluginSignatureType {
+  commercial = 'commercial',
+  community = 'community',
+  core = 'core',
+  grafana = 'grafana',
+  private = 'private',
+}
 
 /**
  * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
