@@ -44,7 +44,7 @@ func (j *pgoJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
 			},
 		},
 		PackageName: slotname,
-		ApplyFuncs:  []dstutil.ApplyFunc{corecodegen.PrefixDropper(decl.Lineage.Name()), corecodegen.DecoderCompactor()},
+		ApplyFuncs:  []dstutil.ApplyFunc{corecodegen.PrefixDropper(decl.Lineage.Name())},
 	})
 	if err != nil {
 		return nil, err
