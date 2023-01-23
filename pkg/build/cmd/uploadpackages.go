@@ -148,7 +148,6 @@ func getVersionFolder(cfg uploadConfig, event string) string {
 		// Corner case for custom enterprise2 mode
 		if event == config.Custom && cfg.versionMode == config.Enterprise2Mode {
 			return releaseFolder
-			break
 		}
 		panic(fmt.Sprintf("Unrecognized version mode: %s", cfg.versionMode))
 	}
