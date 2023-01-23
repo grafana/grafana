@@ -88,13 +88,17 @@ function generateInternalHref<T extends DataQuery = any>(
   );
 }
 
-function interpolateObject<T extends Object>(
+function interpolateObject<T>(
   obj: T | undefined,
   scopedVars: ScopedVars,
   replaceVariables: InterpolateFunction
 ): T | undefined {
   if (!obj) {
     return obj;
+  }
+  if (typeof obj === 'string') {
+    // @ts-ignore this is complaining we are returning string, but we are checking if obj is a string so should be fine.
+    return replaceVariables(obj, scopedVars);
   }
   const copy = JSON.parse(JSON.stringify(obj));
   return interpolateObjectRecursive(copy, scopedVars, replaceVariables);
