@@ -7,8 +7,9 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/grafana/grafana/pkg/models/roletype"
 	"golang.org/x/oauth2"
+
+	"github.com/grafana/grafana/pkg/models/roletype"
 )
 
 type SocialGithub struct {
@@ -205,6 +206,7 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 
 	var role roletype.RoleType
 	var grafanaAdmin bool
+	var isGrafanaAdmin *bool = nil
 
 	if !s.skipOrgRoleSync {
 		role, grafanaAdmin = s.extractRoleAndAdmin(response.Body, teams, true)
@@ -212,11 +214,15 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 		if s.roleAttributeStrict && !role.IsValid() {
 			return nil, &InvalidBasicRoleError{idP: "Github", assignedRole: string(role)}
 		}
+
+		if s.allowAssignGrafanaAdmin {
+			isGrafanaAdmin = &grafanaAdmin
+		}
 	}
 
-	var isGrafanaAdmin *bool = nil
-	if s.allowAssignGrafanaAdmin {
-		isGrafanaAdmin = &grafanaAdmin
+	// we skip allowing assignment of GrafanaAdmin if skipOrgRoleSync is present
+	if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
+		s.log.Debug("allowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana will not sync grafanaAdmins, consider setting one or the other")
 	}
 
 	userInfo := &BasicUserInfo{

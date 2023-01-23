@@ -203,3 +203,16 @@ Your GitHub teams can be referenced in two ways:
 Example: `@grafana/developers`
 
 [Learn more about Team Sync]({{< relref "../../configure-team-sync/" >}})
+
+## Skip organization role sync
+
+To prevent the sync of org roles from Grafana.com, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
+This also impacts `allow_assign_grafana_admin` setting, by not syncing the grafana admin role from GitHub.
+
+```ini
+[auth.grafana_com]
+# ..
+# prevents the sync of org roles from Github
+skip_org_role_sync = true
+``
+```
