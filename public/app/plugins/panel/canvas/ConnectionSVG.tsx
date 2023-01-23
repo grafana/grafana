@@ -26,6 +26,7 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
   const headId = Date.now() + '_' + idCounter++;
   const CONNECTION_LINE_ID = 'connectionLineId';
   const CONNECTION_HEAD_ID = useMemo(() => `head-${headId}`, [headId]);
+  const EDITOR_HEAD_ID = useMemo(() => `editorHead-${headId}`, [headId]);
 
   const [selectedConnection, setSelectedConnection] = useState<CanvasConnection | undefined>(undefined);
 
@@ -201,7 +202,7 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
       <svg ref={setSVGRef} className={styles.editorSVG}>
         <defs>
           <marker
-            id="editorHead"
+            id={EDITOR_HEAD_ID}
             markerWidth="10"
             markerHeight="7"
             refX="10"
@@ -212,7 +213,7 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
             <polygon points="0 0, 10 3.5, 0 7" fill="rgb(255,255,255)" />
           </marker>
         </defs>
-        <line ref={setLineRef} stroke="rgb(255,255,255)" strokeWidth={2} markerEnd="url(#editorHead)" />
+        <line ref={setLineRef} stroke="rgb(255,255,255)" strokeWidth={2} markerEnd={`url(#${EDITOR_HEAD_ID})`} />
       </svg>
       {renderConnections()}
     </>
