@@ -69,8 +69,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
   }, [data]);
 
   const onChangeInternal = async (query: LokiQuery) => {
-    const queryStats = await datasource.queryStatsRequest(query);
-    setQueryStats(queryStats);
+    setQueryStats(await datasource.queryStatsRequest(query));
     setDataIsStale(true);
     onChange(query);
   };

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 import { useToggle } from 'react-use';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { getValueFormat, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Icon, useStyles2 } from '@grafana/ui';
 import { QueryStats } from 'app/plugins/datasource/loki/components/types';
@@ -19,15 +19,9 @@ export function QueryOptionGroup({ title, children, collapsedInfo, queryStats, d
   const [isOpen, toggleOpen] = useToggle(false);
   const styles = useStyles2(getStyles(queryStats?.bytes));
 
-  const bytesToUnit = (bytes: number) => {
-    let units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
-    let i = 0;
-
-    for (i; bytes > 1024; i++) {
-      bytes /= 1024;
-    }
-
-    return bytes.toFixed(1) + ' ' + units[i];
+  const convertUnits = () => {
+    const { text, suffix } = getValueFormat('bytes')(queryStats?.bytes!, 1);
+    return text + suffix;
   };
 
   return (
@@ -49,7 +43,7 @@ export function QueryOptionGroup({ title, children, collapsedInfo, queryStats, d
         {isOpen && <div className={styles.body}>{children}</div>}
       </Stack>
       {datasource?.type === 'loki' && queryStats?.bytes ? (
-        <p className={styles.sizeIndicator}>This query will process approximately {bytesToUnit(queryStats?.bytes)}.</p>
+        <p className={styles.sizeIndicator}>This query will process approximately {convertUnits()}.</p>
       ) : null}
     </div>
   );
