@@ -41,7 +41,7 @@ var wireExtsSet = wire.NewSet(
 	wireSet,
 	migrations.ProvideOSSMigrations,
 	licensing.ProvideService,
-	wire.Bind(new(models.Licensing), new(*licensing.OSSLicensingService)),
+	wire.Bind(new(licensing.Licensing), new(*licensing.OSSLicensingService)),
 	wire.Bind(new(registry.DatabaseMigrator), new(*migrations.OSSMigrations)),
 	setting.ProvideProvider,
 	wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
