@@ -31,7 +31,7 @@ If you have an issue with your Dashboard panel, you can send us debug informatio
 
 If you have an issue with your Grafana instance, you can generate an archive containing information concerning the state and the configuration of the instance.
 
-You can send us this bundle for advanced support, refer to [Send a support bundle to Grafana Labs support]({{< relref "./support-bundles/" >}}).
+To send us a bundle for advanced support, refer to [Send a support bundle to Grafana Labs support]({{< relref "./support-bundles/" >}}).
 
 ## Troubleshoot transformations
 
@@ -53,5 +53,4 @@ sudo yum install urw-fonts
 
 ## FAQs
 
-Check out the [FAQ section](https://community.grafana.com/c/howto/faq) on the Grafana Community page for answers to frequently
-asked questions.
+Check out the [FAQ section](https://community.grafana.com/c/howto/faq) on the Grafana Community page for answers to frequently asked questions.
