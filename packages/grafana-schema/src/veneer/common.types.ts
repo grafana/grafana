@@ -18,5 +18,4 @@ export interface DataSourcePluginMeta<T extends Record<string, unknown> = {}>
   extends PluginMeta<T>,
     raw.DataSourcePluginMeta {}
 
-//export interface Field
 export * from '../common/common.gen';
