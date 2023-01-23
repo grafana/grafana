@@ -16,7 +16,7 @@ describe('should get tooltip data correctly', () => {
     });
   });
 
-  it('with none unit', () => {
+  it('with default unit', () => {
     const tooltipData = getTooltipData(makeField('none'), 'total', 8_624_078_250, 978_250, 8_624_078_250);
     expect(tooltipData).toEqual({
       name: 'total',

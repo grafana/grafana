@@ -24,8 +24,9 @@ import { useMeasure } from 'react-use';
 import { CoreApp, createTheme, DataFrame, FieldType, getDisplayProcessor } from '@grafana/data';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
-import { TooltipData, SelectedView } from '../types';
+import { TooltipData, Metadata, SelectedView } from '../types';
 
+import FlameGraphMetadata, { getMetadata } from './FlameGraphMetadata';
 import FlameGraphTooltip, { getTooltipData } from './FlameGraphTooltip';
 import { ItemWithStart } from './dataTransform';
 import { getBarX, getRectDimensionsForLevel, renderRect } from './rendering';
@@ -36,10 +37,12 @@ type Props = {
   flameGraphHeight?: number;
   levels: ItemWithStart[][];
   topLevelIndex: number;
+  selectedBarIndex: number;
   rangeMin: number;
   rangeMax: number;
   search: string;
   setTopLevelIndex: (level: number) => void;
+  setSelectedBarIndex: (bar: number) => void;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
   selectedView: SelectedView;
@@ -52,10 +55,12 @@ const FlameGraph = ({
   flameGraphHeight,
   levels,
   topLevelIndex,
+  selectedBarIndex,
   rangeMin,
   rangeMax,
   search,
   setTopLevelIndex,
+  setSelectedBarIndex,
   setRangeMin,
   setRangeMax,
   selectedView,
@@ -73,6 +78,7 @@ const FlameGraph = ({
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [tooltipData, setTooltipData] = useState<TooltipData>();
   const [showTooltip, setShowTooltip] = useState(false);
+  const [metadata, setMetadata] = useState<Metadata>();
 
   // Convert pixel coordinates to bar coordinates in the levels array so that we can add mouse events like clicks to
   // the canvas.
@@ -127,6 +133,14 @@ const FlameGraph = ({
     [levels, wrapperWidth, valueField, totalTicks, rangeMin, rangeMax, search, topLevelIndex]
   );
 
+  // update metatdata when bar selected in flame graph
+  useEffect(() => {
+    if (levels[topLevelIndex] && levels[topLevelIndex][selectedBarIndex]) {
+      const bar = levels[topLevelIndex][selectedBarIndex];
+      setMetadata(getMetadata(valueField, bar.value, totalTicks));
+    }
+  }, [levels, selectedBarIndex, setMetadata, topLevelIndex, totalTicks, valueField]);
+
   useEffect(() => {
     if (graphRef.current) {
       const pixelsPerTick = (wrapperWidth * window.devicePixelRatio) / totalTicks / (rangeMax - rangeMin);
@@ -140,6 +154,7 @@ const FlameGraph = ({
 
         if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
           setTopLevelIndex(levelIndex);
+          setSelectedBarIndex(barIndex);
           setRangeMin(levels[levelIndex][barIndex].start / totalTicks);
           setRangeMax((levels[levelIndex][barIndex].start + levels[levelIndex][barIndex].value) / totalTicks);
         }
@@ -181,10 +196,12 @@ const FlameGraph = ({
     setRangeMax,
     selectedView,
     valueField,
+    setSelectedBarIndex,
   ]);
 
   return (
     <div className={styles.graph} ref={sizeRef}>
+      <FlameGraphMetadata metadata={metadata!} />
       <canvas ref={graphRef} data-testid="flameGraph" />
       <FlameGraphTooltip tooltipRef={tooltipRef} tooltipData={tooltipData!} showTooltip={showTooltip} />
     </div>
@@ -198,8 +215,8 @@ const getStyles = (selectedView: SelectedView, app: CoreApp, flameGraphHeight: n
     overflow: scroll;
     width: ${selectedView === SelectedView.FlameGraph ? '100%' : '50%'};
     ${app !== CoreApp.Explore
-      ? `height: calc(${flameGraphHeight}px - 44px)`
-      : ''}; // 44px to adjust for header pushing content down
+      ? `height: calc(${flameGraphHeight}px - 50px)`
+      : ''}; // 50px to adjust for header pushing content down
   `,
 });
 
