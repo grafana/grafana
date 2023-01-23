@@ -10,7 +10,7 @@
 
 import * as ui from '@grafana/schema';
 
-export const PanelModelVersion = Object.freeze([0, 0]);
+export const PanelCfgModelVersion = Object.freeze([0, 0]);
 
 export interface PanelOptions extends ui.SingleStatBaseOptions {
   showThresholdLabels: boolean;

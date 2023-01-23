@@ -39,6 +39,7 @@ example:
 [auth.github]
 enabled = true
 allow_sign_up = true
+auto_login = false
 client_id = YOUR_GITHUB_APP_CLIENT_ID
 client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
 scopes = user:email,read:org
@@ -81,6 +82,8 @@ Grafana instance. For example:
 ```bash
 [auth.github]
 enabled = true
+allow_sign_up = true
+auto_login = false
 client_id = YOUR_GITHUB_APP_CLIENT_ID
 client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
 scopes = user:email,read:org
@@ -88,7 +91,6 @@ team_ids = 150,300
 auth_url = https://github.com/login/oauth/authorize
 token_url = https://github.com/login/oauth/access_token
 api_url = https://api.github.com/user
-allow_sign_up = true
 ```
 
 ### allowed_organizations
@@ -101,15 +103,25 @@ your Grafana instance. For example
 ```bash
 [auth.github]
 enabled = true
+allow_sign_up = true
+auto_login = false
 client_id = YOUR_GITHUB_APP_CLIENT_ID
 client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
 scopes = user:email,read:org
 auth_url = https://github.com/login/oauth/authorize
 token_url = https://github.com/login/oauth/access_token
 api_url = https://api.github.com/user
-allow_sign_up = true
 # space-delimited organization names
 allowed_organizations = github google
+```
+
+### Configure automatic login
+
+Set `auto_login` option to true to attempt login automatically, skipping the login screen.
+This setting is ignored if multiple auth providers are configured to use auto login.
+
+```
+auto_login = true
 ```
 
 ### Map roles
