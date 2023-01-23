@@ -1,955 +1,1325 @@
 {
   "kinds": {
     "alertgroupspanelcfg": {
-      "name": "AlertGroupsPanelCfg",
-      "pluralName": "AlertGroupsPanelCfgs",
-      "machineName": "alertgroupspanelcfg",
-      "pluralMachineName": "alertgroupspanelcfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "PanelCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "alertgroupspanelcfg",
+      "maturity": "planned",
+      "name": "AlertGroupsPanelCfg",
+      "pluralMachineName": "alertgroupspanelcfgs",
+      "pluralName": "AlertGroupsPanelCfgs",
+      "schemaInterface": "PanelCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "alertlistpanelcfg": {
-      "name": "AlertListPanelCfg",
-      "pluralName": "AlertListPanelCfgs",
-      "machineName": "alertlistpanelcfg",
-      "pluralMachineName": "alertlistpanelcfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "PanelCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "alertlistpanelcfg",
+      "maturity": "planned",
+      "name": "AlertListPanelCfg",
+      "pluralMachineName": "alertlistpanelcfgs",
+      "pluralName": "AlertListPanelCfgs",
+      "schemaInterface": "PanelCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "alertmanagerdataquery": {
-      "name": "AlertmanagerDataQuery",
-      "pluralName": "AlertmanagerDataQuerys",
-      "machineName": "alertmanagerdataquery",
-      "pluralMachineName": "alertmanagerdataquerys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataQuery"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": false,
+      "machineName": "alertmanagerdataquery",
+      "maturity": "planned",
+      "name": "AlertmanagerDataQuery",
+      "pluralMachineName": "alertmanagerdataquerys",
+      "pluralName": "AlertmanagerDataQuerys",
+      "schemaInterface": "DataQuery",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "alertmanagerdatasourcecfg": {
-      "name": "AlertmanagerDataSourceCfg",
-      "pluralName": "AlertmanagerDataSourceCfgs",
-      "machineName": "alertmanagerdatasourcecfg",
-      "pluralMachineName": "alertmanagerdatasourcecfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataSourceCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "alertmanagerdatasourcecfg",
+      "maturity": "planned",
+      "name": "AlertmanagerDataSourceCfg",
+      "pluralMachineName": "alertmanagerdatasourcecfgs",
+      "pluralName": "AlertmanagerDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "annotationslistpanelcfg": {
-      "name": "AnnotationsListPanelCfg",
-      "pluralName": "AnnotationsListPanelCfgs",
-      "machineName": "annotationslistpanelcfg",
-      "pluralMachineName": "annotationslistpanelcfgs",
-      "lineageIsGroup": true,
-      "maturity": "experimental",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "PanelCfg"
+      "docsRef": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/annotationslistpanelcfg/schema-reference",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "annotationslistpanelcfg",
+      "maturity": "experimental",
+      "name": "AnnotationsListPanelCfg",
+      "pluralMachineName": "annotationslistpanelcfgs",
+      "pluralName": "AnnotationsListPanelCfgs",
+      "schemaInterface": "PanelCfg",
+      "schemaRef": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/annotationslist/composable_panelcfg.cue",
+      "tsRef": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/annotationslist/models.gen.ts"
     },
     "apikey": {
-      "name": "APIKey",
-      "pluralName": "APIKeys",
-      "machineName": "apikey",
-      "pluralMachineName": "apikeys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "core",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": false,
+      "machineName": "apikey",
+      "maturity": "planned",
+      "name": "APIKey",
+      "pluralMachineName": "apikeys",
+      "pluralName": "APIKeys",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "azuremonitordataquery": {
-      "name": "AzureMonitorDataQuery",
-      "pluralName": "AzureMonitorDataQuerys",
-      "machineName": "azuremonitordataquery",
-      "pluralMachineName": "azuremonitordataquerys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataQuery"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": false,
+      "machineName": "azuremonitordataquery",
+      "maturity": "planned",
+      "name": "AzureMonitorDataQuery",
+      "pluralMachineName": "azuremonitordataquerys",
+      "pluralName": "AzureMonitorDataQuerys",
+      "schemaInterface": "DataQuery",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "azuremonitordatasourcecfg": {
-      "name": "AzureMonitorDataSourceCfg",
-      "pluralName": "AzureMonitorDataSourceCfgs",
-      "machineName": "azuremonitordatasourcecfg",
-      "pluralMachineName": "azuremonitordatasourcecfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataSourceCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "azuremonitordatasourcecfg",
+      "maturity": "planned",
+      "name": "AzureMonitorDataSourceCfg",
+      "pluralMachineName": "azuremonitordatasourcecfgs",
+      "pluralName": "AzureMonitorDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "barchartpanelcfg": {
-      "name": "BarChartPanelCfg",
-      "pluralName": "BarChartPanelCfgs",
-      "machineName": "barchartpanelcfg",
-      "pluralMachineName": "barchartpanelcfgs",
-      "lineageIsGroup": true,
-      "maturity": "experimental",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "PanelCfg"
+      "docsRef": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/barchartpanelcfg/schema-reference",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "barchartpanelcfg",
+      "maturity": "experimental",
+      "name": "BarChartPanelCfg",
+      "pluralMachineName": "barchartpanelcfgs",
+      "pluralName": "BarChartPanelCfgs",
+      "schemaInterface": "PanelCfg",
+      "schemaRef": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/barchart/composable_panelcfg.cue",
+      "tsRef": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/barchart/models.gen.ts"
     },
     "bargaugepanelcfg": {
-      "name": "BarGaugePanelCfg",
-      "pluralName": "BarGaugePanelCfgs",
-      "machineName": "bargaugepanelcfg",
-      "pluralMachineName": "bargaugepanelcfgs",
-      "lineageIsGroup": true,
-      "maturity": "experimental",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "PanelCfg"
+      "docsRef": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/bargaugepanelcfg/schema-reference",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "bargaugepanelcfg",
+      "maturity": "experimental",
+      "name": "BarGaugePanelCfg",
+      "pluralMachineName": "bargaugepanelcfgs",
+      "pluralName": "BarGaugePanelCfgs",
+      "schemaInterface": "PanelCfg",
+      "schemaRef": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/bargauge/composable_panelcfg.cue",
+      "tsRef": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/bargauge/models.gen.ts"
     },
     "cloudwatchdataquery": {
-      "name": "CloudWatchDataQuery",
-      "pluralName": "CloudWatchDataQuerys",
-      "machineName": "cloudwatchdataquery",
-      "pluralMachineName": "cloudwatchdataquerys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataQuery"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": false,
+      "machineName": "cloudwatchdataquery",
+      "maturity": "planned",
+      "name": "CloudWatchDataQuery",
+      "pluralMachineName": "cloudwatchdataquerys",
+      "pluralName": "CloudWatchDataQuerys",
+      "schemaInterface": "DataQuery",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "cloudwatchdatasourcecfg": {
-      "name": "CloudWatchDataSourceCfg",
-      "pluralName": "CloudWatchDataSourceCfgs",
-      "machineName": "cloudwatchdatasourcecfg",
-      "pluralMachineName": "cloudwatchdatasourcecfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataSourceCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "cloudwatchdatasourcecfg",
+      "maturity": "planned",
+      "name": "CloudWatchDataSourceCfg",
+      "pluralMachineName": "cloudwatchdatasourcecfgs",
+      "pluralName": "CloudWatchDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "dashboard": {
-      "name": "Dashboard",
-      "pluralName": "Dashboards",
-      "machineName": "dashboard",
-      "pluralMachineName": "dashboards",
-      "lineageIsGroup": false,
-      "maturity": "experimental",
+      "category": "core",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "docsRef": "https:/grafana.com/docs/grafana/next/developers/kinds/core/dashboard/schema-reference",
+      "goRef": "https:/github.com/grafana/grafana/tree/main/pkg/kinds/dashboard/dashboard_kind_gen.go",
+      "lineageIsGroup": false,
+      "machineName": "dashboard",
+      "maturity": "experimental",
+      "name": "Dashboard",
+      "pluralMachineName": "dashboards",
+      "pluralName": "Dashboards",
+      "schemaRef": "https:/github.com/grafana/grafana/tree/main/kinds/dashboard/dashboard_kind.cue",
+      "tsRef": "https:/github.com/grafana/grafana/tree/main/packages/grafana-schema/src/raw/dashboard/x/dashboard_types.gen.ts"
     },
     "dashboarddataquery": {
-      "name": "DashboardDataQuery",
-      "pluralName": "DashboardDataQuerys",
-      "machineName": "dashboarddataquery",
-      "pluralMachineName": "dashboarddataquerys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataQuery"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": false,
+      "machineName": "dashboarddataquery",
+      "maturity": "planned",
+      "name": "DashboardDataQuery",
+      "pluralMachineName": "dashboarddataquerys",
+      "pluralName": "DashboardDataQuerys",
+      "schemaInterface": "DataQuery",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "dashboarddatasourcecfg": {
-      "name": "DashboardDataSourceCfg",
-      "pluralName": "DashboardDataSourceCfgs",
-      "machineName": "dashboarddatasourcecfg",
-      "pluralMachineName": "dashboarddatasourcecfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataSourceCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "dashboarddatasourcecfg",
+      "maturity": "planned",
+      "name": "DashboardDataSourceCfg",
+      "pluralMachineName": "dashboarddatasourcecfgs",
+      "pluralName": "DashboardDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "dashboardlistpanelcfg": {
-      "name": "DashboardListPanelCfg",
-      "pluralName": "DashboardListPanelCfgs",
-      "machineName": "dashboardlistpanelcfg",
-      "pluralMachineName": "dashboardlistpanelcfgs",
-      "lineageIsGroup": true,
-      "maturity": "experimental",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "PanelCfg"
+      "docsRef": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/dashboardlistpanelcfg/schema-reference",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "dashboardlistpanelcfg",
+      "maturity": "experimental",
+      "name": "DashboardListPanelCfg",
+      "pluralMachineName": "dashboardlistpanelcfgs",
+      "pluralName": "DashboardListPanelCfgs",
+      "schemaInterface": "PanelCfg",
+      "schemaRef": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/dashboardlist/composable_panelcfg.cue",
+      "tsRef": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/dashboardlist/models.gen.ts"
     },
     "datasource": {
-      "name": "DataSource",
-      "pluralName": "DataSources",
-      "machineName": "datasource",
-      "pluralMachineName": "datasources",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "core",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": false,
+      "machineName": "datasource",
+      "maturity": "planned",
+      "name": "DataSource",
+      "pluralMachineName": "datasources",
+      "pluralName": "DataSources",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "debugpanelcfg": {
-      "name": "DebugPanelCfg",
-      "pluralName": "DebugPanelCfgs",
-      "machineName": "debugpanelcfg",
-      "pluralMachineName": "debugpanelcfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "PanelCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "debugpanelcfg",
+      "maturity": "planned",
+      "name": "DebugPanelCfg",
+      "pluralMachineName": "debugpanelcfgs",
+      "pluralName": "DebugPanelCfgs",
+      "schemaInterface": "PanelCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "elasticsearchdataquery": {
-      "name": "ElasticsearchDataQuery",
-      "pluralName": "ElasticsearchDataQuerys",
-      "machineName": "elasticsearchdataquery",
-      "pluralMachineName": "elasticsearchdataquerys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataQuery"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": false,
+      "machineName": "elasticsearchdataquery",
+      "maturity": "planned",
+      "name": "ElasticsearchDataQuery",
+      "pluralMachineName": "elasticsearchdataquerys",
+      "pluralName": "ElasticsearchDataQuerys",
+      "schemaInterface": "DataQuery",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "elasticsearchdatasourcecfg": {
-      "name": "ElasticsearchDataSourceCfg",
-      "pluralName": "ElasticsearchDataSourceCfgs",
-      "machineName": "elasticsearchdatasourcecfg",
-      "pluralMachineName": "elasticsearchdatasourcecfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataSourceCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "elasticsearchdatasourcecfg",
+      "maturity": "planned",
+      "name": "ElasticsearchDataSourceCfg",
+      "pluralMachineName": "elasticsearchdatasourcecfgs",
+      "pluralName": "ElasticsearchDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "flamegraphpanelcfg": {
-      "name": "FlameGraphPanelCfg",
-      "pluralName": "FlameGraphPanelCfgs",
-      "machineName": "flamegraphpanelcfg",
-      "pluralMachineName": "flamegraphpanelcfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "PanelCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "flamegraphpanelcfg",
+      "maturity": "planned",
+      "name": "FlameGraphPanelCfg",
+      "pluralMachineName": "flamegraphpanelcfgs",
+      "pluralName": "FlameGraphPanelCfgs",
+      "schemaInterface": "PanelCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "folder": {
-      "name": "Folder",
-      "pluralName": "Folders",
-      "machineName": "folder",
-      "pluralMachineName": "folders",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "core",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": false,
+      "machineName": "folder",
+      "maturity": "planned",
+      "name": "Folder",
+      "pluralMachineName": "folders",
+      "pluralName": "Folders",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "gaugepanelcfg": {
-      "name": "GaugePanelCfg",
-      "pluralName": "GaugePanelCfgs",
-      "machineName": "gaugepanelcfg",
-      "pluralMachineName": "gaugepanelcfgs",
-      "lineageIsGroup": true,
-      "maturity": "experimental",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "PanelCfg"
+      "docsRef": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/gaugepanelcfg/schema-reference",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "gaugepanelcfg",
+      "maturity": "experimental",
+      "name": "GaugePanelCfg",
+      "pluralMachineName": "gaugepanelcfgs",
+      "pluralName": "GaugePanelCfgs",
+      "schemaInterface": "PanelCfg",
+      "schemaRef": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/gauge/composable_panelcfg.cue",
+      "tsRef": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/gauge/models.gen.ts"
     },
     "geomappanelcfg": {
-      "name": "GeomapPanelCfg",
-      "pluralName": "GeomapPanelCfgs",
-      "machineName": "geomappanelcfg",
-      "pluralMachineName": "geomappanelcfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "PanelCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "geomappanelcfg",
+      "maturity": "planned",
+      "name": "GeomapPanelCfg",
+      "pluralMachineName": "geomappanelcfgs",
+      "pluralName": "GeomapPanelCfgs",
+      "schemaInterface": "PanelCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "gettingstartedpanelcfg": {
-      "name": "GettingStartedPanelCfg",
-      "pluralName": "GettingStartedPanelCfgs",
-      "machineName": "gettingstartedpanelcfg",
-      "pluralMachineName": "gettingstartedpanelcfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "PanelCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "gettingstartedpanelcfg",
+      "maturity": "planned",
+      "name": "GettingStartedPanelCfg",
+      "pluralMachineName": "gettingstartedpanelcfgs",
+      "pluralName": "GettingStartedPanelCfgs",
+      "schemaInterface": "PanelCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "googlecloudmonitoringdataquery": {
-      "name": "GoogleCloudMonitoringDataQuery",
-      "pluralName": "GoogleCloudMonitoringDataQuerys",
-      "machineName": "googlecloudmonitoringdataquery",
-      "pluralMachineName": "googlecloudmonitoringdataquerys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataQuery"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": false,
+      "machineName": "googlecloudmonitoringdataquery",
+      "maturity": "planned",
+      "name": "GoogleCloudMonitoringDataQuery",
+      "pluralMachineName": "googlecloudmonitoringdataquerys",
+      "pluralName": "GoogleCloudMonitoringDataQuerys",
+      "schemaInterface": "DataQuery",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "googlecloudmonitoringdatasourcecfg": {
-      "name": "GoogleCloudMonitoringDataSourceCfg",
-      "pluralName": "GoogleCloudMonitoringDataSourceCfgs",
-      "machineName": "googlecloudmonitoringdatasourcecfg",
-      "pluralMachineName": "googlecloudmonitoringdatasourcecfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataSourceCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "googlecloudmonitoringdatasourcecfg",
+      "maturity": "planned",
+      "name": "GoogleCloudMonitoringDataSourceCfg",
+      "pluralMachineName": "googlecloudmonitoringdatasourcecfgs",
+      "pluralName": "GoogleCloudMonitoringDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "grafanadataquery": {
-      "name": "GrafanaDataQuery",
-      "pluralName": "GrafanaDataQuerys",
-      "machineName": "grafanadataquery",
-      "pluralMachineName": "grafanadataquerys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataQuery"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": false,
+      "machineName": "grafanadataquery",
+      "maturity": "planned",
+      "name": "GrafanaDataQuery",
+      "pluralMachineName": "grafanadataquerys",
+      "pluralName": "GrafanaDataQuerys",
+      "schemaInterface": "DataQuery",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "grafanadatasourcecfg": {
-      "name": "GrafanaDataSourceCfg",
-      "pluralName": "GrafanaDataSourceCfgs",
-      "machineName": "grafanadatasourcecfg",
-      "pluralMachineName": "grafanadatasourcecfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataSourceCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "grafanadatasourcecfg",
+      "maturity": "planned",
+      "name": "GrafanaDataSourceCfg",
+      "pluralMachineName": "grafanadatasourcecfgs",
+      "pluralName": "GrafanaDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "graphitedataquery": {
-      "name": "GraphiteDataQuery",
-      "pluralName": "GraphiteDataQuerys",
-      "machineName": "graphitedataquery",
-      "pluralMachineName": "graphitedataquerys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataQuery"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": false,
+      "machineName": "graphitedataquery",
+      "maturity": "planned",
+      "name": "GraphiteDataQuery",
+      "pluralMachineName": "graphitedataquerys",
+      "pluralName": "GraphiteDataQuerys",
+      "schemaInterface": "DataQuery",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "graphitedatasourcecfg": {
-      "name": "GraphiteDataSourceCfg",
-      "pluralName": "GraphiteDataSourceCfgs",
-      "machineName": "graphitedatasourcecfg",
-      "pluralMachineName": "graphitedatasourcecfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataSourceCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "graphitedatasourcecfg",
+      "maturity": "planned",
+      "name": "GraphiteDataSourceCfg",
+      "pluralMachineName": "graphitedatasourcecfgs",
+      "pluralName": "GraphiteDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "grapholdpanelcfg": {
-      "name": "GraphOldPanelCfg",
-      "pluralName": "GraphOldPanelCfgs",
-      "machineName": "grapholdpanelcfg",
-      "pluralMachineName": "grapholdpanelcfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "PanelCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "grapholdpanelcfg",
+      "maturity": "planned",
+      "name": "GraphOldPanelCfg",
+      "pluralMachineName": "grapholdpanelcfgs",
+      "pluralName": "GraphOldPanelCfgs",
+      "schemaInterface": "PanelCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "histogrampanelcfg": {
-      "name": "HistogramPanelCfg",
-      "pluralName": "HistogramPanelCfgs",
-      "machineName": "histogrampanelcfg",
-      "pluralMachineName": "histogrampanelcfgs",
-      "lineageIsGroup": true,
-      "maturity": "experimental",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "PanelCfg"
+      "docsRef": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/histogrampanelcfg/schema-reference",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "histogrampanelcfg",
+      "maturity": "experimental",
+      "name": "HistogramPanelCfg",
+      "pluralMachineName": "histogrampanelcfgs",
+      "pluralName": "HistogramPanelCfgs",
+      "schemaInterface": "PanelCfg",
+      "schemaRef": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/histogram/composable_panelcfg.cue",
+      "tsRef": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/histogram/models.gen.ts"
     },
     "iconpanelcfg": {
-      "name": "IconPanelCfg",
-      "pluralName": "IconPanelCfgs",
-      "machineName": "iconpanelcfg",
-      "pluralMachineName": "iconpanelcfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "PanelCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "iconpanelcfg",
+      "maturity": "planned",
+      "name": "IconPanelCfg",
+      "pluralMachineName": "iconpanelcfgs",
+      "pluralName": "IconPanelCfgs",
+      "schemaInterface": "PanelCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "jaegerdataquery": {
-      "name": "JaegerDataQuery",
-      "pluralName": "JaegerDataQuerys",
-      "machineName": "jaegerdataquery",
-      "pluralMachineName": "jaegerdataquerys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataQuery"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": false,
+      "machineName": "jaegerdataquery",
+      "maturity": "planned",
+      "name": "JaegerDataQuery",
+      "pluralMachineName": "jaegerdataquerys",
+      "pluralName": "JaegerDataQuerys",
+      "schemaInterface": "DataQuery",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "jaegerdatasourcecfg": {
-      "name": "JaegerDataSourceCfg",
-      "pluralName": "JaegerDataSourceCfgs",
-      "machineName": "jaegerdatasourcecfg",
-      "pluralMachineName": "jaegerdatasourcecfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataSourceCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "jaegerdatasourcecfg",
+      "maturity": "planned",
+      "name": "JaegerDataSourceCfg",
+      "pluralMachineName": "jaegerdatasourcecfgs",
+      "pluralName": "JaegerDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "livepanelcfg": {
-      "name": "LivePanelCfg",
-      "pluralName": "LivePanelCfgs",
-      "machineName": "livepanelcfg",
-      "pluralMachineName": "livepanelcfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "PanelCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "livepanelcfg",
+      "maturity": "planned",
+      "name": "LivePanelCfg",
+      "pluralMachineName": "livepanelcfgs",
+      "pluralName": "LivePanelCfgs",
+      "schemaInterface": "PanelCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "logspanelcfg": {
-      "name": "LogsPanelCfg",
-      "pluralName": "LogsPanelCfgs",
-      "machineName": "logspanelcfg",
-      "pluralMachineName": "logspanelcfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "PanelCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "logspanelcfg",
+      "maturity": "planned",
+      "name": "LogsPanelCfg",
+      "pluralMachineName": "logspanelcfgs",
+      "pluralName": "LogsPanelCfgs",
+      "schemaInterface": "PanelCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "lokidataquery": {
-      "name": "LokiDataQuery",
-      "pluralName": "LokiDataQuerys",
-      "machineName": "lokidataquery",
-      "pluralMachineName": "lokidataquerys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataQuery"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": false,
+      "machineName": "lokidataquery",
+      "maturity": "planned",
+      "name": "LokiDataQuery",
+      "pluralMachineName": "lokidataquerys",
+      "pluralName": "LokiDataQuerys",
+      "schemaInterface": "DataQuery",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "lokidatasourcecfg": {
-      "name": "LokiDataSourceCfg",
-      "pluralName": "LokiDataSourceCfgs",
-      "machineName": "lokidatasourcecfg",
-      "pluralMachineName": "lokidatasourcecfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataSourceCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "lokidatasourcecfg",
+      "maturity": "planned",
+      "name": "LokiDataSourceCfg",
+      "pluralMachineName": "lokidatasourcecfgs",
+      "pluralName": "LokiDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "microsoftsqlserverdataquery": {
-      "name": "MicrosoftSQLServerDataQuery",
-      "pluralName": "MicrosoftSQLServerDataQuerys",
-      "machineName": "microsoftsqlserverdataquery",
-      "pluralMachineName": "microsoftsqlserverdataquerys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataQuery"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": false,
+      "machineName": "microsoftsqlserverdataquery",
+      "maturity": "planned",
+      "name": "MicrosoftSQLServerDataQuery",
+      "pluralMachineName": "microsoftsqlserverdataquerys",
+      "pluralName": "MicrosoftSQLServerDataQuerys",
+      "schemaInterface": "DataQuery",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "microsoftsqlserverdatasourcecfg": {
-      "name": "MicrosoftSQLServerDataSourceCfg",
-      "pluralName": "MicrosoftSQLServerDataSourceCfgs",
-      "machineName": "microsoftsqlserverdatasourcecfg",
-      "pluralMachineName": "microsoftsqlserverdatasourcecfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataSourceCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "microsoftsqlserverdatasourcecfg",
+      "maturity": "planned",
+      "name": "MicrosoftSQLServerDataSourceCfg",
+      "pluralMachineName": "microsoftsqlserverdatasourcecfgs",
+      "pluralName": "MicrosoftSQLServerDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "mysqldataquery": {
-      "name": "MySQLDataQuery",
-      "pluralName": "MySQLDataQuerys",
-      "machineName": "mysqldataquery",
-      "pluralMachineName": "mysqldataquerys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataQuery"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": false,
+      "machineName": "mysqldataquery",
+      "maturity": "planned",
+      "name": "MySQLDataQuery",
+      "pluralMachineName": "mysqldataquerys",
+      "pluralName": "MySQLDataQuerys",
+      "schemaInterface": "DataQuery",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "mysqldatasourcecfg": {
-      "name": "MySQLDataSourceCfg",
-      "pluralName": "MySQLDataSourceCfgs",
-      "machineName": "mysqldatasourcecfg",
-      "pluralMachineName": "mysqldatasourcecfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataSourceCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "mysqldatasourcecfg",
+      "maturity": "planned",
+      "name": "MySQLDataSourceCfg",
+      "pluralMachineName": "mysqldatasourcecfgs",
+      "pluralName": "MySQLDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "newspanelcfg": {
-      "name": "NewsPanelCfg",
-      "pluralName": "NewsPanelCfgs",
-      "machineName": "newspanelcfg",
-      "pluralMachineName": "newspanelcfgs",
-      "lineageIsGroup": true,
-      "maturity": "experimental",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "PanelCfg"
+      "docsRef": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/newspanelcfg/schema-reference",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "newspanelcfg",
+      "maturity": "experimental",
+      "name": "NewsPanelCfg",
+      "pluralMachineName": "newspanelcfgs",
+      "pluralName": "NewsPanelCfgs",
+      "schemaInterface": "PanelCfg",
+      "schemaRef": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/news/composable_panelcfg.cue",
+      "tsRef": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/news/models.gen.ts"
     },
     "nodegraphpanelcfg": {
-      "name": "NodeGraphPanelCfg",
-      "pluralName": "NodeGraphPanelCfgs",
-      "machineName": "nodegraphpanelcfg",
-      "pluralMachineName": "nodegraphpanelcfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "PanelCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "nodegraphpanelcfg",
+      "maturity": "planned",
+      "name": "NodeGraphPanelCfg",
+      "pluralMachineName": "nodegraphpanelcfgs",
+      "pluralName": "NodeGraphPanelCfgs",
+      "schemaInterface": "PanelCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "parcadataquery": {
-      "name": "ParcaDataQuery",
-      "pluralName": "ParcaDataQuerys",
-      "machineName": "parcadataquery",
-      "pluralMachineName": "parcadataquerys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataQuery"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": false,
+      "machineName": "parcadataquery",
+      "maturity": "planned",
+      "name": "ParcaDataQuery",
+      "pluralMachineName": "parcadataquerys",
+      "pluralName": "ParcaDataQuerys",
+      "schemaInterface": "DataQuery",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "parcadatasourcecfg": {
-      "name": "ParcaDataSourceCfg",
-      "pluralName": "ParcaDataSourceCfgs",
-      "machineName": "parcadatasourcecfg",
-      "pluralMachineName": "parcadatasourcecfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataSourceCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "parcadatasourcecfg",
+      "maturity": "planned",
+      "name": "ParcaDataSourceCfg",
+      "pluralMachineName": "parcadatasourcecfgs",
+      "pluralName": "ParcaDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "phlaredataquery": {
-      "name": "PhlareDataQuery",
-      "pluralName": "PhlareDataQuerys",
-      "machineName": "phlaredataquery",
-      "pluralMachineName": "phlaredataquerys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataQuery"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": false,
+      "machineName": "phlaredataquery",
+      "maturity": "planned",
+      "name": "PhlareDataQuery",
+      "pluralMachineName": "phlaredataquerys",
+      "pluralName": "PhlareDataQuerys",
+      "schemaInterface": "DataQuery",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "phlaredatasourcecfg": {
-      "name": "PhlareDataSourceCfg",
-      "pluralName": "PhlareDataSourceCfgs",
-      "machineName": "phlaredatasourcecfg",
-      "pluralMachineName": "phlaredatasourcecfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataSourceCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "phlaredatasourcecfg",
+      "maturity": "planned",
+      "name": "PhlareDataSourceCfg",
+      "pluralMachineName": "phlaredatasourcecfgs",
+      "pluralName": "PhlareDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "piechartpanelcfg": {
-      "name": "PieChartPanelCfg",
-      "pluralName": "PieChartPanelCfgs",
-      "machineName": "piechartpanelcfg",
-      "pluralMachineName": "piechartpanelcfgs",
-      "lineageIsGroup": true,
-      "maturity": "experimental",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "PanelCfg"
+      "docsRef": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/piechartpanelcfg/schema-reference",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "piechartpanelcfg",
+      "maturity": "experimental",
+      "name": "PieChartPanelCfg",
+      "pluralMachineName": "piechartpanelcfgs",
+      "pluralName": "PieChartPanelCfgs",
+      "schemaInterface": "PanelCfg",
+      "schemaRef": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/piechart/composable_panelcfg.cue",
+      "tsRef": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/piechart/models.gen.ts"
     },
     "playlist": {
-      "name": "Playlist",
-      "pluralName": "Playlists",
-      "machineName": "playlist",
-      "pluralMachineName": "playlists",
-      "lineageIsGroup": false,
-      "maturity": "merged",
+      "category": "core",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "docsRef": "https:/grafana.com/docs/grafana/next/developers/kinds/core/playlist/schema-reference",
+      "goRef": "https:/github.com/grafana/grafana/tree/main/pkg/kinds/playlist/playlist_kind_gen.go",
+      "lineageIsGroup": false,
+      "machineName": "playlist",
+      "maturity": "merged",
+      "name": "Playlist",
+      "pluralMachineName": "playlists",
+      "pluralName": "Playlists",
+      "schemaRef": "https:/github.com/grafana/grafana/tree/main/kinds/playlist/playlist_kind.cue",
+      "tsRef": "https:/github.com/grafana/grafana/tree/main/packages/grafana-schema/src/raw/playlist/x/playlist_types.gen.ts"
     },
     "postgresqldataquery": {
-      "name": "PostgreSQLDataQuery",
-      "pluralName": "PostgreSQLDataQuerys",
-      "machineName": "postgresqldataquery",
-      "pluralMachineName": "postgresqldataquerys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataQuery"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": false,
+      "machineName": "postgresqldataquery",
+      "maturity": "planned",
+      "name": "PostgreSQLDataQuery",
+      "pluralMachineName": "postgresqldataquerys",
+      "pluralName": "PostgreSQLDataQuerys",
+      "schemaInterface": "DataQuery",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "postgresqldatasourcecfg": {
-      "name": "PostgreSQLDataSourceCfg",
-      "pluralName": "PostgreSQLDataSourceCfgs",
-      "machineName": "postgresqldatasourcecfg",
-      "pluralMachineName": "postgresqldatasourcecfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataSourceCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "postgresqldatasourcecfg",
+      "maturity": "planned",
+      "name": "PostgreSQLDataSourceCfg",
+      "pluralMachineName": "postgresqldatasourcecfgs",
+      "pluralName": "PostgreSQLDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "prometheusdataquery": {
-      "name": "PrometheusDataQuery",
-      "pluralName": "PrometheusDataQuerys",
-      "machineName": "prometheusdataquery",
-      "pluralMachineName": "prometheusdataquerys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataQuery"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": false,
+      "machineName": "prometheusdataquery",
+      "maturity": "planned",
+      "name": "PrometheusDataQuery",
+      "pluralMachineName": "prometheusdataquerys",
+      "pluralName": "PrometheusDataQuerys",
+      "schemaInterface": "DataQuery",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "prometheusdatasourcecfg": {
-      "name": "PrometheusDataSourceCfg",
-      "pluralName": "PrometheusDataSourceCfgs",
-      "machineName": "prometheusdatasourcecfg",
-      "pluralMachineName": "prometheusdatasourcecfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataSourceCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "prometheusdatasourcecfg",
+      "maturity": "planned",
+      "name": "PrometheusDataSourceCfg",
+      "pluralMachineName": "prometheusdatasourcecfgs",
+      "pluralName": "PrometheusDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "query": {
-      "name": "Query",
-      "pluralName": "Querys",
-      "machineName": "query",
-      "pluralMachineName": "querys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "core",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": false,
+      "machineName": "query",
+      "maturity": "planned",
+      "name": "Query",
+      "pluralMachineName": "querys",
+      "pluralName": "Querys",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "queryhistory": {
-      "name": "QueryHistory",
-      "pluralName": "QueryHistorys",
-      "machineName": "queryhistory",
-      "pluralMachineName": "queryhistorys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "core",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": false,
+      "machineName": "queryhistory",
+      "maturity": "planned",
+      "name": "QueryHistory",
+      "pluralMachineName": "queryhistorys",
+      "pluralName": "QueryHistorys",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "serviceaccount": {
-      "name": "ServiceAccount",
-      "pluralName": "ServiceAccounts",
-      "machineName": "serviceaccount",
-      "pluralMachineName": "serviceaccounts",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "core",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": false,
+      "machineName": "serviceaccount",
+      "maturity": "planned",
+      "name": "ServiceAccount",
+      "pluralMachineName": "serviceaccounts",
+      "pluralName": "ServiceAccounts",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "statpanelcfg": {
-      "name": "StatPanelCfg",
-      "pluralName": "StatPanelCfgs",
-      "machineName": "statpanelcfg",
-      "pluralMachineName": "statpanelcfgs",
-      "lineageIsGroup": true,
-      "maturity": "experimental",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "PanelCfg"
+      "docsRef": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/statpanelcfg/schema-reference",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "statpanelcfg",
+      "maturity": "experimental",
+      "name": "StatPanelCfg",
+      "pluralMachineName": "statpanelcfgs",
+      "pluralName": "StatPanelCfgs",
+      "schemaInterface": "PanelCfg",
+      "schemaRef": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/stat/composable_panelcfg.cue",
+      "tsRef": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/stat/models.gen.ts"
     },
     "tableoldpanelcfg": {
-      "name": "TableOldPanelCfg",
-      "pluralName": "TableOldPanelCfgs",
-      "machineName": "tableoldpanelcfg",
-      "pluralMachineName": "tableoldpanelcfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "PanelCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "tableoldpanelcfg",
+      "maturity": "planned",
+      "name": "TableOldPanelCfg",
+      "pluralMachineName": "tableoldpanelcfgs",
+      "pluralName": "TableOldPanelCfgs",
+      "schemaInterface": "PanelCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "team": {
-      "name": "Team",
-      "pluralName": "Teams",
-      "machineName": "team",
-      "pluralMachineName": "teams",
-      "lineageIsGroup": false,
-      "maturity": "merged",
+      "category": "core",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "docsRef": "https:/grafana.com/docs/grafana/next/developers/kinds/core/team/schema-reference",
+      "goRef": "https:/github.com/grafana/grafana/tree/main/pkg/kinds/team/team_kind_gen.go",
+      "lineageIsGroup": false,
+      "machineName": "team",
+      "maturity": "merged",
+      "name": "Team",
+      "pluralMachineName": "teams",
+      "pluralName": "Teams",
+      "schemaRef": "https:/github.com/grafana/grafana/tree/main/kinds/team/team_kind.cue",
+      "tsRef": "https:/github.com/grafana/grafana/tree/main/packages/grafana-schema/src/raw/team/x/team_types.gen.ts"
     },
     "tempodataquery": {
-      "name": "TempoDataQuery",
-      "pluralName": "TempoDataQuerys",
-      "machineName": "tempodataquery",
-      "pluralMachineName": "tempodataquerys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataQuery"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": false,
+      "machineName": "tempodataquery",
+      "maturity": "planned",
+      "name": "TempoDataQuery",
+      "pluralMachineName": "tempodataquerys",
+      "pluralName": "TempoDataQuerys",
+      "schemaInterface": "DataQuery",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "tempodatasourcecfg": {
-      "name": "TempoDataSourceCfg",
-      "pluralName": "TempoDataSourceCfgs",
-      "machineName": "tempodatasourcecfg",
-      "pluralMachineName": "tempodatasourcecfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataSourceCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "tempodatasourcecfg",
+      "maturity": "planned",
+      "name": "TempoDataSourceCfg",
+      "pluralMachineName": "tempodatasourcecfgs",
+      "pluralName": "TempoDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "testdatadbdataquery": {
-      "name": "TestDataDBDataQuery",
-      "pluralName": "TestDataDBDataQuerys",
-      "machineName": "testdatadbdataquery",
-      "pluralMachineName": "testdatadbdataquerys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataQuery"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": false,
+      "machineName": "testdatadbdataquery",
+      "maturity": "planned",
+      "name": "TestDataDBDataQuery",
+      "pluralMachineName": "testdatadbdataquerys",
+      "pluralName": "TestDataDBDataQuerys",
+      "schemaInterface": "DataQuery",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "testdatadbdatasourcecfg": {
-      "name": "TestDataDBDataSourceCfg",
-      "pluralName": "TestDataDBDataSourceCfgs",
-      "machineName": "testdatadbdatasourcecfg",
-      "pluralMachineName": "testdatadbdatasourcecfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataSourceCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "testdatadbdatasourcecfg",
+      "maturity": "planned",
+      "name": "TestDataDBDataSourceCfg",
+      "pluralMachineName": "testdatadbdatasourcecfgs",
+      "pluralName": "TestDataDBDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "textpanelcfg": {
-      "name": "TextPanelCfg",
-      "pluralName": "TextPanelCfgs",
-      "machineName": "textpanelcfg",
-      "pluralMachineName": "textpanelcfgs",
-      "lineageIsGroup": true,
-      "maturity": "experimental",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "PanelCfg"
+      "docsRef": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/textpanelcfg/schema-reference",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "textpanelcfg",
+      "maturity": "experimental",
+      "name": "TextPanelCfg",
+      "pluralMachineName": "textpanelcfgs",
+      "pluralName": "TextPanelCfgs",
+      "schemaInterface": "PanelCfg",
+      "schemaRef": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/text/composable_panelcfg.cue",
+      "tsRef": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/text/models.gen.ts"
     },
     "thumb": {
-      "name": "Thumb",
-      "pluralName": "Thumbs",
-      "machineName": "thumb",
-      "pluralMachineName": "thumbs",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "core",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": false,
+      "machineName": "thumb",
+      "maturity": "planned",
+      "name": "Thumb",
+      "pluralMachineName": "thumbs",
+      "pluralName": "Thumbs",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "tracespanelcfg": {
-      "name": "TracesPanelCfg",
-      "pluralName": "TracesPanelCfgs",
-      "machineName": "tracespanelcfg",
-      "pluralMachineName": "tracespanelcfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "PanelCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "tracespanelcfg",
+      "maturity": "planned",
+      "name": "TracesPanelCfg",
+      "pluralMachineName": "tracespanelcfgs",
+      "pluralName": "TracesPanelCfgs",
+      "schemaInterface": "PanelCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "user": {
-      "name": "User",
-      "pluralName": "Users",
-      "machineName": "user",
-      "pluralMachineName": "users",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "core",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": false,
+      "machineName": "user",
+      "maturity": "planned",
+      "name": "User",
+      "pluralMachineName": "users",
+      "pluralName": "Users",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "welcomepanelcfg": {
-      "name": "WelcomePanelCfg",
-      "pluralName": "WelcomePanelCfgs",
-      "machineName": "welcomepanelcfg",
-      "pluralMachineName": "welcomepanelcfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "PanelCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "welcomepanelcfg",
+      "maturity": "planned",
+      "name": "WelcomePanelCfg",
+      "pluralMachineName": "welcomepanelcfgs",
+      "pluralName": "WelcomePanelCfgs",
+      "schemaInterface": "PanelCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "xychartpanelcfg": {
-      "name": "XYChartPanelCfg",
-      "pluralName": "XYChartPanelCfgs",
-      "machineName": "xychartpanelcfg",
-      "pluralMachineName": "xychartpanelcfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "PanelCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "xychartpanelcfg",
+      "maturity": "planned",
+      "name": "XYChartPanelCfg",
+      "pluralMachineName": "xychartpanelcfgs",
+      "pluralName": "XYChartPanelCfgs",
+      "schemaInterface": "PanelCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "zipkindataquery": {
-      "name": "ZipkinDataQuery",
-      "pluralName": "ZipkinDataQuerys",
-      "machineName": "zipkindataquery",
-      "pluralMachineName": "zipkindataquerys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataQuery"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": false,
+      "machineName": "zipkindataquery",
+      "maturity": "planned",
+      "name": "ZipkinDataQuery",
+      "pluralMachineName": "zipkindataquerys",
+      "pluralName": "ZipkinDataQuerys",
+      "schemaInterface": "DataQuery",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     },
     "zipkindatasourcecfg": {
-      "name": "ZipkinDataSourceCfg",
-      "pluralName": "ZipkinDataSourceCfgs",
-      "machineName": "zipkindatasourcecfg",
-      "pluralMachineName": "zipkindatasourcecfgs",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+      "category": "composable",
       "currentVersion": [
         0,
         0
       ],
-      "schemaInterface": "DataSourceCfg"
+      "docsRef": "n/a",
+      "goRef": "n/a",
+      "lineageIsGroup": true,
+      "machineName": "zipkindatasourcecfg",
+      "maturity": "planned",
+      "name": "ZipkinDataSourceCfg",
+      "pluralMachineName": "zipkindatasourcecfgs",
+      "pluralName": "ZipkinDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg",
+      "schemaRef": "n/a",
+      "tsRef": "n/a"
     }
   },
   "dimensions": {
