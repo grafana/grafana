@@ -121,9 +121,6 @@ func (hs *HTTPServer) registerRoutes() {
 	}
 	r.Get("/styleguide", reqSignedIn, hs.Index)
 
-	r.Get("/admin/support-bundles", reqGrafanaAdmin, hs.Index)
-	r.Get("/admin/support-bundles/create", reqGrafanaAdmin, hs.Index)
-
 	r.Get("/live", reqGrafanaAdmin, hs.Index)
 	r.Get("/live/pipeline", reqGrafanaAdmin, hs.Index)
 	r.Get("/live/cloud", reqGrafanaAdmin, hs.Index)
@@ -136,9 +133,10 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/connections/your-connections/datasources", authorize(reqOrgAdmin, datasources.ConfigurationPageAccess), hs.Index)
 	r.Get("/connections/your-connections/datasources/new", authorize(reqOrgAdmin, datasources.NewPageAccess), hs.Index)
 	r.Get("/connections/your-connections/datasources/edit/*", authorize(reqOrgAdmin, datasources.EditPageAccess), hs.Index)
-	r.Get("/connections/connect-data", middleware.CanAdminPlugins(hs.Cfg), hs.Index)
-	r.Get("/connections/connect-data/datasources/:id", middleware.CanAdminPlugins(hs.Cfg), hs.Index)
-	r.Get("/connections/connect-data/datasources/:id/page/:page", middleware.CanAdminPlugins(hs.Cfg), hs.Index)
+	r.Get("/connections", authorize(reqOrgAdmin, datasources.ConfigurationPageAccess), hs.Index)
+	r.Get("/connections/connect-data", authorize(reqOrgAdmin, datasources.ConfigurationPageAccess), hs.Index)
+	r.Get("/connections/datasources/:id", middleware.CanAdminPlugins(hs.Cfg), hs.Index)
+	r.Get("/connections/datasources/:id/page/:page", middleware.CanAdminPlugins(hs.Cfg), hs.Index)
 
 	// App Root Page
 	appPluginIDScope := plugins.ScopeProvider.GetResourceScope(ac.Parameter(":id"))

@@ -11,12 +11,14 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/infra/localcache"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestAlertRuleExtraction(t *testing.T) {
@@ -39,7 +41,8 @@ func TestAlertRuleExtraction(t *testing.T) {
 	}
 
 	dsService := &fakeDatasourceService{ExpectedDatasource: defaultDs}
-	store := mockstore.NewSQLStoreMock()
+	db := dbtest.NewFakeDB()
+	store := ProvideAlertStore(db, localcache.ProvideService(), &setting.Cfg{}, nil)
 	extractor := ProvideDashAlertExtractorService(dsPermissions, dsService, store)
 
 	t.Run("Parsing alert rules from dashboard json", func(t *testing.T) {
@@ -201,7 +204,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 	})
 
 	t.Run("Alert notifications are in DB", func(t *testing.T) {
-		sqlStore := sqlStore{db: db.InitTestDB(t)}
+		sqlStore := sqlStore{db: sqlstore.InitTestDB(t)}
 
 		firstNotification := models.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
 		err = sqlStore.CreateAlertNotificationCommand(context.Background(), &firstNotification)

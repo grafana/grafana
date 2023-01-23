@@ -3,9 +3,12 @@ package secretscan
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -34,19 +37,37 @@ type Token struct {
 	ReportedAt string `json:"reported_at"` //nolint
 }
 
-var ErrInvalidStatusCode = errors.New("invalid status code")
+var (
+	ErrInvalidStatusCode = errors.New("invalid status code")
+	errSecretScanURL     = errors.New("secretscan url must be https")
+)
 
-func newClient(url, version string) *client {
+func newClient(url, version string, dev bool) (*client, error) {
+	if !strings.HasPrefix(url, "https://") && !dev {
+		return nil, errSecretScanURL
+	}
+
 	return &client{
 		version: version,
 		baseURL: url,
 		httpClient: &http.Client{
-			Timeout:       timeout,
-			Transport:     nil,
-			CheckRedirect: nil,
-			Jar:           nil,
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					Renegotiation: tls.RenegotiateFreelyAsClient,
+				},
+				Proxy: http.ProxyFromEnvironment,
+				DialContext: (&net.Dialer{
+					Timeout:   timeout,
+					KeepAlive: 15 * time.Second,
+				}).DialContext,
+				TLSHandshakeTimeout:   10 * time.Second,
+				ExpectContinueTimeout: 1 * time.Second,
+				MaxIdleConns:          100,
+				IdleConnTimeout:       30 * time.Second,
+			},
+			Timeout: time.Second * 30,
 		},
-	}
+	}, nil
 }
 
 // checkTokens checks if any leaked tokens exist.

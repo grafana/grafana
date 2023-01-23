@@ -32,7 +32,7 @@ import { getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 import { findField } from 'app/features/dimensions';
 
 import { BarsOptions, getConfig } from './bars';
-import { PanelFieldConfig, PanelOptions, defaultPanelFieldConfig } from './models.gen';
+import { PanelFieldConfig, PanelOptions, defaultPanelFieldConfig } from './panelcfg.gen';
 import { BarChartDisplayValues, BarChartDisplayWarning } from './types';
 
 function getBarCharScaleOrientation(orientation: VizOrientation) {

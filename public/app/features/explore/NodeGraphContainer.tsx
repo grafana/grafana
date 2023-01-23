@@ -5,7 +5,7 @@ import { useToggle, useWindowSize } from 'react-use';
 
 import { applyFieldOverrides, DataFrame, GrafanaTheme2, SplitOpen } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { Badge, Collapse, useStyles2, useTheme2 } from '@grafana/ui';
+import { Collapse, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { NodeGraph } from '../../plugins/panel/nodeGraph';
 import { useCategorizeFrames } from '../../plugins/panel/nodeGraph/useCategorizeFrames';
@@ -82,12 +82,7 @@ export function UnconnectedNodeGraphContainer(props: Props) {
 
   return (
     <Collapse
-      label={
-        <span>
-          Node graph{countWarning}{' '}
-          <Badge text={'Beta'} color={'blue'} icon={'rocket'} tooltip={'This visualization is in beta'} />
-        </span>
-      }
+      label={<span>Node graph{countWarning} </span>}
       collapsible={withTraceView}
       // We allow collapsing this only when it is shown together with trace view.
       isOpen={withTraceView ? open : true}

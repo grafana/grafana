@@ -5,7 +5,8 @@ import { dateTimeFormat } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { LinkButton, Spinner, IconButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { StoreState } from 'app/types';
+import { contextSrv } from 'app/core/core';
+import { AccessControlAction, StoreState } from 'app/types';
 
 import { loadBundles, removeBundle, checkBundles } from './state/actions';
 
@@ -17,7 +18,7 @@ const subTitle = (
 );
 
 const NewBundleButton = (
-  <LinkButton icon="plus" href="admin/support-bundles/create" variant="primary">
+  <LinkButton icon="plus" href="support-bundles/create" variant="primary">
     New support bundle
   </LinkButton>
 );
@@ -52,12 +53,18 @@ const SupportBundlesUnconnected = ({ supportBundles, isLoading, loadBundles, rem
     }
   });
 
-  const actions = config.featureToggles.topnav ? NewBundleButton : undefined;
+  const hasAccess = contextSrv.hasAccess(AccessControlAction.ActionSupportBundlesCreate, contextSrv.isGrafanaAdmin);
+  const hasDeleteAccess = contextSrv.hasAccess(
+    AccessControlAction.ActionSupportBundlesDelete,
+    contextSrv.isGrafanaAdmin
+  );
+
+  const actions = config.featureToggles.topnav && hasAccess ? NewBundleButton : undefined;
 
   return (
     <Page navId="support-bundles" subTitle={subTitle} actions={actions}>
       <Page.Contents isLoading={isLoading}>
-        {!config.featureToggles.topnav && NewBundleButton}
+        {!config.featureToggles.topnav && hasAccess && NewBundleButton}
 
         <table className="filter-table form-inline">
           <thead>
@@ -88,7 +95,9 @@ const SupportBundlesUnconnected = ({ supportBundles, isLoading, loadBundles, rem
                   </LinkButton>
                 </th>
                 <th>
-                  <IconButton onClick={() => removeBundle(bundle.uid)} name="trash-alt" variant="destructive" />
+                  {hasDeleteAccess && (
+                    <IconButton onClick={() => removeBundle(bundle.uid)} name="trash-alt" variant="destructive" />
+                  )}
                 </th>
               </tr>
             ))}

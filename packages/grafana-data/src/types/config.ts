@@ -210,6 +210,7 @@ export interface GrafanaConfig {
   angularSupportEnabled: boolean;
   feedbackLinksEnabled: boolean;
   secretsManagerPluginEnabled: boolean;
+  supportBundlesEnabled: boolean;
   googleAnalyticsId: string | undefined;
   googleAnalytics4Id: string | undefined;
   googleAnalytics4SendManualPageViews: boolean;
@@ -223,7 +224,9 @@ export interface AuthSettings {
   OAuthSkipOrgRoleUpdateSync?: boolean;
   SAMLSkipOrgRoleSync?: boolean;
   LDAPSkipOrgRoleSync?: boolean;
+  JWTAuthSkipOrgRoleSync?: boolean;
   GrafanaComSkipOrgRoleSync?: boolean;
   AzureADSkipOrgRoleSync?: boolean;
+  GoogleSkipOrgRoleSync?: boolean;
   DisableSyncLock?: boolean;
 }

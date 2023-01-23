@@ -222,7 +222,7 @@ func (s *ServiceImpl) getHomeNode(c *models.ReqContext, prefs *pref.Preference) 
 		slugQuery := dashboards.GetDashboardRefByIDQuery{ID: prefs.HomeDashboardID}
 		err := s.dashboardService.GetDashboardUIDByID(c.Req.Context(), &slugQuery)
 		if err == nil {
-			homeUrl = models.GetDashboardUrl(slugQuery.Result.UID, slugQuery.Result.Slug)
+			homeUrl = dashboards.GetDashboardURL(slugQuery.Result.UID, slugQuery.Result.Slug)
 		}
 	}
 
@@ -250,7 +250,7 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqC
 		supportBundleNode := &navtree.NavLink{
 			Text:       "Support bundles",
 			Id:         "support-bundles",
-			Url:        "/admin/support-bundles",
+			Url:        "/support-bundles",
 			Icon:       "wrench",
 			Section:    navtree.NavSectionConfig,
 			SortWeight: navtree.WeightHelp,
@@ -569,9 +569,8 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree
 
 	baseUrl := s.cfg.AppSubURL + "/connections"
 
-	// Connect data
-	// FIXME: while we don't have a permissions for listing plugins the legacy check has to stay as a default
-	if plugins.ReqCanAdminPlugins(s.cfg)(c) || hasAccess(plugins.ReqCanAdminPlugins(s.cfg), plugins.AdminAccessEvaluator) {
+	if hasAccess(ac.ReqOrgAdmin, datasources.ConfigurationPageAccess) {
+		// Connect data
 		children = append(children, &navtree.NavLink{
 			Id:        "connections-connect-data",
 			Text:      "Connect data",
@@ -580,9 +579,7 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree
 			Url:       s.cfg.AppSubURL + "/connections/connect-data",
 			Children:  []*navtree.NavLink{},
 		})
-	}
 
-	if hasAccess(ac.ReqOrgAdmin, datasources.ConfigurationPageAccess) {
 		// Your connections
 		children = append(children, &navtree.NavLink{
 			Id:       "connections-your-connections",

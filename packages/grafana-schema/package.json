@@ -41,7 +41,7 @@
     "@rollup/plugin-json": "5.0.1",
     "@rollup/plugin-node-resolve": "15.0.1",
     "@swc/helpers": "0.4.12",
-    "esbuild": "0.16.7",
+    "esbuild": "0.16.17",
     "rimraf": "3.0.2",
     "rollup": "2.79.1",
     "rollup-plugin-dts": "^5.0.0",

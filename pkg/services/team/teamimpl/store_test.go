@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
@@ -299,7 +300,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 				err = teamSvc.AddTeamMember(userIds[2], testOrgID, groupID, false, 0)
 				require.NoError(t, err)
-				err = updateDashboardACL(t, sqlStore, 1, &models.DashboardACL{
+				err = updateDashboardACL(t, sqlStore, 1, &dashboards.DashboardACL{
 					DashboardID: 1, OrgID: testOrgID, Permission: models.PERMISSION_EDIT, TeamID: groupID,
 				})
 				require.NoError(t, err)
@@ -310,7 +311,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				_, err = teamSvc.GetTeamByID(context.Background(), query)
 				require.Equal(t, err, team.ErrTeamNotFound)
 
-				permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: testOrgID}
+				permQuery := &dashboards.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: testOrgID}
 				err = getDashboardACLInfoList(sqlStore, permQuery)
 				require.NoError(t, err)
 
@@ -616,7 +617,7 @@ func hasWildcardScope(user *user.SignedInUser, action string) bool {
 }
 
 // TODO: Use FakeDashboardStore when org has its own service
-func updateDashboardACL(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardID int64, items ...*models.DashboardACL) error {
+func updateDashboardACL(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardID int64, items ...*dashboards.DashboardACL) error {
 	t.Helper()
 
 	err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -643,7 +644,7 @@ func updateDashboardACL(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardID i
 		}
 
 		// Update dashboard HasACL flag
-		dashboard := models.Dashboard{HasACL: true}
+		dashboard := dashboards.Dashboard{HasACL: true}
 		_, err = sess.Cols("has_acl").Where("id=?", dashboardID).Update(&dashboard)
 		return err
 	})
@@ -653,9 +654,9 @@ func updateDashboardACL(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardID i
 // This function was copied from pkg/services/dashboards/database to circumvent
 // import cycles. When this org-related code is refactored into a service the
 // tests can the real GetDashboardACLInfoList functions
-func getDashboardACLInfoList(s *sqlstore.SQLStore, query *models.GetDashboardACLInfoListQuery) error {
+func getDashboardACLInfoList(s *sqlstore.SQLStore, query *dashboards.GetDashboardACLInfoListQuery) error {
 	outerErr := s.WithDbSession(context.Background(), func(dbSession *db.Session) error {
-		query.Result = make([]*models.DashboardACLInfoDTO, 0)
+		query.Result = make([]*dashboards.DashboardACLInfoDTO, 0)
 		falseStr := s.GetDialect().BooleanStr(false)
 
 		if query.DashboardID == 0 {
