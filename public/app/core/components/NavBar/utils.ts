@@ -89,7 +89,7 @@ export let getSupportBundleFooterLinks = (cfg = config): FooterLink[] => {
       id: 'support-bundle',
       text: t('nav.help/support-bundle', 'Support Bundles'),
       icon: 'question-circle',
-      url: '/admin/support-bundles',
+      url: '/support-bundles',
     },
   ];
 };
