@@ -96,7 +96,6 @@ func (h *RemoteLokiBackend) recordStreamsAsync(ctx context.Context, streams []st
 }
 
 func (h *RemoteLokiBackend) recordStreams(ctx context.Context, streams []stream, logger log.Logger) error {
-	logger.Error("pushing streams", "streams", streams)
 	if err := h.client.push(streams); err != nil {
 		return err
 	}
