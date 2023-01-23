@@ -28,8 +28,6 @@ func (w *AttributeWalker) walk(p cue.Path, v cue.Value) {
 
 	w.seen[v] = true
 
-	isRef := v != cue.Dereference(v)
-
 	for attr := range w.count {
 		if found := v.Attribute(attr); found.Err() == nil {
 			w.count[attr]++
@@ -38,7 +36,10 @@ func (w *AttributeWalker) walk(p cue.Path, v cue.Value) {
 
 	switch v.Kind() {
 	case cue.StructKind:
-		if isRef {
+		// If current cue.Value is a reference to another
+		// definition, we don't want to traverse its fields
+		// individually, because we'll do so for the actual def.
+		if v != cue.Dereference(v) {
 			return
 		}
 
