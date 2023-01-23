@@ -464,6 +464,8 @@ describe('generateEmptyQuery', () => {
     const query = await generateEmptyQuery([], 1, { type: 'loki', uid: 'ds1' });
 
     expect(query.datasource?.uid).toBe('ds1');
+    expect(query.datasource?.type).toBe('loki');
+    expect(query.refId).toBe('A');
   });
   it('should generate query without dataSourceOverride and with queries', async () => {
     const query = await generateEmptyQuery(
@@ -477,5 +479,7 @@ describe('generateEmptyQuery', () => {
     );
 
     expect(query.datasource?.uid).toBe('ds1');
+    expect(query.datasource?.type).toBe('loki');
+    expect(query.refId).toBe('B');
   });
 });
