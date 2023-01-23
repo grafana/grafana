@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -26,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -63,7 +63,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	orgService := orgtest.NewOrgServiceFake()
 	orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{}
 	hs.orgService = orgService
-	mock := mockstore.NewSQLStoreMock()
+	mock := dbtest.NewFakeDB()
 
 	loggedInUserScenario(t, "When calling GET on", "api/org/users", "api/org/users", func(sc *scenarioContext) {
 		setUpGetOrgUsersDB(t, sqlStore)
@@ -219,7 +219,7 @@ func TestOrgUsersAPIEndpoint_LegacyAccessControl_FolderAdmin(t *testing.T) {
 	require.NotNil(t, folder)
 
 	// Grant our test Viewer with permission to admin the folder
-	acls := []*models.DashboardACL{
+	acls := []*dashboards.DashboardACL{
 		{
 			DashboardID: folder.ID,
 			OrgID:       testOrgID,

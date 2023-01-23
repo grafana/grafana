@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
 	tempuser "github.com/grafana/grafana/pkg/services/temp_user"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -113,7 +114,7 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 
 	// send invite email
 	if inviteDto.SendEmail && util.IsEmail(inviteDto.LoginOrEmail) {
-		emailCmd := models.SendEmailCommand{
+		emailCmd := notifications.SendEmailCommand{
 			To:       []string{inviteDto.LoginOrEmail},
 			Template: "new_user_invite",
 			Data: map[string]interface{}{
@@ -126,7 +127,7 @@ func (hs *HTTPServer) AddOrgInvite(c *models.ReqContext) response.Response {
 		}
 
 		if err := hs.AlertNG.NotificationService.SendEmailCommandHandler(c.Req.Context(), &emailCmd); err != nil {
-			if errors.Is(err, models.ErrSmtpNotEnabled) {
+			if errors.Is(err, notifications.ErrSmtpNotEnabled) {
 				return response.Error(412, err.Error(), err)
 			}
 
@@ -155,7 +156,7 @@ func (hs *HTTPServer) inviteExistingUserToOrg(c *models.ReqContext, user *user.U
 	}
 
 	if inviteDto.SendEmail && util.IsEmail(user.Email) {
-		emailCmd := models.SendEmailCommand{
+		emailCmd := notifications.SendEmailCommand{
 			To:       []string{user.Email},
 			Template: "invited_to_org",
 			Data: map[string]interface{}{

@@ -27,6 +27,7 @@ export const TracesPanel: React.FunctionComponent<PanelProps> = ({ data }) => {
     return await getDataSourceSrv().get(data.request?.targets[0].datasource?.uid);
   });
   const scrollElement = document.getElementsByClassName(styles.wrapper)[0];
+  const datasourceType = dataSource && dataSource.value ? dataSource.value.type : 'unknown';
 
   if (!data || !data.series.length || !traceProp) {
     return (
@@ -49,6 +50,7 @@ export const TracesPanel: React.FunctionComponent<PanelProps> = ({ data }) => {
           setSearchBarSuffix={setSearchBarSuffix}
           focusedSpanIdForSearch={focusedSpanIdForSearch}
           setFocusedSpanIdForSearch={setFocusedSpanIdForSearch}
+          datasourceType={datasourceType}
         />
       ) : null}
 

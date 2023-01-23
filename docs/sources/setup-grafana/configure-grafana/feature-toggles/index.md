@@ -62,7 +62,6 @@ Alpha features might be changed or removed without prior notice.
 | `live-service-web-worker`          | This will use a webworker thread to processes events rather than the main thread                                                                                             |
 | `queryOverLive`                    | Use Grafana Live WebSocket to execute backend queries                                                                                                                        |
 | `tempoApmTable`                    | Show APM table                                                                                                                                                               |
-| `influxdbBackendMigration`         | Query InfluxDB InfluxQL without the proxy                                                                                                                                    |
 | `publicDashboards`                 | Enables public access to dashboards                                                                                                                                          |
 | `lokiLive`                         | Support WebSocket streaming for loki (early prototype)                                                                                                                       |
 | `lokiDataframeApi`                 | Use experimental loki api for WebSocket streaming (early prototype)                                                                                                          |
@@ -96,6 +95,7 @@ Alpha features might be changed or removed without prior notice.
 | `authnService`                     | Use new auth service to perform authentication                                                                                                                               |
 | `sessionRemoteCache`               | Enable using remote cache for user sessions                                                                                                                                  |
 | `alertingBacktesting`              | Rule backtesting API for alerting                                                                                                                                            |
+| `azureMultipleResourcePicker`      | Azure multiple resource picker                                                                                                                                               |
 
 ## Development feature toggles
 

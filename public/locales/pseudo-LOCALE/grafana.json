@@ -12,12 +12,15 @@
       "light-theme": "Ŀįģĥŧ",
       "search": "Ŝęäřčĥ"
     },
+    "search-box": {
+      "placeholder": "Ŝęäřčĥ Ğřäƒäŉä"
+    },
     "section": {
       "actions": "Åčŧįőŉş",
       "dashboard-search-results": "Đäşĥþőäřđş",
       "pages": "Päģęş",
       "preferences": "Přęƒęřęŉčęş",
-      "recent-dashboards": "Ŗęčęŉŧľy vįęŵęđ đäşĥþőäřđş"
+      "recent-dashboards": "Ŗęčęŉŧ đäşĥþőäřđş"
     }
   },
   "common": {

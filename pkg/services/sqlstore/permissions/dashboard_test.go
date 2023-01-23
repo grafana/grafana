@@ -148,13 +148,13 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 func setupTest(t *testing.T, numFolders, numDashboards int, permissions []accesscontrol.Permission) db.DB {
 	store := db.InitTestDB(t)
 	err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
-		dashes := make([]models.Dashboard, 0, numFolders+numDashboards)
+		dashes := make([]dashboards.Dashboard, 0, numFolders+numDashboards)
 		for i := 1; i <= numFolders; i++ {
 			str := strconv.Itoa(i)
-			dashes = append(dashes, models.Dashboard{
-				OrgId:    1,
+			dashes = append(dashes, dashboards.Dashboard{
+				OrgID:    1,
 				Slug:     str,
-				Uid:      str,
+				UID:      str,
 				Title:    str,
 				IsFolder: true,
 				Data:     simplejson.New(),
@@ -169,11 +169,11 @@ func setupTest(t *testing.T, numFolders, numDashboards int, permissions []access
 			if i%numFolders != 0 {
 				folderID = i % numFolders
 			}
-			dashes = append(dashes, models.Dashboard{
-				OrgId:    1,
+			dashes = append(dashes, dashboards.Dashboard{
+				OrgID:    1,
 				IsFolder: false,
-				FolderId: int64(folderID),
-				Uid:      str,
+				FolderID: int64(folderID),
+				UID:      str,
 				Slug:     str,
 				Title:    str,
 				Data:     simplejson.New(),

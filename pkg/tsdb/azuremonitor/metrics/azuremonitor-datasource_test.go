@@ -501,21 +501,24 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour),
 					).SetConfig(&data.FieldConfig{Links: []data.DataLink{averageLink}}),
 					data.NewField("Blob Count", data.Labels{"blobtype": "PageBlob"},
-						[]*float64{ptr.Float64(3), ptr.Float64(3), ptr.Float64(3), ptr.Float64(3), ptr.Float64(3), nil}).SetConfig(&data.FieldConfig{Unit: "short", Links: []data.DataLink{averageLink}})),
+						[]*float64{ptr.Float64(3), ptr.Float64(3), ptr.Float64(3), ptr.Float64(3), ptr.Float64(3), nil}).
+						SetConfig(&data.FieldConfig{Unit: "short", Links: []data.DataLink{averageLink}, DisplayName: "Blob Count grafana"})),
 
 				data.NewFrame("",
 					data.NewField("Time", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour),
 					).SetConfig(&data.FieldConfig{Links: []data.DataLink{averageLink}}),
 					data.NewField("Blob Count", data.Labels{"blobtype": "BlockBlob"},
-						[]*float64{ptr.Float64(1), ptr.Float64(1), ptr.Float64(1), ptr.Float64(1), ptr.Float64(1), nil}).SetConfig(&data.FieldConfig{Unit: "short", Links: []data.DataLink{averageLink}})),
+						[]*float64{ptr.Float64(1), ptr.Float64(1), ptr.Float64(1), ptr.Float64(1), ptr.Float64(1), nil}).
+						SetConfig(&data.FieldConfig{Unit: "short", Links: []data.DataLink{averageLink}, DisplayName: "Blob Count grafana"})),
 
 				data.NewFrame("",
 					data.NewField("Time", nil,
 						makeDates(time.Date(2019, 2, 9, 15, 21, 0, 0, time.UTC), 6, time.Hour),
 					).SetConfig(&data.FieldConfig{Links: []data.DataLink{averageLink}}),
 					data.NewField("Blob Count", data.Labels{"blobtype": "Azure Data Lake Storage"},
-						[]*float64{ptr.Float64(0), ptr.Float64(0), ptr.Float64(0), ptr.Float64(0), ptr.Float64(0), nil}).SetConfig(&data.FieldConfig{Unit: "short", Links: []data.DataLink{averageLink}})),
+						[]*float64{ptr.Float64(0), ptr.Float64(0), ptr.Float64(0), ptr.Float64(0), ptr.Float64(0), nil}).
+						SetConfig(&data.FieldConfig{Unit: "short", Links: []data.DataLink{averageLink}, DisplayName: "Blob Count grafana"})),
 			},
 		},
 		{
@@ -685,7 +688,7 @@ func TestAzureMonitorParseResponse(t *testing.T) {
 					).SetConfig(&data.FieldConfig{Links: []data.DataLink{averageLink}}),
 					data.NewField("Percentage CPU", data.Labels{"microsoft.resourceid": "/subscriptions/12345678-aaaa-bbbb-cccc-123456789abc/resourceGroups/grafanastaging/providers/Microsoft.Compute/virtualMachines/grafana"}, []*float64{
 						ptr.Float64(2.0875), ptr.Float64(2.1525), ptr.Float64(2.155), ptr.Float64(3.6925), ptr.Float64(2.44),
-					}).SetConfig(&data.FieldConfig{Unit: "percent", Links: []data.DataLink{averageLink}}),
+					}).SetConfig(&data.FieldConfig{Unit: "percent", Links: []data.DataLink{averageLink}, DisplayName: "Percentage CPU grafana"}),
 				),
 			},
 		},
