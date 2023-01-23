@@ -480,7 +480,7 @@ class UnThemedQueryGroup extends PureComponent<Props, State> {
 
 export const QueryGroup = withTheme2(UnThemedQueryGroup);
 
-function getStyles(theme: GrafanaTheme2, isDragActive?: boolean) {
+function getStyles(theme: GrafanaTheme2) {
   return {
     innerWrapper: css`
       display: flex;
