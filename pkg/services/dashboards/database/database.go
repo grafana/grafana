@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -257,7 +258,7 @@ func (d *DashboardStore) UpdateDashboardACL(ctx context.Context, dashboardID int
 	})
 }
 
-func (d *DashboardStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*models.Alert) error {
+func (d *DashboardStore) SaveAlerts(ctx context.Context, dashID int64, alerts []*alertmodels.Alert) error {
 	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		existingAlerts, err := GetAlertsByDashboardId2(dashID, sess)
 		if err != nil {
@@ -632,22 +633,22 @@ func saveProvisionedData(sess *db.Session, provisioning *dashboards.DashboardPro
 	return err
 }
 
-func GetAlertsByDashboardId2(dashboardId int64, sess *db.Session) ([]*models.Alert, error) {
-	alerts := make([]*models.Alert, 0)
+func GetAlertsByDashboardId2(dashboardId int64, sess *db.Session) ([]*alertmodels.Alert, error) {
+	alerts := make([]*alertmodels.Alert, 0)
 	err := sess.Where("dashboard_id = ?", dashboardId).Find(&alerts)
 
 	if err != nil {
-		return []*models.Alert{}, err
+		return []*alertmodels.Alert{}, err
 	}
 
 	return alerts, nil
 }
 
-func (d *DashboardStore) updateAlerts(ctx context.Context, existingAlerts []*models.Alert, alerts []*models.Alert, log log.Logger) error {
+func (d *DashboardStore) updateAlerts(ctx context.Context, existingAlerts []*alertmodels.Alert, alertsIn []*alertmodels.Alert, log log.Logger) error {
 	return d.store.WithDbSession(ctx, func(sess *db.Session) error {
-		for _, alert := range alerts {
+		for _, alert := range alertsIn {
 			update := false
-			var alertToUpdate *models.Alert
+			var alertToUpdate *alertmodels.Alert
 
 			for _, k := range existingAlerts {
 				if alert.PanelId == k.PanelId {
@@ -674,7 +675,7 @@ func (d *DashboardStore) updateAlerts(ctx context.Context, existingAlerts []*mod
 			} else {
 				alert.Updated = time.Now()
 				alert.Created = time.Now()
-				alert.State = models.AlertStateUnknown
+				alert.State = alertmodels.AlertStateUnknown
 				alert.NewStateDate = time.Now()
 
 				_, err := sess.Insert(alert)
@@ -704,7 +705,7 @@ func (d *DashboardStore) updateAlerts(ctx context.Context, existingAlerts []*mod
 	})
 }
 
-func (d *DashboardStore) deleteMissingAlerts(alerts []*models.Alert, existingAlerts []*models.Alert, sess *db.Session) error {
+func (d *DashboardStore) deleteMissingAlerts(alerts []*alertmodels.Alert, existingAlerts []*alertmodels.Alert, sess *db.Session) error {
 	for _, missingAlert := range alerts {
 		missing := true
 
@@ -906,7 +907,7 @@ func createEntityEvent(dashboard *dashboards.Dashboard, eventType store.EntityEv
 }
 
 func (d *DashboardStore) deleteAlertDefinition(dashboardId int64, sess *db.Session) error {
-	alerts := make([]*models.Alert, 0)
+	alerts := make([]*alertmodels.Alert, 0)
 	if err := sess.Where("dashboard_id = ?", dashboardId).Find(&alerts); err != nil {
 		return err
 	}
