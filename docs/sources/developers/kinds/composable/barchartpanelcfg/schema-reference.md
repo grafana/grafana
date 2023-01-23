@@ -45,17 +45,17 @@ TODO docs
 
 | Property              | Type    | Required | Description                                                                                                                        |
 |-----------------------|---------|----------|------------------------------------------------------------------------------------------------------------------------------------|
-| `barRadius`           | number  | No       | TODO docs Default: `0`.                                                                                                            |
+| `barRadius`           | number  | No       | Controls the radius of each bar. Default: `0`.                                                                                     |
 | `barWidth`            | number  | No       | Controls the width of bars. 1 = Max width, 0 = Min width. Default: `0.97`.                                                         |
-| `colorByField`        | string  | No       | TODO docs                                                                                                                          |
+| `colorByField`        | string  | No       | Use the color value for a sibling field to color each bar value.                                                                   |
 | `fullHighlight`       | boolean | No       | Enables mode which highlights the entire bar area and shows tooltip when cursor<br/>hovers over highlighted area Default: `false`. |
 | `groupWidth`          | number  | No       | Controls the width of groups. 1 = max with, 0 = min width. Default: `0.7`.                                                         |
 | `orientation`         | string  | No       | TODO docs Possible values are: `auto`, `vertical`, `horizontal`.                                                                   |
 | `showValue`           | string  | No       | TODO docs Possible values are: `auto`, `never`, `always`.                                                                          |
 | `stacking`            | string  | No       | TODO docs Possible values are: `none`, `normal`, `percent`.                                                                        |
-| `xField`              | string  | No       | TODO docs                                                                                                                          |
-| `xTickLabelMaxLength` | integer | No       | TODO docs                                                                                                                          |
-| `xTickLabelRotation`  | integer | No       | TODO docs Default: `0`.                                                                                                            |
-| `xTickLabelSpacing`   | integer | No       | TODO docs<br/>negative values indicate backwards skipping behavior Default: `0`.                                                   |
+| `xField`              | string  | No       | Manually select which field from the dataset to represent the x field.                                                             |
+| `xTickLabelMaxLength` | integer | No       | Sets the max length that a label can have before it is truncated.                                                                  |
+| `xTickLabelRotation`  | integer | No       | Controls the rotation of the x axis labels. Default: `0`.                                                                          |
+| `xTickLabelSpacing`   | integer | No       | Controls the spacing between x axis labels.<br/>negative values indicate backwards skipping behavior Default: `0`.                 |
 
 
