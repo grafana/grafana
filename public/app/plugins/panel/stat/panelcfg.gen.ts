@@ -8,20 +8,20 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-import * as common from '@grafana/schema';
+import * as ui from '@grafana/schema';
 
 export const PanelCfgModelVersion = Object.freeze([0, 0]);
 
-export interface PanelOptions extends common.SingleStatBaseOptions {
-  colorMode: common.BigValueColorMode;
-  graphMode: common.BigValueGraphMode;
-  justifyMode: common.BigValueJustifyMode;
-  textMode: common.BigValueTextMode;
+export interface PanelOptions extends ui.SingleStatBaseOptions {
+  colorMode: ui.BigValueColorMode;
+  graphMode: ui.BigValueGraphMode;
+  justifyMode: ui.BigValueJustifyMode;
+  textMode: ui.BigValueTextMode;
 }
 
 export const defaultPanelOptions: Partial<PanelOptions> = {
-  colorMode: common.BigValueColorMode.Value,
-  graphMode: common.BigValueGraphMode.Area,
-  justifyMode: common.BigValueJustifyMode.Auto,
-  textMode: common.BigValueTextMode.Auto,
+  colorMode: ui.BigValueColorMode.Value,
+  graphMode: ui.BigValueGraphMode.Area,
+  justifyMode: ui.BigValueJustifyMode.Auto,
+  textMode: ui.BigValueTextMode.Auto,
 };
