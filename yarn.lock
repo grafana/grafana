@@ -32019,18 +32019,18 @@ __metadata:
   linkType: hard
 
 "qs@npm:^6.4.0":
-  version: 6.10.1
-  resolution: "qs@npm:6.10.1"
+  version: 6.10.3
+  resolution: "qs@npm:6.10.3"
   dependencies:
     side-channel: ^1.0.4
-  checksum: 00e390dbf98eff4d8ff121b61ab2fe32106852290de99ecd0e40fc76651c4101f43fc6cc8313cb69423563876fc532951b11dda55d2917def05f292258263480
+  checksum: 0fac5e6c7191d0295a96d0e83c851aeb015df7e990e4d3b093897d3ac6c94e555dbd0a599739c84d7fa46d7fee282d94ba76943983935cf33bba6769539b8019
   languageName: node
   linkType: hard
 
 "qs@npm:~6.5.2":
-  version: 6.5.2
-  resolution: "qs@npm:6.5.2"
-  checksum: 24af7b9928ba2141233fba2912876ff100403dba1b08b20c3b490da9ea6c636760445ea2211a079e7dfa882a5cf8f738337b3748c8bdd0f93358fa8881d2db8f
+  version: 6.5.3
+  resolution: "qs@npm:6.5.3"
+  checksum: 6f20bf08cabd90c458e50855559539a28d00b2f2e7dddcb66082b16a43188418cb3cb77cbd09268bcef6022935650f0534357b8af9eeb29bf0f27ccb17655692
   languageName: node
   linkType: hard
 
