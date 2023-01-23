@@ -1,4 +1,5 @@
 import { SpanLinks } from '@jaegertracing/jaeger-ui-components/src/types/links';
+import { property } from 'lodash';
 import React from 'react';
 
 import {
@@ -25,7 +26,8 @@ import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
-import { dataLinkHasAllVariablesDefined, getFieldLinksForExplore } from '../utils/links';
+import { variableRegex } from '../../variables/utils';
+import { getFieldLinksForExplore } from '../utils/links';
 
 /**
  * This is a factory for the link creator. It returns the function mainly so it can return undefined in which case
@@ -49,18 +51,28 @@ export function createSpanLinkFactory({
 }): SpanLinkFunc | undefined {
   let scopedVars = scopedVarsFromTrace(trace);
 
-  if (!dataFrame || dataFrame.fields.length === 1 || !dataFrame.fields.some((f) => Boolean(f.config.links?.length))) {
+  if (!dataFrame) {
+    return undefined;
+  }
+  const hasLinks = dataFrame.fields.some((f) => Boolean(f.config.links?.length));
+  const legacyFormat = dataFrame.fields.length === 1;
+
+  if (legacyFormat || !hasLinks) {
     // if the dataframe contains just a single blob of data (legacy format) or does not have any links configured,
     // let's try to use the old legacy path.
     // TODO: This was mainly a backward compatibility thing but at this point can probably be removed.
     return legacyCreateSpanLinkFactory(
       splitOpenFn,
+      // We need this to make the types happy but for this branch of code it does not matter which field we supply.
+      dataFrame.fields[0],
       traceToLogsOptions,
       traceToMetricsOptions,
       createFocusSpanLink,
       scopedVars
     );
-  } else {
+  }
+
+  if (hasLinks) {
     return function SpanLink(span: TraceSpan): SpanLinks | undefined {
       scopedVars = {
         ...scopedVars,
@@ -84,6 +96,7 @@ export function createSpanLinkFactory({
               href: links[0].href,
               onClick: links[0].onClick,
               content: <Icon name="gf-logs" title="Explore the logs for this in split view" />,
+              field: links[0].origin,
             },
           ],
         };
@@ -94,6 +107,8 @@ export function createSpanLinkFactory({
       }
     };
   }
+
+  return undefined;
 }
 
 /**
@@ -103,6 +118,7 @@ const defaultKeys = ['cluster', 'hostname', 'namespace', 'pod'].map((k) => ({ ke
 
 function legacyCreateSpanLinkFactory(
   splitOpenFn: SplitOpen,
+  field: Field,
   traceToLogsOptions?: TraceToLogsOptionsV2,
   traceToMetricsOptions?: TraceToMetricsOptions,
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>,
@@ -172,7 +188,7 @@ function legacyCreateSpanLinkFactory(
 
         // Check if all variables are defined and don't show if they aren't. This is usually handled by the
         // getQueryFor* functions but this is for case of custom query supplied by the user.
-        if (dataLinkHasAllVariablesDefined(dataLink, scopedVars)) {
+        if (dataLinkHasAllVariablesDefined(dataLink.internal!.query, scopedVars)) {
           const link = mapInternalLinkToExplore({
             link: dataLink,
             internalLink: dataLink.internal!,
@@ -199,6 +215,7 @@ function legacyCreateSpanLinkFactory(
               href: link.href,
               onClick: link.onClick,
               content: <Icon name="gf-logs" title="Explore the logs for this in split view" />,
+              field,
             },
           ];
         }
@@ -245,6 +262,7 @@ function legacyCreateSpanLinkFactory(
           href: link.href,
           onClick: link.onClick,
           content: <Icon name="chart-line" title="Explore metrics for this span" />,
+          field,
         });
       }
     }
@@ -264,6 +282,7 @@ function legacyCreateSpanLinkFactory(
           title: reference.span ? reference.span.operationName : 'View linked span',
           content: <Icon name="link" title="View linked span" />,
           onClick: link.onClick,
+          field: link.origin,
         });
       }
     }
@@ -277,6 +296,7 @@ function legacyCreateSpanLinkFactory(
           title: reference.span ? reference.span.operationName : 'View linked span',
           content: <Icon name="link" title="View linked span" />,
           onClick: link.onClick,
+          field: link.origin,
         });
       }
     }
@@ -505,4 +525,57 @@ function scopedVarsFromSpan(span: TraceSpan): ScopedVars {
       },
     },
   };
+}
+
+type VarValue = string | number | boolean | undefined;
+
+function dataLinkHasAllVariablesDefined<T extends DataQuery>(query: T, scopedVars: ScopedVars): boolean {
+  const vars = getVariablesMapInTemplate(getStringsFromObject(query), scopedVars);
+  return Object.values(vars).every((val) => val !== undefined);
+}
+
+function getStringsFromObject<T extends Object>(obj: T): string {
+  let acc = '';
+  for (const k of Object.keys(obj)) {
+    // Honestly not sure how to type this to make TS happy.
+    // @ts-ignore
+    if (typeof obj[k] === 'string') {
+      // @ts-ignore
+      acc += ' ' + obj[k];
+      // @ts-ignore
+    } else if (typeof obj[k] === 'object' && obj[k] !== null) {
+      // @ts-ignore
+      acc += ' ' + getStringsFromObject(obj[k]);
+    }
+  }
+  return acc;
+}
+
+function getVariablesMapInTemplate(target: string, scopedVars: ScopedVars): Record<string, VarValue> {
+  const regex = new RegExp(variableRegex);
+  const values: Record<string, VarValue> = {};
+
+  target.replace(regex, (match, var1, var2, fmt2, var3, fieldPath) => {
+    const variableName = var1 || var2 || var3;
+    values[variableName] = getVariableValue(variableName, fieldPath, scopedVars);
+
+    // Don't care about the result anyway
+    return '';
+  });
+
+  return values;
+}
+
+function getVariableValue(variableName: string, fieldPath: string | undefined, scopedVars: ScopedVars): VarValue {
+  const scopedVar = scopedVars[variableName];
+  if (!scopedVar) {
+    return undefined;
+  }
+
+  if (fieldPath) {
+    // @ts-ignore ScopedVars are typed in way that I don't think this is possible to type correctly.
+    return property(fieldPath)(scopedVar.value);
+  }
+
+  return scopedVar.value;
 }

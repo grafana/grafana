@@ -11,6 +11,7 @@ import { TemplateSrv } from '../../templating/template_srv';
 import { createSpanLinkFactory } from './createSpanLink';
 
 const dummyTraceData = { duration: 10, traceID: 'trace1', traceName: 'test trace' } as unknown as Trace;
+const dummyDataFrame = new MutableDataFrame({ fields: [{ name: 'traceId', values: ['trace1'] }] });
 
 describe('createSpanLinkFactory', () => {
   it('returns no links if there is no data source uid', () => {
@@ -18,6 +19,7 @@ describe('createSpanLinkFactory', () => {
     const createLink = createSpanLinkFactory({
       splitOpenFn: splitOpenFn,
       trace: dummyTraceData,
+      dataFrame: dummyDataFrame,
     });
     const links = createLink!(createTraceSpan());
     expect(links?.logLinks).toBeUndefined();
@@ -418,6 +420,7 @@ describe('createSpanLinkFactory', () => {
           queries: [{ query: 'customQuery' }],
         },
         trace: dummyTraceData,
+        dataFrame: dummyDataFrame,
       });
       expect(createLink).toBeDefined();
 
@@ -440,6 +443,7 @@ describe('createSpanLinkFactory', () => {
           datasourceUid: 'prom1',
         } as TraceToMetricsOptions,
         trace: dummyTraceData,
+        dataFrame: dummyDataFrame,
       });
       expect(createLink).toBeDefined();
 
@@ -460,6 +464,7 @@ describe('createSpanLinkFactory', () => {
           ],
         },
         trace: dummyTraceData,
+        dataFrame: dummyDataFrame,
       });
       expect(createLink).toBeDefined();
 
@@ -506,6 +511,7 @@ describe('createSpanLinkFactory', () => {
           spanEndTimeShift: '1h',
         },
         trace: dummyTraceData,
+        dataFrame: dummyDataFrame,
       });
       expect(createLink).toBeDefined();
 
@@ -534,6 +540,7 @@ describe('createSpanLinkFactory', () => {
         ],
       },
       trace: dummyTraceData,
+      dataFrame: dummyDataFrame,
     });
     expect(createLink).toBeDefined();
 
@@ -837,6 +844,7 @@ function setupSpanLinkFactory(options: Partial<TraceToLogsOptionsV2> = {}, datas
       } as unknown as LinkModel;
     },
     trace: dummyTraceData,
+    dataFrame: dummyDataFrame,
   });
 }
 
