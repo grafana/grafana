@@ -67,14 +67,22 @@ func (h *RemoteLokiBackend) statesToStreams(rule *models.AlertRule, states []sta
 		labels[FolderUIDLabel] = fmt.Sprint(rule.NamespaceUID)
 		repr := labels.String()
 
-		entry, err := lokiRepresentation(state)
+		entry := lokiEntry{
+			SchemaVersion: 1,
+			Previous:      state.PreviousFormatted(),
+			Current:       state.Formatted(),
+			Values:        valuesAsDataBlob(state.State),
+		}
+		jsn, err := json.Marshal(entry)
 		if err != nil {
 			logger.Error("Failed to construct history record for state, skipping", "error", err)
 			continue
 		}
+		line := string(jsn)
+
 		buckets[repr] = append(buckets[repr], row{
 			At:  state.State.LastEvaluationTime,
-			Val: entry,
+			Val: line,
 		})
 	}
 
@@ -115,20 +123,6 @@ type lokiEntry struct {
 	Previous      string           `json:"previous"`
 	Current       string           `json:"current"`
 	Values        *simplejson.Json `json:"values"`
-}
-
-func lokiRepresentation(state state.StateTransition) (string, error) {
-	entry := lokiEntry{
-		SchemaVersion: 1,
-		Previous:      state.PreviousFormatted(),
-		Current:       state.Formatted(),
-		Values:        valuesAsDataBlob(state.State),
-	}
-	js, err := json.Marshal(entry)
-	if err != nil {
-		return "", err
-	}
-	return string(js), nil
 }
 
 func valuesAsDataBlob(state *state.State) *simplejson.Json {
