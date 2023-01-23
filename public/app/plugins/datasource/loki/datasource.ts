@@ -207,61 +207,36 @@ export class LokiDatasource
   }
 
   getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
-    const isQuerySuitable = (query: LokiQuery) => {
-      const normalized = getNormalizedLokiQuery(query);
-      const { expr } = normalized;
-      // it has to be a logs-producing range-query
-      return expr && isLogsQuery(expr) && normalized.queryType === LokiQueryType.Range;
-    };
+    const logsVolumeRequest = cloneDeep(request);
+    const targets = logsVolumeRequest.targets
+      .map((query) => this.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, query))
+      .filter((query): query is LokiQuery => !!query);
 
-    const isLogsVolumeAvailable = request.targets.some(isQuerySuitable);
-
-    if (!isLogsVolumeAvailable) {
+    if (!targets.length) {
       return undefined;
     }
 
-    const logsVolumeRequest = cloneDeep(request);
-    logsVolumeRequest.targets = logsVolumeRequest.targets.filter(isQuerySuitable).map((target) => {
-      const query = removeCommentsFromQuery(target.expr);
-      return {
-        ...target,
-        refId: `${REF_ID_STARTER_LOG_VOLUME}${target.refId}`,
-        instant: false,
-        volumeQuery: true,
-        expr: `sum by (level) (count_over_time(${query}[$__interval]))`,
-      };
-    });
-
-    return queryLogsVolume(this, logsVolumeRequest, {
-      extractLevel,
-      range: request.range,
-      targets: request.targets,
-    });
+    return queryLogsVolume(
+      this,
+      { ...logsVolumeRequest, targets },
+      {
+        extractLevel,
+        range: request.range,
+        targets: request.targets,
+      }
+    );
   }
 
   getLogsSampleDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
-    const isQuerySuitable = (query: LokiQuery) => {
-      return query.expr && !isLogsQuery(query.expr);
-    };
+    const logsSampleRequest = cloneDeep(request);
+    const targets = logsSampleRequest.targets
+      .map((query) => this.getSupplementaryQuery(SupplementaryQueryType.LogsSample, query))
+      .filter((query): query is LokiQuery => !!query);
 
-    const isLogsSampleAvailable = request.targets.some(isQuerySuitable);
-
-    if (!isLogsSampleAvailable) {
+    if (!targets.length) {
       return undefined;
     }
-
-    const logsSampleRequest = cloneDeep(request);
-    logsSampleRequest.targets = logsSampleRequest.targets.filter(isQuerySuitable).map((target) => {
-      const query = removeCommentsFromQuery(target.expr);
-      return {
-        ...target,
-        refId: `${REF_ID_STARTER_LOG_SAMPLE}${target.refId}`,
-        expr: getLogQueryFromMetricsQuery(query),
-        maxLines: 100,
-      };
-    });
-
-    return queryLogsSample(this, logsSampleRequest);
+    return queryLogsSample(this, { ...logsSampleRequest, targets });
   }
 
   query(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {

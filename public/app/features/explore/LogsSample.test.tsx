@@ -28,6 +28,8 @@ const createProps = (propOverrides?: Partial<ComponentProps<typeof LogsSamplePan
     timeZone: 'timeZone',
     datasourceInstance: undefined,
     setLogsSampleEnabled: jest.fn(),
+    queries: [],
+    splitOpen: jest.fn(),
   };
 
   return { ...props, ...propOverrides };
@@ -124,7 +126,7 @@ describe('LogsSamplePanel', () => {
       <LogsSamplePanel
         {...createProps({
           queries: [{ refId: 'test_refid' }],
-          data: { data: [sampleDataFrame], state: LoadingState.Done },
+          queryResponse: { data: [sampleDataFrame], state: LoadingState.Done },
           splitOpen,
           datasourceInstance,
         })}

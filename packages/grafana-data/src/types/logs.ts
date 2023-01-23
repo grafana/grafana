@@ -195,11 +195,23 @@ export enum SupplementaryQueryType {
  * @internal
  */
 export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQuery> {
+  /**
+   * Returns an observable that will be used to fetch supplementary data based on provided
+   * supplementary query type and original request.
+   */
   getDataProvider(
     type: SupplementaryQueryType,
     request: DataQueryRequest<TQuery>
   ): Observable<DataQueryResponse> | undefined;
+  /**
+   * Returns supplementary query types that data source supports.
+   */
   getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[];
+  /**
+   * Returns supplementary query that will be used to fetch supplementary data based on provided type and original query.
+   * If provided query is not suitable for provided supplementary query type, undefined should be returned.
+   */
+  getSupplementaryQuery(type: SupplementaryQueryType, query: TQuery): TQuery | undefined;
 }
 
 export const hasSupplementaryQuerySupport = <TQuery extends DataQuery>(
@@ -214,6 +226,7 @@ export const hasSupplementaryQuerySupport = <TQuery extends DataQuery>(
 
   return (
     withSupplementaryQueriesSupport.getDataProvider !== undefined &&
+    withSupplementaryQueriesSupport.getSupplementaryQuery !== undefined &&
     withSupplementaryQueriesSupport.getSupportedSupplementaryQueryTypes().includes(type)
   );
 };
