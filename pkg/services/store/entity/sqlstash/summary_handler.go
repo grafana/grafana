@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
 type summarySupport struct {
@@ -15,6 +16,11 @@ type summarySupport struct {
 	fields      *string
 	errors      *string // should not allow saving with this!
 	marshaled   []byte
+
+	// metadata for nested objects
+	parent_grn *entity.GRN
+	folder     string
+	isNested   bool // set when this is for a nested item
 }
 
 func newSummarySupport(summary *models.EntitySummary) (*summarySupport, error) {
@@ -99,4 +105,12 @@ func (s summarySupport) toEntitySummary() (*models.EntitySummary, error) {
 		}
 	}
 	return summary, err
+}
+
+func (s *summarySupport) getParentGRN() *string {
+	if s.isNested {
+		t := s.parent_grn.ToGRNString()
+		return &t
+	}
+	return nil
 }
