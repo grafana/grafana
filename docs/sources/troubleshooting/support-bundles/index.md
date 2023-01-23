@@ -45,6 +45,6 @@ b. Attach the archive (tar.gz) file to a support ticket that you send to Grafana
 - **User information**: A list of users of the grafana instance
 - **Database and Migration information**: Database information and migration log
 - **Plugin information**: Plugin information for grafana instance
-- **Basic information**: Basic information about the grafana instance (Version, mem use information, goroutines…)
+- **Basic information**: Basic information about the grafana instance (version, memory usage etc)
 - **Settings**: Settings for grafana instance
 - **SAML**: Healthcheck connection and metadata for SAML (only displayed if SAML is enabled)
