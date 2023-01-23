@@ -10,11 +10,11 @@
 
 import * as ui from '@grafana/schema';
 
-export const PanelModelVersion = Object.freeze([0, 0]);
+export const PanelCfgModelVersion = Object.freeze([0, 0]);
 
 export interface PanelOptions extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui.OptionsWithTextFormatting {
   /**
-   * TODO docs
+   * Controls the radius of each bar.
    */
   barRadius?: number;
   /**
@@ -22,11 +22,12 @@ export interface PanelOptions extends ui.OptionsWithLegend, ui.OptionsWithToolti
    */
   barWidth: number;
   /**
-   * TODO docs
+   * Use the color value for a sibling field to color each bar value.
    */
   colorByField?: string;
   /**
-   * Enables mode which highlights the entire bar area and shows tooltip when cursor hovers over highlighted area
+   * Enables mode which highlights the entire bar area and shows tooltip when cursor
+   * hovers over highlighted area
    */
   fullHighlight: boolean;
   /**
@@ -34,7 +35,7 @@ export interface PanelOptions extends ui.OptionsWithLegend, ui.OptionsWithToolti
    */
   groupWidth: number;
   /**
-   * TODO docs
+   * Controls the orientation of the bar chart, either vertical or horizontal.
    */
   orientation: ui.VizOrientation;
   /**
@@ -42,23 +43,23 @@ export interface PanelOptions extends ui.OptionsWithLegend, ui.OptionsWithToolti
    */
   showValue: ui.VisibilityMode;
   /**
-   * TODO docs
+   * Controls whether bars are stacked or not, either normally or in percent mode.
    */
   stacking: ui.StackingMode;
   /**
-   * TODO docs
+   * Manually select which field from the dataset to represent the x field.
    */
   xField?: string;
   /**
-   * TODO docs
+   * Sets the max length that a label can have before it is truncated.
    */
   xTickLabelMaxLength: number;
   /**
-   * TODO docs
+   * Controls the rotation of the x axis labels.
    */
   xTickLabelRotation: number;
   /**
-   * TODO docs
+   * Controls the spacing between x axis labels.
    * negative values indicate backwards skipping behavior
    */
   xTickLabelSpacing?: number;

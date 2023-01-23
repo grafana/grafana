@@ -601,7 +601,7 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []acce
 	})
 	require.NoError(t, err)
 	ac := accesscontrolmock.New().WithPermissions(permissions)
-	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(dashStore))
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(dashStore, dashStore))
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 	teamSvc := teamimpl.ProvideService(store, store.Cfg)

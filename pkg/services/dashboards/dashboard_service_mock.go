@@ -124,11 +124,11 @@ func (_m *FakeDashboardService) GetDashboard(ctx context.Context, query *GetDash
 }
 
 // GetDashboardACLInfoList provides a mock function with given fields: ctx, query
-func (_m *FakeDashboardService) GetDashboardACLInfoList(ctx context.Context, query *models.GetDashboardACLInfoListQuery) error {
+func (_m *FakeDashboardService) GetDashboardACLInfoList(ctx context.Context, query *GetDashboardACLInfoListQuery) error {
 	ret := _m.Called(ctx, query)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.GetDashboardACLInfoListQuery) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *GetDashboardACLInfoListQuery) error); ok {
 		r0 = rf(ctx, query)
 	} else {
 		r0 = ret.Error(0)
@@ -282,11 +282,11 @@ func (_m *FakeDashboardService) SearchDashboards(ctx context.Context, query *mod
 }
 
 // UpdateDashboardACL provides a mock function with given fields: ctx, uid, items
-func (_m *FakeDashboardService) UpdateDashboardACL(ctx context.Context, uid int64, items []*models.DashboardACL) error {
+func (_m *FakeDashboardService) UpdateDashboardACL(ctx context.Context, uid int64, items []*DashboardACL) error {
 	ret := _m.Called(ctx, uid, items)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int64, []*models.DashboardACL) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int64, []*DashboardACL) error); ok {
 		r0 = rf(ctx, uid, items)
 	} else {
 		r0 = ret.Error(0)

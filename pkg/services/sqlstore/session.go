@@ -68,7 +68,7 @@ func startSessionOrUseExisting(ctx context.Context, engine *xorm.Engine, beginTr
 
 // WithDbSession calls the callback with the session in the context (if exists).
 // Otherwise it creates a new one that is closed upon completion.
-// A session is stored in the context if sqlstore.InTransaction() has been been previously called with the same context (and it's not committed/rolledback yet).
+// A session is stored in the context if sqlstore.InTransaction() has been previously called with the same context (and it's not committed/rolledback yet).
 // In case of sqlite3.ErrLocked or sqlite3.ErrBusy failure it will be retried at most five times before giving up.
 func (ss *SQLStore) WithDbSession(ctx context.Context, callback DBTransactionFunc) error {
 	return ss.withDbSession(ctx, ss.engine, callback)
