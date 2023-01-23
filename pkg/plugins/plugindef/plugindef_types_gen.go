@@ -432,6 +432,13 @@ type PluginDef struct {
 	// the UI.
 	Name string `json:"name"`
 
+	// The PascalCase name for the plugin. Used for creating machine-friendly
+	// identifiers, typically in code generation.
+	//
+	// If not provided, defaults to name, but title-cased and sanitized (only
+	// alphabetical characters allowed).
+	PascalName string `json:"pascalName"`
+
 	// Initialize plugin on startup. By default, the plugin
 	// initializes on first use.
 	Preload *bool `json:"preload,omitempty"`

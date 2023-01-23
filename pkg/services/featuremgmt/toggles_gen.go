@@ -294,4 +294,8 @@ const (
 	// FlagAlertingNoNormalState
 	// Stop maintaining state of alerts that are not firing
 	FlagAlertingNoNormalState = "alertingNoNormalState"
+
+	// FlagAzureMultipleResourcePicker
+	// Azure multiple resource picker
+	FlagAzureMultipleResourcePicker = "azureMultipleResourcePicker"
 )
