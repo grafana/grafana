@@ -37,6 +37,7 @@ export interface PromOptions extends DataSourceJsonData {
   prometheusVersion?: string;
   enableSecureSocksProxy?: boolean;
   cacheLevel?: PrometheusCacheLevel;
+  defaultEditor?: QueryEditorMode;
 }
 
 export type ExemplarTraceIdDestination = {
@@ -118,6 +119,7 @@ export type PromValue = [number, any];
 
 export interface PromMetric {
   __name__?: string;
+
   [index: string]: any;
 }
 

@@ -22,6 +22,7 @@ import {
 import { useUpdateDatasource } from '../../../../features/datasources/state';
 import { PromApplication, PromBuildInfoResponse } from '../../../../types/unified-alerting-dto';
 import { PrometheusCacheLevel } from '../datasource';
+import { QueryEditorMode } from '../querybuilder/shared/types';
 import { PromOptions } from '../types';
 
 import { ExemplarsSettings } from './ExemplarsSettings';
@@ -32,6 +33,11 @@ const { Input, FormField } = LegacyForms;
 const httpOptions = [
   { value: 'POST', label: 'POST' },
   { value: 'GET', label: 'GET' },
+];
+
+const editorOptions = [
+  { value: QueryEditorMode.Builder, label: 'Builder' },
+  { value: QueryEditorMode.Code, label: 'Code' },
 ];
 
 const cacheValueOptions = [
@@ -144,7 +150,8 @@ export const PromSettings = (props: Props) => {
   // This update call is typed as void, but it returns a response which we need
   const onUpdate = useUpdateDatasource();
 
-  // We are explicitly adding httpMethod so it is correctly displayed in dropdown. This way, it is more predictable for users.
+  // We are explicitly adding httpMethod so, it is correctly displayed in dropdown.
+  // This way, it is more predictable for users.
   if (!options.jsonData.httpMethod) {
     options.jsonData.httpMethod = 'POST';
   }
@@ -166,6 +173,7 @@ export const PromSettings = (props: Props) => {
                   placeholder="15s"
                   onChange={onChangeHandler('timeInterval', options, onOptionsChange)}
                   validationEvents={promSettingsValidationEvents}
+                  disabled={options.readOnly}
                 />
               }
               tooltip="Set this to the typical scrape and evaluation interval configured in Prometheus. Defaults to 15s."
@@ -186,6 +194,7 @@ export const PromSettings = (props: Props) => {
                   spellCheck={false}
                   placeholder="60s"
                   validationEvents={promSettingsValidationEvents}
+                  disabled={options.readOnly}
                 />
               }
               tooltip="Set the Prometheus query timeout."
@@ -206,6 +215,7 @@ export const PromSettings = (props: Props) => {
             value={httpOptions.find((o) => o.value === options.jsonData.httpMethod)}
             onChange={onChangeHandler('httpMethod', options, onOptionsChange)}
             className="width-6"
+            disabled={options.readOnly}
           />
         </div>
       </div>
@@ -250,6 +260,7 @@ export const PromSettings = (props: Props) => {
                     }
                   )}
                   width={20}
+                  disabled={options.readOnly}
                 />
               }
               tooltip="Set this to the type of your prometheus database, e.g. Prometheus, Cortex, Mimir or Thanos. Changing this field will save your current settings, and attempt to detect the version."
@@ -271,6 +282,7 @@ export const PromSettings = (props: Props) => {
                     )}
                     onChange={onChangeHandler('prometheusVersion', options, onOptionsChange)}
                     width={20}
+                    disabled={options.readOnly}
                   />
                 }
                 tooltip={`Use this to set the version of your ${options.jsonData.prometheusType} instance if it is not automatically configured.`}
@@ -287,12 +299,30 @@ export const PromSettings = (props: Props) => {
             labelWidth={28}
             label="Disable metrics lookup"
             tooltip="Checking this option will disable the metrics chooser and metric/label support in the query field's autocomplete. This helps if you have performance issues with bigger Prometheus instances."
+            disabled={options.readOnly}
           >
             <InlineSwitch
               value={options.jsonData.disableMetricsLookup ?? false}
               onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'disableMetricsLookup')}
             />
           </InlineField>
+        </div>
+        <div className="gf-form">
+          <FormField
+            label="Default Editor"
+            labelWidth={14}
+            inputEl={
+              <Select
+                aria-label={`Default Editor (Code or Builder)`}
+                options={editorOptions}
+                value={editorOptions.find((o) => o.value === options.jsonData.defaultEditor)}
+                onChange={onChangeHandler('defaultEditor', options, onOptionsChange)}
+                width={20}
+                disabled={options.readOnly}
+              />
+            }
+            tooltip={`Set default editor option (builder/code) for all users of this datasource. If no option was selected, the default editor will be the "builder". If they switch to other option rather than the specified with this setting on the panel we always show the selected editor for that user.`}
+          />
         </div>
         <div className="gf-form-inline">
           <div className="gf-form max-width-30">
@@ -307,6 +337,7 @@ export const PromSettings = (props: Props) => {
                   onChange={onChangeHandler('customQueryParameters', options, onOptionsChange)}
                   spellCheck={false}
                   placeholder="Example: max_source_resolution=5m&timeout=10"
+                  disabled={options.readOnly}
                 />
               }
             />
@@ -340,6 +371,7 @@ export const PromSettings = (props: Props) => {
             exemplarOptions
           )
         }
+        disabled={options.readOnly}
       />
     </>
   );

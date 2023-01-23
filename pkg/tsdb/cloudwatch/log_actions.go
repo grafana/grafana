@@ -18,7 +18,6 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
 
@@ -113,8 +112,6 @@ func (e *cloudWatchExecutor) executeLogAction(ctx context.Context, logger log.Lo
 
 	var data *data.Frame = nil
 	switch logsQuery.SubType {
-	case "GetLogGroupFields":
-		data, err = e.handleGetLogGroupFields(ctx, logsClient, logsQuery, query.RefID)
 	case "StartQuery":
 		data, err = e.handleStartQuery(ctx, logger, logsClient, logsQuery, query.TimeRange, query.RefID)
 	case "StopQuery":
@@ -213,19 +210,16 @@ func (e *cloudWatchExecutor) executeStartQuery(ctx context.Context, logsClient c
 		QueryString: aws.String(modifiedQueryString),
 	}
 
-	if e.features.IsEnabled(featuremgmt.FlagCloudWatchCrossAccountQuerying) {
-		if logsQuery.LogGroups != nil && len(logsQuery.LogGroups) > 0 {
-			var logGroupIdentifiers []string
-			for _, lg := range logsQuery.LogGroups {
-				arn := lg.ARN
-				// due to a bug in the startQuery api, we remove * from the arn, otherwise it throws an error
-				logGroupIdentifiers = append(logGroupIdentifiers, strings.TrimSuffix(arn, "*"))
-			}
-			startQueryInput.LogGroupIdentifiers = aws.StringSlice(logGroupIdentifiers)
+	if logsQuery.LogGroups != nil && len(logsQuery.LogGroups) > 0 {
+		var logGroupIdentifiers []string
+		for _, lg := range logsQuery.LogGroups {
+			arn := lg.ARN
+			// due to a bug in the startQuery api, we remove * from the arn, otherwise it throws an error
+			logGroupIdentifiers = append(logGroupIdentifiers, strings.TrimSuffix(arn, "*"))
 		}
-	}
-
-	if startQueryInput.LogGroupIdentifiers == nil {
+		startQueryInput.LogGroupIdentifiers = aws.StringSlice(logGroupIdentifiers)
+	} else {
+		// even though log group names are being phased out, we still need to support them for backwards compatibility and alert queries
 		startQueryInput.LogGroupNames = aws.StringSlice(logsQuery.LogGroupNames)
 	}
 
@@ -320,37 +314,6 @@ func (e *cloudWatchExecutor) handleGetQueryResults(ctx context.Context, logsClie
 	}
 
 	dataFrame.Name = refID
-	dataFrame.RefID = refID
-
-	return dataFrame, nil
-}
-
-func (e *cloudWatchExecutor) handleGetLogGroupFields(ctx context.Context, logsClient cloudwatchlogsiface.CloudWatchLogsAPI,
-	logsQuery models.LogsQuery, refID string) (*data.Frame, error) {
-	queryInput := &cloudwatchlogs.GetLogGroupFieldsInput{
-		LogGroupName: aws.String(logsQuery.LogGroupName),
-		Time:         aws.Int64(logsQuery.Time),
-	}
-
-	getLogGroupFieldsOutput, err := logsClient.GetLogGroupFieldsWithContext(ctx, queryInput)
-	if err != nil {
-		return nil, err
-	}
-
-	fieldNames := make([]*string, 0)
-	fieldPercentages := make([]*int64, 0)
-
-	for _, logGroupField := range getLogGroupFieldsOutput.LogGroupFields {
-		fieldNames = append(fieldNames, logGroupField.Name)
-		fieldPercentages = append(fieldPercentages, logGroupField.Percent)
-	}
-
-	dataFrame := data.NewFrame(
-		refID,
-		data.NewField("name", nil, fieldNames),
-		data.NewField("percent", nil, fieldPercentages),
-	)
-
 	dataFrame.RefID = refID
 
 	return dataFrame, nil

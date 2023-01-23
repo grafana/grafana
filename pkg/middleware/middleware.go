@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -26,6 +27,9 @@ func HandleNoCacheHeader(ctx *models.ReqContext) {
 }
 
 func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {
+	t := web.NewTree()
+	t.Add("/api/datasources/uid/:uid/resources/*", nil)
+	t.Add("/api/datasources/:id/resources/*", nil)
 	return func(c *web.Context) {
 		c.Resp.Before(func(w web.ResponseWriter) {
 			// if response has already been written, skip.
@@ -33,8 +37,12 @@ func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {
 				return
 			}
 
-			if !strings.HasPrefix(c.Req.URL.Path, "/api/datasources/proxy/") {
+			// TODO case if keeping this
+			_, _, resourceURLMatch := t.Match(c.Req.URL.Path)
+			if !strings.HasPrefix(c.Req.URL.Path, "/api/datasources/proxy/") && !resourceURLMatch {
 				addNoCacheHeaders(c.Resp)
+			} else {
+				spew.Printf("not override cache headers on %s \n", c.Req.URL.Path) // TODO Remove before merging
 			}
 
 			if !cfg.AllowEmbedding {

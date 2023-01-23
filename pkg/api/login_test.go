@@ -12,9 +12,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -24,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	loginservice "github.com/grafana/grafana/pkg/services/login"
@@ -33,6 +31,8 @@ import (
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func fakeSetIndexViewData(t *testing.T) {
@@ -324,6 +324,7 @@ func TestLoginPostRedirect(t *testing.T) {
 		HooksService:     &hooks.HooksService{},
 		License:          &licensing.OSSLicensingService{},
 		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
+		Features:         featuremgmt.WithFeatures(),
 	}
 	hs.Cfg.CookieSecure = true
 
@@ -603,6 +604,7 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 		Cfg:              setting.NewCfg(),
 		License:          &licensing.OSSLicensingService{},
 		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
+		Features:         featuremgmt.WithFeatures(),
 		HooksService:     hookService,
 	}
 

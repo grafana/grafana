@@ -12,9 +12,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
-	commonv1 "github.com/grafana/grafana/pkg/tsdb/phlare/gen/common/v1"
-	querierv1 "github.com/grafana/grafana/pkg/tsdb/phlare/gen/querier/v1"
-	"github.com/grafana/grafana/pkg/tsdb/phlare/gen/querier/v1/querierv1connect"
+	querierv1 "github.com/grafana/phlare/api/gen/proto/go/querier/v1"
+	"github.com/grafana/phlare/api/gen/proto/go/querier/v1/querierv1connect"
+	typesv1 "github.com/grafana/phlare/api/gen/proto/go/types/v1"
 )
 
 var (
@@ -234,8 +234,8 @@ func (d *PhlareDatasource) PublishStream(_ context.Context, _ *backend.PublishSt
 	}, nil
 }
 
-func withoutPrivateLabels(labels []*commonv1.LabelPair) []*commonv1.LabelPair {
-	res := make([]*commonv1.LabelPair, 0, len(labels))
+func withoutPrivateLabels(labels []*typesv1.LabelPair) []*typesv1.LabelPair {
+	res := make([]*typesv1.LabelPair, 0, len(labels))
 	for _, l := range labels {
 		if !strings.HasPrefix(l.Name, "__") {
 			res = append(res, l)

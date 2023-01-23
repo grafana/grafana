@@ -63,7 +63,7 @@ export function LabelFilters({
         <EditorList
           items={items}
           onChange={onLabelsChange}
-          renderItem={(item, onChangeItem, onDelete) => (
+          renderItem={(item: Partial<QueryBuilderLabelFilter>, onChangeItem, onDelete) => (
             <LabelFilterItem
               debounceDuration={debounceDuration}
               item={item}

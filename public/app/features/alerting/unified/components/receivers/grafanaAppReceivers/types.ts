@@ -1,23 +1,18 @@
 import { Receiver } from '../../../../../../plugins/datasource/alertmanager/types';
-// we will add in here more types if needed
-export enum GrafanaAppReceiverEnum {
-  GRAFANA_ONCALL = 'Grafana OnCall',
-}
+import { SupportedPlugin } from '../../../types/pluginBridges';
 
 export interface AmRouteReceiver {
   label: string;
   value: string;
-  grafanaAppReceiverType?: GrafanaAppReceiverEnum;
+  grafanaAppReceiverType?: SupportedPlugin;
 }
 
 export interface ReceiverWithTypes extends Receiver {
-  grafanaAppReceiverType?: GrafanaAppReceiverEnum;
+  grafanaAppReceiverType?: SupportedPlugin;
 }
+export const GRAFANA_APP_RECEIVERS_SOURCE_IMAGE: Record<SupportedPlugin, string> = {
+  [SupportedPlugin.OnCall]: 'public/img/alerting/oncall_logo.svg',
 
-export const GRAFANA_APP_RECEIVERS_SOURCE_IMAGE = {
-  'Grafana OnCall': 'public/img/alerting/oncall_logo.svg',
+  [SupportedPlugin.Incident]: '',
+  [SupportedPlugin.MachineLearning]: '',
 };
-
-export enum GRAFANA_APP_PLUGIN_IDS {
-  'Grafana OnCall' = 'grafana-oncall-app',
-}
