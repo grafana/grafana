@@ -113,7 +113,9 @@ func (c *httpLokiClient) push(s []stream) error {
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		byt, _ := io.ReadAll(resp.Body)
 		if len(byt) > 0 {
-			c.log.Error("Error response from Loki", "response", string(byt))
+			c.log.Error("Error response from Loki", "response", string(byt), "status", resp.StatusCode)
+		} else {
+			c.log.Error("Error response from Loki with an empty body", "status", resp.StatusCode)
 		}
 		return fmt.Errorf("received a non-200 response from loki, status: %d", resp.StatusCode)
 	}
