@@ -151,19 +151,19 @@ func getCustomizedCloudSettings(cloud string, jsonData json.RawMessage) (types.A
 }
 
 func getAzureRoutes(cloud string, jsonData json.RawMessage) (map[string]types.AzRoute, error) {
-	if cloud == azsettings.AzureCustomized {
-		customizedCloudSettings, err := getCustomizedCloudSettings(cloud, jsonData)
-		if err != nil {
-			return nil, err
-		}
-		if customizedCloudSettings.CustomizedRoutes == nil {
-			return nil, fmt.Errorf("unable to instantiate routes, customizedRoutes must be set")
-		}
-		azureRoutes := customizedCloudSettings.CustomizedRoutes
-		return azureRoutes, nil
-	} else {
+	customizedCloudSettings, err := getCustomizedCloudSettings(cloud, jsonData)
+	if err != nil {
+		return nil, err
+	}
+	if (customizedCloudSettings.CustomizedRoutes == nil && cloud == azsettings.AzureCustomized) {
+		return nil, fmt.Errorf("unable to instantiate routes, customizedRoutes must be set")
+	}
+
+	if (customizedCloudSettings.CustomizedRoutes == nil && cloud != azsettings.AzureCustomized) {
 		return routes[cloud], nil
 	}
+	azureRoutes := customizedCloudSettings.CustomizedRoutes
+	return azureRoutes, nil
 }
 
 type azDatasourceExecutor interface {
