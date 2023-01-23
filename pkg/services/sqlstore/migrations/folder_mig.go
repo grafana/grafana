@@ -4,7 +4,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 )
 
-// nolint:unused // this is temporarily unused during feature development
 func addFolderMigrations(mg *migrator.Migrator) {
 	mg.AddMigration("create folder table", migrator.NewAddTableMigration(folderv1()))
 
@@ -23,8 +22,8 @@ func addFolderMigrations(mg *migrator.Migrator) {
 	}))
 }
 
-// nolint:unused // this is temporarily unused during feature development
 func folderv1() migrator.Table {
+	// Do not make any changes to this schema; introduce new migrations for further changes
 	return migrator.Table{
 		Name: "folder",
 		Columns: []*migrator.Column{
