@@ -93,12 +93,12 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
 				CanAdminValue:                    true,
 				CheckPermissionBeforeUpdateValue: true,
-				GetACLValue: []*models.DashboardACLInfoDTO{
-					{OrgId: 1, DashboardId: 1, UserId: 2, Permission: models.PERMISSION_VIEW},
-					{OrgId: 1, DashboardId: 1, UserId: 3, Permission: models.PERMISSION_EDIT},
-					{OrgId: 1, DashboardId: 1, UserId: 4, Permission: models.PERMISSION_ADMIN},
-					{OrgId: 1, DashboardId: 1, TeamId: 1, Permission: models.PERMISSION_VIEW},
-					{OrgId: 1, DashboardId: 1, TeamId: 2, Permission: models.PERMISSION_ADMIN},
+				GetACLValue: []*dashboards.DashboardACLInfoDTO{
+					{OrgID: 1, DashboardID: 1, UserID: 2, Permission: models.PERMISSION_VIEW},
+					{OrgID: 1, DashboardID: 1, UserID: 3, Permission: models.PERMISSION_EDIT},
+					{OrgID: 1, DashboardID: 1, UserID: 4, Permission: models.PERMISSION_ADMIN},
+					{OrgID: 1, DashboardID: 1, TeamID: 1, Permission: models.PERMISSION_VIEW},
+					{OrgID: 1, DashboardID: 1, TeamID: 2, Permission: models.PERMISSION_ADMIN},
 				},
 			})
 
@@ -107,12 +107,12 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 					callGetDashboardPermissions(sc, hs)
 					assert.Equal(t, 200, sc.resp.Code)
 
-					var resp []*models.DashboardACLInfoDTO
+					var resp []*dashboards.DashboardACLInfoDTO
 					err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 					require.NoError(t, err)
 
 					assert.Len(t, resp, 5)
-					assert.Equal(t, int64(2), resp[0].UserId)
+					assert.Equal(t, int64(2), resp[0].UserID)
 					assert.Equal(t, models.PERMISSION_VIEW, resp[0].Permission)
 				}, mockSQLStore)
 
@@ -269,19 +269,19 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			})
 
 			mockSQLStore := dbtest.NewFakeDB()
-			var resp []*models.DashboardACLInfoDTO
+			var resp []*dashboards.DashboardACLInfoDTO
 			loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "/api/dashboards/id/1/permissions",
 				"/api/dashboards/id/:dashboardId/permissions", org.RoleAdmin, func(sc *scenarioContext) {
 					setUp()
 					guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{
 						CanAdminValue:                    true,
 						CheckPermissionBeforeUpdateValue: true,
-						GetACLValue: []*models.DashboardACLInfoDTO{
-							{OrgId: 1, DashboardId: 1, UserId: 2, UserLogin: "hiddenUser", Permission: models.PERMISSION_VIEW},
-							{OrgId: 1, DashboardId: 1, UserId: 3, UserLogin: testUserLogin, Permission: models.PERMISSION_EDIT},
-							{OrgId: 1, DashboardId: 1, UserId: 4, UserLogin: "user_1", Permission: models.PERMISSION_ADMIN},
+						GetACLValue: []*dashboards.DashboardACLInfoDTO{
+							{OrgID: 1, DashboardID: 1, UserID: 2, UserLogin: "hiddenUser", Permission: models.PERMISSION_VIEW},
+							{OrgID: 1, DashboardID: 1, UserID: 3, UserLogin: testUserLogin, Permission: models.PERMISSION_EDIT},
+							{OrgID: 1, DashboardID: 1, UserID: 4, UserLogin: "user_1", Permission: models.PERMISSION_ADMIN},
 						},
-						GetHiddenACLValue: []*models.DashboardACL{
+						GetHiddenACLValue: []*dashboards.DashboardACL{
 							{OrgID: 1, DashboardID: 1, UserID: 2, Permission: models.PERMISSION_VIEW},
 						},
 					})
@@ -293,9 +293,9 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 					require.NoError(t, err)
 
 					assert.Len(t, resp, 2)
-					assert.Equal(t, int64(3), resp[0].UserId)
+					assert.Equal(t, int64(3), resp[0].UserID)
 					assert.Equal(t, models.PERMISSION_EDIT, resp[0].Permission)
-					assert.Equal(t, int64(4), resp[1].UserId)
+					assert.Equal(t, int64(4), resp[1].UserID)
 					assert.Equal(t, models.PERMISSION_ADMIN, resp[1].Permission)
 				}, mockSQLStore)
 
@@ -306,15 +306,15 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			}
 			for _, acl := range resp {
 				cmd.Items = append(cmd.Items, dtos.DashboardACLUpdateItem{
-					UserID:     acl.UserId,
+					UserID:     acl.UserID,
 					Permission: acl.Permission,
 				})
 			}
 			assert.Len(t, cmd.Items, 3)
 
-			var numOfItems []*models.DashboardACL
+			var numOfItems []*dashboards.DashboardACL
 			dashboardStore.On("UpdateDashboardACL", mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-				items := args.Get(2).([]*models.DashboardACL)
+				items := args.Get(2).([]*dashboards.DashboardACL)
 				numOfItems = items
 			}).Return(nil).Once()
 			updateDashboardPermissionScenario(t, updatePermissionContext{
