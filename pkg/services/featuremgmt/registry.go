@@ -403,5 +403,10 @@ var (
 			State:           FeatureStateBeta,
 			RequiresRestart: false,
 		},
+		{
+			Name:        "azureMultipleResourcePicker",
+			Description: "Azure multiple resource picker",
+			State:       FeatureStateAlpha,
+		},
 	}
 )
