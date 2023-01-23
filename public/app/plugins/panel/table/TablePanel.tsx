@@ -1,7 +1,15 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { DataFrame, FieldMatcherID, getFrameDisplayName, PanelProps, SelectableValue } from '@grafana/data';
+import {
+  DataFrame,
+  FieldMatcherID,
+  getFrameDisplayName,
+  PanelProps,
+  SelectableValue,
+  // ArrayVector,
+  // FieldType,
+} from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
@@ -13,19 +21,39 @@ interface Props extends PanelProps<PanelOptions> {}
 export function TablePanel(props: Props) {
   const { data, height, width, options, fieldConfig, id } = props;
 
+  // JEV: error on load (sometimes) -> The pseudo class ":nth-child" is potentially unsafe when doing server-side rendering. Try changing it to ":nth-of-type".
+
+  // JEV: is there a useTheme1() hook?
   const theme = useTheme2();
   const panelContext = usePanelContext();
+  // JEV: optional chain here?
   const frames = data.series;
+  console.log('frames', frames);
+  // JEV: a single function can push both values to respective arrays
   const mainFrames = frames.filter((f) => f.meta?.custom?.parentRowIndex === undefined);
+  console.log(mainFrames, 'mainFrames');
   const subFrames = frames.filter((f) => f.meta?.custom?.parentRowIndex !== undefined);
+  console.log(subFrames, 'subFrames');
+  // JEV: optional chain here superfluous; mainFrames will never be `undefined`, since it's being built with filter()
   const count = mainFrames?.length;
+  console.log(count, 'count');
   const hasFields = mainFrames[0]?.fields.length;
   const currentIndex = getCurrentFrameIndex(mainFrames, options);
+  console.log(currentIndex, 'currentIndex');
+  // JEV: add row# field here?
   const main = mainFrames[currentIndex];
+  // main.fields.unshift(buildRowNumField(main.length));
+  console.log(main, 'main');
+  // console.log(buildRowNumField(main.length), 'newField');
 
   let tableHeight = height;
   let subData = subFrames;
 
+  // useEffect(() => {
+  //   main.fields = [buildRowNumField(main.length), ...main.fields];
+  // }, [addRows])
+
+  // JEV: no data error handler
   if (!count || !hasFields) {
     return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
   }
@@ -38,6 +66,7 @@ export function TablePanel(props: Props) {
     subData = subFrames.filter((f) => f.refId === main.refId);
   }
 
+  // JEV: is this a single table row?
   const tableElement = (
     <Table
       height={tableHeight}
@@ -77,6 +106,7 @@ export function TablePanel(props: Props) {
   );
 }
 
+// JEV: are we using function declarations instead of arrow functions for hoisting? the `this` keyword bindind? both?
 function getCurrentFrameIndex(frames: DataFrame[], options: PanelOptions) {
   return options.frameIndex > 0 && options.frameIndex < frames.length ? options.frameIndex : 0;
 }
@@ -126,6 +156,18 @@ function onChangeTableSelection(val: SelectableValue<number>, props: Props) {
   });
 }
 
+// function buildRowNumField(length: number) {
+//   return { name: 'row', type: FieldType['number'], config: {}, values: buildRowNumValues(length) };
+// }
+
+// function buildRowNumValues(length: number) {
+//   let arr = [];
+//   for (let i = 1; i <= length; i++) {
+//     arr.push(i);
+//   }
+//   return new ArrayVector(arr);
+// }
+
 const tableStyles = {
   wrapper: css`
     display: flex;
@@ -133,6 +175,7 @@ const tableStyles = {
     justify-content: space-between;
     height: 100%;
   `,
+  // JEV: this isn't being used anywhere; in the case of no data, we render <PanelDataErrorView />
   noData: css`
     display: flex;
     flex-direction: column;
