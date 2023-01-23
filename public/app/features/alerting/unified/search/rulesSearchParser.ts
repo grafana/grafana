@@ -1,11 +1,11 @@
 import { isPromAlertingRuleState, PromAlertingRuleState, PromRuleType } from '../../../../types/unified-alerting-dto';
-import { isPromRuleType } from '../utils/rules';
+import { getRuleHealth, isPromRuleType } from '../utils/rules';
 
 import * as terms from './search.terms';
 import {
   applyFiltersToQuery,
-  FilterSupportedTerm,
   FilterExpr,
+  FilterSupportedTerm,
   parseQueryToFilter,
   QueryFilterMapper,
 } from './searchParser';
@@ -19,30 +19,40 @@ export interface RulesFilter {
   ruleType?: PromRuleType;
   dataSourceName?: string;
   labels: string[];
+  ruleHealth?: RuleHealth;
 }
 
 const filterSupportedTerms: FilterSupportedTerm[] = [
-  FilterSupportedTerm.ds,
-  FilterSupportedTerm.ns,
+  FilterSupportedTerm.dataSource,
+  FilterSupportedTerm.nameSpace,
   FilterSupportedTerm.label,
   FilterSupportedTerm.group,
   FilterSupportedTerm.rule,
   FilterSupportedTerm.state,
   FilterSupportedTerm.type,
+  FilterSupportedTerm.health,
 ];
+
+export enum RuleHealth {
+  Ok = 'ok',
+  Error = 'error',
+  NoData = 'nodata',
+  Unknown = 'unknown',
+}
 
 // Define how to map parsed tokens into the filter object
 export function getSearchFilterFromQuery(query: string): RulesFilter {
   const filter: RulesFilter = { labels: [], freeFormWords: [] };
 
   const tokenToFilterMap: QueryFilterMapper = {
-    [terms.DsToken]: (value) => (filter.dataSourceName = value),
-    [terms.NsToken]: (value) => (filter.namespace = value),
+    [terms.DataSourceToken]: (value) => (filter.dataSourceName = value),
+    [terms.NameSpaceToken]: (value) => (filter.namespace = value),
     [terms.GroupToken]: (value) => (filter.groupName = value),
     [terms.RuleToken]: (value) => (filter.ruleName = value),
     [terms.LabelToken]: (value) => filter.labels.push(value),
     [terms.StateToken]: (value) => (isPromAlertingRuleState(value) ? (filter.ruleState = value) : undefined),
     [terms.TypeToken]: (value) => (isPromRuleType(value) ? (filter.ruleType = value) : undefined),
+    [terms.HealthToken]: (value) => (filter.ruleHealth = getRuleHealth(value)),
     [terms.FreeFormExpression]: (value) => filter.freeFormWords.push(value),
   };
 
@@ -59,10 +69,10 @@ export function applySearchFilterToQuery(query: string, filter: RulesFilter): st
   // Convert filter object into an array
   // It allows to pick filters from the array in the same order as they were applied in the original query
   if (filter.dataSourceName) {
-    filterStateArray.push({ type: terms.DsToken, value: filter.dataSourceName });
+    filterStateArray.push({ type: terms.DataSourceToken, value: filter.dataSourceName });
   }
   if (filter.namespace) {
-    filterStateArray.push({ type: terms.NsToken, value: filter.namespace });
+    filterStateArray.push({ type: terms.NameSpaceToken, value: filter.namespace });
   }
   if (filter.groupName) {
     filterStateArray.push({ type: terms.GroupToken, value: filter.groupName });
@@ -75,6 +85,9 @@ export function applySearchFilterToQuery(query: string, filter: RulesFilter): st
   }
   if (filter.ruleType) {
     filterStateArray.push({ type: terms.TypeToken, value: filter.ruleType });
+  }
+  if (filter.ruleHealth) {
+    filterStateArray.push({ type: terms.HealthToken, value: filter.ruleHealth });
   }
   if (filter.labels) {
     filterStateArray.push(...filter.labels.map((l) => ({ type: terms.LabelToken, value: l })));

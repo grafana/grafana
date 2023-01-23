@@ -5,12 +5,12 @@ import { applySearchFilterToQuery, getSearchFilterFromQuery } from './rulesSearc
 
 describe('Alert rules searchParser', () => {
   describe('getSearchFilterFromQuery', () => {
-    it.each(['ds:prometheus'])('should parse data source filter from %s', (query) => {
+    it.each(['datasource:prometheus'])('should parse data source filter from %s', (query) => {
       const filter = getSearchFilterFromQuery(query);
       expect(filter.dataSourceName).toBe('prometheus');
     });
 
-    it.each(['ns:integrations-node'])('should parse namespace filter from %s', (query) => {
+    it.each(['namespace:integrations-node'])('should parse namespace filter from %s', (query) => {
       const filter = getSearchFilterFromQuery(query);
       expect(filter.namespace).toBe('integrations-node');
     });
@@ -58,7 +58,8 @@ describe('Alert rules searchParser', () => {
     });
 
     it('should parse filter values with whitespaces when in quotes', () => {
-      const query = 'ds:"prom dev" ns:"node one" label:"team=frontend us" group:"cpu alerts" rule:"cpu failure"';
+      const query =
+        'datasource:"prom dev" namespace:"node one" label:"team=frontend us" group:"cpu alerts" rule:"cpu failure"';
       const filter = getSearchFilterFromQuery(query);
 
       expect(filter.dataSourceName).toBe('prom dev');
@@ -70,7 +71,7 @@ describe('Alert rules searchParser', () => {
 
     it('should parse filter values with special characters', () => {
       const query =
-        'ds:prom::dev/linux>>; ns:"[{node}] (#20+)" label:_region=apac|emea\\nasa group:$20.00%$ rule:"cpu!! & memory.,?"';
+        'datasource:prom::dev/linux>>; namespace:"[{node}] (#20+)" label:_region=apac|emea\\nasa group:$20.00%$ rule:"cpu!! & memory.,?"';
       const filter = getSearchFilterFromQuery(query);
 
       expect(filter.dataSourceName).toBe('prom::dev/linux>>;');
@@ -89,7 +90,7 @@ describe('Alert rules searchParser', () => {
     });
 
     it('should parse mixed free form words and filters', () => {
-      const query = 'ds:prometheus utilization label:team cpu';
+      const query = 'datasource:prometheus utilization label:team cpu';
       const filter = getSearchFilterFromQuery(query);
 
       expect(filter.dataSourceName).toBe('prometheus');
@@ -124,7 +125,7 @@ describe('Alert rules searchParser', () => {
       const query = applySearchFilterToQuery('', filter);
 
       expect(query).toBe(
-        'ds:"Mimir Dev" ns:/etc/prometheus group:cpu-usage rule:"cpu > 80%" state:firing type:alerting label:team label:region=apac cpu eighty'
+        'datasource:"Mimir Dev" namespace:/etc/prometheus group:cpu-usage rule:"cpu > 80%" state:firing type:alerting label:team label:region=apac cpu eighty'
       );
     });
 
@@ -137,11 +138,11 @@ describe('Alert rules searchParser', () => {
         ruleName: 'cpu > 80%',
       });
 
-      const baseQuery = 'ds:prometheus ns:mimir-global group:memory rule:"mem > 90% label:severity"';
+      const baseQuery = 'datasource:prometheus namespace:mimir-global group:memory rule:"mem > 90% label:severity"';
       const query = applySearchFilterToQuery(baseQuery, filter);
 
       expect(query).toBe(
-        'ds:"Mimir Dev" ns:/etc/prometheus group:cpu-usage rule:"cpu > 80%" label:team label:region=apac'
+        'datasource:"Mimir Dev" namespace:/etc/prometheus group:cpu-usage rule:"cpu > 80%" label:team label:region=apac'
       );
     });
 
@@ -154,10 +155,12 @@ describe('Alert rules searchParser', () => {
         ruleName: 'cpu > 80%',
       });
 
-      const baseQuery = 'label:region=apac rule:"mem > 90%" group:memory ns:mimir-global ds:prometheus';
+      const baseQuery = 'label:region=apac rule:"mem > 90%" group:memory namespace:mimir-global datasource:prometheus';
       const query = applySearchFilterToQuery(baseQuery, filter);
 
-      expect(query).toBe('label:region=emea rule:"cpu > 80%" group:cpu-usage ns:/etc/prometheus ds:"Mimir Dev"');
+      expect(query).toBe(
+        'label:region=emea rule:"cpu > 80%" group:cpu-usage namespace:/etc/prometheus datasource:"Mimir Dev"'
+      );
     });
   });
 });

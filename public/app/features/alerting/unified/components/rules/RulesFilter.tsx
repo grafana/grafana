@@ -5,13 +5,15 @@ import React, { FormEvent, useState } from 'react';
 import { DataSourceInstanceSettings, GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { DataSourcePicker, logInfo } from '@grafana/runtime';
-import { Button, Field, Icon, Input, Label, RadioButtonGroup, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Field, Icon, Input, Label, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { PromAlertingRuleState, PromRuleType } from 'app/types/unified-alerting-dto';
 
 import { LogMessages } from '../../Analytics';
 import { useRulesFilter } from '../../hooks/useFilteredRules';
+import { RuleHealth } from '../../search/rulesSearchParser';
 import { alertStateToReadable } from '../../utils/rules';
+import { HoverCard } from '../HoverCard';
 
 const ViewOptions: SelectableValue[] = [
   {
@@ -40,6 +42,12 @@ const RuleTypeOptions: SelectableValue[] = [
     label: 'Recording ',
     value: PromRuleType.Recording,
   },
+];
+
+const RuleHealthOptions: SelectableValue[] = [
+  { label: 'Ok', value: RuleHealth.Ok },
+  { label: 'No Data', value: RuleHealth.NoData },
+  { label: 'Error', value: RuleHealth.Error },
 ];
 
 interface RulesFilerProps {
@@ -92,6 +100,11 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
     setFilterKey((key) => key + 1);
   };
 
+  const handleRuleHealthChange = (ruleHealth: RuleHealth) => {
+    updateFilters({ ...filterState, ruleHealth });
+    setFilterKey((key) => key + 1);
+  };
+
   const handleClearFiltersClick = () => {
     setSearchQuery(undefined);
     onFilterCleared();
@@ -123,6 +136,14 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
             <Label>Rule type</Label>
             <RadioButtonGroup options={RuleTypeOptions} value={filterState.ruleType} onChange={handleRuleTypeChange} />
           </div>
+          <div>
+            <Label>Health</Label>
+            <RadioButtonGroup
+              options={RuleHealthOptions}
+              value={filterState.ruleHealth}
+              onChange={handleRuleHealthChange}
+            />
+          </div>
         </Stack>
         <Stack direction="column" gap={1}>
           <Stack direction="row" gap={1}>
@@ -132,9 +153,9 @@ const RulesFilter = ({ onFilterCleared = () => undefined }: RulesFilerProps) => 
                 <Label>
                   <Stack gap={0.5}>
                     <span>Search</span>
-                    <Tooltip content={<SearchQueryHelp />}>
+                    <HoverCard content={<SearchQueryHelp />}>
                       <Icon name="info-circle" size="sm" />
-                    </Tooltip>
+                    </HoverCard>
                   </Stack>
                 </Label>
               }
@@ -202,8 +223,9 @@ function SearchQueryHelp() {
         <HelpRow title="Group" expr="group:cpu-usage" />
         <HelpRow title="Rule" expr='rule:"cpu 80%"' />
         <HelpRow title="Labels" expr="label:team=A" />
-        <HelpRow title="State" expr="state:firing" />
-        <HelpRow title="Type" expr="type:alerting" />
+        <HelpRow title="State" expr="state:firing|normal|pending" />
+        <HelpRow title="Type" expr="type:alerting|recording" />
+        <HelpRow title="Health" expr="health:ok|nodata|error" />
       </div>
     </div>
   );

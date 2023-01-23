@@ -5,26 +5,28 @@ import { parser } from './search';
 import * as terms from './search.terms';
 
 const filterTokenToTypeMap: Record<number, string> = {
-  [terms.DsToken]: 'ds',
-  [terms.NsToken]: 'ns',
+  [terms.DataSourceToken]: 'datasource',
+  [terms.NameSpaceToken]: 'namespace',
   [terms.LabelToken]: 'label',
   [terms.RuleToken]: 'rule',
   [terms.GroupToken]: 'group',
   [terms.StateToken]: 'state',
   [terms.TypeToken]: 'type',
+  [terms.HealthToken]: 'health',
 };
 
 // This enum allows to configure parser behavior
 // Depending on our needs we can enable and disable only selected filters
 // Thanks to that we can create multiple different filters having the same search grammar
 export enum FilterSupportedTerm {
-  ds = 'dsFilter',
-  ns = 'nsFilter',
+  dataSource = 'dataSourceFilter',
+  nameSpace = 'nameSpaceFilter',
   label = 'labelFilter',
   group = 'groupFilter',
   rule = 'ruleFilter',
   state = 'stateFilter',
   type = 'typeFilter',
+  health = 'healthFilter',
 }
 
 export type QueryFilterMapper = Record<number, (filter: string) => void>;

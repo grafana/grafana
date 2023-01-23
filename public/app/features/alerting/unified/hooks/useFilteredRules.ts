@@ -10,7 +10,7 @@ import { isPromAlertingRuleState, PromRuleType, RulerGrafanaRuleDTO } from 'app/
 import { getSearchFilterFromQuery, RulesFilter, applySearchFilterToQuery } from '../search/rulesSearchParser';
 import { labelsMatchMatchers, matcherToMatcherField, parseMatcher, parseMatchers } from '../utils/alertmanager';
 import { isCloudRulesSource } from '../utils/datasource';
-import { isAlertingRule, isGrafanaRulerRule, isPromRuleType } from '../utils/rules';
+import { getRuleHealth, isAlertingRule, isGrafanaRulerRule, isPromRuleType } from '../utils/rules';
 
 import { useURLSearchParams } from './useURLSearchParams';
 
@@ -139,6 +139,12 @@ const reduceGroups = (filterState: RulesFilter) => {
       if (filterState.ruleName && !rule.name?.toLocaleLowerCase().includes(filterState.ruleName.toLocaleLowerCase())) {
         return false;
       }
+
+      if (filterState.ruleHealth && rule.promRule) {
+        const ruleHealth = getRuleHealth(rule.promRule.health);
+        return filterState.ruleHealth === ruleHealth;
+      }
+
       // Query strings can match alert name, label keys, and label values
       if (filterState.labels.length > 0) {
         // const matchers = parseMatchers(filters.queryString);

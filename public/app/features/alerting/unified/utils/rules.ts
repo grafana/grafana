@@ -27,6 +27,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { State } from '../components/StateTag';
+import { RuleHealth } from '../search/rulesSearchParser';
 
 import { RULER_NOT_SUPPORTED_MSG } from './constants';
 import { AsyncRequestState } from './redux';
@@ -73,6 +74,22 @@ export function isPromRuleType(ruleType: string): ruleType is PromRuleType {
 
 export function isPrometheusRuleIdentifier(identifier: RuleIdentifier): identifier is PrometheusRuleIdentifier {
   return 'ruleHash' in identifier;
+}
+
+export function getRuleHealth(health: string): RuleHealth | undefined {
+  switch (health) {
+    case 'ok':
+      return RuleHealth.Ok;
+    case 'nodata':
+      return RuleHealth.NoData;
+    case 'error':
+    case 'err': // Prometheus-compat data sources
+      return RuleHealth.Error;
+    case 'unknown':
+      return RuleHealth.Unknown;
+    default:
+      return undefined;
+  }
 }
 
 export function alertStateToReadable(state: PromAlertingRuleState | GrafanaAlertStateWithReason | AlertState): string {
