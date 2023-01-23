@@ -138,7 +138,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(BarChartPa
       })
       .addSliderInput({
         path: 'xTickLabelRotation',
-        name: 'Rotate X tick labels',
+        name: 'Rotate x-axis tick labels',
         defaultValue: defaultPanelOptions.xTickLabelRotation,
         settings: {
           min: -90,
@@ -150,8 +150,8 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(BarChartPa
       })
       .addNumberInput({
         path: 'xTickLabelMaxLength',
-        name: 'X tick label max length',
-        description: 'X labels will be truncated to the length provided',
+        name: 'X-axis tick label max length',
+        description: 'X-axis labels will be truncated to the length provided',
         settings: {
           placeholder: 'None',
           min: 0,
@@ -161,7 +161,7 @@ export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(BarChartPa
       .addCustomEditor({
         id: 'xTickLabelSpacing',
         path: 'xTickLabelSpacing',
-        name: 'Bar labels minimum spacing',
+        name: 'X-axis labels minimum spacing',
         defaultValue: defaultPanelOptions.xTickLabelSpacing,
         editor: TickSpacingEditor,
       })
