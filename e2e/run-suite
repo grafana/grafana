@@ -18,6 +18,7 @@ args=("$@")
 
 CMD="start"
 PARAMS=""
+CLEANUP=""
 
 declare -A env=(
   [BASE_URL]=${BASE_URL:-"http://$HOST:$PORT"}
@@ -80,6 +81,7 @@ case "$1" in
                 ;;
         esac
         cypressConfig[testFiles]=$testFilesForEnterpriseSuite
+        CLEANUP="rm -rf ../../e2e/enterprise-suite"
         ;;
     "")
         ;;
@@ -114,4 +116,4 @@ yarn $CMD --env "$(join env)" \
   --config "$(join cypressConfig)" \
   $PARAMS
 
-rm -rf ../../e2e/enterprise-suite
+$CLEANUP
