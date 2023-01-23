@@ -49,11 +49,11 @@ export function createSpanLinkFactory({
   createFocusSpanLink?: (traceId: string, spanId: string) => LinkModel<Field>;
   trace: Trace;
 }): SpanLinkFunc | undefined {
-  let scopedVars = scopedVarsFromTrace(trace);
-
   if (!dataFrame) {
     return undefined;
   }
+
+  let scopedVars = scopedVarsFromTrace(trace);
   const hasLinks = dataFrame.fields.some((f) => Boolean(f.config.links?.length));
   const legacyFormat = dataFrame.fields.length === 1;
 

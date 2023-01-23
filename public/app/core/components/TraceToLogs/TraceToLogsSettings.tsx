@@ -45,14 +45,13 @@ export interface TraceToLogsData extends DataSourceJsonData {
  * Gets new version of the traceToLogs config from the json data either returning directly or transforming the old
  * version to new and returning that.
  */
-export function getTraceToLogsOptions(data: TraceToLogsData): TraceToLogsOptionsV2 | undefined {
-  if (data.tracesToLogsV2) {
+export function getTraceToLogsOptions(data?: TraceToLogsData): TraceToLogsOptionsV2 | undefined {
+  if (data?.tracesToLogsV2) {
     return data.tracesToLogsV2;
   }
-  if (!data.tracesToLogs) {
+  if (!data?.tracesToLogs) {
     return undefined;
   }
-
   const traceToLogs: TraceToLogsOptionsV2 = {
     customQuery: false,
   };
