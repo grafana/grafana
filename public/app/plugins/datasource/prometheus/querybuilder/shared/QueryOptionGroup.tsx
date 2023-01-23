@@ -6,13 +6,14 @@ import { getValueFormat, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Icon, useStyles2 } from '@grafana/ui';
 import { QueryStats } from 'app/plugins/datasource/loki/components/types';
+import { LokiDatasource } from 'app/plugins/datasource/loki/datasource';
 
 export interface Props {
   title: string;
   collapsedInfo: string[];
   children: React.ReactNode;
   queryStats?: QueryStats;
-  datasource?: any;
+  datasource?: LokiDatasource;
 }
 
 export function QueryOptionGroup({ title, children, collapsedInfo, queryStats, datasource }: Props) {
