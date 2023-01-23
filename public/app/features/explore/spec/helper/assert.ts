@@ -4,6 +4,8 @@ import { ExploreId } from '../../../../types';
 
 import { withinExplore } from './setup';
 
+/* eslint-disable no-console */
+
 export const assertQueryHistoryExists = async (query: string, exploreId: ExploreId = ExploreId.left) => {
   const selector = withinExplore(exploreId);
 
@@ -38,13 +40,21 @@ export const assertQueryHistoryComment = async (
 };
 
 export const assertQueryHistoryIsStarred = async (expectedStars: boolean[], exploreId: ExploreId = ExploreId.left) => {
+  console.time('select explore');
   const selector = withinExplore(exploreId);
+  console.timeEnd('select explore');
+  console.time('get all buttons');
   const starButtons = selector.getAllByRole('button', { name: /Star query|Unstar query/ });
+  console.timeEnd('get all buttons');
+  console.time('main assert');
   await waitFor(() =>
     expectedStars.forEach((starred, queryIndex) => {
+      console.time('assert star #' + queryIndex);
       expect(starButtons[queryIndex]).toHaveAccessibleName(starred ? 'Unstar query' : 'Star query');
+      console.timeEnd('assert star #' + queryIndex);
     })
   );
+  console.timeEnd('main assert');
 };
 
 export const assertQueryHistoryTabIsSelected = (
@@ -74,3 +84,5 @@ export const assertQueryHistoryElementsShown = (
 export const assertLoadMoreQueryHistoryNotVisible = (exploreId: ExploreId = ExploreId.left) => {
   expect(withinExplore(exploreId).queryByRole('button', { name: 'Load more' })).not.toBeInTheDocument();
 };
+
+/* eslint-enable no-console */

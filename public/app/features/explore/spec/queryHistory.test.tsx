@@ -190,9 +190,13 @@ describe('Explore: Query History', () => {
 
     // star one one query
     console.time('star');
+    console.time('star act');
     await starQueryHistory(1, ExploreId.left);
+    console.timeEnd('star act');
+    console.time('star assert');
     await assertQueryHistoryIsStarred([false, true], ExploreId.left);
     await assertQueryHistoryIsStarred([false, true], ExploreId.right);
+    console.timeEnd('star assert');
     expect(reportInteractionMock).toBeCalledWith('grafana_explore_query_history_starred', {
       queryHistoryEnabled: false,
       newValue: true,
