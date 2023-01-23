@@ -399,7 +399,7 @@ var (
 		},
 		{
 			Name:         "editPanelCSVDragAndDrop",
-			Description:  "Enable drag and drop csv, excel files for edit panel",
+			Description:  "Enables drag and drop for CSV and Excel files",
 			FrontendOnly: true,
 			State:        FeatureStateAlpha,
 		},
@@ -408,6 +408,11 @@ var (
 			Description:     "Stop maintaining state of alerts that are not firing",
 			State:           FeatureStateBeta,
 			RequiresRestart: false,
+		},
+		{
+			Name:        "azureMultipleResourcePicker",
+			Description: "Azure multiple resource picker",
+			State:       FeatureStateAlpha,
 		},
 	}
 )

@@ -292,10 +292,14 @@ const (
 	FlagAlertingBacktesting = "alertingBacktesting"
 
 	// FlagEditPanelCSVDragAndDrop
-	// Enable drag and drop csv, excel files for edit panel
+	// Enables drag and drop for CSV and Excel files
 	FlagEditPanelCSVDragAndDrop = "editPanelCSVDragAndDrop"
 
 	// FlagAlertingNoNormalState
 	// Stop maintaining state of alerts that are not firing
 	FlagAlertingNoNormalState = "alertingNoNormalState"
+
+	// FlagAzureMultipleResourcePicker
+	// Azure multiple resource picker
+	FlagAzureMultipleResourcePicker = "azureMultipleResourcePicker"
 )
