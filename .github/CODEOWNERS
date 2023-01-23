@@ -306,7 +306,6 @@ WORKFLOW.md @torkelo
 /packages/grafana-ui/src/components/TimeSeries/ @grafana/grafana-bi-squad
 /packages/grafana-ui/src/components/uPlot/ @grafana/grafana-bi-squad
 /packages/grafana-ui/src/utils/storybook/ @grafana/plugins-platform-frontend
-/packages/jaeger-ui-components// @grafana/observability-traces-and-profiling
 /plugins-bundled/ @grafana/plugins-platform-frontend
 
 

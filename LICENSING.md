@@ -15,7 +15,6 @@ packages/grafana-e2e-selectors/
 packages/grafana-runtime/
 packages/grafana-toolkit/
 packages/grafana-ui/
-packages/jaeger-ui-components/
 packaging/
 kinds/
 pkg/kinds/
