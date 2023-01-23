@@ -23,6 +23,8 @@ hash-to-hash comparison.
 
 When a token is found to be leaked, the service will automatically revoke the token, rendering it unusable.
 
+> **Note:** if the `revoke` option is disabled, the service will only send a notification to the configured webhook URL and log the event. The token will not be automatically revoked.
+
 ### Outgoing webhook
 
 By default, when a token leak is found, the service will automatically revoke the token and log the event.
@@ -59,4 +61,7 @@ base_url = https://secret-scanning.grafana.net
 
 # URL to send outgoing webhooks to in case of detection
 oncall_url =
+
+# Wether to revoke the token if a leak is detected or just send a notification
+revoke = true
 ```
