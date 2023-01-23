@@ -65,10 +65,10 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 	//LOGZ.IO GRAFANA CHANGE :: DEV-37746: Add switch to account query param
 	accountId := alert.Annotations[ngmodels.LogzioAccountIdAnnotation]
 	var generatorUrl string
-	genUrl, err := url.Parse(alert.GeneratorURL)
+	parsedGeneratorUrl, err := ParseLogzioAppPath(alert.GeneratorURL)
 	if err == nil {
-		genUrl = AppendSwitchToAccountQueryParam(genUrl, accountId)
-		generatorUrl = genUrl.String()
+		parsedGeneratorUrl = AppendSwitchToAccountQueryParam(parsedGeneratorUrl, accountId)
+		generatorUrl = ToLogzioAppPath(parsedGeneratorUrl.String())
 	} else {
 		generatorUrl = alert.GeneratorURL
 	}

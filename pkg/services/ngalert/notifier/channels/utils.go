@@ -164,6 +164,10 @@ func ToLogzioAppPath(path string) string {
 	return strings.Replace(path, EncodedHashSymbol, "#", 1)
 }
 
+func ParseLogzioAppPath(path string) (*url.URL, error) {
+	return url.Parse(strings.Replace(path, "#", EncodedHashSymbol, 1))
+}
+
 // Golang encode function encodes space as + instead of %20 so we need to replace
 func ReplaceEncodedSpace(path string) string {
 	return strings.Replace(path, "+", EncodedSpaceSymbol, -1)
