@@ -28,8 +28,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
   // Limit descriptions to 3 lines max before ellipsing
   // Some plugin descriptions can be very long
   description: css({
-    '-webkit-line-clamp': '3',
-    '-webkit-box-orient': 'vertical',
+    WebkitLineClamp: 3,
+    WebkitBoxOrient: 'vertical',
     display: '-webkit-box',
     overflow: 'hidden',
   }),
