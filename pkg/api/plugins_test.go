@@ -12,7 +12,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 
@@ -197,10 +196,9 @@ func Test_GetPluginAssetCDNRedirect(t *testing.T) {
 				"/public/plugins/:pluginId/*",
 				cfg, service, func(sc *scenarioContext) {
 					// Get the prometheus metric (to test that the handler is instrumented correctly)
-					counter := metrics.MPluginsCDNFallbackRedirectRequests.With(prometheus.Labels{
+					counter := pluginsCDNFallbackRedirectRequests.With(prometheus.Labels{
 						"plugin_id":      cdnPluginID,
 						"plugin_version": "1.0.0",
-						"asset_path":     cas.expRelativeURL,
 					})
 
 					// Encode the prometheus metric and get its value
@@ -229,10 +227,9 @@ func Test_GetPluginAssetCDNRedirect(t *testing.T) {
 			cfg, service, func(sc *scenarioContext) {
 				// Here the metric should not increment
 				var m dto.Metric
-				counter := metrics.MPluginsCDNFallbackRedirectRequests.With(prometheus.Labels{
+				counter := pluginsCDNFallbackRedirectRequests.With(prometheus.Labels{
 					"plugin_id":      nonCDNPluginID,
 					"plugin_version": "2.0.0",
-					"asset_path":     "module.js",
 				})
 				require.NoError(t, counter.Write(&m))
 				assert.Zero(t, m.Counter.GetValue())

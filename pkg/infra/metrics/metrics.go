@@ -108,10 +108,6 @@ var (
 
 	// MPublicDashboardDatasourceQuerySuccess is a metric counter for successful queries labelled by datasource
 	MPublicDashboardDatasourceQuerySuccess *prometheus.CounterVec
-
-	// MPluginsCDNFallbackRedirectRequests is a metric counter keeping track of how many
-	// requests are received on the plugins CDN backend redirect fallback handler.
-	MPluginsCDNFallbackRedirectRequests *prometheus.CounterVec
 )
 
 // Timers
@@ -573,12 +569,6 @@ func init() {
 		Help:      "total amount of public dashboards",
 		Namespace: ExporterName,
 	})
-
-	MPluginsCDNFallbackRedirectRequests = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Namespace: "grafana",
-		Name:      "plugins_cdn_fallback_redirect_requests_total",
-		Help:      "Number of requests to the plugins CDN backend redirect fallback handler.",
-	}, []string{"plugin_id", "plugin_version", "asset_path"})
 }
 
 // SetBuildInformation sets the build information for this binary
@@ -690,6 +680,5 @@ func initMetricVars() {
 		MStatTotalPublicDashboards,
 		MPublicDashboardRequestCount,
 		MPublicDashboardDatasourceQuerySuccess,
-		MPluginsCDNFallbackRedirectRequests,
 	)
 }

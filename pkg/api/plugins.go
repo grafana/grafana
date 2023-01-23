@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"io"
 	"net/http"
 	"path"
@@ -14,7 +15,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -35,6 +35,14 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+// pluginsCDNFallbackRedirectRequests is a metric counter keeping track of how many
+// requests are received on the plugins CDN backend redirect fallback handler.
+var pluginsCDNFallbackRedirectRequests = promauto.NewCounterVec(prometheus.CounterOpts{
+	Namespace: "grafana",
+	Name:      "plugins_cdn_fallback_redirect_requests_total",
+	Help:      "Number of requests to the plugins CDN backend redirect fallback handler.",
+}, []string{"plugin_id", "plugin_version"})
 
 func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	typeFilter := c.Query("type")
@@ -396,10 +404,9 @@ func (hs *HTTPServer) redirectCDNPluginAsset(c *models.ReqContext, plugin plugin
 		"assetPath", assetPath,
 		"remoteURL", remoteURL,
 	)
-	metrics.MPluginsCDNFallbackRedirectRequests.With(prometheus.Labels{
+	pluginsCDNFallbackRedirectRequests.With(prometheus.Labels{
 		"plugin_id":      plugin.ID,
 		"plugin_version": plugin.Info.Version,
-		"asset_path":     assetPath,
 	}).Inc()
 	http.Redirect(c.Resp, c.Req, remoteURL, http.StatusFound)
 }
