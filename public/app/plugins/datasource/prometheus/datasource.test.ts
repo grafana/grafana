@@ -1450,13 +1450,19 @@ describe('PrometheusDatasource2', () => {
         ],
         interval: '5s',
       };
-      const step = 55;
-      let end = 7 * 24 * 60 * 60 + step;
+      let end = 7 * 24 * 60 * 60;
       end -= end % 55;
       const start = 0;
+      const step = 55;
       const adjusted = alignRange(start, end, step, timeSrvStub.timeRange().to.utcOffset() * 60);
       const urlExpected =
-        'proxied/api/v1/query_range?query=test' + '&start=' + adjusted.start + '&end=' + adjusted.end + '&step=' + step;
+        'proxied/api/v1/query_range?query=test' +
+        '&start=' +
+        adjusted.start +
+        '&end=' +
+        (adjusted.end + step) +
+        '&step=' +
+        step;
       fetchMock.mockImplementation(() => of(response));
       ds.query(query as any);
       const res = fetchMock.mock.calls[0][0];
@@ -1698,10 +1704,10 @@ describe('PrometheusDatasource2', () => {
           __interval_ms: { text: 5 * 1000, value: 5 * 1000 },
         },
       };
-      const step = 13;
-      let end = 7 * 24 * 60 * 60 + step;
+      let end = 7 * 24 * 60 * 60;
       end -= end % 55;
       const start = 0;
+      const step = 55;
       const adjusted = alignRange(start, end, step, timeSrvStub.timeRange().to.utcOffset() * 60);
       const urlExpected =
         'proxied/api/v1/query_range?query=' +
@@ -1709,7 +1715,7 @@ describe('PrometheusDatasource2', () => {
         '&start=' +
         adjusted.start +
         '&end=' +
-        adjusted.end +
+        (adjusted.end + step) +
         '&step=' +
         step;
       fetchMock.mockImplementation(() => of(response));
@@ -1981,51 +1987,6 @@ describe('PrometheusDatasource for POST', () => {
     });
   });
 });
-
-function getPrepareTargetsContext({
-  targets,
-  app,
-  queryOptions,
-  languageProvider,
-}: {
-  targets: PromQuery[];
-  app?: CoreApp;
-  queryOptions?: Partial<QueryOptions>;
-  languageProvider?: any;
-}) {
-  const instanceSettings = {
-    url: 'proxied',
-    directUrl: 'direct',
-    access: 'proxy',
-    user: 'test',
-    password: 'mupp',
-    jsonData: { httpMethod: 'POST' },
-  } as unknown as DataSourceInstanceSettings<PromOptions>;
-  const start = 0;
-  const end = 1;
-  const panelId = '2';
-  const options = {
-    targets,
-    interval: '1s',
-    panelId,
-    app,
-    ...queryOptions,
-  } as unknown as DataQueryRequest<PromQuery>;
-
-  const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
-  if (languageProvider) {
-    ds.languageProvider = languageProvider;
-  }
-  const { queries, activeTargets } = ds.prepareTargets(options, start, end);
-
-  return {
-    queries,
-    activeTargets,
-    start,
-    end,
-    panelId,
-  };
-}
 
 describe('prepareTargets', () => {
   describe('when run from a Panel', () => {
@@ -2470,4 +2431,49 @@ function createAnnotationResponse() {
   };
 
   return { ...response };
+}
+
+function getPrepareTargetsContext({
+  targets,
+  app,
+  queryOptions,
+  languageProvider,
+}: {
+  targets: PromQuery[];
+  app?: CoreApp;
+  queryOptions?: Partial<QueryOptions>;
+  languageProvider?: any;
+}) {
+  const instanceSettings = {
+    url: 'proxied',
+    directUrl: 'direct',
+    access: 'proxy',
+    user: 'test',
+    password: 'mupp',
+    jsonData: { httpMethod: 'POST' },
+  } as unknown as DataSourceInstanceSettings<PromOptions>;
+  const start = 0;
+  const end = 1;
+  const panelId = '2';
+  const options = {
+    targets,
+    interval: '1s',
+    panelId,
+    app,
+    ...queryOptions,
+  } as unknown as DataQueryRequest<PromQuery>;
+
+  const ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
+  if (languageProvider) {
+    ds.languageProvider = languageProvider;
+  }
+  const { queries, activeTargets } = ds.prepareTargets(options, start, end);
+
+  return {
+    queries,
+    activeTargets,
+    start,
+    end,
+    panelId,
+  };
 }
