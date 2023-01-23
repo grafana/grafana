@@ -34,6 +34,7 @@ export interface Preferences {
   theme?: string;
   /**
    * The timezone selection
+   * TODO: this should use the timezone defined in common
    */
   timezone?: string;
   /**

@@ -29,6 +29,7 @@ type Preferences struct {
 	Theme *string `json:"theme,omitempty"`
 
 	// The timezone selection
+	// TODO: this should use the timezone defined in common
 	Timezone *string `json:"timezone,omitempty"`
 
 	// day of the week (sunday, monday, etc)
