@@ -10,11 +10,23 @@ import LanguageProvider from './language_provider';
 import { PromQuery } from './types';
 
 describe('Language completion provider', () => {
+  const getTimeRangeParams = (override?: Partial<{ start: string; end: string }>) => ({
+    start: '0',
+    end: '1',
+    ...override,
+  });
+
+  const getQuantizedTimeRangeParams = (override?: Partial<{ start: string; end: string }>) => {
+    const range = getTimeRangeParams(override);
+    return { start: range.start, end: range.end };
+  };
+
   const datasource: PrometheusDatasource = {
     metadataRequest: () => ({ data: { data: [] as any[] } }),
-    getTimeRangeParams: () => ({ start: '0', end: '1' }),
+    getTimeRangeParams: getTimeRangeParams,
     interpolateString: (string: string) => string,
     hasLabelsMatchAPISupport: () => false,
+    getQuantizedTimeRangeParams: getQuantizedTimeRangeParams,
   } as unknown as PrometheusDatasource;
 
   describe('cleanText', () => {
@@ -376,6 +388,7 @@ describe('Language completion provider', () => {
         metadataRequest: () => ({ data: { data: [{ __name__: 'metric', bar: 'bazinga' }] as any[] } }),
         getTimeRangeParams: () => ({ start: '0', end: '1' }),
         interpolateString: (string: string) => string,
+        getQuantizedTimeRangeParams: getQuantizedTimeRangeParams,
       } as unknown as PrometheusDatasource;
       const instance = new LanguageProvider(datasources);
       const value = Plain.deserialize('metric{}');
@@ -408,8 +421,9 @@ describe('Language completion provider', () => {
             ],
           },
         }),
-        getTimeRangeParams: () => ({ start: '0', end: '1' }),
+        getTimeRangeParams: getTimeRangeParams,
         interpolateString: (string: string) => string,
+        getQuantizedTimeRangeParams: getQuantizedTimeRangeParams,
       } as unknown as PrometheusDatasource;
       const instance = new LanguageProvider(datasource);
       const value = Plain.deserialize('{job1="foo",job2!="foo",job3=~"foo",__name__="metric",}');
@@ -648,8 +662,9 @@ describe('Language completion provider', () => {
     it('does not re-fetch default labels', async () => {
       const datasource: PrometheusDatasource = {
         metadataRequest: jest.fn(() => ({ data: { data: [] as any[] } })),
-        getTimeRangeParams: jest.fn(() => ({ start: '0', end: '1' })),
+        getTimeRangeParams: getTimeRangeParams,
         interpolateString: (string: string) => string,
+        getQuantizedTimeRangeParams: getQuantizedTimeRangeParams,
       } as unknown as PrometheusDatasource;
 
       const mockedMetadataRequest = jest.mocked(datasource.metadataRequest);
@@ -678,7 +693,7 @@ describe('Language completion provider', () => {
       jest.spyOn(console, 'warn').mockImplementation(() => {});
       const datasource: PrometheusDatasource = {
         metadataRequest: jest.fn(() => ({ data: { data: ['foo', 'bar'] as string[] } })),
-        getTimeRangeParams: jest.fn(() => ({ start: '0', end: '1' })),
+        getTimeRangeParams: getTimeRangeParams,
         lookupsDisabled: true,
       } as unknown as PrometheusDatasource;
       const mockedMetadataRequest = jest.mocked(datasource.metadataRequest);
@@ -703,7 +718,8 @@ describe('Language completion provider', () => {
     it('issues metadata requests when lookup is not disabled', async () => {
       const datasource: PrometheusDatasource = {
         metadataRequest: jest.fn(() => ({ data: { data: ['foo', 'bar'] as string[] } })),
-        getTimeRangeParams: jest.fn(() => ({ start: '0', end: '1' })),
+        getTimeRangeParams: getTimeRangeParams,
+        getQuantizedTimeRangeParams: getQuantizedTimeRangeParams,
         lookupsDisabled: false,
         interpolateString: (string: string) => string,
       } as unknown as PrometheusDatasource;
