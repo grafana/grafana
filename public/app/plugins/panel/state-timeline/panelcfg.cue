@@ -15,7 +15,7 @@
 package grafanaplugin
 
 import (
-	ui "github.com/grafana/grafana/packages/grafana-schema/src/common"
+	"github.com/grafana/grafana/packages/grafana-schema/src/common"
 )
 
 composableKinds: PanelCfg: {
@@ -29,17 +29,17 @@ composableKinds: PanelCfg: {
 						PanelOptions: {
 							// FIXME ts comments indicate this shouldn't be in the saved model, but currently is emitted
 							mode?: TimelineMode
-							ui.OptionsWithLegend
-							ui.OptionsWithTooltip
-							ui.OptionsWithTimezones
-							showValue:    ui.VisibilityMode | *"auto"
+							common.OptionsWithLegend
+							common.OptionsWithTooltip
+							common.OptionsWithTimezones
+							showValue:    common.VisibilityMode | *"auto"
 							rowHeight:    number | *0.9
 							colWidth?:    number
 							mergeValues?: bool | *true
 							alignValue?:  TimelineValueAlignment | *"left"
 						} @cuetsy(kind="interface")
 						PanelFieldConfig: {
-							ui.HideableFieldConfig
+							common.HideableFieldConfig
 							lineWidth?:   number | *0
 							fillOpacity?: number | *70
 						} @cuetsy(kind="interface")
