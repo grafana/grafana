@@ -210,6 +210,49 @@ func TestService_Login(t *testing.T) {
 	}
 }
 
+func TestService_RedirectURL(t *testing.T) {
+	type testCase struct {
+		desc        string
+		client      string
+		expectedURL string
+		expectedErr error
+	}
+
+	tests := []testCase{
+		{
+			desc:        "should generate url for valid redirect client",
+			client:      "redirect",
+			expectedURL: "https://localhost/redirect",
+			expectedErr: nil,
+		},
+		{
+			desc:        "should return error on non existing client",
+			client:      "non-existing",
+			expectedErr: authn.ErrClientNotConfigured,
+		},
+		{
+			desc:        "should return error when client don't support the redirect interface",
+			client:      "non-redirect",
+			expectedErr: authn.ErrUnsupportedClient,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			service := setupTests(t, func(svc *Service) {
+				svc.clients["redirect"] = authntest.FakeRedirectClient{
+					ExpectedURL: tt.expectedURL,
+				}
+				svc.clients["non-redirect"] = &authntest.FakeClient{}
+			})
+
+			u, err := service.RedirectURL(context.Background(), tt.client, nil)
+			assert.ErrorIs(t, err, tt.expectedErr)
+			assert.Equal(t, tt.expectedURL, u)
+		})
+	}
+}
+
 func mustParseURL(s string) *url.URL {
 	u, err := url.Parse(s)
 	if err != nil {

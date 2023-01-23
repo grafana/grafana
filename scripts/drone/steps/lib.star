@@ -644,9 +644,9 @@ def package_step(edition, ver_mode, variants=None):
         sign_args = ' --sign'
         env = {
             'GRAFANA_API_KEY': from_secret('grafana_api_key'),
-            'GPG_PRIV_KEY': from_secret('gpg_priv_key'),
-            'GPG_PUB_KEY': from_secret('gpg_pub_key'),
-            'GPG_KEY_PASSWORD': from_secret('gpg_key_password'),
+            'GPG_PRIV_KEY': from_secret('packages_gpg_private_key'),
+            'GPG_PUB_KEY': from_secret('packages_gpg_public_key'),
+            'GPG_KEY_PASSWORD': from_secret('packages_gpg_passphrase'),
         }
         test_args = ''
     else:
@@ -943,7 +943,8 @@ def redis_integration_tests_step():
         },
         'commands': [
             'dockerize -wait tcp://redis:6379/0 -timeout 120s',
-            './bin/grabpl integration-tests',
+            'go clean -testcache',
+            "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=5m {}'",
         ],
     }
 
@@ -958,7 +959,8 @@ def memcached_integration_tests_step():
         },
         'commands': [
             'dockerize -wait tcp://memcached:11211 -timeout 120s',
-            './bin/grabpl integration-tests',
+            'go clean -testcache',
+            "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=5m {}'",
         ],
     }
 

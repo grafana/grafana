@@ -5,7 +5,6 @@
     "graph-ng": "",
     "panel-tests": ""
   },
-  "URL": "/d/graph-shared-tooltips.json/panel-tests-shared-tooltips",
   "fields": {
     "schemaVersion": 28
   },
@@ -14,7 +13,6 @@
       "uid": "graph-shared-tooltips.json#4",
       "kind": "panel",
       "name": "two units",
-      "URL": "/d/graph-shared-tooltips.json/panel-tests-shared-tooltips?viewPanel=4",
       "fields": {
         "type": "timeseries"
       },
@@ -33,7 +31,6 @@
       "uid": "graph-shared-tooltips.json#13",
       "kind": "panel",
       "name": "Speed vs Temperature (XY)",
-      "URL": "/d/graph-shared-tooltips.json/panel-tests-shared-tooltips?viewPanel=13",
       "fields": {
         "type": "xychart"
       },
@@ -62,7 +59,6 @@
       "uid": "graph-shared-tooltips.json#2",
       "kind": "panel",
       "name": "Cursor info",
-      "URL": "/d/graph-shared-tooltips.json/panel-tests-shared-tooltips?viewPanel=2",
       "fields": {
         "type": "debug"
       },
@@ -81,7 +77,6 @@
       "uid": "graph-shared-tooltips.json#5",
       "kind": "panel",
       "name": "Only temperature",
-      "URL": "/d/graph-shared-tooltips.json/panel-tests-shared-tooltips?viewPanel=5",
       "fields": {
         "type": "timeseries"
       },
@@ -100,7 +95,6 @@
       "uid": "graph-shared-tooltips.json#9",
       "kind": "panel",
       "name": "Only Speed",
-      "URL": "/d/graph-shared-tooltips.json/panel-tests-shared-tooltips?viewPanel=9",
       "fields": {
         "type": "timeseries"
       },
@@ -119,7 +113,6 @@
       "uid": "graph-shared-tooltips.json#11",
       "kind": "panel",
       "name": "Panel Title",
-      "URL": "/d/graph-shared-tooltips.json/panel-tests-shared-tooltips?viewPanel=11",
       "fields": {
         "type": "timeseries"
       },
@@ -138,7 +131,6 @@
       "uid": "graph-shared-tooltips.json#8",
       "kind": "panel",
       "name": "flot panel (temperature)",
-      "URL": "/d/graph-shared-tooltips.json/panel-tests-shared-tooltips?viewPanel=8",
       "fields": {
         "type": "graph"
       },
@@ -157,7 +149,6 @@
       "uid": "graph-shared-tooltips.json#10",
       "kind": "panel",
       "name": "flot panel (no units)",
-      "URL": "/d/graph-shared-tooltips.json/panel-tests-shared-tooltips?viewPanel=10",
       "fields": {
         "type": "graph"
       },
