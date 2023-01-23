@@ -1450,10 +1450,10 @@ describe('PrometheusDatasource2', () => {
         ],
         interval: '5s',
       };
-      let end = 7 * 24 * 60 * 60;
+      const step = 55;
+      let end = 7 * 24 * 60 * 60 + step;
       end -= end % 55;
       const start = 0;
-      const step = 55;
       const adjusted = alignRange(start, end, step, timeSrvStub.timeRange().to.utcOffset() * 60);
       const urlExpected =
         'proxied/api/v1/query_range?query=test' + '&start=' + adjusted.start + '&end=' + adjusted.end + '&step=' + step;
@@ -1698,10 +1698,10 @@ describe('PrometheusDatasource2', () => {
           __interval_ms: { text: 5 * 1000, value: 5 * 1000 },
         },
       };
-      let end = 7 * 24 * 60 * 60;
+      const step = 13;
+      let end = 7 * 24 * 60 * 60 + step;
       end -= end % 55;
       const start = 0;
-      const step = 55;
       const adjusted = alignRange(start, end, step, timeSrvStub.timeRange().to.utcOffset() * 60);
       const urlExpected =
         'proxied/api/v1/query_range?query=' +
