@@ -4,6 +4,7 @@ keywords:
   - schema
 title: Dashboard kind
 ---
+> Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
 # Dashboard kind
 

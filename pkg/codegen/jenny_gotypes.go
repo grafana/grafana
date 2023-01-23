@@ -30,7 +30,7 @@ func (j GoTypesJenny) Generate(sfg SchemaForGen) (*codejen.File, error) {
 			},
 		},
 		PackageName: sfg.Schema.Lineage().Name(),
-		ApplyFuncs:  append(j.ApplyFuncs, PrefixDropper(sfg.Name), DecoderCompactor()),
+		ApplyFuncs:  append(j.ApplyFuncs, PrefixDropper(sfg.Name)),
 	})
 
 	if err != nil {

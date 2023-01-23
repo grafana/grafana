@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"os"
 	"path"
 	"runtime"
 	"strings"
@@ -75,7 +76,7 @@ func (m *PluginManifest) isV2() bool {
 	return strings.HasPrefix(m.ManifestVersion, "2.")
 }
 
-// ReadPluginManifest attempts to read and verify the plugin manifest
+// readPluginManifest attempts to read and verify the plugin manifest
 // if any error occurs or the manifest is not valid, this will return an error
 func ReadPluginManifest(body []byte) (*PluginManifest, error) {
 	block, _ := clearsign.Decode(body)
@@ -222,8 +223,12 @@ func verifyHash(mlog log.Logger, plugin plugins.FoundPlugin, path, hash string) 
 	// on the path provided in a manifest file for a plugin and not user input.
 	f, err := plugin.FS.Open(path)
 	if err != nil {
+		if os.IsPermission(err) {
+			mlog.Warn("Could not open plugin file due to lack of permissions", "plugin", plugin.JSONData.ID, "path", path)
+			return errors.New("permission denied when attempting to read plugin file")
+		}
 		mlog.Warn("Plugin file listed in the manifest was not found", "plugin", plugin.JSONData.ID, "path", path)
-		return fmt.Errorf("plugin file listed in the manifest was not found")
+		return errors.New("plugin file listed in the manifest was not found")
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
@@ -233,12 +238,12 @@ func verifyHash(mlog log.Logger, plugin plugins.FoundPlugin, path, hash string) 
 
 	h := sha256.New()
 	if _, err := io.Copy(h, f); err != nil {
-		return fmt.Errorf("could not calculate plugin file checksum")
+		return errors.New("could not calculate plugin file checksum")
 	}
 	sum := hex.EncodeToString(h.Sum(nil))
 	if sum != hash {
 		mlog.Warn("Plugin file checksum does not match signature checksum", "plugin", plugin.JSONData.ID, "path", path)
-		return fmt.Errorf("plugin file checksum does not match signature checksum")
+		return errors.New("plugin file checksum does not match signature checksum")
 	}
 
 	return nil
