@@ -65,7 +65,7 @@ jest.mock('react-virtualized-auto-sizer', () => {
 
 // the mock below gets rid of this warning from recompose:
 // Warning: React.createFactory() is deprecated and will be removed in a future major release. Consider using JSX or use React.createElement() directly instead.
-jest.mock('@jaegertracing/jaeger-ui-components', () => ({}));
+jest.mock('./components', () => ({}));
 
 interface ScenarioContext {
   dashboard?: DashboardModel | null;

@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
-import TracePageSearchBar from '@jaegertracing/jaeger-ui-components/src/TracePageHeader/TracePageSearchBar';
-import { TopOfViewRefType } from '@jaegertracing/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView';
 import React, { useMemo, useState, createRef } from 'react';
 import { useAsync } from 'react-use';
 
 import { PanelProps } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { TraceView } from 'app/features/explore/TraceView/TraceView';
+import TracePageSearchBar from 'app/features/explore/TraceView/components/TracePageHeader/TracePageSearchBar';
+import { TopOfViewRefType } from 'app/features/explore/TraceView/components/TraceTimelineViewer/VirtualizedTraceView';
 import { useSearch } from 'app/features/explore/TraceView/useSearch';
 import { transformDataFrames } from 'app/features/explore/TraceView/utils/transform';
 

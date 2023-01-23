@@ -1,7 +1,6 @@
 import { renderHook, act } from '@testing-library/react-hooks';
 
-import { TraceSpan } from '@jaegertracing/jaeger-ui-components';
-
+import { TraceSpan } from './components';
 import { useChildrenState } from './useChildrenState';
 
 describe('useChildrenState', () => {

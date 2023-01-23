@@ -5090,7 +5090,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/runtime@9.4.0-pre, @grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
+"@grafana/runtime@workspace:*, @grafana/runtime@workspace:packages/grafana-runtime":
   version: 0.0.0-use.local
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
   dependencies:
@@ -5555,58 +5555,6 @@ __metadata:
   checksum: 5282759d961d61350f33d9118d16bcaed914ebf8061a52f4fa474b2cb08720c9c81d165e13b82f2e5a8a212cc5af482f0c6fc1ac27b9e067e5394c9a6ed186c9
   languageName: node
   linkType: hard
-
-"@jaegertracing/jaeger-ui-components@workspace:*, @jaegertracing/jaeger-ui-components@workspace:packages/jaeger-ui-components":
-  version: 0.0.0-use.local
-  resolution: "@jaegertracing/jaeger-ui-components@workspace:packages/jaeger-ui-components"
-  dependencies:
-    "@emotion/css": 11.10.5
-    "@grafana/data": 9.4.0-pre
-    "@grafana/e2e-selectors": 9.4.0-pre
-    "@grafana/runtime": 9.4.0-pre
-    "@grafana/tsconfig": ^1.2.0-rc1
-    "@grafana/ui": 9.4.0-pre
-    "@testing-library/jest-dom": 5.16.5
-    "@testing-library/react": 12.1.4
-    "@testing-library/user-event": 14.4.3
-    "@types/deep-freeze": ^0.1.1
-    "@types/enzyme": 3.10.12
-    "@types/hoist-non-react-statics": ^3.3.1
-    "@types/jest": 29.2.3
-    "@types/lodash": 4.14.187
-    "@types/prop-types": 15.7.5
-    "@types/react": 17.0.42
-    "@types/react-icons": 2.2.7
-    "@types/sinon": ^10.0.13
-    "@types/slate-react": 0.22.9
-    "@types/testing-library__jest-dom": 5.14.5
-    "@types/tinycolor2": 1.4.3
-    chance: ^1.0.10
-    classnames: ^2.2.5
-    combokeys: ^3.0.0
-    copy-to-clipboard: ^3.1.0
-    deep-freeze: ^0.0.1
-    enzyme: 3.11.0
-    fuzzy: ^0.1.3
-    hoist-non-react-statics: ^3.3.2
-    json-markup: ^1.1.0
-    lodash: 4.17.21
-    lru-memoize: ^1.1.0
-    memoize-one: 6.0.0
-    moment: 2.29.4
-    moment-timezone: 0.5.38
-    prop-types: 15.8.1
-    react: 17.0.2
-    react-dom: 17.0.2
-    react-icons: 2.2.7
-    reselect: 4.1.6
-    sinon: 14.0.1
-    tinycolor2: 1.4.2
-    tslib: 2.4.1
-    tween-functions: ^1.2.0
-    typescript: 4.8.4
-  languageName: unknown
-  linkType: soft
 
 "@jest/console@npm:^27.5.1":
   version: 27.5.1
@@ -11025,13 +10973,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/deep-freeze@npm:^0.1.1":
-  version: 0.1.2
-  resolution: "@types/deep-freeze@npm:0.1.2"
-  checksum: 16a9f73ad2753049ae3d3b6d2b2d972bb47f21e237fd4a3d2a7b36bac9f69bd2b8671209d5d47d493e92861e283b1e999ec81260b158dd08d1855f8086ac8d40
-  languageName: node
-  linkType: hard
-
 "@types/enzyme-adapter-react-16@npm:1.0.6":
   version: 1.0.6
   resolution: "@types/enzyme-adapter-react-16@npm:1.0.6"
@@ -11260,7 +11201,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/hoist-non-react-statics@npm:3.3.1, @types/hoist-non-react-statics@npm:^3.3.0, @types/hoist-non-react-statics@npm:^3.3.1":
+"@types/hoist-non-react-statics@npm:3.3.1, @types/hoist-non-react-statics@npm:^3.3.0":
   version: 3.3.1
   resolution: "@types/hoist-non-react-statics@npm:3.3.1"
   dependencies:
@@ -11724,13 +11665,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/prop-types@npm:15.7.5":
-  version: 15.7.5
-  resolution: "@types/prop-types@npm:15.7.5"
-  checksum: 5b43b8b15415e1f298243165f1d44390403bb2bd42e662bca3b5b5633fdd39c938e91b7fce3a9483699db0f7a715d08cef220c121f723a634972fdf596aec980
-  languageName: node
-  linkType: hard
-
 "@types/qs@npm:*, @types/qs@npm:^6.9.5":
   version: 6.9.7
   resolution: "@types/qs@npm:6.9.7"
@@ -11826,25 +11760,6 @@ __metadata:
   dependencies:
     "@types/react": "*"
   checksum: 8b7c1b2b63b8f6d58e181613ba5392755b042bf87c74e65caad7bfc4585566944e9aacda6ee3b1cad222aea6667716c8be8643b39b72ae7b4aaadde063a62d25
-  languageName: node
-  linkType: hard
-
-"@types/react-icon-base@npm:*":
-  version: 2.1.4
-  resolution: "@types/react-icon-base@npm:2.1.4"
-  dependencies:
-    "@types/react": "*"
-  checksum: 67b5d22c6234946b2b2dd137e75902642762248da190fbf3110f0d4c101fc435e19cc4a19866887868e77ef9ce4e5cdc2eb899a52ae5103f143de1ab6aaef85b
-  languageName: node
-  linkType: hard
-
-"@types/react-icons@npm:2.2.7":
-  version: 2.2.7
-  resolution: "@types/react-icons@npm:2.2.7"
-  dependencies:
-    "@types/react": "*"
-    "@types/react-icon-base": "*"
-  checksum: b395741c537820af5b75852eed7909d203956711a296bebb8103f6e62ced9f6b4876805b4128a5b9a15f4566d2a63e3bedd6b565be5963b940e97c57c86d4db9
   languageName: node
   linkType: hard
 
@@ -12097,7 +12012,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/sinon@npm:10.0.13, @types/sinon@npm:^10.0.13":
+"@types/sinon@npm:10.0.13":
   version: 10.0.13
   resolution: "@types/sinon@npm:10.0.13"
   dependencies:
@@ -15694,9 +15609,9 @@ __metadata:
   linkType: hard
 
 "chance@npm:^1.0.10":
-  version: 1.1.8
-  resolution: "chance@npm:1.1.8"
-  checksum: e733f51e1094d7b0343a9e79f38599086442e6284fc2789cf9e072c71a0070874a1b340f9fffe4e66260899733f768cf113434be466ecb0016e3afcb60add3ee
+  version: 1.1.9
+  resolution: "chance@npm:1.1.9"
+  checksum: 57d09fd404ffb87f5e106705c28c38a77cb0a6d96f3828d63052947a12d62d65f40a100d74b123bea3d5ebce3b53333a93d3b81783c64d8473788a0ce6b6e8db
   languageName: node
   linkType: hard
 
@@ -16681,7 +16596,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"copy-to-clipboard@npm:^3.1.0, copy-to-clipboard@npm:^3.3.1":
+"copy-to-clipboard@npm:^3.3.1":
   version: 3.3.1
   resolution: "copy-to-clipboard@npm:3.3.1"
   dependencies:
@@ -18099,13 +18014,6 @@ __metadata:
   version: 0.7.0
   resolution: "dedent@npm:0.7.0"
   checksum: 87de191050d9a40dd70cad01159a0bcf05ecb59750951242070b6abf9569088684880d00ba92a955b4058804f16eeaf91d604f283929b4f614d181cd7ae633d2
-  languageName: node
-  linkType: hard
-
-"deep-freeze@npm:^0.0.1":
-  version: 0.0.1
-  resolution: "deep-freeze@npm:0.0.1"
-  checksum: 1e43c98e44c7849382d9f896e679d48a1b5bf40993f7cc858e3730ef4e2ba387b9b7b7fe722cac34febe7f6a564cd242c27bbc319e8df793c2a287f21e5ba038
   languageName: node
   linkType: hard
 
@@ -21489,13 +21397,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fuzzy@npm:^0.1.3":
-  version: 0.1.3
-  resolution: "fuzzy@npm:0.1.3"
-  checksum: acc09c6173e12d5dc8ae51857551ddbe834befa9ebc6be6d5581d09117265d704809d80407d220fd0652f347a9975a4d106854cacc8bd031487a0ede86982f84
-  languageName: node
-  linkType: hard
-
 "gauge@npm:^3.0.0":
   version: 3.0.2
   resolution: "gauge@npm:3.0.2"
@@ -22117,7 +22018,6 @@ __metadata:
     "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": "workspace:*"
-    "@jaegertracing/jaeger-ui-components": "workspace:*"
     "@kusto/monaco-kusto": 5.3.6
     "@leeoniya/ufuzzy": 0.9.1
     "@lezer/common": 1.0.1
@@ -22232,7 +22132,9 @@ __metadata:
     brace: 0.11.1
     calculate-size: 1.1.1
     centrifuge: 3.1.0
+    chance: ^1.0.10
     classnames: 2.3.2
+    combokeys: ^3.0.0
     comlink: 4.3.1
     common-tags: 1.8.2
     copy-webpack-plugin: 9.0.1
@@ -22287,6 +22189,7 @@ __metadata:
     jest-matcher-utils: 29.3.1
     jquery: 3.6.1
     js-yaml: ^4.1.0
+    json-markup: ^1.1.0
     json-source-map: 0.6.1
     jsurl: ^0.1.5
     kbar: 0.1.0-beta.36
@@ -22295,6 +22198,7 @@ __metadata:
     lodash: 4.17.21
     logfmt: ^1.3.2
     lru-cache: 7.14.0
+    lru-memoize: ^1.1.0
     memoize-one: 6.0.0
     mini-css-extract-plugin: 2.7.2
     moment: 2.29.4
@@ -22388,6 +22292,7 @@ __metadata:
     ts-loader: 9.3.1
     ts-node: 10.9.1
     tslib: 2.4.1
+    tween-functions: ^1.2.0
     typescript: 4.8.4
     uplot: 1.6.23
     uuid: 9.0.0
@@ -32909,29 +32814,6 @@ __metadata:
     react-native:
       optional: true
   checksum: f523d7ec5dcb7f5fd36efc9385639d01160071f4dadbbc5a3f1daa64b0f332f709347bdd3bc68f5aefbd72c8742233aa715b308b1ca87179ad501acc19c72068
-  languageName: node
-  linkType: hard
-
-"react-icon-base@npm:2.1.0":
-  version: 2.1.0
-  resolution: "react-icon-base@npm:2.1.0"
-  peerDependencies:
-    prop-types: "*"
-    react: "*"
-    react-dom: "*"
-  checksum: 62b6bfe48649974d3ce2d9d1d1ebadc3523ae85181a2ecde858667c216abe1b3e95b68a0bf800335c6b9aa7804081d0fcbdb6647be04c00e1e5f537846788b00
-  languageName: node
-  linkType: hard
-
-"react-icons@npm:2.2.7":
-  version: 2.2.7
-  resolution: "react-icons@npm:2.2.7"
-  dependencies:
-    react-icon-base: 2.1.0
-  peerDependencies:
-    react: ^0.14.0 || ^15.0.0 || ^16.0.0
-    react-dom: ^0.14.0 || ^15.0.0 || ^16.0.0
-  checksum: 74e692fdd3d3e2be7cc7a549e7d9ac00eadf21d0b6825681d55c497d5c8683d39bcb56633037c428672140c8f024f062ee34b6f51cab74467ac4d5ce0e4fd98b
   languageName: node
   linkType: hard
 

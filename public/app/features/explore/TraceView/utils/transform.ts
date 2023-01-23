@@ -1,5 +1,6 @@
 import { DataFrame, DataFrameView, TraceSpanRow } from '@grafana/data';
-import { Trace, TraceProcess, TraceResponse, transformTraceData } from '@jaegertracing/jaeger-ui-components';
+
+import { Trace, TraceProcess, TraceResponse, transformTraceData } from '../components';
 
 export function transformDataFrames(frame?: DataFrame): Trace | null {
   if (!frame) {

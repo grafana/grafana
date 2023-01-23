@@ -1,4 +1,3 @@
-import { SpanLinks } from '@jaegertracing/jaeger-ui-components/src/types/links';
 import React from 'react';
 
 import {
@@ -18,7 +17,6 @@ import {
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Icon } from '@grafana/ui';
-import { SpanLinkFunc, TraceSpan } from '@jaegertracing/jaeger-ui-components';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricQuery, TraceToMetricsOptions } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -26,6 +24,9 @@ import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
 import { getFieldLinksForExplore } from '../utils/links';
+
+import { SpanLinkFunc, TraceSpan } from './components';
+import { SpanLinks } from './components/types/links';
 
 /**
  * This is a factory for the link creator. It returns the function mainly so it can return undefined in which case
