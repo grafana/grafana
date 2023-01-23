@@ -56,18 +56,18 @@ func (r *Resource) Execute(ctx context.Context, req *backend.CallResourceRequest
 
 	if strings.Contains(resp.Request.URL.String(), "metadata") {
 		// cache metadata for 24 hours
-		resp.Header.Set("Cache-Control", "public, max-age=86400")
+		resp.Header.Set("Cache-Control", "private, max-age=86400")
 	} else {
 		switch r.cacheLevel {
 		case "low":
 			// 1 minute
-			resp.Header.Set("Cache-Control", "public, max-age=60")
+			resp.Header.Set("Cache-Control", "private, max-age=60")
 		case "medium":
 			// 10 minutes
-			resp.Header.Set("Cache-Control", "public, max-age=600")
+			resp.Header.Set("Cache-Control", "private, max-age=600")
 		case "high":
 			// 60 minutes
-			resp.Header.Set("Cache-Control", "public, max-age=3600")
+			resp.Header.Set("Cache-Control", "private, max-age=3600")
 		case "none":
 			resp.Header.Set("Cache-Control", "no-cache")
 		}
