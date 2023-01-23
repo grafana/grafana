@@ -14,7 +14,10 @@ const filterTokenToTypeMap: Record<number, string> = {
   [terms.TypeToken]: 'type',
 };
 
-export enum FilterDialect {
+// This enum allows to configure parser behavior
+// Depending on our needs we can enable and disable only selected filters
+// Thanks to that we can create multiple different filters having the same search grammar
+export enum FilterSupportedTerm {
   ds = 'dsFilter',
   ns = 'nsFilter',
   label = 'labelFilter',
@@ -31,8 +34,12 @@ export interface FilterExpr {
   value: string;
 }
 
-export function parseQueryToFilter(query: string, dialects: FilterDialect[], filterMapper: QueryFilterMapper) {
-  traverseNodeTree(query, dialects, (node) => {
+export function parseQueryToFilter(
+  query: string,
+  supportedTerms: FilterSupportedTerm[],
+  filterMapper: QueryFilterMapper
+) {
+  traverseNodeTree(query, supportedTerms, (node) => {
     if (node.type.id === terms.FilterExpression) {
       const filter = getFilterFromSyntaxNode(query, node);
 
@@ -71,9 +78,13 @@ function getNodeContent(query: string, node: SyntaxNode) {
   return query.slice(node.from, node.to).trim().replace(/\"/g, '');
 }
 
-export function applyFiltersToQuery(query: string, dialects: FilterDialect[], filters: FilterExpr[]): string {
+export function applyFiltersToQuery(
+  query: string,
+  supportedTerms: FilterSupportedTerm[],
+  filters: FilterExpr[]
+): string {
   const existingFilterNodes: SyntaxNode[] = [];
-  traverseNodeTree(query, dialects, (node) => {
+  traverseNodeTree(query, supportedTerms, (node) => {
     if (node.type.id === terms.FilterExpression && node.firstChild) {
       existingFilterNodes.push(node.firstChild);
     }
@@ -104,7 +115,7 @@ export function applyFiltersToQuery(query: string, dialects: FilterDialect[], fi
     }
   });
 
-  // Apply new filters that were not in the query yet
+  // Apply new filters that hasn't been in the query yet
   filters.forEach((fs) => {
     if (fs.type === terms.FreeFormExpression) {
       newQueryExpressions.push(fs.value);
@@ -116,8 +127,8 @@ export function applyFiltersToQuery(query: string, dialects: FilterDialect[], fi
   return newQueryExpressions.join(' ');
 }
 
-function traverseNodeTree(query: string, dialects: FilterDialect[], visit: (node: SyntaxNode) => void) {
-  const dialect = dialects.join(' ');
+function traverseNodeTree(query: string, supportedTerms: FilterSupportedTerm[], visit: (node: SyntaxNode) => void) {
+  const dialect = supportedTerms.join(' ');
   const parsed = parser.configure({ dialect }).parse(query);
   let cursor = parsed.cursor();
   do {

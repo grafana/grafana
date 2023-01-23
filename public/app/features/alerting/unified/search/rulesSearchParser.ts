@@ -2,7 +2,13 @@ import { isPromAlertingRuleState, PromAlertingRuleState, PromRuleType } from '..
 import { isPromRuleType } from '../utils/rules';
 
 import * as terms from './search.terms';
-import { applyFiltersToQuery, FilterDialect, FilterExpr, parseQueryToFilter, QueryFilterMapper } from './searchParser';
+import {
+  applyFiltersToQuery,
+  FilterSupportedTerm,
+  FilterExpr,
+  parseQueryToFilter,
+  QueryFilterMapper,
+} from './searchParser';
 
 export interface RulesFilter {
   freeFormWords: string[];
@@ -15,16 +21,17 @@ export interface RulesFilter {
   labels: string[];
 }
 
-const rulesSearchDialects: FilterDialect[] = [
-  FilterDialect.ds,
-  FilterDialect.ns,
-  FilterDialect.label,
-  FilterDialect.group,
-  FilterDialect.rule,
-  FilterDialect.state,
-  FilterDialect.type,
+const filterSupportedTerms: FilterSupportedTerm[] = [
+  FilterSupportedTerm.ds,
+  FilterSupportedTerm.ns,
+  FilterSupportedTerm.label,
+  FilterSupportedTerm.group,
+  FilterSupportedTerm.rule,
+  FilterSupportedTerm.state,
+  FilterSupportedTerm.type,
 ];
 
+// Define how to map parsed tokens into the filter object
 export function getSearchFilterFromQuery(query: string): RulesFilter {
   const filter: RulesFilter = { labels: [], freeFormWords: [] };
 
@@ -39,11 +46,13 @@ export function getSearchFilterFromQuery(query: string): RulesFilter {
     [terms.FreeFormExpression]: (value) => filter.freeFormWords.push(value),
   };
 
-  parseQueryToFilter(query, rulesSearchDialects, tokenToFilterMap);
+  parseQueryToFilter(query, filterSupportedTerms, tokenToFilterMap);
 
   return filter;
 }
 
+// Reverse of the previous function
+// Describes how to map the object into an array of tokens and values
 export function applySearchFilterToQuery(query: string, filter: RulesFilter): string {
   const filterStateArray: FilterExpr[] = [];
 
@@ -74,5 +83,5 @@ export function applySearchFilterToQuery(query: string, filter: RulesFilter): st
     filterStateArray.push(...filter.freeFormWords.map((word) => ({ type: terms.FreeFormExpression, value: word })));
   }
 
-  return applyFiltersToQuery(query, rulesSearchDialects, filterStateArray);
+  return applyFiltersToQuery(query, filterSupportedTerms, filterStateArray);
 }
