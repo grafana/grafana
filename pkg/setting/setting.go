@@ -1777,8 +1777,8 @@ func (cfg *Cfg) readDataSourcesSettings() {
 }
 
 func GetAllowedOriginGlobs(originPatterns []string) ([]glob.Glob, error) {
-	var originGlobs []glob.Glob
 	allowedOrigins := originPatterns
+	originGlobs := make([]glob.Glob, 0, len(allowedOrigins))
 	for _, originPattern := range allowedOrigins {
 		g, err := glob.Compile(originPattern)
 		if err != nil {
