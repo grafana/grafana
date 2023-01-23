@@ -250,7 +250,7 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqC
 		supportBundleNode := &navtree.NavLink{
 			Text:       "Support bundles",
 			Id:         "support-bundles",
-			Url:        "/admin/support-bundles",
+			Url:        "/support-bundles",
 			Icon:       "wrench",
 			Section:    navtree.NavSectionConfig,
 			SortWeight: navtree.WeightHelp,
