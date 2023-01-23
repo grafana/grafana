@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useEffect, useMemo, useState } from 'react';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
 import {
   Alert,
   Button,
@@ -12,6 +12,7 @@ import {
   useStyles2,
   withErrorBoundary,
 } from '@grafana/ui';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
 
@@ -49,15 +50,18 @@ import { initialAsyncRequestState } from './utils/redux';
 import { addRouteToParentRoute, mergePartialAmRouteWithRouteTree, omitRouteFromRouteTree } from './utils/routeTree';
 
 enum ActiveTab {
-  NotificationPolicies,
-  MuteTimings,
+  NotificationPolicies = 'notification_policies',
+  MuteTimings = 'mute_timings',
 }
 
 const AmRoutes = () => {
   const dispatch = useDispatch();
   const styles = useStyles2(getStyles);
-  // TODO add querystring param for the current tab so we can route to it immediately
-  const [activeTab, setActiveTab] = useState<ActiveTab>(ActiveTab.NotificationPolicies);
+
+  const [queryParams, setQueryParams] = useQueryParams();
+  const { tab } = decodeQueryParams(queryParams);
+
+  const [activeTab, setActiveTab] = useState<ActiveTab>(tab);
   const [updatingTree, setUpdatingTree] = useState<boolean>(false);
   const [contactPointFilter, setContactPointFilter] = useState<string>('');
 
@@ -230,6 +234,7 @@ const AmRoutes = () => {
           active={policyTreeTabActive}
           onChangeTab={() => {
             setActiveTab(ActiveTab.NotificationPolicies);
+            setQueryParams({ tab: ActiveTab.NotificationPolicies });
           }}
         />
         <Tab
@@ -238,6 +243,7 @@ const AmRoutes = () => {
           counter={numberOfMuteTimings}
           onChangeTab={() => {
             setActiveTab(ActiveTab.MuteTimings);
+            setQueryParams({ tab: ActiveTab.MuteTimings });
           }}
         />
         <Spacer />
@@ -309,5 +315,25 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-top: ${theme.spacing(2)};
   `,
 });
+
+interface QueryParamValues {
+  tab: ActiveTab;
+}
+
+function decodeQueryParams(queryParams: UrlQueryMap): QueryParamValues {
+  let tab = ActiveTab.NotificationPolicies; // default tab
+
+  if (queryParams['tab'] === ActiveTab.NotificationPolicies) {
+    tab = ActiveTab.NotificationPolicies;
+  }
+
+  if (queryParams['tab'] === ActiveTab.MuteTimings) {
+    tab = ActiveTab.MuteTimings;
+  }
+
+  return {
+    tab,
+  };
+}
 
 export default withErrorBoundary(AmRoutes, { style: 'page' });
