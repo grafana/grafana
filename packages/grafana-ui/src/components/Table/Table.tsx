@@ -46,6 +46,7 @@ export const Table = memo((props: Props) => {
     width,
     columnMinWidth = COLUMN_MIN_WIDTH,
     noHeader,
+    addRowNumberColumn,
     resizable = true,
     initialSortBy,
     footerOptions,
@@ -130,6 +131,7 @@ export const Table = memo((props: Props) => {
   const {
     getTableProps,
     headerGroups,
+    // JEV: adjust here?
     rows,
     prepareRow,
     totalColumnsWidth,
