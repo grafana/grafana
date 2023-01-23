@@ -17,6 +17,5 @@ export type {
   SpecialValueMap,
   Threshold,
   ThresholdsConfig,
-  ThresholdsMode,
 } from './index.gen';
-export { defaultFieldConfig, defaultThresholdsConfig } from './index.gen';
+export { defaultFieldConfig, defaultThresholdsConfig, ThresholdsMode } from './index.gen';
