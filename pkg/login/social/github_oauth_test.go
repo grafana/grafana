@@ -168,21 +168,6 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 				Groups: []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
 			},
 		},
-		{ // Case that's going to change with Grafana 10
-			name:              "No fallback to default org role (will change in Grafana 10)",
-			roleAttributePath: "",
-			userRawJSON:       testGHUserJSON,
-			autoAssignOrgRole: "Editor",
-			userTeamsRawJSON:  testGHUserTeamsJSON,
-			want: &BasicUserInfo{
-				Id:     "1",
-				Name:   "monalisa octocat",
-				Email:  "octocat@github.com",
-				Login:  "octocat",
-				Role:   "",
-				Groups: []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
-			},
-		},
 		{
 			name:                   "Should be empty role if setting skipOrgRoleSync is set to true",
 			roleAttributePath:      "contains(groups[*], '@github/justice-league') && 'Editor' || 'Viewer'",
@@ -197,7 +182,21 @@ func TestSocialGitHub_UserInfo(t *testing.T) {
 				Role:   "",
 				Groups: []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
 			},
-			wantErr: false,
+		},
+		{ // Case that's going to change with Grafana 10
+			name:              "No fallback to default org role (will change in Grafana 10)",
+			roleAttributePath: "",
+			userRawJSON:       testGHUserJSON,
+			autoAssignOrgRole: "Editor",
+			userTeamsRawJSON:  testGHUserTeamsJSON,
+			want: &BasicUserInfo{
+				Id:     "1",
+				Name:   "monalisa octocat",
+				Email:  "octocat@github.com",
+				Login:  "octocat",
+				Role:   "",
+				Groups: []string{"https://github.com/orgs/github/teams/justice-league", "@github/justice-league"},
+			},
 		},
 	}
 	for _, tt := range tests {
