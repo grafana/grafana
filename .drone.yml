@@ -92,11 +92,7 @@ steps:
   - ./bin/build verify-starlark .
   depends_on:
   - compile-build-cmd
-  environment:
-    BUILDIFIER_CHKSUM: 52bf6b102cb4f88464e197caac06d69793fa2b05f5ad50a7e7bf6fbd656648a3
-    BUILDIFIER_VERSION: 5.1.0
-    PATH: /usr/bin:/bin
-  image: byrnedo/alpine-curl:0.1.8
+  image: grafana/build-container:826cb5d482f
   name: lint-starlark
 trigger:
   event:
@@ -6502,6 +6498,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: 1a7a3523a39d4f2d89d1f081ecaf08eeba53e95b0b34a8f49d91cfe0ce8d0ac6
+hmac: 24294888357179471867ddda2c52c490cef3d5fcd69c8c51c5a561860f2734dc
 
 ...

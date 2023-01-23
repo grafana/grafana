@@ -184,15 +184,10 @@ def lint_drone_step():
 def lint_starlark_step():
     return {
         "name": "lint-starlark",
-        "image": curl_image,
+        "image": build_image,
         "commands": [
             "./bin/build verify-starlark .",
         ],
-        "environment": {
-            "BUILDIFIER_VERSION": "5.1.0",
-            "BUILDIFIER_CHKSUM": "52bf6b102cb4f88464e197caac06d69793fa2b05f5ad50a7e7bf6fbd656648a3",
-            "PATH": "/usr/bin:/bin",
-        },
         "depends_on": [
             "compile-build-cmd",
         ],
