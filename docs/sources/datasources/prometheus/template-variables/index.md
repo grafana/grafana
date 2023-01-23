@@ -99,7 +99,7 @@ For details, refer to the [Grafana blog](/blog/2020/09/28/new-in-grafana-7.2-__r
 
 The Prometheus data source supports two variable syntaxes for use in the **Query** field:
 
-- `$<varname>`, for example `rate(http_requests_total{job=~"\$job"}[$_rate_interval])`, which is easier to read and write but does not allow you to use a variable in the middle of a word.
+- `$<varname>`, for example `rate(http_requests_total{job=~"$job"}[$_rate_interval])`, which is easier to read and write but does not allow you to use a variable in the middle of a word.
 - `[[varname]]`, for example `rate(http_requests_total{job=~"[[job]]"}[$_rate_interval])`
 
 If you've enabled the _Multi-value_ or _Include all value_ options, Grafana converts the labels from plain text to a regex-compatible string, which requires you to use `=~` instead of `=`.
