@@ -47,12 +47,13 @@ export const PanelHeaderNotice: FC<Props> = ({ notice, onClick }) => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   notice: css({
+    background: 'inherit',
     border: 'none',
     borderRadius: theme.shape.borderRadius(),
   }),
   iconTooltip: css({
     color: `${theme.colors.text.secondary}`,
-    backgroundColor: `${theme.colors.background.primary}`,
+    backgroundColor: 'inherit',
     cursor: 'auto',
     border: 'none',
     borderRadius: `${theme.shape.borderRadius()}`,

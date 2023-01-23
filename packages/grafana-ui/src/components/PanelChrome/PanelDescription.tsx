@@ -40,12 +40,12 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     description: css({
       color: `${theme.colors.text.secondary}`,
-      backgroundColor: `${theme.colors.background.primary}`,
+      backgroundColor: 'inherit',
       cursor: 'auto',
       border: 'none',
       borderRadius: `${theme.shape.borderRadius()}`,
       padding: `${theme.spacing(0, 1)}`,
-      height: ` ${theme.spacing(theme.components.height.md)}`,
+      height: '100%',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -57,7 +57,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       '&: focus:not(:focus-visible)': getMouseFocusStyles(theme),
 
       '&:hover ': {
-        boxShadow: `${theme.shadows.z1}`,
         color: `${theme.colors.text.primary}`,
         background: `${theme.colors.background.secondary}`,
       },

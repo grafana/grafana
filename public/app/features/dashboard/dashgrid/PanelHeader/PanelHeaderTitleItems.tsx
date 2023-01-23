@@ -66,7 +66,7 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     item: css({
       label: 'panel-header-item',
-      backgroundColor: `${theme.colors.background.primary}`,
+      backgroundColor: 'inherit',
       cursor: 'auto',
       border: 'none',
       borderRadius: `${theme.shape.borderRadius()}`,

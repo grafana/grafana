@@ -10,12 +10,14 @@ import { Icon } from '../Icon/Icon';
 import { PanelMenu } from './PanelMenu';
 
 interface Props {
+  children?: React.ReactNode;
   menu: ReactElement | (() => ReactElement);
   title?: string;
   offset?: number;
+  dragClass?: string;
 }
 
-export function HoverWidget({ menu, title, offset = -32 }: Props) {
+export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: Props) {
   const styles = useStyles2(getStyles);
   const draggableRef = useRef<HTMLDivElement>(null);
 
@@ -28,17 +30,21 @@ export function HoverWidget({ menu, title, offset = -32 }: Props) {
     draggableRef.current?.releasePointerCapture(e.pointerId);
   }, []);
 
+  if (children === undefined || React.Children.count(children) === 0) {
+    return null;
+  }
+
   return (
     <div className={classnames(styles.container, 'show-on-hover')} style={{ top: `${offset}px` }}>
       <div
-        className={classnames(styles.square, styles.draggable, 'grid-drag-handle')}
+        className={classnames(styles.square, styles.draggable, dragClass)}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
         ref={draggableRef}
       >
         <Icon name="draggabledots" />
       </div>
-      {title && <div className={styles.title}>{title}</div>}
+      {children}
       <div className={styles.square}>
         <PanelMenu menu={menu} title={title} placement="bottom" menuButtonClass={styles.menuButton} offset={[59, 8]} />
       </div>

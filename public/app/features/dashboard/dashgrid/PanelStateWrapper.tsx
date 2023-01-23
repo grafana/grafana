@@ -616,7 +616,12 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     const title = panel.getDisplayTitle();
     const padding: PanelPadding = plugin.noPadding ? 'none' : 'md';
 
-    const titleItems = [
+    const showTitleItems =
+      (panel.links && panel.links.length > 0 && this.onShowPanelLinks) ||
+      (data.series.length > 0 && data.series.some((v) => (v.meta?.notices?.length ?? 0) > 0)) ||
+      (data.request && data.request.timeInfo) ||
+      alertState;
+    const titleItems = showTitleItems && (
       <PanelHeaderTitleItems
         key="title-items"
         alertState={alertState}
@@ -624,8 +629,8 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         panelId={panel.id}
         panelLinks={panel.links}
         onShowPanelLinks={this.onShowPanelLinks}
-      />,
-    ];
+      />
+    );
 
     let menu;
     if (!dashboard.meta.publicDashboardAccessToken) {
@@ -656,6 +661,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           menu={menu}
           padding={padding}
           gridPos={panel.gridPos}
+          dragClass="grid-drag-handle"
         >
           {(innerWidth, innerHeight) => (
             <>
