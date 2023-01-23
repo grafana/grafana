@@ -109,7 +109,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					assert.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, "", sc.dashboardGuardianMock.DashUID)
-					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgID)
 					assert.Equal(t, cmd.UserID, sc.dashboardGuardianMock.User.UserID)
 				})
 
@@ -129,7 +129,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.otherSavedFolder.ID, sc.dashboardGuardianMock.DashID)
-					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgID)
 					assert.Equal(t, cmd.UserID, sc.dashboardGuardianMock.User.UserID)
 				})
 
@@ -149,7 +149,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInFolder.UID, sc.dashboardGuardianMock.DashUID)
-					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgID)
 					assert.Equal(t, cmd.UserID, sc.dashboardGuardianMock.User.UserID)
 				})
 
@@ -170,7 +170,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInFolder.UID, sc.dashboardGuardianMock.DashUID)
-					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgID)
 					assert.Equal(t, cmd.UserID, sc.dashboardGuardianMock.User.UserID)
 				})
 
@@ -191,7 +191,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					assert.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInGeneralFolder.UID, sc.dashboardGuardianMock.DashUID)
-					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgID)
 					assert.Equal(t, cmd.UserID, sc.dashboardGuardianMock.User.UserID)
 				})
 
@@ -212,7 +212,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInFolder.UID, sc.dashboardGuardianMock.DashUID)
-					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgID)
 					assert.Equal(t, cmd.UserID, sc.dashboardGuardianMock.User.UserID)
 				})
 
@@ -233,7 +233,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInGeneralFolder.UID, sc.dashboardGuardianMock.DashUID)
-					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgID)
 					assert.Equal(t, cmd.UserID, sc.dashboardGuardianMock.User.UserID)
 				})
 
@@ -254,7 +254,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					assert.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInFolder.UID, sc.dashboardGuardianMock.DashUID)
-					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgID)
 					assert.Equal(t, cmd.UserID, sc.dashboardGuardianMock.User.UserID)
 				})
 
@@ -275,7 +275,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInGeneralFolder.UID, sc.dashboardGuardianMock.DashUID)
-					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgID)
 					assert.Equal(t, cmd.UserID, sc.dashboardGuardianMock.User.UserID)
 				})
 
@@ -296,7 +296,7 @@ func TestIntegrationIntegratedDashboardService(t *testing.T) {
 					require.Equal(t, dashboards.ErrDashboardUpdateAccessDenied, err)
 
 					assert.Equal(t, sc.savedDashInFolder.UID, sc.dashboardGuardianMock.DashUID)
-					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgId)
+					assert.Equal(t, cmd.OrgID, sc.dashboardGuardianMock.OrgID)
 					assert.Equal(t, cmd.UserID, sc.dashboardGuardianMock.User.UserID)
 				})
 		})
@@ -826,7 +826,7 @@ func permissionScenario(t *testing.T, desc string, canSave bool, fn permissionSc
 		dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
 		require.NoError(t, err)
 		service := ProvideDashboardService(
-			cfg, dashboardStore, &dummyDashAlertExtractor{},
+			cfg, dashboardStore, dashboardStore, &dummyDashAlertExtractor{},
 			featuremgmt.WithFeatures(),
 			accesscontrolmock.NewMockedPermissionsService(),
 			accesscontrolmock.NewMockedPermissionsService(),
@@ -885,7 +885,7 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
 	require.NoError(t, err)
 	service := ProvideDashboardService(
-		cfg, dashboardStore, &dummyDashAlertExtractor{},
+		cfg, dashboardStore, dashboardStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(),
 		accesscontrolmock.NewMockedPermissionsService(),
 		accesscontrolmock.NewMockedPermissionsService(),
@@ -906,7 +906,7 @@ func callSaveWithError(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSto
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
 	require.NoError(t, err)
 	service := ProvideDashboardService(
-		cfg, dashboardStore, &dummyDashAlertExtractor{},
+		cfg, dashboardStore, dashboardStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(),
 		accesscontrolmock.NewMockedPermissionsService(),
 		accesscontrolmock.NewMockedPermissionsService(),
@@ -945,7 +945,7 @@ func saveTestDashboard(t *testing.T, title string, orgID, folderID int64, sqlSto
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
 	require.NoError(t, err)
 	service := ProvideDashboardService(
-		cfg, dashboardStore, &dummyDashAlertExtractor{},
+		cfg, dashboardStore, dashboardStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(),
 		accesscontrolmock.NewMockedPermissionsService(),
 		accesscontrolmock.NewMockedPermissionsService(),
@@ -985,7 +985,7 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
 	require.NoError(t, err)
 	service := ProvideDashboardService(
-		cfg, dashboardStore, &dummyDashAlertExtractor{},
+		cfg, dashboardStore, dashboardStore, &dummyDashAlertExtractor{},
 		featuremgmt.WithFeatures(),
 		accesscontrolmock.NewMockedPermissionsService(),
 		accesscontrolmock.NewMockedPermissionsService(),

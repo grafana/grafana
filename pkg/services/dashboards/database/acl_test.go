@@ -42,7 +42,7 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 
 	t.Run("Dashboard permission with userId and teamId set to 0", func(t *testing.T) {
 		setup(t)
-		err := updateDashboardACL(t, dashboardStore, savedFolder.ID, models.DashboardACL{
+		err := updateDashboardACL(t, dashboardStore, savedFolder.ID, dashboards.DashboardACL{
 			OrgID:       1,
 			DashboardID: savedFolder.ID,
 			Permission:  models.PERMISSION_EDIT,
@@ -52,34 +52,34 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 
 	t.Run("Folder acl should include default acl", func(t *testing.T) {
 		setup(t)
-		query := models.GetDashboardACLInfoListQuery{DashboardID: savedFolder.ID, OrgID: 1}
+		query := dashboards.GetDashboardACLInfoListQuery{DashboardID: savedFolder.ID, OrgID: 1}
 
 		err := dashboardStore.GetDashboardACLInfoList(context.Background(), &query)
 		require.Nil(t, err)
 
 		require.Equal(t, 2, len(query.Result))
 		defaultPermissionsId := int64(-1)
-		require.Equal(t, defaultPermissionsId, query.Result[0].DashboardId)
+		require.Equal(t, defaultPermissionsId, query.Result[0].DashboardID)
 		require.Equal(t, org.RoleViewer, *query.Result[0].Role)
 		require.False(t, query.Result[0].Inherited)
-		require.Equal(t, defaultPermissionsId, query.Result[1].DashboardId)
+		require.Equal(t, defaultPermissionsId, query.Result[1].DashboardID)
 		require.Equal(t, org.RoleEditor, *query.Result[1].Role)
 		require.False(t, query.Result[1].Inherited)
 	})
 
 	t.Run("Dashboard acl should include acl for parent folder", func(t *testing.T) {
 		setup(t)
-		query := models.GetDashboardACLInfoListQuery{DashboardID: childDash.ID, OrgID: 1}
+		query := dashboards.GetDashboardACLInfoListQuery{DashboardID: childDash.ID, OrgID: 1}
 
 		err := dashboardStore.GetDashboardACLInfoList(context.Background(), &query)
 		require.Nil(t, err)
 
 		require.Equal(t, 2, len(query.Result))
 		defaultPermissionsId := int64(-1)
-		require.Equal(t, defaultPermissionsId, query.Result[0].DashboardId)
+		require.Equal(t, defaultPermissionsId, query.Result[0].DashboardID)
 		require.Equal(t, org.RoleViewer, *query.Result[0].Role)
 		require.True(t, query.Result[0].Inherited)
-		require.Equal(t, defaultPermissionsId, query.Result[1].DashboardId)
+		require.Equal(t, defaultPermissionsId, query.Result[1].DashboardID)
 		require.Equal(t, org.RoleEditor, *query.Result[1].Role)
 		require.True(t, query.Result[1].Inherited)
 	})
@@ -89,7 +89,7 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 		err := dashboardStore.UpdateDashboardACL(context.Background(), savedFolder.ID, nil)
 		require.Nil(t, err)
 
-		query := models.GetDashboardACLInfoListQuery{DashboardID: childDash.ID, OrgID: 1}
+		query := dashboards.GetDashboardACLInfoListQuery{DashboardID: childDash.ID, OrgID: 1}
 		err = dashboardStore.GetDashboardACLInfoList(context.Background(), &query)
 		require.Nil(t, err)
 
@@ -99,7 +99,7 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 	t.Run("Given a dashboard folder and a user", func(t *testing.T) {
 		t.Run("Given dashboard folder permission", func(t *testing.T) {
 			setup(t)
-			err := updateDashboardACL(t, dashboardStore, savedFolder.ID, models.DashboardACL{
+			err := updateDashboardACL(t, dashboardStore, savedFolder.ID, dashboards.DashboardACL{
 				OrgID:       1,
 				UserID:      currentUser.ID,
 				DashboardID: savedFolder.ID,
@@ -108,17 +108,17 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 			require.Nil(t, err)
 
 			t.Run("When reading dashboard acl should include acl for parent folder", func(t *testing.T) {
-				query := models.GetDashboardACLInfoListQuery{DashboardID: childDash.ID, OrgID: 1}
+				query := dashboards.GetDashboardACLInfoListQuery{DashboardID: childDash.ID, OrgID: 1}
 
 				err := dashboardStore.GetDashboardACLInfoList(context.Background(), &query)
 				require.Nil(t, err)
 
 				require.Equal(t, 1, len(query.Result))
-				require.Equal(t, savedFolder.ID, query.Result[0].DashboardId)
+				require.Equal(t, savedFolder.ID, query.Result[0].DashboardID)
 			})
 
 			t.Run("Given child dashboard permission", func(t *testing.T) {
-				err := updateDashboardACL(t, dashboardStore, childDash.ID, models.DashboardACL{
+				err := updateDashboardACL(t, dashboardStore, childDash.ID, dashboards.DashboardACL{
 					OrgID:       1,
 					UserID:      currentUser.ID,
 					DashboardID: childDash.ID,
@@ -127,15 +127,15 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 				require.Nil(t, err)
 
 				t.Run("When reading dashboard acl should include acl for parent folder and child", func(t *testing.T) {
-					query := models.GetDashboardACLInfoListQuery{OrgID: 1, DashboardID: childDash.ID}
+					query := dashboards.GetDashboardACLInfoListQuery{OrgID: 1, DashboardID: childDash.ID}
 
 					err := dashboardStore.GetDashboardACLInfoList(context.Background(), &query)
 					require.Nil(t, err)
 
 					require.Equal(t, 2, len(query.Result))
-					require.Equal(t, savedFolder.ID, query.Result[0].DashboardId)
+					require.Equal(t, savedFolder.ID, query.Result[0].DashboardID)
 					require.True(t, query.Result[0].Inherited)
-					require.Equal(t, childDash.ID, query.Result[1].DashboardId)
+					require.Equal(t, childDash.ID, query.Result[1].DashboardID)
 					require.False(t, query.Result[1].Inherited)
 				})
 			})
@@ -143,7 +143,7 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 
 		t.Run("Reading dashboard acl should include default acl for parent folder and the child acl", func(t *testing.T) {
 			setup(t)
-			err := updateDashboardACL(t, dashboardStore, childDash.ID, models.DashboardACL{
+			err := updateDashboardACL(t, dashboardStore, childDash.ID, dashboards.DashboardACL{
 				OrgID:       1,
 				UserID:      currentUser.ID,
 				DashboardID: childDash.ID,
@@ -151,26 +151,26 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 			})
 			require.Nil(t, err)
 
-			query := models.GetDashboardACLInfoListQuery{OrgID: 1, DashboardID: childDash.ID}
+			query := dashboards.GetDashboardACLInfoListQuery{OrgID: 1, DashboardID: childDash.ID}
 
 			err = dashboardStore.GetDashboardACLInfoList(context.Background(), &query)
 			require.Nil(t, err)
 
 			defaultPermissionsId := int64(-1)
 			require.Equal(t, 3, len(query.Result))
-			require.Equal(t, defaultPermissionsId, query.Result[0].DashboardId)
+			require.Equal(t, defaultPermissionsId, query.Result[0].DashboardID)
 			require.Equal(t, org.RoleViewer, *query.Result[0].Role)
 			require.True(t, query.Result[0].Inherited)
-			require.Equal(t, defaultPermissionsId, query.Result[1].DashboardId)
+			require.Equal(t, defaultPermissionsId, query.Result[1].DashboardID)
 			require.Equal(t, org.RoleEditor, *query.Result[1].Role)
 			require.True(t, query.Result[1].Inherited)
-			require.Equal(t, childDash.ID, query.Result[2].DashboardId)
+			require.Equal(t, childDash.ID, query.Result[2].DashboardID)
 			require.False(t, query.Result[2].Inherited)
 		})
 
 		t.Run("Add and delete dashboard permission", func(t *testing.T) {
 			setup(t)
-			err := updateDashboardACL(t, dashboardStore, savedFolder.ID, models.DashboardACL{
+			err := updateDashboardACL(t, dashboardStore, savedFolder.ID, dashboards.DashboardACL{
 				OrgID:       1,
 				UserID:      currentUser.ID,
 				DashboardID: savedFolder.ID,
@@ -178,21 +178,21 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 			})
 			require.Nil(t, err)
 
-			q1 := &models.GetDashboardACLInfoListQuery{DashboardID: savedFolder.ID, OrgID: 1}
+			q1 := &dashboards.GetDashboardACLInfoListQuery{DashboardID: savedFolder.ID, OrgID: 1}
 			err = dashboardStore.GetDashboardACLInfoList(context.Background(), q1)
 			require.Nil(t, err)
 
-			require.Equal(t, savedFolder.ID, q1.Result[0].DashboardId)
+			require.Equal(t, savedFolder.ID, q1.Result[0].DashboardID)
 			require.Equal(t, models.PERMISSION_EDIT, q1.Result[0].Permission)
 			require.Equal(t, "Edit", q1.Result[0].PermissionName)
-			require.Equal(t, currentUser.ID, q1.Result[0].UserId)
+			require.Equal(t, currentUser.ID, q1.Result[0].UserID)
 			require.Equal(t, currentUser.Login, q1.Result[0].UserLogin)
 			require.Equal(t, currentUser.Email, q1.Result[0].UserEmail)
 
 			err = updateDashboardACL(t, dashboardStore, savedFolder.ID)
 			require.Nil(t, err)
 
-			q3 := &models.GetDashboardACLInfoListQuery{DashboardID: savedFolder.ID, OrgID: 1}
+			q3 := &dashboards.GetDashboardACLInfoListQuery{DashboardID: savedFolder.ID, OrgID: 1}
 			err = dashboardStore.GetDashboardACLInfoList(context.Background(), q3)
 			require.Nil(t, err)
 			require.Equal(t, 0, len(q3.Result))
@@ -204,7 +204,7 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 			team1, err := teamSvc.CreateTeam("group1 name", "", 1)
 			require.Nil(t, err)
 
-			err = updateDashboardACL(t, dashboardStore, savedFolder.ID, models.DashboardACL{
+			err = updateDashboardACL(t, dashboardStore, savedFolder.ID, dashboards.DashboardACL{
 				OrgID:       1,
 				TeamID:      team1.ID,
 				DashboardID: savedFolder.ID,
@@ -212,12 +212,12 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 			})
 			require.Nil(t, err)
 
-			q1 := &models.GetDashboardACLInfoListQuery{DashboardID: savedFolder.ID, OrgID: 1}
+			q1 := &dashboards.GetDashboardACLInfoListQuery{DashboardID: savedFolder.ID, OrgID: 1}
 			err = dashboardStore.GetDashboardACLInfoList(context.Background(), q1)
 			require.Nil(t, err)
-			require.Equal(t, savedFolder.ID, q1.Result[0].DashboardId)
+			require.Equal(t, savedFolder.ID, q1.Result[0].DashboardID)
 			require.Equal(t, models.PERMISSION_EDIT, q1.Result[0].Permission)
-			require.Equal(t, team1.ID, q1.Result[0].TeamId)
+			require.Equal(t, team1.ID, q1.Result[0].TeamID)
 		})
 
 		t.Run("Should be able to update an existing permission for a team", func(t *testing.T) {
@@ -225,7 +225,7 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 			teamSvc := teamimpl.ProvideService(sqlStore, sqlStore.Cfg)
 			team1, err := teamSvc.CreateTeam("group1 name", "", 1)
 			require.Nil(t, err)
-			err = updateDashboardACL(t, dashboardStore, savedFolder.ID, models.DashboardACL{
+			err = updateDashboardACL(t, dashboardStore, savedFolder.ID, dashboards.DashboardACL{
 				OrgID:       1,
 				TeamID:      team1.ID,
 				DashboardID: savedFolder.ID,
@@ -233,13 +233,13 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 			})
 			require.Nil(t, err)
 
-			q3 := &models.GetDashboardACLInfoListQuery{DashboardID: savedFolder.ID, OrgID: 1}
+			q3 := &dashboards.GetDashboardACLInfoListQuery{DashboardID: savedFolder.ID, OrgID: 1}
 			err = dashboardStore.GetDashboardACLInfoList(context.Background(), q3)
 			require.Nil(t, err)
 			require.Equal(t, 1, len(q3.Result))
-			require.Equal(t, savedFolder.ID, q3.Result[0].DashboardId)
+			require.Equal(t, savedFolder.ID, q3.Result[0].DashboardID)
 			require.Equal(t, models.PERMISSION_ADMIN, q3.Result[0].Permission)
-			require.Equal(t, team1.ID, q3.Result[0].TeamId)
+			require.Equal(t, team1.ID, q3.Result[0].TeamID)
 		})
 	})
 
@@ -248,17 +248,17 @@ func TestIntegrationDashboardACLDataAccess(t *testing.T) {
 		var rootFolderId int64 = 0
 		//sqlStore := db.InitTestDB(t)
 
-		query := models.GetDashboardACLInfoListQuery{DashboardID: rootFolderId, OrgID: 1}
+		query := dashboards.GetDashboardACLInfoListQuery{DashboardID: rootFolderId, OrgID: 1}
 
 		err := dashboardStore.GetDashboardACLInfoList(context.Background(), &query)
 		require.Nil(t, err)
 
 		require.Equal(t, 2, len(query.Result))
 		defaultPermissionsId := int64(-1)
-		require.Equal(t, defaultPermissionsId, query.Result[0].DashboardId)
+		require.Equal(t, defaultPermissionsId, query.Result[0].DashboardID)
 		require.Equal(t, org.RoleViewer, *query.Result[0].Role)
 		require.False(t, query.Result[0].Inherited)
-		require.Equal(t, defaultPermissionsId, query.Result[1].DashboardId)
+		require.Equal(t, defaultPermissionsId, query.Result[1].DashboardID)
 		require.Equal(t, org.RoleEditor, *query.Result[1].Role)
 		require.False(t, query.Result[1].Inherited)
 	})

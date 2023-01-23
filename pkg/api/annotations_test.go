@@ -680,9 +680,9 @@ func setUpACL() {
 	store := dbtest.NewFakeDB()
 	teamSvc := &teamtest.FakeService{}
 	dashSvc := &dashboards.FakeDashboardService{}
-	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
-		q.Result = []*models.DashboardACLInfoDTO{
+	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*dashboards.GetDashboardACLInfoListQuery)
+		q.Result = []*dashboards.DashboardACLInfoDTO{
 			{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
 			{Role: &editorRole, Permission: models.PERMISSION_EDIT},
 		}
