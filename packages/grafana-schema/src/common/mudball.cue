@@ -262,3 +262,64 @@ ScopedVar: {
 ScopedVars: {
 	[string]: ScopedVar
 } @cuetsy(kind="interface")
+
+// TODO Should be moved to common data query?
+QueryResultMeta: {
+	type?: DataFrameType
+	// DataSource Specific Values
+	custom?: {...}
+	// Stats
+	stats?: [...QueryResultMetaStat]
+	// Meta notices
+	notices?: [...QueryResultMetaNotice]
+	// Used to track transformation ids that where part of the processing
+  transformations?: [...string]
+  // Currently used to show results in Explore only in preferred visualisation option
+  preferredVisualisationType?: PreferredVisualisationType
+  // The path for live stream updates for this frame
+  channel?: string
+  // Did the query response come from the cache
+  isCachedResponse?: bool
+	// Optionally identify which topic the frame should be assigned to.
+	// A value specified in the response will override what the request asked for.
+	dataTopic?: DataTopic
+	// This is the raw query sent to the underlying system.  All macros and templating
+  // as been applied.  When metadata contains this value, it will be shown in the query inspector
+  executedQueryString?: string
+  // A browsable path on the datasource
+  path?: string
+  //defaults to '/'
+  pathSeparator?: string
+  // Legacy data source specific, should be moved to custom
+  // used by log models and loki
+  searchWords?: [...string]
+  // used by log models and loki
+  limit?: int64
+  // used to keep track of old json doc values
+  json?: bool
+  instant?: bool
+} @cuetsy(kind="interface")
+
+// TODO this is enum with one field
+// Attached to query results (not persisted)
+DataTopic: "annotations" | "" @cuetsy(kind="type")
+
+// TODO extends FieldConfig
+QueryResultMetaStat: {
+  displayName: string
+  value: int64
+} @cuetsy(kind="interface")
+
+QueryResultMetaNotice: {
+  // Specify the notice severity
+  severity: "info" | "warning" | "error" @cuetsy(kind="type")
+  // Notice descriptive text
+  text: string
+  // An optional link that may be displayed in the UI.
+  // This value may be an absolute URL or relative to grafana root
+  link?: string
+  // Optionally suggest an appropriate tab for the panel inspector
+  inspect?: "meta" | "error" | "data" | "stats" @cuetsy(kind="type")
+} @cuetsy(kind="interface")
+
+PreferredVisualisationType: "graph" | "table" | "logs" | "trace" | "nodeGraph" | "flamegraph" | "rawPrometheus" @cuetsy(kind="type")

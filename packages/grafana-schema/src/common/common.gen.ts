@@ -23,6 +23,60 @@ export enum DataFrameType {
   TimeSeriesWide = 'timeseries-wide',
 }
 
+/**
+ * TODO extends #QueryResultBase
+ */
+export interface DataFrame {
+  /**
+   * All fields of equal length
+   */
+  fields: Array<Field>;
+  /**
+   * The number of rows
+   */
+  length: number;
+  name?: string;
+}
+
+export const defaultDataFrame: Partial<DataFrame> = {
+  fields: [],
+};
+
+/**
+ * TODO Field<T = any, V = Vector<T>>
+ */
+export interface Field {
+  /**
+   * Meta info about how field and how to display it
+   */
+  config: FieldConfig;
+  /**
+   * Convert a value for display TODO extend in veneer
+   */
+  display?: unknown;
+  /**
+   * Get value data links with variables interpolated. Extended in veneer
+   */
+  getLinks?: unknown;
+  labels?: Labels;
+  /**
+   * Name of the field (column)
+   */
+  name: string;
+  /**
+   * Cached values with appropriate display and id values TODO | null
+   */
+  state?: FieldState;
+  /**
+   * Field value type (string, number, etc)
+   */
+  type: FieldType;
+  /**
+   * The raw field values. Extended in veneer
+   */
+  values: Record<string, unknown>;
+}
+
 export enum FieldType {
   bool = 'bool',
   geo = 'geo',
@@ -34,9 +88,132 @@ export enum FieldType {
 }
 
 /**
- * TODO | null
+ * Every property is optional
+ * Plugins may extend this with additional properties. Something like series overrides
  */
-export type DecimalCount = number;
+export interface FieldConfig {
+  /**
+   * Significant digits (for display) TODO this should be a separate type
+   */
+  decimals?: number;
+  /**
+   * Human readable field metadata
+   */
+  description?: string;
+  /**
+   * The display value for this field.  This supports template variables blank is auto
+   */
+  displayName?: string;
+  /**
+   * This can be used by data sources that return and explicit naming structure for values and labels
+   * When this property is configured, this value is used rather than the default naming strategy.
+   */
+  displayNameFromDS?: string;
+  /**
+   * True if data source field supports ad-hoc filters
+   */
+  filterable?: boolean;
+  /**
+   * Interval indicates the expected regular step between values in the series.
+   * When an interval exists, consumers can identify "missing" values when the expected value is not present.
+   * The grafana timeseries visualization will render disconnected values when missing values are found it the time field.
+   * The interval uses the same units as the values.  For time.Time, this is defined in milliseconds.
+   * TODO | null
+   */
+  interval?: number;
+  /**
+   * Convert input values into a display string
+   */
+  mappings?: Array<ValueMapping>;
+  /**
+   * TODO | null
+   */
+  max?: number;
+  /**
+   * TODO | null
+   */
+  min?: number;
+  /**
+   * An explict path to the field in the datasource.  When the frame meta includes a path,
+   * This will default to `${frame.meta.path}/${field.name}
+   * When defined, this value can be used as an identifier within the datasource scope, and
+   * may be used to update the results
+   */
+  path?: string;
+  /**
+   * Map numeric values to states
+   */
+  thresholds?: Array<ThresholdsConfig>;
+  /**
+   * Numeric Options
+   */
+  unit?: string;
+  /**
+   * True if data source can write a value to the path.  Auth/authz are supported separately
+   */
+  writeable?: boolean;
+}
+
+export const defaultFieldConfig: Partial<FieldConfig> = {
+  mappings: [],
+  thresholds: [],
+};
+
+export interface FieldState {
+  /**
+   * Cache of reduced values
+   */
+  calcs?: Record<string, unknown>;
+  /**
+   * An appropriate name for the field (does not include frame info) TODO | null
+   */
+  displayName?: string;
+  /**
+   * Boolean value is true if field is in a larger data set with multiple frames.
+   * This is only related to the cached displayName property above.
+   */
+  multipleFrames?: boolean;
+  /**
+   * Boolean value is true if a null filling threshold has been applied
+   * against the frame of the field. This is used to avoid cases in which
+   * this would applied more than one time.
+   */
+  nullThresholdApplied?: boolean;
+  /**
+   * Location of this field within the context frames results
+   * @internal -- we will try to make this unnecessary
+   */
+  origin?: DataFrameFieldIndex;
+  /**
+   * The numeric range for values in this field.  This value will respect the min/max
+   * set in field config, or when set to `auto` this will have the min/max for all data
+   * in the response
+   */
+  range?: NumericRange;
+  /**
+   * Appropriate values for templating
+   */
+  scopedVars?: ScopedVars;
+  /**
+   * Series index is index for this field in a larger data set that can span multiple DataFrames
+   * Useful for assigning color to series by looking up a color in a palette using this index
+   */
+  seriesIndex?: number;
+}
+
+/**
+ * TODO docs
+ */
+export interface NumericRange {
+  delta: number;
+  max?: number;
+  min?: number;
+}
+
+export interface DataFrameFieldIndex {
+  fieldIndex: number;
+  frameIndex: number;
+}
 
 /**
  * TODO Duplicate declaration
@@ -638,6 +815,129 @@ export interface VizTooltipOptions {
   sort: SortOrder;
 }
 
+export interface Labels {}
+
+/**
+ * TODO docs | generic type
+ */
+export interface ScopedVar {
+  text: unknown;
+  value: unknown;
+}
+
+/**
+ * TODO docs
+ */
+export interface ScopedVars {}
+
+/**
+ * TODO Should be moved to common data query?
+ */
+export interface QueryResultMeta {
+  /**
+   * The path for live stream updates for this frame
+   */
+  channel?: string;
+  /**
+   * DataSource Specific Values
+   */
+  custom?: Record<string, unknown>;
+  /**
+   * Optionally identify which topic the frame should be assigned to.
+   * A value specified in the response will override what the request asked for.
+   */
+  dataTopic?: DataTopic;
+  /**
+   * This is the raw query sent to the underlying system.  All macros and templating
+   * as been applied.  When metadata contains this value, it will be shown in the query inspector
+   */
+  executedQueryString?: string;
+  instant?: boolean;
+  /**
+   * Did the query response come from the cache
+   */
+  isCachedResponse?: boolean;
+  /**
+   * used to keep track of old json doc values
+   */
+  json?: boolean;
+  /**
+   * used by log models and loki
+   */
+  limit?: number;
+  /**
+   * Meta notices
+   */
+  notices?: Array<QueryResultMetaNotice>;
+  /**
+   * A browsable path on the datasource
+   */
+  path?: string;
+  /**
+   * defaults to '/'
+   */
+  pathSeparator?: string;
+  /**
+   * Currently used to show results in Explore only in preferred visualisation option
+   */
+  preferredVisualisationType?: PreferredVisualisationType;
+  /**
+   * Legacy data source specific, should be moved to custom
+   * used by log models and loki
+   */
+  searchWords?: Array<string>;
+  /**
+   * Stats
+   */
+  stats?: Array<QueryResultMetaStat>;
+  /**
+   * Used to track transformation ids that where part of the processing
+   */
+  transformations?: Array<string>;
+  type?: DataFrameType;
+}
+
+export const defaultQueryResultMeta: Partial<QueryResultMeta> = {
+  notices: [],
+  searchWords: [],
+  stats: [],
+  transformations: [],
+};
+
+/**
+ * TODO this is enum with one field
+ * Attached to query results (not persisted)
+ */
+export type DataTopic = ('annotations' | '');
+
+/**
+ * TODO extends FieldConfig
+ */
+export interface QueryResultMetaStat {
+  displayName: string;
+  value: number;
+}
+
+export interface QueryResultMetaNotice {
+  /**
+   * Optionally suggest an appropriate tab for the panel inspector
+   */
+  inspect?: ('meta' | 'error' | 'data' | 'stats');
+  /**
+   * An optional link that may be displayed in the UI.
+   * This value may be an absolute URL or relative to grafana root
+   */
+  link?: string;
+  /**
+   * Specify the notice severity
+   */
+  severity: ('info' | 'warning' | 'error');
+  /**
+   * Notice descriptive text
+   */
+  text: string;
+}
+
 /**
  * Internally, this is the "type" of cell that's being displayed
  * in the table such as colored text, JSON, gauge, etc.
@@ -755,6 +1055,8 @@ export interface DataSourceRef {
    */
   uid?: string;
 }
+
+export type PreferredVisualisationType = ('graph' | 'table' | 'logs' | 'trace' | 'nodeGraph' | 'flamegraph' | 'rawPrometheus');
 
 /**
  * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)

@@ -25,7 +25,7 @@ DataFrame: {
   // All fields of equal length
   fields: [...#Field]
   // The number of rows
-  length: number
+  length: int64
 } @cuetsy(kind="interface")
 
 // TODO Field<T = any, V = Vector<T>>
@@ -69,8 +69,8 @@ DataFrame: {
 		displayNameFromDS?: string
 		// Human readable field metadata
 		description?: string
-		//An explict path to the field in the datasource.  When the frame meta includes a path,
-		//This will default to `${frame.meta.path}/${field.name}
+		// An explict path to the field in the datasource.  When the frame meta includes a path,
+		// This will default to `${frame.meta.path}/${field.name}
 		// When defined, this value can be used as an identifier within the datasource scope, and
 		// may be used to update the results
 		path?: string
@@ -80,26 +80,26 @@ DataFrame: {
 		filterable?: bool
 		// Numeric Options
 		unit?: string
-		// Significant digits (for display)
-		decimals?: #DecimalCount
+		// Significant digits (for display) TODO this should be a separate type
+		decimals?: int64
 		// TODO | null
-		min?: number
+		min?: int64
 		// TODO | null
-		max?: number
+		max?: int64
 		// Interval indicates the expected regular step between values in the series.
 		// When an interval exists, consumers can identify "missing" values when the expected value is not present.
 		// The grafana timeseries visualization will render disconnected values when missing values are found it the time field.
 		// The interval uses the same units as the values.  For time.Time, this is defined in milliseconds.
 		// TODO | null
-		interval?: number
+		interval?: int64
 		// Convert input values into a display string
 		mappings?: [...#ValueMapping]
 		// Map numeric values to states
 		thresholds?: [...#ThresholdsConfig]
 } @cuetsy(kind="interface")
 
-// TODO | null
-#DecimalCount?: number @cuetsy(kind="type")
+// TODO this doesn't work
+//#DecimalCount?: int64 | null @cuetsy(kind="type")
 
 #FieldState: {
 		// An appropriate name for the field (does not include frame info) TODO | null
@@ -114,7 +114,7 @@ DataFrame: {
 		scopedVars?: ScopedVars
 		// Series index is index for this field in a larger data set that can span multiple DataFrames
 		// Useful for assigning color to series by looking up a color in a palette using this index
-		seriesIndex?: number
+		seriesIndex?: int64
 		// Location of this field within the context frames results
 		// @internal -- we will try to make this unnecessary
 		origin?: #DataFrameFieldIndex
@@ -132,9 +132,9 @@ DataFrame: {
 
 // TODO docs
 #NumericRange: {
-		min?: number // TODO | null
-		max?: number // TODO | null
-		delta: number
+		min?: int64 // TODO | null
+		max?: int64 // TODO | null
+		delta: int64
 } @cuetsy(kind="interface")
 
 #DataFrameFieldIndex: {
@@ -153,7 +153,7 @@ DataFrame: {
 #Threshold: {
 	// TODO docs
 	// FIXME the corresponding typescript field is required/non-optional, but nulls currently appear here when serializing -Infinity to JSON
-	value?: number @grafanamaturity(NeedsExpertReview)
+	value?: int64 @grafanamaturity(NeedsExpertReview)
 	// TODO docs
 	color: string @grafanamaturity(NeedsExpertReview)
 	// TODO docs
