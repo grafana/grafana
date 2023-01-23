@@ -495,6 +495,10 @@ function buildMetricsQuery(
   return expr;
 }
 
+/**
+ * Variables from trace that can be used in the query
+ * @param trace
+ */
 function scopedVarsFromTrace(trace: Trace): ScopedVars {
   return {
     __trace: {
@@ -508,6 +512,10 @@ function scopedVarsFromTrace(trace: Trace): ScopedVars {
   };
 }
 
+/**
+ * Variables from span that can be used in the query
+ * @param span
+ */
 function scopedVarsFromSpan(span: TraceSpan): ScopedVars {
   const tags: ScopedVars = {};
 
@@ -536,6 +544,15 @@ function scopedVarsFromSpan(span: TraceSpan): ScopedVars {
 
 type VarValue = string | number | boolean | undefined;
 
+/**
+ * This function takes some code from  template service replace() function to figure out if all variables are
+ * interpolated. This is so we don't show links that do not work. This cuts a lots of corners though and that is why
+ * it's a local function. We sort of don't care about the dashboard template variables for example. Also we only link
+ * to loki/splunk/elastic, so it should be less probable that user needs part of a query that looks like a variable but
+ * is actually part of the query language.
+ * @param query
+ * @param scopedVars
+ */
 function dataLinkHasAllVariablesDefined<T extends DataQuery>(query: T, scopedVars: ScopedVars): boolean {
   const vars = getVariablesMapInTemplate(getStringsFromObject(query), scopedVars);
   return Object.values(vars).every((val) => val !== undefined);
