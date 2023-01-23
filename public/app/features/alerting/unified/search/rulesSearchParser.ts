@@ -9,7 +9,7 @@ export interface RulesFilter {
   namespace?: string;
   groupName?: string;
   ruleName?: string;
-  ruleState?: PromAlertingRuleState; // Unify somehow with Prometheus rules
+  ruleState?: PromAlertingRuleState;
   ruleType?: PromRuleType;
   dataSourceName?: string;
   labels: string[];

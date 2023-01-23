@@ -26,6 +26,11 @@ export enum FilterDialect {
 
 export type QueryFilterMapper = Record<number, (filter: string) => void>;
 
+export interface FilterExpr {
+  type: number;
+  value: string;
+}
+
 export function parseQueryToFilter(query: string, dialects: FilterDialect[], filterMapper: QueryFilterMapper) {
   traverseNodeTree(query, dialects, (node) => {
     if (node.type.id === terms.FilterExpression) {
@@ -64,11 +69,6 @@ function getFilterFromSyntaxNode(query: string, filterExpressionNode: SyntaxNode
 
 function getNodeContent(query: string, node: SyntaxNode) {
   return query.slice(node.from, node.to).trim().replace(/\"/g, '');
-}
-
-export interface FilterExpr {
-  type: number;
-  value: string;
 }
 
 export function applyFiltersToQuery(query: string, dialects: FilterDialect[], filters: FilterExpr[]): string {
