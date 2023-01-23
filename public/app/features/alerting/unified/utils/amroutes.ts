@@ -211,6 +211,7 @@ export const formAmRouteToAmRoute = (
     groupIntervalValueType,
     repeatIntervalValue,
     repeatIntervalValueType,
+    receiver,
   } = formAmRoute;
 
   const group_by = overrideGrouping && groupBy ? groupBy : [];
@@ -243,6 +244,7 @@ export const formAmRouteToAmRoute = (
     repeat_interval,
     routes: routes,
     mute_time_intervals: formAmRoute.muteTimeIntervals,
+    receiver: receiver,
   };
 
   // non-Grafana managed rules should use "matchers", Grafana-managed rules should use "object_matchers"
@@ -271,7 +273,12 @@ export const stringToSelectableValue = (str: string): SelectableValue<string> =>
 export const stringsToSelectableValues = (arr: string[] | undefined): Array<SelectableValue<string>> =>
   (arr ?? []).map(stringToSelectableValue);
 
-export const mapSelectValueToString = (selectableValue: SelectableValue<string>): string => {
+export const mapSelectValueToString = (selectableValue: SelectableValue<string>): string | undefined => {
+  // this allows us to deal with cleared values
+  if (selectableValue === null) {
+    return undefined;
+  }
+
   if (!selectableValue) {
     return '';
   }

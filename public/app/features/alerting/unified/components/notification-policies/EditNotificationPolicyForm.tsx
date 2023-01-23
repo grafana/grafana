@@ -164,6 +164,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ actionButt
                   className={formStyles.input}
                   onChange={(value) => onChange(mapSelectValueToString(value))}
                   options={receiversWithOnCallOnTop}
+                  isClearable
                 />
               )}
               control={control}
