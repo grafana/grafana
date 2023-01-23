@@ -3,8 +3,6 @@ package pluginsettings
 import (
 	"context"
 	"time"
-
-	"github.com/grafana/grafana/pkg/models"
 )
 
 type FakePluginSettings struct {
@@ -33,7 +31,7 @@ func (ps *FakePluginSettings) GetPluginSettingByPluginID(ctx context.Context, ar
 	if res, ok := ps.Plugins[args.PluginID]; ok {
 		return res, nil
 	}
-	return nil, models.ErrPluginSettingNotFound
+	return nil, ErrPluginSettingNotFound
 }
 
 // UpdatePluginSetting updates a Plugin Setting
@@ -66,7 +64,7 @@ func (ps *FakePluginSettings) UpdatePluginSettingPluginVersion(ctx context.Conte
 		res.PluginVersion = args.PluginVersion
 		return nil
 	}
-	return models.ErrPluginSettingNotFound
+	return ErrPluginSettingNotFound
 }
 
 // DecryptedValues decrypts the encrypted secureJSONData of the provided plugin setting and
