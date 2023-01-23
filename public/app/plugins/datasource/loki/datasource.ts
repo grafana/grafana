@@ -386,7 +386,7 @@ export class LokiDatasource
   }
 
   async queryStatsRequest(query: LokiQuery): Promise<QueryStats> {
-    const labelMatcher = query.expr.split('}')[0] + '}';
+    const labelMatcher = `{${query.expr.split('{')[1].split('}')[0]}}`;
     const { start, end } = this.getTimeRangeParams();
 
     const { data } = await lastValueFrom(
