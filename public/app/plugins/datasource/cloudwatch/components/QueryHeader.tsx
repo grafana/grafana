@@ -35,7 +35,7 @@ const QueryHeader: React.FC<Props> = ({
   const { queryMode, region } = query;
   const isMonitoringAccount = useIsMonitoringAccount(datasource.resources, query.region);
   const [regions, regionIsLoading] = useRegions(datasource);
-  const emptyLogsExpression = queryMode === 'Logs' && (isCloudWatchLogsQuery(query) ? !query.expression : false);
+  const emptyLogsExpression = isCloudWatchLogsQuery(query) ? !query.expression : false;
 
   const onQueryModeChange = ({ value }: SelectableValue<CloudWatchQueryMode>) => {
     if (value && value !== queryMode) {

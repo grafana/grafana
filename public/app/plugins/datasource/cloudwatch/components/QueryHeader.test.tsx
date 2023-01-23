@@ -132,9 +132,9 @@ describe('QueryHeader', () => {
           dataIsStale={false}
         />
       );
-      await waitFor(() => expect(screen.queryByText('CloudWatch Metrics')).toBeInTheDocument());
-      await act(async () => {
-        await selectEvent.select(screen.getByLabelText('Query mode'), 'CloudWatch Logs', { container: document.body });
+      expect(await screen.findByText('CloudWatch Metrics')).toBeInTheDocument();
+      await selectEvent.select(await screen.findByLabelText('Query mode'), 'CloudWatch Logs', {
+        container: document.body,
       });
       expect(onChange).toHaveBeenCalledWith({
         ...validMetricSearchBuilderQuery,
@@ -158,11 +158,9 @@ describe('QueryHeader', () => {
           dataIsStale={false}
         />
       );
-      await waitFor(() => expect(screen.queryByText('CloudWatch Logs')).toBeInTheDocument());
-      await act(async () => {
-        await selectEvent.select(screen.getByLabelText('Query mode'), 'CloudWatch Metrics', {
-          container: document.body,
-        });
+      expect(await screen.findByText('CloudWatch Logs')).toBeInTheDocument();
+      await selectEvent.select(await screen.findByLabelText('Query mode'), 'CloudWatch Metrics', {
+        container: document.body,
       });
       expect(onChange).toHaveBeenCalledWith({
         ...validMetricSearchBuilderQuery,
@@ -187,8 +185,8 @@ describe('QueryHeader', () => {
           dataIsStale={false}
         />
       );
-      await waitFor(() => expect(screen.queryByText('Run queries')).toBeInTheDocument());
-      await waitFor(() => expect(screen.getByText('Run queries').closest('button')).toBeDisabled());
+      expect(await screen.findByText('Run queries')).toBeInTheDocument();
+      expect(screen.getByText('Run queries').closest('button')).toBeDisabled();
     });
     it('should enable run query button when set', async () => {
       const onChange = jest.fn();
@@ -202,8 +200,8 @@ describe('QueryHeader', () => {
           dataIsStale={false}
         />
       );
-      await waitFor(() => expect(screen.queryByText('Run queries')).toBeInTheDocument());
-      await waitFor(() => expect(screen.getByText('Run queries').closest('button')).not.toBeDisabled());
+      expect(await screen.findByText('Run queries')).toBeInTheDocument();
+      expect(screen.getByText('Run queries').closest('button')).not.toBeDisabled();
     });
   });
 });
