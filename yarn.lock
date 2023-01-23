@@ -19304,6 +19304,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"esbuild-plugin-browserslist@npm:^0.6.0":
+  version: 0.6.0
+  resolution: "esbuild-plugin-browserslist@npm:0.6.0"
+  dependencies:
+    debug: ^4.3.4
+    zod: ^3.19.1
+  peerDependencies:
+    browserslist: ^4.21.4
+    esbuild: ~0.16.1
+  checksum: 8642d107e9f9f6f7216e819794084f6d512dbbbeec77fcafa9fdbd185a2831dcd6524e796c8e770a66974fc7210534ed6857e1705bf600e1dea14e8ca5941f50
+  languageName: node
+  linkType: hard
+
 "esbuild-sunos-64@npm:0.15.12":
   version: 0.15.12
   resolution: "esbuild-sunos-64@npm:0.15.12"
@@ -22139,6 +22152,7 @@ __metadata:
     baron: 3.0.3
     blob-polyfill: 7.0.20220408
     brace: 0.11.1
+    browserslist: ^4.21.4
     calculate-size: 1.1.1
     centrifuge: 3.1.0
     classnames: 2.3.2
@@ -22160,6 +22174,7 @@ __metadata:
     enzyme-to-json: 3.6.2
     esbuild: 0.16.16
     esbuild-loader: ^2.20.0
+    esbuild-plugin-browserslist: ^0.6.0
     eslint: 8.31.0
     eslint-config-prettier: 8.6.0
     eslint-plugin-import: ^2.26.0
@@ -39863,6 +39878,13 @@ __metadata:
   version: 0.1.0
   resolution: "yocto-queue@npm:0.1.0"
   checksum: f77b3d8d00310def622123df93d4ee654fc6a0096182af8bd60679ddcdfb3474c56c6c7190817c84a2785648cdee9d721c0154eb45698c62176c322fb46fc700
+  languageName: node
+  linkType: hard
+
+"zod@npm:^3.19.1":
+  version: 3.20.2
+  resolution: "zod@npm:3.20.2"
+  checksum: 04172f7e9350372684ccd298d4716908edc9113751295b6c4e1b3ea84e2af8997e504b33ba36f4741417bb2a5dc90bfd40501f6b0e7389df10e42a63d6d8366c
   languageName: node
   linkType: hard
 
