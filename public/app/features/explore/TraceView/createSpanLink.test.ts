@@ -793,7 +793,7 @@ describe('createSpanLinkFactory', () => {
           { key: 'k8s.pod.name', value: 'pod' },
         ],
         customQuery: true,
-        query: '{${__tags}} |="${__span.tags["service.name"]}" |="${__trace.id}"',
+        query: '{${__tags}} |="${__span.tags["service.name"]}" |="${__trace.traceId}"',
       });
       expect(createLink).toBeDefined();
       const links = createLink!(

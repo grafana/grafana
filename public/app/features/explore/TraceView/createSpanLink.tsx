@@ -326,7 +326,7 @@ function getQueryForLoki(
     expr += ' |="${__span.traceId}"';
   }
   if (filterBySpanID && span.spanID) {
-    expr += ' |="${__span.id}"';
+    expr += ' |="${__span.spanId}"';
   }
 
   return {
@@ -368,7 +368,7 @@ function getQueryForElasticsearchOrOpensearch(
     query = '"${__span.traceId}" AND ' + query;
   }
   if (filterBySpanID && span.spanID) {
-    query = '"${__span.id}" AND ' + query;
+    query = '"${__span.spanId}" AND ' + query;
   }
 
   return {
@@ -393,7 +393,7 @@ function getQueryForSplunk(span: TraceSpan, options: TraceToLogsOptionsV2, tags:
     query += ' "${__span.traceId}"';
   }
   if (filterBySpanID && span.spanID) {
-    query += ' "${__span.id}"';
+    query += ' "${__span.spanId}"';
   }
 
   return {
@@ -495,7 +495,7 @@ function scopedVarsFromTrace(trace: Trace): ScopedVars {
       value: {
         duration: trace.duration,
         name: trace.traceName,
-        id: trace.traceID,
+        traceId: trace.traceID,
       },
     },
   };
@@ -517,7 +517,7 @@ function scopedVarsFromSpan(span: TraceSpan): ScopedVars {
     __span: {
       text: 'Span',
       value: {
-        id: span.spanID,
+        spanId: span.spanID,
         traceId: span.traceID,
         duration: span.duration,
         name: span.operationName,
