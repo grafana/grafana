@@ -264,6 +264,14 @@ ScopedVars: {
 } @cuetsy(kind="interface")
 
 // TODO Should be moved to common data query?
+QueryResultBase: {
+   // Matches the query target refId
+  refId?: string
+   // Used by some backend data sources to communicate back info about the execution (generated sql, timing)
+  meta?: QueryResultMeta
+} @cuetsy(kind="interface")
+
+// TODO docs
 QueryResultMeta: {
 	type?: DataFrameType
 	// DataSource Specific Values
@@ -300,9 +308,9 @@ QueryResultMeta: {
   instant?: bool
 } @cuetsy(kind="interface")
 
-// TODO this is enum with one field
+// TODO this is an enum with one field
 // Attached to query results (not persisted)
-DataTopic: "annotations" | "" @cuetsy(kind="type")
+DataTopic: "annotations" @cuetsy(kind="type")
 
 // TODO extends FieldConfig
 QueryResultMetaStat: {

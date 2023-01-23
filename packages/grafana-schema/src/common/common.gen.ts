@@ -26,7 +26,7 @@ export enum DataFrameType {
 /**
  * TODO extends #QueryResultBase
  */
-export interface DataFrame {
+export interface DataFrame extends QueryResultBase {
   /**
    * All fields of equal length
    */
@@ -833,6 +833,20 @@ export interface ScopedVars {}
 /**
  * TODO Should be moved to common data query?
  */
+export interface QueryResultBase {
+  /**
+   * Used by some backend data sources to communicate back info about the execution (generated sql, timing)
+   */
+  meta?: QueryResultMeta;
+  /**
+   * Matches the query target refId
+   */
+  refId?: string;
+}
+
+/**
+ * TODO docs
+ */
 export interface QueryResultMeta {
   /**
    * The path for live stream updates for this frame
@@ -905,10 +919,10 @@ export const defaultQueryResultMeta: Partial<QueryResultMeta> = {
 };
 
 /**
- * TODO this is enum with one field
+ * TODO this is an enum with one field
  * Attached to query results (not persisted)
  */
-export type DataTopic = ('annotations' | '');
+export type DataTopic = 'annotations';
 
 /**
  * TODO extends FieldConfig

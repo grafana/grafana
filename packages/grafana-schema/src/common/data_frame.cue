@@ -19,8 +19,9 @@ DataFrameType:
 		//Explicit fields for xMin, xMax, count
 		"histogram" @cuetsy(kind="enum", memberNames="TimeSeriesWide|TimeSeriesLong|TimeSeriesMany|TimeSeriesMulti|DirectoryListing|HeatmapRows|HeatmapCells|Histogram")
 
-// TODO extends #QueryResultBase
+// TODO docs
 DataFrame: {
+	QueryResultBase
   name?: string
   // All fields of equal length
   fields: [...#Field]
