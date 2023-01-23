@@ -94,10 +94,6 @@ type EntitySummary struct {
 	// URL safe version of the name.  It will be unique within the folder
 	Slug string `json:"slug,omitempty"`
 
-	// URL should only be set if the value is not derived directly from kind+uid
-	// NOTE: this may go away with a more robust GRN solution /!\
-	URL string `json:"URL,omitempty"`
-
 	// When errors exist
 	Error *EntityErrorInfo `json:"error,omitempty"`
 
