@@ -31,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
@@ -213,7 +214,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	}
 	userAuthTokenSvc := authtest.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
-	authJWTSvc := models.NewFakeJWTService()
+	authJWTSvc := jwt.NewFakeJWTService()
 	tracer := tracing.InitializeTracerForTest()
 	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginservice.LoginServiceMock{}, &usertest.FakeUserService{}, sqlStore)
 	loginService := &logintest.LoginServiceFake{}
@@ -541,7 +542,7 @@ var (
 )
 
 type setUpConf struct {
-	aclMockResp []*models.DashboardACLInfoDTO
+	aclMockResp []*dashboards.DashboardACLInfoDTO
 }
 
 type mockSearchService struct{ ExpectedResult models.HitList }
@@ -556,7 +557,7 @@ func setUp(confs ...setUpConf) *HTTPServer {
 	store := dbtest.NewFakeDB()
 	hs := &HTTPServer{SQLStore: store, SearchService: &mockSearchService{}}
 
-	aclMockResp := []*models.DashboardACLInfoDTO{}
+	aclMockResp := []*dashboards.DashboardACLInfoDTO{}
 	for _, c := range confs {
 		if c.aclMockResp != nil {
 			aclMockResp = c.aclMockResp
@@ -564,8 +565,8 @@ func setUp(confs ...setUpConf) *HTTPServer {
 	}
 	teamSvc := &teamtest.FakeService{}
 	dashSvc := &dashboards.FakeDashboardService{}
-	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*models.GetDashboardACLInfoListQuery)
+	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*dashboards.GetDashboardACLInfoListQuery)
 		q.Result = aclMockResp
 	}).Return(nil)
 	guardian.InitLegacyGuardian(store, dashSvc, teamSvc)

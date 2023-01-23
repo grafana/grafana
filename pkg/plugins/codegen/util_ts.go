@@ -64,7 +64,7 @@ func convertImport(im *ast.ImportSpec) (tsast.ImportSpec, error) {
 	if im.Name != nil && im.Name.String() != "" {
 		tsim.AsName = im.Name.String()
 	} else {
-		sl := strings.Split(im.Path.Value, "/")
+		sl := strings.Split(strings.Trim(im.Path.Value, "\""), "/")
 		final := sl[len(sl)-1]
 		if idx := strings.Index(final, ":"); idx != -1 {
 			tsim.AsName = final[idx:]
