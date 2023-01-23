@@ -413,7 +413,7 @@ lineage: seqs: [
 				#MatcherConfig: {
 					id:       string | *"" @grafanamaturity(NeedsExpertReview)
 					options?: _            @grafanamaturity(NeedsExpertReview)
-				} @cuetsy(kind="interface")
+				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				#DynamicConfigValue: {
 					id:     string | *"" @grafanamaturity(NeedsExpertReview)
