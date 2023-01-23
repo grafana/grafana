@@ -15,7 +15,7 @@
 package grafanaplugin
 
 import (
-	ui "github.com/grafana/grafana/packages/grafana-schema/src/common"
+	"github.com/grafana/grafana/packages/grafana-schema/src/common"
 )
 
 composableKinds: PanelCfg: {
@@ -28,9 +28,9 @@ composableKinds: PanelCfg: {
 							frameIndex:    number | *0
 							showHeader:    bool | *true
 							showTypeIcons: bool | *false
-							sortBy?: [...ui.TableSortByFieldState]
+							sortBy?: [...common.TableSortByFieldState]
 						} @cuetsy(kind="interface")
-						PanelFieldConfig: ui.TableFieldOptions & {} @cuetsy(kind="interface")
+						PanelFieldConfig: common.TableFieldOptions & {} @cuetsy(kind="interface")
 					},
 				]
 			},

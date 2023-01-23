@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/secrets/fakes"
@@ -106,7 +105,7 @@ func TestIntegrationPluginSettings(t *testing.T) {
 		secureJsonData, err := secretsService.EncryptJsonData(context.Background(), map[string]string{"secureKey": "secureValue"}, secrets.WithoutScope())
 		require.NoError(t, err)
 
-		existing := models.PluginSetting{
+		existing := pluginsettings.PluginSetting{
 			OrgId:    1,
 			PluginId: "existing",
 			Enabled:  false,
@@ -167,8 +166,8 @@ func TestIntegrationPluginSettings(t *testing.T) {
 		})
 
 		t.Run("UpdatePluginSetting should update existing plugin settings and publish PluginStateChangedEvent", func(t *testing.T) {
-			var pluginStateChangedEvent *models.PluginStateChangedEvent
-			store.Bus().AddEventListener(func(_ context.Context, evt *models.PluginStateChangedEvent) error {
+			var pluginStateChangedEvent *pluginsettings.PluginStateChangedEvent
+			store.Bus().AddEventListener(func(_ context.Context, evt *pluginsettings.PluginStateChangedEvent) error {
 				pluginStateChangedEvent = evt
 				return nil
 			})
@@ -225,8 +224,8 @@ func TestIntegrationPluginSettings(t *testing.T) {
 
 	t.Run("Non-existing plugin settings", func(t *testing.T) {
 		t.Run("UpdatePluginSetting should insert plugin settings and publish PluginStateChangedEvent", func(t *testing.T) {
-			var pluginStateChangedEvent *models.PluginStateChangedEvent
-			store.Bus().AddEventListener(func(_ context.Context, evt *models.PluginStateChangedEvent) error {
+			var pluginStateChangedEvent *pluginsettings.PluginStateChangedEvent
+			store.Bus().AddEventListener(func(_ context.Context, evt *pluginsettings.PluginStateChangedEvent) error {
 				pluginStateChangedEvent = evt
 				return nil
 			})

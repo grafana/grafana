@@ -1,4 +1,4 @@
-package models
+package validations
 
 import (
 	"net/http"
