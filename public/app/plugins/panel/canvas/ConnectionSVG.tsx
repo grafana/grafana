@@ -23,8 +23,9 @@ let idCounter = 0;
 export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
   const styles = useStyles2(getStyles);
 
+  const headId = Date.now() + '_' + idCounter++;
   const CONNECTION_LINE_ID = 'connectionLineId';
-  const CONNECTION_HEAD_ID = useMemo(() => `head-${idCounter++}`, []);
+  const CONNECTION_HEAD_ID = useMemo(() => `head-${headId}`, [headId]);
 
   const [selectedConnection, setSelectedConnection] = useState<CanvasConnection | undefined>(undefined);
 
@@ -118,7 +119,6 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
       }
 
       const parentBorderWidth = parseFloat(getComputedStyle(parent).borderWidth);
-
       const sourceHorizontalCenter = sourceRect.left - parentRect.left - parentBorderWidth + sourceRect.width / 2;
       const sourceVerticalCenter = sourceRect.top - parentRect.top - parentBorderWidth + sourceRect.height / 2;
 
