@@ -112,7 +112,7 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
     shouldFocusError: true,
   });
 
-  const { handleSubmit, watch } = formAPI;
+  const { handleSubmit, watch, getValues } = formAPI;
 
   const type = watch('type');
   const dataSourceName = watch('dataSourceName');
@@ -122,7 +122,18 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
   const submitState = useUnifiedAlertingSelector((state) => state.ruleForm.saveRule) || initialAsyncRequestState;
   useCleanup((state) => (state.unifiedAlerting.ruleForm.saveRule = initialAsyncRequestState));
 
+  const [conditionErrorMsg, setConditionErrorMsg] = useState('');
+
+  const checkAlertCondition = (msg = '') => {
+    setConditionErrorMsg(msg);
+  };
+
   const submit = (values: RuleFormValues, exitOnSave: boolean) => {
+    if (conditionErrorMsg !== '') {
+      notifyApp.error(conditionErrorMsg);
+      return;
+    }
+
     dispatch(
       saveRuleFormAction({
         values: {
@@ -236,7 +247,7 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
             <div className={styles.contentInner}>
               <AlertRuleNameInput />
-              <QueryAndExpressionsStep editingExistingRule={!!existing} />
+              <QueryAndExpressionsStep editingExistingRule={!!existing} onDataChange={checkAlertCondition} />
               {showStep2 && (
                 <>
                   {type === RuleFormType.grafana ? (
