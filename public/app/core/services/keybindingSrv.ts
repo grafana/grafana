@@ -29,11 +29,9 @@ import { withFocusedPanel } from './withFocusedPanelId';
 
 export class KeybindingSrv {
   constructor(private locationService: LocationService, private chromeService: AppChromeService) {}
-  bindings: string[] = [];
 
   clearAndInitGlobalBindings() {
     Mousetrap.reset();
-    this.bindings = [];
 
     if (this.locationService.getLocation().pathname !== '/login') {
       this.bind(['?', 'h'], this.showHelpModal);
@@ -166,9 +164,6 @@ export class KeybindingSrv {
   }
 
   bind(keyArg: string | string[], fn: () => void) {
-    const keyArgArr = Array.isArray(keyArg) ? keyArg : [keyArg];
-    this.bindings.push(...keyArgArr);
-
     Mousetrap.bind(
       keyArg,
       (evt) => {
@@ -182,8 +177,6 @@ export class KeybindingSrv {
   }
 
   bindGlobal(keyArg: string, fn: () => void) {
-    this.bindings.push(keyArg);
-
     Mousetrap.bindGlobal(
       keyArg,
       (evt) => {
@@ -197,7 +190,6 @@ export class KeybindingSrv {
   }
 
   unbind(keyArg: string, keyType?: string) {
-    this.bindings = this.bindings.filter((binding) => binding !== keyArg);
     Mousetrap.unbind(keyArg, keyType);
   }
 
