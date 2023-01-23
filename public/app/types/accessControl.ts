@@ -88,6 +88,7 @@ export enum AccessControlAction {
   // Support bundle actions
   ActionSupportBundlesCreate = 'support.bundles:create',
   ActionSupportBundlesRead = 'support.bundles:read',
+  ActionSupportBundlesDelete = 'support.bundles:delete',
 
   // Alerting rules
   AlertingRuleCreate = 'alert.rules:create',
