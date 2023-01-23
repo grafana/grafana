@@ -15,7 +15,7 @@
 package grafanaplugin
 
 import (
-	ui "github.com/grafana/grafana/packages/grafana-schema/src/common"
+	"github.com/grafana/grafana/packages/grafana-schema/src/common"
 )
 
 composableKinds: PanelCfg: {
@@ -27,8 +27,8 @@ composableKinds: PanelCfg: {
 				schemas: [
 					{
 						PanelOptions: {
-							ui.SingleStatBaseOptions
-							displayMode:  ui.BarGaugeDisplayMode | *"gradient"
+							common.SingleStatBaseOptions
+							displayMode:  common.BarGaugeDisplayMode | *"gradient"
 							showUnfilled: bool | *true
 							minVizWidth:  uint32 | *0
 							minVizHeight: uint32 | *10

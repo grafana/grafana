@@ -8,19 +8,19 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-import * as ui from '@grafana/schema';
+import * as common from '@grafana/schema';
 
 export const PanelCfgModelVersion = Object.freeze([0, 0]);
 
-export interface PanelOptions extends ui.SingleStatBaseOptions {
-  displayMode: ui.BarGaugeDisplayMode;
+export interface PanelOptions extends common.SingleStatBaseOptions {
+  displayMode: common.BarGaugeDisplayMode;
   minVizHeight: number;
   minVizWidth: number;
   showUnfilled: boolean;
 }
 
 export const defaultPanelOptions: Partial<PanelOptions> = {
-  displayMode: ui.BarGaugeDisplayMode.Gradient,
+  displayMode: common.BarGaugeDisplayMode.Gradient,
   minVizHeight: 10,
   minVizWidth: 0,
   showUnfilled: true,
