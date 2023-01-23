@@ -1,5 +1,5 @@
 import { cx, css } from '@emotion/css';
-import React, { forwardRef, ButtonHTMLAttributes } from 'react';
+import React, { forwardRef, ButtonHTMLAttributes, useState } from 'react';
 
 import { GrafanaTheme2, IconName, isIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -74,7 +74,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
       [styles.contentWithIcon]: !!icon,
       [styles.contentWithRightIcon]: isOpen !== undefined,
     });
-
+    const [showTooltip, setShowTooltip] = useState(true);
     const body = (
       <button
         ref={ref}
@@ -82,6 +82,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
         aria-label={getButtonAriaLabel(ariaLabel, tooltip)}
         aria-expanded={isOpen}
         {...rest}
+        onTouchStart={() => setShowTooltip(false)}
       >
         {renderIcon(icon)}
         {imgSrc && <img className={styles.img} src={imgSrc} alt={imgAlt ?? ''} />}
@@ -93,7 +94,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
     );
 
     return tooltip ? (
-      <Tooltip content={tooltip} placement="bottom">
+      <Tooltip content={tooltip} placement="bottom" show={!showTooltip ? false : undefined}>
         {body}
       </Tooltip>
     ) : (
