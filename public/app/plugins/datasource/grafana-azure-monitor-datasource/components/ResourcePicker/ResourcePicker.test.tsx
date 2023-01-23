@@ -70,6 +70,7 @@ const defaultProps = {
     ResourceRowType.Variable,
   ],
   queryType,
+  disableRow: jest.fn(),
 };
 
 describe('AzureMonitor ResourcePicker', () => {

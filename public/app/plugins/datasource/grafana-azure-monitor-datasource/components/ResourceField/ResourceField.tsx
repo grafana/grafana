@@ -10,7 +10,7 @@ import { AzureQueryEditorFieldProps, AzureMetricResource } from '../../types';
 import { Field } from '../Field';
 import ResourcePicker from '../ResourcePicker';
 import getStyles from '../ResourcePicker/styles';
-import { ResourceRowType } from '../ResourcePicker/types';
+import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseMultipleResourceDetails, setResources } from '../ResourcePicker/utils';
 
 interface ResourceFieldProps<T> extends AzureQueryEditorFieldProps {
@@ -19,6 +19,7 @@ interface ResourceFieldProps<T> extends AzureQueryEditorFieldProps {
   resources: T[];
   inlineField?: boolean;
   labelWidth?: number;
+  disableRow: (row: ResourceRow, selectedRows: ResourceRowGroup) => boolean;
 }
 
 const ResourceField: React.FC<ResourceFieldProps<string | AzureMetricResource>> = ({
@@ -30,6 +31,7 @@ const ResourceField: React.FC<ResourceFieldProps<string | AzureMetricResource>> 
   resources,
   inlineField,
   labelWidth,
+  disableRow,
 }) => {
   const styles = useStyles2(getStyles);
   const [pickerIsOpen, setPickerIsOpen] = useState(false);
@@ -68,6 +70,7 @@ const ResourceField: React.FC<ResourceFieldProps<string | AzureMetricResource>> 
           onCancel={closePicker}
           selectableEntryTypes={selectableEntryTypes}
           queryType={queryType}
+          disableRow={disableRow}
         />
       </Modal>
       <Field label="Resource" inlineField={inlineField} labelWidth={labelWidth}>

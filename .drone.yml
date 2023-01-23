@@ -2277,8 +2277,9 @@ steps:
     event:
     - tag
 - commands:
-  - ./bin/grabpl artifacts npm store --tag ${DRONE_TAG}
+  - ./bin/build artifacts npm store --tag ${DRONE_TAG}
   depends_on:
+  - compile-build-cmd
   - build-frontend-packages
   environment:
     GCP_KEY:
@@ -4415,19 +4416,21 @@ platform:
 services: []
 steps:
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.20/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
+  environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.4
+  name: compile-build-cmd
 - commands:
   - yarn install --immutable
   depends_on: []
   image: grafana/build-container:826cb5d482f
   name: yarn-install
 - commands:
-  - ./bin/grabpl artifacts npm retrieve --tag ${DRONE_TAG}
+  - ./bin/build artifacts npm retrieve --tag ${DRONE_TAG}
   depends_on:
+  - compile-build-cmd
   - yarn-install
   environment:
     GCP_KEY:
@@ -4438,8 +4441,9 @@ steps:
   image: grafana/grafana-ci-deploy:1.3.3
   name: retrieve-npm-packages
 - commands:
-  - ./bin/grabpl artifacts npm release --tag ${DRONE_TAG}
+  - ./bin/build artifacts npm release --tag ${DRONE_TAG}
   depends_on:
+  - compile-build-cmd
   - retrieve-npm-packages
   environment:
     NPM_TOKEN:
@@ -6502,6 +6506,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: e1dac7a8aea6660b26ed554c4e16279c8a573c71d8425decbed6412b92f07949
+hmac: 1df4560e309d1fabd324a5afaeeeca88cee9e208e7f67869beb9182e13dc5619
 
 ...
