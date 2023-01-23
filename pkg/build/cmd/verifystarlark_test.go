@@ -25,6 +25,21 @@ func TestVerifyStarlark(t *testing.T) {
 				t.Fatalf("Expected execution error but got none")
 			}
 		})
+
+		t.Run("context cancellation", func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			workspace := t.TempDir()
+			err := os.WriteFile(filepath.Join(workspace, "ignored.star"), []byte{}, os.ModePerm)
+			if err != nil {
+				t.Fatalf(err.Error())
+			}
+			cancel()
+
+			_, executionErr := verifyStarlark(ctx, workspace, buildifierLintCommand)
+			if executionErr == nil {
+				t.Fatalf("Expected execution error but got none")
+			}
+		})
 	})
 
 	t.Run("verification errors", func(t *testing.T) {
