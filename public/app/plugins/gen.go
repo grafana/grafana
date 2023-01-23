@@ -54,7 +54,7 @@ func main() {
 
 	pluginKindGen.Append(
 		codegen.PluginTreeListJenny(),
-		codegen.PluginGoTypesJenny("pkg/tsdb", adaptToPipeline(corecodegen.GoTypesJenny{ExpandReferences: true})),
+		codegen.PluginGoTypesJenny("pkg/tsdb"),
 		codegen.PluginTSTypesJenny("public/app/plugins", adaptToPipeline(corecodegen.TSTypesJenny{})),
 		codegen.PluginDocsJenny(toDeclForGen(corecodegen.DocsJenny(
 			filepath.Join("docs", "sources", "developers", "kinds", "composable"),
