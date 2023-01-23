@@ -52,16 +52,16 @@ var _ authn.RedirectClient = new(FakeRedirectClient)
 type FakeRedirectClient struct {
 	ExpectedErr      error
 	ExpectedURL      string
-	ExpectedOK       bool
+	ExpectedName     string
 	ExpectedIdentity *authn.Identity
+}
+
+func (f FakeRedirectClient) Name() string {
+	return f.ExpectedName
 }
 
 func (f FakeRedirectClient) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	return f.ExpectedIdentity, f.ExpectedErr
-}
-
-func (f FakeRedirectClient) Test(ctx context.Context, r *authn.Request) bool {
-	return f.ExpectedOK
 }
 
 func (f FakeRedirectClient) RedirectURL(ctx context.Context, r *authn.Request) (string, error) {

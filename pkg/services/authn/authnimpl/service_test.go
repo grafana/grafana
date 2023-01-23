@@ -269,10 +269,8 @@ func TestService_RedirectURL(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			service := setupTests(t, func(svc *Service) {
-				svc.clients["redirect"] = authntest.FakeRedirectClient{
-					ExpectedURL: tt.expectedURL,
-				}
-				svc.clients["non-redirect"] = &authntest.FakeClient{}
+				svc.RegisterClient(authntest.FakeRedirectClient{ExpectedName: "redirect", ExpectedURL: tt.expectedURL})
+				svc.RegisterClient(&authntest.FakeClient{ExpectedName: "non-redirect"})
 			})
 
 			u, err := service.RedirectURL(context.Background(), tt.client, nil)
