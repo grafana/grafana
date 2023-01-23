@@ -45,7 +45,7 @@ _sharedKind: {
 	// In addition to lowercase normalization, dashes are transformed to underscores.
 	machineName: strings.ToLower(strings.Replace(name, "-", "_", -1))
 
-	// pluralName is the pluralized form of name.	Defaults to name + "s".
+	// pluralName is the pluralized form of name. Defaults to name + "s".
 	pluralName: =~"^([A-Z][a-zA-Z0-9-]{0,61}[a-zA-Z])$" | *(name + "s")
 
 	// pluralMachineName is the pluralized form of [machineName]. The same case
@@ -57,8 +57,8 @@ _sharedKind: {
 	// grouped lineage, each top-level field in the schema specifies a discrete
 	// object that is expected to exist in the wild
 	//
-	// This field is set at the framework level, and cannot be in the declaration of
-	// any individual kind.
+	// This value of this field is set by the kindsys framework. It cannot be changed
+	// in the declaration of any individual kind.
 	//
 	// This is likely to eventually become a first-class property in Thema:
 	// https://github.com/grafana/thema/issues/62
@@ -71,7 +71,7 @@ _sharedKind: {
 	// schema in lineage.
 	currentVersion: thema.#SyntacticVersion & (thema.#LatestVersion & {lin: lineage}).out
 
-	maturity: #Maturity
+	maturity: Maturity
 
 	// The kind system itself is not mature enough yet for any single
 	// kind to advance beyond "experimental"
@@ -81,7 +81,7 @@ _sharedKind: {
 
 // Maturity indicates the how far a given kind declaration is in its initial
 // journey. Mature kinds still evolve, but with guarantees about compatibility.
-#Maturity: "merged" | "experimental" | "stable" | "mature"
+Maturity: "merged" | "experimental" | "stable" | "mature"
 
 // Core specifies the kind category for core-defined arbitrary types.
 // Familiar types and functional resources in Grafana, such as dashboards and
