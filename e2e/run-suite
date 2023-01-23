@@ -25,7 +25,7 @@ declare -A env=(
 )
 
 testFilesForSingleSuite="*.spec.ts"
-testFilesForEnterpriseSuite="extensions/*-suite/*.spec.ts"
+testFilesForEnterpriseSuite="enterprise-suite/*-suite/*.spec.ts"
 
 declare -A cypressConfig=(
   [integrationFolder]=../../e2e
@@ -67,6 +67,7 @@ case "$1" in
         ;;
     "enterprise")
         echo "Enterprise"
+        cp -Lr ../../e2e/enterprise ../../e2e/enterprise-suite
         case "$2" in
             "debug")
                 echo -e "Debug mode"
@@ -112,3 +113,5 @@ function join () {
 yarn $CMD --env "$(join env)" \
   --config "$(join cypressConfig)" \
   $PARAMS
+
+rm -rf ../../e2e/enterprise-suite
