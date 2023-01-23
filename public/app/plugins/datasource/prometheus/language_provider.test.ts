@@ -9,18 +9,18 @@ import { PrometheusDatasource } from './datasource';
 import LanguageProvider from './language_provider';
 import { PromQuery } from './types';
 
+const getTimeRangeParams = (override?: Partial<{ start: string; end: string }>) => ({
+  start: '0',
+  end: '1',
+  ...override,
+});
+
+const getQuantizedTimeRangeParams = (override?: Partial<{ start: string; end: string }>) => {
+  const range = getTimeRangeParams(override);
+  return { start: range.start, end: range.end };
+};
+
 describe('Language completion provider', () => {
-  const getTimeRangeParams = (override?: Partial<{ start: string; end: string }>) => ({
-    start: '0',
-    end: '1',
-    ...override,
-  });
-
-  const getQuantizedTimeRangeParams = (override?: Partial<{ start: string; end: string }>) => {
-    const range = getTimeRangeParams(override);
-    return { start: range.start, end: range.end };
-  };
-
   const datasource: PrometheusDatasource = {
     metadataRequest: () => ({ data: { data: [] as any[] } }),
     getTimeRangeParams: getTimeRangeParams,

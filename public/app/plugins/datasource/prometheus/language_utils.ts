@@ -238,8 +238,8 @@ export function roundSecToLastMin(seconds: number, minutes = 1): number {
 }
 
 // Returns number of minutes rounded up to the nearest nth minute
-export function roundSecToNextMin(seconds: number, minutes = 1): number {
-  return Math.ceil(seconds / 60) - (Math.ceil(seconds / 60) % minutes);
+export function roundSecToNextMin(seconds: number, secondsToRound = 1): number {
+  return Math.ceil(seconds / 60) - (Math.ceil(seconds / 60) % secondsToRound);
 }
 
 export function limitSuggestions(items: string[]) {

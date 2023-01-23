@@ -21,6 +21,7 @@ import { VariableHide } from '../../../features/variables/types';
 import {
   alignRange,
   extractRuleMappingFromGroups,
+  PrometheusCacheLevel,
   PrometheusDatasource,
   prometheusRegularEscape,
   prometheusSpecialRegexEscape,
@@ -43,7 +44,19 @@ const templateSrvStub = {
   replace: jest.fn((a: string, ...rest: any) => a),
 };
 
+const fromSeconds = 1674500289215;
+const toSeconds = 1674500349215;
+
 const timeSrvStub = {
+  timeRange(): any {
+    return {
+      from: dateTime(fromSeconds),
+      to: dateTime(toSeconds),
+    };
+  },
+};
+
+const timeSrvStubOld = {
   timeRange(): any {
     return {
       from: dateTime(1531468681),
@@ -66,11 +79,12 @@ describe('PrometheusDatasource', () => {
     password: 'mupp',
     jsonData: {
       customQueryParameters: '',
-    } as any,
+      cacheLevel: PrometheusCacheLevel.low,
+    } as Partial<PromOptions>,
   } as unknown as DataSourceInstanceSettings<PromOptions>;
 
   beforeEach(() => {
-    ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
+    ds = new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStubOld as any);
   });
 
   describe('Query', () => {
@@ -184,6 +198,7 @@ describe('PrometheusDatasource', () => {
 
   describe('customQueryParams', () => {
     const target = { expr: 'test{job="testjob"}', format: 'time_series', refId: '' };
+
     function makeQuery(target: PromQuery) {
       return {
         range: { from: time({ seconds: 63 }), to: time({ seconds: 183 }) },
@@ -411,6 +426,63 @@ describe('PrometheusDatasource', () => {
         const seriesLabels = result[0].data[0].fields.slice(1).map((field: Field) => getFieldDisplayName(field));
         expect(seriesLabels).toEqual(expected);
       });
+    });
+  });
+
+  describe('QuantizeTimeSteps', () => {
+    it('test default 1 minute quantization', () => {
+      const dataSource = new PrometheusDatasource(
+        {
+          ...instanceSettings,
+          jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.low },
+        },
+        templateSrvStub as unknown as TemplateSrv,
+        timeSrvStub as unknown as TimeSrv
+      );
+      const quantizedRange = dataSource.getQuantizedTimeRangeParams();
+      // For "1 minute" the window contains all the minutes, so a query from 1:11:09 - 1:12:09 becomes 1:11 - 1:13
+      expect(parseInt(quantizedRange.end, 10) - parseInt(quantizedRange.start, 10)).toBe(120);
+    });
+
+    it('test 10 minute quantization', () => {
+      const dataSource = new PrometheusDatasource(
+        {
+          ...instanceSettings,
+          jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.medium },
+        },
+        templateSrvStub as unknown as TemplateSrv,
+        timeSrvStub as unknown as TimeSrv
+      );
+      const quantizedRange = dataSource.getQuantizedTimeRangeParams();
+      expect(parseInt(quantizedRange.end, 10) - parseInt(quantizedRange.start, 10)).toBe(600);
+    });
+
+    it('test 60 minute quantization', () => {
+      const dataSource = new PrometheusDatasource(
+        {
+          ...instanceSettings,
+          jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.high },
+        },
+        templateSrvStub as unknown as TemplateSrv,
+        timeSrvStub as unknown as TimeSrv
+      );
+      const quantizedRange = dataSource.getQuantizedTimeRangeParams();
+      expect(parseInt(quantizedRange.end, 10) - parseInt(quantizedRange.start, 10)).toBe(3600);
+    });
+
+    it('test quantization turned off', () => {
+      const dataSource = new PrometheusDatasource(
+        {
+          ...instanceSettings,
+          jsonData: { ...instanceSettings.jsonData, cacheLevel: PrometheusCacheLevel.none },
+        },
+        templateSrvStub as unknown as TemplateSrv,
+        timeSrvStub as unknown as TimeSrv
+      );
+      const quantizedRange = dataSource.getQuantizedTimeRangeParams();
+      expect(parseInt(quantizedRange.end, 10) - parseInt(quantizedRange.start, 10)).toBe(
+        (toSeconds - fromSeconds) / 1000
+      );
     });
   });
 
@@ -755,7 +827,7 @@ describe('PrometheusDatasource2', () => {
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
-    jsonData: { httpMethod: 'GET' },
+    jsonData: { httpMethod: 'GET', cacheLevel: PrometheusCacheLevel.none },
   } as unknown as DataSourceInstanceSettings<PromOptions>;
 
   let ds: PrometheusDatasource;
