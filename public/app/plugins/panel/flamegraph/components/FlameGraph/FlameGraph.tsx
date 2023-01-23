@@ -133,7 +133,6 @@ const FlameGraph = ({
     [levels, wrapperWidth, valueField, totalTicks, rangeMin, rangeMax, search, topLevelIndex]
   );
 
-  // update metatdata when bar selected in flame graph
   useEffect(() => {
     if (levels[topLevelIndex] && levels[topLevelIndex][selectedBarIndex]) {
       const bar = levels[topLevelIndex][selectedBarIndex];
