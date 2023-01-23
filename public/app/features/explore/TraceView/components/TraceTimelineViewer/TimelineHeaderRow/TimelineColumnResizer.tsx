@@ -178,7 +178,6 @@ export default class TimelineColumnResizer extends React.PureComponent<
     if (this._dragManager.isDragging() && this._rootElm && dragPosition != null) {
       isDraggingLeft = dragPosition < position;
       isDraggingRight = dragPosition > position;
-      left = `${dragPosition * 100}%`;
       // Draw a highlight from the current dragged position back to the original
       // position, e.g. highlight the change. Draw the highlight via `left` and
       // `right` css styles (simpler than using `width`).

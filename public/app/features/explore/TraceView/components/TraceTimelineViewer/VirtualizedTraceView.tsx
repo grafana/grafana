@@ -16,7 +16,7 @@ import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
 import memoizeOne from 'memoize-one';
 import * as React from 'react';
-import { createRef, RefObject } from 'react';
+import { RefObject } from 'react';
 
 import { GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
@@ -196,7 +196,6 @@ const memoizedGetClipping = memoizeOne(getClipping, isEqual);
 // export from tests
 export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTraceViewProps> {
   listView: ListView | TNil;
-  topTraceViewRef = createRef<HTMLDivElement>();
 
   constructor(props: VirtualizedTraceViewProps) {
     super(props);

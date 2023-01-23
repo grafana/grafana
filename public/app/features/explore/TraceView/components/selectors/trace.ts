@@ -14,7 +14,7 @@
 
 import { createSelector, createStructuredSelector } from 'reselect';
 
-import { Trace, TraceData, TraceProcess, TraceResponse, TraceSpan, TraceSpanData } from '../types/trace';
+import { Trace, TraceData, TraceProcess, TraceResponse, TraceSpanData } from '../types/trace';
 import TreeNode from '../utils/TreeNode';
 import { formatMillisecondTime, formatSecondTime, ONE_SECOND } from '../utils/date';
 import { numberSortComparator } from '../utils/sort';
@@ -126,12 +126,6 @@ export const getTraceDuration = createSelector(getTraceSpans, getTraceTimestamp,
   )
 );
 
-export const getTraceEndTimestamp = createSelector(
-  getTraceTimestamp,
-  getTraceDuration,
-  (timestamp: number, duration: number) => timestamp! + duration
-);
-
 export const getParentSpan = createSelector(
   getTraceSpanIdsAsTree,
   getTraceSpansAsMap,
@@ -199,13 +193,6 @@ export const getSortedSpans = createSelector(
     [...spans].sort((spanA, spanB) => dir * comparator(selector(spanA, trace), selector(spanB, trace)))
 );
 
-const getTraceSpansByHierarchyPosition = createSelector(getTraceSpanIdsAsTree, (tree) => {
-  const hierarchyPositionMap = new Map();
-  let i = 0;
-  tree.walk((spanID: string | number | undefined) => hierarchyPositionMap.set(spanID, i++));
-  return hierarchyPositionMap;
-});
-
 export const getTreeSizeForTraceSpan = createSelector(
   createSelector((state: { trace: TraceResponse }) => state.trace, getTraceSpanIdsAsTree),
   createSelector((state: { span: TraceSpanData }) => state.span, getSpanId),
@@ -216,12 +203,6 @@ export const getTreeSizeForTraceSpan = createSelector(
     }
     return node.size - 1;
   }
-);
-
-export const getSpanHierarchySortPositionForTrace = createSelector(
-  createSelector(({ trace }: { trace: Trace }) => trace, getTraceSpansByHierarchyPosition),
-  ({ span }: { span: TraceSpan }) => span,
-  (hierarchyPositionMap, span) => hierarchyPositionMap.get(getSpanId(span))
 );
 
 export const getTraceName = createSelector(
@@ -265,44 +246,4 @@ export const getTicksForTrace = createSelector(
       timestamp: getTraceTimestamp(trace) + getTraceDuration(trace) * (num / interval),
       width,
     }))
-);
-
-// TODO: delete this when the backend can ensure uniqueness
-/* istanbul ignore next */
-export const enforceUniqueSpanIds = createSelector(
-  /* istanbul ignore next */ (trace: Trace) => trace,
-  getTraceSpans,
-  /* istanbul ignore next */ (trace, spans) => {
-    const map = new Map();
-
-    const spanArray: TraceSpanData[] = [];
-
-    return {
-      ...trace,
-      spans: spans.reduce((result: TraceSpanData[], span: TraceSpanData) => {
-        const spanID = map.has(getSpanId(span)) ? `${getSpanId(span)}_${map.get(getSpanId(span))}` : getSpanId(span);
-        const updatedSpan = { ...span, spanID };
-
-        if (spanID !== getSpanId(span)) {
-          // eslint-disable-next-line no-console
-          console.warn('duplicate spanID in trace replaced', getSpanId(span), 'new:', spanID);
-        }
-
-        // set the presence of the span in the map or increment the number
-        map.set(getSpanId(span), (map.get(getSpanId(span)) || 0) + 1);
-
-        return result.concat([updatedSpan]);
-      }, spanArray),
-    };
-  }
-);
-
-// TODO: delete this when the backend can ensure uniqueness
-export const dropEmptyStartTimeSpans = createSelector(
-  /* istanbul ignore next */ (trace: Trace) => trace,
-  getTraceSpans,
-  /* istanbul ignore next */ (trace, spans) => ({
-    ...trace,
-    spans: spans.filter((span: TraceSpanData) => !!getSpanTimestamp(span)),
-  })
 );

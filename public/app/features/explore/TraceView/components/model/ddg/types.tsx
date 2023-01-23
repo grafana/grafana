@@ -27,20 +27,8 @@ export type TDdgOperation = {
   service: TDdgService;
 };
 
-export type TDdgServiceMap = Map<string, TDdgService>;
-
 export type TDdgPath = {
   focalIdx: number;
   members: PathElem[];
   traceIDs: string[];
-};
-
-export type TDdgDistanceToPathElems = Map<number, PathElem[]>;
-
-export type TDdgModel = {
-  distanceToPathElems: TDdgDistanceToPathElems;
-  hash: string;
-  paths: TDdgPath[];
-  services: TDdgServiceMap;
-  visIdxToPathElem: PathElem[];
 };

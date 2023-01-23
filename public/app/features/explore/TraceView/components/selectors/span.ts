@@ -64,24 +64,3 @@ export const filterSpansForText = createSelector(
   (spans, text) =>
     spans.filter((span) => (span ? fuzzyMatch(`${getSpanServiceName(span)} ${getSpanName(span)}`, text).found : false))
 );
-
-const getTextFilteredSpansAsMap = createSelector(filterSpansForText, (matchingSpans) =>
-  matchingSpans.reduce(
-    (obj, span) => ({
-      ...obj,
-      [getSpanId(span)]: span,
-    }),
-    {}
-  )
-);
-
-// TODO: delete this function as it is not used?
-export const highlightSpansForTextFilter = createSelector(
-  ({ spans }: { spans: TraceSpanData[] }) => spans,
-  getTextFilteredSpansAsMap,
-  (spans, textFilteredSpansMap: { [key: string]: TraceSpanData }) =>
-    spans.map((span: TraceSpanData) => ({
-      ...span,
-      muted: !textFilteredSpansMap[getSpanId(span)],
-    }))
-);
