@@ -27,6 +27,7 @@ describe('FlameGraphTopTableContainer', () => {
         search={search}
         setSearch={setSearch}
         setTopLevelIndex={jest.fn()}
+        setSelectedBarIndex={jest.fn()}
         setRangeMin={jest.fn()}
         setRangeMax={jest.fn()}
       />
