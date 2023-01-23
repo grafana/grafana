@@ -25,7 +25,7 @@ import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertman
 import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
 import { ProvisionedResource, ProvisioningAlert } from './components/Provisioning';
 import { Spacer } from './components/Spacer';
-import { MuteTimingsTable } from './components/amroutes/MuteTimingsTable';
+import { MuteTimingsTable } from './components/mute-timings/MuteTimingsTable';
 import {
   computeInheritedTree,
   findRoutesMatchingFilter,

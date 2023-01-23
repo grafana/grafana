@@ -18,7 +18,7 @@ import {
 import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 
-import AmRoutes from './AmRoutes';
+import NotificationPolicies from './NotificationPolicies';
 import { fetchAlertManagerConfig, fetchStatus, updateAlertManagerConfig } from './api/alertmanager';
 import { discoverAlertmanagerFeatures } from './api/buildInfo';
 import * as grafanaApp from './components/receivers/grafanaAppReceivers/grafanaApp';
@@ -46,7 +46,7 @@ const mocks = {
 };
 const useGetGrafanaReceiverTypeCheckerMock = jest.spyOn(grafanaApp, 'useGetGrafanaReceiverTypeChecker');
 
-const renderAmRoutes = (alertManagerSourceName?: string) => {
+const renderNotificationPolicies = (alertManagerSourceName?: string) => {
   const store = configureStore();
   locationService.push(location);
 
@@ -57,7 +57,7 @@ const renderAmRoutes = (alertManagerSourceName?: string) => {
   return render(
     <Provider store={store}>
       <Router history={locationService.getHistory()}>
-        <AmRoutes />
+        <NotificationPolicies />
       </Router>
     </Provider>
   );
@@ -108,7 +108,7 @@ const ui = {
   confirmDeleteButton: byLabelText('Confirm Modal Danger Button'),
 };
 
-describe('AmRoutes', () => {
+describe('NotificationPolicies', () => {
   const subroutes: Route[] = [
     {
       match: {
@@ -229,7 +229,7 @@ describe('AmRoutes', () => {
       template_files: {},
     });
 
-    await renderAmRoutes();
+    await renderNotificationPolicies();
 
     await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalledTimes(1));
 
@@ -284,7 +284,7 @@ describe('AmRoutes', () => {
       return Promise.resolve(currentConfig.current);
     });
 
-    await renderAmRoutes();
+    await renderNotificationPolicies();
     expect(await ui.rootReceiver.find()).toHaveTextContent('default');
     expect(ui.rootGroupBy.get()).toHaveTextContent('alertname');
 
@@ -346,7 +346,7 @@ describe('AmRoutes', () => {
       template_files: {},
     });
 
-    await renderAmRoutes();
+    await renderNotificationPolicies();
 
     // open root route for editing
     const rootRouteContainer = await ui.rootRouteContainer.find();
@@ -390,7 +390,7 @@ describe('AmRoutes', () => {
       )
     );
 
-    renderAmRoutes();
+    renderNotificationPolicies();
     expect(ui.newPolicyButton.query()).not.toBeInTheDocument();
     expect(ui.editButton.query()).not.toBeInTheDocument();
   });
@@ -402,7 +402,7 @@ describe('AmRoutes', () => {
         message: "Alertmanager has exploded. it's gone. Forget about it.",
       },
     });
-    await renderAmRoutes();
+    await renderNotificationPolicies();
     await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalledTimes(1));
     expect(await byText("Alertmanager has exploded. it's gone. Forget about it.").find()).toBeInTheDocument();
     expect(ui.rootReceiver.query()).not.toBeInTheDocument();
@@ -437,7 +437,7 @@ describe('AmRoutes', () => {
       return Promise.resolve(currentConfig.current);
     });
 
-    await renderAmRoutes(GRAFANA_RULES_SOURCE_NAME);
+    await renderNotificationPolicies(GRAFANA_RULES_SOURCE_NAME);
     expect(await ui.rootReceiver.find()).toHaveTextContent('default');
     expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled();
 
@@ -507,7 +507,7 @@ describe('AmRoutes', () => {
 
     mocks.api.updateAlertManagerConfig.mockResolvedValue(Promise.resolve());
 
-    await renderAmRoutes(GRAFANA_RULES_SOURCE_NAME);
+    await renderNotificationPolicies(GRAFANA_RULES_SOURCE_NAME);
     await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled());
 
     const deleteButtons = await ui.deleteRouteButton.findAll();
@@ -563,7 +563,7 @@ describe('AmRoutes', () => {
       return Promise.resolve(currentConfig.current);
     });
 
-    await renderAmRoutes(dataSources.am.name);
+    await renderNotificationPolicies(dataSources.am.name);
     expect(await ui.rootReceiver.find()).toHaveTextContent('default');
     expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalled();
 
@@ -609,7 +609,7 @@ describe('AmRoutes', () => {
       ...someCloudAlertManagerStatus,
       config: someCloudAlertManagerConfig.alertmanager_config,
     });
-    await renderAmRoutes(dataSources.promAlertManager.name);
+    await renderNotificationPolicies(dataSources.promAlertManager.name);
     const rootRouteContainer = await ui.rootRouteContainer.find();
     expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument();
     const rows = await ui.row.findAll();
@@ -633,7 +633,7 @@ describe('AmRoutes', () => {
         },
       },
     });
-    await renderAmRoutes(dataSources.promAlertManager.name);
+    await renderNotificationPolicies(dataSources.promAlertManager.name);
     const rootRouteContainer = await ui.rootRouteContainer.find();
     expect(ui.editButton.query(rootRouteContainer)).not.toBeInTheDocument();
     expect(ui.newPolicyCTAButton.query()).not.toBeInTheDocument();
@@ -668,7 +668,7 @@ describe('AmRoutes', () => {
 
     mocks.api.fetchAlertManagerConfig.mockResolvedValue(defaultConfig);
 
-    await renderAmRoutes(dataSources.am.name);
+    await renderNotificationPolicies(dataSources.am.name);
     const rows = await ui.row.findAll();
     expect(rows).toHaveLength(1);
     await userEvent.click(ui.editRouteButton.get(rows[0]));
@@ -714,7 +714,7 @@ describe('AmRoutes', () => {
       message: 'alertmanager storage object not found',
     });
 
-    await renderAmRoutes();
+    await renderNotificationPolicies();
 
     await waitFor(() => expect(mocks.api.fetchAlertManagerConfig).toHaveBeenCalledTimes(1));
 

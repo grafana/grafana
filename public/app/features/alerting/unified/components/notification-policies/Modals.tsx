@@ -13,11 +13,11 @@ import {
 
 import { FormAmRoute } from '../../types/amroutes';
 import { AlertGroup } from '../alert-groups/AlertGroup';
-import { AmRootRouteForm } from '../amroutes/AmRootRouteForm';
-import { AmRoutesExpandedForm } from '../amroutes/AmRoutesExpandedForm';
 import { useGetAmRouteReceiverWithGrafanaAppTypes } from '../receivers/grafanaAppReceivers/grafanaApp';
 
 import { AlertGroupsSummary } from './AlertGroupsSummary';
+import { AmRootRouteForm } from './EditDefaultPolicyForm';
+import { AmRoutesExpandedForm } from './EditNotificationPolicyForm';
 import { Matchers } from './Matchers';
 
 type ModalHook<T = undefined> = [JSX.Element, (item: T) => void, () => void];

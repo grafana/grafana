@@ -2813,7 +2813,7 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/AlertsFolderView.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/features/alerting/unified/AmRoutes.test.tsx:5381": [
+    "public/app/features/alerting/unified/NotificationPolicies.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/alerting/unified/PanelAlertTabContent.test.tsx:5381": [
