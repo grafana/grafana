@@ -7,6 +7,7 @@ package main
 
 import (
 	"context"
+	"cuelang.org/go/cue"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/grafana/codejen"
 	"github.com/grafana/grafana/pkg/kindsys"
+	"github.com/grafana/grafana/pkg/kindsys/kindsysreport"
 	"github.com/grafana/grafana/pkg/plugins/pfs/corelist"
 	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/registry/corekind"
@@ -75,11 +77,12 @@ var plannedCoreKinds = []string{
 
 type Kind struct {
 	kindsys.SomeKindProperties
-	Category  string
-	SchemaRef string
-	GoRef     string
-	TsRef     string
-	DocsRef   string
+	Category             string
+	SchemaRef            string
+	GoRef                string
+	TsRef                string
+	DocsRef              string
+	GrafanaMaturityCount int
 }
 
 // MarshalJSON is overwritten to marshal
@@ -96,6 +99,7 @@ func (k Kind) MarshalJSON() ([]byte, error) {
 	}
 
 	m["category"] = k.Category
+	m["grafanaMaturityCount"] = k.GrafanaMaturityCount
 
 	for _, ref := range []string{"SchemaRef", "GoRef", "TsRef", "DocsRef"} {
 		refVal := reflect.ValueOf(k).FieldByName(ref).String()
@@ -178,12 +182,13 @@ func buildKindStateReport() *KindStateReport {
 			category := "core"
 			commonProps := k.Props().Common()
 			r.add(Kind{
-				SomeKindProperties: k.Props(),
-				Category:           category,
-				GoRef:              buildCoreGoRef(commonProps),
-				DocsRef:            buildDocsRef(category, commonProps),
-				TsRef:              buildCoreTSRef(k.Lineage(), k.Decl()),
-				SchemaRef:          buildCoreSchemaRef(commonProps),
+				SomeKindProperties:   k.Props(),
+				Category:             category,
+				GoRef:                buildCoreGoRef(commonProps),
+				DocsRef:              buildDocsRef(category, commonProps),
+				TsRef:                buildCoreTSRef(k.Lineage(), k.Decl()),
+				SchemaRef:            buildCoreSchemaRef(commonProps),
+				GrafanaMaturityCount: grafanaMaturityAttrCount(k.Lineage().Latest().Underlying()),
 			})
 		}
 	}
@@ -218,12 +223,13 @@ func buildKindStateReport() *KindStateReport {
 					goRef = buildComposableGoRef(pp.Properties.Type, cp)
 				}
 				r.add(Kind{
-					SomeKindProperties: ck.Props(),
-					Category:           category,
-					GoRef:              goRef,
-					DocsRef:            buildDocsRef(category, ck.Props().Common()),
-					TsRef:              buildComposableTSRef(pp.Properties.Type, cp),
-					SchemaRef:          buildComposableSchemaRef(pp.Properties.Type, cp),
+					SomeKindProperties:   ck.Props(),
+					Category:             category,
+					GoRef:                goRef,
+					DocsRef:              buildDocsRef(category, ck.Props().Common()),
+					TsRef:                buildComposableTSRef(pp.Properties.Type, cp),
+					SchemaRef:            buildComposableSchemaRef(pp.Properties.Type, cp),
+					GrafanaMaturityCount: grafanaMaturityAttrCount(ck.Lineage().Latest().Underlying()),
 				})
 			} else if may := si.Should(string(pp.Properties.Type)); may {
 				n := plugindef.DerivePascalName(pp.Properties) + si.Name()
@@ -292,6 +298,12 @@ func buildComposableSchemaRef(pType plugindef.Type, cp kindsys.ComposablePropert
 	schemaInterface := strings.ToLower(cp.SchemaInterface)
 	pName := strings.Replace(cp.MachineName, schemaInterface, "", 1)
 	return path.Join(repoBaseURL, fmt.Sprintf(composableCUEPath, string(pType), pName, schemaInterface))
+}
+
+func grafanaMaturityAttrCount(sch cue.Value) int {
+	const attr = "grafanamaturity"
+	aw := new(kindsysreport.AttributeWalker)
+	return aw.Count(sch, attr)[attr]
 }
 
 func machinize(s string) string {
