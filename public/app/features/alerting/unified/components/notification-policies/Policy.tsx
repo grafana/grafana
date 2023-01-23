@@ -303,7 +303,8 @@ const Policy: FC<PolicyComponentProps> = ({
               {hasMuteTimings && (
                 <MetaText icon="calendar-slash">
                   <span>Muted when</span>
-                  <HoverCard
+                  {/* TODO make a better mite timing overview, allow combining multiple in to one overview */}
+                  {/* <HoverCard
                     arrow
                     placement="top"
                     header={<MetaText icon="calendar-slash">Mute Timings</MetaText>}
@@ -317,7 +318,16 @@ const Policy: FC<PolicyComponentProps> = ({
                     <div>
                       <Strong>{muteTimings.join(', ')}</Strong>
                     </div>
-                  </HoverCard>
+                  </HoverCard> */}
+                  <div>
+                    <Strong>
+                      {muteTimings.map((timing) => (
+                        <Link key={timing} to={createMuteTimingLink(timing, alertManagerSourceName)}>
+                          {timing}
+                        </Link>
+                      ))}
+                    </Strong>
+                  </div>
                 </MetaText>
               )}
               {timingOptions && Object.values(timingOptions).some(Boolean) && (
@@ -532,6 +542,10 @@ function createContactPointLink(contactPoint: string, alertManagerSourceName = '
   return `/alerting/notifications/receivers/${encodeURIComponent(contactPoint)}/edit?alertmanager=${encodeURIComponent(
     alertManagerSourceName
   )}`;
+}
+
+function createMuteTimingLink(muteTimingName: string, alertManagerSourceName = ''): string {
+  return `/alerting/routes/mute-timing/edit?muteName=${muteTimingName}&alertmanager=${alertManagerSourceName}`;
 }
 
 const wildcardRouteWarning = <Badge icon="exclamation-triangle" text="Matches all labels" color="orange" />;
