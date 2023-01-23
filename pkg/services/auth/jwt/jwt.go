@@ -1,4 +1,4 @@
-package models
+package jwt
 
 import (
 	"context"
