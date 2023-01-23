@@ -89,10 +89,6 @@ steps:
   image: golang:1.19.4
   name: compile-build-cmd
 - commands:
-  - curl -fLO https://github.com/bazelbuild/buildtools/releases/download/$${BUILDIFIER_VERSION}/buildifier-linux-amd64
-  - echo "$${BUILDIFIER_CHKSUM}  buildifier-linux-amd64" | sha256sum -c -s
-  - mv buildifier-linux-amd64 /bin/buildifier
-  - chmod +x /bin/buildifier
   - ./bin/build verify-starlark .
   depends_on:
   - compile-build-cmd
@@ -6506,6 +6502,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: 1df4560e309d1fabd324a5afaeeeca88cee9e208e7f67869beb9182e13dc5619
+hmac: 1a7a3523a39d4f2d89d1f081ecaf08eeba53e95b0b34a8f49d91cfe0ce8d0ac6
 
 ...

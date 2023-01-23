@@ -186,10 +186,6 @@ def lint_starlark_step():
         "name": "lint-starlark",
         "image": curl_image,
         "commands": [
-            "curl -fLO https://github.com/bazelbuild/buildtools/releases/download/$${BUILDIFIER_VERSION}/buildifier-linux-amd64",
-            'echo "$${BUILDIFIER_CHKSUM}  buildifier-linux-amd64" | sha256sum -c -s',
-            "mv buildifier-linux-amd64 /bin/buildifier",
-            "chmod +x /bin/buildifier",
             "./bin/build verify-starlark .",
         ],
         "environment": {
