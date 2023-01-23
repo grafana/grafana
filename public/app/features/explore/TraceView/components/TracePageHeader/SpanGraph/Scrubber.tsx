@@ -72,12 +72,13 @@ export const getStyles = () => {
   };
 };
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export type ScrubberProps = {
   isDragging: boolean;
   position: number;
-  onMouseDown: (evt: React.MouseEvent<unknown>) => void;
-  onMouseEnter: (evt: React.MouseEvent<unknown>) => void;
-  onMouseLeave: (evt: React.MouseEvent<unknown>) => void;
+  onMouseDown: (evt: React.MouseEvent<any>) => void;
+  onMouseEnter: (evt: React.MouseEvent<any>) => void;
+  onMouseLeave: (evt: React.MouseEvent<any>) => void;
 };
 
 export default function Scrubber({ isDragging, onMouseDown, onMouseEnter, onMouseLeave, position }: ScrubberProps) {
