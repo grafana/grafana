@@ -43,7 +43,7 @@ var wireExtsBasicSet = wire.NewSet(
 	wire.Bind(new(auth.UserTokenService), new(*authimpl.UserAuthTokenService)),
 	wire.Bind(new(auth.UserTokenBackgroundService), new(*authimpl.UserAuthTokenService)),
 	licensing.ProvideService,
-	wire.Bind(new(models.Licensing), new(*licensing.OSSLicensingService)),
+	wire.Bind(new(licensing.Licensing), new(*licensing.OSSLicensingService)),
 	setting.ProvideProvider,
 	wire.Bind(new(setting.Provider), new(*setting.OSSImpl)),
 	acimpl.ProvideService,

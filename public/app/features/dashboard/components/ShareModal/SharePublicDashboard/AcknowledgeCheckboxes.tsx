@@ -1,10 +1,8 @@
-import { css } from '@emotion/css';
 import React from 'react';
 import { UseFormRegister } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
-import { Checkbox, FieldSet, HorizontalGroup, LinkButton, useStyles2, VerticalGroup } from '@grafana/ui/src';
+import { Checkbox, FieldSet, HorizontalGroup, LinkButton, VerticalGroup } from '@grafana/ui/src';
 
 import { SharePublicDashboardAcknowledgmentInputs, SharePublicDashboardInputs } from './SharePublicDashboard';
 
@@ -55,49 +53,30 @@ export const AcknowledgeCheckboxes = ({
 }: {
   disabled: boolean;
   register: UseFormRegister<SharePublicDashboardInputs>;
-}) => {
-  const styles = useStyles2(getStyles);
-
-  return (
-    <>
-      <p>Before you click Save, please acknowledge the following information:</p>
-      <FieldSet disabled={disabled}>
-        <VerticalGroup spacing="md">
-          {ACKNOWLEDGES.map((acknowledge) => (
-            <HorizontalGroup key={acknowledge.type} spacing="none" align="center">
-              <Checkbox
-                {...register(acknowledge.type)}
-                label={acknowledge.description}
-                data-testid={acknowledge.testId}
-                className={styles.checkbox}
-                labelClassName={styles.checkboxLabel}
-              />
-              <LinkButton
-                variant="primary"
-                href={acknowledge.info.href}
-                target="_blank"
-                fill="text"
-                icon="info-circle"
-                rel="noopener noreferrer"
-                tooltip={acknowledge.info.tooltip}
-              />
-            </HorizontalGroup>
-          ))}
-        </VerticalGroup>
-      </FieldSet>
-    </>
-  );
-};
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  checkbox: css`
-    display: flex;
-    align-items: baseline;
-  `,
-  checkboxLabel: css`
-    white-space: break-spaces;
-    max-width: fit-content;
-    line-height: ${theme.typography.bodySmall.lineHeight};
-    margin-bottom: 0;
-  `,
-});
+}) => (
+  <>
+    <p>Before you click Save, please acknowledge the following information:</p>
+    <FieldSet disabled={disabled}>
+      <VerticalGroup spacing="md">
+        {ACKNOWLEDGES.map((acknowledge) => (
+          <HorizontalGroup key={acknowledge.type} spacing="none" align="center">
+            <Checkbox
+              {...register(acknowledge.type)}
+              label={acknowledge.description}
+              data-testid={acknowledge.testId}
+            />
+            <LinkButton
+              variant="primary"
+              href={acknowledge.info.href}
+              target="_blank"
+              fill="text"
+              icon="info-circle"
+              rel="noopener noreferrer"
+              tooltip={acknowledge.info.tooltip}
+            />
+          </HorizontalGroup>
+        ))}
+      </VerticalGroup>
+    </FieldSet>
+  </>
+);
