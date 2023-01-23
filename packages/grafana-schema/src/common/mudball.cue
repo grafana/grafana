@@ -312,8 +312,9 @@ QueryResultMeta: {
 // Attached to query results (not persisted)
 DataTopic: "annotations" @cuetsy(kind="type")
 
-// TODO extends FieldConfig
+// TODO docs
 QueryResultMetaStat: {
+	FieldConfig
   displayName: string
   value: int64
 } @cuetsy(kind="interface")

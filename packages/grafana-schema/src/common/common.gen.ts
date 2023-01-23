@@ -430,6 +430,71 @@ export interface DataSourceJsonData {
 }
 
 /**
+ * Frontend settings model that is passed to Datasource constructor. This differs a bit from the model above
+ * as this data model is available to every user who has access to a data source (Viewers+).  This is loaded
+ * in bootData (on page load), or from: /api/frontend/settings
+ * TODO <T extends DataSourceJsonData = DataSourceJsonData>
+ */
+export interface DataSourceInstanceSettings {
+  /**
+   * Currently we support 2 options - direct (browser) and proxy (server)
+   */
+  access: string;
+  /**
+   * This is the full Authorization header if basic auth is enabled.
+   * Only available here when access is Browser (direct), when access is Server (proxy)
+   * The basic auth header, username & password is never exposed to browser/Frontend
+   * so this will be empty then.
+   */
+  basicAuth?: string;
+  /**
+   *  @deprecated -- use jsonData to store information related to database.
+   * This field should only be used by Elasticsearch and Influxdb.
+   */
+  database?: string;
+  id: number;
+  isDefault?: boolean;
+  jsonData: unknown;
+  meta: DataSourcePluginMeta;
+  name: string;
+  /**
+   * when access is direct, for some legacy datasources
+   */
+  password?: string;
+  /**
+   * When the name+uid are based on template variables, maintain access to the real values
+   */
+  rawRef?: DataSourceRef;
+  readOnly: boolean;
+  type: string;
+  uid: string;
+  url?: string;
+  username?: string;
+  withCredentials?: boolean;
+}
+
+/**
+ * TODO docs | <T extends KeyValue = {}> extends PluginMeta<T>
+ */
+export interface DataSourcePluginMeta {
+  alerting?: boolean;
+  annotations?: boolean;
+  backend?: boolean;
+  builtIn?: boolean;
+  category?: string;
+  hasQueryHelp?: boolean;
+  isBackend?: boolean;
+  logs?: boolean;
+  metrics?: boolean;
+  mixed?: boolean;
+  queryOptions?: PluginMetaQueryOptions;
+  sort?: number;
+  streaming?: boolean;
+  tracing?: boolean;
+  unlicensed?: boolean;
+}
+
+/**
  * These are the common properties available to all queries in all datasources.
  * Specific implementations will *extend* this interface, adding the required
  * properties for the given context.
@@ -1028,7 +1093,10 @@ export type DataTopic = 'annotations';
 /**
  * TODO extends FieldConfig
  */
-export interface QueryResultMetaStat {
+export interface QueryResultMetaStat extends FieldConfig {
+  /**
+   * The display value for this field.  This supports template variables blank is auto
+   */
   displayName: string;
   value: number;
 }
@@ -1168,6 +1236,12 @@ export interface FieldSchema {
    */
   name: string;
   type?: FieldType;
+}
+
+export interface PluginMetaQueryOptions {
+  cacheTimeout?: boolean;
+  maxDataPoints?: boolean;
+  minInterval?: boolean;
 }
 
 export interface DataSourceRef {
