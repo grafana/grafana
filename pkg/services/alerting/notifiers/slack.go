@@ -415,7 +415,7 @@ func (sn *SlackNotifier) slackFileUpload(evalContext *alerting.EvalContext, log 
 	if err != nil {
 		return err
 	}
-	cmd := &models.SendWebhookSync{
+	cmd := &notifications.SendWebhookSync{
 		Url: "https://slack.com/api/files.upload", Body: uploadBody.String(), HttpHeader: headers, HttpMethod: "POST",
 	}
 	if err := sn.NotificationService.SendWebhookSync(evalContext.Ctx, cmd); err != nil {

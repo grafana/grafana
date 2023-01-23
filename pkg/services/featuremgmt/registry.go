@@ -84,12 +84,6 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:         "influxdbBackendMigration",
-			Description:  "Query InfluxDB InfluxQL without the proxy",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-		},
-		{
 			Name:            "showFeatureFlagsInUI",
 			Description:     "Show feature flags in the settings UI",
 			State:           FeatureStateAlpha,
@@ -408,6 +402,11 @@ var (
 			Description:     "Stop maintaining state of alerts that are not firing",
 			State:           FeatureStateBeta,
 			RequiresRestart: false,
+		},
+		{
+			Name:        "azureMultipleResourcePicker",
+			Description: "Azure multiple resource picker",
+			State:       FeatureStateAlpha,
 		},
 	}
 )

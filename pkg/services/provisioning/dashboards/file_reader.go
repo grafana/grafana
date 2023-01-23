@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning/utils"
@@ -141,7 +140,7 @@ func (fr *FileReader) isDatabaseAccessRestricted() bool {
 
 // storeDashboardsInFolder saves dashboards from the filesystem on disk to the folder from config
 func (fr *FileReader) storeDashboardsInFolder(ctx context.Context, filesFoundOnDisk map[string]os.FileInfo,
-	dashboardRefs map[string]*models.DashboardProvisioning, usageTracker *usageTracker) error {
+	dashboardRefs map[string]*dashboards.DashboardProvisioning, usageTracker *usageTracker) error {
 	folderID, err := fr.getOrCreateFolderID(ctx, fr.Cfg, fr.dashboardProvisioningService, fr.Cfg.Folder)
 	if err != nil && !errors.Is(err, ErrFolderNameMissing) {
 		return err
@@ -163,7 +162,7 @@ func (fr *FileReader) storeDashboardsInFolder(ctx context.Context, filesFoundOnD
 // storeDashboardsInFoldersFromFilesystemStructure saves dashboards from the filesystem on disk to the same folder
 // in Grafana as they are in on the filesystem.
 func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(ctx context.Context, filesFoundOnDisk map[string]os.FileInfo,
-	dashboardRefs map[string]*models.DashboardProvisioning, resolvedPath string, usageTracker *usageTracker) error {
+	dashboardRefs map[string]*dashboards.DashboardProvisioning, resolvedPath string, usageTracker *usageTracker) error {
 	for path, fileInfo := range filesFoundOnDisk {
 		folderName := ""
 
@@ -187,14 +186,14 @@ func (fr *FileReader) storeDashboardsInFoldersFromFileStructure(ctx context.Cont
 }
 
 // handleMissingDashboardFiles will unprovision or delete dashboards which are missing on disk.
-func (fr *FileReader) handleMissingDashboardFiles(ctx context.Context, provisionedDashboardRefs map[string]*models.DashboardProvisioning,
+func (fr *FileReader) handleMissingDashboardFiles(ctx context.Context, provisionedDashboardRefs map[string]*dashboards.DashboardProvisioning,
 	filesFoundOnDisk map[string]os.FileInfo) {
 	// find dashboards to delete since json file is missing
 	var dashboardsToDelete []int64
 	for path, provisioningData := range provisionedDashboardRefs {
 		_, existsOnDisk := filesFoundOnDisk[path]
 		if !existsOnDisk {
-			dashboardsToDelete = append(dashboardsToDelete, provisioningData.DashboardId)
+			dashboardsToDelete = append(dashboardsToDelete, provisioningData.DashboardID)
 		}
 	}
 
@@ -222,7 +221,7 @@ func (fr *FileReader) handleMissingDashboardFiles(ctx context.Context, provision
 
 // saveDashboard saves or updates the dashboard provisioning file at path.
 func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID int64, fileInfo os.FileInfo,
-	provisionedDashboardRefs map[string]*models.DashboardProvisioning) (provisioningMetadata, error) {
+	provisionedDashboardRefs map[string]*dashboards.DashboardProvisioning) (provisioningMetadata, error) {
 	provisioningMetadata := provisioningMetadata{}
 	resolvedFileInfo, err := resolveSymlink(fileInfo, path)
 	if err != nil {
@@ -257,7 +256,7 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 	}
 
 	if alreadyProvisioned {
-		dash.Dashboard.SetID(provisionedData.DashboardId)
+		dash.Dashboard.SetID(provisionedData.DashboardID)
 	}
 
 	if !fr.isDatabaseAccessRestricted() {
@@ -281,15 +280,15 @@ func (fr *FileReader) saveDashboard(ctx context.Context, path string, folderID i
 }
 
 func getProvisionedDashboardsByPath(ctx context.Context, service dashboards.DashboardProvisioningService, name string) (
-	map[string]*models.DashboardProvisioning, error) {
+	map[string]*dashboards.DashboardProvisioning, error) {
 	arr, err := service.GetProvisionedDashboardData(ctx, name)
 	if err != nil {
 		return nil, err
 	}
 
-	byPath := map[string]*models.DashboardProvisioning{}
+	byPath := map[string]*dashboards.DashboardProvisioning{}
 	for _, pd := range arr {
-		byPath[pd.ExternalId] = pd
+		byPath[pd.ExternalID] = pd
 	}
 
 	return byPath, nil

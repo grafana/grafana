@@ -1,6 +1,8 @@
+import { Observable } from 'rxjs';
+
 import { Labels } from './data';
 import { DataFrame } from './dataFrame';
-import { DataQueryResponse } from './datasource';
+import { DataQueryRequest, DataQueryResponse } from './datasource';
 import { DataQuery } from './query';
 import { AbsoluteTimeRange } from './time';
 
@@ -175,4 +177,43 @@ export const hasLogsContextSupport = (datasource: unknown): datasource is DataSo
   const withLogsSupport = datasource as DataSourceWithLogsContextSupport;
 
   return withLogsSupport.getLogRowContext !== undefined && withLogsSupport.showContextToggle !== undefined;
+};
+
+/**
+ * Types of supplementary queries that can be run in Explore.
+ * @internal
+ */
+export enum SupplementaryQueryType {
+  LogsVolume = 'LogsVolume',
+  LogsSample = 'LogsSample',
+}
+
+/**
+ * Data sources that support supplementary queries in Explore.
+ * This will enable users to see additional data when running original queries.
+ * Supported supplementary queries are defined in SupplementaryQueryType enum.
+ * @internal
+ */
+export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQuery> {
+  getDataProvider(
+    type: SupplementaryQueryType,
+    request: DataQueryRequest<TQuery>
+  ): Observable<DataQueryResponse> | undefined;
+  getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[];
+}
+
+export const hasSupplementaryQuerySupport = <TQuery extends DataQuery>(
+  datasource: unknown,
+  type: SupplementaryQueryType
+): datasource is DataSourceWithSupplementaryQueriesSupport<TQuery> => {
+  if (!datasource) {
+    return false;
+  }
+
+  const withSupplementaryQueriesSupport = datasource as DataSourceWithSupplementaryQueriesSupport<TQuery>;
+
+  return (
+    withSupplementaryQueriesSupport.getDataProvider !== undefined &&
+    withSupplementaryQueriesSupport.getSupportedSupplementaryQueryTypes().includes(type)
+  );
 };

@@ -145,7 +145,7 @@ func (wn *WebhookNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	bodyJSON, _ := json.Marshal(body)
 
-	cmd := &models.SendWebhookSync{
+	cmd := &notifications.SendWebhookSync{
 		Url:        wn.URL,
 		User:       wn.User,
 		Password:   wn.Password,
