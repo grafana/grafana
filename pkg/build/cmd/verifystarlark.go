@@ -82,22 +82,16 @@ func buildifierLintCommand(path string) (string, []string) {
 // The caller is trusted and it is the callers responsibility to ensure that the resulting command is safe to execute.
 func verifyStarlark(ctx context.Context, workspace string, commandFn commandFunc) ([]error, error) {
 	var verificationErrs []error
-	var executionErr error
 
 	// All errors from filepath.WalkDir are filtered by the fs.WalkDirFunc.
-	// The anonymous function used here never returns an error.
 	// Lstat or ReadDir errors are reported as verificationErrors.
-	// If any execution of the `buildifier` command fails, it is reported as executionErr and
-	// any verification of subsequent files is skipped.
-	if err := filepath.WalkDir(workspace, func(path string, d fs.DirEntry, err error) error {
+	// If any execution of the `buildifier` command fails or if the context is cancelled,
+	// it is reported as an error and any verification of subsequent files is skipped.
+	err := filepath.WalkDir(workspace, func(path string, d fs.DirEntry, err error) error {
 		// Skip verification of the file or files within the directory if there is an error
 		// returned by Lstat or ReadDir.
 		if err != nil {
 			verificationErrs = append(verificationErrs, err)
-			return nil
-		}
-
-		if executionErr != nil {
 			return nil
 		}
 
@@ -112,7 +106,7 @@ func verifyStarlark(ctx context.Context, workspace string, commandFn commandFunc
 			cmd := exec.CommandContext(ctx, command, args...)
 			cmd.Dir = workspace
 
-			_, err := cmd.Output()
+			_, err = cmd.Output()
 			if err == nil { // No error, early return.
 				return nil
 			}
@@ -126,30 +120,23 @@ func verifyStarlark(ctx context.Context, workspace string, commandFn commandFunc
 					verificationErrs = append(verificationErrs, errors.New(string(err.Stderr)))
 					return nil
 				case 2: // usage errors: invoked incorrectly
-					executionErr = fmt.Errorf("command %q: %s", cmd, err.Stderr)
-					return nil
+					return fmt.Errorf("command %q: %s", cmd, err.Stderr)
 				case 3: // unexpected runtime errors: file I/O problems or internal bugs
-					executionErr = fmt.Errorf("command %q: %s", cmd, err.Stderr)
-					return nil
+					return fmt.Errorf("command %q: %s", cmd, err.Stderr)
 				case 4: // check mode failed (reformat is needed)
 					verificationErrs = append(verificationErrs, errors.New(string(err.Stderr)))
 					return nil
 				default:
-					executionErr = fmt.Errorf("command %q: %s", cmd, err.Stderr)
-					return nil
+					return fmt.Errorf("command %q: %s", cmd, err.Stderr)
 				}
 			}
 
 			// Error was not an exit error from the command.
-			executionErr = fmt.Errorf("command %q: %v", cmd, err)
-			return nil
+			return fmt.Errorf("command %q: %v", cmd, err)
 		}
 
 		return nil
-	}); err != nil {
-		// Should never happen. See comment by the invocation of WalkDir for more information.
-		panic(fmt.Sprintf("unexpected error from filepath.WalkDir: %v", err))
-	}
+	})
 
-	return verificationErrs, executionErr
+	return verificationErrs, err
 }

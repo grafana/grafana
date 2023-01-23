@@ -33,6 +33,10 @@ func TestVerifyStarlark(t *testing.T) {
 			if err != nil {
 				t.Fatalf(err.Error())
 			}
+			err = os.WriteFile(filepath.Join(workspace, "other-ignored.star"), []byte{}, os.ModePerm)
+			if err != nil {
+				t.Fatalf(err.Error())
+			}
 			cancel()
 
 			_, executionErr := verifyStarlark(ctx, workspace, buildifierLintCommand)
