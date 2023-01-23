@@ -5,7 +5,7 @@ import { addOrientationOption, addStandardDataReduceOptions } from '../stat/comm
 
 import { gaugePanelMigrationHandler, gaugePanelChangedHandler } from './GaugeMigrations';
 import { GaugePanel } from './GaugePanel';
-import { PanelOptions, defaultPanelOptions } from './models.gen';
+import { PanelOptions, defaultPanelOptions } from './panelcfg.gen';
 import { GaugeSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions>(GaugePanel)
