@@ -206,8 +206,8 @@ Example: `@grafana/developers`
 
 ## Skip organization role sync
 
-To prevent the sync of org roles from Grafana.com, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
-This also impacts `allow_assign_grafana_admin` setting, by not syncing the grafana admin role from GitHub.
+To prevent the sync of organization roles from Grafana.com, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
+This also impacts the `allow_assign_grafana_admin` setting by not syncing the Grafana admin role from GitHub.
 
 ```ini
 [auth.grafana_com]

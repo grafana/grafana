@@ -914,10 +914,10 @@ This also impacts `allow_assign_grafana_admin` setting, by not syncing the grafa
 The following table shows the OAuth provider's setting with the default value and the skip org role sync setting.
 | OAuth Provider | `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | Behavior |
 | --- | --- | --- | --- |
-| Github | false | false | User organization roles are set with `defaultRole` and cannot be changed |
-| Github | true | false | User organization roles are set with `defaultRole` for Github, and GrafanaAdmins are set. For other providers, the synchronization will be skipped, and the org role can be changed, along with other OAuth provider users' org roles. |
-| Github | false | true | User organization roles are set with `defaultRole` and the org role can be changed for Github synced users. |
-| Github | true | true | User organization roles are set with `defaultRole` for Google. For other providers, the synchronization will be skipped, and the org role can be changed, along with other OAuth provider users' org roles. |
+| GitHub | false | false | User organization roles are set with `defaultRole` and cannot be changed |
+| Github | true | false | User organization roles are set with `defaultRole` for GitHub, and Grafana Admins are set. For other providers, the synchronization is skipped, and the org role can be changed, along with other OAuth provider users' org roles. |
+| GitHub | false | true | User organization roles are set with `defaultRole`, and the organization role can be changed for GitHub synced users. |
+| GitHub | true | true | User organization roles are set with `defaultRole` for Google. For other providers, the synchronization is skipped, and the org role can be changed, along with other OAuth provider users' org roles. |
 
 ### api_key_max_seconds_to_live
 
