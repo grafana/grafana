@@ -17,7 +17,7 @@ import { setDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { configureStore } from 'app/store/configureStore';
 
 import { AlertGroupsPanel } from './AlertGroupsPanel';
-import { PanelOptions } from './models.gen';
+import { PanelOptions } from './panelcfg.gen';
 
 jest.mock('app/features/alerting/unified/api/alertmanager');
 

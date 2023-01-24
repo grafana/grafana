@@ -12,7 +12,7 @@ import { AlertmanagerGroup, Matcher } from 'app/plugins/datasource/alertmanager/
 import { useDispatch } from 'app/types';
 
 import { AlertGroup } from './AlertGroup';
-import { PanelOptions } from './models.gen';
+import { PanelOptions } from './panelcfg.gen';
 import { useFilteredGroups } from './useFilteredGroups';
 
 export const AlertGroupsPanel = (props: PanelProps<PanelOptions>) => {
