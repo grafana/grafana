@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -41,6 +42,43 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 		require.Len(t, resolvedScopes, 1)
 
 		require.Equal(t, fmt.Sprintf("folders:uid:%v", db.UID), resolvedScopes[0])
+
+		folderStore.AssertCalled(t, "GetFolderByTitle", mock.Anything, orgId, title)
+	})
+	t.Run("resolver should include inherited scopes if any", func(t *testing.T) {
+		dashboardStore := &FakeDashboardStore{}
+		orgId := rand.Int63()
+		title := "Very complex :title with: and /" + util.GenerateShortUID()
+
+		db := &folder.Folder{Title: title, ID: rand.Int63(), UID: util.GenerateShortUID()}
+
+		folderStore := NewFakeFolderStore(t)
+		folderStore.On("GetFolderByTitle", mock.Anything, mock.Anything, mock.Anything).Return(db, nil).Once()
+
+		scope := "folders:name:" + title
+
+		folderSvc := foldertest.NewFakeService()
+		folderSvc.ExpectedFolders = []*folder.Folder{
+			{
+				UID: "parent",
+			},
+			{
+				UID: "grandparent",
+			},
+		}
+		_, resolver := NewFolderNameScopeResolver(dashboardStore, folderStore, folderSvc)
+
+		resolvedScopes, err := resolver.Resolve(context.Background(), orgId, scope)
+		require.NoError(t, err)
+		require.Len(t, resolvedScopes, 3)
+
+		if diff := cmp.Diff([]string{
+			fmt.Sprintf("folders:uid:%v", db.UID),
+			fmt.Sprintf("folders:uid:parent"),
+			fmt.Sprintf("folders:uid:grandparent"),
+		}, resolvedScopes); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
 
 		folderStore.AssertCalled(t, "GetFolderByTitle", mock.Anything, orgId, title)
 	})
@@ -99,6 +137,43 @@ func TestNewFolderIDScopeResolver(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, resolvedScopes, 1)
 		require.Equal(t, fmt.Sprintf("folders:uid:%v", db.UID), resolvedScopes[0])
+
+		folderStore.AssertCalled(t, "GetFolderByID", mock.Anything, orgId, db.ID)
+	})
+	t.Run("resolver should should include inherited scopes if any", func(t *testing.T) {
+		dashboardStore := &FakeDashboardStore{}
+		folderStore := NewFakeFolderStore(t)
+
+		folderSvc := foldertest.NewFakeService()
+		folderSvc.ExpectedFolders = []*folder.Folder{
+			{
+				UID: "parent",
+			},
+			{
+				UID: "grandparent",
+			},
+		}
+		_, resolver := NewFolderIDScopeResolver(dashboardStore, folderStore, folderSvc)
+
+		orgId := rand.Int63()
+		uid := util.GenerateShortUID()
+
+		db := &folder.Folder{ID: rand.Int63(), UID: uid}
+		folderStore.On("GetFolderByID", mock.Anything, mock.Anything, mock.Anything).Return(db, nil).Once()
+
+		scope := "folders:id:" + strconv.FormatInt(db.ID, 10)
+
+		resolvedScopes, err := resolver.Resolve(context.Background(), orgId, scope)
+		require.NoError(t, err)
+		require.Len(t, resolvedScopes, 3)
+
+		if diff := cmp.Diff([]string{
+			fmt.Sprintf("folders:uid:%v", db.UID),
+			fmt.Sprintf("folders:uid:parent"),
+			fmt.Sprintf("folders:uid:grandparent"),
+		}, resolvedScopes); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
 
 		folderStore.AssertCalled(t, "GetFolderByID", mock.Anything, orgId, db.ID)
 	})
@@ -175,6 +250,43 @@ func TestNewDashboardIDScopeResolver(t *testing.T) {
 		require.Equal(t, fmt.Sprintf("folders:uid:%s", folder.UID), resolvedScopes[1])
 	})
 
+	t.Run("resolver should inlude inherited scopes if any", func(t *testing.T) {
+		store := &FakeDashboardStore{}
+		folderStore := NewFakeFolderStore(t)
+
+		folderSvc := foldertest.NewFakeService()
+		folderSvc.ExpectedFolders = []*folder.Folder{
+			{
+				UID: "parent",
+			},
+			{
+				UID: "grandparent",
+			},
+		}
+		_, resolver := NewDashboardIDScopeResolver(store, folderStore, folderSvc)
+
+		orgID := rand.Int63()
+		folder := &folder.Folder{ID: 2, UID: "2"}
+		dashboard := &Dashboard{ID: 1, FolderID: folder.ID, UID: "1"}
+
+		store.On("GetDashboard", mock.Anything, mock.Anything).Return(dashboard, nil).Once()
+		folderStore.On("GetFolderByID", mock.Anything, orgID, folder.ID).Return(folder, nil).Once()
+
+		scope := ac.Scope("dashboards", "id", strconv.FormatInt(dashboard.ID, 10))
+		resolvedScopes, err := resolver.Resolve(context.Background(), orgID, scope)
+		require.NoError(t, err)
+		require.Len(t, resolvedScopes, 4)
+
+		if diff := cmp.Diff([]string{
+			fmt.Sprintf("dashboards:uid:%s", dashboard.UID),
+			fmt.Sprintf("folders:uid:%s", folder.UID),
+			fmt.Sprintf("folders:uid:parent"),
+			fmt.Sprintf("folders:uid:grandparent"),
+		}, resolvedScopes); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
+	})
+
 	t.Run("resolver should fail if input scope is not expected", func(t *testing.T) {
 		_, resolver := NewDashboardIDScopeResolver(&FakeDashboardStore{}, NewFakeFolderStore(t), foldertest.NewFakeService())
 		_, err := resolver.Resolve(context.Background(), rand.Int63(), "dashboards:uid:123")
@@ -220,6 +332,44 @@ func TestNewDashboardUIDScopeResolver(t *testing.T) {
 		require.Len(t, resolvedScopes, 2)
 		require.Equal(t, fmt.Sprintf("dashboards:uid:%s", dashboard.UID), resolvedScopes[0])
 		require.Equal(t, fmt.Sprintf("folders:uid:%s", folder.UID), resolvedScopes[1])
+	})
+
+	t.Run("resolver should include inherited scopes if any", func(t *testing.T) {
+		store := &FakeDashboardStore{}
+		folderStore := NewFakeFolderStore(t)
+
+		folderSvc := foldertest.NewFakeService()
+		folderSvc.ExpectedFolders = []*folder.Folder{
+			{
+				UID: "parent",
+			},
+			{
+				UID: "grandparent",
+			},
+		}
+
+		_, resolver := NewDashboardUIDScopeResolver(store, folderStore, folderSvc)
+
+		orgID := rand.Int63()
+		folder := &folder.Folder{ID: 2, UID: "2"}
+		dashboard := &Dashboard{ID: 1, FolderID: folder.ID, UID: "1"}
+
+		store.On("GetDashboard", mock.Anything, mock.Anything).Return(dashboard, nil).Once()
+		folderStore.On("GetFolderByID", mock.Anything, orgID, folder.ID).Return(folder, nil).Once()
+
+		scope := ac.Scope("dashboards", "uid", dashboard.UID)
+		resolvedScopes, err := resolver.Resolve(context.Background(), orgID, scope)
+		require.NoError(t, err)
+		require.Len(t, resolvedScopes, 4)
+
+		if diff := cmp.Diff([]string{
+			fmt.Sprintf("dashboards:uid:%s", dashboard.UID),
+			fmt.Sprintf("folders:uid:%s", folder.UID),
+			fmt.Sprintf("folders:uid:parent"),
+			fmt.Sprintf("folders:uid:grandparent"),
+		}, resolvedScopes); diff != "" {
+			t.Errorf("Result mismatch (-want +got):\n%s", diff)
+		}
 	})
 
 	t.Run("resolver should fail if input scope is not expected", func(t *testing.T) {
