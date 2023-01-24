@@ -36,6 +36,9 @@ export abstract class VariableSupportBase<
 > {
   abstract getType(): VariableSupportType;
 
+  /**
+   * Define this method in the config if you want to pre-populate the editor with a default query.
+   */
   getDefaultQuery?(): Partial<TQuery>;
 }
 

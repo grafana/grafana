@@ -77,7 +77,7 @@ describe('QueryVariableEditor', () => {
         } as unknown as DataSourceApi,
       },
     };
-    it('should pass the query with default values if the datasource config defines it', () => {
+    it('should pass down the query with default values if the datasource config defines it', () => {
       const extended = { ...extendedCustom };
       extended.extended.dataSource.variables!.getDefaultQuery = jest
         .fn()
@@ -90,7 +90,7 @@ describe('QueryVariableEditor', () => {
         expect.anything()
       );
     });
-    it('should not get default query if the datasource config doesnt define it', () => {
+    it('should not pass down a default query if the datasource config doesnt define it', () => {
       extendedCustom.extended.dataSource.variables!.getDefaultQuery = undefined;
       const { props } = setupTestContext(extendedCustom);
       expect(props.extended?.dataSource?.variables?.getDefaultQuery).not.toBeDefined();
