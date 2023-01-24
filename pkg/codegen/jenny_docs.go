@@ -324,11 +324,10 @@ func printProperties(w io.Writer, s *schema) {
 	table.SetAutoWrapText(false)
 
 	// Buffer all property rows so that we can sort them before printing them.
-	var rows [][]string
-
+	rows := make([][]string, 0, len(s.Properties))
 	for k, p := range s.Properties {
 		// Generate relative links for objects and arrays of objects.
-		var propType []string
+		propType := make([]string, 0, len(p.Type))
 		for _, pt := range p.Type {
 			switch pt {
 			case PropertyTypeObject:
@@ -372,7 +371,7 @@ func printProperties(w io.Writer, s *schema) {
 		desc := p.Description
 
 		if len(p.Enum) > 0 {
-			var vals []string
+			vals := make([]string, 0, len(p.Enum))
 			for _, e := range p.Enum {
 				vals = append(vals, e.String())
 			}
