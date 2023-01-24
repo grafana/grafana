@@ -17,8 +17,9 @@ import (
 
 const (
 	// Themes
-	lightName = "light"
-	darkName  = "dark"
+	lightName  = "light"
+	darkName   = "dark"
+	systemName = "system"
 )
 
 func (hs *HTTPServer) editorInAnyFolder(c *contextmodel.ReqContext) bool {
@@ -100,7 +101,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			OrgRole:                    c.OrgRole,
 			GravatarUrl:                dtos.GetGravatarUrl(c.Email),
 			IsGrafanaAdmin:             c.IsGrafanaAdmin,
-			LightTheme:                 prefs.Theme == lightName,
+			Theme:                      prefs.Theme,
 			Timezone:                   prefs.Timezone,
 			WeekStart:                  weekStart,
 			Locale:                     locale,
@@ -149,12 +150,13 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		data.User.Name = data.User.Login
 	}
 
+	// TODO: clean this up :)
 	themeURLParam := c.Query("theme")
 	if themeURLParam == lightName {
-		data.User.LightTheme = true
+		data.User.Theme = lightName
 		data.Theme = lightName
 	} else if themeURLParam == darkName {
-		data.User.LightTheme = false
+		data.User.Theme = darkName
 		data.Theme = darkName
 	}
 

@@ -190,7 +190,19 @@ export class GrafanaBootConfig implements GrafanaConfig {
 }
 
 function getThemeCustomizations(config: GrafanaBootConfig) {
-  const mode = config.bootData.user.lightTheme ? 'light' : 'dark';
+  let mode: 'light' | 'dark';
+  const themePref = config.bootData.user.theme;
+
+  if (themePref === 'light' || themePref === 'dark') {
+    mode = themePref;
+  } else if (themePref === 'system') {
+    const mediaResult = window.matchMedia('(prefers-color-scheme: dark)');
+    mode = mediaResult.matches ? 'dark' : 'light';
+  } else {
+    // TODO: decide what to do here
+    mode = 'dark';
+  }
+
   const themeOptions: NewThemeOptions = {
     colors: { mode },
   };
