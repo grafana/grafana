@@ -185,6 +185,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"expressionsEnabled":               hs.Cfg.ExpressionsEnabled,
 		"awsAllowedAuthProviders":          hs.Cfg.AWSAllowedAuthProviders,
 		"awsAssumeRoleEnabled":             hs.Cfg.AWSAssumeRoleEnabled,
+		"supportBundlesEnabled":            isSupportBundlesEnabled(hs),
 		"azure": map[string]interface{}{
 			"cloud":                  hs.Cfg.Azure.Cloud,
 			"managedIdentityEnabled": hs.Cfg.Azure.ManagedIdentityEnabled,
@@ -220,6 +221,11 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 	}
 
 	return jsonObj, nil
+}
+
+func isSupportBundlesEnabled(hs *HTTPServer) bool {
+	return hs.Cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(false) &&
+		hs.Features.IsEnabled(featuremgmt.FlagSupportBundles)
 }
 
 func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins EnabledPlugins) (map[string]plugins.DataSourceDTO, error) {
