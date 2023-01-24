@@ -72,6 +72,13 @@ const defaultProps = {
   queryType,
   disableRow: jest.fn(),
   renderAdvanced: jest.fn(),
+  fetchInitialRows: jest.fn(),
+  fetchAndAppendNestedRow: jest.fn(),
+  isValid: jest.fn(),
+  resourceToString: jest.fn(),
+  parseResourceDetails: jest.fn(),
+  search: jest.fn(),
+  searchLimit: 10,
 };
 
 describe('AzureMonitor ResourcePicker', () => {
@@ -178,7 +185,7 @@ describe('AzureMonitor ResourcePicker', () => {
 
   it('should call onApply with a new resource when a user clicks on the checkbox in the row', async () => {
     const onApply = jest.fn();
-    render(<ResourcePicker {...defaultProps} queryType={'metrics'} onApply={onApply} resources={[]} />);
+    render(<ResourcePicker {...defaultProps} onApply={onApply} resources={[]} />);
 
     const subscriptionButton = await screen.findByRole('button', { name: 'Expand Primary Subscription' });
     expect(subscriptionButton).toBeInTheDocument();
@@ -254,7 +261,7 @@ describe('AzureMonitor ResourcePicker', () => {
 
   it('should call onApply with a new subscription when a user types it in the selection box', async () => {
     const onApply = jest.fn();
-    render(<ResourcePicker {...defaultProps} queryType={'metrics'} onApply={onApply} resources={[{}]} />);
+    render(<ResourcePicker {...defaultProps} onApply={onApply} resources={[{}]} />);
     const subscriptionCheckbox = await screen.findByLabelText('Primary Subscription');
     expect(subscriptionCheckbox).toBeInTheDocument();
     expect(subscriptionCheckbox).not.toBeChecked();
@@ -329,7 +336,7 @@ describe('AzureMonitor ResourcePicker', () => {
     const rpd = createMockResourcePickerData();
     rpd.search = jest.fn().mockResolvedValue([]);
 
-    render(<ResourcePicker {...defaultProps} resourcePickerData={rpd} />);
+    render(<ResourcePicker {...defaultProps} />);
 
     const searchField = await screen.findByLabelText('resource search');
     expect(searchField).toBeInTheDocument();
@@ -350,7 +357,7 @@ describe('AzureMonitor ResourcePicker', () => {
       });
     });
 
-    render(<ResourcePicker {...defaultProps} resourcePickerData={rpd} />);
+    render(<ResourcePicker {...defaultProps} />);
 
     const searchField = await screen.findByLabelText('resource search');
     expect(searchField).toBeInTheDocument();
@@ -393,15 +400,8 @@ describe('AzureMonitor ResourcePicker', () => {
   });
 
   it('should throw an error if no namespaces are found', async () => {
-    const resourcePickerData = createMockResourcePickerData(['getResourceGroupsBySubscriptionId']);
-    render(
-      <ResourcePicker
-        {...defaultProps}
-        queryType={'metrics'}
-        resourcePickerData={resourcePickerData}
-        resources={[noResourceURI]}
-      />
-    );
+    // const resourcePickerData = createMockResourcePickerData(['getResourceGroupsBySubscriptionId']);
+    render(<ResourcePicker {...defaultProps} resources={[noResourceURI]} />);
     const subscriptionExpand = await screen.findByLabelText('Expand Primary Subscription');
     await subscriptionExpand.click();
     const error = await screen.findByRole('alert');

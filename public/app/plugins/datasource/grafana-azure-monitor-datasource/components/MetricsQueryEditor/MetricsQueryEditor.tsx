@@ -9,7 +9,7 @@ import type Datasource from '../../datasource';
 import type { AzureMonitorQuery, AzureMonitorOption, AzureMonitorErrorish, AzureMetricResource } from '../../types';
 import ResourceField from '../ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
-import { parseResourceDetails } from '../ResourcePicker/utils';
+import { parseResourceDetails, resourceToString, setResources } from '../ResourcePicker/utils';
 
 import AdvancedResourcePicker from './AdvancedResourcePicker';
 import AggregationField from './AggregationField';
@@ -80,14 +80,8 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
         <EditorRow>
           <EditorFieldGroup>
             <ResourceField
-              query={query}
-              datasource={datasource}
-              variableOptionGroup={variableOptionGroup}
-              onQueryChange={onChange}
-              setError={setError}
               selectableEntryTypes={[ResourceRowType.Resource]}
               resources={resources ?? []}
-              queryType={'metrics'}
               disableRow={disableRow}
               renderAdvanced={(resources, onChange) => (
                 // It's required to cast resources because the resource picker
@@ -95,6 +89,17 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
                 // eslint-disable-next-line
                 <AdvancedResourcePicker resources={resources as AzureMetricResource[]} onChange={onChange} />
               )}
+              searchLimit={datasource.resourcePickerData.resultLimit}
+              fetchInitialRows={(selected) => datasource.resourcePickerData.fetchInitialRows('metrics', selected)}
+              fetchAndAppendNestedRow={(rows, parentRow) =>
+                datasource.resourcePickerData.fetchAndAppendNestedRow(rows, parentRow, 'metrics')
+              }
+              search={(term) => datasource.resourcePickerData.search(term, 'metrics')}
+              isValid={(r) => !!(r.subscription && r.resourceGroup && r.resourceName && r.metricNamespace)}
+              resourceToString={resourceToString}
+              parseResourceDetails={parseResourceDetails}
+              onResourcesChange={(resources) => onChange(setResources(query, 'metrics', resources))}
+              parseAzureMetricResource={(r) => r}
             />
             <MetricNamespaceField
               metricNamespaces={metricNamespaces}

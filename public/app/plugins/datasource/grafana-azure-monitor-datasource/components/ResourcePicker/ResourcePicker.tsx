@@ -6,7 +6,6 @@ import { config } from '@grafana/runtime';
 import { Alert, Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
-import ResourcePickerData, { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
 import { AzureMetricResource } from '../../types';
 import messageFromError from '../../utils/messageFromError';
 import { Space } from '../Space';
@@ -17,30 +16,40 @@ import NestedRow from './NestedRow';
 import Search from './Search';
 import getStyles from './styles';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from './types';
-import { findRows, parseMultipleResourceDetails, resourcesToStrings, matchURI, resourceToString } from './utils';
+import { findRows, matchURI } from './utils';
 
 interface ResourcePickerProps<T> {
-  resourcePickerData: ResourcePickerData;
   resources: T[];
   selectableEntryTypes: ResourceRowType[];
-  queryType: ResourcePickerQueryType;
+  searchLimit: number;
 
+  fetchInitialRows: (selected: T[]) => Promise<ResourceRowGroup>;
+  fetchAndAppendNestedRow: (rows: ResourceRowGroup, parentRow: ResourceRow) => Promise<ResourceRowGroup>;
+  search: (term: string) => Promise<ResourceRowGroup>;
   onApply: (resources: T[]) => void;
   onCancel: () => void;
   disableRow: (row: ResourceRow, selectedRows: ResourceRowGroup) => boolean;
   renderAdvanced: (resources: T[], onChange: (resources: T[]) => void) => React.ReactNode;
+  isValid: (r: T) => boolean;
+  resourceToString: (r: T) => string;
+  parseResourceDetails: (r: string, location?: string) => T;
 }
 
-const ResourcePicker = ({
-  resourcePickerData,
+const ResourcePicker = <T extends unknown>({
   resources,
+  searchLimit,
   onApply,
   onCancel,
   selectableEntryTypes,
-  queryType,
   disableRow,
   renderAdvanced,
-}: ResourcePickerProps<string | AzureMetricResource>) => {
+  fetchInitialRows,
+  fetchAndAppendNestedRow,
+  isValid,
+  resourceToString,
+  parseResourceDetails,
+  search,
+}: ResourcePickerProps<T>) => {
   const styles = useStyles2(getStyles);
 
   const [isLoading, setIsLoading] = useState(false);
@@ -59,25 +68,26 @@ const ResourcePicker = ({
     if (!isLoading) {
       try {
         setIsLoading(true);
-        const resources = await resourcePickerData.fetchInitialRows(
-          queryType,
-          parseMultipleResourceDetails(internalSelected ?? {})
-        );
+        // const resources = await resourcePickerData.fetchInitialRows(
+        //   queryType,
+        //   parseMultipleResourceDetails(internalSelected ?? {})
+        // );
+        const resources = await fetchInitialRows(internalSelected ?? {});
         setRows(resources);
       } catch (error) {
         setErrorMessage(messageFromError(error));
       }
       setIsLoading(false);
     }
-  }, [internalSelected, isLoading, resourcePickerData, queryType]);
+  }, [internalSelected, isLoading, fetchInitialRows]);
 
   useEffectOnce(() => {
     loadInitialData();
   });
 
   // Avoid using empty resources
-  const isValid = (r: string | AzureMetricResource) =>
-    typeof r === 'string' ? r !== '' : r.subscription && r.resourceGroup && r.resourceName && r.metricNamespace;
+  // const isValid = (r: string | AzureMetricResource) =>
+  //   typeof r === 'string' ? r !== '' : r.subscription && r.resourceGroup && r.resourceName && r.metricNamespace;
 
   // set selected row data whenever row or selection changes
   useEffect(() => {
@@ -86,12 +96,12 @@ const ResourcePicker = ({
     }
 
     const sanitized = internalSelected.filter((r) => isValid(r));
-    const found = internalSelected && findRows(rows, resourcesToStrings(sanitized));
+    const found = internalSelected && findRows(rows, sanitized.map(resourceToString));
     if (found && found.length) {
       return setSelectedRows(found);
     }
     return setSelectedRows([]);
-  }, [internalSelected, rows]);
+  }, [internalSelected, rows, isValid, resourceToString]);
 
   // Request resources for an expanded resource group
   const requestNestedRows = useCallback(
@@ -105,20 +115,20 @@ const ResourcePicker = ({
       }
 
       try {
-        const nestedRows = await resourcePickerData.fetchAndAppendNestedRow(rows, parentRow, queryType);
+        const nestedRows = await fetchAndAppendNestedRow(rows, parentRow);
         setRows(nestedRows);
       } catch (error) {
         setErrorMessage(messageFromError(error));
         throw error;
       }
     },
-    [resourcePickerData, rows, queryType]
+    [rows, fetchAndAppendNestedRow]
   );
 
   const handleSelectionChanged = useCallback(
     (row: ResourceRow, isSelected: boolean) => {
       if (isSelected) {
-        const newRes = queryType === 'logs' ? row.uri : parseMultipleResourceDetails([row.uri], row.location)[0];
+        const newRes = parseResourceDetails(row.uri, row.location);
         const newSelected = internalSelected ? internalSelected.concat(newRes) : [newRes];
         setInternalSelected(newSelected);
       } else {
@@ -128,14 +138,14 @@ const ResourcePicker = ({
         setInternalSelected(newInternalSelected);
       }
     },
-    [queryType, internalSelected, setInternalSelected]
+    [internalSelected, setInternalSelected, parseResourceDetails, resourceToString]
   );
 
   const handleApply = useCallback(() => {
     if (internalSelected) {
-      onApply(queryType === 'logs' ? internalSelected : parseMultipleResourceDetails(internalSelected));
+      onApply(internalSelected);
     }
-  }, [queryType, internalSelected, onApply]);
+  }, [internalSelected, onApply]);
 
   const handleSearch = useCallback(
     async (searchWord: string) => {
@@ -150,9 +160,9 @@ const ResourcePicker = ({
 
       try {
         setIsLoading(true);
-        const searchResults = await resourcePickerData.search(searchWord, queryType);
+        const searchResults = await search(searchWord);
         setRows(searchResults);
-        if (searchResults.length >= resourcePickerData.resultLimit) {
+        if (searchResults.length >= searchLimit) {
           setShouldShowLimitFlag(true);
         }
       } catch (err) {
@@ -160,14 +170,14 @@ const ResourcePicker = ({
       }
       setIsLoading(false);
     },
-    [loadInitialData, resourcePickerData, queryType]
+    [loadInitialData, searchLimit, search]
   );
 
   return (
     <div>
       <Search searchFn={handleSearch} />
       {shouldShowLimitFlag ? (
-        <p className={styles.resultLimit}>Showing first {resourcePickerData.resultLimit} results</p>
+        <p className={styles.resultLimit}>Showing first {searchLimit} results</p>
       ) : (
         <Space v={2} />
       )}
@@ -251,7 +261,13 @@ const ResourcePicker = ({
             renderAdvanced={renderAdvanced}
           />
         ) : (
-          <Advanced resources={internalSelected} onChange={(r) => setInternalSelected(r)} />
+          // Disabling eslint because this component will go away soon
+          <Advanced
+            // eslint-disable-next-line
+            resources={internalSelected as Array<string | AzureMetricResource>}
+            // eslint-disable-next-line
+            onChange={(r) => setInternalSelected(r as T[])}
+          />
         )}
 
         <Space v={2} />

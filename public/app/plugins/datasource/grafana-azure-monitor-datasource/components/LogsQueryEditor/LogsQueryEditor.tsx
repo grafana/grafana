@@ -8,7 +8,7 @@ import Datasource from '../../datasource';
 import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery } from '../../types';
 import ResourceField from '../ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
-import { parseResourceDetails } from '../ResourcePicker/utils';
+import { parseResourceDetails, setResources } from '../ResourcePicker/utils';
 
 import AdvancedResourcePicker from './AdvancedResourcePicker';
 import FormatAsField from './FormatAsField';
@@ -59,14 +59,8 @@ const LogsQueryEditor: React.FC<LogsQueryEditorProps> = ({
         <EditorRow>
           <EditorFieldGroup>
             <ResourceField
-              query={query}
-              datasource={datasource}
               inlineField={true}
               labelWidth={10}
-              subscriptionId={subscriptionId}
-              variableOptionGroup={variableOptionGroup}
-              onQueryChange={onChange}
-              setError={setError}
               selectableEntryTypes={[
                 ResourceRowType.Subscription,
                 ResourceRowType.ResourceGroup,
@@ -74,7 +68,6 @@ const LogsQueryEditor: React.FC<LogsQueryEditorProps> = ({
                 ResourceRowType.Variable,
               ]}
               resources={query.azureLogAnalytics?.resources ?? []}
-              queryType="logs"
               disableRow={disableRow}
               renderAdvanced={(resources, onChange) => (
                 // It's required to cast resources because the resource picker
@@ -82,6 +75,22 @@ const LogsQueryEditor: React.FC<LogsQueryEditorProps> = ({
                 // eslint-disable-next-line
                 <AdvancedResourcePicker resources={resources as string[]} onChange={onChange} />
               )}
+              searchLimit={datasource.resourcePickerData.resultLimit}
+              fetchInitialRows={(selected) =>
+                datasource.resourcePickerData.fetchInitialRows(
+                  'logs',
+                  selected.map((r) => parseResourceDetails(r))
+                )
+              }
+              fetchAndAppendNestedRow={(rows, parentRow) =>
+                datasource.resourcePickerData.fetchAndAppendNestedRow(rows, parentRow, 'logs')
+              }
+              search={(term) => datasource.resourcePickerData.search(term, 'logs')}
+              isValid={(r) => r !== ''}
+              resourceToString={(r) => r}
+              parseResourceDetails={(r) => r}
+              onResourcesChange={(resources) => onChange(setResources(query, 'logs', resources))}
+              parseAzureMetricResource={parseResourceDetails}
             />
           </EditorFieldGroup>
         </EditorRow>
