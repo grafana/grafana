@@ -25,11 +25,7 @@ export function QueryEditor(props: Props) {
     <>
       <InlineLabel>
         Build complex queries using TraceQL to select a list of traces.{' '}
-        <a
-          rel="noreferrer"
-          target="_blank"
-          href="https://github.com/grafana/tempo/blob/main/docs/design-proposals/2022-04%20TraceQL%20Concepts.md"
-        >
+        <a rel="noreferrer" target="_blank" href="https://grafana.com/docs/tempo/latest/traceql/">
           Documentation
         </a>
       </InlineLabel>

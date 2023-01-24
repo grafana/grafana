@@ -74,14 +74,14 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 			return nil, fmt.Errorf("error getting http options: %w", err)
 		}
 
-		httpCli, err := httpClientProvider.New(httpCliOpts)
-		if err != nil {
-			return nil, err
-		}
-
 		// Set SigV4 service namespace
 		if httpCliOpts.SigV4 != nil {
 			httpCliOpts.SigV4.Service = "es"
+		}
+
+		httpCli, err := httpClientProvider.New(httpCliOpts)
+		if err != nil {
+			return nil, err
 		}
 
 		version, err := coerceVersion(jsonData["esVersion"])
