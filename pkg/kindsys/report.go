@@ -36,12 +36,12 @@ const (
 
 	// Local references
 	coreTSPath  = "packages/grafana-schema/src/raw/%s/%s/%s_types.gen.ts"
-	coreGoPath  = "pkg/kinds/%s/%s_kind_gen.go"
+	coreGoPath  = "pkg/kinds/%s"
 	coreCUEPath = "kinds/%s/%s_kind.cue"
 
-	composableTSPath  = "public/app/plugins/%s/%s/models.gen.ts"
-	composableGoPath  = "pkg/tsdb/%s/types_%s_gen.go"
-	composableCUEPath = "public/app/plugins/%s/%s/composable_%s.cue"
+	composableTSPath  = "public/app/plugins/%s/%s/%s.gen.ts"
+	composableGoPath  = "pkg/tsdb/%s/kinds/%s/types_%s_gen.go"
+	composableCUEPath = "public/app/plugins/%s/%s/%s.cue"
 )
 
 func main() {
@@ -76,13 +76,17 @@ var plannedCoreKinds = []string{
 	"QueryHistory",
 }
 
+type KindLinks struct {
+	Schema string
+	Go     string
+	Ts     string
+	Docs   string
+}
+
 type Kind struct {
 	kindsys.SomeKindProperties
 	Category             string
-	SchemaRef            string
-	GoRef                string
-	TsRef                string
-	DocsRef              string
+	Links                KindLinks
 	GrafanaMaturityCount int
 }
 
@@ -102,12 +106,13 @@ func (k Kind) MarshalJSON() ([]byte, error) {
 	m["category"] = k.Category
 	m["grafanaMaturityCount"] = k.GrafanaMaturityCount
 
-	for _, ref := range []string{"SchemaRef", "GoRef", "TsRef", "DocsRef"} {
-		refVal := reflect.ValueOf(k).FieldByName(ref).String()
+	m["links"] = map[string]string{}
+	for _, ref := range []string{"Schema", "Go", "Ts", "Docs"} {
+		refVal := reflect.ValueOf(k.Links).FieldByName(ref).String()
 		if len(refVal) > 0 {
-			m[toCamelCase(ref)] = refVal
+			m["links"].(map[string]string)[toCamelCase(ref)] = refVal
 		} else {
-			m[toCamelCase(ref)] = "n/a"
+			m["links"].(map[string]string)[toCamelCase(ref)] = "n/a"
 		}
 	}
 
@@ -177,19 +182,14 @@ func buildKindStateReport() *KindStateReport {
 	seen := make(map[string]bool)
 	for _, k := range b.All() {
 		seen[k.Props().Common().Name] = true
-		k.Lineage()
+		lin := k.Lineage()
 		switch k.Props().(type) {
 		case kindsys.CoreProperties:
-			category := "core"
-			commonProps := k.Props().Common()
 			r.add(Kind{
 				SomeKindProperties:   k.Props(),
-				Category:             category,
-				GoRef:                buildCoreGoRef(commonProps),
-				DocsRef:              buildDocsRef(category, commonProps),
-				TsRef:                buildCoreTSRef(k.Lineage(), k.Decl()),
-				SchemaRef:            buildCoreSchemaRef(commonProps),
-				GrafanaMaturityCount: grafanaMaturityAttrCount(k.Lineage().Latest().Underlying()),
+				Category:             "core",
+				Links:                buildCoreLinks(lin, k.Decl().Properties),
+				GrafanaMaturityCount: grafanaMaturityAttrCount(lin.Latest().Underlying()),
 			})
 		}
 	}
@@ -216,20 +216,11 @@ func buildKindStateReport() *KindStateReport {
 	all := kindsys.SchemaInterfaces(nil)
 	for _, pp := range corelist.New(nil) {
 		for _, si := range all {
-			category := "composable"
-			var goRef string
 			if ck, has := pp.ComposableKinds[si.Name()]; has {
-				cp := ck.Decl().Properties
-				if pp.Properties.Backend != nil && *pp.Properties.Backend {
-					goRef = buildComposableGoRef(pp.Properties.Type, cp)
-				}
 				r.add(Kind{
 					SomeKindProperties:   ck.Props(),
-					Category:             category,
-					GoRef:                goRef,
-					DocsRef:              buildDocsRef(category, ck.Props().Common()),
-					TsRef:                buildComposableTSRef(pp.Properties.Type, cp),
-					SchemaRef:            buildComposableSchemaRef(pp.Properties.Type, cp),
+					Category:             "composable",
+					Links:                buildComposableLinks(pp.Properties, ck.Decl().Properties),
 					GrafanaMaturityCount: grafanaMaturityAttrCount(ck.Lineage().Latest().Underlying()),
 				})
 			} else if may := si.Should(string(pp.Properties.Type)); may {
@@ -247,8 +238,7 @@ func buildKindStateReport() *KindStateReport {
 				}
 				r.add(Kind{
 					SomeKindProperties: ck,
-					Category:           category,
-					GoRef:              goRef,
+					Category:           "composable",
 				})
 			}
 		}
@@ -267,38 +257,60 @@ func buildDocsRef(category string, props kindsys.CommonProperties) string {
 	return path.Join(docsBaseURL, category, props.MachineName, "schema-reference")
 }
 
-func buildCoreTSRef(lin thema.Lineage, decl kindsys.Decl[kindsys.CoreProperties]) string {
+func buildCoreLinks(lin thema.Lineage, cp kindsys.CoreProperties) KindLinks {
+	const category = "core"
 	vpath := fmt.Sprintf("v%v", lin.Latest().Version()[0])
-	if decl.Properties.Common().Maturity.Less(kindsys.MaturityStable) {
+	if cp.Maturity.Less(kindsys.MaturityStable) {
 		vpath = "x"
 	}
 
-	return path.Join(repoBaseURL, fmt.Sprintf(coreTSPath, decl.Properties.MachineName, vpath, decl.Properties.MachineName))
+	return KindLinks{
+		Schema: path.Join(repoBaseURL, fmt.Sprintf(coreCUEPath, cp.MachineName, cp.MachineName)),
+		Go:     path.Join(repoBaseURL, fmt.Sprintf(coreGoPath, cp.MachineName)),
+		Ts:     path.Join(repoBaseURL, fmt.Sprintf(coreTSPath, cp.MachineName, vpath, cp.MachineName)),
+		Docs:   path.Join(docsBaseURL, category, cp.MachineName, "schema-reference"),
+	}
 }
 
-func buildComposableTSRef(pType plugindef.Type, cp kindsys.ComposableProperties) string {
-	pName := strings.Replace(cp.MachineName, strings.ToLower(cp.SchemaInterface), "", 1)
-	return path.Join(repoBaseURL, fmt.Sprintf(composableTSPath, string(pType), pName))
+// used to map names for those plugins that aren't following
+// naming conventions, like 'annonlist' which comes from "Annotations list".
+var irregularPluginNames = map[string]string{
+	// Panel
+	"alertgroups":     "alertGroups",
+	"annotationslist": "annolist",
+	"dashboardlist":   "dashlist",
+	"nodegraph":       "nodeGraph",
+	"statetimeline":   "state-timeline",
+	"statushistory":   "status-history",
+	"tableold":        "table-old",
+	// Datasource
+	"googlecloudmonitoring": "cloud-monitoring",
+	"azuremonitor":          "grafana-azure-monitor-datasource",
+	"microsoftsqlserver":    "mssql",
+	"postgresql":            "postgres",
+	"testdatadb":            "testdata",
 }
 
-func buildCoreGoRef(cp kindsys.CommonProperties) string {
-	return path.Join(repoBaseURL, fmt.Sprintf(coreGoPath, cp.MachineName, cp.MachineName))
-}
-
-func buildComposableGoRef(pType plugindef.Type, cp kindsys.ComposableProperties) string {
+func buildComposableLinks(pp plugindef.PluginDef, cp kindsys.ComposableProperties) KindLinks {
+	const category = "composable"
 	schemaInterface := strings.ToLower(cp.SchemaInterface)
-	pName := strings.Replace(cp.MachineName, schemaInterface, "", 1)
-	return path.Join(repoBaseURL, fmt.Sprintf(composableGoPath, pName, schemaInterface))
-}
 
-func buildCoreSchemaRef(cp kindsys.CommonProperties) string {
-	return path.Join(repoBaseURL, fmt.Sprintf(coreCUEPath, cp.MachineName, cp.MachineName))
-}
-
-func buildComposableSchemaRef(pType plugindef.Type, cp kindsys.ComposableProperties) string {
-	schemaInterface := strings.ToLower(cp.SchemaInterface)
 	pName := strings.Replace(cp.MachineName, schemaInterface, "", 1)
-	return path.Join(repoBaseURL, fmt.Sprintf(composableCUEPath, string(pType), pName, schemaInterface))
+	if irr, ok := irregularPluginNames[pName]; ok {
+		pName = irr
+	}
+
+	var goLink string
+	if pp.Backend != nil && *pp.Backend {
+		goLink = path.Join(repoBaseURL, fmt.Sprintf(composableGoPath, pName, schemaInterface, schemaInterface))
+	}
+
+	return KindLinks{
+		Schema: path.Join(repoBaseURL, fmt.Sprintf(composableCUEPath, string(pp.Type), pName, schemaInterface)),
+		Go:     goLink,
+		Ts:     path.Join(repoBaseURL, fmt.Sprintf(composableTSPath, string(pp.Type), pName, schemaInterface)),
+		Docs:   path.Join(docsBaseURL, category, cp.MachineName, "schema-reference"),
+	}
 }
 
 func grafanaMaturityAttrCount(sch cue.Value) int {
