@@ -12,6 +12,7 @@ interface PanelMenuProps {
   title?: string;
   placement?: TooltipPlacement;
   offset?: [number, number];
+  onVisibleChange?: (state: boolean) => void;
 }
 
 export function PanelMenu({
@@ -21,16 +22,17 @@ export function PanelMenu({
   offset,
   dragClassCancel,
   menuButtonClass,
+  onVisibleChange,
 }: PanelMenuProps) {
   return (
-    <Dropdown overlay={menu} placement={placement} offset={offset}>
+    <Dropdown overlay={menu} placement={placement} offset={offset} onVisibleChange={onVisibleChange}>
       <ToolbarButton
         aria-label={`Menu for panel with ${title ? `title ${title}` : 'no title'}`}
         title="Menu"
         icon="ellipsis-v"
         narrow
         data-testid="panel-menu-button"
-        className={cx(menuButtonClass, dragClassCancel, 'show-on-hover')}
+        className={cx(menuButtonClass, dragClassCancel)}
       />
     </Dropdown>
   );

@@ -152,7 +152,7 @@ export function PanelChrome({
           {headerContent}
 
           <div className={styles.rightAligned}>
-            {menu && <PanelMenu menu={menu} title={title} menuButtonClass={styles.menuItem} />}
+            {menu && <PanelMenu menu={menu} title={title} menuButtonClass={cx(styles.menuItem, 'show-on-hover')} />}
 
             {leftItems && <div className={styles.items}>{itemsRenderer(leftItems, (item) => item)}</div>}
           </div>

@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import classnames from 'classnames';
-import React, { ReactElement, useCallback, useRef } from 'react';
+import React, { ReactElement, useCallback, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -30,12 +30,14 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: 
     draggableRef.current?.releasePointerCapture(e.pointerId);
   }, []);
 
+  const [menuOpen, setMenuOpen] = useState(false);
+
   if (children === undefined || React.Children.count(children) === 0) {
     return null;
   }
 
   return (
-    <div className={classnames(styles.container, 'show-on-hover')} style={{ top: `${offset}px` }}>
+    <div className={classnames(styles.container, { 'show-on-hover': !menuOpen })} style={{ top: `${offset}px` }}>
       <div
         className={classnames(styles.square, styles.draggable, dragClass)}
         onPointerDown={onPointerDown}
@@ -46,7 +48,14 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: 
       </div>
       {children}
       <div className={styles.square}>
-        <PanelMenu menu={menu} title={title} placement="bottom" menuButtonClass={styles.menuButton} offset={[59, 8]} />
+        <PanelMenu
+          menu={menu}
+          title={title}
+          placement="bottom"
+          menuButtonClass={styles.menuButton}
+          offset={[59, 8]}
+          onVisibleChange={setMenuOpen}
+        />
       </div>
     </div>
   );
