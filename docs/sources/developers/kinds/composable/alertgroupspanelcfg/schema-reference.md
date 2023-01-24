@@ -8,7 +8,7 @@ title: AlertGroupsPanelCfg kind
 
 # AlertGroupsPanelCfg kind
 
-### Maturity: merged
+### Maturity: [merged](../../../maturity/#merged)
 ### Version: 0.0
 
 ## Properties
