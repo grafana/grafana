@@ -13,7 +13,7 @@ import { SupplementaryResultError } from './SupplementaryResultError';
 import { SETTINGS_KEYS } from './utils/logs';
 
 type Props = {
-  data: DataQueryResponse | undefined;
+  queryResponse: DataQueryResponse | undefined;
   enabled: boolean;
   timeZone: TimeZone;
   datasourceInstance: DataSourceApi | null | undefined;
@@ -21,7 +21,7 @@ type Props = {
 };
 
 export function LogsSamplePanel(props: Props) {
-  const { data, timeZone, enabled, setLogsSampleEnabled, datasourceInstance } = props;
+  const { queryResponse, timeZone, enabled, setLogsSampleEnabled, datasourceInstance } = props;
 
   const onToggleLogsSampleCollapse = (isOpen: boolean) => {
     setLogsSampleEnabled(isOpen);
@@ -33,18 +33,18 @@ export function LogsSamplePanel(props: Props) {
 
   let LogsSamplePanelContent: JSX.Element | null;
 
-  if (data === undefined) {
+  if (queryResponse === undefined) {
     LogsSamplePanelContent = null;
-  } else if (data?.error !== undefined) {
+  } else if (queryResponse?.error !== undefined) {
     LogsSamplePanelContent = (
-      <SupplementaryResultError error={data.error} title="Failed to load log samples for this query" />
+      <SupplementaryResultError error={queryResponse.error} title="Failed to load log samples for this query" />
     );
-  } else if (data?.state === LoadingState.Loading) {
+  } else if (queryResponse?.state === LoadingState.Loading) {
     LogsSamplePanelContent = <span>Log samples are loading...</span>;
-  } else if (data?.data.length === 0 || data?.data[0].length === 0) {
+  } else if (queryResponse?.data.length === 0 || queryResponse?.data[0].length === 0) {
     LogsSamplePanelContent = <span>No logs sample data.</span>;
   } else {
-    const logs = dataFrameToLogsModel(data.data, undefined);
+    const logs = dataFrameToLogsModel(queryResponse.data, undefined);
     LogsSamplePanelContent = (
       <LogRows
         logRows={logs.rows}

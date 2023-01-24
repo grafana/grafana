@@ -371,7 +371,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
 
     return (
       <LogsSamplePanel
-        data={logsSample.data}
+        queryResponse={logsSample.data}
         timeZone={timeZone}
         enabled={logsSample.enabled}
         datasourceInstance={datasourceInstance}

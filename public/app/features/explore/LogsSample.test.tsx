@@ -15,7 +15,7 @@ jest.mock('@grafana/runtime', () => {
 
 const createProps = (propOverrides?: Partial<ComponentProps<typeof LogsSamplePanel>>) => {
   const props = {
-    data: undefined,
+    queryResponse: undefined,
     enabled: true,
     timeZone: 'timeZone',
     datasourceInstance: undefined,
@@ -58,17 +58,19 @@ describe('LogsSamplePanel', () => {
   });
 
   it('shows loading message', () => {
-    render(<LogsSamplePanel {...createProps({ data: { data: [], state: LoadingState.Loading } })} />);
+    render(<LogsSamplePanel {...createProps({ queryResponse: { data: [], state: LoadingState.Loading } })} />);
     expect(screen.getByText('Log samples are loading...')).toBeInTheDocument();
   });
 
   it('shows no data message', () => {
-    render(<LogsSamplePanel {...createProps({ data: { data: [], state: LoadingState.Done } })} />);
+    render(<LogsSamplePanel {...createProps({ queryResponse: { data: [], state: LoadingState.Done } })} />);
     expect(screen.getByText('No logs sample data.')).toBeInTheDocument();
   });
 
   it('shows logs sample data', () => {
-    render(<LogsSamplePanel {...createProps({ data: { data: [sampleDataFrame], state: LoadingState.Done } })} />);
+    render(
+      <LogsSamplePanel {...createProps({ queryResponse: { data: [sampleDataFrame], state: LoadingState.Done } })} />
+    );
     expect(screen.getByText('2022-02-22 04:28:11')).toBeInTheDocument();
     expect(screen.getByText('line1')).toBeInTheDocument();
     expect(screen.getByText('2022-02-22 09:42:50')).toBeInTheDocument();
@@ -76,7 +78,9 @@ describe('LogsSamplePanel', () => {
   });
 
   it('shows log details', async () => {
-    render(<LogsSamplePanel {...createProps({ data: { data: [sampleDataFrame], state: LoadingState.Done } })} />);
+    render(
+      <LogsSamplePanel {...createProps({ queryResponse: { data: [sampleDataFrame], state: LoadingState.Done } })} />
+    );
     const line = screen.getByText('line1');
     expect(screen.queryByText('foo')).not.toBeInTheDocument();
     await userEvent.click(line);
@@ -89,7 +93,7 @@ describe('LogsSamplePanel', () => {
     render(
       <LogsSamplePanel
         {...createProps({
-          data: { data: [], state: LoadingState.Error, error: { data: { message: 'Test error message' } } },
+          queryResponse: { data: [], state: LoadingState.Error, error: { data: { message: 'Test error message' } } },
         })}
       />
     );
