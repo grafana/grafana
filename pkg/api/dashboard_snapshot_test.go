@@ -143,14 +143,14 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 						OrgID: q.OrgID,
 					}
 				}).Return(qResult, nil).Maybe()
-				var qResult []*dashboards.DashboardACLInfoDTO
+				var qResultACL []*dashboards.DashboardACLInfoDTO
 				dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
 					// q := args.Get(1).(*dashboards.GetDashboardACLInfoListQuery)
-					qResult = []*dashboards.DashboardACLInfoDTO{
+					qResultACL = []*dashboards.DashboardACLInfoDTO{
 						{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
 						{Role: &editorRole, Permission: models.PERMISSION_EDIT},
 					}
-				}).Return(qResult)
+				}).Return(qResultACL, nil)
 				guardian.InitLegacyGuardian(sc.sqlStore, dashSvc, teamSvc)
 				hs := &HTTPServer{dashboardsnapshotsService: setUpSnapshotTest(t, 0, ts.URL), DashboardService: dashSvc}
 				sc.handlerFunc = hs.DeleteDashboardSnapshot
