@@ -67,6 +67,7 @@ func (c *OAuth) Name() string {
 }
 
 func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
+	r.SetMeta(authn.MetaKeyAuthModule, c.moduleName)
 	// get hashed state stored in cookie
 	stateCookie, err := r.HTTPRequest.Cookie(stateCookieName)
 	if err != nil {
@@ -74,7 +75,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}
 
 	if stateCookie.Value == "" {
-		return nil, errMissingOAuthState.Errorf("missing state in state cookie")
+		return nil, errMissingOAuthState.Errorf("missing state value in state cookie")
 	}
 
 	// get state returned by the idp and hash it
