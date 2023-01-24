@@ -68,7 +68,7 @@ beforeAll(() => {
     ],
   } as BootData;
 
-  server.listen({ onUnhandledRequest: 'error' });
+  server.listen({ onUnhandledRequest: 'bypass' });
 });
 
 beforeEach(() => {
@@ -345,6 +345,7 @@ describe('SharePublic - Already persisted', () => {
     expect(enableTimeRangeSwitch).toBeEnabled();
     expect(enableTimeRangeSwitch).toBeChecked();
   });
+
   it('when modal is opened, then time range switch is enabled and not checked when its not checked in the db', async () => {
     server.use(
       rest.get('/api/dashboards/uid/:dashboardUid/public-dashboards', (req, res, ctx) => {
