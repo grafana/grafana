@@ -50,7 +50,6 @@ import LanguageProvider from './LanguageProvider';
 import { LiveStreams, LokiLiveTarget } from './LiveStreams';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
-import { QueryStats } from './components/types';
 import { escapeLabelValueInExactSelector, escapeLabelValueInSelector, isRegexSelector } from './languageUtils';
 import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
 import {
@@ -79,6 +78,7 @@ import {
   LokiQueryType,
   LokiVariableQuery,
   LokiVariableQueryType,
+  QueryStats,
 } from './types';
 import { LokiVariableSupport } from './variables';
 

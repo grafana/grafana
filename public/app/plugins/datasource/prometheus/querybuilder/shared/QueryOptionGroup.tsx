@@ -5,8 +5,8 @@ import { useToggle } from 'react-use';
 import { getValueFormat, GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Icon, useStyles2 } from '@grafana/ui';
-import { QueryStats } from 'app/plugins/datasource/loki/components/types';
 import { LokiDatasource } from 'app/plugins/datasource/loki/datasource';
+import { QueryStats } from 'app/plugins/datasource/loki/types';
 
 export interface Props {
   title: string;

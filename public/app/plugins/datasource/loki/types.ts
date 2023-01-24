@@ -154,3 +154,10 @@ export interface LokiVariableQuery extends DataQuery {
   label?: string;
   stream?: string;
 }
+
+export interface QueryStats {
+  streams: number;
+  chunks: number;
+  bytes: number;
+  entries: number;
+}
