@@ -149,6 +149,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
 
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;
+    this.bootData.user.lightTheme = getThemeMode(options) === 'light';
     this.isPublicDashboardView = options.bootData.settings.isPublicDashboardView;
 
     const defaults = {
@@ -207,18 +208,7 @@ function getThemeMode(config: GrafanaBootConfig) {
 }
 
 function getThemeCustomizations(config: GrafanaBootConfig) {
-  let mode: 'light' | 'dark';
-  const themePref = config.bootData.user.theme;
-
-  if (themePref === 'light' || themePref === 'dark') {
-    mode = themePref;
-  } else if (themePref === 'system') {
-    const mediaResult = window.matchMedia('(prefers-color-scheme: dark)');
-    mode = mediaResult.matches ? 'dark' : 'light';
-  } else {
-    // TODO: decide what to do here
-    mode = 'dark';
-  }
+  const mode = config.bootData.user.lightTheme ? 'light' : 'dark';
 
   const themeOptions: NewThemeOptions = {
     colors: { mode },

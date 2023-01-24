@@ -14,7 +14,7 @@ export class User implements CurrentUserInternal {
   email: string;
   name: string;
   externalUserId: string;
-  lightTheme: boolean;
+  theme: string;
   orgCount: number;
   orgId: number;
   orgName: string;
@@ -43,7 +43,7 @@ export class User implements CurrentUserInternal {
     this.timezone = '';
     this.fiscalYearStartMonth = 0;
     this.helpFlags1 = 0;
-    this.lightTheme = false;
+    this.theme = 'dark';
     this.hasEditPermissionInFolders = false;
     this.email = '';
     this.name = '';
