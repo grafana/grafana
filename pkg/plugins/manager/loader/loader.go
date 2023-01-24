@@ -312,7 +312,7 @@ func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error)
 	if plugin.Extensions != nil {
 		for _, link := range plugin.Extensions.Links {
 			if !filepath.IsAbs(link.Path) {
-				link.Path = fmt.Sprintf("/%s", link.Path)
+				link.Path = path.Join("/", link.Path)
 			}
 		}
 	}

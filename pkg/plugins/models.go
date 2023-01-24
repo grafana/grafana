@@ -297,7 +297,7 @@ type Extensions struct {
 }
 
 type ExtensionsLink struct {
-	Id          string `json:"id"`
+	ID          string `json:"id"`
 	Description string `json:"description"`
 	Path        string `json:"path"`
 }

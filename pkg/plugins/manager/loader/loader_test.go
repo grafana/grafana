@@ -444,12 +444,12 @@ func TestLoader_Load(t *testing.T) {
 					Extensions: &plugins.Extensions{
 						Links: []*plugins.ExtensionsLink{
 							{
-								Id:          "root",
+								ID:          "root",
 								Description: "Link to the plugin root",
 								Path:        "/my-simple-app",
 							},
 							{
-								Id:          "root2",
+								ID:          "root2",
 								Description: "Link to the plugin root without backslash",
 								Path:        "/my-simple-app",
 							},
