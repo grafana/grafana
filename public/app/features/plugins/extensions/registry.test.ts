@@ -1,10 +1,10 @@
 import type { AppPluginConfig, PluginsExtensionConfig } from '@grafana/runtime';
 
-import { configurePluginExtensions } from './registry';
+import { createPluginExtensionsRegistry } from './registry';
 
 describe('Plugin registry', () => {
-  describe('configurePluginExtensions function', () => {
-    const registry = configurePluginExtensions({
+  describe('createPluginExtensionsRegistry function', () => {
+    const registry = createPluginExtensionsRegistry({
       'belugacdn-app': createConfig({
         links: [
           {

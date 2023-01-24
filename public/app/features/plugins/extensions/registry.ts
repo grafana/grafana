@@ -5,7 +5,7 @@ import type {
   PluginsExtensionRegistryLink,
 } from '@grafana/runtime';
 
-export function configurePluginExtensions(apps: Record<string, AppPluginConfig> = {}): PluginsExtensionRegistry {
+export function createPluginExtensionsRegistry(apps: Record<string, AppPluginConfig> = {}): PluginsExtensionRegistry {
   const registry = Object.entries(apps).reduce<PluginsExtensionRegistry>(
     (registry, [pluginId, config]) => {
       const extensions = config.extensions;
