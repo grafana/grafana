@@ -85,7 +85,7 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"tenant_id", "uid"}, Type: migrator.UniqueIndex},
-			{Cols: []string{"tenant_id", "slug_path"}, Type: migrator.UniqueIndex},
+			//	{Cols: []string{"tenant_id", "slug_path"}, Type: migrator.UniqueIndex},
 		},
 	})
 
@@ -193,7 +193,7 @@ func addEntityStoreMigrations(mg *migrator.Migrator) {
 	// Migration cleanups: given that this is a complex setup
 	// that requires a lot of testing before we are ready to push out of dev
 	// this script lets us easy wipe previous changes and initialize clean tables
-	suffix := " (v06)" // change this when we want to wipe and reset the object tables
+	suffix := " (v010)" // change this when we want to wipe and reset the object tables
 	mg.AddMigration("EntityStore init: cleanup"+suffix, migrator.NewRawSQLMigration(strings.TrimSpace(`
 		DELETE FROM migration_log WHERE migration_id LIKE 'EntityStore init%';
 	`)))
