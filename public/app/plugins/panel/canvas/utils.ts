@@ -1,4 +1,4 @@
-import { AppEvents, PluginState, SelectableValue } from '@grafana/data';
+import { AppEvents, Field, LinkModel, PluginState, SelectableValue } from '@grafana/data';
 import { hasAlphaPanels } from 'app/core/config';
 
 import appEvents from '../../../core/app_events';
@@ -8,11 +8,13 @@ import {
   CanvasElementOptions,
   canvasElementRegistry,
   defaultElementItems,
+  TextConfig,
 } from '../../../features/canvas';
 import { notFoundItem } from '../../../features/canvas/elements/notFound';
 import { ElementState } from '../../../features/canvas/runtime/element';
 import { FrameState } from '../../../features/canvas/runtime/frame';
 import { Scene, SelectionParams } from '../../../features/canvas/runtime/scene';
+import { DimensionContext } from '../../../features/dimensions';
 
 import { AnchorPoint } from './types';
 
@@ -98,4 +100,32 @@ export function onAddItem(sel: SelectableValue<string>, rootLayer: FrameState | 
 
     setTimeout(() => doSelect(rootLayer.scene, newElement));
   }
+}
+
+export function getDataLinks(ctx: DimensionContext, cfg: TextConfig, textData: string | undefined): LinkModel[] {
+  const panelData = ctx.getPanelData();
+  const frames = panelData?.series;
+
+  const links: Array<LinkModel<Field>> = [];
+  const linkLookup = new Set<string>();
+
+  frames?.forEach((frame) => {
+    const visibleFields = frame.fields.filter((field) => !Boolean(field.config.custom?.hideFrom?.tooltip));
+
+    if (cfg.text?.field && visibleFields.some((f) => f.name === cfg.text?.field)) {
+      const field = visibleFields.filter((field) => field.name === cfg.text?.field)[0];
+      if (field?.getLinks) {
+        const disp = field.display ? field.display(textData) : { text: `${textData}`, numeric: +textData! };
+        field.getLinks({ calculatedValue: disp }).forEach((link) => {
+          const key = `${link.title}/${link.href}`;
+          if (!linkLookup.has(key)) {
+            links.push(link);
+            linkLookup.add(key);
+          }
+        });
+      }
+    }
+  });
+
+  return links;
 }
