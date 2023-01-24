@@ -31,8 +31,8 @@ const getStyles = stylesFactory((theme: GrafanaTheme2, data) => ({
   `,
   span: css`
     display: table-cell;
-    vertical-align: ${data.valign};
-    text-align: ${data.align};
+    vertical-align: ${data?.valign};
+    text-align: ${data?.align};
     font-size: ${data?.size}px;
     color: ${data?.color};
   `,

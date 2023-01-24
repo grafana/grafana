@@ -60,6 +60,8 @@ type Service interface {
 	Login(ctx context.Context, client string, r *Request) (*Identity, error)
 	// RegisterPostLoginHook registers a hook that that is called after a login request.
 	RegisterPostLoginHook(hook PostLoginHookFn)
+	// RedirectURL will generate url that we can use to initiate auth flow for supported clients.
+	RedirectURL(ctx context.Context, client string, r *Request) (string, error)
 }
 
 type Client interface {
@@ -67,6 +69,11 @@ type Client interface {
 	Authenticate(ctx context.Context, r *Request) (*Identity, error)
 	// Test should return true if client can be used to authenticate request
 	Test(ctx context.Context, r *Request) bool
+}
+
+type RedirectClient interface {
+	Client
+	RedirectURL(ctx context.Context, r *Request) (string, error)
 }
 
 type PasswordClient interface {

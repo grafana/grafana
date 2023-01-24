@@ -635,6 +635,10 @@ func (tp *testPlugin) IsDecommissioned() bool {
 	return false
 }
 
+func (tp *testPlugin) Target() backendplugin.Target {
+	return backendplugin.TargetNone
+}
+
 func (tp *testPlugin) CollectMetrics(_ context.Context, _ *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
 	return nil, backendplugin.ErrMethodNotImplemented
 }

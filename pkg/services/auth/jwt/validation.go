@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"gopkg.in/square/go-jose.v2/jwt"
-
-	"github.com/grafana/grafana/pkg/models"
 )
 
 func (s *AuthService) initClaimExpectations() error {
@@ -54,7 +52,7 @@ func (s *AuthService) initClaimExpectations() error {
 	return nil
 }
 
-func (s *AuthService) validateClaims(claims models.JWTClaims) error {
+func (s *AuthService) validateClaims(claims JWTClaims) error {
 	var registeredClaims jwt.Claims
 	for key, value := range claims {
 		switch key {
