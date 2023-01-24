@@ -34,10 +34,49 @@ def secrets():
         vault_secret(azure_tenant, 'infra/data/ci/datasources/cpp-azure-resourcemanager-credentials', 'tenant_id'),
     
         # Package publishing
-        vault_secret('packages_gpg_public_key', 'infra/data/ci/packages-publish/gpg', 'public-key'),
-        vault_secret('packages_gpg_private_key', 'infra/data/ci/packages-publish/gpg', 'private-key'),
-        vault_secret('packages_gpg_passphrase', 'infra/data/ci/packages-publish/gpg', 'passphrase'),
-        vault_secret('packages_service_account', 'infra/data/ci/packages-publish/service-account', 'credentials.json'),
-        vault_secret('packages_access_key_id', 'infra/data/ci/packages-publish/bucket-credentials', 'AccessID'),
-        vault_secret('packages_secret_access_key', 'infra/data/ci/packages-publish/bucket-credentials', 'Secret'),
+        vault_secret(
+            'packages_gpg_public_key',
+            'infra/data/ci/packages-publish/gpg',
+            'public-key-b64',
+        ),
+        vault_secret(
+            'packages_gpg_private_key',
+            'infra/data/ci/packages-publish/gpg',
+            'private-key-b64',
+        ),
+        vault_secret(
+            'packages_gpg_passphrase',
+            'infra/data/ci/packages-publish/gpg',
+            'passphrase',
+        ),
+        vault_secret(
+            'packages_service_account',
+            'infra/data/ci/packages-publish/service-account',
+            'credentials.json',
+        ),
+        vault_secret(
+            'packages_access_key_id',
+            'infra/data/ci/packages-publish/bucket-credentials',
+            'AccessID',
+        ),
+        vault_secret(
+            'packages_secret_access_key',
+            'infra/data/ci/packages-publish/bucket-credentials',
+            'Secret',
+        ),
+        vault_secret(
+            'aws_region',
+            'secret/data/common/aws-marketplace',
+            'aws_region',
+        ),
+        vault_secret(
+            'aws_access_key_id',
+            'secret/data/common/aws-marketplace',
+            'aws_access_key_id',
+        ),
+        vault_secret(
+            'aws_secret_access_key',
+            'secret/data/common/aws-marketplace',
+            'aws_secret_access_key',
+        ),
     ]
