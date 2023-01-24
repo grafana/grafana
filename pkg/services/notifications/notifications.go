@@ -159,7 +159,10 @@ func subjectTemplateFunc(obj map[string]interface{}, data map[string]interface{}
 		return ""
 	}
 
-	return buf.String()
+	subj := buf.String()
+	// Since we have already executed the template, save it to subject data so we don't have to do it again later on
+	obj["executed_template"] = subj
+	return subj
 }
 
 func (ns *NotificationService) SendEmailCommandHandlerSync(ctx context.Context, cmd *models.SendEmailCommandSync) error {
