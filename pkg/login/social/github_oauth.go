@@ -205,10 +205,10 @@ func (s *SocialGithub) UserInfo(client *http.Client, token *oauth2.Token) (*Basi
 	teams := convertToGroupList(teamMemberships)
 
 	var role roletype.RoleType
-	var grafanaAdmin bool
 	var isGrafanaAdmin *bool = nil
 
 	if !s.skipOrgRoleSync {
+		var grafanaAdmin bool
 		role, grafanaAdmin = s.extractRoleAndAdmin(response.Body, teams, true)
 
 		if s.roleAttributeStrict && !role.IsValid() {
