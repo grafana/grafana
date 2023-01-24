@@ -341,8 +341,3 @@ Primarily useful on very large schemas, like the dashboard schema, for getting *
 field that at least makes validation tests pass, but making clear that the field isn’t necessarily properly correct.
 
 No argval is accepted. (Use a `//` comment to say more about the attention that’s needed.)
-
-### MaybeRemove
-
-Field was added as part of applying the maximalist rule, and should be considered for removal in a subsequent review of 
-the schema.
