@@ -87,6 +87,8 @@ export interface FeatureToggles {
   sessionRemoteCache?: boolean;
   disablePrometheusExemplarSampling?: boolean;
   alertingBacktesting?: boolean;
+  editPanelCSVDragAndDrop?: boolean;
   alertingNoNormalState?: boolean;
   azureMultipleResourcePicker?: boolean;
+  topNavCommandPalette?: boolean;
 }
