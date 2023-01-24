@@ -49,7 +49,7 @@ describe('Plugin registry', () => {
       });
     });
 
-    it('should configure registry links', () => {
+    it('should configure all registry links', () => {
       const numberOfLinks = Object.keys(registry.links).length;
 
       expect(numberOfLinks).toBe(3);
@@ -70,7 +70,7 @@ describe('Plugin registry', () => {
       });
     });
 
-    it('should configure first link when duplicates exists', () => {
+    it('should configure first link when duplicates exist', () => {
       const link = registry.links['duplicate-links-app.declare-incident'];
 
       expect(link).toEqual({
