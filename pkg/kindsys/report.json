@@ -8,13 +8,13 @@
       ],
       "lineageIsGroup": true,
       "links": {
-        "docs": "n/a",
+        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/alertgroupspanelcfg/schema-reference",
         "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "schema": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/alertGroups/panelcfg.cue",
+        "ts": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/alertGroups/panelcfg.gen.ts"
       },
       "machineName": "alertgroupspanelcfg",
-      "maturity": "planned",
+      "maturity": "merged",
       "name": "AlertGroupsPanelCfg",
       "pluralMachineName": "alertgroupspanelcfgs",
       "pluralName": "AlertGroupsPanelCfgs",
@@ -27,14 +27,14 @@
         0
       ],
       "lineageIsGroup": true,
-      "maturity": "merged",
-      "currentVersion": [
-        0,
-        0
-      ],
-      "schemaInterface": "PanelCfg"
-    },
-    "alertlistpanelcfg": {
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "alertlistpanelcfg",
+      "maturity": "planned",
       "name": "AlertListPanelCfg",
       "pluralMachineName": "alertlistpanelcfgs",
       "pluralName": "AlertListPanelCfgs",
