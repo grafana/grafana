@@ -5,16 +5,17 @@ import (
 	"net"
 	"time"
 
+	"golang.org/x/oauth2"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/user"
-	"golang.org/x/oauth2"
 )
 
 type FakeUserAuthTokenService struct {
 	CreateTokenProvider          func(ctx context.Context, user *user.User, clientIP net.IP, userAgent string) (*auth.UserToken, error)
-	TryRotateTokenProvider       func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, error)
+	TryRotateTokenProvider       func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, *auth.UserToken, error)
 	LookupTokenProvider          func(ctx context.Context, unhashedToken string) (*auth.UserToken, error)
 	RevokeTokenProvider          func(ctx context.Context, token *auth.UserToken, soft bool) error
 	RevokeAllUserTokensProvider  func(ctx context.Context, userId int64) error
@@ -33,8 +34,8 @@ func NewFakeUserAuthTokenService() *FakeUserAuthTokenService {
 				UnhashedToken: "",
 			}, nil
 		},
-		TryRotateTokenProvider: func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, error) {
-			return false, nil
+		TryRotateTokenProvider: func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, *auth.UserToken, error) {
+			return false, nil, nil
 		},
 		LookupTokenProvider: func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
 			return &auth.UserToken{
@@ -78,7 +79,7 @@ func (s *FakeUserAuthTokenService) LookupToken(ctx context.Context, unhashedToke
 }
 
 func (s *FakeUserAuthTokenService) TryRotateToken(ctx context.Context, token *auth.UserToken, clientIP net.IP,
-	userAgent string) (bool, error) {
+	userAgent string) (bool, *auth.UserToken, error) {
 	return s.TryRotateTokenProvider(context.Background(), token, clientIP, userAgent)
 }
 
