@@ -289,3 +289,7 @@ func IdentityFromSignedInUser(id string, usr *user.SignedInUser, params ClientPa
 		ClientParams:   params,
 	}
 }
+
+func ClientWithPrefix(name string) string {
+	return fmt.Sprintf("auth.client.%s", name)
+}
