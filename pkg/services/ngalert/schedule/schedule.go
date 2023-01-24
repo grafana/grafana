@@ -446,19 +446,20 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		select {
 		// used by external services (API) to notify that rule is updated.
 		case ctx := <-updateCh:
-			// we can continue directly if the rule is paused because in the next tick it will be picked up. The state
-			// will be cleaned up and the routine will be stopped and removed from the registry
-			if ctx.IsPaused {
-				logger.Info("Skip updating rule because it is paused")
-				clearState(grafanaCtx, ngmodels.StateReasonPaused)
-				continue
-			}
 			// sometimes it can happen when, for example, the rule evaluation took so long,
 			// and there were two concurrent messages in updateCh and evalCh, and the eval's one got processed first.
 			// therefore, at the time when message from updateCh is processed the current rule will have
 			// at least the same version (or greater) and the state created for the new version of the rule.
 			if currentRuleVersion >= int64(ctx.Version) {
 				logger.Info("Skip updating rule because its current version is actual", "version", currentRuleVersion, "newVersion", ctx.Version)
+				continue
+			}
+
+			// we can continue directly if the rule is paused because in the next tick it will be picked up. The state
+			// will be cleaned up and the routine will be stopped and removed from the registry
+			if ctx.IsPaused {
+				logger.Info("Skip updating rule because it is paused")
+				clearState(grafanaCtx, ngmodels.StateReasonPaused)
 				continue
 			}
 			logger.Info("Clearing the state of the rule because version has changed", "version", currentRuleVersion, "newVersion", ctx.Version)
@@ -517,11 +518,12 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 				// The context dead\ine is 5 seconds which should be enough time for the state to be deleted from the
 				// database and the historian to record the state changes async. Do not cancel the context with defer as
 				// otherwise the context will be canceled before the historian can write any state changes.
-				ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
+				ctx, cancelFunc := context.WithTimeout(context.Background(), 60*time.Second)
 				errChan := clearState(ctx, reason)
 				go func() {
 					defer cancelFunc()
-					<-errChan
+					err := <-errChan
+					logger.Error("Error clearing state", "error", err)
 				}()
 			}
 			logger.Debug("Stopping alert rule routine")
