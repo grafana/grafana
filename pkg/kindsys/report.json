@@ -9,13 +9,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
-        "docs": "n/a",
+        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/alertgroupspanelcfg/schema-reference",
         "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "schema": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/alertGroups/panelcfg.cue",
+        "ts": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/alertGroups/panelcfg.gen.ts"
       },
       "machineName": "alertgroupspanelcfg",
-      "maturity": "planned",
+      "maturity": "merged",
       "name": "AlertGroupsPanelCfg",
       "pluralMachineName": "alertgroupspanelcfgs",
       "pluralName": "AlertGroupsPanelCfgs",
@@ -1659,15 +1659,15 @@
       "merged": {
         "name": "merged",
         "items": [
+          "alertgroupspanelcfg",
           "playlist",
           "team"
         ],
-        "count": 2
+        "count": 3
       },
       "planned": {
         "name": "planned",
         "items": [
-          "alertgroupspanelcfg",
           "alertlistpanelcfg",
           "alertmanagerdataquery",
           "alertmanagerdatasourcecfg",
@@ -1729,7 +1729,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 61
+        "count": 60
       },
       "stable": {
         "name": "stable",
