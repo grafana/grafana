@@ -165,7 +165,7 @@ func (c *httpLokiClient) setAuthAndTenantHeaders(req *http.Request) {
 		req.Header.Add("X-Scope-OrgID", c.cfg.TenantID)
 	}
 }
-func (c *httpLokiClient) query(selectors [][3]string, start, end int64) (QueryRes, error) {
+func (c *httpLokiClient) query(ctx context.Context, selectors [][3]string, start, end int64) (QueryRes, error) {
 	// Run the pre-flight checks for the query.
 	if len(selectors) == 0 {
 		return QueryRes{}, fmt.Errorf("at least one selector required to query")
@@ -174,17 +174,10 @@ func (c *httpLokiClient) query(selectors [][3]string, start, end int64) (QueryRe
 		return QueryRes{}, fmt.Errorf("start time cannot be after end time")
 	}
 
-	// Build the query selector.
-	query := ""
-	for _, s := range selectors {
-		if !isValidOperator(s[1]) {
-			return QueryRes{}, fmt.Errorf("'%s' is not a valid query operator", s[1])
-		}
-		query += fmt.Sprintf("%%%,", s[0], s[1], s[2])
+	query, err := selectorString(selectors)
+	if err != nil {
+		return QueryRes{}, fmt.Errorf("failed to build loki selector string: %w", err)
 	}
-	// Remove the last comma, as we append one to every selector.
-	query = query[:len(query)-1]
-	query = "{" + query + "}"
 
 	values := url.Values{}
 	values.Set("query", query)
@@ -199,6 +192,8 @@ func (c *httpLokiClient) query(selectors [][3]string, start, end int64) (QueryRe
 	if err != nil {
 		return QueryRes{}, fmt.Errorf("error creating request: %w", err)
 	}
+
+	req = req.WithContext(ctx)
 
 	client := http.Client{
 		Timeout: time.Second * 30,
@@ -222,6 +217,24 @@ func (c *httpLokiClient) query(selectors [][3]string, start, end int64) (QueryRe
 	}
 
 	return queryRes, nil
+}
+
+func selectorString(selectors [][3]string) (string, error) {
+	if len(selectors) == 0 {
+		return "{}", nil
+	}
+	// Build the query selector.
+	query := ""
+	for _, s := range selectors {
+		if !isValidOperator(s[1]) {
+			return "", fmt.Errorf("'%s' is not a valid query operator", s[1])
+		}
+		query += fmt.Sprintf("%%%,", s[0], s[1], s[2])
+	}
+	// Remove the last comma, as we append one to every selector.
+	query = query[:len(query)-1]
+	return "{" + query + "}", nil
+
 }
 
 func isValidOperator(op string) bool {

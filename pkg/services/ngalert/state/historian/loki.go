@@ -32,7 +32,7 @@ const (
 type remoteLokiClient interface {
 	ping(context.Context) error
 	push(context.Context, []stream) error
-	query(selectors [][3]string, start, end int64) (QueryRes, error)
+	query(ctx context.Context, selectors [][3]string, start, end int64) (QueryRes, error)
 }
 
 type RemoteLokiBackend struct {
@@ -72,7 +72,7 @@ func (h *RemoteLokiBackend) QueryStates(ctx context.Context, query models.Histor
 	if query.RuleUID == "" {
 		return nil, errors.New("the RuleUID is not set but required")
 	}
-	res, err := h.client.query([][3]string{
+	res, err := h.client.query(ctx, [][3]string{
 		{"rule_id", "=", query.RuleUID},
 	}, query.From.Unix(), query.To.Unix())
 	if err != nil {
