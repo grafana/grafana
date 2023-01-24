@@ -214,7 +214,7 @@ func TestParsePanelKey(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			res := parsePanelKey(&tc.in, logger)
+			res := parsePanelKey(tc.in, logger)
 			require.Equal(t, tc.exp, res)
 		})
 	}

@@ -37,7 +37,7 @@ type panelKey struct {
 }
 
 // panelKey attempts to get the key of the panel attached to the given rule. Returns nil if the rule is not attached to a panel.
-func parsePanelKey(rule *models.AlertRule, logger log.Logger) *panelKey {
+func parsePanelKey(rule models.AlertRule, logger log.Logger) *panelKey {
 	dashUID, ok := rule.Annotations[models.DashboardUIDAnnotation]
 	if ok {
 		panelAnno := rule.Annotations[models.PanelIDAnnotation]

@@ -197,7 +197,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 
 	allChanges := append(states, staleStates...)
 	if st.historian != nil {
-		st.historian.RecordStatesAsync(ctx, alertRule, allChanges)
+		st.historian.RecordStatesAsync(ctx, *alertRule, allChanges)
 	}
 	return allChanges
 }
