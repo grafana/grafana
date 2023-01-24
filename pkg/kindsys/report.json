@@ -2,7 +2,9 @@
   "kinds": {
     "alertgroupspanelcfg": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/alerting-squad-frontend"
+      ],
       "currentVersion": [
         0,
         0
@@ -10,10 +12,10 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
-        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/alertgroupspanelcfg/schema-reference",
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/alertgroupspanelcfg/schema-reference",
         "go": "n/a",
-        "schema": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/alertGroups/panelcfg.cue",
-        "ts": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/alertGroups/panelcfg.gen.ts"
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/alertGroups/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/alertGroups/panelcfg.gen.ts"
       },
       "machineName": "alertgroupspanelcfg",
       "maturity": "merged",
@@ -227,7 +229,9 @@
     },
     "cloudwatchdataquery": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/aws-plugins"
+      ],
       "currentVersion": [
         0,
         0
@@ -235,24 +239,16 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
-        "docs": "n/a",
-        "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/cloudwatchdataquery/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/tsdb/cloudwatch/kinds/dataquery/types_dataquery_gen.go",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/cloudwatch/dataquery.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/cloudwatch/dataquery.gen.ts"
       },
       "machineName": "cloudwatchdataquery",
-      "maturity": "planned",
+      "maturity": "merged",
       "name": "CloudWatchDataQuery",
       "pluralMachineName": "cloudwatchdataquerys",
       "pluralName": "CloudWatchDataQuerys",
-      "machineName": "cloudwatchdataquery",
-      "pluralMachineName": "cloudwatchdataquerys",
-      "lineageIsGroup": false,
-      "maturity": "merged",
-      "currentVersion": [
-        0,
-        0
-      ],
       "schemaInterface": "DataQuery"
     },
     "cloudwatchdatasourcecfg": {
@@ -1776,12 +1772,12 @@
       "merged": {
         "name": "merged",
         "items": [
-          "cloudwatchdataquery",
           "alertgroupspanelcfg",
+          "cloudwatchdataquery",
           "playlist",
           "team"
         ],
-        "count": 3
+        "count": 4
       },
       "planned": {
         "name": "planned",
@@ -1846,7 +1842,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 60
+        "count": 59
       },
       "stable": {
         "name": "stable",
