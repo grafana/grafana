@@ -259,6 +259,8 @@ export const Table = memo((props: Props) => {
   const RenderRow = useCallback(
     ({ index: rowIndex, style }: { index: number; style: CSSProperties }) => {
       let row = rows[rowIndex];
+      console.log(row, 'insideRow');
+      console.log(rowIndex, 'insiderowIndex');
       if (enablePagination) {
         row = page[rowIndex];
       }

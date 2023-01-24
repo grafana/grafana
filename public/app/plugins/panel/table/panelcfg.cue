@@ -25,6 +25,7 @@ composableKinds: PanelCfg: {
 				schemas: [
 					{
 						PanelOptions: {
+							JEV: add option here
 							frameIndex:    number | *0
 							showHeader:    bool | *true
 							showRowNumbers?:    bool | *false

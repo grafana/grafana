@@ -166,11 +166,9 @@ export function getColumns(
 export function buildFieldsForOptionalRowNums(totalRows: number): Field {
   return {
     name: ' ',
-    display: (value: number) => {
-      return {
-        numeric: value,
-        text: String(value),
-      };
+    display: function (value) {
+      console.log(value, 'value');
+      return value;
     },
     type: FieldType.number,
     config: {
