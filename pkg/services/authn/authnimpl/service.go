@@ -244,19 +244,19 @@ func (s *Service) RegisterPostLoginHook(hook authn.PostLoginHookFn, priority uin
 	s.postLoginHooks.insert(hook, priority)
 }
 
-func (s *Service) RedirectURL(ctx context.Context, client string, r *authn.Request) (string, error) {
+func (s *Service) RedirectURL(ctx context.Context, client string, r *authn.Request) (*authn.Redirect, error) {
 	ctx, span := s.tracer.Start(ctx, "authn.RedirectURL")
 	defer span.End()
 	span.SetAttributes(attributeKeyClient, client, attribute.Key(attributeKeyClient).String(client))
 
 	c, ok := s.clients[client]
 	if !ok {
-		return "", authn.ErrClientNotConfigured.Errorf("client not configured: %s", client)
+		return nil, authn.ErrClientNotConfigured.Errorf("client not configured: %s", client)
 	}
 
 	redirectClient, ok := c.(authn.RedirectClient)
 	if !ok {
-		return "", authn.ErrUnsupportedClient.Errorf("client does not support generating redirect url: %s", client)
+		return nil, authn.ErrUnsupportedClient.Errorf("client does not support generating redirect url: %s", client)
 	}
 
 	return redirectClient.RedirectURL(ctx, r)
