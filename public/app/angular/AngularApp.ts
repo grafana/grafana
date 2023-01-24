@@ -37,7 +37,12 @@ export class AngularApp {
   init() {
     const app = angular.module('grafana', []);
 
-    app.config(
+    app.config([
+      '$controllerProvider',
+      '$compileProvider',
+      '$filterProvider',
+      '$httpProvider',
+      '$provide',
       (
         $controllerProvider: angular.IControllerProvider,
         $compileProvider: angular.ICompileProvider,
@@ -74,8 +79,8 @@ export class AngularApp {
             return $delegate;
           },
         ]);
-      }
-    );
+      },
+    ]);
 
     this.ngModuleDependencies = ['grafana.core', 'ngSanitize', 'grafana', 'pasvaz.bindonce', 'react'];
 

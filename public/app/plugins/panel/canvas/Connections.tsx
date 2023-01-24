@@ -55,10 +55,9 @@ export class Connections {
 
     const elementBoundingRect = element!.getBoundingClientRect();
     const parentBoundingRect = this.scene.div?.getBoundingClientRect();
-    let parentBorderWidth = parseFloat(getComputedStyle(this.scene.div!).borderWidth);
 
-    const relativeTop = elementBoundingRect.top - (parentBoundingRect?.top ?? 0) - parentBorderWidth;
-    const relativeLeft = elementBoundingRect.left - (parentBoundingRect?.left ?? 0) - parentBorderWidth;
+    const relativeTop = elementBoundingRect.top - (parentBoundingRect?.top ?? 0);
+    const relativeLeft = elementBoundingRect.left - (parentBoundingRect?.left ?? 0);
 
     if (this.connectionAnchorDiv) {
       this.connectionAnchorDiv.style.display = 'none';
@@ -95,10 +94,9 @@ export class Connections {
 
         const sourceRect = this.connectionSource.div.getBoundingClientRect();
         const parentRect = this.connectionSource.div.parentElement.getBoundingClientRect();
-        const parentBorderWidth = parseFloat(getComputedStyle(this.connectionSource.div.parentElement).borderWidth);
 
-        const sourceVerticalCenter = sourceRect.top - parentRect.top - parentBorderWidth + sourceRect.height / 2;
-        const sourceHorizontalCenter = sourceRect.left - parentRect.left - parentBorderWidth + sourceRect.width / 2;
+        const sourceVerticalCenter = sourceRect.top - parentRect.top + sourceRect.height / 2;
+        const sourceHorizontalCenter = sourceRect.left - parentRect.left + sourceRect.width / 2;
 
         // Convert from DOM coords to connection coords
         // TODO: Break this out into util function and add tests
@@ -112,8 +110,8 @@ export class Connections {
         if (this.connectionTarget && this.connectionTarget.div) {
           const targetRect = this.connectionTarget.div.getBoundingClientRect();
 
-          const targetVerticalCenter = targetRect.top - parentRect.top - parentBorderWidth + targetRect.height / 2;
-          const targetHorizontalCenter = targetRect.left - parentRect.left - parentBorderWidth + targetRect.width / 2;
+          const targetVerticalCenter = targetRect.top - parentRect.top + targetRect.height / 2;
+          const targetHorizontalCenter = targetRect.left - parentRect.left + targetRect.width / 2;
 
           targetX = (x - targetHorizontalCenter) / (targetRect.width / 2);
           targetY = (targetVerticalCenter - y) / (targetRect.height / 2);

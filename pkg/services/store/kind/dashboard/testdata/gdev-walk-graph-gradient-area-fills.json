@@ -5,7 +5,6 @@
     "graph": "",
     "panel-tests": ""
   },
-  "URL": "/d/graph-gradient-area-fills.json/panel-tests-graph-gradient-area-fills",
   "fields": {
     "schemaVersion": 18
   },
@@ -14,7 +13,6 @@
       "uid": "graph-gradient-area-fills.json#2",
       "kind": "panel",
       "name": "Req/s",
-      "URL": "/d/graph-gradient-area-fills.json/panel-tests-graph-gradient-area-fills?viewPanel=2",
       "fields": {
         "type": "graph"
       },
@@ -33,7 +31,6 @@
       "uid": "graph-gradient-area-fills.json#11",
       "kind": "panel",
       "name": "Req/s",
-      "URL": "/d/graph-gradient-area-fills.json/panel-tests-graph-gradient-area-fills?viewPanel=11",
       "fields": {
         "type": "graph"
       },
@@ -52,7 +49,6 @@
       "uid": "graph-gradient-area-fills.json#7",
       "kind": "panel",
       "name": "Memory",
-      "URL": "/d/graph-gradient-area-fills.json/panel-tests-graph-gradient-area-fills?viewPanel=7",
       "fields": {
         "type": "graph"
       },
@@ -71,7 +67,6 @@
       "uid": "graph-gradient-area-fills.json#10",
       "kind": "panel",
       "name": "Req/s",
-      "URL": "/d/graph-gradient-area-fills.json/panel-tests-graph-gradient-area-fills?viewPanel=10",
       "fields": {
         "type": "graph"
       },
