@@ -44,7 +44,7 @@ export function LogsSamplePanel(props: Props) {
   } else if (queryResponse.data.length === 0 || queryResponse.data[0].length === 0) {
     LogsSamplePanelContent = <span>No logs sample data.</span>;
   } else {
-    const logs = dataFrameToLogsModel(queryResponse.data, undefined);
+    const logs = dataFrameToLogsModel(queryResponse.data);
     LogsSamplePanelContent = (
       <LogRows
         logRows={logs.rows}
