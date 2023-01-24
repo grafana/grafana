@@ -102,18 +102,50 @@ type templateData struct {
 // Copied from https://github.com/marcusolsson/json-schema-docs and slightly changed to fit the DocsJenny
 
 type schema struct {
-	ID          string             `json:"$id,omitempty"`
-	Ref         string             `json:"$ref,omitempty"`
-	Schema      string             `json:"$schema,omitempty"`
-	Title       string             `json:"title,omitempty"`
-	Description string             `json:"description,omitempty"`
-	Required    []string           `json:"required,omitempty"`
-	Type        PropertyTypes      `json:"type,omitempty"`
-	Properties  map[string]*schema `json:"properties,omitempty"`
-	Items       *schema            `json:"items,omitempty"`
-	Definitions map[string]*schema `json:"definitions,omitempty"`
-	Enum        []Any              `json:"enum"`
-	Default     any                `json:"default"`
+	ID                   string                `json:"$id,omitempty"`
+	Ref                  string                `json:"$ref,omitempty"`
+	Schema               string                `json:"$schema,omitempty"`
+	Title                string                `json:"title,omitempty"`
+	Description          string                `json:"description,omitempty"`
+	Required             []string              `json:"required,omitempty"`
+	Type                 PropertyTypes         `json:"type,omitempty"`
+	Properties           map[string]*schema    `json:"properties,omitempty"`
+	Items                *schema               `json:"items,omitempty"`
+	Definitions          map[string]*schema    `json:"definitions,omitempty"`
+	Enum                 []Any                 `json:"enum"`
+	AdditionalProperties *AdditionalProperties `json:"additionalProperties"`
+	Default              any                   `json:"default"`
+}
+
+type AdditionalProperties struct {
+	Type                 string
+	Items                *AdditionalProperties
+	AdditionalProperties *AdditionalProperties
+}
+
+func renderMap(s *schema) string {
+	mapValue := getMapVal(s.AdditionalProperties)
+	return "map[string]" + mapValue
+}
+
+func getMapVal(props *AdditionalProperties) string {
+	if props == nil {
+		return ""
+	}
+
+	if props.AdditionalProperties == nil && props.Items == nil {
+		return props.Type
+	}
+
+	if props.AdditionalProperties != nil {
+		return "map[string]" + getMapVal(props.AdditionalProperties)
+	}
+
+	if props.Items != nil {
+		return "[]" + getMapVal(props.Items)
+	}
+
+	return ""
 }
 
 func jsonToMarkdown(jsonData []byte, tpl string, kindName string) ([]byte, error) {
@@ -236,7 +268,7 @@ func (s schema) Markdown(level int) string {
 
 	var buf bytes.Buffer
 
-	if s.Title != "" {
+	if s.Title != "" && s.AdditionalProperties == nil {
 		fmt.Fprintln(&buf, makeHeading(s.Title, level))
 		fmt.Fprintln(&buf)
 	}
@@ -284,6 +316,11 @@ func findDefinitions(s *schema) []*schema {
 	var objs []*schema
 
 	for k, p := range s.Properties {
+		// No need to render properties table for a map type
+		if p.AdditionalProperties != nil {
+			continue
+		}
+
 		// Use the identifier as the title.
 		if p.Type.HasType(PropertyTypeObject) {
 			if len(p.Title) == 0 {
@@ -325,15 +362,21 @@ func printProperties(w io.Writer, s *schema) {
 
 	// Buffer all property rows so that we can sort them before printing them.
 	rows := make([][]string, 0, len(s.Properties))
+
 	for k, p := range s.Properties {
-		// Generate relative links for objects and arrays of objects.
 		propType := make([]string, 0, len(p.Type))
+
+		// Generate relative links for objects and arrays of objects.
 		for _, pt := range p.Type {
-			switch pt {
-			case PropertyTypeObject:
+			switch {
+			// if AdditionalProperties is not nil, then most likely it's a field of map type
+			case p.AdditionalProperties != nil:
+				typeStr := renderMap(p)
+				propType = append(propType, typeStr)
+			case pt == PropertyTypeObject:
 				name, anchor := propNameAndAnchor(k, p.Title)
 				propType = append(propType, fmt.Sprintf("[%s](#%s)", name, anchor))
-			case PropertyTypeArray:
+			case pt == PropertyTypeArray:
 				if p.Items != nil {
 					for _, pi := range p.Items.Type {
 						if pi == PropertyTypeObject {
