@@ -64,10 +64,15 @@ import {
   addLineFilter,
   findLastPosition,
   getLabelFilterPositions,
-  getStreamSelectorPositions,
 } from './modifyQuery';
 import { getQueryHints } from './queryHints';
-import { getLogQueryFromMetricsQuery, getNormalizedLokiQuery, isLogsQuery, isValidQuery } from './queryUtils';
+import {
+  getLogQueryFromMetricsQuery,
+  getNormalizedLokiQuery,
+  getStreamSelectorsFromQuery,
+  isLogsQuery,
+  isValidQuery,
+} from './queryUtils';
 import { sortDataFrameByTime } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
 import { trackQuery } from './tracking';
@@ -389,11 +394,7 @@ export class LokiDatasource
   async queryStatsRequest(query: LokiQuery): Promise<QueryStats> {
     const { start, end } = this.getTimeRangeParams();
 
-    const labelMatcherPositions = getStreamSelectorPositions(query.expr);
-    const labelMatchers = labelMatcherPositions.map((labelMatcher) => {
-      return query.expr.slice(labelMatcher.from, labelMatcher.to);
-    });
-
+    const labelMatchers = getStreamSelectorsFromQuery(query);
     let statsForAll: QueryStats = { streams: 0, chunks: 0, bytes: 0, entries: 0 };
 
     for (const labelMatcher of labelMatchers) {

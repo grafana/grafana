@@ -21,6 +21,7 @@ import {
 
 import { ErrorId } from '../prometheus/querybuilder/shared/parsingUtils';
 
+import { getStreamSelectorPositions } from './modifyQuery';
 import { LokiQuery, LokiQueryType } from './types';
 
 export function formatQuery(selector: string | undefined): string {
@@ -251,6 +252,16 @@ export function getLogQueryFromMetricsQuery(query: string): string {
   });
 
   return selector + pipelineExpr;
+}
+
+export function getStreamSelectorsFromQuery(query: LokiQuery): string[] {
+  const labelMatcherPositions = getStreamSelectorPositions(query.expr);
+
+  const labelMatchers = labelMatcherPositions.map((labelMatcher) => {
+    return query.expr.slice(labelMatcher.from, labelMatcher.to);
+  });
+
+  return labelMatchers;
 }
 
 export function isQueryWithLabelFilter(query: string): boolean {
