@@ -36,8 +36,9 @@ const (
 var (
 	errMissingOAuthState   = errutil.NewBase(errutil.StatusBadRequest, "auth.oauth.state.missing", errutil.WithPublicMessage("Missing saved oauth state"))
 	errInvalidOAuthState   = errutil.NewBase(errutil.StatusUnauthorized, "auth.oauth.state.invalid", errutil.WithPublicMessage("Provided state does not match stored state"))
-	errMissingAttribute    = errutil.NewBase(errutil.StatusUnauthorized, "auth.oauth.attribute.missing")
-	errAttributeNotAllowed = errutil.NewBase(errutil.StatusUnauthorized, "auth.oauth.attribute.not-allowed")
+	errMissingOAuthPKCE    = errutil.NewBase(errutil.StatusBadRequest, "auth.oauth.pkce.missing", errutil.WithPublicMessage("Missing pkce cookie"))
+	errMissingMissingEmail = errutil.NewBase(errutil.StatusUnauthorized, "auth.oauth.email.missing")
+	errEmailNotAllowed     = errutil.NewBase(errutil.StatusUnauthorized, "auth.oauth.email.not-allowed")
 )
 
 var _ authn.RedirectClient = new(OAuth)
@@ -47,7 +48,7 @@ func ProvideOAuth(
 	connector social.SocialConnector, httpClient *http.Client,
 ) *OAuth {
 	return &OAuth{
-		name, fmt.Sprintf("oauth_%s", strings.TrimPrefix("auth.client.", name)),
+		name, fmt.Sprintf("oauth_%s", strings.TrimPrefix(name, "auth.client.")),
 		log.New(name), cfg, oauthCfg, connector, httpClient,
 	}
 }
@@ -86,10 +87,11 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}
 
 	var opts []oauth2.AuthCodeOption
+	// if pkce is enabled for client validate we have the cookie and set it as url param
 	if c.oauthCfg.UsePKCE {
 		pkceCookie, err := r.HTTPRequest.Cookie(oauthPKCECookieName)
 		if err != nil {
-			return nil, err
+			return nil, errMissingOAuthPKCE.Errorf("no pkce cookie found: %w", err)
 		}
 		opts = append(opts, oauth2.SetAuthURLParam(codeVerifierParamName, pkceCookie.Value))
 	}
@@ -108,11 +110,11 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}
 
 	if userInfo.Email == "" {
-		return nil, errMissingAttribute.Errorf("required attribute email was not provided")
+		return nil, errMissingMissingEmail.Errorf("required attribute email was not provided")
 	}
 
 	if !c.connector.IsEmailAllowed(userInfo.Email) {
-		return nil, errAttributeNotAllowed.Errorf("provided email is not allowed")
+		return nil, errEmailNotAllowed.Errorf("provided email is not allowed")
 	}
 
 	return &authn.Identity{
@@ -124,7 +126,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		AuthID:         userInfo.Id,
 		Groups:         userInfo.Groups,
 		OAuthToken:     token,
-		OrgRoles:       getOauthOrgRole(userInfo, c.cfg),
+		OrgRoles:       getOAuthOrgRole(userInfo, c.cfg),
 		ClientParams: authn.ClientParams{
 			SyncUser:            true,
 			SyncTeamMembers:     true,
@@ -164,8 +166,8 @@ func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redir
 	return &authn.Redirect{
 		URL: c.connector.AuthCodeURL(state, opts...),
 		Extra: map[string]string{
-			authn.ExtraKeyOAuthState: hashedSate,
-			authn.ExtraKeyOAuthPKCE:  plainPKCE,
+			authn.KeyOAuthState: hashedSate,
+			authn.KeyOAuthPKCE:  plainPKCE,
 		},
 	}, nil
 }
@@ -214,7 +216,7 @@ func hashOAuthState(state, secret, seed string) string {
 	return hex.EncodeToString(hashBytes[:])
 }
 
-func getOauthOrgRole(userInfo *social.BasicUserInfo, cfg *setting.Cfg) map[int64]org.RoleType {
+func getOAuthOrgRole(userInfo *social.BasicUserInfo, cfg *setting.Cfg) map[int64]org.RoleType {
 	orgRoles := make(map[int64]org.RoleType, 0)
 	if cfg.OAuthSkipOrgRoleUpdateSync {
 		return orgRoles
