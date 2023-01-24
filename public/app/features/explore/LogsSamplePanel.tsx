@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { CoreApp, DataQueryResponse, DataSourceApi, LoadingState, LogsDedupStrategy } from '@grafana/data';
+import { DataQueryResponse, DataSourceApi, LoadingState, LogsDedupStrategy } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
 import { Collapse } from '@grafana/ui';
@@ -55,7 +55,6 @@ export function LogsSamplePanel(props: Props) {
         prettifyLogMessage={store.getBool(SETTINGS_KEYS.prettifyLogMessage, false)}
         timeZone={timeZone}
         enableLogDetails={true}
-        app={CoreApp.Explore}
       />
     );
   }
