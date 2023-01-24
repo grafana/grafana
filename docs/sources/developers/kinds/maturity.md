@@ -11,32 +11,6 @@ weight: 300
 
 > Grafana’s schema, Kind, and related codegen systems are under intense development.
 
-Grafana is moving to a schema-centric model of development, where schemas are the single source of truth that specify 
-the shape of objects - for example, dashboards, datasources, users - in the frontend, backend, and plugin code. 
-Eventually, all of Grafana’s object types will be schematized within the “Kind System.” Kinds, their schemas, the Kind 
-system rules, and associated code generators will collectively provide a clear, consistent foundation for Grafana’s 
-APIs, documentation, persistent storage, clients, as-code tooling, and so forth.
-
-It’s exciting to imagine the possibilities that a crisp, consistent development workflow will enable - this is why 
-companies build [developer platforms](https://internaldeveloperplatform.org/)! At the same time, it’s also 
-overwhelming - any schema system that can meet Grafana’s complex requirements will necessarily have a lot of moving 
-parts. Additionally, we must account for having Grafana continue to work as we make the transition - a prerequisite 
-for every large-scale refactoring.
-
-**This document is the canonical reference for *how* to write Grafana schemas: start from nothing, and confidently 
-iterate to a mature initial version.** (Maintaining and evolving schemas *after* maturity is reached is a topic for 
-another doc.)
-
-There are several planned categories of Kinds for Grafana. The schema authoring workflow for each varies, as does the 
-path to maturity. This doc contains general reference material applicable to all Kind-writing, and links to the guides 
-for each category of Kind. Shortly, we’ll give you the necessary information to figure out which guide to follow. Before
-that, though, some context on the overarching goal of “schema maturity” is helpful.
-
-## About schema maturity
-
-If you hacked on any Grafana schema from 2021Q1-2022-Q3, then you’ve probably had the following anxious thought: “What 
-promise does merging this PR make to Grafana users and developers?” 😬😱😬
-
 Fear of unknown impacts leads to defensive coding, slow PRs, circular arguments, and an overall hesitance to engage. 
 That friction alone is sufficient to sink a large-scale project. This guide seeks to counteract this friction by 
 defining an end goal for all schemas: “mature.” This is the word we’re using to refer to the commonsense notion of “this
@@ -70,9 +44,44 @@ Finally, the above definitions imply that maturity for *individual Kinds/schemas
 mature, as well. This is by design: **Grafana Labs does not intend to publicize any single schema as mature until 
 [certain schema system milestones are met](https://github.com/orgs/grafana/projects/133/views/8).**
 
-## Schema-writing guidelines
+# Schema Maturity Milestones
 
-### Avoid anonymous nested structs
+Maturity milestones are a linear progression. Each milestone implies that the conditions of its predecessors continue to
+be met. 
+
+Reaching a particular milestone implies that the properties of all prior milestones are still met.
+
+### (Milestone 0 - Planned) {#planned}
+
+| **Goal**                     | Put a Kind name on the official TODO list: [Kind Schematization Progress Tracker](https://docs.google.com/spreadsheets/d/1DL6nZHyX42X013QraWYbKsMmHozLrtXDj8teLKvwYMY/edit#gid=0) |
+|------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Reached when**             | The planned Kind is listed in the relevant sheet of the progress tracker with a link to track / be able to see when exactly it is planned and who is responsible for doing it     |
+| **Common hurdles**           | Existing definitions may not correspond clearly to an object boundary - e.g. playlists are currently in denormalized SQL tables playlist and playlist_item                        |
+| **Public-facing guarantees** | None                                                                                                                                                                              |
+| **customer-facing stage**    | None                                                                                                                                                                              |
+
+### Milestone 1 - Merged {#merged}
+
+| **Goal**                     | Get an initial schema written down. Not final. Not perfect.                                                                                                                                                                   |
+|------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Reached when**             | A PR introducing the initial version of a schema has been merged.                                                                                                                                                             |
+| **Common hurdles**           | Getting comfortable with Thema and CUE<br/>Figuring out where all the existing definitions of the Kind are<br/>Knowing whether it’s safe to omit possibly-crufty fields from the existing definitions when writing the schema |
+| **Public-facing guarantees** | None                                                                                                                                                                                                                          |
+| **User-facing stage**        | None                                                                                                                                                                                                                          |
+
+### Milestone 2 - Experimental {#experimental}
+
+| **Goal**                     | Schemas are the source of truth for basic working code.                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+|------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Reached when**             | Go and TypeScript types generated from schema are used in all relevant production code, having replaced handwritten type definitions (if any).                                                                                                                                                                                                                                                                                                                                              |
+| **Common hurdles**           | Compromises on field definitions that seemed fine to reach “committed” start to feel unacceptable<br/>Ergonomics of generated code may start to bite<br/>Aligning with the look and feel of related schemas                                                                                                                                                                                                                                                                                 |
+| **Public-facing guarantees** | Kinds are available for as-code usage in [grok](https://github.com/grafana/grok), and in tools downstream of grok, following all of grok’s standard patterns.                                                                                                                                                                                                                                                                                                                               |
+| **Stage comms**              | Internal users:- Start using the schema and give feedback internally to help move to the next stage.External users:- Align with the [experimental](https://docs.google.com/document/d/1lqp0hALax2PT7jSObsX52EbQmIDFnLFMqIbBrJ4EYCE/edit#heading=h.ehl5iy7pcjvq) stage in the release definition document.  - Experimental schemas will be discoverable, and from a customer PoV should never be used in production, but they can be explored and we are more than happy to receive feedback |
+
+
+# Schema-writing guidelines
+
+## Avoid anonymous nested structs
 
 ***Always name your sub-objects.***
 
@@ -143,91 +152,55 @@ type Two struct {
 
 Never use `number` for a numeric type in a schema.
 
-Instead, use a specific, sized type like `int64` or `float32`. This makes your intent precisely clear. 
+Instead, use a specific, sized type like `int64` or `float32`. This makes your intent precisely clear.
 TypeScript will still represent these fields with `number`, but other languages (e.g. Go, Protobuf) can be more precise.
 
-Unlike in Go, int and uint are not your friends. These correspond to `math/big` types. Use a sized type, 
+Unlike in Go, int and uint are not your friends. These correspond to `math/big` types. Use a sized type,
 like `uint32` or `int32`, unless the use case specifically requires a huge numeric space.
 
 ## No explicit `null`
- 
-***Do not use `null` as a type in any schema.*** 
+
+***Do not use `null` as a type in any schema.***
 
 This one is tricky to think about, and requires some background.
 
-Historically, Grafana’s dashboard JSON has often contained fields with the explicit value `null`. 
-This was problematic, because explicit `null` introduces an ambiguity: is a JSON field being present 
-with value null meaningfully different from the field being absent? That is, should a program behave differently 
+Historically, Grafana’s dashboard JSON has often contained fields with the explicit value `null`.
+This was problematic, because explicit `null` introduces an ambiguity: is a JSON field being present
+with value null meaningfully different from the field being absent? That is, should a program behave differently
 if it encounters a null vs. an absent field?
 
-In almost all cases, the answer is “no.” Thus, the ambiguity: if both explicit null and absence are *accepted* 
-by a system, it pushes responsibility onto anyone writing code in that system to decide, case-by-case, 
+In almost all cases, the answer is “no.” Thus, the ambiguity: if both explicit null and absence are *accepted*
+by a system, it pushes responsibility onto anyone writing code in that system to decide, case-by-case,
 whether the two are *intended to be meaningfully different*, and therefore whether behavior should be different.
 
 CUE does have a `null` type, and only accepts data containing `nulls` as valid if the schema explicitly allows a `null`.
-That means, by default, using CUE for schemas removes the possibility of ambiguity in code that receives data validated 
+That means, by default, using CUE for schemas removes the possibility of ambiguity in code that receives data validated
 by those schemas, even if the language they’re writing in still allows for ambiguity. (Javascript does, Go doesn’t.)
 
-As a schema author, this means you’re being unambiguous by default - no `nulls`. That’s good! The only question is 
+As a schema author, this means you’re being unambiguous by default - no `nulls`. That’s good! The only question is
 whether it’s worth explicitly allowing a `null` for some particular case:
 ~~~ Cue
 someField: int32 | null
 ~~~
 
-The *only* time this *may* be a good idea is if your field needs to be able to represent a value 
-that is not otherwise acceptable within the value space - for example, if `someField` needs to be able to contain 
-[Infinity](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/POSITIVE_INFINITY). 
-When such values are serialized to null by default, it can be convenient to accept null in the schema - but even then, 
+The *only* time this *may* be a good idea is if your field needs to be able to represent a value
+that is not otherwise acceptable within the value space - for example, if `someField` needs to be able to contain
+[Infinity](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/POSITIVE_INFINITY).
+When such values are serialized to null by default, it can be convenient to accept null in the schema - but even then,
 explicit null is unlikely to be the best way to represent such values, because it is so subtle and falsey.
 
-**Above all, DO NOT accept `null` in a schema simply because current behavior sometimes unintentionally produces a `null`.** 
+**Above all, DO NOT accept `null` in a schema simply because current behavior sometimes unintentionally produces a `null`.**
 Schematization is an opportunity to get rid of this ambiguity. Fix the accidental null-producing behavior, instead.
-
-
 
 ## Issues
 
-- If a schema has a "kind" field and its set as enum, it generates a Kind alias that conflicts with the generated 
-Kind struct.
+- If a schema has a "kind" field and its set as enum, it generates a Kind alias that conflicts with the generated
+  Kind struct.
 - Byte fields are existing in Go but not in TS, so the generator fails.
-- **omitempty** is useful when we return things like json.RawMessage (alias of []byte) because Postgres saves this 
-information as `nil`, when MySQL and SQLite save it as `{}`. If we found it in the rest of the cases, it isn't necessary
-to set `?` in the field in the schema.
+- **omitempty** is useful when we return things like json.RawMessage (alias of []byte) because Postgres saves this
+  information as `nil`, when MySQL and SQLite save it as `{}`. If we found it in the rest of the cases, it isn't necessary
+  to set `?` in the field in the schema.
 
-
-# Schema Maturity Milestones
-
-Maturity milestones are a linear progression. Each milestone implies that the conditions of its predecessors continue to
-be met. 
-
-Reaching a particular milestone implies that the properties of all prior milestones are still met.
-
-### (Milestone 0 - Planned) {#planned}
-
-| **Goal**                     | Put a Kind name on the official TODO list: [Kind Schematization Progress Tracker](https://docs.google.com/spreadsheets/d/1DL6nZHyX42X013QraWYbKsMmHozLrtXDj8teLKvwYMY/edit#gid=0) |
-|------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Reached when**             | The planned Kind is listed in the relevant sheet of the progress tracker with a link to track / be able to see when exactly it is planned and who is responsible for doing it     |
-| **Common hurdles**           | Existing definitions may not correspond clearly to an object boundary - e.g. playlists are currently in denormalized SQL tables playlist and playlist_item                        |
-| **Public-facing guarantees** | None                                                                                                                                                                              |
-| **customer-facing stage**    | None                                                                                                                                                                              |
-
-### Milestone 1 - Merged {#merged}
-
-| **Goal**                     | Get an initial schema written down. Not final. Not perfect.                                                                                                                                                                   |
-|------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Reached when**             | A PR introducing the initial version of a schema has been merged.                                                                                                                                                             |
-| **Common hurdles**           | Getting comfortable with Thema and CUE<br/>Figuring out where all the existing definitions of the Kind are<br/>Knowing whether it’s safe to omit possibly-crufty fields from the existing definitions when writing the schema |
-| **Public-facing guarantees** | None                                                                                                                                                                                                                          |
-| **User-facing stage**        | None                                                                                                                                                                                                                          |
-
-### Milestone 2 - Experimental {#experimental}
-
-| **Goal**                     | Schemas are the source of truth for basic working code.                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-|------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Reached when**             | Go and TypeScript types generated from schema are used in all relevant production code, having replaced handwritten type definitions (if any).                                                                                                                                                                                                                                                                                                                                              |
-| **Common hurdles**           | Compromises on field definitions that seemed fine to reach “committed” start to feel unacceptable<br/>Ergonomics of generated code may start to bite<br/>Aligning with the look and feel of related schemas                                                                                                                                                                                                                                                                                 |
-| **Public-facing guarantees** | Kinds are available for as-code usage in [grok](https://github.com/grafana/grok), and in tools downstream of grok, following all of grok’s standard patterns.                                                                                                                                                                                                                                                                                                                               |
-| **Stage comms**              | Internal users:- Start using the schema and give feedback internally to help move to the next stage.External users:- Align with the [experimental](https://docs.google.com/document/d/1lqp0hALax2PT7jSObsX52EbQmIDFnLFMqIbBrJ4EYCE/edit#heading=h.ehl5iy7pcjvq) stage in the release definition document.  - Experimental schemas will be discoverable, and from a customer PoV should never be used in production, but they can be explored and we are more than happy to receive feedback |
 
 # Schema Attributes
 
