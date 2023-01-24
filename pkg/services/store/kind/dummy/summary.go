@@ -37,17 +37,17 @@ func GetEntitySummaryBuilder(kind string) models.EntitySummaryBuilder {
 			Nested: nil, // ignore for now
 			References: []*models.EntityExternalReference{
 				{
-					Kind: "ds",
-					Type: "influx",
-					UID:  "xyz",
+					Family:     "ds",
+					Type:       "influx",
+					Identifier: "xyz",
 				},
 				{
-					Kind: "panel",
-					Type: "heatmap",
+					Family: models.StandardKindPanel,
+					Type:   "heatmap",
 				},
 				{
-					Kind: "panel",
-					Type: "timeseries",
+					Family: models.StandardKindPanel,
+					Type:   "timeseries",
 				},
 			},
 		}

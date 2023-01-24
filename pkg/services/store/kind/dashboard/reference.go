@@ -10,7 +10,7 @@ import (
 // A reference accumulator can combine
 type ReferenceAccumulator interface {
 	// Add references as we find them
-	Add(kind string, subtype string, uid string)
+	Add(family string, ttype string, id string)
 
 	// Returns the set of distinct references in a sorted order
 	Get() []*models.EntityExternalReference
@@ -26,14 +26,14 @@ type referenceAccumulator struct {
 	refs map[string]*models.EntityExternalReference
 }
 
-func (x *referenceAccumulator) Add(kind string, sub string, uid string) {
-	key := fmt.Sprintf("%s/%s/%s", kind, sub, uid)
+func (x *referenceAccumulator) Add(family string, ttype string, id string) {
+	key := fmt.Sprintf("%s/%s/%s", family, ttype, id)
 	_, ok := x.refs[key]
 	if !ok {
 		x.refs[key] = &models.EntityExternalReference{
-			Kind: kind,
-			Type: sub,
-			UID:  uid,
+			Family:     family,
+			Type:       ttype,
+			Identifier: id,
 		}
 	}
 }

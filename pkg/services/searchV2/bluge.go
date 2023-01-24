@@ -170,15 +170,15 @@ func getNonFolderDashboardDoc(dash dashboard, location string) *bluge.Document {
 	}
 
 	for _, ref := range dash.summary.References {
-		if ref.Kind == models.StandardKindDataSource {
+		if ref.Family == models.StandardKindDataSource {
 			if ref.Type != "" {
 				doc.AddField(bluge.NewKeywordField(documentFieldDSType, ref.Type).
 					StoreValue().
 					Aggregatable().
 					SearchTermPositions())
 			}
-			if ref.UID != "" {
-				doc.AddField(bluge.NewKeywordField(documentFieldDSUID, ref.UID).
+			if ref.Identifier != "" {
+				doc.AddField(bluge.NewKeywordField(documentFieldDSUID, ref.Identifier).
 					StoreValue().
 					Aggregatable().
 					SearchTermPositions())
@@ -209,7 +209,7 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 			AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindPanel)).Aggregatable().StoreValue()) // likely want independent index for this
 
 		for _, ref := range dash.summary.References {
-			switch ref.Kind {
+			switch ref.Family {
 			case models.StandardKindDashboard:
 				if ref.Type != "" {
 					doc.AddField(bluge.NewKeywordField(documentFieldDSType, ref.Type).
@@ -217,19 +217,19 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 						Aggregatable().
 						SearchTermPositions())
 				}
-				if ref.UID != "" {
-					doc.AddField(bluge.NewKeywordField(documentFieldDSUID, ref.UID).
+				if ref.Identifier != "" {
+					doc.AddField(bluge.NewKeywordField(documentFieldDSUID, ref.Identifier).
 						StoreValue().
 						Aggregatable().
 						SearchTermPositions())
 				}
 			case models.ExternalEntityReferencePlugin:
-				if ref.Type == models.StandardKindPanel && ref.UID != "" {
-					doc.AddField(bluge.NewKeywordField(documentFieldPanelType, ref.UID).Aggregatable().StoreValue())
+				if ref.Type == models.StandardKindPanel && ref.Identifier != "" {
+					doc.AddField(bluge.NewKeywordField(documentFieldPanelType, ref.Identifier).Aggregatable().StoreValue())
 				}
 			case models.ExternalEntityReferenceRuntime:
-				if ref.Type == models.ExternalEntityReferenceRuntime_Transformer && ref.UID != "" {
-					doc.AddField(bluge.NewKeywordField(documentFieldTransformer, ref.UID).Aggregatable())
+				if ref.Type == models.ExternalEntityReferenceRuntime_Transformer && ref.Identifier != "" {
+					doc.AddField(bluge.NewKeywordField(documentFieldTransformer, ref.Identifier).Aggregatable())
 				}
 			}
 		}

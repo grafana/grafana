@@ -52,7 +52,7 @@ func GetEntitySummaryBuilder() models.EntitySummaryBuilder {
 				"expires":     obj.Expires,
 			},
 			References: []*models.EntityExternalReference{
-				{Kind: models.StandardKindDashboard, UID: obj.DashboardUID},
+				{Family: models.StandardKindDashboard, Identifier: obj.DashboardUID},
 			},
 		}
 
