@@ -80,7 +80,7 @@
     "@types/sinon": "10.0.13",
     "@types/testing-library__jest-dom": "5.14.5",
     "@types/tinycolor2": "1.4.3",
-    "esbuild": "0.16.7",
+    "esbuild": "0.16.17",
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "react-test-renderer": "17.0.2",
