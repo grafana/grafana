@@ -537,7 +537,7 @@ lerna.json @grafana/frontend-ops
 
 # Kind definitions
 /kinds/dashboard @grafana/dashboards-squad
-/kinds/ @grafana/grafana-as-code // as-code is fallback owner
+/kinds/ @grafana/grafana-as-code
 
 # Kind system and code generation
 embed.go @grafana/grafana-as-code
