@@ -26,10 +26,13 @@ export interface PanelChromeProps {
   description?: string | (() => string);
   titleItems?: ReactNode[];
   menu?: ReactElement | (() => ReactElement);
-  /** dragClass, hoverHeader not yet implemented */
   dragClass?: string;
   dragClassCancel?: string;
   hoverHeader?: boolean;
+  /**
+   * Use only to indicate loading or streaming data in the panel.
+   * Any other values of loadingState are ignored.
+   */
   loadingState?: LoadingState;
   /**
    * Used to display status message (used for panel errors currently)
@@ -39,11 +42,13 @@ export interface PanelChromeProps {
    * Handle opening error details view (like inspect / error tab)
    */
   statusMessageOnClick?: (e: React.SyntheticEvent) => void;
-  /** @deprecated in favor of props
-   * status for errors and loadingState for loading and streaming
+  /**
+   * @deprecated in favor of props
+   * statusMessage for error messages
+   * and loadingState for loading and streaming data
    * which will serve the same purpose
-   * of showing/interacting with the panel's data state
-   * */
+   * of showing/interacting with the panel's state
+   */
   leftItems?: ReactNode[];
 }
 
@@ -64,14 +69,13 @@ export function PanelChrome({
   description = '',
   titleItems = [],
   menu,
-  // dragClass,
+  dragClass,
+  dragClassCancel,
   hoverHeader = false,
   loadingState,
   statusMessage,
   statusMessageOnClick,
   leftItems,
-  dragClass,
-  dragClassCancel,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
