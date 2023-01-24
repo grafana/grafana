@@ -107,7 +107,7 @@ To speed up the time it takes to review your plugin:
 
 **Can I see metrics of my plugin installs, downloads or usage?**
 
-- No. We don't offer this information. You are also not allowed to include any kind of tracking code inside your plugin.
+- No. We don't offer this information at the moment to plugin authors.
 
 **How can I update my plugin's catalog page?**
 
