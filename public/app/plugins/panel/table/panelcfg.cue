@@ -15,24 +15,22 @@
 package grafanaplugin
 
 import (
-	ui "github.com/grafana/grafana/packages/grafana-schema/src/common"
+	"github.com/grafana/grafana/packages/grafana-schema/src/common"
 )
 
 composableKinds: PanelCfg: {
-	maturity: "experimental"
-
 	lineage: {
 		seqs: [
 			{
 				schemas: [
 					{
 						PanelOptions: {
-							ui.SingleStatBaseOptions
-							graphMode:   ui.BigValueGraphMode | *"area"
-							colorMode:   ui.BigValueColorMode | *"value"
-							justifyMode: ui.BigValueJustifyMode | *"auto"
-							textMode:    ui.BigValueTextMode | *"auto"
+							frameIndex:    number | *0
+							showHeader:    bool | *true
+							showTypeIcons: bool | *false
+							sortBy?: [...common.TableSortByFieldState]
 						} @cuetsy(kind="interface")
+						PanelFieldConfig: common.TableFieldOptions & {} @cuetsy(kind="interface")
 					},
 				]
 			},

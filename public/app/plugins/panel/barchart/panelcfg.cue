@@ -15,7 +15,7 @@
 package grafanaplugin
 
 import (
-	ui "github.com/grafana/grafana/packages/grafana-schema/src/common"
+	"github.com/grafana/grafana/packages/grafana-schema/src/common"
 )
 
 composableKinds: PanelCfg: {
@@ -28,16 +28,16 @@ composableKinds: PanelCfg: {
 					// v0.0
 					{
 						PanelOptions: {
-							ui.OptionsWithLegend
-							ui.OptionsWithTooltip
-							ui.OptionsWithTextFormatting
+							common.OptionsWithLegend
+							common.OptionsWithTooltip
+							common.OptionsWithTextFormatting
 
 							// Manually select which field from the dataset to represent the x field.
 							xField?: string
 							// Use the color value for a sibling field to color each bar value.
 							colorByField?: string
 							// Controls the orientation of the bar chart, either vertical or horizontal.
-							orientation: ui.VizOrientation | *"auto"
+							orientation: common.VizOrientation | *"auto"
 							// Controls the radius of each bar.
 							barRadius?: float64 & >=0 & <=0.5 | *0
 							// Controls the rotation of the x axis labels.
@@ -48,9 +48,9 @@ composableKinds: PanelCfg: {
 							// negative values indicate backwards skipping behavior
 							xTickLabelSpacing?: int32 | *0
 							// Controls whether bars are stacked or not, either normally or in percent mode.
-							stacking: ui.StackingMode | *"none"
+							stacking: common.StackingMode | *"none"
 							// This controls whether values are shown on top or to the left of bars.
-							showValue: ui.VisibilityMode | *"auto"
+							showValue: common.VisibilityMode | *"auto"
 							// Controls the width of bars. 1 = Max width, 0 = Min width.
 							barWidth: float64 & >=0 & <=1 | *0.97
 							// Controls the width of groups. 1 = max with, 0 = min width.
@@ -60,8 +60,8 @@ composableKinds: PanelCfg: {
 							fullHighlight: bool | *false
 						} @cuetsy(kind="interface")
 						PanelFieldConfig: {
-							ui.AxisConfig
-							ui.HideableFieldConfig
+							common.AxisConfig
+							common.HideableFieldConfig
 
 							// Controls line width of the bars.
 							lineWidth?: int32 & >=0 & <=10 | *1
@@ -69,9 +69,9 @@ composableKinds: PanelCfg: {
 							fillOpacity?: int32 & >=0 & <=100 | *80
 							// Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard color scheme field option.
 							// Gradient appearance is influenced by the Fill opacity setting.
-							gradientMode?: ui.GraphGradientMode | *"none"
+							gradientMode?: common.GraphGradientMode | *"none"
 							// Threshold rendering
-							thresholdsStyle?: ui.GraphThresholdsStyleConfig
+							thresholdsStyle?: common.GraphThresholdsStyleConfig
 						} @cuetsy(kind="interface")
 					},
 				]

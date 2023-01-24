@@ -15,20 +15,24 @@
 package grafanaplugin
 
 import (
-	ui "github.com/grafana/grafana/packages/grafana-schema/src/common"
+	"github.com/grafana/grafana/packages/grafana-schema/src/common"
 )
 
 composableKinds: PanelCfg: {
+	maturity: "experimental"
+
 	lineage: {
 		seqs: [
 			{
 				schemas: [
 					{
 						PanelOptions: {
-							legend:  ui.VizLegendOptions
-							tooltip: ui.VizTooltipOptions
+							common.SingleStatBaseOptions
+							displayMode:  common.BarGaugeDisplayMode | *"gradient"
+							showUnfilled: bool | *true
+							minVizWidth:  uint32 | *0
+							minVizHeight: uint32 | *10
 						} @cuetsy(kind="interface")
-						PanelFieldConfig: ui.GraphFieldConfig & {} @cuetsy(kind="interface")
 					},
 				]
 			},
