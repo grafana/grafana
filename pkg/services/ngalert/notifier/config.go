@@ -130,7 +130,7 @@ func (a AlertingConfiguration) DispatcherLimits() alerting.DispatcherLimits {
 	return &nilLimits{}
 }
 
-func (a AlertingConfiguration) InhibitRules() []*alerting.InhibitRule {
+func (a AlertingConfiguration) InhibitRules() []alerting.InhibitRule {
 	return a.AlertmanagerConfig.InhibitRules
 }
 

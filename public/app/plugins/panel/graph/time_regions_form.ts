@@ -8,7 +8,8 @@ export class TimeRegionFormCtrl {
   disabled = false;
   colorModes: any;
 
-  /** @ngInject */
+  static $inject = ['$scope'];
+
   constructor(private $scope: any) {}
 
   $onInit() {

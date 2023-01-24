@@ -1408,7 +1408,13 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
+
+	// Deprecated
 	OAuthAutoLogin = auth.Key("oauth_auto_login").MustBool(false)
+	if OAuthAutoLogin {
+		cfg.Logger.Warn("[Deprecated] The oauth_auto_login configuration setting is deprecated. Please use auto_login inside auth provider section instead.")
+	}
+
 	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
 	SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
 	cfg.OAuthSkipOrgRoleUpdateSync = auth.Key("oauth_skip_org_role_update_sync").MustBool(false)
@@ -1771,8 +1777,8 @@ func (cfg *Cfg) readDataSourcesSettings() {
 }
 
 func GetAllowedOriginGlobs(originPatterns []string) ([]glob.Glob, error) {
-	var originGlobs []glob.Glob
 	allowedOrigins := originPatterns
+	originGlobs := make([]glob.Glob, 0, len(allowedOrigins))
 	for _, originPattern := range allowedOrigins {
 		g, err := glob.Compile(originPattern)
 		if err != nil {

@@ -550,9 +550,9 @@ Optionally, use this option to override the default endpoint address for Applica
 
 <hr />
 
-### enable_feedback_links
+### feedback_links_enabled
 
-If set to false will remove all feedback links from the UI. Defaults to true.
+Set to `false` to remove all feedback links from the UI. Default is `true`.
 
 ## [security]
 
@@ -838,6 +838,8 @@ Set to `true` to disable the signout link in the side menu. This is useful if yo
 URL to redirect the user to after they sign out.
 
 ### oauth_auto_login
+
+> **Note**: This option is deprecated - use `auto_login` option for specific OAuth provider instead.
 
 Set to `true` to attempt login with OAuth automatically, skipping the login screen.
 This setting is ignored if multiple OAuth providers are configured. Default is `false`.
