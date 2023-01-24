@@ -8,8 +8,8 @@ title: Preferences kind
 
 # Preferences kind
 
-### Maturity: merged
-### Version: 0.0
+## Maturity: merged
+## Version: 0.0
 
 ## Properties
 
