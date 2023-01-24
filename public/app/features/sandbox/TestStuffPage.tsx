@@ -10,7 +10,8 @@ import {
   NavModelItem,
   PanelData,
 } from '@grafana/data';
-import { Button, Table } from '@grafana/ui';
+import { getPluginLink } from '@grafana/runtime';
+import { Button, HorizontalGroup, LinkButton, Table } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { config } from 'app/core/config';
 import { useAppNotification } from 'app/core/copy/appNotification';
@@ -66,6 +67,9 @@ export const TestStuffPage = () => {
   return (
     <Page navModel={{ node: node, main: node }}>
       <Page.Contents>
+        <HorizontalGroup>
+          <LinkToBasicApp linkId="myorg-basic-app.page-one" />
+        </HorizontalGroup>
         {data && (
           <AutoSizer style={{ width: '100%', height: '600px' }}>
             {({ width }) => {
@@ -148,6 +152,20 @@ export function getDefaultState(): State {
       savedQueryUid: null,
     },
   };
+}
+
+function LinkToBasicApp({ linkId }: { linkId: string }) {
+  const { link } = getPluginLink({ id: linkId });
+
+  if (!link) {
+    return null;
+  }
+
+  return (
+    <LinkButton href={link.href} title={link.description}>
+      Go to basic app
+    </LinkButton>
+  );
 }
 
 export default TestStuffPage;
