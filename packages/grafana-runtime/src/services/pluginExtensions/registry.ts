@@ -11,7 +11,7 @@ let registry: PluginsExtensionRegistry | undefined;
 
 export function setPluginsExtensionRegistry(instance: PluginsExtensionRegistry): void {
   if (registry) {
-    throw new Error('setPluginsExtensionRegistry function should only be set once, when Grafana is starting.');
+    throw new Error('setPluginsExtensionRegistry function should only be called once, when Grafana is starting.');
   }
   registry = instance;
 }
