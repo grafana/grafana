@@ -218,11 +218,11 @@ function SearchQueryHelp() {
       <div className={styles.grid}>
         <div>Filter type</div>
         <div>Expression</div>
-        <HelpRow title="Datasource" expr="ds:mimir" />
-        <HelpRow title="Folder/Namespace" expr="ns:global" />
+        <HelpRow title="Datasource" expr="datasource:mimir" />
+        <HelpRow title="Folder/Namespace" expr="namespace:global" />
         <HelpRow title="Group" expr="group:cpu-usage" />
         <HelpRow title="Rule" expr='rule:"cpu 80%"' />
-        <HelpRow title="Labels" expr="label:team=A" />
+        <HelpRow title="Labels" expr="label:team=A label:cluster=a1" />
         <HelpRow title="State" expr="state:firing|normal|pending" />
         <HelpRow title="Type" expr="type:alerting|recording" />
         <HelpRow title="Health" expr="health:ok|nodata|error" />
