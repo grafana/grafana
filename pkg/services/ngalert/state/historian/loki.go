@@ -3,7 +3,9 @@ package historian
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
@@ -30,6 +32,7 @@ const (
 type remoteLokiClient interface {
 	ping(context.Context) error
 	push(context.Context, []stream) error
+	query(selectors [][3]string, start, end int64) (QueryRes, error)
 }
 
 type RemoteLokiBackend struct {
@@ -66,7 +69,54 @@ func (h *RemoteLokiBackend) RecordStatesAsync(ctx context.Context, rule history_
 }
 
 func (h *RemoteLokiBackend) QueryStates(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {
-	return data.NewFrame("states"), nil
+	if query.RuleUID == "" {
+		return nil, errors.New("the RuleUID is not set but required")
+	}
+	res, err := h.client.query([][3]string{
+		{"rule_id", "=", query.RuleUID},
+	}, query.From.Unix(), query.To.Unix())
+	if err != nil {
+		return nil, err
+	}
+	return merge(res)
+}
+
+// merge will put all the results in one array sorted by timestamp.
+func merge(res QueryRes) (*data.Frame, error) {
+	// Find the total number of elements in all arrays
+	totalLen := 0
+	for _, arr := range res.Data.Result {
+		totalLen += len(arr.Values)
+	}
+	// Create a new slice to store the merged elements
+	df := data.NewFrame("result")
+	// Initialize a slice of pointers to the current position in each array
+	pointers := make([]int, len(res.Data.Result))
+	for {
+		// Find the minimum element among all arrays
+		minVal := (^int64(0) >> 1) // set initial value to max int
+		minIdx := -1
+		minEl := [2]string{}
+		for i, stream := range res.Data.Result {
+			curVal, err := strconv.ParseInt(stream.Values[pointers[i]][0], 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse timestamp from loki repsonse: %w", err)
+			}
+			if pointers[i] < len(stream.Values) && curVal < minVal {
+				minVal = curVal
+				minEl = stream.Values[pointers[i]]
+				minIdx = i
+			}
+		}
+		// If all pointers have reached the end of their arrays, we're done
+		if minIdx == -1 {
+			break
+		}
+		// Append the minimum element to the merged slice and move the pointer
+		df.AppendRow(minEl)
+		pointers[minIdx]++
+	}
+	return df, nil
 }
 
 func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger) []stream {

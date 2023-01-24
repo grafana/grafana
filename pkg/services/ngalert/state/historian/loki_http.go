@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -163,4 +164,87 @@ func (c *httpLokiClient) setAuthAndTenantHeaders(req *http.Request) {
 	if c.cfg.TenantID != "" {
 		req.Header.Add("X-Scope-OrgID", c.cfg.TenantID)
 	}
+}
+func (c *httpLokiClient) query(selectors [][3]string, start, end int64) (QueryRes, error) {
+	// Run the pre-flight checks for the query.
+	if len(selectors) == 0 {
+		return QueryRes{}, fmt.Errorf("at least one selector required to query")
+	}
+	if start > end {
+		return QueryRes{}, fmt.Errorf("start time cannot be after end time")
+	}
+
+	// Build the query selector.
+	query := ""
+	for _, s := range selectors {
+		if !isValidOperator(s[1]) {
+			return QueryRes{}, fmt.Errorf("'%s' is not a valid query operator", s[1])
+		}
+		query += fmt.Sprintf("%%%,", s[0], s[1], s[2])
+	}
+	// Remove the last comma, as we append one to every selector.
+	query = query[:len(query)-1]
+	query = "{" + query + "}"
+
+	values := url.Values{}
+	values.Set("query", query)
+	values.Set("start", fmt.Sprintf("%d", start))
+	values.Set("end", fmt.Sprintf("%d", end))
+
+	encodedValues := values.Encode()
+
+	req, err := http.NewRequest(http.MethodGet,
+		c.cfg.ReadPathURL.JoinPath("/loki/api/v1/query_range?"+encodedValues).String(),
+		strings.NewReader(encodedValues))
+	if err != nil {
+		return QueryRes{}, fmt.Errorf("error creating request: %w", err)
+	}
+
+	client := http.Client{
+		Timeout: time.Second * 30,
+	}
+
+	res, err := client.Do(req)
+	if err != nil {
+		return QueryRes{}, fmt.Errorf("error executing request: %w", err)
+	}
+
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		return QueryRes{}, fmt.Errorf("error reading request response: %w", err)
+	}
+
+	queryRes := QueryRes{}
+	err = json.Unmarshal(data, &queryRes)
+	if err != nil {
+		fmt.Println(string(data))
+		return QueryRes{}, fmt.Errorf("error parsing request response: %w", err)
+	}
+
+	return queryRes, nil
+}
+
+func isValidOperator(op string) bool {
+	switch op {
+	case "=":
+	case "!=":
+	case "=~":
+	case "!~":
+		return true
+	}
+	return false
+}
+
+type Stream struct {
+	Stream map[string]string `json:"stream"`
+	Values [][2]string       `json:"values"`
+}
+
+type QueryRes struct {
+	Status string    `json:"status"`
+	Data   QueryData `json:"data"`
+}
+
+type QueryData struct {
+	Result []Stream `json:"result"`
 }
