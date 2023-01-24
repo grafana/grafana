@@ -45,7 +45,7 @@ import { ShareModal } from '../ShareModal';
 
 interface Props extends ShareModalTabProps {}
 
-type SharePublicDashboardAcknowledgmentInputs = {
+export type SharePublicDashboardAcknowledgmentInputs = {
   publicAcknowledgment: boolean;
   dataSourcesAcknowledgment: boolean;
   usageAcknowledgment: boolean;

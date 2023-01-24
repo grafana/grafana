@@ -20,7 +20,6 @@ module.exports = {
   testTimeout: 30000,
   resolver: `<rootDir>/public/test/jest-resolver.js`,
   setupFilesAfterEnv: ['./public/test/setupTests.ts'],
-  snapshotSerializers: ['enzyme-to-json/serializer'],
   globals: {
     __webpack_public_path__: '', // empty string
   },
