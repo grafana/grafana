@@ -12,6 +12,7 @@ import {
   mockPromAlertingRule,
   mockRulerGrafanaRule,
 } from '../mocks';
+import { RuleHealth } from '../search/rulesSearchParser';
 import { getFilter } from '../utils/search';
 
 import { filterRules } from './useFilteredRules';
@@ -107,6 +108,28 @@ describe('filterRules', function () {
     });
 
     const filtered = filterRules([ns], getFilter({ ruleState: PromAlertingRuleState.Firing }));
+
+    expect(filtered[0].groups[0].rules).toHaveLength(1);
+    expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
+  });
+
+  it('should filter out rules by health filter', function () {
+    const rules = [
+      mockCombinedRule({
+        name: 'High CPU usage',
+        promRule: mockPromAlertingRule({ health: RuleHealth.Ok }),
+      }),
+      mockCombinedRule({
+        name: 'Memory too low',
+        promRule: mockPromAlertingRule({ health: RuleHealth.Error }),
+      }),
+    ];
+
+    const ns = mockCombinedRuleNamespace({
+      groups: [mockCombinedRuleGroup('Resources usage group', rules)],
+    });
+
+    const filtered = filterRules([ns], getFilter({ ruleHealth: RuleHealth.Error }));
 
     expect(filtered[0].groups[0].rules).toHaveLength(1);
     expect(filtered[0].groups[0].rules[0].name).toBe('Memory too low');
