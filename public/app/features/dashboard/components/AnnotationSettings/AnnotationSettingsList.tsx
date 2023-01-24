@@ -66,13 +66,13 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
               <tr key={`${annotation.name}-${idx}`}>
                 {annotation.builtIn ? (
                   <td role="gridcell" style={{ width: '90%' }} className="pointer" onClick={() => onEdit(idx)}>
-                    <Button size="sm" fill="text">
+                    <Button size="sm" fill="text" variant="secondary">
                       {getAnnotationName(annotation)}
                     </Button>
                   </td>
                 ) : (
                   <td role="gridcell" className="pointer" onClick={() => onEdit(idx)}>
-                    <Button size="sm" fill="text">
+                    <Button size="sm" fill="text" variant="secondary">
                       {getAnnotationName(annotation)}
                     </Button>
                   </td>
