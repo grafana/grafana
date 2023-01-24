@@ -35,6 +35,8 @@ export abstract class VariableSupportBase<
   TOptions extends DataSourceJsonData = DataSourceOptionsType<DSType>
 > {
   abstract getType(): VariableSupportType;
+
+  getDefaultQuery?(): Partial<TQuery>;
 }
 
 /**
