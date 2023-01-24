@@ -9,6 +9,17 @@
 
 
 /**
+ * TODO docs
+ */
+export interface DataSourceJsonData {
+  alertmanagerUid?: string;
+  authType?: string;
+  defaultRegion?: string;
+  manageAlerts?: boolean;
+  profile?: string;
+}
+
+/**
  * These are the common properties available to all queries in all datasources.
  * Specific implementations will *extend* this interface, adding the required
  * properties for the given context.
@@ -38,6 +49,43 @@ export interface DataQuery {
    * A - Z
    */
   refId: string;
+}
+
+export interface MapLayerOptions {
+  /**
+   * Custom options depending on the type
+   */
+  config?: unknown;
+  /**
+   * Defines a frame MatcherConfig that may filter data for the given layer
+   */
+  filterData?: unknown;
+  /**
+   * Common method to define geometry fields
+   */
+  location?: FrameGeometrySource;
+  /**
+   * configured unique display name
+   */
+  name: string;
+  /**
+   * Common properties:
+   * https://openlayers.org/en/latest/apidoc/module-ol_layer_Base-BaseLayer.html
+   * Layer opacity (0-1)
+   */
+  opacity?: number;
+  /**
+   * Check tooltip (defaults to true)
+   */
+  tooltip?: boolean;
+  type: string;
+}
+
+export enum FrameGeometrySourceMode {
+  Auto = 'auto',
+  Coords = 'coords',
+  Geohash = 'geohash',
+  Lookup = 'lookup',
 }
 
 /**
@@ -488,6 +536,14 @@ export enum BarGaugeDisplayMode {
 }
 
 /**
+ * TODO docs
+ */
+export interface VizTooltipOptions {
+  mode: TooltipDisplayMode;
+  sort: SortOrder;
+}
+
+/**
  * Internally, this is the "type" of cell that's being displayed
  * in the table such as colored text, JSON, gauge, etc.
  * The color-background-solid, gradient-gauge, and lcd-gauge
@@ -595,13 +651,23 @@ export interface DataSourceRef {
   uid?: string;
 }
 
-/**
- * TODO docs
- */
-export interface VizTooltipOptions {
-  mode: TooltipDisplayMode;
-  sort: SortOrder;
+export interface FrameGeometrySource {
+  /**
+   * Path to Gazetteer
+   */
+  gazetteer?: string;
+  /**
+   * Field mappings
+   */
+  geohash?: string;
+  latitude?: string;
+  longitude?: string;
+  lookup?: string;
+  mode: FrameGeometrySourceMode;
+  wkt?: string;
 }
+
+export interface Labels {}
 
 /**
  * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
