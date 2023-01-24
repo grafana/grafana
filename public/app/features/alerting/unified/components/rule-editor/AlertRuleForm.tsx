@@ -80,6 +80,7 @@ export const AlertRuleForm: FC<Props> = ({ existing }) => {
         values: {
           ...defaultValues,
           ...values,
+          name: values.ruleName ? values.ruleName : values.name,
           annotations:
             values.annotations
               ?.map(({ key, value }) => ({ key: key.trim(), value: value.trim() }))
