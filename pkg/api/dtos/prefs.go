@@ -17,10 +17,6 @@ type UpdatePrefsCmd struct {
 	WeekStart    string                       `json:"weekStart"`
 	QueryHistory *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
 	Language     string                       `json:"language"`
-
-	// Deprecated: this is not used by anything anymore
-	//nolint:staticcheck
-	Navbar *pref.NavbarPreference `json:"navbar,omitempty"`
 }
 
 // swagger:model
@@ -36,8 +32,4 @@ type PatchPrefsCmd struct {
 	Language         *string                      `json:"language,omitempty"`
 	QueryHistory     *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
 	HomeDashboardUID *string                      `json:"homeDashboardUID,omitempty"`
-
-	// Deprecated: this is not used by anything anymore
-	//nolint:staticcheck
-	Navbar *pref.NavbarPreference `json:"navbar,omitempty"`
 }

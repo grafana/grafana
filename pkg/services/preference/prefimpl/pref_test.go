@@ -169,9 +169,6 @@ func TestGetWithDefaults_withUserAndOrgPrefs(t *testing.T) {
 	})
 }
 
-// No need to check the nav lint lint errors
-//
-//nolint:staticcheck
 func TestGetDefaults_JSONData(t *testing.T) {
 	weekStart := ""
 	queryPreference := pref.QueryHistoryPreference{

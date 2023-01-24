@@ -2,48 +2,34 @@ package prefimpl
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/kinds/preferences"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	pref "github.com/grafana/grafana/pkg/services/preference"
-	"github.com/grafana/grafana/pkg/services/sqlstore/session"
-	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
-	store       store
-	cfg         *setting.Cfg
-	features    *featuremgmt.FeatureManager
-	entitystore entity.EntityStoreServer
-	sess        *session.SessionDB
+	store    store
+	cfg      *setting.Cfg
+	features *featuremgmt.FeatureManager
 }
 
-func ProvideService(db db.DB, cfg *setting.Cfg, features *featuremgmt.FeatureManager, entitystore entity.EntityStoreServer) pref.Service {
+func ProvideService(db db.DB, cfg *setting.Cfg, features *featuremgmt.FeatureManager) pref.Service {
 	service := &Service{
 		cfg:      cfg,
 		features: features,
-		sess:     db.GetSqlxSession(),
 	}
 	if features.IsEnabled(featuremgmt.FlagNewDBLibrary) {
 		service.store = &sqlxStore{
-			sess: service.sess,
+			sess: db.GetSqlxSession(),
 		}
 	} else {
 		service.store = &sqlStore{
 			db: db,
 		}
-	}
-
-	// optionally save to the entity store also
-	if features.IsEnabled(featuremgmt.FlagEntityStore) {
-		service.entitystore = entitystore
 	}
 	return service
 }
@@ -79,7 +65,6 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 				res.JSONData.Language = p.JSONData.Language
 			}
 
-			//nolint:staticcheck
 			if len(p.JSONData.Navbar.SavedItems) > 0 {
 				res.JSONData.Navbar = p.JSONData.Navbar
 			}
@@ -132,9 +117,6 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 				},
 			}
 			_, err = s.store.Insert(ctx, preference)
-			if err == nil {
-				err = s.saveEntity(ctx, preference)
-			}
 			if err != nil {
 				return err
 			}
@@ -152,18 +134,13 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 		Language: cmd.Language,
 	}
 
-	//nolint:staticcheck
 	if cmd.Navbar != nil {
 		preference.JSONData.Navbar = *cmd.Navbar
 	}
 	if cmd.QueryHistory != nil {
 		preference.JSONData.QueryHistory = *cmd.QueryHistory
 	}
-	err = s.store.Update(ctx, preference)
-	if err == nil {
-		err = s.saveEntity(ctx, preference)
-	}
-	return err
+	return s.store.Update(ctx, preference)
 }
 
 func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) error {
@@ -196,7 +173,6 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 		preference.JSONData.Language = *cmd.Language
 	}
 
-	//nolint:staticcheck
 	if cmd.Navbar != nil {
 		if preference.JSONData == nil {
 			preference.JSONData = &pref.PreferenceJSONData{}
@@ -235,7 +211,6 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 	preference.Version += 1
 
 	// Wrap this in an if statement to maintain backwards compatibility
-	//nolint:staticcheck
 	if cmd.Navbar != nil {
 		if preference.JSONData == nil {
 			preference.JSONData = &pref.PreferenceJSONData{}
@@ -249,9 +224,6 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 		err = s.store.Update(ctx, preference)
 	} else {
 		_, err = s.store.Insert(ctx, preference)
-	}
-	if err == nil {
-		err = s.saveEntity(ctx, preference)
 	}
 	return err
 }
@@ -274,66 +246,4 @@ func (s *Service) GetDefaults() *pref.Preference {
 
 func (s *Service) DeleteByUser(ctx context.Context, userID int64) error {
 	return s.store.DeleteByUser(ctx, userID)
-}
-
-func (s *Service) saveEntity(ctx context.Context, p *pref.Preference) error {
-	if s.entitystore == nil {
-		return nil
-	}
-
-	// Convert from pref.Preference to preferences
-	m := preferences.Preferences{}
-	if p.HomeDashboardID > 0 {
-		uid := ""
-		err := s.sess.Get(ctx, &uid, "SELECT uid FROM dashboard WHERE id=?", p.HomeDashboardID) // orgID already taken care of
-		if err != nil {
-			return err
-		}
-		if uid != "" {
-			m.HomeDashboardUID = &uid
-		}
-	}
-	if p.Theme != "" {
-		m.Theme = &p.Theme
-	}
-	if p.JSONData != nil {
-		if p.JSONData.Language != "" {
-			m.Language = &p.JSONData.Language
-		}
-		if p.JSONData.QueryHistory.HomeTab != "" {
-			m.QueryHistory = &preferences.QueryHistoryPreference{
-				HomeTab: &p.JSONData.QueryHistory.HomeTab,
-			}
-		}
-	}
-	if p.Timezone != "" {
-		m.Timezone = &p.Timezone
-	}
-	if p.WeekStart != nil {
-		m.WeekStart = p.WeekStart
-	}
-
-	body, err := json.MarshalIndent(m, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	req := &entity.WriteEntityRequest{
-		GRN: &entity.GRN{
-			TenantId: p.OrgID,
-			Kind:     models.StandardKindPreferences,
-		},
-		Body:    body,
-		Comment: "saved from prefimpl",
-	}
-	if p.TeamID > 0 {
-		req.GRN.UID = fmt.Sprintf("team-%d", p.TeamID)
-	} else if p.UserID == 0 {
-		req.GRN.UID = "default"
-	} else {
-		req.GRN.UID = fmt.Sprintf("user-%d", p.UserID)
-	}
-
-	_, err = s.entitystore.Write(ctx, req)
-	return err
 }
