@@ -1,3 +1,4 @@
+export type { MatcherConfig } from '@grafana/schema';
 import { MonoTypeOperatorFunction } from 'rxjs';
 
 import { RegistryItemWithOptions } from '../utils/Registry';
@@ -79,10 +80,6 @@ export interface ValueMatcherInfo<TOptions = any> extends RegistryItemWithOption
   get: (options: TOptions) => ValueMatcher;
   isApplicable: (field: Field) => boolean;
   getDefaultOptions: (field: Field) => TOptions;
-}
-export interface MatcherConfig<TOptions = any> {
-  id: string;
-  options?: TOptions;
 }
 
 /**

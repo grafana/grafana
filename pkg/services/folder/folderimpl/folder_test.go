@@ -38,7 +38,7 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 	t.Run("should register scope resolvers", func(t *testing.T) {
 		cfg := setting.NewCfg()
 		ac := acmock.New()
-		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, nil, &featuremgmt.FeatureManager{}, nil, nil)
+		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, nil, &featuremgmt.FeatureManager{}, nil)
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 2)
 	})
@@ -66,7 +66,6 @@ func TestIntegrationFolderService(t *testing.T) {
 			dashboardStore:       dashStore,
 			dashboardFolderStore: folderStore,
 			store:                nestedFolderStore,
-			searchService:        nil,
 			features:             features,
 			permissions:          folderPermissions,
 			bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
