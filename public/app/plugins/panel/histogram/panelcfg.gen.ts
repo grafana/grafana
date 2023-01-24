@@ -8,11 +8,11 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-import * as ui from '@grafana/schema';
+import * as common from '@grafana/schema';
 
 export const PanelCfgModelVersion = Object.freeze([0, 0]);
 
-export interface PanelOptions extends ui.OptionsWithLegend, ui.OptionsWithTooltip {
+export interface PanelOptions extends common.OptionsWithLegend, common.OptionsWithTooltip {
   /**
    * Offset buckets by this amount
    */
@@ -31,7 +31,7 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
   bucketOffset: 0,
 };
 
-export interface PanelFieldConfig extends ui.AxisConfig, ui.HideableFieldConfig {
+export interface PanelFieldConfig extends common.AxisConfig, common.HideableFieldConfig {
   /**
    * Controls the fill opacity of the bars.
    */
@@ -40,7 +40,7 @@ export interface PanelFieldConfig extends ui.AxisConfig, ui.HideableFieldConfig 
    * Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard color scheme field option.
    * Gradient appearance is influenced by the Fill opacity setting.
    */
-  gradientMode?: ui.GraphGradientMode;
+  gradientMode?: common.GraphGradientMode;
   /**
    * Controls line width of the bars.
    */
@@ -49,6 +49,6 @@ export interface PanelFieldConfig extends ui.AxisConfig, ui.HideableFieldConfig 
 
 export const defaultPanelFieldConfig: Partial<PanelFieldConfig> = {
   fillOpacity: 80,
-  gradientMode: ui.GraphGradientMode.None,
+  gradientMode: common.GraphGradientMode.None,
   lineWidth: 1,
 };

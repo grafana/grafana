@@ -15,7 +15,7 @@
 package grafanaplugin
 
 import (
-	ui "github.com/grafana/grafana/packages/grafana-schema/src/common"
+	"github.com/grafana/grafana/packages/grafana-schema/src/common"
 )
 
 composableKinds: PanelCfg: {
@@ -27,8 +27,8 @@ composableKinds: PanelCfg: {
 				schemas: [
 					{
 						PanelOptions: {
-							ui.OptionsWithLegend
-							ui.OptionsWithTooltip
+							common.OptionsWithLegend
+							common.OptionsWithTooltip
 
 							//Size of each bucket
 							bucketSize?: int32
@@ -39,8 +39,8 @@ composableKinds: PanelCfg: {
 						} @cuetsy(kind="interface")
 
 						PanelFieldConfig: {
-							ui.AxisConfig
-							ui.HideableFieldConfig
+							common.AxisConfig
+							common.HideableFieldConfig
 
 							// Controls line width of the bars.
 							lineWidth?: uint32 & <=10 | *1
@@ -48,7 +48,7 @@ composableKinds: PanelCfg: {
 							fillOpacity?: uint32 & <=100 | *80
 							// Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard color scheme field option.
 							// Gradient appearance is influenced by the Fill opacity setting.
-							gradientMode?: ui.GraphGradientMode | *"none"
+							gradientMode?: common.GraphGradientMode | *"none"
 						} @cuetsy(kind="interface")
 					},
 				]
