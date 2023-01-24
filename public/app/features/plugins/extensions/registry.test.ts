@@ -49,7 +49,7 @@ describe('Plugin registry', () => {
       });
     });
 
-    it('should configure registry links', () => {
+    it('should configure all registry links', () => {
       const numberOfLinks = Object.keys(registry.links).length;
 
       expect(numberOfLinks).toBe(3);
