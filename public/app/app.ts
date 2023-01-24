@@ -170,7 +170,7 @@ export class GrafanaApp {
       setDataSourceSrv(dataSourceSrv);
       initWindowRuntime();
 
-      const pluginExtensionRegistry = configurePluginExtensions(config.pluginExtensions);
+      const pluginExtensionRegistry = configurePluginExtensions(config.apps);
       setPluginsExtensionRegistry(pluginExtensionRegistry);
 
       // init modal manager
@@ -181,7 +181,7 @@ export class GrafanaApp {
         initI18nPromise,
 
         // Preload selected app plugins
-        await preloadPlugins(config.pluginsToPreload),
+        await preloadPlugins(config.apps),
       ]);
 
       // initialize chrome service

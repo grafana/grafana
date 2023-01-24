@@ -78,13 +78,16 @@ export interface UnifiedAlertingConfig {
 }
 
 /**
- * Describes the plugins that should be preloaded prior to start Grafana.
+ * Describes app plugins installed in Grafana.
  *
  * @public
  */
-export type PreloadPlugin = {
+export type AppPluginConfig = {
+  id: string;
   path: string;
   version: string;
+  preload: boolean;
+  extensions?: PluginsExtensionConfig;
 };
 
 /** Supported OAuth services
@@ -152,10 +155,10 @@ export interface BootData {
  * @internal
  */
 export interface GrafanaConfig {
-  pluginExtensions: Record<string, PluginsExtensionConfig>;
   isPublicDashboardView: boolean;
   datasources: { [str: string]: DataSourceInstanceSettings };
   panels: { [key: string]: PanelPluginMeta };
+  apps: Record<string, AppPluginConfig>;
   auth: AuthSettings;
   minRefreshInterval: string;
   appSubUrl: string;
@@ -197,7 +200,6 @@ export interface GrafanaConfig {
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
-  pluginsToPreload: PreloadPlugin[];
   featureToggles: FeatureToggles;
   licenseInfo: LicenseInfo;
   http2Enabled: boolean;

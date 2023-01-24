@@ -1,9 +1,11 @@
+import type { AppPluginConfig, PluginsExtensionConfig } from '@grafana/data';
+
 import { configurePluginExtensions } from './registry';
 
 describe('Plugin registry', () => {
   describe('configurePluginExtensions function', () => {
     const registry = configurePluginExtensions({
-      'belugacdn-app': {
+      'belugacdn-app': createConfig({
         links: [
           {
             id: 'declare-incident',
@@ -11,8 +13,8 @@ describe('Plugin registry', () => {
             path: '/incidents/declare',
           },
         ],
-      },
-      'strava-app': {
+      }),
+      'strava-app': createConfig({
         links: [
           {
             id: 'declare-incident',
@@ -20,8 +22,8 @@ describe('Plugin registry', () => {
             path: '/incidents/declare',
           },
         ],
-      },
-      'duplicate-links-app': {
+      }),
+      'duplicate-links-app': createConfig({
         links: [
           {
             id: 'declare-incident',
@@ -34,7 +36,8 @@ describe('Plugin registry', () => {
             path: '/incidents/declare2',
           },
         ],
-      },
+      }),
+      'no-extensions-app': createConfig(undefined),
     });
 
     it('should configure a registry link', () => {
@@ -77,3 +80,13 @@ describe('Plugin registry', () => {
     });
   });
 });
+
+function createConfig(extensions?: PluginsExtensionConfig): AppPluginConfig {
+  return {
+    id: 'myorg-basic-app',
+    preload: false,
+    path: '',
+    version: '',
+    extensions,
+  };
+}

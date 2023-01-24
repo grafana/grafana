@@ -1,12 +1,14 @@
-import type { PluginsExtensionConfig, PluginsExtensionLinkConfig } from '@grafana/data';
+import type { AppPluginConfig, PluginsExtensionLinkConfig } from '@grafana/data';
 import type { PluginsExtensionRegistry, PluginsExtensionRegistryLink } from '@grafana/runtime';
 
-export function configurePluginExtensions(
-  pluginExtensions: Record<string, PluginsExtensionConfig>
-): PluginsExtensionRegistry {
-  const registry = Object.entries(pluginExtensions).reduce<PluginsExtensionRegistry>(
-    (registry, [pluginId, pluginExtension]) => {
-      const links = createLinks(pluginId, pluginExtension.links);
+export function configurePluginExtensions(apps: Record<string, AppPluginConfig> = {}): PluginsExtensionRegistry {
+  const registry = Object.entries(apps).reduce<PluginsExtensionRegistry>(
+    (registry, [pluginId, config]) => {
+      const extensions = config.extensions;
+      if (!extensions) {
+        return registry;
+      }
+      const links = createLinks(pluginId, extensions.links);
       registry.links = { ...links, ...registry.links };
 
       return registry;

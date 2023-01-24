@@ -14,11 +14,10 @@ import {
   MapLayerOptions,
   OAuthSettings,
   PanelPluginMeta,
-  PreloadPlugin,
+  AppPluginConfig,
   systemDateFormats,
   SystemDateFormatSettings,
   NewThemeOptions,
-  PluginsExtensionConfig,
 } from '@grafana/data';
 
 export interface AzureSettings {
@@ -30,6 +29,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   isPublicDashboardView: boolean;
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
+  apps: Record<string, AppPluginConfig> = {};
   auth: AuthSettings = {};
   minRefreshInterval = '';
   appUrl = '';
@@ -77,7 +77,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
-  pluginsToPreload: PreloadPlugin[] = [];
   featureToggles: FeatureToggles = {};
   licenseInfo: LicenseInfo = {} as LicenseInfo;
   rendererAvailable = false;
@@ -144,7 +143,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   rudderstackConfigUrl: undefined;
 
   tokenExpirationDayLimit: undefined;
-  pluginExtensions: Record<string, PluginsExtensionConfig> = {};
 
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;
