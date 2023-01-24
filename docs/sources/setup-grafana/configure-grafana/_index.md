@@ -906,7 +906,7 @@ The following table shows the OAuth provider's setting with the default value an
 
 ### [auth.github] skip_org_role_sync
 
-Upon the first login from a user, we set the organization roles from the setting `AutoAssignOrgRole`. If you want to manage organizational roles, set the `skip_org_role_sync` option to `true`. Github syncs organizational roles and sets GrafanaAdmins as well.
+When a user logs in the first time, Grafana sets the organization role based on the value specified in `AutoAssignOrgRole`. If you want to manage organization roles, set the `skip_org_role_sync` option to `true`. GitHub syncs organization roles and sets Grafana Admins.
 This also impacts `allow_assign_grafana_admin` setting, by not syncing the grafana admin role from GitHub.
 
 > **Note:** There is a separate setting called `oauth_skip_org_role_update_sync` which has a different scope. While `skip_org_role_sync` only applies to the specific OAuth provider, `oauth_skip_org_role_update_sync` is a generic setting that affects all configured OAuth providers.
