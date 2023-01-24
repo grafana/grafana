@@ -183,25 +183,6 @@ explicit null is unlikely to be the best way to represent such values, because i
 **Above all, DO NOT accept `null` in a schema simply because current behavior sometimes unintentionally produces a `null`.** 
 Schematization is an opportunity to get rid of this ambiguity. Fix the accidental null-producing behavior, instead.
 
-## Setting Defaults and Field Optionality
-
-**TODO oof is this a complicated topic**
-
-## Comments and Documentation
-
-Kind declarations are used to generate a variety of documentation. This is a superpower of schema-centric 
-development - certain key documentation can automatically be kept in line with the code. 
-
-But, that documentation can only be as good as the source from which it’s generated. This section offers guidance 
-on how to write effective documentation for kinds in the kind declarations themselves.
-
-### Kind-level documentation
-TODO providing a high-level summary of the type
-TODO link to examples of where it shows up
-
-### Field-level documentation
-TODO criteria for writing good field-level docs
-TODO link to examples of where it shows up**
 
 
 ## Issues
