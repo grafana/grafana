@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -52,6 +53,7 @@ func ProvideService(
 	loginAttempts loginattempt.Service, quotaService quota.Service,
 	authInfoService login.AuthInfoService, renderService rendering.Service,
 	features *featuremgmt.FeatureManager, oauthTokenService oauthtoken.OAuthTokenService,
+	socialService social.Service,
 ) *Service {
 	s := &Service{
 		log:            log.New("authn.service"),
@@ -114,6 +116,18 @@ func ProvideService(
 
 	if s.cfg.JWTAuthEnabled {
 		s.RegisterClient(clients.ProvideJWT(jwtService, cfg))
+	}
+
+	for name := range socialService.GetOAuthProviders() {
+		clientName := authn.ClientWithPrefix(name)
+		connector, _ := socialService.GetConnector(name)
+		oauthCfg := socialService.GetOAuthInfoProvider(name)
+		httpClient, err := socialService.GetOAuthHttpClient(name)
+		if err != nil {
+			s.log.Error("failed to configure oauth client", "client", clientName, "err", err)
+		} else {
+			s.clients[clientName] = clients.ProvideOAuthClient(clientName, cfg, oauthCfg, connector, httpClient)
+		}
 	}
 
 	// FIXME (jguer): move to User package
