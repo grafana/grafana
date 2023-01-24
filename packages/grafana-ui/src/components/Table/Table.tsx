@@ -151,6 +151,7 @@ export const Table = memo((props: Props) => {
     setPageSize,
     pageOptions,
   } = useTable(options, useFilters, useSortBy, useAbsoluteLayout, useResizeColumns, useExpanded, usePagination);
+  // console.log(rows, 'rows');
 
   const extendedState = state as GrafanaTableState;
 
