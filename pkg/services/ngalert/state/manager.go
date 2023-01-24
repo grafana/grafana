@@ -166,7 +166,7 @@ func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) *State {
 // ResetStateByRuleUID removes the rule instances from cache and instanceStore. If reason is ngModels.StateReasonPaused
 // also adds an entry to state history. rule argument must not be nil when the reason is ngModels.StateReasonPaused as
 // it is needed to add the entry to the state history, otherwise it can be nil.
-func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey, rule *ngModels.AlertRule, reason string) []*State {
+func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey, rule *ngModels.AlertRule, reason string) ([]*State, <-chan error) {
 	logger := st.log.New(ruleKey.LogContext()...)
 	logger.Debug("Resetting state of the rule")
 
@@ -178,6 +178,7 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.Ale
 		}
 	}
 
+	errChan := make(<-chan error)
 	if reason == ngModels.StateReasonPaused {
 		transitions := make([]StateTransition, 0, len(states))
 		for _, s := range states {
@@ -195,12 +196,12 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.Ale
 		}
 
 		if st.historian != nil {
-			st.historian.RecordStatesAsync(ctx, rule, transitions)
+			errChan = st.historian.RecordStatesAsync(ctx, rule, transitions)
 		}
 	}
 
 	logger.Info("Rules state was reset", "states", len(states))
-	return states
+	return states, errChan
 }
 
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.

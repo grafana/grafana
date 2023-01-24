@@ -336,14 +336,14 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 	evalDuration := sch.metrics.EvalDuration.WithLabelValues(orgID)
 	evalTotalFailures := sch.metrics.EvalFailures.WithLabelValues(orgID)
 
-	clearState := func(ctx context.Context, reason string) {
-		var states []*state.State
+	clearState := func(ctx context.Context, reason string) <-chan error {
 		rule := sch.schedulableAlertRules.get(key)
-		states = sch.stateManager.ResetStateByRuleUID(ctx, key, rule, reason)
+		states, errChan := sch.stateManager.ResetStateByRuleUID(ctx, key, rule, reason)
 		expiredAlerts := FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
 		if len(expiredAlerts.PostableAlerts) > 0 {
 			sch.alertsSender.Send(key, expiredAlerts)
 		}
+		return errChan
 	}
 
 	evaluate := func(ctx context.Context, attempt int64, e *evaluation, span tracing.Span) {
@@ -517,8 +517,12 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 				// The context dead\ine is 5 seconds which should be enough time for the state to be deleted from the
 				// database and the historian to record the state changes async. Do not cancel the context with defer as
 				// otherwise the context will be canceled before the historian can write any state changes.
-				ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-				clearState(ctx, reason)
+				ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Second)
+				errChan := clearState(ctx, reason)
+				go func() {
+					defer cancelFunc()
+					<-errChan
+				}()
 			}
 			logger.Debug("Stopping alert rule routine")
 			return nil
