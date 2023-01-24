@@ -15,8 +15,11 @@ import (
 	"sort"
 	"strings"
 
+	"cuelang.org/go/cue"
+
 	"github.com/grafana/codejen"
 	"github.com/grafana/grafana/pkg/kindsys"
+	"github.com/grafana/grafana/pkg/kindsys/kindsysreport"
 	"github.com/grafana/grafana/pkg/plugins/pfs/corelist"
 	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/registry/corekind"
@@ -82,8 +85,9 @@ type KindLinks struct {
 
 type Kind struct {
 	kindsys.SomeKindProperties
-	Category string
-	Links    KindLinks
+	Category             string
+	Links                KindLinks
+	GrafanaMaturityCount int
 }
 
 // MarshalJSON is overwritten to marshal
@@ -100,6 +104,7 @@ func (k Kind) MarshalJSON() ([]byte, error) {
 	}
 
 	m["category"] = k.Category
+	m["grafanaMaturityCount"] = k.GrafanaMaturityCount
 
 	m["links"] = map[string]string{}
 	for _, ref := range []string{"Schema", "Go", "Ts", "Docs"} {
@@ -177,13 +182,14 @@ func buildKindStateReport() *KindStateReport {
 	seen := make(map[string]bool)
 	for _, k := range b.All() {
 		seen[k.Props().Common().Name] = true
-		k.Lineage()
+		lin := k.Lineage()
 		switch k.Props().(type) {
 		case kindsys.CoreProperties:
 			r.add(Kind{
-				SomeKindProperties: k.Props(),
-				Category:           "core",
-				Links:              buildCoreLinks(k.Lineage(), k.Decl().Properties),
+				SomeKindProperties:   k.Props(),
+				Category:             "core",
+				Links:                buildCoreLinks(lin, k.Decl().Properties),
+				GrafanaMaturityCount: grafanaMaturityAttrCount(lin.Latest().Underlying()),
 			})
 		}
 	}
@@ -212,9 +218,10 @@ func buildKindStateReport() *KindStateReport {
 		for _, si := range all {
 			if ck, has := pp.ComposableKinds[si.Name()]; has {
 				r.add(Kind{
-					SomeKindProperties: ck.Props(),
-					Category:           "composable",
-					Links:              buildComposableLinks(pp.Properties, ck.Decl().Properties),
+					SomeKindProperties:   ck.Props(),
+					Category:             "composable",
+					Links:                buildComposableLinks(pp.Properties, ck.Decl().Properties),
+					GrafanaMaturityCount: grafanaMaturityAttrCount(ck.Lineage().Latest().Underlying()),
 				})
 			} else if may := si.Should(string(pp.Properties.Type)); may {
 				n := plugindef.DerivePascalName(pp.Properties) + si.Name()
@@ -304,6 +311,12 @@ func buildComposableLinks(pp plugindef.PluginDef, cp kindsys.ComposablePropertie
 		Ts:     path.Join(repoBaseURL, fmt.Sprintf(composableTSPath, string(pp.Type), pName, schemaInterface)),
 		Docs:   path.Join(docsBaseURL, category, cp.MachineName, "schema-reference"),
 	}
+}
+
+func grafanaMaturityAttrCount(sch cue.Value) int {
+	const attr = "grafanamaturity"
+	aw := new(kindsysreport.AttributeWalker)
+	return aw.Count(sch, attr)[attr]
 }
 
 func machinize(s string) string {

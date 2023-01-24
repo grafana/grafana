@@ -6,6 +6,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -26,6 +27,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -46,6 +48,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
         "docs": "n/a",
@@ -66,6 +69,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -86,6 +90,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/annotationslistpanelcfg/schema-reference",
@@ -106,6 +111,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
         "docs": "n/a",
@@ -125,6 +131,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
         "docs": "n/a",
@@ -145,6 +152,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -165,6 +173,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/barchartpanelcfg/schema-reference",
@@ -185,6 +194,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/bargaugepanelcfg/schema-reference",
@@ -205,6 +215,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
         "docs": "n/a",
@@ -225,6 +236,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -245,6 +257,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 144,
       "lineageIsGroup": false,
       "links": {
         "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/core/dashboard/schema-reference",
@@ -264,6 +277,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
         "docs": "n/a",
@@ -284,6 +298,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -304,6 +319,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/dashboardlistpanelcfg/schema-reference",
@@ -324,6 +340,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
         "docs": "n/a",
@@ -343,6 +360,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -363,6 +381,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
         "docs": "n/a",
@@ -383,6 +402,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -403,6 +423,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -423,6 +444,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
         "docs": "n/a",
@@ -442,6 +464,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/gaugepanelcfg/schema-reference",
@@ -462,6 +485,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -482,6 +506,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -502,6 +527,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
         "docs": "n/a",
@@ -522,6 +548,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -542,6 +569,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
         "docs": "n/a",
@@ -562,6 +590,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -582,6 +611,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
         "docs": "n/a",
@@ -602,6 +632,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -622,6 +653,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -642,6 +674,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/histogrampanelcfg/schema-reference",
@@ -662,6 +695,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -682,6 +716,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
         "docs": "n/a",
@@ -702,6 +737,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -722,6 +758,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -742,6 +779,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -762,6 +800,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
         "docs": "n/a",
@@ -782,6 +821,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -802,6 +842,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
         "docs": "n/a",
@@ -822,6 +863,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -842,6 +884,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
         "docs": "n/a",
@@ -862,6 +905,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -882,6 +926,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/newspanelcfg/schema-reference",
@@ -902,6 +947,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -922,6 +968,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
         "docs": "n/a",
@@ -942,6 +989,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -962,6 +1010,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
         "docs": "n/a",
@@ -982,6 +1031,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -1002,6 +1052,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/piechartpanelcfg/schema-reference",
@@ -1022,6 +1073,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
         "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/core/playlist/schema-reference",
@@ -1041,6 +1093,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
         "docs": "n/a",
@@ -1061,6 +1114,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -1081,6 +1135,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
         "docs": "n/a",
@@ -1101,6 +1156,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -1121,6 +1177,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
         "docs": "n/a",
@@ -1140,6 +1197,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
         "docs": "n/a",
@@ -1159,6 +1217,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
         "docs": "n/a",
@@ -1178,6 +1237,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/statpanelcfg/schema-reference",
@@ -1198,6 +1258,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -1218,6 +1279,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 7,
       "lineageIsGroup": false,
       "links": {
         "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/core/team/schema-reference",
@@ -1237,6 +1299,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
         "docs": "n/a",
@@ -1257,6 +1320,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -1277,6 +1341,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
         "docs": "n/a",
@@ -1297,6 +1362,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -1317,6 +1383,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/textpanelcfg/schema-reference",
@@ -1337,6 +1404,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
         "docs": "n/a",
@@ -1356,6 +1424,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -1376,6 +1445,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
         "docs": "n/a",
@@ -1395,6 +1465,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -1415,6 +1486,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
@@ -1435,6 +1507,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
         "docs": "n/a",
@@ -1455,6 +1528,7 @@
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
         "docs": "n/a",
