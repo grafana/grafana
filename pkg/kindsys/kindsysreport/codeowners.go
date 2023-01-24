@@ -12,6 +12,7 @@ type CodeOwnersFinder struct {
 }
 
 func NewCodeOwnersFinder(groot string) (CodeOwnersFinder, error) {
+	//nolint:gosec
 	file, err := os.Open(filepath.Join(groot, ".github", "CODEOWNERS"))
 	if err != nil {
 		return CodeOwnersFinder{}, err
@@ -49,7 +50,6 @@ func (f CodeOwnersFinder) FindFor(pp ...string) ([]string, error) {
 		for _, o := range r.Owners {
 			m[o.Value] = struct{}{}
 		}
-
 	}
 
 	result := make([]string, 0, len(m))
