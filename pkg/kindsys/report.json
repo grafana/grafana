@@ -2,7 +2,9 @@
   "kinds": {
     "alertgroupspanelcfg": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/alerting-squad-frontend"
+      ],
       "currentVersion": [
         0,
         0
@@ -10,10 +12,10 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
-        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/alertgroupspanelcfg/schema-reference",
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/alertgroupspanelcfg/schema-reference",
         "go": "n/a",
-        "schema": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/alertGroups/panelcfg.cue",
-        "ts": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/alertGroups/panelcfg.gen.ts"
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/alertGroups/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/alertGroups/panelcfg.gen.ts"
       },
       "machineName": "alertgroupspanelcfg",
       "maturity": "merged",
