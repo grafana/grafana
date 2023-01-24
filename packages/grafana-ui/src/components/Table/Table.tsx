@@ -55,7 +55,7 @@ export const Table = memo((props: Props) => {
     enablePagination,
   } = props;
   console.log(addRowNumberColumn);
-  console.log(data, 'data');
+  // console.log(data, 'data');
 
   const listRef = useRef<VariableSizeList>(null);
   const tableDivRef = useRef<HTMLDivElement>(null);
@@ -97,7 +97,7 @@ export const Table = memo((props: Props) => {
     // https://github.com/tannerlinsley/react-table/blob/7be2fc9d8b5e223fc998af88865ae86a88792fdb/src/hooks/useTable.js#L585
     return Array(data.length).fill(0);
   }, [data]);
-  console.log(memoizedData, 'memoizedData');
+  // console.log(memoizedData, 'memoizedData');
 
   const isCountRowsSet = Boolean(
     footerOptions?.countRows &&
@@ -111,6 +111,7 @@ export const Table = memo((props: Props) => {
     () => getColumns(data, width, columnMinWidth, !!subData?.length, footerItems, isCountRowsSet, true),
     [data, width, columnMinWidth, footerItems, subData, isCountRowsSet]
   );
+  console.log(memoizedColumns, 'memoizedColumns');
 
   // Internal react table state reducer
   const stateReducer = useTableStateReducer(props);
@@ -252,7 +253,7 @@ export const Table = memo((props: Props) => {
   const RenderRow = useCallback(
     ({ index: rowIndex, style }: { index: number; style: CSSProperties }) => {
       let row = rows[rowIndex];
-      console.log(row, 'row');
+      // console.log(row, 'row');
       if (enablePagination) {
         row = page[rowIndex];
       }

@@ -20,20 +20,20 @@ export function TablePanel(props: Props) {
   const panelContext = usePanelContext();
   // JEV: optional chain here?
   const frames = data.series;
-  console.log('frames', frames);
+  // console.log('frames', frames);
   // JEV: a single function can push both values to respective arrays
   const mainFrames = frames.filter((f) => f.meta?.custom?.parentRowIndex === undefined);
-  console.log(mainFrames, 'mainFrames');
+  // console.log(mainFrames, 'mainFrames');
   const subFrames = frames.filter((f) => f.meta?.custom?.parentRowIndex !== undefined);
-  console.log(subFrames, 'subFrames');
+  // console.log(subFrames, 'subFrames');
   // JEV: optional chain here superfluous; mainFrames will never be `undefined`, since it's being built with filter()
   const count = mainFrames?.length;
-  console.log(count, 'count');
+  // console.log(count, 'count');
   const hasFields = mainFrames[0]?.fields.length;
   const currentIndex = getCurrentFrameIndex(mainFrames, options);
-  console.log(currentIndex, 'currentIndex');
+  // console.log(currentIndex, 'currentIndex');
   const main = mainFrames[currentIndex];
-  console.log(main, 'main');
+  // console.log(main, 'main');
 
   let tableHeight = height;
   let subData = subFrames;

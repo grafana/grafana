@@ -1,6 +1,7 @@
 import { Property } from 'csstype';
 import { clone } from 'lodash';
 import memoizeOne from 'memoize-one';
+// import React from 'react';
 import { Row } from 'react-table';
 
 import {
@@ -78,6 +79,7 @@ export function getColumns(
 ): GrafanaTableColumn[] {
   const columns: GrafanaTableColumn[] = [];
   let fieldCountWithoutWidth = 0;
+  console.log(data, 'data');
 
   if (expander) {
     columns.push({
@@ -98,25 +100,47 @@ export function getColumns(
     availableWidth -= EXPANDER_WIDTH;
   }
 
-  if (hasRowNumberColumn) {
+  // if (true) {
+  //   columns.unshift({
+  //     // Make an expander cell
+  //     Header: () => null, // No header
+  //     id: 'rowNum', // It needs an ID
+  //     Cell: <p>0</p>,
+  //     width: EXPANDER_WIDTH,
+  //     minWidth: EXPANDER_WIDTH,
+  //     filter: (rows: Row[], id: string, filterValues?: SelectableValue[]) => {
+  //       return [];
+  //     },
+  //     justifyContent: 'left',
+  //     field: data.fields[0],
+  //     sortType: 'basic',
+  //   });
+
+  //   availableWidth -= EXPANDER_WIDTH;
+  // }
+
+  if (!expander && hasRowNumberColumn) {
+    console.log('fired');
+    const fieldData = buildFieldsForRowNums(data.length);
+
     columns.unshift({
       Header: 'row',
       id: 'row#',
-      // tableStyles: TableStyles;
-      // cellProps: React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>;
-      // field: Field;
-      // onCellFilterAdded?: TableFilterActionCallback;
-      // innerWidth: number;
-      filter: (item) => item,
+      field: fieldData,
+      filter: (rows: Row[], id: string, filterValues?: SelectableValue[]) => {
+        return [];
+      },
       sortType: 'basic',
       width: 50,
       minWidth: 50,
       justifyContent: 'left',
-      field: buildFieldsForRowNums(data.length),
     });
+    availableWidth -= EXPANDER_WIDTH;
+    // data.fields.unshift(fieldData);
   }
 
   for (const [fieldIndex, field] of data.fields.entries()) {
+    console.log(data.fields, 'data.fields');
     const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
 
     if (fieldTableOptions.hidden) {
@@ -179,7 +203,7 @@ export function getColumns(
     column.minWidth = 50;
   }
 
-  console.log(columns, 'columns');
+  // console.log(columns, 'columns');
   return columns;
 }
 
@@ -187,7 +211,14 @@ function buildFieldsForRowNums(totalRows: number) {
   return {
     name: 'row#',
     type: FieldType['number'],
-    config: {},
+    config: {
+      color: { mode: 'thresholds' },
+      custom: {
+        align: 'auto',
+        cellOptions: { type: 'auto' },
+        inspect: false,
+      },
+    },
     values: buildRowNumValues(totalRows),
   };
 }
@@ -195,7 +226,7 @@ function buildFieldsForRowNums(totalRows: number) {
 function buildRowNumValues(totalRows: number) {
   let arr = [];
   for (let i = 1; i <= totalRows; i++) {
-    arr.push(String(i));
+    arr.push(i);
   }
   return new ArrayVector(arr);
 }
