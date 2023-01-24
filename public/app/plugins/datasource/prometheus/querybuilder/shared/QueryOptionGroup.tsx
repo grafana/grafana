@@ -18,7 +18,9 @@ export interface Props {
 
 export function QueryOptionGroup({ title, children, collapsedInfo, queryStats, datasource }: Props) {
   const [isOpen, toggleOpen] = useToggle(false);
-  const styles = useStyles2(getStyles(queryStats?.bytes));
+
+  const querySizeThresholdInBytes = 50000;
+  const styles = useStyles2(getStyles(querySizeThresholdInBytes, queryStats?.bytes));
 
   const convertUnits = () => {
     const { text, suffix } = getValueFormat('bytes')(queryStats?.bytes!, 1);
@@ -50,7 +52,7 @@ export function QueryOptionGroup({ title, children, collapsedInfo, queryStats, d
   );
 }
 
-const getStyles = (querySizeInBytes?: number) => (theme: GrafanaTheme2) => {
+const getStyles = (querySizeThresholdInBytes: number, querySizeInBytes?: number) => (theme: GrafanaTheme2) => {
   return {
     wrapper: css({
       width: '100%',
@@ -101,7 +103,9 @@ const getStyles = (querySizeInBytes?: number) => (theme: GrafanaTheme2) => {
     }),
     sizeIndicator: css({
       margin: '0px',
-      color: querySizeInBytes! > 50000 ? '#FF5286' : '#6CCF8E',
+      color: theme.colors.text.secondary,
+      // Temporary disabled until we have discussed what the threshold should be
+      // color: querySizeInBytes! > querySizeThresholdInBytes ? '#FF5286' : '#6CCF8E',
       fontSize: theme.typography.bodySmall.fontSize,
     }),
   };
