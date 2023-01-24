@@ -1,4 +1,4 @@
-import React, { FC, useEffect, useRef, useState, useCallback } from 'react';
+import React, { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Stack } from '@grafana/experimental';
@@ -79,7 +79,9 @@ export const TemplateStep: FC = () => {
 
   const setRuleNameAfterTemplate = useCallback(
     (template?: Template) => {
-      if (!getValues('ruleName')) {
+      const value = getValues('ruleName');
+      const valueExists = templates.current.find((opt) => value === `${opt.name} Alerting Rule`);
+      if (valueExists || !value) {
         setValue('ruleName', `${template?.name} Alerting Rule`);
       }
     },
