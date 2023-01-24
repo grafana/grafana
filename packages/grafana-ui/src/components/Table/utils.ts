@@ -167,7 +167,11 @@ export function getColumns(
 
 export function buildFieldsForOptionalRowNums(totalRows: number): Field {
   return {
-    name: 'row',
+    name: ' ',
+    display: function (value) {
+      console.log(value, 'value');
+      return value;
+    },
     type: FieldType.number,
     config: {
       color: { mode: 'thresholds' },
