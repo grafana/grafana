@@ -2,10 +2,18 @@ import { DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
 
 import { PromApplication } from '../../../types/unified-alerting-dto';
 
-import { Prometheus as PromQuery } from './dataquery.gen';
+import { Prometheus as GenPromQuery } from './dataquery.gen';
 import { QueryEditorMode } from './querybuilder/shared/types';
 
-export { PromQuery };
+export interface PromQuery extends GenPromQuery {
+  /**
+   * Timezone offset to align start & end time on backend
+   */
+  utcOffsetSec?: number;
+  valueWithRefId?: boolean;
+  legendFormat?: string;
+  requestId?: string;
+}
 
 export interface PromOptions extends DataSourceJsonData {
   timeInterval?: string;

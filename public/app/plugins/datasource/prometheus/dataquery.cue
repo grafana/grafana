@@ -40,11 +40,6 @@ composableKinds: DataQuery: {
 						interval?:       string
 						intervalMs?:     int64
 						intervalFactor?: int64
-						// Timezone offset to align start & end time on backend
-						utcOffsetSec?:   int64
-						legendFormat?:   string
-						valueWithRefId?: bool
-						requestId?:      string
 						showingGraph?:   bool
 						showingTable?:   bool
 						// Code or Builder mode

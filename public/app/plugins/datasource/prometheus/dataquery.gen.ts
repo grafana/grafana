@@ -30,14 +30,7 @@ export interface Prometheus extends common.DataQuery {
   interval?: string;
   intervalFactor?: number;
   intervalMs?: number;
-  legendFormat?: string;
   range?: boolean;
-  requestId?: string;
   showingGraph?: boolean;
   showingTable?: boolean;
-  /**
-   * Timezone offset to align start & end time on backend
-   */
-  utcOffsetSec?: number;
-  valueWithRefId?: boolean;
 }

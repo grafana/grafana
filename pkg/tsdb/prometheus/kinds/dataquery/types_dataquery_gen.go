@@ -46,8 +46,7 @@ type PrometheusDataQuery struct {
 	IntervalMs     *int64  `json:"intervalMs,omitempty"`
 
 	// Unique, guid like, string used in explore mode
-	Key          *string `json:"key,omitempty"`
-	LegendFormat *string `json:"legendFormat,omitempty"`
+	Key *string `json:"key,omitempty"`
 
 	// Specify the query flavor
 	// TODO make this required and give it a default
@@ -55,14 +54,9 @@ type PrometheusDataQuery struct {
 	Range     *bool   `json:"range,omitempty"`
 
 	// A - Z
-	RefId        string  `json:"refId"`
-	RequestId    *string `json:"requestId,omitempty"`
-	ShowingGraph *bool   `json:"showingGraph,omitempty"`
-	ShowingTable *bool   `json:"showingTable,omitempty"`
-
-	// Timezone offset to align start & end time on backend
-	UtcOffsetSec   *int64 `json:"utcOffsetSec,omitempty"`
-	ValueWithRefId *bool  `json:"valueWithRefId,omitempty"`
+	RefId        string `json:"refId"`
+	ShowingGraph *bool  `json:"showingGraph,omitempty"`
+	ShowingTable *bool  `json:"showingTable,omitempty"`
 }
 
 // Code or Builder mode

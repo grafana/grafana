@@ -45,7 +45,14 @@ const (
 
 var safeResolution = 11000
 
-type QueryModel = dataquery.PrometheusDataQuery
+type QueryModel struct {
+	dataquery.PrometheusDataQuery
+	LegendFormat *string `json:"legendFormat,omitempty"`
+	RequestId    *string `json:"requestId,omitempty"`
+	// Timezone offset to align start & end time on backend
+	UtcOffsetSec   *int64 `json:"utcOffsetSec,omitempty"`
+	ValueWithRefId *bool  `json:"valueWithRefId,omitempty"`
+}
 
 type TimeRange struct {
 	Start time.Time
