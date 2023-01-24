@@ -25,7 +25,7 @@ export function LogsSamplePanel(props: Props) {
   const onToggleLogsSampleCollapse = (isOpen: boolean) => {
     setLogsSampleEnabled(isOpen);
     reportInteraction('grafana_explore_logs_sample_toggle_clicked', {
-      datasourceType: datasourceInstance ? datasourceInstance?.type : 'unknown',
+      datasourceType: datasourceInstance?.type ?? 'unknown',
       type: isOpen ? 'open' : 'close',
     });
   };
