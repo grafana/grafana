@@ -10,6 +10,7 @@ import {
   Field,
   FieldMatcherID,
   fieldMatchers,
+  FieldType,
   LegacyGraphHoverEvent,
   TimeRange,
   TimeZone,
@@ -120,7 +121,7 @@ export class GraphNG extends Component<GraphNGProps, GraphNGState> {
       frames,
       fields || {
         x: fieldMatchers.get(FieldMatcherID.firstTimeField).get({}),
-        y: fieldMatchers.get(FieldMatcherID.numeric).get({}),
+        y: fieldMatchers.get(FieldMatcherID.byTypes).get(new Set([FieldType.number, FieldType.enum])),
       },
       props.timeRange
     );

@@ -15,62 +15,36 @@ import { GraphFieldConfig, LineInterpolation } from '@grafana/schema';
 import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
 import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
 
-function ordinalizeStringFields(frames: DataFrame[]) {
-  // enums
-  const uniqStrVals = new Set<string>();
+// mutates fields!
+function unifyEnumFields(frames: DataFrame[]) {
+  let allTexts: string[] = [];
 
   let frames2: DataFrame[] = frames.map((frame) => {
     return {
       ...frame,
       fields: frame.fields.map((field) => {
-        if (field.type === FieldType.string) {
+        if (field.type === FieldType.enum) {
+          let idxs = field.values.toArray() as unknown as number[];
+          let txts = field.config.type!.enum!.text!;
 
-          let vals = field.values.toArray();
-
-          for (let i = 0; i < vals.length; i++) {
-            uniqStrVals.add(vals[i]);
+          // by-reference incrementing
+          if (allTexts.length > 0) {
+            for (let i = 0; i < idxs.length; i++) {
+              idxs[i] += allTexts.length;
+            }
           }
 
-          return {
-            ...field,
-            // type: FieldType.number, // ordinal? enumstr?
-            config: {
-              ...field.config,
-              unit: 'enumstr', // ordinal? enumstr?
-            },
-            values: new ArrayVector(vals.slice()),
-          };
+          allTexts.push(...txts);
+
+          // shared among all enum fields
+          field.config.type!.enum!.text! = allTexts;
+
+          // TODO: update displayProcessor?
         }
 
         return field;
       }),
     };
-  });
-
-  // ordinalize across all string fields in all frames
-  let ordinalStrMap = new Map<string, number>();
-
-  let ordinalLabels = [...uniqStrVals];
-
-  ordinalLabels.forEach((val, i) => {
-    ordinalStrMap.set(val, i);
-  });
-
-  frames2.forEach((frame) => {
-    frame.fields.forEach((field) => {
-      if (field.type === FieldType.string) {
-        let vals = field.values.toArray();
-
-        for (let i = 0; i < vals.length; i++) {
-          // can mutate here cause we slice() during copying earlier
-          vals[i] = ordinalStrMap.get(vals[i]);
-        }
-
-        field.type = FieldType.number; // ordinal? enumstr?
-        // field.entities seems to make it through to here, so ¯\_(ツ)_/¯
-        field.enum = ordinalLabels;
-      }
-    });
   });
 
   return frames2;
@@ -88,7 +62,7 @@ export function prepareGraphableFields(
     return null;
   }
 
-  series = ordinalizeStringFields(series);
+  series = unifyEnumFields(series);
 
   let copy: Field;
 
@@ -129,6 +103,7 @@ export function prepareGraphableFields(
           fields.push(copy);
           break; // ok
         case FieldType.string:
+        case FieldType.enum:
           copy = {
             ...field,
             values: new ArrayVector(field.values.toArray()),
