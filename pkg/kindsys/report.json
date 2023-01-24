@@ -2,6 +2,7 @@
   "kinds": {
     "alertgroupspanelcfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -23,6 +24,7 @@
     },
     "alertlistpanelcfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -44,6 +46,7 @@
     },
     "alertmanagerdataquery": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -65,6 +68,7 @@
     },
     "alertmanagerdatasourcecfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -86,6 +90,9 @@
     },
     "annotationslistpanelcfg": {
       "category": "composable",
+      "codeowners": [
+        "grafana/user-essentials"
+      ],
       "currentVersion": [
         0,
         0
@@ -93,10 +100,10 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
-        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/annotationslistpanelcfg/schema-reference",
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/annotationslistpanelcfg/schema-reference",
         "go": "n/a",
-        "schema": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/annolist/panelcfg.cue",
-        "ts": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/annolist/panelcfg.gen.ts"
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/annolist/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/annolist/panelcfg.gen.ts"
       },
       "machineName": "annotationslistpanelcfg",
       "maturity": "experimental",
@@ -107,6 +114,7 @@
     },
     "apikey": {
       "category": "core",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -127,6 +135,7 @@
     },
     "azuremonitordataquery": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -148,6 +157,7 @@
     },
     "azuremonitordatasourcecfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -169,6 +179,9 @@
     },
     "barchartpanelcfg": {
       "category": "composable",
+      "codeowners": [
+        "grafana/grafana-bi-squad"
+      ],
       "currentVersion": [
         0,
         0
@@ -176,10 +189,10 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
-        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/barchartpanelcfg/schema-reference",
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/barchartpanelcfg/schema-reference",
         "go": "n/a",
-        "schema": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/barchart/panelcfg.cue",
-        "ts": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/barchart/panelcfg.gen.ts"
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/barchart/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/barchart/panelcfg.gen.ts"
       },
       "machineName": "barchartpanelcfg",
       "maturity": "experimental",
@@ -190,6 +203,9 @@
     },
     "bargaugepanelcfg": {
       "category": "composable",
+      "codeowners": [
+        "grafana/user-essentials"
+      ],
       "currentVersion": [
         0,
         0
@@ -197,10 +213,10 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
-        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/bargaugepanelcfg/schema-reference",
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/bargaugepanelcfg/schema-reference",
         "go": "n/a",
-        "schema": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/bargauge/panelcfg.cue",
-        "ts": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/bargauge/panelcfg.gen.ts"
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/bargauge/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/bargauge/panelcfg.gen.ts"
       },
       "machineName": "bargaugepanelcfg",
       "maturity": "experimental",
@@ -211,6 +227,7 @@
     },
     "cloudwatchdataquery": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -232,6 +249,7 @@
     },
     "cloudwatchdatasourcecfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -253,6 +271,12 @@
     },
     "dashboard": {
       "category": "core",
+      "codeowners": [
+        "grafana/grafana-as-code",
+        "grafana/grafana-bi-squad",
+        "grafana/plugins-platform-frontend",
+        "grafana/user-essentials"
+      ],
       "currentVersion": [
         0,
         0
@@ -260,10 +284,10 @@
       "grafanaMaturityCount": 144,
       "lineageIsGroup": false,
       "links": {
-        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/core/dashboard/schema-reference",
-        "go": "https:/github.com/grafana/grafana/tree/main/pkg/kinds/dashboard",
-        "schema": "https:/github.com/grafana/grafana/tree/main/kinds/dashboard/dashboard_kind.cue",
-        "ts": "https:/github.com/grafana/grafana/tree/main/packages/grafana-schema/src/raw/dashboard/x/dashboard_types.gen.ts"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/dashboard/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/kinds/dashboard",
+        "schema": "https://github.com/grafana/grafana/tree/main/kinds/dashboard/dashboard_kind.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/packages/grafana-schema/src/raw/dashboard/x/dashboard_types.gen.ts"
       },
       "machineName": "dashboard",
       "maturity": "experimental",
@@ -273,6 +297,7 @@
     },
     "dashboarddataquery": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -294,6 +319,7 @@
     },
     "dashboarddatasourcecfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -315,6 +341,9 @@
     },
     "dashboardlistpanelcfg": {
       "category": "composable",
+      "codeowners": [
+        "grafana/user-essentials"
+      ],
       "currentVersion": [
         0,
         0
@@ -322,10 +351,10 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
-        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/dashboardlistpanelcfg/schema-reference",
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/dashboardlistpanelcfg/schema-reference",
         "go": "n/a",
-        "schema": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/dashlist/panelcfg.cue",
-        "ts": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/dashlist/panelcfg.gen.ts"
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/dashlist/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/dashlist/panelcfg.gen.ts"
       },
       "machineName": "dashboardlistpanelcfg",
       "maturity": "experimental",
@@ -336,6 +365,7 @@
     },
     "datasource": {
       "category": "core",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -356,6 +386,7 @@
     },
     "debugpanelcfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -377,6 +408,7 @@
     },
     "elasticsearchdataquery": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -398,6 +430,7 @@
     },
     "elasticsearchdatasourcecfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -419,6 +452,7 @@
     },
     "flamegraphpanelcfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -440,6 +474,7 @@
     },
     "folder": {
       "category": "core",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -460,6 +495,9 @@
     },
     "gaugepanelcfg": {
       "category": "composable",
+      "codeowners": [
+        "grafana/user-essentials"
+      ],
       "currentVersion": [
         0,
         0
@@ -467,10 +505,10 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
-        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/gaugepanelcfg/schema-reference",
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/gaugepanelcfg/schema-reference",
         "go": "n/a",
-        "schema": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/gauge/panelcfg.cue",
-        "ts": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/gauge/panelcfg.gen.ts"
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/gauge/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/gauge/panelcfg.gen.ts"
       },
       "machineName": "gaugepanelcfg",
       "maturity": "experimental",
@@ -481,6 +519,7 @@
     },
     "geomappanelcfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -502,6 +541,7 @@
     },
     "gettingstartedpanelcfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -523,6 +563,7 @@
     },
     "googlecloudmonitoringdataquery": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -544,6 +585,7 @@
     },
     "googlecloudmonitoringdatasourcecfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -565,6 +607,7 @@
     },
     "grafanadataquery": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -586,6 +629,7 @@
     },
     "grafanadatasourcecfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -607,6 +651,7 @@
     },
     "graphitedataquery": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -628,6 +673,7 @@
     },
     "graphitedatasourcecfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -649,6 +695,7 @@
     },
     "grapholdpanelcfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -670,6 +717,9 @@
     },
     "histogrampanelcfg": {
       "category": "composable",
+      "codeowners": [
+        "grafana/grafana-bi-squad"
+      ],
       "currentVersion": [
         0,
         0
@@ -677,10 +727,10 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
-        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/histogrampanelcfg/schema-reference",
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/histogrampanelcfg/schema-reference",
         "go": "n/a",
-        "schema": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/histogram/panelcfg.cue",
-        "ts": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/histogram/panelcfg.gen.ts"
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/histogram/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/histogram/panelcfg.gen.ts"
       },
       "machineName": "histogrampanelcfg",
       "maturity": "experimental",
@@ -691,6 +741,7 @@
     },
     "iconpanelcfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -712,6 +763,7 @@
     },
     "jaegerdataquery": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -733,6 +785,7 @@
     },
     "jaegerdatasourcecfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -754,6 +807,7 @@
     },
     "livepanelcfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -775,6 +829,7 @@
     },
     "logspanelcfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -796,6 +851,7 @@
     },
     "lokidataquery": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -817,6 +873,7 @@
     },
     "lokidatasourcecfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -838,6 +895,7 @@
     },
     "microsoftsqlserverdataquery": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -859,6 +917,7 @@
     },
     "microsoftsqlserverdatasourcecfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -880,6 +939,7 @@
     },
     "mysqldataquery": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -901,6 +961,7 @@
     },
     "mysqldatasourcecfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -922,6 +983,9 @@
     },
     "newspanelcfg": {
       "category": "composable",
+      "codeowners": [
+        "grafana/user-essentials"
+      ],
       "currentVersion": [
         0,
         0
@@ -929,10 +993,10 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
-        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/newspanelcfg/schema-reference",
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/newspanelcfg/schema-reference",
         "go": "n/a",
-        "schema": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/news/panelcfg.cue",
-        "ts": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/news/panelcfg.gen.ts"
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/news/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/news/panelcfg.gen.ts"
       },
       "machineName": "newspanelcfg",
       "maturity": "experimental",
@@ -943,6 +1007,7 @@
     },
     "nodegraphpanelcfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -964,6 +1029,7 @@
     },
     "parcadataquery": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -985,6 +1051,7 @@
     },
     "parcadatasourcecfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -1006,6 +1073,7 @@
     },
     "phlaredataquery": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -1027,6 +1095,7 @@
     },
     "phlaredatasourcecfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -1048,6 +1117,9 @@
     },
     "piechartpanelcfg": {
       "category": "composable",
+      "codeowners": [
+        "grafana/grafana-bi-squad"
+      ],
       "currentVersion": [
         0,
         0
@@ -1055,10 +1127,10 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
-        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/piechartpanelcfg/schema-reference",
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/piechartpanelcfg/schema-reference",
         "go": "n/a",
-        "schema": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/piechart/panelcfg.cue",
-        "ts": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/piechart/panelcfg.gen.ts"
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/piechart/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/piechart/panelcfg.gen.ts"
       },
       "machineName": "piechartpanelcfg",
       "maturity": "experimental",
@@ -1069,6 +1141,12 @@
     },
     "playlist": {
       "category": "core",
+      "codeowners": [
+        "grafana/grafana-as-code",
+        "grafana/grafana-bi-squad",
+        "grafana/plugins-platform-frontend",
+        "grafana/user-essentials"
+      ],
       "currentVersion": [
         0,
         0
@@ -1076,10 +1154,10 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
-        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/core/playlist/schema-reference",
-        "go": "https:/github.com/grafana/grafana/tree/main/pkg/kinds/playlist",
-        "schema": "https:/github.com/grafana/grafana/tree/main/kinds/playlist/playlist_kind.cue",
-        "ts": "https:/github.com/grafana/grafana/tree/main/packages/grafana-schema/src/raw/playlist/x/playlist_types.gen.ts"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/playlist/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/kinds/playlist",
+        "schema": "https://github.com/grafana/grafana/tree/main/kinds/playlist/playlist_kind.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/packages/grafana-schema/src/raw/playlist/x/playlist_types.gen.ts"
       },
       "machineName": "playlist",
       "maturity": "merged",
@@ -1089,6 +1167,7 @@
     },
     "postgresqldataquery": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -1110,6 +1189,7 @@
     },
     "postgresqldatasourcecfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -1131,6 +1211,7 @@
     },
     "prometheusdataquery": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -1152,6 +1233,7 @@
     },
     "prometheusdatasourcecfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -1173,6 +1255,7 @@
     },
     "query": {
       "category": "core",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -1193,6 +1276,7 @@
     },
     "queryhistory": {
       "category": "core",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -1213,6 +1297,7 @@
     },
     "serviceaccount": {
       "category": "core",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -1233,6 +1318,9 @@
     },
     "statpanelcfg": {
       "category": "composable",
+      "codeowners": [
+        "grafana/user-essentials"
+      ],
       "currentVersion": [
         0,
         0
@@ -1240,10 +1328,10 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
-        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/statpanelcfg/schema-reference",
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/statpanelcfg/schema-reference",
         "go": "n/a",
-        "schema": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/stat/panelcfg.cue",
-        "ts": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/stat/panelcfg.gen.ts"
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/stat/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/stat/panelcfg.gen.ts"
       },
       "machineName": "statpanelcfg",
       "maturity": "experimental",
@@ -1254,6 +1342,7 @@
     },
     "tableoldpanelcfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -1275,6 +1364,12 @@
     },
     "team": {
       "category": "core",
+      "codeowners": [
+        "grafana/grafana-as-code",
+        "grafana/grafana-bi-squad",
+        "grafana/plugins-platform-frontend",
+        "grafana/user-essentials"
+      ],
       "currentVersion": [
         0,
         0
@@ -1282,10 +1377,10 @@
       "grafanaMaturityCount": 7,
       "lineageIsGroup": false,
       "links": {
-        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/core/team/schema-reference",
-        "go": "https:/github.com/grafana/grafana/tree/main/pkg/kinds/team",
-        "schema": "https:/github.com/grafana/grafana/tree/main/kinds/team/team_kind.cue",
-        "ts": "https:/github.com/grafana/grafana/tree/main/packages/grafana-schema/src/raw/team/x/team_types.gen.ts"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/team/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/kinds/team",
+        "schema": "https://github.com/grafana/grafana/tree/main/kinds/team/team_kind.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/packages/grafana-schema/src/raw/team/x/team_types.gen.ts"
       },
       "machineName": "team",
       "maturity": "merged",
@@ -1295,6 +1390,7 @@
     },
     "tempodataquery": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -1316,6 +1412,7 @@
     },
     "tempodatasourcecfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -1337,6 +1434,7 @@
     },
     "testdatadbdataquery": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -1358,6 +1456,7 @@
     },
     "testdatadbdatasourcecfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -1379,6 +1478,9 @@
     },
     "textpanelcfg": {
       "category": "composable",
+      "codeowners": [
+        "grafana/user-essentials"
+      ],
       "currentVersion": [
         0,
         0
@@ -1386,10 +1488,10 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
-        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/textpanelcfg/schema-reference",
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/textpanelcfg/schema-reference",
         "go": "n/a",
-        "schema": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/text/panelcfg.cue",
-        "ts": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/text/panelcfg.gen.ts"
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/text/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/text/panelcfg.gen.ts"
       },
       "machineName": "textpanelcfg",
       "maturity": "experimental",
@@ -1400,6 +1502,7 @@
     },
     "thumb": {
       "category": "core",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -1420,6 +1523,7 @@
     },
     "tracespanelcfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -1441,6 +1545,7 @@
     },
     "user": {
       "category": "core",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -1461,6 +1566,7 @@
     },
     "welcomepanelcfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -1482,6 +1588,7 @@
     },
     "xychartpanelcfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -1503,6 +1610,7 @@
     },
     "zipkindataquery": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -1524,6 +1632,7 @@
     },
     "zipkindatasourcecfg": {
       "category": "composable",
+      "codeowners": [],
       "currentVersion": [
         0,
         0
