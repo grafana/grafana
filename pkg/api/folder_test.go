@@ -242,19 +242,9 @@ func createFolderScenario(t *testing.T, desc string, url string, routePattern st
 		teamSvc := &teamtest.FakeService{}
 		dashSvc := &dashboards.FakeDashboardService{}
 		qResult1 := aclMockResp
-		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
-			// q := args.Get(1).(*dashboards.GetDashboardACLInfoListQuery)
-		}).Return(qResult1, nil)
-		var qResult *dashboards.Dashboard
-		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
-			q := args.Get(1).(*dashboards.GetDashboardQuery)
-			qResult = &dashboards.Dashboard{
-				ID:  1,
-				UID: q.UID,
-			}
-			fmt.Println("qResult0", qResult)
-		}).Return(qResult, nil)
-		fmt.Println("qResult", qResult)
+		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult1, nil)
+		qResult := &dashboards.Dashboard{}
+		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
 		store := dbtest.NewFakeDB()
 		guardian.InitLegacyGuardian(store, dashSvc, teamSvc)
 		hs := HTTPServer{

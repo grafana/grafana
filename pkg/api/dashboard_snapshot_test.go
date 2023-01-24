@@ -80,7 +80,7 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 						UID: q.UID,
 					}
 				}).Return(qResult, nil).Maybe()
-				dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(nil).Maybe()
+				dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(nil, nil).Maybe()
 				hs.DashboardService = dashSvc
 
 				guardian.InitLegacyGuardian(sc.sqlStore, dashSvc, teamSvc)
@@ -135,22 +135,13 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 					externalRequest = req
 				})
 				dashSvc := dashboards.NewFakeDashboardService(t)
-				var qResult *dashboards.Dashboard
-				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
-					q := args.Get(1).(*dashboards.GetDashboardQuery)
-					qResult = &dashboards.Dashboard{
-						ID:    q.ID,
-						OrgID: q.OrgID,
-					}
-				}).Return(qResult, nil).Maybe()
-				var qResultACL []*dashboards.DashboardACLInfoDTO
-				dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
-					// q := args.Get(1).(*dashboards.GetDashboardACLInfoListQuery)
-					qResultACL = []*dashboards.DashboardACLInfoDTO{
-						{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
-						{Role: &editorRole, Permission: models.PERMISSION_EDIT},
-					}
-				}).Return(qResultACL, nil)
+				qResult := &dashboards.Dashboard{}
+				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil).Maybe()
+				qResultACL := []*dashboards.DashboardACLInfoDTO{
+					{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
+					{Role: &editorRole, Permission: models.PERMISSION_EDIT},
+				}
+				dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResultACL, nil)
 				guardian.InitLegacyGuardian(sc.sqlStore, dashSvc, teamSvc)
 				hs := &HTTPServer{dashboardsnapshotsService: setUpSnapshotTest(t, 0, ts.URL), DashboardService: dashSvc}
 				sc.handlerFunc = hs.DeleteDashboardSnapshot

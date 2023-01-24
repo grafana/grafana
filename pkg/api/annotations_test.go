@@ -227,14 +227,8 @@ func TestAnnotationsAPIEndpoint(t *testing.T) {
 
 			t.Run("Should be able to do anything", func(t *testing.T) {
 				dashSvc := dashboards.NewFakeDashboardService(t)
-				var result *dashboards.Dashboard
-				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
-					q := args.Get(1).(*dashboards.GetDashboardQuery)
-					result = &dashboards.Dashboard{
-						ID:  q.ID,
-						UID: q.UID,
-					}
-				}).Return(result, nil)
+				result := &dashboards.Dashboard{}
+				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(result, nil)
 				postAnnotationScenario(t, "When calling POST on", "/api/annotations", "/api/annotations", role, cmd, store, dashSvc, func(sc *scenarioContext) {
 					setUpACL()
 					sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()

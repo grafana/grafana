@@ -27,14 +27,8 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 	t.Run("Dashboard permissions test", func(t *testing.T) {
 		settings := setting.NewCfg()
 		dashboardStore := &dashboards.FakeDashboardStore{}
-		var qResult *dashboards.Dashboard
-		dashboardStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
-			q := args.Get(1).(*dashboards.GetDashboardQuery)
-			qResult = &dashboards.Dashboard{
-				ID:  q.ID,
-				UID: q.UID,
-			}
-		}).Return(qResult, nil)
+		qResult := &dashboards.Dashboard{}
+		dashboardStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
 		defer dashboardStore.AssertExpectations(t)
 
 		features := featuremgmt.WithFeatures()
