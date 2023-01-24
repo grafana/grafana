@@ -89,6 +89,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   } = { systemRequirements: { met: false, requiredImageRendererPluginVersion: '' }, thumbnailsExist: false };
   rendererVersion = '';
   secretsManagerPluginEnabled = false;
+  supportBundlesEnabled = false;
   http2Enabled = false;
   dateFormats?: SystemDateFormatSettings;
   sentry = {
