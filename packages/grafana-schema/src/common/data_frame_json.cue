@@ -48,8 +48,6 @@ FieldValueEntityLookup: {
 DataFrameSchema: {
   // Matches the query target refId
   refId?: string
-  // Initial response global metadata
-  meta?: QueryResultMeta
   // Frame name
   name?: string
   // Field definition without any metadata

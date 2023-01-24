@@ -294,10 +294,6 @@ export interface DataFrameSchema {
    */
   fields: Array<FieldSchema>;
   /**
-   * Initial response global metadata
-   */
-  meta?: QueryResultMeta;
-  /**
    * Frame name
    */
   name?: string;
@@ -320,73 +316,6 @@ export interface DataSourceJsonData {
   defaultRegion?: string;
   manageAlerts?: boolean;
   profile?: string;
-}
-
-/**
- * Frontend settings model that is passed to Datasource constructor. This differs a bit from the model above
- * as this data model is available to every user who has access to a data source (Viewers+).  This is loaded
- * in bootData (on page load), or from: /api/frontend/settings
- */
-export interface DataSourceInstanceSettings {
-  /**
-   * Currently we support 2 options - direct (browser) and proxy (server)
-   */
-  access: string;
-  /**
-   * This is the full Authorization header if basic auth is enabled.
-   * Only available here when access is Browser (direct), when access is Server (proxy)
-   * The basic auth header, username & password is never exposed to browser/Frontend
-   * so this will be empty then.
-   */
-  basicAuth?: string;
-  /**
-   *  @deprecated -- use jsonData to store information related to database.
-   * This field should only be used by Elasticsearch and Influxdb.
-   */
-  database?: string;
-  id: number;
-  isDefault?: boolean;
-  /**
-   * Extended in veneer
-   */
-  jsonData: unknown;
-  meta: DataSourcePluginMeta;
-  name: string;
-  /**
-   * when access is direct, for some legacy datasources
-   */
-  password?: string;
-  /**
-   * When the name+uid are based on template variables, maintain access to the real values
-   */
-  rawRef?: DataSourceRef;
-  readOnly: boolean;
-  type: string;
-  uid: string;
-  url?: string;
-  username?: string;
-  withCredentials?: boolean;
-}
-
-/**
- * TODO docs
- */
-export interface DataSourcePluginMeta {
-  alerting?: boolean;
-  annotations?: boolean;
-  backend?: boolean;
-  builtIn?: boolean;
-  category?: string;
-  hasQueryHelp?: boolean;
-  isBackend?: boolean;
-  logs?: boolean;
-  metrics?: boolean;
-  mixed?: boolean;
-  queryOptions?: PluginMetaQueryOptions;
-  sort?: number;
-  streaming?: boolean;
-  tracing?: boolean;
-  unlicensed?: boolean;
 }
 
 /**
@@ -913,133 +842,6 @@ export interface VizTooltipOptions {
   sort: SortOrder;
 }
 
-export interface Labels {}
-
-/**
- * TODO Should be moved to common data query?
- */
-export interface QueryResultBase {
-  /**
-   * Used by some backend data sources to communicate back info about the execution (generated sql, timing)
-   */
-  meta?: QueryResultMeta;
-  /**
-   * Matches the query target refId
-   */
-  refId?: string;
-}
-
-/**
- * TODO docs
- */
-export interface QueryResultMeta {
-  /**
-   * The path for live stream updates for this frame
-   */
-  channel?: string;
-  /**
-   * DataSource Specific Values
-   */
-  custom?: Record<string, unknown>;
-  /**
-   * Optionally identify which topic the frame should be assigned to.
-   * A value specified in the response will override what the request asked for.
-   */
-  dataTopic?: DataTopic;
-  /**
-   * This is the raw query sent to the underlying system.  All macros and templating
-   * as been applied.  When metadata contains this value, it will be shown in the query inspector
-   */
-  executedQueryString?: string;
-  instant?: boolean;
-  /**
-   * Did the query response come from the cache
-   */
-  isCachedResponse?: boolean;
-  /**
-   * used to keep track of old json doc values
-   */
-  json?: boolean;
-  /**
-   * used by log models and loki
-   */
-  limit?: number;
-  /**
-   * Meta notices
-   */
-  notices?: Array<QueryResultMetaNotice>;
-  /**
-   * A browsable path on the datasource
-   */
-  path?: string;
-  /**
-   * defaults to '/'
-   */
-  pathSeparator?: string;
-  /**
-   * Currently used to show results in Explore only in preferred visualisation option
-   */
-  preferredVisualisationType?: PreferredVisualisationType;
-  /**
-   * Legacy data source specific, should be moved to custom
-   * used by log models and loki
-   */
-  searchWords?: Array<string>;
-  /**
-   * Stats
-   */
-  stats?: Array<QueryResultMetaStat>;
-  /**
-   * Used to track transformation ids that where part of the processing
-   */
-  transformations?: Array<string>;
-  type?: DataFrameType;
-}
-
-export const defaultQueryResultMeta: Partial<QueryResultMeta> = {
-  notices: [],
-  searchWords: [],
-  stats: [],
-  transformations: [],
-};
-
-/**
- * TODO this is an enum with one field
- * Attached to query results (not persisted)
- */
-export type DataTopic = 'annotations';
-
-/**
- * TODO docs
- */
-export interface QueryResultMetaStat extends FieldConfig {
-  /**
-   * The display value for this field.  This supports template variables blank is auto
-   */
-  displayName: string;
-  value: number;
-}
-
-export interface QueryResultMetaNotice {
-  /**
-   * Optionally suggest an appropriate tab for the panel inspector
-   */
-  inspect?: ('meta' | 'error' | 'data' | 'stats');
-  /**
-   * An optional link that may be displayed in the UI.
-   * This value may be an absolute URL or relative to grafana root
-   */
-  link?: string;
-  /**
-   * Specify the notice severity
-   */
-  severity: ('info' | 'warning' | 'error');
-  /**
-   * Notice descriptive text
-   */
-  text: string;
-}
-
 /**
  * Internally, this is the "type" of cell that's being displayed
  * in the table such as colored text, JSON, gauge, etc.
@@ -1157,15 +959,6 @@ export interface FieldSchema {
   type?: FieldType;
 }
 
-/**
- * TODO docs
- */
-export interface PluginMetaQueryOptions {
-  cacheTimeout?: boolean;
-  maxDataPoints?: boolean;
-  minInterval?: boolean;
-}
-
 export interface DataSourceRef {
   /**
    * The plugin type-id
@@ -1193,7 +986,7 @@ export interface FrameGeometrySource {
   wkt?: string;
 }
 
-export type PreferredVisualisationType = ('graph' | 'table' | 'logs' | 'trace' | 'nodeGraph' | 'flamegraph' | 'rawPrometheus');
+export interface Labels {}
 
 /**
  * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)
