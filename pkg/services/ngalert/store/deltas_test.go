@@ -328,7 +328,7 @@ func TestCalculateAutomaticChanges(t *testing.T) {
 		group2 := models.GenerateGroupKey(orgID)
 		rules2 := models.GenerateAlertRules(4, models.AlertRuleGen(withGroupKey(group2), models.WithSequentialGroupIndex()))
 
-		movedIndex := rand.Intn(len(rules2) - 1)
+		movedIndex := rand.Intn(len(rules2))
 		movedRule := rules2[movedIndex]
 		copyRule := models.CopyRule(movedRule)
 		copyRule.RuleGroup = group.RuleGroup
