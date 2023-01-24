@@ -22,7 +22,8 @@ export function relativeTemplateUrlToCDN(templateUrl: string, baseUrl: string) {
   return `${baseUrl.replace('plugin-cdn/', `${config.pluginsCDNBaseURL}/`)}/${templateUrl}`;
 }
 
-/** @ngInject */
+coreModule.directive('pluginComponent', ['$compile', '$http', '$templateCache', '$location', pluginDirectiveLoader]);
+
 function pluginDirectiveLoader($compile: any, $http: any, $templateCache: any, $location: ILocationService) {
   function getTemplate(component: { template: any; templateUrl: any }) {
     if (component.template) {
@@ -268,5 +269,3 @@ function pluginDirectiveLoader($compile: any, $http: any, $templateCache: any, $
     },
   };
 }
-
-coreModule.directive('pluginComponent', pluginDirectiveLoader);
