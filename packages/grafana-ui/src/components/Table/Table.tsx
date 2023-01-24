@@ -1,3 +1,4 @@
+import { cloneDeep } from 'lodash';
 import React, { CSSProperties, memo, useCallback, useEffect, useMemo, useRef, useState, UIEventHandler } from 'react';
 import {
   Cell,
@@ -11,7 +12,7 @@ import {
 } from 'react-table';
 import { VariableSizeList } from 'react-window';
 
-import { Field, ReducerID } from '@grafana/data';
+import { DataFrame, Field, ReducerID } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
@@ -31,6 +32,7 @@ import {
   getFooterItems,
   createFooterCalculationValues,
   EXPANDER_WIDTH,
+  buildFieldsForOptionalRowNums,
 } from './utils';
 
 const COLUMN_MIN_WIDTH = 150;
@@ -46,7 +48,7 @@ export const Table = memo((props: Props) => {
     width,
     columnMinWidth = COLUMN_MIN_WIDTH,
     noHeader,
-    addRowNumberColumn,
+    addRowNumberColumn = true,
     resizable = true,
     initialSortBy,
     footerOptions,
@@ -54,8 +56,7 @@ export const Table = memo((props: Props) => {
     footerValues,
     enablePagination,
   } = props;
-  console.log(addRowNumberColumn);
-  // console.log(data, 'data');
+  console.log(data, 'data');
 
   const listRef = useRef<VariableSizeList>(null);
   const tableDivRef = useRef<HTMLDivElement>(null);
@@ -108,8 +109,16 @@ export const Table = memo((props: Props) => {
 
   // React-table column definitions
   const memoizedColumns = useMemo(
-    () => getColumns(data, width, columnMinWidth, !!subData?.length, footerItems, isCountRowsSet, true),
-    [data, width, columnMinWidth, footerItems, subData, isCountRowsSet]
+    () =>
+      getColumns(
+        addOptionalNumberRowToTable(data, addRowNumberColumn),
+        width,
+        columnMinWidth,
+        !!subData?.length,
+        footerItems,
+        isCountRowsSet
+      ),
+    [data, width, columnMinWidth, footerItems, subData, isCountRowsSet, addRowNumberColumn]
   );
   console.log(memoizedColumns, 'memoizedColumns');
 
@@ -313,6 +322,19 @@ export const Table = memo((props: Props) => {
         )}
       </div>
     );
+  }
+
+  function addOptionalNumberRowToTable(data: DataFrame, condition: boolean): DataFrame {
+    if (condition) {
+      console.log('fired');
+      // JEV
+      const rowField: Field = buildFieldsForOptionalRowNums(data.length);
+      const newData = cloneDeep(data);
+      newData.fields = [rowField, ...newData.fields];
+      return newData;
+    }
+
+    return data;
   }
 
   const getItemSize = (index: number): number => {

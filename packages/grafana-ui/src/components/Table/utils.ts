@@ -1,7 +1,6 @@
 import { Property } from 'csstype';
 import { clone } from 'lodash';
 import memoizeOne from 'memoize-one';
-// import React from 'react';
 import { Row } from 'react-table';
 
 import {
@@ -41,6 +40,7 @@ import {
 } from './types';
 
 export const EXPANDER_WIDTH = 50;
+export const ROW_NUMBER_WIDTH = 50;
 
 export function getTextAlign(field?: Field): Property.JustifyContent {
   if (!field) {
@@ -99,7 +99,6 @@ export function getColumns(
   }
 
   for (const [fieldIndex, field] of data.fields.entries()) {
-    console.log(data.fields, 'data.fields');
     const fieldTableOptions = (field.config.custom || {}) as TableFieldOptions;
 
     if (fieldTableOptions.hidden) {
@@ -166,23 +165,24 @@ export function getColumns(
   return columns;
 }
 
-function buildFieldsForRowNums(totalRows: number) {
+export function buildFieldsForOptionalRowNums(totalRows: number): Field {
   return {
-    name: 'row#',
-    type: FieldType['number'],
+    name: 'row',
+    type: FieldType.number,
     config: {
       color: { mode: 'thresholds' },
       custom: {
         align: 'auto',
         cellOptions: { type: 'auto' },
         inspect: false,
+        width: ROW_NUMBER_WIDTH,
       },
     },
-    values: buildRowNumValues(totalRows),
+    values: buildBufferedValues(totalRows),
   };
 }
 
-function buildRowNumValues(totalRows: number) {
+function buildBufferedValues(totalRows: number): ArrayVector<number> {
   let arr = [];
   for (let i = 1; i <= totalRows; i++) {
     arr.push(i);
