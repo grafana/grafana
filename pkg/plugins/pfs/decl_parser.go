@@ -57,10 +57,11 @@ func (psr *declParser) Parse(root fs.FS) ([]*PluginDecl, error) {
 			}
 			decls = append(decls, &PluginDecl{
 				SchemaInterface: &slot,
-				Lineage:    kind.Lineage(),
-				Imports:    pp.CUEImports,
-				PluginMeta: pp.Properties,
-				PluginPath: path,
+				Lineage:         kind.Lineage(),
+				Imports:         pp.CUEImports,
+				PluginMeta:      pp.Properties,
+				PluginPath:      path,
+				KindDecl:        kind.Decl(),
 			})
 		}
 	}
