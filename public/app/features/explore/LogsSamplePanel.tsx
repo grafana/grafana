@@ -37,10 +37,10 @@ export function LogsSamplePanel(props: Props) {
     LogsSamplePanelContent = null;
   } else if (queryResponse?.error !== undefined) {
     LogsSamplePanelContent = (
-      <SupplementaryResultError error={queryResponse.error} title="Failed to load log samples for this query" />
+      <SupplementaryResultError error={queryResponse.error} title="Failed to load logs sample for this query" />
     );
   } else if (queryResponse?.state === LoadingState.Loading) {
-    LogsSamplePanelContent = <span>Log samples are loading...</span>;
+    LogsSamplePanelContent = <span>Logs sample is loading...</span>;
   } else if (queryResponse?.data.length === 0 || queryResponse?.data[0].length === 0) {
     LogsSamplePanelContent = <span>No logs sample data.</span>;
   } else {

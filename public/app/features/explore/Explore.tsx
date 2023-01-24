@@ -572,7 +572,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
   } = item;
 
   const logsSample = supplementaryQueries[SupplementaryQueryType.LogsSample];
-  // We want to show log samples only if there are no log results and if there is already graph or table result
+  // We want to show logs sample only if there are no log results and if there is already graph or table result
   const showLogsSample = !!(logsSample.dataProvider !== undefined && !logsResult && (graphResult || tableResult));
 
   return {

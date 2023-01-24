@@ -59,7 +59,7 @@ describe('LogsSamplePanel', () => {
 
   it('shows loading message', () => {
     render(<LogsSamplePanel {...createProps({ queryResponse: { data: [], state: LoadingState.Loading } })} />);
-    expect(screen.getByText('Log samples are loading...')).toBeInTheDocument();
+    expect(screen.getByText('Logs sample is loading...')).toBeInTheDocument();
   });
 
   it('shows no data message', () => {
@@ -97,7 +97,7 @@ describe('LogsSamplePanel', () => {
         })}
       />
     );
-    expect(screen.getByText('Failed to load log samples for this query')).toBeInTheDocument();
+    expect(screen.getByText('Failed to load logs sample for this query')).toBeInTheDocument();
     expect(screen.getByText('Test error message')).toBeInTheDocument();
   });
 });

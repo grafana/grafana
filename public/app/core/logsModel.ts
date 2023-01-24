@@ -748,7 +748,7 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
 }
 
 /**
- * Creates an observable, which makes requests to get logs samples.
+ * Creates an observable, which makes requests to get logs sample.
  */
 export function queryLogsSample<TQuery extends DataQuery, TOptions extends DataSourceJsonData>(
   datasource: DataSourceApi<TQuery, TOptions>,
