@@ -29,7 +29,7 @@ func TestBroadcastRunner_OnSubscribe(t *testing.T) {
 	data := json.RawMessage(`{}`)
 
 	mockDispatcher.EXPECT().GetLiveMessage(&model.GetLiveMessageQuery{
-		OrgId:   1,
+		OrgID:   1,
 		Channel: channel,
 	}).DoAndReturn(func(query *model.GetLiveMessageQuery) (model.LiveMessage, bool, error) {
 		return model.LiveMessage{
@@ -64,7 +64,7 @@ func TestBroadcastRunner_OnPublish(t *testing.T) {
 	var orgID int64 = 1
 
 	mockDispatcher.EXPECT().SaveLiveMessage(&model.SaveLiveMessageQuery{
-		OrgId:   orgID,
+		OrgID:   orgID,
 		Channel: channel,
 		Data:    data,
 	}).DoAndReturn(func(query *model.SaveLiveMessageQuery) error {

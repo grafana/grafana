@@ -43,7 +43,7 @@ func (b *BroadcastRunner) OnSubscribe(_ context.Context, u *user.SignedInUser, e
 		JoinLeave: true,
 	}
 	query := &model.GetLiveMessageQuery{
-		OrgId:   u.OrgID,
+		OrgID:   u.OrgID,
 		Channel: e.Channel,
 	}
 	msg, ok, err := b.liveMessageStore.GetLiveMessage(query)
@@ -59,7 +59,7 @@ func (b *BroadcastRunner) OnSubscribe(_ context.Context, u *user.SignedInUser, e
 // OnPublish is called when a client wants to broadcast on the websocket
 func (b *BroadcastRunner) OnPublish(_ context.Context, u *user.SignedInUser, e model.PublishEvent) (model.PublishReply, backend.PublishStreamStatus, error) {
 	query := &model.SaveLiveMessageQuery{
-		OrgId:   u.OrgID,
+		OrgID:   u.OrgID,
 		Channel: e.Channel,
 		Data:    e.Data,
 	}
