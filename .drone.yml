@@ -1336,14 +1336,12 @@ steps:
   depends_on:
   - grabpl
   environment:
-    GCP_KEY:
-      from_secret: gcp_key
     GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
+      from_secret: packages_gpg_passphrase
     GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
+      from_secret: packages_gpg_private_key
     GPG_PUB_KEY:
-      from_secret: gpg_pub_key
+      from_secret: packages_gpg_public_key
     GRAFANA_COM_API_KEY:
       from_secret: grafana_api_key
   image: grafana/grafana-ci-deploy:1.3.1
@@ -3129,14 +3127,12 @@ steps:
   depends_on:
   - grabpl
   environment:
-    GCP_KEY:
-      from_secret: gcp_key
     GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
+      from_secret: packages_gpg_passphrase
     GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
+      from_secret: packages_gpg_private_key
     GPG_PUB_KEY:
-      from_secret: gpg_pub_key
+      from_secret: packages_gpg_public_key
     GRAFANA_COM_API_KEY:
       from_secret: grafana_api_key
   image: grafana/grafana-ci-deploy:1.3.1
@@ -3177,14 +3173,12 @@ steps:
   depends_on:
   - grabpl
   environment:
-    GCP_KEY:
-      from_secret: gcp_key
     GPG_KEY_PASSWORD:
-      from_secret: gpg_key_password
+      from_secret: packages_gpg_passphrase
     GPG_PRIV_KEY:
-      from_secret: gpg_priv_key
+      from_secret: packages_gpg_private_key
     GPG_PUB_KEY:
-      from_secret: gpg_pub_key
+      from_secret: packages_gpg_public_key
     GRAFANA_COM_API_KEY:
       from_secret: grafana_api_key
   image: grafana/grafana-ci-deploy:1.3.1
@@ -4638,6 +4632,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: b65ffdb9332c4fa65a76b25e84b5b5e71719d51e76d1cc84a9b230464b1b311c
+hmac: ed5c6f87c21245d54bd48e3376063a5839b9041aa123bf3fd4a6708d8a0aec3f
 
 ...
