@@ -8,8 +8,8 @@ title: Playlist kind
 
 # Playlist kind
 
-### Maturity: [merged](../../../maturity/#merged)
-### Version: 0.0
+## Maturity: [merged](../../../maturity/#merged)
+## Version: 0.0
 
 ## Properties
 

@@ -8,8 +8,8 @@ title: DashboardListPanelCfg kind
 
 # DashboardListPanelCfg kind
 
-### Maturity: [experimental](../../../maturity/#experimental)
-### Version: 0.0
+## Maturity: [experimental](../../../maturity/#experimental)
+## Version: 0.0
 
 ## Properties
 
