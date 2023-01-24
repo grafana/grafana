@@ -155,11 +155,10 @@ func getAzureRoutes(cloud string, jsonData json.RawMessage) (map[string]types.Az
 	if err != nil {
 		return nil, err
 	}
-	if (customizedCloudSettings.CustomizedRoutes == nil && cloud == azsettings.AzureCustomized) {
+	if customizedCloudSettings.CustomizedRoutes == nil && cloud == azsettings.AzureCustomized {
 		return nil, fmt.Errorf("unable to instantiate routes, customizedRoutes must be set")
 	}
-
-	if (customizedCloudSettings.CustomizedRoutes == nil && cloud != azsettings.AzureCustomized) {
+	if customizedCloudSettings.CustomizedRoutes == nil && cloud != azsettings.AzureCustomized {
 		return routes[cloud], nil
 	}
 	azureRoutes := customizedCloudSettings.CustomizedRoutes
