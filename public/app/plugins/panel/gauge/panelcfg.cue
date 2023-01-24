@@ -15,28 +15,21 @@
 package grafanaplugin
 
 import (
-	ui "github.com/grafana/grafana/packages/grafana-schema/src/common"
+	"github.com/grafana/grafana/packages/grafana-schema/src/common"
 )
 
 composableKinds: PanelCfg: {
+	maturity: "experimental"
+
 	lineage: {
 		seqs: [
 			{
 				schemas: [
 					{
 						PanelOptions: {
-							ui.OptionsWithLegend
-							ui.OptionsWithTooltip
-							ui.OptionsWithTimezones
-							showValue:  ui.VisibilityMode
-							rowHeight:  number
-							colWidth?:  number
-							alignValue: "center" | *"left" | "right"
-						} @cuetsy(kind="interface")
-						PanelFieldConfig: {
-							ui.HideableFieldConfig
-							lineWidth?:   number | *1
-							fillOpacity?: number | *70
+							common.SingleStatBaseOptions
+							showThresholdLabels:  bool | *false
+							showThresholdMarkers: bool | *true
 						} @cuetsy(kind="interface")
 					},
 				]

@@ -1,7 +1,5 @@
 package common
 
-// TODO break this up into individual files. Current limitation on this is codegen logic, imports, dependencies
-
 // TODO docs
 AxisPlacement:      "auto" | "top" | "right" | "bottom" | "left" | "hidden" @cuetsy(kind="enum")
 

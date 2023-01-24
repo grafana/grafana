@@ -1198,7 +1198,7 @@ export const mockNavModel: NavIndex = {
     id: 'support-bundles',
     text: 'Support bundles',
     icon: 'sliders-v-alt',
-    url: '/admin/support-bundles',
+    url: '/support-bundles',
   },
   'server-settings': {
     id: 'server-settings',

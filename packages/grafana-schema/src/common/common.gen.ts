@@ -9,497 +9,6 @@
 
 
 /**
- *  See also:
- *  https://github.com/grafana/grafana-plugin-sdk-go/blob/main/data/frame_type.go
- */
-export enum DataFrameType {
-  DirectoryListing = 'directory-listing',
-  HeatmapCells = 'heatmap-cells',
-  HeatmapRows = 'heatmap-rows',
-  Histogram = 'histogram',
-  TimeSeriesLong = 'timeseries-long',
-  TimeSeriesMany = 'timeseries-many',
-  TimeSeriesMulti = 'timeseries-multi',
-  TimeSeriesWide = 'timeseries-wide',
-}
-
-/**
- * TODO docs
- */
-export interface DataFrame extends QueryResultBase {
-  /**
-   * All fields of equal length
-   */
-  fields: Array<Field>;
-  /**
-   * The number of rows
-   */
-  length: number;
-  name?: string;
-}
-
-export const defaultDataFrame: Partial<DataFrame> = {
-  fields: [],
-};
-
-/**
- * TODO Field<T = any, V = Vector<T>>
- */
-export interface Field {
-  /**
-   * Meta info about how field and how to display it
-   */
-  config: FieldConfig;
-  /**
-   * Convert a value for display TODO extend in veneer
-   */
-  display?: unknown;
-  /**
-   * Get value data links with variables interpolated. Extended in veneer
-   */
-  getLinks?: unknown;
-  labels?: Labels;
-  /**
-   * Name of the field (column)
-   */
-  name: string;
-  /**
-   * Cached values with appropriate display and id values TODO | null
-   */
-  state?: FieldState;
-  /**
-   * Field value type (string, number, etc)
-   */
-  type: FieldType;
-  /**
-   * The raw field values. Extended in veneer
-   */
-  values: Record<string, unknown>;
-}
-
-export enum FieldType {
-  bool = 'bool',
-  geo = 'geo',
-  number = 'number',
-  other = 'other',
-  string = 'string',
-  time = 'time',
-  trace = 'trace',
-}
-
-/**
- * Every property is optional
- * Plugins may extend this with additional properties. Something like series overrides
- */
-export interface FieldConfig {
-  /**
-   * Significant digits (for display) TODO this should be a separate type
-   */
-  decimals?: number;
-  /**
-   * Human readable field metadata
-   */
-  description?: string;
-  /**
-   * The display value for this field.  This supports template variables blank is auto
-   */
-  displayName?: string;
-  /**
-   * This can be used by data sources that return and explicit naming structure for values and labels
-   * When this property is configured, this value is used rather than the default naming strategy.
-   */
-  displayNameFromDS?: string;
-  /**
-   * True if data source field supports ad-hoc filters
-   */
-  filterable?: boolean;
-  /**
-   * Interval indicates the expected regular step between values in the series.
-   * When an interval exists, consumers can identify "missing" values when the expected value is not present.
-   * The grafana timeseries visualization will render disconnected values when missing values are found it the time field.
-   * The interval uses the same units as the values.  For time.Time, this is defined in milliseconds.
-   * TODO | null
-   */
-  interval?: number;
-  /**
-   * Convert input values into a display string
-   */
-  mappings?: Array<ValueMapping>;
-  /**
-   * TODO | null
-   */
-  max?: number;
-  /**
-   * TODO | null
-   */
-  min?: number;
-  /**
-   * An explict path to the field in the datasource.  When the frame meta includes a path,
-   * This will default to `${frame.meta.path}/${field.name}
-   * When defined, this value can be used as an identifier within the datasource scope, and
-   * may be used to update the results
-   */
-  path?: string;
-  /**
-   * Map numeric values to states
-   */
-  thresholds?: Array<ThresholdsConfig>;
-  /**
-   * Numeric Options
-   */
-  unit?: string;
-  /**
-   * True if data source can write a value to the path.  Auth/authz are supported separately
-   */
-  writeable?: boolean;
-}
-
-export const defaultFieldConfig: Partial<FieldConfig> = {
-  mappings: [],
-  thresholds: [],
-};
-
-export interface FieldState {
-  /**
-   * Cache of reduced values
-   */
-  calcs?: Record<string, unknown>;
-  /**
-   * An appropriate name for the field (does not include frame info) TODO | null
-   */
-  displayName?: string;
-  /**
-   * Boolean value is true if field is in a larger data set with multiple frames.
-   * This is only related to the cached displayName property above.
-   */
-  multipleFrames?: boolean;
-  /**
-   * Boolean value is true if a null filling threshold has been applied
-   * against the frame of the field. This is used to avoid cases in which
-   * this would applied more than one time.
-   */
-  nullThresholdApplied?: boolean;
-  /**
-   * Location of this field within the context frames results
-   * @internal -- we will try to make this unnecessary
-   */
-  origin?: DataFrameFieldIndex;
-  /**
-   * The numeric range for values in this field.  This value will respect the min/max
-   * set in field config, or when set to `auto` this will have the min/max for all data
-   * in the response
-   */
-  range?: NumericRange;
-  /**
-   * Appropriate values for templating
-   */
-  scopedVars?: ScopedVars;
-  /**
-   * Series index is index for this field in a larger data set that can span multiple DataFrames
-   * Useful for assigning color to series by looking up a color in a palette using this index
-   */
-  seriesIndex?: number;
-}
-
-/**
- * TODO docs
- */
-export interface NumericRange {
-  delta: number;
-  max?: number;
-  min?: number;
-}
-
-export interface DataFrameFieldIndex {
-  fieldIndex: number;
-  frameIndex: number;
-}
-
-/**
- * TODO Duplicate declaration
- */
-export interface ThresholdsConfig {
-  mode: ThresholdsMode;
-  /**
-   * Must be sorted by 'value', first value is always -Infinity
-   */
-  steps: Array<Threshold>;
-}
-
-export const defaultThresholdsConfig: Partial<ThresholdsConfig> = {
-  steps: [],
-};
-
-/**
- * TODO Duplicate declaration
- */
-export interface Threshold {
-  /**
-   * TODO docs
-   */
-  color: string;
-  /**
-   * TODO docs
-   * TODO are the values here enumerable into a disjunction?
-   * Some seem to be listed in typescript comment
-   */
-  state?: string;
-  /**
-   * TODO docs
-   * FIXME the corresponding typescript field is required/non-optional, but nulls currently appear here when serializing -Infinity to JSON
-   */
-  value?: number;
-}
-
-/**
- * TODO Duplicate declaration
- */
-export enum ThresholdsMode {
-  Absolute = 'absolute',
-  Percentage = 'percentage',
-}
-
-/**
- * TODO docs | Duplicate declaration
- */
-export type ValueMapping = (ValueMap | RangeMap | RegexMap | SpecialValueMap);
-
-/**
- * TODO docs | Duplicate declaration
- */
-export enum MappingType {
-  RangeToText = 'range',
-  RegexToText = 'regex',
-  SpecialValue = 'special',
-  ValueToText = 'value',
-}
-
-/**
- * TODO docs | Duplicate declaration
- */
-export interface ValueMap {
-  options: Record<string, ValueMappingResult>;
-  type: MappingType.ValueToText;
-}
-
-/**
- * TODO docs | Duplicate declaration
- */
-export interface RangeMap {
-  options: {
-    /**
-     * to and from are `number | null` in current ts, really not sure what to do
-     */
-    from: number;
-    to: number;
-    result: ValueMappingResult;
-  };
-  type: MappingType.RangeToText;
-}
-
-/**
- * TODO docs | Duplicate declaration
- */
-export interface RegexMap {
-  options: {
-    pattern: string;
-    result: ValueMappingResult;
-  };
-  type: MappingType.RegexToText;
-}
-
-/**
- * TODO docs | Duplicate declaration
- */
-export interface SpecialValueMap {
-  options: {
-    match: ('true' | 'false');
-    pattern: string;
-    result: ValueMappingResult;
-  };
-  type: MappingType.SpecialValue;
-}
-
-/**
- * The JSON transfer object for DataFrames. Values are stored in simple JSON
- */
-export interface DataFrameJSON {
-  /**
-   * The field data
-   */
-  data?: DataFrameData;
-  /**
-   * The schema defines the field type and configuration.
-   */
-  schema?: DataFrameSchema;
-}
-
-export type FieldValues = Array<unknown>;
-
-export const defaultFieldValues: FieldValues = [];
-
-export interface DataFrameData {
-  /**
-   * Holds value bases per field so we can encode numbers from fixed points
-   * e.g. [1612900958, 1612900959, 1612900960] -> 1612900958 + [0, 1, 2]
-   */
-  bases?: Array<number>;
-  /**
-   * Since JSON cannot encode NaN, Inf, -Inf, and undefined, these entities
-   * are decoded after JSON.parse() using this struct
-   * TODO | null
-   */
-  entities?: Array<FieldValueEntityLookup>;
-  /**
-   * Holds enums per field so we can encode recurring string values as ints
-   * e.g. ["foo", "foo", "baz", "foo"] -> ["foo", "baz"] + [0,0,1,0]
-   * NOTE: currently only decoding is implemented
-   * TODO | null
-   */
-  enums?: Array<Array<string>>;
-  /**
-   * Holds value multipliers per field so we can encode large numbers concisely
-   * e.g. [4900000000, 35000000000] -> 1e9 + [4.9, 35]
-   */
-  factors?: Array<number>;
-  /**
-   * A columnar store that matches fields defined by schema.
-   */
-  values: Array<FieldValues>;
-}
-
-export const defaultDataFrameData: Partial<DataFrameData> = {
-  bases: [],
-  entities: [],
-  enums: [],
-  factors: [],
-  values: [],
-};
-
-/**
- * Since JSON cannot encode NaN, Inf, -Inf, and undefined, the locations
- * of these entities in field value arrays are stored here for restoration
- * after JSON.parse()
- */
-export interface FieldValueEntityLookup {
-  Inf?: Array<number>;
-  NaN?: Array<number>;
-  NegInf?: Array<number>;
-  /**
-   * Missing because of absence or join
-   */
-  Undef?: Array<number>;
-}
-
-export const defaultFieldValueEntityLookup: Partial<FieldValueEntityLookup> = {
-  Inf: [],
-  NaN: [],
-  NegInf: [],
-  Undef: [],
-};
-
-export interface DataFrameSchema {
-  /**
-   * Field definition without any metadata
-   */
-  fields: Array<FieldSchema>;
-  /**
-   * Initial response global metadata
-   */
-  meta?: QueryResultMeta;
-  /**
-   * Frame name
-   */
-  name?: string;
-  /**
-   * Matches the query target refId
-   */
-  refId?: string;
-}
-
-export const defaultDataFrameSchema: Partial<DataFrameSchema> = {
-  fields: [],
-};
-
-/**
- * TODO docs
- */
-export interface DataSourceJsonData {
-  alertmanagerUid?: string;
-  authType?: string;
-  defaultRegion?: string;
-  manageAlerts?: boolean;
-  profile?: string;
-}
-
-/**
- * Frontend settings model that is passed to Datasource constructor. This differs a bit from the model above
- * as this data model is available to every user who has access to a data source (Viewers+).  This is loaded
- * in bootData (on page load), or from: /api/frontend/settings
- */
-export interface DataSourceInstanceSettings {
-  /**
-   * Currently we support 2 options - direct (browser) and proxy (server)
-   */
-  access: string;
-  /**
-   * This is the full Authorization header if basic auth is enabled.
-   * Only available here when access is Browser (direct), when access is Server (proxy)
-   * The basic auth header, username & password is never exposed to browser/Frontend
-   * so this will be empty then.
-   */
-  basicAuth?: string;
-  /**
-   *  @deprecated -- use jsonData to store information related to database.
-   * This field should only be used by Elasticsearch and Influxdb.
-   */
-  database?: string;
-  id: number;
-  isDefault?: boolean;
-  /**
-   * Extended in veneer
-   */
-  jsonData: unknown;
-  meta: DataSourcePluginMeta;
-  name: string;
-  /**
-   * when access is direct, for some legacy datasources
-   */
-  password?: string;
-  /**
-   * When the name+uid are based on template variables, maintain access to the real values
-   */
-  rawRef?: DataSourceRef;
-  readOnly: boolean;
-  type: string;
-  uid: string;
-  url?: string;
-  username?: string;
-  withCredentials?: boolean;
-}
-
-/**
- * TODO docs
- */
-export interface DataSourcePluginMeta {
-  alerting?: boolean;
-  annotations?: boolean;
-  backend?: boolean;
-  builtIn?: boolean;
-  category?: string;
-  hasQueryHelp?: boolean;
-  isBackend?: boolean;
-  logs?: boolean;
-  metrics?: boolean;
-  mixed?: boolean;
-  queryOptions?: PluginMetaQueryOptions;
-  sort?: number;
-  streaming?: boolean;
-  tracing?: boolean;
-  unlicensed?: boolean;
-}
-
-/**
  * These are the common properties available to all queries in all datasources.
  * Specific implementations will *extend* this interface, adding the required
  * properties for the given context.
@@ -529,6 +38,43 @@ export interface DataQuery {
    * A - Z
    */
   refId: string;
+}
+
+export interface MapLayerOptions {
+  /**
+   * Custom options depending on the type
+   */
+  config?: unknown;
+  /**
+   * Defines a frame MatcherConfig that may filter data for the given layer
+   */
+  filterData?: unknown;
+  /**
+   * Common method to define geometry fields
+   */
+  location?: FrameGeometrySource;
+  /**
+   * configured unique display name
+   */
+  name: string;
+  /**
+   * Common properties:
+   * https://openlayers.org/en/latest/apidoc/module-ol_layer_Base-BaseLayer.html
+   * Layer opacity (0-1)
+   */
+  opacity?: number;
+  /**
+   * Check tooltip (defaults to true)
+   */
+  tooltip?: boolean;
+  type: string;
+}
+
+export enum FrameGeometrySourceMode {
+  Auto = 'auto',
+  Coords = 'coords',
+  Geohash = 'geohash',
+  Lookup = 'lookup',
 }
 
 /**
@@ -979,324 +525,6 @@ export enum BarGaugeDisplayMode {
 }
 
 /**
- * TODO docs
- */
-export interface VizTooltipOptions {
-  mode: TooltipDisplayMode;
-  sort: SortOrder;
-}
-
-export interface Labels {}
-
-/**
- * TODO docs | generic type
- */
-export interface ScopedVar {
-  text: unknown;
-  value: unknown;
-}
-
-/**
- * TODO docs
- */
-export interface ScopedVars {}
-
-/**
- * TODO Should be moved to common data query?
- */
-export interface QueryResultBase {
-  /**
-   * Used by some backend data sources to communicate back info about the execution (generated sql, timing)
-   */
-  meta?: QueryResultMeta;
-  /**
-   * Matches the query target refId
-   */
-  refId?: string;
-}
-
-/**
- * TODO docs
- */
-export interface QueryResultMeta {
-  /**
-   * The path for live stream updates for this frame
-   */
-  channel?: string;
-  /**
-   * DataSource Specific Values
-   */
-  custom?: Record<string, unknown>;
-  /**
-   * Optionally identify which topic the frame should be assigned to.
-   * A value specified in the response will override what the request asked for.
-   */
-  dataTopic?: DataTopic;
-  /**
-   * This is the raw query sent to the underlying system.  All macros and templating
-   * as been applied.  When metadata contains this value, it will be shown in the query inspector
-   */
-  executedQueryString?: string;
-  instant?: boolean;
-  /**
-   * Did the query response come from the cache
-   */
-  isCachedResponse?: boolean;
-  /**
-   * used to keep track of old json doc values
-   */
-  json?: boolean;
-  /**
-   * used by log models and loki
-   */
-  limit?: number;
-  /**
-   * Meta notices
-   */
-  notices?: Array<QueryResultMetaNotice>;
-  /**
-   * A browsable path on the datasource
-   */
-  path?: string;
-  /**
-   * defaults to '/'
-   */
-  pathSeparator?: string;
-  /**
-   * Currently used to show results in Explore only in preferred visualisation option
-   */
-  preferredVisualisationType?: PreferredVisualisationType;
-  /**
-   * Legacy data source specific, should be moved to custom
-   * used by log models and loki
-   */
-  searchWords?: Array<string>;
-  /**
-   * Stats
-   */
-  stats?: Array<QueryResultMetaStat>;
-  /**
-   * Used to track transformation ids that where part of the processing
-   */
-  transformations?: Array<string>;
-  type?: DataFrameType;
-}
-
-export const defaultQueryResultMeta: Partial<QueryResultMeta> = {
-  notices: [],
-  searchWords: [],
-  stats: [],
-  transformations: [],
-};
-
-/**
- * TODO this is an enum with one field
- * Attached to query results (not persisted)
- */
-export type DataTopic = 'annotations';
-
-/**
- * TODO docs
- */
-export interface QueryResultMetaStat extends FieldConfig {
-  /**
-   * The display value for this field.  This supports template variables blank is auto
-   */
-  displayName: string;
-  value: number;
-}
-
-export interface QueryResultMetaNotice {
-  /**
-   * Optionally suggest an appropriate tab for the panel inspector
-   */
-  inspect?: ('meta' | 'error' | 'data' | 'stats');
-  /**
-   * An optional link that may be displayed in the UI.
-   * This value may be an absolute URL or relative to grafana root
-   */
-  link?: string;
-  /**
-   * Specify the notice severity
-   */
-  severity: ('info' | 'warning' | 'error');
-  /**
-   * Notice descriptive text
-   */
-  text: string;
-}
-
-/**
- * TODO docs
- */
-export interface PluginMeta {
-  baseUrl: string;
-  defaultNavUrl?: string;
-  /**
-   * Define plugin requirements
-   */
-  dependencies?: PluginDependencies;
-  enabled?: boolean;
-  enterprise?: boolean;
-  hasUpdate?: boolean;
-  id: string;
-  includes?: Array<PluginInclude>;
-  info: {
-    author: {
-      name: string;
-      url?: string;
-    };
-    description: string;
-    links: Array<PluginMetaInfoLink>;
-    logos: {
-      large: string;
-      small: string;
-    };
-    build?: Array<PluginBuildInfo>;
-    screenshots: Array<ScreenshotInfo>;
-    updated: string;
-    version: string;
-  };
-  /**
-   * Filled in by the backend
-   */
-  jsonData?: unknown;
-  latestVersion?: string;
-  live?: boolean;
-  /**
-   * System.load & relative URLS
-   */
-  module: string;
-  name: string;
-  pinned?: boolean;
-  secureJsonData?: Record<string, unknown>;
-  secureJsonFields?: Record<string, boolean>;
-  signature?: PluginSignatureStatus;
-  signatureOrg?: string;
-  signatureType?: PluginSignatureType;
-  state?: PluginState;
-  type: PluginType;
-}
-
-export const defaultPluginMeta: Partial<PluginMeta> = {
-  includes: [],
-};
-
-/**
- * Describes {@link https://grafana.com/docs/grafana/latest/plugins | type of plugin}
- */
-export enum PluginType {
-  app = 'app',
-  datasource = 'datasource',
-  panel = 'panel',
-  renderer = 'renderer',
-  secretsmanager = 'secretsmanager',
-}
-
-export interface PluginMetaInfoLink {
-  name: string;
-  url: string;
-}
-
-export interface PluginBuildInfo {
-  branch?: string;
-  hash?: string;
-  number?: number;
-  pr?: number;
-  repo?: string;
-  time?: number;
-}
-
-export interface ScreenshotInfo {
-  name: string;
-  path: string;
-}
-
-/**
- * TODO docs
- */
-export enum PluginIncludeType {
-  dashboard = 'dashboard',
-  datasource = 'datasource',
-  page = 'page',
-  panel = 'panel',
-}
-
-/**
- * TODO docs
- */
-export interface PluginInclude {
-  /**
-   * Adds the "page" or "dashboard" type includes to the navigation if set to `true`.
-   */
-  addToNav?: boolean;
-  /**
-   * Angular app pages
-   */
-  component?: string;
-  icon?: string;
-  name: string;
-  path?: string;
-  /**
-   * "Admin", "Editor" or "Viewer". If set then the include will only show up in the navigation if the user has the required roles.
-   */
-  role?: string;
-  type: PluginIncludeType;
-}
-
-/**
- * alpha - Only included if `enable_alpha` config option is true
- * beta - Will show a warning banner
- * stable - Will not show anything
- * deprecated - Will continue to work -- but not show up in the options to add
- */
-export enum PluginState {
-  alpha = 'alpha',
-  beta = 'beta',
-  deprecated = 'deprecated',
-  stable = 'stable',
-}
-
-/**
- * TODO docs
- */
-export interface PluginDependencies {
-  grafanaDependency?: string;
-  grafanaVersion: string;
-  plugins: Array<PluginDependencyInfo>;
-}
-
-export const defaultPluginDependencies: Partial<PluginDependencies> = {
-  plugins: [],
-};
-
-/**
- * TODO docs
- */
-export interface PluginDependencyInfo {
-  id: string;
-  name: string;
-  type: PluginType;
-  version: string;
-}
-
-/**
- * Describes status of {@link https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/ | plugin signature}
- * internal - core plugin, no signature
- * valid - signed and accurate MANIFEST
- * invalid - invalid signature
- * modified - valid signature, but content mismatch
- * missing - missing signature file
- */
-export enum PluginSignatureStatus {
-  internal = 'internal',
-  invalid = 'invalid',
-  missing = 'missing',
-  modified = 'modified',
-  valid = 'valid',
-}
-
-/**
  * Internally, this is the "type" of cell that's being displayed
  * in the table such as colored text, JSON, gauge, etc.
  * The color-background-solid, gradient-gauge, and lcd-gauge
@@ -1393,35 +621,6 @@ export type TimeZoneUtc = 'utc';
  */
 export type TimeZoneBrowser = 'browser';
 
-/**
- * TODO duplicate
- */
-export interface ValueMappingResult {
-  color?: string;
-  icon?: string;
-  index?: number;
-  text?: string;
-}
-
-export interface FieldSchema {
-  config?: FieldConfig;
-  labels?: Labels;
-  /**
-   * The column name
-   */
-  name: string;
-  type?: FieldType;
-}
-
-/**
- * TODO docs
- */
-export interface PluginMetaQueryOptions {
-  cacheTimeout?: boolean;
-  maxDataPoints?: boolean;
-  minInterval?: boolean;
-}
-
 export interface DataSourceRef {
   /**
    * The plugin type-id
@@ -1433,17 +632,28 @@ export interface DataSourceRef {
   uid?: string;
 }
 
-export type PreferredVisualisationType = ('graph' | 'table' | 'logs' | 'trace' | 'nodeGraph' | 'flamegraph' | 'rawPrometheus');
+export interface FrameGeometrySource {
+  /**
+   * Path to Gazetteer
+   */
+  gazetteer?: string;
+  /**
+   * Field mappings
+   */
+  geohash?: string;
+  latitude?: string;
+  longitude?: string;
+  lookup?: string;
+  mode: FrameGeometrySourceMode;
+  wkt?: string;
+}
 
 /**
- * Describes level of {@link https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/#plugin-signature-levels/ | plugin signature level}
+ * TODO docs
  */
-export enum PluginSignatureType {
-  commercial = 'commercial',
-  community = 'community',
-  core = 'core',
-  grafana = 'grafana',
-  private = 'private',
+export interface VizTooltipOptions {
+  mode: TooltipDisplayMode;
+  sort: SortOrder;
 }
 
 /**
