@@ -108,7 +108,10 @@ func UploadPackages(c *cli.Context) error {
 		}
 	}
 
-	cfg.versionFolder = getVersionFolder(cfg, event)
+	cfg.versionFolder, err = getVersionFolder(cfg, event)
+	if err != nil {
+		return err
+	}
 
 	if err := uploadPackages(cfg); err != nil {
 		return cli.Exit(err.Error(), 1)
@@ -135,20 +138,20 @@ func bucketForEnterprise2(releaseModeConfig *config.BuildConfig, event string) (
 	return "", fmt.Errorf("enterprise2 bucket var doesn't exist")
 }
 
-func getVersionFolder(cfg uploadConfig, event string) string {
+func getVersionFolder(cfg uploadConfig, event string) (string, error) {
 	switch cfg.versionMode {
 	case config.TagMode:
-		return releaseFolder
+		return releaseFolder, nil
 	case config.MainMode, config.DownstreamMode:
-		return mainFolder
+		return mainFolder, nil
 	case config.ReleaseBranchMode:
-		return releaseBranchFolder
+		return releaseBranchFolder, nil
 	default:
 		// Corner case for custom enterprise2 mode
 		if event == config.Custom && cfg.versionMode == config.Enterprise2Mode {
-			return releaseFolder
+			return releaseFolder, nil
 		}
-		panic(fmt.Sprintf("Unrecognized version mode: %s", cfg.versionMode))
+		return "", fmt.Errorf("Unrecognized version mode: %s", cfg.versionMode)
 	}
 }
 

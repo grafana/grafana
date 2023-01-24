@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -18,16 +19,21 @@ func Test_getVersionFolder(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
+		err  error
 	}{
-		{"tag mode", args{uploadConfig{versionMode: config.TagMode}, "", releaseFolder}},
-		{"main mode", args{uploadConfig{versionMode: config.MainMode}, "", mainFolder}},
-		{"downstream mode", args{uploadConfig{versionMode: config.DownstreamMode}, "", mainFolder}},
-		{"release branch mode", args{uploadConfig{versionMode: config.ReleaseBranchMode}, "", releaseBranchFolder}},
-		{"enterprise pro mode", args{uploadConfig{versionMode: config.Enterprise2Mode}, config.Custom, releaseFolder}},
+		{"tag mode", args{uploadConfig{versionMode: config.TagMode}, "", releaseFolder}, nil},
+		{"main mode", args{uploadConfig{versionMode: config.MainMode}, "", mainFolder}, nil},
+		{"downstream mode", args{uploadConfig{versionMode: config.DownstreamMode}, "", mainFolder}, nil},
+		{"release branch mode", args{uploadConfig{versionMode: config.ReleaseBranchMode}, "", releaseBranchFolder}, nil},
+		{"enterprise pro mode", args{uploadConfig{versionMode: config.Enterprise2Mode}, config.Custom, releaseFolder}, nil},
+		{"unrecognised version mode", args{uploadConfig{versionMode: "foo"}, config.Custom, ""}, errors.New("")},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			versionMode := getVersionFolder(tt.args.cfg, tt.args.event)
+			versionMode, err := getVersionFolder(tt.args.cfg, tt.args.event)
+			if tt.err != nil {
+				require.Error(t, err)
+			}
 			require.Equal(t, versionMode, tt.args.versionFolder)
 		})
 	}
