@@ -1,10 +1,10 @@
 import { css } from '@emotion/css';
-import React, { FC, MouseEvent } from 'react';
+import React, { MouseEvent } from 'react';
 
 import { AnnotationEvent, DateTimeInput, GrafanaTheme2, PanelProps } from '@grafana/data';
 import { Card, TagList, Tooltip, RenderUserContentAsHTML, useStyles2 } from '@grafana/ui';
 
-import { PanelOptions } from './models.gen';
+import { PanelOptions } from './panelcfg.gen';
 
 interface Props extends Pick<PanelProps<PanelOptions>, 'options'> {
   annotation: AnnotationEvent;
@@ -14,14 +14,7 @@ interface Props extends Pick<PanelProps<PanelOptions>, 'options'> {
   onTagClick: (tag: string, remove?: boolean) => void;
 }
 
-export const AnnotationListItem: FC<Props> = ({
-  options,
-  annotation,
-  formatDate,
-  onClick,
-  onAvatarClick,
-  onTagClick,
-}) => {
+export const AnnotationListItem = ({ options, annotation, formatDate, onClick, onAvatarClick, onTagClick }: Props) => {
   const styles = useStyles2(getStyles);
   const { showUser, showTags, showTime } = options;
   const { text = '', login, email, avatarUrl, tags, time, timeEnd } = annotation;
@@ -78,7 +71,7 @@ interface AvatarProps {
   email?: string;
 }
 
-const Avatar: FC<AvatarProps> = ({ onClick, avatarUrl, login, email }) => {
+const Avatar = ({ onClick, avatarUrl, login, email }: AvatarProps) => {
   const styles = useStyles2(getStyles);
   const onAvatarClick = (e: MouseEvent) => {
     e.stopPropagation();
@@ -105,7 +98,7 @@ interface TimeStampProps {
   formatDate: (date: DateTimeInput, format?: string) => string;
 }
 
-const TimeStamp: FC<TimeStampProps> = ({ time, formatDate }) => {
+const TimeStamp = ({ time, formatDate }: TimeStampProps) => {
   const styles = useStyles2(getStyles);
 
   return (

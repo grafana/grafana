@@ -747,6 +747,63 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
   });
 }
 
+/**
+ * Creates an observable, which makes requests to get logs samples.
+ */
+export function queryLogsSample<TQuery extends DataQuery, TOptions extends DataSourceJsonData>(
+  datasource: DataSourceApi<TQuery, TOptions>,
+  logsSampleRequest: DataQueryRequest<TQuery>
+): Observable<DataQueryResponse> {
+  logsSampleRequest.hideFromInspector = true;
+
+  return new Observable((observer) => {
+    let rawLogsSample: DataFrame[] = [];
+    observer.next({
+      state: LoadingState.Loading,
+      error: undefined,
+      data: [],
+    });
+
+    const queryResponse = datasource.query(logsSampleRequest);
+    const queryObservable = isObservable(queryResponse) ? queryResponse : from(queryResponse);
+
+    const subscription = queryObservable.subscribe({
+      complete: () => {
+        observer.next({
+          state: LoadingState.Done,
+          error: undefined,
+          data: rawLogsSample,
+        });
+        observer.complete();
+      },
+      next: (dataQueryResponse: DataQueryResponse) => {
+        const { error } = dataQueryResponse;
+        if (error !== undefined) {
+          observer.next({
+            state: LoadingState.Error,
+            error,
+            data: [],
+          });
+          observer.error(error);
+        } else {
+          rawLogsSample = rawLogsSample.concat(dataQueryResponse.data.map(toDataFrame));
+        }
+      },
+      error: (error) => {
+        observer.next({
+          state: LoadingState.Error,
+          error: error,
+          data: [],
+        });
+        observer.error(error);
+      },
+    });
+    return () => {
+      subscription?.unsubscribe();
+    };
+  });
+}
+
 function getIntervalInfo(scopedVars: ScopedVars, timespanMs: number): { interval: string; intervalMs?: number } {
   if (scopedVars.__interval) {
     let intervalMs: number = scopedVars.__interval_ms.value;

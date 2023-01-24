@@ -57,7 +57,7 @@ func (r *Route) validateChild() error {
 	return nil
 }
 
-func (t *MessageTemplate) Validate() error {
+func (t *NotificationTemplate) Validate() error {
 	if t.Name == "" {
 		return fmt.Errorf("template must have a name")
 	}

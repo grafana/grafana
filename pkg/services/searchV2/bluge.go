@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/models"
 )
 
@@ -188,12 +190,21 @@ func getNonFolderDashboardDoc(dash dashboard, location string) *bluge.Document {
 }
 
 func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
+	dashURL := fmt.Sprintf("/d/%s/%s", dash.uid, slugify.Slugify(dash.summary.Name))
+
 	var docs []*bluge.Document
 	for _, panel := range dash.summary.Nested {
 		if panel.Fields["type"] == "row" {
 			continue // skip rows
 		}
-		doc := newSearchDocument(panel.UID, panel.Name, panel.Description, panel.URL).
+		idx := strings.LastIndex(panel.UID, "#")
+		panelId, err := strconv.Atoi(panel.UID[idx+1:])
+		if err != nil {
+			continue
+		}
+
+		url := fmt.Sprintf("%s?viewPanel=%d", dashURL, panelId)
+		doc := newSearchDocument(panel.UID, panel.Name, panel.Description, url).
 			AddField(bluge.NewKeywordField(documentFieldLocation, location).Aggregatable().StoreValue()).
 			AddField(bluge.NewKeywordField(documentFieldKind, string(entityKindPanel)).Aggregatable().StoreValue()) // likely want independent index for this
 

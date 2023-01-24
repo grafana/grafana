@@ -5,7 +5,7 @@ import { histogramFieldsToFrame } from '@grafana/data/src/transformations/transf
 import { useTheme2 } from '@grafana/ui';
 
 import { Histogram, getBucketSize } from './Histogram';
-import { PanelOptions } from './models.gen';
+import { PanelOptions } from './panelcfg.gen';
 
 type Props = PanelProps<PanelOptions>;
 
@@ -16,6 +16,20 @@ export const HistogramPanel = ({ data, options, width, height }: Props) => {
     if (!data?.series?.length) {
       return undefined;
     }
+
+    // stamp origins for legend's calcs (from raw values)
+    data.series.forEach((frame, frameIndex) => {
+      frame.fields.forEach((field, fieldIndex) => {
+        field.state = {
+          ...field.state,
+          origin: {
+            frameIndex,
+            fieldIndex,
+          },
+        };
+      });
+    });
+
     if (data.series.length === 1) {
       const info = getHistogramFields(data.series[0]);
       if (info) {

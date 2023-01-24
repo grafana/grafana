@@ -34,7 +34,7 @@ export const RuleDetails: FC<Props> = ({ rule }) => {
 
   return (
     <div>
-      <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} />
+      <RuleDetailsActionButtons rule={rule} rulesSource={rulesSource} isViewMode={false} />
       <div className={styles.wrapper}>
         <div className={styles.leftSide}>
           {<EvaluationBehaviorSummary rule={rule} />}

@@ -20,6 +20,7 @@ import {
   measureText,
   PlotLegend,
   Portal,
+  StackingMode,
   TooltipDisplayMode,
   UPlotConfigBuilder,
   UPLOT_AXIS_FONT_SIZE,
@@ -36,7 +37,7 @@ import { CloseButton } from 'app/core/components/CloseButton/CloseButton';
 import { DataHoverView } from '../geomap/components/DataHoverView';
 import { getFieldLegendItem } from '../state-timeline/utils';
 
-import { PanelOptions } from './models.gen';
+import { PanelOptions } from './panelcfg.gen';
 import { prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
 
 const TOOLTIP_OFFSET = 10;
@@ -168,6 +169,8 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       const disp = getFieldDisplayName(field, alignedFrame);
       seriesIdx = info.aligned.fields.findIndex((f) => disp === getFieldDisplayName(f, info.aligned));
     }
+    const tooltipMode =
+      options.fullHighlight && options.stacking !== StackingMode.None ? TooltipDisplayMode.Multi : options.tooltip.mode;
 
     return (
       <>
@@ -195,7 +198,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
           rowIndex={datapointIdx}
           columnIndex={seriesIdx}
           sortOrder={options.tooltip.sort}
-          mode={options.tooltip.mode}
+          mode={tooltipMode}
         />
       </>
     );
@@ -280,6 +283,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       text,
       xTickLabelRotation,
       xTickLabelSpacing,
+      fullHighlight,
     } = options;
 
     return preparePlotConfigBuilder({
@@ -305,6 +309,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
       getColor,
       fillOpacity,
       allFrames: info.viz,
+      fullHighlight,
     });
   };
 
@@ -350,7 +355,7 @@ export const BarChartPanel: React.FunctionComponent<Props> = ({
                 offset={{ x: TOOLTIP_OFFSET, y: TOOLTIP_OFFSET }}
                 allowPointerEvents={isToolTipOpen.current}
               >
-                {renderTooltip(info.aligned, focusedSeriesIdx, focusedPointIdx)}
+                {renderTooltip(info.viz[0], focusedSeriesIdx, focusedPointIdx)}
               </VizTooltipContainer>
             )}
           </Portal>

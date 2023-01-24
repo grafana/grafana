@@ -14,8 +14,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -84,7 +86,7 @@ func getContextHandler(t *testing.T) *ContextHandler {
 	require.NoError(t, err)
 	userAuthTokenSvc := authtest.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
-	authJWTSvc := models.NewFakeJWTService()
+	authJWTSvc := jwt.NewFakeJWTService()
 	tracer := tracing.InitializeTracerForTest()
 
 	loginService := loginservice.LoginServiceMock{ExpectedUser: &user.User{ID: userID}}
@@ -101,28 +103,12 @@ func getContextHandler(t *testing.T) *ContextHandler {
 	}
 	orgService := orgtest.NewOrgServiceFake()
 
-	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService, &userService, &FakeGetSignUserStore{})
+	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService, &userService, nil)
 	authenticator := &fakeAuthenticator{}
 
 	return ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc,
 		renderSvc, sqlStore, tracer, authProxy, loginService, nil, authenticator,
-		&userService, orgService, nil, nil, &authntest.FakeService{})
-}
-
-type FakeGetSignUserStore struct {
-	db.DB
-}
-
-func (f *FakeGetSignUserStore) GetSignedInUser(ctx context.Context, query *models.GetSignedInUserQuery) error {
-	if query.UserId != userID {
-		return user.ErrUserNotFound
-	}
-
-	query.Result = &user.SignedInUser{
-		UserID: userID,
-		OrgID:  orgID,
-	}
-	return nil
+		&userService, orgService, nil, featuremgmt.WithFeatures(), &authntest.FakeService{})
 }
 
 type fakeAuthenticator struct{}

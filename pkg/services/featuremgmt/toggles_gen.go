@@ -63,10 +63,6 @@ const (
 	// Experimental. Allow override default AAD audience for Azure Prometheus endpoint
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
 
-	// FlagInfluxdbBackendMigration
-	// Query InfluxDB InfluxQL without the proxy
-	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
-
 	// FlagShowFeatureFlagsInUI
 	// Show feature flags in the settings UI
 	FlagShowFeatureFlagsInUI = "showFeatureFlagsInUI"
@@ -74,6 +70,10 @@ const (
 	// FlagPublicDashboards
 	// Enables public access to dashboards
 	FlagPublicDashboards = "publicDashboards"
+
+	// FlagPublicDashboardsEmailSharing
+	// Allows public dashboard sharing to be restricted to only allowed emails
+	FlagPublicDashboardsEmailSharing = "publicDashboardsEmailSharing"
 
 	// FlagLokiLive
 	// Support WebSocket streaming for loki (early prototype)
@@ -290,4 +290,12 @@ const (
 	// FlagAlertingBacktesting
 	// Rule backtesting API for alerting
 	FlagAlertingBacktesting = "alertingBacktesting"
+
+	// FlagAlertingNoNormalState
+	// Stop maintaining state of alerts that are not firing
+	FlagAlertingNoNormalState = "alertingNoNormalState"
+
+	// FlagAzureMultipleResourcePicker
+	// Azure multiple resource picker
+	FlagAzureMultipleResourcePicker = "azureMultipleResourcePicker"
 )
