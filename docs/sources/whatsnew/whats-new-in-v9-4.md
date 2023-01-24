@@ -55,3 +55,7 @@ organizations will be able to harness fine-grained access control within Grafana
 For example, you could assign a user in your organization, whom has the Viewer basic role (note that a user must still
 have a basic role assigned) the new Grafana OnCall RBAC role of "Schedules Editor". This would allow the user to view
 everything in Grafana OnCall, and also allow them to edit OnCall Schedules
+
+## Loki datasource query validation
+
+We added support to validate queries and visually display errors as a query is being written, without having to execute it to receive this feedback. This feature supports single and multi-line queries, with and without variables.
