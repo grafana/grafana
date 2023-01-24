@@ -126,7 +126,7 @@ func ProvideService(
 		if err != nil {
 			s.log.Error("failed to configure oauth client", "client", clientName, "err", err)
 		} else {
-			s.clients[clientName] = clients.ProvideOAuthClient(clientName, cfg, oauthCfg, connector, httpClient)
+			s.clients[clientName] = clients.ProvideOAuth(clientName, cfg, oauthCfg, connector, httpClient)
 		}
 	}
 

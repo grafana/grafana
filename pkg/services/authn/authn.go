@@ -122,10 +122,16 @@ func (r *Request) GetMeta(k string) string {
 	return r.metadata[k]
 }
 
+const (
+	ExtraKeyOAuthPKCE  = "pkce"
+	ExtraKeyOAuthState = "state"
+)
+
 type Redirect struct {
-	URL   string
-	State string
-	PKCE  string
+	// Url used for redirect
+	URL string
+	// Extra contains data used for redirect, e.g. for oauth this would be state and pkce
+	Extra map[string]string
 }
 
 const (

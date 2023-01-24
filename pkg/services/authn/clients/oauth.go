@@ -10,15 +10,15 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/util/errutil"
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 const (
@@ -28,9 +28,9 @@ const (
 	codeChallengeMethodParamName = "code_challenge_method"
 	codeChallengeMethod          = "S256"
 
-	stateQueryName  = "state"
-	stateCookieName = "oauth_state"
-	pkceCookieName  = "oauth_code_verifier"
+	oauthStateQueryName  = "state"
+	oauthStateCookieName = "oauth_state"
+	oauthPKCECookieName  = "oauth_code_verifier"
 )
 
 var (
@@ -42,7 +42,7 @@ var (
 
 var _ authn.RedirectClient = new(OAuth)
 
-func ProvideOAuthClient(
+func ProvideOAuth(
 	name string, cfg *setting.Cfg, oauthCfg *social.OAuthInfo,
 	connector social.SocialConnector, httpClient *http.Client,
 ) *OAuth {
@@ -69,7 +69,7 @@ func (c *OAuth) Name() string {
 func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	r.SetMeta(authn.MetaKeyAuthModule, c.moduleName)
 	// get hashed state stored in cookie
-	stateCookie, err := r.HTTPRequest.Cookie(stateCookieName)
+	stateCookie, err := r.HTTPRequest.Cookie(oauthStateCookieName)
 	if err != nil {
 		return nil, errMissingOAuthState.Errorf("missing state cookie")
 	}
@@ -79,7 +79,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	}
 
 	// get state returned by the idp and hash it
-	stateQuery := hashOAuthState(r.HTTPRequest.URL.Query().Get(stateQueryName), c.cfg.SecretKey, c.oauthCfg.ClientSecret)
+	stateQuery := hashOAuthState(r.HTTPRequest.URL.Query().Get(oauthStateQueryName), c.cfg.SecretKey, c.oauthCfg.ClientSecret)
 	// compare the state returned by idp against the one we stored in cookie
 	if stateQuery != stateCookie.Value {
 		return nil, errInvalidOAuthState.Errorf("provided state did not match stored state")
@@ -87,7 +87,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 
 	var opts []oauth2.AuthCodeOption
 	if c.oauthCfg.UsePKCE {
-		pkceCookie, err := r.HTTPRequest.Cookie(pkceCookieName)
+		pkceCookie, err := r.HTTPRequest.Cookie(oauthPKCECookieName)
 		if err != nil {
 			return nil, err
 		}
@@ -161,11 +161,13 @@ func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redir
 		return nil, err
 	}
 
-	redirect := &authn.Redirect{}
-	redirect.PKCE = plainPKCE
-	redirect.State = hashedSate
-	redirect.URL = c.connector.AuthCodeURL(state, opts...)
-	return redirect, nil
+	return &authn.Redirect{
+		URL: c.connector.AuthCodeURL(state, opts...),
+		Extra: map[string]string{
+			authn.ExtraKeyOAuthState: hashedSate,
+			authn.ExtraKeyOAuthPKCE:  plainPKCE,
+		},
+	}, nil
 }
 
 func (c *OAuth) Test(ctx context.Context, r *authn.Request) bool {
