@@ -221,5 +221,5 @@ For more information about expressions, refer to [About expressions]({{< relref 
 1. Click **Apply**.
 
 ## Special cases
-When data source returns no series or numbers the expression engine produces special result `NoData`.  All operations with this type of result result in NoData. If for example, the request contains two queries to data source that are merged by math expression, NoData returned by at least one of data source queries will cause the result of the math expression and all subsequent chain of expressions to be NoData.
+When any queried data source returns no series or numbers, the expression engine returns `NoData`.  For example, if a request contains two data source queries that are merged by an expression, if `NoData` is returned by at least one of the data source queries, then the returned result for the entire query is `NoData`.
 NoData result allows [Grafana Alerting]({{< relref "../../../alerting/" >}}) to handle this case in a special way. Read more about [No data and error handling]({{< relref "../../../alerting/alerting-rules/create-grafana-managed-rule/#no-data-and-error-handling" >}})
