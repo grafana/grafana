@@ -16,8 +16,19 @@
 
     [[ if eq .Theme "light" ]]
     <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.light %>" />
-    [[ else ]]
+    [[ else if eq .Theme "dark" ]]
     <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.dark %>" />
+    [[ else ]]
+    <link
+      media="(prefers-color-scheme: light)"
+      rel="stylesheet"
+      href="[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.light %>"
+    />
+    <link
+      media="(prefers-color-scheme: dark)"
+      rel="stylesheet"
+      href="[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.dark %>"
+    />
     [[ end ]]
 
     <script nonce="[[.Nonce]]">
@@ -250,6 +261,17 @@
           dark: '[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.dark %>'
         }
       };
+
+      if (window.grafanaBootData.user.theme === "system") {
+        document.body.classList.remove("theme-system");
+        var darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+        if (darkQuery.matches) {
+          document.body.classList.add("theme-dark");
+        } else {
+          document.body.classList.add("theme-light");
+        }
+      }
 
       window.__grafana_load_failed = function() {
         var preloader = document.getElementsByClassName("preloader");
