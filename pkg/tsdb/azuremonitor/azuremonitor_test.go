@@ -86,6 +86,40 @@ func TestNewInstanceSettings(t *testing.T) {
 			},
 			Err: require.NoError,
 		},
+		{
+			name: "creates a customized route instance for Public cloud",
+			settings: backend.DataSourceInstanceSettings{
+				JSONData:                []byte(`{"cloudName":"azuremonitor","customizedRoutes":{"Route":{"URL":"url"}},"azureAuthType":"clientsecret"}`),
+				DecryptedSecureJSONData: map[string]string{"clientSecret": "secret"},
+				ID:                      50,
+			},
+			expectedModel: types.DatasourceInfo{
+				Cloud: "AzureCloud",
+				Credentials: &azcredentials.AzureClientSecretCredentials{
+					AzureCloud:   "AzureCloud",
+					ClientSecret: "secret",
+				},
+				Settings: types.AzureMonitorSettings{},
+				Routes: map[string]types.AzRoute{
+					"Route": {
+						URL: "url",
+					},
+				},
+				JSONData: map[string]interface{}{
+					"azureAuthType": "clientsecret",
+					"cloudName":     "azuremonitor",
+					"customizedRoutes": map[string]interface{}{
+						"Route": map[string]interface{}{
+							"URL": "url",
+						},
+					},
+				},
+				DatasourceID:            50,
+				DecryptedSecureJSONData: map[string]string{"clientSecret": "secret"},
+				Services:                map[string]types.DatasourceService{},
+			},
+			Err: require.NoError,
+		},
 	}
 
 	cfg := &setting.Cfg{
