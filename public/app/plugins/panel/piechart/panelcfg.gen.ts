@@ -8,7 +8,7 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-import * as ui from '@grafana/schema';
+import * as common from '@grafana/schema';
 
 export const PanelCfgModelVersion = Object.freeze([0, 0]);
 
@@ -42,7 +42,7 @@ export enum PieChartLegendValues {
   Value = 'value',
 }
 
-export interface PieChartLegendOptions extends ui.VizLegendOptions {
+export interface PieChartLegendOptions extends common.VizLegendOptions {
   values: Array<PieChartLegendValues>;
 }
 
@@ -50,7 +50,7 @@ export const defaultPieChartLegendOptions: Partial<PieChartLegendOptions> = {
   values: [],
 };
 
-export interface PanelOptions extends ui.OptionsWithTooltip, ui.SingleStatBaseOptions {
+export interface PanelOptions extends common.OptionsWithTooltip, common.SingleStatBaseOptions {
   displayLabels: Array<PieChartLabels>;
   legend: PieChartLegendOptions;
   pieType: PieChartType;
@@ -60,4 +60,4 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
   displayLabels: [],
 };
 
-export interface PanelFieldConfig extends ui.HideableFieldConfig {}
+export interface PanelFieldConfig extends common.HideableFieldConfig {}

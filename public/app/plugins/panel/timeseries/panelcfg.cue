@@ -15,7 +15,7 @@
 package grafanaplugin
 
 import (
-	ui "github.com/grafana/grafana/packages/grafana-schema/src/common"
+	"github.com/grafana/grafana/packages/grafana-schema/src/common"
 )
 
 composableKinds: PanelCfg: {
@@ -25,10 +25,10 @@ composableKinds: PanelCfg: {
 				schemas: [
 					{
 						PanelOptions: {
-							legend:  ui.VizLegendOptions
-							tooltip: ui.VizTooltipOptions
+							legend:  common.VizLegendOptions
+							tooltip: common.VizTooltipOptions
 						} @cuetsy(kind="interface")
-						PanelFieldConfig: ui.GraphFieldConfig & {} @cuetsy(kind="interface")
+						PanelFieldConfig: common.GraphFieldConfig & {} @cuetsy(kind="interface")
 					},
 				]
 			},
