@@ -1,45 +1,61 @@
 import { PromAlertingRuleState, PromRuleType } from '../../../../types/unified-alerting-dto';
 import { getFilter } from '../utils/search';
 
-import { applySearchFilterToQuery, getSearchFilterFromQuery } from './rulesSearchParser';
+import { applySearchFilterToQuery, getSearchFilterFromQuery, RuleHealth } from './rulesSearchParser';
 
 describe('Alert rules searchParser', () => {
   describe('getSearchFilterFromQuery', () => {
-    it.each(['datasource:prometheus'])('should parse data source filter from %s', (query) => {
+    it.each(['datasource:prometheus'])('should parse data source filter from "%s" query', (query) => {
       const filter = getSearchFilterFromQuery(query);
       expect(filter.dataSourceName).toBe('prometheus');
     });
 
-    it.each(['namespace:integrations-node'])('should parse namespace filter from %s', (query) => {
+    it.each(['namespace:integrations-node'])('should parse namespace filter from "%s" query', (query) => {
       const filter = getSearchFilterFromQuery(query);
       expect(filter.namespace).toBe('integrations-node');
     });
 
-    it.each(['label:team label:region=emea'])('should parse label filter from %s', (query) => {
+    it.each(['label:team label:region=emea'])('should parse label filter from "%s" query', (query) => {
       const filter = getSearchFilterFromQuery(query);
       expect(filter.labels).toHaveLength(2);
       expect(filter.labels).toContain('team');
       expect(filter.labels).toContain('region=emea');
     });
 
-    it.each(['group:cpu-utilization'])('should parse group filter from %s', (query) => {
+    it.each(['group:cpu-utilization'])('should parse group filter from "%s" query', (query) => {
       const filter = getSearchFilterFromQuery(query);
       expect(filter.groupName).toBe('cpu-utilization');
     });
 
-    it.each(['rule:cpu-80%-alert'])('should parse rule name filter from %s', (query) => {
+    it.each(['rule:cpu-80%-alert'])('should parse rule name filter from "%s" query', (query) => {
       const filter = getSearchFilterFromQuery(query);
       expect(filter.ruleName).toBe('cpu-80%-alert');
     });
 
-    it.each(['state:firing'])('should parse rule state filter from %s', (query) => {
+    it.each([
+      { query: 'state:firing', expectedFilter: PromAlertingRuleState.Firing },
+      { query: 'state:inactive', expectedFilter: PromAlertingRuleState.Inactive },
+      { query: 'state:pending', expectedFilter: PromAlertingRuleState.Pending },
+    ])('should parse $expectedFilter rule state filter from "$query" query', ({ query, expectedFilter }) => {
       const filter = getSearchFilterFromQuery(query);
-      expect(filter.ruleState).toBe(PromAlertingRuleState.Firing);
+      expect(filter.ruleState).toBe(expectedFilter);
     });
 
-    it.each(['type:recording'])('should parse rule type filter from %s', (query) => {
+    it.each([
+      { query: 'type:alerting', expectedFilter: PromRuleType.Alerting },
+      { query: 'type:recording', expectedFilter: PromRuleType.Recording },
+    ])('should parse $expectedFilter rule type filter from "$query" input', ({ query, expectedFilter }) => {
       const filter = getSearchFilterFromQuery(query);
-      expect(filter.ruleType).toBe(PromRuleType.Recording);
+      expect(filter.ruleType).toBe(expectedFilter);
+    });
+
+    it.each([
+      { query: 'health:ok', expectedFilter: RuleHealth.Ok },
+      { query: 'health:nodata', expectedFilter: RuleHealth.NoData },
+      { query: 'health:error', expectedFilter: RuleHealth.Error },
+    ])('should parse RuleHealth $expectedFilter filter from "$query" query', ({ query, expectedFilter }) => {
+      const filter = getSearchFilterFromQuery(query);
+      expect(filter.ruleHealth).toBe(expectedFilter);
     });
 
     it('should parse non-filtering words as free form query', () => {
@@ -120,12 +136,13 @@ describe('Alert rules searchParser', () => {
         ruleName: 'cpu > 80%',
         ruleType: PromRuleType.Alerting,
         ruleState: PromAlertingRuleState.Firing,
+        ruleHealth: RuleHealth.Ok,
       });
 
       const query = applySearchFilterToQuery('', filter);
 
       expect(query).toBe(
-        'datasource:"Mimir Dev" namespace:/etc/prometheus group:cpu-usage rule:"cpu > 80%" state:firing type:alerting label:team label:region=apac cpu eighty'
+        'datasource:"Mimir Dev" namespace:/etc/prometheus group:cpu-usage rule:"cpu > 80%" state:firing type:alerting health:ok label:team label:region=apac cpu eighty'
       );
     });
 
