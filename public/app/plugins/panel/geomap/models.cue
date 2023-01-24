@@ -16,7 +16,7 @@ package grafanaplugin
 
 import (
 	"github.com/grafana/thema"
-		ui "github.com/grafana/grafana/packages/grafana-schema/src/common"
+	ui "github.com/grafana/grafana/packages/grafana-schema/src/common"
 )
 
 Panel: thema.#Lineage & {
@@ -26,25 +26,25 @@ Panel: thema.#Lineage & {
 			schemas: [
 				{
 					PanelOptions: {
-						view: MapViewConfig
+						view:     MapViewConfig
 						controls: ControlsOptions
-						basemap: ui.MapLayerOptions
+						basemap:  ui.MapLayerOptions
 						layers: [...ui.MapLayerOptions]
 						tooltip: TooltipOptions
 					} @cuetsy(kind="interface")
 
 					MapViewConfig: {
-						id: string | *"zero"
-						lat?: int64 | *0
-						lon?: int64 | *0
-						zoom?: int64 | *1
-						minZoom?: int64
-						maxZoom?: int64
-						padding?: int64
+						id:         string | *"zero"
+						lat?:       int64 | *0
+						lon?:       int64 | *0
+						zoom?:      int64 | *1
+						minZoom?:   int64
+						maxZoom?:   int64
+						padding?:   int64
 						allLayers?: bool | *true
-						lastOnly?: bool
-						layer?: string
-						shared?: bool
+						lastOnly?:  bool
+						layer?:     string
+						shared?:    bool
 					} @cuetsy(kind="interface")
 
 					ControlsOptions: {
@@ -68,7 +68,7 @@ Panel: thema.#Lineage & {
 
 					TooltipMode: "none" | "details" @cuetsy(kind="enum",memberNames="None|Details")
 
-					MapCenterID: "zero"|"coords"|"fit" @cuetsy(kind="enum",members="Zero|Coordinates|Fit")
+					MapCenterID: "zero" | "coords" | "fit" @cuetsy(kind="enum",members="Zero|Coordinates|Fit")
 				},
 			]
 		},
