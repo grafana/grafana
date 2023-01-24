@@ -8,13 +8,13 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-import * as ui from '@grafana/schema';
+import * as common from '@grafana/schema';
 
 export const PanelCfgModelVersion = Object.freeze([0, 0]);
 
-export interface PanelOptions extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui.OptionsWithTextFormatting {
+export interface PanelOptions extends common.OptionsWithLegend, common.OptionsWithTooltip, common.OptionsWithTextFormatting {
   /**
-   * TODO docs
+   * Controls the radius of each bar.
    */
   barRadius?: number;
   /**
@@ -22,7 +22,7 @@ export interface PanelOptions extends ui.OptionsWithLegend, ui.OptionsWithToolti
    */
   barWidth: number;
   /**
-   * TODO docs
+   * Use the color value for a sibling field to color each bar value.
    */
   colorByField?: string;
   /**
@@ -35,31 +35,31 @@ export interface PanelOptions extends ui.OptionsWithLegend, ui.OptionsWithToolti
    */
   groupWidth: number;
   /**
-   * TODO docs
+   * Controls the orientation of the bar chart, either vertical or horizontal.
    */
-  orientation: ui.VizOrientation;
+  orientation: common.VizOrientation;
   /**
    * This controls whether values are shown on top or to the left of bars.
    */
-  showValue: ui.VisibilityMode;
+  showValue: common.VisibilityMode;
   /**
-   * TODO docs
+   * Controls whether bars are stacked or not, either normally or in percent mode.
    */
-  stacking: ui.StackingMode;
+  stacking: common.StackingMode;
   /**
-   * TODO docs
+   * Manually select which field from the dataset to represent the x field.
    */
   xField?: string;
   /**
-   * TODO docs
+   * Sets the max length that a label can have before it is truncated.
    */
   xTickLabelMaxLength: number;
   /**
-   * TODO docs
+   * Controls the rotation of the x axis labels.
    */
   xTickLabelRotation: number;
   /**
-   * TODO docs
+   * Controls the spacing between x axis labels.
    * negative values indicate backwards skipping behavior
    */
   xTickLabelSpacing?: number;
@@ -70,14 +70,14 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
   barWidth: 0.97,
   fullHighlight: false,
   groupWidth: 0.7,
-  orientation: ui.VizOrientation.Auto,
-  showValue: ui.VisibilityMode.Auto,
-  stacking: ui.StackingMode.None,
+  orientation: common.VizOrientation.Auto,
+  showValue: common.VisibilityMode.Auto,
+  stacking: common.StackingMode.None,
   xTickLabelRotation: 0,
   xTickLabelSpacing: 0,
 };
 
-export interface PanelFieldConfig extends ui.AxisConfig, ui.HideableFieldConfig {
+export interface PanelFieldConfig extends common.AxisConfig, common.HideableFieldConfig {
   /**
    * Controls the fill opacity of the bars.
    */
@@ -86,7 +86,7 @@ export interface PanelFieldConfig extends ui.AxisConfig, ui.HideableFieldConfig 
    * Set the mode of the gradient fill. Fill gradient is based on the line color. To change the color, use the standard color scheme field option.
    * Gradient appearance is influenced by the Fill opacity setting.
    */
-  gradientMode?: ui.GraphGradientMode;
+  gradientMode?: common.GraphGradientMode;
   /**
    * Controls line width of the bars.
    */
@@ -94,11 +94,11 @@ export interface PanelFieldConfig extends ui.AxisConfig, ui.HideableFieldConfig 
   /**
    * Threshold rendering
    */
-  thresholdsStyle?: ui.GraphThresholdsStyleConfig;
+  thresholdsStyle?: common.GraphThresholdsStyleConfig;
 }
 
 export const defaultPanelFieldConfig: Partial<PanelFieldConfig> = {
   fillOpacity: 80,
-  gradientMode: ui.GraphGradientMode.None,
+  gradientMode: common.GraphGradientMode.None,
   lineWidth: 1,
 };

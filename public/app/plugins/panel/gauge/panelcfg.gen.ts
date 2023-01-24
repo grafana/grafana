@@ -8,11 +8,11 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-import * as ui from '@grafana/schema';
+import * as common from '@grafana/schema';
 
 export const PanelCfgModelVersion = Object.freeze([0, 0]);
 
-export interface PanelOptions extends ui.SingleStatBaseOptions {
+export interface PanelOptions extends common.SingleStatBaseOptions {
   showThresholdLabels: boolean;
   showThresholdMarkers: boolean;
 }
