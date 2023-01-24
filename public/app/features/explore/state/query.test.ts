@@ -517,7 +517,7 @@ describe('reducer', () => {
       mockDataProvider = () => {
         return of({ state: LoadingState.Done, error: undefined, data: [{}] });
       };
-      // turn logs volume off (but keep log sample on)
+      // turn logs volume off (but keep logs sample on)
       dispatch(setSupplementaryQueryEnabled(ExploreId.left, false, SupplementaryQueryType.LogsVolume));
       expect(getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].enabled).toBe(
         false
