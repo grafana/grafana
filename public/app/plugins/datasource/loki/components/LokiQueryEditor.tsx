@@ -67,7 +67,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
     setDataIsStale(false);
   }, [data]);
 
-  const onChangeInternal = async (query: LokiQuery) => {
+  const onChangeInternal = (query: LokiQuery) => {
     setDataIsStale(true);
     onChange(query);
   };
