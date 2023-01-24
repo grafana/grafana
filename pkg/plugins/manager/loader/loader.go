@@ -355,7 +355,7 @@ func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, pluginDi
 
 	plugin.SetLogger(log.New(fmt.Sprintf("plugin.%s", plugin.ID)))
 	if err := setImages(plugin, cdnBasePath); err != nil {
-		return nil, fmt.Errorf("set images: %w", err)
+		return nil, err
 	}
 
 	return plugin, nil
@@ -499,7 +499,7 @@ func baseURL(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string,
 	if isCDN {
 		u, err := pluginscdn.NewCDNURLConstructor(
 			cdnURLTemplate, pluginJSON.ID, pluginJSON.Info.Version,
-		).URLFor("")
+		).Base()
 		if err != nil {
 			return "", err
 		}
@@ -515,7 +515,7 @@ func module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string, 
 	if cdnURLTemplate != "" && isCDN {
 		u, err := pluginscdn.NewCDNURLConstructor(
 			cdnURLTemplate, pluginJSON.ID, pluginJSON.Info.Version,
-		).URLFor("module")
+		).Path("module")
 		if err != nil {
 			return "", err
 		}

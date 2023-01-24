@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"io"
 	"net/http"
 	"path"
@@ -14,6 +13,8 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+
+	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -376,7 +377,7 @@ func (hs *HTTPServer) serveLocalPluginAsset(c *models.ReqContext, plugin plugins
 		c.Resp.Header().Set("Cache-Control", "public, max-age=3600")
 	}
 
-	if rs, ok := f.(io.ReadSeekCloser); ok {
+	if rs, ok := f.(io.ReadSeeker); ok {
 		http.ServeContent(c.Resp, c.Req, assetPath, fi.ModTime(), rs)
 		return
 	}

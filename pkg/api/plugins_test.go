@@ -15,7 +15,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -142,7 +141,7 @@ func Test_PluginsInstallAndUninstall_AccessControl(t *testing.T) {
 			req := webtest.RequestWithSignedInUser(server.NewPostRequest("/api/plugins/test/install", input), userWithPermissions(1, tc.permissions))
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
-			assert.Equal(t, tc.expectedCode, res.StatusCode)
+			require.Equal(t, tc.expectedCode, res.StatusCode)
 			require.NoError(t, res.Body.Close())
 		})
 
@@ -151,7 +150,7 @@ func Test_PluginsInstallAndUninstall_AccessControl(t *testing.T) {
 			req := webtest.RequestWithSignedInUser(server.NewPostRequest("/api/plugins/test/uninstall", input), userWithPermissions(1, tc.permissions))
 			res, err := server.SendJSON(req)
 			require.NoError(t, err)
-			assert.Equal(t, tc.expectedCode, res.StatusCode)
+			require.Equal(t, tc.expectedCode, res.StatusCode)
 			require.NoError(t, res.Body.Close())
 		})
 	}
@@ -210,12 +209,12 @@ func Test_GetPluginAssetCDNRedirect(t *testing.T) {
 					callGetPluginAsset(sc)
 
 					// Check redirect code + location
-					assert.Equal(t, http.StatusFound, sc.resp.Code, "wrong status code")
-					assert.Equal(t, cdnFolderBaseURL+"/"+cas.expRelativeURL, sc.resp.Header().Get("Location"), "wrong location header")
+					require.Equal(t, http.StatusFound, sc.resp.Code, "wrong status code")
+					require.Equal(t, cdnFolderBaseURL+"/"+cas.expRelativeURL, sc.resp.Header().Get("Location"), "wrong location header")
 
 					// Check metric
 					require.NoError(t, counter.Write(&m))
-					assert.Equal(t, before+1, m.Counter.GetValue(), "prometheus metric not incremented")
+					require.Equal(t, before+1, m.Counter.GetValue(), "prometheus metric not incremented")
 				},
 			)
 		}
@@ -232,18 +231,18 @@ func Test_GetPluginAssetCDNRedirect(t *testing.T) {
 					"plugin_version": "2.0.0",
 				})
 				require.NoError(t, counter.Write(&m))
-				assert.Zero(t, m.Counter.GetValue())
+				require.Zero(t, m.Counter.GetValue())
 
 				// Call handler
 				callGetPluginAsset(sc)
 
 				// 404 implies access to fs
-				assert.Equal(t, http.StatusNotFound, sc.resp.Code)
-				assert.Empty(t, sc.resp.Header().Get("Location"))
+				require.Equal(t, http.StatusNotFound, sc.resp.Code)
+				require.Empty(t, sc.resp.Header().Get("Location"))
 
 				// Ensure the metric did not change
 				require.NoError(t, counter.Write(&m))
-				assert.Zero(t, m.Counter.GetValue())
+				require.Zero(t, m.Counter.GetValue())
 			},
 		)
 	})

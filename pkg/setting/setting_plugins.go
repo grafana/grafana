@@ -49,7 +49,7 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	}
 
 	// Plugins CDN settings
-	cfg.PluginsCDNURLTemplate = strings.TrimRight(pluginsSection.Key("plugins_cdn_base_url").MustString(""), "/")
+	cfg.PluginsCDNURLTemplate = strings.TrimRight(pluginsSection.Key("cdn_base_url").MustString(""), "/")
 
 	return nil
 }
