@@ -4,8 +4,11 @@ import datasetResponse from './datasets-response.json';
 import fieldsResponse from './fields-response.json';
 import tablesResponse from './tables-response.json';
 
+const tableNameWithSpecialCharacter = tablesResponse.results.tables.frames[0].data.values[0][1];
+const normalTableName = tablesResponse.results.tables.frames[0].data.values[0][0];
+
 describe('MySQL datasource', () => {
-  it('code editor autocomplete should work', () => {
+  it('code editor autocomplete should handle table name escaping/quoting', () => {
     e2e.flows.login('admin', 'admin');
 
     e2e().intercept('POST', '**/api/ds/query', (req) => {
@@ -34,8 +37,20 @@ describe('MySQL datasource', () => {
     e2e().get("label[for^='option-code']").should('be.visible').click();
     e2e().get('textarea').type('S{downArrow}{enter}');
     e2e().wait('@tables');
-    e2e().get('.suggest-widget').contains('`table-name-that-needs-quotes`').should('be.visible');
+    e2e().get('.suggest-widget').contains(tableNameWithSpecialCharacter).should('be.visible');
     e2e().get('textarea').type('{enter}');
-    e2e().get('textarea').should('have.value', `SELECT  FROM grafana.\`table-name-that-needs-quotes\``);
+    e2e().get('textarea').should('have.value', `SELECT  FROM grafana.\`${tableNameWithSpecialCharacter}\``);
+
+    const deleteTimes = new Array(tableNameWithSpecialCharacter.length + 2).fill(
+      '{backspace}',
+      0,
+      tableNameWithSpecialCharacter.length + 2
+    );
+    e2e().get('textarea').type(deleteTimes.join(''));
+
+    e2e().get('textarea').type('{command}i');
+    e2e().get('.suggest-widget').contains(tableNameWithSpecialCharacter).should('be.visible');
+    e2e().get('textarea').type('S{downArrow}{enter}');
+    e2e().get('textarea').should('have.value', `SELECT  FROM grafana.${normalTableName}`);
   });
 });

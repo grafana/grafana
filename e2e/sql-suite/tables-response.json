@@ -11,7 +11,7 @@
             },
             "fields": [{ "name": "TABLE_NAME", "type": "string", "typeInfo": { "frame": "string", "nullable": true } }]
           },
-          "data": { "values": [["normalTable", "table-name-that-needs-quotes"]] }
+          "data": { "values": [["normalTable", "table-name"]] }
         }
       ]
     }
