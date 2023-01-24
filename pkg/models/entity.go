@@ -122,18 +122,21 @@ type EntityErrorInfo struct {
 	Details interface{} `json:"details,omitempty"`
 }
 
-// Reference to another object outside itself
-// This message is derived from the object body and can be used to search for references.
-// This does not represent a method to declare a reference to another object.
-type EntityExternalReference struct {
-	// datasource (instance), dashboard (instance),
-	Kind string `json:"kind,omitempty"`
+// Identify the objects required for this entity to work properly
+// The values are uses to drive a search index to see what is required across the corpus
+type EntityDependency struct {
+	// eg: datasource, plugin, runtime
+	Category string `json:"category,omitempty"`
 
-	// prometheus / heatmap, heatamp|prometheus
+	// datasource > prometheus|influx|...
+	// plugin > panel | datasource
+	// runtime > transformer
 	Type string `json:"type,omitempty"` // flavor
 
-	// Unique ID for this object
-	UID string `json:"UID,omitempty"`
+	// datasource > UID
+	// plugin > plugin identifier
+	// runtime > name lookup
+	Identifier string `json:"ID,omitempty"`
 }
 
 // EntitySummaryBuilder will read an object, validate it, and return a summary, sanitized payload, or an error
