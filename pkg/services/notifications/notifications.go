@@ -54,7 +54,8 @@ func ProvideService(bus bus.Bus, cfg *setting.Cfg, mailer Mailer, store TempUser
 
 	mailTemplates = template.New("name")
 	mailTemplates.Funcs(template.FuncMap{
-		"Subject": subjectTemplateFunc,
+		"Subject":       subjectTemplateFunc,
+		"HiddenSubject": hiddenSubjectTemplateFunc,
 	})
 	mailTemplates.Funcs(sprig.FuncMap())
 
@@ -135,6 +136,15 @@ func (ns *NotificationService) SendWebhookSync(ctx context.Context, cmd *models.
 	})
 }
 
+// hiddenSubjectTemplateFunc sets the subject template (value) on the map represented by `.Subject.` (obj) so that it can be compiled and executed later.
+// It returns a blank string, so there will be no resulting value left in place of the template.
+func hiddenSubjectTemplateFunc(obj map[string]interface{}, value string) string {
+	obj["value"] = value
+	return ""
+}
+
+// subjectTemplateFunc does the same thing has hiddenSubjectTemplateFunc, but in addition it executes and returns the subject template using the data represented in `.TemplateData` (data)
+// This results in the template being replaced by the subject string.
 func subjectTemplateFunc(obj map[string]interface{}, data map[string]interface{}, value string) string {
 	obj["value"] = value
 

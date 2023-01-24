@@ -1,4 +1,4 @@
-[[Subject .Subject .TemplateData "[[.Title]]"]]
+[[HiddenSubject .Subject "[[.Title]]"]]
 
 [[.Title]]
 ----------------
