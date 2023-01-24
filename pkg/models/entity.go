@@ -124,9 +124,10 @@ type EntityErrorInfo struct {
 
 // Identify the objects required for this entity to work properly
 // The values are uses to drive a search index to see what is required across the corpus
-type EntityDependency struct {
+type EntityExternalReference struct {
+	// Category of dependency
 	// eg: datasource, plugin, runtime
-	Category string `json:"category,omitempty"`
+	Family string `json:"family,omitempty"`
 
 	// datasource > prometheus|influx|...
 	// plugin > panel | datasource
