@@ -166,7 +166,7 @@ func (h *AnnotationBackend) recordAnnotationsSync(ctx context.Context, panel *pa
 		dashID, err := h.dashboards.getID(ctx, panel.orgID, panel.dashUID)
 		if err != nil {
 			logger.Error("Error getting dashboard for alert annotation", "dashboardUID", panel.dashUID, "error", err)
-			return fmt.Errorf("Error getting dashboard for alert annotation: %w", err)
+			return fmt.Errorf("error getting dashboard for alert annotation: %w", err)
 		}
 
 		for i := range annotations {
@@ -177,7 +177,7 @@ func (h *AnnotationBackend) recordAnnotationsSync(ctx context.Context, panel *pa
 
 	if err := h.annotations.SaveMany(ctx, annotations); err != nil {
 		logger.Error("Error saving alert annotation batch", "error", err)
-		return fmt.Errorf("Error saving alert annotation batch: %w", err)
+		return fmt.Errorf("error saving alert annotation batch: %w", err)
 	}
 
 	logger.Debug("Done saving alert annotation batch")
