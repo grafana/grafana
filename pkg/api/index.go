@@ -35,12 +35,14 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	hasEditPerm := hasAccess(hs.editorInAnyFolder, ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionFoldersCreate)))
 
-	settings, err := hs.getFrontendSettingsMap(c)
+	settings, err := hs.getFrontendSettings(c)
 	if err != nil {
 		return nil, err
 	}
 
-	settings["dateFormats"] = hs.Cfg.DateFormats
+	// PR TODO: Should this just move to frontendsettings.go?
+	settings.DateFormats = hs.Cfg.DateFormats
+	settings.IsPublicDashboardView = c.IsPublicDashboardView
 
 	prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: c.UserID, OrgID: c.OrgID, Teams: c.Teams}
 	prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
@@ -70,16 +72,12 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	if c.IsRenderCall && !hs.Cfg.ServeFromSubPath {
 		appURL = fmt.Sprintf("%s://localhost:%s", hs.Cfg.Protocol, hs.Cfg.HTTPPort)
 		appSubURL = ""
-		settings["appSubUrl"] = ""
+		settings.AppSubUrl = ""
 	}
 
 	navTree, err := hs.navTreeService.GetNavTree(c, hasEditPerm, prefs)
 	if err != nil {
 		return nil, err
-	}
-
-	if c.IsPublicDashboardView {
-		settings["isPublicDashboardView"] = true
 	}
 
 	weekStart := ""
