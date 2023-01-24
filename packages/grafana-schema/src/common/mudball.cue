@@ -245,4 +245,6 @@ VizTooltipOptions: {
 	sort: SortOrder
 } @cuetsy(kind="interface")
 
-
+Labels: {
+	[string]: string
+} @cuetsy(kind="interface")
