@@ -63,6 +63,7 @@ export const ResultItem = React.forwardRef(
     );
   }
 );
+
 ResultItem.displayName = 'ResultItem';
 
 const getResultItemStyles = (theme: GrafanaTheme2, isActive: boolean) => {
@@ -83,7 +84,7 @@ const getResultItemStyles = (theme: GrafanaTheme2, isActive: boolean) => {
         display: isActive ? 'block' : 'none',
         content: '" "',
         position: 'absolute',
-        left: 0,
+        left: 4,
         top: 0,
         bottom: 0,
         width: theme.spacing(0.5),
