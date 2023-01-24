@@ -87,7 +87,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *contextmodel.ReqContext) {
 	if hs.Features.IsEnabled(featuremgmt.FlagAuthnService) {
 		req := &authn.Request{HTTPRequest: ctx.Req, Resp: ctx.Resp}
 		if code == "" {
-			redirect, err := hs.authnService.RedirectURL(ctx.Req.Context(), "auth.client."+name, req)
+			redirect, err := hs.authnService.RedirectURL(ctx.Req.Context(), authn.ClientWithPrefix(name), req)
 			if err != nil {
 				ctx.Logger.Warn("failed to generate oauth redirect url", "err", err)
 				ctx.Redirect(hs.Cfg.AppSubURL + "/login")
