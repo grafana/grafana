@@ -8,8 +8,8 @@ title: CloudWatchDataQuery kind
 
 # CloudWatchDataQuery kind
 
-### Maturity: merged
-### Version: 0.0
+## Maturity: merged
+## Version: 0.0
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
