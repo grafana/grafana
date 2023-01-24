@@ -260,7 +260,7 @@ func TestDashboardService(t *testing.T) {
 
 	t.Run("When org user is deleted", func(t *testing.T) {
 		fakeStore := dashboards.FakeDashboardStore{}
-		fakeStore.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(nil)
+		fakeStore.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(nil, nil)
 		t.Run("Should remove dependent permissions for deleted org user", func(t *testing.T) {
 			permQuery := &dashboards.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: 1}
 
@@ -272,7 +272,7 @@ func TestDashboardService(t *testing.T) {
 
 		t.Run("Should not remove dashboard permissions for same user in another org", func(t *testing.T) {
 			fakeStore := dashboards.FakeDashboardStore{}
-			fakeStore.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(nil)
+			fakeStore.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(nil, nil)
 			permQuery := &dashboards.GetDashboardACLInfoListQuery{DashboardID: 2, OrgID: 3}
 
 			_, err := fakeStore.GetDashboardACLInfoList(context.Background(), permQuery)
