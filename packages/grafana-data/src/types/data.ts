@@ -42,7 +42,7 @@ export interface QueryResultMeta {
    * TypeVersion is the version of the Type property. Versions greater than 0.0 correspond to the dataplane
    * contract documentation https://github.com/grafana/grafana-plugin-sdk-go/tree/main/data/contract_docs.
    */
-  typeVersion?: string;
+  typeVersion?: [number, number];
 
   /** DatasSource Specific Values */
   custom?: Record<string, any>;
