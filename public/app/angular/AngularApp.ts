@@ -43,6 +43,7 @@ export class AngularApp {
       '$filterProvider',
       '$httpProvider',
       '$provide',
+      '$sceDelegateProvider',
       (
         $controllerProvider: angular.IControllerProvider,
         $compileProvider: angular.ICompileProvider,
