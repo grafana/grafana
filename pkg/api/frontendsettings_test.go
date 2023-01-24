@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/plugins"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/datasources/querycaching"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
@@ -52,13 +53,14 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.
 			Cfg:                   cfg,
 			RendererPluginManager: &fakeRendererManager{},
 		},
-		SQLStore:             sqlStore,
-		SettingsProvider:     setting.ProvideProvider(cfg),
-		pluginStore:          &plugins.FakePluginStore{},
-		grafanaUpdateChecker: &updatechecker.GrafanaService{},
-		AccessControl:        accesscontrolmock.New().WithDisabled(),
-		PluginSettings:       pluginSettings.ProvideService(sqlStore, secretsService),
-		SocialService:        social.ProvideService(cfg, features),
+		SQLStore:                  sqlStore,
+		SettingsProvider:          setting.ProvideProvider(cfg),
+		pluginStore:               &plugins.FakePluginStore{},
+		grafanaUpdateChecker:      &updatechecker.GrafanaService{},
+		AccessControl:             accesscontrolmock.New().WithDisabled(),
+		PluginSettings:            pluginSettings.ProvideService(sqlStore, secretsService),
+		SocialService:             social.ProvideService(cfg, features),
+		DataSourceCacheCfgService: &querycaching.OSSDatasourceCacheConfigImpl{},
 	}
 
 	m := web.New()
