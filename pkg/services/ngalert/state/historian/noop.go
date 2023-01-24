@@ -3,7 +3,6 @@ package historian
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 )
 
@@ -14,7 +13,7 @@ func NewNopHistorian() *NoOpHistorian {
 	return &NoOpHistorian{}
 }
 
-func (f *NoOpHistorian) RecordStatesAsync(ctx context.Context, _ models.AlertRule, _ []state.StateTransition) <-chan error {
+func (f *NoOpHistorian) RecordStatesAsync(ctx context.Context, _ state.RuleMeta, _ []state.StateTransition) <-chan error {
 	errCh := make(chan error)
 	close(errCh)
 	return errCh

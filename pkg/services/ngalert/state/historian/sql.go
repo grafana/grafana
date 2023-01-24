@@ -19,7 +19,7 @@ func NewSqlBackend() *SqlBackend {
 	}
 }
 
-func (h *SqlBackend) RecordStatesAsync(ctx context.Context, _ models.AlertRule, _ []state.StateTransition) <-chan error {
+func (h *SqlBackend) RecordStatesAsync(ctx context.Context, _ state.RuleMeta, _ []state.StateTransition) <-chan error {
 	errCh := make(chan error)
 	close(errCh)
 	return errCh
