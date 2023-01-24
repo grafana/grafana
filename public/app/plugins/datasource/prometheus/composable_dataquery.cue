@@ -31,26 +31,26 @@ composableKinds: DataQuery: {
 				schemas: [
 					{
 						common.DataQuery
-						expr: string
-						format?: string
-						instant?: bool
-						range?: bool
-						exemplar?: bool
-						hinting?: bool
-						interval?: string
-						intervalMs?: int64
+						expr:            string
+						format?:         string
+						instant?:        bool
+						range?:          bool
+						exemplar?:       bool
+						hinting?:        bool
+						interval?:       string
+						intervalMs?:     int64
 						intervalFactor?: int64
 						// Timezone offset to align start & end time on backend
-						utcOffsetSec?: int64
-						legendFormat?: string
+						utcOffsetSec?:   int64
+						legendFormat?:   string
 						valueWithRefId?: bool
-						requestId?: string
-						showingGraph?: bool
-						showingTable?: bool
+						requestId?:      string
+						showingGraph?:   bool
+						showingTable?:   bool
 						// Code or Builder mode
 						editorMode?: #QueryEditorMode
 
-						#QueryEditorMode: "code"|"builder" @cuetsy(kind="enum")
+						#QueryEditorMode: "code" | "builder" @cuetsy(kind="enum")
 					},
 				]
 			},

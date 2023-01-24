@@ -8,8 +8,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/utils"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds/dataquery"
 )
 
 // Internal interval and range variables
@@ -44,7 +45,7 @@ const (
 
 var safeResolution = 11000
 
-type QueryModel = DataQuery
+type QueryModel = dataquery.PrometheusDataQuery
 
 type TimeRange struct {
 	Start time.Time
@@ -85,13 +86,13 @@ func Parse(query backend.DataQuery, timeInterval string, intervalCalculator inte
 		Range != nil && !*model.
 		Instant && !*model.Range {
 		// In older dashboards, we were not setting range query param and !range && !instant was run as range query
-		rangeQuery = utils.ToPtr(true)
+		rangeQuery = kindsys.Ptr(true)
 	}
 
 	// We never want to run exemplar query for alerting
 	exemplarQuery := model.Exemplar
 	if fromAlert {
-		exemplarQuery = utils.ToPtr(false)
+		exemplarQuery = kindsys.Ptr(false)
 	}
 
 	return &Query{
@@ -136,7 +137,7 @@ func calculatePrometheusInterval(model *QueryModel, timeInterval string, query b
 
 	// If we are using variable for interval/step, we will replace it with calculated interval
 	if isVariableInterval(*queryInterval) {
-		queryInterval = utils.ToPtr("")
+		queryInterval = kindsys.Ptr("")
 	}
 
 	minInterval, err := intervalv2.GetIntervalFrom(timeInterval, *queryInterval, *model.IntervalMs, 15*time.Second)
@@ -178,7 +179,7 @@ func calculateRateInterval(interval time.Duration, scrapeInterval string, interv
 	return rateInterval
 }
 
-func interpolateVariables(model *DataQuery, interval time.Duration, timeRange time.Duration,
+func interpolateVariables(model *QueryModel, interval time.Duration, timeRange time.Duration,
 	intervalCalculator intervalv2.Calculator, timeInterval string) string {
 	expr := model.Expr
 	rangeMs := timeRange.Milliseconds()

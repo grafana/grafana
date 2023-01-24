@@ -2,7 +2,7 @@ import { DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
 
 import { PromApplication } from '../../../types/unified-alerting-dto';
 
-import { Prometheus as PromQuery } from './models.gen';
+import { Prometheus as PromQuery } from './dataquery.gen';
 import { QueryEditorMode } from './querybuilder/shared/types';
 
 export { PromQuery };

@@ -40,7 +40,3 @@ func StartTrace(ctx context.Context, tracer tracing.Tracer, name string, attribu
 		span.End()
 	}
 }
-
-func ToPtr[Type bool | string | int64](v Type) *Type {
-	return &v
-}

@@ -9,8 +9,8 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/utils"
 	"github.com/stretchr/testify/require"
 )
 
@@ -91,7 +91,7 @@ func TestClient(t *testing.T) {
 				Expr:       "rate(ALERTS{job=\"test\" [$__rate_interval]})",
 				Start:      time.Unix(0, 0),
 				End:        time.Unix(1234, 0),
-				RangeQuery: utils.ToPtr(true),
+				RangeQuery: kindsys.Ptr(true),
 				Step:       1 * time.Second,
 			}
 			res, err := client.QueryRange(context.Background(), req)
@@ -118,7 +118,7 @@ func TestClient(t *testing.T) {
 				Expr:       "rate(ALERTS{job=\"test\" [$__rate_interval]})",
 				Start:      time.Unix(0, 0),
 				End:        time.Unix(1234, 0),
-				RangeQuery: utils.ToPtr(true),
+				RangeQuery: kindsys.Ptr(true),
 				Step:       1 * time.Second,
 			}
 			res, err := client.QueryRange(context.Background(), req)

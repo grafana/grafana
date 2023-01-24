@@ -15,8 +15,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
-	"github.com/grafana/grafana/pkg/tsdb/prometheus/utils"
 	"github.com/stretchr/testify/require"
 )
 
@@ -121,7 +121,7 @@ func createJsonTestData(start int64, step int64, timestampCount int, seriesCount
 	bytes := []byte(fmt.Sprintf(`{"status":"success","data":{"resultType":"matrix","result":[%v]}}`, strings.Join(allSeries, ",")))
 
 	qm := models.QueryModel{
-		Range: utils.ToPtr(true),
+		Range: kindsys.Ptr(true),
 		Expr:  "test",
 	}
 
