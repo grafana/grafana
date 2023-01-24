@@ -74,8 +74,8 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 
 		if diff := cmp.Diff([]string{
 			fmt.Sprintf("folders:uid:%v", db.UID),
-			fmt.Sprintf("folders:uid:parent"),
-			fmt.Sprintf("folders:uid:grandparent"),
+			"folders:uid:parent",
+			"folders:uid:grandparent",
 		}, resolvedScopes); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
@@ -169,8 +169,8 @@ func TestNewFolderIDScopeResolver(t *testing.T) {
 
 		if diff := cmp.Diff([]string{
 			fmt.Sprintf("folders:uid:%v", db.UID),
-			fmt.Sprintf("folders:uid:parent"),
-			fmt.Sprintf("folders:uid:grandparent"),
+			"folders:uid:parent",
+			"folders:uid:grandparent",
 		}, resolvedScopes); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
@@ -280,8 +280,8 @@ func TestNewDashboardIDScopeResolver(t *testing.T) {
 		if diff := cmp.Diff([]string{
 			fmt.Sprintf("dashboards:uid:%s", dashboard.UID),
 			fmt.Sprintf("folders:uid:%s", folder.UID),
-			fmt.Sprintf("folders:uid:parent"),
-			fmt.Sprintf("folders:uid:grandparent"),
+			"folders:uid:parent",
+			"folders:uid:grandparent",
 		}, resolvedScopes); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}
@@ -365,8 +365,8 @@ func TestNewDashboardUIDScopeResolver(t *testing.T) {
 		if diff := cmp.Diff([]string{
 			fmt.Sprintf("dashboards:uid:%s", dashboard.UID),
 			fmt.Sprintf("folders:uid:%s", folder.UID),
-			fmt.Sprintf("folders:uid:parent"),
-			fmt.Sprintf("folders:uid:grandparent"),
+			"folders:uid:parent",
+			"folders:uid:grandparent",
 		}, resolvedScopes); diff != "" {
 			t.Errorf("Result mismatch (-want +got):\n%s", diff)
 		}

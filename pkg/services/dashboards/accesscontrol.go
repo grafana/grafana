@@ -6,7 +6,6 @@ import (
 
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
@@ -60,7 +59,7 @@ func NewFolderNameScopeResolver(db Store, folderDB FolderStore, folderSvc folder
 			return nil, err
 		}
 
-		result = util.Prepend(result, ScopeFoldersProvider.GetResourceScopeUID(folder.UID))
+		result = append([]string{ScopeFoldersProvider.GetResourceScopeUID(folder.UID)}, result...)
 		return result, nil
 	})
 }
@@ -92,7 +91,7 @@ func NewFolderIDScopeResolver(db Store, folderDB FolderStore, folderSvc folder.S
 			return nil, err
 		}
 
-		result = util.Prepend(result, ScopeFoldersProvider.GetResourceScopeUID(folder.UID))
+		result = append([]string{ScopeFoldersProvider.GetResourceScopeUID(folder.UID)}, result...)
 		return result, nil
 	})
 }
@@ -164,7 +163,12 @@ func resolveDashboardScope(ctx context.Context, db Store, folderDB FolderStore, 
 		return nil, err
 	}
 
-	result = util.Prepend(result, ScopeDashboardsProvider.GetResourceScopeUID(dashboard.UID), ScopeFoldersProvider.GetResourceScopeUID(folderUID))
+	result = append([]string{
+		ScopeDashboardsProvider.GetResourceScopeUID(dashboard.UID),
+		ScopeFoldersProvider.GetResourceScopeUID(folderUID),
+	},
+		result...,
+	)
 
 	return result, nil
 }
