@@ -112,7 +112,7 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
     shouldFocusError: true,
   });
 
-  const { handleSubmit, watch, getValues } = formAPI;
+  const { handleSubmit, watch } = formAPI;
 
   const type = watch('type');
   const dataSourceName = watch('dataSourceName');
