@@ -155,7 +155,6 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		setUp := func() {
 			viewerRole := org.RoleViewer
 			editorRole := org.RoleEditor
-			// var qResult []*dashboards.DashboardACLInfoDTO
 			qResult := []*dashboards.DashboardACLInfoDTO{
 				{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
 				{Role: &editorRole, Permission: models.PERMISSION_EDIT},
@@ -395,10 +394,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				setUpInner()
 				dashboardService := dashboards.NewFakeDashboardService(t)
 				qResult := dashboards.NewDashboard("test")
-				dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
-					// q := args.Get(1).(*dashboards.GetDashboardQuery)
-					// q.Result = dashboards.NewDashboard("test")
-				}).Return(qResult, nil)
+				dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
 				dashboardService.On("DeleteDashboard", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(nil)
 
 				hs.callDeleteDashboardByUID(t, sc, dashboardService)
@@ -494,10 +490,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 				sc.sqlStore = mockSQLStore
 				dashboardService := dashboards.NewFakeDashboardService(t)
 				qResult := dashboards.NewDashboard("test")
-				dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
-					// q := args.Get(1).(*dashboards.GetDashboardQuery)
-					// q.Result = dashboards.NewDashboard("test")
-				}).Return(qResult, nil)
+				dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
 				dashboardService.On("DeleteDashboard", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(nil)
 				hs.callDeleteDashboardByUID(t, sc, dashboardService)
 
@@ -841,10 +834,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		fakeDash.HasACL = false
 
 		dashboardService := dashboards.NewFakeDashboardService(t)
-		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
-			// q := args.Get(1).(*dashboards.GetDashboardQuery)
-			// q.Result = fakeDash
-		}).Return(fakeDash, nil)
+		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(fakeDash, nil)
 		dashboardService.On("SaveDashboard", mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"), mock.AnythingOfType("bool")).Run(func(args mock.Arguments) {
 			cmd := args.Get(1).(*dashboards.SaveDashboardDTO)
 			cmd.Dashboard = &dashboards.Dashboard{
@@ -878,10 +868,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		fakeDash.HasACL = false
 
 		dashboardService := dashboards.NewFakeDashboardService(t)
-		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
-			// q := args.Get(1).(*dashboards.GetDashboardQuery)
-			// q.Result = fakeDash
-		}).Return(fakeDash, nil)
+		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(fakeDash, nil)
 		dashboardService.On("SaveDashboard", mock.Anything, mock.AnythingOfType("*dashboards.SaveDashboardDTO"), mock.AnythingOfType("bool")).Run(func(args mock.Arguments) {
 			cmd := args.Get(1).(*dashboards.SaveDashboardDTO)
 			cmd.Dashboard = &dashboards.Dashboard{

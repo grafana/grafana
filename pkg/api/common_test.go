@@ -540,10 +540,7 @@ func setUp(confs ...setUpConf) *HTTPServer {
 	teamSvc := &teamtest.FakeService{}
 	dashSvc := &dashboards.FakeDashboardService{}
 	qResult := aclMockResp
-	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
-		// q := args.Get(1).(*dashboards.GetDashboardACLInfoListQuery)
-
-	}).Return(qResult, nil)
+	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
 	guardian.InitLegacyGuardian(store, dashSvc, teamSvc)
 	return hs
 }
