@@ -72,13 +72,14 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 
 				teamSvc := &teamtest.FakeService{}
 				dashSvc := dashboards.NewFakeDashboardService(t)
+				var qResult *dashboards.Dashboard
 				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
 					q := args.Get(1).(*dashboards.GetDashboardQuery)
-					q.Result = &dashboards.Dashboard{
+					qResult = &dashboards.Dashboard{
 						ID:  q.ID,
 						UID: q.UID,
 					}
-				}).Return(nil).Maybe()
+				}).Return(qResult, nil).Maybe()
 				dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(nil).Maybe()
 				hs.DashboardService = dashSvc
 
@@ -118,13 +119,13 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 	t.Run("When user is editor and dashboard has default ACL", func(t *testing.T) {
 		teamSvc := &teamtest.FakeService{}
 		dashSvc := &dashboards.FakeDashboardService{}
+		qResult := []*dashboards.DashboardACLInfoDTO{
+			{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
+			{Role: &editorRole, Permission: models.PERMISSION_EDIT},
+		}
 		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
-			q := args.Get(1).(*dashboards.GetDashboardACLInfoListQuery)
-			q.Result = []*dashboards.DashboardACLInfoDTO{
-				{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
-				{Role: &editorRole, Permission: models.PERMISSION_EDIT},
-			}
-		}).Return(nil)
+			// q := args.Get(1).(*dashboards.GetDashboardACLInfoListQuery)
+		}).Return(qResult, nil)
 
 		loggedInUserScenarioWithRole(t, "Should be able to delete a snapshot when calling DELETE on", "DELETE",
 			"/api/snapshots/12345", "/api/snapshots/:key", org.RoleEditor, func(sc *scenarioContext) {
@@ -134,20 +135,22 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 					externalRequest = req
 				})
 				dashSvc := dashboards.NewFakeDashboardService(t)
+				var qResult *dashboards.Dashboard
 				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
 					q := args.Get(1).(*dashboards.GetDashboardQuery)
-					q.Result = &dashboards.Dashboard{
+					qResult = &dashboards.Dashboard{
 						ID:    q.ID,
 						OrgID: q.OrgID,
 					}
-				}).Return(nil).Maybe()
+				}).Return(qResult, nil).Maybe()
+				var qResult []*dashboards.DashboardACLInfoDTO
 				dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
-					q := args.Get(1).(*dashboards.GetDashboardACLInfoListQuery)
-					q.Result = []*dashboards.DashboardACLInfoDTO{
+					// q := args.Get(1).(*dashboards.GetDashboardACLInfoListQuery)
+					qResult = []*dashboards.DashboardACLInfoDTO{
 						{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
 						{Role: &editorRole, Permission: models.PERMISSION_EDIT},
 					}
-				}).Return(nil)
+				}).Return(qResult)
 				guardian.InitLegacyGuardian(sc.sqlStore, dashSvc, teamSvc)
 				hs := &HTTPServer{dashboardsnapshotsService: setUpSnapshotTest(t, 0, ts.URL), DashboardService: dashSvc}
 				sc.handlerFunc = hs.DeleteDashboardSnapshot

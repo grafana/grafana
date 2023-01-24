@@ -39,10 +39,11 @@ func TestAPIEndpoint_GetCurrentOrgPreferences_LegacyAccessControl(t *testing.T) 
 	cfg := setting.NewCfg()
 	cfg.RBACEnabled = false
 	dashSvc := dashboards.NewFakeDashboardService(t)
+	var qResult *dashboards.Dashboard
 	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*dashboards.GetDashboardQuery)
-		q.Result = &dashboards.Dashboard{UID: "home", ID: 1}
-	}).Return(nil)
+		// q := args.Get(1).(*dashboards.GetDashboardQuery)
+		qResult = &dashboards.Dashboard{UID: "home", ID: 1}
+	}).Return(qResult, nil)
 
 	prefService := preftest.NewPreferenceServiceFake()
 	prefService.ExpectedPreference = &pref.Preference{HomeDashboardID: 1, Theme: "dark"}
@@ -81,8 +82,8 @@ func TestAPIEndpoint_GetCurrentOrgPreferences_AccessControl(t *testing.T) {
 
 	dashSvc := dashboards.NewFakeDashboardService(t)
 	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*dashboards.GetDashboardQuery)
-		q.Result = &dashboards.Dashboard{UID: "home", ID: 1}
+		// q := args.Get(1).(*dashboards.GetDashboardQuery)
+		// q.Result = &dashboards.Dashboard{UID: "home", ID: 1}
 	}).Return(nil)
 
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
@@ -196,10 +197,11 @@ func TestAPIEndpoint_PatchUserPreferences(t *testing.T) {
 	cfg.RBACEnabled = false
 
 	dashSvc := dashboards.NewFakeDashboardService(t)
+	var qResult *dashboards.Dashboard
 	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*dashboards.GetDashboardQuery)
-		q.Result = &dashboards.Dashboard{UID: "home", ID: 1}
-	}).Return(nil)
+		// q := args.Get(1).(*dashboards.GetDashboardQuery)
+		qResult = &dashboards.Dashboard{UID: "home", ID: 1}
+	}).Return(qResult, nil)
 
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		hs.Cfg = cfg

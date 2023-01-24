@@ -119,10 +119,11 @@ func ProvideDashboardPermissions(
 ) (*DashboardPermissionsService, error) {
 	getDashboard := func(ctx context.Context, orgID int64, resourceID string) (*dashboards.Dashboard, error) {
 		query := &dashboards.GetDashboardQuery{UID: resourceID, OrgID: orgID}
-		if _, err := dashboardStore.GetDashboard(ctx, query); err != nil {
+		queryResult, err := dashboardStore.GetDashboard(ctx, query)
+		if err != nil {
 			return nil, err
 		}
-		return query.Result, nil
+		return queryResult, nil
 	}
 
 	options := resourcepermissions.Options{
@@ -147,10 +148,11 @@ func ProvideDashboardPermissions(
 			}
 			if dashboard.FolderID > 0 {
 				query := &dashboards.GetDashboardQuery{ID: dashboard.FolderID, OrgID: orgID}
-				if _, err := dashboardStore.GetDashboard(ctx, query); err != nil {
+				queryResult, err := dashboardStore.GetDashboard(ctx, query)
+				if err != nil {
 					return nil, err
 				}
-				return []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.Result.UID)}, nil
+				return []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(queryResult.UID)}, nil
 			}
 			return []string{}, nil
 		},
@@ -201,11 +203,12 @@ func ProvideFolderPermissions(
 		ResourceAttribute: "uid",
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
 			query := &dashboards.GetDashboardQuery{UID: resourceID, OrgID: orgID}
-			if _, err := dashboardStore.GetDashboard(ctx, query); err != nil {
+			queryResult, err := dashboardStore.GetDashboard(ctx, query)
+			if err != nil {
 				return err
 			}
 
-			if !query.Result.IsFolder {
+			if !queryResult.IsFolder {
 				return errors.New("not found")
 			}
 

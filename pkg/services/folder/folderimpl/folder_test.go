@@ -128,11 +128,9 @@ func TestIntegrationFolderService(t *testing.T) {
 
 			title := "Folder-TEST"
 			t.Run("When updating folder should return access denied error", func(t *testing.T) {
-				dashStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
-					folder := args.Get(1).(*dashboards.GetDashboardQuery)
-					folder.Result = dashboards.NewDashboard("dashboard-test")
-					folder.Result.IsFolder = true
-				}).Return(&dashboards.Dashboard{}, nil)
+				folderResult := dashboards.NewDashboard("dashboard-test")
+				folderResult.IsFolder = true
+				dashStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(folderResult, nil)
 				_, err := service.Update(context.Background(), &folder.UpdateFolderCommand{
 					UID:          folderUID,
 					OrgID:        orgID,

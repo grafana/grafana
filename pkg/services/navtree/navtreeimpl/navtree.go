@@ -220,9 +220,9 @@ func (s *ServiceImpl) getHomeNode(c *models.ReqContext, prefs *pref.Preference) 
 
 	if prefs.HomeDashboardID != 0 {
 		slugQuery := dashboards.GetDashboardRefByIDQuery{ID: prefs.HomeDashboardID}
-		err := s.dashboardService.GetDashboardUIDByID(c.Req.Context(), &slugQuery)
+		slugQueryResult, err := s.dashboardService.GetDashboardUIDByID(c.Req.Context(), &slugQuery)
 		if err == nil {
-			homeUrl = dashboards.GetDashboardURL(slugQuery.Result.UID, slugQuery.Result.Slug)
+			homeUrl = dashboards.GetDashboardURL(slugQueryResult.UID, slugQueryResult.Slug)
 		}
 	}
 
@@ -343,9 +343,9 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *models.ReqContext) ([]*navtre
 			ID:    dashboardId,
 			OrgID: c.OrgID,
 		}
-		err := s.dashboardService.GetDashboard(c.Req.Context(), query)
+		queryResult, err := s.dashboardService.GetDashboard(c.Req.Context(), query)
 		if err == nil {
-			starredDashboards = append(starredDashboards, query.Result)
+			starredDashboards = append(starredDashboards, queryResult)
 		}
 	}
 

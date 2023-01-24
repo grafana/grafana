@@ -766,13 +766,14 @@ func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, s
 	store := dbtest.NewFakeDB()
 
 	dashSvc := dashboards.NewFakeDashboardService(t)
+	var result *dashboards.Dashboard
 	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
 		q := args.Get(1).(*dashboards.GetDashboardQuery)
-		q.Result = &dashboards.Dashboard{
+		result = &dashboards.Dashboard{
 			ID:  q.ID,
 			UID: q.UID,
 		}
-	}).Return(nil)
+	}).Return(result, nil)
 	guardian.InitLegacyGuardian(store, dashSvc, &teamtest.FakeService{})
 	t.Helper()
 
