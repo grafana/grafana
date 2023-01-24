@@ -38,7 +38,6 @@ const renderSharePublicDashboard = async (props: React.ComponentProps<typeof Sha
   );
 
   await waitFor(() => screen.getByText('Link'));
-  await waitForElementToBeRemoved(screen.getByTestId('Spinner'));
   isEnabled && fireEvent.click(screen.getByText('Public dashboard'));
 };
 
