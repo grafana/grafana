@@ -35,13 +35,13 @@ export function LogsSamplePanel(props: Props) {
 
   if (queryResponse === undefined) {
     LogsSamplePanelContent = null;
-  } else if (queryResponse?.error !== undefined) {
+  } else if (queryResponse.error !== undefined) {
     LogsSamplePanelContent = (
       <SupplementaryResultError error={queryResponse.error} title="Failed to load logs sample for this query" />
     );
-  } else if (queryResponse?.state === LoadingState.Loading) {
+  } else if (queryResponse.state === LoadingState.Loading) {
     LogsSamplePanelContent = <span>Logs sample is loading...</span>;
-  } else if (queryResponse?.data.length === 0 || queryResponse?.data[0].length === 0) {
+  } else if (queryResponse.data.length === 0 || queryResponse.data[0].length === 0) {
     LogsSamplePanelContent = <span>No logs sample data.</span>;
   } else {
     const logs = dataFrameToLogsModel(queryResponse.data, undefined);
