@@ -390,7 +390,7 @@ export class LokiDatasource
     const { start, end } = this.getTimeRangeParams();
 
     const { data } = await lastValueFrom(
-      getBackendSrv().fetch({
+      getBackendSrv().fetch<QueryStats>({
         method: 'GET',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         params: { query: labelMatcher, start, end },
@@ -398,7 +398,7 @@ export class LokiDatasource
       })
     );
 
-    return data as QueryStats;
+    return data;
   }
 
   async metricFindQuery(query: LokiVariableQuery | string) {
