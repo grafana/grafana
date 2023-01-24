@@ -151,7 +151,7 @@ func getVersionFolder(cfg uploadConfig, event string) (string, error) {
 		if event == config.Custom && cfg.versionMode == config.Enterprise2Mode {
 			return releaseFolder, nil
 		}
-		return "", fmt.Errorf("Unrecognized version mode: %s", cfg.versionMode)
+		return "", fmt.Errorf("unrecognized version mode: %s", cfg.versionMode)
 	}
 }
 
