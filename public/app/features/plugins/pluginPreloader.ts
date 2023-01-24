@@ -1,4 +1,4 @@
-import { AppPluginConfig } from '@grafana/data';
+import { AppPluginConfig } from '@grafana/runtime';
 
 import { importPluginModule } from './plugin_loader';
 

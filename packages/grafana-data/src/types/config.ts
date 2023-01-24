@@ -5,7 +5,6 @@ import { GrafanaTheme2 } from '../themes';
 import { DataSourceInstanceSettings } from './datasource';
 import { FeatureToggles } from './featureToggles.gen';
 import { PanelPluginMeta } from './panel';
-import { PluginsExtensionConfig } from './pluginExtensions';
 
 import { GrafanaTheme, IconName, NavLinkDTO, OrgRole } from '.';
 
@@ -77,19 +76,6 @@ export interface UnifiedAlertingConfig {
   minInterval: string;
 }
 
-/**
- * Describes app plugins installed in Grafana.
- *
- * @public
- */
-export type AppPluginConfig = {
-  id: string;
-  path: string;
-  version: string;
-  preload: boolean;
-  extensions?: PluginsExtensionConfig;
-};
-
 /** Supported OAuth services
  *
  * @public
@@ -158,7 +144,6 @@ export interface GrafanaConfig {
   isPublicDashboardView: boolean;
   datasources: { [str: string]: DataSourceInstanceSettings };
   panels: { [key: string]: PanelPluginMeta };
-  apps: Record<string, AppPluginConfig>;
   auth: AuthSettings;
   minRefreshInterval: string;
   appSubUrl: string;

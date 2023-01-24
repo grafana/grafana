@@ -1,4 +1,4 @@
-import type { AppPluginConfig, PluginsExtensionConfig } from '@grafana/data';
+import type { AppPluginConfig, PluginsExtensionConfig } from '@grafana/runtime';
 
 import { configurePluginExtensions } from './registry';
 

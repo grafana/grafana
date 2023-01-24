@@ -14,7 +14,6 @@ import {
   MapLayerOptions,
   OAuthSettings,
   PanelPluginMeta,
-  AppPluginConfig,
   systemDateFormats,
   SystemDateFormatSettings,
   NewThemeOptions,
@@ -24,6 +23,24 @@ export interface AzureSettings {
   cloud?: string;
   managedIdentityEnabled: boolean;
 }
+
+export type PluginsExtensionConfig = {
+  links: PluginsExtensionLinkConfig[];
+};
+
+export type PluginsExtensionLinkConfig = {
+  id: string;
+  description: string;
+  path: string;
+};
+
+export type AppPluginConfig = {
+  id: string;
+  path: string;
+  version: string;
+  preload: boolean;
+  extensions?: PluginsExtensionConfig;
+};
 
 export class GrafanaBootConfig implements GrafanaConfig {
   isPublicDashboardView: boolean;

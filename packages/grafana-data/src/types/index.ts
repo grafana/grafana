@@ -35,7 +35,6 @@ export * from './legacyEvents';
 export * from './live';
 export * from './variables';
 export * from './geometry';
-export type { PluginsExtensionConfig, PluginsExtensionLinkConfig } from './pluginExtensions';
 export { isUnsignedPluginSignature } from './pluginSignature';
 export type {
   CurrentUserDTO,
@@ -46,7 +45,6 @@ export type {
   GrafanaConfig,
   BuildInfo,
   LicenseInfo,
-  AppPluginConfig,
 } from './config';
 export type { FeatureToggles } from './featureToggles.gen';
 export * from './alerts';
