@@ -280,10 +280,6 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 	}
 	oid := grn.ToGRNString()
 
-	if grn.UID == "2JZhcxhVk" {
-		fmt.Printf("xxxx")
-	}
-
 	timestamp := time.Now().UnixMilli()
 	createdAt := r.CreatedAt
 	createdBy := r.CreatedBy

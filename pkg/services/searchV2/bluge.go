@@ -194,8 +194,8 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 
 	var docs []*bluge.Document
 	for _, panel := range dash.summary.Nested {
-		if panel.Kind == "panel-row" {
-			continue // for now, we are excluding rows from the search index
+		if panel.Fields["type"] == "row" {
+			continue // skip rows
 		}
 		idx := strings.LastIndex(panel.UID, "#")
 		panelId, err := strconv.Atoi(panel.UID[idx+1:])
