@@ -273,9 +273,9 @@
       "category": "core",
       "codeowners": [
         "grafana/grafana-as-code",
-        "grafana/user-essentials",
+        "grafana/grafana-bi-squad",
         "grafana/plugins-platform-frontend",
-        "grafana/grafana-bi-squad"
+        "grafana/user-essentials"
       ],
       "currentVersion": [
         0,
@@ -1142,10 +1142,10 @@
     "playlist": {
       "category": "core",
       "codeowners": [
-        "grafana/grafana-bi-squad",
         "grafana/grafana-as-code",
-        "grafana/user-essentials",
-        "grafana/plugins-platform-frontend"
+        "grafana/grafana-bi-squad",
+        "grafana/plugins-platform-frontend",
+        "grafana/user-essentials"
       ],
       "currentVersion": [
         0,
@@ -1366,9 +1366,9 @@
       "category": "core",
       "codeowners": [
         "grafana/grafana-as-code",
-        "grafana/user-essentials",
+        "grafana/grafana-bi-squad",
         "grafana/plugins-platform-frontend",
-        "grafana/grafana-bi-squad"
+        "grafana/user-essentials"
       ],
       "currentVersion": [
         0,

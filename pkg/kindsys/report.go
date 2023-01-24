@@ -331,11 +331,14 @@ func grafanaMaturityAttrCount(sch cue.Value) int {
 }
 
 func findCodeOwners(of kindsysreport.CodeOwnersFinder, links KindLinks) []string {
-	return elsedie(of.FindFor([]string{
+	owners := elsedie(of.FindFor([]string{
 		toLocalPath(links.Schema),
 		toLocalPath(links.Go),
 		toLocalPath(links.Ts),
 	}...))("cannot find code owners")
+
+	sort.Strings(owners)
+	return owners
 }
 
 func machinize(s string) string {
