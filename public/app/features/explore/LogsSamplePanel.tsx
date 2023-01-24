@@ -1,7 +1,8 @@
 import React from 'react';
 
-import { CoreApp, DataQueryResponse, DataSourceApi, LoadingState, LogsDedupStrategy, TimeZone } from '@grafana/data';
+import { CoreApp, DataQueryResponse, DataSourceApi, LoadingState, LogsDedupStrategy } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
+import { TimeZone } from '@grafana/schema';
 import { Collapse } from '@grafana/ui';
 import { dataFrameToLogsModel } from 'app/core/logsModel';
 import store from 'app/core/store';
