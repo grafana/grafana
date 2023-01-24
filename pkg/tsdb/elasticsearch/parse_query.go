@@ -12,10 +12,10 @@ func parseQuery(tsdbQuery []backend.DataQuery) ([]*Query, error) {
 		if err != nil {
 			return nil, err
 		}
-		timeField, err := model.Get("timeField").String()
-		if err != nil {
-			return nil, err
-		}
+
+		// we had a string-field named `timeField` in the past. we do not use it anymore.
+		// please do not create a new field with that name, to avoid potential problems with old, persisted queries.
+
 		rawQuery := model.Get("query").MustString()
 		bucketAggs, err := parseBucketAggs(model)
 		if err != nil {
@@ -26,15 +26,16 @@ func parseQuery(tsdbQuery []backend.DataQuery) ([]*Query, error) {
 			return nil, err
 		}
 		alias := model.Get("alias").MustString("")
-		interval := model.Get("interval").MustString("")
+		intervalMs := model.Get("intervalMs").MustInt64(0)
+		interval := q.Interval
 
 		queries = append(queries, &Query{
-			TimeField:     timeField,
 			RawQuery:      rawQuery,
 			BucketAggs:    bucketAggs,
 			Metrics:       metrics,
 			Alias:         alias,
 			Interval:      interval,
+			IntervalMs:    intervalMs,
 			RefID:         q.RefID,
 			MaxDataPoints: q.MaxDataPoints,
 		})
@@ -45,8 +46,9 @@ func parseQuery(tsdbQuery []backend.DataQuery) ([]*Query, error) {
 
 func parseBucketAggs(model *simplejson.Json) ([]*BucketAgg, error) {
 	var err error
-	var result []*BucketAgg
-	for _, t := range model.Get("bucketAggs").MustArray() {
+	bucketAggs := model.Get("bucketAggs").MustArray()
+	result := make([]*BucketAgg, 0, len(bucketAggs))
+	for _, t := range bucketAggs {
 		aggJSON := simplejson.NewFromAny(t)
 		agg := &BucketAgg{}
 
@@ -70,8 +72,9 @@ func parseBucketAggs(model *simplejson.Json) ([]*BucketAgg, error) {
 
 func parseMetrics(model *simplejson.Json) ([]*MetricAgg, error) {
 	var err error
-	var result []*MetricAgg
-	for _, t := range model.Get("metrics").MustArray() {
+	metrics := model.Get("metrics").MustArray()
+	result := make([]*MetricAgg, 0, len(metrics))
+	for _, t := range metrics {
 		metricJSON := simplejson.NewFromAny(t)
 		metric := &MetricAgg{}
 

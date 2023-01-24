@@ -3008,13 +3008,13 @@
         "tags": [
           "provisioning"
         ],
-        "summary": "Get all message templates.",
+        "summary": "Get all notification templates.",
         "operationId": "RouteGetTemplates",
         "responses": {
           "200": {
-            "description": "MessageTemplates",
+            "description": "NotificationTemplates",
             "schema": {
-              "$ref": "#/definitions/MessageTemplates"
+              "$ref": "#/definitions/NotificationTemplates"
             }
           },
           "404": {
@@ -3028,7 +3028,7 @@
         "tags": [
           "provisioning"
         ],
-        "summary": "Get a message template.",
+        "summary": "Get a notification template.",
         "operationId": "RouteGetTemplate",
         "parameters": [
           {
@@ -3041,9 +3041,9 @@
         ],
         "responses": {
           "200": {
-            "description": "MessageTemplate",
+            "description": "NotificationTemplate",
             "schema": {
-              "$ref": "#/definitions/MessageTemplate"
+              "$ref": "#/definitions/NotificationTemplate"
             }
           },
           "404": {
@@ -3058,7 +3058,7 @@
         "tags": [
           "provisioning"
         ],
-        "summary": "Updates an existing template.",
+        "summary": "Updates an existing notification template.",
         "operationId": "RoutePutTemplate",
         "parameters": [
           {
@@ -3072,15 +3072,15 @@
             "name": "Body",
             "in": "body",
             "schema": {
-              "$ref": "#/definitions/MessageTemplateContent"
+              "$ref": "#/definitions/NotificationTemplateContent"
             }
           }
         ],
         "responses": {
           "202": {
-            "description": "MessageTemplate",
+            "description": "NotificationTemplate",
             "schema": {
-              "$ref": "#/definitions/MessageTemplate"
+              "$ref": "#/definitions/NotificationTemplate"
             }
           },
           "400": {
@@ -5240,7 +5240,7 @@
     },
     "/folders": {
       "get": {
-        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID.",
+        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders.",
         "tags": [
           "folders"
         ],
@@ -5266,7 +5266,7 @@
           {
             "type": "string",
             "description": "The parent folder UID",
-            "name": "parent_uid",
+            "name": "parentUid",
             "in": "query"
           }
         ],
@@ -6998,6 +6998,44 @@
         "responses": {
           "200": {
             "$ref": "#/responses/okResponse"
+          },
+          "401": {
+            "$ref": "#/responses/unauthorisedError"
+          },
+          "403": {
+            "$ref": "#/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/responses/internalServerError"
+          }
+        }
+      }
+    },
+    "/orgs/{org_id}/users/search": {
+      "get": {
+        "security": [
+          {
+            "basic": []
+          }
+        ],
+        "description": "If you are running Grafana Enterprise and have Fine-grained access control enabled\nyou need to have a permission with action: `org.users:read` with scope `users:*`.",
+        "tags": [
+          "orgs"
+        ],
+        "summary": "Search Users in Organization.",
+        "operationId": "searchOrgUsers",
+        "parameters": [
+          {
+            "type": "integer",
+            "format": "int64",
+            "name": "org_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/searchOrgUsersResponse"
           },
           "401": {
             "$ref": "#/responses/unauthorisedError"
@@ -12180,9 +12218,6 @@
         "hasAcl": {
           "type": "boolean"
         },
-        "hasPublicDashboard": {
-          "type": "boolean"
-        },
         "isFolder": {
           "type": "boolean"
         },
@@ -12372,8 +12407,8 @@
           "format": "date-time"
         },
         "createdBy": {
-          "description": "Since we get created by with left join user table, this can be null technically,\nbut in reality it will always be set, when database is not corrupted.",
-          "type": "string"
+          "type": "integer",
+          "format": "int64"
         },
         "dashboardId": {
           "type": "integer",
@@ -12381,6 +12416,9 @@
         },
         "dashboardUid": {
           "type": "string"
+        },
+        "data": {
+          "$ref": "#/definitions/Json"
         },
         "id": {
           "type": "integer",
@@ -12404,7 +12442,7 @@
       }
     },
     "DashboardVersionMeta": {
-      "description": "DashboardVersionMeta extends the dashboard version model with the names\nassociated with the UserIds, overriding the field with the same name from\nthe DashboardVersion model.",
+      "description": "DashboardVersionMeta extends the DashboardVersionDTO with the names\nassociated with the UserIds, overriding the field with the same name from\nthe DashboardVersionDTO model.",
       "type": "object",
       "properties": {
         "created": {
@@ -12681,6 +12719,7 @@
       }
     },
     "DataTopic": {
+      "description": "nolint:revive",
       "type": "string",
       "title": "DataTopic is used to identify which topic the frame should be assigned to."
     },
@@ -13137,7 +13176,7 @@
           "type": "integer",
           "format": "int64"
         },
-        "parent_uid": {
+        "parentUid": {
           "type": "string"
         },
         "title": {
@@ -13956,6 +13995,23 @@
       "format": "int64",
       "title": "InspectType is a type for the Inspect property of a Notice."
     },
+    "Item": {
+      "type": "object",
+      "title": "Item defines model for Item.",
+      "properties": {
+        "title": {
+          "description": "Title is an unused property -- it will be removed in the future",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/definitions/ItemType"
+        },
+        "value": {
+          "description": "Value depends on type and describes the playlist item.\n\ndashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future. (deprecated)\ndashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.\ndashboard_by_uid: The value is the dashboard UID",
+          "type": "string"
+        }
+      }
+    },
     "ItemDTO": {
       "type": "object",
       "properties": {
@@ -14029,6 +14085,10 @@
           "format": "int64"
         }
       }
+    },
+    "ItemType": {
+      "type": "string",
+      "title": "Type of the item."
     },
     "Json": {
       "type": "object"
@@ -14384,34 +14444,6 @@
         "$ref": "#/definitions/Matcher"
       }
     },
-    "MessageTemplate": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string"
-        },
-        "provenance": {
-          "$ref": "#/definitions/Provenance"
-        },
-        "template": {
-          "type": "string"
-        }
-      }
-    },
-    "MessageTemplateContent": {
-      "type": "object",
-      "properties": {
-        "template": {
-          "type": "string"
-        }
-      }
-    },
-    "MessageTemplates": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/MessageTemplate"
-      }
-    },
     "Metadata": {
       "description": "Metadata contains user accesses for a given resource\nEx: map[string]bool{\"create\":true, \"delete\": true}",
       "type": "object",
@@ -14583,6 +14615,34 @@
       "type": "integer",
       "format": "int64",
       "title": "NoticeSeverity is a type for the Severity property of a Notice."
+    },
+    "NotificationTemplate": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/definitions/Provenance"
+        },
+        "template": {
+          "type": "string"
+        }
+      }
+    },
+    "NotificationTemplateContent": {
+      "type": "object",
+      "properties": {
+        "template": {
+          "type": "string"
+        }
+      }
+    },
+    "NotificationTemplates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/NotificationTemplate"
+      }
     },
     "NotificationTestCommand": {
       "type": "object",
@@ -14781,6 +14841,12 @@
             "type": "boolean"
           }
         },
+        "authLabels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "avatarUrl": {
           "type": "string"
         },
@@ -14906,6 +14972,9 @@
     "PatchAnnotationsCmd": {
       "type": "object",
       "properties": {
+        "data": {
+          "$ref": "#/definitions/Json"
+        },
         "id": {
           "type": "integer",
           "format": "int64"
@@ -15121,24 +15190,29 @@
     },
     "PlaylistItem": {
       "type": "object",
-      "title": "PlaylistItem defines model for playlist.Item.",
       "properties": {
+        "Id": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "PlaylistId": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "order": {
+          "type": "integer",
+          "format": "int64"
+        },
         "title": {
-          "description": "Title is an unused property -- it will be removed in the future",
           "type": "string"
         },
         "type": {
-          "$ref": "#/definitions/PlaylistItemType"
+          "type": "string"
         },
         "value": {
-          "description": "Value depends on type and describes the playlist item.\n\ndashboard_by_id: The value is an internal numerical identifier set by Grafana. This\nis not portable as the numerical identifier is non-deterministic between different instances.\nWill be replaced by dashboard_by_uid in the future. (deprecated)\ndashboard_by_tag: The value is a tag which is set on any number of dashboards. All\ndashboards behind the tag will be added to the playlist.\ndashboard_by_uid: The value is the dashboard UID",
           "type": "string"
         }
       }
-    },
-    "PlaylistItemType": {
-      "type": "string",
-      "title": "Type of the item."
     },
     "Playlists": {
       "type": "array",
@@ -16578,6 +16652,29 @@
         }
       }
     },
+    "SearchOrgUsersQueryResult": {
+      "type": "object",
+      "properties": {
+        "orgUsers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/OrgUserDTO"
+          }
+        },
+        "page": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "perPage": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "totalCount": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
     "SearchTeamQueryResult": {
       "type": "object",
       "properties": {
@@ -17746,6 +17843,9 @@
     "UpdateAnnotationsCmd": {
       "type": "object",
       "properties": {
+        "data": {
+          "$ref": "#/definitions/Json"
+        },
         "id": {
           "type": "integer",
           "format": "int64"
@@ -18068,7 +18168,7 @@
         "Email": {
           "type": "string"
         },
-        "Id": {
+        "ID": {
           "type": "integer",
           "format": "int64"
         },
@@ -18475,7 +18575,6 @@
       }
     },
     "alertGroups": {
-      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -18636,14 +18735,12 @@
       }
     },
     "gettableAlerts": {
-      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
       }
     },
     "gettableSilence": {
-      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -18692,7 +18789,6 @@
       }
     },
     "gettableSilences": {
-      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
@@ -18879,6 +18975,7 @@
       }
     },
     "receiver": {
+      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",
@@ -19662,7 +19759,7 @@
       "schema": {
         "type": "array",
         "items": {
-          "$ref": "#/definitions/PlaylistItem"
+          "$ref": "#/definitions/Item"
         }
       }
     },
@@ -20117,6 +20214,12 @@
       "description": "(empty)",
       "schema": {
         "$ref": "#/definitions/SearchOrgServiceAccountsResult"
+      }
+    },
+    "searchOrgUsersResponse": {
+      "description": "(empty)",
+      "schema": {
+        "$ref": "#/definitions/SearchOrgUsersQueryResult"
       }
     },
     "searchOrgsResponse": {

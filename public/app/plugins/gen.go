@@ -54,8 +54,11 @@ func main() {
 
 	pluginKindGen.Append(
 		codegen.PluginTreeListJenny(),
-		codegen.PluginGoTypesJenny("pkg/tsdb", adaptToPipeline(corecodegen.GoTypesJenny{})),
+		codegen.PluginGoTypesJenny("pkg/tsdb"),
 		codegen.PluginTSTypesJenny("public/app/plugins", adaptToPipeline(corecodegen.TSTypesJenny{})),
+		codegen.PluginDocsJenny(toDeclForGen(corecodegen.DocsJenny(
+			filepath.Join("docs", "sources", "developers", "kinds", "composable"),
+		))),
 	)
 
 	pluginKindGen.AddPostprocessors(corecodegen.SlashHeaderMapper("public/app/plugins/gen.go"))
@@ -85,7 +88,17 @@ func adaptToPipeline(j codejen.OneToOne[corecodegen.SchemaForGen]) codejen.OneTo
 		return corecodegen.SchemaForGen{
 			Name:    pd.PluginMeta.Name,
 			Schema:  pd.Lineage.Latest(),
-			IsGroup: pd.Slot.IsGroup(),
+			IsGroup: pd.SchemaInterface.IsGroup(),
 		}
+	})
+}
+
+func toDeclForGen(j codejen.OneToOne[*corecodegen.DeclForGen]) codejen.OneToOne[*pfs.PluginDecl] {
+	return codejen.AdaptOneToOne(j, func(pd *pfs.PluginDecl) *corecodegen.DeclForGen {
+		kd, err := corecodegen.ForGen(pd.Lineage.Runtime(), pd.KindDecl.Some())
+		if err != nil {
+			panic("should be unreachable")
+		}
+		return kd
 	})
 }

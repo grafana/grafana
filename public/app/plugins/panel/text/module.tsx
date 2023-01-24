@@ -2,7 +2,7 @@ import { PanelPlugin } from '@grafana/data';
 
 import { TextPanel } from './TextPanel';
 import { TextPanelEditor } from './TextPanelEditor';
-import { CodeLanguage, defaultCodeOptions, defaultPanelOptions, PanelOptions, TextMode } from './models.gen';
+import { CodeLanguage, defaultCodeOptions, defaultPanelOptions, PanelOptions, TextMode } from './panelcfg.gen';
 import { textPanelMigrationHandler } from './textPanelMigrationHandler';
 
 export const plugin = new PanelPlugin<PanelOptions>(TextPanel)
@@ -11,7 +11,6 @@ export const plugin = new PanelPlugin<PanelOptions>(TextPanel)
       .addRadio({
         path: 'mode',
         name: 'Mode',
-        description: 'text mode of the panel',
         settings: {
           options: [
             { value: TextMode.Markdown, label: 'Markdown' },
@@ -49,7 +48,6 @@ export const plugin = new PanelPlugin<PanelOptions>(TextPanel)
         id: 'content',
         path: 'content',
         name: 'Content',
-        description: 'Content of the panel',
         editor: TextPanelEditor,
         defaultValue: defaultPanelOptions.content,
       });

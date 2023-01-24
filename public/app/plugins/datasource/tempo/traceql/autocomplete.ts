@@ -13,9 +13,11 @@ interface Props {
  */
 export class CompletionProvider implements monacoTypes.languages.CompletionItemProvider {
   languageProvider: TempoLanguageProvider;
+  registerInteractionCommandId: string | null;
 
   constructor(props: Props) {
     this.languageProvider = props.languageProvider;
+    this.registerInteractionCommandId = null;
   }
 
   triggerCharacters = ['{', '.', '[', '(', '=', '~', ' ', '"'];
@@ -57,14 +59,19 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
       // so that monaco keeps the order we use
       const maxIndexDigits = items.length.toString().length;
       const suggestions: monacoTypes.languages.CompletionItem[] = items.map((item, index) => {
-        const suggestion = {
+        const suggestion: monacoTypes.languages.CompletionItem = {
           kind: getMonacoCompletionItemKind(item.type, this.monaco!),
           label: item.label,
           insertText: item.insertText,
           sortText: index.toString().padStart(maxIndexDigits, '0'), // to force the order we have
           range,
+          command: {
+            id: this.registerInteractionCommandId || 'noOp',
+            title: 'Report Interaction',
+            arguments: [item.label, item.type],
+          },
         };
-        fixSuggestion(suggestion, item.type, model, offset, this.monaco!);
+        fixSuggestion(suggestion, item.type, model, offset);
         return suggestion;
       });
       return { suggestions };
@@ -78,6 +85,13 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     tags.forEach((t) => (this.tags[t] = new Set<string>()));
   }
 
+  /**
+   * Set the ID for the registerInteraction command, to be used to keep track of how many completions are used by the users
+   */
+  setRegisterInteractionCommandId(id: string | null) {
+    this.registerInteractionCommandId = id;
+  }
+
   private overrideTagName(tagName: string): string {
     switch (tagName) {
       case 'status':
@@ -88,7 +102,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
   }
 
   private async getTagValues(tagName: string): Promise<Array<SelectableValue<string>>> {
-    let tagValues: Array<SelectableValue<string>> = [];
+    let tagValues: Array<SelectableValue<string>>;
 
     if (this.cachedValues.hasOwnProperty(tagName)) {
       tagValues = this.cachedValues[tagName];
@@ -135,7 +149,6 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         }));
       case 'SPANSET_IN_VALUE':
         const tagName = this.overrideTagName(situation.tagName);
-        const tagsNoQuotesAroundValue: string[] = ['status'];
         const tagValues = await this.getTagValues(tagName);
         const items: Completion[] = [];
 
@@ -143,7 +156,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           if (situation.betweenQuotes) {
             return val.label!;
           }
-          return tagsNoQuotesAroundValue.includes(situation.tagName) ? val.label! : `"${val.label}"`;
+          return val.type === 'string' ? `"${val.label}"` : val.label!;
         };
 
         tagValues.forEach((val) => {
@@ -261,18 +274,11 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
         };
       }
 
-      // remove the scopes from the word to get accurate autocompletes
-      // Ex: 'span.host.name' won't resolve to any autocomplete values, but removing 'span.' results in 'host.name' which can have autocomplete values
-      const noScopeWord = CompletionProvider.scopes.reduce(
-        (result, word) => result.replace(`${word}.`, ''),
-        nameMatched?.groups?.word || ''
-      );
-
       // We already have an operator and know that the set isn't complete so let's autocomplete the possible values for the tag name
       // { .http.method = |
       return {
         type: 'SPANSET_IN_VALUE',
-        tagName: noScopeWord,
+        tagName: nameFull,
         betweenQuotes: !!matched.groups?.open_quote,
       };
     }
@@ -404,11 +410,10 @@ function getRangeAndOffset(monaco: Monaco, model: monacoTypes.editor.ITextModel,
  * here.
  */
 function fixSuggestion(
-  suggestion: monacoTypes.languages.CompletionItem & { range: monacoTypes.IRange },
+  suggestion: monacoTypes.languages.CompletionItem,
   itemType: CompletionType,
   model: monacoTypes.editor.ITextModel,
-  offset: number,
-  monaco: Monaco
+  offset: number
 ) {
   if (itemType === 'TAG_NAME') {
     const match = model
@@ -427,10 +432,10 @@ function fixSuggestion(
         }
 
         // Adjust the range, so that we will replace the whole tag.
-        suggestion.range = monaco.Range.lift({
+        suggestion.range = {
           ...suggestion.range,
           startColumn: offset - tag.length + 1,
-        });
+        };
       }
     }
   }

@@ -45,7 +45,7 @@ import { ShareModal } from '../ShareModal';
 
 interface Props extends ShareModalTabProps {}
 
-type SharePublicDashboardAcknowledgmentInputs = {
+export type SharePublicDashboardAcknowledgmentInputs = {
   publicAcknowledgment: boolean;
   dataSourcesAcknowledgment: boolean;
   usageAcknowledgment: boolean;
@@ -54,6 +54,7 @@ type SharePublicDashboardAcknowledgmentInputs = {
 export type SharePublicDashboardInputs = {
   isAnnotationsEnabled: boolean;
   enabledSwitch: boolean;
+  isTimeRangeEnabled: boolean;
 } & SharePublicDashboardAcknowledgmentInputs;
 
 export const SharePublicDashboard = (props: Props) => {
@@ -64,17 +65,13 @@ export const SharePublicDashboard = (props: Props) => {
 
   const dashboardVariables = props.dashboard.getVariables();
   const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
-  const { hasPublicDashboard } = props.dashboard.meta;
 
   const {
     isLoading: isGetLoading,
     data: publicDashboard,
     isError: isGetError,
     isFetching,
-  } = useGetPublicDashboardQuery(props.dashboard.uid, {
-    // if we don't have a public dashboard, don't try to load public dashboard
-    skip: !hasPublicDashboard,
-  });
+  } = useGetPublicDashboardQuery(props.dashboard.uid);
 
   const {
     reset,
@@ -88,6 +85,7 @@ export const SharePublicDashboard = (props: Props) => {
       dataSourcesAcknowledgment: false,
       usageAcknowledgment: false,
       isAnnotationsEnabled: false,
+      isTimeRangeEnabled: false,
       enabledSwitch: false,
     },
   });
@@ -110,6 +108,7 @@ export const SharePublicDashboard = (props: Props) => {
       dataSourcesAcknowledgment: isPublicDashboardPersisted,
       usageAcknowledgment: isPublicDashboardPersisted,
       isAnnotationsEnabled: publicDashboard?.annotationsEnabled,
+      isTimeRangeEnabled: publicDashboard?.timeSelectionEnabled,
       enabledSwitch: publicDashboard?.isEnabled,
     });
   }, [publicDashboard, reset]);
@@ -151,11 +150,12 @@ export const SharePublicDashboard = (props: Props) => {
         ...publicDashboard!,
         isEnabled: values.enabledSwitch,
         annotationsEnabled: values.isAnnotationsEnabled,
+        timeSelectionEnabled: values.isTimeRangeEnabled,
       },
     };
 
     // create or update based on whether we have existing uid
-    hasPublicDashboard ? updatePublicDashboard(req) : createPublicDashboard(req);
+    !!publicDashboard ? updatePublicDashboard(req) : createPublicDashboard(req);
   };
 
   const onDismissDelete = () => {
@@ -260,7 +260,7 @@ export const SharePublicDashboard = (props: Props) => {
             <HorizontalGroup>
               <Layout orientation={isDesktop ? 0 : 1}>
                 <Button type="submit" disabled={isSaveDisabled} data-testid={selectors.SaveConfigButton}>
-                  {hasPublicDashboard ? 'Save public dashboard' : 'Create public dashboard'}
+                  {!!publicDashboard ? 'Save public dashboard' : 'Create public dashboard'}
                 </Button>
                 {publicDashboard && hasWritePermissions && (
                   <DeletePublicDashboardButton

@@ -70,6 +70,7 @@ func (s *ServiceImpl) processAppPlugin(plugin plugins.PluginDTO, c *models.ReqCo
 		Text:       plugin.Name,
 		Id:         "plugin-page-" + plugin.ID,
 		Img:        plugin.Info.Logos.Small,
+		SubTitle:   plugin.Info.Description,
 		Section:    navtree.NavSectionPlugin,
 		SortWeight: navtree.WeightPlugin,
 		IsSection:  true,
@@ -187,6 +188,9 @@ func (s *ServiceImpl) addPluginToSection(c *models.ReqContext, treeRoot *navtree
 		if len(navConfig.Text) > 0 {
 			appLink.Text = navConfig.Text
 		}
+		if len(navConfig.Icon) > 0 {
+			appLink.Icon = navConfig.Icon
+		}
 	}
 
 	if sectionID == navtree.NavIDRoot {
@@ -262,8 +266,8 @@ func (s *ServiceImpl) readNavigationSettings() {
 		"grafana-incident-app":             {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 2, Text: "Incident"},
 		"grafana-ml-app":                   {SectionID: navtree.NavIDAlertsAndIncidents, SortWeight: 3, Text: "Machine Learning"},
 		"grafana-cloud-link-app":           {SectionID: navtree.NavIDCfg},
-		"grafana-easystart-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightSavedItems + 1, Text: "Connections"},
-		"grafana-k6-app":                   {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAlertsAndIncidents + 1, Text: "Performance testing"},
+		"grafana-easystart-app":            {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightSavedItems + 1, Text: "Connections", Icon: "adjust-circle"},
+		"grafana-k6-app":                   {SectionID: navtree.NavIDRoot, SortWeight: navtree.WeightAlertsAndIncidents + 1, Text: "Performance testing", Icon: "k6"},
 	}
 
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{

@@ -6,6 +6,7 @@ package server
 import (
 	"github.com/google/wire"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -20,8 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
-	"github.com/grafana/grafana/pkg/infra/supportbundles"
-	"github.com/grafana/grafana/pkg/infra/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	uss "github.com/grafana/grafana/pkg/infra/usagestats/service"
@@ -29,7 +28,6 @@ import (
 	loginpkg "github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
-	"github.com/grafana/grafana/pkg/models"
 	pluginDashboards "github.com/grafana/grafana/pkg/plugins/manager/dashboards"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -116,8 +114,8 @@ import (
 	serviceaccountsmanager "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 	serviceaccountsretriever "github.com/grafana/grafana/pkg/services/serviceaccounts/retriever"
 	"github.com/grafana/grafana/pkg/services/shorturls"
+	"github.com/grafana/grafana/pkg/services/shorturls/shorturlimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/stats/statsimpl"
 	"github.com/grafana/grafana/pkg/services/store"
@@ -127,6 +125,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/kind"
 	"github.com/grafana/grafana/pkg/services/store/resolver"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
+	"github.com/grafana/grafana/pkg/services/supportbundles"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
@@ -204,8 +204,8 @@ var wireBasicSet = wire.NewSet(
 	annotationsimpl.ProvideCleanupService,
 	wire.Bind(new(annotations.Cleaner), new(*annotationsimpl.CleanupServiceImpl)),
 	cleanup.ProvideService,
-	shorturls.ProvideService,
-	wire.Bind(new(shorturls.Service), new(*shorturls.ShortURLService)),
+	shorturlimpl.ProvideService,
+	wire.Bind(new(shorturls.Service), new(*shorturlimpl.ShortURLService)),
 	queryhistory.ProvideService,
 	wire.Bind(new(queryhistory.Service), new(*queryhistory.QueryHistoryService)),
 	correlations.ProvideService,
@@ -230,7 +230,7 @@ var wireBasicSet = wire.NewSet(
 	pushhttp.ProvideService,
 	contexthandler.ProvideService,
 	jwt.ProvideService,
-	wire.Bind(new(models.JWTService), new(*jwt.AuthService)),
+	wire.Bind(new(jwt.JWTService), new(*jwt.AuthService)),
 	ngstore.ProvideDBStore,
 	ngimage.ProvideDeleteExpiredService,
 	ngalert.ProvideService,
@@ -293,6 +293,7 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(dashboards.DashboardProvisioningService), new(*dashboardservice.DashboardServiceImpl)),
 	wire.Bind(new(dashboards.PluginService), new(*dashboardservice.DashboardServiceImpl)),
 	wire.Bind(new(dashboards.Store), new(*dashboardstore.DashboardStore)),
+	wire.Bind(new(dashboards.FolderStore), new(*dashboardstore.DashboardStore)),
 	dashboardimportservice.ProvideService,
 	wire.Bind(new(dashboardimport.Service), new(*dashboardimportservice.ImportDashboardService)),
 	plugindashboardsservice.ProvideService,
@@ -383,7 +384,6 @@ var wireTestSet = wire.NewSet(
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationServiceMock)),
-	mockstore.NewSQLStoreMock,
 	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
 	prefimpl.ProvideService,
 	oauthtoken.ProvideService,

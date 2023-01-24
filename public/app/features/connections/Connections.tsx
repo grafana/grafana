@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Route, Switch } from 'react-router-dom';
+import { Redirect, Route, Switch } from 'react-router-dom';
 
 import { NavLandingPage } from 'app/core/components/AppChrome/NavLandingPage';
 import { DataSourcesRoutesContext } from 'app/features/datasources/state';
@@ -8,6 +8,7 @@ import { StoreState, useSelector } from 'app/types';
 import { ROUTES } from './constants';
 import {
   ConnectDataPage,
+  DataSourceDashboardsPage,
   DataSourceDetailsPage,
   DataSourcesListPage,
   EditDataSourcePage,
@@ -28,7 +29,7 @@ export default function Connections() {
       }}
     >
       <Switch>
-        <Route exact path={ROUTES.Base} component={() => <NavLandingPage navId="connections" />} />
+        <Route exact path={ROUTES.Base} component={() => <Redirect to={ROUTES.ConnectData} />} />
         <Route
           exact
           path={ROUTES.YourConnections}
@@ -38,6 +39,7 @@ export default function Connections() {
         <Route exact path={ROUTES.DataSourcesDetails} component={DataSourceDetailsPage} />
         <Route exact path={ROUTES.DataSourcesNew} component={NewDataSourcePage} />
         <Route exact path={ROUTES.DataSourcesEdit} component={EditDataSourcePage} />
+        <Route exact path={ROUTES.DataSourcesDashboards} component={DataSourceDashboardsPage} />
         {!isConnectDataPageOverriden && <Route path={ROUTES.ConnectData} component={ConnectDataPage} />}
 
         {/* Default page */}

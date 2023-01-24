@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
@@ -202,7 +203,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 		OrgID:    c.OrgID,
 	})
 	if err != nil {
-		if !errors.Is(err, models.ErrPluginSettingNotFound) {
+		if !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
 			return response.Error(http.StatusInternalServerError, "Failed to get plugin settings", nil)
 		}
 	} else {
@@ -227,7 +228,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 }
 
 func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext) response.Response {
-	cmd := models.UpdatePluginSettingCmd{}
+	cmd := pluginsettings.UpdatePluginSettingCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
@@ -271,7 +272,7 @@ func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response 
 
 	// fallback try readme
 	if len(content) == 0 {
-		content, err = hs.pluginMarkdown(c.Req.Context(), pluginID, "help")
+		content, err = hs.pluginMarkdown(c.Req.Context(), pluginID, "readme")
 		if err != nil {
 			return response.Error(501, "Could not get markdown file", err)
 		}

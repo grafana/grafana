@@ -14,10 +14,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/client"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/querydata/exemplar"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/utils"
 	"github.com/grafana/grafana/pkg/util/maputil"
 )
@@ -35,15 +35,15 @@ type ExemplarEvent struct {
 // QueryData handles querying but different from buffered package uses a custom client instead of default Go Prom
 // client.
 type QueryData struct {
-	intervalCalculator                intervalv2.Calculator
-	tracer                            tracing.Tracer
-	client                            *client.Client
-	log                               log.Logger
-	ID                                int64
-	URL                               string
-	TimeInterval                      string
-	enableWideSeries                  bool
-	disablePrometheusExemplarSampling bool
+	intervalCalculator intervalv2.Calculator
+	tracer             tracing.Tracer
+	client             *client.Client
+	log                log.Logger
+	ID                 int64
+	URL                string
+	TimeInterval       string
+	enableWideSeries   bool
+	exemplarSampler    func() exemplar.Sampler
 }
 
 func New(
@@ -66,21 +66,28 @@ func New(
 
 	promClient := client.NewClient(httpClient, httpMethod, settings.URL)
 
+	// standard deviation sampler is the default for backwards compatibility
+	exemplarSampler := exemplar.NewStandardDeviationSampler
+
+	if features.IsEnabled(featuremgmt.FlagDisablePrometheusExemplarSampling) {
+		exemplarSampler = exemplar.NewNoOpSampler
+	}
+
 	return &QueryData{
-		intervalCalculator:                intervalv2.NewCalculator(),
-		tracer:                            tracer,
-		log:                               plog,
-		client:                            promClient,
-		TimeInterval:                      timeInterval,
-		ID:                                settings.ID,
-		URL:                               settings.URL,
-		enableWideSeries:                  features.IsEnabled(featuremgmt.FlagPrometheusWideSeries),
-		disablePrometheusExemplarSampling: features.IsEnabled(featuremgmt.FlagDisablePrometheusExemplarSampling),
+		intervalCalculator: intervalv2.NewCalculator(),
+		tracer:             tracer,
+		log:                plog,
+		client:             promClient,
+		TimeInterval:       timeInterval,
+		ID:                 settings.ID,
+		URL:                settings.URL,
+		enableWideSeries:   features.IsEnabled(featuremgmt.FlagPrometheusWideSeries),
+		exemplarSampler:    exemplarSampler,
 	}, nil
 }
 
 func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName] == "true"
+	fromAlert := req.Headers["FromAlert"] == "true"
 	result := backend.QueryDataResponse{
 		Responses: backend.Responses{},
 	}
@@ -90,7 +97,7 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 		if err != nil {
 			return &result, err
 		}
-		r, err := s.fetch(ctx, s.client, query)
+		r, err := s.fetch(ctx, s.client, query, req.Headers)
 		if err != nil {
 			return &result, err
 		}
@@ -104,7 +111,7 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 	return &result, nil
 }
 
-func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.Query) (*backend.DataResponse, error) {
+func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.Query, headers map[string]string) (*backend.DataResponse, error) {
 	traceCtx, end := s.trace(ctx, q)
 	defer end()
 
@@ -117,64 +124,56 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 	}
 
 	if q.InstantQuery {
-		res, err := s.instantQuery(traceCtx, client, q)
-		if err != nil {
-			return nil, err
-		}
-		response.Error = res.Error
+		res, err := s.instantQuery(traceCtx, client, q, headers)
+		response.Error = err
 		response.Frames = res.Frames
 	}
 
 	if q.RangeQuery {
-		res, err := s.rangeQuery(traceCtx, client, q)
+		res, err := s.rangeQuery(traceCtx, client, q, headers)
 		if err != nil {
-			return nil, err
-		}
-		if res.Error != nil {
 			if response.Error == nil {
-				response.Error = res.Error
+				response.Error = err
 			} else {
-				response.Error = fmt.Errorf("%v %w", response.Error, res.Error) // lovely
+				response.Error = fmt.Errorf("%v %w", response.Error, err)
 			}
 		}
 		response.Frames = append(response.Frames, res.Frames...)
 	}
 
 	if q.ExemplarQuery {
-		res, err := s.exemplarQuery(traceCtx, client, q)
+		res, err := s.exemplarQuery(traceCtx, client, q, headers)
 		if err != nil {
 			// If exemplar query returns error, we want to only log it and
 			// continue with other results processing
 			logger.Error("Exemplar query failed", "query", q.Expr, "err", err)
 		}
-		if res != nil {
-			response.Frames = append(response.Frames, res.Frames...)
-		}
+		response.Frames = append(response.Frames, res.Frames...)
 	}
 
 	return response, nil
 }
 
-func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query) (*backend.DataResponse, error) {
+func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) (backend.DataResponse, error) {
 	res, err := c.QueryRange(ctx, q)
 	if err != nil {
-		return nil, err
+		return backend.DataResponse{}, err
 	}
 	return s.parseResponse(ctx, q, res)
 }
 
-func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query) (*backend.DataResponse, error) {
+func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) (backend.DataResponse, error) {
 	res, err := c.QueryInstant(ctx, q)
 	if err != nil {
-		return nil, err
+		return backend.DataResponse{}, err
 	}
 	return s.parseResponse(ctx, q, res)
 }
 
-func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query) (*backend.DataResponse, error) {
+func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) (backend.DataResponse, error) {
 	res, err := c.QueryExemplars(ctx, q)
 	if err != nil {
-		return nil, err
+		return backend.DataResponse{}, err
 	}
 	return s.parseResponse(ctx, q, res)
 }

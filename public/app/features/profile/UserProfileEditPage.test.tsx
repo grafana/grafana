@@ -11,6 +11,7 @@ import TestProvider from '../../../test/helpers/TestProvider';
 import { backendSrv } from '../../core/services/backend_srv';
 import { configureStore } from '../../store/configureStore';
 import { TeamPermissionLevel } from '../../types';
+import { getMockTeam } from '../teams/__mocks__/teamMocks';
 
 import { Props, UserProfileEditPage } from './UserProfileEditPage';
 import { initialUserState } from './state/reducers';
@@ -27,14 +28,13 @@ const defaultProps: Props = {
     orgId: 0,
   },
   teams: [
-    {
-      id: 0,
+    getMockTeam(0, {
       name: 'Team One',
       email: 'team.one@test.com',
       avatarUrl: '/avatar/07d881f402480a2a511a9a15b5fa82c0',
       memberCount: 2000,
       permission: TeamPermissionLevel.Admin,
-    },
+    }),
   ],
   orgs: [
     {
@@ -130,11 +130,10 @@ describe('UserProfileEditPage', () => {
   });
 
   describe('when user has loaded', () => {
-    it('should show edit profile form', async () => {
+    it('should show profile form', async () => {
       await getTestContext();
 
       const { name, email, username, saveProfile } = getSelectors();
-      expect(screen.getByText(/edit profile/i)).toBeInTheDocument();
       expect(name()).toBeInTheDocument();
       expect(name()).toHaveValue('Test User');
       expect(email()).toBeInTheDocument();

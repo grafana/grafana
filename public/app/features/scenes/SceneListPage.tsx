@@ -1,9 +1,9 @@
 // Libraries
-import React, { FC } from 'react';
+import React from 'react';
 import { useAsync } from 'react-use';
 
 import { Stack } from '@grafana/experimental';
-import { Card, LinkButton } from '@grafana/ui';
+import { Card } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 
 // Types
@@ -13,7 +13,7 @@ import { getScenes } from './scenes';
 
 export interface Props {}
 
-export const SceneListPage: FC<Props> = ({}) => {
+export const SceneListPage = ({}: Props) => {
   const scenes = getScenes();
   const results = useAsync(() => {
     return getGrafanaSearcher().starred({ starred: true });
@@ -26,16 +26,8 @@ export const SceneListPage: FC<Props> = ({}) => {
           <h5>Test scenes</h5>
           <Stack direction="column" gap={0}>
             {scenes.map((scene) => (
-              <Card key={scene.title}>
+              <Card key={scene.title} href={`/scenes/${scene.title}`}>
                 <Card.Heading>{scene.title}</Card.Heading>
-                <Card.Actions>
-                  <LinkButton size="sm" href={`/scenes/${scene.title}`}>
-                    Open as standalone scene
-                  </LinkButton>
-                  <LinkButton size="sm" variant="secondary" href={`/scenes/embedded/${scene.title}`}>
-                    Open as embedded scene
-                  </LinkButton>
-                </Card.Actions>
               </Card>
             ))}
           </Stack>

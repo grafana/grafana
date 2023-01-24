@@ -11,7 +11,7 @@ interface Props extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
   children: (props: PanelHeaderMenuTriggerApi) => ReactElement;
 }
 
-export const PanelHeaderMenuTrigger = ({ children, ...divProps }: Props) => {
+export function PanelHeaderMenuTrigger({ children, ...divProps }: Props) {
   const [clickCoordinates, setClickCoordinates] = useState<CartesianCoords2D>({ x: 0, y: 0 });
   const [panelMenuOpen, setPanelMenuOpen] = useState<boolean>(false);
 
@@ -38,7 +38,7 @@ export const PanelHeaderMenuTrigger = ({ children, ...divProps }: Props) => {
       {children({ panelMenuOpen, closeMenu: () => setPanelMenuOpen(false) })}
     </header>
   );
-};
+}
 
 function isClick(current: CartesianCoords2D, clicked: CartesianCoords2D, deadZone = 3.5): boolean {
   // A "deadzone" radius is added so that if the cursor is moved within this radius
