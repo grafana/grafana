@@ -72,13 +72,25 @@ func (h *RemoteLokiBackend) QueryStates(ctx context.Context, query models.Histor
 	if query.RuleUID == "" {
 		return nil, errors.New("the RuleUID is not set but required")
 	}
-	res, err := h.client.query(ctx, [][3]string{
-		{"rule_id", "=", query.RuleUID},
-	}, query.From.Unix(), query.To.Unix())
+	selectors := buildSelectors(query)
+	res, err := h.client.query(ctx, selectors, query.From.Unix(), query.To.Unix())
 	if err != nil {
 		return nil, err
 	}
 	return merge(res)
+}
+
+func buildSelectors(query models.HistoryQuery) [][3]string {
+	// +2 as we put the RuleID and OrgID also into a label selector.
+	selectors := make([][3]string, len(query.Labels)+2)
+	selectors[0] = [3]string{"rule_id", "=", query.RuleUID}
+	selectors[1] = [3]string{"org_id", "=", fmt.Sprintf("%d", query.OrgID)}
+	i := 2
+	for label, val := range query.Labels {
+		selectors[i] = [3]string{label, "=", val}
+		i++
+	}
+	return selectors
 }
 
 // merge will put all the results in one array sorted by timestamp.

@@ -194,6 +194,7 @@ func (c *httpLokiClient) query(ctx context.Context, selectors [][3]string, start
 	}
 
 	req = req.WithContext(ctx)
+	c.setAuthAndTenantHeaders(req)
 
 	client := http.Client{
 		Timeout: time.Second * 30,
