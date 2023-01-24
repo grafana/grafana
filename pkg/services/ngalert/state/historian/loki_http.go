@@ -229,7 +229,7 @@ func selectorString(selectors [][3]string) (string, error) {
 		if !isValidOperator(s[1]) {
 			return "", fmt.Errorf("'%s' is not a valid query operator", s[1])
 		}
-		query += fmt.Sprintf("%%%,", s[0], s[1], s[2])
+		query += fmt.Sprintf("%s%s%q,", s[0], s[1], s[2])
 	}
 	// Remove the last comma, as we append one to every selector.
 	query = query[:len(query)-1]
@@ -239,10 +239,7 @@ func selectorString(selectors [][3]string) (string, error) {
 
 func isValidOperator(op string) bool {
 	switch op {
-	case "=":
-	case "!=":
-	case "=~":
-	case "!~":
+	case "=", "!=", "=~", "!~":
 		return true
 	}
 	return false

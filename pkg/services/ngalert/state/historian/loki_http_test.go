@@ -100,3 +100,23 @@ func TestLokiHTTPClient(t *testing.T) {
 		require.NoError(t, err)
 	})
 }
+
+func TestSelectorString(t *testing.T) {
+	selectors := [][3]string{{"name", "=", "Bob"}, {"age", "=~", "30"}}
+	expected := "{name=\"Bob\",age=~\"30\"}"
+	result, err := selectorString(selectors)
+	require.NoError(t, err)
+	require.Equal(t, expected, result)
+
+	selectors = [][3]string{{"name", "?", "Bob"}}
+	expected = ""
+	result, err = selectorString(selectors)
+	require.Error(t, err)
+	require.Equal(t, expected, result)
+
+	selectors = [][3]string{}
+	expected = "{}"
+	result, err = selectorString(selectors)
+	require.NoError(t, err)
+	require.Equal(t, expected, result)
+}
