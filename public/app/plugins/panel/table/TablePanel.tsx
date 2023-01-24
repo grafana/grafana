@@ -1,15 +1,7 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import {
-  DataFrame,
-  FieldMatcherID,
-  getFrameDisplayName,
-  PanelProps,
-  SelectableValue,
-  // ArrayVector,
-  // FieldType,
-} from '@grafana/data';
+import { DataFrame, FieldMatcherID, getFrameDisplayName, PanelProps, SelectableValue } from '@grafana/data';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
@@ -40,20 +32,12 @@ export function TablePanel(props: Props) {
   const hasFields = mainFrames[0]?.fields.length;
   const currentIndex = getCurrentFrameIndex(mainFrames, options);
   console.log(currentIndex, 'currentIndex');
-  // JEV: add row# field here?
   const main = mainFrames[currentIndex];
-  // main.fields.unshift(buildRowNumField(main.length));
   console.log(main, 'main');
-  // console.log(buildRowNumField(main.length), 'newField');
 
   let tableHeight = height;
   let subData = subFrames;
 
-  // useEffect(() => {
-  //   main.fields = [buildRowNumField(main.length), ...main.fields];
-  // }, [addRows])
-
-  // JEV: no data error handler
   if (!count || !hasFields) {
     return <PanelDataErrorView panelId={id} fieldConfig={fieldConfig} data={data} />;
   }
@@ -66,7 +50,6 @@ export function TablePanel(props: Props) {
     subData = subFrames.filter((f) => f.refId === main.refId);
   }
 
-  // JEV: is this a single table row?
   const tableElement = (
     <Table
       height={tableHeight}
@@ -155,18 +138,6 @@ function onChangeTableSelection(val: SelectableValue<number>, props: Props) {
     frameIndex: val.value || 0,
   });
 }
-
-// function buildRowNumField(length: number) {
-//   return { name: 'row', type: FieldType['number'], config: {}, values: buildRowNumValues(length) };
-// }
-
-// function buildRowNumValues(length: number) {
-//   let arr = [];
-//   for (let i = 1; i <= length; i++) {
-//     arr.push(i);
-//   }
-//   return new ArrayVector(arr);
-// }
 
 const tableStyles = {
   wrapper: css`

@@ -72,7 +72,9 @@ export function getColumns(
   columnMinWidth: number,
   expander: boolean,
   footerValues?: FooterItem[],
-  isCountRowsSet?: boolean
+  isCountRowsSet?: boolean,
+  // JEV: add arg hasRowNumberColumn?
+  hasRowNumberColumn?: boolean
 ): GrafanaTableColumn[] {
   const columns: GrafanaTableColumn[] = [];
   let fieldCountWithoutWidth = 0;
@@ -94,6 +96,24 @@ export function getColumns(
     });
 
     availableWidth -= EXPANDER_WIDTH;
+  }
+
+  if (hasRowNumberColumn) {
+    columns.unshift({
+      Header: 'row',
+      id: 'row#',
+      // tableStyles: TableStyles;
+      // cellProps: React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>;
+      // field: Field;
+      // onCellFilterAdded?: TableFilterActionCallback;
+      // innerWidth: number;
+      filter: (item) => item,
+      sortType: 'basic',
+      width: 50,
+      minWidth: 50,
+      justifyContent: 'left',
+      field: buildFieldsForRowNums(data.length),
+    });
   }
 
   for (const [fieldIndex, field] of data.fields.entries()) {
@@ -159,7 +179,25 @@ export function getColumns(
     column.minWidth = 50;
   }
 
+  console.log(columns, 'columns');
   return columns;
+}
+
+function buildFieldsForRowNums(totalRows: number) {
+  return {
+    name: 'row#',
+    type: FieldType['number'],
+    config: {},
+    values: buildRowNumValues(totalRows),
+  };
+}
+
+function buildRowNumValues(totalRows: number) {
+  let arr = [];
+  for (let i = 1; i <= totalRows; i++) {
+    arr.push(String(i));
+  }
+  return new ArrayVector(arr);
 }
 
 export function getCellComponent(displayMode: TableCellDisplayMode, field: Field): CellComponent {
