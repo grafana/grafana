@@ -19,7 +19,7 @@ import { buildVisualQueryFromString } from '../querybuilder/parsing';
 import { changeEditorMode, getQueryWithDefaults } from '../querybuilder/state';
 import { LokiQuery } from '../types';
 
-import { LokiQueryEditorProps, QueryStats } from './types';
+import { LokiQueryEditorProps } from './types';
 
 export const testIds = {
   editor: 'loki-editor',
@@ -31,7 +31,6 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
   const [queryPatternsModalOpen, setQueryPatternsModalOpen] = useState(false);
   const [dataIsStale, setDataIsStale] = useState(false);
   const [labelBrowserVisible, setLabelBrowserVisible] = useState(false);
-  const [queryStats, setQueryStats] = useState({} as QueryStats);
   const { flag: explain, setFlag: setExplain } = useFlag(lokiQueryEditorExplainKey);
 
   const query = getQueryWithDefaults(props.query);
@@ -69,7 +68,6 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
   }, [data]);
 
   const onChangeInternal = async (query: LokiQuery) => {
-    setQueryStats(await datasource.queryStatsRequest(query));
     setDataIsStale(true);
     onChange(query);
   };
@@ -169,7 +167,6 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
         )}
         <LokiQueryBuilderOptions
           query={query}
-          queryStats={queryStats}
           onChange={onChange}
           onRunQuery={onRunQuery}
           app={app}

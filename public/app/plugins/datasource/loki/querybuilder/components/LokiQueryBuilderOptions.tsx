@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { CoreApp, SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow } from '@grafana/experimental';
@@ -14,7 +14,6 @@ import { LokiQuery, LokiQueryType } from '../../types';
 
 export interface Props {
   query: LokiQuery;
-  queryStats: QueryStats;
   onChange: (update: LokiQuery) => void;
   onRunQuery: () => void;
   datasource: LokiDatasource;
@@ -23,7 +22,10 @@ export interface Props {
 }
 
 export const LokiQueryBuilderOptions = React.memo<Props>(
-  ({ app, query, queryStats, onChange, onRunQuery, datasource, maxLines }) => {
+  ({ app, query, onChange, onRunQuery, datasource, maxLines }) => {
+    const [queryStats, setQueryStats] = useState<QueryStats>({ streams: 0, chunks: 0, bytes: 0, entries: 0 });
+    const [prevQuery, setPrevQuery] = useState(query);
+
     const onQueryTypeChange = (value: LokiQueryType) => {
       onChange({ ...query, queryType: value });
       onRunQuery();
@@ -53,6 +55,18 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
 
     let queryType = query.queryType ?? (query.instant ? LokiQueryType.Instant : LokiQueryType.Range);
     let showMaxLines = isLogsQuery(query.expr);
+
+    useEffect(() => {
+      if (query.expr === prevQuery.expr) {
+        return;
+      }
+
+      const makeAsyncRequest = async () => {
+        setQueryStats(await datasource.queryStatsRequest(query));
+        setPrevQuery(query);
+      };
+      makeAsyncRequest();
+    }, [query, prevQuery, datasource]);
 
     return (
       <EditorRow>
