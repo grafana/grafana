@@ -291,11 +291,11 @@ func (_m *FakeDashboardStore) GetProvisionedDataByDashboardUID(ctx context.Conte
 }
 
 // HasAdminPermissionInDashboardsOrFolders provides a mock function with given fields: ctx, query
-func (_m *FakeDashboardStore) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *models.HasAdminPermissionInDashboardsOrFoldersQuery) error {
+func (_m *FakeDashboardStore) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *HasAdminPermissionInDashboardsOrFoldersQuery) error {
 	ret := _m.Called(ctx, query)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.HasAdminPermissionInDashboardsOrFoldersQuery) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *HasAdminPermissionInDashboardsOrFoldersQuery) error); ok {
 		r0 = rf(ctx, query)
 	} else {
 		r0 = ret.Error(0)
@@ -305,11 +305,11 @@ func (_m *FakeDashboardStore) HasAdminPermissionInDashboardsOrFolders(ctx contex
 }
 
 // HasEditPermissionInFolders provides a mock function with given fields: ctx, query
-func (_m *FakeDashboardStore) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
+func (_m *FakeDashboardStore) HasEditPermissionInFolders(ctx context.Context, query *HasEditPermissionInFoldersQuery) error {
 	ret := _m.Called(ctx, query)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *models.HasEditPermissionInFoldersQuery) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *HasEditPermissionInFoldersQuery) error); ok {
 		r0 = rf(ctx, query)
 	} else {
 		r0 = ret.Error(0)

@@ -214,7 +214,7 @@ func OrgAdminDashOrFolderAdminOrTeamAdmin(ss db.DB, ds dashboards.DashboardServi
 			return
 		}
 
-		hasAdminPermissionInDashOrFoldersQuery := models.HasAdminPermissionInDashboardsOrFoldersQuery{SignedInUser: c.SignedInUser}
+		hasAdminPermissionInDashOrFoldersQuery := dashboards.HasAdminPermissionInDashboardsOrFoldersQuery{SignedInUser: c.SignedInUser}
 		if err := ds.HasAdminPermissionInDashboardsOrFolders(c.Req.Context(), &hasAdminPermissionInDashOrFoldersQuery); err != nil {
 			c.JsonApiErr(500, "Failed to check if user is a folder admin", err)
 		}

@@ -169,22 +169,19 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 
 func (hs *HTTPServer) MoveFolder(c *models.ReqContext) response.Response {
 	if hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		cmd := models.MoveFolderCommand{}
+		cmd := folder.MoveFolderCommand{}
 		if err := web.Bind(c.Req, &cmd); err != nil {
 			return response.Error(http.StatusBadRequest, "bad request data", err)
 		}
 		var theFolder *folder.Folder
 		var err error
-		if cmd.ParentUID != nil {
-			moveCommand := folder.MoveFolderCommand{
-				UID:          web.Params(c.Req)[":uid"],
-				NewParentUID: *cmd.ParentUID,
-				OrgID:        c.OrgID,
-			}
-			theFolder, err = hs.folderService.Move(c.Req.Context(), &moveCommand)
-			if err != nil {
-				return response.Error(http.StatusInternalServerError, "update folder uid failed", err)
-			}
+		if cmd.NewParentUID != "" {
+			cmd.UID = web.Params(c.Req)[":uid"]
+			cmd.OrgID = c.OrgID
+		}
+		theFolder, err = hs.folderService.Move(c.Req.Context(), &cmd)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "update folder uid failed", err)
 		}
 		return response.JSON(http.StatusOK, theFolder)
 	}

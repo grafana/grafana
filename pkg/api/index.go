@@ -21,7 +21,7 @@ const (
 )
 
 func (hs *HTTPServer) editorInAnyFolder(c *models.ReqContext) bool {
-	hasEditPermissionInFoldersQuery := models.HasEditPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
+	hasEditPermissionInFoldersQuery := dashboards.HasEditPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
 	if err := hs.DashboardService.HasEditPermissionInFolders(c.Req.Context(), &hasEditPermissionInFoldersQuery); err != nil {
 		return false
 	}

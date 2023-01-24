@@ -420,3 +420,13 @@ type GetDashboardACLInfoListQuery struct {
 	OrgID       int64
 	Result      []*DashboardACLInfoDTO
 }
+
+type HasEditPermissionInFoldersQuery struct {
+	SignedInUser *user.SignedInUser
+	Result       bool
+}
+
+type HasAdminPermissionInDashboardsOrFoldersQuery struct {
+	SignedInUser *user.SignedInUser
+	Result       bool
+}

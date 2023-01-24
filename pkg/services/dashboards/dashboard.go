@@ -21,8 +21,8 @@ type DashboardService interface {
 	GetDashboards(ctx context.Context, query *GetDashboardsQuery) error
 	GetDashboardTags(ctx context.Context, query *GetDashboardTagsQuery) error
 	GetDashboardUIDByID(ctx context.Context, query *GetDashboardRefByIDQuery) error
-	HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *models.HasAdminPermissionInDashboardsOrFoldersQuery) error
-	HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error
+	HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *HasAdminPermissionInDashboardsOrFoldersQuery) error
+	HasEditPermissionInFolders(ctx context.Context, query *HasEditPermissionInFoldersQuery) error
 	ImportDashboard(ctx context.Context, dto *SaveDashboardDTO) (*Dashboard, error)
 	MakeUserAdmin(ctx context.Context, orgID int64, userID, dashboardID int64, setViewAndEditPermissions bool) error
 	SaveDashboard(ctx context.Context, dto *SaveDashboardDTO, allowUiUpdate bool) (*Dashboard, error)
@@ -68,8 +68,8 @@ type Store interface {
 	GetProvisionedDashboardData(ctx context.Context, name string) ([]*DashboardProvisioning, error)
 	GetProvisionedDataByDashboardID(ctx context.Context, dashboardID int64) (*DashboardProvisioning, error)
 	GetProvisionedDataByDashboardUID(ctx context.Context, orgID int64, dashboardUID string) (*DashboardProvisioning, error)
-	HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *models.HasAdminPermissionInDashboardsOrFoldersQuery) error
-	HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error
+	HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *HasAdminPermissionInDashboardsOrFoldersQuery) error
+	HasEditPermissionInFolders(ctx context.Context, query *HasEditPermissionInFoldersQuery) error
 	// SaveAlerts saves dashboard alertmodels.
 	SaveAlerts(ctx context.Context, dashID int64, alerts []*alertmodels.Alert) error
 	SaveDashboard(ctx context.Context, cmd SaveDashboardCommand) (*Dashboard, error)

@@ -602,11 +602,11 @@ func (dr *DashboardServiceImpl) GetDashboardACLInfoList(ctx context.Context, que
 	return dr.dashboardStore.GetDashboardACLInfoList(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *models.HasAdminPermissionInDashboardsOrFoldersQuery) error {
+func (dr *DashboardServiceImpl) HasAdminPermissionInDashboardsOrFolders(ctx context.Context, query *dashboards.HasAdminPermissionInDashboardsOrFoldersQuery) error {
 	return dr.dashboardStore.HasAdminPermissionInDashboardsOrFolders(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) HasEditPermissionInFolders(ctx context.Context, query *models.HasEditPermissionInFoldersQuery) error {
+func (dr *DashboardServiceImpl) HasEditPermissionInFolders(ctx context.Context, query *dashboards.HasEditPermissionInFoldersQuery) error {
 	return dr.dashboardStore.HasEditPermissionInFolders(ctx, query)
 }
 
