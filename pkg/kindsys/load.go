@@ -102,9 +102,10 @@ func ToKindProps[T KindProperties](v cue.Value) (T, error) {
 	}
 
 	item := v.Unify(kdef)
-	if err := item.Validate(cue.Concrete(false), cue.All()); err != nil {
-		return *props, ewrap(item.Err(), ErrValueNotAKind)
+	if item.Err() != nil {
+		return *props, errors.Wrap(errors.Promote(ErrValueNotAKind, ""), item.Err())
 	}
+
 	if err := item.Decode(props); err != nil {
 		// Should only be reachable if CUE and Go framework types have diverged
 		panic(errors.Details(err, nil))
@@ -113,11 +114,10 @@ func ToKindProps[T KindProperties](v cue.Value) (T, error) {
 	return *props, nil
 }
 
-// SomeDecl represents a single kind declaration, having been loaded
-// and validated by a func such as [LoadCoreKind].
+// SomeDecl represents a single kind declaration, having been loaded and
+// validated by a func such as [LoadCoreKind].
 //
-// The underlying type of the Properties field indicates the category of
-// kind.
+// The underlying type of the Properties field indicates the category of kind.
 type SomeDecl struct {
 	// V is the cue.Value containing the entire Kind declaration.
 	V cue.Value
@@ -134,12 +134,7 @@ func (decl SomeDecl) BindKindLineage(rt *thema.Runtime, opts ...thema.BindOption
 	if rt == nil {
 		rt = cuectx.GrafanaThemaRuntime()
 	}
-	switch decl.Properties.(type) {
-	case CoreProperties, CustomProperties, ComposableProperties:
-		return thema.BindLineage(decl.V.LookupPath(cue.MakePath(cue.Str("lineage"))), rt, opts...)
-	default:
-		panic("unreachable")
-	}
+	return thema.BindLineage(decl.V.LookupPath(cue.MakePath(cue.Str("lineage"))), rt, opts...)
 }
 
 // IsCore indicates whether the represented kind is a core kind.

@@ -14,10 +14,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
-	sync "github.com/grafana/grafana/pkg/services/authn/authnimpl/usersync"
+	"github.com/grafana/grafana/pkg/services/authn/authnimpl/sync"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -25,6 +27,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
+)
+
+const (
+	attributeKeyClient = "authn.client"
 )
 
 var (
@@ -43,6 +49,7 @@ func ProvideService(
 	userProtectionService login.UserProtectionService,
 	loginAttempts loginattempt.Service, quotaService quota.Service,
 	authInfoService login.AuthInfoService, renderService rendering.Service,
+	features *featuremgmt.FeatureManager, oauthTokenService oauthtoken.OAuthTokenService,
 ) *Service {
 	s := &Service{
 		log:            log.New("authn.service"),
@@ -110,6 +117,10 @@ func ProvideService(
 	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgUser)
 	s.RegisterPostAuthHook(sync.ProvideUserLastSeenSync(userService).SyncLastSeen)
 	s.RegisterPostAuthHook(sync.ProvideAPIKeyLastSeenSync(apikeyService).SyncLastSeen)
+
+	if features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
+		s.RegisterPostAuthHook(sync.ProvideOauthTokenSync(oauthTokenService, sessionService).SyncOauthToken)
+	}
 
 	return s
 }
@@ -211,6 +222,24 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 
 func (s *Service) RegisterPostLoginHook(hook authn.PostLoginHookFn) {
 	s.postLoginHooks = append(s.postLoginHooks, hook)
+}
+
+func (s *Service) RedirectURL(ctx context.Context, client string, r *authn.Request) (string, error) {
+	ctx, span := s.tracer.Start(ctx, "authn.RedirectURL")
+	defer span.End()
+	span.SetAttributes(attributeKeyClient, client, attribute.Key(attributeKeyClient).String(client))
+
+	c, ok := s.clients[client]
+	if !ok {
+		return "", authn.ErrClientNotConfigured.Errorf("client not configured: %s", client)
+	}
+
+	redirectClient, ok := c.(authn.RedirectClient)
+	if !ok {
+		return "", authn.ErrUnsupportedClient.Errorf("client does not support generating redirect url: %s", client)
+	}
+
+	return redirectClient.RedirectURL(ctx, r)
 }
 
 func orgIDFromRequest(r *authn.Request) int64 {

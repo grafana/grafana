@@ -1,20 +1,22 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
-import { useTheme2 } from '../../themes';
+import { useStyles2 } from '../../themes';
 import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip';
 
+import { TitleItem } from './TitleItem';
+
 interface Props {
   description: string | (() => string);
+  className?: string;
 }
 
-export function PanelDescription({ description }: Props) {
-  const theme = useTheme2();
-  const styles = getStyles(theme);
+export function PanelDescription({ description, className }: Props) {
+  const styles = useStyles2(getStyles);
 
   const getDescriptionContent = (): JSX.Element => {
     // description
@@ -29,9 +31,9 @@ export function PanelDescription({ description }: Props) {
 
   return description !== '' ? (
     <Tooltip interactive content={getDescriptionContent}>
-      <span className={styles.description}>
-        <Icon name="info-circle" size="lg" aria-label="description" />
-      </span>
+      <TitleItem className={cx(className, styles.description)}>
+        <Icon name="info-circle" size="lg" title="description" />
+      </TitleItem>
     </Tooltip>
   ) : null;
 }

@@ -1,13 +1,10 @@
-import { regexp } from '@betterer/regexp';
 import { BettererFileTest } from '@betterer/betterer';
 import { ESLint, Linter } from 'eslint';
 import { existsSync } from 'fs';
-import { exec } from 'child_process';
 import path from 'path';
 import glob from 'glob';
 
 export default {
-  'no enzyme tests': () => regexp(/from 'enzyme'/g).include('**/*.test.*'),
   'better eslint': () => countEslintErrors().include('**/*.{ts,tsx}'),
   'no undocumented stories': () => countUndocumentedStories().include('**/*.story.tsx'),
 };
@@ -46,6 +43,7 @@ function countEslintErrors() {
 
     const baseRules: Partial<Linter.RulesRecord> = {
       '@typescript-eslint/no-explicit-any': 'error',
+      '@grafana/no-aria-label-selectors': 'error',
     };
 
     const nonTestFilesRules: Partial<Linter.RulesRecord> = {

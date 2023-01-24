@@ -14,6 +14,7 @@ import { toKeyedAction } from 'app/features/variables/state/keyedVariablesReduce
 import { PrometheusDatasource } from 'app/plugins/datasource/prometheus/datasource';
 import { PromOptions } from 'app/plugins/datasource/prometheus/types';
 import { configureStore } from 'app/store/configureStore';
+import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { PanelAlertTabContent } from './PanelAlertTabContent';
 import { fetchRules } from './api/prometheus';
@@ -27,6 +28,7 @@ import {
   mockPromRuleNamespace,
   mockRulerGrafanaRule,
 } from './mocks';
+import { RuleFormValues } from './types/rule-form';
 import * as config from './utils/config';
 import { Annotation } from './utils/constants';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
@@ -304,7 +306,18 @@ describe('PanelAlertTabContent', () => {
     expect(match).toHaveLength(2);
 
     const defaults = JSON.parse(decodeURIComponent(match![1]));
-    expect(defaults).toMatchSnapshot();
+    const defaultsWithDeterministicTime: Partial<RuleFormValues> = {
+      ...defaults,
+      queries: defaults.queries.map((q: AlertQuery) => {
+        return {
+          ...q,
+          // Fix computed time stamp to avoid assertion flakiness
+          ...(q.relativeTimeRange ? { relativeTimeRange: { from: 21600, to: 0 } } : {}),
+        };
+      }),
+    };
+
+    expect(defaultsWithDeterministicTime).toMatchSnapshot();
 
     expect(mocks.api.fetchRulerRules).toHaveBeenCalledWith(
       { dataSourceName: GRAFANA_RULES_SOURCE_NAME, apiVersion: 'legacy' },

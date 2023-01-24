@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React, { CSSProperties, ReactElement, ReactNode } from 'react';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
@@ -29,6 +29,7 @@ export interface PanelChromeProps {
   titleItems?: ReactNode;
   menu?: ReactElement | (() => ReactElement);
   dragClass?: string;
+  dragClassCancel?: string;
   hoverHeader?: boolean;
   loadingState?: LoadingState;
   /**
@@ -64,13 +65,14 @@ export function PanelChrome({
   description = '',
   titleItems,
   menu,
-  dragClass,
   hoverHeader = false,
   loadingState,
   statusMessage,
   gridPos,
   statusMessageOnClick,
   leftItems,
+  dragClass,
+  dragClassCancel,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
@@ -93,6 +95,7 @@ export function PanelChrome({
 
   const headerStyles: CSSProperties = {
     height: headerHeight,
+    cursor: dragClass ? 'move' : 'auto',
   };
 
   const itemStyles: CSSProperties = {
@@ -114,10 +117,10 @@ export function PanelChrome({
         </h6>
       )}
 
-      <PanelDescription description={description} />
+      <PanelDescription description={description} className={dragClassCancel} />
 
       {titleItems !== undefined && (
-        <div className={styles.titleItems} data-testid="title-items-container">
+        <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
           {titleItems}
         </div>
       )}
@@ -145,7 +148,7 @@ export function PanelChrome({
       )}
 
       {hasHeader && (
-        <div className={styles.headerContainer} style={headerStyles} data-testid="header-container">
+        <div className={cx(styles.headerContainer, dragClass)} style={headerStyles} data-testid="header-container">
           {headerContent}
 
           <div className={styles.rightAligned}>
@@ -157,9 +160,11 @@ export function PanelChrome({
       )}
 
       {statusMessage && (
-        <div className={styles.errorContainer}>
-          <PanelStatus message={statusMessage} onClick={statusMessageOnClick} />
-        </div>
+        <PanelStatus
+          className={cx(styles.errorContainer, dragClassCancel)}
+          message={statusMessage}
+          onClick={statusMessageOnClick}
+        />
       )}
 
       <div className={styles.content} style={contentStyle}>

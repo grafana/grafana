@@ -1,892 +1,1547 @@
 {
   "kinds": {
-    "alertgroups_panel": {
-      "name": "AlertGroups-Panel",
-      "pluralName": "AlertGroups-Panels",
-      "machineName": "alertgroups_panel",
-      "pluralMachineName": "alertgroups_panels",
+    "alertgroupspanelcfg": {
+      "category": "composable",
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "alertgroupspanelcfg",
       "maturity": "planned",
+      "name": "AlertGroupsPanelCfg",
+      "pluralMachineName": "alertgroupspanelcfgs",
+      "pluralName": "AlertGroupsPanelCfgs",
+      "schemaInterface": "PanelCfg"
+    },
+    "alertlistpanelcfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "alertlist_panel": {
-      "name": "Alertlist-Panel",
-      "pluralName": "Alertlist-Panels",
-      "machineName": "alertlist_panel",
-      "pluralMachineName": "alertlist_panels",
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "alertlistpanelcfg",
       "maturity": "planned",
+      "name": "AlertListPanelCfg",
+      "pluralMachineName": "alertlistpanelcfgs",
+      "pluralName": "AlertListPanelCfgs",
+      "schemaInterface": "PanelCfg"
+    },
+    "alertmanagerdataquery": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "alertmanager_dsoptions": {
-      "name": "Alertmanager-DSOptions",
-      "pluralName": "Alertmanager-DSOptionss",
-      "machineName": "alertmanager_dsoptions",
-      "pluralMachineName": "alertmanager_dsoptionss",
-      "lineageIsGroup": true,
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "alertmanagerdataquery",
       "maturity": "planned",
+      "name": "AlertmanagerDataQuery",
+      "pluralMachineName": "alertmanagerdataquerys",
+      "pluralName": "AlertmanagerDataQuerys",
+      "schemaInterface": "DataQuery"
+    },
+    "alertmanagerdatasourcecfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "alertmanager_query": {
-      "name": "Alertmanager-Query",
-      "pluralName": "Alertmanager-Querys",
-      "machineName": "alertmanager_query",
-      "pluralMachineName": "alertmanager_querys",
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "alertmanagerdatasourcecfg",
       "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
+      "name": "AlertmanagerDataSourceCfg",
+      "pluralMachineName": "alertmanagerdatasourcecfgs",
+      "pluralName": "AlertmanagerDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg"
     },
-    "annolist_panel": {
-      "name": "Annolist-Panel",
-      "pluralName": "Annolist-Panels",
-      "machineName": "annolist_panel",
-      "pluralMachineName": "annolist_panels",
-      "lineageIsGroup": true,
-      "maturity": "merged",
+    "annotationslistpanelcfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/annotationslistpanelcfg/schema-reference",
+        "go": "n/a",
+        "schema": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/annolist/panelcfg.cue",
+        "ts": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/annolist/panelcfg.gen.ts"
+      },
+      "machineName": "annotationslistpanelcfg",
+      "maturity": "experimental",
+      "name": "AnnotationsListPanelCfg",
+      "pluralMachineName": "annotationslistpanelcfgs",
+      "pluralName": "AnnotationsListPanelCfgs",
+      "schemaInterface": "PanelCfg"
     },
     "apikey": {
-      "name": "APIKey",
-      "pluralName": "APIKeys",
-      "machineName": "apikey",
-      "pluralMachineName": "apikeys",
+      "category": "core",
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "apikey",
       "maturity": "planned",
+      "name": "APIKey",
+      "pluralMachineName": "apikeys",
+      "pluralName": "APIKeys"
+    },
+    "azuremonitordataquery": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "barchart_panel": {
-      "name": "Barchart-Panel",
-      "pluralName": "Barchart-Panels",
-      "machineName": "barchart_panel",
-      "pluralMachineName": "barchart_panels",
-      "lineageIsGroup": true,
-      "maturity": "merged",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    "bargauge_panel": {
-      "name": "Bargauge-Panel",
-      "pluralName": "Bargauge-Panels",
-      "machineName": "bargauge_panel",
-      "pluralMachineName": "bargauge_panels",
-      "lineageIsGroup": true,
-      "maturity": "merged",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    "cloudwatch_dsoptions": {
-      "name": "Cloudwatch-DSOptions",
-      "pluralName": "Cloudwatch-DSOptionss",
-      "machineName": "cloudwatch_dsoptions",
-      "pluralMachineName": "cloudwatch_dsoptionss",
-      "lineageIsGroup": true,
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "azuremonitordataquery",
       "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
+      "name": "AzureMonitorDataQuery",
+      "pluralMachineName": "azuremonitordataquerys",
+      "pluralName": "AzureMonitorDataQuerys",
+      "schemaInterface": "DataQuery"
     },
-    "cloudwatch_query": {
-      "name": "Cloudwatch-Query",
-      "pluralName": "Cloudwatch-Querys",
-      "machineName": "cloudwatch_query",
-      "pluralMachineName": "cloudwatch_querys",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+    "azuremonitordatasourcecfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "azuremonitordatasourcecfg",
+      "maturity": "planned",
+      "name": "AzureMonitorDataSourceCfg",
+      "pluralMachineName": "azuremonitordatasourcecfgs",
+      "pluralName": "AzureMonitorDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg"
+    },
+    "barchartpanelcfg": {
+      "category": "composable",
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/barchartpanelcfg/schema-reference",
+        "go": "n/a",
+        "schema": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/barchart/panelcfg.cue",
+        "ts": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/barchart/panelcfg.gen.ts"
+      },
+      "machineName": "barchartpanelcfg",
+      "maturity": "experimental",
+      "name": "BarChartPanelCfg",
+      "pluralMachineName": "barchartpanelcfgs",
+      "pluralName": "BarChartPanelCfgs",
+      "schemaInterface": "PanelCfg"
+    },
+    "bargaugepanelcfg": {
+      "category": "composable",
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/bargaugepanelcfg/schema-reference",
+        "go": "n/a",
+        "schema": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/bargauge/panelcfg.cue",
+        "ts": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/bargauge/panelcfg.gen.ts"
+      },
+      "machineName": "bargaugepanelcfg",
+      "maturity": "experimental",
+      "name": "BarGaugePanelCfg",
+      "pluralMachineName": "bargaugepanelcfgs",
+      "pluralName": "BarGaugePanelCfgs",
+      "schemaInterface": "PanelCfg"
+    },
+    "cloudwatchdataquery": {
+      "category": "composable",
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "cloudwatchdataquery",
+      "maturity": "planned",
+      "name": "CloudWatchDataQuery",
+      "pluralMachineName": "cloudwatchdataquerys",
+      "pluralName": "CloudWatchDataQuerys",
+      "schemaInterface": "DataQuery"
+    },
+    "cloudwatchdatasourcecfg": {
+      "category": "composable",
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "cloudwatchdatasourcecfg",
+      "maturity": "planned",
+      "name": "CloudWatchDataSourceCfg",
+      "pluralMachineName": "cloudwatchdatasourcecfgs",
+      "pluralName": "CloudWatchDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg"
     },
     "dashboard": {
-      "name": "Dashboard",
-      "pluralName": "Dashboards",
-      "machineName": "dashboard",
-      "pluralMachineName": "dashboards",
+      "category": "core",
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 144,
       "lineageIsGroup": false,
-      "maturity": "merged",
+      "links": {
+        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/core/dashboard/schema-reference",
+        "go": "https:/github.com/grafana/grafana/tree/main/pkg/kinds/dashboard",
+        "schema": "https:/github.com/grafana/grafana/tree/main/kinds/dashboard/dashboard_kind.cue",
+        "ts": "https:/github.com/grafana/grafana/tree/main/packages/grafana-schema/src/raw/dashboard/x/dashboard_types.gen.ts"
+      },
+      "machineName": "dashboard",
+      "maturity": "experimental",
+      "name": "Dashboard",
+      "pluralMachineName": "dashboards",
+      "pluralName": "Dashboards"
+    },
+    "dashboarddataquery": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "dashboard_dsoptions": {
-      "name": "Dashboard-DSOptions",
-      "pluralName": "Dashboard-DSOptionss",
-      "machineName": "dashboard_dsoptions",
-      "pluralMachineName": "dashboard_dsoptionss",
-      "lineageIsGroup": true,
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "dashboarddataquery",
       "maturity": "planned",
+      "name": "DashboardDataQuery",
+      "pluralMachineName": "dashboarddataquerys",
+      "pluralName": "DashboardDataQuerys",
+      "schemaInterface": "DataQuery"
+    },
+    "dashboarddatasourcecfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "dashboard_query": {
-      "name": "Dashboard-Query",
-      "pluralName": "Dashboard-Querys",
-      "machineName": "dashboard_query",
-      "pluralMachineName": "dashboard_querys",
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "dashboarddatasourcecfg",
       "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
+      "name": "DashboardDataSourceCfg",
+      "pluralMachineName": "dashboarddatasourcecfgs",
+      "pluralName": "DashboardDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg"
     },
-    "dashlist_panel": {
-      "name": "Dashlist-Panel",
-      "pluralName": "Dashlist-Panels",
-      "machineName": "dashlist_panel",
-      "pluralMachineName": "dashlist_panels",
-      "lineageIsGroup": true,
-      "maturity": "merged",
+    "dashboardlistpanelcfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/dashboardlistpanelcfg/schema-reference",
+        "go": "n/a",
+        "schema": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/dashlist/panelcfg.cue",
+        "ts": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/dashlist/panelcfg.gen.ts"
+      },
+      "machineName": "dashboardlistpanelcfg",
+      "maturity": "experimental",
+      "name": "DashboardListPanelCfg",
+      "pluralMachineName": "dashboardlistpanelcfgs",
+      "pluralName": "DashboardListPanelCfgs",
+      "schemaInterface": "PanelCfg"
     },
     "datasource": {
-      "name": "DataSource",
-      "pluralName": "DataSources",
-      "machineName": "datasource",
-      "pluralMachineName": "datasources",
+      "category": "core",
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "datasource",
       "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
+      "name": "DataSource",
+      "pluralMachineName": "datasources",
+      "pluralName": "DataSources"
     },
-    "debug_panel": {
-      "name": "Debug-Panel",
-      "pluralName": "Debug-Panels",
-      "machineName": "debug_panel",
-      "pluralMachineName": "debug_panels",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+    "debugpanelcfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "debugpanelcfg",
+      "maturity": "planned",
+      "name": "DebugPanelCfg",
+      "pluralMachineName": "debugpanelcfgs",
+      "pluralName": "DebugPanelCfgs",
+      "schemaInterface": "PanelCfg"
     },
-    "elasticsearch_dsoptions": {
-      "name": "Elasticsearch-DSOptions",
-      "pluralName": "Elasticsearch-DSOptionss",
-      "machineName": "elasticsearch_dsoptions",
-      "pluralMachineName": "elasticsearch_dsoptionss",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+    "elasticsearchdataquery": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "elasticsearchdataquery",
+      "maturity": "planned",
+      "name": "ElasticsearchDataQuery",
+      "pluralMachineName": "elasticsearchdataquerys",
+      "pluralName": "ElasticsearchDataQuerys",
+      "schemaInterface": "DataQuery"
     },
-    "elasticsearch_query": {
-      "name": "Elasticsearch-Query",
-      "pluralName": "Elasticsearch-Querys",
-      "machineName": "elasticsearch_query",
-      "pluralMachineName": "elasticsearch_querys",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+    "elasticsearchdatasourcecfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "elasticsearchdatasourcecfg",
+      "maturity": "planned",
+      "name": "ElasticsearchDataSourceCfg",
+      "pluralMachineName": "elasticsearchdatasourcecfgs",
+      "pluralName": "ElasticsearchDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg"
     },
-    "flamegraph_panel": {
-      "name": "Flamegraph-Panel",
-      "pluralName": "Flamegraph-Panels",
-      "machineName": "flamegraph_panel",
-      "pluralMachineName": "flamegraph_panels",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+    "flamegraphpanelcfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "flamegraphpanelcfg",
+      "maturity": "planned",
+      "name": "FlameGraphPanelCfg",
+      "pluralMachineName": "flamegraphpanelcfgs",
+      "pluralName": "FlameGraphPanelCfgs",
+      "schemaInterface": "PanelCfg"
     },
     "folder": {
-      "name": "Folder",
-      "pluralName": "Folders",
-      "machineName": "folder",
-      "pluralMachineName": "folders",
+      "category": "core",
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "folder",
       "maturity": "planned",
+      "name": "Folder",
+      "pluralMachineName": "folders",
+      "pluralName": "Folders"
+    },
+    "gaugepanelcfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "gauge_panel": {
-      "name": "Gauge-Panel",
-      "pluralName": "Gauge-Panels",
-      "machineName": "gauge_panel",
-      "pluralMachineName": "gauge_panels",
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
-      "maturity": "merged",
+      "links": {
+        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/gaugepanelcfg/schema-reference",
+        "go": "n/a",
+        "schema": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/gauge/panelcfg.cue",
+        "ts": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/gauge/panelcfg.gen.ts"
+      },
+      "machineName": "gaugepanelcfg",
+      "maturity": "experimental",
+      "name": "GaugePanelCfg",
+      "pluralMachineName": "gaugepanelcfgs",
+      "pluralName": "GaugePanelCfgs",
+      "schemaInterface": "PanelCfg"
+    },
+    "geomappanelcfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "geomap_panel": {
-      "name": "Geomap-Panel",
-      "pluralName": "Geomap-Panels",
-      "machineName": "geomap_panel",
-      "pluralMachineName": "geomap_panels",
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "geomappanelcfg",
       "maturity": "planned",
+      "name": "GeomapPanelCfg",
+      "pluralMachineName": "geomappanelcfgs",
+      "pluralName": "GeomapPanelCfgs",
+      "schemaInterface": "PanelCfg"
+    },
+    "gettingstartedpanelcfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "gettingstarted_panel": {
-      "name": "Gettingstarted-Panel",
-      "pluralName": "Gettingstarted-Panels",
-      "machineName": "gettingstarted_panel",
-      "pluralMachineName": "gettingstarted_panels",
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "gettingstartedpanelcfg",
       "maturity": "planned",
+      "name": "GettingStartedPanelCfg",
+      "pluralMachineName": "gettingstartedpanelcfgs",
+      "pluralName": "GettingStartedPanelCfgs",
+      "schemaInterface": "PanelCfg"
+    },
+    "googlecloudmonitoringdataquery": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "grafana_azure_monitor_datasource_dsoptions": {
-      "name": "Grafana-Azure-Monitor-Datasource-DSOptions",
-      "pluralName": "Grafana-Azure-Monitor-Datasource-DSOptionss",
-      "machineName": "grafana_azure_monitor_datasource_dsoptions",
-      "pluralMachineName": "grafana_azure_monitor_datasource_dsoptionss",
-      "lineageIsGroup": true,
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "googlecloudmonitoringdataquery",
       "maturity": "planned",
+      "name": "GoogleCloudMonitoringDataQuery",
+      "pluralMachineName": "googlecloudmonitoringdataquerys",
+      "pluralName": "GoogleCloudMonitoringDataQuerys",
+      "schemaInterface": "DataQuery"
+    },
+    "googlecloudmonitoringdatasourcecfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "grafana_azure_monitor_datasource_query": {
-      "name": "Grafana-Azure-Monitor-Datasource-Query",
-      "pluralName": "Grafana-Azure-Monitor-Datasource-Querys",
-      "machineName": "grafana_azure_monitor_datasource_query",
-      "pluralMachineName": "grafana_azure_monitor_datasource_querys",
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "googlecloudmonitoringdatasourcecfg",
       "maturity": "planned",
+      "name": "GoogleCloudMonitoringDataSourceCfg",
+      "pluralMachineName": "googlecloudmonitoringdatasourcecfgs",
+      "pluralName": "GoogleCloudMonitoringDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg"
+    },
+    "grafanadataquery": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "grafana_dsoptions": {
-      "name": "Grafana-DSOptions",
-      "pluralName": "Grafana-DSOptionss",
-      "machineName": "grafana_dsoptions",
-      "pluralMachineName": "grafana_dsoptionss",
-      "lineageIsGroup": true,
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "grafanadataquery",
       "maturity": "planned",
+      "name": "GrafanaDataQuery",
+      "pluralMachineName": "grafanadataquerys",
+      "pluralName": "GrafanaDataQuerys",
+      "schemaInterface": "DataQuery"
+    },
+    "grafanadatasourcecfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "grafana_query": {
-      "name": "Grafana-Query",
-      "pluralName": "Grafana-Querys",
-      "machineName": "grafana_query",
-      "pluralMachineName": "grafana_querys",
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "grafanadatasourcecfg",
       "maturity": "planned",
+      "name": "GrafanaDataSourceCfg",
+      "pluralMachineName": "grafanadatasourcecfgs",
+      "pluralName": "GrafanaDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg"
+    },
+    "graphitedataquery": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "graph_panel": {
-      "name": "Graph-Panel",
-      "pluralName": "Graph-Panels",
-      "machineName": "graph_panel",
-      "pluralMachineName": "graph_panels",
-      "lineageIsGroup": true,
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "graphitedataquery",
       "maturity": "planned",
+      "name": "GraphiteDataQuery",
+      "pluralMachineName": "graphitedataquerys",
+      "pluralName": "GraphiteDataQuerys",
+      "schemaInterface": "DataQuery"
+    },
+    "graphitedatasourcecfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "graphite_dsoptions": {
-      "name": "Graphite-DSOptions",
-      "pluralName": "Graphite-DSOptionss",
-      "machineName": "graphite_dsoptions",
-      "pluralMachineName": "graphite_dsoptionss",
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "graphitedatasourcecfg",
       "maturity": "planned",
+      "name": "GraphiteDataSourceCfg",
+      "pluralMachineName": "graphitedatasourcecfgs",
+      "pluralName": "GraphiteDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg"
+    },
+    "grapholdpanelcfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "graphite_query": {
-      "name": "Graphite-Query",
-      "pluralName": "Graphite-Querys",
-      "machineName": "graphite_query",
-      "pluralMachineName": "graphite_querys",
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "grapholdpanelcfg",
       "maturity": "planned",
+      "name": "GraphOldPanelCfg",
+      "pluralMachineName": "grapholdpanelcfgs",
+      "pluralName": "GraphOldPanelCfgs",
+      "schemaInterface": "PanelCfg"
+    },
+    "histogrampanelcfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "histogram_panel": {
-      "name": "Histogram-Panel",
-      "pluralName": "Histogram-Panels",
-      "machineName": "histogram_panel",
-      "pluralMachineName": "histogram_panels",
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
-      "maturity": "merged",
+      "links": {
+        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/histogrampanelcfg/schema-reference",
+        "go": "n/a",
+        "schema": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/histogram/panelcfg.cue",
+        "ts": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/histogram/panelcfg.gen.ts"
+      },
+      "machineName": "histogrampanelcfg",
+      "maturity": "experimental",
+      "name": "HistogramPanelCfg",
+      "pluralMachineName": "histogrampanelcfgs",
+      "pluralName": "HistogramPanelCfgs",
+      "schemaInterface": "PanelCfg"
+    },
+    "iconpanelcfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "icon_panel": {
-      "name": "Icon-Panel",
-      "pluralName": "Icon-Panels",
-      "machineName": "icon_panel",
-      "pluralMachineName": "icon_panels",
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "iconpanelcfg",
       "maturity": "planned",
+      "name": "IconPanelCfg",
+      "pluralMachineName": "iconpanelcfgs",
+      "pluralName": "IconPanelCfgs",
+      "schemaInterface": "PanelCfg"
+    },
+    "jaegerdataquery": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "jaeger_dsoptions": {
-      "name": "Jaeger-DSOptions",
-      "pluralName": "Jaeger-DSOptionss",
-      "machineName": "jaeger_dsoptions",
-      "pluralMachineName": "jaeger_dsoptionss",
-      "lineageIsGroup": true,
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "jaegerdataquery",
       "maturity": "planned",
+      "name": "JaegerDataQuery",
+      "pluralMachineName": "jaegerdataquerys",
+      "pluralName": "JaegerDataQuerys",
+      "schemaInterface": "DataQuery"
+    },
+    "jaegerdatasourcecfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "jaeger_query": {
-      "name": "Jaeger-Query",
-      "pluralName": "Jaeger-Querys",
-      "machineName": "jaeger_query",
-      "pluralMachineName": "jaeger_querys",
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "jaegerdatasourcecfg",
       "maturity": "planned",
+      "name": "JaegerDataSourceCfg",
+      "pluralMachineName": "jaegerdatasourcecfgs",
+      "pluralName": "JaegerDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg"
+    },
+    "livepanelcfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "live_panel": {
-      "name": "Live-Panel",
-      "pluralName": "Live-Panels",
-      "machineName": "live_panel",
-      "pluralMachineName": "live_panels",
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "livepanelcfg",
       "maturity": "planned",
+      "name": "LivePanelCfg",
+      "pluralMachineName": "livepanelcfgs",
+      "pluralName": "LivePanelCfgs",
+      "schemaInterface": "PanelCfg"
+    },
+    "logspanelcfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "logs_panel": {
-      "name": "Logs-Panel",
-      "pluralName": "Logs-Panels",
-      "machineName": "logs_panel",
-      "pluralMachineName": "logs_panels",
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "logspanelcfg",
       "maturity": "planned",
+      "name": "LogsPanelCfg",
+      "pluralMachineName": "logspanelcfgs",
+      "pluralName": "LogsPanelCfgs",
+      "schemaInterface": "PanelCfg"
+    },
+    "lokidataquery": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "loki_dsoptions": {
-      "name": "Loki-DSOptions",
-      "pluralName": "Loki-DSOptionss",
-      "machineName": "loki_dsoptions",
-      "pluralMachineName": "loki_dsoptionss",
-      "lineageIsGroup": true,
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "lokidataquery",
       "maturity": "planned",
+      "name": "LokiDataQuery",
+      "pluralMachineName": "lokidataquerys",
+      "pluralName": "LokiDataQuerys",
+      "schemaInterface": "DataQuery"
+    },
+    "lokidatasourcecfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "loki_query": {
-      "name": "Loki-Query",
-      "pluralName": "Loki-Querys",
-      "machineName": "loki_query",
-      "pluralMachineName": "loki_querys",
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "lokidatasourcecfg",
       "maturity": "planned",
+      "name": "LokiDataSourceCfg",
+      "pluralMachineName": "lokidatasourcecfgs",
+      "pluralName": "LokiDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg"
+    },
+    "microsoftsqlserverdataquery": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "mssql_dsoptions": {
-      "name": "Mssql-DSOptions",
-      "pluralName": "Mssql-DSOptionss",
-      "machineName": "mssql_dsoptions",
-      "pluralMachineName": "mssql_dsoptionss",
-      "lineageIsGroup": true,
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "microsoftsqlserverdataquery",
       "maturity": "planned",
+      "name": "MicrosoftSQLServerDataQuery",
+      "pluralMachineName": "microsoftsqlserverdataquerys",
+      "pluralName": "MicrosoftSQLServerDataQuerys",
+      "schemaInterface": "DataQuery"
+    },
+    "microsoftsqlserverdatasourcecfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "mssql_query": {
-      "name": "Mssql-Query",
-      "pluralName": "Mssql-Querys",
-      "machineName": "mssql_query",
-      "pluralMachineName": "mssql_querys",
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "microsoftsqlserverdatasourcecfg",
       "maturity": "planned",
+      "name": "MicrosoftSQLServerDataSourceCfg",
+      "pluralMachineName": "microsoftsqlserverdatasourcecfgs",
+      "pluralName": "MicrosoftSQLServerDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg"
+    },
+    "mysqldataquery": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "mysql_dsoptions": {
-      "name": "Mysql-DSOptions",
-      "pluralName": "Mysql-DSOptionss",
-      "machineName": "mysql_dsoptions",
-      "pluralMachineName": "mysql_dsoptionss",
-      "lineageIsGroup": true,
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "mysqldataquery",
       "maturity": "planned",
+      "name": "MySQLDataQuery",
+      "pluralMachineName": "mysqldataquerys",
+      "pluralName": "MySQLDataQuerys",
+      "schemaInterface": "DataQuery"
+    },
+    "mysqldatasourcecfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "mysql_query": {
-      "name": "Mysql-Query",
-      "pluralName": "Mysql-Querys",
-      "machineName": "mysql_query",
-      "pluralMachineName": "mysql_querys",
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "mysqldatasourcecfg",
       "maturity": "planned",
+      "name": "MySQLDataSourceCfg",
+      "pluralMachineName": "mysqldatasourcecfgs",
+      "pluralName": "MySQLDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg"
+    },
+    "newspanelcfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "news_panel": {
-      "name": "News-Panel",
-      "pluralName": "News-Panels",
-      "machineName": "news_panel",
-      "pluralMachineName": "news_panels",
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
-      "maturity": "merged",
+      "links": {
+        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/newspanelcfg/schema-reference",
+        "go": "n/a",
+        "schema": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/news/panelcfg.cue",
+        "ts": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/news/panelcfg.gen.ts"
+      },
+      "machineName": "newspanelcfg",
+      "maturity": "experimental",
+      "name": "NewsPanelCfg",
+      "pluralMachineName": "newspanelcfgs",
+      "pluralName": "NewsPanelCfgs",
+      "schemaInterface": "PanelCfg"
+    },
+    "nodegraphpanelcfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "nodegraph_panel": {
-      "name": "NodeGraph-Panel",
-      "pluralName": "NodeGraph-Panels",
-      "machineName": "nodegraph_panel",
-      "pluralMachineName": "nodegraph_panels",
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "nodegraphpanelcfg",
       "maturity": "planned",
+      "name": "NodeGraphPanelCfg",
+      "pluralMachineName": "nodegraphpanelcfgs",
+      "pluralName": "NodeGraphPanelCfgs",
+      "schemaInterface": "PanelCfg"
+    },
+    "parcadataquery": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "parca_dsoptions": {
-      "name": "Parca-DSOptions",
-      "pluralName": "Parca-DSOptionss",
-      "machineName": "parca_dsoptions",
-      "pluralMachineName": "parca_dsoptionss",
-      "lineageIsGroup": true,
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "parcadataquery",
       "maturity": "planned",
+      "name": "ParcaDataQuery",
+      "pluralMachineName": "parcadataquerys",
+      "pluralName": "ParcaDataQuerys",
+      "schemaInterface": "DataQuery"
+    },
+    "parcadatasourcecfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "parca_query": {
-      "name": "Parca-Query",
-      "pluralName": "Parca-Querys",
-      "machineName": "parca_query",
-      "pluralMachineName": "parca_querys",
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "parcadatasourcecfg",
       "maturity": "planned",
+      "name": "ParcaDataSourceCfg",
+      "pluralMachineName": "parcadatasourcecfgs",
+      "pluralName": "ParcaDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg"
+    },
+    "phlaredataquery": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "phlare_dsoptions": {
-      "name": "Phlare-DSOptions",
-      "pluralName": "Phlare-DSOptionss",
-      "machineName": "phlare_dsoptions",
-      "pluralMachineName": "phlare_dsoptionss",
-      "lineageIsGroup": true,
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "phlaredataquery",
       "maturity": "planned",
+      "name": "PhlareDataQuery",
+      "pluralMachineName": "phlaredataquerys",
+      "pluralName": "PhlareDataQuerys",
+      "schemaInterface": "DataQuery"
+    },
+    "phlaredatasourcecfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "phlare_query": {
-      "name": "Phlare-Query",
-      "pluralName": "Phlare-Querys",
-      "machineName": "phlare_query",
-      "pluralMachineName": "phlare_querys",
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "phlaredatasourcecfg",
       "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
+      "name": "PhlareDataSourceCfg",
+      "pluralMachineName": "phlaredatasourcecfgs",
+      "pluralName": "PhlareDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg"
     },
-    "piechart_panel": {
-      "name": "Piechart-Panel",
-      "pluralName": "Piechart-Panels",
-      "machineName": "piechart_panel",
-      "pluralMachineName": "piechart_panels",
-      "lineageIsGroup": true,
-      "maturity": "merged",
+    "piechartpanelcfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/piechartpanelcfg/schema-reference",
+        "go": "n/a",
+        "schema": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/piechart/panelcfg.cue",
+        "ts": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/piechart/panelcfg.gen.ts"
+      },
+      "machineName": "piechartpanelcfg",
+      "maturity": "experimental",
+      "name": "PieChartPanelCfg",
+      "pluralMachineName": "piechartpanelcfgs",
+      "pluralName": "PieChartPanelCfgs",
+      "schemaInterface": "PanelCfg"
     },
     "playlist": {
-      "name": "Playlist",
-      "pluralName": "Playlists",
-      "machineName": "playlist",
-      "pluralMachineName": "playlists",
+      "category": "core",
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
+      "links": {
+        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/core/playlist/schema-reference",
+        "go": "https:/github.com/grafana/grafana/tree/main/pkg/kinds/playlist",
+        "schema": "https:/github.com/grafana/grafana/tree/main/kinds/playlist/playlist_kind.cue",
+        "ts": "https:/github.com/grafana/grafana/tree/main/packages/grafana-schema/src/raw/playlist/x/playlist_types.gen.ts"
+      },
+      "machineName": "playlist",
       "maturity": "merged",
-      "currentVersion": [
-        0,
-        0
-      ]
+      "name": "Playlist",
+      "pluralMachineName": "playlists",
+      "pluralName": "Playlists"
     },
-    "postgres_dsoptions": {
-      "name": "Postgres-DSOptions",
-      "pluralName": "Postgres-DSOptionss",
-      "machineName": "postgres_dsoptions",
-      "pluralMachineName": "postgres_dsoptionss",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+    "postgresqldataquery": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "postgresqldataquery",
+      "maturity": "planned",
+      "name": "PostgreSQLDataQuery",
+      "pluralMachineName": "postgresqldataquerys",
+      "pluralName": "PostgreSQLDataQuerys",
+      "schemaInterface": "DataQuery"
     },
-    "postgres_query": {
-      "name": "Postgres-Query",
-      "pluralName": "Postgres-Querys",
-      "machineName": "postgres_query",
-      "pluralMachineName": "postgres_querys",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+    "postgresqldatasourcecfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "postgresqldatasourcecfg",
+      "maturity": "planned",
+      "name": "PostgreSQLDataSourceCfg",
+      "pluralMachineName": "postgresqldatasourcecfgs",
+      "pluralName": "PostgreSQLDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg"
     },
-    "prometheus_dsoptions": {
-      "name": "Prometheus-DSOptions",
-      "pluralName": "Prometheus-DSOptionss",
-      "machineName": "prometheus_dsoptions",
-      "pluralMachineName": "prometheus_dsoptionss",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+    "prometheusdataquery": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "prometheusdataquery",
+      "maturity": "planned",
+      "name": "PrometheusDataQuery",
+      "pluralMachineName": "prometheusdataquerys",
+      "pluralName": "PrometheusDataQuerys",
+      "schemaInterface": "DataQuery"
     },
-    "prometheus_query": {
-      "name": "Prometheus-Query",
-      "pluralName": "Prometheus-Querys",
-      "machineName": "prometheus_query",
-      "pluralMachineName": "prometheus_querys",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+    "prometheusdatasourcecfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "prometheusdatasourcecfg",
+      "maturity": "planned",
+      "name": "PrometheusDataSourceCfg",
+      "pluralMachineName": "prometheusdatasourcecfgs",
+      "pluralName": "PrometheusDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg"
     },
     "query": {
-      "name": "Query",
-      "pluralName": "Querys",
-      "machineName": "query",
-      "pluralMachineName": "querys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "core",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "query",
+      "maturity": "planned",
+      "name": "Query",
+      "pluralMachineName": "querys",
+      "pluralName": "Querys"
     },
     "queryhistory": {
-      "name": "QueryHistory",
-      "pluralName": "QueryHistorys",
-      "machineName": "queryhistory",
-      "pluralMachineName": "queryhistorys",
-      "lineageIsGroup": false,
-      "maturity": "planned",
+      "category": "core",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "queryhistory",
+      "maturity": "planned",
+      "name": "QueryHistory",
+      "pluralMachineName": "queryhistorys",
+      "pluralName": "QueryHistorys"
     },
     "serviceaccount": {
-      "name": "ServiceAccount",
-      "pluralName": "ServiceAccounts",
-      "machineName": "serviceaccount",
-      "pluralMachineName": "serviceaccounts",
+      "category": "core",
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "serviceaccount",
       "maturity": "planned",
+      "name": "ServiceAccount",
+      "pluralMachineName": "serviceaccounts",
+      "pluralName": "ServiceAccounts"
+    },
+    "statpanelcfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "stackdriver_dsoptions": {
-      "name": "Stackdriver-DSOptions",
-      "pluralName": "Stackdriver-DSOptionss",
-      "machineName": "stackdriver_dsoptions",
-      "pluralMachineName": "stackdriver_dsoptionss",
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
+      "links": {
+        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/statpanelcfg/schema-reference",
+        "go": "n/a",
+        "schema": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/stat/panelcfg.cue",
+        "ts": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/stat/panelcfg.gen.ts"
+      },
+      "machineName": "statpanelcfg",
+      "maturity": "experimental",
+      "name": "StatPanelCfg",
+      "pluralMachineName": "statpanelcfgs",
+      "pluralName": "StatPanelCfgs",
+      "schemaInterface": "PanelCfg"
+    },
+    "tableoldpanelcfg": {
+      "category": "composable",
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "tableoldpanelcfg",
       "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    "stackdriver_query": {
-      "name": "Stackdriver-Query",
-      "pluralName": "Stackdriver-Querys",
-      "machineName": "stackdriver_query",
-      "pluralMachineName": "stackdriver_querys",
-      "lineageIsGroup": true,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    "stat_panel": {
-      "name": "Stat-Panel",
-      "pluralName": "Stat-Panels",
-      "machineName": "stat_panel",
-      "pluralMachineName": "stat_panels",
-      "lineageIsGroup": true,
-      "maturity": "merged",
-      "currentVersion": [
-        0,
-        0
-      ]
-    },
-    "table_old_panel": {
-      "name": "Table-Old-Panel",
-      "pluralName": "Table-Old-Panels",
-      "machineName": "table_old_panel",
-      "pluralMachineName": "table_old_panels",
-      "lineageIsGroup": true,
-      "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
+      "name": "TableOldPanelCfg",
+      "pluralMachineName": "tableoldpanelcfgs",
+      "pluralName": "TableOldPanelCfgs",
+      "schemaInterface": "PanelCfg"
     },
     "team": {
-      "name": "Team",
-      "pluralName": "Teams",
-      "machineName": "team",
-      "pluralMachineName": "teams",
+      "category": "core",
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 7,
       "lineageIsGroup": false,
+      "links": {
+        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/core/team/schema-reference",
+        "go": "https:/github.com/grafana/grafana/tree/main/pkg/kinds/team",
+        "schema": "https:/github.com/grafana/grafana/tree/main/kinds/team/team_kind.cue",
+        "ts": "https:/github.com/grafana/grafana/tree/main/packages/grafana-schema/src/raw/team/x/team_types.gen.ts"
+      },
+      "machineName": "team",
       "maturity": "merged",
+      "name": "Team",
+      "pluralMachineName": "teams",
+      "pluralName": "Teams"
+    },
+    "tempodataquery": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "tempo_dsoptions": {
-      "name": "Tempo-DSOptions",
-      "pluralName": "Tempo-DSOptionss",
-      "machineName": "tempo_dsoptions",
-      "pluralMachineName": "tempo_dsoptionss",
-      "lineageIsGroup": true,
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "tempodataquery",
       "maturity": "planned",
+      "name": "TempoDataQuery",
+      "pluralMachineName": "tempodataquerys",
+      "pluralName": "TempoDataQuerys",
+      "schemaInterface": "DataQuery"
+    },
+    "tempodatasourcecfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "tempo_query": {
-      "name": "Tempo-Query",
-      "pluralName": "Tempo-Querys",
-      "machineName": "tempo_query",
-      "pluralMachineName": "tempo_querys",
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "tempodatasourcecfg",
       "maturity": "planned",
+      "name": "TempoDataSourceCfg",
+      "pluralMachineName": "tempodatasourcecfgs",
+      "pluralName": "TempoDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg"
+    },
+    "testdatadbdataquery": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "testdata_dsoptions": {
-      "name": "Testdata-DSOptions",
-      "pluralName": "Testdata-DSOptionss",
-      "machineName": "testdata_dsoptions",
-      "pluralMachineName": "testdata_dsoptionss",
-      "lineageIsGroup": true,
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "testdatadbdataquery",
       "maturity": "planned",
+      "name": "TestDataDBDataQuery",
+      "pluralMachineName": "testdatadbdataquerys",
+      "pluralName": "TestDataDBDataQuerys",
+      "schemaInterface": "DataQuery"
+    },
+    "testdatadbdatasourcecfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
-    },
-    "testdata_query": {
-      "name": "Testdata-Query",
-      "pluralName": "Testdata-Querys",
-      "machineName": "testdata_query",
-      "pluralMachineName": "testdata_querys",
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "testdatadbdatasourcecfg",
       "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
+      "name": "TestDataDBDataSourceCfg",
+      "pluralMachineName": "testdatadbdatasourcecfgs",
+      "pluralName": "TestDataDBDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg"
     },
-    "text_panel": {
-      "name": "Text-Panel",
-      "pluralName": "Text-Panels",
-      "machineName": "text_panel",
-      "pluralMachineName": "text_panels",
-      "lineageIsGroup": true,
-      "maturity": "merged",
+    "textpanelcfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "https:/grafana.com/docs/grafana/next/developers/kinds/composable/textpanelcfg/schema-reference",
+        "go": "n/a",
+        "schema": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/text/panelcfg.cue",
+        "ts": "https:/github.com/grafana/grafana/tree/main/public/app/plugins/panel/text/panelcfg.gen.ts"
+      },
+      "machineName": "textpanelcfg",
+      "maturity": "experimental",
+      "name": "TextPanelCfg",
+      "pluralMachineName": "textpanelcfgs",
+      "pluralName": "TextPanelCfgs",
+      "schemaInterface": "PanelCfg"
     },
     "thumb": {
-      "name": "Thumb",
-      "pluralName": "Thumbs",
-      "machineName": "thumb",
-      "pluralMachineName": "thumbs",
+      "category": "core",
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "thumb",
       "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
+      "name": "Thumb",
+      "pluralMachineName": "thumbs",
+      "pluralName": "Thumbs"
     },
-    "traces_panel": {
-      "name": "Traces-Panel",
-      "pluralName": "Traces-Panels",
-      "machineName": "traces_panel",
-      "pluralMachineName": "traces_panels",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+    "tracespanelcfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "tracespanelcfg",
+      "maturity": "planned",
+      "name": "TracesPanelCfg",
+      "pluralMachineName": "tracespanelcfgs",
+      "pluralName": "TracesPanelCfgs",
+      "schemaInterface": "PanelCfg"
     },
     "user": {
-      "name": "User",
-      "pluralName": "Users",
-      "machineName": "user",
-      "pluralMachineName": "users",
+      "category": "core",
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "user",
       "maturity": "planned",
-      "currentVersion": [
-        0,
-        0
-      ]
+      "name": "User",
+      "pluralMachineName": "users",
+      "pluralName": "Users"
     },
-    "welcome_panel": {
-      "name": "Welcome-Panel",
-      "pluralName": "Welcome-Panels",
-      "machineName": "welcome_panel",
-      "pluralMachineName": "welcome_panels",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+    "welcomepanelcfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "welcomepanelcfg",
+      "maturity": "planned",
+      "name": "WelcomePanelCfg",
+      "pluralMachineName": "welcomepanelcfgs",
+      "pluralName": "WelcomePanelCfgs",
+      "schemaInterface": "PanelCfg"
     },
-    "xychart_panel": {
-      "name": "Xychart-Panel",
-      "pluralName": "Xychart-Panels",
-      "machineName": "xychart_panel",
-      "pluralMachineName": "xychart_panels",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+    "xychartpanelcfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "xychartpanelcfg",
+      "maturity": "planned",
+      "name": "XYChartPanelCfg",
+      "pluralMachineName": "xychartpanelcfgs",
+      "pluralName": "XYChartPanelCfgs",
+      "schemaInterface": "PanelCfg"
     },
-    "zipkin_dsoptions": {
-      "name": "Zipkin-DSOptions",
-      "pluralName": "Zipkin-DSOptionss",
-      "machineName": "zipkin_dsoptions",
-      "pluralMachineName": "zipkin_dsoptionss",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+    "zipkindataquery": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "zipkindataquery",
+      "maturity": "planned",
+      "name": "ZipkinDataQuery",
+      "pluralMachineName": "zipkindataquerys",
+      "pluralName": "ZipkinDataQuerys",
+      "schemaInterface": "DataQuery"
     },
-    "zipkin_query": {
-      "name": "Zipkin-Query",
-      "pluralName": "Zipkin-Querys",
-      "machineName": "zipkin_query",
-      "pluralMachineName": "zipkin_querys",
-      "lineageIsGroup": true,
-      "maturity": "planned",
+    "zipkindatasourcecfg": {
+      "category": "composable",
       "currentVersion": [
         0,
         0
-      ]
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "n/a",
+        "go": "n/a",
+        "schema": "n/a",
+        "ts": "n/a"
+      },
+      "machineName": "zipkindatasourcecfg",
+      "maturity": "planned",
+      "name": "ZipkinDataSourceCfg",
+      "pluralMachineName": "zipkindatasourcecfgs",
+      "pluralName": "ZipkinDataSourceCfgs",
+      "schemaInterface": "DataSourceCfg"
     }
   },
   "dimensions": {
@@ -894,69 +1549,69 @@
       "composable": {
         "name": "composable",
         "items": [
-          "alertgroups_panel",
-          "alertlist_panel",
-          "alertmanager_dsoptions",
-          "alertmanager_query",
-          "annolist_panel",
-          "barchart_panel",
-          "bargauge_panel",
-          "cloudwatch_dsoptions",
-          "cloudwatch_query",
-          "dashboard_dsoptions",
-          "dashboard_query",
-          "dashlist_panel",
-          "debug_panel",
-          "elasticsearch_dsoptions",
-          "elasticsearch_query",
-          "flamegraph_panel",
-          "gauge_panel",
-          "geomap_panel",
-          "gettingstarted_panel",
-          "grafana_azure_monitor_datasource_dsoptions",
-          "grafana_azure_monitor_datasource_query",
-          "grafana_dsoptions",
-          "grafana_query",
-          "graph_panel",
-          "graphite_dsoptions",
-          "graphite_query",
-          "histogram_panel",
-          "icon_panel",
-          "jaeger_dsoptions",
-          "jaeger_query",
-          "live_panel",
-          "logs_panel",
-          "loki_dsoptions",
-          "loki_query",
-          "mssql_dsoptions",
-          "mssql_query",
-          "mysql_dsoptions",
-          "mysql_query",
-          "news_panel",
-          "nodegraph_panel",
-          "parca_dsoptions",
-          "parca_query",
-          "phlare_dsoptions",
-          "phlare_query",
-          "piechart_panel",
-          "postgres_dsoptions",
-          "postgres_query",
-          "prometheus_dsoptions",
-          "prometheus_query",
-          "stackdriver_dsoptions",
-          "stackdriver_query",
-          "stat_panel",
-          "table_old_panel",
-          "tempo_dsoptions",
-          "tempo_query",
-          "testdata_dsoptions",
-          "testdata_query",
-          "text_panel",
-          "traces_panel",
-          "welcome_panel",
-          "xychart_panel",
-          "zipkin_dsoptions",
-          "zipkin_query"
+          "alertgroupspanelcfg",
+          "alertlistpanelcfg",
+          "alertmanagerdataquery",
+          "alertmanagerdatasourcecfg",
+          "annotationslistpanelcfg",
+          "azuremonitordataquery",
+          "azuremonitordatasourcecfg",
+          "barchartpanelcfg",
+          "bargaugepanelcfg",
+          "cloudwatchdataquery",
+          "cloudwatchdatasourcecfg",
+          "dashboarddataquery",
+          "dashboarddatasourcecfg",
+          "dashboardlistpanelcfg",
+          "debugpanelcfg",
+          "elasticsearchdataquery",
+          "elasticsearchdatasourcecfg",
+          "flamegraphpanelcfg",
+          "gaugepanelcfg",
+          "geomappanelcfg",
+          "gettingstartedpanelcfg",
+          "googlecloudmonitoringdataquery",
+          "googlecloudmonitoringdatasourcecfg",
+          "grafanadataquery",
+          "grafanadatasourcecfg",
+          "graphitedataquery",
+          "graphitedatasourcecfg",
+          "grapholdpanelcfg",
+          "histogrampanelcfg",
+          "iconpanelcfg",
+          "jaegerdataquery",
+          "jaegerdatasourcecfg",
+          "livepanelcfg",
+          "logspanelcfg",
+          "lokidataquery",
+          "lokidatasourcecfg",
+          "microsoftsqlserverdataquery",
+          "microsoftsqlserverdatasourcecfg",
+          "mysqldataquery",
+          "mysqldatasourcecfg",
+          "newspanelcfg",
+          "nodegraphpanelcfg",
+          "parcadataquery",
+          "parcadatasourcecfg",
+          "phlaredataquery",
+          "phlaredatasourcecfg",
+          "piechartpanelcfg",
+          "postgresqldataquery",
+          "postgresqldatasourcecfg",
+          "prometheusdataquery",
+          "prometheusdatasourcecfg",
+          "statpanelcfg",
+          "tableoldpanelcfg",
+          "tempodataquery",
+          "tempodatasourcecfg",
+          "testdatadbdataquery",
+          "testdatadbdatasourcecfg",
+          "textpanelcfg",
+          "tracespanelcfg",
+          "welcomepanelcfg",
+          "xychartpanelcfg",
+          "zipkindataquery",
+          "zipkindatasourcecfg"
         ],
         "count": 63
       },
@@ -981,8 +1636,20 @@
     "maturity": {
       "experimental": {
         "name": "experimental",
-        "items": [],
-        "count": 0
+        "items": [
+          "annotationslistpanelcfg",
+          "barchartpanelcfg",
+          "bargaugepanelcfg",
+          "dashboard",
+          "dashboardlistpanelcfg",
+          "gaugepanelcfg",
+          "histogrampanelcfg",
+          "newspanelcfg",
+          "piechartpanelcfg",
+          "statpanelcfg",
+          "textpanelcfg"
+        ],
+        "count": 11
       },
       "mature": {
         "name": "mature",
@@ -992,86 +1659,75 @@
       "merged": {
         "name": "merged",
         "items": [
-          "annolist_panel",
-          "barchart_panel",
-          "bargauge_panel",
-          "dashboard",
-          "dashlist_panel",
-          "gauge_panel",
-          "histogram_panel",
-          "news_panel",
-          "piechart_panel",
           "playlist",
-          "stat_panel",
-          "team",
-          "text_panel"
+          "team"
         ],
-        "count": 13
+        "count": 2
       },
       "planned": {
         "name": "planned",
         "items": [
-          "alertgroups_panel",
-          "alertlist_panel",
-          "alertmanager_dsoptions",
-          "alertmanager_query",
+          "alertgroupspanelcfg",
+          "alertlistpanelcfg",
+          "alertmanagerdataquery",
+          "alertmanagerdatasourcecfg",
           "apikey",
-          "cloudwatch_dsoptions",
-          "cloudwatch_query",
-          "dashboard_dsoptions",
-          "dashboard_query",
+          "azuremonitordataquery",
+          "azuremonitordatasourcecfg",
+          "cloudwatchdataquery",
+          "cloudwatchdatasourcecfg",
+          "dashboarddataquery",
+          "dashboarddatasourcecfg",
           "datasource",
-          "debug_panel",
-          "elasticsearch_dsoptions",
-          "elasticsearch_query",
-          "flamegraph_panel",
+          "debugpanelcfg",
+          "elasticsearchdataquery",
+          "elasticsearchdatasourcecfg",
+          "flamegraphpanelcfg",
           "folder",
-          "geomap_panel",
-          "gettingstarted_panel",
-          "grafana_azure_monitor_datasource_dsoptions",
-          "grafana_azure_monitor_datasource_query",
-          "grafana_dsoptions",
-          "grafana_query",
-          "graph_panel",
-          "graphite_dsoptions",
-          "graphite_query",
-          "icon_panel",
-          "jaeger_dsoptions",
-          "jaeger_query",
-          "live_panel",
-          "logs_panel",
-          "loki_dsoptions",
-          "loki_query",
-          "mssql_dsoptions",
-          "mssql_query",
-          "mysql_dsoptions",
-          "mysql_query",
-          "nodegraph_panel",
-          "parca_dsoptions",
-          "parca_query",
-          "phlare_dsoptions",
-          "phlare_query",
-          "postgres_dsoptions",
-          "postgres_query",
-          "prometheus_dsoptions",
-          "prometheus_query",
+          "geomappanelcfg",
+          "gettingstartedpanelcfg",
+          "googlecloudmonitoringdataquery",
+          "googlecloudmonitoringdatasourcecfg",
+          "grafanadataquery",
+          "grafanadatasourcecfg",
+          "graphitedataquery",
+          "graphitedatasourcecfg",
+          "grapholdpanelcfg",
+          "iconpanelcfg",
+          "jaegerdataquery",
+          "jaegerdatasourcecfg",
+          "livepanelcfg",
+          "logspanelcfg",
+          "lokidataquery",
+          "lokidatasourcecfg",
+          "microsoftsqlserverdataquery",
+          "microsoftsqlserverdatasourcecfg",
+          "mysqldataquery",
+          "mysqldatasourcecfg",
+          "nodegraphpanelcfg",
+          "parcadataquery",
+          "parcadatasourcecfg",
+          "phlaredataquery",
+          "phlaredatasourcecfg",
+          "postgresqldataquery",
+          "postgresqldatasourcecfg",
+          "prometheusdataquery",
+          "prometheusdatasourcecfg",
           "query",
           "queryhistory",
           "serviceaccount",
-          "stackdriver_dsoptions",
-          "stackdriver_query",
-          "table_old_panel",
-          "tempo_dsoptions",
-          "tempo_query",
-          "testdata_dsoptions",
-          "testdata_query",
+          "tableoldpanelcfg",
+          "tempodataquery",
+          "tempodatasourcecfg",
+          "testdatadbdataquery",
+          "testdatadbdatasourcecfg",
           "thumb",
-          "traces_panel",
+          "tracespanelcfg",
           "user",
-          "welcome_panel",
-          "xychart_panel",
-          "zipkin_dsoptions",
-          "zipkin_query"
+          "welcomepanelcfg",
+          "xychartpanelcfg",
+          "zipkindataquery",
+          "zipkindatasourcecfg"
         ],
         "count": 61
       },

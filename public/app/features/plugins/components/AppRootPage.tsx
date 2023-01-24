@@ -112,7 +112,8 @@ const stateSlice = createSlice({
           ...pluginNav,
           node: {
             ...pluginNav.main,
-            hideFromBreadcrumbs: true,
+            // Because breadcumbs code is also used to set title when topnav should only set hideFromBreadcrumbs when topnav is enabled
+            hideFromBreadcrumbs: config.featureToggles.topnav,
           },
         };
       }

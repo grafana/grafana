@@ -7,7 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
-	legacymodels "github.com/grafana/grafana/pkg/models"
+	legacymodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/tsdb/graphite"
 )

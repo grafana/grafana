@@ -8,12 +8,20 @@ import { TooltipPlacement } from '../Tooltip';
 interface PanelMenuProps {
   menu: ReactElement | (() => ReactElement);
   menuButtonClass?: string;
+  dragClassCancel?: string;
   title?: string;
   placement?: TooltipPlacement;
   offset?: [number, number];
 }
 
-export function PanelMenu({ menu, title, placement = 'bottom', offset, menuButtonClass }: PanelMenuProps) {
+export function PanelMenu({
+  menu,
+  title,
+  placement = 'bottom',
+  offset,
+  dragClassCancel,
+  menuButtonClass,
+}: PanelMenuProps) {
   return (
     <Dropdown overlay={menu} placement={placement} offset={offset}>
       <ToolbarButton
@@ -22,7 +30,7 @@ export function PanelMenu({ menu, title, placement = 'bottom', offset, menuButto
         icon="ellipsis-v"
         narrow
         data-testid="panel-menu-button"
-        className={cx(menuButtonClass, 'show-on-hover')}
+        className={cx(menuButtonClass, dragClassCancel, 'show-on-hover')}
       />
     </Dropdown>
   );
