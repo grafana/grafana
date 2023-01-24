@@ -3,8 +3,6 @@ package state_test
 import (
 	"context"
 	"fmt"
-	"os"
-	"runtime/trace"
 	"testing"
 	"time"
 
@@ -26,26 +24,13 @@ func BenchmarkProcessEvalResults(b *testing.B) {
 	sut := state.NewManager(cfg)
 	now := time.Now().UTC()
 	rule := makeBenchRule()
-	results := makeBenchResults(10)
+	results := makeBenchResults(100)
 	labels := map[string]string{}
-
-	tfile, err := os.Create("rcopy.out")
-	if err != nil {
-		panic(err)
-	}
-	defer tfile.Close()
-
-	err = trace.Start(tfile)
-	if err != nil {
-		panic(err)
-	}
 
 	var ans []state.StateTransition
 	for i := 0; i < b.N; i++ {
 		ans = sut.ProcessEvalResults(context.Background(), now, &rule, results, labels)
 	}
-
-	trace.Stop()
 
 	b.StopTimer()
 
