@@ -123,12 +123,7 @@ type AdditionalProperties struct {
 	AdditionalProperties *AdditionalProperties
 }
 
-func renderMap(s *schema) string {
-	mapValue := getMapVal(s.AdditionalProperties)
-	return "map[string]" + mapValue
-}
-
-func getMapVal(props *AdditionalProperties) string {
+func renderMapType(props *AdditionalProperties) string {
 	if props == nil {
 		return ""
 	}
@@ -138,11 +133,11 @@ func getMapVal(props *AdditionalProperties) string {
 	}
 
 	if props.AdditionalProperties != nil {
-		return "map[string]" + getMapVal(props.AdditionalProperties)
+		return "map[string]" + renderMapType(props.AdditionalProperties)
 	}
 
 	if props.Items != nil {
-		return "[]" + getMapVal(props.Items)
+		return "[]" + renderMapType(props.Items)
 	}
 
 	return ""
@@ -363,72 +358,35 @@ func printProperties(w io.Writer, s *schema) {
 	// Buffer all property rows so that we can sort them before printing them.
 	rows := make([][]string, 0, len(s.Properties))
 
-	for k, p := range s.Properties {
-		propType := make([]string, 0, len(p.Type))
-
-		// Generate relative links for objects and arrays of objects.
-		for _, pt := range p.Type {
-			switch {
-			// if AdditionalProperties is not nil, then most likely it's a field of map type
-			case p.AdditionalProperties != nil:
-				typeStr := renderMap(p)
-				propType = append(propType, typeStr)
-			case pt == PropertyTypeObject:
-				name, anchor := propNameAndAnchor(k, p.Title)
-				propType = append(propType, fmt.Sprintf("[%s](#%s)", name, anchor))
-			case pt == PropertyTypeArray:
-				if p.Items != nil {
-					for _, pi := range p.Items.Type {
-						if pi == PropertyTypeObject {
-							name, anchor := propNameAndAnchor(k, p.Items.Title)
-							propType = append(propType, fmt.Sprintf("[%s](#%s)[]", name, anchor))
-						} else {
-							propType = append(propType, fmt.Sprintf("%s[]", pi))
-						}
-					}
-				} else {
-					propType = append(propType, string(pt))
-				}
-			default:
-				propType = append(propType, string(pt))
-			}
-		}
-
-		var propTypeStr string
-		if len(propType) == 1 {
-			propTypeStr = propType[0]
-		} else if len(propType) == 2 {
-			propTypeStr = strings.Join(propType, " or ")
-		} else if len(propType) > 2 {
-			propTypeStr = fmt.Sprintf("%s, or %s", strings.Join(propType[:len(propType)-1], ", "), propType[len(propType)-1])
-		}
+	for key, val := range s.Properties {
+		typeStr := propTypeStr(key, val)
 
 		// Emphasize required properties.
 		var required string
-		if in(s.Required, k) {
+		if in(s.Required, key) {
 			required = "**Yes**"
 		} else {
 			required = "No"
 		}
 
-		desc := p.Description
+		desc := val.Description
 
-		if len(p.Enum) > 0 {
-			vals := make([]string, 0, len(p.Enum))
-			for _, e := range p.Enum {
+		if len(val.Enum) > 0 {
+			vals := make([]string, 0, len(val.Enum))
+			for _, e := range val.Enum {
 				vals = append(vals, e.String())
 			}
 			desc += " Possible values are: `" + strings.Join(vals, "`, `") + "`."
 		}
 
-		if p.Default != nil {
-			desc += fmt.Sprintf(" Default: `%v`.", p.Default)
+		if val.Default != nil {
+			desc += fmt.Sprintf(" Default: `%v`.", val.Default)
 		}
 
-		rows = append(rows, []string{fmt.Sprintf("`%s`", k), propTypeStr, required, formatForTable(desc)})
+		rows = append(rows, []string{fmt.Sprintf("`%s`", key), typeStr, required, formatForTable(desc)})
 	}
 
-	// Sort by the required column, then by the name column.
+	// Sort by the required column, then by the key column.
 	sort.Slice(rows, func(i, j int) bool {
 		if rows[i][2] < rows[j][2] {
 			return true
@@ -441,6 +399,53 @@ func printProperties(w io.Writer, s *schema) {
 
 	table.AppendBulk(rows)
 	table.Render()
+}
+
+func propTypeStr(propName string, propValue *schema) string {
+	// If the property has AdditionalProperties, it is most likely a map type
+	if propValue.AdditionalProperties != nil {
+		mapValue := renderMapType(propValue.AdditionalProperties)
+		return "map[string]" + mapValue
+	}
+
+	propType := make([]string, 0, len(propValue.Type))
+	// Generate relative links for objects and arrays of objects.
+	for _, pt := range propValue.Type {
+		switch pt {
+		case PropertyTypeObject:
+			name, anchor := propNameAndAnchor(propName, propValue.Title)
+			propType = append(propType, fmt.Sprintf("[%s](#%s)", name, anchor))
+		case PropertyTypeArray:
+			if propValue.Items != nil {
+				for _, pi := range propValue.Items.Type {
+					if pi == PropertyTypeObject {
+						name, anchor := propNameAndAnchor(propName, propValue.Items.Title)
+						propType = append(propType, fmt.Sprintf("[%s](#%s)[]", name, anchor))
+					} else {
+						propType = append(propType, fmt.Sprintf("%s[]", pi))
+					}
+				}
+			} else {
+				propType = append(propType, string(pt))
+			}
+		default:
+			propType = append(propType, string(pt))
+		}
+	}
+
+	if len(propType) == 0 {
+		return ""
+	}
+	
+	if len(propType) == 1 {
+		return propType[0]
+	}
+
+	if len(propType) == 2 {
+		return strings.Join(propType, " or ")
+	}
+
+	return fmt.Sprintf("%s, or %s", strings.Join(propType[:len(propType)-1], ", "), propType[len(propType)-1])
 }
 
 func propNameAndAnchor(prop, title string) (string, string) {
