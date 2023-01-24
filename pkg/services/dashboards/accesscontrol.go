@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/folder"
 )
 
 const (
@@ -38,7 +39,7 @@ var (
 )
 
 // NewFolderNameScopeResolver provides an ScopeAttributeResolver that is able to convert a scope prefixed with "folders:name:" into an uid based scope.
-func NewFolderNameScopeResolver(db Store, folderDB FolderStore) (string, ac.ScopeAttributeResolver) {
+func NewFolderNameScopeResolver(db Store, folderDB FolderStore, folderSvc folder.Service) (string, ac.ScopeAttributeResolver) {
 	prefix := ScopeFoldersProvider.GetResourceScopeName("")
 	return prefix, ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
 		if !strings.HasPrefix(scope, prefix) {
@@ -57,7 +58,7 @@ func NewFolderNameScopeResolver(db Store, folderDB FolderStore) (string, ac.Scop
 }
 
 // NewFolderIDScopeResolver provides an ScopeAttributeResolver that is able to convert a scope prefixed with "folders:id:" into an uid based scope.
-func NewFolderIDScopeResolver(db Store, folderDB FolderStore) (string, ac.ScopeAttributeResolver) {
+func NewFolderIDScopeResolver(db Store, folderDB FolderStore, folderSvc folder.Service) (string, ac.ScopeAttributeResolver) {
 	prefix := ScopeFoldersProvider.GetResourceScope("")
 	return prefix, ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
 		if !strings.HasPrefix(scope, prefix) {
@@ -84,7 +85,7 @@ func NewFolderIDScopeResolver(db Store, folderDB FolderStore) (string, ac.ScopeA
 
 // NewDashboardIDScopeResolver provides an ScopeAttributeResolver that is able to convert a scope prefixed with "dashboards:id:"
 // into uid based scopes for both dashboard and folder
-func NewDashboardIDScopeResolver(db Store, folderDB FolderStore) (string, ac.ScopeAttributeResolver) {
+func NewDashboardIDScopeResolver(db Store, folderDB FolderStore, folderSvc folder.Service) (string, ac.ScopeAttributeResolver) {
 	prefix := ScopeDashboardsProvider.GetResourceScope("")
 	return prefix, ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
 		if !strings.HasPrefix(scope, prefix) {
@@ -101,13 +102,13 @@ func NewDashboardIDScopeResolver(db Store, folderDB FolderStore) (string, ac.Sco
 			return nil, err
 		}
 
-		return resolveDashboardScope(ctx, db, folderDB, orgID, dashboard)
+		return resolveDashboardScope(ctx, db, folderDB, orgID, dashboard, folderSvc)
 	})
 }
 
 // NewDashboardUIDScopeResolver provides an ScopeAttributeResolver that is able to convert a scope prefixed with "dashboards:uid:"
 // into uid based scopes for both dashboard and folder
-func NewDashboardUIDScopeResolver(db Store, folderDB FolderStore) (string, ac.ScopeAttributeResolver) {
+func NewDashboardUIDScopeResolver(db Store, folderDB FolderStore, folderSvc folder.Service) (string, ac.ScopeAttributeResolver) {
 	prefix := ScopeDashboardsProvider.GetResourceScopeUID("")
 	return prefix, ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
 		if !strings.HasPrefix(scope, prefix) {
@@ -124,11 +125,11 @@ func NewDashboardUIDScopeResolver(db Store, folderDB FolderStore) (string, ac.Sc
 			return nil, err
 		}
 
-		return resolveDashboardScope(ctx, db, folderDB, orgID, dashboard)
+		return resolveDashboardScope(ctx, db, folderDB, orgID, dashboard, folderSvc)
 	})
 }
 
-func resolveDashboardScope(ctx context.Context, db Store, folderDB FolderStore, orgID int64, dashboard *Dashboard) ([]string, error) {
+func resolveDashboardScope(ctx context.Context, db Store, folderDB FolderStore, orgID int64, dashboard *Dashboard, folderSvc folder.Service) ([]string, error) {
 	var folderUID string
 	if dashboard.FolderID < 0 {
 		return []string{ScopeDashboardsProvider.GetResourceScopeUID(dashboard.UID)}, nil

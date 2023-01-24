@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -49,9 +50,10 @@ func ProvideDashboardService(
 	cfg *setting.Cfg, dashboardStore dashboards.Store, folderStore dashboards.FolderStore, dashAlertExtractor alerting.DashAlertExtractor,
 	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, ac accesscontrol.AccessControl,
+	folderSvc folder.Service,
 ) *DashboardServiceImpl {
-	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(dashboardStore, folderStore))
-	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(dashboardStore, folderStore))
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardIDScopeResolver(dashboardStore, folderStore, folderSvc))
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(dashboardStore, folderStore, folderSvc))
 
 	return &DashboardServiceImpl{
 		cfg:                  cfg,
