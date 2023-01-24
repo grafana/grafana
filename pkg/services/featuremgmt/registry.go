@@ -414,5 +414,11 @@ var (
 			Description: "Azure multiple resource picker",
 			State:       FeatureStateAlpha,
 		},
+		{
+			Name:         "topNavCommandPalette",
+			Description:  "Launch the Command Palette from the top navigation search box",
+			State:        FeatureStateBeta,
+			FrontendOnly: true,
+		},
 	}
 )
