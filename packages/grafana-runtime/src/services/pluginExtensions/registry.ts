@@ -18,7 +18,7 @@ export function setPluginsExtensionRegistry(instance: PluginsExtensionRegistry):
 
 export function getPluginsExtensionRegistry(): PluginsExtensionRegistry {
   if (!registry) {
-    throw new Error('getPluginsExtensionRegistry can only be used after Grafana instance has started.');
+    throw new Error('getPluginsExtensionRegistry can only be used after the Grafana instance has started.');
   }
   return registry;
 }
