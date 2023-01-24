@@ -2,6 +2,7 @@ package plugindef
 
 import (
 	"strings"
+	"regexp"
 
 	"github.com/grafana/thema"
 )
@@ -33,6 +34,18 @@ seqs: [
 				// Human-readable name of the plugin that is shown to the user in
 				// the UI.
 				name: string
+
+				// FIXME there appears to be a bug in thema that prevents this from working. Maybe it'd
+				// help to refer to it with an alias, but thema can't support using current list syntax.
+				// syntax (fixed by grafana/thema#82). Either way, for now, pascalName gets populated in Go.
+				let sani = (strings.ToTitle(regexp.ReplaceAllLiteral("[^a-zA-Z]+", name, "")))
+
+				// The PascalCase name for the plugin. Used for creating machine-friendly
+				// identifiers, typically in code generation.
+				//
+				// If not provided, defaults to name, but title-cased and sanitized (only
+				// alphabetical characters allowed).
+				pascalName: string & =~"^([A-Z][a-zA-Z]{1,62})$" | *sani
 
 				// Plugin category used on the Add data source page.
 				category?: "tsdb" | "logging" | "cloud" | "tracing" | "sql" | "enterprise" | "profiling" | "other"

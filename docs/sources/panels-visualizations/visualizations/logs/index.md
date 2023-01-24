@@ -32,9 +32,9 @@ For logs where a **level** label is specified, we use the value of the label to 
 
 Each log row has an extendable area with its labels and detected fields, for more robust interaction. Each field or label has a stats icon to display ad-hoc statistics in relation to all displayed logs.
 
-### Derived fields links
+### Data links
 
-By using Derived fields, you can turn any part of a log message into an internal or external link. The created link is visible as a button next to the Detected field in the Log details view.
+By using data links, you can turn any part of a log message into an internal or external link. The created link is visible as a button in the **Links** section inside the **Log details** view.
 
 ### Display options
 
