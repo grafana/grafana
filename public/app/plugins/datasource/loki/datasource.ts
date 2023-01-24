@@ -65,6 +65,7 @@ import {
   addLineFilter,
   findLastPosition,
   getLabelFilterPositions,
+  getStreamSelectorPositions,
 } from './modifyQuery';
 import { getQueryHints } from './queryHints';
 import { getLogQueryFromMetricsQuery, getNormalizedLokiQuery, isLogsQuery, isValidQuery } from './queryUtils';
@@ -386,19 +387,34 @@ export class LokiDatasource
   }
 
   async queryStatsRequest(query: LokiQuery): Promise<QueryStats> {
-    const labelMatcher = `{${query.expr.split('{')[1].split('}')[0]}}`;
     const { start, end } = this.getTimeRangeParams();
 
-    const { data } = await lastValueFrom(
-      getBackendSrv().fetch<QueryStats>({
-        method: 'GET',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        params: { query: labelMatcher, start, end },
-        url: `${this.instanceSettings.url}/loki/api/v1/index/stats`,
-      })
-    );
+    const labelMatcherPositions = getStreamSelectorPositions(query.expr);
+    const labelMatchers = labelMatcherPositions.map((labelMatcher) => {
+      return query.expr.slice(labelMatcher.from, labelMatcher.to);
+    });
 
-    return data;
+    let statsForAll: QueryStats = { streams: 0, chunks: 0, bytes: 0, entries: 0 };
+
+    for (const labelMatcher of labelMatchers) {
+      const { data } = await lastValueFrom(
+        getBackendSrv().fetch<QueryStats>({
+          method: 'GET',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          params: { query: labelMatcher, start, end },
+          url: `${this.instanceSettings.url}/loki/api/v1/index/stats`,
+        })
+      );
+
+      statsForAll = {
+        streams: statsForAll.streams + data.streams,
+        chunks: statsForAll.chunks + data.chunks,
+        bytes: statsForAll.bytes + data.bytes,
+        entries: statsForAll.entries + data.entries,
+      };
+    }
+
+    return statsForAll;
   }
 
   async metricFindQuery(query: LokiVariableQuery | string) {
