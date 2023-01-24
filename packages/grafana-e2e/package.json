@@ -52,7 +52,7 @@
     "@types/lodash": "4.14.187",
     "@types/node": "18.11.9",
     "@types/uuid": "8.3.4",
-    "esbuild": "0.16.7",
+    "esbuild": "0.16.17",
     "rollup": "2.79.1",
     "rollup-plugin-dts": "^5.0.0",
     "rollup-plugin-esbuild": "5.0.0",

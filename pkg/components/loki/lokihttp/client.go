@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/dskit/backoff"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/config"
+	"github.com/prometheus/common/model"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -231,7 +232,7 @@ func (c *client) run() {
 			if !ok {
 				return
 			}
-			tenantID := ""
+			tenantID := c.getTenantID(e.Labels)
 			batch, ok := batches[tenantID]
 
 			// If the batch doesn't exist yet, we create a new one with the entry
@@ -264,6 +265,22 @@ func (c *client) run() {
 			}
 		}
 	}
+}
+
+func (c *client) getTenantID(labels model.LabelSet) string {
+	// Check if it has been overridden while processing the pipeline stages
+	if value, ok := labels[ReservedLabelTenantID]; ok {
+		return string(value)
+	}
+
+	// Check if has been specified in the config
+	if c.cfg.TenantID != "" {
+		return c.cfg.TenantID
+	}
+
+	// Defaults to an empty string, which means the X-Scope-OrgID header
+	// will not be sent
+	return ""
 }
 
 func (c *client) Chan() chan<- Entry {
