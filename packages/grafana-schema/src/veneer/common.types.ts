@@ -13,9 +13,4 @@ export interface DataQuery extends raw.DataQuery {
   datasource?: raw.DataSourceRef | null;
 }
 
-export interface DataSourceInstanceSettings<T extends raw.DataSourceJsonData = raw.DataSourceJsonData>
-  extends raw.DataSourceInstanceSettings {
-  jsonData: T;
-}
-
 export * from '../common/common.gen';
