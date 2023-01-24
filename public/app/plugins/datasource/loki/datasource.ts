@@ -471,7 +471,7 @@ export class LokiDatasource
   }
 
   async getDataSamples(query: LokiQuery): Promise<DataFrame[]> {
-    // Currently works only for log samples
+    // Currently works only for logs sample
     if (!isValidQuery(query.expr) || !isLogsQuery(query.expr)) {
       return [];
     }
