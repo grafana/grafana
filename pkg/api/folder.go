@@ -39,7 +39,7 @@ func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
 			OrgID:        c.OrgID,
 			Limit:        c.QueryInt64("limit"),
 			Page:         c.QueryInt64("page"),
-			UID:          c.Query("parent_uid"),
+			UID:          c.Query("parentUid"),
 			SignedInUser: c.SignedInUser,
 		})
 	} else {
@@ -340,7 +340,7 @@ type GetFoldersParams struct {
 	// The parent folder UID
 	// in:query
 	// required:false
-	ParentUID string `json:"parent_uid"`
+	ParentUID string `json:"parentUid"`
 }
 
 // swagger:parameters getFolderByUID
