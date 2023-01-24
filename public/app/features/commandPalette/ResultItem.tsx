@@ -76,8 +76,9 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
     }),
     activeRow: css({
-      color: theme.colors.text.maxContrast,
-      background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
+      color: theme.colors.text.link,
+      textDecoration: 'underline',
+      //background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
       '&:before': {
         display: 'block',
         content: '" "',
