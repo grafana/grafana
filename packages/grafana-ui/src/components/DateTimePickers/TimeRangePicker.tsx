@@ -125,10 +125,10 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
         </ToolbarButton>
       </Tooltip>
       {isOpen && (
-        <>
+        <div>
           <div role="presentation" className={cx(modalBackdrop, styles.backdrop)} {...underlayProps} />
-          <section className={styles.content} ref={ref} {...overlayProps} {...dialogProps}>
-            <FocusScope contain autoFocus>
+          <FocusScope contain autoFocus>
+            <section className={styles.content} ref={ref} {...overlayProps} {...dialogProps}>
               <TimePickerContent
                 timeZone={timeZone}
                 fiscalYearStartMonth={fiscalYearStartMonth}
@@ -142,9 +142,9 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
                 onChangeFiscalYearStartMonth={onChangeFiscalYearStartMonth}
                 hideQuickRanges={hideQuickRanges}
               />
-            </FocusScope>
-          </section>
-        </>
+            </section>
+          </FocusScope>
+        </div>
       )}
 
       {timeSyncButton}
@@ -181,7 +181,7 @@ const ZoomOutTooltip = () => (
   </>
 );
 
-const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRange; timeZone?: TimeZone }) => {
+export const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRange; timeZone?: TimeZone }) => {
   const styles = useStyles2(getLabelStyles);
 
   return (

@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
@@ -13,9 +14,9 @@ import (
 // 1) Permissions for the dashboard
 // 2) permissions for its parent folder
 // 3) if no specific permissions have been set for the dashboard or its parent folder then get the default permissions
-func (d *DashboardStore) GetDashboardACLInfoList(ctx context.Context, query *models.GetDashboardACLInfoListQuery) error {
+func (d *DashboardStore) GetDashboardACLInfoList(ctx context.Context, query *dashboards.GetDashboardACLInfoListQuery) error {
 	outerErr := d.store.WithDbSession(ctx, func(dbSession *db.Session) error {
-		query.Result = make([]*models.DashboardACLInfoDTO, 0)
+		query.Result = make([]*dashboards.DashboardACLInfoDTO, 0)
 		falseStr := d.store.GetDialect().BooleanStr(false)
 
 		if query.DashboardID == 0 {
@@ -103,7 +104,7 @@ func (d *DashboardStore) HasEditPermissionInFolders(ctx context.Context, query *
 			return nil
 		}
 
-		builder := db.NewSqlBuilder(d.cfg)
+		builder := db.NewSqlBuilder(d.cfg, d.store.GetDialect())
 		builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ? AND dashboard.is_folder = ?",
 			query.SignedInUser.OrgID, d.store.GetDialect().BooleanStr(true))
 		builder.WriteDashboardPermissionFilter(query.SignedInUser, models.PERMISSION_EDIT)
@@ -131,7 +132,7 @@ func (d *DashboardStore) HasAdminPermissionInDashboardsOrFolders(ctx context.Con
 			return nil
 		}
 
-		builder := db.NewSqlBuilder(d.cfg)
+		builder := db.NewSqlBuilder(d.cfg, d.store.GetDialect())
 		builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ?", query.SignedInUser.OrgID)
 		builder.WriteDashboardPermissionFilter(query.SignedInUser, models.PERMISSION_ADMIN)
 

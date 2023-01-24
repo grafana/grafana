@@ -177,6 +177,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('extract-json-paths', import '../dev-dashboards/transforms/extract-json-paths.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('gauge-multi-series', import '../dev-dashboards/panel-gauge/gauge-multi-series.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
@@ -199,6 +206,13 @@ local dashboard = grafana.dashboard;
       }
     },
     dashboard.new('geomap-photo-layer', import '../dev-dashboards/panel-geomap/geomap-photo-layer.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
+    dashboard.new('geomap-route-layer', import '../dev-dashboards/panel-geomap/geomap-route-layer.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
       spec+: {

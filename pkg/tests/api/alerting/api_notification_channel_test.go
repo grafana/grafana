@@ -16,16 +16,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -740,7 +740,7 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 	env.NotificationService.EmailHandlerSync = mockEmail.sendEmailCommandHandlerSync
 	// As we are using a NotificationService mock here, but the test expects real NotificationService -
 	// we try to issue a real POST request here
-	env.NotificationService.WebhookHandler = func(_ context.Context, cmd *models.SendWebhookSync) error {
+	env.NotificationService.WebhookHandler = func(_ context.Context, cmd *notifications.SendWebhookSync) error {
 		if res, err := http.Post(cmd.Url, "", strings.NewReader(cmd.Body)); err == nil {
 			_ = res.Body.Close()
 		}
@@ -1165,10 +1165,10 @@ func (nc *mockNotificationChannel) Close() error {
 }
 
 type mockEmailHandler struct {
-	emails []*models.SendEmailCommandSync
+	emails []*notifications.SendEmailCommandSync
 }
 
-func (e *mockEmailHandler) sendEmailCommandHandlerSync(_ context.Context, cmd *models.SendEmailCommandSync) error {
+func (e *mockEmailHandler) sendEmailCommandHandlerSync(_ context.Context, cmd *notifications.SendEmailCommandSync) error {
 	// We 0 out the start time since that is a variable that we cannot predict.
 	alerts := cmd.Data["Alerts"].(channels.ExtendedAlerts)
 	for i := range alerts {
@@ -1185,7 +1185,7 @@ type mockEmailHandlerWithTimeout struct {
 	timeout time.Duration
 }
 
-func (e *mockEmailHandlerWithTimeout) sendEmailCommandHandlerSync(ctx context.Context, cmd *models.SendEmailCommandSync) error {
+func (e *mockEmailHandlerWithTimeout) sendEmailCommandHandlerSync(ctx context.Context, cmd *notifications.SendEmailCommandSync) error {
 	select {
 	case <-time.After(e.timeout):
 		return e.mockEmailHandler.sendEmailCommandHandlerSync(ctx, cmd)
@@ -2280,9 +2280,9 @@ var expAlertmanagerConfigFromAPI = `
 }
 `
 
-var expEmailNotifications = []*models.SendEmailCommandSync{
+var expEmailNotifications = []*notifications.SendEmailCommandSync{
 	{
-		SendEmailCommand: models.SendEmailCommand{
+		SendEmailCommand: notifications.SendEmailCommand{
 			To:          []string{"test@email.com"},
 			SingleEmail: true,
 			Template:    "ng_alert_notification",
@@ -2529,10 +2529,10 @@ var expNonEmailNotifications = map[string][]string{
 		}`,
 	},
 	"pushover_recv/pushover_test": {
-		"--abcd\r\nContent-Disposition: form-data; name=\"user\"\r\n\r\nmysecretkey\r\n--abcd\r\nContent-Disposition: form-data; name=\"token\"\r\n\r\nmysecrettoken\r\n--abcd\r\nContent-Disposition: form-data; name=\"priority\"\r\n\r\n0\r\n--abcd\r\nContent-Disposition: form-data; name=\"sound\"\r\n\r\n\r\n--abcd\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\n[FIRING:1] PushoverAlert (default)\r\n--abcd\r\nContent-Disposition: form-data; name=\"url\"\r\n\r\nhttp://localhost:3000/alerting/list\r\n--abcd\r\nContent-Disposition: form-data; name=\"url_title\"\r\n\r\nShow alert rule\r\n--abcd\r\nContent-Disposition: form-data; name=\"message\"\r\n\r\n**Firing**\n\nValue: A=1\nLabels:\n - alertname = PushoverAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_PushoverAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DPushoverAlert&matcher=grafana_folder%3Ddefault\n\r\n--abcd\r\nContent-Disposition: form-data; name=\"html\"\r\n\r\n1\r\n--abcd--\r\n",
+		"--abcd\r\nContent-Disposition: form-data; name=\"user\"\r\n\r\nmysecretkey\r\n--abcd\r\nContent-Disposition: form-data; name=\"token\"\r\n\r\nmysecrettoken\r\n--abcd\r\nContent-Disposition: form-data; name=\"priority\"\r\n\r\n0\r\n--abcd\r\nContent-Disposition: form-data; name=\"sound\"\r\n\r\n\r\n--abcd\r\nContent-Disposition: form-data; name=\"title\"\r\n\r\n[FIRING:1] PushoverAlert (default)\r\n--abcd\r\nContent-Disposition: form-data; name=\"url\"\r\n\r\nhttp://localhost:3000/alerting/list\r\n--abcd\r\nContent-Disposition: form-data; name=\"url_title\"\r\n\r\nShow alert rule\r\n--abcd\r\nContent-Disposition: form-data; name=\"message\"\r\n\r\n**Firing**\n\nValue: A=1\nLabels:\n - alertname = PushoverAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_PushoverAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DPushoverAlert&matcher=grafana_folder%3Ddefault\r\n--abcd\r\nContent-Disposition: form-data; name=\"html\"\r\n\r\n1\r\n--abcd--\r\n",
 	},
 	"telegram_recv/bot6sh027hs034h": {
-		"--abcd\r\nContent-Disposition: form-data; name=\"chat_id\"\r\n\r\ntelegram_chat_id\r\n--abcd\r\nContent-Disposition: form-data; name=\"parse_mode\"\r\n\r\nhtml\r\n--abcd\r\nContent-Disposition: form-data; name=\"text\"\r\n\r\n**Firing**\n\nValue: A=1\nLabels:\n - alertname = TelegramAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_TelegramAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DTelegramAlert&matcher=grafana_folder%3Ddefault\n\r\n--abcd--\r\n",
+		"--abcd\r\nContent-Disposition: form-data; name=\"chat_id\"\r\n\r\ntelegram_chat_id\r\n--abcd\r\nContent-Disposition: form-data; name=\"parse_mode\"\r\n\r\nHTML\r\n--abcd\r\nContent-Disposition: form-data; name=\"text\"\r\n\r\n**Firing**\n\nValue: A=1\nLabels:\n - alertname = TelegramAlert\n - grafana_folder = default\nAnnotations:\nSource: http://localhost:3000/alerting/grafana/UID_TelegramAlert/view\nSilence: http://localhost:3000/alerting/silence/new?alertmanager=grafana&matcher=alertname%3DTelegramAlert&matcher=grafana_folder%3Ddefault\n\r\n--abcd--\r\n",
 	},
 	"googlechat_recv/googlechat_test": {
 		`{

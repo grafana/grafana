@@ -445,7 +445,7 @@ describe('createSpanLinkFactory', () => {
             { name: 'defaultQuery', query: '' },
             { query: 'no_name_here' },
           ],
-        } as TraceToMetricsOptions,
+        },
       });
       expect(createLink).toBeDefined();
 
@@ -512,12 +512,12 @@ describe('createSpanLinkFactory', () => {
       splitOpenFn,
       traceToMetricsOptions: {
         datasourceUid: 'prom1Uid',
-        queries: [{ name: 'Named Query', query: 'metric{$__tags}[5m]' }],
+        queries: [{ name: 'Named Query', query: 'metric{$__tags, $__tags}[5m]' }],
         tags: [
           { key: 'job', value: '' },
           { key: 'k8s.pod', value: 'pod' },
         ],
-      } as TraceToMetricsOptions,
+      },
     });
     expect(createLink).toBeDefined();
 
@@ -535,7 +535,7 @@ describe('createSpanLinkFactory', () => {
     expect(links).toBeDefined();
     expect(links!.metricLinks![0]!.href).toBe(
       `/explore?left=${encodeURIComponent(
-        '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"metric{job=\\"tns/app\\", pod=\\"sample-pod\\"}[5m]","refId":"A"}],"panelsState":{}}'
+        '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"metric{job=\\"tns/app\\", pod=\\"sample-pod\\", job=\\"tns/app\\", pod=\\"sample-pod\\"}[5m]","refId":"A"}],"panelsState":{}}'
       )}`
     );
   });
@@ -661,6 +661,34 @@ describe('createSpanLinkFactory', () => {
       expect(linkDef!.href).toBe(
         `/explore?left=${encodeURIComponent(
           `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"${searchUID}","queries":[{"query":"\\"6605c7b08e715d6c\\" AND \\"7946b05c2e2e4e5a\\" AND cluster:\\"cluster1\\" AND hostname:\\"hostname1\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}],"panelsState":{}}`
+        )}`
+      );
+    });
+
+    it('formats query correctly if only filterByTraceID is true', () => {
+      const createLink = setupSpanLinkFactory(
+        {
+          datasourceUid: searchUID,
+          filterByTraceID: true,
+        },
+        searchUID
+      );
+
+      expect(createLink).toBeDefined();
+      const links = createLink!(
+        createTraceSpan({
+          process: {
+            serviceName: 'service',
+            tags: [],
+          },
+        })
+      );
+
+      const linkDef = links?.logLinks?.[0];
+      expect(linkDef).toBeDefined();
+      expect(linkDef!.href).toBe(
+        `/explore?left=${encodeURIComponent(
+          `{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"searchUID","queries":[{"query":"\\"7946b05c2e2e4e5a\\"","refId":"","metrics":[{"id":"1","type":"logs"}]}],"panelsState":{}}`
         )}`
       );
     });

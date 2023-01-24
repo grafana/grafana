@@ -25,7 +25,7 @@ func (j crdTypesJenny) JennyName() string {
 }
 
 func (j crdTypesJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
-	if !(decl.IsCoreStructured() || decl.IsCustomStructured()) {
+	if !(decl.IsCore() || decl.IsCustom()) {
 		return nil, nil
 	}
 

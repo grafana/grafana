@@ -7,10 +7,8 @@ import (
 	"context"
 
 	"github.com/google/wire"
-	"github.com/grafana/grafana/pkg/tsdb/parca"
-	"github.com/grafana/grafana/pkg/tsdb/phlare"
-
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -33,7 +31,6 @@ import (
 	loginpkg "github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
-	"github.com/grafana/grafana/pkg/models"
 	pluginDashboards "github.com/grafana/grafana/pkg/plugins/manager/dashboards"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -101,9 +98,9 @@ import (
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	secretsMigrator "github.com/grafana/grafana/pkg/services/secrets/migrator"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	serviceaccountsmanager "github.com/grafana/grafana/pkg/services/serviceaccounts/manager"
 	"github.com/grafana/grafana/pkg/services/shorturls"
+	"github.com/grafana/grafana/pkg/services/shorturls/shorturlimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/store"
@@ -132,6 +129,8 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/mssql"
 	"github.com/grafana/grafana/pkg/tsdb/mysql"
 	"github.com/grafana/grafana/pkg/tsdb/opentsdb"
+	"github.com/grafana/grafana/pkg/tsdb/parca"
+	"github.com/grafana/grafana/pkg/tsdb/phlare"
 	"github.com/grafana/grafana/pkg/tsdb/postgres"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus"
 	"github.com/grafana/grafana/pkg/tsdb/tempo"
@@ -185,8 +184,8 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(httpclient.Provider), new(*sdkhttpclient.Provider)),
 	serverlock.ProvideService,
 	cleanup.ProvideService,
-	shorturls.ProvideService,
-	wire.Bind(new(shorturls.Service), new(*shorturls.ShortURLService)),
+	shorturlimpl.ProvideService,
+	wire.Bind(new(shorturls.Service), new(*shorturlimpl.ShortURLService)),
 	queryhistory.ProvideService,
 	wire.Bind(new(queryhistory.Service), new(*queryhistory.QueryHistoryService)),
 	quotaimpl.ProvideService,
@@ -209,7 +208,7 @@ var wireSet = wire.NewSet(
 	pushhttp.ProvideService,
 	contexthandler.ProvideService,
 	jwt.ProvideService,
-	wire.Bind(new(models.JWTService), new(*jwt.AuthService)),
+	wire.Bind(new(jwt.JWTService), new(*jwt.AuthService)),
 	ngalert.ProvideService,
 	librarypanels.ProvideService,
 	wire.Bind(new(librarypanels.Service), new(*librarypanels.LibraryPanelService)),
@@ -243,8 +242,6 @@ var wireSet = wire.NewSet(
 	pluginSettings.ProvideService,
 	wire.Bind(new(pluginsettings.Service), new(*pluginSettings.Service)),
 	alerting.ProvideService,
-	database.ProvideServiceAccountsStore,
-	wire.Bind(new(serviceaccounts.Store), new(*database.ServiceAccountsStoreImpl)),
 	ossaccesscontrol.ProvideServiceAccountPermissions,
 	wire.Bind(new(accesscontrol.ServiceAccountPermissionsService), new(*ossaccesscontrol.ServiceAccountPermissionsService)),
 	serviceaccountsmanager.ProvideServiceAccountsService,
@@ -259,6 +256,7 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(dashboards.DashboardProvisioningService), new(*dashboardservice.DashboardServiceImpl)),
 	wire.Bind(new(dashboards.PluginService), new(*dashboardservice.DashboardServiceImpl)),
 	wire.Bind(new(dashboards.Store), new(*dashboardstore.DashboardStore)),
+	wire.Bind(new(dashboards.FolderStore), new(*dashboardstore.DashboardStore)),
 	dashboardimportservice.ProvideService,
 	wire.Bind(new(dashboardimport.Service), new(*dashboardimportservice.ImportDashboardService)),
 	plugindashboardsservice.ProvideService,
@@ -302,8 +300,7 @@ var wireSet = wire.NewSet(
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.EmailSender), new(*notifications.NotificationServiceMock)),
 	dbtest.NewFakeDB,
-	wire.Bind(new(sqlstore.Store), new(*sqlstore.SQLStore)),
-	wire.Bind(new(db.DB), new(*dbtest.FakeDB)),
+	wire.Bind(new(db.DB), new(*sqlstore.SQLStore)),
 	prefimpl.ProvideService,
 	opentsdb.ProvideService,
 	acimpl.ProvideAccessControl,

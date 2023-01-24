@@ -8,24 +8,23 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
 	cfg                *setting.Cfg
-	sqlstore           sqlstore.Store
+	sqlstore           db.DB
 	plugins            plugins.Store
 	social             social.Service
 	usageStats         usagestats.Service
@@ -46,7 +45,7 @@ func ProvideService(
 	us usagestats.Service,
 	statsService stats.Service,
 	cfg *setting.Cfg,
-	store sqlstore.Store,
+	store db.DB,
 	social social.Service,
 	plugins plugins.Store,
 	features *featuremgmt.FeatureManager,
@@ -109,7 +108,7 @@ func (s *Service) Run(ctx context.Context) error {
 func (s *Service) collectSystemStats(ctx context.Context) (map[string]interface{}, error) {
 	m := map[string]interface{}{}
 
-	statsQuery := models.GetSystemStatsQuery{}
+	statsQuery := stats.GetSystemStatsQuery{}
 	if err := s.statsService.GetSystemStats(ctx, &statsQuery); err != nil {
 		s.log.Error("Failed to get system stats", "error", err)
 		return nil, err
@@ -222,7 +221,7 @@ func (s *Service) collectAdditionalMetrics(ctx context.Context) (map[string]inte
 func (s *Service) collectAlertNotifierStats(ctx context.Context) (map[string]interface{}, error) {
 	m := map[string]interface{}{}
 	// get stats about alert notifier usage
-	anStats := models.GetAlertNotifierUsageStatsQuery{}
+	anStats := stats.GetAlertNotifierUsageStatsQuery{}
 	if err := s.statsService.GetAlertNotifiersUsageStats(ctx, &anStats); err != nil {
 		s.log.Error("Failed to get alert notification stats", "error", err)
 		return nil, err
@@ -236,7 +235,7 @@ func (s *Service) collectAlertNotifierStats(ctx context.Context) (map[string]int
 
 func (s *Service) collectDatasourceStats(ctx context.Context) (map[string]interface{}, error) {
 	m := map[string]interface{}{}
-	dsStats := models.GetDataSourceStatsQuery{}
+	dsStats := stats.GetDataSourceStatsQuery{}
 	if err := s.statsService.GetDataSourceStats(ctx, &dsStats); err != nil {
 		s.log.Error("Failed to get datasource stats", "error", err)
 		return nil, err
@@ -283,7 +282,7 @@ func (s *Service) collectDatasourceAccess(ctx context.Context) (map[string]inter
 	m := map[string]interface{}{}
 
 	// fetch datasource access stats
-	dsAccessStats := models.GetDataSourceAccessStatsQuery{}
+	dsAccessStats := stats.GetDataSourceAccessStatsQuery{}
 	if err := s.statsService.GetDataSourceAccessStats(ctx, &dsAccessStats); err != nil {
 		s.log.Error("Failed to get datasource access stats", "error", err)
 		return nil, err
@@ -319,7 +318,7 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 		return false
 	}
 
-	statsQuery := models.GetSystemStatsQuery{}
+	statsQuery := stats.GetSystemStatsQuery{}
 	if err := s.statsService.GetSystemStats(ctx, &statsQuery); err != nil {
 		s.log.Error("Failed to get system stats", "error", err)
 		return false
@@ -354,7 +353,7 @@ func (s *Service) updateTotalStats(ctx context.Context) bool {
 
 	metrics.MStatTotalPublicDashboards.Set(float64(statsQuery.Result.PublicDashboards))
 
-	dsStats := models.GetDataSourceStatsQuery{}
+	dsStats := stats.GetDataSourceStatsQuery{}
 	if err := s.statsService.GetDataSourceStats(ctx, &dsStats); err != nil {
 		s.log.Error("Failed to get datasource stats", "error", err)
 		return true

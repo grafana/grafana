@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
+	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -22,6 +23,8 @@ import (
 // Get all folders.
 //
 // Returns all folders that the authenticated user has permission to view.
+// If nested folders are enabled, it expects an additional query parameter with the parent folder UID
+// and returns the immediate subfolders.
 //
 // Responses:
 // 200: getFoldersResponse
@@ -29,7 +32,19 @@ import (
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
-	folders, err := hs.folderService.GetFolders(c.Req.Context(), c.SignedInUser, c.OrgID, c.QueryInt64("limit"), c.QueryInt64("page"))
+	var folders []*folder.Folder
+	var err error
+	if hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		folders, err = hs.folderService.GetChildren(c.Req.Context(), &folder.GetChildrenQuery{
+			OrgID:        c.OrgID,
+			Limit:        c.QueryInt64("limit"),
+			Page:         c.QueryInt64("page"),
+			UID:          c.Query("parent_uid"),
+			SignedInUser: c.SignedInUser,
+		})
+	} else {
+		folders, err = hs.searchFolders(c)
+	}
 
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
@@ -38,11 +53,12 @@ func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
 	uids := make(map[string]bool, len(folders))
 	result := make([]dtos.FolderSearchHit, 0)
 	for _, f := range folders {
-		uids[f.Uid] = true
+		uids[f.UID] = true
 		result = append(result, dtos.FolderSearchHit{
-			Id:    f.Id,
-			Uid:   f.Uid,
-			Title: f.Title,
+			Id:        f.ID,
+			Uid:       f.UID,
+			Title:     f.Title,
+			ParentUID: f.ParentUID,
 		})
 	}
 
@@ -73,7 +89,11 @@ func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
+	g, err := guardian.NewByUID(c.Req.Context(), folder.UID, c.OrgID, c.SignedInUser)
+	if err != nil {
+		return response.Err(err)
+	}
+
 	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, folder))
 }
 
@@ -99,7 +119,10 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 		return apierrors.ToFolderErrorResponse(err)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
+	g, err := guardian.NewByUID(c.Req.Context(), folder.UID, c.OrgID, c.SignedInUser)
+	if err != nil {
+		return response.Err(err)
+	}
 	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, folder))
 }
 
@@ -135,7 +158,11 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 		hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 	}
 
-	g := guardian.New(c.Req.Context(), folder.ID, c.OrgID, c.SignedInUser)
+	g, err := guardian.NewByUID(c.Req.Context(), folder.UID, c.OrgID, c.SignedInUser)
+	if err != nil {
+		return response.Err(err)
+	}
+
 	// TODO set ParentUID if nested folders are enabled
 	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, folder))
 }
@@ -182,15 +209,23 @@ func (hs *HTTPServer) MoveFolder(c *models.ReqContext) response.Response {
 // 409: conflictError
 // 500: internalServerError
 func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
-	cmd := models.UpdateFolderCommand{}
+	cmd := folder.UpdateFolderCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	result, err := hs.folderService.Update(c.Req.Context(), c.SignedInUser, c.OrgID, web.Params(c.Req)[":uid"], &cmd)
+
+	cmd.OrgID = c.OrgID
+	cmd.UID = web.Params(c.Req)[":uid"]
+	cmd.SignedInUser = c.SignedInUser
+	result, err := hs.folderService.Update(c.Req.Context(), &cmd)
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
-	g := guardian.New(c.Req.Context(), result.ID, c.OrgID, c.SignedInUser)
+	g, err := guardian.NewByUID(c.Req.Context(), result.UID, c.OrgID, c.SignedInUser)
+	if err != nil {
+		return response.Err(err)
+	}
+
 	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, result))
 }
 
@@ -218,7 +253,7 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 	}
 
 	uid := web.Params(c.Req)[":uid"]
-	err = hs.folderService.DeleteFolder(c.Req.Context(), &folder.DeleteFolderCommand{UID: uid, OrgID: c.OrgID, ForceDeleteRules: c.QueryBool("forceDeleteRules"), SignedInUser: c.SignedInUser})
+	err = hs.folderService.Delete(c.Req.Context(), &folder.DeleteFolderCommand{UID: uid, OrgID: c.OrgID, ForceDeleteRules: c.QueryBool("forceDeleteRules"), SignedInUser: c.SignedInUser})
 	if err != nil {
 		return apierrors.ToFolderErrorResponse(err)
 	}
@@ -261,6 +296,35 @@ func (hs *HTTPServer) newToFolderDto(c *models.ReqContext, g guardian.DashboardG
 	}
 }
 
+func (hs *HTTPServer) searchFolders(c *models.ReqContext) ([]*folder.Folder, error) {
+	searchQuery := search.Query{
+		SignedInUser: c.SignedInUser,
+		DashboardIds: make([]int64, 0),
+		FolderIds:    make([]int64, 0),
+		Limit:        c.QueryInt64("limit"),
+		OrgId:        c.OrgID,
+		Type:         "dash-folder",
+		Permission:   models.PERMISSION_VIEW,
+		Page:         c.QueryInt64("page"),
+	}
+
+	if err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery); err != nil {
+		return nil, err
+	}
+
+	folders := make([]*folder.Folder, 0)
+
+	for _, hit := range searchQuery.Result {
+		folders = append(folders, &folder.Folder{
+			ID:    hit.ID,
+			UID:   hit.UID,
+			Title: hit.Title,
+		})
+	}
+
+	return folders, nil
+}
+
 // swagger:parameters getFolders
 type GetFoldersParams struct {
 	// Limit the maximum number of folders to return
@@ -273,6 +337,10 @@ type GetFoldersParams struct {
 	// required:false
 	// default:1
 	Page int64 `json:"page"`
+	// The parent folder UID
+	// in:query
+	// required:false
+	ParentUID string `json:"parent_uid"`
 }
 
 // swagger:parameters getFolderByUID
@@ -293,7 +361,7 @@ type UpdateFolderParams struct {
 	//
 	// in:body
 	// required:true
-	Body models.UpdateFolderCommand `json:"body"`
+	Body folder.UpdateFolderCommand `json:"body"`
 }
 
 // swagger:parameters getFolderByID

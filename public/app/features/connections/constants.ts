@@ -11,9 +11,9 @@ export const ROUTES = {
   DataSources: `/${ROUTE_BASE_ID}/your-connections/datasources`,
   DataSourcesNew: `/${ROUTE_BASE_ID}/your-connections/datasources/new`,
   DataSourcesEdit: `/${ROUTE_BASE_ID}/your-connections/datasources/edit/:uid`,
-  DataSourcesDashboards: `/${ROUTE_BASE_ID}/datasources/edit/:uid/dashboards`,
+  DataSourcesDashboards: `/${ROUTE_BASE_ID}/your-connections/datasources/edit/:uid/dashboards`,
 
   // Connect Data
   ConnectData: `/${ROUTE_BASE_ID}/connect-data`,
-  DataSourcesDetails: `/${ROUTE_BASE_ID}/connect-data/datasources/:id`,
+  DataSourcesDetails: `/${ROUTE_BASE_ID}/datasources/:id`,
 } as const;

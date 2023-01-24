@@ -10,7 +10,7 @@ import {
   DataSourceInstanceSettings,
   DataSourceWithLogsContextSupport,
   DataSourceWithQueryImportSupport,
-  DataSourceWithLogsVolumeSupport,
+  DataSourceWithSupplementaryQueriesSupport,
   DateTime,
   dateTime,
   Field,
@@ -24,6 +24,7 @@ import {
   toUtc,
   QueryFixAction,
   CoreApp,
+  SupplementaryQueryType,
 } from '@grafana/data';
 import { BackendSrvRequest, DataSourceWithBackend, getBackendSrv, getDataSourceSrv, config } from '@grafana/runtime';
 import { queryLogsVolume } from 'app/core/logsModel';
@@ -74,7 +75,7 @@ export class ElasticDatasource
   implements
     DataSourceWithLogsContextSupport,
     DataSourceWithQueryImportSupport<ElasticsearchQuery>,
-    DataSourceWithLogsVolumeSupport<ElasticsearchQuery>
+    DataSourceWithSupplementaryQueriesSupport<ElasticsearchQuery>
 {
   basicAuth?: string;
   withCredentials?: boolean;
@@ -418,7 +419,7 @@ export class ElasticDatasource
       (query): ElasticsearchQuery => ({
         ...query,
         datasource: this.getRef(),
-        query: this.interpolateLuceneQuery(query.query || '', scopedVars),
+        query: this.addAdHocFilters(this.interpolateLuceneQuery(query.query || '', scopedVars)),
         bucketAggs: query.bucketAggs?.map(interpolateBucketAgg),
       })
     );
@@ -580,6 +581,25 @@ export class ElasticDatasource
     return logResponse;
   };
 
+  getDataProvider(
+    type: SupplementaryQueryType,
+    request: DataQueryRequest<ElasticsearchQuery>
+  ): Observable<DataQueryResponse> | undefined {
+    if (!this.getSupportedSupplementaryQueryTypes().includes(type)) {
+      return undefined;
+    }
+    switch (type) {
+      case SupplementaryQueryType.LogsVolume:
+        return this.getLogsVolumeDataProvider(request);
+      default:
+        return undefined;
+    }
+  }
+
+  getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[] {
+    return [SupplementaryQueryType.LogsVolume];
+  }
+
   getLogsVolumeDataProvider(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> | undefined {
     const isLogsVolumeAvailable = request.targets.some((target) => {
       return target.metrics?.length === 1 && target.metrics[0].type === 'logs';
@@ -638,7 +658,8 @@ export class ElasticDatasource
     const shouldRunTroughBackend =
       request.app === CoreApp.Explore && config.featureToggles.elasticsearchBackendMigration;
     if (shouldRunTroughBackend) {
-      return super.query(request).pipe(tap((response) => trackQuery(response, request.targets, request.app)));
+      const start = new Date();
+      return super.query(request).pipe(tap((response) => trackQuery(response, request, start)));
     }
     let payload = '';
     const targets = this.interpolateVariablesInQueries(cloneDeep(request.targets), request.scopedVars);
@@ -705,6 +726,7 @@ export class ElasticDatasource
 
     const url = this.getMultiSearchUrl();
 
+    const start = new Date();
     return this.post(url, payload).pipe(
       map((res) => {
         const er = new ElasticResponse(sentTargets, res);
@@ -721,7 +743,7 @@ export class ElasticDatasource
 
         return er.getTimeSeries();
       }),
-      tap((response) => trackQuery(response, request.targets, request.app))
+      tap((response) => trackQuery(response, request, start))
     );
   }
 
@@ -967,6 +989,37 @@ export class ElasticDatasource
       }
     }
     return { ...query, query: expression };
+  }
+
+  addAdHocFilters(query: string) {
+    const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
+    if (adhocFilters.length === 0) {
+      return query;
+    }
+    const esFilters = adhocFilters.map((filter) => {
+      const { key, operator, value } = filter;
+      if (!key || !value) {
+        return;
+      }
+      switch (operator) {
+        case '=':
+          return `${key}:"${value}"`;
+        case '!=':
+          return `-${key}:"${value}"`;
+        case '=~':
+          return `${key}:/${value}/`;
+        case '!~':
+          return `-${key}:/${value}/`;
+        case '>':
+          return `${key}:>${value}`;
+        case '<':
+          return `${key}:<${value}`;
+      }
+      return;
+    });
+
+    const finalQuery = [query, ...esFilters].filter((f) => f).join(' AND ');
+    return finalQuery;
   }
 }
 

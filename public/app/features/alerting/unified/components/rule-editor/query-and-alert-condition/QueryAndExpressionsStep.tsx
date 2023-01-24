@@ -67,8 +67,8 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
   }, []);
 
   const runQueries = useCallback(() => {
-    runner.current.run(queries);
-  }, [queries]);
+    runner.current.run(getValues('queries'));
+  }, [getValues]);
 
   // whenever we update the queries we have to update the form too
   useEffect(() => {
@@ -95,6 +95,11 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
   // data queries only
   const dataQueries = useMemo(() => {
     return queries.filter((query) => !isExpressionQuery(query.model));
+  }, [queries]);
+
+  // expression queries only
+  const expressionQueries = useMemo(() => {
+    return queries.filter((query) => isExpressionQuery(query.model));
   }, [queries]);
 
   const emptyQueries = queries.length === 0;
@@ -172,6 +177,7 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
           {/* Data Queries */}
           <QueryEditor
             queries={dataQueries}
+            expressions={expressionQueries}
             onRunQueries={runQueries}
             onChangeQueries={onChangeQueries}
             onDuplicateQuery={onDuplicateQuery}

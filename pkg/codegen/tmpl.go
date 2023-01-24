@@ -38,10 +38,9 @@ type (
 		Leader        string
 	}
 	tvars_kind_registry struct {
-		NumRaw, NumStructured int
-		PackageName           string
-		KindPackagePrefix     string
-		Kinds                 []*DeclForGen
+		PackageName       string
+		KindPackagePrefix string
+		Kinds             []*DeclForGen
 	}
 	tvars_kind_registry_backend struct {
 		BackendKindPackagePrefix string

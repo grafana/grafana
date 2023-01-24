@@ -12,7 +12,7 @@ import (
 )
 
 type Kind struct {
-	GrafanaKind kindsys.Structured
+	GrafanaKind kindsys.Interface
 	Object      runtime.Object // singular type
 	ObjectList  runtime.Object // list type
 	Schema      apiextensionsv1.CustomResourceDefinition
@@ -21,7 +21,7 @@ type Kind struct {
 // TODO this could probably be done in CUE/framework
 func (crd Kind) GVK() k8schema.GroupVersionKind {
 	// TODO custom structured
-	props := crd.GrafanaKind.Props().(kindsys.CoreStructuredProperties)
+	props := crd.GrafanaKind.Props().(kindsys.CoreProperties)
 	gvk := k8schema.GroupVersionKind{
 		Group: fmt.Sprintf("%s.core.grafana", props.MachineName),
 		Kind:  props.Name,

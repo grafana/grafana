@@ -18,8 +18,16 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2, PanelContainer, Alert } from '@grafana/ui';
-import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
+import {
+  CustomScrollbar,
+  ErrorBoundaryAlert,
+  Themeable2,
+  withTheme2,
+  PanelContainer,
+  Alert,
+  AdHocFilterItem,
+} from '@grafana/ui';
+import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
 import appEvents from 'app/core/app_events';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
@@ -40,6 +48,7 @@ import { NoData } from './NoData';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { NodeGraphContainer } from './NodeGraphContainer';
 import { QueryRows } from './QueryRows';
+import RawPrometheusContainer from './RawPrometheusContainer';
 import { ResponseErrorContainer } from './ResponseErrorContainer';
 import RichHistoryContainer from './RichHistory/RichHistoryContainer';
 import { SecondaryActions } from './SecondaryActions';
@@ -77,9 +86,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       flex-direction: column;
       padding: ${theme.spacing(2)};
       padding-top: 0;
-    `,
-    exploreContainerTopnav: css`
-      padding-top: ${theme.spacing(2)};
     `,
   };
 };
@@ -159,7 +165,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     this.props.setQueries(this.props.exploreId, [query]);
   };
 
-  onCellFilterAdded = (filter: FilterItem) => {
+  onCellFilterAdded = (filter: AdHocFilterItem) => {
     const { value, key, operator } = filter;
     if (operator === FILTER_FOR_OPERATOR) {
       this.onClickFilterLabel(key, value);
@@ -316,6 +322,21 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     );
   }
 
+  renderRawPrometheus(width: number) {
+    const { exploreId, datasourceInstance, timeZone } = this.props;
+    return (
+      <RawPrometheusContainer
+        showRawPrometheus={true}
+        ariaLabel={selectors.pages.Explore.General.table}
+        width={width}
+        exploreId={exploreId}
+        onCellFilterAdded={datasourceInstance?.modifyQuery ? this.onCellFilterAdded : undefined}
+        timeZone={timeZone}
+        splitOpenFn={this.onSplitOpen('table')}
+      />
+    );
+  }
+
   renderLogsPanel(width: number) {
     const { exploreId, syncedTimes, theme, queryResponse } = this.props;
     const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
@@ -388,11 +409,11 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       theme,
       showMetrics,
       showTable,
+      showRawPrometheus,
       showLogs,
       showTrace,
       showNodeGraph,
       showFlameGraph,
-      splitted,
       timeZone,
       isFromCompactUrl,
     } = this.props;
@@ -410,6 +431,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         queryResponse.nodeGraphFrames,
         queryResponse.flameGraphFrames,
         queryResponse.tableFrames,
+        queryResponse.rawPrometheusFrames,
         queryResponse.traceFrames,
       ].every((e) => e.length === 0);
 
@@ -423,11 +445,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
         {isFromCompactUrl ? this.renderCompactUrlWarning() : null}
         {datasourceMissing ? this.renderEmptyState(styles.exploreContainer) : null}
         {datasourceInstance && (
-          <div
-            className={cx(styles.exploreContainer, {
-              [styles.exploreContainerTopnav]: Boolean(config.featureToggles.topnav && !splitted),
-            })}
-          >
+          <div className={styles.exploreContainer}>
             <PanelContainer className={styles.queryContainer}>
               <QueryRows exploreId={exploreId} />
               <SecondaryActions
@@ -457,6 +475,9 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                         <>
                           {showMetrics && graphResult && (
                             <ErrorBoundaryAlert>{this.renderGraphPanel(width)}</ErrorBoundaryAlert>
+                          )}
+                          {showRawPrometheus && (
+                            <ErrorBoundaryAlert>{this.renderRawPrometheus(width)}</ErrorBoundaryAlert>
                           )}
                           {showTable && <ErrorBoundaryAlert>{this.renderTablePanel(width)}</ErrorBoundaryAlert>}
                           {showLogs && <ErrorBoundaryAlert>{this.renderLogsPanel(width)}</ErrorBoundaryAlert>}
@@ -518,6 +539,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showFlameGraph,
     loading,
     isFromCompactUrl,
+    showRawPrometheus,
   } = item;
 
   return {
@@ -537,6 +559,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     showTable,
     showTrace,
     showNodeGraph,
+    showRawPrometheus,
     showFlameGraph,
     splitted: isSplit(state),
     loading,

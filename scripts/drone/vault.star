@@ -52,12 +52,12 @@ def secrets():
         vault_secret(
             'packages_gpg_public_key',
             'infra/data/ci/packages-publish/gpg',
-            'public-key',
+            'public-key-b64',
         ),
         vault_secret(
             'packages_gpg_private_key',
             'infra/data/ci/packages-publish/gpg',
-            'private-key',
+            'private-key-b64',
         ),
         vault_secret(
             'packages_gpg_passphrase',
@@ -78,5 +78,20 @@ def secrets():
             'packages_secret_access_key',
             'infra/data/ci/packages-publish/bucket-credentials',
             'Secret',
+        ),
+        vault_secret(
+            'aws_region',
+            'secret/data/common/aws-marketplace',
+            'aws_region',
+        ),
+        vault_secret(
+            'aws_access_key_id',
+            'secret/data/common/aws-marketplace',
+            'aws_access_key_id',
+        ),
+        vault_secret(
+            'aws_secret_access_key',
+            'secret/data/common/aws-marketplace',
+            'aws_secret_access_key',
         ),
     ]

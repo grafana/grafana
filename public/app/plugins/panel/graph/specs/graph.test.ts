@@ -6,7 +6,7 @@ import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
 import TimeSeries from 'app/core/time_series2';
 
-import { DashboardModel } from '../../../../features/dashboard/state';
+import { createDashboardModelFixture } from '../../../../features/dashboard/state/__fixtures__/dashboardFixtures';
 import { graphDirective, GraphElement } from '../graph';
 import { GraphCtrl } from '../module';
 
@@ -1337,7 +1337,7 @@ describe('grafanaGraph', () => {
 });
 
 function getGraphElement({ canEdit, canMakeEditable }: { canEdit?: boolean; canMakeEditable?: boolean } = {}) {
-  const dashboard = new DashboardModel({});
+  const dashboard = createDashboardModelFixture({});
   dashboard.events.on = jest.fn();
   dashboard.meta.canEdit = canEdit;
   dashboard.meta.canMakeEditable = canMakeEditable;

@@ -48,7 +48,7 @@ func (f *ProvisioningApiHandler) handleRouteGetTemplate(ctx *models.ReqContext, 
 	return f.svc.RouteGetTemplate(ctx, name)
 }
 
-func (f *ProvisioningApiHandler) handleRoutePutTemplate(ctx *models.ReqContext, body apimodels.MessageTemplateContent, name string) response.Response {
+func (f *ProvisioningApiHandler) handleRoutePutTemplate(ctx *models.ReqContext, body apimodels.NotificationTemplateContent, name string) response.Response {
 	return f.svc.RoutePutTemplate(ctx, body, name)
 }
 
@@ -74,6 +74,10 @@ func (f *ProvisioningApiHandler) handleRoutePutMuteTiming(ctx *models.ReqContext
 
 func (f *ProvisioningApiHandler) handleRouteDeleteMuteTiming(ctx *models.ReqContext, name string) response.Response {
 	return f.svc.RouteDeleteMuteTiming(ctx, name)
+}
+
+func (f *ProvisioningApiHandler) handleRouteGetAlertRules(ctx *models.ReqContext) response.Response {
+	return f.svc.RouteGetAlertRules(ctx)
 }
 
 func (f *ProvisioningApiHandler) handleRouteGetAlertRule(ctx *models.ReqContext, UID string) response.Response {

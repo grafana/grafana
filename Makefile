@@ -7,11 +7,12 @@ WIRE_TAGS = "oss"
 -include local/Makefile
 include .bingo/Variables.mk
 
-.PHONY: all deps-go deps-js deps build-go build-backend build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue
+.PHONY: all deps-go deps-js deps build-go build-backend build-server build-cli build-js build build-docker-full build-docker-full-ubuntu lint-go golangci-lint test-go test-js gen-ts test run run-frontend clean devenv devenv-down protobuf drone help gen-go gen-cue fix-cue
 
 GO = go
 GO_FILES ?= ./pkg/...
 SH_FILES ?= $(shell find ./scripts -name *.sh)
+GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_DEV),-dev)
 GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 
@@ -68,13 +69,17 @@ gen-cue: ## Do all CUE/Thema code generation
 	@echo "generate code from .cue files"
 	go generate ./pkg/plugins/plugindef
 	go generate ./kinds/gen.go
-	go generate ./pkg/framework/coremodel
 	go generate ./public/app/plugins/gen.go
-	go generate ./kinds/report.go
+	go generate ./pkg/kindsys/report.go
 
 gen-go: $(WIRE) gen-cue
 	@echo "generate go files"
 	$(WIRE) gen -tags $(WIRE_TAGS) ./pkg/server ./pkg/cmd/grafana-cli/runner
+
+fix-cue: $(CUE)
+	@echo "formatting cue files"
+	$(CUE) fix kinds/**/*.cue
+	$(CUE) fix public/app/plugins/**/**/*.cue
 
 gen-jsonnet:
 	go generate ./devenv/jsonnet
@@ -168,7 +173,7 @@ build-docker-full-ubuntu: ## Build Docker image based on Ubuntu for development.
 	DOCKER_BUILDKIT=1 \
 	docker build \
 	--build-arg BASE_IMAGE=ubuntu:20.04 \
-	--build-arg GO_IMAGE=golang:1.19.3 \
+	--build-arg GO_IMAGE=golang:1.19.4 \
 	--tag grafana/grafana:dev-ubuntu .
 
 ##@ Services

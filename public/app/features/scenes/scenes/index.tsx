@@ -1,4 +1,4 @@
-import { Scene } from '../components/Scene';
+import { DashboardScene } from '../dashboard/DashboardScene';
 
 import { getFlexLayoutTest, getScenePanelRepeaterTest } from './demo';
 import { getGridLayoutTest } from './grid';
@@ -9,11 +9,12 @@ import { getGridWithRowLayoutTest } from './gridWithRow';
 import { getNestedScene } from './nested';
 import { getQueryVariableDemo } from './queryVariableDemo';
 import { getSceneWithRows } from './sceneWithRows';
-import { getVariablesDemo } from './variablesDemo';
+import { getTransformationsDemo } from './transformations';
+import { getVariablesDemo, getVariablesDemoWithAll } from './variablesDemo';
 
 interface SceneDef {
   title: string;
-  getScene: (standalone: boolean) => Scene;
+  getScene: () => DashboardScene;
 }
 export function getScenes(): SceneDef[] {
   return [
@@ -27,24 +28,24 @@ export function getScenes(): SceneDef[] {
     { title: 'Grid with rows and different queries and time ranges', getScene: getGridWithMultipleTimeRanges },
     { title: 'Multiple grid layouts test', getScene: getMultipleGridLayoutTest },
     { title: 'Variables', getScene: getVariablesDemo },
+    { title: 'Variables with All values', getScene: getVariablesDemoWithAll },
     { title: 'Query variable', getScene: getQueryVariableDemo },
+    { title: 'Transformations demo', getScene: getTransformationsDemo },
   ];
 }
 
-const cache: Record<string, { standalone: boolean; scene: Scene }> = {};
+const cache: Record<string, DashboardScene> = {};
 
-export function getSceneByTitle(title: string, standalone = true) {
+export function getSceneByTitle(title: string) {
   if (cache[title]) {
-    if (cache[title].standalone === standalone) {
-      return cache[title].scene;
-    }
+    return cache[title];
   }
 
   const scene = getScenes().find((x) => x.title === title);
 
   if (scene) {
-    cache[title] = { scene: scene.getScene(standalone), standalone };
+    cache[title] = scene.getScene();
   }
 
-  return cache[title].scene;
+  return cache[title];
 }

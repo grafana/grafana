@@ -32,7 +32,7 @@ func (j *crdregjenny) JennyName() string {
 func (j *crdregjenny) Generate(decls ...*DeclForGen) (*codejen.File, error) {
 	sdecls := make([]*DeclForGen, 0, len(decls))
 	for _, d := range decls {
-		if d.IsCoreStructured() {
+		if d.IsCore() {
 			sdecls = append(sdecls, d)
 		}
 	}

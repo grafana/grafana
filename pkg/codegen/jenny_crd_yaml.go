@@ -34,11 +34,11 @@ func (yamlCRDJenny) JennyName() string {
 }
 
 func (j yamlCRDJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
-	if !decl.IsCoreStructured() {
+	if !decl.IsCore() {
 		return nil, nil
 	}
 
-	props := decl.SomeDecl.Properties.(kindsys.CoreStructuredProperties)
+	props := decl.SomeDecl.Properties.(kindsys.CoreProperties)
 	lin := decl.Lineage()
 
 	// We need to go through every schema, as they all have to be defined in the CRD
@@ -83,7 +83,7 @@ func (j yamlCRDJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
 		if props.CRD.DummySchema {
 			ver.Schema = map[string]any{
 				"openAPIV3Schema": map[string]any{
-					"type": "object",
+					"type":                                 "object",
 					"x-kubernetes-preserve-unknown-fields": true,
 					"properties": map[string]any{
 						"spec": map[string]any{
@@ -185,7 +185,7 @@ func versionString(version thema.SyntacticVersion) string {
 }
 
 // Hoisting this out of thema until we resolve the proper approach there
-func generateOpenAPI(sch thema.Schema, props kindsys.CoreStructuredProperties) (string, error) {
+func generateOpenAPI(sch thema.Schema, props kindsys.CoreProperties) (string, error) {
 	ctx := sch.Underlying().Context()
 	v := ctx.CompileString(fmt.Sprintf("#%s: _", props.Name))
 	defpath := cue.MakePath(cue.Def(props.Name))
