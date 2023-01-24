@@ -23,60 +23,6 @@ export enum DataFrameType {
   TimeSeriesWide = 'timeseries-wide',
 }
 
-/**
- * TODO docs
- */
-export interface DataFrame extends QueryResultBase {
-  /**
-   * All fields of equal length
-   */
-  fields: Array<Field>;
-  /**
-   * The number of rows
-   */
-  length: number;
-  name?: string;
-}
-
-export const defaultDataFrame: Partial<DataFrame> = {
-  fields: [],
-};
-
-/**
- * TODO Field<T = any, V = Vector<T>>
- */
-export interface Field {
-  /**
-   * Meta info about how field and how to display it
-   */
-  config: FieldConfig;
-  /**
-   * Convert a value for display TODO extend in veneer
-   */
-  display?: unknown;
-  /**
-   * Get value data links with variables interpolated. Extended in veneer
-   */
-  getLinks?: unknown;
-  labels?: Labels;
-  /**
-   * Name of the field (column)
-   */
-  name: string;
-  /**
-   * Cached values with appropriate display and id values TODO | null
-   */
-  state?: FieldState;
-  /**
-   * Field value type (string, number, etc)
-   */
-  type: FieldType;
-  /**
-   * The raw field values. Extended in veneer
-   */
-  values: Record<string, unknown>;
-}
-
 export enum FieldType {
   bool = 'bool',
   geo = 'geo',
@@ -93,7 +39,7 @@ export enum FieldType {
  */
 export interface FieldConfig {
   /**
-   * Significant digits (for display) TODO this should be a separate type
+   * Significant digits (for display) TODO this should be a separate type (DecimalCount)
    */
   decimals?: number;
   /**
@@ -158,62 +104,6 @@ export const defaultFieldConfig: Partial<FieldConfig> = {
   mappings: [],
   thresholds: [],
 };
-
-export interface FieldState {
-  /**
-   * Cache of reduced values
-   */
-  calcs?: Record<string, unknown>;
-  /**
-   * An appropriate name for the field (does not include frame info) TODO | null
-   */
-  displayName?: string;
-  /**
-   * Boolean value is true if field is in a larger data set with multiple frames.
-   * This is only related to the cached displayName property above.
-   */
-  multipleFrames?: boolean;
-  /**
-   * Boolean value is true if a null filling threshold has been applied
-   * against the frame of the field. This is used to avoid cases in which
-   * this would applied more than one time.
-   */
-  nullThresholdApplied?: boolean;
-  /**
-   * Location of this field within the context frames results
-   * @internal -- we will try to make this unnecessary
-   */
-  origin?: DataFrameFieldIndex;
-  /**
-   * The numeric range for values in this field.  This value will respect the min/max
-   * set in field config, or when set to `auto` this will have the min/max for all data
-   * in the response
-   */
-  range?: NumericRange;
-  /**
-   * Appropriate values for templating
-   */
-  scopedVars?: ScopedVars;
-  /**
-   * Series index is index for this field in a larger data set that can span multiple DataFrames
-   * Useful for assigning color to series by looking up a color in a palette using this index
-   */
-  seriesIndex?: number;
-}
-
-/**
- * TODO docs
- */
-export interface NumericRange {
-  delta: number;
-  max?: number;
-  min?: number;
-}
-
-export interface DataFrameFieldIndex {
-  fieldIndex: number;
-  frameIndex: number;
-}
 
 /**
  * TODO Duplicate declaration
@@ -1026,19 +916,6 @@ export interface VizTooltipOptions {
 export interface Labels {}
 
 /**
- * TODO docs | generic type
- */
-export interface ScopedVar {
-  text: unknown;
-  value: unknown;
-}
-
-/**
- * TODO docs
- */
-export interface ScopedVars {}
-
-/**
  * TODO Should be moved to common data query?
  */
 export interface QueryResultBase {
@@ -1161,176 +1038,6 @@ export interface QueryResultMetaNotice {
    * Notice descriptive text
    */
   text: string;
-}
-
-/**
- * TODO docs
- */
-export interface PluginMeta {
-  baseUrl: string;
-  defaultNavUrl?: string;
-  /**
-   * Define plugin requirements
-   */
-  dependencies?: PluginDependencies;
-  enabled?: boolean;
-  enterprise?: boolean;
-  hasUpdate?: boolean;
-  id: string;
-  includes?: Array<PluginInclude>;
-  info: {
-    author: {
-      name: string;
-      url?: string;
-    };
-    description: string;
-    links: Array<PluginMetaInfoLink>;
-    logos: {
-      large: string;
-      small: string;
-    };
-    build?: Array<PluginBuildInfo>;
-    screenshots: Array<ScreenshotInfo>;
-    updated: string;
-    version: string;
-  };
-  /**
-   * Filled in by the backend
-   */
-  jsonData?: unknown;
-  latestVersion?: string;
-  live?: boolean;
-  /**
-   * System.load & relative URLS
-   */
-  module: string;
-  name: string;
-  pinned?: boolean;
-  secureJsonData?: Record<string, unknown>;
-  secureJsonFields?: Record<string, boolean>;
-  signature?: PluginSignatureStatus;
-  signatureOrg?: string;
-  signatureType?: PluginSignatureType;
-  state?: PluginState;
-  type: PluginType;
-}
-
-export const defaultPluginMeta: Partial<PluginMeta> = {
-  includes: [],
-};
-
-/**
- * Describes {@link https://grafana.com/docs/grafana/latest/plugins | type of plugin}
- */
-export enum PluginType {
-  app = 'app',
-  datasource = 'datasource',
-  panel = 'panel',
-  renderer = 'renderer',
-  secretsmanager = 'secretsmanager',
-}
-
-export interface PluginMetaInfoLink {
-  name: string;
-  url: string;
-}
-
-export interface PluginBuildInfo {
-  branch?: string;
-  hash?: string;
-  number?: number;
-  pr?: number;
-  repo?: string;
-  time?: number;
-}
-
-export interface ScreenshotInfo {
-  name: string;
-  path: string;
-}
-
-/**
- * TODO docs
- */
-export enum PluginIncludeType {
-  dashboard = 'dashboard',
-  datasource = 'datasource',
-  page = 'page',
-  panel = 'panel',
-}
-
-/**
- * TODO docs
- */
-export interface PluginInclude {
-  /**
-   * Adds the "page" or "dashboard" type includes to the navigation if set to `true`.
-   */
-  addToNav?: boolean;
-  /**
-   * Angular app pages
-   */
-  component?: string;
-  icon?: string;
-  name: string;
-  path?: string;
-  /**
-   * "Admin", "Editor" or "Viewer". If set then the include will only show up in the navigation if the user has the required roles.
-   */
-  role?: string;
-  type: PluginIncludeType;
-}
-
-/**
- * alpha - Only included if `enable_alpha` config option is true
- * beta - Will show a warning banner
- * stable - Will not show anything
- * deprecated - Will continue to work -- but not show up in the options to add
- */
-export enum PluginState {
-  alpha = 'alpha',
-  beta = 'beta',
-  deprecated = 'deprecated',
-  stable = 'stable',
-}
-
-/**
- * TODO docs
- */
-export interface PluginDependencies {
-  grafanaDependency?: string;
-  grafanaVersion: string;
-  plugins: Array<PluginDependencyInfo>;
-}
-
-export const defaultPluginDependencies: Partial<PluginDependencies> = {
-  plugins: [],
-};
-
-/**
- * TODO docs
- */
-export interface PluginDependencyInfo {
-  id: string;
-  name: string;
-  type: PluginType;
-  version: string;
-}
-
-/**
- * Describes status of {@link https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/ | plugin signature}
- * internal - core plugin, no signature
- * valid - signed and accurate MANIFEST
- * invalid - invalid signature
- * modified - valid signature, but content mismatch
- * missing - missing signature file
- */
-export enum PluginSignatureStatus {
-  internal = 'internal',
-  invalid = 'invalid',
-  missing = 'missing',
-  modified = 'modified',
-  valid = 'valid',
 }
 
 /**
@@ -1487,17 +1194,6 @@ export interface FrameGeometrySource {
 }
 
 export type PreferredVisualisationType = ('graph' | 'table' | 'logs' | 'trace' | 'nodeGraph' | 'flamegraph' | 'rawPrometheus');
-
-/**
- * Describes level of {@link https://grafana.com/docs/grafana/latest/plugins/plugin-signatures/#plugin-signature-levels/ | plugin signature level}
- */
-export enum PluginSignatureType {
-  commercial = 'commercial',
-  community = 'community',
-  core = 'core',
-  grafana = 'grafana',
-  private = 'private',
-}
 
 /**
  * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)

@@ -19,35 +19,6 @@ DataFrameType:
 	//Explicit fields for xMin, xMax, count
 	"histogram" @cuetsy(kind="enum", memberNames="TimeSeriesWide|TimeSeriesLong|TimeSeriesMany|TimeSeriesMulti|DirectoryListing|HeatmapRows|HeatmapCells|Histogram")
 
-// TODO docs
-DataFrame: {
-	QueryResultBase
-  name?: string
-  // All fields of equal length
-  fields: [...Field]
-  // The number of rows
-  length: int64
-} @cuetsy(kind="interface")
-
-// TODO Field<T = any, V = Vector<T>>
-Field: {
-		//Name of the field (column)
-		name: string
-		// Field value type (string, number, etc)
-		type: FieldType
-		// Meta info about how field and how to display it
-		config: FieldConfig
-		// The raw field values. Extended in veneer
-		values: {...}
-		labels?: Labels
-		// Cached values with appropriate display and id values TODO | null
-		state?: FieldState
-		// Convert a value for display TODO extend in veneer
-		display?: _
-		// Get value data links with variables interpolated. Extended in veneer
-		getLinks?: _
-} @cuetsy(kind="interface")
-
 FieldType:
     // Or date
     "time" |
@@ -81,7 +52,7 @@ FieldConfig: {
     filterable?: bool
     // Numeric Options
     unit?: string
-    // Significant digits (for display) TODO this should be a separate type
+    // Significant digits (for display) TODO this should be a separate type (DecimalCount)
     decimals?: int64
     // TODO | null
     min?: int64
@@ -101,47 +72,6 @@ FieldConfig: {
 
 // TODO this doesn't work
 //DecimalCount?: int64 | null @cuetsy(kind="type")
-
-FieldState: {
-    // An appropriate name for the field (does not include frame info) TODO | null
-    displayName?: string
-    //Cache of reduced values
-    calcs?: FieldCalcs
-    // The numeric range for values in this field.  This value will respect the min/max
-    // set in field config, or when set to `auto` this will have the min/max for all data
-    // in the response
-    range?: NumericRange
-    // Appropriate values for templating
-    scopedVars?: ScopedVars
-    // Series index is index for this field in a larger data set that can span multiple DataFrames
-    // Useful for assigning color to series by looking up a color in a palette using this index
-    seriesIndex?: int64
-    // Location of this field within the context frames results
-    // @internal -- we will try to make this unnecessary
-    origin?: DataFrameFieldIndex
-    // Boolean value is true if field is in a larger data set with multiple frames.
-    // This is only related to the cached displayName property above.
-    multipleFrames?: bool
-    // Boolean value is true if a null filling threshold has been applied
-    // against the frame of the field. This is used to avoid cases in which
-    // this would applied more than one time.
-    nullThresholdApplied?: bool
-} @cuetsy(kind="interface")
-
-// TODO Docs
-FieldCalcs: {...}
-
-// TODO docs
-NumericRange: {
-    min?: int64 // TODO | null
-    max?: int64 // TODO | null
-    delta: int64
-} @cuetsy(kind="interface")
-
-DataFrameFieldIndex: {
-    frameIndex: int64
-    fieldIndex: int64
-} @cuetsy(kind="interface")
 
 // TODO Duplicate declaration
 ThresholdsConfig: {

@@ -18,12 +18,4 @@ export interface DataSourceInstanceSettings<T extends raw.DataSourceJsonData = r
   jsonData: T;
 }
 
-export interface PluginMeta<T extends Record<string, unknown> = {}> extends raw.PluginMeta {
-  jsonData?: T;
-}
-
-export interface DataSourcePluginMeta<T extends Record<string, unknown> = {}>
-  extends PluginMeta<T>,
-    raw.DataSourcePluginMeta {}
-
 export * from '../common/common.gen';

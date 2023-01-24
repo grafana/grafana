@@ -249,18 +249,6 @@ Labels: {
 	[string]: string
 } @cuetsy(kind="interface")
 
-// TODO docs | generic type
-ScopedVar: {
-  text: _
-  value: _
-  [string]: _
-} @cuetsy(kind="interface")
-
-// TODO docs
-ScopedVars: {
-	[string]: ScopedVar
-} @cuetsy(kind="interface")
-
 // TODO Should be moved to common data query?
 QueryResultBase: {
    // Matches the query target refId
