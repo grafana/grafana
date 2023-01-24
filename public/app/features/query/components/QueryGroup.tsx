@@ -8,13 +8,12 @@ import {
   DataSourceApi,
   DataSourceInstanceSettings,
   getDefaultTimeRange,
-  GrafanaTheme2,
   LoadingState,
   PanelData,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourcePicker, getDataSourceSrv } from '@grafana/runtime';
-import { Button, CustomScrollbar, HorizontalGroup, InlineFormLabel, Modal, Themeable2, withTheme2 } from '@grafana/ui';
+import { Button, CustomScrollbar, HorizontalGroup, InlineFormLabel, Modal, stylesFactory } from '@grafana/ui';
 import { PluginHelp } from 'app/core/components/PluginHelp/PluginHelp';
 import config from 'app/core/config';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -33,7 +32,7 @@ import { QueryEditorRows } from './QueryEditorRows';
 import { QueryGroupOptionsEditor } from './QueryGroupOptions';
 import { SavedQueryPicker } from './SavedQueryPicker';
 
-interface Props extends Themeable2 {
+interface Props {
   queryRunner: PanelQueryRunner;
   options: QueryGroupOptions;
   onOpenQueryInspector?: () => void;
@@ -61,7 +60,7 @@ interface State {
   };
 }
 
-class UnThemedQueryGroup extends PureComponent<Props, State> {
+export class QueryGroup extends PureComponent<Props, State> {
   backendSrv = backendSrv;
   dataSourceSrv = getDataSourceSrv();
   querySubscription: Unsubscribable | null = null;
@@ -455,7 +454,7 @@ class UnThemedQueryGroup extends PureComponent<Props, State> {
 
   render() {
     const { isHelpOpen, dsSettings } = this.state;
-    const styles = getStyles(this.props.theme);
+    const styles = getStyles();
 
     return (
       <CustomScrollbar autoHeightMin="100%" scrollRefCallback={this.setScrollRef}>
@@ -478,34 +477,34 @@ class UnThemedQueryGroup extends PureComponent<Props, State> {
   }
 }
 
-export const QueryGroup = withTheme2(UnThemedQueryGroup);
+const getStyles = stylesFactory(() => {
+  const { theme } = config;
 
-function getStyles(theme: GrafanaTheme2) {
   return {
     innerWrapper: css`
       display: flex;
       flex-direction: column;
-      padding: ${theme.spacing(2)};
+      padding: ${theme.spacing.md};
     `,
     dataSourceRow: css`
       display: flex;
-      margin-bottom: ${theme.spacing(2)};
+      margin-bottom: ${theme.spacing.md};
     `,
     dataSourceRowItem: css`
-      margin-right: ${theme.spacing(0.5)};
+      margin-right: ${theme.spacing.inlineFormMargin};
     `,
     dataSourceRowItemOptions: css`
       flex-grow: 1;
-      margin-right: ${theme.spacing(0.5)};
+      margin-right: ${theme.spacing.inlineFormMargin};
     `,
     queriesWrapper: css`
       padding-bottom: 16px;
     `,
     expressionWrapper: css``,
     expressionButton: css`
-      margin-right: ${theme.spacing(1)};
+      margin-right: ${theme.spacing.sm};
     `,
   };
-}
+});
 
 type QueriesTabStyles = ReturnType<typeof getStyles>;
