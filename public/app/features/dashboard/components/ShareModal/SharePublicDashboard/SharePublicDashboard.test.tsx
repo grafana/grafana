@@ -72,20 +72,6 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
-  server.use(
-    rest.get('/api/snapshot/shared-options', (req, res, ctx) => {
-      return res(
-        ctx.status(200),
-        ctx.json({
-          externalEnabled: false,
-          externalSnapshotName: 'Publish to snapshots.raintank.io',
-          externalSnapshotURL: 'https://snapshots.raintank.io',
-          snapshotEnabled: true,
-        })
-      );
-    })
-  );
-
   config.featureToggles.publicDashboards = true;
   mockDashboard = createDashboardModelFixture({
     uid: 'mockDashboardUid',
