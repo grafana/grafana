@@ -302,4 +302,8 @@ const (
 	// FlagAzureMultipleResourcePicker
 	// Azure multiple resource picker
 	FlagAzureMultipleResourcePicker = "azureMultipleResourcePicker"
+
+	// FlagTopNavCommandPalette
+	// Launch the Command Palette from the top navigation search box
+	FlagTopNavCommandPalette = "topNavCommandPalette"
 )

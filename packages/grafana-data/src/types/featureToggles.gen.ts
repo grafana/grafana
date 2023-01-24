@@ -90,4 +90,5 @@ export interface FeatureToggles {
   editPanelCSVDragAndDrop?: boolean;
   alertingNoNormalState?: boolean;
   azureMultipleResourcePicker?: boolean;
+  topNavCommandPalette?: boolean;
 }
