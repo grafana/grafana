@@ -44,7 +44,7 @@ Finally, the above definitions imply that maturity for *individual Kinds/schemas
 mature, as well. This is by design: **Grafana Labs does not intend to publicize any single schema as mature until 
 [certain schema system milestones are met](https://github.com/orgs/grafana/projects/133/views/8).**
 
-# Schema Maturity Milestones
+## Schema Maturity Milestones
 
 Maturity milestones are a linear progression. Each milestone implies that the conditions of its predecessors continue to
 be met. 
@@ -79,9 +79,9 @@ Reaching a particular milestone implies that the properties of all prior milesto
 | **Stage comms**              | Internal users:- Start using the schema and give feedback internally to help move to the next stage.External users:- Align with the [experimental](https://docs.google.com/document/d/1lqp0hALax2PT7jSObsX52EbQmIDFnLFMqIbBrJ4EYCE/edit#heading=h.ehl5iy7pcjvq) stage in the release definition document.  - Experimental schemas will be discoverable, and from a customer PoV should never be used in production, but they can be explored and we are more than happy to receive feedback |
 
 
-# Schema-writing guidelines
+## Schema-writing guidelines
 
-## Avoid anonymous nested structs
+### Avoid anonymous nested structs
 
 ***Always name your sub-objects.***
 
@@ -146,7 +146,7 @@ type Two struct {
 }
 ~~~
 
-## Use precise numeric types
+### Use precise numeric types
 
 ***Use precise numeric types like `float64` or `uint32`. Never use `number`.***
 
@@ -158,7 +158,7 @@ TypeScript will still represent these fields with `number`, but other languages 
 Unlike in Go, int and uint are not your friends. These correspond to `math/big` types. Use a sized type,
 like `uint32` or `int32`, unless the use case specifically requires a huge numeric space.
 
-## No explicit `null`
+### No explicit `null`
 
 ***Do not use `null` as a type in any schema.***
 
@@ -192,7 +192,7 @@ explicit null is unlikely to be the best way to represent such values, because i
 **Above all, DO NOT accept `null` in a schema simply because current behavior sometimes unintentionally produces a `null`.**
 Schematization is an opportunity to get rid of this ambiguity. Fix the accidental null-producing behavior, instead.
 
-## Issues
+### Issues
 
 - If a schema has a "kind" field and its set as enum, it generates a Kind alias that conflicts with the generated
   Kind struct.
@@ -202,7 +202,7 @@ Schematization is an opportunity to get rid of this ambiguity. Fix the accidenta
   to set `?` in the field in the schema.
 
 
-# Schema Attributes
+## Schema Attributes
 
 Grafana’s schema system relies on [CUE attributes](https://cuelang.org/docs/references/spec/#attributes)declared on 
 properties within schemas to control some aspects of code generation behavior. 
@@ -224,8 +224,7 @@ Any given attribute may consist of `{name}`, `{name,arg}`, or `{name,arg,argval}
 (meaning of any argval is specific to its arg, which is specific to its name). The following documentation represents 
 this tree using a header hierarchy.
 
-***
-## @cuetsy
+### @cuetsy
 
 These attributes control the behavior of the [cuetsy code generator](https://github.com/grafana/cuetsy), which converts 
 CUE to TypeScript. We include only the kind arg here for brevity; cuetsy’s README has the canonical documentation on all
@@ -236,29 +235,28 @@ Notes:
 - Grafana’s code generators hardcode that an interface (`@cuetsy(kind=”interface”)`) is generated to represent the root 
 schema object, unless it is known to be a [grouped lineage](https://docs.google.com/document/d/13Rv395_T8WTLBgdL-2rbXKu0fx_TW-Q9yz9x6oBjm6g/edit#heading=h.vx7stzpxtw4t).
 
-### kind
+#### kind
 
 Indicates the kind of TypeScript symbol that should be generated for that schema field.
 
-### interface
+#### interface
 
 Generate the schema field as a TS interface. Field must be struct-kinded.
 
-### enum
+#### enum
 
 Generate the schema field as a TS enum. Field must be either int-kinded (numeric enums) or string-kinded (string enums).
 
-### type
+#### type
 
 Generate the schema field as a TS type alias.
 
-***
-## @grafana
+### @grafana
 
 These attributes control code generation behaviors that are specific to Grafana core. Some may also be supported
 in plugin code generators.
 
-### TSVeneer
+#### TSVeneer
 
 Applying a TSVeneer arg to a field in a schema indicates that the schema author wants to enrich the generated type
 (for example by adding generic type parameters), so code generation should expect a handwritten 
@@ -270,7 +268,7 @@ Multiple argvals may be given, separated by `|`.
 A TSVeneer arg has no effect if it is applied to a field that is not exported as a standalone TypeScript type 
 (which usually means a CUE field that also has an `@cuetsy(kind=)` attribute).
 
-### type
+#### type
 
 A handwritten veneer is needed to refine the raw generated TypeScript type, for example by adding generics. 
 See [the dashboard types veneer](https://github.com/grafana/grafana/blob/5f93e67419e9587363d1fc1e6f1f4a8044eb54d0/packages/grafana-schema/src/veneer/dashboard.types.ts) 
@@ -278,14 +276,13 @@ for an example, and [some](https://github.com/grafana/grafana/blob/5f93e67419e95
 [corresponding](https://github.com/grafana/grafana/blob/5f93e67419e9587363d1fc1e6f1f4a8044eb54d0/kinds/dashboard/dashboard_kind.cue#L143) 
 CUE attributes.
 
-***
-## @grafanamaturity
+### @grafanamaturity
 
 These attributes are used to support iterative development of a schema towards maturity.
 
 Grafana code generators and CI enforce that schemas marked as mature MUST NOT have any `@grafanamaturity` attributes.
 
-### NeedsExpertReview
+#### NeedsExpertReview
 
 Indicates that a non-expert on that schema wrote the field, and was not fully confident in its type and/or docs.
 
