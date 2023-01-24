@@ -119,9 +119,8 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
         return;
       }
 
-      const parentBorderWidth = parseFloat(getComputedStyle(parent).borderWidth);
-      const sourceHorizontalCenter = sourceRect.left - parentRect.left - parentBorderWidth + sourceRect.width / 2;
-      const sourceVerticalCenter = sourceRect.top - parentRect.top - parentBorderWidth + sourceRect.height / 2;
+      const sourceHorizontalCenter = sourceRect.left - parentRect.left + sourceRect.width / 2;
+      const sourceVerticalCenter = sourceRect.top - parentRect.top + sourceRect.height / 2;
 
       // Convert from connection coords to DOM coords
       // TODO: Break this out into util function and add tests
@@ -134,8 +133,8 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
       if (info.targetName) {
         const targetRect = target.div?.getBoundingClientRect();
 
-        const targetHorizontalCenter = targetRect!.left - parentRect.left - parentBorderWidth + targetRect!.width / 2;
-        const targetVerticalCenter = targetRect!.top - parentRect.top - parentBorderWidth + targetRect!.height / 2;
+        const targetHorizontalCenter = targetRect!.left - parentRect.left + targetRect!.width / 2;
+        const targetVerticalCenter = targetRect!.top - parentRect.top + targetRect!.height / 2;
 
         x2 = targetHorizontalCenter + (info.target.x * targetRect!.width) / 2;
         y2 = targetVerticalCenter - (info.target.y * targetRect!.height) / 2;

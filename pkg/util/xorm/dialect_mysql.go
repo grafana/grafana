@@ -5,7 +5,6 @@
 package xorm
 
 import (
-	"crypto/tls"
 	"errors"
 	"fmt"
 	"regexp"
@@ -163,16 +162,7 @@ var (
 
 type mysql struct {
 	core.Base
-	net               string
-	addr              string
-	params            map[string]string
-	loc               *time.Location
-	timeout           time.Duration
-	tls               *tls.Config
-	allowAllFiles     bool
-	allowOldPasswords bool
-	clientFoundRows   bool
-	rowFormat         string
+	rowFormat string
 }
 
 func (db *mysql) Init(d *core.DB, uri *core.Uri, drivername, dataSourceName string) error {
@@ -192,7 +182,6 @@ func (db *mysql) SetParams(params map[string]string) {
 			fallthrough
 		case "COMPRESSED":
 			db.rowFormat = t
-			break
 		default:
 			break
 		}
@@ -339,7 +328,7 @@ func (db *mysql) GetColumns(tableName string) ([]string, map[string]*core.Column
 		}
 		col.Name = strings.Trim(columnName, "` ")
 		col.Comment = comment
-		if "YES" == isNullable {
+		if isNullable == "YES" {
 			col.Nullable = true
 		}
 
@@ -397,14 +386,11 @@ func (db *mysql) GetColumns(tableName string) ([]string, map[string]*core.Column
 		if _, ok := core.SqlTypes[colType]; ok {
 			col.SQLType = core.SQLType{Name: colType, DefaultLength: len1, DefaultLength2: len2}
 		} else {
-			return nil, nil, fmt.Errorf("Unknown colType %v", colType)
+			return nil, nil, fmt.Errorf("unknown colType %v", colType)
 		}
 
 		if colKey == "PRI" {
 			col.IsPrimaryKey = true
-		}
-		if colKey == "UNI" {
-			// col.is
 		}
 
 		if extra == "auto_increment" {
@@ -478,7 +464,7 @@ func (db *mysql) GetIndexes(tableName string) (map[string]*core.Index, error) {
 			continue
 		}
 
-		if "YES" == nonUnique || nonUnique == "1" {
+		if nonUnique == "YES" || nonUnique == "1" {
 			indexType = core.IndexType
 		} else {
 			indexType = core.UniqueType
@@ -574,7 +560,7 @@ func (p *mymysqlDriver) Parse(driverName, dataSourceName string) (*core.Uri, err
 		// Parse protocol part of URI
 		p := strings.SplitN(pd[0], ":", 2)
 		if len(p) != 2 {
-			return nil, errors.New("Wrong protocol part of URI")
+			return nil, errors.New("wrong protocol part of URI")
 		}
 		db.Proto = p[0]
 		options := strings.Split(p[1], ",")
@@ -606,7 +592,7 @@ func (p *mymysqlDriver) Parse(driverName, dataSourceName string) (*core.Uri, err
 	// Parse database part of URI
 	dup := strings.SplitN(pd[0], "/", 3)
 	if len(dup) != 3 {
-		return nil, errors.New("Wrong database part of URI")
+		return nil, errors.New("wrong database part of URI")
 	}
 	db.DbName = dup[0]
 	db.User = dup[1]
@@ -625,7 +611,6 @@ func (p *mysqlDriver) Parse(driverName, dataSourceName string) (*core.Uri, error
 			`\/(?P<dbname>.*?)` + // /dbname
 			`(?:\?(?P<params>[^\?]*))?$`) // [?param1=value1&paramN=valueN]
 	matches := dsnPattern.FindStringSubmatch(dataSourceName)
-	// tlsConfigRegister := make(map[string]*tls.Config)
 	names := dsnPattern.SubexpNames()
 
 	uri := &core.Uri{DbType: core.MYSQL}
