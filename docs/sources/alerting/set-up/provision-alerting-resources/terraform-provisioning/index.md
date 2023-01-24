@@ -98,7 +98,7 @@ EOT
 
 2. Enter text for your notification in the text field.
 
-The `text` field supports [Go-style templating](https://pkg.go.dev/text/template). This enables you to manage your Grafana Alerting message templates directly in Terraform.
+The `text` field supports [Go-style templating](https://pkg.go.dev/text/template). This enables you to manage your Grafana Alerting notification templates directly in Terraform.
 
 3. Run the command ‘terraform apply’.
 

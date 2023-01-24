@@ -220,7 +220,7 @@ providers:
 				dashboardData, err := simplejson.NewJson([]byte(tc.dashboardData))
 				require.NoError(t, err)
 				buf := &bytes.Buffer{}
-				err = json.NewEncoder(buf).Encode(models.SaveDashboardCommand{
+				err = json.NewEncoder(buf).Encode(dashboards.SaveDashboardCommand{
 					Dashboard: dashboardData,
 				})
 				require.NoError(t, err)

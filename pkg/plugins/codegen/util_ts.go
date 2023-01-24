@@ -14,8 +14,11 @@ import (
 // indicates the import path should be dropped in the conversion to TS. Imports
 // not present in the list are not not allowed, and code generation will fail.
 var importMap = map[string]string{
-	"github.com/grafana/thema":                                      "",
-	"github.com/grafana/grafana/packages/grafana-schema/src/schema": "@grafana/schema",
+	"github.com/grafana/thema": "",
+
+	"github.com/grafana/grafana/pkg/kindsys":                        "",
+	"github.com/grafana/grafana/pkg/plugins/pfs":                    "",
+	"github.com/grafana/grafana/packages/grafana-schema/src/common": "@grafana/schema",
 }
 
 func init() {
@@ -61,7 +64,7 @@ func convertImport(im *ast.ImportSpec) (tsast.ImportSpec, error) {
 	if im.Name != nil && im.Name.String() != "" {
 		tsim.AsName = im.Name.String()
 	} else {
-		sl := strings.Split(im.Path.Value, "/")
+		sl := strings.Split(strings.Trim(im.Path.Value, "\""), "/")
 		final := sl[len(sl)-1]
 		if idx := strings.Index(final, ":"); idx != -1 {
 			tsim.AsName = final[idx:]

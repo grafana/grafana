@@ -6,7 +6,12 @@ import { DataFrame, Field, KeyValue, SelectableValue } from '@grafana/data';
 
 import { TableStyles } from './styles';
 
-export { type TableFieldOptions, TableCellDisplayMode, type FieldTextAlignment } from '@grafana/schema';
+export {
+  type TableFieldOptions,
+  TableCellDisplayMode,
+  type FieldTextAlignment,
+  TableCellBackgroundDisplayMode,
+} from '@grafana/schema';
 
 export interface TableRow {
   [x: string]: any;
@@ -14,9 +19,9 @@ export interface TableRow {
 
 export const FILTER_FOR_OPERATOR = '=';
 export const FILTER_OUT_OPERATOR = '!=';
-export type FilterOperator = typeof FILTER_FOR_OPERATOR | typeof FILTER_OUT_OPERATOR;
-export type FilterItem = { key: string; value: string; operator: FilterOperator };
-export type TableFilterActionCallback = (item: FilterItem) => void;
+export type AdHocFilterOperator = typeof FILTER_FOR_OPERATOR | typeof FILTER_OUT_OPERATOR;
+export type AdHocFilterItem = { key: string; value: string; operator: AdHocFilterOperator };
+export type TableFilterActionCallback = (item: AdHocFilterItem) => void;
 export type TableColumnResizeActionCallback = (fieldDisplayName: string, width: number) => void;
 export type TableSortByActionCallback = (state: TableSortByFieldState[]) => void;
 

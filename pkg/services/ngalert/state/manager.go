@@ -37,6 +37,8 @@ type Manager struct {
 	images        ImageCapturer
 	historian     Historian
 	externalURL   *url.URL
+
+	doNotSaveNormalState bool
 }
 
 type ManagerCfg struct {
@@ -46,19 +48,22 @@ type ManagerCfg struct {
 	Images        ImageCapturer
 	Clock         clock.Clock
 	Historian     Historian
+	// DoNotSaveNormalState controls whether eval.Normal state is persisted to the database and returned by get methods
+	DoNotSaveNormalState bool
 }
 
 func NewManager(cfg ManagerCfg) *Manager {
 	return &Manager{
-		cache:         newCache(),
-		ResendDelay:   ResendDelay, // TODO: make this configurable
-		log:           log.New("ngalert.state.manager"),
-		metrics:       cfg.Metrics,
-		instanceStore: cfg.InstanceStore,
-		images:        cfg.Images,
-		historian:     cfg.Historian,
-		clock:         cfg.Clock,
-		externalURL:   cfg.ExternalURL,
+		cache:                newCache(),
+		ResendDelay:          ResendDelay, // TODO: make this configurable
+		log:                  log.New("ngalert.state.manager"),
+		metrics:              cfg.Metrics,
+		instanceStore:        cfg.InstanceStore,
+		images:               cfg.Images,
+		historian:            cfg.Historian,
+		clock:                cfg.Clock,
+		externalURL:          cfg.ExternalURL,
+		doNotSaveNormalState: cfg.DoNotSaveNormalState,
 	}
 }
 
@@ -179,7 +184,7 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.Ale
 func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []StateTransition {
 	logger := st.log.FromContext(ctx)
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
-	var states []StateTransition
+	states := make([]StateTransition, 0, len(results))
 
 	for _, result := range results {
 		s := st.setNextState(ctx, alertRule, result, extraLabels, logger)
@@ -271,11 +276,11 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 }
 
 func (st *Manager) GetAll(orgID int64) []*State {
-	return st.cache.getAll(orgID)
+	allStates := st.cache.getAll(orgID, st.doNotSaveNormalState)
+	return allStates
 }
-
 func (st *Manager) GetStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
-	return st.cache.getStatesForRuleUID(orgID, alertRuleUID)
+	return st.cache.getStatesForRuleUID(orgID, alertRuleUID, st.doNotSaveNormalState)
 }
 
 func (st *Manager) Put(states []*State) {
@@ -294,9 +299,14 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 	instances := make([]ngModels.AlertInstance, 0, len(states))
 
 	for _, s := range states {
+		// Do not save normal state to database and remove transition to Normal state but keep mapped states
+		if st.doNotSaveNormalState && IsNormalStateWithNoReason(s.State) && !s.Changed() {
+			continue
+		}
+
 		key, err := s.GetAlertInstanceKey()
 		if err != nil {
-			logger.Error("Failed to create a key for alert state to save it to database. The state will be ignored ", "cacheID", s.CacheID, "error", err)
+			logger.Error("Failed to create a key for alert state to save it to database. The state will be ignored ", "cacheID", s.CacheID, "error", err, "labels", s.Labels.String())
 			continue
 		}
 		fields := ngModels.AlertInstance{
@@ -309,6 +319,10 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 			CurrentStateEnd:   s.EndsAt,
 		}
 		instances = append(instances, fields)
+	}
+
+	if len(instances) == 0 {
+		return
 	}
 
 	if err := st.instanceStore.SaveAlertInstances(ctx, instances...); err != nil {
@@ -369,10 +383,10 @@ func (st *Manager) deleteStaleStatesFromCache(ctx context.Context, logger log.Lo
 	// TODO: We will need to change this when we support images without screenshots as each series will have a different image
 	var resolvedImage *ngModels.Image
 
-	var resolvedStates []StateTransition
 	staleStates := st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
 		return stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds)
 	})
+	resolvedStates := make([]StateTransition, 0, len(staleStates))
 
 	for _, s := range staleStates {
 		logger.Info("Detected stale state entry", "cacheID", s.CacheID, "state", s.State, "reason", s.StateReason)

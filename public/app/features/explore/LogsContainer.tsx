@@ -11,10 +11,11 @@ import {
   EventBus,
   SplitOpen,
   DataFrame,
+  SupplementaryQueryType,
 } from '@grafana/data';
 import { Collapse } from '@grafana/ui';
 import { StoreState } from 'app/types';
-import { ExploreId, ExploreItemState, SupplementaryQueryType } from 'app/types/explore';
+import { ExploreId, ExploreItemState } from 'app/types/explore';
 
 import { getTimeZone } from '../profile/state/selectors';
 
@@ -33,8 +34,8 @@ interface LogsContainerProps extends PropsFromRedux {
   syncedTimes: boolean;
   loadingState: LoadingState;
   scrollElement?: HTMLDivElement;
-  onClickFilterLabel?: (key: string, value: string) => void;
-  onClickFilterOutLabel?: (key: string, value: string) => void;
+  onClickFilterLabel: (key: string, value: string) => void;
+  onClickFilterOutLabel: (key: string, value: string) => void;
   onStartScanning: () => void;
   onStopScanning: () => void;
   eventBus: EventBus;
