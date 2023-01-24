@@ -210,7 +210,7 @@ type readyToRunItem struct {
 	evaluation
 }
 
-func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.Group, tick time.Time) ([]readyToRunItem, map[ngmodels.AlertRuleKey]struct{}, map[ngmodels.AlertRuleKey]struct{}) {
+func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.Group, tick time.Time) ([]readyToRunItem, map[ngmodels.AlertRuleKey]struct{}, []ngmodels.AlertRuleKey) {
 	tickNum := tick.Unix() / int64(sch.baseInterval.Seconds())
 
 	if err := sch.updateSchedulableAlertRules(ctx); err != nil {
@@ -230,17 +230,18 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	sch.metrics.SchedulableAlertRulesHash.Set(float64(hashUIDs(alertRules)))
 
 	readyToRun := make([]readyToRunItem, 0)
-	pausedAlertRuleKeys := make(map[ngmodels.AlertRuleKey]struct{})
+	pausedAlertRuleKeys := make([]ngmodels.AlertRuleKey, 0)
 	missingFolder := make(map[string][]string)
 	for _, item := range alertRules {
 		key := item.GetKey()
 		if item.IsPaused {
 			if ruleInfo, ok := sch.registry.del(key); ok {
 				ruleInfo.stop(errRulePaused)
-				sch.log.Info("alert rule paused", key.LogContext()...)
+				logCtx := append([]interface{}{"reason", "paused"}, key.LogContext()...)
+				sch.log.Info("rule evaluation routine stopped", logCtx...)
 			}
 			delete(registeredDefinitions, key)
-			pausedAlertRuleKeys[key] = struct{}{}
+			pausedAlertRuleKeys = append(pausedAlertRuleKeys, key)
 			continue
 		}
 
@@ -335,22 +336,13 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 	evalDuration := sch.metrics.EvalDuration.WithLabelValues(orgID)
 	evalTotalFailures := sch.metrics.EvalFailures.WithLabelValues(orgID)
 
-	clearState := func(ctx context.Context, err error) {
-		// clean up the state only if the reason for stopping the evaluation loop is that the rule was deleted/paused
-		isRuleDeleted := errors.Is(err, errRuleDeleted)
-		isRulePaused := errors.Is(err, errRulePaused)
-		if isRuleDeleted || isRulePaused {
-			var states []*state.State
-			if isRuleDeleted {
-				states = sch.stateManager.ResetStateByDeletedRuleUID(ctx, key)
-			} else if isRulePaused {
-				rule := sch.schedulableAlertRules.get(key)
-				states = sch.stateManager.ResetStateByPausedRuleUID(ctx, key, rule)
-			}
-			expiredAlerts := FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
-			if len(expiredAlerts.PostableAlerts) > 0 {
-				sch.alertsSender.Send(key, expiredAlerts)
-			}
+	clearState := func(ctx context.Context, reason string) {
+		var states []*state.State
+		rule := sch.schedulableAlertRules.get(key)
+		states = sch.stateManager.ResetStateByRuleUID(ctx, key, rule, reason)
+		expiredAlerts := FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
+		if len(expiredAlerts.PostableAlerts) > 0 {
+			sch.alertsSender.Send(key, expiredAlerts)
 		}
 	}
 
@@ -458,6 +450,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			// will be cleaned up and the routine will be stopped and removed from the registry
 			if ctx.IsPaused {
 				logger.Info("Skip updating rule because it is paused")
+				clearState(grafanaCtx, ngmodels.StateReasonPaused)
 				continue
 			}
 			// sometimes it can happen when, for example, the rule evaluation took so long,
@@ -470,7 +463,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			}
 			logger.Info("Clearing the state of the rule because version has changed", "version", currentRuleVersion, "newVersion", ctx.Version)
 			// clear the state. So the next evaluation will start from the scratch.
-			clearState(grafanaCtx, errRuleDeleted)
+			clearState(grafanaCtx, ngmodels.StateReasonUpdated)
 		// evalCh - used by the scheduler to signal that evaluation is needed.
 		case ctx, ok := <-evalCh:
 			if !ok {
@@ -494,7 +487,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 					if currentRuleVersion != newVersion {
 						if currentRuleVersion > 0 { // do not clean up state if the eval loop has just started.
 							logger.Debug("Got a new version of alert rule. Clear up the state and refresh extra labels", "version", currentRuleVersion, "newVersion", newVersion)
-							clearState(grafanaCtx, errRuleDeleted)
+							clearState(grafanaCtx, ngmodels.StateReasonUpdated)
 						}
 						currentRuleVersion = newVersion
 					}
@@ -515,11 +508,18 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 				}
 			}()
 		case <-grafanaCtx.Done():
-			// The context deadline is 5 seconds which should be enough time for the state to be deleted from the database
-			// and the historian to record the state changes async. Do not cancel the context with defer as otherwise
-			// the context will be canceled before the historian can write any state changes.
-			ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
-			clearState(ctx, grafanaCtx.Err())
+			// clean up the state only if the reason for stopping the evaluation loop is that the rule was deleted/paused
+			if errors.Is(grafanaCtx.Err(), errRuleDeleted) || errors.Is(grafanaCtx.Err(), errRulePaused) {
+				reason := ngmodels.StateReasonDeleted
+				if errors.Is(grafanaCtx.Err(), errRulePaused) {
+					reason = ngmodels.StateReasonPaused
+				}
+				// The context dead\ine is 5 seconds which should be enough time for the state to be deleted from the
+				// database and the historian to record the state changes async. Do not cancel the context with defer as
+				// otherwise the context will be canceled before the historian can write any state changes.
+				ctx, _ := context.WithTimeout(context.Background(), 5*time.Second)
+				clearState(ctx, reason)
+			}
 			logger.Debug("Stopping alert rule routine")
 			return nil
 		}

@@ -163,20 +163,10 @@ func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) *State {
 	return st.cache.get(orgID, alertRuleUID, stateId)
 }
 
-// ResetStateByDeletedRuleUID deletes all entries in the state manager that match the given rule UID.
-func (st *Manager) ResetStateByDeletedRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey) []*State {
-	return st.resetStateByRuleUID(ctx, ruleKey, nil, ngModels.StateReasonDeleted)
-}
-
-// ResetStateByPausedRuleUID deletes all entries in the state manager that match the given rule UID.
-func (st *Manager) ResetStateByPausedRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey, rule *ngModels.AlertRule) []*State {
-	return st.resetStateByRuleUID(ctx, ruleKey, rule, ngModels.StateReasonPaused)
-}
-
-// resetStateByRuleUID removes the rule instances from cache and instanceStore. If reason is ngModels.StateReasonPaused
+// ResetStateByRuleUID removes the rule instances from cache and instanceStore. If reason is ngModels.StateReasonPaused
 // also adds an entry to state history. rule argument must not be nil when the reason is ngModels.StateReasonPaused as
 // it is needed to add the entry to the state history, otherwise it can be nil.
-func (st *Manager) resetStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey, rule *ngModels.AlertRule, reason string) []*State {
+func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey, rule *ngModels.AlertRule, reason string) []*State {
 	logger := st.log.New(ruleKey.LogContext()...)
 	logger.Debug("Resetting state of the rule")
 
@@ -209,7 +199,7 @@ func (st *Manager) resetStateByRuleUID(ctx context.Context, ruleKey ngModels.Ale
 		}
 	}
 
-	logger.Info("rules state was reset", "states", len(states))
+	logger.Info("Rules state was reset", "states", len(states))
 	return states
 }
 
