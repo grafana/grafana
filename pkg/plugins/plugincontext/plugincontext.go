@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -80,9 +79,9 @@ func (p *Provider) pluginContext(ctx context.Context, pluginID string, user *use
 
 	ps, err := p.getCachedPluginSettings(ctx, pluginID, user)
 	if err != nil {
-		// models.ErrPluginSettingNotFound is expected if there's no row found for plugin setting in database (if non-app plugin).
+		// pluginsettings.ErrPluginSettingNotFound is expected if there's no row found for plugin setting in database (if non-app plugin).
 		// If it's not this expected error something is wrong with cache or database and we return the error to the client.
-		if !errors.Is(err, models.ErrPluginSettingNotFound) {
+		if !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
 			return backend.PluginContext{}, false, fmt.Errorf("%v: %w", "Failed to get plugin settings", err)
 		}
 	} else {

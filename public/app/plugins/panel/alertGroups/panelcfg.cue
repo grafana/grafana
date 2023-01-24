@@ -1,4 +1,4 @@
-// Copyright 2021 Grafana Labs
+// Copyright 2023 Grafana Labs
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,10 +14,6 @@
 
 package grafanaplugin
 
-import (
-	ui "github.com/grafana/grafana/packages/grafana-schema/src/common"
-)
-
 composableKinds: PanelCfg: {
 	lineage: {
 		seqs: [
@@ -25,18 +21,12 @@ composableKinds: PanelCfg: {
 				schemas: [
 					{
 						PanelOptions: {
-							ui.OptionsWithLegend
-							ui.OptionsWithTooltip
-							ui.OptionsWithTimezones
-							showValue:  ui.VisibilityMode
-							rowHeight:  number
-							colWidth?:  number
-							alignValue: "center" | *"left" | "right"
-						} @cuetsy(kind="interface")
-						PanelFieldConfig: {
-							ui.HideableFieldConfig
-							lineWidth?:   number | *1
-							fillOpacity?: number | *70
+							// Comma-separated list of values used to filter alert results
+							labels: string
+							// Name of the alertmanager used as a source for alerts
+							alertmanager: string
+							// Expand all alert groups by default
+							expandAll: bool
 						} @cuetsy(kind="interface")
 					},
 				]

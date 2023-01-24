@@ -51,7 +51,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'grid',
     gap: theme.spacing(3),
     gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-    gridAutoRows: '130px',
+    gridAutoRows: '138px',
     padding: theme.spacing(2, 0),
   }),
 });

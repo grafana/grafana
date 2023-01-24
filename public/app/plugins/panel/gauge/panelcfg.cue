@@ -15,22 +15,22 @@
 package grafanaplugin
 
 import (
-	ui "github.com/grafana/grafana/packages/grafana-schema/src/common"
+	"github.com/grafana/grafana/packages/grafana-schema/src/common"
 )
 
 composableKinds: PanelCfg: {
+	maturity: "experimental"
+
 	lineage: {
 		seqs: [
 			{
 				schemas: [
 					{
 						PanelOptions: {
-							frameIndex:    number | *0
-							showHeader:    bool | *true
-							showTypeIcons: bool | *false
-							sortBy?: [...ui.TableSortByFieldState]
+							common.SingleStatBaseOptions
+							showThresholdLabels:  bool | *false
+							showThresholdMarkers: bool | *true
 						} @cuetsy(kind="interface")
-						PanelFieldConfig: ui.TableFieldOptions & {} @cuetsy(kind="interface")
 					},
 				]
 			},

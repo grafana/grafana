@@ -15,7 +15,7 @@
 package grafanaplugin
 
 import (
-	ui "github.com/grafana/grafana/packages/grafana-schema/src/common"
+	"github.com/grafana/grafana/packages/grafana-schema/src/common"
 )
 
 composableKinds: PanelCfg: {
@@ -27,9 +27,11 @@ composableKinds: PanelCfg: {
 				schemas: [
 					{
 						PanelOptions: {
-							ui.SingleStatBaseOptions
-							showThresholdLabels:  bool | *false
-							showThresholdMarkers: bool | *true
+							common.SingleStatBaseOptions
+							graphMode:   common.BigValueGraphMode | *"area"
+							colorMode:   common.BigValueColorMode | *"value"
+							justifyMode: common.BigValueJustifyMode | *"auto"
+							textMode:    common.BigValueTextMode | *"auto"
 						} @cuetsy(kind="interface")
 					},
 				]
