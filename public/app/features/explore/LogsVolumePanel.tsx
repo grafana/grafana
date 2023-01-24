@@ -10,6 +10,7 @@ import {
   SplitOpen,
   TimeZone,
   EventBus,
+  LogsVolumeType,
 } from '@grafana/data';
 import { Alert, Button, Collapse, InlineField, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
 
@@ -58,37 +59,6 @@ function ErrorAlert(props: { error: DataQueryError }) {
   );
 }
 
-function createVisualisationData(
-  logLinesBased: DataQueryResponse | undefined,
-  logLinesBasedVisibleRange: AbsoluteTimeRange | undefined,
-  fullRangeData: DataQueryResponse | undefined,
-  absoluteRange: AbsoluteTimeRange
-):
-  | {
-      logsVolumeData: DataQueryResponse;
-      fullRangeData: boolean;
-      range: AbsoluteTimeRange;
-    }
-  | undefined {
-  if (fullRangeData !== undefined) {
-    return {
-      logsVolumeData: fullRangeData,
-      fullRangeData: true,
-      range: absoluteRange,
-    };
-  }
-
-  if (logLinesBased !== undefined) {
-    return {
-      logsVolumeData: logLinesBased,
-      fullRangeData: false,
-      range: logLinesBasedVisibleRange || absoluteRange,
-    };
-  }
-
-  return undefined;
-}
-
 export function LogsVolumePanel(props: Props) {
   const { width, timeZone, splitOpen, onUpdateTimeRange, onLoadLogsVolume, onHiddenSeriesChanged } = props;
   const theme = useTheme2();
@@ -96,18 +66,13 @@ export function LogsVolumePanel(props: Props) {
   const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
   const height = 150;
 
-  const data = createVisualisationData(
-    props.logLinesBasedData,
-    props.logLinesBasedDataVisibleRange,
-    props.logsVolumeData,
-    props.absoluteRange
-  );
-
-  if (data === undefined) {
+  if (props.logsVolumeData === undefined) {
     return null;
   }
 
-  const { logsVolumeData, fullRangeData, range } = data;
+  const logsVolumeData = props.logsVolumeData;
+  const range = logsVolumeData.data[0]?.meta?.custom?.absoluteRange || props.absoluteRange;
+  const fullRangeData = logsVolumeData.data[0]?.meta?.custom?.logsVolumeType !== LogsVolumeType.Limited;
 
   if (logsVolumeData.error !== undefined) {
     return <ErrorAlert error={logsVolumeData.error} />;
