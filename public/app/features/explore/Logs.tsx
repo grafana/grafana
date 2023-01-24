@@ -16,7 +16,6 @@ import {
   LogsSortOrder,
   LinkModel,
   Field,
-  DataQuery,
   DataFrame,
   GrafanaTheme2,
   LoadingState,
@@ -28,6 +27,7 @@ import {
   EventBus,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import {
   RadioButtonGroup,
   Button,

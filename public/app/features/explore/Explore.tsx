@@ -8,7 +8,6 @@ import { Unsubscribable } from 'rxjs';
 
 import {
   AbsoluteTimeRange,
-  DataQuery,
   GrafanaTheme2,
   LoadingState,
   QueryFixAction,
@@ -19,6 +18,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import {
   CustomScrollbar,
   ErrorBoundaryAlert,
