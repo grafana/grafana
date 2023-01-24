@@ -15,7 +15,7 @@
 package grafanaplugin
 
 import (
-	ui "github.com/grafana/grafana/packages/grafana-schema/src/common"
+	"github.com/grafana/grafana/packages/grafana-schema/src/common"
 )
 
 composableKinds: PanelCfg: {
@@ -39,17 +39,17 @@ composableKinds: PanelCfg: {
 						//  - Value: The raw numerical value.
 						PieChartLegendValues: "value" | "percent" @cuetsy(kind="enum")
 						PieChartLegendOptions: {
-							ui.VizLegendOptions
+							common.VizLegendOptions
 							values: [...PieChartLegendValues]
 						} @cuetsy(kind="interface")
 						PanelOptions: {
-							ui.OptionsWithTooltip
-							ui.SingleStatBaseOptions
+							common.OptionsWithTooltip
+							common.SingleStatBaseOptions
 							pieType: PieChartType
 							displayLabels: [...PieChartLabels]
 							legend: PieChartLegendOptions
 						} @cuetsy(kind="interface")
-						PanelFieldConfig: ui.HideableFieldConfig @cuetsy(kind="interface")
+						PanelFieldConfig: common.HideableFieldConfig @cuetsy(kind="interface")
 					},
 				]
 			},

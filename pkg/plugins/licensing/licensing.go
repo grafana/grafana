@@ -3,16 +3,16 @@ package licensing
 import (
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type Service struct {
 	licensePath string
-	license     models.Licensing
+	license     licensing.Licensing
 }
 
-func ProvideLicensing(cfg *setting.Cfg, l models.Licensing) *Service {
+func ProvideLicensing(cfg *setting.Cfg, l licensing.Licensing) *Service {
 	return &Service{
 		licensePath: cfg.EnterpriseLicensePath,
 		license:     l,
@@ -21,7 +21,7 @@ func ProvideLicensing(cfg *setting.Cfg, l models.Licensing) *Service {
 
 func (l Service) Environment() []string {
 	var env []string
-	if envProvider, ok := l.license.(models.LicenseEnvironment); ok {
+	if envProvider, ok := l.license.(licensing.LicenseEnvironment); ok {
 		for k, v := range envProvider.Environment() {
 			env = append(env, fmt.Sprintf("%s=%s", k, v))
 		}

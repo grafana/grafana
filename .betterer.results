@@ -3,14 +3,6 @@
 // If this file contains merge conflicts, use `betterer merge` to automatically resolve them:
 // https://phenomnomnominal.github.io/betterer/docs/results-file/#merge
 //
-exports[`no enzyme tests`] = {
-  value: `{
-    "packages/grafana-ui/src/components/QueryField/QueryField.test.tsx:2976628669": [
-      [0, 26, 13, "RegExp match", "2409514259"]
-    ]
-  }`
-};
-
 exports[`better eslint`] = {
   value: `{
     "e2e/benchmarks/live/4-20hz-panels.spec.ts:5381": [
@@ -277,8 +269,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-data/src/geo/layer.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-data/src/panel/PanelPlugin.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -584,8 +575,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
     ],
     "packages/grafana-data/src/types/variables.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -993,10 +983,14 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "3"],
       [0, 0, 0, "Do not use any type assertions.", "4"]
     ],
+    "packages/grafana-schema/src/veneer/common.types.ts:5381": [
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
     "packages/grafana-schema/src/veneer/dashboard.types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
+      [0, 0, 0, "Do not use any type assertions.", "2"],
+      [0, 0, 0, "Do not use any type assertions.", "3"]
     ],
     "packages/grafana-toolkit/src/cli/tasks/component.create.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -1312,12 +1306,6 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/PluginSignatureBadge/PluginSignatureBadge.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "packages/grafana-ui/src/components/QueryField/QueryField.test.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
     "packages/grafana-ui/src/components/QueryField/QueryField.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
