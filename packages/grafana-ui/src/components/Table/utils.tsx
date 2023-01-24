@@ -73,13 +73,11 @@ export function getColumns(
   columnMinWidth: number,
   expander: boolean,
   footerValues?: FooterItem[],
-  isCountRowsSet?: boolean,
-  // JEV: add arg hasRowNumberColumn?
-  hasRowNumberColumn?: boolean
+  isCountRowsSet?: boolean
 ): GrafanaTableColumn[] {
   const columns: GrafanaTableColumn[] = [];
   let fieldCountWithoutWidth = 0;
-  console.log(data, 'data');
+  console.log(data.fields, 'data.fields');
 
   if (expander) {
     columns.push({
@@ -98,45 +96,6 @@ export function getColumns(
     });
 
     availableWidth -= EXPANDER_WIDTH;
-  }
-
-  // if (true) {
-  //   columns.unshift({
-  //     // Make an expander cell
-  //     Header: () => null, // No header
-  //     id: 'rowNum', // It needs an ID
-  //     Cell: <p>0</p>,
-  //     width: EXPANDER_WIDTH,
-  //     minWidth: EXPANDER_WIDTH,
-  //     filter: (rows: Row[], id: string, filterValues?: SelectableValue[]) => {
-  //       return [];
-  //     },
-  //     justifyContent: 'left',
-  //     field: data.fields[0],
-  //     sortType: 'basic',
-  //   });
-
-  //   availableWidth -= EXPANDER_WIDTH;
-  // }
-
-  if (!expander && hasRowNumberColumn) {
-    console.log('fired');
-    const fieldData = buildFieldsForRowNums(data.length);
-
-    columns.unshift({
-      Header: 'row',
-      id: 'row#',
-      field: fieldData,
-      filter: (rows: Row[], id: string, filterValues?: SelectableValue[]) => {
-        return [];
-      },
-      sortType: 'basic',
-      width: 50,
-      minWidth: 50,
-      justifyContent: 'left',
-    });
-    availableWidth -= EXPANDER_WIDTH;
-    // data.fields.unshift(fieldData);
   }
 
   for (const [fieldIndex, field] of data.fields.entries()) {
