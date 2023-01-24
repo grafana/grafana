@@ -457,14 +457,13 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 
 			// we can continue directly if the rule is paused because in the next tick it will be picked up. The state
 			// will be cleaned up and the routine will be stopped and removed from the registry
+			reason := ngmodels.StateReasonUpdated
 			if ctx.IsPaused {
-				logger.Info("Skip updating rule because it is paused")
-				clearState(grafanaCtx, ngmodels.StateReasonPaused)
-				continue
+				reason = ngmodels.StateReasonPaused
 			}
-			logger.Info("Clearing the state of the rule because version has changed", "version", currentRuleVersion, "newVersion", ctx.Version)
+			logger.Info("Clearing the state of the rule because it was updated", "version", currentRuleVersion, "newVersion", ctx.Version)
 			// clear the state. So the next evaluation will start from the scratch.
-			clearState(grafanaCtx, ngmodels.StateReasonUpdated)
+			clearState(grafanaCtx, reason)
 		// evalCh - used by the scheduler to signal that evaluation is needed.
 		case ctx, ok := <-evalCh:
 			if !ok {
