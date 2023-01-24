@@ -49,13 +49,7 @@ it('renders panel with a header with title in place if prop title', () => {
 
 it('renders panel with a header if prop titleItems', () => {
   setup({
-    titleItems: [
-      {
-        icon: 'info-circle',
-        tooltip: 'This is the panel description',
-        onClick: () => {},
-      },
-    ],
+    titleItems: [<div key="title-item-test"> This should be a self-contained node </div>],
   });
 
   expect(screen.getByTestId('header-container')).toBeInTheDocument();
@@ -63,13 +57,7 @@ it('renders panel with a header if prop titleItems', () => {
 
 it('renders panel with a header with icons in place if prop titleItems', () => {
   setup({
-    titleItems: [
-      {
-        icon: 'info-circle',
-        tooltip: 'This is the panel description',
-        onClick: () => {},
-      },
-    ],
+    titleItems: [<div key="title-item-test"> This should be a self-contained node </div>],
   });
 
   expect(screen.getByTestId('title-items-container')).toBeInTheDocument();
@@ -89,8 +77,8 @@ it('renders panel with a header if prop menu', () => {
 it('renders panel with a show-on-hover menu icon if prop menu', () => {
   setup({ menu: <div> Menu </div> });
 
-  expect(screen.getByTestId('menu-icon')).toBeInTheDocument();
-  expect(screen.getByTestId('menu-icon')).not.toBeVisible();
+  expect(screen.getByTestId('panel-menu-button')).toBeInTheDocument();
+  expect(screen.getByTestId('panel-menu-button')).not.toBeVisible();
 });
 
 it.skip('renders states in the panel header if any given', () => {});

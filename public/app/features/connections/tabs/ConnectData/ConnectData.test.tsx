@@ -3,9 +3,11 @@ import React from 'react';
 import { Provider } from 'react-redux';
 
 import { PluginType } from '@grafana/data';
+import { contextSrv } from 'app/core/core';
 import { getCatalogPluginMock, getPluginsStateMock } from 'app/features/plugins/admin/__mocks__';
 import { CatalogPlugin } from 'app/features/plugins/admin/types';
 import { configureStore } from 'app/store/configureStore';
+import { AccessControlAction } from 'app/types';
 
 import { ConnectData } from './ConnectData';
 
@@ -28,7 +30,13 @@ const mockCatalogDataSourcePlugin = getCatalogPluginMock({
   id: 'sample-data-source',
 });
 
+const originalHasPermission = contextSrv.hasPermission;
+
 describe('Connect Data', () => {
+  beforeEach(() => {
+    contextSrv.hasPermission = originalHasPermission;
+  });
+
   test('renders no results if the plugins list is empty', async () => {
     renderPage();
 
@@ -56,5 +64,39 @@ describe('Connect Data', () => {
 
     fireEvent.change(searchField, { target: { value: 'cramp' } });
     expect(screen.queryByText('No results matching your query were found.')).toBeInTheDocument();
+  });
+
+  test('shows a "No access" modal if the user does not have permissions to create datasources', async () => {
+    (contextSrv.hasPermission as jest.Mock) = jest.fn().mockImplementation((permission: string) => {
+      if (permission === AccessControlAction.DataSourcesCreate) {
+        return false;
+      }
+
+      return true;
+    });
+
+    renderPage([getCatalogPluginMock(), mockCatalogDataSourcePlugin]);
+    const exampleSentenceInModal = 'Editors cannot add new connections.';
+
+    // Should not show the modal by default
+    expect(screen.queryByText(new RegExp(exampleSentenceInModal))).not.toBeInTheDocument();
+
+    // Should show the modal if the user has no permissions
+    fireEvent.click(await screen.findByText('Sample data source'));
+    expect(screen.queryByText(new RegExp(exampleSentenceInModal))).toBeInTheDocument();
+  });
+
+  test('does not show a "No access" modal but displays the details page if the user has the right permissions', async () => {
+    (contextSrv.hasPermission as jest.Mock) = jest.fn().mockReturnValue(true);
+
+    renderPage([getCatalogPluginMock(), mockCatalogDataSourcePlugin]);
+    const exampleSentenceInModal = 'Editors cannot add new connections.';
+
+    // Should not show the modal by default
+    expect(screen.queryByText(new RegExp(exampleSentenceInModal))).not.toBeInTheDocument();
+
+    // Should not show the modal when clicking a card
+    fireEvent.click(await screen.findByText('Sample data source'));
+    expect(screen.queryByText(new RegExp(exampleSentenceInModal))).not.toBeInTheDocument();
   });
 });

@@ -108,6 +108,22 @@ export function getNormalizedLokiQuery(query: LokiQuery): LokiQuery {
   return { ...rest, queryType: LokiQueryType.Range };
 }
 
+const tagsToObscure = ['String', 'Identifier', 'LineComment', 'Number'];
+const partsToKeep = ['__error__', '__interval', '__interval_ms'];
+export function obfuscate(query: string): string {
+  let obfuscatedQuery: string = query;
+  const tree = parser.parse(query);
+  tree.iterate({
+    enter: ({ name, from, to }): false | void => {
+      const queryPart = query.substring(from, to);
+      if (tagsToObscure.includes(name) && !partsToKeep.includes(queryPart)) {
+        obfuscatedQuery = obfuscatedQuery.replace(queryPart, name);
+      }
+    },
+  });
+  return obfuscatedQuery;
+}
+
 export function parseToNodeNamesArray(query: string): string[] {
   const queryParts: string[] = [];
   const tree = parser.parse(query);

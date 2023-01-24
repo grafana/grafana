@@ -23,10 +23,10 @@ func (s State) String() string {
 type Bundle struct {
 	UID       string `json:"uid"`
 	State     State  `json:"state"`
-	FilePath  string `json:"filePath"`
 	Creator   string `json:"creator"`
 	CreatedAt int64  `json:"createdAt"`
 	ExpiresAt int64  `json:"expiresAt"`
+	TarBytes  []byte `json:"tarBytes,omitempty"`
 }
 
 type CollectorFunc func(context.Context) (*SupportItem, error)

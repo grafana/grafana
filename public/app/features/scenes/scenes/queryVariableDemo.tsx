@@ -1,7 +1,6 @@
 import { VariableRefresh } from '@grafana/data';
 import {
   SceneCanvasText,
-  SceneSubMenu,
   SceneTimePicker,
   SceneFlexLayout,
   SceneTimeRange,
@@ -10,13 +9,12 @@ import {
   CustomVariable,
   DataSourceVariable,
   QueryVariable,
-  EmbeddedScene,
 } from '@grafana/scenes';
 
-import { Scene } from '../components/Scene';
+import { DashboardScene } from '../dashboard/DashboardScene';
 
-export function getQueryVariableDemo(standalone: boolean): Scene | EmbeddedScene {
-  const state = {
+export function getQueryVariableDemo(): DashboardScene {
+  return new DashboardScene({
     title: 'Query variable',
     $variables: new SceneVariableSet({
       variables: [
@@ -65,10 +63,6 @@ export function getQueryVariableDemo(standalone: boolean): Scene | EmbeddedScene
     }),
     $timeRange: new SceneTimeRange(),
     actions: [new SceneTimePicker({})],
-    subMenu: new SceneSubMenu({
-      children: [new VariableValueSelectors({})],
-    }),
-  };
-
-  return standalone ? new Scene(state) : new EmbeddedScene(state);
+    controls: [new VariableValueSelectors({})],
+  });
 }

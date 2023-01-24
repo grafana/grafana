@@ -1,34 +1,18 @@
 import { css, cx } from '@emotion/css';
-import { isEmpty } from 'lodash';
 import React, { CSSProperties, ReactElement, ReactNode } from 'react';
 
-import { GrafanaTheme2, isIconName, LoadingState } from '@grafana/data';
+import { GrafanaTheme2, LoadingState } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../themes';
-import { IconName } from '../../types/icon';
 import { Dropdown } from '../Dropdown/Dropdown';
 import { Icon } from '../Icon/Icon';
-import { IconButton, IconButtonVariant } from '../IconButton/IconButton';
 import { LoadingBar } from '../LoadingBar/LoadingBar';
-import { PopoverContent, Tooltip } from '../Tooltip';
+import { ToolbarButton } from '../ToolbarButton';
+import { Tooltip } from '../Tooltip';
 
+import { PanelDescription } from './PanelDescription';
 import { PanelStatus } from './PanelStatus';
-
-interface Status {
-  message?: string;
-  onClick?: (e: React.SyntheticEvent) => void;
-}
-
-/**
- * @internal
- */
-export interface PanelChromeInfoState {
-  icon: IconName;
-  label?: string | ReactNode;
-  tooltip?: PopoverContent;
-  variant?: IconButtonVariant;
-  onClick?: () => void;
-}
 
 /**
  * @internal
@@ -39,13 +23,22 @@ export interface PanelChromeProps {
   children: (innerWidth: number, innerHeight: number) => ReactNode;
   padding?: PanelPadding;
   title?: string;
-  titleItems?: PanelChromeInfoState[];
+  description?: string | (() => string);
+  titleItems?: ReactNode[];
   menu?: ReactElement | (() => ReactElement);
   /** dragClass, hoverHeader not yet implemented */
-  // dragClass?: string;
+  dragClass?: string;
+  dragClassCancel?: string;
   hoverHeader?: boolean;
   loadingState?: LoadingState;
-  status?: Status;
+  /**
+   * Used to display status message (used for panel errors currently)
+   */
+  statusMessage?: string;
+  /**
+   * Handle opening error details view (like inspect / error tab)
+   */
+  statusMessageOnClick?: (e: React.SyntheticEvent) => void;
   /** @deprecated in favor of props
    * status for errors and loadingState for loading and streaming
    * which will serve the same purpose
@@ -68,106 +61,103 @@ export function PanelChrome({
   children,
   padding = 'md',
   title = '',
+  description = '',
   titleItems = [],
   menu,
   // dragClass,
   hoverHeader = false,
   loadingState,
-  status,
-  leftItems = [],
+  statusMessage,
+  statusMessageOnClick,
+  leftItems,
+  dragClass,
+  dragClassCancel,
 }: PanelChromeProps) {
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
 
   // To Do rely on hoverHeader prop for header, not separate props
   // once hoverHeader is implemented
-  const hasHeader = title.length > 0 || leftItems.length > 0;
+  //
+  // Backwards compatibility for having a designated space for the header
+
+  const hasHeader =
+    hoverHeader === false &&
+    (title.length > 0 ||
+      titleItems.length > 0 ||
+      description !== '' ||
+      loadingState === LoadingState.Streaming ||
+      (leftItems?.length ?? 0) > 0);
 
   const headerHeight = getHeaderHeight(theme, hasHeader);
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(padding, theme, width, headerHeight, height);
 
   const headerStyles: CSSProperties = {
     height: headerHeight,
+    cursor: dragClass ? 'move' : 'auto',
   };
+
   const itemStyles: CSSProperties = {
     minHeight: headerHeight,
     minWidth: headerHeight,
   };
+
   const containerStyles: CSSProperties = { width, height };
+  const ariaLabel = title ? selectors.components.Panels.Panel.containerByTitle(title) : 'Panel';
 
-  const isUsingDeprecatedLeftItems = isEmpty(status) && !loadingState;
-  const showLoading = loadingState === LoadingState.Loading && !isUsingDeprecatedLeftItems;
-  const showStreaming = loadingState === LoadingState.Streaming && !isUsingDeprecatedLeftItems;
-
-  const renderStatus = () => {
-    const showError = loadingState === LoadingState.Error || status?.message;
-    if (!isUsingDeprecatedLeftItems && showError) {
-      return (
-        <div className={styles.errorContainer}>
-          <PanelStatus message={status?.message} onClick={status?.onClick} />
-        </div>
-      );
-    } else {
-      return null;
-    }
-  };
   return (
-    <div className={styles.container} style={containerStyles}>
+    <div className={styles.container} style={containerStyles} aria-label={ariaLabel}>
       <div className={styles.loadingBarContainer}>
-        {showLoading ? <LoadingBar width={'28%'} height={'2px'} /> : null}
+        {loadingState === LoadingState.Loading ? <LoadingBar width={'28%'} height={'2px'} /> : null}
       </div>
 
-      <div className={styles.headerContainer} style={headerStyles} data-testid="header-container">
+      <div className={cx(styles.headerContainer, dragClass)} style={headerStyles} data-testid="header-container">
         {title && (
           <h6 title={title} className={styles.title}>
             {title}
           </h6>
         )}
 
-        {showStreaming && (
-          <div className={styles.item} style={itemStyles}>
-            <Tooltip content="Streaming">
-              <Icon name="circle" type="mono" size="sm" className={styles.streaming} />
-            </Tooltip>
+        <PanelDescription description={description} className={dragClassCancel} />
+
+        {titleItems.length > 0 && (
+          <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
+            {titleItems.map((item) => item)}
           </div>
         )}
 
-        {titleItems.length > 0 && (
-          <div className={styles.items} data-testid="title-items-container">
-            {titleItems
-              .filter((item) => isIconName(item.icon))
-              .map((item, i) => (
-                <div key={`${item.icon}-${i}`} className={styles.item} style={itemStyles}>
-                  {item.onClick ? (
-                    <IconButton tooltip={item.tooltip} name={item.icon} size="sm" onClick={item.onClick} />
-                  ) : (
-                    <Tooltip content={item.tooltip ?? ''}>
-                      <Icon name={item.icon} size="sm" />
-                    </Tooltip>
-                  )}
-                </div>
-              ))}
+        {loadingState === LoadingState.Streaming && (
+          <div className={styles.item} style={itemStyles}>
+            <Tooltip content="Streaming">
+              <Icon name="circle-mono" size="sm" className={styles.streaming} />
+            </Tooltip>
           </div>
         )}
 
         <div className={styles.rightAligned}>
           {menu && (
             <Dropdown overlay={menu} placement="bottom">
-              <div className={cx(styles.item, styles.menuItem, 'menu-icon')} data-testid="menu-icon" style={itemStyles}>
-                <IconButton
-                  ariaLabel={`Menu for panel with ${title ? `title ${title}` : 'no title'}`}
-                  tooltip="Menu"
-                  name="ellipsis-v"
-                  size="sm"
-                />
-              </div>
+              <ToolbarButton
+                aria-label={`Menu for panel with ${title ? `title ${title}` : 'no title'}`}
+                title="Menu"
+                icon="ellipsis-v"
+                narrow
+                data-testid="panel-menu-button"
+                className={cx(styles.menuItem, dragClassCancel, 'menu-icon')}
+              />
             </Dropdown>
           )}
 
-          {isUsingDeprecatedLeftItems && <div className={styles.items}>{itemsRenderer(leftItems, (item) => item)}</div>}
+          {leftItems && <div className={styles.items}>{itemsRenderer(leftItems, (item) => item)}</div>}
         </div>
 
-        {renderStatus()}
+        {statusMessage && (
+          <PanelStatus
+            className={cx(styles.errorContainer, dragClassCancel)}
+            message={statusMessage}
+            onClick={statusMessageOnClick}
+          />
+        )}
       </div>
 
       <div className={styles.content} style={contentStyle}>
@@ -186,6 +176,7 @@ const getHeaderHeight = (theme: GrafanaTheme2, hasHeader: boolean) => {
   if (hasHeader) {
     return theme.spacing.gridSize * theme.components.panel.headerHeight;
   }
+
   return 0;
 };
 
@@ -212,7 +203,7 @@ const getContentStyle = (
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const { padding, background, borderColor } = theme.components.panel;
+  const { background, borderColor } = theme.components.panel;
 
   return {
     container: css({
@@ -252,7 +243,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-header',
       display: 'flex',
       alignItems: 'center',
-      padding: `0 ${theme.spacing(padding)}`,
+      padding: theme.spacing(0, 0, 0, 1),
     }),
     streaming: css({
       marginRight: 0,
@@ -280,20 +271,25 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     menuItem: css({
       visibility: 'hidden',
+      border: 'none',
     }),
     errorContainer: css({
       label: 'error-container',
       position: 'absolute',
-      width: '100%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
+      left: '50%',
+      transform: 'translateX(-50%)',
     }),
     rightAligned: css({
       label: 'right-aligned-container',
       marginLeft: 'auto',
       display: 'flex',
       alignItems: 'center',
+    }),
+    titleItems: css({
+      display: 'flex',
+      alignItems: 'center',
+      overflow: 'hidden',
+      padding: theme.spacing(1),
     }),
   };
 };

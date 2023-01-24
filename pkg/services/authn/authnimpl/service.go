@@ -14,16 +14,27 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
-	sync "github.com/grafana/grafana/pkg/services/authn/authnimpl/usersync"
+	"github.com/grafana/grafana/pkg/services/authn/authnimpl/sync"
 	"github.com/grafana/grafana/pkg/services/authn/clients"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
+	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
+)
+
+const (
+	attributeKeyClient = "authn.client"
+)
+
+var (
+	errDisabledIdentity = errutil.NewBase(errutil.StatusUnauthorized, "identity.disabled")
 )
 
 // make sure service implements authn.Service interface
@@ -35,8 +46,10 @@ func ProvideService(
 	accessControlService accesscontrol.Service,
 	apikeyService apikey.Service, userService user.Service,
 	jwtService auth.JWTVerifierService,
+	userProtectionService login.UserProtectionService,
 	loginAttempts loginattempt.Service, quotaService quota.Service,
 	authInfoService login.AuthInfoService, renderService rendering.Service,
+	features *featuremgmt.FeatureManager, oauthTokenService oauthtoken.OAuthTokenService,
 ) *Service {
 	s := &Service{
 		log:            log.New("authn.service"),
@@ -58,19 +71,39 @@ func ProvideService(
 		s.clients[authn.ClientAnonymous] = clients.ProvideAnonymous(cfg, orgService)
 	}
 
+	var proxyClients []authn.ProxyClient
 	var passwordClients []authn.PasswordClient
+	if s.cfg.LDAPEnabled {
+		ldap := clients.ProvideLDAP(cfg)
+		proxyClients = append(proxyClients, ldap)
+		passwordClients = append(passwordClients, ldap)
+	}
 
 	if !s.cfg.DisableLogin {
-		passwordClients = append(passwordClients, clients.ProvideGrafana(userService))
+		grafana := clients.ProvideGrafana(cfg, userService)
+		proxyClients = append(proxyClients, grafana)
+		passwordClients = append(passwordClients, grafana)
 	}
 
-	if s.cfg.LDAPEnabled {
-		passwordClients = append(passwordClients, clients.ProvideLDAP(cfg))
+	// if we have password clients configure check if basic auth or form auth is enabled
+	if len(passwordClients) > 0 {
+		passwordClient := clients.ProvidePassword(loginAttempts, passwordClients...)
+		if s.cfg.BasicAuthEnabled {
+			s.clients[authn.ClientBasic] = clients.ProvideBasic(passwordClient)
+		}
+		// FIXME (kalleep): Remove the global variable and stick it into cfg
+		if !setting.DisableLoginForm {
+			s.clients[authn.ClientForm] = clients.ProvideForm(passwordClient)
+		}
 	}
 
-	// only configure basic auth client if it is enabled, and we have at least one password client enabled
-	if s.cfg.BasicAuthEnabled && len(passwordClients) > 0 {
-		s.clients[authn.ClientBasic] = clients.ProvideBasic(loginAttempts, passwordClients...)
+	if s.cfg.AuthProxyEnabled && len(proxyClients) > 0 {
+		proxy, err := clients.ProvideProxy(cfg, proxyClients...)
+		if err != nil {
+			s.log.Error("failed to configure auth proxy", "err", err)
+		} else {
+			s.clients[authn.ClientProxy] = proxy
+		}
 	}
 
 	if s.cfg.JWTAuthEnabled {
@@ -78,10 +111,16 @@ func ProvideService(
 	}
 
 	// FIXME (jguer): move to User package
-	userSyncService := sync.ProvideUserSync(userService, authInfoService, quotaService)
+	userSyncService := sync.ProvideUserSync(userService, userProtectionService, authInfoService, quotaService)
 	orgUserSyncService := sync.ProvideOrgSync(userService, orgService, accessControlService)
 	s.RegisterPostAuthHook(userSyncService.SyncUser)
 	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgUser)
+	s.RegisterPostAuthHook(sync.ProvideUserLastSeenSync(userService).SyncLastSeen)
+	s.RegisterPostAuthHook(sync.ProvideAPIKeyLastSeenSync(apikeyService).SyncLastSeen)
+
+	if features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
+		s.RegisterPostAuthHook(sync.ProvideOauthTokenSync(oauthTokenService, sessionService).SyncOauthToken)
+	}
 
 	return s
 }
@@ -122,11 +161,17 @@ func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Requ
 		return nil, true, err
 	}
 
+	// FIXME (kalleep): Handle disabled identities
+
 	for _, hook := range s.postAuthHooks {
 		if err := hook(ctx, identity, r); err != nil {
 			s.log.FromContext(ctx).Warn("post auth hook failed", "error", err, "id", identity)
 			return nil, false, err
 		}
+	}
+
+	if identity.IsDisabled {
+		return nil, true, errDisabledIdentity.Errorf("identity is disabled")
 	}
 
 	return identity, true, nil
@@ -177,6 +222,24 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 
 func (s *Service) RegisterPostLoginHook(hook authn.PostLoginHookFn) {
 	s.postLoginHooks = append(s.postLoginHooks, hook)
+}
+
+func (s *Service) RedirectURL(ctx context.Context, client string, r *authn.Request) (string, error) {
+	ctx, span := s.tracer.Start(ctx, "authn.RedirectURL")
+	defer span.End()
+	span.SetAttributes(attributeKeyClient, client, attribute.Key(attributeKeyClient).String(client))
+
+	c, ok := s.clients[client]
+	if !ok {
+		return "", authn.ErrClientNotConfigured.Errorf("client not configured: %s", client)
+	}
+
+	redirectClient, ok := c.(authn.RedirectClient)
+	if !ok {
+		return "", authn.ErrUnsupportedClient.Errorf("client does not support generating redirect url: %s", client)
+	}
+
+	return redirectClient.RedirectURL(ctx, r)
 }
 
 func orgIDFromRequest(r *authn.Request) int64 {

@@ -1,15 +1,22 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
+import { reportInteraction } from '@grafana/runtime';
 import { useStyles2, MenuGroup, MenuItem, Icon, ContextMenu } from '@grafana/ui';
 
 import { SpanLinks } from '../types/links';
 
 interface SpanLinksProps {
   links: SpanLinks;
+  datasourceType: string;
 }
 
-const renderMenuItems = (links: SpanLinks, styles: ReturnType<typeof getStyles>, closeMenu: () => void) => {
+const renderMenuItems = (
+  links: SpanLinks,
+  styles: ReturnType<typeof getStyles>,
+  closeMenu: () => void,
+  datasourceType: string
+) => {
   return (
     <>
       {!!links.logLinks?.length ? (
@@ -21,6 +28,11 @@ const renderMenuItems = (links: SpanLinks, styles: ReturnType<typeof getStyles>,
               onClick={
                 link.onClick
                   ? (event) => {
+                      reportInteraction('grafana_traces_trace_view_span_link_clicked', {
+                        datasourceType: datasourceType,
+                        type: 'log',
+                        location: 'menu',
+                      });
                       event?.preventDefault();
                       link.onClick!(event);
                       closeMenu();
@@ -42,6 +54,11 @@ const renderMenuItems = (links: SpanLinks, styles: ReturnType<typeof getStyles>,
               onClick={
                 link.onClick
                   ? (event) => {
+                      reportInteraction('grafana_traces_trace_view_span_link_clicked', {
+                        datasourceType: datasourceType,
+                        type: 'metric',
+                        location: 'menu',
+                      });
                       event?.preventDefault();
                       link.onClick!(event);
                       closeMenu();
@@ -63,6 +80,11 @@ const renderMenuItems = (links: SpanLinks, styles: ReturnType<typeof getStyles>,
               onClick={
                 link.onClick
                   ? (event) => {
+                      reportInteraction('grafana_traces_trace_view_span_link_clicked', {
+                        datasourceType: datasourceType,
+                        type: 'trace',
+                        location: 'menu',
+                      });
                       event?.preventDefault();
                       link.onClick!(event);
                       closeMenu();
@@ -79,7 +101,7 @@ const renderMenuItems = (links: SpanLinks, styles: ReturnType<typeof getStyles>,
   );
 };
 
-export const SpanLinksMenu = ({ links }: SpanLinksProps) => {
+export const SpanLinksMenu = ({ links, datasourceType }: SpanLinksProps) => {
   const styles = useStyles2(getStyles);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
@@ -104,7 +126,7 @@ export const SpanLinksMenu = ({ links }: SpanLinksProps) => {
       {isMenuOpen ? (
         <ContextMenu
           onClose={() => setIsMenuOpen(false)}
-          renderMenuItems={() => renderMenuItems(links, styles, closeMenu)}
+          renderMenuItems={() => renderMenuItems(links, styles, closeMenu, datasourceType)}
           focusOnOpen={true}
           x={menuPosition.x}
           y={menuPosition.y}

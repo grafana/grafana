@@ -33,6 +33,7 @@ export { UnitPicker } from './UnitPicker/UnitPicker';
 export { StatsPicker } from './StatsPicker/StatsPicker';
 export { RefreshPicker, defaultIntervals } from './RefreshPicker/RefreshPicker';
 export { TimeRangePicker, type TimeRangePickerProps } from './DateTimePickers/TimeRangePicker';
+export { TimePickerTooltip } from './DateTimePickers/TimeRangePicker';
 export { TimeOfDayPicker } from './DateTimePickers/TimeOfDayPicker';
 export { TimeZonePicker } from './DateTimePickers/TimeZonePicker';
 export { WeekStartPicker } from './DateTimePickers/WeekStartPicker';
@@ -79,7 +80,12 @@ export { PageToolbar } from './PageLayout/PageToolbar';
 export { SetInterval } from './SetInterval/SetInterval';
 
 export { Table } from './Table/Table';
-export { TableCellDisplayMode, type TableSortByFieldState, type TableFooterCalc } from './Table/types';
+export {
+  TableCellDisplayMode,
+  type TableSortByFieldState,
+  type TableFooterCalc,
+  type AdHocFilterItem,
+} from './Table/types';
 export { TableInputCSV } from './TableInputCSV/TableInputCSV';
 export { TabsBar } from './Tabs/TabsBar';
 export { Tab } from './Tabs/Tab';
