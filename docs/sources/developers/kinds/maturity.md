@@ -70,24 +70,6 @@ Finally, the above definitions imply that maturity for *individual Kinds/schemas
 mature, as well. This is by design: **Grafana Labs does not intend to publicize any single schema as mature until 
 [certain schema system milestones are met](https://github.com/orgs/grafana/projects/133/views/8).**
 
-## Maturity process guides
-
-Grafana’s schematized Kinds are all expressed using Thema. Consequently, all the schematization cases have a common 
-first step: writing schemas with Thema. It is recommended to complete 
-[Thema’s quickstart](https://github.com/grafana/thema/blob/main/docs/go-quickstart.md), which steps through schema 
-authoring basics.
-
-All have in common that there is one .cue input file, and one command to run that updates all the targets. Our code 
-generators are idempotent - they 
-[*never* produce stubs](https://github.com/grafana/grafana/pull/54816#issuecomment-1256341790). Consequently, it is a 
-system you can learn a lot about through trial and error: try something, run the generator, then see the effects by 
-running `git diff`.
-
-When writing Thema schemas within Grafana, there are a few key differences vs. the approach in the Thema tutorial:
-- All schema-based codegen in grafana/grafana is performed by make `gen-cue`, rather than by invoking the thema CLI.
-- Grafana code generators support certain attributes the Thema CLI is not natively aware of.
-- Thema lineages are expected to be declared at specific subpaths within .cue files, varying by category.
-
 ## Schema-writing guidelines
 
 ### Avoid anonymous nested structs
