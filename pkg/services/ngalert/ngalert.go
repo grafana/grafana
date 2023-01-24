@@ -397,7 +397,7 @@ func configureHistorianBackend(cfg setting.UnifiedAlertingStateHistorySettings, 
 			BasicAuthPassword: cfg.LokiBasicAuthPassword,
 			TenantID:          cfg.LokiTenantID,
 		})
-		if err := backend.TestConnection(); err != nil {
+		if err := backend.TestConnection(context.Background()); err != nil {
 			return nil, fmt.Errorf("failed to ping the remote loki historian: %w", err)
 		}
 		return backend, nil

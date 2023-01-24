@@ -22,8 +22,8 @@ const (
 )
 
 type remoteLokiClient interface {
-	ping() error
-	push([]stream) error
+	ping(context.Context) error
+	push(context.Context, []stream) error
 }
 
 type RemoteLokiBackend struct {
@@ -39,8 +39,8 @@ func NewRemoteLokiBackend(cfg LokiConfig) *RemoteLokiBackend {
 	}
 }
 
-func (h *RemoteLokiBackend) TestConnection() error {
-	return h.client.ping()
+func (h *RemoteLokiBackend) TestConnection(ctx context.Context) error {
+	return h.client.ping(ctx)
 }
 
 func (h *RemoteLokiBackend) RecordStatesAsync(ctx context.Context, rule *models.AlertRule, states []state.StateTransition) <-chan error {
@@ -115,7 +115,7 @@ func (h *RemoteLokiBackend) recordStreamsAsync(ctx context.Context, streams []st
 }
 
 func (h *RemoteLokiBackend) recordStreams(ctx context.Context, streams []stream, logger log.Logger) error {
-	if err := h.client.push(streams); err != nil {
+	if err := h.client.push(ctx, streams); err != nil {
 		return err
 	}
 	logger.Debug("Done saving alert state history batch")
