@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 )
 
 const (
@@ -43,7 +44,7 @@ func (h *RemoteLokiBackend) TestConnection() error {
 	return h.client.ping()
 }
 
-func (h *RemoteLokiBackend) RecordStatesAsync(ctx context.Context, rule state.RuleMeta, states []state.StateTransition) <-chan error {
+func (h *RemoteLokiBackend) RecordStatesAsync(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
 	logger := h.log.FromContext(ctx)
 	streams := h.statesToStreams(rule, states, logger)
 	return h.recordStreamsAsync(ctx, streams, logger)
@@ -53,7 +54,7 @@ func (h *RemoteLokiBackend) QueryStates(ctx context.Context, query models.Histor
 	return data.NewFrame("states"), nil
 }
 
-func (h *RemoteLokiBackend) statesToStreams(rule state.RuleMeta, states []state.StateTransition, logger log.Logger) []stream {
+func (h *RemoteLokiBackend) statesToStreams(rule history_model.RuleMeta, states []state.StateTransition, logger log.Logger) []stream {
 	buckets := make(map[string][]row) // label repr -> entries
 	for _, state := range states {
 		if !shouldRecord(state) {

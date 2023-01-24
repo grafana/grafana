@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 )
 
 // AnnotationBackend is an implementation of state.Historian that uses Grafana Annotations as the backing datastore.
@@ -40,7 +41,7 @@ func NewAnnotationBackend(annotations annotations.Repository, dashboards dashboa
 }
 
 // RecordStates writes a number of state transitions for a given rule to state history.
-func (h *AnnotationBackend) RecordStatesAsync(ctx context.Context, rule state.RuleMeta, states []state.StateTransition) <-chan error {
+func (h *AnnotationBackend) RecordStatesAsync(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
 	logger := h.log.FromContext(ctx)
 	// Build annotations before starting goroutine, to make sure all data is copied and won't mutate underneath us.
 	annotations := h.buildAnnotations(rule, states, logger)
@@ -136,7 +137,7 @@ func (h *AnnotationBackend) QueryStates(ctx context.Context, query ngmodels.Hist
 	return frame, nil
 }
 
-func (h *AnnotationBackend) buildAnnotations(rule state.RuleMeta, states []state.StateTransition, logger log.Logger) []annotations.Item {
+func (h *AnnotationBackend) buildAnnotations(rule history_model.RuleMeta, states []state.StateTransition, logger log.Logger) []annotations.Item {
 	items := make([]annotations.Item, 0, len(states))
 	for _, state := range states {
 		if !shouldRecord(state) {
@@ -184,7 +185,7 @@ func (h *AnnotationBackend) recordAnnotationsSync(ctx context.Context, panel *pa
 	return nil
 }
 
-func buildAnnotationTextAndData(rule state.RuleMeta, currentState *state.State) (string, *simplejson.Json) {
+func buildAnnotationTextAndData(rule history_model.RuleMeta, currentState *state.State) (string, *simplejson.Json) {
 	jsonData := simplejson.New()
 	var value string
 

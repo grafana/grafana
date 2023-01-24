@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 )
 
 func TestShouldRecord(t *testing.T) {
@@ -214,7 +215,7 @@ func TestParsePanelKey(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			m := state.NewRuleMeta(&tc.in, logger)
+			m := history_model.NewRuleMeta(&tc.in, logger)
 			res := parsePanelKey(m, logger)
 			require.Equal(t, tc.exp, res)
 		})
