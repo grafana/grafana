@@ -535,9 +535,12 @@ lerna.json @grafana/frontend-ops
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware.go @grafana/grafana-partnerships-team
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware_test.go @grafana/grafana-partnerships-team
 
+# Kind definitions
+/kinds/dashboard @grafana/dashboards-squad
+/kinds/ @grafana/grafana-as-code
+
 # Kind system and code generation
 embed.go @grafana/grafana-as-code
-/kinds/ @grafana/grafana-as-code
 /pkg/kinds/ @grafana/grafana-as-code
 /pkg/cuectx/ @grafana/grafana-as-code
 /pkg/registry/ @grafana/grafana-as-code

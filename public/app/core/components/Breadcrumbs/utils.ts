@@ -16,6 +16,7 @@ export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelIte
     if (urlSearchParams.has('editview')) {
       urlToMatch += `?editview=${urlSearchParams.get('editview')}`;
     }
+
     if (!foundHome && !node.hideFromBreadcrumbs) {
       if (homeNav && urlToMatch === homeNav.url) {
         crumbs.unshift({ text: getNavTitle(homeNav.id) ?? homeNav.text, href: node.url ?? '' });
@@ -31,7 +32,18 @@ export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelIte
   }
 
   if (pageNav) {
-    addCrumbs(pageNav);
+    if (pageNav.url && pageNav.children) {
+      const child = pageNav.children.find((child) => child.active);
+      if (child) {
+        addCrumbs(child);
+        // Some pages set up children but they are not connected to parent pageNav
+        if (child.parentItem !== pageNav) {
+          addCrumbs(pageNav);
+        }
+      }
+    } else {
+      addCrumbs(pageNav);
+    }
   }
 
   addCrumbs(sectionNav);

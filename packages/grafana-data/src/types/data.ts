@@ -38,7 +38,7 @@ export type PreferredVisualisationType = typeof preferredVisualizationTypes[numb
 export interface QueryResultMeta {
   type?: DataFrameType;
 
-  /** DatasSource Specific Values */
+  /** DataSource Specific Values */
   custom?: Record<string, any>;
 
   /** Stats */

@@ -26,11 +26,11 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
@@ -41,7 +41,6 @@ import (
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
-	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
@@ -55,7 +54,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/stats/statsimpl"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
@@ -190,6 +188,7 @@ type scenarioContext struct {
 	authInfoService         *logintest.AuthInfoServiceFake
 	dashboardVersionService dashver.Service
 	userService             user.Service
+	dashboardService        dashboards.DashboardService
 }
 
 func (sc *scenarioContext) exec() {
@@ -213,7 +212,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg) *contexthandler.ContextHa
 	}
 	userAuthTokenSvc := authtest.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
-	authJWTSvc := models.NewFakeJWTService()
+	authJWTSvc := jwt.NewFakeJWTService()
 	tracer := tracing.InitializeTracerForTest()
 	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginservice.LoginServiceMock{}, &usertest.FakeUserService{}, sqlStore)
 	loginService := &logintest.LoginServiceFake{}
@@ -249,31 +248,6 @@ type fakeRenderService struct {
 
 func (s *fakeRenderService) Init() error {
 	return nil
-}
-
-func setupAccessControlScenarioContext(t *testing.T, cfg *setting.Cfg, url string, permissions []accesscontrol.Permission) (*scenarioContext, *HTTPServer) {
-	store := sqlstore.InitTestDB(t)
-	statsService := statsimpl.ProvideService(store)
-	hs := &HTTPServer{
-		Cfg:                  cfg,
-		Live:                 newTestLive(t, store),
-		License:              &licensing.OSSLicensingService{},
-		Features:             featuremgmt.WithFeatures(),
-		QuotaService:         quotatest.New(false, nil),
-		RouteRegister:        routing.NewRouteRegister(),
-		AccessControl:        accesscontrolmock.New().WithPermissions(permissions),
-		searchUsersService:   searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), usertest.NewUserServiceFake()),
-		ldapGroups:           ldap.ProvideGroupsService(),
-		accesscontrolService: actest.FakeService{},
-		statsService:         statsService,
-	}
-
-	sc := setupScenarioContext(t, url)
-
-	hs.registerRoutes()
-	hs.RouteRegister.Register(sc.m.Router)
-
-	return sc, hs
 }
 
 type accessControlTestCase struct {
@@ -531,6 +505,7 @@ func SetupAPITestServer(t *testing.T, opts ...APITestServerOption) *webtest.Serv
 	}
 
 	hs.registerRoutes()
+
 	s := webtest.NewServer(t, hs.RouteRegister)
 	return s
 }
@@ -564,10 +539,8 @@ func setUp(confs ...setUpConf) *HTTPServer {
 	}
 	teamSvc := &teamtest.FakeService{}
 	dashSvc := &dashboards.FakeDashboardService{}
-	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*dashboards.GetDashboardACLInfoListQuery)
-		q.Result = aclMockResp
-	}).Return(nil)
+	qResult := aclMockResp
+	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
 	guardian.InitLegacyGuardian(store, dashSvc, teamSvc)
 	return hs
 }

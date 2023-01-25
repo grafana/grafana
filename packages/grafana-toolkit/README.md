@@ -146,14 +146,7 @@ Yes! grafana-toolkit supports TypeScript by default.
 
 grafana-toolkit comes with Jest as a test runner.
 
-Internally at Grafana we use Enzyme. If you are developing React plugin and you want to configure Enzyme as a testing utility, then you need to configure `enzyme-adapter-react`. To do so, create `<YOUR_PLUGIN_DIR>/config/jest-setup.ts` file that will provide necessary setup. Copy the following code into that file to get Enzyme working with React:
-
-```ts
-import { configure } from 'enzyme';
-import Adapter from 'enzyme-adapter-react-16';
-
-configure({ adapter: new Adapter() });
-```
+Internally at Grafana we use React Testing Library.
 
 You can also set up Jest with shims of your needs by creating `jest-shim.ts` file in the same directory: `<YOUR_PLUGIN_DIR_>/config/jest-shim.ts`
 
