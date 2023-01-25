@@ -20,7 +20,7 @@ type Manager struct {
 
 func ProvideService() *Manager {
 	defaultBaseURL := "https://grafana.com/api/plugins"
-	return New(false, defaultBaseURL, log.OldyLogger("plugin.repository"))
+	return New(false, defaultBaseURL, log.EnhancedLogger("plugin.repository"))
 }
 
 func New(skipTLSVerify bool, baseURL string, logger log.PrettyLogger) *Manager {

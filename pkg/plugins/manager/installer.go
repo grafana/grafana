@@ -25,7 +25,7 @@ type PluginInstaller struct {
 
 func ProvideInstaller(cfg *config.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service,
 	pluginRepo repo.Service) *PluginInstaller {
-	return New(pluginRegistry, pluginLoader, pluginRepo, storage.FileSystem(log.OldyLogger("installer.fs"), cfg.PluginsPath))
+	return New(pluginRegistry, pluginLoader, pluginRepo, storage.FileSystem(log.EnhancedLogger("installer.fs"), cfg.PluginsPath))
 }
 
 func New(pluginRegistry registry.Service, pluginLoader loader.Service, pluginRepo repo.Service,

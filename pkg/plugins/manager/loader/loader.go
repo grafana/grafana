@@ -52,7 +52,7 @@ func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugi
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
 	roleRegistry plugins.RoleRegistry) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
-		storage.FileSystem(log.OldyLogger("loader.fs"), cfg.PluginsPath), roleRegistry)
+		storage.FileSystem(log.EnhancedLogger("loader.fs"), cfg.PluginsPath), roleRegistry)
 }
 
 func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
