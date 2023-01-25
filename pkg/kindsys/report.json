@@ -1737,11 +1737,12 @@
           "query",
           "queryhistory",
           "serviceaccount",
+          "serviceaccount",
           "team",
           "thumb",
           "user"
         ],
-        "count": 11
+        "count": 12
       }
     },
     "maturity": {
@@ -1772,9 +1773,10 @@
         "items": [
           "alertgroupspanelcfg",
           "playlist",
+          "serviceaccount",
           "team"
         ],
-        "count": 3
+        "count": 4
       },
       "planned": {
         "name": "planned",
