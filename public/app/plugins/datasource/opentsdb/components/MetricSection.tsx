@@ -1,3 +1,4 @@
+import { debounce } from 'lodash';
 import React from 'react';
 
 import { SelectableValue, toOption } from '@grafana/data';
@@ -16,7 +17,7 @@ export interface MetricSectionProps {
 export function MetricSection({ query, onChange, onRunQuery, suggestMetrics, aggregators }: MetricSectionProps) {
   const aggregatorOptions = aggregators.map((value: string) => toOption(value));
 
-  const metricSearch = (query: string) => suggestMetrics(query);
+  const metricSearch = debounce((query: string) => suggestMetrics(query), 350, { leading: true });
 
   return (
     <div className="gf-form-inline" data-testid={testIds.section}>
