@@ -36,7 +36,7 @@ type Folder struct {
 	// TODO: validate if this field is required/relevant to folders.
 	// currently there is no such column
 	Version   int
-	Url       string
+	URL       string
 	UpdatedBy int64
 	CreatedBy int64
 	HasACL    bool
@@ -145,4 +145,12 @@ type GetChildrenQuery struct {
 	Page  int64
 
 	SignedInUser *user.SignedInUser `json:"-"`
+}
+
+type HasEditPermissionInFoldersQuery struct {
+	SignedInUser *user.SignedInUser
+}
+
+type HasAdminPermissionInDashboardsOrFoldersQuery struct {
+	SignedInUser *user.SignedInUser
 }

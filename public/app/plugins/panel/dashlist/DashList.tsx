@@ -14,7 +14,7 @@ import { SearchCard } from 'app/features/search/components/SearchCard';
 import { DashboardSearchItem } from 'app/features/search/types';
 import { useDispatch } from 'app/types';
 
-import { PanelLayout, PanelOptions } from './models.gen';
+import { PanelLayout, PanelOptions } from './panelcfg.gen';
 import { getStyles } from './styles';
 
 type Dashboard = DashboardSearchItem & { id?: number; isSearchResult?: boolean; isRecent?: boolean };
