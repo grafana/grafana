@@ -9,13 +9,13 @@
 
 package dataquery
 
-// Defines values for QueryType.
+// Defines values for PhlareQueryType.
 const (
-	QueryTypeBoth QueryType = "both"
+	PhlareQueryTypeBoth PhlareQueryType = "both"
 
-	QueryTypeMetrics QueryType = "metrics"
+	PhlareQueryTypeMetrics PhlareQueryType = "metrics"
 
-	QueryTypeProfile QueryType = "profile"
+	PhlareQueryTypeProfile PhlareQueryType = "profile"
 )
 
 // PhlareDataQuery defines model for PhlareDataQuery.
@@ -25,24 +25,29 @@ type PhlareDataQuery struct {
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
 	Datasource *interface{} `json:"datasource,omitempty"`
-	GroupBy    []string     `json:"groupBy"`
+
+	// Allows to group the results.
+	GroupBy []string `json:"groupBy"`
 
 	// true if query is disabled (ie should not be returned to the dashboard)
 	Hide *bool `json:"hide,omitempty"`
 
 	// Unique, guid like, string used in explore mode
-	Key           *string `json:"key,omitempty"`
-	LabelSelector string  `json:"labelSelector"`
-	ProfileTypeId string  `json:"profileTypeId"`
+	Key *string `json:"key,omitempty"`
+
+	// Specifies the query label selectors.
+	LabelSelector string `json:"labelSelector"`
+
+	// Specifies the type of profile to query.
+	ProfileTypeId string `json:"profileTypeId"`
 
 	// Specify the query flavor
 	// TODO make this required and give it a default
-	QueryType QueryType `json:"queryType"`
+	QueryType *string `json:"queryType,omitempty"`
 
 	// A - Z
 	RefId string `json:"refId"`
 }
 
-// Specify the query flavor
-// TODO make this required and give it a default
-type QueryType string
+// PhlareQueryType defines model for PhlareQueryType.
+type PhlareQueryType string

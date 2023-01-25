@@ -27,9 +27,9 @@ type dsJsonModel struct {
 }
 
 const (
-	queryTypeProfile = string(dataquery.QueryTypeProfile)
-	queryTypeMetrics = string(dataquery.QueryTypeMetrics)
-	queryTypeBoth    = string(dataquery.QueryTypeBoth)
+	queryTypeProfile = string(dataquery.PhlareQueryTypeProfile)
+	queryTypeMetrics = string(dataquery.PhlareQueryTypeMetrics)
+	queryTypeBoth    = string(dataquery.PhlareQueryTypeBoth)
 )
 
 // query processes single Phlare query transforming the response to data.Frame packaged in DataResponse

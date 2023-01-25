@@ -12,27 +12,26 @@ import * as common from '@grafana/schema';
 
 export const DataQueryModelVersion = Object.freeze([0, 0]);
 
-/**
- * Specify the query flavor
- * TODO make this required and give it a default
- */
-export type queryType = ('metrics' | 'profile' | 'both');
+export type PhlareQueryType = ('metrics' | 'profile' | 'both');
 
-export const defaultqueryType: queryType = 'both';
+export const defaultPhlareQueryType: PhlareQueryType = 'both';
 
 export interface Phlare extends common.DataQuery {
-  groupBy: Array<string>;
-  labelSelector: string;
-  profileTypeId: string;
   /**
-   * Specify the query flavor
-   * TODO make this required and give it a default
+   * Allows to group the results.
    */
-  queryType: string;
+  groupBy: Array<string>;
+  /**
+   * Specifies the query label selectors.
+   */
+  labelSelector: string;
+  /**
+   * Specifies the type of profile to query.
+   */
+  profileTypeId: string;
 }
 
 export const defaultPhlare: Partial<Phlare> = {
   groupBy: [],
   labelSelector: '{}',
-  queryType: 'both',
 };

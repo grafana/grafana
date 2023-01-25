@@ -23,18 +23,23 @@ import (
 pfs.GrafanaPlugin
 
 composableKinds: DataQuery: {
-	maturity: "merged"
+	maturity: "experimental"
 
 	lineage: {
 		seqs: [
 			{
 				schemas: [
+					// v0.0
 					{
 						common.DataQuery
+
+						// Specifies the query label selectors.
 						labelSelector: string | *"{}"
+						// Specifies the type of profile to query.
 						profileTypeId: string
-						queryType:     "metrics" | "profile" | "both" | *"both" @cuetsy(kind="type")
+						// Allows to group the results.
 						groupBy: [...string]
+						#PhlareQueryType: "metrics" | "profile" | *"both" @cuetsy(kind="type")
 					},
 				]
 			},

@@ -1091,7 +1091,7 @@
         "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/phlare/dataquery.gen.ts"
       },
       "machineName": "phlaredataquery",
-      "maturity": "merged",
+      "maturity": "experimental",
       "name": "PhlareDataQuery",
       "pluralMachineName": "phlaredataquerys",
       "pluralName": "PhlareDataQuerys",
@@ -1758,11 +1758,12 @@
           "gaugepanelcfg",
           "histogrampanelcfg",
           "newspanelcfg",
+          "phlaredataquery",
           "piechartpanelcfg",
           "statpanelcfg",
           "textpanelcfg"
         ],
-        "count": 11
+        "count": 12
       },
       "mature": {
         "name": "mature",
@@ -1773,11 +1774,10 @@
         "name": "merged",
         "items": [
           "alertgroupspanelcfg",
-          "phlaredataquery",
           "playlist",
           "team"
         ],
-        "count": 4
+        "count": 3
       },
       "planned": {
         "name": "planned",

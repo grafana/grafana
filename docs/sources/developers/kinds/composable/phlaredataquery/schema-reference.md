@@ -8,16 +8,15 @@ title: PhlareDataQuery kind
 
 # PhlareDataQuery kind
 
-## Maturity: merged
+## Maturity: experimental
 ## Version: 0.0
 
 ## Properties
 
-| Property        | Type     | Required | Description                                                         |
-|-----------------|----------|----------|---------------------------------------------------------------------|
-| `groupBy`       | string[] | No       |                                                                     |
-| `labelSelector` | string   | No       | Default: `{}`.                                                      |
-| `profileTypeId` | string   | No       |                                                                     |
-| `queryType`     | string   | No       | Possible values are: `both`, `profile`, `metrics`. Default: `both`. |
+| Property        | Type     | Required | Description                                         |
+|-----------------|----------|----------|-----------------------------------------------------|
+| `groupBy`       | string[] | No       | Allows to group the results.                        |
+| `labelSelector` | string   | No       | Specifies the query label selectors. Default: `{}`. |
+| `profileTypeId` | string   | No       | Specifies the type of profile to query.             |
 
 
