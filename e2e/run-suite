@@ -26,7 +26,7 @@ declare -A env=(
 )
 
 testFilesForSingleSuite="*.spec.ts"
-testFilesForEnterpriseSuite="enterprise-suite/*-suite/*.spec.ts"
+rootForEnterpriseSuite="extensions-suite"
 
 declare -A cypressConfig=(
   [integrationFolder]=../../e2e
@@ -68,20 +68,23 @@ case "$1" in
         ;;
     "enterprise")
         echo "Enterprise"
-        CLEANUP="rm -rf ../../e2e/enterprise-suite"
-        SETUP="cp -Lr ../../e2e/enterprise ../../e2e/enterprise-suite"
+        CLEANUP="rm -rf ../../e2e/extensions-suite"
+        SETUP="cp -Lr ../../e2e/extensions ../../e2e/extensions-suite"
+        enterpriseSuite=$(basename "${args[1]}")
         case "$2" in
             "debug")
                 echo -e "Debug mode"
                 env[SLOWMO]=1
                 PARAMS="--no-exit"
+                enterpriseSuite=$(basename "${args[2]}")
                 ;;
             "dev")
                 echo "Dev mode"
                 CMD="open"
+                enterpriseSuite=$(basename "${args[2]}")
                 ;;
         esac
-        cypressConfig[testFiles]=$testFilesForEnterpriseSuite
+        cypressConfig[testFiles]=$rootForEnterpriseSuite/$enterpriseSuite/*-suite/*.spec.ts
         $CLEANUP && $SETUP
         ;;
     "")
