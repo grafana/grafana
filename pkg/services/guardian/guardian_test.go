@@ -690,22 +690,21 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 	t.Run("Get hidden ACL tests", func(t *testing.T) {
 		store := dbtest.NewFakeDB()
 		dashSvc := dashboards.NewFakeDashboardService(t)
-		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
-			q := args.Get(1).(*dashboards.GetDashboardACLInfoListQuery)
-			q.Result = []*dashboards.DashboardACLInfoDTO{
-				{Inherited: false, UserID: 1, UserLogin: "user1", Permission: models.PERMISSION_EDIT},
-				{Inherited: false, UserID: 2, UserLogin: "user2", Permission: models.PERMISSION_ADMIN},
-				{Inherited: true, UserID: 3, UserLogin: "user3", Permission: models.PERMISSION_VIEW},
-			}
-		}).Return(nil)
+		qResult := []*dashboards.DashboardACLInfoDTO{
+			{Inherited: false, UserID: 1, UserLogin: "user1", Permission: models.PERMISSION_EDIT},
+			{Inherited: false, UserID: 2, UserLogin: "user2", Permission: models.PERMISSION_ADMIN},
+			{Inherited: true, UserID: 3, UserLogin: "user3", Permission: models.PERMISSION_VIEW},
+		}
+		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
+		var qResultDash *dashboards.Dashboard
 		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
 			q := args.Get(1).(*dashboards.GetDashboardQuery)
-			q.Result = &dashboards.Dashboard{
+			qResultDash = &dashboards.Dashboard{
 				ID:    q.ID,
 				UID:   q.UID,
 				OrgID: q.OrgID,
 			}
-		}).Return(nil)
+		}).Return(qResultDash, nil)
 
 		cfg := setting.NewCfg()
 		cfg.HiddenUsers = map[string]struct{}{"user2": {}}
@@ -734,13 +733,9 @@ func TestGuardianGetHiddenACL(t *testing.T) {
 				IsGrafanaAdmin: true,
 			}
 			dashSvc := dashboards.NewFakeDashboardService(t)
+			qResult := &dashboards.Dashboard{}
 			dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
-				q := args.Get(1).(*dashboards.GetDashboardQuery)
-				q.Result = &dashboards.Dashboard{
-					ID:  q.ID,
-					UID: q.UID,
-				}
-			}).Return(nil)
+			}).Return(qResult, nil)
 			g, err := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, dashSvc, &teamtest.FakeService{})
 			require.NoError(t, err)
 
@@ -756,27 +751,26 @@ func TestGuardianGetACLWithoutDuplicates(t *testing.T) {
 	t.Run("Get hidden ACL tests", func(t *testing.T) {
 		store := dbtest.NewFakeDB()
 		dashSvc := dashboards.NewFakeDashboardService(t)
-		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
-			q := args.Get(1).(*dashboards.GetDashboardACLInfoListQuery)
-			q.Result = []*dashboards.DashboardACLInfoDTO{
-				{Inherited: true, UserID: 3, UserLogin: "user3", Permission: models.PERMISSION_EDIT},
-				{Inherited: false, UserID: 3, UserLogin: "user3", Permission: models.PERMISSION_VIEW},
-				{Inherited: false, UserID: 2, UserLogin: "user2", Permission: models.PERMISSION_ADMIN},
-				{Inherited: true, UserID: 4, UserLogin: "user4", Permission: models.PERMISSION_ADMIN},
-				{Inherited: false, UserID: 4, UserLogin: "user4", Permission: models.PERMISSION_ADMIN},
-				{Inherited: false, UserID: 5, UserLogin: "user5", Permission: models.PERMISSION_EDIT},
-				{Inherited: true, UserID: 6, UserLogin: "user6", Permission: models.PERMISSION_VIEW},
-				{Inherited: false, UserID: 6, UserLogin: "user6", Permission: models.PERMISSION_EDIT},
-			}
-		}).Return(nil)
+		qResult := []*dashboards.DashboardACLInfoDTO{
+			{Inherited: true, UserID: 3, UserLogin: "user3", Permission: models.PERMISSION_EDIT},
+			{Inherited: false, UserID: 3, UserLogin: "user3", Permission: models.PERMISSION_VIEW},
+			{Inherited: false, UserID: 2, UserLogin: "user2", Permission: models.PERMISSION_ADMIN},
+			{Inherited: true, UserID: 4, UserLogin: "user4", Permission: models.PERMISSION_ADMIN},
+			{Inherited: false, UserID: 4, UserLogin: "user4", Permission: models.PERMISSION_ADMIN},
+			{Inherited: false, UserID: 5, UserLogin: "user5", Permission: models.PERMISSION_EDIT},
+			{Inherited: true, UserID: 6, UserLogin: "user6", Permission: models.PERMISSION_VIEW},
+			{Inherited: false, UserID: 6, UserLogin: "user6", Permission: models.PERMISSION_EDIT},
+		}
+		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
+		qResultDash := &dashboards.Dashboard{}
 		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
 			q := args.Get(1).(*dashboards.GetDashboardQuery)
-			q.Result = &dashboards.Dashboard{
+			qResultDash = &dashboards.Dashboard{
 				ID:    q.ID,
 				UID:   q.UID,
 				OrgID: q.OrgID,
 			}
-		}).Return(nil)
+		}).Return(qResultDash, nil)
 
 		t.Run("Should get acl without duplicates", func(t *testing.T) {
 			user := &user.SignedInUser{
