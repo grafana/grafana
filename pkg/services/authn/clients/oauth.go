@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -34,11 +35,17 @@ const (
 )
 
 var (
-	errMissingOAuthState   = errutil.NewBase(errutil.StatusBadRequest, "auth.oauth.state.missing", errutil.WithPublicMessage("Missing saved oauth state"))
-	errInvalidOAuthState   = errutil.NewBase(errutil.StatusUnauthorized, "auth.oauth.state.invalid", errutil.WithPublicMessage("Provided state does not match stored state"))
-	errMissingOAuthPKCE    = errutil.NewBase(errutil.StatusBadRequest, "auth.oauth.pkce.missing", errutil.WithPublicMessage("Missing pkce cookie"))
-	errMissingMissingEmail = errutil.NewBase(errutil.StatusUnauthorized, "auth.oauth.email.missing")
-	errEmailNotAllowed     = errutil.NewBase(errutil.StatusUnauthorized, "auth.oauth.email.not-allowed")
+	errOAuthGenPKCE     = errutil.NewBase(errutil.StatusInternal, "auth.oauth.pkce.internal", errutil.WithPublicMessage("An internal error occurred"))
+	errOAuthMissingPKCE = errutil.NewBase(errutil.StatusBadRequest, "auth.oauth.pkce.missing", errutil.WithPublicMessage("Missing required pkce cookie"))
+
+	errOAuthGenState     = errutil.NewBase(errutil.StatusInternal, "auth.oauth.state.internal", errutil.WithPublicMessage("An internal error occurred"))
+	errOAuthMissingState = errutil.NewBase(errutil.StatusBadRequest, "auth.oauth.state.missing", errutil.WithPublicMessage("Missing saved oauth state"))
+	errOAuthInvalidState = errutil.NewBase(errutil.StatusUnauthorized, "auth.oauth.state.invalid", errutil.WithPublicMessage("Provided state does not match stored state"))
+
+	errOAuthTokenExchange = errutil.NewBase(errutil.StatusInternal, "auth.oauth.token.exchange", errutil.WithPublicMessage("Failed to get token from provider"))
+
+	errOAuthMissingRequiredEmail = errutil.NewBase(errutil.StatusUnauthorized, "auth.oauth.email.missing")
+	errOAuthEmailNotAllowed      = errutil.NewBase(errutil.StatusUnauthorized, "auth.oauth.email.not-allowed")
 )
 
 var _ authn.RedirectClient = new(OAuth)
@@ -72,18 +79,18 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	// get hashed state stored in cookie
 	stateCookie, err := r.HTTPRequest.Cookie(oauthStateCookieName)
 	if err != nil {
-		return nil, errMissingOAuthState.Errorf("missing state cookie")
+		return nil, errOAuthMissingState.Errorf("missing state cookie")
 	}
 
 	if stateCookie.Value == "" {
-		return nil, errMissingOAuthState.Errorf("missing state value in state cookie")
+		return nil, errOAuthMissingState.Errorf("missing state value in state cookie")
 	}
 
 	// get state returned by the idp and hash it
 	stateQuery := hashOAuthState(r.HTTPRequest.URL.Query().Get(oauthStateQueryName), c.cfg.SecretKey, c.oauthCfg.ClientSecret)
 	// compare the state returned by idp against the one we stored in cookie
 	if stateQuery != stateCookie.Value {
-		return nil, errInvalidOAuthState.Errorf("provided state did not match stored state")
+		return nil, errOAuthInvalidState.Errorf("provided state did not match stored state")
 	}
 
 	var opts []oauth2.AuthCodeOption
@@ -91,7 +98,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 	if c.oauthCfg.UsePKCE {
 		pkceCookie, err := r.HTTPRequest.Cookie(oauthPKCECookieName)
 		if err != nil {
-			return nil, errMissingOAuthPKCE.Errorf("no pkce cookie found: %w", err)
+			return nil, errOAuthMissingPKCE.Errorf("no pkce cookie found: %w", err)
 		}
 		opts = append(opts, oauth2.SetAuthURLParam(codeVerifierParamName, pkceCookie.Value))
 	}
@@ -106,15 +113,15 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 
 	userInfo, err := c.connector.UserInfo(c.connector.Client(clientCtx, token), token)
 	if err != nil {
-		return nil, err
+		return nil, errOAuthTokenExchange.Errorf("failed to exchange code to token: %w", err)
 	}
 
 	if userInfo.Email == "" {
-		return nil, errMissingMissingEmail.Errorf("required attribute email was not provided")
+		return nil, errOAuthMissingRequiredEmail.Errorf("required attribute email was not provided")
 	}
 
 	if !c.connector.IsEmailAllowed(userInfo.Email) {
-		return nil, errEmailNotAllowed.Errorf("provided email is not allowed")
+		return nil, errOAuthEmailNotAllowed.Errorf("provided email is not allowed")
 	}
 
 	return &authn.Identity{
@@ -147,8 +154,9 @@ func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redir
 	var plainPKCE string
 	if c.oauthCfg.UsePKCE {
 		pkce, hashedPKCE, err := genPKCECode()
+		err = errors.New("some err")
 		if err != nil {
-			return nil, err
+			return nil, errOAuthGenPKCE.Errorf("failed to generate pkce: %w", err)
 		}
 
 		plainPKCE = pkce
@@ -160,7 +168,7 @@ func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redir
 
 	state, hashedSate, err := genOAuthState(c.cfg.SecretKey, c.oauthCfg.ClientSecret)
 	if err != nil {
-		return nil, err
+		return nil, errOAuthGenState.Errorf("failed to generate state: %w", err)
 	}
 
 	return &authn.Redirect{

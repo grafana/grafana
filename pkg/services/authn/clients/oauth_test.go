@@ -40,7 +40,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 			desc:        "should return error when missing state cookie",
 			req:         &authn.Request{HTTPRequest: &http.Request{Header: map[string][]string{}}},
 			oauthCfg:    &social.OAuthInfo{},
-			expectedErr: errMissingOAuthState,
+			expectedErr: errOAuthMissingState,
 		},
 		{
 			desc:             "should return error when state cookie is present but don't have a value",
@@ -48,7 +48,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 			oauthCfg:         &social.OAuthInfo{},
 			addStateCookie:   true,
 			stateCookieValue: "",
-			expectedErr:      errMissingOAuthState,
+			expectedErr:      errOAuthMissingState,
 		},
 		{
 			desc: "should return error when state from ipd does not match stored state",
@@ -60,7 +60,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 			oauthCfg:         &social.OAuthInfo{UsePKCE: true},
 			addStateCookie:   true,
 			stateCookieValue: "some-state",
-			expectedErr:      errInvalidOAuthState,
+			expectedErr:      errOAuthInvalidState,
 		},
 		{
 			desc: "should return error when pkce is configured but the cookie is not present",
@@ -72,7 +72,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 			oauthCfg:         &social.OAuthInfo{UsePKCE: true},
 			addStateCookie:   true,
 			stateCookieValue: "some-state",
-			expectedErr:      errMissingOAuthPKCE,
+			expectedErr:      errOAuthMissingPKCE,
 		},
 		{
 			desc: "should return error when email is empty",
@@ -87,7 +87,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 			addPKCECookie:    true,
 			pkceCookieValue:  "some-pkce-value",
 			userInfo:         &social.BasicUserInfo{},
-			expectedErr:      errMissingMissingEmail,
+			expectedErr:      errOAuthMissingRequiredEmail,
 		},
 		{
 			desc: "should return error when email is not allowed",
@@ -103,7 +103,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 			pkceCookieValue:  "some-pkce-value",
 			userInfo:         &social.BasicUserInfo{Email: "some@email.com"},
 			isEmailAllowed:   false,
-			expectedErr:      errEmailNotAllowed,
+			expectedErr:      errOAuthEmailNotAllowed,
 		},
 		{
 			desc: "should return identity for valid request",
