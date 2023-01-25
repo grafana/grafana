@@ -1,7 +1,6 @@
 import { css, cx } from '@emotion/css';
 import BaseLayer from 'ol/layer/Base';
 import React, { useMemo } from 'react';
-import SVG from 'react-inlinesvg';
 import { useObservable } from 'react-use';
 import { of } from 'rxjs';
 
@@ -9,6 +8,7 @@ import { DataFrame, formattedValueToString, getFieldColorModeForField, GrafanaTh
 import { getMinMaxAndDelta } from '@grafana/data/src/field/scale';
 import { useStyles2, VizLegendItem } from '@grafana/ui';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
+import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 import { config } from 'app/core/config';
 import { DimensionSupplier } from 'app/features/dimensions';
 import { getThresholdItems } from 'app/plugins/panel/state-timeline/utils';
@@ -58,7 +58,7 @@ export function MarkersLegend(props: MarkersLegendProps) {
       <div className={style.infoWrap}>
         <div className={style.layerName}>{layerName}</div>
         <div className={cx(style.layerBody, style.fixedColorContainer)}>
-          <SVG
+          <SanitizedSVG
             src={`public/${symbol}`}
             className={style.legendSymbol}
             title={'Symbol'}
