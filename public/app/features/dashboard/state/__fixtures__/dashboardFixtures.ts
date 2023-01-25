@@ -24,6 +24,7 @@ export function createDashboardModelFixture(
     schemaVersion: 1,
     revision: 1,
     style: 'dark',
+    timezone: '',
     ...dashboardInput,
   };
 

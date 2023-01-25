@@ -30,8 +30,8 @@ lineage: seqs: [
 				tags?: [...string] @grafanamaturity(NeedsExpertReview)
 				// Theme of dashboard.
 				style: "light" | *"dark" @grafanamaturity(NeedsExpertReview)
-				// Timezone of dashboard,
-				timezone?: *"browser" | "utc" | "" @grafanamaturity(NeedsExpertReview)
+				// Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc".
+				timezone?: string | "browser" | "utc" | *""
 				// Whether a dashboard is editable or not.
 				editable:     bool | *true
 				graphTooltip: #DashboardCursorSync @grafanamaturity(NeedsExpertReview)

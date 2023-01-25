@@ -158,15 +158,6 @@ const (
 	StyleLight Style = "light"
 )
 
-// Defines values for Timezone.
-const (
-	TimezoneBrowser Timezone = "browser"
-
-	TimezoneEmpty Timezone = ""
-
-	TimezoneUtc Timezone = "utc"
-)
-
 // TODO docs
 // FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
 type AnnotationQuery struct {
@@ -754,8 +745,8 @@ type Dashboard struct {
 		TimeOptions []string `json:"time_options"`
 	} `json:"timepicker,omitempty"`
 
-	// Timezone of dashboard,
-	Timezone *Timezone `json:"timezone,omitempty"`
+	// Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc".
+	Timezone *interface{} `json:"timezone,omitempty"`
 
 	// Title of dashboard.
 	Title *string `json:"title,omitempty"`
@@ -772,6 +763,3 @@ type Dashboard struct {
 
 // Theme of dashboard.
 type Style string
-
-// Timezone of dashboard,
-type Timezone string
