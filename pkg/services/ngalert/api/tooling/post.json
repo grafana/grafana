@@ -3746,7 +3746,6 @@
    "type": "array"
   },
   "integration": {
-   "description": "Integration integration",
    "properties": {
     "lastNotifyAttempt": {
      "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -3890,6 +3889,7 @@
    "type": "array"
   },
   "postableSilence": {
+   "description": "PostableSilence postable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -5296,6 +5296,23 @@
     },
     "tags": [
      "ruler"
+    ]
+   }
+  },
+  "/api/ruler/grafana/states": {
+   "get": {
+    "operationId": "RouteGetStateHistory",
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "200": {
+      "$ref": "#/responses/StateHistory"
+     }
+    },
+    "summary": "Query state history.",
+    "tags": [
+     "history"
     ]
    }
   },
