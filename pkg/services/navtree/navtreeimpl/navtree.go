@@ -335,9 +335,9 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *models.ReqContext) ([]*navtre
 			ID:    dashboardId,
 			OrgID: c.OrgID,
 		}
-		err := s.dashboardService.GetDashboard(c.Req.Context(), query)
+		queryResult, err := s.dashboardService.GetDashboard(c.Req.Context(), query)
 		if err == nil {
-			starredDashboards = append(starredDashboards, query.Result)
+			starredDashboards = append(starredDashboards, queryResult)
 		}
 	}
 
