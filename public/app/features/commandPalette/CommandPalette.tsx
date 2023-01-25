@@ -151,7 +151,7 @@ const getSearchStyles = (theme: GrafanaTheme2) => ({
     paddingBottom: theme.spacing(1),
   }),
   sectionHeader: css({
-    padding: theme.spacing(1.5, 2, 1.5, 2),
+    padding: theme.spacing(1.5, 2, 1, 2),
     fontSize: theme.typography.bodySmall.fontSize,
     fontWeight: theme.typography.fontWeightMedium,
     color: theme.colors.text.secondary,
