@@ -177,12 +177,9 @@ func (hs *HTTPServer) MoveFolder(c *contextmodel.ReqContext) response.Response {
 		var theFolder *folder.Folder
 		var err error
 		if cmd.NewParentUID != "" {
-			moveCommand := folder.MoveFolderCommand{
-				UID:          web.Params(c.Req)[":uid"],
-				NewParentUID: cmd.NewParentUID,
-				OrgID:        c.OrgID,
-			}
-			theFolder, err = hs.folderService.Move(c.Req.Context(), &moveCommand)
+			cmd.OrgID = c.OrgID
+			cmd.UID = web.Params(c.Req)[":uid"]
+			theFolder, err = hs.folderService.Move(c.Req.Context(), &cmd)
 			if err != nil {
 				return response.Error(http.StatusInternalServerError, "update folder uid failed", err)
 			}
