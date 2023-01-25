@@ -573,7 +573,7 @@ export enum TableCellBackgroundDisplayMode {
 }
 
 /**
- * TODO docs
+ * Sort by field state
  */
 export interface TableSortByFieldState {
   desc?: boolean;
@@ -581,7 +581,7 @@ export interface TableSortByFieldState {
 }
 
 /**
- * TODO docs
+ * Footer options
  */
 export interface TableFooterOptions {
   countRows?: boolean;

@@ -11,13 +11,13 @@ TableCellDisplayMode: "auto" | "color-text" | "color-background" | "color-backgr
 // or a gradient.
 TableCellBackgroundDisplayMode: "basic" | "gradient" @cuetsy(kind="enum",memberNames="Basic|Gradient")
 
-// TODO docs
+// Sort by field state
 TableSortByFieldState: {
 	displayName: string
 	desc?:       bool
 } @cuetsy(kind="interface")
 
-// TODO docs
+// Footer options
 TableFooterOptions: {
 	show: bool
   reducer: [...string] // actually 1 value

@@ -31,7 +31,7 @@ title: TablePanelCfg kind
 
 ### TableSortByFieldState
 
-TODO docs
+Sort by field state
 
 #### Properties
 
