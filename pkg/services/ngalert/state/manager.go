@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 )
 
 var (
@@ -237,7 +238,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 
 	allChanges := append(states, staleStates...)
 	if st.historian != nil {
-		st.historian.RecordStatesAsync(ctx, alertRule, allChanges)
+		st.historian.RecordStatesAsync(ctx, history_model.NewRuleMeta(alertRule, logger), allChanges)
 	}
 	return allChanges
 }

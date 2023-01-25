@@ -16,7 +16,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
 const (
@@ -170,7 +170,7 @@ func getNonFolderDashboardDoc(dash dashboard, location string) *bluge.Document {
 	}
 
 	for _, ref := range dash.summary.References {
-		if ref.Kind == models.StandardKindDataSource {
+		if ref.Kind == entity.StandardKindDataSource {
 			if ref.Type != "" {
 				doc.AddField(bluge.NewKeywordField(documentFieldDSType, ref.Type).
 					StoreValue().
@@ -210,7 +210,7 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 
 		for _, ref := range dash.summary.References {
 			switch ref.Kind {
-			case models.StandardKindDashboard:
+			case entity.StandardKindDashboard:
 				if ref.Type != "" {
 					doc.AddField(bluge.NewKeywordField(documentFieldDSType, ref.Type).
 						StoreValue().
@@ -223,12 +223,12 @@ func getDashboardPanelDocs(dash dashboard, location string) []*bluge.Document {
 						Aggregatable().
 						SearchTermPositions())
 				}
-			case models.ExternalEntityReferencePlugin:
-				if ref.Type == models.StandardKindPanel && ref.UID != "" {
+			case entity.ExternalEntityReferencePlugin:
+				if ref.Type == entity.StandardKindPanel && ref.UID != "" {
 					doc.AddField(bluge.NewKeywordField(documentFieldPanelType, ref.UID).Aggregatable().StoreValue())
 				}
-			case models.ExternalEntityReferenceRuntime:
-				if ref.Type == models.ExternalEntityReferenceRuntime_Transformer && ref.UID != "" {
+			case entity.ExternalEntityReferenceRuntime:
+				if ref.Type == entity.ExternalEntityReferenceRuntime_Transformer && ref.UID != "" {
 					doc.AddField(bluge.NewKeywordField(documentFieldTransformer, ref.UID).Aggregatable())
 				}
 			}

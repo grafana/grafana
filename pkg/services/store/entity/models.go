@@ -1,16 +1,19 @@
-package models
+package entity
 
 //-----------------------------------------------------------------------------------------------------
 // NOTE: the object store is in heavy development, and the locations will likely continue to move
 //-----------------------------------------------------------------------------------------------------
 
-import "context"
+import (
+	"context"
+)
 
 const (
-	StandardKindDashboard = "dashboard"
-	StandardKindPlaylist  = "playlist"
-	StandardKindSnapshot  = "snapshot"
-	StandardKindFolder    = "folder"
+	StandardKindDashboard   = "dashboard"
+	StandardKindPlaylist    = "playlist"
+	StandardKindSnapshot    = "snapshot"
+	StandardKindFolder      = "folder"
+	StandardKindPreferences = "preferences"
 
 	// StandardKindDataSource: not a real kind yet, but used to define references from dashboards
 	// Types: influx, prometheus, testdata, ...
@@ -20,7 +23,7 @@ const (
 	// Standalone panel is not an object kind yet -- library panel, or nested in dashboard
 	StandardKindPanel = "panel"
 
-	// StandardKindSVG SVG file support
+	// entity.StandardKindSVG SVG file support
 	StandardKindSVG = "svg"
 
 	// StandardKindPNG PNG file support
@@ -108,18 +111,6 @@ type EntitySummary struct {
 
 	// The summary can not be extended
 	_ interface{}
-}
-
-// This will likely get replaced with a more general error framework.
-type EntityErrorInfo struct {
-	// TODO: Match an error code registry?
-	Code int64 `json:"code,omitempty"`
-
-	// Simple error display
-	Message string `json:"message,omitempty"`
-
-	// Error details
-	Details interface{} `json:"details,omitempty"`
 }
 
 // Reference to another object outside itself

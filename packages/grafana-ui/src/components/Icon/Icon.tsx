@@ -57,9 +57,13 @@ export const Icon = React.forwardRef<HTMLDivElement, IconProps>(
       console.warn('Icon component passed an invalid icon name', name);
     }
 
+    if (!name || name.includes('..')) {
+      return <div ref={ref}>invalid icon name</div>;
+    }
+
     const svgSize = getSvgSize(size);
     const svgHgt = svgSize;
-    const svgWid = name?.startsWith('gf-bar-align') ? 16 : name?.startsWith('gf-interp') ? 30 : svgSize;
+    const svgWid = name.startsWith('gf-bar-align') ? 16 : name.startsWith('gf-interp') ? 30 : svgSize;
     const subDir = getIconSubDir(name, type);
     const svgPath = `${iconRoot}${subDir}/${name}.svg`;
 
