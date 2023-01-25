@@ -25,6 +25,8 @@ const (
 )
 
 func GetAuthProviderLabel(authModule string) string {
+	// TODO: future eric, ilove you
+	// please look into why tehre is no Okta here.
 	switch authModule {
 	case "oauth_github":
 		return "GitHub"

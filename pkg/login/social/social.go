@@ -181,9 +181,10 @@ func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager) *Soc
 		// Okta
 		if name == "okta" {
 			ss.socialMap["okta"] = &SocialOkta{
-				SocialBase:    newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-				apiUrl:        info.ApiUrl,
-				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
+				SocialBase:      newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+				apiUrl:          info.ApiUrl,
+				allowedGroups:   util.SplitString(sec.Key("allowed_groups").String()),
+				skipOrgRoleSync: cfg.OktaSkipOrgRoleSync,
 			}
 		}
 

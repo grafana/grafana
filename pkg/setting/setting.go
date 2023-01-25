@@ -496,6 +496,9 @@ type Cfg struct {
 
 	SecureSocksDSProxy SecureSocksDSProxySettings
 
+	// Okta OAuth
+	OktaSkipOrgRoleSync bool
+
 	// Access Control
 	RBACEnabled         bool
 	RBACPermissionCache bool
