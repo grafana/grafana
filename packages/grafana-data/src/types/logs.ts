@@ -208,7 +208,7 @@ export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQu
    */
   getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[];
   /**
-   * Returns supplementary query that will be used to fetch supplementary data based on provided type and original query.
+   * Returns a supplementary query to be used to fetch supplementary data based on the provided type and original query.
    * If provided query is not suitable for provided supplementary query type, undefined should be returned.
    */
   getSupplementaryQuery(type: SupplementaryQueryType, query: TQuery): TQuery | undefined;
