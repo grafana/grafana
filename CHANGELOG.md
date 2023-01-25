@@ -1,6 +1,6 @@
 <!-- 9.3.2 START -->
 
-# 9.3.2 (2023-01-24)
+# 9.3.2 (2023-12-13)
 
 ### Features and enhancements
 
@@ -290,7 +290,7 @@ The following functions and classes related to logs are deprecated in the `grafa
 
 <!-- 9.2.10 START -->
 
-# 9.2.10 (unreleased)
+# 9.2.10 (2023-01-24)
 
 ### Features and enhancements
 
