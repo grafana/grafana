@@ -14,19 +14,66 @@
 
 package grafanaplugin
 
+import (
+	"github.com/grafana/grafana/packages/grafana-schema/src/common"
+)
+
 composableKinds: PanelCfg: {
+	maturity: "experimental"
+
 	lineage: {
 		seqs: [
 			{
 				schemas: [
 					{
+						// TODO docs
+						VizDisplayMode: "candles+volume" | "candles" | "volume" @cuetsy(kind="enum", memberNames="CandlesVolume|Candles|Volume")
+						// TODO docs
+						CandleStyle: "candles" | "ohlcbars" @cuetsy(kind="enum" memberNames="Candles|OHLCBars")
+						// TODO docs
+						// "open-close":  up/down color depends on current close vs current open
+						// filled always
+						// "close-close": up/down color depends on current close vs prior close
+						// filled/hollow depends on current close vs current open
+						ColorStrategy: "open-close" | "close-close" @cuetsy(kind="enum" memberNames="OpenClose|CloseClose")
+						// TODO docs
+						CandlestickFieldMap: {
+							open?:   string
+							high?:   string
+							low?:    string
+							close?:  string
+							volume?: string
+						} @cuetsy(kind="interface")
+						// TODO docs
+						CandlestickColors: {
+							up:   string | *"green"
+							down: string | *"red"
+							flat: string | *"gray"
+						} @cuetsy(kind="interface")
+						CandlestickLegendOptions: {
+							common.VizLegendOptions
+							displayMode: common.LegendDisplayMode | *"list"
+							showLegend:  bool | *true
+							placement:   common.LegendPlacement | *"bottom"
+						} @cuetsy(kind="interface")
 						PanelOptions: {
-							// anything for now
-							...
+							common.OptionsWithLegend
+							legend: CandlestickLegendOptions
+							// TODO docs
+							mode: VizDisplayMode | *"candles+volume"
+							// TODO docs
+							candleStyle: CandleStyle | *"candles"
+							// TODO docs
+							colorStrategy: ColorStrategy | *"open-close"
+							// TODO docs
+							fields: CandlestickFieldMap | *{}
+							// TODO docs
+							colors: CandlestickColors
+							// When enabled, all fields will be sent to the graph
+							includeAllFields?: bool | *false
 						} @cuetsy(kind="interface")
 						PanelFieldConfig: {
-							// anything for now
-							...
+							//TODO Needs schema from Timeseries panel
 						} @cuetsy(kind="interface")
 					},
 				]
