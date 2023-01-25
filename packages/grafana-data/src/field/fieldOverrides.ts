@@ -220,7 +220,6 @@ export function applyFieldOverrides(options: ApplyFieldOverrideOptions): DataFra
 // 2. have the ability to selectively get display color or text (but not always both, which are each quite expensive)
 // 3. sufficently optimize text formatting and threshold color determinitation
 function cachingDisplayProcessor(disp: DisplayProcessor, maxCacheSize = 2500): DisplayProcessor {
-  console.log(disp, 'disp');
   type dispCache = Map<any, DisplayValue>;
   // decimals -> cache mapping, -1 is unspecified decimals
   const caches = new Map<number, dispCache>();
