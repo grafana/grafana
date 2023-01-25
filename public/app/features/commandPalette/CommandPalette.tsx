@@ -150,10 +150,8 @@ const getSearchStyles = (theme: GrafanaTheme2) => ({
   resultsContainer: css({
     paddingBottom: theme.spacing(1),
   }),
-  // Virtual list measures margin incorrectly, so we need to split padding before/after border
-  // over and inner and outer element
   sectionHeader: css({
-    padding: theme.spacing(1.5, 2, 1, 2),
+    padding: theme.spacing(1.5, 2, 1.5, 2),
     fontSize: theme.typography.bodySmall.fontSize,
     fontWeight: theme.typography.fontWeightMedium,
     color: theme.colors.text.secondary,
