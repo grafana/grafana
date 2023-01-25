@@ -24,7 +24,7 @@ export function findHighlightChunksInText({
 }
 
 const cleanNeedle = (needle: string): string => {
-  return needle.replace(/[[{(][\w,.\/0-9:;<=>?:*+]+$/, '');
+  return needle.replace(/[[{(][\w,.\/:;<=>?:*+]+$/, '');
 };
 
 /**
