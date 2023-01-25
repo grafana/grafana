@@ -145,7 +145,7 @@ type AzureLogsQuery struct {
 	ResultFormat *AzureLogsQueryResultFormat `json:"resultFormat,omitempty"`
 
 	// Workspace ID. This was removed in Grafana 8, but remains for backwards compat
-	Workspace string `json:"workspace"`
+	Workspace *string `json:"workspace,omitempty"`
 }
 
 // Specifies the format results should be returned as.
@@ -263,7 +263,7 @@ type AzureMonitorQuery struct {
 		ResultFormat *AzureMonitorQueryAzureLogAnalyticsResultFormat `json:"resultFormat,omitempty"`
 
 		// Workspace ID. This was removed in Grafana 8, but remains for backwards compat
-		Workspace string `json:"workspace"`
+		Workspace *string `json:"workspace,omitempty"`
 	} `json:"azureLogAnalytics,omitempty"`
 
 	// Azure Monitor Metrics sub-query properties.

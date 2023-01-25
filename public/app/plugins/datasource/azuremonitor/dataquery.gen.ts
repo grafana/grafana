@@ -175,7 +175,7 @@ export interface AzureLogsQuery {
   /**
    * Workspace ID. This was removed in Grafana 8, but remains for backwards compat
    */
-  workspace: string;
+  workspace?: string;
 }
 
 export const defaultAzureLogsQuery: Partial<AzureLogsQuery> = {

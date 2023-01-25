@@ -114,7 +114,7 @@ composableKinds: DataQuery: {
 							// Array of resource URIs to be queried.
 							resources: [...string]
 							// Workspace ID. This was removed in Grafana 8, but remains for backwards compat
-							workspace: string
+							workspace?: string
 
 							// @deprecated Use resources instead 
 							resource?: string
