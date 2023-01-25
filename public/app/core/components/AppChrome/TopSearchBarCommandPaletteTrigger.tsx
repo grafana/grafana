@@ -51,7 +51,7 @@ interface PretendTextInputProps {
 
 function PretendTextInput({ onClick }: PretendTextInputProps) {
   const styles = useStyles2(getStyles);
-  const shortcutKey = useMemo(() => getModKey(), []);
+  const modKey = useMemo(() => getModKey(), []);
 
   // We want the desktop command palette trigger to look like a search box,
   // but it actually behaves like a button - you active it and it performs an
@@ -70,7 +70,7 @@ function PretendTextInput({ onClick }: PretendTextInputProps) {
 
         <div className={styles.suffix}>
           <Icon name="keyboard" />
-          <span className={styles.shortcut}>{shortcutKey}+k</span>
+          <span className={styles.shortcut}>{modKey}+k</span>
         </div>
       </div>
     </div>
