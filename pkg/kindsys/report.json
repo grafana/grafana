@@ -283,7 +283,7 @@
         0,
         0
       ],
-      "grafanaMaturityCount": 144,
+      "grafanaMaturityCount": 142,
       "lineageIsGroup": false,
       "links": {
         "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/dashboard/schema-reference",
