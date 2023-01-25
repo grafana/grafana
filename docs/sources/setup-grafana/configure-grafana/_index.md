@@ -677,7 +677,7 @@ List of allowed headers to be set by the user. Suggested to use for if authentic
 
 ### enabled
 
-Set to `false` to disable snapshot feature (default `true`).
+Set to `false` to disable the snapshot feature (default `true`).
 
 ### external_enabled
 
