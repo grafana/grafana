@@ -185,6 +185,7 @@ export {
 export { ErrorWithStack } from './ErrorBoundary/ErrorWithStack';
 export { DataSourceHttpSettings } from './DataSourceSettings/DataSourceHttpSettings';
 export { AlertingSettings } from './DataSourceSettings/AlertingSettings';
+export { SecureSocksProxySettings } from './DataSourceSettings/SecureSocksProxySettings';
 export { TLSAuthSettings } from './DataSourceSettings/TLSAuthSettings';
 export { CertificationKey } from './DataSourceSettings/CertificationKey';
 export { Spinner } from './Spinner/Spinner';
