@@ -12,6 +12,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 
@@ -176,6 +178,9 @@ func Test_GetPluginAssetCDNRedirect(t *testing.T) {
 		}
 		cfg := setting.NewCfg()
 		cfg.PluginsCDNURLTemplate = "https://cdn.example.com/{id}/{version}/public/plugins/{id}/{assetPath}"
+		cfg.PluginSettings = map[string]map[string]string{
+			cdnPluginID: {"cdn": "true"},
+		}
 
 		const cdnFolderBaseURL = "https://cdn.example.com/cdn-plugin/1.0.0/public/plugins/cdn-plugin"
 
@@ -480,10 +485,15 @@ func callGetPluginAsset(sc *scenarioContext) {
 func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern string,
 	cfg *setting.Cfg, pluginStore plugins.Store, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
+		cfg.IsFeatureToggleEnabled = func(_ string) bool { return false }
 		hs := HTTPServer{
 			Cfg:         cfg,
 			pluginStore: pluginStore,
 			log:         log.NewNopLogger(),
+			pluginsCDNService: pluginscdn.ProvideService(&config.Cfg{
+				PluginsCDNURLTemplate: cfg.PluginsCDNURLTemplate,
+				PluginSettings:        cfg.PluginSettings,
+			}),
 		}
 
 		sc := setupScenarioContext(t, url)
