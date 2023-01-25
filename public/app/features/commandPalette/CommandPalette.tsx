@@ -158,8 +158,10 @@ const getSearchStyles = (theme: GrafanaTheme2) => ({
     fontWeight: theme.typography.fontWeightMedium,
     color: theme.colors.text.secondary,
     borderTop: `1px solid ${theme.colors.border.weak}`,
+    marginTop: theme.spacing(1),
   }),
   sectionHeaderFirst: css({
     borderTop: 'none',
+    marginTop: 0,
   }),
 });
