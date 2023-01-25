@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -588,8 +587,8 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []acce
 	t.Helper()
 	store := db.InitTestDB(t)
 
-	toSave := models.NewDashboard(uid)
-	toSave.SetUid(uid)
+	toSave := dashboards.NewDashboard(uid)
+	toSave.SetUID(uid)
 
 	// seed dashboard
 	quotaService := quotatest.New(false, nil)
@@ -602,7 +601,7 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []acce
 	})
 	require.NoError(t, err)
 	ac := accesscontrolmock.New().WithPermissions(permissions)
-	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(dashStore))
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(dashStore, dashStore))
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 	teamSvc := teamimpl.ProvideService(store, store.Cfg)

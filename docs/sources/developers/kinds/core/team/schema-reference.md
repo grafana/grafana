@@ -4,11 +4,12 @@ keywords:
   - schema
 title: Team kind
 ---
+> Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
 # Team kind
 
-### Maturity: merged
-### Version: 0.0
+## Maturity: merged
+## Version: 0.0
 
 ## Properties
 

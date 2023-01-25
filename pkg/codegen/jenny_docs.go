@@ -46,6 +46,9 @@ func (j docsJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
 
 	// We don't need entire json obj, only the value of components.schemas path
 	var obj struct {
+		Info struct {
+			Title string
+		}
 		Components struct {
 			Schemas json.RawMessage
 		}
@@ -59,7 +62,6 @@ func (j docsJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
 	kindJsonStr := strings.Replace(string(obj.Components.Schemas), "#/components/schemas/", "#/", -1)
 
 	kindProps := decl.Properties.Common()
-	kindName := strings.ToLower(kindProps.Name)
 	data := templateData{
 		KindName:     kindProps.Name,
 		KindVersion:  decl.Lineage().Latest().Version().String(),
@@ -72,12 +74,12 @@ func (j docsJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
 		return nil, err
 	}
 
-	doc, err := jsonToMarkdown([]byte(kindJsonStr), string(tmpl), kindName)
+	doc, err := jsonToMarkdown([]byte(kindJsonStr), string(tmpl), obj.Info.Title)
 	if err != nil {
-		return nil, fmt.Errorf("failed to build markdown for kind %s: %v", kindName, err)
+		return nil, fmt.Errorf("failed to build markdown for kind %s: %v", kindProps.Name, err)
 	}
 
-	return codejen.NewFile(filepath.Join(j.docsPath, kindName, "schema-reference.md"), doc, j), nil
+	return codejen.NewFile(filepath.Join(j.docsPath, strings.ToLower(kindProps.Name), "schema-reference.md"), doc, j), nil
 }
 
 // makeTemplate pre-populates the template with the kind metadata

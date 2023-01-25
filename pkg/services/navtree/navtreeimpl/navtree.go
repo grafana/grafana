@@ -218,14 +218,6 @@ func (s *ServiceImpl) getHomeNode(c *models.ReqContext, prefs *pref.Preference) 
 		homeUrl = homePage
 	}
 
-	if prefs.HomeDashboardID != 0 {
-		slugQuery := dashboards.GetDashboardRefByIDQuery{ID: prefs.HomeDashboardID}
-		err := s.dashboardService.GetDashboardUIDByID(c.Req.Context(), &slugQuery)
-		if err == nil {
-			homeUrl = models.GetDashboardUrl(slugQuery.Result.UID, slugQuery.Result.Slug)
-		}
-	}
-
 	homeNode := &navtree.NavLink{
 		Text:       "Home",
 		Id:         "home",
@@ -250,7 +242,7 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqC
 		supportBundleNode := &navtree.NavLink{
 			Text:       "Support bundles",
 			Id:         "support-bundles",
-			Url:        "/admin/support-bundles",
+			Url:        "/support-bundles",
 			Icon:       "wrench",
 			Section:    navtree.NavSectionConfig,
 			SortWeight: navtree.WeightHelp,
@@ -279,7 +271,7 @@ func (s *ServiceImpl) getProfileNode(c *models.ReqContext) *navtree.NavLink {
 
 	children := []*navtree.NavLink{
 		{
-			Text: "Preferences", Id: "profile/settings", Url: s.cfg.AppSubURL + "/profile", Icon: "sliders-v-alt",
+			Text: "Profile", Id: "profile/settings", Url: s.cfg.AppSubURL + "/profile", Icon: "sliders-v-alt",
 		},
 	}
 
@@ -569,9 +561,8 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree
 
 	baseUrl := s.cfg.AppSubURL + "/connections"
 
-	// Connect data
-	// FIXME: while we don't have a permissions for listing plugins the legacy check has to stay as a default
-	if plugins.ReqCanAdminPlugins(s.cfg)(c) || hasAccess(plugins.ReqCanAdminPlugins(s.cfg), plugins.AdminAccessEvaluator) {
+	if hasAccess(ac.ReqOrgAdmin, datasources.ConfigurationPageAccess) {
+		// Connect data
 		children = append(children, &navtree.NavLink{
 			Id:        "connections-connect-data",
 			Text:      "Connect data",
@@ -580,9 +571,7 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree
 			Url:       s.cfg.AppSubURL + "/connections/connect-data",
 			Children:  []*navtree.NavLink{},
 		})
-	}
 
-	if hasAccess(ac.ReqOrgAdmin, datasources.ConfigurationPageAccess) {
 		// Your connections
 		children = append(children, &navtree.NavLink{
 			Id:       "connections-your-connections",

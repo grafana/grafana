@@ -30,7 +30,6 @@ export interface FeatureToggles {
   panelTitleSearch?: boolean;
   tempoApmTable?: boolean;
   prometheusAzureOverrideAudience?: boolean;
-  influxdbBackendMigration?: boolean;
   showFeatureFlagsInUI?: boolean;
   publicDashboards?: boolean;
   publicDashboardsEmailSharing?: boolean;
@@ -88,5 +87,8 @@ export interface FeatureToggles {
   sessionRemoteCache?: boolean;
   disablePrometheusExemplarSampling?: boolean;
   alertingBacktesting?: boolean;
+  editPanelCSVDragAndDrop?: boolean;
   alertingNoNormalState?: boolean;
+  azureMultipleResourcePicker?: boolean;
+  topNavCommandPalette?: boolean;
 }

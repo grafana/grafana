@@ -30,22 +30,6 @@ func NewFolder(title string) *Folder {
 	return folder
 }
 
-// DashboardToFolder converts Dashboard to Folder
-func DashboardToFolder(dash *Dashboard) *Folder {
-	return &Folder{
-		Id:        dash.Id,
-		Uid:       dash.Uid,
-		Title:     dash.Title,
-		HasACL:    dash.HasACL,
-		Url:       dash.GetUrl(),
-		Version:   dash.Version,
-		Created:   dash.Created,
-		CreatedBy: dash.CreatedBy,
-		Updated:   dash.Updated,
-		UpdatedBy: dash.UpdatedBy,
-	}
-}
-
 //
 // COMMANDS
 //

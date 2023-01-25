@@ -22,10 +22,10 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -740,7 +740,7 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 	env.NotificationService.EmailHandlerSync = mockEmail.sendEmailCommandHandlerSync
 	// As we are using a NotificationService mock here, but the test expects real NotificationService -
 	// we try to issue a real POST request here
-	env.NotificationService.WebhookHandler = func(_ context.Context, cmd *models.SendWebhookSync) error {
+	env.NotificationService.WebhookHandler = func(_ context.Context, cmd *notifications.SendWebhookSync) error {
 		if res, err := http.Post(cmd.Url, "", strings.NewReader(cmd.Body)); err == nil {
 			_ = res.Body.Close()
 		}
@@ -1165,10 +1165,10 @@ func (nc *mockNotificationChannel) Close() error {
 }
 
 type mockEmailHandler struct {
-	emails []*models.SendEmailCommandSync
+	emails []*notifications.SendEmailCommandSync
 }
 
-func (e *mockEmailHandler) sendEmailCommandHandlerSync(_ context.Context, cmd *models.SendEmailCommandSync) error {
+func (e *mockEmailHandler) sendEmailCommandHandlerSync(_ context.Context, cmd *notifications.SendEmailCommandSync) error {
 	// We 0 out the start time since that is a variable that we cannot predict.
 	alerts := cmd.Data["Alerts"].(channels.ExtendedAlerts)
 	for i := range alerts {
@@ -1185,7 +1185,7 @@ type mockEmailHandlerWithTimeout struct {
 	timeout time.Duration
 }
 
-func (e *mockEmailHandlerWithTimeout) sendEmailCommandHandlerSync(ctx context.Context, cmd *models.SendEmailCommandSync) error {
+func (e *mockEmailHandlerWithTimeout) sendEmailCommandHandlerSync(ctx context.Context, cmd *notifications.SendEmailCommandSync) error {
 	select {
 	case <-time.After(e.timeout):
 		return e.mockEmailHandler.sendEmailCommandHandlerSync(ctx, cmd)
@@ -2280,9 +2280,9 @@ var expAlertmanagerConfigFromAPI = `
 }
 `
 
-var expEmailNotifications = []*models.SendEmailCommandSync{
+var expEmailNotifications = []*notifications.SendEmailCommandSync{
 	{
-		SendEmailCommand: models.SendEmailCommand{
+		SendEmailCommand: notifications.SendEmailCommand{
 			To:          []string{"test@email.com"},
 			SingleEmail: true,
 			Template:    "ng_alert_notification",
