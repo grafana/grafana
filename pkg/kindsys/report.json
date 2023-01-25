@@ -1437,7 +1437,7 @@
     "testdatadataquery": {
       "category": "composable",
       "codeowners": [
-        "grafana/backend-platform"
+        "grafana/plugins-platform-frontend"
       ],
       "currentVersion": [
         0,
