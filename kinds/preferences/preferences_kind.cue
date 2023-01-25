@@ -1,12 +1,12 @@
 package kind
 
-name: "Preferences"
+name:     "Preferences"
 maturity: "merged"
 
 lineage: seqs: [
 	{
 		schemas: [
-			{//0.0
+			{
 				// UID for the home dashboard
 				homeDashboardUID?: string
 
@@ -27,10 +27,10 @@ lineage: seqs: [
 				queryHistory?: #QueryHistoryPreference
 
 				#QueryHistoryPreference: {
-					// one of: '' | 'query' | 'starred';
-					homeTab?: string
-				} @cuetsy(kind="interface")
-			}
+								// one of: '' | 'query' | 'starred';
+								homeTab?: string
+				} @cuetsy(kind="interface") //0.0
+			},
 		]
-	}
+	},
 ]
