@@ -15,7 +15,7 @@ export const modelVersion = Object.freeze([1, 0]);
 export interface PanelOptions {
   frameIndex: number;
   showHeader: boolean;
-  showRowNumbers: boolean;
+  showRowNumbers?: boolean;
   showTypeIcons?: boolean;
   sortBy?: TableSortByFieldState[];
   footer?: TableFooterCalc; // TODO: should be array (options builder is limited)
