@@ -111,7 +111,6 @@ func (s *SocialGitlab) UserInfo(client *http.Client, _ *oauth2.Token) (*BasicUse
 
 	var role roletype.RoleType
 	var isGrafanaAdmin *bool = nil
-	fmt.Printf("skipOrgrolesync %t\n", s.skipOrgRoleSync)
 	if !s.skipOrgRoleSync {
 		var grafanaAdmin bool
 		role, grafanaAdmin = s.extractRoleAndAdmin(response.Body, groups, true)
