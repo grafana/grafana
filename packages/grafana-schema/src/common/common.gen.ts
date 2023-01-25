@@ -527,7 +527,7 @@ export interface TableSortByFieldState {
 /**
  * TODO docs
  */
-export interface TableFooterCalc {
+export interface TableFooterOptions {
   countRows?: boolean;
   enablePagination?: boolean;
   fields?: Array<string>;
@@ -535,7 +535,7 @@ export interface TableFooterCalc {
   show: boolean;
 }
 
-export const defaultTableFooterCalc: Partial<TableFooterCalc> = {
+export const defaultTableFooterOptions: Partial<TableFooterOptions> = {
   fields: [],
   reducer: [],
 };
@@ -640,7 +640,7 @@ export interface TableFieldOptions {
 export const defaultTableFieldOptions: Partial<TableFieldOptions> = {
   align: 'auto',
   cellOptions: {
-    type: TableCellDisplayMode,
+    type: 'auto',
   },
   inspect: false,
 };

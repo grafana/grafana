@@ -30,7 +30,7 @@ composableKinds: PanelCfg: {
 							showTypeIcons: bool | *false
 							sortBy?: [...ui.TableSortByFieldState]
 							// TODO: should be array (options builder is limited)
-							footer?: ui.TableFooterCalc | *{
+							footer?: ui.TableFooterOptions | *{
 								show: false
 								countRows: false
 								reducer: []

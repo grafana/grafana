@@ -16,7 +16,7 @@ export interface PanelOptions {
   /**
    * TODO: should be array (options builder is limited)
    */
-  footer?: ui.TableFooterCalc;
+  footer?: ui.TableFooterOptions;
   frameIndex: number;
   showHeader: boolean;
   showTypeIcons: boolean;

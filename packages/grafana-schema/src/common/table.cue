@@ -18,7 +18,7 @@ TableSortByFieldState: {
 } @cuetsy(kind="interface")
 
 // TODO docs
-TableFooterCalc: {
+TableFooterOptions: {
 	show: bool
   reducer: [...string] // actually 1 value
   fields?: [...string]
@@ -70,7 +70,7 @@ TableFieldOptions: {
 	align: FieldTextAlignment | *"auto"
 	// This field is deprecated in favor of using cellOptions
 	displayMode?: TableCellDisplayMode
-	cellOptions: TableCellOptions | *{ type: TableCellDisplayMode | *"auto" }
+	cellOptions: TableCellOptions | *{ type: TableCellDisplayMode & "auto" }
 	hidden?:     bool // ?? default is missing or false ??
 	inspect: bool | *false
 	filterable?: bool
