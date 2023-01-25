@@ -17,7 +17,7 @@ ColorDimensionConfig: {
   _empty: _
 }@cuetsy(kind="interface")
 
-TextDimensionMode: "fixed" | "field" | "template" @cuetsy(kind="enum", memberNames="Fixed|Field|Template")
+TextDimensionMode: "fixed" | "field" | "template" @cuetsy(kind="enum")
 
 TextDimensionConfig: {
   BaseDimensionConfig

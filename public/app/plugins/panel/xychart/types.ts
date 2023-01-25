@@ -1,11 +1,5 @@
 import { DataFrame, Field, FieldColorMode } from '@grafana/data';
-import {
-  ColorDimensionConfig,
-  LineStyle,
-  ScaleDimensionConfig,
-  TextDimensionConfig,
-  VisibilityMode,
-} from '@grafana/schema';
+import { LineStyle, ScaleDimensionConfig, VisibilityMode } from '@grafana/schema';
 import { VizLegendItem } from '@grafana/ui';
 import { DimensionSupplier } from 'app/features/dimensions';
 
@@ -38,21 +32,14 @@ export interface LegendInfo {
 }
 
 export interface ScatterFieldConfig extends GeneratedScatterFieldConfig {
-  pointColor?: ColorDimensionConfig;
-  pointSize?: ScaleDimensionConfig;
-  labelValue?: TextDimensionConfig;
-  lineColor?: ColorDimensionConfig;
   pointSymbol?: DimensionSupplier<string>;
 }
 
 export const defaultScatterFieldConfig: Partial<ScatterFieldConfig> = {
-  show: generatedDefaultScatterFieldConfig.show,
-  label: generatedDefaultScatterFieldConfig.label,
+  ...generatedDefaultScatterFieldConfig,
 };
 
-export interface ScatterSeriesConfig
-  extends ScatterFieldConfig,
-    Omit<GeneratedScatterSeriesConfig, 'pointColor' | 'lineColor' | 'labelValue' | 'pointSize'> {}
+export interface ScatterSeriesConfig extends ScatterFieldConfig, GeneratedScatterSeriesConfig {}
 
 export interface PanelOptions extends Omit<GeneratedPanelOptions, 'series'> {
   series: ScatterSeriesConfig[];

@@ -31,7 +31,7 @@ composableKinds: PanelCfg: {
 				schemas: [
 					{
 
-						SeriesMapping: "auto" | "manual"                   @cuetsy(kind="enum",memberNames="Auto|Manual")
+						SeriesMapping: "auto" | "manual"                   @cuetsy(kind="enum")
 						ScatterShow:   "points" | "lines" | "points+lines" @cuetsy(kind="enum", memberNames="Points|Lines|PointsAndLines")
 
 						XYDimensionConfig: {
