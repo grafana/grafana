@@ -47,14 +47,15 @@ export const defaultCandlestickColors: Partial<CandlestickColors> = {
   up: 'green',
 };
 
-export interface CandlestickLegendOptions extends common.VizLegendOptions {
-  showLegend: boolean;
-}
-
-export const defaultCandlestickLegendOptions: Partial<CandlestickLegendOptions> = {
-  showLegend: true,
-};
-
+/**
+ * TODO have defaults for legend options once it is possible
+ * CandlestickLegendOptions: {
+ * 	common.VizLegendOptions
+ * 	displayMode: common.LegendDisplayMode & (*"list" | _)
+ * 	showLegend:  bool | *true
+ * 	placement:   common.LegendPlacement | *"bottom"
+ * } @cuetsy(kind="interface")
+ */
 export interface PanelOptions extends common.OptionsWithLegend {
   /**
    * TODO docs
@@ -76,18 +77,8 @@ export interface PanelOptions extends common.OptionsWithLegend {
    * When enabled, all fields will be sent to the graph
    */
   includeAllFields?: boolean;
-  legend: {
-    displayMode: LegendDisplayMode;
-    placement: LegendPlacement;
-    showLegend: boolean;
-    asTable?: boolean;
-    isVisible?: boolean;
-    sortBy?: string;
-    sortDesc?: boolean;
-    width?: number;
-    calcs: Array<string>;
-  };
   /**
+   * legend: CandlestickLegendOptions
    * TODO docs
    */
   mode: VizDisplayMode;

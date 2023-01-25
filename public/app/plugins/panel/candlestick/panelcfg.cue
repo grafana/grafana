@@ -50,15 +50,17 @@ composableKinds: PanelCfg: {
 							down: string | *"red"
 							flat: string | *"gray"
 						} @cuetsy(kind="interface")
-						CandlestickLegendOptions: {
-							common.VizLegendOptions
-							displayMode: common.LegendDisplayMode | *"list"
-							showLegend:  bool | *true
-							placement:   common.LegendPlacement | *"bottom"
-						} @cuetsy(kind="interface")
+						// TODO have defaults for legend options once it is possible
+						// CandlestickLegendOptions: {
+						// 	common.VizLegendOptions
+						// 	displayMode: common.LegendDisplayMode & (*"list" | _)
+						// 	showLegend:  bool | *true
+						// 	placement:   common.LegendPlacement | *"bottom"
+						// } @cuetsy(kind="interface")
 						PanelOptions: {
 							common.OptionsWithLegend
-							legend: CandlestickLegendOptions
+
+							// legend: CandlestickLegendOptions
 							// TODO docs
 							mode: VizDisplayMode | *"candles+volume"
 							// TODO docs
