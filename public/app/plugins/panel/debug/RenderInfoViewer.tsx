@@ -11,7 +11,7 @@ import {
 } from '@grafana/data';
 import { IconButton } from '@grafana/ui';
 
-import { DebugPanelOptions, UpdateCounters, UpdateConfig } from './types';
+import { DebugPanelOptions, UpdateCounters, UpdateConfig } from './panelcfg.gen';
 
 type Props = PanelProps<DebugPanelOptions>;
 

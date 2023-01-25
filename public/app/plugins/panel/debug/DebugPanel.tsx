@@ -6,7 +6,7 @@ import { CursorView } from './CursorView';
 import { EventBusLoggerPanel } from './EventBusLogger';
 import { RenderInfoViewer } from './RenderInfoViewer';
 import { StateView } from './StateView';
-import { DebugPanelOptions, DebugMode } from './types';
+import { DebugPanelOptions, DebugMode } from './panelcfg.gen';
 
 type Props = PanelProps<DebugPanelOptions>;
 

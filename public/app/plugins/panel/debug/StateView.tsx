@@ -3,7 +3,7 @@ import React, { FormEvent } from 'react';
 import { PanelOptionsEditorProps, PanelProps } from '@grafana/data';
 import { Field, Input, usePanelContext } from '@grafana/ui';
 
-import { DebugPanelOptions } from './types';
+import { DebugPanelOptions } from './panelcfg.gen';
 
 export function StateView(props: PanelProps<DebugPanelOptions>) {
   const context = usePanelContext();
