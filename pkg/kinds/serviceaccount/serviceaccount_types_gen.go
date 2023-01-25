@@ -46,8 +46,8 @@ type Serviceaccount struct {
 	// Name of the service account.
 	Name string `json:"name"`
 
-	// OrgID is the ID of an organisation the service account belongs to.
-	OrgID int64 `json:"orgID"`
+	// OrgId is the ID of an organisation the service account belongs to.
+	OrgId int64 `json:"orgId"`
 
 	// OrgRole is a Grafana Organization Role which can be 'Viewer', 'Editor', 'Admin'.
 	Role OrgRole `json:"role"`

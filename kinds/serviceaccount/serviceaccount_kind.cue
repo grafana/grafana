@@ -10,8 +10,8 @@ lineage: seqs: [
 			{
 				// ID is the unique identifier of the service account in the database.
 				id: int64 @grafanamaturity(ToMetadata="sys")
-				// OrgID is the ID of an organisation the service account belongs to.
-				orgID: int64 @grafanamaturity(ToMetadata="sys")
+				// OrgId is the ID of an organisation the service account belongs to.
+				orgId: int64 @grafanamaturity(ToMetadata="sys")
 				// Name of the service account.
 				name: string
 				// Login of the service account.

@@ -44,9 +44,9 @@ export interface Serviceaccount {
    */
   name: string;
   /**
-   * OrgID is the ID of an organisation the service account belongs to.
+   * OrgId is the ID of an organisation the service account belongs to.
    */
-  orgID: number;
+  orgId: number;
   /**
    * Role is the Grafana organization role of the service account which can be 'Viewer', 'Editor', 'Admin'.
    */

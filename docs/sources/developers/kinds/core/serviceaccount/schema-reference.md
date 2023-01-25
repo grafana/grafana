@@ -20,7 +20,7 @@ title: Serviceaccount kind
 | `isDisabled`    | boolean                  | **Yes**  | IsDisabled indicates if the service account is disabled.                                                                                |
 | `login`         | string                   | **Yes**  | Login of the service account.                                                                                                           |
 | `name`          | string                   | **Yes**  | Name of the service account.                                                                                                            |
-| `orgID`         | integer                  | **Yes**  | OrgID is the ID of an organisation the service account belongs to.                                                                      |
+| `orgId`         | integer                  | **Yes**  | OrgId is the ID of an organisation the service account belongs to.                                                                      |
 | `role`          | string                   | **Yes**  | OrgRole is a Grafana Organization Role which can be 'Viewer', 'Editor', 'Admin'. Possible values are: `Admin`, `Editor`, `Viewer`.      |
 | `tokens`        | integer                  | **Yes**  | Tokens is the number of active tokens for the service account.<br/>Tokens are used to authenticate the service account against Grafana. |
 | `accessControl` | [object](#accesscontrol) | No       | AccessControl metadata associated with a given resource.                                                                                |
