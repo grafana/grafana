@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
@@ -149,72 +148,6 @@ func TestRemovePrivateLabels(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			res := removePrivateLabels(tc.in)
-			require.Equal(t, tc.exp, res)
-		})
-	}
-}
-
-func TestParsePanelKey(t *testing.T) {
-	logger := log.NewNopLogger()
-
-	type testCase struct {
-		name string
-		in   models.AlertRule
-		exp  *panelKey
-	}
-
-	cases := []testCase{
-		{
-			name: "no dash UID",
-			in: models.AlertRule{
-				OrgID: 1,
-				Annotations: map[string]string{
-					models.PanelIDAnnotation: "123",
-				},
-			},
-			exp: nil,
-		},
-		{
-			name: "no panel ID",
-			in: models.AlertRule{
-				OrgID: 1,
-				Annotations: map[string]string{
-					models.DashboardUIDAnnotation: "abcd-uid",
-				},
-			},
-			exp: nil,
-		},
-		{
-			name: "invalid panel ID",
-			in: models.AlertRule{
-				OrgID: 1,
-				Annotations: map[string]string{
-					models.DashboardUIDAnnotation: "abcd-uid",
-					models.PanelIDAnnotation:      "bad-id",
-				},
-			},
-			exp: nil,
-		},
-		{
-			name: "success",
-			in: models.AlertRule{
-				OrgID: 1,
-				Annotations: map[string]string{
-					models.DashboardUIDAnnotation: "abcd-uid",
-					models.PanelIDAnnotation:      "123",
-				},
-			},
-			exp: &panelKey{
-				orgID:   1,
-				dashUID: "abcd-uid",
-				panelID: 123,
-			},
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			res := parsePanelKey(&tc.in, logger)
 			require.Equal(t, tc.exp, res)
 		})
 	}

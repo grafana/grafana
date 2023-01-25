@@ -1,16 +1,19 @@
-package models
+package entity
 
 //-----------------------------------------------------------------------------------------------------
 // NOTE: the object store is in heavy development, and the locations will likely continue to move
 //-----------------------------------------------------------------------------------------------------
 
-import "context"
+import (
+	"context"
+)
 
 const (
-	StandardKindDashboard = "dashboard"
-	StandardKindPlaylist  = "playlist"
-	StandardKindSnapshot  = "snapshot"
-	StandardKindFolder    = "folder"
+	StandardKindDashboard   = "dashboard"
+	StandardKindPlaylist    = "playlist"
+	StandardKindSnapshot    = "snapshot"
+	StandardKindFolder      = "folder"
+	StandardKindPreferences = "preferences"
 
 	// StandardKindDataSource: not a real kind yet, but used to define references from dashboards
 	// Types: influx, prometheus, testdata, ...
@@ -20,7 +23,7 @@ const (
 	// Standalone panel is not an object kind yet -- library panel, or nested in dashboard
 	StandardKindPanel = "panel"
 
-	// StandardKindSVG SVG file support
+	// entity.StandardKindSVG SVG file support
 	StandardKindSVG = "svg"
 
 	// StandardKindPNG PNG file support
@@ -110,20 +113,9 @@ type EntitySummary struct {
 	_ interface{}
 }
 
-// This will likely get replaced with a more general error framework.
-type EntityErrorInfo struct {
-	// TODO: Match an error code registry?
-	Code int64 `json:"code,omitempty"`
-
-	// Simple error display
-	Message string `json:"message,omitempty"`
-
-	// Error details
-	Details interface{} `json:"details,omitempty"`
-}
-
-// Identify the objects required for this entity to work properly
-// The values are uses to drive a search index to see what is required across the corpus
+// Reference to another object outside itself
+// This message is derived from the object body and can be used to search for references.
+// This does not represent a method to declare a reference to another object.
 type EntityExternalReference struct {
 	// Category of dependency
 	// eg: datasource, plugin, runtime

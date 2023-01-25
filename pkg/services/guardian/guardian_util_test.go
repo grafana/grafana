@@ -47,13 +47,14 @@ func orgRoleScenario(desc string, t *testing.T, role org.RoleType, fn scenarioFu
 		store := dbtest.NewFakeDB()
 
 		fakeDashboardService := dashboards.NewFakeDashboardService(t)
+		var qResult *dashboards.Dashboard
 		fakeDashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
 			q := args.Get(1).(*dashboards.GetDashboardQuery)
-			q.Result = &dashboards.Dashboard{
+			qResult = &dashboards.Dashboard{
 				ID:  q.ID,
 				UID: q.UID,
 			}
-		}).Return(nil)
+		}).Return(qResult, nil)
 		guard, err := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, fakeDashboardService, &teamtest.FakeService{})
 		require.NoError(t, err)
 
@@ -78,13 +79,14 @@ func apiKeyScenario(desc string, t *testing.T, role org.RoleType, fn scenarioFun
 		}
 		store := dbtest.NewFakeDB()
 		dashSvc := dashboards.NewFakeDashboardService(t)
+		var qResult *dashboards.Dashboard
 		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
 			q := args.Get(1).(*dashboards.GetDashboardQuery)
-			q.Result = &dashboards.Dashboard{
+			qResult = &dashboards.Dashboard{
 				ID:  q.ID,
 				UID: q.UID,
 			}
-		}).Return(nil)
+		}).Return(qResult, nil)
 		guard, err := newDashboardGuardian(context.Background(), dashboardID, orgID, user, store, dashSvc, &teamtest.FakeService{})
 		require.NoError(t, err)
 
@@ -114,18 +116,17 @@ func permissionScenario(desc string, dashboardID int64, sc *scenarioContext,
 		teamSvc := &teamtest.FakeService{ExpectedTeamsByUser: teams}
 
 		dashSvc := dashboards.NewFakeDashboardService(t)
-		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
-			q := args.Get(1).(*dashboards.GetDashboardACLInfoListQuery)
-			q.Result = permissions
-		}).Return(nil)
+		qResult := permissions
+		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
+		qResultDash := &dashboards.Dashboard{}
 		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
 			q := args.Get(1).(*dashboards.GetDashboardQuery)
-			q.Result = &dashboards.Dashboard{
+			qResultDash = &dashboards.Dashboard{
 				ID:    q.ID,
 				UID:   q.UID,
 				OrgID: q.OrgID,
 			}
-		}).Return(nil)
+		}).Return(qResultDash, nil)
 
 		sc.permissionScenario = desc
 		g, err := newDashboardGuardian(context.Background(), dashboardID, sc.givenUser.OrgID, sc.givenUser, store, dashSvc, teamSvc)
