@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -25,7 +25,7 @@ import (
 // 200: adminGetSettingsResponse
 // 401: unauthorisedError
 // 403: forbiddenError
-func (hs *HTTPServer) AdminGetSettings(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) AdminGetSettings(c *contextmodel.ReqContext) response.Response {
 	settings, err := hs.getAuthorizedSettings(c.Req.Context(), c.SignedInUser, hs.SettingsProvider.Current())
 	if err != nil {
 		return response.Error(http.StatusForbidden, "Failed to authorize settings", err)
@@ -45,7 +45,7 @@ func (hs *HTTPServer) AdminGetSettings(c *model.ReqContext) response.Response {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) AdminGetStats(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) AdminGetStats(c *contextmodel.ReqContext) response.Response {
 	statsQuery := stats.GetAdminStatsQuery{}
 
 	if err := hs.statsService.GetAdminStats(c.Req.Context(), &statsQuery); err != nil {

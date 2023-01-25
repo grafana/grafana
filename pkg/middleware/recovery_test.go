@@ -10,7 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -42,7 +42,7 @@ func TestRecoveryMiddleware(t *testing.T) {
 	})
 }
 
-func panicHandler(c *model.ReqContext) {
+func panicHandler(c *contextmodel.ReqContext) {
 	panic("Handler has panicked")
 }
 
@@ -73,7 +73,7 @@ func recoveryScenario(t *testing.T, desc string, url string, fn scenarioFunc) {
 		// mock out gc goroutine
 		sc.m.Use(OrgRedirect(cfg, sc.userService))
 
-		sc.defaultHandler = func(c *model.ReqContext) {
+		sc.defaultHandler = func(c *contextmodel.ReqContext) {
 			sc.context = c
 			if sc.handlerFunc != nil {
 				sc.handlerFunc(sc.context)

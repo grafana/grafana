@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	models2 "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -41,7 +41,7 @@ func TestToMacaronPath(t *testing.T) {
 }
 
 func TestAlertingProxy_createProxyContext(t *testing.T) {
-	ctx := &model.ReqContext{
+	ctx := &contextmodel.ReqContext{
 		Context: &web.Context{
 			Req: &http.Request{},
 		},

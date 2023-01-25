@@ -8,7 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -47,7 +47,7 @@ func (api *AccessControlAPI) RegisterAPIEndpoints() {
 }
 
 // GET /api/access-control/user/actions
-func (api *AccessControlAPI) getUserActions(c *model.ReqContext) response.Response {
+func (api *AccessControlAPI) getUserActions(c *contextmodel.ReqContext) response.Response {
 	reloadCache := c.QueryBool("reloadcache")
 	permissions, err := api.Service.GetUserPermissions(c.Req.Context(),
 		c.SignedInUser, ac.Options{ReloadCache: reloadCache})
@@ -59,7 +59,7 @@ func (api *AccessControlAPI) getUserActions(c *model.ReqContext) response.Respon
 }
 
 // GET /api/access-control/user/permissions
-func (api *AccessControlAPI) getUserPermissions(c *model.ReqContext) response.Response {
+func (api *AccessControlAPI) getUserPermissions(c *contextmodel.ReqContext) response.Response {
 	reloadCache := c.QueryBool("reloadcache")
 	permissions, err := api.Service.GetUserPermissions(c.Req.Context(),
 		c.SignedInUser, ac.Options{ReloadCache: reloadCache})
@@ -71,7 +71,7 @@ func (api *AccessControlAPI) getUserPermissions(c *model.ReqContext) response.Re
 }
 
 // GET /api/access-control/users/permissions
-func (api *AccessControlAPI) searchUsersPermissions(c *model.ReqContext) response.Response {
+func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) response.Response {
 	searchOptions := ac.SearchOptions{
 		ActionPrefix: c.Query("actionPrefix"),
 		Action:       c.Query("action"),
@@ -98,7 +98,7 @@ func (api *AccessControlAPI) searchUsersPermissions(c *model.ReqContext) respons
 }
 
 // GET /api/access-control/user/:userID/permissions/search
-func (api *AccessControlAPI) searchUserPermissions(c *model.ReqContext) response.Response {
+func (api *AccessControlAPI) searchUserPermissions(c *contextmodel.ReqContext) response.Response {
 	userIDString := web.Params(c.Req)[":userID"]
 	userID, err := strconv.ParseInt(userIDString, 10, 64)
 	if err != nil {

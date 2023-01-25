@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/quota"
@@ -55,7 +55,7 @@ func (api *ImportDashboardAPI) RegisterAPIEndpoints(routeRegister routing.RouteR
 // 412: preconditionFailedError
 // 422: unprocessableEntityError
 // 500: internalServerError
-func (api *ImportDashboardAPI) ImportDashboard(c *model.ReqContext) response.Response {
+func (api *ImportDashboardAPI) ImportDashboard(c *contextmodel.ReqContext) response.Response {
 	req := dashboardimport.ImportDashboardRequest{}
 	if err := web.Bind(c.Req, &req); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -84,12 +84,12 @@ func (api *ImportDashboardAPI) ImportDashboard(c *model.ReqContext) response.Res
 }
 
 type QuotaService interface {
-	QuotaReached(c *model.ReqContext, target quota.TargetSrv) (bool, error)
+	QuotaReached(c *contextmodel.ReqContext, target quota.TargetSrv) (bool, error)
 }
 
-type quotaServiceFunc func(c *model.ReqContext, target quota.TargetSrv) (bool, error)
+type quotaServiceFunc func(c *contextmodel.ReqContext, target quota.TargetSrv) (bool, error)
 
-func (fn quotaServiceFunc) QuotaReached(c *model.ReqContext, target quota.TargetSrv) (bool, error) {
+func (fn quotaServiceFunc) QuotaReached(c *contextmodel.ReqContext, target quota.TargetSrv) (bool, error) {
 	return fn(c, target)
 }
 

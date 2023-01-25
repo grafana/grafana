@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -33,7 +33,7 @@ var client = &http.Client{
 // Responses:
 // 200: getSharingOptionsResponse
 // 401: unauthorisedError
-func GetSharingOptions(c *model.ReqContext) {
+func GetSharingOptions(c *contextmodel.ReqContext) {
 	c.JSON(http.StatusOK, util.DynMap{
 		"externalSnapshotURL":  setting.ExternalSnapshotUrl,
 		"externalSnapshotName": setting.ExternalSnapshotName,
@@ -104,7 +104,7 @@ func createOriginalDashboardURL(appURL string, cmd *dashboardsnapshots.CreateDas
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) CreateDashboardSnapshot(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) CreateDashboardSnapshot(c *contextmodel.ReqContext) response.Response {
 	cmd := dashboardsnapshots.CreateDashboardSnapshotCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -193,7 +193,7 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *model.ReqContext) response.Resp
 // 400: badRequestError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetDashboardSnapshot(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) GetDashboardSnapshot(c *contextmodel.ReqContext) response.Response {
 	key := web.Params(c.Req)[":key"]
 	if len(key) == 0 {
 		return response.Error(http.StatusBadRequest, "Empty snapshot key", nil)
@@ -272,7 +272,7 @@ func deleteExternalDashboardSnapshot(externalUrl string) error {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *contextmodel.ReqContext) response.Response {
 	key := web.Params(c.Req)[":deleteKey"]
 	if len(key) == 0 {
 		return response.Error(404, "Snapshot not found", nil)
@@ -312,7 +312,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *model.ReqContext) re
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) DeleteDashboardSnapshot(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) DeleteDashboardSnapshot(c *contextmodel.ReqContext) response.Response {
 	key := web.Params(c.Req)[":key"]
 	if len(key) == 0 {
 		return response.Error(http.StatusNotFound, "Snapshot not found", nil)
@@ -377,7 +377,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *model.ReqContext) response.Resp
 // Responses:
 // 200: searchDashboardSnapshotsResponse
 // 500: internalServerError
-func (hs *HTTPServer) SearchDashboardSnapshots(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) SearchDashboardSnapshots(c *contextmodel.ReqContext) response.Response {
 	query := c.Query("query")
 	limit := c.QueryInt("limit")
 

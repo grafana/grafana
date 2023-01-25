@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -26,7 +26,7 @@ type AuthOptions struct {
 	ReqNoAnonynmous bool
 }
 
-func accessForbidden(c *model.ReqContext) {
+func accessForbidden(c *contextmodel.ReqContext) {
 	if c.IsApiRequest() {
 		c.JsonApiErr(403, "Permission denied", nil)
 		return
@@ -35,7 +35,7 @@ func accessForbidden(c *model.ReqContext) {
 	c.Redirect(setting.AppSubUrl + "/")
 }
 
-func notAuthorized(c *model.ReqContext) {
+func notAuthorized(c *contextmodel.ReqContext) {
 	if c.IsApiRequest() {
 		c.JsonApiErr(401, "Unauthorized", nil)
 		return
@@ -45,7 +45,7 @@ func notAuthorized(c *model.ReqContext) {
 	c.Redirect(setting.AppSubUrl + "/login")
 }
 
-func tokenRevoked(c *model.ReqContext, err *auth.TokenRevokedError) {
+func tokenRevoked(c *contextmodel.ReqContext, err *auth.TokenRevokedError) {
 	if c.IsApiRequest() {
 		c.JSON(401, map[string]interface{}{
 			"message": "Token revoked",
@@ -61,7 +61,7 @@ func tokenRevoked(c *model.ReqContext, err *auth.TokenRevokedError) {
 	c.Redirect(setting.AppSubUrl + "/login")
 }
 
-func writeRedirectCookie(c *model.ReqContext) {
+func writeRedirectCookie(c *contextmodel.ReqContext) {
 	redirectTo := c.Req.RequestURI
 	if setting.AppSubUrl != "" && !strings.HasPrefix(redirectTo, setting.AppSubUrl) {
 		redirectTo = setting.AppSubUrl + c.Req.RequestURI
@@ -82,14 +82,14 @@ func removeForceLoginParams(str string) string {
 	return forceLoginParamsRegexp.ReplaceAllString(str, "")
 }
 
-func EnsureEditorOrViewerCanEdit(c *model.ReqContext) {
+func EnsureEditorOrViewerCanEdit(c *contextmodel.ReqContext) {
 	if !c.SignedInUser.HasRole(org.RoleEditor) && !setting.ViewersCanEdit {
 		accessForbidden(c)
 	}
 }
 
-func CanAdminPlugins(cfg *setting.Cfg) func(c *model.ReqContext) {
-	return func(c *model.ReqContext) {
+func CanAdminPlugins(cfg *setting.Cfg) func(c *contextmodel.ReqContext) {
+	return func(c *contextmodel.ReqContext) {
 		if !plugins.ReqCanAdminPlugins(cfg)(c) {
 			accessForbidden(c)
 			return
@@ -98,7 +98,7 @@ func CanAdminPlugins(cfg *setting.Cfg) func(c *model.ReqContext) {
 }
 
 func RoleAuth(roles ...org.RoleType) web.Handler {
-	return func(c *model.ReqContext) {
+	return func(c *contextmodel.ReqContext) {
 		ok := false
 		for _, role := range roles {
 			if role == c.OrgRole {
@@ -113,7 +113,7 @@ func RoleAuth(roles ...org.RoleType) web.Handler {
 }
 
 func Auth(options *AuthOptions) web.Handler {
-	return func(c *model.ReqContext) {
+	return func(c *contextmodel.ReqContext) {
 		forceLogin := false
 		if c.AllowAnonymous {
 			forceLogin = shouldForceLogin(c)
@@ -152,7 +152,7 @@ func Auth(options *AuthOptions) web.Handler {
 // Intended for when feature flags open up access to APIs that
 // are otherwise only available to admins.
 func AdminOrEditorAndFeatureEnabled(enabled bool) web.Handler {
-	return func(c *model.ReqContext) {
+	return func(c *contextmodel.ReqContext) {
 		if c.OrgRole == org.RoleAdmin {
 			return
 		}
@@ -168,7 +168,7 @@ func AdminOrEditorAndFeatureEnabled(enabled bool) web.Handler {
 // SnapshotPublicModeOrSignedIn creates a middleware that allows access
 // if snapshot public mode is enabled or if user is signed in.
 func SnapshotPublicModeOrSignedIn(cfg *setting.Cfg) web.Handler {
-	return func(c *model.ReqContext) {
+	return func(c *contextmodel.ReqContext) {
 		if cfg.SnapshotPublicMode {
 			return
 		}
@@ -180,7 +180,7 @@ func SnapshotPublicModeOrSignedIn(cfg *setting.Cfg) web.Handler {
 	}
 }
 
-func ReqNotSignedIn(c *model.ReqContext) {
+func ReqNotSignedIn(c *contextmodel.ReqContext) {
 	if c.IsSignedIn {
 		c.Redirect(setting.AppSubUrl + "/")
 	}
@@ -189,7 +189,7 @@ func ReqNotSignedIn(c *model.ReqContext) {
 // NoAuth creates a middleware that doesn't require any authentication.
 // If forceLogin param is set it will redirect the user to the login page.
 func NoAuth() web.Handler {
-	return func(c *model.ReqContext) {
+	return func(c *contextmodel.ReqContext) {
 		if shouldForceLogin(c) {
 			notAuthorized(c)
 			return
@@ -199,7 +199,7 @@ func NoAuth() web.Handler {
 
 // shouldForceLogin checks if user should be enforced to login.
 // Returns true if forceLogin parameter is set.
-func shouldForceLogin(c *model.ReqContext) bool {
+func shouldForceLogin(c *contextmodel.ReqContext) bool {
 	forceLogin := false
 	forceLoginParam, err := strconv.ParseBool(c.Req.URL.Query().Get("forceLogin"))
 	if err == nil {
@@ -209,8 +209,8 @@ func shouldForceLogin(c *model.ReqContext) bool {
 	return forceLogin
 }
 
-func OrgAdminDashOrFolderAdminOrTeamAdmin(ss db.DB, ds dashboards.DashboardService, ts team.Service) func(c *model.ReqContext) {
-	return func(c *model.ReqContext) {
+func OrgAdminDashOrFolderAdminOrTeamAdmin(ss db.DB, ds dashboards.DashboardService, ts team.Service) func(c *contextmodel.ReqContext) {
+	return func(c *contextmodel.ReqContext) {
 		if c.OrgRole == org.RoleAdmin {
 			return
 		}

@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/stretchr/testify/assert"
@@ -89,7 +89,7 @@ func logSentryEventScenario(t *testing.T, desc string, event frontendlogging.Fro
 
 		loggingHandler := NewFrontendLogMessageHandler(sourceMapStore)
 
-		handler := routing.Wrap(func(c *model.ReqContext) response.Response {
+		handler := routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			sc.context = c
 			c.Req.Body = mockRequestBody(event)
 			c.Req.Header.Add("Content-Type", "application/json")
@@ -162,7 +162,7 @@ func logGrafanaJavascriptAgentEventScenario(t *testing.T, desc string, event fro
 
 		loggingHandler := GrafanaJavascriptAgentLogMessageHandler(sourceMapStore)
 
-		handler := routing.Wrap(func(c *model.ReqContext) response.Response {
+		handler := routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			sc.context = c
 			c.Req.Body = mockRequestBody(event)
 			c.Req.Header.Add("Content-Type", "application/json")

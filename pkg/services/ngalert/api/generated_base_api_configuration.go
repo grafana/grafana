@@ -12,33 +12,33 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 type ConfigurationApi interface {
-	RouteDeleteNGalertConfig(*model.ReqContext) response.Response
-	RouteGetAlertmanagers(*model.ReqContext) response.Response
-	RouteGetNGalertConfig(*model.ReqContext) response.Response
-	RouteGetStatus(*model.ReqContext) response.Response
-	RoutePostNGalertConfig(*model.ReqContext) response.Response
+	RouteDeleteNGalertConfig(*contextmodel.ReqContext) response.Response
+	RouteGetAlertmanagers(*contextmodel.ReqContext) response.Response
+	RouteGetNGalertConfig(*contextmodel.ReqContext) response.Response
+	RouteGetStatus(*contextmodel.ReqContext) response.Response
+	RoutePostNGalertConfig(*contextmodel.ReqContext) response.Response
 }
 
-func (f *ConfigurationApiHandler) RouteDeleteNGalertConfig(ctx *model.ReqContext) response.Response {
+func (f *ConfigurationApiHandler) RouteDeleteNGalertConfig(ctx *contextmodel.ReqContext) response.Response {
 	return f.handleRouteDeleteNGalertConfig(ctx)
 }
-func (f *ConfigurationApiHandler) RouteGetAlertmanagers(ctx *model.ReqContext) response.Response {
+func (f *ConfigurationApiHandler) RouteGetAlertmanagers(ctx *contextmodel.ReqContext) response.Response {
 	return f.handleRouteGetAlertmanagers(ctx)
 }
-func (f *ConfigurationApiHandler) RouteGetNGalertConfig(ctx *model.ReqContext) response.Response {
+func (f *ConfigurationApiHandler) RouteGetNGalertConfig(ctx *contextmodel.ReqContext) response.Response {
 	return f.handleRouteGetNGalertConfig(ctx)
 }
-func (f *ConfigurationApiHandler) RouteGetStatus(ctx *model.ReqContext) response.Response {
+func (f *ConfigurationApiHandler) RouteGetStatus(ctx *contextmodel.ReqContext) response.Response {
 	return f.handleRouteGetStatus(ctx)
 }
-func (f *ConfigurationApiHandler) RoutePostNGalertConfig(ctx *model.ReqContext) response.Response {
+func (f *ConfigurationApiHandler) RoutePostNGalertConfig(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Request Body
 	conf := apimodels.PostableNGalertConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {

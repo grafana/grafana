@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/multildap"
@@ -118,7 +118,7 @@ func (user *LDAPUserDTO) FetchOrgs(ctx context.Context, orga org.Service) error 
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) ReloadLDAPCfg(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) ReloadLDAPCfg(c *contextmodel.ReqContext) response.Response {
 	if !ldap.IsEnabled() {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
@@ -144,7 +144,7 @@ func (hs *HTTPServer) ReloadLDAPCfg(c *model.ReqContext) response.Response {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) GetLDAPStatus(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) GetLDAPStatus(c *contextmodel.ReqContext) response.Response {
 	if !ldap.IsEnabled() {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
@@ -197,7 +197,7 @@ func (hs *HTTPServer) GetLDAPStatus(c *model.ReqContext) response.Response {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) PostSyncUserWithLDAP(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) PostSyncUserWithLDAP(c *contextmodel.ReqContext) response.Response {
 	if !ldap.IsEnabled() {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
@@ -293,7 +293,7 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *model.ReqContext) response.Respons
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) GetUserFromLDAP(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) GetUserFromLDAP(c *contextmodel.ReqContext) response.Response {
 	if !ldap.IsEnabled() {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}

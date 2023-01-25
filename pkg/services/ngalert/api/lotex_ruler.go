@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/web"
 	"gopkg.in/yaml.v3"
@@ -55,7 +55,7 @@ func NewLotexRuler(proxy *AlertingProxy, log log.Logger) *LotexRuler {
 	}
 }
 
-func (r *LotexRuler) RouteDeleteNamespaceRulesConfig(ctx *model.ReqContext, namespace string) response.Response {
+func (r *LotexRuler) RouteDeleteNamespaceRulesConfig(ctx *contextmodel.ReqContext, namespace string) response.Response {
 	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
@@ -73,7 +73,7 @@ func (r *LotexRuler) RouteDeleteNamespaceRulesConfig(ctx *model.ReqContext, name
 	)
 }
 
-func (r *LotexRuler) RouteDeleteRuleGroupConfig(ctx *model.ReqContext, namespace string, group string) response.Response {
+func (r *LotexRuler) RouteDeleteRuleGroupConfig(ctx *contextmodel.ReqContext, namespace string, group string) response.Response {
 	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
@@ -96,7 +96,7 @@ func (r *LotexRuler) RouteDeleteRuleGroupConfig(ctx *model.ReqContext, namespace
 	)
 }
 
-func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *model.ReqContext, namespace string) response.Response {
+func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *contextmodel.ReqContext, namespace string) response.Response {
 	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
@@ -118,7 +118,7 @@ func (r *LotexRuler) RouteGetNamespaceRulesConfig(ctx *model.ReqContext, namespa
 	)
 }
 
-func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *model.ReqContext, namespace string, group string) response.Response {
+func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *contextmodel.ReqContext, namespace string, group string) response.Response {
 	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
@@ -141,7 +141,7 @@ func (r *LotexRuler) RouteGetRulegGroupConfig(ctx *model.ReqContext, namespace s
 	)
 }
 
-func (r *LotexRuler) RouteGetRulesConfig(ctx *model.ReqContext) response.Response {
+func (r *LotexRuler) RouteGetRulesConfig(ctx *contextmodel.ReqContext) response.Response {
 	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
@@ -160,7 +160,7 @@ func (r *LotexRuler) RouteGetRulesConfig(ctx *model.ReqContext) response.Respons
 	)
 }
 
-func (r *LotexRuler) RoutePostNameRulesConfig(ctx *model.ReqContext, conf apimodels.PostableRuleGroupConfig, ns string) response.Response {
+func (r *LotexRuler) RoutePostNameRulesConfig(ctx *contextmodel.ReqContext, conf apimodels.PostableRuleGroupConfig, ns string) response.Response {
 	legacyRulerPrefix, err := r.validateAndGetPrefix(ctx)
 	if err != nil {
 		return ErrResp(500, err, "")
@@ -173,7 +173,7 @@ func (r *LotexRuler) RoutePostNameRulesConfig(ctx *model.ReqContext, conf apimod
 	return r.withReq(ctx, http.MethodPost, u, bytes.NewBuffer(yml), jsonExtractor(nil), nil)
 }
 
-func (r *LotexRuler) validateAndGetPrefix(ctx *model.ReqContext) (string, error) {
+func (r *LotexRuler) validateAndGetPrefix(ctx *contextmodel.ReqContext) (string, error) {
 	datasourceUID := web.Params(ctx.Req)[":DatasourceUID"]
 	if datasourceUID == "" {
 		return "", fmt.Errorf("datasource UID is invalid")

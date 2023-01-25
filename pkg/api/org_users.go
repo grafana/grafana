@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -33,7 +33,7 @@ import (
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) AddOrgUserToCurrentOrg(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) AddOrgUserToCurrentOrg(c *contextmodel.ReqContext) response.Response {
 	cmd := org.AddOrgUserCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -56,7 +56,7 @@ func (hs *HTTPServer) AddOrgUserToCurrentOrg(c *model.ReqContext) response.Respo
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) AddOrgUser(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) AddOrgUser(c *contextmodel.ReqContext) response.Response {
 	cmd := org.AddOrgUserCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -70,7 +70,7 @@ func (hs *HTTPServer) AddOrgUser(c *model.ReqContext) response.Response {
 	return hs.addOrgUserHelper(c, cmd)
 }
 
-func (hs *HTTPServer) addOrgUserHelper(c *model.ReqContext, cmd org.AddOrgUserCommand) response.Response {
+func (hs *HTTPServer) addOrgUserHelper(c *contextmodel.ReqContext, cmd org.AddOrgUserCommand) response.Response {
 	if !cmd.Role.IsValid() {
 		return response.Error(400, "Invalid role specified", nil)
 	}
@@ -115,7 +115,7 @@ func (hs *HTTPServer) addOrgUserHelper(c *model.ReqContext, cmd org.AddOrgUserCo
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *contextmodel.ReqContext) response.Response {
 	result, err := hs.searchOrgUsersHelper(c, &org.SearchOrgUsersQuery{
 		OrgID: c.OrgID,
 		Query: c.Query("query"),
@@ -144,7 +144,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *model.ReqContext) response.Res
 // 403: forbiddenError
 // 500: internalServerError
 
-func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *contextmodel.ReqContext) response.Response {
 	orgUsersResult, err := hs.searchOrgUsersHelper(c, &org.SearchOrgUsersQuery{
 		OrgID:                    c.OrgID,
 		Query:                    c.Query("query"),
@@ -185,7 +185,7 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrgLookup(c *model.ReqContext) respon
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) GetOrgUsers(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) GetOrgUsers(c *contextmodel.ReqContext) response.Response {
 	orgId, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
@@ -220,7 +220,7 @@ func (hs *HTTPServer) GetOrgUsers(c *model.ReqContext) response.Response {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) SearchOrgUsers(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) SearchOrgUsers(c *contextmodel.ReqContext) response.Response {
 	orgID, err := strconv.ParseInt(web.Params(c.Req)[":orgId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "orgId is invalid", err)
@@ -253,7 +253,7 @@ func (hs *HTTPServer) SearchOrgUsers(c *model.ReqContext) response.Response {
 
 // SearchOrgUsersWithPaging is an HTTP handler to search for org users with paging.
 // GET /api/org/users/search
-func (hs *HTTPServer) SearchOrgUsersWithPaging(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) SearchOrgUsersWithPaging(c *contextmodel.ReqContext) response.Response {
 	perPage := c.QueryInt("perpage")
 	if perPage <= 0 {
 		perPage = 1000
@@ -280,7 +280,7 @@ func (hs *HTTPServer) SearchOrgUsersWithPaging(c *model.ReqContext) response.Res
 	return response.JSON(http.StatusOK, result)
 }
 
-func (hs *HTTPServer) searchOrgUsersHelper(c *model.ReqContext, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
+func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *org.SearchOrgUsersQuery) (*org.SearchOrgUsersQueryResult, error) {
 	result, err := hs.orgService.SearchOrgUsers(c.Req.Context(), query)
 	if err != nil {
 		return nil, err
@@ -336,7 +336,7 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *model.ReqContext, query *org.Searc
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateOrgUserForCurrentOrg(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateOrgUserForCurrentOrg(c *contextmodel.ReqContext) response.Response {
 	cmd := org.UpdateOrgUserCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -363,7 +363,7 @@ func (hs *HTTPServer) UpdateOrgUserForCurrentOrg(c *model.ReqContext) response.R
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateOrgUser(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateOrgUser(c *contextmodel.ReqContext) response.Response {
 	cmd := org.UpdateOrgUserCommand{}
 	var err error
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -380,7 +380,7 @@ func (hs *HTTPServer) UpdateOrgUser(c *model.ReqContext) response.Response {
 	return hs.updateOrgUserHelper(c, cmd)
 }
 
-func (hs *HTTPServer) updateOrgUserHelper(c *model.ReqContext, cmd org.UpdateOrgUserCommand) response.Response {
+func (hs *HTTPServer) updateOrgUserHelper(c *contextmodel.ReqContext, cmd org.UpdateOrgUserCommand) response.Response {
 	if !cmd.Role.IsValid() {
 		return response.Error(400, "Invalid role specified", nil)
 	}
@@ -410,7 +410,7 @@ func (hs *HTTPServer) updateOrgUserHelper(c *model.ReqContext, cmd org.UpdateOrg
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) RemoveOrgUserForCurrentOrg(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) RemoveOrgUserForCurrentOrg(c *contextmodel.ReqContext) response.Response {
 	userId, err := strconv.ParseInt(web.Params(c.Req)[":userId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "userId is invalid", err)
@@ -436,7 +436,7 @@ func (hs *HTTPServer) RemoveOrgUserForCurrentOrg(c *model.ReqContext) response.R
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) RemoveOrgUser(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) RemoveOrgUser(c *contextmodel.ReqContext) response.Response {
 	userId, err := strconv.ParseInt(web.Params(c.Req)[":userId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "userId is invalid", err)

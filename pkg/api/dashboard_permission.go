@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/web"
@@ -42,7 +42,7 @@ import (
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetDashboardPermissionList(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) GetDashboardPermissionList(c *contextmodel.ReqContext) response.Response {
 	var dashID int64
 	var err error
 	dashUID := web.Params(c.Req)[":uid"]
@@ -124,7 +124,7 @@ func (hs *HTTPServer) GetDashboardPermissionList(c *model.ReqContext) response.R
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateDashboardPermissions(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateDashboardPermissions(c *contextmodel.ReqContext) response.Response {
 	var dashID int64
 	var err error
 	apiCmd := dtos.UpdateDashboardACLCommand{}

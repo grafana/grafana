@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
@@ -130,7 +130,7 @@ type ClientDecoratorTest struct {
 	TestClient      *TestClient
 	Middlewares     []plugins.ClientMiddleware
 	Decorator       *client.Decorator
-	ReqContext      *model.ReqContext
+	ReqContext      *contextmodel.ReqContext
 	QueryDataReq    *backend.QueryDataRequest
 	QueryDataCtx    context.Context
 	CallResourceReq *backend.CallResourceRequest
@@ -181,7 +181,7 @@ func NewClientDecoratorTest(t *testing.T, opts ...ClientDecoratorTestOption) *Cl
 func WithReqContext(req *http.Request, user *user.SignedInUser) ClientDecoratorTestOption {
 	return ClientDecoratorTestOption(func(cdt *ClientDecoratorTest) {
 		if cdt.ReqContext == nil {
-			cdt.ReqContext = &model.ReqContext{
+			cdt.ReqContext = &contextmodel.ReqContext{
 				Context:      &web.Context{},
 				SignedInUser: user,
 			}

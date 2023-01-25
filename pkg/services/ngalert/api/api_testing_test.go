@@ -11,7 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acMock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakes "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -24,7 +24,7 @@ import (
 
 func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 	t.Run("when fine-grained access is enabled", func(t *testing.T) {
-		rc := &model.ReqContext{
+		rc := &contextmodel.ReqContext{
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
@@ -95,7 +95,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 	})
 
 	t.Run("when fine-grained access is disabled", func(t *testing.T) {
-		rc := &model.ReqContext{
+		rc := &contextmodel.ReqContext{
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
@@ -152,7 +152,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 
 func TestRouteEvalQueries(t *testing.T) {
 	t.Run("when fine-grained access is enabled", func(t *testing.T) {
-		rc := &model.ReqContext{
+		rc := &contextmodel.ReqContext{
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
@@ -222,7 +222,7 @@ func TestRouteEvalQueries(t *testing.T) {
 	})
 
 	t.Run("when fine-grained access is disabled", func(t *testing.T) {
-		rc := &model.ReqContext{
+		rc := &contextmodel.ReqContext{
 			Context: &web.Context{
 				Req: &http.Request{},
 			},

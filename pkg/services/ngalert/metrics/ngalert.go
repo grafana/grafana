@@ -12,7 +12,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/util/ticker"
 
@@ -305,12 +305,12 @@ func (m *OrgRegistries) RemoveOrgRegistry(org int64) {
 func Instrument(
 	method,
 	path string,
-	action func(*model.ReqContext) response.Response,
+	action func(*contextmodel.ReqContext) response.Response,
 	metrics *API,
 ) web.Handler {
 	normalizedPath := MakeLabelValue(path)
 
-	return func(c *model.ReqContext) {
+	return func(c *contextmodel.ReqContext) {
 		start := time.Now()
 		res := action(c)
 

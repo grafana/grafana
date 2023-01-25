@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -24,7 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func (hs *HTTPServer) ValidateOrgAlert(c *model.ReqContext) {
+func (hs *HTTPServer) ValidateOrgAlert(c *contextmodel.ReqContext) {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":alertId"], 10, 64)
 	if err != nil {
 		c.JsonApiErr(http.StatusBadRequest, "alertId is invalid", nil)
@@ -52,7 +52,7 @@ func (hs *HTTPServer) ValidateOrgAlert(c *model.ReqContext) {
 // 200: getDashboardStatesResponse
 // 400: badRequestError
 // 500: internalServerError
-func (hs *HTTPServer) GetAlertStatesForDashboard(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) GetAlertStatesForDashboard(c *contextmodel.ReqContext) response.Response {
 	dashboardID := c.QueryInt64("dashboardId")
 
 	if dashboardID == 0 {
@@ -79,7 +79,7 @@ func (hs *HTTPServer) GetAlertStatesForDashboard(c *model.ReqContext) response.R
 // 200: getAlertsResponse
 // 401: unauthorisedError
 // 500: internalServerError
-func (hs *HTTPServer) GetAlerts(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) GetAlerts(c *contextmodel.ReqContext) response.Response {
 	dashboardQuery := c.Query("dashboardQuery")
 	dashboardTags := c.QueryStrings("dashboardTag")
 	stringDashboardIDs := c.QueryStrings("dashboardId")
@@ -166,7 +166,7 @@ func (hs *HTTPServer) GetAlerts(c *model.ReqContext) response.Response {
 // 422: unprocessableEntityError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) AlertTest(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) AlertTest(c *contextmodel.ReqContext) response.Response {
 	dto := dtos.AlertTestCommand{}
 	if err := web.Bind(c.Req, &dto); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -220,7 +220,7 @@ func (hs *HTTPServer) AlertTest(c *model.ReqContext) response.Response {
 // 200: getAlertResponse
 // 401: unauthorisedError
 // 500: internalServerError
-func (hs *HTTPServer) GetAlert(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) GetAlert(c *contextmodel.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":alertId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "alertId is invalid", err)
@@ -234,8 +234,8 @@ func (hs *HTTPServer) GetAlert(c *model.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, &query.Result)
 }
 
-func (hs *HTTPServer) GetAlertNotifiers(ngalertEnabled bool) func(*model.ReqContext) response.Response {
-	return func(_ *model.ReqContext) response.Response {
+func (hs *HTTPServer) GetAlertNotifiers(ngalertEnabled bool) func(*contextmodel.ReqContext) response.Response {
+	return func(_ *contextmodel.ReqContext) response.Response {
 		if ngalertEnabled {
 			return response.JSON(http.StatusOK, channels_config.GetAvailableNotifiers())
 		}
@@ -256,7 +256,7 @@ func (hs *HTTPServer) GetAlertNotifiers(ngalertEnabled bool) func(*model.ReqCont
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) GetAlertNotificationLookup(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) GetAlertNotificationLookup(c *contextmodel.ReqContext) response.Response {
 	alertNotifications, err := hs.getAlertNotificationsInternal(c)
 	if err != nil {
 		return response.Error(500, "Failed to get alert notifications", err)
@@ -282,7 +282,7 @@ func (hs *HTTPServer) GetAlertNotificationLookup(c *model.ReqContext) response.R
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) GetAlertNotifications(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) GetAlertNotifications(c *contextmodel.ReqContext) response.Response {
 	alertNotifications, err := hs.getAlertNotificationsInternal(c)
 	if err != nil {
 		return response.Error(500, "Failed to get alert notifications", err)
@@ -297,7 +297,7 @@ func (hs *HTTPServer) GetAlertNotifications(c *model.ReqContext) response.Respon
 	return response.JSON(http.StatusOK, result)
 }
 
-func (hs *HTTPServer) getAlertNotificationsInternal(c *model.ReqContext) ([]*alertmodels.AlertNotification, error) {
+func (hs *HTTPServer) getAlertNotificationsInternal(c *contextmodel.ReqContext) ([]*alertmodels.AlertNotification, error) {
 	query := &alertmodels.GetAllAlertNotificationsQuery{OrgId: c.OrgID}
 
 	if err := hs.AlertNotificationService.GetAllAlertNotifications(c.Req.Context(), query); err != nil {
@@ -319,7 +319,7 @@ func (hs *HTTPServer) getAlertNotificationsInternal(c *model.ReqContext) ([]*ale
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetAlertNotificationByID(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) GetAlertNotificationByID(c *contextmodel.ReqContext) response.Response {
 	notificationId, err := strconv.ParseInt(web.Params(c.Req)[":notificationId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "notificationId is invalid", err)
@@ -356,7 +356,7 @@ func (hs *HTTPServer) GetAlertNotificationByID(c *model.ReqContext) response.Res
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetAlertNotificationByUID(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) GetAlertNotificationByUID(c *contextmodel.ReqContext) response.Response {
 	query := &alertmodels.GetAlertNotificationsWithUidQuery{
 		OrgId: c.OrgID,
 		Uid:   web.Params(c.Req)[":uid"],
@@ -389,7 +389,7 @@ func (hs *HTTPServer) GetAlertNotificationByUID(c *model.ReqContext) response.Re
 // 403: forbiddenError
 // 409: conflictError
 // 500: internalServerError
-func (hs *HTTPServer) CreateAlertNotification(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) CreateAlertNotification(c *contextmodel.ReqContext) response.Response {
 	cmd := alertmodels.CreateAlertNotificationCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -422,7 +422,7 @@ func (hs *HTTPServer) CreateAlertNotification(c *model.ReqContext) response.Resp
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateAlertNotification(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateAlertNotification(c *contextmodel.ReqContext) response.Response {
 	cmd := alertmodels.UpdateAlertNotificationCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -469,7 +469,7 @@ func (hs *HTTPServer) UpdateAlertNotification(c *model.ReqContext) response.Resp
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateAlertNotificationByUID(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateAlertNotificationByUID(c *contextmodel.ReqContext) response.Response {
 	cmd := alertmodels.UpdateAlertNotificationWithUidCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -569,7 +569,7 @@ func (hs *HTTPServer) fillWithSecureSettingsDataByUID(ctx context.Context, cmd *
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) DeleteAlertNotification(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) DeleteAlertNotification(c *contextmodel.ReqContext) response.Response {
 	notificationId, err := strconv.ParseInt(web.Params(c.Req)[":notificationId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "notificationId is invalid", err)
@@ -602,7 +602,7 @@ func (hs *HTTPServer) DeleteAlertNotification(c *model.ReqContext) response.Resp
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) DeleteAlertNotificationByUID(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) DeleteAlertNotificationByUID(c *contextmodel.ReqContext) response.Response {
 	cmd := alertmodels.DeleteAlertNotificationWithUidCommand{
 		OrgId: c.OrgID,
 		Uid:   web.Params(c.Req)[":uid"],
@@ -634,7 +634,7 @@ func (hs *HTTPServer) DeleteAlertNotificationByUID(c *model.ReqContext) response
 // 403: forbiddenError
 // 412: SMTPNotEnabledError
 // 500: internalServerError
-func (hs *HTTPServer) NotificationTest(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) NotificationTest(c *contextmodel.ReqContext) response.Response {
 	dto := dtos.NotificationTestCommand{}
 	if err := web.Bind(c.Req, &dto); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -673,14 +673,14 @@ func (hs *HTTPServer) NotificationTest(c *model.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) PauseAlert(legacyAlertingEnabled *bool) func(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) PauseAlert(legacyAlertingEnabled *bool) func(c *contextmodel.ReqContext) response.Response {
 	if legacyAlertingEnabled == nil || !*legacyAlertingEnabled {
-		return func(_ *model.ReqContext) response.Response {
+		return func(_ *contextmodel.ReqContext) response.Response {
 			return response.Error(http.StatusBadRequest, "legacy alerting is disabled, so this call has no effect.", nil)
 		}
 	}
 
-	return func(c *model.ReqContext) response.Response {
+	return func(c *contextmodel.ReqContext) response.Response {
 		dto := dtos.PauseAlertCommand{}
 		if err := web.Bind(c.Req, &dto); err != nil {
 			return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -755,14 +755,14 @@ func (hs *HTTPServer) PauseAlert(legacyAlertingEnabled *bool) func(c *model.ReqC
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) PauseAllAlerts(legacyAlertingEnabled *bool) func(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) PauseAllAlerts(legacyAlertingEnabled *bool) func(c *contextmodel.ReqContext) response.Response {
 	if legacyAlertingEnabled == nil || !*legacyAlertingEnabled {
-		return func(_ *model.ReqContext) response.Response {
+		return func(_ *contextmodel.ReqContext) response.Response {
 			return response.Error(http.StatusBadRequest, "legacy alerting is disabled, so this call has no effect.", nil)
 		}
 	}
 
-	return func(c *model.ReqContext) response.Response {
+	return func(c *contextmodel.ReqContext) response.Response {
 		dto := dtos.PauseAllAlertsCommand{}
 		if err := web.Bind(c.Req, &dto); err != nil {
 			return response.Error(http.StatusBadRequest, "bad request data", err)

@@ -6,13 +6,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/comments"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func (hs *HTTPServer) commentsGet(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) commentsGet(c *contextmodel.ReqContext) response.Response {
 	cmd := comments.GetCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -29,7 +29,7 @@ func (hs *HTTPServer) commentsGet(c *model.ReqContext) response.Response {
 	})
 }
 
-func (hs *HTTPServer) commentsCreate(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) commentsCreate(c *contextmodel.ReqContext) response.Response {
 	cmd := comments.CreateCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)

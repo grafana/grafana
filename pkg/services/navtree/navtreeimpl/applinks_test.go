@@ -10,7 +10,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/navtree"
@@ -23,7 +23,7 @@ import (
 
 func TestAddAppLinks(t *testing.T) {
 	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
-	reqCtx := &model.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
+	reqCtx := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
 	permissions := []ac.Permission{
 		{Action: plugins.ActionAppAccess, Scope: "*"},
 		{Action: plugins.ActionInstall, Scope: "*"},
@@ -388,7 +388,7 @@ func TestReadingNavigationSettings(t *testing.T) {
 func TestAddAppLinksAccessControl(t *testing.T) {
 	httpReq, _ := http.NewRequest(http.MethodGet, "", nil)
 	user := &user.SignedInUser{OrgID: 1}
-	reqCtx := &model.ReqContext{SignedInUser: user, Context: &web.Context{Req: httpReq}}
+	reqCtx := &contextmodel.ReqContext{SignedInUser: user, Context: &web.Context{Req: httpReq}}
 	catalogReadAction := "test-app1.catalog:read"
 
 	testApp1 := plugins.PluginDTO{

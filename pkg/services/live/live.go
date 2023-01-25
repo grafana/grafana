@@ -27,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/comments/commentmodel"
-	contexthandlermodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -350,7 +349,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		CheckOrigin:     checkOrigin,
 	})
 
-	g.websocketHandler = func(ctx *contexthandlermodel.ReqContext) {
+	g.websocketHandler = func(ctx *contexthandlercontextmodel.ReqContext) {
 		user := ctx.SignedInUser
 
 		// Centrifuge expects Credentials in context with a current user ID.
@@ -363,7 +362,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		wsHandler.ServeHTTP(ctx.Resp, r)
 	}
 
-	g.pushWebsocketHandler = func(ctx *contexthandlermodel.ReqContext) {
+	g.pushWebsocketHandler = func(ctx *contexthandlercontextmodel.ReqContext) {
 		user := ctx.SignedInUser
 		newCtx := livecontext.SetContextSignedUser(ctx.Req.Context(), user)
 		newCtx = livecontext.SetContextStreamID(newCtx, web.Params(ctx.Req)[":streamId"])
@@ -371,7 +370,7 @@ func ProvideService(plugCtxProvider *plugincontext.Provider, cfg *setting.Cfg, r
 		pushWSHandler.ServeHTTP(ctx.Resp, r)
 	}
 
-	g.pushPipelineWebsocketHandler = func(ctx *contexthandlermodel.ReqContext) {
+	g.pushPipelineWebsocketHandler = func(ctx *contexthandlercontextmodel.ReqContext) {
 		user := ctx.SignedInUser
 		newCtx := livecontext.SetContextSignedUser(ctx.Req.Context(), user)
 		newCtx = livecontext.SetContextChannelID(newCtx, web.Params(ctx.Req)["*"])
@@ -971,7 +970,7 @@ func (g *GrafanaLive) ClientCount(orgID int64, channel string) (int, error) {
 	return len(p.Presence), nil
 }
 
-func (g *GrafanaLive) HandleHTTPPublish(ctx *contexthandlermodel.ReqContext) response.Response {
+func (g *GrafanaLive) HandleHTTPPublish(ctx *contexthandlercontextmodel.ReqContext) response.Response {
 	cmd := dtos.LivePublishCmd{}
 	if err := web.Bind(ctx.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -1047,7 +1046,7 @@ type streamChannelListResponse struct {
 }
 
 // HandleListHTTP returns metadata so the UI can build a nice form
-func (g *GrafanaLive) HandleListHTTP(c *contexthandlermodel.ReqContext) response.Response {
+func (g *GrafanaLive) HandleListHTTP(c *contexthandlercontextmodel.ReqContext) response.Response {
 	var channels []*managedstream.ManagedChannel
 	var err error
 	if g.IsHA() {
@@ -1065,7 +1064,7 @@ func (g *GrafanaLive) HandleListHTTP(c *contexthandlermodel.ReqContext) response
 }
 
 // HandleInfoHTTP special http response for
-func (g *GrafanaLive) HandleInfoHTTP(ctx *contexthandlermodel.ReqContext) response.Response {
+func (g *GrafanaLive) HandleInfoHTTP(ctx *contexthandlercontextmodel.ReqContext) response.Response {
 	path := web.Params(ctx.Req)["*"]
 	if path == "grafana/dashboards/gitops" {
 		return response.JSON(http.StatusOK, util.DynMap{
@@ -1078,7 +1077,7 @@ func (g *GrafanaLive) HandleInfoHTTP(ctx *contexthandlermodel.ReqContext) respon
 }
 
 // HandleChannelRulesListHTTP ...
-func (g *GrafanaLive) HandleChannelRulesListHTTP(c *contexthandlermodel.ReqContext) response.Response {
+func (g *GrafanaLive) HandleChannelRulesListHTTP(c *contexthandlercontextmodel.ReqContext) response.Response {
 	result, err := g.pipelineStorage.ListChannelRules(c.Req.Context(), c.OrgID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get channel rules", err)
@@ -1139,7 +1138,7 @@ func (s *DryRunRuleStorage) ListChannelRules(_ context.Context, _ int64) ([]pipe
 }
 
 // HandlePipelineConvertTestHTTP ...
-func (g *GrafanaLive) HandlePipelineConvertTestHTTP(c *contexthandlermodel.ReqContext) response.Response {
+func (g *GrafanaLive) HandlePipelineConvertTestHTTP(c *contexthandlercontextmodel.ReqContext) response.Response {
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
@@ -1184,7 +1183,7 @@ func (g *GrafanaLive) HandlePipelineConvertTestHTTP(c *contexthandlermodel.ReqCo
 }
 
 // HandleChannelRulesPostHTTP ...
-func (g *GrafanaLive) HandleChannelRulesPostHTTP(c *contexthandlermodel.ReqContext) response.Response {
+func (g *GrafanaLive) HandleChannelRulesPostHTTP(c *contexthandlercontextmodel.ReqContext) response.Response {
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
@@ -1204,7 +1203,7 @@ func (g *GrafanaLive) HandleChannelRulesPostHTTP(c *contexthandlermodel.ReqConte
 }
 
 // HandleChannelRulesPutHTTP ...
-func (g *GrafanaLive) HandleChannelRulesPutHTTP(c *contexthandlermodel.ReqContext) response.Response {
+func (g *GrafanaLive) HandleChannelRulesPutHTTP(c *contexthandlercontextmodel.ReqContext) response.Response {
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
@@ -1227,7 +1226,7 @@ func (g *GrafanaLive) HandleChannelRulesPutHTTP(c *contexthandlermodel.ReqContex
 }
 
 // HandleChannelRulesDeleteHTTP ...
-func (g *GrafanaLive) HandleChannelRulesDeleteHTTP(c *contexthandlermodel.ReqContext) response.Response {
+func (g *GrafanaLive) HandleChannelRulesDeleteHTTP(c *contexthandlercontextmodel.ReqContext) response.Response {
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
@@ -1248,7 +1247,7 @@ func (g *GrafanaLive) HandleChannelRulesDeleteHTTP(c *contexthandlermodel.ReqCon
 }
 
 // HandlePipelineEntitiesListHTTP ...
-func (g *GrafanaLive) HandlePipelineEntitiesListHTTP(_ *contexthandlermodel.ReqContext) response.Response {
+func (g *GrafanaLive) HandlePipelineEntitiesListHTTP(_ *contexthandlercontextmodel.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, util.DynMap{
 		"subscribers":     pipeline.SubscribersRegistry,
 		"dataOutputs":     pipeline.DataOutputsRegistry,
@@ -1259,7 +1258,7 @@ func (g *GrafanaLive) HandlePipelineEntitiesListHTTP(_ *contexthandlermodel.ReqC
 }
 
 // HandleWriteConfigsListHTTP ...
-func (g *GrafanaLive) HandleWriteConfigsListHTTP(c *contexthandlermodel.ReqContext) response.Response {
+func (g *GrafanaLive) HandleWriteConfigsListHTTP(c *contexthandlercontextmodel.ReqContext) response.Response {
 	backends, err := g.pipelineStorage.ListWriteConfigs(c.Req.Context(), c.OrgID)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get write configs", err)
@@ -1274,7 +1273,7 @@ func (g *GrafanaLive) HandleWriteConfigsListHTTP(c *contexthandlermodel.ReqConte
 }
 
 // HandleWriteConfigsPostHTTP ...
-func (g *GrafanaLive) HandleWriteConfigsPostHTTP(c *contexthandlermodel.ReqContext) response.Response {
+func (g *GrafanaLive) HandleWriteConfigsPostHTTP(c *contexthandlercontextmodel.ReqContext) response.Response {
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
@@ -1294,7 +1293,7 @@ func (g *GrafanaLive) HandleWriteConfigsPostHTTP(c *contexthandlermodel.ReqConte
 }
 
 // HandleWriteConfigsPutHTTP ...
-func (g *GrafanaLive) HandleWriteConfigsPutHTTP(c *contexthandlermodel.ReqContext) response.Response {
+func (g *GrafanaLive) HandleWriteConfigsPutHTTP(c *contexthandlercontextmodel.ReqContext) response.Response {
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)
@@ -1338,7 +1337,7 @@ func (g *GrafanaLive) HandleWriteConfigsPutHTTP(c *contexthandlermodel.ReqContex
 }
 
 // HandleWriteConfigsDeleteHTTP ...
-func (g *GrafanaLive) HandleWriteConfigsDeleteHTTP(c *contexthandlermodel.ReqContext) response.Response {
+func (g *GrafanaLive) HandleWriteConfigsDeleteHTTP(c *contexthandlercontextmodel.ReqContext) response.Response {
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Error reading body", err)

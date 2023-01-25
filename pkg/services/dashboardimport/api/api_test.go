@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -166,10 +166,10 @@ func (s *serviceMock) ImportDashboard(ctx context.Context, req *dashboardimport.
 	return nil, nil
 }
 
-func quotaReached(c *model.ReqContext, target quota.TargetSrv) (bool, error) {
+func quotaReached(c *contextmodel.ReqContext, target quota.TargetSrv) (bool, error) {
 	return true, nil
 }
 
-func quotaNotReached(c *model.ReqContext, target quota.TargetSrv) (bool, error) {
+func quotaNotReached(c *contextmodel.ReqContext, target quota.TargetSrv) (bool, error) {
 	return false, nil
 }

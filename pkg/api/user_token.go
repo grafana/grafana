@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/auth"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -27,7 +27,7 @@ import (
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) GetUserAuthTokens(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) GetUserAuthTokens(c *contextmodel.ReqContext) response.Response {
 	return hs.getUserAuthTokensInternal(c, c.UserID)
 }
 
@@ -43,7 +43,7 @@ func (hs *HTTPServer) GetUserAuthTokens(c *model.ReqContext) response.Response {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) RevokeUserAuthToken(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) RevokeUserAuthToken(c *contextmodel.ReqContext) response.Response {
 	cmd := auth.RevokeAuthTokenCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -72,7 +72,7 @@ func (hs *HTTPServer) logoutUserFromAllDevicesInternal(ctx context.Context, user
 	})
 }
 
-func (hs *HTTPServer) getUserAuthTokensInternal(c *model.ReqContext, userID int64) response.Response {
+func (hs *HTTPServer) getUserAuthTokensInternal(c *contextmodel.ReqContext, userID int64) response.Response {
 	userQuery := user.GetUserByIDQuery{ID: userID}
 
 	_, err := hs.userService.GetByID(c.Req.Context(), &userQuery)
@@ -144,7 +144,7 @@ func (hs *HTTPServer) getUserAuthTokensInternal(c *model.ReqContext, userID int6
 	return response.JSON(http.StatusOK, result)
 }
 
-func (hs *HTTPServer) revokeUserAuthTokenInternal(c *model.ReqContext, userID int64, cmd auth.RevokeAuthTokenCmd) response.Response {
+func (hs *HTTPServer) revokeUserAuthTokenInternal(c *contextmodel.ReqContext, userID int64, cmd auth.RevokeAuthTokenCmd) response.Response {
 	userQuery := user.GetUserByIDQuery{ID: userID}
 	_, err := hs.userService.GetByID(c.Req.Context(), &userQuery)
 	if err != nil {

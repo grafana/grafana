@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -69,7 +69,7 @@ func genPKCECode() (string, string, error) {
 	return string(ascii), pkce, nil
 }
 
-func (hs *HTTPServer) OAuthLogin(ctx *model.ReqContext) {
+func (hs *HTTPServer) OAuthLogin(ctx *contextmodel.ReqContext) {
 	loginInfo := models.LoginInfo{
 		AuthModule: "oauth",
 	}
@@ -309,7 +309,7 @@ func (hs *HTTPServer) buildExternalUserInfo(token *oauth2.Token, userInfo *socia
 
 // SyncUser syncs a Grafana user profile with the corresponding OAuth profile.
 func (hs *HTTPServer) SyncUser(
-	ctx *model.ReqContext,
+	ctx *contextmodel.ReqContext,
 	extUser *models.ExternalUserInfo,
 	connect social.SocialConnector,
 ) (*user.User, error) {
@@ -351,7 +351,7 @@ type LoginError struct {
 	Err           error
 }
 
-func (hs *HTTPServer) handleOAuthLoginError(ctx *model.ReqContext, info models.LoginInfo, err LoginError) {
+func (hs *HTTPServer) handleOAuthLoginError(ctx *contextmodel.ReqContext, info models.LoginInfo, err LoginError) {
 	ctx.Handle(hs.Cfg, err.HttpStatus, err.PublicMessage, err.Err)
 
 	info.Error = err.Err
@@ -363,7 +363,7 @@ func (hs *HTTPServer) handleOAuthLoginError(ctx *model.ReqContext, info models.L
 	hs.HooksService.RunLoginHook(&info, ctx)
 }
 
-func (hs *HTTPServer) handleOAuthLoginErrorWithRedirect(ctx *model.ReqContext, info models.LoginInfo, err error, v ...interface{}) {
+func (hs *HTTPServer) handleOAuthLoginErrorWithRedirect(ctx *contextmodel.ReqContext, info models.LoginInfo, err error, v ...interface{}) {
 	hs.redirectWithError(ctx, err, v...)
 
 	info.Error = err

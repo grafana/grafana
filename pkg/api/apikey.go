@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/services/apikey"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -26,7 +26,7 @@ import (
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetAPIKeys(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) GetAPIKeys(c *contextmodel.ReqContext) response.Response {
 	query := apikey.GetApiKeysQuery{OrgId: c.OrgID, User: c.SignedInUser, IncludeExpired: c.QueryBool("includeExpired")}
 
 	if err := hs.apiKeyService.GetAPIKeys(c.Req.Context(), &query); err != nil {
@@ -70,7 +70,7 @@ func (hs *HTTPServer) GetAPIKeys(c *model.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) DeleteAPIKey(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) DeleteAPIKey(c *contextmodel.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
@@ -104,7 +104,7 @@ func (hs *HTTPServer) DeleteAPIKey(c *model.ReqContext) response.Response {
 // 403: forbiddenError
 // 409: conflictError
 // 500: internalServerError
-func (hs *HTTPServer) AddAPIKey(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) AddAPIKey(c *contextmodel.ReqContext) response.Response {
 	cmd := apikey.AddCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)

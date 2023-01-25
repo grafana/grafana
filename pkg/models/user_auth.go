@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -60,7 +60,7 @@ type RequestURIKey struct{}
 // COMMANDS
 
 type UpsertUserCommand struct {
-	ReqContext   *model.ReqContext
+	ReqContext   *contextmodel.ReqContext
 	ExternalUser *ExternalUserInfo
 	UserLookupParams
 	SignupAllowed bool
@@ -90,7 +90,7 @@ type DeleteAuthInfoCommand struct {
 // QUERIES
 
 type LoginUserQuery struct {
-	ReqContext *model.ReqContext
+	ReqContext *contextmodel.ReqContext
 	Username   string
 	Password   string
 	User       *user.User

@@ -28,7 +28,7 @@ import (
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/dashboards/service"
@@ -56,7 +56,7 @@ func TestGetHomeDashboard(t *testing.T) {
 	httpReq, err := http.NewRequest(http.MethodGet, "", nil)
 	require.NoError(t, err)
 	httpReq.Header.Add("Content-Type", "application/json")
-	req := &model.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
+	req := &contextmodel.ReqContext{SignedInUser: &user.SignedInUser{}, Context: &web.Context{Req: httpReq}}
 	cfg := setting.NewCfg()
 	cfg.StaticRootPath = "../../public/"
 	prefService := preftest.NewPreferenceServiceFake()
@@ -1070,7 +1070,7 @@ func postDashboardScenario(t *testing.T, desc string, url string, routePattern s
 		}
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = routing.Wrap(func(c *model.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
@@ -1102,7 +1102,7 @@ func postValidateScenario(t *testing.T, desc string, url string, routePattern st
 		}
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = routing.Wrap(func(c *model.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
@@ -1142,7 +1142,7 @@ func postDiffScenario(t *testing.T, desc string, url string, routePattern string
 		}
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = routing.Wrap(func(c *model.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
@@ -1184,7 +1184,7 @@ func restoreDashboardVersionScenario(t *testing.T, desc string, url string, rout
 		sc := setupScenarioContext(t, url)
 		sc.sqlStore = sqlStore
 		sc.dashboardVersionService = fakeDashboardVersionService
-		sc.defaultHandler = routing.Wrap(func(c *model.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c

@@ -4,15 +4,15 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 // SetPublicDashboardOrgIdOnContext Adds orgId to context based on org of public dashboard
-func SetPublicDashboardOrgIdOnContext(publicDashboardService publicdashboards.Service) func(c *model.ReqContext) {
-	return func(c *model.ReqContext) {
+func SetPublicDashboardOrgIdOnContext(publicDashboardService publicdashboards.Service) func(c *contextmodel.ReqContext) {
+	return func(c *contextmodel.ReqContext) {
 		accessToken, ok := web.Params(c.Req)[":accessToken"]
 		if !ok || !tokens.IsValidAccessToken(accessToken) {
 			return
@@ -29,15 +29,15 @@ func SetPublicDashboardOrgIdOnContext(publicDashboardService publicdashboards.Se
 }
 
 // SetPublicDashboardFlag Adds public dashboard flag on context
-func SetPublicDashboardFlag(c *model.ReqContext) {
+func SetPublicDashboardFlag(c *contextmodel.ReqContext) {
 	c.IsPublicDashboardView = true
 }
 
 // RequiresExistingAccessToken Middleware to enforce that a public dashboards exists before continuing to handler. This
 // method will query the database to ensure that it exists.
 // Use when we want to enforce a public dashboard is valid on an endpoint we do not maintain
-func RequiresExistingAccessToken(publicDashboardService publicdashboards.Service) func(c *model.ReqContext) {
-	return func(c *model.ReqContext) {
+func RequiresExistingAccessToken(publicDashboardService publicdashboards.Service) func(c *contextmodel.ReqContext) {
+	return func(c *contextmodel.ReqContext) {
 		accessToken, ok := web.Params(c.Req)[":accessToken"]
 
 		if !ok {
@@ -62,8 +62,8 @@ func RequiresExistingAccessToken(publicDashboardService publicdashboards.Service
 	}
 }
 
-func CountPublicDashboardRequest() func(c *model.ReqContext) {
-	return func(c *model.ReqContext) {
+func CountPublicDashboardRequest() func(c *contextmodel.ReqContext) {
+	return func(c *contextmodel.ReqContext) {
 		metrics.MPublicDashboardRequestCount.Inc()
 	}
 }

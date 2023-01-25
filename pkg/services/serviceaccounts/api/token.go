@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/services/apikey"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/database"
 	"github.com/grafana/grafana/pkg/web"
@@ -66,7 +66,7 @@ const sevenDaysAhead = 7 * 24 * time.Hour
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (api *ServiceAccountsAPI) ListTokens(ctx *model.ReqContext) response.Response {
+func (api *ServiceAccountsAPI) ListTokens(ctx *contextmodel.ReqContext) response.Response {
 	saID, err := strconv.ParseInt(web.Params(ctx.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
@@ -127,7 +127,7 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *model.ReqContext) response.Respon
 // 404: notFoundError
 // 409: conflictError
 // 500: internalServerError
-func (api *ServiceAccountsAPI) CreateToken(c *model.ReqContext) response.Response {
+func (api *ServiceAccountsAPI) CreateToken(c *contextmodel.ReqContext) response.Response {
 	saID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)
@@ -210,7 +210,7 @@ func (api *ServiceAccountsAPI) CreateToken(c *model.ReqContext) response.Respons
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (api *ServiceAccountsAPI) DeleteToken(c *model.ReqContext) response.Response {
+func (api *ServiceAccountsAPI) DeleteToken(c *contextmodel.ReqContext) response.Response {
 	saID, err := strconv.ParseInt(web.Params(c.Req)[":serviceAccountId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Service Account ID is invalid", err)

@@ -8,16 +8,16 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 type (
 	handlerStd       = func(http.ResponseWriter, *http.Request)
 	handlerStdCtx    = func(http.ResponseWriter, *http.Request, *web.Context)
-	handlerStdReqCtx = func(http.ResponseWriter, *http.Request, *model.ReqContext)
-	handlerReqCtx    = func(*model.ReqContext)
-	handlerReqCtxRes = func(*model.ReqContext) Response
+	handlerStdReqCtx = func(http.ResponseWriter, *http.Request, *contextmodel.ReqContext)
+	handlerReqCtx    = func(*contextmodel.ReqContext)
+	handlerReqCtxRes = func(*contextmodel.ReqContext) Response
 	handlerCtx       = func(*web.Context)
 )
 
@@ -67,11 +67,11 @@ func webCtx(w http.ResponseWriter, r *http.Request) *web.Context {
 	return ctx
 }
 
-func reqCtx(w http.ResponseWriter, r *http.Request) *model.ReqContext {
+func reqCtx(w http.ResponseWriter, r *http.Request) *contextmodel.ReqContext {
 	wCtx := webCtx(w, r)
-	reqCtx, ok := wCtx.Req.Context().Value(ctxkey.Key{}).(*model.ReqContext)
+	reqCtx, ok := wCtx.Req.Context().Value(ctxkey.Key{}).(*contextmodel.ReqContext)
 	if !ok {
-		panic("no *model.ReqContext found")
+		panic("no *contextmodel.ReqContext found")
 	}
 	return reqCtx
 }

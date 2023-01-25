@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -33,17 +33,17 @@ type Service interface {
 	registry.ProvidesUsageStats
 	Run(ctx context.Context) error
 	Enabled() bool
-	GetImage(c *model.ReqContext)
-	GetDashboardPreviewsSetupSettings(c *model.ReqContext) dashboardPreviewsSetupConfig
+	GetImage(c *contextmodel.ReqContext)
+	GetDashboardPreviewsSetupSettings(c *contextmodel.ReqContext) dashboardPreviewsSetupConfig
 
 	// from dashboard page
-	SetImage(c *model.ReqContext) // form post
-	UpdateThumbnailState(c *model.ReqContext)
+	SetImage(c *contextmodel.ReqContext) // form post
+	UpdateThumbnailState(c *contextmodel.ReqContext)
 
 	// Must be admin
-	StartCrawler(c *model.ReqContext) response.Response
-	StopCrawler(c *model.ReqContext) response.Response
-	CrawlerStatus(c *model.ReqContext) response.Response
+	StartCrawler(c *contextmodel.ReqContext) response.Response
+	StopCrawler(c *contextmodel.ReqContext) response.Response
+	CrawlerStatus(c *contextmodel.ReqContext) response.Response
 }
 
 type thumbService struct {
@@ -155,7 +155,7 @@ func (hs *thumbService) Enabled() bool {
 	return hs.features.IsEnabled(featuremgmt.FlagDashboardPreviews)
 }
 
-func (hs *thumbService) parseImageReq(c *model.ReqContext, checkSave bool) *previewRequest {
+func (hs *thumbService) parseImageReq(c *contextmodel.ReqContext, checkSave bool) *previewRequest {
 	params := web.Params(c.Req)
 
 	kind, err := ParseThumbnailKind(params[":kind"])
@@ -200,7 +200,7 @@ type updateThumbnailStateRequest struct {
 	State ThumbnailState `json:"state" binding:"Required"`
 }
 
-func (hs *thumbService) UpdateThumbnailState(c *model.ReqContext) {
+func (hs *thumbService) UpdateThumbnailState(c *contextmodel.ReqContext) {
 	req := hs.parseImageReq(c, false)
 	if req == nil {
 		return // already returned value
@@ -232,7 +232,7 @@ func (hs *thumbService) UpdateThumbnailState(c *model.ReqContext) {
 	c.JSON(http.StatusOK, map[string]string{"success": "true"})
 }
 
-func (hs *thumbService) GetImage(c *model.ReqContext) {
+func (hs *thumbService) GetImage(c *contextmodel.ReqContext) {
 	req := hs.parseImageReq(c, false)
 	if req == nil {
 		return // already returned value
@@ -275,7 +275,7 @@ func (hs *thumbService) GetImage(c *model.ReqContext) {
 	}
 }
 
-func (hs *thumbService) hasAccessToPreview(c *model.ReqContext, res *DashboardThumbnail, req *previewRequest) bool {
+func (hs *thumbService) hasAccessToPreview(c *contextmodel.ReqContext, res *DashboardThumbnail, req *previewRequest) bool {
 	if !hs.licensing.FeatureEnabled("accesscontrol.enforcement") {
 		return true
 	}
@@ -319,7 +319,7 @@ func (hs *thumbService) hasAccessToPreview(c *model.ReqContext, res *DashboardTh
 	return true
 }
 
-func (hs *thumbService) GetDashboardPreviewsSetupSettings(c *model.ReqContext) dashboardPreviewsSetupConfig {
+func (hs *thumbService) GetDashboardPreviewsSetupSettings(c *contextmodel.ReqContext) dashboardPreviewsSetupConfig {
 	return hs.getDashboardPreviewsSetupSettings(c.Req.Context())
 }
 
@@ -362,7 +362,7 @@ func (hs *thumbService) getSystemRequirements(ctx context.Context) dashboardPrev
 }
 
 // Hack for now -- lets you upload images explicitly
-func (hs *thumbService) SetImage(c *model.ReqContext) {
+func (hs *thumbService) SetImage(c *contextmodel.ReqContext) {
 	req := hs.parseImageReq(c, false)
 	if req == nil {
 		return // already returned value
@@ -424,7 +424,7 @@ func (hs *thumbService) SetImage(c *model.ReqContext) {
 	c.JSON(http.StatusOK, map[string]int{"OK": len(fileBytes)})
 }
 
-func (hs *thumbService) StartCrawler(c *model.ReqContext) response.Response {
+func (hs *thumbService) StartCrawler(c *contextmodel.ReqContext) response.Response {
 	body, err := io.ReadAll(c.Req.Body)
 	if err != nil {
 		return response.Error(500, "error reading bytes", err)
@@ -452,7 +452,7 @@ func (hs *thumbService) StartCrawler(c *model.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, status)
 }
 
-func (hs *thumbService) StopCrawler(c *model.ReqContext) response.Response {
+func (hs *thumbService) StopCrawler(c *contextmodel.ReqContext) response.Response {
 	msg, err := hs.renderer.Stop()
 	if err != nil {
 		return response.Error(500, "error starting", err)
@@ -460,7 +460,7 @@ func (hs *thumbService) StopCrawler(c *model.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, msg)
 }
 
-func (hs *thumbService) CrawlerStatus(c *model.ReqContext) response.Response {
+func (hs *thumbService) CrawlerStatus(c *contextmodel.ReqContext) response.Response {
 	msg, err := hs.renderer.Status()
 	if err != nil {
 		return response.Error(500, "error starting", err)
@@ -469,7 +469,7 @@ func (hs *thumbService) CrawlerStatus(c *model.ReqContext) response.Response {
 }
 
 // Ideally this service would not require first looking up the full dashboard just to bet the id!
-func (hs *thumbService) getStatus(c *model.ReqContext, uid string, checkSave bool) (int, error) {
+func (hs *thumbService) getStatus(c *contextmodel.ReqContext, uid string, checkSave bool) (int, error) {
 	guardian, err := guardian.NewByUID(c.Req.Context(), uid, c.OrgID, c.SignedInUser)
 	if err != nil {
 		return 0, err

@@ -27,7 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
@@ -100,8 +100,8 @@ type ContextHandler struct {
 type reqContextKey = ctxkey.Key
 
 // FromContext returns the ReqContext value stored in a context.Context, if any.
-func FromContext(c context.Context) *model.ReqContext {
-	if reqCtx, ok := c.Value(reqContextKey{}).(*model.ReqContext); ok {
+func FromContext(c context.Context) *contextmodel.ReqContext {
+	if reqCtx, ok := c.Value(reqContextKey{}).(*contextmodel.ReqContext); ok {
 		return reqCtx
 	}
 	return nil
@@ -115,7 +115,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		_, span := h.tracer.Start(ctx, "Auth - Middleware")
 		defer span.End()
 
-		reqContext := &model.ReqContext{
+		reqContext := &contextmodel.ReqContext{
 			Context:        mContext,
 			SignedInUser:   &user.SignedInUser{},
 			IsSignedIn:     false,
@@ -201,7 +201,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 	})
 }
 
-func (h *ContextHandler) initContextWithAnonymousUser(reqContext *model.ReqContext) bool {
+func (h *ContextHandler) initContextWithAnonymousUser(reqContext *contextmodel.ReqContext) bool {
 	ctx, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithAnonymousUser")
 	defer span.End()
 
@@ -276,7 +276,7 @@ func (h *ContextHandler) getAPIKey(ctx context.Context, keyString string) (*apik
 	return keyQuery.Result, nil
 }
 
-func (h *ContextHandler) initContextWithAPIKey(reqContext *model.ReqContext) bool {
+func (h *ContextHandler) initContextWithAPIKey(reqContext *contextmodel.ReqContext) bool {
 	if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
 		identity, ok, err := h.authnService.Authenticate(reqContext.Req.Context(), authn.ClientAPIKey, &authn.Request{HTTPRequest: reqContext.Req})
 		if !ok {
@@ -405,7 +405,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *model.ReqContext) boo
 	return true
 }
 
-func (h *ContextHandler) initContextWithBasicAuth(reqContext *model.ReqContext, orgID int64) bool {
+func (h *ContextHandler) initContextWithBasicAuth(reqContext *contextmodel.ReqContext, orgID int64) bool {
 	if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
 		identity, ok, err := h.authnService.Authenticate(reqContext.Req.Context(), authn.ClientBasic, &authn.Request{HTTPRequest: reqContext.Req})
 		if !ok {
@@ -485,7 +485,7 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *model.ReqContext, 
 	return true
 }
 
-func (h *ContextHandler) initContextWithToken(reqContext *model.ReqContext, orgID int64) bool {
+func (h *ContextHandler) initContextWithToken(reqContext *contextmodel.ReqContext, orgID int64) bool {
 	if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
 		identity, ok, err := h.authnService.Authenticate(reqContext.Req.Context(),
 			authn.ClientSession, &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
@@ -580,7 +580,7 @@ func (h *ContextHandler) initContextWithToken(reqContext *model.ReqContext, orgI
 	return true
 }
 
-func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *model.ReqContext) web.BeforeFunc {
+func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *contextmodel.ReqContext) web.BeforeFunc {
 	return func(w web.ResponseWriter) {
 		if w.Written() {
 			reqContext.Logger.Debug("Response written, skipping invalid cookie delete")
@@ -592,7 +592,7 @@ func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *model.R
 	}
 }
 
-func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *model.ReqContext) web.BeforeFunc {
+func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *contextmodel.ReqContext) web.BeforeFunc {
 	return func(w web.ResponseWriter) {
 		// if response has already been written, skip.
 		if w.Written() {
@@ -633,7 +633,7 @@ func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *model.ReqContext) we
 	}
 }
 
-func (h *ContextHandler) initContextWithRenderAuth(reqContext *model.ReqContext) bool {
+func (h *ContextHandler) initContextWithRenderAuth(reqContext *contextmodel.ReqContext) bool {
 	if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
 		identity, ok, err := h.authnService.Authenticate(reqContext.Req.Context(), authn.ClientRender, &authn.Request{HTTPRequest: reqContext.Req})
 		if !ok {
@@ -687,7 +687,7 @@ func (h *ContextHandler) initContextWithRenderAuth(reqContext *model.ReqContext)
 	return true
 }
 
-func logUserIn(reqContext *model.ReqContext, auth *authproxy.AuthProxy, username string, logger log.Logger, ignoreCache bool) (int64, error) {
+func logUserIn(reqContext *contextmodel.ReqContext, auth *authproxy.AuthProxy, username string, logger log.Logger, ignoreCache bool) (int64, error) {
 	logger.Debug("Trying to log user in", "username", username, "ignoreCache", ignoreCache)
 	// Try to log in user via various providers
 	id, err := auth.Login(reqContext, ignoreCache)
@@ -704,7 +704,7 @@ func logUserIn(reqContext *model.ReqContext, auth *authproxy.AuthProxy, username
 	return id, nil
 }
 
-func (h *ContextHandler) handleError(ctx *model.ReqContext, err error, statusCode int, cb func(error)) {
+func (h *ContextHandler) handleError(ctx *contextmodel.ReqContext, err error, statusCode int, cb func(error)) {
 	details := err
 	var e authproxy.Error
 	if errors.As(err, &e) {
@@ -717,7 +717,7 @@ func (h *ContextHandler) handleError(ctx *model.ReqContext, err error, statusCod
 	}
 }
 
-func (h *ContextHandler) initContextWithAuthProxy(reqContext *model.ReqContext, orgID int64) bool {
+func (h *ContextHandler) initContextWithAuthProxy(reqContext *contextmodel.ReqContext, orgID int64) bool {
 	if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
 		identity, ok, err := h.authnService.Authenticate(reqContext.Req.Context(), authn.ClientProxy, &authn.Request{HTTPRequest: reqContext.Req, Resp: reqContext.Resp})
 		if !ok {

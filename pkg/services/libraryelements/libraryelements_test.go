@@ -22,7 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
@@ -258,7 +258,7 @@ func getCreateCommandWithModel(folderID int64, name string, kind models.LibraryE
 type scenarioContext struct {
 	ctx           *web.Context
 	service       *LibraryElementService
-	reqContext    *model.ReqContext
+	reqContext    *contextmodel.ReqContext
 	user          user.SignedInUser
 	folder        *folder.Folder
 	initialResult libraryElementResult
@@ -466,7 +466,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			ctx:      &webCtx,
 			service:  &service,
 			sqlStore: sqlStore,
-			reqContext: &model.ReqContext{
+			reqContext: &contextmodel.ReqContext{
 				Context:      &webCtx,
 				SignedInUser: &usr,
 			},

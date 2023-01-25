@@ -1,4 +1,4 @@
-package model
+package contextmodel
 
 import (
 	"net/http"

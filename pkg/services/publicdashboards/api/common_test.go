@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	datasourceService "github.com/grafana/grafana/pkg/services/datasources/service"
@@ -82,7 +82,7 @@ type testContext struct {
 func contextProvider(tc *testContext) web.Handler {
 	return func(c *web.Context) {
 		signedIn := tc.user != nil
-		reqCtx := &model.ReqContext{
+		reqCtx := &contextmodel.ReqContext{
 			Context:      c,
 			SignedInUser: tc.user,
 			IsSignedIn:   signedIn,

@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -14,7 +14,7 @@ import (
 // GetPluginDashboards get plugin dashboards.
 //
 // /api/plugins/:pluginId/dashboards
-func (hs *HTTPServer) GetPluginDashboards(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) GetPluginDashboards(c *contextmodel.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
 	listReq := &plugindashboards.ListPluginDashboardsRequest{

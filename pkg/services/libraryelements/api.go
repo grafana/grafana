@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/web"
@@ -38,7 +38,7 @@ func (l *LibraryElementService) registerAPIEndpoints() {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (l *LibraryElementService) createHandler(c *model.ReqContext) response.Response {
+func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) response.Response {
 	cmd := CreateLibraryElementCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -88,7 +88,7 @@ func (l *LibraryElementService) createHandler(c *model.ReqContext) response.Resp
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (l *LibraryElementService) deleteHandler(c *model.ReqContext) response.Response {
+func (l *LibraryElementService) deleteHandler(c *contextmodel.ReqContext) response.Response {
 	id, err := l.deleteLibraryElement(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to delete library element")
@@ -111,7 +111,7 @@ func (l *LibraryElementService) deleteHandler(c *model.ReqContext) response.Resp
 // 401: unauthorisedError
 // 404: notFoundError
 // 500: internalServerError
-func (l *LibraryElementService) getHandler(c *model.ReqContext) response.Response {
+func (l *LibraryElementService) getHandler(c *contextmodel.ReqContext) response.Response {
 	element, err := l.getLibraryElementByUid(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to get library element")
@@ -132,7 +132,7 @@ func (l *LibraryElementService) getHandler(c *model.ReqContext) response.Respons
 // 200: getLibraryElementsResponse
 // 401: unauthorisedError
 // 500: internalServerError
-func (l *LibraryElementService) getAllHandler(c *model.ReqContext) response.Response {
+func (l *LibraryElementService) getAllHandler(c *contextmodel.ReqContext) response.Response {
 	query := searchLibraryElementsQuery{
 		perPage:          c.QueryInt("perPage"),
 		page:             c.QueryInt("page"),
@@ -166,7 +166,7 @@ func (l *LibraryElementService) getAllHandler(c *model.ReqContext) response.Resp
 // 404: notFoundError
 // 412: preconditionFailedError
 // 500: internalServerError
-func (l *LibraryElementService) patchHandler(c *model.ReqContext) response.Response {
+func (l *LibraryElementService) patchHandler(c *contextmodel.ReqContext) response.Response {
 	cmd := PatchLibraryElementCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -213,7 +213,7 @@ func (l *LibraryElementService) patchHandler(c *model.ReqContext) response.Respo
 // 401: unauthorisedError
 // 404: notFoundError
 // 500: internalServerError
-func (l *LibraryElementService) getConnectionsHandler(c *model.ReqContext) response.Response {
+func (l *LibraryElementService) getConnectionsHandler(c *contextmodel.ReqContext) response.Response {
 	connections, err := l.getConnections(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to get connections")
@@ -233,7 +233,7 @@ func (l *LibraryElementService) getConnectionsHandler(c *model.ReqContext) respo
 // 401: unauthorisedError
 // 404: notFoundError
 // 500: internalServerError
-func (l *LibraryElementService) getByNameHandler(c *model.ReqContext) response.Response {
+func (l *LibraryElementService) getByNameHandler(c *contextmodel.ReqContext) response.Response {
 	elements, err := l.getLibraryElementsByName(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":name"])
 	if err != nil {
 		return toLibraryElementError(err, "Failed to get library element")

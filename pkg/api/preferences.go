@@ -6,7 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/web"
@@ -19,7 +19,7 @@ const (
 )
 
 // POST /api/preferences/set-home-dash
-func (hs *HTTPServer) SetHomeDashboard(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) SetHomeDashboard(c *contextmodel.ReqContext) response.Response {
 	cmd := pref.SavePreferenceCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -60,7 +60,7 @@ func (hs *HTTPServer) SetHomeDashboard(c *model.ReqContext) response.Response {
 // 200: getPreferencesResponse
 // 401: unauthorisedError
 // 500: internalServerError
-func (hs *HTTPServer) GetUserPreferences(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) GetUserPreferences(c *contextmodel.ReqContext) response.Response {
 	return hs.getPreferencesFor(c.Req.Context(), c.OrgID, c.UserID, 0)
 }
 
@@ -116,7 +116,7 @@ func (hs *HTTPServer) getPreferencesFor(ctx context.Context, orgID, userID, team
 // 400: badRequestError
 // 401: unauthorisedError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateUserPreferences(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateUserPreferences(c *contextmodel.ReqContext) response.Response {
 	dtoCmd := dtos.UpdatePrefsCmd{}
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -174,7 +174,7 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 // 400: badRequestError
 // 401: unauthorisedError
 // 500: internalServerError
-func (hs *HTTPServer) PatchUserPreferences(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) PatchUserPreferences(c *contextmodel.ReqContext) response.Response {
 	dtoCmd := dtos.PatchPrefsCmd{}
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -234,7 +234,7 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) GetOrgPreferences(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) GetOrgPreferences(c *contextmodel.ReqContext) response.Response {
 	return hs.getPreferencesFor(c.Req.Context(), c.OrgID, 0, 0)
 }
 
@@ -248,7 +248,7 @@ func (hs *HTTPServer) GetOrgPreferences(c *model.ReqContext) response.Response {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateOrgPreferences(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateOrgPreferences(c *contextmodel.ReqContext) response.Response {
 	dtoCmd := dtos.UpdatePrefsCmd{}
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -267,7 +267,7 @@ func (hs *HTTPServer) UpdateOrgPreferences(c *model.ReqContext) response.Respons
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) PatchOrgPreferences(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) PatchOrgPreferences(c *contextmodel.ReqContext) response.Response {
 	dtoCmd := dtos.PatchPrefsCmd{}
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)

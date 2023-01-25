@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acMock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -657,7 +657,7 @@ func createService(ac *acMock.Mock, store *fakes.RuleStore, scheduler schedule.S
 	}
 }
 
-func createRequestContext(orgID int64, role org.RoleType, params map[string]string) *model.ReqContext {
+func createRequestContext(orgID int64, role org.RoleType, params map[string]string) *contextmodel.ReqContext {
 	uri, _ := url.Parse("http://localhost")
 	ctx := web.Context{Req: &http.Request{
 		URL: uri,
@@ -666,7 +666,7 @@ func createRequestContext(orgID int64, role org.RoleType, params map[string]stri
 		ctx.Req = web.SetURLParams(ctx.Req, params)
 	}
 
-	return &model.ReqContext{
+	return &contextmodel.ReqContext{
 		IsSignedIn: true,
 		SignedInUser: &user.SignedInUser{
 			OrgRole: role,

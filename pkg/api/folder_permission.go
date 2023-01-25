@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -27,7 +27,7 @@ import (
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetFolderPermissionList(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) GetFolderPermissionList(c *contextmodel.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
 	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.OrgID, UID: &uid, SignedInUser: c.SignedInUser})
 
@@ -84,7 +84,7 @@ func (hs *HTTPServer) GetFolderPermissionList(c *model.ReqContext) response.Resp
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateFolderPermissions(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateFolderPermissions(c *contextmodel.ReqContext) response.Response {
 	apiCmd := dtos.UpdateDashboardACLCommand{}
 	if err := web.Bind(c.Req, &apiCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)

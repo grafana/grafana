@@ -2,7 +2,7 @@ package routing
 
 import (
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -12,8 +12,8 @@ var (
 	}
 )
 
-func Wrap(handler func(c *model.ReqContext) response.Response) web.Handler {
-	return func(c *model.ReqContext) {
+func Wrap(handler func(c *contextmodel.ReqContext) response.Response) web.Handler {
+	return func(c *contextmodel.ReqContext) {
 		if res := handler(c); res != nil {
 			res.WriteTo(c)
 		}

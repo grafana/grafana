@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -42,7 +42,7 @@ func (e UnknownReceiverError) Error() string {
 	return fmt.Sprintf("unknown receiver: %s", e.UID)
 }
 
-func (srv AlertmanagerSrv) RouteGetAMStatus(c *model.ReqContext) response.Response {
+func (srv AlertmanagerSrv) RouteGetAMStatus(c *contextmodel.ReqContext) response.Response {
 	am, errResp := srv.AlertmanagerFor(c.OrgID)
 	if errResp != nil {
 		return errResp
@@ -51,7 +51,7 @@ func (srv AlertmanagerSrv) RouteGetAMStatus(c *model.ReqContext) response.Respon
 	return response.JSON(http.StatusOK, am.GetStatus())
 }
 
-func (srv AlertmanagerSrv) RouteCreateSilence(c *model.ReqContext, postableSilence apimodels.PostableSilence) response.Response {
+func (srv AlertmanagerSrv) RouteCreateSilence(c *contextmodel.ReqContext, postableSilence apimodels.PostableSilence) response.Response {
 	err := postableSilence.Validate(strfmt.Default)
 	if err != nil {
 		srv.log.Error("silence failed validation", "error", err)
@@ -92,7 +92,7 @@ func (srv AlertmanagerSrv) RouteCreateSilence(c *model.ReqContext, postableSilen
 	})
 }
 
-func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *model.ReqContext) response.Response {
+func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *contextmodel.ReqContext) response.Response {
 	am, errResp := srv.AlertmanagerFor(c.OrgID)
 	if errResp != nil {
 		return errResp
@@ -106,7 +106,7 @@ func (srv AlertmanagerSrv) RouteDeleteAlertingConfig(c *model.ReqContext) respon
 	return response.JSON(http.StatusAccepted, util.DynMap{"message": "configuration deleted; the default is applied"})
 }
 
-func (srv AlertmanagerSrv) RouteDeleteSilence(c *model.ReqContext, silenceID string) response.Response {
+func (srv AlertmanagerSrv) RouteDeleteSilence(c *contextmodel.ReqContext, silenceID string) response.Response {
 	am, errResp := srv.AlertmanagerFor(c.OrgID)
 	if errResp != nil {
 		return errResp
@@ -121,7 +121,7 @@ func (srv AlertmanagerSrv) RouteDeleteSilence(c *model.ReqContext, silenceID str
 	return response.JSON(http.StatusOK, util.DynMap{"message": "silence deleted"})
 }
 
-func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *model.ReqContext) response.Response {
+func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *contextmodel.ReqContext) response.Response {
 	config, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.OrgID)
 	if err != nil {
 		if errors.Is(err, store.ErrNoAlertmanagerConfiguration) {
@@ -132,7 +132,7 @@ func (srv AlertmanagerSrv) RouteGetAlertingConfig(c *model.ReqContext) response.
 	return response.JSON(http.StatusOK, config)
 }
 
-func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *model.ReqContext) response.Response {
+func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *contextmodel.ReqContext) response.Response {
 	am, errResp := srv.AlertmanagerFor(c.OrgID)
 	if errResp != nil {
 		return errResp
@@ -156,7 +156,7 @@ func (srv AlertmanagerSrv) RouteGetAMAlertGroups(c *model.ReqContext) response.R
 	return response.JSON(http.StatusOK, groups)
 }
 
-func (srv AlertmanagerSrv) RouteGetAMAlerts(c *model.ReqContext) response.Response {
+func (srv AlertmanagerSrv) RouteGetAMAlerts(c *contextmodel.ReqContext) response.Response {
 	am, errResp := srv.AlertmanagerFor(c.OrgID)
 	if errResp != nil {
 		return errResp
@@ -183,7 +183,7 @@ func (srv AlertmanagerSrv) RouteGetAMAlerts(c *model.ReqContext) response.Respon
 	return response.JSON(http.StatusOK, alerts)
 }
 
-func (srv AlertmanagerSrv) RouteGetSilence(c *model.ReqContext, silenceID string) response.Response {
+func (srv AlertmanagerSrv) RouteGetSilence(c *contextmodel.ReqContext, silenceID string) response.Response {
 	am, errResp := srv.AlertmanagerFor(c.OrgID)
 	if errResp != nil {
 		return errResp
@@ -200,7 +200,7 @@ func (srv AlertmanagerSrv) RouteGetSilence(c *model.ReqContext, silenceID string
 	return response.JSON(http.StatusOK, gettableSilence)
 }
 
-func (srv AlertmanagerSrv) RouteGetSilences(c *model.ReqContext) response.Response {
+func (srv AlertmanagerSrv) RouteGetSilences(c *contextmodel.ReqContext) response.Response {
 	am, errResp := srv.AlertmanagerFor(c.OrgID)
 	if errResp != nil {
 		return errResp
@@ -217,7 +217,7 @@ func (srv AlertmanagerSrv) RouteGetSilences(c *model.ReqContext) response.Respon
 	return response.JSON(http.StatusOK, gettableSilences)
 }
 
-func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *model.ReqContext, body apimodels.PostableUserConfig) response.Response {
+func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *contextmodel.ReqContext, body apimodels.PostableUserConfig) response.Response {
 	currentConfig, err := srv.mam.GetAlertmanagerConfiguration(c.Req.Context(), c.OrgID)
 	// If a config is present and valid we proceed with the guard, otherwise we
 	// just bypass the guard which is okay as we are anyway in an invalid state.
@@ -248,7 +248,7 @@ func (srv AlertmanagerSrv) RoutePostAlertingConfig(c *model.ReqContext, body api
 	return ErrResp(http.StatusInternalServerError, err, "")
 }
 
-func (srv AlertmanagerSrv) RouteGetReceivers(c *model.ReqContext) response.Response {
+func (srv AlertmanagerSrv) RouteGetReceivers(c *contextmodel.ReqContext) response.Response {
 	am, errResp := srv.AlertmanagerFor(c.OrgID)
 	if errResp != nil {
 		return errResp
@@ -258,7 +258,7 @@ func (srv AlertmanagerSrv) RouteGetReceivers(c *model.ReqContext) response.Respo
 	return response.JSON(http.StatusOK, rcvs)
 }
 
-func (srv AlertmanagerSrv) RoutePostTestReceivers(c *model.ReqContext, body apimodels.TestReceiversConfigBodyParams) response.Response {
+func (srv AlertmanagerSrv) RoutePostTestReceivers(c *contextmodel.ReqContext, body apimodels.TestReceiversConfigBodyParams) response.Response {
 	if err := srv.crypto.LoadSecureSettings(c.Req.Context(), c.OrgID, body.Receivers); err != nil {
 		var unknownReceiverError UnknownReceiverError
 		if errors.As(err, &unknownReceiverError) {

@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/models"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -350,7 +350,7 @@ func updateDashboardPermissionScenario(t *testing.T, ctx updatePermissionContext
 	t.Run(fmt.Sprintf("%s %s", ctx.desc, ctx.url), func(t *testing.T) {
 		sc := setupScenarioContext(t, ctx.url)
 
-		sc.defaultHandler = routing.Wrap(func(c *model.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(ctx.cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c

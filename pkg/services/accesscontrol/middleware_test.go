@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -55,7 +55,7 @@ func TestMiddleware(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.desc, func(t *testing.T) {
 			fallbackCalled := false
-			fallback := func(c *model.ReqContext) {
+			fallback := func(c *contextmodel.ReqContext) {
 				fallbackCalled = true
 			}
 
@@ -66,7 +66,7 @@ func TestMiddleware(t *testing.T) {
 			server.Use(accesscontrol.Middleware(test.ac)(fallback, test.evaluator))
 
 			endpointCalled := false
-			server.Get("/", func(c *model.ReqContext) {
+			server.Get("/", func(c *contextmodel.ReqContext) {
 				endpointCalled = true
 				c.Resp.WriteHeader(http.StatusOK)
 			})
@@ -99,13 +99,13 @@ func TestMiddleware_forceLogin(t *testing.T) {
 		server := web.New()
 		server.UseMiddleware(web.Renderer("../../public/views", "[[", "]]"))
 
-		server.Get("/endpoint", func(c *model.ReqContext) {
+		server.Get("/endpoint", func(c *contextmodel.ReqContext) {
 			endpointCalled = true
 			c.Resp.WriteHeader(http.StatusOK)
 		})
 
 		ac := mock.New().WithPermissions([]accesscontrol.Permission{{Action: "endpoint:read", Scope: "endpoint:1"}})
-		server.Use(contextProvider(func(c *model.ReqContext) {
+		server.Use(contextProvider(func(c *contextmodel.ReqContext) {
 			c.AllowAnonymous = true
 			c.SignedInUser.IsAnonymous = true
 			c.IsSignedIn = false
@@ -129,9 +129,9 @@ func TestMiddleware_forceLogin(t *testing.T) {
 	}
 }
 
-func contextProvider(modifiers ...func(c *model.ReqContext)) web.Handler {
+func contextProvider(modifiers ...func(c *contextmodel.ReqContext)) web.Handler {
 	return func(c *web.Context) {
-		reqCtx := &model.ReqContext{
+		reqCtx := &contextmodel.ReqContext{
 			Context:      c,
 			Logger:       log.New(""),
 			SignedInUser: &user.SignedInUser{},

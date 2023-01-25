@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -444,7 +444,7 @@ type testContext struct {
 func contextProvider(tc *testContext) web.Handler {
 	return func(c *web.Context) {
 		signedIn := tc.user != nil
-		reqCtx := &model.ReqContext{
+		reqCtx := &contextmodel.ReqContext{
 			Context:      c,
 			SignedInUser: tc.user,
 			IsSignedIn:   signedIn,

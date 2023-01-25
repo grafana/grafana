@@ -12,84 +12,84 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 type RulerApi interface {
-	RouteDeleteGrafanaRuleGroupConfig(*model.ReqContext) response.Response
-	RouteDeleteNamespaceGrafanaRulesConfig(*model.ReqContext) response.Response
-	RouteDeleteNamespaceRulesConfig(*model.ReqContext) response.Response
-	RouteDeleteRuleGroupConfig(*model.ReqContext) response.Response
-	RouteGetGrafanaRuleGroupConfig(*model.ReqContext) response.Response
-	RouteGetGrafanaRulesConfig(*model.ReqContext) response.Response
-	RouteGetNamespaceGrafanaRulesConfig(*model.ReqContext) response.Response
-	RouteGetNamespaceRulesConfig(*model.ReqContext) response.Response
-	RouteGetRulegGroupConfig(*model.ReqContext) response.Response
-	RouteGetRulesConfig(*model.ReqContext) response.Response
-	RoutePostNameGrafanaRulesConfig(*model.ReqContext) response.Response
-	RoutePostNameRulesConfig(*model.ReqContext) response.Response
+	RouteDeleteGrafanaRuleGroupConfig(*contextmodel.ReqContext) response.Response
+	RouteDeleteNamespaceGrafanaRulesConfig(*contextmodel.ReqContext) response.Response
+	RouteDeleteNamespaceRulesConfig(*contextmodel.ReqContext) response.Response
+	RouteDeleteRuleGroupConfig(*contextmodel.ReqContext) response.Response
+	RouteGetGrafanaRuleGroupConfig(*contextmodel.ReqContext) response.Response
+	RouteGetGrafanaRulesConfig(*contextmodel.ReqContext) response.Response
+	RouteGetNamespaceGrafanaRulesConfig(*contextmodel.ReqContext) response.Response
+	RouteGetNamespaceRulesConfig(*contextmodel.ReqContext) response.Response
+	RouteGetRulegGroupConfig(*contextmodel.ReqContext) response.Response
+	RouteGetRulesConfig(*contextmodel.ReqContext) response.Response
+	RoutePostNameGrafanaRulesConfig(*contextmodel.ReqContext) response.Response
+	RoutePostNameRulesConfig(*contextmodel.ReqContext) response.Response
 }
 
-func (f *RulerApiHandler) RouteDeleteGrafanaRuleGroupConfig(ctx *model.ReqContext) response.Response {
+func (f *RulerApiHandler) RouteDeleteGrafanaRuleGroupConfig(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
 	namespaceParam := web.Params(ctx.Req)[":Namespace"]
 	groupnameParam := web.Params(ctx.Req)[":Groupname"]
 	return f.handleRouteDeleteGrafanaRuleGroupConfig(ctx, namespaceParam, groupnameParam)
 }
-func (f *RulerApiHandler) RouteDeleteNamespaceGrafanaRulesConfig(ctx *model.ReqContext) response.Response {
+func (f *RulerApiHandler) RouteDeleteNamespaceGrafanaRulesConfig(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
 	namespaceParam := web.Params(ctx.Req)[":Namespace"]
 	return f.handleRouteDeleteNamespaceGrafanaRulesConfig(ctx, namespaceParam)
 }
-func (f *RulerApiHandler) RouteDeleteNamespaceRulesConfig(ctx *model.ReqContext) response.Response {
+func (f *RulerApiHandler) RouteDeleteNamespaceRulesConfig(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	namespaceParam := web.Params(ctx.Req)[":Namespace"]
 	return f.handleRouteDeleteNamespaceRulesConfig(ctx, datasourceUIDParam, namespaceParam)
 }
-func (f *RulerApiHandler) RouteDeleteRuleGroupConfig(ctx *model.ReqContext) response.Response {
+func (f *RulerApiHandler) RouteDeleteRuleGroupConfig(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	namespaceParam := web.Params(ctx.Req)[":Namespace"]
 	groupnameParam := web.Params(ctx.Req)[":Groupname"]
 	return f.handleRouteDeleteRuleGroupConfig(ctx, datasourceUIDParam, namespaceParam, groupnameParam)
 }
-func (f *RulerApiHandler) RouteGetGrafanaRuleGroupConfig(ctx *model.ReqContext) response.Response {
+func (f *RulerApiHandler) RouteGetGrafanaRuleGroupConfig(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
 	namespaceParam := web.Params(ctx.Req)[":Namespace"]
 	groupnameParam := web.Params(ctx.Req)[":Groupname"]
 	return f.handleRouteGetGrafanaRuleGroupConfig(ctx, namespaceParam, groupnameParam)
 }
-func (f *RulerApiHandler) RouteGetGrafanaRulesConfig(ctx *model.ReqContext) response.Response {
+func (f *RulerApiHandler) RouteGetGrafanaRulesConfig(ctx *contextmodel.ReqContext) response.Response {
 	return f.handleRouteGetGrafanaRulesConfig(ctx)
 }
-func (f *RulerApiHandler) RouteGetNamespaceGrafanaRulesConfig(ctx *model.ReqContext) response.Response {
+func (f *RulerApiHandler) RouteGetNamespaceGrafanaRulesConfig(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
 	namespaceParam := web.Params(ctx.Req)[":Namespace"]
 	return f.handleRouteGetNamespaceGrafanaRulesConfig(ctx, namespaceParam)
 }
-func (f *RulerApiHandler) RouteGetNamespaceRulesConfig(ctx *model.ReqContext) response.Response {
+func (f *RulerApiHandler) RouteGetNamespaceRulesConfig(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	namespaceParam := web.Params(ctx.Req)[":Namespace"]
 	return f.handleRouteGetNamespaceRulesConfig(ctx, datasourceUIDParam, namespaceParam)
 }
-func (f *RulerApiHandler) RouteGetRulegGroupConfig(ctx *model.ReqContext) response.Response {
+func (f *RulerApiHandler) RouteGetRulegGroupConfig(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	namespaceParam := web.Params(ctx.Req)[":Namespace"]
 	groupnameParam := web.Params(ctx.Req)[":Groupname"]
 	return f.handleRouteGetRulegGroupConfig(ctx, datasourceUIDParam, namespaceParam, groupnameParam)
 }
-func (f *RulerApiHandler) RouteGetRulesConfig(ctx *model.ReqContext) response.Response {
+func (f *RulerApiHandler) RouteGetRulesConfig(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	return f.handleRouteGetRulesConfig(ctx, datasourceUIDParam)
 }
-func (f *RulerApiHandler) RoutePostNameGrafanaRulesConfig(ctx *model.ReqContext) response.Response {
+func (f *RulerApiHandler) RoutePostNameGrafanaRulesConfig(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
 	namespaceParam := web.Params(ctx.Req)[":Namespace"]
 	// Parse Request Body
@@ -99,7 +99,7 @@ func (f *RulerApiHandler) RoutePostNameGrafanaRulesConfig(ctx *model.ReqContext)
 	}
 	return f.handleRoutePostNameGrafanaRulesConfig(ctx, conf, namespaceParam)
 }
-func (f *RulerApiHandler) RoutePostNameRulesConfig(ctx *model.ReqContext) response.Response {
+func (f *RulerApiHandler) RoutePostNameRulesConfig(ctx *contextmodel.ReqContext) response.Response {
 	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	namespaceParam := web.Params(ctx.Req)[":Namespace"]

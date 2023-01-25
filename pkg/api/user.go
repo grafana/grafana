@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/contexthandler/model"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -30,7 +30,7 @@ import (
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetSignedInUser(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) GetSignedInUser(c *contextmodel.ReqContext) response.Response {
 	return hs.getUserUserProfile(c, c.UserID)
 }
 
@@ -44,7 +44,7 @@ func (hs *HTTPServer) GetSignedInUser(c *model.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetUserByID(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) GetUserByID(c *contextmodel.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
@@ -52,7 +52,7 @@ func (hs *HTTPServer) GetUserByID(c *model.ReqContext) response.Response {
 	return hs.getUserUserProfile(c, id)
 }
 
-func (hs *HTTPServer) getUserUserProfile(c *model.ReqContext, userID int64) response.Response {
+func (hs *HTTPServer) getUserUserProfile(c *contextmodel.ReqContext, userID int64) response.Response {
 	query := user.GetUserProfileQuery{UserID: userID}
 
 	userProfile, err := hs.userService.GetProfile(c.Req.Context(), &query)
@@ -87,7 +87,7 @@ func (hs *HTTPServer) getUserUserProfile(c *model.ReqContext, userID int64) resp
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetUserByLoginOrEmail(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) GetUserByLoginOrEmail(c *contextmodel.ReqContext) response.Response {
 	query := user.GetUserByLoginQuery{LoginOrEmail: c.Query("loginOrEmail")}
 	usr, err := hs.userService.GetByLogin(c.Req.Context(), &query)
 	if err != nil {
@@ -119,7 +119,7 @@ func (hs *HTTPServer) GetUserByLoginOrEmail(c *model.ReqContext) response.Respon
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateSignedInUser(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateSignedInUser(c *contextmodel.ReqContext) response.Response {
 	cmd := user.UpdateUserCommand{}
 	var err error
 	if err = web.Bind(c.Req, &cmd); err != nil {
@@ -153,7 +153,7 @@ func (hs *HTTPServer) UpdateSignedInUser(c *model.ReqContext) response.Response 
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateUser(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateUser(c *contextmodel.ReqContext) response.Response {
 	cmd := user.UpdateUserCommand{}
 	var err error
 	if err = web.Bind(c.Req, &cmd); err != nil {
@@ -172,7 +172,7 @@ func (hs *HTTPServer) UpdateUser(c *model.ReqContext) response.Response {
 }
 
 // POST /api/users/:id/using/:orgId
-func (hs *HTTPServer) UpdateUserActiveOrg(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateUserActiveOrg(c *contextmodel.ReqContext) response.Response {
 	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
@@ -251,7 +251,7 @@ func (hs *HTTPServer) isExternalUser(ctx context.Context, userID int64) (bool, e
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) GetSignedInUserOrgList(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) GetSignedInUserOrgList(c *contextmodel.ReqContext) response.Response {
 	return hs.getUserOrgList(c.Req.Context(), c.UserID)
 }
 
@@ -266,7 +266,7 @@ func (hs *HTTPServer) GetSignedInUserOrgList(c *model.ReqContext) response.Respo
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) GetSignedInUserTeamList(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) GetSignedInUserTeamList(c *contextmodel.ReqContext) response.Response {
 	return hs.getUserTeamList(c, c.OrgID, c.UserID)
 }
 
@@ -282,7 +282,7 @@ func (hs *HTTPServer) GetSignedInUserTeamList(c *model.ReqContext) response.Resp
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetUserTeams(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) GetUserTeams(c *contextmodel.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
@@ -290,7 +290,7 @@ func (hs *HTTPServer) GetUserTeams(c *model.ReqContext) response.Response {
 	return hs.getUserTeamList(c, c.OrgID, id)
 }
 
-func (hs *HTTPServer) getUserTeamList(c *model.ReqContext, orgID int64, userID int64) response.Response {
+func (hs *HTTPServer) getUserTeamList(c *contextmodel.ReqContext, orgID int64, userID int64) response.Response {
 	query := team.GetTeamsByUserQuery{OrgID: orgID, UserID: userID, SignedInUser: c.SignedInUser}
 
 	queryResult, err := hs.teamService.GetTeamsByUser(c.Req.Context(), &query)
@@ -316,7 +316,7 @@ func (hs *HTTPServer) getUserTeamList(c *model.ReqContext, orgID int64, userID i
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetUserOrgList(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) GetUserOrgList(c *contextmodel.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
@@ -366,7 +366,7 @@ func (hs *HTTPServer) validateUsingOrg(ctx context.Context, userID int64, orgID 
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) UserSetUsingOrg(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) UserSetUsingOrg(c *contextmodel.ReqContext) response.Response {
 	orgID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
@@ -386,7 +386,7 @@ func (hs *HTTPServer) UserSetUsingOrg(c *model.ReqContext) response.Response {
 }
 
 // GET /profile/switch-org/:id
-func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *model.ReqContext) {
+func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *contextmodel.ReqContext) {
 	orgID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		c.JsonApiErr(http.StatusBadRequest, "id is invalid", err)
@@ -421,7 +421,7 @@ func (hs *HTTPServer) ChangeActiveOrgAndRedirectToHome(c *model.ReqContext) {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) ChangeUserPassword(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) ChangeUserPassword(c *contextmodel.ReqContext) response.Response {
 	cmd := user.ChangeUserPasswordCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -469,7 +469,7 @@ func (hs *HTTPServer) ChangeUserPassword(c *model.ReqContext) response.Response 
 }
 
 // redirectToChangePassword handles GET /.well-known/change-password.
-func redirectToChangePassword(c *model.ReqContext) {
+func redirectToChangePassword(c *contextmodel.ReqContext) {
 	c.Redirect("/profile/password", 302)
 }
 
@@ -482,7 +482,7 @@ func redirectToChangePassword(c *model.ReqContext) {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) SetHelpFlag(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) SetHelpFlag(c *contextmodel.ReqContext) response.Response {
 	flag, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
@@ -512,7 +512,7 @@ func (hs *HTTPServer) SetHelpFlag(c *model.ReqContext) response.Response {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) ClearHelpFlags(c *model.ReqContext) response.Response {
+func (hs *HTTPServer) ClearHelpFlags(c *contextmodel.ReqContext) response.Response {
 	cmd := user.SetUserHelpFlagCommand{
 		UserID:     c.UserID,
 		HelpFlags1: user.HelpFlags1(0),
