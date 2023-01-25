@@ -98,8 +98,6 @@ export const useMenuFocus = ({
         menuItems?.[focusedItem]?.click();
         break;
       case 'Escape':
-        event.preventDefault();
-        event.stopPropagation();
         onClose?.();
         break;
       case 'Tab':
