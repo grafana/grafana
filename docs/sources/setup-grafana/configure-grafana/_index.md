@@ -675,6 +675,10 @@ List of allowed headers to be set by the user. Suggested to use for if authentic
 
 ## [snapshots]
 
+### enabled
+
+Set to `false` to disable snapshot feature (default `true`).
+
 ### external_enabled
 
 Set to `false` to disable external snapshot publish endpoint (default `true`).
