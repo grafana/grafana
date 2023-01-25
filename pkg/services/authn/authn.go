@@ -296,6 +296,8 @@ func IdentityFromSignedInUser(id string, usr *user.SignedInUser, params ClientPa
 	}
 }
 
+
+// ClientWithPrefix returns a client name prefixed with "auth.client."
 func ClientWithPrefix(name string) string {
 	return fmt.Sprintf("auth.client.%s", name)
 }
