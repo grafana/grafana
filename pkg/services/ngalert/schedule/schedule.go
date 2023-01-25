@@ -522,7 +522,9 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 				go func() {
 					defer cancelFunc()
 					err := <-errChan
-					logger.Error("Error clearing state", "error", err)
+					if err != nil {
+						logger.Error("Error clearing state", "error", err)
+					}
 				}()
 			}
 			logger.Debug("Stopping alert rule routine")

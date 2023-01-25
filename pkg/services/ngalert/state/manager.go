@@ -170,38 +170,38 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.Ale
 	logger := st.log.New(ruleKey.LogContext()...)
 	logger.Debug("Resetting state of the rule")
 
+	errCh := make(<-chan error)
 	states := st.cache.removeByRuleUID(ruleKey.OrgID, ruleKey.UID)
-	if len(states) > 0 && st.instanceStore != nil {
-		err := st.instanceStore.DeleteAlertInstancesByRule(ctx, ruleKey)
-		if err != nil {
-			logger.Error("Failed to delete states that belong to a rule from database", "error", err)
-		}
-	}
-
-	errChan := make(<-chan error)
-	if reason == ngModels.StateReasonPaused {
-		transitions := make([]StateTransition, 0, len(states))
-		for _, s := range states {
-			oldState := s.State
-			oldReason := s.StateReason
-			now := time.Now()
-			s.SetNormal(reason, s.StartsAt, now)
-			s.LastEvaluationTime = now
-			s.Values = map[string]float64{}
-			transitions = append(transitions, StateTransition{
-				State:               s,
-				PreviousState:       oldState,
-				PreviousStateReason: oldReason,
-			})
+	if len(states) > 0 {
+		if st.instanceStore != nil {
+			err := st.instanceStore.DeleteAlertInstancesByRule(ctx, ruleKey)
+			if err != nil {
+				logger.Error("Failed to delete states that belong to a rule from database", "error", err)
+			}
 		}
 
-		if st.historian != nil {
-			errChan = st.historian.RecordStatesAsync(ctx, rule, transitions)
+		if reason == ngModels.StateReasonPaused && st.historian != nil {
+			transitions := make([]StateTransition, 0, len(states))
+			for _, s := range states {
+				oldState := s.State
+				oldReason := s.StateReason
+				now := time.Now()
+				s.SetNormal(reason, s.StartsAt, now)
+				s.LastEvaluationTime = now
+				s.Values = map[string]float64{}
+				transitions = append(transitions, StateTransition{
+					State:               s,
+					PreviousState:       oldState,
+					PreviousStateReason: oldReason,
+				})
+			}
+
+			errCh = st.historian.RecordStatesAsync(ctx, rule, transitions)
 		}
 	}
 
 	logger.Info("Rules state was reset", "states", len(states))
-	return states, errChan
+	return states, errCh
 }
 
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
