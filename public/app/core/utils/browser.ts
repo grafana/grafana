@@ -38,6 +38,6 @@ export function userAgentIsApple() {
   return appleRe.test(navigator.platform);
 }
 
-export function getShortcutKey() {
-  return userAgentIsApple() ? 'Cmd' : 'Ctrl';
+export function getModKey() {
+  return userAgentIsApple() ? 'cmd' : 'ctrl';
 }
