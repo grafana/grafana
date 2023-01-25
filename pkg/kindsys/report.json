@@ -1590,7 +1590,9 @@
     },
     "xychartpanelcfg": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/grafana-bi-squad"
+      ],
       "currentVersion": [
         0,
         0
@@ -1598,13 +1600,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
-        "docs": "n/a",
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/xychartpanelcfg/schema-reference",
         "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/xychart/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/xychart/panelcfg.gen.ts"
       },
       "machineName": "xychartpanelcfg",
-      "maturity": "planned",
+      "maturity": "experimental",
       "name": "XYChartPanelCfg",
       "pluralMachineName": "xychartpanelcfgs",
       "pluralName": "XYChartPanelCfgs",
@@ -1758,9 +1760,10 @@
           "newspanelcfg",
           "piechartpanelcfg",
           "statpanelcfg",
-          "textpanelcfg"
+          "textpanelcfg",
+          "xychartpanelcfg"
         ],
-        "count": 11
+        "count": 12
       },
       "mature": {
         "name": "mature",
@@ -1836,11 +1839,10 @@
           "tracespanelcfg",
           "user",
           "welcomepanelcfg",
-          "xychartpanelcfg",
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 60
+        "count": 59
       },
       "stable": {
         "name": "stable",
