@@ -29,6 +29,7 @@ func NewRuleMeta(r *models.AlertRule, log log.Logger) RuleMeta {
 		if err != nil {
 			logger.Error("Error parsing panelUID for alert annotation", "ruleID", r.ID, "dash", dashUID, "actual", panelAnno, "error", err)
 			pid = 0
+			dashUID = ""
 		}
 		panelID = pid
 	}
