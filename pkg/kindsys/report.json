@@ -1408,7 +1408,7 @@
         "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/tempo/dataquery.gen.ts"
       },
       "machineName": "tempodataquery",
-      "maturity": "merged",
+      "maturity": "experimental",
       "name": "TempoDataQuery",
       "pluralMachineName": "tempodataquerys",
       "pluralName": "TempoDataQuerys",
@@ -1760,9 +1760,10 @@
           "newspanelcfg",
           "piechartpanelcfg",
           "statpanelcfg",
+          "tempodataquery",
           "textpanelcfg"
         ],
-        "count": 11
+        "count": 12
       },
       "mature": {
         "name": "mature",
@@ -1774,10 +1775,9 @@
         "items": [
           "alertgroupspanelcfg",
           "playlist",
-          "team",
-          "tempodataquery"
+          "team"
         ],
-        "count": 4
+        "count": 3
       },
       "planned": {
         "name": "planned",

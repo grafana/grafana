@@ -8,21 +8,20 @@ title: TempoDataQuery kind
 
 # TempoDataQuery kind
 
-## Maturity: merged
+## Maturity: experimental
 ## Version: 0.0
 
 ## Properties
 
-| Property          | Type   | Required | Description                                                                                |
-|-------------------|--------|----------|--------------------------------------------------------------------------------------------|
-| `limit`           | number | No       |                                                                                            |
-| `maxDuration`     | string | No       |                                                                                            |
-| `minDuration`     | string | No       |                                                                                            |
-| `queryType`       | string | No       | Possible values are: `traceql`, `search`, `serviceMap`, `upload`, `nativeSearch`, `clear`. |
-| `query`           | string | No       |                                                                                            |
-| `search`          | string | No       |                                                                                            |
-| `serviceMapQuery` | string | No       |                                                                                            |
-| `serviceName`     | string | No       |                                                                                            |
-| `spanName`        | string | No       |                                                                                            |
+| Property          | Type   | Required | Description |
+|-------------------|--------|----------|-------------|
+| `limit`           | number | No       |             |
+| `maxDuration`     | string | No       |             |
+| `minDuration`     | string | No       |             |
+| `query`           | string | No       |             |
+| `search`          | string | No       |             |
+| `serviceMapQuery` | string | No       |             |
+| `serviceName`     | string | No       |             |
+| `spanName`        | string | No       |             |
 
 

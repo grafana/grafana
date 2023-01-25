@@ -12,6 +12,9 @@ import * as common from '@grafana/schema';
 
 export const DataQueryModelVersion = Object.freeze([0, 0]);
 
+/**
+ * search = Loki search, nativeSearch = Tempo search for backwards compatibility
+ */
 export type TempoQueryType = ('traceql' | 'search' | 'serviceMap' | 'upload' | 'nativeSearch' | 'clear');
 
 export interface Tempo extends common.DataQuery {
@@ -19,14 +22,6 @@ export interface Tempo extends common.DataQuery {
   maxDuration?: string;
   minDuration?: string;
   query: string;
-  /**
-   * search = Loki search, nativeSearch = Tempo search for backwards compatibility
-   */
-  /**
-   * Specify the query flavor
-   * TODO make this required and give it a default
-   */
-  queryType: string;
   search?: string;
   serviceMapQuery?: string;
   serviceName?: string;

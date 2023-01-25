@@ -9,21 +9,6 @@
 
 package dataquery
 
-// Defines values for QueryType.
-const (
-	QueryTypeClear QueryType = "clear"
-
-	QueryTypeNativeSearch QueryType = "nativeSearch"
-
-	QueryTypeSearch QueryType = "search"
-
-	QueryTypeServiceMap QueryType = "serviceMap"
-
-	QueryTypeTraceql QueryType = "traceql"
-
-	QueryTypeUpload QueryType = "upload"
-)
-
 // Defines values for TempoQueryType.
 const (
 	TempoQueryTypeClear TempoQueryType = "clear"
@@ -57,12 +42,9 @@ type TempoDataQuery struct {
 	MinDuration *string  `json:"minDuration,omitempty"`
 	Query       string   `json:"query"`
 
-	// search = Loki search, nativeSearch = Tempo search for backwards compatibility
-	//
-	//
 	// Specify the query flavor
 	// TODO make this required and give it a default
-	QueryType QueryType `json:"queryType"`
+	QueryType *string `json:"queryType,omitempty"`
 
 	// A - Z
 	RefId           string  `json:"refId"`
@@ -73,10 +55,4 @@ type TempoDataQuery struct {
 }
 
 // search = Loki search, nativeSearch = Tempo search for backwards compatibility
-//
-// Specify the query flavor
-// TODO make this required and give it a default
-type QueryType string
-
-// TempoQueryType defines model for TempoQueryType.
 type TempoQueryType string

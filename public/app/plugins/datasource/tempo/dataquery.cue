@@ -23,7 +23,7 @@ import (
 pfs.GrafanaPlugin
 
 composableKinds: DataQuery: {
-	maturity: "merged"
+	maturity: "experimental"
 
 	lineage: {
 		seqs: [
@@ -31,17 +31,16 @@ composableKinds: DataQuery: {
 				schemas: [
 					{
 						common.DataQuery
-						query:   string
-						search?: string
-						// search = Loki search, nativeSearch = Tempo search for backwards compatibility
-						queryType:        #TempoQueryType
+						query:            string
+						search?:          string
 						serviceName?:     string
 						spanName?:        string
 						minDuration?:     string
 						maxDuration?:     string
-						limit?:           number
 						serviceMapQuery?: string
+						limit?:           number
 
+						// search = Loki search, nativeSearch = Tempo search for backwards compatibility
 						#TempoQueryType: "traceql" | "search" | "serviceMap" | "upload" | "nativeSearch" | "clear" @cuetsy(kind="type")
 					},
 				]
