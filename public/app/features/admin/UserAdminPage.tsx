@@ -39,7 +39,7 @@ interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {
   error?: UserAdminError;
 }
 
-const SyncedOAuthLabels: string[] = ['GitHub', 'GitLab', 'OAuth'];
+const SyncedOAuthLabels: string[] = ['GitHub', 'OAuth'];
 
 export class UserAdminPage extends PureComponent<Props> {
   async componentDidMount() {
@@ -113,6 +113,7 @@ export class UserAdminPage extends PureComponent<Props> {
       user?.isExternal && user?.authLabels?.some((r) => SyncedOAuthLabels.includes(r));
     const isSAMLUser = user?.isExternal && user?.authLabels?.includes('SAML');
     const isGoogleUser = user?.isExternal && user?.authLabels?.includes('Google');
+    const isGitLabUser = user?.isExternal && user?.authLabels?.includes('GitLab');
     const isAuthProxyUser = user?.isExternal && user?.authLabels?.includes('Auth Proxy');
     const isAzureADUser = user?.isExternal && user?.authLabels?.includes('AzureAD');
     const isGrafanaComUser = user?.isExternal && user?.authLabels?.includes('grafana.com');
@@ -122,6 +123,7 @@ export class UserAdminPage extends PureComponent<Props> {
         !(
           isAuthProxyUser ||
           isGoogleUser ||
+          isGitLabUser ||
           isOAuthUserWithSkippableSync ||
           isSAMLUser ||
           isLDAPUser ||
@@ -136,6 +138,7 @@ export class UserAdminPage extends PureComponent<Props> {
         // both OAuthSkipOrgRoleUpdateSync and specific provider settings needs to be false for a user to be synced
         (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.GrafanaComSkipOrgRoleSync && isGrafanaComUser) ||
         (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.AzureADSkipOrgRoleSync && isAzureADUser) ||
+        (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.GitLabSkipOrgRoleSync && isGitLabUser) ||
         (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.GoogleSkipOrgRoleSync && isGoogleUser));
 
     const pageNav: NavModelItem = {
