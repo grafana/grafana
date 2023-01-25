@@ -7,7 +7,7 @@ _build:
 
 # Grafana schema
 
-> Grafana’s schema, Kind, and related codegen systems are under intense development.
+> Grafana’s schemas, kind system and related code generation are in active development.
 
 Grafana is moving to a schema-centric model of development, where schemas are the single source of truth that specify
 the shape of objects - for example, dashboards, datasources, users - in the frontend, backend, and plugin code.
