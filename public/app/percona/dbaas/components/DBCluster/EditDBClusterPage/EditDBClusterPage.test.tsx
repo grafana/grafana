@@ -1,4 +1,4 @@
-import { render, fireEvent, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
@@ -100,7 +100,6 @@ describe('EditDBClusterPage::', () => {
     );
 
     expect(screen.queryByTestId('dbcluster-basic-options-step')).not.toBeInTheDocument();
-    expect(screen.getByTestId('dbCluster-advanced-settings')).toBeInTheDocument();
     expect(screen.getByTestId('nodes-field-container')).toBeInTheDocument();
 
     expect(screen.getByTestId('db-cluster-cancel-button')).toBeInTheDocument();
@@ -142,8 +141,6 @@ describe('EditDBClusterPage::', () => {
         </Provider>
       )
     );
-
-    fireEvent.click(screen.getByTestId('dbCluster-advanced-settings'));
 
     const button = screen.getByTestId('db-cluster-submit-button');
     expect(button).toBeDisabled();

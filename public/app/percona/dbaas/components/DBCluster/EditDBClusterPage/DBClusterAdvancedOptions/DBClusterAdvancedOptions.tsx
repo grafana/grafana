@@ -72,6 +72,15 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({
   const parameterValidators = [required, min(MIN_RESOURCES), resourceValidator];
   const { name, kubernetesCluster, topology, resources, memory, cpu, databaseType, disk, nodes, single } = values;
   const resourcesInputProps = { step: '0.1' };
+  const collapsableProps =
+    mode === 'create'
+      ? {
+          collapsableProps: {
+            isOpen: false,
+            buttonDataTestId: 'dbCluster-advanced-settings',
+          },
+        }
+      : {};
 
   const parsePositiveInt = useCallback((value) => (value > 0 && Number.isInteger(+value) ? value : undefined), []);
 
@@ -195,13 +204,7 @@ export const DBClusterAdvancedOptions: FC<DBClusterAdvancedOptionsProps> = ({
   }, [databaseType, nodes]);
 
   return (
-    <FieldSet
-      label={Messages.fieldSets.advancedSettings}
-      collapsableProps={{
-        isOpen: mode === 'edit',
-        buttonDataTestId: 'dbCluster-advanced-settings',
-      }}
-    >
+    <FieldSet label={Messages.fieldSets.advancedSettings} {...collapsableProps}>
       <>{showUnsafeConfigurationWarning && <UnsafeConfigurationWarning />}</>
       <div className={styles.line}>
         <NumberInputField

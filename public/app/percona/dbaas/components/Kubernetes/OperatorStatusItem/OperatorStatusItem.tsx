@@ -29,7 +29,8 @@ export const OperatorStatusItem: FC<OperatorStatusItemProps> = ({
   return (
     <div className={styles.connectionItemWrapper} data-testid={dataTestId}>
       <span className={styles.connectionItemLabel} title={OPERATOR_FULL_LABELS[databaseType]}>
-        {buildOperatorLabel(operator, databaseType)}${showStatus ? ':' : ''}
+        {buildOperatorLabel(operator, databaseType)}
+        {showStatus ? ':' : ''}
       </span>
       {showStatus && (
         <span className={styles.connectionItemValue}>
