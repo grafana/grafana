@@ -60,8 +60,8 @@ func (c urlConstructor) path(assetPath string) (*url.URL, error) {
 	return u, nil
 }
 
-// stringURLFor is like path, but it returns the absolute URL as a string rather than *url.URL.
-func (c urlConstructor) stringURLFor(assetPath string) (string, error) {
+// stringPath is like path, but it returns the absolute URL as a string rather than *url.URL.
+func (c urlConstructor) stringPath(assetPath string) (string, error) {
 	u, err := c.path(assetPath)
 	if err != nil {
 		return "", err

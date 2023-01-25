@@ -23,7 +23,7 @@ func TestURLConstructor_StringURLFor(t *testing.T) {
 		{"dots", "some/././././file.txt", "https://the.cdn/the-plugin/0.1/some/file.txt"},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			u, err := uc.stringURLFor(c.path)
+			u, err := uc.stringPath(c.path)
 			require.NoError(t, err)
 			assert.Equal(t, c.exp, u)
 		})

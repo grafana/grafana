@@ -104,7 +104,7 @@ func (s Service) RelativeURL(p *plugins.Plugin, pathStr, defaultStr string) (str
 	}
 	if s.IsCDNPlugin(p.ID) {
 		// CDN
-		return s.cdnURLConstructor(p.ID, p.Info.Version).stringURLFor(pathStr)
+		return s.cdnURLConstructor(p.ID, p.Info.Version).stringPath(pathStr)
 	}
 	// Local
 	u, _ := url.Parse(pathStr)
@@ -124,5 +124,5 @@ func (s Service) CDNAssetURL(pluginID, pluginVersion, assetPath string) (string,
 	if !s.IsCDNPlugin(pluginID) {
 		return "", ErrPluginNotCDN
 	}
-	return s.cdnURLConstructor(pluginID, pluginVersion).stringURLFor(assetPath)
+	return s.cdnURLConstructor(pluginID, pluginVersion).stringPath(assetPath)
 }
