@@ -196,7 +196,7 @@ export enum SupplementaryQueryType {
  */
 export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQuery> {
   /**
-   * Returns an observable that will be used to fetch supplementary data based on provided
+   * Returns an observable that will be used to fetch supplementary data based on the provided
    * supplementary query type and original request.
    */
   getDataProvider(
