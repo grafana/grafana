@@ -8,7 +8,8 @@ maturity: "experimental"
 lineage: seqs: [
 	{
 		schemas: [
-			{// 0.0
+			// 0.0
+			{
 				@grafana(TSVeneer="type")
 
 				// Unique numeric identifier for the dashboard.
@@ -413,7 +414,7 @@ lineage: seqs: [
 				#MatcherConfig: {
 					id:       string | *"" @grafanamaturity(NeedsExpertReview)
 					options?: _            @grafanamaturity(NeedsExpertReview)
-				} @cuetsy(kind="interface")
+				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				#DynamicConfigValue: {
 					id:     string | *"" @grafanamaturity(NeedsExpertReview)
@@ -506,6 +507,7 @@ lineage: seqs: [
 					}
 					...
 				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
+
 				#HeatmapPanel: {
 					type: "heatmap" @grafanamaturity(NeedsExpertReview)
 					...

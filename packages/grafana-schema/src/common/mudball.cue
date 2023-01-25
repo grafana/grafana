@@ -1,7 +1,5 @@
 package common
 
-// TODO break this up into individual files. Current limitation on this is codegen logic, imports, dependencies
-
 // TODO docs
 AxisPlacement:      "auto" | "top" | "right" | "bottom" | "left" | "hidden" @cuetsy(kind="enum")
 
@@ -247,7 +245,6 @@ VizTooltipOptions: {
 	sort: SortOrder
 } @cuetsy(kind="interface")
 
-
-
-// Controls the value alignment in the TimelineChart component
-TimelineValueAlignment: "center" | "left" | "right" @cuetsy(kind="type")
+Labels: {
+	[string]: string
+} @cuetsy(kind="interface")

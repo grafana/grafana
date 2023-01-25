@@ -943,7 +943,8 @@ def redis_integration_tests_step():
         },
         'commands': [
             'dockerize -wait tcp://redis:6379/0 -timeout 120s',
-            './bin/grabpl integration-tests',
+            'go clean -testcache',
+            "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=5m {}'",
         ],
     }
 
@@ -958,7 +959,8 @@ def memcached_integration_tests_step():
         },
         'commands': [
             'dockerize -wait tcp://memcached:11211 -timeout 120s',
-            './bin/grabpl integration-tests',
+            'go clean -testcache',
+            "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=5m {}'",
         ],
     }
 

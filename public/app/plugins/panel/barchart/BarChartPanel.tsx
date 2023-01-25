@@ -37,7 +37,7 @@ import { getFieldLegendItem } from 'app/core/components/TimelineChart/utils';
 
 import { DataHoverView } from '../geomap/components/DataHoverView';
 
-import { PanelOptions } from './models.gen';
+import { PanelOptions } from './panelcfg.gen';
 import { prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
 
 const TOOLTIP_OFFSET = 10;

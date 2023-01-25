@@ -259,7 +259,7 @@ func createDummyDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardPr
 func createDummyACL(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardPermission *DashboardPermission, search Search, dashboardID int64) int64 {
 	t.Helper()
 
-	acl := &models.DashboardACL{
+	acl := &dashboards.DashboardACL{
 		OrgID:       1,
 		Created:     time.Now(),
 		Updated:     time.Now(),
@@ -388,7 +388,7 @@ func insertTestDashboard(t *testing.T, sqlStore *sqlstore.SQLStore, title string
 }
 
 // TODO: Use FakeDashboardStore when org has its own service
-func updateDashboardACL(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardID int64, items ...*models.DashboardACL) error {
+func updateDashboardACL(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardID int64, items ...*dashboards.DashboardACL) error {
 	t.Helper()
 
 	err := sqlStore.WithDbSession(context.Background(), func(sess *Session) error {

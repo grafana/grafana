@@ -7,7 +7,7 @@ import { GrafanaTheme2, PanelProps, renderTextPanelMarkdown, textUtil, Interpola
 import { CustomScrollbar, CodeEditor, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
 
-import { defaultCodeOptions, PanelOptions, TextMode } from './models.gen';
+import { defaultCodeOptions, PanelOptions, TextMode } from './panelcfg.gen';
 
 export interface Props extends PanelProps<PanelOptions> {}
 
