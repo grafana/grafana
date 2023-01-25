@@ -14,8 +14,6 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
-
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -393,9 +391,7 @@ func (hs *HTTPServer) serveLocalPluginAsset(c *models.ReqContext, plugin plugins
 
 // redirectCDNPluginAsset redirects the http request to specified asset path on the configured plugins CDN.
 func (hs *HTTPServer) redirectCDNPluginAsset(c *models.ReqContext, plugin plugins.PluginDTO, assetPath string) {
-	remoteURL, err := pluginscdn.NewCDNURLConstructor(
-		hs.Cfg.PluginsCDNURLTemplate, plugin.ID, plugin.Info.Version,
-	).StringURLFor(assetPath)
+	remoteURL, err := hs.pluginsCDNService.CDNAssetURL(plugin.ID, plugin.Info.Version, assetPath)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get CDN plugin asset remote URL", err)
 		return

@@ -1,6 +1,7 @@
 package pluginscdn
 
 import (
+	"errors"
 	"net/url"
 	"path"
 	"path/filepath"
@@ -15,6 +16,8 @@ const (
 	systemJSCDNKeyword = "plugin-cdn"
 )
 
+var ErrPluginNotCDN = errors.New("plugin is not a cdn plugin")
+
 // Service provides methods for constructing asset paths for plugins.
 // It supports core plugins, external plugins stored on the local filesystem, and external plugins stored
 // on the plugins CDN, and it will switch to the correct implementation depending on the plugin and the config.
@@ -26,10 +29,10 @@ func ProvideService(cfg *config.Cfg) *Service {
 	return &Service{cfg: cfg}
 }
 
-// cdnURLConstructor returns a new URLConstructor for the provided plugin id and version.
-// The CDN should be enabled for the plugin, otherwise the returned URLConstructor will have
+// cdnURLConstructor returns a new urlConstructor for the provided plugin id and version.
+// The CDN should be enabled for the plugin, otherwise the returned urlConstructor will have
 // and invalid base url.
-func (c Service) cdnURLConstructor(pluginID, pluginVersion string) URLConstructor {
+func (c Service) cdnURLConstructor(pluginID, pluginVersion string) urlConstructor {
 	return NewCDNURLConstructor(c.cfg.PluginsCDNURLTemplate, pluginID, pluginVersion)
 }
 
@@ -91,4 +94,13 @@ func (c Service) RelativeURL(p *plugins.Plugin, pathStr, defaultStr string) (str
 		return pathStr, nil
 	}
 	return path.Join(p.BaseURL, pathStr), nil
+}
+
+// CDNAssetURL returns the URL of a CDN asset for a CDN plugin. If the specified plugin is not a CDN plugin,
+// it returns ErrPluginNotCDN.
+func (c Service) CDNAssetURL(pluginID, pluginVersion, assetPath string) (string, error) {
+	if !c.IsCDNPlugin(pluginID) {
+		return "", ErrPluginNotCDN
+	}
+	return c.cdnURLConstructor(pluginID, pluginVersion).StringURLFor(assetPath)
 }

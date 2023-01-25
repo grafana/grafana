@@ -412,7 +412,7 @@ func TestLoader_Load(t *testing.T) {
 			cfg: &config.Cfg{
 				PluginsCDNURLTemplate: "https://cdn.example.com/{id}/{version}/public/plugins/{id}/{assetPath}",
 				PluginSettings: setting.PluginSettings{
-					"grafana-worldmap-panel": map[string]string{"cdn": "true"},
+					"grafana-worldmap-panel": {"cdn": "true"},
 				},
 			},
 			pluginPaths: []string{"../testdata/cdn"},
@@ -455,7 +455,6 @@ func TestLoader_Load(t *testing.T) {
 					},
 					PluginDir: filepath.Join(parentDir, "testdata/cdn/plugin"),
 					Class:     plugins.External,
-					CDN:       true,
 					Signature: plugins.SignatureValid,
 					BaseURL:   "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel",
 					Module:    "plugin-cdn/grafana-worldmap-panel/0.3.3/public/plugins/grafana-worldmap-panel/module",

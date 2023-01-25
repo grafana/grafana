@@ -92,15 +92,21 @@ func (l *Loader) createPluginsForLoading(class plugins.Class, foundPlugins found
 	for pluginDir, pluginJSON := range foundPlugins {
 		plugin, err := l.createPluginBase(pluginJSON, class, pluginDir)
 		if err != nil {
-			l.log.Warn("Could not create plugin base", "pluginID", pluginJSON.Info)
+			l.log.Warn("Could not create plugin base", "pluginID", pluginJSON.ID, "err", err)
 			continue
 		}
 
 		// calculate initial signature state
-		sig, err := signature.Calculate(l.log, plugin)
-		if err != nil {
-			l.log.Warn("Could not calculate plugin signature state", "pluginID", plugin.ID, "err", err)
-			continue
+		var sig plugins.Signature
+		if l.pluginsCDNService.IsCDNPlugin(plugin.ID) {
+			// CDN plugins have no signature checks for now.
+			sig = plugins.Signature{Status: plugins.SignatureValid}
+		} else {
+			sig, err = signature.Calculate(l.log, plugin)
+			if err != nil {
+				l.log.Warn("Could not calculate plugin signature state", "pluginID", plugin.ID, "err", err)
+				continue
+			}
 		}
 		plugin.Signature = sig.Status
 		plugin.SignatureType = sig.Type
@@ -187,7 +193,7 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 			module := filepath.Join(plugin.PluginDir, "module.js")
 			if exists, err := fs.Exists(module); err != nil {
 				return nil, err
-			} else if !exists && !plugin.CDN {
+			} else if !exists && !l.pluginsCDNService.IsCDNPlugin(plugin.ID) {
 				l.log.Warn("Plugin missing module.js",
 					"pluginID", plugin.ID,
 					"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.",
@@ -344,7 +350,6 @@ func (l *Loader) createPluginBase(pluginJSON plugins.JSONData, class plugins.Cla
 		BaseURL:   baseURL,
 		Module:    moduleURL,
 		Class:     class,
-		CDN:       l.pluginsCDNService.IsCDNPlugin(pluginJSON.ID),
 	}
 
 	plugin.SetLogger(log.New(fmt.Sprintf("plugin.%s", plugin.ID)))

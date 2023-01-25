@@ -164,11 +164,9 @@ func Test_GetPluginAssetCDNRedirect(t *testing.T) {
 	t.Run("Plugin CDN asset redirect", func(t *testing.T) {
 		cdnPlugin := &plugins.Plugin{
 			JSONData: plugins.JSONData{ID: cdnPluginID, Info: plugins.Info{Version: "1.0.0"}},
-			CDN:      true,
 		}
 		nonCdnPlugin := &plugins.Plugin{
 			JSONData: plugins.JSONData{ID: nonCDNPluginID, Info: plugins.Info{Version: "2.0.0"}},
-			CDN:      false,
 		}
 		service := &plugins.FakePluginStore{
 			PluginList: []plugins.PluginDTO{

@@ -7,8 +7,8 @@ import (
 	"strings"
 )
 
-// URLConstructor is a struct that can build CDN URLs for plugins on a remote CDN.
-type URLConstructor struct {
+// urlConstructor is a struct that can build CDN URLs for plugins on a remote CDN.
+type urlConstructor struct {
 	// cdnURLTemplate is absolute base url of the CDN. This string will be formatted
 	// according to the rules specified in the Path method.
 	cdnURLTemplate string
@@ -20,9 +20,9 @@ type URLConstructor struct {
 	pluginVersion string
 }
 
-// NewCDNURLConstructor creates a new URLConstructor for the specified template and plugin id + version combo.
-func NewCDNURLConstructor(cdnURLTemplate string, pluginID string, pluginVersion string) URLConstructor {
-	return URLConstructor{
+// NewCDNURLConstructor creates a new urlConstructor for the specified template and plugin id + version combo.
+func NewCDNURLConstructor(cdnURLTemplate string, pluginID string, pluginVersion string) urlConstructor {
+	return urlConstructor{
 		cdnURLTemplate: cdnURLTemplate,
 		pluginID:       pluginID,
 		pluginVersion:  pluginVersion,
@@ -30,7 +30,7 @@ func NewCDNURLConstructor(cdnURLTemplate string, pluginID string, pluginVersion 
 }
 
 // Path returns a new *url.URL that points to an asset file for the CDN, plugin and plugin version
-// specified by the current URLConstructor.
+// specified by the current urlConstructor.
 //
 // c.cdnURLTemplate is used to build the string, the following substitutions are performed in it:
 //
@@ -43,7 +43,7 @@ func NewCDNURLConstructor(cdnURLTemplate string, pluginID string, pluginVersion 
 // The asset path is sanitized via path.Clean (double slashes are removed, "../" is resolved, etc).
 //
 // The returned URL will be for a file, so it won't have a trailing slash.
-func (c URLConstructor) Path(assetPath string) (*url.URL, error) {
+func (c urlConstructor) Path(assetPath string) (*url.URL, error) {
 	u, err := url.Parse(
 		strings.TrimRight(
 			strings.NewReplacer(
@@ -61,7 +61,7 @@ func (c URLConstructor) Path(assetPath string) (*url.URL, error) {
 }
 
 // StringURLFor is like Path, but it returns the absolute URL as a string rather than *url.URL.
-func (c URLConstructor) StringURLFor(assetPath string) (string, error) {
+func (c urlConstructor) StringURLFor(assetPath string) (string, error) {
 	u, err := c.Path(assetPath)
 	if err != nil {
 		return "", err
