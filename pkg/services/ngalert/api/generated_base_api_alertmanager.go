@@ -12,39 +12,39 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/contexthandler/model"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 type AlertmanagerApi interface {
-	RouteCreateGrafanaSilence(*models.ReqContext) response.Response
-	RouteCreateSilence(*models.ReqContext) response.Response
-	RouteDeleteAlertingConfig(*models.ReqContext) response.Response
-	RouteDeleteGrafanaAlertingConfig(*models.ReqContext) response.Response
-	RouteDeleteGrafanaSilence(*models.ReqContext) response.Response
-	RouteDeleteSilence(*models.ReqContext) response.Response
-	RouteGetAMAlertGroups(*models.ReqContext) response.Response
-	RouteGetAMAlerts(*models.ReqContext) response.Response
-	RouteGetAMStatus(*models.ReqContext) response.Response
-	RouteGetAlertingConfig(*models.ReqContext) response.Response
-	RouteGetGrafanaAMAlertGroups(*models.ReqContext) response.Response
-	RouteGetGrafanaAMAlerts(*models.ReqContext) response.Response
-	RouteGetGrafanaAMStatus(*models.ReqContext) response.Response
-	RouteGetGrafanaAlertingConfig(*models.ReqContext) response.Response
-	RouteGetGrafanaReceivers(*models.ReqContext) response.Response
-	RouteGetGrafanaSilence(*models.ReqContext) response.Response
-	RouteGetGrafanaSilences(*models.ReqContext) response.Response
-	RouteGetSilence(*models.ReqContext) response.Response
-	RouteGetSilences(*models.ReqContext) response.Response
-	RoutePostAMAlerts(*models.ReqContext) response.Response
-	RoutePostAlertingConfig(*models.ReqContext) response.Response
-	RoutePostGrafanaAlertingConfig(*models.ReqContext) response.Response
-	RoutePostTestGrafanaReceivers(*models.ReqContext) response.Response
+	RouteCreateGrafanaSilence(*model.ReqContext) response.Response
+	RouteCreateSilence(*model.ReqContext) response.Response
+	RouteDeleteAlertingConfig(*model.ReqContext) response.Response
+	RouteDeleteGrafanaAlertingConfig(*model.ReqContext) response.Response
+	RouteDeleteGrafanaSilence(*model.ReqContext) response.Response
+	RouteDeleteSilence(*model.ReqContext) response.Response
+	RouteGetAMAlertGroups(*model.ReqContext) response.Response
+	RouteGetAMAlerts(*model.ReqContext) response.Response
+	RouteGetAMStatus(*model.ReqContext) response.Response
+	RouteGetAlertingConfig(*model.ReqContext) response.Response
+	RouteGetGrafanaAMAlertGroups(*model.ReqContext) response.Response
+	RouteGetGrafanaAMAlerts(*model.ReqContext) response.Response
+	RouteGetGrafanaAMStatus(*model.ReqContext) response.Response
+	RouteGetGrafanaAlertingConfig(*model.ReqContext) response.Response
+	RouteGetGrafanaReceivers(*model.ReqContext) response.Response
+	RouteGetGrafanaSilence(*model.ReqContext) response.Response
+	RouteGetGrafanaSilences(*model.ReqContext) response.Response
+	RouteGetSilence(*model.ReqContext) response.Response
+	RouteGetSilences(*model.ReqContext) response.Response
+	RoutePostAMAlerts(*model.ReqContext) response.Response
+	RoutePostAlertingConfig(*model.ReqContext) response.Response
+	RoutePostGrafanaAlertingConfig(*model.ReqContext) response.Response
+	RoutePostTestGrafanaReceivers(*model.ReqContext) response.Response
 }
 
-func (f *AlertmanagerApiHandler) RouteCreateGrafanaSilence(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RouteCreateGrafanaSilence(ctx *model.ReqContext) response.Response {
 	// Parse Request Body
 	conf := apimodels.PostableSilence{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
@@ -52,7 +52,7 @@ func (f *AlertmanagerApiHandler) RouteCreateGrafanaSilence(ctx *models.ReqContex
 	}
 	return f.handleRouteCreateGrafanaSilence(ctx, conf)
 }
-func (f *AlertmanagerApiHandler) RouteCreateSilence(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RouteCreateSilence(ctx *model.ReqContext) response.Response {
 	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	// Parse Request Body
@@ -62,80 +62,80 @@ func (f *AlertmanagerApiHandler) RouteCreateSilence(ctx *models.ReqContext) resp
 	}
 	return f.handleRouteCreateSilence(ctx, conf, datasourceUIDParam)
 }
-func (f *AlertmanagerApiHandler) RouteDeleteAlertingConfig(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RouteDeleteAlertingConfig(ctx *model.ReqContext) response.Response {
 	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	return f.handleRouteDeleteAlertingConfig(ctx, datasourceUIDParam)
 }
-func (f *AlertmanagerApiHandler) RouteDeleteGrafanaAlertingConfig(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RouteDeleteGrafanaAlertingConfig(ctx *model.ReqContext) response.Response {
 	return f.handleRouteDeleteGrafanaAlertingConfig(ctx)
 }
-func (f *AlertmanagerApiHandler) RouteDeleteGrafanaSilence(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RouteDeleteGrafanaSilence(ctx *model.ReqContext) response.Response {
 	// Parse Path Parameters
 	silenceIdParam := web.Params(ctx.Req)[":SilenceId"]
 	return f.handleRouteDeleteGrafanaSilence(ctx, silenceIdParam)
 }
-func (f *AlertmanagerApiHandler) RouteDeleteSilence(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RouteDeleteSilence(ctx *model.ReqContext) response.Response {
 	// Parse Path Parameters
 	silenceIdParam := web.Params(ctx.Req)[":SilenceId"]
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	return f.handleRouteDeleteSilence(ctx, silenceIdParam, datasourceUIDParam)
 }
-func (f *AlertmanagerApiHandler) RouteGetAMAlertGroups(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RouteGetAMAlertGroups(ctx *model.ReqContext) response.Response {
 	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	return f.handleRouteGetAMAlertGroups(ctx, datasourceUIDParam)
 }
-func (f *AlertmanagerApiHandler) RouteGetAMAlerts(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RouteGetAMAlerts(ctx *model.ReqContext) response.Response {
 	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	return f.handleRouteGetAMAlerts(ctx, datasourceUIDParam)
 }
-func (f *AlertmanagerApiHandler) RouteGetAMStatus(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RouteGetAMStatus(ctx *model.ReqContext) response.Response {
 	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	return f.handleRouteGetAMStatus(ctx, datasourceUIDParam)
 }
-func (f *AlertmanagerApiHandler) RouteGetAlertingConfig(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RouteGetAlertingConfig(ctx *model.ReqContext) response.Response {
 	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	return f.handleRouteGetAlertingConfig(ctx, datasourceUIDParam)
 }
-func (f *AlertmanagerApiHandler) RouteGetGrafanaAMAlertGroups(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RouteGetGrafanaAMAlertGroups(ctx *model.ReqContext) response.Response {
 	return f.handleRouteGetGrafanaAMAlertGroups(ctx)
 }
-func (f *AlertmanagerApiHandler) RouteGetGrafanaAMAlerts(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RouteGetGrafanaAMAlerts(ctx *model.ReqContext) response.Response {
 	return f.handleRouteGetGrafanaAMAlerts(ctx)
 }
-func (f *AlertmanagerApiHandler) RouteGetGrafanaAMStatus(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RouteGetGrafanaAMStatus(ctx *model.ReqContext) response.Response {
 	return f.handleRouteGetGrafanaAMStatus(ctx)
 }
-func (f *AlertmanagerApiHandler) RouteGetGrafanaAlertingConfig(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RouteGetGrafanaAlertingConfig(ctx *model.ReqContext) response.Response {
 	return f.handleRouteGetGrafanaAlertingConfig(ctx)
 }
-func (f *AlertmanagerApiHandler) RouteGetGrafanaReceivers(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RouteGetGrafanaReceivers(ctx *model.ReqContext) response.Response {
 	return f.handleRouteGetGrafanaReceivers(ctx)
 }
-func (f *AlertmanagerApiHandler) RouteGetGrafanaSilence(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RouteGetGrafanaSilence(ctx *model.ReqContext) response.Response {
 	// Parse Path Parameters
 	silenceIdParam := web.Params(ctx.Req)[":SilenceId"]
 	return f.handleRouteGetGrafanaSilence(ctx, silenceIdParam)
 }
-func (f *AlertmanagerApiHandler) RouteGetGrafanaSilences(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RouteGetGrafanaSilences(ctx *model.ReqContext) response.Response {
 	return f.handleRouteGetGrafanaSilences(ctx)
 }
-func (f *AlertmanagerApiHandler) RouteGetSilence(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RouteGetSilence(ctx *model.ReqContext) response.Response {
 	// Parse Path Parameters
 	silenceIdParam := web.Params(ctx.Req)[":SilenceId"]
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	return f.handleRouteGetSilence(ctx, silenceIdParam, datasourceUIDParam)
 }
-func (f *AlertmanagerApiHandler) RouteGetSilences(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RouteGetSilences(ctx *model.ReqContext) response.Response {
 	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	return f.handleRouteGetSilences(ctx, datasourceUIDParam)
 }
-func (f *AlertmanagerApiHandler) RoutePostAMAlerts(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RoutePostAMAlerts(ctx *model.ReqContext) response.Response {
 	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	// Parse Request Body
@@ -145,7 +145,7 @@ func (f *AlertmanagerApiHandler) RoutePostAMAlerts(ctx *models.ReqContext) respo
 	}
 	return f.handleRoutePostAMAlerts(ctx, conf, datasourceUIDParam)
 }
-func (f *AlertmanagerApiHandler) RoutePostAlertingConfig(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RoutePostAlertingConfig(ctx *model.ReqContext) response.Response {
 	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	// Parse Request Body
@@ -155,7 +155,7 @@ func (f *AlertmanagerApiHandler) RoutePostAlertingConfig(ctx *models.ReqContext)
 	}
 	return f.handleRoutePostAlertingConfig(ctx, conf, datasourceUIDParam)
 }
-func (f *AlertmanagerApiHandler) RoutePostGrafanaAlertingConfig(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RoutePostGrafanaAlertingConfig(ctx *model.ReqContext) response.Response {
 	// Parse Request Body
 	conf := apimodels.PostableUserConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
@@ -163,7 +163,7 @@ func (f *AlertmanagerApiHandler) RoutePostGrafanaAlertingConfig(ctx *models.ReqC
 	}
 	return f.handleRoutePostGrafanaAlertingConfig(ctx, conf)
 }
-func (f *AlertmanagerApiHandler) RoutePostTestGrafanaReceivers(ctx *models.ReqContext) response.Response {
+func (f *AlertmanagerApiHandler) RoutePostTestGrafanaReceivers(ctx *model.ReqContext) response.Response {
 	// Parse Request Body
 	conf := apimodels.TestReceiversConfigBodyParams{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {

@@ -8,7 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/licensing"
 )
 
@@ -151,7 +151,7 @@ func (fm *FeatureManager) GetFlags() []FeatureFlag {
 	return v
 }
 
-func (fm *FeatureManager) HandleGetSettings(c *models.ReqContext) {
+func (fm *FeatureManager) HandleGetSettings(c *model.ReqContext) {
 	res := make(map[string]interface{}, 3)
 	res["enabled"] = fm.GetEnabled(c.Req.Context())
 

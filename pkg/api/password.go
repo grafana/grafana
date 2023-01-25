@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -16,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func (hs *HTTPServer) SendResetPasswordEmail(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) SendResetPasswordEmail(c *model.ReqContext) response.Response {
 	form := dtos.SendResetPasswordEmailForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -54,7 +55,7 @@ func (hs *HTTPServer) SendResetPasswordEmail(c *models.ReqContext) response.Resp
 	return response.Success("Email sent")
 }
 
-func (hs *HTTPServer) ResetPassword(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) ResetPassword(c *model.ReqContext) response.Response {
 	form := dtos.ResetUserPasswordForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)

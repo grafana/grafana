@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
@@ -46,7 +46,7 @@ func ReverseProxyGnetReq(logger log.Logger, proxyPath string, version string) *h
 	return proxyutil.NewReverseProxy(logger, director)
 }
 
-func (hs *HTTPServer) ProxyGnetRequest(c *models.ReqContext) {
+func (hs *HTTPServer) ProxyGnetRequest(c *model.ReqContext) {
 	proxyPath := web.Params(c.Req)["*"]
 	proxy := ReverseProxyGnetReq(c.Logger, proxyPath, hs.Cfg.BuildVersion)
 	proxy.Transport = grafanaComProxyTransport

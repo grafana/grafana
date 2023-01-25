@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -31,7 +32,7 @@ import (
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetFolders(c *model.ReqContext) response.Response {
 	var folders []*folder.Folder
 	var err error
 	if hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
@@ -82,7 +83,7 @@ func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetFolderByUID(c *model.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
 	folder, err := hs.folderService.Get(c.Req.Context(), &folder.GetFolderQuery{OrgID: c.OrgID, UID: &uid, SignedInUser: c.SignedInUser})
 	if err != nil {
@@ -109,7 +110,7 @@ func (hs *HTTPServer) GetFolderByUID(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetFolderByID(c *model.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
@@ -139,7 +140,7 @@ func (hs *HTTPServer) GetFolderByID(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 409: conflictError
 // 500: internalServerError
-func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) CreateFolder(c *model.ReqContext) response.Response {
 	cmd := folder.CreateFolderCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -167,7 +168,7 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, hs.newToFolderDto(c, g, folder))
 }
 
-func (hs *HTTPServer) MoveFolder(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) MoveFolder(c *model.ReqContext) response.Response {
 	if hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		cmd := folder.MoveFolderCommand{}
 		if err := web.Bind(c.Req, &cmd); err != nil {
@@ -208,7 +209,7 @@ func (hs *HTTPServer) MoveFolder(c *models.ReqContext) response.Response {
 // 404: notFoundError
 // 409: conflictError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateFolder(c *model.ReqContext) response.Response {
 	cmd := folder.UpdateFolderCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -243,7 +244,7 @@ func (hs *HTTPServer) UpdateFolder(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // temporarily adding this function to HTTPServer, will be removed from HTTPServer when librarypanels featuretoggle is removed
+func (hs *HTTPServer) DeleteFolder(c *model.ReqContext) response.Response { // temporarily adding this function to HTTPServer, will be removed from HTTPServer when librarypanels featuretoggle is removed
 	err := hs.LibraryElementService.DeleteLibraryElementsInFolder(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
 	if err != nil {
 		if errors.Is(err, libraryelements.ErrFolderHasConnectedLibraryElements) {
@@ -261,7 +262,7 @@ func (hs *HTTPServer) DeleteFolder(c *models.ReqContext) response.Response { // 
 	return response.JSON(http.StatusOK, "")
 }
 
-func (hs *HTTPServer) newToFolderDto(c *models.ReqContext, g guardian.DashboardGuardian, folder *folder.Folder) dtos.Folder {
+func (hs *HTTPServer) newToFolderDto(c *model.ReqContext, g guardian.DashboardGuardian, folder *folder.Folder) dtos.Folder {
 	canEdit, _ := g.CanEdit()
 	canSave, _ := g.CanSave()
 	canAdmin, _ := g.CanAdmin()
@@ -296,7 +297,7 @@ func (hs *HTTPServer) newToFolderDto(c *models.ReqContext, g guardian.DashboardG
 	}
 }
 
-func (hs *HTTPServer) searchFolders(c *models.ReqContext) ([]*folder.Folder, error) {
+func (hs *HTTPServer) searchFolders(c *model.ReqContext) ([]*folder.Folder, error) {
 	searchQuery := search.Query{
 		SignedInUser: c.SignedInUser,
 		DashboardIds: make([]int64, 0),

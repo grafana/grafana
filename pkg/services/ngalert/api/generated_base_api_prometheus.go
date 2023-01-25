@@ -12,30 +12,30 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 type PrometheusApi interface {
-	RouteGetAlertStatuses(*models.ReqContext) response.Response
-	RouteGetGrafanaAlertStatuses(*models.ReqContext) response.Response
-	RouteGetGrafanaRuleStatuses(*models.ReqContext) response.Response
-	RouteGetRuleStatuses(*models.ReqContext) response.Response
+	RouteGetAlertStatuses(*model.ReqContext) response.Response
+	RouteGetGrafanaAlertStatuses(*model.ReqContext) response.Response
+	RouteGetGrafanaRuleStatuses(*model.ReqContext) response.Response
+	RouteGetRuleStatuses(*model.ReqContext) response.Response
 }
 
-func (f *PrometheusApiHandler) RouteGetAlertStatuses(ctx *models.ReqContext) response.Response {
+func (f *PrometheusApiHandler) RouteGetAlertStatuses(ctx *model.ReqContext) response.Response {
 	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	return f.handleRouteGetAlertStatuses(ctx, datasourceUIDParam)
 }
-func (f *PrometheusApiHandler) RouteGetGrafanaAlertStatuses(ctx *models.ReqContext) response.Response {
+func (f *PrometheusApiHandler) RouteGetGrafanaAlertStatuses(ctx *model.ReqContext) response.Response {
 	return f.handleRouteGetGrafanaAlertStatuses(ctx)
 }
-func (f *PrometheusApiHandler) RouteGetGrafanaRuleStatuses(ctx *models.ReqContext) response.Response {
+func (f *PrometheusApiHandler) RouteGetGrafanaRuleStatuses(ctx *model.ReqContext) response.Response {
 	return f.handleRouteGetGrafanaRuleStatuses(ctx)
 }
-func (f *PrometheusApiHandler) RouteGetRuleStatuses(ctx *models.ReqContext) response.Response {
+func (f *PrometheusApiHandler) RouteGetRuleStatuses(ctx *model.ReqContext) response.Response {
 	// Parse Path Parameters
 	datasourceUIDParam := web.Params(ctx.Req)[":DatasourceUID"]
 	return f.handleRouteGetRuleStatuses(ctx, datasourceUIDParam)

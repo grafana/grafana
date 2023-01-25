@@ -12,8 +12,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
@@ -32,7 +32,7 @@ type PrometheusSrv struct {
 
 const queryIncludeInternalLabels = "includeInternalLabels"
 
-func (srv PrometheusSrv) RouteGetAlertStatuses(c *models.ReqContext) response.Response {
+func (srv PrometheusSrv) RouteGetAlertStatuses(c *model.ReqContext) response.Response {
 	alertResponse := apimodels.AlertResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",
@@ -105,7 +105,7 @@ func getPanelIDFromRequest(r *http.Request) (int64, error) {
 	return 0, nil
 }
 
-func (srv PrometheusSrv) RouteGetRuleStatuses(c *models.ReqContext) response.Response {
+func (srv PrometheusSrv) RouteGetRuleStatuses(c *model.ReqContext) response.Response {
 	dashboardUID := c.Query("dashboard_uid")
 	panelID, err := getPanelIDFromRequest(c.Req)
 	if err != nil {

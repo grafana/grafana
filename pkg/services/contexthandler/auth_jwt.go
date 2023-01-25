@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/models/roletype"
 	authJWT "github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -24,7 +25,7 @@ const (
 	UserNotFound = "User not found"
 )
 
-func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64) bool {
+func (h *ContextHandler) initContextWithJWT(ctx *model.ReqContext, orgId int64) bool {
 	if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
 		identity, ok, err := h.authnService.Authenticate(ctx.Req.Context(),
 			authn.ClientJWT,

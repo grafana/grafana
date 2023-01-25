@@ -8,8 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -89,7 +89,7 @@ func (api *Api) RegisterAPIEndpoints() {
 
 // ListPublicDashboards Gets list of public dashboards by orgId
 // GET /api/dashboards/public-dashboards
-func (api *Api) ListPublicDashboards(c *models.ReqContext) response.Response {
+func (api *Api) ListPublicDashboards(c *model.ReqContext) response.Response {
 	resp, err := api.PublicDashboardService.FindAll(c.Req.Context(), c.SignedInUser, c.OrgID)
 	if err != nil {
 		return response.Err(err)
@@ -99,7 +99,7 @@ func (api *Api) ListPublicDashboards(c *models.ReqContext) response.Response {
 
 // GetPublicDashboard Gets public dashboard for dashboard
 // GET /api/dashboards/uid/:dashboardUid/public-dashboards
-func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
+func (api *Api) GetPublicDashboard(c *model.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
 	if !tokens.IsValidShortUID(dashboardUid) {
@@ -120,7 +120,7 @@ func (api *Api) GetPublicDashboard(c *models.ReqContext) response.Response {
 
 // CreatePublicDashboard Sets public dashboard for dashboard
 // POST /api/dashboards/uid/:dashboardUid/public-dashboards
-func (api *Api) CreatePublicDashboard(c *models.ReqContext) response.Response {
+func (api *Api) CreatePublicDashboard(c *model.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
 	if !tokens.IsValidShortUID(dashboardUid) {
@@ -152,7 +152,7 @@ func (api *Api) CreatePublicDashboard(c *models.ReqContext) response.Response {
 
 // UpdatePublicDashboard Sets public dashboard for dashboard
 // PUT /api/dashboards/uid/:dashboardUid/public-dashboards/:uid
-func (api *Api) UpdatePublicDashboard(c *models.ReqContext) response.Response {
+func (api *Api) UpdatePublicDashboard(c *model.ReqContext) response.Response {
 	// exit if we don't have a valid dashboardUid
 	dashboardUid := web.Params(c.Req)[":dashboardUid"]
 	if !tokens.IsValidShortUID(dashboardUid) {
@@ -190,7 +190,7 @@ func (api *Api) UpdatePublicDashboard(c *models.ReqContext) response.Response {
 
 // Delete a public dashboard
 // DELETE /api/dashboards/uid/:dashboardUid/public-dashboards/:uid
-func (api *Api) DeletePublicDashboard(c *models.ReqContext) response.Response {
+func (api *Api) DeletePublicDashboard(c *model.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
 	if !tokens.IsValidShortUID(uid) {
 		return response.Err(ErrInvalidUid.Errorf("UpdatePublicDashboard: invalid Uid %s", uid))

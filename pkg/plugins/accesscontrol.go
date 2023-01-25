@@ -1,8 +1,8 @@
 package plugins
 
 import (
-	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -22,9 +22,9 @@ var (
 	AdminAccessEvaluator = ac.EvalAny(ac.EvalPermission(ActionWrite), ac.EvalPermission(ActionInstall))
 )
 
-func ReqCanAdminPlugins(cfg *setting.Cfg) func(rc *models.ReqContext) bool {
+func ReqCanAdminPlugins(cfg *setting.Cfg) func(rc *model.ReqContext) bool {
 	// Legacy handler that protects access to the Configuration > Plugins page
-	return func(rc *models.ReqContext) bool {
+	return func(rc *model.ReqContext) bool {
 		return rc.OrgRole == org.RoleAdmin || cfg.PluginAdminEnabled && rc.IsGrafanaAdmin
 	}
 }

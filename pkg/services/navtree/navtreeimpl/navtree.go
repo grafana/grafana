@@ -7,10 +7,10 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
+	"github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -71,7 +71,7 @@ func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStor
 }
 
 //nolint:gocyclo
-func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *pref.Preference) (*navtree.NavTreeRoot, error) {
+func (s *ServiceImpl) GetNavTree(c *model.ReqContext, hasEditPerm bool, prefs *pref.Preference) (*navtree.NavTreeRoot, error) {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	treeRoot := &navtree.NavTreeRoot{}
 
@@ -111,7 +111,7 @@ func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 		treeRoot.AddSection(dashboardLink)
 	}
 
-	canExplore := func(context *models.ReqContext) bool {
+	canExplore := func(context *model.ReqContext) bool {
 		return c.OrgRole == org.RoleAdmin || c.OrgRole == org.RoleEditor || setting.ViewersCanEdit
 	}
 
@@ -210,7 +210,7 @@ func (s *ServiceImpl) GetNavTree(c *models.ReqContext, hasEditPerm bool, prefs *
 	return treeRoot, nil
 }
 
-func (s *ServiceImpl) getHomeNode(c *models.ReqContext, prefs *pref.Preference) *navtree.NavLink {
+func (s *ServiceImpl) getHomeNode(c *model.ReqContext, prefs *pref.Preference) *navtree.NavLink {
 	homeUrl := s.cfg.AppSubURL + "/"
 	homePage := s.cfg.HomePage
 
@@ -232,7 +232,7 @@ func (s *ServiceImpl) getHomeNode(c *models.ReqContext, prefs *pref.Preference) 
 	return homeNode
 }
 
-func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqContext) {
+func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *model.ReqContext) {
 	if setting.HelpEnabled {
 		helpVersion := fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, setting.BuildVersion, setting.BuildCommit)
 		if s.cfg.AnonymousHideVersion && !c.IsSignedIn {
@@ -261,7 +261,7 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqC
 	}
 }
 
-func (s *ServiceImpl) getProfileNode(c *models.ReqContext) *navtree.NavLink {
+func (s *ServiceImpl) getProfileNode(c *model.ReqContext) *navtree.NavLink {
 	// Only set login if it's different from the name
 	var login string
 	if c.SignedInUser.Login != c.SignedInUser.NameOrFallback() {
@@ -311,7 +311,7 @@ func (s *ServiceImpl) getProfileNode(c *models.ReqContext) *navtree.NavLink {
 	}
 }
 
-func (s *ServiceImpl) buildStarredItemsNavLinks(c *models.ReqContext) ([]*navtree.NavLink, error) {
+func (s *ServiceImpl) buildStarredItemsNavLinks(c *model.ReqContext) ([]*navtree.NavLink, error) {
 	starredItemsChildNavs := []*navtree.NavLink{}
 
 	query := star.GetUserStarsQuery{
@@ -357,9 +357,9 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *models.ReqContext) ([]*navtre
 	return starredItemsChildNavs, nil
 }
 
-func (s *ServiceImpl) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm bool) []*navtree.NavLink {
+func (s *ServiceImpl) buildDashboardNavLinks(c *model.ReqContext, hasEditPerm bool) []*navtree.NavLink {
 	hasAccess := ac.HasAccess(s.accessControl, c)
-	hasEditPermInAnyFolder := func(c *models.ReqContext) bool {
+	hasEditPermInAnyFolder := func(c *model.ReqContext) bool {
 		return hasEditPerm
 	}
 
@@ -444,7 +444,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 	return dashboardChildNavs
 }
 
-func (s *ServiceImpl) buildLegacyAlertNavLinks(c *models.ReqContext) *navtree.NavLink {
+func (s *ServiceImpl) buildLegacyAlertNavLinks(c *model.ReqContext) *navtree.NavLink {
 	var alertChildNavs []*navtree.NavLink
 	alertChildNavs = append(alertChildNavs, &navtree.NavLink{
 		Text: "Alert rules", Id: "alert-list", Url: s.cfg.AppSubURL + "/alerting/list", Icon: "list-ul",
@@ -476,7 +476,7 @@ func (s *ServiceImpl) buildLegacyAlertNavLinks(c *models.ReqContext) *navtree.Na
 	return &alertNav
 }
 
-func (s *ServiceImpl) buildAlertNavLinks(c *models.ReqContext, hasEditPerm bool) *navtree.NavLink {
+func (s *ServiceImpl) buildAlertNavLinks(c *model.ReqContext, hasEditPerm bool) *navtree.NavLink {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	var alertChildNavs []*navtree.NavLink
 
@@ -515,7 +515,7 @@ func (s *ServiceImpl) buildAlertNavLinks(c *models.ReqContext, hasEditPerm bool)
 		})
 	}
 
-	fallbackHasEditPerm := func(*models.ReqContext) bool { return hasEditPerm }
+	fallbackHasEditPerm := func(*model.ReqContext) bool { return hasEditPerm }
 
 	if hasAccess(fallbackHasEditPerm, ac.EvalAny(ac.EvalPermission(ac.ActionAlertingRuleCreate), ac.EvalPermission(ac.ActionAlertingRuleExternalWrite))) {
 		if !s.features.IsEnabled(featuremgmt.FlagTopnav) {
@@ -553,7 +553,7 @@ func (s *ServiceImpl) buildAlertNavLinks(c *models.ReqContext, hasEditPerm bool)
 	return nil
 }
 
-func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree.NavLink {
+func (s *ServiceImpl) buildDataConnectionsNavLink(c *model.ReqContext) *navtree.NavLink {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 
 	var children []*navtree.NavLink

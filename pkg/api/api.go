@@ -33,11 +33,11 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -173,8 +173,8 @@ func (hs *HTTPServer) registerRoutes() {
 		)
 	}
 
-	r.Get("/explore", authorize(func(c *models.ReqContext) {
-		if f, ok := reqSignedIn.(func(c *models.ReqContext)); ok {
+	r.Get("/explore", authorize(func(c *model.ReqContext) {
+		if f, ok := reqSignedIn.(func(c *model.ReqContext)); ok {
 			f(c)
 		}
 		middleware.EnsureEditorOrViewerCanEdit(c)

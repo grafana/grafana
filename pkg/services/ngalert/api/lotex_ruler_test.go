@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -98,7 +98,7 @@ func TestLotexRuler_ValidateAndGetPrefix(t *testing.T) {
 			// Setup request context.
 			httpReq, err := http.NewRequest(http.MethodGet, "http://grafanacloud.com"+tt.urlParams, nil)
 			require.NoError(t, err)
-			ctx := &models.ReqContext{Context: &web.Context{Req: web.SetURLParams(httpReq, tt.namedParams)}}
+			ctx := &model.ReqContext{Context: &web.Context{Req: web.SetURLParams(httpReq, tt.namedParams)}}
 
 			prefix, err := ruler.validateAndGetPrefix(ctx)
 			require.Equal(t, tt.expected, prefix)

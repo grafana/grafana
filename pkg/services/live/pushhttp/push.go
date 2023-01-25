@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/convert"
 	"github.com/grafana/grafana/pkg/services/live/pushurl"
@@ -45,7 +45,7 @@ func (g *Gateway) Run(ctx context.Context) error {
 	return ctx.Err()
 }
 
-func (g *Gateway) Handle(ctx *models.ReqContext) {
+func (g *Gateway) Handle(ctx *model.ReqContext) {
 	streamID := web.Params(ctx.Req)[":streamId"]
 
 	stream, err := g.GrafanaLive.ManagedStreamRunner.GetOrCreateStream(ctx.SignedInUser.OrgID, liveDto.ScopeStream, streamID)
@@ -98,7 +98,7 @@ func (g *Gateway) Handle(ctx *models.ReqContext) {
 	ctx.Resp.WriteHeader(http.StatusOK)
 }
 
-func (g *Gateway) HandlePipelinePush(ctx *models.ReqContext) {
+func (g *Gateway) HandlePipelinePush(ctx *model.ReqContext) {
 	channelID := web.Params(ctx.Req)["*"]
 
 	body, err := io.ReadAll(ctx.Req.Body)

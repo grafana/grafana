@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
+	"github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
@@ -162,7 +163,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 	middlewareScenario(t, "middleware should add Cache-Control header for requests with HTML response", func(
 		t *testing.T, sc *scenarioContext) {
-		sc.handlerFunc = func(c *models.ReqContext) {
+		sc.handlerFunc = func(c *model.ReqContext) {
 			t.Log("Handler called")
 			data := &dtos.IndexViewData{
 				User:     &dtos.CurrentUser{},
@@ -721,7 +722,7 @@ func TestMiddlewareContext(t *testing.T) {
 			body := "key=value"
 			sc.req.Body = io.NopCloser(strings.NewReader(body))
 
-			sc.handlerFunc = func(c *models.ReqContext) {
+			sc.handlerFunc = func(c *model.ReqContext) {
 				t.Log("Handler called")
 				defer func() {
 					err := c.Req.Body.Close()
@@ -745,7 +746,7 @@ func TestMiddlewareContext(t *testing.T) {
 			body := "key=value"
 			sc.req.Body = io.NopCloser(strings.NewReader(body))
 
-			sc.handlerFunc = func(c *models.ReqContext) {
+			sc.handlerFunc = func(c *model.ReqContext) {
 				t.Log("Handler called")
 				defer func() {
 					err := c.Req.Body.Close()
@@ -889,7 +890,7 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		sc.jwtAuthService = ctxHdlr.JWTAuthService.(*jwt.FakeJWTService)
 		sc.remoteCacheService = ctxHdlr.RemoteCache
 
-		sc.defaultHandler = func(c *models.ReqContext) {
+		sc.defaultHandler = func(c *model.ReqContext) {
 			require.NotNil(t, c)
 			t.Log("Default HTTP handler called")
 			sc.context = c

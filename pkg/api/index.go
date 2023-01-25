@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -21,7 +21,7 @@ const (
 	darkName  = "dark"
 )
 
-func (hs *HTTPServer) editorInAnyFolder(c *models.ReqContext) bool {
+func (hs *HTTPServer) editorInAnyFolder(c *model.ReqContext) bool {
 	hasEditPermissionInFoldersQuery := folder.HasEditPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
 	hasEditPermissionInFoldersQueryResult, err := hs.DashboardService.HasEditPermissionInFolders(c.Req.Context(), &hasEditPermissionInFoldersQuery)
 	if err != nil {
@@ -30,7 +30,7 @@ func (hs *HTTPServer) editorInAnyFolder(c *models.ReqContext) bool {
 	return hasEditPermissionInFoldersQueryResult
 }
 
-func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewData, error) {
+func (hs *HTTPServer) setIndexViewData(c *model.ReqContext) (*dtos.IndexViewData, error) {
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	hasEditPerm := hasAccess(hs.editorInAnyFolder, ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionFoldersCreate)))
 
@@ -167,7 +167,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 	return &data, nil
 }
 
-func (hs *HTTPServer) Index(c *models.ReqContext) {
+func (hs *HTTPServer) Index(c *model.ReqContext) {
 	data, err := hs.setIndexViewData(c)
 	if err != nil {
 		c.Handle(hs.Cfg, 500, "Failed to get settings", err)
@@ -176,7 +176,7 @@ func (hs *HTTPServer) Index(c *models.ReqContext) {
 	c.HTML(http.StatusOK, "index", data)
 }
 
-func (hs *HTTPServer) NotFoundHandler(c *models.ReqContext) {
+func (hs *HTTPServer) NotFoundHandler(c *model.ReqContext) {
 	if c.IsApiRequest() {
 		c.JsonApiErr(404, "Not found", nil)
 		return

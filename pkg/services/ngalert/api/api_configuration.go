@@ -8,7 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -26,7 +26,7 @@ type ConfigSrv struct {
 	log                  log.Logger
 }
 
-func (srv ConfigSrv) RouteGetAlertmanagers(c *models.ReqContext) response.Response {
+func (srv ConfigSrv) RouteGetAlertmanagers(c *model.ReqContext) response.Response {
 	urls := srv.alertmanagerProvider.AlertmanagersFor(c.OrgID)
 	droppedURLs := srv.alertmanagerProvider.DroppedAlertmanagersFor(c.OrgID)
 	ams := v1.AlertManagersResult{Active: make([]v1.AlertManager, len(urls)), Dropped: make([]v1.AlertManager, len(droppedURLs))}
@@ -43,7 +43,7 @@ func (srv ConfigSrv) RouteGetAlertmanagers(c *models.ReqContext) response.Respon
 	})
 }
 
-func (srv ConfigSrv) RouteGetNGalertConfig(c *models.ReqContext) response.Response {
+func (srv ConfigSrv) RouteGetNGalertConfig(c *model.ReqContext) response.Response {
 	if c.OrgRole != org.RoleAdmin {
 		return accessForbiddenResp()
 	}
@@ -65,7 +65,7 @@ func (srv ConfigSrv) RouteGetNGalertConfig(c *models.ReqContext) response.Respon
 	return response.JSON(http.StatusOK, resp)
 }
 
-func (srv ConfigSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels.PostableNGalertConfig) response.Response {
+func (srv ConfigSrv) RoutePostNGalertConfig(c *model.ReqContext, body apimodels.PostableNGalertConfig) response.Response {
 	if c.OrgRole != org.RoleAdmin {
 		return accessForbiddenResp()
 	}
@@ -99,7 +99,7 @@ func (srv ConfigSrv) RoutePostNGalertConfig(c *models.ReqContext, body apimodels
 	return response.JSON(http.StatusCreated, util.DynMap{"message": "admin configuration updated"})
 }
 
-func (srv ConfigSrv) RouteDeleteNGalertConfig(c *models.ReqContext) response.Response {
+func (srv ConfigSrv) RouteDeleteNGalertConfig(c *model.ReqContext) response.Response {
 	if c.OrgRole != org.RoleAdmin {
 		return accessForbiddenResp()
 	}
@@ -135,7 +135,7 @@ func (srv ConfigSrv) externalAlertmanagers(ctx context.Context, orgID int64) ([]
 	return alertmanagers, nil
 }
 
-func (srv ConfigSrv) RouteGetAlertingStatus(c *models.ReqContext) response.Response {
+func (srv ConfigSrv) RouteGetAlertingStatus(c *model.ReqContext) response.Response {
 	sendsAlertsTo := ngmodels.InternalAlertmanager
 
 	cfg, err := srv.store.GetAdminConfiguration(c.OrgID)

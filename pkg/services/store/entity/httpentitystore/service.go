@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/services/store/kind"
 	"github.com/grafana/grafana/pkg/util"
@@ -17,7 +18,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 type HTTPEntityStore interface {
@@ -60,7 +60,7 @@ func (s *httpEntityStore) RegisterHTTPRoutes(route routing.RouteRegister) {
 // This function will extract UID+Kind from the requested path "*" in our router
 // This is far from ideal! but is at least consistent for these endpoints.
 // This will quickly be revisited as we explore how to encode UID+Kind in a "GRN" format
-func (s *httpEntityStore) getGRNFromRequest(c *models.ReqContext) (*entity.GRN, map[string]string, error) {
+func (s *httpEntityStore) getGRNFromRequest(c *model.ReqContext) (*entity.GRN, map[string]string, error) {
 	params := web.Params(c.Req)
 	// Read parameters that are encoded in the URL
 	vals := c.Req.URL.Query()
@@ -76,7 +76,7 @@ func (s *httpEntityStore) getGRNFromRequest(c *models.ReqContext) (*entity.GRN, 
 	}, params, nil
 }
 
-func (s *httpEntityStore) doGetEntity(c *models.ReqContext) response.Response {
+func (s *httpEntityStore) doGetEntity(c *model.ReqContext) response.Response {
 	grn, params, err := s.getGRNFromRequest(c)
 	if err != nil {
 		return response.Error(400, err.Error(), err)
@@ -111,7 +111,7 @@ func (s *httpEntityStore) doGetEntity(c *models.ReqContext) response.Response {
 	return response.JSON(200, rsp)
 }
 
-func (s *httpEntityStore) doGetRawEntity(c *models.ReqContext) response.Response {
+func (s *httpEntityStore) doGetRawEntity(c *model.ReqContext) response.Response {
 	grn, params, err := s.getGRNFromRequest(c)
 	if err != nil {
 		return response.Error(400, err.Error(), err)
@@ -161,7 +161,7 @@ func (s *httpEntityStore) doGetRawEntity(c *models.ReqContext) response.Response
 
 const MAX_UPLOAD_SIZE = 5 * 1024 * 1024 // 5MB
 
-func (s *httpEntityStore) doWriteEntity(c *models.ReqContext) response.Response {
+func (s *httpEntityStore) doWriteEntity(c *model.ReqContext) response.Response {
 	grn, params, err := s.getGRNFromRequest(c)
 	if err != nil {
 		return response.Error(400, err.Error(), err)
@@ -187,7 +187,7 @@ func (s *httpEntityStore) doWriteEntity(c *models.ReqContext) response.Response 
 	return response.JSON(200, rsp)
 }
 
-func (s *httpEntityStore) doDeleteEntity(c *models.ReqContext) response.Response {
+func (s *httpEntityStore) doDeleteEntity(c *model.ReqContext) response.Response {
 	grn, params, err := s.getGRNFromRequest(c)
 	if err != nil {
 		return response.Error(400, err.Error(), err)
@@ -202,7 +202,7 @@ func (s *httpEntityStore) doDeleteEntity(c *models.ReqContext) response.Response
 	return response.JSON(200, rsp)
 }
 
-func (s *httpEntityStore) doGetHistory(c *models.ReqContext) response.Response {
+func (s *httpEntityStore) doGetHistory(c *model.ReqContext) response.Response {
 	grn, params, err := s.getGRNFromRequest(c)
 	if err != nil {
 		return response.Error(400, err.Error(), err)
@@ -219,7 +219,7 @@ func (s *httpEntityStore) doGetHistory(c *models.ReqContext) response.Response {
 	return response.JSON(200, rsp)
 }
 
-func (s *httpEntityStore) doUpload(c *models.ReqContext) response.Response {
+func (s *httpEntityStore) doUpload(c *model.ReqContext) response.Response {
 	c.Req.Body = http.MaxBytesReader(c.Resp, c.Req.Body, MAX_UPLOAD_SIZE)
 	if err := c.Req.ParseMultipartForm(MAX_UPLOAD_SIZE); err != nil {
 		msg := fmt.Sprintf("Please limit file uploaded under %s", util.ByteCountSI(MAX_UPLOAD_SIZE))
@@ -302,11 +302,11 @@ func (s *httpEntityStore) doUpload(c *models.ReqContext) response.Response {
 	return response.JSON(200, rsp)
 }
 
-func (s *httpEntityStore) doListFolder(c *models.ReqContext) response.Response {
+func (s *httpEntityStore) doListFolder(c *model.ReqContext) response.Response {
 	return response.JSON(501, "Not implemented yet")
 }
 
-func (s *httpEntityStore) doSearch(c *models.ReqContext) response.Response {
+func (s *httpEntityStore) doSearch(c *model.ReqContext) response.Response {
 	vals := c.Req.URL.Query()
 
 	req := &entity.EntitySearchRequest{

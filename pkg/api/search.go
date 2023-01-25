@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/util"
@@ -20,7 +21,7 @@ import (
 // 401: unauthorisedError
 // 422: unprocessableEntityError
 // 500: internalServerError
-func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) Search(c *model.ReqContext) response.Response {
 	query := c.Query("query")
 	tags := c.QueryStrings("tag")
 	starred := c.Query("starred")
@@ -94,7 +95,7 @@ func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
 	return hs.searchHitsWithMetadata(c, searchQuery.Result)
 }
 
-func (hs *HTTPServer) searchHitsWithMetadata(c *models.ReqContext, hits models.HitList) response.Response {
+func (hs *HTTPServer) searchHitsWithMetadata(c *model.ReqContext, hits models.HitList) response.Response {
 	folderUIDs := make(map[string]bool)
 	dashboardUIDs := make(map[string]bool)
 
@@ -136,7 +137,7 @@ func (hs *HTTPServer) searchHitsWithMetadata(c *models.ReqContext, hits models.H
 // Responses:
 // 200: listSortOptionsResponse
 // 401: unauthorisedError
-func (hs *HTTPServer) ListSortOptions(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) ListSortOptions(c *model.ReqContext) response.Response {
 	opts := hs.SearchService.SortOptions()
 
 	res := []util.DynMap{}

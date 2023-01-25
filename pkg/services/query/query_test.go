@@ -16,11 +16,11 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/plugins"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	"github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fakeDatasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	dsSvc "github.com/grafana/grafana/pkg/services/datasources/service"
@@ -211,7 +211,7 @@ func TestParseMetricRequest(t *testing.T) {
 		httpreq, err := http.NewRequest(http.MethodPost, "http://localhost/", bytes.NewReader([]byte{}))
 		require.NoError(t, err)
 
-		reqCtx := &models.ReqContext{
+		reqCtx := &model.ReqContext{
 			Context: &web.Context{},
 		}
 		ctx := ctxkey.Set(context.Background(), reqCtx)
@@ -325,7 +325,7 @@ func TestQueryDataMultipleSources(t *testing.T) {
 		httpreq, err := http.NewRequest(http.MethodPost, "http://localhost/ds/query?expression=true", bytes.NewReader([]byte{}))
 		require.NoError(t, err)
 
-		reqCtx := &models.ReqContext{
+		reqCtx := &model.ReqContext{
 			Context: &web.Context{},
 		}
 		ctx := ctxkey.Set(context.Background(), reqCtx)

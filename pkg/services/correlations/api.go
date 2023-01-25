@@ -7,8 +7,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 
 	"github.com/grafana/grafana/pkg/web"
@@ -43,7 +43,7 @@ func (s *CorrelationsService) registerAPIEndpoints() {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (s *CorrelationsService) createHandler(c *models.ReqContext) response.Response {
+func (s *CorrelationsService) createHandler(c *model.ReqContext) response.Response {
 	cmd := CreateCorrelationCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -93,7 +93,7 @@ type CreateCorrelationResponse struct {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (s *CorrelationsService) deleteHandler(c *models.ReqContext) response.Response {
+func (s *CorrelationsService) deleteHandler(c *model.ReqContext) response.Response {
 	cmd := DeleteCorrelationCommand{
 		UID:       web.Params(c.Req)[":correlationUID"],
 		SourceUID: web.Params(c.Req)[":uid"],
@@ -147,7 +147,7 @@ type DeleteCorrelationResponse struct {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (s *CorrelationsService) updateHandler(c *models.ReqContext) response.Response {
+func (s *CorrelationsService) updateHandler(c *model.ReqContext) response.Response {
 	cmd := UpdateCorrelationCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		if errors.Is(err, ErrUpdateCorrelationEmptyParams) {
@@ -208,7 +208,7 @@ type UpdateCorrelationResponse struct {
 // 401: unauthorisedError
 // 404: notFoundError
 // 500: internalServerError
-func (s *CorrelationsService) getCorrelationHandler(c *models.ReqContext) response.Response {
+func (s *CorrelationsService) getCorrelationHandler(c *model.ReqContext) response.Response {
 	query := GetCorrelationQuery{
 		UID:       web.Params(c.Req)[":correlationUID"],
 		SourceUID: web.Params(c.Req)[":uid"],
@@ -255,7 +255,7 @@ type GetCorrelationResponse struct {
 // 401: unauthorisedError
 // 404: notFoundError
 // 500: internalServerError
-func (s *CorrelationsService) getCorrelationsBySourceUIDHandler(c *models.ReqContext) response.Response {
+func (s *CorrelationsService) getCorrelationsBySourceUIDHandler(c *model.ReqContext) response.Response {
 	query := GetCorrelationsBySourceUIDQuery{
 		SourceUID: web.Params(c.Req)[":uid"],
 		OrgId:     c.OrgID,
@@ -298,7 +298,7 @@ type GetCorrelationsBySourceUIDResponse struct {
 // 401: unauthorisedError
 // 404: notFoundError
 // 500: internalServerError
-func (s *CorrelationsService) getCorrelationsHandler(c *models.ReqContext) response.Response {
+func (s *CorrelationsService) getCorrelationsHandler(c *model.ReqContext) response.Response {
 	query := GetCorrelationsQuery{
 		OrgId: c.OrgID,
 	}
