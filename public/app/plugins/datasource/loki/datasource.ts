@@ -66,7 +66,13 @@ import {
   getLabelFilterPositions,
 } from './modifyQuery';
 import { getQueryHints } from './queryHints';
-import { getLogQueryFromMetricsQuery, getNormalizedLokiQuery, isLogsQuery, isValidQuery } from './queryUtils';
+import {
+  getLogQueryFromMetricsQuery,
+  getNormalizedLokiQuery,
+  getStreamSelectorsFromQuery,
+  isLogsQuery,
+  isValidQuery,
+} from './queryUtils';
 import { sortDataFrameByTime } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
 import { trackQuery } from './tracking';
@@ -77,6 +83,7 @@ import {
   LokiQueryType,
   LokiVariableQuery,
   LokiVariableQueryType,
+  QueryStats,
 } from './types';
 import { LokiVariableSupport } from './variables';
 
@@ -381,7 +388,31 @@ export class LokiDatasource
     }
 
     const res = await this.getResource(url, params);
-    return res.data || [];
+    return res.data ?? (res || []);
+  }
+
+  async getQueryStats(query: LokiQuery): Promise<QueryStats> {
+    const { start, end } = this.getTimeRangeParams();
+
+    const labelMatchers = getStreamSelectorsFromQuery(query);
+    const url = 'index/stats';
+    const params = { query: '', start, end };
+
+    let statsForAll: QueryStats = { streams: 0, chunks: 0, bytes: 0, entries: 0 };
+
+    for (const labelMatcher of labelMatchers) {
+      params.query = labelMatcher;
+      const data = await this.metadataRequest(url, params);
+
+      statsForAll = {
+        streams: statsForAll.streams + data.streams,
+        chunks: statsForAll.chunks + data.chunks,
+        bytes: statsForAll.bytes + data.bytes,
+        entries: statsForAll.entries + data.entries,
+      };
+    }
+
+    return statsForAll;
   }
 
   async metricFindQuery(query: LokiVariableQuery | string) {
