@@ -153,7 +153,7 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		alertRules:          api.AlertRules,
 	}), m)
 
-	api.RegisterHistoryApiEndpoints(NewHistoryApi(&HistorySrv{
+	api.RegisterHistoryApiEndpoints(NewStateHistoryApi(&HistorySrv{
 		logger: logger,
 	}), m)
 }

@@ -12,15 +12,15 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 )
 
 type HistoryApi interface {
-	RouteGetStateHistory(*models.ReqContext) response.Response
+	RouteGetStateHistory(*contextmodel.ReqContext) response.Response
 }
 
-func (f *HistoryApiHandler) RouteGetStateHistory(ctx *models.ReqContext) response.Response {
+func (f *HistoryApiHandler) RouteGetStateHistory(ctx *contextmodel.ReqContext) response.Response {
 	return f.handleRouteGetStateHistory(ctx)
 }
 

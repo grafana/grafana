@@ -2,19 +2,19 @@ package api
 
 import (
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 )
 
-type StateHistoryApiHandler struct {
+type HistoryApiHandler struct {
 	svc *HistorySrv
 }
 
-func NewStateHistoryApi(svc *HistorySrv) *StateHistoryApiHandler {
-	return &StateHistoryApiHandler{
+func NewStateHistoryApi(svc *HistorySrv) *HistoryApiHandler {
+	return &HistoryApiHandler{
 		svc: svc,
 	}
 }
 
-func (f *StateHistoryApiHandler) handleRouteGetStateHistory(ctx *models.ReqContext) response.Response {
+func (f *HistoryApiHandler) handleRouteGetStateHistory(ctx *contextmodel.ReqContext) response.Response {
 	return f.svc.RouteQueryStateHistory(ctx)
 }

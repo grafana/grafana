@@ -5,13 +5,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
-	gapi "github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 )
 
 type HistorySrv struct {
 	logger log.Logger
 }
 
-func (srv *HistorySrv) RouteQueryStateHistory(c *gapi.ReqContext) response.Response {
+func (srv *HistorySrv) RouteQueryStateHistory(c *contextmodel.ReqContext) response.Response {
 	return response.Empty(http.StatusInternalServerError)
 }
