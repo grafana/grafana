@@ -164,6 +164,7 @@ func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Cont
 // Be aware that none of middleware will run without registering any router.
 func (m *Macaron) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	req.URL.Path = strings.TrimPrefix(req.URL.Path, m.urlPrefix)
+	req.URL.RawPath = strings.TrimPrefix(req.URL.RawPath, m.urlPrefix)
 	m.Router.ServeHTTP(rw, req)
 }
 
