@@ -13,14 +13,14 @@ title: DebugPanelCfg kind
 
 ## Properties
 
-| Property            | Type                         | Required | Description                                                               |
-|---------------------|------------------------------|----------|---------------------------------------------------------------------------|
-| `DebugMode`         | string                       | **Yes**  | Possible values are: `render`, `events`, `cursor`, `State`, `ThrowError`. |
-| `DebugPanelOptions` | [object](#debugpaneloptions) | **Yes**  |                                                                           |
-| `UpdateConfig`      | [object](#updateconfig)      | **Yes**  |                                                                           |
-| `UpdateCounters`    | [object](#updatecounters)    | **Yes**  |                                                                           |
+| Property         | Type                      | Required | Description                                                               |
+|------------------|---------------------------|----------|---------------------------------------------------------------------------|
+| `DebugMode`      | string                    | **Yes**  | Possible values are: `render`, `events`, `cursor`, `State`, `ThrowError`. |
+| `PanelOptions`   | [object](#paneloptions)   | **Yes**  |                                                                           |
+| `UpdateConfig`   | [object](#updateconfig)   | **Yes**  |                                                                           |
+| `UpdateCounters` | [object](#updatecounters) | **Yes**  |                                                                           |
 
-## DebugPanelOptions
+## PanelOptions
 
 ### Properties
 
