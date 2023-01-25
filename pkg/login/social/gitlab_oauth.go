@@ -6,8 +6,9 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/grafana/grafana/pkg/models/roletype"
 	"golang.org/x/oauth2"
+
+	"github.com/grafana/grafana/pkg/models/roletype"
 )
 
 type SocialGitlab struct {
