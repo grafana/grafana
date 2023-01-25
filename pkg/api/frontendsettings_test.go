@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -58,7 +60,11 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.
 		grafanaUpdateChecker: &updatechecker.GrafanaService{},
 		AccessControl:        accesscontrolmock.New().WithDisabled(),
 		PluginSettings:       pluginSettings.ProvideService(sqlStore, secretsService),
-		SocialService:        social.ProvideService(cfg, features),
+		pluginsCDNService: pluginscdn.ProvideService(&config.Cfg{
+			PluginsCDNURLTemplate: cfg.PluginsCDNURLTemplate,
+			PluginSettings:        cfg.PluginSettings,
+		}),
+		SocialService: social.ProvideService(cfg, features),
 	}
 
 	m := web.New()

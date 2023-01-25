@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
-
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -100,8 +98,8 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 	secretsManagerPluginEnabled := kvstore.EvaluateRemoteSecretsPlugin(c.Req.Context(), hs.secretsPluginManager, hs.Cfg) == nil
 
 	var cdnBaseURL string
-	if hs.Cfg.PluginsCDNURLTemplate != "" {
-		cdnBaseURL, err = pluginscdn.CDNBaseURL(hs.Cfg.PluginsCDNURLTemplate)
+	if hs.pluginsCDNService.HasCDN() {
+		cdnBaseURL, err = hs.pluginsCDNService.CDNBaseURL()
 		if err != nil {
 			return nil, fmt.Errorf("plugins cdn base url: %w", err)
 		}

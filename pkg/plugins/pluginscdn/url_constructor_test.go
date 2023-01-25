@@ -8,7 +8,7 @@ import (
 )
 
 func TestURLConstructor_StringURLFor(t *testing.T) {
-	uc := NewCDNURLConstructor("https://the.cdn/{id}/{version}/{assetPath}", "the-plugin", "0.1")
+	uc := newCDNURLConstructor("https://the.cdn/{id}/{version}/{assetPath}", "the-plugin", "0.1")
 	type tc struct {
 		name string
 		path string
@@ -23,33 +23,7 @@ func TestURLConstructor_StringURLFor(t *testing.T) {
 		{"dots", "some/././././file.txt", "https://the.cdn/the-plugin/0.1/some/file.txt"},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			u, err := uc.StringURLFor(c.path)
-			require.NoError(t, err)
-			assert.Equal(t, c.exp, u)
-		})
-	}
-}
-
-func TestCDNBaseURL(t *testing.T) {
-	type tc struct {
-		name  string
-		input string
-		exp   string
-	}
-	for _, c := range []tc{
-		{
-			name:  "valid",
-			input: "https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn/{id}/{version}/public/plugins/{id}/{assetPath}",
-			exp:   "https://grafana-assets.grafana.net",
-		},
-		{
-			name:  "empty",
-			input: "",
-			exp:   "",
-		},
-	} {
-		t.Run(c.name, func(t *testing.T) {
-			u, err := CDNBaseURL(c.input)
+			u, err := uc.stringURLFor(c.path)
 			require.NoError(t, err)
 			assert.Equal(t, c.exp, u)
 		})

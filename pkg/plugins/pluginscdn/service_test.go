@@ -90,4 +90,32 @@ func TestService(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "default", u)
 	})
+
+	t.Run("CDNBaseURL", func(t *testing.T) {
+		for _, c := range []struct {
+			name       string
+			cfgURL     string
+			expBaseURL string
+			expError   error
+		}{
+			{
+				name:       "valid",
+				cfgURL:     "https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn/{id}/{version}/public/plugins/{id}/{assetPath}",
+				expBaseURL: "https://grafana-assets.grafana.net",
+			},
+			{
+				name:     "empty",
+				cfgURL:   "",
+				expError: ErrCDNDisabled,
+			},
+		} {
+			t.Run(c.name, func(t *testing.T) {
+				u, err := ProvideService(&config.Cfg{PluginsCDNURLTemplate: c.cfgURL}).CDNBaseURL()
+				require.Equal(t, c.expError, err)
+				if c.expError == nil {
+					require.Equal(t, c.expBaseURL, u)
+				}
+			})
+		}
+	})
 }

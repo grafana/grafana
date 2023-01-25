@@ -2,6 +2,7 @@ package pluginscdn
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
 	"path"
 	"path/filepath"
@@ -16,7 +17,10 @@ const (
 	systemJSCDNKeyword = "plugin-cdn"
 )
 
-var ErrPluginNotCDN = errors.New("plugin is not a cdn plugin")
+var (
+	ErrPluginNotCDN = errors.New("plugin is not a cdn plugin")
+	ErrCDNDisabled  = errors.New("plugins cdn is disabled")
+)
 
 // Service provides methods for constructing asset paths for plugins.
 // It supports core plugins, external plugins stored on the local filesystem, and external plugins stored
@@ -32,20 +36,38 @@ func ProvideService(cfg *config.Cfg) *Service {
 // cdnURLConstructor returns a new urlConstructor for the provided plugin id and version.
 // The CDN should be enabled for the plugin, otherwise the returned urlConstructor will have
 // and invalid base url.
-func (c Service) cdnURLConstructor(pluginID, pluginVersion string) urlConstructor {
-	return NewCDNURLConstructor(c.cfg.PluginsCDNURLTemplate, pluginID, pluginVersion)
+func (s Service) cdnURLConstructor(pluginID, pluginVersion string) urlConstructor {
+	return newCDNURLConstructor(s.cfg.PluginsCDNURLTemplate, pluginID, pluginVersion)
+}
+
+// HasCDN returns true if the plugins cdn is enabled.
+func (s Service) HasCDN() bool {
+	return s.cfg.PluginsCDNURLTemplate != ""
 }
 
 // IsCDNPlugin returns true if the CDN is enabled in the config and if the specified plugin ID has CDN enabled.
-func (c Service) IsCDNPlugin(pluginID string) bool {
-	return c.cfg.PluginsCDNURLTemplate != "" && c.cfg.PluginSettings[pluginID]["cdn"] != ""
+func (s Service) IsCDNPlugin(pluginID string) bool {
+	return s.HasCDN() && s.cfg.PluginSettings[pluginID]["cdn"] != ""
+}
+
+// CDNBaseURL returns the absolute base URL of the plugins CDN.
+// If the plugins CDN is disabled, it returns an ErrCDNDisabled.
+func (s Service) CDNBaseURL() (string, error) {
+	if !s.HasCDN() {
+		return "", ErrCDNDisabled
+	}
+	u, err := url.Parse(s.cfg.PluginsCDNURLTemplate)
+	if err != nil {
+		return "", fmt.Errorf("url parse: %w", err)
+	}
+	return u.Scheme + "://" + u.Host, nil
 }
 
 // systemJSCDNPath returns a system-js path for the plugin CDN.
 // It replaces the base path of the CDN with systemJSCDNKeyword.
 // If assetPath is an empty string, the base path for the plugin is returned.
-func (c Service) systemJSCDNPath(pluginID, pluginVersion, assetPath string) (string, error) {
-	u, err := c.cdnURLConstructor(pluginID, pluginVersion).Path(assetPath)
+func (s Service) systemJSCDNPath(pluginID, pluginVersion, assetPath string) (string, error) {
+	u, err := s.cdnURLConstructor(pluginID, pluginVersion).path(assetPath)
 	if err != nil {
 		return "", err
 	}
@@ -53,36 +75,36 @@ func (c Service) systemJSCDNPath(pluginID, pluginVersion, assetPath string) (str
 }
 
 // Base returns the base path for the specified plugin.
-func (c Service) Base(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) (string, error) {
+func (s Service) Base(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) (string, error) {
 	if class == plugins.Core {
 		return path.Join("public/app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir)), nil
 	}
-	if c.IsCDNPlugin(pluginJSON.ID) {
-		return c.systemJSCDNPath(pluginJSON.ID, pluginJSON.Info.Version, "")
+	if s.IsCDNPlugin(pluginJSON.ID) {
+		return s.systemJSCDNPath(pluginJSON.ID, pluginJSON.Info.Version, "")
 	}
 	return path.Join("public/plugins", pluginJSON.ID), nil
 }
 
 // Module returns the module.js path for the specified plugin.
-func (c Service) Module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) (string, error) {
+func (s Service) Module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) (string, error) {
 	if class == plugins.Core {
 		return path.Join("app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir), "module"), nil
 	}
-	if c.IsCDNPlugin(pluginJSON.ID) {
-		return c.systemJSCDNPath(pluginJSON.ID, pluginJSON.Info.Version, "module")
+	if s.IsCDNPlugin(pluginJSON.ID) {
+		return s.systemJSCDNPath(pluginJSON.ID, pluginJSON.Info.Version, "module")
 	}
 	return path.Join("plugins", pluginJSON.ID, "module"), nil
 }
 
 // RelativeURL returns the relative URL for an arbitrary plugin asset.
 // If pathStr is an empty string, defaultStr is returned.
-func (c Service) RelativeURL(p *plugins.Plugin, pathStr, defaultStr string) (string, error) {
+func (s Service) RelativeURL(p *plugins.Plugin, pathStr, defaultStr string) (string, error) {
 	if pathStr == "" {
 		return defaultStr, nil
 	}
-	if c.IsCDNPlugin(p.ID) {
+	if s.IsCDNPlugin(p.ID) {
 		// CDN
-		return c.cdnURLConstructor(p.ID, p.Info.Version).StringURLFor(pathStr)
+		return s.cdnURLConstructor(p.ID, p.Info.Version).stringURLFor(pathStr)
 	}
 	// Local
 	u, _ := url.Parse(pathStr)
@@ -98,9 +120,9 @@ func (c Service) RelativeURL(p *plugins.Plugin, pathStr, defaultStr string) (str
 
 // CDNAssetURL returns the URL of a CDN asset for a CDN plugin. If the specified plugin is not a CDN plugin,
 // it returns ErrPluginNotCDN.
-func (c Service) CDNAssetURL(pluginID, pluginVersion, assetPath string) (string, error) {
-	if !c.IsCDNPlugin(pluginID) {
+func (s Service) CDNAssetURL(pluginID, pluginVersion, assetPath string) (string, error) {
+	if !s.IsCDNPlugin(pluginID) {
 		return "", ErrPluginNotCDN
 	}
-	return c.cdnURLConstructor(pluginID, pluginVersion).StringURLFor(assetPath)
+	return s.cdnURLConstructor(pluginID, pluginVersion).stringURLFor(assetPath)
 }
