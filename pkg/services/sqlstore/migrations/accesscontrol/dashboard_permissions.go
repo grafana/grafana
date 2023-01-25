@@ -132,7 +132,7 @@ func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard,
 	//nolint:prealloc // too dificult logic
 	var allRoles []*ac.Role
 	//nolint:prealloc // too dificult logic
-	var rolesToCreate []*ac.Role
+	rolesToCreate := []*ac.Role{}
 	for orgID, roles := range permissionMap {
 		for name := range roles {
 			role, err := m.findRole(orgID, name)
