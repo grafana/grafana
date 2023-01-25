@@ -36,7 +36,7 @@ export class Connections {
   findElementTarget = (element: Element): ElementState | undefined => {
     let elementTarget = undefined;
 
-    // Cap recursion at root element level
+    // Cap recursion at the scene level
     if (element === this.scene.div) {
       return undefined;
     }
