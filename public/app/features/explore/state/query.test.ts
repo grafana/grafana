@@ -9,6 +9,7 @@ import {
   DataQueryResponse,
   DataSourceApi,
   DataSourceJsonData,
+  DataSourcePluginMeta,
   DataSourceWithSupplementaryQueriesSupport,
   LoadingState,
   MutableDataFrame,
@@ -108,7 +109,7 @@ function setupQueryResponse(state: StoreState) {
   );
 }
 
-async function setupStore(queries, datasourceInstance) {
+async function setupStore(queries: DataQuery[], datasourceInstance: Partial<DataSourceApi>) {
   let dispatch: ThunkDispatch, getState: () => StoreState;
 
   const store: { dispatch: ThunkDispatch; getState: () => StoreState } = configureStore({
@@ -265,13 +266,13 @@ describe('importing queries', () => {
 describe('adding new query rows', () => {
   describe('with mixed datasources disabled', () => {
     it('should add query row when there is not yet a row', async () => {
-      const queries = [];
+      const queries: DataQuery[] = [];
       const datasourceInstance = {
         query: jest.fn(),
         getRef: jest.fn(),
         meta: {
           id: 'postgres',
-        },
+        } as unknown as DataSourcePluginMeta<{}>,
       };
 
       const getState = await setupStore(queries, datasourceInstance);
@@ -297,7 +298,7 @@ describe('adding new query rows', () => {
         getRef: jest.fn(),
         meta: {
           id: 'loki',
-        },
+        } as unknown as DataSourcePluginMeta<{}>,
       };
       const getState = await setupStore(queries, datasourceInstance);
 
@@ -312,13 +313,13 @@ describe('adding new query rows', () => {
     };
 
     it('should add query row whith rootdatasource when there is not yet a row', async () => {
-      const queries = [];
+      const queries: DataQuery[] = [];
       const datasourceInstance = {
         query: jest.fn(),
         getRef: jest.fn(),
         meta: {
           id: 'mixed',
-        },
+        } as unknown as DataSourcePluginMeta<{}>,
       };
 
       const getState = await setupStore(queries, datasourceInstance);
@@ -345,7 +346,7 @@ describe('adding new query rows', () => {
         getRef: jest.fn(),
         meta: {
           id: 'postgres',
-        },
+        } as unknown as DataSourcePluginMeta<{}>,
       };
 
       const getState = await setupStore(queries, datasourceInstance);
