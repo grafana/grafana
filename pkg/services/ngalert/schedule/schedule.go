@@ -461,7 +461,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			if ctx.IsPaused {
 				reason = ngmodels.StateReasonPaused
 			}
-			logger.Info("Clearing the state of the rule because it was updated", "version", currentRuleVersion, "newVersion", ctx.Version)
+			logger.Info("Clearing the state of the rule because it was updated", "version", currentRuleVersion, "newVersion", ctx.Version, "reason", reason)
 			// clear the state. So the next evaluation will start from the scratch.
 			clearState(grafanaCtx, reason)
 		// evalCh - used by the scheduler to signal that evaluation is needed.
@@ -523,7 +523,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 					defer cancelFunc()
 					err := <-errChan
 					if err != nil {
-						logger.Error("Error clearing state", "error", err)
+						logger.Error("Error clearing state", "error", err, "reason", reason)
 					}
 				}()
 			}
