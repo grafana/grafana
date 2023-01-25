@@ -290,4 +290,4 @@ export interface WorkspacesQuery extends BaseGrafanaTemplateVariableQuery {
 
 export type GrafanaTemplateVariableQuery = (AppInsightsMetricNameQuery | AppInsightsGroupByQuery | SubscriptionsQuery | ResourceGroupsQuery | ResourceNamesQuery | MetricNamespaceQuery | MetricDefinitionsQuery | MetricNamesQuery | WorkspacesQuery | UnknownQuery);
 
-export interface Azure Monitor {}
+export interface AzureMonitor {}
