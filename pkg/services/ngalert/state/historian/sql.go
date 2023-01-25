@@ -19,7 +19,10 @@ func NewSqlBackend() *SqlBackend {
 	}
 }
 
-func (h *SqlBackend) RecordStatesAsync(ctx context.Context, _ *models.AlertRule, _ []state.StateTransition) {
+func (h *SqlBackend) RecordStatesAsync(ctx context.Context, _ *models.AlertRule, _ []state.StateTransition) <-chan error {
+	errCh := make(chan error)
+	close(errCh)
+	return errCh
 }
 
 func (h *SqlBackend) QueryStates(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {

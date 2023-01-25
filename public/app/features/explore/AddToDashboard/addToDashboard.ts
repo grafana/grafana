@@ -1,4 +1,5 @@
-import { DataFrame, DataQuery, DataSourceRef } from '@grafana/data';
+import { DataFrame } from '@grafana/data';
+import { DataQuery, DataSourceRef } from '@grafana/schema';
 import { backendSrv } from 'app/core/services/backend_srv';
 import {
   getNewDashboardModelData,
