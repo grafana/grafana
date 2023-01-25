@@ -312,10 +312,10 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.Equal(t, err, team.ErrTeamNotFound)
 
 				permQuery := &dashboards.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: testOrgID}
-				err = getDashboardACLInfoList(sqlStore, permQuery)
+				permQueryResult, err := getDashboardACLInfoList(sqlStore, permQuery)
 				require.NoError(t, err)
 
-				require.Equal(t, len(permQuery.Result), 0)
+				require.Equal(t, len(permQueryResult), 0)
 			})
 
 			t.Run("Should be able to return if user is admin of teams or not", func(t *testing.T) {
@@ -654,9 +654,9 @@ func updateDashboardACL(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardID i
 // This function was copied from pkg/services/dashboards/database to circumvent
 // import cycles. When this org-related code is refactored into a service the
 // tests can the real GetDashboardACLInfoList functions
-func getDashboardACLInfoList(s *sqlstore.SQLStore, query *dashboards.GetDashboardACLInfoListQuery) error {
+func getDashboardACLInfoList(s *sqlstore.SQLStore, query *dashboards.GetDashboardACLInfoListQuery) ([]*dashboards.DashboardACLInfoDTO, error) {
+	queryResult := make([]*dashboards.DashboardACLInfoDTO, 0)
 	outerErr := s.WithDbSession(context.Background(), func(dbSession *db.Session) error {
-		query.Result = make([]*dashboards.DashboardACLInfoDTO, 0)
 		falseStr := s.GetDialect().BooleanStr(false)
 
 		if query.DashboardID == 0 {
@@ -680,7 +680,7 @@ func getDashboardACLInfoList(s *sqlstore.SQLStore, query *dashboards.GetDashboar
 				falseStr + ` AS inherited
 		FROM dashboard_acl as da
 		WHERE da.dashboard_id = -1`
-			return dbSession.SQL(sql).Find(&query.Result)
+			return dbSession.SQL(sql).Find(&queryResult)
 		}
 
 		rawSQL := `
@@ -722,16 +722,16 @@ func getDashboardACLInfoList(s *sqlstore.SQLStore, query *dashboards.GetDashboar
 			ORDER BY da.id ASC
 			`
 
-		return dbSession.SQL(rawSQL, query.OrgID, query.DashboardID).Find(&query.Result)
+		return dbSession.SQL(rawSQL, query.OrgID, query.DashboardID).Find(&queryResult)
 	})
 
 	if outerErr != nil {
-		return outerErr
+		return nil, outerErr
 	}
 
-	for _, p := range query.Result {
+	for _, p := range queryResult {
 		p.PermissionName = p.Permission.String()
 	}
 
-	return nil
+	return queryResult, nil
 }

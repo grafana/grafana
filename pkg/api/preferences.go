@@ -35,11 +35,11 @@ func (hs *HTTPServer) SetHomeDashboard(c *models.ReqContext) response.Response {
 		if query.UID == "" {
 			dashboardID = 0 // clear the value
 		} else {
-			err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
+			queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 			if err != nil {
 				return response.Error(404, "Dashboard not found", err)
 			}
-			dashboardID = query.Result.ID
+			dashboardID = queryResult.ID
 		}
 	}
 
@@ -77,9 +77,9 @@ func (hs *HTTPServer) getPreferencesFor(ctx context.Context, orgID, userID, team
 	// when homedashboardID is 0, that means it is the default home dashboard, no UID would be returned in the response
 	if preference.HomeDashboardID != 0 {
 		query := dashboards.GetDashboardQuery{ID: preference.HomeDashboardID, OrgID: orgID}
-		err = hs.DashboardService.GetDashboard(ctx, &query)
+		queryResult, err := hs.DashboardService.GetDashboard(ctx, &query)
 		if err == nil {
-			dashboardUID = query.Result.UID
+			dashboardUID = queryResult.UID
 		}
 	}
 
@@ -136,11 +136,11 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 			// clear the value
 			dashboardID = 0
 		} else {
-			err := hs.DashboardService.GetDashboard(ctx, &query)
+			queryResult, err := hs.DashboardService.GetDashboard(ctx, &query)
 			if err != nil {
 				return response.Error(404, "Dashboard not found", err)
 			}
-			dashboardID = query.Result.ID
+			dashboardID = queryResult.ID
 		}
 	}
 	dtoCmd.HomeDashboardID = dashboardID
@@ -196,11 +196,11 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 			defaultDash := int64(0)
 			dashboardID = &defaultDash
 		} else {
-			err := hs.DashboardService.GetDashboard(ctx, &query)
+			queryResult, err := hs.DashboardService.GetDashboard(ctx, &query)
 			if err != nil {
 				return response.Error(404, "Dashboard not found", err)
 			}
-			dashboardID = &query.Result.ID
+			dashboardID = &queryResult.ID
 		}
 	}
 	dtoCmd.HomeDashboardID = dashboardID

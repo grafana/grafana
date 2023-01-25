@@ -17,11 +17,9 @@ export const PublicDashboardFooter = function () {
 
   return conf.hide ? null : (
     <div className={styles.footer}>
-      <span className={styles.logoText}>
-        <a href={conf.link} target="_blank" rel="noreferrer noopener">
-          {conf.text} <img className={styles.logoImg} alt="" src={conf.logo}></img>
-        </a>
-      </span>
+      <a className={styles.link} href={conf.link} target="_blank" rel="noreferrer noopener">
+        {conf.text} <img className={styles.logoImg} alt="" src={conf.logo}></img>
+      </a>
     </div>
   );
 };
@@ -41,10 +39,13 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     justify-content: end;
     height: 30px;
-    padding: ${theme.spacing(0, 1, 0, 1)};
+    padding: ${theme.spacing(0, 2, 0, 1)};
   `,
-  logoText: css`
-    margin-right: ${theme.spacing(1)};
+  link: css`
+    display: flex;
+    gap: 4px;
+    justify-content: end;
+    align-items: center;
   `,
   logoImg: css`
     height: 100%;
