@@ -36,20 +36,20 @@ func (s Service) NewCDNURLConstructor(pluginID, pluginVersion string) URLConstru
 	}
 }
 
-// HasCDN returns true if the plugins cdn is enabled.
-func (s Service) HasCDN() bool {
+// IsEnabled returns true if the plugins cdn is enabled.
+func (s Service) IsEnabled() bool {
 	return s.cfg.PluginsCDNURLTemplate != ""
 }
 
 // IsCDNPlugin returns true if the CDN is enabled in the config and if the specified plugin ID has CDN enabled.
 func (s Service) IsCDNPlugin(pluginID string) bool {
-	return s.HasCDN() && s.cfg.PluginSettings[pluginID]["cdn"] != ""
+	return s.IsEnabled() && s.cfg.PluginSettings[pluginID]["cdn"] != ""
 }
 
 // BaseURL returns the absolute base URL of the plugins CDN.
 // If the plugins CDN is disabled, it returns an empty string.
 func (s Service) BaseURL() (string, error) {
-	if !s.HasCDN() {
+	if !s.IsEnabled() {
 		return "", nil
 	}
 	u, err := url.Parse(s.cfg.PluginsCDNURLTemplate)
