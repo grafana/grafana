@@ -34,7 +34,7 @@ import {
   TimeRange,
   toUtc,
 } from '@grafana/data';
-import { config, DataSourceWithBackend, FetchError, getBackendSrv } from '@grafana/runtime';
+import { config, DataSourceWithBackend, FetchError } from '@grafana/runtime';
 import { queryLogsSample, queryLogsVolume } from 'app/core/logsModel';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -388,24 +388,21 @@ export class LokiDatasource
     }
 
     const res = await this.getResource(url, params);
-    return res.data || [];
+    return res.data ?? (res || []);
   }
 
   async queryStatsRequest(query: LokiQuery): Promise<QueryStats> {
     const { start, end } = this.getTimeRangeParams();
 
     const labelMatchers = getStreamSelectorsFromQuery(query);
+    const url = 'index/stats';
+    const params = { query: '', start, end };
+
     let statsForAll: QueryStats = { streams: 0, chunks: 0, bytes: 0, entries: 0 };
 
     for (const labelMatcher of labelMatchers) {
-      const { data } = await lastValueFrom(
-        getBackendSrv().fetch<QueryStats>({
-          method: 'GET',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          params: { query: labelMatcher, start, end },
-          url: `${this.instanceSettings.url}/loki/api/v1/index/stats`,
-        })
-      );
+      params.query = labelMatcher;
+      const data = await this.metadataRequest(url, params);
 
       statsForAll = {
         streams: statsForAll.streams + data.streams,

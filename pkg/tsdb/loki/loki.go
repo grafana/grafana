@@ -112,7 +112,8 @@ func callResource(ctx context.Context, req *backend.CallResourceRequest, sender 
 	}
 	if (!strings.HasPrefix(url, "labels?")) &&
 		(!strings.HasPrefix(url, "label/")) && // the `/label/$label_name/values` form
-		(!strings.HasPrefix(url, "series?")) {
+		(!strings.HasPrefix(url, "series?")) &&
+		(!strings.HasPrefix(url, "index/stats?")) {
 		return fmt.Errorf("invalid resource URL: %s", url)
 	}
 	lokiURL := fmt.Sprintf("/loki/api/v1/%s", url)
