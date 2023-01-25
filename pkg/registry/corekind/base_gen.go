@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/kinds/playlist"
+	"github.com/grafana/grafana/pkg/kinds/preference"
 	"github.com/grafana/grafana/pkg/kinds/team"
 	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/thema"
@@ -30,16 +31,18 @@ import (
 // Prefer All*() methods when performing operations generically across all kinds.
 // For example, a validation HTTP middleware for any kind-schematized object type.
 type Base struct {
-	all       []kindsys.Core
-	dashboard *dashboard.Kind
-	playlist  *playlist.Kind
-	team      *team.Kind
+	all        []kindsys.Core
+	dashboard  *dashboard.Kind
+	playlist   *playlist.Kind
+	preference *preference.Kind
+	team       *team.Kind
 }
 
 // type guards
 var (
 	_ kindsys.Core = &dashboard.Kind{}
 	_ kindsys.Core = &playlist.Kind{}
+	_ kindsys.Core = &preference.Kind{}
 	_ kindsys.Core = &team.Kind{}
 )
 
@@ -51,6 +54,11 @@ func (b *Base) Dashboard() *dashboard.Kind {
 // Playlist returns the [kindsys.Interface] implementation for the playlist kind.
 func (b *Base) Playlist() *playlist.Kind {
 	return b.playlist
+}
+
+// Preference returns the [kindsys.Interface] implementation for the preference kind.
+func (b *Base) Preference() *preference.Kind {
+	return b.preference
 }
 
 // Team returns the [kindsys.Interface] implementation for the team kind.
@@ -73,6 +81,12 @@ func doNewBase(rt *thema.Runtime) *Base {
 		panic(fmt.Sprintf("error while initializing the playlist Kind: %s", err))
 	}
 	reg.all = append(reg.all, reg.playlist)
+
+	reg.preference, err = preference.NewKind(rt)
+	if err != nil {
+		panic(fmt.Sprintf("error while initializing the preference Kind: %s", err))
+	}
+	reg.all = append(reg.all, reg.preference)
 
 	reg.team, err = team.NewKind(rt)
 	if err != nil {
