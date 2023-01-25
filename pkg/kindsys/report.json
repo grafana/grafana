@@ -1211,6 +1211,32 @@
       "pluralName": "PostgreSQLDataSourceCfgs",
       "schemaInterface": "DataSourceCfg"
     },
+    "preference": {
+      "category": "core",
+      "codeowners": [
+        "grafana/grafana-as-code",
+        "grafana/grafana-bi-squad",
+        "grafana/plugins-platform-frontend",
+        "grafana/user-essentials"
+      ],
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/preference/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/kinds/preference",
+        "schema": "https://github.com/grafana/grafana/tree/main/kinds/preference/preference_kind.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/packages/grafana-schema/src/raw/preference/x/preference_types.gen.ts"
+      },
+      "machineName": "preference",
+      "maturity": "merged",
+      "name": "Preference",
+      "pluralMachineName": "preferences",
+      "pluralName": "Preferences"
+    },
     "prometheusdataquery": {
       "category": "composable",
       "codeowners": [],
@@ -1734,6 +1760,7 @@
           "datasource",
           "folder",
           "playlist",
+          "preference",
           "query",
           "queryhistory",
           "serviceaccount",
@@ -1741,7 +1768,7 @@
           "thumb",
           "user"
         ],
-        "count": 11
+        "count": 12
       }
     },
     "maturity": {
@@ -1772,9 +1799,10 @@
         "items": [
           "alertgroupspanelcfg",
           "playlist",
+          "preference",
           "team"
         ],
-        "count": 3
+        "count": 4
       },
       "planned": {
         "name": "planned",
