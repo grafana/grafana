@@ -97,12 +97,9 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
 	secretsManagerPluginEnabled := kvstore.EvaluateRemoteSecretsPlugin(c.Req.Context(), hs.secretsPluginManager, hs.Cfg) == nil
 
-	var cdnBaseURL string
-	if hs.pluginsCDNService.HasCDN() {
-		cdnBaseURL, err = hs.pluginsCDNService.CDNBaseURL()
-		if err != nil {
-			return nil, fmt.Errorf("plugins cdn base url: %w", err)
-		}
+	cdnBaseURL, err := hs.pluginsCDNService.BaseURL()
+	if err != nil {
+		return nil, fmt.Errorf("plugins cdn base url: %w", err)
 	}
 
 	jsonObj := map[string]interface{}{

@@ -8,7 +8,11 @@ import (
 )
 
 func TestURLConstructor_StringURLFor(t *testing.T) {
-	uc := newCDNURLConstructor("https://the.cdn/{id}/{version}/{assetPath}", "the-plugin", "0.1")
+	uc := URLConstructor{
+		cdnURLTemplate: "https://the.cdn/{id}/{version}/{assetPath}",
+		pluginID:       "the-plugin",
+		pluginVersion:  "0.1",
+	}
 	type tc struct {
 		name string
 		path string
@@ -23,7 +27,7 @@ func TestURLConstructor_StringURLFor(t *testing.T) {
 		{"dots", "some/././././file.txt", "https://the.cdn/the-plugin/0.1/some/file.txt"},
 	} {
 		t.Run(c.name, func(t *testing.T) {
-			u, err := uc.stringPath(c.path)
+			u, err := uc.StringPath(c.path)
 			require.NoError(t, err)
 			assert.Equal(t, c.exp, u)
 		})

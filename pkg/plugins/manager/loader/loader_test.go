@@ -7,6 +7,7 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 
 	"github.com/google/go-cmp/cmp"
@@ -1377,9 +1378,10 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 }
 
 func newLoader(cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
+	cdn := pluginscdn.ProvideService(cfg)
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakePluginStorage(),
-		fakes.NewFakeRoleRegistry(), pluginscdn.ProvideService(cfg))
+		fakes.NewFakeRoleRegistry(), cdn, assetpath.ProvideService(cdn))
 
 	for _, cb := range cbs {
 		cb(l)

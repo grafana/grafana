@@ -1,10 +1,11 @@
-package pluginscdn
+package assetpath
 
 import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/stretchr/testify/require"
 )
 
@@ -13,19 +14,13 @@ func extPath(pluginID string) string {
 }
 
 func TestService(t *testing.T) {
-	svc := ProvideService(&config.Cfg{
+	svc := ProvideService(pluginscdn.ProvideService(&config.Cfg{
 		PluginsCDNURLTemplate: "https://cdn.example.com/{id}/{version}/public/plugins/{id}/{assetPath}",
 		PluginSettings: map[string]map[string]string{
 			"one": {"cdn": "true"},
 			"two": {},
 		},
-	})
-
-	t.Run("IsCDNPlugin", func(t *testing.T) {
-		require.True(t, svc.IsCDNPlugin("one"))
-		require.False(t, svc.IsCDNPlugin("two"))
-		require.False(t, svc.IsCDNPlugin("unknown"))
-	})
+	}))
 
 	const tableOldPath = "/grafana/public/app/plugins/panel/table-old"
 	jsonData := map[string]plugins.JSONData{
@@ -89,33 +84,5 @@ func TestService(t *testing.T) {
 		u, err = svc.RelativeURL(pluginsMap["two"], "default", "default")
 		require.NoError(t, err)
 		require.Equal(t, "default", u)
-	})
-
-	t.Run("CDNBaseURL", func(t *testing.T) {
-		for _, c := range []struct {
-			name       string
-			cfgURL     string
-			expBaseURL string
-			expError   error
-		}{
-			{
-				name:       "valid",
-				cfgURL:     "https://grafana-assets.grafana.net/plugin-cdn-test/plugin-cdn/{id}/{version}/public/plugins/{id}/{assetPath}",
-				expBaseURL: "https://grafana-assets.grafana.net",
-			},
-			{
-				name:     "empty",
-				cfgURL:   "",
-				expError: ErrCDNDisabled,
-			},
-		} {
-			t.Run(c.name, func(t *testing.T) {
-				u, err := ProvideService(&config.Cfg{PluginsCDNURLTemplate: c.cfgURL}).CDNBaseURL()
-				require.Equal(t, c.expError, err)
-				if c.expError == nil {
-					require.Equal(t, c.expBaseURL, u)
-				}
-			})
-		}
 	})
 }

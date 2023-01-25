@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 
 	"github.com/grafana/grafana/pkg/infra/fs"
@@ -45,7 +46,8 @@ type Loader struct {
 	pluginInitializer  initializer.Initializer
 	signatureValidator signature.Validator
 	pluginStorage      storage.Manager
-	pluginsCDNService  *pluginscdn.Service
+	pluginsCDN         *pluginscdn.Service
+	assetPath          *assetpath.Service
 	log                log.Logger
 	cfg                *config.Cfg
 
@@ -54,15 +56,15 @@ type Loader struct {
 
 func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
-	roleRegistry plugins.RoleRegistry, pluginsCDNService *pluginscdn.Service) *Loader {
+	roleRegistry plugins.RoleRegistry, pluginsCDNService *pluginscdn.Service, assetPath *assetpath.Service) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
-		storage.FileSystem(logger.NewLogger("loader.fs"), cfg.PluginsPath), roleRegistry, pluginsCDNService)
+		storage.FileSystem(logger.NewLogger("loader.fs"), cfg.PluginsPath), roleRegistry, pluginsCDNService, assetPath)
 }
 
 func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
 	processManager process.Service, pluginStorage storage.Manager, roleRegistry plugins.RoleRegistry,
-	pluginsCDNService *pluginscdn.Service) *Loader {
+	pluginsCDNService *pluginscdn.Service, assetPath *assetpath.Service) *Loader {
 	return &Loader{
 		pluginFinder:       finder.New(),
 		pluginRegistry:     pluginRegistry,
@@ -74,7 +76,8 @@ func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLo
 		log:                log.New("plugin.loader"),
 		roleRegistry:       roleRegistry,
 		cfg:                cfg,
-		pluginsCDNService:  pluginsCDNService,
+		pluginsCDN:         pluginsCDNService,
+		assetPath:          assetPath,
 	}
 }
 
@@ -98,7 +101,7 @@ func (l *Loader) createPluginsForLoading(class plugins.Class, foundPlugins found
 
 		// calculate initial signature state
 		var sig plugins.Signature
-		if l.pluginsCDNService.IsCDNPlugin(plugin.ID) {
+		if l.pluginsCDN.IsCDNPlugin(plugin.ID) {
 			// CDN plugins have no signature checks for now.
 			sig = plugins.Signature{Status: plugins.SignatureValid}
 		} else {
@@ -193,7 +196,7 @@ func (l *Loader) loadPlugins(ctx context.Context, class plugins.Class, pluginJSO
 			module := filepath.Join(plugin.PluginDir, "module.js")
 			if exists, err := fs.Exists(module); err != nil {
 				return nil, err
-			} else if !exists && !l.pluginsCDNService.IsCDNPlugin(plugin.ID) {
+			} else if !exists && !l.pluginsCDN.IsCDNPlugin(plugin.ID) {
 				l.log.Warn("Plugin missing module.js",
 					"pluginID", plugin.ID,
 					"warning", "Missing module.js, If you loaded this plugin from git, make sure to compile it.",
@@ -336,11 +339,11 @@ func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error)
 }
 
 func (l *Loader) createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) (*plugins.Plugin, error) {
-	baseURL, err := l.pluginsCDNService.Base(pluginJSON, class, pluginDir)
+	baseURL, err := l.assetPath.Base(pluginJSON, class, pluginDir)
 	if err != nil {
 		return nil, fmt.Errorf("base url: %w", err)
 	}
-	moduleURL, err := l.pluginsCDNService.Module(pluginJSON, class, pluginDir)
+	moduleURL, err := l.assetPath.Module(pluginJSON, class, pluginDir)
 	if err != nil {
 		return nil, fmt.Errorf("module url: %w", err)
 	}
@@ -363,14 +366,14 @@ func (l *Loader) createPluginBase(pluginJSON plugins.JSONData, class plugins.Cla
 func (l *Loader) setImages(p *plugins.Plugin) error {
 	var err error
 	for _, dst := range []*string{&p.Info.Logos.Small, &p.Info.Logos.Large} {
-		*dst, err = l.pluginsCDNService.RelativeURL(p, *dst, defaultLogoPath(p.Type))
+		*dst, err = l.assetPath.RelativeURL(p, *dst, defaultLogoPath(p.Type))
 		if err != nil {
 			return fmt.Errorf("logo: %w", err)
 		}
 	}
 	for i := 0; i < len(p.Info.Screenshots); i++ {
 		screenshot := &p.Info.Screenshots[i]
-		screenshot.Path, err = l.pluginsCDNService.RelativeURL(p, screenshot.Path, "")
+		screenshot.Path, err = l.assetPath.RelativeURL(p, screenshot.Path, "")
 		if err != nil {
 			return fmt.Errorf("screenshot %d relative url: %w", i, err)
 		}
