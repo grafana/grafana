@@ -34,8 +34,8 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 	folderService := &foldertest.FakeService{}
 
 	t.Run("Given a correct request for creating a folder", func(t *testing.T) {
-		cmd := models.CreateFolderCommand{
-			Uid:   "uid",
+		cmd := folder.CreateFolderCommand{
+			UID:   "uid",
 			Title: "Folder",
 		}
 
@@ -73,8 +73,8 @@ func TestFoldersAPIEndpoint(t *testing.T) {
 			{Error: dashboards.ErrFolderFailedGenerateUniqueUid, ExpectedStatusCode: 500},
 		}
 
-		cmd := models.CreateFolderCommand{
-			Uid:   "uid",
+		cmd := folder.CreateFolderCommand{
+			UID:   "uid",
 			Title: "Folder",
 		}
 
@@ -235,7 +235,7 @@ func callCreateFolder(sc *scenarioContext) {
 }
 
 func createFolderScenario(t *testing.T, desc string, url string, routePattern string, folderService folder.Service,
-	cmd models.CreateFolderCommand, fn scenarioFunc) {
+	cmd folder.CreateFolderCommand, fn scenarioFunc) {
 	setUpRBACGuardian(t)
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
 		aclMockResp := []*dashboards.DashboardACLInfoDTO{}
