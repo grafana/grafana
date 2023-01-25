@@ -853,7 +853,9 @@
     },
     "lokidataquery": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/observability-logs"
+      ],
       "currentVersion": [
         0,
         0
@@ -861,13 +863,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
-        "docs": "n/a",
-        "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/lokidataquery/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/tsdb/loki/kinds/dataquery/types_dataquery_gen.go",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/loki/dataquery.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/loki/dataquery.gen.ts"
       },
       "machineName": "lokidataquery",
-      "maturity": "planned",
+      "maturity": "merged",
       "name": "LokiDataQuery",
       "pluralMachineName": "lokidataquerys",
       "pluralName": "LokiDataQuerys",
@@ -1771,10 +1773,11 @@
         "name": "merged",
         "items": [
           "alertgroupspanelcfg",
+          "lokidataquery",
           "playlist",
           "team"
         ],
-        "count": 3
+        "count": 4
       },
       "planned": {
         "name": "planned",
@@ -1809,7 +1812,6 @@
           "jaegerdatasourcecfg",
           "livepanelcfg",
           "logspanelcfg",
-          "lokidataquery",
           "lokidatasourcecfg",
           "microsoftsqlserverdataquery",
           "microsoftsqlserverdatasourcecfg",
@@ -1840,7 +1842,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 60
+        "count": 59
       },
       "stable": {
         "name": "stable",

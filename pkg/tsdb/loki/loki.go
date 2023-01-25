@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
 )
 
 var logger = log.New("tsdb.loki")
@@ -57,6 +58,12 @@ type datasourceInfo struct {
 }
 
 type QueryJSONModel struct {
+	dataquery.LokiDataQuery
+	Direction   *string `json:"direction,omitempty"`
+	VolumeQuery *bool   `json:"volumeQuery,omitempty"`
+}
+
+type QueryJSONModelOld struct {
 	QueryType    string `json:"queryType"`
 	Expr         string `json:"expr"`
 	Direction    string `json:"direction"`

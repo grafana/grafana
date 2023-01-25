@@ -1,6 +1,6 @@
 import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
 
-import { QueryEditorMode } from '../prometheus/querybuilder/shared/types';
+import { Loki as LokiQueryFromSchema } from './dataquery.gen';
 
 export interface LokiInstantQueryRequest {
   query: string;
@@ -35,20 +35,13 @@ export enum LokiQueryDirection {
   Forward = 'forward',
 }
 
-export interface LokiQuery extends DataQuery {
-  queryType?: LokiQueryType;
-  expr: string;
+export interface LokiQuery extends Omit<LokiQueryFromSchema, 'queryType'> {
   direction?: LokiQueryDirection;
-  legendFormat?: string;
-  maxLines?: number;
-  resolution?: number;
-  /** Used in range queries */
   volumeQuery?: boolean;
-  /* @deprecated now use queryType */
-  range?: boolean;
-  /* @deprecated now use queryType */
-  instant?: boolean;
-  editorMode?: QueryEditorMode;
+  // CUE autogenerates `queryType` as `?string`, as that's how it is defined
+  // in the parent-interface (in DataQuery).
+  // to fix it, we override it here.
+  queryType?: LokiQueryType;
 }
 
 export interface LokiOptions extends DataSourceJsonData {
