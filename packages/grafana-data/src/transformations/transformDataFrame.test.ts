@@ -1,5 +1,4 @@
-import { dataFrameToJSON } from '../dataframe';
-import { toDataFrame, toDataFrameDTO } from '../dataframe/processDataFrame';
+import { toDataFrame } from '../dataframe/processDataFrame';
 import { FieldType } from '../types';
 import { mockTransformationsRegistry } from '../utils/tests/mockTransformationsRegistry';
 
