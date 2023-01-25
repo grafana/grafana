@@ -395,18 +395,22 @@ type LoginError struct {
 func (hs *HTTPServer) handleOAuthLoginError(ctx *contextmodel.ReqContext, info loginservice.LoginInfo, err LoginError) {
 	ctx.Handle(hs.Cfg, err.HttpStatus, err.PublicMessage, err.Err)
 
-	info.Error = err.Err
-	if info.Error == nil {
-		info.Error = errors.New(err.PublicMessage)
-	}
-	info.HTTPStatus = err.HttpStatus
+	// login hooks is handled by authn.Service
+	if !hs.Features.IsEnabled(featuremgmt.FlagAuthnService) {
+		info.Error = err.Err
+		if info.Error == nil {
+			info.Error = errors.New(err.PublicMessage)
+		}
+		info.HTTPStatus = err.HttpStatus
 
-	hs.HooksService.RunLoginHook(&info, ctx)
+		hs.HooksService.RunLoginHook(&info, ctx)
+	}
 }
 
 func (hs *HTTPServer) handleOAuthLoginErrorWithRedirect(ctx *contextmodel.ReqContext, info loginservice.LoginInfo, err error, v ...interface{}) {
 	hs.redirectWithError(ctx, err, v...)
 
+	// login hooks is handled by authn.Service
 	if !hs.Features.IsEnabled(featuremgmt.FlagAuthnService) {
 		info.Error = err
 		hs.HooksService.RunLoginHook(&info, ctx)
