@@ -6,13 +6,15 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/grafana/grafana/pkg/models/roletype"
 	"golang.org/x/oauth2"
 )
 
 type SocialGitlab struct {
 	*SocialBase
-	allowedGroups []string
-	apiUrl        string
+	allowedGroups   []string
+	apiUrl          string
+	skipOrgRoleSync bool
 }
 
 func (s *SocialGitlab) IsGroupMember(groups []string) bool {
@@ -107,14 +109,22 @@ func (s *SocialGitlab) UserInfo(client *http.Client, _ *oauth2.Token) (*BasicUse
 
 	groups := s.GetGroups(client)
 
-	role, grafanaAdmin := s.extractRoleAndAdmin(response.Body, groups, true)
-	if s.roleAttributeStrict && !role.IsValid() {
-		return nil, &InvalidBasicRoleError{idP: "Gitlab", assignedRole: string(role)}
-	}
-
+	var role roletype.RoleType
 	var isGrafanaAdmin *bool = nil
-	if s.allowAssignGrafanaAdmin {
-		isGrafanaAdmin = &grafanaAdmin
+	fmt.Printf("skipOrgrolesync %t\n", s.skipOrgRoleSync)
+	if !s.skipOrgRoleSync {
+		var grafanaAdmin bool
+		role, grafanaAdmin = s.extractRoleAndAdmin(response.Body, groups, true)
+		if s.roleAttributeStrict && !role.IsValid() {
+			return nil, &InvalidBasicRoleError{idP: "Gitlab", assignedRole: string(role)}
+		}
+
+		if s.allowAssignGrafanaAdmin {
+			isGrafanaAdmin = &grafanaAdmin
+		}
+	}
+	if s.allowAssignGrafanaAdmin && s.skipOrgRoleSync {
+		s.log.Debug("allowAssignGrafanaAdmin and skipOrgRoleSync are both set, Grafana Admin role will not be synced, consider setting one or the other")
 	}
 
 	userInfo := &BasicUserInfo{

@@ -225,6 +225,7 @@ export interface AuthSettings {
   LDAPSkipOrgRoleSync?: boolean;
   JWTAuthSkipOrgRoleSync?: boolean;
   GrafanaComSkipOrgRoleSync?: boolean;
+  GitLabSkipOrgRoleSync?: boolean;
   AzureADSkipOrgRoleSync?: boolean;
   GoogleSkipOrgRoleSync?: boolean;
   DisableSyncLock?: boolean;
