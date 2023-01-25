@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -437,8 +438,8 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 	}
 }
 
-func createTestRequestCtx() contexthandlercontextmodel.ReqContext {
-	return contexthandlercontextmodel.ReqContext{
+func createTestRequestCtx() contextmodel.ReqContext {
+	return contextmodel.ReqContext{
 		Context: &web.Context{
 			Req: &http.Request{},
 		},

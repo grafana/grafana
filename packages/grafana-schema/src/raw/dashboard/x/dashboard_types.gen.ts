@@ -647,10 +647,13 @@ export interface Dashboard {
    */
   editable: boolean;
   /**
-   * TODO docs
+   * The month that the fiscal year starts on.  0 = January, 11 = December
    */
   fiscalYearStartMonth?: number;
   gnetId?: string;
+  /**
+   * Configuration of dashboard cursor sync behavior.
+   */
   graphTooltip: DashboardCursorSync;
   /**
    * Unique numeric identifier for the dashboard.
@@ -797,6 +800,7 @@ export interface Dashboard {
 
 export const defaultDashboard: Partial<Dashboard> = {
   editable: true,
+  fiscalYearStartMonth: 0,
   graphTooltip: DashboardCursorSync.Off,
   links: [],
   panels: [],

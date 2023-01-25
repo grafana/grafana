@@ -41,25 +41,22 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 
 		dashSnapSvc := dashboardsnapshots.NewMockService(t)
 		dashSnapSvc.On("DeleteDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.DeleteDashboardSnapshotCommand")).Return(nil).Maybe()
-		dashSnapSvc.On("GetDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.GetDashboardSnapshotQuery")).Run(func(args mock.Arguments) {
-			q := args.Get(1).(*dashboardsnapshots.GetDashboardSnapshotQuery)
-			res := &dashboardsnapshots.DashboardSnapshot{
-				Id:        1,
-				Key:       "12345",
-				DeleteKey: "54321",
-				Dashboard: jsonModel,
-				Expires:   time.Now().Add(time.Duration(1000) * time.Second),
-				UserId:    999999,
-			}
-			if userId != 0 {
-				res.UserId = userId
-			}
-			if deleteUrl != "" {
-				res.External = true
-				res.ExternalDeleteUrl = deleteUrl
-			}
-			q.Result = res
-		}).Return(nil)
+		res := &dashboardsnapshots.DashboardSnapshot{
+			ID:        1,
+			Key:       "12345",
+			DeleteKey: "54321",
+			Dashboard: jsonModel,
+			Expires:   time.Now().Add(time.Duration(1000) * time.Second),
+			UserID:    999999,
+		}
+		if userId != 0 {
+			res.UserID = userId
+		}
+		if deleteUrl != "" {
+			res.External = true
+			res.ExternalDeleteURL = deleteUrl
+		}
+		dashSnapSvc.On("GetDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.GetDashboardSnapshotQuery")).Return(res, nil)
 		dashSnapSvc.On("DeleteDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.DeleteDashboardSnapshotCommand")).Return(nil).Maybe()
 		return dashSnapSvc
 	}
@@ -256,7 +253,7 @@ func TestGetDashboardSnapshotNotFound(t *testing.T) {
 		dashSnapSvc.
 			On("GetDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.GetDashboardSnapshotQuery")).
 			Run(func(args mock.Arguments) {}).
-			Return(dashboardsnapshots.ErrBaseNotFound.Errorf(""))
+			Return(nil, dashboardsnapshots.ErrBaseNotFound.Errorf(""))
 
 		return dashSnapSvc
 	}
@@ -305,7 +302,7 @@ func TestGetDashboardSnapshotFailure(t *testing.T) {
 		dashSnapSvc.
 			On("GetDashboardSnapshot", mock.Anything, mock.AnythingOfType("*dashboardsnapshots.GetDashboardSnapshotQuery")).
 			Run(func(args mock.Arguments) {}).
-			Return(errors.New("something went wrong"))
+			Return(nil, errors.New("something went wrong"))
 
 		return dashSnapSvc
 	}
