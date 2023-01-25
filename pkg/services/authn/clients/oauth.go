@@ -135,11 +135,10 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 		OAuthToken:     token,
 		OrgRoles:       getOAuthOrgRole(userInfo, c.cfg),
 		ClientParams: authn.ClientParams{
-			SyncUser:            true,
-			SyncTeamMembers:     true,
-			EnableDisabledUsers: true,
-			AllowSignUp:         c.connector.IsSignupAllowed(),
-			LookUpParams:        models.UserLookupParams{Email: &userInfo.Email},
+			SyncUser:        true,
+			SyncTeamMembers: true,
+			AllowSignUp:     c.connector.IsSignupAllowed(),
+			LookUpParams:    models.UserLookupParams{Email: &userInfo.Email},
 		},
 	}, nil
 }
