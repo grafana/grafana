@@ -56,8 +56,8 @@ lineage: seqs: [
 					// TODO docs
 					time_options: [...string] | *["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
 				} @grafanamaturity(NeedsExpertReview)
-				// TODO docs
-				fiscalYearStartMonth?: uint8 & <13 @grafanamaturity(NeedsExpertReview)
+				// The month that the fiscal year starts on.  0 = January, 11 = December
+				fiscalYearStartMonth?: uint8 & <12 | *0
 				// TODO docs
 				liveNow?: bool @grafanamaturity(NeedsExpertReview)
 				// TODO docs

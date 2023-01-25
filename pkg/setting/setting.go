@@ -467,6 +467,9 @@ type Cfg struct {
 	// then Live uses AppURL as the only allowed origin.
 	LiveAllowedOrigins []string
 
+	// Github OAuth
+	GithubSkipOrgRoleSync bool
+
 	// Grafana.com URL, used for OAuth redirect.
 	GrafanaComURL string
 	// Grafana.com API URL. Can be set separately to GrafanaComURL
@@ -1375,6 +1378,11 @@ func readAuthGrafanaComSettings(iniFile *ini.File, cfg *Cfg) {
 	cfg.GrafanaComSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
+func readAuthGithubSettings(iniFile *ini.File, cfg *Cfg) {
+	sec := iniFile.Section("auth.github")
+	cfg.GithubSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+}
+
 func readAuthGoogleSettings(iniFile *ini.File, cfg *Cfg) {
 	sec := iniFile.Section("auth.google")
 	cfg.GoogleSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
@@ -1501,7 +1509,11 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	cfg.AuthProxyHeadersEncoded = authProxy.Key("headers_encoded").MustBool(false)
 
+	// GrafanaCom
 	readAuthGrafanaComSettings(iniFile, cfg)
+
+	// Github
+	readAuthGithubSettings(iniFile, cfg)
 	return nil
 }
 
