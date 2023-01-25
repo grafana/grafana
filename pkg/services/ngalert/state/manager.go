@@ -163,10 +163,10 @@ func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) *State {
 	return st.cache.get(orgID, alertRuleUID, stateId)
 }
 
-// ResetStateByRuleUID removes the rule instances from cache and instanceStore. If reason is ngModels.StateReasonPaused
-// also adds an entry to state history. rule argument must not be nil when the reason is ngModels.StateReasonPaused as
-// it is needed to add the entry to the state history, otherwise it can be nil.
-func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey, rule *ngModels.AlertRule, reason string) ([]*State, <-chan error) {
+// DeleteStateByRuleUID removes the rule instances from cache and instanceStore. A closed channel is returned to be able
+// to gracefully handle the clear state step in scheduler in case we do not need to use the historian to save state
+// history.
+func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey) ([]*State, <-chan error) {
 	logger := st.log.New(ruleKey.LogContext()...)
 	logger.Debug("Resetting state of the rule")
 
@@ -186,7 +186,16 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.Ale
 	}
 	logger.Info("Rules state was reset", "states", len(states))
 
-	if reason != ngModels.StateReasonPaused || st.historian == nil {
+	return states, errCh
+}
+
+// ResetStateByRuleUID removes the rule instances from cache and instanceStore and saves state history. If the state
+// history has to be saved, rule must not be nil.
+func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.AlertRule, reason string) ([]*State, <-chan error) {
+	ruleKey := rule.GetKey()
+	states, errCh := st.DeleteStateByRuleUID(ctx, ruleKey)
+
+	if rule == nil || st.historian == nil {
 		return states, errCh
 	}
 	transitions := make([]StateTransition, 0, len(states))

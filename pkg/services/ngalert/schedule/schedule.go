@@ -325,13 +325,19 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 	evalTotalFailures := sch.metrics.EvalFailures.WithLabelValues(orgID)
 
 	clearState := func(ctx context.Context, reason string) <-chan error {
-		rule := sch.schedulableAlertRules.get(key)
-		states, errChan := sch.stateManager.ResetStateByRuleUID(ctx, key, rule, reason)
+		var states []*state.State
+		var errCh <-chan error
+		if reason == ngmodels.StateReasonPaused {
+			rule := sch.schedulableAlertRules.get(key)
+			states, errCh = sch.stateManager.ResetStateByRuleUID(ctx, rule, reason)
+		} else {
+			states, errCh = sch.stateManager.DeleteStateByRuleUID(ctx, key)
+		}
 		expiredAlerts := FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
 		if len(expiredAlerts.PostableAlerts) > 0 {
 			sch.alertsSender.Send(key, expiredAlerts)
 		}
-		return errChan
+		return errCh
 	}
 
 	evaluate := func(ctx context.Context, attempt int64, e *evaluation, span tracing.Span) {
