@@ -101,6 +101,9 @@ export type {
   OrgRole
 } from './raw/serviceaccount/x/serviceaccount_types.gen';
 
+// Raw generated enums and default consts from serviceaccount kind.
+export { defaultServiceaccount } from './raw/serviceaccount/x/serviceaccount_types.gen';
+
 // Raw generated types from Team kind.
 export type { Team } from './raw/team/x/team_types.gen';
 
