@@ -48,7 +48,6 @@ enable = [
   "exportloopref",
   "staticcheck",
   "stylecheck",
-  "typecheck",
   "unconvert",
   "unused",
   "whitespace",

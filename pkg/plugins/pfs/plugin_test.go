@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+
 	"github.com/grafana/grafana/pkg/kindsys"
 )
 
@@ -17,6 +18,7 @@ import (
 func TestSchemaInterfacesAreLoaded(t *testing.T) {
 	knownSI := []string{"PanelCfg", "DataQuery", "DataSourceCfg"}
 	all := kindsys.SchemaInterfaces(nil)
+	//nolint:prealloc // for test purpose
 	var loadedSI []string
 	for k := range all {
 		loadedSI = append(loadedSI, k)
