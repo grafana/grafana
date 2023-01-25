@@ -9,22 +9,14 @@ import { GrafanaAlertmanagerDeliveryWarning } from './GrafanaAlertmanagerDeliver
 describe('GrafanaAlertmanagerDeliveryWarning', () => {
   describe('When AlertmanagerChoice set to External', () => {
     it('Should not render when the datasource is not Grafana', () => {
-      const { container } = render(
-        <GrafanaAlertmanagerDeliveryWarning
-          currentAlertmanager="custom-alertmanager"
-          alertmanagerChoice={AlertmanagerChoice.External}
-        />
-      );
+      const { container } = render(<GrafanaAlertmanagerDeliveryWarning currentAlertmanager="custom-alertmanager" />);
 
       expect(container).toBeEmptyDOMElement();
     });
 
     it('Should render warning when the datasource is Grafana', () => {
       const { container } = render(
-        <GrafanaAlertmanagerDeliveryWarning
-          currentAlertmanager={GRAFANA_RULES_SOURCE_NAME}
-          alertmanagerChoice={AlertmanagerChoice.External}
-        />
+        <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={GRAFANA_RULES_SOURCE_NAME} />
       );
 
       expect(container).toHaveTextContent('Grafana alerts are not delivered to Grafana Alertmanager');
@@ -35,10 +27,7 @@ describe('GrafanaAlertmanagerDeliveryWarning', () => {
     'Should not render when datasource is Grafana and Alertmanager choice is %s',
     (choice) => {
       const { container } = render(
-        <GrafanaAlertmanagerDeliveryWarning
-          currentAlertmanager={GRAFANA_RULES_SOURCE_NAME}
-          alertmanagerChoice={choice}
-        />
+        <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={GRAFANA_RULES_SOURCE_NAME} />
       );
 
       expect(container).toBeEmptyDOMElement();

@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { isEmpty } from 'lodash';
 import React, { FC, Fragment, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -7,10 +8,12 @@ import { config } from '@grafana/runtime';
 import { Button, ClipboardButton, ConfirmModal, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
+import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction, useDispatch } from 'app/types';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
+import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
 import { useStateHistoryModal } from '../../hooks/useStateHistoryModal';
 import { deleteRuleAction } from '../../state/actions';
@@ -80,6 +83,8 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
 
   const { isEditable, isRemovable } = useIsRuleEditable(rulesSourceName, rulerRule);
 
+  const canSilence = useCanSilence(alertmanagerSourceName);
+
   const returnTo = location.pathname + location.search;
   // explore does not support grafana rule queries atm
   // neither do "federated rules"
@@ -144,7 +149,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
     }
   }
 
-  if (alertmanagerSourceName && contextSrv.hasAccess(AccessControlAction.AlertingInstanceCreate, contextSrv.isEditor)) {
+  if (canSilence && alertmanagerSourceName) {
     buttons.push(
       <LinkButton
         size="sm"
@@ -248,6 +253,21 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
   }
   return null;
 };
+
+function useCanSilence(alertmanagerSourceName?: string) {
+  const hasAlertmanagerSource = Boolean(alertmanagerSourceName);
+
+  const { useGetAlertmanagerChoiceQuery, useGetExternalAlertmanagersQuery } = alertmanagerApi;
+  const { currentData: alertmanagerChoice } = useGetAlertmanagerChoiceQuery();
+
+  const { currentData: externalAMs } = useGetExternalAlertmanagersQuery();
+
+  const hasPermissions = contextSrv.hasAccess(AccessControlAction.AlertingInstanceCreate, contextSrv.isEditor);
+  const hasExternalAlertmanagers = !isEmpty(externalAMs?.activeAlertManagers);
+  const wantsDeliveredToExternalAms = alertmanagerChoice !== AlertmanagerChoice.Internal;
+
+  return hasAlertmanagerSource && hasPermissions && wantsDeliveredToExternalAms && hasExternalAlertmanagers;
+}
 
 export const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
