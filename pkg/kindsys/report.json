@@ -1281,6 +1281,32 @@
       "pluralName": "PrometheusDataSourceCfgs",
       "schemaInterface": "DataSourceCfg"
     },
+    "publicdashboard": {
+      "category": "core",
+      "codeowners": [
+        "grafana/grafana-as-code",
+        "grafana/grafana-bi-squad",
+        "grafana/plugins-platform-frontend",
+        "grafana/user-essentials"
+      ],
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/publicdashboard/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/kinds/publicdashboard",
+        "schema": "https://github.com/grafana/grafana/tree/main/kinds/publicdashboard/publicdashboard_kind.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/packages/grafana-schema/src/raw/publicdashboard/x/publicdashboard_types.gen.ts"
+      },
+      "machineName": "publicdashboard",
+      "maturity": "merged",
+      "name": "Publicdashboard",
+      "pluralMachineName": "publicdashboards",
+      "pluralName": "Publicdashboards"
+    },
     "query": {
       "category": "core",
       "codeowners": [],
@@ -1766,6 +1792,7 @@
           "folder",
           "playlist",
           "preferences",
+          "publicdashboard",
           "query",
           "queryhistory",
           "serviceaccount",
@@ -1773,7 +1800,7 @@
           "thumb",
           "user"
         ],
-        "count": 12
+        "count": 13
       }
     },
     "maturity": {
@@ -1805,10 +1832,11 @@
           "alertgroupspanelcfg",
           "playlist",
           "preferences",
+          "publicdashboard",
           "serviceaccount",
           "team"
         ],
-        "count": 5
+        "count": 6
       },
       "planned": {
         "name": "planned",

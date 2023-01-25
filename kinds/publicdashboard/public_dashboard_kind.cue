@@ -1,6 +1,6 @@
 package kind
 
-name:     "PublicDashboard"
+name:     "Publicdashboard"
 maturity: "merged"
 
 lineage: seqs: [

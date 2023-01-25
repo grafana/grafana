@@ -8,7 +8,7 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
-export interface PublicDashboard {
+export interface Publicdashboard {
   /**
    * Unique public access token
    */
