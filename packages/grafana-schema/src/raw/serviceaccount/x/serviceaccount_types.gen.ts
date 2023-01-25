@@ -13,7 +13,7 @@
  */
 export type OrgRole = ('Admin' | 'Editor' | 'Viewer');
 
-export interface Serviceaccount {
+export interface ServiceAccount {
   /**
    * AccessControl metadata associated with a given resource.
    */
@@ -66,6 +66,6 @@ export interface Serviceaccount {
   updated?: number;
 }
 
-export const defaultServiceaccount: Partial<Serviceaccount> = {
+export const defaultServiceAccount: Partial<ServiceAccount> = {
   teams: [],
 };
