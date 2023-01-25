@@ -170,38 +170,41 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.Ale
 	logger := st.log.New(ruleKey.LogContext()...)
 	logger.Debug("Resetting state of the rule")
 
-	errCh := make(<-chan error)
+	// We create and immediately close the channel as a nil or not closed channels will hang forever, and we do a couple
+	// of early exists in the code below. The returned channel is only expected to be read as it is of type <-chan error
+	errCh := make(chan error)
+	close(errCh)
 	states := st.cache.removeByRuleUID(ruleKey.OrgID, ruleKey.UID)
-	if len(states) > 0 {
-		if st.instanceStore != nil {
-			err := st.instanceStore.DeleteAlertInstancesByRule(ctx, ruleKey)
-			if err != nil {
-				logger.Error("Failed to delete states that belong to a rule from database", "error", err)
-			}
-		}
-
-		if reason == ngModels.StateReasonPaused && st.historian != nil {
-			transitions := make([]StateTransition, 0, len(states))
-			for _, s := range states {
-				oldState := s.State
-				oldReason := s.StateReason
-				now := time.Now()
-				s.SetNormal(reason, s.StartsAt, now)
-				s.LastEvaluationTime = now
-				s.Values = map[string]float64{}
-				transitions = append(transitions, StateTransition{
-					State:               s,
-					PreviousState:       oldState,
-					PreviousStateReason: oldReason,
-				})
-			}
-
-			errCh = st.historian.RecordStatesAsync(ctx, rule, transitions)
+	if len(states) == 0 {
+		return states, errCh
+	}
+	if st.instanceStore != nil {
+		err := st.instanceStore.DeleteAlertInstancesByRule(ctx, ruleKey)
+		if err != nil {
+			logger.Error("Failed to delete states that belong to a rule from database", "error", err)
 		}
 	}
-
 	logger.Info("Rules state was reset", "states", len(states))
-	return states, errCh
+
+	if reason != ngModels.StateReasonPaused || st.historian == nil {
+		return states, errCh
+	}
+	transitions := make([]StateTransition, 0, len(states))
+	for _, s := range states {
+		oldState := s.State
+		oldReason := s.StateReason
+		now := time.Now()
+		s.SetNormal(reason, s.StartsAt, now)
+		s.LastEvaluationTime = now
+		s.Values = map[string]float64{}
+		transitions = append(transitions, StateTransition{
+			State:               s,
+			PreviousState:       oldState,
+			PreviousStateReason: oldReason,
+		})
+	}
+
+	return states, st.historian.RecordStatesAsync(ctx, rule, transitions)
 }
 
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
