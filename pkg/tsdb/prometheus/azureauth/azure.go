@@ -23,7 +23,7 @@ var (
 	}
 )
 
-func ConfigureAzureAuthentication(settings backend.DataSourceInstanceSettings, azureSettings *azsettings.AzureSettings, opts *sdkhttpclient.Options) error {
+func ConfigureAzureAuthentication(settings backend.DataSourceInstanceSettings, azureSettings *azsettings.AzureSettings, clientOpts *sdkhttpclient.Options) error {
 	jsonData, err := utils.GetJsonData(settings)
 	if err != nil {
 		return fmt.Errorf("failed to get jsonData: %w", err)
@@ -47,7 +47,9 @@ func ConfigureAzureAuthentication(settings backend.DataSourceInstanceSettings, a
 			}
 		}
 
-		azhttpclient.AddAzureAuthentication(opts, azureSettings, credentials, scopes)
+		authOpts := azhttpclient.NewAuthOptions(azureSettings)
+		authOpts.Scopes(scopes)
+		azhttpclient.AddAzureAuthentication(clientOpts, authOpts, credentials)
 	}
 
 	return nil
