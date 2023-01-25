@@ -300,7 +300,7 @@ datasources:
             editorMode: "code"
             format: "table"
             rawQuery: "true"
-            rawSql: "SELECT * FROM superhero WHERE name=''${name}''"
+            rawSql: "SELECT * FROM superhero WHERE name='$${name}'"
             refId: "A"
           field: "text"
           transformations:
