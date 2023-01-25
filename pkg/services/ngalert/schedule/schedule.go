@@ -514,7 +514,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 				if errors.Is(grafanaCtx.Err(), errRulePaused) {
 					reason = ngmodels.StateReasonPaused
 				}
-				// The context dead\ine is 5 seconds which should be enough time for the state to be deleted from the
+				// The context deadline is 5 seconds which should be enough time for the state to be deleted from the
 				// database and the historian to record the state changes async. Do not cancel the context with defer as
 				// otherwise the context will be canceled before the historian can write any state changes.
 				ctx, cancelFunc := context.WithTimeout(context.Background(), 60*time.Second)
