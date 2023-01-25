@@ -670,9 +670,9 @@ export interface Dashboard {
   liveNow?: boolean;
   panels?: Array<(Panel | RowPanel | GraphPanel | HeatmapPanel)>;
   /**
-   * TODO docs
+   * Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
    */
-  refresh?: (string | false);
+  refresh?: string;
   /**
    * Version of the current dashboard data
    */
