@@ -120,8 +120,8 @@ lineage: seqs: [
 					target?:   #AnnotationTarget @grafanamaturity(NeedsExpertReview)
 				} @cuetsy(kind="interface")
 
-				// TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
-				#VariableModel: #QueryVariableModel | #AdHocVariableModel | #ConstantVariableModel | #DataSourceVariableModel | #IntervalVariableModel | #TextBoxVariableModel | #CustomVariableModel | #UserVariableModel | #OrgVariableModel | #DashboardVariableModel @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
+				// Dashboard variables. See https://grafana.com/docs/grafana/latest/variables/variable-types/
+				#VariableModel: #QueryVariableModel | #AdHocVariableModel | #ConstantVariableModel | #DataSourceVariableModel | #IntervalVariableModel | #TextBoxVariableModel | #CustomVariableModel | #UserVariableModel | #OrgVariableModel | #DashboardVariableModel @cuetsy(kind="type")
 
 				// Common information that all types of variables shares.
 				// A variable in Grafana is a container that can hold different types of data, and it variates depending on the query.
@@ -217,6 +217,7 @@ lineage: seqs: [
 					isNone?:  bool
 				} @cuetsy(kind="interface")
 
+				// Variable which value is set by a free text with an optional default value.
 				#TextBoxVariableModel: {
 					#VariableWithOptions
 					type: "textbox"
@@ -224,20 +225,29 @@ lineage: seqs: [
 					originalQuery: string
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
+				// Variable which value cannot be changed
 				#ConstantVariableModel: {
 					#VariableWithOptions
 					type: "constant"
 				} @cuetsy(kind="interface")
 
+				// Variables to represents time spans such as 1m, 1h, 1d.
 				#IntervalVariableModel: {
 					#VariableWithOptions
-					type:       "interval"
-					auto:       bool
-					auto_min:   string
+					type: "interval"
+					// This option allows you to specify how many times the current time range should be divided to calculate the current `auto` time span.
+					// Configuring `auto_min` and or `auto_count` will setup the auto interval to use the min or count option.
+					auto: bool
+					// The minimum threshold below which the step count intervals will not divide the time. 
+					// For example, if the minimum interval is set to `2m`, and the value is `30m` then Grafana would group the data into 15 two-minute increments.
+					auto_min: string
+					// Select the number of times the current time range will be divided to calculate the value, similar to the Max data points query option. 
+					// For example, if the current visible time range is 30 minutes, then the auto interval groups the data into 30 one-minute increments.
 					auto_count: int32
 					refresh:    #VariableRefresh
 				} @cuetsy(kind="interface")
 
+				// Variable which value is selected from a list of options and it support the selection of multiple values.
 				#VariableWithMultiSupport: {
 					#VariableWithOptions
 					multi:      bool
@@ -245,6 +255,7 @@ lineage: seqs: [
 					allValue?:  string
 				} @cuetsy(kind="interface")
 
+				// Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on.
 				#QueryVariableModel: {
 					#VariableWithMultiSupport
 					type:        "query"
@@ -257,6 +268,7 @@ lineage: seqs: [
 					refresh:     #VariableRefresh
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
+				// Variable which options are different data sources from the same type.
 				#DataSourceVariableModel: {
 					#VariableWithMultiSupport
 					type:    "datasource"
@@ -264,15 +276,24 @@ lineage: seqs: [
 					refresh: #VariableRefresh
 				} @cuetsy(kind="interface")
 
+				// Define the variable options manually using a comma-separated list.
 				#CustomVariableModel: {
 					#VariableWithMultiSupport
 					type: "custom"
 				} @cuetsy(kind="interface")
 
-				#VariableHide:    0 | 1 | 2                                                 @cuetsy(kind="enum",memberNames="dontHide|hideLabel|hideVariable") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
-				#VariableRefresh: 0 | 1 | 2                                                 @cuetsy(kind="enum",memberNames="never|onDashboardLoad|onTimeRangeChanged") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
-				#VariableSort:    0 | 1 | 2 | 3 | 4 | 5 | 6                                 @cuetsy(kind="enum",memberNames="disabled|alphabeticalAsc|alphabeticalDesc|numericalAsc|numericalDesc|alphabeticalCaseInsensitiveAsc|alphabeticalCaseInsensitiveDesc") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
-				#LoadingState:    "NotStarted" | "Loading" | "Streaming" | "Done" | "Error" @cuetsy(kind="enum") @grafanamaturity(NeedsExpertReview)
+				// Options to set a variable visible in the UI
+				#VariableHide: 0 | 1 | 2 @cuetsy(kind="enum",memberNames="dontHide|hideLabel|hideVariable") @grafana(TSVeneer="type")
+
+				// Options to config when to refresh a variable
+				// - `onDashboardLoad`: Queries the data source every time the dashboard loads. 
+				// - `onTimeRangeChanged`: Queries the data source when the dashboard time range changes. 
+				#VariableRefresh: 0 | 1 | 2 @cuetsy(kind="enum",memberNames="never|onDashboardLoad|onTimeRangeChanged") @grafana(TSVeneer="type")
+
+				// Options to config how to sort variable options
+				#VariableSort: 0 | 1 | 2 | 3 | 4 | 5 | 6 @cuetsy(kind="enum",memberNames="disabled|alphabeticalAsc|alphabeticalDesc|numericalAsc|numericalDesc|alphabeticalCaseInsensitiveAsc|alphabeticalCaseInsensitiveDesc") @grafana(TSVeneer="type")
+
+				#LoadingState: "NotStarted" | "Loading" | "Streaming" | "Done" | "Error" @cuetsy(kind="enum") @grafanamaturity(NeedsExpertReview)
 
 				// Ref to a DataSource instance
 				#DataSourceRef: {
