@@ -12,3 +12,9 @@ export function ensureDefine(templateName: string, templateContent: string): str
   }
   return content;
 }
+export function updateAndSanitizeDefine(newDefine: string, templateContent: string): string {
+  return templateContent.replace(
+    /\{\{\s*define\s*\"\w*/,
+    `{{ define "${newDefine.replace(/\(/g, '').replace(/\)/g, '').replace(/\s/g, '.')}`
+  );
+}

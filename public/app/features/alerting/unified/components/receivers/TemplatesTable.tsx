@@ -101,6 +101,16 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
                         icon="file-alt"
                       />
                     )}
+                    {contextSrv.hasPermission(permissions.create) && (
+                      <ActionIcon
+                        to={makeAMLink(
+                          `/alerting/notifications/templates/${encodeURIComponent(name)}/duplicate`,
+                          alertManagerName
+                        )}
+                        tooltip="Duplicate template"
+                        icon="copy"
+                      />
+                    )}
                     {!provenance && (
                       <Authorize actions={[permissions.update, permissions.delete]}>
                         <Authorize actions={[permissions.update]}>
