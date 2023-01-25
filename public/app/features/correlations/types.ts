@@ -13,7 +13,6 @@ export interface CorrelationConfig {
   target: object;
   type: CorrelationConfigType;
   transformations?: Transformation[];
-  mappings?: object;
 }
 
 export interface Correlation {

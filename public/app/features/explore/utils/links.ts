@@ -127,21 +127,18 @@ export const getFieldLinksForExplore = (options: {
         }
         return linkModel;
       } else {
-        //TODO some sort of global use of transformationData.mappings
         const internalLinkSpecificVars: ScopedVars = {};
-        if (link.internal?.transformationData?.transformations) {
+        if (link.internal?.transformations) {
           const fieldValue = field.values.get(rowIndex);
-          link.internal?.transformationData?.transformations.forEach((transformation) => {
+          link.internal?.transformations.forEach((transformation) => {
             if (transformation.type === 'regex' && transformation.expression) {
-              const regexp = new RegExp(transformation.expression, 'g');
+              const regexp = new RegExp(transformation.expression);
               const matches = fieldValue.match(regexp);
               if (matches.length > 0) {
                 internalLinkSpecificVars[transformation.variable || field.name] = {
                   value: matches[0],
                 };
               }
-            } else if (transformation.type === 'logfmt') {
-              // TODO what do we do with logs fieldValue
             }
           });
         }

@@ -56,44 +56,29 @@ type CorrelationConfig struct {
 		SET config='{"type":"query","field":"text","target":{"editorMode":"code","format":"table","rawQuery":true,"rawSql":"SELECT * FROM superhero WHERE name=''${name}''","refId":"A","sql":{"columns":[{"parameters":[],"type":"function"}],"groupBy":[{"property":{"type":"string"},"type":"groupBy"}],"limit":50}},"transformations":[{"type":"regex","expression":"(Superman|Batman)", "variable":"name"}]}'
 		WHERE id = 637
 
-		date,text
-		1674078628,station=central3 action=enter username=Batman
-
-		UPDATE correlation
-		SET config='{"type":"query","field":"text","target":{"editorMode":"code","format":"table","rawQuery":true,"rawSql":"SELECT * FROM superhero WHERE name=''${name}''","refId":"A","sql":{"columns":[{"parameters":[],"type":"function"}],"groupBy":[{"property":{"type":"string"},"type":"groupBy"}],"limit":50}},"transformations":[{"type":"logfmt"}],"mappings":{"superHeroName":"name"}}'
-		WHERE id = 653
-
 	*/
 	Transformations []Transformation `json:"transformations"`
-
-	Mappings interface{} `json:"mappings"`
 }
 
 func (c CorrelationConfig) MarshalJSON() ([]byte, error) {
 	target := c.Target
 	transformations := c.Transformations
-	mappings := c.Mappings
 	if target == nil {
 		target = map[string]interface{}{}
 	}
 	if transformations == nil {
 		transformations = nil
 	}
-	if mappings == nil {
-		mappings = nil
-	}
 	return json.Marshal(struct {
 		Type            CorrelationConfigType  `json:"type"`
 		Field           string                 `json:"field"`
 		Target          map[string]interface{} `json:"target"`
 		Transformations []Transformation       `json:"transformations"`
-		Mappings        interface{}            `json:"mappings"`
 	}{
 		Type:            ConfigTypeQuery,
 		Field:           c.Field,
 		Target:          target,
 		Transformations: transformations,
-		Mappings:        mappings,
 	})
 }
 
