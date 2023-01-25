@@ -39,7 +39,7 @@ func (hs *HTTPServer) GetFolders(c *models.ReqContext) response.Response {
 			OrgID:        c.OrgID,
 			Limit:        c.QueryInt64("limit"),
 			Page:         c.QueryInt64("page"),
-			UID:          c.Query("parent_uid"),
+			UID:          c.Query("parentUid"),
 			SignedInUser: c.SignedInUser,
 		})
 	} else {
@@ -169,19 +169,16 @@ func (hs *HTTPServer) CreateFolder(c *models.ReqContext) response.Response {
 
 func (hs *HTTPServer) MoveFolder(c *models.ReqContext) response.Response {
 	if hs.Features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		cmd := models.MoveFolderCommand{}
+		cmd := folder.MoveFolderCommand{}
 		if err := web.Bind(c.Req, &cmd); err != nil {
 			return response.Error(http.StatusBadRequest, "bad request data", err)
 		}
 		var theFolder *folder.Folder
 		var err error
-		if cmd.ParentUID != nil {
-			moveCommand := folder.MoveFolderCommand{
-				UID:          web.Params(c.Req)[":uid"],
-				NewParentUID: *cmd.ParentUID,
-				OrgID:        c.OrgID,
-			}
-			theFolder, err = hs.folderService.Move(c.Req.Context(), &moveCommand)
+		if cmd.NewParentUID != "" {
+			cmd.OrgID = c.OrgID
+			cmd.UID = web.Params(c.Req)[":uid"]
+			theFolder, err = hs.folderService.Move(c.Req.Context(), &cmd)
 			if err != nil {
 				return response.Error(http.StatusInternalServerError, "update folder uid failed", err)
 			}
@@ -280,7 +277,7 @@ func (hs *HTTPServer) newToFolderDto(c *models.ReqContext, g guardian.DashboardG
 		Id:            folder.ID,
 		Uid:           folder.UID,
 		Title:         folder.Title,
-		Url:           folder.Url,
+		Url:           folder.URL,
 		HasACL:        folder.HasACL,
 		CanSave:       canSave,
 		CanEdit:       canEdit,
@@ -340,7 +337,7 @@ type GetFoldersParams struct {
 	// The parent folder UID
 	// in:query
 	// required:false
-	ParentUID string `json:"parent_uid"`
+	ParentUID string `json:"parentUid"`
 }
 
 // swagger:parameters getFolderByUID

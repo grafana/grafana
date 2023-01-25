@@ -8,8 +8,8 @@ title: Dashboard kind
 
 # Dashboard kind
 
-### Maturity: experimental
-### Version: 0.0
+## Maturity: experimental
+## Version: 0.0
 
 ## Properties
 
@@ -22,7 +22,7 @@ title: Dashboard kind
 | `style`                | string                            | **Yes**  | Theme of dashboard. Possible values are: `dark`, `light`. Default: `dark`.                                                                                                                                              |
 | `annotations`          | [object](#annotations)            | No       | TODO docs                                                                                                                                                                                                               |
 | `description`          | string                            | No       | Description of dashboard.                                                                                                                                                                                               |
-| `fiscalYearStartMonth` | integer                           | No       | TODO docs                                                                                                                                                                                                               |
+| `fiscalYearStartMonth` | integer                           | No       | The month that the fiscal year starts on.  0 = January, 11 = December Default: `0`.                                                                                                                                     |
 | `gnetId`               | string                            | No       |                                                                                                                                                                                                                         |
 | `id`                   | integer                           | No       | Unique numeric identifier for the dashboard.<br/>TODO must isolate or remove identifiers local to a Grafana instance...?                                                                                                |
 | `links`                | [DashboardLink](#dashboardlink)[] | No       | TODO docs                                                                                                                                                                                                               |

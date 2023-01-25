@@ -54,7 +54,7 @@ func main() {
 
 	pluginKindGen.Append(
 		codegen.PluginTreeListJenny(),
-		codegen.PluginGoTypesJenny("pkg/tsdb", adaptToPipeline(corecodegen.GoTypesJenny{ExpandReferences: true})),
+		codegen.PluginGoTypesJenny("pkg/tsdb"),
 		codegen.PluginTSTypesJenny("public/app/plugins", adaptToPipeline(corecodegen.TSTypesJenny{})),
 		codegen.PluginDocsJenny(toDeclForGen(corecodegen.DocsJenny(
 			filepath.Join("docs", "sources", "developers", "kinds", "composable"),
@@ -86,7 +86,7 @@ func main() {
 func adaptToPipeline(j codejen.OneToOne[corecodegen.SchemaForGen]) codejen.OneToOne[*pfs.PluginDecl] {
 	return codejen.AdaptOneToOne(j, func(pd *pfs.PluginDecl) corecodegen.SchemaForGen {
 		return corecodegen.SchemaForGen{
-			Name:    pd.PluginMeta.Name,
+			Name:    strings.ReplaceAll(pd.PluginMeta.Name, " ", ""),
 			Schema:  pd.Lineage.Latest(),
 			IsGroup: pd.SchemaInterface.IsGroup(),
 		}
