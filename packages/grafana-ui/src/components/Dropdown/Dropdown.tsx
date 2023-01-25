@@ -37,7 +37,7 @@ export const Dropdown = React.memo(({ children, overlay, placement }: Props) => 
   };
 
   const handleKeys = (event: React.KeyboardEvent) => {
-    if (event.key === 'Escape') {
+    if (event.key === 'Escape' || event.key === 'Tab') {
       setShow(false);
     }
   };

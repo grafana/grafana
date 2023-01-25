@@ -101,6 +101,7 @@ export const useMenuFocus = ({
         onClose?.();
         break;
       case 'Tab':
+        event.preventDefault();
         onClose?.();
         break;
       default:
