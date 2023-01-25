@@ -6,7 +6,7 @@ import { AccessoryButton } from '@grafana/experimental';
 import { Input, Label, InlineField, Button, useStyles2 } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
-import { AzureMetricResource } from '../../types';
+import { AzureMonitorResource } from '../../types';
 
 export interface ResourcePickerProps<T> {
   resources: T[];
@@ -20,7 +20,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   resourceGroupAndName: css({ display: 'flex', columnGap: theme.spacing(0.5) }),
 });
 
-const AdvancedResourcePicker = ({ resources, onChange }: ResourcePickerProps<AzureMetricResource>) => {
+const AdvancedResourcePicker = ({ resources, onChange }: ResourcePickerProps<AzureMonitorResource>) => {
   const styles = useStyles2(getStyles);
 
   useEffect(() => {
@@ -30,7 +30,7 @@ const AdvancedResourcePicker = ({ resources, onChange }: ResourcePickerProps<Azu
     }
   }, [resources, onChange]);
 
-  const onResourceChange = (index: number, resource: AzureMetricResource) => {
+  const onResourceChange = (index: number, resource: AzureMonitorResource) => {
     const newResources = [...resources];
     newResources[index] = resource;
     onChange(newResources);
@@ -53,7 +53,7 @@ const AdvancedResourcePicker = ({ resources, onChange }: ResourcePickerProps<Azu
     );
   };
 
-  const onCommonPropChange = (r: Partial<AzureMetricResource>) => {
+  const onCommonPropChange = (r: Partial<AzureMonitorResource>) => {
     onChange(resources.map((resource) => ({ ...resource, ...r })));
   };
 

@@ -6,7 +6,7 @@ import { config } from '@grafana/runtime';
 
 import { multiResourceCompatibleTypes } from '../../azureMetadata';
 import type Datasource from '../../datasource';
-import type { AzureMonitorQuery, AzureMonitorOption, AzureMonitorErrorish, AzureMetricResource } from '../../types';
+import type { AzureMonitorQuery, AzureMonitorOption, AzureMonitorErrorish, AzureMonitorResource } from '../../types';
 import ResourceField from '../ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails } from '../ResourcePicker/utils';
@@ -91,9 +91,9 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
               disableRow={disableRow}
               renderAdvanced={(resources, onChange) => (
                 // It's required to cast resources because the resource picker
-                // specifies the type to string | AzureMetricResource.
+                // specifies the type to string | AzureMonitorResource.
                 // eslint-disable-next-line
-                <AdvancedResourcePicker resources={resources as AzureMetricResource[]} onChange={onChange} />
+                <AdvancedResourcePicker resources={resources as AzureMonitorResource[]} onChange={onChange} />
               )}
             />
             <MetricNamespaceField

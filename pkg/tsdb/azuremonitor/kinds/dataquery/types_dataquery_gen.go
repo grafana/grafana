@@ -133,13 +133,13 @@ type AppInsightsMetricNameQueryKind string
 // Azure Monitor Logs sub-query properties
 type AzureLogsQuery struct {
 	// KQL query to be executed.
-	Query string `json:"query"`
+	Query *string `json:"query,omitempty"`
 
 	// @deprecated Use resources instead
 	Resource *string `json:"resource,omitempty"`
 
 	// Array of resource URIs to be queried.
-	Resources []string `json:"resources"`
+	Resources *[]string `json:"resources,omitempty"`
 
 	// Specifies the format results should be returned as.
 	ResultFormat *AzureLogsQueryResultFormat `json:"resultFormat,omitempty"`
@@ -154,7 +154,7 @@ type AzureLogsQueryResultFormat string
 // AzureMetricDimension defines model for AzureMetricDimension.
 type AzureMetricDimension struct {
 	// Name of Dimension to be filtered on.
-	Dimension string `json:"dimension"`
+	Dimension *string `json:"dimension,omitempty"`
 
 	// @deprecated filter is deprecated in favour of filters to support multiselect.
 	Filter *string `json:"filter,omitempty"`
@@ -163,22 +163,22 @@ type AzureMetricDimension struct {
 	Filters *[]string `json:"filters,omitempty"`
 
 	// String denoting the filter operation. Supports 'eq' - equals,'ne' - not equals, 'sw' - starts with. Note that some dimensions may not support all operators.
-	Operator string `json:"operator"`
+	Operator *string `json:"operator,omitempty"`
 }
 
 // AzureMetricQuery defines model for AzureMetricQuery.
 type AzureMetricQuery struct {
 	// The aggregation to be used within the query. Defaults to the primaryAggregationType defined by the metric.
-	Aggregation string `json:"aggregation"`
+	Aggregation *string `json:"aggregation,omitempty"`
 
 	// Aliases can be set to modify the legend labels. e.g. {{ resourceGroup }}. See docs for more detail.
 	Alias *string `json:"alias,omitempty"`
 
 	// Time grains that are supported by the metric.
-	AllowedTimeGrainsMs []int64 `json:"allowedTimeGrainsMs"`
+	AllowedTimeGrainsMs *[]int64 `json:"allowedTimeGrainsMs,omitempty"`
 
 	// Used as the value for the metricNamespace property when it's different from the resource namespace.
-	CustomNamespace string `json:"customNamespace"`
+	CustomNamespace *string `json:"customNamespace,omitempty"`
 
 	// @deprecated This property was migrated to dimensionFilters and should only be accessed in the migration
 	Dimension *string `json:"dimension,omitempty"`
@@ -187,9 +187,9 @@ type AzureMetricQuery struct {
 	DimensionFilter *string `json:"dimensionFilter,omitempty"`
 
 	// Filters to reduce the set of data returned. Dimensions that can be filtered on are defined by the metric.
-	DimensionFilters []struct {
+	DimensionFilters *[]struct {
 		// Name of Dimension to be filtered on.
-		Dimension string `json:"dimension"`
+		Dimension *string `json:"dimension,omitempty"`
 
 		// @deprecated filter is deprecated in favour of filters to support multiselect.
 		Filter *string `json:"filter,omitempty"`
@@ -198,22 +198,22 @@ type AzureMetricQuery struct {
 		Filters *[]string `json:"filters,omitempty"`
 
 		// String denoting the filter operation. Supports 'eq' - equals,'ne' - not equals, 'sw' - starts with. Note that some dimensions may not support all operators.
-		Operator string `json:"operator"`
-	} `json:"dimensionFilters"`
+		Operator *string `json:"operator,omitempty"`
+	} `json:"dimensionFilters,omitempty"`
 
 	// @deprecated Use metricNamespace instead
 	MetricDefinition *string `json:"metricDefinition,omitempty"`
 
 	// The metric to query data for within the specified metricNamespace. e.g. UsedCapacity
-	MetricName string `json:"metricName"`
+	MetricName *string `json:"metricName,omitempty"`
 
 	// metricNamespace is used as the resource type (or resource namespace).
 	// It's usually equal to the target metric namespace. e.g. microsoft.storage/storageaccounts
 	// Kept the name of the variable as metricNamespace to avoid backward incompatibility issues.
-	MetricNamespace string `json:"metricNamespace"`
+	MetricNamespace *string `json:"metricNamespace,omitempty"`
 
 	// The Azure region containing the resource(s).
-	Region string `json:"region"`
+	Region *string `json:"region,omitempty"`
 
 	// @deprecated Use resources instead
 	ResourceGroup *string `json:"resourceGroup,omitempty"`
@@ -225,22 +225,22 @@ type AzureMetricQuery struct {
 	ResourceUri *string `json:"resourceUri,omitempty"`
 
 	// Array of resource URIs to be queried.
-	Resources []struct {
+	Resources *[]struct {
 		MetricNamespace *string `json:"metricNamespace,omitempty"`
 		Region          *string `json:"region,omitempty"`
-		ResourceGroup   string  `json:"resourceGroup"`
-		ResourceName    string  `json:"resourceName"`
+		ResourceGroup   *string `json:"resourceGroup,omitempty"`
+		ResourceName    *string `json:"resourceName,omitempty"`
 		Subscription    *string `json:"subscription,omitempty"`
-	} `json:"resources"`
+	} `json:"resources,omitempty"`
 
 	// The granularity of data points to be queried. Defaults to auto.
-	TimeGrain string `json:"timeGrain"`
+	TimeGrain *string `json:"timeGrain,omitempty"`
 
 	// @deprecated
 	TimeGrainUnit *string `json:"timeGrainUnit,omitempty"`
 
 	// Maximum number of records to return. Defaults to 10.
-	Top string `json:"top"`
+	Top *string `json:"top,omitempty"`
 }
 
 // AzureMonitorDataQuery defines model for AzureMonitorDataQuery.
@@ -251,13 +251,13 @@ type AzureMonitorQuery struct {
 	// Azure Monitor Logs sub-query properties.
 	AzureLogAnalytics *struct {
 		// KQL query to be executed.
-		Query string `json:"query"`
+		Query *string `json:"query,omitempty"`
 
 		// @deprecated Use resources instead
 		Resource *string `json:"resource,omitempty"`
 
 		// Array of resource URIs to be queried.
-		Resources []string `json:"resources"`
+		Resources *[]string `json:"resources,omitempty"`
 
 		// Specifies the format results should be returned as.
 		ResultFormat *AzureMonitorQueryAzureLogAnalyticsResultFormat `json:"resultFormat,omitempty"`
@@ -269,16 +269,16 @@ type AzureMonitorQuery struct {
 	// Azure Monitor Metrics sub-query properties.
 	AzureMonitor *struct {
 		// The aggregation to be used within the query. Defaults to the primaryAggregationType defined by the metric.
-		Aggregation string `json:"aggregation"`
+		Aggregation *string `json:"aggregation,omitempty"`
 
 		// Aliases can be set to modify the legend labels. e.g. {{ resourceGroup }}. See docs for more detail.
 		Alias *string `json:"alias,omitempty"`
 
 		// Time grains that are supported by the metric.
-		AllowedTimeGrainsMs []int64 `json:"allowedTimeGrainsMs"`
+		AllowedTimeGrainsMs *[]int64 `json:"allowedTimeGrainsMs,omitempty"`
 
 		// Used as the value for the metricNamespace property when it's different from the resource namespace.
-		CustomNamespace string `json:"customNamespace"`
+		CustomNamespace *string `json:"customNamespace,omitempty"`
 
 		// @deprecated This property was migrated to dimensionFilters and should only be accessed in the migration
 		Dimension *string `json:"dimension,omitempty"`
@@ -287,9 +287,9 @@ type AzureMonitorQuery struct {
 		DimensionFilter *string `json:"dimensionFilter,omitempty"`
 
 		// Filters to reduce the set of data returned. Dimensions that can be filtered on are defined by the metric.
-		DimensionFilters []struct {
+		DimensionFilters *[]struct {
 			// Name of Dimension to be filtered on.
-			Dimension string `json:"dimension"`
+			Dimension *string `json:"dimension,omitempty"`
 
 			// @deprecated filter is deprecated in favour of filters to support multiselect.
 			Filter *string `json:"filter,omitempty"`
@@ -298,22 +298,22 @@ type AzureMonitorQuery struct {
 			Filters *[]string `json:"filters,omitempty"`
 
 			// String denoting the filter operation. Supports 'eq' - equals,'ne' - not equals, 'sw' - starts with. Note that some dimensions may not support all operators.
-			Operator string `json:"operator"`
-		} `json:"dimensionFilters"`
+			Operator *string `json:"operator,omitempty"`
+		} `json:"dimensionFilters,omitempty"`
 
 		// @deprecated Use metricNamespace instead
 		MetricDefinition *string `json:"metricDefinition,omitempty"`
 
 		// The metric to query data for within the specified metricNamespace. e.g. UsedCapacity
-		MetricName string `json:"metricName"`
+		MetricName *string `json:"metricName,omitempty"`
 
 		// metricNamespace is used as the resource type (or resource namespace).
 		// It's usually equal to the target metric namespace. e.g. microsoft.storage/storageaccounts
 		// Kept the name of the variable as metricNamespace to avoid backward incompatibility issues.
-		MetricNamespace string `json:"metricNamespace"`
+		MetricNamespace *string `json:"metricNamespace,omitempty"`
 
 		// The Azure region containing the resource(s).
-		Region string `json:"region"`
+		Region *string `json:"region,omitempty"`
 
 		// @deprecated Use resources instead
 		ResourceGroup *string `json:"resourceGroup,omitempty"`
@@ -325,31 +325,31 @@ type AzureMonitorQuery struct {
 		ResourceUri *string `json:"resourceUri,omitempty"`
 
 		// Array of resource URIs to be queried.
-		Resources []struct {
+		Resources *[]struct {
 			MetricNamespace *string `json:"metricNamespace,omitempty"`
 			Region          *string `json:"region,omitempty"`
-			ResourceGroup   string  `json:"resourceGroup"`
-			ResourceName    string  `json:"resourceName"`
+			ResourceGroup   *string `json:"resourceGroup,omitempty"`
+			ResourceName    *string `json:"resourceName,omitempty"`
 			Subscription    *string `json:"subscription,omitempty"`
-		} `json:"resources"`
+		} `json:"resources,omitempty"`
 
 		// The granularity of data points to be queried. Defaults to auto.
-		TimeGrain string `json:"timeGrain"`
+		TimeGrain *string `json:"timeGrain,omitempty"`
 
 		// @deprecated
 		TimeGrainUnit *string `json:"timeGrainUnit,omitempty"`
 
 		// Maximum number of records to return. Defaults to 10.
-		Top string `json:"top"`
+		Top *string `json:"top,omitempty"`
 	} `json:"azureMonitor,omitempty"`
 
 	// Azure Resource Graph sub-query properties.
 	AzureResourceGraph *struct {
 		// Azure Resource Graph KQL query to be executed.
-		Query string `json:"query"`
+		Query *string `json:"query,omitempty"`
 
 		// Specifies the format results should be returned as. Defaults to table.
-		ResultFormat string `json:"resultFormat"`
+		ResultFormat *string `json:"resultFormat,omitempty"`
 	} `json:"azureResourceGraph,omitempty"`
 
 	// For mixed data sources the selected datasource is on the query level.
@@ -396,8 +396,8 @@ type AzureMonitorQueryAzureLogAnalyticsResultFormat string
 type AzureMonitorResource struct {
 	MetricNamespace *string `json:"metricNamespace,omitempty"`
 	Region          *string `json:"region,omitempty"`
-	ResourceGroup   string  `json:"resourceGroup"`
-	ResourceName    string  `json:"resourceName"`
+	ResourceGroup   *string `json:"resourceGroup,omitempty"`
+	ResourceName    *string `json:"resourceName,omitempty"`
 	Subscription    *string `json:"subscription,omitempty"`
 }
 
@@ -407,10 +407,10 @@ type AzureQueryType string
 // AzureResourceGraphQuery defines model for AzureResourceGraphQuery.
 type AzureResourceGraphQuery struct {
 	// Azure Resource Graph KQL query to be executed.
-	Query string `json:"query"`
+	Query *string `json:"query,omitempty"`
 
 	// Specifies the format results should be returned as. Defaults to table.
-	ResultFormat string `json:"resultFormat"`
+	ResultFormat *string `json:"resultFormat,omitempty"`
 }
 
 // GrafanaTemplateVariableQuery defines model for GrafanaTemplateVariableQuery.

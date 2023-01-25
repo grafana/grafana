@@ -7,7 +7,7 @@ import { Alert, Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
 import ResourcePickerData, { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
-import { AzureMetricResource } from '../../types';
+import { AzureMonitorResource } from '../../types';
 import messageFromError from '../../utils/messageFromError';
 import { Space } from '../Space';
 
@@ -40,7 +40,7 @@ const ResourcePicker = ({
   queryType,
   disableRow,
   renderAdvanced,
-}: ResourcePickerProps<string | AzureMetricResource>) => {
+}: ResourcePickerProps<string | AzureMonitorResource>) => {
   const styles = useStyles2(getStyles);
 
   const [isLoading, setIsLoading] = useState(false);
@@ -76,7 +76,7 @@ const ResourcePicker = ({
   });
 
   // Avoid using empty resources
-  const isValid = (r: string | AzureMetricResource) =>
+  const isValid = (r: string | AzureMonitorResource) =>
     typeof r === 'string' ? r !== '' : r.subscription && r.resourceGroup && r.resourceName && r.metricNamespace;
 
   // set selected row data whenever row or selection changes

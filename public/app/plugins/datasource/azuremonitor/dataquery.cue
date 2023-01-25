@@ -59,27 +59,27 @@ composableKinds: DataQuery: {
 
 						#AzureMetricQuery: {
 							// Array of resource URIs to be queried.
-							resources: [...#AzureMonitorResource]
+							resources?: [...#AzureMonitorResource]
 							// metricNamespace is used as the resource type (or resource namespace).
 							// It's usually equal to the target metric namespace. e.g. microsoft.storage/storageaccounts
 							// Kept the name of the variable as metricNamespace to avoid backward incompatibility issues.
-							metricNamespace: string
+							metricNamespace?: string
 							// Used as the value for the metricNamespace property when it's different from the resource namespace.
-							customNamespace: string
+							customNamespace?: string
 							// The metric to query data for within the specified metricNamespace. e.g. UsedCapacity
-							metricName: string
+							metricName?: string
 							// The Azure region containing the resource(s).
-							region: string
+							region?: string
 							// The granularity of data points to be queried. Defaults to auto.
-							timeGrain: string
+							timeGrain?: string
 							// The aggregation to be used within the query. Defaults to the primaryAggregationType defined by the metric.
-							aggregation: string
+							aggregation?: string
 							// Filters to reduce the set of data returned. Dimensions that can be filtered on are defined by the metric.
-							dimensionFilters: [...#AzureMetricDimension]
+							dimensionFilters?: [...#AzureMetricDimension]
 							// Maximum number of records to return. Defaults to 10.
-							top: string
+							top?: string
 							// Time grains that are supported by the metric.
-							allowedTimeGrainsMs: [...int64]
+							allowedTimeGrainsMs?: [...int64]
 
 							// Aliases can be set to modify the legend labels. e.g. {{ resourceGroup }}. See docs for more detail.
 							alias?: string
@@ -108,11 +108,11 @@ composableKinds: DataQuery: {
 						// Azure Monitor Logs sub-query properties
 						#AzureLogsQuery: {
 							// KQL query to be executed.
-							query: string
+							query?: string
 							// Specifies the format results should be returned as.
 							resultFormat?: #ResultFormat
 							// Array of resource URIs to be queried.
-							resources: [...string]
+							resources?: [...string]
 							// Workspace ID. This was removed in Grafana 8, but remains for backwards compat
 							workspace?: string
 
@@ -124,24 +124,24 @@ composableKinds: DataQuery: {
 
 						#AzureResourceGraphQuery: {
 							// Azure Resource Graph KQL query to be executed.
-							query: string
+							query?: string
 							// Specifies the format results should be returned as. Defaults to table.
-							resultFormat: string
+							resultFormat?: string
 						} @cuetsy(kind="interface")
 
 						#AzureMonitorResource: {
 							subscription?:    string
-							resourceGroup:    string
-							resourceName:     string
+							resourceGroup?:   string
+							resourceName?:    string
 							metricNamespace?: string
 							region?:          string
 						} @cuetsy(kind="interface")
 
 						#AzureMetricDimension: {
 							// Name of Dimension to be filtered on.
-							dimension: string
+							dimension?: string
 							// String denoting the filter operation. Supports 'eq' - equals,'ne' - not equals, 'sw' - starts with. Note that some dimensions may not support all operators.
-							operator: string
+							operator?: string
 							// Values to match with the filter.
 							filters?: [...string]
 							// @deprecated filter is deprecated in favour of filters to support multiselect.

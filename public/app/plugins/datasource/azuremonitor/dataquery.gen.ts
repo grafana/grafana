@@ -73,7 +73,7 @@ export interface AzureMetricQuery {
   /**
    * The aggregation to be used within the query. Defaults to the primaryAggregationType defined by the metric.
    */
-  aggregation: string;
+  aggregation?: string;
   /**
    * Aliases can be set to modify the legend labels. e.g. {{ resourceGroup }}. See docs for more detail.
    */
@@ -81,11 +81,11 @@ export interface AzureMetricQuery {
   /**
    * Time grains that are supported by the metric.
    */
-  allowedTimeGrainsMs: Array<number>;
+  allowedTimeGrainsMs?: Array<number>;
   /**
    * Used as the value for the metricNamespace property when it's different from the resource namespace.
    */
-  customNamespace: string;
+  customNamespace?: string;
   /**
    * @deprecated This property was migrated to dimensionFilters and should only be accessed in the migration
    */
@@ -97,7 +97,7 @@ export interface AzureMetricQuery {
   /**
    * Filters to reduce the set of data returned. Dimensions that can be filtered on are defined by the metric.
    */
-  dimensionFilters: Array<AzureMetricDimension>;
+  dimensionFilters?: Array<AzureMetricDimension>;
   /**
    * @deprecated Use metricNamespace instead
    */
@@ -105,17 +105,17 @@ export interface AzureMetricQuery {
   /**
    * The metric to query data for within the specified metricNamespace. e.g. UsedCapacity
    */
-  metricName: string;
+  metricName?: string;
   /**
    * metricNamespace is used as the resource type (or resource namespace).
    * It's usually equal to the target metric namespace. e.g. microsoft.storage/storageaccounts
    * Kept the name of the variable as metricNamespace to avoid backward incompatibility issues.
    */
-  metricNamespace: string;
+  metricNamespace?: string;
   /**
    * The Azure region containing the resource(s).
    */
-  region: string;
+  region?: string;
   /**
    * @deprecated Use resources instead
    */
@@ -131,11 +131,11 @@ export interface AzureMetricQuery {
   /**
    * Array of resource URIs to be queried.
    */
-  resources: Array<AzureMonitorResource>;
+  resources?: Array<AzureMonitorResource>;
   /**
    * The granularity of data points to be queried. Defaults to auto.
    */
-  timeGrain: string;
+  timeGrain?: string;
   /**
    * @deprecated
    */
@@ -143,7 +143,7 @@ export interface AzureMetricQuery {
   /**
    * Maximum number of records to return. Defaults to 10.
    */
-  top: string;
+  top?: string;
 }
 
 export const defaultAzureMetricQuery: Partial<AzureMetricQuery> = {
@@ -159,7 +159,7 @@ export interface AzureLogsQuery {
   /**
    * KQL query to be executed.
    */
-  query: string;
+  query?: string;
   /**
    * @deprecated Use resources instead
    */
@@ -167,7 +167,7 @@ export interface AzureLogsQuery {
   /**
    * Array of resource URIs to be queried.
    */
-  resources: Array<string>;
+  resources?: Array<string>;
   /**
    * Specifies the format results should be returned as.
    */
@@ -191,18 +191,18 @@ export interface AzureResourceGraphQuery {
   /**
    * Azure Resource Graph KQL query to be executed.
    */
-  query: string;
+  query?: string;
   /**
    * Specifies the format results should be returned as. Defaults to table.
    */
-  resultFormat: string;
+  resultFormat?: string;
 }
 
 export interface AzureMonitorResource {
   metricNamespace?: string;
   region?: string;
-  resourceGroup: string;
-  resourceName: string;
+  resourceGroup?: string;
+  resourceName?: string;
   subscription?: string;
 }
 
@@ -210,7 +210,7 @@ export interface AzureMetricDimension {
   /**
    * Name of Dimension to be filtered on.
    */
-  dimension: string;
+  dimension?: string;
   /**
    * @deprecated filter is deprecated in favour of filters to support multiselect.
    */
@@ -222,7 +222,7 @@ export interface AzureMetricDimension {
   /**
    * String denoting the filter operation. Supports 'eq' - equals,'ne' - not equals, 'sw' - starts with. Note that some dimensions may not support all operators.
    */
-  operator: string;
+  operator?: string;
 }
 
 export const defaultAzureMetricDimension: Partial<AzureMetricDimension> = {

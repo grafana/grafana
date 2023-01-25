@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Icon, Input, Tooltip, Collapse, Label, InlineField } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
-import { AzureMetricResource } from '../../types';
+import { AzureMonitorResource } from '../../types';
 import { Space } from '../Space';
 
 interface ResourcePickerProps<T> {
@@ -11,10 +11,10 @@ interface ResourcePickerProps<T> {
   onChange: (resources: T[]) => void;
 }
 
-const Advanced = ({ resources, onChange }: ResourcePickerProps<string | AzureMetricResource>) => {
+const Advanced = ({ resources, onChange }: ResourcePickerProps<string | AzureMonitorResource>) => {
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(!!resources.length && JSON.stringify(resources).includes('$'));
 
-  const onResourceChange = (resource: string | AzureMetricResource, index: number) => {
+  const onResourceChange = (resource: string | AzureMonitorResource, index: number) => {
     const newResources = [...resources];
     newResources[index] = resource;
     onChange(newResources);
