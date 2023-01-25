@@ -64,8 +64,8 @@ func (b *Base) Preferences() *preferences.Kind {
 	return b.preferences
 }
 
-// Serviceaccount returns the [kindsys.Interface] implementation for the serviceaccount kind.
-func (b *Base) Serviceaccount() *serviceaccount.Kind {
+// ServiceAccount returns the [kindsys.Interface] implementation for the serviceaccount kind.
+func (b *Base) ServiceAccount() *serviceaccount.Kind {
 	return b.serviceaccount
 }
 
