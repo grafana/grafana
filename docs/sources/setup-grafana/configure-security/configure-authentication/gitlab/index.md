@@ -223,3 +223,16 @@ the correct teams.
 Your GitLab groups can be referenced in the same way as `allowed_groups`, like `example` or `foo/bar`.
 
 [Learn more about Team Sync]({{< relref "../../configure-team-sync/" >}})
+
+## Skip organization role sync
+
+To prevent the sync of organization roles from GitLab, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
+This also impacts the `allow_assign_grafana_admin` setting by not syncing the Grafana admin role from GitLab.
+
+```ini
+[auth.gitlab]
+# ..
+# prevents the sync of org roles from Github
+skip_org_role_sync = true
+``
+```

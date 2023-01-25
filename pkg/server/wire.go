@@ -116,6 +116,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/shorturls/shorturlimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	starApi "github.com/grafana/grafana/pkg/services/star/api"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/stats/statsimpl"
 	"github.com/grafana/grafana/pkg/services/store"
@@ -327,6 +328,7 @@ var wireBasicSet = wire.NewSet(
 	publicdashboardsStore.ProvideStore,
 	wire.Bind(new(publicdashboards.Store), new(*publicdashboardsStore.PublicDashboardStoreImpl)),
 	publicdashboardsApi.ProvideApi,
+	starApi.ProvideApi,
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
 	statsimpl.ProvideService,

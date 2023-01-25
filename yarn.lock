@@ -19561,9 +19561,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eslint@npm:8.31.0":
-  version: 8.31.0
-  resolution: "eslint@npm:8.31.0"
+"eslint@npm:8.32.0":
+  version: 8.32.0
+  resolution: "eslint@npm:8.32.0"
   dependencies:
     "@eslint/eslintrc": ^1.4.1
     "@humanwhocodes/config-array": ^0.11.8
@@ -19606,7 +19606,7 @@ __metadata:
     text-table: ^0.2.0
   bin:
     eslint: bin/eslint.js
-  checksum: 5e5688bb864edc6b12d165849994812eefa67fb3fc44bb26f53659b63edcd8bcc68389d27cc6cc9e5b79ee22f24b6f311fa3ed047bddcafdec7d84c1b5561e4f
+  checksum: 23c8fb3c57291eecd9c1448faf603226a8f885022a2cd96e303459bf72e39b7f54987c6fb948f0f9eecaf7085600e6eb0663482a35ea83da12e9f9141a22b91e
   languageName: node
   linkType: hard
 
@@ -20613,9 +20613,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fork-ts-checker-webpack-plugin@npm:7.2.13":
-  version: 7.2.13
-  resolution: "fork-ts-checker-webpack-plugin@npm:7.2.13"
+"fork-ts-checker-webpack-plugin@npm:7.3.0":
+  version: 7.3.0
+  resolution: "fork-ts-checker-webpack-plugin@npm:7.3.0"
   dependencies:
     "@babel/code-frame": ^7.16.7
     chalk: ^4.1.2
@@ -20636,7 +20636,7 @@ __metadata:
   peerDependenciesMeta:
     vue-template-compiler:
       optional: true
-  checksum: 3d4694c6fee4b8b2f213d0d10a3f40da770ca0ed3aa2a3dc8d1e701ad1ecaed3a1507f77a1b0cea6ef80539b04d8e5f5f02560e688d310bcb9e8c81f684d2950
+  checksum: 49c2af801e264349a3fdf0afe4ad33065960c43bd7e56c8351a5e0d32c8c54146cc89d6a0b70b1e0f810de96787bd0c7fd275cc8727a9aea1a077c53de99659a
   languageName: node
   linkType: hard
 
@@ -21751,7 +21751,7 @@ __metadata:
     esbuild: 0.16.17
     esbuild-loader: 2.21.0
     esbuild-plugin-browserslist: ^0.6.0
-    eslint: 8.31.0
+    eslint: 8.32.0
     eslint-config-prettier: 8.6.0
     eslint-plugin-import: ^2.26.0
     eslint-plugin-jest: 27.2.1
@@ -21766,7 +21766,7 @@ __metadata:
     fast-deep-equal: ^3.1.3
     fast-json-patch: 3.1.1
     file-saver: 2.0.5
-    fork-ts-checker-webpack-plugin: 7.2.13
+    fork-ts-checker-webpack-plugin: 7.3.0
     framework-utils: ^1.1.0
     fs-extra: 10.1.0
     glob: 8.0.3

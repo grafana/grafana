@@ -684,7 +684,7 @@ type Dashboard struct {
 	// Whether a dashboard is editable or not.
 	Editable bool `json:"editable"`
 
-	// TODO docs
+	// The month that the fiscal year starts on.  0 = January, 11 = December
 	FiscalYearStartMonth *int    `json:"fiscalYearStartMonth,omitempty"`
 	GnetId               *string `json:"gnetId,omitempty"`
 
