@@ -111,6 +111,21 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
     });
   };
 
+  onQueryCachingTTLBlur = (event: ChangeEvent<HTMLInputElement>) => {
+    const { options, onChange } = this.props;
+
+    let ttl: number | null = parseInt(event.target.value, 10);
+
+    if (isNaN(ttl) || ttl === 0) {
+      ttl = null;
+    }
+
+    onChange({
+      ...options,
+      queryCachingTTL: ttl,
+    });
+  };
+
   onMaxDataPointsBlur = (event: ChangeEvent<HTMLInputElement>) => {
     const { options, onChange } = this.props;
 
@@ -162,6 +177,34 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
             spellCheck={false}
             onBlur={this.onCacheTimeoutBlur}
             defaultValue={options.cacheTimeout ?? ''}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  renderQueryCachingTTLOption() {
+    const { dataSource, options } = this.props;
+
+    const tooltip = `Cache time-to-live: How long results from this queries in this panel will be cached, in milliseconds. Defaults to the TTL in the caching configuration for this datasource.`;
+
+    if (!dataSource.cachingConfig?.enabled) {
+      return null;
+    }
+
+    return (
+      <div className="gf-form-inline">
+        <div className="gf-form">
+          <InlineFormLabel width={9} tooltip={tooltip}>
+            Cache TTL
+          </InlineFormLabel>
+          <Input
+            type="number"
+            className="width-6"
+            placeholder={`${dataSource.cachingConfig.TTLMs}`}
+            spellCheck={false}
+            onBlur={this.onQueryCachingTTLBlur}
+            defaultValue={options.queryCachingTTL ?? undefined}
           />
         </div>
       </div>
@@ -312,6 +355,7 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
         {this.renderMaxDataPointsOption()}
         {this.renderIntervalOption()}
         {this.renderCacheTimeoutOption()}
+        {this.renderQueryCachingTTLOption()}
 
         <div className="gf-form">
           <InlineFormLabel width={9}>Relative time</InlineFormLabel>

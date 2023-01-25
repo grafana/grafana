@@ -45,6 +45,7 @@ export class QueryRunner implements QueryRunnerSrv {
       timeRange,
       timeInfo,
       cacheTimeout,
+      queryCachingTTL,
       maxDataPoints,
       scopedVars,
       minInterval,
@@ -68,6 +69,7 @@ export class QueryRunner implements QueryRunnerSrv {
       maxDataPoints: maxDataPoints,
       scopedVars: scopedVars || {},
       cacheTimeout,
+      queryCachingTTL,
       startTime: Date.now(),
     };
 
