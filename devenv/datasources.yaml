@@ -20,6 +20,7 @@ deleteDatasources:
   - name: gdev-elasticsearch-v7-logs
   - name: gdev-elasticsearch-v7-filebeat
   - name: gdev-elasticsearch-v7-metricbeat
+  - name: testData-correlations
 
 datasources:
   - name: gdev-graphite
@@ -284,3 +285,26 @@ datasources:
     access: proxy
     url: http://localhost:3200
     editable: false
+
+  - name: testData-correlations
+    isDefault: false
+    editable: true
+    type: testdata
+    correlations:
+      - targetUID: WyFv5154z
+        label: "Superhero freeform"
+        description: "this is a test correlation from provisioning"
+        config:
+          type: query
+          target:
+            editorMode: "code"
+            format: "table"
+            rawQuery: "true"
+            rawSql: "SELECT * FROM superhero WHERE name=''${name}''"
+            refId: "A"
+          field: "text"
+          transformations:
+            - type: "regex"
+              expression: "(Superman|Batman)"
+              variable: "name"
+

@@ -57,7 +57,7 @@ type CorrelationConfig struct {
 		WHERE id = 637
 
 	*/
-	Transformations []Transformation `json:"transformations"`
+	Transformations []Transformation `json:"transformations,omitempty"`
 }
 
 func (c CorrelationConfig) MarshalJSON() ([]byte, error) {
