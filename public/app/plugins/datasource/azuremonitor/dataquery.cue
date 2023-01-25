@@ -55,7 +55,7 @@ composableKinds: DataQuery: {
 						} @cuetsy(kind="interface")
 
 						// Defines the supported queryTypes. GrafanaTemplateVariableFn is deprecated
-						#AzureQueryType: "Azure Monitor" | "Azure Log Analytics" @cuetsy(kind="enum", memberNames="AzureMonitor|LogAnalytics")
+						#AzureQueryType: "Azure Monitor" | "Azure Log Analytics" | "Azure Resource Graph" | "Azure Subscriptions" | "Azure Resource Groups" | "Azure Namespaces" | "Azure Resource Names" | "Azure Metric Names" | "Azure Workspaces" | "Grafana Template Variable Function" @cuetsy(kind="enum", memberNames="AzureMonitor|LogAnalytics|AzureResourceGraph|SubscriptionsQuery|ResourceGroupsQuery|NamespacesQuery|ResourceNamesQuery|MetricNamesQuery|WorkspacesQuery|GrafanaTemplateVariableFn")
 
 						#AzureMetricQuery: {
 							// Array of resource URIs to be queried.
@@ -76,8 +76,8 @@ composableKinds: DataQuery: {
 							aggregation: string
 							// Filters to reduce the set of data returned. Dimensions that can be filtered on are defined by the metric.
 							dimensionFilters: [...#AzureMetricDimension]
-							// Maximum number of records to return. Defaults to 10
-							top: string | "10"
+							// Maximum number of records to return. Defaults to 10.
+							top: string
 							// Time grains that are supported by the metric.
 							allowedTimeGrainsMs: [...int64]
 

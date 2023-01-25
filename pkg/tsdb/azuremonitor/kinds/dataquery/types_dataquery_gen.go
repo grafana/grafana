@@ -37,7 +37,23 @@ const (
 const (
 	AzureQueryTypeAzureLogAnalytics AzureQueryType = "Azure Log Analytics"
 
+	AzureQueryTypeAzureMetricNames AzureQueryType = "Azure Metric Names"
+
 	AzureQueryTypeAzureMonitor AzureQueryType = "Azure Monitor"
+
+	AzureQueryTypeAzureNamespaces AzureQueryType = "Azure Namespaces"
+
+	AzureQueryTypeAzureResourceGraph AzureQueryType = "Azure Resource Graph"
+
+	AzureQueryTypeAzureResourceGroups AzureQueryType = "Azure Resource Groups"
+
+	AzureQueryTypeAzureResourceNames AzureQueryType = "Azure Resource Names"
+
+	AzureQueryTypeAzureSubscriptions AzureQueryType = "Azure Subscriptions"
+
+	AzureQueryTypeAzureWorkspaces AzureQueryType = "Azure Workspaces"
+
+	AzureQueryTypeGrafanaTemplateVariableFunction AzureQueryType = "Grafana Template Variable Function"
 )
 
 // Defines values for GrafanaTemplateVariableQueryType.
@@ -223,8 +239,8 @@ type AzureMetricQuery struct {
 	// @deprecated
 	TimeGrainUnit *string `json:"timeGrainUnit,omitempty"`
 
-	// Maximum number of records to return. Defaults to 10
-	Top interface{} `json:"top"`
+	// Maximum number of records to return. Defaults to 10.
+	Top string `json:"top"`
 }
 
 // AzureMonitorDataQuery defines model for AzureMonitorDataQuery.
@@ -323,8 +339,8 @@ type AzureMonitorQuery struct {
 		// @deprecated
 		TimeGrainUnit *string `json:"timeGrainUnit,omitempty"`
 
-		// Maximum number of records to return. Defaults to 10
-		Top interface{} `json:"top"`
+		// Maximum number of records to return. Defaults to 10.
+		Top string `json:"top"`
 	} `json:"azureMonitor,omitempty"`
 
 	// Azure Resource Graph sub-query properties.

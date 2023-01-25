@@ -58,7 +58,15 @@ export const defaultAzureMonitorQuery: Partial<AzureMonitorQuery> = {
  */
 export enum AzureQueryType {
   AzureMonitor = 'Azure Monitor',
+  AzureResourceGraph = 'Azure Resource Graph',
+  GrafanaTemplateVariableFn = 'Grafana Template Variable Function',
   LogAnalytics = 'Azure Log Analytics',
+  MetricNamesQuery = 'Azure Metric Names',
+  NamespacesQuery = 'Azure Namespaces',
+  ResourceGroupsQuery = 'Azure Resource Groups',
+  ResourceNamesQuery = 'Azure Resource Names',
+  SubscriptionsQuery = 'Azure Subscriptions',
+  WorkspacesQuery = 'Azure Workspaces',
 }
 
 export interface AzureMetricQuery {
@@ -133,9 +141,9 @@ export interface AzureMetricQuery {
    */
   timeGrainUnit?: string;
   /**
-   * Maximum number of records to return. Defaults to 10
+   * Maximum number of records to return. Defaults to 10.
    */
-  top: (string | '10');
+  top: string;
 }
 
 export const defaultAzureMetricQuery: Partial<AzureMetricQuery> = {
