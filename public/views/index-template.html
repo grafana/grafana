@@ -14,21 +14,11 @@
     <link rel="apple-touch-icon" sizes="180x180" href="[[.AppleTouchIcon]]" />
     <link rel="mask-icon" href="[[.ContentDeliveryURL]]public/img/grafana_mask_icon.svg" color="#F05A28" />
 
+    <!-- If theme is "system", we inject the stylesheets with javascript further down the page -->
     [[ if eq .Theme "light" ]]
     <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.light %>" />
     [[ else if eq .Theme "dark" ]]
     <link rel="stylesheet" href="[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.dark %>" />
-    [[ else ]]
-    <link
-      media="(prefers-color-scheme: light)"
-      rel="stylesheet"
-      href="[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.light %>"
-    />
-    <link
-      media="(prefers-color-scheme: dark)"
-      rel="stylesheet"
-      href="[[.ContentDeliveryURL]]public/build/<%= htmlWebpackPlugin.files.cssChunks.dark %>"
-    />
     [[ end ]]
 
     <script nonce="[[.Nonce]]">
@@ -262,6 +252,8 @@
         }
       };
 
+      // Set theme to match system only on startup.
+      // Do not react to changes in system theme after startup.
       if (window.grafanaBootData.user.theme === "system") {
         document.body.classList.remove("theme-system");
         var darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
