@@ -64,6 +64,17 @@ export interface CSVWave {
   valuesCSV?: string;
 }
 
+/**
+ * TODO: Should this live here given it's not used in the dataquery?
+ */
+export interface Scenario {
+  description?: string;
+  hideAliasField?: boolean;
+  id: string;
+  name: string;
+  stringInput: string;
+}
+
 export interface TestData extends common.DataQuery {
   alias?: string;
   channel?: string;

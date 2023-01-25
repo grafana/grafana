@@ -97,6 +97,15 @@ composableKinds: DataQuery: {
 							valuesCSV?: string
 							labels?:    string
 						} @cuetsy(kind="interface")
+
+						// TODO: Should this live here given it's not used in the dataquery?
+						#Scenario: {
+							id:              string
+							name:            string
+							stringInput:     string
+							description?:    string
+							hideAliasField?: bool
+						} @cuetsy(kind="interface")
 					},
 				]
 			},

@@ -80,6 +80,15 @@ type PulseWaveQuery struct {
 	TimeStep *float32 `json:"timeStep,omitempty"`
 }
 
+// TODO: Should this live here given it's not used in the dataquery?
+type Scenario struct {
+	Description    *string `json:"description,omitempty"`
+	HideAliasField *bool   `json:"hideAliasField,omitempty"`
+	Id             string  `json:"id"`
+	Name           string  `json:"name"`
+	StringInput    string  `json:"stringInput"`
+}
+
 // SimulationQuery defines model for SimulationQuery.
 type SimulationQuery struct {
 	Config map[string]interface{} `json:"config,omitempty"`
