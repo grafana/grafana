@@ -33,8 +33,9 @@ lineage: seqs: [
 				// Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc".
 				timezone?: string | "browser" | "utc" | *""
 				// Whether a dashboard is editable or not.
-				editable:     bool | *true
-				graphTooltip: #DashboardCursorSync @grafanamaturity(NeedsExpertReview)
+				editable: bool | *true
+				// Configuration of dashboard cursor sync behavior.
+				graphTooltip: #DashboardCursorSync
 				// Time range for dashboard, e.g. last 6 hours, last 7 days, etc
 				time?: {
 					from: string | *"now-6h"
@@ -291,7 +292,7 @@ lineage: seqs: [
 				// 0 for no shared crosshair or tooltip (default).
 				// 1 for shared crosshair.
 				// 2 for shared crosshair AND shared tooltip.
-				#DashboardCursorSync: *0 | 1 | 2 @cuetsy(kind="enum",memberNames="Off|Crosshair|Tooltip") @grafanamaturity(NeedsExpertReview)
+				#DashboardCursorSync: *0 | 1 | 2 @cuetsy(kind="enum",memberNames="Off|Crosshair|Tooltip")
 
 				// Schema for panel targets is specified by datasource
 				// plugins. We use a placeholder definition, which the Go

@@ -651,6 +651,9 @@ export interface Dashboard {
    */
   fiscalYearStartMonth?: number;
   gnetId?: string;
+  /**
+   * Configuration of dashboard cursor sync behavior.
+   */
   graphTooltip: DashboardCursorSync;
   /**
    * Unique numeric identifier for the dashboard.
