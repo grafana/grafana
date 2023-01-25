@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -140,8 +139,8 @@ func TestIntegrationFolderService(t *testing.T) {
 			})
 
 			t.Run("When deleting folder by uid should return access denied error", func(t *testing.T) {
-				newFolder := models.NewFolder("Folder")
-				newFolder.Uid = folderUID
+				newFolder := folder.NewFolder("Folder", "")
+				newFolder.UID = folderUID
 
 				folderStore.On("GetFolderByID", mock.Anything, orgID, folderId).Return(newFolder, nil)
 				folderStore.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(newFolder, nil)

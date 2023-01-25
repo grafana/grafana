@@ -8,8 +8,8 @@ title: AnnotationsListPanelCfg kind
 
 # AnnotationsListPanelCfg kind
 
-### Maturity: experimental
-### Version: 0.0
+## Maturity: experimental
+## Version: 0.0
 
 ## Properties
 
