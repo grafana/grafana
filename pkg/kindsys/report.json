@@ -410,7 +410,9 @@
     },
     "elasticsearchdataquery": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/observability-logs"
+      ],
       "currentVersion": [
         0,
         0
@@ -418,13 +420,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
-        "docs": "n/a",
-        "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/elasticsearchdataquery/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/tsdb/elasticsearch/kinds/dataquery/types_dataquery_gen.go",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/elasticsearch/dataquery.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/elasticsearch/dataquery.gen.ts"
       },
       "machineName": "elasticsearchdataquery",
-      "maturity": "planned",
+      "maturity": "merged",
       "name": "ElasticsearchDataQuery",
       "pluralMachineName": "elasticsearchdataquerys",
       "pluralName": "ElasticsearchDataQuerys",
@@ -1776,11 +1778,12 @@
         "name": "merged",
         "items": [
           "alertgroupspanelcfg",
+          "elasticsearchdataquery",
           "playlist",
           "serviceaccount",
           "team"
         ],
-        "count": 4
+        "count": 5
       },
       "planned": {
         "name": "planned",
@@ -1797,7 +1800,6 @@
           "dashboarddatasourcecfg",
           "datasource",
           "debugpanelcfg",
-          "elasticsearchdataquery",
           "elasticsearchdatasourcecfg",
           "flamegraphpanelcfg",
           "folder",
@@ -1845,7 +1847,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 59
+        "count": 58
       },
       "stable": {
         "name": "stable",
