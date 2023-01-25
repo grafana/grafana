@@ -28,7 +28,7 @@ const Advanced = ({ resources, onChange }: ResourcePickerProps<string | AzureMet
         isOpen={isAdvancedOpen}
         onToggle={() => setIsAdvancedOpen(!isAdvancedOpen)}
       >
-        {resources.map((resource, index) => (
+        {(resources.length ? resources : [{}]).map((resource, index) => (
           <div key={`resource-${index + 1}`}>
             {typeof resource === 'string' ? (
               <>

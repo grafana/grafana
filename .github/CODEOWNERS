@@ -156,7 +156,7 @@ WORKFLOW.md @torkelo
 /devenv/docker/blocks/elastic* @grafana/observability-logs
 
 # Performance tests
-/devenv/docker/loadtest-ts/ @grafana/grafana-edge-squad
+/devenv/docker/loadtest-ts/ @grafana/multitenancy-squad
 
 /devenv/bulk-dashboards/ @grafana/dashboards-squad
 /devenv/bulk_alerting_dashboards/ @grafana/alerting-squad-backend
@@ -252,15 +252,15 @@ WORKFLOW.md @torkelo
 /pkg/services/sqlstore/migrations/ @grafana/backend-platform @grafana/hosted-grafana-team
 *_mig.go @grafana/backend-platform @grafana/hosted-grafana-team
 
-# Grafana edge
-/pkg/services/live/ @grafana/grafana-edge-squad
-/pkg/services/searchV2/ @grafana/grafana-edge-squad
-/pkg/services/store/ @grafana/grafana-edge-squad
-/pkg/services/querylibrary/ @grafana/grafana-edge-squad
-/pkg/services/export/ @grafana/grafana-edge-squad
-/pkg/infra/filestorage/ @grafana/grafana-edge-squad
-/pkg/tsdb/testdatasource/ @grafana/grafana-edge-squad
-/pkg/util/converter/ @grafana/grafana-edge-squad
+# Grafana multitenancy
+/pkg/services/live/ @grafana/multitenancy-squad
+/pkg/services/searchV2/ @grafana/multitenancy-squad
+/pkg/services/store/ @grafana/multitenancy-squad
+/pkg/services/querylibrary/ @grafana/multitenancy-squad
+/pkg/services/export/ @grafana/multitenancy-squad
+/pkg/infra/filestorage/ @grafana/multitenancy-squad
+/pkg/tsdb/testdatasource/ @grafana/multitenancy-squad
+/pkg/util/converter/ @grafana/multitenancy-squad
 
 # Alerting
 /pkg/services/ngalert/ @grafana/alerting-squad-backend
@@ -283,7 +283,7 @@ WORKFLOW.md @torkelo
 /pkg/plugins/pfs/ @grafana/plugins-platform-backend @grafana/grafana-as-code
 
 # Dashboard previews / crawler (behind feature flag)
-/pkg/services/thumbs/ @grafana/grafana-edge-squad
+/pkg/services/thumbs/ @grafana/multitenancy-squad
 
 # Backend code docs
 /contribute/backend/ @grafana/backend-platform
@@ -361,7 +361,7 @@ lerna.json @grafana/frontend-ops
 /public/app/features/geo/ @grafana/grafana-edge-squad
 /public/app/features/library-panels/ @grafana/user-essentials
 /public/app/features/logs/ @grafana/observability-logs
-/public/app/features/live/ @grafana/grafana-edge-squad
+/public/app/features/live/ @grafana/multitenancy-squad
 /public/app/features/manage-dashboards/ @grafana/dashboards-squad
 /public/app/features/notifications/ @grafana/user-essentials
 /public/app/features/org/ @grafana/user-essentials
@@ -376,7 +376,7 @@ lerna.json @grafana/frontend-ops
 /public/app/features/scenes/ @grafana/dashboards-squad
 /public/app/features/search/ @grafana/user-essentials
 /public/app/features/serviceaccounts/ @grafana/grafana-authnz-team
-/public/app/features/storage/ @grafana/grafana-edge-squad
+/public/app/features/storage/ @grafana/multitenancy-squad
 /public/app/features/teams/ @grafana/grafana-authnz-team
 /public/app/features/templating/ @grafana/dashboards-squad
 /public/app/features/transformers/ @grafana/grafana-edge-squad
@@ -535,9 +535,12 @@ lerna.json @grafana/frontend-ops
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware.go @grafana/grafana-partnerships-team
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware_test.go @grafana/grafana-partnerships-team
 
+# Kind definitions
+/kinds/dashboard @grafana/dashboards-squad
+/kinds/ @grafana/grafana-as-code
+
 # Kind system and code generation
 embed.go @grafana/grafana-as-code
-/kinds/ @grafana/grafana-as-code
 /pkg/kinds/ @grafana/grafana-as-code
 /pkg/cuectx/ @grafana/grafana-as-code
 /pkg/registry/ @grafana/grafana-as-code

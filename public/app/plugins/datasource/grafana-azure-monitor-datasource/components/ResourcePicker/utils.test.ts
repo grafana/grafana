@@ -8,7 +8,7 @@ import {
   parseResourceDetails,
   parseResourceURI,
   resourcesToStrings,
-  setResource,
+  setResources,
 } from './utils';
 
 jest.mock('@grafana/runtime', () => ({
@@ -191,22 +191,30 @@ describe('AzureMonitor ResourcePicker utils', () => {
     });
   });
 
-  describe('setResource', () => {
+  describe('setResources', () => {
     it('updates a resource with a resource URI for Log Analytics', () => {
-      expect(setResource(createMockQuery(), '/subscription/sub')).toMatchObject({
+      expect(setResources(createMockQuery(), 'logs', ['/subscription/sub'])).toMatchObject({
+        azureLogAnalytics: { resources: ['/subscription/sub'] },
+      });
+    });
+
+    it('ignores an empty resource URI', () => {
+      expect(setResources(createMockQuery(), 'logs', ['/subscription/sub', ''])).toMatchObject({
         azureLogAnalytics: { resources: ['/subscription/sub'] },
       });
     });
 
     it('updates a resource with a resource parameters for Metrics', () => {
       expect(
-        setResource(createMockQuery(), {
-          subscription: 'sub',
-          resourceGroup: 'rg',
-          metricNamespace: 'Microsoft.Storage/storageAccounts',
-          resourceName: 'testacct',
-          region: 'westus',
-        })
+        setResources(createMockQuery(), 'metrics', [
+          {
+            subscription: 'sub',
+            resourceGroup: 'rg',
+            metricNamespace: 'Microsoft.Storage/storageAccounts',
+            resourceName: 'testacct',
+            region: 'westus',
+          },
+        ])
       ).toMatchObject({
         subscription: 'sub',
         azureMonitor: {
@@ -220,6 +228,29 @@ describe('AzureMonitor ResourcePicker utils', () => {
               resourceName: 'testacct',
             },
           ],
+        },
+      });
+    });
+
+    it('ignores a partially empty metrics resource', () => {
+      expect(
+        setResources(createMockQuery(), 'metrics', [
+          {
+            subscription: 'sub',
+            resourceGroup: 'rg',
+            metricNamespace: 'Microsoft.Storage/storageAccounts',
+            resourceName: '',
+            region: 'westus',
+          },
+        ])
+      ).toMatchObject({
+        subscription: 'sub',
+        azureMonitor: {
+          aggregation: undefined,
+          metricName: undefined,
+          metricNamespace: 'microsoft.storage/storageaccounts',
+          region: 'westus',
+          resources: [],
         },
       });
     });

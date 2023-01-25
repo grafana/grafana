@@ -11,6 +11,86 @@
 /**
  * TODO docs
  */
+export interface DataSourceJsonData {
+  alertmanagerUid?: string;
+  authType?: string;
+  defaultRegion?: string;
+  manageAlerts?: boolean;
+  profile?: string;
+}
+
+/**
+ * These are the common properties available to all queries in all datasources.
+ * Specific implementations will *extend* this interface, adding the required
+ * properties for the given context.
+ */
+export interface DataQuery {
+  /**
+   * For mixed data sources the selected datasource is on the query level.
+   * For non mixed scenarios this is undefined.
+   * TODO find a better way to do this ^ that's friendly to schema
+   * TODO this shouldn't be unknown but DataSourceRef | null
+   */
+  datasource?: unknown;
+  /**
+   * true if query is disabled (ie should not be returned to the dashboard)
+   */
+  hide?: boolean;
+  /**
+   * Unique, guid like, string used in explore mode
+   */
+  key?: string;
+  /**
+   * Specify the query flavor
+   * TODO make this required and give it a default
+   */
+  queryType?: string;
+  /**
+   * A - Z
+   */
+  refId: string;
+}
+
+export interface MapLayerOptions {
+  /**
+   * Custom options depending on the type
+   */
+  config?: unknown;
+  /**
+   * Defines a frame MatcherConfig that may filter data for the given layer
+   */
+  filterData?: unknown;
+  /**
+   * Common method to define geometry fields
+   */
+  location?: FrameGeometrySource;
+  /**
+   * configured unique display name
+   */
+  name: string;
+  /**
+   * Common properties:
+   * https://openlayers.org/en/latest/apidoc/module-ol_layer_Base-BaseLayer.html
+   * Layer opacity (0-1)
+   */
+  opacity?: number;
+  /**
+   * Check tooltip (defaults to true)
+   */
+  tooltip?: boolean;
+  type: string;
+}
+
+export enum FrameGeometrySourceMode {
+  Auto = 'auto',
+  Coords = 'coords',
+  Geohash = 'geohash',
+  Lookup = 'lookup',
+}
+
+/**
+ * TODO docs
+ */
 export enum AxisPlacement {
   Auto = 'auto',
   Bottom = 'bottom',
@@ -456,6 +536,14 @@ export enum BarGaugeDisplayMode {
 }
 
 /**
+ * TODO docs
+ */
+export interface VizTooltipOptions {
+  mode: TooltipDisplayMode;
+  sort: SortOrder;
+}
+
+/**
  * Internally, this is the "type" of cell that's being displayed
  * in the table such as colored text, JSON, gauge, etc.
  * The color-background-solid, gradient-gauge, and lcd-gauge
@@ -552,13 +640,34 @@ export type TimeZoneUtc = 'utc';
  */
 export type TimeZoneBrowser = 'browser';
 
-/**
- * TODO docs
- */
-export interface VizTooltipOptions {
-  mode: TooltipDisplayMode;
-  sort: SortOrder;
+export interface DataSourceRef {
+  /**
+   * The plugin type-id
+   */
+  type?: string;
+  /**
+   * Specific datasource instance
+   */
+  uid?: string;
 }
+
+export interface FrameGeometrySource {
+  /**
+   * Path to Gazetteer
+   */
+  gazetteer?: string;
+  /**
+   * Field mappings
+   */
+  geohash?: string;
+  latitude?: string;
+  longitude?: string;
+  lookup?: string;
+  mode: FrameGeometrySourceMode;
+  wkt?: string;
+}
+
+export interface Labels {}
 
 /**
  * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)

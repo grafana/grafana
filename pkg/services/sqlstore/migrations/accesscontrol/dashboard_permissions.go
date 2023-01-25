@@ -76,29 +76,29 @@ func (m dashboardPermissionsMigrator) Exec(sess *xorm.Session, migrator *migrato
 	m.sess = sess
 	m.dialect = migrator.Dialect
 
-	var dashboards []dashboard
-	if err := m.sess.SQL("SELECT id, is_folder, folder_id, org_id, has_acl FROM dashboard").Find(&dashboards); err != nil {
+	var dashs []dashboard
+	if err := m.sess.SQL("SELECT id, is_folder, folder_id, org_id, has_acl FROM dashboard").Find(&dashs); err != nil {
 		return fmt.Errorf("failed to list dashboards: %w", err)
 	}
 
-	var acl []models.DashboardACL
+	var acl []dashboards.DashboardACL
 	if err := m.sess.Find(&acl); err != nil {
 		return fmt.Errorf("failed to list dashboard ACL: %w", err)
 	}
 
-	aclMap := make(map[int64][]models.DashboardACL, len(acl))
+	aclMap := make(map[int64][]dashboards.DashboardACL, len(acl))
 	for _, p := range acl {
 		aclMap[p.DashboardID] = append(aclMap[p.DashboardID], p)
 	}
 
-	if err := m.migratePermissions(dashboards, aclMap, migrator); err != nil {
+	if err := m.migratePermissions(dashs, aclMap, migrator); err != nil {
 		return fmt.Errorf("failed to migrate permissions: %w", err)
 	}
 
 	return nil
 }
 
-func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard, aclMap map[int64][]models.DashboardACL, migrator *migrator.Migrator) error {
+func (m dashboardPermissionsMigrator) migratePermissions(dashboards []dashboard, aclMap map[int64][]dashboards.DashboardACL, migrator *migrator.Migrator) error {
 	permissionMap := map[int64]map[string][]*ac.Permission{}
 	for _, d := range dashboards {
 		if d.ID == -1 {
@@ -215,7 +215,7 @@ func (m dashboardPermissionsMigrator) mapPermission(id int64, p models.Permissio
 	return permissions
 }
 
-func getRoleName(p models.DashboardACL) string {
+func getRoleName(p dashboards.DashboardACL) string {
 	if p.UserID != 0 {
 		return fmt.Sprintf("managed:users:%d:permissions", p.UserID)
 	}
@@ -225,9 +225,9 @@ func getRoleName(p models.DashboardACL) string {
 	return fmt.Sprintf("managed:builtins:%s:permissions", strings.ToLower(string(*p.Role)))
 }
 
-func deduplicateAcl(acl []models.DashboardACL) []models.DashboardACL {
-	output := make([]models.DashboardACL, 0, len(acl))
-	uniqueACL := map[string]models.DashboardACL{}
+func deduplicateAcl(acl []dashboards.DashboardACL) []dashboards.DashboardACL {
+	output := make([]dashboards.DashboardACL, 0, len(acl))
+	uniqueACL := map[string]dashboards.DashboardACL{}
 	for _, item := range acl {
 		// acl items with userID or teamID is enforced to be unique by sql constraint, so we can skip those
 		if item.UserID > 0 || item.TeamID > 0 {

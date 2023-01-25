@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/retriever"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -40,7 +41,7 @@ var (
 
 func ProvideTeamPermissions(
 	cfg *setting.Cfg, router routing.RouteRegister, sql db.DB,
-	ac accesscontrol.AccessControl, license models.Licensing, service accesscontrol.Service,
+	ac accesscontrol.AccessControl, license licensing.Licensing, service accesscontrol.Service,
 	teamService team.Service, userService user.Service,
 ) (*TeamPermissionsService, error) {
 	options := resourcepermissions.Options{
@@ -114,7 +115,7 @@ var DashboardAdminActions = append(DashboardEditActions, []string{dashboards.Act
 
 func ProvideDashboardPermissions(
 	cfg *setting.Cfg, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
-	license models.Licensing, dashboardStore dashboards.Store, service accesscontrol.Service,
+	license licensing.Licensing, dashboardStore dashboards.Store, service accesscontrol.Service,
 	teamService team.Service, userService user.Service,
 ) (*DashboardPermissionsService, error) {
 	getDashboard := func(ctx context.Context, orgID int64, resourceID string) (*dashboards.Dashboard, error) {
@@ -193,7 +194,7 @@ var FolderAdminActions = append(FolderEditActions, []string{dashboards.ActionFol
 
 func ProvideFolderPermissions(
 	cfg *setting.Cfg, router routing.RouteRegister, sql db.DB, accesscontrol accesscontrol.AccessControl,
-	license models.Licensing, dashboardStore dashboards.Store, service accesscontrol.Service,
+	license licensing.Licensing, dashboardStore dashboards.Store, service accesscontrol.Service,
 	teamService team.Service, userService user.Service,
 ) (*FolderPermissionsService, error) {
 	options := resourcepermissions.Options{
@@ -284,7 +285,7 @@ type ServiceAccountPermissionsService struct {
 
 func ProvideServiceAccountPermissions(
 	cfg *setting.Cfg, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
-	license models.Licensing, serviceAccountRetrieverService *retriever.Service, service accesscontrol.Service,
+	license licensing.Licensing, serviceAccountRetrieverService *retriever.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service,
 ) (*ServiceAccountPermissionsService, error) {
 	options := resourcepermissions.Options{
