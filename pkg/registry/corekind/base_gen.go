@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/kinds/playlist"
+	"github.com/grafana/grafana/pkg/kinds/star"
 	"github.com/grafana/grafana/pkg/kinds/team"
 	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/thema"
@@ -33,6 +34,7 @@ type Base struct {
 	all       []kindsys.Core
 	dashboard *dashboard.Kind
 	playlist  *playlist.Kind
+	star      *star.Kind
 	team      *team.Kind
 }
 
@@ -40,6 +42,7 @@ type Base struct {
 var (
 	_ kindsys.Core = &dashboard.Kind{}
 	_ kindsys.Core = &playlist.Kind{}
+	_ kindsys.Core = &star.Kind{}
 	_ kindsys.Core = &team.Kind{}
 )
 
@@ -51,6 +54,11 @@ func (b *Base) Dashboard() *dashboard.Kind {
 // Playlist returns the [kindsys.Interface] implementation for the playlist kind.
 func (b *Base) Playlist() *playlist.Kind {
 	return b.playlist
+}
+
+// Star returns the [kindsys.Interface] implementation for the star kind.
+func (b *Base) Star() *star.Kind {
+	return b.star
 }
 
 // Team returns the [kindsys.Interface] implementation for the team kind.
@@ -73,6 +81,12 @@ func doNewBase(rt *thema.Runtime) *Base {
 		panic(fmt.Sprintf("error while initializing the playlist Kind: %s", err))
 	}
 	reg.all = append(reg.all, reg.playlist)
+
+	reg.star, err = star.NewKind(rt)
+	if err != nil {
+		panic(fmt.Sprintf("error while initializing the star Kind: %s", err))
+	}
+	reg.all = append(reg.all, reg.star)
 
 	reg.team, err = team.NewKind(rt)
 	if err != nil {

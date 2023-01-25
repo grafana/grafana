@@ -95,6 +95,9 @@ export type {
 // Raw generated enums and default consts from playlist kind.
 export { defaultPlaylist } from './raw/playlist/x/playlist_types.gen';
 
+// Raw generated types from Star kind.
+export type { Star } from './raw/star/x/star_types.gen';
+
 // Raw generated types from Team kind.
 export type { Team } from './raw/team/x/team_types.gen';
 
