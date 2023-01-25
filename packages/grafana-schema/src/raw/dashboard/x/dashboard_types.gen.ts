@@ -779,7 +779,7 @@ export interface Dashboard {
   /**
    * Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc".
    */
-  timezone?: (string | 'browser' | 'utc');
+  timezone?: string;
   /**
    * Title of dashboard.
    */

@@ -746,7 +746,7 @@ type Dashboard struct {
 	} `json:"timepicker,omitempty"`
 
 	// Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc".
-	Timezone *interface{} `json:"timezone,omitempty"`
+	Timezone *string `json:"timezone,omitempty"`
 
 	// Title of dashboard.
 	Title *string `json:"title,omitempty"`
