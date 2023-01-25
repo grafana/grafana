@@ -194,10 +194,10 @@ func AppendSwitchToAccountQueryParam(u *url.URL, accountId string) *url.URL {
 	return &updatedUrl
 }
 
-func ToBasePathWithAccountRedirect(path *url.URL, as model.Alerts) string {
+func ToBasePathWithAccountRedirect(path *url.URL, alerts model.Alerts) string {
 	var accountId = ""
-	if len(as) > 0 {
-		accountId = string(as[0].Annotations[ngmodels.LogzioAccountIdAnnotation])
+	if len(alerts) > 0 {
+		accountId = string(alerts[0].Annotations[ngmodels.LogzioAccountIdAnnotation])
 	}
 
 	return AppendSwitchToAccountQueryParam(path, accountId).String()
