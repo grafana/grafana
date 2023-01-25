@@ -6,6 +6,8 @@ import { VisibilityMode, TimelineValueAlignment } from '@grafana/schema';
 import { FIXED_UNIT } from '@grafana/ui/src/components/GraphNG/GraphNG';
 import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
 import { pointWithin, Quadtree, Rect } from 'app/plugins/panel/barchart/quadtree';
+import { PanelFieldConfig as StateTimeLineFieldConfig } from 'app/plugins/panel/state-timeline/panelcfg.gen';
+import { PanelFieldConfig as StatusHistoryFieldConfig } from 'app/plugins/panel/status-history/panelcfg.gen';
 
 import { TimelineMode } from './utils';
 
@@ -49,7 +51,7 @@ export interface TimelineCoreOptions {
   label: (seriesIdx: number) => string;
   getTimeRange: () => TimeRange;
   formatValue?: (seriesIdx: number, value: any) => string;
-  getFieldConfig: (seriesIdx: number) => { fillOpacity?: number; lineWidth?: number };
+  getFieldConfig: (seriesIdx: number) => StateTimeLineFieldConfig | StatusHistoryFieldConfig;
   onHover: (seriesIdx: number, valueIdx: number, rect: Rect) => void;
   onLeave: () => void;
 }
