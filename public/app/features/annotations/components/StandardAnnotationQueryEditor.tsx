@@ -22,7 +22,7 @@ import { AnnotationQueryResponse } from '../types';
 
 import { AnnotationFieldMapper } from './AnnotationResultMapper';
 
-interface Props {
+export interface Props {
   datasource: DataSourceApi;
   datasourceInstanceSettings: DataSourceInstanceSettings;
   annotation: AnnotationQuery<DataQuery>;
