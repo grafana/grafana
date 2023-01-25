@@ -7,10 +7,10 @@ import {
   FieldType,
   LoadingState,
   MutableDataFrame,
-  DataQuery,
   SupplementaryQueryType,
   DataSourceApi,
 } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
 
 import { LogsSamplePanel } from './LogsSamplePanel';
 
@@ -110,7 +110,7 @@ describe('LogsSamplePanel', () => {
     expect(screen.getByText('Failed to load logs sample for this query')).toBeInTheDocument();
     expect(screen.getByText('Test error message')).toBeInTheDocument();
   });
-  it('shows split open button', async () => {
+  it('has split open button functionality', async () => {
     const datasourceInstance = {
       uid: 'test_uid',
       getDataProvider: jest.fn(),
