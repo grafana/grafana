@@ -7,18 +7,18 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/kinds/preferences"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
-func GetEntityKindInfo() models.EntityKindInfo {
-	return models.EntityKindInfo{
-		ID:   models.StandardKindPreferences,
+func GetEntityKindInfo() entity.EntityKindInfo {
+	return entity.EntityKindInfo{
+		ID:   entity.StandardKindPreferences,
 		Name: "Preferences",
 	}
 }
 
-func GetEntitySummaryBuilder() models.EntitySummaryBuilder {
-	return func(ctx context.Context, uid string, body []byte) (*models.EntitySummary, []byte, error) {
+func GetEntitySummaryBuilder() entity.EntitySummaryBuilder {
+	return func(ctx context.Context, uid string, body []byte) (*entity.EntitySummary, []byte, error) {
 		if uid != "default" {
 			parts := strings.Split(uid, "-")
 			if len(parts) != 2 {
@@ -35,15 +35,15 @@ func GetEntitySummaryBuilder() models.EntitySummaryBuilder {
 			return nil, nil, err // unable to read object
 		}
 
-		summary := &models.EntitySummary{
-			Kind: models.StandardKindPreferences,
+		summary := &entity.EntitySummary{
+			Kind: entity.StandardKindPreferences,
 			Name: uid, // team-${id} | user-${id}
 			UID:  uid,
 		}
 
 		if obj.HomeDashboardUID != nil && *obj.HomeDashboardUID != "" {
-			summary.References = append(summary.References, &models.EntityExternalReference{
-				Kind: models.StandardKindDashboard,
+			summary.References = append(summary.References, &entity.EntityExternalReference{
+				Kind: entity.StandardKindDashboard,
 				UID:  *obj.HomeDashboardUID,
 			})
 		}

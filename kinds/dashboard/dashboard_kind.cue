@@ -33,8 +33,9 @@ lineage: seqs: [
 				// Timezone of dashboard,
 				timezone?: *"browser" | "utc" | "" @grafanamaturity(NeedsExpertReview)
 				// Whether a dashboard is editable or not.
-				editable:     bool | *true
-				graphTooltip: #DashboardCursorSync @grafanamaturity(NeedsExpertReview)
+				editable: bool | *true
+				// Configuration of dashboard cursor sync behavior.
+				graphTooltip: #DashboardCursorSync
 				// Time range for dashboard, e.g. last 6 hours, last 7 days, etc
 				time?: {
 					from: string | *"now-6h"
@@ -55,8 +56,8 @@ lineage: seqs: [
 					// TODO docs
 					time_options: [...string] | *["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
 				} @grafanamaturity(NeedsExpertReview)
-				// TODO docs
-				fiscalYearStartMonth?: uint8 & <13 @grafanamaturity(NeedsExpertReview)
+				// The month that the fiscal year starts on.  0 = January, 11 = December
+				fiscalYearStartMonth?: uint8 & <12 | *0
 				// TODO docs
 				liveNow?: bool @grafanamaturity(NeedsExpertReview)
 				// TODO docs
@@ -291,7 +292,7 @@ lineage: seqs: [
 				// 0 for no shared crosshair or tooltip (default).
 				// 1 for shared crosshair.
 				// 2 for shared crosshair AND shared tooltip.
-				#DashboardCursorSync: *0 | 1 | 2 @cuetsy(kind="enum",memberNames="Off|Crosshair|Tooltip") @grafanamaturity(NeedsExpertReview)
+				#DashboardCursorSync: *0 | 1 | 2 @cuetsy(kind="enum",memberNames="Off|Crosshair|Tooltip")
 
 				// Schema for panel targets is specified by datasource
 				// plugins. We use a placeholder definition, which the Go

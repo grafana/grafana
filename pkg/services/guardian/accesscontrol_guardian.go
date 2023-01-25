@@ -37,13 +37,14 @@ func NewAccessControlDashboardGuardian(
 			OrgID: user.OrgID,
 		}
 
-		if err := dashboardService.GetDashboard(ctx, q); err != nil {
+		qResult, err := dashboardService.GetDashboard(ctx, q)
+		if err != nil {
 			if errors.Is(err, dashboards.ErrDashboardNotFound) {
 				return nil, ErrGuardianDashboardNotFound.Errorf("failed to get dashboard by UID: %w", err)
 			}
 			return nil, ErrGuardianGetDashboardFailure.Errorf("failed to get dashboard by UID: %w", err)
 		}
-		dashboard = q.Result
+		dashboard = qResult
 	}
 
 	return &AccessControlDashboardGuardian{
@@ -74,13 +75,14 @@ func NewAccessControlDashboardGuardianByUID(
 			OrgID: user.OrgID,
 		}
 
-		if err := dashboardService.GetDashboard(ctx, q); err != nil {
+		qResult, err := dashboardService.GetDashboard(ctx, q)
+		if err != nil {
 			if errors.Is(err, dashboards.ErrDashboardNotFound) {
 				return nil, ErrGuardianDashboardNotFound.Errorf("failed to get dashboard by UID: %w", err)
 			}
 			return nil, ErrGuardianGetDashboardFailure.Errorf("failed to get dashboard by UID: %w", err)
 		}
-		dashboard = q.Result
+		dashboard = qResult
 	}
 
 	return &AccessControlDashboardGuardian{
@@ -337,8 +339,9 @@ func (a *AccessControlDashboardGuardian) loadParentFolder(folderID int64) (*dash
 		return &dashboards.Dashboard{UID: accesscontrol.GeneralFolderUID}, nil
 	}
 	folderQuery := &dashboards.GetDashboardQuery{ID: folderID, OrgID: a.user.OrgID}
-	if err := a.dashboardService.GetDashboard(a.ctx, folderQuery); err != nil {
+	folderQueryResult, err := a.dashboardService.GetDashboard(a.ctx, folderQuery)
+	if err != nil {
 		return nil, err
 	}
-	return folderQuery.Result, nil
+	return folderQueryResult, nil
 }

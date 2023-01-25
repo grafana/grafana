@@ -5,7 +5,6 @@ import { assertIsDefined } from 'test/helpers/asserts';
 
 import {
   ArrayVector,
-  DataQuery,
   DataQueryResponse,
   DataSourceApi,
   DataSourceJsonData,
@@ -15,6 +14,7 @@ import {
   RawTimeRange,
   SupplementaryQueryType,
 } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
 import { ExploreId, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
