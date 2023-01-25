@@ -1,11 +1,12 @@
 ---
 title: Build a panel plugin with D3.js
 summary: Learn how to use D3.js in your panel plugins.
+description: how to use D3.js in your panel plugins.
 id: build-a-panel-plugin-with-d3
-categories: ["plugins"]
-tags: ["beginner"]
+categories: ['plugins']
+tags: ['beginner']
 status: Published
-authors: ["grafana_labs"]
+authors: ['grafana_labs']
 Feedback Link: https://github.com/grafana/tutorials/issues/new
 weight: 60
 ---
@@ -14,7 +15,7 @@ weight: 60
 
 Panels are the building blocks of Grafana, and allow you to visualize data in different ways. This tutorial gives you a hands-on walkthrough of creating your own panel using [D3.js](https://d3js.org/).
 
-For more information about panels, refer to the documentation on [Panels](https://grafana.com/docs/grafana/latest/features/panels/panels/).
+For more information about panels, refer to the documentation on [Panels](/docs/grafana/latest/features/panels/panels/).
 
 In this tutorial, you'll:
 
@@ -107,7 +108,7 @@ D3 is already bundled with Grafana, and you can access it by importing the `d3` 
 1. Import `d3` in **SimplePanel.tsx**.
 
    ```ts
-   import * as d3 from "d3";
+   import * as d3 from 'd3';
    ```
 
 In the previous step, we had to define the width of each bar in pixels. Instead, let's use _scales_ from the D3 library to make the width of each bar depend on the width of the panel.
@@ -187,11 +188,11 @@ Congrats! You've created a simple and responsive bar chart.
 ## Complete example
 
 ```ts
-import React from "react";
-import { PanelProps } from "@grafana/data";
-import { SimpleOptions } from "types";
-import { useTheme } from "@grafana/ui";
-import * as d3 from "d3";
+import React from 'react';
+import { PanelProps } from '@grafana/data';
+import { SimpleOptions } from 'types';
+import { useTheme } from '@grafana/ui';
+import * as d3 from 'd3';
 
 interface Props extends PanelProps<SimpleOptions> {}
 

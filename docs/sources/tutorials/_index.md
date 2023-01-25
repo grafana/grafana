@@ -1,7 +1,7 @@
 ---
-title: "Tutorials"
-menuTitle: "Tutorials"
-description: "Grafana tutorials"
+title: 'Tutorials'
+menuTitle: 'Tutorials'
+description: 'Grafana tutorials'
 ---
 
 # Tutorials

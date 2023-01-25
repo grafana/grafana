@@ -1,13 +1,14 @@
 ---
 title: Run Grafana behind a reverse proxy
 summary: Learn how to run Grafana behind a reverse proxy
+description: Learn how to run Grafana behind a reverse proxy
 id: run-grafana-behind-a-proxy
-categories: ["administration"]
-tags: ["advanced"]
+categories: ['administration']
+tags: ['advanced']
 status: Published
-authors: ["grafana_labs"]
+authors: ['grafana_labs']
 Feedback Link: https://github.com/grafana/tutorials/issues/new
-aliases: ["/docs/grafana/latest/installation/behind_proxy/"]
+aliases: ['/docs/grafana/latest/installation/behind_proxy/']
 ---
 
 ## Introduction

@@ -1,11 +1,12 @@
 ---
 title: Build a panel plugin
 summary: Learn how to create a custom visualization for your dashboards.
+description: Learn how to create a custom visualization for your dashboards.
 id: build-a-panel-plugin
-categories: ["plugins"]
-tags: ["beginner"]
+categories: ['plugins']
+tags: ['beginner']
 status: Published
-authors: ["grafana_labs"]
+authors: ['grafana_labs']
 Feedback Link: https://github.com/grafana/tutorials/issues/new
 weight: 50
 ---
@@ -14,7 +15,7 @@ weight: 50
 
 Panels are the building blocks of Grafana. They allow you to visualize data in different ways. While Grafana has several types of panels already built-in, you can also build your own panel, to add support for other visualizations.
 
-For more information about panels, refer to the documentation on [Panels](https://grafana.com/docs/grafana/latest/panels/).
+For more information about panels, refer to the documentation on [Panels](/docs/grafana/latest/panels/).
 
 {{% class "prerequisite-section" %}}
 
@@ -99,8 +100,8 @@ Here's the updated options definition:
 **src/types.ts**
 
 ```ts
-type SeriesSize = "sm" | "md" | "lg";
-type CircleColor = "red" | "green" | "blue";
+type SeriesSize = 'sm' | 'md' | 'lg';
+type CircleColor = 'red' | 'green' | 'blue';
 
 // interface defining panel options type
 export interface SimpleOptions {
@@ -160,13 +161,13 @@ You're almost done. You've added a new option and a corresponding control to cha
    ```ts
    let color: string;
    switch (options.color) {
-     case "red":
+     case 'red':
        color = theme.palette.redBase;
        break;
-     case "green":
+     case 'green':
        color = theme.palette.greenBase;
        break;
-     case "blue":
+     case 'blue':
        color = theme.palette.blue95;
        break;
    }
@@ -186,7 +187,7 @@ Now, when you change the color in the panel editor, the fill color of the circle
 
 Most panels visualize dynamic data from a Grafana data source. In this step, you'll create one circle per series, each with a radius equal to the last value in the series.
 
-> To use data from queries in your panel, you need to set up a data source. If you don't have one available, you can use the [TestData DB](https://grafana.com/docs/grafana/latest/features/datasources/testdata) data source while developing.
+> To use data from queries in your panel, you need to set up a data source. If you don't have one available, you can use the [TestData DB](/docs/grafana/latest/features/datasources/testdata) data source while developing.
 
 The results from a data source query within your panel are available in the `data` property inside your panel component.
 
@@ -210,7 +211,7 @@ Let's see how you can retrieve data from a data frame and use it in your visuali
 
    ```ts
    const radii = data.series
-     .map((series) => series.fields.find((field) => field.type === "number"))
+     .map((series) => series.fields.find((field) => field.type === 'number'))
      .map((field) => field?.values.get(field.values.length - 1));
    ```
 
@@ -251,7 +252,7 @@ Let's see how you can retrieve data from a data frame and use it in your visuali
 
 1. Rebuild your plugin and try it out by adding multiple queries to the panel. Refresh the dashboard.
 
-If you want to know more about data frames, check out our introduction to [Data frames](https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/).
+If you want to know more about data frames, check out our introduction to [Data frames](/docs/grafana/latest/developers/plugins/data-frames/).
 
 ## Summary
 

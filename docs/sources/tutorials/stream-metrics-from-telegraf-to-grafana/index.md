@@ -1,11 +1,12 @@
 ---
 title: Stream metrics from Telegraf to Grafana
 summary: Use Telegraf to stream live metrics to Grafana.
+description: Use Telegraf to stream live metrics to Grafana.
 id: stream-metrics-from-telegraf-to-grafana
-categories: ["administration"]
-tags: ["beginner"]
+categories: ['administration']
+tags: ['beginner']
 status: Published
-authors: ["grafana_labs"]
+authors: ['grafana_labs']
 Feedback Link: https://github.com/grafana/tutorials/issues/new
 weight: 75
 ---
@@ -28,7 +29,7 @@ In this tutorial, you'll:
 
 ## Run Grafana and create admin token
 
-1. Run Grafana following [installation instructions](https://grafana.com/docs/grafana/latest/installation/) for your operating system
+1. Run Grafana following [installation instructions](/docs/grafana/latest/installation/) for your operating system
 1. Log in and go to Configuration -> API Keys
 1. Press "Add API key" button and create a new API token with **Admin** role
 

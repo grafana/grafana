@@ -1,11 +1,12 @@
 ---
 title: Grafana fundamentals
 summary: Get familiar with Grafana
+description: Get familiar with Grafana
 id: grafana-fundamentals
-categories: ["fundamentals"]
-tags: ["beginner"]
+categories: ['fundamentals']
+tags: ['beginner']
 status: Published
-authors: ["grafana_labs"]
+authors: ['grafana_labs']
 Feedback Link: https://github.com/grafana/tutorials/issues/new
 weight: 10
 ---
@@ -34,7 +35,7 @@ In this tutorial, you'll:
 
 This tutorial uses a sample application to demonstrate some of the features in Grafana. To complete the exercises in this tutorial, you need to download the files to your local machine.
 
-In this step, you'll set up the sample application, as well as supporting services, such as [Prometheus](https://prometheus.io/) and [Loki](https://grafana.com/oss/loki/).
+In this step, you'll set up the sample application, as well as supporting services, such as [Prometheus](https://prometheus.io/) and [Loki](/oss/loki/).
 
 1. Clone the [github.com/grafana/tutorial-environment](https://github.com/grafana/tutorial-environment) repository.
 
@@ -163,7 +164,7 @@ Depending on your use case, you might want to group on other labels. Try groupin
 
 ## Add a logging data source
 
-Grafana supports log data sources, like [Loki](https://grafana.com/oss/loki/). Just like for metrics, you first need to add your data source to Grafana.
+Grafana supports log data sources, like [Loki](/oss/loki/). Just like for metrics, you first need to add your data source to Grafana.
 
 1. In the sidebar, hover your cursor over the **Configuration** (gear) icon, and then click **Data Sources**.
 1. Click **Add data source**.
@@ -317,9 +318,9 @@ Now that Grafana knows how to notify us, it's time to set up an alert rule:
 1. Click **+ New alert rule**.
 1. For **Section 1**, name the rule `fundamentals-test`, and set **Rule type** to **Grafana Managed Alert**. For **Folder** type `fundamentals` and in the box that appears, press **Create: fundamentals**.
 1. For **Section 2**, find the **query A** box. Choose your Prometheus datasource and enter the same query that we used in our earlier panel: `sum(rate(tns_request_duration_seconds_count[5m])) by(route)`. Press **Run queries**. You should see some data in the graph.
-1. Now scroll down to the **query B** box. For **Operation** choose `Classic condition`. [You can read more about classic and multi-dimensional conditions here](https://grafana.com/docs/grafana/latest/alerting/unified-alerting/alerting-rules/create-grafana-managed-rule/#single-and-multi-dimensional-rule). For conditions enter the following: `WHEN last() OF A IS ABOVE 0.2`
+1. Now scroll down to the **query B** box. For **Operation** choose `Classic condition`. [You can read more about classic and multi-dimensional conditions here](/docs/grafana/latest/alerting/unified-alerting/alerting-rules/create-grafana-managed-rule/#single-and-multi-dimensional-rule). For conditions enter the following: `WHEN last() OF A IS ABOVE 0.2`
 1. In **Section 3**, enter `30s` for the **Evaluate every** field. For the purposes of this tutorial, the evaluation interval is intentionally short. This makes it easier to test. In the **for** field, enter `0m`. This setting makes Grafana wait until an alert has fired for a given time before Grafana sends the notification.
-1. In **Section 4**, you can add some sample text to your summary message. [Read more about message templating here](https://grafana.com/docs/grafana/latest/alerting/unified-alerting/message-templating/).
+1. In **Section 4**, you can add some sample text to your summary message. [Read more about message templating here](/docs/grafana/latest/alerting/unified-alerting/message-templating/).
 1. Click **Save and exit** at the top of the page.
 1. In Grafana's sidebar, hover the cursor over the **Alerting** (bell) icon and then click **Notification policies**.
 1. Under **Root policy**, press **Edit** and change the **Default contact point** to **RequestBin**. As a system grows, admins can use the **Notification policies** setting to organize and match alert rules to specific contact points.
@@ -345,9 +346,9 @@ docker-compose down -v
 
 Check out the links below to continue your learning journey with Grafana's LGTM stack.
 
-- [Prometheus](https://grafana.com/docs/grafana/latest/features/datasources/prometheus/)
-- [Loki](https://grafana.com/docs/grafana/latest/features/datasources/loki/)
-- [Explore](https://grafana.com/docs/grafana/latest/features/explore/)
-- [Alerting Overview](https://grafana.com/docs/grafana/latest/alerting/)
-- [Alert rules](https://grafana.com/docs/grafana/latest/alerting/create-alerts/)
-- [Contact Points](https://grafana.com/docs/grafana/latest/alerting/notifications/)
+- [Prometheus](/docs/grafana/latest/features/datasources/prometheus/)
+- [Loki](/docs/grafana/latest/features/datasources/loki/)
+- [Explore](/docs/grafana/latest/features/explore/)
+- [Alerting Overview](/docs/grafana/latest/alerting/)
+- [Alert rules](/docs/grafana/latest/alerting/create-alerts/)
+- [Contact Points](/docs/grafana/latest/alerting/notifications/)

@@ -1,11 +1,12 @@
 ---
 title: Build a data source backend plugin
 summary: Create a backend for your data source plugin.
+description: Create a backend for your data source plugin.
 id: build-a-data-source-backend-plugin
-categories: ["plugins"]
-tags: ["beginner"]
+categories: ['plugins']
+tags: ['beginner']
 status: Published
-authors: ["grafana_labs"]
+authors: ['grafana_labs']
 Feedback Link: https://github.com/grafana/tutorials/issues/new
 weight: 75
 ---
@@ -14,7 +15,7 @@ weight: 75
 
 Grafana supports a wide range of data sources, including Prometheus, MySQL, and even Datadog. There's a good chance you can already visualize metrics from the systems you have set up. In some cases, though, you already have an in-house metrics solution that you’d like to add to your Grafana dashboards. This tutorial teaches you to build a support for your data source.
 
-For more information about backend plugins, refer to the documentation on [Backend plugins](https://grafana.com/docs/grafana/latest/developers/plugins/backend/).
+For more information about backend plugins, refer to the documentation on [Backend plugins](/docs/grafana/latest/developers/plugins/backend/).
 
 In this tutorial, you'll:
 
@@ -40,7 +41,7 @@ In this tutorial, you'll:
 
 ## Create a new plugin
 
-To build a backend for your data source plugin, Grafana requires a binary that it can execute when it loads the plugin during start-up. In this guide, we will build a binary using the [Grafana plugin SDK for Go](https://grafana.com/docs/grafana/latest/developers/plugins/backend/grafana-plugin-sdk-for-go/).
+To build a backend for your data source plugin, Grafana requires a binary that it can execute when it loads the plugin during start-up. In this guide, we will build a binary using the [Grafana plugin SDK for Go](/docs/grafana/latest/developers/plugins/backend/grafana-plugin-sdk-for-go/).
 
 The easiest way to get started is to use the Grafana [create-plugin tool](https://www.npmjs.com/package/@grafana/create-plugin). Navigate to the plugin folder that you configured in step 1 and type:
 
@@ -61,7 +62,7 @@ yarn install
 yarn build
 ```
 
-Run the following to update [Grafana plugin SDK for Go](https://grafana.com/docs/grafana/latest/developers/plugins/backend/grafana-plugin-sdk-for-go/) dependency to the latest minor version:
+Run the following to update [Grafana plugin SDK for Go](/docs/grafana/latest/developers/plugins/backend/grafana-plugin-sdk-for-go/) dependency to the latest minor version:
 
 ```bash
 go get -u github.com/grafana/grafana-plugin-sdk-go
@@ -96,8 +97,8 @@ You now have a new data source instance of your plugin that is ready to use in a
 #### Grafana doesn't load my plugin
 
 By default, Grafana requires backend plugins to be signed. To load unsigned backend plugins, you need to
-configure Grafana to [allow unsigned plugins](https://grafana.com/docs/grafana/latest/plugins/plugin-signature-verification/#allow-unsigned-plugins).
-For more information, refer to [Plugin signature verification](https://grafana.com/docs/grafana/latest/plugins/plugin-signature-verification/#backend-plugins).
+configure Grafana to [allow unsigned plugins](/docs/grafana/latest/plugins/plugin-signature-verification/#allow-unsigned-plugins).
+For more information, refer to [Plugin signature verification](/docs/grafana/latest/plugins/plugin-signature-verification/#backend-plugins).
 
 ## Anatomy of a backend plugin
 
@@ -112,13 +113,13 @@ The folders and files used to build the backend for the data source are:
 
 #### plugin.json
 
-The [plugin.json](https://grafana.com/docs/grafana/latest/developers/plugins/metadata/) file is required for all plugins. When building a backend plugin these properties are important:
+The [plugin.json](/docs/grafana/latest/developers/plugins/metadata/) file is required for all plugins. When building a backend plugin these properties are important:
 
-| property   | description                                                                                                                                                                      |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| backend    | Should be set to `true` for backend plugins. This tells Grafana that it should start a binary when loading the plugin.                                                           |
-| executable | This is the name of the executable that Grafana expects to start, see [plugin.json reference](https://grafana.com/docs/grafana/latest/developers/plugins/metadata/) for details. |
-| alerting   | Should be set to `true` if your backend datasource supports alerting.                                                                                                            |
+| property   | description                                                                                                                                                   |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| backend    | Should be set to `true` for backend plugins. This tells Grafana that it should start a binary when loading the plugin.                                        |
+| executable | This is the name of the executable that Grafana expects to start, see [plugin.json reference](/docs/grafana/latest/developers/plugins/metadata/) for details. |
+| alerting   | Should be set to `true` if your backend datasource supports alerting.                                                                                         |
 
 In the next step we will look at the query endpoint!
 
@@ -132,7 +133,7 @@ In the tutorial we have extracted a method named `query` to take care of each qu
 
 As you can see the sample only returns static numbers. Try to extend the plugin to return other types of data.
 
-You can read more about how to [build data frames in our docs](https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/).
+You can read more about how to [build data frames in our docs](/docs/grafana/latest/developers/plugins/data-frames/).
 
 ## Add support for health checks
 

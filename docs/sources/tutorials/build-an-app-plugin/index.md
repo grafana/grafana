@@ -1,11 +1,12 @@
 ---
 title: Build an app plugin
 summary: Learn at how to create an app for Grafana.
+description: Learn at how to create an app for Grafana.
 id: build-an-app-plugin
-categories: ["plugins"]
-tags: ["beginner"]
+categories: ['plugins']
+tags: ['beginner']
 status: Published
-authors: ["grafana_labs"]
+authors: ['grafana_labs']
 Feedback Link: https://github.com/grafana/tutorials/issues/new
 weight: 50
 draft: true
@@ -63,8 +64,8 @@ Let's add a tab for managing server instances.
 1. In the `src/pages` directory, add a new file called `Instances.tsx`. This component contains the content for the new tab.
 
    ```ts
-   import { AppRootProps } from "@grafana/data";
-   import React, { FC } from "react";
+   import { AppRootProps } from '@grafana/data';
+   import React, { FC } from 'react';
 
    export const Instances: FC<AppRootProps> = ({ query, path, meta }) => {
      return <p>Hello</p>;
@@ -76,7 +77,7 @@ Let's add a tab for managing server instances.
    **index.ts**
 
    ```ts
-   import { Instances } from "./Instances";
+   import { Instances } from './Instances';
    ```
 
    ```ts

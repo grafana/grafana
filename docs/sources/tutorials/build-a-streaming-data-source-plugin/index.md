@@ -1,20 +1,21 @@
 ---
 title: Build a streaming data source backend plugin
 summary: Create a backend for your data source plugin with streaming capabilities.
+description: Create a backend for your data source plugin with streaming capabilities.
 id: build-a-streaming-data-source-backend-plugin
-categories: ["plugins"]
-tags: ["beginner"]
+categories: ['plugins']
+tags: ['beginner']
 status: Published
-authors: ["grafana_labs"]
+authors: ['grafana_labs']
 Feedback Link: https://github.com/grafana/tutorials/issues/new
 weight: 75
 ---
 
 ## Introduction
 
-Grafana supports a wide range of data sources, including Prometheus, MySQL, and even Datadog. In previous tutorials we have shown how to extend Grafana capabilities to query custom data sources by [building a backend datasource plugin](https://grafana.com/tutorials/build-a-data-source-backend-plugin/). In this tutorial we take a step further and add streaming capabilities to the backend datasource plugin. Streaming allows plugins to push data to Grafana panels as soon as data appears (without periodic polling from UI side).
+Grafana supports a wide range of data sources, including Prometheus, MySQL, and even Datadog. In previous tutorials we have shown how to extend Grafana capabilities to query custom data sources by [building a backend datasource plugin](/tutorials/build-a-data-source-backend-plugin/). In this tutorial we take a step further and add streaming capabilities to the backend datasource plugin. Streaming allows plugins to push data to Grafana panels as soon as data appears (without periodic polling from UI side).
 
-For more information about backend plugins, refer to the documentation on [Backend plugins](https://grafana.com/docs/grafana/latest/developers/plugins/backend/).
+For more information about backend plugins, refer to the documentation on [Backend plugins](/docs/grafana/latest/developers/plugins/backend/).
 
 In this tutorial, you'll:
 
@@ -25,7 +26,7 @@ In this tutorial, you'll:
 #### Prerequisites
 
 - Knowledge about how data sources are implemented in the frontend.
-- Knowledge about [backend datasource anatomy](https://grafana.com/tutorials/build-a-data-source-backend-plugin/)
+- Knowledge about [backend datasource anatomy](/tutorials/build-a-data-source-backend-plugin/)
 - Grafana 8.0+
 - Go ([Version](https://github.com/grafana/plugin-tools/blob/main/packages/create-plugin/templates/backend/go.mod#L3))
 - [Mage](https://magefile.org/)
@@ -39,7 +40,7 @@ In this tutorial, you'll:
 
 ## Create a new plugin
 
-To build a backend for your data source plugin, Grafana requires a binary that it can execute when it loads the plugin during start-up. In this guide, we will build a binary using the [Grafana plugin SDK for Go](https://grafana.com/docs/grafana/latest/developers/plugins/backend/grafana-plugin-sdk-for-go/).
+To build a backend for your data source plugin, Grafana requires a binary that it can execute when it loads the plugin during start-up. In this guide, we will build a binary using the [Grafana plugin SDK for Go](/docs/grafana/latest/developers/plugins/backend/grafana-plugin-sdk-for-go/).
 
 The easiest way to get started is to use the Grafana [create-plugin tool](https://www.npmjs.com/package/@grafana/create-plugin). Navigate to the plugin folder that you configured in step 1 and type:
 
@@ -60,7 +61,7 @@ yarn install
 yarn build
 ```
 
-Run the following to update [Grafana plugin SDK for Go](https://grafana.com/docs/grafana/latest/developers/plugins/backend/grafana-plugin-sdk-for-go/) dependency to the latest minor version:
+Run the following to update [Grafana plugin SDK for Go](/docs/grafana/latest/developers/plugins/backend/grafana-plugin-sdk-for-go/) dependency to the latest minor version:
 
 ```bash
 go get -u github.com/grafana/grafana-plugin-sdk-go
@@ -95,12 +96,12 @@ You now have a new data source instance of your plugin that is ready to use in a
 #### Grafana doesn't load my plugin
 
 By default, Grafana requires backend plugins to be signed. To load unsigned backend plugins, you need to
-configure Grafana to [allow unsigned plugins](https://grafana.com/docs/grafana/latest/plugins/plugin-signature-verification/#allow-unsigned-plugins).
-For more information, refer to [Plugin signature verification](https://grafana.com/docs/grafana/latest/plugins/plugin-signature-verification/#backend-plugins).
+configure Grafana to [allow unsigned plugins](/docs/grafana/latest/plugins/plugin-signature-verification/#allow-unsigned-plugins).
+For more information, refer to [Plugin signature verification](/docs/grafana/latest/plugins/plugin-signature-verification/#backend-plugins).
 
 ## Anatomy of a backend plugin
 
-As you may notice till this moment we did the same steps described in [build a backend datasource plugin tutorial](https://grafana.com/tutorials/build-a-data-source-backend-plugin/). At this point, you should be familiar with backend plugin structure and a way how data querying and health check capabilities could be implemented. Let's take the next step and discuss how datasource plugin can handle data streaming.
+As you may notice till this moment we did the same steps described in [build a backend datasource plugin tutorial](/tutorials/build-a-data-source-backend-plugin/). At this point, you should be familiar with backend plugin structure and a way how data querying and health check capabilities could be implemented. Let's take the next step and discuss how datasource plugin can handle data streaming.
 
 ## Add streaming capabilities
 
@@ -112,7 +113,7 @@ In short – implementing a streaming plugin means implementing a `backend.Strea
 
 When returning a `data.Frame` with initial data we can return a special field `Channel` to let the frontend know that we are going to stream data frames after initial data load. When the frontend receives a frame with a `Channel` set it automatically issues a subscription request to that channel.
 
-Channel is a string identifier of topic to which clients can subscribe in Grafana Live. See a documentation of Grafana Live for [details about channel structure](https://grafana.com/docs/grafana/latest/live/live-channel/).
+Channel is a string identifier of topic to which clients can subscribe in Grafana Live. See a documentation of Grafana Live for [details about channel structure](/docs/grafana/latest/live/live-channel/).
 
 As said in docs in Grafana Live channel consists of 3 parts delimited by `/`:
 

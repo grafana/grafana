@@ -1,6 +1,7 @@
 ---
 title: Plugin Anatomy
 ---
+
 Plugins come in different shapes and sizes. Before we dive deeper, let's look at some of the properties that are shared by all of them.
 
 Every plugin you create will require at least two files: `plugin.json` and `module.ts`.
@@ -13,9 +14,9 @@ While certain plugin types can have specific configuration options, let's look a
 
 - `type` tells Grafana what type of plugin to expect. Grafana supports three types of plugins: `panel`, `datasource`, and `app`.
 - `name` is what users will see in the list of plugins. If you're creating a data source, this is typically the name of the database it connects to, such as Prometheus, PostgreSQL, or Stackdriver.
-- `id` uniquely identifies your plugin, and should start with your Grafana username, to avoid clashing with other plugins. [Sign up for a Grafana account](https://grafana.com/signup) to claim your username.
+- `id` uniquely identifies your plugin, and should start with your Grafana username, to avoid clashing with other plugins. [Sign up for a Grafana account](/signup/) to claim your username.
 
-To see all the available configuration settings for the `plugin.json`, refer to the [plugin.json Schema](https://grafana.com/docs/grafana/latest/plugins/developing/plugin.json/).
+To see all the available configuration settings for the `plugin.json`, refer to the [plugin.json Schema](/docs/grafana/latest/plugins/developing/plugin.json/).
 
 ### module.ts
 

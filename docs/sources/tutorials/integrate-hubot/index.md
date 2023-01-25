@@ -1,13 +1,14 @@
 ---
 title: Integrate Hubot with Grafana
 summary: Learn how to integrate Hubot with Grafana
+description: Learn how to integrate Hubot with Grafana
 id: integrate-hubot
-categories: ["administration"]
-tags: ["advanced"]
+categories: ['administration']
+tags: ['advanced']
 status: Published
-authors: ["grafana_labs"]
+authors: ['grafana_labs']
 Feedback Link: https://github.com/grafana/tutorials/issues/new
-aliases: ["/docs/grafana/latest/tutorials/hubot_howto/"]
+aliases: ['/docs/grafana/latest/tutorials/hubot_howto/']
 ---
 
 # Integrate Hubot with Grafana
@@ -18,7 +19,7 @@ No matter what data source you are using, the PNG image of the Graph will look t
 
 This guide will show you how to install and configure the [Hubot-Grafana](https://github.com/stephenyeargin/hubot-grafana) plugin. This plugin allows you to tell hubot to render any dashboard or graph right from a channel in Slack, Hipchat or Basecamp. The bot will respond with an image of the graph and a link that will take you to the graph.
 
-> *Amazon S3 Required*: The hubot-grafana script will upload the rendered graphs to Amazon S3. This
+> _Amazon S3 Required_: The hubot-grafana script will upload the rendered graphs to Amazon S3. This
 > is so Hipchat and Slack can show them reliably (they require the image to be publicly available).
 
 {{< figure src="/static/img/docs/tutorials/hubot_grafana.png"  max-width="800px" >}}
@@ -34,17 +35,15 @@ Hubot is very easy to install and host. If you do not already have a bot up and 
 ## Install Hubot-Grafana script
 
 In your Hubot project repo install the Grafana plugin using `npm`:
+
 ```bash
 npm install hubot-grafana --save
 ```
+
 Edit the file external-scripts.json, and add hubot-grafana to the list of plugins.
 
 ```json
-[
-"hubot-pugme",
-"hubot-shipit",
-"hubot-grafana"
-]
+["hubot-pugme", "hubot-shipit", "hubot-grafana"]
 ```
 
 ## Configure
@@ -80,21 +79,21 @@ The `S3` options are optional but for the images to work properly in services li
 ## Hubot commands
 
 - `hubot graf list`
-    - Lists the available dashboards
+  - Lists the available dashboards
 - `hubot graf db graphite-carbon-metrics`
-    - Graph all panels in the dashboard
+  - Graph all panels in the dashboard
 - `hubot graf db graphite-carbon-metrics:3`
-    - Graph only panel with id 3 of a particular dashboard
+  - Graph only panel with id 3 of a particular dashboard
 - `hubot graf db graphite-carbon-metrics:cpu`
-    - Graph only the panels containing "cpu" (case insensitive) in the title
+  - Graph only the panels containing "cpu" (case insensitive) in the title
 - `hubot graf db graphite-carbon-metrics now-12hr`
-    - Get a dashboard with a window of 12 hours ago to now
+  - Get a dashboard with a window of 12 hours ago to now
 - `hubot graf db graphite-carbon-metrics now-24hr now-12hr`
-    - Get a dashboard with a window of 24 hours ago to 12 hours ago
+  - Get a dashboard with a window of 24 hours ago to 12 hours ago
 - `hubot graf db graphite-carbon-metrics:3 now-8d now-1d`
-    - Get only the third panel of a particular dashboard with a window of 8 days ago to yesterday
+  - Get only the third panel of a particular dashboard with a window of 8 days ago to yesterday
 - `hubot graf db graphite-carbon-metrics host=carbon-a`
-    - Get a templated dashboard with the `$host` parameter set to `carbon-a`
+  - Get a templated dashboard with the `$host` parameter set to `carbon-a`
 
 ## Aliases
 
@@ -117,5 +116,3 @@ Now you can add an alias like this:
 ## Summary
 
 Grafana is going to ship with integrated Slack and Hipchat features some day but you do not have to wait for that. Grafana 2 shipped with a very clever server side rendering feature that can render any panel to a png using phantomjs. The hubot plugin for Grafana is something you can install and use today!
-
-

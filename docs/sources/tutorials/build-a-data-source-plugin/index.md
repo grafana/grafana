@@ -1,11 +1,12 @@
 ---
 title: Build a data source plugin
 summary: Create a plugin to add support for your own data sources.
+description: Create a plugin to add support for your own data sources.
 id: build-a-data-source-plugin
-categories: ["plugins"]
-tags: ["beginner"]
+categories: ['plugins']
+tags: ['beginner']
 status: Published
-authors: ["grafana_labs"]
+authors: ['grafana_labs']
 Feedback Link: https://github.com/grafana/tutorials/issues/new
 weight: 70
 ---
@@ -101,8 +102,8 @@ Let's see how to create and return a data frame from the `query` method. In this
    const frame = new MutableDataFrame({
      refId: query.refId,
      fields: [
-       { name: "time", type: FieldType.time },
-       { name: "value", type: FieldType.number },
+       { name: 'time', type: FieldType.time },
+       { name: 'value', type: FieldType.number },
      ],
    });
    ```
@@ -255,7 +256,7 @@ Just like query editor, the form field in the config editor calls the registered
      <FormField
        label="Resolution"
        onChange={this.onResolutionChange}
-       value={jsonData.resolution || ""}
+       value={jsonData.resolution || ''}
        placeholder="Enter a number"
      />
    </div>
@@ -305,16 +306,16 @@ Just like query editor, the form field in the config editor calls the registered
 
 So far, you've generated the data returned by the data source. A more realistic use case would be to fetch data from an external API.
 
-While you can use something like [axios](https://github.com/axios/axios) or the [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) to make requests, we recommend using the [`getBackendSrv`](https://grafana.com/docs/grafana/latest/packages_api/runtime/getbackendsrv/) function from the [grafana/runtime](https://grafana.com/docs/grafana/latest/packages_api/runtime/) package.
+While you can use something like [axios](https://github.com/axios/axios) or the [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) to make requests, we recommend using the [`getBackendSrv`](/docs/grafana/latest/packages_api/runtime/getbackendsrv/) function from the [grafana/runtime](/docs/grafana/latest/packages_api/runtime/) package.
 
-The main advantage of `getBackendSrv` is that it proxies requests through the Grafana server rather making the request from the browser. This is strongly recommended when making authenticated requests to an external API. For more information on authenticating external requests, refer to [Add authentication for data source plugins](https://grafana.com/docs/grafana/latest/developers/plugins/add-authentication-for-data-source-plugins/).
+The main advantage of `getBackendSrv` is that it proxies requests through the Grafana server rather making the request from the browser. This is strongly recommended when making authenticated requests to an external API. For more information on authenticating external requests, refer to [Add authentication for data source plugins](/docs/grafana/latest/developers/plugins/add-authentication-for-data-source-plugins/).
 
 1. Import `getBackendSrv`.
 
    **src/DataSource.ts**
 
    ```ts
-   import { getBackendSrv } from "@grafana/runtime";
+   import { getBackendSrv } from '@grafana/runtime';
    ```
 
 1. Create a helper method `doRequest` and use the `datasourceRequest` method to make a request to your API. Replace `https://api.example.com/metrics` to point to your own API endpoint.
@@ -365,7 +366,7 @@ In this tutorial you built a complete data source plugin for Grafana that uses a
 
 Learn how you can improve your plugin even further, by reading our advanced guides:
 
-- [Add support for variables](https://grafana.com/docs/grafana/latest/developers/plugins/add-support-for-variables/)
-- [Add support for annotations](https://grafana.com/docs/grafana/latest/developers/plugins/add-support-for-annotations/)
-- [Add support for Explore queries](https://grafana.com/docs/grafana/latest/developers/plugins/add-support-for-explore-queries/)
-- [Build a logs data source](https://grafana.com/docs/grafana/latest/developers/plugins/build-a-logs-data-source-plugin/)
+- [Add support for variables](/docs/grafana/latest/developers/plugins/add-support-for-variables/)
+- [Add support for annotations](/docs/grafana/latest/developers/plugins/add-support-for-annotations/)
+- [Add support for Explore queries](/docs/grafana/latest/developers/plugins/add-support-for-explore-queries/)
+- [Build a logs data source](/docs/grafana/latest/developers/plugins/build-a-logs-data-source-plugin/)

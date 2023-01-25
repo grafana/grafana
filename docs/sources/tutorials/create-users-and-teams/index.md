@@ -1,11 +1,12 @@
 ---
 title: Create users and teams
 summary: Learn how to set up teams and users.
+description: Learn how to set up teams and users.
 id: create-users-and-teams
-categories: ["administration"]
-tags: ["beginner"]
+categories: ['administration']
+tags: ['beginner']
 status: Published
-authors: ["grafana_labs"]
+authors: ['grafana_labs']
 Feedback Link: https://github.com/grafana/tutorials/issues/new
 weight: 20
 ---
@@ -47,7 +48,7 @@ a global role, the default `admin` user has this role.
 - **Editor -** Create and edit dashboards.
 - **Viewer -** View dashboards.
 
-> **Note**: You can also configure Grafana to allow [anonymous access](https://grafana.com/docs/grafana/latest/auth/overview/#anonymous-authentication), to make dashboards available even to those who don't have a Grafana user account. That's how Grafana Labs made https://play.grafana.org publicly available.
+> **Note**: You can also configure Grafana to allow [anonymous access](/docs/grafana/latest/auth/overview/#anonymous-authentication), to make dashboards available even to those who don't have a Grafana user account. That's how Grafana Labs made https://play.grafana.org publicly available.
 
 ### Exercise
 
@@ -231,5 +232,5 @@ In this tutorial, you've configured Grafana for an organization:
 
 ### Learn more
 
-- [Organization Roles](https://grafana.com/docs/grafana/next/administration/manage-users-and-permissions/about-users-and-permissions/#organization-roles)
-- [Permissions Overview](https://grafana.com/docs/grafana/latest/administration/manage-users-and-permissions/about-users-and-permissions/#about-users-and-permissions)
+- [Organization Roles](/docs/grafana/next/administration/manage-users-and-permissions/about-users-and-permissions/#organization-roles)
+- [Permissions Overview](/docs/grafana/latest/administration/manage-users-and-permissions/about-users-and-permissions/#about-users-and-permissions)
