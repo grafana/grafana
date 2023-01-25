@@ -9,6 +9,7 @@ const baseUser: CurrentUserDTO = {
   email: 'email@example.com',
   name: 'My Name',
   theme: 'dark',
+  lightTheme: false, // deprecated
   orgCount: 1,
   orgId: 1,
   orgName: 'Main Org.',
