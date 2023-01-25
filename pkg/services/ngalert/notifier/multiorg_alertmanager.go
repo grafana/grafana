@@ -76,9 +76,10 @@ func NewMultiOrgAlertmanager(cfg *setting.Cfg, configStore AlertingStore, orgSto
 	clusterLogger := l.New("component", "cluster")
 	moa.peer = &NilPeer{}
 	if len(cfg.UnifiedAlerting.HAPeers) > 0 {
+		wr := prometheus.WrapRegistererWithPrefix(fmt.Sprintf("%s_%s_", metrics.Namespace, metrics.Subsystem), m.Registerer)
 		peer, err := cluster.Create(
 			clusterLogger,
-			m.Registerer,
+			wr,
 			cfg.UnifiedAlerting.HAListenAddr,
 			cfg.UnifiedAlerting.HAAdvertiseAddr,
 			cfg.UnifiedAlerting.HAPeers, // peers
