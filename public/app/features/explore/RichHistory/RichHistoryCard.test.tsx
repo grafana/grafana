@@ -1,7 +1,8 @@
 import { render, screen, fireEvent, getByText } from '@testing-library/react';
 import React from 'react';
 
-import { DataSourceApi, DataQuery } from '@grafana/data';
+import { DataSourceApi } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
