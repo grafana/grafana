@@ -33,12 +33,12 @@ func parsePluginOrPanic(path string, pkgname string, rt *thema.Runtime) pfs.Pars
 func corePlugins(rt *thema.Runtime) []pfs.ParsedPlugin {
 	return []pfs.ParsedPlugin{
 		parsePluginOrPanic("public/app/plugins/datasource/alertmanager", "alertmanager", rt),
+		parsePluginOrPanic("public/app/plugins/datasource/azuremonitor", "grafana_azure_monitor_datasource", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/cloud-monitoring", "stackdriver", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/cloudwatch", "cloudwatch", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/dashboard", "dashboard", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/elasticsearch", "elasticsearch", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/grafana", "grafana", rt),
-		parsePluginOrPanic("public/app/plugins/datasource/grafana-azure-monitor-datasource", "grafana_azure_monitor_datasource", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/graphite", "graphite", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/jaeger", "jaeger", rt),
 		parsePluginOrPanic("public/app/plugins/datasource/loki", "loki", rt),
