@@ -9,7 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/logger"
+	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 func TestProcessManager_Start(t *testing.T) {
@@ -271,7 +271,7 @@ func createPlugin(t *testing.T, bp backendplugin.Plugin, cbs ...func(p *plugins.
 		},
 	}
 
-	p.SetLogger(logger.NewNopLogger())
+	p.SetLogger(log.NewNopLogger())
 	p.RegisterClient(bp)
 
 	for _, cb := range cbs {

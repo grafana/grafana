@@ -10,7 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/logger"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 )
@@ -57,7 +57,7 @@ func (l *FakeLoader) Unload(ctx context.Context, pluginID string) error {
 type FakePluginClient struct {
 	ID      string
 	Managed bool
-	Log     logger.Logger
+	Log     log.Logger
 
 	startCount     int
 	stopCount      int
@@ -76,7 +76,7 @@ func (pc *FakePluginClient) PluginID() string {
 	return pc.ID
 }
 
-func (pc *FakePluginClient) Logger() logger.Logger {
+func (pc *FakePluginClient) Logger() log.Logger {
 	return pc.Log
 }
 
@@ -311,7 +311,7 @@ func NewFakeBackendProcessProvider() *FakeBackendProcessProvider {
 
 func (pr *FakeBackendProcessProvider) BackendFactory(_ context.Context, p *plugins.Plugin) backendplugin.PluginFactoryFunc {
 	pr.Requested[p.ID]++
-	return func(pluginID string, _ logger.Logger, _ []string) (backendplugin.Plugin, error) {
+	return func(pluginID string, _ log.Logger, _ []string) (backendplugin.Plugin, error) {
 		pr.Invoked[pluginID]++
 		return &FakePluginClient{}, nil
 	}

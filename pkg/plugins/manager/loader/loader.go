@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/logger"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
@@ -43,7 +43,7 @@ type Loader struct {
 	pluginInitializer  initializer.Initializer
 	signatureValidator signature.Validator
 	pluginStorage      storage.Manager
-	log                logger.Logger
+	log                log.Logger
 
 	errs map[string]*plugins.SignatureError
 }
@@ -52,7 +52,7 @@ func ProvideService(cfg *config.Cfg, license plugins.Licensing, authorizer plugi
 	pluginRegistry registry.Service, backendProvider plugins.BackendFactoryProvider,
 	roleRegistry plugins.RoleRegistry) *Loader {
 	return New(cfg, license, authorizer, pluginRegistry, backendProvider, process.NewManager(pluginRegistry),
-		storage.FileSystem(logger.OldyLogger("loader.fs"), cfg.PluginsPath), roleRegistry)
+		storage.FileSystem(log.OldyLogger("loader.fs"), cfg.PluginsPath), roleRegistry)
 }
 
 func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLoaderAuthorizer,
@@ -66,7 +66,7 @@ func New(cfg *config.Cfg, license plugins.Licensing, authorizer plugins.PluginLo
 		processManager:     processManager,
 		pluginStorage:      pluginStorage,
 		errs:               make(map[string]*plugins.SignatureError),
-		log:                logger.New("plugin.loader"),
+		log:                log.New("plugin.loader"),
 		roleRegistry:       roleRegistry,
 	}
 }
@@ -320,7 +320,7 @@ func createPluginBase(pluginJSON plugins.JSONData, class plugins.Class, pluginDi
 		Class:     class,
 	}
 
-	plugin.SetLogger(logger.New(fmt.Sprintf("plugin.%s", plugin.ID)))
+	plugin.SetLogger(log.New(fmt.Sprintf("plugin.%s", plugin.ID)))
 	setImages(plugin)
 
 	return plugin
@@ -442,7 +442,7 @@ func validatePluginJSON(data plugins.JSONData) error {
 type foundPlugins map[string]plugins.JSONData
 
 // stripDuplicates will strip duplicate plugins or plugins that already exist
-func (f *foundPlugins) stripDuplicates(existingPlugins map[string]struct{}, log logger.Logger) {
+func (f *foundPlugins) stripDuplicates(existingPlugins map[string]struct{}, log log.Logger) {
 	pluginsByID := make(map[string]struct{})
 	for k, scannedPlugin := range *f {
 		if _, existing := existingPlugins[scannedPlugin.ID]; existing {

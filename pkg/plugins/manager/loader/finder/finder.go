@@ -7,18 +7,18 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/grafana/pkg/infra/fs"
-	"github.com/grafana/grafana/pkg/plugins/logger"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 var walk = util.Walk
 
 type Finder struct {
-	log logger.Logger
+	log log.Logger
 }
 
 func New() Finder {
-	return Finder{log: logger.New("plugin.finder")}
+	return Finder{log: log.New("plugin.finder")}
 }
 
 func (f *Finder) Find(pluginPaths []string) ([]string, error) {

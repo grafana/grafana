@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
-	"github.com/grafana/grafana/pkg/plugins/logger"
+	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 type ClientV2 struct {
@@ -28,7 +28,7 @@ type ClientV2 struct {
 	secretsmanagerplugin.SecretsManagerPlugin
 }
 
-func newClientV2(descriptor PluginDescriptor, logger logger.Logger, rpcClient plugin.ClientProtocol) (pluginClient, error) {
+func newClientV2(descriptor PluginDescriptor, logger log.Logger, rpcClient plugin.ClientProtocol) (pluginClient, error) {
 	rawDiagnostics, err := rpcClient.Dispense("diagnostics")
 	if err != nil {
 		return nil, err

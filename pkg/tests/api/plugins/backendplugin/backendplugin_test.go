@@ -19,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/logger"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -581,7 +581,7 @@ func createTestPlugin(id string) (*plugins.Plugin, *testPlugin) {
 		Class: plugins.Core,
 	}
 
-	p.SetLogger(logger.New("test-plugin"))
+	p.SetLogger(log.New("test-plugin"))
 	tp := &testPlugin{
 		pluginID: id,
 		logger:   p.Logger(),
@@ -596,7 +596,7 @@ func createTestPlugin(id string) (*plugins.Plugin, *testPlugin) {
 
 type testPlugin struct {
 	pluginID string
-	logger   logger.Logger
+	logger   log.Logger
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
 	backend.QueryDataHandler
@@ -607,7 +607,7 @@ func (tp *testPlugin) PluginID() string {
 	return tp.pluginID
 }
 
-func (tp *testPlugin) Logger() logger.Logger {
+func (tp *testPlugin) Logger() log.Logger {
 	return tp.logger
 }
 

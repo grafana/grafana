@@ -8,7 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/logger"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 )
 
@@ -18,7 +18,7 @@ type Manager struct {
 	pluginRegistry registry.Service
 
 	mu  sync.Mutex
-	log logger.Logger
+	log log.Logger
 }
 
 func ProvideService(pluginRegistry registry.Service) *Manager {
@@ -28,7 +28,7 @@ func ProvideService(pluginRegistry registry.Service) *Manager {
 func NewManager(pluginRegistry registry.Service) *Manager {
 	return &Manager{
 		pluginRegistry: pluginRegistry,
-		log:            logger.New("plugin.process.manager"),
+		log:            log.New("plugin.process.manager"),
 	}
 }
 

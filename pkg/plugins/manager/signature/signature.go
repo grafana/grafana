@@ -2,18 +2,18 @@ package signature
 
 import (
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/logger"
+	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 type Validator struct {
 	authorizer plugins.PluginLoaderAuthorizer
-	log        logger.Logger
+	log        log.Logger
 }
 
 func NewValidator(authorizer plugins.PluginLoaderAuthorizer) Validator {
 	return Validator{
 		authorizer: authorizer,
-		log:        logger.New("plugin.signature.validator"),
+		log:        log.New("plugin.signature.validator"),
 	}
 }
 

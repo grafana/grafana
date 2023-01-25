@@ -11,14 +11,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/logger"
+	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 type Initializer struct {
 	cfg             *config.Cfg
 	license         plugins.Licensing
 	backendProvider plugins.BackendFactoryProvider
-	log             logger.Logger
+	log             log.Logger
 }
 
 func New(cfg *config.Cfg, backendProvider plugins.BackendFactoryProvider, license plugins.Licensing) Initializer {
@@ -26,7 +26,7 @@ func New(cfg *config.Cfg, backendProvider plugins.BackendFactoryProvider, licens
 		cfg:             cfg,
 		license:         license,
 		backendProvider: backendProvider,
-		log:             logger.New("plugin.initializer"),
+		log:             log.New("plugin.initializer"),
 	}
 }
 

@@ -6,13 +6,13 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/logger"
+	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
 // corePlugin represents a plugin that's part of Grafana core.
 type corePlugin struct {
 	pluginID string
-	logger   logger.Logger
+	logger   log.Logger
 	backend.CheckHealthHandler
 	backend.CallResourceHandler
 	backend.QueryDataHandler
@@ -21,7 +21,7 @@ type corePlugin struct {
 
 // New returns a new backendplugin.PluginFactoryFunc for creating a core (built-in) backendplugin.Plugin.
 func New(opts backend.ServeOpts) backendplugin.PluginFactoryFunc {
-	return func(pluginID string, logger logger.Logger, env []string) (backendplugin.Plugin, error) {
+	return func(pluginID string, logger log.Logger, env []string) (backendplugin.Plugin, error) {
 		return &corePlugin{
 			pluginID:            pluginID,
 			logger:              logger,
@@ -37,7 +37,7 @@ func (cp *corePlugin) PluginID() string {
 	return cp.pluginID
 }
 
-func (cp *corePlugin) Logger() logger.Logger {
+func (cp *corePlugin) Logger() log.Logger {
 	return cp.logger
 }
 

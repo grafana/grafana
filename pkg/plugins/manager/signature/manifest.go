@@ -24,7 +24,7 @@ import (
 	"golang.org/x/crypto/openpgp/clearsign"
 
 	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/logger"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -99,7 +99,7 @@ func readPluginManifest(body []byte) (*pluginManifest, error) {
 	return &manifest, nil
 }
 
-func Calculate(mlog logger.Logger, plugin *plugins.Plugin) (plugins.Signature, error) {
+func Calculate(mlog log.Logger, plugin *plugins.Plugin) (plugins.Signature, error) {
 	if plugin.IsCorePlugin() {
 		return plugins.Signature{
 			Status: plugins.SignatureInternal,
@@ -194,7 +194,7 @@ func Calculate(mlog logger.Logger, plugin *plugins.Plugin) (plugins.Signature, e
 	}, nil
 }
 
-func verifyHash(mlog logger.Logger, pluginID string, path string, hash string) error {
+func verifyHash(mlog log.Logger, pluginID string, path string, hash string) error {
 	// nolint:gosec
 	// We can ignore the gosec G304 warning on this one because `path` is based
 	// on the path provided in a manifest file for a plugin and not user input.

@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
-	"github.com/grafana/grafana/pkg/plugins/logger"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -48,13 +48,13 @@ type Plugin struct {
 	Renderer       pluginextensionv2.RendererPlugin
 	SecretsManager secretsmanagerplugin.SecretsManagerPlugin
 	client         backendplugin.Plugin
-	log            logger.Logger
+	log            log.Logger
 }
 
 type PluginDTO struct {
 	JSONData
 
-	logger    logger.Logger
+	logger    log.Logger
 	pluginDir string
 
 	Class Class
@@ -218,11 +218,11 @@ func (p *Plugin) PluginID() string {
 	return p.ID
 }
 
-func (p *Plugin) Logger() logger.Logger {
+func (p *Plugin) Logger() log.Logger {
 	return p.log
 }
 
-func (p *Plugin) SetLogger(l logger.Logger) {
+func (p *Plugin) SetLogger(l log.Logger) {
 	p.log = l
 }
 

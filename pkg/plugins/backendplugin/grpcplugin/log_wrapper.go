@@ -7,11 +7,11 @@ import (
 
 	"github.com/hashicorp/go-hclog"
 
-	"github.com/grafana/grafana/pkg/plugins/logger"
+	plog "github.com/grafana/grafana/pkg/plugins/log"
 )
 
 type logWrapper struct {
-	Logger logger.Logger
+	Logger plog.Logger
 
 	name        string
 	impliedArgs []interface{}

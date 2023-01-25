@@ -1,4 +1,4 @@
-package logger
+package log
 
 // Logger is the default logger
 type Logger interface {

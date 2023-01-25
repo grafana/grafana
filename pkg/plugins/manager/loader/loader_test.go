@@ -13,7 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/logger"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/initializer"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
@@ -446,7 +446,7 @@ func TestLoader_setDefaultNavURL(t *testing.T) {
 				},
 			}},
 		}
-		logger := logger.NewTestLogger()
+		logger := log.NewTestLogger()
 		pluginWithDashboard.SetLogger(logger)
 
 		t.Run("Default nav URL is not set if dashboard UID field not is set", func(t *testing.T) {

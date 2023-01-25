@@ -8,7 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/logger"
+	"github.com/grafana/grafana/pkg/plugins/log"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
 	"github.com/grafana/grafana/pkg/tsdb/cloudmonitoring"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch"
@@ -50,7 +50,7 @@ const (
 
 func init() {
 	// Non-optimal global solution to replace plugin SDK default loggers for core plugins.
-	sdklog.DefaultLogger = &logWrapper{logger: logger.New("plugin.coreplugin")}
+	sdklog.DefaultLogger = &logWrapper{logger: log.New("plugin.coreplugin")}
 	backend.Logger = sdklog.DefaultLogger
 }
 
@@ -127,7 +127,7 @@ func asBackendPlugin(svc interface{}) backendplugin.PluginFactoryFunc {
 }
 
 type logWrapper struct {
-	logger logger.Logger
+	logger log.Logger
 }
 
 func (l *logWrapper) Debug(msg string, args ...interface{}) {
