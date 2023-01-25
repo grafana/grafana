@@ -75,7 +75,7 @@ export interface Props {
   columnMinWidth?: number;
   noHeader?: boolean;
   showTypeIcons?: boolean;
-  addRowNumberColumn?: boolean;
+  showRowNumbers?: boolean;
   resizable?: boolean;
   initialSortBy?: TableSortByFieldState[];
   onColumnResize?: TableColumnResizeActionCallback;

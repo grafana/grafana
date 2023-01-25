@@ -48,7 +48,7 @@ export const Table = memo((props: Props) => {
     width,
     columnMinWidth = COLUMN_MIN_WIDTH,
     noHeader,
-    addRowNumberColumn = true,
+    showRowNumbers,
     resizable = true,
     initialSortBy,
     footerOptions,
@@ -110,14 +110,14 @@ export const Table = memo((props: Props) => {
   const memoizedColumns = useMemo(
     () =>
       getColumns(
-        addOptionalNumberRowToTable(data, addRowNumberColumn),
+        addOptionalNumbersRowToTable(data, showRowNumbers),
         width,
         columnMinWidth,
         !!subData?.length,
         footerItems,
         isCountRowsSet
       ),
-    [data, width, columnMinWidth, footerItems, subData, isCountRowsSet, addRowNumberColumn]
+    [data, width, columnMinWidth, footerItems, subData, isCountRowsSet, showRowNumbers]
   );
   console.log(memoizedColumns, 'memoizedColumns');
 
@@ -325,9 +325,8 @@ export const Table = memo((props: Props) => {
     );
   }
 
-  function addOptionalNumberRowToTable(data: DataFrame, condition: boolean): DataFrame {
+  function addOptionalNumbersRowToTable(data: DataFrame, condition: boolean | undefined): DataFrame {
     if (condition) {
-      console.log('fired');
       // JEV
       const rowField: Field = buildFieldsForOptionalRowNums(data.length);
       const newData = cloneDeep(data);

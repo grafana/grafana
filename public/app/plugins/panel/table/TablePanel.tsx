@@ -15,25 +15,16 @@ export function TablePanel(props: Props) {
 
   // JEV: error on load (sometimes) -> The pseudo class ":nth-child" is potentially unsafe when doing server-side rendering. Try changing it to ":nth-of-type".
 
-  // JEV: is there a useTheme1() hook?
   const theme = useTheme2();
   const panelContext = usePanelContext();
-  // JEV: optional chain here?
   const frames = data.series;
-  // console.log('frames', frames);
   // JEV: a single function can push both values to respective arrays
   const mainFrames = frames.filter((f) => f.meta?.custom?.parentRowIndex === undefined);
-  // console.log(mainFrames, 'mainFrames');
   const subFrames = frames.filter((f) => f.meta?.custom?.parentRowIndex !== undefined);
-  // console.log(subFrames, 'subFrames');
-  // JEV: optional chain here superfluous; mainFrames will never be `undefined`, since it's being built with filter()
-  const count = mainFrames?.length;
-  // console.log(count, 'count');
+  const count = mainFrames.length;
   const hasFields = mainFrames[0]?.fields.length;
   const currentIndex = getCurrentFrameIndex(mainFrames, options);
-  // console.log(currentIndex, 'currentIndex');
   const main = mainFrames[currentIndex];
-  // console.log(main, 'main');
 
   let tableHeight = height;
   let subData = subFrames;
@@ -59,7 +50,7 @@ export function TablePanel(props: Props) {
       showTypeIcons={options.showTypeIcons}
       resizable={true}
       initialSortBy={options.sortBy}
-      // addRowNumberColumn
+      showRowNumbers={options.showRowNumbers}
       onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
       onColumnResize={(displayName, width) => onColumnResize(displayName, width, props)}
       onCellFilterAdded={panelContext.onAddAdHocFilter}
@@ -90,7 +81,6 @@ export function TablePanel(props: Props) {
   );
 }
 
-// JEV: are we using function declarations instead of arrow functions for hoisting? the `this` keyword bindind? both?
 function getCurrentFrameIndex(frames: DataFrame[], options: PanelOptions) {
   return options.frameIndex > 0 && options.frameIndex < frames.length ? options.frameIndex : 0;
 }
