@@ -31,7 +31,9 @@ var (
 		{Action: dashboards.ActionDashboardsWrite, Scope: dashboards.ScopeFoldersAll},
 	}
 	// DashboardServiceImpl implements the DashboardService interface
-	_ dashboards.DashboardService = (*DashboardServiceImpl)(nil)
+	_ dashboards.DashboardService             = (*DashboardServiceImpl)(nil)
+	_ dashboards.DashboardProvisioningService = (*DashboardServiceImpl)(nil)
+	_ dashboards.PluginService                = (*DashboardServiceImpl)(nil)
 )
 
 type DashboardServiceImpl struct {
@@ -46,6 +48,7 @@ type DashboardServiceImpl struct {
 	ac                   accesscontrol.AccessControl
 }
 
+// This is the uber service that implements a three smaller services
 func ProvideDashboardService(
 	cfg *setting.Cfg, dashboardStore dashboards.Store, folderStore dashboards.FolderStore, dashAlertExtractor alerting.DashAlertExtractor,
 	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
