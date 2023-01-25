@@ -12,6 +12,7 @@ package corekind
 import (
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/kinds/apikey"
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/kinds/playlist"
 	"github.com/grafana/grafana/pkg/kinds/serviceaccount"
@@ -32,6 +33,7 @@ import (
 // For example, a validation HTTP middleware for any kind-schematized object type.
 type Base struct {
 	all            []kindsys.Core
+	apikey         *apikey.Kind
 	dashboard      *dashboard.Kind
 	playlist       *playlist.Kind
 	serviceaccount *serviceaccount.Kind
@@ -40,11 +42,17 @@ type Base struct {
 
 // type guards
 var (
+	_ kindsys.Core = &apikey.Kind{}
 	_ kindsys.Core = &dashboard.Kind{}
 	_ kindsys.Core = &playlist.Kind{}
 	_ kindsys.Core = &serviceaccount.Kind{}
 	_ kindsys.Core = &team.Kind{}
 )
+
+// Apikey returns the [kindsys.Interface] implementation for the apikey kind.
+func (b *Base) Apikey() *apikey.Kind {
+	return b.apikey
+}
 
 // Dashboard returns the [kindsys.Interface] implementation for the dashboard kind.
 func (b *Base) Dashboard() *dashboard.Kind {
@@ -69,6 +77,12 @@ func (b *Base) Team() *team.Kind {
 func doNewBase(rt *thema.Runtime) *Base {
 	var err error
 	reg := &Base{}
+
+	reg.apikey, err = apikey.NewKind(rt)
+	if err != nil {
+		panic(fmt.Sprintf("error while initializing the apikey Kind: %s", err))
+	}
+	reg.all = append(reg.all, reg.apikey)
 
 	reg.dashboard, err = dashboard.NewKind(rt)
 	if err != nil {

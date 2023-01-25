@@ -7,6 +7,12 @@
 //
 // Run 'make gen-cue' from repository root to regenerate.
 
+// Raw generated types from Apikey kind.
+export type {
+  Apikey,
+  OrgRole
+} from './raw/apikey/x/apikey_types.gen';
+
 // Raw generated types from Dashboard kind.
 export type {
   AnnotationTarget,

@@ -116,24 +116,29 @@
     },
     "apikey": {
       "category": "core",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/grafana-as-code",
+        "grafana/grafana-bi-squad",
+        "grafana/plugins-platform-frontend",
+        "grafana/user-essentials"
+      ],
       "currentVersion": [
         0,
         0
       ],
-      "grafanaMaturityCount": 0,
+      "grafanaMaturityCount": 4,
       "lineageIsGroup": false,
       "links": {
-        "docs": "n/a",
-        "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/apikey/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/kinds/apikey",
+        "schema": "https://github.com/grafana/grafana/tree/main/kinds/apikey/apikey_kind.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/packages/grafana-schema/src/raw/apikey/x/apikey_types.gen.ts"
       },
       "machineName": "apikey",
-      "maturity": "planned",
-      "name": "APIKey",
+      "maturity": "merged",
+      "name": "Apikey",
       "pluralMachineName": "apikeys",
-      "pluralName": "APIKeys"
+      "pluralName": "Apikeys"
     },
     "azuremonitordataquery": {
       "category": "composable",
@@ -1776,11 +1781,12 @@
         "name": "merged",
         "items": [
           "alertgroupspanelcfg",
+          "apikey",
           "playlist",
           "serviceaccount",
           "team"
         ],
-        "count": 4
+        "count": 5
       },
       "planned": {
         "name": "planned",
@@ -1788,7 +1794,6 @@
           "alertlistpanelcfg",
           "alertmanagerdataquery",
           "alertmanagerdatasourcecfg",
-          "apikey",
           "azuremonitordataquery",
           "azuremonitordatasourcecfg",
           "cloudwatchdataquery",
@@ -1845,7 +1850,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 59
+        "count": 58
       },
       "stable": {
         "name": "stable",
