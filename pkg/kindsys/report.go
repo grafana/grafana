@@ -71,7 +71,7 @@ var plannedCoreKinds = []string{
 	"Folder",
 	"DataSource",
 	"APIKey",
-	"ServiceAccount",
+	"Serviceaccount",
 	"Thumb",
 	"Query",
 	"QueryHistory",

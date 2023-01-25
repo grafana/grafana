@@ -95,16 +95,23 @@ export type {
 // Raw generated enums and default consts from playlist kind.
 export { defaultPlaylist } from './raw/playlist/x/playlist_types.gen';
 
-// The following exported declarations correspond to types in the publicdashboard@0.0 kind's
-// schema with attribute @grafana(TSVeneer="type").
-//
-// The handwritten file for these type and default veneers is expected to be at
-// packages/grafana-schema/src/veneer/publicdashboard.types.ts.
-// This re-export declaration enforces that the handwritten veneer file exists,
-// and exports all the symbols in the list.
-//
-// TODO generate code such that tsc enforces type compatibility between raw and veneer decls
-export type { PublicDashboard } from './veneer/publicdashboard.types';
+// Raw generated types from Preferences kind.
+export type {
+  Preferences,
+  QueryHistoryPreference
+} from './raw/preferences/x/preferences_types.gen';
+
+// Raw generated types from PublicDashboard kind.
+export type { PublicDashboard } from './raw/publicdashboard/x/publicdashboard_types.gen';
+
+// Raw generated types from Serviceaccount kind.
+export type {
+  Serviceaccount,
+  OrgRole
+} from './raw/serviceaccount/x/serviceaccount_types.gen';
+
+// Raw generated enums and default consts from serviceaccount kind.
+export { defaultServiceaccount } from './raw/serviceaccount/x/serviceaccount_types.gen';
 
 // Raw generated types from Team kind.
 export type { Team } from './raw/team/x/team_types.gen';
