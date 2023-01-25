@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
@@ -214,12 +215,13 @@ func OrgAdminDashOrFolderAdminOrTeamAdmin(ss db.DB, ds dashboards.DashboardServi
 			return
 		}
 
-		hasAdminPermissionInDashOrFoldersQuery := models.HasAdminPermissionInDashboardsOrFoldersQuery{SignedInUser: c.SignedInUser}
-		if err := ds.HasAdminPermissionInDashboardsOrFolders(c.Req.Context(), &hasAdminPermissionInDashOrFoldersQuery); err != nil {
+		hasAdminPermissionInDashOrFoldersQuery := folder.HasAdminPermissionInDashboardsOrFoldersQuery{SignedInUser: c.SignedInUser}
+		hasAdminPermissionInDashOrFoldersQueryResult, err := ds.HasAdminPermissionInDashboardsOrFolders(c.Req.Context(), &hasAdminPermissionInDashOrFoldersQuery)
+		if err != nil {
 			c.JsonApiErr(500, "Failed to check if user is a folder admin", err)
 		}
 
-		if hasAdminPermissionInDashOrFoldersQuery.Result {
+		if hasAdminPermissionInDashOrFoldersQueryResult {
 			return
 		}
 
