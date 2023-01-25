@@ -89,6 +89,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/star"
+	starApi "github.com/grafana/grafana/pkg/services/star/api"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity/httpentitystore"
@@ -213,6 +214,7 @@ type HTTPServer struct {
 	oauthTokenService      oauthtoken.OAuthTokenService
 	statsService           stats.Service
 	authnService           authn.Service
+	starApi                *starApi.API
 }
 
 type ServerOptions struct {
@@ -257,6 +259,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	queryLibraryHTTPService querylibrary.HTTPService, queryLibraryService querylibrary.Service, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service,
 	k8saccess k8saccess.K8SAccess, // required so that the router is registered
+	starApi *starApi.API,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -363,6 +366,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		oauthTokenService:            oauthTokenService,
 		statsService:                 statsService,
 		authnService:                 authnService,
+		starApi:                      starApi,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
