@@ -5,8 +5,9 @@ import { useAsync } from 'react-use';
 import { CoreApp, QueryEditorProps } from '@grafana/data';
 import { ButtonCascader, CascaderOption } from '@grafana/ui';
 
+import { defaultPhlare } from '../dataquery.gen';
 import { PhlareDataSource } from '../datasource';
-import { defaultQuery, PhlareDataSourceOptions, ProfileTypeMessage, Query } from '../types';
+import { PhlareDataSourceOptions, ProfileTypeMessage, Query } from '../types';
 
 import { EditorRow } from './EditorRow';
 import { EditorRows } from './EditorRows';
@@ -117,7 +118,7 @@ function useProfileName(profileTypes: ProfileTypeMessage[], profileTypeId: strin
 }
 
 export function normalizeQuery(query: Query, app?: CoreApp | string) {
-  let normalized = defaults(query, defaultQuery);
+  let normalized = defaults(query, defaultPhlare);
   if (app !== CoreApp.Explore && normalized.queryType === 'both') {
     // In dashboards and other places, we can't show both types of graphs at the same time.
     // This will also be a default when having 'both' query and adding it from explore to dashboard
