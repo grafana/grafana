@@ -17,18 +17,28 @@ export function GrafanaAlertmanagerDeliveryWarning({ currentAlertmanager }: Graf
   const styles = useStyles2(getStyles);
 
   const { useGetAlertmanagerChoiceQuery, useGetExternalAlertmanagersQuery } = alertmanagerApi;
-  const viewingInternalAm = currentAlertmanager === GRAFANA_RULES_SOURCE_NAME;
-
   const { currentData: alertmanagerChoice } = useGetAlertmanagerChoiceQuery();
-  const { currentData: externalAMs } = useGetExternalAlertmanagersQuery();
 
-  const externalAlertManagers = externalAMs?.activeAlertManagers ?? [];
+  const viewingInternalAM = currentAlertmanager === GRAFANA_RULES_SOURCE_NAME;
 
-  if (alertmanagerChoice === AlertmanagerChoice.Internal) {
+  const interactsWithExternalAMs =
+    alertmanagerChoice && [AlertmanagerChoice.External, AlertmanagerChoice.All].includes(alertmanagerChoice);
+
+  const fetchExternalAMs = viewingInternalAM && interactsWithExternalAMs;
+
+  // only fetch external AMs when we have the right admin config
+  const { currentData: externalAMs } = useGetExternalAlertmanagersQuery(undefined, {
+    skip: !fetchExternalAMs,
+  });
+
+  if (!interactsWithExternalAMs) {
     return null;
   }
 
-  if (viewingInternalAm && alertmanagerChoice === AlertmanagerChoice.External) {
+  const externalAlertManagers = externalAMs?.activeAlertManagers ?? [];
+  const hasActiveExternalAMs = !isEmpty(externalAlertManagers);
+
+  if (alertmanagerChoice === AlertmanagerChoice.External && hasActiveExternalAMs) {
     return (
       <Alert title="Grafana alerts are not delivered to Grafana Alertmanager">
         Grafana is configured to send alerts to external Alertmanagers only. Changing Grafana Alertmanager configuration
@@ -41,7 +51,7 @@ export function GrafanaAlertmanagerDeliveryWarning({ currentAlertmanager }: Graf
     );
   }
 
-  if (viewingInternalAm && alertmanagerChoice === AlertmanagerChoice.All && !isEmpty(externalAlertManagers)) {
+  if (alertmanagerChoice === AlertmanagerChoice.All && hasActiveExternalAMs) {
     return (
       <Alert title="You have additional Alertmanagers configured" severity="warning">
         Grafana is configured to send alerts to both the internal and external Alertmanagers. Changing the internal
