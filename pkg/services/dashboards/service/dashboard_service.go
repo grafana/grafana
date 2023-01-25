@@ -397,7 +397,7 @@ func (dr *DashboardServiceImpl) MakeUserAdmin(ctx context.Context, orgID int64, 
 			OrgID:       orgID,
 			DashboardID: dashboardID,
 			UserID:      userID,
-			Permission:  models.PERMISSION_ADMIN,
+			Permission:  dashboards.PERMISSION_ADMIN,
 			Created:     time.Now(),
 			Updated:     time.Now(),
 		},
@@ -409,7 +409,7 @@ func (dr *DashboardServiceImpl) MakeUserAdmin(ctx context.Context, orgID int64, 
 				OrgID:       orgID,
 				DashboardID: dashboardID,
 				Role:        &rtEditor,
-				Permission:  models.PERMISSION_EDIT,
+				Permission:  dashboards.PERMISSION_EDIT,
 				Created:     time.Now(),
 				Updated:     time.Now(),
 			},
@@ -417,7 +417,7 @@ func (dr *DashboardServiceImpl) MakeUserAdmin(ctx context.Context, orgID int64, 
 				OrgID:       orgID,
 				DashboardID: dashboardID,
 				Role:        &rtViewer,
-				Permission:  models.PERMISSION_VIEW,
+				Permission:  dashboards.PERMISSION_VIEW,
 				Created:     time.Now(),
 				Updated:     time.Now(),
 			},
@@ -493,14 +493,14 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 		var permissions []accesscontrol.SetResourcePermissionCommand
 		if !provisioned && dto.User.IsRealUser() && !dto.User.IsAnonymous {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
-				UserID: dto.User.UserID, Permission: models.PERMISSION_ADMIN.String(),
+				UserID: dto.User.UserID, Permission: dashboards.PERMISSION_ADMIN.String(),
 			})
 		}
 
 		if !inFolder {
 			permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-				{BuiltinRole: string(org.RoleEditor), Permission: models.PERMISSION_EDIT.String()},
-				{BuiltinRole: string(org.RoleViewer), Permission: models.PERMISSION_VIEW.String()},
+				{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
+				{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
 			}...)
 		}
 
@@ -534,11 +534,11 @@ func (dr *DashboardServiceImpl) GetDashboards(ctx context.Context, query *dashbo
 	return dr.dashboardStore.GetDashboards(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	return dr.dashboardStore.FindDashboards(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error {
+func (dr *DashboardServiceImpl) SearchDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) error {
 	res, err := dr.FindDashboards(ctx, query)
 	if err != nil {
 		return err
@@ -560,7 +560,7 @@ func getHitType(item dashboards.DashboardSearchProjection) models.HitType {
 	return hitType
 }
 
-func makeQueryResult(query *models.FindPersistedDashboardsQuery, res []dashboards.DashboardSearchProjection) {
+func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashboards.DashboardSearchProjection) {
 	query.Result = make([]*models.Hit, 0)
 	hits := make(map[int64]*models.Hit)
 

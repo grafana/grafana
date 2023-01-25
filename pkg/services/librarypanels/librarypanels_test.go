@@ -608,7 +608,7 @@ type scenarioContext struct {
 
 type folderACLItem struct {
 	roleType   org.RoleType
-	permission models.PermissionType
+	permission dashboards.PermissionType
 }
 
 func toLibraryElement(t *testing.T, res libraryelements.LibraryElementDTO) libraryElement {

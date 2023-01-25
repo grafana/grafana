@@ -62,7 +62,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 			cmd := dtos.UpdateDashboardACLCommand{
 				Items: []dtos.DashboardACLUpdateItem{
-					{UserID: 1000, Permission: models.PERMISSION_ADMIN},
+					{UserID: 1000, Permission: dashboards.PERMISSION_ADMIN},
 				},
 			}
 
@@ -89,11 +89,11 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 				CanAdminValue:                    true,
 				CheckPermissionBeforeUpdateValue: true,
 				GetACLValue: []*dashboards.DashboardACLInfoDTO{
-					{OrgID: 1, DashboardID: 1, UserID: 2, Permission: models.PERMISSION_VIEW},
-					{OrgID: 1, DashboardID: 1, UserID: 3, Permission: models.PERMISSION_EDIT},
-					{OrgID: 1, DashboardID: 1, UserID: 4, Permission: models.PERMISSION_ADMIN},
-					{OrgID: 1, DashboardID: 1, TeamID: 1, Permission: models.PERMISSION_VIEW},
-					{OrgID: 1, DashboardID: 1, TeamID: 2, Permission: models.PERMISSION_ADMIN},
+					{OrgID: 1, DashboardID: 1, UserID: 2, Permission: dashboards.PERMISSION_VIEW},
+					{OrgID: 1, DashboardID: 1, UserID: 3, Permission: dashboards.PERMISSION_EDIT},
+					{OrgID: 1, DashboardID: 1, UserID: 4, Permission: dashboards.PERMISSION_ADMIN},
+					{OrgID: 1, DashboardID: 1, TeamID: 1, Permission: dashboards.PERMISSION_VIEW},
+					{OrgID: 1, DashboardID: 1, TeamID: 2, Permission: dashboards.PERMISSION_ADMIN},
 				},
 			})
 
@@ -108,12 +108,12 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 					assert.Len(t, resp, 5)
 					assert.Equal(t, int64(2), resp[0].UserID)
-					assert.Equal(t, models.PERMISSION_VIEW, resp[0].Permission)
+					assert.Equal(t, dashboards.PERMISSION_VIEW, resp[0].Permission)
 				}, mockSQLStore)
 
 			cmd := dtos.UpdateDashboardACLCommand{
 				Items: []dtos.DashboardACLUpdateItem{
-					{UserID: 1000, Permission: models.PERMISSION_ADMIN},
+					{UserID: 1000, Permission: dashboards.PERMISSION_ADMIN},
 				},
 			}
 
@@ -142,7 +142,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 			cmd := dtos.UpdateDashboardACLCommand{
 				Items: []dtos.DashboardACLUpdateItem{
-					{UserID: 1000, TeamID: 1, Permission: models.PERMISSION_ADMIN},
+					{UserID: 1000, TeamID: 1, Permission: dashboards.PERMISSION_ADMIN},
 				},
 			}
 
@@ -156,7 +156,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 					assert.Equal(t, 400, sc.resp.Code)
 					respJSON, err := jsonMap(sc.resp.Body.Bytes())
 					require.NoError(t, err)
-					assert.Equal(t, models.ErrPermissionsWithUserAndTeamNotAllowed.Error(), respJSON["error"])
+					assert.Equal(t, dashboards.ErrPermissionsWithUserAndTeamNotAllowed.Error(), respJSON["error"])
 				},
 			}, hs)
 		})
@@ -174,7 +174,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 			cmd := dtos.UpdateDashboardACLCommand{
 				Items: []dtos.DashboardACLUpdateItem{
-					{UserID: 1000, Permission: models.PERMISSION_ADMIN},
+					{UserID: 1000, Permission: dashboards.PERMISSION_ADMIN},
 				},
 			}
 
@@ -195,12 +195,12 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 			cmds := []dtos.UpdateDashboardACLCommand{
 				{
 					Items: []dtos.DashboardACLUpdateItem{
-						{UserID: 1000, Permission: models.PERMISSION_ADMIN, Role: &role},
+						{UserID: 1000, Permission: dashboards.PERMISSION_ADMIN, Role: &role},
 					},
 				},
 				{
 					Items: []dtos.DashboardACLUpdateItem{
-						{TeamID: 1000, Permission: models.PERMISSION_ADMIN, Role: &role},
+						{TeamID: 1000, Permission: dashboards.PERMISSION_ADMIN, Role: &role},
 					},
 				},
 			}
@@ -216,7 +216,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 						assert.Equal(t, 400, sc.resp.Code)
 						respJSON, err := jsonMap(sc.resp.Body.Bytes())
 						require.NoError(t, err)
-						assert.Equal(t, models.ErrPermissionsWithRoleNotAllowed.Error(), respJSON["error"])
+						assert.Equal(t, dashboards.ErrPermissionsWithRoleNotAllowed.Error(), respJSON["error"])
 					},
 				}, hs)
 			}
@@ -236,7 +236,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 			cmd := dtos.UpdateDashboardACLCommand{
 				Items: []dtos.DashboardACLUpdateItem{
-					{UserID: 1000, Permission: models.PERMISSION_ADMIN},
+					{UserID: 1000, Permission: dashboards.PERMISSION_ADMIN},
 				},
 			}
 
@@ -272,12 +272,12 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 						CanAdminValue:                    true,
 						CheckPermissionBeforeUpdateValue: true,
 						GetACLValue: []*dashboards.DashboardACLInfoDTO{
-							{OrgID: 1, DashboardID: 1, UserID: 2, UserLogin: "hiddenUser", Permission: models.PERMISSION_VIEW},
-							{OrgID: 1, DashboardID: 1, UserID: 3, UserLogin: testUserLogin, Permission: models.PERMISSION_EDIT},
-							{OrgID: 1, DashboardID: 1, UserID: 4, UserLogin: "user_1", Permission: models.PERMISSION_ADMIN},
+							{OrgID: 1, DashboardID: 1, UserID: 2, UserLogin: "hiddenUser", Permission: dashboards.PERMISSION_VIEW},
+							{OrgID: 1, DashboardID: 1, UserID: 3, UserLogin: testUserLogin, Permission: dashboards.PERMISSION_EDIT},
+							{OrgID: 1, DashboardID: 1, UserID: 4, UserLogin: "user_1", Permission: dashboards.PERMISSION_ADMIN},
 						},
 						GetHiddenACLValue: []*dashboards.DashboardACL{
-							{OrgID: 1, DashboardID: 1, UserID: 2, Permission: models.PERMISSION_VIEW},
+							{OrgID: 1, DashboardID: 1, UserID: 2, Permission: dashboards.PERMISSION_VIEW},
 						},
 					})
 
@@ -289,14 +289,14 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 
 					assert.Len(t, resp, 2)
 					assert.Equal(t, int64(3), resp[0].UserID)
-					assert.Equal(t, models.PERMISSION_EDIT, resp[0].Permission)
+					assert.Equal(t, dashboards.PERMISSION_EDIT, resp[0].Permission)
 					assert.Equal(t, int64(4), resp[1].UserID)
-					assert.Equal(t, models.PERMISSION_ADMIN, resp[1].Permission)
+					assert.Equal(t, dashboards.PERMISSION_ADMIN, resp[1].Permission)
 				}, mockSQLStore)
 
 			cmd := dtos.UpdateDashboardACLCommand{
 				Items: []dtos.DashboardACLUpdateItem{
-					{UserID: 1000, Permission: models.PERMISSION_ADMIN},
+					{UserID: 1000, Permission: dashboards.PERMISSION_ADMIN},
 				},
 			}
 			for _, acl := range resp {

@@ -15,7 +15,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -117,8 +116,8 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 		teamSvc := &teamtest.FakeService{}
 		dashSvc := &dashboards.FakeDashboardService{}
 		qResult := []*dashboards.DashboardACLInfoDTO{
-			{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
-			{Role: &editorRole, Permission: models.PERMISSION_EDIT},
+			{Role: &viewerRole, Permission: dashboards.PERMISSION_VIEW},
+			{Role: &editorRole, Permission: dashboards.PERMISSION_EDIT},
 		}
 		dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
 
@@ -133,8 +132,8 @@ func TestDashboardSnapshotAPIEndpoint_singleSnapshot(t *testing.T) {
 				qResult := &dashboards.Dashboard{}
 				dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil).Maybe()
 				qResultACL := []*dashboards.DashboardACLInfoDTO{
-					{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
-					{Role: &editorRole, Permission: models.PERMISSION_EDIT},
+					{Role: &viewerRole, Permission: dashboards.PERMISSION_VIEW},
+					{Role: &editorRole, Permission: dashboards.PERMISSION_EDIT},
 				}
 				dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResultACL, nil)
 				guardian.InitLegacyGuardian(sc.sqlStore, dashSvc, teamSvc)

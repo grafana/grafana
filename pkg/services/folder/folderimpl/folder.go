@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -310,13 +309,13 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		var permissions []accesscontrol.SetResourcePermissionCommand
 		if user.IsRealUser() && !user.IsAnonymous {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
-				UserID: userID, Permission: models.PERMISSION_ADMIN.String(),
+				UserID: userID, Permission: dashboards.PERMISSION_ADMIN.String(),
 			})
 		}
 
 		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: string(org.RoleEditor), Permission: models.PERMISSION_EDIT.String()},
-			{BuiltinRole: string(org.RoleViewer), Permission: models.PERMISSION_VIEW.String()},
+			{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
+			{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
 		}...)
 
 		_, permissionErr = s.permissions.SetPermissions(ctx, cmd.OrgID, createdFolder.UID, permissions...)
@@ -626,7 +625,7 @@ func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folder
 			OrgID:       orgID,
 			DashboardID: folderID,
 			UserID:      userID,
-			Permission:  models.PERMISSION_ADMIN,
+			Permission:  dashboards.PERMISSION_ADMIN,
 			Created:     time.Now(),
 			Updated:     time.Now(),
 		},
@@ -638,7 +637,7 @@ func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folder
 				OrgID:       orgID,
 				DashboardID: folderID,
 				Role:        &rtEditor,
-				Permission:  models.PERMISSION_EDIT,
+				Permission:  dashboards.PERMISSION_EDIT,
 				Created:     time.Now(),
 				Updated:     time.Now(),
 			},
@@ -646,7 +645,7 @@ func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folder
 				OrgID:       orgID,
 				DashboardID: folderID,
 				Role:        &rtViewer,
-				Permission:  models.PERMISSION_VIEW,
+				Permission:  dashboards.PERMISSION_VIEW,
 				Created:     time.Now(),
 				Updated:     time.Now(),
 			},
