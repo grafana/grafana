@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -21,10 +22,14 @@ type HistorySrv struct {
 }
 
 func (srv *HistorySrv) RouteQueryStateHistory(c *contextmodel.ReqContext) response.Response {
+	from := c.QueryInt64("from")
+	to := c.QueryInt64("to")
 	query := models.HistoryQuery{
 		RuleUID:      c.Query("ruleUID"),
 		OrgID:        c.OrgID,
 		SignedInUser: c.SignedInUser,
+		From:         time.Unix(from, 0),
+		To:           time.Unix(to, 0),
 	}
 	frame, err := srv.hist.QueryStates(c.Req.Context(), query)
 	if err != nil {
