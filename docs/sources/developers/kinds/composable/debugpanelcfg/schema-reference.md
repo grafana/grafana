@@ -8,7 +8,7 @@ title: DebugPanelCfg kind
 
 # DebugPanelCfg kind
 
-## Maturity: merged
+## Maturity: experimental
 ## Version: 0.0
 
 ## Properties

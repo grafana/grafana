@@ -404,7 +404,7 @@
         "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/debug/panelcfg.gen.ts"
       },
       "machineName": "debugpanelcfg",
-      "maturity": "merged",
+      "maturity": "experimental",
       "name": "DebugPanelCfg",
       "pluralMachineName": "debugpanelcfgs",
       "pluralName": "DebugPanelCfgs",
@@ -1755,6 +1755,7 @@
           "bargaugepanelcfg",
           "dashboard",
           "dashboardlistpanelcfg",
+          "debugpanelcfg",
           "gaugepanelcfg",
           "histogrampanelcfg",
           "newspanelcfg",
@@ -1762,7 +1763,7 @@
           "statpanelcfg",
           "textpanelcfg"
         ],
-        "count": 11
+        "count": 12
       },
       "mature": {
         "name": "mature",
@@ -1773,11 +1774,10 @@
         "name": "merged",
         "items": [
           "alertgroupspanelcfg",
-          "debugpanelcfg",
           "playlist",
           "team"
         ],
-        "count": 4
+        "count": 3
       },
       "planned": {
         "name": "planned",

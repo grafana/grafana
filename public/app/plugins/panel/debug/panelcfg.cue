@@ -23,7 +23,7 @@ import (
 pfs.GrafanaPlugin
 
 composableKinds: PanelCfg: {
-	maturity: "merged"
+	maturity: "experimental"
 
 	lineage: {
 		seqs: [
