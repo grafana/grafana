@@ -31,43 +31,58 @@ composableKinds: DataQuery: {
 				schemas: [
 					{
 						#AzureMonitorQuery: common.DataQuery & {
+							// Azure subscription containing the resource(s) to be queried.
 							subscription?: string
 
-							// ARG uses multiple subscriptions
+							// Subscriptions to be queried via Azure Resource Graph.
 							subscriptions?: [...string]
 
-							azureMonitor?:              #AzureMetricQuery
-							azureLogAnalytics?:         #AzureLogsQuery
-							azureResourceGraph?:        #AzureResourceGraphQuery
+							// Azure Monitor Metrics sub-query properties.
+							azureMonitor?: #AzureMetricQuery
+							// Azure Monitor Logs sub-query properties.
+							azureLogAnalytics?: #AzureLogsQuery
+							// Azure Resource Graph sub-query properties.
+							azureResourceGraph?: #AzureResourceGraphQuery
+							// @deprecated Legacy template variable support.
 							grafanaTemplateVariableFn?: #GrafanaTemplateVariableQuery
 
-							// Template variables params 
+							// Template variables params. These exist for backwards compatiblity with legacy template variables.
 							resourceGroup?: string
 							namespace?:     string
 							resource?:      string
-							query?:         #AzureQueryType
+							// Azure Monitor query type.
+							// queryType:      #AzureQueryType & "Azure Monitor"
 						} @cuetsy(kind="interface")
 
-						// GrafanaTemplateVariableFn is deprecated
-						#AzureQueryType: "Azure Monitor" | "Azure Log Analytics" | "Azure Resource Graph" | "Azure Subscriptions" | "Azure Resource Groups" | "Azure Namespaces" | "Azure Resource Names" | "Azure Metric Names" | "Azure Workspaces" | "Grafana Template Variable Function" @cuetsy(kind="enum", memberNames="AzureMonitor|LogAnalytics|AzureResourceGraph|SubscriptionsQuery|ResourceGroupsQuery|NamespacesQuery|ResourceNamesQuery|MetricNamesQuery|WorkspacesQuery|GrafanaTemplateVariableFn")
+						// Defines the supported queryTypes. GrafanaTemplateVariableFn is deprecated
+						#AzureQueryType: "Azure Monitor" | "Azure Log Analytics" @cuetsy(kind="enum", memberNames="AzureMonitor|LogAnalytics")
 
-						// Azure Monitor Metrics sub-query properties
 						#AzureMetricQuery: {
-							resources?: [...#AzureMonitorResource]
+							// Array of resource URIs to be queried.
+							resources: [...#AzureMonitorResource]
 							// metricNamespace is used as the resource type (or resource namespace).
-							// It"s usually equal to the target metric namespace.
+							// It's usually equal to the target metric namespace. e.g. microsoft.storage/storageaccounts
 							// Kept the name of the variable as metricNamespace to avoid backward incompatibility issues.
-							metricNamespace?: string
-							// used as the value for the metricNamespace param when different from the resource namespace 
-							customNamespace?: string
-							metricName?:      string
-							region?:          string
-							timeGrain?:       string
-							aggregation?:     string
-							dimensionFilters?: [...#AzureMetricDimension]
+							metricNamespace: string
+							// Used as the value for the metricNamespace property when it's different from the resource namespace.
+							customNamespace: string
+							// The metric to query data for within the specified metricNamespace. e.g. UsedCapacity
+							metricName: string
+							// The Azure region containing the resource(s).
+							region: string
+							// The granularity of data points to be queried. Defaults to auto.
+							timeGrain: string
+							// The aggregation to be used within the query. Defaults to the primaryAggregationType defined by the metric.
+							aggregation: string
+							// Filters to reduce the set of data returned. Dimensions that can be filtered on are defined by the metric.
+							dimensionFilters: [...#AzureMetricDimension]
+							// Maximum number of records to return. Defaults to 10
+							top: string | "10"
+							// Time grains that are supported by the metric.
+							allowedTimeGrainsMs: [...int64]
+
+							// Aliases can be set to modify the legend labels. e.g. {{ resourceGroup }}. See docs for more detail.
 							alias?: string
-							top?:   string
-							allowedTimeGrainsMs?: [...int64]
 
 							// @deprecated
 							timeGrainUnit?: string
@@ -92,34 +107,44 @@ composableKinds: DataQuery: {
 
 						// Azure Monitor Logs sub-query properties
 						#AzureLogsQuery: {
-							query?:        string
-							resultFormat?: string
-							resources?: [...string]
-
-							workspace?: string
+							// KQL query to be executed.
+							query: string
+							// Specifies the format results should be returned as.
+							resultFormat?: #ResultFormat
+							// Array of resource URIs to be queried.
+							resources: [...string]
+							// Workspace ID. This was removed in Grafana 8, but remains for backwards compat
+							workspace: string
 
 							// @deprecated Use resources instead 
 							resource?: string
 						} @cuetsy(kind="interface")
 
+						#ResultFormat: "table" | "time_series" @cuetsy(kind="enum")
+
 						#AzureResourceGraphQuery: {
-							query?:        string
-							resultFormat?: string
+							// Azure Resource Graph KQL query to be executed.
+							query: string
+							// Specifies the format results should be returned as. Defaults to table.
+							resultFormat: string
 						} @cuetsy(kind="interface")
 
 						#AzureMonitorResource: {
 							subscription?:    string
-							resourceGroup?:   string
-							resourceName?:    string
+							resourceGroup:    string
+							resourceName:     string
 							metricNamespace?: string
 							region?:          string
 						} @cuetsy(kind="interface")
 
 						#AzureMetricDimension: {
+							// Name of Dimension to be filtered on.
 							dimension: string
-							operator:  string
+							// String denoting the filter operation. Supports 'eq' - equals,'ne' - not equals, 'sw' - starts with. Note that some dimensions may not support all operators.
+							operator: string
+							// Values to match with the filter.
 							filters?: [...string]
-							// @deprecated filter is deprecated in favour of filters to support multiselect
+							// @deprecated filter is deprecated in favour of filters to support multiselect.
 							filter?: string
 						} @cuetsy(kind="interface")
 
