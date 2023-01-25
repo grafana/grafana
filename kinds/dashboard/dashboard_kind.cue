@@ -35,7 +35,7 @@ lineage: seqs: [
 				// Whether a dashboard is editable or not.
 				editable: bool | *true
 				// Configuration of dashboard cursor sync behavior.
-				graphTooltip: #DashboardCursorSync | *0
+				graphTooltip: #DashboardCursorSync
 				// Time range for dashboard, e.g. last 6 hours, last 7 days, etc
 				time?: {
 					from: string | *"now-6h"
