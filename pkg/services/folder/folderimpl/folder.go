@@ -408,12 +408,12 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 	logger := s.log.FromContext(ctx)
 
 	query := dashboards.GetDashboardQuery{OrgID: cmd.OrgID, UID: cmd.UID}
-	_, err := s.dashboardStore.GetDashboard(ctx, &query)
+	queryResult, err := s.dashboardStore.GetDashboard(ctx, &query)
 	if err != nil {
 		return nil, toFolderError(err)
 	}
 
-	dashFolder := query.Result
+	dashFolder := queryResult
 	currentTitle := dashFolder.Title
 
 	if !dashFolder.IsFolder {

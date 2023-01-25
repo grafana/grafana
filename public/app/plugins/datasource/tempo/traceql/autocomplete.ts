@@ -92,15 +92,6 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
     this.registerInteractionCommandId = id;
   }
 
-  private overrideTagName(tagName: string): string {
-    switch (tagName) {
-      case 'status':
-        return 'status.code';
-      default:
-        return tagName;
-    }
-  }
-
   private async getTagValues(tagName: string): Promise<Array<SelectableValue<string>>> {
     let tagValues: Array<SelectableValue<string>>;
 
@@ -148,8 +139,7 @@ export class CompletionProvider implements monacoTypes.languages.CompletionItemP
           type: 'OPERATOR',
         }));
       case 'SPANSET_IN_VALUE':
-        const tagName = this.overrideTagName(situation.tagName);
-        const tagValues = await this.getTagValues(tagName);
+        const tagValues = await this.getTagValues(situation.tagName);
         const items: Completion[] = [];
 
         const getInsertionText = (val: SelectableValue<string>): string => {

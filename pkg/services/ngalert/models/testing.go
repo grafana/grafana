@@ -25,7 +25,7 @@ func AlertRuleGen(mutators ...AlertRuleMutator) func() *AlertRule {
 				NoData,
 				OK,
 			}
-			return s[rand.Intn(len(s)-1)]
+			return s[rand.Intn(len(s))]
 		}
 
 		randErrState := func() ExecutionErrorState {
@@ -34,7 +34,7 @@ func AlertRuleGen(mutators ...AlertRuleMutator) func() *AlertRule {
 				ErrorErrState,
 				OkErrState,
 			}
-			return s[rand.Intn(len(s)-1)]
+			return s[rand.Intn(len(s))]
 		}
 
 		interval := (rand.Int63n(6) + 1) * 10

@@ -6,15 +6,9 @@ import { Provider } from 'react-redux';
 import { Route, Router } from 'react-router-dom';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
-import {
-  DataSourceApi,
-  DataSourceInstanceSettings,
-  DataSourceRef,
-  QueryEditorProps,
-  ScopedVars,
-  UrlQueryValue,
-} from '@grafana/data';
+import { DataSourceApi, DataSourceInstanceSettings, QueryEditorProps, ScopedVars, UrlQueryValue } from '@grafana/data';
 import { locationSearchToObject, locationService, setDataSourceSrv, setEchoSrv, config } from '@grafana/runtime';
+import { DataSourceRef } from '@grafana/schema';
 import { GrafanaContext } from 'app/core/context/GrafanaContext';
 import { GrafanaRoute } from 'app/core/navigation/GrafanaRoute';
 import { Echo } from 'app/core/services/echo/Echo';

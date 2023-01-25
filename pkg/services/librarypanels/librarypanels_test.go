@@ -77,7 +77,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.Id)
+			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID)
 
 			err := sc.service.ConnectLibraryPanelsForDashboard(sc.ctx, sc.user, dashInDB)
 			require.NoError(t, err)
@@ -175,7 +175,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.Id)
+			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID)
 
 			err = sc.service.ConnectLibraryPanelsForDashboard(sc.ctx, sc.user, dashInDB)
 			require.NoError(t, err)
@@ -221,7 +221,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.Id)
+			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID)
 
 			err := sc.service.ConnectLibraryPanelsForDashboard(sc.ctx, sc.user, dashInDB)
 			require.EqualError(t, err, errLibraryPanelHeaderUIDMissing.Error())
@@ -230,7 +230,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 	scenarioWithLibraryPanel(t, "When an admin tries to store a dashboard with unused/removed library panels, it should disconnect unused/removed library panels",
 		func(t *testing.T, sc scenarioContext) {
 			unused, err := sc.elementService.CreateElement(sc.ctx, sc.user, libraryelements.CreateLibraryElementCommand{
-				FolderID: sc.folder.Id,
+				FolderID: sc.folder.ID,
 				Name:     "Unused Libray Panel",
 				Model: []byte(`
 			{
@@ -277,7 +277,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 				Title: "Testing ConnectLibraryPanelsForDashboard",
 				Data:  simplejson.NewFromAny(dashJSON),
 			}
-			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.Id)
+			dashInDB := createDashboard(t, sc.sqlStore, sc.user, &dash, sc.folder.ID)
 			err = sc.elementService.ConnectElementsToDashboard(sc.ctx, sc.user, []string{sc.initialResult.Result.UID}, dashInDB.ID)
 			require.NoError(t, err)
 
@@ -406,7 +406,7 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 			_, err := sc.elementService.GetElement(sc.ctx, sc.user, existingUID)
 			require.NoError(t, err)
 
-			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, simplejson.New(), panels, sc.folder.Id)
+			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, simplejson.New(), panels, sc.folder.ID)
 			require.NoError(t, err)
 
 			element, err := sc.elementService.GetElement(sc.ctx, sc.user, existingUID)
@@ -414,7 +414,7 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 			var expected = getExpected(t, element, existingUID, existingName, sc.initialResult.Result.Model)
 			expected.FolderID = sc.initialResult.Result.FolderID
 			expected.Description = sc.initialResult.Result.Description
-			expected.Meta.FolderUID = sc.folder.Uid
+			expected.Meta.FolderUID = sc.folder.UID
 			expected.Meta.FolderName = sc.folder.Title
 			var result = toLibraryElement(t, element)
 			if diff := cmp.Diff(expected, result, getCompareOptions()...); diff != "" {
@@ -601,7 +601,7 @@ type scenarioContext struct {
 	service        Service
 	elementService libraryelements.Service
 	user           *user.SignedInUser
-	folder         *models.Folder
+	folder         *folder.Folder
 	initialResult  libraryPanelResult
 	sqlStore       db.DB
 }
@@ -766,19 +766,20 @@ func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, s
 	store := dbtest.NewFakeDB()
 
 	dashSvc := dashboards.NewFakeDashboardService(t)
+	var result *dashboards.Dashboard
 	dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
 		q := args.Get(1).(*dashboards.GetDashboardQuery)
-		q.Result = &dashboards.Dashboard{
+		result = &dashboards.Dashboard{
 			ID:  q.ID,
 			UID: q.UID,
 		}
-	}).Return(nil)
+	}).Return(result, nil)
 	guardian.InitLegacyGuardian(store, dashSvc, &teamtest.FakeService{})
 	t.Helper()
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
 		command := libraryelements.CreateLibraryElementCommand{
-			FolderID: sc.folder.Id,
+			FolderID: sc.folder.ID,
 			Name:     "Text - Library Panel",
 			Model: []byte(`
 			{
@@ -877,15 +878,15 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			sqlStore:       sqlStore,
 		}
 
-		folder := createFolderWithACL(t, sc.sqlStore, "ScenarioFolder", sc.user, []folderACLItem{})
-		sc.folder = &models.Folder{
-			Id:        folder.ID,
-			Uid:       folder.UID,
-			Title:     folder.Title,
-			Url:       dashboards.GetFolderURL(folder.UID, slugify.Slugify(folder.Title)),
+		foldr := createFolderWithACL(t, sc.sqlStore, "ScenarioFolder", sc.user, []folderACLItem{})
+		sc.folder = &folder.Folder{
+			ID:        foldr.ID,
+			UID:       foldr.UID,
+			Title:     foldr.Title,
+			URL:       dashboards.GetFolderURL(foldr.UID, slugify.Slugify(foldr.Title)),
 			Version:   0,
-			Created:   folder.Created,
-			Updated:   folder.Updated,
+			Created:   foldr.Created,
+			Updated:   foldr.Updated,
 			UpdatedBy: 0,
 			CreatedBy: 0,
 			HasACL:    false,
