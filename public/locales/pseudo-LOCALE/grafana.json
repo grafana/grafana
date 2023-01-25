@@ -12,12 +12,15 @@
       "light-theme": "Ŀįģĥŧ",
       "search": "Ŝęäřčĥ"
     },
+    "search-box": {
+      "placeholder": "Ŝęäřčĥ őř ĵūmp ŧő..."
+    },
     "section": {
       "actions": "Åčŧįőŉş",
       "dashboard-search-results": "Đäşĥþőäřđş",
       "pages": "Päģęş",
       "preferences": "Přęƒęřęŉčęş",
-      "recent-dashboards": "Ŗęčęŉŧľy vįęŵęđ đäşĥþőäřđş"
+      "recent-dashboards": "Ŗęčęŉŧ đäşĥþőäřđş"
     }
   },
   "common": {
@@ -282,7 +285,7 @@
       "title": "Cĥäŉģę päşşŵőřđ"
     },
     "profile/settings": {
-      "title": "Přęƒęřęŉčęş"
+      "title": "Přőƒįľę"
     },
     "profile/switch-org": "Ŝŵįŧčĥ őřģäŉįžäŧįőŉ",
     "scenes": {
@@ -552,8 +555,7 @@
       "name-error": "Ńämę įş řęqūįřęđ",
       "name-label": "Ńämę",
       "username-label": "Ůşęřŉämę"
-    },
-    "title": "Přőƒįľę"
+    }
   },
   "user-session": {
     "browser-column": "ßřőŵşęř & ØŜ",

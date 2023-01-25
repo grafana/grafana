@@ -3,10 +3,9 @@ package supportbundlesimpl
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 	"time"
 
+	grafanaApi "github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -36,6 +35,9 @@ type Service struct {
 
 	log log.Logger
 
+	enabled         bool
+	serverAdminOnly bool
+
 	collectors map[string]supportbundles.Collector
 }
 
@@ -50,29 +52,33 @@ func ProvideService(cfg *setting.Cfg,
 	pluginStore plugins.Store,
 	pluginSettings pluginsettings.Service,
 	features *featuremgmt.FeatureManager,
+	httpServer *grafanaApi.HTTPServer,
 	usageStats usagestats.Service) (*Service, error) {
+	section := cfg.SectionWithEnvOverrides("support_bundles")
 	s := &Service{
-		cfg:            cfg,
-		store:          newStore(kvStore),
-		pluginStore:    pluginStore,
-		pluginSettings: pluginSettings,
-		accessControl:  accessControl,
-		features:       features,
-		log:            log.New("supportbundle.service"),
-		collectors:     make(map[string]supportbundles.Collector),
+		cfg:             cfg,
+		store:           newStore(kvStore),
+		pluginStore:     pluginStore,
+		pluginSettings:  pluginSettings,
+		accessControl:   accessControl,
+		features:        features,
+		log:             log.New("supportbundle.service"),
+		enabled:         section.Key("enabled").MustBool(true),
+		serverAdminOnly: section.Key("server_admin_only").MustBool(true),
+		collectors:      make(map[string]supportbundles.Collector),
 	}
 
-	if !features.IsEnabled(featuremgmt.FlagSupportBundles) {
+	if !features.IsEnabled(featuremgmt.FlagSupportBundles) || !s.enabled {
 		return s, nil
 	}
 
 	if !accessControl.IsDisabled() {
-		if err := declareFixedRoles(accesscontrolService); err != nil {
+		if err := s.declareFixedRoles(accesscontrolService); err != nil {
 			return nil, err
 		}
 	}
 
-	s.registerAPIEndpoints(routeRegister)
+	s.registerAPIEndpoints(httpServer, routeRegister)
 
 	// TODO: move to relevant services
 	s.RegisterSupportItemCollector(basicCollector(cfg))
@@ -149,12 +155,6 @@ func (s *Service) remove(ctx context.Context, uid string) error {
 	// TODO handle cases when bundles aren't complete yet
 	if bundle.State == supportbundles.StatePending {
 		return fmt.Errorf("could not remove a support bundle with uid %s as it is still being created", uid)
-	}
-
-	if bundle.FilePath != "" {
-		if err := os.RemoveAll(filepath.Dir(bundle.FilePath)); err != nil {
-			return fmt.Errorf("could not remove directory for support bundle %s: %w", uid, err)
-		}
 	}
 
 	// Remove the KV store entry

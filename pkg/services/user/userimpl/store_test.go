@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
@@ -281,7 +282,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		})
 		require.Nil(t, err)
 
-		err = updateDashboardACL(t, ss, 1, &models.DashboardACL{
+		err = updateDashboardACL(t, ss, 1, &dashboards.DashboardACL{
 			DashboardID: 1, OrgID: users[0].OrgID, UserID: users[1].ID,
 			Permission: models.PERMISSION_EDIT,
 		})
@@ -420,7 +421,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		})
 		require.Nil(t, err)
 
-		err = updateDashboardACL(t, ss, 1, &models.DashboardACL{
+		err = updateDashboardACL(t, ss, 1, &dashboards.DashboardACL{
 			DashboardID: 1, OrgID: users[0].OrgID, UserID: users[1].ID,
 			Permission: models.PERMISSION_EDIT,
 		})
@@ -430,11 +431,11 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		err = userStore.Delete(context.Background(), users[1].ID)
 		require.Nil(t, err)
 
-		permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: users[0].OrgID}
-		err = userStore.getDashboardACLInfoList(permQuery)
+		permQuery := &dashboards.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: users[0].OrgID}
+		permQueryResult, err := userStore.getDashboardACLInfoList(permQuery)
 		require.Nil(t, err)
 
-		require.Len(t, permQuery.Result, 0)
+		require.Len(t, permQueryResult, 0)
 
 		// A user is an org member and has been assigned permissions
 		// Re-init DB
@@ -454,7 +455,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		})
 		require.Nil(t, err)
 
-		err = updateDashboardACL(t, ss, 1, &models.DashboardACL{
+		err = updateDashboardACL(t, ss, 1, &dashboards.DashboardACL{
 			DashboardID: 1, OrgID: users[0].OrgID, UserID: users[1].ID,
 			Permission: models.PERMISSION_EDIT,
 		})
@@ -486,11 +487,11 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		err = userStore.Delete(context.Background(), users[1].ID)
 		require.Nil(t, err)
 
-		permQuery = &models.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: users[0].OrgID}
-		err = userStore.getDashboardACLInfoList(permQuery)
+		permQuery = &dashboards.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: users[0].OrgID}
+		permQueryResult, err = userStore.getDashboardACLInfoList(permQuery)
 		require.Nil(t, err)
 
-		require.Len(t, permQuery.Result, 0)
+		require.Len(t, permQueryResult, 0)
 	})
 
 	t.Run("Testing DB - return list of users that the SignedInUser has permission to read", func(t *testing.T) {
@@ -817,7 +818,7 @@ func createFiveTestUsers(t *testing.T, svc user.Service, fn func(i int) *user.Cr
 }
 
 // TODO: Use FakeDashboardStore when org has its own service
-func updateDashboardACL(t *testing.T, sqlStore db.DB, dashboardID int64, items ...*models.DashboardACL) error {
+func updateDashboardACL(t *testing.T, sqlStore db.DB, dashboardID int64, items ...*dashboards.DashboardACL) error {
 	t.Helper()
 
 	err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
@@ -844,7 +845,7 @@ func updateDashboardACL(t *testing.T, sqlStore db.DB, dashboardID int64, items .
 		}
 
 		// Update dashboard HasACL flag
-		dashboard := models.Dashboard{HasACL: true}
+		dashboard := dashboards.Dashboard{HasACL: true}
 		_, err = sess.Cols("has_acl").Where("id=?", dashboardID).Update(&dashboard)
 		return err
 	})
@@ -854,9 +855,9 @@ func updateDashboardACL(t *testing.T, sqlStore db.DB, dashboardID int64, items .
 // This function was copied from pkg/services/dashboards/database to circumvent
 // import cycles. When this org-related code is refactored into a service the
 // tests can the real GetDashboardACLInfoList functions
-func (ss *sqlStore) getDashboardACLInfoList(query *models.GetDashboardACLInfoListQuery) error {
+func (ss *sqlStore) getDashboardACLInfoList(query *dashboards.GetDashboardACLInfoListQuery) ([]*dashboards.DashboardACLInfoDTO, error) {
+	queryResult := make([]*dashboards.DashboardACLInfoDTO, 0)
 	outerErr := ss.db.WithDbSession(context.Background(), func(dbSession *db.Session) error {
-		query.Result = make([]*models.DashboardACLInfoDTO, 0)
 		falseStr := ss.dialect.BooleanStr(false)
 
 		if query.DashboardID == 0 {
@@ -880,7 +881,7 @@ func (ss *sqlStore) getDashboardACLInfoList(query *models.GetDashboardACLInfoLis
 				falseStr + ` AS inherited
 		FROM dashboard_acl as da
 		WHERE da.dashboard_id = -1`
-			return dbSession.SQL(sql).Find(&query.Result)
+			return dbSession.SQL(sql).Find(&queryResult)
 		}
 
 		rawSQL := `
@@ -922,18 +923,18 @@ func (ss *sqlStore) getDashboardACLInfoList(query *models.GetDashboardACLInfoLis
 			ORDER BY da.id ASC
 			`
 
-		return dbSession.SQL(rawSQL, query.OrgID, query.DashboardID).Find(&query.Result)
+		return dbSession.SQL(rawSQL, query.OrgID, query.DashboardID).Find(&queryResult)
 	})
 
 	if outerErr != nil {
-		return outerErr
+		return nil, outerErr
 	}
 
-	for _, p := range query.Result {
+	for _, p := range queryResult {
 		p.PermissionName = p.Permission.String()
 	}
 
-	return nil
+	return queryResult, nil
 }
 
 func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Service, user.Service) {

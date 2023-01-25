@@ -20,17 +20,17 @@ import { refIdExists } from '../util';
 
 import { AlertType } from './AlertType';
 import {
-  duplicateQuery,
   addNewDataQuery,
   addNewExpression,
+  duplicateQuery,
   queriesAndExpressionsReducer,
   removeExpression,
   rewireExpressions,
   setDataQueries,
   updateExpression,
   updateExpressionRefId,
-  updateExpressionType,
   updateExpressionTimeRange,
+  updateExpressionType,
 } from './reducer';
 
 interface Props {
@@ -67,8 +67,8 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
   }, []);
 
   const runQueries = useCallback(() => {
-    runner.current.run(queries);
-  }, [queries]);
+    runner.current.run(getValues('queries'));
+  }, [getValues]);
 
   // whenever we update the queries we have to update the form too
   useEffect(() => {
@@ -161,7 +161,13 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
           <InputControl
             name="expression"
             render={({ field: { ref, ...field } }) => {
-              return <ExpressionEditor {...field} dataSourceName={dataSourceName} />;
+              return (
+                <ExpressionEditor
+                  {...field}
+                  dataSourceName={dataSourceName}
+                  showPreviewAlertsButton={!isRecordingRuleType}
+                />
+              );
             }}
             control={control}
             rules={{

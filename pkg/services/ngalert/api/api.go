@@ -156,7 +156,13 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 
 func (api *API) Usage(ctx context.Context, scopeParams *quota.ScopeParameters) (*quota.Map, error) {
 	u := &quota.Map{}
-	if orgUsage, err := api.RuleStore.Count(ctx, scopeParams.OrgID); err != nil {
+
+	var orgID int64 = 0
+	if scopeParams != nil {
+		orgID = scopeParams.OrgID
+	}
+
+	if orgUsage, err := api.RuleStore.Count(ctx, orgID); err != nil {
 		return u, err
 	} else {
 		tag, err := quota.NewTag(models.QuotaTargetSrv, models.QuotaTarget, quota.OrgScope)

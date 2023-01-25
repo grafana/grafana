@@ -6,9 +6,9 @@
   "version": "9.4.0-pre",
   "repository": "github:grafana/grafana",
   "scripts": {
-    "build": "yarn i18n:compile && NODE_ENV=production webpack --config scripts/webpack/webpack.prod.js",
+    "build": "yarn i18n:compile && NODE_ENV=production webpack --progress --config scripts/webpack/webpack.prod.js",
     "build:nominify": "yarn run build --env noMinify=1",
-    "dev": "yarn i18n:compile && webpack --progress --color --config scripts/webpack/webpack.dev.js",
+    "dev": "yarn i18n:compile && NODE_ENV=dev webpack --progress --color --config scripts/webpack/webpack.dev.js",
     "e2e": "./e2e/start-and-run-suite",
     "e2e:debug": "./e2e/start-and-run-suite debug",
     "e2e:dev": "./e2e/start-and-run-suite dev",
@@ -71,6 +71,12 @@
     ],
     "*pkg/**/*.go": [
       "gofmt -w -s"
+    ],
+    "*kinds/**/*.cue": [
+      "make fix-cue"
+    ],
+    "*public/app/plugins/**/**/*.cue": [
+      "make fix-cue"
     ]
   },
   "devDependencies": {
@@ -94,6 +100,7 @@
     "@emotion/eslint-plugin": "11.10.0",
     "@grafana/e2e": "workspace:*",
     "@grafana/eslint-config": "5.1.0",
+    "@grafana/eslint-plugin": "link:./packages/grafana-eslint-rules",
     "@grafana/toolkit": "workspace:*",
     "@grafana/tsconfig": "^1.2.0-rc1",
     "@pmmmwh/react-refresh-webpack-plugin": "0.5.8",
@@ -116,8 +123,6 @@
     "@types/d3-force": "^2.1.0",
     "@types/d3-scale-chromatic": "1.3.1",
     "@types/debounce-promise": "3.1.5",
-    "@types/enzyme": "3.10.12",
-    "@types/enzyme-adapter-react-16": "1.0.6",
     "@types/eslint": "8.4.9",
     "@types/file-saver": "2.0.5",
     "@types/glob": "^8.0.0",
@@ -160,25 +165,26 @@
     "@types/uuid": "8.3.4",
     "@typescript-eslint/eslint-plugin": "5.42.0",
     "@typescript-eslint/parser": "5.42.0",
-    "@wojtekmaj/enzyme-adapter-react-17": "0.8.0",
     "autoprefixer": "10.4.13",
     "babel-jest": "29.3.1",
     "babel-loader": "9.1.0",
     "babel-plugin-angularjs-annotate": "0.10.0",
     "babel-plugin-macros": "3.1.0",
     "blob-polyfill": "7.0.20220408",
+    "browserslist": "^4.21.4",
     "copy-webpack-plugin": "9.0.1",
     "css-loader": "6.7.1",
     "css-minimizer-webpack-plugin": "4.2.2",
     "cypress": "9.5.1",
-    "enzyme": "3.11.0",
-    "enzyme-to-json": "3.6.2",
+    "esbuild": "0.16.17",
+    "esbuild-loader": "2.21.0",
+    "esbuild-plugin-browserslist": "^0.6.0",
     "eslint": "8.31.0",
     "eslint-config-prettier": "8.6.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-jest": "27.1.3",
     "eslint-plugin-jsdoc": "39.6.2",
-    "eslint-plugin-jsx-a11y": "6.6.1",
+    "eslint-plugin-jsx-a11y": "6.7.1",
     "eslint-plugin-lodash": "7.4.0",
     "eslint-plugin-react": "7.31.10",
     "eslint-plugin-react-hooks": "4.6.0",
@@ -246,14 +252,14 @@
     "@grafana/aws-sdk": "0.0.40",
     "@grafana/data": "workspace:*",
     "@grafana/e2e-selectors": "workspace:*",
-    "@grafana/experimental": "1.0.1",
+    "@grafana/experimental": "1.1.0",
     "@grafana/faro-core": "1.0.0-beta2",
     "@grafana/faro-web-sdk": "1.0.0-beta2",
     "@grafana/google-sdk": "0.0.4",
     "@grafana/lezer-logql": "0.1.1",
     "@grafana/monaco-logql": "^0.0.6",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "0.0.4",
+    "@grafana/scenes": "latest",
     "@grafana/schema": "workspace:*",
     "@grafana/ui": "workspace:*",
     "@jaegertracing/jaeger-ui-components": "workspace:*",
@@ -261,7 +267,7 @@
     "@leeoniya/ufuzzy": "0.9.1",
     "@lezer/common": "1.0.1",
     "@lezer/highlight": "1.1.2",
-    "@lezer/lr": "1.2.3",
+    "@lezer/lr": "1.3.1",
     "@opentelemetry/api": "1.3.0",
     "@opentelemetry/exporter-collector": "0.25.0",
     "@opentelemetry/semantic-conventions": "1.8.0",
@@ -398,7 +404,8 @@
     "uuid": "9.0.0",
     "vendor": "link:./public/vendor",
     "visjs-network": "4.25.0",
-    "whatwg-fetch": "3.6.2"
+    "whatwg-fetch": "3.6.2",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.19.1/xlsx-0.19.1.tgz"
   },
   "resolutions": {
     "underscore": "1.13.6",
@@ -429,10 +436,5 @@
   "engines": {
     "node": ">= 16"
   },
-  "packageManager": "yarn@3.3.0",
-  "dependenciesMeta": {
-    "@grafana/scenes@0.0.3": {
-      "unplugged": true
-    }
-  }
+  "packageManager": "yarn@3.3.0"
 }

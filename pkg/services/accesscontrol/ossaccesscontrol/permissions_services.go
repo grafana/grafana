@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/retriever"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -40,7 +41,7 @@ var (
 
 func ProvideTeamPermissions(
 	cfg *setting.Cfg, router routing.RouteRegister, sql db.DB,
-	ac accesscontrol.AccessControl, license models.Licensing, service accesscontrol.Service,
+	ac accesscontrol.AccessControl, license licensing.Licensing, service accesscontrol.Service,
 	teamService team.Service, userService user.Service,
 ) (*TeamPermissionsService, error) {
 	options := resourcepermissions.Options{
@@ -114,15 +115,16 @@ var DashboardAdminActions = append(DashboardEditActions, []string{dashboards.Act
 
 func ProvideDashboardPermissions(
 	cfg *setting.Cfg, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
-	license models.Licensing, dashboardStore dashboards.Store, service accesscontrol.Service,
+	license licensing.Licensing, dashboardStore dashboards.Store, service accesscontrol.Service,
 	teamService team.Service, userService user.Service,
 ) (*DashboardPermissionsService, error) {
-	getDashboard := func(ctx context.Context, orgID int64, resourceID string) (*models.Dashboard, error) {
-		query := &models.GetDashboardQuery{Uid: resourceID, OrgId: orgID}
-		if _, err := dashboardStore.GetDashboard(ctx, query); err != nil {
+	getDashboard := func(ctx context.Context, orgID int64, resourceID string) (*dashboards.Dashboard, error) {
+		query := &dashboards.GetDashboardQuery{UID: resourceID, OrgID: orgID}
+		queryResult, err := dashboardStore.GetDashboard(ctx, query)
+		if err != nil {
 			return nil, err
 		}
-		return query.Result, nil
+		return queryResult, nil
 	}
 
 	options := resourcepermissions.Options{
@@ -145,12 +147,13 @@ func ProvideDashboardPermissions(
 			if err != nil {
 				return nil, err
 			}
-			if dashboard.FolderId > 0 {
-				query := &models.GetDashboardQuery{Id: dashboard.FolderId, OrgId: orgID}
-				if _, err := dashboardStore.GetDashboard(ctx, query); err != nil {
+			if dashboard.FolderID > 0 {
+				query := &dashboards.GetDashboardQuery{ID: dashboard.FolderID, OrgID: orgID}
+				queryResult, err := dashboardStore.GetDashboard(ctx, query)
+				if err != nil {
 					return nil, err
 				}
-				return []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(query.Result.Uid)}, nil
+				return []string{dashboards.ScopeFoldersProvider.GetResourceScopeUID(queryResult.UID)}, nil
 			}
 			return []string{}, nil
 		},
@@ -193,19 +196,20 @@ var FolderAdminActions = append(FolderEditActions, []string{dashboards.ActionFol
 
 func ProvideFolderPermissions(
 	cfg *setting.Cfg, router routing.RouteRegister, sql db.DB, accesscontrol accesscontrol.AccessControl,
-	license models.Licensing, dashboardStore dashboards.Store, service accesscontrol.Service,
+	license licensing.Licensing, dashboardStore dashboards.Store, service accesscontrol.Service,
 	teamService team.Service, userService user.Service,
 ) (*FolderPermissionsService, error) {
 	options := resourcepermissions.Options{
 		Resource:          "folders",
 		ResourceAttribute: "uid",
 		ResourceValidator: func(ctx context.Context, orgID int64, resourceID string) error {
-			query := &models.GetDashboardQuery{Uid: resourceID, OrgId: orgID}
-			if _, err := dashboardStore.GetDashboard(ctx, query); err != nil {
+			query := &dashboards.GetDashboardQuery{UID: resourceID, OrgID: orgID}
+			queryResult, err := dashboardStore.GetDashboard(ctx, query)
+			if err != nil {
 				return err
 			}
 
-			if !query.Result.IsFolder {
+			if !queryResult.IsFolder {
 				return errors.New("not found")
 			}
 
@@ -284,7 +288,7 @@ type ServiceAccountPermissionsService struct {
 
 func ProvideServiceAccountPermissions(
 	cfg *setting.Cfg, router routing.RouteRegister, sql db.DB, ac accesscontrol.AccessControl,
-	license models.Licensing, serviceAccountRetrieverService *retriever.Service, service accesscontrol.Service,
+	license licensing.Licensing, serviceAccountRetrieverService *retriever.Service, service accesscontrol.Service,
 	teamService team.Service, userService user.Service,
 ) (*ServiceAccountPermissionsService, error) {
 	options := resourcepermissions.Options{

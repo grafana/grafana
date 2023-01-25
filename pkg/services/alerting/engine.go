@@ -15,13 +15,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util/ticker"
@@ -32,7 +32,7 @@ import (
 // are sent.
 type AlertEngine struct {
 	RenderService    rendering.Service
-	RequestValidator models.PluginRequestValidator
+	RequestValidator validations.PluginRequestValidator
 	DataService      legacydata.RequestHandler
 	Cfg              *setting.Cfg
 
@@ -58,7 +58,7 @@ func (e *AlertEngine) IsDisabled() bool {
 }
 
 // ProvideAlertEngine returns a new AlertEngine.
-func ProvideAlertEngine(renderer rendering.Service, requestValidator models.PluginRequestValidator,
+func ProvideAlertEngine(renderer rendering.Service, requestValidator validations.PluginRequestValidator,
 	dataService legacydata.RequestHandler, usageStatsService usagestats.Service, encryptionService encryption.Internal,
 	notificationService *notifications.NotificationService, tracer tracing.Tracer, store AlertStore, cfg *setting.Cfg,
 	dashAlertExtractor DashAlertExtractor, dashboardService dashboards.DashboardService, cacheService *localcache.CacheService, dsService datasources.DataSourceService, annotationsRepo annotations.Repository) *AlertEngine {

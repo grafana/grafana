@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -22,15 +23,15 @@ func (hs *HTTPServer) GetStars(c *models.ReqContext) response.Response {
 
 	uids := []string{}
 	for dashboardId := range iuserstars.UserStars {
-		query := &models.GetDashboardQuery{
-			Id:    dashboardId,
-			OrgId: c.OrgID,
+		query := &dashboards.GetDashboardQuery{
+			ID:    dashboardId,
+			OrgID: c.OrgID,
 		}
-		err := hs.DashboardService.GetDashboard(c.Req.Context(), query)
+		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), query)
 
 		// Grafana admin users may have starred dashboards in multiple orgs.  This will avoid returning errors when the dashboard is in another org
 		if err == nil {
-			uids = append(uids, query.Result.Uid)
+			uids = append(uids, queryResult.UID)
 		}
 	}
 	return response.JSON(200, uids)
@@ -91,7 +92,7 @@ func (hs *HTTPServer) StarDashboardByUID(c *models.ReqContext) response.Response
 		return rsp
 	}
 
-	cmd := star.StarDashboardCommand{UserID: c.UserID, DashboardID: dash.Id}
+	cmd := star.StarDashboardCommand{UserID: c.UserID, DashboardID: dash.ID}
 
 	if err := hs.starService.Add(c.Req.Context(), &cmd); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to star dashboard", err)
@@ -156,7 +157,7 @@ func (hs *HTTPServer) UnstarDashboardByUID(c *models.ReqContext) response.Respon
 		return rsp
 	}
 
-	cmd := star.UnstarDashboardCommand{UserID: c.UserID, DashboardID: dash.Id}
+	cmd := star.UnstarDashboardCommand{UserID: c.UserID, DashboardID: dash.ID}
 
 	if err := hs.starService.Delete(c.Req.Context(), &cmd); err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to unstar dashboard", err)

@@ -4,7 +4,6 @@ import React from 'react';
 import {
   DataFrame,
   DataLink,
-  DataQuery,
   DataSourceInstanceSettings,
   DataSourceJsonData,
   dateTime,
@@ -17,6 +16,7 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { Icon } from '@grafana/ui';
 import { SpanLinkFunc, TraceSpan } from '@jaegertracing/jaeger-ui-components';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
@@ -318,15 +318,19 @@ function getLinkForElasticsearchOrOpensearch(
     return acc;
   }, []);
 
-  let query = '';
-  if (tags.length > 0) {
-    query += `${tags.join(' AND ')}`;
-  }
-  if (filterByTraceID && span.traceID) {
-    query = `"${span.traceID}" AND ` + query;
-  }
+  let queryArr = [];
   if (filterBySpanID && span.spanID) {
-    query = `"${span.spanID}" AND ` + query;
+    queryArr.push(`"${span.spanID}"`);
+  }
+
+  if (filterByTraceID && span.traceID) {
+    queryArr.push(`"${span.traceID}"`);
+  }
+
+  if (tags.length > 0) {
+    for (const tag of tags) {
+      queryArr.push(tag);
+    }
   }
 
   const dataLink: DataLink<ElasticsearchOrOpensearchQuery> = {
@@ -336,7 +340,7 @@ function getLinkForElasticsearchOrOpensearch(
       datasourceUid: dataSourceSettings.uid,
       datasourceName: dataSourceSettings.name,
       query: {
-        query: query,
+        query: queryArr.join(' AND '),
         refId: '',
         metrics: [
           {

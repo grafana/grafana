@@ -12,6 +12,9 @@
       "light-theme": "",
       "search": ""
     },
+    "search-box": {
+      "placeholder": ""
+    },
     "section": {
       "actions": "",
       "dashboard-search-results": "",
@@ -552,8 +555,7 @@
       "name-error": "Name ist erforderlich",
       "name-label": "Name",
       "username-label": "Benutzername"
-    },
-    "title": "Profil"
+    }
   },
   "user-session": {
     "browser-column": "Browser & Betriebssystem",

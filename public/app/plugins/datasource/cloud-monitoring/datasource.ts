@@ -8,6 +8,7 @@ import {
   DataSourceInstanceSettings,
   ScopedVars,
   SelectableValue,
+  TimeRange,
 } from '@grafana/data';
 import { DataSourceWithBackend, getBackendSrv, toDataQueryResponse, BackendSrv } from '@grafana/runtime';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -39,7 +40,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
   constructor(
     private instanceSettings: DataSourceInstanceSettings<CloudMonitoringOptions>,
     public templateSrv: TemplateSrv = getTemplateSrv(),
-    private readonly timeSrv: TimeSrv = getTimeSrv()
+    readonly timeSrv: TimeSrv = getTimeSrv()
   ) {
     super(instanceSettings);
     this.authenticationType = instanceSettings.jsonData.authenticationType || 'jwt';
@@ -89,7 +90,13 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
     };
   }
 
-  async getLabels(metricType: string, refId: string, projectName: string, aggregation?: Aggregation) {
+  async getLabels(
+    metricType: string,
+    refId: string,
+    projectName: string,
+    aggregation?: Aggregation,
+    timeRange?: TimeRange
+  ) {
     const options = {
       targets: [
         {
@@ -107,7 +114,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
           ),
         },
       ],
-      range: this.timeSrv.timeRange(),
+      range: timeRange ?? this.timeSrv.timeRange(),
     };
 
     const queries = options.targets;

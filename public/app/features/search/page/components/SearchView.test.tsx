@@ -105,6 +105,46 @@ describe('SearchView', () => {
     expect(screen.getByRole('button', { name: 'Clear search and filters' })).toBeInTheDocument();
   });
 
+  it('shows an empty state if no starred dashboard returned', async () => {
+    jest.spyOn(getGrafanaSearcher(), 'search').mockResolvedValue({
+      ...mockSearchResult,
+      totalRows: 0,
+      view: new DataFrameView<DashboardQueryResult>({ fields: [], length: 0 }),
+    });
+
+    setup(undefined, { starred: true });
+
+    await waitFor(() => expect(screen.queryByText('No results found for your query.')).toBeInTheDocument());
+    expect(screen.getByRole('button', { name: 'Clear search and filters' })).toBeInTheDocument();
+  });
+
+  it('shows empty folder cta for empty folder', async () => {
+    jest.spyOn(getGrafanaSearcher(), 'search').mockResolvedValue({
+      ...mockSearchResult,
+      totalRows: 0,
+      view: new DataFrameView<DashboardQueryResult>({ fields: [], length: 0 }),
+    });
+
+    setup(
+      {
+        folderDTO: {
+          id: 1,
+          uid: 'abc',
+          title: 'morning coffee',
+          url: '/morningcoffee',
+          version: 1,
+          canSave: true,
+          canEdit: true,
+          canAdmin: true,
+          canDelete: true,
+        },
+      },
+      undefined
+    );
+
+    await waitFor(() => expect(screen.queryByText("This folder doesn't have any dashboards yet")).toBeInTheDocument());
+  });
+
   describe('include panels', () => {
     it('should be enabled when layout is list', async () => {
       config.featureToggles.panelTitleSearch = true;

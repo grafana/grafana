@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
@@ -56,8 +56,13 @@ export const CommandPalette = () => {
         <KBarAnimator className={styles.animator}>
           <FocusScope contain autoFocus restoreFocus>
             <div {...overlayProps} {...dialogProps}>
-              <KBarSearch className={styles.search} />
-              <RenderResults dashboardResults={dashboardResults} />
+              <KBarSearch
+                defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search or jump to...')}
+                className={styles.search}
+              />
+              <div className={styles.resultsContainer}>
+                <RenderResults dashboardResults={dashboardResults} />
+              </div>
             </div>
           </FocusScope>
         </KBarAnimator>
@@ -80,24 +85,29 @@ const RenderResults = ({ dashboardResults }: RenderResultsProps) => {
     () => dashboardResults.map((dashboard) => new ActionImpl(dashboard, { store: {} })),
     [dashboardResults]
   );
+
   const items = useMemo(
     () => (dashboardResultItems.length > 0 ? [...results, dashboardsSectionTitle, ...dashboardResultItems] : results),
     [results, dashboardsSectionTitle, dashboardResultItems]
   );
 
   return (
-    <div className={styles.resultsContainer}>
-      <KBarResults
-        items={items}
-        onRender={({ item, active }) =>
+    <KBarResults
+      items={items}
+      maxHeight={650}
+      onRender={({ item, active }) => {
+        const isFirst = items[0] === item;
+
+        const renderedItem =
           typeof item === 'string' ? (
-            <div className={styles.sectionHeader}>{item}</div>
+            <div className={cx(styles.sectionHeader, isFirst && styles.sectionHeaderFirst)}>{item}</div>
           ) : (
             <ResultItem action={item} active={active} currentRootActionId={rootActionId!} />
-          )
-        }
-      />
-    </div>
+          );
+
+        return renderedItem;
+      }}
+    />
   );
 };
 
@@ -117,32 +127,39 @@ const getSearchStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   animator: css({
-    maxWidth: theme.breakpoints.values.sm, // supposed to be 600...
+    maxWidth: theme.breakpoints.values.md,
     width: '100%',
-    background: theme.colors.background.canvas,
+    background: theme.colors.background.primary,
     color: theme.colors.text.primary,
-    borderRadius: theme.shape.borderRadius(4),
+    borderRadius: theme.shape.borderRadius(2),
+    border: `1px solid ${theme.colors.border.weak}`,
     overflow: 'hidden',
     boxShadow: theme.shadows.z3,
   }),
   search: css({
-    padding: theme.spacing(2, 3),
+    padding: theme.spacing(1.5, 2),
     fontSize: theme.typography.fontSize,
     width: '100%',
     boxSizing: 'border-box',
     outline: 'none',
     border: 'none',
-    background: theme.colors.background.canvas,
-    color: theme.colors.text.primary,
+    background: theme.components.input.background,
+    color: theme.components.input.text,
     borderBottom: `1px solid ${theme.colors.border.weak}`,
   }),
-  sectionHeader: css({
-    padding: theme.spacing(1, 2),
-    fontSize: theme.typography.h6.fontSize,
-    fontWeight: theme.typography.body.fontWeight,
-    color: theme.colors.text.secondary,
-  }),
   resultsContainer: css({
-    padding: theme.spacing(2, 0),
+    paddingBottom: theme.spacing(1),
+  }),
+  sectionHeader: css({
+    padding: theme.spacing(1.5, 2, 1, 2),
+    fontSize: theme.typography.bodySmall.fontSize,
+    fontWeight: theme.typography.fontWeightMedium,
+    color: theme.colors.text.primary,
+    borderTop: `1px solid ${theme.colors.border.weak}`,
+    marginTop: theme.spacing(1),
+  }),
+  sectionHeaderFirst: css({
+    borderTop: 'none',
+    marginTop: 0,
   }),
 });
