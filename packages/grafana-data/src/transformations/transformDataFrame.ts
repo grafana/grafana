@@ -62,14 +62,21 @@ const postProcessTransform =
           }
         }
 
-        // Add back the frames we excluded
+        // Add back the filtered out frames
         if (matcher) {
-          const append = before.filter((v) => !matcher(v));
+          // keep the frame order the same
+          let insert = 0;
+          const append = before.filter((v, idx) => {
+            const keep = !matcher(v);
+            if (keep && !insert) {
+              insert = idx;
+            }
+            return keep;
+          });
           if (append.length) {
-            return [...after, ...append];
+            after.splice(insert, 0, ...append);
           }
         }
-
         return after;
       })
     );

@@ -1,10 +1,14 @@
-export type { MatcherConfig } from '@grafana/schema';
 import { MonoTypeOperatorFunction } from 'rxjs';
+
+import { MatcherConfig } from '@grafana/schema';
 
 import { RegistryItemWithOptions } from '../utils/Registry';
 
 import { DataFrame, Field } from './dataFrame';
 import { InterpolateFunction } from './panel';
+
+/** deprecated, use it from schema */
+export type { MatcherConfig };
 
 /**
  * Context passed to transformDataFrame and to each transform operator
