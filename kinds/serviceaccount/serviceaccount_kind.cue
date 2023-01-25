@@ -22,10 +22,10 @@ lineage: seqs: [
 				role: #OrgRole @grafanamaturity(ToMetadata="kind")
 				// Tokens is the number of active tokens for the service account.
 				// Tokens are used to authenticate the service account against Grafana.
-				tokens: int64 @grafanamaturity(ToMetadata="sys")
+				tokens: int64 @grafanamaturity(ToMetadata="kind")
 				// AvatarUrl is the service account's avatar URL. It allows the frontend to display a picture in front
 				// of the service account.
-				avatarUrl: string @grafanamaturity(ToMetadata="sys")
+				avatarUrl: string @grafanamaturity(ToMetadata="kind")
 				// AccessControl metadata associated with a given resource.
 				accessControl?: {
 					[string]: bool @grafanamaturity(ToMetadata="sys")
