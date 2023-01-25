@@ -18075,6 +18075,9 @@
         "Host": {
           "type": "string"
         },
+        "OmitHost": {
+          "type": "boolean"
+        },
         "Opaque": {
           "type": "string"
         },
@@ -18927,6 +18930,7 @@
       }
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -19031,6 +19035,7 @@
       }
     },
     "gettableAlert": {
+      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -19092,6 +19097,7 @@
       }
     },
     "gettableSilence": {
+      "description": "GettableSilence gettable silence",
       "type": "object",
       "required": [
         "comment",
@@ -19328,7 +19334,6 @@
       }
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",

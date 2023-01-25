@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	model "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -92,9 +91,9 @@ func (service *AlertRuleService) GetAlertRuleWithFolderTitle(ctx context.Context
 		return AlertRuleWithFolderTitle{}, err
 	}
 
-	dq := model.GetDashboardQuery{
-		OrgId: orgID,
-		Uid:   query.Result.NamespaceUID,
+	dq := dashboards.GetDashboardQuery{
+		OrgID: orgID,
+		UID:   query.Result.NamespaceUID,
 	}
 	err = service.dashboardService.GetDashboard(ctx, &dq)
 	if err != nil {
@@ -418,9 +417,9 @@ func (service *AlertRuleService) GetAlertRuleGroupWithFolderTitle(ctx context.Co
 		return file.AlertRuleGroupWithFolderTitle{}, store.ErrAlertRuleGroupNotFound
 	}
 
-	dq := model.GetDashboardQuery{
-		OrgId: orgID,
-		Uid:   namespaceUID,
+	dq := dashboards.GetDashboardQuery{
+		OrgID: orgID,
+		UID:   namespaceUID,
 	}
 	err := service.dashboardService.GetDashboard(ctx, &dq)
 	if err != nil {
@@ -466,11 +465,11 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderTitle(ctx context.Conte
 		namespaces[r.NamespaceUID] = append(namespaces[r.NamespaceUID], &groupKey)
 	}
 
-	dq := model.GetDashboardsQuery{
-		DashboardUIds: nil,
+	dq := dashboards.GetDashboardsQuery{
+		DashboardUIDs: nil,
 	}
 	for uid := range namespaces {
-		dq.DashboardUIds = append(dq.DashboardUIds, uid)
+		dq.DashboardUIDs = append(dq.DashboardUIDs, uid)
 	}
 
 	// We need folder titles for the provisioning file format. We do it this way instead of using GetUserVisibleNamespaces to avoid folder:read permissions that should not apply to those with alert.provisioning:read.
@@ -480,7 +479,7 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderTitle(ctx context.Conte
 	}
 	folderUidToTitle := make(map[string]string)
 	for _, dash := range dq.Result {
-		folderUidToTitle[dash.Uid] = dash.Title
+		folderUidToTitle[dash.UID] = dash.Title
 	}
 
 	result := make([]file.AlertRuleGroupWithFolderTitle, 0)
