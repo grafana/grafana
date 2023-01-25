@@ -42,11 +42,11 @@ func GetEntitySummaryBuilder(kind string) entity.EntitySummaryBuilder {
 					Identifier: "xyz",
 				},
 				{
-					Family: models.StandardKindPanel,
+					Family: entity.StandardKindPanel,
 					Type:   "heatmap",
 				},
 				{
-					Family: models.StandardKindPanel,
+					Family: entity.StandardKindPanel,
 					Type:   "timeseries",
 				},
 			},
