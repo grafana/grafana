@@ -232,7 +232,6 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 
 	identity, err = s.authenticate(ctx, c, r)
 	if err != nil {
-		s.log.FromContext(ctx).Warn("failed to perform login", "client", client, "err", err)
 		return nil, err
 	}
 
