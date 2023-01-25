@@ -118,7 +118,6 @@ export const Table = memo((props: Props) => {
       ),
     [data, width, columnMinWidth, footerItems, subData, isCountRowsSet, showRowNumbers]
   );
-  console.log(memoizedColumns, 'memoizedColumns');
 
   // Internal react table state reducer
   const stateReducer = useTableStateReducer(props);
@@ -152,7 +151,6 @@ export const Table = memo((props: Props) => {
     setPageSize,
     pageOptions,
   } = useTable(options, useFilters, useSortBy, useAbsoluteLayout, useResizeColumns, useExpanded, usePagination);
-  // console.log(rows, 'rows');
 
   const extendedState = state as GrafanaTableState;
 
@@ -226,7 +224,6 @@ export const Table = memo((props: Props) => {
   useResetVariableListSizeCache(extendedState, listRef, data);
   useFixScrollbarContainer(variableSizeListScrollbarRef, tableDivRef);
 
-  // JEV: what's a subtable?
   const renderSubTable = useCallback(
     (rowIndex: number) => {
       if (state.expanded[rowIndex]) {
@@ -261,8 +258,6 @@ export const Table = memo((props: Props) => {
   const RenderRow = useCallback(
     ({ index: rowIndex, style }: { index: number; style: CSSProperties }) => {
       let row = rows[rowIndex];
-      console.log(row, 'insideRow');
-      console.log(rowIndex, 'insiderowIndex');
       if (enablePagination) {
         row = page[rowIndex];
       }
@@ -326,7 +321,6 @@ export const Table = memo((props: Props) => {
 
   function addOptionalNumbersRowToTable(data: DataFrame, condition: boolean | undefined): DataFrame {
     if (condition) {
-      // JEV
       const rowField: Field = buildFieldsForOptionalRowNums(data.length);
       const newData = cloneDeep(data);
       newData.fields = [rowField, ...newData.fields];
