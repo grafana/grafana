@@ -430,6 +430,9 @@ type Cfg struct {
 	// Google
 	GoogleSkipOrgRoleSync bool
 
+	// Gitlab
+	GitLabSkipOrgRoleSync bool
+
 	// LDAP
 	LDAPEnabled         bool
 	LDAPSkipOrgRoleSync bool
@@ -1385,6 +1388,11 @@ func readAuthGoogleSettings(iniFile *ini.File, cfg *Cfg) {
 	cfg.GoogleSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
+func readAuthGitlabSettings(iniFile *ini.File, cfg *Cfg) {
+	sec := iniFile.Section("auth.gitlab")
+	cfg.GitLabSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+}
+
 func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	auth := iniFile.Section("auth")
 
@@ -1441,6 +1449,9 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	// Google Auth
 	readAuthGoogleSettings(iniFile, cfg)
+
+	// GitLab Auth
+	readAuthGitlabSettings(iniFile, cfg)
 
 	// anonymous access
 	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)

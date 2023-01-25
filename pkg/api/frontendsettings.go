@@ -152,6 +152,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"GoogleSkipOrgRoleSync":      hs.Cfg.GoogleSkipOrgRoleSync,
 			"JWTAuthSkipOrgRoleSync":     hs.Cfg.JWTAuthSkipOrgRoleSync,
 			"GrafanaComSkipOrgRoleSync":  hs.Cfg.GrafanaComSkipOrgRoleSync,
+			"GitLabSkipOrgRoleSync":      hs.Cfg.GitLabSkipOrgRoleSync,
 			"AzureADSkipOrgRoleSync":     hs.Cfg.AzureADSkipOrgRoleSync,
 			"DisableSyncLock":            hs.Cfg.DisableSyncLock,
 		},
