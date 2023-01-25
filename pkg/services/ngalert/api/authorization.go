@@ -59,7 +59,7 @@ func (api *API) authorize(method, path string) web.Handler {
 			ac.EvalPermission(ac.ActionAlertingRuleDelete, scope),
 		)
 	// Grafana rule state history paths
-	case http.MethodGet + "api/ruler/grafana/states":
+	case http.MethodGet + "/api/ruler/grafana/states":
 		fallback = middleware.ReqSignedIn
 		eval = ac.EvalPermission(ac.ActionAlertingRuleRead)
 
