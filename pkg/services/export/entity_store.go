@@ -256,34 +256,34 @@ func (e *entityStoreJob) start(ctx context.Context) {
 		rowUser.OrgID = orgId
 		rowUser.UserID = 1
 		cmd := &dashboardsnapshots.GetDashboardSnapshotsQuery{
-			OrgId:        orgId,
+			OrgID:        orgId,
 			Limit:        500000,
 			SignedInUser: rowUser,
 		}
 
-		err := e.dashboardsnapshots.SearchDashboardSnapshots(ctx, cmd)
+		result, err := e.dashboardsnapshots.SearchDashboardSnapshots(ctx, cmd)
 		if err != nil {
 			e.status.Status = "error: " + err.Error()
 			return
 		}
 
-		for _, dto := range cmd.Result {
+		for _, dto := range result {
 			m := snapshot.Model{
 				Name:        dto.Name,
-				ExternalURL: dto.ExternalUrl,
+				ExternalURL: dto.ExternalURL,
 				Expires:     dto.Expires.UnixMilli(),
 			}
-			rowUser.OrgID = dto.OrgId
-			rowUser.UserID = dto.UserId
+			rowUser.OrgID = dto.OrgID
+			rowUser.UserID = dto.UserID
 
 			snapcmd := &dashboardsnapshots.GetDashboardSnapshotQuery{
 				Key: dto.Key,
 			}
-			err = e.dashboardsnapshots.GetDashboardSnapshot(ctx, snapcmd)
+			snapcmdResult, err := e.dashboardsnapshots.GetDashboardSnapshot(ctx, snapcmd)
 			if err == nil {
-				res := snapcmd.Result
+				res := snapcmdResult
 				m.DeleteKey = res.DeleteKey
-				m.ExternalURL = res.ExternalUrl
+				m.ExternalURL = res.ExternalURL
 
 				snap := res.Dashboard
 				m.DashboardUID = snap.Get("uid").MustString("")

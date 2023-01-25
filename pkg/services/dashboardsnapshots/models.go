@@ -9,15 +9,15 @@ import (
 
 // DashboardSnapshot model
 type DashboardSnapshot struct {
-	Id                int64
+	ID                int64 `xorm:"pk autoincr 'id'"`
 	Name              string
 	Key               string
 	DeleteKey         string
-	OrgId             int64
-	UserId            int64
+	OrgID             int64 `xorm:"org_id"`
+	UserID            int64 `xorm:"user_id"`
 	External          bool
-	ExternalUrl       string
-	ExternalDeleteUrl string
+	ExternalURL       string `xorm:"external_url"`
+	ExternalDeleteURL string `xorm:"external_delete_url"`
 
 	Expires time.Time
 	Created time.Time
@@ -29,13 +29,13 @@ type DashboardSnapshot struct {
 
 // DashboardSnapshotDTO without dashboard map
 type DashboardSnapshotDTO struct {
-	Id          int64  `json:"id"`
+	ID          int64  `json:"id" xorm:"id"`
 	Name        string `json:"name"`
 	Key         string `json:"key"`
-	OrgId       int64  `json:"orgId"`
-	UserId      int64  `json:"userId"`
+	OrgID       int64  `json:"orgId" xorm:"org_id"`
+	UserID      int64  `json:"userId" xorm:"user_id"`
 	External    bool   `json:"external"`
-	ExternalUrl string `json:"externalUrl"`
+	ExternalURL string `json:"externalUrl" xorm:"external_url"`
 
 	Expires time.Time `json:"expires"`
 	Created time.Time `json:"created"`
@@ -63,8 +63,8 @@ type CreateDashboardSnapshotCommand struct {
 	// required:false
 	// default: false
 	External          bool   `json:"external"`
-	ExternalUrl       string `json:"-"`
-	ExternalDeleteUrl string `json:"-"`
+	ExternalURL       string `json:"-"`
+	ExternalDeleteURL string `json:"-"`
 
 	// Define the unique key. Required if `external` is `true`.
 	// required:false
@@ -73,12 +73,10 @@ type CreateDashboardSnapshotCommand struct {
 	// required:false
 	DeleteKey string `json:"deleteKey"`
 
-	OrgId  int64 `json:"-"`
-	UserId int64 `json:"-"`
+	OrgID  int64 `json:"-"`
+	UserID int64 `json:"-"`
 
 	DashboardEncrypted []byte `json:"-"`
-
-	Result *DashboardSnapshot
 }
 
 type DeleteDashboardSnapshotCommand struct {
@@ -92,8 +90,6 @@ type DeleteExpiredSnapshotsCommand struct {
 type GetDashboardSnapshotQuery struct {
 	Key       string
 	DeleteKey string
-
-	Result *DashboardSnapshot
 }
 
 type DashboardSnapshotsList []*DashboardSnapshotDTO
@@ -101,8 +97,6 @@ type DashboardSnapshotsList []*DashboardSnapshotDTO
 type GetDashboardSnapshotsQuery struct {
 	Name         string
 	Limit        int
-	OrgId        int64
+	OrgID        int64
 	SignedInUser *user.SignedInUser
-
-	Result DashboardSnapshotsList
 }
