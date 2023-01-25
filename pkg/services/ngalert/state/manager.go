@@ -166,17 +166,13 @@ func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) *State {
 // DeleteStateByRuleUID removes the rule instances from cache and instanceStore. A closed channel is returned to be able
 // to gracefully handle the clear state step in scheduler in case we do not need to use the historian to save state
 // history.
-func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey) ([]*State, <-chan error) {
+func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey) []*State {
 	logger := st.log.New(ruleKey.LogContext()...)
 	logger.Debug("Resetting state of the rule")
 
-	// We create and immediately close the channel as a nil or not closed channels will hang forever, and we do a couple
-	// of early exists in the code below. The returned channel is only expected to be read as it is of type <-chan error
-	errCh := make(chan error)
-	close(errCh)
 	states := st.cache.removeByRuleUID(ruleKey.OrgID, ruleKey.UID)
 	if len(states) == 0 {
-		return states, errCh
+		return states
 	}
 	if st.instanceStore != nil {
 		err := st.instanceStore.DeleteAlertInstancesByRule(ctx, ruleKey)
@@ -186,15 +182,19 @@ func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.Al
 	}
 	logger.Info("Rules state was reset", "states", len(states))
 
-	return states, errCh
+	return states
 }
 
 // ResetStateByRuleUID removes the rule instances from cache and instanceStore and saves state history. If the state
 // history has to be saved, rule must not be nil.
 func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.AlertRule, reason string) ([]*State, <-chan error) {
 	ruleKey := rule.GetKey()
-	states, errCh := st.DeleteStateByRuleUID(ctx, ruleKey)
+	states := st.DeleteStateByRuleUID(ctx, ruleKey)
 
+	// We create and immediately close the channel as a nil or not closed channels will hang forever, and we do a couple
+	// of early exists in the code below. The returned channel is only expected to be read as it is of type <-chan error
+	errCh := make(chan error)
+	close(errCh)
 	if rule == nil || st.historian == nil {
 		return states, errCh
 	}
