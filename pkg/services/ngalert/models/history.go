@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"github.com/grafana/grafana/pkg/services/user"
+)
 
 // HistoryQuery represents a query for alert state history.
 type HistoryQuery struct {
@@ -9,4 +13,6 @@ type HistoryQuery struct {
 	Labels  map[string]string
 	From    time.Time
 	To      time.Time
+	// SignedInUser is required when the state history backend is annotations.
+	SignedInUser *user.SignedInUser
 }
