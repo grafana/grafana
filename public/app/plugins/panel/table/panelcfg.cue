@@ -25,10 +25,9 @@ composableKinds: PanelCfg: {
 				schemas: [
 					{
 						PanelOptions: {
-							JEV: add option here
 							frameIndex:    number | *0
 							showHeader:    bool | *true
-							showRowNumbers?:    bool | *false
+							showRowNumbers:    bool | *false
 							showTypeIcons: bool | *false
 							sortBy?: [...common.TableSortByFieldState]
 						} @cuetsy(kind="interface")
