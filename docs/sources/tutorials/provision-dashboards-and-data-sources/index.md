@@ -247,7 +247,7 @@ For more information on how to configure dashboard providers, refer to [Dashboar
 
 In this tutorial you learned how you to reuse dashboards and data sources across multiple teams by provisioning Grafana from version-controlled configuration files.
 
-Dashboard definitions can get unwieldly as more panels and configurations are added to them. There are a number of open source tools available to make it easier to manage dashboard definitions:
+Dashboard definitions can get unwieldy as more panels and configurations are added to them. There are a number of open source tools available to make it easier to manage dashboard definitions:
 
 - [grafana-dash-gen](https://github.com/uber/grafana-dash-gen) (Javascript)
 - [grafanalib](https://github.com/weaveworks/grafanalib) (Python)

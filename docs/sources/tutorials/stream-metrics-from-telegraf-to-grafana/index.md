@@ -56,7 +56,7 @@ In this tutorial we will be using Telegraf HTTP output plugin to send metrics in
     Authorization = "Bearer <Your API Key>"
 ```
 
-Make sure to replace `<Your API Key>` placeholder with your actual API key created in the previous step. Save this config into `telegraf.conf` file and run Telegraf pointing to this config file. Telegraf will periodically (once in a second) report the state of total CPU usage on a host to Grafana (which is supposed to be running on `http://localhost:3000`). Of couse you can replace `custom_stream_id` to something more meaningful for your use case.
+Make sure to replace `<Your API Key>` placeholder with your actual API key created in the previous step. Save this config into `telegraf.conf` file and run Telegraf pointing to this config file. Telegraf will periodically (once in a second) report the state of total CPU usage on a host to Grafana (which is supposed to be running on `http://localhost:3000`). Of course you can replace `custom_stream_id` to something more meaningful for your use case.
 
 Inside Grafana Influx data is converted to Grafana data frames and then frames are published to Grafana Live channels. In this case, the channel where CPU data will be published is `stream/custom_stream_id/cpu`. The `stream` scope is constant, the `custom_stream_id` namespace is the last part of API URL set in Telegraf configuration (`http://localhost:3000/api/live/push/telegraf`) and the path is `cpu` - the name of a measurement.
 
