@@ -210,7 +210,7 @@ To prevent the sync of organization roles from GitHub, set `skip_org_role_sync` 
 This also impacts the `allow_assign_grafana_admin` setting by not syncing the Grafana admin role from GitHub.
 
 ```ini
-[auth.grafana_com]
+[auth.github]
 # ..
 # prevents the sync of org roles from Github
 skip_org_role_sync = true
