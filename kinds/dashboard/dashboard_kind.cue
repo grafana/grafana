@@ -64,7 +64,7 @@ lineage: seqs: [
 				weekStart?: string @grafanamaturity(NeedsExpertReview)
 
 				// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
-				refresh?: string
+				refresh?: string | false
 				// Version of the JSON schema, incremented each time a Grafana update brings
 				// changes to said schema.
 				// TODO this is the existing schema numbering system. It will be replaced by Thema's themaVersion

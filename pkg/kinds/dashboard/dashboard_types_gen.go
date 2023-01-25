@@ -705,7 +705,7 @@ type Dashboard struct {
 	Panels  *[]interface{} `json:"panels,omitempty"`
 
 	// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
-	Refresh *string `json:"refresh,omitempty"`
+	Refresh *interface{} `json:"refresh,omitempty"`
 
 	// Version of the current dashboard data
 	Revision int `json:"revision"`
