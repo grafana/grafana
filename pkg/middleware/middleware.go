@@ -69,9 +69,9 @@ func addSecurityHeaders(w web.ResponseWriter, cfg *setting.Cfg) {
 }
 
 func addNoCacheHeaders(w web.ResponseWriter) {
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Pragma", "no-cache")
-	w.Header().Set("Expires", "-1")
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Del("Pragma")
+	w.Header().Del("Expires")
 }
 
 func addXFrameOptionsDenyHeader(w web.ResponseWriter) {
