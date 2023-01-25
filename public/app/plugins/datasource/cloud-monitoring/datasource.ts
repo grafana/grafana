@@ -16,13 +16,13 @@ import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_sr
 
 import { CloudMonitoringAnnotationSupport } from './annotationSupport';
 import { SLO_BURN_RATE_SELECTOR_NAME } from './constants';
+import { QueryType } from './dataquery.gen';
 import { getMetricType, setMetricType } from './functions';
 import {
   CloudMonitoringOptions,
   CloudMonitoringQuery,
   Filter,
   MetricDescriptor,
-  QueryType,
   PostResponse,
   Aggregation,
   MetricQuery,
@@ -102,7 +102,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         {
           refId,
           datasource: this.getRef(),
-          queryType: QueryType.TIME_SERIES_LIST,
+          queryType: QueryType.TimeSeriesList,
           timeSeriesList: setMetricType(
             {
               projectName: this.templateSrv.replace(projectName),
@@ -234,7 +234,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
         refId,
         intervalMs,
         hide,
-        queryType: type === 'annotationQuery' ? QueryType.ANNOTATION : QueryType.TIME_SERIES_LIST,
+        queryType: type === 'annotationQuery' ? QueryType.Annotation : QueryType.TimeSeriesList,
         timeSeriesList: {
           ...rest,
           view: rest.view || 'FULL',
@@ -242,7 +242,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       };
     }
 
-    if (has(query, 'metricQuery') && ['metrics', QueryType.ANNOTATION].includes(query.queryType)) {
+    if (has(query, 'metricQuery') && ['metrics', QueryType.Annotation].includes(query.queryType)) {
       const metricQuery: MetricQuery = get(query, 'metricQuery')!;
       if (metricQuery.editorMode === 'mql') {
         query.timeSeriesQuery = {
@@ -250,7 +250,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
           query: metricQuery.query,
           graphPeriod: metricQuery.graphPeriod,
         };
-        query.queryType = QueryType.TIME_SERIES_QUERY;
+        query.queryType = QueryType.TimeSeriesQuery;
       } else {
         query.timeSeriesList = {
           projectName: metricQuery.projectName,
@@ -262,7 +262,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
           view: metricQuery.view,
           preprocessor: metricQuery.preprocessor,
         };
-        query.queryType = QueryType.TIME_SERIES_LIST;
+        query.queryType = QueryType.TimeSeriesList;
         if (metricQuery.metricType) {
           query.timeSeriesList.filters = this.migrateMetricTypeFilter(
             metricQuery.metricType,
@@ -274,7 +274,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       query = omit(query, 'metricQuery');
     }
 
-    if (query.queryType === QueryType.SLO && has(query, 'sloQuery.aliasBy')) {
+    if (query.queryType === QueryType.Slo && has(query, 'sloQuery.aliasBy')) {
       query.aliasBy = get(query, 'sloQuery.aliasBy');
       query = omit(query, 'sloQuery.aliasBy');
     }
@@ -296,7 +296,7 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       return false;
     }
 
-    if (query.queryType === QueryType.SLO) {
+    if (query.queryType === QueryType.Slo) {
       if (!query.sloQuery) {
         return false;
       }
@@ -310,11 +310,11 @@ export default class CloudMonitoringDatasource extends DataSourceWithBackend<
       );
     }
 
-    if (query.queryType === QueryType.TIME_SERIES_QUERY) {
+    if (query.queryType === QueryType.TimeSeriesQuery) {
       return !!query.timeSeriesQuery && !!query.timeSeriesQuery.projectName && !!query.timeSeriesQuery.query;
     }
 
-    if ([QueryType.TIME_SERIES_LIST, QueryType.ANNOTATION].includes(query.queryType)) {
+    if ([QueryType.TimeSeriesList, QueryType.Annotation].includes(query.queryType)) {
       return !!query.timeSeriesList && !!query.timeSeriesList.projectName && !!getMetricType(query.timeSeriesList);
     }
 

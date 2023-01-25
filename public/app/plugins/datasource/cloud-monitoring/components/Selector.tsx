@@ -5,8 +5,8 @@ import { EditorField } from '@grafana/experimental';
 import { Select } from '@grafana/ui';
 
 import { SELECTORS } from '../constants';
+import { SLOQuery } from '../dataquery.gen';
 import CloudMonitoringDatasource from '../datasource';
-import { SLOQuery } from '../types';
 
 export interface Props {
   refId: string;

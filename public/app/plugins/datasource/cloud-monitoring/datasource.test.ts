@@ -5,8 +5,9 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import { createMockInstanceSetttings } from './__mocks__/cloudMonitoringInstanceSettings';
 import { createMockQuery } from './__mocks__/cloudMonitoringQuery';
+import { PreprocessorType, QueryType } from './dataquery.gen';
 import Datasource from './datasource';
-import { CloudMonitoringQuery, MetricKind, PreprocessorType, QueryType } from './types';
+import { CloudMonitoringQuery, MetricKind } from './types';
 
 describe('Cloud Monitoring Datasource', () => {
   describe('interpolateVariablesInQueries', () => {
@@ -185,7 +186,7 @@ describe('Cloud Monitoring Datasource', () => {
           description: 'a SLO query with alias',
           input: {
             refId: 'A',
-            queryType: QueryType.SLO,
+            queryType: QueryType.Slo,
             intervalMs: 1000,
             sloQuery: {
               aliasBy: 'alias',
@@ -219,7 +220,7 @@ describe('Cloud Monitoring Datasource', () => {
       {
         description: 'should include an SLO query',
         input: {
-          queryType: QueryType.SLO,
+          queryType: QueryType.Slo,
           sloQuery: {
             selectorName: 'selector',
             serviceId: 'service',
@@ -233,7 +234,7 @@ describe('Cloud Monitoring Datasource', () => {
       {
         description: 'should include a time series query',
         input: {
-          queryType: QueryType.TIME_SERIES_QUERY,
+          queryType: QueryType.TimeSeriesQuery,
           timeSeriesQuery: {
             projectName: 'project',
             query: 'test query',
@@ -244,7 +245,7 @@ describe('Cloud Monitoring Datasource', () => {
       {
         description: 'should include a time series list query',
         input: {
-          queryType: QueryType.TIME_SERIES_LIST,
+          queryType: QueryType.TimeSeriesList,
           timeSeriesList: {
             projectName: 'project',
             filters: ['metric.type', '=', 'cloudsql_database'],
@@ -255,7 +256,7 @@ describe('Cloud Monitoring Datasource', () => {
       {
         description: 'should include an annotation query',
         input: {
-          queryType: QueryType.ANNOTATION,
+          queryType: QueryType.Annotation,
           timeSeriesList: {
             projectName: 'project',
             filters: ['metric.type', '=', 'cloudsql_database'],

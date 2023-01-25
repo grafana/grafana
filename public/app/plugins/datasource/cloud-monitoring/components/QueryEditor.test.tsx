@@ -3,7 +3,7 @@ import React from 'react';
 
 import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
 import { createMockQuery } from '../__mocks__/cloudMonitoringQuery';
-import { QueryType } from '../types';
+import { QueryType } from '../dataquery.gen';
 
 import { QueryEditor } from './QueryEditor';
 
@@ -40,7 +40,7 @@ describe('QueryEditor', () => {
 
     render(<QueryEditor {...defaultProps} query={query} onChange={onChange} />);
     await waitFor(() =>
-      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ queryType: QueryType.TIME_SERIES_LIST }))
+      expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ queryType: QueryType.TimeSeriesList }))
     );
   });
 });

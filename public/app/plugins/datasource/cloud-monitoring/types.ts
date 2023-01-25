@@ -1,6 +1,8 @@
 import { DataQuery, DataSourceJsonData, SelectableValue } from '@grafana/data';
 import { GoogleAuthType } from '@grafana/google-sdk';
 
+import { CloudMonitoringQuery as _CloudMonitoringQuery, PreprocessorType, QueryType } from './dataquery.gen';
+
 export const authTypes: Array<SelectableValue<string>> = [
   { label: 'Google JWT File', value: GoogleAuthType.JWT },
   { label: 'GCE Default Service Account', value: GoogleAuthType.GCE },
@@ -52,19 +54,6 @@ export interface VariableQueryData {
 export interface Aggregation {
   crossSeriesReducer?: string;
   groupBys?: string[];
-}
-
-export enum QueryType {
-  TIME_SERIES_LIST = 'timeSeriesList',
-  TIME_SERIES_QUERY = 'timeSeriesQuery',
-  SLO = 'slo',
-  ANNOTATION = 'annotation',
-}
-
-export enum PreprocessorType {
-  None = 'none',
-  Rate = 'rate',
-  Delta = 'delta',
 }
 
 export enum MetricKind {
@@ -127,56 +116,8 @@ export interface MetricQuery {
   graphPeriod?: 'disabled' | string;
 }
 
-export interface TimeSeriesList {
-  projectName: string;
-  crossSeriesReducer: string;
-  alignmentPeriod?: string;
-  perSeriesAligner?: string;
-  groupBys?: string[];
-  filters?: string[];
-  view?: string;
-  secondaryCrossSeriesReducer?: string;
-  secondaryAlignmentPeriod?: string;
-  secondaryPerSeriesAligner?: string;
-  secondaryGroupBys?: string[];
-  // preprocessor is not part of the API, but is used to store the preprocessor
-  // and not affect the UI for the rest of parameters
-  preprocessor?: PreprocessorType;
-}
-
-export interface TimeSeriesQuery {
-  projectName: string;
-  query: string;
-  // To disable the graphPeriod, it should explictly be set to 'disabled'
-  graphPeriod?: 'disabled' | string;
-}
-
-export interface AnnotationQuery extends TimeSeriesList {
-  title?: string;
-  text?: string;
-}
-
-export interface SLOQuery {
-  projectName: string;
-  perSeriesAligner?: string;
-  alignmentPeriod?: string;
-  selectorName: string;
-  serviceId: string;
-  serviceName: string;
-  sloId: string;
-  sloName: string;
-  goal?: number;
-  lookbackPeriod?: string;
-}
-
-export interface CloudMonitoringQuery extends DataQuery {
-  aliasBy?: string;
-  datasourceId?: number; // Should not be necessary anymore
+export interface CloudMonitoringQuery extends _CloudMonitoringQuery {
   queryType: QueryType;
-  timeSeriesList?: TimeSeriesList | AnnotationQuery;
-  timeSeriesQuery?: TimeSeriesQuery;
-  sloQuery?: SLOQuery;
-  intervalMs: number;
 }
 
 export interface CloudMonitoringOptions extends DataSourceJsonData {

@@ -7,10 +7,11 @@ import CloudMonitoringCheatSheet from './components/CloudMonitoringCheatSheet';
 import { ConfigEditor } from './components/ConfigEditor/ConfigEditor';
 import { QueryEditor } from './components/QueryEditor';
 import { CloudMonitoringVariableQueryEditor } from './components/VariableQueryEditor';
+import { QueryType } from './dataquery.gen';
 import CloudMonitoringDatasource from './datasource';
 import pluginJson from './plugin.json';
 import { trackCloudMonitoringDashboardLoaded } from './tracking';
-import { CloudMonitoringQuery, QueryType } from './types';
+import { CloudMonitoringQuery } from './types';
 
 export const plugin = new DataSourcePlugin<CloudMonitoringDatasource, CloudMonitoringQuery>(CloudMonitoringDatasource)
   .setQueryEditorHelp(CloudMonitoringCheatSheet)
@@ -24,17 +25,17 @@ getAppEvents().subscribe<DashboardLoadedEvent<CloudMonitoringQuery>>(
   ({ payload: { dashboardId, orgId, grafanaVersion, queries } }) => {
     const cloudmonitorQueries = queries[pluginJson.id];
     let stats = {
-      [QueryType.TIME_SERIES_QUERY]: 0,
-      [QueryType.TIME_SERIES_LIST]: 0,
-      [QueryType.SLO]: 0,
-      [QueryType.ANNOTATION]: 0,
+      [QueryType.TimeSeriesQuery]: 0,
+      [QueryType.TimeSeriesList]: 0,
+      [QueryType.Slo]: 0,
+      [QueryType.Annotation]: 0,
     };
     cloudmonitorQueries.forEach((query) => {
       if (
-        query.queryType === QueryType.TIME_SERIES_QUERY ||
-        query.queryType === QueryType.TIME_SERIES_LIST ||
-        query.queryType === QueryType.SLO ||
-        query.queryType === QueryType.ANNOTATION
+        query.queryType === QueryType.TimeSeriesQuery ||
+        query.queryType === QueryType.TimeSeriesList ||
+        query.queryType === QueryType.Slo ||
+        query.queryType === QueryType.Annotation
       ) {
         stats[query.queryType]++;
       } else if (query.queryType === 'metrics') {
@@ -54,10 +55,10 @@ getAppEvents().subscribe<DashboardLoadedEvent<CloudMonitoringQuery>>(
         grafana_version: grafanaVersion,
         dashboard_id: dashboardId,
         org_id: orgId,
-        mql_queries: stats[QueryType.TIME_SERIES_QUERY],
-        time_series_filter_queries: stats[QueryType.TIME_SERIES_LIST],
-        slo_queries: stats[QueryType.SLO],
-        annotation_queries: stats[QueryType.ANNOTATION],
+        mql_queries: stats[QueryType.TimeSeriesQuery],
+        time_series_filter_queries: stats[QueryType.TimeSeriesList],
+        slo_queries: stats[QueryType.Slo],
+        annotation_queries: stats[QueryType.Annotation],
       });
     }
   }

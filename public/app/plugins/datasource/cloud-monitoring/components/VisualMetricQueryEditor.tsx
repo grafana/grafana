@@ -6,9 +6,10 @@ import { GrafanaTheme2, SelectableValue, TimeRange } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental';
 import { getSelectStyles, Select, useStyles2, useTheme2 } from '@grafana/ui';
 
+import { PreprocessorType, TimeSeriesList } from '../dataquery.gen';
 import CloudMonitoringDatasource from '../datasource';
 import { getAlignmentPickerData, getMetricType, setMetricType } from '../functions';
-import { CustomMetaData, MetricDescriptor, MetricKind, PreprocessorType, TimeSeriesList, ValueTypes } from '../types';
+import { CustomMetaData, MetricDescriptor, MetricKind, ValueTypes } from '../types';
 
 import { AliasBy } from './AliasBy';
 import { Alignment } from './Alignment';

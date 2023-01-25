@@ -4,9 +4,10 @@ import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/experimental';
 
 import { ALIGNMENT_PERIODS, SLO_BURN_RATE_SELECTOR_NAME } from '../constants';
+import { SLOQuery } from '../dataquery.gen';
 import CloudMonitoringDatasource from '../datasource';
 import { alignmentPeriodLabel } from '../functions';
-import { AlignmentTypes, CustomMetaData, SLOQuery } from '../types';
+import { AlignmentTypes, CustomMetaData } from '../types';
 
 import { AliasBy } from './AliasBy';
 import { LookbackPeriodSelect } from './LookbackPeriodSelect';

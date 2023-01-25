@@ -2,17 +2,12 @@ import { AnnotationQuery } from '@grafana/data';
 
 import { createMockDatasource } from './__mocks__/cloudMonitoringDatasource';
 import { CloudMonitoringAnnotationSupport } from './annotationSupport';
-import {
-  AlignmentTypes,
-  CloudMonitoringQuery,
-  LegacyCloudMonitoringAnnotationQuery,
-  MetricKind,
-  QueryType,
-} from './types';
+import { QueryType } from './dataquery.gen';
+import { AlignmentTypes, CloudMonitoringQuery, LegacyCloudMonitoringAnnotationQuery, MetricKind } from './types';
 
 const query: CloudMonitoringQuery = {
   refId: 'query',
-  queryType: QueryType.ANNOTATION,
+  queryType: QueryType.Annotation,
   intervalMs: 0,
   timeSeriesList: {
     projectName: 'project-name',
@@ -85,7 +80,7 @@ describe('CloudMonitoringAnnotationSupport', () => {
     it('should ensure queryType is set to "annotation"', () => {
       const queryWithoutMetricsQueryType = { ...annotationQuery, queryType: 'blah' };
       expect(annotationSupport.prepareQuery?.(queryWithoutMetricsQueryType)).toEqual(
-        expect.objectContaining({ queryType: QueryType.ANNOTATION })
+        expect.objectContaining({ queryType: QueryType.Annotation })
       );
     });
     it('should ensure type is set "annotationQuery"', () => {

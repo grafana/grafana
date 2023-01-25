@@ -1,4 +1,5 @@
-import { AlignmentTypes, CloudMonitoringQuery, QueryType, SLOQuery, TimeSeriesList, TimeSeriesQuery } from '../types';
+import { QueryType, SLOQuery, TimeSeriesList, TimeSeriesQuery } from '../dataquery.gen';
+import { AlignmentTypes, CloudMonitoringQuery } from '../types';
 
 type Subset<K> = {
   [attr in keyof K]?: K[attr] extends object ? Subset<K[attr]> : K[attr];
@@ -50,7 +51,7 @@ export const createMockQuery: (overrides?: Subset<CloudMonitoringQuery>) => Clou
       uid: 'abc',
     },
     refId: 'cloudMonitoringRefId',
-    queryType: QueryType.TIME_SERIES_LIST,
+    queryType: QueryType.TimeSeriesList,
     intervalMs: 0,
     hide: false,
     ...overrides,

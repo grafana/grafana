@@ -1,8 +1,9 @@
 import { AnnotationSupport, AnnotationQuery } from '@grafana/data';
 
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
+import { QueryType } from './dataquery.gen';
 import CloudMonitoringDatasource from './datasource';
-import { AlignmentTypes, CloudMonitoringQuery, LegacyCloudMonitoringAnnotationQuery, QueryType } from './types';
+import { AlignmentTypes, CloudMonitoringQuery, LegacyCloudMonitoringAnnotationQuery } from './types';
 
 // The legacy query format sets the title and text values to empty strings by default.
 // If the title or text is not undefined at the top-level of the annotation target,
@@ -34,7 +35,7 @@ export const CloudMonitoringAnnotationSupport: (
         target: {
           intervalMs: ds.intervalMs,
           refId: target?.refId || 'annotationQuery',
-          queryType: QueryType.ANNOTATION,
+          queryType: QueryType.Annotation,
           timeSeriesList: {
             projectName: target?.projectName || ds.getDefaultProject(),
             filters: target?.filters || [],
@@ -54,7 +55,7 @@ export const CloudMonitoringAnnotationSupport: (
 
       return {
         ...anno.target,
-        queryType: QueryType.ANNOTATION,
+        queryType: QueryType.Annotation,
         type: 'annotationQuery',
       };
     },

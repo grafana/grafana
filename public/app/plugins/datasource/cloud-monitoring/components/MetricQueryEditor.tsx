@@ -3,15 +3,9 @@ import React, { useCallback, useEffect } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { EditorRows } from '@grafana/experimental';
 
+import { QueryType, TimeSeriesList, TimeSeriesQuery } from '../dataquery.gen';
 import CloudMonitoringDatasource from '../datasource';
-import {
-  AlignmentTypes,
-  CloudMonitoringQuery,
-  CustomMetaData,
-  QueryType,
-  TimeSeriesList,
-  TimeSeriesQuery,
-} from '../types';
+import { AlignmentTypes, CloudMonitoringQuery, CustomMetaData } from '../types';
 
 import { GraphPeriod } from './GraphPeriod';
 import { MQLQueryEditor } from './MQLQueryEditor';
@@ -67,10 +61,10 @@ function Editor({
   );
 
   useEffect(() => {
-    if (query.queryType === QueryType.TIME_SERIES_LIST && !query.timeSeriesList) {
+    if (query.queryType === QueryType.TimeSeriesList && !query.timeSeriesList) {
       onChangeTimeSeriesList(defaultTimeSeriesList(datasource));
     }
-    if (query.queryType === QueryType.TIME_SERIES_QUERY && !query.timeSeriesQuery) {
+    if (query.queryType === QueryType.TimeSeriesQuery && !query.timeSeriesQuery) {
       onChangeTimeSeriesQuery(defaultTimeSeriesQuery(datasource));
     }
   }, [
@@ -84,7 +78,7 @@ function Editor({
 
   return (
     <EditorRows>
-      {[QueryType.TIME_SERIES_LIST, QueryType.ANNOTATION].includes(query.queryType) && query.timeSeriesList && (
+      {[QueryType.TimeSeriesList, QueryType.Annotation].includes(query.queryType) && query.timeSeriesList && (
         <VisualMetricQueryEditor
           refId={refId}
           variableOptionGroup={variableOptionGroup}
@@ -97,7 +91,7 @@ function Editor({
         />
       )}
 
-      {query.queryType === QueryType.TIME_SERIES_QUERY && query.timeSeriesQuery && (
+      {query.queryType === QueryType.TimeSeriesQuery && query.timeSeriesQuery && (
         <>
           <MQLQueryEditor
             onChange={(q: string) => onChangeTimeSeriesQuery({ ...query.timeSeriesQuery!, query: q })}

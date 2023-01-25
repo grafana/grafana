@@ -3,8 +3,9 @@ import React, { FC, useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
+import { PreprocessorType, SLOQuery, TimeSeriesList } from '../dataquery.gen';
 import { getAlignmentPickerData } from '../functions';
-import { MetricDescriptor, PreprocessorType, SLOQuery, TimeSeriesList } from '../types';
+import { MetricDescriptor } from '../types';
 
 export interface Props {
   inputId: string;

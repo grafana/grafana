@@ -4,8 +4,9 @@ import { SelectableValue } from '@grafana/data';
 import { EditorField } from '@grafana/experimental';
 import { RadioButtonGroup } from '@grafana/ui';
 
+import { PreprocessorType, TimeSeriesList } from '../dataquery.gen';
 import { getAlignmentPickerData } from '../functions';
-import { MetricDescriptor, MetricKind, PreprocessorType, TimeSeriesList, ValueTypes } from '../types';
+import { MetricDescriptor, MetricKind, ValueTypes } from '../types';
 
 const NONE_OPTION = { label: 'None', value: PreprocessorType.None };
 

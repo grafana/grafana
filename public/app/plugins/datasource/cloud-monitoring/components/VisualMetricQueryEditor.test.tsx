@@ -8,7 +8,8 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
 import { createMockMetricDescriptor } from '../__mocks__/cloudMonitoringMetricDescriptor';
 import { createMockTimeSeriesList } from '../__mocks__/cloudMonitoringQuery';
-import { MetricKind, PreprocessorType } from '../types';
+import { PreprocessorType } from '../dataquery.gen';
+import { MetricKind } from '../types';
 
 import { defaultTimeSeriesList } from './MetricQueryEditor';
 import { VisualMetricQueryEditor } from './VisualMetricQueryEditor';

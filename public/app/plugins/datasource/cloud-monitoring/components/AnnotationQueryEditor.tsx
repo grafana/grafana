@@ -5,8 +5,9 @@ import { QueryEditorProps, toOption } from '@grafana/data';
 import { EditorField, EditorRows } from '@grafana/experimental';
 import { Input } from '@grafana/ui';
 
+import { AnnotationQuery, QueryType } from '../dataquery.gen';
 import CloudMonitoringDatasource from '../datasource';
-import { AnnotationQuery, CloudMonitoringOptions, CloudMonitoringQuery, QueryType } from '../types';
+import { CloudMonitoringOptions, CloudMonitoringQuery } from '../types';
 
 import { MetricQueryEditor, defaultTimeSeriesList } from './MetricQueryEditor';
 
@@ -57,7 +58,7 @@ export const AnnotationQueryEditor = (props: Props) => {
   // Use a known query type
   useEffect(() => {
     if (!Object.values(QueryType).includes(query.queryType)) {
-      onChange({ ...query, queryType: QueryType.TIME_SERIES_LIST });
+      onChange({ ...query, queryType: QueryType.TimeSeriesList });
     }
   });
 

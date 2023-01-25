@@ -4,9 +4,10 @@ import { SelectableValue } from '@grafana/data';
 import { EditorField, EditorFieldGroup } from '@grafana/experimental';
 
 import { ALIGNMENT_PERIODS } from '../constants';
+import { PreprocessorType, TimeSeriesList } from '../dataquery.gen';
 import CloudMonitoringDatasource from '../datasource';
 import { alignmentPeriodLabel } from '../functions';
-import { CustomMetaData, MetricDescriptor, PreprocessorType, TimeSeriesList } from '../types';
+import { CustomMetaData, MetricDescriptor } from '../types';
 
 import { AlignmentFunction } from './AlignmentFunction';
 import { PeriodSelect } from './PeriodSelect';

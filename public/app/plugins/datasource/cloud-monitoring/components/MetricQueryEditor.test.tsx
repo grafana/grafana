@@ -3,7 +3,7 @@ import React from 'react';
 
 import { createMockDatasource } from '../__mocks__/cloudMonitoringDatasource';
 import { createMockQuery } from '../__mocks__/cloudMonitoringQuery';
-import { QueryType } from '../types';
+import { QueryType } from '../dataquery.gen';
 
 import { MetricQueryEditor } from './MetricQueryEditor';
 
@@ -40,7 +40,7 @@ describe('MetricQueryEditor', () => {
     const query = createMockQuery();
     // Force to populate with default values
     delete query.timeSeriesQuery;
-    query.queryType = QueryType.TIME_SERIES_QUERY;
+    query.queryType = QueryType.TimeSeriesQuery;
 
     render(<MetricQueryEditor {...defaultProps} onChange={onChange} query={query} />);
     expect(onChange).toHaveBeenCalled();
@@ -49,7 +49,7 @@ describe('MetricQueryEditor', () => {
   it('renders an annotation query', async () => {
     const onChange = jest.fn();
     const query = createMockQuery();
-    query.queryType = QueryType.ANNOTATION;
+    query.queryType = QueryType.Annotation;
 
     render(<MetricQueryEditor {...defaultProps} onChange={onChange} query={query} />);
     const l = await screen.findByLabelText('Project');
