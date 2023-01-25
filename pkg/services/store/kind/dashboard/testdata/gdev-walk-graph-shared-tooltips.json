@@ -18,12 +18,12 @@
       },
       "references": [
         {
-          "kind": "ds"
+          "family": "ds"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "timeseries"
+          "ID": "timeseries"
         }
       ]
     },
@@ -36,22 +36,22 @@
       },
       "references": [
         {
-          "kind": "ds"
+          "family": "ds"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "xychart"
+          "ID": "xychart"
         },
         {
-          "kind": "runtime",
+          "family": "runtime",
           "type": "transformer",
-          "UID": "organize"
+          "ID": "organize"
         },
         {
-          "kind": "runtime",
+          "family": "runtime",
           "type": "transformer",
-          "UID": "seriesToColumns"
+          "ID": "seriesToColumns"
         }
       ]
     },
@@ -64,12 +64,12 @@
       },
       "references": [
         {
-          "kind": "ds"
+          "family": "ds"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "debug"
+          "ID": "debug"
         }
       ]
     },
@@ -82,12 +82,12 @@
       },
       "references": [
         {
-          "kind": "ds"
+          "family": "ds"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "timeseries"
+          "ID": "timeseries"
         }
       ]
     },
@@ -100,12 +100,12 @@
       },
       "references": [
         {
-          "kind": "ds"
+          "family": "ds"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "timeseries"
+          "ID": "timeseries"
         }
       ]
     },
@@ -118,12 +118,12 @@
       },
       "references": [
         {
-          "kind": "ds"
+          "family": "ds"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "timeseries"
+          "ID": "timeseries"
         }
       ]
     },
@@ -136,12 +136,12 @@
       },
       "references": [
         {
-          "kind": "ds"
+          "family": "ds"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -154,49 +154,49 @@
       },
       "references": [
         {
-          "kind": "ds"
+          "family": "ds"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     }
   ],
   "references": [
     {
-      "kind": "ds"
+      "family": "ds"
     },
     {
-      "kind": "plugin",
+      "family": "plugin",
       "type": "panel",
-      "UID": "debug"
+      "ID": "debug"
     },
     {
-      "kind": "plugin",
+      "family": "plugin",
       "type": "panel",
-      "UID": "graph"
+      "ID": "graph"
     },
     {
-      "kind": "plugin",
+      "family": "plugin",
       "type": "panel",
-      "UID": "timeseries"
+      "ID": "timeseries"
     },
     {
-      "kind": "plugin",
+      "family": "plugin",
       "type": "panel",
-      "UID": "xychart"
+      "ID": "xychart"
     },
     {
-      "kind": "runtime",
+      "family": "runtime",
       "type": "transformer",
-      "UID": "organize"
+      "ID": "organize"
     },
     {
-      "kind": "runtime",
+      "family": "runtime",
       "type": "transformer",
-      "UID": "seriesToColumns"
+      "ID": "seriesToColumns"
     }
   ]
 }
