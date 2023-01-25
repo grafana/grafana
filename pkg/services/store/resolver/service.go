@@ -51,7 +51,7 @@ func (r *standardReferenceResolver) Resolve(ctx context.Context, ref *entity.Ent
 		return ResolutionInfo{OK: false, Timestamp: getNow()}, fmt.Errorf("ref is nil")
 	}
 
-	switch ref.Kind {
+	switch ref.Family {
 	case entity.StandardKindDataSource:
 		return r.resolveDatasource(ctx, ref)
 
@@ -74,7 +74,7 @@ func (r *standardReferenceResolver) Resolve(ctx context.Context, ref *entity.Ent
 }
 
 func (r *standardReferenceResolver) resolveDatasource(ctx context.Context, ref *entity.EntityExternalReference) (ResolutionInfo, error) {
-	ds, err := r.ds.getDS(ctx, ref.UID)
+	ds, err := r.ds.getDS(ctx, ref.Identifier)
 	if err != nil || ds == nil || ds.UID == "" {
 		return ResolutionInfo{
 			OK:        false,
@@ -100,7 +100,7 @@ func (r *standardReferenceResolver) resolveDatasource(ctx context.Context, ref *
 }
 
 func (r *standardReferenceResolver) resolvePlugin(ctx context.Context, ref *entity.EntityExternalReference) (ResolutionInfo, error) {
-	p, ok := r.pluginStore.Plugin(ctx, ref.UID)
+	p, ok := r.pluginStore.Plugin(ctx, ref.Identifier)
 	if !ok {
 		return ResolutionInfo{
 			OK:        false,
