@@ -129,6 +129,9 @@ export interface CurrentUserDTO {
   locale: string;
   language: string;
   permissions?: Record<string, boolean>;
+
+  /** @deprecated Use theme instead */
+  lightTheme: boolean;
 }
 
 export interface CurrentUser extends CurrentUserDTO {

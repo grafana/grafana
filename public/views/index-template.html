@@ -263,9 +263,11 @@
         if (darkQuery.matches) {
           document.body.classList.add("theme-dark");
           cssLink.href = window.grafanaBootData.themePaths.dark;
+          window.grafanaBootData.user.lightTheme = false;
         } else {
           document.body.classList.add("theme-light");
           cssLink.href = window.grafanaBootData.themePaths.light;
+          window.grafanaBootData.user.lightTheme = true;
         }
         document.head.appendChild(cssLink);
       }
