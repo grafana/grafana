@@ -32,18 +32,30 @@ export class Connections {
     this.connectionLine = connectionLine;
   };
 
+  // Recursively find the first parent that is a canvas element
+  findElementTarget = (element: Element): ElementState | undefined => {
+    let elementTarget = undefined;
+
+    // Cap recursion at root element level
+    if (element === this.scene.div) {
+      return undefined;
+    }
+
+    elementTarget = this.scene.findElementByTarget(element);
+
+    if (!elementTarget && element.parentElement) {
+      elementTarget = this.findElementTarget(element.parentElement);
+    }
+
+    return elementTarget;
+  };
+
   handleMouseEnter = (event: React.MouseEvent) => {
-    if (!(event.target instanceof HTMLElement || event.target instanceof SVGElement) || !this.scene.isEditingEnabled) {
+    if (!(event.target instanceof Element) || !this.scene.isEditingEnabled) {
       return;
     }
 
-    let element: HTMLElement | null = null;
-
-    if (event.target instanceof HTMLElement && event.target.parentElement) {
-      element = event.target.parentElement?.parentElement;
-    } else if (event.target instanceof SVGElement) {
-      element = event.target.parentElement;
-    }
+    let element: ElementState | undefined = this.findElementTarget(event.target);
 
     if (!element) {
       console.log('no element');
@@ -51,16 +63,16 @@ export class Connections {
     }
 
     if (this.isDrawingConnection) {
-      this.connectionTarget = this.scene.findElementByTarget(element);
+      this.connectionTarget = element;
     } else {
-      this.connectionSource = this.scene.findElementByTarget(element);
+      this.connectionSource = element;
       if (!this.connectionSource) {
         console.log('no connection source');
         return;
       }
     }
 
-    const elementBoundingRect = element!.getBoundingClientRect();
+    const elementBoundingRect = element.div!.getBoundingClientRect();
     const parentBoundingRect = this.scene.div?.getBoundingClientRect();
 
     const relativeTop = elementBoundingRect.top - (parentBoundingRect?.top ?? 0);
