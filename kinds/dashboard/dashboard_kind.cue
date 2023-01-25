@@ -120,11 +120,12 @@ lineage: seqs: [
 					target?:   #AnnotationTarget @grafanamaturity(NeedsExpertReview)
 				} @cuetsy(kind="interface")
 
-				// FROM: packages/grafana-data/src/types/templateVars.ts
-				// TODO docs
-				// TODO what about what's in public/app/features/types.ts?
 				// TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
-				#VariableModel: {
+				#VariableModel: #AdHocVariableModel | #DashboardVariableModel | #OrgVariableModel | #UserVariableModel @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
+
+				// Common information that all types of variables shares.
+				// A variable in Grafana is a container that can hold different types of data, and it variates depending on the query.
+				#BaseVariableModel: {
 					id:            string | *"00000000-0000-0000-0000-000000000000"
 					type:          #VariableType
 					name:          string
@@ -137,13 +138,141 @@ lineage: seqs: [
 					state:         #LoadingState
 					error?: {...}
 					description?: string
-					// TODO: Move this into a separated QueryVariableModel type
-					query?:      string | {...}
+				} @cuetsy(kind="interface")
+
+				// Variables which allow to select filters from a datasource based on the dimensions from the datasource.
+				#AdHocVariableModel: {
+					#BaseVariableModel
+					type: "adhoc"
+					// Datasource ref can be defined and hold null values
 					datasource?: #DataSourceRef
-					...
-				} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
-				#VariableHide: 0 | 1 | 2                                                 @cuetsy(kind="enum",memberNames="dontHide|hideLabel|hideVariable") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
-				#LoadingState: "NotStarted" | "Loading" | "Streaming" | "Done" | "Error" @cuetsy(kind="enum") @grafanamaturity(NeedsExpertReview)
+					filters: [...#AdHocVariableFilter]
+				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
+
+				// Filters selected filters generated for an ad-hoc variable from a datasource.
+				#AdHocVariableFilter: {
+					key:       string
+					operator:  string
+					value:     string
+					condition: string
+				} @cuetsy(kind="interface")
+
+				// Common props for variables injected by the system.
+				#SystemVariable: {
+					#BaseVariableModel
+					type:        "system"
+					systemValue: string
+					current: {
+						value: {...}
+					}
+				} @cuetsy(kind="interface")
+
+				// Variable injected by the system which holds the current dashboard.
+				#DashboardVariableModel: {
+					#SystemVariable
+					current: {
+						value: {
+							name: string
+							uid:  string
+						}
+					}
+				} @cuetsy(kind="interface")
+
+				// Variable injected by the system which holds the current organization.
+				#OrgVariableModel: {
+					#SystemVariable
+					current: {
+						value: {
+							name: string
+							id:   int32
+						}
+					}
+				} @cuetsy(kind="interface")
+
+				// Variable injected by the system which holds the current user.
+				#UserVariableModel: {
+					#SystemVariable
+					current: {
+						value: {
+							login:  string
+							id:     int32
+							email?: string
+						}
+					}
+				} @cuetsy(kind="interface")
+
+				// Variables which value is selected from a list of options.
+				#VariableWithOptions: {
+					#BaseVariableModel
+					current: #VariableOption
+					options: [...#VariableOption]
+					query: string
+				} @cuetsy(kind="interface")
+
+				// Option to be selected in a variable.
+				#VariableOption: {
+					selected: bool
+					text:     string | [...string]
+					value:    string | [...string]
+					isNone?:  bool
+				} @cuetsy(kind="interface")
+
+				#TextBoxVariableModel: {
+					#VariableWithOptions
+					type: "textbox"
+					// This can be null
+					originalQuery: string
+				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
+
+				#ConstantVariableModel: {
+					#VariableWithOptions
+					type: "constant"
+				} @cuetsy(kind="interface")
+
+				#IntervalVariableModel: {
+					#VariableWithOptions
+					type:       "interval"
+					auto:       bool
+					auto_min:   string
+					auto_count: int32
+					refresh:    #VariableRefresh
+				} @cuetsy(kind="interface")
+
+				#VariableWithMultiSupport: {
+					#VariableWithOptions
+					multi:      bool
+					includeAll: bool
+					allValue?:  string
+				} @cuetsy(kind="interface")
+
+				#QueryVariableModel: {
+					#VariableWithMultiSupport
+					type:        "query"
+					datasource?: #DataSourceRef
+					definition:  string
+					sort:        #VariableSort
+					queryValue?: string
+					query:       string | {...}
+					regex:       string
+					refresh:     #VariableRefresh
+				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
+
+				#DataSourceVariableModel: {
+					#VariableWithMultiSupport
+					type:    "datasource"
+					regex:   string
+					refresh: #VariableRefresh
+				} @cuetsy(kind="interface")
+
+				#CustomVariableModel: {
+					#VariableWithMultiSupport
+					type: "custom"
+				} @cuetsy(kind="interface")
+
+				#VariableHide:    0 | 1 | 2                                                 @cuetsy(kind="enum",memberNames="dontHide|hideLabel|hideVariable") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
+				#VariableRefresh: 0 | 1 | 2                                                 @cuetsy(kind="enum",memberNames="never|onDashboardLoad|onTimeRangeChanged") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
+				#VariableSort:    0 | 1 | 2 | 3 | 4 | 5 | 6                                 @cuetsy(kind="enum",memberNames="disabled|alphabeticalAsc|alphabeticalDesc|numericalAsc|numericalDesc|alphabeticalCaseInsensitiveAsc|alphabeticalCaseInsensitiveDesc") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
+				#LoadingState:    "NotStarted" | "Loading" | "Streaming" | "Done" | "Error" @cuetsy(kind="enum") @grafanamaturity(NeedsExpertReview)
 
 				// Ref to a DataSource instance
 				#DataSourceRef: {

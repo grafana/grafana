@@ -132,6 +132,32 @@ const (
 	VariableHideN2 VariableHide = 2
 )
 
+// Defines values for VariableRefresh.
+const (
+	VariableRefreshN0 VariableRefresh = 0
+
+	VariableRefreshN1 VariableRefresh = 1
+
+	VariableRefreshN2 VariableRefresh = 2
+)
+
+// Defines values for VariableSort.
+const (
+	VariableSortN0 VariableSort = 0
+
+	VariableSortN1 VariableSort = 1
+
+	VariableSortN2 VariableSort = 2
+
+	VariableSortN3 VariableSort = 3
+
+	VariableSortN4 VariableSort = 4
+
+	VariableSortN5 VariableSort = 5
+
+	VariableSortN6 VariableSort = 6
+)
+
 // Defines values for VariableType.
 const (
 	VariableTypeAdhoc VariableType = "adhoc"
@@ -166,6 +192,21 @@ const (
 
 	TimezoneUtc Timezone = "utc"
 )
+
+// Filters selected filters generated for an ad-hoc variable from a datasource.
+type AdHocVariableFilter struct {
+	Condition string `json:"condition"`
+	Key       string `json:"key"`
+	Operator  string `json:"operator"`
+	Value     string `json:"value"`
+}
+
+// AdHocVariableModel defines model for AdHocVariableModel.
+type AdHocVariableModel struct {
+	// Embedded struct due to allOf(#/components/schemas/BaseVariableModel)
+	BaseVariableModel `yaml:",inline"`
+	// Embedded fields due to inline allOf schema
+}
 
 // TODO docs
 // FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
@@ -207,6 +248,41 @@ type AnnotationTarget struct {
 	Type     string   `json:"type"`
 }
 
+// Common information that all types of variables shares.
+// A variable in Grafana is a container that can hold different types of data, and it variates depending on the query.
+type BaseVariableModel struct {
+	Description  *string                 `json:"description,omitempty"`
+	Error        *map[string]interface{} `json:"error,omitempty"`
+	Global       bool                    `json:"global"`
+	Hide         VariableHide            `json:"hide"`
+	Id           string                  `json:"id"`
+	Index        int                     `json:"index"`
+	Label        *string                 `json:"label,omitempty"`
+	Name         string                  `json:"name"`
+	RootStateKey *string                 `json:"rootStateKey,omitempty"`
+	SkipUrlSync  bool                    `json:"skipUrlSync"`
+	State        LoadingState            `json:"state"`
+
+	// FROM: packages/grafana-data/src/types/templateVars.ts
+	// TODO docs
+	// TODO this implies some wider pattern/discriminated union, probably?
+	Type VariableType `json:"type"`
+}
+
+// ConstantVariableModel defines model for ConstantVariableModel.
+type ConstantVariableModel struct {
+	// Embedded struct due to allOf(#/components/schemas/VariableWithOptions)
+	VariableWithOptions `yaml:",inline"`
+	// Embedded fields due to inline allOf schema
+}
+
+// CustomVariableModel defines model for CustomVariableModel.
+type CustomVariableModel struct {
+	// Embedded struct due to allOf(#/components/schemas/VariableWithMultiSupport)
+	VariableWithMultiSupport `yaml:",inline"`
+	// Embedded fields due to inline allOf schema
+}
+
 // 0 for no shared crosshair or tooltip (default).
 // 1 for shared crosshair.
 // 2 for shared crosshair AND shared tooltip.
@@ -232,6 +308,13 @@ type Link struct {
 // TODO docs
 type LinkType string
 
+// VariableModel defines model for VariableModel.
+type VariableModel struct {
+	// Embedded struct due to allOf(#/components/schemas/SystemVariable)
+	SystemVariable `yaml:",inline"`
+	// Embedded fields due to inline allOf schema
+}
+
 // Ref to a DataSource instance
 type DataSourceRef struct {
 	// The plugin type-id
@@ -239,6 +322,13 @@ type DataSourceRef struct {
 
 	// Specific datasource instance
 	Uid *string `json:"uid,omitempty"`
+}
+
+// DataSourceVariableModel defines model for DataSourceVariableModel.
+type DataSourceVariableModel struct {
+	// Embedded struct due to allOf(#/components/schemas/VariableWithMultiSupport)
+	VariableWithMultiSupport `yaml:",inline"`
+	// Embedded fields due to inline allOf schema
 }
 
 // DynamicConfigValue defines model for DynamicConfigValue.
@@ -365,6 +455,13 @@ type HeatmapPanel struct {
 // HeatmapPanelType defines model for HeatmapPanel.Type.
 type HeatmapPanelType string
 
+// IntervalVariableModel defines model for IntervalVariableModel.
+type IntervalVariableModel struct {
+	// Embedded struct due to allOf(#/components/schemas/VariableWithOptions)
+	VariableWithOptions `yaml:",inline"`
+	// Embedded fields due to inline allOf schema
+}
+
 // LoadingState defines model for LoadingState.
 type LoadingState string
 
@@ -375,6 +472,13 @@ type MappingType string
 type MatcherConfig struct {
 	Id      string       `json:"id"`
 	Options *interface{} `json:"options,omitempty"`
+}
+
+// OrgVariableModel defines model for OrgVariableModel.
+type OrgVariableModel struct {
+	// Embedded struct due to allOf(#/components/schemas/SystemVariable)
+	SystemVariable `yaml:",inline"`
+	// Embedded fields due to inline allOf schema
 }
 
 // Dashboard panels. Panels are canonically defined inline
@@ -459,6 +563,13 @@ type Panel struct {
 // "h" for horizontal, "v" for vertical.
 // TODO this is probably optional
 type PanelRepeatDirection string
+
+// QueryVariableModel defines model for QueryVariableModel.
+type QueryVariableModel struct {
+	// Embedded struct due to allOf(#/components/schemas/VariableWithMultiSupport)
+	VariableWithMultiSupport `yaml:",inline"`
+	// Embedded fields due to inline allOf schema
+}
 
 // TODO docs
 type RangeMap struct {
@@ -572,6 +683,13 @@ type SpecialValueMapOptionsMatch string
 // TODO docs
 type SpecialValueMatch string
 
+// SystemVariable defines model for SystemVariable.
+type SystemVariable struct {
+	// Embedded struct due to allOf(#/components/schemas/BaseVariableModel)
+	BaseVariableModel `yaml:",inline"`
+	// Embedded fields due to inline allOf schema
+}
+
 // Schema for panel targets is specified by datasource
 // plugins. We use a placeholder definition, which the Go
 // schema loader either left open/as-is with the Base
@@ -580,6 +698,13 @@ type SpecialValueMatch string
 // When working directly from CUE, importers can extend this
 // type directly to achieve the same effect.
 type Target map[string]interface{}
+
+// TextBoxVariableModel defines model for TextBoxVariableModel.
+type TextBoxVariableModel struct {
+	// Embedded struct due to allOf(#/components/schemas/VariableWithOptions)
+	VariableWithOptions `yaml:",inline"`
+	// Embedded fields due to inline allOf schema
+}
 
 // TODO docs
 type Threshold struct {
@@ -614,6 +739,13 @@ type Transformation struct {
 	Options map[string]interface{} `json:"options"`
 }
 
+// UserVariableModel defines model for UserVariableModel.
+type UserVariableModel struct {
+	// Embedded struct due to allOf(#/components/schemas/SystemVariable)
+	SystemVariable `yaml:",inline"`
+	// Embedded fields due to inline allOf schema
+}
+
 // TODO docs
 type ValueMap struct {
 	Options map[string]ValueMappingResult `json:"options"`
@@ -638,38 +770,41 @@ type ValueMappingResult struct {
 // VariableHide defines model for VariableHide.
 type VariableHide int
 
-// FROM: packages/grafana-data/src/types/templateVars.ts
-// TODO docs
-// TODO what about what's in public/app/features/types.ts?
 // TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
-type VariableModel struct {
-	// Ref to a DataSource instance
-	Datasource  *DataSourceRef          `json:"datasource,omitempty"`
-	Description *string                 `json:"description,omitempty"`
-	Error       *map[string]interface{} `json:"error,omitempty"`
-	Global      bool                    `json:"global"`
-	Hide        VariableHide            `json:"hide"`
-	Id          string                  `json:"id"`
-	Index       int                     `json:"index"`
-	Label       *string                 `json:"label,omitempty"`
-	Name        string                  `json:"name"`
+type VariableModel interface{}
 
-	// TODO: Move this into a separated QueryVariableModel type
-	Query        *interface{} `json:"query,omitempty"`
-	RootStateKey *string      `json:"rootStateKey,omitempty"`
-	SkipUrlSync  bool         `json:"skipUrlSync"`
-	State        LoadingState `json:"state"`
-
-	// FROM: packages/grafana-data/src/types/templateVars.ts
-	// TODO docs
-	// TODO this implies some wider pattern/discriminated union, probably?
-	Type VariableType `json:"type"`
+// Option to be selected in a variable.
+type VariableOption struct {
+	IsNone   *bool       `json:"isNone,omitempty"`
+	Selected bool        `json:"selected"`
+	Text     interface{} `json:"text"`
+	Value    interface{} `json:"value"`
 }
+
+// VariableRefresh defines model for VariableRefresh.
+type VariableRefresh int
+
+// VariableSort defines model for VariableSort.
+type VariableSort int
 
 // FROM: packages/grafana-data/src/types/templateVars.ts
 // TODO docs
 // TODO this implies some wider pattern/discriminated union, probably?
 type VariableType string
+
+// VariableWithMultiSupport defines model for VariableWithMultiSupport.
+type VariableWithMultiSupport struct {
+	// Embedded struct due to allOf(#/components/schemas/VariableWithOptions)
+	VariableWithOptions `yaml:",inline"`
+	// Embedded fields due to inline allOf schema
+}
+
+// VariableWithOptions defines model for VariableWithOptions.
+type VariableWithOptions struct {
+	// Embedded struct due to allOf(#/components/schemas/BaseVariableModel)
+	BaseVariableModel `yaml:",inline"`
+	// Embedded fields due to inline allOf schema
+}
 
 // Dashboard defines model for dashboard.
 type Dashboard struct {

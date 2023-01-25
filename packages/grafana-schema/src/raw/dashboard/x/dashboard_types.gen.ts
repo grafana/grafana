@@ -69,13 +69,15 @@ export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
 };
 
 /**
- * FROM: packages/grafana-data/src/types/templateVars.ts
- * TODO docs
- * TODO what about what's in public/app/features/types.ts?
  * TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
  */
-export interface VariableModel {
-  datasource?: DataSourceRef;
+export type VariableModel = (AdHocVariableModel | DashboardVariableModel | OrgVariableModel | UserVariableModel);
+
+/**
+ * Common information that all types of variables shares.
+ * A variable in Grafana is a container that can hold different types of data, and it variates depending on the query.
+ */
+export interface BaseVariableModel {
   description?: string;
   error?: Record<string, unknown>;
   global: boolean;
@@ -84,27 +86,182 @@ export interface VariableModel {
   index: number;
   label?: string;
   name: string;
-  /**
-   * TODO: Move this into a separated QueryVariableModel type
-   */
-  query?: (string | Record<string, unknown>);
   rootStateKey?: string;
   skipUrlSync: boolean;
   state: LoadingState;
   type: VariableType;
 }
 
-export const defaultVariableModel: Partial<VariableModel> = {
+export const defaultBaseVariableModel: Partial<BaseVariableModel> = {
   global: false,
   id: '00000000-0000-0000-0000-000000000000',
   index: -1,
   skipUrlSync: false,
 };
 
+/**
+ * Variables which allow to select filters from a datasource based on the dimensions from the datasource.
+ */
+export interface AdHocVariableModel extends BaseVariableModel {
+  /**
+   * Datasource ref can be defined and hold null values
+   */
+  datasource?: DataSourceRef;
+  filters: Array<AdHocVariableFilter>;
+  type: 'adhoc';
+}
+
+export const defaultAdHocVariableModel: Partial<AdHocVariableModel> = {
+  filters: [],
+};
+
+/**
+ * Filters selected filters generated for an ad-hoc variable from a datasource.
+ */
+export interface AdHocVariableFilter {
+  condition: string;
+  key: string;
+  operator: string;
+  value: string;
+}
+
+/**
+ * Common props for variables injected by the system.
+ */
+export interface SystemVariable extends BaseVariableModel {
+  current: {
+    value: Record<string, unknown>;
+  };
+  systemValue: string;
+  type: 'system';
+}
+
+/**
+ * Variable injected by the system which holds the current dashboard.
+ */
+export interface DashboardVariableModel extends SystemVariable {
+  current: {
+    value: {
+      name: string;
+      uid: string;
+    };
+  };
+}
+
+/**
+ * Variable injected by the system which holds the current organization.
+ */
+export interface OrgVariableModel extends SystemVariable {
+  current: {
+    value: {
+      name: string;
+      id: number;
+    };
+  };
+}
+
+/**
+ * Variable injected by the system which holds the current user.
+ */
+export interface UserVariableModel extends SystemVariable {
+  current: {
+    value: {
+      login: string;
+      id: number;
+      email?: string;
+    };
+  };
+}
+
+/**
+ * Variables which value is selected from a list of options.
+ */
+export interface VariableWithOptions extends BaseVariableModel {
+  current: VariableOption;
+  options: Array<VariableOption>;
+  query: string;
+}
+
+export const defaultVariableWithOptions: Partial<VariableWithOptions> = {
+  options: [],
+};
+
+/**
+ * Option to be selected in a variable.
+ */
+export interface VariableOption {
+  isNone?: boolean;
+  selected: boolean;
+  text: (string | Array<string>);
+  value: (string | Array<string>);
+}
+
+export interface TextBoxVariableModel extends VariableWithOptions {
+  /**
+   * This can be null
+   */
+  originalQuery: string;
+  type: 'textbox';
+}
+
+export interface ConstantVariableModel extends VariableWithOptions {
+  type: 'constant';
+}
+
+export interface IntervalVariableModel extends VariableWithOptions {
+  auto: boolean;
+  auto_count: number;
+  auto_min: string;
+  refresh: VariableRefresh;
+  type: 'interval';
+}
+
+export interface VariableWithMultiSupport extends VariableWithOptions {
+  allValue?: string;
+  includeAll: boolean;
+  multi: boolean;
+}
+
+export interface QueryVariableModel extends VariableWithMultiSupport {
+  datasource?: DataSourceRef;
+  definition: string;
+  queryValue?: string;
+  refresh: VariableRefresh;
+  regex: string;
+  sort: VariableSort;
+  type: 'query';
+}
+
+export interface DataSourceVariableModel extends VariableWithMultiSupport {
+  refresh: VariableRefresh;
+  regex: string;
+  type: 'datasource';
+}
+
+export interface CustomVariableModel extends VariableWithMultiSupport {
+  type: 'custom';
+}
+
 export enum VariableHide {
   dontHide = 0,
   hideLabel = 1,
   hideVariable = 2,
+}
+
+export enum VariableRefresh {
+  never = 0,
+  onDashboardLoad = 1,
+  onTimeRangeChanged = 2,
+}
+
+export enum VariableSort {
+  alphabeticalAsc = 1,
+  alphabeticalCaseInsensitiveAsc = 5,
+  alphabeticalCaseInsensitiveDesc = 6,
+  alphabeticalDesc = 2,
+  disabled = 0,
+  numericalAsc = 3,
+  numericalDesc = 4,
 }
 
 export enum LoadingState {

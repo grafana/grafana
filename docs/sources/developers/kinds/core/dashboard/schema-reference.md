@@ -151,42 +151,7 @@ TODO docs
 
 ### VariableModel
 
-FROM: packages/grafana-data/src/types/templateVars.ts
-TODO docs
-TODO what about what's in public/app/features/types.ts?
 TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
-
-#### Properties
-
-| Property       | Type                            | Required | Description                                                                                                                                                                                                                                             |
-|----------------|---------------------------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `global`       | boolean                         | **Yes**  | Default: `false`.                                                                                                                                                                                                                                       |
-| `hide`         | integer                         | **Yes**  | Possible values are: `0`, `1`, `2`.                                                                                                                                                                                                                     |
-| `id`           | string                          | **Yes**  | Default: `00000000-0000-0000-0000-000000000000`.                                                                                                                                                                                                        |
-| `index`        | integer                         | **Yes**  | Default: `-1`.                                                                                                                                                                                                                                          |
-| `name`         | string                          | **Yes**  |                                                                                                                                                                                                                                                         |
-| `skipUrlSync`  | boolean                         | **Yes**  | Default: `false`.                                                                                                                                                                                                                                       |
-| `state`        | string                          | **Yes**  | Possible values are: `NotStarted`, `Loading`, `Streaming`, `Done`, `Error`.                                                                                                                                                                             |
-| `type`         | string                          | **Yes**  | FROM: packages/grafana-data/src/types/templateVars.ts<br/>TODO docs<br/>TODO this implies some wider pattern/discriminated union, probably? Possible values are: `query`, `adhoc`, `constant`, `datasource`, `interval`, `textbox`, `custom`, `system`. |
-| `datasource`   | [DataSourceRef](#datasourceref) | No       | Ref to a DataSource instance                                                                                                                                                                                                                            |
-| `description`  | string                          | No       |                                                                                                                                                                                                                                                         |
-| `error`        | [object](#error)                | No       |                                                                                                                                                                                                                                                         |
-| `label`        | string                          | No       |                                                                                                                                                                                                                                                         |
-| `query`        |                                 | No       | TODO: Move this into a separated QueryVariableModel type                                                                                                                                                                                                |
-| `rootStateKey` | string                          | No       |                                                                                                                                                                                                                                                         |
-
-#### DataSourceRef
-
-Ref to a DataSource instance
-
-##### Properties
-
-| Property | Type   | Required | Description                  |
-|----------|--------|----------|------------------------------|
-| `type`   | string | No       | The plugin type-id           |
-| `uid`    | string | No       | Specific datasource instance |
-
-#### error
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|

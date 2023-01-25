@@ -24,8 +24,26 @@ export interface VariableModel
   // TODO remove explicit nulls
   description: string | null;
   hide: VariableHide;
-  // TODO remove explicit nulls
-  datasource: CommonDataSourceRef | null;
+}
+
+export interface AdHocVariableModel extends Omit<raw.AdHocVariableModel, 'datasource'> {
+  // Overrides nullable properties because CUE doesn't support null values
+  datasource: raw.DataSourceRef | null;
+}
+
+export interface VariableWithMultiSupport extends Omit<raw.VariableWithMultiSupport, 'allValue'> {
+  // Overrides nullable properties because CUE doesn't support null values
+  allValue?: string | null;
+}
+
+export interface TextBoxVariableModel extends Omit<raw.TextBoxVariableModel, 'originalQuery'> {
+  // Overrides nullable properties because CUE doesn't support null values
+  originalQuery: string | null;
+}
+
+export interface QueryVariableModel extends Omit<raw.QueryVariableModel, 'datasource'> {
+  // Overrides nullable properties because CUE doesn't support null values
+  datasource: raw.DataSourceRef | null;
 }
 
 export interface Dashboard extends Omit<raw.Dashboard, 'templating'> {
