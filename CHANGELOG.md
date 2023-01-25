@@ -288,6 +288,23 @@ The following functions and classes related to logs are deprecated in the `grafa
 - **Toolkit:** Deprecate `component:create` command. [#56086](https://github.com/grafana/grafana/pull/56086), [@academo](https://github.com/academo)
 - **Toolkit:** Remove changelog command. [#56073](https://github.com/grafana/grafana/pull/56073), [@gitstart](https://github.com/gitstart)
 
+<!-- 9.2.10 START -->
+
+# 9.2.10 (unreleased)
+
+### Features and enhancements
+
+- **TextPanel:** Refactor to functional component (#60885). [#61940](https://github.com/grafana/grafana/pull/61940), [@ryantxu](https://github.com/ryantxu)
+- **[v9.2.x] Chore:** Upgrade Go to 1.19.4. [#60826](https://github.com/grafana/grafana/pull/60826), [@sakjur](https://github.com/sakjur)
+
+### Bug fixes
+
+- **Live:** Fix `Subscription to the channel already exists` live streaming error. [#61420](https://github.com/grafana/grafana/pull/61420), [@grafanabot](https://github.com/grafanabot)
+- **Live:** Fix `Subscription to the channel already exists` live streaming error. [#61419](https://github.com/grafana/grafana/pull/61419), [@grafanabot](https://github.com/grafanabot)
+- **Live:** Fix `Subscription to the channel already exists` live streaming error. [#61406](https://github.com/grafana/grafana/pull/61406), [@ArturWierzbicki](https://github.com/ArturWierzbicki)
+
+<!-- 9.2.10 END -->
+
 <!-- 9.2.7 START -->
 
 # 9.2.7 (2022-11-29)
