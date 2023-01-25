@@ -188,6 +188,7 @@ type scenarioContext struct {
 	authInfoService         *logintest.AuthInfoServiceFake
 	dashboardVersionService dashver.Service
 	userService             user.Service
+	dashboardService        dashboards.DashboardService
 }
 
 func (sc *scenarioContext) exec() {
@@ -538,10 +539,8 @@ func setUp(confs ...setUpConf) *HTTPServer {
 	}
 	teamSvc := &teamtest.FakeService{}
 	dashSvc := &dashboards.FakeDashboardService{}
-	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*dashboards.GetDashboardACLInfoListQuery)
-		q.Result = aclMockResp
-	}).Return(nil)
+	qResult := aclMockResp
+	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
 	guardian.InitLegacyGuardian(store, dashSvc, teamSvc)
 	return hs
 }
