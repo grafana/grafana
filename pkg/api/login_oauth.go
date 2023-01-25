@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/errutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -89,8 +90,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *contextmodel.ReqContext) {
 		if code == "" {
 			redirect, err := hs.authnService.RedirectURL(ctx.Req.Context(), authn.ClientWithPrefix(name), req)
 			if err != nil {
-				ctx.Logger.Warn("failed to generate oauth redirect url", "err", err)
-				ctx.Redirect(hs.Cfg.AppSubURL + "/login")
+				hs.handleAuthnOAuthErr(ctx, "failed to generate oauth redirect url", err)
 				return
 			}
 
@@ -108,8 +108,8 @@ func (hs *HTTPServer) OAuthLogin(ctx *contextmodel.ReqContext) {
 		cookies.DeleteCookie(ctx.Resp, OauthStateCookieName, hs.CookieOptionsFromCfg)
 
 		if err != nil {
-			// FIXME: handle vs redirect
-			hs.redirectWithError(ctx, err)
+			hs.handleAuthnOAuthErr(ctx, "failed to perform login for oauth request", err)
+			return
 		}
 
 		metrics.MApiLoginOAuth.Inc()
@@ -384,6 +384,20 @@ func (hs *HTTPServer) SyncUser(
 func (hs *HTTPServer) hashStatecode(code, seed string) string {
 	hashBytes := sha256.Sum256([]byte(code + hs.Cfg.SecretKey + seed))
 	return hex.EncodeToString(hashBytes[:])
+}
+
+func (hs *HTTPServer) handleAuthnOAuthErr(c *models.ReqContext, msg string, err error) {
+	c.Logger.Warn(msg, "err", err)
+
+	gfErr := &errutil.Error{}
+	if errors.As(err, gfErr) {
+		if gfErr.Public().Message != "" {
+			c.Handle(hs.Cfg, gfErr.Public().StatusCode, gfErr.Public().Message, err)
+			return
+		}
+	}
+
+	c.Redirect(hs.Cfg.AppSubURL + "/login")
 }
 
 type LoginError struct {
