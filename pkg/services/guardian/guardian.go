@@ -81,7 +81,7 @@ func newDashboardGuardian(ctx context.Context, dashId int64, orgId int64, user *
 			OrgID: orgId,
 		}
 
-		if err := dashSvc.GetDashboard(ctx, q); err != nil {
+		if _, err := dashSvc.GetDashboard(ctx, q); err != nil {
 			if errors.Is(err, dashboards.ErrDashboardNotFound) {
 				return nil, ErrGuardianDashboardNotFound.Errorf("failed to get dashboard by UID: %w", err)
 			}
@@ -110,13 +110,14 @@ func newDashboardGuardianByUID(ctx context.Context, dashUID string, orgId int64,
 			OrgID: orgId,
 		}
 
-		if err := dashSvc.GetDashboard(ctx, q); err != nil {
+		qResult, err := dashSvc.GetDashboard(ctx, q)
+		if err != nil {
 			if errors.Is(err, dashboards.ErrDashboardNotFound) {
 				return nil, ErrGuardianDashboardNotFound.Errorf("failed to get dashboard by UID: %w", err)
 			}
 			return nil, ErrGuardianGetDashboardFailure.Errorf("failed to get dashboard by UID: %w", err)
 		}
-		dashID = q.Result.ID
+		dashID = qResult.ID
 	}
 
 	return &dashboardGuardianImpl{
@@ -306,10 +307,11 @@ func (g *dashboardGuardianImpl) GetACL() ([]*dashboards.DashboardACLInfoDTO, err
 	}
 
 	query := dashboards.GetDashboardACLInfoListQuery{DashboardID: g.dashId, OrgID: g.orgId}
-	if err := g.dashboardService.GetDashboardACLInfoList(g.ctx, &query); err != nil {
+	queryResult, err := g.dashboardService.GetDashboardACLInfoList(g.ctx, &query)
+	if err != nil {
 		return nil, err
 	}
-	g.acl = query.Result
+	g.acl = queryResult
 	return g.acl, nil
 }
 
