@@ -51,7 +51,7 @@ func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 	// When dashboard UID present in the request, we ignore dashboard ID
 	if query.DashboardUid != "" {
 		dq := dashboards.GetDashboardQuery{UID: query.DashboardUid, OrgID: c.OrgID}
-		err := hs.DashboardService.GetDashboard(c.Req.Context(), &dq)
+		dqResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &dq)
 		if err != nil {
 			if hs.Features.IsEnabled(featuremgmt.FlagDashboardsFromStorage) {
 				// OK... the storage UIDs do not (yet?) exist in the DashboardService
@@ -59,7 +59,7 @@ func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 				return response.Error(http.StatusBadRequest, "Invalid dashboard UID in annotation request", err)
 			}
 		} else {
-			query.DashboardId = dq.Result.ID
+			query.DashboardId = dqResult.ID
 		}
 	}
 
@@ -80,10 +80,10 @@ func (hs *HTTPServer) GetAnnotations(c *models.ReqContext) response.Response {
 				item.DashboardUID = val
 			} else {
 				query := dashboards.GetDashboardQuery{ID: item.DashboardId, OrgID: c.OrgID}
-				err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
-				if err == nil && query.Result != nil {
-					item.DashboardUID = &query.Result.UID
-					dashboardCache[item.DashboardId] = &query.Result.UID
+				queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
+				if err == nil && queryResult != nil {
+					item.DashboardUID = &queryResult.UID
+					dashboardCache[item.DashboardId] = &queryResult.UID
 				}
 			}
 		}
@@ -123,9 +123,9 @@ func (hs *HTTPServer) PostAnnotation(c *models.ReqContext) response.Response {
 	// overwrite dashboardId when dashboardUID is not empty
 	if cmd.DashboardUID != "" {
 		query := dashboards.GetDashboardQuery{OrgID: c.OrgID, UID: cmd.DashboardUID}
-		err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
+		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 		if err == nil {
-			cmd.DashboardId = query.Result.ID
+			cmd.DashboardId = queryResult.ID
 		}
 	}
 
@@ -380,9 +380,9 @@ func (hs *HTTPServer) MassDeleteAnnotations(c *models.ReqContext) response.Respo
 
 	if cmd.DashboardUID != "" {
 		query := dashboards.GetDashboardQuery{OrgID: c.OrgID, UID: cmd.DashboardUID}
-		err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
+		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 		if err == nil {
-			cmd.DashboardId = query.Result.ID
+			cmd.DashboardId = queryResult.ID
 		}
 	}
 
