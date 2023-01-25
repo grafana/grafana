@@ -31,14 +31,23 @@ composableKinds: DataQuery: {
 				schemas: [
 					{
 						common.DataQuery
-						query:            string
-						search?:          string
-						serviceName?:     string
-						spanName?:        string
-						minDuration?:     string
-						maxDuration?:     string
+
+						// TraceQL query or trace ID
+						query: string
+						// Logfmt query to filter traces by their tags. Example: http.status_code=200 error=true
+						search?: string
+						// Query traces by service name
+						serviceName?: string
+						// Query traces by span name
+						spanName?: string
+						// Define the minimum duration to select traces. Use duration format, for example: 1.2s, 100ms
+						minDuration?: string
+						// Define the maximum duration to select traces. Use duration format, for example: 1.2s, 100ms
+						maxDuration?: string
+						// Filters to be included in a PromQL query to select data for the service graph. Example: {client="app",service="app"}
 						serviceMapQuery?: string
-						limit?:           number
+						// Defines the maximum number of traces that are returned from Tempo
+						limit?: number
 
 						// search = Loki search, nativeSearch = Tempo search for backwards compatibility
 						#TempoQueryType: "traceql" | "search" | "serviceMap" | "upload" | "nativeSearch" | "clear" @cuetsy(kind="type")

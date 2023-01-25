@@ -18,12 +18,36 @@ export const DataQueryModelVersion = Object.freeze([0, 0]);
 export type TempoQueryType = ('traceql' | 'search' | 'serviceMap' | 'upload' | 'nativeSearch' | 'clear');
 
 export interface Tempo extends common.DataQuery {
+  /**
+   * Defines the maximum number of traces that are returned from Tempo
+   */
   limit?: number;
+  /**
+   * Define the maximum duration to select traces. Use duration format, for example: 1.2s, 100ms
+   */
   maxDuration?: string;
+  /**
+   * Define the minimum duration to select traces. Use duration format, for example: 1.2s, 100ms
+   */
   minDuration?: string;
+  /**
+   * TraceQL query or trace ID
+   */
   query: string;
+  /**
+   * Logfmt query to filter traces by their tags. Example: http.status_code=200 error=true
+   */
   search?: string;
+  /**
+   * Filters to be included in a PromQL query to select data for the service graph. Example: {client="app",service="app"}
+   */
   serviceMapQuery?: string;
+  /**
+   * Query traces by service name
+   */
   serviceName?: string;
+  /**
+   * Query traces by span name
+   */
   spanName?: string;
 }
