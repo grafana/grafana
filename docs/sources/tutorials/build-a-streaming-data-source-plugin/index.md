@@ -10,7 +10,7 @@ Feedback Link: https://github.com/grafana/tutorials/issues/new
 weight: 75
 ---
 
-{{< tutorials/step title="Introduction" >}}
+## Introduction
 
 Grafana supports a wide range of data sources, including Prometheus, MySQL, and even Datadog. In previous tutorials we have shown how to extend Grafana capabilities to query custom data sources by [building a backend datasource plugin](https://grafana.com/tutorials/build-a-data-source-backend-plugin/). In this tutorial we take a step further and add streaming capabilities to the backend datasource plugin. Streaming allows plugins to push data to Grafana panels as soon as data appears (without periodic polling from UI side).
 
@@ -21,6 +21,7 @@ In this tutorial, you'll:
 - Extend a backend plugin with streaming capabilities
 
 {{% class "prerequisite-section" %}}
+
 #### Prerequisites
 
 - Knowledge about how data sources are implemented in the frontend.
@@ -30,15 +31,13 @@ In this tutorial, you'll:
 - [Mage](https://magefile.org/)
 - NodeJS ([Version](https://github.com/grafana/plugin-tools/blob/main/packages/create-plugin/templates/common/package.json#L66))
 - yarn
-{{% /class %}}
+  {{% /class %}}
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Set up your environment" >}}
+## Set up your environment
 
 {{< docs/shared lookup="tutorials/set-up-environment.md" source="grafana" >}}
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Create a new plugin" >}}
+## Create a new plugin
 
 To build a backend for your data source plugin, Grafana requires a binary that it can execute when it loads the plugin during start-up. In this guide, we will build a binary using the [Grafana plugin SDK for Go](https://grafana.com/docs/grafana/latest/developers/plugins/backend/grafana-plugin-sdk-for-go/).
 
@@ -99,13 +98,11 @@ By default, Grafana requires backend plugins to be signed. To load unsigned back
 configure Grafana to [allow unsigned plugins](https://grafana.com/docs/grafana/latest/plugins/plugin-signature-verification/#allow-unsigned-plugins).
 For more information, refer to [Plugin signature verification](https://grafana.com/docs/grafana/latest/plugins/plugin-signature-verification/#backend-plugins).
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Anatomy of a backend plugin" >}}
+## Anatomy of a backend plugin
 
 As you may notice till this moment we did the same steps described in [build a backend datasource plugin tutorial](https://grafana.com/tutorials/build-a-data-source-backend-plugin/). At this point, you should be familiar with backend plugin structure and a way how data querying and health check capabilities could be implemented. Let's take the next step and discuss how datasource plugin can handle data streaming.
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Add streaming capabilities" >}}
+## Add streaming capabilities
 
 What we want to achieve here is to issue a query to load initial data from a datasource plugin and then switching to data streaming mode where the plugin will push data frames to Grafana time-series panel.
 
@@ -119,9 +116,9 @@ Channel is a string identifier of topic to which clients can subscribe in Grafan
 
 As said in docs in Grafana Live channel consists of 3 parts delimited by `/`:
 
-* Scope
-* Namespace
-* Path
+- Scope
+- Namespace
+- Path
 
 For datasource plugin channels Grafana uses `ds` scope. Namespace in the case of datasource channels is a datasource unique ID (UID) which is issued by Grafana at the moment of datasource creation. The path is a custom string that plugin authors free to choose themselves (just make sure it consists of allowed symbols). I.e. datasource channel looks like `ds/<DATASOURCE_UID>/<CUSTOM_PATH>`.
 
@@ -161,9 +158,6 @@ return &backend.PublishStreamResponse{
 }, nil
 ```
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Summary" >}}
+## Summary
 
 In this tutorial you created a backend for your data source plugin with streaming capabilities.
-
-{{< /tutorials/step >}}

@@ -10,36 +10,34 @@ Feedback Link: https://github.com/grafana/tutorials/issues/new
 weight: 50
 ---
 
-{{< tutorials/step title="Introduction" >}}
+## Introduction
 
 Panels are the building blocks of Grafana. They allow you to visualize data in different ways. While Grafana has several types of panels already built-in, you can also build your own panel, to add support for other visualizations.
 
 For more information about panels, refer to the documentation on [Panels](https://grafana.com/docs/grafana/latest/panels/).
 
 {{% class "prerequisite-section" %}}
+
 ### Prerequisites
 
 - Grafana >=7.0
 - NodeJS >=14
 - yarn
-{{% /class %}}
-{{< /tutorials/step >}}
-{{< tutorials/step title="Set up your environment" >}}
+  {{% /class %}}
+
+## Set up your environment
 
 {{< docs/shared lookup="tutorials/set-up-environment.md" source="grafana" >}}
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Create a new plugin" >}}
+## Create a new plugin
 
 {{< docs/shared lookup="tutorials/create-plugin.md" source="grafana" >}}
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Anatomy of a plugin" >}}
+## Anatomy of a plugin
 
 {{< docs/shared lookup="tutorials/plugin-anatomy.md" source="grafana" >}}
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Panel plugins" >}}
+## Panel plugins
 
 Since Grafana 6.x, panels are [ReactJS components](https://reactjs.org/docs/components-and-props.html).
 
@@ -74,10 +72,9 @@ Now that you can view your panel, try making a change to the panel plugin:
 1. Run `yarn dev` to build the plugin.
 1. In the browser, reload Grafana with the new changes.
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Add panel options" >}}
+## Add panel options
 
-Sometimes you want to offer the users of your panel an option to configure the behavior of your plugin. By configuring  _panel options_ for your plugin, your panel will be able to accept user input.
+Sometimes you want to offer the users of your panel an option to configure the behavior of your plugin. By configuring _panel options_ for your plugin, your panel will be able to accept user input.
 
 In the previous step, you changed the fill color of the circle in the code. Let's change the code so that the plugin user can configure the color from the panel editor.
 
@@ -102,8 +99,8 @@ Here's the updated options definition:
 **src/types.ts**
 
 ```ts
-type SeriesSize = 'sm' | 'md' | 'lg';
-type CircleColor = 'red' | 'green' | 'blue';
+type SeriesSize = "sm" | "md" | "lg";
+type CircleColor = "red" | "green" | "blue";
 
 // interface defining panel options type
 export interface SimpleOptions {
@@ -163,13 +160,13 @@ You're almost done. You've added a new option and a corresponding control to cha
    ```ts
    let color: string;
    switch (options.color) {
-     case 'red':
+     case "red":
        color = theme.palette.redBase;
        break;
-     case 'green':
+     case "green":
        color = theme.palette.greenBase;
        break;
-     case 'blue':
+     case "blue":
        color = theme.palette.blue95;
        break;
    }
@@ -185,8 +182,7 @@ You're almost done. You've added a new option and a corresponding control to cha
 
 Now, when you change the color in the panel editor, the fill color of the circle changes as well.
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Create dynamic panels using data frames" >}}
+## Create dynamic panels using data frames
 
 Most panels visualize dynamic data from a Grafana data source. In this step, you'll create one circle per series, each with a radius equal to the last value in the series.
 
@@ -203,7 +199,7 @@ const { data } = props;
 Here's an example of a data frame with a time field, `Time`, and a number field, `Value`:
 
 | Time          | Value |
-|---------------|-------|
+| ------------- | ----- |
 | 1589189388597 | 32.4  |
 | 1589189406480 | 27.2  |
 | 1589189513721 | 15.0  |
@@ -214,8 +210,8 @@ Let's see how you can retrieve data from a data frame and use it in your visuali
 
    ```ts
    const radii = data.series
-    .map(series => series.fields.find(field => field.type === 'number'))
-    .map(field => field?.values.get(field.values.length - 1));
+     .map((series) => series.fields.find((field) => field.type === "number"))
+     .map((field) => field?.values.get(field.values.length - 1));
    ```
 
    `radii` will contain the last values in each of the series that are returned from a data source query. You'll use these to set the radius for each circle.
@@ -243,10 +239,12 @@ Let's see how you can retrieve data from a data frame and use it in your visuali
    Note how we're creating a `<circle>` element for each value in `radii`:
 
    ```ts
-   {radii.map((radius, index) => {
-     const step = width / radii.length;
-     return <circle r={radius} transform={`translate(${index * step + step / 2}, 0)`} />;
-   })}
+   {
+     radii.map((radius, index) => {
+       const step = width / radii.length;
+       return <circle r={radius} transform={`translate(${index * step + step / 2}, 0)`} />;
+     });
+   }
    ```
 
    We use the `transform` here to distribute the circle horizontally within the panel.
@@ -255,9 +253,6 @@ Let's see how you can retrieve data from a data frame and use it in your visuali
 
 If you want to know more about data frames, check out our introduction to [Data frames](https://grafana.com/docs/grafana/latest/developers/plugins/data-frames/).
 
-{{% /tutorials/step %}}
-{{< tutorials/step title="Summary" >}}
+## Summary
 
 In this tutorial you learned how to create a custom visualization for your dashboards.
-
-{{< /tutorials/step >}}

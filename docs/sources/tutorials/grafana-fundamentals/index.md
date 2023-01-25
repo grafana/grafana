@@ -10,7 +10,7 @@ Feedback Link: https://github.com/grafana/tutorials/issues/new
 weight: 10
 ---
 
-{{< tutorials/step title="Introduction" >}}
+## Introduction
 
 In this tutorial, you'll learn how to use Grafana to set up a monitoring solution for your application.
 
@@ -22,14 +22,15 @@ In this tutorial, you'll:
 - Set up alerts
 
 {{% class "prerequisite-section" %}}
+
 ### Prerequisites
 
 - [Docker](https://docs.docker.com/install/)
 - [Docker Compose](https://docs.docker.com/compose/) (included in Docker for Desktop for macOS and Windows)
 - [Git](https://git-scm.com/)
-{{% /class %}}
-{{< /tutorials/step >}}
-{{< tutorials/step title="Set up the sample application" >}}
+  {{% /class %}}
+
+## Set up the sample application
 
 This tutorial uses a sample application to demonstrate some of the features in Grafana. To complete the exercises in this tutorial, you need to download the files to your local machine.
 
@@ -61,7 +62,7 @@ In this step, you'll set up the sample application, as well as supporting servic
    docker-compose up -d
    ```
 
-   The first time you run `docker-compose up -d`, Docker downloads all the    necessary resources for the tutorial. This might take a few minutes, depending    on your internet connection.
+   The first time you run `docker-compose up -d`, Docker downloads all the necessary resources for the tutorial. This might take a few minutes, depending on your internet connection.
 
    > **Note:** If you already have Grafana, Loki, or Prometheus running on your system, then you might see errors because the Docker image is trying to use ports that your local installations are already using. Stop the services, then run the command again.
 
@@ -89,8 +90,7 @@ To add a link:
 
 To vote for a link, click the triangle icon next to the name of the link.
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Log in to Grafana" >}}
+## Log in to Grafana
 
 Grafana is an open-source platform for monitoring and observability that lets you visualize and explore the state of your systems.
 
@@ -110,14 +110,13 @@ The first thing you see is the Home dashboard, which helps you get started.
 
 To the far left you can see the _sidebar_, a set of quick access icons for navigating Grafana.
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Add a metrics data source" >}}
+## Add a metrics data source
 
 The sample application exposes metrics which are stored in [Prometheus](https://prometheus.io/), a popular time series database (TSDB).
 
 To be able to visualize the metrics from Prometheus, you first need to add it as a data source in Grafana.
 
-1. In the sidebar, hover your cursor over the  **Configuration** (gear) icon, and then click **Data sources**.
+1. In the sidebar, hover your cursor over the **Configuration** (gear) icon, and then click **Data sources**.
 1. Click **Add data source**.
 1. In the list of data sources, click **Prometheus**.
 1. In the URL box, enter **http\://prometheus:9090**.
@@ -125,16 +124,15 @@ To be able to visualize the metrics from Prometheus, you first need to add it as
 
    Prometheus is now available as a data source in Grafana.
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Explore your metrics" >}}
+## Explore your metrics
 
 Grafana Explore is a workflow for troubleshooting and data exploration. In this step, you'll be using Explore to create ad-hoc queries to understand the metrics exposed by the sample application.
 
 > Ad-hoc queries are queries that are made interactively, with the purpose of exploring data. An ad-hoc query is commonly followed by another, more specific query.
 
 1. In the sidebar, click the **Explore** (compass) icon.
-1. In the **Query editor**, where it says *Enter a PromQL query…*, enter `tns_request_duration_seconds_count` and then press Shift + Enter.
-  A graph appears.
+1. In the **Query editor**, where it says _Enter a PromQL query…_, enter `tns_request_duration_seconds_count` and then press Shift + Enter.
+   A graph appears.
 1. In the top right corner, click the dropdown arrow on the **Run Query** button, and then select **5s**. Grafana runs your query and updates the graph every 5 seconds.
 
    You just made your first _PromQL_ query! [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/) is a powerful query language that lets you select and aggregate time series data stored in Prometheus.
@@ -163,12 +161,11 @@ Grafana Explore is a workflow for troubleshooting and data exploration. In this 
 
 Depending on your use case, you might want to group on other labels. Try grouping by other labels, such as `status_code`, by changing the `by(route)` part of the query.
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Add a logging data source" >}}
+## Add a logging data source
 
 Grafana supports log data sources, like [Loki](https://grafana.com/oss/loki/). Just like for metrics, you first need to add your data source to Grafana.
 
-1. In the sidebar, hover your cursor over the  **Configuration** (gear) icon, and then click **Data Sources**.
+1. In the sidebar, hover your cursor over the **Configuration** (gear) icon, and then click **Data Sources**.
 1. Click **Add data source**.
 1. In the list of data sources, click **Loki**.
 1. In the URL box, enter [http://loki:3100](http://loki:3100).
@@ -176,8 +173,7 @@ Grafana supports log data sources, like [Loki](https://grafana.com/oss/loki/). J
 
 Loki is now available as a data source in Grafana.
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Explore your logs" >}}
+## Explore your logs
 
 Grafana Explore not only lets you make ad-hoc queries for metrics, but lets you explore your logs as well.
 
@@ -210,8 +206,7 @@ Let's generate an error, and analyze it with Explore.
 
 Logs are helpful for understanding what went wrong. Later in this tutorial, you'll see how you can correlate logs with metrics from Prometheus to better understand the context of the error.
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Build a dashboard" >}}
+## Build a dashboard
 
 A _dashboard_ gives you an at-a-glance view of your data and lets you track metrics through different visualizations.
 
@@ -233,8 +228,7 @@ Every panel consists of a _query_ and a _visualization_. The query defines _what
 1. Click the **Save dashboard** (disk) icon at the top of the dashboard to save your dashboard.
 1. Enter a name in the **Dashboard name** field and then click **Save**.
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Annotate events" >}}
+## Annotate events
 
 When things go bad, it often helps if you understand the context in which the failure occurred. Time of last deploy, system changes, or database migration can offer insight into what might have caused an outage. Annotations allow you to represent such events directly on your graphs.
 
@@ -267,6 +261,7 @@ Manually annotating your dashboard is fine for those single events. For regularl
    ```
 
 <!--this add button is gone rn. look into this -->
+
 1. Click **Add**. Grafana displays the Annotations list, with your new annotation.
 1. Click the **Go back** arrow to return to your dashboard.
 1. At the top of your dashboard, there is now a toggle to display the results of the newly created annotation query. Press it so that it's enabled.
@@ -277,8 +272,7 @@ Being able to combine data from multiple data sources in one graph allows you to
 
 Annotations also work very well alongside alerts. In the next and final section, we will set up an alert for our app `grafana.news` and then we will trigger it. This will provide a quick intro to our new Alerting platform.
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Create a Grafana Managed Alert" >}}
+## Create a Grafana Managed Alert
 
 Alerts allow you to identify problems in your system moments after they occur. By quickly identifying unintended changes in your system, you can minimize disruptions to your services.
 
@@ -286,7 +280,7 @@ Grafana's new alerting platform debuted with Grafana 8. A year later, with Grafa
 
 The most basic alert consists of two parts:
 
-1. A _Contact Point_ - A Contact point defines how Grafana delivers an alert. When the conditions of an _alert rule_ are met, Grafana notifies the contact points, or channels, configured for that alert. Some popular channels include email, webhooks, Slack notifications, and PagerDuty notifications. 
+1. A _Contact Point_ - A Contact point defines how Grafana delivers an alert. When the conditions of an _alert rule_ are met, Grafana notifies the contact points, or channels, configured for that alert. Some popular channels include email, webhooks, Slack notifications, and PagerDuty notifications.
 1. An _Alert rule_ - An Alert rule defines one or more _conditions_ that Grafana regularly evaluates. When these evaluations meet the rule's criteria, the alert is triggered.
 
 To begin, let's set up a webhook Contact Point. Once we have a usable endpoint, we'll write an alert rule and trigger a notification.
@@ -339,8 +333,7 @@ We have now configured an alert rule and a contact point. Now let's see if we ca
 
 Once the query `sum(rate(tns_request_duration_seconds_count[5m])) by(route)` returns a value greater than `0.2` Grafana will trigger our alert. Browse to the Request Bin we created earlier and find the sent Grafana alert notification with details and metadata.
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Summary" >}}
+## Summary
 
 In this tutorial you learned about fundamental features of Grafana. To do so, we ran several Docker containers on your local machine. When you are ready to clean up this local tutorial environment, run the following command:
 
@@ -358,5 +351,3 @@ Check out the links below to continue your learning journey with Grafana's LGTM 
 - [Alerting Overview](https://grafana.com/docs/grafana/latest/alerting/)
 - [Alert rules](https://grafana.com/docs/grafana/latest/alerting/create-alerts/)
 - [Contact Points](https://grafana.com/docs/grafana/latest/alerting/notifications/)
-
-{{< /tutorials/step >}}

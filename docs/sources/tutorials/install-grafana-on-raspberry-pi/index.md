@@ -8,7 +8,7 @@ authors: ["grafana_labs"]
 Feedback Link: https://github.com/grafana/tutorials/issues/new
 ---
 
-{{< tutorials/step title="Introduction" >}}
+## Introduction
 
 The Raspberry Pi is a tiny, affordable, yet capable computer that can run a range of different applications. Even Grafana!
 
@@ -20,13 +20,14 @@ In this tutorial, you'll:
 - Install Grafana on your Raspberry Pi.
 
 {{% class "prerequisite-section" %}}
+
 ### Prerequisites
 
 - Raspberry Pi
 - SD card
-{{% /class %}}
-{{< /tutorials/step >}}
-{{< tutorials/step title="Set up your Raspberry Pi" >}}
+  {{% /class %}}
+
+## Set up your Raspberry Pi
 
 Before we can install Grafana, you first need to set up your Raspberry Pi.
 
@@ -92,17 +93,18 @@ All the necessary files are now on the SD card. Let's start up the Raspberry Pi.
 
 Congratulations! You've now got a tiny Linux machine running that you can hide in a closet and access from your normal workstation.
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Install Grafana" >}}
+## Install Grafana
 
 Now that you've got the Raspberry Pi up and running, the next step is to install Grafana.
 
 1. Add the APT key used to authenticate packages:
+
    ```
    wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
    ```
 
 1. Add the Grafana APT repository:
+
    ```
    echo "deb https://packages.grafana.com/oss/deb stable main" | sudo tee -a /etc/apt/sources.list.d/grafana.list
    ```
@@ -116,14 +118,17 @@ Now that you've got the Raspberry Pi up and running, the next step is to install
 Grafana is now installed, but not yet running. To make sure Grafana starts up even if the Raspberry Pi is restarted, we need to enable and start the Grafana Systemctl service.
 
 1. Enable the Grafana server:
+
    ```
    sudo /bin/systemctl enable grafana-server
    ```
 
 1. Start the Grafana server:
+
    ```
    sudo /bin/systemctl start grafana-server
    ```
+
    Grafana is now running on the machine and is accessible from any device on the local network.
 
 1. Open a browser and go to `http://<ip address>:3000`, where the IP address is the address that you used to connect to the Raspberry Pi earlier. You're greeted with the Grafana login page.
@@ -132,14 +137,10 @@ Grafana is now installed, but not yet running. To make sure Grafana starts up ev
 
 Congratulations! Grafana is now running on your Raspberry Pi. If the Raspberry Pi is ever restarted or turned off, Grafana will start up whenever the machine regains power.
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Summary" >}}
+## Summary
 
 If you want to use Grafana without having to go through a full installation process, check out [Grafana Cloud](https://grafana.com/products/cloud/), which is designed to get users up and running quickly and easily. Grafana Cloud offers a forever free plan that is genuinely useful for hobbyists, testing, and small teams.
 
 ### Learn more
 
 - [Raspberry Pi Documentation](https://www.raspberrypi.org/documentation/)
-
-
-{{< /tutorials/step >}}

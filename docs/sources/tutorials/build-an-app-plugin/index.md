@@ -11,7 +11,7 @@ weight: 50
 draft: true
 ---
 
-{{< tutorials/step title="Introduction" >}}
+## Introduction
 
 App plugins are Grafana plugins that can bundle data source and panel plugins within one package. They also let you create _custom pages_ within Grafana. Custom pages enable the plugin author to include things like documentation, sign-up forms, or to control other services over HTTP.
 
@@ -24,24 +24,21 @@ Data source and panel plugins will show up like normal plugins. The app pages wi
 - Grafana 7.0
 - NodeJS 12.x
 - yarn
-{{% /class %}}
-{{< /tutorials/step >}}
-{{< tutorials/step title="Set up your environment" >}}
+  {{% /class %}}
+
+## Set up your environment
 
 {{< docs/shared lookup="tutorials/set-up-environment.md" source="grafana" >}}
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Create a new plugin" >}}
+## Create a new plugin
 
 {{< docs/shared lookup="tutorials/create-plugin.md" source="grafana" >}}
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Anatomy of a plugin" >}}
+## Anatomy of a plugin
 
 {{< docs/shared lookup="tutorials/plugin-anatomy.md" source="grafana" >}}
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="App plugins" >}}
+## App plugins
 
 App plugins let you bundle resources such as dashboards, panels, and data sources into a single plugin.
 
@@ -53,8 +50,7 @@ Dashboards and pages can be added to the app menu by setting `addToNav` to `true
 
 By setting `"defaultNav": true`, users can navigate to the dashboard by clicking the app icon in the side menu.
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Add a custom page" >}}
+## Add a custom page
 
 App plugins let you extend the Grafana user interface through the use of _custom pages_.
 
@@ -67,13 +63,11 @@ Let's add a tab for managing server instances.
 1. In the `src/pages` directory, add a new file called `Instances.tsx`. This component contains the content for the new tab.
 
    ```ts
-   import { AppRootProps } from '@grafana/data';
-   import React, { FC } from 'react';
+   import { AppRootProps } from "@grafana/data";
+   import React, { FC } from "react";
 
    export const Instances: FC<AppRootProps> = ({ query, path, meta }) => {
-     return (
-       <p>Hello</p>
-     );
+     return <p>Hello</p>;
    };
    ```
 
@@ -82,7 +76,7 @@ Let's add a tab for managing server instances.
    **index.ts**
 
    ```ts
-   import { Instances } from './Instances';
+   import { Instances } from "./Instances";
    ```
 
    ```ts
@@ -113,8 +107,7 @@ Let's add a tab for managing server instances.
 
 > **Note:** While `page` includes typically reference pages created by the app, you can set `path` to any URL, internal or external. Try setting `path` to `https://grafana.com`.
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Configure the app" >}}
+## Configure the app
 
 Let's add a new configuration page where users are able to configure default zone and regions for any instances they create.
 
@@ -131,8 +124,7 @@ Let's add a new configuration page where users are able to configure default zon
    })
    ```
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Add a dashboard" >}}
+## Add a dashboard
 
 #### Include a dashboard in your app
 
@@ -140,6 +132,7 @@ Let's add a new configuration page where users are able to configure default zon
 1. Create a file called `overview.json` in the `dashboards` directory.
 1. Copy the JSON definition for the dashboard you want to include and paste it into `overview.json`. If you don't have one available, you can find a sample dashboard at the end of this step.
 1. In `plugin.json`, add the following object to the `includes` property.
+
    - The `name` of the dashboard needs to be the same as the `title` in the dashboard JSON model.
    - `path` points out the file that contains the dashboard definition, relative to the `plugin.json` file.
 
@@ -156,8 +149,7 @@ Let's add a new configuration page where users are able to configure default zon
 
 1. Save and restart Grafana to load the new changes.
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Bundle a plugin" >}}
+## Bundle a plugin
 
 An app plugin can contain panel and data source plugins that get installed along with the app plugin.
 
@@ -210,9 +202,6 @@ If you want to let users know that your app requires an existing plugin, you can
 }
 ```
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Summary" >}}
+## Summary
 
 In this tutorial you learned how to create an app plugin.
-
-{{< /tutorials/step >}}

@@ -10,7 +10,7 @@ Feedback Link: https://github.com/grafana/tutorials/issues/new
 weight: 60
 ---
 
-{{< tutorials/step title="Introduction" >}}
+## Introduction
 
 Panels are the building blocks of Grafana, and allow you to visualize data in different ways. This tutorial gives you a hands-on walkthrough of creating your own panel using [D3.js](https://d3js.org/).
 
@@ -22,24 +22,23 @@ In this tutorial, you'll:
 - Learn how to use D3.js to build a panel using data-driven transformations.
 
 {{% class "prerequisite-section" %}}
+
 ### Prerequisites
 
 - Grafana 7.0
 - NodeJS 12.x
 - yarn
-{{% /class %}}
-{{< /tutorials/step >}}
-{{< tutorials/step title="Set up your environment" >}}
+  {{% /class %}}
+
+## Set up your environment
 
 {{< docs/shared lookup="tutorials/set-up-environment.md" source="grafana" >}}
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Create a new plugin" >}}
+## Create a new plugin
 
 {{< docs/shared lookup="tutorials/create-plugin.md" source="grafana" >}}
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Data-driven documents" >}}
+## Data-driven documents
 
 [D3.js](https://d3js.org/) is a JavaScript library for manipulating documents based on data. It lets you transform arbitrary data into HTML, and is commonly used for creating visualizations.
 
@@ -47,17 +46,17 @@ Wait a minute. Manipulating documents based on data? That's sounds an awful lot 
 
 In **SimplePanel.tsx**, change `SimplePanel` to return an `svg` with a `rect` element.
 
-   ```ts
-   export const SimplePanel: React.FC<Props> = ({ options, data, width, height }) => {
-     const theme = useTheme();
+```ts
+export const SimplePanel: React.FC<Props> = ({ options, data, width, height }) => {
+  const theme = useTheme();
 
-     return (
-       <svg width={width} height={height}>
-         <rect x={0} y={0} width={10} height={10} fill={theme.palette.greenBase} />
-       </svg>
-     );
-   };
-   ```
+  return (
+    <svg width={width} height={height}>
+      <rect x={0} y={0} width={10} height={10} fill={theme.palette.greenBase} />
+    </svg>
+  );
+};
+```
 
 One single rectangle might not be very exciting, so let's see how you can create rectangles from data.
 
@@ -93,8 +92,7 @@ As you can see, React is perfectly capable of dynamically creating HTML elements
 
 So why would you use even use D3? In the next step, we'll see how you can take advantage of D3's data transformations.
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Transform data using D3.js" >}}
+## Transform data using D3.js
 
 In this step, you'll see how you can transform data using D3 before rendering it using React.
 
@@ -109,7 +107,7 @@ D3 is already bundled with Grafana, and you can access it by importing the `d3` 
 1. Import `d3` in **SimplePanel.tsx**.
 
    ```ts
-   import * as d3 from 'd3';
+   import * as d3 from "d3";
    ```
 
 In the previous step, we had to define the width of each bar in pixels. Instead, let's use _scales_ from the D3 library to make the width of each bar depend on the width of the panel.
@@ -123,6 +121,7 @@ Scales are functions that map a range of values to another range of values. In t
      .scaleLinear()
      .domain([0, d3.max(values) || 0.0])
      .range([0, width]);
+   ```
 
 1. Pass the value to the scale function to calculate the width of the bar in pixels.
 
@@ -140,8 +139,7 @@ Scales are functions that map a range of values to another range of values. In t
 
 As you can see, even if we're using React to render the actual elements, the D3 library contains useful tools that you can use to transform your data before rendering it.
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Add an axis" >}}
+## Add an axis
 
 Another useful tool in the D3 toolbox is the ability to generate _axes_. Adding axes to our chart makes it easier for the user to understand the differences between each bar.
 
@@ -157,7 +155,7 @@ Let's see how you can use D3 to add a horizontal axis to your bar chart.
 
    ```ts
    <g
-     ref={node => {
+     ref={(node) => {
        d3.select(node).call(axis as any);
      }}
    />
@@ -178,7 +176,7 @@ By default, the axis renders at the top of the SVG element. We'd like to move it
    ```ts
    <g
      transform={`translate(0, ${chartHeight})`}
-     ref={node => {
+     ref={(node) => {
        d3.select(node).call(axis as any);
      }}
    />
@@ -186,15 +184,14 @@ By default, the axis renders at the top of the SVG element. We'd like to move it
 
 Congrats! You've created a simple and responsive bar chart.
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Complete example" >}}
+## Complete example
 
 ```ts
-import React from 'react';
-import { PanelProps } from '@grafana/data';
-import { SimpleOptions } from 'types';
-import { useTheme } from '@grafana/ui';
-import * as d3 from 'd3';
+import React from "react";
+import { PanelProps } from "@grafana/data";
+import { SimpleOptions } from "types";
+import { useTheme } from "@grafana/ui";
+import * as d3 from "d3";
 
 interface Props extends PanelProps<SimpleOptions> {}
 
@@ -223,7 +220,7 @@ export const SimplePanel: React.FC<Props> = ({ options, data, width, height }) =
       </g>
       <g
         transform={`translate(0, ${chartHeight})`}
-        ref={node => {
+        ref={(node) => {
           d3.select(node).call(axis as any);
         }}
       />
@@ -231,9 +228,7 @@ export const SimplePanel: React.FC<Props> = ({ options, data, width, height }) =
   );
 };
 ```
-{{< /tutorials/step >}}
-{{< tutorials/step title="Summary" >}}
+
+## Summary
 
 In this tutorial you built a panel plugin with D3.js.
-
-{{< /tutorials/step >}}

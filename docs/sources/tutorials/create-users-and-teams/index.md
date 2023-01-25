@@ -10,12 +10,11 @@ Feedback Link: https://github.com/grafana/tutorials/issues/new
 weight: 20
 ---
 
-{{< tutorials/step title="Introduction" >}}
+## Introduction
 
 This tutorial is for admins or anyone that wants to learn how to manage
 users in Grafana. You'll add multiple local users, organize them into teams,
 and make sure they're only able to access the resources they need.
-
 
 ### Scenario
 
@@ -27,16 +26,15 @@ In this scenario, you'll:
 - Create users and organize them into teams.
 - Manage resource access for each user and team through roles and folders.
 
-
 {{% class "prerequisite-section" %}}
 
 ### Prerequisites
 
 - Grafana 7.0 or newer, this tutorial was tested with Grafana 8.5.
 - A user with the Admin or Server Admin role.
-{{% /class %}}
-{{< /tutorials/step >}}
-{{< tutorials/step title="Add users" >}}
+  {{% /class %}}
+
+## Add users
 
 In Grafana, all users are granted an _organization role_ that determines what
 resources they can access.
@@ -45,9 +43,9 @@ There are three types of organization roles in Grafana. The **Grafana Admin** is
 a global role, the default `admin` user has this role.
 
 - **Grafana Admin -** Manage organizations, users, and view server-wide settings.
-- **Organization Administrator -**   Manage data sources, teams, and users within an organization.
-- **Editor -**  Create and edit dashboards.
-- **Viewer -**  View dashboards.
+- **Organization Administrator -** Manage data sources, teams, and users within an organization.
+- **Editor -** Create and edit dashboards.
+- **Viewer -** View dashboards.
 
 > **Note**: You can also configure Grafana to allow [anonymous access](https://grafana.com/docs/grafana/latest/auth/overview/#anonymous-authentication), to make dashboards available even to those who don't have a Grafana user account. That's how Grafana Labs made https://play.grafana.org publicly available.
 
@@ -55,12 +53,12 @@ a global role, the default `admin` user has this role.
 
 Graphona has asked you to add a group of early adopters that work in the Marketing and Engineering teams. They'll need to be able to edit their own team's dashboards, but want to have view access to dashboards that belong to the other team.
 
-| Name              | Email                     | Username          |
-|-------------------|---------------------------|-------------------|
-| Almaz Russom      | almaz.russom@example.com  | almaz.russom      |
-| Brenda Tilman     | brenda.tilman@example.com | brenda.tilman     |
+| Name              | Email                         | Username          |
+| ----------------- | ----------------------------- | ----------------- |
+| Almaz Russom      | almaz.russom@example.com      | almaz.russom      |
+| Brenda Tilman     | brenda.tilman@example.com     | brenda.tilman     |
 | Mada Rawdha Tahan | mada.rawdha.tahan@example.com | mada.rawdha.tahan |
-| Yuan Yang         | yuan.yang@example.com     | yuan.yang         |
+| Yuan Yang         | yuan.yang@example.com         | yuan.yang         |
 
 #### Add users
 
@@ -74,8 +72,7 @@ Repeat the following steps for each of the employees in the table above to creat
 
 When you create a user they are granted the Viewer role by default, which means that they won't be able to make any changes to any of the resources in Grafana. That's ok for now, you'll grant more user permissions by adding users to _teams_ in the next step.
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Assign users to teams" >}}
+## Assign users to teams
 
 Teams let you grant permissions to a group of users, instead of granting permissions to individual users one at a time.
 
@@ -86,23 +83,21 @@ Teams are useful when onboarding new colleagues. When you add a user to a team, 
 In this step, you'll create two teams and assign users to them.
 
 | Username          | Team        |
-|-------------------|-------------|
+| ----------------- | ----------- |
 | brenda.tilman     | Marketing   |
 | mada.rawdha.tahan | Marketing   |
 | almaz.russom      | Engineering |
 | yuan.yang         | Engineering |
-
-
 
 #### Create a team
 
 Create the _Marketing_ and _Engineering_ teams.
 
 1. In the sidebar, hover your mouse over the **Configuration** (gear) icon and
- then click **Teams**.
+   then click **Teams**.
 1. Click **New team**.
 1. In **Name**, enter the name of the team: either _Marketing_ or _Engineering_.
- You do not need to enter an email.
+   You do not need to enter an email.
 1. Click **Create**.
 1. Click on the **Teams** link at the top of the page to return to teams page and create the second team.
 
@@ -117,8 +112,7 @@ Repeat these steps for each user to assign them to their team. Refer to the tabl
 
 When you're done, you'll have two teams with two users assigned to each.
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Manage resource access with folders" >}}
+## Manage resource access with folders
 
 It's a good practice to use folders to organize collections of related dashboards. You can assign permissions at the folder level to individual users or teams.
 
@@ -129,7 +123,7 @@ The Marketing team is going to use Grafana for analytics, while the Engineering 
 You'll create two folders, _Analytics_ and _Application_, where each team can add their own dashboards. The teams still want to be able to view each other's dashboards.
 
 | Folder      | Team        | Permissions |
-|-------------|-------------|-------------|
+| ----------- | ----------- | ----------- |
 | Analytics   | Marketing   | Edit        |
 |             | Engineering | View        |
 | Application | Marketing   | View        |
@@ -167,8 +161,7 @@ In this example, Graphona wants to explicitly grant teams access to folders. To 
 
 When you're finished, you'll have two empty folders, the contents of which can only be viewed by members of the Marketing or Engineering teams. Only Marketing team members can edit the contents of the Analytics folder, only Engineering team members can edit the contents of the Application folder.
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Define granular permissions" >}}
+## Define granular permissions
 
 By using folders and teams, you avoid having to manage permissions for individual users.
 
@@ -179,7 +172,7 @@ However, there are times when you need to configure permissions on a more granul
 Graphona has hired a consultant to assist the Marketing team. The consultant should only be able to access the SEO dashboard in the Analytics folder.
 
 | Name       | Email                            | Username   |
-|------------|----------------------------------|------------|
+| ---------- | -------------------------------- | ---------- |
 | Luc Masson | luc.masson@exampleconsulting.com | luc.masson |
 
 #### Add a new user
@@ -228,9 +221,7 @@ For this example, you can log in as the user `luc.masson` to see that they can o
 1. Click on the list icon (3 lines) to see the dashboard list.
 1. Click on the **SEO dashboard**, there shouldn't be any editing permissions since we assigned Luc the viewer role.
 
-
-{{< /tutorials/step >}}
-{{< tutorials/step title="Summary" >}}
+## Summary
 
 In this tutorial, you've configured Grafana for an organization:
 
@@ -242,5 +233,3 @@ In this tutorial, you've configured Grafana for an organization:
 
 - [Organization Roles](https://grafana.com/docs/grafana/next/administration/manage-users-and-permissions/about-users-and-permissions/#organization-roles)
 - [Permissions Overview](https://grafana.com/docs/grafana/latest/administration/manage-users-and-permissions/about-users-and-permissions/#about-users-and-permissions)
-
-{{< /tutorials/step >}}

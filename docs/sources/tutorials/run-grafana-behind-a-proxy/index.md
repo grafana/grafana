@@ -10,7 +10,7 @@ Feedback Link: https://github.com/grafana/tutorials/issues/new
 aliases: ["/docs/grafana/latest/installation/behind_proxy/"]
 ---
 
-{{< tutorials/step title="Introduction" >}}
+## Introduction
 
 In this tutorial, you'll configure Grafana to run behind a reverse proxy.
 
@@ -41,8 +41,7 @@ serve_from_sub_path = true
 
 Next, you need to configure your reverse proxy.
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Configure NGINX" >}}
+## Configure NGINX
 
 [NGINX](https://www.nginx.com) is a high performance load balancer, web server, and reverse proxy.
 
@@ -107,7 +106,7 @@ server {
 
   location /grafana/ {
     rewrite  ^/grafana/(.*)  /$1 break;
-    proxy_set_header Host $http_host; 
+    proxy_set_header Host $http_host;
     proxy_pass http://grafana;
   }
 
@@ -123,8 +122,7 @@ server {
 }
 ```
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Configure HAProxy" >}}
+## Configure HAProxy
 
 To configure HAProxy to serve Grafana under a _sub path_:
 
@@ -143,8 +141,7 @@ backend grafana_backend
   server grafana localhost:3000
 ```
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Configure IIS" >}}
+## Configure IIS
 
 > IIS requires that the URL Rewrite module is installed.
 
@@ -171,24 +168,24 @@ This is the rewrite rule that is generated in the `web.config`:
 
 See the [tutorial on IIS URL Rewrites](/tutorials/iis/) for more in-depth instructions.
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Configure Traefik" >}}
+## Configure Traefik
 
 [Traefik](https://traefik.io/traefik/) Cloud Native Reverse Proxy / Load Balancer / Edge Router
 
 Using the docker provider the following labels will configure the router and service for a domain or subdomain routing.
 
 ```yaml
-  labels:
-      traefik.http.routers.grafana.rule: Host(`grafana.example.com`)
-      traefik.http.services.grafana.loadbalancer.server.port: 3000
+labels:
+  traefik.http.routers.grafana.rule: Host(`grafana.example.com`)
+  traefik.http.services.grafana.loadbalancer.server.port: 3000
 ```
 
 To deploy on a _sub path_
+
 ```yaml
-  labels:
-      traefik.http.routers.grafana.rule: Host(`example.com`) && PathPrefix(`/grafana`)
-      traefik.http.services.grafana.loadbalancer.server.port: 3000
+labels:
+  traefik.http.routers.grafana.rule: Host(`example.com`) && PathPrefix(`/grafana`)
+  traefik.http.services.grafana.loadbalancer.server.port: 3000
 ```
 
 Examples using the file provider.
@@ -219,9 +216,6 @@ http:
           - url: http://192.168.30.10:3000
 ```
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Summary" >}}
+## Summary
 
 In this tutorial you learned how to run Grafana behind a reverse proxy.
-
-{{< /tutorials/step >}}

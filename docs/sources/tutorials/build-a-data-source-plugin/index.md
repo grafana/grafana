@@ -10,7 +10,7 @@ Feedback Link: https://github.com/grafana/tutorials/issues/new
 weight: 70
 ---
 
-{{< tutorials/step title="Introduction" >}}
+## Introduction
 
 Grafana supports a wide range of data sources, including Prometheus, MySQL, and even Datadog. There's a good chance you can already visualize metrics from the systems you have set up. In some cases, though, you already have an in-house metrics solution that you’d like to add to your Grafana dashboards. This tutorial teaches you to build a support for your data source.
 
@@ -21,29 +21,27 @@ In this tutorial, you'll:
 - Configure your data source using the config editor
 
 {{% class "prerequisite-section" %}}
+
 ### Prerequisites
 
 - Grafana >=7.0
 - NodeJS >=14
 - yarn
-{{% /class %}}
-{{< /tutorials/step >}}
-{{< tutorials/step title="Set up your environment" >}}
+  {{% /class %}}
+
+## Set up your environment
 
 {{< docs/shared lookup="tutorials/set-up-environment.md" source="grafana" >}}
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Create a new plugin" >}}
+## Create a new plugin
 
 {{< docs/shared lookup="tutorials/create-plugin.md" source="grafana" >}}
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Anatomy of a plugin" >}}
+## Anatomy of a plugin
 
 {{< docs/shared lookup="tutorials/plugin-anatomy.md" source="grafana" >}}
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Data source plugins" >}}
+## Data source plugins
 
 A data source in Grafana must extend the `DataSourceApi` interface, which requires you to defines two methods: `query` and `testDatasource`.
 
@@ -67,8 +65,7 @@ The `options` object contains the queries, or _targets_, that the user made, alo
 async testDatasource()
 ```
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Data frames" >}}
+## Data frames
 
 Nowadays there are countless of different databases, each with their own ways of querying data. To be able to support all the different data formats, Grafana consolidates the data into a unified data structure called _data frames_.
 
@@ -104,8 +101,8 @@ Let's see how to create and return a data frame from the `query` method. In this
    const frame = new MutableDataFrame({
      refId: query.refId,
      fields: [
-       { name: 'time', type: FieldType.time },
-       { name: 'value', type: FieldType.number },
+       { name: "time", type: FieldType.time },
+       { name: "value", type: FieldType.number },
      ],
    });
    ```
@@ -146,8 +143,7 @@ Your data source is now sending data frames that Grafana can visualize. Next, we
 
 > In this example, we're generating timestamps from the current time range. This means that you'll get the same graph no matter what time range you're using. In practice, you'd instead use the timestamps returned by your database.
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Define a query" >}}
+## Define a query
 
 Most data sources offer a way to query specific data. MySQL and PostgreSQL use SQL, while Prometheus has its own query language, called _PromQL_. No matter what query language your databases are using, Grafana lets you build support for it.
 
@@ -195,13 +191,7 @@ Now that you've defined the query model you wish to support, the next step is to
    ```
 
    ```ts
-   <FormField
-     width={4}
-     value={frequency}
-     onChange={this.onFrequencyChange}
-     label="Frequency"
-     type="number"
-   />
+   <FormField width={4} value={frequency} onChange={this.onFrequencyChange} label="Frequency" type="number" />
    ```
 
 1. Add a event listener for the new property.
@@ -229,8 +219,7 @@ The new query model is now ready to use in our `query` method.
    frame.add({ time: from + t, value: Math.sin((2 * Math.PI * query.frequency * t) / duration) });
    ```
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Configure your data source" >}}
+## Configure your data source
 
 To access a specific data source, you often need to configure things like hostname, credentials, or authentication method. A _config editor_ lets your users configure your data source plugin to fit their needs.
 
@@ -266,7 +255,7 @@ Just like query editor, the form field in the config editor calls the registered
      <FormField
        label="Resolution"
        onChange={this.onResolutionChange}
-       value={jsonData.resolution || ''}
+       value={jsonData.resolution || ""}
        placeholder="Enter a number"
      />
    </div>
@@ -312,8 +301,7 @@ Just like query editor, the form field in the config editor calls the registered
    const step = duration / this.resolution;
    ```
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Get data from an external API" >}}
+## Get data from an external API
 
 So far, you've generated the data returned by the data source. A more realistic use case would be to fetch data from an external API.
 
@@ -326,7 +314,7 @@ The main advantage of `getBackendSrv` is that it proxies requests through the Gr
    **src/DataSource.ts**
 
    ```ts
-   import { getBackendSrv } from "@grafana/runtime"
+   import { getBackendSrv } from "@grafana/runtime";
    ```
 
 1. Create a helper method `doRequest` and use the `datasourceRequest` method to make a request to your API. Replace `https://api.example.com/metrics` to point to your own API endpoint.
@@ -369,8 +357,7 @@ The main advantage of `getBackendSrv` is that it proxies requests through the Gr
    }
    ```
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Summary" >}}
+## Summary
 
 In this tutorial you built a complete data source plugin for Grafana that uses a query editor to control what data to visualize. You've added a data source option, commonly used to set connection options and more.
 
@@ -382,5 +369,3 @@ Learn how you can improve your plugin even further, by reading our advanced guid
 - [Add support for annotations](https://grafana.com/docs/grafana/latest/developers/plugins/add-support-for-annotations/)
 - [Add support for Explore queries](https://grafana.com/docs/grafana/latest/developers/plugins/add-support-for-explore-queries/)
 - [Build a logs data source](https://grafana.com/docs/grafana/latest/developers/plugins/build-a-logs-data-source-plugin/)
-
-{{< /tutorials/step >}}

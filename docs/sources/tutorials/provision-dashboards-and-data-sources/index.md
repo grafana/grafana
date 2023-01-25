@@ -9,7 +9,7 @@ Feedback Link: https://github.com/grafana/tutorials/issues/new
 weight: 40
 ---
 
-{{< tutorials/step title="Introduction" >}}
+## Introduction
 
 Learn how you can reuse dashboards and data sources across multiple teams by provisioning Grafana from version-controlled configuration files.
 
@@ -19,13 +19,14 @@ In this tutorial, you'll:
 - Provision data sources.
 
 {{% class "prerequisite-section" %}}
+
 ### Prerequisites
 
 - Grafana 7.0
 - Administrator privileges on the system you are doing the tutorial on
-{{% /class %}}
-{{< /tutorials/step >}}
-{{< tutorials/step title="Configuration as code" >}}
+  {{% /class %}}
+
+## Configuration as code
 
 Configuration as code is the practice of storing the configuration of your system as a set of version controlled, human-readable configuration files, rather than in a database. These configuration files can be reused across environments to avoid duplicated resources.
 
@@ -37,8 +38,7 @@ Grafana supports configuration as code through _provisioning_. The resources tha
 - [Data sources](https://grafana.com/docs/grafana/latest/administration/provisioning/#datasources)
 - [Alert notification channels](https://grafana.com/docs/grafana/latest/administration/provisioning/#alert-notification-channels)
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Set the provisioning directory" >}}
+## Set the provisioning directory
 
 Before you can start provisioning resources, Grafana needs to know where to find the _provisioning directory_. The provisioning directory contains configuration files that are applied whenever Grafana starts and continuously updated while running.
 
@@ -67,8 +67,7 @@ provisioning/
 
 Next, we'll look at how to provision a data source.
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Provision a data source" >}}
+## Provision a data source
 
 Each data source provisioning config file contains a _manifest_ that specifies the desired state of a set of provisioned data sources.
 
@@ -93,8 +92,7 @@ Let's configure a [TestData DB](https://grafana.com/docs/grafana/latest/features
 
 > The configuration options can vary between different types of data sources. For more information on how to configure a specific data source, refer to [Data sources](https://grafana.com/docs/grafana/latest/administration/provisioning/#datasources).
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Provision a dashboard" >}}
+## Provision a dashboard
 
 Each dashboard config file contains a manifest that specifies the desired state of a set of _dashboard providers_.
 
@@ -112,13 +110,14 @@ In the `provisioning/dashboards/` directory, create a file called `default.yaml`
 apiVersion: 1
 
 providers:
-  - name: Default    # A uniquely identifiable name for the provider
+  - name: Default # A uniquely identifiable name for the provider
     folder: Services # The folder where to place the dashboards
     type: file
     options:
-      path:  <path to dashboard definitions>
-            # Default path for Windows: C:/Program Files/GrafanaLabs/grafana/public/dashboards
-            # Default path for Linux is: /var/lib/grafana/dashboards
+      path:
+        <path to dashboard definitions>
+        # Default path for Windows: C:/Program Files/GrafanaLabs/grafana/public/dashboards
+        # Default path for Linux is: /var/lib/grafana/dashboards
 ```
 
 For more information on how to configure dashboard providers, refer to [Dashboards](https://grafana.com/docs/grafana/latest/administration/provisioning/#dashboards).
@@ -129,136 +128,113 @@ For more information on how to configure dashboard providers, refer to [Dashboar
 
    ```json
    {
-   "__inputs": [ ],
-   "__requires": [ ],
-   "annotations": {
-      "list": [ ]
-   },
-   "editable": false,
-   "gnetId": null,
-   "graphTooltip": 0,
-   "hideControls": false,
-   "id": null,
-   "links": [ ],
-   "panels": [
-      {
-         "aliasColors": { },
+     "__inputs": [],
+     "__requires": [],
+     "annotations": {
+       "list": []
+     },
+     "editable": false,
+     "gnetId": null,
+     "graphTooltip": 0,
+     "hideControls": false,
+     "id": null,
+     "links": [],
+     "panels": [
+       {
+         "aliasColors": {},
          "bars": false,
          "dashLength": 10,
          "dashes": false,
          "datasource": "TestData DB",
          "fill": 1,
          "gridPos": {
-            "h": 8,
-            "w": 24,
-            "x": 0,
-            "y": 0
+           "h": 8,
+           "w": 24,
+           "x": 0,
+           "y": 0
          },
          "id": 2,
          "legend": {
-            "alignAsTable": false,
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "rightSide": false,
-            "show": true,
-            "total": false,
-            "values": false
+           "alignAsTable": false,
+           "avg": false,
+           "current": false,
+           "max": false,
+           "min": false,
+           "rightSide": false,
+           "show": true,
+           "total": false,
+           "values": false
          },
          "lines": true,
          "linewidth": 1,
-         "links": [ ],
+         "links": [],
          "nullPointMode": "null",
          "percentage": false,
          "pointradius": 5,
          "points": false,
          "renderer": "flot",
          "repeat": null,
-         "seriesOverrides": [ ],
+         "seriesOverrides": [],
          "spaceLength": 10,
          "stack": false,
          "steppedLine": false,
-         "targets": [ ],
-         "thresholds": [ ],
+         "targets": [],
+         "thresholds": [],
          "timeFrom": null,
          "timeShift": null,
          "title": "CPU Usage",
          "tooltip": {
-            "shared": true,
-            "sort": 0,
-            "value_type": "individual"
+           "shared": true,
+           "sort": 0,
+           "value_type": "individual"
          },
          "type": "graph",
          "xaxis": {
-            "buckets": null,
-            "mode": "time",
-            "name": null,
-            "show": true,
-            "values": [ ]
+           "buckets": null,
+           "mode": "time",
+           "name": null,
+           "show": true,
+           "values": []
          },
          "yaxes": [
-            {
-               "format": "short",
-               "label": null,
-               "logBase": 1,
-               "max": null,
-               "min": null,
-               "show": true
-            },
-            {
-               "format": "short",
-               "label": null,
-               "logBase": 1,
-               "max": null,
-               "min": null,
-               "show": true
-            }
+           {
+             "format": "short",
+             "label": null,
+             "logBase": 1,
+             "max": null,
+             "min": null,
+             "show": true
+           },
+           {
+             "format": "short",
+             "label": null,
+             "logBase": 1,
+             "max": null,
+             "min": null,
+             "show": true
+           }
          ]
-      }
-   ],
-   "refresh": "",
-   "rows": [ ],
-   "schemaVersion": 16,
-   "style": "dark",
-   "tags": [
-      "kubernetes"
-   ],
-   "templating": {
-      "list": [ ]
-   },
-   "time": {
-      "from": "now-6h",
-      "to": "now"
-   },
-   "timepicker": {
-      "refresh_intervals": [
-         "5s",
-         "10s",
-         "30s",
-         "1m",
-         "5m",
-         "15m",
-         "30m",
-         "1h",
-         "2h",
-         "1d"
-      ],
-      "time_options": [
-         "5m",
-         "15m",
-         "1h",
-         "6h",
-         "12h",
-         "24h",
-         "2d",
-         "7d",
-         "30d"
-      ]
-   },
-   "timezone": "browser",
-   "title": "Cluster",
-   "version": 0
+       }
+     ],
+     "refresh": "",
+     "rows": [],
+     "schemaVersion": 16,
+     "style": "dark",
+     "tags": ["kubernetes"],
+     "templating": {
+       "list": []
+     },
+     "time": {
+       "from": "now-6h",
+       "to": "now"
+     },
+     "timepicker": {
+       "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"],
+       "time_options": ["5m", "15m", "1h", "6h", "12h", "24h", "2d", "7d", "30d"]
+     },
+     "timezone": "browser",
+     "title": "Cluster",
+     "version": 0
    }
    ```
 
@@ -267,8 +243,7 @@ For more information on how to configure dashboard providers, refer to [Dashboar
 
 > If you don't specify an `id` in the dashboard definition, then Grafana assigns one during provisioning. You can set the `id` yourself if you want to reference the dashboard from other dashboards. Be careful to not use the same `id` for multiple dashboards, as this will cause a conflict.
 
-{{< /tutorials/step >}}
-{{< tutorials/step title="Summary" >}}
+## Summary
 
 In this tutorial you learned how you to reuse dashboards and data sources across multiple teams by provisioning Grafana from version-controlled configuration files.
 
@@ -282,5 +257,3 @@ Dashboard definitions can get unwieldly as more panels and configurations are ad
 ### Learn more
 
 - [Provisioning Grafana](https://grafana.com/docs/grafana/latest/administration/provisioning/)
-
-{{< /tutorials/step >}}
