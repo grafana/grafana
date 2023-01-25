@@ -1345,9 +1345,9 @@
       },
       "machineName": "serviceaccount",
       "maturity": "merged",
-      "name": "Serviceaccount",
+      "name": "ServiceAccount",
       "pluralMachineName": "serviceaccounts",
-      "pluralName": "Serviceaccounts"
+      "pluralName": "ServiceAccounts"
     },
     "statpanelcfg": {
       "category": "composable",
