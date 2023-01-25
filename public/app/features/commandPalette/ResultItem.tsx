@@ -84,7 +84,7 @@ const getResultItemStyles = (theme: GrafanaTheme2) => {
         display: 'block',
         content: '" "',
         position: 'absolute',
-        left: 4,
+        left: 0,
         top: 0,
         bottom: 0,
         width: theme.spacing(0.5),
