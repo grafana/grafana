@@ -4,16 +4,15 @@ import { AnyAction } from 'redux';
 
 import {
   EventBusExtended,
-  DataQuery,
   ExploreUrlState,
   TimeRange,
   HistoryItem,
   DataSourceApi,
   ExplorePanelsState,
   PreferredVisualisationType,
-  DataSourceRef,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
+import { DataQuery, DataSourceRef } from '@grafana/schema';
 import {
   DEFAULT_RANGE,
   getQueryKeys,

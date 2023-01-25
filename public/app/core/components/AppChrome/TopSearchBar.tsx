@@ -27,7 +27,7 @@ export function TopSearchBar() {
   const profileNode = navIndex['profile'];
 
   const search =
-    config.featureToggles.commandPalette && config.featureToggles.topNavcommandPalette ? (
+    config.featureToggles.commandPalette && config.featureToggles.topNavCommandPalette ? (
       <TopSearchBarCommandPaletteTrigger />
     ) : (
       <TopSearchBarInput />
