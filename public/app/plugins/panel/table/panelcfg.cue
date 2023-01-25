@@ -15,19 +15,20 @@
 package grafanaplugin
 
 import (
-	"github.com/grafana/grafana/packages/grafana-schema/src/common"
+	ui "github.com/grafana/grafana/packages/grafana-schema/src/common"
 )
 
 composableKinds: PanelCfg: {
+	maturity: "experimental"
 	lineage: {
 		seqs: [
 			{
 				schemas: [
 					{
 						PanelOptions: {
-							frameIndex:    number | *0
-							showHeader:    bool | *true
-							showTypeIcons: bool | *false
+							frameIndex:     number | *0
+							showHeader:     bool | *true
+							showTypeIcons?: bool | *false
 							sortBy?: [...ui.TableSortByFieldState]
 							// TODO: should be array (options builder is limited)
 							footer?: ui.TableFooterOptions | *{

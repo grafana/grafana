@@ -14,7 +14,7 @@ import {
 import { config, getDataSourceSrv, PanelRenderer } from '@grafana/runtime';
 import { Alert, CodeEditor, DateTimePicker, LinkButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
-import { PanelOptions } from 'app/plugins/panel/table/models.gen';
+import { PanelOptions } from 'app/plugins/panel/table/panelcfg.gen';
 import { AccessControlAction } from 'app/types';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 

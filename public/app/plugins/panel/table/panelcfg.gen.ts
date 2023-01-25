@@ -19,7 +19,7 @@ export interface PanelOptions {
   footer?: ui.TableFooterOptions;
   frameIndex: number;
   showHeader: boolean;
-  showTypeIcons: boolean;
+  showTypeIcons?: boolean;
   sortBy?: Array<ui.TableSortByFieldState>;
 }
 

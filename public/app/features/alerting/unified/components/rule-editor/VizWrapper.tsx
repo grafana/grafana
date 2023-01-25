@@ -7,7 +7,7 @@ import { PanelRenderer } from '@grafana/runtime';
 import { GraphFieldConfig, GraphTresholdsStyleMode } from '@grafana/schema';
 import { PanelContext, PanelContextProvider, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { PanelOptions } from 'app/plugins/panel/table/models.gen';
+import { PanelOptions } from 'app/plugins/panel/table/panelcfg.gen';
 
 import { useVizHeight } from '../../hooks/useVizHeight';
 import { SupportedPanelPlugins, PanelPluginsButtonGroup } from '../PanelPluginsButtonGroup';

@@ -13,7 +13,7 @@ import { PaginationEditor } from './PaginationEditor';
 import { TableCellOptionEditor } from './TableCellOptionEditor';
 import { TablePanel } from './TablePanel';
 import { tableMigrationHandler, tablePanelChangedHandler } from './migrations';
-import { PanelOptions, defaultPanelOptions } from './models.gen';
+import { PanelOptions, defaultPanelOptions } from './panelcfg.gen';
 import { TableSuggestionsSupplier } from './suggestions';
 
 const footerCategory = 'Table footer';

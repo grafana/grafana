@@ -1365,16 +1365,27 @@
       "schemaInterface": "PanelCfg"
     },
     "tablepanelcfg": {
-      "name": "TablePanelCfg",
-      "pluralName": "TablePanelCfgs",
-      "machineName": "tablepanelcfg",
-      "pluralMachineName": "tablepanelcfgs",
-      "lineageIsGroup": true,
-      "maturity": "merged",
+      "category": "composable",
+      "codeowners": [
+        "grafana/grafana-bi-squad"
+      ],
       "currentVersion": [
         0,
         0
       ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/tablepanelcfg/schema-reference",
+        "go": "n/a",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/table/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/table/panelcfg.gen.ts"
+      },
+      "machineName": "tablepanelcfg",
+      "maturity": "experimental",
+      "name": "TablePanelCfg",
+      "pluralMachineName": "tablepanelcfgs",
+      "pluralName": "TablePanelCfgs",
       "schemaInterface": "PanelCfg"
     },
     "team": {
@@ -1772,9 +1783,10 @@
           "newspanelcfg",
           "piechartpanelcfg",
           "statpanelcfg",
+          "tablepanelcfg",
           "textpanelcfg"
         ],
-        "count": 11
+        "count": 12
       },
       "mature": {
         "name": "mature",
@@ -1786,7 +1798,6 @@
         "items": [
           "alertgroupspanelcfg",
           "playlist",
-          "tablepanelcfg",
           "team"
         ],
         "count": 3
