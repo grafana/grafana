@@ -190,15 +190,16 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	// lookup folder title
 	if dash.FolderID > 0 {
 		query := dashboards.GetDashboardQuery{ID: dash.FolderID, OrgID: c.OrgID}
-		if err := hs.DashboardService.GetDashboard(c.Req.Context(), &query); err != nil {
+		queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
+		if err != nil {
 			if errors.Is(err, dashboards.ErrFolderNotFound) {
 				return response.Error(404, "Folder not found", err)
 			}
 			return response.Error(500, "Dashboard folder could not be read", err)
 		}
-		meta.FolderUid = query.Result.UID
-		meta.FolderTitle = query.Result.Title
-		meta.FolderUrl = query.Result.GetURL()
+		meta.FolderUid = queryResult.UID
+		meta.FolderTitle = queryResult.Title
+		meta.FolderUrl = queryResult.GetURL()
 	}
 
 	provisioningData, err := hs.dashboardProvisioningService.GetProvisionedDashboardDataByDashboardID(c.Req.Context(), dash.ID)
@@ -281,11 +282,12 @@ func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id in
 		query = dashboards.GetDashboardQuery{ID: id, OrgID: orgID}
 	}
 
-	if err := hs.DashboardService.GetDashboard(ctx, &query); err != nil {
+	queryResult, err := hs.DashboardService.GetDashboard(ctx, &query)
+	if err != nil {
 		return nil, response.Error(404, "Dashboard not found", err)
 	}
 
-	return query.Result, nil
+	return queryResult, nil
 }
 
 // DeleteDashboardByUID swagger:route DELETE /dashboards/uid/{uid} dashboards deleteDashboardByUID
@@ -531,9 +533,9 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 
 	if preference.HomeDashboardID != 0 {
 		slugQuery := dashboards.GetDashboardRefByIDQuery{ID: preference.HomeDashboardID}
-		err := hs.DashboardService.GetDashboardUIDByID(c.Req.Context(), &slugQuery)
+		slugQueryResult, err := hs.DashboardService.GetDashboardUIDByID(c.Req.Context(), &slugQuery)
 		if err == nil {
-			url := dashboards.GetDashboardURL(slugQuery.Result.UID, slugQuery.Result.Slug)
+			url := dashboards.GetDashboardURL(slugQueryResult.UID, slugQueryResult.Slug)
 			dashRedirect := dtos.DashboardRedirect{RedirectUri: url}
 			return response.JSON(http.StatusOK, &dashRedirect)
 		}
@@ -1016,13 +1018,13 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext) response.Res
 // 500: internalServerError
 func (hs *HTTPServer) GetDashboardTags(c *models.ReqContext) {
 	query := dashboards.GetDashboardTagsQuery{OrgID: c.OrgID}
-	err := hs.DashboardService.GetDashboardTags(c.Req.Context(), &query)
+	queryResult, err := hs.DashboardService.GetDashboardTags(c.Req.Context(), &query)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get tags from database", err)
 		return
 	}
 
-	c.JSON(http.StatusOK, query.Result)
+	c.JSON(http.StatusOK, queryResult)
 }
 
 // GetDashboardUIDs converts internal ids to UIDs
@@ -1037,11 +1039,11 @@ func (hs *HTTPServer) GetDashboardUIDs(c *models.ReqContext) {
 			continue
 		}
 		q.ID = id
-		err = hs.DashboardService.GetDashboardUIDByID(c.Req.Context(), q)
+		qResult, err := hs.DashboardService.GetDashboardUIDByID(c.Req.Context(), q)
 		if err != nil {
 			continue
 		}
-		uids = append(uids, q.Result.UID)
+		uids = append(uids, qResult.UID)
 	}
 	c.JSON(http.StatusOK, uids)
 }

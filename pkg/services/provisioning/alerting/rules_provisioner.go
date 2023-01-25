@@ -102,7 +102,7 @@ func (prov *defaultAlertRuleProvisioner) getOrCreateFolderUID(
 		Slug:  slugify.Slugify(folderName),
 		OrgID: orgID,
 	}
-	err := prov.dashboardService.GetDashboard(ctx, cmd)
+	cmdResult, err := prov.dashboardService.GetDashboard(ctx, cmd)
 	if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
 		return "", err
 	}
@@ -123,9 +123,9 @@ func (prov *defaultAlertRuleProvisioner) getOrCreateFolderUID(
 		return dbDash.UID, nil
 	}
 
-	if !cmd.Result.IsFolder {
+	if !cmdResult.IsFolder {
 		return "", fmt.Errorf("got invalid response. expected folder, found dashboard")
 	}
 
-	return cmd.Result.UID, nil
+	return cmdResult.UID, nil
 }
