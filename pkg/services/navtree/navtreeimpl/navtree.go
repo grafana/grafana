@@ -218,14 +218,6 @@ func (s *ServiceImpl) getHomeNode(c *models.ReqContext, prefs *pref.Preference) 
 		homeUrl = homePage
 	}
 
-	if prefs.HomeDashboardID != 0 {
-		slugQuery := dashboards.GetDashboardRefByIDQuery{ID: prefs.HomeDashboardID}
-		err := s.dashboardService.GetDashboardUIDByID(c.Req.Context(), &slugQuery)
-		if err == nil {
-			homeUrl = dashboards.GetDashboardURL(slugQuery.Result.UID, slugQuery.Result.Slug)
-		}
-	}
-
 	homeNode := &navtree.NavLink{
 		Text:       "Home",
 		Id:         "home",
@@ -279,7 +271,7 @@ func (s *ServiceImpl) getProfileNode(c *models.ReqContext) *navtree.NavLink {
 
 	children := []*navtree.NavLink{
 		{
-			Text: "Preferences", Id: "profile/settings", Url: s.cfg.AppSubURL + "/profile", Icon: "sliders-v-alt",
+			Text: "Profile", Id: "profile/settings", Url: s.cfg.AppSubURL + "/profile", Icon: "sliders-v-alt",
 		},
 	}
 
@@ -343,9 +335,9 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *models.ReqContext) ([]*navtre
 			ID:    dashboardId,
 			OrgID: c.OrgID,
 		}
-		err := s.dashboardService.GetDashboard(c.Req.Context(), query)
+		queryResult, err := s.dashboardService.GetDashboard(c.Req.Context(), query)
 		if err == nil {
-			starredDashboards = append(starredDashboards, query.Result)
+			starredDashboards = append(starredDashboards, queryResult)
 		}
 	}
 

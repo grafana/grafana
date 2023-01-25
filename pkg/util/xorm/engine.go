@@ -246,13 +246,6 @@ func (engine *Engine) NoCache() *Session {
 	return session.NoCache()
 }
 
-// NoCascade If you do not want to auto cascade load object
-func (engine *Engine) NoCascade() *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.NoCascade()
-}
-
 // NewDB provides an interface to operate database directly
 func (engine *Engine) NewDB() (*core.DB, error) {
 	return core.OpenDialect(engine.dialect)
@@ -373,13 +366,6 @@ func (engine *Engine) DBMetas() ([]*core.Table, error) {
 		}
 	}
 	return tables, nil
-}
-
-// Cascade use cascade or not
-func (engine *Engine) Cascade(trueOrFalse ...bool) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.Cascade(trueOrFalse...)
 }
 
 // Where method provide a condition query

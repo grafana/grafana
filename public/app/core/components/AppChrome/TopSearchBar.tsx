@@ -3,6 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Dropdown, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { config } from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { useSelector } from 'app/types';
 
@@ -14,6 +15,7 @@ import { QuickAdd } from './QuickAdd/QuickAdd';
 import { SignInLink } from './TopBar/SignInLink';
 import { TopNavBarMenu } from './TopBar/TopNavBarMenu';
 import { TopSearchBarSection } from './TopBar/TopSearchBarSection';
+import { TopSearchBarCommandPaletteTrigger } from './TopSearchBarCommandPaletteTrigger';
 import { TopSearchBarInput } from './TopSearchBarInput';
 import { TOP_BAR_LEVEL_HEIGHT } from './types';
 
@@ -24,6 +26,13 @@ export function TopSearchBar() {
   const helpNode = navIndex['help'];
   const profileNode = navIndex['profile'];
 
+  const search =
+    config.featureToggles.commandPalette && config.featureToggles.topNavCommandPalette ? (
+      <TopSearchBarCommandPaletteTrigger />
+    ) : (
+      <TopSearchBarInput />
+    );
+
   return (
     <div className={styles.layout}>
       <TopSearchBarSection>
@@ -32,9 +41,9 @@ export function TopSearchBar() {
         </a>
         <OrganizationSwitcher />
       </TopSearchBarSection>
-      <TopSearchBarSection>
-        <TopSearchBarInput />
-      </TopSearchBarSection>
+
+      <TopSearchBarSection>{search}</TopSearchBarSection>
+
       <TopSearchBarSection align="right">
         <QuickAdd />
         {helpNode && (
@@ -70,7 +79,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'space-between',
 
     [theme.breakpoints.up('sm')]: {
-      gridTemplateColumns: '1fr 1fr 1fr',
+      gridTemplateColumns: '2fr minmax(200px, 1fr) 2fr', // search should not be smaller than 200px
       display: 'grid',
 
       justifyContent: 'flex-start',
