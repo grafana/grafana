@@ -1,8 +1,10 @@
 import { DataSourceJsonData } from '@grafana/data';
 
-// export type { QueryType, Phlare as Query } from './dataquery.gen';
-import { Phlare as Query } from './dataquery.gen';
-export type { Query };
+import { Phlare as PhlareGen, queryType } from './dataquery.gen';
+
+export interface Query extends PhlareGen {
+  queryType: queryType;
+}
 
 export interface ProfileTypeMessage {
   ID: string;
