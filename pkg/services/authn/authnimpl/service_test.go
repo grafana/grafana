@@ -243,7 +243,6 @@ func TestService_RedirectURL(t *testing.T) {
 	type testCase struct {
 		desc        string
 		client      string
-		expectedURL string
 		expectedErr error
 	}
 
