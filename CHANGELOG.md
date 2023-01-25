@@ -1,6 +1,6 @@
 <!-- 9.3.2 START -->
 
-# 9.3.2 (unreleased)
+# 9.3.2 (2023-01-24)
 
 ### Features and enhancements
 
