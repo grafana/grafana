@@ -53,6 +53,7 @@ export const defaultScatterFieldConfig: Partial<ScatterFieldConfig> = {
 export interface ScatterSeriesConfig
   extends ScatterFieldConfig,
     Omit<GeneratedScatterSeriesConfig, 'pointColor' | 'lineColor' | 'labelValue' | 'pointSize'> {}
+
 export interface PanelOptions extends Omit<GeneratedPanelOptions, 'series'> {
   series: ScatterSeriesConfig[];
 }
