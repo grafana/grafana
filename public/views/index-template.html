@@ -265,12 +265,17 @@
       if (window.grafanaBootData.user.theme === "system") {
         document.body.classList.remove("theme-system");
         var darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
+        var cssLink = document.createElement("link");
+        cssLink.rel = 'stylesheet';
 
         if (darkQuery.matches) {
           document.body.classList.add("theme-dark");
+          cssLink.href = window.grafanaBootData.themePaths.dark;
         } else {
           document.body.classList.add("theme-light");
+          cssLink.href = window.grafanaBootData.themePaths.light;
         }
+        document.head.appendChild(cssLink);
       }
 
       window.__grafana_load_failed = function() {
