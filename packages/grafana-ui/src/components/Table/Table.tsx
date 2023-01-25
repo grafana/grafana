@@ -98,7 +98,6 @@ export const Table = memo((props: Props) => {
     // https://github.com/tannerlinsley/react-table/blob/7be2fc9d8b5e223fc998af88865ae86a88792fdb/src/hooks/useTable.js#L585
     return Array(data.length).fill(0);
   }, [data]);
-  // console.log(memoizedData, 'memoizedData');
 
   const isCountRowsSet = Boolean(
     footerOptions?.countRows &&
