@@ -1336,7 +1336,7 @@
         "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/state-timeline/panelcfg.gen.ts"
       },
       "machineName": "statetimelinepanelcfg",
-      "maturity": "merged",
+      "maturity": "experimental",
       "name": "StateTimelinePanelCfg",
       "pluralMachineName": "statetimelinepanelcfgs",
       "pluralName": "StateTimelinePanelCfgs",
@@ -1384,7 +1384,7 @@
         "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/status-history/panelcfg.gen.ts"
       },
       "machineName": "statushistorypanelcfg",
-      "maturity": "merged",
+      "maturity": "experimental",
       "name": "StatusHistoryPanelCfg",
       "pluralMachineName": "statushistorypanelcfgs",
       "pluralName": "StatusHistoryPanelCfgs",
@@ -1807,10 +1807,12 @@
           "histogrampanelcfg",
           "newspanelcfg",
           "piechartpanelcfg",
+          "statetimelinepanelcfg",
           "statpanelcfg",
+          "statushistorypanelcfg",
           "textpanelcfg"
         ],
-        "count": 11
+        "count": 13
       },
       "mature": {
         "name": "mature",
@@ -1822,11 +1824,9 @@
         "items": [
           "alertgroupspanelcfg",
           "playlist",
-          "statetimelinepanelcfg",
-          "statushistorypanelcfg",
           "team"
         ],
-        "count": 5
+        "count": 3
       },
       "planned": {
         "name": "planned",

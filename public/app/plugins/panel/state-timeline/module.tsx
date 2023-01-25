@@ -12,7 +12,7 @@ import { SpanNullsEditor } from '../timeseries/SpanNullsEditor';
 
 import { StateTimelinePanel } from './StateTimelinePanel';
 import { timelinePanelChangedHandler } from './migrations';
-import { PanelOptions, PanelFieldConfig, defaultPanelOptions, defaultPanelFieldConfig } from './models.gen';
+import { PanelOptions, PanelFieldConfig, defaultPanelOptions, defaultPanelFieldConfig } from './panelcfg.gen';
 import { StatTimelineSuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(StateTimelinePanel)

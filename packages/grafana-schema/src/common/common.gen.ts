@@ -465,6 +465,11 @@ export enum BigValueTextMode {
 export type FieldTextAlignment = ('auto' | 'left' | 'right' | 'center');
 
 /**
+ * Controls the value alignment in the TimelineChart component
+ */
+export type TimelineValueAlignment = ('center' | 'left' | 'right');
+
+/**
  * TODO docs
  */
 export interface VizTextDisplayOptions {

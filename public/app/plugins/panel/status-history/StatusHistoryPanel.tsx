@@ -23,7 +23,7 @@ import { OutsideRangePlugin } from '../timeseries/plugins/OutsideRangePlugin';
 import { getTimezones } from '../timeseries/utils';
 
 import { StatusHistoryTooltip } from './StatusHistoryTooltip';
-import { PanelOptions } from './models.gen';
+import { PanelOptions } from './panelcfg.gen';
 
 const TOOLTIP_OFFSET = 10;
 

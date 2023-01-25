@@ -19,12 +19,12 @@ import (
 )
 
 composableKinds: PanelCfg: {
+	maturity: "experimental"
 	lineage: {
 		seqs: [
 			{
 				schemas: [
 					{
-						TimelineValueAlignment: "center" | "left" | "right" @cuetsy(kind="type")
 						PanelOptions: {
 							ui.OptionsWithLegend
 							ui.OptionsWithTooltip
@@ -37,7 +37,7 @@ composableKinds: PanelCfg: {
 							//Merge equal consecutive values
 							mergeValues?: bool | *true
 							//Controls value alignment on the timelines
-							alignValue?: TimelineValueAlignment | *"left"
+							alignValue?: ui.TimelineValueAlignment | *"left"
 						} @cuetsy(kind="interface")
 						PanelFieldConfig: {
 							ui.HideableFieldConfig

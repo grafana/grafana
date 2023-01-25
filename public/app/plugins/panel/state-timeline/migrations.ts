@@ -2,7 +2,7 @@ import { isArray } from 'lodash';
 
 import { FieldConfigSource, MappingType, PanelModel, ValueMap } from '@grafana/data';
 
-import { PanelFieldConfig, PanelOptions } from './models.gen';
+import { PanelFieldConfig, PanelOptions } from './panelcfg.gen';
 
 // This is called when the panel changes from another panel
 export const timelinePanelChangedHandler = (

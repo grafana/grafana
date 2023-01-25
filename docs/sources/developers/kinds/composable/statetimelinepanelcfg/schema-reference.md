@@ -8,16 +8,15 @@ title: StateTimelinePanelCfg kind
 
 # StateTimelinePanelCfg kind
 
-## Maturity: merged
+## Maturity: experimental
 ## Version: 0.0
 
 ## Properties
 
-| Property                 | Type                        | Required | Description                                     |
-|--------------------------|-----------------------------|----------|-------------------------------------------------|
-| `PanelFieldConfig`       | [object](#panelfieldconfig) | **Yes**  |                                                 |
-| `PanelOptions`           | [object](#paneloptions)     | **Yes**  |                                                 |
-| `TimelineValueAlignment` | string                      | **Yes**  | Possible values are: `center`, `left`, `right`. |
+| Property           | Type                        | Required | Description |
+|--------------------|-----------------------------|----------|-------------|
+| `PanelFieldConfig` | [object](#panelfieldconfig) | **Yes**  |             |
+| `PanelOptions`     | [object](#paneloptions)     | **Yes**  |             |
 
 ## PanelFieldConfig
 
@@ -32,11 +31,11 @@ title: StateTimelinePanelCfg kind
 
 ### Properties
 
-| Property      | Type    | Required | Description                                               |
-|---------------|---------|----------|-----------------------------------------------------------|
-| `alignValue`  | string  | No       | Possible values are: `center`, `left`, `right`.           |
-| `mergeValues` | boolean | No       | Merge equal consecutive values Default: `true`.           |
-| `rowHeight`   | number  | No       | Controls the row height Default: `0.9`.                   |
-| `showValue`   | string  | No       | TODO docs Possible values are: `auto`, `never`, `always`. |
+| Property      | Type    | Required | Description                                                                                                 |
+|---------------|---------|----------|-------------------------------------------------------------------------------------------------------------|
+| `alignValue`  | string  | No       | Controls the value alignment in the TimelineChart component Possible values are: `center`, `left`, `right`. |
+| `mergeValues` | boolean | No       | Merge equal consecutive values Default: `true`.                                                             |
+| `rowHeight`   | number  | No       | Controls the row height Default: `0.9`.                                                                     |
+| `showValue`   | string  | No       | TODO docs Possible values are: `auto`, `never`, `always`.                                                   |
 
 

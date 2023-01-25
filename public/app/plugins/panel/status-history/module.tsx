@@ -3,7 +3,7 @@ import { VisibilityMode } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { StatusHistoryPanel } from './StatusHistoryPanel';
-import { PanelOptions, PanelFieldConfig, defaultPanelFieldConfig } from './models.gen';
+import { PanelOptions, PanelFieldConfig, defaultPanelFieldConfig } from './panelcfg.gen';
 import { StatusHistorySuggestionsSupplier } from './suggestions';
 
 export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(StatusHistoryPanel)

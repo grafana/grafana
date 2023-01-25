@@ -19,6 +19,7 @@ import (
 )
 
 composableKinds: PanelCfg: {
+	maturity: "experimental"
 	lineage: {
 		seqs: [
 			{

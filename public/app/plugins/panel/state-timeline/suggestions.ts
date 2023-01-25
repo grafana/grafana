@@ -1,7 +1,7 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
 import { SuggestionName } from 'app/types/suggestions';
 
-import { PanelFieldConfig, PanelOptions } from './models.gen';
+import { PanelFieldConfig, PanelOptions } from './panelcfg.gen';
 
 export class StatTimelineSuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {

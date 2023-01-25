@@ -12,13 +12,11 @@ import * as ui from '@grafana/schema';
 
 export const PanelCfgModelVersion = Object.freeze([0, 0]);
 
-export type TimelineValueAlignment = ('center' | 'left' | 'right');
-
 export interface PanelOptions extends ui.OptionsWithLegend, ui.OptionsWithTooltip, ui.OptionsWithTimezones {
   /**
    * Controls value alignment on the timelines
    */
-  alignValue?: TimelineValueAlignment;
+  alignValue?: ui.TimelineValueAlignment;
   /**
    * Merge equal consecutive values
    */
