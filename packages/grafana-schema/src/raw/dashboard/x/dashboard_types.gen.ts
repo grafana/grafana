@@ -71,7 +71,7 @@ export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
 /**
  * TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
  */
-export type VariableModel = (AdHocVariableModel | DashboardVariableModel | OrgVariableModel | UserVariableModel);
+export type VariableModel = (QueryVariableModel | AdHocVariableModel | ConstantVariableModel | DataSourceVariableModel | IntervalVariableModel | TextBoxVariableModel | CustomVariableModel | UserVariableModel | OrgVariableModel | DashboardVariableModel);
 
 /**
  * Common information that all types of variables shares.

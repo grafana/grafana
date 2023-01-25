@@ -121,7 +121,7 @@ lineage: seqs: [
 				} @cuetsy(kind="interface")
 
 				// TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
-				#VariableModel: #AdHocVariableModel | #DashboardVariableModel | #OrgVariableModel | #UserVariableModel @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
+				#VariableModel: #QueryVariableModel | #AdHocVariableModel | #ConstantVariableModel | #DataSourceVariableModel | #IntervalVariableModel | #TextBoxVariableModel | #CustomVariableModel | #UserVariableModel | #OrgVariableModel | #DashboardVariableModel @cuetsy(kind="type") @grafanamaturity(NeedsExpertReview)
 
 				// Common information that all types of variables shares.
 				// A variable in Grafana is a container that can hold different types of data, and it variates depending on the query.
