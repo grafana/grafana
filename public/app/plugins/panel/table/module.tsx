@@ -108,7 +108,6 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
         name: 'Show table header',
         defaultValue: defaultPanelOptions.showHeader,
       })
-      // JEV
       .addBooleanSwitch({
         path: 'showRowNumbers',
         name: 'Show row numbers',

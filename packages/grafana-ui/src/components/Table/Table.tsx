@@ -320,8 +320,8 @@ export const Table = memo((props: Props) => {
     );
   }
 
-  function addOptionalNumbersRowToTable(data: DataFrame, condition: boolean | undefined): DataFrame {
-    if (condition) {
+  function addOptionalNumbersRowToTable(data: DataFrame, showRowNumbers: boolean | undefined): DataFrame {
+    if (showRowNumbers) {
       const rowField: Field = buildFieldsForOptionalRowNums(data.length);
       const newData = cloneDeep(data);
       newData.fields = [rowField, ...newData.fields];

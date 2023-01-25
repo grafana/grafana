@@ -77,7 +77,6 @@ export function getColumns(
 ): GrafanaTableColumn[] {
   const columns: GrafanaTableColumn[] = [];
   let fieldCountWithoutWidth = 0;
-  console.log(data.fields, 'data.fields');
 
   if (expander) {
     columns.push({
@@ -161,7 +160,6 @@ export function getColumns(
     column.minWidth = 50;
   }
 
-  // console.log(columns, 'columns');
   return columns;
 }
 
