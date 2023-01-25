@@ -324,25 +324,21 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 	evalDuration := sch.metrics.EvalDuration.WithLabelValues(orgID)
 	evalTotalFailures := sch.metrics.EvalFailures.WithLabelValues(orgID)
 
-	clearState := func(ctx context.Context, reason string) {
-		var states []*state.State
-		if reason == ngmodels.StateReasonPaused {
-			var errCh <-chan error
-			rule := sch.schedulableAlertRules.get(key)
-			states, errCh = sch.stateManager.ResetStateByRuleUID(ctx, rule, reason)
-			go func() {
-				err := <-errCh
-				if err != nil {
-					logger.Error("Error clearing state", "error", err)
-				}
-			}()
-		} else {
-			states = sch.stateManager.DeleteStateByRuleUID(ctx, key)
-		}
+	notify := func(states []*state.State) {
 		expiredAlerts := FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
 		if len(expiredAlerts.PostableAlerts) > 0 {
 			sch.alertsSender.Send(key, expiredAlerts)
 		}
+	}
+
+	resetState := func(ctx context.Context, isPaused bool) {
+		rule := sch.schedulableAlertRules.get(key)
+		reason := ngmodels.StateReasonUpdated
+		if isPaused {
+			reason = ngmodels.StateReasonPaused
+		}
+		states := sch.stateManager.ResetStateByRuleUID(ctx, rule, reason)
+		notify(states)
 	}
 
 	evaluate := func(ctx context.Context, attempt int64, e *evaluation, span tracing.Span) {
@@ -440,7 +436,6 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 
 	evalRunning := false
 	var currentRuleVersion int64 = 0
-	var isCurrentlyPaused = false
 	defer sch.stopApplied(key)
 	for {
 		select {
@@ -455,16 +450,9 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 				continue
 			}
 
-			// we can continue directly if the rule is paused because in the next tick it will be picked up. The state
-			// will be cleaned up and the routine will be stopped and removed from the registry
-			reason := ngmodels.StateReasonUpdated
-			if ctx.IsPaused && isCurrentlyPaused != ctx.IsPaused {
-				reason = ngmodels.StateReasonPaused
-			}
-			isCurrentlyPaused = ctx.IsPaused
-			logger.Info("Clearing the state of the rule because it was updated", "version", currentRuleVersion, "newVersion", ctx.Version, "reason", reason)
+			logger.Info("Clearing the state of the rule because it was updated", "version", currentRuleVersion, "newVersion", ctx.Version, "isPaused", ctx.IsPaused)
 			// clear the state. So the next evaluation will start from the scratch.
-			clearState(grafanaCtx, reason)
+			resetState(grafanaCtx, ctx.IsPaused)
 		// evalCh - used by the scheduler to signal that evaluation is needed.
 		case ctx, ok := <-evalCh:
 			if !ok {
@@ -488,13 +476,8 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 					// fetch latest alert rule version
 					if currentRuleVersion != newVersion {
 						if currentRuleVersion > 0 { // do not clean up state if the eval loop has just started.
-							reason := ngmodels.StateReasonUpdated
-							if isPaused && isCurrentlyPaused != isPaused {
-								reason = ngmodels.StateReasonPaused
-							}
-							isCurrentlyPaused = isPaused
-							logger.Debug("Got a new version of alert rule. Clear up the state and refresh extra labels", "version", currentRuleVersion, "newVersion", newVersion, "reason", reason)
-							clearState(grafanaCtx, reason)
+							logger.Debug("Got a new version of alert rule. Clear up the state and refresh extra labels", "version", currentRuleVersion, "newVersion", newVersion)
+							resetState(grafanaCtx, ctx.rule.IsPaused)
 						}
 						currentRuleVersion = newVersion
 					}
@@ -520,7 +503,8 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		case <-grafanaCtx.Done():
 			// clean up the state only if the reason for stopping the evaluation loop is that the rule was deleted
 			if errors.Is(grafanaCtx.Err(), errRuleDeleted) {
-				clearState(context.Background(), ngmodels.StateReasonDeleted)
+				states := sch.stateManager.DeleteStateByRuleUID(context.Background(), key)
+				notify(states)
 			}
 			logger.Debug("Stopping alert rule routine")
 			return nil

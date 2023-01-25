@@ -187,16 +187,12 @@ func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.Al
 
 // ResetStateByRuleUID removes the rule instances from cache and instanceStore and saves state history. If the state
 // history has to be saved, rule must not be nil.
-func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.AlertRule, reason string) ([]*State, <-chan error) {
+func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.AlertRule, reason string) []*State {
 	ruleKey := rule.GetKey()
 	states := st.DeleteStateByRuleUID(ctx, ruleKey)
 
-	// We create and immediately close the channel as a nil or not closed channels will hang forever, and we do a couple
-	// of early exists in the code below. The returned channel is only expected to be read as it is of type <-chan error
-	errCh := make(chan error)
-	close(errCh)
 	if rule == nil || st.historian == nil {
-		return states, errCh
+		return states
 	}
 	transitions := make([]StateTransition, 0, len(states))
 	for _, s := range states {
@@ -213,7 +209,14 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.Alert
 		})
 	}
 
-	return states, st.historian.RecordStatesAsync(ctx, rule, transitions)
+	errCh := st.historian.RecordStatesAsync(ctx, rule, transitions)
+	go func() {
+		err := <-errCh
+		if err != nil {
+			st.log.FromContext(ctx).Error("Error updating historian state reset transitions", append(ruleKey.LogContext(), "reason", reason, "error", err)...)
+		}
+	}()
+	return states
 }
 
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
