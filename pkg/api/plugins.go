@@ -14,6 +14,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
+
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -25,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -338,7 +339,7 @@ func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
 		return
 	}
 
-	if hs.Cfg.PluginsCDNURLTemplate != "" && plugin.CDN {
+	if hs.pluginsCDNService.IsCDNPlugin(pluginID) {
 		// Send a redirect to the client
 		hs.redirectCDNPluginAsset(c, plugin, requestedFile)
 		return

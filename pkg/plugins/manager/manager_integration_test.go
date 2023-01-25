@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
+
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -113,7 +115,8 @@ func TestIntegrationPluginManager(t *testing.T) {
 
 	lic := plicensing.ProvideLicensing(cfg, &licensing.OSSLicensingService{Cfg: cfg})
 	l := loader.ProvideService(pCfg, lic, signature.NewUnsignedAuthorizer(pCfg),
-		reg, provider.ProvideService(coreRegistry), fakes.NewFakeRoleRegistry())
+		reg, provider.ProvideService(coreRegistry), fakes.NewFakeRoleRegistry(),
+		pluginscdn.ProvideService(pCfg))
 	ps, err := store.ProvideService(cfg, pCfg, reg, l)
 	require.NoError(t, err)
 

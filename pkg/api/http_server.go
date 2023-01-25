@@ -13,6 +13,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
@@ -200,6 +202,7 @@ type HTTPServer struct {
 	playlistService              playlist.Service
 	apiKeyService                apikey.Service
 	kvStore                      kvstore.KVStore
+	pluginsCDNService            *pluginscdn.Service
 
 	userService            user.Service
 	tempUserService        tempUser.Service
@@ -256,6 +259,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService,
 	queryLibraryHTTPService querylibrary.HTTPService, queryLibraryService querylibrary.Service, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service,
+	pluginsCDNService *pluginscdn.Service,
 	k8saccess k8saccess.K8SAccess, // required so that the router is registered
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
@@ -363,6 +367,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		oauthTokenService:            oauthTokenService,
 		statsService:                 statsService,
 		authnService:                 authnService,
+		pluginsCDNService:            pluginsCDNService,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")

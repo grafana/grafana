@@ -7,6 +7,8 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/stretchr/testify/require"
@@ -1378,7 +1380,7 @@ func Test_setPathsBasedOnApp(t *testing.T) {
 func newLoader(cfg *config.Cfg, cbs ...func(loader *Loader)) *Loader {
 	l := New(cfg, &fakes.FakeLicensingService{}, signature.NewUnsignedAuthorizer(cfg), fakes.NewFakePluginRegistry(),
 		fakes.NewFakeBackendProcessProvider(), fakes.NewFakeProcessManager(), fakes.NewFakePluginStorage(),
-		fakes.NewFakeRoleRegistry())
+		fakes.NewFakeRoleRegistry(), pluginscdn.ProvideService(cfg))
 
 	for _, cb := range cbs {
 		cb(l)

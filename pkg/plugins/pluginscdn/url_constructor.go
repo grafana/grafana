@@ -69,11 +69,6 @@ func (c URLConstructor) StringURLFor(assetPath string) (string, error) {
 	return u.String(), nil
 }
 
-// Base returns the base URL for the specified CDN plugin + version folder as a *url.URL.
-func (c URLConstructor) Base() (*url.URL, error) {
-	return c.Path("")
-}
-
 // CDNBaseURL returns the base url from a plugins CDN template string.
 func CDNBaseURL(cdnURLTemplate string) (string, error) {
 	if cdnURLTemplate == "" {

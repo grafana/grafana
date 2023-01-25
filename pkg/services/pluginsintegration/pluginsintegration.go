@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/clientmiddleware"
@@ -34,6 +35,7 @@ var WireSet = wire.NewSet(
 	process.ProvideService,
 	wire.Bind(new(process.Service), new(*process.Manager)),
 	coreplugin.ProvideCoreRegistry,
+	pluginscdn.ProvideService,
 	loader.ProvideService,
 	wire.Bind(new(loader.Service), new(*loader.Loader)),
 	wire.Bind(new(plugins.ErrorResolver), new(*loader.Loader)),
