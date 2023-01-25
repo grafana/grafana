@@ -59,6 +59,7 @@ export function TablePanel(props: Props) {
       showTypeIcons={options.showTypeIcons}
       resizable={true}
       initialSortBy={options.sortBy}
+      // addRowNumberColumn
       onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
       onColumnResize={(displayName, width) => onColumnResize(displayName, width, props)}
       onCellFilterAdded={panelContext.onAddAdHocFilter}
