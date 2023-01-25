@@ -340,8 +340,25 @@ composableKinds: DataQuery: {
 							minimize: bool
 						} @cuetsy(kind="interface")
 
-						//#MovingAverageModelSettings: {} @cuetsy(kind="interface") // Not sure how to do this one
-						#MovingAverage: {} @cuetsy(kind="interface") // Not sure how to do this one
+						// #MovingAverageModelSettings Not sure how to do this one:
+						// export type MovingAverageModelSettings<T extends MovingAverageModel = MovingAverageModel> = Partial<
+						//   Extract<
+						//     | MovingAverageSimpleModelSettings
+						//     | MovingAverageLinearModelSettings
+						//     | MovingAverageEWMAModelSettings
+						//     | MovingAverageHoltModelSettings
+						//     | MovingAverageHoltWintersModelSettings,
+						//     { model: T }
+						//   >
+						// >;
+
+						// #MovingAverage Not sure how to do this one - for now just mocking it:
+						#MovingAverage: {} @cuetsy(kind="interface")
+						// export interface MovingAverage<T extends MovingAverageModel = MovingAverageModel>
+						//   extends BasePipelineMetricAggregation {
+						//   type: 'moving_avg';
+						//   settings?: MovingAverageModelSettings<T>;
+						// }
 
 						#MovingFunction: {
 							#BasePipelineMetricAggregation

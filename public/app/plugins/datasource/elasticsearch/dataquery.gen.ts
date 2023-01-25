@@ -300,7 +300,7 @@ export interface MovingAverageHoltWintersModelSettings extends BaseMovingAverage
 }
 
 /**
- * #MovingAverageModelSettings: {} @cuetsy(kind="interface") // Not sure how to do this one
+ * #MovingAverage Not sure how to do this one - for now just mocking it:
  */
 export interface MovingAverage {}
 

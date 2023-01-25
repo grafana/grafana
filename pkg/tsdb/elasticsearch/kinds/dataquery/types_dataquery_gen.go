@@ -930,7 +930,7 @@ type Min struct {
 // MinType defines model for Min.Type.
 type MinType string
 
-// #MovingAverageModelSettings: {} @cuetsy(kind="interface") // Not sure how to do this one
+// #MovingAverage Not sure how to do this one - for now just mocking it:
 type MovingAverage map[string]interface{}
 
 // MovingAverageEWMAModelSettings defines model for MovingAverageEWMAModelSettings.
