@@ -8,3 +8,5 @@ _build:
 # Grafana schema
 
 {{< section >}}
+
+See the [Kind Glossary]({{< relref "glossary/" >}}) for definitions of Kinds and related terms. 
