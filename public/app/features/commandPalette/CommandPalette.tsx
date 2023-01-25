@@ -127,7 +127,7 @@ const getSearchStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   animator: css({
-    maxWidth: theme.breakpoints.values.lg,
+    maxWidth: theme.breakpoints.values.md,
     width: '100%',
     background: theme.colors.background.primary,
     color: theme.colors.text.primary,
@@ -154,7 +154,7 @@ const getSearchStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(1.5, 2, 1, 2),
     fontSize: theme.typography.bodySmall.fontSize,
     fontWeight: theme.typography.fontWeightMedium,
-    color: theme.colors.text.secondary,
+    color: theme.colors.text.primary,
     borderTop: `1px solid ${theme.colors.border.weak}`,
     marginTop: theme.spacing(1),
   }),
