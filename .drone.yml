@@ -1336,6 +1336,8 @@ steps:
   depends_on:
   - grabpl
   environment:
+    GCP_KEY:
+      from_secret: gcp_key
     GPG_KEY_PASSWORD:
       from_secret: packages_gpg_passphrase
     GPG_PRIV_KEY:
@@ -3127,6 +3129,8 @@ steps:
   depends_on:
   - grabpl
   environment:
+    GCP_KEY:
+      from_secret: gcp_key
     GPG_KEY_PASSWORD:
       from_secret: packages_gpg_passphrase
     GPG_PRIV_KEY:
@@ -3173,6 +3177,8 @@ steps:
   depends_on:
   - grabpl
   environment:
+    GCP_KEY:
+      from_secret: gcp_key
     GPG_KEY_PASSWORD:
       from_secret: packages_gpg_passphrase
     GPG_PRIV_KEY:
@@ -4632,6 +4638,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: ed5c6f87c21245d54bd48e3376063a5839b9041aa123bf3fd4a6708d8a0aec3f
+hmac: 2b78b3489ea0d6afba76f0ccf5b59cb5c77e92d5f5ee7b39bc9ff4010cd32ed6
 
 ...

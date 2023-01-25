@@ -995,6 +995,7 @@ def store_packages_step(edition, ver_mode):
         ],
         'environment': {
             'GRAFANA_COM_API_KEY': from_secret('grafana_api_key'),
+            'GCP_KEY': from_secret('gcp_key'),
             'GPG_PRIV_KEY': from_secret('packages_gpg_private_key'),
             'GPG_PUB_KEY': from_secret('packages_gpg_public_key'),
             'GPG_KEY_PASSWORD': from_secret('packages_gpg_passphrase'),
