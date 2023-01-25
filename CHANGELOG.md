@@ -1,3 +1,8 @@
+<!-- 9.3.4 START -->
+
+# 9.3.4 (unreleased)
+
+<!-- 9.3.4 END -->
 <!-- 9.3.2 START -->
 
 # 9.3.2 (unreleased)
