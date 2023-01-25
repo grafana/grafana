@@ -403,7 +403,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
       params.db = this.database;
     }
 
-    if (options && options.policy) {
+    if (options?.policy) {
       params.rp = options.policy;
     }
 
