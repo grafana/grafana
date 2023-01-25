@@ -169,7 +169,6 @@ export function buildFieldsForOptionalRowNums(totalRows: number): Field {
   return {
     name: ' ',
     display: (value: number) => {
-      console.log(value);
       return {
         numeric: value,
         text: String(value),

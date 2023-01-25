@@ -56,7 +56,6 @@ export const Table = memo((props: Props) => {
     footerValues,
     enablePagination,
   } = props;
-  console.log(data, 'data');
 
   const listRef = useRef<VariableSizeList>(null);
   const tableDivRef = useRef<HTMLDivElement>(null);
