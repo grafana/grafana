@@ -2,11 +2,11 @@
 keywords:
   - grafana
   - schema
-title: Serviceaccount kind
+title: ServiceAccount kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
-# Serviceaccount kind
+# ServiceAccount kind
 
 ## Maturity: merged
 ## Version: 0.0
