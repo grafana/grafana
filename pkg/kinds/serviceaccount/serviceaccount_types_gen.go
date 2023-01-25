@@ -32,7 +32,7 @@ type Serviceaccount struct {
 	AvatarUrl string `json:"avatarUrl"`
 
 	// Created indicates when the service account was created.
-	Created int64 `json:"created"`
+	Created *int64 `json:"created,omitempty"`
 
 	// ID is the unique identifier of the service account in the database.
 	Id int64 `json:"id"`
@@ -53,12 +53,12 @@ type Serviceaccount struct {
 	Role OrgRole `json:"role"`
 
 	// Teams is a list of teams the service account belongs to.
-	Teams []string `json:"teams"`
+	Teams *[]string `json:"teams,omitempty"`
 
 	// Tokens is the number of active tokens for the service account.
 	// Tokens are used to authenticate the service account against Grafana.
 	Tokens int64 `json:"tokens"`
 
 	// Updated indicates when the service account was updated.
-	Updated int64 `json:"updated"`
+	Updated *int64 `json:"updated,omitempty"`
 }

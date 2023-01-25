@@ -32,11 +32,11 @@ lineage: seqs: [
 				}
 
 				// Teams is a list of teams the service account belongs to.
-				teams: [...string] @grafanamaturity(ToMetadata="sys")
+				teams?: [...string] @grafanamaturity(ToMetadata="sys")
 				// Created indicates when the service account was created.
-				created: int64 @grafanamaturity(ToMetadata="sys")
+				created?: int64 @grafanamaturity(ToMetadata="sys")
 				// Updated indicates when the service account was updated.
-				updated: int64 @grafanamaturity(ToMetadata="sys")
+				updated?: int64 @grafanamaturity(ToMetadata="sys")
 
 				// OrgRole is a Grafana Organization Role which can be 'Viewer', 'Editor', 'Admin'.
 				#OrgRole: "Admin" | "Editor" | "Viewer" @cuetsy(kind="type")

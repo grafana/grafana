@@ -26,7 +26,7 @@ export interface Serviceaccount {
   /**
    * Created indicates when the service account was created.
    */
-  created: number;
+  created?: number;
   /**
    * ID is the unique identifier of the service account in the database.
    */
@@ -54,7 +54,7 @@ export interface Serviceaccount {
   /**
    * Teams is a list of teams the service account belongs to.
    */
-  teams: Array<string>;
+  teams?: Array<string>;
   /**
    * Tokens is the number of active tokens for the service account.
    * Tokens are used to authenticate the service account against Grafana.
@@ -63,7 +63,7 @@ export interface Serviceaccount {
   /**
    * Updated indicates when the service account was updated.
    */
-  updated: number;
+  updated?: number;
 }
 
 export const defaultServiceaccount: Partial<Serviceaccount> = {
