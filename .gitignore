@@ -157,10 +157,8 @@ compilation-stats.json
 /e2e/benchmarks/**/results/*
 /e2e/benchmarks/**/results
 /e2e/build_results.zip
-
-# enterprise e2e tests
-/e2e/enterprise
-/e2e/enterprise-suite
+/e2e/extensions
+/e2e/extensions-suite
 
 # grafana server
 /scripts/grafana-server/server.log
