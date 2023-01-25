@@ -22,6 +22,8 @@ import (
 //For example, if alert goes to Alerting at 13:00, timeframe starts at 12:55
 const alertPanelWindowBeforeTriggerInMinutes = 5 //LOGZ.IO GRAFANA CHANGE :: DEV-32382
 
+const LogzioSwitchToAccountQueryParamName = "switchToAccountId"
+
 type ExtendedAlert struct {
 	Status       string      `json:"status"`
 	Labels       template.KV `json:"labels"`
@@ -60,6 +62,17 @@ func removePrivateItems(kv template.KV) template.KV {
 }
 
 func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *ExtendedAlert {
+	//LOGZ.IO GRAFANA CHANGE :: DEV-37746: Add switch to account query param
+	accountId := alert.Annotations[ngmodels.LogzioAccountIdAnnotation]
+	var generatorUrl string
+	parsedGeneratorUrl, err := ParseLogzioAppPath(alert.GeneratorURL)
+	if err == nil {
+		parsedGeneratorUrl = AppendSwitchToAccountQueryParam(parsedGeneratorUrl, accountId)
+		generatorUrl = ToLogzioAppPath(parsedGeneratorUrl.String())
+	} else {
+		generatorUrl = alert.GeneratorURL
+	}
+	//LOGZ.IO GRAFANA CHANGE :: end
 	// remove "private" annotations & labels so they don't show up in the template
 	extended := &ExtendedAlert{
 		Status:       alert.Status,
@@ -67,7 +80,7 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 		Annotations:  removePrivateItems(alert.Annotations),
 		StartsAt:     alert.StartsAt,
 		EndsAt:       alert.EndsAt,
-		GeneratorURL: alert.GeneratorURL,
+		GeneratorURL: generatorUrl, //LOGZ.IO GRAFANA CHANGE :: DEV-37746: Add switch to account query param
 		Fingerprint:  alert.Fingerprint,
 	}
 
@@ -84,13 +97,13 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 	dashboardUid := alert.Annotations[ngmodels.DashboardUIDAnnotation]
 	if len(dashboardUid) > 0 {
 		u.Path = path.Join(externalPath, "/d/", dashboardUid)
-		u.RawQuery = appendAlertPanelTimeframeToQueryString(u.RawQuery, alert) //LOGZ.IO GRAFANA CHANGE :: DEV-32382 - Append timeframe for panel/dashboard URL
-		extended.DashboardURL = ToLogzioAppPath(u.String())                    //LOGZ.IO GRAFANA CHANGE :: DEV-31356: Change grafana default username, footer URL,text to logzio ones
+		u.RawQuery = appendAlertPanelTimeframeToQueryString(u.RawQuery, alert)                          //LOGZ.IO GRAFANA CHANGE :: DEV-32382 - Append timeframe for panel/dashboard URL
+		extended.DashboardURL = ToLogzioAppPath(AppendSwitchToAccountQueryParam(u, accountId).String()) //LOGZ.IO GRAFANA CHANGE :: DEV-31356: Change grafana default username, footer URL,text to logzio ones, DEV-37746: Add switch to account query param
 		panelId := alert.Annotations[ngmodels.PanelIDAnnotation]
 		if len(panelId) > 0 {
 			u.RawQuery = "viewPanel=" + panelId
-			u.RawQuery = appendAlertPanelTimeframeToQueryString(u.RawQuery, alert) //LOGZ.IO GRAFANA CHANGE :: DEV-32382 - Append timeframe for panel/dashboard URL
-			extended.PanelURL = ToLogzioAppPath(u.String())                        //LOGZ.IO GRAFANA CHANGE :: DEV-31356: Change grafana default username, footer URL,text to logzio ones
+			u.RawQuery = appendAlertPanelTimeframeToQueryString(u.RawQuery, alert)                      //LOGZ.IO GRAFANA CHANGE :: DEV-32382 - Append timeframe for panel/dashboard URL
+			extended.PanelURL = ToLogzioAppPath(AppendSwitchToAccountQueryParam(u, accountId).String()) //LOGZ.IO GRAFANA CHANGE :: DEV-31356: Change grafana default username, footer URL,text to logzio ones, DEV-37746: Add switch to account query param
 		}
 	}
 
@@ -114,6 +127,7 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 	}
 
 	u.RawQuery = query.Encode()
+	u = AppendSwitchToAccountQueryParam(u, accountId) //LOGZ.IO GRAFANA CHANGE :: DEV-37746: Add switch to account query param
 	u.RawQuery = ReplaceEncodedSpace(u.RawQuery)      //LOGZ.IO GRAFANA CHANGE :: Replace space encoded as + in silence URL
 	extended.SilenceURL = ToLogzioAppPath(u.String()) //LOGZ.IO GRAFANA CHANGE :: DEV-31356: Change grafana default username, footer URL,text to logzio ones
 

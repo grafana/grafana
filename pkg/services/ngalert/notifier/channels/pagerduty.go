@@ -163,14 +163,15 @@ func (pn *PagerdutyNotifier) buildPagerdutyMessage(ctx context.Context, alerts m
 		details[k] = detail
 	}
 
+	basePath := ToBasePathWithAccountRedirect(pn.tmpl.ExternalURL, alerts) //LOGZ.IO GRAFANA CHANGE :: DEV-37746: Add switch to account query param
 	msg := &pagerDutyMessage{
-		Client:      "Grafana",
-		ClientURL:   ToLogzioAppPath(pn.tmpl.ExternalURL.String()), // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
+		Client:      "Logz.io",
+		ClientURL:   ToLogzioAppPath(basePath), // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
 		RoutingKey:  pn.Key,
 		EventAction: eventType,
 		DedupKey:    key.Hash(),
 		Links: []pagerDutyLink{{
-			HRef: ToLogzioAppPath(pn.tmpl.ExternalURL.String()), // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
+			HRef: ToLogzioAppPath(basePath), // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
 			Text: "External URL",
 		}},
 		Description: tmpl(DefaultMessageTitleEmbed), // TODO: this can be configurable template.

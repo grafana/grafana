@@ -88,7 +88,8 @@ const (
 	// Annotations are actually a set of labels, so technically this is the label name of an annotation.
 	DashboardUIDAnnotation       = "__dashboardUid__"
 	PanelIDAnnotation            = "__panelId__"
-	AlertRuleStateAnnotationType = "unified_alert_rule" // LOGZ.IO GRAFANA CHANGE :: DEV-31760 - Retrieve annotations for migrated unified alerts
+	AlertRuleStateAnnotationType = "unified_alert_rule"  // LOGZ.IO GRAFANA CHANGE :: DEV-31760 - Retrieve annotations for migrated unified alerts
+	LogzioAccountIdAnnotation    = "__logzioAccountId__" //LOGZ.IO GRAFANA CHANGE :: DEV-37746: Add switch to account query param
 )
 
 // AlertRule is the model for alert rules in unified alerting.

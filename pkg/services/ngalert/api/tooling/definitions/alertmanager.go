@@ -469,6 +469,7 @@ type AlertEvaluationRequest struct {
 }
 
 type AlertProcessRequest struct {
+	AccountId                           string          `json:"accountId"`
 	ShouldManageAnnotationsAndInstances *bool           `json:"shouldManageAnnotationsAndInstances"`
 	AlertRule                           ApiAlertRule    `json:"alertRule"`
 	EvaluationResults                   []ApiEvalResult `json:"evaluationResults"`

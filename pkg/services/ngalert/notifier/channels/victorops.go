@@ -114,7 +114,8 @@ func (vn *VictoropsNotifier) Notify(ctx context.Context, as ...*types.Alert) (bo
 	bodyJSON.Set("state_message", tmpl(`{{ template "default.message" . }}`))
 	bodyJSON.Set("monitoring_tool", LogzioFooterText) //LOGZ.IO GRAFANA CHANGE :: DEV-31356: Change grafana default username, footer URL,text to logzio ones
 
-	ruleURL := ToLogzioAppPath(joinUrlPath(vn.tmpl.ExternalURL.String(), "/alerting/list", vn.log)) // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
+	basePath := ToBasePathWithAccountRedirect(vn.tmpl.ExternalURL, alerts)      //LOGZ.IO GRAFANA CHANGE :: DEV-37746: Add switch to account query param
+	ruleURL := ToLogzioAppPath(joinUrlPath(basePath, "/alerting/list", vn.log)) // LOGZ.IO GRAFANA CHANGE :: DEV-31554 - Set APP url to logzio grafana for alert notification URLs
 	bodyJSON.Set("alert_url", ruleURL)
 
 	if tmplErr != nil {

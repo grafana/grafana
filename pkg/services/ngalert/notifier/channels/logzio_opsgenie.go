@@ -136,7 +136,10 @@ func (on *LogzioOpsgenieNotifier) buildOpsgenieMessage(ctx context.Context, aler
 		return bodyJSON, nil
 	}
 
-	rulePageURL := ToLogzioAppPath(joinUrlPath(on.tmpl.ExternalURL.String(), "/alerting/list", on.log))
+	//LOGZ.IO GRAFANA CHANGE :: DEV-37746: Add switch to account query param
+	basePath := ToBasePathWithAccountRedirect(on.tmpl.ExternalURL, types.Alerts(as...))
+	rulePageURL := ToLogzioAppPath(joinUrlPath(basePath, "/alerting/list", on.log))
+	//LOGZ.IO GRAFANA CHANGE :: end
 
 	var tmplErr error
 	tmpl, data := TmplText(ctx, on.tmpl, as, on.log, &tmplErr)
