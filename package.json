@@ -332,7 +332,7 @@
     "hoist-non-react-statics": "3.3.2",
     "i18next": "^22.0.0",
     "immer": "9.0.16",
-    "immutable": "4.1.0",
+    "immutable": "4.2.2",
     "jquery": "3.6.1",
     "js-yaml": "^4.1.0",
     "json-source-map": "0.6.1",

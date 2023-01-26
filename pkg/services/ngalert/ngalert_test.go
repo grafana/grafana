@@ -35,7 +35,7 @@ func Test_subscribeToFolderChanges(t *testing.T) {
 	db.PutRule(context.Background(), rules...)
 
 	scheduler := &schedule.FakeScheduleService{}
-	scheduler.On("UpdateAlertRule", mock.Anything, mock.Anything).Return()
+	scheduler.On("UpdateAlertRule", mock.Anything, mock.Anything, mock.Anything).Return()
 
 	subscribeToFolderChanges(context.Background(), log.New("test"), bus, db, scheduler)
 
@@ -69,6 +69,6 @@ func Test_subscribeToFolderChanges(t *testing.T) {
 	}, time.Second, 10*time.Millisecond, "scheduler was expected to be called %d times but called %d", len(rules), calledTimes)
 
 	for _, rule := range rules {
-		scheduler.AssertCalled(t, "UpdateAlertRule", rule.GetKey(), rule.Version)
+		scheduler.AssertCalled(t, "UpdateAlertRule", rule.GetKey(), rule.Version, false)
 	}
 }
