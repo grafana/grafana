@@ -1,4 +1,5 @@
 import { createAction } from '@reduxjs/toolkit';
+import { isArray } from 'lodash';
 import { AnyAction } from 'redux';
 
 import { ExploreUrlState, serializeStateToUrlParam, SplitOpenOptions, UrlQueryMap } from '@grafana/data';
@@ -108,9 +109,10 @@ export const splitOpen = <T extends DataQuery = DataQuery>(options?: SplitOpenOp
     let rightUrlState: ExploreUrlState = leftUrlState;
 
     if (options) {
+      const { query } = options;
       rightUrlState = {
         datasource: options.datasourceUid,
-        queries: [options.query],
+        queries: isArray(query) ? query : [query],
         range: options.range || leftState.range,
         panelsState: options.panelsState,
       };

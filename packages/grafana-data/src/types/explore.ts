@@ -24,7 +24,7 @@ export interface ExploreTracePanelState {
 
 export interface SplitOpenOptions<T> {
   datasourceUid: string;
-  query: T;
+  query: T | T[];
   range?: TimeRange;
   panelsState?: ExplorePanelsState;
 }
