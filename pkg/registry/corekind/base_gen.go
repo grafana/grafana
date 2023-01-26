@@ -72,8 +72,8 @@ func (b *Base) Publicdashboard() *publicdashboard.Kind {
 	return b.publicdashboard
 }
 
-// Serviceaccount returns the [kindsys.Interface] implementation for the serviceaccount kind.
-func (b *Base) Serviceaccount() *serviceaccount.Kind {
+// ServiceAccount returns the [kindsys.Interface] implementation for the serviceaccount kind.
+func (b *Base) ServiceAccount() *serviceaccount.Kind {
 	return b.serviceaccount
 }
 

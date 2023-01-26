@@ -22,8 +22,8 @@ const (
 // OrgRole is a Grafana Organization Role which can be 'Viewer', 'Editor', 'Admin'.
 type OrgRole string
 
-// Serviceaccount defines model for serviceaccount.
-type Serviceaccount struct {
+// ServiceAccount defines model for ServiceAccount.
+type ServiceAccount struct {
 	// AccessControl metadata associated with a given resource.
 	AccessControl map[string]bool `json:"accessControl,omitempty"`
 
