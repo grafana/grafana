@@ -503,7 +503,9 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		case <-grafanaCtx.Done():
 			// clean up the state only if the reason for stopping the evaluation loop is that the rule was deleted
 			if errors.Is(grafanaCtx.Err(), errRuleDeleted) {
-				states := sch.stateManager.DeleteStateByRuleUID(context.Background(), key)
+				ctx, cancelFunc := context.WithTimeout(context.Background(), 5*time.Minute)
+				defer cancelFunc()
+				states := sch.stateManager.DeleteStateByRuleUID(ctx, key)
 				notify(states)
 			}
 			logger.Debug("Stopping alert rule routine")
