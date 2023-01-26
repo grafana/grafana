@@ -894,7 +894,7 @@ describe('LokiDatasource', () => {
 
     it('creates provider for logs query', () => {
       const options = getQueryOptions<LokiQuery>({
-        targets: [{ expr: '{label=value}', refId: 'A' }],
+        targets: [{ expr: '{label=value}', refId: 'A', queryType: LokiQueryType.Range }],
       });
 
       expect(ds.getDataProvider(SupplementaryQueryType.LogsVolume, options)).toBeDefined();
@@ -911,8 +911,8 @@ describe('LokiDatasource', () => {
     it('creates provider if at least one query is a logs query', () => {
       const options = getQueryOptions<LokiQuery>({
         targets: [
-          { expr: 'rate({label=value}[1m])', refId: 'A' },
-          { expr: '{label=value}', refId: 'B' },
+          { expr: 'rate({label=value}[1m])', queryType: LokiQueryType.Range, refId: 'A' },
+          { expr: '{label=value}', queryType: LokiQueryType.Range, refId: 'B' },
         ],
       });
 
@@ -959,6 +959,93 @@ describe('LokiDatasource', () => {
       });
 
       expect(ds.getDataProvider(SupplementaryQueryType.LogsSample, options)).toBeDefined();
+    });
+  });
+
+  describe('getSupplementaryQuery', () => {
+    let ds: LokiDatasource;
+    beforeEach(() => {
+      ds = createLokiDatasource(templateSrvStub);
+    });
+
+    describe('logs volume', () => {
+      it('returns logs volume query for range log query', () => {
+        expect(
+          ds.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, {
+            expr: '{label=value}',
+            queryType: LokiQueryType.Range,
+            refId: 'A',
+          })
+        ).toEqual({
+          expr: 'sum by (level) (count_over_time({label=value}[$__interval]))',
+          instant: false,
+          queryType: 'range',
+          refId: 'log-volume-A',
+          volumeQuery: true,
+        });
+      });
+
+      it('does not return logs volume query for instant log query', () => {
+        expect(
+          ds.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, {
+            expr: '{label=value}',
+            queryType: LokiQueryType.Instant,
+            refId: 'A',
+          })
+        ).toEqual(undefined);
+      });
+
+      it('does not return logs volume query for metric query', () => {
+        expect(
+          ds.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, {
+            expr: 'rate({label=value}[5m]',
+            queryType: LokiQueryType.Range,
+            refId: 'A',
+          })
+        ).toEqual(undefined);
+      });
+    });
+
+    describe('logs sample', () => {
+      it('returns logs sample query for range metric query', () => {
+        expect(
+          ds.getSupplementaryQuery(SupplementaryQueryType.LogsSample, {
+            expr: 'rate({label=value}[5m]',
+            queryType: LokiQueryType.Range,
+            refId: 'A',
+          })
+        ).toEqual({
+          expr: '{label=value}',
+          queryType: 'range',
+          refId: 'log-sample-A',
+          maxLines: 100,
+        });
+      });
+
+      it('returns logs sample query for instant metric query', () => {
+        expect(
+          ds.getSupplementaryQuery(SupplementaryQueryType.LogsSample, {
+            expr: 'rate({label=value}[5m]',
+            queryType: LokiQueryType.Instant,
+            refId: 'A',
+          })
+        ).toEqual({
+          expr: '{label=value}',
+          queryType: 'instant',
+          refId: 'log-sample-A',
+          maxLines: 100,
+        });
+      });
+
+      it('does not return logs sample query for log query query', () => {
+        expect(
+          ds.getSupplementaryQuery(SupplementaryQueryType.LogsSample, {
+            expr: '{label=value}',
+            queryType: LokiQueryType.Range,
+            refId: 'A',
+          })
+        ).toEqual(undefined);
+      });
     });
   });
 
