@@ -26,21 +26,24 @@ func HandleNoCacheHeader(ctx *models.ReqContext) {
 }
 
 func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {
+	t := web.NewTree()
+	t.Add("/api/datasources/uid/:uid/resources/*", nil)
+	t.Add("/api/datasources/:id/resources/*", nil)
 	return func(c *web.Context) {
-		c.Resp.Before(func(w web.ResponseWriter) {
-			// if response has already been written, skip.
+		c.Resp.Before(func(w web.ResponseWriter) { // if response has already been written, skip.
 			if w.Written() {
 				return
 			}
 
-			if !strings.HasPrefix(c.Req.URL.Path, "/api/datasources/proxy/") {
+			_, _, resourceURLMatch := t.Match(c.Req.URL.Path)
+			resourceCachable := allowCacheControl(c.Resp) && resourceURLMatch
+			if !strings.HasPrefix(c.Req.URL.Path, "/api/datasources/proxy/") && !resourceCachable {
 				addNoCacheHeaders(c.Resp)
 			}
 
 			if !cfg.AllowEmbedding {
 				addXFrameOptionsDenyHeader(w)
 			}
-
 			addSecurityHeaders(w, cfg)
 		})
 	}
@@ -69,9 +72,9 @@ func addSecurityHeaders(w web.ResponseWriter, cfg *setting.Cfg) {
 }
 
 func addNoCacheHeaders(w web.ResponseWriter) {
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Pragma", "no-cache")
-	w.Header().Set("Expires", "-1")
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Del("Pragma")
+	w.Header().Del("Expires")
 }
 
 func addXFrameOptionsDenyHeader(w web.ResponseWriter) {
@@ -94,4 +97,25 @@ func AddCustomResponseHeaders(cfg *setting.Cfg) web.Handler {
 			}
 		})
 	}
+}
+
+func allowCacheControl(rw web.ResponseWriter) bool {
+	ccHeaderValues := rw.Header().Values("Cache-Control")
+
+	if len(ccHeaderValues) == 0 {
+		return false
+	}
+
+	foundPrivate := false
+	foundPublic := false
+	for _, val := range ccHeaderValues {
+		if val == "private" {
+			foundPrivate = true
+		}
+		if val == "public" {
+			foundPublic = true
+		}
+	}
+
+	return foundPrivate && !foundPublic && rw.Header().Get("X-Grafana-Cache") != ""
 }
