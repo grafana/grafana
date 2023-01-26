@@ -7,6 +7,7 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -167,14 +168,31 @@ func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) *State {
 // DeleteStateByRuleUID removes the rule instances from cache and instanceStore. A closed channel is returned to be able
 // to gracefully handle the clear state step in scheduler in case we do not need to use the historian to save state
 // history.
-func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey) []*State {
-	logger := st.log.New(ruleKey.LogContext()...)
+func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey, reason string) []StateTransition {
+	logger := st.log.FromContext(ctx)
 	logger.Debug("Resetting state of the rule")
 
 	states := st.cache.removeByRuleUID(ruleKey.OrgID, ruleKey.UID)
+
 	if len(states) == 0 {
-		return states
+		return nil
 	}
+
+	now := time.Now()
+	transitions := make([]StateTransition, 0, len(states))
+	for _, s := range states {
+		oldState := s.State
+		oldReason := s.StateReason
+		s.SetNormal(reason, s.StartsAt, now)
+		s.LastEvaluationTime = now
+		s.Values = map[string]float64{}
+		transitions = append(transitions, StateTransition{
+			State:               s,
+			PreviousState:       oldState,
+			PreviousStateReason: oldReason,
+		})
+	}
+
 	if st.instanceStore != nil {
 		err := st.instanceStore.DeleteAlertInstancesByRule(ctx, ruleKey)
 		if err != nil {
@@ -183,32 +201,17 @@ func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.Al
 	}
 	logger.Info("Rules state was reset", "states", len(states))
 
-	return states
+	return transitions
 }
 
 // ResetStateByRuleUID removes the rule instances from cache and instanceStore and saves state history. If the state
 // history has to be saved, rule must not be nil.
-func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.AlertRule, reason string) []*State {
+func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.AlertRule, reason string) []StateTransition {
 	ruleKey := rule.GetKey()
-	states := st.DeleteStateByRuleUID(ctx, ruleKey)
+	transitions := st.DeleteStateByRuleUID(ctx, ruleKey, reason)
 
-	if rule == nil || st.historian == nil {
-		return states
-	}
-	transitions := make([]StateTransition, 0, len(states))
-	for _, s := range states {
-		oldState := s.State
-		oldReason := s.StateReason
-		state := *s
-		now := time.Now()
-		state.SetNormal(reason, s.StartsAt, now)
-		state.LastEvaluationTime = now
-		state.Values = map[string]float64{}
-		transitions = append(transitions, StateTransition{
-			State:               &state,
-			PreviousState:       oldState,
-			PreviousStateReason: oldReason,
-		})
+	if rule == nil || st.historian == nil || len(transitions) == 0 {
+		return transitions
 	}
 
 	ruleMeta := history_model.NewRuleMeta(rule, st.log)
@@ -219,7 +222,7 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.Alert
 			st.log.FromContext(ctx).Error("Error updating historian state reset transitions", append(ruleKey.LogContext(), "reason", reason, "error", err)...)
 		}
 	}()
-	return states
+	return transitions
 }
 
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
