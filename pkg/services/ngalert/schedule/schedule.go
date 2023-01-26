@@ -331,13 +331,15 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		}
 	}
 
-	resetState := func(ctx context.Context, isPaused bool) {
+	deleteState := func(ctx context.Context) {
+		states := sch.stateManager.DeleteStateByRuleUID(ctx, key)
+		notify(states)
+	}
+
+	// this function is called only when rule is paused.
+	resetStateOnPauseChange := func(ctx context.Context) {
 		rule := sch.schedulableAlertRules.get(key)
-		reason := ngmodels.StateReasonUpdated
-		if isPaused {
-			reason = ngmodels.StateReasonPaused
-		}
-		states := sch.stateManager.ResetStateByRuleUID(ctx, rule, reason)
+		states := sch.stateManager.ResetStateByRuleUID(ctx, rule, ngmodels.StateReasonPaused)
 		notify(states)
 	}
 
@@ -452,7 +454,11 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 
 			logger.Info("Clearing the state of the rule because it was updated", "version", currentRuleVersion, "newVersion", ctx.Version, "isPaused", ctx.IsPaused)
 			// clear the state. So the next evaluation will start from the scratch.
-			resetState(grafanaCtx, ctx.IsPaused)
+			if ctx.IsPaused {
+				resetStateOnPauseChange(grafanaCtx)
+				continue
+			}
+			deleteState(grafanaCtx)
 		// evalCh - used by the scheduler to signal that evaluation is needed.
 		case ctx, ok := <-evalCh:
 			if !ok {
@@ -477,7 +483,11 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 					if currentRuleVersion != newVersion {
 						if currentRuleVersion > 0 { // do not clean up state if the eval loop has just started.
 							logger.Debug("Got a new version of alert rule. Clear up the state and refresh extra labels", "version", currentRuleVersion, "newVersion", newVersion)
-							resetState(grafanaCtx, ctx.rule.IsPaused)
+							if isPaused {
+								resetStateOnPauseChange(grafanaCtx)
+							} else {
+								deleteState(grafanaCtx)
+							}
 						}
 						currentRuleVersion = newVersion
 					}
@@ -505,8 +515,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 			if errors.Is(grafanaCtx.Err(), errRuleDeleted) {
 				ctx, cancelFunc := context.WithTimeout(context.Background(), 10*time.Second)
 				defer cancelFunc()
-				states := sch.stateManager.DeleteStateByRuleUID(ctx, key)
-				notify(states)
+				deleteState(ctx)
 			}
 			logger.Debug("Stopping alert rule routine")
 			return nil
