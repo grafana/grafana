@@ -331,7 +331,6 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		}
 	}
 
-	// this function is called only when rule is paused.
 	resetState := func(ctx context.Context, isPaused bool) {
 		rule := sch.schedulableAlertRules.get(key)
 		reason := ngmodels.StateReasonUpdated
