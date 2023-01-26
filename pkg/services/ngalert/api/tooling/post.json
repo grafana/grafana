@@ -2154,6 +2154,10 @@
      "format": "int64",
      "type": "integer"
     },
+    "isPaused": {
+     "example": true,
+     "type": "boolean"
+    },
     "labels": {
      "additionalProperties": {
       "type": "string"
@@ -3367,7 +3371,6 @@
    "type": "object"
   },
   "alertGroup": {
-   "description": "AlertGroup alert group",
    "properties": {
     "alerts": {
      "description": "alerts",
@@ -3552,6 +3555,7 @@
    "type": "object"
   },
   "gettableAlerts": {
+   "description": "GettableAlerts gettable alerts",
    "items": {
     "$ref": "#/definitions/gettableAlert"
    },
@@ -3606,6 +3610,7 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
@@ -3793,7 +3798,6 @@
    "type": "object"
   },
   "receiver": {
-   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
