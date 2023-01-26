@@ -388,7 +388,9 @@
     },
     "debugpanelcfg": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "ryantxu"
+      ],
       "currentVersion": [
         0,
         0
@@ -396,13 +398,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
-        "docs": "n/a",
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/debugpanelcfg/schema-reference",
         "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/debug/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/debug/panelcfg.gen.ts"
       },
       "machineName": "debugpanelcfg",
-      "maturity": "planned",
+      "maturity": "experimental",
       "name": "DebugPanelCfg",
       "pluralMachineName": "debugpanelcfgs",
       "pluralName": "DebugPanelCfgs",
@@ -1864,6 +1866,7 @@
           "bargaugepanelcfg",
           "dashboard",
           "dashboardlistpanelcfg",
+          "debugpanelcfg",
           "gaugepanelcfg",
           "histogrampanelcfg",
           "newspanelcfg",
@@ -1874,7 +1877,7 @@
           "textpanelcfg",
           "xychartpanelcfg"
         ],
-        "count": 14
+        "count": 15
       },
       "mature": {
         "name": "mature",
@@ -1907,7 +1910,6 @@
           "dashboarddataquery",
           "dashboarddatasourcecfg",
           "datasource",
-          "debugpanelcfg",
           "elasticsearchdataquery",
           "elasticsearchdatasourcecfg",
           "flamegraphpanelcfg",
@@ -1955,7 +1957,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 58
+        "count": 57
       },
       "stable": {
         "name": "stable",

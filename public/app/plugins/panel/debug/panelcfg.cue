@@ -30,12 +30,12 @@ composableKinds: PanelCfg: {
 			{
 				schemas: [
 					{
-						UpdateConfig: { for k, _ in UpdateCounters { "\(k)": bool } } @cuetsy(kind="type")
+						UpdateConfig: {for k, _ in UpdateCounters {"\(k)": bool}} @cuetsy(kind="type")
 
 						UpdateCounters: {
-							render:        number
-							dataChanged:   number
-							schemaChanged: number
+							render:        uint32
+							dataChanged:   uint32
+							schemaChanged: uint32
 						} @cuetsy(kind="type")
 
 						DebugMode: "render" | "events" | "cursor" | "State" | "ThrowError" @cuetsy(kind="enum")

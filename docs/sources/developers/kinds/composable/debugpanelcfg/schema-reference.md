@@ -53,10 +53,10 @@ title: DebugPanelCfg kind
 
 ### Properties
 
-| Property        | Type   | Required | Description |
-|-----------------|--------|----------|-------------|
-| `dataChanged`   | number | **Yes**  |             |
-| `render`        | number | **Yes**  |             |
-| `schemaChanged` | number | **Yes**  |             |
+| Property        | Type    | Required | Description |
+|-----------------|---------|----------|-------------|
+| `dataChanged`   | integer | **Yes**  |             |
+| `render`        | integer | **Yes**  |             |
+| `schemaChanged` | integer | **Yes**  |             |
 
 
