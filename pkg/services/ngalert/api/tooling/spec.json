@@ -1269,23 +1269,6 @@
         }
       }
     },
-    "/api/ruler/grafana/states": {
-      "get": {
-        "produces": [
-          "application/json"
-        ],
-        "tags": [
-          "history"
-        ],
-        "summary": "Query state history.",
-        "operationId": "RouteGetStateHistory",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/StateHistory"
-          }
-        }
-      }
-    },
     "/api/ruler/{DatasourceUID}/api/v1/rules": {
       "get": {
         "description": "List rule groups",
@@ -2625,6 +2608,23 @@
             "schema": {
               "$ref": "#/definitions/NotFound"
             }
+          }
+        }
+      }
+    },
+    "/api/v1/rules/history": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "history"
+        ],
+        "summary": "Query state history.",
+        "operationId": "RouteGetStateHistory",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/StateHistory"
           }
         }
       }

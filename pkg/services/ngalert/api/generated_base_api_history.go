@@ -27,11 +27,11 @@ func (f *HistoryApiHandler) RouteGetStateHistory(ctx *contextmodel.ReqContext) r
 func (api *API) RegisterHistoryApiEndpoints(srv HistoryApi, m *metrics.API) {
 	api.RouteRegister.Group("", func(group routing.RouteRegister) {
 		group.Get(
-			toMacaronPath("/api/ruler/grafana/states"),
-			api.authorize(http.MethodGet, "/api/ruler/grafana/states"),
+			toMacaronPath("/api/v1/rules/history"),
+			api.authorize(http.MethodGet, "/api/v1/rules/history"),
 			metrics.Instrument(
 				http.MethodGet,
-				"/api/ruler/grafana/states",
+				"/api/v1/rules/history",
 				srv.RouteGetStateHistory,
 				m,
 			),
