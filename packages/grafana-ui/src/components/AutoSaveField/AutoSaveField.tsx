@@ -104,7 +104,12 @@ export const AutoSaveField = React.forwardRef<FieldProps, Props>((props) => {
         })}
       </Field>
       {fieldState.showSuccess && (
-        <InlineToast suffixIcon={'check'} referenceElement={inputRef.current} placement={'right'}>
+        <InlineToast
+          suffixIcon={'check'}
+          referenceElement={inputRef.current}
+          placement="right"
+          alternativePlacement="bottom"
+        >
           Saved!
         </InlineToast>
       )}
