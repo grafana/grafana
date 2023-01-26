@@ -63,18 +63,6 @@ type QueryJSONModel struct {
 	VolumeQuery *bool   `json:"volumeQuery,omitempty"`
 }
 
-type QueryJSONModelOld struct {
-	QueryType    string `json:"queryType"`
-	Expr         string `json:"expr"`
-	Direction    string `json:"direction"`
-	LegendFormat string `json:"legendFormat"`
-	Interval     string `json:"interval"`
-	IntervalMS   int    `json:"intervalMS"`
-	Resolution   int64  `json:"resolution"`
-	MaxLines     int    `json:"maxLines"`
-	VolumeQuery  bool   `json:"volumeQuery"`
-}
-
 func parseQueryModel(raw json.RawMessage) (*QueryJSONModel, error) {
 	model := &QueryJSONModel{}
 	err := json.Unmarshal(raw, model)
