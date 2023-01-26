@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -32,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web/webtest"
@@ -452,8 +452,6 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 		isGrafanaAdmin      bool
 		permissions         []accesscontrol.Permission
 		expectedCode        int
-		expectedUserCount   int
-		user                user.SignedInUser
 		targetOrg           int64
 	}
 
@@ -526,109 +524,69 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 }
 
 func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
-	url := "/api/orgs/%v/users/"
 	type testCase struct {
-		name                string
+		desc                string
 		enableAccessControl bool
-		user                user.SignedInUser
-		targetOrg           int64
+		permissions         []accesscontrol.Permission
+		isGrafanaAdmin      bool
+		role                org.RoleType
 		input               string
 		expectedCode        int
 	}
 
 	tests := []testCase{
 		{
-			name:                "server admin can add users to his org (legacy)",
+			desc:                "server admin can add users to his org (legacy)",
 			enableAccessControl: false,
-			user:                testServerAdminViewer,
-			targetOrg:           testServerAdminViewer.OrgID,
-			input:               `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(testAdminOrg2.OrgRole) + `"}`,
+			isGrafanaAdmin:      true,
+			input:               `{"loginOrEmail": "user", "role": "Viewer"}`,
 			expectedCode:        http.StatusOK,
 		},
 		{
-			name:                "server admin can add users to another org (legacy)",
+			desc:                "org admin cannot add users to his org (legacy)",
 			enableAccessControl: false,
-			user:                testServerAdminViewer,
-			targetOrg:           2,
-			input:               `{"loginOrEmail": "` + testEditorOrg1.Login + `", "role": "` + string(testEditorOrg1.OrgRole) + `"}`,
-			expectedCode:        http.StatusOK,
-		},
-		{
-			name:                "org admin cannot add users to his org (legacy)",
-			enableAccessControl: false,
+			role:                org.RoleAdmin,
 			expectedCode:        http.StatusForbidden,
-			user:                testAdminOrg2,
-			targetOrg:           testAdminOrg2.OrgID,
-			input:               `{"loginOrEmail": "` + testEditorOrg1.Login + `", "role": "` + string(testEditorOrg1.OrgRole) + `"}`,
+			input:               `{"loginOrEmail": "user", "role": "Viewer"}`,
 		},
 		{
-			name:                "org admin cannot add users to another org (legacy)",
-			enableAccessControl: false,
-			expectedCode:        http.StatusForbidden,
-			user:                testAdminOrg2,
-			targetOrg:           1,
-			input:               `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(testAdminOrg2.OrgRole) + `"}`,
-		},
-		{
-			name:                "server admin can add users to his org",
+			desc:                "user with permissions can add users to org",
 			enableAccessControl: true,
-			user:                testServerAdminViewer,
-			targetOrg:           testServerAdminViewer.OrgID,
-			input:               `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(testAdminOrg2.OrgRole) + `"}`,
-			expectedCode:        http.StatusOK,
+			role:                org.RoleViewer,
+			permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionOrgUsersAdd, Scope: "users:*"},
+			},
+			input:        `{"loginOrEmail": "user", "role": "Viewer"}`,
+			expectedCode: http.StatusOK,
 		},
 		{
-			name:                "server admin can add users to another org",
-			enableAccessControl: true,
-			user:                testServerAdminViewer,
-			targetOrg:           2,
-			input:               `{"loginOrEmail": "` + testEditorOrg1.Login + `", "role": "` + string(testEditorOrg1.OrgRole) + `"}`,
-			expectedCode:        http.StatusOK,
-		},
-		{
-			name:                "org admin can add users to his org",
-			enableAccessControl: true,
-			user:                testAdminOrg2,
-			targetOrg:           testAdminOrg2.OrgID,
-			input:               `{"loginOrEmail": "` + testEditorOrg1.Login + `", "role": "` + string(testEditorOrg1.OrgRole) + `"}`,
-			expectedCode:        http.StatusOK,
-		},
-		{
-			name:                "org admin cannot add users to another org",
+			desc:                "user without permissions cannot add users to org",
 			enableAccessControl: true,
 			expectedCode:        http.StatusForbidden,
-			user:                testAdminOrg2,
-			targetOrg:           1,
-			input:               `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(testAdminOrg2.OrgRole) + `"}`,
+			input:               `{"loginOrEmail": "user", "role": "Viewer"}`,
 		},
 	}
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			cfg := setting.NewCfg()
-			cfg.RBACEnabled = tc.enableAccessControl
-			var err error
-			sc := setupHTTPServerWithCfg(t, false, cfg, func(hs *HTTPServer) {
-				hs.orgService, err = orgimpl.ProvideService(hs.SQLStore, cfg, quotatest.New(false, nil))
-				require.NoError(t, err)
-				hs.userService, err = userimpl.ProvideService(
-					hs.SQLStore, hs.orgService, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg), localcache.ProvideService(), quotatest.New(false, nil))
-				require.NoError(t, err)
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = setting.NewCfg()
+				hs.Cfg.RBACEnabled = tt.enableAccessControl
+				hs.orgService = &orgtest.FakeOrgService{}
+				hs.authInfoService = &logintest.AuthInfoServiceFake{}
+				hs.userService = &usertest.FakeUserService{
+					ExpectedUser:         &user.User{},
+					ExpectedSignedInUser: userWithPermissions(1, tt.permissions),
+				}
 			})
 
-			setupOrgUsersDBForAccessControlTests(t, sc.db, sc.hs.orgService)
-			setInitCtxSignedInUser(sc.initCtx, tc.user)
+			u := userWithPermissions(1, tt.permissions)
+			u.OrgRole = tt.role
+			u.IsGrafanaAdmin = tt.isGrafanaAdmin
 
-			// Perform request
-			input := strings.NewReader(tc.input)
-			response := callAPI(sc.server, http.MethodPost, fmt.Sprintf(url, tc.targetOrg), input, t)
-			assert.Equal(t, tc.expectedCode, response.Code)
-
-			if tc.expectedCode != http.StatusForbidden {
-				// Check result
-				var message util.DynMap
-				err := json.NewDecoder(response.Body).Decode(&message)
-				require.NoError(t, err)
-			}
+			res, err := server.SendJSON(webtest.RequestWithSignedInUser(server.NewPostRequest("/api/orgs/1/users", strings.NewReader(tt.input)), u))
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }
