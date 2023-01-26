@@ -42,7 +42,8 @@ func (s Service) ListPluginDashboards(ctx context.Context, req *plugindashboards
 
 	// load current dashboards
 	query := dashboards.GetDashboardsByPluginIDQuery{OrgID: req.OrgID, PluginID: req.PluginID}
-	if err := s.dashboardPluginService.GetDashboardsByPluginID(ctx, &query); err != nil {
+	queryResult, err := s.dashboardPluginService.GetDashboardsByPluginID(ctx, &query)
+	if err != nil {
 		return nil, err
 	}
 
@@ -67,7 +68,7 @@ func (s Service) ListPluginDashboards(ctx context.Context, req *plugindashboards
 		res.Revision = dashboard.Data.Get("revision").MustInt64(1)
 
 		// find existing dashboard
-		for _, existingDash := range query.Result {
+		for _, existingDash := range queryResult {
 			if existingDash.Slug == dashboard.Slug {
 				res.UID = existingDash.UID
 				res.DashboardId = existingDash.ID
@@ -84,7 +85,7 @@ func (s Service) ListPluginDashboards(ctx context.Context, req *plugindashboards
 	}
 
 	// find deleted dashboards
-	for _, dash := range query.Result {
+	for _, dash := range queryResult {
 		if _, exists := existingMatches[dash.ID]; !exists {
 			result = append(result, &plugindashboards.PluginDashboard{
 				UID:         dash.UID,

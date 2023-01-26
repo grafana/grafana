@@ -7,13 +7,11 @@ import (
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
-
-	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/models"
 )
 
 type roleType string
@@ -206,7 +204,7 @@ func (m *folderHelper) setACL(orgID int64, dashboardID int64, items []*dashboard
 	seen := make(map[keyType]struct{}, len(items))
 	for _, item := range items {
 		if item.UserID == 0 && item.TeamID == 0 && (item.Role == nil || !item.Role.IsValid()) {
-			return models.ErrDashboardACLInfoMissing
+			return dashboards.ErrDashboardACLInfoMissing
 		}
 
 		// ignore duplicate user permissions

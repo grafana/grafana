@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
 import React, { memo, CSSProperties } from 'react';
-import SVG from 'react-inlinesvg';
 import AutoSizer from 'react-virtualized-auto-sizer';
 import { areEqual, FixedSizeGrid as Grid } from 'react-window';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useTheme2, stylesFactory } from '@grafana/ui';
+import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 
 import { ResourceItem } from './FolderPickerTab';
 
@@ -38,7 +38,7 @@ function Cell(props: CellProps) {
           onClick={() => onChange(card.value)}
         >
           {card.imgUrl.endsWith('.svg') ? (
-            <SVG src={card.imgUrl} className={styles.img} />
+            <SanitizedSVG src={card.imgUrl} className={styles.img} />
           ) : (
             <img src={card.imgUrl} alt="" className={styles.img} />
           )}

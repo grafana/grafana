@@ -335,9 +335,9 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *models.ReqContext) ([]*navtre
 			ID:    dashboardId,
 			OrgID: c.OrgID,
 		}
-		err := s.dashboardService.GetDashboard(c.Req.Context(), query)
+		queryResult, err := s.dashboardService.GetDashboard(c.Req.Context(), query)
 		if err == nil {
-			starredDashboards = append(starredDashboards, query.Result)
+			starredDashboards = append(starredDashboards, queryResult)
 		}
 	}
 
@@ -376,13 +376,15 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 	})
 
 	if c.IsSignedIn {
-		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-			Text:     "Snapshots",
-			SubTitle: "Interactive, publically available, point-in-time representations of dashboards",
-			Id:       "dashboards/snapshots",
-			Url:      s.cfg.AppSubURL + "/dashboard/snapshots",
-			Icon:     "camera",
-		})
+		if s.cfg.SnapshotEnabled {
+			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+				Text:     "Snapshots",
+				SubTitle: "Interactive, publically available, point-in-time representations of dashboards",
+				Id:       "dashboards/snapshots",
+				Url:      s.cfg.AppSubURL + "/dashboard/snapshots",
+				Icon:     "camera",
+			})
+		}
 
 		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 			Text:     "Library panels",

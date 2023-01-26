@@ -259,7 +259,6 @@ WORKFLOW.md @torkelo
 /pkg/services/querylibrary/ @grafana/multitenancy-squad
 /pkg/services/export/ @grafana/multitenancy-squad
 /pkg/infra/filestorage/ @grafana/multitenancy-squad
-/pkg/tsdb/testdatasource/ @grafana/multitenancy-squad
 /pkg/util/converter/ @grafana/multitenancy-squad
 
 # Alerting
@@ -281,6 +280,7 @@ WORKFLOW.md @torkelo
 /pkg/services/datasources/ @grafana/plugins-platform-backend
 /pkg/services/pluginsintegration/ @grafana/plugins-platform-backend
 /pkg/plugins/pfs/ @grafana/plugins-platform-backend @grafana/grafana-as-code
+/pkg/tsdb/testdatasource/ @grafana/plugins-platform-backend
 
 # Dashboard previews / crawler (behind feature flag)
 /pkg/services/thumbs/ @grafana/multitenancy-squad
@@ -486,7 +486,7 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/datasource/cloudwatch/ @grafana/aws-plugins
 /public/app/plugins/datasource/elasticsearch/ @grafana/observability-logs
 /public/app/plugins/datasource/grafana/ @grafana/user-essentials
-/public/app/plugins/datasource/testdata/ @grafana/backend-platform
+/public/app/plugins/datasource/testdata/ @grafana/plugins-platform-frontend
 /public/app/plugins/datasource/grafana-azure-monitor-datasource/ @grafana/partner-plugins
 /public/app/plugins/datasource/graphite/ @grafana/observability-metrics
 /public/app/plugins/datasource/influxdb/ @grafana/observability-metrics
@@ -535,9 +535,12 @@ lerna.json @grafana/frontend-ops
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware.go @grafana/grafana-partnerships-team
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware_test.go @grafana/grafana-partnerships-team
 
+# Kind definitions
+/kinds/dashboard @grafana/dashboards-squad
+/kinds/ @grafana/grafana-as-code
+
 # Kind system and code generation
 embed.go @grafana/grafana-as-code
-/kinds/ @grafana/grafana-as-code
 /pkg/kinds/ @grafana/grafana-as-code
 /pkg/cuectx/ @grafana/grafana-as-code
 /pkg/registry/ @grafana/grafana-as-code

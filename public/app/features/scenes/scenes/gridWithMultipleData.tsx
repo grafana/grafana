@@ -1,4 +1,5 @@
 import { VizPanel, SceneGridRow, SceneTimePicker, SceneGridLayout, SceneTimeRange } from '@grafana/scenes';
+import { TestDataQueryType } from 'app/plugins/datasource/testdata/dataquery.gen';
 
 import { DashboardScene } from '../dashboard/DashboardScene';
 import { SceneEditManager } from '../editor/SceneEditManager';
@@ -12,7 +13,7 @@ export function getGridWithMultipleData(): DashboardScene {
       children: [
         new SceneGridRow({
           $timeRange: new SceneTimeRange(),
-          $data: getQueryRunnerWithRandomWalkQuery({ scenarioId: 'random_walk_table' }),
+          $data: getQueryRunnerWithRandomWalkQuery({ scenarioId: TestDataQueryType.RandomWalkTable }),
           title: 'Row A - has its own query',
           key: 'Row A',
           isCollapsed: true,

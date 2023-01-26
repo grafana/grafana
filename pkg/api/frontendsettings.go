@@ -149,9 +149,11 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"OAuthSkipOrgRoleUpdateSync": hs.Cfg.OAuthSkipOrgRoleUpdateSync,
 			"SAMLSkipOrgRoleSync":        hs.Cfg.SectionWithEnvOverrides("auth.saml").Key("skip_org_role_sync").MustBool(false),
 			"LDAPSkipOrgRoleSync":        hs.Cfg.LDAPSkipOrgRoleSync,
+			"GithubSkipOrgRoleSync":      hs.Cfg.GithubSkipOrgRoleSync,
 			"GoogleSkipOrgRoleSync":      hs.Cfg.GoogleSkipOrgRoleSync,
 			"JWTAuthSkipOrgRoleSync":     hs.Cfg.JWTAuthSkipOrgRoleSync,
 			"GrafanaComSkipOrgRoleSync":  hs.Cfg.GrafanaComSkipOrgRoleSync,
+			"GitLabSkipOrgRoleSync":      hs.Cfg.GitLabSkipOrgRoleSync,
 			"AzureADSkipOrgRoleSync":     hs.Cfg.AzureADSkipOrgRoleSync,
 			"DisableSyncLock":            hs.Cfg.DisableSyncLock,
 		},
@@ -208,6 +210,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"samlEnabled":             hs.samlEnabled(),
 		"samlName":                hs.samlName(),
 		"tokenExpirationDayLimit": hs.Cfg.SATokenExpirationDayLimit,
+		"snapshotEnabled":         hs.Cfg.SnapshotEnabled,
 	}
 
 	if hs.pluginsCDNService != nil && hs.pluginsCDNService.IsEnabled() {

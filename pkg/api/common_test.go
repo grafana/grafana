@@ -40,6 +40,7 @@ import (
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -188,6 +189,7 @@ type scenarioContext struct {
 	authInfoService         *logintest.AuthInfoServiceFake
 	dashboardVersionService dashver.Service
 	userService             user.Service
+	dashboardService        dashboards.DashboardService
 }
 
 func (sc *scenarioContext) exec() {
@@ -391,6 +393,8 @@ func setupHTTPServerWithCfgDb(
 	folderPermissionsService := accesscontrolmock.NewMockedPermissionsService()
 	dashboardPermissionsService := accesscontrolmock.NewMockedPermissionsService()
 
+	folderSvc := foldertest.NewFakeService()
+
 	// Create minimal HTTP Server
 	hs := &HTTPServer{
 		Cfg:                    cfg,
@@ -407,6 +411,7 @@ func setupHTTPServerWithCfgDb(
 		DashboardService: dashboardservice.ProvideDashboardService(
 			cfg, dashboardsStore, dashboardsStore, nil, features,
 			folderPermissionsService, dashboardPermissionsService, ac,
+			folderSvc,
 		),
 		preferenceService: preftest.NewPreferenceServiceFake(),
 		userService:       userSvc,
@@ -538,10 +543,8 @@ func setUp(confs ...setUpConf) *HTTPServer {
 	}
 	teamSvc := &teamtest.FakeService{}
 	dashSvc := &dashboards.FakeDashboardService{}
-	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*dashboards.GetDashboardACLInfoListQuery)
-		q.Result = aclMockResp
-	}).Return(nil)
+	qResult := aclMockResp
+	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
 	guardian.InitLegacyGuardian(store, dashSvc, teamSvc)
 	return hs
 }
