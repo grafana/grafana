@@ -3,22 +3,26 @@ package sqlstash
 import (
 	"encoding/json"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
 type summarySupport struct {
-	model       *models.EntitySummary
+	model       *entity.EntitySummary
 	name        string
 	description *string // null or empty
 	slug        *string // null or empty
-	folder      *string // null or empty
 	labels      *string
 	fields      *string
 	errors      *string // should not allow saving with this!
 	marshaled   []byte
+
+	// metadata for nested objects
+	parent_grn *entity.GRN
+	folder     string
+	isNested   bool // set when this is for a nested item
 }
 
-func newSummarySupport(summary *models.EntitySummary) (*summarySupport, error) {
+func newSummarySupport(summary *entity.EntitySummary) (*summarySupport, error) {
 	var err error
 	var js []byte
 	s := &summarySupport{
@@ -36,9 +40,6 @@ func newSummarySupport(summary *models.EntitySummary) (*summarySupport, error) {
 		}
 		if summary.Slug != "" {
 			s.slug = &summary.Slug
-		}
-		if summary.Folder != "" {
-			s.folder = &summary.Folder
 		}
 		if len(summary.Labels) > 0 {
 			js, err = json.Marshal(summary.Labels)
@@ -70,9 +71,9 @@ func newSummarySupport(summary *models.EntitySummary) (*summarySupport, error) {
 	return s, err
 }
 
-func (s summarySupport) toEntitySummary() (*models.EntitySummary, error) {
+func (s summarySupport) toEntitySummary() (*entity.EntitySummary, error) {
 	var err error
-	summary := &models.EntitySummary{
+	summary := &entity.EntitySummary{
 		Name: s.name,
 	}
 	if s.description != nil {
@@ -80,9 +81,6 @@ func (s summarySupport) toEntitySummary() (*models.EntitySummary, error) {
 	}
 	if s.slug != nil {
 		summary.Slug = *s.slug
-	}
-	if s.folder != nil {
-		summary.Folder = *s.folder
 	}
 	if s.labels != nil {
 		b := []byte(*s.labels)
@@ -106,4 +104,12 @@ func (s summarySupport) toEntitySummary() (*models.EntitySummary, error) {
 		}
 	}
 	return summary, err
+}
+
+func (s *summarySupport) getParentGRN() *string {
+	if s.isNested {
+		t := s.parent_grn.ToGRNString()
+		return &t
+	}
+	return nil
 }

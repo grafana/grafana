@@ -6,13 +6,14 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/jmespath/go-jmespath"
+
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/models/roletype"
+	authJWT "github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/jmespath/go-jmespath"
 )
 
 const (
@@ -22,27 +23,6 @@ const (
 )
 
 func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64) bool {
-	if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
-		identity, ok, err := h.authnService.Authenticate(ctx.Req.Context(),
-			authn.ClientJWT,
-			&authn.Request{HTTPRequest: ctx.Req, Resp: ctx.Resp, OrgID: orgId})
-		if !ok {
-			return false
-		}
-
-		newCtx := WithAuthHTTPHeader(ctx.Req.Context(), h.Cfg.JWTAuthHeaderName)
-		*ctx.Req = *ctx.Req.WithContext(newCtx)
-
-		if err != nil {
-			writeErr(ctx, err)
-			return true
-		}
-
-		ctx.SignedInUser = identity.SignedInUser()
-		ctx.IsSignedIn = true
-		return true
-	}
-
 	if !h.Cfg.JWTAuthEnabled || h.Cfg.JWTAuthHeaderName == "" {
 		return false
 	}
@@ -59,9 +39,8 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 	// Strip the 'Bearer' prefix if it exists.
 	jwtToken = strings.TrimPrefix(jwtToken, "Bearer ")
 
-	// The header is Authorization and the token does not look like a JWT,
-	// this is likely an API key. Pass it on.
-	if h.Cfg.JWTAuthHeaderName == "Authorization" && !looksLikeJWT(jwtToken) {
+	// If the "sub" claim is missing or empty then pass the control to the next handler
+	if !authJWT.HasSubClaim(jwtToken) {
 		return false
 	}
 
@@ -100,28 +79,31 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 		extUser.Name = name
 	}
 
-	role, grafanaAdmin := h.extractJWTRoleAndAdmin(claims)
-	if h.Cfg.JWTAuthRoleAttributeStrict && !role.IsValid() {
-		ctx.Logger.Debug("Extracted Role is invalid")
-		ctx.JsonApiErr(http.StatusForbidden, InvalidRole, nil)
-		return true
-	}
-
-	if role.IsValid() {
-		var orgID int64
-		if h.Cfg.AutoAssignOrg && h.Cfg.AutoAssignOrgId > 0 {
-			orgID = int64(h.Cfg.AutoAssignOrgId)
-			ctx.Logger.Debug("The user has a role assignment and organization membership is auto-assigned",
-				"role", role, "orgId", orgID)
-		} else {
-			orgID = int64(1)
-			ctx.Logger.Debug("The user has a role assignment and organization membership is not auto-assigned",
-				"role", role, "orgId", orgID)
+	var role roletype.RoleType
+	var grafanaAdmin bool
+	if !h.Cfg.JWTAuthSkipOrgRoleSync {
+		role, grafanaAdmin = h.extractJWTRoleAndAdmin(claims)
+		if h.Cfg.JWTAuthRoleAttributeStrict && !role.IsValid() {
+			ctx.Logger.Debug("Extracted Role is invalid")
+			ctx.JsonApiErr(http.StatusForbidden, InvalidRole, nil)
+			return true
 		}
+		if role.IsValid() {
+			var orgID int64
+			if h.Cfg.AutoAssignOrg && h.Cfg.AutoAssignOrgId > 0 {
+				orgID = int64(h.Cfg.AutoAssignOrgId)
+				ctx.Logger.Debug("The user has a role assignment and organization membership is auto-assigned",
+					"role", role, "orgId", orgID)
+			} else {
+				orgID = int64(1)
+				ctx.Logger.Debug("The user has a role assignment and organization membership is not auto-assigned",
+					"role", role, "orgId", orgID)
+			}
 
-		extUser.OrgRoles[orgID] = role
-		if h.Cfg.JWTAuthAllowAssignGrafanaAdmin {
-			extUser.IsGrafanaAdmin = &grafanaAdmin
+			extUser.OrgRoles[orgID] = role
+			if h.Cfg.JWTAuthAllowAssignGrafanaAdmin {
+				extUser.IsGrafanaAdmin = &grafanaAdmin
+			}
 		}
 	}
 
@@ -221,10 +203,4 @@ func searchClaimsForStringAttr(attributePath string, claims map[string]interface
 	}
 
 	return "", nil
-}
-
-func looksLikeJWT(token string) bool {
-	// A JWT must have 3 parts separated by `.`.
-	parts := strings.Split(token, ".")
-	return len(parts) == 3
 }

@@ -10,7 +10,9 @@ import (
 	"github.com/jmespath/go-jmespath"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/auth"
+	authJWT "github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -18,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-var _ authn.Client = new(JWT)
+var _ authn.ContextAwareClient = new(JWT)
 
 var (
 	ErrJWTInvalid = errutil.NewBase(errutil.StatusUnauthorized,
@@ -43,6 +45,10 @@ type JWT struct {
 	jwtService auth.JWTVerifierService
 }
 
+func (s *JWT) Name() string {
+	return authn.ClientJWT
+}
+
 func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	jwtToken := s.retrieveToken(r.HTTPRequest)
 
@@ -65,7 +71,7 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 		ClientParams: authn.ClientParams{
 			SyncUser:            true,
 			SyncTeamMembers:     true,
-			AllowSignUp:         false,
+			AllowSignUp:         s.cfg.JWTAuthAutoSignUp,
 			EnableDisabledUsers: false,
 		}}
 
@@ -82,41 +88,41 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 		id.Name = name
 	}
 
-	role, grafanaAdmin := s.extractRoleAndAdmin(claims)
-	if s.cfg.JWTAuthRoleAttributeStrict && !role.IsValid() {
-		s.log.Warn("extracted Role is invalid", "role", role, "auth_id", id.AuthID)
-		return nil, ErrJWTInvalidRole.Errorf("invalid role claim in JWT: %s", role)
-	}
-
-	if role.IsValid() {
-		var orgID int64
-		// FIXME (jguer): GetIDForNewUser already has the auto assign information
-		// just neeeds the org role. Find a meaningful way to pass this default
-		// role to it (that doesn't involve id.OrgRoles[0] = role)
-		if s.cfg.AutoAssignOrg && s.cfg.AutoAssignOrgId > 0 {
-			orgID = int64(s.cfg.AutoAssignOrgId)
-			s.log.Debug("The user has a role assignment and organization membership is auto-assigned",
-				"role", role, "orgId", orgID)
-		} else {
-			orgID = int64(1)
-			s.log.Debug("The user has a role assignment and organization membership is not auto-assigned",
-				"role", role, "orgId", orgID)
+	var role roletype.RoleType
+	var grafanaAdmin bool
+	if !s.cfg.JWTAuthSkipOrgRoleSync {
+		role, grafanaAdmin = s.extractRoleAndAdmin(claims)
+		if s.cfg.JWTAuthRoleAttributeStrict && !role.IsValid() {
+			s.log.Warn("extracted Role is invalid", "role", role, "auth_id", id.AuthID)
+			return nil, ErrJWTInvalidRole.Errorf("invalid role claim in JWT: %s", role)
 		}
 
-		id.OrgRoles[orgID] = role
-		if s.cfg.JWTAuthAllowAssignGrafanaAdmin {
-			id.IsGrafanaAdmin = &grafanaAdmin
+		if role.IsValid() {
+			var orgID int64
+			// FIXME (jguer): GetIDForNewUser already has the auto assign information
+			// just needs the org role. Find a meaningful way to pass this default
+			// role to it (that doesn't involve id.OrgRoles[0] = role)
+			if s.cfg.AutoAssignOrg && s.cfg.AutoAssignOrgId > 0 {
+				orgID = int64(s.cfg.AutoAssignOrgId)
+				s.log.Debug("The user has a role assignment and organization membership is auto-assigned",
+					"role", role, "orgId", orgID)
+			} else {
+				orgID = int64(1)
+				s.log.Debug("The user has a role assignment and organization membership is not auto-assigned",
+					"role", role, "orgId", orgID)
+			}
+
+			id.OrgRoles[orgID] = role
+			if s.cfg.JWTAuthAllowAssignGrafanaAdmin {
+				id.IsGrafanaAdmin = &grafanaAdmin
+			}
 		}
 	}
 
-	if id.Login == "" || id.Email == "" {
+	if id.Login == "" && id.Email == "" {
 		s.log.Debug("Failed to get an authentication claim from JWT",
 			"login", id.Login, "email", id.Email)
-		return nil, ErrJWTMissingClaim.Errorf("missing login or email claim in JWT")
-	}
-
-	if s.cfg.JWTAuthAutoSignUp {
-		id.ClientParams.AllowSignUp = true
+		return nil, ErrJWTMissingClaim.Errorf("missing login and email claim in JWT")
 	}
 
 	return id, nil
@@ -143,19 +149,16 @@ func (s *JWT) Test(ctx context.Context, r *authn.Request) bool {
 		return false
 	}
 
-	// The header is Authorization and the token does not look like a JWT,
-	// this is likely an API key. Pass it on.
-	if s.cfg.JWTAuthHeaderName == "Authorization" && !looksLikeJWT(jwtToken) {
+	// If the "sub" claim is missing or empty then pass the control to the next handler
+	if !authJWT.HasSubClaim(jwtToken) {
 		return false
 	}
 
 	return true
 }
 
-func looksLikeJWT(token string) bool {
-	// A JWT must have 3 parts separated by `.`.
-	parts := strings.Split(token, ".")
-	return len(parts) == 3
+func (s *JWT) Priority() uint {
+	return 20
 }
 
 const roleGrafanaAdmin = "GrafanaAdmin"

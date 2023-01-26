@@ -191,7 +191,7 @@ export const metricAggregationConfig: MetricsConfiguration = {
     },
   },
   raw_document: {
-    label: 'Raw Document (legacy)',
+    label: 'Raw Document (deprecated)',
     requiresField: false,
     isSingleMetric: true,
     isPipelineAgg: false,

@@ -10,9 +10,6 @@ import (
 
 	"github.com/segmentio/encoding/json"
 
-	"github.com/grafana/grafana/pkg/services/datasources/permissions"
-	"github.com/grafana/grafana/pkg/services/searchV2"
-
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -20,10 +17,13 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	"github.com/grafana/grafana/pkg/services/searchV2"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -60,7 +60,7 @@ type thumbService struct {
 	dashboardService           dashboards.DashboardService
 	dsUidsLookup               getDatasourceUidsForDashboard
 	dsPermissionsService       permissions.DatasourcePermissionsService
-	licensing                  models.Licensing
+	licensing                  licensing.Licensing
 	searchService              searchV2.SearchService
 }
 
@@ -78,7 +78,7 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 	lockService *serverlock.ServerLockService, renderService rendering.Service,
 	gl *live.GrafanaLive, store db.DB, authSetupService CrawlerAuthSetupService,
 	dashboardService dashboards.DashboardService, dashboardThumbsService DashboardThumbService, searchService searchV2.SearchService,
-	dsPermissionsService permissions.DatasourcePermissionsService, licensing models.Licensing) Service {
+	dsPermissionsService permissions.DatasourcePermissionsService, licensing licensing.Licensing) Service {
 	if !features.IsEnabled(featuremgmt.FlagDashboardPreviews) {
 		return &dummyService{}
 	}

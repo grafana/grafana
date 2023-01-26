@@ -218,14 +218,6 @@ func (s *ServiceImpl) getHomeNode(c *models.ReqContext, prefs *pref.Preference) 
 		homeUrl = homePage
 	}
 
-	if prefs.HomeDashboardID != 0 {
-		slugQuery := models.GetDashboardRefByIdQuery{Id: prefs.HomeDashboardID}
-		err := s.dashboardService.GetDashboardUIDById(c.Req.Context(), &slugQuery)
-		if err == nil {
-			homeUrl = models.GetDashboardUrl(slugQuery.Result.Uid, slugQuery.Result.Slug)
-		}
-	}
-
 	homeNode := &navtree.NavLink{
 		Text:       "Home",
 		Id:         "home",
@@ -250,7 +242,7 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *models.ReqC
 		supportBundleNode := &navtree.NavLink{
 			Text:       "Support bundles",
 			Id:         "support-bundles",
-			Url:        "/admin/support-bundles",
+			Url:        "/support-bundles",
 			Icon:       "wrench",
 			Section:    navtree.NavSectionConfig,
 			SortWeight: navtree.WeightHelp,
@@ -279,7 +271,7 @@ func (s *ServiceImpl) getProfileNode(c *models.ReqContext) *navtree.NavLink {
 
 	children := []*navtree.NavLink{
 		{
-			Text: "Preferences", Id: "profile/settings", Url: s.cfg.AppSubURL + "/profile", Icon: "sliders-v-alt",
+			Text: "Profile", Id: "profile/settings", Url: s.cfg.AppSubURL + "/profile", Icon: "sliders-v-alt",
 		},
 	}
 
@@ -331,7 +323,7 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *models.ReqContext) ([]*navtre
 		return nil, err
 	}
 
-	starredDashboards := []*models.Dashboard{}
+	starredDashboards := []*dashboards.Dashboard{}
 	starredDashboardsCounter := 0
 	for dashboardId := range starredDashboardResult.UserStars {
 		// Set a loose limit to the first 50 starred dashboards found
@@ -339,13 +331,13 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *models.ReqContext) ([]*navtre
 			break
 		}
 		starredDashboardsCounter++
-		query := &models.GetDashboardQuery{
-			Id:    dashboardId,
-			OrgId: c.OrgID,
+		query := &dashboards.GetDashboardQuery{
+			ID:    dashboardId,
+			OrgID: c.OrgID,
 		}
-		err := s.dashboardService.GetDashboard(c.Req.Context(), query)
+		queryResult, err := s.dashboardService.GetDashboard(c.Req.Context(), query)
 		if err == nil {
-			starredDashboards = append(starredDashboards, query.Result)
+			starredDashboards = append(starredDashboards, queryResult)
 		}
 	}
 
@@ -355,9 +347,9 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *models.ReqContext) ([]*navtre
 		})
 		for _, starredItem := range starredDashboards {
 			starredItemsChildNavs = append(starredItemsChildNavs, &navtree.NavLink{
-				Id:   "starred/" + starredItem.Uid,
+				Id:   "starred/" + starredItem.UID,
 				Text: starredItem.Title,
-				Url:  starredItem.GetUrl(),
+				Url:  starredItem.GetURL(),
 			})
 		}
 	}
@@ -384,13 +376,15 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *models.ReqContext, hasEditPerm b
 	})
 
 	if c.IsSignedIn {
-		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-			Text:     "Snapshots",
-			SubTitle: "Interactive, publically available, point-in-time representations of dashboards",
-			Id:       "dashboards/snapshots",
-			Url:      s.cfg.AppSubURL + "/dashboard/snapshots",
-			Icon:     "camera",
-		})
+		if s.cfg.SnapshotEnabled {
+			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
+				Text:     "Snapshots",
+				SubTitle: "Interactive, publically available, point-in-time representations of dashboards",
+				Id:       "dashboards/snapshots",
+				Url:      s.cfg.AppSubURL + "/dashboard/snapshots",
+				Icon:     "camera",
+			})
+		}
 
 		dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 			Text:     "Library panels",
@@ -569,9 +563,8 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree
 
 	baseUrl := s.cfg.AppSubURL + "/connections"
 
-	// Connect data
-	// FIXME: while we don't have a permissions for listing plugins the legacy check has to stay as a default
-	if plugins.ReqCanAdminPlugins(s.cfg)(c) || hasAccess(plugins.ReqCanAdminPlugins(s.cfg), plugins.AdminAccessEvaluator) {
+	if hasAccess(ac.ReqOrgAdmin, datasources.ConfigurationPageAccess) {
+		// Connect data
 		children = append(children, &navtree.NavLink{
 			Id:        "connections-connect-data",
 			Text:      "Connect data",
@@ -580,9 +573,7 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *models.ReqContext) *navtree
 			Url:       s.cfg.AppSubURL + "/connections/connect-data",
 			Children:  []*navtree.NavLink{},
 		})
-	}
 
-	if hasAccess(ac.ReqOrgAdmin, datasources.ConfigurationPageAccess) {
 		// Your connections
 		children = append(children, &navtree.NavLink{
 			Id:       "connections-your-connections",

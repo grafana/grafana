@@ -44,9 +44,6 @@ func TestNavTreeRoot(t *testing.T) {
 		treeRoot.RemoveEmptySectionsAndApplyNewInformationArchitecture(true)
 
 		require.Equal(t, "Administration", treeRoot.Children[0].Text)
-		require.Equal(t, NavIDAdminGeneral, treeRoot.Children[0].Children[0].Id)
-		require.Equal(t, NavIDAdminPlugins, treeRoot.Children[0].Children[1].Id)
-		require.Equal(t, NavIDAdminAccess, treeRoot.Children[0].Children[2].Id)
 	})
 
 	t.Run("Should move reports into Dashboards", func(t *testing.T) {

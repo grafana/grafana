@@ -7,11 +7,11 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 )
 
 var (
@@ -37,6 +37,8 @@ type Manager struct {
 	images        ImageCapturer
 	historian     Historian
 	externalURL   *url.URL
+
+	doNotSaveNormalState bool
 }
 
 type ManagerCfg struct {
@@ -46,19 +48,22 @@ type ManagerCfg struct {
 	Images        ImageCapturer
 	Clock         clock.Clock
 	Historian     Historian
+	// DoNotSaveNormalState controls whether eval.Normal state is persisted to the database and returned by get methods
+	DoNotSaveNormalState bool
 }
 
 func NewManager(cfg ManagerCfg) *Manager {
 	return &Manager{
-		cache:         newCache(),
-		ResendDelay:   ResendDelay, // TODO: make this configurable
-		log:           log.New("ngalert.state.manager"),
-		metrics:       cfg.Metrics,
-		instanceStore: cfg.InstanceStore,
-		images:        cfg.Images,
-		historian:     cfg.Historian,
-		clock:         cfg.Clock,
-		externalURL:   cfg.ExternalURL,
+		cache:                newCache(),
+		ResendDelay:          ResendDelay, // TODO: make this configurable
+		log:                  log.New("ngalert.state.manager"),
+		metrics:              cfg.Metrics,
+		instanceStore:        cfg.InstanceStore,
+		images:               cfg.Images,
+		historian:            cfg.Historian,
+		clock:                cfg.Clock,
+		externalURL:          cfg.ExternalURL,
+		doNotSaveNormalState: cfg.DoNotSaveNormalState,
 	}
 }
 
@@ -159,18 +164,61 @@ func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) *State {
 	return st.cache.get(orgID, alertRuleUID, stateId)
 }
 
-// ResetStateByRuleUID deletes all entries in the state manager that match the given rule UID.
-func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey) []*State {
+// DeleteStateByRuleUID removes the rule instances from cache and instanceStore. A closed channel is returned to be able
+// to gracefully handle the clear state step in scheduler in case we do not need to use the historian to save state
+// history.
+func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey) []*State {
 	logger := st.log.New(ruleKey.LogContext()...)
 	logger.Debug("Resetting state of the rule")
+
 	states := st.cache.removeByRuleUID(ruleKey.OrgID, ruleKey.UID)
-	if len(states) > 0 && st.instanceStore != nil {
+	if len(states) == 0 {
+		return states
+	}
+	if st.instanceStore != nil {
 		err := st.instanceStore.DeleteAlertInstancesByRule(ctx, ruleKey)
 		if err != nil {
 			logger.Error("Failed to delete states that belong to a rule from database", "error", err)
 		}
 	}
 	logger.Info("Rules state was reset", "states", len(states))
+
+	return states
+}
+
+// ResetStateByRuleUID removes the rule instances from cache and instanceStore and saves state history. If the state
+// history has to be saved, rule must not be nil.
+func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.AlertRule, reason string) []*State {
+	ruleKey := rule.GetKey()
+	states := st.DeleteStateByRuleUID(ctx, ruleKey)
+
+	if rule == nil || st.historian == nil {
+		return states
+	}
+	transitions := make([]StateTransition, 0, len(states))
+	for _, s := range states {
+		oldState := s.State
+		oldReason := s.StateReason
+		state := *s
+		now := time.Now()
+		state.SetNormal(reason, s.StartsAt, now)
+		state.LastEvaluationTime = now
+		state.Values = map[string]float64{}
+		transitions = append(transitions, StateTransition{
+			State:               &state,
+			PreviousState:       oldState,
+			PreviousStateReason: oldReason,
+		})
+	}
+
+	ruleMeta := history_model.NewRuleMeta(rule, st.log)
+	errCh := st.historian.RecordStatesAsync(ctx, ruleMeta, transitions)
+	go func() {
+		err := <-errCh
+		if err != nil {
+			st.log.FromContext(ctx).Error("Error updating historian state reset transitions", append(ruleKey.LogContext(), "reason", reason, "error", err)...)
+		}
+	}()
 	return states
 }
 
@@ -179,7 +227,7 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.Ale
 func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels) []StateTransition {
 	logger := st.log.FromContext(ctx)
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
-	var states []StateTransition
+	states := make([]StateTransition, 0, len(results))
 
 	for _, result := range results {
 		s := st.setNextState(ctx, alertRule, result, extraLabels, logger)
@@ -192,7 +240,7 @@ func (st *Manager) ProcessEvalResults(ctx context.Context, evaluatedAt time.Time
 
 	allChanges := append(states, staleStates...)
 	if st.historian != nil {
-		st.historian.RecordStatesAsync(ctx, alertRule, allChanges)
+		st.historian.RecordStatesAsync(ctx, history_model.NewRuleMeta(alertRule, logger), allChanges)
 	}
 	return allChanges
 }
@@ -234,7 +282,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 		logger.Debug("Ignoring set next state as result is pending")
 	}
 
-	// Set reason iff: result is different than state, reason is not Alerting or Normal
+	// Set reason iff: result and state are different, reason is not Alerting or Normal
 	currentState.StateReason = ""
 
 	if currentState.State != result.State &&
@@ -271,11 +319,11 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 }
 
 func (st *Manager) GetAll(orgID int64) []*State {
-	return st.cache.getAll(orgID)
+	allStates := st.cache.getAll(orgID, st.doNotSaveNormalState)
+	return allStates
 }
-
 func (st *Manager) GetStatesForRuleUID(orgID int64, alertRuleUID string) []*State {
-	return st.cache.getStatesForRuleUID(orgID, alertRuleUID)
+	return st.cache.getStatesForRuleUID(orgID, alertRuleUID, st.doNotSaveNormalState)
 }
 
 func (st *Manager) Put(states []*State) {
@@ -294,9 +342,14 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 	instances := make([]ngModels.AlertInstance, 0, len(states))
 
 	for _, s := range states {
+		// Do not save normal state to database and remove transition to Normal state but keep mapped states
+		if st.doNotSaveNormalState && IsNormalStateWithNoReason(s.State) && !s.Changed() {
+			continue
+		}
+
 		key, err := s.GetAlertInstanceKey()
 		if err != nil {
-			logger.Error("Failed to create a key for alert state to save it to database. The state will be ignored ", "cacheID", s.CacheID, "error", err)
+			logger.Error("Failed to create a key for alert state to save it to database. The state will be ignored ", "cacheID", s.CacheID, "error", err, "labels", s.Labels.String())
 			continue
 		}
 		fields := ngModels.AlertInstance{
@@ -309,6 +362,10 @@ func (st *Manager) saveAlertStates(ctx context.Context, logger log.Logger, state
 			CurrentStateEnd:   s.EndsAt,
 		}
 		instances = append(instances, fields)
+	}
+
+	if len(instances) == 0 {
+		return
 	}
 
 	if err := st.instanceStore.SaveAlertInstances(ctx, instances...); err != nil {
@@ -369,10 +426,10 @@ func (st *Manager) deleteStaleStatesFromCache(ctx context.Context, logger log.Lo
 	// TODO: We will need to change this when we support images without screenshots as each series will have a different image
 	var resolvedImage *ngModels.Image
 
-	var resolvedStates []StateTransition
 	staleStates := st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
 		return stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds)
 	})
+	resolvedStates := make([]StateTransition, 0, len(staleStates))
 
 	for _, s := range staleStates {
 		logger.Info("Detected stale state entry", "cacheID", s.CacheID, "state", s.State, "reason", s.StateReason)

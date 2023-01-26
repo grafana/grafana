@@ -148,7 +148,12 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"OAuthSkipOrgRoleUpdateSync": hs.Cfg.OAuthSkipOrgRoleUpdateSync,
 			"SAMLSkipOrgRoleSync":        hs.Cfg.SectionWithEnvOverrides("auth.saml").Key("skip_org_role_sync").MustBool(false),
 			"LDAPSkipOrgRoleSync":        hs.Cfg.LDAPSkipOrgRoleSync,
+			"GithubSkipOrgRoleSync":      hs.Cfg.GithubSkipOrgRoleSync,
+			"GoogleSkipOrgRoleSync":      hs.Cfg.GoogleSkipOrgRoleSync,
+			"JWTAuthSkipOrgRoleSync":     hs.Cfg.JWTAuthSkipOrgRoleSync,
 			"GrafanaComSkipOrgRoleSync":  hs.Cfg.GrafanaComSkipOrgRoleSync,
+			"GitLabSkipOrgRoleSync":      hs.Cfg.GitLabSkipOrgRoleSync,
+			"AzureADSkipOrgRoleSync":     hs.Cfg.AzureADSkipOrgRoleSync,
 			"DisableSyncLock":            hs.Cfg.DisableSyncLock,
 		},
 		"buildInfo": map[string]interface{}{
@@ -182,6 +187,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"expressionsEnabled":               hs.Cfg.ExpressionsEnabled,
 		"awsAllowedAuthProviders":          hs.Cfg.AWSAllowedAuthProviders,
 		"awsAssumeRoleEnabled":             hs.Cfg.AWSAssumeRoleEnabled,
+		"supportBundlesEnabled":            isSupportBundlesEnabled(hs),
 		"azure": map[string]interface{}{
 			"cloud":                  hs.Cfg.Azure.Cloud,
 			"managedIdentityEnabled": hs.Cfg.Azure.ManagedIdentityEnabled,
@@ -203,6 +209,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"samlEnabled":             hs.samlEnabled(),
 		"samlName":                hs.samlName(),
 		"tokenExpirationDayLimit": hs.Cfg.SATokenExpirationDayLimit,
+		"snapshotEnabled":         hs.Cfg.SnapshotEnabled,
 	}
 
 	if hs.ThumbService != nil {
@@ -217,6 +224,11 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 	}
 
 	return jsonObj, nil
+}
+
+func isSupportBundlesEnabled(hs *HTTPServer) bool {
+	return hs.Cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(false) &&
+		hs.Features.IsEnabled(featuremgmt.FlagSupportBundles)
 }
 
 func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins EnabledPlugins) (map[string]plugins.DataSourceDTO, error) {

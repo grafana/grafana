@@ -22,7 +22,7 @@ CODE_OF_CONDUCT.md @grafana/docs-squad
 CONTRIBUTING.md @grafana/docs-squad
 GOVERNANCE.md @RichiH
 HALL_OF_FAME.md @grafana/docs-squad
-ISSUE_TRIAGE.md @grafana/docs-squad
+ISSUE_TRIAGE.md @grafana/grafana-community-support
 LICENSE @torkelo
 LICENSING.md @torkelo
 MAINTAINERS.md @RichiH
@@ -156,7 +156,7 @@ WORKFLOW.md @torkelo
 /devenv/docker/blocks/elastic* @grafana/observability-logs
 
 # Performance tests
-/devenv/docker/loadtest-ts/ @grafana/grafana-edge-squad
+/devenv/docker/loadtest-ts/ @grafana/multitenancy-squad
 
 /devenv/bulk-dashboards/ @grafana/dashboards-squad
 /devenv/bulk_alerting_dashboards/ @grafana/alerting-squad-backend
@@ -167,7 +167,7 @@ WORKFLOW.md @torkelo
 /devenv/dev-dashboards-without-uid/ @grafana/dashboards-squad
 /devenv/dev-dashboards/ @grafana/dashboards-squad
 /devenv/docker/blocks/alert_webhook_listener/ @grafana/alerting-squad-backend
-/devenv/docker/blocks/clickhouse/ @grafana/enterprise-plugins
+/devenv/docker/blocks/clickhouse/ @grafana/partner-plugins
 /devenv/docker/blocks/collectd/ @grafana/observability-metrics
 /devenv/docker/blocks/grafana/ @grafana/grafana-as-code
 /devenv/docker/blocks/graphite/ @grafana/observability-metrics
@@ -228,10 +228,10 @@ WORKFLOW.md @torkelo
 /Makefile @grafana/grafana-release-eng
 /scripts/build/ @grafana/grafana-release-eng
 
-# Cloud Datasources backend code
+# OSS Plugin Partnerships backend code
 /pkg/tsdb/cloudwatch/ @grafana/aws-plugins
-/pkg/tsdb/azuremonitor/ @grafana/cloud-provider-plugins
-/pkg/tsdb/cloudmonitoring/ @grafana/cloud-provider-plugins
+/pkg/tsdb/azuremonitor/ @grafana/partner-plugins
+/pkg/tsdb/cloudmonitoring/ @grafana/partner-plugins
 
 # Observability backend code
 /pkg/tsdb/prometheus/ @grafana/observability-metrics
@@ -252,15 +252,14 @@ WORKFLOW.md @torkelo
 /pkg/services/sqlstore/migrations/ @grafana/backend-platform @grafana/hosted-grafana-team
 *_mig.go @grafana/backend-platform @grafana/hosted-grafana-team
 
-# Grafana edge
-/pkg/services/live/ @grafana/grafana-edge-squad
-/pkg/services/searchV2/ @grafana/grafana-edge-squad
-/pkg/services/store/ @grafana/grafana-edge-squad
-/pkg/services/querylibrary/ @grafana/grafana-edge-squad
-/pkg/services/export/ @grafana/grafana-edge-squad
-/pkg/infra/filestorage/ @grafana/grafana-edge-squad
-/pkg/tsdb/testdatasource/ @grafana/grafana-edge-squad
-/pkg/util/converter/ @grafana/grafana-edge-squad
+# Grafana multitenancy
+/pkg/services/live/ @grafana/multitenancy-squad
+/pkg/services/searchV2/ @grafana/multitenancy-squad
+/pkg/services/store/ @grafana/multitenancy-squad
+/pkg/services/querylibrary/ @grafana/multitenancy-squad
+/pkg/services/export/ @grafana/multitenancy-squad
+/pkg/infra/filestorage/ @grafana/multitenancy-squad
+/pkg/util/converter/ @grafana/multitenancy-squad
 
 # Alerting
 /pkg/services/ngalert/ @grafana/alerting-squad-backend
@@ -281,9 +280,10 @@ WORKFLOW.md @torkelo
 /pkg/services/datasources/ @grafana/plugins-platform-backend
 /pkg/services/pluginsintegration/ @grafana/plugins-platform-backend
 /pkg/plugins/pfs/ @grafana/plugins-platform-backend @grafana/grafana-as-code
+/pkg/tsdb/testdatasource/ @grafana/plugins-platform-backend
 
 # Dashboard previews / crawler (behind feature flag)
-/pkg/services/thumbs/ @grafana/grafana-edge-squad
+/pkg/services/thumbs/ @grafana/multitenancy-squad
 
 # Backend code docs
 /contribute/backend/ @grafana/backend-platform
@@ -293,7 +293,7 @@ WORKFLOW.md @torkelo
 /public/locales/ @grafana/user-essentials
 /public/app/core/internationalization/ @grafana/user-essentials
 /e2e/ @grafana/user-essentials
-/e2e/cloud-plugins-suite/ @grafana/cloud-provider-plugins
+/e2e/cloud-plugins-suite/ @grafana/partner-plugins
 /packages/ @grafana/user-essentials @grafana/plugins-platform-frontend @grafana/grafana-bi-squad
 /packages/grafana-e2e-selectors/ @grafana/user-essentials
 /packages/grafana-e2e/ @grafana/user-essentials
@@ -307,6 +307,7 @@ WORKFLOW.md @torkelo
 /packages/grafana-ui/src/components/uPlot/ @grafana/grafana-bi-squad
 /packages/grafana-ui/src/utils/storybook/ @grafana/plugins-platform-frontend
 /packages/jaeger-ui-components// @grafana/observability-traces-and-profiling
+/packages/grafana-data/src/**/*logs* @grafana/observability-logs
 /plugins-bundled/ @grafana/plugins-platform-frontend
 
 
@@ -361,7 +362,7 @@ lerna.json @grafana/frontend-ops
 /public/app/features/geo/ @grafana/grafana-edge-squad
 /public/app/features/library-panels/ @grafana/user-essentials
 /public/app/features/logs/ @grafana/observability-logs
-/public/app/features/live/ @grafana/grafana-edge-squad
+/public/app/features/live/ @grafana/multitenancy-squad
 /public/app/features/manage-dashboards/ @grafana/dashboards-squad
 /public/app/features/notifications/ @grafana/user-essentials
 /public/app/features/org/ @grafana/user-essentials
@@ -376,7 +377,7 @@ lerna.json @grafana/frontend-ops
 /public/app/features/scenes/ @grafana/dashboards-squad
 /public/app/features/search/ @grafana/user-essentials
 /public/app/features/serviceaccounts/ @grafana/grafana-authnz-team
-/public/app/features/storage/ @grafana/grafana-edge-squad
+/public/app/features/storage/ @grafana/multitenancy-squad
 /public/app/features/teams/ @grafana/grafana-authnz-team
 /public/app/features/templating/ @grafana/dashboards-squad
 /public/app/features/transformers/ @grafana/grafana-edge-squad
@@ -432,6 +433,8 @@ lerna.json @grafana/frontend-ops
 /public/testdata/ @grafana/user-essentials
 /public/views/ @grafana/user-essentials
 
+/public/app/features/explore/Logs.tsx @grafana/observability-logs
+/public/app/features/explore/LogsContainer.tsx @grafana/observability-logs
 
 /public/api-merged.json @grafana/backend-platform
 /public/api-spec.json @grafana/backend-platform
@@ -486,8 +489,8 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/datasource/cloudwatch/ @grafana/aws-plugins
 /public/app/plugins/datasource/elasticsearch/ @grafana/observability-logs
 /public/app/plugins/datasource/grafana/ @grafana/user-essentials
-/public/app/plugins/datasource/testdata/ @grafana/backend-platform
-/public/app/plugins/datasource/grafana-azure-monitor-datasource/ @grafana/cloud-provider-plugins
+/public/app/plugins/datasource/testdata/ @grafana/plugins-platform-frontend
+/public/app/plugins/datasource/grafana-azure-monitor-datasource/ @grafana/partner-plugins
 /public/app/plugins/datasource/graphite/ @grafana/observability-metrics
 /public/app/plugins/datasource/influxdb/ @grafana/observability-metrics
 /public/app/plugins/datasource/jaeger/ @grafana/observability-traces-and-profiling
@@ -498,7 +501,7 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/datasource/opentsdb/ @grafana/backend-platform
 /public/app/plugins/datasource/postgres/ @grafana/grafana-bi-squad
 /public/app/plugins/datasource/prometheus/ @grafana/observability-metrics
-/public/app/plugins/datasource/cloud-monitoring/ @grafana/cloud-provider-plugins
+/public/app/plugins/datasource/cloud-monitoring/ @grafana/partner-plugins
 /public/app/plugins/datasource/zipkin/ @grafana/observability-traces-and-profiling
 /public/app/plugins/datasource/tempo/ @grafana/observability-traces-and-profiling
 /public/app/plugins/datasource/phlare/ @grafana/observability-traces-and-profiling
@@ -535,13 +538,15 @@ lerna.json @grafana/frontend-ops
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware.go @grafana/grafana-partnerships-team
 /pkg/infra/httpclient/httpclientprovider/sigv4_middleware_test.go @grafana/grafana-partnerships-team
 
+# Kind definitions
+/kinds/dashboard @grafana/dashboards-squad
+/kinds/ @grafana/grafana-as-code
+
 # Kind system and code generation
 embed.go @grafana/grafana-as-code
-/kinds/ @grafana/grafana-as-code
 /pkg/kinds/ @grafana/grafana-as-code
 /pkg/cuectx/ @grafana/grafana-as-code
 /pkg/registry/ @grafana/grafana-as-code
-/pkg/framework/coremodel/ @grafana/grafana-as-code
 /pkg/codegen/ @grafana/grafana-as-code
 /pkg/kindsys/ @grafana/grafana-as-code
 /pkg/kindsys/kindcat_custom.cue @grafana/apps-platform-core
@@ -565,7 +570,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/backport.yml @grafana/grafana-release-eng
 /.github/workflows/bump-version.yml @grafana/grafana-release-eng
 /.github/workflows/close-milestone.yml @grafana/grafana-release-eng
-/.github/workflows/cloud-data-sources-code-coverage.yml @grafana/cloud-provider-plugins
+/.github/workflows/cloud-data-sources-code-coverage.yml @grafana/partner-plugins
 /.github/workflows/codeowners-validator.yml @tolzhabayev
 /.github/workflows/codeql-analysis.yml @DanCech
 /.github/workflows/commands.yml @torkelo

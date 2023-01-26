@@ -12,6 +12,9 @@
       "light-theme": "",
       "search": ""
     },
+    "search-box": {
+      "placeholder": ""
+    },
     "section": {
       "actions": "",
       "dashboard-search-results": "",
@@ -127,15 +130,6 @@
     "admin": {
       "subtitle": "Serverweite Einstellungen und Zugriff auf Ressourcen wie Organisationen, Benutzer und Lizenzen verwalten",
       "title": "Server-Administrator"
-    },
-    "admin-access": {
-      "title": "Benutzer und Zugriff"
-    },
-    "admin-general": {
-      "title": "Allgemein"
-    },
-    "admin-plugins": {
-      "title": "Plugins und Daten"
     },
     "alerting": {
       "subtitle": "Informiere dich über Probleme in deinen Systemen kurz nach deren Auftreten",
@@ -262,6 +256,9 @@
       "subtitle": "Überwachungs- und Infrastruktur-Apps",
       "title": "Überwachung"
     },
+    "new": {
+      "title": ""
+    },
     "new-dashboard": {
       "title": "Neues Dashboard"
     },
@@ -356,13 +353,22 @@
   },
   "panel": {
     "header-menu": {
+      "copy": "",
+      "create-library-panel": "",
+      "duplicate": "",
+      "edit": "",
+      "explore": "",
+      "get-help": "",
       "hide-legend": "Legende ausblenden",
       "inspect": "Überprüfen",
       "inspect-data": "Daten",
       "inspect-json": "Panel-JSON",
       "more": "Mehr …",
+      "query": "",
+      "remove": "",
       "share": "Teilen",
       "show-legend": "Legende anzeigen",
+      "unlink-library-panel": "",
       "view": "Anzeigen"
     }
   },
@@ -381,6 +387,14 @@
     },
     "select-button": {
       "auto-refresh": "Automatisches Aktualisierungsintervall festlegen"
+    }
+  },
+  "search": {
+    "dashboard-actions": {
+      "import": "",
+      "new": "",
+      "new-dashboard": "",
+      "new-folder": ""
     }
   },
   "share-modal": {
@@ -541,8 +555,7 @@
       "name-error": "Name ist erforderlich",
       "name-label": "Name",
       "username-label": "Benutzername"
-    },
-    "title": "Profil bearbeiten"
+    }
   },
   "user-session": {
     "browser-column": "Browser & Betriebssystem",

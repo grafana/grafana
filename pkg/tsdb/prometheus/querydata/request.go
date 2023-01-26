@@ -125,23 +125,17 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 
 	if q.InstantQuery {
 		res, err := s.instantQuery(traceCtx, client, q, headers)
-		if err != nil {
-			return nil, err
-		}
-		response.Error = res.Error
+		response.Error = err
 		response.Frames = res.Frames
 	}
 
 	if q.RangeQuery {
 		res, err := s.rangeQuery(traceCtx, client, q, headers)
 		if err != nil {
-			return nil, err
-		}
-		if res.Error != nil {
 			if response.Error == nil {
-				response.Error = res.Error
+				response.Error = err
 			} else {
-				response.Error = fmt.Errorf("%v %w", response.Error, res.Error) // lovely
+				response.Error = fmt.Errorf("%v %w", response.Error, err)
 			}
 		}
 		response.Frames = append(response.Frames, res.Frames...)
@@ -154,34 +148,32 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 			// continue with other results processing
 			logger.Error("Exemplar query failed", "query", q.Expr, "err", err)
 		}
-		if res != nil {
-			response.Frames = append(response.Frames, res.Frames...)
-		}
+		response.Frames = append(response.Frames, res.Frames...)
 	}
 
 	return response, nil
 }
 
-func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) (*backend.DataResponse, error) {
+func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) (backend.DataResponse, error) {
 	res, err := c.QueryRange(ctx, q)
 	if err != nil {
-		return nil, err
+		return backend.DataResponse{}, err
 	}
 	return s.parseResponse(ctx, q, res)
 }
 
-func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) (*backend.DataResponse, error) {
+func (s *QueryData) instantQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) (backend.DataResponse, error) {
 	res, err := c.QueryInstant(ctx, q)
 	if err != nil {
-		return nil, err
+		return backend.DataResponse{}, err
 	}
 	return s.parseResponse(ctx, q, res)
 }
 
-func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) (*backend.DataResponse, error) {
+func (s *QueryData) exemplarQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) (backend.DataResponse, error) {
 	res, err := c.QueryExemplars(ctx, q)
 	if err != nil {
-		return nil, err
+		return backend.DataResponse{}, err
 	}
 	return s.parseResponse(ctx, q, res)
 }

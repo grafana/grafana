@@ -1,5 +1,5 @@
 import { locationUtil, NavModelItem } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 import { changeTheme } from 'app/core/services/theme';
 
@@ -50,20 +50,10 @@ function navTreeToActions(navTree: NavModelItem[], parent?: NavModelItem): Comma
 export default (navBarTree: NavModelItem[]): CommandPaletteAction[] => {
   const globalActions: CommandPaletteAction[] = [
     {
-      id: 'go/search',
-      name: t('command-palette.action.search', 'Search'),
-      keywords: 'navigate',
-      perform: () => locationService.push('?search=open'),
-      section: t('command-palette.section.pages', 'Pages'),
-      shortcut: ['s', 'o'],
-      priority: DEFAULT_PRIORITY,
-    },
-    {
       id: 'preferences/theme',
       name: t('command-palette.action.change-theme', 'Change theme...'),
       keywords: 'interface color dark light',
       section: t('command-palette.section.preferences', 'Preferences'),
-      shortcut: ['c', 't'],
       priority: PREFERENCES_PRIORITY,
     },
     {
@@ -83,6 +73,17 @@ export default (navBarTree: NavModelItem[]): CommandPaletteAction[] => {
       priority: PREFERENCES_PRIORITY,
     },
   ];
+
+  if (!config.featureToggles.topNavCommandPalette) {
+    globalActions.unshift({
+      id: 'go/search',
+      name: t('command-palette.action.search', 'Search'),
+      keywords: 'navigate',
+      perform: () => locationService.push('?search=open'),
+      section: t('command-palette.section.pages', 'Pages'),
+      priority: DEFAULT_PRIORITY,
+    });
+  }
 
   const navBarActions = navTreeToActions(navBarTree);
 

@@ -3,7 +3,7 @@ package manager
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/teamguardian"
@@ -27,10 +27,10 @@ func (s *Service) CanAdmin(ctx context.Context, orgId int64, teamId int64, user 
 		return team.ErrNotAllowedToUpdateTeamInDifferentOrg
 	}
 
-	cmd := models.GetTeamMembersQuery{
-		OrgId:        orgId,
-		TeamId:       teamId,
-		UserId:       user.UserID,
+	cmd := team.GetTeamMembersQuery{
+		OrgID:        orgId,
+		TeamID:       teamId,
+		UserID:       user.UserID,
 		SignedInUser: user,
 	}
 
@@ -40,7 +40,7 @@ func (s *Service) CanAdmin(ctx context.Context, orgId int64, teamId int64, user 
 	}
 
 	for _, member := range results {
-		if member.UserId == user.UserID && member.Permission == models.PERMISSION_ADMIN {
+		if member.UserID == user.UserID && member.Permission == dashboards.PERMISSION_ADMIN {
 			return nil
 		}
 	}

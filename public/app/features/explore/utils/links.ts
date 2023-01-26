@@ -11,6 +11,7 @@ import {
   getFieldDisplayValuesProxy,
   SplitOpen,
   DataLink,
+  DisplayValue,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -23,6 +24,12 @@ const dataLinkHasRequiredPermissions = (link: DataLink) => {
   return !link.internal || contextSrv.hasAccessToExplore();
 };
 
+/**
+ * Check if every variable in the link has a value. If not this returns false. If there are no variables in the link
+ * this will return true.
+ * @param link
+ * @param scopedVars
+ */
 const dataLinkHasAllVariablesDefined = (link: DataLink, scopedVars: ScopedVars) => {
   let hasAllRequiredVarDefined = true;
 
@@ -72,18 +79,35 @@ export const getFieldLinksForExplore = (options: {
     text: 'Raw value',
   };
 
+  let fieldDisplayValuesProxy: Record<string, DisplayValue> | undefined = undefined;
+
   // If we have a dataFrame we can allow referencing other columns and their values in the interpolation.
   if (dataFrame) {
+    fieldDisplayValuesProxy = getFieldDisplayValuesProxy({
+      frame: dataFrame,
+      rowIndex,
+    });
+
     scopedVars['__data'] = {
       value: {
         name: dataFrame.name,
         refId: dataFrame.refId,
-        fields: getFieldDisplayValuesProxy({
-          frame: dataFrame,
-          rowIndex,
-        }),
+        fields: fieldDisplayValuesProxy,
       },
       text: 'Data',
+    };
+
+    dataFrame.fields.forEach((f) => {
+      if (fieldDisplayValuesProxy && fieldDisplayValuesProxy[f.name]) {
+        scopedVars[f.name] = {
+          value: fieldDisplayValuesProxy[f.name],
+        };
+      }
+    });
+
+    // add this for convenience
+    scopedVars['__targetField'] = {
+      value: fieldDisplayValuesProxy[field.name],
     };
   }
 

@@ -1,6 +1,8 @@
+import { Observable } from 'rxjs';
+
 import { Labels } from './data';
 import { DataFrame } from './dataFrame';
-import { DataQueryResponse } from './datasource';
+import { DataQueryRequest, DataQueryResponse } from './datasource';
 import { DataQuery } from './query';
 import { AbsoluteTimeRange } from './time';
 
@@ -175,4 +177,56 @@ export const hasLogsContextSupport = (datasource: unknown): datasource is DataSo
   const withLogsSupport = datasource as DataSourceWithLogsContextSupport;
 
   return withLogsSupport.getLogRowContext !== undefined && withLogsSupport.showContextToggle !== undefined;
+};
+
+/**
+ * Types of supplementary queries that can be run in Explore.
+ * @internal
+ */
+export enum SupplementaryQueryType {
+  LogsVolume = 'LogsVolume',
+  LogsSample = 'LogsSample',
+}
+
+/**
+ * Data sources that support supplementary queries in Explore.
+ * This will enable users to see additional data when running original queries.
+ * Supported supplementary queries are defined in SupplementaryQueryType enum.
+ * @internal
+ */
+export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQuery> {
+  /**
+   * Returns an observable that will be used to fetch supplementary data based on the provided
+   * supplementary query type and original request.
+   */
+  getDataProvider(
+    type: SupplementaryQueryType,
+    request: DataQueryRequest<TQuery>
+  ): Observable<DataQueryResponse> | undefined;
+  /**
+   * Returns supplementary query types that data source supports.
+   */
+  getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[];
+  /**
+   * Returns a supplementary query to be used to fetch supplementary data based on the provided type and original query.
+   * If provided query is not suitable for provided supplementary query type, undefined should be returned.
+   */
+  getSupplementaryQuery(type: SupplementaryQueryType, query: TQuery): TQuery | undefined;
+}
+
+export const hasSupplementaryQuerySupport = <TQuery extends DataQuery>(
+  datasource: unknown,
+  type: SupplementaryQueryType
+): datasource is DataSourceWithSupplementaryQueriesSupport<TQuery> => {
+  if (!datasource) {
+    return false;
+  }
+
+  const withSupplementaryQueriesSupport = datasource as DataSourceWithSupplementaryQueriesSupport<TQuery>;
+
+  return (
+    withSupplementaryQueriesSupport.getDataProvider !== undefined &&
+    withSupplementaryQueriesSupport.getSupplementaryQuery !== undefined &&
+    withSupplementaryQueriesSupport.getSupportedSupplementaryQueryTypes().includes(type)
+  );
 };

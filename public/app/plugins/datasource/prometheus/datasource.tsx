@@ -1,8 +1,8 @@
-import { cloneDeep, defaults } from 'lodash';
+import {cloneDeep, defaults} from 'lodash';
 import LRU from 'lru-cache';
 import React from 'react';
-import { forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
-import { catchError, filter, map, tap } from 'rxjs/operators';
+import {forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError} from 'rxjs';
+import {catchError, filter, map, tap} from 'rxjs/operators';
 import semver from 'semver/preload';
 
 import {
@@ -36,21 +36,23 @@ import {
   isFetchError,
   toDataQueryResponse,
 } from '@grafana/runtime';
-import { Badge, BadgeColor, Tooltip } from '@grafana/ui';
-import { safeStringifyValue } from 'app/core/utils/explore';
-import { discoverDataSourceFeatures } from 'app/features/alerting/unified/api/buildInfo';
-import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
-import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
-import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto';
+import {Badge, BadgeColor, Tooltip} from '@grafana/ui';
+import {safeStringifyValue} from 'app/core/utils/explore';
+import {discoverDataSourceFeatures} from 'app/features/alerting/unified/api/buildInfo';
+import {getTimeSrv, TimeSrv} from 'app/features/dashboard/services/TimeSrv';
+import {getTemplateSrv, TemplateSrv} from 'app/features/templating/template_srv';
+import {PromApiFeatures, PromApplication} from 'app/types/unified-alerting-dto';
 
-import { addLabelToQuery } from './add_label_to_query';
-import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
+import {addLabelToQuery} from './add_label_to_query';
+import {AnnotationQueryEditor} from './components/AnnotationQueryEditor';
 import PrometheusLanguageProvider from './language_provider';
-import { expandRecordingRules } from './language_utils';
-import { renderLegendFormat } from './legend';
+import {expandRecordingRules} from './language_utils';
+import {renderLegendFormat} from './legend';
 import PrometheusMetricFindQuery from './metric_find_query';
-import { getInitHints, getQueryHints } from './query_hints';
-import { getOriginalMetricName, transform, transformV2 } from './result_transformer';
+import {getInitHints, getQueryHints} from './query_hints';
+import {QueryEditorMode} from './querybuilder/shared/types';
+import {getOriginalMetricName, transform, transformV2} from './result_transformer';
+import {trackQuery} from './tracking';
 import {
   ExemplarTraceIdDestination,
   PromDataErrorResponse,
@@ -63,16 +65,15 @@ import {
   PromScalarData,
   PromVectorData,
 } from './types';
-import { PrometheusVariableSupport } from './variables';
-import { PrometheusIncrementalStorage } from './middleware/PrometheusIncrementalStorage';
+import {PrometheusVariableSupport} from './variables';
+import {PrometheusIncrementalStorage} from './middleware/PrometheusIncrementalStorage';
 
 const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
 
 export class PrometheusDatasource
   extends DataSourceWithBackend<PromQuery, PromOptions>
-  implements DataSourceWithQueryImportSupport<PromQuery>, DataSourceWithQueryExportSupport<PromQuery>
-{
+  implements DataSourceWithQueryImportSupport<PromQuery>, DataSourceWithQueryExportSupport<PromQuery> {
   type: string;
   editorSrc: string;
   ruleMappings: { [index: string]: string };
@@ -82,7 +83,7 @@ export class PrometheusDatasource
   access: 'direct' | 'proxy';
   basicAuth: any;
   withCredentials: any;
-  metricsNameCache = new LRU<string, string[]>({ max: 10 });
+  metricsNameCache = new LRU<string, string[]>({max: 10});
   interval: string;
   queryTimeout: string | undefined;
   httpMethod: string;
@@ -92,6 +93,7 @@ export class PrometheusDatasource
   customQueryParameters: any;
   datasourceConfigurationPrometheusFlavor?: PromApplication;
   datasourceConfigurationPrometheusVersion?: string;
+  defaultEditor?: QueryEditorMode;
   exemplarsAvailable: boolean;
   subType: PromApplication;
   rulerEnabled: boolean;
@@ -133,6 +135,7 @@ export class PrometheusDatasource
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
     this.datasourceConfigurationPrometheusFlavor = instanceSettings.jsonData.prometheusType;
     this.datasourceConfigurationPrometheusVersion = instanceSettings.jsonData.prometheusVersion;
+    this.defaultEditor = instanceSettings.jsonData.defaultEditor;
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
     this.prometheusDataFrameStorage = new PrometheusIncrementalStorage();
@@ -448,9 +451,10 @@ export class PrometheusDatasource
 
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     if (this.access === 'proxy') {
+      const startTime = new Date();
       const targets = request.targets.map((target) => this.processTargetV2(target, request));
-      const requestWithUpdatedTargets = { ...request, targets: targets.flat() };
-      const { request: updatedRequest, originalRange } =
+      const requestWithUpdatedTargets = {...request, targets: targets.flat()};
+      const {request: updatedRequest, originalRange} =
         this.prometheusDataFrameStorage.modifyRequestDurationsIfStorageOverlapsRequest(requestWithUpdatedTargets);
 
       return super.query(updatedRequest).pipe(
@@ -468,14 +472,17 @@ export class PrometheusDatasource
             return newFrames;
           }
 
-        return dataFrames
+          return dataFrames
+        }),
+        tap((response: DataQueryResponse) => {
+          trackQuery(response, request, startTime);
         })
       );
       // Run queries trough browser/proxy
     } else {
       const start = this.getPrometheusTime(request.range.from, false);
       const end = this.getPrometheusTime(request.range.to, true);
-      const { queries, activeTargets } = this.prepareTargets(request, start, end);
+      const {queries, activeTargets} = this.prepareTargets(request, start, end);
 
       // No valid targets, return the empty result to save a round trip.
       if (!queries || !queries.length) {
@@ -624,8 +631,8 @@ export class PrometheusDatasource
     if (interval !== adjustedInterval) {
       interval = adjustedInterval;
       scopedVars = Object.assign({}, options.scopedVars, {
-        __interval: { text: interval + 's', value: interval + 's' },
-        __interval_ms: { text: interval * 1000, value: interval * 1000 },
+        __interval: {text: interval + 's', value: interval + 's'},
+        __interval_ms: {text: interval * 1000, value: interval * 1000},
         ...this.getRateIntervalScopedVariable(interval, scrapeInterval),
         ...this.getRangeScopedVars(options.range),
       });
@@ -657,7 +664,7 @@ export class PrometheusDatasource
       scrapeInterval = 15;
     }
     const rateInterval = Math.max(interval + scrapeInterval, 4 * scrapeInterval);
-    return { __rate_interval: { text: rateInterval + 's', value: rateInterval + 's' } };
+    return {__rate_interval: {text: rateInterval + 's', value: rateInterval + 's'}};
   }
 
   adjustInterval(interval: number, minInterval: number, range: number, intervalFactor: number) {
@@ -674,7 +681,7 @@ export class PrometheusDatasource
 
   performTimeSeriesQuery(query: PromQueryRequest, start: number, end: number) {
     if (start > end) {
-      throw { message: 'Invalid time range' };
+      throw {message: 'Invalid time range'};
     }
 
     const url = '/api/v1/query_range';
@@ -765,8 +772,8 @@ export class PrometheusDatasource
     }
 
     const scopedVars = {
-      __interval: { text: this.interval, value: this.interval },
-      __interval_ms: { text: rangeUtil.intervalToMs(this.interval), value: rangeUtil.intervalToMs(this.interval) },
+      __interval: {text: this.interval, value: this.interval},
+      __interval_ms: {text: rangeUtil.intervalToMs(this.interval), value: rangeUtil.intervalToMs(this.interval)},
       ...this.getRangeScopedVars(this.timeSrv.timeRange()),
     };
     const interpolated = this.templateSrv.replace(query, scopedVars, this.interpolateQueryExpr);
@@ -778,9 +785,9 @@ export class PrometheusDatasource
     const msRange = range.to.diff(range.from);
     const sRange = Math.round(msRange / 1000);
     return {
-      __range_ms: { text: msRange, value: msRange },
-      __range_s: { text: sRange, value: sRange },
-      __range: { text: sRange + 's', value: sRange + 's' },
+      __range_ms: {text: msRange, value: msRange},
+      __range_s: {text: sRange, value: sRange},
+      __range: {text: sRange + 's', value: sRange + 's'},
     };
   }
 
@@ -793,7 +800,7 @@ export class PrometheusDatasource
     }
 
     const annotation = options.annotation;
-    const { expr = '' } = annotation;
+    const {expr = ''} = annotation;
 
     if (!expr) {
       return Promise.resolve([]);
@@ -832,13 +839,13 @@ export class PrometheusDatasource
   }
 
   processAnnotationResponse = (options: AnnotationQueryRequest<PromQuery>, data: BackendDataSourceResponse) => {
-    const frames: DataFrame[] = toDataQueryResponse({ data: data }).data;
+    const frames: DataFrame[] = toDataQueryResponse({data: data}).data;
     if (!frames || !frames.length) {
       return [];
     }
 
     const annotation = options.annotation;
-    const { tagKeys = '', titleFormat = '', textFormat = '' } = annotation;
+    const {tagKeys = '', titleFormat = '', textFormat = ''} = annotation;
 
     const step = rangeUtil.intervalToSeconds(annotation.step || ANNOTATION_QUERY_STEP_DEFAULT) * 1000;
     const tagKeysArray = tagKeys.split(',');
@@ -919,8 +926,8 @@ export class PrometheusDatasource
     const url = '/api/v1/query_exemplars';
     return this._request<PromDataSuccessResponse<PromExemplarData>>(
       url,
-      { query: query.expr, start: query.start.toString(), end: query.end.toString() },
-      { requestId: query.requestId, headers: query.headers }
+      {query: query.expr, start: query.start.toString(), end: query.end.toString()},
+      {requestId: query.requestId, headers: query.headers}
     );
   }
 
@@ -934,24 +941,24 @@ export class PrometheusDatasource
       let tags: string[] = [];
       seriesLabels.map((value) => (tags = tags.concat(Object.keys(value))));
       const uniqueLabels = [...new Set(tags)];
-      return uniqueLabels.map((value: any) => ({ text: value }));
+      return uniqueLabels.map((value: any) => ({text: value}));
     } else {
       // Get all tags
       const params = this.getTimeRangeParams();
       const result = await this.metadataRequest('/api/v1/labels', params);
-      return result?.data?.data?.map((value: any) => ({ text: value })) ?? [];
+      return result?.data?.data?.map((value: any) => ({text: value})) ?? [];
     }
   }
 
   async getTagValues(options: { key?: string } = {}) {
     const params = this.getTimeRangeParams();
     const result = await this.metadataRequest(`/api/v1/label/${options.key}/values`, params);
-    return result?.data?.data?.map((value: any) => ({ text: value })) ?? [];
+    return result?.data?.data?.map((value: any) => ({text: value})) ?? [];
   }
 
   async getBuildInfo() {
     try {
-      const buildInfo = await discoverDataSourceFeatures({ url: this.url, name: this.name, type: 'prometheus' });
+      const buildInfo = await discoverDataSourceFeatures({url: this.url, name: this.name, type: 'prometheus'});
       return buildInfo;
     } catch (error) {
       // We don't want to break the rest of functionality if build info does not work correctly
@@ -960,15 +967,15 @@ export class PrometheusDatasource
   }
 
   getBuildInfoMessage(buildInfo: PromApiFeatures) {
-    const enabled = <Badge color="green" icon="check" text="Ruler API enabled" />;
-    const disabled = <Badge color="orange" icon="exclamation-triangle" text="Ruler API not enabled" />;
+    const enabled = <Badge color="green" icon="check" text="Ruler API enabled"/>;
+    const disabled = <Badge color="orange" icon="exclamation-triangle" text="Ruler API not enabled"/>;
     const unsupported = (
       <Tooltip
         placement="top"
         content="Prometheus does not allow editing rules, connect to either a Mimir or Cortex datasource to manage alerts via Grafana."
       >
         <div>
-          <Badge color="red" icon="exclamation-triangle" text="Ruler API not supported" />
+          <Badge color="red" icon="exclamation-triangle" text="Ruler API not supported"/>
         </div>
       </Tooltip>
     );
@@ -1002,7 +1009,7 @@ export class PrometheusDatasource
         text={
           <span>
             <img
-              style={{ width: 14, height: 14, verticalAlign: 'text-bottom' }}
+              style={{width: 14, height: 14, verticalAlign: 'text-bottom'}}
               src={LOGOS[application ?? PromApplication.Prometheus]}
               alt=""
             />{' '}
@@ -1040,7 +1047,7 @@ export class PrometheusDatasource
   async testDatasource() {
     const now = new Date().getTime();
     const request: DataQueryRequest<PromQuery> = {
-      targets: [{ refId: 'test', expr: '1+1', instant: true }],
+      targets: [{refId: 'test', expr: '1+1', instant: true}],
       requestId: `${this.id}-health`,
       scopedVars: {},
       dashboardId: 0,
@@ -1059,7 +1066,7 @@ export class PrometheusDatasource
     return lastValueFrom(this.query(request))
       .then((res: DataQueryResponse) => {
         if (!res || !res.data || res.state !== LoadingState.Done) {
-          return { status: 'error', message: `Error reading Prometheus: ${res?.error?.message}` };
+          return {status: 'error', message: `Error reading Prometheus: ${res?.error?.message}`};
         } else {
           return {
             status: 'success',
@@ -1072,7 +1079,7 @@ export class PrometheusDatasource
       })
       .catch((err: any) => {
         console.error('Prometheus Error', err);
-        return { status: 'error', message: err.message };
+        return {status: 'error', message: err.message};
       });
   }
 
@@ -1104,7 +1111,7 @@ export class PrometheusDatasource
 
   async loadRules() {
     try {
-      const res = await this.metadataRequest('/api/v1/rules', {}, { showErrorAlert: false });
+      const res = await this.metadataRequest('/api/v1/rules', {}, {showErrorAlert: false});
       const groups = res.data?.data?.groups;
 
       if (groups) {
@@ -1143,7 +1150,7 @@ export class PrometheusDatasource
     let expression = query.expr ?? '';
     switch (action.type) {
       case 'ADD_FILTER': {
-        const { key, value } = action.options ?? {};
+        const {key, value} = action.options ?? {};
         if (key && value) {
           expression = addLabelToQuery(expression, key, value);
         }
@@ -1151,7 +1158,7 @@ export class PrometheusDatasource
         break;
       }
       case 'ADD_FILTER_OUT': {
-        const { key, value } = action.options ?? {};
+        const {key, value} = action.options ?? {};
         if (key && value) {
           expression = addLabelToQuery(expression, key, value, '!=');
         }
@@ -1178,7 +1185,7 @@ export class PrometheusDatasource
       default:
         break;
     }
-    return { ...query, expr: expression };
+    return {...query, expr: expression};
   }
 
   getPrometheusTime(date: string | DateTime, roundUp: boolean) {
@@ -1205,8 +1212,8 @@ export class PrometheusDatasource
     const adhocFilters = this.templateSrv.getAdhocFilters(this.name);
 
     const finalQuery = adhocFilters.reduce((acc: string, filter: { key?: any; operator?: any; value?: any }) => {
-      const { key, operator } = filter;
-      let { value } = filter;
+      const {key, operator} = filter;
+      let {value} = filter;
       if (operator === '=~' || operator === '!~') {
         value = prometheusRegularEscape(value);
       }

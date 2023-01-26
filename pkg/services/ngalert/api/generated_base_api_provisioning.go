@@ -177,7 +177,7 @@ func (f *ProvisioningApiHandler) RoutePutTemplate(ctx *models.ReqContext) respon
 	// Parse Path Parameters
 	nameParam := web.Params(ctx.Req)[":name"]
 	// Parse Request Body
-	conf := apimodels.MessageTemplateContent{}
+	conf := apimodels.NotificationTemplateContent{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}

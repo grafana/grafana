@@ -32,6 +32,12 @@ Add the `publicDashboards` feature toggle to your `custom.ini` file.
 publicDashboards = true
 ```
 
+If you are using Docker, use an environment variable to enable public dashboards:
+
+```
+--env GF_FEATURE_TOGGLES_ENABLE=publicDashboards
+```
+
 > **Note:** For Grafana Cloud, you will need to contact support to have the feature enabled.
 
 #### Make a dashboard public

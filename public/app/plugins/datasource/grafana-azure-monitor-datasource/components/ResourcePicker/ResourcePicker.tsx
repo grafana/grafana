@@ -2,6 +2,7 @@ import { cx } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
+import { config } from '@grafana/runtime';
 import { Alert, Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
@@ -11,43 +12,48 @@ import messageFromError from '../../utils/messageFromError';
 import { Space } from '../Space';
 
 import Advanced from './Advanced';
+import AdvancedMulti from './AdvancedMulti';
 import NestedRow from './NestedRow';
 import Search from './Search';
 import getStyles from './styles';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from './types';
-import { findRow, parseResourceDetails, resourceToString } from './utils';
+import { findRows, parseMultipleResourceDetails, resourcesToStrings, matchURI, resourceToString } from './utils';
 
 interface ResourcePickerProps<T> {
   resourcePickerData: ResourcePickerData;
-  resource: T;
+  resources: T[];
   selectableEntryTypes: ResourceRowType[];
   queryType: ResourcePickerQueryType;
 
-  onApply: (resource?: T) => void;
+  onApply: (resources: T[]) => void;
   onCancel: () => void;
+  disableRow: (row: ResourceRow, selectedRows: ResourceRowGroup) => boolean;
+  renderAdvanced: (resources: T[], onChange: (resources: T[]) => void) => React.ReactNode;
 }
 
 const ResourcePicker = ({
   resourcePickerData,
-  resource,
+  resources,
   onApply,
   onCancel,
   selectableEntryTypes,
   queryType,
+  disableRow,
+  renderAdvanced,
 }: ResourcePickerProps<string | AzureMetricResource>) => {
   const styles = useStyles2(getStyles);
 
   const [isLoading, setIsLoading] = useState(false);
   const [rows, setRows] = useState<ResourceRowGroup>([]);
   const [selectedRows, setSelectedRows] = useState<ResourceRowGroup>([]);
-  const [internalSelected, setInternalSelected] = useState(resource);
+  const [internalSelected, setInternalSelected] = useState(resources);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const [shouldShowLimitFlag, setShouldShowLimitFlag] = useState(false);
 
   // Sync the resourceURI prop to internal state
   useEffect(() => {
-    setInternalSelected(resource);
-  }, [resource]);
+    setInternalSelected(resources);
+  }, [resources]);
 
   const loadInitialData = useCallback(async () => {
     if (!isLoading) {
@@ -55,7 +61,7 @@ const ResourcePicker = ({
         setIsLoading(true);
         const resources = await resourcePickerData.fetchInitialRows(
           queryType,
-          parseResourceDetails(internalSelected ?? {})
+          parseMultipleResourceDetails(internalSelected ?? {})
         );
         setRows(resources);
       } catch (error) {
@@ -69,20 +75,20 @@ const ResourcePicker = ({
     loadInitialData();
   });
 
+  // Avoid using empty resources
+  const isValid = (r: string | AzureMetricResource) =>
+    typeof r === 'string' ? r !== '' : r.subscription && r.resourceGroup && r.resourceName && r.metricNamespace;
+
   // set selected row data whenever row or selection changes
   useEffect(() => {
     if (!internalSelected) {
       setSelectedRows([]);
     }
 
-    const found = internalSelected && findRow(rows, resourceToString(internalSelected));
-    if (found) {
-      return setSelectedRows([
-        {
-          ...found,
-          children: undefined,
-        },
-      ]);
+    const sanitized = internalSelected.filter((r) => isValid(r));
+    const found = internalSelected && findRows(rows, resourcesToStrings(sanitized));
+    if (found && found.length) {
+      return setSelectedRows(found);
     }
     return setSelectedRows([]);
   }, [internalSelected, rows]);
@@ -109,21 +115,27 @@ const ResourcePicker = ({
     [resourcePickerData, rows, queryType]
   );
 
-  const resourceIsString = typeof resource === 'string';
   const handleSelectionChanged = useCallback(
     (row: ResourceRow, isSelected: boolean) => {
-      isSelected
-        ? setInternalSelected(resourceIsString ? row.uri : parseResourceDetails(row.uri))
-        : setInternalSelected(resourceIsString ? '' : {});
+      if (isSelected) {
+        const newRes = queryType === 'logs' ? row.uri : parseMultipleResourceDetails([row.uri], row.location)[0];
+        const newSelected = internalSelected ? internalSelected.concat(newRes) : [newRes];
+        setInternalSelected(newSelected);
+      } else {
+        const newInternalSelected = internalSelected?.filter((r) => {
+          return !matchURI(resourceToString(r), row.uri);
+        });
+        setInternalSelected(newInternalSelected);
+      }
     },
-    [resourceIsString]
+    [queryType, internalSelected, setInternalSelected]
   );
 
   const handleApply = useCallback(() => {
     if (internalSelected) {
-      onApply(resourceIsString ? internalSelected : parseResourceDetails(internalSelected));
+      onApply(queryType === 'logs' ? internalSelected : parseMultipleResourceDetails(internalSelected));
     }
-  }, [resourceIsString, internalSelected, onApply]);
+  }, [queryType, internalSelected, onApply]);
 
   const handleSearch = useCallback(
     async (searchWord: string) => {
@@ -198,6 +210,7 @@ const ResourcePicker = ({
                   onRowSelectedChange={handleSelectionChanged}
                   selectableEntryTypes={selectableEntryTypes}
                   scrollIntoView={true}
+                  disableRow={disableRow}
                 />
               ))}
           </tbody>
@@ -221,6 +234,7 @@ const ResourcePicker = ({
                       requestNestedRows={requestNestedRows}
                       onRowSelectedChange={handleSelectionChanged}
                       selectableEntryTypes={selectableEntryTypes}
+                      disableRow={() => false}
                     />
                   ))}
                 </tbody>
@@ -230,11 +244,20 @@ const ResourcePicker = ({
           </>
         )}
 
-        <Advanced resource={internalSelected} onChange={(r) => setInternalSelected(r)} />
+        {config.featureToggles.azureMultipleResourcePicker ? (
+          <AdvancedMulti
+            resources={internalSelected}
+            onChange={(r) => setInternalSelected(r)}
+            renderAdvanced={renderAdvanced}
+          />
+        ) : (
+          <Advanced resources={internalSelected} onChange={(r) => setInternalSelected(r)} />
+        )}
+
         <Space v={2} />
 
         <Button
-          disabled={!!errorMessage}
+          disabled={!!errorMessage || !internalSelected.every(isValid)}
           onClick={handleApply}
           data-testid={selectors.components.queryEditor.resourcePicker.apply.button}
         >

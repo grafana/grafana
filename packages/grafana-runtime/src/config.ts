@@ -27,6 +27,7 @@ export interface AzureSettings {
 
 export class GrafanaBootConfig implements GrafanaConfig {
   isPublicDashboardView: boolean;
+  snapshotEnabled = true;
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
   auth: AuthSettings = {};
@@ -89,6 +90,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   } = { systemRequirements: { met: false, requiredImageRendererPluginVersion: '' }, thumbnailsExist: false };
   rendererVersion = '';
   secretsManagerPluginEnabled = false;
+  supportBundlesEnabled = false;
   http2Enabled = false;
   dateFormats?: SystemDateFormatSettings;
   sentry = {

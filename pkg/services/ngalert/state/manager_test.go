@@ -219,7 +219,7 @@ func TestDashboardAnnotations(t *testing.T) {
 	_, dbstore := tests.SetupTestEnv(t, 1)
 
 	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
-	hist := historian.NewAnnotationBackend(fakeAnnoRepo, &dashboards.FakeDashboardService{})
+	hist := historian.NewAnnotationBackend(fakeAnnoRepo, &dashboards.FakeDashboardService{}, nil)
 	cfg := state.ManagerCfg{
 		Metrics:       testMetrics.GetStateMetrics(),
 		ExternalURL:   nil,
@@ -2208,7 +2208,7 @@ func TestProcessEvalResults(t *testing.T) {
 
 	for _, tc := range testCases {
 		fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
-		hist := historian.NewAnnotationBackend(fakeAnnoRepo, &dashboards.FakeDashboardService{})
+		hist := historian.NewAnnotationBackend(fakeAnnoRepo, &dashboards.FakeDashboardService{}, nil)
 		cfg := state.ManagerCfg{
 			Metrics:       testMetrics.GetStateMetrics(),
 			ExternalURL:   nil,
@@ -2542,4 +2542,246 @@ func TestStaleResults(t *testing.T) {
 			}
 		}
 	})
+}
+
+func TestDeleteStateByRuleUID(t *testing.T) {
+	interval := time.Minute
+	ctx := context.Background()
+	_, dbstore := tests.SetupTestEnv(t, 1)
+
+	const mainOrgID int64 = 1
+	rule := tests.CreateTestAlertRule(t, ctx, dbstore, int64(interval.Seconds()), mainOrgID)
+
+	labels1 := models.InstanceLabels{"test1": "testValue1"}
+	_, hash1, _ := labels1.StringAndHash()
+	labels2 := models.InstanceLabels{"test2": "testValue2"}
+	_, hash2, _ := labels2.StringAndHash()
+	instances := []models.AlertInstance{
+		{
+			AlertInstanceKey: models.AlertInstanceKey{
+				RuleOrgID:  rule.OrgID,
+				RuleUID:    rule.UID,
+				LabelsHash: hash1,
+			},
+			CurrentState: models.InstanceStateNormal,
+			Labels:       labels1,
+		},
+		{
+			AlertInstanceKey: models.AlertInstanceKey{
+				RuleOrgID:  rule.OrgID,
+				RuleUID:    rule.UID,
+				LabelsHash: hash2,
+			},
+			CurrentState: models.InstanceStateFiring,
+			Labels:       labels2,
+		},
+	}
+
+	_ = dbstore.SaveAlertInstances(ctx, instances...)
+
+	testCases := []struct {
+		desc          string
+		instanceStore state.InstanceStore
+
+		expectedStates map[string]*state.State
+
+		startingStateCacheCount int
+		finalStateCacheCount    int
+		startingInstanceDBCount int
+		finalInstanceDBCount    int
+	}{
+		{
+			desc:          "all states/instances are removed from cache and DB",
+			instanceStore: dbstore,
+			expectedStates: map[string]*state.State{
+				`[["test1","testValue1"]]`: {
+					AlertRuleUID:       rule.UID,
+					OrgID:              1,
+					CacheID:            `[["test1","testValue1"]]`,
+					Labels:             data.Labels{"test1": "testValue1"},
+					State:              eval.Normal,
+					EvaluationDuration: 0,
+					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+				},
+				`[["test2","testValue2"]]`: {
+					AlertRuleUID:       rule.UID,
+					OrgID:              1,
+					CacheID:            `[["test2","testValue2"]]`,
+					Labels:             data.Labels{"test2": "testValue2"},
+					State:              eval.Alerting,
+					EvaluationDuration: 0,
+					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+				},
+			},
+			startingStateCacheCount: 2,
+			finalStateCacheCount:    0,
+			startingInstanceDBCount: 2,
+			finalInstanceDBCount:    0,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			ctx := context.Background()
+			cfg := state.ManagerCfg{
+				Metrics:       testMetrics.GetStateMetrics(),
+				ExternalURL:   nil,
+				InstanceStore: dbstore,
+				Images:        &state.NoopImageService{},
+				Clock:         clock.New(),
+				Historian:     &state.FakeHistorian{},
+			}
+			st := state.NewManager(cfg)
+			st.Warm(ctx, dbstore)
+			q := &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
+			_ = dbstore.ListAlertInstances(ctx, q)
+			existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
+
+			// We have loaded the expected number of entries from the db
+			assert.Equal(t, tc.startingStateCacheCount, len(existingStatesForRule))
+			assert.Equal(t, tc.startingInstanceDBCount, len(q.Result))
+
+			states := st.DeleteStateByRuleUID(ctx, rule.GetKey())
+
+			// Check that the deleted states are the same as the ones that were in cache
+			assert.Equal(t, tc.startingStateCacheCount, len(states))
+			for _, s := range states {
+				assert.Equal(t, tc.expectedStates[s.CacheID], s)
+			}
+
+			q = &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
+			_ = dbstore.ListAlertInstances(ctx, q)
+			existingStatesForRule = st.GetStatesForRuleUID(rule.OrgID, rule.UID)
+
+			// The expected number of state entries remains after states are deleted
+			assert.Equal(t, tc.finalStateCacheCount, len(existingStatesForRule))
+			assert.Equal(t, tc.finalInstanceDBCount, len(q.Result))
+		})
+	}
+}
+
+func TestResetStateByRuleUID(t *testing.T) {
+	interval := time.Minute
+	ctx := context.Background()
+	_, dbstore := tests.SetupTestEnv(t, 1)
+
+	const mainOrgID int64 = 1
+	rule := tests.CreateTestAlertRule(t, ctx, dbstore, int64(interval.Seconds()), mainOrgID)
+
+	labels1 := models.InstanceLabels{"test1": "testValue1"}
+	_, hash1, _ := labels1.StringAndHash()
+	labels2 := models.InstanceLabels{"test2": "testValue2"}
+	_, hash2, _ := labels2.StringAndHash()
+	instances := []models.AlertInstance{
+		{
+			AlertInstanceKey: models.AlertInstanceKey{
+				RuleOrgID:  rule.OrgID,
+				RuleUID:    rule.UID,
+				LabelsHash: hash1,
+			},
+			CurrentState: models.InstanceStateNormal,
+			Labels:       labels1,
+		},
+		{
+			AlertInstanceKey: models.AlertInstanceKey{
+				RuleOrgID:  rule.OrgID,
+				RuleUID:    rule.UID,
+				LabelsHash: hash2,
+			},
+			CurrentState: models.InstanceStateFiring,
+			Labels:       labels2,
+		},
+	}
+
+	_ = dbstore.SaveAlertInstances(ctx, instances...)
+
+	testCases := []struct {
+		desc          string
+		instanceStore state.InstanceStore
+
+		expectedStates map[string]*state.State
+
+		startingStateCacheCount  int
+		finalStateCacheCount     int
+		startingInstanceDBCount  int
+		finalInstanceDBCount     int
+		newHistorianEntriesCount int
+	}{
+		{
+			desc:          "all states/instances are removed from cache and DB and saved in historian",
+			instanceStore: dbstore,
+			expectedStates: map[string]*state.State{
+				`[["test1","testValue1"]]`: {
+					AlertRuleUID:       rule.UID,
+					OrgID:              1,
+					CacheID:            `[["test1","testValue1"]]`,
+					Labels:             data.Labels{"test1": "testValue1"},
+					State:              eval.Normal,
+					EvaluationDuration: 0,
+					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+				},
+				`[["test2","testValue2"]]`: {
+					AlertRuleUID:       rule.UID,
+					OrgID:              1,
+					CacheID:            `[["test2","testValue2"]]`,
+					Labels:             data.Labels{"test2": "testValue2"},
+					State:              eval.Alerting,
+					EvaluationDuration: 0,
+					Annotations:        map[string]string{"testAnnoKey": "testAnnoValue"},
+				},
+			},
+			startingStateCacheCount:  2,
+			finalStateCacheCount:     0,
+			startingInstanceDBCount:  2,
+			finalInstanceDBCount:     0,
+			newHistorianEntriesCount: 2,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			ctx := context.Background()
+			fakeHistorian := &state.FakeHistorian{StateTransitions: make([]state.StateTransition, 0)}
+			cfg := state.ManagerCfg{
+				Metrics:       testMetrics.GetStateMetrics(),
+				ExternalURL:   nil,
+				InstanceStore: dbstore,
+				Images:        &state.NoopImageService{},
+				Clock:         clock.New(),
+				Historian:     fakeHistorian,
+			}
+			st := state.NewManager(cfg)
+			st.Warm(ctx, dbstore)
+			q := &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
+			_ = dbstore.ListAlertInstances(ctx, q)
+			existingStatesForRule := st.GetStatesForRuleUID(rule.OrgID, rule.UID)
+
+			// We have loaded the expected number of entries from the db
+			assert.Equal(t, tc.startingStateCacheCount, len(existingStatesForRule))
+			assert.Equal(t, tc.startingInstanceDBCount, len(q.Result))
+
+			states := st.ResetStateByRuleUID(ctx, rule, models.StateReasonPaused)
+
+			// Check that the deleted states are the same as the ones that were in cache
+			assert.Equal(t, tc.startingStateCacheCount, len(states))
+			for _, s := range states {
+				assert.Equal(t, tc.expectedStates[s.CacheID], s)
+			}
+
+			// Check if both entries have been added to the historian
+			assert.Equal(t, tc.newHistorianEntriesCount, len(fakeHistorian.StateTransitions))
+			for _, str := range fakeHistorian.StateTransitions {
+				assert.Equal(t, tc.expectedStates[str.State.CacheID].State, str.PreviousState)
+				assert.Equal(t, tc.expectedStates[str.State.CacheID].StateReason, str.PreviousStateReason)
+			}
+
+			q = &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
+			_ = dbstore.ListAlertInstances(ctx, q)
+			existingStatesForRule = st.GetStatesForRuleUID(rule.OrgID, rule.UID)
+
+			// The expected number of state entries remains after states are deleted
+			assert.Equal(t, tc.finalStateCacheCount, len(existingStatesForRule))
+			assert.Equal(t, tc.finalInstanceDBCount, len(q.Result))
+		})
+	}
 }

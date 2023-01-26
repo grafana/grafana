@@ -4,7 +4,7 @@ import React, { MouseEvent } from 'react';
 import { AnnotationEvent, DateTimeInput, GrafanaTheme2, PanelProps } from '@grafana/data';
 import { Card, TagList, Tooltip, RenderUserContentAsHTML, useStyles2 } from '@grafana/ui';
 
-import { PanelOptions } from './models.gen';
+import { PanelOptions } from './panelcfg.gen';
 
 interface Props extends Pick<PanelProps<PanelOptions>, 'options'> {
   annotation: AnnotationEvent;
