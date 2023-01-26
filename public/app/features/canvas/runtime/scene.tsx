@@ -26,9 +26,10 @@ import {
   getTextDimensionFromData,
 } from 'app/features/dimensions/utils';
 import { CanvasContextMenu } from 'app/plugins/panel/canvas/CanvasContextMenu';
+import { CanvasTooltip } from 'app/plugins/panel/canvas/CanvasTooltip';
 import { CONNECTION_ANCHOR_DIV_ID } from 'app/plugins/panel/canvas/ConnectionAnchors';
 import { Connections } from 'app/plugins/panel/canvas/Connections';
-import { AnchorPoint, LayerActionID } from 'app/plugins/panel/canvas/types';
+import { AnchorPoint, CanvasTooltipPayload, LayerActionID } from 'app/plugins/panel/canvas/types';
 
 import appEvents from '../../../core/app_events';
 import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
@@ -73,6 +74,9 @@ export class Scene {
 
   inlineEditingCallback?: () => void;
   setBackgroundCallback?: (anchorPoint: AnchorPoint) => void;
+
+  tooltipCallback?: (tooltip: CanvasTooltipPayload | undefined) => void;
+  tooltip?: CanvasTooltipPayload;
 
   readonly editModeEnabled = new BehaviorSubject<boolean>(false);
   subscription: Subscription;
@@ -149,6 +153,7 @@ export class Scene {
     getScalar: (scalar: ScalarDimensionConfig) => getScalarDimensionFromData(this.data, scalar),
     getText: (text: TextDimensionConfig) => getTextDimensionFromData(this.data, text),
     getResource: (res: ResourceDimensionConfig) => getResourceDimensionFromData(this.data, res),
+    getPanelData: () => this.data,
   };
 
   updateData(data: PanelData) {
@@ -263,7 +268,7 @@ export class Scene {
     }
   };
 
-  findElementByTarget = (target: HTMLElement | SVGElement): ElementState | undefined => {
+  findElementByTarget = (target: Element): ElementState | undefined => {
     // We will probably want to add memoization to this as we are calling on drag / resize
 
     const stack = [...this.root.elements];
@@ -283,7 +288,7 @@ export class Scene {
     return undefined;
   };
 
-  setNonTargetPointerEvents = (target: HTMLElement | SVGElement, disablePointerEvents: boolean) => {
+  setNonTargetPointerEvents = (target: Element, disablePointerEvents: boolean) => {
     const stack = [...this.root.elements];
     while (stack.length > 0) {
       const currentElement = stack.shift();
@@ -600,6 +605,8 @@ export class Scene {
 
   render() {
     const canShowContextMenu = this.isPanelEditing || (!this.isPanelEditing && this.isEditingEnabled);
+    const canShowElementTooltip =
+      !this.isEditingEnabled && this.tooltip?.element && this.tooltip.element.data.links?.length > 0;
 
     return (
       <div key={this.revId} className={this.styles.wrap} style={this.style} ref={this.setRef}>
@@ -608,6 +615,11 @@ export class Scene {
         {canShowContextMenu && (
           <Portal>
             <CanvasContextMenu scene={this} panel={this.panel} />
+          </Portal>
+        )}
+        {canShowElementTooltip && (
+          <Portal>
+            <CanvasTooltip scene={this} />
           </Portal>
         )}
       </div>

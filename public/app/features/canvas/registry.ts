@@ -8,6 +8,7 @@ import { droneTopItem } from './elements/droneTop';
 import { iconItem } from './elements/icon';
 import { metricValueItem } from './elements/metricValue';
 import { rectangleItem } from './elements/rectangle';
+import { serverItem } from './elements/server/server';
 import { textItem } from './elements/text';
 import { windTurbineItem } from './elements/windTurbine';
 
@@ -23,6 +24,7 @@ export const defaultElementItems = [
   textItem,
   rectangleItem,
   iconItem,
+  serverItem,
 ];
 
 export const advancedElementItems = [buttonItem, windTurbineItem, droneTopItem, droneFrontItem, droneSideItem];

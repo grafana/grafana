@@ -86,7 +86,7 @@ func settingsCollector(settings setting.Provider) supportbundles.Collector {
 	return supportbundles.Collector{
 		UID:               "settings",
 		DisplayName:       "Settings",
-		Description:       "Settings for grafana instance",
+		Description:       "Settings of the Grafana instance",
 		IncludedByDefault: false,
 		Default:           true,
 		Fn: func(ctx context.Context) (*supportbundles.SupportItem, error) {
@@ -108,7 +108,7 @@ func usageStatesCollector(stats usagestats.Service) supportbundles.Collector {
 	return supportbundles.Collector{
 		UID:               "usage-stats",
 		DisplayName:       "Usage statistics",
-		Description:       "Usage statistic for grafana instance",
+		Description:       "Usage statistics of the Grafana instance",
 		IncludedByDefault: false,
 		Default:           true,
 		Fn: func(ctx context.Context) (*supportbundles.SupportItem, error) {
@@ -133,7 +133,7 @@ func pluginInfoCollector(pluginStore plugins.Store, pluginSettings pluginsetting
 	return supportbundles.Collector{
 		UID:               "plugins",
 		DisplayName:       "Plugin information",
-		Description:       "Plugin information for grafana instance",
+		Description:       "Plugin information for the Grafana instance",
 		IncludedByDefault: false,
 		Default:           true,
 		Fn: func(ctx context.Context) (*supportbundles.SupportItem, error) {

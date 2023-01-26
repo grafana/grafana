@@ -8,7 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 )
@@ -107,7 +107,7 @@ func UAEnabled(ctx context.Context) bool {
 }
 
 func (e *DashAlertExtractorService) getAlertFromPanels(ctx context.Context, jsonWithPanels *simplejson.Json, validateAlertFunc func(*models.Alert) bool, logTranslationFailures bool, dashAlertInfo DashAlertInfo) ([]*models.Alert, error) {
-	alerts := make([]*models.Alert, 0)
+	ret := make([]*models.Alert, 0)
 
 	for _, panelObj := range jsonWithPanels.Get("panels").MustArray() {
 		panel := simplejson.NewFromAny(panelObj)
@@ -121,7 +121,7 @@ func (e *DashAlertExtractorService) getAlertFromPanels(ctx context.Context, json
 				return nil, err
 			}
 
-			alerts = append(alerts, alertSlice...)
+			ret = append(ret, alertSlice...)
 			continue
 		}
 
@@ -242,10 +242,10 @@ func (e *DashAlertExtractorService) getAlertFromPanels(ctx context.Context, json
 			return nil, ValidationError{Reason: fmt.Sprintf("Panel id is not correct, alertName=%v, panelId=%v", alert.Name, alert.PanelId)}
 		}
 
-		alerts = append(alerts, alert)
+		ret = append(ret, alert)
 	}
 
-	return alerts, nil
+	return ret, nil
 }
 
 func validateAlertRule(alert *models.Alert) bool {

@@ -55,19 +55,7 @@ const (
 	IncludeTypeSecretsmanager IncludeType = "secretsmanager"
 )
 
-// Defines values for ReleaseState.
-const (
-	ReleaseStateAlpha ReleaseState = "alpha"
-
-	ReleaseStateBeta ReleaseState = "beta"
-
-	ReleaseStateDeprecated ReleaseState = "deprecated"
-
-	ReleaseStateStable ReleaseState = "stable"
-)
-
 // Defines values for Category.
-// Defines values for PlugindefCategory.
 const (
 	CategoryCloud Category = "cloud"
 
@@ -87,7 +75,6 @@ const (
 )
 
 // Defines values for Type.
-// Defines values for PlugindefType.
 const (
 	TypeApp Type = "app"
 
@@ -98,6 +85,17 @@ const (
 	TypeRenderer Type = "renderer"
 
 	TypeSecretsmanager Type = "secretsmanager"
+)
+
+// Defines values for ReleaseState.
+const (
+	ReleaseStateAlpha ReleaseState = "alpha"
+
+	ReleaseStateBeta ReleaseState = "beta"
+
+	ReleaseStateDeprecated ReleaseState = "deprecated"
+
+	ReleaseStateStable ReleaseState = "stable"
 )
 
 // BasicRole is a Grafana basic role, which can be 'Viewer', 'Editor', 'Admin' or 'Grafana Admin'.
@@ -274,6 +272,142 @@ type Permission struct {
 	Scope  *string `json:"scope,omitempty"`
 }
 
+// PluginDef defines model for PluginDef.
+type PluginDef struct {
+	// For data source plugins, if the plugin supports alerting.
+	Alerting *bool `json:"alerting,omitempty"`
+
+	// For data source plugins, if the plugin supports annotation
+	// queries.
+	Annotations *bool `json:"annotations,omitempty"`
+
+	// Set to true for app plugins that should be enabled by default
+	// in all orgs
+	AutoEnabled *bool `json:"autoEnabled,omitempty"`
+
+	// If the plugin has a backend component.
+	Backend *bool `json:"backend,omitempty"`
+
+	// builtin indicates whether the plugin is developed and shipped as part
+	// of Grafana. Also known as a "core plugin."
+	BuiltIn bool `json:"builtIn"`
+
+	// Plugin category used on the Add data source page.
+	Category     *Category    `json:"category,omitempty"`
+	Dependencies Dependencies `json:"dependencies"`
+
+	// Grafana Enerprise specific features.
+	EnterpriseFeatures *struct {
+		// Enable/Disable health diagnostics errors. Requires Grafana
+		// >=7.5.5.
+		HealthDiagnosticsErrors *bool `json:"healthDiagnosticsErrors,omitempty"`
+	} `json:"enterpriseFeatures,omitempty"`
+
+	// The first part of the file name of the backend component
+	// executable. There can be multiple executables built for
+	// different operating system and architecture. Grafana will
+	// check for executables named `<executable>_<$GOOS>_<lower case
+	// $GOARCH><.exe for Windows>`, e.g. `plugin_linux_amd64`.
+	// Combination of $GOOS and $GOARCH can be found here:
+	// https://golang.org/doc/install/source#environment.
+	Executable *string `json:"executable,omitempty"`
+
+	// For data source plugins, include hidden queries in the data
+	// request.
+	HiddenQueries *bool `json:"hiddenQueries,omitempty"`
+
+	// hideFromList excludes the plugin from listings in Grafana's UI. Only
+	// allowed for builtin plugins.
+	HideFromList bool `json:"hideFromList"`
+
+	// Unique name of the plugin. If the plugin is published on
+	// grafana.com, then the plugin id has to follow the naming
+	// conventions.
+	Id string `json:"id"`
+
+	// Resources to include in plugin.
+	Includes *[]Include `json:"includes,omitempty"`
+
+	// Metadata about a Grafana plugin. Some fields are used on the plugins
+	// page in Grafana and others on grafana.com, if the plugin is published.
+	Info Info `json:"info"`
+
+	// For data source plugins, if the plugin supports logs.
+	Logs *bool `json:"logs,omitempty"`
+
+	// For data source plugins, if the plugin supports metric queries.
+	// Used in Explore.
+	Metrics *bool `json:"metrics,omitempty"`
+
+	// Human-readable name of the plugin that is shown to the user in
+	// the UI.
+	Name string `json:"name"`
+
+	// The PascalCase name for the plugin. Used for creating machine-friendly
+	// identifiers, typically in code generation.
+	//
+	// If not provided, defaults to name, but title-cased and sanitized (only
+	// alphabetical characters allowed).
+	PascalName string `json:"pascalName"`
+
+	// Initialize plugin on startup. By default, the plugin
+	// initializes on first use.
+	Preload *bool `json:"preload,omitempty"`
+
+	// For data source plugins. There is a query options section in
+	// the plugin's query editor and these options can be turned on
+	// if needed.
+	QueryOptions *struct {
+		// For data source plugins. If the `cache timeout` option should
+		// be shown in the query options section in the query editor.
+		CacheTimeout *bool `json:"cacheTimeout,omitempty"`
+
+		// For data source plugins. If the `max data points` option should
+		// be shown in the query options section in the query editor.
+		MaxDataPoints *bool `json:"maxDataPoints,omitempty"`
+
+		// For data source plugins. If the `min interval` option should be
+		// shown in the query options section in the query editor.
+		MinInterval *bool `json:"minInterval,omitempty"`
+	} `json:"queryOptions,omitempty"`
+
+	// Optional list of RBAC RoleRegistrations.
+	// Describes and organizes the default permissions associated with any of the Grafana basic roles,
+	// which characterizes what viewers, editors, admins, or grafana admins can do on the plugin.
+	// The Admin basic role inherits its default permissions from the Editor basic role which in turn
+	// inherits them from the Viewer basic role.
+	Roles *[]RoleRegistration `json:"roles,omitempty"`
+
+	// Routes is a list of proxy routes, if any. For datasource plugins only.
+	Routes *[]Route `json:"routes,omitempty"`
+
+	// For panel plugins. Hides the query editor.
+	SkipDataQuery *bool `json:"skipDataQuery,omitempty"`
+
+	// ReleaseState indicates release maturity state of a plugin.
+	State *ReleaseState `json:"state,omitempty"`
+
+	// For data source plugins, if the plugin supports streaming.
+	Streaming *bool `json:"streaming,omitempty"`
+
+	// This is an undocumented feature.
+	Tables *bool `json:"tables,omitempty"`
+
+	// For data source plugins, if the plugin supports tracing.
+	Tracing *bool `json:"tracing,omitempty"`
+
+	// type indicates which type of Grafana plugin this is, of the defined
+	// set of Grafana plugin types.
+	Type Type `json:"type"`
+}
+
+// Plugin category used on the Add data source page.
+type Category string
+
+// type indicates which type of Grafana plugin this is, of the defined
+// set of Grafana plugin types.
+type Type string
+
 // ReleaseState indicates release maturity state of a plugin.
 type ReleaseState string
 
@@ -359,133 +493,3 @@ type URLParam struct {
 	Content string `json:"content"`
 	Name    string `json:"name"`
 }
-
-// Plugindef defines model for plugindef.
-// PluginDef defines model for plugindef.
-type PluginDef struct {
-	// For data source plugins, if the plugin supports alerting.
-	Alerting *bool `json:"alerting,omitempty"`
-
-	// For data source plugins, if the plugin supports annotation
-	// queries.
-	Annotations *bool `json:"annotations,omitempty"`
-
-	// Set to true for app plugins that should be enabled by default
-	// in all orgs
-	AutoEnabled *bool `json:"autoEnabled,omitempty"`
-
-	// If the plugin has a backend component.
-	Backend *bool `json:"backend,omitempty"`
-
-	// builtin indicates whether the plugin is developed and shipped as part
-	// of Grafana. Also known as a "core plugin."
-	BuiltIn bool `json:"builtIn"`
-
-	// Plugin category used on the Add data source page.
-	Category     *Category    `json:"category,omitempty"`
-	Dependencies Dependencies `json:"dependencies"`
-
-	// Grafana Enerprise specific features.
-	EnterpriseFeatures *struct {
-		// Enable/Disable health diagnostics errors. Requires Grafana
-		// >=7.5.5.
-		HealthDiagnosticsErrors *bool `json:"healthDiagnosticsErrors,omitempty"`
-	} `json:"enterpriseFeatures,omitempty"`
-
-	// The first part of the file name of the backend component
-	// executable. There can be multiple executables built for
-	// different operating system and architecture. Grafana will
-	// check for executables named `<executable>_<$GOOS>_<lower case
-	// $GOARCH><.exe for Windows>`, e.g. `plugin_linux_amd64`.
-	// Combination of $GOOS and $GOARCH can be found here:
-	// https://golang.org/doc/install/source#environment.
-	Executable *string `json:"executable,omitempty"`
-
-	// For data source plugins, include hidden queries in the data
-	// request.
-	HiddenQueries *bool `json:"hiddenQueries,omitempty"`
-
-	// hideFromList excludes the plugin from listings in Grafana's UI. Only
-	// allowed for builtin plugins.
-	HideFromList bool `json:"hideFromList"`
-
-	// Unique name of the plugin. If the plugin is published on
-	// grafana.com, then the plugin id has to follow the naming
-	// conventions.
-	Id string `json:"id"`
-
-	// Resources to include in plugin.
-	Includes *[]Include `json:"includes,omitempty"`
-
-	// Metadata about a Grafana plugin. Some fields are used on the plugins
-	// page in Grafana and others on grafana.com, if the plugin is published.
-	Info Info `json:"info"`
-
-	// For data source plugins, if the plugin supports logs.
-	Logs *bool `json:"logs,omitempty"`
-
-	// For data source plugins, if the plugin supports metric queries.
-	// Used in Explore.
-	Metrics *bool `json:"metrics,omitempty"`
-
-	// Human-readable name of the plugin that is shown to the user in
-	// the UI.
-	Name string `json:"name"`
-
-	// Initialize plugin on startup. By default, the plugin
-	// initializes on first use.
-	Preload *bool `json:"preload,omitempty"`
-
-	// For data source plugins. There is a query options section in
-	// the plugin's query editor and these options can be turned on
-	// if needed.
-	QueryOptions *struct {
-		// For data source plugins. If the `cache timeout` option should
-		// be shown in the query options section in the query editor.
-		CacheTimeout *bool `json:"cacheTimeout,omitempty"`
-
-		// For data source plugins. If the `max data points` option should
-		// be shown in the query options section in the query editor.
-		MaxDataPoints *bool `json:"maxDataPoints,omitempty"`
-
-		// For data source plugins. If the `min interval` option should be
-		// shown in the query options section in the query editor.
-		MinInterval *bool `json:"minInterval,omitempty"`
-	} `json:"queryOptions,omitempty"`
-
-	// Optional list of RBAC RoleRegistrations.
-	// Describes and organizes the default permissions associated with any of the Grafana basic roles,
-	// which characterizes what viewers, editors, admins, or grafana admins can do on the plugin.
-	// The Admin basic role inherits its default permissions from the Editor basic role which in turn
-	// inherits them from the Viewer basic role.
-	Roles *[]RoleRegistration `json:"roles,omitempty"`
-
-	// Routes is a list of proxy routes, if any. For datasource plugins only.
-	Routes *[]Route `json:"routes,omitempty"`
-
-	// For panel plugins. Hides the query editor.
-	SkipDataQuery *bool `json:"skipDataQuery,omitempty"`
-
-	// ReleaseState indicates release maturity state of a plugin.
-	State *ReleaseState `json:"state,omitempty"`
-
-	// For data source plugins, if the plugin supports streaming.
-	Streaming *bool `json:"streaming,omitempty"`
-
-	// This is an undocumented feature.
-	Tables *bool `json:"tables,omitempty"`
-
-	// For data source plugins, if the plugin supports tracing.
-	Tracing *bool `json:"tracing,omitempty"`
-
-	// type indicates which type of Grafana plugin this is, of the defined
-	// set of Grafana plugin types.
-	Type Type `json:"type"`
-}
-
-// Plugin category used on the Add data source page.
-type Category string
-
-// type indicates which type of Grafana plugin this is, of the defined
-// set of Grafana plugin types.
-type Type string
