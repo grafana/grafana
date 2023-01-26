@@ -238,19 +238,9 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     }
   }
 
-  isWaitingForDatasourceToLoad(): boolean {
-    // if we not yet have loaded the datasource in state the
-    // ds in props and the ds in state will have different values.
-    return this.props.dataSource.type !== this.state.datasource?.meta.id;
-  }
-
   renderPluginEditor = () => {
     const { query, onChange, queries, onRunQuery, onAddQuery, app = CoreApp.PanelEditor, history } = this.props;
     const { datasource, data } = this.state;
-
-    if (this.isWaitingForDatasourceToLoad()) {
-      return null;
-    }
 
     if (datasource?.components?.QueryCtrl) {
       return <div ref={(element) => (this.element = element)} />;
