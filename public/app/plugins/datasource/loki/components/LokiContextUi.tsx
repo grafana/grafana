@@ -49,16 +49,24 @@ export function LokiContextUi(props: LokiContextUiProps) {
   const [contextFilters, setContextFilters] = useState<ContextFilter[]>([]);
   const [initialized, setInitialized] = useState(false);
   const timerHandle = React.useRef<number>();
+  const previousInitialized = React.useRef<boolean>(false);
   useEffect(() => {
     if (!initialized) {
       return;
     }
+
+    // don't trigger if we initialized, this will be the same query anyways.
+    if (!previousInitialized.current) {
+      previousInitialized.current = initialized;
+      return;
+    }
+
     if (timerHandle.current) {
       clearTimeout(timerHandle.current);
     }
     timerHandle.current = window.setTimeout(() => {
       updateFilter(contextFilters);
-    }, 2000);
+    }, 1500);
 
     return () => {
       clearTimeout(timerHandle.current);
@@ -98,7 +106,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
         {' '}
         <Tooltip
           content={
-            'This feature is experimental and only works on simple Log queries containing no more than 1 parser (logfmt, json).'
+            'This feature is experimental and only works on log queries containing no more than 1 parser (logfmt, json).'
           }
           placement="top"
         >
