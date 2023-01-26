@@ -5,3 +5,5 @@
  */
 export * from './veneer/common.types';
 export * from './index.gen';
+// Re-export duplicate types explicitly
+export type { OrgRole } from './index.gen';
