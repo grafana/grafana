@@ -19,7 +19,7 @@ import {
   SortOrder,
 } from '@grafana/schema';
 
-import { PanelFieldConfig, PanelOptions } from './models.gen';
+import { PanelFieldConfig, PanelOptions } from './panelcfg.gen';
 import { BarChartOptionsEX, prepareBarChartDisplayValues, preparePlotConfigBuilder } from './utils';
 
 function mockDataFrame() {
@@ -211,6 +211,19 @@ describe('BarChart utils', () => {
           null,
         ]
       `);
+
+      const displayLegendValuesAsc = assertIsDefined('legend' in result ? result : null).legend;
+      const legendField = displayLegendValuesAsc.fields[1];
+
+      expect(legendField.values.toArray()).toMatchInlineSnapshot(`
+      [
+        -10,
+        null,
+        10,
+        null,
+        null,
+      ]
+    `);
     });
 
     it('should sort fields when legend sortBy and sortDesc are set', () => {
@@ -232,6 +245,12 @@ describe('BarChart utils', () => {
       expect(displayValuesAsc.fields[2].name).toBe('c');
       expect(displayValuesAsc.fields[3].name).toBe('b');
 
+      const displayLegendValuesAsc = assertIsDefined('legend' in resultAsc ? resultAsc : null).legend;
+      expect(displayLegendValuesAsc.fields[0].type).toBe(FieldType.string);
+      expect(displayLegendValuesAsc.fields[1].name).toBe('a');
+      expect(displayLegendValuesAsc.fields[2].name).toBe('c');
+      expect(displayLegendValuesAsc.fields[3].name).toBe('b');
+
       const resultDesc = prepareBarChartDisplayValues([frame], createTheme(), {
         legend: { sortBy: 'Min', sortDesc: true },
       } as PanelOptions);
@@ -240,6 +259,32 @@ describe('BarChart utils', () => {
       expect(displayValuesDesc.fields[1].name).toBe('b');
       expect(displayValuesDesc.fields[2].name).toBe('c');
       expect(displayValuesDesc.fields[3].name).toBe('a');
+
+      const displayLegendValuesDesc = assertIsDefined('legend' in resultDesc ? resultDesc : null).legend;
+      expect(displayLegendValuesDesc.fields[0].type).toBe(FieldType.string);
+      expect(displayLegendValuesDesc.fields[1].name).toBe('b');
+      expect(displayLegendValuesDesc.fields[2].name).toBe('c');
+      expect(displayLegendValuesDesc.fields[3].name).toBe('a');
+    });
+
+    it('should remove unit from legend values when stacking is percent', () => {
+      const frame = new MutableDataFrame({
+        fields: [
+          { name: 'string', type: FieldType.string, values: ['a', 'b', 'c'] },
+          { name: 'a', values: [-10, 20, 10], state: { calcs: { min: -10 } } },
+          { name: 'b', values: [20, 20, 20], state: { calcs: { min: 20 } } },
+          { name: 'c', values: [10, 10, 10], state: { calcs: { min: 10 } } },
+        ],
+      });
+
+      const resultAsc = prepareBarChartDisplayValues([frame], createTheme(), {
+        stacking: StackingMode.Percent,
+      } as PanelOptions);
+      const displayLegendValuesAsc = assertIsDefined('legend' in resultAsc ? resultAsc : null).legend;
+
+      expect(displayLegendValuesAsc.fields[1].config.unit).toBeUndefined();
+      expect(displayLegendValuesAsc.fields[2].config.unit).toBeUndefined();
+      expect(displayLegendValuesAsc.fields[3].config.unit).toBeUndefined();
     });
   });
 });

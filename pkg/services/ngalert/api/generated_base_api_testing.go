@@ -31,7 +31,7 @@ func (f *TestingApiHandler) BacktestConfig(ctx *models.ReqContext) response.Resp
 	if err := web.Bind(ctx.Req, &conf); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	return f.handleBacktestingConfig(ctx, conf)
+	return f.handleBacktestConfig(ctx, conf)
 }
 func (f *TestingApiHandler) RouteEvalQueries(ctx *models.ReqContext) response.Response {
 	// Parse Request Body

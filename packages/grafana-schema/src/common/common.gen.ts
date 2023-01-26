@@ -9,6 +9,17 @@
 
 
 /**
+ * TODO docs
+ */
+export interface DataSourceJsonData {
+  alertmanagerUid?: string;
+  authType?: string;
+  defaultRegion?: string;
+  manageAlerts?: boolean;
+  profile?: string;
+}
+
+/**
  * These are the common properties available to all queries in all datasources.
  * Specific implementations will *extend* this interface, adding the required
  * properties for the given context.
@@ -38,6 +49,64 @@ export interface DataQuery {
    * A - Z
    */
   refId: string;
+}
+
+export interface BaseDimensionConfig {
+  field?: string;
+  fixed: (string | number);
+}
+
+export interface ScaleDimensionConfig extends BaseDimensionConfig {
+  max: number;
+  min: number;
+}
+
+/**
+ * This is actually an empty interface used mainly for naming?
+ */
+export interface ColorDimensionConfig extends BaseDimensionConfig {}
+
+export enum TextDimensionMode {
+  Field = 'field',
+  Fixed = 'fixed',
+  Template = 'template',
+}
+
+export interface MapLayerOptions {
+  /**
+   * Custom options depending on the type
+   */
+  config?: unknown;
+  /**
+   * Defines a frame MatcherConfig that may filter data for the given layer
+   */
+  filterData?: unknown;
+  /**
+   * Common method to define geometry fields
+   */
+  location?: FrameGeometrySource;
+  /**
+   * configured unique display name
+   */
+  name: string;
+  /**
+   * Common properties:
+   * https://openlayers.org/en/latest/apidoc/module-ol_layer_Base-BaseLayer.html
+   * Layer opacity (0-1)
+   */
+  opacity?: number;
+  /**
+   * Check tooltip (defaults to true)
+   */
+  tooltip?: boolean;
+  type: string;
+}
+
+export enum FrameGeometrySourceMode {
+  Auto = 'auto',
+  Coords = 'coords',
+  Geohash = 'geohash',
+  Lookup = 'lookup',
 }
 
 /**
@@ -417,6 +486,11 @@ export enum BigValueTextMode {
 export type FieldTextAlignment = ('auto' | 'left' | 'right' | 'center');
 
 /**
+ * Controls the value alignment in the TimelineChart component
+ */
+export type TimelineValueAlignment = ('center' | 'left' | 'right');
+
+/**
  * TODO docs
  */
 export interface VizTextDisplayOptions {
@@ -485,6 +559,14 @@ export enum BarGaugeDisplayMode {
   Basic = 'basic',
   Gradient = 'gradient',
   Lcd = 'lcd',
+}
+
+/**
+ * TODO docs
+ */
+export interface VizTooltipOptions {
+  mode: TooltipDisplayMode;
+  sort: SortOrder;
 }
 
 /**
@@ -595,13 +677,27 @@ export interface DataSourceRef {
   uid?: string;
 }
 
-/**
- * TODO docs
- */
-export interface VizTooltipOptions {
-  mode: TooltipDisplayMode;
-  sort: SortOrder;
+export interface TextDimensionConfig extends BaseDimensionConfig {
+  mode: TextDimensionMode;
 }
+
+export interface FrameGeometrySource {
+  /**
+   * Path to Gazetteer
+   */
+  gazetteer?: string;
+  /**
+   * Field mappings
+   */
+  geohash?: string;
+  latitude?: string;
+  longitude?: string;
+  lookup?: string;
+  mode: FrameGeometrySourceMode;
+  wkt?: string;
+}
+
+export interface Labels {}
 
 /**
  * Field options for each field within a table (e.g 10, "The String", 64.20, etc.)

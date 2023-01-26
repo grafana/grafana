@@ -5,7 +5,6 @@ import React, { RefObject, useCallback, useMemo, useState } from 'react';
 import {
   DataFrame,
   DataLink,
-  DataQuery,
   DataSourceApi,
   DataSourceJsonData,
   Field,
@@ -16,6 +15,7 @@ import {
   SplitOpen,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import {
   SpanBarOptionsData,

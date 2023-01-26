@@ -5,7 +5,6 @@ import React from 'react';
 import {
   DataFrame,
   DataLink,
-  DataQuery,
   DataSourceInstanceSettings,
   DataSourceJsonData,
   dateTime,
@@ -18,6 +17,7 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { Icon } from '@grafana/ui';
 import { SpanLinkFunc, Trace, TraceSpan } from '@jaegertracing/jaeger-ui-components';
 import { TraceToLogsOptionsV2 } from 'app/core/components/TraceToLogs/TraceToLogsSettings';

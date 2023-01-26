@@ -1394,8 +1394,8 @@ github.com/gorilla/websocket v1.4.1/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/ad
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/gorilla/websocket v1.5.0 h1:PPwGk2jz7EePpoHN/+ClbZu8SPxiqlu12wZP/3sWmnc=
 github.com/gorilla/websocket v1.5.0/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
-github.com/grafana/alerting v0.0.0-20230119191910-5ebb70a85264 h1:ApQsGfr05Yma0dpd1+ib11cJQcpmet+E/Ke/aQkdT1Y=
-github.com/grafana/alerting v0.0.0-20230119191910-5ebb70a85264/go.mod h1:NoSLbfmUwE+omWFReFrLtbtOItmvTbuQERJ6XFYp9ME=
+github.com/grafana/alerting v0.0.0-20230124145916-c6a7791d037e h1:YCxvmaPXHGiaQdWy6qeQExivxWzpwUyM0sh73vudWhw=
+github.com/grafana/alerting v0.0.0-20230124145916-c6a7791d037e/go.mod h1:NoSLbfmUwE+omWFReFrLtbtOItmvTbuQERJ6XFYp9ME=
 github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw=
 github.com/grafana/codejen v0.0.3/go.mod h1:zmwwM/DRyQB7pfuBjTWII3CWtxcXh8LTwAYGfDfpR6s=
 github.com/grafana/cuetsy v0.1.5 h1:mnFwAXdbqCsyL8r7kkdUMJ4kOAR26cxIPmrZj7JzTeY=
@@ -1404,12 +1404,13 @@ github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f h1:FvvSVEbnGeM2bUivG
 github.com/grafana/dskit v0.0.0-20211011144203-3a88ec0b675f/go.mod h1:uPG2nyK4CtgNDmWv7qyzYcdI+S90kHHRWvHnBtEMBXM=
 github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036 h1:GplhUk6Xes5JIhUUrggPcPBhOn+eT8+WsHiebvq7GgA=
 github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036/go.mod h1:xbL0rPBG9cCiLr28tMa8zpbdarY27NDyej4t/EjAShU=
-github.com/grafana/grafana-aws-sdk v0.11.0 h1:ncPD/UN0wNcKq3kEU90RdvrnK/6R4VW2Lo5dPcGk9t0=
-github.com/grafana/grafana-aws-sdk v0.11.0/go.mod h1:5Iw3xY7iXJfNaYHrRHMXa/kaB2lWoyntg71PPLGvSs8=
+github.com/grafana/grafana-aws-sdk v0.12.0 h1:eUjFdFZeZE+nyu/RMRz+qFxTBew69ToLBrbRhTbjkfM=
+github.com/grafana/grafana-aws-sdk v0.12.0/go.mod h1:rCXLYoMpPqF90U7XqgVJ1HIAopFVF0bB3SXBVEJIm3I=
 github.com/grafana/grafana-azure-sdk-go v1.5.1 h1:d+wwqvWLYvPeGltxU50LNjvCykyJjoyd5exMYJW4nLM=
 github.com/grafana/grafana-azure-sdk-go v1.5.1/go.mod h1:OJJuBJ3MOoaq2mqD6xlPsArpL2R5j80TrDqPYr35Zak=
 github.com/grafana/grafana-google-sdk-go v0.0.0-20211104130251-b190293eaf58 h1:2ud7NNM7LrGPO4x0NFR8qLq68CqI4SmB7I2yRN2w9oE=
 github.com/grafana/grafana-google-sdk-go v0.0.0-20211104130251-b190293eaf58/go.mod h1:Vo2TKWfDVmNTELBUM+3lkrZvFtBws0qSZdXhQxRdJrE=
+github.com/grafana/grafana-plugin-sdk-go v0.94.0/go.mod h1:3VXz4nCv6wH5SfgB3mlW39s+c+LetqSCjFj7xxPC5+M=
 github.com/grafana/grafana-plugin-sdk-go v0.114.0/go.mod h1:D7x3ah+1d4phNXpbnOaxa/osSaZlwh9/ZUnGGzegRbk=
 github.com/grafana/grafana-plugin-sdk-go v0.147.0 h1:VavvJOa/Ubs+wzalzWIl+FQmdaD4vEK8KVYU0a8rf+E=
 github.com/grafana/grafana-plugin-sdk-go v0.147.0/go.mod h1:NMgO3t2gR5wyLx8bWZ9CTmpDk5Txp4wYFccFLHdYn3Q=
@@ -1419,6 +1420,8 @@ github.com/grafana/prometheus-alertmanager v0.25.1-0.20230119183635-ec19b0a443b7
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20230119183635-ec19b0a443b7/go.mod h1:MnBfDPXJqXmmfPwQlCLvVUdqfnvrAw+hSPtDeaaFwj4=
 github.com/grafana/saml v0.4.13-0.20230123091136-3b6b1ec6c3cb h1:9PLj02xp4DeLTM2+ZyBMcN1sh0ir8GuF/1xXKyF+yws=
 github.com/grafana/saml v0.4.13-0.20230123091136-3b6b1ec6c3cb/go.mod h1:igEejV+fihTIlHXYP8zOec3V5A8y3lws5bQBFsTm4gA=
+github.com/grafana/sqlds/v2 v2.3.10 h1:HWKhE0vR6LoEiE+Is8CSZOgaB//D1yqb2ntkass9Fd4=
+github.com/grafana/sqlds/v2 v2.3.10/go.mod h1:c6ibxnxRVGxV/0YkEgvy7QpQH/lyifFyV7K/14xvdIs=
 github.com/grafana/thema v0.0.0-20230122235053-b4b6714dd1c9 h1:nAdsZkvPYNH6wDPkAi9JaDSIf5i2iVz4+Rqk4AOt6sE=
 github.com/grafana/thema v0.0.0-20230122235053-b4b6714dd1c9/go.mod h1:5j2nf4xmWhKr+1vyGouML8eJ8xERS5Jw/lhjs0eyz78=
 github.com/grafana/xorm v0.8.3-0.20220614223926-2fcda7565af6 h1:I9dh1MXGX0wGyxdV/Sl7+ugnki4Dfsy8lv2s5Yf887o=
@@ -1563,6 +1566,8 @@ github.com/hetznercloud/hcloud-go v1.26.2/go.mod h1:2C5uMtBiMoFr3m7lBFPf7wXTdh33
 github.com/hetznercloud/hcloud-go v1.32.0/go.mod h1:XX/TQub3ge0yWR2yHWmnDVIrB+MQbda1pHxkUmDlUME=
 github.com/hetznercloud/hcloud-go v1.33.2 h1:ptWKVYLW7YtjXzsqTFKFxwpVo3iM9UMkVPBYQE4teLU=
 github.com/hetznercloud/hcloud-go v1.33.2/go.mod h1:XX/TQub3ge0yWR2yHWmnDVIrB+MQbda1pHxkUmDlUME=
+github.com/hmarr/codeowners v1.1.1 h1:a1eD22I36JYH6O/zb+R+JkJgQ3CSlbu6H9EserOojSw=
+github.com/hmarr/codeowners v1.1.1/go.mod h1:+ez+YARvfVhzL1MzY0f2+D/VusjODs4iRj3tO/IxBMw=
 github.com/hodgesds/perf-utils v0.0.8/go.mod h1:F6TfvsbtrF88i++hou29dTXlI2sfsJv+gRZDtmTJkAs=
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
 github.com/huandu/xstrings v1.0.0/go.mod h1:4qWG/gcEcfX4z/mBDHJ++3ReCw9ibxbsNJbcucJdbSo=
@@ -1964,6 +1969,7 @@ github.com/mitchellh/mapstructure v1.5.0 h1:jeMsZIYE/09sWLaz43PL7Gy6RuMjD2eJVyua
 github.com/mitchellh/mapstructure v1.5.0/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=
 github.com/mitchellh/osext v0.0.0-20151018003038-5e2d6d41470f/go.mod h1:OkQIRizQZAeMln+1tSwduZz7+Af5oFlKirV/MSYes2A=
 github.com/mitchellh/reflectwalk v1.0.0/go.mod h1:mSTlrgnPZtwu0c4WaC2kGObEpuNDbx0jmZXqmk4esnw=
+github.com/mitchellh/reflectwalk v1.0.1/go.mod h1:mSTlrgnPZtwu0c4WaC2kGObEpuNDbx0jmZXqmk4esnw=
 github.com/mitchellh/reflectwalk v1.0.2 h1:G2LzWKi524PWgd3mLHV8Y5k7s6XUvT0Gef6zxSIeXaQ=
 github.com/mitchellh/reflectwalk v1.0.2/go.mod h1:mSTlrgnPZtwu0c4WaC2kGObEpuNDbx0jmZXqmk4esnw=
 github.com/mjibson/esc v0.2.0/go.mod h1:9Hw9gxxfHulMF5OJKCyhYD7PzlSdhzXyaGEBRPH1OPs=
