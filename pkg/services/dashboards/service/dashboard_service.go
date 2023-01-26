@@ -548,7 +548,14 @@ func (dr *DashboardServiceImpl) GetDashboard(ctx context.Context, query *dashboa
 }
 
 func validateDashboard(d dashboards.Dashboard) error {
+	if d.Data == nil {
+		return nil
+	}
+
 	blob, err := d.Data.Bytes()
+	if err != nil {
+		return err
+	}
 
 	ctx := cuecontext.New()
 	dk, err := dashboard.NewKind(cuectx.GrafanaThemaRuntime())
