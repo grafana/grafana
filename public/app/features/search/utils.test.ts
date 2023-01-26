@@ -12,7 +12,6 @@ describe('Search utils', () => {
     });
 
     it('should return tag as array, if present', () => {
-      //@ts-ignore
       const params = { sort: undefined, tag: 'test', query: 'test' };
       expect(parseRouteParams(params)).toEqual({
         query: 'test',
@@ -23,14 +22,6 @@ describe('Search utils', () => {
       expect(parseRouteParams(params2)).toEqual({
         query: 'test',
         tag: ['test'],
-      });
-    });
-
-    it('should return sort as a SelectableValue', () => {
-      const params: Partial<SearchQueryParams> = { sort: 'test' };
-
-      expect(parseRouteParams(params)).toEqual({
-        sort: { value: 'test' },
       });
     });
 

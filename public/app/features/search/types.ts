@@ -78,9 +78,8 @@ export interface SearchState {
   starred: boolean;
   explain?: boolean; // adds debug info
   datasource?: string;
-  sort: SelectableValue | null;
-  // Save sorting data between layouts
-  prevSort: SelectableValue | null;
+  sort: string | null;
+  prevSort: string | null; // Save sorting data between layouts
   layout: SearchLayout;
   result?: QueryResponse;
   loading?: boolean;

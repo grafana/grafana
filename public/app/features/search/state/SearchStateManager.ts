@@ -1,7 +1,6 @@
 import { debounce } from 'lodash';
 import { FormEvent } from 'react';
 
-import { SelectableValue } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
@@ -113,7 +112,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     this.setStateAndDoSearch({ starred: false });
   };
 
-  onSortChange = (sort: SelectableValue | null) => {
+  onSortChange = (sort: string | null) => {
     if (this.state.layout === SearchLayout.Folders) {
       this.setStateAndDoSearch({ sort, layout: SearchLayout.List });
     } else {
@@ -146,7 +145,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       tags: this.state.tag as string[],
       ds_uid: this.state.datasource as string,
       location: this.state.folderUid, // This will scope all results to the prefix
-      sort: this.state.sort?.value,
+      sort: this.state.sort ?? undefined,
       explain: this.state.explain,
       withAllowedActions: this.state.explain, // allowedActions are currently not used for anything on the UI and added only in `explain` mode
       starred: this.state.starred,
@@ -179,7 +178,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     const trackingInfo = {
       layout: this.state.layout,
       starred: this.state.starred,
-      sortValue: this.state.sort?.value,
+      sortValue: this.state.sort ?? undefined,
       query: this.state.query,
       tagCount: this.state.tag?.length,
       includePanels: this.state.includePanels,
@@ -233,7 +232,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     reportSearchResultInteraction(this.state.eventTrackingNamespace, {
       layout: this.state.layout,
       starred: this.state.starred,
-      sortValue: this.state.sort?.value,
+      sortValue: this.state.sort ?? undefined,
       query: this.state.query,
       tagCount: this.state.tag?.length,
       includePanels: this.state.includePanels,
@@ -247,7 +246,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     reportDashboardListViewed(this.state.eventTrackingNamespace, {
       layout: this.state.layout,
       starred: this.state.starred,
-      sortValue: this.state.sort?.value,
+      sortValue: this.state.sort ?? undefined,
       query: this.state.query,
       tagCount: this.state.tag?.length,
       includePanels: this.state.includePanels,
