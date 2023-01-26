@@ -7,19 +7,19 @@ import (
 	"net/http"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
@@ -27,11 +27,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
+	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
 func setUpGetOrgUsersDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
@@ -196,79 +198,69 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	})
 }
 
-func TestOrgUsersAPIEndpoint_LegacyAccessControl_FolderAdmin(t *testing.T) {
-	cfg := setting.NewCfg()
-	cfg.RBACEnabled = false
-	sc := setupHTTPServerWithCfg(t, true, cfg)
-	setInitCtxSignedInViewer(sc.initCtx)
-
-	// Create a dashboard folder
-	cmd := dashboards.SaveDashboardCommand{
-		OrgID:    testOrgID,
-		FolderID: 1,
-		IsFolder: true,
-		Dashboard: simplejson.NewFromAny(map[string]interface{}{
-			"id":    nil,
-			"title": "1 test dash folder",
-			"tags":  "prod",
-		}),
+func TestOrgUsersAPIEndpoint_LegacyAccessControl(t *testing.T) {
+	type testCase struct {
+		desc          string
+		isTeamAdmin   bool
+		isFolderAdmin bool
+		role          org.RoleType
+		expectedCode  int
 	}
-	folder, err := sc.dashboardsStore.SaveDashboard(context.Background(), cmd)
-	require.NoError(t, err)
-	require.NotNil(t, folder)
 
-	// Grant our test Viewer with permission to admin the folder
-	acls := []*dashboards.DashboardACL{
+	tests := []testCase{
 		{
-			DashboardID: folder.ID,
-			OrgID:       testOrgID,
-			UserID:      testUserID,
-			Permission:  dashboards.PERMISSION_ADMIN,
-			Created:     time.Now(),
-			Updated:     time.Now(),
+			desc:          "should be able to search org user when user is folder admin",
+			isFolderAdmin: true,
+			role:          org.RoleViewer,
+			expectedCode:  http.StatusOK,
+		},
+		{
+			desc:          "should be able to search org user when user is team admin",
+			isFolderAdmin: true,
+			role:          org.RoleViewer,
+			expectedCode:  http.StatusOK,
+		},
+		{
+			desc:         "should be able to search org user when user is admin",
+			role:         org.RoleAdmin,
+			expectedCode: http.StatusOK,
+		},
+		{
+			desc:         "should not be able to search org user when user is viewer",
+			role:         org.RoleViewer,
+			expectedCode: http.StatusForbidden,
+		},
+		{
+			desc:         "should not be able to search org user when user is editor",
+			role:         org.RoleEditor,
+			expectedCode: http.StatusForbidden,
 		},
 	}
-	err = sc.dashboardsStore.UpdateDashboardACL(context.Background(), folder.ID, acls)
-	require.NoError(t, err)
 
-	response := callAPI(sc.server, http.MethodGet, "/api/org/users/lookup", nil, t)
-	assert.Equal(t, http.StatusOK, response.Code)
-}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				cfg := setting.NewCfg()
+				cfg.RBACEnabled = false
+				hs.Cfg = cfg
 
-func TestOrgUsersAPIEndpoint_LegacyAccessControl_TeamAdmin(t *testing.T) {
-	cfg := setting.NewCfg()
-	cfg.RBACEnabled = false
-	sc := setupHTTPServerWithCfg(t, true, cfg)
-	setInitCtxSignedInViewer(sc.initCtx)
+				dashboardService := dashboards.NewFakeDashboardService(t)
+				dashboardService.On("HasAdminPermissionInDashboardsOrFolders", mock.Anything, mock.Anything).Return(tt.isFolderAdmin, nil).Maybe()
+				hs.DashboardService = dashboardService
 
-	// Setup store teams
-	team1, err := sc.teamService.CreateTeam("testteam1", "testteam1@example.org", testOrgID)
-	require.NoError(t, err)
-	err = sc.teamService.AddTeamMember(testUserID, testOrgID, team1.ID, false, dashboards.PERMISSION_ADMIN)
-	require.NoError(t, err)
+				teamService := teamtest.NewFakeService()
+				teamService.ExpectedIsAdmin = tt.isTeamAdmin
+				hs.teamService = teamService
+				hs.orgService = &orgtest.FakeOrgService{ExpectedSearchOrgUsersResult: &org.SearchOrgUsersQueryResult{}}
+				hs.authInfoService = &logintest.AuthInfoServiceFake{}
+			})
 
-	response := callAPI(sc.server, http.MethodGet, "/api/org/users/lookup", nil, t)
-	assert.Equal(t, http.StatusOK, response.Code)
-}
-
-func TestOrgUsersAPIEndpoint_LegacyAccessControl_Admin(t *testing.T) {
-	cfg := setting.NewCfg()
-	cfg.RBACEnabled = false
-	sc := setupHTTPServerWithCfg(t, true, cfg)
-	setInitCtxSignedInOrgAdmin(sc.initCtx)
-
-	response := callAPI(sc.server, http.MethodGet, "/api/org/users/lookup", nil, t)
-	assert.Equal(t, http.StatusOK, response.Code)
-}
-
-func TestOrgUsersAPIEndpoint_LegacyAccessControl_Viewer(t *testing.T) {
-	cfg := setting.NewCfg()
-	cfg.RBACEnabled = false
-	sc := setupHTTPServerWithCfg(t, true, cfg)
-	setInitCtxSignedInViewer(sc.initCtx)
-
-	response := callAPI(sc.server, http.MethodGet, "/api/org/users/lookup", nil, t)
-	assert.Equal(t, http.StatusForbidden, response.Code)
+			res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/org/users/lookup"), &user.SignedInUser{OrgID: 1, OrgRole: tt.role}))
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
+		})
+	}
 }
 
 func TestOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
