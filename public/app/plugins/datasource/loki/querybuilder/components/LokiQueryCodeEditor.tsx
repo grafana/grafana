@@ -27,15 +27,6 @@ export function LokiQueryCodeEditor({
 }: Props) {
   const styles = useStyles2(getStyles);
 
-  // the inner QueryField works like this when a blur event happens:
-  // - if it has an onBlur prop, it calls it
-  // - else it calls onRunQuery (some extra conditions apply)
-  //
-  // we want it to not do anything when a blur event happens in explore mode,
-  // so we set an empty-function in such case. otherwise we set `undefined`,
-  // which will cause it to run the query when blur happens.
-  const onBlur = app === CoreApp.Explore ? () => undefined : undefined;
-
   return (
     <div className={styles.wrapper}>
       <LokiQueryField
@@ -44,7 +35,6 @@ export function LokiQueryCodeEditor({
         range={range}
         onRunQuery={onRunQuery}
         onChange={onChange}
-        onBlur={onBlur}
         history={history}
         data={data}
         app={app}
