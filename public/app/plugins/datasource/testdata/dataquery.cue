@@ -39,39 +39,39 @@ composableKinds: DataQuery: {
 						sim?:         #SimulationQuery
 						csvWave?: [...#CSVWave] //TODO can we prevent partial from being generated
 						labels?:                string
-						lines?:                 number
+						lines?:                 int64
 						levelColumn?:           bool
 						channel?:               string
 						nodes?:                 #NodesQuery
 						csvFileName?:           string
 						csvContent?:            string
 						rawFrameContent?:       string
-						seriesCount?:           number
+						seriesCount?:           int32
 						usa?:                   #USAQuery
 						errorType?:             "server_panic" | "frontend_exception" | "frontend_observable"
-						spanCount?:             number
+						spanCount?:             int32
 
 						#StreamingQuery: {
 							type:   "signal" | "logs" | "fetch"
-							speed:  number
-							spread: number
-							noise:  number
-							bands?: number
+							speed:  int32
+							spread: int32
+							noise:  int32
+							bands?: int32
 							url?:   string
 						} @cuetsy(kind="interface")
 
 						#PulseWaveQuery: {
-							timeStep?: number
-							onCount?:  number
-							offCount?: number
-							onValue?:  number
-							offValue?: number
+							timeStep?: int64
+							onCount?:  int64
+							offCount?: int64
+							onValue?:  float64
+							offValue?: float64
 						} @cuetsy(kind="interface")
 
 						#SimulationQuery: {
 							key: {
 								type: string
-								tick: number
+								tick: float64
 								uid?: string
 							}
 							config?: {...}
@@ -81,7 +81,7 @@ composableKinds: DataQuery: {
 
 						#NodesQuery: {
 							type?:  "random" | "response" | "random edges"
-							count?: number
+							count?: int64
 						} @cuetsy(kind="interface")
 
 						#USAQuery: {
@@ -92,7 +92,7 @@ composableKinds: DataQuery: {
 						} @cuetsy(kind="interface")
 
 						#CSVWave: {
-							timeStep?:  number
+							timeStep?:  int64
 							name?:      string
 							valuesCSV?: string
 							labels?:    string

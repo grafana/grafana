@@ -56,15 +56,15 @@ const (
 
 // CSVWave defines model for CSVWave.
 type CSVWave struct {
-	Labels    *string  `json:"labels,omitempty"`
-	Name      *string  `json:"name,omitempty"`
-	TimeStep  *float32 `json:"timeStep,omitempty"`
-	ValuesCSV *string  `json:"valuesCSV,omitempty"`
+	Labels    *string `json:"labels,omitempty"`
+	Name      *string `json:"name,omitempty"`
+	TimeStep  *int64  `json:"timeStep,omitempty"`
+	ValuesCSV *string `json:"valuesCSV,omitempty"`
 }
 
 // NodesQuery defines model for NodesQuery.
 type NodesQuery struct {
-	Count *float32        `json:"count,omitempty"`
+	Count *int64          `json:"count,omitempty"`
 	Type  *NodesQueryType `json:"type,omitempty"`
 }
 
@@ -73,11 +73,11 @@ type NodesQueryType string
 
 // PulseWaveQuery defines model for PulseWaveQuery.
 type PulseWaveQuery struct {
-	OffCount *float32 `json:"offCount,omitempty"`
-	OffValue *float32 `json:"offValue,omitempty"`
-	OnCount  *float32 `json:"onCount,omitempty"`
-	OnValue  *float32 `json:"onValue,omitempty"`
-	TimeStep *float32 `json:"timeStep,omitempty"`
+	OffCount *int64   `json:"offCount,omitempty"`
+	OffValue *float64 `json:"offValue,omitempty"`
+	OnCount  *int64   `json:"onCount,omitempty"`
+	OnValue  *float64 `json:"onValue,omitempty"`
+	TimeStep *int64   `json:"timeStep,omitempty"`
 }
 
 // TODO: Should this live here given it's not used in the dataquery?
@@ -93,7 +93,7 @@ type Scenario struct {
 type SimulationQuery struct {
 	Config map[string]interface{} `json:"config,omitempty"`
 	Key    struct {
-		Tick float32 `json:"tick"`
+		Tick float64 `json:"tick"`
 		Type string  `json:"type"`
 		Uid  *string `json:"uid,omitempty"`
 	} `json:"key"`
@@ -103,10 +103,10 @@ type SimulationQuery struct {
 
 // StreamingQuery defines model for StreamingQuery.
 type StreamingQuery struct {
-	Bands  *float32           `json:"bands,omitempty"`
-	Noise  float32            `json:"noise"`
-	Speed  float32            `json:"speed"`
-	Spread float32            `json:"spread"`
+	Bands  *int32             `json:"bands,omitempty"`
+	Noise  int32              `json:"noise"`
+	Speed  int32              `json:"speed"`
+	Spread int32              `json:"spread"`
 	Type   StreamingQueryType `json:"type"`
 	Url    *string            `json:"url,omitempty"`
 }
@@ -121,10 +121,10 @@ type TestDataDataQuery struct {
 	CsvContent  *string `json:"csvContent,omitempty"`
 	CsvFileName *string `json:"csvFileName,omitempty"`
 	CsvWave     *[]struct {
-		Labels    *string  `json:"labels,omitempty"`
-		Name      *string  `json:"name,omitempty"`
-		TimeStep  *float32 `json:"timeStep,omitempty"`
-		ValuesCSV *string  `json:"valuesCSV,omitempty"`
+		Labels    *string `json:"labels,omitempty"`
+		Name      *string `json:"name,omitempty"`
+		TimeStep  *int64  `json:"timeStep,omitempty"`
+		ValuesCSV *string `json:"valuesCSV,omitempty"`
 	} `json:"csvWave,omitempty"`
 
 	// For mixed data sources the selected datasource is on the query level.
@@ -138,20 +138,20 @@ type TestDataDataQuery struct {
 	Hide *bool `json:"hide,omitempty"`
 
 	// Unique, guid like, string used in explore mode
-	Key         *string  `json:"key,omitempty"`
-	Labels      *string  `json:"labels,omitempty"`
-	LevelColumn *bool    `json:"levelColumn,omitempty"`
-	Lines       *float32 `json:"lines,omitempty"`
+	Key         *string `json:"key,omitempty"`
+	Labels      *string `json:"labels,omitempty"`
+	LevelColumn *bool   `json:"levelColumn,omitempty"`
+	Lines       *int64  `json:"lines,omitempty"`
 	Nodes       *struct {
-		Count *float32   `json:"count,omitempty"`
+		Count *int64     `json:"count,omitempty"`
 		Type  *NodesType `json:"type,omitempty"`
 	} `json:"nodes,omitempty"`
 	PulseWave *struct {
-		OffCount *float32 `json:"offCount,omitempty"`
-		OffValue *float32 `json:"offValue,omitempty"`
-		OnCount  *float32 `json:"onCount,omitempty"`
-		OnValue  *float32 `json:"onValue,omitempty"`
-		TimeStep *float32 `json:"timeStep,omitempty"`
+		OffCount *int64   `json:"offCount,omitempty"`
+		OffValue *float64 `json:"offValue,omitempty"`
+		OnCount  *int64   `json:"onCount,omitempty"`
+		OnValue  *float64 `json:"onValue,omitempty"`
+		TimeStep *int64   `json:"timeStep,omitempty"`
 	} `json:"pulseWave,omitempty"`
 
 	// Specify the query flavor
@@ -160,25 +160,25 @@ type TestDataDataQuery struct {
 	RawFrameContent *string `json:"rawFrameContent,omitempty"`
 
 	// A - Z
-	RefId       string   `json:"refId"`
-	ScenarioId  *string  `json:"scenarioId,omitempty"`
-	SeriesCount *float32 `json:"seriesCount,omitempty"`
+	RefId       string  `json:"refId"`
+	ScenarioId  *string `json:"scenarioId,omitempty"`
+	SeriesCount *int32  `json:"seriesCount,omitempty"`
 	Sim         *struct {
 		Config map[string]interface{} `json:"config,omitempty"`
 		Key    struct {
-			Tick float32 `json:"tick"`
+			Tick float64 `json:"tick"`
 			Type string  `json:"type"`
 			Uid  *string `json:"uid,omitempty"`
 		} `json:"key"`
 		Last   *bool `json:"last,omitempty"`
 		Stream *bool `json:"stream,omitempty"`
 	} `json:"sim,omitempty"`
-	SpanCount *float32 `json:"spanCount,omitempty"`
+	SpanCount *int32 `json:"spanCount,omitempty"`
 	Stream    *struct {
-		Bands  *float32   `json:"bands,omitempty"`
-		Noise  float32    `json:"noise"`
-		Speed  float32    `json:"speed"`
-		Spread float32    `json:"spread"`
+		Bands  *int32     `json:"bands,omitempty"`
+		Noise  int32      `json:"noise"`
+		Speed  int32      `json:"speed"`
+		Spread int32      `json:"spread"`
 		Type   StreamType `json:"type"`
 		Url    *string    `json:"url,omitempty"`
 	} `json:"stream,omitempty"`
