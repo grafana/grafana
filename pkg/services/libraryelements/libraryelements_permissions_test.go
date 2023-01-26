@@ -250,9 +250,9 @@ func TestLibraryElementPermissions(t *testing.T) {
 					resp := sc.service.createHandler(sc.reqContext)
 					result := validateAndUnMarshalResponse(t, resp)
 					result.Result.Meta.CreatedBy.Name = userInDbName
-					result.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+					result.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
 					result.Result.Meta.UpdatedBy.Name = userInDbName
-					result.Result.Meta.UpdatedBy.AvatarURL = userInDbAvatar
+					result.Result.Meta.UpdatedBy.AvatarUrl = userInDbAvatar
 					result.Result.Meta.FolderName = folder.Title
 					result.Result.Meta.FolderUID = folder.UID
 					results = append(results, result.Result)
@@ -273,9 +273,9 @@ func TestLibraryElementPermissions(t *testing.T) {
 				resp := sc.service.createHandler(sc.reqContext)
 				result := validateAndUnMarshalResponse(t, resp)
 				result.Result.Meta.CreatedBy.Name = userInDbName
-				result.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+				result.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
 				result.Result.Meta.UpdatedBy.Name = userInDbName
-				result.Result.Meta.UpdatedBy.AvatarURL = userInDbAvatar
+				result.Result.Meta.UpdatedBy.AvatarUrl = userInDbAvatar
 				result.Result.Meta.FolderName = "General"
 				result.Result.Meta.FolderUID = ""
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
@@ -313,9 +313,9 @@ func TestLibraryElementPermissions(t *testing.T) {
 					resp := sc.service.createHandler(sc.reqContext)
 					result := validateAndUnMarshalResponse(t, resp)
 					result.Result.Meta.CreatedBy.Name = userInDbName
-					result.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+					result.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
 					result.Result.Meta.UpdatedBy.Name = userInDbName
-					result.Result.Meta.UpdatedBy.AvatarURL = userInDbAvatar
+					result.Result.Meta.UpdatedBy.AvatarUrl = userInDbAvatar
 					result.Result.Meta.FolderName = folder.Title
 					result.Result.Meta.FolderUID = folder.UID
 					results = append(results, result.Result)
@@ -365,9 +365,9 @@ func TestLibraryElementPermissions(t *testing.T) {
 				resp := sc.service.createHandler(sc.reqContext)
 				result := validateAndUnMarshalResponse(t, resp)
 				result.Result.Meta.CreatedBy.Name = userInDbName
-				result.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+				result.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
 				result.Result.Meta.UpdatedBy.Name = userInDbName
-				result.Result.Meta.UpdatedBy.AvatarURL = userInDbAvatar
+				result.Result.Meta.UpdatedBy.AvatarUrl = userInDbAvatar
 				result.Result.Meta.FolderName = "General"
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 

@@ -3,6 +3,7 @@ package libraryelements
 import (
 	"testing"
 
+	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/util"
 
 	"github.com/google/go-cmp/cmp"
@@ -68,15 +69,15 @@ func TestPatchLibraryElement(t *testing.T) {
 						ConnectedDashboards: 0,
 						Created:             sc.initialResult.Result.Meta.Created,
 						Updated:             result.Result.Meta.Updated,
-						CreatedBy: LibraryElementDTOMetaUser{
-							ID:        1,
+						CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+							Id:        1,
 							Name:      userInDbName,
-							AvatarURL: userInDbAvatar,
+							AvatarUrl: userInDbAvatar,
 						},
-						UpdatedBy: LibraryElementDTOMetaUser{
-							ID:        1,
+						UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+							Id:        1,
 							Name:      "signed_in_user",
-							AvatarURL: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
+							AvatarUrl: "/avatar/37524e1eb8b3e32850b57db0a19af93b",
 						},
 					},
 				},
@@ -101,7 +102,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			var result = validateAndUnMarshalResponse(t, resp)
 			sc.initialResult.Result.FolderID = newFolder.ID
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
-			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
 			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Version = 2
 			sc.initialResult.Result.Meta.FolderName = "NewFolder"
@@ -125,7 +126,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			var result = validateAndUnMarshalResponse(t, resp)
 			sc.initialResult.Result.Name = "New Name"
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
-			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
 			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Model["title"] = "Text - Library Panel"
 			sc.initialResult.Result.Version = 2
@@ -148,7 +149,7 @@ func TestPatchLibraryElement(t *testing.T) {
 			var result = validateAndUnMarshalResponse(t, resp)
 			sc.initialResult.Result.UID = cmd.UID
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
-			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
 			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Model["title"] = "Text - Library Panel"
 			sc.initialResult.Result.Version = 2
@@ -225,7 +226,7 @@ func TestPatchLibraryElement(t *testing.T) {
 				"description": "New description",
 			}
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
-			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
 			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
@@ -252,7 +253,7 @@ func TestPatchLibraryElement(t *testing.T) {
 				"description": "New description",
 			}
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
-			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
 			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
@@ -279,7 +280,7 @@ func TestPatchLibraryElement(t *testing.T) {
 				"description": "A description",
 			}
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
-			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
 			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
@@ -295,9 +296,9 @@ func TestPatchLibraryElement(t *testing.T) {
 			sc.ctx.Req.Body = mockRequestBody(cmd)
 			resp := sc.service.patchHandler(sc.reqContext)
 			var result = validateAndUnMarshalResponse(t, resp)
-			sc.initialResult.Result.Meta.UpdatedBy.ID = int64(2)
+			sc.initialResult.Result.Meta.UpdatedBy.Id = int64(2)
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
-			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
 			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {
@@ -393,7 +394,7 @@ func TestPatchLibraryElement(t *testing.T) {
 				"description": "A description",
 			}
 			sc.initialResult.Result.Meta.CreatedBy.Name = userInDbName
-			sc.initialResult.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+			sc.initialResult.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
 			sc.initialResult.Result.Meta.Updated = result.Result.Meta.Updated
 			sc.initialResult.Result.Version = 2
 			if diff := cmp.Diff(sc.initialResult.Result, result.Result, getCompareOptions()...); diff != "" {

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"time"
+
+	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 )
 
 type LibraryConnectionKind int
@@ -93,15 +95,8 @@ type LibraryElementDTOMeta struct {
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
 
-	CreatedBy LibraryElementDTOMetaUser `json:"createdBy"`
-	UpdatedBy LibraryElementDTOMetaUser `json:"updatedBy"`
-}
-
-// LibraryElementDTOMetaUser is the meta information for user that creates/changes the library element.
-type LibraryElementDTOMetaUser struct {
-	ID        int64  `json:"id"`
-	Name      string `json:"name"`
-	AvatarURL string `json:"avatarUrl"`
+	CreatedBy librarypanel.LibraryElementDTOMetaUser `json:"createdBy"`
+	UpdatedBy librarypanel.LibraryElementDTOMetaUser `json:"updatedBy"`
 }
 
 // libraryElementConnection is the model for library element connections.
@@ -129,13 +124,13 @@ type libraryElementConnectionWithMeta struct {
 
 // LibraryElementConnectionDTO is the frontend DTO for element connections.
 type LibraryElementConnectionDTO struct {
-	ID            int64                     `json:"id"`
-	Kind          int64                     `json:"kind"`
-	ElementID     int64                     `json:"elementId"`
-	ConnectionID  int64                     `json:"connectionId"`
-	ConnectionUID string                    `json:"connectionUid"`
-	Created       time.Time                 `json:"created"`
-	CreatedBy     LibraryElementDTOMetaUser `json:"createdBy"`
+	ID            int64                                  `json:"id"`
+	Kind          int64                                  `json:"kind"`
+	ElementID     int64                                  `json:"elementId"`
+	ConnectionID  int64                                  `json:"connectionId"`
+	ConnectionUID string                                 `json:"connectionUid"`
+	Created       time.Time                              `json:"created"`
+	CreatedBy     librarypanel.LibraryElementDTOMetaUser `json:"createdBy"`
 }
 
 var (

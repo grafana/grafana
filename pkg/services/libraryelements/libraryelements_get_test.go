@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/web"
@@ -54,15 +55,15 @@ func TestGetLibraryElement(t *testing.T) {
 							ConnectedDashboards: 0,
 							Created:             res.Result.Meta.Created,
 							Updated:             res.Result.Meta.Updated,
-							CreatedBy: LibraryElementDTOMetaUser{
-								ID:        1,
+							CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								Id:        1,
 								Name:      userInDbName,
-								AvatarURL: userInDbAvatar,
+								AvatarUrl: userInDbAvatar,
 							},
-							UpdatedBy: LibraryElementDTOMetaUser{
-								ID:        1,
+							UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								Id:        1,
 								Name:      userInDbName,
-								AvatarURL: userInDbAvatar,
+								AvatarUrl: userInDbAvatar,
 							},
 						},
 					},
@@ -149,15 +150,15 @@ func TestGetLibraryElement(t *testing.T) {
 							ConnectedDashboards: 1,
 							Created:             res.Result.Meta.Created,
 							Updated:             res.Result.Meta.Updated,
-							CreatedBy: LibraryElementDTOMetaUser{
-								ID:        1,
+							CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								Id:        1,
 								Name:      userInDbName,
-								AvatarURL: userInDbAvatar,
+								AvatarUrl: userInDbAvatar,
 							},
-							UpdatedBy: LibraryElementDTOMetaUser{
-								ID:        1,
+							UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+								Id:        1,
 								Name:      userInDbName,
-								AvatarURL: userInDbAvatar,
+								AvatarUrl: userInDbAvatar,
 							},
 						},
 					},

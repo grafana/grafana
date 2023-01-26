@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -633,15 +634,15 @@ func toLibraryElement(t *testing.T, res libraryelements.LibraryElementDTO) libra
 			ConnectedDashboards: res.Meta.ConnectedDashboards,
 			Created:             res.Meta.Created,
 			Updated:             res.Meta.Updated,
-			CreatedBy: libraryelements.LibraryElementDTOMetaUser{
-				ID:        res.Meta.CreatedBy.ID,
+			CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+				Id:        res.Meta.CreatedBy.Id,
 				Name:      res.Meta.CreatedBy.Name,
-				AvatarURL: res.Meta.CreatedBy.AvatarURL,
+				AvatarUrl: res.Meta.CreatedBy.AvatarUrl,
 			},
-			UpdatedBy: libraryelements.LibraryElementDTOMetaUser{
-				ID:        res.Meta.UpdatedBy.ID,
+			UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+				Id:        res.Meta.UpdatedBy.Id,
 				Name:      res.Meta.UpdatedBy.Name,
-				AvatarURL: res.Meta.UpdatedBy.AvatarURL,
+				AvatarUrl: res.Meta.UpdatedBy.AvatarUrl,
 			},
 		},
 	}
@@ -671,15 +672,15 @@ func getExpected(t *testing.T, res libraryelements.LibraryElementDTO, UID string
 			ConnectedDashboards: 0,
 			Created:             res.Meta.Created,
 			Updated:             res.Meta.Updated,
-			CreatedBy: libraryelements.LibraryElementDTOMetaUser{
-				ID:        1,
+			CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+				Id:        1,
 				Name:      userInDbName,
-				AvatarURL: userInDbAvatar,
+				AvatarUrl: userInDbAvatar,
 			},
-			UpdatedBy: libraryelements.LibraryElementDTOMetaUser{
-				ID:        1,
+			UpdatedBy: librarypanel.LibraryElementDTOMetaUser{
+				Id:        1,
 				Name:      userInDbName,
-				AvatarURL: userInDbAvatar,
+				AvatarUrl: userInDbAvatar,
 			},
 		},
 	}

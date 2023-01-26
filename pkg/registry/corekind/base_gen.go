@@ -13,6 +13,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
+	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/kinds/playlist"
 	"github.com/grafana/grafana/pkg/kinds/preferences"
 	"github.com/grafana/grafana/pkg/kinds/serviceaccount"
@@ -34,6 +35,7 @@ import (
 type Base struct {
 	all            []kindsys.Core
 	dashboard      *dashboard.Kind
+	librarypanel   *librarypanel.Kind
 	playlist       *playlist.Kind
 	preferences    *preferences.Kind
 	serviceaccount *serviceaccount.Kind
@@ -43,6 +45,7 @@ type Base struct {
 // type guards
 var (
 	_ kindsys.Core = &dashboard.Kind{}
+	_ kindsys.Core = &librarypanel.Kind{}
 	_ kindsys.Core = &playlist.Kind{}
 	_ kindsys.Core = &preferences.Kind{}
 	_ kindsys.Core = &serviceaccount.Kind{}
@@ -52,6 +55,11 @@ var (
 // Dashboard returns the [kindsys.Interface] implementation for the dashboard kind.
 func (b *Base) Dashboard() *dashboard.Kind {
 	return b.dashboard
+}
+
+// LibraryPanel returns the [kindsys.Interface] implementation for the librarypanel kind.
+func (b *Base) LibraryPanel() *librarypanel.Kind {
+	return b.librarypanel
 }
 
 // Playlist returns the [kindsys.Interface] implementation for the playlist kind.
@@ -83,6 +91,12 @@ func doNewBase(rt *thema.Runtime) *Base {
 		panic(fmt.Sprintf("error while initializing the dashboard Kind: %s", err))
 	}
 	reg.all = append(reg.all, reg.dashboard)
+
+	reg.librarypanel, err = librarypanel.NewKind(rt)
+	if err != nil {
+		panic(fmt.Sprintf("error while initializing the librarypanel Kind: %s", err))
+	}
+	reg.all = append(reg.all, reg.librarypanel)
 
 	reg.playlist, err = playlist.NewKind(rt)
 	if err != nil {
