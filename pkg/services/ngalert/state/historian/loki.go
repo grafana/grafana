@@ -72,7 +72,10 @@ func (h *RemoteLokiBackend) QueryStates(ctx context.Context, query models.Histor
 	if query.RuleUID == "" {
 		return nil, errors.New("the RuleUID is not set but required")
 	}
-	selectors := buildSelectors(query)
+	selectors, err := buildSelectors(query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build the provided selectors: %w", err)
+	}
 	res, err := h.client.query(ctx, selectors, query.From.Unix(), query.To.Unix())
 	if err != nil {
 		return nil, err
@@ -80,17 +83,35 @@ func (h *RemoteLokiBackend) QueryStates(ctx context.Context, query models.Histor
 	return merge(res)
 }
 
-func buildSelectors(query models.HistoryQuery) [][3]string {
+func buildSelectors(query models.HistoryQuery) ([]Selector, error) {
 	// +2 as we put the RuleID and OrgID also into a label selector.
-	selectors := make([][3]string, len(query.Labels)+2)
-	selectors[0] = [3]string{"rule_id", "=", query.RuleUID}
-	selectors[1] = [3]string{"org_id", "=", fmt.Sprintf("%d", query.OrgID)}
+	selectors := make([]Selector, len(query.Labels)+2)
+
+	// Set the predefined selector rule_id
+	selector, err := NewSelector("rule_id", "=", query.RuleUID)
+	if err != nil {
+		return nil, err
+	}
+	selectors[0] = selector
+
+	// Set the predefined selector org_id
+	selector, err = NewSelector("org_id", "=", fmt.Sprintf("%d", query.OrgID))
+	if err != nil {
+		return nil, err
+	}
+	selectors[1] = selector
+
+	// Set all the other selectors
 	i := 2
 	for label, val := range query.Labels {
-		selectors[i] = [3]string{label, "=", val}
+		selector, err = NewSelector(label, "=", val)
+		if err != nil {
+			return nil, err
+		}
+		selectors[i] = selector
 		i++
 	}
-	return selectors
+	return selectors, nil
 }
 
 // merge will put all the results in one array sorted by timestamp.

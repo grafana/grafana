@@ -59,6 +59,28 @@ type httpLokiClient struct {
 	log    log.Logger
 }
 
+// Kind of Operation (=, !=, =~, !~)
+type Operator string
+
+const (
+	// Equal operator (=)
+	Eq Operator = "="
+	// Not Equal operator (!=)
+	Neq Operator = "!="
+	// Equal operator supporting RegEx (=~)
+	EqRegEx Operator = "=~"
+	// Not Equal operator supporting RegEx (!~)
+	NeqRegEx Operator = "!~"
+)
+
+type Selector struct {
+	// Label to Select
+	Label string
+	Op    Operator
+	// Value that is expected
+	Value string
+}
+
 func newLokiClient(cfg LokiConfig, logger log.Logger) *httpLokiClient {
 	return &httpLokiClient{
 		client: http.Client{
@@ -165,7 +187,7 @@ func (c *httpLokiClient) setAuthAndTenantHeaders(req *http.Request) {
 		req.Header.Add("X-Scope-OrgID", c.cfg.TenantID)
 	}
 }
-func (c *httpLokiClient) query(ctx context.Context, selectors [][3]string, start, end int64) (QueryRes, error) {
+func (c *httpLokiClient) query(ctx context.Context, selectors []Selector, start, end int64) (QueryRes, error) {
 	// Run the pre-flight checks for the query.
 	if len(selectors) == 0 {
 		return QueryRes{}, fmt.Errorf("at least one selector required to query")
@@ -174,13 +196,8 @@ func (c *httpLokiClient) query(ctx context.Context, selectors [][3]string, start
 		return QueryRes{}, fmt.Errorf("start time cannot be after end time")
 	}
 
-	query, err := selectorString(selectors)
-	if err != nil {
-		return QueryRes{}, fmt.Errorf("failed to build loki selector string: %w", err)
-	}
-
 	values := url.Values{}
-	values.Set("query", query)
+	values.Set("query", selectorString(selectors))
 	values.Set("start", fmt.Sprintf("%d", start))
 	values.Set("end", fmt.Sprintf("%d", end))
 
@@ -220,22 +237,26 @@ func (c *httpLokiClient) query(ctx context.Context, selectors [][3]string, start
 	return queryRes, nil
 }
 
-func selectorString(selectors [][3]string) (string, error) {
+func selectorString(selectors []Selector) string {
 	if len(selectors) == 0 {
-		return "{}", nil
+		return "{}"
 	}
 	// Build the query selector.
 	query := ""
 	for _, s := range selectors {
-		if !isValidOperator(s[1]) {
-			return "", fmt.Errorf("'%s' is not a valid query operator", s[1])
-		}
-		query += fmt.Sprintf("%s%s%q,", s[0], s[1], s[2])
+		query += fmt.Sprintf("%s%s%q,", s.Label, s.Op, s.Value)
 	}
 	// Remove the last comma, as we append one to every selector.
 	query = query[:len(query)-1]
-	return "{" + query + "}", nil
+	return "{" + query + "}"
 
+}
+
+func NewSelector(label, op, value string) (Selector, error) {
+	if !isValidOperator(op) {
+		return Selector{}, fmt.Errorf("'%s' is not a valid query operator", op)
+	}
+	return Selector{Label: label, Op: Operator(op), Value: value}, nil
 }
 
 func isValidOperator(op string) bool {

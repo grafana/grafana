@@ -117,8 +117,8 @@ func TestLokiHTTPClient(t *testing.T) {
 
 		// Create an array of selectors that should be used for the
 		// query.
-		selectors := [][3]string{
-			{"", "", ""},
+		selectors := []Selector{
+			{Label: "", Op: Eq, Value: ""},
 		}
 
 		// Define the query time range
@@ -133,21 +133,24 @@ func TestLokiHTTPClient(t *testing.T) {
 }
 
 func TestSelectorString(t *testing.T) {
-	selectors := [][3]string{{"name", "=", "Bob"}, {"age", "=~", "30"}}
+	selectors := []Selector{{"name", "=", "Bob"}, {"age", "=~", "30"}}
 	expected := "{name=\"Bob\",age=~\"30\"}"
-	result, err := selectorString(selectors)
-	require.NoError(t, err)
+	result := selectorString(selectors)
 	require.Equal(t, expected, result)
 
-	selectors = [][3]string{{"name", "?", "Bob"}}
-	expected = ""
-	result, err = selectorString(selectors)
-	require.Error(t, err)
-	require.Equal(t, expected, result)
-
-	selectors = [][3]string{}
+	selectors = []Selector{}
 	expected = "{}"
-	result, err = selectorString(selectors)
-	require.NoError(t, err)
+	result = selectorString(selectors)
 	require.Equal(t, expected, result)
+}
+
+func TestNewSelector(t *testing.T) {
+	selector, err := NewSelector("label", "=", "value")
+	require.NoError(t, err)
+	require.Equal(t, "label", selector.Label)
+	require.Equal(t, Eq, selector.Op)
+	require.Equal(t, "value", selector.Value)
+
+	selector, err = NewSelector("label", "invalid", "value")
+	require.Error(t, err)
 }
