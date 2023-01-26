@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
@@ -48,7 +47,7 @@ func (a *simpleAuthService) GetDashboardReadFilter(user *user.SignedInUser) (Res
 		OrgId:           user.OrgID,
 		Dialect:         a.sql.GetDialect(),
 		UserId:          user.UserID,
-		PermissionLevel: models.PERMISSION_VIEW,
+		PermissionLevel: dashboards.PERMISSION_VIEW,
 	}
 	rows := make([]*dashIdQueryResult, 0)
 
