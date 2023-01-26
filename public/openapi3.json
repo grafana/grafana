@@ -964,7 +964,7 @@
         "content": {
           "application/json": {
             "schema": {
-              "$ref": "#/components/schemas/Prefs"
+              "$ref": "#/components/schemas/Preferences"
             }
           }
         },
@@ -1625,6 +1625,16 @@
           "application/json": {
             "schema": {
               "$ref": "#/components/schemas/HitList"
+            }
+          }
+        },
+        "description": "(empty)"
+      },
+      "searchResultResponse": {
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SearchResult"
             }
           }
         },
@@ -3055,9 +3065,6 @@
       },
       "CreateDashboardSnapshotCommand": {
         "properties": {
-          "Result": {
-            "$ref": "#/components/schemas/DashboardSnapshot"
-          },
           "dashboard": {
             "$ref": "#/components/schemas/Json"
           },
@@ -3604,64 +3611,6 @@
         },
         "type": "object"
       },
-      "DashboardSnapshot": {
-        "description": "DashboardSnapshot model",
-        "properties": {
-          "Created": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "Dashboard": {
-            "$ref": "#/components/schemas/Json"
-          },
-          "DashboardEncrypted": {
-            "items": {
-              "format": "uint8",
-              "type": "integer"
-            },
-            "type": "array"
-          },
-          "DeleteKey": {
-            "type": "string"
-          },
-          "Expires": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "External": {
-            "type": "boolean"
-          },
-          "ExternalDeleteUrl": {
-            "type": "string"
-          },
-          "ExternalUrl": {
-            "type": "string"
-          },
-          "Id": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "Key": {
-            "type": "string"
-          },
-          "Name": {
-            "type": "string"
-          },
-          "OrgId": {
-            "format": "int64",
-            "type": "integer"
-          },
-          "Updated": {
-            "format": "date-time",
-            "type": "string"
-          },
-          "UserId": {
-            "format": "int64",
-            "type": "integer"
-          }
-        },
-        "type": "object"
-      },
       "DashboardSnapshotDTO": {
         "description": "DashboardSnapshotDTO without dashboard map",
         "properties": {
@@ -4055,6 +4004,27 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "DiscordConfig": {
+        "properties": {
+          "http_config": {
+            "$ref": "#/components/schemas/HTTPClientConfig"
+          },
+          "message": {
+            "type": "string"
+          },
+          "send_resolved": {
+            "type": "boolean"
+          },
+          "title": {
+            "type": "string"
+          },
+          "webhook_url": {
+            "$ref": "#/components/schemas/SecretURL"
+          }
+        },
+        "title": "DiscordConfig configures notifications via Discord.",
         "type": "object"
       },
       "DiscoveryBase": {
@@ -4685,6 +4655,12 @@
       },
       "GettableApiReceiver": {
         "properties": {
+          "discord_configs": {
+            "items": {
+              "$ref": "#/components/schemas/DiscordConfig"
+            },
+            "type": "array"
+          },
           "email_configs": {
             "items": {
               "$ref": "#/components/schemas/EmailConfig"
@@ -4740,6 +4716,12 @@
           "victorops_configs": {
             "items": {
               "$ref": "#/components/schemas/VictorOpsConfig"
+            },
+            "type": "array"
+          },
+          "webex_configs": {
+            "items": {
+              "$ref": "#/components/schemas/WebexConfig"
             },
             "type": "array"
           },
@@ -4808,7 +4790,7 @@
             "type": "object"
           },
           "settings": {
-            "$ref": "#/components/schemas/Json"
+            "$ref": "#/components/schemas/RawMessage"
           },
           "type": {
             "type": "string"
@@ -5040,7 +5022,13 @@
           "victorops_api_key": {
             "$ref": "#/components/schemas/Secret"
           },
+          "victorops_api_key_file": {
+            "type": "string"
+          },
           "victorops_api_url": {
+            "$ref": "#/components/schemas/URL"
+          },
+          "webex_api_url": {
             "$ref": "#/components/schemas/URL"
           },
           "wechat_api_corp_id": {
@@ -5081,6 +5069,9 @@
           "oauth2": {
             "$ref": "#/components/schemas/OAuth2"
           },
+          "proxy_connect_header": {
+            "$ref": "#/components/schemas/Header"
+          },
           "proxy_url": {
             "$ref": "#/components/schemas/URL"
           },
@@ -5089,6 +5080,15 @@
           }
         },
         "title": "HTTPClientConfig configures an HTTP client.",
+        "type": "object"
+      },
+      "Header": {
+        "additionalProperties": {
+          "items": {
+            "$ref": "#/components/schemas/Secret"
+          },
+          "type": "array"
+        },
         "type": "object"
       },
       "Hit": {
@@ -5859,34 +5859,6 @@
         },
         "type": "object"
       },
-      "NavLink": {
-        "properties": {
-          "id": {
-            "type": "string"
-          },
-          "target": {
-            "type": "string"
-          },
-          "text": {
-            "type": "string"
-          },
-          "url": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "NavbarPreference": {
-        "properties": {
-          "savedItems": {
-            "items": {
-              "$ref": "#/components/schemas/NavLink"
-            },
-            "type": "array"
-          }
-        },
-        "type": "object"
-      },
       "NewApiKeyResult": {
         "properties": {
           "id": {
@@ -6242,13 +6214,22 @@
           "routing_key": {
             "$ref": "#/components/schemas/Secret"
           },
+          "routing_key_file": {
+            "type": "string"
+          },
           "send_resolved": {
             "type": "boolean"
           },
           "service_key": {
             "$ref": "#/components/schemas/Secret"
           },
+          "service_key_file": {
+            "type": "string"
+          },
           "severity": {
+            "type": "string"
+          },
+          "source": {
             "type": "string"
           },
           "url": {
@@ -6367,9 +6348,6 @@
           },
           "language": {
             "type": "string"
-          },
-          "navbar": {
-            "$ref": "#/components/schemas/NavbarPreference"
           },
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
@@ -6643,6 +6621,12 @@
       },
       "PostableApiReceiver": {
         "properties": {
+          "discord_configs": {
+            "items": {
+              "$ref": "#/components/schemas/DiscordConfig"
+            },
+            "type": "array"
+          },
           "email_configs": {
             "items": {
               "$ref": "#/components/schemas/EmailConfig"
@@ -6698,6 +6682,12 @@
           "victorops_configs": {
             "items": {
               "$ref": "#/components/schemas/VictorOpsConfig"
+            },
+            "type": "array"
+          },
+          "webex_configs": {
+            "items": {
+              "$ref": "#/components/schemas/WebexConfig"
             },
             "type": "array"
           },
@@ -6763,7 +6753,7 @@
             "type": "object"
           },
           "settings": {
-            "$ref": "#/components/schemas/Json"
+            "$ref": "#/components/schemas/RawMessage"
           },
           "type": {
             "type": "string"
@@ -6865,34 +6855,33 @@
         },
         "type": "object"
       },
-      "Prefs": {
+      "Preferences": {
         "properties": {
-          "homeDashboardId": {
-            "format": "int64",
-            "type": "integer"
-          },
           "homeDashboardUID": {
+            "description": "UID for the home dashboard",
             "type": "string"
           },
           "language": {
+            "description": "Selected language (beta)",
             "type": "string"
-          },
-          "navbar": {
-            "$ref": "#/components/schemas/NavbarPreference"
           },
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
           },
           "theme": {
+            "description": "light, dark, empty is default",
             "type": "string"
           },
           "timezone": {
+            "description": "The timezone selection\nTODO: this should use the timezone defined in common",
             "type": "string"
           },
           "weekStart": {
+            "description": "day of the week (sunday, monday, etc)",
             "type": "string"
           }
         },
+        "title": "Preferences defines model for Preferences.",
         "type": "object"
       },
       "PrometheusRemoteWriteTargetJSON": {
@@ -7093,6 +7082,9 @@
           "token": {
             "$ref": "#/components/schemas/Secret"
           },
+          "token_file": {
+            "type": "string"
+          },
           "url": {
             "type": "string"
           },
@@ -7101,6 +7093,9 @@
           },
           "user_key": {
             "$ref": "#/components/schemas/Secret"
+          },
+          "user_key_file": {
+            "type": "string"
           }
         },
         "type": "object"
@@ -7346,8 +7341,17 @@
         },
         "type": "object"
       },
+      "RawMessage": {
+        "type": "object"
+      },
       "Receiver": {
         "properties": {
+          "discord_configs": {
+            "items": {
+              "$ref": "#/components/schemas/DiscordConfig"
+            },
+            "type": "array"
+          },
           "email_configs": {
             "items": {
               "$ref": "#/components/schemas/EmailConfig"
@@ -7397,6 +7401,12 @@
           "victorops_configs": {
             "items": {
               "$ref": "#/components/schemas/VictorOpsConfig"
+            },
+            "type": "array"
+          },
+          "webex_configs": {
+            "items": {
+              "$ref": "#/components/schemas/WebexConfig"
             },
             "type": "array"
           },
@@ -7991,6 +8001,50 @@
         },
         "type": "object"
       },
+      "SearchResult": {
+        "properties": {
+          "result": {
+            "items": {
+              "$ref": "#/components/schemas/SearchResultItem"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "SearchResultItem": {
+        "properties": {
+          "action": {
+            "type": "string"
+          },
+          "basicRole": {
+            "type": "string"
+          },
+          "orgID": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "roleName": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "teamID": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "userID": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "version": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
       "SearchTeamQueryResult": {
         "properties": {
           "page": {
@@ -8468,6 +8522,9 @@
           "key_file": {
             "description": "The client key file for the targets.",
             "type": "string"
+          },
+          "max_version": {
+            "$ref": "#/components/schemas/TLSVersion"
           },
           "min_version": {
             "$ref": "#/components/schemas/TLSVersion"
@@ -9043,6 +9100,7 @@
         "type": "string"
       },
       "URL": {
+        "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
         "properties": {
           "ForceQuery": {
             "type": "boolean"
@@ -9078,7 +9136,7 @@
             "$ref": "#/components/schemas/Userinfo"
           }
         },
-        "title": "URL is a custom URL type that allows validation at configuration load time.",
+        "title": "A URL represents a parsed URL (technically, a URI reference).",
         "type": "object"
       },
       "UpdateAlertNotificationCommand": {
@@ -9382,9 +9440,6 @@
           },
           "language": {
             "type": "string"
-          },
-          "navbar": {
-            "$ref": "#/components/schemas/NavbarPreference"
           },
           "queryHistory": {
             "$ref": "#/components/schemas/QueryHistoryPreference"
@@ -9749,7 +9804,7 @@
             "$ref": "#/components/schemas/Secret"
           },
           "api_key_file": {
-            "$ref": "#/components/schemas/Secret"
+            "type": "string"
           },
           "api_url": {
             "$ref": "#/components/schemas/URL"
@@ -9788,6 +9843,27 @@
       "VisType": {
         "title": "VisType is used to indicate how the data should be visualized in explore.",
         "type": "string"
+      },
+      "WebexConfig": {
+        "properties": {
+          "api_url": {
+            "$ref": "#/components/schemas/URL"
+          },
+          "http_config": {
+            "$ref": "#/components/schemas/HTTPClientConfig"
+          },
+          "message": {
+            "type": "string"
+          },
+          "room_id": {
+            "type": "string"
+          },
+          "send_resolved": {
+            "type": "boolean"
+          }
+        },
+        "title": "WebexConfig configures notifications via Webex.",
+        "type": "object"
       },
       "WebhookConfig": {
         "properties": {
@@ -9866,7 +9942,6 @@
         "type": "object"
       },
       "alertGroup": {
-        "description": "AlertGroup alert group",
         "properties": {
           "alerts": {
             "description": "alerts",
@@ -10110,6 +10185,7 @@
         "type": "array"
       },
       "integration": {
+        "description": "Integration integration",
         "properties": {
           "lastNotifyAttempt": {
             "description": "A timestamp indicating the last attempt to deliver a notification regardless of the outcome.\nFormat: date-time",
@@ -10253,6 +10329,7 @@
         "type": "array"
       },
       "postableSilence": {
+        "description": "PostableSilence postable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -10290,7 +10367,6 @@
         "type": "object"
       },
       "receiver": {
-        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",
@@ -10428,6 +10504,30 @@
   },
   "openapi": "3.0.3",
   "paths": {
+    "/access-control/assignments/search": {
+      "post": {
+        "description": "Returns the result of the search through access-control role assignments.\n\nYou need to have a permission with action `teams.roles:read` on scope `teams:*`\nand a permission with action `users.roles:read` on scope `users:*`.",
+        "operationId": "searchResult",
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/searchResultResponse"
+          },
+          "400": {
+            "$ref": "#/components/responses/badRequestError"
+          },
+          "403": {
+            "$ref": "#/components/responses/forbiddenError"
+          },
+          "500": {
+            "$ref": "#/components/responses/internalServerError"
+          }
+        },
+        "summary": "Debug permissions.",
+        "tags": [
+          "enterprise"
+        ]
+      }
+    },
     "/access-control/roles": {
       "get": {
         "description": "Gets all existing roles. The response contains all global and organization local roles, for the organization which user is signed in.\n\nYou need to have a permission with action `roles:read` and scope `roles:*`.",
