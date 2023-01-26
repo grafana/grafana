@@ -86,7 +86,8 @@ func (s *HeadlessScreenshotService) Take(ctx context.Context, opts ScreenshotOpt
 	defer func() { s.duration.Observe(time.Since(start).Seconds()) }()
 
 	q := dashboards.GetDashboardQuery{UID: opts.DashboardUID}
-	if err := s.ds.GetDashboard(ctx, &q); err != nil {
+	qResult, err := s.ds.GetDashboard(ctx, &q)
+	if err != nil {
 		s.instrumentError(err)
 		return nil, err
 	}
@@ -94,9 +95,9 @@ func (s *HeadlessScreenshotService) Take(ctx context.Context, opts ScreenshotOpt
 	opts = opts.SetDefaults()
 
 	u := url.URL{}
-	u.Path = path.Join("d-solo", q.Result.UID, q.Result.Slug)
+	u.Path = path.Join("d-solo", qResult.UID, qResult.Slug)
 	p := u.Query()
-	p.Add("orgId", strconv.FormatInt(q.Result.OrgID, 10))
+	p.Add("orgId", strconv.FormatInt(qResult.OrgID, 10))
 	p.Add("panelId", strconv.FormatInt(opts.PanelID, 10))
 	p.Add("from", opts.From)
 	p.Add("to", opts.To)
@@ -104,7 +105,7 @@ func (s *HeadlessScreenshotService) Take(ctx context.Context, opts ScreenshotOpt
 
 	renderOpts := rendering.Opts{
 		AuthOpts: rendering.AuthOpts{
-			OrgID:   q.Result.OrgID,
+			OrgID:   qResult.OrgID,
 			OrgRole: org.RoleAdmin,
 		},
 		ErrorOpts: rendering.ErrorOpts{

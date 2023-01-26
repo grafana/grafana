@@ -283,7 +283,7 @@
         0,
         0
       ],
-      "grafanaMaturityCount": 144,
+      "grafanaMaturityCount": 140,
       "lineageIsGroup": false,
       "links": {
         "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/dashboard/schema-reference",
@@ -1009,7 +1009,9 @@
     },
     "nodegraphpanelcfg": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/observability-traces-and-profiling"
+      ],
       "currentVersion": [
         0,
         0
@@ -1017,13 +1019,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
-        "docs": "n/a",
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/nodegraphpanelcfg/schema-reference",
         "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/nodeGraph/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/nodeGraph/panelcfg.gen.ts"
       },
       "machineName": "nodegraphpanelcfg",
-      "maturity": "planned",
+      "maturity": "experimental",
       "name": "NodeGraphPanelCfg",
       "pluralMachineName": "nodegraphpanelcfgs",
       "pluralName": "NodeGraphPanelCfgs",
@@ -1211,6 +1213,32 @@
       "pluralName": "PostgreSQLDataSourceCfgs",
       "schemaInterface": "DataSourceCfg"
     },
+    "preferences": {
+      "category": "core",
+      "codeowners": [
+        "grafana/grafana-as-code",
+        "grafana/grafana-bi-squad",
+        "grafana/plugins-platform-frontend",
+        "grafana/user-essentials"
+      ],
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/preferences/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/kinds/preferences",
+        "schema": "https://github.com/grafana/grafana/tree/main/kinds/preferences/preferences_kind.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/packages/grafana-schema/src/raw/preferences/x/preferences_types.gen.ts"
+      },
+      "machineName": "preferences",
+      "maturity": "merged",
+      "name": "Preferences",
+      "pluralMachineName": "preferencess",
+      "pluralName": "Preferencess"
+    },
     "prometheusdataquery": {
       "category": "composable",
       "codeowners": [],
@@ -1254,6 +1282,32 @@
       "pluralMachineName": "prometheusdatasourcecfgs",
       "pluralName": "PrometheusDataSourceCfgs",
       "schemaInterface": "DataSourceCfg"
+    },
+    "publicdashboard": {
+      "category": "core",
+      "codeowners": [
+        "grafana/grafana-as-code",
+        "grafana/grafana-bi-squad",
+        "grafana/plugins-platform-frontend",
+        "grafana/user-essentials"
+      ],
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/publicdashboard/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/kinds/publicdashboard",
+        "schema": "https://github.com/grafana/grafana/tree/main/kinds/publicdashboard/publicdashboard_kind.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/packages/grafana-schema/src/raw/publicdashboard/x/publicdashboard_types.gen.ts"
+      },
+      "machineName": "publicdashboard",
+      "maturity": "merged",
+      "name": "PublicDashboard",
+      "pluralMachineName": "publicdashboards",
+      "pluralName": "PublicDashboards"
     },
     "query": {
       "category": "core",
@@ -1299,24 +1353,53 @@
     },
     "serviceaccount": {
       "category": "core",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/grafana-as-code",
+        "grafana/grafana-bi-squad",
+        "grafana/plugins-platform-frontend",
+        "grafana/user-essentials"
+      ],
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 9,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/serviceaccount/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/kinds/serviceaccount",
+        "schema": "https://github.com/grafana/grafana/tree/main/kinds/serviceaccount/serviceaccount_kind.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/packages/grafana-schema/src/raw/serviceaccount/x/serviceaccount_types.gen.ts"
+      },
+      "machineName": "serviceaccount",
+      "maturity": "merged",
+      "name": "ServiceAccount",
+      "pluralMachineName": "serviceaccounts",
+      "pluralName": "ServiceAccounts"
+    },
+    "statetimelinepanelcfg": {
+      "category": "composable",
+      "codeowners": [
+        "grafana/grafana-bi-squad"
+      ],
       "currentVersion": [
         0,
         0
       ],
       "grafanaMaturityCount": 0,
-      "lineageIsGroup": false,
+      "lineageIsGroup": true,
       "links": {
-        "docs": "n/a",
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/statetimelinepanelcfg/schema-reference",
         "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/state-timeline/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/state-timeline/panelcfg.gen.ts"
       },
-      "machineName": "serviceaccount",
-      "maturity": "planned",
-      "name": "ServiceAccount",
-      "pluralMachineName": "serviceaccounts",
-      "pluralName": "ServiceAccounts"
+      "machineName": "statetimelinepanelcfg",
+      "maturity": "experimental",
+      "name": "StateTimelinePanelCfg",
+      "pluralMachineName": "statetimelinepanelcfgs",
+      "pluralName": "StateTimelinePanelCfgs",
+      "schemaInterface": "PanelCfg"
     },
     "statpanelcfg": {
       "category": "composable",
@@ -1340,6 +1423,30 @@
       "name": "StatPanelCfg",
       "pluralMachineName": "statpanelcfgs",
       "pluralName": "StatPanelCfgs",
+      "schemaInterface": "PanelCfg"
+    },
+    "statushistorypanelcfg": {
+      "category": "composable",
+      "codeowners": [
+        "grafana/grafana-bi-squad"
+      ],
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/statushistorypanelcfg/schema-reference",
+        "go": "n/a",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/status-history/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/status-history/panelcfg.gen.ts"
+      },
+      "machineName": "statushistorypanelcfg",
+      "maturity": "experimental",
+      "name": "StatusHistoryPanelCfg",
+      "pluralMachineName": "statushistorypanelcfgs",
+      "pluralName": "StatusHistoryPanelCfgs",
       "schemaInterface": "PanelCfg"
     },
     "tableoldpanelcfg": {
@@ -1434,9 +1541,11 @@
       "pluralName": "TempoDataSourceCfgs",
       "schemaInterface": "DataSourceCfg"
     },
-    "testdatadbdataquery": {
+    "testdatadataquery": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/plugins-platform-frontend"
+      ],
       "currentVersion": [
         0,
         0
@@ -1444,19 +1553,19 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
-        "docs": "n/a",
-        "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/testdatadataquery/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/tsdb/testdata/kinds/dataquery/types_dataquery_gen.go",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/testdata/dataquery.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/testdata/dataquery.gen.ts"
       },
-      "machineName": "testdatadbdataquery",
-      "maturity": "planned",
-      "name": "TestDataDBDataQuery",
-      "pluralMachineName": "testdatadbdataquerys",
-      "pluralName": "TestDataDBDataQuerys",
+      "machineName": "testdatadataquery",
+      "maturity": "experimental",
+      "name": "TestDataDataQuery",
+      "pluralMachineName": "testdatadataquerys",
+      "pluralName": "TestDataDataQuerys",
       "schemaInterface": "DataQuery"
     },
-    "testdatadbdatasourcecfg": {
+    "testdatadatasourcecfg": {
       "category": "composable",
       "codeowners": [],
       "currentVersion": [
@@ -1471,11 +1580,11 @@
         "schema": "n/a",
         "ts": "n/a"
       },
-      "machineName": "testdatadbdatasourcecfg",
+      "machineName": "testdatadatasourcecfg",
       "maturity": "planned",
-      "name": "TestDataDBDataSourceCfg",
-      "pluralMachineName": "testdatadbdatasourcecfgs",
-      "pluralName": "TestDataDBDataSourceCfgs",
+      "name": "TestDataDataSourceCfg",
+      "pluralMachineName": "testdatadatasourcecfgs",
+      "pluralName": "TestDataDataSourceCfgs",
       "schemaInterface": "DataSourceCfg"
     },
     "textpanelcfg": {
@@ -1590,7 +1699,9 @@
     },
     "xychartpanelcfg": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/grafana-bi-squad"
+      ],
       "currentVersion": [
         0,
         0
@@ -1598,13 +1709,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
-        "docs": "n/a",
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/xychartpanelcfg/schema-reference",
         "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/xychart/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/xychart/panelcfg.gen.ts"
       },
       "machineName": "xychartpanelcfg",
-      "maturity": "planned",
+      "maturity": "experimental",
       "name": "XYChartPanelCfg",
       "pluralMachineName": "xychartpanelcfgs",
       "pluralName": "XYChartPanelCfgs",
@@ -1711,12 +1822,14 @@
           "postgresqldatasourcecfg",
           "prometheusdataquery",
           "prometheusdatasourcecfg",
+          "statetimelinepanelcfg",
           "statpanelcfg",
+          "statushistorypanelcfg",
           "tableoldpanelcfg",
           "tempodataquery",
           "tempodatasourcecfg",
-          "testdatadbdataquery",
-          "testdatadbdatasourcecfg",
+          "testdatadataquery",
+          "testdatadatasourcecfg",
           "textpanelcfg",
           "tracespanelcfg",
           "welcomepanelcfg",
@@ -1724,7 +1837,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 63
+        "count": 65
       },
       "core": {
         "name": "core",
@@ -1734,6 +1847,8 @@
           "datasource",
           "folder",
           "playlist",
+          "preferences",
+          "publicdashboard",
           "query",
           "queryhistory",
           "serviceaccount",
@@ -1741,7 +1856,7 @@
           "thumb",
           "user"
         ],
-        "count": 11
+        "count": 13
       }
     },
     "maturity": {
@@ -1756,11 +1871,16 @@
           "gaugepanelcfg",
           "histogrampanelcfg",
           "newspanelcfg",
+          "nodegraphpanelcfg",
           "piechartpanelcfg",
+          "statetimelinepanelcfg",
           "statpanelcfg",
-          "textpanelcfg"
+          "statushistorypanelcfg",
+          "testdatadataquery",
+          "textpanelcfg",
+          "xychartpanelcfg"
         ],
-        "count": 11
+        "count": 16
       },
       "mature": {
         "name": "mature",
@@ -1772,9 +1892,12 @@
         "items": [
           "alertgroupspanelcfg",
           "playlist",
+          "preferences",
+          "publicdashboard",
+          "serviceaccount",
           "team"
         ],
-        "count": 3
+        "count": 6
       },
       "planned": {
         "name": "planned",
@@ -1815,7 +1938,6 @@
           "microsoftsqlserverdatasourcecfg",
           "mysqldataquery",
           "mysqldatasourcecfg",
-          "nodegraphpanelcfg",
           "parcadataquery",
           "parcadatasourcecfg",
           "phlaredataquery",
@@ -1826,21 +1948,18 @@
           "prometheusdatasourcecfg",
           "query",
           "queryhistory",
-          "serviceaccount",
           "tableoldpanelcfg",
           "tempodataquery",
           "tempodatasourcecfg",
-          "testdatadbdataquery",
-          "testdatadbdatasourcecfg",
+          "testdatadatasourcecfg",
           "thumb",
           "tracespanelcfg",
           "user",
           "welcomepanelcfg",
-          "xychartpanelcfg",
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 60
+        "count": 56
       },
       "stable": {
         "name": "stable",

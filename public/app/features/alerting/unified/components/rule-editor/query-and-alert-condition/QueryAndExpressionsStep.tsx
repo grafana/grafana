@@ -16,28 +16,29 @@ import { ExpressionEditor } from '../ExpressionEditor';
 import { ExpressionsEditor } from '../ExpressionsEditor';
 import { QueryEditor } from '../QueryEditor';
 import { RuleEditorSection } from '../RuleEditorSection';
-import { refIdExists } from '../util';
+import { errorFromSeries, refIdExists } from '../util';
 
 import { AlertType } from './AlertType';
 import {
-  duplicateQuery,
   addNewDataQuery,
   addNewExpression,
+  duplicateQuery,
   queriesAndExpressionsReducer,
   removeExpression,
   rewireExpressions,
   setDataQueries,
   updateExpression,
   updateExpressionRefId,
-  updateExpressionType,
   updateExpressionTimeRange,
+  updateExpressionType,
 } from './reducer';
 
 interface Props {
   editingExistingRule: boolean;
+  onDataChange: (error: string) => void;
 }
 
-export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
+export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onDataChange }) => {
   const runner = useRef(new AlertingQueryRunner());
   const {
     setValue,
@@ -104,6 +105,30 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
 
   const emptyQueries = queries.length === 0;
 
+  useEffect(() => {
+    const currentCondition = getValues('condition');
+
+    if (!currentCondition) {
+      return;
+    }
+
+    const error = errorFromSeries(panelData[currentCondition]?.series || []);
+    onDataChange(error?.message || '');
+  }, [panelData, getValues, onDataChange]);
+
+  const handleSetCondition = useCallback(
+    (refId: string | null) => {
+      if (!refId) {
+        return;
+      }
+
+      runQueries(); //we need to run the queries to know if the condition is valid
+
+      setValue('condition', refId);
+    },
+    [runQueries, setValue]
+  );
+
   const onUpdateRefId = useCallback(
     (oldRefId: string, newRefId: string) => {
       const newRefIdExists = refIdExists(queries, newRefId);
@@ -116,10 +141,10 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
 
       // update condition too if refId was updated
       if (condition === oldRefId) {
-        setValue('condition', newRefId);
+        handleSetCondition(newRefId);
       }
     },
-    [condition, queries, setValue]
+    [condition, queries, handleSetCondition]
   );
 
   const onChangeQueries = useCallback(
@@ -147,9 +172,9 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
   useEffect(() => {
     if (!refIdExists(queries, condition)) {
       const lastRefId = queries.at(-1)?.refId ?? null;
-      setValue('condition', lastRefId);
+      handleSetCondition(lastRefId);
     }
-  }, [condition, queries, setValue]);
+  }, [condition, queries, handleSetCondition]);
 
   return (
     <RuleEditorSection stepNo={2} title="Set a query and alert condition">
@@ -161,7 +186,13 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
           <InputControl
             name="expression"
             render={({ field: { ref, ...field } }) => {
-              return <ExpressionEditor {...field} dataSourceName={dataSourceName} />;
+              return (
+                <ExpressionEditor
+                  {...field}
+                  dataSourceName={dataSourceName}
+                  showPreviewAlertsButton={!isRecordingRuleType}
+                />
+              );
             }}
             control={control}
             rules={{
@@ -183,18 +214,14 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule }) => {
             onDuplicateQuery={onDuplicateQuery}
             panelData={panelData}
             condition={condition}
-            onSetCondition={(refId) => {
-              setValue('condition', refId);
-            }}
+            onSetCondition={handleSetCondition}
           />
           {/* Expression Queries */}
           <ExpressionsEditor
             queries={queries}
             panelData={panelData}
             condition={condition}
-            onSetCondition={(refId) => {
-              setValue('condition', refId);
-            }}
+            onSetCondition={handleSetCondition}
             onRemoveExpression={(refId) => {
               dispatch(removeExpression(refId));
             }}
