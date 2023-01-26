@@ -11,28 +11,20 @@ import {
   AnnotationQueryRequest,
   CoreApp,
   DataFrame,
-  DataFrameDTO,
   DataQueryError,
   DataQueryRequest,
   DataQueryResponse,
-  DataQueryResponseData,
   DataSourceInstanceSettings,
   DataSourceWithQueryExportSupport,
   DataSourceWithQueryImportSupport,
   dateMath,
   DateTime,
   dateTime,
-  Field,
-  FieldDTO,
   LoadingState,
   QueryFixAction,
   rangeUtil,
-  RawTimeRange,
   ScopedVars,
-  TIME_SERIES_TIME_FIELD_NAME,
-  TIME_SERIES_VALUE_FIELD_NAME,
   TimeRange,
-  Vector,
 } from '@grafana/data';
 import {
   BackendDataSourceResponse,
@@ -72,10 +64,10 @@ import {
   PromVectorData,
 } from './types';
 import { PrometheusVariableSupport } from './variables';
+import { PrometheusIncrementalStorage } from './middleware/PrometheusIncrementalStorage';
 
 const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
-const PROMETHEUS_STORAGE_TIME_INDEX = '__time__';
 
 export class PrometheusDatasource
   extends DataSourceWithBackend<PromQuery, PromOptions>
@@ -109,7 +101,7 @@ export class PrometheusDatasource
   // When reading we should assume that everything that's been populated in this storage has the same durations, otherwise we would purge when receiving the response
   // @todo implement merging new series into old dataframe, and backfilling missing data?
   // @todo make this a class and provide some abstraction? It's kinda hard to deal with and easy to make mistakes rn
-  prometheusDataFrameStorage: Record<string, Record<string, number[]>>;
+  prometheusDataFrameStorage: PrometheusIncrementalStorage;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -143,7 +135,7 @@ export class PrometheusDatasource
     this.datasourceConfigurationPrometheusVersion = instanceSettings.jsonData.prometheusVersion;
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
-    this.prometheusDataFrameStorage = {};
+    this.prometheusDataFrameStorage = new PrometheusIncrementalStorage();
 
     // This needs to be here and cannot be static because of how annotations typing affects casting of data source
     // objects to DataSourceApi types.
@@ -454,317 +446,12 @@ export class PrometheusDatasource
     return processedTargets;
   }
 
-  /**
-   * @todo array vector typings
-   * @param target
-   * @param request
-   */
-  modifyRequestDurationsIfStorageOverlapsRequest(request: DataQueryRequest<PromQuery>): {
-    request: DataQueryRequest<PromQuery>;
-    originalRange?: TimeRange;
-  } {
-    console.log('modifyRequestDurationsIfStorageOverlapsRequest request', request);
-    // const storageKey = request.f
-    // We assume that time snapping has already been set up?
-    const requestFrom = request.range.from;
-    const requestTo = request.range.to;
-
-    console.log('from', requestFrom);
-    console.log('to', requestTo);
-
-    console.log('the CURRENT CACHE', this.prometheusDataFrameStorage);
-    // request.targets[index].expr + request.targets[index].interval
-
-    let canCache: Boolean[] = [];
-    let neededDurations: Array<{ end: number; start: number }> = [];
-
-    for (let i = 0; i < request.targets.length; i++) {
-      const target = request.targets[i];
-
-      const cacheKey: string | undefined = this.createPrometheusStorageIndexFromRequestTarget(target, request);
-      console.log('THE CACHE KEY', cacheKey);
-
-      if (!cacheKey) {
-        console.warn('No Cache key was generated, targets cannot be streamed');
-        canCache.push(false);
-        break;
-      }
-
-      const previousResultForThisQuery = this.prometheusDataFrameStorage[cacheKey];
-      console.log('the CURRENT HIT?', previousResultForThisQuery);
-
-      if (previousResultForThisQuery) {
-        const timeValuesFromStorage = previousResultForThisQuery[PROMETHEUS_STORAGE_TIME_INDEX];
-        // const fieldValuesFromStorage = Object.values(previousResultForThisQuery)[0].fields.find(field => field.name === TIME_SERIES_VALUE_FIELD_NAME);
-        // Assume that the added fields are contigious, and every series always has the most recent samples
-        if (timeValuesFromStorage) {
-          const cacheFrom = timeValuesFromStorage[0];
-          const cacheTo = timeValuesFromStorage[timeValuesFromStorage.length - 1];
-
-          console.log('First in storage', cacheFrom);
-          console.log('Last in storage', cacheTo);
-          console.log('DURATION IN MINS', (cacheTo - cacheFrom) / 60 / 1000);
-          console.log('previousREsultForThisquery', previousResultForThisQuery);
-          console.log('thisRequest', request);
-
-          // The expected case when the query start is contained in storage, but the end is not, the query window moved forward in time
-          if (requestFrom >= cacheFrom && requestTo >= cacheTo) {
-            canCache.push(true);
-            //alignRange(cacheTo, requestTo, target.step, this.timeSrv.timeRange().to.utcOffset() * 60);
-            neededDurations.push({ start: cacheTo, end: requestTo });
-          }
-          // previousResultForThisQuery
-        }
-      }
-    }
-
-    if (
-      canCache.length &&
-      neededDurations.length &&
-      canCache.every((val) => val) &&
-      neededDurations.every(
-        (val) => val && val.start === neededDurations[0].start && val.end === neededDurations[0].end
-      )
-    ) {
-      const originalRange = cloneDeep(request.range);
-      const rawTimeRange = {
-        from: dateTime(neededDurations[0].start),
-        to: dateTime(neededDurations[0].end),
-      };
-
-      const timeRange: TimeRange = {
-        ...rawTimeRange,
-        raw: rawTimeRange,
-      };
-
-      console.warn('QUERY IS CONTAINED BY CACHE, MODIFYING REQUEST');
-      console.log('Original query range', originalRange);
-      console.log('Modified query range', timeRange);
-
-      // calculate new from/tos
-      return { request: { ...request, range: timeRange }, originalRange: originalRange };
-    }
-
-    return { request: request };
-  }
-
-  /**
-   * @todo need to interpolate variables or we'll get bugs
-   * @param target
-   * @param request
-   */
-  createPrometheusStorageIndexFromRequestTarget = (
-    target: PromQuery,
-    request: DataQueryRequest<PromQuery>
-  ): string | undefined => {
-    if (!target) {
-      console.error('Request target is required to build storage index');
-      return;
-    }
-
-    if (!target?.expr) {
-      console.error('Request expression is required to build storage index');
-      return;
-    }
-
-    // If the query (target) doesn't explicitly have an interval defined it's gonna use the one that's available on the request object.
-    // @todo is the above true?
-    const intervalString = target?.interval ?? request.interval;
-
-    if (!intervalString) {
-      console.error('Request interval is required to build storage index');
-      return;
-    }
-
-    return target?.expr + '__' + intervalString;
-  };
-
-  appendQueryResultToDataFrameStorage = (
-    queries: DataQueryRequest<PromQuery>,
-    dataFrames: DataQueryResponse,
-    originalRange?: TimeRange
-  ): DataQueryResponseData => {
-    const data: DataQueryResponseData = dataFrames.data;
-    console.log('DataFrames passed in', dataFrames);
-
-    const valueFrameToLabelsString = (valueField: FieldDTO | Field): string => {
-      let keyValues: Array<{ key: string; value: any }> = [];
-
-      if (valueField?.labels) {
-        const keys = Object.keys(valueField?.labels ?? {});
-        keys.forEach((key) => {
-          keyValues.push({
-            key,
-            value: valueField?.labels && key in valueField?.labels ? valueField.labels[key] : undefined,
-          });
-        });
-      }
-
-      return JSON.stringify(keyValues);
-    };
-
-    queries.targets.forEach((target) => {
-      const timeSeriesForThisQuery = data.filter((response) => response.refId === target.refId);
-      timeSeriesForThisQuery.forEach((response, index) => {
-        // console.log('Each response', response, index)
-        // Not needed, please remove
-        if (!response?.meta?.executedQueryString ?? ''.includes(target?.expr)) {
-          console.warn('This expression is not for this query');
-          return;
-        }
-
-        // @todo only include time series (no instant) and not annotations
-        if (response?.meta?.custom?.resultType !== 'matrix') {
-          return;
-        }
-
-        // For each query response get the time and the values
-        const responseTimeField = response.fields?.find((field) => field.name === TIME_SERIES_TIME_FIELD_NAME);
-
-        // We're consuming these dataFrames after the transform which will remove some duplicate time values that is sent in the raw response from prometheus
-        const responseValueFields = response.fields?.filter((field) => field.name !== TIME_SERIES_TIME_FIELD_NAME);
-
-        // Get the querystring that was executed on the prometheus server, this string contains the step time as well so we can use this as our "key" in the prometheus data frame storage
-        const responseQueryExpressionAndStepString = this.createPrometheusStorageIndexFromRequestTarget(
-          target,
-          queries
-        );
-
-        // If we aren't able to create the query expression string to be used as the index, we should stop now
-        if (!responseQueryExpressionAndStepString) {
-          console.warn('no responseQueryExpressionAndStepString!');
-          return;
-        }
-
-        const previousDataFrames =
-          responseQueryExpressionAndStepString in this.prometheusDataFrameStorage
-            ? this.prometheusDataFrameStorage[responseQueryExpressionAndStepString]
-            : false;
-
-        // We're about to populate the cache if it doesn't exist, so let's prime the main object
-        if (!(responseQueryExpressionAndStepString in this.prometheusDataFrameStorage)) {
-          this.prometheusDataFrameStorage[responseQueryExpressionAndStepString] = {
-            __time__: responseTimeField.values.buffer,
-          };
-        }
-
-        let timeValuesStorage = [];
-        responseValueFields.forEach((valueField, valueFieldIndex) => {
-          // Generate a unique name for this dataframe using the values
-          const seriesLabelsIndexString = valueFrameToLabelsString(valueField);
-
-          const thisQueryHasNeverBeenDoneBefore =
-            !this.prometheusDataFrameStorage || !previousDataFrames || !previousDataFrames[seriesLabelsIndexString];
-          const thisQueryHasBeenDoneBefore = !thisQueryHasNeverBeenDoneBefore;
-
-          //@todo types
-          const responseTimeFieldValues = responseTimeField?.values;
-
-          // Store the response if it'.s new
-          if (thisQueryHasNeverBeenDoneBefore && seriesLabelsIndexString) {
-            this.prometheusDataFrameStorage[responseQueryExpressionAndStepString][seriesLabelsIndexString] =
-              valueField.values.buffer;
-          } else if (thisQueryHasBeenDoneBefore && seriesLabelsIndexString) {
-            // Check to see if the labels have changed
-            // @todo
-            // If the labels are the same as saved, append any new values, making sure that any additional data is taken from the newest response
-            // @todo
-            // @todo if the query is the last 10 minutes (or 2 hours)
-
-            const existingTimeFrame = this.prometheusDataFrameStorage[responseQueryExpressionAndStepString]['__time__'];
-            const existingValueFrame =
-              this.prometheusDataFrameStorage[responseQueryExpressionAndStepString][seriesLabelsIndexString];
-
-            if (existingValueFrame && existingValueFrame.length > 0 && existingTimeFrame && responseTimeFieldValues) {
-              // @todo overlap
-
-              // console.log('existingValueFrames', existingValueFrame);
-              // Remove the first element as it should be a duplicate, since these are time values it doesn't matter if we grab this from the new request or not?
-              let existingTimeFramesNewValuesRemoved: number[] = [];
-              let existingValueFrameNewValuesRemoved: number[] = [];
-
-              for (let i = 0; i < existingTimeFrame?.length; i++) {
-                // Only add timeframes from the old data to the new data, if they aren't already contained in the new data
-                if (responseTimeFieldValues.buffer.indexOf(existingTimeFrame[i]) === -1) {
-                  existingTimeFramesNewValuesRemoved.push(existingTimeFrame[i]);
-                  existingValueFrameNewValuesRemoved.push(existingValueFrame[i])
-
-                  // For these time steps, create a new object with the old values
-
-                  // for (let j = 0; j < existingValueFrames.length; j++) {
-                  //   const jsonIndex = valueFrameToLabelsString(existingValueFrames[j]);
-                  //   if (jsonIndex in existingValueFrameNewValuesRemoved) {
-                  //     existingValueFrameNewValuesRemoved[jsonIndex].push(existingValueFrames[j].values.buffer[i]);
-                  //   } else {
-                  //     existingValueFrameNewValuesRemoved[jsonIndex] = [existingValueFrames[j].values.buffer[i]];
-                  //   }
-                  // }
-                }
-              }
-
-
-              const allTimeValuesMerged = [...existingTimeFramesNewValuesRemoved, ...responseTimeFieldValues.buffer];
-              const allValueFramesMerged = [...existingValueFrameNewValuesRemoved, ...valueField.values.buffer]
-
-              // console.log('New Time Frames', responseTimeField);
-              // console.log('Old Time Frames', existingTimeFrame);
-              // console.log('Old Time Frames to Add To New Frames', existingTimeFramesNewValuesRemoved);
-              // console.log('All Time Frames Merged', allTimeValuesMerged);
-              //
-              // console.warn('New Value object', responseValueFields);
-              // console.log('Old Value Frames', existingValueFrame);
-              // console.log('Old Value Frames to Add To New Frames', existingValueFrameNewValuesRemoved);
-              // console.log('All Value Frames Merged', allValueFramesMerged);
-              //
-
-              // Naive splice of new data onto old data
-              // existingTimeFramesNewValuesRemoved?.splice(
-              //   newDataIndexStartInOldData, // start before duplicate elements
-              //   (existingTimeFramesNewValuesRemoved?.values?.length) - (newDataIndexStartInOldData), // delete count
-              //   ...timeFrames.buffer // items to replace
-              // );
-
-
-              // This is a reference to the original dataframes passed in, so we're mutating the original dataframe here!
-              valueField.values.buffer = allValueFramesMerged;
-
-              // If we set the time values here we'll screw up the rest of the loop, we should be checking to see if each series has the same time steps, or we need to clear the cache
-              //@todo if allTimeValuesMerged is not same as previous iteration, wipe storage
-              //// responseTimeField.values.buffer = allTimeValuesMerged;
-              timeValuesStorage = allTimeValuesMerged;
-
-              console.log('seriesLabelsIndexString', seriesLabelsIndexString);
-              console.log('allValueFramesMerged', allValueFramesMerged);
-
-
-              this.prometheusDataFrameStorage[responseQueryExpressionAndStepString][seriesLabelsIndexString] = allValueFramesMerged;
-              // @todo check for any change, and blow up cache if found
-              this.prometheusDataFrameStorage[responseQueryExpressionAndStepString]['__time__'] = allTimeValuesMerged;
-              console.warn('UPDATED STORAGE STATE', this.prometheusDataFrameStorage[responseQueryExpressionAndStepString][seriesLabelsIndexString])
-            } else {
-              console.warn('no existing values found');
-            }
-          }
-        });
-
-        // If we changed the time steps, let's mutate the dataframe
-        if(timeValuesStorage.length){
-          responseTimeField.values.buffer = timeValuesStorage;
-        }
-      });
-    });
-
-    console.log('dataFrames OUT', dataFrames);
-
-    return dataFrames;
-  };
-
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     if (this.access === 'proxy') {
       const targets = request.targets.map((target) => this.processTargetV2(target, request));
       const requestWithUpdatedTargets = { ...request, targets: targets.flat() };
       const { request: updatedRequest, originalRange } =
-        this.modifyRequestDurationsIfStorageOverlapsRequest(requestWithUpdatedTargets);
+        this.prometheusDataFrameStorage.modifyRequestDurationsIfStorageOverlapsRequest(requestWithUpdatedTargets);
 
       return super.query(updatedRequest).pipe(
         map((response) => {
@@ -772,25 +459,16 @@ export class PrometheusDatasource
             exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
           });
 
-          // if(originalRange){
-          //   // Merge dataFrame with storage
-          //   const newFrames = dataFrames.data.map(frame => {
-          //     console.log('frame', frame);
-          //     console.log('dataFrames', dataFrames)
-          //     console.log(this.prometheusDataFrameStorage);
-          //
-          //     frame.fields
-          //     debugger;
-          //   })
-          // }
+          if (this.prometheusDataFrameStorage) {
+            const newFrames = this.prometheusDataFrameStorage.appendQueryResultToDataFrameStorage(
+              requestWithUpdatedTargets,
+              dataFrames,
+              originalRange
+            );
+            return newFrames;
+          }
 
-          const newFrames = this.appendQueryResultToDataFrameStorage(
-            requestWithUpdatedTargets,
-            dataFrames,
-            originalRange
-          );
-
-          return newFrames;
+        return dataFrames
         })
       );
       // Run queries trough browser/proxy
@@ -816,7 +494,6 @@ export class PrometheusDatasource
   }
 
   private exploreQuery(queries: PromQueryRequest[], activeTargets: PromQuery[], end: number) {
-    console.log('exploreQuery');
     let runningQueriesCount = queries.length;
 
     const subQueries = queries.map((query, index) => {
@@ -855,7 +532,6 @@ export class PrometheusDatasource
     requestId: string,
     scopedVars: ScopedVars
   ) {
-    console.log('panelsquery');
     const observables = queries.map((query, index) => {
       const target = activeTargets[index];
 
@@ -891,7 +567,6 @@ export class PrometheusDatasource
   }
 
   private runQuery<T>(query: PromQueryRequest, end: number, filter: OperatorFunction<any, T>): Observable<T> {
-    console.log('RUN QUERY');
     if (query.instant) {
       return this.performInstantQuery(query, end).pipe(filter);
     }
@@ -996,9 +671,7 @@ export class PrometheusDatasource
     return Math.max(interval * intervalFactor, minInterval, safeInterval);
   }
 
-  // Add cache?
   performTimeSeriesQuery(query: PromQueryRequest, start: number, end: number) {
-    console.log('performTimeSeriesQuery');
     if (start > end) {
       throw { message: 'Invalid time range' };
     }
@@ -1010,18 +683,6 @@ export class PrometheusDatasource
       end,
       step: query.step,
     };
-    const queryBucketName = query.expr + query.step;
-    console.log('performTimeSeriesQuery');
-    console.log('query', query);
-    console.log('queryBucketName', queryBucketName);
-    //
-    // // Data frame has already been populated for this query/step
-    // if(this.prometheusDataFrameStorage && queryBucketName in this.prometheusDataFrameStorage){
-    //   const dataFrame = this.prometheusDataFrameStorage[queryBucketName]
-    // }else{
-    //   // Clear any saved dataframes
-    //   this.prometheusDataFrameStorage = undefined;
-    // }
 
     if (this.queryTimeout) {
       data['timeout'] = this.queryTimeout;
