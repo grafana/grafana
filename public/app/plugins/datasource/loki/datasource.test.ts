@@ -1,9 +1,6 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
-import { ReactElement } from 'react';
 import { of } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { getQueryOptions } from 'test/helpers/getQueryOptions';
-import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import {
   AbstractLabelOperator,
