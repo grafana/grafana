@@ -64,21 +64,21 @@ func createExternalDashboardSnapshot(cmd dashboardsnapshots.CreateDashboardSnaps
 		return nil, err
 	}
 
-	response, err := client.Post(externalSnapshotUrl+"/api/snapshots", "application/json", bytes.NewBuffer(messageBytes))
+	resp, err := client.Post(externalSnapshotUrl+"/api/snapshots", "application/json", bytes.NewBuffer(messageBytes))
 	if err != nil {
 		return nil, err
 	}
 	defer func() {
-		if err := response.Body.Close(); err != nil {
+		if err := resp.Body.Close(); err != nil {
 			plog.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
-	if response.StatusCode != 200 {
-		return nil, fmt.Errorf("create external snapshot response status code %d", response.StatusCode)
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("create external snapshot response status code %d", resp.StatusCode)
 	}
 
-	if err := json.NewDecoder(response.Body).Decode(&createSnapshotResponse); err != nil {
+	if err := json.NewDecoder(resp.Body).Decode(&createSnapshotResponse); err != nil {
 		return nil, err
 	}
 
@@ -134,17 +134,17 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Res
 			return nil
 		}
 
-		response, err := createExternalDashboardSnapshot(cmd, hs.Cfg.ExternalSnapshotUrl)
+		resp, err := createExternalDashboardSnapshot(cmd, hs.Cfg.ExternalSnapshotUrl)
 		if err != nil {
 			c.JsonApiErr(http.StatusInternalServerError, "Failed to create external snapshot", err)
 			return nil
 		}
 
-		snapshotUrl = response.Url
-		cmd.Key = response.Key
-		cmd.DeleteKey = response.DeleteKey
-		cmd.ExternalURL = response.Url
-		cmd.ExternalDeleteURL = response.DeleteUrl
+		snapshotUrl = resp.Url
+		cmd.Key = resp.Key
+		cmd.DeleteKey = resp.DeleteKey
+		cmd.ExternalURL = resp.Url
+		cmd.ExternalDeleteURL = resp.DeleteUrl
 		cmd.Dashboard = simplejson.New()
 
 		metrics.MApiDashboardSnapshotExternal.Inc()
@@ -241,26 +241,26 @@ func (hs *HTTPServer) GetDashboardSnapshot(c *models.ReqContext) response.Respon
 }
 
 func deleteExternalDashboardSnapshot(externalUrl string) error {
-	response, err := client.Get(externalUrl)
+	resp, err := client.Get(externalUrl)
 	if err != nil {
 		return err
 	}
 
 	defer func() {
-		if err := response.Body.Close(); err != nil {
+		if err := resp.Body.Close(); err != nil {
 			plog.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
-	if response.StatusCode == 200 {
+	if resp.StatusCode == 200 {
 		return nil
 	}
 
 	// Gracefully ignore "snapshot not found" errors as they could have already
 	// been removed either via the cleanup script or by request.
-	if response.StatusCode == 500 {
+	if resp.StatusCode == 500 {
 		var respJson map[string]interface{}
-		if err := json.NewDecoder(response.Body).Decode(&respJson); err != nil {
+		if err := json.NewDecoder(resp.Body).Decode(&respJson); err != nil {
 			return err
 		}
 
@@ -269,7 +269,7 @@ func deleteExternalDashboardSnapshot(externalUrl string) error {
 		}
 	}
 
-	return fmt.Errorf("unexpected response when deleting external snapshot, status code: %d", response.StatusCode)
+	return fmt.Errorf("unexpected response when deleting external snapshot, status code: %d", resp.StatusCode)
 }
 
 // swagger:route GET /snapshots-delete/{deleteKey} snapshots deleteDashboardSnapshotByDeleteKey
@@ -364,12 +364,12 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *models.ReqContext) response.Res
 	dashboardID := queryResult.Dashboard.Get("id").MustInt64()
 
 	if dashboardID != 0 {
-		guardian, err := guardian.New(c.Req.Context(), dashboardID, c.OrgID, c.SignedInUser)
+		g, err := guardian.New(c.Req.Context(), dashboardID, c.OrgID, c.SignedInUser)
 		if err != nil {
 			return response.Err(err)
 		}
 
-		canEdit, err := guardian.CanEdit()
+		canEdit, err := g.CanEdit()
 		// check for permissions only if the dashboard is found
 		if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
 			return response.Error(http.StatusInternalServerError, "Error while checking permissions for snapshot", err)
@@ -424,9 +424,9 @@ func (hs *HTTPServer) SearchDashboardSnapshots(c *models.ReqContext) response.Re
 		return response.Error(500, "Search failed", err)
 	}
 
-	dtos := make([]*dashboardsnapshots.DashboardSnapshotDTO, len(searchQueryResult))
+	dto := make([]*dashboardsnapshots.DashboardSnapshotDTO, len(searchQueryResult))
 	for i, snapshot := range searchQueryResult {
-		dtos[i] = &dashboardsnapshots.DashboardSnapshotDTO{
+		dto[i] = &dashboardsnapshots.DashboardSnapshotDTO{
 			ID:          snapshot.ID,
 			Name:        snapshot.Name,
 			Key:         snapshot.Key,
@@ -440,7 +440,7 @@ func (hs *HTTPServer) SearchDashboardSnapshots(c *models.ReqContext) response.Re
 		}
 	}
 
-	return response.JSON(http.StatusOK, dtos)
+	return response.JSON(http.StatusOK, dto)
 }
 
 // swagger:parameters createDashboardSnapshot
