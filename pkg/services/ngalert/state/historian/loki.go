@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
@@ -80,7 +81,7 @@ func (h *RemoteLokiBackend) QueryStates(ctx context.Context, query models.Histor
 	if err != nil {
 		return nil, err
 	}
-	return merge(res)
+	return merge(res, query.RuleUID)
 }
 
 func buildSelectors(query models.HistoryQuery) ([]Selector, error) {
@@ -115,14 +116,35 @@ func buildSelectors(query models.HistoryQuery) ([]Selector, error) {
 }
 
 // merge will put all the results in one array sorted by timestamp.
-func merge(res QueryRes) (*data.Frame, error) {
+func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
 	// Find the total number of elements in all arrays
 	totalLen := 0
 	for _, arr := range res.Data.Result {
 		totalLen += len(arr.Values)
 	}
+
 	// Create a new slice to store the merged elements
-	df := data.NewFrame("result")
+	frame := data.NewFrame("states")
+
+	// Since we are guaranteed to have a single rule, we can return it as a single series.
+	// This might change in a later point in time.
+	lbls := data.Labels(map[string]string{
+		"from":    "state-history",
+		"ruleUID": ruleUID,
+	})
+
+	// We represent state history as five vectors:
+	//   1. `time` - when the transition happened
+	//   2. `text` - only used in annotations
+	//   3. `prev` - the previous state and reason
+	//   4. `next` - the next state and reason
+	//   5. `data` - a JSON string, containing the values
+	times := make([]time.Time, 0, totalLen)
+	texts := make([]string, 0, totalLen)
+	prevStates := make([]string, 0, totalLen)
+	nextStates := make([]string, 0, totalLen)
+	values := make([]string, 0, totalLen)
+
 	// Initialize a slice of pointers to the current position in each array
 	pointers := make([]int, len(res.Data.Result))
 	for {
@@ -145,11 +167,32 @@ func merge(res QueryRes) (*data.Frame, error) {
 		if minIdx == -1 {
 			break
 		}
+		var entry lokiEntry
+		json.Unmarshal([]byte(minEl[1]), &entry)
 		// Append the minimum element to the merged slice and move the pointer
-		df.AppendRow(minEl)
+		ts, err := strconv.ParseInt(minEl[0], 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse timestampe in response: %w", err)
+		}
+		value, err := entry.Values.MarshalJSON()
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse values in response: %w", err)
+		}
+		times = append(times, time.Unix(ts, 0))
+		texts = append(texts, minEl[1])
+		prevStates = append(prevStates, entry.Previous)
+		nextStates = append(nextStates, entry.Current)
+		values = append(values, string(value))
 		pointers[minIdx]++
 	}
-	return df, nil
+
+	frame.Fields = append(frame.Fields, data.NewField("time", lbls, times))
+	frame.Fields = append(frame.Fields, data.NewField("text", lbls, texts))
+	frame.Fields = append(frame.Fields, data.NewField("prev", lbls, prevStates))
+	frame.Fields = append(frame.Fields, data.NewField("next", lbls, nextStates))
+	frame.Fields = append(frame.Fields, data.NewField("data", lbls, values))
+
+	return frame, nil
 }
 
 func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger) []stream {
