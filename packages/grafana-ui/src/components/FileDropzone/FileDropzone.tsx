@@ -46,6 +46,7 @@ export interface FileDropzoneProps {
    */
   fileListRenderer?: (file: DropzoneFile, removeFile: (file: DropzoneFile) => void) => ReactNode;
   onFileRemove?: (file: DropzoneFile) => void;
+  primaryTextSupplier?: (files?: DropzoneFile[], options?: BackwardsCompatibleDropzoneOptions) => string;
 }
 
 export interface DropzoneFile {
@@ -57,7 +58,15 @@ export interface DropzoneFile {
   retryUpload?: () => void;
 }
 
-export function FileDropzone({ options, children, readAs, onLoad, fileListRenderer, onFileRemove }: FileDropzoneProps) {
+export function FileDropzone({
+  options,
+  primaryTextSupplier = getPrimaryText,
+  children,
+  readAs,
+  onLoad,
+  fileListRenderer,
+  onFileRemove,
+}: FileDropzoneProps) {
   const [files, setFiles] = useState<DropzoneFile[]>([]);
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
 
@@ -198,7 +207,7 @@ export function FileDropzone({ options, children, readAs, onLoad, fileListRender
     <div className={styles.container}>
       <div data-testid="dropzone" {...getRootProps({ className: styles.dropzone })}>
         <input {...getInputProps()} />
-        {children ?? <FileDropzoneDefaultChildren primaryText={getPrimaryText(files, options)} />}
+        {children ?? <FileDropzoneDefaultChildren primaryText={primaryTextSupplier(files, options)} />}
       </div>
       {errorMessages.length > 0 && getErrorMessages()}
       {options?.accept && (
@@ -252,11 +261,11 @@ export function FileDropzoneDefaultChildren({
     </div>
   );
 }
-function getPrimaryText(files: DropzoneFile[], options?: BackwardsCompatibleDropzoneOptions) {
+function getPrimaryText(files?: DropzoneFile[], options?: BackwardsCompatibleDropzoneOptions) {
   if (options?.multiple === undefined || options?.multiple) {
     return 'Upload file';
   }
-  return files.length ? 'Replace file' : 'Upload file';
+  return files && files.length ? 'Replace file' : 'Upload file';
 }
 
 function getAcceptedFileTypeText(accept: string | string[] | Accept) {

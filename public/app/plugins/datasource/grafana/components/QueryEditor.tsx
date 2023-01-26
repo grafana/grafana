@@ -68,6 +68,10 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
     },
   ];
 
+  dropzoneTextSupplier = () => {
+    return this.props?.query?.file ? 'Replace file' : 'Upload file';
+  };
+
   constructor(props: Props) {
     super(props);
 
@@ -399,6 +403,7 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
               fileListRenderer={this.fileListRenderer}
               options={{ onDropAccepted: this.onDropAccepted, maxSize: 200000, multiple: false }}
               onLoad={this.onFileDrop}
+              primaryTextSupplier={this.dropzoneTextSupplier}
             ></FileDropzone>
             {file && (
               <div className={styles.file}>
