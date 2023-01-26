@@ -45,6 +45,63 @@ const (
 	NodesTypeResponse NodesType = "response"
 )
 
+// Defines values for ScenarioId.
+const (
+	ScenarioIdAnnotations ScenarioId = "annotations"
+
+	ScenarioIdArrow ScenarioId = "arrow"
+
+	ScenarioIdCsvContent ScenarioId = "csv_content"
+
+	ScenarioIdCsvFile ScenarioId = "csv_file"
+
+	ScenarioIdCsvMetricValues ScenarioId = "csv_metric_values"
+
+	ScenarioIdDatapointsOutsideRange ScenarioId = "datapoints_outside_range"
+
+	ScenarioIdExponentialHeatmapBucketData ScenarioId = "exponential_heatmap_bucket_data"
+
+	ScenarioIdFlameGraph ScenarioId = "flame_graph"
+
+	ScenarioIdGrafanaApi ScenarioId = "grafana_api"
+
+	ScenarioIdLinearHeatmapBucketData ScenarioId = "linear_heatmap_bucket_data"
+
+	ScenarioIdLive ScenarioId = "live"
+
+	ScenarioIdLogs ScenarioId = "logs"
+
+	ScenarioIdNoDataPoints ScenarioId = "no_data_points"
+
+	ScenarioIdNodeGraph ScenarioId = "node_graph"
+
+	ScenarioIdPredictableCsvWave ScenarioId = "predictable_csv_wave"
+
+	ScenarioIdPredictablePulse ScenarioId = "predictable_pulse"
+
+	ScenarioIdRandomWalk ScenarioId = "random_walk"
+
+	ScenarioIdRandomWalkTable ScenarioId = "random_walk_table"
+
+	ScenarioIdRandomWalkWithError ScenarioId = "random_walk_with_error"
+
+	ScenarioIdRawFrame ScenarioId = "raw_frame"
+
+	ScenarioIdServerError500 ScenarioId = "server_error_500"
+
+	ScenarioIdSimulation ScenarioId = "simulation"
+
+	ScenarioIdSlowQuery ScenarioId = "slow_query"
+
+	ScenarioIdStreamingClient ScenarioId = "streaming_client"
+
+	ScenarioIdTableStatic ScenarioId = "table_static"
+
+	ScenarioIdTrace ScenarioId = "trace"
+
+	ScenarioIdUsa ScenarioId = "usa"
+)
+
 // Defines values for StreamType.
 const (
 	StreamTypeFetch StreamType = "fetch"
@@ -52,6 +109,63 @@ const (
 	StreamTypeLogs StreamType = "logs"
 
 	StreamTypeSignal StreamType = "signal"
+)
+
+// Defines values for TestDataQueryType.
+const (
+	TestDataQueryTypeAnnotations TestDataQueryType = "annotations"
+
+	TestDataQueryTypeArrow TestDataQueryType = "arrow"
+
+	TestDataQueryTypeCsvContent TestDataQueryType = "csv_content"
+
+	TestDataQueryTypeCsvFile TestDataQueryType = "csv_file"
+
+	TestDataQueryTypeCsvMetricValues TestDataQueryType = "csv_metric_values"
+
+	TestDataQueryTypeDatapointsOutsideRange TestDataQueryType = "datapoints_outside_range"
+
+	TestDataQueryTypeExponentialHeatmapBucketData TestDataQueryType = "exponential_heatmap_bucket_data"
+
+	TestDataQueryTypeFlameGraph TestDataQueryType = "flame_graph"
+
+	TestDataQueryTypeGrafanaApi TestDataQueryType = "grafana_api"
+
+	TestDataQueryTypeLinearHeatmapBucketData TestDataQueryType = "linear_heatmap_bucket_data"
+
+	TestDataQueryTypeLive TestDataQueryType = "live"
+
+	TestDataQueryTypeLogs TestDataQueryType = "logs"
+
+	TestDataQueryTypeNoDataPoints TestDataQueryType = "no_data_points"
+
+	TestDataQueryTypeNodeGraph TestDataQueryType = "node_graph"
+
+	TestDataQueryTypePredictableCsvWave TestDataQueryType = "predictable_csv_wave"
+
+	TestDataQueryTypePredictablePulse TestDataQueryType = "predictable_pulse"
+
+	TestDataQueryTypeRandomWalk TestDataQueryType = "random_walk"
+
+	TestDataQueryTypeRandomWalkTable TestDataQueryType = "random_walk_table"
+
+	TestDataQueryTypeRandomWalkWithError TestDataQueryType = "random_walk_with_error"
+
+	TestDataQueryTypeRawFrame TestDataQueryType = "raw_frame"
+
+	TestDataQueryTypeServerError500 TestDataQueryType = "server_error_500"
+
+	TestDataQueryTypeSimulation TestDataQueryType = "simulation"
+
+	TestDataQueryTypeSlowQuery TestDataQueryType = "slow_query"
+
+	TestDataQueryTypeStreamingClient TestDataQueryType = "streaming_client"
+
+	TestDataQueryTypeTableStatic TestDataQueryType = "table_static"
+
+	TestDataQueryTypeTrace TestDataQueryType = "trace"
+
+	TestDataQueryTypeUsa TestDataQueryType = "usa"
 )
 
 // CSVWave defines model for CSVWave.
@@ -160,9 +274,11 @@ type TestDataDataQuery struct {
 	RawFrameContent *string `json:"rawFrameContent,omitempty"`
 
 	// A - Z
-	RefId       string  `json:"refId"`
-	ScenarioId  *string `json:"scenarioId,omitempty"`
-	SeriesCount *int32  `json:"seriesCount,omitempty"`
+	RefId string `json:"refId"`
+
+	// @deprecated use queryType instead.
+	ScenarioId  *ScenarioId `json:"scenarioId,omitempty"`
+	SeriesCount *int32      `json:"seriesCount,omitempty"`
 	Sim         *struct {
 		Config map[string]interface{} `json:"config,omitempty"`
 		Key    struct {
@@ -197,8 +313,14 @@ type ErrorType string
 // NodesType defines model for TestDataDataQuery.Nodes.Type.
 type NodesType string
 
+// @deprecated use queryType instead.
+type ScenarioId string
+
 // StreamType defines model for TestDataDataQuery.Stream.Type.
 type StreamType string
+
+// TestDataQueryType defines model for TestDataQueryType.
+type TestDataQueryType string
 
 // USAQuery defines model for USAQuery.
 type USAQuery struct {

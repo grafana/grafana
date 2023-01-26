@@ -12,6 +12,36 @@ import * as common from '@grafana/schema';
 
 export const DataQueryModelVersion = Object.freeze([0, 0]);
 
+export enum TestDataQueryType {
+  Annotations = 'annotations',
+  Arrow = 'arrow',
+  CSVContent = 'csv_content',
+  CSVFile = 'csv_file',
+  CSVMetricValues = 'csv_metric_values',
+  DataPointsOutsideRange = 'datapoints_outside_range',
+  ExponentialHeatmapBucketData = 'exponential_heatmap_bucket_data',
+  FlameGraph = 'flame_graph',
+  GrafanaAPI = 'grafana_api',
+  LinearHeatmapBucketData = 'linear_heatmap_bucket_data',
+  Live = 'live',
+  Logs = 'logs',
+  NoDataPoints = 'no_data_points',
+  NodeGraph = 'node_graph',
+  PredictableCSVWave = 'predictable_csv_wave',
+  PredictablePulse = 'predictable_pulse',
+  RandomWalk = 'random_walk',
+  RandomWalkTable = 'random_walk_table',
+  RandomWalkWithError = 'random_walk_with_error',
+  RawFrame = 'raw_frame',
+  ServerError500 = 'server_error_500',
+  Simulation = 'simulation',
+  SlowQuery = 'slow_query',
+  StreamingClient = 'streaming_client',
+  TableStatic = 'table_static',
+  Trace = 'trace',
+  USA = 'usa',
+}
+
 export interface StreamingQuery {
   bands?: number;
   noise: number;
@@ -88,7 +118,10 @@ export interface TestData extends common.DataQuery {
   nodes?: NodesQuery;
   pulseWave?: PulseWaveQuery;
   rawFrameContent?: string;
-  scenarioId?: string;
+  /**
+   * @deprecated use queryType instead.
+   */
+  scenarioId?: TestDataQueryType;
   seriesCount?: number;
   sim?: SimulationQuery;
   spanCount?: number;
@@ -99,4 +132,5 @@ export interface TestData extends common.DataQuery {
 
 export const defaultTestData: Partial<TestData> = {
   csvWave: [],
+  scenarioId: TestDataQueryType.RandomWalk,
 };
