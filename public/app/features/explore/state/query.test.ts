@@ -413,6 +413,7 @@ describe('reducer', () => {
                 SupplementaryQueryType.LogsVolume,
                 SupplementaryQueryType.LogsSample,
               ],
+              getSupplementaryQuery: jest.fn(),
             },
           },
         },

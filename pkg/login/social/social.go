@@ -60,7 +60,9 @@ type OAuthInfo struct {
 	AutoLogin               bool
 }
 
-func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager) *SocialService {
+func ProvideService(cfg *setting.Cfg,
+	features *featuremgmt.FeatureManager,
+) *SocialService {
 	ss := SocialService{
 		cfg:           cfg,
 		oAuthProvider: make(map[string]*OAuthInfo),
@@ -227,6 +229,7 @@ func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager) *Soc
 			}
 		}
 	}
+
 	return &ss
 }
 
