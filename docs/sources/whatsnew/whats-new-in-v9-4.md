@@ -58,6 +58,6 @@ everything in Grafana OnCall, and also allow them to edit OnCall Schedules
 
 ## SAML auto login
 
-We've added auto-login support for SAML authentication, which can be turned on with the `auto_login` configuration option, and now
+We've added auto-login support for SAML authentication, which you can turn on with the `auto_login` configuration option. We also 
 have a unified configuration style among all authentication providers. Instead of using 
-`oauth_auto_login`, use the new `auto_login` option enable automatic login for specific OAuth providers.
+`oauth_auto_login`, use the new `auto_login` option to enable automatic login for specific OAuth providers.
