@@ -36,7 +36,7 @@ interface LogRowContextProps {
 
 const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean, datasourceUiHeight?: number) => {
   if (config.featureToggles.logsContextDatasourceUi) {
-    datasourceUiHeight = 55;
+    datasourceUiHeight = datasourceUiHeight ?? 55;
   } else {
     datasourceUiHeight = 0;
   }
