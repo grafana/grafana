@@ -313,6 +313,12 @@ export function getAppRoutes(): RouteDescriptor[] {
     },
     // ADMIN
     {
+      path: '/admin/authentication',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AdminAuthentication" */ 'app/features/config-auth/AuthConfigPage')
+      ),
+    },
+    {
       path: '/admin',
       component: () => (config.featureToggles.topnav ? <NavLandingPage navId="cfg" /> : <Redirect to="/admin/users" />),
     },

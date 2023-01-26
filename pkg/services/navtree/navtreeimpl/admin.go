@@ -139,6 +139,17 @@ func (s *ServiceImpl) getServerAdminNode(c *models.ReqContext) *navtree.NavLink 
 		}
 	}
 
+	// TODO: create permission for authentication page
+	if hasAccess(ac.ReqOrgAdmin, ac.EvalPermission(ac.ActionUsersCreate)) {
+		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
+			Text:     "Authentication",
+			Id:       "authentication",
+			SubTitle: "Configure authentication",
+			Icon:     "signin",
+			Url:      s.cfg.AppSubURL + "/admin/authentication",
+		})
+	}
+
 	if hasGlobalAccess(ac.ReqGrafanaAdmin, orgsAccessEvaluator) {
 		adminNavLinks = append(adminNavLinks, &navtree.NavLink{
 			Text: "Organizations", SubTitle: "Isolated instances of Grafana running on the same server", Id: "global-orgs", Url: s.cfg.AppSubURL + "/admin/orgs", Icon: "building",
