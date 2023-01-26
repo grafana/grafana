@@ -2656,8 +2656,6 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 			// The expected number of state entries remains after states are deleted
 			assert.Equal(t, tc.finalStateCacheCount, len(existingStatesForRule))
 			assert.Equal(t, tc.finalInstanceDBCount, len(q.Result))
-
-			existingStatesForRule = st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 		})
 	}
 }
@@ -2784,8 +2782,6 @@ func TestResetStateByRuleUID(t *testing.T) {
 			// The expected number of state entries remains after states are deleted
 			assert.Equal(t, tc.finalStateCacheCount, len(existingStatesForRule))
 			assert.Equal(t, tc.finalInstanceDBCount, len(q.Result))
-
-			existingStatesForRule = st.GetStatesForRuleUID(rule.OrgID, rule.UID)
 		})
 	}
 }
