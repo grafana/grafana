@@ -10,6 +10,7 @@ import {
   textUtil,
   DataSourceWithLogsContextSupport,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Alert, Button, ClickOutsideWrapper, CustomScrollbar, IconButton, List, useStyles2 } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
@@ -33,7 +34,12 @@ interface LogRowContextProps {
   getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
 }
 
-const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean, datasourceUiHeight = 55) => {
+const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean, datasourceUiHeight?: number) => {
+  if (config.featureToggles.logsContextDatasourceUi) {
+    datasourceUiHeight = 55;
+  } else {
+    datasourceUiHeight = 0;
+  }
   /**
    * This is workaround for displaying uncropped context when we have unwrapping log messages.
    * We are using margins to correctly position context. Because non-wrapped logs have always 1 line of log
@@ -191,31 +197,37 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
     logGroupPosition = 'before';
   }
 
-  const resizeObserver = useMemo(
-    () =>
-      new ResizeObserver((entries) => {
-        for (let entry of entries) {
-          setHeight(entry.contentRect.height);
-        }
-      }),
-    []
-  );
+  if (config.featureToggles.logsContextDatasourceUi) {
+    // disabling eslint here, because this condition does not change in runtime
 
-  useLayoutEffect(() => {
-    // observe the first child of the ref, which is the datasource controlled component and varies in height
-    // TODO: this is a bit of a hack and we can remove this as soon as we move back from the absolute positioned context
-    const child = datasourceUiRef.current?.children.item(0);
-    if (child) {
-      resizeObserver.observe(child);
-    }
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [datasourceUiRef, resizeObserver]);
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const resizeObserver = useMemo(
+      () =>
+        new ResizeObserver((entries) => {
+          for (let entry of entries) {
+            setHeight(entry.contentRect.height);
+          }
+        }),
+      []
+    );
+
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useLayoutEffect(() => {
+      // observe the first child of the ref, which is the datasource controlled component and varies in height
+      // TODO: this is a bit of a hack and we can remove this as soon as we move back from the absolute positioned context
+      const child = datasourceUiRef.current?.children.item(0);
+      if (child) {
+        resizeObserver.observe(child);
+      }
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }, [datasourceUiRef, resizeObserver]);
+  }
 
   return (
     <>
-      {getLogRowContextUi && (
+      {config.featureToggles.logsContextDatasourceUi && getLogRowContextUi && (
         <div ref={datasourceUiRef} className={dsUi}>
           {getLogRowContextUi(row, runContextQuery)}
         </div>
