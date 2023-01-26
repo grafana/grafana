@@ -189,7 +189,7 @@ func formatFrameName(row Row, column string, query Query) string {
 }
 
 func buildFrameNameFromQuery(row Row, column string) string {
-	var tags []string
+	tags := make([]string, 0, len(row.Tags))
 	for k, v := range row.Tags {
 		tags = append(tags, fmt.Sprintf("%s: %s", k, v))
 	}

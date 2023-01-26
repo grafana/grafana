@@ -207,11 +207,11 @@ type dashboardPluginServiceMock struct {
 	args             []*dashmodels.GetDashboardsByPluginIDQuery
 }
 
-func (d *dashboardPluginServiceMock) GetDashboardsByPluginID(ctx context.Context, query *dashmodels.GetDashboardsByPluginIDQuery) error {
-	query.Result = []*dashmodels.Dashboard{}
+func (d *dashboardPluginServiceMock) GetDashboardsByPluginID(ctx context.Context, query *dashmodels.GetDashboardsByPluginIDQuery) ([]*dashmodels.Dashboard, error) {
+	queryResult := []*dashmodels.Dashboard{}
 
 	if dashboards, exists := d.pluginDashboards[query.PluginID]; exists {
-		query.Result = dashboards
+		queryResult = dashboards
 	}
 
 	if d.args == nil {
@@ -220,5 +220,5 @@ func (d *dashboardPluginServiceMock) GetDashboardsByPluginID(ctx context.Context
 
 	d.args = append(d.args, query)
 
-	return nil
+	return queryResult, nil
 }

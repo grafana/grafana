@@ -32,7 +32,7 @@ export function createTableFrame(
         type: FieldType.time,
         config: {
           custom: {
-            width: 150,
+            width: 200,
           },
         },
       },
@@ -41,7 +41,7 @@ export function createTableFrame(
         type: FieldType.string,
         config: {
           displayNameFromDS: 'Trace ID',
-          custom: { width: 300 },
+          custom: { width: 180 },
           links: [
             {
               title: 'Click to open trace ${__value.raw}',

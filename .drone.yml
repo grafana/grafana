@@ -3247,7 +3247,9 @@ steps:
   name: redis-integration-tests
 - commands:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
-  - ./bin/grabpl integration-tests
+  - go clean -testcache
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -5895,7 +5897,9 @@ steps:
   name: redis-integration-tests
 - commands:
   - dockerize -wait tcp://memcached:11211 -timeout 120s
-  - ./bin/grabpl integration-tests
+  - go clean -testcache
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -6498,6 +6502,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: ecad329c37ebc0d1838ed1992074fd6353a23af2cdcf9bcaaf28be27120277ed
+hmac: 37c61f5b00b0384552fe9402c979bbc57bbc2cf63a0cbff9a93c296619d08b5d
 
 ...

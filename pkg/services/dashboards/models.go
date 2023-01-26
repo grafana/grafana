@@ -198,8 +198,6 @@ type SaveDashboardCommand struct {
 	IsFolder     bool             `json:"isFolder"`
 
 	UpdatedAt time.Time
-
-	Result *Dashboard `json:"-"`
 }
 
 type ValidateDashboardCommand struct {
@@ -209,7 +207,6 @@ type ValidateDashboardCommand struct {
 type TrimDashboardCommand struct {
 	Dashboard *simplejson.Json `json:"dashboard" binding:"Required"`
 	Meta      *simplejson.Json `json:"meta"`
-	Result    *Dashboard       `json:"-"`
 }
 
 type DashboardProvisioning struct {
@@ -240,8 +237,6 @@ type GetDashboardQuery struct {
 	ID    int64  // optional if slug is set
 	UID   string // optional if slug is set
 	OrgID int64
-
-	Result *Dashboard
 }
 
 type DashboardTagCloudItem struct {
@@ -250,33 +245,18 @@ type DashboardTagCloudItem struct {
 }
 
 type GetDashboardTagsQuery struct {
-	OrgID  int64
-	Result []*DashboardTagCloudItem
+	OrgID int64
 }
 
 type GetDashboardsQuery struct {
 	DashboardIDs  []int64
 	DashboardUIDs []string
 	OrgID         int64
-	Result        []*Dashboard
 }
 
 type GetDashboardsByPluginIDQuery struct {
 	OrgID    int64
 	PluginID string
-	Result   []*Dashboard
-}
-
-type GetDashboardSlugByIdQuery struct {
-	ID     int64
-	Result string
-}
-
-type GetDashboardsBySlugQuery struct {
-	OrgID int64
-	Slug  string
-
-	Result []*Dashboard
 }
 
 type DashboardRef struct {
@@ -285,8 +265,7 @@ type DashboardRef struct {
 }
 
 type GetDashboardRefByIDQuery struct {
-	ID     int64
-	Result *DashboardRef
+	ID int64
 }
 
 type SaveDashboardDTO struct {
@@ -336,7 +315,7 @@ func FromDashboard(dash *Dashboard) *folder.Folder {
 		UID:       dash.UID,
 		Title:     dash.Title,
 		HasACL:    dash.HasACL,
-		Url:       GetFolderURL(dash.UID, dash.Slug),
+		URL:       GetFolderURL(dash.UID, dash.Slug),
 		Version:   dash.Version,
 		Created:   dash.Created,
 		CreatedBy: dash.CreatedBy,
@@ -418,5 +397,4 @@ func (dto *DashboardACLInfoDTO) IsDuplicateOf(other *DashboardACLInfoDTO) bool {
 type GetDashboardACLInfoListQuery struct {
 	DashboardID int64
 	OrgID       int64
-	Result      []*DashboardACLInfoDTO
 }

@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import React, { useEffect, useRef, useState } from 'react';
-import InlineSVG from 'react-inlinesvg/esm';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { Button, HorizontalGroup, Icon, IconName, useStyles2 } from '@grafana/ui';
+import { SanitizedSVG } from 'app/core/components/SVG/SanitizedSVG';
 
 import { useAppNotification } from '../../../core/copy/appNotification';
 import { SavedQuery } from '../api/SavedQueriesApi';
@@ -150,7 +150,7 @@ export const QueryEditorDrawerHeader = ({ savedQuery, onDismiss, onSavedQueryCha
                       <a onClick={implementationComingSoonAlert}>
                         <div>
                           {option.src ? (
-                            <InlineSVG src={option.src} className={styles.optionSvg} />
+                            <SanitizedSVG src={option.src} className={styles.optionSvg} />
                           ) : (
                             <Icon name={option.icon} className={styles.menuIconClassName} />
                           )}
