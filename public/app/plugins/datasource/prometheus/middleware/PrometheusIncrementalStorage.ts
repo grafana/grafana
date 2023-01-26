@@ -12,6 +12,7 @@ import {cloneDeep} from "lodash";
 const PROMETHEUS_INCREMENTAL_QUERY_OVERLAP_DURATION_MS = 60 * 10 * 1000;
 const PROMETHEUS_STORAGE_TIME_INDEX = '__time__';
 const PROMETHEUS_STORAGE_EXEMPLAR_INDEX = 'exemplar';
+const DEBUG = false;
 
 // Another issue: if the query window starts at a time when there is no results from the database, we'll always fail the cache check and pull fresh data, even though the cache has everything available
 // Also the cache can def get really big for big queries, need to look into if we want to find a way to limit the size of requests we add to the cache?
@@ -172,10 +173,11 @@ export class PrometheusIncrementalStorage {
               this.storage[responseQueryExpressionAndStepString][seriesLabelsIndexString];
 
             if(existingTimeFrames.length !== existingValueFrames.length){
-              console.error('Time frame and value frames are different lengths, something got screwed up!')
-
-              console.log('existingTimeFrames', existingTimeFrames);
-              console.log('existingValueFrames', existingValueFrames);
+              if(DEBUG){
+                console.error('Time frame and value frames are different lengths, something got screwed up!')
+                console.log('existingTimeFrames', existingTimeFrames);
+                console.log('existingValueFrames', existingValueFrames);
+              }
             }
 
             //come on dude
@@ -202,7 +204,7 @@ export class PrometheusIncrementalStorage {
                 const isFrameOlderThenQuery =
                   existingTimeFrames[i] <
                   originalRange.from.valueOf() - PROMETHEUS_INCREMENTAL_QUERY_OVERLAP_DURATION_MS;
-                if (isFrameOlderThenQuery) {
+                if (isFrameOlderThenQuery && DEBUG) {
                   console.log(
                     'Frame is older then query, evicting',
                     existingTimeFrames[i] - originalRange.from.valueOf()
@@ -217,7 +219,9 @@ export class PrometheusIncrementalStorage {
                     framesFromStorageRelevantToCurrentQuery.push(existingTimeFrames[i]);
                     existingValueFrameNewValuesRemoved.push(existingValueFrames[i]);
                   }else{
-                    console.warn('empty value frame?', i, existingValueFrames);
+                    if(DEBUG){
+                      console.warn('empty value frame?', i, existingValueFrames);
+                    }
                   }
                 }
               }
@@ -238,7 +242,9 @@ export class PrometheusIncrementalStorage {
                 allValueFramesMerged;
               this.storage[responseQueryExpressionAndStepString]['__time__'] = allTimeValuesMerged;
             } else {
-              console.warn('no existing values found');
+              if(DEBUG){
+                console.warn('no existing values found');
+              }
             }
           }
         });
@@ -273,14 +279,18 @@ export class PrometheusIncrementalStorage {
       const cacheKey: string | undefined = this.createPrometheusStorageIndexFromRequestTarget(target, request);
 
       if (!cacheKey) {
-        console.warn('No Cache key was generated, targets cannot be streamed');
+        if(DEBUG){
+          console.warn('No Cache key was generated, targets cannot be streamed');
+        }
         canCache.push(false);
         break;
       }
 
       // @leon exemplars could work, but they're not step/interval-aligned so the current algorithm of merging frames from storage with the response won't work
       if (target?.range !== true || target.hide || target.exemplar) {
-        console.log('target invalid for incremental querying', target);
+        if(DEBUG){
+          console.log('target invalid for incremental querying', target);
+        }
         break;
       }
 
@@ -305,7 +315,9 @@ export class PrometheusIncrementalStorage {
             //alignRange(cacheTo, requestTo, target.step, this.timeSrv.timeRange().to.utcOffset() * 60);
             neededDurations.push({ start: cacheTo, end: requestTo.valueOf() });
           } else {
-            console.log('invalid duration!');
+            if(DEBUG){
+              console.log('invalid duration!');
+            }
           }
         }
       } else {
@@ -333,12 +345,16 @@ export class PrometheusIncrementalStorage {
         raw: rawTimeRange,
       };
 
-      console.warn('QUERY IS CONTAINED BY CACHE, MODIFYING REQUEST', this.storage);
+      if(DEBUG){
+        console.warn('QUERY IS CONTAINED BY CACHE, MODIFYING REQUEST', this.storage);
+      }
 
       // calculate new from/tos
       return { request: { ...request, range: timeRange }, originalRange: originalRange };
     } else {
-      console.warn('QUERY NOT CONTAINED BY CACHE, NOT MODIFYING REQUEST', request);
+      if(DEBUG){
+        console.warn('QUERY NOT CONTAINED BY CACHE, NOT MODIFYING REQUEST', request);
+      }
     }
 
     return { request: request };
