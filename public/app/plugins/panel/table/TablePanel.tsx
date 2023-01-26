@@ -137,7 +137,6 @@ const tableStyles = {
     justify-content: space-between;
     height: 100%;
   `,
-  // JEV: this isn't being used anywhere; in the case of no data, we render <PanelDataErrorView />
   noData: css`
     display: flex;
     flex-direction: column;
