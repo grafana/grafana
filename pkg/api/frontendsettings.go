@@ -97,11 +97,6 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
 	secretsManagerPluginEnabled := kvstore.EvaluateRemoteSecretsPlugin(c.Req.Context(), hs.secretsPluginManager, hs.Cfg) == nil
 
-	cdnBaseURL, err := hs.pluginsCDNService.BaseURL()
-	if err != nil {
-		return nil, fmt.Errorf("plugins cdn base url: %w", err)
-	}
-
 	jsonObj := map[string]interface{}{
 		"defaultDatasource":                   defaultDS,
 		"datasources":                         dataSources,
@@ -150,7 +145,6 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"editorsCanAdmin":                     hs.Cfg.EditorsCanAdmin,
 		"disableSanitizeHtml":                 hs.Cfg.DisableSanitizeHtml,
 		"pluginsToPreload":                    pluginsToPreload,
-		"pluginsCDNBaseURL":                   cdnBaseURL,
 		"auth": map[string]interface{}{
 			"OAuthSkipOrgRoleUpdateSync": hs.Cfg.OAuthSkipOrgRoleUpdateSync,
 			"SAMLSkipOrgRoleSync":        hs.Cfg.SectionWithEnvOverrides("auth.saml").Key("skip_org_role_sync").MustBool(false),
@@ -214,6 +208,14 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"samlEnabled":             hs.samlEnabled(),
 		"samlName":                hs.samlName(),
 		"tokenExpirationDayLimit": hs.Cfg.SATokenExpirationDayLimit,
+	}
+
+	if hs.pluginsCDNService != nil && hs.pluginsCDNService.IsEnabled() {
+		cdnBaseURL, err := hs.pluginsCDNService.BaseURL()
+		if err != nil {
+			return nil, fmt.Errorf("plugins cdn base url: %w", err)
+		}
+		jsonObj["pluginsCDNBaseURL"] = cdnBaseURL
 	}
 
 	if hs.ThumbService != nil {

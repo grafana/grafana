@@ -17,9 +17,9 @@ func TestService(t *testing.T) {
 	})
 
 	t.Run("IsCDNPlugin", func(t *testing.T) {
-		require.True(t, svc.IsCDNPlugin("one"))
-		require.False(t, svc.IsCDNPlugin("two"))
-		require.False(t, svc.IsCDNPlugin("unknown"))
+		require.True(t, svc.PluginSupported("one"))
+		require.False(t, svc.PluginSupported("two"))
+		require.False(t, svc.PluginSupported("unknown"))
 	})
 
 	t.Run("CDNBaseURL", func(t *testing.T) {

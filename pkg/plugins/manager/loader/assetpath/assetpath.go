@@ -22,22 +22,22 @@ func ProvideService(cdn *pluginscdn.Service) *Service {
 }
 
 // Base returns the base path for the specified plugin.
-func (s Service) Base(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) (string, error) {
+func (s *Service) Base(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) (string, error) {
 	if class == plugins.Core {
 		return path.Join("public/app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir)), nil
 	}
-	if s.cdn.IsCDNPlugin(pluginJSON.ID) {
+	if s.cdn.PluginSupported(pluginJSON.ID) {
 		return s.cdn.SystemJSAssetPath(pluginJSON.ID, pluginJSON.Info.Version, "")
 	}
 	return path.Join("public/plugins", pluginJSON.ID), nil
 }
 
 // Module returns the module.js path for the specified plugin.
-func (s Service) Module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) (string, error) {
+func (s *Service) Module(pluginJSON plugins.JSONData, class plugins.Class, pluginDir string) (string, error) {
 	if class == plugins.Core {
 		return path.Join("app/plugins", string(pluginJSON.Type), filepath.Base(pluginDir), "module"), nil
 	}
-	if s.cdn.IsCDNPlugin(pluginJSON.ID) {
+	if s.cdn.PluginSupported(pluginJSON.ID) {
 		return s.cdn.SystemJSAssetPath(pluginJSON.ID, pluginJSON.Info.Version, "module")
 	}
 	return path.Join("plugins", pluginJSON.ID, "module"), nil
@@ -45,11 +45,11 @@ func (s Service) Module(pluginJSON plugins.JSONData, class plugins.Class, plugin
 
 // RelativeURL returns the relative URL for an arbitrary plugin asset.
 // If pathStr is an empty string, defaultStr is returned.
-func (s Service) RelativeURL(p *plugins.Plugin, pathStr, defaultStr string) (string, error) {
+func (s *Service) RelativeURL(p *plugins.Plugin, pathStr, defaultStr string) (string, error) {
 	if pathStr == "" {
 		return defaultStr, nil
 	}
-	if s.cdn.IsCDNPlugin(p.ID) {
+	if s.cdn.PluginSupported(p.ID) {
 		// CDN
 		return s.cdn.NewCDNURLConstructor(p.ID, p.Info.Version).StringPath(pathStr)
 	}
