@@ -56,7 +56,6 @@ export const Table = memo((props: Props) => {
     footerValues,
     enablePagination,
   } = props;
-  console.log(showRowNums);
 
   const listRef = useRef<VariableSizeList>(null);
   const tableDivRef = useRef<HTMLDivElement>(null);
@@ -147,6 +146,7 @@ export const Table = memo((props: Props) => {
     pageOptions,
     setHiddenColumns,
   } = useTable(options, useFilters, useSortBy, useAbsoluteLayout, useResizeColumns, useExpanded, usePagination);
+  console.log(totalColumnsWidth, 'toteWidth');
 
   const extendedState = state as GrafanaTableState;
 

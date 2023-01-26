@@ -11,7 +11,9 @@ import { PanelOptions } from './models.gen';
 interface Props extends PanelProps<PanelOptions> {}
 
 export function TablePanel(props: Props) {
-  const { data, height, width, options, fieldConfig, id } = props;
+  let { data, height, width, options, fieldConfig, id } = props;
+  width = options.showRowNums ? width : width + 50;
+  console.log(width, 'width');
 
   // JEV: error on load (sometimes) -> The pseudo class ":nth-child" is potentially unsafe when doing server-side rendering. Try changing it to ":nth-of-type".
 

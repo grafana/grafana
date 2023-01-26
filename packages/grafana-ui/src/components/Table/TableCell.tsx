@@ -27,6 +27,7 @@ export const TableCell: FC<Props> = ({ cell, tableStyles, onCellFilterAdded, col
   }
 
   let innerWidth = ((cell.column.width as number) ?? 24) - tableStyles.cellPadding * 2;
+  // console.log(innerWidth, 'innerwidth');
 
   return cell.render('Cell', {
     field,
