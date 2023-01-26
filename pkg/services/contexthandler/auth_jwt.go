@@ -83,10 +83,13 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 		ctx.JsonApiErr(http.StatusUnauthorized, InvalidJWT, err)
 		return true
 	}
+
 	extUser := &models.ExternalUserInfo{
 		AuthModule: "jwt",
 		AuthId:     sub,
 		OrgRoles:   map[int64]org.RoleType{},
+		// we do not want to sync team memberships from JWT authentication see - https://github.com/grafana/grafana/issues/62175
+		SkipTeamSync: true,
 	}
 
 	if key := h.Cfg.JWTAuthUsernameClaim; key != "" {

@@ -36,6 +36,7 @@ type ExternalUserInfo struct {
 	OrgRoles       map[int64]org.RoleType
 	IsGrafanaAdmin *bool // This is a pointer to know if we should sync this or not (nil = ignore sync)
 	IsDisabled     bool
+	SkipTeamSync   bool
 }
 
 func (e *ExternalUserInfo) String() string {
