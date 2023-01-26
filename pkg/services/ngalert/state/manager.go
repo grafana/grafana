@@ -178,12 +178,19 @@ func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.Al
 		return nil
 	}
 
-	now := time.Now()
+	now := st.clock.Now()
 	transitions := make([]StateTransition, 0, len(states))
 	for _, s := range states {
 		oldState := s.State
 		oldReason := s.StateReason
-		s.SetNormal(reason, s.StartsAt, now)
+		startsAt := s.StartsAt
+		if s.State != eval.Normal {
+			startsAt = now
+		}
+		s.SetNormal(reason, startsAt, now)
+		// Set Resolved property so the scheduler knows to send a postable alert
+		// to Alertmanager.
+		s.Resolved = oldState == eval.Alerting
 		s.LastEvaluationTime = now
 		s.Values = map[string]float64{}
 		transitions = append(transitions, StateTransition{
