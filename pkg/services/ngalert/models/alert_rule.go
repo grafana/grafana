@@ -13,6 +13,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 
 	alertingModels "github.com/grafana/alerting/alerting/models"
+
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
@@ -111,6 +112,7 @@ const (
 	StateReasonError         = "Error"
 	StateReasonPaused        = "Paused"
 	StateReasonUpdated       = "Updated"
+	StateReasonRuleDeleted   = "RuleDeleted"
 )
 
 var (
