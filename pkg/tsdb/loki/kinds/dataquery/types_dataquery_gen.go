@@ -16,6 +16,15 @@ const (
 	EditorModeCode EditorMode = "code"
 )
 
+// Defines values for LokiQueryType.
+const (
+	LokiQueryTypeInstant LokiQueryType = "instant"
+
+	LokiQueryTypeRange LokiQueryType = "range"
+
+	LokiQueryTypeStream LokiQueryType = "stream"
+)
+
 // Defines values for QueryEditorMode.
 const (
 	QueryEditorModeBuilder QueryEditorMode = "builder"
@@ -64,6 +73,9 @@ type LokiDataQuery struct {
 
 // EditorMode defines model for LokiDataQuery.EditorMode.
 type EditorMode string
+
+// LokiQueryType defines model for LokiQueryType.
+type LokiQueryType string
 
 // QueryEditorMode defines model for QueryEditorMode.
 type QueryEditorMode string

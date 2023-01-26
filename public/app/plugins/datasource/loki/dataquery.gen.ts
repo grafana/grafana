@@ -17,6 +17,12 @@ export enum QueryEditorMode {
   Code = 'code',
 }
 
+export enum LokiQueryType {
+  Instant = 'instant',
+  Range = 'range',
+  Stream = 'stream',
+}
+
 export interface Loki extends common.DataQuery {
   editorMode?: QueryEditorMode;
   /**

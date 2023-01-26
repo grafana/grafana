@@ -1,6 +1,8 @@
 import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
 
-import { Loki as LokiQueryFromSchema } from './dataquery.gen';
+import { Loki as LokiQueryFromSchema, LokiQueryType } from './dataquery.gen';
+
+export { LokiQueryType };
 
 export interface LokiInstantQueryRequest {
   query: string;
@@ -24,23 +26,18 @@ export enum LokiResultType {
   Matrix = 'matrix',
 }
 
-export enum LokiQueryType {
-  Range = 'range',
-  Instant = 'instant',
-  Stream = 'stream',
-}
-
 export enum LokiQueryDirection {
   Backward = 'backward',
   Forward = 'forward',
 }
 
-export interface LokiQuery extends Omit<LokiQueryFromSchema, 'queryType'> {
+export interface LokiQuery extends LokiQueryFromSchema {
   direction?: LokiQueryDirection;
   volumeQuery?: boolean;
   // CUE autogenerates `queryType` as `?string`, as that's how it is defined
   // in the parent-interface (in DataQuery).
-  // to fix it, we override it here.
+  // the temporary fix (until this gets improved in the codegen), is to
+  // override it here
   queryType?: LokiQueryType;
 }
 

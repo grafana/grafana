@@ -1,12 +1,16 @@
 package loki
 
-import "time"
+import (
+	"time"
 
-type QueryType string
+	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
+)
+
+type QueryType = dataquery.LokiQueryType
 
 const (
-	QueryTypeRange   QueryType = "range"
-	QueryTypeInstant QueryType = "instant"
+	QueryTypeRange   = dataquery.LokiQueryTypeRange
+	QueryTypeInstant = dataquery.LokiQueryTypeInstant
 )
 
 type Direction string
