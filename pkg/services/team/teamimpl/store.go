@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -22,7 +22,7 @@ type store interface {
 	Search(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error)
 	GetByID(ctx context.Context, query *team.GetTeamByIDQuery) (*team.TeamDTO, error)
 	GetByUser(ctx context.Context, query *team.GetTeamsByUserQuery) ([]*team.TeamDTO, error)
-	AddMember(userID, orgID, teamID int64, isExternal bool, permission models.PermissionType) error
+	AddMember(userID, orgID, teamID int64, isExternal bool, permission dashboards.PermissionType) error
 	UpdateMember(ctx context.Context, cmd *team.UpdateTeamMemberCommand) error
 	IsMember(orgId int64, teamId int64, userId int64) (bool, error)
 	RemoveMember(ctx context.Context, cmd *team.RemoveTeamMemberCommand) error
@@ -358,7 +358,7 @@ func (ss *xormStore) GetByUser(ctx context.Context, query *team.GetTeamsByUserQu
 }
 
 // AddTeamMember adds a user to a team
-func (ss *xormStore) AddMember(userID, orgID, teamID int64, isExternal bool, permission models.PermissionType) error {
+func (ss *xormStore) AddMember(userID, orgID, teamID int64, isExternal bool, permission dashboards.PermissionType) error {
 	return ss.db.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
 		if isMember, err := isTeamMember(sess, orgID, teamID, userID); err != nil {
 			return err
@@ -416,7 +416,7 @@ func isTeamMember(sess *db.Session, orgId int64, teamId int64, userId int64) (bo
 
 // AddOrUpdateTeamMemberHook is called from team resource permission service
 // it adds user to a team or updates user permissions in a team within the given transaction session
-func AddOrUpdateTeamMemberHook(sess *db.Session, userID, orgID, teamID int64, isExternal bool, permission models.PermissionType) error {
+func AddOrUpdateTeamMemberHook(sess *db.Session, userID, orgID, teamID int64, isExternal bool, permission dashboards.PermissionType) error {
 	isMember, err := isTeamMember(sess, orgID, teamID, userID)
 	if err != nil {
 		return err
@@ -431,7 +431,7 @@ func AddOrUpdateTeamMemberHook(sess *db.Session, userID, orgID, teamID int64, is
 	return err
 }
 
-func addTeamMember(sess *db.Session, orgID, teamID, userID int64, isExternal bool, permission models.PermissionType) error {
+func addTeamMember(sess *db.Session, orgID, teamID, userID int64, isExternal bool, permission dashboards.PermissionType) error {
 	if _, err := teamExists(orgID, teamID, sess); err != nil {
 		return err
 	}
@@ -450,13 +450,13 @@ func addTeamMember(sess *db.Session, orgID, teamID, userID int64, isExternal boo
 	return err
 }
 
-func updateTeamMember(sess *db.Session, orgID, teamID, userID int64, permission models.PermissionType) error {
+func updateTeamMember(sess *db.Session, orgID, teamID, userID int64, permission dashboards.PermissionType) error {
 	member, err := getTeamMember(sess, orgID, teamID, userID)
 	if err != nil {
 		return err
 	}
 
-	if permission != models.PERMISSION_ADMIN {
+	if permission != dashboards.PERMISSION_ADMIN {
 		permission = 0 // make sure we don't get invalid permission levels in store
 	}
 
@@ -590,7 +590,7 @@ func (ss *xormStore) IsAdmin(ctx context.Context, query *team.IsAdminOfTeamsQuer
 	var queryResult bool
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sql := "SELECT COUNT(team.id) AS count FROM team INNER JOIN team_member ON team_member.team_id = team.id WHERE team.org_id = ? AND team_member.user_id = ? AND team_member.permission = ?"
-		params := []interface{}{query.SignedInUser.OrgID, query.SignedInUser.UserID, models.PERMISSION_ADMIN}
+		params := []interface{}{query.SignedInUser.OrgID, query.SignedInUser.UserID, dashboards.PERMISSION_ADMIN}
 
 		type teamCount struct {
 			Count int64
