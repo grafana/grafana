@@ -36,6 +36,42 @@ type FrontendSettingsLicenseInfoDTO struct {
 	LicenseUrl      string          `json:"licenseUrl"`
 	Edition         string          `json:"edition"`
 	EnabledFeatures map[string]bool `json:"enabledFeatures"`
+
+	// PR TODO: enterprise fields - should these be here at all? should they be pointers?
+	TrialExpiry int64  `json:"trialExpiry,omitempty"`
+	AppUrl      string `json:"appUrl,omitempty"`
+}
+
+// PR TODO: enterprise
+type FrontendSettingsLicensing struct {
+	Slug                   *string `json:"slug,omitempty"`
+	LimitBy                *string `json:"limitBy,omitempty"`
+	IncludedUsers          *int64  `json:"includedUsers,omitempty"`
+	LicenseExpiry          *int64  `json:"licenseExpiry,omitempty"`
+	LicenseExpiryWarnDays  *int64  `json:"licenseExpiryWarnDays,omitempty"`
+	TokenExpiry            *int64  `json:"tokenExpiry,omitempty"`
+	IsTrial                *bool   `json:"isTrial,omitempty"`
+	TokenExpiryWarnDays    *int64  `json:"tokenExpiryWarnDays,omitempty"`
+	UsageBilling           *bool   `json:"usageBilling,omitempty"`
+	ActiveAdminsAndEditors *int64  `json:"activeAdminsAndEditors,omitempty"`
+	ActiveViewers          *int64  `json:"activeViewers,omitempty"`
+	ActiveUsers            *int64  `json:"ActiveUsers,omitempty"`
+}
+
+// PR TODO: enterprise
+type FrontendSettingsWhitelabeling struct {
+	Links      any    `json:"links"` // PR TODO: type this properly
+	LoginTitle string `json:"loginTitle"`
+
+	// PR TODO: optional config
+	AppTitle              *string `json:"appTitle,omitempty"`
+	LoginLogo             *string `json:"loginLogo,omitempty"`
+	MenuLogo              *string `json:"menuLogo,omitempty"`
+	LoginBackground       *string `json:"loginBackground,omitempty"`
+	LoginSubtitle         *string `json:"loginSubtitle,omitempty"`
+	LoginBoxBackground    *string `json:"loginBoxBackground,omitempty"`
+	LoadingLogo           *string `json:"loadingLogo,omitempty"`
+	PublicDashboardFooter any     `json:"publicDashboardFooter,omitempty"` // PR TODO: type this properly
 }
 
 type FrontendSettingsAzureDTO struct {
@@ -167,6 +203,9 @@ type FrontendSettingsDTO struct {
 	DateFormats setting.DateFormats `json:"dateFormats,omitempty"`
 
 	LoginError string `json:"loginError,omitempty"`
+
+	Licensing     *FrontendSettingsLicensing     `json:"licensing,omitempty"`
+	Whitelabeling *FrontendSettingsWhitelabeling `json:"whitelabeling,omitempty"`
 
 	PluginsCDNBaseURL string `json:"pluginsCDNBaseURL,omitEmpty"`
 }
