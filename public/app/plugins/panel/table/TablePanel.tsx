@@ -48,7 +48,7 @@ export function TablePanel(props: Props) {
       noHeader={!options.showHeader}
       showTypeIcons={options.showTypeIcons}
       resizable={true}
-      showRowNumbers={options.showRowNums}
+      showRowNums={options.showRowNums}
       initialSortBy={options.sortBy}
       onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
       onColumnResize={(displayName, width) => onColumnResize(displayName, width, props)}
