@@ -57,13 +57,21 @@ export function LogsSamplePanel(props: Props) {
       return null;
     }
 
+    const onSplitOpen = () => {
+      splitOpen({ query: logSampleQueries[0], datasourceUid: datasourceInstance.uid });
+      reportInteraction('grafana_explore_logs_sample_split_button_clicked', {
+        datasourceType: datasourceInstance?.type ?? 'unknown',
+        queriesCount: logSampleQueries.length,
+      });
+    };
+
     return (
       <Button
         size="sm"
         className={styles.logSamplesButton}
         // TODO: support multiple queries (#62107)
         // This currently works only for the first query as splitOpen supports only 1 query
-        onClick={() => splitOpen({ query: logSampleQueries[0], datasourceUid: datasourceInstance.uid })}
+        onClick={onSplitOpen}
       >
         Open logs in split view
       </Button>

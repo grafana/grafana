@@ -1541,9 +1541,11 @@
       "pluralName": "TempoDataSourceCfgs",
       "schemaInterface": "DataSourceCfg"
     },
-    "testdatadbdataquery": {
+    "testdatadataquery": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/plugins-platform-frontend"
+      ],
       "currentVersion": [
         0,
         0
@@ -1551,19 +1553,19 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
-        "docs": "n/a",
-        "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/testdatadataquery/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/tsdb/testdata/kinds/dataquery/types_dataquery_gen.go",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/testdata/dataquery.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/testdata/dataquery.gen.ts"
       },
-      "machineName": "testdatadbdataquery",
-      "maturity": "planned",
-      "name": "TestDataDBDataQuery",
-      "pluralMachineName": "testdatadbdataquerys",
-      "pluralName": "TestDataDBDataQuerys",
+      "machineName": "testdatadataquery",
+      "maturity": "experimental",
+      "name": "TestDataDataQuery",
+      "pluralMachineName": "testdatadataquerys",
+      "pluralName": "TestDataDataQuerys",
       "schemaInterface": "DataQuery"
     },
-    "testdatadbdatasourcecfg": {
+    "testdatadatasourcecfg": {
       "category": "composable",
       "codeowners": [],
       "currentVersion": [
@@ -1578,11 +1580,11 @@
         "schema": "n/a",
         "ts": "n/a"
       },
-      "machineName": "testdatadbdatasourcecfg",
+      "machineName": "testdatadatasourcecfg",
       "maturity": "planned",
-      "name": "TestDataDBDataSourceCfg",
-      "pluralMachineName": "testdatadbdatasourcecfgs",
-      "pluralName": "TestDataDBDataSourceCfgs",
+      "name": "TestDataDataSourceCfg",
+      "pluralMachineName": "testdatadatasourcecfgs",
+      "pluralName": "TestDataDataSourceCfgs",
       "schemaInterface": "DataSourceCfg"
     },
     "textpanelcfg": {
@@ -1826,8 +1828,8 @@
           "tableoldpanelcfg",
           "tempodataquery",
           "tempodatasourcecfg",
-          "testdatadbdataquery",
-          "testdatadbdatasourcecfg",
+          "testdatadataquery",
+          "testdatadatasourcecfg",
           "textpanelcfg",
           "tracespanelcfg",
           "welcomepanelcfg",
@@ -1874,6 +1876,7 @@
           "statetimelinepanelcfg",
           "statpanelcfg",
           "statushistorypanelcfg",
+          "testdatadataquery",
           "textpanelcfg",
           "xychartpanelcfg"
         ],
@@ -1948,8 +1951,7 @@
           "tableoldpanelcfg",
           "tempodataquery",
           "tempodatasourcecfg",
-          "testdatadbdataquery",
-          "testdatadbdatasourcecfg",
+          "testdatadatasourcecfg",
           "thumb",
           "tracespanelcfg",
           "user",
