@@ -119,17 +119,6 @@ export const Table = memo((props: Props) => {
     [data, width, columnMinWidth, footerItems, subData, isCountRowsSet, showRowNums]
   );
 
-  function addOptionalNumbersRowToTable(data: DataFrame, showRowNums: boolean | undefined): DataFrame {
-    if (showRowNums) {
-      const rowField: Field = buildFieldsForOptionalRowNums(data.length);
-      const newData = cloneDeep(data);
-      newData.fields = [rowField, ...newData.fields];
-      return newData;
-    }
-
-    return data;
-  }
-
   // Internal react table state reducer
   const stateReducer = useTableStateReducer(props);
 
@@ -328,6 +317,17 @@ export const Table = memo((props: Props) => {
         )}
       </div>
     );
+  }
+
+  function addOptionalNumbersRowToTable(data: DataFrame, showRowNums: boolean | undefined): DataFrame {
+    if (showRowNums) {
+      const rowField: Field = buildFieldsForOptionalRowNums(data.length);
+      const newData = cloneDeep(data);
+      newData.fields = [rowField, ...newData.fields];
+      return newData;
+    }
+
+    return data;
   }
 
   const getItemSize = (index: number): number => {
