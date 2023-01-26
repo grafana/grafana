@@ -630,6 +630,7 @@ export class PrometheusDatasource
         ...this.getRangeScopedVars(options.range),
       });
     }
+
     query.step = interval;
 
     let expr = target.expr;
@@ -691,22 +692,15 @@ export class PrometheusDatasource
     return this._request<PromDataSuccessResponse<PromMatrixData>>(url, data, {
       requestId: query.requestId,
       headers: query.headers,
-    })
-      .pipe(
-        catchError((err: FetchError<PromDataErrorResponse<PromMatrixData>>) => {
-          if (err.cancelled) {
-            return of(err);
-          }
+    }).pipe(
+      catchError((err: FetchError<PromDataErrorResponse<PromMatrixData>>) => {
+        if (err.cancelled) {
+          return of(err);
+        }
 
-          return throwError(this.handleErrors(err, query));
-        })
-      )
-      .pipe((observable) => {
-        observable.subscribe((dataframe) => {
-          dataframe.data.data.result;
-        });
-        return observable;
-      });
+        return throwError(this.handleErrors(err, query));
+      })
+    );
   }
 
   performInstantQuery(
