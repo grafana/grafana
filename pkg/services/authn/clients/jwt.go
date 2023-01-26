@@ -71,7 +71,7 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 		ClientParams: authn.ClientParams{
 			SyncUser:            true,
 			SyncTeamMembers:     true,
-			AllowSignUp:         false,
+			AllowSignUp:         s.cfg.JWTAuthAutoSignUp,
 			EnableDisabledUsers: false,
 		}}
 
@@ -123,10 +123,6 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 		s.log.Debug("Failed to get an authentication claim from JWT",
 			"login", id.Login, "email", id.Email)
 		return nil, ErrJWTMissingClaim.Errorf("missing login and email claim in JWT")
-	}
-
-	if s.cfg.JWTAuthAutoSignUp {
-		id.ClientParams.AllowSignUp = true
 	}
 
 	return id, nil
