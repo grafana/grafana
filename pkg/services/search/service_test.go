@@ -22,8 +22,8 @@ func TestSearch_SortedResults(t *testing.T) {
 	db := dbtest.NewFakeDB()
 	us := usertest.NewUserServiceFake()
 	ds := dashboards.NewFakeDashboardService(t)
-	ds.On("SearchDashboards", mock.Anything, mock.AnythingOfType("*models.FindPersistedDashboardsQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*models.FindPersistedDashboardsQuery)
+	ds.On("SearchDashboards", mock.Anything, mock.AnythingOfType("*dashboards.FindPersistedDashboardsQuery")).Run(func(args mock.Arguments) {
+		q := args.Get(1).(*dashboards.FindPersistedDashboardsQuery)
 		q.Result = models.HitList{
 			&models.Hit{ID: 16, Title: "CCAA", Type: "dash-db", Tags: []string{"BB", "AA"}},
 			&models.Hit{ID: 10, Title: "AABB", Type: "dash-db", Tags: []string{"CC", "AA"}},

@@ -3,7 +3,6 @@ package permissions
 import (
 	"strings"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -17,7 +16,7 @@ type DashboardPermissionFilter struct {
 	Dialect         migrator.Dialect
 	UserId          int64
 	OrgId           int64
-	PermissionLevel models.PermissionType
+	PermissionLevel dashboards.PermissionType
 }
 
 func (d DashboardPermissionFilter) Where() (string, []interface{}) {
@@ -85,9 +84,9 @@ type AccessControlDashboardPermissionFilter struct {
 	folderActions    []string
 }
 
-// NewAccessControlDashboardPermissionFilter creates a new AccessControlDashboardPermissionFilter that is configured with specific actions calculated based on the models.PermissionType and query type
-func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissionLevel models.PermissionType, queryType string) AccessControlDashboardPermissionFilter {
-	needEdit := permissionLevel > models.PERMISSION_VIEW
+// NewAccessControlDashboardPermissionFilter creates a new AccessControlDashboardPermissionFilter that is configured with specific actions calculated based on the dashboards.PermissionType and query type
+func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissionLevel dashboards.PermissionType, queryType string) AccessControlDashboardPermissionFilter {
+	needEdit := permissionLevel > dashboards.PERMISSION_VIEW
 
 	var folderActions []string
 	var dashboardActions []string
