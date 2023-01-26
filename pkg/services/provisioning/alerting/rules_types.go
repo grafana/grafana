@@ -80,6 +80,7 @@ type AlertRuleV1 struct {
 	For          values.StringValue    `json:"for" yaml:"for"`
 	Annotations  values.StringMapValue `json:"annotations" yaml:"annotations"`
 	Labels       values.StringMapValue `json:"labels" yaml:"labels"`
+	IsPaused     values.BoolValue      `json:"paused" yaml:"paused"`
 }
 
 func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
@@ -136,6 +137,7 @@ func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
 	if len(alertRule.Data) == 0 {
 		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: no data set", alertRule.Title)
 	}
+	alertRule.IsPaused = rule.IsPaused.Value()
 	return alertRule, nil
 }
 
