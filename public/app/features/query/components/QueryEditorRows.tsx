@@ -20,7 +20,7 @@ interface Props {
   dsSettings: DataSourceInstanceSettings;
 
   // Query editing
-  onQueriesChange: (queries: DataQuery[]) => void;
+  onQueriesChange: (queries: DataQuery[], newDatasource?: DataSourceInstanceSettings, index?: number) => void;
   onAddQuery: (query: DataQuery) => void;
   onRunQueries: () => void;
 
@@ -34,7 +34,6 @@ interface Props {
   onQueryCopied?: () => void;
   onQueryRemoved?: () => void;
   onQueryToggled?: (queryStatus?: boolean | undefined) => void;
-  onDatasourceChange?: (dataSource: DataSourceInstanceSettings, query: DataQuery) => void;
 }
 
 export class QueryEditorRows extends PureComponent<Props> {
@@ -58,10 +57,6 @@ export class QueryEditorRows extends PureComponent<Props> {
 
   onDataSourceChange(dataSource: DataSourceInstanceSettings, index: number) {
     const { queries, onQueriesChange } = this.props;
-
-    if (this.props.onDatasourceChange) {
-      this.props.onDatasourceChange(dataSource, queries[index]);
-    }
 
     onQueriesChange(
       queries.map((item, itemIndex) => {
@@ -90,7 +85,9 @@ export class QueryEditorRows extends PureComponent<Props> {
           hide: item.hide,
           datasource: dataSourceRef,
         };
-      })
+      }),
+      dataSource,
+      index
     );
   }
 
