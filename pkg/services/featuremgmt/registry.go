@@ -155,6 +155,12 @@ var (
 			RequiresDevMode: true,
 		},
 		{
+			Name:            "k8sDashboards",
+			Description:     "Save dashboards via k8s",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
 			Name:        "supportBundles",
 			Description: "Support bundles for troubleshooting",
 			State:       FeatureStateAlpha,
@@ -398,6 +404,12 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:         "editPanelCSVDragAndDrop",
+			Description:  "Enables drag and drop for CSV and Excel files",
+			FrontendOnly: true,
+			State:        FeatureStateAlpha,
+		},
+		{
 			Name:            "alertingNoNormalState",
 			Description:     "Stop maintaining state of alerts that are not firing",
 			State:           FeatureStateBeta,
@@ -407,6 +419,12 @@ var (
 			Name:        "azureMultipleResourcePicker",
 			Description: "Azure multiple resource picker",
 			State:       FeatureStateAlpha,
+		},
+		{
+			Name:         "topNavCommandPalette",
+			Description:  "Launch the Command Palette from the top navigation search box",
+			State:        FeatureStateBeta,
+			FrontendOnly: true,
 		},
 	}
 )

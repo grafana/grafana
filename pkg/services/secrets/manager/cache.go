@@ -8,10 +8,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-var (
-	now = time.Now
-)
-
 type dataKeyCacheEntry struct {
 	id         string
 	label      string
@@ -75,13 +71,21 @@ func (c *dataKeyCache) getByLabel(label string) (*dataKeyCacheEntry, bool) {
 	return entry, true
 }
 
-func (c *dataKeyCache) add(entry *dataKeyCacheEntry) {
+func (c *dataKeyCache) addById(entry *dataKeyCacheEntry) {
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
 	entry.expiration = now().Add(c.cacheTTL)
 
 	c.byId[entry.id] = entry
+}
+
+func (c *dataKeyCache) addByLabel(entry *dataKeyCacheEntry) {
+	c.mtx.Lock()
+	defer c.mtx.Unlock()
+
+	entry.expiration = now().Add(c.cacheTTL)
+
 	c.byLabel[entry.label] = entry
 }
 

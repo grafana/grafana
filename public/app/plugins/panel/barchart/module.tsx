@@ -16,7 +16,7 @@ import { ThresholdsStyleEditor } from '../timeseries/ThresholdsStyleEditor';
 
 import { BarChartPanel } from './BarChartPanel';
 import { TickSpacingEditor } from './TickSpacingEditor';
-import { PanelFieldConfig, PanelOptions, defaultPanelFieldConfig, defaultPanelOptions } from './models.gen';
+import { PanelFieldConfig, PanelOptions, defaultPanelFieldConfig, defaultPanelOptions } from './panelcfg.gen';
 import { BarChartSuggestionsSupplier } from './suggestions';
 import { prepareBarChartDisplayValues } from './utils';
 

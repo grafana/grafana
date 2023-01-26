@@ -8,8 +8,8 @@ title: HistogramPanelCfg kind
 
 # HistogramPanelCfg kind
 
-### Maturity: experimental
-### Version: 0.0
+## Maturity: experimental
+## Version: 0.0
 
 ## Properties
 

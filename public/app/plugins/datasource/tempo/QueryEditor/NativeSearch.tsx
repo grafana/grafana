@@ -45,7 +45,7 @@ const NativeSearch = ({ datasource, query, onChange, onBlur, onRunQuery }: Props
       setIsLoading((prevValue) => ({ ...prevValue, [name]: true }));
 
       try {
-        const options = await languageProvider.getOptions(lpName);
+        const options = await languageProvider.getOptionsV1(lpName);
         const filteredOptions = options.filter((item) => (item.value ? fuzzyMatch(item.value, query).found : false));
         return filteredOptions;
       } catch (error) {

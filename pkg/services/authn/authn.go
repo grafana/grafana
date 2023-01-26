@@ -52,8 +52,8 @@ type PostAuthHookFn func(ctx context.Context, identity *Identity, r *Request) er
 type PostLoginHookFn func(ctx context.Context, identity *Identity, r *Request, err error)
 
 type Service interface {
-	// Authenticate authenticates a request using the specified client.
-	Authenticate(ctx context.Context, client string, r *Request) (*Identity, bool, error)
+	// Authenticate authenticates a request
+	Authenticate(ctx context.Context, r *Request) (*Identity, error)
 	// RegisterPostAuthHook registers a hook that is called after a successful authentication.
 	RegisterPostAuthHook(hook PostAuthHookFn)
 	// Login authenticates a request and creates a session on successful authentication.
@@ -65,10 +65,18 @@ type Service interface {
 }
 
 type Client interface {
+	// Name returns the name of a client
+	Name() string
 	// Authenticate performs the authentication for the request
 	Authenticate(ctx context.Context, r *Request) (*Identity, error)
+}
+
+type ContextAwareClient interface {
+	Client
 	// Test should return true if client can be used to authenticate request
 	Test(ctx context.Context, r *Request) bool
+	// Priority for the client, a lower number means higher priority
+	Priority() uint
 }
 
 type RedirectClient interface {
@@ -132,6 +140,8 @@ type Identity struct {
 	// Namespace* constants. For example, "user:1" or "api-key:1".
 	// If the entity is not found in the DB or this entity is non-persistent, this field will be empty.
 	ID string
+	// IsAnonymous
+	IsAnonymous bool
 	// Login is the short hand identifier of the entity. Should be unique.
 	Login string
 	// Name is the display name of the entity. It is not guaranteed to be unique.
@@ -169,11 +179,6 @@ type Identity struct {
 // Role returns the role of the identity in the active organization.
 func (i *Identity) Role() org.RoleType {
 	return i.OrgRoles[i.OrgID]
-}
-
-// IsAnonymous will return true if no ID is set on the identity
-func (i *Identity) IsAnonymous() bool {
-	return i.ID == ""
 }
 
 // TODO: improve error handling
@@ -222,7 +227,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		Email:              i.Email,
 		OrgCount:           i.OrgCount,
 		IsGrafanaAdmin:     isGrafanaAdmin,
-		IsAnonymous:        i.IsAnonymous(),
+		IsAnonymous:        i.IsAnonymous,
 		IsDisabled:         i.IsDisabled,
 		HelpFlags1:         i.HelpFlags1,
 		LastSeenAt:         i.LastSeenAt,
