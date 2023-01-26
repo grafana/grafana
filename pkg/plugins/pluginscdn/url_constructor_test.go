@@ -3,7 +3,6 @@ package pluginscdn
 import (
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -29,7 +28,7 @@ func TestURLConstructor_StringURLFor(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			u, err := uc.StringPath(c.path)
 			require.NoError(t, err)
-			assert.Equal(t, c.exp, u)
+			require.Equal(t, c.exp, u)
 		})
 	}
 }

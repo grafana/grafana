@@ -189,8 +189,8 @@ func TestHTTPServer_GetFrontendSettings_pluginsCDNBaseURL(t *testing.T) {
 			var got settings
 			err := json.Unmarshal(recorder.Body.Bytes(), &got)
 			require.NoError(t, err)
-			assert.Equal(t, http.StatusOK, recorder.Code)
-			assert.EqualValues(t, test.expected, got)
+			require.Equal(t, http.StatusOK, recorder.Code)
+			require.EqualValues(t, test.expected, got)
 		})
 	}
 }
