@@ -44,6 +44,7 @@ export function InlineToast({
         style={{ display: 'inline-block', ...popper.styles.popper }}
         {...popper.attributes.popper}
         ref={setIndicatorElement}
+        aria-live="polite"
       >
         <span className={cx(styles.root, placementStyles[toastPlacement])}>
           {children && <span>{children}</span>}
