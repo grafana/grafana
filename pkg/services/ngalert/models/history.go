@@ -8,11 +8,10 @@ import (
 
 // HistoryQuery represents a query for alert state history.
 type HistoryQuery struct {
-	RuleUID string
-	OrgID   int64
-	Labels  map[string]string
-	From    time.Time
-	To      time.Time
-	// SignedInUser is required when the state history backend is annotations.
+	RuleUID      string
+	OrgID        int64
+	Labels       map[string]string
+	From         time.Time
+	To           time.Time
 	SignedInUser *user.SignedInUser
 }
