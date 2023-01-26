@@ -1,6 +1,6 @@
 import { Action } from 'redux';
 
-import { SelectableValue, WithAccessControlMetadata } from '@grafana/data';
+import { WithAccessControlMetadata } from '@grafana/data';
 
 import { QueryResponse } from './service';
 
@@ -78,8 +78,8 @@ export interface SearchState {
   starred: boolean;
   explain?: boolean; // adds debug info
   datasource?: string;
-  sort: string | null;
-  prevSort: string | null; // Save sorting data between layouts
+  sort?: string;
+  prevSort?: string; // Save sorting data between layouts
   layout: SearchLayout;
   result?: QueryResponse;
   loading?: boolean;
