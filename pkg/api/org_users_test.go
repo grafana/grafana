@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -28,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
-	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -592,114 +592,129 @@ func TestPostOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 }
 
 func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
-	type accessControlTestCase2 struct {
+	type testCase struct {
 		expectedCode int
 		desc         string
 		url          string
 		method       string
+		role         org.RoleType
 		permissions  []accesscontrol.Permission
 		input        string
 	}
-	tests := []accessControlTestCase2{
+	tests := []testCase{
 		{
 			expectedCode: http.StatusOK,
 			desc:         "org viewer with the correct permissions can add a user as a viewer to his org",
 			url:          "/api/org/users",
 			method:       http.MethodPost,
+			role:         org.RoleViewer,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
-			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(org.RoleViewer) + `"}`,
+			input:        `{"loginOrEmail": "user", "role": "Viewer"}`,
 		},
 		{
 			expectedCode: http.StatusForbidden,
 			desc:         "org viewer with the correct permissions cannot add a user as an editor to his org",
 			url:          "/api/org/users",
+			role:         org.RoleViewer,
 			method:       http.MethodPost,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
-			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(org.RoleEditor) + `"}`,
+			input:        `{"loginOrEmail": "user", "role": "Editor"}`,
 		},
 		{
 			expectedCode: http.StatusOK,
 			desc:         "org viewer with the correct permissions can add a user as a viewer to his org",
 			url:          "/api/orgs/1/users",
 			method:       http.MethodPost,
+			role:         org.RoleViewer,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
-			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(org.RoleViewer) + `"}`,
+			input:        `{"loginOrEmail": "user", "role": "Viewer"}`,
 		},
 		{
 			expectedCode: http.StatusForbidden,
 			desc:         "org viewer with the correct permissions cannot add a user as an editor to his org",
 			url:          "/api/orgs/1/users",
 			method:       http.MethodPost,
+			role:         org.RoleViewer,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
-			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(org.RoleEditor) + `"}`,
+			input:        `{"loginOrEmail": "user", "role": "Editor"}`,
 		},
 		{
 			expectedCode: http.StatusOK,
 			desc:         "org viewer with the correct permissions can update a user's role to a viewer in his org",
 			url:          fmt.Sprintf("/api/org/users/%d", testEditorOrg1.UserID),
 			method:       http.MethodPatch,
+			role:         org.RoleViewer,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersWrite, Scope: accesscontrol.ScopeUsersAll}},
-			input:        `{"role": "` + string(org.RoleViewer) + `"}`,
+			input:        `{"role": "Viewer"}`,
 		},
 		{
 			expectedCode: http.StatusForbidden,
-			desc:         "org viewer with the correct permissions cannot update a user's role to a viewer in his org",
+			desc:         "org viewer with the correct permissions cannot update a user's role to a Editorin his org",
 			url:          fmt.Sprintf("/api/org/users/%d", testEditorOrg1.UserID),
 			method:       http.MethodPatch,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersWrite, Scope: accesscontrol.ScopeUsersAll}},
-			input:        `{"role": "` + string(org.RoleEditor) + `"}`,
+			input:        `{"role": "Editor"}`,
 		},
 		{
 			expectedCode: http.StatusOK,
 			desc:         "org viewer with the correct permissions can update a user's role to a viewer in his org",
 			url:          fmt.Sprintf("/api/orgs/1/users/%d", testEditorOrg1.UserID),
 			method:       http.MethodPatch,
+			role:         org.RoleViewer,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersWrite, Scope: accesscontrol.ScopeUsersAll}},
-			input:        `{"role": "` + string(org.RoleViewer) + `"}`,
+			input:        `{"role": "Viewer"}`,
 		},
 		{
 			expectedCode: http.StatusForbidden,
-			desc:         "org viewer with the correct permissions cannot update a user's role to a viewer in his org",
+			desc:         "org viewer with the correct permissions cannot update a user's role to a editor in his org",
 			url:          fmt.Sprintf("/api/orgs/1/users/%d", testEditorOrg1.UserID),
 			method:       http.MethodPatch,
+			role:         org.RoleViewer,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersWrite, Scope: accesscontrol.ScopeUsersAll}},
-			input:        `{"role": "` + string(org.RoleEditor) + `"}`,
+			input:        `{"role": "Editor"}`,
 		},
 		{
 			expectedCode: http.StatusOK,
 			desc:         "org viewer with the correct permissions can invite a user as a viewer in his org",
 			url:          "/api/org/invites",
 			method:       http.MethodPost,
+			role:         org.RoleViewer,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
-			input:        `{"loginOrEmail": "newUserEmail@test.com", "sendEmail": false, "role": "` + string(org.RoleViewer) + `"}`,
+			input:        `{"loginOrEmail": "newUserEmail@test.com", "sendEmail": false, "role": "Viewer"}`,
 		},
 		{
 			expectedCode: http.StatusForbidden,
 			desc:         "org viewer with the correct permissions cannot invite a user as an editor in his org",
 			url:          "/api/org/invites",
 			method:       http.MethodPost,
+			role:         org.RoleEditor,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionUsersCreate}},
-			input:        `{"loginOrEmail": "newUserEmail@test.com", "sendEmail": false, "role": "` + string(org.RoleEditor) + `"}`,
+			input:        `{"loginOrEmail": "newUserEmail@test.com", "sendEmail": false, "role": "Editor"}`,
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			var err error
-			sc := setupHTTPServer(t, true, func(hs *HTTPServer) {
-				hs.tempUserService = tempuserimpl.ProvideService(hs.SQLStore)
-				hs.orgService, err = orgimpl.ProvideService(hs.SQLStore, setting.NewCfg(), quotatest.New(false, nil))
-				hs.userService, err = userimpl.ProvideService(
-					hs.SQLStore, nil, setting.NewCfg(), teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), setting.NewCfg()), localcache.ProvideService(), quotatest.New(false, nil))
-				require.NoError(t, err)
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = setting.NewCfg()
+				hs.orgService = &orgtest.FakeOrgService{}
+				hs.authInfoService = &logintest.AuthInfoServiceFake{}
+				hs.userService = &usertest.FakeUserService{
+					ExpectedUser:         &user.User{},
+					ExpectedSignedInUser: userWithPermissions(1, tt.permissions),
+				}
 			})
-			setInitCtxSignedInViewer(sc.initCtx)
-			setupOrgUsersDBForAccessControlTests(t, sc.db, sc.hs.orgService)
-			setAccessControlPermissions(sc.acmock, test.permissions, sc.initCtx.OrgID)
 
-			input := strings.NewReader(test.input)
-			response := callAPI(sc.server, test.method, test.url, input, t)
-			assert.Equal(t, test.expectedCode, response.Code)
+			u := userWithPermissions(1, tt.permissions)
+			var reader io.Reader
+			if tt.input != "" {
+				reader = strings.NewReader(tt.input)
+			}
+
+			res, err := server.SendJSON(webtest.RequestWithSignedInUser(server.NewRequest(tt.method, tt.url, reader), u))
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }
