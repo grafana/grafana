@@ -38,7 +38,8 @@ export interface LibraryPanel {
    */
   meta?: LibraryElementDTOMeta;
   /**
-   * TODO: this should the same panel type as defined inside dashboard
+   * TODO: should be the same panel schema defined in dashboard
+   * Typescript: Omit<Panel, 'gridPos' | 'id' | 'libraryPanel'>;
    */
   model: unknown;
   /**

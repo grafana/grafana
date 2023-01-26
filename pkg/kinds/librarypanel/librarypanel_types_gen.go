@@ -37,7 +37,8 @@ type LibraryPanel struct {
 	FolderUid *string                `json:"folderUid,omitempty"`
 	Meta      *LibraryElementDTOMeta `json:"meta,omitempty"`
 
-	// TODO: this should the same panel type as defined inside dashboard
+	// TODO: should be the same panel schema defined in dashboard
+	// Typescript: Omit<Panel, 'gridPos' | 'id' | 'libraryPanel'>;
 	Model interface{} `json:"model"`
 
 	// Panel name (also saved in the model)

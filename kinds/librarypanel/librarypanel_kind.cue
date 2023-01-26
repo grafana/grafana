@@ -33,7 +33,8 @@ lineage: seqs: [
 				// panel version, incremented each time the dashboard is updated.
 				version: int64 @grafanamaturity(NeedsExpertReview)
 
-				// TODO: this should the same panel type as defined inside dashboard
+				// TODO: should be the same panel schema defined in dashboard
+				// Typescript: Omit<Panel, 'gridPos' | 'id' | 'libraryPanel'>;
 				model: _
 
 				// Object storage metadata
