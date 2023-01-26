@@ -1,6 +1,9 @@
 package azuremonitor
 
 import (
+	"fmt"
+
+	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
@@ -70,3 +73,16 @@ var (
 		},
 	}
 )
+
+func getAzureMonitorRoutes(settings *azsettings.AzureSettings, credentials azcredentials.AzureCredentials) (map[string]types.AzRoute, error) {
+	azureCloud, err := azcredentials.GetAzureCloud(settings, credentials)
+	if err != nil {
+		return nil, err
+	}
+	if route, ok := routes[azureCloud]; !ok {
+		err := fmt.Errorf("the Azure cloud '%s' not supported by Azure Monitor datasource", azureCloud)
+		return nil, err
+	} else {
+		return route, nil
+	}
+}

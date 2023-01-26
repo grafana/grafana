@@ -33,18 +33,12 @@ type AzureMonitorSettings struct {
 	AppInsightsAppId             string `json:"appInsightsAppId"`
 }
 
-// AzureMonitorCustomizedCloudSettings is the extended Azure Monitor settings for customized cloud
-type AzureMonitorCustomizedCloudSettings struct {
-	CustomizedRoutes map[string]AzRoute `json:"customizedRoutes"`
-}
-
 type DatasourceService struct {
 	URL        string
 	HTTPClient *http.Client
 }
 
 type DatasourceInfo struct {
-	Cloud       string
 	Credentials azcredentials.AzureCredentials
 	Settings    AzureMonitorSettings
 	Routes      map[string]AzRoute

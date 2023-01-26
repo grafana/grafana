@@ -172,7 +172,7 @@ func TestCredentials_getAzureCredentials(t *testing.T) {
 	t.Run("when auth type is client secret", func(t *testing.T) {
 		jsonData := simplejson.NewFromAny(map[string]interface{}{
 			"azureAuthType": azcredentials.AzureAuthClientSecret,
-			"cloudName":     azUSGovManagement,
+			"cloudName":     azureMonitorUSGovernment,
 			"tenantId":      "9b9d90ee-a5cc-49c2-b97e-0d1b0f086b5c",
 			"clientId":      "849ccbb0-92eb-4226-b228-ef391abd8fe6",
 		})
@@ -189,7 +189,7 @@ func TestCredentials_getAzureCredentials(t *testing.T) {
 			require.IsType(t, &azcredentials.AzureClientSecretCredentials{}, credentials)
 			clientSecretCredentials := credentials.(*azcredentials.AzureClientSecretCredentials)
 
-			assert.Equal(t, azsettings.AzureChina, clientSecretCredentials.AzureCloud)
+			assert.Equal(t, azsettings.AzureUSGovernment, clientSecretCredentials.AzureCloud)
 			assert.Equal(t, "9b9d90ee-a5cc-49c2-b97e-0d1b0f086b5c", clientSecretCredentials.TenantId)
 			assert.Equal(t, "849ccbb0-92eb-4226-b228-ef391abd8fe6", clientSecretCredentials.ClientId)
 			assert.Equal(t, "59e3498f-eb12-4943-b8f0-a5aa42640058", clientSecretCredentials.ClientSecret)

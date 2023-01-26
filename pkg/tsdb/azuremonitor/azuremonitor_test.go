@@ -41,47 +41,12 @@ func TestNewInstanceSettings(t *testing.T) {
 				ID:                      40,
 			},
 			expectedModel: types.DatasourceInfo{
-				Cloud:                   azsettings.AzurePublic,
 				Credentials:             &azcredentials.AzureManagedIdentityCredentials{},
 				Settings:                types.AzureMonitorSettings{},
 				Routes:                  routes[azsettings.AzurePublic],
 				JSONData:                map[string]interface{}{"azureAuthType": "msi"},
 				DatasourceID:            40,
 				DecryptedSecureJSONData: map[string]string{"key": "value"},
-				Services:                map[string]types.DatasourceService{},
-			},
-			Err: require.NoError,
-		},
-		{
-			name: "creates an instance for customized cloud",
-			settings: backend.DataSourceInstanceSettings{
-				JSONData:                []byte(`{"cloudName":"customizedazuremonitor","customizedRoutes":{"Route":{"URL":"url"}},"azureAuthType":"clientsecret"}`),
-				DecryptedSecureJSONData: map[string]string{"clientSecret": "secret"},
-				ID:                      50,
-			},
-			expectedModel: types.DatasourceInfo{
-				Cloud: "AzureCustomizedCloud",
-				Credentials: &azcredentials.AzureClientSecretCredentials{
-					AzureCloud:   "AzureCustomizedCloud",
-					ClientSecret: "secret",
-				},
-				Settings: types.AzureMonitorSettings{},
-				Routes: map[string]types.AzRoute{
-					"Route": {
-						URL: "url",
-					},
-				},
-				JSONData: map[string]interface{}{
-					"azureAuthType": "clientsecret",
-					"cloudName":     "customizedazuremonitor",
-					"customizedRoutes": map[string]interface{}{
-						"Route": map[string]interface{}{
-							"URL": "url",
-						},
-					},
-				},
-				DatasourceID:            50,
-				DecryptedSecureJSONData: map[string]string{"clientSecret": "secret"},
 				Services:                map[string]types.DatasourceService{},
 			},
 			Err: require.NoError,
@@ -107,7 +72,6 @@ func TestNewInstanceSettings(t *testing.T) {
 }
 
 type fakeInstance struct {
-	cloud    string
 	routes   map[string]types.AzRoute
 	services map[string]types.DatasourceService
 	settings types.AzureMonitorSettings
@@ -115,7 +79,6 @@ type fakeInstance struct {
 
 func (f *fakeInstance) Get(pluginContext backend.PluginContext) (instancemgmt.Instance, error) {
 	return types.DatasourceInfo{
-		Cloud:    f.cloud,
 		Routes:   f.routes,
 		Services: f.services,
 		Settings: f.settings,
@@ -444,7 +407,6 @@ func TestCheckHealth(t *testing.T) {
 	}
 
 	instance := &fakeInstance{
-		cloud:    cloud,
 		routes:   routes[cloud],
 		services: map[string]types.DatasourceService{},
 		settings: types.AzureMonitorSettings{

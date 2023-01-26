@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -98,23 +97,17 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
 
-		cloud, err := getAzureCloud(cfg, jsonData)
-		if err != nil {
-			return nil, fmt.Errorf("error getting credentials: %w", err)
-		}
-
-		routesForModel, err := getAzureRoutes(cloud, settings.JSONData)
-		if err != nil {
-			return nil, err
-		}
-
 		credentials, err := getAzureCredentials(cfg, jsonData, settings.DecryptedSecureJSONData)
 		if err != nil {
 			return nil, fmt.Errorf("error getting credentials: %w", err)
 		}
 
+		routesForModel, err := getAzureMonitorRoutes(cfg.Azure, credentials)
+		if err != nil {
+			return nil, err
+		}
+
 		model := types.DatasourceInfo{
-			Cloud:                   cloud,
 			Credentials:             credentials,
 			Settings:                azMonitorSettings,
 			JSONData:                jsonDataObj,
@@ -133,31 +126,6 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 		}
 
 		return model, nil
-	}
-}
-
-func getCustomizedCloudSettings(cloud string, jsonData json.RawMessage) (types.AzureMonitorCustomizedCloudSettings, error) {
-	customizedCloudSettings := types.AzureMonitorCustomizedCloudSettings{}
-	err := json.Unmarshal(jsonData, &customizedCloudSettings)
-	if err != nil {
-		return types.AzureMonitorCustomizedCloudSettings{}, fmt.Errorf("error getting customized cloud settings: %w", err)
-	}
-	return customizedCloudSettings, nil
-}
-
-func getAzureRoutes(cloud string, jsonData json.RawMessage) (map[string]types.AzRoute, error) {
-	if cloud == azsettings.AzureCustomized {
-		customizedCloudSettings, err := getCustomizedCloudSettings(cloud, jsonData)
-		if err != nil {
-			return nil, err
-		}
-		if customizedCloudSettings.CustomizedRoutes == nil {
-			return nil, fmt.Errorf("unable to instantiate routes, customizedRoutes must be set")
-		}
-		azureRoutes := customizedCloudSettings.CustomizedRoutes
-		return azureRoutes, nil
-	} else {
-		return routes[cloud], nil
 	}
 }
 
