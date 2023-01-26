@@ -71,7 +71,7 @@
     "date-fns": "2.29.3",
     "hoist-non-react-statics": "3.3.2",
     "i18next": "^22.0.0",
-    "immutable": "4.1.0",
+    "immutable": "4.2.2",
     "is-hotkey": "0.2.0",
     "jquery": "3.6.1",
     "lodash": "4.17.21",
