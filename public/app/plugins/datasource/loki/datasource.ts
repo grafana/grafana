@@ -169,41 +169,39 @@ export class LokiDatasource
     const normalizedQuery = getNormalizedLokiQuery(query);
     const expr = removeCommentsFromQuery(normalizedQuery.expr);
     let isQuerySuitable = false;
-    let supplementaryQuery = undefined;
 
     switch (type) {
       case SupplementaryQueryType.LogsVolume:
         // it has to be a logs-producing range-query
         isQuerySuitable = !!(query.expr && isLogsQuery(query.expr) && query.queryType === LokiQueryType.Range);
-        if (isQuerySuitable) {
-          supplementaryQuery = {
-            ...normalizedQuery,
-            refId: `${REF_ID_STARTER_LOG_VOLUME}${normalizedQuery.refId}`,
-            instant: false,
-            volumeQuery: true,
-            expr: `sum by (level) (count_over_time(${expr}[$__interval]))`,
-          };
+        if (!isQuerySuitable) {
+          return undefined;
         }
-        break;
+
+        return {
+          ...normalizedQuery,
+          refId: `${REF_ID_STARTER_LOG_VOLUME}${normalizedQuery.refId}`,
+          instant: false,
+          volumeQuery: true,
+          expr: `sum by (level) (count_over_time(${expr}[$__interval]))`,
+        };
 
       case SupplementaryQueryType.LogsSample:
         // it has to be a metric query
         isQuerySuitable = !!(query.expr && !isLogsQuery(query.expr));
-        if (isQuerySuitable) {
-          supplementaryQuery = {
-            ...normalizedQuery,
-            refId: `${REF_ID_STARTER_LOG_SAMPLE}${normalizedQuery.refId}`,
-            expr: getLogQueryFromMetricsQuery(expr),
-            maxLines: 100,
-          };
+        if (!isQuerySuitable) {
+          return undefined;
         }
-        break;
+        return {
+          ...normalizedQuery,
+          refId: `${REF_ID_STARTER_LOG_SAMPLE}${normalizedQuery.refId}`,
+          expr: getLogQueryFromMetricsQuery(expr),
+          maxLines: 100,
+        };
 
       default:
-        throw new Error(`getSupplementaryQuery not implemented for type: ${type}`);
+        return undefined;
     }
-
-    return supplementaryQuery;
   }
 
   getLogsVolumeDataProvider(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> | undefined {
