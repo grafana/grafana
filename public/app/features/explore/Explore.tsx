@@ -367,15 +367,17 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
   }
 
   renderLogsSamplePanel() {
-    const { logsSample, timeZone, setSupplementaryQueryEnabled, exploreId, datasourceInstance } = this.props;
+    const { logsSample, timeZone, setSupplementaryQueryEnabled, exploreId, datasourceInstance, queries } = this.props;
 
     return (
       <LogsSamplePanel
         queryResponse={logsSample.data}
         timeZone={timeZone}
         enabled={logsSample.enabled}
+        queries={queries}
         datasourceInstance={datasourceInstance}
-        setLogsSampleEnabled={(enabled) =>
+        splitOpen={this.onSplitOpen('logsSample')}
+        setLogsSampleEnabled={(enabled: boolean) =>
           setSupplementaryQueryEnabled(exploreId, enabled, SupplementaryQueryType.LogsSample)
         }
       />
