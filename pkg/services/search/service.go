@@ -39,7 +39,7 @@ type Query struct {
 	DashboardUIDs []string
 	DashboardIds  []int64
 	FolderIds     []int64
-	Permission    models.PermissionType
+	Permission    dashboards.PermissionType
 	Sort          string
 
 	Result models.HitList
@@ -59,7 +59,7 @@ type SearchService struct {
 }
 
 func (s *SearchService) SearchHandler(ctx context.Context, query *Query) error {
-	dashboardQuery := models.FindPersistedDashboardsQuery{
+	dashboardQuery := dashboards.FindPersistedDashboardsQuery{
 		Title:         query.Title,
 		SignedInUser:  query.SignedInUser,
 		IsStarred:     query.IsStarred,
