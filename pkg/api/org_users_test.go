@@ -445,10 +445,12 @@ func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
 }
 
 func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
-	url := "/api/orgs/%v/users/"
 	type testCase struct {
 		name                string
 		enableAccessControl bool
+		role                org.RoleType
+		isGrafanaAdmin      bool
+		permissions         []accesscontrol.Permission
 		expectedCode        int
 		expectedUserCount   int
 		user                user.SignedInUser
@@ -459,92 +461,66 @@ func TestGetOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 		{
 			name:                "server admin can get users in his org (legacy)",
 			enableAccessControl: false,
+			role:                org.RoleViewer,
+			isGrafanaAdmin:      true,
 			expectedCode:        http.StatusOK,
-			expectedUserCount:   2,
-			user:                testServerAdminViewer,
-			targetOrg:           testServerAdminViewer.OrgID,
+			targetOrg:           1,
 		},
 		{
 			name:                "server admin can get users in another org (legacy)",
 			enableAccessControl: false,
+			isGrafanaAdmin:      true,
 			expectedCode:        http.StatusOK,
-			expectedUserCount:   2,
-			user:                testServerAdminViewer,
 			targetOrg:           2,
 		},
 		{
 			name:                "org admin cannot get users in his org (legacy)",
 			enableAccessControl: false,
 			expectedCode:        http.StatusForbidden,
-			user:                testAdminOrg2,
-			targetOrg:           testAdminOrg2.OrgID,
+			targetOrg:           1,
 		},
 		{
 			name:                "org admin cannot get users in another org (legacy)",
 			enableAccessControl: false,
 			expectedCode:        http.StatusForbidden,
-			user:                testAdminOrg2,
 			targetOrg:           1,
 		},
 		{
-			name:                "server admin can get users in his org",
+			name:                "user with permissions can get users in org",
 			enableAccessControl: true,
-			expectedCode:        http.StatusOK,
-			expectedUserCount:   2,
-			user:                testServerAdminViewer,
-			targetOrg:           testServerAdminViewer.OrgID,
+			permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: "users:*"},
+			},
+			expectedCode: http.StatusOK,
+			targetOrg:    1,
 		},
 		{
-			name:                "server admin can get users in another org",
-			enableAccessControl: true,
-			expectedCode:        http.StatusOK,
-			expectedUserCount:   2,
-			user:                testServerAdminViewer,
-			targetOrg:           2,
-		},
-		{
-			name:                "org admin can get users in their org",
-			enableAccessControl: true,
-			expectedCode:        http.StatusOK,
-			expectedUserCount:   2,
-			user:                testAdminOrg2,
-			targetOrg:           testAdminOrg2.OrgID,
-		},
-		{
-			name:                "org admin cannot get users in another org",
+			name:                "user without permissions cannot get users in org",
 			enableAccessControl: true,
 			expectedCode:        http.StatusForbidden,
-			user:                testAdminOrg2,
 			targetOrg:           1,
 		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg := setting.NewCfg()
-			cfg.RBACEnabled = tc.enableAccessControl
-			var err error
-			sc := setupHTTPServerWithCfg(t, false, cfg, func(hs *HTTPServer) {
-				quotaService := quotatest.New(false, nil)
-				hs.userService, err = userimpl.ProvideService(
-					hs.SQLStore, nil, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg), localcache.ProvideService(), quotaService)
-				require.NoError(t, err)
-				hs.orgService, err = orgimpl.ProvideService(hs.SQLStore, cfg, quotaService)
-				require.NoError(t, err)
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = setting.NewCfg()
+				hs.Cfg.RBACEnabled = tc.enableAccessControl
+				hs.orgService = &orgtest.FakeOrgService{
+					ExpectedSearchOrgUsersResult: &org.SearchOrgUsersQueryResult{},
+				}
+				hs.authInfoService = &logintest.AuthInfoServiceFake{}
+				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: userWithPermissions(1, tc.permissions)}
 			})
-			setInitCtxSignedInUser(sc.initCtx, tc.user)
-			setupOrgUsersDBForAccessControlTests(t, sc.db, sc.hs.orgService)
 
-			// Perform test
-			response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(url, tc.targetOrg), nil, t)
-			require.Equal(t, tc.expectedCode, response.Code)
+			u := userWithPermissions(1, tc.permissions)
+			u.OrgRole = tc.role
+			u.IsGrafanaAdmin = tc.isGrafanaAdmin
 
-			if tc.expectedCode != http.StatusForbidden {
-				var userList []*org.OrgUserDTO
-				err := json.NewDecoder(response.Body).Decode(&userList)
-				require.NoError(t, err)
-
-				assert.Len(t, userList, tc.expectedUserCount)
-			}
+			res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest(fmt.Sprintf("/api/orgs/%d/users/", tc.targetOrg)), u))
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }
