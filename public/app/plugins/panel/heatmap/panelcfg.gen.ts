@@ -72,11 +72,10 @@ export interface RowsHeatmapOptions {
 
 export interface PanelOptions {
   calculate?: boolean;
-  calculation?: ui.HeatmapCalculationOptions;
   cellGap?: number;
   cellRadius?: number;
   cellValues?: CellValues;
-  color: HeatmapColorOptions;
+  color?: HeatmapColorOptions;
   exemplars: ExemplarConfig;
   filterValues?: FilterValueRange;
   legend: HeatmapLegend;
@@ -88,7 +87,9 @@ export interface PanelOptions {
 
 export const defaultPanelOptions: Partial<PanelOptions> = {
   calculate: false,
-  calculation: {
+  cellGap: 1,
+  cellValues: {},
+  color: {
     mode: 'scheme',
     scheme: 'Oranges',
     fill: 'dark-orange',
@@ -97,8 +98,6 @@ export const defaultPanelOptions: Partial<PanelOptions> = {
     exponent: 0.5,
     steps: 64,
   },
-  cellGap: 1,
-  cellValues: {},
   exemplars: {
     color: 'rgba(255,0,255,0.7)',
   },

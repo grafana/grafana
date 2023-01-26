@@ -111,21 +111,20 @@ TODO docs
 
 ### Properties
 
-| Property       | Type                                        | Required | Description                                                                                                        |
-|----------------|---------------------------------------------|----------|--------------------------------------------------------------------------------------------------------------------|
-| `color`        | [HeatmapColorOptions](#heatmapcoloroptions) | **Yes**  |                                                                                                                    |
-| `exemplars`    | [ExemplarConfig](#exemplarconfig)           | **Yes**  |                                                                                                                    |
-| `legend`       | [HeatmapLegend](#heatmaplegend)             | **Yes**  |                                                                                                                    |
-| `showValue`    | string                                      | **Yes**  | TODO docs Possible values are: `auto`, `never`, `always`.                                                          |
-| `tooltip`      | [HeatmapTooltip](#heatmaptooltip)           | **Yes**  |                                                                                                                    |
-| `yAxis`        | [object](#yaxis)                            | **Yes**  | Default: `map[axisPlacement:left]`.                                                                                |
-| `calculate`    | boolean                                     | No       | Default: `false`.                                                                                                  |
-| `calculation`  | [object](#calculation)                      | No       | Default: `map[exponent:0.5 fill:dark-orange mode:scheme reverse:false scale:exponential scheme:Oranges steps:64]`. |
-| `cellGap`      | integer                                     | No       | Default: `1`.                                                                                                      |
-| `cellRadius`   | number                                      | No       |                                                                                                                    |
-| `cellValues`   | [object](#cellvalues)                       | No       | Default: `map[]`.                                                                                                  |
-| `filterValues` | [object](#filtervalues)                     | No       | Default: `map[le:1e-09]`.                                                                                          |
-| `rowsFrame`    | [object](#rowsframe)                        | No       | Default: `map[layout:auto]`.                                                                                       |
+| Property       | Type                              | Required | Description                                                                                                        |
+|----------------|-----------------------------------|----------|--------------------------------------------------------------------------------------------------------------------|
+| `exemplars`    | [ExemplarConfig](#exemplarconfig) | **Yes**  |                                                                                                                    |
+| `legend`       | [HeatmapLegend](#heatmaplegend)   | **Yes**  |                                                                                                                    |
+| `showValue`    | string                            | **Yes**  | TODO docs Possible values are: `auto`, `never`, `always`.                                                          |
+| `tooltip`      | [HeatmapTooltip](#heatmaptooltip) | **Yes**  |                                                                                                                    |
+| `yAxis`        | [object](#yaxis)                  | **Yes**  | Default: `map[axisPlacement:left]`.                                                                                |
+| `calculate`    | boolean                           | No       | Default: `false`.                                                                                                  |
+| `cellGap`      | integer                           | No       | Default: `1`.                                                                                                      |
+| `cellRadius`   | number                            | No       |                                                                                                                    |
+| `cellValues`   | [object](#cellvalues)             | No       | Default: `map[]`.                                                                                                  |
+| `color`        | [object](#color)                  | No       | Default: `map[exponent:0.5 fill:dark-orange mode:scheme reverse:false scale:exponential scheme:Oranges steps:64]`. |
+| `filterValues` | [object](#filtervalues)           | No       | Default: `map[le:1e-09]`.                                                                                          |
+| `rowsFrame`    | [object](#rowsframe)              | No       | Default: `map[layout:auto]`.                                                                                       |
 
 ### ExemplarConfig
 
@@ -134,22 +133,6 @@ TODO docs
 | Property | Type   | Required | Description |
 |----------|--------|----------|-------------|
 | `color`  | string | **Yes**  |             |
-
-### HeatmapColorOptions
-
-#### Properties
-
-| Property   | Type    | Required | Description                                   |
-|------------|---------|----------|-----------------------------------------------|
-| `exponent` | number  | **Yes**  |                                               |
-| `fill`     | string  | **Yes**  |                                               |
-| `mode`     | string  | **Yes**  | Possible values are: `opacity`, `scheme`.     |
-| `reverse`  | boolean | **Yes**  |                                               |
-| `scale`    | string  | **Yes**  | Possible values are: `linear`, `exponential`. |
-| `scheme`   | string  | **Yes**  |                                               |
-| `steps`    | integer | **Yes**  |                                               |
-| `max`      | number  | No       |                                               |
-| `min`      | number  | No       |                                               |
 
 ### HeatmapLegend
 
@@ -168,12 +151,12 @@ TODO docs
 | `show`       | boolean | **Yes**  |             |
 | `yHistogram` | boolean | No       |             |
 
-### calculation
+### cellValues
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
 
-### cellValues
+### color
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
