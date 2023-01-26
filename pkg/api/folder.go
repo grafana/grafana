@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -302,7 +301,7 @@ func (hs *HTTPServer) searchFolders(c *contextmodel.ReqContext) ([]*folder.Folde
 		Limit:        c.QueryInt64("limit"),
 		OrgId:        c.OrgID,
 		Type:         "dash-folder",
-		Permission:   models.PERMISSION_VIEW,
+		Permission:   dashboards.PERMISSION_VIEW,
 		Page:         c.QueryInt64("page"),
 	}
 

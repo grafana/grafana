@@ -133,7 +133,7 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *contextmodel.ReqContext) respon
 	}
 	items = append(items, hiddenACL...)
 
-	if okToUpdate, err := g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, items); err != nil || !okToUpdate {
+	if okToUpdate, err := g.CheckPermissionBeforeUpdate(dashboards.PERMISSION_ADMIN, items); err != nil || !okToUpdate {
 		if err != nil {
 			if errors.Is(err, guardian.ErrGuardianPermissionExists) ||
 				errors.Is(err, guardian.ErrGuardianOverride) {
@@ -158,14 +158,14 @@ func (hs *HTTPServer) UpdateFolderPermissions(c *contextmodel.ReqContext) respon
 	}
 
 	if err := hs.DashboardService.UpdateDashboardACL(c.Req.Context(), folder.ID, items); err != nil {
-		if errors.Is(err, models.ErrDashboardACLInfoMissing) {
-			err = models.ErrFolderACLInfoMissing
+		if errors.Is(err, dashboards.ErrDashboardACLInfoMissing) {
+			err = dashboards.ErrFolderACLInfoMissing
 		}
-		if errors.Is(err, models.ErrDashboardPermissionDashboardEmpty) {
-			err = models.ErrFolderPermissionFolderEmpty
+		if errors.Is(err, dashboards.ErrDashboardPermissionDashboardEmpty) {
+			err = dashboards.ErrFolderPermissionFolderEmpty
 		}
 
-		if errors.Is(err, models.ErrFolderACLInfoMissing) || errors.Is(err, models.ErrFolderPermissionFolderEmpty) {
+		if errors.Is(err, dashboards.ErrFolderACLInfoMissing) || errors.Is(err, dashboards.ErrFolderPermissionFolderEmpty) {
 			return response.Error(409, err.Error(), err)
 		}
 

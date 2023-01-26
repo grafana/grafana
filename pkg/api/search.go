@@ -29,14 +29,14 @@ func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 	page := c.QueryInt64("page")
 	dashboardType := c.Query("type")
 	sort := c.Query("sort")
-	permission := models.PERMISSION_VIEW
+	permission := dashboards.PERMISSION_VIEW
 
 	if limit > 5000 {
 		return response.Error(422, "Limit is above maximum allowed (5000), use page parameter to access hits beyond limit", nil)
 	}
 
 	if c.Query("permission") == "Edit" {
-		permission = models.PERMISSION_EDIT
+		permission = dashboards.PERMISSION_EDIT
 	}
 
 	dbIDs := make([]int64, 0)

@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -682,8 +681,8 @@ func setUpACL() {
 	teamSvc := &teamtest.FakeService{}
 	dashSvc := &dashboards.FakeDashboardService{}
 	qResult := []*dashboards.DashboardACLInfoDTO{
-		{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
-		{Role: &editorRole, Permission: models.PERMISSION_EDIT},
+		{Role: &viewerRole, Permission: dashboards.PERMISSION_VIEW},
+		{Role: &editorRole, Permission: dashboards.PERMISSION_EDIT},
 	}
 	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
 		// q := args.Get(1).(*dashboards.GetDashboardACLInfoListQuery)

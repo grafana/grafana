@@ -9,9 +9,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/util"
@@ -161,7 +161,7 @@ func (hs *HTTPServer) UpdateTeamMember(c *contextmodel.ReqContext) response.Resp
 	return response.Success("Team member updated")
 }
 
-func getPermissionName(permission models.PermissionType) string {
+func getPermissionName(permission dashboards.PermissionType) string {
 	permissionName := permission.String()
 	// Team member permission is 0, which maps to an empty string.
 	// However, we want the team permission service to display "Member" for team members. This is a hack to make it work.

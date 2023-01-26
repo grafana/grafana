@@ -41,6 +41,7 @@ import (
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -393,6 +394,8 @@ func setupHTTPServerWithCfgDb(
 	folderPermissionsService := accesscontrolmock.NewMockedPermissionsService()
 	dashboardPermissionsService := accesscontrolmock.NewMockedPermissionsService()
 
+	folderSvc := foldertest.NewFakeService()
+
 	// Create minimal HTTP Server
 	hs := &HTTPServer{
 		Cfg:                    cfg,
@@ -409,6 +412,7 @@ func setupHTTPServerWithCfgDb(
 		DashboardService: dashboardservice.ProvideDashboardService(
 			cfg, dashboardsStore, dashboardsStore, nil, features,
 			folderPermissionsService, dashboardPermissionsService, ac,
+			folderSvc,
 		),
 		preferenceService: preftest.NewPreferenceServiceFake(),
 		userService:       userSvc,

@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -37,11 +37,11 @@ func (a *simpleSQLAuthService) getDashboardTableAuthFilter(user *user.SignedInUs
 			OrgId:           user.OrgID,
 			Dialect:         a.sql.GetDialect(),
 			UserId:          user.UserID,
-			PermissionLevel: models.PERMISSION_VIEW,
+			PermissionLevel: dashboards.PERMISSION_VIEW,
 		}
 	}
 
-	return permissions.NewAccessControlDashboardPermissionFilter(user, models.PERMISSION_VIEW, "")
+	return permissions.NewAccessControlDashboardPermissionFilter(user, dashboards.PERMISSION_VIEW, "")
 }
 
 func (a *simpleSQLAuthService) GetDashboardReadFilter(user *user.SignedInUser) (ResourceFilter, error) {
