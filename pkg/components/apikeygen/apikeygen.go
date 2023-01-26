@@ -50,13 +50,13 @@ func New(orgId int64, name string) (KeyGenResult, error) {
 func Decode(keyString string) (*ApiKeyJson, error) {
 	jsonString, err := base64.StdEncoding.DecodeString(keyString)
 	if err != nil {
-		return nil, ErrInvalidAPIKey
+		return nil, ErrInvalidAPIKey.Errorf("unable to decode apikey string: %w", err)
 	}
 
 	var keyObj ApiKeyJson
 	err = json.Unmarshal(jsonString, &keyObj)
 	if err != nil {
-		return nil, ErrInvalidAPIKey
+		return nil, ErrInvalidAPIKey.Errorf("unable to unmarshal apikey json: %w", err)
 	}
 
 	return &keyObj, nil

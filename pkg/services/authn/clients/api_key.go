@@ -46,7 +46,7 @@ func (s *APIKey) Name() string {
 func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	apiKey, err := s.getAPIKey(ctx, getTokenFromRequest(r))
 	if err != nil {
-		if errors.Is(err, apikeygen.ErrInvalidApiKey) {
+		if errors.Is(err, apikeygen.ErrInvalidAPIKey) {
 			return nil, errAPIKeyInvalid.Errorf("API key is invalid")
 		}
 		return nil, err
@@ -127,7 +127,7 @@ func (s *APIKey) getFromTokenLegacy(ctx context.Context, token string) (*apikey.
 		return nil, err
 	}
 	if !isValid {
-		return nil, apikeygen.ErrInvalidApiKey
+		return nil, apikeygen.ErrInvalidAPIKey.Errorf("validation failed for API key: %w", err)
 	}
 
 	return keyQuery.Result, nil
