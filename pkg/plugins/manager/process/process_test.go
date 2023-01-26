@@ -271,7 +271,7 @@ func createPlugin(t *testing.T, bp backendplugin.Plugin, cbs ...func(p *plugins.
 		},
 	}
 
-	p.SetLogger(log.NewNopLogger())
+	p.SetLogger(log.NewTestLogger())
 	p.RegisterClient(bp)
 
 	for _, cb := range cbs {

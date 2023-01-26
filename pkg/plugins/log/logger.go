@@ -14,31 +14,31 @@ type DefaultLogger struct {
 	l *log.ConcreteLogger
 }
 
-func (d DefaultLogger) New(ctx ...interface{}) Logger {
+func (d *DefaultLogger) New(ctx ...interface{}) Logger {
 	if len(ctx) == 0 {
-		return DefaultLogger{
+		return &DefaultLogger{
 			l: d.l.New(),
 		}
 	}
 
 	ctx = append([]interface{}{"logger"}, ctx...)
-	return DefaultLogger{
+	return &DefaultLogger{
 		l: d.l.New(ctx...),
 	}
 }
 
-func (d DefaultLogger) Debug(msg string, ctx ...interface{}) {
+func (d *DefaultLogger) Debug(msg string, ctx ...interface{}) {
 	d.l.Debug(msg, ctx...)
 }
 
-func (d DefaultLogger) Info(msg string, ctx ...interface{}) {
+func (d *DefaultLogger) Info(msg string, ctx ...interface{}) {
 	d.l.Info(msg, ctx...)
 }
 
-func (d DefaultLogger) Warn(msg string, ctx ...interface{}) {
+func (d *DefaultLogger) Warn(msg string, ctx ...interface{}) {
 	d.l.Warn(msg, ctx...)
 }
 
-func (d DefaultLogger) Error(msg string, ctx ...interface{}) {
+func (d *DefaultLogger) Error(msg string, ctx ...interface{}) {
 	d.l.Error(msg, ctx...)
 }

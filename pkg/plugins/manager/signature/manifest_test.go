@@ -151,7 +151,7 @@ func TestCalculate(t *testing.T) {
 			})
 			setting.AppUrl = tc.appURL
 
-			sig, err := Calculate(log.NewNopLogger(), &plugins.Plugin{
+			sig, err := Calculate(log.NewTestLogger(), &plugins.Plugin{
 				JSONData: plugins.JSONData{
 					ID: "test-datasource",
 					Info: plugins.Info{
@@ -173,7 +173,7 @@ func TestCalculate(t *testing.T) {
 		})
 
 		runningWindows = true
-		sig, err := Calculate(log.NewNopLogger(), &plugins.Plugin{
+		sig, err := Calculate(log.NewTestLogger(), &plugins.Plugin{
 			JSONData: plugins.JSONData{
 				ID:   "test-renderer",
 				Type: plugins.Renderer,

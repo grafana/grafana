@@ -208,7 +208,7 @@ func createPlugin(t *testing.T, pluginID string, class plugins.Class, managed, b
 			Backend: backend,
 		},
 	}
-	p.SetLogger(log.NewNopLogger())
+	p.SetLogger(log.NewTestLogger())
 	p.RegisterClient(&fakes.FakePluginClient{
 		ID:      pluginID,
 		Managed: managed,
