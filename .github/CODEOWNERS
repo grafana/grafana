@@ -307,6 +307,7 @@ WORKFLOW.md @torkelo
 /packages/grafana-ui/src/components/uPlot/ @grafana/grafana-bi-squad
 /packages/grafana-ui/src/utils/storybook/ @grafana/plugins-platform-frontend
 /packages/jaeger-ui-components// @grafana/observability-traces-and-profiling
+/packages/grafana-data/src/**/*logs* @grafana/observability-logs
 /plugins-bundled/ @grafana/plugins-platform-frontend
 
 
@@ -432,6 +433,8 @@ lerna.json @grafana/frontend-ops
 /public/testdata/ @grafana/user-essentials
 /public/views/ @grafana/user-essentials
 
+/public/app/features/explore/Logs.tsx @grafana/observability-logs
+/public/app/features/explore/LogsContainer.tsx @grafana/observability-logs
 
 /public/api-merged.json @grafana/backend-platform
 /public/api-spec.json @grafana/backend-platform
