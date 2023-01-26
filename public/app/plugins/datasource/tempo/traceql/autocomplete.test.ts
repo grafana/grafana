@@ -29,7 +29,7 @@ describe('CompletionProvider', () => {
   it('does not wrap the tag value in quotes if the type in the response is something other than "string"', async () => {
     const { provider, model } = setup('{foo=}', 5, defaultTags);
 
-    jest.spyOn(provider.languageProvider, 'getOptions').mockImplementation(
+    jest.spyOn(provider.languageProvider, 'getOptionsV2').mockImplementation(
       () =>
         new Promise((resolve) => {
           resolve([
@@ -54,7 +54,7 @@ describe('CompletionProvider', () => {
   it('wraps the tag value in quotes if the type in the response is set to "string"', async () => {
     const { provider, model } = setup('{foo=}', 5, defaultTags);
 
-    jest.spyOn(provider.languageProvider, 'getOptions').mockImplementation(
+    jest.spyOn(provider.languageProvider, 'getOptionsV2').mockImplementation(
       () =>
         new Promise((resolve) => {
           resolve([
@@ -79,7 +79,7 @@ describe('CompletionProvider', () => {
   it('inserts the tag value without quotes if the user has entered quotes', async () => {
     const { provider, model } = setup('{foo="}', 6, defaultTags);
 
-    jest.spyOn(provider.languageProvider, 'getOptions').mockImplementation(
+    jest.spyOn(provider.languageProvider, 'getOptionsV2').mockImplementation(
       () =>
         new Promise((resolve) => {
           resolve([
@@ -171,7 +171,7 @@ describe('CompletionProvider', () => {
   it('suggests tag values after a space inside a string', async () => {
     const { provider, model } = setup('{foo="bar test " }', 15, defaultTags);
 
-    jest.spyOn(provider.languageProvider, 'getOptions').mockImplementation(
+    jest.spyOn(provider.languageProvider, 'getOptionsV2').mockImplementation(
       () =>
         new Promise((resolve) => {
           resolve([
