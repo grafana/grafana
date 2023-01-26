@@ -313,7 +313,6 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     const keys = Object.keys(query) as Array<keyof T>;
     keys.forEach((key) => {
       const replaced = this.templateSrv.replace(workingQueries[0][key], scopedVars, 'raw');
-      console.log(this.templateSrv.getVariables());
       if (replaced.includes(',')) {
         const multiple = replaced.split(',');
         const currentQueries = [...workingQueries];
