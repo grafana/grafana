@@ -62,7 +62,7 @@ interface FolderLinkProps {
 function FolderLink({ libraryPanel }: FolderLinkProps): ReactElement | null {
   const styles = useStyles2(getStyles);
 
-  if (!libraryPanel.meta.folderUid && !libraryPanel.meta.folderName) {
+  if (!libraryPanel.meta?.folderUid && !libraryPanel.meta?.folderName) {
     return null;
   }
 

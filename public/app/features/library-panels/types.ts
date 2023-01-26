@@ -1,11 +1,13 @@
 import { AnyAction } from '@reduxjs/toolkit';
 import { Dispatch } from 'react';
 
+import { LibraryPanel } from '@grafana/schema';
+import { LibraryElementDTOMetaUser } from '@grafana/schema/src/raw/librarypanel/x/librarypanel_types.gen';
+
 import { PanelModel } from '../dashboard/state';
 
 export enum LibraryElementKind {
   Panel = 1,
-  Variable,
 }
 
 export enum LibraryElementConnectionKind {
@@ -29,35 +31,7 @@ export interface LibraryElementsSearchResult {
   page: number;
 }
 
-export interface LibraryElementDTO {
-  id: number;
-  orgId: number;
-  folderUid: string;
-  uid: string;
-  name: string;
-  kind: LibraryElementKind;
-  type: string;
-  description: string;
-  model: any;
-  version: number;
-  meta: LibraryElementDTOMeta;
-}
-
-export interface LibraryElementDTOMeta {
-  folderName: string;
-  folderUid: string;
-  connectedDashboards: number;
-  created: string;
-  updated: string;
-  createdBy: LibraryElementDTOMetaUser;
-  updatedBy: LibraryElementDTOMetaUser;
-}
-
-export interface LibraryElementDTOMetaUser {
-  id: number;
-  name: string;
-  avatarUrl: string;
-}
+export interface LibraryElementDTO extends LibraryPanel {}
 
 export interface LibraryPanelRef {
   name: string;

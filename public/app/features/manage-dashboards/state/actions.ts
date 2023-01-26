@@ -101,8 +101,6 @@ function processElements(dashboardJson?: { __elements?: Record<string, LibraryEl
           uid,
           name,
           version: 0,
-          meta: {},
-          id: 0,
           type,
           kind: LibraryElementKind.Panel,
           description,

@@ -16,35 +16,23 @@ export interface LibraryElementDTOMetaUser {
 
 export interface LibraryElementDTOMeta {
   connectedDashboards: number;
-  created: number;
+  created: string;
   createdBy: LibraryElementDTOMetaUser;
   folderName: string;
   folderUid: string;
-  updated: number;
+  updated: string;
   updatedBy: LibraryElementDTOMetaUser;
 }
 
 export interface LibraryPanel {
   /**
-   * Panel description (ideally optional, but avoid pointer issues)
+   * Panel description
    */
-  description: string;
-  /**
-   * TODO -- remove... do not expose internal ID
-   */
-  folderId: number;
+  description?: string;
   /**
    * Folder UID
    */
-  folderUid: string;
-  /**
-   * TODO: remove, should not be externally defined
-   */
-  id: number;
-  /**
-   * TODO, remove?  always 1
-   */
-  kind: number;
+  folderUid?: string;
   /**
    * Object storage metadata
    */
@@ -58,13 +46,9 @@ export interface LibraryPanel {
    */
   name: string;
   /**
-   * TODO: remove, should not be externally defined
+   * Dashboard version when this was saved (zero if unknown)
    */
-  orgId: number;
-  /**
-   * Dashboard version when this was saved
-   */
-  schemaVersion: number;
+  schemaVersion?: number;
   /**
    * The panel type (from inside the model)
    */
@@ -78,7 +62,3 @@ export interface LibraryPanel {
    */
   version: number;
 }
-
-export const defaultLibraryPanel: Partial<LibraryPanel> = {
-  schemaVersion: 36,
-};

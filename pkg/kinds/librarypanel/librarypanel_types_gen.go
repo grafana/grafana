@@ -13,11 +13,11 @@ package librarypanel
 // LibraryElementDTOMeta defines model for LibraryElementDTOMeta.
 type LibraryElementDTOMeta struct {
 	ConnectedDashboards int64                     `json:"connectedDashboards"`
-	Created             int64                     `json:"created"`
+	Created             string                    `json:"created"`
 	CreatedBy           LibraryElementDTOMetaUser `json:"createdBy"`
 	FolderName          string                    `json:"folderName"`
 	FolderUid           string                    `json:"folderUid"`
-	Updated             int64                     `json:"updated"`
+	Updated             string                    `json:"updated"`
 	UpdatedBy           LibraryElementDTOMetaUser `json:"updatedBy"`
 }
 
@@ -30,21 +30,12 @@ type LibraryElementDTOMetaUser struct {
 
 // LibraryPanel defines model for LibraryPanel.
 type LibraryPanel struct {
-	// Panel description (ideally optional, but avoid pointer issues)
-	Description string `json:"description"`
-
-	// TODO -- remove... do not expose internal ID
-	FolderId int64 `json:"folderId"`
+	// Panel description
+	Description *string `json:"description,omitempty"`
 
 	// Folder UID
-	FolderUid string `json:"folderUid"`
-
-	// TODO: remove, should not be externally defined
-	Id int64 `json:"id"`
-
-	// TODO, remove?  always 1
-	Kind int64                  `json:"kind"`
-	Meta *LibraryElementDTOMeta `json:"meta,omitempty"`
+	FolderUid *string                `json:"folderUid,omitempty"`
+	Meta      *LibraryElementDTOMeta `json:"meta,omitempty"`
 
 	// TODO: this should the same panel type as defined inside dashboard
 	Model interface{} `json:"model"`
@@ -52,11 +43,8 @@ type LibraryPanel struct {
 	// Panel name (also saved in the model)
 	Name string `json:"name"`
 
-	// TODO: remove, should not be externally defined
-	OrgId int64 `json:"orgId"`
-
-	// Dashboard version when this was saved
-	SchemaVersion int `json:"schemaVersion"`
+	// Dashboard version when this was saved (zero if unknown)
+	SchemaVersion *int `json:"schemaVersion,omitempty"`
 
 	// The panel type (from inside the model)
 	Type string `json:"type"`
