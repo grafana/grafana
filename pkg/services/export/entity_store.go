@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
@@ -105,7 +104,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 	}
 	ctx = appcontext.WithUser(ctx, rowUser)
 
-	what := models.StandardKindFolder
+	what := entity.StandardKindFolder
 	e.status.Count[what] = 0
 
 	folders := make(map[int64]string)
@@ -133,7 +132,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 		_, err = e.store.AdminWrite(ctx, &entity.AdminWriteEntityRequest{
 			GRN: &entity.GRN{
 				UID:  dash.UID,
-				Kind: models.StandardKindFolder,
+				Kind: entity.StandardKindFolder,
 			},
 			ClearHistory: true,
 			CreatedAt:    dash.Created.UnixMilli(),
@@ -158,7 +157,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 		e.broadcaster(e.status)
 	}
 
-	what = models.StandardKindDashboard
+	what = entity.StandardKindDashboard
 	e.status.Count[what] = 0
 
 	// TODO paging etc
@@ -181,7 +180,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 		_, err = e.store.AdminWrite(ctx, &entity.AdminWriteEntityRequest{
 			GRN: &entity.GRN{
 				UID:  dash.UID,
-				Kind: models.StandardKindDashboard,
+				Kind: entity.StandardKindDashboard,
 			},
 			ClearHistory: true,
 			Version:      fmt.Sprintf("%d", dash.Version),
@@ -208,7 +207,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 	}
 
 	// Playlists
-	what = models.StandardKindPlaylist
+	what = entity.StandardKindPlaylist
 	e.status.Count[what] = 0
 	rowUser.OrgID = 1
 	rowUser.UserID = 1
@@ -233,7 +232,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 		_, err = e.store.Write(ctx, &entity.WriteEntityRequest{
 			GRN: &entity.GRN{
 				UID:  playlist.Uid,
-				Kind: models.StandardKindPlaylist,
+				Kind: entity.StandardKindPlaylist,
 			},
 			Body:    prettyJSON(playlist),
 			Comment: "export from playlists",
@@ -256,34 +255,34 @@ func (e *entityStoreJob) start(ctx context.Context) {
 		rowUser.OrgID = orgId
 		rowUser.UserID = 1
 		cmd := &dashboardsnapshots.GetDashboardSnapshotsQuery{
-			OrgId:        orgId,
+			OrgID:        orgId,
 			Limit:        500000,
 			SignedInUser: rowUser,
 		}
 
-		err := e.dashboardsnapshots.SearchDashboardSnapshots(ctx, cmd)
+		result, err := e.dashboardsnapshots.SearchDashboardSnapshots(ctx, cmd)
 		if err != nil {
 			e.status.Status = "error: " + err.Error()
 			return
 		}
 
-		for _, dto := range cmd.Result {
+		for _, dto := range result {
 			m := snapshot.Model{
 				Name:        dto.Name,
-				ExternalURL: dto.ExternalUrl,
+				ExternalURL: dto.ExternalURL,
 				Expires:     dto.Expires.UnixMilli(),
 			}
-			rowUser.OrgID = dto.OrgId
-			rowUser.UserID = dto.UserId
+			rowUser.OrgID = dto.OrgID
+			rowUser.UserID = dto.UserID
 
 			snapcmd := &dashboardsnapshots.GetDashboardSnapshotQuery{
 				Key: dto.Key,
 			}
-			err = e.dashboardsnapshots.GetDashboardSnapshot(ctx, snapcmd)
+			snapcmdResult, err := e.dashboardsnapshots.GetDashboardSnapshot(ctx, snapcmd)
 			if err == nil {
-				res := snapcmd.Result
+				res := snapcmdResult
 				m.DeleteKey = res.DeleteKey
-				m.ExternalURL = res.ExternalUrl
+				m.ExternalURL = res.ExternalURL
 
 				snap := res.Dashboard
 				m.DashboardUID = snap.Get("uid").MustString("")
@@ -297,7 +296,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 			_, err = e.store.Write(ctx, &entity.WriteEntityRequest{
 				GRN: &entity.GRN{
 					UID:  dto.Key,
-					Kind: models.StandardKindSnapshot,
+					Kind: entity.StandardKindSnapshot,
 				},
 				Body:    prettyJSON(m),
 				Comment: "export from snapshtts",

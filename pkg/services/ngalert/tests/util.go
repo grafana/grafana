@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -81,6 +82,7 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 	dashboardService := dashboardservice.ProvideDashboardService(
 		cfg, dashboardStore, dashboardStore, nil,
 		features, folderPermissions, dashboardPermissions, ac,
+		foldertest.NewFakeService(),
 	)
 
 	tracer := tracing.InitializeTracerForTest()

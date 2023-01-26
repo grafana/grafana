@@ -23,7 +23,7 @@ var (
 	errAPIKeyRevoked = errutil.NewBase(errutil.StatusUnauthorized, "api-key.revoked", errutil.WithPublicMessage("Revoked API key"))
 )
 
-var _ authn.Client = new(APIKey)
+var _ authn.ContextAwareClient = new(APIKey)
 
 func ProvideAPIKey(apiKeyService apikey.Service, userService user.Service) *APIKey {
 	return &APIKey{
@@ -37,6 +37,10 @@ type APIKey struct {
 	log           log.Logger
 	userService   user.Service
 	apiKeyService apikey.Service
+}
+
+func (s *APIKey) Name() string {
+	return authn.ClientAPIKey
 }
 
 func (s *APIKey) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
@@ -131,6 +135,10 @@ func (s *APIKey) getFromTokenLegacy(ctx context.Context, token string) (*apikey.
 
 func (s *APIKey) Test(ctx context.Context, r *authn.Request) bool {
 	return looksLikeApiKey(getTokenFromRequest(r))
+}
+
+func (s *APIKey) Priority() uint {
+	return 30
 }
 
 func looksLikeApiKey(token string) bool {
