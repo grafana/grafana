@@ -52,6 +52,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -523,13 +524,13 @@ type setUpConf struct {
 	aclMockResp []*dashboards.DashboardACLInfoDTO
 }
 
-type mockSearchService struct{ ExpectedResult models.HitList }
+type mockSearchService struct{ ExpectedResult model.HitList }
 
 func (mss *mockSearchService) SearchHandler(_ context.Context, q *search.Query) error {
 	q.Result = mss.ExpectedResult
 	return nil
 }
-func (mss *mockSearchService) SortOptions() []models.SortOption { return nil }
+func (mss *mockSearchService) SortOptions() []model.SortOption { return nil }
 
 func setUp(confs ...setUpConf) *HTTPServer {
 	store := dbtest.NewFakeDB()

@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -150,7 +151,7 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 		hs.AccessControl = acmock.New()
 		hs.QuotaService = quotatest.New(false, nil)
 		hs.SearchService = &mockSearchService{
-			ExpectedResult: models.HitList{},
+			ExpectedResult: model.HitList{},
 		}
 	})
 

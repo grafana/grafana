@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -108,7 +109,7 @@ func (hs *HTTPServer) GetAlerts(c *models.ReqContext) response.Response {
 			Limit:        1000,
 			OrgId:        c.OrgID,
 			DashboardIds: dashboardIDs,
-			Type:         string(models.DashHitDB),
+			Type:         string(model.DashHitDB),
 			FolderIds:    folderIDs,
 			Permission:   dashboards.PERMISSION_VIEW,
 		}
@@ -119,7 +120,7 @@ func (hs *HTTPServer) GetAlerts(c *models.ReqContext) response.Response {
 		}
 
 		for _, d := range searchQuery.Result {
-			if d.Type == models.DashHitDB && d.ID > 0 {
+			if d.Type == model.DashHitDB && d.ID > 0 {
 				dashboardIDs = append(dashboardIDs, d.ID)
 			}
 		}

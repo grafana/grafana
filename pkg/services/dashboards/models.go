@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -412,9 +413,9 @@ type FindPersistedDashboardsQuery struct {
 	Limit         int64
 	Page          int64
 	Permission    PermissionType
-	Sort          models.SortOption
+	Sort          model.SortOption
 
 	Filters []interface{}
 
-	Result models.HitList
+	Result model.HitList
 }

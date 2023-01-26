@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -21,10 +21,10 @@ func TestHTTPServer_Search(t *testing.T) {
 	sc.initCtx.SignedInUser = &user.SignedInUser{}
 
 	sc.hs.SearchService = &mockSearchService{
-		ExpectedResult: models.HitList{
-			{ID: 1, UID: "folder1", Title: "folder1", Type: models.DashHitFolder},
-			{ID: 2, UID: "folder2", Title: "folder2", Type: models.DashHitFolder},
-			{ID: 3, UID: "dash3", Title: "dash3", FolderUID: "folder2", Type: models.DashHitDB},
+		ExpectedResult: model.HitList{
+			{ID: 1, UID: "folder1", Title: "folder1", Type: model.DashHitFolder},
+			{ID: 2, UID: "folder2", Title: "folder2", Type: model.DashHitFolder},
+			{ID: 3, UID: "dash3", Title: "dash3", FolderUID: "folder2", Type: model.DashHitDB},
 		},
 	}
 
@@ -38,7 +38,7 @@ func TestHTTPServer_Search(t *testing.T) {
 	}
 
 	type withMeta struct {
-		models.Hit
+		model.Hit
 		AccessControl accesscontrol.Metadata `json:"accessControl,omitempty"`
 	}
 
