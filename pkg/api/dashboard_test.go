@@ -16,9 +16,11 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -35,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardversion/dashvertest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
@@ -980,10 +983,13 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 	features := featuremgmt.WithFeatures()
 
+	folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, db.InitTestDB(t), featuremgmt.WithFeatures(), nil)
+
 	if dashboardService == nil {
 		dashboardService = service.ProvideDashboardService(
 			cfg, dashboardStore, folderStore, nil, features,
 			folderPermissions, dashboardPermissions, ac,
+			folderSvc,
 		)
 	}
 
@@ -997,6 +1003,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		dashboardProvisioningService: service.ProvideDashboardService(
 			cfg, dashboardStore, folderStore, nil, features,
 			folderPermissions, dashboardPermissions, ac,
+			folderSvc,
 		),
 		DashboardService: dashboardService,
 		Features:         featuremgmt.WithFeatures(),

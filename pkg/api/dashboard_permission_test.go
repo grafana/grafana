@@ -12,12 +12,15 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -37,12 +40,14 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 		folderPermissions := accesscontrolmock.NewMockedPermissionsService()
 		dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 
+		folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), settings, dashboardStore, dashboards.NewFakeFolderStore(t), mockSQLStore, featuremgmt.WithFeatures(), nil)
 		hs := &HTTPServer{
 			Cfg:      settings,
 			SQLStore: mockSQLStore,
 			Features: features,
 			DashboardService: dashboardservice.ProvideDashboardService(
 				settings, dashboardStore, dashboards.NewFakeFolderStore(t), nil, features, folderPermissions, dashboardPermissions, ac,
+				folderSvc,
 			),
 			AccessControl: accesscontrolmock.New().WithDisabled(),
 		}
