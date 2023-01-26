@@ -426,5 +426,11 @@ var (
 			State:        FeatureStateBeta,
 			FrontendOnly: true,
 		},
+		{
+			Name:         "logsContextDatasourceUi",
+			Description:  "Allow datasource to provide custom UI for context view",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
 	}
 )
