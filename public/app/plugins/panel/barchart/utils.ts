@@ -464,6 +464,27 @@ export function prepareBarChartDisplayValues(
     );
   }
 
+  let legendFields: Field[] = fields;
+  if (options.stacking === StackingMode.Percent) {
+    legendFields = fields.map((field) => {
+      const alignedFrameField = frame.fields.find((f) => f.name === field.name)!;
+
+      const copy = {
+        ...field,
+        config: {
+          ...alignedFrameField.config,
+        },
+        values: field.values,
+      };
+
+      copy.display = getDisplayProcessor({ field: copy, theme });
+
+      return copy;
+    });
+
+    legendFields.unshift(firstField);
+  }
+
   // String field is first
   fields.unshift(firstField);
 
@@ -476,6 +497,10 @@ export function prepareBarChartDisplayValues(
         fields: fields, // ideally: fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.viz)),
       },
     ],
+    legend: {
+      fields: legendFields,
+      length: firstField.values.length,
+    },
   };
 }
 
