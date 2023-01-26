@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { DataFrame, FALLBACK_COLOR, FieldType, TimeRange } from '@grafana/data';
-import { VisibilityMode } from '@grafana/schema';
+import { VisibilityMode, TimelineValueAlignment } from '@grafana/schema';
 import {
   PanelContext,
   PanelContextRoot,
@@ -13,17 +13,14 @@ import {
   VizLegendItem,
 } from '@grafana/ui';
 
-import { TimelineMode, TimelineOptions, TimelineValueAlignment } from './types';
-import { preparePlotConfigBuilder } from './utils';
+import { preparePlotConfigBuilder, TimelineMode } from './utils';
 
 /**
  * @alpha
  */
-export interface TimelineProps
-  extends TimelineOptions,
-    Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'> {
+export interface TimelineProps extends Omit<GraphNGProps, 'prepConfig' | 'propsToDiff' | 'renderLegend'> {
   mode: TimelineMode;
-  rowHeight: number;
+  rowHeight?: number;
   showValue: VisibilityMode;
   alignValue?: TimelineValueAlignment;
   colWidth?: number;

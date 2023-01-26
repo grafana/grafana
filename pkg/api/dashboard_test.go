@@ -16,9 +16,11 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -35,6 +37,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboardversion/dashvertest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
@@ -156,8 +159,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			viewerRole := org.RoleViewer
 			editorRole := org.RoleEditor
 			qResult := []*dashboards.DashboardACLInfoDTO{
-				{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
-				{Role: &editorRole, Permission: models.PERMISSION_EDIT},
+				{Role: &viewerRole, Permission: dashboards.PERMISSION_VIEW},
+				{Role: &editorRole, Permission: dashboards.PERMISSION_EDIT},
 			}
 			dashboardService.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
 			guardian.InitLegacyGuardian(mockSQLStore, dashboardService, teamService)
@@ -245,7 +248,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		qResult := []*dashboards.DashboardACLInfoDTO{
 			{
 				DashboardID: 1,
-				Permission:  models.PERMISSION_EDIT,
+				Permission:  dashboards.PERMISSION_EDIT,
 				UserID:      200,
 			},
 		}
@@ -373,7 +376,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 				dashboardService := dashboards.NewFakeDashboardService(t)
 				qResult := []*dashboards.DashboardACLInfoDTO{
-					{OrgID: 1, DashboardID: 2, UserID: 1, Permission: models.PERMISSION_EDIT},
+					{OrgID: 1, DashboardID: 2, UserID: 1, Permission: dashboards.PERMISSION_EDIT},
 				}
 				dashboardService.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
 				guardian.InitLegacyGuardian(mockSQLStore, dashboardService, teamService)
@@ -431,7 +434,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 				dashboardService := dashboards.NewFakeDashboardService(t)
 				qResult := []*dashboards.DashboardACLInfoDTO{
-					{OrgID: 1, DashboardID: 2, UserID: 1, Permission: models.PERMISSION_VIEW},
+					{OrgID: 1, DashboardID: 2, UserID: 1, Permission: dashboards.PERMISSION_VIEW},
 				}
 				dashboardService.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
 				guardian.InitLegacyGuardian(mockSQLStore, dashboardService, teamService)
@@ -469,7 +472,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 				dashboardService := dashboards.NewFakeDashboardService(t)
 				qResult := []*dashboards.DashboardACLInfoDTO{
-					{OrgID: 1, DashboardID: 2, UserID: 1, Permission: models.PERMISSION_ADMIN},
+					{OrgID: 1, DashboardID: 2, UserID: 1, Permission: dashboards.PERMISSION_ADMIN},
 				}
 				dashboardService.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
 				guardian.InitLegacyGuardian(mockSQLStore, dashboardService, teamService)
@@ -518,7 +521,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			setUpInner := func() {
 				dashboardService := dashboards.NewFakeDashboardService(t)
 				qResult := []*dashboards.DashboardACLInfoDTO{
-					{OrgID: 1, DashboardID: 2, UserID: 1, Permission: models.PERMISSION_VIEW},
+					{OrgID: 1, DashboardID: 2, UserID: 1, Permission: dashboards.PERMISSION_VIEW},
 				}
 				dashboardService.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
 				guardian.InitLegacyGuardian(mockSQLStore, dashboardService, teamService)
@@ -907,7 +910,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		require.NoError(t, err)
 		qResult := &dashboards.Dashboard{ID: 1, Data: dataValue}
 		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
-		qResult2 := []*dashboards.DashboardACLInfoDTO{{OrgID: testOrgID, DashboardID: 1, UserID: testUserID, Permission: models.PERMISSION_EDIT}}
+		qResult2 := []*dashboards.DashboardACLInfoDTO{{OrgID: testOrgID, DashboardID: 1, UserID: testUserID, Permission: dashboards.PERMISSION_EDIT}}
 		dashboardService.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult2, nil)
 		guardian.InitLegacyGuardian(mockSQLStore, dashboardService, teamService)
 
@@ -980,10 +983,13 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 	features := featuremgmt.WithFeatures()
 
+	folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, db.InitTestDB(t), featuremgmt.WithFeatures(), nil)
+
 	if dashboardService == nil {
 		dashboardService = service.ProvideDashboardService(
 			cfg, dashboardStore, folderStore, nil, features,
 			folderPermissions, dashboardPermissions, ac,
+			folderSvc,
 		)
 	}
 
@@ -997,6 +1003,7 @@ func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, pr
 		dashboardProvisioningService: service.ProvideDashboardService(
 			cfg, dashboardStore, folderStore, nil, features,
 			folderPermissions, dashboardPermissions, ac,
+			folderSvc,
 		),
 		DashboardService: dashboardService,
 		Features:         featuremgmt.WithFeatures(),
