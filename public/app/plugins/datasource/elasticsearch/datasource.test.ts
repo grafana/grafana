@@ -15,6 +15,7 @@ import {
   FieldType,
   MutableDataFrame,
   RawTimeRange,
+  SupplementaryQueryType,
   TimeRange,
   toUtc,
 } from '@grafana/data';
@@ -923,6 +924,56 @@ describe('ElasticDatasource', () => {
     const interpolatedQuery = ds.interpolateVariablesInQueries([query], {})[0];
 
     expect((interpolatedQuery.bucketAggs![0] as Filters).settings!.filters![0].query).toBe('*');
+  });
+
+  describe('getSupplementaryQuery', () => {
+    let ds: ElasticDatasource;
+    beforeEach(() => {
+      ds = getTestContext().ds;
+    });
+
+    it('does not return logs volume query for metric query', () => {
+      expect(
+        ds.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, {
+          refId: 'A',
+          metrics: [{ type: 'count', id: '1' }],
+          bucketAggs: [{ type: 'filters', settings: { filters: [{ query: 'foo', label: '' }] }, id: '1' }],
+          query: 'foo="bar"',
+        })
+      ).toEqual(undefined);
+    });
+
+    it('returns logs volume query for log query', () => {
+      expect(
+        ds.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, {
+          refId: 'A',
+          metrics: [{ type: 'logs', id: '1' }],
+          query: 'foo="bar"',
+        })
+      ).toEqual({
+        bucketAggs: [
+          {
+            field: '',
+            id: '3',
+            settings: {
+              interval: 'auto',
+              min_doc_count: '0',
+              trimEdges: '0',
+            },
+            type: 'date_histogram',
+          },
+        ],
+        metrics: [
+          {
+            id: '1',
+            type: 'count',
+          },
+        ],
+        query: 'foo="bar"',
+        refId: 'log-volume-A',
+        timeField: '',
+      });
+    });
   });
 });
 

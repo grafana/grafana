@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { Field } from '@grafana/data';
+
 import { TraceSpan } from './trace';
 
 export type SpanLinkDef = {
@@ -7,6 +9,7 @@ export type SpanLinkDef = {
   onClick?: (event: any) => void;
   content: React.ReactNode;
   title?: string;
+  field: Field;
 };
 
 export type SpanLinks = {
