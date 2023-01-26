@@ -2,12 +2,14 @@ import uPlot, { Cursor, Series } from 'uplot';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { alpha } from '@grafana/data/src/themes/colorManipulator';
-import { VisibilityMode } from '@grafana/schema';
+import { VisibilityMode, TimelineValueAlignment } from '@grafana/schema';
 import { FIXED_UNIT } from '@grafana/ui/src/components/GraphNG/GraphNG';
 import { distribute, SPACE_BETWEEN } from 'app/plugins/panel/barchart/distribute';
 import { pointWithin, Quadtree, Rect } from 'app/plugins/panel/barchart/quadtree';
+import { PanelFieldConfig as StateTimeLineFieldConfig } from 'app/plugins/panel/state-timeline/panelcfg.gen';
+import { PanelFieldConfig as StatusHistoryFieldConfig } from 'app/plugins/panel/status-history/panelcfg.gen';
 
-import { TimelineFieldConfig, TimelineMode, TimelineValueAlignment } from './types';
+import { TimelineMode } from './utils';
 
 const { round, min, ceil } = Math;
 
@@ -39,7 +41,7 @@ export interface TimelineCoreOptions {
   mode: TimelineMode;
   alignValue?: TimelineValueAlignment;
   numSeries: number;
-  rowHeight: number;
+  rowHeight?: number;
   colWidth?: number;
   theme: GrafanaTheme2;
   showValue: VisibilityMode;
@@ -49,7 +51,7 @@ export interface TimelineCoreOptions {
   label: (seriesIdx: number) => string;
   getTimeRange: () => TimeRange;
   formatValue?: (seriesIdx: number, value: any) => string;
-  getFieldConfig: (seriesIdx: number) => TimelineFieldConfig;
+  getFieldConfig: (seriesIdx: number) => StateTimeLineFieldConfig | StatusHistoryFieldConfig;
   onHover: (seriesIdx: number, valueIdx: number, rect: Rect) => void;
   onLeave: () => void;
 }
@@ -567,7 +569,7 @@ export function getConfig(opts: TimelineCoreOptions) {
   };
 }
 
-function getFillColor(fieldConfig: TimelineFieldConfig, color: string) {
+function getFillColor(fieldConfig: { fillOpacity?: number; lineWidth?: number }, color: string) {
   // if #rgba with pre-existing alpha. ignore fieldConfig.fillOpacity
   // e.g. thresholds with opacity
   if (color[0] === '#' && color.length === 9) {

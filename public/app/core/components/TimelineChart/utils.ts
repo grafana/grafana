@@ -24,7 +24,15 @@ import {
   TimeRange,
 } from '@grafana/data';
 import { maybeSortFrame } from '@grafana/data/src/transformations/transformers/joinDataFrames';
-import { VizLegendOptions, AxisPlacement, ScaleDirection, ScaleOrientation } from '@grafana/schema';
+import {
+  VizLegendOptions,
+  AxisPlacement,
+  ScaleDirection,
+  ScaleOrientation,
+  VisibilityMode,
+  TimelineValueAlignment,
+  HideableFieldConfig,
+} from '@grafana/schema';
 import {
   FIXED_UNIT,
   SeriesVisibilityChangeMode,
@@ -38,9 +46,37 @@ import { PlotTooltipInterpolator } from '@grafana/ui/src/components/uPlot/types'
 import { preparePlotData2, getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 
 import { getConfig, TimelineCoreOptions } from './timeline';
-import { TimelineFieldConfig, TimelineOptions } from './types';
 
-const defaultConfig: TimelineFieldConfig = {
+/**
+ * @internal
+ */
+interface UPlotConfigOptions {
+  frame: DataFrame;
+  theme: GrafanaTheme2;
+  mode: TimelineMode;
+  sync?: () => DashboardCursorSync;
+  rowHeight?: number;
+  colWidth?: number;
+  showValue: VisibilityMode;
+  alignValue?: TimelineValueAlignment;
+  mergeValues?: boolean;
+  getValueColor: (frameIdx: number, fieldIdx: number, value: any) => string;
+}
+
+/**
+ * @internal
+ */
+interface PanelFieldConfig extends HideableFieldConfig {
+  fillOpacity?: number;
+  lineWidth?: number;
+}
+
+export enum TimelineMode {
+  Changes = 'changes',
+  Samples = 'samples',
+}
+
+const defaultConfig: PanelFieldConfig = {
   lineWidth: 0,
   fillOpacity: 80,
 };
@@ -52,7 +88,7 @@ export function mapMouseEventToMode(event: React.MouseEvent): SeriesVisibilityCh
   return SeriesVisibilityChangeMode.ToggleSelection;
 }
 
-export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
+export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = ({
   frame,
   theme,
   timeZones,
@@ -92,12 +128,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
   };
 
   const opts: TimelineCoreOptions = {
-    // should expose in panel config
     mode: mode!,
     numSeries: frame.fields.length - 1,
     isDiscrete: (seriesIdx) => isDiscrete(frame.fields[seriesIdx]),
     mergeValues,
-    rowHeight: rowHeight!,
+    rowHeight: rowHeight,
     colWidth: colWidth,
     showValue: showValue!,
     alignValue,
@@ -209,8 +244,8 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<TimelineOptions> = ({
     }
 
     const field = frame.fields[i];
-    const config: FieldConfig<TimelineFieldConfig> = field.config;
-    const customConfig: TimelineFieldConfig = {
+    const config: FieldConfig<PanelFieldConfig> = field.config;
+    const customConfig: PanelFieldConfig = {
       ...defaultConfig,
       ...config.custom,
     };
