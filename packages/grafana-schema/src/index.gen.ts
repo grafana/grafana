@@ -26,6 +26,7 @@ export type {
   SpecialValueMap,
   ValueMappingResult,
   Transformation,
+  LibraryPanelRef,
   RowPanel,
   GraphPanel,
   HeatmapPanel

@@ -38,7 +38,7 @@ export function ImportDashboardLibraryPanelsList({
                 ? { ...input.model, meta: { ...input.model.meta, folderName: folderName ?? 'General' } }
                 : { ...input.model };
 
-            // eslint-ignore-next-line
+            // eslint-ignore
             return (
               <div className={styles.item} key={libraryPanelIndex}>
                 <LibraryPanelCard libraryPanel={libraryPanel as LibraryPanel} onClick={() => undefined} />

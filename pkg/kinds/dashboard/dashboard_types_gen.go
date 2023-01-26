@@ -470,6 +470,12 @@ type HeatmapPanel struct {
 // HeatmapPanelType defines model for HeatmapPanel.Type.
 type HeatmapPanelType string
 
+// LibraryPanelRef defines model for LibraryPanelRef.
+type LibraryPanelRef struct {
+	Name string `json:"name"`
+	Uid  string `json:"uid"`
+}
+
 // LoadingState defines model for LoadingState.
 type LoadingState string
 
@@ -502,7 +508,8 @@ type Panel struct {
 
 	// TODO docs
 	// TODO tighter constraint
-	Interval *string `json:"interval,omitempty"`
+	Interval     *string          `json:"interval,omitempty"`
+	LibraryPanel *LibraryPanelRef `json:"libraryPanel,omitempty"`
 
 	// Panel links.
 	// TODO fill this out - seems there are a couple variants?

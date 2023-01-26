@@ -26,20 +26,13 @@ export interface LibraryElementConnectionDTO {
 
 export interface LibraryElementsSearchResult {
   totalCount: number;
-  elements: LibraryElementDTO[];
+  elements: LibraryPanel[];
   perPage: number;
   page: number;
 }
 
-export interface LibraryElementDTO extends LibraryPanel {}
-
-export interface LibraryPanelRef {
-  name: string;
-  uid: string;
-}
-
 export interface PanelModelWithLibraryPanel extends PanelModel {
-  libraryPanel: LibraryElementDTO;
+  libraryPanel: LibraryPanel;
 }
 
 export type DispatchResult = (dispatch: Dispatch<AnyAction>) => void;
