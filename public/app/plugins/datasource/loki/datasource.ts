@@ -200,7 +200,7 @@ export class LokiDatasource
         break;
 
       default:
-        supplementaryQuery = undefined;
+        throw new Error(`getSupplementaryQuery not implemented for type: ${type}`);
     }
 
     return supplementaryQuery;
