@@ -17,7 +17,7 @@ import cx from 'classnames';
 import React, { memo, Dispatch, SetStateAction } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
 
 import UiFindInput from '../common/UiFindInput';
@@ -117,6 +117,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
   const nextResult = () => {
     reportInteraction('grafana_traces_trace_view_find_next_prev_clicked', {
       datasourceType: datasourceType,
+      grafana_version: config.buildInfo.version,
       direction: 'next',
     });
 
@@ -140,6 +141,7 @@ export default memo(function TracePageSearchBar(props: TracePageSearchBarProps) 
   const prevResult = () => {
     reportInteraction('grafana_traces_trace_view_find_next_prev_clicked', {
       datasourceType: datasourceType,
+      grafana_version: config.buildInfo.version,
       direction: 'prev',
     });
 

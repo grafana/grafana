@@ -18,7 +18,7 @@ import React from 'react';
 import IoLink from 'react-icons/lib/io/link';
 
 import { dateTimeFormat, GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { DataLinkButton, TextArea, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
@@ -202,6 +202,7 @@ export default function SpanDetail(props: SpanDetailProps) {
         onClick: (event: React.MouseEvent) => {
           reportInteraction('grafana_traces_trace_view_span_link_clicked', {
             datasourceType: datasourceType,
+            grafana_version: config.buildInfo.version,
             type: 'log',
             location: 'spanDetails',
           });

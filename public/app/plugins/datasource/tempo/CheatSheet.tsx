@@ -1,10 +1,11 @@
 import React from 'react';
 
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 
 export default function CheatSheet() {
   reportInteraction('grafana_traces_cheatsheet_clicked', {
     datasourceType: 'tempo',
+    grafana_version: config.buildInfo.version,
   });
 
   return (
