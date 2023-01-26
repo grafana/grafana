@@ -319,6 +319,13 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/admin/authentication/saml',
+      component: SafeDynamicImport(
+        () =>
+          import(/* webpackChunkName: "AdminAuthenticationConfigPage" */ 'app/features/config-auth/SAML/SetupSAMLPage')
+      ),
+    },
+    {
       path: '/admin',
       component: () => (config.featureToggles.topnav ? <NavLandingPage navId="cfg" /> : <Redirect to="/admin/users" />),
     },

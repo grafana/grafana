@@ -7,26 +7,51 @@ import { Alert, ConfirmModal, FilterInput, Icon, LinkButton, RadioButtonGroup, T
 import { Page } from 'app/core/components/Page/Page';
 import { StoreState } from 'app/types';
 
+import { ProviderCard } from './components/ProviderCard';
+import { loadSettings } from './state/actions';
+import { getAuthProviderInfo, getEnabledAuthProviders } from './utils';
+
 interface OwnProps {}
 
 export type Props = OwnProps & ConnectedProps<typeof connector>;
 
 function mapStateToProps(state: StoreState) {
-  return {};
+  return {
+    settings: state.authConfig.settings,
+  };
 }
 
-const mapDispatchToProps = {};
+const mapDispatchToProps = {
+  loadSettings,
+};
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export const AuthConfigPageUnconnected = ({}: Props): JSX.Element => {
+export const AuthConfigPageUnconnected = ({ settings, loadSettings }: Props): JSX.Element => {
   const styles = useStyles2(getStyles);
+
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
+
+  const enabledAuthProviders = getEnabledAuthProviders(settings);
+  console.log(enabledAuthProviders);
 
   return (
     <Page navId="authentication">
       <Page.Contents>
         <span>Authentication</span>
-        <div className={styles.cardsContainer}></div>
+        <div className={styles.cardsContainer}>
+          {enabledAuthProviders.map((provider) => (
+            <ProviderCard
+              key={provider}
+              providerId={provider}
+              configPath="admin/authentication"
+              displayName={getAuthProviderInfo(provider).displayName}
+              enabled={true}
+            />
+          ))}
+        </div>
       </Page.Contents>
     </Page>
   );
