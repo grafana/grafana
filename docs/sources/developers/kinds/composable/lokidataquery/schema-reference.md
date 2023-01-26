@@ -8,7 +8,7 @@ title: LokiDataQuery kind
 
 # LokiDataQuery kind
 
-## Maturity: merged
+## Maturity: experimental
 ## Version: 0.0
 
 ## Properties
