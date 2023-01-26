@@ -10,12 +10,15 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
+	"cuelang.org/go/cue/cuecontext"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/dashdiffs"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/models"
@@ -33,6 +36,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
+	"github.com/grafana/thema"
+	"github.com/grafana/thema/vmux"
 )
 
 const (
@@ -98,6 +103,23 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgID, 0, uid)
 	if rsp != nil {
 		return rsp
+	}
+
+	if !dash.IsFolder {
+		// silently validate dashboard JSON
+		status := "success"
+		start := time.Now()
+		if err := validateDashboard(*dash); err != nil {
+			hs.log.Error("dashboard validation failure", "org_id", dash.OrgID, "uid", dash.UID, "error", err)
+			status = "failure"
+		} else {
+			hs.log.Info("dashboard validation success", "error", err)
+		}
+
+		dashboards.DashboardValidationCounter.WithLabelValues(status).Inc()
+		histogram := dashboards.DashboardValidationHist.
+			WithLabelValues(status)
+		histogram.Observe(time.Since(start).Seconds())
 	}
 
 	var (
@@ -1046,6 +1068,28 @@ func (hs *HTTPServer) GetDashboardUIDs(c *models.ReqContext) {
 		uids = append(uids, qResult.UID)
 	}
 	c.JSON(http.StatusOK, uids)
+}
+
+func validateDashboard(d dashboards.Dashboard) error {
+	if d.Data == nil {
+		return nil
+	}
+
+	blob, err := d.Data.Bytes()
+	if err != nil {
+		return err
+	}
+
+	ctx := cuecontext.New()
+	dk, err := dashboard.NewKind(cuectx.GrafanaThemaRuntime())
+	if err != nil {
+		return err
+	}
+	lin := dk.Lineage()
+	sch, _ := lin.Schema(thema.SV(0, 0))
+	dashboardData, _ := vmux.NewJSONCodec("test_dashboard.json").Decode(ctx, blob)
+	_, err = sch.Validate(dashboardData)
+	return err
 }
 
 // swagger:parameters renderReportPDF

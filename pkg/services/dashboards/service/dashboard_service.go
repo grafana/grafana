@@ -6,15 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"cuelang.org/go/cue/cuecontext"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-	"github.com/grafana/thema"
-	"github.com/grafana/thema/vmux"
 
-	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -528,45 +523,7 @@ func (dr *DashboardServiceImpl) setDefaultPermissions(ctx context.Context, dto *
 }
 
 func (dr *DashboardServiceImpl) GetDashboard(ctx context.Context, query *dashboards.GetDashboardQuery) (*dashboards.Dashboard, error) {
-	d, err := dr.dashboardStore.GetDashboard(ctx, query)
-
-	status := "success"
-	start := time.Now()
-	if err := validateDashboard(*d); err != nil {
-		dr.log.Error("dashboard validation failure", "org_id", d.OrgID, "uid", d.UID, "error", err)
-		status = "failure"
-	} else {
-		dr.log.Info("dashboard validation success", "error", err)
-	}
-
-	dashboards.DashboardValidationCounter.WithLabelValues(status).Inc()
-	histogram := dashboards.DashboardValidationHist.
-		WithLabelValues(status)
-	histogram.Observe(time.Since(start).Seconds())
-
-	return d, err
-}
-
-func validateDashboard(d dashboards.Dashboard) error {
-	if d.Data == nil {
-		return nil
-	}
-
-	blob, err := d.Data.Bytes()
-	if err != nil {
-		return err
-	}
-
-	ctx := cuecontext.New()
-	dk, err := dashboard.NewKind(cuectx.GrafanaThemaRuntime())
-	if err != nil {
-		return err
-	}
-	lin := dk.Lineage()
-	sch, _ := lin.Schema(thema.SV(0, 0))
-	dashboardData, _ := vmux.NewJSONCodec("test_dashboard.json").Decode(ctx, blob)
-	_, err = sch.Validate(dashboardData)
-	return err
+	return dr.dashboardStore.GetDashboard(ctx, query)
 }
 
 func (dr *DashboardServiceImpl) GetDashboardUIDByID(ctx context.Context, query *dashboards.GetDashboardRefByIDQuery) (*dashboards.DashboardRef, error) {
