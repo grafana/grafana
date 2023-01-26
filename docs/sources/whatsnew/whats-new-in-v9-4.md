@@ -61,3 +61,7 @@ everything in Grafana OnCall, and also allow them to edit OnCall Schedules
 We've added auto-login support for SAML authentication, which you can turn on with the `auto_login` configuration option. We also
 have a unified configuration style among all authentication providers. Instead of using
 `oauth_auto_login`, use the new `auto_login` option to enable automatic login for specific OAuth providers.
+
+## Loki datasource query validation
+
+We added support to validate queries and visually display errors as a query is being written, without having to execute it to receive this feedback. This feature supports single and multi-line queries, with and without variables.
