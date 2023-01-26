@@ -106,8 +106,14 @@ func Test_teamSync(t *testing.T) {
 		t.Run("login.TeamSync should not be called when not nil and skipTeamSync is set for externalUserInfo", func(t *testing.T) {
 			var actualUser *user.User
 			var actualExternalUser *models.ExternalUserInfo
-			upserCmdSkipTeamSync := &models.UpsertUserCommand{ExternalUser: &models.ExternalUserInfo{Email: email, SkipTeamSync: true},
-				UserLookupParams: models.UserLookupParams{Email: &email}}
+			upserCmdSkipTeamSync := &models.UpsertUserCommand{
+				ExternalUser: &models.ExternalUserInfo{
+					Email: email,
+					// sending in ExternalUserInfo with SkipTeamSync yields no team sync
+					SkipTeamSync: true,
+				},
+				UserLookupParams: models.UserLookupParams{Email: &email},
+			}
 			teamSyncFunc := func(user *user.User, externalUser *models.ExternalUserInfo) error {
 				actualUser = user
 				actualExternalUser = externalUser
