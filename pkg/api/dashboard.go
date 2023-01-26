@@ -1075,7 +1075,7 @@ func validateDashboard(d dashboards.Dashboard) error {
 		return nil
 	}
 
-	blob, err := d.Data.Bytes()
+	blob, err := d.Data.Encode()
 	if err != nil {
 		return err
 	}
