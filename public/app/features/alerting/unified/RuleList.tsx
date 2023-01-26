@@ -20,13 +20,12 @@ import { RuleListStateView } from './components/rules/RuleListStateView';
 import { RuleStats } from './components/rules/RuleStats';
 import RulesFilter from './components/rules/RulesFilter';
 import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
-import { useFilteredRules } from './hooks/useFilteredRules';
+import { useFilteredRules, useRulesFilter } from './hooks/useFilteredRules';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAllPromAndRulerRulesAction } from './state/actions';
 import { useRulesAccess } from './utils/accessControlHooks';
 import { RULE_LIST_POLL_INTERVAL_MS } from './utils/constants';
 import { getAllRulesSourceNames } from './utils/datasource';
-import { getFiltersFromUrlParams } from './utils/misc';
 
 const VIEWS = {
   groups: RuleListGroupView,
@@ -42,8 +41,7 @@ const RuleList = withErrorBoundary(
     const [expandAll, setExpandAll] = useState(false);
 
     const [queryParams] = useQueryParams();
-    const filters = getFiltersFromUrlParams(queryParams);
-    const filtersActive = Object.values(filters).some((filter) => filter !== undefined);
+    const { filterState, hasActiveFilters } = useRulesFilter();
 
     const { canCreateGrafanaRules, canCreateCloudRules } = useRulesAccess();
 
@@ -83,19 +81,20 @@ const RuleList = withErrorBoundary(
     const hasNoAlertRulesCreatedYet = allPromLoaded && allPromEmpty && promRequests.length > 0;
 
     const combinedNamespaces: CombinedRuleNamespace[] = useCombinedRuleNamespaces();
-    const filteredNamespaces = useFilteredRules(combinedNamespaces);
+    const filteredNamespaces = useFilteredRules(combinedNamespaces, filterState);
+
     return (
       // We don't want to show the Loading... indicator for the whole page.
       // We show separate indicators for Grafana-managed and Cloud rules
       <AlertingPageWrapper pageId="alert-list" isLoading={false}>
         <RuleListErrors />
-        <RulesFilter />
+        <RulesFilter onFilterCleared={() => setExpandAll(false)} />
         {!hasNoAlertRulesCreatedYet && (
           <>
             <div className={styles.break} />
             <div className={styles.buttonsContainer}>
               <div className={styles.statsContainer}>
-                {view === 'groups' && filtersActive && (
+                {view === 'groups' && hasActiveFilters && (
                   <Button
                     className={styles.expandAllButton}
                     icon={expandAll ? 'angle-double-up' : 'angle-double-down'}
