@@ -54,8 +54,9 @@ type PostLoginHookFn func(ctx context.Context, identity *Identity, r *Request, e
 type Service interface {
 	// Authenticate authenticates a request
 	Authenticate(ctx context.Context, r *Request) (*Identity, error)
-	// RegisterPostAuthHook registers a hook that is called after a successful authentication.
-	RegisterPostAuthHook(hook PostAuthHookFn)
+	// RegisterPostAuthHook registers a hook with a priority that is called after a successful authentication.
+	// A lower number means higher priority.
+	RegisterPostAuthHook(hook PostAuthHookFn, priority uint)
 	// Login authenticates a request and creates a session on successful authentication.
 	Login(ctx context.Context, client string, r *Request) (*Identity, error)
 	// RegisterPostLoginHook registers a hook that that is called after a login request.

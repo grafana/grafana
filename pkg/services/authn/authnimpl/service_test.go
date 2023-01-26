@@ -292,11 +292,12 @@ func setupTests(t *testing.T, opts ...func(svc *Service)) *Service {
 	t.Helper()
 
 	s := &Service{
-		log:         log.NewNopLogger(),
-		cfg:         setting.NewCfg(),
-		clientQueue: newQueue[authn.ContextAwareClient](),
-		clients:     map[string]authn.Client{},
-		tracer:      tracing.InitializeTracerForTest(),
+		log:           log.NewNopLogger(),
+		cfg:           setting.NewCfg(),
+		clients:       map[string]authn.Client{},
+		clientQueue:   newQueue[authn.ContextAwareClient](),
+		tracer:        tracing.InitializeTracerForTest(),
+		postAuthHooks: newQueue[authn.PostAuthHookFn](),
 	}
 
 	for _, o := range opts {
