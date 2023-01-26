@@ -53,6 +53,7 @@ COPY public/api-spec.json public/api-spec.json
 COPY pkg pkg
 COPY scripts scripts
 COPY conf conf
+COPY .github .github
 
 RUN make build-go
 

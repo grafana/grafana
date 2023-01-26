@@ -34,7 +34,7 @@ export async function getRecentDashboardActions(): Promise<CommandPaletteAction[
   const recentDashboardActions: CommandPaletteAction[] = recentResults.map((item) => {
     const { url, name } = item; // items are backed by DataFrameView, so must hold the url in a closure
     return {
-      id: `recent-dashboards/${url}`,
+      id: `recent-dashboards${url}`,
       name: `${name}`,
       section: t('command-palette.section.recent-dashboards', 'Recent dashboards'),
       priority: RECENT_DASHBOARDS_PRORITY,
@@ -62,7 +62,7 @@ export async function getDashboardSearchResultActions(searchQuery: string): Prom
   const goToDashboardActions: CommandPaletteAction[] = data.view.map((item) => {
     const { url, name } = item; // items are backed by DataFrameView, so must hold the url in a closure
     return {
-      id: `go/dashboard/${url}`,
+      id: `go/dashboard${url}`,
       name: `${name}`,
       section: t('command-palette.section.dashboard-search-results', 'Dashboards'),
       priority: SEARCH_RESULTS_PRORITY,
@@ -77,15 +77,23 @@ export async function getDashboardSearchResultActions(searchQuery: string): Prom
 
 export function useDashboardResults(searchQuery: string, isShowing: boolean) {
   const [dashboardResults, setDashboardResults] = useState<CommandPaletteAction[]>([]);
+  const [isFetchingDashboardResults, setIsFetchingDashboardResults] = useState(false);
 
   // Hit dashboards API
   useEffect(() => {
     if (isShowing && searchQuery.length > 0) {
+      setIsFetchingDashboardResults(true);
       debouncedDashboardSearch(searchQuery).then((resultActions) => {
         setDashboardResults(resultActions);
+        setIsFetchingDashboardResults(false);
       });
+    } else {
+      setDashboardResults([]);
     }
   }, [isShowing, searchQuery]);
 
-  return dashboardResults;
+  return {
+    dashboardResults,
+    isFetchingDashboardResults,
+  };
 }

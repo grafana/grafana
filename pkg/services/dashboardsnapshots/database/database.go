@@ -45,8 +45,9 @@ func (d *DashboardSnapshotStore) DeleteExpiredSnapshots(ctx context.Context, cmd
 	})
 }
 
-func (d *DashboardSnapshotStore) CreateDashboardSnapshot(ctx context.Context, cmd *dashboardsnapshots.CreateDashboardSnapshotCommand) error {
-	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+func (d *DashboardSnapshotStore) CreateDashboardSnapshot(ctx context.Context, cmd *dashboardsnapshots.CreateDashboardSnapshotCommand) (*dashboardsnapshots.DashboardSnapshot, error) {
+	var result *dashboardsnapshots.DashboardSnapshot
+	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		var expires = time.Now().Add(time.Hour * 24 * 365 * 50)
 		if cmd.Expires > 0 {
 			expires = time.Now().Add(time.Second * time.Duration(cmd.Expires))
@@ -56,11 +57,11 @@ func (d *DashboardSnapshotStore) CreateDashboardSnapshot(ctx context.Context, cm
 			Name:               cmd.Name,
 			Key:                cmd.Key,
 			DeleteKey:          cmd.DeleteKey,
-			OrgId:              cmd.OrgId,
-			UserId:             cmd.UserId,
+			OrgID:              cmd.OrgID,
+			UserID:             cmd.UserID,
 			External:           cmd.External,
-			ExternalUrl:        cmd.ExternalUrl,
-			ExternalDeleteUrl:  cmd.ExternalDeleteUrl,
+			ExternalURL:        cmd.ExternalURL,
+			ExternalDeleteURL:  cmd.ExternalDeleteURL,
 			Dashboard:          simplejson.New(),
 			DashboardEncrypted: cmd.DashboardEncrypted,
 			Expires:            expires,
@@ -68,10 +69,14 @@ func (d *DashboardSnapshotStore) CreateDashboardSnapshot(ctx context.Context, cm
 			Updated:            time.Now(),
 		}
 		_, err := sess.Insert(snapshot)
-		cmd.Result = snapshot
+		result = snapshot
 
 		return err
 	})
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func (d *DashboardSnapshotStore) DeleteDashboardSnapshot(ctx context.Context, cmd *dashboardsnapshots.DeleteDashboardSnapshotCommand) error {
@@ -82,8 +87,9 @@ func (d *DashboardSnapshotStore) DeleteDashboardSnapshot(ctx context.Context, cm
 	})
 }
 
-func (d *DashboardSnapshotStore) GetDashboardSnapshot(ctx context.Context, query *dashboardsnapshots.GetDashboardSnapshotQuery) error {
-	return d.store.WithDbSession(ctx, func(sess *db.Session) error {
+func (d *DashboardSnapshotStore) GetDashboardSnapshot(ctx context.Context, query *dashboardsnapshots.GetDashboardSnapshotQuery) (*dashboardsnapshots.DashboardSnapshot, error) {
+	var queryResult *dashboardsnapshots.DashboardSnapshot
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		snapshot := dashboardsnapshots.DashboardSnapshot{Key: query.Key, DeleteKey: query.DeleteKey}
 		has, err := sess.Get(&snapshot)
 
@@ -93,15 +99,20 @@ func (d *DashboardSnapshotStore) GetDashboardSnapshot(ctx context.Context, query
 			return dashboardsnapshots.ErrBaseNotFound.Errorf("dashboard snapshot not found")
 		}
 
-		query.Result = &snapshot
+		queryResult = &snapshot
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
+	return queryResult, nil
 }
 
 // SearchDashboardSnapshots returns a list of all snapshots for admins
 // for other roles, it returns snapshots created by the user
-func (d *DashboardSnapshotStore) SearchDashboardSnapshots(ctx context.Context, query *dashboardsnapshots.GetDashboardSnapshotsQuery) error {
-	return d.store.WithDbSession(ctx, func(sess *db.Session) error {
+func (d *DashboardSnapshotStore) SearchDashboardSnapshots(ctx context.Context, query *dashboardsnapshots.GetDashboardSnapshotsQuery) (dashboardsnapshots.DashboardSnapshotsList, error) {
+	var queryResult dashboardsnapshots.DashboardSnapshotsList
+	err := d.store.WithDbSession(ctx, func(sess *db.Session) error {
 		var snapshots = make(dashboardsnapshots.DashboardSnapshotsList, 0)
 		if query.Limit > 0 {
 			sess.Limit(query.Limit)
@@ -115,16 +126,20 @@ func (d *DashboardSnapshotStore) SearchDashboardSnapshots(ctx context.Context, q
 		// admins can see all snapshots, everyone else can only see their own snapshots
 		switch {
 		case query.SignedInUser.OrgRole == org.RoleAdmin:
-			sess.Where("org_id = ?", query.OrgId)
+			sess.Where("org_id = ?", query.OrgID)
 		case !query.SignedInUser.IsAnonymous:
-			sess.Where("org_id = ? AND user_id = ?", query.OrgId, query.SignedInUser.UserID)
+			sess.Where("org_id = ? AND user_id = ?", query.OrgID, query.SignedInUser.UserID)
 		default:
-			query.Result = snapshots
+			queryResult = snapshots
 			return nil
 		}
 
 		err := sess.Find(&snapshots)
-		query.Result = snapshots
+		queryResult = snapshots
 		return err
 	})
+	if err != nil {
+		return dashboardsnapshots.DashboardSnapshotsList{}, err
+	}
+	return queryResult, nil
 }
