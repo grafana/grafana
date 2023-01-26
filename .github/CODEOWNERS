@@ -12,26 +12,26 @@
 # This should make it easy to add new rules without breaking existing ones.
 
 # Documentation
-/docs/ @grafana/docs-squad
-/contribute/ @grafana/docs-squad
-/docs/sources/developers/plugins/ @grafana/docs-squad @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
-/docs/sources/developers/plugins/backend/ @grafana/docs-squad @grafana/plugins-platform-backend
-/.changelog-archive @grafana/docs-squad
-CHANGELOG.md @grafana/docs-squad
-CODE_OF_CONDUCT.md @grafana/docs-squad
-CONTRIBUTING.md @grafana/docs-squad
+/docs/ @grafana/docs-grafana
+/contribute/ @grafana/docs-grafana
+/docs/sources/developers/plugins/ @grafana/docs-grafana @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
+/docs/sources/developers/plugins/backend/ @grafana/docs-grafana @grafana/plugins-platform-backend
+/.changelog-archive @grafana/docs-grafana
+CHANGELOG.md @grafana/docs-grafana
+CODE_OF_CONDUCT.md @grafana/docs-grafana
+CONTRIBUTING.md @grafana/docs-grafana
 GOVERNANCE.md @RichiH
-HALL_OF_FAME.md @grafana/docs-squad
+HALL_OF_FAME.md @grafana/docs-grafana
 ISSUE_TRIAGE.md @grafana/grafana-community-support
 LICENSE @torkelo
 LICENSING.md @torkelo
 MAINTAINERS.md @RichiH
 NOTICE.md @torkelo
-README.md @grafana/docs-squad
+README.md @grafana/docs-grafana
 ROADMAP.md @torkelo
 SECURITY.md @grafana/security-team
 SUPPORT.md @torkelo
-UPGRADING_DEPENDENCIES.md @grafana/docs-squad
+UPGRADING_DEPENDENCIES.md @grafana/docs-grafana
 WORKFLOW.md @torkelo
 
 
@@ -572,7 +572,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/codeql-analysis.yml @DanCech
 /.github/workflows/commands.yml @torkelo
 /.github/workflows/detect-breaking-changes-* @grafana/plugins-platform-frontend
-/.github/workflows/doc-validator.yml @grafana/docs-squad
+/.github/workflows/doc-validator.yml @grafana/docs-grafana
 /.github/workflows/enterprise-pr-check.yml @grafana/grafana-release-eng
 /.github/workflows/epic-add-to-platform-ux-parent-project.yml @meanmina
 /.github/workflows/github-release.yml @torkelo
@@ -586,8 +586,8 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-codeql-analysis-python.yml @DanCech
 /.github/workflows/pr-commands-closed.yml @tolzhabayev
 /.github/workflows/pr-commands.yml @marefr
-/.github/workflows/publish-technical-documentation-next.yml @grafana/docs-squad
-/.github/workflows/publish-technical-documentation-release.yml @grafana/docs-squad
+/.github/workflows/publish-technical-documentation-next.yml @grafana/docs-grafana
+/.github/workflows/publish-technical-documentation-release.yml @grafana/docs-grafana
 /.github/workflows/remove-milestone.yml @grafana/user-essentials
 /.github/workflows/sbom-report.yml @grafana/security-team
 /.github/workflows/scripts/json-file-to-job-output.js @grafana/plugins-platform-frontend
@@ -607,6 +607,3 @@ embed.go @grafana/grafana-as-code
 /conf/provisioning/datasources/ @grafana/plugins-platform-backend
 /conf/provisioning/notifiers/ @bergquist
 /conf/provisioning/plugins/ @grafana/plugins-platform-backend
-
-
-
