@@ -33,12 +33,12 @@ var client = &http.Client{
 // Responses:
 // 200: getSharingOptionsResponse
 // 401: unauthorisedError
-func GetSharingOptions(c *models.ReqContext) {
+func (hs *HTTPServer) GetSharingOptions(c *models.ReqContext) {
 	c.JSON(http.StatusOK, util.DynMap{
-		"snapshotEnabled":      setting.SnapshotEnabled,
-		"externalSnapshotURL":  setting.ExternalSnapshotUrl,
-		"externalSnapshotName": setting.ExternalSnapshotName,
-		"externalEnabled":      setting.ExternalEnabled,
+		"snapshotEnabled":      hs.Cfg.SnapshotEnabled,
+		"externalSnapshotURL":  hs.Cfg.ExternalSnapshotUrl,
+		"externalSnapshotName": hs.Cfg.ExternalSnapshotName,
+		"externalEnabled":      hs.Cfg.ExternalEnabled,
 	})
 }
 
@@ -49,7 +49,7 @@ type CreateExternalSnapshotResponse struct {
 	DeleteUrl string `json:"deleteUrl"`
 }
 
-func createExternalDashboardSnapshot(cmd dashboardsnapshots.CreateDashboardSnapshotCommand) (*CreateExternalSnapshotResponse, error) {
+func createExternalDashboardSnapshot(cmd dashboardsnapshots.CreateDashboardSnapshotCommand, externalSnapshotUrl string) (*CreateExternalSnapshotResponse, error) {
 	var createSnapshotResponse CreateExternalSnapshotResponse
 	message := map[string]interface{}{
 		"name":      cmd.Name,
@@ -64,7 +64,7 @@ func createExternalDashboardSnapshot(cmd dashboardsnapshots.CreateDashboardSnaps
 		return nil, err
 	}
 
-	response, err := client.Post(setting.ExternalSnapshotUrl+"/api/snapshots", "application/json", bytes.NewBuffer(messageBytes))
+	response, err := client.Post(externalSnapshotUrl+"/api/snapshots", "application/json", bytes.NewBuffer(messageBytes))
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +106,7 @@ func createOriginalDashboardURL(cmd *dashboardsnapshots.CreateDashboardSnapshotC
 // 403: forbiddenError
 // 500: internalServerError
 func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Response {
-	if !setting.SnapshotEnabled {
+	if !hs.Cfg.SnapshotEnabled {
 		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
 		return nil
 	}
@@ -129,12 +129,12 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Res
 	}
 
 	if cmd.External {
-		if !setting.ExternalEnabled {
+		if !hs.Cfg.ExternalEnabled {
 			c.JsonApiErr(http.StatusForbidden, "External dashboard creation is disabled", nil)
 			return nil
 		}
 
-		response, err := createExternalDashboardSnapshot(cmd)
+		response, err := createExternalDashboardSnapshot(cmd, hs.Cfg.ExternalSnapshotUrl)
 		if err != nil {
 			c.JsonApiErr(http.StatusInternalServerError, "Failed to create external snapshot", err)
 			return nil
@@ -201,7 +201,7 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Res
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetDashboardSnapshot(c *models.ReqContext) response.Response {
-	if !setting.SnapshotEnabled {
+	if !hs.Cfg.SnapshotEnabled {
 		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
 		return nil
 	}
@@ -285,7 +285,7 @@ func deleteExternalDashboardSnapshot(externalUrl string) error {
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *models.ReqContext) response.Response {
-	if !setting.SnapshotEnabled {
+	if !hs.Cfg.SnapshotEnabled {
 		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
 		return nil
 	}
@@ -330,7 +330,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *models.ReqContext) r
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) DeleteDashboardSnapshot(c *models.ReqContext) response.Response {
-	if !setting.SnapshotEnabled {
+	if !hs.Cfg.SnapshotEnabled {
 		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
 		return nil
 	}
@@ -400,7 +400,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *models.ReqContext) response.Res
 // 200: searchDashboardSnapshotsResponse
 // 500: internalServerError
 func (hs *HTTPServer) SearchDashboardSnapshots(c *models.ReqContext) response.Response {
-	if !setting.SnapshotEnabled {
+	if !hs.Cfg.SnapshotEnabled {
 		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
 		return nil
 	}

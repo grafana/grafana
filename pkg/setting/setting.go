@@ -87,13 +87,6 @@ var (
 	CookieSameSiteDisabled bool
 	CookieSameSiteMode     http.SameSite
 
-	// Snapshots
-	SnapshotEnabled       bool
-	ExternalSnapshotUrl   string
-	ExternalSnapshotName  string
-	ExternalEnabled       bool
-	SnapShotRemoveExpired bool
-
 	// Dashboard history
 	DashboardVersionsToKeep int
 	MinRefreshInterval      string
@@ -408,6 +401,12 @@ type Cfg struct {
 	DataSourceLimit int
 
 	// Snapshots
+	SnapshotEnabled       bool
+	ExternalSnapshotUrl   string
+	ExternalSnapshotName  string
+	ExternalEnabled       bool
+	SnapShotRemoveExpired bool
+
 	SnapshotPublicMode bool
 
 	ErrTemplateName string
@@ -1703,14 +1702,13 @@ func IsLegacyAlertingEnabled() bool {
 func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {
 	snapshots := iniFile.Section("snapshots")
 
-	// TODO LND Check if we want to disable external snapshot if this is false
-	SnapshotEnabled = snapshots.Key("enabled").MustBool(true)
+	cfg.SnapshotEnabled = snapshots.Key("enabled").MustBool(true)
 
-	ExternalSnapshotUrl = valueAsString(snapshots, "external_snapshot_url", "")
-	ExternalSnapshotName = valueAsString(snapshots, "external_snapshot_name", "")
+	cfg.ExternalSnapshotUrl = valueAsString(snapshots, "external_snapshot_url", "")
+	cfg.ExternalSnapshotName = valueAsString(snapshots, "external_snapshot_name", "")
 
-	ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
-	SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
+	cfg.ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
+	cfg.SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
 	cfg.SnapshotPublicMode = snapshots.Key("public_mode").MustBool(false)
 
 	return nil
