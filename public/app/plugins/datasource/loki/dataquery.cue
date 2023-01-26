@@ -22,11 +22,6 @@ import (
 // This file (with its sibling .cue files) implements pfs.GrafanaPlugin
 pfs.GrafanaPlugin
 
-//type QueryJSONModel struct {
-//	Interval     string `json:"interval"`
-//	IntervalMS   int    `json:"intervalMS"`
-//}
-
 composableKinds: DataQuery: {
 	maturity: "merged"
 
