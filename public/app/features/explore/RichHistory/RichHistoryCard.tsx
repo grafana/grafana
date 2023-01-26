@@ -401,7 +401,6 @@ function DatasourceInfo({ dsApi, size }: { dsApi?: DataSourceApi; size: 'sm' | '
         aria-label="Data source icon"
       />
       <div aria-label="Data source name">{dsApi?.name || 'Data source does not exist anymore'}</div>
-      {/* TODO: better explainer of this? maybe a tooltip? */}
     </div>
   );
 }
