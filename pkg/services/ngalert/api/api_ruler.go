@@ -426,7 +426,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *models.ReqContext, groupKey ngmod
 		srv.scheduleService.UpdateAlertRule(ngmodels.AlertRuleKey{
 			OrgID: c.SignedInUser.OrgID,
 			UID:   rule.Existing.UID,
-		}, rule.Existing.Version+1)
+		}, rule.Existing.Version+1, rule.New.IsPaused)
 	}
 
 	if len(finalChanges.Delete) > 0 {

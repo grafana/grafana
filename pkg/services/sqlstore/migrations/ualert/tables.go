@@ -260,6 +260,16 @@ func AddAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64)
 			Default:  "1",
 		},
 	))
+
+	mg.AddMigration("add is_paused column to alert_rule table", migrator.NewAddColumnMigration(
+		alertRule,
+		&migrator.Column{
+			Name:     "is_paused",
+			Type:     migrator.DB_Bool,
+			Nullable: false,
+			Default:  "false",
+		},
+	))
 }
 
 func AddAlertRuleVersionMigrations(mg *migrator.Migrator) {
@@ -311,6 +321,16 @@ func AddAlertRuleVersionMigrations(mg *migrator.Migrator) {
 			Type:     migrator.DB_Int,
 			Nullable: false,
 			Default:  "1",
+		},
+	))
+
+	mg.AddMigration("add is_paused column to alert_rule_versions table", migrator.NewAddColumnMigration(
+		alertRuleVersion,
+		&migrator.Column{
+			Name:     "is_paused",
+			Type:     migrator.DB_Bool,
+			Nullable: false,
+			Default:  "false",
 		},
 	))
 }
