@@ -32,10 +32,14 @@ export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelIte
   }
 
   if (pageNav) {
-    if (pageNav.children) {
+    if (pageNav.url && pageNav.children) {
       const child = pageNav.children.find((child) => child.active);
       if (child) {
         addCrumbs(child);
+        // Some pages set up children but they are not connected to parent pageNav
+        if (child.parentItem !== pageNav) {
+          addCrumbs(pageNav);
+        }
       }
     } else {
       addCrumbs(pageNav);

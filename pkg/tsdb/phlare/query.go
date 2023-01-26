@@ -285,14 +285,14 @@ func walkTree(tree *ProfileTree, fn func(tree *ProfileTree)) {
 }
 
 func seriesToDataFrames(seriesResp *connect.Response[querierv1.SelectSeriesResponse], profileTypeID string) []*data.Frame {
-	var frames []*data.Frame
+	frames := make([]*data.Frame, 0, len(seriesResp.Msg.Series))
 
 	for _, series := range seriesResp.Msg.Series {
 		// We create separate data frames as the series may not have the same length
 		frame := data.NewFrame("series")
 		frame.Meta = &data.FrameMeta{PreferredVisualization: "graph"}
 
-		fields := data.Fields{}
+		fields := make(data.Fields, 0, 2)
 		timeField := data.NewField("time", nil, []time.Time{})
 		fields = append(fields, timeField)
 

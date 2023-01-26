@@ -95,13 +95,14 @@ def store_npm_packages_step():
         'name': 'store-npm-packages',
         'image': build_image,
         'depends_on': [
+            'compile-build-cmd',
             'build-frontend-packages',
         ],
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket),
         },
-        'commands': ['./bin/grabpl artifacts npm store --tag ${DRONE_TAG}'],
+        'commands': ['./bin/build artifacts npm store --tag ${DRONE_TAG}'],
     }
 
 
@@ -110,6 +111,7 @@ def retrieve_npm_packages_step():
         'name': 'retrieve-npm-packages',
         'image': publish_image,
         'depends_on': [
+            'compile-build-cmd',
             'yarn-install',
         ],
         'failure': 'ignore',
@@ -117,7 +119,7 @@ def retrieve_npm_packages_step():
             'GCP_KEY': from_secret('gcp_key'),
             'PRERELEASE_BUCKET': from_secret(prerelease_bucket),
         },
-        'commands': ['./bin/grabpl artifacts npm retrieve --tag ${DRONE_TAG}'],
+        'commands': ['./bin/build artifacts npm retrieve --tag ${DRONE_TAG}'],
     }
 
 
@@ -126,13 +128,14 @@ def release_npm_packages_step():
         'name': 'release-npm-packages',
         'image': build_image,
         'depends_on': [
+            'compile-build-cmd',
             'retrieve-npm-packages',
         ],
         'failure': 'ignore',
         'environment': {
             'NPM_TOKEN': from_secret('npm_token'),
         },
-        'commands': ['./bin/grabpl artifacts npm release --tag ${DRONE_TAG}'],
+        'commands': ['./bin/build artifacts npm release --tag ${DRONE_TAG}'],
     }
 
 
@@ -594,7 +597,7 @@ def publish_npm_pipelines():
         'target': ['public'],
     }
     steps = [
-        download_grabpl_step(),
+        compile_build_cmd(),
         yarn_install_step(),
         retrieve_npm_packages_step(),
         release_npm_packages_step(),

@@ -567,13 +567,13 @@ export function getSupportBundleRoutes(cfg = config): RouteDescriptor[] {
 
   return [
     {
-      path: '/admin/support-bundles',
+      path: '/support-bundles',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "SupportBundles" */ 'app/features/support-bundles/SupportBundles')
       ),
     },
     {
-      path: '/admin/support-bundles/create',
+      path: '/support-bundles/create',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "SupportBundlesCreate" */ 'app/features/support-bundles/SupportBundlesCreate')
       ),

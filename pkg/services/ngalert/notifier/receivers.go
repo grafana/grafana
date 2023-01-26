@@ -60,7 +60,7 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 	for _, r := range c.Receivers {
 		greceivers := make([]*alerting.GrafanaReceiver, 0, len(r.GrafanaManagedReceivers))
 		for _, gr := range r.PostableGrafanaReceivers.GrafanaManagedReceivers {
-			var settings map[string]string
+			var settings map[string]interface{}
 			//TODO: We shouldn't need to do this marshalling.
 			j, err := gr.Settings.MarshalJSON()
 			if err != nil {
@@ -126,10 +126,7 @@ func (am *Alertmanager) TestReceivers(ctx context.Context, c apimodels.TestRecei
 	}, err
 }
 
-func (am *Alertmanager) GetReceivers(ctx context.Context) []apimodels.Receiver {
-	am.reloadConfigMtx.RLock()
-	defer am.reloadConfigMtx.RUnlock()
-
+func (am *Alertmanager) GetReceivers(_ context.Context) []apimodels.Receiver {
 	apiReceivers := make([]apimodels.Receiver, 0, len(am.Base.GetReceivers()))
 	for _, rcv := range am.Base.GetReceivers() {
 		// Build integrations slice for each receiver.

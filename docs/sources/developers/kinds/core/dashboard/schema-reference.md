@@ -4,11 +4,12 @@ keywords:
   - schema
 title: Dashboard kind
 ---
+> Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
 # Dashboard kind
 
-### Maturity: experimental
-### Version: 0.0
+## Maturity: experimental
+## Version: 0.0
 
 ## Properties
 
@@ -21,13 +22,13 @@ title: Dashboard kind
 | `style`                | string                            | **Yes**  | Theme of dashboard. Possible values are: `dark`, `light`. Default: `dark`.                                                                                                                                              |
 | `annotations`          | [object](#annotations)            | No       | TODO docs                                                                                                                                                                                                               |
 | `description`          | string                            | No       | Description of dashboard.                                                                                                                                                                                               |
-| `fiscalYearStartMonth` | integer                           | No       | TODO docs                                                                                                                                                                                                               |
+| `fiscalYearStartMonth` | integer                           | No       | The month that the fiscal year starts on.  0 = January, 11 = December Default: `0`.                                                                                                                                     |
 | `gnetId`               | string                            | No       |                                                                                                                                                                                                                         |
 | `id`                   | integer                           | No       | Unique numeric identifier for the dashboard.<br/>TODO must isolate or remove identifiers local to a Grafana instance...?                                                                                                |
 | `links`                | [DashboardLink](#dashboardlink)[] | No       | TODO docs                                                                                                                                                                                                               |
 | `liveNow`              | boolean                           | No       | TODO docs                                                                                                                                                                                                               |
 | `panels`               | [object](#panels)[]               | No       |                                                                                                                                                                                                                         |
-| `refresh`              |                                   | No       | TODO docs                                                                                                                                                                                                               |
+| `refresh`              |                                   | No       | Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".                                                                                                                                |
 | `snapshot`             | [Snapshot](#snapshot)             | No       | TODO docs                                                                                                                                                                                                               |
 | `tags`                 | string[]                          | No       | Tags associated with dashboard.                                                                                                                                                                                         |
 | `templating`           | [object](#templating)             | No       | TODO docs                                                                                                                                                                                                               |

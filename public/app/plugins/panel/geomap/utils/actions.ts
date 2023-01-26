@@ -1,6 +1,6 @@
 import { cloneDeep } from 'lodash';
 
-import { FrameGeometrySourceMode } from '@grafana/data/src';
+import { FrameGeometrySourceMode } from '@grafana/schema';
 
 import { GeomapPanel } from '../GeomapPanel';
 import { geomapLayerRegistry } from '../layers/registry';

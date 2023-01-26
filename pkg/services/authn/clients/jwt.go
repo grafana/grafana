@@ -20,7 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
-var _ authn.Client = new(JWT)
+var _ authn.ContextAwareClient = new(JWT)
 
 var (
 	ErrJWTInvalid = errutil.NewBase(errutil.StatusUnauthorized,
@@ -43,6 +43,10 @@ type JWT struct {
 	cfg        *setting.Cfg
 	log        log.Logger
 	jwtService auth.JWTVerifierService
+}
+
+func (s *JWT) Name() string {
+	return authn.ClientJWT
 }
 
 func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
@@ -115,10 +119,10 @@ func (s *JWT) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identi
 		}
 	}
 
-	if id.Login == "" || id.Email == "" {
+	if id.Login == "" && id.Email == "" {
 		s.log.Debug("Failed to get an authentication claim from JWT",
 			"login", id.Login, "email", id.Email)
-		return nil, ErrJWTMissingClaim.Errorf("missing login or email claim in JWT")
+		return nil, ErrJWTMissingClaim.Errorf("missing login and email claim in JWT")
 	}
 
 	if s.cfg.JWTAuthAutoSignUp {
@@ -155,6 +159,10 @@ func (s *JWT) Test(ctx context.Context, r *authn.Request) bool {
 	}
 
 	return true
+}
+
+func (s *JWT) Priority() uint {
+	return 20
 }
 
 const roleGrafanaAdmin = "GrafanaAdmin"
