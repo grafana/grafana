@@ -14,6 +14,9 @@ export enum LibraryElementConnectionKind {
   Dashboard = 1,
 }
 
+/** @deprecated use LibraryPanel */
+export interface LibraryElementDTO extends LibraryPanel {}
+
 export interface LibraryElementConnectionDTO {
   id: number;
   kind: LibraryElementConnectionKind;
