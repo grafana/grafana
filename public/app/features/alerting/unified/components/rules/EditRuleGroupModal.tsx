@@ -188,7 +188,7 @@ export const RulesForGroupTable = ({ rulesWithoutRecordingRules }: { rulesWithou
   );
 };
 
-interface CombinedGroupAndNameSpace {
+export interface CombinedGroupAndNameSpace {
   namespace: CombinedRuleNamespace;
   group: CombinedRuleGroup;
 }
@@ -196,7 +196,7 @@ interface GroupAndNameSpaceNames {
   namespace: string;
   group: string;
 }
-interface ModalProps {
+export interface ModalProps {
   nameSpaceAndGroup: CombinedGroupAndNameSpace | GroupAndNameSpaceNames;
   sourceName: string;
   groupInterval: string;
@@ -426,6 +426,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                 </Button>
               </Modal.ButtonRow>
             </div>
+            {rulerRuleRequests && !hasSomeNoRecordingRules && <div>This group does not contain alert rules.</div>}
             {rulerRuleRequests && hasSomeNoRecordingRules && (
               <>
                 <div>List of rules that belong to this group</div>

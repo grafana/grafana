@@ -41,6 +41,7 @@ import {
   PromRuleType,
   RulerAlertingRuleDTO,
   RulerGrafanaRuleDTO,
+  RulerRecordingRuleDTO,
   RulerRuleGroupDTO,
   RulerRulesConfigDTO,
 } from 'app/types/unified-alerting-dto';
@@ -123,6 +124,18 @@ export const mockRulerGrafanaRule = (
 };
 
 export const mockRulerAlertingRule = (partial: Partial<RulerAlertingRuleDTO> = {}): RulerAlertingRuleDTO => ({
+  alert: 'alert1',
+  expr: 'up = 1',
+  labels: {
+    severity: 'warning',
+  },
+  annotations: {
+    summary: 'test alert',
+  },
+  ...partial,
+});
+
+export const mockRulerRecordingRule = (partial: Partial<RulerRecordingRuleDTO> = {}): RulerAlertingRuleDTO => ({
   alert: 'alert1',
   expr: 'up = 1',
   labels: {
@@ -446,6 +459,37 @@ export const someRulerRules: RulerRulesConfigDTO = {
     mockRulerRuleGroup({ name: 'group2', rules: [mockRulerAlertingRule({ alert: 'alert2' })] }),
   ],
   namespace2: [mockRulerRuleGroup({ name: 'group3', rules: [mockRulerAlertingRule({ alert: 'alert3' })] })],
+};
+
+export const someCloudRulerRules: RulerRulesConfigDTO = {
+  namespace1: [
+    mockRulerRuleGroup({
+      name: 'group1',
+      rules: [
+        mockRulerRecordingRule({
+          record: 'instance:node_num_cpu:sum',
+          expr: 'count without (cpu) (count without (mode) (node_cpu_seconds_total{job="integrations/node_exporter"}))',
+          labels: { type: 'cpu' },
+        }),
+        mockRulerAlertingRule({ alert: 'nonRecordingRule' }),
+      ],
+    }),
+  ],
+};
+
+export const onlyRecordingRulerRules: RulerRulesConfigDTO = {
+  namespace1: [
+    mockRulerRuleGroup({
+      name: 'group1',
+      rules: [
+        mockRulerRecordingRule({
+          record: 'instance:node_num_cpu:sum',
+          expr: 'count without (cpu) (count without (mode) (node_cpu_seconds_total{job="integrations/node_exporter"}))',
+          labels: { type: 'cpu' },
+        }),
+      ],
+    }),
+  ],
 };
 
 export const mockCombinedRule = (partial?: Partial<CombinedRule>): CombinedRule => ({
