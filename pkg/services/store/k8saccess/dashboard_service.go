@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/store/entity"
@@ -32,7 +31,7 @@ func (s *k8sDashboardService) DeleteDashboard(ctx context.Context, dashboardId i
 	return s.orig.DeleteDashboard(ctx, dashboardId, orgId)
 }
 
-func (s *k8sDashboardService) FindDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
+func (s *k8sDashboardService) FindDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]dashboards.DashboardSearchProjection, error) {
 	return s.orig.FindDashboards(ctx, query)
 }
 
@@ -77,7 +76,7 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 	return s.orig.SaveDashboard(ctx, dto, allowUiUpdate)
 }
 
-func (s *k8sDashboardService) SearchDashboards(ctx context.Context, query *models.FindPersistedDashboardsQuery) error {
+func (s *k8sDashboardService) SearchDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) error {
 	return s.orig.SearchDashboards(ctx, query)
 }
 
