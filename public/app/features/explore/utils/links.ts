@@ -30,7 +30,7 @@ const dataLinkHasRequiredPermissions = (link: DataLink) => {
  * @param link
  * @param scopedVars
  */
-export const dataLinkHasAllVariablesDefined = (link: DataLink, scopedVars: ScopedVars) => {
+const dataLinkHasAllVariablesDefined = (link: DataLink, scopedVars: ScopedVars) => {
   let hasAllRequiredVarDefined = true;
 
   if (link.internal) {
