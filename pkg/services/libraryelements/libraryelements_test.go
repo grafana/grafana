@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -293,6 +294,7 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 	service := dashboardservice.ProvideDashboardService(
 		cfg, dashboardStore, dashboardStore, dashAlertExtractor,
 		features, folderPermissions, dashboardPermissions, ac,
+		foldertest.NewFakeService(),
 	)
 	dashboard, err := service.SaveDashboard(context.Background(), dashItem, true)
 	require.NoError(t, err)
@@ -437,6 +439,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		dashboardService := dashboardservice.ProvideDashboardService(
 			sqlStore.Cfg, dashboardStore, dashboardStore, nil,
 			features, folderPermissions, dashboardPermissions, ac,
+			foldertest.NewFakeService(),
 		)
 		guardian.InitLegacyGuardian(sqlStore, dashboardService, &teamtest.FakeService{})
 		service := LibraryElementService{

@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/grafana/grafana/pkg/web"
@@ -24,8 +23,8 @@ var grafanaComProxyTransport = &http.Transport{
 	TLSHandshakeTimeout: 10 * time.Second,
 }
 
-func ReverseProxyGnetReq(logger log.Logger, proxyPath string, version string) *httputil.ReverseProxy {
-	url, _ := url.Parse(setting.GrafanaComUrl)
+func ReverseProxyGnetReq(logger log.Logger, proxyPath string, version string, grafanaComUrl string) *httputil.ReverseProxy {
+	url, _ := url.Parse(grafanaComUrl)
 
 	director := func(req *http.Request) {
 		req.URL.Scheme = url.Scheme
@@ -48,7 +47,7 @@ func ReverseProxyGnetReq(logger log.Logger, proxyPath string, version string) *h
 
 func (hs *HTTPServer) ProxyGnetRequest(c *models.ReqContext) {
 	proxyPath := web.Params(c.Req)["*"]
-	proxy := ReverseProxyGnetReq(c.Logger, proxyPath, hs.Cfg.BuildVersion)
+	proxy := ReverseProxyGnetReq(c.Logger, proxyPath, hs.Cfg.BuildVersion, hs.Cfg.GrafanaComAPIURL)
 	proxy.Transport = grafanaComProxyTransport
 	proxy.ServeHTTP(c.Resp, c.Req)
 }

@@ -4,17 +4,6 @@ import (
 	pref "github.com/grafana/grafana/pkg/services/preference"
 )
 
-type Prefs struct {
-	Theme            string                      `json:"theme"`
-	HomeDashboardID  int64                       `json:"homeDashboardId"`
-	HomeDashboardUID string                      `json:"homeDashboardUID,omitempty"`
-	Timezone         string                      `json:"timezone"`
-	WeekStart        string                      `json:"weekStart"`
-	Language         string                      `json:"language"`
-	Navbar           pref.NavbarPreference       `json:"navbar,omitempty"`
-	QueryHistory     pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
-}
-
 // swagger:model
 type UpdatePrefsCmd struct {
 	// Enum: light,dark
@@ -26,7 +15,6 @@ type UpdatePrefsCmd struct {
 	// Enum: utc,browser
 	Timezone     string                       `json:"timezone"`
 	WeekStart    string                       `json:"weekStart"`
-	Navbar       *pref.NavbarPreference       `json:"navbar,omitempty"`
 	QueryHistory *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
 	Language     string                       `json:"language"`
 }
@@ -42,7 +30,6 @@ type PatchPrefsCmd struct {
 	Timezone         *string                      `json:"timezone,omitempty"`
 	WeekStart        *string                      `json:"weekStart,omitempty"`
 	Language         *string                      `json:"language,omitempty"`
-	Navbar           *pref.NavbarPreference       `json:"navbar,omitempty"`
 	QueryHistory     *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
 	HomeDashboardUID *string                      `json:"homeDashboardUID,omitempty"`
 }

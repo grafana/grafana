@@ -69,8 +69,8 @@ func validRule() apimodels.PostableExtendedRuleNode {
 				},
 			},
 			UID:          util.GenerateShortUID(),
-			NoDataState:  allNoData[rand.Intn(len(allNoData)-1)],
-			ExecErrState: allExecError[rand.Intn(len(allExecError)-1)],
+			NoDataState:  allNoData[rand.Intn(len(allNoData))],
+			ExecErrState: allExecError[rand.Intn(len(allExecError))],
 		},
 	}
 }

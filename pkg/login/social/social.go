@@ -148,15 +148,17 @@ func ProvideService(cfg *setting.Cfg,
 				apiUrl:               info.ApiUrl,
 				teamIds:              sec.Key("team_ids").Ints(","),
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
+				skipOrgRoleSync:      cfg.GithubSkipOrgRoleSync,
 			}
 		}
 
 		// GitLab.
 		if name == "gitlab" {
 			ss.socialMap["gitlab"] = &SocialGitlab{
-				SocialBase:    newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-				apiUrl:        info.ApiUrl,
-				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
+				SocialBase:      newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+				apiUrl:          info.ApiUrl,
+				allowedGroups:   util.SplitString(sec.Key("allowed_groups").String()),
+				skipOrgRoleSync: cfg.GitLabSkipOrgRoleSync,
 			}
 		}
 
