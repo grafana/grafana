@@ -5,7 +5,7 @@ import { DataFrameJSON, SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, InlineSwitch, Input, Label, Select } from '@grafana/ui';
 
 import { EditorProps } from '../QueryEditor';
-import { SimulationQuery } from '../types';
+import { SimulationQuery } from '../dataquery.gen';
 
 import { SimulationSchemaForm } from './SimulationSchemaForm';
 

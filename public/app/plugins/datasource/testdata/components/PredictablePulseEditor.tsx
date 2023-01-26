@@ -3,7 +3,7 @@ import React, { ChangeEvent } from 'react';
 import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
 
 import { EditorProps } from '../QueryEditor';
-import { PulseWaveQuery } from '../types';
+import { PulseWaveQuery } from '../dataquery.gen';
 
 const fields = [
   { label: 'Step', id: 'timeStep', placeholder: '60', tooltip: 'The number of seconds between datapoints.' },
