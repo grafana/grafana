@@ -45,8 +45,8 @@ func summaryBuilder(ctx context.Context, uid string, body []byte) (*entity.Entit
 		switch item.Type {
 		case playlist.ItemTypeDashboardByUid:
 			summary.References = append(summary.References, &entity.EntityExternalReference{
-				Kind: "dashboard",
-				UID:  item.Value,
+				Family:     entity.StandardKindDashboard,
+				Identifier: item.Value,
 			})
 
 		case playlist.ItemTypeDashboardByTag:
