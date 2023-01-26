@@ -726,7 +726,7 @@ export class LokiDatasource
     return `{${expr}}`;
   }
 
-  getLogRowContextUi(row: LogRowModel, refresh: () => void): React.ReactNode {
+  getLogRowContextUi(row: LogRowModel, runContextQuery: () => void): React.ReactNode {
     return LokiContextUi({
       row,
       languageProvider: this.languageProvider,
@@ -767,8 +767,8 @@ export class LokiDatasource
           }
           return expr;
         };
-        if (refresh) {
-          refresh();
+        if (runContextQuery) {
+          runContextQuery();
         }
       },
     });
