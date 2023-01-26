@@ -35,6 +35,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	loginsvc "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/navtree"
@@ -437,7 +438,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		sc.withTokenSessionCookie("token")
 		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
-		sc.oauthTokenService.ExpectedAuthUser = &models.UserAuth{UserId: userID, OAuthExpiry: fakeGetTime()().Add(11 * time.Second)}
+		sc.oauthTokenService.ExpectedAuthUser = &loginsvc.UserAuth{UserId: userID, OAuthExpiry: fakeGetTime()().Add(11 * time.Second)}
 
 		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
 			return &auth.UserToken{
@@ -465,7 +466,7 @@ func TestMiddlewareContext(t *testing.T) {
 		sc.withTokenSessionCookie("token")
 		signedInUser := &user.SignedInUser{OrgID: 2, UserID: userID}
 		sc.userService.ExpectedSignedInUser = signedInUser
-		sc.oauthTokenService.ExpectedAuthUser = &models.UserAuth{
+		sc.oauthTokenService.ExpectedAuthUser = &loginsvc.UserAuth{
 			UserId:            userID,
 			OAuthExpiry:       fakeGetTime()().Add(-1 * time.Second),
 			OAuthAccessToken:  "access_token",
@@ -500,7 +501,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		sc.withTokenSessionCookie("token")
 		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
-		sc.oauthTokenService.ExpectedAuthUser = &models.UserAuth{UserId: userID, OAuthExpiry: fakeGetTime()().Add(-5 * time.Second), OAuthRefreshToken: "refreshtoken"}
+		sc.oauthTokenService.ExpectedAuthUser = &loginsvc.UserAuth{UserId: userID, OAuthExpiry: fakeGetTime()().Add(-5 * time.Second), OAuthRefreshToken: "refreshtoken"}
 
 		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
 			return &auth.UserToken{
@@ -527,7 +528,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		sc.withTokenSessionCookie("token")
 		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: 2, UserID: userID}
-		sc.oauthTokenService.ExpectedAuthUser = &models.UserAuth{UserId: userID}
+		sc.oauthTokenService.ExpectedAuthUser = &loginsvc.UserAuth{UserId: userID}
 
 		sc.userAuthTokenService.LookupTokenProvider = func(ctx context.Context, unhashedToken string) (*auth.UserToken, error) {
 			return &auth.UserToken{
@@ -610,7 +611,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario(t, "Should respect auto signup option", func(t *testing.T, sc *scenarioContext) {
 			var actualAuthProxyAutoSignUp *bool = nil
-			sc.loginService.ExpectedUserFunc = func(cmd *models.UpsertUserCommand) *user.User {
+			sc.loginService.ExpectedUserFunc = func(cmd *loginsvc.UpsertUserCommand) *user.User {
 				actualAuthProxyAutoSignUp = &cmd.SignupAllowed
 				return nil
 			}
@@ -652,7 +653,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario(t, "Should assign role from header to default org", func(t *testing.T, sc *scenarioContext) {
 			var storedRoleInfo map[int64]org.RoleType = nil
-			sc.loginService.ExpectedUserFunc = func(cmd *models.UpsertUserCommand) *user.User {
+			sc.loginService.ExpectedUserFunc = func(cmd *loginsvc.UpsertUserCommand) *user.User {
 				storedRoleInfo = cmd.ExternalUser.OrgRoles
 				sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: defaultOrgId, UserID: userID, OrgRole: storedRoleInfo[defaultOrgId]}
 				return &user.User{ID: userID}
@@ -675,7 +676,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 		middlewareScenario(t, "Should NOT assign role from header to non-default org", func(t *testing.T, sc *scenarioContext) {
 			var storedRoleInfo map[int64]org.RoleType = nil
-			sc.loginService.ExpectedUserFunc = func(cmd *models.UpsertUserCommand) *user.User {
+			sc.loginService.ExpectedUserFunc = func(cmd *loginsvc.UpsertUserCommand) *user.User {
 				storedRoleInfo = cmd.ExternalUser.OrgRoles
 				sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: orgID, UserID: userID, OrgRole: storedRoleInfo[orgID]}
 				return &user.User{ID: userID}

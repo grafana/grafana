@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -140,7 +139,7 @@ func (s *UserSync) updateAuthInfo(ctx context.Context, id *authn.Identity) error
 		return fmt.Errorf("invalid namespace %q for user ID %q", namespace, userID)
 	}
 
-	updateCmd := &models.UpdateAuthInfoCommand{
+	updateCmd := &login.UpdateAuthInfoCommand{
 		AuthModule: id.AuthModule,
 		AuthId:     id.AuthID,
 		UserId:     userID,
@@ -222,7 +221,7 @@ func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.Us
 	}
 
 	if id.AuthModule != "" && id.AuthID != "" {
-		if errSetAuth := s.authInfoService.SetAuthInfo(ctx, &models.SetAuthInfoCommand{
+		if errSetAuth := s.authInfoService.SetAuthInfo(ctx, &login.SetAuthInfoCommand{
 			UserId:     usr.ID,
 			AuthModule: id.AuthModule,
 			AuthId:     id.AuthID,
@@ -241,10 +240,10 @@ func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.Us
 func (s *UserSync) UserInDB(ctx context.Context,
 	authID *string,
 	authModule *string,
-	params models.UserLookupParams) (*user.User, error) {
+	params login.UserLookupParams) (*user.User, error) {
 	// Check authinfo table
 	if authID != nil && authModule != nil {
-		query := &models.GetAuthInfoQuery{
+		query := &login.GetAuthInfoQuery{
 			AuthModule: *authModule,
 			AuthId:     *authID,
 		}
@@ -269,7 +268,7 @@ func (s *UserSync) UserInDB(ctx context.Context,
 	return s.LookupByOneOf(ctx, &params)
 }
 
-func (s *UserSync) LookupByOneOf(ctx context.Context, params *models.UserLookupParams) (*user.User, error) {
+func (s *UserSync) LookupByOneOf(ctx context.Context, params *login.UserLookupParams) (*user.User, error) {
 	var usr *user.User
 	var err error
 
