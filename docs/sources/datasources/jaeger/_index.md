@@ -154,7 +154,7 @@ datasources:
         tags: [{ key: 'service.name', value: 'service' }, { key: 'job' }]
         queries:
           - name: 'Sample query'
-            query: 'sum(rate(tempo_spanmetrics_latency_bucket{$__tags}[5m]))'
+            query: 'sum(rate(traces_spanmetrics_latency_bucket{$__tags}[5m]))'
     secureJsonData:
       basicAuthPassword: my_password
 ```

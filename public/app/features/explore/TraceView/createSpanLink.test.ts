@@ -467,7 +467,7 @@ describe('createSpanLinkFactory', () => {
       expect(defaultLink!.title).toBe('defaultQuery');
       expect(defaultLink!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"histogram_quantile(0.5, sum(rate(tempo_spanmetrics_latency_bucket{operation=\\"operation\\"}[5m])) by (le))","refId":"A"}],"panelsState":{}}'
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"histogram_quantile(0.5, sum(rate(traces_spanmetrics_latency_bucket{service=\\"test service\\"}[5m])) by (le))","refId":"A"}],"panelsState":{}}'
         )}`
       );
 
