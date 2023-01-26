@@ -19,7 +19,7 @@ import {
 import { DataSourceWithBackend, getBackendSrv, getGrafanaLiveSrv, getTemplateSrv, TemplateSrv } from '@grafana/runtime';
 import { getSearchFilterScopedVar } from 'app/features/variables/utils';
 
-import { Scenario, TestData } from './dataquery.gen';
+import { Scenario, TestData, TestDataQueryType } from './dataquery.gen';
 import { queryMetricTree } from './metricTree';
 import { generateRandomEdges, generateRandomNodes, savedNodesResponse } from './nodeGraphUtils';
 import { runStream } from './runStreams';
@@ -91,7 +91,7 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
               csvContent += `${point[1]},${point[0]}\n`;
             }
           }
-          target.scenarioId = 'csv_content';
+          target.scenarioId = TestDataQueryType.CSVContent;
           target.csvContent = csvContent;
         }
 
@@ -123,7 +123,7 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
       query.alias = this.templateSrv.replace(query.alias, scopedVars);
     }
     if (query.scenarioId) {
-      query.scenarioId = this.templateSrv.replace(query.scenarioId, scopedVars);
+      query.scenarioId = this.templateSrv.replace(query.scenarioId, scopedVars) as TestDataQueryType;
     }
     if (query.stringInput) {
       query.stringInput = this.templateSrv.replace(query.stringInput, scopedVars);

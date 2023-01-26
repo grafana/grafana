@@ -25,6 +25,7 @@ export enum TestDataQueryType {
   LinearHeatmapBucketData = 'linear_heatmap_bucket_data',
   Live = 'live',
   Logs = 'logs',
+  ManualEntry = 'manual_entry',
   NoDataPoints = 'no_data_points',
   NodeGraph = 'node_graph',
   PredictableCSVWave = 'predictable_csv_wave',
@@ -40,6 +41,7 @@ export enum TestDataQueryType {
   TableStatic = 'table_static',
   Trace = 'trace',
   USA = 'usa',
+  VariablesQuery = 'variables-query',
 }
 
 export interface StreamingQuery {
@@ -118,9 +120,6 @@ export interface TestData extends common.DataQuery {
   nodes?: NodesQuery;
   pulseWave?: PulseWaveQuery;
   rawFrameContent?: string;
-  /**
-   * @deprecated use queryType instead.
-   */
   scenarioId?: TestDataQueryType;
   seriesCount?: number;
   sim?: SimulationQuery;

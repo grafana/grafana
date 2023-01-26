@@ -32,7 +32,6 @@ composableKinds: DataQuery: {
 					{
 						common.DataQuery
 						alias?: string
-						// @deprecated use queryType instead.
 						scenarioId?:  #TestDataQueryType | *"random_walk"
 						stringInput?: string
 						stream?:      #StreamingQuery
@@ -52,7 +51,7 @@ composableKinds: DataQuery: {
 						errorType?:             "server_panic" | "frontend_exception" | "frontend_observable"
 						spanCount?:             int32
 
-						#TestDataQueryType: "random_walk" | "slow_query" | "random_walk_with_error" | "random_walk_table" | "exponential_heatmap_bucket_data" | "linear_heatmap_bucket_data" | "no_data_points" | "datapoints_outside_range" | "csv_metric_values" | "predictable_pulse" | "predictable_csv_wave" | "streaming_client" | "simulation" | "usa" | "live" | "grafana_api" | "arrow" | "annotations" | "table_static" | "server_error_500" | "logs" | "node_graph" | "flame_graph" | "raw_frame" | "csv_file" | "csv_content" | "trace" @cuetsy(kind="enum", memberNames="RandomWalk|SlowQuery|RandomWalkWithError|RandomWalkTable|ExponentialHeatmapBucketData|LinearHeatmapBucketData|NoDataPoints|DataPointsOutsideRange|CSVMetricValues|PredictablePulse|PredictableCSVWave|StreamingClient|Simulation|USA|Live|GrafanaAPI|Arrow|Annotations|TableStatic|ServerError500|Logs|NodeGraph|FlameGraph|RawFrame|CSVFile|CSVContent|Trace")
+						#TestDataQueryType: "random_walk" | "slow_query" | "random_walk_with_error" | "random_walk_table" | "exponential_heatmap_bucket_data" | "linear_heatmap_bucket_data" | "no_data_points" | "datapoints_outside_range" | "csv_metric_values" | "predictable_pulse" | "predictable_csv_wave" | "streaming_client" | "simulation" | "usa" | "live" | "grafana_api" | "arrow" | "annotations" | "table_static" | "server_error_500" | "logs" | "node_graph" | "flame_graph" | "raw_frame" | "csv_file" | "csv_content" | "trace" | "manual_entry" | "variables-query" @cuetsy(kind="enum", memberNames="RandomWalk|SlowQuery|RandomWalkWithError|RandomWalkTable|ExponentialHeatmapBucketData|LinearHeatmapBucketData|NoDataPoints|DataPointsOutsideRange|CSVMetricValues|PredictablePulse|PredictableCSVWave|StreamingClient|Simulation|USA|Live|GrafanaAPI|Arrow|Annotations|TableStatic|ServerError500|Logs|NodeGraph|FlameGraph|RawFrame|CSVFile|CSVContent|Trace|ManualEntry|VariablesQuery")
 
 						#StreamingQuery: {
 							type:   "signal" | "logs" | "fetch"

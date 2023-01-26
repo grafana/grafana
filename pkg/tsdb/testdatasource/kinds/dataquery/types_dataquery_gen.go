@@ -71,6 +71,8 @@ const (
 
 	ScenarioIdLogs ScenarioId = "logs"
 
+	ScenarioIdManualEntry ScenarioId = "manual_entry"
+
 	ScenarioIdNoDataPoints ScenarioId = "no_data_points"
 
 	ScenarioIdNodeGraph ScenarioId = "node_graph"
@@ -100,6 +102,8 @@ const (
 	ScenarioIdTrace ScenarioId = "trace"
 
 	ScenarioIdUsa ScenarioId = "usa"
+
+	ScenarioIdVariablesQuery ScenarioId = "variables-query"
 )
 
 // Defines values for StreamType.
@@ -137,6 +141,8 @@ const (
 
 	TestDataQueryTypeLogs TestDataQueryType = "logs"
 
+	TestDataQueryTypeManualEntry TestDataQueryType = "manual_entry"
+
 	TestDataQueryTypeNoDataPoints TestDataQueryType = "no_data_points"
 
 	TestDataQueryTypeNodeGraph TestDataQueryType = "node_graph"
@@ -166,6 +172,8 @@ const (
 	TestDataQueryTypeTrace TestDataQueryType = "trace"
 
 	TestDataQueryTypeUsa TestDataQueryType = "usa"
+
+	TestDataQueryTypeVariablesQuery TestDataQueryType = "variables-query"
 )
 
 // CSVWave defines model for CSVWave.
@@ -274,9 +282,7 @@ type TestDataDataQuery struct {
 	RawFrameContent *string `json:"rawFrameContent,omitempty"`
 
 	// A - Z
-	RefId string `json:"refId"`
-
-	// @deprecated use queryType instead.
+	RefId       string      `json:"refId"`
 	ScenarioId  *ScenarioId `json:"scenarioId,omitempty"`
 	SeriesCount *int32      `json:"seriesCount,omitempty"`
 	Sim         *struct {
@@ -313,7 +319,7 @@ type ErrorType string
 // NodesType defines model for TestDataDataQuery.Nodes.Type.
 type NodesType string
 
-// @deprecated use queryType instead.
+// ScenarioId defines model for TestDataDataQuery.ScenarioId.
 type ScenarioId string
 
 // StreamType defines model for TestDataDataQuery.Stream.Type.
