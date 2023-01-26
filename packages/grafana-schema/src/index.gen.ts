@@ -11,7 +11,6 @@
 export type {
   AnnotationTarget,
   AnnotationQuery,
-  VariableModel,
   BaseVariableModel,
   AdHocVariableFilter,
   SystemVariable,
@@ -51,6 +50,9 @@ export {
   defaultAnnotationQuery,
   defaultBaseVariableModel,
   defaultVariableWithOptions,
+  VariableHide,
+  VariableRefresh,
+  VariableSort,
   LoadingState,
   defaultDashboardLink,
   FieldColorModeId,
@@ -75,6 +77,7 @@ export {
 // TODO generate code such that tsc enforces type compatibility between raw and veneer decls
 export type {
   Dashboard,
+  VariableModel,
   AdHocVariableModel,
   TextBoxVariableModel,
   QueryVariableModel,
@@ -97,9 +100,6 @@ export type {
 export {
   defaultDashboard,
   defaultAdHocVariableModel,
-  VariableHide,
-  VariableRefresh,
-  VariableSort,
   defaultPanel,
   defaultFieldConfigSource,
   defaultMatcherConfig,

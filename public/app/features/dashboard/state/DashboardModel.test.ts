@@ -1,7 +1,6 @@
 import { keys as _keys } from 'lodash';
 
 import { VariableHide } from '@grafana/data';
-import { defaultVariableModel } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { getDashboardModel } from '../../../../test/helpers/getDashboardModel';
@@ -345,10 +344,9 @@ describe('DashboardModel', () => {
       model = createDashboardModelFixture({
         templating: {
           list: [
-            {
-              ...defaultVariableModel,
+            createVariableJSONFixture({
               hide: VariableHide.hideVariable,
-            },
+            }),
           ],
         },
       });

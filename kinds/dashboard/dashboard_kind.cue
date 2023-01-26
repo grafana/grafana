@@ -121,7 +121,7 @@ lineage: seqs: [
 				} @cuetsy(kind="interface")
 
 				// Dashboard variables. See https://grafana.com/docs/grafana/latest/variables/variable-types/
-				#VariableModel: #QueryVariableModel | #AdHocVariableModel | #ConstantVariableModel | #DataSourceVariableModel | #IntervalVariableModel | #TextBoxVariableModel | #CustomVariableModel | #UserSystemVariableModel | #OrgSystemVariableModel | #DashboardSystemVariableModel @cuetsy(kind="type")
+				#VariableModel: #QueryVariableModel | #AdHocVariableModel | #ConstantVariableModel | #DataSourceVariableModel | #IntervalVariableModel | #TextBoxVariableModel | #CustomVariableModel | #UserSystemVariableModel | #OrgSystemVariableModel | #DashboardSystemVariableModel @cuetsy(kind="type") @grafana(TSVeneer="type")
 
 				// Common information that all types of variables shares.
 				// A variable in Grafana is a container that can hold different types of data, and it variates depending on the query.
@@ -283,15 +283,15 @@ lineage: seqs: [
 				} @cuetsy(kind="interface")
 
 				// Options to set a variable visible in the UI
-				#VariableHide: 0 | 1 | 2 @cuetsy(kind="enum",memberNames="dontHide|hideLabel|hideVariable") @grafana(TSVeneer="type")
+				#VariableHide: 0 | 1 | 2 @cuetsy(kind="enum",memberNames="dontHide|hideLabel|hideVariable")
 
 				// Options to config when to refresh a variable
 				// - `onDashboardLoad`: Queries the data source every time the dashboard loads. 
 				// - `onTimeRangeChanged`: Queries the data source when the dashboard time range changes. 
-				#VariableRefresh: 0 | 1 | 2 @cuetsy(kind="enum",memberNames="never|onDashboardLoad|onTimeRangeChanged") @grafana(TSVeneer="type")
+				#VariableRefresh: 0 | 1 | 2 @cuetsy(kind="enum",memberNames="never|onDashboardLoad|onTimeRangeChanged")
 
 				// Options to config how to sort variable options
-				#VariableSort: 0 | 1 | 2 | 3 | 4 | 5 | 6 @cuetsy(kind="enum",memberNames="disabled|alphabeticalAsc|alphabeticalDesc|numericalAsc|numericalDesc|alphabeticalCaseInsensitiveAsc|alphabeticalCaseInsensitiveDesc") @grafana(TSVeneer="type")
+				#VariableSort: 0 | 1 | 2 | 3 | 4 | 5 | 6 @cuetsy(kind="enum",memberNames="disabled|alphabeticalAsc|alphabeticalDesc|numericalAsc|numericalDesc|alphabeticalCaseInsensitiveAsc|alphabeticalCaseInsensitiveDesc")
 
 				#LoadingState: "NotStarted" | "Loading" | "Streaming" | "Done" | "Error" @cuetsy(kind="enum") @grafanamaturity(NeedsExpertReview)
 

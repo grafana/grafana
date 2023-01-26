@@ -8,43 +8,127 @@ export interface Panel<TOptions = Record<string, unknown>, TCustomFieldConfig = 
   fieldConfig: FieldConfigSource<TCustomFieldConfig>;
 }
 
-export enum VariableHide {
-  dontHide,
-  hideLabel,
-  hideVariable,
-}
-
-export interface VariableModel
-  extends Omit<raw.VariableModel, 'rootStateKey' | 'error' | 'description' | 'hide' | 'datasource'> {
+export interface BaseVariableModel extends Omit<raw.BaseVariableModel, 'rootStateKey' | 'error' | 'description'> {
   // Overrides nullable properties because CUE doesn't support null values
-  // TODO remove explicit nulls
   rootStateKey: string | null;
-  // TODO remove explicit nulls
   error: any | null;
-  // TODO remove explicit nulls
   description: string | null;
-  hide: VariableHide;
 }
 
-export interface AdHocVariableModel extends Omit<raw.AdHocVariableModel, 'datasource'> {
+export interface VariableWithOptions extends Omit<raw.VariableWithOptions, 'rootStateKey' | 'error' | 'description'> {
   // Overrides nullable properties because CUE doesn't support null values
+  rootStateKey: string | null;
+  error: any | null;
+  description: string | null;
+}
+
+export interface VariableWithMultiSupport
+  extends Omit<raw.VariableWithMultiSupport, 'rootStateKey' | 'error' | 'description' | 'allValue'> {
+  // Overrides nullable properties because CUE doesn't support null values
+  rootStateKey: string | null;
+  error: any | null;
+  description: string | null;
+}
+
+export interface QueryVariableModel
+  extends Omit<raw.QueryVariableModel, 'rootStateKey' | 'error' | 'description' | 'datasource' | 'allValue'> {
+  // Overrides nullable properties because CUE doesn't support null values
+  rootStateKey: string | null;
+  error: any | null;
+  description: string | null;
   datasource: raw.DataSourceRef | null;
-}
-
-export interface VariableWithMultiSupport extends Omit<raw.VariableWithMultiSupport, 'allValue'> {
-  // Overrides nullable properties because CUE doesn't support null values
   allValue?: string | null;
 }
 
-export interface TextBoxVariableModel extends Omit<raw.TextBoxVariableModel, 'originalQuery'> {
+export interface AdHocVariableModel
+  extends Omit<raw.AdHocVariableModel, 'rootStateKey' | 'error' | 'description' | 'datasource'> {
   // Overrides nullable properties because CUE doesn't support null values
+  rootStateKey: string | null;
+  error: any | null;
+  description: string | null;
+  datasource: raw.DataSourceRef | null;
+}
+
+export interface ConstantVariableModel
+  extends Omit<raw.ConstantVariableModel, 'rootStateKey' | 'error' | 'description'> {
+  // Overrides nullable properties because CUE doesn't support null values
+  rootStateKey: string | null;
+  error: any | null;
+  description: string | null;
+}
+
+export interface DataSourceVariableModel
+  extends Omit<raw.DataSourceVariableModel, 'rootStateKey' | 'error' | 'description' | 'datasource' | 'allValue'> {
+  // Overrides nullable properties because CUE doesn't support null values
+  rootStateKey: string | null;
+  error: any | null;
+  description: string | null;
+  datasource: raw.DataSourceRef | null;
+  allValue?: string | null;
+}
+
+export interface IntervalVariableModel
+  extends Omit<raw.IntervalVariableModel, 'rootStateKey' | 'error' | 'description'> {
+  // Overrides nullable properties because CUE doesn't support null values
+  rootStateKey: string | null;
+  error: any | null;
+  description: string | null;
+}
+
+export interface TextBoxVariableModel
+  extends Omit<raw.TextBoxVariableModel, 'rootStateKey' | 'error' | 'description' | 'originalQuery'> {
+  // Overrides nullable properties because CUE doesn't support null values
+  rootStateKey: string | null;
+  error: any | null;
+  description: string | null;
   originalQuery: string | null;
 }
 
-export interface QueryVariableModel extends Omit<raw.QueryVariableModel, 'datasource'> {
+export interface CustomVariableModel
+  extends Omit<raw.CustomVariableModel, 'rootStateKey' | 'error' | 'description' | 'datasource' | 'allValue'> {
   // Overrides nullable properties because CUE doesn't support null values
+  rootStateKey: string | null;
+  error: any | null;
+  description: string | null;
   datasource: raw.DataSourceRef | null;
+  allValue?: string | null;
 }
+
+export interface UserSystemVariableModel
+  extends Omit<raw.UserSystemVariableModel, 'rootStateKey' | 'error' | 'description'> {
+  // Overrides nullable properties because CUE doesn't support null values
+  rootStateKey: string | null;
+  error: any | null;
+  description: string | null;
+}
+
+export interface OrgSystemVariableModel
+  extends Omit<raw.OrgSystemVariableModel, 'rootStateKey' | 'error' | 'description'> {
+  // Overrides nullable properties because CUE doesn't support null values
+  rootStateKey: string | null;
+  error: any | null;
+  description: string | null;
+}
+
+export interface DashboardSystemVariableModel
+  extends Omit<raw.DashboardSystemVariableModel, 'rootStateKey' | 'error' | 'description'> {
+  // Overrides nullable properties because CUE doesn't support null values
+  rootStateKey: string | null;
+  error: any | null;
+  description: string | null;
+}
+
+export type VariableModel =
+  | QueryVariableModel
+  | AdHocVariableModel
+  | ConstantVariableModel
+  | DataSourceVariableModel
+  | IntervalVariableModel
+  | TextBoxVariableModel
+  | CustomVariableModel
+  | UserSystemVariableModel
+  | OrgSystemVariableModel
+  | DashboardSystemVariableModel;
 
 export interface Dashboard extends Omit<raw.Dashboard, 'templating'> {
   panels?: Array<Panel | raw.RowPanel | raw.GraphPanel | raw.HeatmapPanel>;
@@ -66,19 +150,21 @@ export interface MatcherConfig<TConfig = any> extends raw.MatcherConfig {
 }
 
 export const defaultDashboard = raw.defaultDashboard as Dashboard;
-export const defaultVariableModel = {
-  ...raw.defaultVariableModel,
+export const defaultBaseVariableModel = {
+  ...raw.defaultBaseVariableModel,
   // TODO remove explicit nulls
   rootStateKey: null,
   // TODO remove explicit nulls
   error: null,
   // TODO remove explicit nulls
   description: null,
-  hide: VariableHide.dontHide,
+  hide: raw.VariableHide.dontHide,
   state: raw.LoadingState.NotStarted,
-  // TODO remove explicit nulls
-  datasource: null,
-} as VariableModel;
+} as BaseVariableModel;
+export const defaultAdHocVariableModel = {
+  ...raw.defaultAdHocVariableModel,
+};
+
 export const defaultPanel: Partial<Panel> = raw.defaultPanel;
 export const defaultFieldConfig: Partial<FieldConfig> = raw.defaultFieldConfig;
 export const defaultFieldConfigSource: Partial<FieldConfigSource> = raw.defaultFieldConfigSource;

@@ -10,7 +10,10 @@ import {
 import { defaultDashboard, LoadingState, Panel, RowPanel, VariableType } from '@grafana/schema';
 import { DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
 import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
-import { createPanelJSONFixture } from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
+import {
+  createPanelJSONFixture,
+  createVariableJSONFixture,
+} from 'app/features/dashboard/state/__fixtures__/dashboardFixtures';
 
 import { DashboardScene } from './DashboardScene';
 import {
@@ -109,7 +112,7 @@ describe('DashboardLoader', () => {
         time: { from: 'now-10h', to: 'now' },
         templating: {
           list: [
-            {
+            createVariableJSONFixture({
               hide: 2,
               name: 'constant',
               skipUrlSync: false,
@@ -123,7 +126,7 @@ describe('DashboardLoader', () => {
               error: null,
               description: '',
               datasource: null,
-            },
+            }),
           ],
         },
       };

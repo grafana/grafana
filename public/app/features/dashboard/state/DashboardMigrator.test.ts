@@ -665,16 +665,16 @@ describe('DashboardModel', () => {
         templating: {
           list: [
             {
-              // @ts-expect-error
               multi: false,
+              // @ts-expect-error
               current: {
                 value: ['value'],
                 text: ['text'],
               },
             },
             {
-              // @ts-expect-error
               multi: true,
+              // @ts-expect-error
               current: {
                 value: ['value'],
                 text: ['text'],
@@ -723,8 +723,8 @@ describe('DashboardModel', () => {
             },
             {
               type: 'query',
-              // @ts-expect-error
               current: {
+                // @ts-expect-error
                 tags: [
                   {
                     selected: true,
@@ -912,9 +912,9 @@ describe('DashboardModel', () => {
               type: 'constant',
               hide: VariableHide.dontHide,
               query: 'default value',
-              // @ts-expect-error
               current: { selected: true, text: 'A', value: 'B' },
               options: [{ selected: true, text: 'A', value: 'B' }],
+              // @ts-expect-error
               datasource: null,
               allFormat: '',
             },
@@ -922,9 +922,9 @@ describe('DashboardModel', () => {
               type: 'constant',
               hide: VariableHide.hideLabel,
               query: 'default value',
-              // @ts-expect-error
               current: { selected: true, text: 'A', value: 'B' },
               options: [{ selected: true, text: 'A', value: 'B' }],
+              // @ts-expect-error
               datasource: null,
               allFormat: '',
             },
@@ -932,9 +932,9 @@ describe('DashboardModel', () => {
               type: 'constant',
               hide: VariableHide.hideVariable,
               query: 'default value',
-              // @ts-expect-error
               current: { selected: true, text: 'A', value: 'B' },
               options: [{ selected: true, text: 'A', value: 'B' }],
+              // @ts-expect-error
               datasource: null,
               allFormat: '',
             },
@@ -994,97 +994,97 @@ describe('DashboardModel', () => {
       model = new DashboardModel({
         templating: {
           list: [
+            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_never_refresh_with_options',
-              // @ts-expect-error
-              options: [{ text: 'A', value: 'A' }],
+              options: [{ text: 'A', value: 'A', selected: false }],
               refresh: 0,
             },
+            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_never_refresh_without_options',
-              // @ts-expect-error
               options: [],
               refresh: 0,
             },
+            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_dashboard_refresh_with_options',
-              // @ts-expect-error
-              options: [{ text: 'A', value: 'A' }],
+              options: [{ text: 'A', value: 'A', selected: false }],
               refresh: 1,
             },
+            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_dashboard_refresh_without_options',
-              // @ts-expect-error
               options: [],
               refresh: 1,
             },
+            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_timerange_refresh_with_options',
-              // @ts-expect-error
-              options: [{ text: 'A', value: 'A' }],
+              options: [{ text: 'A', value: 'A', selected: false }],
               refresh: 2,
             },
+            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_timerange_refresh_without_options',
-              // @ts-expect-error
               options: [],
               refresh: 2,
             },
+            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_no_refresh_with_options',
-              // @ts-expect-error
-              options: [{ text: 'A', value: 'A' }],
+              options: [{ text: 'A', value: 'A', selected: false }],
             },
+            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_no_refresh_without_options',
-              // @ts-expect-error
               options: [],
             },
+            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_unknown_refresh_with_options',
-              // @ts-expect-error
-              options: [{ text: 'A', value: 'A' }],
+              options: [{ text: 'A', value: 'A', selected: false }],
               refresh: 2001,
             },
+            // @ts-expect-error
             {
               type: 'query',
               name: 'variable_with_unknown_refresh_without_options',
-              // @ts-expect-error
               options: [],
               refresh: 2001,
             },
+            // @ts-expect-error
             {
               type: 'custom',
               name: 'custom',
-              // @ts-expect-error
-              options: [{ text: 'custom', value: 'custom' }],
+              options: [{ text: 'custom', value: 'custom', selected: false }],
             },
+            // @ts-expect-error
             {
               type: 'textbox',
               name: 'textbox',
-              // @ts-expect-error
-              options: [{ text: 'Hello', value: 'World' }],
+              options: [{ text: 'Hello', value: 'World', selected: false }],
             },
+            // @ts-expect-error
             {
               type: 'datasource',
               name: 'datasource',
-              // @ts-expect-error
-              options: [{ text: 'ds', value: 'ds' }], // fake example doesn't exist
+              options: [{ text: 'ds', value: 'ds', selected: false }], // fake example doesn't exist
             },
+            // @ts-expect-error
             {
               type: 'interval',
               name: 'interval',
-              // @ts-expect-error
-              options: [{ text: '1m', value: '1m' }],
+              options: [{ text: '1m', value: '1m', selected: false }],
             },
           ],
         },
@@ -1853,7 +1853,7 @@ describe('DashboardModel', () => {
             {
               type: 'query',
               name: 'var',
-              options: [{ text: 'A', value: 'A' }],
+              options: [{ text: 'A', value: 'A', selected: false }],
               refresh: 0,
               // @ts-expect-error
               datasource: 'prom',
