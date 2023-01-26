@@ -46,6 +46,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `datasourceLogger`                | Logs all datasource requests                                                    |
 | `accessControlOnCall`             | Access control primitives for OnCall                                            |
 | `alertingNoNormalState`           | Stop maintaining state of alerts that are not firing                            |
+| `topNavCommandPalette`            | Launch the Command Palette from the top navigation search box                   |
 
 ## Alpha feature toggles
 
@@ -108,6 +109,7 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | `showFeatureFlagsInUI`                 | Show feature flags in the settings UI                                   |
 | `publicDashboardsEmailSharing`         | Allows public dashboard sharing to be restricted to only allowed emails |
 | `k8s`                                  | Explore native k8s integrations                                         |
+| `k8sDashboards`                        | Save dashboards via k8s                                                 |
 | `dashboardsFromStorage`                | Load dashboards from the generic storage interface                      |
 | `export`                               | Export grafana instance (to git, etc)                                   |
 | `azureMonitorResourcePickerForMetrics` | New UI for Azure Monitor Metrics Query                                  |

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 )
 
 const (
@@ -22,8 +23,8 @@ const (
 )
 
 type remoteLokiClient interface {
-	ping() error
-	push([]stream) error
+	ping(context.Context) error
+	push(context.Context, []stream) error
 }
 
 type RemoteLokiBackend struct {
@@ -39,21 +40,21 @@ func NewRemoteLokiBackend(cfg LokiConfig) *RemoteLokiBackend {
 	}
 }
 
-func (h *RemoteLokiBackend) TestConnection() error {
-	return h.client.ping()
+func (h *RemoteLokiBackend) TestConnection(ctx context.Context) error {
+	return h.client.ping(ctx)
 }
 
-func (h *RemoteLokiBackend) RecordStatesAsync(ctx context.Context, rule *models.AlertRule, states []state.StateTransition) {
+func (h *RemoteLokiBackend) RecordStatesAsync(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
 	logger := h.log.FromContext(ctx)
 	streams := h.statesToStreams(rule, states, logger)
-	h.recordStreamsAsync(ctx, streams, logger)
+	return h.recordStreamsAsync(ctx, streams, logger)
 }
 
 func (h *RemoteLokiBackend) QueryStates(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {
 	return data.NewFrame("states"), nil
 }
 
-func (h *RemoteLokiBackend) statesToStreams(rule *models.AlertRule, states []state.StateTransition, logger log.Logger) []stream {
+func (h *RemoteLokiBackend) statesToStreams(rule history_model.RuleMeta, states []state.StateTransition, logger log.Logger) []stream {
 	buckets := make(map[string][]row) // label repr -> entries
 	for _, state := range states {
 		if !shouldRecord(state) {
@@ -63,7 +64,7 @@ func (h *RemoteLokiBackend) statesToStreams(rule *models.AlertRule, states []sta
 		labels := removePrivateLabels(state.State.Labels)
 		labels[OrgIDLabel] = fmt.Sprint(rule.OrgID)
 		labels[RuleUIDLabel] = fmt.Sprint(rule.UID)
-		labels[GroupLabel] = fmt.Sprint(rule.RuleGroup)
+		labels[GroupLabel] = fmt.Sprint(rule.Group)
 		labels[FolderUIDLabel] = fmt.Sprint(rule.NamespaceUID)
 		repr := labels.String()
 
@@ -102,16 +103,20 @@ func (h *RemoteLokiBackend) statesToStreams(rule *models.AlertRule, states []sta
 	return result
 }
 
-func (h *RemoteLokiBackend) recordStreamsAsync(ctx context.Context, streams []stream, logger log.Logger) {
+func (h *RemoteLokiBackend) recordStreamsAsync(ctx context.Context, streams []stream, logger log.Logger) <-chan error {
+	errCh := make(chan error, 1)
 	go func() {
+		defer close(errCh)
 		if err := h.recordStreams(ctx, streams, logger); err != nil {
 			logger.Error("Failed to save alert state history batch", "error", err)
+			errCh <- fmt.Errorf("failed to save alert state history batch: %w", err)
 		}
 	}()
+	return errCh
 }
 
 func (h *RemoteLokiBackend) recordStreams(ctx context.Context, streams []stream, logger log.Logger) error {
-	if err := h.client.push(streams); err != nil {
+	if err := h.client.push(ctx, streams); err != nil {
 		return err
 	}
 	logger.Debug("Done saving alert state history batch")

@@ -198,6 +198,12 @@ describe('AzureMonitor ResourcePicker utils', () => {
       });
     });
 
+    it('ignores an empty resource URI', () => {
+      expect(setResources(createMockQuery(), 'logs', ['/subscription/sub', ''])).toMatchObject({
+        azureLogAnalytics: { resources: ['/subscription/sub'] },
+      });
+    });
+
     it('updates a resource with a resource parameters for Metrics', () => {
       expect(
         setResources(createMockQuery(), 'metrics', [
@@ -222,6 +228,29 @@ describe('AzureMonitor ResourcePicker utils', () => {
               resourceName: 'testacct',
             },
           ],
+        },
+      });
+    });
+
+    it('ignores a partially empty metrics resource', () => {
+      expect(
+        setResources(createMockQuery(), 'metrics', [
+          {
+            subscription: 'sub',
+            resourceGroup: 'rg',
+            metricNamespace: 'Microsoft.Storage/storageAccounts',
+            resourceName: '',
+            region: 'westus',
+          },
+        ])
+      ).toMatchObject({
+        subscription: 'sub',
+        azureMonitor: {
+          aggregation: undefined,
+          metricName: undefined,
+          metricNamespace: 'microsoft.storage/storageaccounts',
+          region: 'westus',
+          resources: [],
         },
       });
     });

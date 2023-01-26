@@ -102,6 +102,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/shorturls/shorturlimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	starApi "github.com/grafana/grafana/pkg/services/star/api"
 	"github.com/grafana/grafana/pkg/services/star/starimpl"
 	"github.com/grafana/grafana/pkg/services/store"
 	entitystoredummy "github.com/grafana/grafana/pkg/services/store/entity/dummy"
@@ -250,11 +251,11 @@ var wireSet = wire.NewSet(
 	teamguardianDatabase.ProvideTeamGuardianStore,
 	wire.Bind(new(teamguardian.Store), new(*teamguardianDatabase.TeamGuardianStoreImpl)),
 	teamguardianManager.ProvideService,
-	dashboardservice.ProvideDashboardService,
+	dashboardservice.ProvideDashboardService, //DashboardServiceImpl
 	dashboardstore.ProvideDashboardStore,
-	wire.Bind(new(dashboards.DashboardService), new(*dashboardservice.DashboardServiceImpl)),
-	wire.Bind(new(dashboards.DashboardProvisioningService), new(*dashboardservice.DashboardServiceImpl)),
-	wire.Bind(new(dashboards.PluginService), new(*dashboardservice.DashboardServiceImpl)),
+	dashboardservice.ProvideSimpleDashboardService,
+	dashboardservice.ProvideDashboardProvisioningService,
+	dashboardservice.ProvideDashboardPluginService,
 	wire.Bind(new(dashboards.Store), new(*dashboardstore.DashboardStore)),
 	wire.Bind(new(dashboards.FolderStore), new(*dashboardstore.DashboardStore)),
 	dashboardimportservice.ProvideService,
@@ -289,6 +290,7 @@ var wireSet = wire.NewSet(
 	publicdashboardsStore.ProvideStore,
 	wire.Bind(new(publicdashboards.Store), new(*publicdashboardsStore.PublicDashboardStoreImpl)),
 	publicdashboardsApi.ProvideApi,
+	starApi.ProvideApi,
 	userimpl.ProvideService,
 	orgimpl.ProvideService,
 	teamimpl.ProvideService,

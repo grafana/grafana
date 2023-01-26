@@ -43,6 +43,7 @@ export interface FeatureToggles {
   migrationLocking?: boolean;
   storage?: boolean;
   k8s?: boolean;
+  k8sDashboards?: boolean;
   supportBundles?: boolean;
   dashboardsFromStorage?: boolean;
   export?: boolean;
@@ -90,4 +91,5 @@ export interface FeatureToggles {
   editPanelCSVDragAndDrop?: boolean;
   alertingNoNormalState?: boolean;
   azureMultipleResourcePicker?: boolean;
+  topNavCommandPalette?: boolean;
 }

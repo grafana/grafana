@@ -51,8 +51,6 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
 ) folder.Service {
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashboardStore, folderStore))
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(dashboardStore, folderStore))
 	store := ProvideStore(db, cfg, features)
 	svr := &Service{
 		cfg:                  cfg,
@@ -68,6 +66,9 @@ func ProvideService(
 	if features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		svr.DBMigration(db)
 	}
+
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashboardStore, folderStore, svr))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(dashboardStore, folderStore, svr))
 	return svr
 }
 
@@ -183,6 +184,13 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 	}
 
 	return filtered, nil
+}
+
+func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
+	if !s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		return nil, nil
+	}
+	return s.store.GetParents(ctx, q)
 }
 
 func (s *Service) getFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*folder.Folder, error) {
@@ -408,12 +416,12 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 	logger := s.log.FromContext(ctx)
 
 	query := dashboards.GetDashboardQuery{OrgID: cmd.OrgID, UID: cmd.UID}
-	_, err := s.dashboardStore.GetDashboard(ctx, &query)
+	queryResult, err := s.dashboardStore.GetDashboard(ctx, &query)
 	if err != nil {
 		return nil, toFolderError(err)
 	}
 
-	dashFolder := query.Result
+	dashFolder := queryResult
 	currentTitle := dashFolder.Title
 
 	if !dashFolder.IsFolder {

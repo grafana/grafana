@@ -267,6 +267,16 @@ func (p *Plugin) Exited() bool {
 	return false
 }
 
+func (p *Plugin) Target() backendplugin.Target {
+	if !p.Backend {
+		return backendplugin.TargetNone
+	}
+	if p.client == nil {
+		return backendplugin.TargetUnknown
+	}
+	return p.client.Target()
+}
+
 func (p *Plugin) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	pluginClient, ok := p.Client()
 	if !ok {

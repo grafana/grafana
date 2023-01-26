@@ -8,13 +8,13 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/store/entity"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/blugelabs/bluge"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
@@ -113,14 +113,14 @@ var testDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		summary: &models.EntitySummary{
+		summary: &entity.EntitySummary{
 			Name: "test",
 		},
 	},
 	{
 		id:  2,
 		uid: "2",
-		summary: &models.EntitySummary{
+		summary: &entity.EntitySummary{
 			Name: "boom",
 		},
 	},
@@ -162,7 +162,7 @@ func TestDashboardIndexUpdates(t *testing.T) {
 		err := index.updateDashboard(context.Background(), testOrgID, orgIdx, dashboard{
 			id:  3,
 			uid: "3",
-			summary: &models.EntitySummary{
+			summary: &entity.EntitySummary{
 				Name: "created",
 			},
 		})
@@ -181,7 +181,7 @@ func TestDashboardIndexUpdates(t *testing.T) {
 		err := index.updateDashboard(context.Background(), testOrgID, orgIdx, dashboard{
 			id:  2,
 			uid: "2",
-			summary: &models.EntitySummary{
+			summary: &entity.EntitySummary{
 				Name: "nginx",
 			},
 		})
@@ -197,14 +197,14 @@ var testSortDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		summary: &models.EntitySummary{
+		summary: &entity.EntitySummary{
 			Name: "a-test",
 		},
 	},
 	{
 		id:  2,
 		uid: "2",
-		summary: &models.EntitySummary{
+		summary: &entity.EntitySummary{
 			Name: "z-test",
 		},
 	},
@@ -288,14 +288,14 @@ var testPrefixDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		summary: &models.EntitySummary{
+		summary: &entity.EntitySummary{
 			Name: "Archer Data System",
 		},
 	},
 	{
 		id:  2,
 		uid: "2",
-		summary: &models.EntitySummary{
+		summary: &entity.EntitySummary{
 			Name: "Document Sync repo",
 		},
 	},
@@ -366,7 +366,7 @@ var longPrefixDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		summary: &models.EntitySummary{
+		summary: &entity.EntitySummary{
 			Name: "Eyjafjallajökull Eruption data",
 		},
 	},
@@ -385,14 +385,14 @@ var scatteredTokensDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		summary: &models.EntitySummary{
+		summary: &entity.EntitySummary{
 			Name: "Three can keep a secret, if two of them are dead (Benjamin Franklin)",
 		},
 	},
 	{
 		id:  3,
 		uid: "2",
-		summary: &models.EntitySummary{
+		summary: &entity.EntitySummary{
 			Name: "A secret is powerful when it is empty (Umberto Eco)",
 		},
 	},
@@ -418,7 +418,7 @@ var dashboardsWithFolders = []dashboard{
 		id:       1,
 		uid:      "1",
 		isFolder: true,
-		summary: &models.EntitySummary{
+		summary: &entity.EntitySummary{
 			Name: "My folder",
 		},
 	},
@@ -426,9 +426,9 @@ var dashboardsWithFolders = []dashboard{
 		id:       2,
 		uid:      "2",
 		folderID: 1,
-		summary: &models.EntitySummary{
+		summary: &entity.EntitySummary{
 			Name: "Dashboard in folder 1",
-			Nested: []*models.EntitySummary{
+			Nested: []*entity.EntitySummary{
 				newNestedPanel(1, 2, "Panel 1"),
 				newNestedPanel(2, 2, "Panel 2"),
 			},
@@ -438,9 +438,9 @@ var dashboardsWithFolders = []dashboard{
 		id:       3,
 		uid:      "3",
 		folderID: 1,
-		summary: &models.EntitySummary{
+		summary: &entity.EntitySummary{
 			Name: "Dashboard in folder 2",
-			Nested: []*models.EntitySummary{
+			Nested: []*entity.EntitySummary{
 				newNestedPanel(3, 3, "Panel 3"),
 			},
 		},
@@ -448,9 +448,9 @@ var dashboardsWithFolders = []dashboard{
 	{
 		id:  4,
 		uid: "4",
-		summary: &models.EntitySummary{
+		summary: &entity.EntitySummary{
 			Name: "One more dash",
-			Nested: []*models.EntitySummary{
+			Nested: []*entity.EntitySummary{
 				newNestedPanel(4, 4, "Panel 4"),
 			},
 		},
@@ -505,9 +505,9 @@ var dashboardsWithPanels = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		summary: &models.EntitySummary{
+		summary: &entity.EntitySummary{
 			Name: "My Dash",
-			Nested: []*models.EntitySummary{
+			Nested: []*entity.EntitySummary{
 				newNestedPanel(1, 1, "Panel 1"),
 				newNestedPanel(2, 1, "Panel 2"),
 			},
@@ -515,8 +515,8 @@ var dashboardsWithPanels = []dashboard{
 	},
 }
 
-func newNestedPanel(id, dashId int64, name string) *models.EntitySummary {
-	summary := &models.EntitySummary{
+func newNestedPanel(id, dashId int64, name string) *entity.EntitySummary {
+	summary := &entity.EntitySummary{
 		Kind: "panel",
 		UID:  fmt.Sprintf("%d#%d", dashId, id),
 	}
@@ -553,14 +553,14 @@ var punctuationSplitNgramDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		summary: &models.EntitySummary{
+		summary: &entity.EntitySummary{
 			Name: "heat-torkel",
 		},
 	},
 	{
 		id:  2,
 		uid: "2",
-		summary: &models.EntitySummary{
+		summary: &entity.EntitySummary{
 			Name: "topology heatmap",
 		},
 	},
@@ -586,7 +586,7 @@ var camelCaseNgramDashboards = []dashboard{
 	{
 		id:  1,
 		uid: "1",
-		summary: &models.EntitySummary{
+		summary: &entity.EntitySummary{
 			Name: "heatTorkel",
 		},
 	},
@@ -608,7 +608,7 @@ func dashboardsWithTitles(names ...string) []dashboard {
 		out = append(out, dashboard{
 			id:  no,
 			uid: fmt.Sprintf("%d", no),
-			summary: &models.EntitySummary{
+			summary: &entity.EntitySummary{
 				Name: name,
 			},
 		})
