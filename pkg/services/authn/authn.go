@@ -60,7 +60,8 @@ type Service interface {
 	// Login authenticates a request and creates a session on successful authentication.
 	Login(ctx context.Context, client string, r *Request) (*Identity, error)
 	// RegisterPostLoginHook registers a hook that that is called after a login request.
-	RegisterPostLoginHook(hook PostLoginHookFn)
+	// A lower number means higher priority.
+	RegisterPostLoginHook(hook PostLoginHookFn, priority uint)
 	// RedirectURL will generate url that we can use to initiate auth flow for supported clients.
 	RedirectURL(ctx context.Context, client string, r *Request) (string, error)
 }

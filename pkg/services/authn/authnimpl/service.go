@@ -61,6 +61,7 @@ func ProvideService(
 		tracer:         tracer,
 		sessionService: sessionService,
 		postAuthHooks:  newQueue[authn.PostAuthHookFn](),
+		postLoginHooks: newQueue[authn.PostLoginHookFn](),
 	}
 
 	s.RegisterClient(clients.ProvideRender(userService, renderService))
@@ -143,7 +144,7 @@ type Service struct {
 	// postAuthHooks are called after a successful authentication. They can modify the identity.
 	postAuthHooks *queue[authn.PostAuthHookFn]
 	// postLoginHooks are called after a login request is performed, both for failing and successful requests.
-	postLoginHooks []authn.PostLoginHookFn
+	postLoginHooks *queue[authn.PostLoginHookFn]
 }
 
 func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
@@ -202,8 +203,8 @@ func (s *Service) RegisterPostAuthHook(hook authn.PostAuthHookFn, priority uint)
 
 func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (identity *authn.Identity, err error) {
 	defer func() {
-		for _, hook := range s.postLoginHooks {
-			hook(ctx, identity, r, err)
+		for _, hook := range s.postLoginHooks.items {
+			hook.v(ctx, identity, r, err)
 		}
 	}()
 
@@ -239,8 +240,8 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 	return identity, nil
 }
 
-func (s *Service) RegisterPostLoginHook(hook authn.PostLoginHookFn) {
-	s.postLoginHooks = append(s.postLoginHooks, hook)
+func (s *Service) RegisterPostLoginHook(hook authn.PostLoginHookFn, priority uint) {
+	s.postLoginHooks.insert(hook, priority)
 }
 
 func (s *Service) RedirectURL(ctx context.Context, client string, r *authn.Request) (string, error) {
