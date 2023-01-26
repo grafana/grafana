@@ -65,10 +65,12 @@ export function useTableStateReducer({ onColumnResize, onSortByChange, data }: P
 
 export function getInitialState(
   initialSortBy: Props['initialSortBy'],
+  initialShowRowNumbers: Props['showRowNums'],
   columns: GrafanaTableColumn[]
 ): Partial<GrafanaTableState> {
   const state: Partial<GrafanaTableState> = {
     toggleRowExpandedCounter: 0,
+    hiddenColumns: initialShowRowNumbers ? [] : ['0'],
   };
 
   if (initialSortBy) {

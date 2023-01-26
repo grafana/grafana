@@ -123,20 +123,20 @@ export const Table = memo((props: Props) => {
       data: memoizedData,
       disableResizing: !resizable,
       stateReducer: stateReducer,
-      initialState: updateInitialState(getInitialState(initialSortBy, memoizedColumns)),
+      initialState: getInitialState(initialSortBy, showRowNums, memoizedColumns),
       autoResetFilters: false,
       sortTypes: {
         number: sortNumber, // the builtin number type on react-table does not handle NaN values
         'alphanumeric-insensitive': sortCaseInsensitive, // should be replace with the builtin string when react-table is upgraded, see https://github.com/tannerlinsley/react-table/pull/3235
       },
     }),
-    [initialSortBy, memoizedColumns, memoizedData, resizable, stateReducer]
+    [initialSortBy, showRowNums, memoizedColumns, memoizedData, resizable, stateReducer]
   );
 
-  function updateInitialState(initialState: Partial<GrafanaTableState>) {
-    initialState.hiddenColumns = ['0'];
-    return initialState;
-  }
+  // function updateInitialState(initialState: Partial<GrafanaTableState>) {
+  //   initialState.hiddenColumns = ['0'];
+  //   return initialState;
+  // }
 
   const {
     getTableProps,
