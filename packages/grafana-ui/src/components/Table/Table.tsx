@@ -1,4 +1,5 @@
-import React, { CSSProperties, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { cloneDeep } from 'lodash';
+import React, { CSSProperties, memo, useCallback, useEffect, useMemo, useRef, useState, UIEventHandler } from 'react';
 import {
   Cell,
   useAbsoluteLayout,
@@ -11,7 +12,7 @@ import {
 } from 'react-table';
 import { VariableSizeList } from 'react-window';
 
-import { Field, ReducerID } from '@grafana/data';
+import { DataFrame, Field, ReducerID } from '@grafana/data';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { CustomScrollbar } from '../CustomScrollbar/CustomScrollbar';
@@ -31,6 +32,7 @@ import {
   getFooterItems,
   createFooterCalculationValues,
   EXPANDER_WIDTH,
+  buildFieldsForOptionalRowNums,
 } from './utils';
 
 const COLUMN_MIN_WIDTH = 150;
@@ -105,9 +107,28 @@ export const Table = memo((props: Props) => {
 
   // React-table column definitions
   const memoizedColumns = useMemo(
-    () => getColumns(data, width, columnMinWidth, !!subData?.length, footerItems, isCountRowsSet),
-    [data, width, columnMinWidth, footerItems, subData, isCountRowsSet]
+    () =>
+      getColumns(
+        addOptionalNumbersRowToTable(data, showRowNumbers),
+        width,
+        columnMinWidth,
+        !!subData?.length,
+        footerItems,
+        isCountRowsSet
+      ),
+    [data, width, columnMinWidth, footerItems, subData, isCountRowsSet, showRowNumbers]
   );
+
+  function addOptionalNumbersRowToTable(data: DataFrame, showRowNumbers: boolean | undefined): DataFrame {
+    if (showRowNumbers) {
+      const rowField: Field = buildFieldsForOptionalRowNums(data.length);
+      const newData = cloneDeep(data);
+      newData.fields = [rowField, ...newData.fields];
+      return newData;
+    }
+
+    return data;
+  }
 
   // Internal react table state reducer
   const stateReducer = useTableStateReducer(props);
@@ -214,7 +235,7 @@ export const Table = memo((props: Props) => {
   useResetVariableListSizeCache(extendedState, listRef, data);
   useFixScrollbarContainer(variableSizeListScrollbarRef, tableDivRef);
 
-  const renderSubTable = React.useCallback(
+  const renderSubTable = useCallback(
     (rowIndex: number) => {
       if (state.expanded[rowIndex]) {
         const rowSubData = subData?.find((frame) => frame.meta?.custom?.parentRowIndex === rowIndex);
@@ -245,7 +266,7 @@ export const Table = memo((props: Props) => {
     [state.expanded, subData, tableStyles.rowHeight, theme.colors, width]
   );
 
-  const RenderRow = React.useCallback(
+  const RenderRow = useCallback(
     ({ index: rowIndex, style }: { index: number; style: CSSProperties }) => {
       let row = rows[rowIndex];
       if (enablePagination) {
@@ -320,7 +341,7 @@ export const Table = memo((props: Props) => {
     return tableStyles.rowHeight;
   };
 
-  const handleScroll: React.UIEventHandler = (event) => {
+  const handleScroll: UIEventHandler = (event) => {
     const { scrollTop } = event.target as HTMLDivElement;
 
     if (listRef.current !== null) {
