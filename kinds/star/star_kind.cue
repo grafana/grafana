@@ -13,7 +13,7 @@ lineage: seqs: [
 				userId: int64
 				// ID of the star.
 				id: int64
-				// The dashboard which is starred.
+				// DashboardID is the id of the dashboard which is starred.
 				dashboardId: int64
 			},
 		]
