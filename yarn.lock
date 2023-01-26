@@ -4600,7 +4600,7 @@ __metadata:
     "@testing-library/react": 12.1.4
     "@testing-library/react-hooks": 8.0.1
     "@testing-library/user-event": 14.4.3
-    "@types/d3-interpolate": ^1.4.0
+    "@types/d3-interpolate": ^3.0.0
     "@types/history": 4.7.11
     "@types/jest": 29.2.3
     "@types/jquery": 3.5.14
@@ -10488,13 +10488,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/d3-color@npm:^1":
-  version: 1.4.2
-  resolution: "@types/d3-color@npm:1.4.2"
-  checksum: 60d0f00ceb53052a142c606465eeec49b264a8dee180ddeda121770bd24e2fe34d8c33140022d929a5bf3d862e6908a55ee86ac629d10ac93f124fb40db7022a
-  languageName: node
-  linkType: hard
-
 "@types/d3-contour@npm:*":
   version: 3.0.1
   resolution: "@types/d3-contour@npm:3.0.1"
@@ -10558,10 +10551,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/d3-force@npm:^2.1.0":
-  version: 2.1.4
-  resolution: "@types/d3-force@npm:2.1.4"
-  checksum: 635a070c68f7ed9ad3962ec7d2fca7c590349648a1b80e6e1a6084885962f84bcaf12b6998fb3aa190fe97b5d8ed2669084145dcd6b89fec6624a5a2d157beb6
+"@types/d3-force@npm:^3.0.0":
+  version: 3.0.4
+  resolution: "@types/d3-force@npm:3.0.4"
+  checksum: 779fb597fb41e7bc6a5e1b8969d500deb95c4a73428c7c268bf0ca6f3ed668dd2ed6aa652de7af14d2f9c192dad4f6e7badf2c5bc330624bd8405ac88440b278
   languageName: node
   linkType: hard
 
@@ -10588,21 +10581,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/d3-interpolate@npm:*, @types/d3-interpolate@npm:^3.0.1":
+"@types/d3-interpolate@npm:*, @types/d3-interpolate@npm:^3.0.0, @types/d3-interpolate@npm:^3.0.1":
   version: 3.0.1
   resolution: "@types/d3-interpolate@npm:3.0.1"
   dependencies:
     "@types/d3-color": "*"
   checksum: 29ce472968b9e6611bdf0eeedaf89e8d6066190b52ced011d16d8183b8b9f8e6dd6516ca2b85242594942896299b42f37504d44e635f8fba3090c2c58594e21b
-  languageName: node
-  linkType: hard
-
-"@types/d3-interpolate@npm:^1.4.0":
-  version: 1.4.2
-  resolution: "@types/d3-interpolate@npm:1.4.2"
-  dependencies:
-    "@types/d3-color": ^1
-  checksum: 3d551377c036580efb4f918171300d849d9bf7c6fe61b1ee6ba916065a2e406cded2aaef067a39d068ec6ab898053abb703413921f2d3701c9332bd201152ef9
   languageName: node
   linkType: hard
 
@@ -10641,17 +10625,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/d3-scale-chromatic@npm:*":
+"@types/d3-scale-chromatic@npm:*, @types/d3-scale-chromatic@npm:3.0.0":
   version: 3.0.0
   resolution: "@types/d3-scale-chromatic@npm:3.0.0"
   checksum: e06afffd2725570aa90cb3050eb96a94727264948d9256e56807ab582aba379168d84d1d98bcaa275bf38375148b35dfe13697e06fc7565dd17ac7e2acb11980
-  languageName: node
-  linkType: hard
-
-"@types/d3-scale-chromatic@npm:1.3.1":
-  version: 1.3.1
-  resolution: "@types/d3-scale-chromatic@npm:1.3.1"
-  checksum: f3d5eafa0723e6b46fe6610c544e166b03915d91a19298183ad411dc928a0ce12827bb073dfab2bc704e5b9311ea1831a2d7b4192d96cd73891f2e6fecd80041
   languageName: node
   linkType: hard
 
@@ -17271,13 +17248,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"d3-dispatch@npm:1 - 2":
-  version: 2.0.0
-  resolution: "d3-dispatch@npm:2.0.0"
-  checksum: cf473676ae0df1915d51d056d2c6734ceec480d258611d970a01847c50e8c273c185032bf9ed491abd077696bcbeeb491dc94af53e888871f3a1a0fac7365cec
-  languageName: node
-  linkType: hard
-
 "d3-dispatch@npm:1 - 3, d3-dispatch@npm:3":
   version: 3.0.1
   resolution: "d3-dispatch@npm:3.0.1"
@@ -17332,18 +17302,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"d3-force@npm:2.1.1":
-  version: 2.1.1
-  resolution: "d3-force@npm:2.1.1"
-  dependencies:
-    d3-dispatch: 1 - 2
-    d3-quadtree: 1 - 2
-    d3-timer: 1 - 2
-  checksum: aaee5b86d753450e72dae6748765ac3e0b7b784bd420a61264b778d697b9521a343b74b5c55654be2ff7fdf9bada0953a6fcae9be69091176d0579b56df72937
-  languageName: node
-  linkType: hard
-
-"d3-force@npm:3":
+"d3-force@npm:3, d3-force@npm:3.0.0":
   version: 3.0.0
   resolution: "d3-force@npm:3.0.0"
   dependencies:
@@ -17404,13 +17363,6 @@ __metadata:
   version: 3.0.1
   resolution: "d3-polygon@npm:3.0.1"
   checksum: 0b85c532517895544683849768a2c377cee3801ef8ccf3fa9693c8871dd21a0c1a2a0fc75ff54192f0ba2c562b0da2bc27f5bf959dfafc7fa23573b574865d2c
-  languageName: node
-  linkType: hard
-
-"d3-quadtree@npm:1 - 2":
-  version: 2.0.0
-  resolution: "d3-quadtree@npm:2.0.0"
-  checksum: e5f9cee19a636666e9f1614f9a9508dde9af47d80769ecb70b6b5033448a8c3ae96f39f1ffea0d1782442559412e3f98508fedf5dc39fe09a2f5995e6a0913bf
   languageName: node
   linkType: hard
 
@@ -17500,13 +17452,6 @@ __metadata:
   dependencies:
     d3-array: 2
   checksum: d1c7b9658c20646e46c3dd19e11c38e02dec098e8baa7d2cd868af8eb01953668f5da499fa33dc63541cf74a26e788786f8828c4381dbbf475a76b95972979a6
-  languageName: node
-  linkType: hard
-
-"d3-timer@npm:1 - 2":
-  version: 2.0.0
-  resolution: "d3-timer@npm:2.0.0"
-  checksum: 70733c3baffe473155b712896f04f27dae32d6e94169827f57aebb203e190926ba37af12c5f56cbc7126e538a4b1cd083f2451b80dc2a5644d076b6b31982bd8
   languageName: node
   linkType: hard
 
@@ -21699,8 +21644,8 @@ __metadata:
     "@types/angular-route": 1.7.2
     "@types/common-tags": ^1.8.0
     "@types/d3": 7.4.0
-    "@types/d3-force": ^2.1.0
-    "@types/d3-scale-chromatic": 1.3.1
+    "@types/d3-force": ^3.0.0
+    "@types/d3-scale-chromatic": 3.0.0
     "@types/debounce-promise": 3.1.5
     "@types/dompurify": ^2
     "@types/eslint": 8.4.9
@@ -21782,7 +21727,7 @@ __metadata:
     css-minimizer-webpack-plugin: 4.2.2
     cypress: 9.5.1
     d3: 7.8.2
-    d3-force: 2.1.1
+    d3-force: 3.0.0
     d3-scale-chromatic: 3.0.0
     dangerously-set-html-content: 1.0.9
     date-fns: 2.29.3
