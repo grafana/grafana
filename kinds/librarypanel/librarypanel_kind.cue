@@ -35,10 +35,10 @@ lineage: seqs: [
 
 				// TODO: should be the same panel schema defined in dashboard
 				// Typescript: Omit<Panel, 'gridPos' | 'id' | 'libraryPanel'>;
-				model: _
+				model: {...}
 
 				// Object storage metadata
-				meta?: #LibraryElementDTOMeta
+				meta?: #LibraryElementDTOMeta @grafanamaturity(ToMetadata="sys")
 
 				#LibraryElementDTOMetaUser: {
 					id:        int64
@@ -51,8 +51,8 @@ lineage: seqs: [
 					folderUid:           string @grafanamaturity(ToMetadata="sys")
 					connectedDashboards: int64
 
-					created: string // time.Time in golang
-					updated: string // time.Time in golang
+					created: string @grafanamaturity(ToMetadata="sys") // time.Time in golang
+					updated: string @grafanamaturity(ToMetadata="sys") // time.Time in golang
 
 					createdBy: #LibraryElementDTOMetaUser @grafanamaturity(ToMetadata="sys")
 					updatedBy: #LibraryElementDTOMetaUser @grafanamaturity(ToMetadata="sys")

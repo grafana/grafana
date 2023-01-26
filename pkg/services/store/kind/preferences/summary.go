@@ -43,8 +43,8 @@ func GetEntitySummaryBuilder() entity.EntitySummaryBuilder {
 
 		if obj.HomeDashboardUID != nil && *obj.HomeDashboardUID != "" {
 			summary.References = append(summary.References, &entity.EntityExternalReference{
-				Kind: entity.StandardKindDashboard,
-				UID:  *obj.HomeDashboardUID,
+				Family:     entity.StandardKindDashboard,
+				Identifier: *obj.HomeDashboardUID,
 			})
 		}
 

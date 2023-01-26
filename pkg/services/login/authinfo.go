@@ -22,6 +22,7 @@ const (
 	LDAPAuthModule      = "ldap"
 	AuthProxyAuthModule = "authproxy"
 	JWTModule           = "jwt"
+	RenderModule        = "render"
 )
 
 func GetAuthProviderLabel(authModule string) string {

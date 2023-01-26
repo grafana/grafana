@@ -119,6 +119,9 @@ export type {
   QueryHistoryPreference
 } from './raw/preferences/x/preferences_types.gen';
 
+// Raw generated types from PublicDashboard kind.
+export type { PublicDashboard } from './raw/publicdashboard/x/publicdashboard_types.gen';
+
 // Raw generated types from ServiceAccount kind.
 export type {
   ServiceAccount,

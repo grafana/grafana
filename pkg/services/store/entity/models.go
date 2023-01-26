@@ -117,14 +117,19 @@ type EntitySummary struct {
 // This message is derived from the object body and can be used to search for references.
 // This does not represent a method to declare a reference to another object.
 type EntityExternalReference struct {
-	// datasource (instance), dashboard (instance),
-	Kind string `json:"kind,omitempty"`
+	// Category of dependency
+	// eg: datasource, plugin, runtime
+	Family string `json:"family,omitempty"`
 
-	// prometheus / heatmap, heatamp|prometheus
+	// datasource > prometheus|influx|...
+	// plugin > panel | datasource
+	// runtime > transformer
 	Type string `json:"type,omitempty"` // flavor
 
-	// Unique ID for this object
-	UID string `json:"UID,omitempty"`
+	// datasource > UID
+	// plugin > plugin identifier
+	// runtime > name lookup
+	Identifier string `json:"ID,omitempty"`
 }
 
 // EntitySummaryBuilder will read an object, validate it, and return a summary, sanitized payload, or an error

@@ -15,7 +15,7 @@ title: LibraryPanel kind
 
 | Property        | Type                                            | Required | Description                                                                                                                          |
 |-----------------|-------------------------------------------------|----------|--------------------------------------------------------------------------------------------------------------------------------------|
-| `model`         |                                                 | **Yes**  | TODO: should be the same panel schema defined in dashboard<br/>Typescript: Omit<Panel, 'gridPos' &#124; 'id' &#124; 'libraryPanel'>; |
+| `model`         | [object](#model)                                | **Yes**  | TODO: should be the same panel schema defined in dashboard<br/>Typescript: Omit<Panel, 'gridPos' &#124; 'id' &#124; 'libraryPanel'>; |
 | `name`          | string                                          | **Yes**  | Panel name (also saved in the model)                                                                                                 |
 | `type`          | string                                          | **Yes**  | The panel type (from inside the model)                                                                                               |
 | `uid`           | string                                          | **Yes**  | Library element UID                                                                                                                  |
@@ -58,5 +58,13 @@ title: LibraryPanel kind
 | `avatarUrl` | string  | **Yes**  |             |
 | `id`        | integer | **Yes**  |             |
 | `name`      | string  | **Yes**  |             |
+
+## model
+
+TODO: should be the same panel schema defined in dashboard
+Typescript: Omit<Panel, 'gridPos' | 'id' | 'libraryPanel'>;
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
 
 

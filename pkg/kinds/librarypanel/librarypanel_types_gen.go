@@ -39,7 +39,7 @@ type LibraryPanel struct {
 
 	// TODO: should be the same panel schema defined in dashboard
 	// Typescript: Omit<Panel, 'gridPos' | 'id' | 'libraryPanel'>;
-	Model interface{} `json:"model"`
+	Model map[string]interface{} `json:"model"`
 
 	// Panel name (also saved in the model)
 	Name string `json:"name"`

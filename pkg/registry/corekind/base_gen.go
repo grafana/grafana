@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/kinds/playlist"
 	"github.com/grafana/grafana/pkg/kinds/preferences"
+	"github.com/grafana/grafana/pkg/kinds/publicdashboard"
 	"github.com/grafana/grafana/pkg/kinds/serviceaccount"
 	"github.com/grafana/grafana/pkg/kinds/team"
 	"github.com/grafana/grafana/pkg/kindsys"
@@ -33,13 +34,14 @@ import (
 // Prefer All*() methods when performing operations generically across all kinds.
 // For example, a validation HTTP middleware for any kind-schematized object type.
 type Base struct {
-	all            []kindsys.Core
-	dashboard      *dashboard.Kind
-	librarypanel   *librarypanel.Kind
-	playlist       *playlist.Kind
-	preferences    *preferences.Kind
-	serviceaccount *serviceaccount.Kind
-	team           *team.Kind
+	all             []kindsys.Core
+	dashboard       *dashboard.Kind
+	librarypanel    *librarypanel.Kind
+	playlist        *playlist.Kind
+	preferences     *preferences.Kind
+	publicdashboard *publicdashboard.Kind
+	serviceaccount  *serviceaccount.Kind
+	team            *team.Kind
 }
 
 // type guards
@@ -48,6 +50,7 @@ var (
 	_ kindsys.Core = &librarypanel.Kind{}
 	_ kindsys.Core = &playlist.Kind{}
 	_ kindsys.Core = &preferences.Kind{}
+	_ kindsys.Core = &publicdashboard.Kind{}
 	_ kindsys.Core = &serviceaccount.Kind{}
 	_ kindsys.Core = &team.Kind{}
 )
@@ -70,6 +73,11 @@ func (b *Base) Playlist() *playlist.Kind {
 // Preferences returns the [kindsys.Interface] implementation for the preferences kind.
 func (b *Base) Preferences() *preferences.Kind {
 	return b.preferences
+}
+
+// PublicDashboard returns the [kindsys.Interface] implementation for the publicdashboard kind.
+func (b *Base) PublicDashboard() *publicdashboard.Kind {
+	return b.publicdashboard
 }
 
 // ServiceAccount returns the [kindsys.Interface] implementation for the serviceaccount kind.
@@ -109,6 +117,12 @@ func doNewBase(rt *thema.Runtime) *Base {
 		panic(fmt.Sprintf("error while initializing the preferences Kind: %s", err))
 	}
 	reg.all = append(reg.all, reg.preferences)
+
+	reg.publicdashboard, err = publicdashboard.NewKind(rt)
+	if err != nil {
+		panic(fmt.Sprintf("error while initializing the publicdashboard Kind: %s", err))
+	}
+	reg.all = append(reg.all, reg.publicdashboard)
 
 	reg.serviceaccount, err = serviceaccount.NewKind(rt)
 	if err != nil {

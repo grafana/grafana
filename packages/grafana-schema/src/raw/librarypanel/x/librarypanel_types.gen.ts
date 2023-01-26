@@ -41,7 +41,7 @@ export interface LibraryPanel {
    * TODO: should be the same panel schema defined in dashboard
    * Typescript: Omit<Panel, 'gridPos' | 'id' | 'libraryPanel'>;
    */
-  model: unknown;
+  model: Record<string, unknown>;
   /**
    * Panel name (also saved in the model)
    */

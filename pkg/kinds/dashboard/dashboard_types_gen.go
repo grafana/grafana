@@ -240,7 +240,7 @@ type Dashboard struct {
 	LiveNow *bool          `json:"liveNow,omitempty"`
 	Panels  *[]interface{} `json:"panels,omitempty"`
 
-	// TODO docs
+	// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
 	Refresh *interface{} `json:"refresh,omitempty"`
 
 	// Version of the current dashboard data
