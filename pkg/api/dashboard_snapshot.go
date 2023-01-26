@@ -120,9 +120,9 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Res
 	}
 
 	var snapshotUrl string
-	cmd.ExternalUrl = ""
-	cmd.OrgId = c.OrgID
-	cmd.UserId = c.UserID
+	cmd.ExternalURL = ""
+	cmd.OrgID = c.OrgID
+	cmd.UserID = c.UserID
 	originalDashboardURL, err := createOriginalDashboardURL(&cmd)
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Invalid app URL", err)
