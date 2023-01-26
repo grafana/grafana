@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -85,7 +84,7 @@ func ProvideTeamPermissions(
 			case "Member":
 				return teamimpl.AddOrUpdateTeamMemberHook(session, user.ID, orgID, teamId, user.IsExternal, 0)
 			case "Admin":
-				return teamimpl.AddOrUpdateTeamMemberHook(session, user.ID, orgID, teamId, user.IsExternal, models.PERMISSION_ADMIN)
+				return teamimpl.AddOrUpdateTeamMemberHook(session, user.ID, orgID, teamId, user.IsExternal, dashboards.PERMISSION_ADMIN)
 			case "":
 				return teamimpl.RemoveTeamMemberHook(session, &team.RemoveTeamMemberCommand{
 					OrgID:  orgID,

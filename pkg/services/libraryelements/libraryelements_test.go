@@ -267,7 +267,7 @@ type scenarioContext struct {
 
 type folderACLItem struct {
 	roleType   org.RoleType
-	permission models.PermissionType
+	permission dashboards.PermissionType
 }
 
 func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash *dashboards.Dashboard, folderID int64) *dashboards.Dashboard {
