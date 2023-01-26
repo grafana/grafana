@@ -153,16 +153,7 @@ export function RichHistoryStarredTab(props: Props) {
         {loading && <span>Loading results...</span>}
         {!loading &&
           queries.map((q) => {
-            const idx = listOfDatasources.findIndex((d) => d.uid === q.datasourceUid);
-            return (
-              <RichHistoryCard
-                query={q}
-                key={q.id}
-                exploreId={exploreId}
-                dsImg={idx === -1 ? 'public/img/icn-datasource.svg' : listOfDatasources[idx].imgUrl}
-                isRemoved={idx === -1}
-              />
-            );
+            return <RichHistoryCard query={q} key={q.id} exploreId={exploreId} />;
           })}
         {queries.length && queries.length !== totalQueries ? (
           <div>

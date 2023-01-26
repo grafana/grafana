@@ -305,7 +305,7 @@ export const importQueries = (
   sourceDataSource: DataSourceApi | undefined | null,
   targetDataSource: DataSourceApi,
   singleQueryChangeRef?: string // when changing one query DS to another in a mixed environment, we do not want to change all queries, just the one being changed
-): ThunkResult<void> => {
+): ThunkResult<Promise<void>> => {
   return async (dispatch) => {
     if (!sourceDataSource) {
       // explore not initialized
