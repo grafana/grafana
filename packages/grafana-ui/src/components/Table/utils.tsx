@@ -40,7 +40,7 @@ import {
 } from './types';
 
 export const EXPANDER_WIDTH = 50;
-const ROW_NUMBER_WIDTH = 50;
+export const OPTIONAL_ROW_NUMBER_COLUMN_WIDTH = 50;
 
 export function getTextAlign(field?: Field): Property.JustifyContent {
   if (!field) {
@@ -179,7 +179,7 @@ export function buildFieldsForOptionalRowNums(totalRows: number): Field {
         align: 'auto',
         cellOptions: { type: 'auto' },
         inspect: false,
-        width: ROW_NUMBER_WIDTH,
+        width: OPTIONAL_ROW_NUMBER_COLUMN_WIDTH,
       },
     },
     values: buildBufferedValues(totalRows),

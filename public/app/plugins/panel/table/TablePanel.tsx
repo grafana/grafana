@@ -5,15 +5,14 @@ import { DataFrame, FieldMatcherID, getFrameDisplayName, PanelProps, SelectableV
 import { PanelDataErrorView } from '@grafana/runtime';
 import { Select, Table, usePanelContext, useTheme2 } from '@grafana/ui';
 import { TableSortByFieldState } from '@grafana/ui/src/components/Table/types';
+import { OPTIONAL_ROW_NUMBER_COLUMN_WIDTH } from '@grafana/ui/src/components/Table/utils';
 
 import { PanelOptions } from './models.gen';
 
 interface Props extends PanelProps<PanelOptions> {}
 
 export function TablePanel(props: Props) {
-  let { data, height, width, options, fieldConfig, id } = props;
-  width = options.showRowNums ? width : width + 50;
-  console.log(width, 'width');
+  const { data, height, width, options, fieldConfig, id } = props;
 
   // JEV: error on load (sometimes) -> The pseudo class ":nth-child" is potentially unsafe when doing server-side rendering. Try changing it to ":nth-of-type".
 
@@ -45,7 +44,8 @@ export function TablePanel(props: Props) {
   const tableElement = (
     <Table
       height={tableHeight}
-      width={width}
+      // This calculation is to accommodate the optionally rendered Row Numbers Column
+      width={options.showRowNums ? width : width + OPTIONAL_ROW_NUMBER_COLUMN_WIDTH}
       data={main}
       noHeader={!options.showHeader}
       showTypeIcons={options.showTypeIcons}
@@ -53,7 +53,7 @@ export function TablePanel(props: Props) {
       showRowNums={options.showRowNums}
       initialSortBy={options.sortBy}
       onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
-      onColumnResize={(displayName, width) => onColumnResize(displayName, width, props)}
+      onColumnResize={(displayName, resizedWidth) => onColumnResize(displayName, resizedWidth, props)}
       onCellFilterAdded={panelContext.onAddAdHocFilter}
       footerOptions={options.footer}
       enablePagination={options.footer?.enablePagination}
