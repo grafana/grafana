@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -264,31 +265,35 @@ func TestOrgUsersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 }
 
 func TestOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
-	tests := []accessControlTestCase{
+	type testCase struct {
+		desc         string
+		permissions  []accesscontrol.Permission
+		expectedCode int
+	}
+	tests := []testCase{
 		{
 			expectedCode: http.StatusOK,
 			desc:         "UsersLookupGet should return 200 for user with correct permissions",
-			url:          "/api/org/users/lookup",
-			method:       http.MethodGet,
 			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersRead, Scope: accesscontrol.ScopeUsersAll}},
 		},
 		{
 			expectedCode: http.StatusForbidden,
 			desc:         "UsersLookupGet should return 403 for user without required permissions",
-			url:          "/api/org/users/lookup",
-			method:       http.MethodGet,
 			permissions:  []accesscontrol.Permission{{Action: "wrong"}},
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			sc := setupHTTPServer(t, true)
-			setInitCtxSignedInViewer(sc.initCtx)
-			setAccessControlPermissions(sc.acmock, test.permissions, sc.initCtx.OrgID)
-
-			response := callAPI(sc.server, http.MethodGet, test.url, nil, t)
-			assert.Equal(t, test.expectedCode, response.Code)
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = setting.NewCfg()
+				hs.orgService = &orgtest.FakeOrgService{ExpectedSearchOrgUsersResult: &org.SearchOrgUsersQueryResult{}}
+				hs.authInfoService = &logintest.AuthInfoServiceFake{}
+			})
+			res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest("/api/org/users/lookup"), userWithPermissions(1, tt.permissions)))
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }
@@ -364,68 +369,77 @@ func setupOrgUsersDBForAccessControlTests(t *testing.T, db *sqlstore.SQLStore, o
 }
 
 func TestGetOrgUsersAPIEndpoint_AccessControlMetadata(t *testing.T) {
-	url := "/api/orgs/%v/users?accesscontrol=true"
 	type testCase struct {
-		name                string
-		enableAccessControl bool
-		expectedCode        int
-		expectedMetadata    map[string]bool
-		user                user.SignedInUser
-		targetOrg           int64
+		desc             string
+		permissions      []accesscontrol.Permission
+		includeMetadata  bool
+		expectedCode     int
+		expectedMetadata map[string]bool
 	}
 
 	tests := []testCase{
 		{
-			name:                "access control metadata not requested",
-			enableAccessControl: false,
-			expectedCode:        http.StatusOK,
-			expectedMetadata:    nil,
-			user:                testServerAdminViewer,
-			targetOrg:           testServerAdminViewer.OrgID,
+			desc:            "should not get access control metadata",
+			includeMetadata: false,
+			permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: "users:*"},
+				{Action: accesscontrol.ActionOrgUsersWrite, Scope: "users:*"},
+				{Action: accesscontrol.ActionOrgUsersAdd, Scope: "users:*"},
+				{Action: accesscontrol.ActionOrgUsersRemove, Scope: "users:*"},
+			},
+			expectedCode:     http.StatusOK,
+			expectedMetadata: nil,
 		},
 		{
-			name:                "access control metadata requested",
-			enableAccessControl: true,
-			expectedCode:        http.StatusOK,
+			desc:            "should get access control metadata",
+			includeMetadata: true,
+			permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionOrgUsersRead, Scope: "users:*"},
+				{Action: accesscontrol.ActionOrgUsersWrite, Scope: "users:*"},
+				{Action: accesscontrol.ActionOrgUsersAdd, Scope: "users:*"},
+				{Action: accesscontrol.ActionOrgUsersRemove, Scope: "users:*"},
+			},
+			expectedCode: http.StatusOK,
 			expectedMetadata: map[string]bool{
-				"org.users:write":        true,
-				"org.users:add":          true,
-				"org.users:read":         true,
-				"org.users:remove":       true,
-				"users.permissions:read": true},
-			user:      testServerAdminViewer,
-			targetOrg: testServerAdminViewer.OrgID,
+				"org.users:write":  true,
+				"org.users:add":    true,
+				"org.users:read":   true,
+				"org.users:remove": true,
+			},
 		},
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			cfg := setting.NewCfg()
-			cfg.RBACEnabled = tc.enableAccessControl
-			var err error
-			sc := setupHTTPServerWithCfg(t, false, cfg, func(hs *HTTPServer) {
-				hs.userService, err = userimpl.ProvideService(
-					hs.SQLStore, nil, cfg, teamimpl.ProvideService(hs.SQLStore.(*sqlstore.SQLStore), cfg), localcache.ProvideService(), quotatest.New(false, nil))
-				require.NoError(t, err)
-				hs.orgService, err = orgimpl.ProvideService(hs.SQLStore, cfg, quotatest.New(false, nil))
-				require.NoError(t, err)
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = setting.NewCfg()
+				hs.orgService = &orgtest.FakeOrgService{
+					ExpectedSearchOrgUsersResult: &org.SearchOrgUsersQueryResult{OrgUsers: []*org.OrgUserDTO{{UserID: 1}}},
+				}
+				hs.authInfoService = &logintest.AuthInfoServiceFake{}
+				hs.userService = &usertest.FakeUserService{ExpectedSignedInUser: userWithPermissions(1, tt.permissions)}
 			})
-			setupOrgUsersDBForAccessControlTests(t, sc.db, sc.hs.orgService)
-			setInitCtxSignedInUser(sc.initCtx, tc.user)
 
-			// Perform test
-			response := callAPI(sc.server, http.MethodGet, fmt.Sprintf(url, tc.targetOrg), nil, t)
-			require.Equal(t, tc.expectedCode, response.Code)
+			url := "/api/orgs/1/users"
+			if tt.includeMetadata {
+				url += "?accesscontrol=true"
+			}
+
+			res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest(url), userWithPermissions(1, tt.permissions)))
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
 
 			var userList []*org.OrgUserDTO
-			err = json.NewDecoder(response.Body).Decode(&userList)
+			err = json.NewDecoder(res.Body).Decode(&userList)
 			require.NoError(t, err)
 
-			if tc.expectedMetadata != nil {
-				assert.Equal(t, tc.expectedMetadata, userList[0].AccessControl)
+			if tt.expectedMetadata != nil {
+				assert.Equal(t, tt.expectedMetadata, userList[0].AccessControl)
 			} else {
 				assert.Nil(t, userList[0].AccessControl)
 			}
+
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }
