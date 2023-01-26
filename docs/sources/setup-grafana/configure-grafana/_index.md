@@ -772,9 +772,9 @@ Text used as placeholder text on login page for password input.
 
 ### default_theme
 
-Set the default UI theme: `dark` or `light` or `system`. Default is `dark`.
+Sets the default UI theme: `dark`, `light`, or `system`. The default theme is `dark`.
 
-`system` will match the user's system theme.
+`system` matches the user's system theme.
 
 ### default_language
 
