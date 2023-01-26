@@ -1009,7 +1009,9 @@
     },
     "nodegraphpanelcfg": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/observability-traces-and-profiling"
+      ],
       "currentVersion": [
         0,
         0
@@ -1017,13 +1019,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
-        "docs": "n/a",
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/nodegraphpanelcfg/schema-reference",
         "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/nodeGraph/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/nodeGraph/panelcfg.gen.ts"
       },
       "machineName": "nodegraphpanelcfg",
-      "maturity": "planned",
+      "maturity": "experimental",
       "name": "NodeGraphPanelCfg",
       "pluralMachineName": "nodegraphpanelcfgs",
       "pluralName": "NodeGraphPanelCfgs",
@@ -1539,9 +1541,11 @@
       "pluralName": "TempoDataSourceCfgs",
       "schemaInterface": "DataSourceCfg"
     },
-    "testdatadbdataquery": {
+    "testdatadataquery": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/plugins-platform-frontend"
+      ],
       "currentVersion": [
         0,
         0
@@ -1549,19 +1553,19 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
-        "docs": "n/a",
-        "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/testdatadataquery/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/tsdb/testdata/kinds/dataquery/types_dataquery_gen.go",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/testdata/dataquery.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/testdata/dataquery.gen.ts"
       },
-      "machineName": "testdatadbdataquery",
-      "maturity": "planned",
-      "name": "TestDataDBDataQuery",
-      "pluralMachineName": "testdatadbdataquerys",
-      "pluralName": "TestDataDBDataQuerys",
+      "machineName": "testdatadataquery",
+      "maturity": "experimental",
+      "name": "TestDataDataQuery",
+      "pluralMachineName": "testdatadataquerys",
+      "pluralName": "TestDataDataQuerys",
       "schemaInterface": "DataQuery"
     },
-    "testdatadbdatasourcecfg": {
+    "testdatadatasourcecfg": {
       "category": "composable",
       "codeowners": [],
       "currentVersion": [
@@ -1576,11 +1580,11 @@
         "schema": "n/a",
         "ts": "n/a"
       },
-      "machineName": "testdatadbdatasourcecfg",
+      "machineName": "testdatadatasourcecfg",
       "maturity": "planned",
-      "name": "TestDataDBDataSourceCfg",
-      "pluralMachineName": "testdatadbdatasourcecfgs",
-      "pluralName": "TestDataDBDataSourceCfgs",
+      "name": "TestDataDataSourceCfg",
+      "pluralMachineName": "testdatadatasourcecfgs",
+      "pluralName": "TestDataDataSourceCfgs",
       "schemaInterface": "DataSourceCfg"
     },
     "textpanelcfg": {
@@ -1824,8 +1828,8 @@
           "tableoldpanelcfg",
           "tempodataquery",
           "tempodatasourcecfg",
-          "testdatadbdataquery",
-          "testdatadbdatasourcecfg",
+          "testdatadataquery",
+          "testdatadatasourcecfg",
           "textpanelcfg",
           "tracespanelcfg",
           "welcomepanelcfg",
@@ -1867,14 +1871,16 @@
           "gaugepanelcfg",
           "histogrampanelcfg",
           "newspanelcfg",
+          "nodegraphpanelcfg",
           "piechartpanelcfg",
           "statetimelinepanelcfg",
           "statpanelcfg",
           "statushistorypanelcfg",
+          "testdatadataquery",
           "textpanelcfg",
           "xychartpanelcfg"
         ],
-        "count": 14
+        "count": 16
       },
       "mature": {
         "name": "mature",
@@ -1932,7 +1938,6 @@
           "microsoftsqlserverdatasourcecfg",
           "mysqldataquery",
           "mysqldatasourcecfg",
-          "nodegraphpanelcfg",
           "parcadataquery",
           "parcadatasourcecfg",
           "phlaredataquery",
@@ -1946,8 +1951,7 @@
           "tableoldpanelcfg",
           "tempodataquery",
           "tempodatasourcecfg",
-          "testdatadbdataquery",
-          "testdatadbdatasourcecfg",
+          "testdatadatasourcecfg",
           "thumb",
           "tracespanelcfg",
           "user",
@@ -1955,7 +1959,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 58
+        "count": 56
       },
       "stable": {
         "name": "stable",
