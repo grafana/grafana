@@ -108,7 +108,8 @@ export const Table = memo((props: Props) => {
 
   // React-table column definitions
   const memoizedColumns = useMemo(
-    () => getColumns(addNumbersRowToTable(data), width, columnMinWidth, !!subData?.length, footerItems, isCountRowsSet),
+    () =>
+      getColumns(addNumbersRowFieldToData(data), width, columnMinWidth, !!subData?.length, footerItems, isCountRowsSet),
     [data, width, columnMinWidth, footerItems, subData, isCountRowsSet]
   );
 
@@ -122,7 +123,7 @@ export const Table = memo((props: Props) => {
       data: memoizedData,
       disableResizing: !resizable,
       stateReducer: stateReducer,
-      initialState: getInitialState(initialSortBy, memoizedColumns),
+      initialState: updateInitialState(getInitialState(initialSortBy, memoizedColumns)),
       autoResetFilters: false,
       sortTypes: {
         number: sortNumber, // the builtin number type on react-table does not handle NaN values
@@ -132,7 +133,10 @@ export const Table = memo((props: Props) => {
     [initialSortBy, memoizedColumns, memoizedData, resizable, stateReducer]
   );
 
-  // console.log(getInitialState(initialSortBy, memoizedColumns), 'getInitState');
+  function updateInitialState(initialState: Partial<GrafanaTableState>) {
+    initialState.hiddenColumns = ['0'];
+    return initialState;
+  }
 
   const {
     getTableProps,
@@ -146,7 +150,12 @@ export const Table = memo((props: Props) => {
     gotoPage,
     setPageSize,
     pageOptions,
+    setHiddenColumns,
   } = useTable(options, useFilters, useSortBy, useAbsoluteLayout, useResizeColumns, useExpanded, usePagination);
+
+  useEffect(() => {
+    !!showRowNums ? setHiddenColumns([]) : setHiddenColumns(['0']);
+  }, [showRowNums, setHiddenColumns]);
 
   const extendedState = state as GrafanaTableState;
 
@@ -315,7 +324,7 @@ export const Table = memo((props: Props) => {
     );
   }
 
-  function addNumbersRowToTable(data: DataFrame): DataFrame {
+  function addNumbersRowFieldToData(data: DataFrame): DataFrame {
     const rowField: Field = buildFieldsForOptionalRowNums(data.length);
     const newData = cloneDeep(data);
     newData.fields = [rowField, ...newData.fields];
