@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/consistent-type-assertions */
 import React, { FC } from 'react';
 
 import { useStyles2 } from '@grafana/ui';
@@ -10,13 +11,12 @@ import { failureToSeverity } from './Failures.utils';
 
 export const Failures: FC<FailuresProps> = ({ counts }) => {
   const styles = useStyles2(getStyles);
-
   return (
     <ul className={styles.list}>
       {Object.keys(counts).map(
         (count) =>
           counts[count as keyof FailedChecksCounts] > 0 && (
-            <li className={styles.listItem}>
+            <li key={count} className={styles.listItem}>
               <Severity severity={failureToSeverity(count as keyof FailedChecksCounts)} />{' '}
               {counts[count as keyof FailedChecksCounts]}
             </li>
