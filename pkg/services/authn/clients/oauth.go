@@ -177,10 +177,6 @@ func (c *OAuth) RedirectURL(ctx context.Context, r *authn.Request) (*authn.Redir
 	}, nil
 }
 
-func (c *OAuth) Test(ctx context.Context, r *authn.Request) bool {
-	return true
-}
-
 // genPKCECode returns a random URL-friendly string and it's base64 URL encoded SHA256 digest.
 func genPKCECode() (string, string, error) {
 	// IETF RFC 7636 specifies that the code verifier should be 43-128
