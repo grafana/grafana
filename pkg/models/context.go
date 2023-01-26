@@ -110,8 +110,8 @@ func (ctx *ReqContext) writeErrOrFallback(status int, message string, err error)
 		var logMessage string
 		logger := ctx.Logger.Warn
 
-		var gfErr *errutil.Error
-		if errors.As(err, gfErr) {
+		gfErr := errutil.Error{}
+		if errors.As(err, &gfErr) {
 			logger = gfErr.LogLevel.LogFunc(ctx.Logger)
 			publicErr := gfErr.Public()
 
