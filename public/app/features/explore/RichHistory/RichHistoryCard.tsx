@@ -163,7 +163,6 @@ export function RichHistoryCard(props: Props) {
   const onRunQuery = async () => {
     const queriesToRun = query.queries;
     const differentDataSource = query.datasourceUid !== datasourceInstance?.uid;
-    // TODO: check this: we were importing queries, but we shouldn't at this stage given we want to use the ones in history and not the ones in Explore
     if (differentDataSource) {
       await changeDatasource(exploreId, query.datasourceUid);
     }
