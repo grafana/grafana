@@ -276,7 +276,7 @@ func (h *ContextHandler) getAPIKey(ctx context.Context, keyString string) (*apik
 		return nil, err
 	}
 	if !isValid {
-		return nil, apikeygen.ErrInvalidApiKey
+		return nil, apikeygen.ErrInvalidAPIKey
 	}
 
 	return keyQuery.Result, nil
@@ -317,15 +317,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 
 	if errKey != nil {
 		status := http.StatusInternalServerError
-		if errors.Is(errKey, apikeygen.ErrInvalidApiKey) {
-			status = http.StatusUnauthorized
-		}
-		// this is when the getPrefixAPIKey return error form the apikey package instead of the apikeygen
-		// when called in the sqlx store methods
-		if errors.Is(errKey, apikey.ErrInvalid) {
-			status = http.StatusUnauthorized
-		}
-		reqContext.JsonApiErr(status, InvalidAPIKey, errKey)
+		reqContext.WriteErrOrFallback(status, InvalidAPIKey, errKey)
 		return true
 	}
 

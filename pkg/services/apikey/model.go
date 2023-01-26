@@ -7,11 +7,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
 var (
 	ErrNotFound          = errors.New("API key not found")
-	ErrInvalid           = errors.New("invalid API key")
+	ErrInvalid           = errutil.NewBase(errutil.StatusUnauthorized, "apikey", errutil.WithPublicMessage("invalid API key"))
 	ErrInvalidExpiration = errors.New("negative value for SecondsToLive")
 	ErrDuplicate         = errors.New("API key, organization ID and name must be unique")
 )

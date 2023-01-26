@@ -10,5 +10,5 @@ func (e *ErrInvalidApiKey) Error() string {
 }
 
 func (e *ErrInvalidApiKey) Unwrap() error {
-	return apikeygen.ErrInvalidApiKey
+	return apikeygen.ErrInvalidAPIKey
 }
