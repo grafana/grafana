@@ -12,7 +12,7 @@ import (
 
 var (
 	ErrNotFound          = errors.New("API key not found")
-	ErrInvalid           = errutil.NewBase(errutil.StatusUnauthorized, "apikey", errutil.WithPublicMessage("invalid API key"))
+	ErrInvalid           = errutil.NewBase(errutil.StatusUnauthorized, "apikey.Invalid", errutil.WithPublicMessage("invalid API key"))
 	ErrInvalidExpiration = errors.New("negative value for SecondsToLive")
 	ErrDuplicate         = errors.New("API key, organization ID and name must be unique")
 )
