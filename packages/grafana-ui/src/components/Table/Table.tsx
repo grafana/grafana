@@ -109,7 +109,7 @@ export const Table = memo((props: Props) => {
   const memoizedColumns = useMemo(
     () =>
       getColumns(
-        addOptionalNumbersRowToTable(data, showRowNums),
+        addNumbersRowToTable(data, showRowNums),
         width,
         columnMinWidth,
         !!subData?.length,
@@ -150,6 +150,7 @@ export const Table = memo((props: Props) => {
     gotoPage,
     setPageSize,
     pageOptions,
+    // getToggleHiddenProps,
   } = useTable(options, useFilters, useSortBy, useAbsoluteLayout, useResizeColumns, useExpanded, usePagination);
 
   const extendedState = state as GrafanaTableState;
@@ -319,7 +320,7 @@ export const Table = memo((props: Props) => {
     );
   }
 
-  function addOptionalNumbersRowToTable(data: DataFrame, showRowNums: boolean | undefined): DataFrame {
+  function addNumbersRowToTable(data: DataFrame, showRowNums: boolean | undefined): DataFrame {
     if (showRowNums) {
       const rowField: Field = buildFieldsForOptionalRowNums(data.length);
       const newData = cloneDeep(data);
