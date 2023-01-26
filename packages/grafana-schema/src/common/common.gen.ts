@@ -109,6 +109,24 @@ export enum FrameGeometrySourceMode {
   Lookup = 'lookup',
 }
 
+export enum HeatmapCalculationMode {
+  Count = 'count',
+  Size = 'size',
+}
+
+export enum HeatmapCellLayout {
+  auto = 'auto',
+  ge = 'ge',
+  le = 'le',
+  unknown = 'unknown',
+}
+
+export interface HeatmapCalculationBucketConfig {
+  mode?: HeatmapCalculationMode;
+  scale?: ScaleDistributionConfig;
+  value?: string;
+}
+
 /**
  * TODO docs
  */
@@ -695,6 +713,11 @@ export interface FrameGeometrySource {
   lookup?: string;
   mode: FrameGeometrySourceMode;
   wkt?: string;
+}
+
+export interface HeatmapCalculationOptions {
+  xBuckets?: HeatmapCalculationBucketConfig;
+  yBuckets?: HeatmapCalculationBucketConfig;
 }
 
 export interface Labels {}
