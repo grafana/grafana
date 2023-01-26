@@ -338,7 +338,7 @@ export class PrometheusIncrementalStorage {
       // calculate new from/tos
       return { request: { ...request, range: timeRange }, originalRange: originalRange };
     } else {
-      console.warn('QUERY NOT CONTAINED BY CACHE, NOT MODIFYING REQUEST', this.storage);
+      console.warn('QUERY NOT CONTAINED BY CACHE, NOT MODIFYING REQUEST', request);
     }
 
     return { request: request };
