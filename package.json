@@ -43,7 +43,7 @@
     "stats": "webpack --mode production --config scripts/webpack/webpack.prod.js --profile --json > compilation-stats.json",
     "storybook": "yarn workspace @grafana/ui storybook --ci",
     "storybook:build": "yarn workspace @grafana/ui storybook:build",
-    "themes:generate": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/generateSassVariableFiles.ts",
+    "themes:generate": "esbuild ./scripts/cli/generateSassVariableFiles.ts --bundle --platform=node --tsconfig=./scripts/cli/tsconfig.json | node",
     "typecheck": "tsc --noEmit && yarn run packages:typecheck",
     "plugins:build-bundled": "find plugins-bundled -name package.json -not -path '*/node_modules/*' -execdir yarn build \\;",
     "watch": "yarn start -d watch,start core:start --watchTheme",
@@ -54,7 +54,8 @@
     "i18n:compile": "echo 'no i18n compile yet, all good'",
     "betterer": "betterer",
     "betterer:merge": "betterer merge",
-    "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts"
+    "betterer:stats": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/reportBettererStats.ts",
+    "betterer:issues": "ts-node --transpile-only --project ./scripts/cli/tsconfig.json ./scripts/cli/generateBettererIssues.ts"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v9-2/",
@@ -164,6 +165,7 @@
     "@types/testing-library__jest-dom": "5.14.5",
     "@types/tinycolor2": "1.4.3",
     "@types/uuid": "8.3.4",
+    "@types/yargs": "17.0.12",
     "@typescript-eslint/eslint-plugin": "5.42.0",
     "@typescript-eslint/parser": "5.42.0",
     "autoprefixer": "10.4.13",
@@ -173,6 +175,7 @@
     "babel-plugin-macros": "3.1.0",
     "blob-polyfill": "7.0.20220408",
     "browserslist": "^4.21.4",
+    "codeowners": "^5.1.1",
     "copy-webpack-plugin": "9.0.1",
     "css-loader": "6.7.1",
     "css-minimizer-webpack-plugin": "4.2.2",
@@ -193,7 +196,7 @@
     "expose-loader": "4.0.0",
     "fork-ts-checker-webpack-plugin": "7.3.0",
     "fs-extra": "10.1.0",
-    "glob": "8.0.3",
+    "glob": "8.1.0",
     "html-loader": "4.2.0",
     "html-webpack-plugin": "5.5.0",
     "http-server": "14.1.1",
@@ -244,7 +247,8 @@
     "webpack-cli": "4.10.0",
     "webpack-dev-server": "4.11.1",
     "webpack-manifest-plugin": "5.0.0",
-    "webpack-merge": "5.8.0"
+    "webpack-merge": "5.8.0",
+    "yargs": "^17.5.1"
   },
   "dependencies": {
     "@daybrush/utils": "1.10.0",
@@ -293,8 +297,8 @@
     "@visx/event": "2.17.0",
     "@visx/gradient": "2.10.0",
     "@visx/group": "2.10.0",
-    "@visx/scale": "2.2.2",
-    "@visx/shape": "2.12.2",
+    "@visx/scale": "3.0.0",
+    "@visx/shape": "3.0.0",
     "@visx/tooltip": "2.16.0",
     "@welldone-software/why-did-you-render": "7.0.1",
     "angular": "1.8.3",
@@ -311,9 +315,9 @@
     "comlink": "4.3.1",
     "common-tags": "1.8.2",
     "core-js": "3.27.1",
-    "d3": "5.15.0",
-    "d3-force": "^2.1.1",
-    "d3-scale-chromatic": "1.5.0",
+    "d3": "7.8.2",
+    "d3-force": "2.1.1",
+    "d3-scale-chromatic": "3.0.0",
     "dangerously-set-html-content": "1.0.9",
     "date-fns": "2.29.3",
     "debounce-promise": "3.1.2",
@@ -436,7 +440,7 @@
     ]
   },
   "engines": {
-    "node": ">= 16"
+    "node": ">= 18"
   },
   "packageManager": "yarn@3.3.0"
 }
