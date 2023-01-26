@@ -28,6 +28,7 @@ composableKinds: PanelCfg: {
 							frameIndex:    number | *0
 							showHeader:    bool | *true
 							showTypeIcons: bool | *false
+							showRowNums?:  bool | *false
 							sortBy?: [...common.TableSortByFieldState]
 						} @cuetsy(kind="interface")
 						PanelFieldConfig: common.TableFieldOptions & {} @cuetsy(kind="interface")
