@@ -52,7 +52,7 @@ func (j *pgoJenny) Generate(decl *pfs.PluginDecl) (*codejen.File, error) {
 
 	pluginfolder := filepath.Base(decl.PluginPath)
 	// hardcoded exception for testdata datasource, ONLY because "testdata" is basically a
-	// language-resreved keyword for Go
+	// language-reserved keyword for Go
 	if pluginfolder == "testdata" {
 		pluginfolder = "testdatasource"
 	}
