@@ -61,7 +61,7 @@ export function LogsSamplePanel(props: Props) {
       <Button
         size="sm"
         className={styles.logSamplesButton}
-        // TODO: support multiple queries
+        // TODO: support multiple queries (#62107)
         // This currently works only for the first query as splitOpen supports only 1 query
         onClick={() => splitOpen({ query: logSampleQueries[0], datasourceUid: datasourceInstance.uid })}
       >
