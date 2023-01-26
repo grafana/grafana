@@ -8,7 +8,6 @@ import { hasChanges, ignoreChanges } from './DashboardPrompt';
 
 function getDefaultDashboardModel() {
   return createDashboardModelFixture({
-    refresh: false,
     panels: [
       createPanelJSONFixture({
         id: 1,
@@ -56,7 +55,7 @@ describe('DashboardPrompt', () => {
   it('Should ignore a lot of changes', () => {
     const { original, dash } = getTestContext();
     dash.time = { from: '1h' };
-    dash.refresh = true;
+    dash.refresh = '30s';
     dash.schemaVersion = 10;
     expect(hasChanges(dash, original)).toBe(false);
   });

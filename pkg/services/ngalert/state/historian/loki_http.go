@@ -2,6 +2,7 @@ package historian
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -37,7 +38,7 @@ func newLokiClient(cfg LokiConfig, logger log.Logger) *httpLokiClient {
 	}
 }
 
-func (c *httpLokiClient) ping() error {
+func (c *httpLokiClient) ping(ctx context.Context) error {
 	uri := c.cfg.Url.JoinPath("/loki/api/v1/labels")
 	req, err := http.NewRequest(http.MethodGet, uri.String(), nil)
 	if err != nil {
@@ -45,6 +46,7 @@ func (c *httpLokiClient) ping() error {
 	}
 	c.setAuthAndTenantHeaders(req)
 
+	req = req.WithContext(ctx)
 	res, err := c.client.Do(req)
 	if res != nil {
 		defer func() {
@@ -80,7 +82,7 @@ func (r *row) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func (c *httpLokiClient) push(s []stream) error {
+func (c *httpLokiClient) push(ctx context.Context, s []stream) error {
 	body := struct {
 		Streams []stream `json:"streams"`
 	}{Streams: s}
@@ -98,6 +100,7 @@ func (c *httpLokiClient) push(s []stream) error {
 	c.setAuthAndTenantHeaders(req)
 	req.Header.Add("content-type", "application/json")
 
+	req = req.WithContext(ctx)
 	resp, err := c.client.Do(req)
 	if resp != nil {
 		defer func() {

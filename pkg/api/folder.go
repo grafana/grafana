@@ -176,12 +176,9 @@ func (hs *HTTPServer) MoveFolder(c *models.ReqContext) response.Response {
 		var theFolder *folder.Folder
 		var err error
 		if cmd.NewParentUID != "" {
-			moveCommand := folder.MoveFolderCommand{
-				UID:          web.Params(c.Req)[":uid"],
-				NewParentUID: cmd.NewParentUID,
-				OrgID:        c.OrgID,
-			}
-			theFolder, err = hs.folderService.Move(c.Req.Context(), &moveCommand)
+			cmd.OrgID = c.OrgID
+			cmd.UID = web.Params(c.Req)[":uid"]
+			theFolder, err = hs.folderService.Move(c.Req.Context(), &cmd)
 			if err != nil {
 				return response.Error(http.StatusInternalServerError, "update folder uid failed", err)
 			}
@@ -304,7 +301,7 @@ func (hs *HTTPServer) searchFolders(c *models.ReqContext) ([]*folder.Folder, err
 		Limit:        c.QueryInt64("limit"),
 		OrgId:        c.OrgID,
 		Type:         "dash-folder",
-		Permission:   models.PERMISSION_VIEW,
+		Permission:   dashboards.PERMISSION_VIEW,
 		Page:         c.QueryInt64("page"),
 	}
 

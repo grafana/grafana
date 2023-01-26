@@ -37,7 +37,7 @@ func Test_subscribeToFolderChanges(t *testing.T) {
 	scheduler := &schedule.FakeScheduleService{}
 	scheduler.On("UpdateAlertRule", mock.Anything, mock.Anything).Return()
 
-	subscribeToFolderChanges(log.New("test"), bus, db, scheduler)
+	subscribeToFolderChanges(context.Background(), log.New("test"), bus, db, scheduler)
 
 	err := bus.Publish(context.Background(), &events.FolderTitleUpdated{
 		Timestamp: time.Now(),
