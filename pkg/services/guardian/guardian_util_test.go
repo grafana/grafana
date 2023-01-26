@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -262,31 +261,31 @@ func (sc *scenarioContext) reportFailure(desc string, expected interface{}, actu
 	sc.t.Fatalf(buf.String())
 }
 
-func newCustomUserPermission(dashboardID int64, userID int64, permission models.PermissionType) *dashboards.DashboardACL {
+func newCustomUserPermission(dashboardID int64, userID int64, permission dashboards.PermissionType) *dashboards.DashboardACL {
 	return &dashboards.DashboardACL{OrgID: orgID, DashboardID: dashboardID, UserID: userID, Permission: permission}
 }
 
-func newDefaultUserPermission(dashboardID int64, permission models.PermissionType) *dashboards.DashboardACL {
+func newDefaultUserPermission(dashboardID int64, permission dashboards.PermissionType) *dashboards.DashboardACL {
 	return newCustomUserPermission(dashboardID, userID, permission)
 }
 
-func newCustomTeamPermission(dashboardID int64, teamID int64, permission models.PermissionType) *dashboards.DashboardACL {
+func newCustomTeamPermission(dashboardID int64, teamID int64, permission dashboards.PermissionType) *dashboards.DashboardACL {
 	return &dashboards.DashboardACL{OrgID: orgID, DashboardID: dashboardID, TeamID: teamID, Permission: permission}
 }
 
-func newDefaultTeamPermission(dashboardID int64, permission models.PermissionType) *dashboards.DashboardACL {
+func newDefaultTeamPermission(dashboardID int64, permission dashboards.PermissionType) *dashboards.DashboardACL {
 	return newCustomTeamPermission(dashboardID, teamID, permission)
 }
 
-func newAdminRolePermission(dashboardID int64, permission models.PermissionType) *dashboards.DashboardACL {
+func newAdminRolePermission(dashboardID int64, permission dashboards.PermissionType) *dashboards.DashboardACL {
 	return &dashboards.DashboardACL{OrgID: orgID, DashboardID: dashboardID, Role: &adminRole, Permission: permission}
 }
 
-func newEditorRolePermission(dashboardID int64, permission models.PermissionType) *dashboards.DashboardACL {
+func newEditorRolePermission(dashboardID int64, permission dashboards.PermissionType) *dashboards.DashboardACL {
 	return &dashboards.DashboardACL{OrgID: orgID, DashboardID: dashboardID, Role: &editorRole, Permission: permission}
 }
 
-func newViewerRolePermission(dashboardID int64, permission models.PermissionType) *dashboards.DashboardACL {
+func newViewerRolePermission(dashboardID int64, permission dashboards.PermissionType) *dashboards.DashboardACL {
 	return &dashboards.DashboardACL{OrgID: orgID, DashboardID: dashboardID, Role: &viewerRole, Permission: permission}
 }
 

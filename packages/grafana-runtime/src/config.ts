@@ -27,6 +27,7 @@ export interface AzureSettings {
 
 export class GrafanaBootConfig implements GrafanaConfig {
   isPublicDashboardView: boolean;
+  snapshotEnabled = true;
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
   auth: AuthSettings = {};

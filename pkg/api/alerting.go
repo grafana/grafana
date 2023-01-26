@@ -110,7 +110,7 @@ func (hs *HTTPServer) GetAlerts(c *models.ReqContext) response.Response {
 			DashboardIds: dashboardIDs,
 			Type:         string(models.DashHitDB),
 			FolderIds:    folderIDs,
-			Permission:   models.PERMISSION_VIEW,
+			Permission:   dashboards.PERMISSION_VIEW,
 		}
 
 		err := hs.SearchService.SearchHandler(c.Req.Context(), &searchQuery)

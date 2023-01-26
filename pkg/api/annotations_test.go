@@ -681,8 +681,8 @@ func setUpACL() {
 	teamSvc := &teamtest.FakeService{}
 	dashSvc := &dashboards.FakeDashboardService{}
 	qResult := []*dashboards.DashboardACLInfoDTO{
-		{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
-		{Role: &editorRole, Permission: models.PERMISSION_EDIT},
+		{Role: &viewerRole, Permission: dashboards.PERMISSION_VIEW},
+		{Role: &editorRole, Permission: dashboards.PERMISSION_EDIT},
 	}
 	dashSvc.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Run(func(args mock.Arguments) {
 		// q := args.Get(1).(*dashboards.GetDashboardACLInfoListQuery)
