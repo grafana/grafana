@@ -22,6 +22,7 @@ import {
   AzureMonitorLocations,
   AzureMonitorProvidersResponse,
   AzureMonitorLocationsResponse,
+  AzureGetResourceNamesQuery,
 } from '../types';
 import { routeNames } from '../utils/common';
 import migrateQuery from '../utils/migrateQuery';
@@ -98,10 +99,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     const templateSrv = getTemplateSrv();
 
     const subscriptionId = templateSrv.replace(target.subscription || this.defaultSubscriptionId, scopedVars);
-    const resources = item.resources?.map((r) => ({
-      resourceGroup: templateSrv.replace(r.resourceGroup, scopedVars),
-      resourceName: templateSrv.replace(r.resourceName, scopedVars),
-    }));
+    const resources = item.resources?.map((r) => this.replaceTemplateVariables(r, scopedVars)).flat();
     const metricNamespace = templateSrv.replace(item.metricNamespace, scopedVars);
     const customNamespace = templateSrv.replace(item.customNamespace, scopedVars);
     const timeGrain = templateSrv.replace((item.timeGrain || '').toString(), scopedVars);
@@ -165,53 +163,57 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     });
   }
 
-  getResourceNames(subscriptionId: string, resourceGroup?: string, metricNamespace?: string, skipToken?: string) {
-    const validMetricNamespace = startsWith(metricNamespace?.toLowerCase(), 'microsoft.storage/storageaccounts/')
-      ? 'microsoft.storage/storageaccounts'
-      : metricNamespace;
-    let url = `${this.resourcePath}/subscriptions/${subscriptionId}`;
-    if (resourceGroup) {
-      url += `/resourceGroups/${resourceGroup}`;
-    }
-    url += `/resources?api-version=${this.listByResourceGroupApiVersion}`;
-    if (validMetricNamespace) {
-      url += `&$filter=resourceType eq '${validMetricNamespace}'`;
-    }
-    if (skipToken) {
-      url += `&$skiptoken=${skipToken}`;
-    }
-    return this.getResource(url).then(async (result: any) => {
-      let list: Array<{ text: string; value: string }> = [];
-      if (startsWith(metricNamespace?.toLowerCase(), 'microsoft.storage/storageaccounts/')) {
-        list = ResponseParser.parseResourceNames(result, 'microsoft.storage/storageaccounts');
-        for (let i = 0; i < list.length; i++) {
-          list[i].text += '/default';
-          list[i].value += '/default';
-        }
-      } else {
-        list = ResponseParser.parseResourceNames(result, metricNamespace);
+  async getResourceNames(query: AzureGetResourceNamesQuery, skipToken?: string) {
+    const promises = this.replaceTemplateVariables(query).map(({ metricNamespace, subscriptionId, resourceGroup }) => {
+      const validMetricNamespace = startsWith(metricNamespace?.toLowerCase(), 'microsoft.storage/storageaccounts/')
+        ? 'microsoft.storage/storageaccounts'
+        : metricNamespace;
+      let url = `${this.resourcePath}/subscriptions/${subscriptionId}`;
+      if (resourceGroup) {
+        url += `/resourceGroups/${resourceGroup}`;
       }
-
-      if (result.nextLink) {
-        // If there is a nextLink, we should request more pages
-        const nextURL = new URL(result.nextLink);
-        const nextToken = nextURL.searchParams.get('$skiptoken');
-        if (!nextToken) {
-          throw Error('unable to request the next page of resources');
-        }
-        const nextPage = await this.getResourceNames(subscriptionId, resourceGroup, metricNamespace, nextToken);
-        list = list.concat(nextPage);
+      url += `/resources?api-version=${this.listByResourceGroupApiVersion}`;
+      if (validMetricNamespace) {
+        url += `&$filter=resourceType eq '${validMetricNamespace}'`;
       }
+      if (skipToken) {
+        url += `&$skiptoken=${skipToken}`;
+      }
+      return this.getResource(url).then(async (result: any) => {
+        let list: Array<{ text: string; value: string }> = [];
+        if (startsWith(metricNamespace?.toLowerCase(), 'microsoft.storage/storageaccounts/')) {
+          list = ResponseParser.parseResourceNames(result, 'microsoft.storage/storageaccounts');
+          for (let i = 0; i < list.length; i++) {
+            list[i].text += '/default';
+            list[i].value += '/default';
+          }
+        } else {
+          list = ResponseParser.parseResourceNames(result, metricNamespace);
+        }
 
-      return list;
+        if (result.nextLink) {
+          // If there is a nextLink, we should request more pages
+          const nextURL = new URL(result.nextLink);
+          const nextToken = nextURL.searchParams.get('$skiptoken');
+          if (!nextToken) {
+            throw Error('unable to request the next page of resources');
+          }
+          const nextPage = await this.getResourceNames({ metricNamespace, subscriptionId, resourceGroup }, nextToken);
+          list = list.concat(nextPage);
+        }
+
+        return list;
+      });
     });
+    return (await Promise.all(promises)).flat();
   }
 
   getMetricNamespaces(query: GetMetricNamespacesQuery, globalRegion: boolean) {
     const url = UrlBuilder.buildAzureMonitorGetMetricNamespacesUrl(
       this.resourcePath,
       this.apiPreviewVersion,
-      this.replaceTemplateVariables(query),
+      // Only use the first query, as the metric namespaces should be the same for all queries
+      this.replaceSingleTemplateVariables(query),
       globalRegion,
       this.templateSrv
     );
@@ -246,7 +248,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
       this.resourcePath,
       this.apiVersion,
-      this.replaceTemplateVariables(query),
+      // Only use the first query, as the metric names should be the same for all queries
+      this.replaceSingleTemplateVariables(query),
       this.templateSrv
     );
     return this.getResource(url).then((result: AzureMonitorMetricNamesResponse) => {
@@ -259,7 +262,8 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     const url = UrlBuilder.buildAzureMonitorGetMetricNamesUrl(
       this.resourcePath,
       this.apiVersion,
-      this.replaceTemplateVariables(query),
+      // Only use the first query, as the metric metadata should be the same for all queries
+      this.replaceSingleTemplateVariables(query),
       this.templateSrv
     );
     return this.getResource(url).then((result: AzureMonitorMetricsMetadataResponse) => {
@@ -293,16 +297,43 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     return typeof field === 'string' && field.length > 0;
   }
 
-  private replaceTemplateVariables<T extends { [K in keyof T]: string }>(query: T) {
-    const templateSrv = getTemplateSrv();
+  private replaceSingleTemplateVariables<T extends { [K in keyof T]: string }>(query: T, scopedVars?: ScopedVars) {
+    // This method evaluates template variables supporting multiple values but only returns the first value.
+    // This will work as far as the the first combination of variables is valid.
+    // For example if 'rg1' contains 'res1' and 'rg2' contains 'res2' then
+    // { resourceGroup: ['rg1', 'rg2'], resourceName: ['res1', 'res2'] } would return
+    // { resourceGroup: 'rg1', resourceName: 'res1' } which is valid but
+    // { resourceGroup: ['rg1', 'rg2'], resourceName: ['res2'] } would result in
+    // { resourceGroup: 'rg1', resourceName: 'res2' } which is not.
+    return this.replaceTemplateVariables(query, scopedVars)[0];
+  }
 
-    const workingQuery: { [K in keyof T]: string } = { ...query };
+  private replaceTemplateVariables<T extends { [K in keyof T]: string }>(query: T, scopedVars?: ScopedVars) {
+    const workingQueries: Array<{ [K in keyof T]: string }> = [{ ...query }];
     const keys = Object.keys(query) as Array<keyof T>;
     keys.forEach((key) => {
-      workingQuery[key] = templateSrv.replace(workingQuery[key]);
+      const replaced = this.templateSrv.replace(workingQueries[0][key], scopedVars, 'raw');
+      console.log(this.templateSrv.getVariables());
+      if (replaced.includes(',')) {
+        const multiple = replaced.split(',');
+        const currentQueries = [...workingQueries];
+        multiple.forEach((value, i) => {
+          currentQueries.forEach((q) => {
+            if (i === 0) {
+              q[key] = value;
+            } else {
+              workingQueries.push({ ...q, [key]: value });
+            }
+          });
+        });
+      } else {
+        workingQueries.forEach((q) => {
+          q[key] = replaced;
+        });
+      }
     });
 
-    return workingQuery;
+    return workingQueries;
   }
 
   async getProvider(providerName: string) {

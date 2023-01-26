@@ -259,6 +259,12 @@ export interface LegacyAzureGetMetricMetadataQuery {
   metricName: string;
 }
 
+export interface AzureGetResourceNamesQuery {
+  subscriptionId: string;
+  resourceGroup?: string;
+  metricNamespace?: string;
+}
+
 export interface AzureMonitorLocations {
   displayName: string;
   name: string;
