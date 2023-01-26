@@ -19,9 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/store"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 	kdash "github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -54,7 +54,7 @@ type dashboard struct {
 	updated  time.Time
 
 	// Use generic structure
-	summary *models.EntitySummary
+	summary *entity.EntitySummary
 }
 
 // buildSignal is sent when search index is accessed in organization for which
@@ -912,7 +912,7 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 			slug:     "",
 			created:  time.Now(),
 			updated:  time.Now(),
-			summary: &models.EntitySummary{
+			summary: &entity.EntitySummary{
 				//ID:    0,
 				Name: "General",
 			},

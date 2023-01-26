@@ -10,8 +10,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend/resource/httpadapter"
 )
 
 func (s *Service) registerRoutes() *http.ServeMux {
@@ -130,8 +128,6 @@ func createJSONHandler(logger log.Logger) http.Handler {
 			}
 		}
 
-		config := httpadapter.PluginConfigFromContext(req.Context())
-
 		data := map[string]interface{}{
 			"message": "Hello world from test datasource!",
 			"request": map[string]interface{}{
@@ -139,7 +135,6 @@ func createJSONHandler(logger log.Logger) http.Handler {
 				"url":     req.URL,
 				"headers": req.Header,
 				"body":    reqData,
-				"config":  config,
 			},
 		}
 		bytes, err := json.Marshal(&data)

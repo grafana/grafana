@@ -14,3 +14,5 @@ In order to build and publish the Grafana build Docker image, execute the follow
 docker build -t grafana/build-container:<VERSION> .
 docker push grafana/build-container:<VERSION>
 ```
+
+If you're running on a machine that has an ARM chip (Apple M1/M2, etc.), add `--platform linux/amd64` to the `docker build` command. It can take approximately four hours for an initial build to complete. Due to caching, subsequent builds take less time (~10 mins or so).
