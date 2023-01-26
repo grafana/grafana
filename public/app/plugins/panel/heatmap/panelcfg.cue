@@ -72,10 +72,10 @@ composableKinds: PanelCfg: {
 						PanelOptions: {
 							calculate?: bool | *false
 							color?:     HeatmapColorOptions | *{
-								mode:     "scheme"
+								mode:     HeatmapColorMode & "scheme"
 								scheme:   "Oranges"
 								fill:     "dark-orange"
-								scale:    "exponential"
+								scale:    HeatmapColorScale & "exponential"
 								reverse:  false
 								exponent: 0.5
 								steps:    64
@@ -84,14 +84,14 @@ composableKinds: PanelCfg: {
 								le: 1e-9
 							}
 							rowsFrame?: RowsHeatmapOptions | *{
-								layout: "auto"
+								layout: ui.HeatmapCellLayout & "auto"
 							}
 							showValue:   ui.VisibilityMode | *"auto"
 							cellGap?:    uint8 & >=0 & <=25 | *1
 							cellRadius?: float32 // was cardRadius (not used, but migrated from angular)
 							cellValues?: CellValues | *{}
 							yAxis:       YAxisConfig | *{
-								axisPlacement: "left"
+								axisPlacement: ui.AxisPlacement & "left"
 							}
 							legend: HeatmapLegend | *{
 								show: true
