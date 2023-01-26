@@ -133,11 +133,6 @@ export const Table = memo((props: Props) => {
     [initialSortBy, showRowNums, memoizedColumns, memoizedData, resizable, stateReducer]
   );
 
-  // function updateInitialState(initialState: Partial<GrafanaTableState>) {
-  //   initialState.hiddenColumns = ['0'];
-  //   return initialState;
-  // }
-
   const {
     getTableProps,
     headerGroups,
@@ -153,11 +148,12 @@ export const Table = memo((props: Props) => {
     setHiddenColumns,
   } = useTable(options, useFilters, useSortBy, useAbsoluteLayout, useResizeColumns, useExpanded, usePagination);
 
+  const extendedState = state as GrafanaTableState;
+
+  // Hide RowNumberColumn on toggle
   useEffect(() => {
     !!showRowNums ? setHiddenColumns([]) : setHiddenColumns(['0']);
   }, [showRowNums, setHiddenColumns]);
-
-  const extendedState = state as GrafanaTableState;
 
   /*
     Footer value calculation is being moved in the Table component and the footerValues prop will be deprecated.
