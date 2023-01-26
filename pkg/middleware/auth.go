@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"errors"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -37,7 +38,7 @@ func accessForbidden(c *models.ReqContext) {
 
 func notAuthorized(c *models.ReqContext) {
 	if c.IsApiRequest() {
-		c.JsonApiErr(401, "Unauthorized", nil)
+		c.WriteErrOrFallback(http.StatusUnauthorized, http.StatusText(http.StatusUnauthorized), c.LookupTokenErr)
 		return
 	}
 
