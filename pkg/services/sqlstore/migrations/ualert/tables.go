@@ -20,8 +20,6 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 	// should come in the form of a new migration appended to the end of AddTablesMigrations
 	// instead of modifying an existing one. This ensure that tables are modified in a consistent and correct order.
 	historicalTableMigrations(mg)
-
-	extractAlertmanagerConfigurationHistoryMigration(mg)
 }
 
 // historicalTableMigrations contains those migrations that existed prior to creating the improved messaging around migration immutability.
@@ -48,6 +46,8 @@ func historicalTableMigrations(mg *migrator.Migrator) {
 	addAlertImageMigrations(mg)
 
 	addAlertmanagerConfigHistoryMigrations(mg)
+
+	extractAlertmanagerConfigurationHistoryMigration(mg)
 }
 
 // addAlertDefinitionMigrations should not be modified.
