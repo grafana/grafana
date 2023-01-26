@@ -136,9 +136,9 @@
       },
       "machineName": "apikey",
       "maturity": "merged",
-      "name": "Apikey",
+      "name": "APIKey",
       "pluralMachineName": "apikeys",
-      "pluralName": "Apikeys"
+      "pluralName": "APIKeys"
     },
     "azuremonitordataquery": {
       "category": "composable",
@@ -1869,7 +1869,7 @@
           "serviceaccount",
           "team"
         ],
-        "count": 5
+        "count": 6
       },
       "planned": {
         "name": "planned",
@@ -1932,7 +1932,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 58
+        "count": 57
       },
       "stable": {
         "name": "stable",

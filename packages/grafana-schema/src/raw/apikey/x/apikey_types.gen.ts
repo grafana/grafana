@@ -13,7 +13,7 @@
  */
 export type OrgRole = ('Admin' | 'Editor' | 'Viewer');
 
-export interface Apikey {
+export interface APIKey {
   /**
    * AccessControl metadata associated with a given resource.
    */

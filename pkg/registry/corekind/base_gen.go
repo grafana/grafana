@@ -52,8 +52,8 @@ var (
 	_ kindsys.Core = &team.Kind{}
 )
 
-// Apikey returns the [kindsys.Interface] implementation for the apikey kind.
-func (b *Base) Apikey() *apikey.Kind {
+// APIKey returns the [kindsys.Interface] implementation for the apikey kind.
+func (b *Base) APIKey() *apikey.Kind {
 	return b.apikey
 }
 

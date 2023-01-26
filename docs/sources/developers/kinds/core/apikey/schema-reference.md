@@ -2,11 +2,11 @@
 keywords:
   - grafana
   - schema
-title: Apikey kind
+title: APIKey kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
-# Apikey kind
+# APIKey kind
 
 ## Maturity: merged
 ## Version: 0.0

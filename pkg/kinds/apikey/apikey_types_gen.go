@@ -19,11 +19,8 @@ const (
 	OrgRoleViewer OrgRole = "Viewer"
 )
 
-// OrgRole is a Grafana Organization Role which can be 'Viewer', 'Editor', 'Admin'.
-type OrgRole string
-
-// Apikey defines model for apikey.
-type Apikey struct {
+// APIKey defines model for APIKey.
+type APIKey struct {
 	// AccessControl metadata associated with a given resource.
 	AccessControl map[string]bool `json:"accessControl,omitempty"`
 
@@ -39,3 +36,6 @@ type Apikey struct {
 	// OrgRole is a Grafana Organization Role which can be 'Viewer', 'Editor', 'Admin'.
 	Role OrgRole `json:"role"`
 }
+
+// OrgRole is a Grafana Organization Role which can be 'Viewer', 'Editor', 'Admin'.
+type OrgRole string

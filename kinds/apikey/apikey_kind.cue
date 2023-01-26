@@ -1,6 +1,6 @@
 package kind
 
-name:     "Apikey"
+name:     "APIKey"
 maturity: "merged"
 
 lineage: seqs: [

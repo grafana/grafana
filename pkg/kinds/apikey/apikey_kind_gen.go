@@ -23,9 +23,9 @@ const rootrel string = "kinds/apikey"
 
 // TODO standard generated docs
 type Kind struct {
-	lin    thema.ConvergentLineage[*Apikey]
+	lin    thema.ConvergentLineage[*APIKey]
 	jcodec vmux.Codec
-	valmux vmux.ValueMux[*Apikey]
+	valmux vmux.ValueMux[*APIKey]
 	decl   kindsys.Decl[kindsys.CoreProperties]
 }
 
@@ -50,7 +50,7 @@ func NewKind(rt *thema.Runtime, opts ...thema.BindOption) (*Kind, error) {
 	// Get the thema.Schema that the meta says is in the current version (which
 	// codegen ensures is always the latest)
 	cursch := thema.SchemaP(lin, k.decl.Properties.CurrentVersion)
-	tsch, err := thema.BindType[*Apikey](cursch, &Apikey{})
+	tsch, err := thema.BindType[*APIKey](cursch, &APIKey{})
 	if err != nil {
 		// Should be unreachable, modulo bugs in the Thema->Go code generator
 		return nil, err
@@ -78,18 +78,18 @@ func (k *Kind) Lineage() thema.Lineage {
 }
 
 // TODO standard generated docs
-func (k *Kind) ConvergentLineage() thema.ConvergentLineage[*Apikey] {
+func (k *Kind) ConvergentLineage() thema.ConvergentLineage[*APIKey] {
 	return k.lin
 }
 
 // JSONValueMux is a version multiplexer that maps a []byte containing JSON data
-// at any schematized dashboard version to an instance of Apikey.
+// at any schematized dashboard version to an instance of APIKey.
 //
 // Validation and translation errors emitted from this func will identify the
 // input bytes as "dashboard.json".
 //
 // This is a thin wrapper around Thema's [vmux.ValueMux].
-func (k *Kind) JSONValueMux(b []byte) (*Apikey, thema.TranslationLacunas, error) {
+func (k *Kind) JSONValueMux(b []byte) (*APIKey, thema.TranslationLacunas, error) {
 	return k.valmux(b)
 }
 
