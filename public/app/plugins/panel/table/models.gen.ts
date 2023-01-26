@@ -15,7 +15,6 @@ export const modelVersion = Object.freeze([1, 0]);
 export interface PanelOptions {
   frameIndex: number;
   showHeader: boolean;
-  showRowNumbers?: boolean;
   showTypeIcons?: boolean;
   showRowNumbers?: boolean;
   sortBy?: TableSortByFieldState[];
