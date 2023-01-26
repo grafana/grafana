@@ -34,7 +34,7 @@ import {
   TimeRange,
   toUtc,
 } from '@grafana/data';
-import { config, DataSourceWithBackend, FetchError } from '@grafana/runtime';
+import { BackendSrvRequest, config, DataSourceWithBackend, FetchError } from '@grafana/runtime';
 import { queryLogsSample, queryLogsVolume } from 'app/core/logsModel';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -380,14 +380,14 @@ export class LokiDatasource
     return queries.map((query) => this.languageProvider.exportToAbstractQuery(query));
   }
 
-  async metadataRequest(url: string, params?: Record<string, string | number>) {
+  async metadataRequest(url: string, params?: Record<string, string | number>, options?: Partial<BackendSrvRequest>) {
     // url must not start with a `/`, otherwise the AJAX-request
     // going from the browser will contain `//`, which can cause problems.
     if (url.startsWith('/')) {
       throw new Error(`invalid metadata request url: ${url}`);
     }
 
-    const res = await this.getResource(url, params);
+    const res = await this.getResource(url, params, options);
     return res.data ?? (res || []);
   }
 
@@ -397,19 +397,24 @@ export class LokiDatasource
     const labelMatchers = getStreamSelectorsFromQuery(query);
     const url = 'index/stats';
     const params = { query: '', start, end };
+    const options = { showErrorAlert: false };
 
     let statsForAll: QueryStats = { streams: 0, chunks: 0, bytes: 0, entries: 0 };
 
     for (const labelMatcher of labelMatchers) {
-      params.query = labelMatcher;
-      const data = await this.metadataRequest(url, params);
+      try {
+        params.query = labelMatcher;
+        const data = await this.metadataRequest(url, params, options);
 
-      statsForAll = {
-        streams: statsForAll.streams + data.streams,
-        chunks: statsForAll.chunks + data.chunks,
-        bytes: statsForAll.bytes + data.bytes,
-        entries: statsForAll.entries + data.entries,
-      };
+        statsForAll = {
+          streams: statsForAll.streams + data.streams,
+          chunks: statsForAll.chunks + data.chunks,
+          bytes: statsForAll.bytes + data.bytes,
+          entries: statsForAll.entries + data.entries,
+        };
+      } catch (e) {
+        break;
+      }
     }
 
     return statsForAll;
