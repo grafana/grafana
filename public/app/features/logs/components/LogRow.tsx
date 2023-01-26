@@ -12,6 +12,7 @@ import {
   GrafanaTheme2,
   CoreApp,
   DataFrame,
+  DataSourceWithLogsContextSupport,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { styleMixins, withTheme2, Themeable2, Icon, Tooltip } from '@grafana/ui';
@@ -53,6 +54,7 @@ interface Props extends Themeable2 {
   onClickFilterOutLabel?: (key: string, value: string) => void;
   onContextClick?: () => void;
   getRowContext: (row: LogRowModel, options?: RowContextOptions) => Promise<DataQueryResponse>;
+  getLogRowContextUi?: (row: LogRowModel) => React.ReactNode;
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   showContextToggle?: (row?: LogRowModel) => boolean;
   onClickShowField?: (key: string) => void;
@@ -143,7 +145,9 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     errors?: LogRowContextQueryErrors,
     hasMoreContextRows?: HasMoreContextRows,
     updateLimit?: () => void,
-    logsSortOrder?: LogsSortOrder | null
+    logsSortOrder?: LogsSortOrder | null,
+    getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'],
+    runContextQuery?: () => void
   ) {
     const {
       getRows,
@@ -230,6 +234,8 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               getRows={getRows}
               errors={errors}
               hasMoreContextRows={hasMoreContextRows}
+              getLogRowContextUi={getLogRowContextUi}
+              runContextQuery={runContextQuery}
               updateLimit={updateLimit}
               context={context}
               contextIsOpen={showContext}
@@ -273,8 +279,20 @@ class UnThemedLogRow extends PureComponent<Props, State> {
       return (
         <>
           <LogRowContextProvider row={row} getRowContext={getRowContext} logsSortOrder={logsSortOrder}>
-            {({ result, errors, hasMoreContextRows, updateLimit, logsSortOrder }) => {
-              return <>{this.renderLogRow(result, errors, hasMoreContextRows, updateLimit, logsSortOrder)}</>;
+            {({ result, errors, hasMoreContextRows, updateLimit, runContextQuery, logsSortOrder }) => {
+              return (
+                <>
+                  {this.renderLogRow(
+                    result,
+                    errors,
+                    hasMoreContextRows,
+                    updateLimit,
+                    logsSortOrder,
+                    this.props.getLogRowContextUi,
+                    runContextQuery
+                  )}
+                </>
+              );
             }}
           </LogRowContextProvider>
         </>

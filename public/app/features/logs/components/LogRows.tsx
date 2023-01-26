@@ -10,6 +10,7 @@ import {
   LogsSortOrder,
   CoreApp,
   DataFrame,
+  DataSourceWithLogsContextSupport,
 } from '@grafana/data';
 import { withTheme2, Themeable2 } from '@grafana/ui';
 
@@ -42,6 +43,7 @@ export interface Props extends Themeable2 {
   onClickFilterLabel?: (key: string, value: string) => void;
   onClickFilterOutLabel?: (key: string, value: string) => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
+  getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
   getFieldLinks?: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   onClickShowField?: (key: string) => void;
   onClickHideField?: (key: string) => void;
@@ -128,6 +130,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       onLogRowHover,
       app,
       scrollElement,
+      getLogRowContextUi,
     } = this.props;
     const { renderAll, contextIsOpen } = this.state;
     const { logsRowsTable } = getLogRowStyles(theme);
@@ -156,6 +159,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 key={row.uid}
                 getRows={getRows}
                 getRowContext={getRowContext}
+                getLogRowContextUi={getLogRowContextUi}
                 row={row}
                 showContextToggle={showContextToggle}
                 showRowMenu={!contextIsOpen}
@@ -187,6 +191,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 key={row.uid}
                 getRows={getRows}
                 getRowContext={getRowContext}
+                getLogRowContextUi={getLogRowContextUi}
                 row={row}
                 showContextToggle={showContextToggle}
                 showRowMenu={!contextIsOpen}
