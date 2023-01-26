@@ -94,7 +94,6 @@ export function transformV2(
       }
     }
 
-
     return { ...dataFrame, meta: { ...dataFrame.meta, dataTopic: DataTopic.Annotations } };
   });
 
