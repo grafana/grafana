@@ -170,7 +170,7 @@ export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = Dat
 
   /**
    * This method can be used to display a custom UI in the context view.
-   * @beta
+   * @alpha
    * @internal
    */
   getLogRowContextUi?(row: LogRowModel, runContextQuery?: () => void): React.ReactNode;
