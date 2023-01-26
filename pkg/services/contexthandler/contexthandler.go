@@ -306,18 +306,23 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	*reqContext.Req = *reqContext.Req.WithContext(ctx)
 
 	var (
-		apikey *apikey.APIKey
+		aKey   *apikey.APIKey
 		errKey error
 	)
 	if strings.HasPrefix(keyString, apikeygenprefix.GrafanaPrefix) {
-		apikey, errKey = h.getPrefixedAPIKey(reqContext.Req.Context(), keyString) // decode prefixed key
+		aKey, errKey = h.getPrefixedAPIKey(reqContext.Req.Context(), keyString) // decode prefixed key
 	} else {
-		apikey, errKey = h.getAPIKey(reqContext.Req.Context(), keyString) // decode legacy api key
+		aKey, errKey = h.getAPIKey(reqContext.Req.Context(), keyString) // decode legacy api key
 	}
 
 	if errKey != nil {
 		status := http.StatusInternalServerError
 		if errors.Is(errKey, apikeygen.ErrInvalidApiKey) {
+			status = http.StatusUnauthorized
+		}
+		// this is when the getPrefixAPIKey return error form the apikey package instead of the apikeygen
+		// when called in the sqlx store methods
+		if errors.Is(errKey, apikey.ErrInvalid) {
 			status = http.StatusUnauthorized
 		}
 		reqContext.JsonApiErr(status, InvalidAPIKey, errKey)
@@ -329,12 +334,12 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	if getTime == nil {
 		getTime = time.Now
 	}
-	if apikey.Expires != nil && *apikey.Expires <= getTime().Unix() {
+	if aKey.Expires != nil && *aKey.Expires <= getTime().Unix() {
 		reqContext.JsonApiErr(http.StatusUnauthorized, "Expired API key", nil)
 		return true
 	}
 
-	if apikey.IsRevoked != nil && *apikey.IsRevoked {
+	if aKey.IsRevoked != nil && *aKey.IsRevoked {
 		reqContext.JsonApiErr(http.StatusUnauthorized, "Revoked token", nil)
 
 		return true
@@ -350,15 +355,15 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 		if err := h.apiKeyService.UpdateAPIKeyLastUsedDate(context.Background(), id); err != nil {
 			reqContext.Logger.Warn("failed to update last use date for api key", "id", id)
 		}
-	}(apikey.Id)
+	}(aKey.Id)
 
-	if apikey.ServiceAccountId == nil || *apikey.ServiceAccountId < 1 { //There is no service account attached to the apikey
+	if aKey.ServiceAccountId == nil || *aKey.ServiceAccountId < 1 { //There is no service account attached to the apikey
 		// Use the old APIkey method.  This provides backwards compatibility.
 		// will probably have to be supported for a long time.
 		reqContext.SignedInUser = &user.SignedInUser{}
-		reqContext.OrgRole = apikey.Role
-		reqContext.ApiKeyID = apikey.Id
-		reqContext.OrgID = apikey.OrgId
+		reqContext.OrgRole = aKey.Role
+		reqContext.ApiKeyID = aKey.Id
+		reqContext.OrgID = aKey.OrgId
 		reqContext.IsSignedIn = true
 		return true
 	}
@@ -366,7 +371,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	//There is a service account attached to the API key
 
 	//Use service account linked to API key as the signed in user
-	querySignedInUser := user.GetSignedInUserQuery{UserID: *apikey.ServiceAccountId, OrgID: apikey.OrgId}
+	querySignedInUser := user.GetSignedInUserQuery{UserID: *aKey.ServiceAccountId, OrgID: aKey.OrgId}
 	querySignedInUserResult, err := h.userService.GetSignedInUserWithCacheCtx(reqContext.Req.Context(), &querySignedInUser)
 	if err != nil {
 		reqContext.Logger.Error(
