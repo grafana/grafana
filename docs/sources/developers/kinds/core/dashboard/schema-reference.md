@@ -151,7 +151,7 @@ TODO docs
 
 ### VariableModel
 
-TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
+Dashboard variables. See https://grafana.com/docs/grafana/latest/variables/variable-types/
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|

@@ -251,17 +251,19 @@ type AnnotationTarget struct {
 // Common information that all types of variables shares.
 // A variable in Grafana is a container that can hold different types of data, and it variates depending on the query.
 type BaseVariableModel struct {
-	Description  *string                 `json:"description,omitempty"`
-	Error        *map[string]interface{} `json:"error,omitempty"`
-	Global       bool                    `json:"global"`
-	Hide         VariableHide            `json:"hide"`
-	Id           string                  `json:"id"`
-	Index        int                     `json:"index"`
-	Label        *string                 `json:"label,omitempty"`
-	Name         string                  `json:"name"`
-	RootStateKey *string                 `json:"rootStateKey,omitempty"`
-	SkipUrlSync  bool                    `json:"skipUrlSync"`
-	State        LoadingState            `json:"state"`
+	Description *string                 `json:"description,omitempty"`
+	Error       *map[string]interface{} `json:"error,omitempty"`
+	Global      bool                    `json:"global"`
+
+	// Options to set a variable visible in the UI
+	Hide         VariableHide `json:"hide"`
+	Id           string       `json:"id"`
+	Index        int          `json:"index"`
+	Label        *string      `json:"label,omitempty"`
+	Name         string       `json:"name"`
+	RootStateKey *string      `json:"rootStateKey,omitempty"`
+	SkipUrlSync  bool         `json:"skipUrlSync"`
+	State        LoadingState `json:"state"`
 
 	// FROM: packages/grafana-data/src/types/templateVars.ts
 	// TODO docs
@@ -308,8 +310,8 @@ type Link struct {
 // TODO docs
 type LinkType string
 
-// VariableModel defines model for VariableModel.
-type VariableModel struct {
+// SystemVariableModel defines model for SystemVariableModel.
+type SystemVariableModel struct {
 	// Embedded struct due to allOf(#/components/schemas/SystemVariable)
 	SystemVariable `yaml:",inline"`
 	// Embedded fields due to inline allOf schema
@@ -474,8 +476,8 @@ type MatcherConfig struct {
 	Options *interface{} `json:"options,omitempty"`
 }
 
-// OrgVariableModel defines model for OrgVariableModel.
-type OrgVariableModel struct {
+// OrgSystemVariableModel defines model for OrgSystemVariableModel.
+type OrgSystemVariableModel struct {
 	// Embedded struct due to allOf(#/components/schemas/SystemVariable)
 	SystemVariable `yaml:",inline"`
 	// Embedded fields due to inline allOf schema
@@ -739,8 +741,8 @@ type Transformation struct {
 	Options map[string]interface{} `json:"options"`
 }
 
-// UserVariableModel defines model for UserVariableModel.
-type UserVariableModel struct {
+// UserSystemVariableModel defines model for UserSystemVariableModel.
+type UserSystemVariableModel struct {
 	// Embedded struct due to allOf(#/components/schemas/SystemVariable)
 	SystemVariable `yaml:",inline"`
 	// Embedded fields due to inline allOf schema
@@ -767,10 +769,10 @@ type ValueMappingResult struct {
 	Text  *string `json:"text,omitempty"`
 }
 
-// VariableHide defines model for VariableHide.
+// Options to set a variable visible in the UI
 type VariableHide int
 
-// TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
+// Dashboard variables. See https://grafana.com/docs/grafana/latest/variables/variable-types/
 type VariableModel interface{}
 
 // Option to be selected in a variable.
@@ -781,10 +783,12 @@ type VariableOption struct {
 	Value    interface{} `json:"value"`
 }
 
-// VariableRefresh defines model for VariableRefresh.
+// Options to config when to refresh a variable
+// - `onLoad`: Queries the data source every time the dashboard loads.
+// - `onTimeRangeChanged`: Queries the data source when the dashboard time range changes.
 type VariableRefresh int
 
-// VariableSort defines model for VariableSort.
+// Options to config how to sort variable options
 type VariableSort int
 
 // FROM: packages/grafana-data/src/types/templateVars.ts

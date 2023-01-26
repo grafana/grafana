@@ -121,7 +121,7 @@ lineage: seqs: [
 				} @cuetsy(kind="interface")
 
 				// Dashboard variables. See https://grafana.com/docs/grafana/latest/variables/variable-types/
-				#VariableModel: #QueryVariableModel | #AdHocVariableModel | #ConstantVariableModel | #DataSourceVariableModel | #IntervalVariableModel | #TextBoxVariableModel | #CustomVariableModel | #UserVariableModel | #OrgVariableModel | #DashboardVariableModel @cuetsy(kind="type")
+				#VariableModel: #QueryVariableModel | #AdHocVariableModel | #ConstantVariableModel | #DataSourceVariableModel | #IntervalVariableModel | #TextBoxVariableModel | #CustomVariableModel | #UserSystemVariableModel | #OrgSystemVariableModel | #DashboardSystemVariableModel @cuetsy(kind="type")
 
 				// Common information that all types of variables shares.
 				// A variable in Grafana is a container that can hold different types of data, and it variates depending on the query.
@@ -168,7 +168,7 @@ lineage: seqs: [
 				} @cuetsy(kind="interface")
 
 				// Variable injected by the system which holds the current dashboard.
-				#DashboardVariableModel: {
+				#DashboardSystemVariableModel: {
 					#SystemVariable
 					current: {
 						value: {
@@ -179,7 +179,7 @@ lineage: seqs: [
 				} @cuetsy(kind="interface")
 
 				// Variable injected by the system which holds the current organization.
-				#OrgVariableModel: {
+				#OrgSystemVariableModel: {
 					#SystemVariable
 					current: {
 						value: {
@@ -190,7 +190,7 @@ lineage: seqs: [
 				} @cuetsy(kind="interface")
 
 				// Variable injected by the system which holds the current user.
-				#UserVariableModel: {
+				#UserSystemVariableModel: {
 					#SystemVariable
 					current: {
 						value: {

@@ -69,9 +69,9 @@ export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
 };
 
 /**
- * TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
+ * Dashboard variables. See https://grafana.com/docs/grafana/latest/variables/variable-types/
  */
-export type VariableModel = (QueryVariableModel | AdHocVariableModel | ConstantVariableModel | DataSourceVariableModel | IntervalVariableModel | TextBoxVariableModel | CustomVariableModel | UserVariableModel | OrgVariableModel | DashboardVariableModel);
+export type VariableModel = (QueryVariableModel | AdHocVariableModel | ConstantVariableModel | DataSourceVariableModel | IntervalVariableModel | TextBoxVariableModel | CustomVariableModel | UserSystemVariableModel | OrgSystemVariableModel | DashboardSystemVariableModel);
 
 /**
  * Common information that all types of variables shares.
@@ -139,7 +139,7 @@ export interface SystemVariable extends BaseVariableModel {
 /**
  * Variable injected by the system which holds the current dashboard.
  */
-export interface DashboardVariableModel extends SystemVariable {
+export interface DashboardSystemVariableModel extends SystemVariable {
   current: {
     value: {
       name: string;
@@ -151,7 +151,7 @@ export interface DashboardVariableModel extends SystemVariable {
 /**
  * Variable injected by the system which holds the current organization.
  */
-export interface OrgVariableModel extends SystemVariable {
+export interface OrgSystemVariableModel extends SystemVariable {
   current: {
     value: {
       name: string;
@@ -163,7 +163,7 @@ export interface OrgVariableModel extends SystemVariable {
 /**
  * Variable injected by the system which holds the current user.
  */
-export interface UserVariableModel extends SystemVariable {
+export interface UserSystemVariableModel extends SystemVariable {
   current: {
     value: {
       login: string;
@@ -196,6 +196,9 @@ export interface VariableOption {
   value: (string | Array<string>);
 }
 
+/**
+ * Variable which value is set by a free text with an optional default value.
+ */
 export interface TextBoxVariableModel extends VariableWithOptions {
   /**
    * This can be null
@@ -204,24 +207,48 @@ export interface TextBoxVariableModel extends VariableWithOptions {
   type: 'textbox';
 }
 
+/**
+ * Variable which value cannot be changed
+ */
 export interface ConstantVariableModel extends VariableWithOptions {
   type: 'constant';
 }
 
+/**
+ * Variables to represents time spans such as 1m, 1h, 1d.
+ */
 export interface IntervalVariableModel extends VariableWithOptions {
+  /**
+   * This option allows you to specify how many times the current time range should be divided to calculate the current `auto` time span.
+   * Configuring `auto_min` and or `auto_count` will setup the auto interval to use the min or count option.
+   */
   auto: boolean;
+  /**
+   * Select the number of times the current time range will be divided to calculate the value, similar to the Max data points query option.
+   * For example, if the current visible time range is 30 minutes, then the auto interval groups the data into 30 one-minute increments.
+   */
   auto_count: number;
+  /**
+   * The minimum threshold below which the step count intervals will not divide the time.
+   * For example, if the minimum interval is set to `2m`, and the value is `30m` then Grafana would group the data into 15 two-minute increments.
+   */
   auto_min: string;
   refresh: VariableRefresh;
   type: 'interval';
 }
 
+/**
+ * Variable which value is selected from a list of options and it support the selection of multiple values.
+ */
 export interface VariableWithMultiSupport extends VariableWithOptions {
   allValue?: string;
   includeAll: boolean;
   multi: boolean;
 }
 
+/**
+ * Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on.
+ */
 export interface QueryVariableModel extends VariableWithMultiSupport {
   datasource?: DataSourceRef;
   definition: string;
@@ -232,28 +259,45 @@ export interface QueryVariableModel extends VariableWithMultiSupport {
   type: 'query';
 }
 
+/**
+ * Variable which options are different data sources from the same type.
+ */
 export interface DataSourceVariableModel extends VariableWithMultiSupport {
   refresh: VariableRefresh;
   regex: string;
   type: 'datasource';
 }
 
+/**
+ * Define the variable options manually using a comma-separated list.
+ */
 export interface CustomVariableModel extends VariableWithMultiSupport {
   type: 'custom';
 }
 
+/**
+ * Options to set a variable visible in the UI
+ */
 export enum VariableHide {
   dontHide = 0,
   hideLabel = 1,
   hideVariable = 2,
 }
 
+/**
+ * Options to config when to refresh a variable
+ * - `onDashboardLoad`: Queries the data source every time the dashboard loads.
+ * - `onTimeRangeChanged`: Queries the data source when the dashboard time range changes.
+ */
 export enum VariableRefresh {
   never = 0,
   onDashboardLoad = 1,
   onTimeRangeChanged = 2,
 }
 
+/**
+ * Options to config how to sort variable options
+ */
 export enum VariableSort {
   alphabeticalAsc = 1,
   alphabeticalCaseInsensitiveAsc = 5,
