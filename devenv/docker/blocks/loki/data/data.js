@@ -96,7 +96,7 @@ function escapeLogFmtKey(key) {
 
 function escapeLogFmtValue(value) {
   if (logFmtProblemRe.test(value)) {
-    throw new Error(`invalid logfmt-value: ${key}`)
+    throw new Error(`invalid logfmt-value: ${value}`)
   }
 
   // we must handle the space-character because we have values with spaces :-(
