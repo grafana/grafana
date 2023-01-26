@@ -15,13 +15,14 @@ import (
 type DashboardSnapshotStore struct {
 	store db.DB
 	log   log.Logger
+	cfg   *setting.Cfg
 }
 
 // DashboardStore implements the Store interface
 var _ dashboardsnapshots.Store = (*DashboardSnapshotStore)(nil)
 
-func ProvideStore(db db.DB) *DashboardSnapshotStore {
-	return &DashboardSnapshotStore{store: db, log: log.New("dashboardsnapshot.store")}
+func ProvideStore(db db.DB, cfg *setting.Cfg) *DashboardSnapshotStore {
+	return &DashboardSnapshotStore{store: db, log: log.New("dashboardsnapshot.store"), cfg: cfg}
 }
 
 // DeleteExpiredSnapshots removes snapshots with old expiry dates.
@@ -29,7 +30,7 @@ func ProvideStore(db db.DB) *DashboardSnapshotStore {
 // Snapshot expiry is decided by the user when they share the snapshot.
 func (d *DashboardSnapshotStore) DeleteExpiredSnapshots(ctx context.Context, cmd *dashboardsnapshots.DeleteExpiredSnapshotsCommand) error {
 	return d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		if !setting.SnapShotRemoveExpired {
+		if !d.cfg.SnapShotRemoveExpired {
 			d.log.Warn("[Deprecated] The snapshot_remove_expired setting is outdated. Please remove from your config.")
 			return nil
 		}
