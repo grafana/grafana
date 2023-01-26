@@ -13,12 +13,14 @@ interface Props extends PanelProps<PanelOptions> {}
 export function TablePanel(props: Props) {
   const { data, height, width, options, fieldConfig, id } = props;
 
+  // JEV: error on load (sometimes) -> The pseudo class ":nth-child" is potentially unsafe when doing server-side rendering. Try changing it to ":nth-of-type".
+
   const theme = useTheme2();
   const panelContext = usePanelContext();
   const frames = data.series;
   const mainFrames = frames.filter((f) => f.meta?.custom?.parentRowIndex === undefined);
   const subFrames = frames.filter((f) => f.meta?.custom?.parentRowIndex !== undefined);
-  const count = mainFrames?.length;
+  const count = mainFrames.length;
   const hasFields = mainFrames[0]?.fields.length;
   const currentIndex = getCurrentFrameIndex(mainFrames, options);
   const main = mainFrames[currentIndex];
@@ -46,6 +48,7 @@ export function TablePanel(props: Props) {
       noHeader={!options.showHeader}
       showTypeIcons={options.showTypeIcons}
       resizable={true}
+      showRowNumbers={options.showRowNums}
       initialSortBy={options.sortBy}
       onSortByChange={(sortBy) => onSortByChange(sortBy, props)}
       onColumnResize={(displayName, width) => onColumnResize(displayName, width, props)}

@@ -47,6 +47,7 @@ export const Table = memo((props: Props) => {
     columnMinWidth = COLUMN_MIN_WIDTH,
     noHeader,
     resizable = true,
+    showRowNumbers,
     initialSortBy,
     footerOptions,
     showTypeIcons,

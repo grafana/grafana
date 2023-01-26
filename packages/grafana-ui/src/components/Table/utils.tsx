@@ -40,6 +40,7 @@ import {
 } from './types';
 
 export const EXPANDER_WIDTH = 50;
+const ROW_NUMBER_WIDTH = 50;
 
 export function getTextAlign(field?: Field): Property.JustifyContent {
   if (!field) {
@@ -160,6 +161,35 @@ export function getColumns(
   }
 
   return columns;
+}
+
+export function buildFieldsForOptionalRowNums(totalRows: number): Field {
+  return {
+    name: ' ',
+    display: function (value) {
+      console.log(value, 'value');
+      return value;
+    },
+    type: FieldType.number,
+    config: {
+      color: { mode: 'thresholds' },
+      custom: {
+        align: 'auto',
+        cellOptions: { type: 'auto' },
+        inspect: false,
+        width: ROW_NUMBER_WIDTH,
+      },
+    },
+    values: buildBufferedValues(totalRows),
+  };
+}
+
+function buildBufferedValues(totalRows: number): ArrayVector<number> {
+  let arr = [];
+  for (let i = 1; i <= totalRows; i++) {
+    arr.push(i);
+  }
+  return new ArrayVector(arr);
 }
 
 export function getCellComponent(displayMode: TableCellDisplayMode, field: Field): CellComponent {
