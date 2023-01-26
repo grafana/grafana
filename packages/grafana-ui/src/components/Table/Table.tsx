@@ -56,6 +56,7 @@ export const Table = memo((props: Props) => {
     footerValues,
     enablePagination,
   } = props;
+  console.log(showRowNums);
 
   const listRef = useRef<VariableSizeList>(null);
   const tableDivRef = useRef<HTMLDivElement>(null);
@@ -107,20 +108,13 @@ export const Table = memo((props: Props) => {
 
   // React-table column definitions
   const memoizedColumns = useMemo(
-    () =>
-      getColumns(
-        addNumbersRowToTable(data, showRowNums),
-        width,
-        columnMinWidth,
-        !!subData?.length,
-        footerItems,
-        isCountRowsSet
-      ),
-    [data, width, columnMinWidth, footerItems, subData, isCountRowsSet, showRowNums]
+    () => getColumns(addNumbersRowToTable(data), width, columnMinWidth, !!subData?.length, footerItems, isCountRowsSet),
+    [data, width, columnMinWidth, footerItems, subData, isCountRowsSet]
   );
 
   // Internal react table state reducer
   const stateReducer = useTableStateReducer(props);
+  // console.log(stateReducer, 'stateReducer');
 
   const options: any = useMemo(
     () => ({
@@ -138,6 +132,8 @@ export const Table = memo((props: Props) => {
     [initialSortBy, memoizedColumns, memoizedData, resizable, stateReducer]
   );
 
+  // console.log(getInitialState(initialSortBy, memoizedColumns), 'getInitState');
+
   const {
     getTableProps,
     headerGroups,
@@ -150,7 +146,6 @@ export const Table = memo((props: Props) => {
     gotoPage,
     setPageSize,
     pageOptions,
-    // getToggleHiddenProps,
   } = useTable(options, useFilters, useSortBy, useAbsoluteLayout, useResizeColumns, useExpanded, usePagination);
 
   const extendedState = state as GrafanaTableState;
@@ -320,15 +315,11 @@ export const Table = memo((props: Props) => {
     );
   }
 
-  function addNumbersRowToTable(data: DataFrame, showRowNums: boolean | undefined): DataFrame {
-    if (showRowNums) {
-      const rowField: Field = buildFieldsForOptionalRowNums(data.length);
-      const newData = cloneDeep(data);
-      newData.fields = [rowField, ...newData.fields];
-      return newData;
-    }
-
-    return data;
+  function addNumbersRowToTable(data: DataFrame): DataFrame {
+    const rowField: Field = buildFieldsForOptionalRowNums(data.length);
+    const newData = cloneDeep(data);
+    newData.fields = [rowField, ...newData.fields];
+    return newData;
   }
 
   const getItemSize = (index: number): number => {
