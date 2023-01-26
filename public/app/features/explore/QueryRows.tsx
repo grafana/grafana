@@ -50,8 +50,18 @@ export const QueryRows = ({ exploreId }: Props) => {
   }, [dispatch, exploreId]);
 
   const onChange = useCallback(
-    (newQueries: DataQuery[]) => {
+    async (newQueries: DataQuery[]) => {
       dispatch(changeQueriesAction({ queries: newQueries, exploreId }));
+
+      for (const newQuery of newQueries) {
+        for (const oldQuery of queries) {
+          if (newQuery.refId === oldQuery.refId && newQuery.datasource?.type !== oldQuery.datasource?.type) {
+            const queryDatasource = await getDataSourceSrv().get(query.datasource);
+            const targetDS = await getDataSourceSrv().get({ uid: ds.uid });
+            dispatch(importQueries(exploreId, queries, queryDatasource, targetDS, query.refId));
+          }
+        }
+      }
 
       // if we are removing a query we want to run the remaining ones
       if (newQueries.length < queries.length) {
@@ -68,12 +78,6 @@ export const QueryRows = ({ exploreId }: Props) => {
     [onChange, queries]
   );
 
-  const onMixedDataSourceChange = async (ds: DataSourceInstanceSettings, query: DataQuery) => {
-    const queryDatasource = await getDataSourceSrv().get(query.datasource);
-    const targetDS = await getDataSourceSrv().get({ uid: ds.uid });
-    dispatch(importQueries(exploreId, queries, queryDatasource, targetDS, query.refId));
-  };
-
   const onQueryCopied = () => {
     reportInteraction('grafana_explore_query_row_copy');
   };
@@ -89,7 +93,6 @@ export const QueryRows = ({ exploreId }: Props) => {
   return (
     <QueryEditorRows
       dsSettings={dsSettings}
-      onDatasourceChange={(ds: DataSourceInstanceSettings, query: DataQuery) => onMixedDataSourceChange(ds, query)}
       queries={queries}
       onQueriesChange={onChange}
       onAddQuery={onAddQuery}
