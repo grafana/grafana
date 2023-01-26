@@ -63,7 +63,8 @@ export function LokiContextUi(props: LokiContextUiProps) {
     return () => {
       clearTimeout(timerHandle.current);
     };
-  }, [contextFilters, initialized, updateFilter]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contextFilters, initialized]);
 
   useAsync(async () => {
     await languageProvider.start();
