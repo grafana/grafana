@@ -141,7 +141,6 @@ export class LokiDatasource
     super(instanceSettings);
 
     this.languageProvider = new LanguageProvider(this);
-    this.languageProvider.start();
     const settingsData = instanceSettings.jsonData || {};
     this.maxLines = parseInt(settingsData.maxLines ?? '0', 10) || DEFAULT_MAX_LINES;
     this.annotations = {
