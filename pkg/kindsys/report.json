@@ -1542,7 +1542,7 @@
     "testdatadataquery": {
       "category": "composable",
       "codeowners": [
-        "grafana/backend-platform"
+        "grafana/plugins-platform-frontend"
       ],
       "currentVersion": [
         0,
@@ -1557,7 +1557,7 @@
         "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/testdata/dataquery.gen.ts"
       },
       "machineName": "testdatadataquery",
-      "maturity": "merged",
+      "maturity": "experimental",
       "name": "TestDataDataQuery",
       "pluralMachineName": "testdatadataquerys",
       "pluralName": "TestDataDataQuerys",
@@ -1873,10 +1873,11 @@
           "statetimelinepanelcfg",
           "statpanelcfg",
           "statushistorypanelcfg",
+          "testdatadataquery",
           "textpanelcfg",
           "xychartpanelcfg"
         ],
-        "count": 14
+        "count": 15
       },
       "mature": {
         "name": "mature",
@@ -1891,10 +1892,9 @@
           "preferences",
           "publicdashboard",
           "serviceaccount",
-          "team",
-          "testdatadataquery"
+          "team"
         ],
-        "count": 7
+        "count": 6
       },
       "planned": {
         "name": "planned",
