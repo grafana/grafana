@@ -51,6 +51,27 @@ export interface DataQuery {
   refId: string;
 }
 
+export interface BaseDimensionConfig {
+  field?: string;
+  fixed: (string | number);
+}
+
+export interface ScaleDimensionConfig extends BaseDimensionConfig {
+  max: number;
+  min: number;
+}
+
+/**
+ * This is actually an empty interface used mainly for naming?
+ */
+export interface ColorDimensionConfig extends BaseDimensionConfig {}
+
+export enum TextDimensionMode {
+  Field = 'field',
+  Fixed = 'fixed',
+  Template = 'template',
+}
+
 export interface MapLayerOptions {
   /**
    * Custom options depending on the type
@@ -654,6 +675,10 @@ export interface DataSourceRef {
    * Specific datasource instance
    */
   uid?: string;
+}
+
+export interface TextDimensionConfig extends BaseDimensionConfig {
+  mode: TextDimensionMode;
 }
 
 export interface FrameGeometrySource {
