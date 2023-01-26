@@ -13,6 +13,7 @@
   "ts-node": {
     "compilerOptions": {
       "isolatedModules": false,
+      "resolveJsonModule": true,
       "module": "commonjs"
     }
   }

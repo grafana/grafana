@@ -86,7 +86,7 @@ export class DashboardModel implements TimeModel {
   templating: { list: any[] };
   private originalTemplating: any;
   annotations: { list: AnnotationQuery[] };
-  refresh: any;
+  refresh: string;
   snapshot: any;
   schemaVersion: number;
   version: number;
@@ -145,7 +145,7 @@ export class DashboardModel implements TimeModel {
     this.liveNow = Boolean(data.liveNow);
     this.templating = this.ensureListExist(data.templating);
     this.annotations = this.ensureListExist(data.annotations);
-    this.refresh = data.refresh;
+    this.refresh = data.refresh || '';
     this.snapshot = data.snapshot;
     this.schemaVersion = data.schemaVersion ?? 0;
     this.fiscalYearStartMonth = data.fiscalYearStartMonth ?? 0;
