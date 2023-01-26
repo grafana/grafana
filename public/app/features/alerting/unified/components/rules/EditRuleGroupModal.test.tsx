@@ -10,9 +10,9 @@ import {
   mockDataSource,
   mockPromAlertingRule,
   mockRulerAlertingRule,
+  mockRulerRecordingRule,
+  mockRulerRuleGroup,
   mockStore,
-  onlyRecordingRulerRules,
-  someCloudRulerRules,
   someRulerRules,
 } from '../../mocks';
 import { GRAFANA_DATASOURCE_NAME } from '../../utils/datasource';
@@ -23,6 +23,37 @@ const dsSettings = mockDataSource({
   name: 'Prometheus-1',
   uid: 'Prometheus-1',
 });
+
+export const someCloudRulerRules: RulerRulesConfigDTO = {
+  namespace1: [
+    mockRulerRuleGroup({
+      name: 'group1',
+      rules: [
+        mockRulerRecordingRule({
+          record: 'instance:node_num_cpu:sum',
+          expr: 'count without (cpu) (count without (mode) (node_cpu_seconds_total{job="integrations/node_exporter"}))',
+          labels: { type: 'cpu' },
+        }),
+        mockRulerAlertingRule({ alert: 'nonRecordingRule' }),
+      ],
+    }),
+  ],
+};
+
+export const onlyRecordingRulerRules: RulerRulesConfigDTO = {
+  namespace1: [
+    mockRulerRuleGroup({
+      name: 'group1',
+      rules: [
+        mockRulerRecordingRule({
+          record: 'instance:node_num_cpu:sum',
+          expr: 'count without (cpu) (count without (mode) (node_cpu_seconds_total{job="integrations/node_exporter"}))',
+          labels: { type: 'cpu' },
+        }),
+      ],
+    }),
+  ],
+};
 
 const grafanaNamespace: CombinedRuleNamespace = {
   name: 'namespace1',

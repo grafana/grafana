@@ -461,37 +461,6 @@ export const someRulerRules: RulerRulesConfigDTO = {
   namespace2: [mockRulerRuleGroup({ name: 'group3', rules: [mockRulerAlertingRule({ alert: 'alert3' })] })],
 };
 
-export const someCloudRulerRules: RulerRulesConfigDTO = {
-  namespace1: [
-    mockRulerRuleGroup({
-      name: 'group1',
-      rules: [
-        mockRulerRecordingRule({
-          record: 'instance:node_num_cpu:sum',
-          expr: 'count without (cpu) (count without (mode) (node_cpu_seconds_total{job="integrations/node_exporter"}))',
-          labels: { type: 'cpu' },
-        }),
-        mockRulerAlertingRule({ alert: 'nonRecordingRule' }),
-      ],
-    }),
-  ],
-};
-
-export const onlyRecordingRulerRules: RulerRulesConfigDTO = {
-  namespace1: [
-    mockRulerRuleGroup({
-      name: 'group1',
-      rules: [
-        mockRulerRecordingRule({
-          record: 'instance:node_num_cpu:sum',
-          expr: 'count without (cpu) (count without (mode) (node_cpu_seconds_total{job="integrations/node_exporter"}))',
-          labels: { type: 'cpu' },
-        }),
-      ],
-    }),
-  ],
-};
-
 export const mockCombinedRule = (partial?: Partial<CombinedRule>): CombinedRule => ({
   name: 'mockRule',
   query: 'expr',
