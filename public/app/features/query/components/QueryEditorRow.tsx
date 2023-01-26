@@ -243,7 +243,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   isWaitingForDatasourceToLoad(): boolean {
     // if we not yet have loaded the datasource in state the
     // ds in props and the ds in state will have different values.
-    return this.props.dataSource.type !== this.state.loadedDataSourceIdentifier;
+    return this.props.dataSource.uid !== this.state.loadedDataSourceIdentifier;
   }
 
   renderPluginEditor = () => {
