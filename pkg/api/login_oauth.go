@@ -100,6 +100,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *contextmodel.ReqContext) {
 
 			cookies.WriteCookie(ctx.Resp, OauthStateCookieName, redirect.Extra[authn.KeyOAuthState], hs.Cfg.OAuthCookieMaxAge, hs.CookieOptionsFromCfg)
 			ctx.Redirect(redirect.URL)
+			return
 		}
 
 		identity, err := hs.authnService.Login(ctx.Req.Context(), authn.ClientWithPrefix(name), req)
@@ -122,6 +123,7 @@ func (hs *HTTPServer) OAuthLogin(ctx *contextmodel.ReqContext) {
 		}
 
 		ctx.Redirect(redirectURL)
+		return
 	}
 
 	provider := hs.SocialService.GetOAuthInfoProvider(name)
