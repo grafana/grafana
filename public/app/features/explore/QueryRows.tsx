@@ -56,9 +56,9 @@ export const QueryRows = ({ exploreId }: Props) => {
       for (const newQuery of newQueries) {
         for (const oldQuery of queries) {
           if (newQuery.refId === oldQuery.refId && newQuery.datasource?.type !== oldQuery.datasource?.type) {
-            const queryDatasource = await getDataSourceSrv().get(query.datasource);
-            const targetDS = await getDataSourceSrv().get({ uid: ds.uid });
-            dispatch(importQueries(exploreId, queries, queryDatasource, targetDS, query.refId));
+            const queryDatasource = await getDataSourceSrv().get(newQuery.datasource);
+            const targetDS = await getDataSourceSrv().get({ uid: newQuery.datasource?.uid });
+            dispatch(importQueries(exploreId, queries, queryDatasource, targetDS, newQuery.refId));
           }
         }
       }
