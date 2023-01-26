@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/kinds/preferences"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -35,11 +36,11 @@ func (hs *HTTPServer) SetHomeDashboard(c *models.ReqContext) response.Response {
 		if query.UID == "" {
 			dashboardID = 0 // clear the value
 		} else {
-			err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
+			queryResult, err := hs.DashboardService.GetDashboard(c.Req.Context(), &query)
 			if err != nil {
 				return response.Error(404, "Dashboard not found", err)
 			}
-			dashboardID = query.Result.ID
+			dashboardID = queryResult.ID
 		}
 	}
 
@@ -77,29 +78,37 @@ func (hs *HTTPServer) getPreferencesFor(ctx context.Context, orgID, userID, team
 	// when homedashboardID is 0, that means it is the default home dashboard, no UID would be returned in the response
 	if preference.HomeDashboardID != 0 {
 		query := dashboards.GetDashboardQuery{ID: preference.HomeDashboardID, OrgID: orgID}
-		err = hs.DashboardService.GetDashboard(ctx, &query)
+		queryResult, err := hs.DashboardService.GetDashboard(ctx, &query)
 		if err == nil {
-			dashboardUID = query.Result.UID
+			dashboardUID = queryResult.UID
 		}
 	}
 
-	weekStart := ""
-	if preference.WeekStart != nil {
-		weekStart = *preference.WeekStart
-	}
+	dto := preferences.Preferences{}
 
-	dto := dtos.Prefs{
-		Theme:            preference.Theme,
-		HomeDashboardID:  preference.HomeDashboardID,
-		HomeDashboardUID: dashboardUID,
-		Timezone:         preference.Timezone,
-		WeekStart:        weekStart,
+	if preference.WeekStart != nil && *preference.WeekStart != "" {
+		dto.WeekStart = preference.WeekStart
+	}
+	if preference.Theme != "" {
+		dto.Theme = &preference.Theme
+	}
+	if dashboardUID != "" {
+		dto.HomeDashboardUID = &dashboardUID
+	}
+	if preference.Timezone != "" {
+		dto.Timezone = &preference.Timezone
 	}
 
 	if preference.JSONData != nil {
-		dto.Language = preference.JSONData.Language
-		dto.Navbar = preference.JSONData.Navbar
-		dto.QueryHistory = preference.JSONData.QueryHistory
+		if preference.JSONData.Language != "" {
+			dto.Language = &preference.JSONData.Language
+		}
+
+		if preference.JSONData.QueryHistory.HomeTab != "" {
+			dto.QueryHistory = &preferences.QueryHistoryPreference{
+				HomeTab: &preference.JSONData.QueryHistory.HomeTab,
+			}
+		}
 	}
 
 	return response.JSON(http.StatusOK, &dto)
@@ -136,11 +145,11 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 			// clear the value
 			dashboardID = 0
 		} else {
-			err := hs.DashboardService.GetDashboard(ctx, &query)
+			queryResult, err := hs.DashboardService.GetDashboard(ctx, &query)
 			if err != nil {
 				return response.Error(404, "Dashboard not found", err)
 			}
-			dashboardID = query.Result.ID
+			dashboardID = queryResult.ID
 		}
 	}
 	dtoCmd.HomeDashboardID = dashboardID
@@ -155,7 +164,6 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 		WeekStart:       dtoCmd.WeekStart,
 		HomeDashboardID: dtoCmd.HomeDashboardID,
 		QueryHistory:    dtoCmd.QueryHistory,
-		Navbar:          dtoCmd.Navbar,
 	}
 
 	if err := hs.preferenceService.Save(ctx, &saveCmd); err != nil {
@@ -196,11 +204,11 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 			defaultDash := int64(0)
 			dashboardID = &defaultDash
 		} else {
-			err := hs.DashboardService.GetDashboard(ctx, &query)
+			queryResult, err := hs.DashboardService.GetDashboard(ctx, &query)
 			if err != nil {
 				return response.Error(404, "Dashboard not found", err)
 			}
-			dashboardID = &query.Result.ID
+			dashboardID = &queryResult.ID
 		}
 	}
 	dtoCmd.HomeDashboardID = dashboardID
@@ -214,7 +222,6 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 		WeekStart:       dtoCmd.WeekStart,
 		HomeDashboardID: dtoCmd.HomeDashboardID,
 		Language:        dtoCmd.Language,
-		Navbar:          dtoCmd.Navbar,
 		QueryHistory:    dtoCmd.QueryHistory,
 	}
 
@@ -292,7 +299,7 @@ type UpdateOrgPreferencesParams struct {
 // swagger:response getPreferencesResponse
 type GetPreferencesResponse struct {
 	// in:body
-	Body dtos.Prefs `json:"body"`
+	Body preferences.Preferences `json:"body"`
 }
 
 // swagger:parameters patchUserPreferences

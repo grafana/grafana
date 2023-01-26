@@ -432,10 +432,10 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		permQuery := &dashboards.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: users[0].OrgID}
-		err = userStore.getDashboardACLInfoList(permQuery)
+		permQueryResult, err := userStore.getDashboardACLInfoList(permQuery)
 		require.Nil(t, err)
 
-		require.Len(t, permQuery.Result, 0)
+		require.Len(t, permQueryResult, 0)
 
 		// A user is an org member and has been assigned permissions
 		// Re-init DB
@@ -488,10 +488,10 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		require.Nil(t, err)
 
 		permQuery = &dashboards.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: users[0].OrgID}
-		err = userStore.getDashboardACLInfoList(permQuery)
+		permQueryResult, err = userStore.getDashboardACLInfoList(permQuery)
 		require.Nil(t, err)
 
-		require.Len(t, permQuery.Result, 0)
+		require.Len(t, permQueryResult, 0)
 	})
 
 	t.Run("Testing DB - return list of users that the SignedInUser has permission to read", func(t *testing.T) {
@@ -855,9 +855,9 @@ func updateDashboardACL(t *testing.T, sqlStore db.DB, dashboardID int64, items .
 // This function was copied from pkg/services/dashboards/database to circumvent
 // import cycles. When this org-related code is refactored into a service the
 // tests can the real GetDashboardACLInfoList functions
-func (ss *sqlStore) getDashboardACLInfoList(query *dashboards.GetDashboardACLInfoListQuery) error {
+func (ss *sqlStore) getDashboardACLInfoList(query *dashboards.GetDashboardACLInfoListQuery) ([]*dashboards.DashboardACLInfoDTO, error) {
+	queryResult := make([]*dashboards.DashboardACLInfoDTO, 0)
 	outerErr := ss.db.WithDbSession(context.Background(), func(dbSession *db.Session) error {
-		query.Result = make([]*dashboards.DashboardACLInfoDTO, 0)
 		falseStr := ss.dialect.BooleanStr(false)
 
 		if query.DashboardID == 0 {
@@ -881,7 +881,7 @@ func (ss *sqlStore) getDashboardACLInfoList(query *dashboards.GetDashboardACLInf
 				falseStr + ` AS inherited
 		FROM dashboard_acl as da
 		WHERE da.dashboard_id = -1`
-			return dbSession.SQL(sql).Find(&query.Result)
+			return dbSession.SQL(sql).Find(&queryResult)
 		}
 
 		rawSQL := `
@@ -923,18 +923,18 @@ func (ss *sqlStore) getDashboardACLInfoList(query *dashboards.GetDashboardACLInf
 			ORDER BY da.id ASC
 			`
 
-		return dbSession.SQL(rawSQL, query.OrgID, query.DashboardID).Find(&query.Result)
+		return dbSession.SQL(rawSQL, query.OrgID, query.DashboardID).Find(&queryResult)
 	})
 
 	if outerErr != nil {
-		return outerErr
+		return nil, outerErr
 	}
 
-	for _, p := range query.Result {
+	for _, p := range queryResult {
 		p.PermissionName = p.Permission.String()
 	}
 
-	return nil
+	return queryResult, nil
 }
 
 func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Service, user.Service) {
