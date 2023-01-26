@@ -1437,7 +1437,7 @@
     "signatureOrg": ""
   },
   {
-    "name": "TestData DB",
+    "name": "TestData",
     "type": "datasource",
     "id": "testdata",
     "enabled": true,
