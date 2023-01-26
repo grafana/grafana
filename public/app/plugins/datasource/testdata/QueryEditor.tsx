@@ -43,9 +43,9 @@ export const QueryEditor = ({ query, datasource, onChange, onRunQuery }: Props) 
 
   const { loading, value: scenarioList } = useAsync(async () => {
     // migrate manual_entry (unusable since 7, removed in 8)
-    if (query.scenarioId === TestDataQueryType.ManualEntry && (query as any).points) {
+    if (query.scenarioId === TestDataQueryType.ManualEntry && query.points) {
       let csvContent = 'Time,Value\n';
-      for (const point of (query as any).points) {
+      for (const point of query.points) {
         csvContent += `${point[1]},${point[0]}\n`;
       }
       onChange({

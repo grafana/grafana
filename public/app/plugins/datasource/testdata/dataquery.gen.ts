@@ -118,6 +118,7 @@ export interface TestData extends common.DataQuery {
   levelColumn?: boolean;
   lines?: number;
   nodes?: NodesQuery;
+  points?: Array<Array<(string | number)>>;
   pulseWave?: PulseWaveQuery;
   rawFrameContent?: string;
   scenarioId?: TestDataQueryType;
@@ -131,5 +132,6 @@ export interface TestData extends common.DataQuery {
 
 export const defaultTestData: Partial<TestData> = {
   csvWave: [],
+  points: [],
   scenarioId: TestDataQueryType.RandomWalk,
 };

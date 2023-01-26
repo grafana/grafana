@@ -86,8 +86,8 @@ export class TestDataDataSource extends DataSourceWithBackend<TestData> {
         // Unusable since 7, removed in 8
         case 'manual_entry': {
           let csvContent = 'Time,Value\n';
-          if ((target as any).points) {
-            for (const point of (target as any).points) {
+          if (target.points) {
+            for (const point of target.points) {
               csvContent += `${point[1]},${point[0]}\n`;
             }
           }
