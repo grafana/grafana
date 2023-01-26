@@ -64,9 +64,11 @@ const datasources: DataSourceApi[] = [
     },
   } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
 ];
-let useFeatToggles = {
-  exploreMixedDatasource: false,
-};
+
+// TODO: clean up
+// let useFeatToggles = {
+//   exploreMixedDatasource: false,
+// };
 
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   ...jest.requireActual('app/features/dashboard/services/TimeSrv'),
@@ -87,7 +89,7 @@ jest.mock('@grafana/runtime', () => ({
     };
   },
   config: {
-    featureToggles: () => useFeatToggles,
+    featureToggles: { exploreMixedDatasource: true },
   },
 }));
 
@@ -308,17 +310,19 @@ describe('adding new query rows', () => {
     });
   });
   describe('with mixed datasources enabled', () => {
-    useFeatToggles = {
-      exploreMixedDatasource: true,
-    };
+    // TODO: clean up
+    // useFeatToggles = {
+    //   exploreMixedDatasource: true,
+    // };
 
-    it('should add query row whith rootdatasource when there is not yet a row', async () => {
+    it('should add query row whith rootdatasource (without datasourceOverride) when there is not yet a row', async () => {
       const queries: DataQuery[] = [];
       const datasourceInstance = {
         query: jest.fn(),
         getRef: jest.fn(),
         meta: {
           id: 'mixed',
+          mixed: true,
         } as unknown as DataSourcePluginMeta<{}>,
       };
 
@@ -328,6 +332,28 @@ describe('adding new query rows', () => {
       expect(getState().explore[exploreId].queries).toHaveLength(1);
       expect(getState().explore[exploreId].queries[0]?.datasource?.type).toBe('postgres');
       expect(getState().explore[exploreId].queryKeys).toEqual(['ds1-0']);
+    });
+
+    it('should add query row whith rootdatasource (with datasourceOverride) when there is not yet a row', async () => {
+      const queries: DataQuery[] = [];
+      const datasourceInstance = {
+        query: jest.fn(),
+        getRef: () => {
+          return { type: 'loki', uid: 'uid-loki' };
+        },
+        meta: {
+          id: 'loki',
+          mixed: false,
+        } as unknown as DataSourcePluginMeta<{}>,
+      };
+
+      const getState = await setupStore(queries, datasourceInstance);
+
+      // expect(getState().explore[exploreId]).toBe('loki');
+      expect(getState().explore[exploreId].datasourceInstance?.meta?.id).toBe('loki');
+      expect(getState().explore[exploreId].queries).toHaveLength(1);
+      expect(getState().explore[exploreId].queries[0]?.datasource?.type).toBe('loki');
+      expect(getState().explore[exploreId].queryKeys).toEqual(['uid-loki-0']);
     });
 
     it('should add another query row if there are two rows already', async () => {
