@@ -63,8 +63,10 @@ interface Props<TQuery extends DataQuery> {
 }
 
 interface State<TQuery extends DataQuery> {
+  /** DatasourceUid or ds variable expression used to resolve current datasource */
   loadedDataSourceIdentifier?: string | null;
   datasource: DataSourceApi<TQuery> | null;
+  datasourceUid?: string | null;
   hasTextEditMode: boolean;
   data?: PanelData;
   isOpen?: boolean;
@@ -238,9 +240,19 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
     }
   }
 
+  isWaitingForDatasourceToLoad(): boolean {
+    // if we not yet have loaded the datasource in state the
+    // ds in props and the ds in state will have different values.
+    return this.props.dataSource.type !== this.state.loadedDataSourceIdentifier;
+  }
+
   renderPluginEditor = () => {
     const { query, onChange, queries, onRunQuery, onAddQuery, app = CoreApp.PanelEditor, history } = this.props;
     const { datasource, data } = this.state;
+
+    if (this.isWaitingForDatasourceToLoad()) {
+      return null;
+    }
 
     if (datasource?.components?.QueryCtrl) {
       return <div ref={(element) => (this.element = element)} />;
