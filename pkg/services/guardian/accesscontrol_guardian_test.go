@@ -610,10 +610,10 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []acce
 	require.NoError(t, err)
 
 	folderPermissions, err := ossaccesscontrol.ProvideFolderPermissions(
-		setting.NewCfg(), routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, ac, teamSvc, userSvc)
+		setting.NewCfg(), routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, foldertest.NewFakeService(), ac, teamSvc, userSvc)
 	require.NoError(t, err)
 	dashboardPermissions, err := ossaccesscontrol.ProvideDashboardPermissions(
-		setting.NewCfg(), routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, ac, teamSvc, userSvc)
+		setting.NewCfg(), routing.NewRouteRegister(), store, ac, license, &dashboards.FakeDashboardStore{}, foldertest.NewFakeService(), ac, teamSvc, userSvc)
 	require.NoError(t, err)
 	if dashboardSvc == nil {
 		fakeDashboardService := dashboards.NewFakeDashboardService(t)

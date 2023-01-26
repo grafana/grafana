@@ -54,7 +54,7 @@ func NewFolderNameScopeResolver(db Store, folderDB FolderStore, folderSvc folder
 			return nil, err
 		}
 
-		result, err := getInheritedScopes(ctx, folder.OrgID, folder.UID, folderSvc)
+		result, err := GetInheritedScopes(ctx, folder.OrgID, folder.UID, folderSvc)
 		if err != nil {
 			return nil, err
 		}
@@ -86,7 +86,7 @@ func NewFolderIDScopeResolver(db Store, folderDB FolderStore, folderSvc folder.S
 			return nil, err
 		}
 
-		result, err := getInheritedScopes(ctx, folder.OrgID, folder.UID, folderSvc)
+		result, err := GetInheritedScopes(ctx, folder.OrgID, folder.UID, folderSvc)
 		if err != nil {
 			return nil, err
 		}
@@ -158,7 +158,7 @@ func resolveDashboardScope(ctx context.Context, db Store, folderDB FolderStore, 
 		folderUID = folder.UID
 	}
 
-	result, err := getInheritedScopes(ctx, orgID, folderUID, folderSvc)
+	result, err := GetInheritedScopes(ctx, orgID, folderUID, folderSvc)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +173,7 @@ func resolveDashboardScope(ctx context.Context, db Store, folderDB FolderStore, 
 	return result, nil
 }
 
-func getInheritedScopes(ctx context.Context, orgID int64, folderUID string, folderSvc folder.Service) ([]string, error) {
+func GetInheritedScopes(ctx context.Context, orgID int64, folderUID string, folderSvc folder.Service) ([]string, error) {
 	ancestors, err := folderSvc.GetParents(ctx, folder.GetParentsQuery{
 		UID:   folderUID,
 		OrgID: orgID,
