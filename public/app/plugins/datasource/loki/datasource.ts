@@ -166,71 +166,6 @@ export class LokiDatasource
     }
   }
 
-  async prepareContextExpr(row: LogRowModel, origQuery?: DataQuery): Promise<string> {
-    await this.languageProvider.start();
-    const labels = this.languageProvider.getLabelKeys();
-    const expr = Object.keys(row.labels)
-      .map((label: string) => {
-        if (labels.includes(label)) {
-          // escape backslashes in label as users can't escape them by themselves
-          return `${label}="${escapeLabelValueInExactSelector(row.labels[label])}"`;
-        }
-        return '';
-      })
-      .filter((label) => !!label)
-      .join(',');
-
-    return `{${expr}}`;
-  }
-
-  getLogRowContextUi(row: LogRowModel, refresh: () => void): React.ReactNode {
-    return LokiContextUi({
-      row,
-      languageProvider: this.languageProvider,
-      updateFilter: (contextFilters: ContextFilter[]) => {
-        this.prepareContextExpr = async (row: LogRowModel, origQuery?: DataQuery) => {
-          await this.languageProvider.start();
-          const labels = this.languageProvider.getLabelKeys();
-
-          let expr = contextFilters
-            .map((filter) => {
-              const label = filter.value;
-              if (filter && !filter.fromParser && filter.enabled && labels.includes(label)) {
-                // escape backslashes in label as users can't escape them by themselves
-                return `${label}="${escapeLabelValueInExactSelector(row.labels[label])}"`;
-              }
-              return '';
-            })
-            // Filter empty strings
-            .filter((label) => !!label)
-            .join(',');
-
-          expr = `{${expr}}`;
-
-          const parserContextFilters = contextFilters.filter((filter) => filter.fromParser && filter.enabled);
-          if (parserContextFilters.length) {
-            // we should also filter for labels from parsers, let's find the right parser
-            if (origQuery) {
-              const parser = getParserFromQuery((origQuery as LokiQuery).expr);
-              if (parser) {
-                expr = addParserToQuery(expr, parser);
-              }
-            }
-            for (const filter of parserContextFilters) {
-              if (filter.enabled) {
-                expr = addLabelToQuery(expr, filter.label, '=', row.labels[filter.label]);
-              }
-            }
-          }
-          return expr;
-        };
-        if (refresh) {
-          refresh();
-        }
-      },
-    });
-  }
-
   getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[] {
     return [SupplementaryQueryType.LogsVolume, SupplementaryQueryType.LogsSample];
   }
@@ -773,6 +708,71 @@ export class LokiDatasource
       },
     };
   };
+
+  async prepareContextExpr(row: LogRowModel, origQuery?: DataQuery): Promise<string> {
+    await this.languageProvider.start();
+    const labels = this.languageProvider.getLabelKeys();
+    const expr = Object.keys(row.labels)
+      .map((label: string) => {
+        if (labels.includes(label)) {
+          // escape backslashes in label as users can't escape them by themselves
+          return `${label}="${escapeLabelValueInExactSelector(row.labels[label])}"`;
+        }
+        return '';
+      })
+      .filter((label) => !!label)
+      .join(',');
+
+    return `{${expr}}`;
+  }
+
+  getLogRowContextUi(row: LogRowModel, refresh: () => void): React.ReactNode {
+    return LokiContextUi({
+      row,
+      languageProvider: this.languageProvider,
+      updateFilter: (contextFilters: ContextFilter[]) => {
+        this.prepareContextExpr = async (row: LogRowModel, origQuery?: DataQuery) => {
+          await this.languageProvider.start();
+          const labels = this.languageProvider.getLabelKeys();
+
+          let expr = contextFilters
+            .map((filter) => {
+              const label = filter.value;
+              if (filter && !filter.fromParser && filter.enabled && labels.includes(label)) {
+                // escape backslashes in label as users can't escape them by themselves
+                return `${label}="${escapeLabelValueInExactSelector(row.labels[label])}"`;
+              }
+              return '';
+            })
+            // Filter empty strings
+            .filter((label) => !!label)
+            .join(',');
+
+          expr = `{${expr}}`;
+
+          const parserContextFilters = contextFilters.filter((filter) => filter.fromParser && filter.enabled);
+          if (parserContextFilters.length) {
+            // we should also filter for labels from parsers, let's find the right parser
+            if (origQuery) {
+              const parser = getParserFromQuery((origQuery as LokiQuery).expr);
+              if (parser) {
+                expr = addParserToQuery(expr, parser);
+              }
+            }
+            for (const filter of parserContextFilters) {
+              if (filter.enabled) {
+                expr = addLabelToQuery(expr, filter.label, '=', row.labels[filter.label]);
+              }
+            }
+          }
+          return expr;
+        };
+        if (refresh) {
+          refresh();
+        }
+      },
+    });
+  }
 
   testDatasource(): Promise<{ status: string; message: string }> {
     // Consider only last 10 minutes otherwise request takes too long
