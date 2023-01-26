@@ -1349,6 +1349,30 @@
       "pluralMachineName": "serviceaccounts",
       "pluralName": "ServiceAccounts"
     },
+    "statetimelinepanelcfg": {
+      "category": "composable",
+      "codeowners": [
+        "grafana/grafana-bi-squad"
+      ],
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/statetimelinepanelcfg/schema-reference",
+        "go": "n/a",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/state-timeline/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/state-timeline/panelcfg.gen.ts"
+      },
+      "machineName": "statetimelinepanelcfg",
+      "maturity": "experimental",
+      "name": "StateTimelinePanelCfg",
+      "pluralMachineName": "statetimelinepanelcfgs",
+      "pluralName": "StateTimelinePanelCfgs",
+      "schemaInterface": "PanelCfg"
+    },
     "statpanelcfg": {
       "category": "composable",
       "codeowners": [
@@ -1371,6 +1395,30 @@
       "name": "StatPanelCfg",
       "pluralMachineName": "statpanelcfgs",
       "pluralName": "StatPanelCfgs",
+      "schemaInterface": "PanelCfg"
+    },
+    "statushistorypanelcfg": {
+      "category": "composable",
+      "codeowners": [
+        "grafana/grafana-bi-squad"
+      ],
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 0,
+      "lineageIsGroup": true,
+      "links": {
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/statushistorypanelcfg/schema-reference",
+        "go": "n/a",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/status-history/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/status-history/panelcfg.gen.ts"
+      },
+      "machineName": "statushistorypanelcfg",
+      "maturity": "experimental",
+      "name": "StatusHistoryPanelCfg",
+      "pluralMachineName": "statushistorypanelcfgs",
+      "pluralName": "StatusHistoryPanelCfgs",
       "schemaInterface": "PanelCfg"
     },
     "tableoldpanelcfg": {
@@ -1744,7 +1792,9 @@
           "postgresqldatasourcecfg",
           "prometheusdataquery",
           "prometheusdatasourcecfg",
+          "statetimelinepanelcfg",
           "statpanelcfg",
+          "statushistorypanelcfg",
           "tableoldpanelcfg",
           "tempodataquery",
           "tempodatasourcecfg",
@@ -1757,7 +1807,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 63
+        "count": 65
       },
       "core": {
         "name": "core",
@@ -1791,11 +1841,13 @@
           "histogrampanelcfg",
           "newspanelcfg",
           "piechartpanelcfg",
+          "statetimelinepanelcfg",
           "statpanelcfg",
+          "statushistorypanelcfg",
           "textpanelcfg",
           "xychartpanelcfg"
         ],
-        "count": 12
+        "count": 14
       },
       "mature": {
         "name": "mature",
