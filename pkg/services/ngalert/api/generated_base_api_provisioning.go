@@ -12,95 +12,95 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/models"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 type ProvisioningApi interface {
-	RouteDeleteAlertRule(*contextmodel.ReqContext) response.Response
-	RouteDeleteContactpoints(*contextmodel.ReqContext) response.Response
-	RouteDeleteMuteTiming(*contextmodel.ReqContext) response.Response
-	RouteDeleteTemplate(*contextmodel.ReqContext) response.Response
-	RouteGetAlertRule(*contextmodel.ReqContext) response.Response
-	RouteGetAlertRuleGroup(*contextmodel.ReqContext) response.Response
-	RouteGetAlertRules(*contextmodel.ReqContext) response.Response
-	RouteGetContactpoints(*contextmodel.ReqContext) response.Response
-	RouteGetMuteTiming(*contextmodel.ReqContext) response.Response
-	RouteGetMuteTimings(*contextmodel.ReqContext) response.Response
-	RouteGetPolicyTree(*contextmodel.ReqContext) response.Response
-	RouteGetTemplate(*contextmodel.ReqContext) response.Response
-	RouteGetTemplates(*contextmodel.ReqContext) response.Response
-	RoutePostAlertRule(*contextmodel.ReqContext) response.Response
-	RoutePostContactpoints(*contextmodel.ReqContext) response.Response
-	RoutePostMuteTiming(*contextmodel.ReqContext) response.Response
-	RoutePutAlertRule(*contextmodel.ReqContext) response.Response
-	RoutePutAlertRuleGroup(*contextmodel.ReqContext) response.Response
-	RoutePutContactpoint(*contextmodel.ReqContext) response.Response
-	RoutePutMuteTiming(*contextmodel.ReqContext) response.Response
-	RoutePutPolicyTree(*contextmodel.ReqContext) response.Response
-	RoutePutTemplate(*contextmodel.ReqContext) response.Response
-	RouteResetPolicyTree(*contextmodel.ReqContext) response.Response
+	RouteDeleteAlertRule(*models.ReqContext) response.Response
+	RouteDeleteContactpoints(*models.ReqContext) response.Response
+	RouteDeleteMuteTiming(*models.ReqContext) response.Response
+	RouteDeleteTemplate(*models.ReqContext) response.Response
+	RouteGetAlertRule(*models.ReqContext) response.Response
+	RouteGetAlertRuleGroup(*models.ReqContext) response.Response
+	RouteGetAlertRules(*models.ReqContext) response.Response
+	RouteGetContactpoints(*models.ReqContext) response.Response
+	RouteGetMuteTiming(*models.ReqContext) response.Response
+	RouteGetMuteTimings(*models.ReqContext) response.Response
+	RouteGetPolicyTree(*models.ReqContext) response.Response
+	RouteGetTemplate(*models.ReqContext) response.Response
+	RouteGetTemplates(*models.ReqContext) response.Response
+	RoutePostAlertRule(*models.ReqContext) response.Response
+	RoutePostContactpoints(*models.ReqContext) response.Response
+	RoutePostMuteTiming(*models.ReqContext) response.Response
+	RoutePutAlertRule(*models.ReqContext) response.Response
+	RoutePutAlertRuleGroup(*models.ReqContext) response.Response
+	RoutePutContactpoint(*models.ReqContext) response.Response
+	RoutePutMuteTiming(*models.ReqContext) response.Response
+	RoutePutPolicyTree(*models.ReqContext) response.Response
+	RoutePutTemplate(*models.ReqContext) response.Response
+	RouteResetPolicyTree(*models.ReqContext) response.Response
 }
 
-func (f *ProvisioningApiHandler) RouteDeleteAlertRule(ctx *contextmodel.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RouteDeleteAlertRule(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	uIDParam := web.Params(ctx.Req)[":UID"]
 	return f.handleRouteDeleteAlertRule(ctx, uIDParam)
 }
-func (f *ProvisioningApiHandler) RouteDeleteContactpoints(ctx *contextmodel.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RouteDeleteContactpoints(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	uIDParam := web.Params(ctx.Req)[":UID"]
 	return f.handleRouteDeleteContactpoints(ctx, uIDParam)
 }
-func (f *ProvisioningApiHandler) RouteDeleteMuteTiming(ctx *contextmodel.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RouteDeleteMuteTiming(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	nameParam := web.Params(ctx.Req)[":name"]
 	return f.handleRouteDeleteMuteTiming(ctx, nameParam)
 }
-func (f *ProvisioningApiHandler) RouteDeleteTemplate(ctx *contextmodel.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RouteDeleteTemplate(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	nameParam := web.Params(ctx.Req)[":name"]
 	return f.handleRouteDeleteTemplate(ctx, nameParam)
 }
-func (f *ProvisioningApiHandler) RouteGetAlertRule(ctx *contextmodel.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RouteGetAlertRule(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	uIDParam := web.Params(ctx.Req)[":UID"]
 	return f.handleRouteGetAlertRule(ctx, uIDParam)
 }
-func (f *ProvisioningApiHandler) RouteGetAlertRuleGroup(ctx *contextmodel.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RouteGetAlertRuleGroup(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	folderUIDParam := web.Params(ctx.Req)[":FolderUID"]
 	groupParam := web.Params(ctx.Req)[":Group"]
 	return f.handleRouteGetAlertRuleGroup(ctx, folderUIDParam, groupParam)
 }
-func (f *ProvisioningApiHandler) RouteGetAlertRules(ctx *contextmodel.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RouteGetAlertRules(ctx *models.ReqContext) response.Response {
 	return f.handleRouteGetAlertRules(ctx)
 }
-func (f *ProvisioningApiHandler) RouteGetContactpoints(ctx *contextmodel.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RouteGetContactpoints(ctx *models.ReqContext) response.Response {
 	return f.handleRouteGetContactpoints(ctx)
 }
-func (f *ProvisioningApiHandler) RouteGetMuteTiming(ctx *contextmodel.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RouteGetMuteTiming(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	nameParam := web.Params(ctx.Req)[":name"]
 	return f.handleRouteGetMuteTiming(ctx, nameParam)
 }
-func (f *ProvisioningApiHandler) RouteGetMuteTimings(ctx *contextmodel.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RouteGetMuteTimings(ctx *models.ReqContext) response.Response {
 	return f.handleRouteGetMuteTimings(ctx)
 }
-func (f *ProvisioningApiHandler) RouteGetPolicyTree(ctx *contextmodel.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RouteGetPolicyTree(ctx *models.ReqContext) response.Response {
 	return f.handleRouteGetPolicyTree(ctx)
 }
-func (f *ProvisioningApiHandler) RouteGetTemplate(ctx *contextmodel.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RouteGetTemplate(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	nameParam := web.Params(ctx.Req)[":name"]
 	return f.handleRouteGetTemplate(ctx, nameParam)
 }
-func (f *ProvisioningApiHandler) RouteGetTemplates(ctx *contextmodel.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RouteGetTemplates(ctx *models.ReqContext) response.Response {
 	return f.handleRouteGetTemplates(ctx)
 }
-func (f *ProvisioningApiHandler) RoutePostAlertRule(ctx *contextmodel.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RoutePostAlertRule(ctx *models.ReqContext) response.Response {
 	// Parse Request Body
 	conf := apimodels.ProvisionedAlertRule{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
@@ -108,7 +108,7 @@ func (f *ProvisioningApiHandler) RoutePostAlertRule(ctx *contextmodel.ReqContext
 	}
 	return f.handleRoutePostAlertRule(ctx, conf)
 }
-func (f *ProvisioningApiHandler) RoutePostContactpoints(ctx *contextmodel.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RoutePostContactpoints(ctx *models.ReqContext) response.Response {
 	// Parse Request Body
 	conf := apimodels.EmbeddedContactPoint{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
@@ -116,7 +116,7 @@ func (f *ProvisioningApiHandler) RoutePostContactpoints(ctx *contextmodel.ReqCon
 	}
 	return f.handleRoutePostContactpoints(ctx, conf)
 }
-func (f *ProvisioningApiHandler) RoutePostMuteTiming(ctx *contextmodel.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RoutePostMuteTiming(ctx *models.ReqContext) response.Response {
 	// Parse Request Body
 	conf := apimodels.MuteTimeInterval{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
@@ -124,7 +124,7 @@ func (f *ProvisioningApiHandler) RoutePostMuteTiming(ctx *contextmodel.ReqContex
 	}
 	return f.handleRoutePostMuteTiming(ctx, conf)
 }
-func (f *ProvisioningApiHandler) RoutePutAlertRule(ctx *contextmodel.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RoutePutAlertRule(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	uIDParam := web.Params(ctx.Req)[":UID"]
 	// Parse Request Body
@@ -134,7 +134,7 @@ func (f *ProvisioningApiHandler) RoutePutAlertRule(ctx *contextmodel.ReqContext)
 	}
 	return f.handleRoutePutAlertRule(ctx, conf, uIDParam)
 }
-func (f *ProvisioningApiHandler) RoutePutAlertRuleGroup(ctx *contextmodel.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RoutePutAlertRuleGroup(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	folderUIDParam := web.Params(ctx.Req)[":FolderUID"]
 	groupParam := web.Params(ctx.Req)[":Group"]
@@ -145,7 +145,7 @@ func (f *ProvisioningApiHandler) RoutePutAlertRuleGroup(ctx *contextmodel.ReqCon
 	}
 	return f.handleRoutePutAlertRuleGroup(ctx, conf, folderUIDParam, groupParam)
 }
-func (f *ProvisioningApiHandler) RoutePutContactpoint(ctx *contextmodel.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RoutePutContactpoint(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	uIDParam := web.Params(ctx.Req)[":UID"]
 	// Parse Request Body
@@ -155,7 +155,7 @@ func (f *ProvisioningApiHandler) RoutePutContactpoint(ctx *contextmodel.ReqConte
 	}
 	return f.handleRoutePutContactpoint(ctx, conf, uIDParam)
 }
-func (f *ProvisioningApiHandler) RoutePutMuteTiming(ctx *contextmodel.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RoutePutMuteTiming(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	nameParam := web.Params(ctx.Req)[":name"]
 	// Parse Request Body
@@ -165,7 +165,7 @@ func (f *ProvisioningApiHandler) RoutePutMuteTiming(ctx *contextmodel.ReqContext
 	}
 	return f.handleRoutePutMuteTiming(ctx, conf, nameParam)
 }
-func (f *ProvisioningApiHandler) RoutePutPolicyTree(ctx *contextmodel.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RoutePutPolicyTree(ctx *models.ReqContext) response.Response {
 	// Parse Request Body
 	conf := apimodels.Route{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
@@ -173,7 +173,7 @@ func (f *ProvisioningApiHandler) RoutePutPolicyTree(ctx *contextmodel.ReqContext
 	}
 	return f.handleRoutePutPolicyTree(ctx, conf)
 }
-func (f *ProvisioningApiHandler) RoutePutTemplate(ctx *contextmodel.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RoutePutTemplate(ctx *models.ReqContext) response.Response {
 	// Parse Path Parameters
 	nameParam := web.Params(ctx.Req)[":name"]
 	// Parse Request Body
@@ -183,7 +183,7 @@ func (f *ProvisioningApiHandler) RoutePutTemplate(ctx *contextmodel.ReqContext) 
 	}
 	return f.handleRoutePutTemplate(ctx, conf, nameParam)
 }
-func (f *ProvisioningApiHandler) RouteResetPolicyTree(ctx *contextmodel.ReqContext) response.Response {
+func (f *ProvisioningApiHandler) RouteResetPolicyTree(ctx *models.ReqContext) response.Response {
 	return f.handleRouteResetPolicyTree(ctx)
 }
 
