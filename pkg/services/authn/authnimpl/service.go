@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/hashicorp/go-multierror"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -34,7 +35,8 @@ const (
 )
 
 var (
-	errDisabledIdentity = errutil.NewBase(errutil.StatusUnauthorized, "identity.disabled")
+	errCantAuthenticateReq = errutil.NewBase(errutil.StatusUnauthorized, "auth.unauthorized")
+	errDisabledIdentity    = errutil.NewBase(errutil.StatusUnauthorized, "identity.disabled")
 )
 
 // make sure service implements authn.Service interface
@@ -55,20 +57,23 @@ func ProvideService(
 		log:            log.New("authn.service"),
 		cfg:            cfg,
 		clients:        make(map[string]authn.Client),
+		clientQueue:    newQueue[authn.ContextAwareClient](),
 		tracer:         tracer,
 		sessionService: sessionService,
 		postAuthHooks:  []authn.PostAuthHookFn{},
 	}
 
-	s.clients[authn.ClientRender] = clients.ProvideRender(userService, renderService)
-	s.clients[authn.ClientAPIKey] = clients.ProvideAPIKey(apikeyService, userService)
+	s.RegisterClient(clients.ProvideRender(userService, renderService))
+	s.RegisterClient(clients.ProvideAPIKey(apikeyService, userService))
 
-	sessionClient := clients.ProvideSession(sessionService, userService, cfg.LoginCookieName, cfg.LoginMaxLifetime)
-	s.clients[authn.ClientSession] = sessionClient
-	s.RegisterPostAuthHook(sessionClient.RefreshTokenHook)
+	if cfg.LoginCookieName != "" {
+		sessionClient := clients.ProvideSession(sessionService, userService, cfg.LoginCookieName, cfg.LoginMaxLifetime)
+		s.RegisterClient(sessionClient)
+		s.RegisterPostAuthHook(sessionClient.RefreshTokenHook)
+	}
 
 	if s.cfg.AnonymousEnabled {
-		s.clients[authn.ClientAnonymous] = clients.ProvideAnonymous(cfg, orgService)
+		s.RegisterClient(clients.ProvideAnonymous(cfg, orgService))
 	}
 
 	var proxyClients []authn.ProxyClient
@@ -89,11 +94,11 @@ func ProvideService(
 	if len(passwordClients) > 0 {
 		passwordClient := clients.ProvidePassword(loginAttempts, passwordClients...)
 		if s.cfg.BasicAuthEnabled {
-			s.clients[authn.ClientBasic] = clients.ProvideBasic(passwordClient)
+			s.RegisterClient(clients.ProvideBasic(passwordClient))
 		}
 		// FIXME (kalleep): Remove the global variable and stick it into cfg
 		if !setting.DisableLoginForm {
-			s.clients[authn.ClientForm] = clients.ProvideForm(passwordClient)
+			s.RegisterClient(clients.ProvideForm(passwordClient))
 		}
 	}
 
@@ -102,12 +107,12 @@ func ProvideService(
 		if err != nil {
 			s.log.Error("failed to configure auth proxy", "err", err)
 		} else {
-			s.clients[authn.ClientProxy] = proxy
+			s.RegisterClient(proxy)
 		}
 	}
 
 	if s.cfg.JWTAuthEnabled {
-		s.clients[authn.ClientJWT] = clients.ProvideJWT(jwtService, cfg)
+		s.RegisterClient(clients.ProvideJWT(jwtService, cfg))
 	}
 
 	// FIXME (jguer): move to User package
@@ -126,9 +131,11 @@ func ProvideService(
 }
 
 type Service struct {
-	log     log.Logger
-	cfg     *setting.Cfg
-	clients map[string]authn.Client
+	log log.Logger
+	cfg *setting.Cfg
+
+	clients     map[string]authn.Client
+	clientQueue *queue[authn.ContextAwareClient]
 
 	tracer         tracing.Tracer
 	sessionService auth.UserTokenService
@@ -139,42 +146,54 @@ type Service struct {
 	postLoginHooks []authn.PostLoginHookFn
 }
 
-func (s *Service) Authenticate(ctx context.Context, client string, r *authn.Request) (*authn.Identity, bool, error) {
-	c, ok := s.clients[client]
-	if !ok {
-		return nil, false, nil
-	}
-
-	if !c.Test(ctx, r) {
-		return nil, false, nil
-	}
-
+func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	ctx, span := s.tracer.Start(ctx, "authn.Authenticate")
 	defer span.End()
-	span.SetAttributes("authn.client", client, attribute.Key("authn.client").String(client))
 
+	var authErr error
+	for _, item := range s.clientQueue.items {
+		if item.v.Test(ctx, r) {
+			identity, err := s.authenticate(ctx, item.v, r)
+			if err != nil {
+				s.log.Warn("failed to authenticate", "client", item.v.Name(), "err", err)
+				authErr = multierror.Append(authErr, err)
+				// try next
+				continue
+			}
+
+			if identity != nil {
+				return identity, nil
+			}
+		}
+	}
+
+	if authErr != nil {
+		return nil, authErr
+	}
+
+	return nil, errCantAuthenticateReq.Errorf("cannot authenticate request")
+}
+
+func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Request) (*authn.Identity, error) {
 	r.OrgID = orgIDFromRequest(r)
 	identity, err := c.Authenticate(ctx, r)
 	if err != nil {
-		s.log.FromContext(ctx).Warn("auth client could not authenticate request", "client", client, "error", err)
-		span.AddEvents([]string{"message"}, []tracing.EventValue{{Str: "auth client could not authenticate request"}})
-		return nil, true, err
+		s.log.FromContext(ctx).Warn("auth client could not authenticate request", "client", c.Name(), "error", err)
+		return nil, err
 	}
-
-	// FIXME (kalleep): Handle disabled identities
 
 	for _, hook := range s.postAuthHooks {
 		if err := hook(ctx, identity, r); err != nil {
 			s.log.FromContext(ctx).Warn("post auth hook failed", "error", err, "id", identity)
-			return nil, false, err
+			return nil, err
 		}
 	}
 
 	if identity.IsDisabled {
-		return nil, true, errDisabledIdentity.Errorf("identity is disabled")
+		return nil, errDisabledIdentity.Errorf("identity is disabled")
 	}
 
-	return identity, true, nil
+	return identity, nil
 }
 
 func (s *Service) RegisterPostAuthHook(hook authn.PostAuthHookFn) {
@@ -182,18 +201,18 @@ func (s *Service) RegisterPostAuthHook(hook authn.PostAuthHookFn) {
 }
 
 func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (identity *authn.Identity, err error) {
-	var ok bool
-	identity, ok, err = s.Authenticate(ctx, client, r)
-	if !ok {
-		return nil, authn.ErrClientNotConfigured.Errorf("client not configured: %s", client)
-	}
-
 	defer func() {
 		for _, hook := range s.postLoginHooks {
 			hook(ctx, identity, r, err)
 		}
 	}()
 
+	c, ok := s.clients[client]
+	if !ok {
+		return nil, authn.ErrClientNotConfigured.Errorf("client not configured: %s", client)
+	}
+
+	identity, err = s.authenticate(ctx, c, r)
 	if err != nil {
 		return nil, err
 	}
@@ -240,6 +259,13 @@ func (s *Service) RedirectURL(ctx context.Context, client string, r *authn.Reque
 	}
 
 	return redirectClient.RedirectURL(ctx, r)
+}
+
+func (s *Service) RegisterClient(c authn.Client) {
+	s.clients[c.Name()] = c
+	if cac, ok := c.(authn.ContextAwareClient); ok {
+		s.clientQueue.insert(cac, cac.Priority())
+	}
 }
 
 func orgIDFromRequest(r *authn.Request) int64 {

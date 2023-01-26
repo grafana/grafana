@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
 // A snapshot is a dashboard with no external queries and a few additional properties
@@ -19,15 +19,15 @@ type Model struct {
 	Snapshot     json.RawMessage `json:"snapshot,omitempty"`
 }
 
-func GetEntityKindInfo() models.EntityKindInfo {
-	return models.EntityKindInfo{
-		ID:   models.StandardKindSnapshot,
+func GetEntityKindInfo() entity.EntityKindInfo {
+	return entity.EntityKindInfo{
+		ID:   entity.StandardKindSnapshot,
 		Name: "Snapshot",
 	}
 }
 
-func GetEntitySummaryBuilder() models.EntitySummaryBuilder {
-	return func(ctx context.Context, uid string, body []byte) (*models.EntitySummary, []byte, error) {
+func GetEntitySummaryBuilder() entity.EntitySummaryBuilder {
+	return func(ctx context.Context, uid string, body []byte) (*entity.EntitySummary, []byte, error) {
 		obj := &Model{}
 		err := json.Unmarshal(body, obj)
 		if err != nil {
@@ -41,8 +41,8 @@ func GetEntitySummaryBuilder() models.EntitySummaryBuilder {
 			return nil, nil, fmt.Errorf("expected delete key")
 		}
 
-		summary := &models.EntitySummary{
-			Kind:        models.StandardKindFolder,
+		summary := &entity.EntitySummary{
+			Kind:        entity.StandardKindFolder,
 			Name:        obj.Name,
 			Description: obj.Description,
 			UID:         uid,
@@ -51,8 +51,8 @@ func GetEntitySummaryBuilder() models.EntitySummaryBuilder {
 				"externalURL": obj.ExternalURL,
 				"expires":     obj.Expires,
 			},
-			References: []*models.EntityExternalReference{
-				{Kind: models.StandardKindDashboard, UID: obj.DashboardUID},
+			References: []*entity.EntityExternalReference{
+				{Family: entity.StandardKindDashboard, Identifier: obj.DashboardUID},
 			},
 		}
 

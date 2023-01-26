@@ -176,7 +176,7 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 	}
 	items = append(items, hiddenACL...)
 
-	if okToUpdate, err := g.CheckPermissionBeforeUpdate(models.PERMISSION_ADMIN, items); err != nil || !okToUpdate {
+	if okToUpdate, err := g.CheckPermissionBeforeUpdate(dashboards.PERMISSION_ADMIN, items); err != nil || !okToUpdate {
 		if err != nil {
 			if errors.Is(err, guardian.ErrGuardianPermissionExists) || errors.Is(err, guardian.ErrGuardianOverride) {
 				return response.Error(400, err.Error(), err)
@@ -200,8 +200,8 @@ func (hs *HTTPServer) UpdateDashboardPermissions(c *models.ReqContext) response.
 	}
 
 	if err := hs.DashboardService.UpdateDashboardACL(c.Req.Context(), dashID, items); err != nil {
-		if errors.Is(err, models.ErrDashboardACLInfoMissing) ||
-			errors.Is(err, models.ErrDashboardPermissionDashboardEmpty) {
+		if errors.Is(err, dashboards.ErrDashboardACLInfoMissing) ||
+			errors.Is(err, dashboards.ErrDashboardPermissionDashboardEmpty) {
 			return response.Error(409, err.Error(), err)
 		}
 		return response.Error(500, "Failed to create permission", err)
@@ -275,11 +275,11 @@ func (hs *HTTPServer) updateDashboardAccessControl(ctx context.Context, orgID in
 func validatePermissionsUpdate(apiCmd dtos.UpdateDashboardACLCommand) error {
 	for _, item := range apiCmd.Items {
 		if item.UserID > 0 && item.TeamID > 0 {
-			return models.ErrPermissionsWithUserAndTeamNotAllowed
+			return dashboards.ErrPermissionsWithUserAndTeamNotAllowed
 		}
 
 		if (item.UserID > 0 || item.TeamID > 0) && item.Role != nil {
-			return models.ErrPermissionsWithRoleNotAllowed
+			return dashboards.ErrPermissionsWithRoleNotAllowed
 		}
 	}
 	return nil

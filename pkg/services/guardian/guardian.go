@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
@@ -30,7 +29,7 @@ type DashboardGuardian interface {
 	CanAdmin() (bool, error)
 	CanDelete() (bool, error)
 	CanCreate(folderID int64, isFolder bool) (bool, error)
-	CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*dashboards.DashboardACL) (bool, error)
+	CheckPermissionBeforeUpdate(permission dashboards.PermissionType, updatePermissions []*dashboards.DashboardACL) (bool, error)
 
 	// GetACL returns ACL.
 	GetACL() ([]*dashboards.DashboardACLInfoDTO, error)
@@ -149,23 +148,23 @@ func newDashboardGuardianByDashboard(ctx context.Context, dash *dashboards.Dashb
 }
 
 func (g *dashboardGuardianImpl) CanSave() (bool, error) {
-	return g.HasPermission(models.PERMISSION_EDIT)
+	return g.HasPermission(dashboards.PERMISSION_EDIT)
 }
 
 func (g *dashboardGuardianImpl) CanEdit() (bool, error) {
 	if setting.ViewersCanEdit {
-		return g.HasPermission(models.PERMISSION_VIEW)
+		return g.HasPermission(dashboards.PERMISSION_VIEW)
 	}
 
-	return g.HasPermission(models.PERMISSION_EDIT)
+	return g.HasPermission(dashboards.PERMISSION_EDIT)
 }
 
 func (g *dashboardGuardianImpl) CanView() (bool, error) {
-	return g.HasPermission(models.PERMISSION_VIEW)
+	return g.HasPermission(dashboards.PERMISSION_VIEW)
 }
 
 func (g *dashboardGuardianImpl) CanAdmin() (bool, error) {
-	return g.HasPermission(models.PERMISSION_ADMIN)
+	return g.HasPermission(dashboards.PERMISSION_ADMIN)
 }
 
 func (g *dashboardGuardianImpl) CanDelete() (bool, error) {
@@ -178,7 +177,7 @@ func (g *dashboardGuardianImpl) CanCreate(_ int64, _ bool) (bool, error) {
 	return g.CanSave()
 }
 
-func (g *dashboardGuardianImpl) HasPermission(permission models.PermissionType) (bool, error) {
+func (g *dashboardGuardianImpl) HasPermission(permission dashboards.PermissionType) (bool, error) {
 	if g.user.OrgRole == org.RoleAdmin {
 		return g.logHasPermissionResult(permission, true, nil)
 	}
@@ -192,7 +191,7 @@ func (g *dashboardGuardianImpl) HasPermission(permission models.PermissionType) 
 	return g.logHasPermissionResult(permission, result, err)
 }
 
-func (g *dashboardGuardianImpl) logHasPermissionResult(permission models.PermissionType, hasPermission bool, err error) (bool, error) {
+func (g *dashboardGuardianImpl) logHasPermissionResult(permission dashboards.PermissionType, hasPermission bool, err error) (bool, error) {
 	if err != nil {
 		return hasPermission, err
 	}
@@ -206,7 +205,7 @@ func (g *dashboardGuardianImpl) logHasPermissionResult(permission models.Permiss
 	return hasPermission, err
 }
 
-func (g *dashboardGuardianImpl) checkACL(permission models.PermissionType, acl []*dashboards.DashboardACLInfoDTO) (bool, error) {
+func (g *dashboardGuardianImpl) checkACL(permission dashboards.PermissionType, acl []*dashboards.DashboardACLInfoDTO) (bool, error) {
 	orgRole := g.user.OrgRole
 	teamACLItems := []*dashboards.DashboardACLInfoDTO{}
 
@@ -254,10 +253,10 @@ func (g *dashboardGuardianImpl) checkACL(permission models.PermissionType, acl [
 	return false, nil
 }
 
-func (g *dashboardGuardianImpl) CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*dashboards.DashboardACL) (bool, error) {
+func (g *dashboardGuardianImpl) CheckPermissionBeforeUpdate(permission dashboards.PermissionType, updatePermissions []*dashboards.DashboardACL) (bool, error) {
 	acl := []*dashboards.DashboardACLInfoDTO{}
 	adminRole := org.RoleAdmin
-	everyoneWithAdminRole := &dashboards.DashboardACLInfoDTO{DashboardID: g.dashId, UserID: 0, TeamID: 0, Role: &adminRole, Permission: models.PERMISSION_ADMIN}
+	everyoneWithAdminRole := &dashboards.DashboardACLInfoDTO{DashboardID: g.dashId, UserID: 0, TeamID: 0, Role: &adminRole, Permission: dashboards.PERMISSION_ADMIN}
 
 	// validate that duplicate permissions don't exists
 	for _, p := range updatePermissions {
@@ -436,11 +435,11 @@ func (g *FakeDashboardGuardian) CanCreate(_ int64, _ bool) (bool, error) {
 	return g.CanSaveValue, nil
 }
 
-func (g *FakeDashboardGuardian) HasPermission(permission models.PermissionType) (bool, error) {
+func (g *FakeDashboardGuardian) HasPermission(permission dashboards.PermissionType) (bool, error) {
 	return g.HasPermissionValue, nil
 }
 
-func (g *FakeDashboardGuardian) CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*dashboards.DashboardACL) (bool, error) {
+func (g *FakeDashboardGuardian) CheckPermissionBeforeUpdate(permission dashboards.PermissionType, updatePermissions []*dashboards.DashboardACL) (bool, error) {
 	return g.CheckPermissionBeforeUpdateValue, g.CheckPermissionBeforeUpdateError
 }
 

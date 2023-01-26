@@ -301,7 +301,7 @@ func (hs *HTTPServer) searchFolders(c *models.ReqContext) ([]*folder.Folder, err
 		Limit:        c.QueryInt64("limit"),
 		OrgId:        c.OrgID,
 		Type:         "dash-folder",
-		Permission:   models.PERMISSION_VIEW,
+		Permission:   dashboards.PERMISSION_VIEW,
 		Page:         c.QueryInt64("page"),
 	}
 
