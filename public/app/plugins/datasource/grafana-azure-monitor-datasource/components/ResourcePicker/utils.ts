@@ -165,7 +165,7 @@ export function setResources(
       ...query,
       azureLogAnalytics: {
         ...query.azureLogAnalytics,
-        resources: resourcesToStrings(resources),
+        resources: resourcesToStrings(resources).filter((resource) => resource !== ''),
       },
     };
   }
@@ -178,7 +178,13 @@ export function setResources(
       ...query.azureMonitor,
       metricNamespace: parsedResource.metricNamespace?.toLocaleLowerCase(),
       region: parsedResource.region,
-      resources: parseMultipleResourceDetails(resources),
+      resources: parseMultipleResourceDetails(resources).filter(
+        (resource) =>
+          resource.resourceName !== '' &&
+          resource.metricNamespace !== '' &&
+          resource.subscription !== '' &&
+          resource.resourceGroup !== ''
+      ),
       metricName: undefined,
       aggregation: undefined,
       timeGrain: '',

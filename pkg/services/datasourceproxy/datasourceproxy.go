@@ -17,12 +17,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
 	"github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator models.PluginRequestValidator,
+func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator validations.PluginRequestValidator,
 	pluginStore plugins.Store, cfg *setting.Cfg, httpClientProvider httpclient.Provider,
 	oauthTokenService *oauthtoken.Service, dsService datasources.DataSourceService,
 	tracer tracing.Tracer, secretsService secrets.Service) *DataSourceProxyService {
@@ -41,7 +42,7 @@ func ProvideService(dataSourceCache datasources.CacheService, plugReqValidator m
 
 type DataSourceProxyService struct {
 	DataSourceCache        datasources.CacheService
-	PluginRequestValidator models.PluginRequestValidator
+	PluginRequestValidator validations.PluginRequestValidator
 	pluginStore            plugins.Store
 	Cfg                    *setting.Cfg
 	HTTPClientProvider     httpclient.Provider
@@ -131,7 +132,7 @@ func (p *DataSourceProxyService) proxyDatasourceRequest(c *models.ReqContext, ds
 	proxy.HandleRequest()
 }
 
-var proxyPathRegexp = regexp.MustCompile(`^\/api\/datasources\/proxy\/([\d]+|uid\/[\w]+)\/?`)
+var proxyPathRegexp = regexp.MustCompile(`^\/api\/datasources\/proxy\/([\d]+|uid\/[\w-]+)\/?`)
 
 func extractProxyPath(originalRawPath string) string {
 	return proxyPathRegexp.ReplaceAllString(originalRawPath, "")
