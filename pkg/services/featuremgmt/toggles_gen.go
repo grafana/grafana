@@ -115,6 +115,10 @@ const (
 	// Explore native k8s integrations
 	FlagK8s = "k8s"
 
+	// FlagK8sDashboards
+	// Save dashboards via k8s
+	FlagK8sDashboards = "k8sDashboards"
+
 	// FlagSupportBundles
 	// Support bundles for troubleshooting
 	FlagSupportBundles = "supportBundles"

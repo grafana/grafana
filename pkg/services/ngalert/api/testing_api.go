@@ -29,6 +29,6 @@ func (f *TestingApiHandler) handleRouteEvalQueries(c *contextmodel.ReqContext, b
 	return f.svc.RouteEvalQueries(c, body)
 }
 
-func (f *TestingApiHandler) handleBacktestingConfig(ctx *contextmodel.ReqContext, conf apimodels.BacktestConfig) response.Response {
+func (f *TestingApiHandler) handleBacktestConfig(ctx *contextmodel.ReqContext, conf apimodels.BacktestConfig) response.Response {
 	return f.svc.BacktestAlertRule(ctx, conf)
 }

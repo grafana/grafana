@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
+	"github.com/grafana/grafana/pkg/kinds/preferences"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -83,23 +84,31 @@ func (hs *HTTPServer) getPreferencesFor(ctx context.Context, orgID, userID, team
 		}
 	}
 
-	weekStart := ""
-	if preference.WeekStart != nil {
-		weekStart = *preference.WeekStart
-	}
+	dto := preferences.Preferences{}
 
-	dto := dtos.Prefs{
-		Theme:            preference.Theme,
-		HomeDashboardID:  preference.HomeDashboardID,
-		HomeDashboardUID: dashboardUID,
-		Timezone:         preference.Timezone,
-		WeekStart:        weekStart,
+	if preference.WeekStart != nil && *preference.WeekStart != "" {
+		dto.WeekStart = preference.WeekStart
+	}
+	if preference.Theme != "" {
+		dto.Theme = &preference.Theme
+	}
+	if dashboardUID != "" {
+		dto.HomeDashboardUID = &dashboardUID
+	}
+	if preference.Timezone != "" {
+		dto.Timezone = &preference.Timezone
 	}
 
 	if preference.JSONData != nil {
-		dto.Language = preference.JSONData.Language
-		dto.Navbar = preference.JSONData.Navbar
-		dto.QueryHistory = preference.JSONData.QueryHistory
+		if preference.JSONData.Language != "" {
+			dto.Language = &preference.JSONData.Language
+		}
+
+		if preference.JSONData.QueryHistory.HomeTab != "" {
+			dto.QueryHistory = &preferences.QueryHistoryPreference{
+				HomeTab: &preference.JSONData.QueryHistory.HomeTab,
+			}
+		}
 	}
 
 	return response.JSON(http.StatusOK, &dto)
@@ -155,7 +164,6 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 		WeekStart:       dtoCmd.WeekStart,
 		HomeDashboardID: dtoCmd.HomeDashboardID,
 		QueryHistory:    dtoCmd.QueryHistory,
-		Navbar:          dtoCmd.Navbar,
 	}
 
 	if err := hs.preferenceService.Save(ctx, &saveCmd); err != nil {
@@ -214,7 +222,6 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 		WeekStart:       dtoCmd.WeekStart,
 		HomeDashboardID: dtoCmd.HomeDashboardID,
 		Language:        dtoCmd.Language,
-		Navbar:          dtoCmd.Navbar,
 		QueryHistory:    dtoCmd.QueryHistory,
 	}
 
@@ -292,7 +299,7 @@ type UpdateOrgPreferencesParams struct {
 // swagger:response getPreferencesResponse
 type GetPreferencesResponse struct {
 	// in:body
-	Body dtos.Prefs `json:"body"`
+	Body preferences.Preferences `json:"body"`
 }
 
 // swagger:parameters patchUserPreferences
