@@ -193,6 +193,9 @@ BigValueTextMode: "auto" | "value" | "value_and_name" | "name" | "none" @cuetsy(
 // TODO docs
 FieldTextAlignment: "auto" | "left" | "right" | "center" @cuetsy(kind="type")
 
+// Controls the value alignment in the TimelineChart component
+TimelineValueAlignment: "center" | "left" | "right" @cuetsy(kind="type")
+
 // TODO docs
 VizTextDisplayOptions: {
 	// Explicit title text size

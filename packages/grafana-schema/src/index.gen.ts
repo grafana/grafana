@@ -101,14 +101,20 @@ export type {
 // Raw generated enums and default consts from playlist kind.
 export { defaultPlaylist } from './raw/playlist/x/playlist_types.gen';
 
-// Raw generated types from Serviceaccount kind.
+// Raw generated types from Preferences kind.
 export type {
-  Serviceaccount,
+  Preferences,
+  QueryHistoryPreference
+} from './raw/preferences/x/preferences_types.gen';
+
+// Raw generated types from ServiceAccount kind.
+export type {
+  ServiceAccount,
   OrgRole
 } from './raw/serviceaccount/x/serviceaccount_types.gen';
 
 // Raw generated enums and default consts from serviceaccount kind.
-export { defaultServiceaccount } from './raw/serviceaccount/x/serviceaccount_types.gen';
+export { defaultServiceAccount } from './raw/serviceaccount/x/serviceaccount_types.gen';
 
 // Raw generated types from Team kind.
 export type { Team } from './raw/team/x/team_types.gen';
