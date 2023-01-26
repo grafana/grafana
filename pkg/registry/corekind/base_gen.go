@@ -67,8 +67,8 @@ func (b *Base) Preferences() *preferences.Kind {
 	return b.preferences
 }
 
-// Publicdashboard returns the [kindsys.Interface] implementation for the publicdashboard kind.
-func (b *Base) Publicdashboard() *publicdashboard.Kind {
+// PublicDashboard returns the [kindsys.Interface] implementation for the publicdashboard kind.
+func (b *Base) PublicDashboard() *publicdashboard.Kind {
 	return b.publicdashboard
 }
 

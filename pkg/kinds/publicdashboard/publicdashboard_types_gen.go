@@ -10,8 +10,8 @@
 
 package publicdashboard
 
-// Publicdashboard defines model for Publicdashboard.
-type Publicdashboard struct {
+// PublicDashboard defines model for PublicDashboard.
+type PublicDashboard struct {
 	// Unique public access token
 	AccessToken *string `json:"accessToken,omitempty"`
 

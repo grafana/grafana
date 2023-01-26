@@ -2,11 +2,11 @@
 keywords:
   - grafana
   - schema
-title: Publicdashboard kind
+title: PublicDashboard kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
-# Publicdashboard kind
+# PublicDashboard kind
 
 ## Maturity: merged
 ## Version: 0.0

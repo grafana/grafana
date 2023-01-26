@@ -1303,9 +1303,9 @@
       },
       "machineName": "publicdashboard",
       "maturity": "merged",
-      "name": "Publicdashboard",
+      "name": "PublicDashboard",
       "pluralMachineName": "publicdashboards",
-      "pluralName": "Publicdashboards"
+      "pluralName": "PublicDashboards"
     },
     "query": {
       "category": "core",
