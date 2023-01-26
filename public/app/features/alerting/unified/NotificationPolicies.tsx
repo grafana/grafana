@@ -2,16 +2,7 @@ import { css } from '@emotion/css';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
-import {
-  Alert,
-  Button,
-  LoadingPlaceholder,
-  Tab,
-  TabContent,
-  TabsBar,
-  useStyles2,
-  withErrorBoundary,
-} from '@grafana/ui';
+import { Alert, LoadingPlaceholder, Tab, TabContent, TabsBar, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 import { useDispatch } from 'app/types';
@@ -247,7 +238,7 @@ const AmRoutes = () => {
           }}
         />
         <Spacer />
-        {haveData && muteTimingsTabActive && <Button type="button">Add mute timing</Button>}
+        {/* {haveData && muteTimingsTabActive && <Button type="button">Add mute timing</Button>} */}
       </TabsBar>
       <TabContent className={styles.tabContent}>
         {isLoading && <LoadingPlaceholder text="Loading Alertmanager config..." />}

@@ -159,7 +159,7 @@ const Policy: FC<PolicyComponentProps> = ({
               {!isDefaultPolicy && (
                 <strong>
                   <Stack direction="row" alignItems="center" gap={0.5}>
-                    <Icon name="x" /> Matchers
+                    <Icon name="x" /> Custom policy
                   </Stack>
                 </strong>
               )}
