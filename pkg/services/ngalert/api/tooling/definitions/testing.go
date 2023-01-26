@@ -176,6 +176,12 @@ type ResponseDetails struct {
 	Msg string `json:"msg"`
 }
 
+// swagger:parameters BacktestConfig
+type BacktestConfigRequest struct {
+	// in:body
+	Body BacktestConfig
+}
+
 // swagger:model
 type BacktestConfig struct {
 	From     time.Time      `json:"from"`

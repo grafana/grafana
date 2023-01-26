@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/playlist"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
 func exportSystemPlaylists(helper *commitHelper, job *gitExportJob) error {
@@ -41,7 +41,7 @@ func exportSystemPlaylists(helper *commitHelper, job *gitExportJob) error {
 			fpath: filepath.Join(
 				helper.orgDir,
 				"entity",
-				models.StandardKindPlaylist,
+				entity.StandardKindPlaylist,
 				fmt.Sprintf("%s.json", playlist.Uid)),
 			body: prettyJSON(playlist),
 		})

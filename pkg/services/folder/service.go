@@ -7,6 +7,9 @@ import (
 type Service interface {
 	// GetChildren returns an array containing all child folders.
 	GetChildren(ctx context.Context, cmd *GetChildrenQuery) ([]*Folder, error)
+	// GetParents returns an array containing add parent folders if nested folders are enabled
+	// otherwise it returns an empty array
+	GetParents(ctx context.Context, q GetParentsQuery) ([]*Folder, error)
 	Create(ctx context.Context, cmd *CreateFolderCommand) (*Folder, error)
 
 	// GetFolder takes a GetFolderCommand and returns a folder matching the
