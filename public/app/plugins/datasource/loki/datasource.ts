@@ -35,6 +35,7 @@ import {
   toUtc,
 } from '@grafana/data';
 import { config, DataSourceWithBackend, FetchError } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { queryLogsSample, queryLogsVolume } from 'app/core/logsModel';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
@@ -50,6 +51,7 @@ import LanguageProvider from './LanguageProvider';
 import { LiveStreams, LokiLiveTarget } from './LiveStreams';
 import { transformBackendResult } from './backendResultTransformer';
 import { LokiAnnotationsQueryEditor } from './components/AnnotationsQueryEditor';
+import { LokiContextUi } from './components/LokiContextUi';
 import { escapeLabelValueInExactSelector, escapeLabelValueInSelector, isRegexSelector } from './languageUtils';
 import { labelNamesRegex, labelValuesRegex } from './migrations/variableQueryMigrations';
 import {
@@ -66,11 +68,18 @@ import {
   getLabelFilterPositions,
 } from './modifyQuery';
 import { getQueryHints } from './queryHints';
-import { getLogQueryFromMetricsQuery, getNormalizedLokiQuery, isLogsQuery, isValidQuery } from './queryUtils';
+import {
+  getLogQueryFromMetricsQuery,
+  getNormalizedLokiQuery,
+  getParserFromQuery,
+  isLogsQuery,
+  isValidQuery,
+} from './queryUtils';
 import { sortDataFrameByTime } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
 import { trackQuery } from './tracking';
 import {
+  ContextFilter,
   LokiOptions,
   LokiQuery,
   LokiQueryDirection,
@@ -132,6 +141,7 @@ export class LokiDatasource
     super(instanceSettings);
 
     this.languageProvider = new LanguageProvider(this);
+    this.languageProvider.start();
     const settingsData = instanceSettings.jsonData || {};
     this.maxLines = parseInt(settingsData.maxLines ?? '0', 10) || DEFAULT_MAX_LINES;
     this.annotations = {
@@ -155,6 +165,71 @@ export class LokiDatasource
       default:
         return undefined;
     }
+  }
+
+  async prepareContextExpr(row: LogRowModel, origQuery?: DataQuery): Promise<string> {
+    await this.languageProvider.start();
+    const labels = this.languageProvider.getLabelKeys();
+    const expr = Object.keys(row.labels)
+      .map((label: string) => {
+        if (labels.includes(label)) {
+          // escape backslashes in label as users can't escape them by themselves
+          return `${label}="${escapeLabelValueInExactSelector(row.labels[label])}"`;
+        }
+        return '';
+      })
+      .filter((label) => !!label)
+      .join(',');
+
+    return `{${expr}}`;
+  }
+
+  getLogRowContextUi(row: LogRowModel, refresh: () => void): React.ReactNode {
+    return LokiContextUi({
+      row,
+      languageProvider: this.languageProvider,
+      updateFilter: (contextFilters: ContextFilter[]) => {
+        this.prepareContextExpr = async (row: LogRowModel, origQuery?: DataQuery) => {
+          await this.languageProvider.start();
+          const labels = this.languageProvider.getLabelKeys();
+
+          let expr = contextFilters
+            .map((filter) => {
+              const label = filter.value;
+              if (filter && !filter.fromParser && filter.enabled && labels.includes(label)) {
+                // escape backslashes in label as users can't escape them by themselves
+                return `${label}="${escapeLabelValueInExactSelector(row.labels[label])}"`;
+              }
+              return '';
+            })
+            // Filter empty strings
+            .filter((label) => !!label)
+            .join(',');
+
+          expr = `{${expr}}`;
+
+          const parserContextFilters = contextFilters.filter((filter) => filter.fromParser && filter.enabled);
+          if (parserContextFilters.length) {
+            // we should also filter for labels from parsers, let's find the right parser
+            if (origQuery) {
+              const parser = getParserFromQuery((origQuery as LokiQuery).expr);
+              if (parser) {
+                expr = addParserToQuery(expr, parser);
+              }
+            }
+            for (const filter of parserContextFilters) {
+              if (filter.enabled) {
+                expr = addLabelToQuery(expr, filter.label, '=', row.labels[filter.label]);
+              }
+            }
+          }
+          return expr;
+        };
+        if (refresh) {
+          refresh();
+        }
+      },
+    });
   }
 
   getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[] {
@@ -576,10 +651,14 @@ export class LokiDatasource
     return Math.ceil(date.valueOf() * 1e6);
   }
 
-  getLogRowContext = async (row: LogRowModel, options?: RowContextOptions): Promise<{ data: DataFrame[] }> => {
+  getLogRowContext = async (
+    row: LogRowModel,
+    options?: RowContextOptions,
+    origQuery?: DataQuery
+  ): Promise<{ data: DataFrame[] }> => {
     const direction = (options && options.direction) || 'BACKWARD';
     const limit = (options && options.limit) || 10;
-    const { query, range } = await this.prepareLogRowContextQueryTarget(row, limit, direction);
+    const { query, range } = await this.prepareLogRowContextQueryTarget(row, limit, direction, origQuery);
 
     const processDataFrame = (frame: DataFrame): DataFrame => {
       // log-row-context requires specific field-names to work, so we set them here: "ts", "line", "id"
@@ -645,29 +724,17 @@ export class LokiDatasource
   prepareLogRowContextQueryTarget = async (
     row: LogRowModel,
     limit: number,
-    direction: 'BACKWARD' | 'FORWARD'
+    direction: 'BACKWARD' | 'FORWARD',
+    origQuery?: DataQuery
   ): Promise<{ query: LokiQuery; range: TimeRange }> => {
-    // need to await the languageProvider to be started to have all labels. This call is not blocking after it has been called once.
-    await this.languageProvider.start();
-    const labels = this.languageProvider.getLabelKeys();
-    const expr = Object.keys(row.labels)
-      .map((label: string) => {
-        if (labels.includes(label)) {
-          // escape backslashes in label as users can't escape them by themselves
-          return `${label}="${escapeLabelValueInExactSelector(row.labels[label])}"`;
-        }
-        return '';
-      })
-      // Filter empty strings
-      .filter((label) => !!label)
-      .join(',');
+    let expr = await this.prepareContextExpr(row, origQuery);
 
     const contextTimeBuffer = 2 * 60 * 60 * 1000; // 2h buffer
 
     const queryDirection = direction === 'FORWARD' ? LokiQueryDirection.Forward : LokiQueryDirection.Backward;
 
     const query: LokiQuery = {
-      expr: `{${expr}}`,
+      expr,
       queryType: LokiQueryType.Range,
       refId: `${REF_ID_STARTER_LOG_ROW_CONTEXT}${row.dataFrame.refId || ''}`,
       maxLines: limit,
