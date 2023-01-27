@@ -94,6 +94,11 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
             To request troubleshooting help, send a snapshot of this panel to Grafana Labs Technical Support. The
             snapshot contains query response data and panel settings.
           </span>
+          {config.featureToggles.supportBundles && (
+            <span className="muted">
+              <a href="/support-bundles">???? Support bundles???</a>
+            </span>
+          )}
         </Stack>
       }
       tabs={
@@ -218,6 +223,7 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
           </AutoSizer>
         </>
       )}
+      {currentTab === SnapshotTab.Bundle && <div>TODO????</div>}
     </Drawer>
   );
 }
