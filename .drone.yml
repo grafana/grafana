@@ -721,11 +721,12 @@ trigger:
   - pull_request
   paths:
     exclude:
-    - '*.md'
     - docs/**
-    - latest.json
+    - '*.md'
+    include: []
   repo:
-  - grafana/*
+    include:
+    - grafana/*
 type: docker
 volumes:
 - host:
@@ -1650,11 +1651,12 @@ trigger:
   - pull_request
   paths:
     exclude:
-    - '*.md'
     - docs/**
-    - latest.json
+    - '*.md'
+    include: []
   repo:
-  - grafana/*
+    exclude:
+    - grafana/*
 type: docker
 volumes:
 - host:
@@ -7532,6 +7534,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: 600f0025d5057aca2d840e170f51cc5dc1d23793d89d44033e34be416c9564cc
+hmac: fb56b27536ee6497284772d6afe7602e6c8e2cff5a24739b6609972976f5015c
 
 ...

@@ -61,9 +61,6 @@ trigger = {
             'latest.json',
         ],
     },
-    'repo': [
-      'grafana/*',
-    ]
 }
 
 
@@ -129,7 +126,7 @@ def pr_pipelines(external=False):
             ver_mode,
             external=external,
         ),
-        build_e2e(trigger, ver_mode, external=external),
+        build_e2e(get_pr_trigger(external=external), ver_mode, external=external),
         integration_tests(
             get_pr_trigger(
                 include_paths=[
