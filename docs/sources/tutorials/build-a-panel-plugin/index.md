@@ -28,15 +28,15 @@ For more information about panels, refer to the documentation on [Panels](/docs/
 
 ## Set up your environment
 
-{{< docs/shared lookup="tutorials/set-up-environment.md" source="grafana" version="next" >}}
+{{< docs/shared lookup="tutorials/set-up-environment.md" source="grafana" version="latest" >}}
 
 ## Create a new plugin
 
-{{< docs/shared lookup="tutorials/create-plugin.md" source="grafana" version="next" >}}
+{{< docs/shared lookup="tutorials/create-plugin.md" source="grafana" version="latest" >}}
 
 ## Anatomy of a plugin
 
-{{< docs/shared lookup="tutorials/plugin-anatomy.md" source="grafana" version="next" >}}
+{{< docs/shared lookup="tutorials/plugin-anatomy.md" source="grafana" version="latest" >}}
 
 ## Panel plugins
 

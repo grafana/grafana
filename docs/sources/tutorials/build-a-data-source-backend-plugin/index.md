@@ -37,7 +37,7 @@ In this tutorial, you'll:
 
 ## Set up your environment
 
-{{< docs/shared lookup="tutorials/set-up-environment.md" source="grafana" version="next" >}}
+{{< docs/shared lookup="tutorials/set-up-environment.md" source="grafana" version="latest" >}}
 
 ## Create a new plugin
 
