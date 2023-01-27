@@ -200,7 +200,7 @@ steps:
   - ln -s src grafana
   - cd -
   - cd ../grafana-enterpise
-  - ./build.sh &> /dev/null
+  - ./build.sh
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -314,7 +314,7 @@ steps:
   - ln -s src grafana
   - cd -
   - cd ../grafana-enterpise
-  - ./build.sh &> /dev/null
+  - ./build.sh
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -6522,6 +6522,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: db8b9cdc0f6631cca720505556f3ef0bf0c1be21ea61077ab04ae956d1caa242
+hmac: 6b49fa18db3a57452a400edcaff4a0383e35dc5f99e701683e9d13b92e07099a
 
 ...
