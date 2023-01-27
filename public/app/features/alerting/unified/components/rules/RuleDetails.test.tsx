@@ -13,6 +13,7 @@ import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 import { CombinedRule } from 'app/types/unified-alerting';
 
+import { AlertmanagersChoiceResponse } from '../../api/alertmanagerApi';
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
 import { getCloudRule, getGrafanaRule } from '../../mocks';
 import { mockAlertmanagerChoiceResponse } from '../../mocks/alertmanagerApi';
@@ -36,6 +37,11 @@ const ui = {
 jest.spyOn(contextSrv, 'accessControlEnabled').mockReturnValue(true);
 
 const server = setupServer();
+
+const alertmanagerChoiceMockedResponse: AlertmanagersChoiceResponse = {
+  alertmanagersChoice: AlertmanagerChoice.Internal,
+  externalAlertmanagers: 0,
+};
 
 beforeAll(() => {
   setBackendSrv(backendSrv);
@@ -82,7 +88,7 @@ describe('RuleDetails RBAC', () => {
     it('Should not render Silence button for users wihout the instance create permission', async () => {
       // Arrange
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
-      mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.Internal });
+      mockAlertmanagerChoiceResponse(server, alertmanagerChoiceMockedResponse);
 
       // Act
       renderRuleDetails(grafanaRule);
@@ -98,7 +104,7 @@ describe('RuleDetails RBAC', () => {
         .spyOn(contextSrv, 'hasPermission')
         .mockImplementation((action) => action === AccessControlAction.AlertingInstanceCreate);
 
-      mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.Internal });
+      mockAlertmanagerChoiceResponse(server, alertmanagerChoiceMockedResponse);
 
       // Act
       renderRuleDetails(grafanaRule);

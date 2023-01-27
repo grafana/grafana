@@ -9,8 +9,8 @@ import { setBackendSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { configureStore } from 'app/store/configureStore';
 
-import { AlertmanagerChoice, ExternalAlertmanagersResponse } from '../../../../plugins/datasource/alertmanager/types';
-import { mockAlertmanagerChoiceResponse, mockAlertmanagersResponse } from '../mocks/alertmanagerApi';
+import { AlertmanagerChoice } from '../../../../plugins/datasource/alertmanager/types';
+import { mockAlertmanagerChoiceResponse } from '../mocks/alertmanagerApi';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
 import { GrafanaAlertmanagerDeliveryWarning } from './GrafanaAlertmanagerDeliveryWarning';
@@ -32,7 +32,10 @@ describe('GrafanaAlertmanagerDeliveryWarning', () => {
   });
 
   it('Should not render when the datasource is not Grafana', () => {
-    mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.External });
+    mockAlertmanagerChoiceResponse(server, {
+      alertmanagersChoice: AlertmanagerChoice.External,
+      externalAlertmanagers: 0,
+    });
 
     const { container } = renderWithStore(
       <GrafanaAlertmanagerDeliveryWarning currentAlertmanager="custom-alertmanager" />
@@ -42,8 +45,10 @@ describe('GrafanaAlertmanagerDeliveryWarning', () => {
   });
 
   it('Should render warning when the datasource is Grafana and using external AM', async () => {
-    mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.External });
-    mockAlertmanagersResponse(server, mockAMresponse);
+    mockAlertmanagerChoiceResponse(server, {
+      alertmanagersChoice: AlertmanagerChoice.External,
+      externalAlertmanagers: 1,
+    });
 
     renderWithStore(<GrafanaAlertmanagerDeliveryWarning currentAlertmanager={GRAFANA_RULES_SOURCE_NAME} />);
 
@@ -51,8 +56,7 @@ describe('GrafanaAlertmanagerDeliveryWarning', () => {
   });
 
   it('Should render warning when the datasource is Grafana and using All AM', async () => {
-    mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.All });
-    mockAlertmanagersResponse(server, mockAMresponse);
+    mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.All, externalAlertmanagers: 1 });
 
     renderWithStore(<GrafanaAlertmanagerDeliveryWarning currentAlertmanager={GRAFANA_RULES_SOURCE_NAME} />);
 
@@ -60,7 +64,10 @@ describe('GrafanaAlertmanagerDeliveryWarning', () => {
   });
 
   it('Should render no warning when choice is Internal', async () => {
-    mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.Internal });
+    mockAlertmanagerChoiceResponse(server, {
+      alertmanagersChoice: AlertmanagerChoice.Internal,
+      externalAlertmanagers: 1,
+    });
 
     const { container } = renderWithStore(
       <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={GRAFANA_RULES_SOURCE_NAME} />
@@ -70,8 +77,7 @@ describe('GrafanaAlertmanagerDeliveryWarning', () => {
   });
 
   it('Should render no warning when choice is All but no active AM instances', async () => {
-    mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.All });
-    mockAlertmanagersResponse(server, { data: { activeAlertManagers: [], droppedAlertManagers: [] } });
+    mockAlertmanagerChoiceResponse(server, { alertmanagersChoice: AlertmanagerChoice.All, externalAlertmanagers: 0 });
 
     const { container } = renderWithStore(
       <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={GRAFANA_RULES_SOURCE_NAME} />
@@ -80,17 +86,6 @@ describe('GrafanaAlertmanagerDeliveryWarning', () => {
     expect(container).toBeEmptyDOMElement();
   });
 });
-
-const mockAMresponse: ExternalAlertmanagersResponse = {
-  data: {
-    activeAlertManagers: [
-      {
-        url: 'http://localhost:9093/',
-      },
-    ],
-    droppedAlertManagers: [],
-  },
-};
 
 function renderWithStore(element: JSX.Element) {
   const store = configureStore();

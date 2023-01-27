@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { isEmpty } from 'lodash';
 import React, { FC, Fragment, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
@@ -254,23 +253,23 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
   return null;
 };
 
+/**
+ * We don't want to show the silence button if either
+ * 1. the user has no permissions to create silences
+ * 2. the admin has configured to only send instances to external AMs
+ */
 function useCanSilence(alertmanagerSourceName?: string) {
   const hasAlertmanagerSource = Boolean(alertmanagerSourceName);
 
-  const { useGetAlertmanagerChoiceQuery, useGetExternalAlertmanagersQuery } = alertmanagerApi;
-  const { currentData: alertmanagerChoice } = useGetAlertmanagerChoiceQuery();
-
-  const interactsWithExternalAMs =
-    alertmanagerChoice && [AlertmanagerChoice.External, AlertmanagerChoice.All].includes(alertmanagerChoice);
-
-  const { currentData: externalAMs } = useGetExternalAlertmanagersQuery(undefined, {
-    skip: !interactsWithExternalAMs,
-  });
+  const { useGetAlertmanagerChoiceStatusQuery } = alertmanagerApi;
+  const { currentData: amConfigStatus } = useGetAlertmanagerChoiceStatusQuery();
 
   const hasPermissions = contextSrv.hasAccess(AccessControlAction.AlertingInstanceCreate, contextSrv.isEditor);
-  const hasExternalAlertmanagers = !isEmpty(externalAMs?.activeAlertManagers);
 
-  return hasAlertmanagerSource && hasPermissions && (interactsWithExternalAMs ? hasExternalAlertmanagers : true);
+  const interactsOnlyWithExternalAMs = amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.External;
+  const interactsWithAll = amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.All;
+
+  return hasAlertmanagerSource && hasPermissions && (!interactsOnlyWithExternalAMs || interactsWithAll);
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({

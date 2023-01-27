@@ -148,8 +148,17 @@ func (srv ConfigSrv) RouteGetAlertingStatus(c *contextmodel.ReqContext) response
 		sendsAlertsTo = cfg.SendAlertsTo
 	}
 
+	// handle errors
+	externalAlertManagers, err := srv.externalAlertmanagers(c.Req.Context(), c.OrgID)
+	if err != nil {
+		msg := "failed to fetch configuration from the database"
+		srv.log.Error(msg, "error", err)
+		return ErrResp(http.StatusInternalServerError, err, msg)
+	}
+
 	resp := apimodels.AlertingStatus{
-		AlertmanagersChoice: apimodels.AlertmanagersChoice(sendsAlertsTo.String()),
+		AlertmanagersChoice:   apimodels.AlertmanagersChoice(sendsAlertsTo.String()),
+		ExternalAlertManagers: len(externalAlertManagers),
 	}
 	return response.JSON(http.StatusOK, resp)
 }

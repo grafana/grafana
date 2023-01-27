@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { isEmpty } from 'lodash';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
@@ -16,29 +15,22 @@ interface GrafanaAlertmanagerDeliveryWarningProps {
 export function GrafanaAlertmanagerDeliveryWarning({ currentAlertmanager }: GrafanaAlertmanagerDeliveryWarningProps) {
   const styles = useStyles2(getStyles);
 
-  const { useGetAlertmanagerChoiceQuery, useGetExternalAlertmanagersQuery } = alertmanagerApi;
-  const { currentData: alertmanagerChoice } = useGetAlertmanagerChoiceQuery();
+  const { useGetAlertmanagerChoiceStatusQuery } = alertmanagerApi;
+  const { currentData: amChoiceStatus } = useGetAlertmanagerChoiceStatusQuery();
 
   const viewingInternalAM = currentAlertmanager === GRAFANA_RULES_SOURCE_NAME;
 
   const interactsWithExternalAMs =
-    alertmanagerChoice && [AlertmanagerChoice.External, AlertmanagerChoice.All].includes(alertmanagerChoice);
+    amChoiceStatus?.alertmanagersChoice &&
+    [AlertmanagerChoice.External, AlertmanagerChoice.All].includes(amChoiceStatus?.alertmanagersChoice);
 
-  const fetchExternalAMs = viewingInternalAM && interactsWithExternalAMs;
-
-  // only fetch external AMs when we have the right admin config
-  const { currentData: externalAMs } = useGetExternalAlertmanagersQuery(undefined, {
-    skip: !fetchExternalAMs,
-  });
-
-  if (!interactsWithExternalAMs) {
+  if (!interactsWithExternalAMs || !viewingInternalAM) {
     return null;
   }
 
-  const externalAlertManagers = externalAMs?.activeAlertManagers ?? [];
-  const hasActiveExternalAMs = !isEmpty(externalAlertManagers);
+  const hasActiveExternalAMs = amChoiceStatus.externalAlertmanagers > 0;
 
-  if (alertmanagerChoice === AlertmanagerChoice.External && hasActiveExternalAMs) {
+  if (amChoiceStatus.alertmanagersChoice === AlertmanagerChoice.External && hasActiveExternalAMs) {
     return (
       <Alert title="Grafana alerts are not delivered to Grafana Alertmanager">
         Grafana is configured to send alerts to external Alertmanagers only. Changing Grafana Alertmanager configuration
@@ -51,7 +43,7 @@ export function GrafanaAlertmanagerDeliveryWarning({ currentAlertmanager }: Graf
     );
   }
 
-  if (alertmanagerChoice === AlertmanagerChoice.All && hasActiveExternalAMs) {
+  if (amChoiceStatus.alertmanagersChoice === AlertmanagerChoice.All && hasActiveExternalAMs) {
     return (
       <Alert title="You have additional Alertmanagers to configure" severity="warning">
         Ensure you make configuration changes in the correct Alertmanagers; both internal and external. Changing one
