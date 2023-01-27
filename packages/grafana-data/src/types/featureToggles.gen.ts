@@ -93,4 +93,5 @@ export interface FeatureToggles {
   azureMultipleResourcePicker?: boolean;
   topNavCommandPalette?: boolean;
   logsSampleInExplore?: boolean;
+  logsContextDatasourceUi?: boolean;
 }

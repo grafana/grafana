@@ -1009,7 +1009,9 @@
     },
     "nodegraphpanelcfg": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/observability-traces-and-profiling"
+      ],
       "currentVersion": [
         0,
         0
@@ -1017,13 +1019,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
-        "docs": "n/a",
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/nodegraphpanelcfg/schema-reference",
         "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/nodeGraph/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/nodeGraph/panelcfg.gen.ts"
       },
       "machineName": "nodegraphpanelcfg",
-      "maturity": "planned",
+      "maturity": "experimental",
       "name": "NodeGraphPanelCfg",
       "pluralMachineName": "nodegraphpanelcfgs",
       "pluralName": "NodeGraphPanelCfgs",
@@ -1869,6 +1871,7 @@
           "gaugepanelcfg",
           "histogrampanelcfg",
           "newspanelcfg",
+          "nodegraphpanelcfg",
           "piechartpanelcfg",
           "statetimelinepanelcfg",
           "statpanelcfg",
@@ -1877,7 +1880,7 @@
           "textpanelcfg",
           "xychartpanelcfg"
         ],
-        "count": 15
+        "count": 16
       },
       "mature": {
         "name": "mature",
@@ -1935,7 +1938,6 @@
           "microsoftsqlserverdatasourcecfg",
           "mysqldataquery",
           "mysqldatasourcecfg",
-          "nodegraphpanelcfg",
           "parcadataquery",
           "parcadatasourcecfg",
           "phlaredataquery",
@@ -1957,7 +1959,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 57
+        "count": 56
       },
       "stable": {
         "name": "stable",

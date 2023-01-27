@@ -314,4 +314,8 @@ const (
 	// FlagLogsSampleInExplore
 	// Access to logs sample feature in Explore
 	FlagLogsSampleInExplore = "logsSampleInExplore"
+
+	// FlagLogsContextDatasourceUi
+	// Allow datasource to provide custom UI for context view
+	FlagLogsContextDatasourceUi = "logsContextDatasourceUi"
 )

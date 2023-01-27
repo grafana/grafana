@@ -1,6 +1,5 @@
 import { DataSourceInstanceSettings, LinkModel, MutableDataFrame } from '@grafana/data';
 import { DataSourceSrv, setDataSourceSrv, setTemplateSrv } from '@grafana/runtime';
-import { Trace, TraceSpan } from '@jaegertracing/jaeger-ui-components';
 import { TraceToMetricsOptions } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { DatasourceSrv } from 'app/features/plugins/datasource_srv';
 
@@ -8,6 +7,7 @@ import { TraceToLogsOptionsV2 } from '../../../core/components/TraceToLogs/Trace
 import { LinkSrv, setLinkSrv } from '../../panel/panellinks/link_srv';
 import { TemplateSrv } from '../../templating/template_srv';
 
+import { Trace, TraceSpan } from './components';
 import { createSpanLinkFactory } from './createSpanLink';
 
 const dummyTraceData = { duration: 10, traceID: 'trace1', traceName: 'test trace' } as unknown as Trace;
@@ -496,7 +496,7 @@ describe('createSpanLinkFactory', () => {
       expect(defaultLink!.title).toBe('defaultQuery');
       expect(defaultLink!.href).toBe(
         `/explore?left=${encodeURIComponent(
-          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"histogram_quantile(0.5, sum(rate(tempo_spanmetrics_latency_bucket{operation=\\"operation\\"}[5m])) by (le))","refId":"A"}]}'
+          '{"range":{"from":"2020-10-14T01:00:00.000Z","to":"2020-10-14T01:00:01.000Z"},"datasource":"prom1Uid","queries":[{"expr":"histogram_quantile(0.5, sum(rate(traces_spanmetrics_latency_bucket{service=\\"test service\\"}[5m])) by (le))","refId":"A"}]}'
         )}`
       );
 

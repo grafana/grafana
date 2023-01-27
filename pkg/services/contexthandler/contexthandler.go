@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
@@ -99,8 +100,8 @@ type ContextHandler struct {
 type reqContextKey = ctxkey.Key
 
 // FromContext returns the ReqContext value stored in a context.Context, if any.
-func FromContext(c context.Context) *models.ReqContext {
-	if reqCtx, ok := c.Value(reqContextKey{}).(*models.ReqContext); ok {
+func FromContext(c context.Context) *contextmodel.ReqContext {
+	if reqCtx, ok := c.Value(reqContextKey{}).(*contextmodel.ReqContext); ok {
 		return reqCtx
 	}
 	return nil
@@ -114,7 +115,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		_, span := h.tracer.Start(ctx, "Auth - Middleware")
 		defer span.End()
 
-		reqContext := &models.ReqContext{
+		reqContext := &contextmodel.ReqContext{
 			Context:        mContext,
 			SignedInUser:   &user.SignedInUser{},
 			IsSignedIn:     false,
@@ -218,7 +219,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 	})
 }
 
-func (h *ContextHandler) initContextWithAnonymousUser(reqContext *models.ReqContext) bool {
+func (h *ContextHandler) initContextWithAnonymousUser(reqContext *contextmodel.ReqContext) bool {
 	_, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithAnonymousUser")
 	defer span.End()
 
@@ -282,7 +283,7 @@ func (h *ContextHandler) getAPIKey(ctx context.Context, keyString string) (*apik
 	return keyQuery.Result, nil
 }
 
-func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bool {
+func (h *ContextHandler) initContextWithAPIKey(reqContext *contextmodel.ReqContext) bool {
 	header := reqContext.Req.Header.Get("Authorization")
 	parts := strings.SplitN(header, " ", 2)
 	var keyString string
@@ -396,7 +397,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	return true
 }
 
-func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext, orgID int64) bool {
+func (h *ContextHandler) initContextWithBasicAuth(reqContext *contextmodel.ReqContext, orgID int64) bool {
 	if !h.Cfg.BasicAuthEnabled {
 		return false
 	}
@@ -456,7 +457,7 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 	return true
 }
 
-func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, orgID int64) bool {
+func (h *ContextHandler) initContextWithToken(reqContext *contextmodel.ReqContext, orgID int64) bool {
 	if h.Cfg.LoginCookieName == "" {
 		return false
 	}
@@ -528,7 +529,7 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 	return true
 }
 
-func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *models.ReqContext) web.BeforeFunc {
+func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *contextmodel.ReqContext) web.BeforeFunc {
 	return func(w web.ResponseWriter) {
 		if w.Written() {
 			reqContext.Logger.Debug("Response written, skipping invalid cookie delete")
@@ -540,7 +541,7 @@ func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *models.
 	}
 }
 
-func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext) web.BeforeFunc {
+func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *contextmodel.ReqContext) web.BeforeFunc {
 	return func(w web.ResponseWriter) {
 		// if response has already been written, skip.
 		if w.Written() {
@@ -581,7 +582,7 @@ func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext) w
 	}
 }
 
-func (h *ContextHandler) initContextWithRenderAuth(reqContext *models.ReqContext) bool {
+func (h *ContextHandler) initContextWithRenderAuth(reqContext *contextmodel.ReqContext) bool {
 	key := reqContext.GetCookie("renderKey")
 	if key == "" {
 		return false
@@ -617,7 +618,7 @@ func (h *ContextHandler) initContextWithRenderAuth(reqContext *models.ReqContext
 	return true
 }
 
-func logUserIn(reqContext *models.ReqContext, auth *authproxy.AuthProxy, username string, logger log.Logger, ignoreCache bool) (int64, error) {
+func logUserIn(reqContext *contextmodel.ReqContext, auth *authproxy.AuthProxy, username string, logger log.Logger, ignoreCache bool) (int64, error) {
 	logger.Debug("Trying to log user in", "username", username, "ignoreCache", ignoreCache)
 	// Try to log in user via various providers
 	id, err := auth.Login(reqContext, ignoreCache)
@@ -634,7 +635,7 @@ func logUserIn(reqContext *models.ReqContext, auth *authproxy.AuthProxy, usernam
 	return id, nil
 }
 
-func (h *ContextHandler) handleError(ctx *models.ReqContext, err error, statusCode int, cb func(error)) {
+func (h *ContextHandler) handleError(ctx *contextmodel.ReqContext, err error, statusCode int, cb func(error)) {
 	details := err
 	var e authproxy.Error
 	if errors.As(err, &e) {
@@ -647,7 +648,7 @@ func (h *ContextHandler) handleError(ctx *models.ReqContext, err error, statusCo
 	}
 }
 
-func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext, orgID int64) bool {
+func (h *ContextHandler) initContextWithAuthProxy(reqContext *contextmodel.ReqContext, orgID int64) bool {
 	username := reqContext.Req.Header.Get(h.Cfg.AuthProxyHeaderName)
 
 	logger := log.New("auth.proxy")

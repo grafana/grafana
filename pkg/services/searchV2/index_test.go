@@ -9,13 +9,12 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/store"
 
 	"github.com/blugelabs/bluge"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
@@ -32,11 +31,11 @@ func (t *testDashboardLoader) LoadDashboards(_ context.Context, _ int64, _ strin
 
 var testLogger = log.New("index-test-logger")
 
-var testAllowAllFilter = func(uid string) bool {
+var testAllowAllFilter = func(kind entityKind, uid, parent string) bool {
 	return true
 }
 
-var testDisallowAllFilter = func(uid string) bool {
+var testDisallowAllFilter = func(kind entityKind, uid, parent string) bool {
 	return false
 }
 
@@ -430,8 +429,8 @@ var dashboardsWithFolders = []dashboard{
 		summary: &entity.EntitySummary{
 			Name: "Dashboard in folder 1",
 			Nested: []*entity.EntitySummary{
-				newNestedPanel(1, "Panel 1"),
-				newNestedPanel(2, "Panel 2"),
+				newNestedPanel(1, 2, "Panel 1"),
+				newNestedPanel(2, 2, "Panel 2"),
 			},
 		},
 	},
@@ -442,7 +441,7 @@ var dashboardsWithFolders = []dashboard{
 		summary: &entity.EntitySummary{
 			Name: "Dashboard in folder 2",
 			Nested: []*entity.EntitySummary{
-				newNestedPanel(3, "Panel 3"),
+				newNestedPanel(3, 3, "Panel 3"),
 			},
 		},
 	},
@@ -452,7 +451,7 @@ var dashboardsWithFolders = []dashboard{
 		summary: &entity.EntitySummary{
 			Name: "One more dash",
 			Nested: []*entity.EntitySummary{
-				newNestedPanel(4, "Panel 4"),
+				newNestedPanel(4, 4, "Panel 4"),
 			},
 		},
 	},
@@ -509,17 +508,17 @@ var dashboardsWithPanels = []dashboard{
 		summary: &entity.EntitySummary{
 			Name: "My Dash",
 			Nested: []*entity.EntitySummary{
-				newNestedPanel(1, "Panel 1"),
-				newNestedPanel(2, "Panel 2"),
+				newNestedPanel(1, 1, "Panel 1"),
+				newNestedPanel(2, 1, "Panel 2"),
 			},
 		},
 	},
 }
 
-func newNestedPanel(id int64, name string) *entity.EntitySummary {
+func newNestedPanel(id, dashId int64, name string) *entity.EntitySummary {
 	summary := &entity.EntitySummary{
 		Kind: "panel",
-		UID:  fmt.Sprintf("???#%d", id),
+		UID:  fmt.Sprintf("%d#%d", dashId, id),
 	}
 	summary.Name = name
 	return summary
