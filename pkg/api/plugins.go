@@ -346,7 +346,7 @@ func (hs *HTTPServer) getPluginAssets(c *contextmodel.ReqContext) {
 }
 
 // serveLocalPluginAsset returns the content of a plugin asset file from the local filesystem to the http client.
-func (hs *HTTPServer) serveLocalPluginAsset(c *models.ReqContext, plugin plugins.PluginDTO, assetPath string) {
+func (hs *HTTPServer) serveLocalPluginAsset(c *contextmodel.ReqContext, plugin plugins.PluginDTO, assetPath string) {
 	f, err := plugin.File(assetPath)
 	if err != nil {
 		if errors.Is(err, plugins.ErrFileNotExist) {
@@ -388,7 +388,7 @@ func (hs *HTTPServer) serveLocalPluginAsset(c *models.ReqContext, plugin plugins
 }
 
 // redirectCDNPluginAsset redirects the http request to specified asset path on the configured plugins CDN.
-func (hs *HTTPServer) redirectCDNPluginAsset(c *models.ReqContext, plugin plugins.PluginDTO, assetPath string) {
+func (hs *HTTPServer) redirectCDNPluginAsset(c *contextmodel.ReqContext, plugin plugins.PluginDTO, assetPath string) {
 	remoteURL, err := hs.pluginsCDNService.AssetURL(plugin.ID, plugin.Info.Version, assetPath)
 	if err != nil {
 		c.JsonApiErr(500, "Failed to get CDN plugin asset remote URL", err)
