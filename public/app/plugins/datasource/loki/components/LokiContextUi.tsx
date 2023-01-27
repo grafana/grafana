@@ -116,7 +116,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
               padding: '1px 5px',
               verticalAlign: 'text-bottom',
             })}
-            name={'Alpha'}
+            name={'Experimental'}
             colorIndex={1}
           />
         </Tooltip>{' '}
