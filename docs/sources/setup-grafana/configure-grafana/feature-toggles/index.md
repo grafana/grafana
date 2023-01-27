@@ -28,7 +28,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `commandPalette`                    | Enable command palette                                                               | Yes                |
 | `cloudWatchDynamicLabels`           | Use dynamic labels instead of alias patterns in CloudWatch datasource                | Yes                |
 | `internationalization`              | Enables internationalization                                                         | Yes                |
-| `cloudWatchCrossAccountQuerying`    | Use cross-account querying in CloudWatch datasource                                  | Yes                |
+| `cloudWatchCrossAccountQuerying`    | Enables cross-account querying in CloudWatch datasources                                 | Yes                |
 | `accessTokenExpirationCheck`        | Enable OAuth access_token expiration check and token refresh using the refresh_token |                    |
 | `disablePrometheusExemplarSampling` | Disable Prometheus examplar sampling                                                 |                    |
 | `logsSampleInExplore`               | Enables access to the logs sample feature in Explore                                 | Yes                |
