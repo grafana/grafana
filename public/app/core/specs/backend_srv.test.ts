@@ -270,8 +270,8 @@ describe('backendSrv', () => {
             } as FetchError
           );
           expect(appEventsMock.emit).toHaveBeenCalledWith(AppEvents.alertError, [
+            'Error',
             'Something failed',
-            '',
             'bogus-trace-id',
           ]);
         });
