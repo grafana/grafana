@@ -483,6 +483,7 @@ func toGettableExtendedRuleNode(r ngmodels.AlertRule, namespaceID int64, provena
 			NoDataState:     apimodels.NoDataState(r.NoDataState),
 			ExecErrState:    apimodels.ExecutionErrorState(r.ExecErrState),
 			Provenance:      provenance,
+			IsPaused:        r.IsPaused,
 		},
 	}
 	forDuration := model.Duration(r.For)
