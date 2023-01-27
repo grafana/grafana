@@ -286,11 +286,11 @@ export function isQueryWithLineFilter(query: string): boolean {
   return queryWithLineFilter;
 }
 
-export function getStreamSelectorsFromQuery(query: LokiQuery): string[] {
-  const labelMatcherPositions = getStreamSelectorPositions(query.expr);
+export function getStreamSelectorsFromQuery(query: string): string[] {
+  const labelMatcherPositions = getStreamSelectorPositions(query);
 
   const labelMatchers = labelMatcherPositions.map((labelMatcher) => {
-    return query.expr.slice(labelMatcher.from, labelMatcher.to);
+    return query.slice(labelMatcher.from, labelMatcher.to);
   });
 
   return labelMatchers;

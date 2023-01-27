@@ -416,7 +416,7 @@ export class LokiDatasource
 
   async getQueryStats(query: LokiQuery): Promise<QueryStats> {
     const { start, end } = this.getTimeRangeParams();
-    const labelMatchers = getStreamSelectorsFromQuery(query);
+    const labelMatchers = getStreamSelectorsFromQuery(query.expr);
 
     let statsForAll: QueryStats = { streams: 0, chunks: 0, bytes: 0, entries: 0 };
 
