@@ -746,7 +746,7 @@ export class LokiDatasource
   }
 
   async prepareContextExpr(row: LogRowModel, origQuery?: DataQuery): Promise<string> {
-    return await this.prepareContextExprWithoutParsedLabes(row, origQuery);
+    return await this.prepareContextExprWithoutParsedLabels(row, origQuery);
   }
 
   getLogRowContextUi(row: LogRowModel, runContextQuery: () => void): React.ReactNode {
