@@ -71,7 +71,7 @@ func Test_teamSync(t *testing.T) {
 	}
 
 	email := "test_user@example.org"
-	upserCmd := &models.UpsertUserCommand{ExternalUser: &models.ExternalUserInfo{Email: email},
+	upsertCmd := &models.UpsertUserCommand{ExternalUser: &models.ExternalUserInfo{Email: email},
 		UserLookupParams: models.UserLookupParams{Email: &email}}
 	expectedUser := &user.User{
 		ID:    1,
@@ -84,8 +84,8 @@ func Test_teamSync(t *testing.T) {
 	var actualUser *user.User
 	var actualExternalUser *models.ExternalUserInfo
 
-	t.Run("login.TeamSync should not be called when  nil", func(t *testing.T) {
-		err := login.UpsertUser(context.Background(), upserCmd)
+	t.Run("login.TeamSync should not be called when nil", func(t *testing.T) {
+		err := login.UpsertUser(context.Background(), upsertCmd)
 		require.Nil(t, err)
 		assert.Nil(t, actualUser)
 		assert.Nil(t, actualExternalUser)
@@ -97,10 +97,33 @@ func Test_teamSync(t *testing.T) {
 				return nil
 			}
 			login.TeamSync = teamSyncFunc
-			err := login.UpsertUser(context.Background(), upserCmd)
+			err := login.UpsertUser(context.Background(), upsertCmd)
 			require.Nil(t, err)
 			assert.Equal(t, actualUser, expectedUser)
-			assert.Equal(t, actualExternalUser, upserCmd.ExternalUser)
+			assert.Equal(t, actualExternalUser, upsertCmd.ExternalUser)
+		})
+
+		t.Run("login.TeamSync should not be called when not nil and skipTeamSync is set for externalUserInfo", func(t *testing.T) {
+			var actualUser *user.User
+			var actualExternalUser *models.ExternalUserInfo
+			upsertCmdSkipTeamSync := &models.UpsertUserCommand{
+				ExternalUser: &models.ExternalUserInfo{
+					Email: email,
+					// sending in ExternalUserInfo with SkipTeamSync yields no team sync
+					SkipTeamSync: true,
+				},
+				UserLookupParams: models.UserLookupParams{Email: &email},
+			}
+			teamSyncFunc := func(user *user.User, externalUser *models.ExternalUserInfo) error {
+				actualUser = user
+				actualExternalUser = externalUser
+				return nil
+			}
+			login.TeamSync = teamSyncFunc
+			err := login.UpsertUser(context.Background(), upsertCmdSkipTeamSync)
+			require.Nil(t, err)
+			assert.Nil(t, actualUser)
+			assert.Nil(t, actualExternalUser)
 		})
 
 		t.Run("login.TeamSync should propagate its errors to the caller", func(t *testing.T) {
@@ -108,7 +131,7 @@ func Test_teamSync(t *testing.T) {
 				return errors.New("teamsync test error")
 			}
 			login.TeamSync = teamSyncFunc
-			err := login.UpsertUser(context.Background(), upserCmd)
+			err := login.UpsertUser(context.Background(), upsertCmd)
 			require.Error(t, err)
 		})
 	})

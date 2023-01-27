@@ -154,7 +154,8 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 		}
 	}
 
-	if ls.TeamSync != nil {
+	// There are external providers where we want to completely skip team synchronization see - https://github.com/grafana/grafana/issues/62175
+	if ls.TeamSync != nil && !extUser.SkipTeamSync {
 		if errTeamSync := ls.TeamSync(cmd.Result, extUser); errTeamSync != nil {
 			return errTeamSync
 		}

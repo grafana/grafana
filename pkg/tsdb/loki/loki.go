@@ -57,15 +57,15 @@ type datasourceInfo struct {
 }
 
 type QueryJSONModel struct {
-	QueryType    string `json:"queryType"`
-	Expr         string `json:"expr"`
-	Direction    string `json:"direction"`
-	LegendFormat string `json:"legendFormat"`
-	Interval     string `json:"interval"`
-	IntervalMS   int    `json:"intervalMS"`
-	Resolution   int64  `json:"resolution"`
-	MaxLines     int    `json:"maxLines"`
-	VolumeQuery  bool   `json:"volumeQuery"`
+	QueryType           string `json:"queryType"`
+	Expr                string `json:"expr"`
+	Direction           string `json:"direction"`
+	LegendFormat        string `json:"legendFormat"`
+	Interval            string `json:"interval"`
+	IntervalMS          int    `json:"intervalMS"`
+	Resolution          int64  `json:"resolution"`
+	MaxLines            int    `json:"maxLines"`
+	SupportingQueryType string `json:"supportingQueryType"`
 }
 
 func parseQueryModel(raw json.RawMessage) (*QueryJSONModel, error) {

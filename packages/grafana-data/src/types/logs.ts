@@ -167,6 +167,13 @@ export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = Dat
    * This method can be used to show "context" button based on runtime conditions (for example row model data or plugin settings, etc.)
    */
   showContextToggle(row?: LogRowModel): boolean;
+
+  /**
+   * This method can be used to display a custom UI in the context view.
+   * @alpha
+   * @internal
+   */
+  getLogRowContextUi?(row: LogRowModel, runContextQuery?: () => void): React.ReactNode;
 }
 
 export const hasLogsContextSupport = (datasource: unknown): datasource is DataSourceWithLogsContextSupport => {
@@ -229,4 +236,14 @@ export const hasSupplementaryQuerySupport = <TQuery extends DataQuery>(
     withSupplementaryQueriesSupport.getSupplementaryQuery !== undefined &&
     withSupplementaryQueriesSupport.getSupportedSupplementaryQueryTypes().includes(type)
   );
+};
+
+export const hasLogsContextUiSupport = (datasource: unknown): datasource is DataSourceWithLogsContextSupport => {
+  if (!datasource) {
+    return false;
+  }
+
+  const withLogsSupport = datasource as DataSourceWithLogsContextSupport;
+
+  return withLogsSupport.getLogRowContextUi !== undefined;
 };

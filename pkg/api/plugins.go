@@ -15,6 +15,8 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -32,6 +34,14 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
+
+// pluginsCDNFallbackRedirectRequests is a metric counter keeping track of how many
+// requests are received on the plugins CDN backend redirect fallback handler.
+var pluginsCDNFallbackRedirectRequests = promauto.NewCounterVec(prometheus.CounterOpts{
+	Namespace: "grafana",
+	Name:      "plugins_cdn_fallback_redirect_requests_total",
+	Help:      "Number of requests to the plugins CDN backend redirect fallback handler.",
+}, []string{"plugin_id", "plugin_version"})
 
 func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Response {
 	typeFilter := c.Query("type")
@@ -301,6 +311,13 @@ func (hs *HTTPServer) CollectPluginMetrics(c *contextmodel.ReqContext) response.
 
 // getPluginAssets returns public plugin assets (images, JS, etc.)
 //
+// If the plugin has cdn = false in its config (default), it will always attempt to return the asset
+// from the local filesystem.
+//
+// If the plugin has cdn = true and hs.Cfg.PluginsCDNURLTemplate is empty, it will get the file
+// from the local filesystem. If hs.Cfg.PluginsCDNURLTemplate is not empty,
+// this handler returns a redirect to the plugin asset file on the specified CDN.
+//
 // /public/plugins/:pluginId/*
 func (hs *HTTPServer) getPluginAssets(c *contextmodel.ReqContext) {
 	pluginID := web.Params(c.Req)[":pluginId"]
@@ -318,7 +335,19 @@ func (hs *HTTPServer) getPluginAssets(c *contextmodel.ReqContext) {
 		return
 	}
 
-	f, err := plugin.File(requestedFile)
+	if hs.pluginsCDNService.PluginSupported(pluginID) {
+		// Send a redirect to the client
+		hs.redirectCDNPluginAsset(c, plugin, requestedFile)
+		return
+	}
+
+	// Send the actual file to the client from local filesystem
+	hs.serveLocalPluginAsset(c, plugin, requestedFile)
+}
+
+// serveLocalPluginAsset returns the content of a plugin asset file from the local filesystem to the http client.
+func (hs *HTTPServer) serveLocalPluginAsset(c *contextmodel.ReqContext, plugin plugins.PluginDTO, assetPath string) {
+	f, err := plugin.File(assetPath)
 	if err != nil {
 		if errors.Is(err, plugins.ErrFileNotExist) {
 			c.JsonApiErr(404, "Plugin file not found", nil)
@@ -346,15 +375,37 @@ func (hs *HTTPServer) getPluginAssets(c *contextmodel.ReqContext) {
 	}
 
 	if rs, ok := f.(io.ReadSeeker); ok {
-		http.ServeContent(c.Resp, c.Req, requestedFile, fi.ModTime(), rs)
-	} else {
-		b, err := io.ReadAll(f)
-		if err != nil {
-			c.JsonApiErr(500, "Plugin file exists but could not read", err)
-			return
-		}
-		http.ServeContent(c.Resp, c.Req, requestedFile, fi.ModTime(), bytes.NewReader(b))
+		http.ServeContent(c.Resp, c.Req, assetPath, fi.ModTime(), rs)
+		return
 	}
+
+	b, err := io.ReadAll(f)
+	if err != nil {
+		c.JsonApiErr(500, "Plugin file exists but could not read", err)
+		return
+	}
+	http.ServeContent(c.Resp, c.Req, assetPath, fi.ModTime(), bytes.NewReader(b))
+}
+
+// redirectCDNPluginAsset redirects the http request to specified asset path on the configured plugins CDN.
+func (hs *HTTPServer) redirectCDNPluginAsset(c *contextmodel.ReqContext, plugin plugins.PluginDTO, assetPath string) {
+	remoteURL, err := hs.pluginsCDNService.AssetURL(plugin.ID, plugin.Info.Version, assetPath)
+	if err != nil {
+		c.JsonApiErr(500, "Failed to get CDN plugin asset remote URL", err)
+		return
+	}
+	hs.log.Warn(
+		"plugin cdn redirect hit",
+		"pluginID", plugin.ID,
+		"pluginVersion", plugin.Info.Version,
+		"assetPath", assetPath,
+		"remoteURL", remoteURL,
+	)
+	pluginsCDNFallbackRedirectRequests.With(prometheus.Labels{
+		"plugin_id":      plugin.ID,
+		"plugin_version": plugin.Info.Version,
+	}).Inc()
+	http.Redirect(c.Resp, c.Req, remoteURL, http.StatusTemporaryRedirect)
 }
 
 // CheckHealth returns the health of a plugin.
