@@ -55,30 +55,51 @@ You can also configure settings specific to the Tempo data source:
 
 The **Trace to logs** setting configures the [trace to logs feature]({{< relref "../../explore/trace-integration" >}}) that is available when you integrate Grafana with Tempo.
 
-**To configure trace to logs:**
+There are two ways to configure the trace to logs feature. You can use simplified configuration with default query, or you can configure custom query where you can use a template language to interpolate variables from the trace or span.
+
+**To use simple configuration:**
 
 1. Select the target data source.
-1. Select which tags to use in the logs query. The tags you configure must be present in the spans attributes or resources for a trace to logs span link to appear.
+1. Set start and end time shift. As the logs timestamps may not exactly match the timestamps of the spans in trace it may be necessary to search in larger or shifted time range to find the desired logs.
+1. Select which tags to use in the logs query. The tags you configure must be present in the spans attributes or resources for a trace to logs span link to appear. You can optionally configure a new name for the tag. This is useful for example if the tag has dots in the name and the target data source does not allow using dots in labels. In that case you can for example remap `http.status` to `http_status`.
+1. Optionally switch on Filter by Trace ID and/or Filter by Span ID to further filter the logs if your logs consistently contain trace or span IDs.
 
-   - **Single tag**
-     - Configuring `job` as a tag and clicking on a span link will take you to your configured logs datasource with the query `{job='value from clicked span'}`.
-   - **Multiple tags**
-     - If multiple tags are used they will be concatenated so the logs query would look like `{job='value from clicked span', service='value from clicked span'}`.
-   - **Mapped tags**
-     - For a mapped tag `service.name` with value `service`, clicking on a span link will take you to your configured logs datasource with the query `{service='value from clicked span'}` instead of `{service.name='value from clicked span'}`.
-     - This is useful for instances where your tracing datasource tags and your logs datasource tags don't match one-to-one.
+**To use custom query configuration:**
+
+1. Select the target data source.
+1. Set start and end time shift. As the logs timestamps may not exactly match the timestamps of the spans in trace it may be necessary to search in larger or shifted time range to find the desired logs.
+1. Optionally select tags to map. In the custom query you can use all tags separately, even those not mapped here or you can use ${\_\_tags} variable which will use and interpolate the tags mapped here. The tags you configure must be present in the spans attributes or resources for a trace to logs span link to appear. You can optionally configure a new name for the tag. This is useful for example if the tag has dots in the name and the target data source does not allow using dots in labels. In that case you can for example remap `http.status` to `http_status`.
+1. Skip Filter by Trace ID or Filter by Span ID as these cannot be used with custom query.
+1. Switch on Use custom query.
+1. Specify custom query to be used to query the logs. You can use various variables to make that query relevant for current span. The link will only be shown only if all the variables are interpolated with non empty values to prevent creating invalid query.
+
+**Variables that can be used in custom query**
+To use a variable you need to wrap it in `${}`. For example `${__span.name}`.
+
+| Variable name      | Description                                                                                                                                                                                                                                                                                                                                                        |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| \_\_tags           | This variable is special because it uses the tag mapping in from the UI to create a label matcher string in the specific data source syntax. It uses only tags that are present in the span so the link will still be created even if only one of those tags is present in the span. You can use this if not all the tags are required for the query to be useful. |
+| \_\_span.spanId    | The ID of the span.                                                                                                                                                                                                                                                                                                                                                |
+| \_\_span.traceId   | The ID of the trace.                                                                                                                                                                                                                                                                                                                                               |
+| \_\_span.duration  | The duration of the span                                                                                                                                                                                                                                                                                                                                           |
+| \_\_span.name      | Name of the span                                                                                                                                                                                                                                                                                                                                                   |
+| \_\_span.tags      | Namespace for the tags in the span. To access a specific tag named "version" you would use `${__span.tags.version}`. In case the tag contains dot you have to access it as `${__span.tags["http.status"]}`                                                                                                                                                         |
+| \_\_trace.traceId  | The ID of the trace.                                                                                                                                                                                                                                                                                                                                               |
+| \_\_trace.duration | The duration of the trace                                                                                                                                                                                                                                                                                                                                          |
+| \_\_trace.name     | The name of the trace.                                                                                                                                                                                                                                                                                                                                             |
 
 The following table describes the ways in which you can configure your trace to logs settings:
 
-| Setting name              | Description                                                                                                                                                                                     |
-| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Data source**           | Defines the target data source. You can select only Loki or Splunk \[logs\] data sources.                                                                                                       |
-| **Tags**                  | Defines the the tags to use in the logs query. Default is `'cluster', 'hostname', 'namespace', 'pod'`.                                                                                          |
-| **Map tag names**         | Enables you to configure how Tempo tag names map to logs label names. For example, you can map `service.name` to `service`.                                                                     |
-| **Span start time shift** | Shifts the start time for the logs query, based on the span's start time. You can use time units, such as `5s`, `1m`, `3h`. To extend the time to the past, use a negative value. Default is 0. |
-| **Span end time shift**   | Shifts the end time for the logs query, based on the span's end time. You can use time units. Default is 0.                                                                                     |
-| **Filter by Trace ID**    | Toggles whether to append the trace ID to the logs query.                                                                                                                                       |
-| **Filter by Span ID**     | Toggles whether to append the span ID to the logs query.                                                                                                                                        |
+| Setting name              | Description                                                                                                                                                                                                                                                                   |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Data source**           | Defines the target data source. You can select only Loki or Splunk \[logs\] data sources.                                                                                                                                                                                     |
+| **Span start time shift** | Shifts the start time for the logs query, based on the span's start time. You can use time units, such as `5s`, `1m`, `3h`. To extend the time to the past, use a negative value. Default is 0.                                                                               |
+| **Span end time shift**   | Shifts the end time for the logs query, based on the span's end time. You can use time units. Default is 0.                                                                                                                                                                   |
+| **Tags**                  | Defines the the tags to use in the logs query. Default is `'cluster', 'hostname', 'namespace', 'pod'`. You can change the tag name for example to remove dots from the name if they are not allowed in the target data source. For example map `http.status` to `http_status` |
+| **Filter by Trace ID**    | Toggles whether to append the trace ID to the logs query.                                                                                                                                                                                                                     |
+| **Filter by Span ID**     | Toggles whether to append the span ID to the logs query.                                                                                                                                                                                                                      |
+| **Use custom query**      | Toggles use of custom query with interpolation.                                                                                                                                                                                                                               |
+| **Query**                 | Input to write custom query. Use variable interpolation to customize it with variables from span.                                                                                                                                                                             |
 
 ### Configure trace to metrics
 
