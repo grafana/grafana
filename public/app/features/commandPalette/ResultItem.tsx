@@ -36,7 +36,7 @@ export const ResultItem = React.forwardRef(
     let name = action.name;
 
     // TODO: does this needs adjusting for i18n?
-    if (action.children && !action.command?.perform && !name.endsWith('...')) {
+    if (action.children.length && !action.command?.perform && !name.endsWith('...')) {
       name += '...';
     }
 
