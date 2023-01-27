@@ -93,9 +93,29 @@ steps:
   image: grafana/build-container:1.6.7
   name: betterer-frontend
 - commands:
+  - pwd
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    ../grafana-enterpise
+  - cd ../grafana-enterpise
+  - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
+    elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
+    else git checkout main; fi
+  - cd ../
+  - ln -s src grafana
+  - cd -
+  - cd ../grafana-enterpise
+  - ./build.sh
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  failure: ignore
+  image: grafana/build-container:1.6.7
+  name: clone-enterprise
+- commands:
   - yarn run ci:test-frontend
   depends_on:
   - yarn-install
+  - clone-enterprise
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.6.7
@@ -135,6 +155,25 @@ platform:
 services: []
 steps:
 - commands:
+  - pwd
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    ../grafana-enterpise
+  - cd ../grafana-enterpise
+  - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
+    elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
+    else git checkout main; fi
+  - cd ../
+  - ln -s src grafana
+  - cd -
+  - cd ../grafana-enterpise
+  - ./build.sh
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  failure: ignore
+  image: grafana/build-container:1.6.7
+  name: clone-enterprise
+- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15.6
   name: identify-runner
@@ -150,6 +189,7 @@ steps:
   - yarn run typecheck
   depends_on:
   - yarn-install
+  - clone-enterprise
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:1.6.7
@@ -189,6 +229,25 @@ platform:
 services: []
 steps:
 - commands:
+  - pwd
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    ../grafana-enterpise
+  - cd ../grafana-enterpise
+  - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
+    elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
+    else git checkout main; fi
+  - cd ../
+  - ln -s src grafana
+  - cd -
+  - cd ../grafana-enterpise
+  - ./build.sh
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  failure: ignore
+  image: grafana/build-container:1.6.7
+  name: clone-enterprise
+- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15.6
   name: identify-runner
@@ -200,15 +259,6 @@ steps:
   image: golang:1.19.4
   name: compile-build-cmd
 - commands:
-  - '# It is required that code generated from Thema/CUE be committed and in sync
-    with its inputs.'
-  - '# The following command will fail if running code generators produces any diff
-    in output.'
-  - CODEGEN_VERIFY=1 make gen-cue
-  depends_on: []
-  image: grafana/build-container:1.6.7
-  name: verify-gen-cue
-- commands:
   - '# It is required that generated jsonnet is committed and in sync with its inputs.'
   - '# The following command will fail if running code generators produces any diff
     in output.'
@@ -216,6 +266,16 @@ steps:
   depends_on: []
   image: grafana/build-container:1.6.7
   name: verify-gen-jsonnet
+- commands:
+  - '# It is required that code generated from Thema/CUE be committed and in sync
+    with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-cue
+  depends_on:
+  - clone-enterprise
+  image: grafana/build-container:1.6.7
+  name: verify-gen-cue
 - commands:
   - make gen-go
   depends_on:
@@ -283,6 +343,25 @@ steps:
     CGO_ENABLED: 0
   image: golang:1.19.4
   name: compile-build-cmd
+- commands:
+  - pwd
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    ../grafana-enterpise
+  - cd ../grafana-enterpise
+  - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
+    elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
+    else git checkout main; fi
+  - cd ../
+  - ln -s src grafana
+  - cd -
+  - cd ../grafana-enterpise
+  - ./build.sh
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  failure: ignore
+  image: grafana/build-container:1.6.7
+  name: clone-enterprise
 - commands:
   - make gen-go
   depends_on: []
@@ -673,6 +752,25 @@ services:
     path: /var/lib/mysql
 steps:
 - commands:
+  - pwd
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    ../grafana-enterpise
+  - cd ../grafana-enterpise
+  - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
+    elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
+    else git checkout main; fi
+  - cd ../
+  - ln -s src grafana
+  - cd -
+  - cd ../grafana-enterpise
+  - ./build.sh
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  failure: ignore
+  image: grafana/build-container:1.6.7
+  name: clone-enterprise
+- commands:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.20/grabpl
   - chmod +x bin/grabpl
@@ -695,7 +793,8 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
-  depends_on: []
+  depends_on:
+  - clone-enterprise
   image: grafana/build-container:1.6.7
   name: verify-gen-cue
 - commands:
@@ -1100,6 +1199,14 @@ steps:
   image: golang:1.19.4
   name: compile-build-cmd
 - commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:1.6.7
+  name: verify-gen-jsonnet
+- commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
   - '# The following command will fail if running code generators produces any diff
@@ -1108,14 +1215,6 @@ steps:
   depends_on: []
   image: grafana/build-container:1.6.7
   name: verify-gen-cue
-- commands:
-  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
-  - '# The following command will fail if running code generators produces any diff
-    in output.'
-  - CODEGEN_VERIFY=1 make gen-jsonnet
-  depends_on: []
-  image: grafana/build-container:1.6.7
-  name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
@@ -1663,6 +1762,25 @@ services:
     path: /var/lib/mysql
 steps:
 - commands:
+  - pwd
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    ../grafana-enterpise
+  - cd ../grafana-enterpise
+  - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
+    elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
+    else git checkout main; fi
+  - cd ../
+  - ln -s src grafana
+  - cd -
+  - cd ../grafana-enterpise
+  - ./build.sh
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  failure: ignore
+  image: grafana/build-container:1.6.7
+  name: clone-enterprise
+- commands:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.20/grabpl
   - chmod +x bin/grabpl
@@ -1685,7 +1803,8 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
-  depends_on: []
+  depends_on:
+  - clone-enterprise
   image: grafana/build-container:1.6.7
   name: verify-gen-cue
 - commands:
@@ -2328,6 +2447,14 @@ steps:
   image: golang:1.19.4
   name: compile-build-cmd
 - commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:1.6.7
+  name: verify-gen-jsonnet
+- commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
   - '# The following command will fail if running code generators produces any diff
@@ -2336,14 +2463,6 @@ steps:
   depends_on: []
   image: grafana/build-container:1.6.7
   name: verify-gen-cue
-- commands:
-  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
-  - '# The following command will fail if running code generators produces any diff
-    in output.'
-  - CODEGEN_VERIFY=1 make gen-jsonnet
-  depends_on: []
-  image: grafana/build-container:1.6.7
-  name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
@@ -2584,9 +2703,12 @@ steps:
   image: alpine:3.15.6
   name: identify-runner
 - commands:
+  - pwd
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    grafana-enterprise
   - cd grafana-enterprise
-  - git checkout ${DRONE_TAG}
+  - if git checkout ${DRONE_TAG}; then echo "checked out ${DRONE_TAG}"; elif git checkout
+    main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -2871,9 +2993,12 @@ platform:
 services: []
 steps:
 - commands:
+  - pwd
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    grafana-enterprise
   - cd grafana-enterprise
-  - git checkout ${DRONE_TAG}
+  - if git checkout ${DRONE_TAG}; then echo "checked out ${DRONE_TAG}"; elif git checkout
+    main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -2956,9 +3081,12 @@ platform:
 services: []
 steps:
 - commands:
+  - pwd
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    grafana-enterprise
   - cd grafana-enterprise
-  - git checkout ${DRONE_TAG}
+  - if git checkout ${DRONE_TAG}; then echo "checked out ${DRONE_TAG}"; elif git checkout
+    main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -3100,9 +3228,12 @@ steps:
   image: alpine:3.15.6
   name: identify-runner
 - commands:
+  - pwd
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    grafana-enterprise
   - cd grafana-enterprise
-  - git checkout ${DRONE_TAG}
+  - if git checkout ${DRONE_TAG}; then echo "checked out ${DRONE_TAG}"; elif git checkout
+    main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -3332,9 +3463,12 @@ steps:
   image: alpine:3.15.6
   name: identify-runner
 - commands:
+  - pwd
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    grafana-enterprise
   - cd grafana-enterprise
-  - git checkout ${DRONE_TAG}
+  - if git checkout ${DRONE_TAG}; then echo "checked out ${DRONE_TAG}"; elif git checkout
+    main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -3582,9 +3716,12 @@ steps:
   image: alpine:3.15.6
   name: identify-runner
 - commands:
+  - pwd
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    grafana-enterprise
   - cd grafana-enterprise
-  - git checkout ${DRONE_TAG}
+  - if git checkout ${DRONE_TAG}; then echo "checked out ${DRONE_TAG}"; elif git checkout
+    main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -4999,6 +5136,14 @@ steps:
   image: golang:1.19.4
   name: compile-build-cmd
 - commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:1.6.7
+  name: verify-gen-jsonnet
+- commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
   - '# The following command will fail if running code generators produces any diff
@@ -5007,14 +5152,6 @@ steps:
   depends_on: []
   image: grafana/build-container:1.6.7
   name: verify-gen-cue
-- commands:
-  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
-  - '# The following command will fail if running code generators produces any diff
-    in output.'
-  - CODEGEN_VERIFY=1 make gen-jsonnet
-  depends_on: []
-  image: grafana/build-container:1.6.7
-  name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
@@ -5242,9 +5379,12 @@ steps:
   image: alpine:3.15.6
   name: identify-runner
 - commands:
+  - pwd
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    grafana-enterprise
   - cd grafana-enterprise
-  - git checkout ${DRONE_BRANCH}
+  - if git checkout ${DRONE_BRANCH}; then echo "checked out ${DRONE_BRANCH}"; elif
+    git checkout main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -5532,9 +5672,12 @@ platform:
 services: []
 steps:
 - commands:
+  - pwd
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    grafana-enterprise
   - cd grafana-enterprise
-  - git checkout ${DRONE_BRANCH}
+  - if git checkout ${DRONE_BRANCH}; then echo "checked out ${DRONE_BRANCH}"; elif
+    git checkout main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -5613,9 +5756,12 @@ platform:
 services: []
 steps:
 - commands:
+  - pwd
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    grafana-enterprise
   - cd grafana-enterprise
-  - git checkout ${DRONE_BRANCH}
+  - if git checkout ${DRONE_BRANCH}; then echo "checked out ${DRONE_BRANCH}"; elif
+    git checkout main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -5753,9 +5899,12 @@ steps:
   image: alpine:3.15.6
   name: identify-runner
 - commands:
+  - pwd
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    grafana-enterprise
   - cd grafana-enterprise
-  - git checkout ${DRONE_BRANCH}
+  - if git checkout ${DRONE_BRANCH}; then echo "checked out ${DRONE_BRANCH}"; elif
+    git checkout main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -5974,9 +6123,12 @@ steps:
   image: alpine:3.15.6
   name: identify-runner
 - commands:
+  - pwd
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    grafana-enterprise
   - cd grafana-enterprise
-  - git checkout ${DRONE_BRANCH}
+  - if git checkout ${DRONE_BRANCH}; then echo "checked out ${DRONE_BRANCH}"; elif
+    git checkout main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -6451,6 +6603,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: 86222a86386ae1d2afce23b4a15f09e97aaeb873275ed34ac73d733335d63e4b
+hmac: asdf
 
 ...

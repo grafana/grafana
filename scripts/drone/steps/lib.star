@@ -77,19 +77,37 @@ def identify_runner_step(platform='linux'):
         }
 
 
-def clone_enterprise_step(committish='${DRONE_COMMIT}'):
-    return {
+def enterprise_setup_step(location='grafana-enterprise', canFail=False):
+    step = clone_enterprise_step(source='${DRONE_SOURCE_BRANCH}', target='${DRONE_TARGET_BRANCH}', canFail=True, location=location)
+    step['commands'] += [
+        'cd ../',
+        'ln -s src grafana',
+        'cd -',
+        'cd {}'.format(location),
+        './build.sh',
+    ]
+
+    return step
+
+def clone_enterprise_step(source='${DRONE_COMMIT}', target='main', canFail=False, location='grafana-enterprise'):
+    step = {
         'name': 'clone-enterprise',
         'image': build_image,
         'environment': {
             'GITHUB_TOKEN': from_secret('github_token'),
         },
         'commands': [
-            'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"',
-            'cd grafana-enterprise',
-            'git checkout {}'.format(committish),
+            'pwd',
+            'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git" ' + location,
+            'cd {}'.format(location),
+            'if git checkout {0}; then echo "checked out {0}"; elif git checkout {1}; then echo "git checkout {1}"; else git checkout main; fi'.format(source, target),
         ],
     }
+
+    if canFail:
+        step['failure'] = 'ignore'
+
+    return step
 
 
 def init_enterprise_step(ver_mode):
@@ -1067,11 +1085,11 @@ def get_windows_steps(edition, ver_mode):
 
     if edition in ('enterprise', 'enterprise2'):
         if ver_mode == 'release':
-            committish = '${DRONE_TAG}'
+            source = '${DRONE_TAG}'
         elif ver_mode == 'release-branch':
-            committish = '$$env:DRONE_BRANCH'
+            source = '$$env:DRONE_BRANCH'
         else:
-            committish = '$$env:DRONE_COMMIT'
+            source = '$$env:DRONE_COMMIT'
 
         # For enterprise, we have to clone both OSS and enterprise and merge the latter into the former
         download_grabpl_cmds = [
@@ -1084,7 +1102,7 @@ def get_windows_steps(edition, ver_mode):
         clone_cmds = [
             'git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"',
             'cd grafana-enterprise',
-            'git checkout {}'.format(committish),
+            'git checkout {}'.format(source),
         ]
 
         init_cmds = [

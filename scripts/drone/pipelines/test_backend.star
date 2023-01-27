@@ -10,6 +10,7 @@ load(
     'compile_build_cmd',
     'clone_enterprise_step',
     'init_enterprise_step',
+    'enterprise_setup_step',
 )
 
 load(
@@ -19,14 +20,25 @@ load(
 )
 
 
-def test_backend(trigger, ver_mode, committish):
+def test_backend(trigger, ver_mode, source):
     environment = {'EDITION': 'oss'}
 
-    steps = [
+    steps = []
+
+    verify_step = verify_gen_cue_step()
+
+    if ver_mode == 'pr':
+        # In pull requests, attempt to clone grafana enterprise.
+        steps.append(enterprise_setup_step(location='../grafana-enterpise'))
+        # Ensure that verif_gen_cue happens after we clone enterprise
+        # At the time of writing this, very_gen_cue is depended on by the wire step which is what everything else depends on.
+        verify_step['depends_on'] += ['clone-enterprise']
+
+    steps += [
         identify_runner_step(),
         compile_build_cmd(edition='oss'),
-        verify_gen_cue_step(),
         verify_gen_jsonnet_step(),
+        verify_step,
         wire_install_step(),
         test_backend_step(),
         test_backend_integration_step(),
@@ -45,12 +57,12 @@ def test_backend(trigger, ver_mode, committish):
     )
 
 
-def test_backend_enterprise(trigger, ver_mode, committish, edition="enterprise"):
+def test_backend_enterprise(trigger, ver_mode, source, edition="enterprise"):
     environment = {'EDITION': edition}
 
     steps = (
         [
-            clone_enterprise_step(committish),
+            clone_enterprise_step(source),
             download_grabpl_step(),
             init_enterprise_step(ver_mode),
             identify_runner_step(),
