@@ -128,6 +128,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   pluginAdminEnabled = true;
   pluginAdminExternalManageEnabled = false;
   pluginCatalogHiddenPlugins: string[] = [];
+  pluginsCDNBaseURL = '';
   expressionsEnabled = false;
   customTheme?: undefined;
   awsAllowedAuthProviders: string[] = [];
