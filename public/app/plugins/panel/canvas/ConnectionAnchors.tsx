@@ -14,10 +14,13 @@ type Props = {
 
 export const CONNECTION_ANCHOR_DIV_ID = 'connectionControl';
 export const CONNECTION_ANCHOR_ALT = 'connection anchor';
+const anchorPadding = 3;
+export const connectionAnchorHighlightOffset = 8;
 
 export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
   const highlightEllipseRef = useRef<HTMLDivElement>(null);
   const styles = useStyles2(getStyles);
+  // TODO re-evaluate dimensional constants
   const halfSize = 2.5;
   const halfSizeHighlightEllipse = 5.5;
   const anchorImage =
@@ -30,8 +33,8 @@ export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
 
     if (highlightEllipseRef.current && event.target.style) {
       highlightEllipseRef.current.style.display = 'block';
-      highlightEllipseRef.current.style.top = `calc(${event.target.style.top} - ${halfSizeHighlightEllipse}px)`;
-      highlightEllipseRef.current.style.left = `calc(${event.target.style.left} - ${halfSizeHighlightEllipse}px)`;
+      highlightEllipseRef.current.style.top = `calc(${event.target.style.top} - ${halfSizeHighlightEllipse}px + ${anchorPadding}px)`;
+      highlightEllipseRef.current.style.left = `calc(${event.target.style.left} - ${halfSizeHighlightEllipse}px + ${anchorPadding}px)`;
     }
   };
 
@@ -78,8 +81,8 @@ export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
 
       // Convert anchor coords to relative percentage
       const style = {
-        top: `calc(${-anchor.y * 50 + 50}% - ${halfSize}px)`,
-        left: `calc(${anchor.x * 50 + 50}% - ${halfSize}px)`,
+        top: `calc(${-anchor.y * 50 + 50}% - ${halfSize}px - ${anchorPadding}px)`,
+        left: `calc(${anchor.x * 50 + 50}% - ${halfSize}px - ${anchorPadding}px)`,
       };
 
       return (
@@ -122,10 +125,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
     height: calc(100% + 60px);
   `,
   anchor: css`
+    padding: ${anchorPadding}px;
     position: absolute;
     cursor: cursor;
-    width: 5px;
-    height: 5px;
+    width: calc(5px + 2 * ${anchorPadding}px);
+    height: calc(5px + 2 * ${anchorPadding}px);
     z-index: 100;
     pointer-events: auto !important;
   `,
@@ -136,8 +140,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     cursor: cursor;
     position: absolute;
     pointer-events: auto;
-    width: 16px;
-    height: 16px;
+    width: calc(${connectionAnchorHighlightOffset}px * 2);
+    height: calc(${connectionAnchorHighlightOffset}px * 2);
     border-radius: 50%;
     display: none;
     z-index: 110;
