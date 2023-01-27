@@ -77,6 +77,7 @@ import {
   LokiQueryType,
   LokiVariableQuery,
   LokiVariableQueryType,
+  SupportingQueryType,
 } from './types';
 import { LokiVariableSupport } from './variables';
 
@@ -182,7 +183,7 @@ export class LokiDatasource
           ...normalizedQuery,
           refId: `${REF_ID_STARTER_LOG_VOLUME}${normalizedQuery.refId}`,
           instant: false,
-          volumeQuery: true,
+          supportingQueryType: SupportingQueryType.LogsVolume,
           expr: `sum by (level) (count_over_time(${expr}[$__interval]))`,
         };
 

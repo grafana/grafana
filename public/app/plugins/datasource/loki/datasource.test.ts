@@ -33,7 +33,7 @@ import { CustomVariableModel } from '../../../features/variables/types';
 import { LokiDatasource, REF_ID_DATA_SAMPLES } from './datasource';
 import { createLokiDatasource, createMetadataRequest } from './mocks';
 import { parseToNodeNamesArray } from './queryUtils';
-import { LokiOptions, LokiQuery, LokiQueryType, LokiVariableQueryType } from './types';
+import { LokiOptions, LokiQuery, LokiQueryType, LokiVariableQueryType, SupportingQueryType } from './types';
 import { LokiVariableSupport } from './variables';
 
 jest.mock('@grafana/runtime', () => {
@@ -981,7 +981,7 @@ describe('LokiDatasource', () => {
           instant: false,
           queryType: 'range',
           refId: 'log-volume-A',
-          volumeQuery: true,
+          supportingQueryType: SupportingQueryType.LogsVolume,
         });
       });
 
