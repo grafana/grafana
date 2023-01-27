@@ -29,10 +29,7 @@ def lint_backend_pipeline(trigger, ver_mode):
 
     if ver_mode == 'pr':
         # In pull requests, attempt to clone grafana enterprise.
-        init_steps += [
-            clone_enterprise_step(source='${DRONE_SOURCE_BRANCH}', target='${DRONE_TARGET_BRANCH}', canFail=True, location='../grafana-enterprise'),
-            enterprise_setup_step(location='../grafana-enterpise'),
-        ]
+        init_steps.append(enterprise_setup_step(location='../grafana-enterpise'))
 
     init_steps.append(wire_step)
 

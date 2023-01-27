@@ -27,10 +27,7 @@ def test_backend(trigger, ver_mode, source):
 
     if ver_mode == 'pr':
         # In pull requests, attempt to clone grafana enterprise.
-        steps += [
-            clone_enterprise_step(source='${DRONE_SOURCE_BRANCH}', target='${DRONE_TARGET_BRANCH}', canFail=True, location='../grafana-enterprise'),
-            enterprise_setup_step(location='../grafana-enterpise'),
-        ]
+        steps.append(enterprise_setup_step(location='../grafana-enterpise'))
 
     steps += [
         identify_runner_step(),

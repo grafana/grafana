@@ -78,18 +78,11 @@ def identify_runner_step(platform='linux'):
 
 
 def enterprise_setup_step(location='grafana-enterprise', canFail=False):
-    step = {
-        'name': 'enterprise_setup',
-        'image': build_image,
-        'depends_on': ['clone-enterprise'],
-        'commands': [
-            'cd {}'.format(location),
-            './build.sh &> /dev/null',
-        ],
-    }
-
-    if canFail:
-        step['failure'] = 'ignore'
+    step = clone_enterprise_step(source='${DRONE_SOURCE_BRANCH}', target='${DRONE_TARGET_BRANCH}', canFail=True, location=location)
+    step['commands'] += [
+        'cd {}'.format(location),
+        './build.sh &> /dev/null',
+    ]
 
     return step
 
