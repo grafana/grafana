@@ -2,7 +2,6 @@ package dashboards
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -181,7 +180,7 @@ func GetInheritedScopes(ctx context.Context, orgID int64, folderUID string, fold
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("could not retrieve folder parents: %w", err)
+		return nil, folder.ErrInternal.Errorf("could not retrieve folder parents: %w", err)
 	}
 
 	result := make([]string, 0, len(ancestors))
