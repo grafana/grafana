@@ -118,4 +118,37 @@ describe('LogsQueryEdiutor', () => {
 
     expect(await screen.findByLabelText('web-server_DataDisk')).toBeDisabled();
   });
+
+  it('should show info about multiple selection', async () => {
+    const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
+    const query = createMockQuery();
+    delete query?.subscription;
+    delete query?.azureLogAnalytics?.resources;
+    const onChange = jest.fn();
+
+    render(
+      <LogsQueryEditor
+        query={query}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={onChange}
+        setError={() => {}}
+      />
+    );
+
+    const resourcePickerButton = await screen.findByRole('button', { name: 'Select a resource' });
+    resourcePickerButton.click();
+
+    const subscriptionButton = await screen.findByRole('button', { name: 'Expand Primary Subscription' });
+    subscriptionButton.click();
+
+    const resourceGroupButton = await screen.findByRole('button', { name: 'Expand A Great Resource Group' });
+    resourceGroupButton.click();
+
+    const checkbox = await screen.findByLabelText('web-server');
+    await userEvent.click(checkbox);
+    expect(checkbox).toBeChecked();
+
+    expect(await screen.findByText('You may only choose items from the same resource type.')).toBeInTheDocument();
+  });
 });

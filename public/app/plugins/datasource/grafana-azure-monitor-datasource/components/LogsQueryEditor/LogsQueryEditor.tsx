@@ -82,6 +82,11 @@ const LogsQueryEditor: React.FC<LogsQueryEditorProps> = ({
                 // eslint-disable-next-line
                 <AdvancedResourcePicker resources={resources as string[]} onChange={onChange} />
               )}
+              selectionNotice={() =>
+                config.featureToggles.azureMultipleResourcePicker
+                  ? 'You may only choose items from the same resource type.'
+                  : ''
+              }
             />
           </EditorFieldGroup>
         </EditorRow>
