@@ -1,3 +1,4 @@
+import logfmt from 'logfmt';
 import { useCallback } from 'react';
 
 import {
@@ -127,18 +128,26 @@ export const getFieldLinksForExplore = (options: {
         }
         return linkModel;
       } else {
-        const internalLinkSpecificVars: ScopedVars = {};
+        let internalLinkSpecificVars: ScopedVars = {};
         if (link.internal?.transformations) {
           const fieldValue = field.values.get(rowIndex);
           link.internal?.transformations.forEach((transformation) => {
             if (transformation.type === 'regex' && transformation.expression) {
               const regexp = new RegExp(transformation.expression);
               const matches = fieldValue.match(regexp);
-              if (matches.length > 0) {
+              if (matches?.length > 0) {
                 internalLinkSpecificVars[transformation.variable || field.name] = {
-                  value: matches[0],
+                  value: matches[1] || matches[0], // not global - return capture group if found, else full match
                 };
               }
+            } else if (transformation.type === 'logfmt') {
+              const logFmtVal = logfmt.parse(fieldValue) as { [key: string]: string };
+              let scopeVarFromLogFmt: ScopedVars = {};
+              Object.keys(logFmtVal).forEach((key) => {
+                const logFmtValue = logFmtVal[key];
+                scopeVarFromLogFmt[key] = { value: logFmtValue };
+              });
+              internalLinkSpecificVars = { ...internalLinkSpecificVars, ...scopeVarFromLogFmt };
             }
           });
         }

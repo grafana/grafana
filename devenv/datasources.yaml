@@ -307,4 +307,20 @@ datasources:
             - type: "regex"
               expression: "(Superman|Batman)"
               variable: "name"
-
+      - targetUID: WyFv5154z
+        label: "Superhero 2 transformations"
+        description: "2nd test transformations"
+        config:
+          type: query
+          target:
+            editorMode: "code"
+            format: "table"
+            rawQuery: "true"
+            rawSql: "SELECT * FROM superhero WHERE name='$${name}' AND alignment='$${align}'"
+            refId: "A"
+          field: "text"
+          transformations:
+            - type: "logfmt"
+            - type: "regex"
+              expression: "text=.*(good|bad).*"
+              variable: "align"
