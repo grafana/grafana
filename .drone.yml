@@ -293,6 +293,7 @@ steps:
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
+  failure: ignore
   image: grafana/build-container:1.6.7
   name: clone-enterprise
 - commands:
@@ -6492,6 +6493,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: feae9c04a24f6a4f25bd54e2874ca9eccb6964871791da5fd5bbe1d4186f6f26
+hmac: 2e10fab7f80302369ce063bd4f27a1cd01b06429eb4c9136c7b31d244404efdc
 
 ...

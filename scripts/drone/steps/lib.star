@@ -77,8 +77,8 @@ def identify_runner_step(platform='linux'):
         }
 
 
-def enterprise_setup_step(location='grafana-enterprise'):
-  return {
+def enterprise_setup_step(location='grafana-enterprise', canFail=False):
+    step = {
         'name': 'enterprise_setup',
         'image': build_image,
         'depends_on': ['clone-enterprise'],
@@ -88,8 +88,13 @@ def enterprise_setup_step(location='grafana-enterprise'):
         ],
     }
 
+    if canFail:
+        step['failure'] = 'ignore'
+
+    return step
+
 def clone_enterprise_step(source='${DRONE_COMMIT}', target='main', canFail=False, location='grafana-enterprise'):
-    return {
+    step = {
         'name': 'clone-enterprise',
         'image': build_image,
         'environment': {
@@ -101,6 +106,11 @@ def clone_enterprise_step(source='${DRONE_COMMIT}', target='main', canFail=False
             'if git checkout {0}; then echo "checked out {0}"; elif git checkout {1}; then echo "git checkout {1}"; else git checkout main; fi'.format(source, target),
         ],
     }
+
+    if canFail:
+        step['failure'] = 'ignore'
+
+    return step
 
 
 def init_enterprise_step(ver_mode):
