@@ -6,7 +6,6 @@ import {
   KBarAnimator,
   KBarPortal,
   KBarPositioner,
-  KBarResults,
   KBarSearch,
   VisualState,
   useRegisterActions,
@@ -20,6 +19,7 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { Icon, Spinner, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
+import { KBarResults } from './KBarResults';
 import { ResultItem } from './ResultItem';
 import { useDashboardResults } from './actions/dashboardActions';
 import useActions from './actions/useActions';

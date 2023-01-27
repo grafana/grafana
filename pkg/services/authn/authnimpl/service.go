@@ -60,7 +60,8 @@ func ProvideService(
 		clientQueue:    newQueue[authn.ContextAwareClient](),
 		tracer:         tracer,
 		sessionService: sessionService,
-		postAuthHooks:  []authn.PostAuthHookFn{},
+		postAuthHooks:  newQueue[authn.PostAuthHookFn](),
+		postLoginHooks: newQueue[authn.PostLoginHookFn](),
 	}
 
 	s.RegisterClient(clients.ProvideRender(userService, renderService))
@@ -69,7 +70,7 @@ func ProvideService(
 	if cfg.LoginCookieName != "" {
 		sessionClient := clients.ProvideSession(sessionService, userService, cfg.LoginCookieName, cfg.LoginMaxLifetime)
 		s.RegisterClient(sessionClient)
-		s.RegisterPostAuthHook(sessionClient.RefreshTokenHook)
+		s.RegisterPostAuthHook(sessionClient.RefreshTokenHook, 20)
 	}
 
 	if s.cfg.AnonymousEnabled {
@@ -118,13 +119,13 @@ func ProvideService(
 	// FIXME (jguer): move to User package
 	userSyncService := sync.ProvideUserSync(userService, userProtectionService, authInfoService, quotaService)
 	orgUserSyncService := sync.ProvideOrgSync(userService, orgService, accessControlService)
-	s.RegisterPostAuthHook(userSyncService.SyncUser)
-	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgUser)
-	s.RegisterPostAuthHook(sync.ProvideUserLastSeenSync(userService).SyncLastSeen)
-	s.RegisterPostAuthHook(sync.ProvideAPIKeyLastSeenSync(apikeyService).SyncLastSeen)
+	s.RegisterPostAuthHook(userSyncService.SyncUser, 10)
+	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgUser, 30)
+	s.RegisterPostAuthHook(sync.ProvideUserLastSeenSync(userService).SyncLastSeen, 40)
+	s.RegisterPostAuthHook(sync.ProvideAPIKeyLastSeenSync(apikeyService).SyncLastSeen, 50)
 
 	if features.IsEnabled(featuremgmt.FlagAccessTokenExpirationCheck) {
-		s.RegisterPostAuthHook(sync.ProvideOauthTokenSync(oauthTokenService, sessionService).SyncOauthToken)
+		s.RegisterPostAuthHook(sync.ProvideOauthTokenSync(oauthTokenService, sessionService).SyncOauthToken, 60)
 	}
 
 	return s
@@ -141,9 +142,9 @@ type Service struct {
 	sessionService auth.UserTokenService
 
 	// postAuthHooks are called after a successful authentication. They can modify the identity.
-	postAuthHooks []authn.PostAuthHookFn
+	postAuthHooks *queue[authn.PostAuthHookFn]
 	// postLoginHooks are called after a login request is performed, both for failing and successful requests.
-	postLoginHooks []authn.PostLoginHookFn
+	postLoginHooks *queue[authn.PostLoginHookFn]
 }
 
 func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
@@ -182,8 +183,8 @@ func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Req
 		return nil, err
 	}
 
-	for _, hook := range s.postAuthHooks {
-		if err := hook(ctx, identity, r); err != nil {
+	for _, hook := range s.postAuthHooks.items {
+		if err := hook.v(ctx, identity, r); err != nil {
 			s.log.FromContext(ctx).Warn("post auth hook failed", "error", err, "id", identity)
 			return nil, err
 		}
@@ -196,14 +197,14 @@ func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Req
 	return identity, nil
 }
 
-func (s *Service) RegisterPostAuthHook(hook authn.PostAuthHookFn) {
-	s.postAuthHooks = append(s.postAuthHooks, hook)
+func (s *Service) RegisterPostAuthHook(hook authn.PostAuthHookFn, priority uint) {
+	s.postAuthHooks.insert(hook, priority)
 }
 
 func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (identity *authn.Identity, err error) {
 	defer func() {
-		for _, hook := range s.postLoginHooks {
-			hook(ctx, identity, r, err)
+		for _, hook := range s.postLoginHooks.items {
+			hook.v(ctx, identity, r, err)
 		}
 	}()
 
@@ -239,8 +240,8 @@ func (s *Service) Login(ctx context.Context, client string, r *authn.Request) (i
 	return identity, nil
 }
 
-func (s *Service) RegisterPostLoginHook(hook authn.PostLoginHookFn) {
-	s.postLoginHooks = append(s.postLoginHooks, hook)
+func (s *Service) RegisterPostLoginHook(hook authn.PostLoginHookFn, priority uint) {
+	s.postLoginHooks.insert(hook, priority)
 }
 
 func (s *Service) RedirectURL(ctx context.Context, client string, r *authn.Request) (string, error) {
