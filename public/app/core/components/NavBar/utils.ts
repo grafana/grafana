@@ -4,11 +4,10 @@ import { locationUtil, NavModelItem, NavSection } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
-import { AccessControlAction } from 'app/types';
 
 import { ShowModalReactEvent } from '../../../types/events';
 import appEvents from '../../app_events';
-import { FooterLink, getFooterLinks } from '../Footer/Footer';
+import { getFooterLinks } from '../Footer/Footer';
 import { OrgSwitcher } from '../OrgSwitcher';
 import { HelpModal } from '../help/HelpModal';
 
