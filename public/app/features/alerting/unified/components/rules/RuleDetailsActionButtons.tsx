@@ -212,7 +212,9 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
         );
       }
 
-      rightButtons.push(<CloneRuleButton text="Clone" ruleIdentifier={identifier} isProvisioned={isProvisioned} />);
+      rightButtons.push(
+        <CloneRuleButton key="clone" text="Clone" ruleIdentifier={identifier} isProvisioned={isProvisioned} />
+      );
     }
 
     if (isRemovable && rulerRule && !isFederated && !isProvisioned) {
