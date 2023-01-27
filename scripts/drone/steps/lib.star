@@ -81,12 +81,10 @@ def enterprise_setup_step(location='grafana-enterprise', canFail=False):
     step = clone_enterprise_step(source='${DRONE_SOURCE_BRANCH}', target='${DRONE_TARGET_BRANCH}', canFail=True, location=location)
     step['commands'] += [
         'cd ../',
-        'mv src grafana',
-        'pushd {}'.format(location),
+        'ln -s src grafana',
+        'cd {}'.format(location),
         './build.sh &> /dev/null',
         'ls -al ../grafana/pkg/extensions | wc -l',
-        'popd',
-        'mv grafana src',
     ]
 
     return step
