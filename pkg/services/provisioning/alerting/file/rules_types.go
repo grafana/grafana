@@ -207,6 +207,7 @@ type AlertRuleExport struct {
 	For          model.Duration             `json:"for" yaml:"for"`
 	Annotations  map[string]string          `json:"annotations,omitempty" yaml:"annotations,omitempty"`
 	Labels       map[string]string          `json:"labels,omitempty" yaml:"labels,omitempty"`
+	IsPaused     bool                       `json:"isPaused" yaml:"isPaused"`
 }
 
 // AlertQueryExport is the provisioned export of models.AlertQuery.
@@ -283,6 +284,7 @@ func newAlertRuleExport(rule models.AlertRule) (AlertRuleExport, error) {
 		ExecErrState: rule.ExecErrState,
 		Annotations:  rule.Annotations,
 		Labels:       rule.Labels,
+		IsPaused:     rule.IsPaused,
 	}, nil
 }
 
