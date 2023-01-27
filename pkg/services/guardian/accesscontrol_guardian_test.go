@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashdb "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/licensing/licensingtest"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -601,7 +602,7 @@ func setupAccessControlGuardianTest(t *testing.T, uid string, permissions []acce
 	})
 	require.NoError(t, err)
 	ac := accesscontrolmock.New().WithPermissions(permissions)
-	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(dashStore, dashStore))
+	ac.RegisterScopeAttributeResolver(dashboards.NewDashboardUIDScopeResolver(dashStore, dashStore, foldertest.NewFakeService()))
 	license := licensingtest.NewFakeLicensing()
 	license.On("FeatureEnabled", "accesscontrol.enforcement").Return(true).Maybe()
 	teamSvc := teamimpl.ProvideService(store, store.Cfg)

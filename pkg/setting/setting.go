@@ -87,12 +87,6 @@ var (
 	CookieSameSiteDisabled bool
 	CookieSameSiteMode     http.SameSite
 
-	// Snapshots
-	ExternalSnapshotUrl   string
-	ExternalSnapshotName  string
-	ExternalEnabled       bool
-	SnapShotRemoveExpired bool
-
 	// Dashboard history
 	DashboardVersionsToKeep int
 	MinRefreshInterval      string
@@ -282,6 +276,8 @@ type Cfg struct {
 	PluginAdminEnabled               bool
 	PluginAdminExternalManageEnabled bool
 
+	PluginsCDNURLTemplate string
+
 	// Panels
 	DisableSanitizeHtml bool
 
@@ -407,6 +403,12 @@ type Cfg struct {
 	DataSourceLimit int
 
 	// Snapshots
+	SnapshotEnabled       bool
+	ExternalSnapshotUrl   string
+	ExternalSnapshotName  string
+	ExternalEnabled       bool
+	SnapShotRemoveExpired bool
+
 	SnapshotPublicMode bool
 
 	ErrTemplateName string
@@ -466,6 +468,9 @@ type Cfg struct {
 	// LiveAllowedOrigins is a set of origins accepted by Live. If not provided
 	// then Live uses AppURL as the only allowed origin.
 	LiveAllowedOrigins []string
+
+	// Github OAuth
+	GithubSkipOrgRoleSync bool
 
 	// Grafana.com URL, used for OAuth redirect.
 	GrafanaComURL string
@@ -1375,6 +1380,11 @@ func readAuthGrafanaComSettings(iniFile *ini.File, cfg *Cfg) {
 	cfg.GrafanaComSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
+func readAuthGithubSettings(iniFile *ini.File, cfg *Cfg) {
+	sec := iniFile.Section("auth.github")
+	cfg.GithubSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+}
+
 func readAuthGoogleSettings(iniFile *ini.File, cfg *Cfg) {
 	sec := iniFile.Section("auth.google")
 	cfg.GoogleSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
@@ -1501,7 +1511,11 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	cfg.AuthProxyHeadersEncoded = authProxy.Key("headers_encoded").MustBool(false)
 
+	// GrafanaCom
 	readAuthGrafanaComSettings(iniFile, cfg)
+
+	// Github
+	readAuthGithubSettings(iniFile, cfg)
 	return nil
 }
 
@@ -1690,11 +1704,13 @@ func IsLegacyAlertingEnabled() bool {
 func readSnapshotsSettings(cfg *Cfg, iniFile *ini.File) error {
 	snapshots := iniFile.Section("snapshots")
 
-	ExternalSnapshotUrl = valueAsString(snapshots, "external_snapshot_url", "")
-	ExternalSnapshotName = valueAsString(snapshots, "external_snapshot_name", "")
+	cfg.SnapshotEnabled = snapshots.Key("enabled").MustBool(true)
 
-	ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
-	SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
+	cfg.ExternalSnapshotUrl = valueAsString(snapshots, "external_snapshot_url", "")
+	cfg.ExternalSnapshotName = valueAsString(snapshots, "external_snapshot_name", "")
+
+	cfg.ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
+	cfg.SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
 	cfg.SnapshotPublicMode = snapshots.Key("public_mode").MustBool(false)
 
 	return nil

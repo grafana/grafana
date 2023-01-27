@@ -115,6 +115,10 @@ const (
 	// Explore native k8s integrations
 	FlagK8s = "k8s"
 
+	// FlagK8sDashboards
+	// Save dashboards via k8s
+	FlagK8sDashboards = "k8sDashboards"
+
 	// FlagSupportBundles
 	// Support bundles for troubleshooting
 	FlagSupportBundles = "supportBundles"
@@ -306,4 +310,8 @@ const (
 	// FlagTopNavCommandPalette
 	// Launch the Command Palette from the top navigation search box
 	FlagTopNavCommandPalette = "topNavCommandPalette"
+
+	// FlagLogsContextDatasourceUi
+	// Allow datasource to provide custom UI for context view
+	FlagLogsContextDatasourceUi = "logsContextDatasourceUi"
 )
