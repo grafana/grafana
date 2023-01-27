@@ -292,7 +292,8 @@
       "title": "场景"
     },
     "search": {
-      "placeholder": "搜索 Grafana"
+      "placeholder": "搜索 Grafana",
+      "placeholderCommandPalette": ""
     },
     "search-dashboards": {
       "title": ""

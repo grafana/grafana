@@ -98,6 +98,7 @@ Alpha features might be changed or removed without prior notice.
 | `alertingBacktesting`              | Rule backtesting API for alerting                                                                                                                                            |
 | `editPanelCSVDragAndDrop`          | Enables drag and drop for CSV and Excel files                                                                                                                                |
 | `azureMultipleResourcePicker`      | Azure multiple resource picker                                                                                                                                               |
+| `logsContextDatasourceUi`          | Allow datasource to provide custom UI for context view                                                                                                                       |
 
 ## Development feature toggles
 
@@ -109,6 +110,7 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | `showFeatureFlagsInUI`                 | Show feature flags in the settings UI                                   |
 | `publicDashboardsEmailSharing`         | Allows public dashboard sharing to be restricted to only allowed emails |
 | `k8s`                                  | Explore native k8s integrations                                         |
+| `k8sDashboards`                        | Save dashboards via k8s                                                 |
 | `dashboardsFromStorage`                | Load dashboards from the generic storage interface                      |
 | `export`                               | Export grafana instance (to git, etc)                                   |
 | `azureMonitorResourcePickerForMetrics` | New UI for Azure Monitor Metrics Query                                  |

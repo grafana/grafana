@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -21,7 +21,7 @@ var (
 	ReqOrgAdmin            = RoleAuth(org.RoleAdmin)
 )
 
-func HandleNoCacheHeader(ctx *models.ReqContext) {
+func HandleNoCacheHeader(ctx *contextmodel.ReqContext) {
 	ctx.SkipCache = ctx.Req.Header.Get("X-Grafana-NoCache") == "true"
 }
 
@@ -69,9 +69,9 @@ func addSecurityHeaders(w web.ResponseWriter, cfg *setting.Cfg) {
 }
 
 func addNoCacheHeaders(w web.ResponseWriter) {
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Pragma", "no-cache")
-	w.Header().Set("Expires", "-1")
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Del("Pragma")
+	w.Header().Del("Expires")
 }
 
 func addXFrameOptionsDenyHeader(w web.ResponseWriter) {

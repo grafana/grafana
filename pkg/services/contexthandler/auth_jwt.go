@@ -12,8 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	authJWT "github.com/grafana/grafana/pkg/services/auth/jwt"
-	"github.com/grafana/grafana/pkg/services/authn"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -24,28 +23,7 @@ const (
 	UserNotFound = "User not found"
 )
 
-func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64) bool {
-	if h.features.IsEnabled(featuremgmt.FlagAuthnService) {
-		identity, ok, err := h.authnService.Authenticate(ctx.Req.Context(),
-			authn.ClientJWT,
-			&authn.Request{HTTPRequest: ctx.Req, Resp: ctx.Resp, OrgID: orgId})
-		if !ok {
-			return false
-		}
-
-		newCtx := WithAuthHTTPHeader(ctx.Req.Context(), h.Cfg.JWTAuthHeaderName)
-		*ctx.Req = *ctx.Req.WithContext(newCtx)
-
-		if err != nil {
-			ctx.WriteErr(err)
-			return true
-		}
-
-		ctx.SignedInUser = identity.SignedInUser()
-		ctx.IsSignedIn = true
-		return true
-	}
-
+func (h *ContextHandler) initContextWithJWT(ctx *contextmodel.ReqContext, orgId int64) bool {
 	if !h.Cfg.JWTAuthEnabled || h.Cfg.JWTAuthHeaderName == "" {
 		return false
 	}
@@ -83,10 +61,13 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 		ctx.JsonApiErr(http.StatusUnauthorized, InvalidJWT, err)
 		return true
 	}
+
 	extUser := &models.ExternalUserInfo{
 		AuthModule: "jwt",
 		AuthId:     sub,
 		OrgRoles:   map[int64]org.RoleType{},
+		// we do not want to sync team memberships from JWT authentication see - https://github.com/grafana/grafana/issues/62175
+		SkipTeamSync: true,
 	}
 
 	if key := h.Cfg.JWTAuthUsernameClaim; key != "" {

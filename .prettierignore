@@ -36,3 +36,5 @@ kinds/report.json
 
 # Generated schema docs
 docs/sources/developers/kinds/
+
+scripts/cli/bettererIssueTemplate.md

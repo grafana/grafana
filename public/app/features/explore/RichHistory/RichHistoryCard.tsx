@@ -2,8 +2,9 @@ import { css, cx } from '@emotion/css';
 import React, { useState, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { DataSourceApi, DataQuery, GrafanaTheme2 } from '@grafana/data';
+import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { TextArea, Button, IconButton, useStyles2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import appEvents from 'app/core/app_events';
