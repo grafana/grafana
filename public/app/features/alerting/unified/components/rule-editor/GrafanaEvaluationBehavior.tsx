@@ -4,7 +4,7 @@ import { RegisterOptions, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, Field, InlineLabel, Input, InputControl, useStyles2, Switch } from '@grafana/ui';
+import { Button, Field, InlineLabel, Input, InputControl, useStyles2, Switch, Tooltip, Icon } from '@grafana/ui';
 import { RulerRuleDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { logInfo, LogMessages } from '../../Analytics';
@@ -279,16 +279,28 @@ export function GrafanaEvaluationBehavior({
         <ForInput evaluateEvery={evaluateEvery} />
 
         {existing && (
-          <Field htmlFor="pause-alert-switch" label="Pause evaluation">
+          <Field htmlFor="pause-alert-switch">
             <InputControl
               render={() => (
-                <Switch
-                  id="pause-alert"
-                  onChange={(value) => {
-                    setValue('isPaused', value.currentTarget.checked);
-                  }}
-                  value={Boolean(isPaused)}
-                />
+                <Stack gap={1}>
+                  <Switch
+                    id="pause-alert"
+                    onChange={(value) => {
+                      setValue('isPaused', value.currentTarget.checked);
+                    }}
+                    value={Boolean(isPaused)}
+                  />
+                  <label htmlFor="pause-alert" className={styles.switchLabel}>
+                    Pause evaluation
+                    <Tooltip
+                      placement="top"
+                      content="Pausing the rule will stop its evaluation until unpaused"
+                      theme={'info'}
+                    >
+                      <Icon tabIndex={0} name="info-circle" size="sm" style={{ marginLeft: '10px' }} />
+                    </Tooltip>
+                  </label>
+                </Stack>
               )}
               name="isPaused"
             />
@@ -377,4 +389,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   marginTop: css`
     margin-top: ${theme.spacing(1)};
   `,
+  switchLabel: css({
+    color: theme.colors.text.primary,
+    cursor: 'pointer',
+    fontSize: theme.typography.bodySmall.fontSize,
+  }),
 });
