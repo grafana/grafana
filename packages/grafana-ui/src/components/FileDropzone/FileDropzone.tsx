@@ -46,7 +46,7 @@ export interface FileDropzoneProps {
    */
   fileListRenderer?: (file: DropzoneFile, removeFile: (file: DropzoneFile) => void) => ReactNode;
   onFileRemove?: (file: DropzoneFile) => void;
-  primaryTextSupplier?: (files?: DropzoneFile[], options?: BackwardsCompatibleDropzoneOptions) => string;
+  primaryTextSupplier?: (files: DropzoneFile[], options?: BackwardsCompatibleDropzoneOptions) => string;
 }
 
 export interface DropzoneFile {
