@@ -11,7 +11,7 @@ type Props = {
 };
 
 export const CONNECTION_ANCHOR_DIV_ID = 'connectionControl';
-export const connectionAnchorAlt = 'connection anchor';
+export const CONNECTION_ANCHOR_ALT = 'connection anchor';
 
 export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
   const highlightEllipseRef = useRef<HTMLDivElement>(null);
