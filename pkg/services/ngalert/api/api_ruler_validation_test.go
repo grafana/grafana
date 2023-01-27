@@ -111,24 +111,30 @@ func TestValidateRuleGroup(t *testing.T) {
 	t.Run("should validate struct and rules", func(t *testing.T) {
 		g := validGroup(cfg, rules...)
 		conditionValidations := 0
-		alerts, err := validateRuleGroup(&g, orgId, folder, func(condition models.Condition) error {
+		alerts, existingRulesWithoutIsPaused, err := validateRuleGroup(&g, orgId, folder, func(condition models.Condition) error {
 			conditionValidations++
 			return nil
 		}, cfg)
 		require.NoError(t, err)
 		require.Len(t, alerts, len(rules))
 		require.Equal(t, len(rules), conditionValidations)
+		require.Equal(t, len(alerts), len(existingRulesWithoutIsPaused))
 	})
 	t.Run("should default to default interval from config if group interval is 0", func(t *testing.T) {
+		for _, rule := range rules {
+			isPaused := true
+			rule.GrafanaManagedAlert.IsPaused = &isPaused
+		}
 		g := validGroup(cfg, rules...)
 		g.Interval = 0
-		alerts, err := validateRuleGroup(&g, orgId, folder, func(condition models.Condition) error {
+		alerts, existingRulesWithoutIsPaused, err := validateRuleGroup(&g, orgId, folder, func(condition models.Condition) error {
 			return nil
 		}, cfg)
 		require.NoError(t, err)
 		for _, alert := range alerts {
 			require.Equal(t, int64(cfg.DefaultRuleEvaluationInterval.Seconds()), alert.IntervalSeconds)
 		}
+		require.Equal(t, 0, len(existingRulesWithoutIsPaused))
 	})
 }
 
@@ -196,7 +202,7 @@ func TestValidateRuleGroupFailures(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			g := testCase.group()
-			_, err := validateRuleGroup(g, orgId, folder, func(condition models.Condition) error {
+			_, _, err := validateRuleGroup(g, orgId, folder, func(condition models.Condition) error {
 				return nil
 			}, cfg)
 			require.Error(t, err)

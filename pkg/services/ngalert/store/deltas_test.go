@@ -25,7 +25,7 @@ func TestCalculateChanges(t *testing.T) {
 		groupKey := models.GenerateGroupKey(orgId)
 		submitted := models.GenerateAlertRules(rand.Intn(5)+1, models.AlertRuleGen(withOrgID(orgId), simulateSubmitted, withoutUID))
 
-		changes, err := CalculateChanges(context.Background(), fakeStore, groupKey, submitted)
+		changes, err := CalculateChanges(context.Background(), fakeStore, groupKey, submitted, map[string]struct{}{})
 		require.NoError(t, err)
 
 		require.Len(t, changes.New, len(submitted))
@@ -50,7 +50,7 @@ func TestCalculateChanges(t *testing.T) {
 		fakeStore := fakes.NewRuleStore(t)
 		fakeStore.PutRule(context.Background(), inDatabase...)
 
-		changes, err := CalculateChanges(context.Background(), fakeStore, groupKey, make([]*models.AlertRule, 0))
+		changes, err := CalculateChanges(context.Background(), fakeStore, groupKey, make([]*models.AlertRule, 0), map[string]struct{}{})
 		require.NoError(t, err)
 
 		require.Equal(t, groupKey, changes.GroupKey)
@@ -74,7 +74,7 @@ func TestCalculateChanges(t *testing.T) {
 		fakeStore := fakes.NewRuleStore(t)
 		fakeStore.PutRule(context.Background(), inDatabase...)
 
-		changes, err := CalculateChanges(context.Background(), fakeStore, groupKey, submitted)
+		changes, err := CalculateChanges(context.Background(), fakeStore, groupKey, submitted, map[string]struct{}{})
 		require.NoError(t, err)
 
 		require.Equal(t, groupKey, changes.GroupKey)
@@ -112,7 +112,7 @@ func TestCalculateChanges(t *testing.T) {
 		fakeStore := fakes.NewRuleStore(t)
 		fakeStore.PutRule(context.Background(), inDatabase...)
 
-		changes, err := CalculateChanges(context.Background(), fakeStore, groupKey, submitted)
+		changes, err := CalculateChanges(context.Background(), fakeStore, groupKey, submitted, map[string]struct{}{})
 		require.NoError(t, err)
 
 		require.Empty(t, changes.Update)
@@ -170,13 +170,13 @@ func TestCalculateChanges(t *testing.T) {
 				expected := models.AlertRuleGen(simulateSubmitted, testCase.mutator)()
 				expected.UID = dbRule.UID
 				submitted := *expected
-				changes, err := CalculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRule{&submitted})
+				changes, err := CalculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRule{&submitted}, map[string]struct{}{})
 				require.NoError(t, err)
 				require.Len(t, changes.Update, 1)
 				ch := changes.Update[0]
 				require.Equal(t, ch.Existing, dbRule)
 				fixed := *expected
-				models.PatchPartialAlertRule(dbRule, &fixed)
+				models.PatchPartialAlertRule(dbRule, &fixed, map[string]struct{}{})
 				require.Equal(t, fixed, *ch.New)
 			})
 		}
@@ -200,7 +200,7 @@ func TestCalculateChanges(t *testing.T) {
 
 		submittedMap, submitted := models.GenerateUniqueAlertRules(rand.Intn(len(inDatabase)-5)+5, models.AlertRuleGen(simulateSubmitted, withGroupKey(groupKey), withUIDs(inDatabaseMap)))
 
-		changes, err := CalculateChanges(context.Background(), fakeStore, groupKey, submitted)
+		changes, err := CalculateChanges(context.Background(), fakeStore, groupKey, submitted, map[string]struct{}{})
 		require.NoError(t, err)
 
 		require.Equal(t, groupKey, changes.GroupKey)
@@ -227,7 +227,7 @@ func TestCalculateChanges(t *testing.T) {
 		submitted := models.AlertRuleGen(withOrgID(orgId), simulateSubmitted)()
 		require.NotEqual(t, "", submitted.UID)
 
-		_, err := CalculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRule{submitted})
+		_, err := CalculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRule{submitted}, map[string]struct{}{})
 		require.Error(t, err)
 	})
 
@@ -245,7 +245,7 @@ func TestCalculateChanges(t *testing.T) {
 		groupKey := models.GenerateGroupKey(orgId)
 		submitted := models.AlertRuleGen(withOrgID(orgId), simulateSubmitted, withoutUID)()
 
-		_, err := CalculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRule{submitted})
+		_, err := CalculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRule{submitted}, map[string]struct{}{})
 		require.ErrorIs(t, err, expectedErr)
 	})
 
@@ -263,7 +263,7 @@ func TestCalculateChanges(t *testing.T) {
 		groupKey := models.GenerateGroupKey(orgId)
 		submitted := models.AlertRuleGen(withOrgID(orgId), simulateSubmitted)()
 
-		_, err := CalculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRule{submitted})
+		_, err := CalculateChanges(context.Background(), fakeStore, groupKey, []*models.AlertRule{submitted}, map[string]struct{}{})
 		require.ErrorIs(t, err, expectedErr)
 	})
 }
