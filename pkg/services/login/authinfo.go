@@ -25,7 +25,6 @@ const (
 )
 
 func GetAuthProviderLabel(authModule string) string {
-	// please look into why tehre is no Okta here.
 	switch authModule {
 	case "oauth_github":
 		return "GitHub"
@@ -35,6 +34,8 @@ func GetAuthProviderLabel(authModule string) string {
 		return "AzureAD"
 	case "oauth_gitlab":
 		return "GitLab"
+	case "oauth_okta":
+		return "Okta"
 	case "oauth_grafana_com", "oauth_grafananet":
 		return "grafana.com"
 	case SAMLAuthModule:
