@@ -15,7 +15,6 @@ import (
 	"gopkg.in/ldap.v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 )
@@ -33,8 +32,8 @@ type IConnection interface {
 
 // IServer is interface for LDAP authorization
 type IServer interface {
-	Login(*models.LoginUserQuery) (*models.ExternalUserInfo, error)
-	Users([]string) ([]*models.ExternalUserInfo, error)
+	Login(*login.LoginUserQuery) (*login.ExternalUserInfo, error)
+	Users([]string) ([]*login.ExternalUserInfo, error)
 	Bind() error
 	UserBind(string, string) error
 	Dial() error
@@ -202,8 +201,8 @@ func (server *Server) Close() {
 //
 // Dial() sets the connection with the server for this Struct. Therefore, we require a
 // call to Dial() before being able to execute this function.
-func (server *Server) Login(query *models.LoginUserQuery) (
-	*models.ExternalUserInfo, error,
+func (server *Server) Login(query *login.LoginUserQuery) (
+	*login.ExternalUserInfo, error,
 ) {
 	var err error
 	var authAndBind bool
@@ -279,7 +278,7 @@ func (server *Server) shouldSingleBind() bool {
 // Dial() sets the connection with the server for this Struct. Therefore, we require a
 // call to Dial() before being able to execute this function.
 func (server *Server) Users(logins []string) (
-	[]*models.ExternalUserInfo,
+	[]*login.ExternalUserInfo,
 	error,
 ) {
 	var users [][]*ldap.Entry
@@ -293,7 +292,7 @@ func (server *Server) Users(logins []string) (
 	}
 
 	if len(users) == 0 {
-		return []*models.ExternalUserInfo{}, nil
+		return []*login.ExternalUserInfo{}, nil
 	}
 
 	serializedUsers, err := server.serializeUsers(users)
@@ -361,7 +360,7 @@ func (server *Server) users(logins []string) (
 // validateGrafanaUser validates user access.
 // If there are no ldap group mappings access is true
 // otherwise a single group must match
-func (server *Server) validateGrafanaUser(user *models.ExternalUserInfo) error {
+func (server *Server) validateGrafanaUser(user *login.ExternalUserInfo) error {
 	if !SkipOrgRoleSync() && len(server.Config.Groups) > 0 &&
 		(len(user.OrgRoles) == 0 && (user.IsGrafanaAdmin == nil || !*user.IsGrafanaAdmin)) {
 		server.log.Error(
@@ -423,14 +422,14 @@ func (server *Server) getSearchRequest(
 }
 
 // buildGrafanaUser extracts info from UserInfo model to ExternalUserInfo
-func (server *Server) buildGrafanaUser(user *ldap.Entry) (*models.ExternalUserInfo, error) {
+func (server *Server) buildGrafanaUser(user *ldap.Entry) (*login.ExternalUserInfo, error) {
 	memberOf, err := server.getMemberOf(user)
 	if err != nil {
 		return nil, err
 	}
 
 	attrs := server.Config.Attr
-	extUser := &models.ExternalUserInfo{
+	extUser := &login.ExternalUserInfo{
 		AuthModule: login.LDAPAuthModule,
 		AuthId:     user.DN,
 		Name: strings.TrimSpace(
@@ -595,8 +594,8 @@ func (server *Server) requestMemberOf(entry *ldap.Entry) ([]string, error) {
 // from LDAP result to ExternalInfo struct
 func (server *Server) serializeUsers(
 	entries [][]*ldap.Entry,
-) ([]*models.ExternalUserInfo, error) {
-	var serialized []*models.ExternalUserInfo
+) ([]*login.ExternalUserInfo, error) {
+	var serialized []*login.ExternalUserInfo
 	var users = map[string]struct{}{}
 
 	for _, dn := range entries {
