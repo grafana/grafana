@@ -361,6 +361,7 @@ func dummyRule(title string, orgID int64) models.AlertRule {
 }
 
 func createTestRule(title string, groupTitle string, orgID int64) models.AlertRule {
+	isPaused := false
 	return models.AlertRule{
 		OrgID:           orgID,
 		Title:           title,
@@ -383,6 +384,7 @@ func createTestRule(title string, groupTitle string, orgID int64) models.AlertRu
 		For:          time.Second * 60,
 		NoDataState:  models.OK,
 		ExecErrState: models.OkErrState,
+		IsPaused:     &isPaused,
 	}
 }
 

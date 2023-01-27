@@ -575,6 +575,7 @@ func createTestAlertRule(title string, orgID int64) definitions.ProvisionedAlert
 		For:          model.Duration(60),
 		NoDataState:  models.OK,
 		ExecErrState: models.OkErrState,
+		IsPaused:     false,
 	}
 }
 

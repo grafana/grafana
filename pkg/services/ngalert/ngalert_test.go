@@ -69,6 +69,6 @@ func Test_subscribeToFolderChanges(t *testing.T) {
 	}, time.Second, 10*time.Millisecond, "scheduler was expected to be called %d times but called %d", len(rules), calledTimes)
 
 	for _, rule := range rules {
-		scheduler.AssertCalled(t, "UpdateAlertRule", rule.GetKey(), rule.Version, false)
+		scheduler.AssertCalled(t, "UpdateAlertRule", rule.GetKey(), rule.Version, rules[0].IsPaused)
 	}
 }
