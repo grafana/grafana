@@ -1,9 +1,9 @@
 package plugindef
 
 import (
-	"strings"
 	"regexp"
-
+	"strings"
+	
 	"github.com/grafana/thema"
 )
 
@@ -120,6 +120,24 @@ seqs: [
 					...
 				}
 
+				#ExtensionsLink: {
+					// Unique identifier of the plugin link extension
+					id:          string
+					description: string
+					// Relative path to the plugin
+					path: string
+					...
+				}
+
+				// A extension point provided by the plugin.
+				#Extension: {
+					links?: [...#ExtensionsLink]
+					...
+				}
+
+				// Extensions by the plugin.
+				extensions?: [...#Extension]
+
 				// For data source plugins, if the plugin supports logs.
 				logs?: bool
 
@@ -173,9 +191,9 @@ seqs: [
 				// each of which has an action and an optional scope.
 				// Example: the role 'Schedules Reader' bundles permissions to view all schedules of the plugin.
 				#Role: {
-					name: string,
-					name: =~"^([A-Z][0-9A-Za-z ]+)$"
-					description: string,
+					name:        string
+					name:        =~"^([A-Z][0-9A-Za-z ]+)$"
+					description: string
 					permissions: [...#Permission]
 				}
 

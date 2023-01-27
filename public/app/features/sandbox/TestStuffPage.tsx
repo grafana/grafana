@@ -155,7 +155,12 @@ export function getDefaultState(): State {
 }
 
 function LinkToBasicApp({ linkId }: { linkId: string }) {
-  const { link } = getPluginLink({ id: linkId });
+  const { link } = getPluginLink({
+    id: linkId,
+    queryParams: {
+      title: 'something',
+    },
+  });
 
   if (!link) {
     return null;
