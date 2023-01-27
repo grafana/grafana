@@ -8,6 +8,7 @@ load(
     'wire_install_step',
     'postgres_integration_tests_step',
     'mysql_integration_tests_step',
+    'enterprise_setup_step',
 )
 
 load(
@@ -23,17 +24,29 @@ load(
 )
 
 
-def integration_tests(trigger, prefix):
+def integration_tests(trigger, prefix, ver_mode='pr'):
     environment = {'EDITION': 'oss'}
 
     services = integration_test_services(edition="oss")
     volumes = integration_test_services_volumes()
 
-    init_steps = [
+
+    init_steps = []
+
+    verify_step = verify_gen_cue_step()
+
+    if ver_mode == 'pr':
+        # In pull requests, attempt to clone grafana enterprise.
+        init_steps.append(enterprise_setup_step(location='../grafana-enterpise'))
+        # Ensure that verif_gen_cue happens after we clone enterprise
+        # At the time of writing this, very_gen_cue is depended on by the wire step which is what everything else depends on.
+        verify_step['depends_on'] += ['clone-enterprise']
+
+    init_steps += [
         download_grabpl_step(),
         compile_build_cmd(),
         identify_runner_step(),
-        verify_gen_cue_step(),
+        verify_step,
         verify_gen_jsonnet_step(),
         wire_install_step(),
     ]

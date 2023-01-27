@@ -7,6 +7,7 @@ load(
     'yarn_install_step',
     'betterer_frontend_step',
     'test_frontend_step',
+    'enterprise_setup_step',
 )
 
 load(
@@ -24,8 +25,17 @@ def test_frontend(trigger, ver_mode, source):
         download_grabpl_step(),
         yarn_install_step(),
         betterer_frontend_step(edition='oss'),
-        test_frontend_step(edition='oss'),
     ]
+
+    test_step = test_frontend_step(edition='oss')
+
+    if ver_mode == 'pr':
+        # In pull requests, attempt to clone grafana enterprise.
+        steps.append(enterprise_setup_step(location='../grafana-enterpise'))
+        # Also, make the test step depend on 'clone-enterprise
+        test_step['depends_on'] += ['clone-enterprise']
+
+    steps.append(test_step)
 
     pipeline_name = '{}-test-frontend'.format(ver_mode)
     if ver_mode in ("release-branch", "release"):
