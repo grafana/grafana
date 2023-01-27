@@ -30,6 +30,7 @@ export function InstallControlsButton({ plugin, pluginStatus, latestCompatibleVe
   const uninstallBtnText = isUninstalling ? 'Uninstalling' : 'Uninstall';
   const trackingProps = {
     plugin_id: plugin.id,
+    plugin_type: plugin.type,
     path: location.pathname,
   };
 
