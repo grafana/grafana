@@ -3,7 +3,7 @@ import { config } from '@grafana/runtime';
 import { SuggestionName } from 'app/types/suggestions';
 
 import { prepareCandlestickFields } from './fields';
-import { CandlestickOptions, defaultPanelOptions } from './models.gen';
+import { PanelOptions, defaultPanelOptions } from './panelcfg.gen';
 
 export class CandlestickSuggestionsSupplier {
   getSuggestionsForData(builder: VisualizationSuggestionsBuilder) {
@@ -29,7 +29,7 @@ export class CandlestickSuggestionsSupplier {
       return;
     }
 
-    const list = builder.getListAppender<CandlestickOptions, {}>({
+    const list = builder.getListAppender<PanelOptions, {}>({
       name: '',
       pluginId: 'candlestick',
       options: {},

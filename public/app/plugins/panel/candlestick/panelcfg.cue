@@ -29,13 +29,13 @@ composableKinds: PanelCfg: {
 						// TODO docs
 						VizDisplayMode: "candles+volume" | "candles" | "volume" @cuetsy(kind="enum", memberNames="CandlesVolume|Candles|Volume")
 						// TODO docs
-						CandleStyle: "candles" | "ohlcbars" @cuetsy(kind="enum" memberNames="Candles|OHLCBars")
+						CandleStyle: "candles" | "ohlcbars" @cuetsy(kind="enum", memberNames="Candles|OHLCBars")
 						// TODO docs
 						// "open-close":  up/down color depends on current close vs current open
 						// filled always
 						// "close-close": up/down color depends on current close vs prior close
 						// filled/hollow depends on current close vs current open
-						ColorStrategy: "open-close" | "close-close" @cuetsy(kind="enum" memberNames="OpenClose|CloseClose")
+						ColorStrategy: "open-close" | "close-close" @cuetsy(kind="enum", memberNames="OpenClose|CloseClose")
 						// TODO docs
 						CandlestickFieldMap: {
 							open?:   string
@@ -50,17 +50,9 @@ composableKinds: PanelCfg: {
 							down: string | *"red"
 							flat: string | *"gray"
 						} @cuetsy(kind="interface")
-						// TODO have defaults for legend options once it is possible
-						// CandlestickLegendOptions: {
-						// 	common.VizLegendOptions
-						// 	displayMode: common.LegendDisplayMode & (*"list" | _)
-						// 	showLegend:  bool | *true
-						// 	placement:   common.LegendPlacement | *"bottom"
-						// } @cuetsy(kind="interface")
 						PanelOptions: {
 							common.OptionsWithLegend
 
-							// legend: CandlestickLegendOptions
 							// TODO docs
 							mode: VizDisplayMode | *"candles+volume"
 							// TODO docs

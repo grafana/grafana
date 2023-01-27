@@ -13,7 +13,7 @@ import { findField } from 'app/features/dimensions';
 
 import { prepareGraphableFields } from '../timeseries/utils';
 
-import { CandlestickOptions, CandlestickFieldMap, VizDisplayMode } from './models.gen';
+import { PanelOptions, CandlestickFieldMap, VizDisplayMode } from './panelcfg.gen';
 
 export interface FieldPickerInfo {
   /** property name */
@@ -97,7 +97,7 @@ function findFieldOrAuto(frame: DataFrame, info: FieldPickerInfo, options: Candl
 
 export function prepareCandlestickFields(
   series: DataFrame[] | undefined,
-  options: CandlestickOptions,
+  options: Partial<PanelOptions>,
   theme: GrafanaTheme2,
   timeRange?: TimeRange
 ): CandlestickData | null {

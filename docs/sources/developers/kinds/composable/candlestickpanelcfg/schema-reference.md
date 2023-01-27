@@ -13,15 +13,15 @@ title: CandlestickPanelCfg kind
 
 ## Properties
 
-| Property              | Type                           | Required | Description                                                                                                                                                                                                                                                                                                      |
-|-----------------------|--------------------------------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `CandleStyle`         | string                         | **Yes**  | TODO docs Possible values are: `candles`, `ohlcbars`.                                                                                                                                                                                                                                                            |
-| `CandlestickColors`   | [object](#candlestickcolors)   | **Yes**  | TODO docs                                                                                                                                                                                                                                                                                                        |
-| `CandlestickFieldMap` | [object](#candlestickfieldmap) | **Yes**  | TODO docs                                                                                                                                                                                                                                                                                                        |
-| `ColorStrategy`       | string                         | **Yes**  | TODO docs<br/>"open-close":  up/down color depends on current close vs current open<br/>filled always<br/>"close-close": up/down color depends on current close vs prior close<br/>filled/hollow depends on current close vs current open Possible values are: `open-close`, `close-close`.                      |
-| `PanelFieldConfig`    | [object](#panelfieldconfig)    | **Yes**  |                                                                                                                                                                                                                                                                                                                  |
-| `PanelOptions`        | [object](#paneloptions)        | **Yes**  | TODO have defaults for legend options once it is possible<br/>CandlestickLegendOptions: {<br/>	common.VizLegendOptions<br/>	displayMode: common.LegendDisplayMode & (*"list" &#124; _)<br/>	showLegend:  bool &#124; *true<br/>	placement:   common.LegendPlacement &#124; *"bottom"<br/>} @cuetsy(kind="interface") |
-| `VizDisplayMode`      | string                         | **Yes**  | TODO docs Possible values are: `candles+volume`, `candles`, `volume`.                                                                                                                                                                                                                                            |
+| Property              | Type                           | Required | Description                                                                                                                                                                                                                                                                                 |
+|-----------------------|--------------------------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `CandleStyle`         | string                         | **Yes**  | TODO docs Possible values are: `candles`, `ohlcbars`.                                                                                                                                                                                                                                       |
+| `CandlestickColors`   | [object](#candlestickcolors)   | **Yes**  | TODO docs                                                                                                                                                                                                                                                                                   |
+| `CandlestickFieldMap` | [object](#candlestickfieldmap) | **Yes**  | TODO docs                                                                                                                                                                                                                                                                                   |
+| `ColorStrategy`       | string                         | **Yes**  | TODO docs<br/>"open-close":  up/down color depends on current close vs current open<br/>filled always<br/>"close-close": up/down color depends on current close vs prior close<br/>filled/hollow depends on current close vs current open Possible values are: `open-close`, `close-close`. |
+| `PanelFieldConfig`    | [object](#panelfieldconfig)    | **Yes**  |                                                                                                                                                                                                                                                                                             |
+| `PanelOptions`        | [object](#paneloptions)        | **Yes**  |                                                                                                                                                                                                                                                                                             |
+| `VizDisplayMode`      | string                         | **Yes**  | TODO docs Possible values are: `candles+volume`, `candles`, `volume`.                                                                                                                                                                                                                       |
 
 ## CandlestickColors
 
@@ -55,14 +55,6 @@ TODO docs
 |----------|------|----------|-------------|
 
 ## PanelOptions
-
-TODO have defaults for legend options once it is possible
-CandlestickLegendOptions: {
-	common.VizLegendOptions
-	displayMode: common.LegendDisplayMode & (*"list" | _)
-	showLegend:  bool | *true
-	placement:   common.LegendPlacement | *"bottom"
-} @cuetsy(kind="interface")
 
 ### Properties
 
