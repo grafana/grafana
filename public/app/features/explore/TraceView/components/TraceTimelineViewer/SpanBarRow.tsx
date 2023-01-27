@@ -456,7 +456,7 @@ export class UnthemedSpanBarRow extends React.PureComponent<SpanBarRowProps> {
               >
                 {showErrorIcon && (
                   <Icon
-                    name={'exclamation-triangle'}
+                    name={'exclamation-circle'}
                     style={{
                       backgroundColor: span.errorIconColor
                         ? autoColor(theme, span.errorIconColor)
