@@ -10164,7 +10164,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/dom@npm:8.20.0":
+"@testing-library/dom@npm:8.20.0, @testing-library/dom@npm:>=7, @testing-library/dom@npm:^8.0.0":
   version: 8.20.0
   resolution: "@testing-library/dom@npm:8.20.0"
   dependencies:
@@ -10177,22 +10177,6 @@ __metadata:
     lz-string: ^1.4.4
     pretty-format: ^27.0.2
   checksum: 1e599129a2fe91959ce80900a0a4897232b89e2a8e22c1f5950c36d39c97629ea86b4986b60b173b5525a05de33fde1e35836ea597b03de78cc51b122835c6f0
-  languageName: node
-  linkType: hard
-
-"@testing-library/dom@npm:>=7, @testing-library/dom@npm:^8.0.0":
-  version: 8.19.0
-  resolution: "@testing-library/dom@npm:8.19.0"
-  dependencies:
-    "@babel/code-frame": ^7.10.4
-    "@babel/runtime": ^7.12.5
-    "@types/aria-query": ^4.2.0
-    aria-query: ^5.0.0
-    chalk: ^4.1.0
-    dom-accessibility-api: ^0.5.9
-    lz-string: ^1.4.4
-    pretty-format: ^27.0.2
-  checksum: 6bb93fef96703b6c47cf1b7cc8f71d402a9576084a94ba4e9926f51bd7bb1287fbb4f6942d82bd03fc6f3d998ae97e60f6aea4618f3a1ce6139597d2a4ecb7b9
   languageName: node
   linkType: hard
 
@@ -10336,13 +10320,6 @@ __metadata:
   version: 1.8.4
   resolution: "@types/angular@npm:1.8.4"
   checksum: aa8fcfb75152276669a06656721cece74569708cb41b75f8b6296feefa1df4d621ae15850dc73eb956f8475aae22409cf9056c4e354f242a548da8bf3fcd1bda
-  languageName: node
-  linkType: hard
-
-"@types/aria-query@npm:^4.2.0":
-  version: 4.2.2
-  resolution: "@types/aria-query@npm:4.2.2"
-  checksum: 6f2ce11d91e2d665f3873258db19da752d91d85d3679eb5efcdf9c711d14492287e1e4eb52613b28e60375841a9e428594e745b68436c963d8bad4bf72188df3
   languageName: node
   linkType: hard
 
