@@ -53,8 +53,8 @@ export const enrichConfigItems = (items: NavModelItem[], location: Location<unkn
 
     if (link.id === 'help') {
       link.children = [
+        ...menuItems,
         ...getFooterLinks(),
-        ...getSupportBundleFooterLinks(),
         {
           id: 'keyboard-shortcuts',
           text: t('nav.help/keyboard-shortcuts', 'Keyboard shortcuts'),
