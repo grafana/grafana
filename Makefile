@@ -93,7 +93,7 @@ swagger-clean:
 ##@ OpenAPI 3
 OAPI_SPEC_TARGET = public/openapi3.json
 
-openapi3-gen: swagger-api-spec ## Generates OpenApi 3 specs from the Swagger 2 already generated
+openapi3-gen: swagger-gen ## Generates OpenApi 3 specs from the Swagger 2 already generated
 	$(GO) run scripts/openapi3/openapi3conv.go $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
 
 ##@ Building
