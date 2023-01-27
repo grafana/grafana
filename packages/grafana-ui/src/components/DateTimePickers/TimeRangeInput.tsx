@@ -1,7 +1,7 @@
 import { css, cx } from '@emotion/css';
 import React, { FC, FormEvent, MouseEvent, useState } from 'react';
 
-import { dateMath, dateTime, getDefaultTimeRange, GrafanaTheme2, TimeRange, TimeZone } from '@grafana/data';
+import { dateMath, dateTime, getDefaultTimeRange, GrafanaTheme2, TimeRange, TimeZone, TimeOption } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { stylesFactory } from '../../themes';
@@ -31,6 +31,7 @@ export interface TimeRangeInputProps {
   /** Controls visibility of the preset time ranges (e.g. **Last 5 minutes**) in the picker menu */
   hideQuickRanges?: boolean;
   disabled?: boolean;
+  timeOptions?: TimeOption[];
 }
 
 const noop = () => {};
@@ -46,6 +47,7 @@ export const TimeRangeInput: FC<TimeRangeInputProps> = ({
   isReversed = true,
   hideQuickRanges = false,
   disabled = false,
+  timeOptions = quickOptions,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const theme = useTheme2();
@@ -105,7 +107,7 @@ export const TimeRangeInput: FC<TimeRangeInputProps> = ({
             timeZone={timeZone}
             value={isValidTimeRange(value) ? value : getDefaultTimeRange()}
             onChange={onRangeChange}
-            quickOptions={quickOptions}
+            quickOptions={timeOptions}
             onChangeTimeZone={onChangeTimeZone}
             className={styles.content}
             hideTimeZone={hideTimeZone}
