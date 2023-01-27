@@ -89,7 +89,7 @@ jest.mock('@grafana/runtime', () => ({
     };
   },
   config: {
-    featureToggles: { exploreMixedDatasource: true },
+    featureToggles: { exploreMixedDatasource: false },
   },
 }));
 
@@ -267,21 +267,45 @@ describe('importing queries', () => {
 
 describe('adding new query rows', () => {
   describe('with mixed datasources disabled', () => {
-    it('should add query row when there is not yet a row', async () => {
+    it('should add query row when there is not yet a row and meta.mixed === true (impossible in UI)', async () => {
       const queries: DataQuery[] = [];
       const datasourceInstance = {
         query: jest.fn(),
-        getRef: jest.fn(),
+        getRef: () => {
+          return { type: 'loki', uid: 'uid-loki' };
+        },
         meta: {
-          id: 'postgres',
+          id: 'mixed',
+          mixed: true,
         } as unknown as DataSourcePluginMeta<{}>,
       };
 
       const getState = await setupStore(queries, datasourceInstance);
 
-      expect(getState().explore[exploreId].datasourceInstance?.meta?.id).toBe('postgres');
+      expect(getState().explore[exploreId].datasourceInstance?.meta?.id).toBe('mixed');
+      expect(getState().explore[exploreId].datasourceInstance?.meta?.mixed).toBe(true);
       expect(getState().explore[exploreId].queries).toHaveLength(1);
-      expect(getState().explore[exploreId].queryKeys).toEqual(['ds1-0']);
+      expect(getState().explore[exploreId].queryKeys).toEqual(['uid-loki-0']);
+    });
+    it('should add query row when there is not yet a row and meta.mixed === false', async () => {
+      const queries: DataQuery[] = [];
+      const datasourceInstance = {
+        query: jest.fn(),
+        getRef: () => {
+          return { type: 'loki', uid: 'uid-loki' };
+        },
+        meta: {
+          id: 'loki',
+          mixed: false,
+        } as unknown as DataSourcePluginMeta<{}>,
+      };
+
+      const getState = await setupStore(queries, datasourceInstance);
+
+      expect(getState().explore[exploreId].datasourceInstance?.meta?.id).toBe('loki');
+      expect(getState().explore[exploreId].datasourceInstance?.meta?.mixed).toBe(false);
+      expect(getState().explore[exploreId].queries).toHaveLength(1);
+      expect(getState().explore[exploreId].queryKeys).toEqual(['uid-loki-0']);
     });
 
     it('should add another query row if there are two rows already', async () => {
@@ -300,11 +324,13 @@ describe('adding new query rows', () => {
         getRef: jest.fn(),
         meta: {
           id: 'loki',
+          mixed: false,
         } as unknown as DataSourcePluginMeta<{}>,
       };
       const getState = await setupStore(queries, datasourceInstance);
 
       expect(getState().explore[exploreId].datasourceInstance?.meta?.id).toBe('loki');
+      expect(getState().explore[exploreId].datasourceInstance?.meta?.mixed).toBe(false);
       expect(getState().explore[exploreId].queries).toHaveLength(3);
       expect(getState().explore[exploreId].queryKeys).toEqual(['ds3-0', 'ds4-1', 'ds4-2']);
     });
@@ -329,6 +355,7 @@ describe('adding new query rows', () => {
       const getState = await setupStore(queries, datasourceInstance);
 
       expect(getState().explore[exploreId].datasourceInstance?.meta?.id).toBe('mixed');
+      expect(getState().explore[exploreId].datasourceInstance?.meta?.mixed).toBe(true);
       expect(getState().explore[exploreId].queries).toHaveLength(1);
       expect(getState().explore[exploreId].queries[0]?.datasource?.type).toBe('postgres');
       expect(getState().explore[exploreId].queryKeys).toEqual(['ds1-0']);
@@ -349,8 +376,8 @@ describe('adding new query rows', () => {
 
       const getState = await setupStore(queries, datasourceInstance);
 
-      // expect(getState().explore[exploreId]).toBe('loki');
       expect(getState().explore[exploreId].datasourceInstance?.meta?.id).toBe('loki');
+      expect(getState().explore[exploreId].datasourceInstance?.meta?.mixed).toBe(false);
       expect(getState().explore[exploreId].queries).toHaveLength(1);
       expect(getState().explore[exploreId].queries[0]?.datasource?.type).toBe('loki');
       expect(getState().explore[exploreId].queryKeys).toEqual(['uid-loki-0']);
@@ -372,12 +399,14 @@ describe('adding new query rows', () => {
         getRef: jest.fn(),
         meta: {
           id: 'postgres',
+          mixed: false,
         } as unknown as DataSourcePluginMeta<{}>,
       };
 
       const getState = await setupStore(queries, datasourceInstance);
 
       expect(getState().explore[exploreId].datasourceInstance?.meta?.id).toBe('postgres');
+      expect(getState().explore[exploreId].datasourceInstance?.meta?.mixed).toBe(false);
       expect(getState().explore[exploreId].queries).toHaveLength(3);
       expect(getState().explore[exploreId].queries[2]?.datasource?.type).toBe('loki');
       expect(getState().explore[exploreId].queryKeys).toEqual(['ds3-0', 'ds4-1', 'ds4-2']);
