@@ -310,4 +310,8 @@ const (
 	// FlagTopNavCommandPalette
 	// Launch the Command Palette from the top navigation search box
 	FlagTopNavCommandPalette = "topNavCommandPalette"
+
+	// FlagLogsSampleInExplore
+	// Enables logs sample in Explore
+	FlagLogsSampleInExplore = "logsSampleInExplore"
 )

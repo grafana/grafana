@@ -426,5 +426,12 @@ var (
 			State:        FeatureStateBeta,
 			FrontendOnly: true,
 		},
+		{
+			Name:         "logsSampleInExplore",
+			Description:  "Access to logs sample feature in Explore",
+			State:        FeatureStateStable,
+			Expression:   "true", //turned on by default
+			FrontendOnly: true,
+		},
 	}
 )
