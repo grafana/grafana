@@ -196,8 +196,9 @@ steps:
   - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
     elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
     else git checkout main; fi
-  - cd ../
+  - pushd ../
   - ln -s src grafana
+  - popd
   - cd ../grafana-enterpise
   - ./build.sh &> /dev/null
   - ls -al ../grafana/pkg/extensions | wc -l
@@ -310,8 +311,9 @@ steps:
   - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
     elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
     else git checkout main; fi
-  - cd ../
+  - pushd ../
   - ln -s src grafana
+  - popd
   - cd ../grafana-enterpise
   - ./build.sh &> /dev/null
   - ls -al ../grafana/pkg/extensions | wc -l
@@ -6522,6 +6524,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: edc58b4ae0177357e6b146d3bb298e0fc52f01009ee29ae156faa2c9da509d7f
+hmac: 8a52210095df1bd720ba345153034522e1390c3fdb98f7767d1574a4ccf067e0
 
 ...
