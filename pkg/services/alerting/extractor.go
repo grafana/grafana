@@ -301,7 +301,10 @@ func (e *DashAlertExtractorService) extractAlerts(ctx context.Context, validateF
 // in the first validation pass.
 func (e *DashAlertExtractorService) ValidateAlerts(ctx context.Context, dashAlertInfo DashAlertInfo) error {
 	_, err := e.extractAlerts(ctx, func(alert *models.Alert) error {
-		return validateAlertRule(alert)
+		if alert.OrgId == 0 || alert.PanelId == 0 {
+			return errors.New("missing OrgId, PanelId or both")
+		}
+		return nil
 	}, false, dashAlertInfo)
 	return err
 }
