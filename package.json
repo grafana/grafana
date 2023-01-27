@@ -272,7 +272,7 @@
     "@grafana/ui": "workspace:*",
     "@jaegertracing/jaeger-ui-components": "workspace:*",
     "@kusto/monaco-kusto": "5.3.6",
-    "@leeoniya/ufuzzy": "0.9.1",
+    "@leeoniya/ufuzzy": "1.0.1",
     "@lezer/common": "1.0.1",
     "@lezer/highlight": "1.1.2",
     "@lezer/lr": "1.3.1",

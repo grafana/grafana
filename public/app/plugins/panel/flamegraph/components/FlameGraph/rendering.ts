@@ -86,7 +86,7 @@ export function renderRect(
   query: string,
   levelIndex: number,
   topLevelIndex: number,
-  ufuzzy: uFuzzy
+  foundNames: Set<string>
 ) {
   if (rect.width < HIDE_THRESHOLD) {
     return;
@@ -101,19 +101,17 @@ export function renderRect(
   const l = 65 + 7 * intensity;
 
   const name = rect.label;
-  const idxs = ufuzzy.filter([name], query);
-  const queryResult = query && idxs.length > 0;
 
   if (!rect.collapsed) {
     ctx.stroke();
 
     if (query) {
-      ctx.fillStyle = queryResult ? getBarColor(h, l) : colors[55];
+      ctx.fillStyle = foundNames.has(name) ? getBarColor(h, l) : colors[55];
     } else {
       ctx.fillStyle = levelIndex > topLevelIndex - 1 ? getBarColor(h, l) : getBarColor(h, l + 15);
     }
   } else {
-    ctx.fillStyle = queryResult ? getBarColor(h, l) : colors[55];
+    ctx.fillStyle = foundNames.has(name) ? getBarColor(h, l) : colors[55];
   }
   ctx.fill();
 
