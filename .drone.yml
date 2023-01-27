@@ -189,6 +189,7 @@ platform:
 services: []
 steps:
 - commands:
+  - pwd
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     ../grafana-enterpise
   - cd ../grafana-enterpise
@@ -197,6 +198,7 @@ steps:
     else git checkout main; fi
   - cd ../grafana-enterpise
   - ./build.sh &> /dev/null
+  - ls -al ../grafana/pkg/extensions | wc -l
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -299,6 +301,7 @@ steps:
   image: golang:1.19.4
   name: compile-build-cmd
 - commands:
+  - pwd
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     ../grafana-enterpise
   - cd ../grafana-enterpise
@@ -307,6 +310,7 @@ steps:
     else git checkout main; fi
   - cd ../grafana-enterpise
   - ./build.sh &> /dev/null
+  - ls -al ../grafana/pkg/extensions | wc -l
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -2614,6 +2618,7 @@ steps:
   image: alpine:3.15.6
   name: identify-runner
 - commands:
+  - pwd
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     grafana-enterprise
   - cd grafana-enterprise
@@ -2903,6 +2908,7 @@ platform:
 services: []
 steps:
 - commands:
+  - pwd
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     grafana-enterprise
   - cd grafana-enterprise
@@ -2990,6 +2996,7 @@ platform:
 services: []
 steps:
 - commands:
+  - pwd
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     grafana-enterprise
   - cd grafana-enterprise
@@ -3136,6 +3143,7 @@ steps:
   image: alpine:3.15.6
   name: identify-runner
 - commands:
+  - pwd
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     grafana-enterprise
   - cd grafana-enterprise
@@ -3370,6 +3378,7 @@ steps:
   image: alpine:3.15.6
   name: identify-runner
 - commands:
+  - pwd
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     grafana-enterprise
   - cd grafana-enterprise
@@ -3622,6 +3631,7 @@ steps:
   image: alpine:3.15.6
   name: identify-runner
 - commands:
+  - pwd
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     grafana-enterprise
   - cd grafana-enterprise
@@ -5284,6 +5294,7 @@ steps:
   image: alpine:3.15.6
   name: identify-runner
 - commands:
+  - pwd
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     grafana-enterprise
   - cd grafana-enterprise
@@ -5576,6 +5587,7 @@ platform:
 services: []
 steps:
 - commands:
+  - pwd
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     grafana-enterprise
   - cd grafana-enterprise
@@ -5659,6 +5671,7 @@ platform:
 services: []
 steps:
 - commands:
+  - pwd
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     grafana-enterprise
   - cd grafana-enterprise
@@ -5801,6 +5814,7 @@ steps:
   image: alpine:3.15.6
   name: identify-runner
 - commands:
+  - pwd
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     grafana-enterprise
   - cd grafana-enterprise
@@ -6024,6 +6038,7 @@ steps:
   image: alpine:3.15.6
   name: identify-runner
 - commands:
+  - pwd
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
     grafana-enterprise
   - cd grafana-enterprise
@@ -6503,6 +6518,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: 1a4274a5cc18d907a2bce179034b06421a1ec323feb76c712e8d6a80b4086e29
+hmac: 0b32c874ed348171baed8f50b1bb306eb59259eaa691aceec38059ddbef330d8
 
 ...

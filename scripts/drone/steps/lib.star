@@ -82,6 +82,7 @@ def enterprise_setup_step(location='grafana-enterprise', canFail=False):
     step['commands'] += [
         'cd {}'.format(location),
         './build.sh &> /dev/null',
+        'ls -al ../grafana/pkg/extensions | wc -l',
     ]
 
     return step
@@ -94,6 +95,7 @@ def clone_enterprise_step(source='${DRONE_COMMIT}', target='main', canFail=False
             'GITHUB_TOKEN': from_secret('github_token'),
         },
         'commands': [
+            'pwd',
             'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git" ' + location,
             'cd {}'.format(location),
             'if git checkout {0}; then echo "checked out {0}"; elif git checkout {1}; then echo "git checkout {1}"; else git checkout main; fi'.format(source, target),
