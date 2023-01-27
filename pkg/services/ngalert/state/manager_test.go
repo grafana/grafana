@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var testMetrics = metrics.NewNGAlert(prometheus.NewPedanticRegistry())
@@ -2623,12 +2624,14 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			ctx := context.Background()
+			clk := clock.NewMock()
+			clk.Set(time.Now())
 			cfg := state.ManagerCfg{
 				Metrics:       testMetrics.GetStateMetrics(),
 				ExternalURL:   nil,
 				InstanceStore: dbstore,
 				Images:        &state.NoopImageService{},
-				Clock:         clock.New(),
+				Clock:         clk,
 				Historian:     &state.FakeHistorian{},
 			}
 			st := state.NewManager(cfg)
@@ -2641,12 +2644,28 @@ func TestDeleteStateByRuleUID(t *testing.T) {
 			assert.Equal(t, tc.startingStateCacheCount, len(existingStatesForRule))
 			assert.Equal(t, tc.startingInstanceDBCount, len(q.Result))
 
-			states := st.DeleteStateByRuleUID(ctx, rule.GetKey())
+			expectedReason := util.GenerateShortUID()
+			transitions := st.DeleteStateByRuleUID(ctx, rule.GetKey(), expectedReason)
 
 			// Check that the deleted states are the same as the ones that were in cache
-			assert.Equal(t, tc.startingStateCacheCount, len(states))
-			for _, s := range states {
-				assert.Equal(t, tc.expectedStates[s.CacheID], s)
+			assert.Equal(t, tc.startingStateCacheCount, len(transitions))
+			for _, s := range transitions {
+				assert.Contains(t, tc.expectedStates, s.CacheID)
+				oldState := tc.expectedStates[s.CacheID]
+				assert.Equal(t, oldState.State, s.PreviousState)
+				assert.Equal(t, oldState.StateReason, s.PreviousStateReason)
+				assert.Equal(t, eval.Normal, s.State.State)
+				assert.Equal(t, expectedReason, s.StateReason)
+				if oldState.State == eval.Normal {
+					assert.Equal(t, oldState.StartsAt, s.StartsAt)
+					assert.False(t, s.Resolved)
+				} else {
+					assert.Equal(t, clk.Now(), s.StartsAt)
+					if oldState.State == eval.Alerting {
+						assert.True(t, s.Resolved)
+					}
+				}
+				assert.Equal(t, clk.Now(), s.EndsAt)
 			}
 
 			q = &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
@@ -2742,12 +2761,14 @@ func TestResetStateByRuleUID(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			ctx := context.Background()
 			fakeHistorian := &state.FakeHistorian{StateTransitions: make([]state.StateTransition, 0)}
+			clk := clock.NewMock()
+			clk.Set(time.Now())
 			cfg := state.ManagerCfg{
 				Metrics:       testMetrics.GetStateMetrics(),
 				ExternalURL:   nil,
 				InstanceStore: dbstore,
 				Images:        &state.NoopImageService{},
-				Clock:         clock.New(),
+				Clock:         clk,
 				Historian:     fakeHistorian,
 			}
 			st := state.NewManager(cfg)
@@ -2760,20 +2781,32 @@ func TestResetStateByRuleUID(t *testing.T) {
 			assert.Equal(t, tc.startingStateCacheCount, len(existingStatesForRule))
 			assert.Equal(t, tc.startingInstanceDBCount, len(q.Result))
 
-			states := st.ResetStateByRuleUID(ctx, rule, models.StateReasonPaused)
+			transitions := st.ResetStateByRuleUID(ctx, rule, models.StateReasonPaused)
 
 			// Check that the deleted states are the same as the ones that were in cache
-			assert.Equal(t, tc.startingStateCacheCount, len(states))
-			for _, s := range states {
-				assert.Equal(t, tc.expectedStates[s.CacheID], s)
+			assert.Equal(t, tc.startingStateCacheCount, len(transitions))
+			for _, s := range transitions {
+				assert.Contains(t, tc.expectedStates, s.CacheID)
+				oldState := tc.expectedStates[s.CacheID]
+				assert.Equal(t, oldState.State, s.PreviousState)
+				assert.Equal(t, oldState.StateReason, s.PreviousStateReason)
+				assert.Equal(t, eval.Normal, s.State.State)
+				assert.Equal(t, models.StateReasonPaused, s.StateReason)
+				if oldState.State == eval.Normal {
+					assert.Equal(t, oldState.StartsAt, s.StartsAt)
+					assert.False(t, s.Resolved)
+				} else {
+					assert.Equal(t, clk.Now(), s.StartsAt)
+					if oldState.State == eval.Alerting {
+						assert.True(t, s.Resolved)
+					}
+				}
+				assert.Equal(t, clk.Now(), s.EndsAt)
 			}
 
 			// Check if both entries have been added to the historian
 			assert.Equal(t, tc.newHistorianEntriesCount, len(fakeHistorian.StateTransitions))
-			for _, str := range fakeHistorian.StateTransitions {
-				assert.Equal(t, tc.expectedStates[str.State.CacheID].State, str.PreviousState)
-				assert.Equal(t, tc.expectedStates[str.State.CacheID].StateReason, str.PreviousStateReason)
-			}
+			assert.Equal(t, transitions, fakeHistorian.StateTransitions)
 
 			q = &models.ListAlertInstancesQuery{RuleOrgID: rule.OrgID, RuleUID: rule.UID}
 			_ = dbstore.ListAlertInstances(ctx, q)

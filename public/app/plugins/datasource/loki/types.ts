@@ -42,8 +42,8 @@ export interface LokiQuery extends DataQuery {
   legendFormat?: string;
   maxLines?: number;
   resolution?: number;
-  /** Used in range queries */
-  volumeQuery?: boolean;
+  /** Used only to identify supporting queries, e.g. logs volume, logs sample and data sample */
+  supportingQueryType?: SupportingQueryType;
   /* @deprecated now use queryType */
   range?: boolean;
   /* @deprecated now use queryType */
@@ -152,4 +152,18 @@ export interface LokiVariableQuery extends DataQuery {
   type: LokiVariableQueryType;
   label?: string;
   stream?: string;
+}
+
+export enum SupportingQueryType {
+  LogsVolume = 'logsVolume',
+  LogsSample = 'logsSample',
+  DataSample = 'dataSample',
+}
+
+export interface ContextFilter {
+  enabled: boolean;
+  label: string;
+  value: string;
+  fromParser: boolean;
+  description?: string;
 }

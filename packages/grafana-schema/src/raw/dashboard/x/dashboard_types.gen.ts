@@ -777,9 +777,9 @@ export interface Dashboard {
     time_options: Array<string>;
   };
   /**
-   * Timezone of dashboard,
+   * Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc".
    */
-  timezone?: ('browser' | 'utc' | '');
+  timezone?: string;
   /**
    * Title of dashboard.
    */
