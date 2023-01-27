@@ -14,7 +14,8 @@ interface Props extends PanelProps<PanelOptions> {}
 export function TablePanel(props: Props) {
   const { data, height, width, options, fieldConfig, id } = props;
 
-  // JEV: error on load (sometimes) -> The pseudo class ":nth-child" is potentially unsafe when doing server-side rendering. Try changing it to ":nth-of-type".
+  // JEV: error on load (sometimes) -> The pseudo class ":nth-child" is potentially unsafe when doing server-side rendering. Try changing it to ":nth-of-type"
+  // JEV: also errors on table column sort
 
   const theme = useTheme2();
   const panelContext = usePanelContext();
