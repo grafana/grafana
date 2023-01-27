@@ -159,6 +159,30 @@ describe('AzureMonitorDatasource', () => {
         },
       });
     });
+
+    it('expand template variables for a region', () => {
+      const region = '$reg';
+      templateSrv.init([
+        {
+          id: 'reg',
+          name: 'reg',
+          current: {
+            value: `eastus`,
+          },
+        },
+      ]);
+      const query = createMockQuery({
+        azureMonitor: {
+          region,
+        },
+      });
+      const templatedQuery = ctx.ds.azureMonitorDatasource.applyTemplateVariables(query, {});
+      expect(templatedQuery).toMatchObject({
+        azureMonitor: {
+          region: 'eastus',
+        },
+      });
+    });
   });
 
   describe('When performing getMetricNamespaces', () => {

@@ -23,10 +23,12 @@ import (
 	pluginClient "github.com/grafana/grafana/pkg/plugins/manager/client"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader"
+	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	datasources "github.com/grafana/grafana/pkg/services/datasources/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -56,8 +58,9 @@ func TestCallResource(t *testing.T) {
 		nil, nil, nil, nil, testdatasource.ProvideService(cfg, featuremgmt.WithFeatures()), nil, nil, nil, nil, nil, nil)
 	pCfg := config.ProvideConfig(setting.ProvideProvider(cfg), cfg)
 	reg := registry.ProvideService()
+	cdn := pluginscdn.ProvideService(pCfg)
 	l := loader.ProvideService(pCfg, fakes.NewFakeLicensingService(), signature.NewUnsignedAuthorizer(pCfg),
-		reg, provider.ProvideService(coreRegistry), fakes.NewFakeRoleRegistry())
+		reg, provider.ProvideService(coreRegistry), fakes.NewFakeRoleRegistry(), cdn, assetpath.ProvideService(cdn))
 	ps, err := store.ProvideService(cfg, pCfg, reg, l)
 	require.NoError(t, err)
 
