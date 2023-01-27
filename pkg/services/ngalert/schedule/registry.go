@@ -79,7 +79,7 @@ func (r *alertRuleInfoRegistry) keyMap() map[models.AlertRuleKey]struct{} {
 type ruleVersion int64
 type ruleVersionAndPauseStatus struct {
 	Version  ruleVersion
-	IsPaused bool
+	IsPaused *bool
 }
 
 type alertRuleInfo struct {

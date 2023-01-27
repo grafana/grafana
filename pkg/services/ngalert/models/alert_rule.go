@@ -160,7 +160,7 @@ type AlertRule struct {
 	For         time.Duration
 	Annotations map[string]string
 	Labels      map[string]string
-	IsPaused    bool
+	IsPaused    *bool
 }
 
 // GetDashboardUID returns the DashboardUID or "".
@@ -469,6 +469,9 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRule) {
 	}
 	if ruleToPatch.For == -1 {
 		ruleToPatch.For = existingRule.For
+	}
+	if ruleToPatch.IsPaused == nil {
+		ruleToPatch.IsPaused = existingRule.IsPaused
 	}
 }
 

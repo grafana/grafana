@@ -38,7 +38,7 @@ type ScheduleService interface {
 	// an error. The scheduler is terminated when this function returns.
 	Run(context.Context) error
 	// UpdateAlertRule notifies scheduler that a rule has been changed
-	UpdateAlertRule(key ngmodels.AlertRuleKey, lastVersion int64, isPaused bool)
+	UpdateAlertRule(key ngmodels.AlertRuleKey, lastVersion int64, isPaused *bool)
 	// DeleteAlertRule notifies scheduler that rules have been deleted
 	DeleteAlertRule(keys ...ngmodels.AlertRuleKey)
 }
@@ -151,7 +151,7 @@ func (sch *schedule) Run(ctx context.Context) error {
 }
 
 // UpdateAlertRule looks for the active rule evaluation and commands it to update the rule
-func (sch *schedule) UpdateAlertRule(key ngmodels.AlertRuleKey, lastVersion int64, isPaused bool) {
+func (sch *schedule) UpdateAlertRule(key ngmodels.AlertRuleKey, lastVersion int64, isPaused *bool) {
 	ruleInfo, err := sch.registry.get(key)
 	if err != nil {
 		return
@@ -332,10 +332,10 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		}
 	}
 
-	resetState := func(ctx context.Context, isPaused bool) {
+	resetState := func(ctx context.Context, isPaused *bool) {
 		rule := sch.schedulableAlertRules.get(key)
 		reason := ngmodels.StateReasonUpdated
-		if isPaused {
+		if isPaused != nil && *isPaused {
 			reason = ngmodels.StateReasonPaused
 		}
 		states := sch.stateManager.ResetStateByRuleUID(ctx, rule, reason)
@@ -442,16 +442,20 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 		select {
 		// used by external services (API) to notify that rule is updated.
 		case ctx := <-updateCh:
+			logCtx := []interface{}{"version", currentRuleVersion, "newVersion", ctx.Version}
 			// sometimes it can happen when, for example, the rule evaluation took so long,
 			// and there were two concurrent messages in updateCh and evalCh, and the eval's one got processed first.
 			// therefore, at the time when message from updateCh is processed the current rule will have
 			// at least the same version (or greater) and the state created for the new version of the rule.
 			if currentRuleVersion >= int64(ctx.Version) {
-				logger.Info("Skip updating rule because its current version is actual", "version", currentRuleVersion, "newVersion", ctx.Version)
+				logger.Info("Skip updating rule because its current version is actual", logCtx...)
 				continue
 			}
 
-			logger.Info("Clearing the state of the rule because it was updated", "version", currentRuleVersion, "newVersion", ctx.Version, "isPaused", ctx.IsPaused)
+			if ctx.IsPaused != nil {
+				logCtx = append(logCtx, "isPaused", *ctx.IsPaused)
+			}
+			logger.Info("Clearing the state of the rule because it was updated", logCtx...)
 			// clear the state. So the next evaluation will start from the scratch.
 			resetState(grafanaCtx, ctx.IsPaused)
 		// evalCh - used by the scheduler to signal that evaluation is needed.
@@ -482,7 +486,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 						}
 						currentRuleVersion = newVersion
 					}
-					if isPaused {
+					if isPaused != nil && *isPaused {
 						return nil
 					}
 					tracingCtx, span := sch.tracer.Start(grafanaCtx, "alert rule execution")
