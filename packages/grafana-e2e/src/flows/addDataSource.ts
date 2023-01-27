@@ -26,7 +26,7 @@ export const addDataSource = (config?: Partial<AddDataSourceConfig>) => {
     form: () => {},
     name: `e2e-${uuidv4()}`,
     skipTlsVerify: false,
-    type: 'TestData DB',
+    type: 'TestData',
     ...config,
   };
 

@@ -642,7 +642,7 @@ describe('getLinksSupplier', () => {
     );
 
     const links = supplier({ valueRowIndex: 0 });
-    const encodeURIParams = `{"datasource":"${datasourceUid}","queries":["12345"],"panelsState":{}}`;
+    const encodeURIParams = `{"datasource":"${datasourceUid}","queries":["12345"]}`;
     expect(links.length).toBe(1);
     expect(links[0]).toEqual(
       expect.objectContaining({

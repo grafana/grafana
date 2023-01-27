@@ -12,9 +12,9 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -77,7 +77,7 @@ func TestTokenRotationAtEndOfRequest(t *testing.T) {
 }
 
 func initTokenRotationScenario(ctx context.Context, t *testing.T, ctxHdlr *ContextHandler) (
-	*models.ReqContext, *httptest.ResponseRecorder, error) {
+	*contextmodel.ReqContext, *httptest.ResponseRecorder, error) {
 	t.Helper()
 
 	ctxHdlr.Cfg.LoginCookieName = "login_token"
@@ -92,7 +92,7 @@ func initTokenRotationScenario(ctx context.Context, t *testing.T, ctxHdlr *Conte
 	if err != nil {
 		return nil, nil, err
 	}
-	reqContext := &models.ReqContext{
+	reqContext := &contextmodel.ReqContext{
 		Context: &web.Context{Req: req},
 		Logger:  log.New("testlogger"),
 	}
