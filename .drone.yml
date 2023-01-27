@@ -189,6 +189,26 @@ platform:
 services: []
 steps:
 - commands:
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    ../grafana-enterprise
+  - cd ../grafana-enterprise
+  - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
+    elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
+    else git checkout main; fi
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  failure: ignore
+  image: grafana/build-container:1.6.7
+  name: clone-enterprise
+- commands:
+  - cd ../grafana-enterpise
+  - ./build.sh &> /dev/null
+  depends_on:
+  - clone-enterprise
+  image: grafana/build-container:1.6.7
+  name: enterprise_setup
+- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15.6
   name: identify-runner
@@ -6493,6 +6513,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: 2e10fab7f80302369ce063bd4f27a1cd01b06429eb4c9136c7b31d244404efdc
+hmac: acae02eef86bef0fdffa10fa1ed7a4950f3e6a37c516c71e50203df763c8ad5a
 
 ...

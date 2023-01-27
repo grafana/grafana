@@ -10,6 +10,7 @@ load(
     'compile_build_cmd',
     'clone_enterprise_step',
     'init_enterprise_step',
+    'enterprise_setup_step',
 )
 
 load(
@@ -22,7 +23,16 @@ load(
 def test_backend(trigger, ver_mode, source):
     environment = {'EDITION': 'oss'}
 
-    steps = [
+    steps = []
+
+    if ver_mode == 'pr':
+        # In pull requests, attempt to clone grafana enterprise.
+        steps += [
+            clone_enterprise_step(source='${DRONE_SOURCE_BRANCH}', target='${DRONE_TARGET_BRANCH}', canFail=True, location='../grafana-enterprise'),
+            enterprise_setup_step(location='../grafana-enterpise'),
+        ]
+
+    steps += [
         identify_runner_step(),
         compile_build_cmd(edition='oss'),
         verify_gen_cue_step(),
