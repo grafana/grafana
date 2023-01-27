@@ -112,7 +112,7 @@ WORKFLOW.md @torkelo
 /pkg/services/pluginsettings/ @grafana/backend-platform
 /pkg/services/preference/ @grafana/backend-platform
 /pkg/services/provisioning/ @grafana/backend-platform
-/pkg/services/publicdashboards/ @grafana/backend-platform
+/pkg/services/publicdashboards/ @grafana/dashboards-squad
 /pkg/services/query/ @grafana/backend-platform
 /pkg/services/queryhistory/ @grafana/backend-platform
 /pkg/services/quota/ @grafana/backend-platform
