@@ -2,24 +2,35 @@ package k8saccess
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/grafana/grafana/pkg/apimachinery/bridge"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/store/entity"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type k8sDashboardService struct {
-	orig  dashboards.DashboardService
-	store entity.EntityStoreServer
+	orig      dashboards.DashboardService
+	clientSet *bridge.Clientset
+	store     entity.EntityStoreServer
 }
 
 var _ dashboards.DashboardService = (*k8sDashboardService)(nil)
 
-func NewDashboardService(orig dashboards.DashboardService, store entity.EntityStoreServer) dashboards.DashboardService {
+func NewDashboardService(cfg *setting.Cfg, orig dashboards.DashboardService, store entity.EntityStoreServer) dashboards.DashboardService {
+	config, err := bridge.LoadRestConfig(cfg)
+	if err != nil {
+		panic(err)
+	}
+	clientSet, err := bridge.NewClientset(config)
+	if err != nil {
+		panic(err)
+	}
 	return &k8sDashboardService{
-		orig:  orig,
-		store: store,
+		orig:      orig,
+		clientSet: clientSet,
+		store:     store,
 	}
 }
 
@@ -71,8 +82,39 @@ func (s *k8sDashboardService) MakeUserAdmin(ctx context.Context, orgID int64, us
 	return s.orig.MakeUserAdmin(ctx, orgID, userID, dashboardID, setViewAndEditPermissions)
 }
 
+// example write from app sdk https://github.com/grafana/grafana-app-sdk/blob/44004e08c6cb131e3a2b8fed63f85ccc2ecc9220/crd/simplestore.go#L95
+// questions:
+// - how do we get a namespace?
+// - how do we use the dashboard core kind?
+// - how do we translate incoming dashboard DTO to dashboard kind?
 func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO, allowUiUpdate bool) (*dashboards.Dashboard, error) {
-	fmt.Printf("SAVE: " + dto.Dashboard.UID)
+	//s.clientSet.RESTClient().Patch(types.ApplyPatchType).Resource().
+	//fmt.Printf("SAVE: " + dto.Dashboard.UID)
+	//if labels == nil {
+	//	labels = make(map[string]string)
+	//}
+	//o := Base[T]{
+	//	TypeMeta: metav1.TypeMeta{
+	//		Kind:       s.cr.kind,
+	//		APIVersion: s.cr.GroupVersion().Identifier(),
+	//	},
+	//	ObjectMeta: metav1.ObjectMeta{
+	//		Name:   name,
+	//		Labels: labels,
+	//	},
+	//	Spec: obj,
+	//}
+	//b, err := json.Marshal(o)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//status := 0
+	//into := Base[T]{}
+	//err = s.client.Post().Resource(s.cr.Plural()).Namespace(namespace).Body(b).Do(ctx).StatusCode(&status).Into(&into)
+	//if err != nil {
+	//	return nil, newKubernetesClientError(err, status)
+	//}
+	//return &into, nil
 	return s.orig.SaveDashboard(ctx, dto, allowUiUpdate)
 }
 
