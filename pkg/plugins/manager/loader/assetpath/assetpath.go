@@ -1,6 +1,7 @@
 package assetpath
 
 import (
+	"fmt"
 	"net/url"
 	"path"
 	"path/filepath"
@@ -54,7 +55,10 @@ func (s *Service) RelativeURL(p *plugins.Plugin, pathStr, defaultStr string) (st
 		return s.cdn.NewCDNURLConstructor(p.ID, p.Info.Version).StringPath(pathStr)
 	}
 	// Local
-	u, _ := url.Parse(pathStr)
+	u, err := url.Parse(pathStr)
+	if err != nil {
+		return "", fmt.Errorf("url parse: %w", err)
+	}
 	if u.IsAbs() {
 		return pathStr, nil
 	}
