@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -127,11 +126,9 @@ func TestIntegrationFolderService(t *testing.T) {
 
 			title := "Folder-TEST"
 			t.Run("When updating folder should return access denied error", func(t *testing.T) {
-				dashStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
-					folder := args.Get(1).(*dashboards.GetDashboardQuery)
-					folder.Result = dashboards.NewDashboard("dashboard-test")
-					folder.Result.IsFolder = true
-				}).Return(&dashboards.Dashboard{}, nil)
+				folderResult := dashboards.NewDashboard("dashboard-test")
+				folderResult.IsFolder = true
+				dashStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(folderResult, nil)
 				_, err := service.Update(context.Background(), &folder.UpdateFolderCommand{
 					UID:          folderUID,
 					OrgID:        orgID,
@@ -142,8 +139,8 @@ func TestIntegrationFolderService(t *testing.T) {
 			})
 
 			t.Run("When deleting folder by uid should return access denied error", func(t *testing.T) {
-				newFolder := models.NewFolder("Folder")
-				newFolder.Uid = folderUID
+				newFolder := folder.NewFolder("Folder", "")
+				newFolder.UID = folderUID
 
 				folderStore.On("GetFolderByID", mock.Anything, orgID, folderId).Return(newFolder, nil)
 				folderStore.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(newFolder, nil)

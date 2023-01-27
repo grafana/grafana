@@ -198,11 +198,13 @@ function isLogsData(series: DataFrame) {
  * Convert dataFrame into LogsModel which consists of creating separate array of log rows and metrics series. Metrics
  * series can be either already included in the dataFrame or will be computed from the log rows.
  * @param dataFrame
- * @param intervalMs In case there are no metrics series, we use this for computing it from log rows.
+ * @param intervalMs Optional. In case there are no metrics series, we use this for computing it from log rows.
+ * @param absoluteRange Optional. Used to store absolute range of executed queries in logs model. This is used for pagination.
+ * @param queries Optional. Used to store executed queries in logs model. This is used for pagination.
  */
 export function dataFrameToLogsModel(
   dataFrame: DataFrame[],
-  intervalMs: number | undefined,
+  intervalMs?: number,
   absoluteRange?: AbsoluteTimeRange,
   queries?: DataQuery[]
 ): LogsModel {
@@ -748,7 +750,7 @@ export function queryLogsVolume<TQuery extends DataQuery, TOptions extends DataS
 }
 
 /**
- * Creates an observable, which makes requests to get logs samples.
+ * Creates an observable, which makes requests to get logs sample.
  */
 export function queryLogsSample<TQuery extends DataQuery, TOptions extends DataSourceJsonData>(
   datasource: DataSourceApi<TQuery, TOptions>,

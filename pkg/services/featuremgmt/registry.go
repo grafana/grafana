@@ -155,6 +155,12 @@ var (
 			RequiresDevMode: true,
 		},
 		{
+			Name:            "k8sDashboards",
+			Description:     "Save dashboards via k8s",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
 			Name:        "supportBundles",
 			Description: "Support bundles for troubleshooting",
 			State:       FeatureStateAlpha,

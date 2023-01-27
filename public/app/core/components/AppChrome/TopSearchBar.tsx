@@ -27,7 +27,7 @@ export function TopSearchBar() {
   const profileNode = navIndex['profile'];
 
   const search =
-    config.featureToggles.commandPalette && config.featureToggles.topNavcommandPalette ? (
+    config.featureToggles.commandPalette && config.featureToggles.topNavCommandPalette ? (
       <TopSearchBarCommandPaletteTrigger />
     ) : (
       <TopSearchBarInput />
@@ -79,7 +79,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'space-between',
 
     [theme.breakpoints.up('sm')]: {
-      gridTemplateColumns: '2fr minmax(200px, 1fr) 2fr', // search should not be smaller than 200px
+      gridTemplateColumns: '1.5fr minmax(200px, 1fr) 1.5fr', // search should not be smaller than 200px
       display: 'grid',
 
       justifyContent: 'flex-start',
