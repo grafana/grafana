@@ -312,7 +312,7 @@ const (
 	FlagTopNavCommandPalette = "topNavCommandPalette"
 
 	// FlagLogsSampleInExplore
-	// Access to logs sample feature in Explore
+	// Enables access to the logs sample feature in Explore
 	FlagLogsSampleInExplore = "logsSampleInExplore"
 
 	// FlagLogsContextDatasourceUi
