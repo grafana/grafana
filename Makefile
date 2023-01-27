@@ -139,7 +139,7 @@ build-js: ## Build frontend assets.
 
 build: build-go build-js ## Build backend and frontend.
 
-run: $(BRA) swagger-oss-gen ## Build and run web server on filesystem changes.
+run: $(BRA) openapi3-gen ## Build and run web server on filesystem changes.
 	$(BRA) run
 
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
