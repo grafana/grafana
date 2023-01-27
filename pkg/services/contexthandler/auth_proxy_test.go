@@ -14,8 +14,10 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
@@ -41,7 +43,7 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 
 	req, err := http.NewRequest("POST", "http://example.com", nil)
 	require.NoError(t, err)
-	ctx := &models.ReqContext{
+	ctx := &contextmodel.ReqContext{
 		Context: &web.Context{Req: req},
 		Logger:  log.New("Test"),
 	}
@@ -85,7 +87,7 @@ func getContextHandler(t *testing.T) *ContextHandler {
 	require.NoError(t, err)
 	userAuthTokenSvc := authtest.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
-	authJWTSvc := models.NewFakeJWTService()
+	authJWTSvc := jwt.NewFakeJWTService()
 	tracer := tracing.InitializeTracerForTest()
 
 	loginService := loginservice.LoginServiceMock{ExpectedUser: &user.User{ID: userID}}

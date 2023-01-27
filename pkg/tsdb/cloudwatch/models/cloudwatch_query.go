@@ -248,7 +248,7 @@ func ParseMetricDataQueries(dataQueries []backend.DataQuery, startTime time.Time
 		metricDataQueries[query.RefID] = metricsDataQuery
 	}
 
-	var result []*CloudWatchQuery
+	result := make([]*CloudWatchQuery, 0, len(metricDataQueries))
 	for refId, mdq := range metricDataQueries {
 		cwQuery := &CloudWatchQuery{
 			logger:            logger,

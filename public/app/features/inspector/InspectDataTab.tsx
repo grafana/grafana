@@ -108,7 +108,7 @@ export class InspectDataTab extends PureComponent<Props, State> {
       area: 'inspector',
     });
 
-    const logsModel = dataFrameToLogsModel(data || [], undefined);
+    const logsModel = dataFrameToLogsModel(data || []);
     downloadLogsModelAsTxt(logsModel, panel ? panel.getDisplayTitle() : 'Explore');
   };
 

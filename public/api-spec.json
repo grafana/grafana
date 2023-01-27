@@ -4568,7 +4568,7 @@
     },
     "/folders": {
       "get": {
-        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID.",
+        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders.",
         "tags": [
           "folders"
         ],
@@ -4594,7 +4594,7 @@
           {
             "type": "string",
             "description": "The parent folder UID",
-            "name": "parent_uid",
+            "name": "parentUid",
             "in": "query"
           }
         ],
@@ -11159,9 +11159,6 @@
         "hasAcl": {
           "type": "boolean"
         },
-        "hasPublicDashboard": {
-          "type": "boolean"
-        },
         "isFolder": {
           "type": "boolean"
         },
@@ -11919,7 +11916,7 @@
           "type": "integer",
           "format": "int64"
         },
-        "parent_uid": {
+        "parentUid": {
           "type": "string"
         },
         "title": {

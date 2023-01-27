@@ -16,8 +16,8 @@ import {
 import React, { useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { config, reportInteraction } from '@grafana/runtime';
+import { Icon, Spinner, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { ResultItem } from './ResultItem';
@@ -34,9 +34,9 @@ export const CommandPalette = () => {
     searchQuery: state.searchQuery,
   }));
 
-  const actions = useActions();
+  const actions = useActions(searchQuery);
   useRegisterActions(actions, [actions]);
-  const dashboardResults = useDashboardResults(searchQuery, showing);
+  const { dashboardResults, isFetchingDashboardResults } = useDashboardResults(searchQuery, showing);
 
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps } = useOverlay(
@@ -56,11 +56,16 @@ export const CommandPalette = () => {
         <KBarAnimator className={styles.animator}>
           <FocusScope contain autoFocus restoreFocus>
             <div {...overlayProps} {...dialogProps}>
-              <KBarSearch
-                defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search Grafana')}
-                className={styles.search}
-              />
-              <RenderResults dashboardResults={dashboardResults} />
+              <div className={styles.searchContainer}>
+                {isFetchingDashboardResults ? <Spinner className={styles.spinner} /> : <Icon name="search" size="md" />}
+                <KBarSearch
+                  defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search Grafana')}
+                  className={styles.search}
+                />
+              </div>
+              <div className={styles.resultsContainer}>
+                <RenderResults dashboardResults={dashboardResults} />
+              </div>
             </div>
           </FocusScope>
         </KBarAnimator>
@@ -92,84 +97,85 @@ const RenderResults = ({ dashboardResults }: RenderResultsProps) => {
   return (
     <KBarResults
       items={items}
+      maxHeight={650}
       onRender={({ item, active }) => {
-        // These items are rendered in a container, in a virtual list, so we cannot
-        // use :first/last-child selectors, so we must mimic them in JS
-        const isFirstItem = items[0] === item;
-        const isLastItem = items[items.length - 1] === item;
+        const isFirst = items[0] === item;
 
         const renderedItem =
           typeof item === 'string' ? (
-            <div className={styles.sectionHeader}>
-              <div className={cx(styles.sectionHeaderInner, isFirstItem && styles.sectionHeaderInnerFirst)}>{item}</div>
-            </div>
+            <div className={cx(styles.sectionHeader, isFirst && styles.sectionHeaderFirst)}>{item}</div>
           ) : (
             <ResultItem action={item} active={active} currentRootActionId={rootActionId!} />
           );
 
-        return isLastItem ? <div className={styles.lastItem}>{renderedItem}</div> : renderedItem;
+        return renderedItem;
       }}
     />
   );
 };
 
-const getSearchStyles = (theme: GrafanaTheme2) => ({
-  positioner: css({
-    zIndex: theme.zIndex.portal,
-    marginTop: '0px',
-    '&::before': {
-      content: '""',
-      position: 'fixed',
-      top: 0,
-      right: 0,
-      bottom: 0,
-      left: 0,
-      background: theme.components.overlay.background,
-      backdropFilter: 'blur(1px)',
-    },
-  }),
-  animator: css({
-    maxWidth: theme.breakpoints.values.sm, // supposed to be 600...
-    width: '100%',
-    background: theme.colors.background.canvas,
-    color: theme.colors.text.primary,
-    borderRadius: theme.shape.borderRadius(4),
-    overflow: 'hidden',
-    boxShadow: theme.shadows.z3,
-  }),
-  search: css({
-    padding: theme.spacing(2, 3),
-    fontSize: theme.typography.fontSize,
-    width: '100%',
-    boxSizing: 'border-box',
-    outline: 'none',
-    border: 'none',
-    background: theme.colors.background.canvas,
-    color: theme.colors.text.primary,
-    borderBottom: `1px solid ${theme.colors.border.medium}`,
-  }),
+const getSearchStyles = (theme: GrafanaTheme2) => {
+  const topNavCommandPalette = Boolean(config.featureToggles.topNavCommandPalette);
 
-  // Virtual list measures margin incorrectly, so we need to split padding before/after border
-  // over and inner and outer element
-  sectionHeader: css({
-    paddingTop: theme.spacing(2),
-    fontSize: theme.typography.h6.fontSize,
-    fontWeight: theme.typography.body.fontWeight,
-    color: theme.colors.text.secondary,
-  }),
-  sectionHeaderInner: css({
-    padding: theme.spacing(1, 2),
-    borderTop: `1px solid ${theme.colors.border.medium}`,
-  }),
-
-  // We don't need the header above the first section
-  sectionHeaderInnerFirst: css({
-    borderTop: 'none',
-    paddingTop: 0,
-  }),
-
-  // Last item gets extra padding so it's not clipped by the rounded corners on the container
-  lastItem: css({
-    paddingBottom: theme.spacing(1),
-  }),
-});
+  return {
+    positioner: css({
+      zIndex: theme.zIndex.portal,
+      marginTop: '0px',
+      paddingTop: topNavCommandPalette ? '4px !important' : undefined,
+      '&::before': {
+        content: '""',
+        position: 'fixed',
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+        background: theme.components.overlay.background,
+        backdropFilter: 'blur(1px)',
+      },
+    }),
+    animator: css({
+      maxWidth: theme.breakpoints.values.md,
+      width: '100%',
+      background: theme.colors.background.primary,
+      color: theme.colors.text.primary,
+      borderRadius: theme.shape.borderRadius(2),
+      border: `1px solid ${theme.colors.border.weak}`,
+      overflow: 'hidden',
+      boxShadow: theme.shadows.z3,
+    }),
+    searchContainer: css({
+      alignItems: 'center',
+      background: theme.components.input.background,
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      display: 'flex',
+      gap: theme.spacing(1),
+      padding: theme.spacing(1, 2),
+    }),
+    search: css({
+      fontSize: theme.typography.fontSize,
+      width: '100%',
+      boxSizing: 'border-box',
+      outline: 'none',
+      border: 'none',
+      color: theme.components.input.text,
+    }),
+    spinner: css({
+      height: '22px',
+    }),
+    resultsContainer: css({
+      paddingBottom: theme.spacing(1),
+    }),
+    sectionHeader: css({
+      padding: theme.spacing(1.5, 2, 1, 2),
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      color: theme.colors.text.primary,
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      marginTop: theme.spacing(1),
+    }),
+    sectionHeaderFirst: css({
+      borderTop: 'none',
+      marginTop: 0,
+    }),
+  };
+};

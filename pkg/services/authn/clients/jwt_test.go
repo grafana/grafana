@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -21,9 +22,9 @@ func stringPtr(s string) *string {
 }
 
 func TestAuthenticateJWT(t *testing.T) {
-	jwtService := &models.FakeJWTService{
-		VerifyProvider: func(context.Context, string) (models.JWTClaims, error) {
-			return models.JWTClaims{
+	jwtService := &jwt.FakeJWTService{
+		VerifyProvider: func(context.Context, string) (jwt.JWTClaims, error) {
+			return jwt.JWTClaims{
 				"sub":                "1234567890",
 				"email":              "eai.doe@cor.po",
 				"preferred_username": "eai-doe",
@@ -86,9 +87,9 @@ func TestAuthenticateJWT(t *testing.T) {
 }
 
 func TestJWTClaimConfig(t *testing.T) {
-	jwtService := &models.FakeJWTService{
-		VerifyProvider: func(context.Context, string) (models.JWTClaims, error) {
-			return models.JWTClaims{
+	jwtService := &jwt.FakeJWTService{
+		VerifyProvider: func(context.Context, string) (jwt.JWTClaims, error) {
+			return jwt.JWTClaims{
 				"sub":                "1234567890",
 				"email":              "eai.doe@cor.po",
 				"preferred_username": "eai-doe",
@@ -197,7 +198,7 @@ func TestJWTClaimConfig(t *testing.T) {
 }
 
 func TestJWTTest(t *testing.T) {
-	jwtService := &models.FakeJWTService{}
+	jwtService := &jwt.FakeJWTService{}
 	jwtHeaderName := "X-Forwarded-User"
 	// #nosec G101 -- This is dummy/test token
 	validFormatToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.XbPfbIHMI6arZ3Y922BhjWgQzWXcXNrz0ogtVhfEd2o"

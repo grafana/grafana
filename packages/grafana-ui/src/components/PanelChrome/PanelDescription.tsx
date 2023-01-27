@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { Icon } from '../Icon/Icon';
@@ -8,9 +8,10 @@ import { TitleItem } from './TitleItem';
 
 interface Props {
   description: string | (() => string);
+  className?: string;
 }
 
-export function PanelDescription({ description }: Props) {
+export function PanelDescription({ description, className }: Props) {
   const styles = getStyles();
 
   const getDescriptionContent = (): JSX.Element => {
@@ -26,7 +27,7 @@ export function PanelDescription({ description }: Props) {
 
   return description !== '' ? (
     <Tooltip interactive content={getDescriptionContent}>
-      <TitleItem className={styles.description}>
+      <TitleItem className={cx(className, styles.description)}>
         <Icon name="info-circle" size="lg" title="description" />
       </TitleItem>
     </Tooltip>

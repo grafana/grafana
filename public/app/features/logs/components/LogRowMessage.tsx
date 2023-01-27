@@ -32,7 +32,7 @@ interface Props extends Themeable2 {
   logsSortOrder?: LogsSortOrder | null;
 }
 
-const getStyles = (theme: GrafanaTheme2, showContextButton: boolean, isInDashboard: boolean | undefined) => {
+const getStyles = (theme: GrafanaTheme2, showContextButton: boolean, isInExplore: boolean) => {
   const outlineColor = tinycolor(theme.components.dashboard.background).setAlpha(0.7).toRgbString();
 
   return {
@@ -74,7 +74,7 @@ const getStyles = (theme: GrafanaTheme2, showContextButton: boolean, isInDashboa
     `,
     logRowMenuCell: css`
       position: absolute;
-      right: ${isInDashboard ? '40px' : `calc(75px + ${theme.spacing()} + ${showContextButton ? '80px' : '40px'})`};
+      right: ${!isInExplore ? '40px' : `calc(75px + ${theme.spacing()} + ${showContextButton ? '80px' : '40px'})`};
       margin-top: -${theme.spacing(0.125)};
     `,
     logLine: css`
@@ -169,7 +169,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
     const { hasAnsi, raw } = row;
     const restructuredEntry = restructureLog(raw, prettifyLogMessage);
     const shouldShowContextToggle = showContextToggle ? showContextToggle(row) : false;
-    const styles = getStyles(theme, shouldShowContextToggle, app === CoreApp.Dashboard);
+    const styles = getStyles(theme, shouldShowContextToggle, app === CoreApp.Explore);
 
     return (
       <>

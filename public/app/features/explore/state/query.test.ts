@@ -5,7 +5,6 @@ import { assertIsDefined } from 'test/helpers/asserts';
 
 import {
   ArrayVector,
-  DataQuery,
   DataQueryResponse,
   DataSourceApi,
   DataSourceJsonData,
@@ -17,6 +16,7 @@ import {
   SupplementaryQueryType,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { ExploreId, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
@@ -617,6 +617,7 @@ describe('reducer', () => {
                 SupplementaryQueryType.LogsVolume,
                 SupplementaryQueryType.LogsSample,
               ],
+              getSupplementaryQuery: jest.fn(),
             },
           },
         },
@@ -721,7 +722,7 @@ describe('reducer', () => {
       mockDataProvider = () => {
         return of({ state: LoadingState.Done, error: undefined, data: [{}] });
       };
-      // turn logs volume off (but keep log sample on)
+      // turn logs volume off (but keep logs sample on)
       dispatch(setSupplementaryQueryEnabled(ExploreId.left, false, SupplementaryQueryType.LogsVolume));
       expect(getState().explore[ExploreId.left].supplementaryQueries[SupplementaryQueryType.LogsVolume].enabled).toBe(
         false
