@@ -44,8 +44,6 @@ function navTreeToActions(navTree: NavModelItem[], parent?: NavModelItem): Comma
     }
   }
 
-  console.log(navActions);
-
   return navActions;
 }
 

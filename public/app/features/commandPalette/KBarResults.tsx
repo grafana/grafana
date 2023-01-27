@@ -15,7 +15,7 @@ interface RenderParams<T = ActionImpl | string> {
 }
 
 interface KBarResultsProps {
-  // eslint-disable-next-line
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   items: any[];
   onRender: (params: RenderParams) => React.ReactElement;
   maxHeight?: number;
@@ -160,7 +160,7 @@ export const KBarResults: React.FC<KBarResultsProps> = (props) => {
           // ActionImpl constructor copies all properties from action onto ActionImpl
           // so our url property is secretly there, but completely untyped
           // Preferably this change is upstreamed and ActionImpl has this
-          // eslint-disable-next-line
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           const url = (item as ActionImpl & { url?: string }).url;
 
           const handlers = typeof item !== 'string' && {
@@ -200,7 +200,7 @@ export const KBarResults: React.FC<KBarResultsProps> = (props) => {
               <a
                 key={virtualRow.index}
                 href={url}
-                // eslint-disable-next-line
+                // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
                 ref={active ? (activeRef as React.RefObject<HTMLAnchorElement>) : null}
                 {...childProps}
               >
@@ -212,7 +212,7 @@ export const KBarResults: React.FC<KBarResultsProps> = (props) => {
           return (
             <div
               key={virtualRow.index}
-              // eslint-disable-next-line
+              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
               ref={active ? (activeRef as React.RefObject<HTMLDivElement>) : null}
               {...childProps}
             >
