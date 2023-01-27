@@ -16,6 +16,7 @@ import {
   RawTimeRange,
   SupplementaryQueryType,
 } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { ExploreId, ExploreItemState, StoreState, ThunkDispatch } from 'app/types';
 
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
@@ -65,11 +66,6 @@ const datasources: DataSourceApi[] = [
   } as DataSourceApi<DataQuery, DataSourceJsonData, {}>,
 ];
 
-// TODO: clean up
-// let useFeatToggles = {
-//   exploreMixedDatasource: false,
-// };
-
 jest.mock('app/features/dashboard/services/TimeSrv', () => ({
   ...jest.requireActual('app/features/dashboard/services/TimeSrv'),
   getTimeSrv: () => ({
@@ -88,8 +84,9 @@ jest.mock('@grafana/runtime', () => ({
       get: (uid?: string) => datasources.find((ds) => ds.uid === uid) || datasources[0],
     };
   },
+  __esModule: true,
   config: {
-    featureToggles: { exploreMixedDatasource: false },
+    featureToggles: { exploreMixedDatasource: null },
   },
 }));
 
@@ -267,6 +264,10 @@ describe('importing queries', () => {
 
 describe('adding new query rows', () => {
   describe('with mixed datasources disabled', () => {
+    beforeEach(() => {
+      config.featureToggles.exploreMixedDatasource = false;
+    });
+
     it('should add query row when there is not yet a row and meta.mixed === true (impossible in UI)', async () => {
       const queries: DataQuery[] = [];
       const datasourceInstance = {
@@ -336,10 +337,9 @@ describe('adding new query rows', () => {
     });
   });
   describe('with mixed datasources enabled', () => {
-    // TODO: clean up
-    // useFeatToggles = {
-    //   exploreMixedDatasource: true,
-    // };
+    beforeEach(() => {
+      config.featureToggles.exploreMixedDatasource = true;
+    });
 
     it('should add query row whith rootdatasource (without datasourceOverride) when there is not yet a row', async () => {
       const queries: DataQuery[] = [];
