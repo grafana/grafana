@@ -1,7 +1,7 @@
 package kind
 
-name:     "ServiceAccount"
-maturity: "merged"
+name:        "ServiceAccount"
+maturity:    "merged"
 description: "A Grafana service account."
 
 lineage: seqs: [

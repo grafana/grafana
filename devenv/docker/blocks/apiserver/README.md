@@ -32,6 +32,7 @@ GF_APISERVER_SERVER_CERT_FILE_PATH=devenv/docker/blocks/apiserver/certs/apiserve
 GF_APISERVER_SERVER_KEY_FILE_PATH=devenv/docker/blocks/apiserver/certs/apiserver-key.pem \
 GF_APISERVER_KUBEBRIDGE_KUBECONFIG_PATH=devenv/docker/blocks/apiserver/apiserver.kubeconfig \
 GF_LOG_LEVEL=debug \
+GF_APISERVER_SERVER_LISTEN_ADDRESS=127.0.0.1:8444 \
 make run
 # Test it:
 $ kubectl --kubeconfig=devenv/docker/blocks/apiserver/apiserver.kubeconfig api-resources
