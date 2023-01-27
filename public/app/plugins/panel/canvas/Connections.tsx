@@ -88,6 +88,7 @@ export class Connections {
     }
   };
 
+  // Return boolean indicates if connection anchors were hidden or not
   handleMouseLeave = (event: React.MouseEvent | React.FocusEvent): boolean => {
     // If mouse is leaving INTO the anchor image, don't remove div
     if (
