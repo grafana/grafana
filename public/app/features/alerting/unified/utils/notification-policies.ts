@@ -38,8 +38,8 @@ function matchLabels(matchers: ObjectMatcher[], labels: Label[]) {
 
 // Match does a depth-first left-to-right search through the route tree
 // and returns the matching routing nodes.
-function findMatchingRoutes(root: Route, labels: Label[]): Route[] {
-  let matches: Route[] = [];
+function findMatchingRoutes<T extends Route>(root: T, labels: Label[]): T[] {
+  let matches: T[] = [];
 
   // If the current node is not a match, return nothing
   const normalizedMatchers = normalizeMatchers(root);
@@ -53,6 +53,8 @@ function findMatchingRoutes(root: Route, labels: Label[]): Route[] {
       let child = root.routes[index];
       let matchingChildren = findMatchingRoutes(child, labels);
 
+      // TODO how do I solve this typescript thingy? It looks correct to me /shrug
+      // @ts-ignore
       matches = matches.concat(matchingChildren);
 
       // we have matching children and we don't want to continue, so break here

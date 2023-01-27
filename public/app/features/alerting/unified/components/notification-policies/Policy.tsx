@@ -156,13 +156,6 @@ const Policy: FC<PolicyComponentProps> = ({
           {/* Matchers and actions */}
           <div className={styles.matchersRow}>
             <Stack direction="row" alignItems="center" gap={1}>
-              {!isDefaultPolicy && (
-                <strong>
-                  <Stack direction="row" alignItems="center" gap={0.5}>
-                    <Icon name="x" /> Custom policy
-                  </Stack>
-                </strong>
-              )}
               {isDefaultPolicy ? (
                 <>
                   <strong>Default policy</strong>

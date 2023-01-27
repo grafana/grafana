@@ -1,7 +1,9 @@
 import { css } from '@emotion/css';
+import { intersectionBy } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, UrlQueryMap } from '@grafana/data';
+import { Stack } from '@grafana/experimental';
 import { Alert, LoadingPlaceholder, Tab, TabContent, TabsBar, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { Route, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
@@ -16,7 +18,6 @@ import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
 import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
 import { ProvisionedResource, ProvisioningAlert } from './components/Provisioning';
-import { Spacer } from './components/Spacer';
 import { MuteTimingsTable } from './components/mute-timings/MuteTimingsTable';
 import {
   computeInheritedTree,
@@ -37,6 +38,7 @@ import { fetchAlertGroupsAction, fetchAlertManagerConfigAction, updateAlertManag
 import { FormAmRoute } from './types/amroutes';
 import { addUniqueIdentifierToRoute, normalizeMatchers } from './utils/amroutes';
 import { isVanillaPrometheusAlertManagerDataSource } from './utils/datasource';
+import { findMatchingRoutes, Label } from './utils/notification-policies';
 import { initialAsyncRequestState } from './utils/redux';
 import { addRouteToParentRoute, mergePartialAmRouteWithRouteTree, omitRouteFromRouteTree } from './utils/routeTree';
 
@@ -54,7 +56,8 @@ const AmRoutes = () => {
 
   const [activeTab, setActiveTab] = useState<ActiveTab>(tab);
   const [updatingTree, setUpdatingTree] = useState<boolean>(false);
-  const [contactPointFilter, setContactPointFilter] = useState<string>('');
+  const [contactPointFilter, setContactPointFilter] = useState<string | undefined>();
+  const [labelsFilter, setLabelsFilter] = useState<Label[] | undefined>();
 
   const { useGetAlertmanagerChoiceQuery } = alertmanagerApi;
   const { currentData: alertmanagerChoice } = useGetAlertmanagerChoiceQuery();
@@ -88,15 +91,35 @@ const AmRoutes = () => {
     return;
   }, [config?.route]);
 
-  // these are computed from the contactPoint filter
+  // these are computed from the contactPoint and labels filter
   const routesMatchingFilters = useMemo(() => {
-    if (rootRoute) {
-      const fullRoute = computeInheritedTree(rootRoute);
-      return findRoutesMatchingFilter(fullRoute, { receiver: contactPointFilter });
+    let matchingRoutes: RouteWithID[] = [];
+    if (!rootRoute) {
+      return matchingRoutes;
     }
 
-    return [];
-  }, [contactPointFilter, rootRoute]);
+    const fullRoute = computeInheritedTree(rootRoute);
+
+    const routesMatchingContactPoint = contactPointFilter
+      ? findRoutesMatchingFilter(fullRoute, {
+          receiver: contactPointFilter,
+        })
+      : undefined;
+    if (routesMatchingContactPoint) {
+      matchingRoutes = routesMatchingContactPoint;
+    }
+
+    const routesMatchingLabels = labelsFilter ? findMatchingRoutes(rootRoute, labelsFilter) : undefined;
+    if (routesMatchingLabels) {
+      matchingRoutes = routesMatchingLabels;
+    }
+
+    if (routesMatchingContactPoint && routesMatchingLabels) {
+      matchingRoutes = intersectionBy(routesMatchingContactPoint, routesMatchingLabels, 'id');
+    }
+
+    return matchingRoutes;
+  }, [contactPointFilter, labelsFilter, rootRoute]);
 
   const isProvisioned = Boolean(config?.route?.provenance);
 
@@ -237,8 +260,6 @@ const AmRoutes = () => {
             setQueryParams({ tab: ActiveTab.MuteTimings });
           }}
         />
-        <Spacer />
-        {/* {haveData && muteTimingsTabActive && <Button type="button">Add mute timing</Button>} */}
       </TabsBar>
       <TabContent className={styles.tabContent}>
         {isLoading && <LoadingPlaceholder text="Loading Alertmanager config..." />}
@@ -256,37 +277,39 @@ const AmRoutes = () => {
                   alertmanagerChoice={alertmanagerChoice}
                 />
                 {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.RootNotificationPolicy} />}
-                {rootRoute && (
-                  <NotificationPoliciesFilter
-                    receivers={receivers}
-                    onChangeLabels={() => {}}
-                    onChangeReceiver={setContactPointFilter}
-                  />
-                )}
-                {rootRoute && haveData && (
-                  <Policy
-                    isDefault
-                    receivers={receivers}
-                    routeTree={rootRoute}
-                    currentRoute={rootRoute}
-                    alertGroups={fetchAlertGroups.result}
-                    contactPoint={rootRoute.receiver}
-                    contactPointsState={contactPointsState.receivers}
-                    groupBy={rootRoute.group_by}
-                    timingOptions={timingOptions}
-                    readOnly={readOnly}
-                    matchers={matchers}
-                    muteTimings={rootRoute.mute_time_intervals}
-                    childPolicies={childPolicies}
-                    continueMatching={rootRoute.continue}
-                    alertManagerSourceName={alertManagerSourceName}
-                    onAddPolicy={openAddModal}
-                    onEditPolicy={openEditModal}
-                    onDeletePolicy={openDeleteModal}
-                    onShowAlertInstances={showAlertGroupsModal}
-                    routesMatchingFilters={routesMatchingFilters}
-                  />
-                )}
+                <Stack direction="column" gap={1}>
+                  {rootRoute && (
+                    <NotificationPoliciesFilter
+                      receivers={receivers}
+                      onChangeLabels={setLabelsFilter}
+                      onChangeReceiver={setContactPointFilter}
+                    />
+                  )}
+                  {rootRoute && haveData && (
+                    <Policy
+                      isDefault
+                      receivers={receivers}
+                      routeTree={rootRoute}
+                      currentRoute={rootRoute}
+                      alertGroups={fetchAlertGroups.result}
+                      contactPoint={rootRoute.receiver}
+                      contactPointsState={contactPointsState.receivers}
+                      groupBy={rootRoute.group_by}
+                      timingOptions={timingOptions}
+                      readOnly={readOnly}
+                      matchers={matchers}
+                      muteTimings={rootRoute.mute_time_intervals}
+                      childPolicies={childPolicies}
+                      continueMatching={rootRoute.continue}
+                      alertManagerSourceName={alertManagerSourceName}
+                      onAddPolicy={openAddModal}
+                      onEditPolicy={openEditModal}
+                      onDeletePolicy={openDeleteModal}
+                      onShowAlertInstances={showAlertGroupsModal}
+                      routesMatchingFilters={routesMatchingFilters}
+                    />
+                  )}
+                </Stack>
                 {addModal}
                 {editModal}
                 {deleteModal}

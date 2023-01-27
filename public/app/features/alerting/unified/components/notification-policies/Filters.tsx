@@ -1,15 +1,19 @@
 import { pick } from 'lodash';
-import React, { FC } from 'react';
+import React, { FC, useCallback, useEffect, useRef } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { InlineField, Select } from '@grafana/ui';
+import { Button, Field, Icon, Input, Label as LabelElement, Select, Tooltip } from '@grafana/ui';
 import { Receiver, RouteWithID } from 'app/plugins/datasource/alertmanager/types';
+
+import { useURLSearchParams } from '../../hooks/useURLSearchParams';
+import { parseMatchers } from '../../utils/alertmanager';
+import { Label } from '../../utils/notification-policies';
 
 interface NotificationPoliciesFilterProps {
   receivers: Receiver[];
-  onChangeLabels: (labels: string[]) => void;
-  onChangeReceiver: (receiver: string) => void;
+  onChangeLabels: (labels: Label[] | undefined) => void;
+  onChangeReceiver: (receiver: string | undefined) => void;
 }
 
 const NotificationPoliciesFilter: FC<NotificationPoliciesFilterProps> = ({
@@ -17,22 +21,86 @@ const NotificationPoliciesFilter: FC<NotificationPoliciesFilterProps> = ({
   onChangeReceiver,
   onChangeLabels,
 }) => {
-  const receiverOptions: Array<SelectableValue<string>> = receivers.map((receiver) => ({
-    label: receiver.name,
-    value: receiver.name,
-  }));
+  const [searchParams, setSearchParams] = useURLSearchParams();
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const { queryString, contactPoint } = getNotificationPoliciesFilters(searchParams);
+
+  useEffect(() => {
+    onChangeReceiver(contactPoint);
+  }, [contactPoint, onChangeReceiver]);
+
+  useEffect(() => {
+    if (queryString) {
+      const labels: Label[] = parseMatchers(queryString ?? '').map(({ name, value }) => [name, value]);
+      onChangeLabels(labels.length > 0 ? labels : undefined);
+    } else {
+      onChangeLabels(undefined);
+    }
+  }, [onChangeLabels, queryString]);
+
+  const clearFilters = useCallback(() => {
+    if (searchInputRef.current) {
+      searchInputRef.current.value = '';
+    }
+    setSearchParams({ contactPoint: undefined, queryString: undefined });
+  }, [setSearchParams]);
+
+  const receiverOptions: Array<SelectableValue<string>> = receivers.map(toOption);
+  const selectedContactPoint = receiverOptions.find((option) => option.value === contactPoint) ?? null;
+
+  const hasFilters = queryString || contactPoint;
 
   return (
-    <Stack direction="row" alignItems="center">
-      <InlineField label="Contact Point">
+    <Stack direction="row" alignItems="flex-end" gap={0.5}>
+      <Field
+        style={{ marginBottom: 0 }}
+        label={
+          <LabelElement>
+            <Stack gap={0.5}>
+              <span>Search by labels</span>
+              <Tooltip
+                content={
+                  <div>
+                    Find notification policies that match the given set of labels, ex:
+                    <code>{`severity=critical, team=operations`}</code>
+                  </div>
+                }
+              >
+                <Icon name="info-circle" size="sm" />
+              </Tooltip>
+            </Stack>
+          </LabelElement>
+        }
+      >
+        <Input
+          ref={searchInputRef}
+          placeholder="Search"
+          data-testid="search-query-input"
+          prefix={<Icon name="search" />}
+          onChange={(event) => {
+            setSearchParams({ queryString: event.currentTarget.value });
+          }}
+          defaultValue={queryString}
+          width={46}
+        />
+      </Field>
+      <Field label="Search by contact point" style={{ marginBottom: 0 }}>
         <Select
           id="receiver"
+          value={selectedContactPoint}
           options={receiverOptions}
-          onChange={(option) => onChangeReceiver(option?.value ?? '')}
-          width={24}
+          onChange={(option) => {
+            setSearchParams({ contactPoint: option?.value });
+          }}
+          width={28}
           isClearable
         />
-      </InlineField>
+      </Field>
+      {hasFilters && (
+        <Button variant="secondary" icon="times" onClick={clearFilters}>
+          Clear filters
+        </Button>
+      )}
     </Stack>
   );
 };
@@ -90,5 +158,15 @@ export function computeInheritedTree(routeTree: RouteWithID): RouteWithID {
     }),
   };
 }
+
+const toOption = (receiver: Receiver) => ({
+  label: receiver.name,
+  value: receiver.name,
+});
+
+const getNotificationPoliciesFilters = (searchParams: URLSearchParams) => ({
+  queryString: searchParams.get('queryString') ?? undefined,
+  contactPoint: searchParams.get('contactPoint') ?? undefined,
+});
 
 export { NotificationPoliciesFilter, findRoutesMatchingFilter };
