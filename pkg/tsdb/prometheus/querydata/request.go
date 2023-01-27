@@ -97,10 +97,7 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 		if err != nil {
 			return &result, err
 		}
-		r, err := s.fetch(ctx, s.client, query, req.Headers)
-		if err != nil {
-			return &result, err
-		}
+		r := s.fetch(ctx, s.client, query, req.Headers)
 		if r == nil {
 			s.log.FromContext(ctx).Debug("Received nilresponse from runQuery", "query", query.Expr)
 			continue
@@ -111,7 +108,7 @@ func (s *QueryData) Execute(ctx context.Context, req *backend.QueryDataRequest) 
 	return &result, nil
 }
 
-func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.Query, headers map[string]string) (*backend.DataResponse, error) {
+func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.Query, headers map[string]string) *backend.DataResponse {
 	traceCtx, end := s.trace(ctx, q)
 	defer end()
 
@@ -151,7 +148,7 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 		dr.Frames = append(dr.Frames, res.Frames...)
 	}
 
-	return dr, nil
+	return dr
 }
 
 func (s *QueryData) rangeQuery(ctx context.Context, c *client.Client, q *models.Query, headers map[string]string) backend.DataResponse {
