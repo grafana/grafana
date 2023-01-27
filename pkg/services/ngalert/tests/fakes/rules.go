@@ -332,7 +332,7 @@ func (f *RuleStore) IncreaseVersionForAllRulesInNamespace(_ context.Context, org
 			rule.Version++
 			rule.Updated = time.Now()
 			result = append(result, models.AlertRuleKeyWithVersionAndPauseStatus{
-				IsPaused: rule.IsPaused,
+				IsPaused: *rule.IsPaused,
 				AlertRuleKeyWithVersion: models.AlertRuleKeyWithVersion{
 					Version:      rule.Version,
 					AlertRuleKey: rule.GetKey(),

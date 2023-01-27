@@ -38,6 +38,8 @@ type evalAppliedInfo struct {
 	now         time.Time
 }
 
+var isAlertPaused = false
+
 func TestProcessTicks(t *testing.T) {
 	testTracer := tracing.InitializeTracerForTest()
 	testMetrics := metrics.NewNGAlert(prometheus.NewPedanticRegistry())
@@ -434,9 +436,9 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		require.Greaterf(t, expectedToBeSent, 0, "State manager was expected to return at least one state that can be expired")
 
 		t.Run("should do nothing if version in channel is the same", func(t *testing.T) {
-			updateChan <- ruleVersionAndPauseStatus{ruleVersion(rule.Version - 1), false}
-			updateChan <- ruleVersionAndPauseStatus{ruleVersion(rule.Version), false}
-			updateChan <- ruleVersionAndPauseStatus{ruleVersion(rule.Version), false} // second time just to make sure that previous messages were handled
+			updateChan <- ruleVersionAndPauseStatus{ruleVersion(rule.Version - 1), &isAlertPaused}
+			updateChan <- ruleVersionAndPauseStatus{ruleVersion(rule.Version), &isAlertPaused}
+			updateChan <- ruleVersionAndPauseStatus{ruleVersion(rule.Version), &isAlertPaused} // second time just to make sure that previous messages were handled
 
 			actualStates := sch.stateManager.GetStatesForRuleUID(rule.OrgID, rule.UID)
 			require.Len(t, actualStates, len(states))
@@ -445,7 +447,7 @@ func TestSchedule_ruleRoutine(t *testing.T) {
 		})
 
 		t.Run("should clear the state and expire firing alerts if version in channel is greater", func(t *testing.T) {
-			updateChan <- ruleVersionAndPauseStatus{ruleVersion(rule.Version + rand.Int63n(1000) + 1), false}
+			updateChan <- ruleVersionAndPauseStatus{ruleVersion(rule.Version + rand.Int63n(1000) + 1), &isAlertPaused}
 
 			require.Eventually(t, func() bool {
 				return len(sender.Calls) > 0
@@ -602,12 +604,12 @@ func TestSchedule_UpdateAlertRule(t *testing.T) {
 			info, _ := sch.registry.getOrCreateInfo(context.Background(), key)
 			version := rand.Int63()
 			go func() {
-				sch.UpdateAlertRule(key, version, false)
+				sch.UpdateAlertRule(key, version, &isAlertPaused)
 			}()
 
 			select {
 			case v := <-info.updateCh:
-				require.Equal(t, ruleVersionAndPauseStatus{ruleVersion(version), false}, v)
+				require.Equal(t, ruleVersionAndPauseStatus{ruleVersion(version), &isAlertPaused}, v)
 			case <-time.After(5 * time.Second):
 				t.Fatal("No message was received on update channel")
 			}
@@ -617,14 +619,14 @@ func TestSchedule_UpdateAlertRule(t *testing.T) {
 			key := models.GenerateRuleKey(rand.Int63())
 			info, _ := sch.registry.getOrCreateInfo(context.Background(), key)
 			info.stop(nil)
-			sch.UpdateAlertRule(key, rand.Int63(), false)
+			sch.UpdateAlertRule(key, rand.Int63(), &isAlertPaused)
 		})
 	})
 	t.Run("when rule does not exist", func(t *testing.T) {
 		t.Run("should exit", func(t *testing.T) {
 			sch := setupScheduler(t, nil, nil, nil, nil, nil)
 			key := models.GenerateRuleKey(rand.Int63())
-			sch.UpdateAlertRule(key, rand.Int63(), false)
+			sch.UpdateAlertRule(key, rand.Int63(), &isAlertPaused)
 		})
 	})
 }
