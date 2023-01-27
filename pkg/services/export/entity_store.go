@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
@@ -105,7 +104,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 	}
 	ctx = appcontext.WithUser(ctx, rowUser)
 
-	what := models.StandardKindFolder
+	what := entity.StandardKindFolder
 	e.status.Count[what] = 0
 
 	folders := make(map[int64]string)
@@ -133,7 +132,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 		_, err = e.store.AdminWrite(ctx, &entity.AdminWriteEntityRequest{
 			GRN: &entity.GRN{
 				UID:  dash.UID,
-				Kind: models.StandardKindFolder,
+				Kind: entity.StandardKindFolder,
 			},
 			ClearHistory: true,
 			CreatedAt:    dash.Created.UnixMilli(),
@@ -158,7 +157,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 		e.broadcaster(e.status)
 	}
 
-	what = models.StandardKindDashboard
+	what = entity.StandardKindDashboard
 	e.status.Count[what] = 0
 
 	// TODO paging etc
@@ -181,7 +180,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 		_, err = e.store.AdminWrite(ctx, &entity.AdminWriteEntityRequest{
 			GRN: &entity.GRN{
 				UID:  dash.UID,
-				Kind: models.StandardKindDashboard,
+				Kind: entity.StandardKindDashboard,
 			},
 			ClearHistory: true,
 			Version:      fmt.Sprintf("%d", dash.Version),
@@ -208,7 +207,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 	}
 
 	// Playlists
-	what = models.StandardKindPlaylist
+	what = entity.StandardKindPlaylist
 	e.status.Count[what] = 0
 	rowUser.OrgID = 1
 	rowUser.UserID = 1
@@ -233,7 +232,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 		_, err = e.store.Write(ctx, &entity.WriteEntityRequest{
 			GRN: &entity.GRN{
 				UID:  playlist.Uid,
-				Kind: models.StandardKindPlaylist,
+				Kind: entity.StandardKindPlaylist,
 			},
 			Body:    prettyJSON(playlist),
 			Comment: "export from playlists",
@@ -297,7 +296,7 @@ func (e *entityStoreJob) start(ctx context.Context) {
 			_, err = e.store.Write(ctx, &entity.WriteEntityRequest{
 				GRN: &entity.GRN{
 					UID:  dto.Key,
-					Kind: models.StandardKindSnapshot,
+					Kind: entity.StandardKindSnapshot,
 				},
 				Body:    prettyJSON(m),
 				Comment: "export from snapshtts",

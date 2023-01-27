@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -14,10 +13,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var permissionMap = map[string]models.PermissionType{
-	"View":  models.PERMISSION_VIEW,
-	"Edit":  models.PERMISSION_EDIT,
-	"Admin": models.PERMISSION_ADMIN,
+var permissionMap = map[string]dashboards.PermissionType{
+	"View":  dashboards.PERMISSION_VIEW,
+	"Edit":  dashboards.PERMISSION_EDIT,
+	"Admin": dashboards.PERMISSION_ADMIN,
 }
 
 var _ DashboardGuardian = new(AccessControlDashboardGuardian)
@@ -235,7 +234,7 @@ func (a *AccessControlDashboardGuardian) evaluate(evaluator accesscontrol.Evalua
 	return ok, err
 }
 
-func (a *AccessControlDashboardGuardian) CheckPermissionBeforeUpdate(permission models.PermissionType, updatePermissions []*dashboards.DashboardACL) (bool, error) {
+func (a *AccessControlDashboardGuardian) CheckPermissionBeforeUpdate(permission dashboards.PermissionType, updatePermissions []*dashboards.DashboardACL) (bool, error) {
 	// always true for access control
 	return true, nil
 }

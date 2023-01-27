@@ -153,3 +153,11 @@ export interface LokiVariableQuery extends DataQuery {
   label?: string;
   stream?: string;
 }
+
+export interface ContextFilter {
+  enabled: boolean;
+  label: string;
+  value: string;
+  fromParser: boolean;
+  description?: string;
+}

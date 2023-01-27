@@ -24,6 +24,8 @@ type DataSourceCreatedProps = {
   plugin_id: string;
   /** The plugin version (especially interesting in external plugins - core plugins are aligned with grafana version) */
   plugin_version?: string;
+  /** The URL that points to the edit page for the datasoruce. We are using this to be able to distinguish between the performance of different datasource edit locations. */
+  editLink?: string;
 };
 
 /**

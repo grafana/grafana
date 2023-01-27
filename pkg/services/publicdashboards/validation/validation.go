@@ -1,9 +1,11 @@
 package validation
 
 import (
+	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func ValidatePublicDashboard(dto *SavePublicDashboardDTO, dashboard *dashboards.Dashboard) error {
@@ -43,4 +45,16 @@ func ValidateQueryPublicDashboardRequest(req PublicDashboardQueryDTO, pd *Public
 	}
 
 	return nil
+}
+
+// IsValidAccessToken asserts that an accessToken is a valid uuid
+func IsValidAccessToken(token string) bool {
+	_, err := uuid.Parse(token)
+	return err == nil
+}
+
+// IsValidShortUID checks that the uid is not blank and contains valid
+// characters. Wraps utils.IsValidShortUID
+func IsValidShortUID(uid string) bool {
+	return uid != "" && util.IsValidShortUID(uid)
 }
