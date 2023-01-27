@@ -4848,7 +4848,7 @@ __metadata:
     "@rollup/plugin-commonjs": 23.0.2
     "@rollup/plugin-json": 5.0.1
     "@rollup/plugin-node-resolve": 15.0.1
-    "@testing-library/dom": 8.19.0
+    "@testing-library/dom": 8.20.0
     "@testing-library/jest-dom": 5.16.5
     "@testing-library/react": 12.1.4
     "@testing-library/react-hooks": 8.0.1
@@ -5118,7 +5118,7 @@ __metadata:
     "@rollup/plugin-commonjs": 23.0.2
     "@rollup/plugin-node-resolve": 15.0.1
     "@sentry/browser": 6.19.7
-    "@testing-library/dom": 8.19.0
+    "@testing-library/dom": 8.20.0
     "@testing-library/react": 12.1.4
     "@testing-library/react-hooks": 8.0.1
     "@testing-library/user-event": 14.4.3
@@ -5324,7 +5324,7 @@ __metadata:
     "@storybook/preset-scss": 1.0.3
     "@storybook/react": 6.5.14
     "@storybook/theming": 6.5.14
-    "@testing-library/dom": 8.19.0
+    "@testing-library/dom": 8.20.0
     "@testing-library/jest-dom": 5.16.5
     "@testing-library/react": 12.1.4
     "@testing-library/react-hooks": 8.0.1
@@ -5382,7 +5382,7 @@ __metadata:
     process: ^0.11.10
     rc-cascader: 3.8.0
     rc-drawer: 6.1.2
-    rc-slider: 10.0.1
+    rc-slider: 10.1.0
     rc-time-picker: ^3.7.3
     rc-tooltip: 5.2.2
     react: 17.0.2
@@ -10339,19 +10339,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@testing-library/dom@npm:8.19.0, @testing-library/dom@npm:>=7, @testing-library/dom@npm:^8.0.0":
-  version: 8.19.0
-  resolution: "@testing-library/dom@npm:8.19.0"
+"@testing-library/dom@npm:8.20.0, @testing-library/dom@npm:>=7, @testing-library/dom@npm:^8.0.0":
+  version: 8.20.0
+  resolution: "@testing-library/dom@npm:8.20.0"
   dependencies:
     "@babel/code-frame": ^7.10.4
     "@babel/runtime": ^7.12.5
-    "@types/aria-query": ^4.2.0
+    "@types/aria-query": ^5.0.1
     aria-query: ^5.0.0
     chalk: ^4.1.0
     dom-accessibility-api: ^0.5.9
     lz-string: ^1.4.4
     pretty-format: ^27.0.2
-  checksum: 6bb93fef96703b6c47cf1b7cc8f71d402a9576084a94ba4e9926f51bd7bb1287fbb4f6942d82bd03fc6f3d998ae97e60f6aea4618f3a1ce6139597d2a4ecb7b9
+  checksum: 1e599129a2fe91959ce80900a0a4897232b89e2a8e22c1f5950c36d39c97629ea86b4986b60b173b5525a05de33fde1e35836ea597b03de78cc51b122835c6f0
   languageName: node
   linkType: hard
 
@@ -10498,10 +10498,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/aria-query@npm:^4.2.0":
-  version: 4.2.2
-  resolution: "@types/aria-query@npm:4.2.2"
-  checksum: 6f2ce11d91e2d665f3873258db19da752d91d85d3679eb5efcdf9c711d14492287e1e4eb52613b28e60375841a9e428594e745b68436c963d8bad4bf72188df3
+"@types/aria-query@npm:^5.0.1":
+  version: 5.0.1
+  resolution: "@types/aria-query@npm:5.0.1"
+  checksum: 69fd7cceb6113ed370591aef04b3fd0742e9a1b06dd045c43531448847b85de181495e4566f98e776b37c422a12fd71866e0a1dfd904c5ec3f84d271682901de
   languageName: node
   linkType: hard
 
@@ -22050,7 +22050,7 @@ __metadata:
     "@sentry/utils": 6.19.7
     "@swc/core": 1.3.11
     "@swc/helpers": 0.4.12
-    "@testing-library/dom": 8.19.0
+    "@testing-library/dom": 8.20.0
     "@testing-library/jest-dom": 5.16.5
     "@testing-library/react": 12.1.4
     "@testing-library/react-hooks": 8.0.1
@@ -22229,7 +22229,7 @@ __metadata:
     pseudoizer: ^0.1.0
     rc-cascader: 3.8.0
     rc-drawer: 6.1.2
-    rc-slider: 10.0.1
+    rc-slider: 10.1.0
     rc-time-picker: 3.7.3
     rc-tree: 5.7.0
     re-resizable: 6.9.9
@@ -32276,9 +32276,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-slider@npm:10.0.1":
-  version: 10.0.1
-  resolution: "rc-slider@npm:10.0.1"
+"rc-slider@npm:10.1.0":
+  version: 10.1.0
+  resolution: "rc-slider@npm:10.1.0"
   dependencies:
     "@babel/runtime": ^7.10.1
     classnames: ^2.2.5
@@ -32287,7 +32287,7 @@ __metadata:
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: 803f0cc39d43897c0b24549e87232a668d26ff5b0e14b528fd454aa455cdf96ebc60654832c51bb1a6c7b7594ca39017d6c96b3237662471efb863f1723e3d9c
+  checksum: 002662cd0a59d6e48dd82744dfe2043efffd15229fb39665001bd73d584570458c16c0babcc78dc7b0ccde57d83f86114492348b3e5674a0672c97269957319d
   languageName: node
   linkType: hard
 
