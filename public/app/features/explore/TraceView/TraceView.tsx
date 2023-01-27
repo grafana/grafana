@@ -16,7 +16,7 @@ import {
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
-import { TraceToLogsData } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
+import { getTraceToLogsOptions, TraceToLogsData } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricsData } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';

@@ -27,7 +27,7 @@ import { LokiQuery } from '../../../plugins/datasource/loki/types';
 import { variableRegex } from '../../variables/utils';
 import { getFieldLinksForExplore } from '../utils/links';
 
-import { SpanLinkFunc, TraceSpan } from './components';
+import { SpanLinkFunc, Trace, TraceSpan } from './components';
 import { SpanLinks } from './components/types/links';
 
 /**
