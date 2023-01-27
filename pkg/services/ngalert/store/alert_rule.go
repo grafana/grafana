@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -326,12 +327,12 @@ func (st DBstore) GetRuleGroupInterval(ctx context.Context, orgID int64, namespa
 func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, user *user.SignedInUser) (map[string]*folder.Folder, error) {
 	namespaceMap := make(map[string]*folder.Folder)
 
-	searchQuery := models.FindPersistedDashboardsQuery{
+	searchQuery := dashboards.FindPersistedDashboardsQuery{
 		OrgId:        orgID,
 		SignedInUser: user,
 		Type:         searchstore.TypeAlertFolder,
 		Limit:        -1,
-		Permission:   models.PERMISSION_VIEW,
+		Permission:   dashboards.PERMISSION_VIEW,
 		Sort:         models.SortOption{},
 		Filters: []interface{}{
 			searchstore.FolderWithAlertsFilter{},

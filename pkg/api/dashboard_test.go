@@ -159,8 +159,8 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			viewerRole := org.RoleViewer
 			editorRole := org.RoleEditor
 			qResult := []*dashboards.DashboardACLInfoDTO{
-				{Role: &viewerRole, Permission: models.PERMISSION_VIEW},
-				{Role: &editorRole, Permission: models.PERMISSION_EDIT},
+				{Role: &viewerRole, Permission: dashboards.PERMISSION_VIEW},
+				{Role: &editorRole, Permission: dashboards.PERMISSION_EDIT},
 			}
 			dashboardService.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
 			guardian.InitLegacyGuardian(mockSQLStore, dashboardService, teamService)
@@ -248,7 +248,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		qResult := []*dashboards.DashboardACLInfoDTO{
 			{
 				DashboardID: 1,
-				Permission:  models.PERMISSION_EDIT,
+				Permission:  dashboards.PERMISSION_EDIT,
 				UserID:      200,
 			},
 		}
@@ -376,7 +376,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 				dashboardService := dashboards.NewFakeDashboardService(t)
 				qResult := []*dashboards.DashboardACLInfoDTO{
-					{OrgID: 1, DashboardID: 2, UserID: 1, Permission: models.PERMISSION_EDIT},
+					{OrgID: 1, DashboardID: 2, UserID: 1, Permission: dashboards.PERMISSION_EDIT},
 				}
 				dashboardService.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
 				guardian.InitLegacyGuardian(mockSQLStore, dashboardService, teamService)
@@ -434,7 +434,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 				dashboardService := dashboards.NewFakeDashboardService(t)
 				qResult := []*dashboards.DashboardACLInfoDTO{
-					{OrgID: 1, DashboardID: 2, UserID: 1, Permission: models.PERMISSION_VIEW},
+					{OrgID: 1, DashboardID: 2, UserID: 1, Permission: dashboards.PERMISSION_VIEW},
 				}
 				dashboardService.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
 				guardian.InitLegacyGuardian(mockSQLStore, dashboardService, teamService)
@@ -472,7 +472,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 
 				dashboardService := dashboards.NewFakeDashboardService(t)
 				qResult := []*dashboards.DashboardACLInfoDTO{
-					{OrgID: 1, DashboardID: 2, UserID: 1, Permission: models.PERMISSION_ADMIN},
+					{OrgID: 1, DashboardID: 2, UserID: 1, Permission: dashboards.PERMISSION_ADMIN},
 				}
 				dashboardService.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
 				guardian.InitLegacyGuardian(mockSQLStore, dashboardService, teamService)
@@ -521,7 +521,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 			setUpInner := func() {
 				dashboardService := dashboards.NewFakeDashboardService(t)
 				qResult := []*dashboards.DashboardACLInfoDTO{
-					{OrgID: 1, DashboardID: 2, UserID: 1, Permission: models.PERMISSION_VIEW},
+					{OrgID: 1, DashboardID: 2, UserID: 1, Permission: dashboards.PERMISSION_VIEW},
 				}
 				dashboardService.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult, nil)
 				guardian.InitLegacyGuardian(mockSQLStore, dashboardService, teamService)
@@ -910,7 +910,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 		require.NoError(t, err)
 		qResult := &dashboards.Dashboard{ID: 1, Data: dataValue}
 		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
-		qResult2 := []*dashboards.DashboardACLInfoDTO{{OrgID: testOrgID, DashboardID: 1, UserID: testUserID, Permission: models.PERMISSION_EDIT}}
+		qResult2 := []*dashboards.DashboardACLInfoDTO{{OrgID: testOrgID, DashboardID: 1, UserID: testUserID, Permission: dashboards.PERMISSION_EDIT}}
 		dashboardService.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(qResult2, nil)
 		guardian.InitLegacyGuardian(mockSQLStore, dashboardService, teamService)
 

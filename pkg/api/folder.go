@@ -182,13 +182,13 @@ func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int
 		var permissions []accesscontrol.SetResourcePermissionCommand
 		if user.IsRealUser() && !user.IsAnonymous {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
-				UserID: user.UserID, Permission: models.PERMISSION_ADMIN.String(),
+				UserID: user.UserID, Permission: dashboards.PERMISSION_ADMIN.String(),
 			})
 		}
 
 		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: string(org.RoleEditor), Permission: models.PERMISSION_EDIT.String()},
-			{BuiltinRole: string(org.RoleViewer), Permission: models.PERMISSION_VIEW.String()},
+			{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
+			{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
 		}...)
 
 		_, permissionErr = hs.folderPermissionsService.SetPermissions(ctx, orgID, folder.UID, permissions...)
@@ -333,7 +333,7 @@ func (hs *HTTPServer) searchFolders(c *models.ReqContext) ([]*folder.Folder, err
 		Limit:        c.QueryInt64("limit"),
 		OrgId:        c.OrgID,
 		Type:         "dash-folder",
-		Permission:   models.PERMISSION_VIEW,
+		Permission:   dashboards.PERMISSION_VIEW,
 		Page:         c.QueryInt64("page"),
 	}
 
