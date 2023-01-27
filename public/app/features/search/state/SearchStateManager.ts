@@ -6,7 +6,7 @@ import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import store from 'app/core/store';
 
-import { SEARCH_PANELS_LOCAL_STORAGE_KEY, SEARCH_SELECTED_LAYOUT } from '../constants';
+import { SEARCH_PANELS_LOCAL_STORAGE_KEY, SEARCH_SELECTED_LAYOUT, SEARCH_SELECTED_SORT } from '../constants';
 import {
   reportDashboardListViewed,
   reportSearchFailedQueryInteraction,
@@ -113,6 +113,10 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   };
 
   onSortChange = (sort: string | undefined) => {
+    if (sort) {
+      localStorage.setItem(SEARCH_SELECTED_SORT, sort);
+    }
+
     if (this.state.layout === SearchLayout.Folders) {
       this.setStateAndDoSearch({ sort, layout: SearchLayout.List });
     } else {
@@ -260,13 +264,14 @@ export function getSearchStateManager() {
   if (!stateManager) {
     const selectedLayout = localStorage.getItem(SEARCH_SELECTED_LAYOUT) as SearchLayout;
     const layout = selectedLayout ?? initialState.layout;
+    const sort = localStorage.getItem(SEARCH_SELECTED_SORT) ?? undefined;
 
     let includePanels = store.getBool(SEARCH_PANELS_LOCAL_STORAGE_KEY, true);
     if (includePanels) {
       includePanels = false;
     }
 
-    stateManager = new SearchStateManager({ ...initialState, layout: layout, includePanels });
+    stateManager = new SearchStateManager({ ...initialState, layout, sort, includePanels });
   }
 
   return stateManager;
