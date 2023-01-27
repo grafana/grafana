@@ -84,7 +84,7 @@ const LogsQueryEditor: React.FC<LogsQueryEditorProps> = ({
               )}
               selectionNotice={() =>
                 config.featureToggles.azureMultipleResourcePicker
-                  ? 'You may only choose items from the same resource type.'
+                  ? 'You may only choose items of the same resource type.'
                   : ''
               }
             />

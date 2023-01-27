@@ -149,6 +149,6 @@ describe('LogsQueryEdiutor', () => {
     await userEvent.click(checkbox);
     expect(checkbox).toBeChecked();
 
-    expect(await screen.findByText('You may only choose items from the same resource type.')).toBeInTheDocument();
+    expect(await screen.findByText('You may only choose items of the same resource type.')).toBeInTheDocument();
   });
 });
