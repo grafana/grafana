@@ -44,8 +44,8 @@ export function GrafanaAlertmanagerDeliveryWarning({ currentAlertmanager }: Graf
         Grafana is configured to send alerts to external Alertmanagers only. Changing Grafana Alertmanager configuration
         will not affect delivery of your alerts.
         <div className={styles.adminHint}>
-          You can change the configuration on the Alerting Admin page. If you do not have access, contact your
-          Administrator
+          To change your Alertmanager setup, go to the Alerting Admin page. If you do not have access, contact your
+          Administrator.
         </div>
       </Alert>
     );
@@ -53,12 +53,12 @@ export function GrafanaAlertmanagerDeliveryWarning({ currentAlertmanager }: Graf
 
   if (alertmanagerChoice === AlertmanagerChoice.All && hasActiveExternalAMs) {
     return (
-      <Alert title="You have additional Alertmanagers configured" severity="warning">
-        Grafana is configured to send alerts to both the internal and external Alertmanagers. Changing the internal
-        Grafana Alertmanager configuration will not affect the other configured Alertmanagers.
+      <Alert title="You have additional Alertmanagers to configure" severity="warning">
+        Ensure you make configuration changes in the correct Alertmanagers; both internal and external. Changing one
+        will not affect the others.
         <div className={styles.adminHint}>
-          You can change the configuration on the Alerting Admin page. If you do not have access, contact your
-          Administrator
+          To change your Alertmanager setup, go to the Alerting Admin page. If you do not have access, contact your
+          Administrator.
         </div>
       </Alert>
     );

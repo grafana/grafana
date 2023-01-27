@@ -56,7 +56,7 @@ describe('GrafanaAlertmanagerDeliveryWarning', () => {
 
     renderWithStore(<GrafanaAlertmanagerDeliveryWarning currentAlertmanager={GRAFANA_RULES_SOURCE_NAME} />);
 
-    expect(await screen.findByText('You have additional Alertmanagers configured')).toBeVisible();
+    expect(await screen.findByText('You have additional Alertmanagers to configure')).toBeVisible();
   });
 
   it('Should render no warning when choice is Internal', async () => {

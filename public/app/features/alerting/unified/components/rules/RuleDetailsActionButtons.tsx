@@ -260,13 +260,17 @@ function useCanSilence(alertmanagerSourceName?: string) {
   const { useGetAlertmanagerChoiceQuery, useGetExternalAlertmanagersQuery } = alertmanagerApi;
   const { currentData: alertmanagerChoice } = useGetAlertmanagerChoiceQuery();
 
-  const { currentData: externalAMs } = useGetExternalAlertmanagersQuery();
+  const interactsWithExternalAMs =
+    alertmanagerChoice && [AlertmanagerChoice.External, AlertmanagerChoice.All].includes(alertmanagerChoice);
+
+  const { currentData: externalAMs } = useGetExternalAlertmanagersQuery(undefined, {
+    skip: !interactsWithExternalAMs,
+  });
 
   const hasPermissions = contextSrv.hasAccess(AccessControlAction.AlertingInstanceCreate, contextSrv.isEditor);
   const hasExternalAlertmanagers = !isEmpty(externalAMs?.activeAlertManagers);
-  const wantsDeliveredToExternalAms = alertmanagerChoice !== AlertmanagerChoice.Internal;
 
-  return hasAlertmanagerSource && hasPermissions && wantsDeliveredToExternalAms && hasExternalAlertmanagers;
+  return hasAlertmanagerSource && hasPermissions && (interactsWithExternalAMs ? hasExternalAlertmanagers : true);
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
