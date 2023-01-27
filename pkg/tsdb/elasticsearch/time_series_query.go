@@ -78,108 +78,6 @@ func (e *timeSeriesQuery) processQuery(q *Query, ms *es.MultiSearchRequestBuilde
 		processTimeSeriesQuery(q, b, from, to, defaultTimeField)
 	}
 
-	if len(q.BucketAggs) == 0 {
-		if len(q.Metrics) == 0 || q.Metrics[0].Type != "raw_document" {
-			result.Responses[q.RefID] = backend.DataResponse{
-				Error: fmt.Errorf("invalid query, missing metrics and aggregations"),
-			}
-			return nil
-		}
-		metric := q.Metrics[0]
-		b.Size(metric.Settings.Get("size").MustInt(500))
-		b.SortDesc("@timestamp", "boolean")
-		b.AddDocValueField("@timestamp")
-		return nil
-	}
-
-	aggBuilder := b.Agg()
-
-	// iterate backwards to create aggregations bottom-down
-	for _, bucketAgg := range q.BucketAggs {
-		bucketAgg.Settings = simplejson.NewFromAny(
-			bucketAgg.generateSettingsForDSL(),
-		)
-		switch bucketAgg.Type {
-		case dateHistType:
-			aggBuilder = addDateHistogramAgg(aggBuilder, bucketAgg, from, to)
-		case histogramType:
-			aggBuilder = addHistogramAgg(aggBuilder, bucketAgg)
-		case filtersType:
-			aggBuilder = addFiltersAgg(aggBuilder, bucketAgg)
-		case termsType:
-			aggBuilder = addTermsAgg(aggBuilder, bucketAgg, q.Metrics)
-		case geohashGridType:
-			aggBuilder = addGeoHashGridAgg(aggBuilder, bucketAgg)
-		case nestedType:
-			aggBuilder = addNestedAgg(aggBuilder, bucketAgg)
-		}
-	}
-
-	for _, m := range q.Metrics {
-		m := m
-		if m.Type == countType {
-			continue
-		}
-
-		if isPipelineAgg(m.Type) {
-			if isPipelineAggWithMultipleBucketPaths(m.Type) {
-				if len(m.PipelineVariables) > 0 {
-					bucketPaths := map[string]interface{}{}
-					for name, pipelineAgg := range m.PipelineVariables {
-						if _, err := strconv.Atoi(pipelineAgg); err == nil {
-							var appliedAgg *MetricAgg
-							for _, pipelineMetric := range q.Metrics {
-								if pipelineMetric.ID == pipelineAgg {
-									appliedAgg = pipelineMetric
-									break
-								}
-							}
-							if appliedAgg != nil {
-								if appliedAgg.Type == countType {
-									bucketPaths[name] = "_count"
-								} else {
-									bucketPaths[name] = pipelineAgg
-								}
-							}
-						}
-					}
-
-					aggBuilder.Pipeline(m.ID, m.Type, bucketPaths, func(a *es.PipelineAggregation) {
-						a.Settings = m.generateSettingsForDSL()
-					})
-				} else {
-					continue
-				}
-			} else {
-				if _, err := strconv.Atoi(m.PipelineAggregate); err == nil {
-					var appliedAgg *MetricAgg
-					for _, pipelineMetric := range q.Metrics {
-						if pipelineMetric.ID == m.PipelineAggregate {
-							appliedAgg = pipelineMetric
-							break
-						}
-					}
-					if appliedAgg != nil {
-						bucketPath := m.PipelineAggregate
-						if appliedAgg.Type == countType {
-							bucketPath = "_count"
-						}
-
-						aggBuilder.Pipeline(m.ID, m.Type, bucketPath, func(a *es.PipelineAggregation) {
-							a.Settings = m.generateSettingsForDSL()
-						})
-					}
-				} else {
-					continue
-				}
-			}
-		} else {
-			aggBuilder.Metric(m.ID, m.Type, m.Field, func(a *es.MetricAggregation) {
-				a.Settings = m.generateSettingsForDSL()
-			})
-		}
-	}
-
 	return nil
 }
 
@@ -471,6 +369,8 @@ func processTimeSeriesQuery(q *Query, b *es.SearchRequestBuilder, from, to int64
 			aggBuilder = addTermsAgg(aggBuilder, bucketAgg, q.Metrics)
 		case geohashGridType:
 			aggBuilder = addGeoHashGridAgg(aggBuilder, bucketAgg)
+		case nestedType:
+			aggBuilder = addNestedAgg(aggBuilder, bucketAgg)
 		}
 	}
 

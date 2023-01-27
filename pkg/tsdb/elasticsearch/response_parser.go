@@ -86,7 +86,7 @@ func processBuckets(aggs map[string]interface{}, target *Query,
 			continue
 		}
 		if aggDef.Type == nestedType {
-			err = rp.processBuckets(esAgg.MustMap(), target, queryResult, props, depth+1)
+			err = processBuckets(esAgg.MustMap(), target, queryResult, props, depth+1)
 			if err != nil {
 				return err
 			}
