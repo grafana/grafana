@@ -39,7 +39,7 @@ type TempoDataQuery struct {
 	Key *string `json:"key,omitempty"`
 
 	// Defines the maximum number of traces that are returned from Tempo
-	Limit *float32 `json:"limit,omitempty"`
+	Limit *int64 `json:"limit,omitempty"`
 
 	// Define the maximum duration to select traces. Use duration format, for example: 1.2s, 100ms
 	MaxDuration *string `json:"maxDuration,omitempty"`

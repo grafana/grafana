@@ -47,7 +47,7 @@ composableKinds: DataQuery: {
 						// Filters to be included in a PromQL query to select data for the service graph. Example: {client="app",service="app"}
 						serviceMapQuery?: string
 						// Defines the maximum number of traces that are returned from Tempo
-						limit?: number
+						limit?: int64
 
 						// search = Loki search, nativeSearch = Tempo search for backwards compatibility
 						#TempoQueryType: "traceql" | "search" | "serviceMap" | "upload" | "nativeSearch" | "clear" @cuetsy(kind="type")
