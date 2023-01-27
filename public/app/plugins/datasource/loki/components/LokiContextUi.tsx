@@ -13,6 +13,7 @@ export interface LokiContextUiProps {
   languageProvider: LokiLanguageProvider;
   row: LogRowModel;
   updateFilter: (value: ContextFilter[]) => void;
+  onClose: () => void;
 }
 
 function getStyles(theme: GrafanaTheme2) {
@@ -43,7 +44,7 @@ const formatOptionLabel = memoizeOne(({ label, description }: SelectableValue<st
 ));
 
 export function LokiContextUi(props: LokiContextUiProps) {
-  const { row, languageProvider, updateFilter } = props;
+  const { row, languageProvider, updateFilter, onClose } = props;
   const styles = useStyles2(getStyles);
 
   const [contextFilters, setContextFilters] = useState<ContextFilter[]>([]);
@@ -73,6 +74,13 @@ export function LokiContextUi(props: LokiContextUiProps) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contextFilters, initialized]);
+
+  useEffect(() => {
+    return () => {
+      clearTimeout(timerHandle.current);
+      onClose();
+    };
+  }, [onClose]);
 
   useAsync(async () => {
     await languageProvider.start();

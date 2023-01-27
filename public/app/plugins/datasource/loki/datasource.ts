@@ -728,7 +728,7 @@ export class LokiDatasource
     };
   };
 
-  async prepareContextExpr(row: LogRowModel, origQuery?: DataQuery): Promise<string> {
+  async prepareContextExprWithoutParsedLabes(row: LogRowModel, origQuery?: DataQuery): Promise<string> {
     await this.languageProvider.start();
     const labels = this.languageProvider.getLabelKeys();
     const expr = Object.keys(row.labels)
@@ -745,10 +745,17 @@ export class LokiDatasource
     return `{${expr}}`;
   }
 
+  async prepareContextExpr(row: LogRowModel, origQuery?: DataQuery): Promise<string> {
+    return await this.prepareContextExprWithoutParsedLabes(row, origQuery);
+  }
+
   getLogRowContextUi(row: LogRowModel, runContextQuery: () => void): React.ReactNode {
     return LokiContextUi({
       row,
       languageProvider: this.languageProvider,
+      onClose: () => {
+        this.prepareContextExpr = this.prepareContextExprWithoutParsedLabes;
+      },
       updateFilter: (contextFilters: ContextFilter[]) => {
         this.prepareContextExpr = async (row: LogRowModel, origQuery?: DataQuery) => {
           await this.languageProvider.start();
