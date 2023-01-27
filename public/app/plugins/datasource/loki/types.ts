@@ -154,6 +154,13 @@ export interface LokiVariableQuery extends DataQuery {
   stream?: string;
 }
 
+export interface QueryStats {
+  streams: number;
+  chunks: number;
+  bytes: number;
+  entries: number;
+}
+
 export enum SupportingQueryType {
   LogsVolume = 'logsVolume',
   LogsSample = 'logsSample',

@@ -34,7 +34,7 @@ import {
   TimeRange,
   toUtc,
 } from '@grafana/data';
-import { config, DataSourceWithBackend, FetchError } from '@grafana/runtime';
+import { BackendSrvRequest, config, DataSourceWithBackend, FetchError } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { queryLogsSample, queryLogsVolume } from 'app/core/logsModel';
 import { convertToWebSocketUrl } from 'app/core/utils/explore';
@@ -71,6 +71,7 @@ import { getQueryHints } from './queryHints';
 import {
   getLogQueryFromMetricsQuery,
   getNormalizedLokiQuery,
+  getStreamSelectorsFromQuery,
   getParserFromQuery,
   isLogsQuery,
   isValidQuery,
@@ -86,6 +87,7 @@ import {
   LokiQueryType,
   LokiVariableQuery,
   LokiVariableQueryType,
+  QueryStats,
   SupportingQueryType,
 } from './types';
 import { LokiVariableSupport } from './variables';
@@ -401,15 +403,43 @@ export class LokiDatasource
     return queries.map((query) => this.languageProvider.exportToAbstractQuery(query));
   }
 
-  async metadataRequest(url: string, params?: Record<string, string | number>) {
+  async metadataRequest(url: string, params?: Record<string, string | number>, options?: Partial<BackendSrvRequest>) {
     // url must not start with a `/`, otherwise the AJAX-request
     // going from the browser will contain `//`, which can cause problems.
     if (url.startsWith('/')) {
       throw new Error(`invalid metadata request url: ${url}`);
     }
 
-    const res = await this.getResource(url, params);
-    return res.data || [];
+    const res = await this.getResource(url, params, options);
+    return res.data ?? (res || []);
+  }
+
+  async getQueryStats(query: LokiQuery): Promise<QueryStats> {
+    const { start, end } = this.getTimeRangeParams();
+    const labelMatchers = getStreamSelectorsFromQuery(query.expr);
+
+    let statsForAll: QueryStats = { streams: 0, chunks: 0, bytes: 0, entries: 0 };
+
+    for (const labelMatcher of labelMatchers) {
+      try {
+        const data = await this.metadataRequest(
+          'index/stats',
+          { query: labelMatcher, start, end },
+          { showErrorAlert: false }
+        );
+
+        statsForAll = {
+          streams: statsForAll.streams + data.streams,
+          chunks: statsForAll.chunks + data.chunks,
+          bytes: statsForAll.bytes + data.bytes,
+          entries: statsForAll.entries + data.entries,
+        };
+      } catch (e) {
+        break;
+      }
+    }
+
+    return statsForAll;
   }
 
   async metricFindQuery(query: LokiVariableQuery | string) {
