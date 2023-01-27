@@ -2,6 +2,7 @@ package clientmiddleware
 
 import (
 	"context"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
