@@ -78,7 +78,7 @@ type AlertRuleV1 struct {
 	For          values.StringValue    `json:"for" yaml:"for"`
 	Annotations  values.StringMapValue `json:"annotations" yaml:"annotations"`
 	Labels       values.StringMapValue `json:"labels" yaml:"labels"`
-	IsPaused     values.BoolValue      `json:"paused" yaml:"paused"`
+	IsPaused     values.BoolValue      `json:"isPaused" yaml:"isPaused"`
 }
 
 func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {

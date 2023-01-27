@@ -66,7 +66,7 @@ apiVersion: 1
 #       #                      route alerts
 #       labels:
 #         team: sre_team_1
-#       paused: false
+#       isPaused: false
 
 # # List of alert rule UIDs that should be deleted
 # deleteRules:
