@@ -24,6 +24,7 @@ import {
   InlineFieldRow,
   InlineLabel,
   FileDropzone,
+  FileDropzoneDefaultChildren,
   DropzoneFile,
   Themeable2,
   withTheme2,
@@ -400,7 +401,7 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
               options={{ onDropAccepted: this.onDropAccepted, maxSize: 200000, multiple: false }}
               onLoad={this.onFileDrop}
             >
-              {this.props?.query?.file ? 'Replace file' : 'Upload file'}
+              <FileDropzoneDefaultChildren primaryText={this.props?.query?.file ? 'Replace file' : 'Upload file'} />
             </FileDropzone>
             {file && (
               <div className={styles.file}>
