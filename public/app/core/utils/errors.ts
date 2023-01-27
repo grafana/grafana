@@ -11,10 +11,8 @@ export function getMessageFromError(err: unknown): string {
         return err.data.message;
       } else if (err.statusText) {
         return err.statusText;
-      } else {
-        return JSON.stringify(err);
       }
     }
   }
-  return 'Unknown error';
+  return JSON.stringify(err);
 }
