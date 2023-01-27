@@ -4,7 +4,7 @@ import { AuthConfigState, Settings } from 'app/types';
 
 export const initialState: AuthConfigState = {
   settings: {},
-  samlStep: 0,
+  samlStep: 1,
 };
 
 const authConfigSlice = createSlice({

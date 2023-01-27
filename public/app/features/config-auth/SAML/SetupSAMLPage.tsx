@@ -12,6 +12,7 @@ import { selectSamlConfig } from '../state/selectors';
 import { getEnabledAuthProviders } from '../utils';
 
 import { SAMLStepGeneral } from './SAMLStepGeneral';
+import { SAMLStepKeyCert } from './SAMLStepKeyCert';
 import { SAMLStepSelector } from './SAMLStepSelector';
 
 interface OwnProps {}
@@ -59,6 +60,7 @@ export const SetupSAMLPageUnconnected = ({ settings, samlSettings, step, loadSet
           <SAMLStepSelector />
         </div>
         {step === 1 && <SAMLStepGeneral />}
+        {step === 2 && <SAMLStepKeyCert />}
       </Page.Contents>
     </Page>
   );

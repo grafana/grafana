@@ -1,13 +1,15 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { HorizontalGroup, Icon, useStyles2 } from '@grafana/ui';
+import { Field, HorizontalGroup, InlineSwitch, Input, Switch, useStyles2 } from '@grafana/ui';
 import { StoreState } from 'app/types';
 
+import { ConfigStepContainer } from '../components/ConfigStepContainer';
 import { loadSettings } from '../state/actions';
 import { samlStepChanged } from '../state/reducers';
+import { selectSamlConfig } from '../state/selectors';
 
 interface OwnProps {}
 
@@ -17,6 +19,7 @@ function mapStateToProps(state: StoreState) {
   return {
     settings: state.authConfig.settings,
     step: state.authConfig.samlStep,
+    samlSettings: selectSamlConfig(state.authConfig),
   };
 }
 
@@ -27,7 +30,12 @@ const mapDispatchToProps = {
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
 
-export const SAMLStepGeneralUnconnected = ({ settings, step, loadSettings, samlStepChanged }: Props): JSX.Element => {
+export const SAMLStepGeneralUnconnected = ({
+  samlSettings,
+  step,
+  loadSettings,
+  samlStepChanged,
+}: Props): JSX.Element => {
   const styles = useStyles2(getStyles);
 
   const onStepChange = (step: number) => {
@@ -36,9 +44,46 @@ export const SAMLStepGeneralUnconnected = ({ settings, step, loadSettings, samlS
   };
 
   return (
-    <div className="">
-      <h2>General settings</h2>
-    </div>
+    <ConfigStepContainer name="General settings" onStepChange={() => onStepChange(step + 1)}>
+      <HorizontalGroup>
+        <Field
+          label="Display name for this SAML 2.0 intergration"
+          description="Helpful if you use more than one SSO IdP provider or protocol."
+        >
+          <Input id="displayName" placeholder="SAML 2.0 SSO" onChange={() => {}} />
+        </Field>
+        <span className={styles.enabledSwitch}>
+          <InlineSwitch label="Enabled" showLabel={true} value={samlSettings.enabled === 'true'} />
+        </span>
+      </HorizontalGroup>
+      <Field label="Single logout" description="Remember to set single logout metadata">
+        <Switch id="singleLogout" onChange={() => {}} />
+      </Field>
+      <Field
+        label="Allow signup"
+        description="Whether to allow new Grafana user creation through SAML login. If set to false, then only existing Grafana users can log in with SAML."
+      >
+        <Switch id="allowSignup" onChange={() => {}} />
+      </Field>
+      <Field label="Allow Identity Provider initiated login" description="">
+        <Switch id="allowIdpInitiated" onChange={() => {}} />
+      </Field>
+      <Field
+        label="Relay state"
+        description="Relay state for IdP-initiated login. Should match relay state configured in IdP and trailing space is required."
+      >
+        <Input width={60} id="relayState" onChange={() => {}} />
+      </Field>
+      <Field
+        label="Max issue delay"
+        description="Duration, since the IdP issued a response and the SP is allowed to process it."
+      >
+        <Input width={24} id="maxIssueDelay" placeholder="90s" onChange={() => {}} />
+      </Field>
+      <Field label="Metadata valid duration" description="Duration, for how long the SP metadata is valid.">
+        <Input width={24} id="metadataValidDuration" placeholder="48h" onChange={() => {}} />
+      </Field>
+    </ConfigStepContainer>
   );
 };
 
@@ -65,6 +110,9 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     icon: css`
       color: ${theme.colors.success.text};
+    `,
+    enabledSwitch: css`
+      margin-top: ${theme.spacing(2.5)};
     `,
   };
 };
