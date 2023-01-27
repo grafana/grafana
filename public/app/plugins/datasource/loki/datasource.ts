@@ -411,18 +411,17 @@ export class LokiDatasource
 
   async getQueryStats(query: LokiQuery): Promise<QueryStats> {
     const { start, end } = this.getTimeRangeParams();
-
     const labelMatchers = getStreamSelectorsFromQuery(query);
-    const url = 'index/stats';
-    const params = { query: '', start, end };
-    const options = { showErrorAlert: false };
 
     let statsForAll: QueryStats = { streams: 0, chunks: 0, bytes: 0, entries: 0 };
 
     for (const labelMatcher of labelMatchers) {
       try {
-        params.query = labelMatcher;
-        const data = await this.metadataRequest(url, params, options);
+        const data = await this.metadataRequest(
+          'index/stats',
+          { query: labelMatcher, start, end },
+          { showErrorAlert: false }
+        );
 
         statsForAll = {
           streams: statsForAll.streams + data.streams,

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { usePrevious } from 'react-use';
 
 import { CoreApp, SelectableValue } from '@grafana/data';
 import { EditorField, EditorRow } from '@grafana/experimental';
@@ -22,8 +23,8 @@ export interface Props {
 
 export const LokiQueryBuilderOptions = React.memo<Props>(
   ({ app, query, onChange, onRunQuery, maxLines, datasource }) => {
-    const [queryStats, setQueryStats] = useState<QueryStats>({ streams: 0, chunks: 0, bytes: 0, entries: 0 });
-    const [prevQuery, setPrevQuery] = useState<LokiQuery>(query);
+    const [queryStats, setQueryStats] = useState<QueryStats>();
+    const prevQuery = usePrevious(query);
 
     const onQueryTypeChange = (value: LokiQueryType) => {
       onChange({ ...query, queryType: value });
@@ -53,13 +54,20 @@ export const LokiQueryBuilderOptions = React.memo<Props>(
     }
 
     useEffect(() => {
-      if (query.expr === prevQuery.expr) {
+      if (query.expr === prevQuery?.expr) {
+        return;
+      }
+
+      if (!query.expr) {
+        setQueryStats(undefined);
         return;
       }
 
       const makeAsyncRequest = async () => {
-        setQueryStats(await datasource.getQueryStats(query));
-        setPrevQuery(query);
+        const res = await datasource.getQueryStats(query);
+
+        // this filters out the case where the user has not configured loki to use tsdb, in that case all keys in the query stats will be 0
+        Object.values(res).every((v) => v === 0) ? setQueryStats(undefined) : setQueryStats(res);
       };
       makeAsyncRequest();
     }, [query, prevQuery, datasource]);

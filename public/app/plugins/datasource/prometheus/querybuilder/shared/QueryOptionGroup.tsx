@@ -19,7 +19,7 @@ export function QueryOptionGroup({ title, children, collapsedInfo, queryStats }:
   const styles = useStyles2(getStyles);
 
   const convertUnits = (): string => {
-    const { text, suffix } = getValueFormat('bytes')(queryStats!.bytes!, 1);
+    const { text, suffix } = getValueFormat('bytes')(queryStats!.bytes, 1);
     return text + suffix;
   };
 
@@ -41,9 +41,7 @@ export function QueryOptionGroup({ title, children, collapsedInfo, queryStats }:
         </div>
         {isOpen && <div className={styles.body}>{children}</div>}
       </Stack>
-      {queryStats?.bytes ? (
-        <p className={styles.stats}>This query will process approximately {convertUnits()}.</p>
-      ) : null}
+      {queryStats && <p className={styles.stats}>This query will process approximately {convertUnits()}.</p>}
     </div>
   );
 }
