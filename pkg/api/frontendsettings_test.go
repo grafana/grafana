@@ -8,6 +8,8 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/login/social"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -53,12 +55,16 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.
 			Cfg:                   cfg,
 			RendererPluginManager: &fakeRendererManager{},
 		},
-		SQLStore:                  sqlStore,
-		SettingsProvider:          setting.ProvideProvider(cfg),
-		pluginStore:               &plugins.FakePluginStore{},
-		grafanaUpdateChecker:      &updatechecker.GrafanaService{},
-		AccessControl:             accesscontrolmock.New().WithDisabled(),
-		PluginSettings:            pluginSettings.ProvideService(sqlStore, secretsService),
+		SQLStore:             sqlStore,
+		SettingsProvider:     setting.ProvideProvider(cfg),
+		pluginStore:          &plugins.FakePluginStore{},
+		grafanaUpdateChecker: &updatechecker.GrafanaService{},
+		AccessControl:        accesscontrolmock.New().WithDisabled(),
+		PluginSettings:       pluginSettings.ProvideService(sqlStore, secretsService),
+		pluginsCDNService: pluginscdn.ProvideService(&config.Cfg{
+			PluginsCDNURLTemplate: cfg.PluginsCDNURLTemplate,
+			PluginSettings:        cfg.PluginSettings,
+		}),
 		SocialService:             social.ProvideService(cfg, features),
 		DataSourceCacheCfgService: &querycaching.OSSDatasourceCacheConfigImpl{},
 	}
@@ -137,6 +143,56 @@ func TestHTTPServer_GetFrontendSettings_hideVersionAnonymous(t *testing.T) {
 			require.GreaterOrEqual(t, 400, recorder.Code, "status codes higher than 400 indicate a failure")
 
 			assert.EqualValues(t, expected, got)
+		})
+	}
+}
+
+func TestHTTPServer_GetFrontendSettings_pluginsCDNBaseURL(t *testing.T) {
+	type settings struct {
+		PluginsCDNBaseURL string `json:"pluginsCDNBaseURL"`
+	}
+
+	tests := []struct {
+		desc      string
+		mutateCfg func(*setting.Cfg)
+		expected  settings
+	}{
+		{
+			desc: "With CDN",
+			mutateCfg: func(cfg *setting.Cfg) {
+				cfg.PluginsCDNURLTemplate = "https://cdn.example.com/{id}/{version}/public/plugins/{id}/{assetPath}"
+			},
+			expected: settings{PluginsCDNBaseURL: "https://cdn.example.com"},
+		},
+		{
+			desc: "Without CDN",
+			mutateCfg: func(cfg *setting.Cfg) {
+				cfg.PluginsCDNURLTemplate = ""
+			},
+			expected: settings{PluginsCDNBaseURL: ""},
+		},
+		{
+			desc:     "CDN is disabled by default",
+			expected: settings{PluginsCDNBaseURL: ""},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.desc, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			if test.mutateCfg != nil {
+				test.mutateCfg(cfg)
+			}
+			m, _ := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures())
+			req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
+
+			recorder := httptest.NewRecorder()
+			m.ServeHTTP(recorder, req)
+			var got settings
+			err := json.Unmarshal(recorder.Body.Bytes(), &got)
+			require.NoError(t, err)
+			require.Equal(t, http.StatusOK, recorder.Code)
+			require.EqualValues(t, test.expected, got)
 		})
 	}
 }

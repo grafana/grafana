@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	grafana_models "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/util"
@@ -194,7 +194,7 @@ func TestCalculateChanges(t *testing.T) {
 
 		groupKey := models.AlertRuleGroupKey{
 			OrgID:        orgId,
-			NamespaceUID: namespace.Uid,
+			NamespaceUID: namespace.UID,
 			RuleGroup:    groupName,
 		}
 
@@ -442,12 +442,12 @@ func withUIDs(uids map[string]*models.AlertRule) func(rule *models.AlertRule) {
 	}
 }
 
-func randFolder() *grafana_models.Folder {
-	return &grafana_models.Folder{
-		Id:        rand.Int63(),
-		Uid:       util.GenerateShortUID(),
+func randFolder() *folder.Folder {
+	return &folder.Folder{
+		ID:        rand.Int63(),
+		UID:       util.GenerateShortUID(),
 		Title:     "TEST-FOLDER-" + util.GenerateShortUID(),
-		Url:       "",
+		URL:       "",
 		Version:   0,
 		Created:   time.Time{},
 		Updated:   time.Time{},

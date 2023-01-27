@@ -13,6 +13,7 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 
 	alertingModels "github.com/grafana/alerting/alerting/models"
+
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
@@ -109,6 +110,9 @@ const (
 const (
 	StateReasonMissingSeries = "MissingSeries"
 	StateReasonError         = "Error"
+	StateReasonPaused        = "Paused"
+	StateReasonUpdated       = "Updated"
+	StateReasonRuleDeleted   = "RuleDeleted"
 )
 
 var (
@@ -156,6 +160,7 @@ type AlertRule struct {
 	For         time.Duration
 	Annotations map[string]string
 	Labels      map[string]string
+	IsPaused    bool
 }
 
 // GetDashboardUID returns the DashboardUID or "".
@@ -261,6 +266,11 @@ type AlertRuleKeyWithVersion struct {
 	AlertRuleKey `xorm:"extends"`
 }
 
+type AlertRuleKeyWithVersionAndPauseStatus struct {
+	IsPaused                bool
+	AlertRuleKeyWithVersion `xorm:"extends"`
+}
+
 // AlertRuleGroupKey is the identifier of a group of alerts
 type AlertRuleGroupKey struct {
 	OrgID        int64
@@ -335,6 +345,7 @@ type AlertRuleVersion struct {
 	For         time.Duration
 	Annotations map[string]string
 	Labels      map[string]string
+	IsPaused    bool
 }
 
 // GetAlertRuleByUIDQuery is the query for retrieving/deleting an alert rule by UID and organisation ID.
