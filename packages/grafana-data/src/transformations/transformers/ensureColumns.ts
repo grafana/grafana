@@ -20,13 +20,12 @@ export const ensureColumnsTransformer: SynchronousDataTransformerInfo = {
     const timeFieldName = findConsistentTimeFieldName(frames);
 
     if (frames.length > 1 && timeFieldName) {
-      const fields: { [key: string]: string } = {};
-      for (const frame of frames) {
-        if (frame.refId) {
-          fields[frame.refId] = timeFieldName;
-        }
-      }
-      return joinByFieldTransformer.transformer({ fields }, ctx)(frames);
+      return joinByFieldTransformer.transformer(
+        {
+          byField: timeFieldName,
+        },
+        ctx
+      )(frames);
     }
     return frames;
   },
