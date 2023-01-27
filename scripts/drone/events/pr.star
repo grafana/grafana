@@ -61,6 +61,9 @@ trigger = {
             'latest.json',
         ],
     },
+    'repo': [
+      'grafana/*',
+    ]
 }
 
 

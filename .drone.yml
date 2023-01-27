@@ -724,6 +724,8 @@ trigger:
     - '*.md'
     - docs/**
     - latest.json
+  repo:
+  - grafana/*
 type: docker
 volumes:
 - host:
@@ -1651,6 +1653,8 @@ trigger:
     - '*.md'
     - docs/**
     - latest.json
+  repo:
+  - grafana/*
 type: docker
 volumes:
 - host:
@@ -7528,6 +7532,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: 94aa53cb0b7f80da52dd45a3c27544257ff7635f91b6c3599467887ed9d08bbf
+hmac: 600f0025d5057aca2d840e170f51cc5dc1d23793d89d44033e34be416c9564cc
 
 ...
