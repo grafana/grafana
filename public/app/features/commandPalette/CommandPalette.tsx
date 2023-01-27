@@ -59,7 +59,7 @@ export const CommandPalette = () => {
               <div className={styles.searchContainer}>
                 {isFetchingDashboardResults ? <Spinner className={styles.spinner} /> : <Icon name="search" size="md" />}
                 <KBarSearch
-                  defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search Grafana')}
+                  defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search or jump to...')}
                   className={styles.search}
                 />
               </div>

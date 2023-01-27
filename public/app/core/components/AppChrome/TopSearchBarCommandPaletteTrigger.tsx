@@ -36,7 +36,7 @@ export function TopSearchBarCommandPaletteTrigger() {
       <ToolbarButton
         iconOnly
         icon="search"
-        aria-label={t('nav.search.placeholder', 'Search Grafana')}
+        aria-label={t('nav.search.placeholderCommandPalette', 'Search or jump to...')}
         onClick={onOpenSearch}
       />
     );
@@ -65,7 +65,7 @@ function PretendTextInput({ onClick }: PretendTextInputProps) {
         </div>
 
         <button className={styles.fakeInput} onClick={onClick}>
-          {t('nav.search.placeholder', 'Search Grafana')}
+          {t('nav.search.placeholderCommandPalette', 'Search or jump to...')}
         </button>
 
         <div className={styles.suffix}>

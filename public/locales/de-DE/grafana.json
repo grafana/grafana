@@ -292,7 +292,8 @@
       "title": "Szenen"
     },
     "search": {
-      "placeholder": "Grafana durchsuchen"
+      "placeholder": "Grafana durchsuchen",
+      "placeholderCommandPalette": ""
     },
     "search-dashboards": {
       "title": "Dashboards durchsuchen"
