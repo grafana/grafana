@@ -16,7 +16,7 @@ load(
 )
 
 
-def test_frontend(trigger, ver_mode, committish):
+def test_frontend(trigger, ver_mode, source):
     environment = {'EDITION': 'oss'}
 
     steps = [
@@ -40,12 +40,12 @@ def test_frontend(trigger, ver_mode, committish):
     )
 
 
-def test_frontend_enterprise(trigger, ver_mode, committish, edition='enterprise'):
+def test_frontend_enterprise(trigger, ver_mode, source, edition='enterprise'):
     environment = {'EDITION': edition}
 
     steps = (
         [
-            clone_enterprise_step(committish),
+            clone_enterprise_step(source),
             init_enterprise_step(ver_mode),
             identify_runner_step(),
             download_grabpl_step(),

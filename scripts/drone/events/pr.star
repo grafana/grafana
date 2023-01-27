@@ -77,7 +77,7 @@ def pr_pipelines():
                 exclude_paths=['pkg/**', 'packaging/**', 'go.sum', 'go.mod']
             ),
             ver_mode,
-            committish='${DRONE_COMMIT}',
+            source='${DRONE_COMMIT}',
         ),
         lint_frontend_pipeline(
             get_pr_trigger(
@@ -99,7 +99,7 @@ def pr_pipelines():
                 ]
             ),
             ver_mode,
-            committish='${DRONE_COMMIT}',
+            source='${DRONE_COMMIT}',
         ),
         lint_backend_pipeline(
             get_pr_trigger(

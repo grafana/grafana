@@ -92,9 +92,9 @@ def main_pipelines():
 
     pipelines = [
         docs_pipelines(ver_mode, trigger_docs_main()),
-        test_frontend(trigger, ver_mode, committish='${DRONE_COMMIT}'),
+        test_frontend(trigger, ver_mode, source='${DRONE_COMMIT}'),
         lint_frontend_pipeline(trigger, ver_mode),
-        test_backend(trigger, ver_mode, committish='${DRONE_COMMIT}'),
+        test_backend(trigger, ver_mode, source='${DRONE_COMMIT}'),
         lint_backend_pipeline(trigger, ver_mode),
         build_e2e(trigger, ver_mode),
         integration_tests(trigger, prefix=ver_mode),

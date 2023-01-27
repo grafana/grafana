@@ -284,6 +284,25 @@ steps:
   image: golang:1.19.4
   name: compile-build-cmd
 - commands:
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    ../grafana-enterprise
+  - cd ../grafana-enterprise
+  - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
+    elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
+    else git checkout main; fi
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  image: grafana/build-container:1.6.7
+  name: clone-enterprise
+- commands:
+  - cd ../grafana-enterpise
+  - ./build.sh &> /dev/null
+  depends_on:
+  - clone-enterprise
+  image: grafana/build-container:1.6.7
+  name: enterprise_setup
+- commands:
   - make gen-go
   depends_on: []
   image: grafana/build-container:1.6.7
@@ -2585,8 +2604,10 @@ steps:
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    grafana-enterprise
   - cd grafana-enterprise
-  - git checkout ${DRONE_TAG}
+  - if git checkout ${DRONE_TAG}; then echo "checked out ${DRONE_TAG}"; elif git checkout
+    main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -2872,8 +2893,10 @@ services: []
 steps:
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    grafana-enterprise
   - cd grafana-enterprise
-  - git checkout ${DRONE_TAG}
+  - if git checkout ${DRONE_TAG}; then echo "checked out ${DRONE_TAG}"; elif git checkout
+    main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -2957,8 +2980,10 @@ services: []
 steps:
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    grafana-enterprise
   - cd grafana-enterprise
-  - git checkout ${DRONE_TAG}
+  - if git checkout ${DRONE_TAG}; then echo "checked out ${DRONE_TAG}"; elif git checkout
+    main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -3101,8 +3126,10 @@ steps:
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    grafana-enterprise
   - cd grafana-enterprise
-  - git checkout ${DRONE_TAG}
+  - if git checkout ${DRONE_TAG}; then echo "checked out ${DRONE_TAG}"; elif git checkout
+    main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -3333,8 +3360,10 @@ steps:
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    grafana-enterprise
   - cd grafana-enterprise
-  - git checkout ${DRONE_TAG}
+  - if git checkout ${DRONE_TAG}; then echo "checked out ${DRONE_TAG}"; elif git checkout
+    main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -3583,8 +3612,10 @@ steps:
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    grafana-enterprise
   - cd grafana-enterprise
-  - git checkout ${DRONE_TAG}
+  - if git checkout ${DRONE_TAG}; then echo "checked out ${DRONE_TAG}"; elif git checkout
+    main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -5243,8 +5274,10 @@ steps:
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    grafana-enterprise
   - cd grafana-enterprise
-  - git checkout ${DRONE_BRANCH}
+  - if git checkout ${DRONE_BRANCH}; then echo "checked out ${DRONE_BRANCH}"; elif
+    git checkout main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -5533,8 +5566,10 @@ services: []
 steps:
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    grafana-enterprise
   - cd grafana-enterprise
-  - git checkout ${DRONE_BRANCH}
+  - if git checkout ${DRONE_BRANCH}; then echo "checked out ${DRONE_BRANCH}"; elif
+    git checkout main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -5614,8 +5649,10 @@ services: []
 steps:
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    grafana-enterprise
   - cd grafana-enterprise
-  - git checkout ${DRONE_BRANCH}
+  - if git checkout ${DRONE_BRANCH}; then echo "checked out ${DRONE_BRANCH}"; elif
+    git checkout main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -5754,8 +5791,10 @@ steps:
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    grafana-enterprise
   - cd grafana-enterprise
-  - git checkout ${DRONE_BRANCH}
+  - if git checkout ${DRONE_BRANCH}; then echo "checked out ${DRONE_BRANCH}"; elif
+    git checkout main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -5975,8 +6014,10 @@ steps:
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    grafana-enterprise
   - cd grafana-enterprise
-  - git checkout ${DRONE_BRANCH}
+  - if git checkout ${DRONE_BRANCH}; then echo "checked out ${DRONE_BRANCH}"; elif
+    git checkout main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -6451,6 +6492,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: 86222a86386ae1d2afce23b4a15f09e97aaeb873275ed34ac73d733335d63e4b
+hmac: feae9c04a24f6a4f25bd54e2874ca9eccb6964871791da5fd5bbe1d4186f6f26
 
 ...

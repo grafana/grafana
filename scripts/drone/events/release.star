@@ -141,11 +141,11 @@ def release_npm_packages_step():
 
 def oss_pipelines(ver_mode=ver_mode, trigger=release_trigger):
     if ver_mode == 'release':
-        committish = '${DRONE_TAG}'
+        source = '${DRONE_TAG}'
     elif ver_mode == 'release-branch':
-        committish = '${DRONE_BRANCH}'
+        source = '${DRONE_BRANCH}'
     else:
-        committish = '${DRONE_COMMIT}'
+        source = '${DRONE_COMMIT}'
 
     environment = {'EDITION': 'oss'}
 
@@ -235,8 +235,8 @@ def oss_pipelines(ver_mode=ver_mode, trigger=release_trigger):
             environment=environment,
             volumes=volumes,
         ),
-        test_frontend(trigger, ver_mode, committish=committish),
-        test_backend(trigger, ver_mode, committish=committish),
+        test_frontend(trigger, ver_mode, source=source),
+        test_backend(trigger, ver_mode, source=source),
         pipeline(
             name='{}-oss-integration-tests'.format(ver_mode),
             edition='oss',
@@ -261,11 +261,11 @@ def oss_pipelines(ver_mode=ver_mode, trigger=release_trigger):
 
 def enterprise_pipelines(ver_mode=ver_mode, trigger=release_trigger):
     if ver_mode == 'release':
-        committish = '${DRONE_TAG}'
+        source = '${DRONE_TAG}'
     elif ver_mode == 'release-branch':
-        committish = '${DRONE_BRANCH}'
+        source = '${DRONE_BRANCH}'
     else:
-        committish = '${DRONE_COMMIT}'
+        source = '${DRONE_COMMIT}'
 
     environment = {'EDITION': 'enterprise'}
 
@@ -275,7 +275,7 @@ def enterprise_pipelines(ver_mode=ver_mode, trigger=release_trigger):
     init_steps = [
         download_grabpl_step(),
         identify_runner_step(),
-        clone_enterprise_step(committish=committish),
+        clone_enterprise_step(source=source),
         init_enterprise_step(ver_mode),
         compile_build_cmd('enterprise'),
     ] + with_deps(
@@ -363,8 +363,8 @@ def enterprise_pipelines(ver_mode=ver_mode, trigger=release_trigger):
             environment=environment,
             volumes=volumes,
         ),
-        test_frontend_enterprise(trigger, ver_mode, committish=committish),
-        test_backend_enterprise(trigger, ver_mode, committish=committish),
+        test_frontend_enterprise(trigger, ver_mode, source=source),
+        test_backend_enterprise(trigger, ver_mode, source=source),
         pipeline(
             name='{}-enterprise-integration-tests'.format(ver_mode),
             edition='enterprise',
@@ -373,7 +373,7 @@ def enterprise_pipelines(ver_mode=ver_mode, trigger=release_trigger):
             steps=[
                 download_grabpl_step(),
                 identify_runner_step(),
-                clone_enterprise_step(committish=committish),
+                clone_enterprise_step(source=source),
                 init_enterprise_step(ver_mode),
             ]
             + with_deps(
@@ -404,11 +404,11 @@ def enterprise_pipelines(ver_mode=ver_mode, trigger=release_trigger):
 
 def enterprise2_pipelines(prefix='', ver_mode=ver_mode, trigger=release_trigger):
     if ver_mode == 'release':
-        committish = '${DRONE_TAG}'
+        source = '${DRONE_TAG}'
     elif ver_mode == 'release-branch':
-        committish = '${DRONE_BRANCH}'
+        source = '${DRONE_BRANCH}'
     else:
-        committish = '${DRONE_COMMIT}'
+        source = '${DRONE_COMMIT}'
 
     environment = {
         'EDITION': 'enterprise2',
@@ -420,7 +420,7 @@ def enterprise2_pipelines(prefix='', ver_mode=ver_mode, trigger=release_trigger)
     init_steps = [
         download_grabpl_step(),
         identify_runner_step(),
-        clone_enterprise_step(committish=committish),
+        clone_enterprise_step(source=source),
         init_enterprise_step(ver_mode),
         compile_build_cmd('enterprise'),
     ] + with_deps(

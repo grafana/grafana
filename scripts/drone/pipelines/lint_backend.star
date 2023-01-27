@@ -1,5 +1,7 @@
 load(
     'scripts/drone/steps/lib.star',
+    'clone_enterprise_step',
+    'enterprise_setup_step',
     'identify_runner_step',
     'wire_install_step',
     'lint_backend_step',
@@ -22,8 +24,17 @@ def lint_backend_pipeline(trigger, ver_mode):
     init_steps = [
         identify_runner_step(),
         compile_build_cmd(),
-        wire_step,
+
     ]
+
+    if ver_mode == 'pr':
+        # In pull requests, attempt to clone grafana enterprise.
+        init_steps += [
+            clone_enterprise_step(source='${DRONE_SOURCE_BRANCH}', target='${DRONE_TARGET_BRANCH}', canFail=True, location='../grafana-enterprise'),
+            enterprise_setup_step(location='../grafana-enterpise'),
+        ]
+
+    init_steps.append(wire_step)
 
     test_steps = [
         lint_backend_step(),
