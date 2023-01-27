@@ -33,11 +33,11 @@ In this tutorial, you'll:
 
 ## Set up your environment
 
-{{< docs/shared lookup="tutorials/set-up-environment.md" source="grafana" >}}
+{{< docs/shared lookup="tutorials/set-up-environment.md" source="grafana" version="next" >}}
 
 ## Create a new plugin
 
-{{< docs/shared lookup="tutorials/create-plugin.md" source="grafana" >}}
+{{< docs/shared lookup="tutorials/create-plugin.md" source="grafana" version="next" >}}
 
 ## Data-driven documents
 
