@@ -22,12 +22,14 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -257,7 +259,7 @@ func getCreateCommandWithModel(folderID int64, name string, kind models.LibraryE
 type scenarioContext struct {
 	ctx           *web.Context
 	service       *LibraryElementService
-	reqContext    *models.ReqContext
+	reqContext    *contextmodel.ReqContext
 	user          user.SignedInUser
 	folder        *folder.Folder
 	initialResult libraryElementResult
@@ -266,7 +268,7 @@ type scenarioContext struct {
 
 type folderACLItem struct {
 	roleType   org.RoleType
-	permission models.PermissionType
+	permission dashboards.PermissionType
 }
 
 func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash *dashboards.Dashboard, folderID int64) *dashboards.Dashboard {
@@ -293,6 +295,7 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 	service := dashboardservice.ProvideDashboardService(
 		cfg, dashboardStore, dashboardStore, dashAlertExtractor,
 		features, folderPermissions, dashboardPermissions, ac,
+		foldertest.NewFakeService(),
 	)
 	dashboard, err := service.SaveDashboard(context.Background(), dashItem, true)
 	require.NoError(t, err)
@@ -437,6 +440,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		dashboardService := dashboardservice.ProvideDashboardService(
 			sqlStore.Cfg, dashboardStore, dashboardStore, nil,
 			features, folderPermissions, dashboardPermissions, ac,
+			foldertest.NewFakeService(),
 		)
 		guardian.InitLegacyGuardian(sqlStore, dashboardService, &teamtest.FakeService{})
 		service := LibraryElementService{
@@ -465,7 +469,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			ctx:      &webCtx,
 			service:  &service,
 			sqlStore: sqlStore,
-			reqContext: &models.ReqContext{
+			reqContext: &contextmodel.ReqContext{
 				Context:      &webCtx,
 				SignedInUser: &usr,
 			},

@@ -323,7 +323,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		err := dashboardStore.DeleteDashboard(context.Background(), deleteCmd)
 		require.NoError(t, err)
 
-		query := models.FindPersistedDashboardsQuery{
+		query := dashboards.FindPersistedDashboardsQuery{
 			OrgId:        1,
 			FolderIds:    []int64{savedFolder.ID},
 			SignedInUser: &user.SignedInUser{},
@@ -390,7 +390,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 	t.Run("Should be able to find dashboard folder", func(t *testing.T) {
 		setup()
-		query := models.FindPersistedDashboardsQuery{
+		query := dashboards.FindPersistedDashboardsQuery{
 			Title: "1 test dash folder",
 			OrgId: 1,
 			SignedInUser: &user.SignedInUser{
@@ -414,7 +414,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 	t.Run("Should be able to limit find results", func(t *testing.T) {
 		setup()
-		query := models.FindPersistedDashboardsQuery{
+		query := dashboards.FindPersistedDashboardsQuery{
 			OrgId: 1,
 			Limit: 1,
 			SignedInUser: &user.SignedInUser{
@@ -435,7 +435,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 	t.Run("Should be able to find results beyond limit using paging", func(t *testing.T) {
 		setup()
-		query := models.FindPersistedDashboardsQuery{
+		query := dashboards.FindPersistedDashboardsQuery{
 			OrgId: 1,
 			Limit: 1,
 			Page:  2,
@@ -460,7 +460,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 	t.Run("Should be able to filter by tag and type", func(t *testing.T) {
 		setup()
-		query := models.FindPersistedDashboardsQuery{
+		query := dashboards.FindPersistedDashboardsQuery{
 			OrgId: 1,
 			Type:  "dash-db",
 			Tags:  []string{"prod"},
@@ -482,7 +482,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 	t.Run("Should be able to find a dashboard folder's children", func(t *testing.T) {
 		setup()
-		query := models.FindPersistedDashboardsQuery{
+		query := dashboards.FindPersistedDashboardsQuery{
 			OrgId:     1,
 			FolderIds: []int64{savedFolder.ID},
 			SignedInUser: &user.SignedInUser{
@@ -509,7 +509,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 	t.Run("Should be able to find dashboards by ids", func(t *testing.T) {
 		setup()
-		query := models.FindPersistedDashboardsQuery{
+		query := dashboards.FindPersistedDashboardsQuery{
 			DashboardIds: []int64{savedDash.ID, savedDash2.ID},
 			SignedInUser: &user.SignedInUser{
 				OrgID:   1,
@@ -547,7 +547,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		query := models.FindPersistedDashboardsQuery{
+		query := dashboards.FindPersistedDashboardsQuery{
 			SignedInUser: &user.SignedInUser{
 				UserID:  10,
 				OrgID:   1,
@@ -623,7 +623,7 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 	dashA := insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)
 	assert.NotZero(t, dashA.ID)
 	assert.Less(t, dashB.ID, dashA.ID)
-	qNoSort := &models.FindPersistedDashboardsQuery{
+	qNoSort := &dashboards.FindPersistedDashboardsQuery{
 		SignedInUser: &user.SignedInUser{
 			OrgID:   1,
 			UserID:  1,
@@ -639,7 +639,7 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 	assert.Equal(t, dashA.ID, results[0].ID)
 	assert.Equal(t, dashB.ID, results[1].ID)
 
-	qSort := &models.FindPersistedDashboardsQuery{
+	qSort := &dashboards.FindPersistedDashboardsQuery{
 		SignedInUser: &user.SignedInUser{
 			OrgID:   1,
 			UserID:  1,
@@ -673,7 +673,7 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 	require.NoError(t, err)
 	insertTestDashboard(t, dashboardStore, "Alfa", 1, 0, false)
 	dashB := insertTestDashboard(t, dashboardStore, "Beta", 1, 0, false)
-	qNoFilter := &models.FindPersistedDashboardsQuery{
+	qNoFilter := &dashboards.FindPersistedDashboardsQuery{
 		SignedInUser: &user.SignedInUser{
 			OrgID:   1,
 			UserID:  1,
@@ -687,7 +687,7 @@ func TestIntegrationDashboard_Filter(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, results, 2)
 
-	qFilter := &models.FindPersistedDashboardsQuery{
+	qFilter := &dashboards.FindPersistedDashboardsQuery{
 		SignedInUser: &user.SignedInUser{
 			OrgID:   1,
 			UserID:  1,
@@ -840,7 +840,7 @@ func updateDashboardACL(t *testing.T, dashboardStore *DashboardStore, dashboardI
 
 // testSearchDashboards is a (near) copy of the dashboard service
 // SearchDashboards, which is a wrapper around FindDashboards.
-func testSearchDashboards(d *DashboardStore, query *models.FindPersistedDashboardsQuery) error {
+func testSearchDashboards(d *DashboardStore, query *dashboards.FindPersistedDashboardsQuery) error {
 	res, err := d.FindDashboards(context.Background(), query)
 	if err != nil {
 		return err
@@ -849,7 +849,7 @@ func testSearchDashboards(d *DashboardStore, query *models.FindPersistedDashboar
 	return nil
 }
 
-func makeQueryResult(query *models.FindPersistedDashboardsQuery, res []dashboards.DashboardSearchProjection) {
+func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashboards.DashboardSearchProjection) {
 	query.Result = make([]*models.Hit, 0)
 	hits := make(map[int64]*models.Hit)
 

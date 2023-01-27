@@ -21,15 +21,13 @@ import (
 )
 
 var skipPlugins = map[string]bool{
-	"canvas":         true,
-	"heatmap":        true,
-	"state-timeline": true,
-	"status-history": true,
-	"table":          true,
-	"timeseries":     true,
-	"influxdb":       true, // plugin.json fails validation (defaultMatchFormat)
-	"mixed":          true, // plugin.json fails validation (mixed)
-	"opentsdb":       true, // plugin.json fails validation (defaultMatchFormat)
+	"canvas":      true,
+	"heatmap":     true,
+	"table":       true,
+	"timeseries":  true,
+	"influxdb":    true, // plugin.json fails validation (defaultMatchFormat)
+	"mixed":       true, // plugin.json fails validation (mixed)
+	"opentsdb":    true, // plugin.json fails validation (defaultMatchFormat)
 }
 
 const sep = string(filepath.Separator)
@@ -85,7 +83,7 @@ func main() {
 func adaptToPipeline(j codejen.OneToOne[corecodegen.SchemaForGen]) codejen.OneToOne[*pfs.PluginDecl] {
 	return codejen.AdaptOneToOne(j, func(pd *pfs.PluginDecl) corecodegen.SchemaForGen {
 		return corecodegen.SchemaForGen{
-			Name:    pd.PluginMeta.Name,
+			Name:    strings.ReplaceAll(pd.PluginMeta.Name, " ", ""),
 			Schema:  pd.Lineage.Latest(),
 			IsGroup: pd.SchemaInterface.IsGroup(),
 		}

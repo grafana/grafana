@@ -16,8 +16,8 @@ import {
 import React, { useEffect, useMemo, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
-import { useStyles2 } from '@grafana/ui';
+import { config, reportInteraction } from '@grafana/runtime';
+import { Icon, Spinner, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { ResultItem } from './ResultItem';
@@ -34,9 +34,9 @@ export const CommandPalette = () => {
     searchQuery: state.searchQuery,
   }));
 
-  const actions = useActions();
+  const actions = useActions(searchQuery);
   useRegisterActions(actions, [actions]);
-  const dashboardResults = useDashboardResults(searchQuery, showing);
+  const { dashboardResults, isFetchingDashboardResults } = useDashboardResults(searchQuery, showing);
 
   const ref = useRef<HTMLDivElement>(null);
   const { overlayProps } = useOverlay(
@@ -56,10 +56,13 @@ export const CommandPalette = () => {
         <KBarAnimator className={styles.animator}>
           <FocusScope contain autoFocus restoreFocus>
             <div {...overlayProps} {...dialogProps}>
-              <KBarSearch
-                defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search or jump to...')}
-                className={styles.search}
-              />
+              <div className={styles.searchContainer}>
+                {isFetchingDashboardResults ? <Spinner className={styles.spinner} /> : <Icon name="search" size="md" />}
+                <KBarSearch
+                  defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search Grafana')}
+                  className={styles.search}
+                />
+              </div>
               <div className={styles.resultsContainer}>
                 <RenderResults dashboardResults={dashboardResults} />
               </div>
@@ -111,55 +114,68 @@ const RenderResults = ({ dashboardResults }: RenderResultsProps) => {
   );
 };
 
-const getSearchStyles = (theme: GrafanaTheme2) => ({
-  positioner: css({
-    zIndex: theme.zIndex.portal,
-    marginTop: '0px',
-    '&::before': {
-      content: '""',
-      position: 'fixed',
-      top: 0,
-      right: 0,
-      bottom: 0,
-      left: 0,
-      background: theme.components.overlay.background,
-      backdropFilter: 'blur(1px)',
-    },
-  }),
-  animator: css({
-    maxWidth: theme.breakpoints.values.md,
-    width: '100%',
-    background: theme.colors.background.primary,
-    color: theme.colors.text.primary,
-    borderRadius: theme.shape.borderRadius(2),
-    border: `1px solid ${theme.colors.border.weak}`,
-    overflow: 'hidden',
-    boxShadow: theme.shadows.z3,
-  }),
-  search: css({
-    padding: theme.spacing(1.5, 2),
-    fontSize: theme.typography.fontSize,
-    width: '100%',
-    boxSizing: 'border-box',
-    outline: 'none',
-    border: 'none',
-    background: theme.components.input.background,
-    color: theme.components.input.text,
-    borderBottom: `1px solid ${theme.colors.border.weak}`,
-  }),
-  resultsContainer: css({
-    paddingBottom: theme.spacing(1),
-  }),
-  sectionHeader: css({
-    padding: theme.spacing(1.5, 2, 1, 2),
-    fontSize: theme.typography.bodySmall.fontSize,
-    fontWeight: theme.typography.fontWeightMedium,
-    color: theme.colors.text.primary,
-    borderTop: `1px solid ${theme.colors.border.weak}`,
-    marginTop: theme.spacing(1),
-  }),
-  sectionHeaderFirst: css({
-    borderTop: 'none',
-    marginTop: 0,
-  }),
-});
+const getSearchStyles = (theme: GrafanaTheme2) => {
+  const topNavCommandPalette = Boolean(config.featureToggles.topNavCommandPalette);
+
+  return {
+    positioner: css({
+      zIndex: theme.zIndex.portal,
+      marginTop: '0px',
+      paddingTop: topNavCommandPalette ? '4px !important' : undefined,
+      '&::before': {
+        content: '""',
+        position: 'fixed',
+        top: 0,
+        right: 0,
+        bottom: 0,
+        left: 0,
+        background: theme.components.overlay.background,
+        backdropFilter: 'blur(1px)',
+      },
+    }),
+    animator: css({
+      maxWidth: theme.breakpoints.values.md,
+      width: '100%',
+      background: theme.colors.background.primary,
+      color: theme.colors.text.primary,
+      borderRadius: theme.shape.borderRadius(2),
+      border: `1px solid ${theme.colors.border.weak}`,
+      overflow: 'hidden',
+      boxShadow: theme.shadows.z3,
+    }),
+    searchContainer: css({
+      alignItems: 'center',
+      background: theme.components.input.background,
+      borderBottom: `1px solid ${theme.colors.border.weak}`,
+      display: 'flex',
+      gap: theme.spacing(1),
+      padding: theme.spacing(1, 2),
+    }),
+    search: css({
+      fontSize: theme.typography.fontSize,
+      width: '100%',
+      boxSizing: 'border-box',
+      outline: 'none',
+      border: 'none',
+      color: theme.components.input.text,
+    }),
+    spinner: css({
+      height: '22px',
+    }),
+    resultsContainer: css({
+      paddingBottom: theme.spacing(1),
+    }),
+    sectionHeader: css({
+      padding: theme.spacing(1.5, 2, 1, 2),
+      fontSize: theme.typography.bodySmall.fontSize,
+      fontWeight: theme.typography.fontWeightMedium,
+      color: theme.colors.text.primary,
+      borderTop: `1px solid ${theme.colors.border.weak}`,
+      marginTop: theme.spacing(1),
+    }),
+    sectionHeaderFirst: css({
+      borderTop: 'none',
+      marginTop: 0,
+    }),
+  };
+};

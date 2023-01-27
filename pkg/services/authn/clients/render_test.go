@@ -4,14 +4,17 @@ import (
 	"context"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestRender_Authenticate(t *testing.T) {
@@ -35,9 +38,10 @@ func TestRender_Authenticate(t *testing.T) {
 				},
 			},
 			expectedIdentity: &authn.Identity{
-				ID:       "user:0",
-				OrgID:    1,
-				OrgRoles: map[int64]org.RoleType{1: org.RoleViewer},
+				ID:         "user:0",
+				OrgID:      1,
+				OrgRoles:   map[int64]org.RoleType{1: org.RoleViewer},
+				AuthModule: login.RenderModule,
 			},
 			expectedRenderUsr: &rendering.RenderUser{
 				OrgID:   1,
@@ -59,6 +63,7 @@ func TestRender_Authenticate(t *testing.T) {
 				OrgName:        "test",
 				OrgRoles:       map[int64]org.RoleType{1: org.RoleAdmin},
 				IsGrafanaAdmin: boolPtr(false),
+				AuthModule:     login.RenderModule,
 			},
 			expectedRenderUsr: &rendering.RenderUser{
 				OrgID:  1,
@@ -97,6 +102,8 @@ func TestRender_Authenticate(t *testing.T) {
 				assert.Nil(t, identity)
 			} else {
 				assert.NoError(t, err)
+				// ignore LastSeenAt
+				identity.LastSeenAt = time.Time{}
 				assert.EqualValues(t, *tt.expectedIdentity, *identity)
 			}
 		})

@@ -10,9 +10,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -158,7 +158,7 @@ func revokeUserAuthTokenScenario(t *testing.T, desc string, url string, routePat
 
 		sc := setupScenarioContext(t, url)
 		sc.userAuthTokenService = fakeAuthTokenService
-		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
 			sc.context = c
 			sc.context.UserID = userId
@@ -185,7 +185,7 @@ func getUserAuthTokensScenario(t *testing.T, desc string, url string, routePatte
 
 		sc := setupScenarioContext(t, url)
 		sc.userAuthTokenService = fakeAuthTokenService
-		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserID = userId
 			sc.context.OrgID = testOrgID
@@ -208,7 +208,7 @@ func logoutUserFromAllDevicesInternalScenario(t *testing.T, desc string, userId 
 		}
 
 		sc := setupScenarioContext(t, "/")
-		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserID = testUserID
 			sc.context.OrgID = testOrgID
@@ -235,7 +235,7 @@ func revokeUserAuthTokenInternalScenario(t *testing.T, desc string, cmd auth.Rev
 
 		sc := setupScenarioContext(t, "/")
 		sc.userAuthTokenService = fakeAuthTokenService
-		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserID = testUserID
 			sc.context.OrgID = testOrgID
@@ -260,7 +260,7 @@ func getUserAuthTokensInternalScenario(t *testing.T, desc string, token *auth.Us
 
 		sc := setupScenarioContext(t, "/")
 		sc.userAuthTokenService = fakeAuthTokenService
-		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			sc.context = c
 			sc.context.UserID = testUserID
 			sc.context.OrgID = testOrgID
