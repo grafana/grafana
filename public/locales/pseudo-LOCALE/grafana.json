@@ -292,7 +292,8 @@
       "title": "Ŝčęŉęş"
     },
     "search": {
-      "placeholder": "Ŝęäřčĥ Ğřäƒäŉä"
+      "placeholder": "Ŝęäřčĥ Ğřäƒäŉä",
+      "placeholderCommandPalette": "Ŝęäřčĥ őř ĵūmp ŧő..."
     },
     "search-dashboards": {
       "title": "Ŝęäřčĥ đäşĥþőäřđş"
