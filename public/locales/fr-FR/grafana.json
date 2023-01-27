@@ -292,7 +292,8 @@
       "title": "Scènes"
     },
     "search": {
-      "placeholder": "Rechercher dans Grafana"
+      "placeholder": "Rechercher dans Grafana",
+      "placeholderCommandPalette": ""
     },
     "search-dashboards": {
       "title": "Rechercher dans les tableaux de bord"
