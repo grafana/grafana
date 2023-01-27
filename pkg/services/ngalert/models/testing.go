@@ -19,6 +19,7 @@ type AlertRuleMutator func(*AlertRule)
 // The mutators arguments allows changing fields of the resulting structure
 func AlertRuleGen(mutators ...AlertRuleMutator) func() *AlertRule {
 	return func() *AlertRule {
+		isPaused := false
 		randNoDataState := func() NoDataState {
 			s := [...]NoDataState{
 				Alerting,
@@ -78,6 +79,7 @@ func AlertRuleGen(mutators ...AlertRuleMutator) func() *AlertRule {
 			For:             forInterval,
 			Annotations:     annotations,
 			Labels:          labels,
+			IsPaused:        &isPaused,
 		}
 
 		for _, mutator := range mutators {

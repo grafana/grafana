@@ -113,6 +113,7 @@ func CreateTestAlertRule(t testing.TB, ctx context.Context, dbstore *store.DBsto
 
 func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *store.DBstore, intervalSeconds int64, orgID int64, labels map[string]string) *models.AlertRule {
 	ruleGroup := fmt.Sprintf("ruleGroup-%s", util.GenerateShortUID())
+	isPaused := false
 	folderUID := "namespace"
 	user := &user.SignedInUser{
 		UserID:         1,
@@ -157,6 +158,7 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *s
 			RuleGroup:       ruleGroup,
 			NoDataState:     models.NoData,
 			ExecErrState:    models.AlertingErrState,
+			IsPaused:        &isPaused,
 		},
 	})
 	require.NoError(t, err)
