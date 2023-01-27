@@ -223,7 +223,6 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
           </AutoSizer>
         </>
       )}
-      {currentTab === SnapshotTab.Bundle && <div>TODO????</div>}
     </Drawer>
   );
 }
