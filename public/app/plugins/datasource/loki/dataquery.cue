@@ -37,7 +37,8 @@ composableKinds: DataQuery: {
 						// Used to override the name of the series.
 						legendFormat?: string
 						// Used to limit the number of log rows returned.
-						maxLines?:   int64
+						maxLines?: int64
+						// Used to scale the interval value.
 						resolution?: int64
 						// @deprecated, now use queryType.
 						range?: bool

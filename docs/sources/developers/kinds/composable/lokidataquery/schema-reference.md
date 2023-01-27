@@ -21,6 +21,6 @@ title: LokiDataQuery kind
 | `legendFormat` | string  | No       | Used to override the name of the series.       |
 | `maxLines`     | integer | No       | Used to limit the number of log rows returned. |
 | `range`        | boolean | No       | @deprecated, now use queryType.                |
-| `resolution`   | integer | No       |                                                |
+| `resolution`   | integer | No       | Used to scale the interval value.              |
 
 

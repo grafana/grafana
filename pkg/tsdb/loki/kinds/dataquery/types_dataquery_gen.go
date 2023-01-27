@@ -67,7 +67,9 @@ type LokiDataQuery struct {
 	Range *bool `json:"range,omitempty"`
 
 	// A - Z
-	RefId      string `json:"refId"`
+	RefId string `json:"refId"`
+
+	// Used to scale the interval value.
 	Resolution *int64 `json:"resolution,omitempty"`
 }
 
