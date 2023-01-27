@@ -314,17 +314,13 @@ export class BackendSrv implements BackendService {
       return;
     }
 
-    let description = '';
-    let message = err.data.message;
-
-    if (message.length > 80) {
-      description = message;
-      message = 'Error';
-    }
+    let data = err.data;
+    let message = 'Error';
+    let description = data.message;
 
     // Validation
     if (err.status === 422) {
-      message = 'Validation failed';
+      message = 'Validation error';
     }
 
     this.dependencies.appEvents.emit(err.status < 500 ? AppEvents.alertWarning : AppEvents.alertError, [
