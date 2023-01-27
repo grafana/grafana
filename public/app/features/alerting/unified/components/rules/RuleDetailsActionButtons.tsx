@@ -184,25 +184,26 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
       const sourceName = getRulesSourceName(rulesSource);
       const identifier = ruleId.fromRulerRule(sourceName, namespace.name, group.name, rulerRule);
 
+      rightButtons.push(
+        <ClipboardButton
+          key="copy"
+          icon="copy"
+          onClipboardError={(copiedText) => {
+            notifyApp.error('Error while copying URL', copiedText);
+          }}
+          size="sm"
+          getText={buildShareUrl}
+        >
+          Copy link to rule
+        </ClipboardButton>
+      );
+
       if (!isProvisioned) {
         const editURL = urlUtil.renderUrl(
           `${config.appSubUrl}/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`,
           {
             returnTo,
           }
-        );
-        rightButtons.push(
-          <ClipboardButton
-            key="copy"
-            icon="copy"
-            onClipboardError={(copiedText) => {
-              notifyApp.error('Error while copying URL', copiedText);
-            }}
-            size="sm"
-            getText={buildShareUrl}
-          >
-            Copy link to rule
-          </ClipboardButton>
         );
 
         rightButtons.push(
