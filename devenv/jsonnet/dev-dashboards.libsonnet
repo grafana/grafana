@@ -184,6 +184,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('filter', import '../dev-dashboards/transforms/filter.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('gauge-multi-series', import '../dev-dashboards/panel-gauge/gauge-multi-series.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {

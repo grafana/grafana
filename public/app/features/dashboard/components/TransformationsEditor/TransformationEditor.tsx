@@ -56,18 +56,13 @@ export const TransformationEditor = ({
         options: { ...uiConfig.transformation.defaultOptions, ...config.transformation.options },
         input,
         onChange: (opts) => {
-          onChange(index, { id: config.transformation.id, options: opts });
+          onChange(index, {
+            ...config.transformation,
+            options: opts,
+          });
         },
       }),
-    [
-      uiConfig.editor,
-      uiConfig.transformation.defaultOptions,
-      config.transformation.options,
-      config.transformation.id,
-      input,
-      onChange,
-      index,
-    ]
+    [uiConfig.editor, uiConfig.transformation.defaultOptions, config.transformation, input, onChange, index]
   );
 
   return (
