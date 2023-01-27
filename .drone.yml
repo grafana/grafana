@@ -200,7 +200,7 @@ steps:
   - ln -s src grafana
   - cd -
   - cd ../grafana-enterpise
-  - ./build.sh &> /dev/null
+  - ./build.sh
   - ls -al ../grafana/pkg/extensions | wc -l
   environment:
     GITHUB_TOKEN:
@@ -315,7 +315,7 @@ steps:
   - ln -s src grafana
   - cd -
   - cd ../grafana-enterpise
-  - ./build.sh &> /dev/null
+  - ./build.sh
   - ls -al ../grafana/pkg/extensions | wc -l
   environment:
     GITHUB_TOKEN:
@@ -6524,6 +6524,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: 79a2338326c61d1d2fc8abc669c99b270ce058a75502792b3abf44a590972c5c
+hmac: bfcd0bd2785499ba5da26834221d25efb7838197c295896470f352bd3db98ca2
 
 ...
