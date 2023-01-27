@@ -34,6 +34,7 @@ title: StatusHistoryPanelCfg kind
 | Property    | Type   | Required | Description                                               |
 |-------------|--------|----------|-----------------------------------------------------------|
 | `colWidth`  | number | No       | Controls the column width Default: `0.9`.                 |
+| `rowHeight` | number | No       | Set the height of the rows Default: `0.9`.                |
 | `showValue` | string | No       | TODO docs Possible values are: `auto`, `never`, `always`. |
 
 
