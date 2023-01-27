@@ -728,7 +728,7 @@ export class LokiDatasource
     };
   };
 
-  async prepareContextExprWithoutParsedLabes(row: LogRowModel, origQuery?: DataQuery): Promise<string> {
+  async prepareContextExprWithoutParsedLabels(row: LogRowModel, origQuery?: DataQuery): Promise<string> {
     await this.languageProvider.start();
     const labels = this.languageProvider.getLabelKeys();
     const expr = Object.keys(row.labels)
@@ -754,7 +754,7 @@ export class LokiDatasource
       row,
       languageProvider: this.languageProvider,
       onClose: () => {
-        this.prepareContextExpr = this.prepareContextExprWithoutParsedLabes;
+        this.prepareContextExpr = this.prepareContextExprWithoutParsedLabels;
       },
       updateFilter: (contextFilters: ContextFilter[]) => {
         this.prepareContextExpr = async (row: LogRowModel, origQuery?: DataQuery) => {
