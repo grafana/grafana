@@ -253,7 +253,7 @@ func validateAlertRule(alert *models.Alert) error {
 		return ValidationError{Reason: fmt.Sprintf("Panel id is not correct, alertName=%v, panelId=%v", alert.Name, alert.PanelId)}
 	}
 	if !alert.ValidTags() {
-		return ValidationError{Reason: fmt.Sprintf("Invalid tags, must be less than 100 characters")}
+		return ValidationError{Reason: "Invalid tags, must be less than 100 characters"}
 	}
 	return nil
 }
