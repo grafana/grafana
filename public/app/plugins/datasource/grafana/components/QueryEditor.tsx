@@ -406,7 +406,7 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
                 maxSize: 200000,
                 multiple: false,
                 accept: {
-                  'text/plain': ['.csv'],
+                  'text/plain': ['.csv', '.txt'],
                   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
                   'application/vnd.ms-excel': ['.xls'],
                   'application/vnd.apple.numbers': ['.numbers'],
