@@ -11,7 +11,13 @@ interface Props {
   childrenWrapperClassName?: string;
 }
 
-export const DetailsField = ({ className, label, horizontal, children, childrenWrapperClassName }: React.PropsWithChildren<Props>) => {
+export const DetailsField = ({
+  className,
+  label,
+  horizontal,
+  children,
+  childrenWrapperClassName,
+}: React.PropsWithChildren<Props>) => {
   const styles = useStyles2(getStyles);
 
   return (
