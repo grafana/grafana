@@ -36,6 +36,9 @@ SPEC_TARGET = public/api-spec.json
 ENTERPRISE_SPEC_TARGET = public/api-enterprise-spec.json
 MERGED_SPEC_TARGET := public/api-merged.json
 NGALERT_SPEC_TARGET = pkg/services/ngalert/api/tooling/api.json
+ENTERPRISE_EXT_FILE = pkg/extensions/ext.go
+ENTERPRISE_EXT_DIR = pkg/extensions
+ENTERPRISE_EXT_FILES = $(shell find $(ENTERPRISE_EXT_DIR) -name api.go -follow)
 
 $(NGALERT_SPEC_TARGET):
 	+$(MAKE) -C pkg/services/ngalert/api/tooling api.json
@@ -52,14 +55,16 @@ $(SPEC_TARGET): $(SWAGGER) ## Generate API Swagger specification
 	--exclude-tag=alpha \
 	--exclude-tag=enterprise
 
-$(ENTERPRISE_SPEC_TARGET): $(SWAGGER) ## Generate API Swagger specification
+$(ENTERPRISE_SPEC_TARGET): $(ENTERPRISE_EXT_FILES) $(SWAGGER) ## Generate API Swagger specification
+ifneq ("$(wildcard $(ENTERPRISE_EXT_FILE))","") ## if enterprise is enabled
 	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m -w pkg/server -o $(ENTERPRISE_SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/prometheus/alertmanager" \
 	-i pkg/api/swagger_tags.json \
 	--include-tag=enterprise
+endif
 
-swagger-api-spec: gen-go $(SPEC_TARGET) $(MERGED_SPEC_TARGET) validate-api-spec
+swagger-api-spec: gen-go $(MERGED_SPEC_TARGET) validate-api-spec
 
 validate-api-spec: $(MERGED_SPEC_TARGET) $(SWAGGER) ## Validate API spec
 	$(SWAGGER) validate $(<)
@@ -116,7 +121,7 @@ build-js: ## Build frontend assets.
 
 build: build-go build-js ## Build backend and frontend.
 
-run: $(BRA) ## Build and run web server on filesystem changes.
+run: $(BRA) openapi3-gen ## Build and run web server on filesystem changes.
 	$(BRA) run
 
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
