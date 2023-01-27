@@ -72,6 +72,7 @@ def pr_pipelines(external=False):
                 external=external,
             ),
             ver_mode,
+            external=external,
         ),
         test_frontend(
             get_pr_trigger(
@@ -125,7 +126,7 @@ def pr_pipelines(external=False):
             ver_mode,
             external=external,
         ),
-        build_e2e(trigger, ver_mode),
+        build_e2e(trigger, ver_mode, external=external),
         integration_tests(
             get_pr_trigger(
                 include_paths=[
@@ -142,8 +143,8 @@ def pr_pipelines(external=False):
             prefix=ver_mode,
             external=external,
         ),
-        docs_pipelines(ver_mode, trigger_docs_pr()),
-        shellcheck_pipeline(),
+        docs_pipelines(ver_mode, trigger_docs_pr(), external=external),
+        shellcheck_pipeline(external=external),
     ]
 
 

@@ -3,6 +3,7 @@ load('scripts/drone/steps/lib.star', 'build_image', 'compile_build_cmd')
 load(
     'scripts/drone/utils/utils.star',
     'pipeline',
+    'external_name',
 )
 
 trigger = {
@@ -33,14 +34,14 @@ def shellcheck_step():
     }
 
 
-def shellcheck_pipeline():
+def shellcheck_pipeline(external=False):
     environment = {'EDITION': 'oss'}
     steps = [
         compile_build_cmd(),
         shellcheck_step(),
     ]
     return pipeline(
-        name='pr-shellcheck',
+        name=external_name('pr-shellcheck', external),
         edition="oss",
         trigger=trigger,
         services=[],

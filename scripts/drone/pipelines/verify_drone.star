@@ -9,10 +9,11 @@ load(
 load(
     'scripts/drone/utils/utils.star',
     'pipeline',
+    'external_name',
 )
 
 
-def verify_drone(trigger, ver_mode):
+def verify_drone(trigger, ver_mode, external=False):
     environment = {'EDITION': 'oss'}
     steps = [
         identify_runner_step(),
@@ -21,7 +22,7 @@ def verify_drone(trigger, ver_mode):
         lint_drone_step(),
     ]
     return pipeline(
-        name='{}-verify-drone'.format(ver_mode),
+        name=external_name('{}-verify-drone'.format(ver_mode), external),
         edition="oss",
         trigger=trigger,
         services=[],

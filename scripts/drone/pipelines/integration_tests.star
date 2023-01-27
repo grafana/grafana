@@ -21,6 +21,7 @@ load(
 load(
     'scripts/drone/utils/utils.star',
     'pipeline',
+    'external_name',
 )
 
 
@@ -57,7 +58,7 @@ def integration_tests(trigger, prefix, ver_mode='pr', external=False):
     ]
 
     return pipeline(
-        name='{}-integration-tests'.format(prefix),
+        name=external_name('{}-integration-tests'.format(prefix), external),
         edition='oss',
         trigger=trigger,
         environment=environment,

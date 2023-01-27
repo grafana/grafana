@@ -12,6 +12,7 @@ load(
 load(
     'scripts/drone/utils/utils.star',
     'pipeline',
+    'external_name',
 )
 
 
@@ -41,7 +42,7 @@ def lint_backend_pipeline(trigger, ver_mode, external=False):
         test_steps.append(lint_drone_step())
 
     return pipeline(
-        name='{}-lint-backend'.format(ver_mode),
+        name=external_name('{}-lint-backend'.format(ver_mode), external),
         edition="oss",
         trigger=trigger,
         services=[],

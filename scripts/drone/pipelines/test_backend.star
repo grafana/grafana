@@ -17,6 +17,7 @@ load(
     'scripts/drone/utils/utils.star',
     'pipeline',
     'with_deps',
+    'external_name',
 )
 
 
@@ -49,7 +50,7 @@ def test_backend(trigger, ver_mode, source, external=False):
         pipeline_name = '{}-{}-test-backend'.format(ver_mode, 'oss')
 
     return pipeline(
-        name=pipeline_name,
+        name=external_name(pipeline_name, external),
         edition='oss',
         trigger=trigger,
         steps=steps,

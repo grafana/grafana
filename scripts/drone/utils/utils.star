@@ -110,3 +110,9 @@ def with_deps(steps, deps=[]):
     for step in steps:
         step['depends_on'] = deps
     return steps
+
+def external_name(name, external):
+  if external:
+      name='external-' + name
+
+  return name

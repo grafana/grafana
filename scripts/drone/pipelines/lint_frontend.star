@@ -9,6 +9,7 @@ load(
 load(
     'scripts/drone/utils/utils.star',
     'pipeline',
+    'external_name'
 )
 
 
@@ -34,7 +35,7 @@ def lint_frontend_pipeline(trigger, ver_mode, external=False):
     ]
 
     return pipeline(
-        name='{}-lint-frontend'.format(ver_mode),
+        name=external_name('{}-lint-frontend'.format(ver_mode), external),
         edition="oss",
         trigger=trigger,
         services=[],

@@ -1013,7 +1013,7 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: pr-verify-drone
+name: external-pr-verify-drone
 node:
   type: no-parallel
 platform:
@@ -1072,7 +1072,7 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: pr-test-frontend
+name: external-pr-test-frontend
 node:
   type: no-parallel
 platform:
@@ -1138,7 +1138,7 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: pr-lint-frontend
+name: external-pr-lint-frontend
 node:
   type: no-parallel
 platform:
@@ -1195,7 +1195,7 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: pr-test-backend
+name: external-pr-test-backend
 node:
   type: no-parallel
 platform:
@@ -1282,7 +1282,7 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: pr-lint-backend
+name: external-pr-lint-backend
 node:
   type: no-parallel
 platform:
@@ -1348,7 +1348,7 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: pr-build-e2e
+name: external-pr-build-e2e
 node:
   type: no-parallel
 platform:
@@ -1665,7 +1665,7 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: pr-integration-tests
+name: external-pr-integration-tests
 node:
   type: no-parallel
 platform:
@@ -1803,7 +1803,7 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: pr-docs
+name: external-pr-docs
 node:
   type: no-parallel
 platform:
@@ -1875,7 +1875,7 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: pr-shellcheck
+name: external-pr-shellcheck
 node:
   type: no-parallel
 platform:
@@ -7528,6 +7528,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: 9801347903d9eb23cc962ba50a1669c105abe9ba3d21fe278acc41b32ec76478
+hmac: 94aa53cb0b7f80da52dd45a3c27544257ff7635f91b6c3599467887ed9d08bbf
 
 ...
