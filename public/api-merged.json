@@ -15561,6 +15561,9 @@
             "Error"
           ]
         },
+        "is_paused": {
+          "type": "boolean"
+        },
         "no_data_state": {
           "type": "string",
           "enum": [
@@ -18796,7 +18799,6 @@
       }
     },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
