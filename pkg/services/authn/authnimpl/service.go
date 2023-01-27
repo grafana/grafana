@@ -70,7 +70,7 @@ func ProvideService(
 	if cfg.LoginCookieName != "" {
 		sessionClient := clients.ProvideSession(sessionService, userService, cfg.LoginCookieName, cfg.LoginMaxLifetime)
 		s.RegisterClient(sessionClient)
-		s.RegisterPostAuthHook(sessionClient.RefreshTokenHook, 10)
+		s.RegisterPostAuthHook(sessionClient.RefreshTokenHook, 20)
 	}
 
 	if s.cfg.AnonymousEnabled {
@@ -119,7 +119,7 @@ func ProvideService(
 	// FIXME (jguer): move to User package
 	userSyncService := sync.ProvideUserSync(userService, userProtectionService, authInfoService, quotaService)
 	orgUserSyncService := sync.ProvideOrgSync(userService, orgService, accessControlService)
-	s.RegisterPostAuthHook(userSyncService.SyncUser, 20)
+	s.RegisterPostAuthHook(userSyncService.SyncUser, 10)
 	s.RegisterPostAuthHook(orgUserSyncService.SyncOrgUser, 30)
 	s.RegisterPostAuthHook(sync.ProvideUserLastSeenSync(userService).SyncLastSeen, 40)
 	s.RegisterPostAuthHook(sync.ProvideAPIKeyLastSeenSync(apikeyService).SyncLastSeen, 50)
