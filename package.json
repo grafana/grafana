@@ -28,7 +28,7 @@
     "packages:build": "lerna run build --ignore @grafana-plugins/input-datasource",
     "packages:clean": "rimraf ./npm-artifacts && lerna run clean --parallel",
     "packages:prepare": "lerna version --no-push --no-git-tag-version --force-publish --exact",
-    "packages:pack": "mkdir ./npm-artifacts && lerna exec --no-private -- yarn pack --out \"../../npm-artifacts/%s-%v.tgz\"",
+    "packages:pack": "mkdir -p ./npm-artifacts && lerna exec --no-private -- yarn pack --out \"../../npm-artifacts/%s-%v.tgz\"",
     "packages:publish": "lerna exec --no-private -- npm publish package.tgz",
     "packages:publishCanary": "lerna exec --no-private -- npm publish package.tgz --tag canary",
     "packages:publishLatest": "lerna exec --no-private -- npm publish package.tgz",
