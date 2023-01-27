@@ -12,8 +12,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/plugins/config"
-	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/prometheus/client_golang/prometheus"
 	dto "github.com/prometheus/client_model/go"
 
@@ -26,6 +24,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
@@ -212,7 +212,7 @@ func Test_GetPluginAssetCDNRedirect(t *testing.T) {
 					callGetPluginAsset(sc)
 
 					// Check redirect code + location
-					require.Equal(t, http.StatusFound, sc.resp.Code, "wrong status code")
+					require.Equal(t, http.StatusTemporaryRedirect, sc.resp.Code, "wrong status code")
 					require.Equal(t, cdnFolderBaseURL+"/"+cas.expRelativeURL, sc.resp.Header().Get("Location"), "wrong location header")
 
 					// Check metric
