@@ -356,7 +356,9 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
     for (const subscription of subscriptions) {
       const subLocations = ResponseParser.parseLocations(
         await this.getResource<AzureMonitorLocationsResponse>(
-          `${routeNames.azureMonitor}/subscriptions/${subscription}/locations?api-version=${this.locationsApiVersion}`
+          `${routeNames.azureMonitor}/subscriptions/${this.templateSrv.replace(subscription)}/locations?api-version=${
+            this.locationsApiVersion
+          }`
         )
       );
       for (const location of subLocations) {
