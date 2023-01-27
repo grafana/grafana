@@ -1,6 +1,6 @@
 ---
 aliases:
-  - ../installation/upgrading/
+
 description: Guide for upgrading to Grafana v8.4
 keywords:
   - grafana
