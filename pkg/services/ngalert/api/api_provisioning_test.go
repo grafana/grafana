@@ -789,24 +789,18 @@ func createTestEnv(t *testing.T) testEnvironment {
 	prov.EXPECT().GetReturns(models.ProvenanceNone)
 
 	dashboardService := dashboards.NewFakeDashboardService(t)
-	dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*dashboards.GetDashboardQuery)
-		q.Result = &dashboards.Dashboard{
-			UID:   "folder-uid",
-			Title: "Folder Title",
-		}
-	}).Return(nil).Maybe()
-	dashboardService.On("GetDashboards", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardsQuery")).Run(func(args mock.Arguments) {
-		q := args.Get(1).(*dashboards.GetDashboardsQuery)
-		q.Result = []*dashboards.Dashboard{{
-			UID:   "folder-uid",
-			Title: "Folder Title",
-		},
-			{
-				UID:   "folder-uid2",
-				Title: "Folder Title2",
-			}}
-	}).Return(nil).Maybe()
+	dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(&dashboards.Dashboard{
+		UID:   "folder-uid",
+		Title: "Folder Title",
+	}, nil).Maybe()
+	dashboardService.On("GetDashboards", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardsQuery")).Return([]*dashboards.Dashboard{{
+		UID:   "folder-uid",
+		Title: "Folder Title",
+	},
+		{
+			UID:   "folder-uid2",
+			Title: "Folder Title2",
+		}}, nil).Maybe()
 
 	return testEnvironment{
 		secrets:          secrets,

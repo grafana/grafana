@@ -95,14 +95,15 @@ func (service *AlertRuleService) GetAlertRuleWithFolderTitle(ctx context.Context
 		OrgID: orgID,
 		UID:   query.Result.NamespaceUID,
 	}
-	err = service.dashboardService.GetDashboard(ctx, &dq)
+
+	dash, err := service.dashboardService.GetDashboard(ctx, &dq)
 	if err != nil {
 		return AlertRuleWithFolderTitle{}, err
 	}
 
 	return AlertRuleWithFolderTitle{
 		AlertRule:   *query.Result,
-		FolderTitle: dq.Result.Title,
+		FolderTitle: dash.Title,
 	}, nil
 }
 
@@ -421,7 +422,7 @@ func (service *AlertRuleService) GetAlertRuleGroupWithFolderTitle(ctx context.Co
 		OrgID: orgID,
 		UID:   namespaceUID,
 	}
-	err := service.dashboardService.GetDashboard(ctx, &dq)
+	dash, err := service.dashboardService.GetDashboard(ctx, &dq)
 	if err != nil {
 		return file.AlertRuleGroupWithFolderTitle{}, err
 	}
@@ -434,7 +435,7 @@ func (service *AlertRuleService) GetAlertRuleGroupWithFolderTitle(ctx context.Co
 			Rules:     []models.AlertRule{},
 		},
 		OrgID:       orgID,
-		FolderTitle: dq.Result.Title,
+		FolderTitle: dash.Title,
 	}
 	for _, r := range q.Result {
 		if r != nil {
@@ -473,12 +474,12 @@ func (service *AlertRuleService) GetAlertGroupsWithFolderTitle(ctx context.Conte
 	}
 
 	// We need folder titles for the provisioning file format. We do it this way instead of using GetUserVisibleNamespaces to avoid folder:read permissions that should not apply to those with alert.provisioning:read.
-	err := service.dashboardService.GetDashboards(ctx, &dq)
+	dashes, err := service.dashboardService.GetDashboards(ctx, &dq)
 	if err != nil {
 		return nil, err
 	}
 	folderUidToTitle := make(map[string]string)
-	for _, dash := range dq.Result {
+	for _, dash := range dashes {
 		folderUidToTitle[dash.UID] = dash.Title
 	}
 
