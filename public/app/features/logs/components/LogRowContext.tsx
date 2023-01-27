@@ -35,9 +35,7 @@ interface LogRowContextProps {
 }
 
 const getLogRowContextStyles = (theme: GrafanaTheme2, wrapLogMessage?: boolean, datasourceUiHeight?: number) => {
-  if (config.featureToggles.logsContextDatasourceUi) {
-    datasourceUiHeight = datasourceUiHeight ?? 55;
-  } else {
+  if (!config.featureToggles.logsContextDatasourceUi || !datasourceUiHeight) {
     datasourceUiHeight = 0;
   }
   /**
@@ -178,7 +176,7 @@ const LogRowContextGroupHeader: React.FunctionComponent<LogRowContextGroupHeader
   getLogRowContextUi,
   runContextQuery,
 }) => {
-  const [height, setHeight] = useState(50);
+  const [height, setHeight] = useState(0);
   const datasourceUiRef = React.createRef<HTMLDivElement>();
   const {
     datasourceUi: dsUi,
