@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -210,6 +211,14 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *contextmodel.ReqContext) (map[st
 		"samlName":                hs.samlName(),
 		"tokenExpirationDayLimit": hs.Cfg.SATokenExpirationDayLimit,
 		"snapshotEnabled":         hs.Cfg.SnapshotEnabled,
+	}
+
+	if hs.pluginsCDNService != nil && hs.pluginsCDNService.IsEnabled() {
+		cdnBaseURL, err := hs.pluginsCDNService.BaseURL()
+		if err != nil {
+			return nil, fmt.Errorf("plugins cdn base url: %w", err)
+		}
+		jsonObj["pluginsCDNBaseURL"] = cdnBaseURL
 	}
 
 	if hs.ThumbService != nil {
