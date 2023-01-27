@@ -476,7 +476,7 @@ function buildMetricsQuery(
   span: TraceSpan
 ): string {
   if (!query.query) {
-    return `histogram_quantile(0.5, sum(rate(tempo_spanmetrics_latency_bucket{operation="${span.operationName}"}[5m])) by (le))`;
+    return `histogram_quantile(0.5, sum(rate(traces_spanmetrics_latency_bucket{service="${span.process.serviceName}"}[5m])) by (le))`;
   }
 
   let expr = query.query;
