@@ -146,7 +146,6 @@ export const Table = memo((props: Props) => {
     pageOptions,
     setHiddenColumns,
   } = useTable(options, useFilters, useSortBy, useAbsoluteLayout, useResizeColumns, useExpanded, usePagination);
-  console.log(totalColumnsWidth, 'toteWidth');
 
   const extendedState = state as GrafanaTableState;
 
@@ -322,7 +321,7 @@ export const Table = memo((props: Props) => {
 
   function addNumbersRowFieldToData(data: DataFrame): DataFrame {
     const rowField: Field = buildFieldsForOptionalRowNums(data.length);
-    // Since we are mutating data, we make a deep copy to avoid any issues with other areas that might share this data
+    // Since we are mutating data, we make a deep copy to avoid any issues with other components that might share this data
     const newData = cloneDeep(data);
     newData.fields = [rowField, ...newData.fields];
     return newData;

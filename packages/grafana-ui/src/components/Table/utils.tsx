@@ -163,8 +163,13 @@ export function getColumns(
   return columns;
 }
 
+/*
+  Build data field for row numbers and prepend to the field array; 
+  this way, on other column's sort, the row numbers will persist in their proper place.
+*/
 export function buildFieldsForOptionalRowNums(totalRows: number): Field {
   return {
+    // White space as the name, so the column title is blank
     name: ' ',
     display: function (value) {
       return {
