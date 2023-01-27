@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func (hs *HTTPServer) GetFrontendSettings(c *models.ReqContext) {
+func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
 	settings, err := hs.getFrontendSettingsMap(c)
 	if err != nil {
 		c.JsonApiErr(400, "Failed to get frontend settings", err)
@@ -29,7 +29,7 @@ func (hs *HTTPServer) GetFrontendSettings(c *models.ReqContext) {
 }
 
 // getFrontendSettingsMap returns a json object with all the settings needed for front end initialisation.
-func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]interface{}, error) {
+func (hs *HTTPServer) getFrontendSettingsMap(c *contextmodel.ReqContext) (map[string]interface{}, error) {
 	enabledPlugins, err := hs.enabledPlugins(c.Req.Context(), c.OrgID)
 	if err != nil {
 		return nil, err
@@ -231,7 +231,7 @@ func isSupportBundlesEnabled(hs *HTTPServer) bool {
 		hs.Features.IsEnabled(featuremgmt.FlagSupportBundles)
 }
 
-func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins EnabledPlugins) (map[string]plugins.DataSourceDTO, error) {
+func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, enabledPlugins EnabledPlugins) (map[string]plugins.DataSourceDTO, error) {
 	orgDataSources := make([]*datasources.DataSource, 0)
 	if c.OrgID != 0 {
 		query := datasources.GetDataSourcesQuery{OrgId: c.OrgID, DataSourceLimit: hs.Cfg.DataSourceLimit}
