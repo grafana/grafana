@@ -113,7 +113,8 @@ export class InspectDataTab extends PureComponent<Props, State> {
   };
 
   exportTracesAsJson = () => {
-    const { data, panel } = this.props;
+    const { data, panel, app } = this.props;
+
     if (!data) {
       return;
     }
@@ -123,16 +124,19 @@ export class InspectDataTab extends PureComponent<Props, State> {
       if (df.meta?.preferredVisualisationType !== 'trace') {
         continue;
       }
+      let traceFormat = 'otlp';
 
       switch (df.meta?.custom?.traceFormat) {
         case 'jaeger': {
           let res = transformToJaeger(new MutableDataFrame(df));
           downloadAsJson(res, (panel ? panel.getDisplayTitle() : 'Explore') + '-traces');
+          traceFormat = 'jaeger';
           break;
         }
         case 'zipkin': {
           let res = transformToZipkin(new MutableDataFrame(df));
           downloadAsJson(res, (panel ? panel.getDisplayTitle() : 'Explore') + '-traces');
+          traceFormat = 'zipkin';
           break;
         }
         case 'otlp':
@@ -142,11 +146,24 @@ export class InspectDataTab extends PureComponent<Props, State> {
           break;
         }
       }
+
+      reportInteraction('grafana_traces_download_traces_clicked', {
+        app,
+        grafana_version: config.buildInfo.version,
+        trace_format: traceFormat,
+        location: 'inspector',
+      });
     }
   };
 
   exportServiceGraph = () => {
-    const { data, panel } = this.props;
+    const { data, panel, app } = this.props;
+    reportInteraction('grafana_traces_download_service_graph_clicked', {
+      app,
+      grafana_version: config.buildInfo.version,
+      location: 'inspector',
+    });
+
     if (!data) {
       return;
     }

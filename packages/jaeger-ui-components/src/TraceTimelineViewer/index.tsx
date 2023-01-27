@@ -16,7 +16,7 @@ import { css } from '@emotion/css';
 import React, { RefObject } from 'react';
 
 import { GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { stylesFactory, withTheme2 } from '@grafana/ui';
 
 import { Accessors } from '../ScrollManager';
@@ -147,6 +147,7 @@ export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, Sta
     this.props.collapseAll(this.props.trace.spans);
     reportInteraction('grafana_traces_traceID_expand_collapse_clicked', {
       datasourceType: this.props.datasourceType,
+      grafana_version: config.buildInfo.version,
       type: 'collapseAll',
     });
   };
@@ -155,6 +156,7 @@ export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, Sta
     this.props.collapseOne(this.props.trace.spans);
     reportInteraction('grafana_traces_traceID_expand_collapse_clicked', {
       datasourceType: this.props.datasourceType,
+      grafana_version: config.buildInfo.version,
       type: 'collapseOne',
     });
   };
@@ -163,6 +165,7 @@ export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, Sta
     this.props.expandAll();
     reportInteraction('grafana_traces_traceID_expand_collapse_clicked', {
       datasourceType: this.props.datasourceType,
+      grafana_version: config.buildInfo.version,
       type: 'expandAll',
     });
   };
@@ -171,6 +174,7 @@ export class UnthemedTraceTimelineViewer extends React.PureComponent<TProps, Sta
     this.props.expandOne(this.props.trace.spans);
     reportInteraction('grafana_traces_traceID_expand_collapse_clicked', {
       datasourceType: this.props.datasourceType,
+      grafana_version: config.buildInfo.version,
       type: 'expandOne',
     });
   };
