@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/models/roletype"
 	"golang.org/x/oauth2"
 	"gopkg.in/square/go-jose.v2/jwt"
+
+	"github.com/grafana/grafana/pkg/models/roletype"
 )
 
 type SocialOkta struct {
