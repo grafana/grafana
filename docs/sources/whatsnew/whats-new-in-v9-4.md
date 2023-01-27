@@ -70,4 +70,4 @@ We added support to validate queries and visually display errors as a query is b
 
 For Loki metric queries in Explore, you are now able to see the samples of log lines that contributed to the visualized metrics. To see the samples, simply click on collapsed Logs sample panel under your graph or table panel. If you would like to interact with your log lines or change the log query, you can click on Open logs in split view button and log query will be executed in the split view.
 
-{{< figure src="/static/img/logs/logs-sample-whats-new-9-4.png" max-width="750px" caption="Logs sample in Explore" >}}
+{{< figure src="/media/docs/grafana/logs-sample-whats-new-9-4.png" max-width="750px" caption="Logs sample in Explore" >}}
