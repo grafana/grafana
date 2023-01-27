@@ -28,6 +28,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `commandPalette`                    | Enable command palette                                                               | Yes                |
 | `cloudWatchDynamicLabels`           | Use dynamic labels instead of alias patterns in CloudWatch datasource                | Yes                |
 | `internationalization`              | Enables internationalization                                                         | Yes                |
+| `cloudWatchCrossAccountQuerying`    | Use cross-account querying in CloudWatch datasource                                  | Yes                |
 | `accessTokenExpirationCheck`        | Enable OAuth access_token expiration check and token refresh using the refresh_token |                    |
 | `disablePrometheusExemplarSampling` | Disable Prometheus examplar sampling                                                 |                    |
 | `logsSampleInExplore`               | Enables access to the logs sample feature in Explore                                 | Yes                |
@@ -84,7 +85,6 @@ Alpha features might be changed or removed without prior notice.
 | `dataConnectionsConsole`           | Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins. |
 | `topnav`                           | New top nav and page layouts                                                                                                                                                 |
 | `flameGraph`                       | Show the flame graph                                                                                                                                                         |
-| `cloudWatchCrossAccountQuerying`   | Use cross-account querying in CloudWatch datasource                                                                                                                          |
 | `redshiftAsyncQueryDataSupport`    | Enable async query data support for Redshift                                                                                                                                 |
 | `athenaAsyncQueryDataSupport`      | Enable async query data support for Athena                                                                                                                                   |
 | `increaseInMemDatabaseQueryCache`  | Enable more in memory caching for database queries                                                                                                                           |
