@@ -12,13 +12,13 @@ load(
 )
 
 
-def lint_frontend_pipeline(trigger, ver_mode):
+def lint_frontend_pipeline(trigger, ver_mode, external=False):
     environment = {'EDITION': 'oss'}
 
     init_steps = []
     lint_step = lint_frontend_step()
 
-    if ver_mode == 'pr':
+    if ver_mode == 'pr' and not external:
         # In pull requests, attempt to clone grafana enterprise.
         init_steps.append(enterprise_setup_step(location='../grafana-enterpise'))
         # Ensure the lint step happens after the clone-enterprise step

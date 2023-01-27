@@ -15,7 +15,7 @@ load(
 )
 
 
-def lint_backend_pipeline(trigger, ver_mode):
+def lint_backend_pipeline(trigger, ver_mode, external=False):
     environment = {'EDITION': 'oss'}
 
     wire_step = wire_install_step()
@@ -27,7 +27,7 @@ def lint_backend_pipeline(trigger, ver_mode):
 
     ]
 
-    if ver_mode == 'pr':
+    if ver_mode == 'pr' and not external:
         # In pull requests, attempt to clone grafana enterprise.
         init_steps.append(enterprise_setup_step(location='../grafana-enterpise'))
 

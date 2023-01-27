@@ -32,6 +32,7 @@ load('scripts/drone/vault.star', 'secrets')
 def main(ctx):
     return (
         pr_pipelines()
+        + pr_pipelines(external=True) # These pipelines are the ones that run on forks.
         + main_pipelines()
         + oss_pipelines()
         + enterprise_pipelines()

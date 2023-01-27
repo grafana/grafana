@@ -17,7 +17,7 @@ load(
 )
 
 
-def test_frontend(trigger, ver_mode, source):
+def test_frontend(trigger, ver_mode, source, external=False):
     environment = {'EDITION': 'oss'}
 
     steps = [
@@ -29,7 +29,7 @@ def test_frontend(trigger, ver_mode, source):
 
     test_step = test_frontend_step(edition='oss')
 
-    if ver_mode == 'pr':
+    if ver_mode == 'pr' and not external:
         # In pull requests, attempt to clone grafana enterprise.
         steps.append(enterprise_setup_step(location='../grafana-enterpise'))
         # Also, make the test step depend on 'clone-enterprise
