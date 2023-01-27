@@ -23,6 +23,7 @@ import {
 import { AppChromeService } from '../components/AppChrome/AppChromeService';
 import { HelpModal } from '../components/help/HelpModal';
 import { contextSrv } from '../core';
+import { RouteDescriptor } from '../navigation/types';
 
 import { toggleTheme } from './theme';
 import { withFocusedPanel } from './withFocusedPanelId';
@@ -30,10 +31,11 @@ import { withFocusedPanel } from './withFocusedPanelId';
 export class KeybindingSrv {
   constructor(private locationService: LocationService, private chromeService: AppChromeService) {}
 
-  clearAndInitGlobalBindings() {
+  clearAndInitGlobalBindings(route: RouteDescriptor) {
     Mousetrap.reset();
 
-    if (this.locationService.getLocation().pathname !== '/login') {
+    // Chromeless pages like login and signup page don't get any global bindings
+    if (route.chromeless !== true) {
       this.bind(['?', 'h'], this.showHelpModal);
       this.bind('g h', this.goToHome);
       this.bind('g a', this.openAlerting);
