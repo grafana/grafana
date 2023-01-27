@@ -248,12 +248,15 @@ func createFolderScenario(t *testing.T, desc string, url string, routePattern st
 		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
 		store := dbtest.NewFakeDB()
 		guardian.InitLegacyGuardian(store, dashSvc, teamSvc)
+		folderPermissions := acmock.NewMockedPermissionsService()
+		folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 		hs := HTTPServer{
-			AccessControl:        acmock.New(),
-			folderService:        folderService,
-			Cfg:                  setting.NewCfg(),
-			Features:             featuremgmt.WithFeatures(),
-			accesscontrolService: actest.FakeService{},
+			AccessControl:            acmock.New(),
+			folderService:            folderService,
+			Cfg:                      setting.NewCfg(),
+			Features:                 featuremgmt.WithFeatures(),
+			accesscontrolService:     actest.FakeService{},
+			folderPermissionsService: folderPermissions,
 		}
 
 		sc := setupScenarioContext(t, url)
