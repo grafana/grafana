@@ -79,26 +79,6 @@ export const enrichConfigItems = (items: NavModelItem[], location: Location<unkn
   return items;
 };
 
-export let getSupportBundleFooterLinks = (cfg = config): FooterLink[] => {
-  const hasAccess =
-    contextSrv.hasAccess(AccessControlAction.ActionSupportBundlesCreate, contextSrv.isGrafanaAdmin) ||
-    contextSrv.hasAccess(AccessControlAction.ActionSupportBundlesRead, contextSrv.isGrafanaAdmin);
-
-  if (!cfg.supportBundlesEnabled || !hasAccess) {
-    return [];
-  }
-
-  return [
-    {
-      target: '_self',
-      id: 'support-bundle',
-      text: t('nav.help/support-bundle', 'Support Bundles'),
-      icon: 'question-circle',
-      url: '/support-bundles',
-    },
-  ];
-};
-
 export const enrichWithInteractionTracking = (item: NavModelItem, expandedState: boolean) => {
   const onClick = item.onClick;
   item.onClick = () => {
