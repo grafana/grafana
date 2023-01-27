@@ -48,7 +48,7 @@ export const bucketAggregationConfig: BucketsConfiguration = {
     },
   },
   nested: {
-    label: 'Nested',
+    label: 'Nested (experimental)',
     requiresField: true,
     defaultSettings: {},
   },
