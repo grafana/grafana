@@ -64,7 +64,8 @@ export class VariableSupport extends CustomVariableSupport<DataSource, AzureMoni
               const rgs = await this.datasource.getResourceNames(
                 queryObj.subscription,
                 queryObj.resourceGroup,
-                queryObj.namespace
+                queryObj.namespace,
+                queryObj.region
               );
               return {
                 data: rgs?.length ? [toDataFrame(rgs)] : [],
