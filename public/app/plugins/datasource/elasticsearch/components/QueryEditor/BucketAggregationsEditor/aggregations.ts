@@ -62,7 +62,7 @@ interface GeoHashGrid extends BucketAggregationWithField {
   };
 }
 
-export interface Nested extends BucketAggregationWithField {
+interface Nested extends BucketAggregationWithField {
   type: 'nested';
   settings?: {};
 }

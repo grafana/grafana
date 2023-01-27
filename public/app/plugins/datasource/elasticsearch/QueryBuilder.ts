@@ -5,7 +5,6 @@ import {
   Histogram,
   DateHistogram,
   Terms,
-  Nested,
 } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import {
   isMetricAggregationWithField,
