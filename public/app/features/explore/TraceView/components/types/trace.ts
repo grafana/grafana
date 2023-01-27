@@ -20,7 +20,6 @@
 export type TraceKeyValuePair = {
   key: string;
   type?: string;
-  /* eslint-disable @typescript-eslint/no-explicit-any */
   value: any;
 };
 

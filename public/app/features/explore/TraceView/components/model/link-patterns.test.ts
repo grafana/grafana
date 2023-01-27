@@ -67,7 +67,6 @@ describe('processTemplate()', () => {
     expect(() =>
       processTemplate(
         {
-          /* eslint-disable @typescript-eslint/no-explicit-any */
           template: (data: { [key: string]: any }) => `a${data.b}c`,
         },
         (a) => a
@@ -417,7 +416,6 @@ describe('getLinks()', () => {
 
   const span = { depth: 0, process: {}, tags: [{ key: 'mySpecialKey', value: 'valueOfMyKey' }] } as TraceSpan;
 
-  /* eslint-disable @typescript-eslint/no-explicit-any */
   let cache: WeakMap<object, any>;
 
   beforeEach(() => {

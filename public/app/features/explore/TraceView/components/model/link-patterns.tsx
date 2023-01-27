@@ -24,11 +24,9 @@ const parameterRegExp = /#\{([^{}]*)\}/g;
 
 type ProcessedTemplate = {
   parameters: string[];
-  /* eslint-disable @typescript-eslint/no-explicit-any */
   template: (template: { [key: string]: any }) => string;
 };
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export type ProcessedLinkPattern = {
   object: any;
   type: (link: string) => boolean;
@@ -50,7 +48,6 @@ function getParamNames(str: string) {
   return Array.from(names);
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 function stringSupplant(str: string, encodeFn: (unencoded: any) => string, map: Record<string, any>) {
   return str.replace(parameterRegExp, (_, name) => {
     const value = map[name];
@@ -58,7 +55,6 @@ function stringSupplant(str: string, encodeFn: (unencoded: any) => string, map: 
   });
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export function processTemplate(template: unknown, encodeFn: (unencoded: any) => string): ProcessedTemplate {
   if (typeof template !== 'string') {
     /*
@@ -77,7 +73,6 @@ export function processTemplate(template: unknown, encodeFn: (unencoded: any) =>
   };
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export function createTestFunction(entry?: any) {
   if (typeof entry === 'string') {
     return (arg: unknown) => arg === entry;
@@ -102,10 +97,8 @@ export function createTestFunction(entry?: any) {
   throw new Error(`Invalid value: ${entry}`);
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 const identity = (a: any): typeof a => a;
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export function processLinkPattern(pattern: any): ProcessedLinkPattern | null {
   try {
     const url = processTemplate(pattern.url, encodeURIComponent);
@@ -145,7 +138,6 @@ export function getParameterInAncestor(name: string, span: TraceSpan) {
   return undefined;
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 function callTemplate(template: ProcessedTemplate, data: any) {
   return template.template(data);
 }
@@ -159,7 +151,6 @@ export function computeTraceLink(linkPatterns: ProcessedLinkPattern[], trace: Tr
   linkPatterns
     ?.filter((pattern) => pattern?.type('traces'))
     .forEach((pattern) => {
-      /* eslint-disable @typescript-eslint/no-explicit-any */
       const parameterValues: Record<string, any> = {};
       const allParameters = pattern?.parameters.every((parameter) => {
         const key = parameter as keyof Trace;
@@ -201,7 +192,6 @@ export function computeLinks(
   const result: Array<{ url: string; text: string }> = [];
   linkPatterns.forEach((pattern) => {
     if (pattern.type(type) && pattern.key(item.key) && pattern.value(item.value)) {
-      /* eslint-disable @typescript-eslint/no-explicit-any */
       const parameterValues: Record<string, any> = {};
       const allParameters = pattern.parameters.every((parameter) => {
         let entry = getParameterInArray(parameter, items);

@@ -98,7 +98,6 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
 
   const max = data.spans.length;
   for (let i = 0; i < max; i++) {
-    /* eslint-disable @typescript-eslint/no-explicit-any */
     const span: TraceSpan = data.spans[i] as TraceSpan;
     const { startTime, duration, processID } = span;
 
@@ -143,7 +142,6 @@ export default function transformTraceData(data: TraceResponse | undefined): Tra
     if (typeof spanID !== 'string') {
       return;
     }
-    /* eslint-disable @typescript-eslint/no-explicit-any */
     const span = spanMap.get(spanID);
     if (!span) {
       return;

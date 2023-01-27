@@ -37,7 +37,6 @@ type Props = {
 
 // TODO typescript doesn't understand text or null as react nodes
 // https://github.com/Microsoft/TypeScript/issues/21699
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function BreakableText(
   props: Props
 ): any /* React.ReactNode /* React.ReactElement | React.ReactElement[] \*\/ */ {

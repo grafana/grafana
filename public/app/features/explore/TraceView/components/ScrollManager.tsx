@@ -157,7 +157,6 @@ export default class ScrollManager {
     const _collapsed = xrs.getCollapsedChildren();
     const childrenAreHidden = _collapsed ? new Set(_collapsed) : null;
     // use empty Map as fallback to make flow happy
-    /* eslint-disable @typescript-eslint/no-explicit-any */
     const spansMap: Map<string, TraceSpan> = childrenAreHidden
       ? new Map(spans.map((s) => [s.spanID, s] as [string, TraceSpan]))
       : new Map();
@@ -269,7 +268,6 @@ export default class ScrollManager {
 
   destroy() {
     this._trace = undefined;
-    /* eslint-disable @typescript-eslint/no-explicit-any */
     this._scroller = undefined as any;
     this._accessors = undefined;
   }

@@ -72,7 +72,6 @@ export const getStyles = () => {
   };
 };
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 export type ScrubberProps = {
   isDragging: boolean;
   position: number;

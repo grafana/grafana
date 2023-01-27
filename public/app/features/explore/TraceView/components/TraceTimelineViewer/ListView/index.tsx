@@ -491,7 +491,6 @@ export default class ListView extends React.Component<TListViewProps> {
       wrapperProps.style.height = '100%';
       wrapperProps.style.overflowY = 'auto';
     }
-    /* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
     const scrollerStyle = {
       position: 'relative' as 'relative',
       height: this._yPositions.getEstimatedHeight(),
