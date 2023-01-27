@@ -33,11 +33,11 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -173,8 +173,8 @@ func (hs *HTTPServer) registerRoutes() {
 		)
 	}
 
-	r.Get("/explore", authorize(func(c *models.ReqContext) {
-		if f, ok := reqSignedIn.(func(c *models.ReqContext)); ok {
+	r.Get("/explore", authorize(func(c *contextmodel.ReqContext) {
+		if f, ok := reqSignedIn.(func(c *contextmodel.ReqContext)); ok {
 			f(c)
 		}
 		middleware.EnsureEditorOrViewerCanEdit(c)
@@ -670,7 +670,7 @@ func (hs *HTTPServer) registerRoutes() {
 		adminRoute.Post("/ldap/sync/:id", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPUsersSync)), routing.Wrap(hs.PostSyncUserWithLDAP))
 		adminRoute.Get("/ldap/:username", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPUsersRead)), routing.Wrap(hs.GetUserFromLDAP))
 		adminRoute.Get("/ldap/status", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionLDAPStatusRead)), routing.Wrap(hs.GetLDAPStatus))
-	})
+	}, reqSignedIn)
 
 	// Administering users
 	r.Group("/api/admin/users", func(adminUserRoute routing.RouteRegister) {
@@ -688,7 +688,7 @@ func (hs *HTTPServer) registerRoutes() {
 		adminUserRoute.Post("/:id/logout", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersLogout, userIDScope)), routing.Wrap(hs.AdminLogoutUser))
 		adminUserRoute.Get("/:id/auth-tokens", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersAuthTokenList, userIDScope)), routing.Wrap(hs.AdminGetUserAuthTokens))
 		adminUserRoute.Post("/:id/revoke-auth-token", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionUsersAuthTokenUpdate, userIDScope)), routing.Wrap(hs.AdminRevokeUserAuthToken))
-	})
+	}, reqSignedIn)
 
 	// rendering
 	r.Get("/render/*", reqSignedIn, hs.RenderToPng)
@@ -701,7 +701,7 @@ func (hs *HTTPServer) registerRoutes() {
 
 	// Snapshots
 	r.Post("/api/snapshots/", reqSnapshotPublicModeOrSignedIn, hs.CreateDashboardSnapshot)
-	r.Get("/api/snapshot/shared-options/", reqSignedIn, GetSharingOptions)
+	r.Get("/api/snapshot/shared-options/", reqSignedIn, hs.GetSharingOptions)
 	r.Get("/api/snapshots/:key", routing.Wrap(hs.GetDashboardSnapshot))
 	r.Get("/api/snapshots-delete/:deleteKey", reqSnapshotPublicModeOrSignedIn, routing.Wrap(hs.DeleteDashboardSnapshotByDeleteKey))
 	r.Delete("/api/snapshots/:key", reqSignedIn, routing.Wrap(hs.DeleteDashboardSnapshot))

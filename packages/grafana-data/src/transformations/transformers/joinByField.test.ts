@@ -15,6 +15,7 @@ describe('JOIN Transformer', () => {
   describe('outer join', () => {
     const everySecondSeries = toDataFrame({
       name: 'even',
+      refId: 'even',
       fields: [
         { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
         { name: 'temperature', type: FieldType.number, values: [10.3, 10.4, 10.5, 10.6] },
@@ -24,6 +25,7 @@ describe('JOIN Transformer', () => {
 
     const everyOtherSecondSeries = toDataFrame({
       name: 'odd',
+      refId: 'odd',
       fields: [
         { name: 'time', type: FieldType.time, values: [1000, 3000, 5000, 7000] },
         { name: 'temperature', type: FieldType.number, values: [11.1, 11.3, 11.5, 11.7] },
@@ -33,9 +35,12 @@ describe('JOIN Transformer', () => {
 
     it('joins by time field', async () => {
       const cfg: DataTransformerConfig<JoinByFieldOptions> = {
-        id: DataTransformerID.seriesToColumns,
+        id: DataTransformerID.joinByField,
         options: {
-          byField: 'time',
+          fields: {
+            even: 'time',
+            odd: 'time',
+          },
         },
       };
 
@@ -135,9 +140,12 @@ describe('JOIN Transformer', () => {
 
     it('joins by temperature field', async () => {
       const cfg: DataTransformerConfig<JoinByFieldOptions> = {
-        id: DataTransformerID.seriesToColumns,
+        id: DataTransformerID.joinByField,
         options: {
-          byField: 'temperature',
+          fields: {
+            even: 'temperature',
+            odd: 'temperature',
+          },
         },
       };
 
@@ -145,6 +153,7 @@ describe('JOIN Transformer', () => {
         (received) => {
           const data = received[0];
           const filtered = data[0];
+
           expect(filtered.fields).toMatchInlineSnapshot(`
             [
               {
@@ -251,9 +260,12 @@ describe('JOIN Transformer', () => {
 
     it('joins by time field in reverse order', async () => {
       const cfg: DataTransformerConfig<JoinByFieldOptions> = {
-        id: DataTransformerID.seriesToColumns,
+        id: DataTransformerID.joinByField,
         options: {
-          byField: 'time',
+          fields: {
+            even: 'time',
+            odd: 'time',
+          },
         },
       };
 
@@ -265,6 +277,7 @@ describe('JOIN Transformer', () => {
         (received) => {
           const data = received[0];
           const filtered = data[0];
+
           expect(filtered.fields).toMatchInlineSnapshot(`
             [
               {
@@ -376,9 +389,12 @@ describe('JOIN Transformer', () => {
 
       it('when dataframe and field share the same name then use the field name', async () => {
         const cfg: DataTransformerConfig<JoinByFieldOptions> = {
-          id: DataTransformerID.seriesToColumns,
+          id: DataTransformerID.joinByField,
           options: {
-            byField: 'time',
+            fields: {
+              even: 'time',
+              odd: 'time',
+            },
           },
         };
 
@@ -439,9 +455,12 @@ describe('JOIN Transformer', () => {
 
     it('joins if fields are missing', async () => {
       const cfg: DataTransformerConfig<JoinByFieldOptions> = {
-        id: DataTransformerID.seriesToColumns,
+        id: DataTransformerID.joinByField,
         options: {
-          byField: 'time',
+          fields: {
+            even: 'time',
+            odd: 'time',
+          },
         },
       };
 
@@ -517,9 +536,12 @@ describe('JOIN Transformer', () => {
 
     it('handles duplicate field name', async () => {
       const cfg: DataTransformerConfig<JoinByFieldOptions> = {
-        id: DataTransformerID.seriesToColumns,
+        id: DataTransformerID.joinByField,
         options: {
-          byField: 'time',
+          fields: {
+            even: 'time',
+            odd: 'time',
+          },
         },
       };
 
@@ -580,6 +602,7 @@ describe('JOIN Transformer', () => {
   describe('inner join', () => {
     const seriesA = toDataFrame({
       name: 'A',
+      refId: 'A',
       fields: [
         { name: 'time', type: FieldType.time, values: [3000, 4000, 5000, 6000] },
         { name: 'temperature', type: FieldType.number, values: [10.3, 10.4, 10.5, 10.6] },
@@ -589,6 +612,7 @@ describe('JOIN Transformer', () => {
 
     const seriesB = toDataFrame({
       name: 'B',
+      refId: 'B',
       fields: [
         { name: 'time', type: FieldType.time, values: [1000, 3000, 5000, 7000] },
         { name: 'temperature', type: FieldType.number, values: [11.1, 10.3, 10.5, 11.7] },
@@ -598,9 +622,12 @@ describe('JOIN Transformer', () => {
 
     it('inner joins by time field', async () => {
       const cfg: DataTransformerConfig<JoinByFieldOptions> = {
-        id: DataTransformerID.seriesToColumns,
+        id: DataTransformerID.joinByField,
         options: {
-          byField: 'time',
+          fields: {
+            A: 'time',
+            B: 'time',
+          },
           mode: JoinMode.inner,
         },
       };
@@ -679,9 +706,12 @@ describe('JOIN Transformer', () => {
 
     it('inner joins by temperature field', async () => {
       const cfg: DataTransformerConfig<JoinByFieldOptions> = {
-        id: DataTransformerID.seriesToColumns,
+        id: DataTransformerID.joinByField,
         options: {
-          byField: 'temperature',
+          fields: {
+            A: 'temperature',
+            B: 'temperature',
+          },
           mode: JoinMode.inner,
         },
       };
@@ -764,9 +794,12 @@ describe('JOIN Transformer', () => {
 
     it('inner joins by time field in reverse order', async () => {
       const cfg: DataTransformerConfig<JoinByFieldOptions> = {
-        id: DataTransformerID.seriesToColumns,
+        id: DataTransformerID.joinByField,
         options: {
-          byField: 'time',
+          fields: {
+            A: 'time',
+            B: 'time',
+          },
           mode: JoinMode.inner,
         },
       };
@@ -852,6 +885,7 @@ describe('JOIN Transformer', () => {
     describe('Field names', () => {
       const seriesWithSameFieldAndDataFrameName = toDataFrame({
         name: 'temperature',
+        refId: 'temperature',
         fields: [
           { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
           { name: 'temperature', type: FieldType.number, values: [1, 3, 5, 7] },
@@ -860,6 +894,7 @@ describe('JOIN Transformer', () => {
 
       const seriesB = toDataFrame({
         name: 'B',
+        refId: 'B',
         fields: [
           { name: 'time', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
           { name: 'temperature', type: FieldType.number, values: [2, 4, 6, 8] },
@@ -868,9 +903,12 @@ describe('JOIN Transformer', () => {
 
       it('when dataframe and field share the same name then use the field name', async () => {
         const cfg: DataTransformerConfig<JoinByFieldOptions> = {
-          id: DataTransformerID.seriesToColumns,
+          id: DataTransformerID.joinByField,
           options: {
-            byField: 'time',
+            fields: {
+              temperature: 'time',
+              B: 'time',
+            },
             mode: JoinMode.inner,
           },
         };
@@ -932,15 +970,20 @@ describe('JOIN Transformer', () => {
 
     it('joins if fields are missing', async () => {
       const cfg: DataTransformerConfig<JoinByFieldOptions> = {
-        id: DataTransformerID.seriesToColumns,
+        id: DataTransformerID.joinByField,
         options: {
-          byField: 'time',
+          fields: {
+            A: 'time',
+            B: 'time',
+            C: 'time',
+          },
           mode: JoinMode.inner,
         },
       };
 
       const frame1 = toDataFrame({
         name: 'A',
+        refId: 'A',
         fields: [
           { name: 'time', type: FieldType.time, values: [1, 2, 3] },
           { name: 'temperature', type: FieldType.number, values: [10, 11, 12] },
@@ -949,11 +992,13 @@ describe('JOIN Transformer', () => {
 
       const frame2 = toDataFrame({
         name: 'B',
+        refId: 'B',
         fields: [],
       });
 
       const frame3 = toDataFrame({
         name: 'C',
+        refId: 'C',
         fields: [
           { name: 'time', type: FieldType.time, values: [1, 2, 3] },
           { name: 'temperature', type: FieldType.number, values: [20, 22, 24] },
@@ -1011,14 +1056,18 @@ describe('JOIN Transformer', () => {
 
     it('handles duplicate field name', async () => {
       const cfg: DataTransformerConfig<JoinByFieldOptions> = {
-        id: DataTransformerID.seriesToColumns,
+        id: DataTransformerID.joinByField,
         options: {
-          byField: 'time',
+          fields: {
+            frame1: 'time',
+            frame2: 'time',
+          },
           mode: JoinMode.inner,
         },
       };
 
       const frame1 = toDataFrame({
+        refId: 'frame1',
         fields: [
           { name: 'time', type: FieldType.time, values: [1] },
           { name: 'temperature', type: FieldType.number, values: [10] },
@@ -1026,6 +1075,7 @@ describe('JOIN Transformer', () => {
       });
 
       const frame2 = toDataFrame({
+        refId: 'frame2',
         fields: [
           { name: 'time', type: FieldType.time, values: [1] },
           { name: 'temperature', type: FieldType.number, values: [20] },

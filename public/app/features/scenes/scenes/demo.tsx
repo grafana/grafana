@@ -8,6 +8,7 @@ import {
   SceneToolbarInput,
   SceneDataNode,
 } from '@grafana/scenes';
+import { TestDataQueryType } from 'app/plugins/datasource/testdata/dataquery.gen';
 
 import { panelBuilders } from '../builders/panelBuilders';
 import { DashboardScene } from '../dashboard/DashboardScene';
@@ -69,7 +70,7 @@ export function getScenePanelRepeaterTest(): DashboardScene {
   const queryRunner = getQueryRunnerWithRandomWalkQuery({
     seriesCount: 2,
     alias: '__server_names',
-    scenarioId: 'random_walk',
+    scenarioId: TestDataQueryType.RandomWalk,
   });
 
   return new DashboardScene({
