@@ -34,34 +34,52 @@ node_modules: package.json yarn.lock ## Install node modules.
 ##@ Swagger
 SPEC_TARGET = public/api-spec.json
 ENTERPRISE_SPEC_TARGET = public/api-enterprise-spec.json
-MERGED_SPEC_TARGET := public/api-merged.json
+MERGED_SPEC_TARGET = public/api-merged.json
 NGALERT_SPEC_TARGET = pkg/services/ngalert/api/tooling/api.json
 ENTERPRISE_EXT_FILE = pkg/extensions/ext.go
 ENTERPRISE_EXT_DIR = pkg/extensions
-ENTERPRISE_EXT_FILES = $(shell find $(ENTERPRISE_EXT_DIR) -name api.go -follow)
+SWAGGER_OSS_FILES ?= $(shell git diff --name-only . ':(exclude)Makefile' | xargs grep -H swagger: | cut -d: -f1 )
+SWAGGER_ENTERPRISE_FILES ?= $(shell cd ../grafana-enterprise && git diff --name-only | xargs grep -H swagger: | cut -d: -f1 )
 
 $(NGALERT_SPEC_TARGET):
 	+$(MAKE) -C pkg/services/ngalert/api/tooling api.json
 
-$(MERGED_SPEC_TARGET): $(SPEC_TARGET) $(ENTERPRISE_SPEC_TARGET) $(NGALERT_SPEC_TARGET) $(SWAGGER) ## Merge generated and ngalert API specs
+$(MERGED_SPEC_TARGET): swagger-oss-gen swagger-enterprise-gen $(NGALERT_SPEC_TARGET) $(SWAGGER) ## Merge generated and ngalert API specs
 	# known conflicts DsPermissionType, AddApiKeyCommand, Json, Duration (identical models referenced by both specs)
 	$(SWAGGER) mixin $(SPEC_TARGET) $(ENTERPRISE_SPEC_TARGET) $(NGALERT_SPEC_TARGET) --ignore-conflicts -o $(MERGED_SPEC_TARGET)
 
-$(SPEC_TARGET): $(SWAGGER) ## Generate API Swagger specification
+ifneq ($(SWAGGER_OSS_FILES),)
+swagger-oss-gen: $(SWAGGER) ## Generate API Swagger specification
+	@echo "re-generating swagger for OSS"
+	rm $(SPEC_TARGET)
 	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m -w pkg/server -o $(SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/prometheus/alertmanager" \
 	-i pkg/api/swagger_tags.json \
-	--exclude-tag=alpha \
 	--exclude-tag=enterprise
+else
+swagger-oss-gen: $(SWAGGER) ## Generate API Swagger specification
+	@echo "skipping re-generating swagger for OSS"
+endif
 
-$(ENTERPRISE_SPEC_TARGET): $(ENTERPRISE_EXT_FILES) $(SWAGGER) ## Generate API Swagger specification
-ifneq ("$(wildcard $(ENTERPRISE_EXT_FILE))","") ## if enterprise is enabled
+ifeq ("$(wildcard $(ENTERPRISE_EXT_FILE))","") ## if enterprise is enabled
+swagger-enterprise-gen:
+	@echo "skipping re-generating swagger for enterprise: not enabled"
+else
+ifeq ($(SWAGGER_ENTERPRISE_FILES),)
+swagger-enterprise-gen:
+	@echo "skipping re-generating swagger for enterprise: no swagger changes"
+	@echo $(SWAGGER_ENTERPRISE_FILES)
+else
+swagger-enterprise-gen: $(SWAGGER) ## Generate API Swagger specification
+	@echo "re-generating swagger for enterprise"
+	rm $(ENTERPRISE_SPEC_TARGET)
 	SWAGGER_GENERATE_EXTENSION=false $(SWAGGER) generate spec -m -w pkg/server -o $(ENTERPRISE_SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/prometheus/alertmanager" \
 	-i pkg/api/swagger_tags.json \
 	--include-tag=enterprise
+endif
 endif
 
 swagger-api-spec: gen-go $(MERGED_SPEC_TARGET) validate-api-spec
@@ -121,7 +139,7 @@ build-js: ## Build frontend assets.
 
 build: build-go build-js ## Build backend and frontend.
 
-run: $(BRA) openapi3-gen ## Build and run web server on filesystem changes.
+run: $(BRA) swagger-oss-gen ## Build and run web server on filesystem changes.
 	$(BRA) run
 
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
