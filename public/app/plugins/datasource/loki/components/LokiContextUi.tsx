@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, LogRowModel, SelectableValue } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { MultiSelect, Tag, Tooltip, useStyles2 } from '@grafana/ui';
 
 import LokiLanguageProvider from '../LanguageProvider';
@@ -94,6 +95,20 @@ export function LokiContextUi(props: LokiContextUiProps) {
     setInitialized(true);
   });
 
+  useEffect(() => {
+    reportInteraction('grafana_explore_logs_loki_log_context_loaded', {
+      logRowUid: row.uid,
+      type: 'load',
+    });
+
+    return () => {
+      reportInteraction('grafana_explore_logs_loki_log_context_loaded', {
+        logRowUid: row.uid,
+        type: 'unload',
+      });
+    };
+  }, [row]);
+
   const realLabels = contextFilters.filter(({ fromParser }) => !fromParser);
   const realLabelsEnabled = realLabels.filter(({ enabled }) => enabled);
 
@@ -133,7 +148,21 @@ export function LokiContextUi(props: LokiContextUiProps) {
           maxMenuHeight={200}
           menuShouldPortal={false}
           noOptionsMessage="No further labels available"
-          onChange={(keys) => {
+          onChange={(keys, actionMeta) => {
+            if (actionMeta.action === 'select-option') {
+              reportInteraction('grafana_explore_logs_loki_log_context_filtered', {
+                logRowUid: row.uid,
+                type: 'label',
+                action: 'select',
+              });
+            }
+            if (actionMeta.action === 'remove-value') {
+              reportInteraction('grafana_explore_logs_loki_log_context_filtered', {
+                logRowUid: row.uid,
+                type: 'label',
+                action: 'remove',
+              });
+            }
             return setContextFilters(
               contextFilters.map((filter) => {
                 if (filter.fromParser) {
@@ -159,7 +188,21 @@ export function LokiContextUi(props: LokiContextUiProps) {
             maxMenuHeight={200}
             noOptionsMessage="No further labels available"
             isClearable={true}
-            onChange={(keys) => {
+            onChange={(keys, actionMeta) => {
+              if (actionMeta.action === 'select-option') {
+                reportInteraction('grafana_explore_logs_loki_log_context_filtered', {
+                  logRowUid: row.uid,
+                  type: 'parsed_label',
+                  action: 'select',
+                });
+              }
+              if (actionMeta.action === 'remove-value') {
+                reportInteraction('grafana_explore_logs_loki_log_context_filtered', {
+                  logRowUid: row.uid,
+                  type: 'parsed_label',
+                  action: 'remove',
+                });
+              }
               setContextFilters(
                 contextFilters.map((filter) => {
                   if (!filter.fromParser) {
