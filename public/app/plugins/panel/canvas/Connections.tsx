@@ -5,7 +5,7 @@ import { ConnectionPath } from 'app/features/canvas';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
-import { connectionAnchorAlt, ConnectionAnchors } from './ConnectionAnchors';
+import { CONNECTION_ANCHOR_ALT, ConnectionAnchors } from './ConnectionAnchors';
 import { ConnectionSVG } from './ConnectionSVG';
 
 export class Connections {
@@ -94,7 +94,7 @@ export class Connections {
       const relatedTarget = event.relatedTarget;
       assertInstanceOf(relatedTarget, HTMLImageElement);
       // If mouse is leaving INTO the anchor image, don't remove div
-      if (relatedTarget.getAttribute('alt') === connectionAnchorAlt) {
+      if (relatedTarget.getAttribute('alt') === CONNECTION_ANCHOR_ALT) {
         return;
       }
     }

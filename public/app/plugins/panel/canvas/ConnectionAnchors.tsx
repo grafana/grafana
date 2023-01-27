@@ -74,7 +74,7 @@ export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
         <img
           id={id}
           key={id}
-          alt={connectionAnchorAlt}
+          alt={CONNECTION_ANCHOR_ALT}
           className={styles.anchor}
           style={style}
           src={anchorImage}
