@@ -3,7 +3,7 @@ package quotatest
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/quota"
 )
 
@@ -24,7 +24,7 @@ func (f *FakeQuotaService) Update(ctx context.Context, cmd *quota.UpdateQuotaCmd
 	return nil
 }
 
-func (f *FakeQuotaService) QuotaReached(c *models.ReqContext, target quota.TargetSrv) (bool, error) {
+func (f *FakeQuotaService) QuotaReached(c *contextmodel.ReqContext, target quota.TargetSrv) (bool, error) {
 	return f.reached, f.err
 }
 
