@@ -82,12 +82,12 @@ swagger-enterprise-gen: $(SWAGGER) ## Generate API Swagger specification
 endif
 endif
 
-swagger-api-spec: gen-go $(MERGED_SPEC_TARGET) validate-api-spec
+swagger-gen: gen-go $(MERGED_SPEC_TARGET) swagger-validate
 
-validate-api-spec: $(MERGED_SPEC_TARGET) $(SWAGGER) ## Validate API spec
+swagger-validate: $(MERGED_SPEC_TARGET) $(SWAGGER) ## Validate API spec
 	$(SWAGGER) validate $(<)
 
-clean-api-spec:
+swagger-clean:
 	rm $(SPEC_TARGET) $(MERGED_SPEC_TARGET) $(ENTERPRISE_SPEC_TARGET) $(OAPI_SPEC_TARGET)
 
 ##@ OpenAPI 3
