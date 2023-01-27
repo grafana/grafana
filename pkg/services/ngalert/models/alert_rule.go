@@ -444,7 +444,7 @@ func (c Condition) IsValid() bool {
 //   - AlertRule.Condition and AlertRule.Data
 //
 // If either of the pair is specified, neither is patched.
-func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRule) {
+func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRule, existingRulesWithoutIsPaused map[string]struct{}) {
 	if ruleToPatch.Title == "" {
 		ruleToPatch.Title = existingRule.Title
 	}
@@ -469,6 +469,9 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRule) {
 	}
 	if ruleToPatch.For == -1 {
 		ruleToPatch.For = existingRule.For
+	}
+	if _, exists := existingRulesWithoutIsPaused[ruleToPatch.UID]; exists {
+		ruleToPatch.IsPaused = existingRule.IsPaused
 	}
 }
 

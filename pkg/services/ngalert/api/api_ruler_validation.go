@@ -97,7 +97,6 @@ func validateRuleNode(
 		RuleGroup:       groupName,
 		NoDataState:     noDataState,
 		ExecErrState:    errorState,
-		IsPaused:        ruleNode.GrafanaManagedAlert.IsPaused,
 	}
 
 	newAlertRule.For, err = validateForInterval(ruleNode)
@@ -150,18 +149,19 @@ func validateForInterval(ruleNode *apimodels.PostableExtendedRuleNode) (time.Dur
 
 // validateRuleGroup validates API model (definitions.PostableRuleGroupConfig) and converts it to a collection of models.AlertRule.
 // Returns a slice that contains all rules described by API model or error if either group specification or an alert definition is not valid.
+// It also returns a map containing current existing alerts that don't contain the is_paused field in the body of the call.
 func validateRuleGroup(
 	ruleGroupConfig *apimodels.PostableRuleGroupConfig,
 	orgId int64,
 	namespace *folder.Folder,
 	conditionValidator func(ngmodels.Condition) error,
-	cfg *setting.UnifiedAlertingSettings) ([]*ngmodels.AlertRule, error) {
+	cfg *setting.UnifiedAlertingSettings) ([]*ngmodels.AlertRule, map[string]struct{}, error) {
 	if ruleGroupConfig.Name == "" {
-		return nil, errors.New("rule group name cannot be empty")
+		return nil, nil, errors.New("rule group name cannot be empty")
 	}
 
 	if len(ruleGroupConfig.Name) > store.AlertRuleMaxRuleGroupNameLength {
-		return nil, fmt.Errorf("rule group name is too long. Max length is %d", store.AlertRuleMaxRuleGroupNameLength)
+		return nil, nil, fmt.Errorf("rule group name is too long. Max length is %d", store.AlertRuleMaxRuleGroupNameLength)
 	}
 
 	interval := time.Duration(ruleGroupConfig.Interval)
@@ -171,27 +171,34 @@ func validateRuleGroup(
 	}
 
 	if interval < 0 || int64(interval.Seconds())%int64(cfg.BaseInterval.Seconds()) != 0 {
-		return nil, fmt.Errorf("rule evaluation interval (%d second) should be positive number that is multiple of the base interval of %d seconds", int64(interval.Seconds()), int64(cfg.BaseInterval.Seconds()))
+		return nil, nil, fmt.Errorf("rule evaluation interval (%d second) should be positive number that is multiple of the base interval of %d seconds", int64(interval.Seconds()), int64(cfg.BaseInterval.Seconds()))
 	}
 
 	// TODO should we validate that interval is >= cfg.MinInterval? Currently, we allow to save but fix the specified interval if it is < cfg.MinInterval
 
 	result := make([]*ngmodels.AlertRule, 0, len(ruleGroupConfig.Rules))
+	existingRulesWithoutIsPaused := make(map[string]struct{})
 	uids := make(map[string]int, cap(result))
 	for idx := range ruleGroupConfig.Rules {
 		rule, err := validateRuleNode(&ruleGroupConfig.Rules[idx], ruleGroupConfig.Name, interval, orgId, namespace, conditionValidator, cfg)
 		// TODO do not stop on the first failure but return all failures
 		if err != nil {
-			return nil, fmt.Errorf("invalid rule specification at index [%d]: %w", idx, err)
+			return nil, nil, fmt.Errorf("invalid rule specification at index [%d]: %w", idx, err)
 		}
 		if rule.UID != "" {
 			if existingIdx, ok := uids[rule.UID]; ok {
-				return nil, fmt.Errorf("rule [%d] has UID %s that is already assigned to another rule at index %d", idx, rule.UID, existingIdx)
+				return nil, nil, fmt.Errorf("rule [%d] has UID %s that is already assigned to another rule at index %d", idx, rule.UID, existingIdx)
 			}
 			uids[rule.UID] = idx
+		}
+		isRulePaused := ruleGroupConfig.Rules[idx].GrafanaManagedAlert.IsPaused
+		if isRulePaused != nil {
+			rule.IsPaused = *isRulePaused
+		} else if rule.UID != "" {
+			existingRulesWithoutIsPaused[rule.UID] = struct{}{}
 		}
 		rule.RuleGroupIndex = idx + 1
 		result = append(result, rule)
 	}
-	return result, nil
+	return result, existingRulesWithoutIsPaused, nil
 }

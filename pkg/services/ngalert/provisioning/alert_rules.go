@@ -208,7 +208,7 @@ func (service *AlertRuleService) ReplaceRuleGroup(ctx context.Context, orgID int
 		}
 		rules = append(rules, &group.Rules[i])
 	}
-	delta, err := store.CalculateChanges(ctx, service.ruleStore, key, rules)
+	delta, err := store.CalculateChanges(ctx, service.ruleStore, key, rules, map[string]struct{}{})
 	if err != nil {
 		return fmt.Errorf("failed to calculate diff for alert rules: %w", err)
 	}
