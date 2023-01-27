@@ -17,8 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
-	"github.com/grafana/grafana/pkg/models"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	loginservice "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -70,7 +70,7 @@ func genPKCECode() (string, string, error) {
 }
 
 func (hs *HTTPServer) OAuthLogin(ctx *contextmodel.ReqContext) {
-	loginInfo := models.LoginInfo{
+	loginInfo := loginservice.LoginInfo{
 		AuthModule: "oauth",
 	}
 	name := web.Params(ctx.Req)[":name"]
@@ -271,10 +271,10 @@ func (hs *HTTPServer) OAuthLogin(ctx *contextmodel.ReqContext) {
 }
 
 // buildExternalUserInfo returns a ExternalUserInfo struct from OAuth user profile
-func (hs *HTTPServer) buildExternalUserInfo(token *oauth2.Token, userInfo *social.BasicUserInfo, name string) *models.ExternalUserInfo {
+func (hs *HTTPServer) buildExternalUserInfo(token *oauth2.Token, userInfo *social.BasicUserInfo, name string) *loginservice.ExternalUserInfo {
 	oauthLogger.Debug("Building external user info from OAuth user info")
 
-	extUser := &models.ExternalUserInfo{
+	extUser := &loginservice.ExternalUserInfo{
 		AuthModule:     fmt.Sprintf("oauth_%s", name),
 		OAuthToken:     token,
 		AuthId:         userInfo.Id,
@@ -310,16 +310,16 @@ func (hs *HTTPServer) buildExternalUserInfo(token *oauth2.Token, userInfo *socia
 // SyncUser syncs a Grafana user profile with the corresponding OAuth profile.
 func (hs *HTTPServer) SyncUser(
 	ctx *contextmodel.ReqContext,
-	extUser *models.ExternalUserInfo,
+	extUser *loginservice.ExternalUserInfo,
 	connect social.SocialConnector,
 ) (*user.User, error) {
 	oauthLogger.Debug("Syncing Grafana user with corresponding OAuth profile")
 	// add/update user in Grafana
-	cmd := &models.UpsertUserCommand{
+	cmd := &loginservice.UpsertUserCommand{
 		ReqContext:    ctx,
 		ExternalUser:  extUser,
 		SignupAllowed: connect.IsSignupAllowed(),
-		UserLookupParams: models.UserLookupParams{
+		UserLookupParams: loginservice.UserLookupParams{
 			Email:  &extUser.Email,
 			UserID: nil,
 			Login:  nil,
@@ -351,7 +351,7 @@ type LoginError struct {
 	Err           error
 }
 
-func (hs *HTTPServer) handleOAuthLoginError(ctx *contextmodel.ReqContext, info models.LoginInfo, err LoginError) {
+func (hs *HTTPServer) handleOAuthLoginError(ctx *contextmodel.ReqContext, info loginservice.LoginInfo, err LoginError) {
 	ctx.Handle(hs.Cfg, err.HttpStatus, err.PublicMessage, err.Err)
 
 	info.Error = err.Err
@@ -363,7 +363,7 @@ func (hs *HTTPServer) handleOAuthLoginError(ctx *contextmodel.ReqContext, info m
 	hs.HooksService.RunLoginHook(&info, ctx)
 }
 
-func (hs *HTTPServer) handleOAuthLoginErrorWithRedirect(ctx *contextmodel.ReqContext, info models.LoginInfo, err error, v ...interface{}) {
+func (hs *HTTPServer) handleOAuthLoginErrorWithRedirect(ctx *contextmodel.ReqContext, info loginservice.LoginInfo, err error, v ...interface{}) {
 	hs.redirectWithError(ctx, err, v...)
 
 	info.Error = err

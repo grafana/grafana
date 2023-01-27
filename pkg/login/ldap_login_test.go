@@ -5,13 +5,14 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 var errTest = errors.New("test error")
@@ -62,8 +63,8 @@ func (auth *mockAuth) Ping() ([]*multildap.ServerStatus, error) {
 	return nil, nil
 }
 
-func (auth *mockAuth) Login(query *models.LoginUserQuery) (
-	*models.ExternalUserInfo,
+func (auth *mockAuth) Login(query *login.LoginUserQuery) (
+	*login.ExternalUserInfo,
 	error,
 ) {
 	auth.loginCalled = true
@@ -76,14 +77,14 @@ func (auth *mockAuth) Login(query *models.LoginUserQuery) (
 }
 
 func (auth *mockAuth) Users(logins []string) (
-	[]*models.ExternalUserInfo,
+	[]*login.ExternalUserInfo,
 	error,
 ) {
 	return nil, nil
 }
 
 func (auth *mockAuth) User(login string) (
-	*models.ExternalUserInfo,
+	*login.ExternalUserInfo,
 	ldap.ServerConfig,
 	error,
 ) {
@@ -111,7 +112,7 @@ func mockLDAPAuthenticator(valid bool) *mockAuth {
 }
 
 type LDAPLoginScenarioContext struct {
-	loginUserQuery        *models.LoginUserQuery
+	loginUserQuery        *login.LoginUserQuery
 	LDAPAuthenticatorMock *mockAuth
 }
 
@@ -124,7 +125,7 @@ func LDAPLoginScenario(t *testing.T, desc string, fn LDAPLoginScenarioFunc) {
 		mock := &mockAuth{}
 
 		sc := &LDAPLoginScenarioContext{
-			loginUserQuery: &models.LoginUserQuery{
+			loginUserQuery: &login.LoginUserQuery{
 				Username:  "user",
 				Password:  "pwd",
 				IpAddress: "192.168.1.1:56433",

@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -44,10 +43,10 @@ type Implementation struct {
 }
 
 // UpsertUser updates an existing user, or if it doesn't exist, inserts a new one.
-func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUserCommand) error {
+func (ls *Implementation) UpsertUser(ctx context.Context, cmd *login.UpsertUserCommand) error {
 	extUser := cmd.ExternalUser
 
-	usr, errAuthLookup := ls.AuthInfoService.LookupAndUpdate(ctx, &models.GetUserByAuthInfoQuery{
+	usr, errAuthLookup := ls.AuthInfoService.LookupAndUpdate(ctx, &login.GetUserByAuthInfoQuery{
 		AuthModule:       extUser.AuthModule,
 		AuthId:           extUser.AuthId,
 		UserLookupParams: cmd.UserLookupParams,
@@ -109,7 +108,7 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 		}
 
 		if extUser.AuthModule != "" {
-			cmd2 := &models.SetAuthInfoCommand{
+			cmd2 := &login.SetAuthInfoCommand{
 				UserId:     cmd.Result.ID,
 				AuthModule: extUser.AuthModule,
 				AuthId:     extUser.AuthId,
@@ -166,7 +165,7 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 
 func (ls *Implementation) DisableExternalUser(ctx context.Context, username string) error {
 	// Check if external user exist in Grafana
-	userQuery := &models.GetExternalUserInfoByLoginQuery{
+	userQuery := &login.GetExternalUserInfoByLoginQuery{
 		LoginOrEmail: username,
 	}
 
@@ -209,7 +208,7 @@ func (ls *Implementation) SetTeamSyncFunc(teamSyncFunc login.TeamSyncFunc) {
 	ls.TeamSync = teamSyncFunc
 }
 
-func (ls *Implementation) updateUser(ctx context.Context, usr *user.User, extUser *models.ExternalUserInfo) error {
+func (ls *Implementation) updateUser(ctx context.Context, usr *user.User, extUser *login.ExternalUserInfo) error {
 	// sync user info
 	updateCmd := &user.UpdateUserCommand{
 		UserID: usr.ID,
@@ -242,8 +241,8 @@ func (ls *Implementation) updateUser(ctx context.Context, usr *user.User, extUse
 	return ls.userService.Update(ctx, updateCmd)
 }
 
-func (ls *Implementation) updateUserAuth(ctx context.Context, user *user.User, extUser *models.ExternalUserInfo) error {
-	updateCmd := &models.UpdateAuthInfoCommand{
+func (ls *Implementation) updateUserAuth(ctx context.Context, user *user.User, extUser *login.ExternalUserInfo) error {
+	updateCmd := &login.UpdateAuthInfoCommand{
 		AuthModule: extUser.AuthModule,
 		AuthId:     extUser.AuthId,
 		UserId:     user.ID,
@@ -254,7 +253,7 @@ func (ls *Implementation) updateUserAuth(ctx context.Context, user *user.User, e
 	return ls.AuthInfoService.UpdateAuthInfo(ctx, updateCmd)
 }
 
-func (ls *Implementation) syncOrgRoles(ctx context.Context, usr *user.User, extUser *models.ExternalUserInfo) error {
+func (ls *Implementation) syncOrgRoles(ctx context.Context, usr *user.User, extUser *login.ExternalUserInfo) error {
 	logger.Debug("Syncing organization roles", "id", usr.ID, "extOrgRoles", extUser.OrgRoles)
 
 	// don't sync org roles if none is specified
