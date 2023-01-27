@@ -404,7 +404,7 @@ func (hs *HTTPServer) redirectCDNPluginAsset(c *models.ReqContext, plugin plugin
 		"plugin_id":      plugin.ID,
 		"plugin_version": plugin.Info.Version,
 	}).Inc()
-	http.Redirect(c.Resp, c.Req, remoteURL, http.StatusFound)
+	http.Redirect(c.Resp, c.Req, remoteURL, http.StatusTemporaryRedirect)
 }
 
 // CheckHealth returns the health of a plugin.
