@@ -32,10 +32,7 @@ var (
 var logger log.Logger = log.New("plugin.instrumentation")
 
 // instrumentPluginRequest instruments success rate and latency of `fn`
-func instrumentPluginRequest(ctx context.Context, cfg Cfg, tracer tracing.Tracer, pluginCtx *backend.PluginContext, endpoint string, fn func() error) error {
-	ctx, span := tracer.Start(ctx, endpoint)
-	defer span.End()
-
+func instrumentPluginRequest(ctx context.Context, cfg Cfg, pluginCtx *backend.PluginContext, endpoint string, fn func() error) error {
 	status := "ok"
 
 	start := time.Now()
@@ -87,21 +84,21 @@ type Cfg struct {
 }
 
 // InstrumentCollectMetrics instruments collectMetrics.
-func InstrumentCollectMetrics(ctx context.Context, req *backend.PluginContext, cfg Cfg, tracer tracing.Tracer, fn func() error) error {
-	return instrumentPluginRequest(ctx, cfg, tracer, req, "collectMetrics", fn)
+func InstrumentCollectMetrics(ctx context.Context, req *backend.PluginContext, cfg Cfg, fn func() error) error {
+	return instrumentPluginRequest(ctx, cfg, req, "collectMetrics", fn)
 }
 
 // InstrumentCheckHealthRequest instruments checkHealth.
-func InstrumentCheckHealthRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, tracer tracing.Tracer, fn func() error) error {
-	return instrumentPluginRequest(ctx, cfg, tracer, req, "checkHealth", fn)
+func InstrumentCheckHealthRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, fn func() error) error {
+	return instrumentPluginRequest(ctx, cfg, req, "checkHealth", fn)
 }
 
 // InstrumentCallResourceRequest instruments callResource.
-func InstrumentCallResourceRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, tracer tracing.Tracer, fn func() error) error {
-	return instrumentPluginRequest(ctx, cfg, tracer, req, "callResource", fn)
+func InstrumentCallResourceRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, fn func() error) error {
+	return instrumentPluginRequest(ctx, cfg, req, "callResource", fn)
 }
 
 // InstrumentQueryDataRequest instruments success rate and latency of query data requests.
-func InstrumentQueryDataRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, tracer tracing.Tracer, fn func() error) error {
-	return instrumentPluginRequest(ctx, cfg, tracer, req, "queryData", fn)
+func InstrumentQueryDataRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, fn func() error) error {
+	return instrumentPluginRequest(ctx, cfg, req, "queryData", fn)
 }

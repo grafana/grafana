@@ -73,15 +73,16 @@ func NewClientDecorator(cfg *setting.Cfg, pCfg *config.Cfg,
 	pluginRegistry registry.Service,
 	oAuthTokenService oauthtoken.OAuthTokenService,
 	tracer tracing.Tracer) (*client.Decorator, error) {
-	c := client.ProvideService(pluginRegistry, pCfg, tracer)
-	middlewares := CreateMiddlewares(cfg, oAuthTokenService)
+	c := client.ProvideService(pluginRegistry, pCfg)
+	middlewares := CreateMiddlewares(cfg, oAuthTokenService, tracer)
 
 	return client.NewDecorator(c, middlewares...)
 }
 
-func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService) []plugins.ClientMiddleware {
+func CreateMiddlewares(cfg *setting.Cfg, oAuthTokenService oauthtoken.OAuthTokenService, tracer tracing.Tracer) []plugins.ClientMiddleware {
 	skipCookiesNames := []string{cfg.LoginCookieName}
 	middlewares := []plugins.ClientMiddleware{
+		clientmiddleware.NewTracingMiddleware(tracer),
 		clientmiddleware.NewTracingHeaderMiddleware(),
 		clientmiddleware.NewClearAuthHeadersMiddleware(),
 		clientmiddleware.NewOAuthTokenMiddleware(oAuthTokenService),
