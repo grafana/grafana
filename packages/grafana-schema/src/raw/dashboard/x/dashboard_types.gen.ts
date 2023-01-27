@@ -808,5 +808,5 @@ export const defaultDashboard: Partial<Dashboard> = {
   schemaVersion: 36,
   style: 'dark',
   tags: [],
-  timezone: '',
+  timezone: 'browser',
 };
