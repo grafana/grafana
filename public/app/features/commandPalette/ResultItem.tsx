@@ -1,9 +1,9 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { ActionId, ActionImpl } from 'kbar';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { useTheme2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 export const ResultItem = React.forwardRef(
   (
@@ -31,8 +31,7 @@ export const ResultItem = React.forwardRef(
       return action.ancestors.slice(index + 1);
     }, [action.ancestors, currentRootActionId]);
 
-    const theme = useTheme2();
-    const styles = getResultItemStyles(theme, active);
+    const styles = useStyles2(getResultItemStyles);
 
     let name = action.name;
 
@@ -42,7 +41,7 @@ export const ResultItem = React.forwardRef(
     }
 
     return (
-      <div ref={ref} className={styles.row}>
+      <div ref={ref} className={cx(styles.row, active && styles.activeRow)}>
         <div className={styles.actionContainer}>
           {action.icon}
           <div className={styles.textContainer}>
@@ -63,31 +62,33 @@ export const ResultItem = React.forwardRef(
     );
   }
 );
+
 ResultItem.displayName = 'ResultItem';
 
-const getResultItemStyles = (theme: GrafanaTheme2, isActive: boolean) => {
-  const textColor = isActive ? theme.colors.text.maxContrast : theme.colors.text.primary;
-  const rowBackgroundColor = isActive ? theme.colors.background.primary : 'transparent';
-  const shortcutBackgroundColor = isActive ? theme.colors.background.secondary : theme.colors.background.primary;
+const getResultItemStyles = (theme: GrafanaTheme2) => {
   return {
     row: css({
-      color: textColor,
       padding: theme.spacing(1, 2),
-      background: rowBackgroundColor,
       display: 'flex',
       alightItems: 'center',
       justifyContent: 'space-between',
       cursor: 'pointer',
       position: 'relative',
+      borderRadius: theme.shape.borderRadius(2),
+      margin: theme.spacing(0, 1),
+    }),
+    activeRow: css({
+      color: theme.colors.text.maxContrast,
+      background: theme.colors.emphasize(theme.colors.background.primary, 0.03),
       '&:before': {
-        display: isActive ? 'block' : 'none',
+        display: 'block',
         content: '" "',
         position: 'absolute',
         left: 0,
         top: 0,
         bottom: 0,
         width: theme.spacing(0.5),
-        borderRadius: theme.shape.borderRadius(1),
+        borderRadius: theme.shape.borderRadius(2),
         backgroundImage: theme.colors.gradients.brandVertical,
       },
     }),
@@ -103,7 +104,7 @@ const getResultItemStyles = (theme: GrafanaTheme2, isActive: boolean) => {
     }),
     shortcut: css({
       padding: theme.spacing(0, 1),
-      background: shortcutBackgroundColor,
+      background: theme.colors.background.secondary,
       borderRadius: theme.shape.borderRadius(),
       fontSize: theme.typography.fontSize,
     }),

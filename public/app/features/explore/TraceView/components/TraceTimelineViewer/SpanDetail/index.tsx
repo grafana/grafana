@@ -18,7 +18,7 @@ import React from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, LinkModel, TimeZone } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { DataLinkButton, Icon, TextArea, useStyles2 } from '@grafana/ui';
+import { Button, DataLinkButton, Icon, TextArea, useStyles2 } from '@grafana/ui';
 
 import { autoColor } from '../../Theme';
 import { Divider } from '../../common/Divider';
@@ -193,24 +193,48 @@ export default function SpanDetail(props: SpanDetailProps) {
       : []),
   ];
   const styles = useStyles2(getStyles);
-  const links = createSpanLink?.(span);
-  const focusSpanLink = createFocusSpanLink(traceID, spanID);
-  /* eslint-disable @typescript-eslint/no-explicit-any */
-  const logLink = links?.logLinks?.[0]
-    ? ({
-        ...links?.logLinks?.[0],
-        title: 'Logs for this span',
-        onClick: (event: React.MouseEvent) => {
-          reportInteraction('grafana_traces_trace_view_span_link_clicked', {
-            datasourceType: datasourceType,
-            type: 'log',
-            location: 'spanDetails',
-          });
-          links?.logLinks?.[0].onClick!(event);
-        },
-      } as any)
-    : undefined;
 
+  let logLinkButton: JSX.Element | undefined = undefined;
+  if (createSpanLink) {
+    const links = createSpanLink(span);
+    if (links?.logLinks) {
+      logLinkButton = (
+        <DataLinkButton
+          link={{
+            ...links.logLinks[0],
+            title: 'Logs for this span',
+            target: '_blank',
+            origin: links.logLinks[0].field,
+            onClick: (event: React.MouseEvent) => {
+              reportInteraction('grafana_traces_trace_view_span_link_clicked', {
+                datasourceType: datasourceType,
+                type: 'log',
+                location: 'spanDetails',
+              });
+              links?.logLinks?.[0].onClick?.(event);
+            },
+          }}
+          buttonProps={{ icon: 'gf-logs' }}
+        />
+      );
+    } else {
+      logLinkButton = (
+        <Button
+          variant="primary"
+          size="sm"
+          icon={'gf-logs'}
+          disabled
+          tooltip={
+            'We did not match any variables between the link and this span. Check your configuration or this span attributes.'
+          }
+        >
+          Logs for this span
+        </Button>
+      );
+    }
+  }
+
+  const focusSpanLink = createFocusSpanLink(traceID, spanID);
   return (
     <div data-testid="span-detail-component">
       <div className={styles.header}>
@@ -219,11 +243,7 @@ export default function SpanDetail(props: SpanDetailProps) {
           <LabeledList className={ubTxRightAlign} divider={true} items={overviewItems} />
         </div>
       </div>
-      {logLink ? (
-        <>
-          <DataLinkButton link={logLink} buttonProps={{ icon: 'gf-logs' }} />
-        </>
-      ) : null}
+      {logLinkButton}
       <Divider className={ubMy1} type={'horizontal'} />
       <div>
         <div>

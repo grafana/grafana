@@ -46,13 +46,6 @@ type Engine struct {
 	defaultContext context.Context
 }
 
-// BufferSize sets buffer size for iterate
-func (engine *Engine) BufferSize(size int) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.BufferSize(size)
-}
-
 // CondDeleted returns the conditions whether a record is soft deleted.
 func (engine *Engine) CondDeleted(col *core.Column) builder.Cond {
 	var cond = builder.NewCond()
@@ -238,21 +231,6 @@ func (engine *Engine) SetMaxIdleConns(conns int) {
 	engine.db.SetMaxIdleConns(conns)
 }
 
-// NoCache If you has set default cacher, and you want temporilly stop use cache,
-// you can use NoCache()
-func (engine *Engine) NoCache() *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.NoCache()
-}
-
-// NoCascade If you do not want to auto cascade load object
-func (engine *Engine) NoCascade() *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.NoCascade()
-}
-
 // NewDB provides an interface to operate database directly
 func (engine *Engine) NewDB() (*core.DB, error) {
 	return core.OpenDialect(engine.dialect)
@@ -287,17 +265,6 @@ func (engine *Engine) Ping() error {
 	return session.Ping()
 }
 
-// logSQL save sql
-func (engine *Engine) logSQL(sqlStr string, sqlArgs ...interface{}) {
-	if engine.showSQL && !engine.showExecTime {
-		if len(sqlArgs) > 0 {
-			engine.logger.Infof("[SQL] %v %#v", sqlStr, sqlArgs)
-		} else {
-			engine.logger.Infof("[SQL] %v", sqlStr)
-		}
-	}
-}
-
 // Sql provides raw sql input parameter. When you have a complex SQL statement
 // and cannot use Where, Id, In and etc. Methods to describe, you can use SQL.
 //
@@ -316,22 +283,6 @@ func (engine *Engine) SQL(query interface{}, args ...interface{}) *Session {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.SQL(query, args...)
-}
-
-// NoAutoTime Default if your struct has "created" or "updated" filed tag, the fields
-// will automatically be filled with current time when Insert or Update
-// invoked. Call NoAutoTime if you dont' want to fill automatically.
-func (engine *Engine) NoAutoTime() *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.NoAutoTime()
-}
-
-// NoAutoCondition disable auto generate Where condition from bean or not
-func (engine *Engine) NoAutoCondition(no ...bool) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.NoAutoCondition(no...)
 }
 
 func (engine *Engine) loadTableInfo(table *core.Table) error {
@@ -373,13 +324,6 @@ func (engine *Engine) DBMetas() ([]*core.Table, error) {
 		}
 	}
 	return tables, nil
-}
-
-// Cascade use cascade or not
-func (engine *Engine) Cascade(trueOrFalse ...bool) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.Cascade(trueOrFalse...)
 }
 
 // Where method provide a condition query

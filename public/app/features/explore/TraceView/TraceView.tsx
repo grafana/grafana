@@ -4,7 +4,6 @@ import React, { RefObject, useCallback, useMemo, useState } from 'react';
 import {
   DataFrame,
   DataLink,
-  DataQuery,
   DataSourceApi,
   DataSourceJsonData,
   Field,
@@ -15,6 +14,7 @@ import {
   SplitOpen,
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 import { TraceToLogsData } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricsData } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
@@ -115,7 +115,7 @@ export function TraceView(props: Props) {
   );
 
   const instanceSettings = getDatasourceSrv().getInstanceSettings(datasource?.name);
-  const traceToLogsOptions = (instanceSettings?.jsonData as TraceToLogsData)?.tracesToLogs;
+  const traceToLogsOptions = getTraceToLogsOptions(instanceSettings?.jsonData as TraceToLogsData);
   const traceToMetricsOptions = (instanceSettings?.jsonData as TraceToMetricsData)?.tracesToMetrics;
   const spanBarOptions: SpanBarOptionsData | undefined = instanceSettings?.jsonData;
 
@@ -127,8 +127,9 @@ export function TraceView(props: Props) {
         traceToMetricsOptions,
         dataFrame: props.dataFrames[0],
         createFocusSpanLink,
+        trace: traceProp,
       }),
-    [props.splitOpenFn, traceToLogsOptions, traceToMetricsOptions, props.dataFrames, createFocusSpanLink]
+    [props.splitOpenFn, traceToLogsOptions, traceToMetricsOptions, props.dataFrames, createFocusSpanLink, traceProp]
   );
   const onSlimViewClicked = useCallback(() => setSlim(!slim), [slim]);
   const timeZone = useSelector((state) => getTimeZone(state.user));

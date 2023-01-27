@@ -115,6 +115,10 @@ const (
 	// Explore native k8s integrations
 	FlagK8s = "k8s"
 
+	// FlagK8sDashboards
+	// Save dashboards via k8s
+	FlagK8sDashboards = "k8sDashboards"
+
 	// FlagSupportBundles
 	// Support bundles for troubleshooting
 	FlagSupportBundles = "supportBundles"
@@ -302,4 +306,8 @@ const (
 	// FlagAzureMultipleResourcePicker
 	// Azure multiple resource picker
 	FlagAzureMultipleResourcePicker = "azureMultipleResourcePicker"
+
+	// FlagTopNavCommandPalette
+	// Launch the Command Palette from the top navigation search box
+	FlagTopNavCommandPalette = "topNavCommandPalette"
 )
