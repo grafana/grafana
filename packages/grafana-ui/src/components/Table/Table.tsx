@@ -64,6 +64,8 @@ export const Table = memo((props: Props) => {
   const theme = useTheme2();
   const headerHeight = noHeader ? 0 : tableStyles.rowHeight;
   const [footerItems, setFooterItems] = useState<FooterItem[] | undefined>(footerValues);
+  // console.log(footerItems, 'footerItems');
+  // console.log(footerOptions, 'footerOptions');
 
   const footerHeight = useMemo(() => {
     const EXTENDED_ROW_HEIGHT = headerHeight;
@@ -146,6 +148,8 @@ export const Table = memo((props: Props) => {
     pageOptions,
     setHiddenColumns,
   } = useTable(options, useFilters, useSortBy, useAbsoluteLayout, useResizeColumns, useExpanded, usePagination);
+  console.log(headerGroups, 'headerGroups');
+  console.log(rows, 'rows');
 
   const extendedState = state as GrafanaTableState;
 
@@ -186,6 +190,7 @@ export const Table = memo((props: Props) => {
     if (isCountRowsSet) {
       const footerItemsCountRows: FooterItem[] = new Array(footerItems.length).fill(undefined);
       footerItemsCountRows[0] = data.length.toString();
+      // console.log(footerItemsCountRows, 'footerItemsCountRows');
       setFooterItems(footerItemsCountRows);
     } else {
       setFooterItems(footerItems);
@@ -376,7 +381,7 @@ export const Table = memo((props: Props) => {
           {footerItems && (
             <FooterRow
               isPaginationVisible={Boolean(enablePagination)}
-              footerValues={footerItems}
+              footerValues={[undefined, ...footerItems]}
               footerGroups={footerGroups}
               totalColumnsWidth={totalColumnsWidth}
               tableStyles={tableStyles}

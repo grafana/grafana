@@ -75,6 +75,10 @@ export function getColumns(
   footerValues?: FooterItem[],
   isCountRowsSet?: boolean
 ): GrafanaTableColumn[] {
+  // console.log(footerValues, 'footerValues1');
+  // const updatedFooterValues = footerValues;
+  // updatedFooterValues?.unshift(undefined);
+  // console.log(updatedFooterValues, 'footerValues2');
   const columns: GrafanaTableColumn[] = [];
   let fieldCountWithoutWidth = 0;
 
@@ -341,9 +345,13 @@ export function getFooterItems(
   options: TableFooterCalc,
   theme2: GrafanaTheme2
 ): FooterItem[] {
+  // console.log(filterFields, 'filterFields');
+  // console.log(values, 'values');
+  // console.log(options, 'options');
   return filterFields.map((data, i) => {
     if (data.field.type !== FieldType.number) {
       // show the reducer in the first column
+      // JEV: we'll have to change what coulumn this is viewed in...
       if (i === 0 && options.reducer && options.reducer.length > 0) {
         const reducer = fieldReducers.get(options.reducer[0]);
         return reducer.name;
@@ -357,6 +365,7 @@ export function getFooterItems(
     data.field = newField;
     if (options.fields && options.fields.length > 0) {
       const f = options.fields.find((f) => f === data.field.name);
+      // console.log(f, 'f');
       if (f) {
         return getFormattedValue(data.field, options.reducer, theme2);
       }
@@ -367,9 +376,11 @@ export function getFooterItems(
 }
 
 function getFormattedValue(field: Field, reducer: string[], theme: GrafanaTheme2) {
+  // console.log(getFormattedValue, 'getFormattedValue fired');
   const fmt = field.display ?? getDisplayProcessor({ field, theme });
   const calc = reducer[0];
   const v = reduceField({ field, reducers: reducer })[calc];
+  // console.log(formattedValueToString(fmt(v)), 'formattedValueToString(fmt(v));');
   return formattedValueToString(fmt(v));
 }
 
