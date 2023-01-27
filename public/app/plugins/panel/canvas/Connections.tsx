@@ -88,16 +88,17 @@ export class Connections {
     }
   };
 
-  handleMouseLeave = (event: React.MouseEvent | React.FocusEvent) => {
+  handleMouseLeave = (event: React.MouseEvent | React.FocusEvent): boolean => {
     // If mouse is leaving INTO the anchor image, don't remove div
     if (
       event.relatedTarget instanceof HTMLImageElement &&
       event.relatedTarget.getAttribute('alt') === CONNECTION_ANCHOR_ALT
     ) {
-      return;
+      return false;
     }
 
     this.connectionAnchorDiv!.style.display = 'none';
+    return true;
   };
 
   connectionListener = (event: MouseEvent) => {

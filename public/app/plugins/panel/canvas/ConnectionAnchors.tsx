@@ -7,7 +7,9 @@ import { ConnectionCoordinates } from 'app/features/canvas';
 
 type Props = {
   setRef: (anchorElement: HTMLDivElement) => void;
-  handleMouseLeave: (event: React.MouseEvent<Element, MouseEvent> | React.FocusEvent<HTMLDivElement, Element>) => void;
+  handleMouseLeave: (
+    event: React.MouseEvent<Element, MouseEvent> | React.FocusEvent<HTMLDivElement, Element>
+  ) => boolean;
 };
 
 export const CONNECTION_ANCHOR_DIV_ID = 'connectionControl';
@@ -36,6 +38,16 @@ export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
   const onMouseLeaveHighlightElement = () => {
     if (highlightEllipseRef.current) {
       highlightEllipseRef.current.style.display = 'none';
+    }
+  };
+
+  const handleMouseLeaveAnchors = (
+    event: React.MouseEvent<Element, MouseEvent> | React.FocusEvent<HTMLDivElement, Element>
+  ) => {
+    const didHideAnchors = handleMouseLeave(event);
+
+    if (didHideAnchors) {
+      onMouseLeaveHighlightElement();
     }
   };
 
@@ -86,7 +98,7 @@ export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
 
   return (
     <div className={styles.root} ref={setRef}>
-      <div className={styles.mouseoutDiv} onMouseOut={handleMouseLeave} onBlur={handleMouseLeave} />
+      <div className={styles.mouseoutDiv} onMouseOut={handleMouseLeaveAnchors} onBlur={handleMouseLeaveAnchors} />
       <div
         id={CONNECTION_ANCHOR_DIV_ID}
         ref={highlightEllipseRef}
