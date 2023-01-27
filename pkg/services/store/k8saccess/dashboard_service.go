@@ -2,8 +2,14 @@ package k8saccess
 
 import (
 	"context"
+	"encoding/json"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/apimachinery/bridge"
+	"github.com/grafana/grafana/pkg/kinds/dashboard"
+	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
+	"github.com/grafana/grafana/pkg/registry/corecrd"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/store/entity"
@@ -13,12 +19,13 @@ import (
 type k8sDashboardService struct {
 	orig      dashboards.DashboardService
 	clientSet *bridge.Clientset
+	reg       *corecrd.Registry
 	store     entity.EntityStoreServer
 }
 
 var _ dashboards.DashboardService = (*k8sDashboardService)(nil)
 
-func NewDashboardService(cfg *setting.Cfg, orig dashboards.DashboardService, store entity.EntityStoreServer) dashboards.DashboardService {
+func NewDashboardService(cfg *setting.Cfg, orig dashboards.DashboardService, store entity.EntityStoreServer, reg *corecrd.Registry) dashboards.DashboardService {
 	config, err := bridge.LoadRestConfig(cfg)
 	if err != nil {
 		panic(err)
@@ -28,6 +35,7 @@ func NewDashboardService(cfg *setting.Cfg, orig dashboards.DashboardService, sto
 		panic(err)
 	}
 	return &k8sDashboardService{
+		reg:       reg,
 		orig:      orig,
 		clientSet: clientSet,
 		store:     store,
@@ -84,38 +92,52 @@ func (s *k8sDashboardService) MakeUserAdmin(ctx context.Context, orgID int64, us
 
 // example write from app sdk https://github.com/grafana/grafana-app-sdk/blob/44004e08c6cb131e3a2b8fed63f85ccc2ecc9220/crd/simplestore.go#L95
 // questions:
-// - how do we get a namespace?
 // - how do we use the dashboard core kind?
 // - how do we translate incoming dashboard DTO to dashboard kind?
 func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO, allowUiUpdate bool) (*dashboards.Dashboard, error) {
-	//s.clientSet.RESTClient().Patch(types.ApplyPatchType).Resource().
-	//fmt.Printf("SAVE: " + dto.Dashboard.UID)
-	//if labels == nil {
-	//	labels = make(map[string]string)
-	//}
-	//o := Base[T]{
-	//	TypeMeta: metav1.TypeMeta{
-	//		Kind:       s.cr.kind,
-	//		APIVersion: s.cr.GroupVersion().Identifier(),
-	//	},
-	//	ObjectMeta: metav1.ObjectMeta{
-	//		Name:   name,
-	//		Labels: labels,
-	//	},
-	//	Spec: obj,
-	//}
-	//b, err := json.Marshal(o)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//status := 0
-	//into := Base[T]{}
-	//err = s.client.Post().Resource(s.cr.Plural()).Namespace(namespace).Body(b).Do(ctx).StatusCode(&status).Into(&into)
-	//if err != nil {
-	//	return nil, newKubernetesClientError(err, status)
-	//}
-	//return &into, nil
-	return s.orig.SaveDashboard(ctx, dto, allowUiUpdate)
+	namespace := "default"
+	restClient := s.clientSet.RESTClient()
+	labels := make(map[string]string)
+
+	// take the kindsys dashboard kind and alias it so it's easier to distinguish from dashboards.Dashboard
+	type dashboardKind = dashboard.Dashboard
+	// get the dashboard CRD from the CRD registry
+	dashboardCRD := s.reg.Dashboard()
+	// map native Grafana dashboard object to kindsys dashboard object
+	d := dashboardKind{
+		Uid:   &dto.Dashboard.UID,
+		Title: &dto.Dashboard.Title,
+	}
+
+	b := k8ssys.Base[dashboardKind]{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       dashboardCRD.Schema.Kind,
+			APIVersion: dashboardCRD.Schema.APIVersion,
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:   dto.Dashboard.UID,
+			Labels: labels,
+		},
+		Spec: d,
+	}
+
+	raw, err := json.Marshal(&b)
+	if err != nil {
+		return nil, err
+	}
+	status := 0
+	into := k8ssys.Base[dashboardKind]{}
+	err = restClient.
+		Post().
+		Resource("Dashboard").
+		Namespace(namespace).
+		Body(raw).
+		Do(ctx).
+		StatusCode(&status).
+		Into(&into)
+
+	return dto.Dashboard, err
+
 }
 
 func (s *k8sDashboardService) SearchDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) error {

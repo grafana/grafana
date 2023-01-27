@@ -27,7 +27,7 @@ type Clientset struct {
 	*kubernetes.Clientset
 	extset *apiextensionsclient.Clientset
 	config *rest.Config
-	crds   map[k8schema.GroupVersion]apiextensionsv1.CustomResourceDefinition
+	CRDs   map[k8schema.GroupVersion]apiextensionsv1.CustomResourceDefinition
 	lock   sync.RWMutex
 }
 
@@ -47,7 +47,7 @@ func NewClientset(cfg *rest.Config) (*Clientset, error) {
 		Clientset: k8sset,
 		extset:    extset,
 		config:    cfg,
-		crds:      make(map[k8schema.GroupVersion]apiextensionsv1.CustomResourceDefinition),
+		CRDs:      make(map[k8schema.GroupVersion]apiextensionsv1.CustomResourceDefinition),
 	}, nil
 }
 
@@ -60,7 +60,7 @@ func (c *Clientset) RegisterSchema(ctx context.Context, gcrd k8ssys.Kind) error 
 	}
 
 	c.lock.RLock()
-	_, ok := c.crds[ver]
+	_, ok := c.CRDs[ver]
 	c.lock.RUnlock()
 	if ok {
 		return ErrCRDAlreadyRegistered
@@ -76,7 +76,7 @@ func (c *Clientset) RegisterSchema(ctx context.Context, gcrd k8ssys.Kind) error 
 	}
 
 	c.lock.Lock()
-	c.crds[ver] = *crd
+	c.CRDs[ver] = *crd
 	c.lock.Unlock()
 
 	return nil
