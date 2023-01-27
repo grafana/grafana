@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -608,7 +609,7 @@ type scenarioContext struct {
 
 type folderACLItem struct {
 	roleType   org.RoleType
-	permission models.PermissionType
+	permission dashboards.PermissionType
 }
 
 func toLibraryElement(t *testing.T, res libraryelements.LibraryElementDTO) libraryElement {
@@ -706,6 +707,7 @@ func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash
 	service := dashboardservice.ProvideDashboardService(
 		cfg, dashboardStore, dashboardStore, dashAlertService,
 		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), acmock.NewMockedPermissionsService(), ac,
+		foldertest.NewFakeService(),
 	)
 	dashboard, err := service.SaveDashboard(context.Background(), dashItem, true)
 	require.NoError(t, err)

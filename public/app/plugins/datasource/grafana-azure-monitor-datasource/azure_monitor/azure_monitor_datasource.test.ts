@@ -5,7 +5,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 
 import createMockQuery from '../__mocks__/query';
 import { createTemplateVariables } from '../__mocks__/utils';
-import { singleVariable, subscriptionsVariable } from '../__mocks__/variables';
+import { multiVariable, singleVariable, subscriptionsVariable } from '../__mocks__/variables';
 import AzureMonitorDatasource from '../datasource';
 import { AzureDataSourceJsonData, AzureMonitorLocationsResponse, AzureQueryType } from '../types';
 
@@ -119,6 +119,43 @@ describe('AzureMonitorDatasource', () => {
         azureMonitor: {
           metricNamespace,
           resources: [{ resourceGroup, resourceName }],
+        },
+      });
+    });
+
+    it('expand template variables in resource groups and names', () => {
+      const resourceGroup = '$rg';
+      const resourceName = '$rn';
+      templateSrv.init([
+        {
+          id: 'rg',
+          name: 'rg',
+          current: {
+            value: `rg1,rg2`,
+          },
+        },
+        {
+          id: 'rn',
+          name: 'rn',
+          current: {
+            value: `rn1,rn2`,
+          },
+        },
+      ]);
+      const query = createMockQuery({
+        azureMonitor: {
+          resources: [{ resourceGroup, resourceName }],
+        },
+      });
+      const templatedQuery = ctx.ds.azureMonitorDatasource.applyTemplateVariables(query, {});
+      expect(templatedQuery).toMatchObject({
+        azureMonitor: {
+          resources: [
+            { resourceGroup: 'rg1', resourceName: 'rn1' },
+            { resourceGroup: 'rg2', resourceName: 'rn1' },
+            { resourceGroup: 'rg1', resourceName: 'rn2' },
+            { resourceGroup: 'rg2', resourceName: 'rn2' },
+          ],
         },
       });
     });
@@ -568,6 +605,41 @@ describe('AzureMonitorDatasource', () => {
               expect(results.length).toEqual(1);
               expect(results[0].text).toEqual('nodeapp');
               expect(results[0].value).toEqual('nodeapp');
+            });
+        });
+
+        it('should return multiple resources from a template variable', () => {
+          const tsrv = new TemplateSrv();
+          tsrv.replace = jest
+            .fn()
+            .mockImplementation((value: string) => (value === `$${multiVariable.id}` ? 'foo,bar' : value));
+          const ds = new AzureMonitorDatasource(ctx.instanceSettings, templateSrv);
+          ds.azureMonitorDatasource.templateSrv = tsrv;
+          ds.azureMonitorDatasource.getResource = jest
+            .fn()
+            .mockImplementationOnce((path: string) => {
+              expect(path).toMatch('foo');
+              return Promise.resolve(response);
+            })
+            .mockImplementationOnce((path: string) => {
+              expect(path).toMatch('bar');
+              return Promise.resolve({
+                value: [
+                  {
+                    name: resourceGroup + '2',
+                    type: metricNamespace,
+                  },
+                ],
+              });
+            });
+          return ds
+            .getResourceNames(subscription, `$${multiVariable.id}`, metricNamespace)
+            .then((results: Array<{ text: string; value: string }>) => {
+              expect(results.length).toEqual(2);
+              expect(results[0].text).toEqual('nodeapp');
+              expect(results[0].value).toEqual('nodeapp');
+              expect(results[1].text).toEqual('nodeapp2');
+              expect(results[1].value).toEqual('nodeapp2');
             });
         });
       });
