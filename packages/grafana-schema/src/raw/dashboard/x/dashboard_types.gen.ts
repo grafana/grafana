@@ -777,9 +777,9 @@ export interface Dashboard {
     time_options: Array<string>;
   };
   /**
-   * Timezone of dashboard,
+   * Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc".
    */
-  timezone?: ('browser' | 'utc' | '');
+  timezone?: string;
   /**
    * Title of dashboard.
    */
@@ -808,5 +808,5 @@ export const defaultDashboard: Partial<Dashboard> = {
   schemaVersion: 36,
   style: 'dark',
   tags: [],
-  timezone: 'browser',
+  timezone: '',
 };
