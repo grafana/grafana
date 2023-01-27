@@ -71,7 +71,7 @@
     "date-fns": "2.29.3",
     "hoist-non-react-statics": "3.3.2",
     "i18next": "^22.0.0",
-    "immutable": "4.1.0",
+    "immutable": "4.2.2",
     "is-hotkey": "0.2.0",
     "jquery": "3.6.1",
     "lodash": "4.17.21",
@@ -109,7 +109,7 @@
     "slate-react": "0.22.10",
     "tinycolor2": "1.4.2",
     "tslib": "2.4.1",
-    "uplot": "1.6.23",
+    "uplot": "1.6.24",
     "uuid": "9.0.0"
   },
   "devDependencies": {

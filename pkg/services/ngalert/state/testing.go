@@ -61,9 +61,12 @@ func (f *FakeRuleReader) ListAlertRules(_ context.Context, q *models.ListAlertRu
 	return nil
 }
 
-type FakeHistorian struct{}
+type FakeHistorian struct {
+	StateTransitions []StateTransition
+}
 
 func (f *FakeHistorian) RecordStatesAsync(ctx context.Context, rule history_model.RuleMeta, states []StateTransition) <-chan error {
+	f.StateTransitions = append(f.StateTransitions, states...)
 	errCh := make(chan error)
 	close(errCh)
 	return errCh

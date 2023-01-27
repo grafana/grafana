@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
@@ -99,8 +100,8 @@ type ContextHandler struct {
 type reqContextKey = ctxkey.Key
 
 // FromContext returns the ReqContext value stored in a context.Context, if any.
-func FromContext(c context.Context) *models.ReqContext {
-	if reqCtx, ok := c.Value(reqContextKey{}).(*models.ReqContext); ok {
+func FromContext(c context.Context) *contextmodel.ReqContext {
+	if reqCtx, ok := c.Value(reqContextKey{}).(*contextmodel.ReqContext); ok {
 		return reqCtx
 	}
 	return nil
@@ -114,7 +115,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 		_, span := h.tracer.Start(ctx, "Auth - Middleware")
 		defer span.End()
 
-		reqContext := &models.ReqContext{
+		reqContext := &contextmodel.ReqContext{
 			Context:        mContext,
 			SignedInUser:   &user.SignedInUser{},
 			IsSignedIn:     false,
@@ -218,7 +219,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 	})
 }
 
-func (h *ContextHandler) initContextWithAnonymousUser(reqContext *models.ReqContext) bool {
+func (h *ContextHandler) initContextWithAnonymousUser(reqContext *contextmodel.ReqContext) bool {
 	_, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithAnonymousUser")
 	defer span.End()
 
@@ -282,7 +283,7 @@ func (h *ContextHandler) getAPIKey(ctx context.Context, keyString string) (*apik
 	return keyQuery.Result, nil
 }
 
-func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bool {
+func (h *ContextHandler) initContextWithAPIKey(reqContext *contextmodel.ReqContext) bool {
 	header := reqContext.Req.Header.Get("Authorization")
 	parts := strings.SplitN(header, " ", 2)
 	var keyString string
@@ -306,18 +307,23 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	*reqContext.Req = *reqContext.Req.WithContext(ctx)
 
 	var (
-		apikey *apikey.APIKey
+		apiKey *apikey.APIKey
 		errKey error
 	)
 	if strings.HasPrefix(keyString, apikeygenprefix.GrafanaPrefix) {
-		apikey, errKey = h.getPrefixedAPIKey(reqContext.Req.Context(), keyString) // decode prefixed key
+		apiKey, errKey = h.getPrefixedAPIKey(reqContext.Req.Context(), keyString) // decode prefixed key
 	} else {
-		apikey, errKey = h.getAPIKey(reqContext.Req.Context(), keyString) // decode legacy api key
+		apiKey, errKey = h.getAPIKey(reqContext.Req.Context(), keyString) // decode legacy api key
 	}
 
 	if errKey != nil {
 		status := http.StatusInternalServerError
 		if errors.Is(errKey, apikeygen.ErrInvalidApiKey) {
+			status = http.StatusUnauthorized
+		}
+		// this is when the getPrefixAPIKey return error form the apikey package instead of the apikeygen
+		// when called in the sqlx store methods
+		if errors.Is(errKey, apikey.ErrInvalid) {
 			status = http.StatusUnauthorized
 		}
 		reqContext.JsonApiErr(status, InvalidAPIKey, errKey)
@@ -329,12 +335,12 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	if getTime == nil {
 		getTime = time.Now
 	}
-	if apikey.Expires != nil && *apikey.Expires <= getTime().Unix() {
+	if apiKey.Expires != nil && *apiKey.Expires <= getTime().Unix() {
 		reqContext.JsonApiErr(http.StatusUnauthorized, "Expired API key", nil)
 		return true
 	}
 
-	if apikey.IsRevoked != nil && *apikey.IsRevoked {
+	if apiKey.IsRevoked != nil && *apiKey.IsRevoked {
 		reqContext.JsonApiErr(http.StatusUnauthorized, "Revoked token", nil)
 
 		return true
@@ -350,15 +356,15 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 		if err := h.apiKeyService.UpdateAPIKeyLastUsedDate(context.Background(), id); err != nil {
 			reqContext.Logger.Warn("failed to update last use date for api key", "id", id)
 		}
-	}(apikey.Id)
+	}(apiKey.Id)
 
-	if apikey.ServiceAccountId == nil || *apikey.ServiceAccountId < 1 { //There is no service account attached to the apikey
+	if apiKey.ServiceAccountId == nil || *apiKey.ServiceAccountId < 1 { //There is no service account attached to the apikey
 		// Use the old APIkey method.  This provides backwards compatibility.
 		// will probably have to be supported for a long time.
 		reqContext.SignedInUser = &user.SignedInUser{}
-		reqContext.OrgRole = apikey.Role
-		reqContext.ApiKeyID = apikey.Id
-		reqContext.OrgID = apikey.OrgId
+		reqContext.OrgRole = apiKey.Role
+		reqContext.ApiKeyID = apiKey.Id
+		reqContext.OrgID = apiKey.OrgId
 		reqContext.IsSignedIn = true
 		return true
 	}
@@ -366,7 +372,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	//There is a service account attached to the API key
 
 	//Use service account linked to API key as the signed in user
-	querySignedInUser := user.GetSignedInUserQuery{UserID: *apikey.ServiceAccountId, OrgID: apikey.OrgId}
+	querySignedInUser := user.GetSignedInUserQuery{UserID: *apiKey.ServiceAccountId, OrgID: apiKey.OrgId}
 	querySignedInUserResult, err := h.userService.GetSignedInUserWithCacheCtx(reqContext.Req.Context(), &querySignedInUser)
 	if err != nil {
 		reqContext.Logger.Error(
@@ -391,7 +397,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *models.ReqContext) bo
 	return true
 }
 
-func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext, orgID int64) bool {
+func (h *ContextHandler) initContextWithBasicAuth(reqContext *contextmodel.ReqContext, orgID int64) bool {
 	if !h.Cfg.BasicAuthEnabled {
 		return false
 	}
@@ -451,7 +457,7 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *models.ReqContext,
 	return true
 }
 
-func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, orgID int64) bool {
+func (h *ContextHandler) initContextWithToken(reqContext *contextmodel.ReqContext, orgID int64) bool {
 	if h.Cfg.LoginCookieName == "" {
 		return false
 	}
@@ -523,7 +529,7 @@ func (h *ContextHandler) initContextWithToken(reqContext *models.ReqContext, org
 	return true
 }
 
-func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *models.ReqContext) web.BeforeFunc {
+func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *contextmodel.ReqContext) web.BeforeFunc {
 	return func(w web.ResponseWriter) {
 		if w.Written() {
 			reqContext.Logger.Debug("Response written, skipping invalid cookie delete")
@@ -535,7 +541,7 @@ func (h *ContextHandler) deleteInvalidCookieEndOfRequestFunc(reqContext *models.
 	}
 }
 
-func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext) web.BeforeFunc {
+func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *contextmodel.ReqContext) web.BeforeFunc {
 	return func(w web.ResponseWriter) {
 		// if response has already been written, skip.
 		if w.Written() {
@@ -576,7 +582,7 @@ func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *models.ReqContext) w
 	}
 }
 
-func (h *ContextHandler) initContextWithRenderAuth(reqContext *models.ReqContext) bool {
+func (h *ContextHandler) initContextWithRenderAuth(reqContext *contextmodel.ReqContext) bool {
 	key := reqContext.GetCookie("renderKey")
 	if key == "" {
 		return false
@@ -612,7 +618,7 @@ func (h *ContextHandler) initContextWithRenderAuth(reqContext *models.ReqContext
 	return true
 }
 
-func logUserIn(reqContext *models.ReqContext, auth *authproxy.AuthProxy, username string, logger log.Logger, ignoreCache bool) (int64, error) {
+func logUserIn(reqContext *contextmodel.ReqContext, auth *authproxy.AuthProxy, username string, logger log.Logger, ignoreCache bool) (int64, error) {
 	logger.Debug("Trying to log user in", "username", username, "ignoreCache", ignoreCache)
 	// Try to log in user via various providers
 	id, err := auth.Login(reqContext, ignoreCache)
@@ -629,7 +635,7 @@ func logUserIn(reqContext *models.ReqContext, auth *authproxy.AuthProxy, usernam
 	return id, nil
 }
 
-func (h *ContextHandler) handleError(ctx *models.ReqContext, err error, statusCode int, cb func(error)) {
+func (h *ContextHandler) handleError(ctx *contextmodel.ReqContext, err error, statusCode int, cb func(error)) {
 	details := err
 	var e authproxy.Error
 	if errors.As(err, &e) {
@@ -642,7 +648,7 @@ func (h *ContextHandler) handleError(ctx *models.ReqContext, err error, statusCo
 	}
 }
 
-func (h *ContextHandler) initContextWithAuthProxy(reqContext *models.ReqContext, orgID int64) bool {
+func (h *ContextHandler) initContextWithAuthProxy(reqContext *contextmodel.ReqContext, orgID int64) bool {
 	username := reqContext.Req.Header.Get(h.Cfg.AuthProxyHeaderName)
 
 	logger := log.New("auth.proxy")
