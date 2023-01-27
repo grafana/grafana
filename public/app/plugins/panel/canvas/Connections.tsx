@@ -1,10 +1,11 @@
 import React from 'react';
+import { assertInstanceOf } from 'test/helpers/asserts';
 
 import { ConnectionPath } from 'app/features/canvas';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
-import { ConnectionAnchors } from './ConnectionAnchors';
+import { connectionAnchorAlt, ConnectionAnchors } from './ConnectionAnchors';
 import { ConnectionSVG } from './ConnectionSVG';
 
 export class Connections {
@@ -89,6 +90,15 @@ export class Connections {
   };
 
   handleMouseLeave = (event: React.MouseEvent | React.FocusEvent) => {
+    if (event.relatedTarget instanceof HTMLImageElement) {
+      const relatedTarget = event.relatedTarget;
+      assertInstanceOf(relatedTarget, HTMLImageElement);
+      // If mouse is leaving INTO the anchor image, don't remove div
+      if (relatedTarget.getAttribute('alt') === connectionAnchorAlt) {
+        return;
+      }
+    }
+
     this.connectionAnchorDiv!.style.display = 'none';
   };
 

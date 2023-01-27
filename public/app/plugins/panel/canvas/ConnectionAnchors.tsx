@@ -11,6 +11,7 @@ type Props = {
 };
 
 export const CONNECTION_ANCHOR_DIV_ID = 'connectionControl';
+export const connectionAnchorAlt = 'connection anchor';
 
 export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
   const highlightEllipseRef = useRef<HTMLDivElement>(null);
@@ -37,8 +38,6 @@ export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
       highlightEllipseRef.current.style.display = 'none';
     }
   };
-
-  const connectionAnchorAlt = 'connection anchor';
 
   // Unit is percentage from the middle of the element
   // 0, 0 middle; -1, -1 bottom left; 1, 1 top right
