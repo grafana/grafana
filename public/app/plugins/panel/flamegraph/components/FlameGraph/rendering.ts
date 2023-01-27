@@ -85,7 +85,8 @@ export function renderRect(
   rangeMax: number,
   query: string,
   levelIndex: number,
-  topLevelIndex: number
+  topLevelIndex: number,
+  ufuzzy: uFuzzy
 ) {
   if (rect.width < HIDE_THRESHOLD) {
     return;
@@ -100,7 +101,8 @@ export function renderRect(
   const l = 65 + 7 * intensity;
 
   const name = rect.label;
-  const queryResult = query && name.toLowerCase().includes(query.toLowerCase());
+  const idxs = ufuzzy.filter([name], query);
+  const queryResult = query && idxs.length > 0;
 
   if (!rect.collapsed) {
     ctx.stroke();

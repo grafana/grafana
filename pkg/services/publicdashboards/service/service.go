@@ -165,15 +165,16 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 
 	cmd := SavePublicDashboardCommand{
 		PublicDashboard: PublicDashboard{
-			Uid:                uid,
-			DashboardUid:       dto.DashboardUid,
-			OrgId:              dto.OrgId,
-			IsEnabled:          dto.PublicDashboard.IsEnabled,
-			AnnotationsEnabled: dto.PublicDashboard.AnnotationsEnabled,
-			TimeSettings:       dto.PublicDashboard.TimeSettings,
-			CreatedBy:          dto.UserId,
-			CreatedAt:          time.Now(),
-			AccessToken:        accessToken,
+			Uid:                  uid,
+			DashboardUid:         dto.DashboardUid,
+			OrgId:                dto.OrgId,
+			IsEnabled:            dto.PublicDashboard.IsEnabled,
+			AnnotationsEnabled:   dto.PublicDashboard.AnnotationsEnabled,
+			TimeSelectionEnabled: dto.PublicDashboard.TimeSelectionEnabled,
+			TimeSettings:         dto.PublicDashboard.TimeSettings,
+			CreatedBy:            dto.UserId,
+			CreatedAt:            time.Now(),
+			AccessToken:          accessToken,
 		},
 	}
 

@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	loginService "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/secrets"
@@ -80,7 +81,7 @@ func (hs *HTTPServer) CookieOptionsFromCfg() cookies.CookieOptions {
 	}
 }
 
-func (hs *HTTPServer) LoginView(c *models.ReqContext) {
+func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
 	viewData, err := setIndexViewData(hs, c)
 	if err != nil {
 		c.Handle(hs.Cfg, 500, "Failed to get settings", err)
@@ -105,7 +106,7 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 		return
 	}
 
-	if hs.tryOAuthAutoLogin(c) {
+	if hs.tryAutoLogin(c) {
 		return
 	}
 
@@ -139,28 +140,53 @@ func (hs *HTTPServer) LoginView(c *models.ReqContext) {
 	c.HTML(http.StatusOK, getViewIndex(), viewData)
 }
 
-func (hs *HTTPServer) tryOAuthAutoLogin(c *models.ReqContext) bool {
-	if !setting.OAuthAutoLogin {
-		return false
-	}
+func (hs *HTTPServer) tryAutoLogin(c *contextmodel.ReqContext) bool {
+	samlAutoLogin := hs.samlAutoLoginEnabled()
 	oauthInfos := hs.SocialService.GetOAuthInfoProviders()
-	if len(oauthInfos) > 1 {
-		c.Logger.Warn("Skipping OAuth auto login because multiple OAuth providers are configured")
-		return false
-	} else if len(oauthInfos) == 0 {
-		c.Logger.Warn("Skipping OAuth auto login because no OAuth providers are configured")
+
+	autoLoginProvidersLen := 0
+	for _, provider := range oauthInfos {
+		if provider.AutoLogin {
+			autoLoginProvidersLen++
+		}
+	}
+	// If no auto_login option configured for specific OAuth, use legacy option
+	if setting.OAuthAutoLogin && autoLoginProvidersLen == 0 {
+		autoLoginProvidersLen = len(oauthInfos)
+	}
+	if samlAutoLogin {
+		autoLoginProvidersLen++
+	}
+
+	if autoLoginProvidersLen > 1 {
+		c.Logger.Warn("Skipping auto login because multiple auth providers are configured with auto_login option")
 		return false
 	}
-	for key := range oauthInfos {
-		redirectUrl := hs.Cfg.AppSubURL + "/login/" + key
-		c.Logger.Info("OAuth auto login enabled. Redirecting to " + redirectUrl)
+	if autoLoginProvidersLen == 0 && setting.OAuthAutoLogin {
+		c.Logger.Warn("Skipping auto login because no auth providers are configured")
+		return false
+	}
+
+	for providerName, provider := range oauthInfos {
+		if provider.AutoLogin || setting.OAuthAutoLogin {
+			redirectUrl := hs.Cfg.AppSubURL + "/login/" + providerName
+			c.Logger.Info("OAuth auto login enabled. Redirecting to " + redirectUrl)
+			c.Redirect(redirectUrl, 307)
+			return true
+		}
+	}
+
+	if samlAutoLogin {
+		redirectUrl := hs.Cfg.AppSubURL + "/login/saml"
+		c.Logger.Info("SAML auto login enabled. Redirecting to " + redirectUrl)
 		c.Redirect(redirectUrl, 307)
 		return true
 	}
+
 	return false
 }
 
-func (hs *HTTPServer) LoginAPIPing(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) LoginAPIPing(c *contextmodel.ReqContext) response.Response {
 	if c.IsSignedIn || c.IsAnonymous {
 		return response.JSON(http.StatusOK, "Logged in")
 	}
@@ -168,7 +194,7 @@ func (hs *HTTPServer) LoginAPIPing(c *models.ReqContext) response.Response {
 	return response.Error(401, "Unauthorized", nil)
 }
 
-func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) LoginPost(c *contextmodel.ReqContext) response.Response {
 	if hs.Features.IsEnabled(featuremgmt.FlagAuthnService) {
 		identity, err := hs.authnService.Login(c.Req.Context(), authn.ClientForm, &authn.Request{HTTPRequest: c.Req, Resp: c.Resp})
 		if err != nil {
@@ -288,7 +314,7 @@ func (hs *HTTPServer) LoginPost(c *models.ReqContext) response.Response {
 	return resp
 }
 
-func (hs *HTTPServer) loginUserWithUser(user *user.User, c *models.ReqContext) error {
+func (hs *HTTPServer) loginUserWithUser(user *user.User, c *contextmodel.ReqContext) error {
 	if user == nil {
 		return errors.New("could not login user")
 	}
@@ -313,7 +339,7 @@ func (hs *HTTPServer) loginUserWithUser(user *user.User, c *models.ReqContext) e
 	return nil
 }
 
-func (hs *HTTPServer) Logout(c *models.ReqContext) {
+func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 	// If SAML is enabled and this is a SAML user use saml logout
 	if hs.samlSingleLogoutEnabled() {
 		getAuthQuery := models.GetAuthInfoQuery{UserId: c.UserID}
@@ -347,7 +373,7 @@ func (hs *HTTPServer) Logout(c *models.ReqContext) {
 	}
 }
 
-func (hs *HTTPServer) tryGetEncryptedCookie(ctx *models.ReqContext, cookieName string) (string, bool) {
+func (hs *HTTPServer) tryGetEncryptedCookie(ctx *contextmodel.ReqContext, cookieName string) (string, bool) {
 	cookie := ctx.GetCookie(cookieName)
 	if cookie == "" {
 		return "", false
@@ -362,7 +388,7 @@ func (hs *HTTPServer) tryGetEncryptedCookie(ctx *models.ReqContext, cookieName s
 	return string(decryptedError), err == nil
 }
 
-func (hs *HTTPServer) trySetEncryptedCookie(ctx *models.ReqContext, cookieName string, value string, maxAge int) error {
+func (hs *HTTPServer) trySetEncryptedCookie(ctx *contextmodel.ReqContext, cookieName string, value string, maxAge int) error {
 	encryptedError, err := hs.SecretsService.Encrypt(ctx.Req.Context(), []byte(value), secrets.WithoutScope())
 	if err != nil {
 		return err
@@ -373,7 +399,7 @@ func (hs *HTTPServer) trySetEncryptedCookie(ctx *models.ReqContext, cookieName s
 	return nil
 }
 
-func (hs *HTTPServer) redirectWithError(ctx *models.ReqContext, err error, v ...interface{}) {
+func (hs *HTTPServer) redirectWithError(ctx *contextmodel.ReqContext, err error, v ...interface{}) {
 	ctx.Logger.Warn(err.Error(), v...)
 	if err := hs.trySetEncryptedCookie(ctx, loginErrorCookieName, getLoginExternalError(err), 60); err != nil {
 		hs.log.Error("Failed to set encrypted cookie", "err", err)
@@ -382,7 +408,7 @@ func (hs *HTTPServer) redirectWithError(ctx *models.ReqContext, err error, v ...
 	ctx.Redirect(hs.Cfg.AppSubURL + "/login")
 }
 
-func (hs *HTTPServer) RedirectResponseWithError(ctx *models.ReqContext, err error, v ...interface{}) *response.RedirectResponse {
+func (hs *HTTPServer) RedirectResponseWithError(ctx *contextmodel.ReqContext, err error, v ...interface{}) *response.RedirectResponse {
 	ctx.Logger.Error(err.Error(), v...)
 	if err := hs.trySetEncryptedCookie(ctx, loginErrorCookieName, getLoginExternalError(err), 60); err != nil {
 		hs.log.Error("Failed to set encrypted cookie", "err", err)
@@ -401,6 +427,10 @@ func (hs *HTTPServer) samlName() string {
 
 func (hs *HTTPServer) samlSingleLogoutEnabled() bool {
 	return hs.samlEnabled() && hs.SettingsProvider.KeyValue("auth.saml", "single_logout").MustBool(false) && hs.samlEnabled()
+}
+
+func (hs *HTTPServer) samlAutoLoginEnabled() bool {
+	return hs.samlEnabled() && hs.SettingsProvider.KeyValue("auth.saml", "auto_login").MustBool(false)
 }
 
 func getLoginExternalError(err error) string {

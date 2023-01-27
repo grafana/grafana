@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -172,7 +171,7 @@ func loadTestDashboard(ctx context.Context, req *plugindashboards.LoadPluginDash
 	}
 
 	return &plugindashboards.LoadPluginDashboardResponse{
-		Dashboard: models.NewDashboardFromJson(dashboardJSON),
+		Dashboard: dashboards.NewDashboardFromJson(dashboardJSON),
 	}, nil
 }
 

@@ -5,11 +5,12 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
+	"github.com/grafana/grafana/pkg/services/org"
+
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -61,9 +62,9 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 	middlewareScenario(t, "Valid token with valid login claim", func(t *testing.T, sc *scenarioContext) {
 		myUsername := "vladimir"
 		var verifiedToken string
-		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
+		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (jwt.JWTClaims, error) {
 			verifiedToken = token
-			return models.JWTClaims{
+			return jwt.JWTClaims{
 				"sub":          myUsername,
 				"foo-username": myUsername,
 			}, nil
@@ -88,9 +89,9 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 		// nolint:gosec
 		myToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ2bGFkaW1pckBleGFtcGxlLmNvbSIsImlhdCI6MTUxNjIzOTAyMiwiZm9vLXVzZXJuYW1lIjoidmxhZGltaXIiLCJuYW1lIjoiVmxhZGltaXIgRXhhbXBsZSIsImZvby1lbWFpbCI6InZsYWRpbWlyQGV4YW1wbGUuY29tIn0.MeNU1pCzRHGdQuu5ppeftxT31_2Le2kM1wd1GK2jExs"
 		var verifiedToken string
-		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
+		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (jwt.JWTClaims, error) {
 			verifiedToken = myToken
-			return models.JWTClaims{
+			return jwt.JWTClaims{
 				"sub":          myUsername,
 				"foo-username": myUsername,
 			}, nil
@@ -108,9 +109,9 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 
 	middlewareScenario(t, "Valid token with valid email claim", func(t *testing.T, sc *scenarioContext) {
 		var verifiedToken string
-		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
+		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (jwt.JWTClaims, error) {
 			verifiedToken = token
-			return models.JWTClaims{
+			return jwt.JWTClaims{
 				"sub":       myEmail,
 				"foo-email": myEmail,
 			}, nil
@@ -128,9 +129,9 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 
 	middlewareScenario(t, "Valid token with no user and auto_sign_up disabled", func(t *testing.T, sc *scenarioContext) {
 		var verifiedToken string
-		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
+		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (jwt.JWTClaims, error) {
 			verifiedToken = token
-			return models.JWTClaims{
+			return jwt.JWTClaims{
 				"sub":       myEmail,
 				"name":      "Vladimir Example",
 				"foo-email": myEmail,
@@ -146,9 +147,9 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 
 	middlewareScenario(t, "Valid token with no user and auto_sign_up enabled", func(t *testing.T, sc *scenarioContext) {
 		var verifiedToken string
-		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
+		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (jwt.JWTClaims, error) {
 			verifiedToken = token
-			return models.JWTClaims{
+			return jwt.JWTClaims{
 				"sub":       myEmail,
 				"name":      "Vladimir Example",
 				"foo-email": myEmail,
@@ -167,9 +168,9 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 
 	middlewareScenario(t, "Valid token without a login claim", func(t *testing.T, sc *scenarioContext) {
 		var verifiedToken string
-		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
+		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (jwt.JWTClaims, error) {
 			verifiedToken = token
-			return models.JWTClaims{
+			return jwt.JWTClaims{
 				"sub": "baz",
 				"foo": "bar",
 			}, nil
@@ -183,9 +184,9 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 
 	middlewareScenario(t, "Valid token without a email claim", func(t *testing.T, sc *scenarioContext) {
 		var verifiedToken string
-		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
+		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (jwt.JWTClaims, error) {
 			verifiedToken = token
-			return models.JWTClaims{
+			return jwt.JWTClaims{
 				"sub": "baz",
 				"foo": "bar",
 			}, nil
@@ -199,9 +200,9 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 
 	middlewareScenario(t, "Valid token with role", func(t *testing.T, sc *scenarioContext) {
 		var verifiedToken string
-		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
+		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (jwt.JWTClaims, error) {
 			verifiedToken = token
-			return models.JWTClaims{
+			return jwt.JWTClaims{
 				"sub":  myEmail,
 				"role": "Editor",
 			}, nil
@@ -217,9 +218,9 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 
 	middlewareScenario(t, "Valid token with invalid role", func(t *testing.T, sc *scenarioContext) {
 		var verifiedToken string
-		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
+		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (jwt.JWTClaims, error) {
 			verifiedToken = token
-			return models.JWTClaims{
+			return jwt.JWTClaims{
 				"sub":  myEmail,
 				"role": "test",
 			}, nil
@@ -235,9 +236,9 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 
 	middlewareScenario(t, "Valid token with invalid role in strict mode", func(t *testing.T, sc *scenarioContext) {
 		var verifiedToken string
-		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
+		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (jwt.JWTClaims, error) {
 			verifiedToken = token
-			return models.JWTClaims{
+			return jwt.JWTClaims{
 				"sub":  myEmail,
 				"role": "test",
 			}, nil
@@ -252,9 +253,9 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 
 	middlewareScenario(t, "Valid token with grafana admin role not allowed", func(t *testing.T, sc *scenarioContext) {
 		var verifiedToken string
-		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
+		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (jwt.JWTClaims, error) {
 			verifiedToken = token
-			return models.JWTClaims{
+			return jwt.JWTClaims{
 				"sub":  myEmail,
 				"role": "GrafanaAdmin",
 			}, nil
@@ -271,9 +272,9 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 
 	middlewareScenario(t, "Valid token with grafana admin role allowed", func(t *testing.T, sc *scenarioContext) {
 		var verifiedToken string
-		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
+		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (jwt.JWTClaims, error) {
 			verifiedToken = token
-			return models.JWTClaims{
+			return jwt.JWTClaims{
 				"sub":  myEmail,
 				"role": "GrafanaAdmin",
 			}, nil
@@ -290,7 +291,7 @@ func TestMiddlewareJWTAuth(t *testing.T) {
 
 	middlewareScenario(t, "Invalid token", func(t *testing.T, sc *scenarioContext) {
 		var verifiedToken string
-		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (models.JWTClaims, error) {
+		sc.jwtAuthService.VerifyProvider = func(ctx context.Context, token string) (jwt.JWTClaims, error) {
 			verifiedToken = token
 			return nil, errors.New("token is invalid")
 		}

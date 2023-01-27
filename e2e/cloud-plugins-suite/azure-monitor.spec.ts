@@ -139,8 +139,8 @@ e2e.scenario({
   scenario: () => {
     e2e.flows.addDashboard({
       timeRange: {
-        from: '2022-10-03 00:00:00',
-        to: '2022-10-03 23:59:59',
+        from: 'now-6h',
+        to: 'now',
         zone: 'Coordinated Universal Time',
       },
     });
@@ -210,8 +210,8 @@ e2e.scenario({
   scenario: () => {
     e2e.flows.addDashboard({
       timeRange: {
-        from: '2022-10-03 00:00:00',
-        to: '2022-10-03 23:59:59',
+        from: 'now-6h',
+        to: 'now',
         zone: 'Coordinated Universal Time',
       },
     });
@@ -234,14 +234,17 @@ e2e.scenario({
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('resourceGroups')
       .parent()
       .find('input')
-      .type('cloud-plugins-e2e-test{enter}');
+      .type('cloud-plugins-e2e-test{downArrow}{enter}');
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('namespaces').parent().find('button').click();
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('namespaces')
       .parent()
       .find('input')
-      .type('microsoft.storage/storageaccounts{enter}');
+      .type('microsoft.storage/storageaccounts{downArrow}{enter}');
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('resource').parent().find('button').click();
-    e2e.pages.Dashboard.SubMenu.submenuItemLabels('resource').parent().find('input').type('azmonmetricstest{enter}');
+    e2e.pages.Dashboard.SubMenu.submenuItemLabels('resource')
+      .parent()
+      .find('input')
+      .type('azmonmetricstest{downArrow}{enter}');
     e2e.flows.addPanel({
       dataSourceName,
       visitDashboardAtStart: false,

@@ -2,8 +2,8 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 
-import { DataQuery } from '@grafana/data';
 import { setDataSourceSrv } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { configureStore } from 'app/store/configureStore';
 import { ExploreId, ExploreState } from 'app/types';
 

@@ -13,7 +13,7 @@
       "search": "Ŝęäřčĥ"
     },
     "search-box": {
-      "placeholder": "Ŝęäřčĥ Ğřäƒäŉä"
+      "placeholder": "Ŝęäřčĥ őř ĵūmp ŧő..."
     },
     "section": {
       "actions": "Åčŧįőŉş",
@@ -285,7 +285,7 @@
       "title": "Cĥäŉģę päşşŵőřđ"
     },
     "profile/settings": {
-      "title": "Přęƒęřęŉčęş"
+      "title": "Přőƒįľę"
     },
     "profile/switch-org": "Ŝŵįŧčĥ őřģäŉįžäŧįőŉ",
     "scenes": {
@@ -555,8 +555,7 @@
       "name-error": "Ńämę įş řęqūįřęđ",
       "name-label": "Ńämę",
       "username-label": "Ůşęřŉämę"
-    },
-    "title": "Přőƒįľę"
+    }
   },
   "user-session": {
     "browser-column": "ßřőŵşęř & ØŜ",

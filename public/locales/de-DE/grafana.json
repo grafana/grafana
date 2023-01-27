@@ -555,8 +555,7 @@
       "name-error": "Name ist erforderlich",
       "name-label": "Name",
       "username-label": "Benutzername"
-    },
-    "title": "Profil"
+    }
   },
   "user-session": {
     "browser-column": "Browser & Betriebssystem",

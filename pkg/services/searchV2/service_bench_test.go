@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -101,17 +100,17 @@ func populateDB(folderCount, dashboardsPerFolder int, sqlStore *sqlstore.SQLStor
 	offset := 1
 	if errInsert := actest.ConcurrentBatch(actest.Concurrency, folderCount, actest.BatchSize, func(start, end int) error {
 		n := end - start
-		folders := make([]models.Dashboard, 0, n)
+		folders := make([]dashboards.Dashboard, 0, n)
 		now := time.Now()
 
 		for u := start; u < end; u++ {
 			folderID := int64(u + offset)
-			folders = append(folders, models.Dashboard{
-				Id:       folderID,
-				Uid:      fmt.Sprintf("folder%v", folderID),
+			folders = append(folders, dashboards.Dashboard{
+				ID:       folderID,
+				UID:      fmt.Sprintf("folder%v", folderID),
 				Title:    fmt.Sprintf("folder%v", folderID),
 				IsFolder: true,
-				OrgId:    1,
+				OrgID:    1,
 				Created:  now,
 				Updated:  now,
 			})
@@ -132,26 +131,26 @@ func populateDB(folderCount, dashboardsPerFolder int, sqlStore *sqlstore.SQLStor
 	offset += folderCount
 	if errInsert := actest.ConcurrentBatch(actest.Concurrency, dashboardsPerFolder*folderCount, actest.BatchSize, func(start, end int) error {
 		n := end - start
-		dashboards := make([]models.Dashboard, 0, n)
+		dbs := make([]dashboards.Dashboard, 0, n)
 		now := time.Now()
 
 		for u := start; u < end; u++ {
 			dashID := int64(u + offset)
 			folderID := int64((u+offset)%folderCount + 1)
-			dashboards = append(dashboards, models.Dashboard{
-				Id:       dashID,
-				Uid:      fmt.Sprintf("dashboard%v", dashID),
+			dbs = append(dbs, dashboards.Dashboard{
+				ID:       dashID,
+				UID:      fmt.Sprintf("dashboard%v", dashID),
 				Title:    fmt.Sprintf("dashboard%v", dashID),
 				IsFolder: false,
-				FolderId: folderID,
-				OrgId:    1,
+				FolderID: folderID,
+				OrgID:    1,
 				Created:  now,
 				Updated:  now,
 			})
 		}
 
 		err := sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			if _, err := sess.Insert(dashboards); err != nil {
+			if _, err := sess.Insert(dbs); err != nil {
 				return err
 			}
 			return nil

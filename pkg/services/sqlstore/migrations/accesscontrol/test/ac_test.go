@@ -9,8 +9,8 @@ import (
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	acmig "github.com/grafana/grafana/pkg/services/sqlstore/migrations/accesscontrol"
@@ -353,7 +353,7 @@ func setupTeams(t *testing.T, x *xorm.Engine) {
 			TeamID:     1,
 			UserID:     2,
 			External:   false,
-			Permission: models.PERMISSION_ADMIN,
+			Permission: dashboards.PERMISSION_ADMIN,
 			Created:    now,
 			Updated:    now,
 		},
@@ -363,7 +363,7 @@ func setupTeams(t *testing.T, x *xorm.Engine) {
 			TeamID:     1,
 			UserID:     3,
 			External:   false,
-			Permission: models.PERMISSION_ADMIN,
+			Permission: dashboards.PERMISSION_ADMIN,
 			Created:    now,
 			Updated:    now,
 		},
@@ -373,7 +373,7 @@ func setupTeams(t *testing.T, x *xorm.Engine) {
 			TeamID:     1,
 			UserID:     4,
 			External:   false,
-			Permission: models.PERMISSION_ADMIN,
+			Permission: dashboards.PERMISSION_ADMIN,
 			Created:    now,
 			Updated:    now,
 		},

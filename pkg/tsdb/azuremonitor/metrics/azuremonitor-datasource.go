@@ -317,7 +317,10 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 				Unit: toGrafanaUnit(amr.Value[0].Unit),
 			})
 		}
-		resourceID := labels["microsoft.resourceid"]
+		resourceID, ok := labels["microsoft.resourceid"]
+		if !ok {
+			resourceID = labels["Microsoft.ResourceId"]
+		}
 		resourceIDSlice := strings.Split(resourceID, "/")
 		resourceName := ""
 		if len(resourceIDSlice) > 1 {
@@ -328,10 +331,18 @@ func (e *AzureMonitorDatasource) parseResponse(amr types.AzureMonitorResponse, q
 			resourceName = extractResourceNameFromMetricsURL(query.URL)
 			resourceID = extractResourceIDFromMetricsURL(query.URL)
 		}
+		displayName := ""
 		if query.Alias != "" {
-			displayName := formatAzureMonitorLegendKey(query.Alias, resourceName,
+			displayName = formatAzureMonitorLegendKey(query.Alias, resourceName,
 				amr.Value[0].Name.LocalizedValue, "", "", amr.Namespace, amr.Value[0].ID, labels)
-
+		} else if len(labels) > 0 {
+			// If labels are set, it will be used as the legend so we need to set a more user-friendly name
+			displayName = amr.Value[0].Name.LocalizedValue
+			if resourceName != "" {
+				displayName += " " + resourceName
+			}
+		}
+		if displayName != "" {
 			if dataField.Config != nil {
 				dataField.Config.DisplayName = displayName
 			} else {

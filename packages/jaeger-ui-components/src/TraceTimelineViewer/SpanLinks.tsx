@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { useState } from 'react';
 
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { useStyles2, MenuGroup, MenuItem, Icon, ContextMenu } from '@grafana/ui';
 
 import { SpanLinks } from '../types/links';
@@ -30,6 +30,7 @@ const renderMenuItems = (
                   ? (event) => {
                       reportInteraction('grafana_traces_trace_view_span_link_clicked', {
                         datasourceType: datasourceType,
+                        grafana_version: config.buildInfo.version,
                         type: 'log',
                         location: 'menu',
                       });
@@ -56,6 +57,7 @@ const renderMenuItems = (
                   ? (event) => {
                       reportInteraction('grafana_traces_trace_view_span_link_clicked', {
                         datasourceType: datasourceType,
+                        grafana_version: config.buildInfo.version,
                         type: 'metric',
                         location: 'menu',
                       });
@@ -82,6 +84,7 @@ const renderMenuItems = (
                   ? (event) => {
                       reportInteraction('grafana_traces_trace_view_span_link_clicked', {
                         datasourceType: datasourceType,
+                        grafana_version: config.buildInfo.version,
                         type: 'trace',
                         location: 'menu',
                       });

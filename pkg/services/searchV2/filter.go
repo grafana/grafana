@@ -2,14 +2,15 @@ package searchV2
 
 import (
 	"regexp"
+	"strings"
 
 	"github.com/blugelabs/bluge"
 	"github.com/blugelabs/bluge/search"
 	"github.com/blugelabs/bluge/search/searcher"
 	"github.com/blugelabs/bluge/search/similarity"
+
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
 type PermissionFilter struct {
@@ -20,11 +21,11 @@ type PermissionFilter struct {
 type entityKind string
 
 const (
-	entityKindPanel      entityKind = models.StandardKindPanel
-	entityKindDashboard  entityKind = models.StandardKindDashboard
-	entityKindFolder     entityKind = models.StandardKindFolder
-	entityKindDatasource entityKind = models.StandardKindDataSource
-	entityKindQuery      entityKind = models.StandardKindQuery
+	entityKindPanel      entityKind = entity.StandardKindPanel
+	entityKindDashboard  entityKind = entity.StandardKindDashboard
+	entityKindFolder     entityKind = entity.StandardKindFolder
+	entityKindDatasource entityKind = entity.StandardKindDataSource
+	entityKindQuery      entityKind = entity.StandardKindQuery
 )
 
 func (r entityKind) IsValid() bool {
@@ -74,16 +75,8 @@ func (q *PermissionFilter) canAccess(kind entityKind, id, location string) bool 
 	// TODO add `kind` to the `ResourceFilter` interface so that we can move the switch out of here
 	//
 	switch kind {
-	case entityKindFolder:
-		if id == folder.GeneralFolderUID {
-			q.logAccessDecision(true, kind, id, "generalFolder")
-			return true
-		}
-		decision := q.filter(entityKindFolder, id, "")
-		q.logAccessDecision(decision, kind, id, "resourceFilter")
-		return decision
-	case entityKindDashboard:
-		decision := q.filter(entityKindDashboard, id, location)
+	case entityKindFolder, entityKindDashboard:
+		decision := q.filter(kind, id, location)
 		q.logAccessDecision(decision, kind, id, "resourceFilter")
 		return decision
 	case entityKindPanel:
@@ -96,7 +89,7 @@ func (q *PermissionFilter) canAccess(kind entityKind, id, location string) bool 
 		dashboardUid := matches[panelIdFieldDashboardUidSubmatchIndex]
 
 		// Location is <folder_uid>/<dashboard_uid>
-		if len(location) <= len(dashboardUid)+1 {
+		if !strings.HasSuffix(location, "/"+dashboardUid) {
 			q.logAccessDecision(false, kind, id, "invalidLocation", "location", location, "dashboardUid", dashboardUid)
 			return false
 		}

@@ -10,6 +10,7 @@ import {
   DashboardCursorSync,
   EventFilterOptions,
   FieldConfigSource,
+  getDataSourceRef,
   getDefaultTimeRange,
   LinkModel,
   LoadingState,
@@ -32,13 +33,17 @@ import {
   PanelContextProvider,
   PanelPadding,
   SeriesVisibilityChangeMode,
+  AdHocFilterItem,
 } from '@grafana/ui';
 import { PANEL_BORDER } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { InspectTab } from 'app/features/inspector/types';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { applyFilterFromTable } from 'app/features/variables/adhoc/actions';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
+import { dispatch } from 'app/store/store';
 import { RenderEvent } from 'app/types/events';
 
 import { isSoloRoute } from '../../../routes/utils';
@@ -108,6 +113,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         canAddAnnotations: props.dashboard.canAddAnnotations.bind(props.dashboard),
         canEditAnnotations: props.dashboard.canEditAnnotations.bind(props.dashboard),
         canDeleteAnnotations: props.dashboard.canDeleteAnnotations.bind(props.dashboard),
+        onAddAdHocFilter: this.onAddAdHocFilter,
       },
       data: this.getInitialPanelDataState(),
     };
@@ -444,6 +450,20 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     );
   }
 
+  onAddAdHocFilter = (filter: AdHocFilterItem) => {
+    const { key, value, operator } = filter;
+
+    // When the datasource is null/undefined (for a default datasource), we use getInstanceSettings
+    // to find the real datasource ref for the default datasource.
+    const datasourceInstance = getDatasourceSrv().getInstanceSettings(this.props.panel.datasource);
+    const datasourceRef = datasourceInstance && getDataSourceRef(datasourceInstance);
+    if (!datasourceRef) {
+      return;
+    }
+
+    dispatch(applyFilterFromTable({ datasource: datasourceRef, key, operator, value }));
+  };
+
   renderPanelContent(innerWidth: number, innerHeight: number) {
     const { panel, plugin, dashboard } = this.props;
     const { renderCounter, data } = this.state;
@@ -616,6 +636,8 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     const title = panel.getDisplayTitle();
     const padding: PanelPadding = plugin.noPadding ? 'none' : 'md';
 
+    const dragClass = !(isViewing || isEditing) ? 'grid-drag-handle' : '';
+
     const titleItems = [
       <PanelHeaderTitleItems
         key="title-items"
@@ -654,6 +676,8 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           description={!!panel.description ? this.onShowPanelDescription : undefined}
           titleItems={titleItems}
           menu={menu}
+          dragClass={dragClass}
+          dragClassCancel="grid-drag-cancel"
           padding={padding}
         >
           {(innerWidth, innerHeight) => (

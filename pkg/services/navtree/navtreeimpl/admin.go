@@ -1,9 +1,9 @@
 package navtreeimpl
 
 import (
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 )
 
-func (s *ServiceImpl) getOrgAdminNode(c *models.ReqContext) (*navtree.NavLink, error) {
+func (s *ServiceImpl) getOrgAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink, error) {
 	var configNodes []*navtree.NavLink
 
 	hasAccess := ac.HasAccess(s.accessControl, c)
@@ -119,7 +119,7 @@ func (s *ServiceImpl) getOrgAdminNode(c *models.ReqContext) (*navtree.NavLink, e
 	return configNode, nil
 }
 
-func (s *ServiceImpl) getServerAdminNode(c *models.ReqContext) *navtree.NavLink {
+func (s *ServiceImpl) getServerAdminNode(c *contextmodel.ReqContext) *navtree.NavLink {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	hasGlobalAccess := ac.HasGlobalAccess(s.accessControl, s.accesscontrolService, c)
 	orgsAccessEvaluator := ac.EvalPermission(ac.ActionOrgsRead)
@@ -204,11 +204,11 @@ func (s *ServiceImpl) getServerAdminNode(c *models.ReqContext) *navtree.NavLink 
 	return adminNode
 }
 
-func (s *ServiceImpl) ReqCanAdminTeams(c *models.ReqContext) bool {
+func (s *ServiceImpl) ReqCanAdminTeams(c *contextmodel.ReqContext) bool {
 	return c.OrgRole == org.RoleAdmin || (s.cfg.EditorsCanAdmin && c.OrgRole == org.RoleEditor)
 }
 
-func enableServiceAccount(s *ServiceImpl, c *models.ReqContext) bool {
+func enableServiceAccount(s *ServiceImpl, c *contextmodel.ReqContext) bool {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	return hasAccess(ac.ReqOrgAdmin, serviceaccounts.AccessEvaluator)
 }

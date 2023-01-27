@@ -8,18 +8,27 @@ import { Unsubscribable } from 'rxjs';
 
 import {
   AbsoluteTimeRange,
-  DataQuery,
   GrafanaTheme2,
   LoadingState,
   QueryFixAction,
   RawTimeRange,
   EventBus,
   SplitOpenOptions,
+  SupplementaryQueryType,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
-import { CustomScrollbar, ErrorBoundaryAlert, Themeable2, withTheme2, PanelContainer, Alert } from '@grafana/ui';
-import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, FilterItem } from '@grafana/ui/src/components/Table/types';
+import { DataQuery } from '@grafana/schema';
+import {
+  CustomScrollbar,
+  ErrorBoundaryAlert,
+  Themeable2,
+  withTheme2,
+  PanelContainer,
+  Alert,
+  AdHocFilterItem,
+} from '@grafana/ui';
+import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR } from '@grafana/ui/src/components/Table/types';
 import appEvents from 'app/core/app_events';
 import { FadeIn } from 'app/core/components/Animations/FadeIn';
 import { supportedFeatures } from 'app/core/history/richHistoryStorageProvider';
@@ -36,6 +45,7 @@ import { ExploreToolbar } from './ExploreToolbar';
 import { FlameGraphExploreContainer } from './FlameGraphExploreContainer';
 import { GraphContainer } from './Graph/GraphContainer';
 import LogsContainer from './LogsContainer';
+import { LogsSamplePanel } from './LogsSamplePanel';
 import { NoData } from './NoData';
 import { NoDataSourceCallToAction } from './NoDataSourceCallToAction';
 import { NodeGraphContainer } from './NodeGraphContainer';
@@ -48,7 +58,14 @@ import TableContainer from './TableContainer';
 import { TraceViewContainer } from './TraceView/TraceViewContainer';
 import { changeSize } from './state/explorePane';
 import { splitOpen } from './state/main';
-import { addQueryRow, modifyQueries, scanStart, scanStopAction, setQueries } from './state/query';
+import {
+  addQueryRow,
+  modifyQueries,
+  scanStart,
+  scanStopAction,
+  setQueries,
+  setSupplementaryQueryEnabled,
+} from './state/query';
 import { isSplit } from './state/selectors';
 import { makeAbsoluteTime, updateTimeRange } from './state/time';
 
@@ -157,7 +174,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     this.props.setQueries(this.props.exploreId, [query]);
   };
 
-  onCellFilterAdded = (filter: FilterItem) => {
+  onCellFilterAdded = (filter: AdHocFilterItem) => {
     const { value, key, operator } = filter;
     if (operator === FILTER_FOR_OPERATOR) {
       this.onClickFilterLabel(key, value);
@@ -349,6 +366,24 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
     );
   }
 
+  renderLogsSamplePanel() {
+    const { logsSample, timeZone, setSupplementaryQueryEnabled, exploreId, datasourceInstance, queries } = this.props;
+
+    return (
+      <LogsSamplePanel
+        queryResponse={logsSample.data}
+        timeZone={timeZone}
+        enabled={logsSample.enabled}
+        queries={queries}
+        datasourceInstance={datasourceInstance}
+        splitOpen={this.onSplitOpen('logsSample')}
+        setLogsSampleEnabled={(enabled: boolean) =>
+          setSupplementaryQueryEnabled(exploreId, enabled, SupplementaryQueryType.LogsSample)
+        }
+      />
+    );
+  }
+
   renderNodeGraphPanel() {
     const { exploreId, showTrace, queryResponse, datasourceInstance } = this.props;
     const datasourceType = datasourceInstance ? datasourceInstance?.type : 'unknown';
@@ -408,6 +443,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
       showFlameGraph,
       timeZone,
       isFromCompactUrl,
+      showLogsSample,
     } = this.props;
     const { openDrawer } = this.state;
     const styles = getStyles(theme);
@@ -478,6 +514,7 @@ export class Explore extends React.PureComponent<Props, ExploreState> {
                             <ErrorBoundaryAlert>{this.renderFlameGraphPanel()}</ErrorBoundaryAlert>
                           )}
                           {showTrace && <ErrorBoundaryAlert>{this.renderTraceViewPanel()}</ErrorBoundaryAlert>}
+                          {showLogsSample && <ErrorBoundaryAlert>{this.renderLogsSamplePanel()}</ErrorBoundaryAlert>}
                           {showNoData && <ErrorBoundaryAlert>{this.renderNoData()}</ErrorBoundaryAlert>}
                         </>
                       )}
@@ -520,6 +557,7 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     queries,
     isLive,
     graphResult,
+    tableResult,
     logsResult,
     showLogs,
     showMetrics,
@@ -532,7 +570,12 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     loading,
     isFromCompactUrl,
     showRawPrometheus,
+    supplementaryQueries,
   } = item;
+
+  const logsSample = supplementaryQueries[SupplementaryQueryType.LogsSample];
+  // We want to show logs sample only if there are no log results and if there is already graph or table result
+  const showLogsSample = !!(logsSample.dataProvider !== undefined && !logsResult && (graphResult || tableResult));
 
   return {
     datasourceInstance,
@@ -556,6 +599,8 @@ function mapStateToProps(state: StoreState, { exploreId }: ExploreProps) {
     splitted: isSplit(state),
     loading,
     isFromCompactUrl: isFromCompactUrl || false,
+    logsSample,
+    showLogsSample,
   };
 }
 
@@ -569,6 +614,7 @@ const mapDispatchToProps = {
   makeAbsoluteTime,
   addQueryRow,
   splitOpen,
+  setSupplementaryQueryEnabled,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);

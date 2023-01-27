@@ -69,7 +69,7 @@ describe('QueryEditorField', () => {
   it('shows an info alert when no datasource is selected', async () => {
     renderWithContext(<QueryEditorField name="query" />);
 
-    expect(await screen.findByRole('alert', { name: 'No data source selected' })).toBeInTheDocument();
+    expect(await screen.findByRole('status', { name: 'No data source selected' })).toBeInTheDocument();
   });
 
   it('shows an info alert when datasaource does not export a query editor', async () => {

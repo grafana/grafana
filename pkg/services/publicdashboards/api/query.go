@@ -6,7 +6,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/web"
@@ -14,7 +15,7 @@ import (
 
 // ViewPublicDashboard Gets public dashboard
 // GET /api/public/dashboards/:accessToken
-func (api *Api) ViewPublicDashboard(c *models.ReqContext) response.Response {
+func (api *Api) ViewPublicDashboard(c *contextmodel.ReqContext) response.Response {
 	accessToken := web.Params(c.Req)[":accessToken"]
 	if !tokens.IsValidAccessToken(accessToken) {
 		return response.Err(ErrInvalidAccessToken.Errorf("ViewPublicDashboard: invalid access token"))
@@ -30,7 +31,7 @@ func (api *Api) ViewPublicDashboard(c *models.ReqContext) response.Response {
 
 	meta := dtos.DashboardMeta{
 		Slug:                       dash.Slug,
-		Type:                       models.DashTypeDB,
+		Type:                       dashboards.DashTypeDB,
 		CanStar:                    false,
 		CanSave:                    false,
 		CanEdit:                    false,
@@ -52,7 +53,7 @@ func (api *Api) ViewPublicDashboard(c *models.ReqContext) response.Response {
 
 // QueryPublicDashboard returns all results for a given panel on a public dashboard
 // POST /api/public/dashboard/:accessToken/panels/:panelId/query
-func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
+func (api *Api) QueryPublicDashboard(c *contextmodel.ReqContext) response.Response {
 	accessToken := web.Params(c.Req)[":accessToken"]
 	if !tokens.IsValidAccessToken(accessToken) {
 		return response.Err(ErrInvalidAccessToken.Errorf("QueryPublicDashboard: invalid access token"))
@@ -78,7 +79,7 @@ func (api *Api) QueryPublicDashboard(c *models.ReqContext) response.Response {
 
 // GetAnnotations returns annotations for a public dashboard
 // GET /api/public/dashboards/:accessToken/annotations
-func (api *Api) GetAnnotations(c *models.ReqContext) response.Response {
+func (api *Api) GetAnnotations(c *contextmodel.ReqContext) response.Response {
 	accessToken := web.Params(c.Req)[":accessToken"]
 	if !tokens.IsValidAccessToken(accessToken) {
 		return response.Err(ErrInvalidAccessToken.Errorf("GetAnnotations: invalid access token"))

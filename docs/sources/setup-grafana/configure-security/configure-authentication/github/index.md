@@ -39,6 +39,7 @@ example:
 [auth.github]
 enabled = true
 allow_sign_up = true
+auto_login = false
 client_id = YOUR_GITHUB_APP_CLIENT_ID
 client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
 scopes = user:email,read:org
@@ -81,6 +82,8 @@ Grafana instance. For example:
 ```bash
 [auth.github]
 enabled = true
+allow_sign_up = true
+auto_login = false
 client_id = YOUR_GITHUB_APP_CLIENT_ID
 client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
 scopes = user:email,read:org
@@ -88,7 +91,6 @@ team_ids = 150,300
 auth_url = https://github.com/login/oauth/authorize
 token_url = https://github.com/login/oauth/access_token
 api_url = https://api.github.com/user
-allow_sign_up = true
 ```
 
 ### allowed_organizations
@@ -101,15 +103,25 @@ your Grafana instance. For example
 ```bash
 [auth.github]
 enabled = true
+allow_sign_up = true
+auto_login = false
 client_id = YOUR_GITHUB_APP_CLIENT_ID
 client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
 scopes = user:email,read:org
 auth_url = https://github.com/login/oauth/authorize
 token_url = https://github.com/login/oauth/access_token
 api_url = https://api.github.com/user
-allow_sign_up = true
 # space-delimited organization names
 allowed_organizations = github google
+```
+
+### Configure automatic login
+
+Set `auto_login` option to true to attempt login automatically, skipping the login screen.
+This setting is ignored if multiple auth providers are configured to use auto login.
+
+```
+auto_login = true
 ```
 
 ### Map roles
@@ -191,3 +203,16 @@ Your GitHub teams can be referenced in two ways:
 Example: `@grafana/developers`
 
 [Learn more about Team Sync]({{< relref "../../configure-team-sync/" >}})
+
+## Skip organization role sync
+
+To prevent the sync of organization roles from GitHub, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
+This also impacts the `allow_assign_grafana_admin` setting by not syncing the Grafana admin role from GitHub.
+
+```ini
+[auth.github]
+# ..
+# prevents the sync of org roles from Github
+skip_org_role_sync = true
+``
+```

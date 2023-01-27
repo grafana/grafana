@@ -9,10 +9,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -46,14 +46,9 @@ func TestApi_getUsageStats(t *testing.T) {
 			expectedStatus: 403,
 		},
 	}
-	sqlStore := mockstore.NewSQLStoreMock()
+	sqlStore := dbtest.NewFakeDB()
 	uss := createService(t, setting.Cfg{}, sqlStore, false)
 	uss.registerAPIEndpoints()
-
-	sqlStore.ExpectedSystemStats = &stats.SystemStats{}
-	sqlStore.ExpectedDataSourceStats = []*stats.DataSourceStats{}
-	sqlStore.ExpectedDataSourcesAccessStats = []*stats.DataSourceAccessStats{}
-	sqlStore.ExpectedNotifierUsageStats = []*stats.NotifierUsageStats{}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
@@ -98,7 +93,7 @@ type testContext struct {
 func contextProvider(tc *testContext) web.Handler {
 	return func(c *web.Context) {
 		signedIn := tc.user != nil
-		reqCtx := &models.ReqContext{
+		reqCtx := &contextmodel.ReqContext{
 			Context:      c,
 			SignedInUser: tc.user,
 			IsSignedIn:   signedIn,

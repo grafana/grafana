@@ -711,12 +711,15 @@ func getErrorFromElasticResponse(response *es.SearchResponse) string {
 	json := simplejson.NewFromAny(response.Error)
 	reason := json.Get("reason").MustString()
 	rootCauseReason := json.Get("root_cause").GetIndex(0).Get("reason").MustString()
+	causedByReason := json.Get("caused_by").Get("reason").MustString()
 
 	switch {
 	case rootCauseReason != "":
 		errorString = rootCauseReason
 	case reason != "":
 		errorString = reason
+	case causedByReason != "":
+		errorString = causedByReason
 	default:
 		errorString = "Unknown elasticsearch error response"
 	}

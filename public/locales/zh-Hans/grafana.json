@@ -555,8 +555,7 @@
       "name-error": "姓名是必填项",
       "name-label": "姓名",
       "username-label": "用户名"
-    },
-    "title": "用户资料"
+    }
   },
   "user-session": {
     "browser-column": "浏览器和操作系统",

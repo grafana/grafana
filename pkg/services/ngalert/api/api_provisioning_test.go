@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	gfcore "github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -178,7 +178,7 @@ func TestProvisioningApi(t *testing.T) {
 			t.Run("PUT returns 400", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
-				tmpl := definitions.MessageTemplateContent{Template: ""}
+				tmpl := definitions.NotificationTemplateContent{Template: ""}
 
 				response := sut.RoutePutTemplate(&rc, tmpl, "test")
 
@@ -438,8 +438,8 @@ func createProvisioningSrvSutFromEnv(t *testing.T, env *testEnvironment) Provisi
 	}
 }
 
-func createTestRequestCtx() gfcore.ReqContext {
-	return gfcore.ReqContext{
+func createTestRequestCtx() contextmodel.ReqContext {
+	return contextmodel.ReqContext{
 		Context: &web.Context{
 			Req: &http.Request{},
 		},

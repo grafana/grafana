@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/login/social"
@@ -22,14 +23,13 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/stats/statstest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestTotalStatsUpdate(t *testing.T) {
-	sqlStore := mockstore.NewSQLStoreMock()
+	sqlStore := dbtest.NewFakeDB()
 	statsService := statstest.NewFakeService()
 	s := createService(t, setting.NewCfg(), sqlStore, statsService)
 	s.cfg.MetricsEndpointEnabled = true
@@ -95,7 +95,7 @@ func TestUsageStatsProviders(t *testing.T) {
 	provider1 := &dummyUsageStatProvider{stats: map[string]interface{}{"my_stat_1": "val1", "my_stat_2": "val2"}}
 	provider2 := &dummyUsageStatProvider{stats: map[string]interface{}{"my_stat_x": "valx", "my_stat_z": "valz"}}
 
-	store := mockstore.NewSQLStoreMock()
+	store := dbtest.NewFakeDB()
 	statsService := statstest.NewFakeService()
 	mockSystemStats(statsService)
 	s := createService(t, setting.NewCfg(), store, statsService)
@@ -111,7 +111,7 @@ func TestUsageStatsProviders(t *testing.T) {
 }
 
 func TestFeatureUsageStats(t *testing.T) {
-	store := mockstore.NewSQLStoreMock()
+	store := dbtest.NewFakeDB()
 	statsService := statstest.NewFakeService()
 	mockSystemStats(statsService)
 	s := createService(t, setting.NewCfg(), store, statsService)
@@ -124,7 +124,7 @@ func TestFeatureUsageStats(t *testing.T) {
 }
 
 func TestCollectingUsageStats(t *testing.T) {
-	sqlStore := mockstore.NewSQLStoreMock()
+	sqlStore := dbtest.NewFakeDB()
 	statsService := statstest.NewFakeService()
 	expectedDataSources := []*datasources.DataSource{
 		{
@@ -207,7 +207,7 @@ func TestCollectingUsageStats(t *testing.T) {
 }
 
 func TestElasticStats(t *testing.T) {
-	sqlStore := mockstore.NewSQLStoreMock()
+	sqlStore := dbtest.NewFakeDB()
 	statsService := statstest.NewFakeService()
 
 	expectedDataSources := []*datasources.DataSource{
@@ -247,7 +247,7 @@ func TestElasticStats(t *testing.T) {
 	assert.EqualValues(t, 1, metrics["stats.ds."+datasources.DS_ES+".v70_1_1.count"])
 }
 func TestDatasourceStats(t *testing.T) {
-	sqlStore := mockstore.NewSQLStoreMock()
+	sqlStore := dbtest.NewFakeDB()
 	statsService := statstest.NewFakeService()
 	s := createService(t, &setting.Cfg{}, sqlStore, statsService)
 
@@ -355,7 +355,7 @@ func TestDatasourceStats(t *testing.T) {
 }
 
 func TestAlertNotifiersStats(t *testing.T) {
-	sqlStore := mockstore.NewSQLStoreMock()
+	sqlStore := dbtest.NewFakeDB()
 	statsService := statstest.NewFakeService()
 	s := createService(t, &setting.Cfg{}, sqlStore, statsService)
 
