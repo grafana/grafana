@@ -23,15 +23,15 @@ var grafanaComProxyTransport = &http.Transport{
 	TLSHandshakeTimeout: 10 * time.Second,
 }
 
-func ReverseProxyGnetReq(logger log.Logger, proxyPath string, version string, grafanaComUrl string) *httputil.ReverseProxy {
-	url, _ := url.Parse(grafanaComUrl)
+func ReverseProxyGnetReq(logger log.Logger, proxyPath string, version string, grafanaComAPIUrl string) *httputil.ReverseProxy {
+	url, _ := url.Parse(grafanaComAPIUrl)
 
 	director := func(req *http.Request) {
 		req.URL.Scheme = url.Scheme
 		req.URL.Host = url.Host
 		req.Host = url.Host
 
-		req.URL.Path = util.JoinURLFragments(url.Path+"/api", proxyPath)
+		req.URL.Path = util.JoinURLFragments(url.Path, proxyPath)
 
 		// clear cookie headers
 		req.Header.Del("Cookie")
