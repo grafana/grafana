@@ -305,8 +305,9 @@ var (
 		},
 		{
 			Name:        "cloudWatchCrossAccountQuerying",
-			Description: "Use cross-account querying in CloudWatch datasource",
-			State:       FeatureStateAlpha,
+			Description: "Enables cross-account querying in CloudWatch datasources",
+			State:       FeatureStateStable,
+			Expression:  "true", //enabled by default
 		},
 		{
 			Name:         "redshiftAsyncQueryDataSupport",
