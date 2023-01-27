@@ -20,6 +20,7 @@ type LokiConfig struct {
 	BasicAuthUser     string
 	BasicAuthPassword string
 	TenantID          string
+	ExternalLabels    map[string]string
 }
 
 type httpLokiClient struct {
