@@ -29,7 +29,7 @@ Provisioning takes place during the initial set up of your Grafana system, but y
 Create or delete alert rules in your Grafana instance(s).
 
 1. Create an alert rule in Grafana.
-1. Use the [Alerting provisioning API](https://grafana.com/docs/grafana/latest/developers/http_api/alerting/#get-alerts) to extract the alert rule.
+1. Use the [Alerting provisioning API](https://grafana.com/docs/grafana/latest/developers/http_api/alerting_provisioning/#route-get-alert-rule) to extract the alert rule.
 1. Copy the contents into a YAML or JSON configuration file in the default provisioning directory or in your configured directory.
 
    Example configuration files can be found below.
@@ -516,10 +516,17 @@ policies:
     #        a very low alert volume or your upstream notification system performs
     #        its own grouping.
     group_by: ['...']
-    # <list> a list of matchers that an alert has to fulfill to match the node
+    # <list> a list of prometheus-like matchers that an alert rule has to fulfill to match the node (allowed chars
+    #        [a-zA-Z_:])
     matchers:
       - alertname = Watchdog
+      - service_id_X = serviceX
       - severity =~ "warning|critical"
+    # <list> a list of grafana-like matchers that an alert rule has to fulfill to match the node
+    object_matchers:
+      - ['alertname', '=', 'CPUUsage']
+      - ['service_id-X', '=', 'serviceX']
+      - ['severity', '=~', 'warning|critical']
     # <list> Times when the route should be muted. These must match the name of a
     #        mute time interval.
     #        Additionally, the root node cannot have any mute times.

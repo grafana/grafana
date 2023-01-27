@@ -11,7 +11,7 @@ keywords:
   - contact point
   - templating
 title: Manage contact points
-weight: 100
+weight: 200
 ---
 
 # Manage contact points

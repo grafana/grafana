@@ -22,8 +22,7 @@ import (
 // Prefer All*() methods when performing operations generically across all kinds.
 // For example, a validation HTTP middleware for any kind-schematized object type.
 type Base struct {
-	all []kindsys.Interface
-	numRaw, numStructured int
+	all []kindsys.Core
 	{{- range .Kinds }}
 	{{ .Properties.MachineName }} *{{ .Properties.MachineName }}.Kind{{end}}
 }
@@ -31,7 +30,7 @@ type Base struct {
 // type guards
 var (
 {{- range .Kinds }}
-	_ kindsys.{{ if .IsRaw }}Raw{{ else }}Structured{{ end }} = &{{ .Properties.MachineName }}.Kind{}{{end}}
+	_ kindsys.Core = &{{ .Properties.MachineName }}.Kind{}{{end}}
 )
 
 {{range .Kinds }}
@@ -43,13 +42,10 @@ func (b *Base) {{ .Properties.Name }}() *{{ .Properties.MachineName }}.Kind {
 
 func doNewBase(rt *thema.Runtime) *Base {
 	var err error
-	reg := &Base{
-	  numRaw: {{ .NumRaw }},
-	  numStructured: {{ .NumStructured }},
-	}
+	reg := &Base{}
 
 {{range .Kinds }}
-	reg.{{ .Properties.MachineName }}, err = {{ .Properties.MachineName }}.NewKind({{ if .IsCoreStructured }}rt{{ end }})
+	reg.{{ .Properties.MachineName }}, err = {{ .Properties.MachineName }}.NewKind(rt)
 	if err != nil {
 		panic(fmt.Sprintf("error while initializing the {{ .Properties.MachineName }} Kind: %s", err))
 	}

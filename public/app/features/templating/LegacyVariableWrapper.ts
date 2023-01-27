@@ -1,7 +1,6 @@
+import { VariableValue, FormatVariable } from '@grafana/scenes';
 import { VariableModel, VariableType } from '@grafana/schema';
 
-import { FormatVariable } from '../scenes/variables/interpolation/formatRegistry';
-import { VariableValue } from '../scenes/variables/types';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/constants';
 
 export class LegacyVariableWrapper implements FormatVariable {

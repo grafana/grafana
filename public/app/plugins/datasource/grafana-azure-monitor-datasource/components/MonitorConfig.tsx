@@ -1,4 +1,4 @@
-import React, { FunctionComponent, useMemo } from 'react';
+import React, { FunctionComponent, useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
@@ -7,6 +7,7 @@ import { getCredentials, updateCredentials } from '../credentials';
 import { AzureDataSourceSettings, AzureCredentials } from '../types';
 
 import { AzureCredentialsForm } from './AzureCredentialsForm';
+import { DefaultSubscription } from './DefaultSubscription';
 
 const azureClouds = [
   { value: 'azuremonitor', label: 'Azure' },
@@ -21,12 +22,24 @@ export interface Props {
 }
 
 export const MonitorConfig: FunctionComponent<Props> = (props: Props) => {
-  const { updateOptions, getSubscriptions } = props;
+  const { updateOptions, getSubscriptions, options } = props;
+  const [subscriptions, setSubscriptions] = useState<Array<SelectableValue<string>>>([]);
   const credentials = useMemo(() => getCredentials(props.options), [props.options]);
 
-  const onCredentialsChange = (credentials: AzureCredentials): void => {
-    updateOptions((options) => updateCredentials(options, credentials));
+  const onCredentialsChange = (credentials: AzureCredentials, subscriptionId?: string): void => {
+    if (!subscriptionId) {
+      setSubscriptions([]);
+    }
+    updateOptions((options) =>
+      updateCredentials({ ...options, jsonData: { ...options.jsonData, subscriptionId } }, credentials)
+    );
   };
+
+  const onSubscriptionsChange = (receivedSubscriptions: Array<SelectableValue<string>>) =>
+    setSubscriptions(receivedSubscriptions);
+
+  const onSubscriptionChange = (subscriptionId?: string) =>
+    updateOptions((options) => ({ ...options, jsonData: { ...options.jsonData, subscriptionId } }));
 
   return (
     <>
@@ -36,9 +49,18 @@ export const MonitorConfig: FunctionComponent<Props> = (props: Props) => {
         credentials={credentials}
         azureCloudOptions={azureClouds}
         onCredentialsChange={onCredentialsChange}
-        getSubscriptions={getSubscriptions}
         disabled={props.options.readOnly}
-      />
+      >
+        <DefaultSubscription
+          subscriptions={subscriptions}
+          credentials={credentials}
+          getSubscriptions={getSubscriptions}
+          disabled={props.options.readOnly}
+          onSubscriptionsChange={onSubscriptionsChange}
+          onSubscriptionChange={onSubscriptionChange}
+          options={options.jsonData}
+        />
+      </AzureCredentialsForm>
     </>
   );
 };

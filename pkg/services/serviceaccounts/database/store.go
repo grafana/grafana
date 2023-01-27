@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -124,7 +123,7 @@ func (s *ServiceAccountsStoreImpl) UpdateServiceAccount(
 
 		updateTime := time.Now()
 		if saForm.Role != nil {
-			var orgUser models.OrgUser
+			var orgUser org.OrgUser
 			orgUser.Role = *saForm.Role
 			orgUser.Updated = updateTime
 

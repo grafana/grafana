@@ -37,8 +37,9 @@ const NEW_ANNOTATION: AnnotationQuery<AzureMonitorQuery> = {
     queryType: AzureQueryType.LogAnalytics,
     azureLogAnalytics: {
       query: 'AzureActivity\r\n| where $__timeFilter() \r\n| project TimeGenerated, Text=OperationName',
-      resource:
+      resources: [
         '/subscriptions/abc-123-def-456/resourcegroups/our-datasource/providers/microsoft.operationalinsights/workspaces/azureactivitylog',
+      ],
     },
   },
 };

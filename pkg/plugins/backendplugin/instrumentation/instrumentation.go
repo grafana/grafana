@@ -6,11 +6,12 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 )
 
 var (
@@ -18,25 +19,20 @@ var (
 		Namespace: "grafana",
 		Name:      "plugin_request_total",
 		Help:      "The total amount of plugin requests",
-	}, []string{"plugin_id", "endpoint", "status"})
+	}, []string{"plugin_id", "endpoint", "status", "target"})
 
 	pluginRequestDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Namespace: "grafana",
 		Name:      "plugin_request_duration_milliseconds",
 		Help:      "Plugin request duration",
 		Buckets:   []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10, 25, 50, 100},
-	}, []string{"plugin_id", "endpoint"})
+	}, []string{"plugin_id", "endpoint", "target"})
 )
 
 var logger log.Logger = log.New("plugin.instrumentation")
 
-// instrumentPluginRequest instruments success rate and latency of `fn`, and starts a new span
-// with the provided tracer. The span name will be `endpoint`.
-func instrumentPluginRequest(
-	ctx context.Context, cfg *config.Cfg,
-	tracer tracing.Tracer, pluginCtx *backend.PluginContext,
-	endpoint string, fn func() error,
-) error {
+// instrumentPluginRequest instruments success rate and latency of `fn`
+func instrumentPluginRequest(ctx context.Context, cfg Cfg, tracer tracing.Tracer, pluginCtx *backend.PluginContext, endpoint string, fn func() error) error {
 	ctx, span := tracer.Start(ctx, endpoint)
 	defer span.End()
 
@@ -44,14 +40,16 @@ func instrumentPluginRequest(
 
 	start := time.Now()
 
+	timeBeforePluginRequest := log.TimeSinceStart(ctx, start)
+
 	err := fn()
 	if err != nil {
 		status = "error"
 	}
 
 	elapsed := time.Since(start)
-	pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, endpoint).Observe(float64(elapsed / time.Millisecond))
-	pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, endpoint, status).Inc()
+	pluginRequestDuration.WithLabelValues(pluginCtx.PluginID, endpoint, string(cfg.Target)).Observe(float64(elapsed / time.Millisecond))
+	pluginRequestCounter.WithLabelValues(pluginCtx.PluginID, endpoint, status, string(cfg.Target)).Inc()
 
 	if cfg.LogDatasourceRequests {
 		logParams := []interface{}{
@@ -60,8 +58,7 @@ func instrumentPluginRequest(
 			"pluginId", pluginCtx.PluginID,
 			"endpoint", endpoint,
 			"eventName", "grafana-data-egress",
-			"insight_logs", true,
-			"since_grafana_request_started", log.TimeSinceStart(ctx, time.Now()),
+			"time_before_plugin_request", timeBeforePluginRequest,
 		}
 
 		if pluginCtx.User != nil {
@@ -84,34 +81,27 @@ func instrumentPluginRequest(
 	return err
 }
 
+type Cfg struct {
+	LogDatasourceRequests bool
+	Target                backendplugin.Target
+}
+
 // InstrumentCollectMetrics instruments collectMetrics.
-func InstrumentCollectMetrics(
-	ctx context.Context, req *backend.PluginContext, cfg *config.Cfg, tracer tracing.Tracer,
-	fn func() error,
-) error {
+func InstrumentCollectMetrics(ctx context.Context, req *backend.PluginContext, cfg Cfg, tracer tracing.Tracer, fn func() error) error {
 	return instrumentPluginRequest(ctx, cfg, tracer, req, "collectMetrics", fn)
 }
 
 // InstrumentCheckHealthRequest instruments checkHealth.
-func InstrumentCheckHealthRequest(
-	ctx context.Context, req *backend.PluginContext, cfg *config.Cfg, tracer tracing.Tracer,
-	fn func() error,
-) error {
+func InstrumentCheckHealthRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, tracer tracing.Tracer, fn func() error) error {
 	return instrumentPluginRequest(ctx, cfg, tracer, req, "checkHealth", fn)
 }
 
 // InstrumentCallResourceRequest instruments callResource.
-func InstrumentCallResourceRequest(
-	ctx context.Context, req *backend.PluginContext, cfg *config.Cfg, tracer tracing.Tracer,
-	fn func() error,
-) error {
+func InstrumentCallResourceRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, tracer tracing.Tracer, fn func() error) error {
 	return instrumentPluginRequest(ctx, cfg, tracer, req, "callResource", fn)
 }
 
 // InstrumentQueryDataRequest instruments success rate and latency of query data requests.
-func InstrumentQueryDataRequest(
-	ctx context.Context, req *backend.PluginContext, cfg *config.Cfg, tracer tracing.Tracer,
-	fn func() error,
-) error {
+func InstrumentQueryDataRequest(ctx context.Context, req *backend.PluginContext, cfg Cfg, tracer tracing.Tracer, fn func() error) error {
 	return instrumentPluginRequest(ctx, cfg, tracer, req, "queryData", fn)
 }

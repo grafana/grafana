@@ -466,7 +466,7 @@ export class QueryGroup extends PureComponent<Props, State> {
               {this.renderAddQueryRow(dsSettings, styles)}
               {isHelpOpen && (
                 <Modal title="Data source help" isOpen={true} onDismiss={this.onCloseHelp}>
-                  <PluginHelp plugin={dsSettings.meta} type="query_help" />
+                  <PluginHelp pluginId={dsSettings.meta.id} />
                 </Modal>
               )}
             </>

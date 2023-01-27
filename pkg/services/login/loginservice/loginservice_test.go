@@ -60,7 +60,7 @@ func Test_syncOrgRoles_whenTryingToRemoveLastOrgLogsError(t *testing.T) {
 
 	err := login.syncOrgRoles(context.Background(), &user, &externalUser)
 	require.NoError(t, err)
-	assert.Contains(t, buf.String(), models.ErrLastOrgAdmin.Error())
+	assert.Contains(t, buf.String(), org.ErrLastOrgAdmin.Error())
 }
 
 func Test_teamSync(t *testing.T) {
@@ -158,7 +158,7 @@ func createResponseWithOneErrLastOrgAdminItem() orgtest.OrgListResponse {
 	remResp := orgtest.OrgListResponse{
 		{
 			OrgID:    10,
-			Response: models.ErrLastOrgAdmin,
+			Response: org.ErrLastOrgAdmin,
 		},
 		{
 			OrgID:    11,

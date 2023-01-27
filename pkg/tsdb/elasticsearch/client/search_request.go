@@ -2,8 +2,7 @@ package es
 
 import (
 	"strings"
-
-	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
+	"time"
 )
 
 const (
@@ -14,7 +13,7 @@ const (
 
 // SearchRequestBuilder represents a builder which can build a search request
 type SearchRequestBuilder struct {
-	interval intervalv2.Interval
+	interval time.Duration
 	index    string
 	size     int
 	// Currently sort is map, but based in examples it should be an array https://www.elastic.co/guide/en/elasticsearch/reference/current/sort-search-results.html
@@ -25,7 +24,7 @@ type SearchRequestBuilder struct {
 }
 
 // NewSearchRequestBuilder create a new search request builder
-func NewSearchRequestBuilder(interval intervalv2.Interval) *SearchRequestBuilder {
+func NewSearchRequestBuilder(interval time.Duration) *SearchRequestBuilder {
 	builder := &SearchRequestBuilder{
 		interval:    interval,
 		sort:        make(map[string]interface{}),
@@ -137,7 +136,7 @@ func NewMultiSearchRequestBuilder() *MultiSearchRequestBuilder {
 }
 
 // Search initiates and returns a new search request builder
-func (m *MultiSearchRequestBuilder) Search(interval intervalv2.Interval) *SearchRequestBuilder {
+func (m *MultiSearchRequestBuilder) Search(interval time.Duration) *SearchRequestBuilder {
 	b := NewSearchRequestBuilder(interval)
 	m.requestBuilders = append(m.requestBuilders, b)
 	return b

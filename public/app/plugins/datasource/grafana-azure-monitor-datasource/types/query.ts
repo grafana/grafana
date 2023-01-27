@@ -39,12 +39,16 @@ export interface AzureMonitorQuery extends DataQuery {
   resource?: string;
 }
 
+export interface AzureMonitorResource {
+  resourceGroup?: string;
+  resourceName?: string;
+}
+
 /**
  * Azure Monitor Metrics sub-query properties
  */
 export interface AzureMetricQuery {
-  resourceGroup?: string;
-  resourceName?: string;
+  resources?: AzureMetricResource[];
   /** metricNamespace is used as the resource type (or resource namespace).
    * It's usually equal to the target metric namespace.
    * Kept the name of the variable as metricNamespace to avoid backward incompatibility issues.
@@ -53,6 +57,7 @@ export interface AzureMetricQuery {
   /** used as the value for the metricNamespace param when different from the resource namespace */
   customNamespace?: string;
   metricName?: string;
+  region?: string;
   timeGrain?: string;
   aggregation?: string;
   dimensionFilters?: AzureMetricDimension[];
@@ -74,6 +79,11 @@ export interface AzureMetricQuery {
 
   /** @deprecated Use resourceGroup, resourceName and metricNamespace instead */
   resourceUri?: string;
+
+  /** @deprecated Use resources instead */
+  resourceGroup?: string;
+  /** @deprecated Use resources instead */
+  resourceName?: string;
 }
 
 /**
@@ -82,9 +92,12 @@ export interface AzureMetricQuery {
 export interface AzureLogsQuery {
   query?: string;
   resultFormat?: string;
-  resource?: string;
+  resources?: string[];
 
   workspace?: string;
+
+  /** @deprecated Use resources instead */
+  resource?: string;
 }
 
 /**
@@ -110,4 +123,5 @@ export interface AzureMetricResource {
   resourceGroup?: string;
   resourceName?: string;
   metricNamespace?: string;
+  region?: string;
 }

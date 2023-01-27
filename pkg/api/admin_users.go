@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
@@ -37,7 +39,7 @@ import (
 // 403: forbiddenError
 // 412: preconditionFailedError
 // 500: internalServerError
-func (hs *HTTPServer) AdminCreateUser(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AdminCreateUser(c *contextmodel.ReqContext) response.Response {
 	form := dtos.AdminCreateUserForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -67,7 +69,7 @@ func (hs *HTTPServer) AdminCreateUser(c *models.ReqContext) response.Response {
 
 	usr, err := hs.userService.Create(c.Req.Context(), &cmd)
 	if err != nil {
-		if errors.Is(err, models.ErrOrgNotFound) {
+		if errors.Is(err, org.ErrOrgNotFound) {
 			return response.Error(400, err.Error(), nil)
 		}
 
@@ -103,7 +105,7 @@ func (hs *HTTPServer) AdminCreateUser(c *models.ReqContext) response.Response {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) AdminUpdateUserPassword(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AdminUpdateUserPassword(c *contextmodel.ReqContext) response.Response {
 	form := dtos.AdminUpdateUserPasswordForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -155,7 +157,7 @@ func (hs *HTTPServer) AdminUpdateUserPassword(c *models.ReqContext) response.Res
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) AdminUpdateUserPermissions(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AdminUpdateUserPermissions(c *contextmodel.ReqContext) response.Response {
 	form := dtos.AdminUpdateUserPermissionsForm{}
 	if err := web.Bind(c.Req, &form); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -192,7 +194,7 @@ func (hs *HTTPServer) AdminUpdateUserPermissions(c *models.ReqContext) response.
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) AdminDeleteUser(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AdminDeleteUser(c *contextmodel.ReqContext) response.Response {
 	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
@@ -284,7 +286,7 @@ func (hs *HTTPServer) AdminDeleteUser(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) AdminDisableUser(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AdminDisableUser(c *contextmodel.ReqContext) response.Response {
 	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
@@ -327,7 +329,7 @@ func (hs *HTTPServer) AdminDisableUser(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) AdminEnableUser(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AdminEnableUser(c *contextmodel.ReqContext) response.Response {
 	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
@@ -365,7 +367,7 @@ func (hs *HTTPServer) AdminEnableUser(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) AdminLogoutUser(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AdminLogoutUser(c *contextmodel.ReqContext) response.Response {
 	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
@@ -391,7 +393,7 @@ func (hs *HTTPServer) AdminLogoutUser(c *models.ReqContext) response.Response {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) AdminGetUserAuthTokens(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AdminGetUserAuthTokens(c *contextmodel.ReqContext) response.Response {
 	userID, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "id is invalid", err)
@@ -416,7 +418,7 @@ func (hs *HTTPServer) AdminGetUserAuthTokens(c *models.ReqContext) response.Resp
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) AdminRevokeUserAuthToken(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) AdminRevokeUserAuthToken(c *contextmodel.ReqContext) response.Response {
 	cmd := auth.RevokeAuthTokenCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)

@@ -41,7 +41,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
       border-left: unset;
     `,
     groupHeader: css`
-      padding: ${theme.spacing(0, 4)};
+      padding: ${theme.spacing(0, 4.5)};
       display: flex;
       align-items: center;
       color: ${theme.colors.text.primary};

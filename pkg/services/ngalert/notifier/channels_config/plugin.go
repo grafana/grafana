@@ -57,6 +57,8 @@ type SelectOption struct {
 }
 
 // ShowWhen holds information about when options are dependant on other options.
+// Should be used when Element is ElementTypeSelect.
+// Does not work for ElementTypeCheckbox.
 type ShowWhen struct {
 	Field string `json:"field"`
 	Is    string `json:"is"`

@@ -1,12 +1,12 @@
 package validation
 
 import (
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
-func ValidatePublicDashboard(dto *SavePublicDashboardDTO, dashboard *models.Dashboard) error {
+func ValidatePublicDashboard(dto *SavePublicDashboardDTO, dashboard *dashboards.Dashboard) error {
 	if hasTemplateVariables(dashboard) {
 		return ErrPublicDashboardHasTemplateVariables.Errorf("ValidateSavePublicDashboard: public dashboard has template variables")
 	}
@@ -14,7 +14,7 @@ func ValidatePublicDashboard(dto *SavePublicDashboardDTO, dashboard *models.Dash
 	return nil
 }
 
-func hasTemplateVariables(dashboard *models.Dashboard) bool {
+func hasTemplateVariables(dashboard *dashboards.Dashboard) bool {
 	templateVariables := dashboard.Data.Get("templating").Get("list").MustArray()
 
 	return len(templateVariables) > 0

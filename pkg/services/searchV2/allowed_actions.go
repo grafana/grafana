@@ -100,7 +100,7 @@ func (s *StandardSearchService) createAllowedActions(ctx context.Context, orgId 
 		dsActionsByUid = make(map[string][]string)
 	}
 
-	var out [][]allowedActions
+	out := make([][]allowedActions, 0, len(references))
 	for _, ref := range references {
 		var actions []allowedActions
 

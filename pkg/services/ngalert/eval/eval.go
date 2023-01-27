@@ -41,9 +41,13 @@ type ConditionEvaluator interface {
 	Evaluate(ctx context.Context, now time.Time) (Results, error)
 }
 
+type expressionService interface {
+	ExecutePipeline(ctx context.Context, now time.Time, pipeline expr.DataPipeline) (*backend.QueryDataResponse, error)
+}
+
 type conditionEvaluator struct {
 	pipeline          expr.DataPipeline
-	expressionService *expr.Service
+	expressionService expressionService
 	condition         models.Condition
 	evalTimeout       time.Duration
 }
@@ -62,7 +66,7 @@ func (r *conditionEvaluator) EvaluateRaw(ctx context.Context, now time.Time) (re
 	}()
 
 	execCtx := ctx
-	if r.evalTimeout <= 0 {
+	if r.evalTimeout >= 0 {
 		timeoutCtx, cancel := context.WithTimeout(ctx, r.evalTimeout)
 		defer cancel()
 		execCtx = timeoutCtx
@@ -266,7 +270,7 @@ func getExprRequest(ctx EvaluationContext, data []models.AlertQuery, dsCacheServ
 			if expr.IsDataSource(q.DatasourceUID) {
 				ds = expr.DataSourceModel()
 			} else {
-				ds, err = dsCacheService.GetDatasourceByUID(ctx.Ctx, q.DatasourceUID, ctx.User, true)
+				ds, err = dsCacheService.GetDatasourceByUID(ctx.Ctx, q.DatasourceUID, ctx.User, false /*skipCache*/)
 				if err != nil {
 					return nil, fmt.Errorf("failed to build query '%s': %w", q.RefID, err)
 				}

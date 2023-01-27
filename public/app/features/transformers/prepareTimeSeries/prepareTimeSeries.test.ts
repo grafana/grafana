@@ -11,6 +11,10 @@ import {
 
 import { prepareTimeSeriesTransformer, PrepareTimeSeriesOptions, timeSeriesFormat } from './prepareTimeSeries';
 
+const ctx = {
+  interpolate: (v: string) => v,
+};
+
 describe('Prepare time series transformer', () => {
   it('should transform wide to multi', () => {
     const source = [
@@ -29,7 +33,7 @@ describe('Prepare time series transformer', () => {
       format: timeSeriesFormat.TimeSeriesMulti,
     };
 
-    expect(prepareTimeSeriesTransformer.transformer(config)(source)).toEqual([
+    expect(prepareTimeSeriesTransformer.transformer(config, ctx)(source)).toEqual([
       toEquableDataFrame({
         name: 'wide',
         refId: 'A',
@@ -75,7 +79,7 @@ describe('Prepare time series transformer', () => {
       format: timeSeriesFormat.TimeSeriesMulti,
     };
 
-    const frames = prepareTimeSeriesTransformer.transformer(config)(source);
+    const frames = prepareTimeSeriesTransformer.transformer(config, ctx)(source);
     expect(frames.length).toEqual(4);
     expect(
       frames.map((f) => ({
@@ -171,7 +175,7 @@ describe('Prepare time series transformer', () => {
       format: timeSeriesFormat.TimeSeriesMulti,
     };
 
-    expect(prepareTimeSeriesTransformer.transformer(config)(source)).toEqual([
+    expect(prepareTimeSeriesTransformer.transformer(config, ctx)(source)).toEqual([
       toEquableDataFrame({
         name: 'wide',
         refId: 'A',
@@ -235,7 +239,7 @@ describe('Prepare time series transformer', () => {
       format: timeSeriesFormat.TimeSeriesMulti,
     };
 
-    expect(toEquableDataFrames(prepareTimeSeriesTransformer.transformer(config)(source))).toEqual(
+    expect(toEquableDataFrames(prepareTimeSeriesTransformer.transformer(config, ctx)(source))).toEqual(
       toEquableDataFrames(
         source.map((frame) => ({
           ...frame,
@@ -273,7 +277,7 @@ describe('Prepare time series transformer', () => {
       format: timeSeriesFormat.TimeSeriesMulti,
     };
 
-    expect(prepareTimeSeriesTransformer.transformer(config)(source)).toEqual([]);
+    expect(prepareTimeSeriesTransformer.transformer(config, ctx)(source)).toEqual([]);
   });
 
   it('should convert long to multi', () => {
@@ -293,7 +297,7 @@ describe('Prepare time series transformer', () => {
       format: timeSeriesFormat.TimeSeriesMulti,
     };
 
-    const frames = prepareTimeSeriesTransformer.transformer(config)(source);
+    const frames = prepareTimeSeriesTransformer.transformer(config, ctx)(source);
     expect(frames).toEqual([
       toEquableDataFrame({
         name: 'long',
@@ -339,7 +343,7 @@ describe('Prepare time series transformer', () => {
       format: timeSeriesFormat.TimeSeriesMany,
     };
 
-    const frames = prepareTimeSeriesTransformer.transformer(config)(source);
+    const frames = prepareTimeSeriesTransformer.transformer(config, ctx)(source);
     expect(frames).toEqual([
       toEquableDataFrame({
         name: 'wants-to-be-many',

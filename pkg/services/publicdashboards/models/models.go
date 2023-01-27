@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 )
 
@@ -39,6 +39,7 @@ type PublicDashboard struct {
 	AccessToken          string        `json:"accessToken" xorm:"access_token"`
 	AnnotationsEnabled   bool          `json:"annotationsEnabled" xorm:"annotations_enabled"`
 	TimeSelectionEnabled bool          `json:"timeSelectionEnabled" xorm:"time_selection_enabled"`
+	Share                string        `json:"share"`
 
 	CreatedBy int64 `json:"createdBy" xorm:"created_by"`
 	UpdatedBy int64 `json:"updatedBy" xorm:"updated_by"`
@@ -95,7 +96,7 @@ func (ts *TimeSettings) ToDB() ([]byte, error) {
 }
 
 // BuildTimeSettings build time settings object using selected values if enabled and are valid or dashboard default values
-func (pd PublicDashboard) BuildTimeSettings(dashboard *models.Dashboard, reqDTO PublicDashboardQueryDTO) TimeSettings {
+func (pd PublicDashboard) BuildTimeSettings(dashboard *dashboards.Dashboard, reqDTO PublicDashboardQueryDTO) TimeSettings {
 	from := dashboard.Data.GetPath("time", "from").MustString()
 	to := dashboard.Data.GetPath("time", "to").MustString()
 

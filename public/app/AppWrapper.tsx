@@ -91,7 +91,8 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
   }
 
   commandPaletteEnabled() {
-    return config.featureToggles.commandPalette && !config.isPublicDashboardView;
+    const isLoginPage = locationService.getLocation().pathname === '/login';
+    return config.featureToggles.commandPalette && !config.isPublicDashboardView && !isLoginPage;
   }
 
   searchBarEnabled() {

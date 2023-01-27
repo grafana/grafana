@@ -28,7 +28,8 @@ export const joinByFieldTransformer: SynchronousDataTransformerInfo<JoinByFieldO
     mode: JoinMode.outer,
   },
 
-  operator: (options) => (source) => source.pipe(map((data) => joinByFieldTransformer.transformer(options)(data))),
+  operator: (options, ctx) => (source) =>
+    source.pipe(map((data) => joinByFieldTransformer.transformer(options, ctx)(data))),
 
   transformer: (options: JoinByFieldOptions) => {
     let joinBy: FieldMatcher | undefined = undefined;

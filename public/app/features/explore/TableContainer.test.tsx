@@ -1,7 +1,7 @@
-import { screen, render, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import React from 'react';
 
-import { DataFrame, toDataFrame, FieldType, InternalTimeZones } from '@grafana/data';
+import { DataFrame, FieldType, getDefaultTimeRange, InternalTimeZones, toDataFrame } from '@grafana/data';
 import { ExploreId } from 'app/types/explore';
 
 import { TableContainer } from './TableContainer';
@@ -54,7 +54,7 @@ const defaultProps = {
   onCellFilterAdded: jest.fn(),
   tableResult: [dataFrame],
   splitOpenFn: () => {},
-  range: {} as any,
+  range: getDefaultTimeRange(),
   timeZone: InternalTimeZones.utc,
 };
 

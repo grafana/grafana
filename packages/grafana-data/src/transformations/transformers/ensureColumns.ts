@@ -12,16 +12,20 @@ export const ensureColumnsTransformer: SynchronousDataTransformerInfo = {
   name: 'Ensure Columns Transformer',
   description: 'Will check if current data frames is series or columns. If in series it will convert to columns.',
 
-  operator: (options) => (source) => source.pipe(map((data) => ensureColumnsTransformer.transformer(options)(data))),
+  operator: (options, ctx) => (source) =>
+    source.pipe(map((data) => ensureColumnsTransformer.transformer(options, ctx)(data))),
 
-  transformer: (options: any) => (frames: DataFrame[]) => {
+  transformer: (_options: any, ctx) => (frames: DataFrame[]) => {
     // Assume timeseries should first be joined by time
     const timeFieldName = findConsistentTimeFieldName(frames);
 
     if (frames.length > 1 && timeFieldName) {
-      return joinByFieldTransformer.transformer({
-        byField: timeFieldName,
-      })(frames);
+      return joinByFieldTransformer.transformer(
+        {
+          byField: timeFieldName,
+        },
+        ctx
+      )(frames);
     }
     return frames;
   },

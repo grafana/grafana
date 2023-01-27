@@ -161,7 +161,7 @@ func (ss *sqlxStore) Count(ctx context.Context, scopeParams *quota.ScopeParamete
 		u.Set(tag, r.Count)
 	}
 
-	if scopeParams.OrgID != 0 {
+	if scopeParams != nil && scopeParams.OrgID != 0 {
 		if err := ss.sess.Get(ctx, &r, `SELECT COUNT(*) AS count FROM api_key WHERE org_id = ?`, scopeParams.OrgID); err != nil {
 			return u, err
 		} else {

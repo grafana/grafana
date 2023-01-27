@@ -286,6 +286,8 @@ export function createFolder(payload: any) {
   return getBackendSrv().post('/api/folders', payload);
 }
 
+export const SLICE_FOLDER_RESULTS_TO = 1000;
+
 export function searchFolders(
   query: any,
   permission?: PermissionLevelString,
@@ -296,6 +298,7 @@ export function searchFolders(
     type: 'dash-folder',
     permission,
     accesscontrol: withAccessControl,
+    limit: SLICE_FOLDER_RESULTS_TO,
   });
 }
 

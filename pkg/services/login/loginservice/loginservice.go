@@ -62,10 +62,11 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 			return login.ErrSignupNotAllowed
 		}
 
+		// quota check (FIXME: (jguer) this should be done in the user service)
 		// we may insert in both user and org_user tables
 		// therefore we need to query check quota for both user and org services
 		for _, srv := range []string{user.QuotaTargetSrv, org.QuotaTargetSrv} {
-			limitReached, errLimit := ls.QuotaService.QuotaReached(cmd.ReqContext, quota.TargetSrv(srv))
+			limitReached, errLimit := ls.QuotaService.CheckQuotaReached(ctx, quota.TargetSrv(srv), nil)
 			if errLimit != nil {
 				cmd.ReqContext.Logger.Warn("Error getting user quota.", "error", errLimit)
 				return login.ErrGettingUserQuota
@@ -295,7 +296,7 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, usr *user.User, extU
 		// add role
 		cmd := &org.AddOrgUserCommand{UserID: usr.ID, Role: orgRole, OrgID: orgId}
 		err := ls.orgService.AddOrgUser(ctx, cmd)
-		if err != nil && !errors.Is(err, models.ErrOrgNotFound) {
+		if err != nil && !errors.Is(err, org.ErrOrgNotFound) {
 			return err
 		}
 	}
@@ -306,7 +307,7 @@ func (ls *Implementation) syncOrgRoles(ctx context.Context, usr *user.User, extU
 			"userId", usr.ID, "orgId", orgId)
 		cmd := &org.RemoveOrgUserCommand{OrgID: orgId, UserID: usr.ID}
 		if err := ls.orgService.RemoveOrgUser(ctx, cmd); err != nil {
-			if errors.Is(err, models.ErrLastOrgAdmin) {
+			if errors.Is(err, org.ErrLastOrgAdmin) {
 				logger.Error(err.Error(), "userId", cmd.UserID, "orgId", cmd.OrgID)
 				continue
 			}

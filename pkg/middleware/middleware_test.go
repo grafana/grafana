@@ -29,9 +29,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey/apikeytest"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
@@ -127,7 +129,7 @@ func TestMiddleWareContentSecurityPolicyHeaders(t *testing.T) {
 }
 
 func TestMiddlewareContext(t *testing.T) {
-	const noCache = "no-cache"
+	const noStore = "no-store"
 
 	configureJWTAuthHeader := func(cfg *setting.Cfg) {
 		cfg.JWTAuthEnabled = true
@@ -146,9 +148,9 @@ func TestMiddlewareContext(t *testing.T) {
 
 	middlewareScenario(t, "middleware should add Cache-Control header for requests to API", func(t *testing.T, sc *scenarioContext) {
 		sc.fakeReq("GET", "/api/search").exec()
-		assert.Equal(t, noCache, sc.resp.Header().Get("Cache-Control"))
-		assert.Equal(t, noCache, sc.resp.Header().Get("Pragma"))
-		assert.Equal(t, "-1", sc.resp.Header().Get("Expires"))
+		assert.Equal(t, noStore, sc.resp.Header().Get("Cache-Control"))
+		assert.Empty(t, sc.resp.Header().Get("Pragma"))
+		assert.Empty(t, sc.resp.Header().Get("Expires"))
 	})
 
 	middlewareScenario(t, "middleware should not add Cache-Control header for requests to datasource proxy API", func(
@@ -161,7 +163,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 	middlewareScenario(t, "middleware should add Cache-Control header for requests with HTML response", func(
 		t *testing.T, sc *scenarioContext) {
-		sc.handlerFunc = func(c *models.ReqContext) {
+		sc.handlerFunc = func(c *contextmodel.ReqContext) {
 			t.Log("Handler called")
 			data := &dtos.IndexViewData{
 				User:     &dtos.CurrentUser{},
@@ -174,9 +176,9 @@ func TestMiddlewareContext(t *testing.T) {
 		}
 		sc.fakeReq("GET", "/").exec()
 		require.Equal(t, 200, sc.resp.Code)
-		assert.Equal(t, noCache, sc.resp.Header().Get("Cache-Control"))
-		assert.Equal(t, noCache, sc.resp.Header().Get("Pragma"))
-		assert.Equal(t, "-1", sc.resp.Header().Get("Expires"))
+		assert.Equal(t, noStore, sc.resp.Header().Get("Cache-Control"))
+		assert.Empty(t, sc.resp.Header().Get("Pragma"))
+		assert.Empty(t, sc.resp.Header().Get("Expires"))
 	})
 
 	middlewareScenario(t, "middleware should add X-Frame-Options header with deny for request when not allowing embedding", func(
@@ -233,6 +235,50 @@ func TestMiddlewareContext(t *testing.T) {
 		assert.Equal(t, orgID, sc.context.OrgID)
 		assert.Equal(t, org.RoleEditor, sc.context.OrgRole)
 	}, configureJWTAuthHeader)
+
+	middlewareScenario(t, "Valid Basic Auth header with JWT enabled and empty 'sub' claim", func(t *testing.T, sc *scenarioContext) {
+		const password = "MyPass"
+		const orgID int64 = 2
+		const userID int64 = 12
+		// #nosec G101 -- This is dummy/test token
+		const emptySubToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSm9obiBEb2UiLCJzdWIiOiIiLCJpYXQiOjE1MTYyMzkwMjJ9.tnwtOHK58d47dO4DHW4b9MzeToxa1kGiko5Oo887Rqc"
+
+		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: orgID, UserID: userID}
+		authHeader := util.GetBasicAuthHeader("myuser", password)
+		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).withJWTAuthHeader(emptySubToken).exec()
+
+		require.Equal(t, 200, sc.resp.Code)
+
+		assert.True(t, sc.context.IsSignedIn)
+		assert.Equal(t, orgID, sc.context.OrgID)
+		assert.Equal(t, userID, sc.context.UserID)
+	}, func(cfg *setting.Cfg) {
+		cfg.JWTAuthEnabled = true
+		cfg.JWTAuthHeaderName = "X-JWT-Token"
+		cfg.BasicAuthEnabled = true
+	})
+
+	middlewareScenario(t, "Valid Basic Auth header with JWT enabled and missing 'sub' claim", func(t *testing.T, sc *scenarioContext) {
+		const password = "MyPass"
+		const orgID int64 = 2
+		const userID int64 = 12
+		// #nosec G101 -- This is dummy/test token
+		const missingSubToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiSm9obiBEb2UiLCJpYXQiOjE1MTYyMzkwMjJ9.8nYFUX869Y1mnDDDU4yL11aANgVRuifoxrE8BHZY1iE"
+
+		sc.userService.ExpectedSignedInUser = &user.SignedInUser{OrgID: orgID, UserID: userID}
+		authHeader := util.GetBasicAuthHeader("myuser", password)
+		sc.fakeReq("GET", "/").withAuthorizationHeader(authHeader).withJWTAuthHeader(missingSubToken).exec()
+
+		require.Equal(t, 200, sc.resp.Code)
+
+		assert.True(t, sc.context.IsSignedIn)
+		assert.Equal(t, orgID, sc.context.OrgID)
+		assert.Equal(t, userID, sc.context.UserID)
+	}, func(cfg *setting.Cfg) {
+		cfg.JWTAuthEnabled = true
+		cfg.JWTAuthHeaderName = "X-JWT-Token"
+		cfg.BasicAuthEnabled = true
+	})
 
 	middlewareScenario(t, "Valid API key, but does not match DB hash", func(t *testing.T, sc *scenarioContext) {
 		const keyhash = "Something_not_matching"
@@ -676,7 +722,7 @@ func TestMiddlewareContext(t *testing.T) {
 			body := "key=value"
 			sc.req.Body = io.NopCloser(strings.NewReader(body))
 
-			sc.handlerFunc = func(c *models.ReqContext) {
+			sc.handlerFunc = func(c *contextmodel.ReqContext) {
 				t.Log("Handler called")
 				defer func() {
 					err := c.Req.Body.Close()
@@ -696,11 +742,11 @@ func TestMiddlewareContext(t *testing.T) {
 		})
 
 		middlewareScenario(t, "Request body should not be read in default context handler, but query should be altered - jwt", func(t *testing.T, sc *scenarioContext) {
-			sc.fakeReq("POST", "/?targetOrgId=123&auth_token=token")
+			sc.fakeReq("POST", "/?targetOrgId=123&auth_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NSIsImlhdCI6MTUxNjIzOTAyMn0.1E9qmtctlHAeJzNLPgGFfxdA8WfbEl_vwYO91ffQGxs")
 			body := "key=value"
 			sc.req.Body = io.NopCloser(strings.NewReader(body))
 
-			sc.handlerFunc = func(c *models.ReqContext) {
+			sc.handlerFunc = func(c *contextmodel.ReqContext) {
 				t.Log("Handler called")
 				defer func() {
 					err := c.Req.Body.Close()
@@ -841,10 +887,10 @@ func middlewareScenario(t *testing.T, desc string, fn scenarioFunc, cbs ...func(
 		sc.m.Use(OrgRedirect(sc.cfg, sc.userService))
 
 		sc.userAuthTokenService = ctxHdlr.AuthTokenService.(*authtest.FakeUserAuthTokenService)
-		sc.jwtAuthService = ctxHdlr.JWTAuthService.(*models.FakeJWTService)
+		sc.jwtAuthService = ctxHdlr.JWTAuthService.(*jwt.FakeJWTService)
 		sc.remoteCacheService = ctxHdlr.RemoteCache
 
-		sc.defaultHandler = func(c *models.ReqContext) {
+		sc.defaultHandler = func(c *contextmodel.ReqContext) {
 			require.NotNil(t, c)
 			t.Log("Default HTTP handler called")
 			sc.context = c
@@ -884,7 +930,7 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *dbtest.Fake
 	remoteCacheSvc := remotecache.NewFakeStore(t)
 	userAuthTokenSvc := authtest.NewFakeUserAuthTokenService()
 	renderSvc := &fakeRenderService{}
-	authJWTSvc := models.NewFakeJWTService()
+	authJWTSvc := jwt.NewFakeJWTService()
 	tracer := tracing.InitializeTracerForTest()
 	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService, userService, mockSQLStore)
 	authenticator := &logintest.AuthenticatorFake{ExpectedUser: &user.User{}}

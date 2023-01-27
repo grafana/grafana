@@ -32,9 +32,6 @@ func (j *latestj) JennyName() string {
 }
 
 func (j *latestj) Generate(decl *DeclForGen) (*codejen.File, error) {
-	if decl.IsRaw() {
-		return nil, nil
-	}
 	comm := decl.Properties.Common()
 	sfg := SchemaForGen{
 		Name:    comm.Name,

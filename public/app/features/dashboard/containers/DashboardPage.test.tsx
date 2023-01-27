@@ -63,10 +63,6 @@ jest.mock('react-virtualized-auto-sizer', () => {
   return ({ children }: AutoSizerProps) => children({ height: 1, width: 1 });
 });
 
-// the mock below gets rid of this warning from recompose:
-// Warning: React.createFactory() is deprecated and will be removed in a future major release. Consider using JSX or use React.createElement() directly instead.
-jest.mock('@jaegertracing/jaeger-ui-components', () => ({}));
-
 interface ScenarioContext {
   dashboard?: DashboardModel | null;
   container?: HTMLElement;
@@ -313,22 +309,6 @@ describe('DashboardPage', () => {
         dashboard: getTestDashboard(),
       });
       ctx.rerender({ dashboard: ctx.dashboard });
-    });
-
-    it('should not render page toolbar and submenu', () => {
-      expect(screen.queryAllByTestId(selectors.pages.Dashboard.DashNav.navV2)).toHaveLength(0);
-      expect(screen.queryAllByLabelText(selectors.pages.Dashboard.SubMenu.submenu)).toHaveLength(0);
-    });
-  });
-
-  dashboardPageScenario('When dashboard is public', (ctx) => {
-    ctx.setup(() => {
-      locationService.partial({ kiosk: false });
-      ctx.mount({
-        queryParams: {},
-        dashboard: getTestDashboard(),
-      });
-      ctx.rerender({ dashboard: ctx.dashboard, isPublic: true });
     });
 
     it('should not render page toolbar and submenu', () => {

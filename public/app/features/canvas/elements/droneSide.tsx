@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -16,10 +16,8 @@ interface DroneSideConfig {
   pitchAngle?: ScalarDimensionConfig;
 }
 
-const DroneSideDisplay: FC<CanvasElementProps<DroneSideConfig, DroneSideData>> = (props) => {
+const DroneSideDisplay = ({ data }: CanvasElementProps<DroneSideConfig, DroneSideData>) => {
   const styles = useStyles2(getStyles);
-
-  const { data } = props;
 
   const droneSidePitchTransformStyle = `rotate(${data?.pitchAngle ? data.pitchAngle : 0}deg)`;
 

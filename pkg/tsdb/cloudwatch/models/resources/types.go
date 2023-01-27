@@ -33,3 +33,8 @@ type LogGroup struct {
 	Arn  string `json:"arn"`
 	Name string `json:"name"`
 }
+
+type LogGroupField struct {
+	Percent int64  `json:"percent"`
+	Name    string `json:"name"`
+}

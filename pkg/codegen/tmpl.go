@@ -38,10 +38,9 @@ type (
 	}
 	tvars_kind_registry struct {
 		// Header tvars_autogen_header
-		NumRaw, NumStructured int
-		PackageName           string
-		KindPackagePrefix     string
-		Kinds                 []*DeclForGen
+		PackageName       string
+		KindPackagePrefix string
+		Kinds             []*DeclForGen
 	}
 	tvars_coremodel_imports struct {
 		PackageName string

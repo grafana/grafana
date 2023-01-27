@@ -2,7 +2,7 @@ import * as H from 'history';
 import { ContextSrvStub } from 'test/specs/helpers';
 
 import { dateTime, isDateTime } from '@grafana/data';
-import { HistoryWrapper, locationService, setLocationService } from '@grafana/runtime';
+import { config, HistoryWrapper, locationService, setLocationService } from '@grafana/runtime';
 
 import { TimeSrv } from './TimeSrv';
 
@@ -83,6 +83,37 @@ describe('timeSrv', () => {
       timeSrv.init(_dashboard);
 
       expect(timeSrv.refresh).toBe(false);
+    });
+
+    describe('public dashboard', () => {
+      beforeEach(() => {
+        _dashboard = {
+          time: { from: 'now-6h', to: 'now' },
+          getTimezone: jest.fn(() => 'browser'),
+          refresh: false,
+          timeRangeUpdated: jest.fn(() => {}),
+        };
+
+        locationService.push('/d/id?from=now-24h&to=now');
+        config.isPublicDashboardView = true;
+        timeSrv = new TimeSrv(new ContextSrvStub());
+      });
+
+      it("should ignore from and to if it's a public dashboard and time picker is hidden", () => {
+        timeSrv.init({ ..._dashboard, timepicker: { hidden: true } });
+        const time = timeSrv.timeRange();
+
+        expect(time.raw.from).toBe('now-6h');
+        expect(time.raw.to).toBe('now');
+      });
+
+      it("should not ignore from and to if it's a public dashboard but time picker is not hidden", () => {
+        timeSrv.init({ ..._dashboard, timepicker: { hidden: false } });
+        const time = timeSrv.timeRange();
+
+        expect(time.raw.from).toBe('now-24h');
+        expect(time.raw.to).toBe('now');
+      });
     });
 
     it('should handle formatted dates without time', () => {

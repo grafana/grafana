@@ -15,7 +15,6 @@ export default class InfluxQueryModel {
   scopedVars: any;
   refId?: string;
 
-  /** @ngInject */
   constructor(target: InfluxQuery, templateSrv?: TemplateSrv, scopedVars?: ScopedVars) {
     this.target = target;
     this.templateSrv = templateSrv;

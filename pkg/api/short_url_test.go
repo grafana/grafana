@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -23,14 +23,14 @@ func TestShortURLAPIEndpoint(t *testing.T) {
 			Path: "d/TxKARsmGz/new-dashboard?orgId=1&from=1599389322894&to=1599410922894",
 		}
 
-		createResp := &models.ShortUrl{
+		createResp := &shorturls.ShortUrl{
 			Id:    1,
 			OrgId: testOrgID,
 			Uid:   "N1u6L4eGz",
 			Path:  cmd.Path,
 		}
 		service := &fakeShortURLService{
-			createShortURLFunc: func(ctx context.Context, user *user.SignedInUser, path string) (*models.ShortUrl, error) {
+			createShortURLFunc: func(ctx context.Context, user *user.SignedInUser, path string) (*shorturls.ShortUrl, error) {
 				return createResp, nil
 			},
 		}
@@ -61,7 +61,7 @@ func createShortURLScenario(t *testing.T, desc string, url string, routePattern 
 		}
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
@@ -77,14 +77,14 @@ func createShortURLScenario(t *testing.T, desc string, url string, routePattern 
 }
 
 type fakeShortURLService struct {
-	createShortURLFunc func(ctx context.Context, user *user.SignedInUser, path string) (*models.ShortUrl, error)
+	createShortURLFunc func(ctx context.Context, user *user.SignedInUser, path string) (*shorturls.ShortUrl, error)
 }
 
-func (s *fakeShortURLService) GetShortURLByUID(ctx context.Context, user *user.SignedInUser, uid string) (*models.ShortUrl, error) {
+func (s *fakeShortURLService) GetShortURLByUID(ctx context.Context, user *user.SignedInUser, uid string) (*shorturls.ShortUrl, error) {
 	return nil, nil
 }
 
-func (s *fakeShortURLService) CreateShortURL(ctx context.Context, user *user.SignedInUser, path string) (*models.ShortUrl, error) {
+func (s *fakeShortURLService) CreateShortURL(ctx context.Context, user *user.SignedInUser, path string) (*shorturls.ShortUrl, error) {
 	if s.createShortURLFunc != nil {
 		return s.createShortURLFunc(ctx, user, path)
 	}
@@ -92,10 +92,10 @@ func (s *fakeShortURLService) CreateShortURL(ctx context.Context, user *user.Sig
 	return nil, nil
 }
 
-func (s *fakeShortURLService) UpdateLastSeenAt(ctx context.Context, shortURL *models.ShortUrl) error {
+func (s *fakeShortURLService) UpdateLastSeenAt(ctx context.Context, shortURL *shorturls.ShortUrl) error {
 	return nil
 }
 
-func (s *fakeShortURLService) DeleteStaleShortURLs(ctx context.Context, cmd *models.DeleteShortUrlCommand) error {
+func (s *fakeShortURLService) DeleteStaleShortURLs(ctx context.Context, cmd *shorturls.DeleteShortUrlCommand) error {
 	return nil
 }

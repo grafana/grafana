@@ -6,7 +6,8 @@ import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { locationService, setDataSourceSrv, logInfo } from '@grafana/runtime';
+import { locationService, setDataSourceSrv, logInfo, setBackendSrv } from '@grafana/runtime';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import * as actions from 'app/features/alerting/unified/state/actions';
@@ -132,6 +133,10 @@ const ui = {
     saveButton: byRole('button', { name: /Save changes/ }),
   },
 };
+
+beforeAll(() => {
+  setBackendSrv(backendSrv);
+});
 
 describe('RuleList', () => {
   beforeEach(() => {
@@ -493,10 +498,10 @@ describe('RuleList', () => {
     expect(groups).toHaveLength(2);
 
     const filterInput = ui.rulesFilterInput.get();
-    await userEvent.type(filterInput, '{{foo="bar"}');
+    await userEvent.type(filterInput, 'label:foo=bar');
 
     // Input is debounced so wait for it to be visible
-    await waitFor(() => expect(filterInput).toHaveValue('{foo="bar"}'));
+    await waitFor(() => expect(filterInput).toHaveValue('label:foo=bar'));
     // Group doesn't contain matching labels
     await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(1));
 
@@ -512,17 +517,17 @@ describe('RuleList', () => {
 
     // Check for different label matchers
     await userEvent.clear(filterInput);
-    await userEvent.type(filterInput, '{{foo!="bar",foo!="baz"}');
+    await userEvent.type(filterInput, 'label:foo!=bar label:foo!=baz');
     // Group doesn't contain matching labels
     await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(1));
     await waitFor(() => expect(ui.ruleGroup.get()).toHaveTextContent('group-2'));
 
     await userEvent.clear(filterInput);
-    await userEvent.type(filterInput, '{{foo=~"b.+"}');
+    await userEvent.type(filterInput, 'label:"foo=~b.+"');
     await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(2));
 
     await userEvent.clear(filterInput);
-    await userEvent.type(filterInput, '{{region="US"}');
+    await userEvent.type(filterInput, 'label:region=US');
     await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(1));
     await waitFor(() => expect(ui.ruleGroup.get()).toHaveTextContent('group-2'));
   });

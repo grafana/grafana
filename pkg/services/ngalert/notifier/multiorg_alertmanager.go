@@ -9,20 +9,20 @@ import (
 	"sync"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
-	"github.com/grafana/grafana/pkg/services/notifications"
-	"github.com/grafana/grafana/pkg/services/secrets"
-
-	"github.com/grafana/alerting/alerting/notifier/channels"
-	"github.com/prometheus/alertmanager/cluster"
-	"github.com/prometheus/client_golang/prometheus"
-
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/notifications"
+	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
+
+	"github.com/grafana/alerting/alerting"
+	"github.com/grafana/alerting/alerting/notifier/channels"
+	"github.com/prometheus/alertmanager/cluster"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
@@ -41,7 +41,7 @@ type MultiOrgAlertmanager struct {
 	logger   log.Logger
 
 	// clusterPeer represents the clustering peers of Alertmanagers between Grafana instances.
-	peer         ClusterPeer
+	peer         alerting.ClusterPeer
 	settleCancel context.CancelFunc
 
 	configStore AlertingStore
@@ -170,7 +170,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 	moa.alertmanagersMtx.Lock()
 	for _, orgID := range orgIDs {
 		if _, isDisabledOrg := moa.settings.UnifiedAlerting.DisabledOrgs[orgID]; isDisabledOrg {
-			moa.logger.Debug("skipping syncing Alertmanger for disabled org", "org", orgID)
+			moa.logger.Debug("skipping syncing Alertmanager for disabled org", "org", orgID)
 			continue
 		}
 		orgsFound[orgID] = struct{}{}

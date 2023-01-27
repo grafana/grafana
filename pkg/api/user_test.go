@@ -17,9 +17,11 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
 	authinfostore "github.com/grafana/grafana/pkg/services/login/authinfoservice/database"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
@@ -29,7 +31,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/secrets/database"
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
@@ -52,7 +53,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		},
 		TotalCount: 2,
 	}
-	mock := mockstore.NewSQLStoreMock()
+	mock := dbtest.NewFakeDB()
 	userMock := usertest.NewUserServiceFake()
 	loggedInUserScenario(t, "When calling GET on", "api/users/1", "api/users/:id", func(sc *scenarioContext) {
 		fakeNow := time.Date(2019, 2, 11, 17, 30, 40, 0, time.UTC)
@@ -76,7 +77,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			Login:   "loginuser",
 			IsAdmin: true,
 		}
-		user, err := userSvc.CreateUserForTests(context.Background(), &createUserCmd)
+		usr, err := userSvc.CreateUserForTests(context.Background(), &createUserCmd)
 		require.NoError(t, err)
 
 		sc.handlerFunc = hs.GetUserByID
@@ -92,7 +93,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		login := "loginuser"
 		query := &models.GetUserByAuthInfoQuery{AuthModule: "test", AuthId: "test", UserLookupParams: models.UserLookupParams{Login: &login}}
 		cmd := &models.UpdateAuthInfoCommand{
-			UserId:     user.ID,
+			UserId:     usr.ID,
 			AuthId:     query.AuthId,
 			AuthModule: query.AuthModule,
 			OAuthToken: token,
@@ -100,14 +101,14 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		err = srv.UpdateAuthInfo(context.Background(), cmd)
 		require.NoError(t, err)
 		avatarUrl := dtos.GetGravatarUrl("@test.com")
-		sc.fakeReqWithParams("GET", sc.url, map[string]string{"id": fmt.Sprintf("%v", user.ID)}).exec()
+		sc.fakeReqWithParams("GET", sc.url, map[string]string{"id": fmt.Sprintf("%v", usr.ID)}).exec()
 
-		expected := models.UserProfileDTO{
-			Id:             1,
+		expected := user.UserProfileDTO{
+			ID:             1,
 			Email:          "user@test.com",
 			Name:           "user",
 			Login:          "loginuser",
-			OrgId:          1,
+			OrgID:          1,
 			IsGrafanaAdmin: true,
 			AuthLabels:     []string{},
 			CreatedAt:      fakeNow,
@@ -115,7 +116,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			AvatarUrl:      avatarUrl,
 		}
 
-		var resp models.UserProfileDTO
+		var resp user.UserProfileDTO
 		require.Equal(t, http.StatusOK, sc.resp.Code)
 		err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 		require.NoError(t, err)
@@ -147,7 +148,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		hs.userService = userMock
 		sc.fakeReqWithParams("GET", sc.url, map[string]string{"loginOrEmail": "admin@test.com"}).exec()
 
-		var resp models.UserProfileDTO
+		var resp user.UserProfileDTO
 		require.Equal(t, http.StatusOK, sc.resp.Code)
 		err = json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 		require.NoError(t, err)
@@ -255,7 +256,7 @@ func updateUserScenario(t *testing.T, ctx updateUserContext, hs *HTTPServer) {
 		sc.authInfoService = &logintest.AuthInfoServiceFake{}
 		hs.authInfoService = sc.authInfoService
 
-		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(ctx.cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
@@ -308,7 +309,7 @@ func updateSignedInUserScenario(t *testing.T, ctx updateUserContext, hs *HTTPSer
 		sc.authInfoService = &logintest.AuthInfoServiceFake{}
 		hs.authInfoService = sc.authInfoService
 
-		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(ctx.cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c

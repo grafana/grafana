@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -61,9 +60,9 @@ func TestIntegrationAnnotations(t *testing.T) {
 		dashboardStore, err := dashboardstore.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg), quotaService)
 		require.NoError(t, err)
 
-		testDashboard1 := models.SaveDashboardCommand{
-			UserId: 1,
-			OrgId:  1,
+		testDashboard1 := dashboards.SaveDashboardCommand{
+			UserID: 1,
+			OrgID:  1,
 			Dashboard: simplejson.NewFromAny(map[string]interface{}{
 				"title": "Dashboard 1",
 			}),
@@ -72,9 +71,9 @@ func TestIntegrationAnnotations(t *testing.T) {
 		dashboard, err := dashboardStore.SaveDashboard(context.Background(), testDashboard1)
 		require.NoError(t, err)
 
-		testDashboard2 := models.SaveDashboardCommand{
-			UserId: 1,
-			OrgId:  1,
+		testDashboard2 := dashboards.SaveDashboardCommand{
+			UserID: 1,
+			OrgID:  1,
 			Dashboard: simplejson.NewFromAny(map[string]interface{}{
 				"title": "Dashboard 2",
 			}),
@@ -85,7 +84,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		annotation := &annotations.Item{
 			OrgId:       1,
 			UserId:      1,
-			DashboardId: dashboard.Id,
+			DashboardId: dashboard.ID,
 			Text:        "hello",
 			Type:        "alert",
 			Epoch:       10,
@@ -100,7 +99,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		annotation2 := &annotations.Item{
 			OrgId:       1,
 			UserId:      1,
-			DashboardId: dashboard2.Id,
+			DashboardId: dashboard2.ID,
 			Text:        "hello",
 			Type:        "alert",
 			Epoch:       21, // Should swap epoch & epochEnd
@@ -139,7 +138,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		t.Run("Can query for annotation by dashboard id", func(t *testing.T) {
 			items, err := repo.Get(context.Background(), &annotations.ItemQuery{
 				OrgId:        1,
-				DashboardId:  dashboard.Id,
+				DashboardId:  dashboard.ID,
 				From:         0,
 				To:           15,
 				SignedInUser: testUser,
@@ -185,6 +184,11 @@ func TestIntegrationAnnotations(t *testing.T) {
 			inserted, err := repo.Get(context.Background(), query)
 			require.NoError(t, err)
 			assert.Len(t, inserted, count)
+			for _, ins := range inserted {
+				require.Equal(t, int64(12), ins.Time)
+				require.Equal(t, int64(12), ins.TimeEnd)
+				require.Equal(t, ins.Created, ins.Updated)
+			}
 		})
 
 		t.Run("Can batch-insert annotations with tags", func(t *testing.T) {
@@ -412,7 +416,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 			annotation3 := &annotations.Item{
 				OrgId:       1,
 				UserId:      1,
-				DashboardId: dashboard2.Id,
+				DashboardId: dashboard2.ID,
 				Text:        "toBeDeletedWithPanelId",
 				Type:        "alert",
 				Epoch:       11,
@@ -496,9 +500,9 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	dashboardStore, err := dashboardstore.ProvideDashboardStore(sql, sql.Cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sql, sql.Cfg), quotaService)
 	require.NoError(t, err)
 
-	testDashboard1 := models.SaveDashboardCommand{
-		UserId:   1,
-		OrgId:    1,
+	testDashboard1 := dashboards.SaveDashboardCommand{
+		UserID:   1,
+		OrgID:    1,
 		IsFolder: false,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
 			"title": "Dashboard 1",
@@ -506,11 +510,11 @@ func TestIntegrationAnnotationListingWithRBAC(t *testing.T) {
 	}
 	dashboard, err := dashboardStore.SaveDashboard(context.Background(), testDashboard1)
 	require.NoError(t, err)
-	dash1UID := dashboard.Uid
+	dash1UID := dashboard.UID
 
-	testDashboard2 := models.SaveDashboardCommand{
-		UserId: 1,
-		OrgId:  1,
+	testDashboard2 := dashboards.SaveDashboardCommand{
+		UserID: 1,
+		OrgID:  1,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
 			"title": "Dashboard 2",
 		}),

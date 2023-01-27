@@ -24,10 +24,10 @@ import {
   TemplateSrv,
   getTemplateSrv,
 } from '@grafana/runtime';
-import { SpanBarOptions } from '@jaegertracing/jaeger-ui-components';
 import { NodeGraphOptions } from 'app/core/components/NodeGraphSettings';
 import { TraceToLogsOptions } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { serializeParams } from 'app/core/utils/fetch';
+import { SpanBarOptions } from 'app/features/explore/TraceView/components';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 
 import { LokiOptions } from '../loki/types';
@@ -108,7 +108,9 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       reportInteraction('grafana_traces_loki_search_queried', {
         datasourceType: 'tempo',
         app: options.app ?? '',
-        linkedQueryExpr: targets.search[0].linkedQuery?.expr ?? '',
+        grafana_version: config.buildInfo.version,
+        hasLinkedQueryExpr:
+          targets.search[0].linkedQuery?.expr && targets.search[0].linkedQuery?.expr !== '' ? true : false,
       });
 
       const dsSrv = getDatasourceSrv();
@@ -148,10 +150,13 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         reportInteraction('grafana_traces_search_queried', {
           datasourceType: 'tempo',
           app: options.app ?? '',
-          serviceName: targets.nativeSearch[0].serviceName ?? '',
-          spanName: targets.nativeSearch[0].spanName ?? '',
+          grafana_version: config.buildInfo.version,
+          hasServiceName: targets.nativeSearch[0].serviceName ? true : false,
+          hasSpanName: targets.nativeSearch[0].spanName ? true : false,
           resultLimit: targets.nativeSearch[0].limit ?? '',
-          search: targets.nativeSearch[0].search ?? '',
+          hasSearch: targets.nativeSearch[0].search ? true : false,
+          minDuration: targets.nativeSearch[0].minDuration ?? '',
+          maxDuration: targets.nativeSearch[0].maxDuration ?? '',
         });
 
         const timeRange = { startTime: options.range.from.unix(), endTime: options.range.to.unix() };
@@ -181,10 +186,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         // Check whether this is a trace ID or traceQL query by checking if it only contains hex characters
         if (queryValue.trim().match(hexOnlyRegex)) {
           // There's only hex characters so let's assume that this is a trace ID
-          reportInteraction('grafana_traces_traceql_traceID_queried', {
+          reportInteraction('grafana_traces_traceID_queried', {
             datasourceType: 'tempo',
             app: options.app ?? '',
-            query: queryValue ?? '',
+            grafana_version: config.buildInfo.version,
+            hasQuery: queryValue !== '' ? true : false,
           });
 
           subQueries.push(this.handleTraceIdQuery(options, targets.traceql));
@@ -192,6 +198,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           reportInteraction('grafana_traces_traceql_queried', {
             datasourceType: 'tempo',
             app: options.app ?? '',
+            grafana_version: config.buildInfo.version,
             query: queryValue ?? '',
           });
           subQueries.push(
@@ -222,6 +229,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
         reportInteraction('grafana_traces_json_file_uploaded', {
           datasourceType: 'tempo',
           app: options.app ?? '',
+          grafana_version: config.buildInfo.version,
         });
 
         const jsonData = JSON.parse(this.uploadedJson as string);
@@ -245,7 +253,8 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       reportInteraction('grafana_traces_service_graph_queried', {
         datasourceType: 'tempo',
         app: options.app ?? '',
-        serviceMapQuery: targets.serviceMap[0].serviceMapQuery ?? '',
+        grafana_version: config.buildInfo.version,
+        hasServiceMapQuery: targets.serviceMap[0].serviceMapQuery ? true : false,
       });
 
       const dsId = this.serviceMap.datasourceUid;
@@ -471,6 +480,17 @@ function serviceMapQuery(request: DataQueryRequest<TempoQuery>, datasourceUid: s
       }
 
       const { nodes, edges } = mapPromMetricsToServiceMap(responses, request.range);
+      if (nodes.fields.length > 0 && edges.fields.length > 0) {
+        const nodeLength = nodes.fields[0].values.length;
+        const edgeLength = edges.fields[0].values.length;
+
+        reportInteraction('grafana_traces_service_graph_size', {
+          datasourceType: 'tempo',
+          grafana_version: config.buildInfo.version,
+          nodeLength,
+          edgeLength,
+        });
+      }
 
       // No handling of multiple targets assume just one. NodeGraph does not support it anyway, but still should be
       // fixed at some point.
@@ -820,7 +840,11 @@ export function buildExpr(
   extraParams: string,
   request: DataQueryRequest<TempoQuery>
 ) {
-  let serviceMapQuery = request.targets[0]?.serviceMapQuery?.replace('{', '').replace('}', '') ?? '';
+  let serviceMapQuery = request.targets[0]?.serviceMapQuery ?? '';
+  const serviceMapQueryMatch = serviceMapQuery.match(/^{(.*)}$/);
+  if (serviceMapQueryMatch?.length) {
+    serviceMapQuery = serviceMapQueryMatch[1];
+  }
   // map serviceGraph metric tags to APM metric tags
   serviceMapQuery = serviceMapQuery.replace('client', 'service').replace('server', 'service');
   const metricParams = serviceMapQuery.includes('span_name')

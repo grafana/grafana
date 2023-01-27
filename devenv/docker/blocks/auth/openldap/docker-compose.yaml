@@ -1,11 +1,14 @@
   openldap:
     container_name: ldap
-    build: docker/blocks/auth/openldap
+    image: osixia/openldap
     environment:
-      SLAPD_PASSWORD: grafana
-      SLAPD_DOMAIN: grafana.org
-      SLAPD_ADDITIONAL_MODULES: memberof
+      LDAP_ORGANISATION: grafana
+      LDAP_DOMAIN: grafana.org
+      LDAP_ADMIN_PASSWORD: grafana
+      LDAP_SEED_INTERNAL_LDIF_PATH: /tmp/smt/
     ports:
-      - "389:389"
-
-
+      - 389:389
+      - 636:636
+    restart: unless-stopped
+    volumes:
+      - ./docker/blocks/auth/openldap/prepopulate/:/tmp/smt/

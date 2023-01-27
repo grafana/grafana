@@ -37,7 +37,8 @@ export const convertFieldTypeTransformer: SynchronousDataTransformerInfo<Convert
     conversions: [{ targetField: undefined, destinationType: undefined, dateFormat: undefined }],
   },
 
-  operator: (options) => (source) => source.pipe(map((data) => convertFieldTypeTransformer.transformer(options)(data))),
+  operator: (options, ctx) => (source) =>
+    source.pipe(map((data) => convertFieldTypeTransformer.transformer(options, ctx)(data))),
 
   transformer: (options: ConvertFieldTypeTransformerOptions) => (data: DataFrame[]) => {
     if (!Array.isArray(data) || data.length === 0) {

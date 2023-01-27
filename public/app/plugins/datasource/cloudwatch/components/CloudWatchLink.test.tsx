@@ -51,8 +51,8 @@ describe('CloudWatchLink', () => {
       ...validLogsQuery,
       logGroupNames: undefined,
       logGroups: [
-        { value: 'arn:aws:logs:us-east-1:111111111111:log-group:/aws/lambda/test1', text: '/aws/lambda/test1' },
-        { value: 'arn:aws:logs:us-east-1:111111111111:log-group:/aws/lambda/test2', text: '/aws/lambda/test2' },
+        { arn: 'arn:aws:logs:us-east-1:111111111111:log-group:/aws/lambda/test1', name: '/aws/lambda/test1' },
+        { arn: 'arn:aws:logs:us-east-1:111111111111:log-group:/aws/lambda/test2', name: '/aws/lambda/test2' },
       ],
     };
 

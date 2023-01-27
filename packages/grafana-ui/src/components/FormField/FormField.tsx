@@ -41,7 +41,12 @@ export const FormField: FunctionComponent<Props> = ({
         {label}
       </InlineFormLabel>
       {inputEl || (
-        <input type="text" className={`gf-form-input ${inputWidth ? `width-${inputWidth}` : ''}`} {...inputProps} />
+        <input
+          type="text"
+          className={`gf-form-input ${inputWidth ? `width-${inputWidth}` : ''}`}
+          {...inputProps}
+          disabled={inputProps.disabled}
+        />
       )}
     </div>
   );

@@ -5,7 +5,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 
 	"github.com/stretchr/testify/require"
@@ -28,7 +27,7 @@ func TestEmailIntegrationTest(t *testing.T) {
 		ns.Cfg.Smtp.ContentTypes = []string{"text/html", "text/plain"}
 
 		t.Run("When sending reset email password", func(t *testing.T) {
-			cmd := &models.SendEmailCommand{
+			cmd := &SendEmailCommand{
 
 				Data: map[string]interface{}{
 					"Title":         "[CRITICAL] Imaginary timeseries alert",

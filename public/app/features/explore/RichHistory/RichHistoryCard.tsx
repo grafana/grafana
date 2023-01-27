@@ -2,8 +2,9 @@ import { css, cx } from '@emotion/css';
 import React, { useState, useEffect } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
-import { DataSourceApi, DataQuery, GrafanaTheme2 } from '@grafana/data';
+import { DataSourceApi, GrafanaTheme2 } from '@grafana/data';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { TextArea, Button, IconButton, useStyles2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import appEvents from 'app/core/app_events';
@@ -189,6 +190,11 @@ export function RichHistoryCard(props: Props) {
   };
 
   const onCopyQuery = () => {
+    const datasources = [...query.queries.map((q) => q.datasource?.type || 'unknown')];
+    reportInteraction('grafana_explore_query_history_copy_query', {
+      datasources,
+      mixed: Boolean(queryDsInstance?.meta.mixed),
+    });
     const queriesToCopy = query.queries.map((q) => createQueryText(q, queryDsInstance)).join('\n');
     copyStringToClipboard(queriesToCopy);
     dispatch(notifyApp(createSuccessNotification('Query copied to clipboard')));
