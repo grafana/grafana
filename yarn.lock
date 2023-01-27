@@ -22234,7 +22234,7 @@ __metadata:
     rc-tree: 5.7.0
     re-resizable: 6.9.9
     react: 17.0.2
-    react-awesome-query-builder: 5.3.1
+    react-awesome-query-builder: 5.4.0
     react-beautiful-dnd: 13.1.1
     react-diff-viewer: ^3.1.1
     react-dom: 17.0.2
@@ -32476,9 +32476,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-awesome-query-builder@npm:5.3.1":
-  version: 5.3.1
-  resolution: "react-awesome-query-builder@npm:5.3.1"
+"react-awesome-query-builder@npm:5.4.0":
+  version: 5.4.0
+  resolution: "react-awesome-query-builder@npm:5.4.0"
   dependencies:
     "@date-io/moment": ^1.3.13
     classnames: ^2.3.1
@@ -32512,7 +32512,7 @@ __metadata:
     react: ^16.8.4 || ^17.0.1 || ^18.0.0
     react-dom: ^16.8.4 || ^17.0.1 || ^18.0.0
     reactstrap: ^9.0.0
-  checksum: d9c27f5c0ce66ab9ad3f57f7c003471afd5465f732e2359ff916a6f62d0161ccf33a738bd67349d0b82384561242714c8d29f0216c8d5148fdb10c420f5fe914
+  checksum: 96f97b94c6544549e9d0991cec3f7753db722066ed2c24ba75cc0c8f90f2b04ab7f338c6a4a124bac78a0916c53ea864af4382ecb552e283602941c40ae9a035
   languageName: node
   linkType: hard
 
