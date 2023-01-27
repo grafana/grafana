@@ -32,16 +32,16 @@ composableKinds: DataQuery: {
 					{
 						common.DataQuery
 
-						// the LogQL query
+						// The LogQL query.
 						expr: string
-						// used to override the name of the series
+						// Used to override the name of the series.
 						legendFormat?: string
-						// limit the number of log rows returned
+						// Used to limit the number of log rows returned.
 						maxLines?:   int64
 						resolution?: int64
-						// @deprecated, now use queryType
+						// @deprecated, now use queryType.
 						range?: bool
-						// @deprecated, now use queryType
+						// @deprecated, now use queryType.
 						instant?:    bool
 						editorMode?: #QueryEditorMode
 

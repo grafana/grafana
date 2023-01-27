@@ -26,23 +26,23 @@ export enum LokiQueryType {
 export interface Loki extends common.DataQuery {
   editorMode?: QueryEditorMode;
   /**
-   * the LogQL query
+   * The LogQL query.
    */
   expr: string;
   /**
-   * @deprecated, now use queryType
+   * @deprecated, now use queryType.
    */
   instant?: boolean;
   /**
-   * used to override the name of the series
+   * Used to override the name of the series.
    */
   legendFormat?: string;
   /**
-   * limit the number of log rows returned
+   * Used to limit the number of log rows returned.
    */
   maxLines?: number;
   /**
-   * @deprecated, now use queryType
+   * @deprecated, now use queryType.
    */
   range?: boolean;
   resolution?: number;

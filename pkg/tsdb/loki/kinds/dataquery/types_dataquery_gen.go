@@ -41,29 +41,29 @@ type LokiDataQuery struct {
 	Datasource *interface{} `json:"datasource,omitempty"`
 	EditorMode *EditorMode  `json:"editorMode,omitempty"`
 
-	// the LogQL query
+	// The LogQL query.
 	Expr string `json:"expr"`
 
 	// true if query is disabled (ie should not be returned to the dashboard)
 	Hide *bool `json:"hide,omitempty"`
 
-	// @deprecated, now use queryType
+	// @deprecated, now use queryType.
 	Instant *bool `json:"instant,omitempty"`
 
 	// Unique, guid like, string used in explore mode
 	Key *string `json:"key,omitempty"`
 
-	// used to override the name of the series
+	// Used to override the name of the series.
 	LegendFormat *string `json:"legendFormat,omitempty"`
 
-	// limit the number of log rows returned
+	// Used to limit the number of log rows returned.
 	MaxLines *int64 `json:"maxLines,omitempty"`
 
 	// Specify the query flavor
 	// TODO make this required and give it a default
 	QueryType *string `json:"queryType,omitempty"`
 
-	// @deprecated, now use queryType
+	// @deprecated, now use queryType.
 	Range *bool `json:"range,omitempty"`
 
 	// A - Z
