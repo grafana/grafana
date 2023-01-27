@@ -6,8 +6,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 )
 
 const rootUrl = "/api/admin"
@@ -20,7 +20,7 @@ func (uss *UsageStats) registerAPIEndpoints() {
 	})
 }
 
-func (uss *UsageStats) getUsageReportPreview(ctx *models.ReqContext) response.Response {
+func (uss *UsageStats) getUsageReportPreview(ctx *contextmodel.ReqContext) response.Response {
 	usageReport, err := uss.GetUsageReport(ctx.Req.Context())
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to get usage report", err)

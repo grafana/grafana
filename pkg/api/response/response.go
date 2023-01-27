@@ -11,7 +11,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
@@ -19,7 +19,7 @@ import (
 // Response is an HTTP response interface.
 type Response interface {
 	// WriteTo writes to a context.
-	WriteTo(ctx *models.ReqContext)
+	WriteTo(ctx *contextmodel.ReqContext)
 	// Body gets the response's body.
 	Body() []byte
 	// Status gets the response's status.
@@ -77,7 +77,7 @@ func (r *NormalResponse) ErrMessage() string {
 	return r.errMessage
 }
 
-func (r *NormalResponse) WriteTo(ctx *models.ReqContext) {
+func (r *NormalResponse) WriteTo(ctx *contextmodel.ReqContext) {
 	if r.err != nil {
 		v := map[string]interface{}{}
 		traceID := tracing.TraceIDFromContext(ctx.Req.Context(), false)
@@ -132,7 +132,7 @@ func (r StreamingResponse) Body() []byte {
 
 // WriteTo writes the response to the provided context.
 // Required to implement api.Response.
-func (r StreamingResponse) WriteTo(ctx *models.ReqContext) {
+func (r StreamingResponse) WriteTo(ctx *contextmodel.ReqContext) {
 	header := ctx.Resp.Header()
 	for k, v := range r.header {
 		header[k] = v
@@ -155,7 +155,7 @@ type RedirectResponse struct {
 }
 
 // WriteTo writes to a response.
-func (r *RedirectResponse) WriteTo(ctx *models.ReqContext) {
+func (r *RedirectResponse) WriteTo(ctx *contextmodel.ReqContext) {
 	ctx.Redirect(r.location)
 }
 

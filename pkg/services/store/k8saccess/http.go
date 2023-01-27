@@ -4,7 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 )
 
 type httpHelper struct {
@@ -25,7 +25,7 @@ func newHTTPHelper(access *k8sAccess, router routing.RouteRegister) *httpHelper 
 	return s
 }
 
-func (s *httpHelper) showClientInfo(c *models.ReqContext) response.Response {
+func (s *httpHelper) showClientInfo(c *contextmodel.ReqContext) response.Response {
 	if s.access.sys != nil {
 		info := s.access.sys.getInfo()
 		if s.access.sys.err != nil {
@@ -38,7 +38,7 @@ func (s *httpHelper) showClientInfo(c *models.ReqContext) response.Response {
 	})
 }
 
-func (s *httpHelper) doProxy(c *models.ReqContext) {
+func (s *httpHelper) doProxy(c *contextmodel.ReqContext) {
 	// TODO... this does not yet do a real proxy
 	if s.access.sys != nil {
 		if s.access.sys.err == nil {

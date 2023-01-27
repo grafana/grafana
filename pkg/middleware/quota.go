@@ -3,7 +3,7 @@ package middleware
 import (
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -15,7 +15,7 @@ func Quota(quotaService quota.Service) func(string) web.Handler {
 	}
 	//https://open.spotify.com/track/7bZSoBEAEEUsGEuLOf94Jm?si=T1Tdju5qRSmmR0zph_6RBw fuuuuunky
 	return func(targetSrv string) web.Handler {
-		return func(c *models.ReqContext) {
+		return func(c *contextmodel.ReqContext) {
 			limitReached, err := quotaService.QuotaReached(c, quota.TargetSrv(targetSrv))
 			if err != nil {
 				c.JsonApiErr(500, "Failed to get quota", err)

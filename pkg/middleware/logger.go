@@ -21,8 +21,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -89,7 +89,7 @@ var sensitiveQueryStrings = [...]string{
 	"auth_token",
 }
 
-func SanitizeURL(ctx *models.ReqContext, s string) string {
+func SanitizeURL(ctx *contextmodel.ReqContext, s string) string {
 	if s == "" {
 		return s
 	}

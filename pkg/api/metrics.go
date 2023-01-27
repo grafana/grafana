@@ -9,7 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/web"
@@ -46,7 +46,7 @@ func (hs *HTTPServer) handleQueryMetricsError(err error) *response.NormalRespons
 // 400: badRequestError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) QueryMetricsV2(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) QueryMetricsV2(c *contextmodel.ReqContext) response.Response {
 	reqDTO := dtos.MetricRequest{}
 	if err := web.Bind(c.Req, &reqDTO); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)

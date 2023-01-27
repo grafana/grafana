@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/web"
@@ -45,7 +45,7 @@ func (api *API) getDashboardHelper(ctx context.Context, orgID int64, id int64, u
 	return result, nil
 }
 
-func (api *API) GetStars(c *models.ReqContext) response.Response {
+func (api *API) GetStars(c *contextmodel.ReqContext) response.Response {
 	query := star.GetUserStarsQuery{
 		UserID: c.SignedInUser.UserID,
 	}
@@ -85,7 +85,7 @@ func (api *API) GetStars(c *models.ReqContext) response.Response {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (api *API) StarDashboard(c *models.ReqContext) response.Response {
+func (api *API) StarDashboard(c *contextmodel.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Invalid dashboard ID", nil)
@@ -115,7 +115,7 @@ func (api *API) StarDashboard(c *models.ReqContext) response.Response {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (api *API) StarDashboardByUID(c *models.ReqContext) response.Response {
+func (api *API) StarDashboardByUID(c *contextmodel.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
 	if uid == "" {
 		return response.Error(http.StatusBadRequest, "Invalid dashboard UID", nil)
@@ -151,7 +151,7 @@ func (api *API) StarDashboardByUID(c *models.ReqContext) response.Response {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (api *API) UnstarDashboard(c *models.ReqContext) response.Response {
+func (api *API) UnstarDashboard(c *contextmodel.ReqContext) response.Response {
 	id, err := strconv.ParseInt(web.Params(c.Req)[":id"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "Invalid dashboard ID", nil)
@@ -181,7 +181,7 @@ func (api *API) UnstarDashboard(c *models.ReqContext) response.Response {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (api *API) UnstarDashboardByUID(c *models.ReqContext) response.Response {
+func (api *API) UnstarDashboardByUID(c *contextmodel.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
 	if uid == "" {
 		return response.Error(http.StatusBadRequest, "Invalid dashboard UID", nil)

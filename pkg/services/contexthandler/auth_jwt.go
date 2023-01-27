@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	authJWT "github.com/grafana/grafana/pkg/services/auth/jwt"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -22,7 +23,7 @@ const (
 	UserNotFound = "User not found"
 )
 
-func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64) bool {
+func (h *ContextHandler) initContextWithJWT(ctx *contextmodel.ReqContext, orgId int64) bool {
 	if !h.Cfg.JWTAuthEnabled || h.Cfg.JWTAuthHeaderName == "" {
 		return false
 	}

@@ -8,8 +8,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -68,7 +68,7 @@ type Description struct {
 	Permissions []string    `json:"permissions"`
 }
 
-func (a *api) getDescription(c *models.ReqContext) response.Response {
+func (a *api) getDescription(c *contextmodel.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, &Description{
 		Permissions: a.permissions,
 		Assignments: a.service.options.Assignments,
@@ -91,7 +91,7 @@ type resourcePermissionDTO struct {
 	Permission    string   `json:"permission"`
 }
 
-func (a *api) getPermissions(c *models.ReqContext) response.Response {
+func (a *api) getPermissions(c *contextmodel.ReqContext) response.Response {
 	resourceID := web.Params(c.Req)[":resourceID"]
 
 	permissions, err := a.service.GetPermissions(c.Req.Context(), c.SignedInUser, resourceID)
@@ -144,7 +144,7 @@ type setPermissionsCommand struct {
 	Permissions []accesscontrol.SetResourcePermissionCommand `json:"permissions"`
 }
 
-func (a *api) setUserPermission(c *models.ReqContext) response.Response {
+func (a *api) setUserPermission(c *contextmodel.ReqContext) response.Response {
 	userID, err := strconv.ParseInt(web.Params(c.Req)[":userID"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "userID is invalid", err)
@@ -164,7 +164,7 @@ func (a *api) setUserPermission(c *models.ReqContext) response.Response {
 	return permissionSetResponse(cmd)
 }
 
-func (a *api) setTeamPermission(c *models.ReqContext) response.Response {
+func (a *api) setTeamPermission(c *contextmodel.ReqContext) response.Response {
 	teamID, err := strconv.ParseInt(web.Params(c.Req)[":teamID"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamID is invalid", err)
@@ -184,7 +184,7 @@ func (a *api) setTeamPermission(c *models.ReqContext) response.Response {
 	return permissionSetResponse(cmd)
 }
 
-func (a *api) setBuiltinRolePermission(c *models.ReqContext) response.Response {
+func (a *api) setBuiltinRolePermission(c *contextmodel.ReqContext) response.Response {
 	builtInRole := web.Params(c.Req)[":builtInRole"]
 	resourceID := web.Params(c.Req)[":resourceID"]
 
@@ -201,7 +201,7 @@ func (a *api) setBuiltinRolePermission(c *models.ReqContext) response.Response {
 	return permissionSetResponse(cmd)
 }
 
-func (a *api) setPermissions(c *models.ReqContext) response.Response {
+func (a *api) setPermissions(c *contextmodel.ReqContext) response.Response {
 	resourceID := web.Params(c.Req)[":resourceID"]
 
 	cmd := setPermissionsCommand{}

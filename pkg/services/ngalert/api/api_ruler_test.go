@@ -14,9 +14,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	models2 "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acMock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -657,7 +657,7 @@ func createService(ac *acMock.Mock, store *fakes.RuleStore, scheduler schedule.S
 	}
 }
 
-func createRequestContext(orgID int64, role org.RoleType, params map[string]string) *models2.ReqContext {
+func createRequestContext(orgID int64, role org.RoleType, params map[string]string) *contextmodel.ReqContext {
 	uri, _ := url.Parse("http://localhost")
 	ctx := web.Context{Req: &http.Request{
 		URL: uri,
@@ -666,7 +666,7 @@ func createRequestContext(orgID int64, role org.RoleType, params map[string]stri
 		ctx.Req = web.SetURLParams(ctx.Req, params)
 	}
 
-	return &models2.ReqContext{
+	return &contextmodel.ReqContext{
 		IsSignedIn: true,
 		SignedInUser: &user.SignedInUser{
 			OrgRole: role,

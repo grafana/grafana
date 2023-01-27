@@ -10,7 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -30,7 +30,7 @@ func (s *searchHTTPService) RegisterHTTPRoutes(storageRoute routing.RouteRegiste
 	storageRoute.Post("/", middleware.ReqSignedIn, routing.Wrap(s.doQuery))
 }
 
-func (s *searchHTTPService) doQuery(c *models.ReqContext) response.Response {
+func (s *searchHTTPService) doQuery(c *contextmodel.ReqContext) response.Response {
 	searchReadinessCheckResp := s.search.IsReady(c.Req.Context(), c.OrgID)
 	if !searchReadinessCheckResp.IsReady {
 		dashboardSearchNotServedRequestsCounter.With(prometheus.Labels{

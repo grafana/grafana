@@ -18,9 +18,9 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -39,7 +39,7 @@ const (
 	anonString = "Anonymous"
 )
 
-func (hs *HTTPServer) isDashboardStarredByUser(c *models.ReqContext, dashID int64) (bool, error) {
+func (hs *HTTPServer) isDashboardStarredByUser(c *contextmodel.ReqContext, dashID int64) (bool, error) {
 	if !c.IsSignedIn {
 		return false, nil
 	}
@@ -63,7 +63,7 @@ func dashboardGuardianResponse(err error) response.Response {
 // 200: trimDashboardResponse
 // 401: unauthorisedError
 // 500: internalServerError
-func (hs *HTTPServer) TrimDashboard(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) TrimDashboard(c *contextmodel.ReqContext) response.Response {
 	cmd := dashboards.TrimDashboardCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -93,7 +93,7 @@ func (hs *HTTPServer) TrimDashboard(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetDashboard(c *contextmodel.ReqContext) response.Response {
 	uid := web.Params(c.Req)[":uid"]
 	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgID, 0, uid)
 	if rsp != nil {
@@ -242,7 +242,7 @@ func (hs *HTTPServer) GetDashboard(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, dto)
 }
 
-func (hs *HTTPServer) getAnnotationPermissionsByScope(c *models.ReqContext, actions *dtos.AnnotationActions, scope string) {
+func (hs *HTTPServer) getAnnotationPermissionsByScope(c *contextmodel.ReqContext, actions *dtos.AnnotationActions, scope string) {
 	var err error
 
 	evaluate := accesscontrol.EvalPermission(accesscontrol.ActionAnnotationsCreate, scope)
@@ -302,11 +302,11 @@ func (hs *HTTPServer) getDashboardHelper(ctx context.Context, orgID int64, id in
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) DeleteDashboardByUID(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) DeleteDashboardByUID(c *contextmodel.ReqContext) response.Response {
 	return hs.deleteDashboard(c)
 }
 
-func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) deleteDashboard(c *contextmodel.ReqContext) response.Response {
 	dash, rsp := hs.getDashboardHelper(c.Req.Context(), c.OrgID, 0, web.Params(c.Req)[":uid"])
 	if rsp != nil {
 		return rsp
@@ -365,7 +365,7 @@ func (hs *HTTPServer) deleteDashboard(c *models.ReqContext) response.Response {
 // 412: preconditionFailedError
 // 422: unprocessableEntityError
 // 500: internalServerError
-func (hs *HTTPServer) PostDashboard(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) PostDashboard(c *contextmodel.ReqContext) response.Response {
 	cmd := dashboards.SaveDashboardCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -396,7 +396,7 @@ func (hs *HTTPServer) PostDashboard(c *models.ReqContext) response.Response {
 	return hs.postDashboard(c, cmd)
 }
 
-func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd dashboards.SaveDashboardCommand) response.Response {
+func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.SaveDashboardCommand) response.Response {
 	ctx := c.Req.Context()
 	var err error
 	cmd.OrgID = c.OrgID
@@ -517,7 +517,7 @@ func (hs *HTTPServer) postDashboard(c *models.ReqContext, cmd dashboards.SaveDas
 // 200: getHomeDashboardResponse
 // 401: unauthorisedError
 // 500: internalServerError
-func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetHomeDashboard(c *contextmodel.ReqContext) response.Response {
 	prefsQuery := pref.GetPreferenceWithDefaultsQuery{OrgID: c.OrgID, UserID: c.SignedInUser.UserID, Teams: c.Teams}
 	homePage := hs.Cfg.HomePage
 
@@ -575,7 +575,7 @@ func (hs *HTTPServer) GetHomeDashboard(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, &dash)
 }
 
-func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *models.ReqContext, dash *simplejson.Json) {
+func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *contextmodel.ReqContext, dash *simplejson.Json) {
 	// We only add this getting started panel for Admins who have not dismissed it,
 	// and if a custom default home dashboard hasn't been configured
 	if !c.HasUserRole(org.RoleAdmin) ||
@@ -626,7 +626,7 @@ func (hs *HTTPServer) addGettingStartedPanelToHomeDashboard(c *models.ReqContext
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetDashboardVersions(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.Response {
 	var dashID int64
 
 	var err error
@@ -709,7 +709,7 @@ func (hs *HTTPServer) GetDashboardVersions(c *models.ReqContext) response.Respon
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.Response {
 	var dashID int64
 
 	var err error
@@ -784,7 +784,7 @@ func (hs *HTTPServer) GetDashboardVersion(c *models.ReqContext) response.Respons
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) ValidateDashboard(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) ValidateDashboard(c *contextmodel.ReqContext) response.Response {
 	cmd := dashboards.ValidateDashboardCommand{}
 
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -846,7 +846,7 @@ func (hs *HTTPServer) ValidateDashboard(c *models.ReqContext) response.Response 
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) CalculateDashboardDiff(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) CalculateDashboardDiff(c *contextmodel.ReqContext) response.Response {
 	apiOptions := dtos.CalculateDiffOptions{}
 	if err := web.Bind(c.Req, &apiOptions); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -958,7 +958,7 @@ func (hs *HTTPServer) CalculateDashboardDiff(c *models.ReqContext) response.Resp
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) RestoreDashboardVersion(c *contextmodel.ReqContext) response.Response {
 	var dashID int64
 
 	var err error
@@ -1016,7 +1016,7 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *models.ReqContext) response.Res
 // 200: getDashboardsTagsResponse
 // 401: unauthorisedError
 // 500: internalServerError
-func (hs *HTTPServer) GetDashboardTags(c *models.ReqContext) {
+func (hs *HTTPServer) GetDashboardTags(c *contextmodel.ReqContext) {
 	query := dashboards.GetDashboardTagsQuery{OrgID: c.OrgID}
 	queryResult, err := hs.DashboardService.GetDashboardTags(c.Req.Context(), &query)
 	if err != nil {
@@ -1028,7 +1028,7 @@ func (hs *HTTPServer) GetDashboardTags(c *models.ReqContext) {
 }
 
 // GetDashboardUIDs converts internal ids to UIDs
-func (hs *HTTPServer) GetDashboardUIDs(c *models.ReqContext) {
+func (hs *HTTPServer) GetDashboardUIDs(c *contextmodel.ReqContext) {
 	ids := strings.Split(web.Params(c.Req)[":ids"], ",")
 	uids := make([]string, 0, len(ids))
 

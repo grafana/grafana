@@ -16,9 +16,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acMock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -166,7 +166,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 	sut := createSut(t, nil)
 
 	t.Run("assert 404 Not Found when applying config to nonexistent org", func(t *testing.T) {
-		rc := models.ReqContext{
+		rc := contextmodel.ReqContext{
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
@@ -183,7 +183,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 	})
 
 	t.Run("assert 202 when config successfully applied", func(t *testing.T) {
-		rc := models.ReqContext{
+		rc := contextmodel.ReqContext{
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
@@ -200,7 +200,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 
 	t.Run("assert 202 when alertmanager to configure is not ready", func(t *testing.T) {
 		sut := createSut(t, nil)
-		rc := models.ReqContext{
+		rc := contextmodel.ReqContext{
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
@@ -330,7 +330,7 @@ func TestSilenceCreate(t *testing.T) {
 
 	for _, cas := range cases {
 		t.Run(cas.name, func(t *testing.T) {
-			rc := models.ReqContext{
+			rc := contextmodel.ReqContext{
 				Context: &web.Context{
 					Req: &http.Request{},
 				},
@@ -456,7 +456,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			ac := tesCase.accessControl()
 			sut := createSut(t, ac)
 
-			rc := models.ReqContext{
+			rc := contextmodel.ReqContext{
 				Context: &web.Context{
 					Req: &http.Request{},
 				},
@@ -622,8 +622,8 @@ func withEmptyID(silence *apimodels.PostableSilence) {
 	silence.ID = ""
 }
 
-func createRequestCtxInOrg(org int64) *models.ReqContext {
-	return &models.ReqContext{
+func createRequestCtxInOrg(org int64) *contextmodel.ReqContext {
+	return &contextmodel.ReqContext{
 		Context: &web.Context{
 			Req: &http.Request{},
 		},

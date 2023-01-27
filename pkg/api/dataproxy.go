@@ -1,6 +1,6 @@
 package api
 
-import "github.com/grafana/grafana/pkg/models"
+import contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 
 // swagger:route GET /datasources/proxy/{id}/{datasource_proxy_route} datasources datasourceProxyGETcalls
 //
@@ -56,7 +56,7 @@ import "github.com/grafana/grafana/pkg/models"
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) ProxyDataSourceRequest(c *models.ReqContext) {
+func (hs *HTTPServer) ProxyDataSourceRequest(c *contextmodel.ReqContext) {
 	hs.DataProxy.ProxyDataSourceRequest(c)
 }
 
@@ -102,7 +102,7 @@ func (hs *HTTPServer) ProxyDataSourceRequest(c *models.ReqContext) {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) ProxyDataSourceRequestWithUID(c *models.ReqContext) {
+func (hs *HTTPServer) ProxyDataSourceRequestWithUID(c *contextmodel.ReqContext) {
 	hs.DataProxy.ProxyDatasourceRequestWithUID(c, "")
 }
 

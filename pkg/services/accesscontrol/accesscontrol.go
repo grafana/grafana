@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -100,8 +100,8 @@ type User struct {
 }
 
 // HasGlobalAccess checks user access with globally assigned permissions only
-func HasGlobalAccess(ac AccessControl, service Service, c *models.ReqContext) func(fallback func(*models.ReqContext) bool, evaluator Evaluator) bool {
-	return func(fallback func(*models.ReqContext) bool, evaluator Evaluator) bool {
+func HasGlobalAccess(ac AccessControl, service Service, c *contextmodel.ReqContext) func(fallback func(*contextmodel.ReqContext) bool, evaluator Evaluator) bool {
+	return func(fallback func(*contextmodel.ReqContext) bool, evaluator Evaluator) bool {
 		if ac.IsDisabled() {
 			return fallback(c)
 		}
@@ -131,8 +131,8 @@ func HasGlobalAccess(ac AccessControl, service Service, c *models.ReqContext) fu
 	}
 }
 
-func HasAccess(ac AccessControl, c *models.ReqContext) func(fallback func(*models.ReqContext) bool, evaluator Evaluator) bool {
-	return func(fallback func(*models.ReqContext) bool, evaluator Evaluator) bool {
+func HasAccess(ac AccessControl, c *contextmodel.ReqContext) func(fallback func(*contextmodel.ReqContext) bool, evaluator Evaluator) bool {
+	return func(fallback func(*contextmodel.ReqContext) bool, evaluator Evaluator) bool {
 		if ac.IsDisabled() {
 			return fallback(c)
 		}
@@ -147,31 +147,31 @@ func HasAccess(ac AccessControl, c *models.ReqContext) func(fallback func(*model
 	}
 }
 
-var ReqSignedIn = func(c *models.ReqContext) bool {
+var ReqSignedIn = func(c *contextmodel.ReqContext) bool {
 	return c.IsSignedIn
 }
 
-var ReqGrafanaAdmin = func(c *models.ReqContext) bool {
+var ReqGrafanaAdmin = func(c *contextmodel.ReqContext) bool {
 	return c.IsGrafanaAdmin
 }
 
 // ReqViewer returns true if the current user has org.RoleViewer. Note: this can be anonymous user as well
-var ReqViewer = func(c *models.ReqContext) bool {
+var ReqViewer = func(c *contextmodel.ReqContext) bool {
 	return c.OrgRole.Includes(org.RoleViewer)
 }
 
-var ReqOrgAdmin = func(c *models.ReqContext) bool {
+var ReqOrgAdmin = func(c *contextmodel.ReqContext) bool {
 	return c.OrgRole == org.RoleAdmin
 }
 
-var ReqOrgAdminOrEditor = func(c *models.ReqContext) bool {
+var ReqOrgAdminOrEditor = func(c *contextmodel.ReqContext) bool {
 	return c.OrgRole == org.RoleAdmin || c.OrgRole == org.RoleEditor
 }
 
 // ReqHasRole generates a fallback to check whether the user has a role
 // Note that while ReqOrgAdmin returns false for a Grafana Admin / Viewer, ReqHasRole(org.RoleAdmin) will return true
-func ReqHasRole(role org.RoleType) func(c *models.ReqContext) bool {
-	return func(c *models.ReqContext) bool { return c.HasRole(role) }
+func ReqHasRole(role org.RoleType) func(c *contextmodel.ReqContext) bool {
+	return func(c *contextmodel.ReqContext) bool { return c.HasRole(role) }
 }
 
 func BuildPermissionsMap(permissions []Permission) map[string]bool {

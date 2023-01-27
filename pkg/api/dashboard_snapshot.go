@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -33,7 +33,7 @@ var client = &http.Client{
 // Responses:
 // 200: getSharingOptionsResponse
 // 401: unauthorisedError
-func (hs *HTTPServer) GetSharingOptions(c *models.ReqContext) {
+func (hs *HTTPServer) GetSharingOptions(c *contextmodel.ReqContext) {
 	c.JSON(http.StatusOK, util.DynMap{
 		"snapshotEnabled":      hs.Cfg.SnapshotEnabled,
 		"externalSnapshotURL":  hs.Cfg.ExternalSnapshotUrl,
@@ -105,7 +105,7 @@ func createOriginalDashboardURL(cmd *dashboardsnapshots.CreateDashboardSnapshotC
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) CreateDashboardSnapshot(c *contextmodel.ReqContext) response.Response {
 	if !hs.Cfg.SnapshotEnabled {
 		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
 		return nil
@@ -200,7 +200,7 @@ func (hs *HTTPServer) CreateDashboardSnapshot(c *models.ReqContext) response.Res
 // 400: badRequestError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetDashboardSnapshot(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetDashboardSnapshot(c *contextmodel.ReqContext) response.Response {
 	if !hs.Cfg.SnapshotEnabled {
 		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
 		return nil
@@ -284,7 +284,7 @@ func deleteExternalDashboardSnapshot(externalUrl string) error {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *contextmodel.ReqContext) response.Response {
 	if !hs.Cfg.SnapshotEnabled {
 		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
 		return nil
@@ -329,7 +329,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *models.ReqContext) r
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) DeleteDashboardSnapshot(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) DeleteDashboardSnapshot(c *contextmodel.ReqContext) response.Response {
 	if !hs.Cfg.SnapshotEnabled {
 		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
 		return nil
@@ -399,7 +399,7 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *models.ReqContext) response.Res
 // Responses:
 // 200: searchDashboardSnapshotsResponse
 // 500: internalServerError
-func (hs *HTTPServer) SearchDashboardSnapshots(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) SearchDashboardSnapshots(c *contextmodel.ReqContext) response.Response {
 	if !hs.Cfg.SnapshotEnabled {
 		c.JsonApiErr(http.StatusForbidden, "Dashboard Snapshots are disabled", nil)
 		return nil

@@ -2,7 +2,7 @@ package api
 
 import (
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
@@ -17,22 +17,22 @@ func NewConfiguration(grafana *ConfigSrv) *ConfigurationApiHandler {
 	}
 }
 
-func (f *ConfigurationApiHandler) handleRouteGetAlertmanagers(c *models.ReqContext) response.Response {
+func (f *ConfigurationApiHandler) handleRouteGetAlertmanagers(c *contextmodel.ReqContext) response.Response {
 	return f.grafana.RouteGetAlertmanagers(c)
 }
 
-func (f *ConfigurationApiHandler) handleRouteGetNGalertConfig(c *models.ReqContext) response.Response {
+func (f *ConfigurationApiHandler) handleRouteGetNGalertConfig(c *contextmodel.ReqContext) response.Response {
 	return f.grafana.RouteGetNGalertConfig(c)
 }
 
-func (f *ConfigurationApiHandler) handleRoutePostNGalertConfig(c *models.ReqContext, body apimodels.PostableNGalertConfig) response.Response {
+func (f *ConfigurationApiHandler) handleRoutePostNGalertConfig(c *contextmodel.ReqContext, body apimodels.PostableNGalertConfig) response.Response {
 	return f.grafana.RoutePostNGalertConfig(c, body)
 }
 
-func (f *ConfigurationApiHandler) handleRouteDeleteNGalertConfig(c *models.ReqContext) response.Response {
+func (f *ConfigurationApiHandler) handleRouteDeleteNGalertConfig(c *contextmodel.ReqContext) response.Response {
 	return f.grafana.RouteDeleteNGalertConfig(c)
 }
 
-func (f *ConfigurationApiHandler) handleRouteGetStatus(c *models.ReqContext) response.Response {
+func (f *ConfigurationApiHandler) handleRouteGetStatus(c *contextmodel.ReqContext) response.Response {
 	return f.grafana.RouteGetAlertingStatus(c)
 }
