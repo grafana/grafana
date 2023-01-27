@@ -20,12 +20,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/plugins/storage"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -43,7 +43,7 @@ var pluginsCDNFallbackRedirectRequests = promauto.NewCounterVec(prometheus.Count
 	Help:      "Number of requests to the plugins CDN backend redirect fallback handler.",
 }, []string{"plugin_id", "plugin_version"})
 
-func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Response {
 	typeFilter := c.Query("type")
 	enabledFilter := c.Query("enabled")
 	embeddedFilter := c.Query("embedded")
@@ -168,7 +168,7 @@ func (hs *HTTPServer) GetPluginList(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, result)
 }
 
-func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
 	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
@@ -237,7 +237,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *models.ReqContext) response.Respon
 	return response.JSON(http.StatusOK, dto)
 }
 
-func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UpdatePluginSetting(c *contextmodel.ReqContext) response.Response {
 	cmd := pluginsettings.UpdatePluginSettingCmd{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -266,7 +266,7 @@ func (hs *HTTPServer) UpdatePluginSetting(c *models.ReqContext) response.Respons
 	return response.Success("Plugin settings updated")
 }
 
-func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetPluginMarkdown(c *contextmodel.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 	name := web.Params(c.Req)[":name"]
 
@@ -296,7 +296,7 @@ func (hs *HTTPServer) GetPluginMarkdown(c *models.ReqContext) response.Response 
 // CollectPluginMetrics collect metrics from a plugin.
 //
 // /api/plugins/:pluginId/metrics
-func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) CollectPluginMetrics(c *contextmodel.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 	resp, err := hs.pluginClient.CollectMetrics(c.Req.Context(), &backend.CollectMetricsRequest{PluginContext: backend.PluginContext{PluginID: pluginID}})
 	if err != nil {
@@ -319,7 +319,7 @@ func (hs *HTTPServer) CollectPluginMetrics(c *models.ReqContext) response.Respon
 // this handler returns a redirect to the plugin asset file on the specified CDN.
 //
 // /public/plugins/:pluginId/*
-func (hs *HTTPServer) getPluginAssets(c *models.ReqContext) {
+func (hs *HTTPServer) getPluginAssets(c *contextmodel.ReqContext) {
 	pluginID := web.Params(c.Req)[":pluginId"]
 	plugin, exists := hs.pluginStore.Plugin(c.Req.Context(), pluginID)
 	if !exists {
@@ -410,7 +410,7 @@ func (hs *HTTPServer) redirectCDNPluginAsset(c *models.ReqContext, plugin plugin
 
 // CheckHealth returns the health of a plugin.
 // /api/plugins/:pluginId/health
-func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) CheckHealth(c *contextmodel.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
 	pCtx, found, err := hs.PluginContextProvider.Get(c.Req.Context(), pluginID, c.SignedInUser)
@@ -452,11 +452,11 @@ func (hs *HTTPServer) CheckHealth(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, payload)
 }
 
-func (hs *HTTPServer) GetPluginErrorsList(_ *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetPluginErrorsList(_ *contextmodel.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, hs.pluginErrorResolver.PluginErrors())
 }
 
-func (hs *HTTPServer) InstallPlugin(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) InstallPlugin(c *contextmodel.ReqContext) response.Response {
 	dto := dtos.InstallPluginCommand{}
 	if err := web.Bind(c.Req, &dto); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -495,7 +495,7 @@ func (hs *HTTPServer) InstallPlugin(c *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, []byte{})
 }
 
-func (hs *HTTPServer) UninstallPlugin(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UninstallPlugin(c *contextmodel.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
 
 	err := hs.pluginInstaller.Remove(c.Req.Context(), pluginID)
