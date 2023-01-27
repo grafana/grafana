@@ -10,7 +10,7 @@ type State struct {
 	AlertState *prometheus.GaugeVec
 }
 
-func newStateMetrics(r prometheus.Registerer) *State {
+func NewStateMetrics(r prometheus.Registerer) *State {
 	return &State{
 		// TODO: once rule groups support multiple rules, consider partitioning
 		// on rule group as well as tenant, similar to loki|cortex.

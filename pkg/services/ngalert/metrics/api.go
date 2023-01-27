@@ -9,7 +9,7 @@ type API struct {
 	RequestDuration *prometheus.HistogramVec
 }
 
-func newAPIMetrics(r prometheus.Registerer) *API {
+func NewAPIMetrics(r prometheus.Registerer) *API {
 	return &API{
 		RequestDuration: promauto.With(r).NewHistogramVec(
 			prometheus.HistogramOpts{

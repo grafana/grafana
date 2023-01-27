@@ -12,7 +12,7 @@ type MultiOrgAlertmanager struct {
 	registries               *OrgRegistries
 }
 
-func newMultiOrgAlertmanagerMetrics(r prometheus.Registerer) *MultiOrgAlertmanager {
+func NewMultiOrgAlertmanagerMetrics(r prometheus.Registerer) *MultiOrgAlertmanager {
 	return &MultiOrgAlertmanager{
 		Registerer: r,
 		registries: NewOrgRegistries(),

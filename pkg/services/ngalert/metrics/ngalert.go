@@ -36,9 +36,9 @@ func NewNGAlert(r prometheus.Registerer) *NGAlert {
 	return &NGAlert{
 		Registerer:                  r,
 		schedulerMetrics:            NewSchedulerMetrics(r),
-		stateMetrics:                newStateMetrics(r),
-		multiOrgAlertmanagerMetrics: newMultiOrgAlertmanagerMetrics(r),
-		apiMetrics:                  newAPIMetrics(r),
+		stateMetrics:                NewStateMetrics(r),
+		multiOrgAlertmanagerMetrics: NewMultiOrgAlertmanagerMetrics(r),
+		apiMetrics:                  NewAPIMetrics(r),
 	}
 }
 
