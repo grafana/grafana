@@ -5128,7 +5128,7 @@ __metadata:
     prismjs: 1.29.0
     process: ^0.11.10
     rc-cascader: 3.8.0
-    rc-drawer: 6.0.1
+    rc-drawer: 6.1.2
     rc-slider: 10.0.1
     rc-time-picker: ^3.7.3
     rc-tooltip: 5.2.2
@@ -21822,7 +21822,7 @@ __metadata:
     prop-types: 15.8.1
     pseudoizer: ^0.1.0
     rc-cascader: 3.8.0
-    rc-drawer: 6.0.1
+    rc-drawer: 6.1.2
     rc-slider: 10.0.1
     rc-time-picker: 3.7.3
     rc-tree: 5.7.0
@@ -31786,9 +31786,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-drawer@npm:6.0.1":
-  version: 6.0.1
-  resolution: "rc-drawer@npm:6.0.1"
+"rc-drawer@npm:6.1.2":
+  version: 6.1.2
+  resolution: "rc-drawer@npm:6.1.2"
   dependencies:
     "@babel/runtime": ^7.10.1
     "@rc-component/portal": ^1.0.0-6
@@ -31798,7 +31798,7 @@ __metadata:
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: ce4a0b2ac3a96a203a1038f1c30df079e34359f821db9bcab39a87bdc62e62dd681d3b37354d9e1c77b44e3954b4f583d3b16ed021bcd1851dea0f62b888f6a8
+  checksum: 0d7f5cd56bcad80ebc11dd3d1c5b13ef620e8790fac67af62180938c9baa0e671cbd6aaf9588ebd1978de39a2791dcf4f0da56dd366797bada43d2d31ef575ad
   languageName: node
   linkType: hard
 
