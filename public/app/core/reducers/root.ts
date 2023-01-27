@@ -1,4 +1,4 @@
-import { AnyAction, combineReducers } from 'redux';
+import { AnyAction, combineReducers, ReducersMapObject } from 'redux';
 
 import sharedReducers from 'app/core/reducers';
 import ldapReducers from 'app/features/admin/state/reducers';
@@ -52,7 +52,7 @@ const rootReducers = {
 
 const addedReducers = {};
 
-export const addReducer = (newReducers: any) => {
+export const addReducer = (newReducers: ReducersMapObject) => {
   Object.assign(addedReducers, newReducers);
 };
 
