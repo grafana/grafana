@@ -107,7 +107,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
         type: 'unload',
       });
     };
-  }, [row]);
+  }, [row.uid]);
 
   const realLabels = contextFilters.filter(({ fromParser }) => !fromParser);
   const realLabelsEnabled = realLabels.filter(({ enabled }) => enabled);
