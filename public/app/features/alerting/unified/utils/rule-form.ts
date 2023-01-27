@@ -62,6 +62,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     execErrState: GrafanaAlertStateDecision.Error,
     evaluateFor: '5m',
     evaluateEvery: MINUTE,
+    isPaused: null,
 
     // cortex / loki
     namespace: '',
@@ -96,7 +97,7 @@ function listifyLabelsOrAnnotations(item: Labels | Annotations | undefined): Arr
 }
 
 export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): PostableRuleGrafanaRuleDTO {
-  const { name, condition, noDataState, execErrState, evaluateFor, queries } = values;
+  const { name, condition, noDataState, execErrState, evaluateFor, queries, isPaused } = values;
   if (condition) {
     return {
       grafana_alert: {
@@ -105,6 +106,7 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
         no_data_state: noDataState,
         exec_err_state: execErrState,
         data: queries.map(fixBothInstantAndRangeQuery),
+        is_paused: Boolean(isPaused),
       },
       for: evaluateFor,
       annotations: arrayToRecord(values.annotations || []),
@@ -135,6 +137,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
         annotations: listifyLabelsOrAnnotations(rule.annotations),
         labels: listifyLabelsOrAnnotations(rule.labels),
         folder: { title: namespace, id: ga.namespace_id },
+        isPaused: ga.is_paused,
       };
     } else {
       throw new Error('Unexpected type of rule for grafana rules source');
