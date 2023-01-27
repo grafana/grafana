@@ -159,3 +159,11 @@ export enum SupportingQueryType {
   LogsSample = 'logsSample',
   DataSample = 'dataSample',
 }
+
+export interface ContextFilter {
+  enabled: boolean;
+  label: string;
+  value: string;
+  fromParser: boolean;
+  description?: string;
+}

@@ -306,7 +306,6 @@ WORKFLOW.md @torkelo
 /packages/grafana-ui/src/components/TimeSeries/ @grafana/grafana-bi-squad
 /packages/grafana-ui/src/components/uPlot/ @grafana/grafana-bi-squad
 /packages/grafana-ui/src/utils/storybook/ @grafana/plugins-platform-frontend
-/packages/jaeger-ui-components// @grafana/observability-traces-and-profiling
 /packages/grafana-data/src/**/*logs* @grafana/observability-logs
 /plugins-bundled/ @grafana/plugins-platform-frontend
 
@@ -435,6 +434,8 @@ lerna.json @grafana/frontend-ops
 
 /public/app/features/explore/Logs.tsx @grafana/observability-logs
 /public/app/features/explore/LogsContainer.tsx @grafana/observability-logs
+
+/public/app/features/explore/TraceView/ @grafana/observability-traces-and-profiling
 
 /public/api-merged.json @grafana/backend-platform
 /public/api-spec.json @grafana/backend-platform
@@ -570,7 +571,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/backport.yml @grafana/grafana-release-eng
 /.github/workflows/bump-version.yml @grafana/grafana-release-eng
 /.github/workflows/close-milestone.yml @grafana/grafana-release-eng
-/.github/workflows/cloud-data-sources-code-coverage.yml @grafana/partner-plugins
+/.github/workflows/cloud-data-sources-code-coverage.yml @grafana/partner-plugins @grafana/aws-plugins
 /.github/workflows/codeowners-validator.yml @tolzhabayev
 /.github/workflows/codeql-analysis.yml @DanCech
 /.github/workflows/commands.yml @torkelo

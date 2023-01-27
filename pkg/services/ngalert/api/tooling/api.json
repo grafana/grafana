@@ -2005,9 +2005,6 @@
      ],
      "type": "string"
     },
-    "is_paused": {
-     "type": "boolean"
-    },
     "no_data_state": {
      "enum": [
       "Alerting",
@@ -3498,6 +3495,7 @@
    "type": "object"
   },
   "gettableAlert": {
+   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
