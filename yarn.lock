@@ -4640,7 +4640,7 @@ __metadata:
     tinycolor2: 1.4.2
     tslib: 2.4.1
     typescript: 4.8.4
-    uplot: 1.6.23
+    uplot: 1.6.24
     xss: 1.0.14
   peerDependencies:
     react: ^16.8.0 || ^17.0.0
@@ -5170,7 +5170,7 @@ __metadata:
     tinycolor2: 1.4.2
     tslib: 2.4.1
     typescript: 4.8.4
-    uplot: 1.6.23
+    uplot: 1.6.24
     uuid: 9.0.0
     webpack: 5.74.0
   peerDependencies:
@@ -21945,7 +21945,7 @@ __metadata:
     ts-node: 10.9.1
     tslib: 2.4.1
     typescript: 4.8.4
-    uplot: 1.6.23
+    uplot: 1.6.24
     uuid: 9.0.0
     vendor: "link:./public/vendor"
     visjs-network: 4.25.0
@@ -37952,10 +37952,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"uplot@npm:1.6.23":
-  version: 1.6.23
-  resolution: "uplot@npm:1.6.23"
-  checksum: 4fd2b6340b09f8cbff5c136238962c4e31621267a17c321e0183d021c72338973ba16fd943858248983edc4cf9307e352f99e806b6ffb5eaff7a132adaff2bff
+"uplot@npm:1.6.24":
+  version: 1.6.24
+  resolution: "uplot@npm:1.6.24"
+  checksum: 253e389dc6db40e1231d1c63913dea1e6987856cfde985da036e70786ef0077afc40f3ed6883c54d95a97ecedc3ea52a7fa815e88f3c3d381b61c15e745f8a40
   languageName: node
   linkType: hard
 
