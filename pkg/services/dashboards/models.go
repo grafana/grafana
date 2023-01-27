@@ -337,7 +337,7 @@ type DashboardACL struct {
 	UserID     int64         `xorm:"user_id"`
 	TeamID     int64         `xorm:"team_id"`
 	Role       *org.RoleType // pointer to be nullable
-	Permission models.PermissionType
+	Permission PermissionType
 
 	Created time.Time
 	Updated time.Time
@@ -353,23 +353,23 @@ type DashboardACLInfoDTO struct {
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
 
-	UserID         int64                 `json:"userId" xorm:"user_id"`
-	UserLogin      string                `json:"userLogin"`
-	UserEmail      string                `json:"userEmail"`
-	UserAvatarURL  string                `json:"userAvatarUrl" xorm:"user_avatar_url"`
-	TeamID         int64                 `json:"teamId" xorm:"team_id"`
-	TeamEmail      string                `json:"teamEmail"`
-	TeamAvatarURL  string                `json:"teamAvatarUrl" xorm:"team_avatar_url"`
-	Team           string                `json:"team"`
-	Role           *org.RoleType         `json:"role,omitempty"`
-	Permission     models.PermissionType `json:"permission"`
-	PermissionName string                `json:"permissionName"`
-	UID            string                `json:"uid" xorm:"uid"`
-	Title          string                `json:"title"`
-	Slug           string                `json:"slug"`
-	IsFolder       bool                  `json:"isFolder"`
-	URL            string                `json:"url" xorm:"url"`
-	Inherited      bool                  `json:"inherited"`
+	UserID         int64          `json:"userId" xorm:"user_id"`
+	UserLogin      string         `json:"userLogin"`
+	UserEmail      string         `json:"userEmail"`
+	UserAvatarURL  string         `json:"userAvatarUrl" xorm:"user_avatar_url"`
+	TeamID         int64          `json:"teamId" xorm:"team_id"`
+	TeamEmail      string         `json:"teamEmail"`
+	TeamAvatarURL  string         `json:"teamAvatarUrl" xorm:"team_avatar_url"`
+	Team           string         `json:"team"`
+	Role           *org.RoleType  `json:"role,omitempty"`
+	Permission     PermissionType `json:"permission"`
+	PermissionName string         `json:"permissionName"`
+	UID            string         `json:"uid" xorm:"uid"`
+	Title          string         `json:"title"`
+	Slug           string         `json:"slug"`
+	IsFolder       bool           `json:"isFolder"`
+	URL            string         `json:"url" xorm:"url"`
+	Inherited      bool           `json:"inherited"`
 }
 
 func (dto *DashboardACLInfoDTO) hasSameRoleAs(other *DashboardACLInfoDTO) bool {
@@ -397,4 +397,24 @@ func (dto *DashboardACLInfoDTO) IsDuplicateOf(other *DashboardACLInfoDTO) bool {
 type GetDashboardACLInfoListQuery struct {
 	DashboardID int64
 	OrgID       int64
+}
+
+type FindPersistedDashboardsQuery struct {
+	Title         string
+	OrgId         int64
+	SignedInUser  *user.SignedInUser
+	IsStarred     bool
+	DashboardIds  []int64
+	DashboardUIDs []string
+	Type          string
+	FolderIds     []int64
+	Tags          []string
+	Limit         int64
+	Page          int64
+	Permission    PermissionType
+	Sort          models.SortOption
+
+	Filters []interface{}
+
+	Result models.HitList
 }
