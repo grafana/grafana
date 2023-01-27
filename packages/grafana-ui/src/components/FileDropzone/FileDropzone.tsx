@@ -168,13 +168,13 @@ export function FileDropzone({ options, children, readAs, onLoad, fileListRender
   const setErrors = (rejectedFiles: FileRejection[]) => {
     let errors: FileError[] = [];
     rejectedFiles.map((rejectedFile) => {
-      rejectedFile.errors.map((error) => {
+      rejectedFile.errors.map((newError) => {
         if (
-          errors.findIndex((f) => {
-            return f.code === error.code && f.message === error.message;
+          errors.findIndex((presentError) => {
+            return presentError.code === newError.code && presentError.message === newError.message;
           }) === -1
         ) {
-          errors.push(error);
+          errors.push(newError);
         }
       });
     });
