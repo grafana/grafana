@@ -312,12 +312,11 @@ func createFolderWithACL(t *testing.T, sqlStore db.DB, title string, user user.S
 	features := featuremgmt.WithFeatures()
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 	ac := acmock.New()
-	folderPermissions := acmock.NewMockedPermissionsService()
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
 	require.NoError(t, err)
 
-	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, dashboardStore, nil, features, folderPermissions)
+	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, dashboardStore, nil, features)
 	t.Logf("Creating folder with title and UID %q", title)
 	ctx := appcontext.WithUser(context.Background(), &user)
 	folder, err := s.Create(ctx, &folder.CreateFolderCommand{
@@ -446,7 +445,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		service := LibraryElementService{
 			Cfg:           sqlStore.Cfg,
 			SQLStore:      sqlStore,
-			folderService: folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardStore, dashboardStore, nil, features, folderPermissions),
+			folderService: folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardStore, dashboardStore, nil, features),
 		}
 
 		// deliberate difference between signed in user and user in db to make it crystal clear
