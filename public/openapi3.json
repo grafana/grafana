@@ -3534,9 +3534,6 @@
           "hasAcl": {
             "type": "boolean"
           },
-          "hasPublicDashboard": {
-            "type": "boolean"
-          },
           "isFolder": {
             "type": "boolean"
           },
@@ -4495,7 +4492,7 @@
             "format": "int64",
             "type": "integer"
           },
-          "parent_uid": {
+          "parentUid": {
             "type": "string"
           },
           "title": {
@@ -5764,34 +5761,6 @@
         },
         "type": "array"
       },
-      "NotificationTemplate": {
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "provenance": {
-            "$ref": "#/components/schemas/Provenance"
-          },
-          "template": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "NotificationTemplateContent": {
-        "properties": {
-          "template": {
-            "type": "string"
-          }
-        },
-        "type": "object"
-      },
-      "NotificationTemplates": {
-        "items": {
-          "$ref": "#/components/schemas/NotificationTemplate"
-        },
-        "type": "array"
-      },
       "Metadata": {
         "additionalProperties": {
           "type": "boolean"
@@ -5963,6 +5932,34 @@
         "format": "int64",
         "title": "NoticeSeverity is a type for the Severity property of a Notice.",
         "type": "integer"
+      },
+      "NotificationTemplate": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "provenance": {
+            "$ref": "#/components/schemas/Provenance"
+          },
+          "template": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "NotificationTemplateContent": {
+        "properties": {
+          "template": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "NotificationTemplates": {
+        "items": {
+          "$ref": "#/components/schemas/NotificationTemplate"
+        },
+        "type": "array"
       },
       "NotificationTestCommand": {
         "properties": {
@@ -9893,7 +9890,6 @@
         "type": "object"
       },
       "alertGroups": {
-        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -10054,14 +10050,12 @@
         "type": "object"
       },
       "gettableAlerts": {
-        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
         "type": "array"
       },
       "gettableSilence": {
-        "description": "GettableSilence gettable silence",
         "properties": {
           "comment": {
             "description": "comment",
@@ -10110,7 +10104,6 @@
         "type": "object"
       },
       "gettableSilences": {
-        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
@@ -10297,6 +10290,7 @@
         "type": "object"
       },
       "receiver": {
+        "description": "Receiver receiver",
         "properties": {
           "active": {
             "description": "active",
@@ -13835,7 +13829,7 @@
             "description": "ValidationError"
           }
         },
-        "summary": "Updates an existing template.",
+        "summary": "Updates an existing notification template.",
         "tags": [
           "provisioning"
         ]
@@ -16131,7 +16125,7 @@
     },
     "/folders": {
       "get": {
-        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID.",
+        "description": "Returns all folders that the authenticated user has permission to view.\nIf nested folders are enabled, it expects an additional query parameter with the parent folder UID\nand returns the immediate subfolders.",
         "operationId": "getFolders",
         "parameters": [
           {
@@ -16157,7 +16151,7 @@
           {
             "description": "The parent folder UID",
             "in": "query",
-            "name": "parent_uid",
+            "name": "parentUid",
             "schema": {
               "type": "string"
             }

@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -38,7 +37,7 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 	t.Run("should register scope resolvers", func(t *testing.T) {
 		cfg := setting.NewCfg()
 		ac := acmock.New()
-		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, &featuremgmt.FeatureManager{}, nil, nil)
+		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, nil, &featuremgmt.FeatureManager{}, nil)
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 2)
 	})
@@ -51,7 +50,9 @@ func TestIntegrationFolderService(t *testing.T) {
 	t.Run("Folder service tests", func(t *testing.T) {
 		dashStore := &dashboards.FakeDashboardStore{}
 		db := sqlstore.InitTestDB(t)
-		store := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures([]interface{}{"nestedFolders"}))
+		nestedFolderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures([]interface{}{"nestedFolders"}))
+
+		folderStore := dashboards.NewFakeFolderStore(t)
 
 		cfg := setting.NewCfg()
 		cfg.RBACEnabled = false
@@ -59,14 +60,14 @@ func TestIntegrationFolderService(t *testing.T) {
 		folderPermissions := acmock.NewMockedPermissionsService()
 
 		service := &Service{
-			cfg:            cfg,
-			log:            log.New("test-folder-service"),
-			dashboardStore: dashStore,
-			store:          store,
-			searchService:  nil,
-			features:       features,
-			permissions:    folderPermissions,
-			bus:            bus.ProvideBus(tracing.InitializeTracerForTest()),
+			cfg:                  cfg,
+			log:                  log.New("test-folder-service"),
+			dashboardStore:       dashStore,
+			dashboardFolderStore: folderStore,
+			store:                nestedFolderStore,
+			features:             features,
+			permissions:          folderPermissions,
+			bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
 		}
 
 		t.Run("Given user has no permissions", func(t *testing.T) {
@@ -80,8 +81,8 @@ func TestIntegrationFolderService(t *testing.T) {
 			f.ID = folderId
 			f.UID = folderUID
 
-			dashStore.On("GetFolderByID", mock.Anything, orgID, folderId).Return(f, nil)
-			dashStore.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(f, nil)
+			folderStore.On("GetFolderByID", mock.Anything, orgID, folderId).Return(f, nil)
+			folderStore.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(f, nil)
 
 			t.Run("When get folder by id should return access denied error", func(t *testing.T) {
 				_, err := service.Get(context.Background(), &folder.GetFolderQuery{
@@ -125,11 +126,9 @@ func TestIntegrationFolderService(t *testing.T) {
 
 			title := "Folder-TEST"
 			t.Run("When updating folder should return access denied error", func(t *testing.T) {
-				dashStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
-					folder := args.Get(1).(*dashboards.GetDashboardQuery)
-					folder.Result = dashboards.NewDashboard("dashboard-test")
-					folder.Result.IsFolder = true
-				}).Return(&dashboards.Dashboard{}, nil)
+				folderResult := dashboards.NewDashboard("dashboard-test")
+				folderResult.IsFolder = true
+				dashStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(folderResult, nil)
 				_, err := service.Update(context.Background(), &folder.UpdateFolderCommand{
 					UID:          folderUID,
 					OrgID:        orgID,
@@ -140,11 +139,11 @@ func TestIntegrationFolderService(t *testing.T) {
 			})
 
 			t.Run("When deleting folder by uid should return access denied error", func(t *testing.T) {
-				newFolder := models.NewFolder("Folder")
-				newFolder.Uid = folderUID
+				newFolder := folder.NewFolder("Folder", "")
+				newFolder.UID = folderUID
 
-				dashStore.On("GetFolderByID", mock.Anything, orgID, folderId).Return(newFolder, nil)
-				dashStore.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(newFolder, nil)
+				folderStore.On("GetFolderByID", mock.Anything, orgID, folderId).Return(newFolder, nil)
+				folderStore.On("GetFolderByUID", mock.Anything, orgID, folderUID).Return(newFolder, nil)
 
 				err := service.Delete(context.Background(), &folder.DeleteFolderCommand{
 					UID:              folderUID,
@@ -172,7 +171,7 @@ func TestIntegrationFolderService(t *testing.T) {
 
 				dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*dashboards.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
 				dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(dash, nil).Once()
-				dashStore.On("GetFolderByID", mock.Anything, orgID, dash.ID).Return(f, nil)
+				folderStore.On("GetFolderByID", mock.Anything, orgID, dash.ID).Return(f, nil)
 
 				actualFolder, err := service.Create(context.Background(), &folder.CreateFolderCommand{
 					OrgID:        orgID,
@@ -205,7 +204,7 @@ func TestIntegrationFolderService(t *testing.T) {
 
 				dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*dashboards.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
 				dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(dashboardFolder, nil)
-				dashStore.On("GetFolderByID", mock.Anything, orgID, dashboardFolder.ID).Return(f, nil)
+				folderStore.On("GetFolderByID", mock.Anything, orgID, dashboardFolder.ID).Return(f, nil)
 
 				title := "TEST-Folder"
 				req := &folder.UpdateFolderCommand{
@@ -224,7 +223,7 @@ func TestIntegrationFolderService(t *testing.T) {
 				f := folder.NewFolder(util.GenerateShortUID(), "")
 				f.ID = rand.Int63()
 				f.UID = util.GenerateShortUID()
-				dashStore.On("GetFolderByUID", mock.Anything, orgID, f.UID).Return(f, nil)
+				folderStore.On("GetFolderByUID", mock.Anything, orgID, f.UID).Return(f, nil)
 
 				var actualCmd *dashboards.DeleteDashboardCommand
 				dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
@@ -258,7 +257,7 @@ func TestIntegrationFolderService(t *testing.T) {
 				expected := folder.NewFolder(util.GenerateShortUID(), "")
 				expected.ID = rand.Int63()
 
-				dashStore.On("GetFolderByID", mock.Anything, orgID, expected.ID).Return(expected, nil)
+				folderStore.On("GetFolderByID", mock.Anything, orgID, expected.ID).Return(expected, nil)
 
 				actual, err := service.getFolderByID(context.Background(), usr, expected.ID, orgID)
 				require.Equal(t, expected, actual)
@@ -269,7 +268,7 @@ func TestIntegrationFolderService(t *testing.T) {
 				expected := folder.NewFolder(util.GenerateShortUID(), "")
 				expected.UID = util.GenerateShortUID()
 
-				dashStore.On("GetFolderByUID", mock.Anything, orgID, expected.UID).Return(expected, nil)
+				folderStore.On("GetFolderByUID", mock.Anything, orgID, expected.UID).Return(expected, nil)
 
 				actual, err := service.getFolderByUID(context.Background(), usr, orgID, expected.UID)
 				require.Equal(t, expected, actual)
@@ -279,7 +278,7 @@ func TestIntegrationFolderService(t *testing.T) {
 			t.Run("When get folder by title should return folder", func(t *testing.T) {
 				expected := folder.NewFolder("TEST-"+util.GenerateShortUID(), "")
 
-				dashStore.On("GetFolderByTitle", mock.Anything, orgID, expected.Title).Return(expected, nil)
+				folderStore.On("GetFolderByTitle", mock.Anything, orgID, expected.Title).Return(expected, nil)
 
 				actual, err := service.getFolderByTitle(context.Background(), usr, orgID, expected.Title)
 				require.Equal(t, expected, actual)
@@ -322,23 +321,27 @@ func TestNestedFolderServiceFeatureToggle(t *testing.T) {
 		guardian.New = g
 	})
 
-	folderStore := NewFakeStore()
+	nestedFolderStore := NewFakeStore()
 
 	dashStore := dashboards.FakeDashboardStore{}
 	dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*dashboards.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
 	dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(&dashboards.Dashboard{}, nil)
-	dashStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
+
+	dashboardFolderStore := dashboards.NewFakeFolderStore(t)
+	dashboardFolderStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
+
 	cfg := setting.NewCfg()
 	cfg.RBACEnabled = false
 	folderService := &Service{
-		cfg:            cfg,
-		store:          folderStore,
-		dashboardStore: &dashStore,
-		features:       featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
-		log:            log.New("test-folder-service"),
+		cfg:                  cfg,
+		store:                nestedFolderStore,
+		dashboardStore:       &dashStore,
+		dashboardFolderStore: dashboardFolderStore,
+		features:             featuremgmt.WithFeatures(featuremgmt.FlagNestedFolders),
+		log:                  log.New("test-folder-service"),
 	}
 	t.Run("create folder", func(t *testing.T) {
-		folderStore.ExpectedFolder = &folder.Folder{ParentUID: util.GenerateShortUID()}
+		nestedFolderStore.ExpectedFolder = &folder.Folder{ParentUID: util.GenerateShortUID()}
 		res, err := folderService.Create(context.Background(), &folder.CreateFolderCommand{SignedInUser: usr, Title: "my folder"})
 		require.NoError(t, err)
 		require.NotNil(t, res.UID)
@@ -359,11 +362,13 @@ func TestNestedFolderService(t *testing.T) {
 			dashStore := &dashboards.FakeDashboardStore{}
 			dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*dashboards.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
 			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(&dashboards.Dashboard{}, nil)
-			dashStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
 
-			folderStore := NewFakeStore()
+			dashboardFolderStore := dashboards.NewFakeFolderStore(t)
+			dashboardFolderStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
 
-			folderSvc := setup(t, dashStore, folderStore, featuremgmt.WithFeatures(), nil)
+			nestedFolderStore := NewFakeStore()
+
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures(), nil)
 			_, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
 				OrgID:        orgID,
 				Title:        "myFolder",
@@ -372,7 +377,7 @@ func TestNestedFolderService(t *testing.T) {
 			})
 			require.NoError(t, err)
 			// CreateFolder should not call the folder store create if the feature toggle is not enabled.
-			require.False(t, folderStore.CreateCalled)
+			require.False(t, nestedFolderStore.CreateCalled)
 		})
 
 		t.Run("When delete folder, no delete in folder table done", func(t *testing.T) {
@@ -381,16 +386,18 @@ func TestNestedFolderService(t *testing.T) {
 			dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 				actualCmd = args.Get(1).(*dashboards.DeleteDashboardCommand)
 			}).Return(nil).Once()
-			dashStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
 
-			folderStore := NewFakeStore()
+			dashboardFolderStore := dashboards.NewFakeFolderStore(t)
+			dashboardFolderStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
 
-			folderSvc := setup(t, dashStore, folderStore, featuremgmt.WithFeatures(), nil)
+			nestedFolderStore := NewFakeStore()
+
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures(), nil)
 			err := folderSvc.Delete(context.Background(), &folder.DeleteFolderCommand{UID: "myFolder", OrgID: orgID, SignedInUser: usr})
 			require.NoError(t, err)
 			require.NotNil(t, actualCmd)
 
-			require.False(t, folderStore.DeleteCalled)
+			require.False(t, nestedFolderStore.DeleteCalled)
 		})
 	})
 
@@ -406,11 +413,13 @@ func TestNestedFolderService(t *testing.T) {
 			dashStore := &dashboards.FakeDashboardStore{}
 			dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*dashboards.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
 			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(&dashboards.Dashboard{}, nil)
-			dashStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
 
-			folderStore := NewFakeStore()
+			dashboardFolderStore := dashboards.NewFakeFolderStore(t)
+			dashboardFolderStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
 
-			folderSvc := setup(t, dashStore, folderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
+			nestedFolderStore := NewFakeStore()
+
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
 				ExpectedEvaluate: true,
 			})
 			_, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
@@ -421,7 +430,7 @@ func TestNestedFolderService(t *testing.T) {
 			})
 			require.NoError(t, err)
 			// CreateFolder should also call the folder store's create method.
-			require.True(t, folderStore.CreateCalled)
+			require.True(t, nestedFolderStore.CreateCalled)
 		})
 
 		t.Run("create without UID, no error", func(t *testing.T) {
@@ -435,11 +444,13 @@ func TestNestedFolderService(t *testing.T) {
 			dashStore := &dashboards.FakeDashboardStore{}
 			dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*dashboards.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
 			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(&dashboards.Dashboard{UID: "newUID"}, nil)
-			dashStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
 
-			folderStore := NewFakeStore()
+			dashboardFolderStore := dashboards.NewFakeFolderStore(t)
+			dashboardFolderStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
 
-			folderSvc := setup(t, dashStore, folderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
+			nestedFolderStore := NewFakeStore()
+
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
 				ExpectedEvaluate: true,
 			})
 			f, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
@@ -449,7 +460,7 @@ func TestNestedFolderService(t *testing.T) {
 			})
 			require.NoError(t, err)
 			// CreateFolder should also call the folder store's create method.
-			require.True(t, folderStore.CreateCalled)
+			require.True(t, nestedFolderStore.CreateCalled)
 			require.Equal(t, "newUID", f.UID)
 		})
 
@@ -469,14 +480,16 @@ func TestNestedFolderService(t *testing.T) {
 			dashStore := &dashboards.FakeDashboardStore{}
 			dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*dashboards.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
 			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(dashboardFolder, nil)
-			dashStore.On("GetFolderByID", mock.Anything, orgID, dashboardFolder.ID).Return(f, nil)
 			var actualCmd *dashboards.DeleteDashboardCommand
 			dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 				actualCmd = args.Get(1).(*dashboards.DeleteDashboardCommand)
 			}).Return(nil).Once()
 
-			folderStore := NewFakeStore()
-			folderStore.ExpectedParentFolders = []*folder.Folder{
+			dashboardFolderStore := dashboards.NewFakeFolderStore(t)
+			dashboardFolderStore.On("GetFolderByID", mock.Anything, orgID, dashboardFolder.ID).Return(f, nil)
+
+			nestedFolderStore := NewFakeStore()
+			nestedFolderStore.ExpectedParentFolders = []*folder.Folder{
 				{UID: "newFolder", ParentUID: "newFolder"},
 				{UID: "newFolder2", ParentUID: "newFolder2"},
 				{UID: "newFolder3", ParentUID: "newFolder3"},
@@ -491,13 +504,13 @@ func TestNestedFolderService(t *testing.T) {
 				SignedInUser: usr,
 			}
 
-			folderSvc := setup(t, dashStore, folderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
 				ExpectedEvaluate: true,
 			})
 			_, err := folderSvc.Create(context.Background(), &cmd)
 			require.Error(t, err, folder.ErrCircularReference)
 			// CreateFolder should not call the folder store's create method.
-			require.False(t, folderStore.CreateCalled)
+			require.False(t, nestedFolderStore.CreateCalled)
 			require.NotNil(t, actualCmd)
 		})
 
@@ -513,19 +526,20 @@ func TestNestedFolderService(t *testing.T) {
 			dashStore := &dashboards.FakeDashboardStore{}
 			dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*dashboards.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil)
 			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(&dashboards.Dashboard{}, nil)
-			dashStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
-			dashStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
 			var actualCmd *dashboards.DeleteDashboardCommand
 			dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 				actualCmd = args.Get(1).(*dashboards.DeleteDashboardCommand)
 			}).Return(nil).Once()
 
+			dashboardFolderStore := dashboards.NewFakeFolderStore(t)
+			dashboardFolderStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
+
 			// return an error from the folder store
-			folderStore := NewFakeStore()
-			folderStore.ExpectedError = errors.New("FAILED")
+			nestedFolderStore := NewFakeStore()
+			nestedFolderStore.ExpectedError = errors.New("FAILED")
 
 			// the service return success as long as the legacy create succeeds
-			folderSvc := setup(t, dashStore, folderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
 				ExpectedEvaluate: true,
 			})
 			_, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
@@ -537,7 +551,7 @@ func TestNestedFolderService(t *testing.T) {
 			require.Error(t, err, "FAILED")
 
 			// CreateFolder should also call the folder store's create method.
-			require.True(t, folderStore.CreateCalled)
+			require.True(t, nestedFolderStore.CreateCalled)
 			require.NotNil(t, actualCmd)
 		})
 
@@ -550,11 +564,12 @@ func TestNestedFolderService(t *testing.T) {
 			})
 
 			dashStore := &dashboards.FakeDashboardStore{}
+			dashboardFolderStore := dashboards.NewFakeFolderStore(t)
 
-			folderStore := NewFakeStore()
-			folderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
+			nestedFolderStore := NewFakeStore()
+			nestedFolderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
 
-			folderSvc := setup(t, dashStore, folderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
 				ExpectedEvaluate: true,
 			})
 			_, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: usr})
@@ -570,11 +585,12 @@ func TestNestedFolderService(t *testing.T) {
 			})
 
 			dashStore := &dashboards.FakeDashboardStore{}
+			dashboardFolderStore := dashboards.NewFakeFolderStore(t)
 
-			folderStore := NewFakeStore()
-			folderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
+			nestedFolderStore := NewFakeStore()
+			nestedFolderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
 
-			folderSvc := setup(t, dashStore, folderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
 				ExpectedEvaluate: true,
 			})
 			_, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: usr})
@@ -590,16 +606,17 @@ func TestNestedFolderService(t *testing.T) {
 			})
 
 			dashStore := &dashboards.FakeDashboardStore{}
+			dashboardFolderStore := dashboards.NewFakeFolderStore(t)
 
-			folderStore := NewFakeStore()
-			folderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
-			folderStore.ExpectedParentFolders = []*folder.Folder{
+			nestedFolderStore := NewFakeStore()
+			nestedFolderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
+			nestedFolderStore.ExpectedParentFolders = []*folder.Folder{
 				{UID: "newFolder", ParentUID: "newFolder"},
 				{UID: "newFolder2", ParentUID: "newFolder2"},
 				{UID: "newFolder3", ParentUID: "newFolder3"},
 			}
 
-			folderSvc := setup(t, dashStore, folderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
 				ExpectedEvaluate: true,
 			})
 			f, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: usr})
@@ -615,12 +632,13 @@ func TestNestedFolderService(t *testing.T) {
 			})
 
 			dashStore := &dashboards.FakeDashboardStore{}
+			dashboardFolderStore := dashboards.NewFakeFolderStore(t)
 
-			folderStore := NewFakeStore()
-			folderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
-			folderStore.ExpectedError = folder.ErrCircularReference
+			nestedFolderStore := NewFakeStore()
+			nestedFolderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
+			nestedFolderStore.ExpectedError = folder.ErrCircularReference
 
-			folderSvc := setup(t, dashStore, folderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
 				ExpectedEvaluate: true,
 			})
 			f, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder", OrgID: orgID, SignedInUser: usr})
@@ -636,16 +654,17 @@ func TestNestedFolderService(t *testing.T) {
 			})
 
 			dashStore := &dashboards.FakeDashboardStore{}
+			dashboardFolderStore := dashboards.NewFakeFolderStore(t)
 
-			folderStore := NewFakeStore()
-			folderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
-			folderStore.ExpectedParentFolders = []*folder.Folder{
+			nestedFolderStore := NewFakeStore()
+			nestedFolderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
+			nestedFolderStore.ExpectedParentFolders = []*folder.Folder{
 				{UID: "newFolder", ParentUID: "newFolder"},
 				{UID: "newFolder2", ParentUID: "newFolder2"},
 			}
-			folderStore.ExpectedFolderHeight = 5
+			nestedFolderStore.ExpectedFolderHeight = 5
 
-			folderSvc := setup(t, dashStore, folderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
 				ExpectedEvaluate: true,
 			})
 			f, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder2", OrgID: orgID, SignedInUser: usr})
@@ -661,12 +680,13 @@ func TestNestedFolderService(t *testing.T) {
 			})
 
 			dashStore := &dashboards.FakeDashboardStore{}
+			dashboardFolderStore := dashboards.NewFakeFolderStore(t)
 
-			folderStore := NewFakeStore()
-			folderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
-			folderStore.ExpectedParentFolders = []*folder.Folder{{UID: "myFolder", ParentUID: "12345"}, {UID: "12345", ParentUID: ""}}
+			nestedFolderStore := NewFakeStore()
+			nestedFolderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
+			nestedFolderStore.ExpectedParentFolders = []*folder.Folder{{UID: "myFolder", ParentUID: "12345"}, {UID: "12345", ParentUID: ""}}
 
-			folderSvc := setup(t, dashStore, folderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
 				ExpectedEvaluate: true,
 			})
 			f, err := folderSvc.Move(context.Background(), &folder.MoveFolderCommand{UID: "myFolder", NewParentUID: "newFolder2", OrgID: orgID, SignedInUser: usr})
@@ -686,19 +706,21 @@ func TestNestedFolderService(t *testing.T) {
 			dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 				actualCmd = args.Get(1).(*dashboards.DeleteDashboardCommand)
 			}).Return(nil).Once()
-			dashStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
 
-			folderStore := NewFakeStore()
-			folderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
+			dashboardFolderStore := dashboards.NewFakeFolderStore(t)
+			dashboardFolderStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
 
-			folderSvc := setup(t, dashStore, folderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
+			nestedFolderStore := NewFakeStore()
+			nestedFolderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
+
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
 				ExpectedEvaluate: true,
 			})
 			err := folderSvc.Delete(context.Background(), &folder.DeleteFolderCommand{UID: "myFolder", OrgID: orgID, SignedInUser: usr})
 			require.NoError(t, err)
 			require.NotNil(t, actualCmd)
 
-			require.True(t, folderStore.DeleteCalled)
+			require.True(t, nestedFolderStore.DeleteCalled)
 		})
 
 		t.Run("create returns error if maximum depth reached", func(t *testing.T) {
@@ -713,23 +735,24 @@ func TestNestedFolderService(t *testing.T) {
 			dashStore := &dashboards.FakeDashboardStore{}
 			dashStore.On("ValidateDashboardBeforeSave", mock.Anything, mock.AnythingOfType("*dashboards.Dashboard"), mock.AnythingOfType("bool")).Return(true, nil).Times(2)
 			dashStore.On("SaveDashboard", mock.Anything, mock.AnythingOfType("dashboards.SaveDashboardCommand")).Return(&dashboards.Dashboard{}, nil)
-			dashStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
-			dashStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
 			var actualCmd *dashboards.DeleteDashboardCommand
 			dashStore.On("DeleteDashboard", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 				actualCmd = args.Get(1).(*dashboards.DeleteDashboardCommand)
 			}).Return(nil).Once()
+
+			dashboardFolderStore := dashboards.NewFakeFolderStore(t)
+			dashboardFolderStore.On("GetFolderByID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("int64")).Return(&folder.Folder{}, nil)
 
 			parents := make([]*folder.Folder, 0, folder.MaxNestedFolderDepth)
 			for i := 0; i < folder.MaxNestedFolderDepth; i++ {
 				parents = append(parents, &folder.Folder{UID: fmt.Sprintf("folder%d", i)})
 			}
 
-			folderStore := NewFakeStore()
-			//folderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
-			folderStore.ExpectedParentFolders = parents
+			nestedFolderStore := NewFakeStore()
+			//nestedFolderStore.ExpectedFolder = &folder.Folder{UID: "myFolder", ParentUID: "newFolder"}
+			nestedFolderStore.ExpectedParentFolders = parents
 
-			folderSvc := setup(t, dashStore, folderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
 				ExpectedEvaluate: true,
 			})
 			_, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{
@@ -745,18 +768,19 @@ func TestNestedFolderService(t *testing.T) {
 	})
 }
 
-func setup(t *testing.T, dashStore dashboards.Store, folderStore store, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl) folder.Service {
+func setup(t *testing.T, dashStore dashboards.Store, dashboardFolderStore dashboards.FolderStore, nestedFolderStore store, features featuremgmt.FeatureToggles, ac accesscontrol.AccessControl) folder.Service {
 	t.Helper()
 
 	// nothing enabled yet
 	cfg := setting.NewCfg()
 	cfg.RBACEnabled = false
 	return &Service{
-		cfg:            cfg,
-		log:            log.New("test-folder-service"),
-		dashboardStore: dashStore,
-		store:          folderStore,
-		features:       features,
-		accessControl:  ac,
+		cfg:                  cfg,
+		log:                  log.New("test-folder-service"),
+		dashboardStore:       dashStore,
+		dashboardFolderStore: dashboardFolderStore,
+		store:                nestedFolderStore,
+		features:             features,
+		accessControl:        ac,
 	}
 }

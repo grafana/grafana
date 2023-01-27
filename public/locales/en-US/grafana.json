@@ -13,7 +13,7 @@
       "search": "Search"
     },
     "search-box": {
-      "placeholder": "Search Grafana"
+      "placeholder": "Search or jump to..."
     },
     "section": {
       "actions": "Actions",
@@ -285,7 +285,7 @@
       "title": "Change password"
     },
     "profile/settings": {
-      "title": "Preferences"
+      "title": "Profile"
     },
     "profile/switch-org": "Switch organization",
     "scenes": {
@@ -555,8 +555,7 @@
       "name-error": "Name is required",
       "name-label": "Name",
       "username-label": "Username"
-    },
-    "title": "Profile"
+    }
   },
   "user-session": {
     "browser-column": "Browser & OS",

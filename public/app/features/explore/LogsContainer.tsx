@@ -11,10 +11,11 @@ import {
   EventBus,
   SplitOpen,
   DataFrame,
+  SupplementaryQueryType,
 } from '@grafana/data';
 import { Collapse } from '@grafana/ui';
 import { StoreState } from 'app/types';
-import { ExploreId, ExploreItemState, SupplementaryQueryType } from 'app/types/explore';
+import { ExploreId, ExploreItemState } from 'app/types/explore';
 
 import { getTimeZone } from '../profile/state/selectors';
 

@@ -22,12 +22,14 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -257,7 +259,7 @@ func getCreateCommandWithModel(folderID int64, name string, kind models.LibraryE
 type scenarioContext struct {
 	ctx           *web.Context
 	service       *LibraryElementService
-	reqContext    *models.ReqContext
+	reqContext    *contextmodel.ReqContext
 	user          user.SignedInUser
 	folder        *folder.Folder
 	initialResult libraryElementResult
@@ -266,7 +268,7 @@ type scenarioContext struct {
 
 type folderACLItem struct {
 	roleType   org.RoleType
-	permission models.PermissionType
+	permission dashboards.PermissionType
 }
 
 func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash *dashboards.Dashboard, folderID int64) *dashboards.Dashboard {
@@ -291,8 +293,9 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 	folderPermissions := acmock.NewMockedPermissionsService()
 	dashboardPermissions := acmock.NewMockedPermissionsService()
 	service := dashboardservice.ProvideDashboardService(
-		cfg, dashboardStore, dashAlertExtractor,
+		cfg, dashboardStore, dashboardStore, dashAlertExtractor,
 		features, folderPermissions, dashboardPermissions, ac,
+		foldertest.NewFakeService(),
 	)
 	dashboard, err := service.SaveDashboard(context.Background(), dashItem, true)
 	require.NoError(t, err)
@@ -314,7 +317,7 @@ func createFolderWithACL(t *testing.T, sqlStore db.DB, title string, user user.S
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
 	require.NoError(t, err)
 
-	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, nil, features, folderPermissions, nil)
+	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, dashboardStore, nil, features, folderPermissions)
 	t.Logf("Creating folder with title and UID %q", title)
 	ctx := appcontext.WithUser(context.Background(), &user)
 	folder, err := s.Create(ctx, &folder.CreateFolderCommand{
@@ -334,11 +337,11 @@ func updateFolderACL(t *testing.T, dashboardStore *database.DashboardStore, fold
 		return
 	}
 
-	var aclItems []*models.DashboardACL
+	var aclItems []*dashboards.DashboardACL
 	for _, item := range items {
 		role := item.roleType
 		permission := item.permission
-		aclItems = append(aclItems, &models.DashboardACL{
+		aclItems = append(aclItems, &dashboards.DashboardACL{
 			DashboardID: folderID,
 			Role:        &role,
 			Permission:  permission,
@@ -435,14 +438,15 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		folderPermissions := acmock.NewMockedPermissionsService()
 		dashboardPermissions := acmock.NewMockedPermissionsService()
 		dashboardService := dashboardservice.ProvideDashboardService(
-			sqlStore.Cfg, dashboardStore, nil,
+			sqlStore.Cfg, dashboardStore, dashboardStore, nil,
 			features, folderPermissions, dashboardPermissions, ac,
+			foldertest.NewFakeService(),
 		)
 		guardian.InitLegacyGuardian(sqlStore, dashboardService, &teamtest.FakeService{})
 		service := LibraryElementService{
 			Cfg:           sqlStore.Cfg,
 			SQLStore:      sqlStore,
-			folderService: folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardStore, nil, features, folderPermissions, nil),
+			folderService: folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardStore, dashboardStore, nil, features, folderPermissions),
 		}
 
 		// deliberate difference between signed in user and user in db to make it crystal clear
@@ -465,7 +469,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			ctx:      &webCtx,
 			service:  &service,
 			sqlStore: sqlStore,
-			reqContext: &models.ReqContext{
+			reqContext: &contextmodel.ReqContext{
 				Context:      &webCtx,
 				SignedInUser: &usr,
 			},

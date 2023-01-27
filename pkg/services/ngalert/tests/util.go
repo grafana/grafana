@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
+	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
@@ -79,13 +80,14 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 	dashboardPermissions := acmock.NewMockedPermissionsService()
 
 	dashboardService := dashboardservice.ProvideDashboardService(
-		cfg, dashboardStore, nil,
+		cfg, dashboardStore, dashboardStore, nil,
 		features, folderPermissions, dashboardPermissions, ac,
+		foldertest.NewFakeService(),
 	)
 
 	tracer := tracing.InitializeTracerForTest()
 	bus := bus.ProvideBus(tracer)
-	folderService := folderimpl.ProvideService(ac, bus, cfg, dashboardStore, nil, features, folderPermissions, nil)
+	folderService := folderimpl.ProvideService(ac, bus, cfg, dashboardStore, dashboardStore, nil, features, folderPermissions)
 
 	ng, err := ngalert.ProvideService(
 		cfg, featuremgmt.WithFeatures(), nil, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, quotatest.New(false, nil),

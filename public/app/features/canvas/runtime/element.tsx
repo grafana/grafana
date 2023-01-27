@@ -446,6 +446,45 @@ export class ElementState implements LayerElement {
     }
   };
 
+  handleMouseEnter = (event: React.MouseEvent, isSelected: boolean | undefined) => {
+    const scene = this.getScene();
+    if (!scene?.isEditingEnabled) {
+      this.handleTooltip(event);
+    } else if (!isSelected) {
+      scene?.connections.handleMouseEnter(event);
+    }
+  };
+
+  handleTooltip = (event: React.MouseEvent) => {
+    const scene = this.getScene();
+    if (scene?.tooltipCallback) {
+      const rect = this.div?.getBoundingClientRect();
+      scene.tooltipCallback({
+        anchorPoint: { x: rect?.right ?? event.pageX, y: rect?.top ?? event.pageY },
+        element: this,
+        isOpen: false,
+      });
+    }
+  };
+
+  handleMouseLeave = (event: React.MouseEvent) => {
+    const scene = this.getScene();
+    if (scene?.tooltipCallback && !scene?.tooltip?.isOpen) {
+      scene.tooltipCallback(undefined);
+    }
+  };
+
+  onElementClick = (event: React.MouseEvent) => {
+    const scene = this.getScene();
+    if (scene?.tooltipCallback && scene.tooltip?.anchorPoint) {
+      scene.tooltipCallback({
+        anchorPoint: { x: scene.tooltip.anchorPoint.x, y: scene.tooltip.anchorPoint.y },
+        element: this,
+        isOpen: true,
+      });
+    }
+  };
+
   render() {
     const { item, div } = this;
     const scene = this.getScene();
@@ -456,7 +495,9 @@ export class ElementState implements LayerElement {
       <div
         key={this.UID}
         ref={this.initElement}
-        onMouseEnter={!isSelected ? scene?.connections.handleMouseEnter : undefined}
+        onMouseEnter={(e: React.MouseEvent) => this.handleMouseEnter(e, isSelected)}
+        onMouseLeave={!scene?.isEditingEnabled ? this.handleMouseLeave : undefined}
+        onClick={!scene?.isEditingEnabled ? this.onElementClick : undefined}
       >
         <item.display
           key={`${this.UID}/${this.revId}`}

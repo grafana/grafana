@@ -14,7 +14,7 @@ import (
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -500,7 +500,7 @@ func TestAMConfigMigration(t *testing.T) {
 	}
 }
 
-// TestDashAlertMigration tests the execution of the main DashAlertMigration specifically for migrations of alerts.
+// TestDashAlertMigration tests the execution of the main DashAlertMigration specifically for migrations of models.
 func TestDashAlertMigration(t *testing.T) {
 	// Run initial migration to have a working DB.
 	x := setupTestDB(t)

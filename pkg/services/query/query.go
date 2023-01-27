@@ -6,20 +6,21 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/adapters"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
 	"github.com/grafana/grafana/pkg/util/errutil"
-	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -33,7 +34,7 @@ func ProvideService(
 	cfg *setting.Cfg,
 	dataSourceCache datasources.CacheService,
 	expressionService *expr.Service,
-	pluginRequestValidator models.PluginRequestValidator,
+	pluginRequestValidator validations.PluginRequestValidator,
 	dataSourceService datasources.DataSourceService,
 	pluginClient plugins.Client,
 ) *Service {
@@ -54,7 +55,7 @@ type Service struct {
 	cfg                    *setting.Cfg
 	dataSourceCache        datasources.CacheService
 	expressionService      *expr.Service
-	pluginRequestValidator models.PluginRequestValidator
+	pluginRequestValidator validations.PluginRequestValidator
 	dataSourceService      datasources.DataSourceService
 	pluginClient           plugins.Client
 	log                    log.Logger

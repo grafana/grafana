@@ -212,5 +212,9 @@ func (s NoData) AddNotice(notice data.Notice) {
 func (s NoData) AsDataFrame() *data.Frame { return s.Frame }
 
 func (s NoData) New() NoData {
+	return NewNoData()
+}
+
+func NewNoData() NoData {
 	return NoData{data.NewFrame("no data")}
 }

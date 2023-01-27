@@ -139,8 +139,8 @@ e2e.scenario({
   scenario: () => {
     e2e.flows.addDashboard({
       timeRange: {
-        from: '2022-10-03 00:00:00',
-        to: '2022-10-03 23:59:59',
+        from: 'now-6h',
+        to: 'now',
         zone: 'Coordinated Universal Time',
       },
     });
@@ -210,8 +210,8 @@ e2e.scenario({
   scenario: () => {
     e2e.flows.addDashboard({
       timeRange: {
-        from: '2022-10-03 00:00:00',
-        to: '2022-10-03 23:59:59',
+        from: 'now-6h',
+        to: 'now',
         zone: 'Coordinated Universal Time',
       },
     });

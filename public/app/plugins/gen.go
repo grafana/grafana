@@ -21,16 +21,14 @@ import (
 )
 
 var skipPlugins = map[string]bool{
-	"canvas":         true,
-	"heatmap":        true,
-	"candlestick":    true,
-	"state-timeline": true,
-	"status-history": true,
-	"table":          true,
-	"timeseries":     true,
-	"influxdb":       true, // plugin.json fails validation (defaultMatchFormat)
-	"mixed":          true, // plugin.json fails validation (mixed)
-	"opentsdb":       true, // plugin.json fails validation (defaultMatchFormat)
+	"canvas":      true,
+	"heatmap":     true,
+	"candlestick": true,
+	"table":       true,
+	"timeseries":  true,
+	"influxdb":    true, // plugin.json fails validation (defaultMatchFormat)
+	"mixed":       true, // plugin.json fails validation (mixed)
+	"opentsdb":    true, // plugin.json fails validation (defaultMatchFormat)
 }
 
 const sep = string(filepath.Separator)
@@ -54,8 +52,11 @@ func main() {
 
 	pluginKindGen.Append(
 		codegen.PluginTreeListJenny(),
-		codegen.PluginGoTypesJenny("pkg/tsdb", adaptToPipeline(corecodegen.GoTypesJenny{})),
+		codegen.PluginGoTypesJenny("pkg/tsdb"),
 		codegen.PluginTSTypesJenny("public/app/plugins", adaptToPipeline(corecodegen.TSTypesJenny{})),
+		codegen.PluginDocsJenny(toDeclForGen(corecodegen.DocsJenny(
+			filepath.Join("docs", "sources", "developers", "kinds", "composable"),
+		))),
 	)
 
 	pluginKindGen.AddPostprocessors(corecodegen.SlashHeaderMapper("public/app/plugins/gen.go"))
@@ -83,9 +84,19 @@ func main() {
 func adaptToPipeline(j codejen.OneToOne[corecodegen.SchemaForGen]) codejen.OneToOne[*pfs.PluginDecl] {
 	return codejen.AdaptOneToOne(j, func(pd *pfs.PluginDecl) corecodegen.SchemaForGen {
 		return corecodegen.SchemaForGen{
-			Name:    pd.PluginMeta.Name,
+			Name:    strings.ReplaceAll(pd.PluginMeta.Name, " ", ""),
 			Schema:  pd.Lineage.Latest(),
 			IsGroup: pd.SchemaInterface.IsGroup(),
 		}
+	})
+}
+
+func toDeclForGen(j codejen.OneToOne[*corecodegen.DeclForGen]) codejen.OneToOne[*pfs.PluginDecl] {
+	return codejen.AdaptOneToOne(j, func(pd *pfs.PluginDecl) *corecodegen.DeclForGen {
+		kd, err := corecodegen.ForGen(pd.Lineage.Runtime(), pd.KindDecl.Some())
+		if err != nil {
+			panic("should be unreachable")
+		}
+		return kd
 	})
 }

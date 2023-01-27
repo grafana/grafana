@@ -15,6 +15,7 @@ interface NestedRowProps {
   requestNestedRows: (row: ResourceRow) => Promise<void>;
   onRowSelectedChange: (row: ResourceRow, selected: boolean) => void;
   selectableEntryTypes: ResourceRowType[];
+  disableRow: (row: ResourceRow, selectedRows: ResourceRowGroup) => boolean;
   scrollIntoView?: boolean;
 }
 
@@ -26,12 +27,13 @@ const NestedRow: React.FC<NestedRowProps> = ({
   onRowSelectedChange,
   selectableEntryTypes,
   scrollIntoView,
+  disableRow,
 }) => {
   const styles = useStyles2(getStyles);
   const [rowStatus, setRowStatus] = useState<'open' | 'closed' | 'loading'>('closed');
 
   const isSelected = !!selectedRows.find((v) => v.uri === row.uri);
-  const isDisabled = selectedRows.length > 0 && !isSelected;
+  const isDisabled = !isSelected && disableRow(row, selectedRows);
   const isOpen = rowStatus === 'open';
 
   const onRowToggleCollapse = async () => {
@@ -92,6 +94,7 @@ const NestedRow: React.FC<NestedRowProps> = ({
             onRowSelectedChange={onRowSelectedChange}
             selectableEntryTypes={selectableEntryTypes}
             scrollIntoView={scrollIntoView}
+            disableRow={disableRow}
           />
         ))}
 

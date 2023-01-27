@@ -34,9 +34,9 @@ func (s *Storage) SaveLiveMessage(query *model.SaveLiveMessageQuery) error {
 	//	return err
 	//})
 	// return err
-	s.cache.Set(getLiveMessageCacheKey(query.OrgId, query.Channel), model.LiveMessage{
-		Id:        0, // Not used actually.
-		OrgId:     query.OrgId,
+	s.cache.Set(getLiveMessageCacheKey(query.OrgID, query.Channel), model.LiveMessage{
+		ID:        0, // Not used actually.
+		OrgID:     query.OrgID,
 		Channel:   query.Channel,
 		Data:      query.Data,
 		Published: time.Now(),
@@ -54,7 +54,7 @@ func (s *Storage) GetLiveMessage(query *model.GetLiveMessageQuery) (model.LiveMe
 	//	return err
 	//})
 	//return msg, exists, err
-	m, ok := s.cache.Get(getLiveMessageCacheKey(query.OrgId, query.Channel))
+	m, ok := s.cache.Get(getLiveMessageCacheKey(query.OrgID, query.Channel))
 	if !ok {
 		return model.LiveMessage{}, false, nil
 	}

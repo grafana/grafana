@@ -38,6 +38,7 @@ export class KeybindingSrv {
       this.bind('g h', this.goToHome);
       this.bind('g a', this.openAlerting);
       this.bind('g p', this.goToProfile);
+      this.bind('g e', this.goToExplore);
       this.bind('s o', this.openSearch);
       this.bind('t a', this.makeAbsoluteTime);
       this.bind('f', this.openSearch);
@@ -109,6 +110,10 @@ export class KeybindingSrv {
 
   private goToProfile() {
     this.locationService.push('/profile');
+  }
+
+  private goToExplore() {
+    this.locationService.push('/explore');
   }
 
   private makeAbsoluteTime() {

@@ -7,7 +7,7 @@ import { config } from 'app/core/config';
 
 import { clearNameForSingleSeries } from '../bargauge/BarGaugePanel';
 
-import { PanelOptions } from './models.gen';
+import { PanelOptions } from './panelcfg.gen';
 
 export class GaugePanel extends PureComponent<PanelProps<PanelOptions>> {
   renderComponent = (
