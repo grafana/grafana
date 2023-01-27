@@ -4,7 +4,7 @@ import { RegisterOptions, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, Field, InlineLabel, Input, InputControl, useStyles2 } from '@grafana/ui';
+import { Button, Field, InlineLabel, Input, InputControl, useStyles2, Switch } from '@grafana/ui';
 import { RulerRuleDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { logInfo, LogMessages } from '../../Analytics';
@@ -253,13 +253,19 @@ export function GrafanaEvaluationBehavior({
   initialFolder,
   evaluateEvery,
   setEvaluateEvery,
+  existing,
 }: {
   initialFolder: RuleForm | null;
   evaluateEvery: string;
   setEvaluateEvery: (value: string) => void;
+  existing: boolean;
 }) {
   const styles = useStyles2(getStyles);
   const [showErrorHandling, setShowErrorHandling] = useState(false);
+
+  const { watch, setValue } = useFormContext<RuleFormValues>();
+
+  const isPaused = watch('isPaused');
 
   return (
     // TODO remove "and alert condition" for recording rules
@@ -271,6 +277,23 @@ export function GrafanaEvaluationBehavior({
           evaluateEvery={evaluateEvery}
         />
         <ForInput evaluateEvery={evaluateEvery} />
+
+        {existing && (
+          <Field htmlFor="pause-alert-switch" label="Pause evaluation">
+            <InputControl
+              render={() => (
+                <Switch
+                  id="pause-alert"
+                  onChange={(value) => {
+                    setValue('isPaused', value.currentTarget.checked);
+                  }}
+                  value={Boolean(isPaused)}
+                />
+              )}
+              name="isPaused"
+            />
+          </Field>
+        )}
       </Stack>
       <CollapseToggle
         isCollapsed={!showErrorHandling}
