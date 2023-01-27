@@ -132,7 +132,6 @@ export interface SystemVariable extends BaseVariableModel {
   current: {
     value: Record<string, unknown>;
   };
-  systemValue: string;
   type: 'system';
 }
 

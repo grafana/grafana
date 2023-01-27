@@ -1,5 +1,6 @@
+import * as schema from '@grafana/schema';
+
 import { LoadingState } from './data';
-import { DataSourceRef } from './query';
 
 export type VariableType = TypedVariableModel['type'];
 
@@ -11,13 +12,15 @@ export interface VariableModel {
 }
 
 export type TypedVariableModel =
-  | QueryVariableModel
-  | AdHocVariableModel
-  | ConstantVariableModel
-  | DataSourceVariableModel
-  | IntervalVariableModel
-  | TextBoxVariableModel
-  | CustomVariableModel
+  | schema.QueryVariableModel
+  | schema.AdHocVariableModel
+  | schema.ConstantVariableModel
+  | schema.DataSourceVariableModel
+  | schema.IntervalVariableModel
+  | schema.TextBoxVariableModel
+  | schema.CustomVariableModel
+  // FIXME: These are not in the schema beacuse it declares toString as part of the value, which is not necessary to declare in the schema.
+  // We should override the value to add toString at this level to not introduce breaking changes.
   | UserVariableModel
   | OrgVariableModel
   | DashboardVariableModel;
@@ -51,11 +54,7 @@ export interface AdHocVariableFilter {
   condition: string;
 }
 
-export interface AdHocVariableModel extends BaseVariableModel {
-  type: 'adhoc';
-  datasource: DataSourceRef | null;
-  filters: AdHocVariableFilter[];
-}
+export interface AdHocVariableModel extends schema.AdHocVariableModel {}
 
 export interface VariableOption {
   selected: boolean;
@@ -64,54 +63,16 @@ export interface VariableOption {
   isNone?: boolean;
 }
 
-export interface IntervalVariableModel extends VariableWithOptions {
-  type: 'interval';
-  auto: boolean;
-  auto_min: string;
-  auto_count: number;
-  refresh: VariableRefresh;
-}
-
-export interface CustomVariableModel extends VariableWithMultiSupport {
-  type: 'custom';
-}
-
-export interface DataSourceVariableModel extends VariableWithMultiSupport {
-  type: 'datasource';
-  regex: string;
-  refresh: VariableRefresh;
-}
-
-export interface QueryVariableModel extends VariableWithMultiSupport {
-  type: 'query';
-  datasource: DataSourceRef | null;
-  definition: string;
-  sort: VariableSort;
-  queryValue?: string;
-  query: any;
-  regex: string;
-  refresh: VariableRefresh;
-}
-
-export interface TextBoxVariableModel extends VariableWithOptions {
-  type: 'textbox';
-  originalQuery: string | null;
-}
-
-export interface ConstantVariableModel extends VariableWithOptions {
-  type: 'constant';
-}
-
-export interface VariableWithMultiSupport extends VariableWithOptions {
-  multi: boolean;
-  includeAll: boolean;
-  allValue?: string | null;
-}
-
-export interface VariableWithOptions extends BaseVariableModel {
-  current: VariableOption;
-  options: VariableOption[];
-  query: string;
+export interface DataSourceVariableModel extends schema.DataSourceVariableModel {}
+export interface QueryVariableModel extends schema.QueryVariableModel {}
+export interface TextBoxVariableModel extends schema.TextBoxVariableModel {}
+export interface ConstantVariableModel extends schema.ConstantVariableModel {}
+export interface CustomVariableModel extends schema.CustomVariableModel {}
+export interface IntervalVariableModel extends schema.IntervalVariableModel {}
+export interface VariableWithMultiSupport extends schema.VariableWithMultiSupport {}
+export interface VariableWithOptions extends schema.VariableWithOptions {}
+export interface DashboardVariableModel extends schema.DashboardSystemVariableModel {
+  current: { value: schema.DashboardSystemVariableModel['current']['value'] & { toString: () => string } };
 }
 
 export interface DashboardProps {
@@ -119,8 +80,6 @@ export interface DashboardProps {
   uid: string;
   toString: () => string;
 }
-
-export interface DashboardVariableModel extends SystemVariable<DashboardProps> {}
 
 export interface OrgProps {
   name: string;

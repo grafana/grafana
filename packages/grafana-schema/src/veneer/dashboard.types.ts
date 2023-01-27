@@ -28,16 +28,18 @@ export interface VariableWithMultiSupport
   rootStateKey: string | null;
   error: any | null;
   description: string | null;
+  allValue?: string | null;
 }
 
 export interface QueryVariableModel
-  extends Omit<raw.QueryVariableModel, 'rootStateKey' | 'error' | 'description' | 'datasource' | 'allValue'> {
+  extends Omit<raw.QueryVariableModel, 'rootStateKey' | 'error' | 'description' | 'datasource' | 'allValue' | 'query'> {
   // Overrides nullable properties because CUE doesn't support null values
   rootStateKey: string | null;
   error: any | null;
   description: string | null;
   datasource: raw.DataSourceRef | null;
   allValue?: string | null;
+  query: any;
 }
 
 export interface AdHocVariableModel
@@ -58,12 +60,11 @@ export interface ConstantVariableModel
 }
 
 export interface DataSourceVariableModel
-  extends Omit<raw.DataSourceVariableModel, 'rootStateKey' | 'error' | 'description' | 'datasource' | 'allValue'> {
+  extends Omit<raw.DataSourceVariableModel, 'rootStateKey' | 'error' | 'description' | 'allValue'> {
   // Overrides nullable properties because CUE doesn't support null values
   rootStateKey: string | null;
   error: any | null;
   description: string | null;
-  datasource: raw.DataSourceRef | null;
   allValue?: string | null;
 }
 
@@ -85,12 +86,11 @@ export interface TextBoxVariableModel
 }
 
 export interface CustomVariableModel
-  extends Omit<raw.CustomVariableModel, 'rootStateKey' | 'error' | 'description' | 'datasource' | 'allValue'> {
+  extends Omit<raw.CustomVariableModel, 'rootStateKey' | 'error' | 'description' | 'allValue'> {
   // Overrides nullable properties because CUE doesn't support null values
   rootStateKey: string | null;
   error: any | null;
   description: string | null;
-  datasource: raw.DataSourceRef | null;
   allValue?: string | null;
 }
 
@@ -130,6 +130,11 @@ export type VariableModel =
   | OrgSystemVariableModel
   | DashboardSystemVariableModel;
 
+export interface SystemVariable<TProps> extends BaseVariableModel {
+  type: 'system';
+  current: { value: TProps };
+}
+
 export interface Dashboard extends Omit<raw.Dashboard, 'templating'> {
   panels?: Array<Panel | raw.RowPanel | raw.GraphPanel | raw.HeatmapPanel>;
   templating?: {
@@ -152,17 +157,17 @@ export interface MatcherConfig<TConfig = any> extends raw.MatcherConfig {
 export const defaultDashboard = raw.defaultDashboard as Dashboard;
 export const defaultBaseVariableModel = {
   ...raw.defaultBaseVariableModel,
-  // TODO remove explicit nulls
   rootStateKey: null,
-  // TODO remove explicit nulls
   error: null,
-  // TODO remove explicit nulls
   description: null,
   hide: raw.VariableHide.dontHide,
   state: raw.LoadingState.NotStarted,
 } as BaseVariableModel;
 export const defaultAdHocVariableModel = {
   ...raw.defaultAdHocVariableModel,
+};
+export const defaultVariableWithOptions = {
+  ...raw.defaultVariableWithOptions,
 };
 
 export const defaultPanel: Partial<Panel> = raw.defaultPanel;

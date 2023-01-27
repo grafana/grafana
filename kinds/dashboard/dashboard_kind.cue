@@ -138,7 +138,7 @@ lineage: seqs: [
 					state:         #LoadingState
 					error?: {...}
 					description?: string
-				} @cuetsy(kind="interface")
+				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				// Variables which allow to select filters from a datasource based on the dimensions from the datasource.
 				#AdHocVariableModel: {
@@ -160,12 +160,11 @@ lineage: seqs: [
 				// Common props for variables injected by the system.
 				#SystemVariable: {
 					#BaseVariableModel
-					type:        "system"
-					systemValue: string
+					type: "system"
 					current: {
 						value: {...}
 					}
-				} @cuetsy(kind="interface")
+				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				// Variable injected by the system which holds the current dashboard.
 				#DashboardSystemVariableModel: {
@@ -176,7 +175,7 @@ lineage: seqs: [
 							uid:  string
 						}
 					}
-				} @cuetsy(kind="interface")
+				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				// Variable injected by the system which holds the current organization.
 				#OrgSystemVariableModel: {
@@ -187,7 +186,7 @@ lineage: seqs: [
 							id:   int32
 						}
 					}
-				} @cuetsy(kind="interface")
+				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				// Variable injected by the system which holds the current user.
 				#UserSystemVariableModel: {
@@ -199,7 +198,7 @@ lineage: seqs: [
 							email?: string
 						}
 					}
-				} @cuetsy(kind="interface")
+				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				// Variables which value is selected from a list of options.
 				#VariableWithOptions: {
@@ -207,7 +206,7 @@ lineage: seqs: [
 					current: #VariableOption
 					options: [...#VariableOption]
 					query: string
-				} @cuetsy(kind="interface")
+				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				// Option to be selected in a variable.
 				#VariableOption: {
@@ -229,7 +228,7 @@ lineage: seqs: [
 				#ConstantVariableModel: {
 					#VariableWithOptions
 					type: "constant"
-				} @cuetsy(kind="interface")
+				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				// Variables to represents time spans such as 1m, 1h, 1d.
 				#IntervalVariableModel: {
@@ -245,7 +244,7 @@ lineage: seqs: [
 					// For example, if the current visible time range is 30 minutes, then the auto interval groups the data into 30 one-minute increments.
 					auto_count: int32
 					refresh:    #VariableRefresh
-				} @cuetsy(kind="interface")
+				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				// Variable which value is selected from a list of options and it support the selection of multiple values.
 				#VariableWithMultiSupport: {
@@ -253,7 +252,7 @@ lineage: seqs: [
 					multi:      bool
 					includeAll: bool
 					allValue?:  string
-				} @cuetsy(kind="interface")
+				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				// Query-generated list of values such as metric names, server names, sensor IDs, data centers, and so on.
 				#QueryVariableModel: {
@@ -274,13 +273,13 @@ lineage: seqs: [
 					type:    "datasource"
 					regex:   string
 					refresh: #VariableRefresh
-				} @cuetsy(kind="interface")
+				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				// Define the variable options manually using a comma-separated list.
 				#CustomVariableModel: {
 					#VariableWithMultiSupport
 					type: "custom"
-				} @cuetsy(kind="interface")
+				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				// Options to set a variable visible in the UI
 				#VariableHide: 0 | 1 | 2 @cuetsy(kind="enum",memberNames="dontHide|hideLabel|hideVariable")
