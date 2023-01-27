@@ -22,6 +22,8 @@ import * as ruleId from '../../utils/rule-id';
 import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { DeclareIncident } from '../bridges/DeclareIncidentButton';
 
+import { CloneRuleButton } from './CloneRuleButton';
+
 interface Props {
   rule: CombinedRule;
   rulesSource: RulesSource;
@@ -178,35 +180,39 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
   }
 
   if (isViewMode) {
-    if (isEditable && rulerRule && !isFederated && !isProvisioned) {
+    if (isEditable && rulerRule && !isFederated) {
       const sourceName = getRulesSourceName(rulesSource);
       const identifier = ruleId.fromRulerRule(sourceName, namespace.name, group.name, rulerRule);
 
-      const editURL = urlUtil.renderUrl(
-        `${config.appSubUrl}/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`,
-        {
-          returnTo,
-        }
-      );
-      rightButtons.push(
-        <ClipboardButton
-          key="copy"
-          icon="copy"
-          onClipboardError={(copiedText) => {
-            notifyApp.error('Error while copying URL', copiedText);
-          }}
-          size="sm"
-          getText={buildShareUrl}
-        >
-          Copy link to rule
-        </ClipboardButton>
-      );
+      if (!isProvisioned) {
+        const editURL = urlUtil.renderUrl(
+          `${config.appSubUrl}/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`,
+          {
+            returnTo,
+          }
+        );
+        rightButtons.push(
+          <ClipboardButton
+            key="copy"
+            icon="copy"
+            onClipboardError={(copiedText) => {
+              notifyApp.error('Error while copying URL', copiedText);
+            }}
+            size="sm"
+            getText={buildShareUrl}
+          >
+            Copy link to rule
+          </ClipboardButton>
+        );
 
-      rightButtons.push(
-        <LinkButton size="sm" key="edit" variant="secondary" icon="pen" href={editURL}>
-          Edit
-        </LinkButton>
-      );
+        rightButtons.push(
+          <LinkButton size="sm" key="edit" variant="secondary" icon="pen" href={editURL}>
+            Edit
+          </LinkButton>
+        );
+      }
+
+      rightButtons.push(<CloneRuleButton text="Clone" ruleIdentifier={identifier} isProvisioned={isProvisioned} />);
     }
 
     if (isRemovable && rulerRule && !isFederated && !isProvisioned) {
