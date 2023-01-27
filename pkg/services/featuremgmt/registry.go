@@ -305,7 +305,7 @@ var (
 		},
 		{
 			Name:        "cloudWatchCrossAccountQuerying",
-			Description: "Use cross-account querying in CloudWatch datasource",
+			Description: "Enables cross-account querying in CloudWatch datasources",
 			State:       FeatureStateStable,
 			Expression:  "true", //enabled by default
 		},
