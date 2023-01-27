@@ -99,7 +99,7 @@ func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.S
 		})
 		return err
 	}); errInsert != nil {
-		require.NoError(b, err, "could not insert users and roles")
+		require.NoError(b, errInsert, "could not insert users and roles")
 		return nil, nil
 	}
 
@@ -122,7 +122,7 @@ func setupBenchEnv(b *testing.B, usersCount, resourceCount int) (accesscontrol.S
 			return err
 		})
 	}); errInsert != nil {
-		require.NoError(b, err, "could not insert permissions")
+		require.NoError(b, errInsert, "could not insert permissions")
 		return nil, nil
 	}
 
