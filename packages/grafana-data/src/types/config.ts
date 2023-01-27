@@ -152,6 +152,7 @@ export interface BootData {
  */
 export interface GrafanaConfig {
   isPublicDashboardView: boolean;
+  snapshotEnabled: boolean;
   datasources: { [str: string]: DataSourceInstanceSettings };
   panels: { [key: string]: PanelPluginMeta };
   auth: AuthSettings;

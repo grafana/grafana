@@ -147,7 +147,7 @@ describe('getFieldLinksForExplore', () => {
     expect(links).toHaveLength(1);
     expect(links[0].href).toBe(
       `/explore?left=${encodeURIComponent(
-        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo"}],"panelsState":{}}'
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo"}]}'
       )}`
     );
   });
@@ -166,7 +166,7 @@ describe('getFieldLinksForExplore', () => {
     expect(links).toHaveLength(1);
     expect(links[0].href).toBe(
       `/explore?left=${encodeURIComponent(
-        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo"}],"panelsState":{}}'
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo"}]}'
       )}`
     );
   });
@@ -194,7 +194,7 @@ describe('getFieldLinksForExplore', () => {
     expect(links).toHaveLength(1);
     expect(links[0].href).toBe(
       `/explore?left=${encodeURIComponent(
-        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo"}],"panelsState":{}}'
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo"}]}'
       )}`
     );
   });
@@ -236,7 +236,7 @@ describe('getFieldLinksForExplore', () => {
     expect(links).toHaveLength(1);
     expect(links[0].href).toBe(
       `/explore?left=${encodeURIComponent(
-        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo-foo2"}],"panelsState":{}}'
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"query_1-foo-foo2"}]}'
       )}`
     );
   });
