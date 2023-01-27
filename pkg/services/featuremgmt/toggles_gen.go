@@ -312,6 +312,6 @@ const (
 	FlagTopNavCommandPalette = "topNavCommandPalette"
 
 	// FlagLogsSampleInExplore
-	// Enables logs sample in Explore
+	// Access to logs sample feature in Explore
 	FlagLogsSampleInExplore = "logsSampleInExplore"
 )
