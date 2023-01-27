@@ -22,6 +22,7 @@ pkg/kindsys/
 pkg/registry/corekind/
 grafana-mixin/
 public/app/plugins/datasource/tempo
+public/app/features/explore/TraceView/components
 public/img/icons/solid/
 public/img/icons/unicons/
 ```
