@@ -156,11 +156,7 @@ export default class Datasource extends DataSourceWithBackend<AzureMonitorQuery,
   }
 
   getResourceNames(subscriptionId: string, resourceGroup?: string, metricNamespace?: string) {
-    return this.azureMonitorDatasource.getResourceNames(
-      this.templateSrv.replace(subscriptionId),
-      this.templateSrv.replace(resourceGroup),
-      this.templateSrv.replace(metricNamespace)
-    );
+    return this.azureMonitorDatasource.getResourceNames({ subscriptionId, resourceGroup, metricNamespace });
   }
 
   getMetricNames(subscriptionId: string, resourceGroup: string, metricNamespace: string, resourceName: string) {

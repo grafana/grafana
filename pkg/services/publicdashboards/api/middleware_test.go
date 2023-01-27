@@ -8,7 +8,7 @@ import (
 
 	"errors"
 
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -146,21 +146,21 @@ func TestSetPublicDashboardOrgIdOnContext(t *testing.T) {
 
 func TestSetPublicDashboardFlag(t *testing.T) {
 	t.Run("Adds context.IsPublicDashboardView=true to request", func(t *testing.T) {
-		ctx := &models.ReqContext{}
+		ctx := &contextmodel.ReqContext{}
 		SetPublicDashboardFlag(ctx)
 		assert.True(t, ctx.IsPublicDashboardView)
 	})
 }
 
 // This is a helper to test middleware. It handles creating a
-// proper models.ReqContext, setting web parameters, executing middleware, and
+// proper contextmodel.ReqContext, setting web parameters, executing middleware, and
 // returning a response. Response will default to result of
 // httptest.NewRecorder() return value and will only change if modified by the
 // middlware as this will no accept a handler method
-func runMw(t *testing.T, ctx *models.ReqContext, httpmethod string, path string, webparams map[string]string, mw func(c *models.ReqContext)) (*models.ReqContext, *httptest.ResponseRecorder) {
+func runMw(t *testing.T, ctx *contextmodel.ReqContext, httpmethod string, path string, webparams map[string]string, mw func(c *contextmodel.ReqContext)) (*contextmodel.ReqContext, *httptest.ResponseRecorder) {
 	// create valid request context and set 0 values if they don't exist
 	if ctx == nil {
-		ctx = &models.ReqContext{}
+		ctx = &contextmodel.ReqContext{}
 	}
 	if ctx.Context == nil {
 		ctx.Context = &web.Context{}
