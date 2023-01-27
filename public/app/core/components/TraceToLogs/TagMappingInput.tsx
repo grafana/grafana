@@ -1,26 +1,16 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { GrafanaTheme2, KeyValue } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 import { SegmentInput, useStyles2, InlineLabel, Icon } from '@grafana/ui';
 
-const EQ_WIDTH = 3; // = 24px in inline label
-
 interface Props {
-  values: Array<KeyValue<string>>;
-  onChange: (values: Array<KeyValue<string>>) => void;
+  values: Array<{ key: string; value?: string }>;
+  onChange: (values: Array<{ key: string; value?: string }>) => void;
   id?: string;
-  keyPlaceholder?: string;
-  valuePlaceholder?: string;
 }
 
-const KeyValueInput = ({
-  values,
-  onChange,
-  id,
-  keyPlaceholder = 'Key',
-  valuePlaceholder = 'Value (optional)',
-}: Props) => {
+export const TagMappingInput = ({ values, onChange, id }: Props) => {
   const styles = useStyles2(getStyles);
 
   return (
@@ -30,7 +20,7 @@ const KeyValueInput = ({
           <div className={styles.pair} key={idx}>
             <SegmentInput
               id={`${id}-key-${idx}`}
-              placeholder={keyPlaceholder}
+              placeholder={'Tag name'}
               value={value.key}
               onChange={(e) => {
                 onChange(
@@ -43,13 +33,13 @@ const KeyValueInput = ({
                 );
               }}
             />
-            <InlineLabel aria-label="equals" className={styles.operator} width={EQ_WIDTH}>
-              =
+            <InlineLabel aria-label="equals" className={styles.operator}>
+              as
             </InlineLabel>
             <SegmentInput
               id={`${id}-value-${idx}`}
-              placeholder={valuePlaceholder}
-              value={value.value}
+              placeholder={'New name (optional)'}
+              value={value.value || ''}
               onChange={(e) => {
                 onChange(
                   values.map((v, i) => {
@@ -95,8 +85,6 @@ const KeyValueInput = ({
   );
 };
 
-export default KeyValueInput;
-
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`
     display: flex;
@@ -110,5 +98,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   operator: css`
     color: ${theme.v1.palette.orange};
+    width: auto;
   `,
 });

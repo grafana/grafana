@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -284,7 +283,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 		err = updateDashboardACL(t, ss, 1, &dashboards.DashboardACL{
 			DashboardID: 1, OrgID: users[0].OrgID, UserID: users[1].ID,
-			Permission: models.PERMISSION_EDIT,
+			Permission: dashboards.PERMISSION_EDIT,
 		})
 		require.Nil(t, err)
 
@@ -423,7 +422,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 		err = updateDashboardACL(t, ss, 1, &dashboards.DashboardACL{
 			DashboardID: 1, OrgID: users[0].OrgID, UserID: users[1].ID,
-			Permission: models.PERMISSION_EDIT,
+			Permission: dashboards.PERMISSION_EDIT,
 		})
 		require.Nil(t, err)
 
@@ -457,7 +456,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 
 		err = updateDashboardACL(t, ss, 1, &dashboards.DashboardACL{
 			DashboardID: 1, OrgID: users[0].OrgID, UserID: users[1].ID,
-			Permission: models.PERMISSION_EDIT,
+			Permission: dashboards.PERMISSION_EDIT,
 		})
 		require.Nil(t, err)
 
@@ -831,11 +830,11 @@ func updateDashboardACL(t *testing.T, sqlStore db.DB, dashboardID int64, items .
 			item.Created = time.Now()
 			item.Updated = time.Now()
 			if item.UserID == 0 && item.TeamID == 0 && (item.Role == nil || !item.Role.IsValid()) {
-				return models.ErrDashboardACLInfoMissing
+				return dashboards.ErrDashboardACLInfoMissing
 			}
 
 			if item.DashboardID == 0 {
-				return models.ErrDashboardPermissionDashboardEmpty
+				return dashboards.ErrDashboardPermissionDashboardEmpty
 			}
 
 			sess.Nullable("user_id", "team_id")
