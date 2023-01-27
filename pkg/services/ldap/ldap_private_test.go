@@ -10,7 +10,7 @@ import (
 	"gopkg.in/ldap.v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
@@ -159,7 +159,7 @@ func TestServer_validateGrafanaUser(t *testing.T) {
 			log: logger.New("test"),
 		}
 
-		user := &models.ExternalUserInfo{
+		user := &login.ExternalUserInfo{
 			Login: "markelog",
 		}
 
@@ -179,7 +179,7 @@ func TestServer_validateGrafanaUser(t *testing.T) {
 			log: logger.New("test"),
 		}
 
-		user := &models.ExternalUserInfo{
+		user := &login.ExternalUserInfo{
 			Login: "markelog",
 			OrgRoles: map[int64]org.RoleType{
 				1: "test",
@@ -202,7 +202,7 @@ func TestServer_validateGrafanaUser(t *testing.T) {
 			log: logger.New("test"),
 		}
 
-		user := &models.ExternalUserInfo{
+		user := &login.ExternalUserInfo{
 			Login: "markelog",
 		}
 

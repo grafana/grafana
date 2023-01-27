@@ -19,7 +19,7 @@ func TestAnnotationHistorian_Integration(t *testing.T) {
 	t.Run("alert annotations are queryable", func(t *testing.T) {
 		anns := createTestAnnotationBackendSut(t)
 		items := []annotations.Item{createAnnotation()}
-		anns.recordAnnotationsSync(context.Background(), nil, items, log.NewNopLogger())
+		require.NoError(t, anns.recordAnnotationsSync(context.Background(), nil, items, log.NewNopLogger()))
 
 		q := models.HistoryQuery{
 			RuleUID: "my-rule",

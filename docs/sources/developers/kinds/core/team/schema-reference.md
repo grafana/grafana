@@ -8,8 +8,8 @@ title: Team kind
 
 # Team kind
 
-### Maturity: merged
-### Version: 0.0
+## Maturity: merged
+## Version: 0.0
 
 ## Properties
 

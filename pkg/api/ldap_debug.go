@@ -10,7 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/multildap"
@@ -47,14 +47,14 @@ type LDAPRoleDTO struct {
 
 // LDAPUserDTO is a serializer for users mapped from LDAP
 type LDAPUserDTO struct {
-	Name           *LDAPAttribute           `json:"name"`
-	Surname        *LDAPAttribute           `json:"surname"`
-	Email          *LDAPAttribute           `json:"email"`
-	Username       *LDAPAttribute           `json:"login"`
-	IsGrafanaAdmin *bool                    `json:"isGrafanaAdmin"`
-	IsDisabled     bool                     `json:"isDisabled"`
-	OrgRoles       []LDAPRoleDTO            `json:"roles"`
-	Teams          []models.TeamOrgGroupDTO `json:"teams"`
+	Name           *LDAPAttribute         `json:"name"`
+	Surname        *LDAPAttribute         `json:"surname"`
+	Email          *LDAPAttribute         `json:"email"`
+	Username       *LDAPAttribute         `json:"login"`
+	IsGrafanaAdmin *bool                  `json:"isGrafanaAdmin"`
+	IsDisabled     bool                   `json:"isDisabled"`
+	OrgRoles       []LDAPRoleDTO          `json:"roles"`
+	Teams          []ldap.TeamOrgGroupDTO `json:"teams"`
 }
 
 // LDAPServerDTO is a serializer for LDAP server statuses
@@ -117,7 +117,7 @@ func (user *LDAPUserDTO) FetchOrgs(ctx context.Context, orga org.Service) error 
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) ReloadLDAPCfg(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) ReloadLDAPCfg(c *contextmodel.ReqContext) response.Response {
 	if !ldap.IsEnabled() {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
@@ -143,7 +143,7 @@ func (hs *HTTPServer) ReloadLDAPCfg(c *models.ReqContext) response.Response {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) GetLDAPStatus(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetLDAPStatus(c *contextmodel.ReqContext) response.Response {
 	if !ldap.IsEnabled() {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
@@ -196,7 +196,7 @@ func (hs *HTTPServer) GetLDAPStatus(c *models.ReqContext) response.Response {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) PostSyncUserWithLDAP(c *contextmodel.ReqContext) response.Response {
 	if !ldap.IsEnabled() {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}
@@ -222,7 +222,7 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 		return response.Error(500, "Failed to get user", err)
 	}
 
-	authModuleQuery := &models.GetAuthInfoQuery{UserId: usr.ID, AuthModule: login.LDAPAuthModule}
+	authModuleQuery := &login.GetAuthInfoQuery{UserId: usr.ID, AuthModule: login.LDAPAuthModule}
 	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authModuleQuery); err != nil { // validate the userId comes from LDAP
 		if errors.Is(err, user.ErrUserNotFound) {
 			return response.Error(404, user.ErrUserNotFound.Error(), nil)
@@ -259,11 +259,11 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 		return response.Error(http.StatusBadRequest, "Something went wrong while finding the user in LDAP", err)
 	}
 
-	upsertCmd := &models.UpsertUserCommand{
+	upsertCmd := &login.UpsertUserCommand{
 		ReqContext:    c,
 		ExternalUser:  userInfo,
 		SignupAllowed: hs.Cfg.LDAPAllowSignup,
-		UserLookupParams: models.UserLookupParams{
+		UserLookupParams: login.UserLookupParams{
 			UserID: &usr.ID, // Upsert by ID only
 			Email:  nil,
 			Login:  nil,
@@ -292,7 +292,7 @@ func (hs *HTTPServer) PostSyncUserWithLDAP(c *models.ReqContext) response.Respon
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) GetUserFromLDAP(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetUserFromLDAP(c *contextmodel.ReqContext) response.Response {
 	if !ldap.IsEnabled() {
 		return response.Error(http.StatusBadRequest, "LDAP is not enabled", nil)
 	}

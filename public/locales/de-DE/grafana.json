@@ -292,7 +292,8 @@
       "title": "Szenen"
     },
     "search": {
-      "placeholder": "Grafana durchsuchen"
+      "placeholder": "Grafana durchsuchen",
+      "placeholderCommandPalette": ""
     },
     "search-dashboards": {
       "title": "Dashboards durchsuchen"
@@ -555,8 +556,7 @@
       "name-error": "Name ist erforderlich",
       "name-label": "Name",
       "username-label": "Benutzername"
-    },
-    "title": "Profil"
+    }
   },
   "user-session": {
     "browser-column": "Browser & Betriebssystem",

@@ -134,7 +134,6 @@ describe('UserProfileEditPage', () => {
       await getTestContext();
 
       const { name, email, username, saveProfile } = getSelectors();
-      expect(screen.getByText(/profile/i)).toBeInTheDocument();
       expect(name()).toBeInTheDocument();
       expect(name()).toHaveValue('Test User');
       expect(email()).toBeInTheDocument();

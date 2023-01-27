@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -165,7 +164,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 					UserID:     userId,
 					OrgID:      testOrgID,
 					TeamID:     team1.ID,
-					Permission: models.PERMISSION_ADMIN,
+					Permission: dashboards.PERMISSION_ADMIN,
 				})
 
 				require.NoError(t, err)
@@ -173,7 +172,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				qAfterUpdate := &team.GetTeamMembersQuery{OrgID: testOrgID, TeamID: team1.ID, SignedInUser: testUser}
 				qAfterUpdateResult, err := teamSvc.GetTeamMembers(context.Background(), qAfterUpdate)
 				require.NoError(t, err)
-				require.Equal(t, qAfterUpdateResult[0].Permission, models.PERMISSION_ADMIN)
+				require.Equal(t, qAfterUpdateResult[0].Permission, dashboards.PERMISSION_ADMIN)
 			})
 
 			t.Run("Should default to member permission level when updating a user with invalid permission level", func(t *testing.T) {
@@ -188,7 +187,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.NoError(t, err)
 				require.EqualValues(t, qBeforeUpdateResult[0].Permission, 0)
 
-				invalidPermissionLevel := models.PERMISSION_EDIT
+				invalidPermissionLevel := dashboards.PERMISSION_EDIT
 				err = teamSvc.UpdateTeamMember(context.Background(), &team.UpdateTeamMemberCommand{
 					UserID:     userID,
 					OrgID:      testOrgID,
@@ -211,7 +210,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 					UserID:     1,
 					OrgID:      testOrgID,
 					TeamID:     team1.ID,
-					Permission: models.PERMISSION_ADMIN,
+					Permission: dashboards.PERMISSION_ADMIN,
 				})
 
 				require.Error(t, err, team.ErrTeamMemberNotFound)
@@ -267,7 +266,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 			})
 
 			t.Run("Should have empty teams", func(t *testing.T) {
-				err = teamSvc.AddTeamMember(userIds[0], testOrgID, team1.ID, false, models.PERMISSION_ADMIN)
+				err = teamSvc.AddTeamMember(userIds[0], testOrgID, team1.ID, false, dashboards.PERMISSION_ADMIN)
 				require.NoError(t, err)
 
 				t.Run("A user should be able to remove the admin permission for the last admin", func(t *testing.T) {
@@ -284,10 +283,10 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 					sqlStore = db.InitTestDB(t)
 					setup()
 
-					err = teamSvc.AddTeamMember(userIds[0], testOrgID, team1.ID, false, models.PERMISSION_ADMIN)
+					err = teamSvc.AddTeamMember(userIds[0], testOrgID, team1.ID, false, dashboards.PERMISSION_ADMIN)
 					require.NoError(t, err)
 
-					err = teamSvc.AddTeamMember(userIds[1], testOrgID, team1.ID, false, models.PERMISSION_ADMIN)
+					err = teamSvc.AddTeamMember(userIds[1], testOrgID, team1.ID, false, dashboards.PERMISSION_ADMIN)
 					require.NoError(t, err)
 					err = teamSvc.UpdateTeamMember(context.Background(), &team.UpdateTeamMemberCommand{OrgID: testOrgID, TeamID: team1.ID, UserID: userIds[0], Permission: 0})
 					require.NoError(t, err)
@@ -301,7 +300,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				err = teamSvc.AddTeamMember(userIds[2], testOrgID, groupID, false, 0)
 				require.NoError(t, err)
 				err = updateDashboardACL(t, sqlStore, 1, &dashboards.DashboardACL{
-					DashboardID: 1, OrgID: testOrgID, Permission: models.PERMISSION_EDIT, TeamID: groupID,
+					DashboardID: 1, OrgID: testOrgID, Permission: dashboards.PERMISSION_EDIT, TeamID: groupID,
 				})
 				require.NoError(t, err)
 				err = teamSvc.DeleteTeam(context.Background(), &team.DeleteTeamCommand{OrgID: testOrgID, ID: groupID})
@@ -312,10 +311,10 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				require.Equal(t, err, team.ErrTeamNotFound)
 
 				permQuery := &dashboards.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: testOrgID}
-				err = getDashboardACLInfoList(sqlStore, permQuery)
+				permQueryResult, err := getDashboardACLInfoList(sqlStore, permQuery)
 				require.NoError(t, err)
 
-				require.Equal(t, len(permQuery.Result), 0)
+				require.Equal(t, len(permQueryResult), 0)
 			})
 
 			t.Run("Should be able to return if user is admin of teams or not", func(t *testing.T) {
@@ -324,7 +323,7 @@ func TestIntegrationTeamCommandsAndQueries(t *testing.T) {
 				groupId := team2.ID
 				err := teamSvc.AddTeamMember(userIds[0], testOrgID, groupId, false, 0)
 				require.NoError(t, err)
-				err = teamSvc.AddTeamMember(userIds[1], testOrgID, groupId, false, models.PERMISSION_ADMIN)
+				err = teamSvc.AddTeamMember(userIds[1], testOrgID, groupId, false, dashboards.PERMISSION_ADMIN)
 				require.NoError(t, err)
 
 				query := &team.IsAdminOfTeamsQuery{SignedInUser: &user.SignedInUser{OrgID: testOrgID, UserID: userIds[0]}}
@@ -630,11 +629,11 @@ func updateDashboardACL(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardID i
 			item.Created = time.Now()
 			item.Updated = time.Now()
 			if item.UserID == 0 && item.TeamID == 0 && (item.Role == nil || !item.Role.IsValid()) {
-				return models.ErrDashboardACLInfoMissing
+				return dashboards.ErrDashboardACLInfoMissing
 			}
 
 			if item.DashboardID == 0 {
-				return models.ErrDashboardPermissionDashboardEmpty
+				return dashboards.ErrDashboardPermissionDashboardEmpty
 			}
 
 			sess.Nullable("user_id", "team_id")
@@ -654,9 +653,9 @@ func updateDashboardACL(t *testing.T, sqlStore *sqlstore.SQLStore, dashboardID i
 // This function was copied from pkg/services/dashboards/database to circumvent
 // import cycles. When this org-related code is refactored into a service the
 // tests can the real GetDashboardACLInfoList functions
-func getDashboardACLInfoList(s *sqlstore.SQLStore, query *dashboards.GetDashboardACLInfoListQuery) error {
+func getDashboardACLInfoList(s *sqlstore.SQLStore, query *dashboards.GetDashboardACLInfoListQuery) ([]*dashboards.DashboardACLInfoDTO, error) {
+	queryResult := make([]*dashboards.DashboardACLInfoDTO, 0)
 	outerErr := s.WithDbSession(context.Background(), func(dbSession *db.Session) error {
-		query.Result = make([]*dashboards.DashboardACLInfoDTO, 0)
 		falseStr := s.GetDialect().BooleanStr(false)
 
 		if query.DashboardID == 0 {
@@ -680,7 +679,7 @@ func getDashboardACLInfoList(s *sqlstore.SQLStore, query *dashboards.GetDashboar
 				falseStr + ` AS inherited
 		FROM dashboard_acl as da
 		WHERE da.dashboard_id = -1`
-			return dbSession.SQL(sql).Find(&query.Result)
+			return dbSession.SQL(sql).Find(&queryResult)
 		}
 
 		rawSQL := `
@@ -722,16 +721,16 @@ func getDashboardACLInfoList(s *sqlstore.SQLStore, query *dashboards.GetDashboar
 			ORDER BY da.id ASC
 			`
 
-		return dbSession.SQL(rawSQL, query.OrgID, query.DashboardID).Find(&query.Result)
+		return dbSession.SQL(rawSQL, query.OrgID, query.DashboardID).Find(&queryResult)
 	})
 
 	if outerErr != nil {
-		return outerErr
+		return nil, outerErr
 	}
 
-	for _, p := range query.Result {
+	for _, p := range queryResult {
 		p.PermissionName = p.Permission.String()
 	}
 
-	return nil
+	return queryResult, nil
 }

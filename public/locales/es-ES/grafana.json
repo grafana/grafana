@@ -292,7 +292,8 @@
       "title": "Escenas"
     },
     "search": {
-      "placeholder": "Buscar Grafana"
+      "placeholder": "Buscar Grafana",
+      "placeholderCommandPalette": ""
     },
     "search-dashboards": {
       "title": "Buscar paneles de control"
@@ -555,8 +556,7 @@
       "name-error": "El nombre es obligatorio",
       "name-label": "Nombre",
       "username-label": "Nombre de usuario"
-    },
-    "title": "Perfil"
+    }
   },
   "user-session": {
     "browser-column": "Navegador y sistema operativo",

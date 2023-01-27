@@ -30,6 +30,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `internationalization`              | Enables internationalization                                                         | Yes                |
 | `accessTokenExpirationCheck`        | Enable OAuth access_token expiration check and token refresh using the refresh_token |                    |
 | `disablePrometheusExemplarSampling` | Disable Prometheus examplar sampling                                                 |                    |
+| `logsSampleInExplore`               | Enables access to the logs sample feature in Explore                                 | Yes                |
 
 ## Beta feature toggles
 
@@ -46,6 +47,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `datasourceLogger`                | Logs all datasource requests                                                    |
 | `accessControlOnCall`             | Access control primitives for OnCall                                            |
 | `alertingNoNormalState`           | Stop maintaining state of alerts that are not firing                            |
+| `topNavCommandPalette`            | Launch the Command Palette from the top navigation search box                   |
 
 ## Alpha feature toggles
 
@@ -95,8 +97,10 @@ Alpha features might be changed or removed without prior notice.
 | `authnService`                     | Use new auth service to perform authentication                                                                                                                               |
 | `sessionRemoteCache`               | Enable using remote cache for user sessions                                                                                                                                  |
 | `alertingBacktesting`              | Rule backtesting API for alerting                                                                                                                                            |
+| `editPanelCSVDragAndDrop`          | Enables drag and drop for CSV and Excel files                                                                                                                                |
 | `azureMultipleResourcePicker`      | Azure multiple resource picker                                                                                                                                               |
 | `apiserver`                        | Enable the embedded Grafana K8S apiserver                                                                                                                                    |
+| `logsContextDatasourceUi`          | Allow datasource to provide custom UI for context view                                                                                                                       |
 
 ## Development feature toggles
 
@@ -108,6 +112,7 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | `showFeatureFlagsInUI`                 | Show feature flags in the settings UI                                   |
 | `publicDashboardsEmailSharing`         | Allows public dashboard sharing to be restricted to only allowed emails |
 | `k8s`                                  | Explore native k8s integrations                                         |
+| `k8sDashboards`                        | Save dashboards via k8s                                                 |
 | `dashboardsFromStorage`                | Load dashboards from the generic storage interface                      |
 | `export`                               | Export grafana instance (to git, etc)                                   |
 | `azureMonitorResourcePickerForMetrics` | New UI for Azure Monitor Metrics Query                                  |

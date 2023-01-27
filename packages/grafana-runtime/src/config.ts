@@ -27,6 +27,7 @@ export interface AzureSettings {
 
 export class GrafanaBootConfig implements GrafanaConfig {
   isPublicDashboardView: boolean;
+  snapshotEnabled = true;
   datasources: { [str: string]: DataSourceInstanceSettings } = {};
   panels: { [key: string]: PanelPluginMeta } = {};
   auth: AuthSettings = {};
@@ -110,6 +111,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   pluginAdminEnabled = true;
   pluginAdminExternalManageEnabled = false;
   pluginCatalogHiddenPlugins: string[] = [];
+  pluginsCDNBaseURL = '';
   expressionsEnabled = false;
   customTheme?: undefined;
   awsAllowedAuthProviders: string[] = [];

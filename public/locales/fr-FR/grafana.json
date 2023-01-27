@@ -292,7 +292,8 @@
       "title": "Scènes"
     },
     "search": {
-      "placeholder": "Rechercher dans Grafana"
+      "placeholder": "Rechercher dans Grafana",
+      "placeholderCommandPalette": ""
     },
     "search-dashboards": {
       "title": "Rechercher dans les tableaux de bord"
@@ -555,8 +556,7 @@
       "name-error": "Un nom est obligatoire",
       "name-label": "Nom",
       "username-label": "Nom d’utilisateur"
-    },
-    "title": "Profil"
+    }
   },
   "user-session": {
     "browser-column": "Navigateur et système d'exploitation",

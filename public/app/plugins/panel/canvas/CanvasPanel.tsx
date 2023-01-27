@@ -185,11 +185,10 @@ export class CanvasPanel extends Component<Props, State> {
     }
 
     // After editing, the options are valid, but the scene was in a different panel or inline editing mode has changed
-    const shouldUpdateSceneAndPanel = this.needsReload && this.props.options !== nextProps.options;
     const inlineEditingSwitched = this.props.options.inlineEditing !== nextProps.options.inlineEditing;
     const shouldShowAdvancedTypesSwitched =
       this.props.options.showAdvancedTypes !== nextProps.options.showAdvancedTypes;
-    if (shouldUpdateSceneAndPanel || inlineEditingSwitched || shouldShowAdvancedTypesSwitched) {
+    if (this.needsReload || inlineEditingSwitched || shouldShowAdvancedTypesSwitched) {
       if (inlineEditingSwitched) {
         // Replace scene div to prevent selecto instance leaks
         this.scene.revId++;
