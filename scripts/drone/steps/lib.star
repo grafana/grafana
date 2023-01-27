@@ -84,8 +84,7 @@ def enterprise_setup_step(location='grafana-enterprise', canFail=False):
         'ln -s src grafana',
         'cd -',
         'cd {}'.format(location),
-        './build.sh',
-        'ls -al ../grafana/pkg/extensions | wc -l',
+        './build.sh &> /dev/null',
     ]
 
     return step
