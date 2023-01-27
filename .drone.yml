@@ -197,8 +197,10 @@ steps:
     elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
     else git checkout main; fi
   - cd ../grafana-enterpise
+  - mv src grafana
   - ./build.sh &> /dev/null
   - ls -al ../grafana/pkg/extensions | wc -l
+  - mv grafana src
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -309,8 +311,10 @@ steps:
     elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
     else git checkout main; fi
   - cd ../grafana-enterpise
+  - mv src grafana
   - ./build.sh &> /dev/null
   - ls -al ../grafana/pkg/extensions | wc -l
+  - mv grafana src
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -6518,6 +6522,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: 0b32c874ed348171baed8f50b1bb306eb59259eaa691aceec38059ddbef330d8
+hmac: 0567891eaf7ea42ff06a4a64ce4849b878c41c1bc5e87251071aa5907fc1ab17
 
 ...
