@@ -16,7 +16,7 @@ title: LokiDataQuery kind
 | Property       | Type    | Required | Description                             |
 |----------------|---------|----------|-----------------------------------------|
 | `editorMode`   | string  | No       | Possible values are: `code`, `builder`. |
-| `expr`         | string  | No       | the LogQL query                         |
+| `expr`         | string  | No       | The LogQL query.                         |
 | `instant`      | boolean | No       | @deprecated, now use queryType          |
 | `legendFormat` | string  | No       | used to override the name of the series |
 | `maxLines`     | integer | No       | limit the number of log rows returned   |
