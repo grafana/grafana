@@ -3,17 +3,16 @@ package updatechecker
 import (
 	"context"
 	"encoding/json"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"io"
 	"net/http"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/hashicorp/go-version"
-
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/hashicorp/go-version"
 )
 
 type GrafanaService struct {

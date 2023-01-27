@@ -3,11 +3,12 @@ package updatechecker
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/http"
+
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.opentelemetry.io/otel/trace"
-	"io"
-	"net/http"
 )
 
 type httpClient interface {
