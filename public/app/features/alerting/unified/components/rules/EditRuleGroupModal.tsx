@@ -4,19 +4,19 @@ import { FormProvider, RegisterOptions, useForm, useFormContext } from 'react-ho
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Modal, Button, Field, Input, useStyles2, Label, Badge } from '@grafana/ui';
+import { Badge, Button, Field, Input, Label, Modal, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useDispatch } from 'app/types';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
-import { RulerRulesConfigDTO, RulerRuleGroupDTO, RulerRuleDTO } from 'app/types/unified-alerting-dto';
+import { RulerRuleDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { rulesInSameGroupHaveInvalidFor, updateLotexNamespaceAndGroupAction } from '../../state/actions';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { initialAsyncRequestState } from '../../utils/redux';
-import { isAlertingRulerRule, isGrafanaRulerRule } from '../../utils/rules';
+import { isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from '../../utils/rules';
 import { parsePrometheusDuration } from '../../utils/time';
 import { DynamicTable, DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { InfoIcon } from '../InfoIcon';
@@ -122,24 +122,14 @@ export const safeParseDurationstr = (duration: string): number => {
 type AlertsWithForTableColumnProps = DynamicTableColumnProps<AlertInfo>;
 type AlertsWithForTableProps = DynamicTableItemProps<AlertInfo>;
 
-export const RulesForGroupTable = ({
-  rulerRules,
-  groupName,
-  folderName,
-}: {
-  rulerRules: RulerRulesConfigDTO | null | undefined;
-  groupName: string;
-  folderName: string;
-}) => {
+export const RulesForGroupTable = ({ rulesWithoutRecordingRules }: { rulesWithoutRecordingRules: RulerRuleDTO[] }) => {
   const styles = useStyles2(getStyles);
-  const group = getGroupFromRuler(rulerRules, groupName, folderName);
-  const rules: RulerRuleDTO[] = group?.rules ?? [];
 
   const { watch } = useFormContext<FormValues>();
   const currentInterval = watch('groupInterval');
   const unknownCurrentInterval = !Boolean(currentInterval);
 
-  const rows: AlertsWithForTableProps[] = rules
+  const rows: AlertsWithForTableProps[] = rulesWithoutRecordingRules
     .slice()
     .map((rule: RulerRuleDTO, index) => ({
       id: index,
@@ -198,7 +188,7 @@ export const RulesForGroupTable = ({
   );
 };
 
-interface CombinedGroupAndNameSpace {
+export interface CombinedGroupAndNameSpace {
   namespace: CombinedRuleNamespace;
   group: CombinedRuleGroup;
 }
@@ -206,7 +196,7 @@ interface GroupAndNameSpaceNames {
   namespace: string;
   group: string;
 }
-interface ModalProps {
+export interface ModalProps {
   nameSpaceAndGroup: CombinedGroupAndNameSpace | GroupAndNameSpaceNames;
   sourceName: string;
   groupInterval: string;
@@ -328,6 +318,11 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
   const rulerRuleRequests = useUnifiedAlertingSelector((state) => state.rulerRules);
   const groupfoldersForSource = rulerRuleRequests[sourceName];
 
+  const groupWithRules = getGroupFromRuler(groupfoldersForSource?.result, groupName, nameSpaceName);
+  const rulesWithoutRecordingRules: RulerRuleDTO[] =
+    groupWithRules?.rules.filter((rule: RulerRuleDTO) => !isRecordingRulerRule(rule)) ?? [];
+  const hasSomeNoRecordingRules = rulesWithoutRecordingRules.length > 0;
+
   return (
     <Modal
       className={styles.modal}
@@ -431,17 +426,14 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                 </Button>
               </Modal.ButtonRow>
             </div>
-            {rulerRuleRequests && (
+            {rulerRuleRequests && !hasSomeNoRecordingRules && <div>This group does not contain alert rules.</div>}
+            {rulerRuleRequests && hasSomeNoRecordingRules && (
               <>
                 <div>List of rules that belong to this group</div>
                 <div className={styles.evalRequiredLabel}>
                   #Evaluations column represents the number of evaluations needed before alert starts firing.
                 </div>
-                <RulesForGroupTable
-                  rulerRules={groupfoldersForSource?.result}
-                  groupName={groupName}
-                  folderName={nameSpaceName}
-                />
+                <RulesForGroupTable rulesWithoutRecordingRules={rulesWithoutRecordingRules} />
               </>
             )}
           </>

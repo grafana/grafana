@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	authJWT "github.com/grafana/grafana/pkg/services/auth/jwt"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -22,7 +23,7 @@ const (
 	UserNotFound = "User not found"
 )
 
-func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64) bool {
+func (h *ContextHandler) initContextWithJWT(ctx *contextmodel.ReqContext, orgId int64) bool {
 	if !h.Cfg.JWTAuthEnabled || h.Cfg.JWTAuthHeaderName == "" {
 		return false
 	}
@@ -60,10 +61,13 @@ func (h *ContextHandler) initContextWithJWT(ctx *models.ReqContext, orgId int64)
 		ctx.JsonApiErr(http.StatusUnauthorized, InvalidJWT, err)
 		return true
 	}
+
 	extUser := &models.ExternalUserInfo{
 		AuthModule: "jwt",
 		AuthId:     sub,
 		OrgRoles:   map[int64]org.RoleType{},
+		// we do not want to sync team memberships from JWT authentication see - https://github.com/grafana/grafana/issues/62175
+		SkipTeamSync: true,
 	}
 
 	if key := h.Cfg.JWTAuthUsernameClaim; key != "" {
