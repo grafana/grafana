@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -22,7 +21,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -34,7 +32,6 @@ type Service struct {
 	cfg                  *setting.Cfg
 	dashboardStore       dashboards.Store
 	dashboardFolderStore dashboards.FolderStore
-	searchService        *search.SearchService
 	features             featuremgmt.FeatureToggles
 	permissions          accesscontrol.FolderPermissionsService
 	accessControl        accesscontrol.AccessControl
@@ -52,10 +49,7 @@ func ProvideService(
 	db db.DB, // DB for the (new) nested folder store
 	features featuremgmt.FeatureToggles,
 	folderPermissionsService accesscontrol.FolderPermissionsService,
-	searchService *search.SearchService,
 ) folder.Service {
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashboardStore, folderStore))
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(dashboardStore, folderStore))
 	store := ProvideStore(db, cfg, features)
 	svr := &Service{
 		cfg:                  cfg,
@@ -63,7 +57,6 @@ func ProvideService(
 		dashboardStore:       dashboardStore,
 		dashboardFolderStore: folderStore,
 		store:                store,
-		searchService:        searchService,
 		features:             features,
 		permissions:          folderPermissionsService,
 		accessControl:        ac,
@@ -72,6 +65,9 @@ func ProvideService(
 	if features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		svr.DBMigration(db)
 	}
+
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashboardStore, folderStore, svr))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(dashboardStore, folderStore, svr))
 	return svr
 }
 
@@ -160,62 +156,40 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		children, err := s.store.GetChildren(ctx, *cmd)
-		if err != nil {
-			return nil, err
-		}
-
-		filtered := make([]*folder.Folder, 0, len(children))
-		for _, f := range children {
-			// fetch folder from dashboard store
-			dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, f.OrgID, f.UID)
-			if err != nil {
-				s.log.Error("failed to fetch folder by UID: %s from dashboard store", f.UID, err)
-				continue
-			}
-
-			g, err := guardian.New(ctx, f.ID, f.OrgID, cmd.SignedInUser)
-			if err != nil {
-				return nil, err
-			}
-			canView, err := g.CanView()
-			if err != nil || canView {
-				// always expose the dashboard store sequential ID
-				f.ID = dashFolder.ID
-				filtered = append(filtered, f)
-			}
-		}
-
-		return filtered, nil
-	}
-
-	searchQuery := search.Query{
-		SignedInUser: cmd.SignedInUser,
-		DashboardIds: make([]int64, 0),
-		FolderIds:    make([]int64, 0),
-		Limit:        cmd.Limit,
-		OrgId:        cmd.OrgID,
-		Type:         "dash-folder",
-		Permission:   models.PERMISSION_VIEW,
-		Page:         cmd.Page,
-	}
-
-	if err := s.searchService.SearchHandler(ctx, &searchQuery); err != nil {
+	children, err := s.store.GetChildren(ctx, *cmd)
+	if err != nil {
 		return nil, err
 	}
 
-	folders := make([]*folder.Folder, 0)
+	filtered := make([]*folder.Folder, 0, len(children))
+	for _, f := range children {
+		// fetch folder from dashboard store
+		dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, f.OrgID, f.UID)
+		if err != nil {
+			s.log.Error("failed to fetch folder by UID: %s from dashboard store", f.UID, err)
+			continue
+		}
 
-	for _, hit := range searchQuery.Result {
-		folders = append(folders, &folder.Folder{
-			ID:    hit.ID,
-			UID:   hit.UID,
-			Title: hit.Title,
-		})
+		g, err := guardian.New(ctx, f.ID, f.OrgID, cmd.SignedInUser)
+		if err != nil {
+			return nil, err
+		}
+		canView, err := g.CanView()
+		if err != nil || canView {
+			// always expose the dashboard store sequential ID
+			f.ID = dashFolder.ID
+			filtered = append(filtered, f)
+		}
 	}
 
-	return folders, nil
+	return filtered, nil
+}
+
+func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
+	if !s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		return nil, nil
+	}
+	return s.store.GetParents(ctx, q)
 }
 
 func (s *Service) getFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*folder.Folder, error) {
@@ -343,13 +317,13 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		var permissions []accesscontrol.SetResourcePermissionCommand
 		if user.IsRealUser() && !user.IsAnonymous {
 			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
-				UserID: userID, Permission: models.PERMISSION_ADMIN.String(),
+				UserID: userID, Permission: dashboards.PERMISSION_ADMIN.String(),
 			})
 		}
 
 		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: string(org.RoleEditor), Permission: models.PERMISSION_EDIT.String()},
-			{BuiltinRole: string(org.RoleViewer), Permission: models.PERMISSION_VIEW.String()},
+			{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
+			{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
 		}...)
 
 		_, permissionErr = s.permissions.SetPermissions(ctx, cmd.OrgID, createdFolder.UID, permissions...)
@@ -441,12 +415,12 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 	logger := s.log.FromContext(ctx)
 
 	query := dashboards.GetDashboardQuery{OrgID: cmd.OrgID, UID: cmd.UID}
-	_, err := s.dashboardStore.GetDashboard(ctx, &query)
+	queryResult, err := s.dashboardStore.GetDashboard(ctx, &query)
 	if err != nil {
 		return nil, toFolderError(err)
 	}
 
-	dashFolder := query.Result
+	dashFolder := queryResult
 	currentTitle := dashFolder.Title
 
 	if !dashFolder.IsFolder {
@@ -659,7 +633,7 @@ func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folder
 			OrgID:       orgID,
 			DashboardID: folderID,
 			UserID:      userID,
-			Permission:  models.PERMISSION_ADMIN,
+			Permission:  dashboards.PERMISSION_ADMIN,
 			Created:     time.Now(),
 			Updated:     time.Now(),
 		},
@@ -671,7 +645,7 @@ func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folder
 				OrgID:       orgID,
 				DashboardID: folderID,
 				Role:        &rtEditor,
-				Permission:  models.PERMISSION_EDIT,
+				Permission:  dashboards.PERMISSION_EDIT,
 				Created:     time.Now(),
 				Updated:     time.Now(),
 			},
@@ -679,7 +653,7 @@ func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folder
 				OrgID:       orgID,
 				DashboardID: folderID,
 				Role:        &rtViewer,
-				Permission:  models.PERMISSION_VIEW,
+				Permission:  dashboards.PERMISSION_VIEW,
 				Created:     time.Now(),
 				Updated:     time.Now(),
 			},

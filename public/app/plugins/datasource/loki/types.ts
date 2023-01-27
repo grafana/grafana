@@ -56,7 +56,6 @@ export interface LokiOptions extends DataSourceJsonData {
   derivedFields?: DerivedFieldConfig[];
   alertmanager?: string;
   keepCookies?: string[];
-  enableSecureSocksProxy?: boolean;
 }
 
 export interface LokiStats {
@@ -153,4 +152,12 @@ export interface LokiVariableQuery extends DataQuery {
   type: LokiVariableQueryType;
   label?: string;
   stream?: string;
+}
+
+export interface ContextFilter {
+  enabled: boolean;
+  label: string;
+  value: string;
+  fromParser: boolean;
+  description?: string;
 }

@@ -3,10 +3,10 @@ import { VisibilityMode } from '@grafana/schema';
 import { commonOptionsBuilder } from '@grafana/ui';
 
 import { StatusHistoryPanel } from './StatusHistoryPanel';
+import { PanelOptions, PanelFieldConfig, defaultPanelFieldConfig } from './panelcfg.gen';
 import { StatusHistorySuggestionsSupplier } from './suggestions';
-import { StatusPanelOptions, StatusFieldConfig, defaultStatusFieldConfig } from './types';
 
-export const plugin = new PanelPlugin<StatusPanelOptions, StatusFieldConfig>(StatusHistoryPanel)
+export const plugin = new PanelPlugin<PanelOptions, PanelFieldConfig>(StatusHistoryPanel)
   .useFieldConfig({
     standardOptions: {
       [FieldConfigProperty.Color]: {
@@ -23,7 +23,7 @@ export const plugin = new PanelPlugin<StatusPanelOptions, StatusFieldConfig>(Sta
         .addSliderInput({
           path: 'lineWidth',
           name: 'Line width',
-          defaultValue: defaultStatusFieldConfig.lineWidth,
+          defaultValue: defaultPanelFieldConfig.lineWidth,
           settings: {
             min: 0,
             max: 10,
@@ -33,7 +33,7 @@ export const plugin = new PanelPlugin<StatusPanelOptions, StatusFieldConfig>(Sta
         .addSliderInput({
           path: 'fillOpacity',
           name: 'Fill opacity',
-          defaultValue: defaultStatusFieldConfig.fillOpacity,
+          defaultValue: defaultPanelFieldConfig.fillOpacity,
           settings: {
             min: 0,
             max: 100,

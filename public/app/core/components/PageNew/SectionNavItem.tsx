@@ -16,7 +16,6 @@ export function SectionNavItem({ item, isSectionRoot = false }: Props) {
   const styles = useStyles2(getStyles);
 
   const children = item.children?.filter((x) => !x.hideFromTabs);
-  const hasActiveChild = Boolean(children?.length && children.find((x) => x.active));
 
   // If first root child is a section skip the bottom margin (as sections have top margin already)
   const noRootMargin = isSectionRoot && Boolean(item.children![0].children?.length);
@@ -25,10 +24,17 @@ export function SectionNavItem({ item, isSectionRoot = false }: Props) {
     [styles.link]: true,
     [styles.activeStyle]: item.active,
     [styles.isSection]: Boolean(children?.length) || item.isSection,
-    [styles.hasActiveChild]: hasActiveChild,
     [styles.isSectionRoot]: isSectionRoot,
     [styles.noRootMargin]: noRootMargin,
   });
+
+  let icon: React.ReactNode | null = null;
+
+  if (item.img) {
+    icon = <img data-testid="section-image" className={styles.sectionImg} src={item.img} alt="" />;
+  } else if (item.icon) {
+    icon = <Icon data-testid="section-icon" name={item.icon} />;
+  }
 
   return (
     <>
@@ -39,8 +45,7 @@ export function SectionNavItem({ item, isSectionRoot = false }: Props) {
         role="tab"
         aria-selected={item.active}
       >
-        {isSectionRoot && item.icon && <Icon name={item.icon} />}
-        {isSectionRoot && item.img && <img className={styles.sectionImg} src={item.img} alt={`logo of ${item.text}`} />}
+        {isSectionRoot && icon}
         {getNavTitle(item.id) ?? item.text}
         {item.tabSuffix && <item.tabSuffix className={styles.suffix} />}
       </a>
@@ -73,7 +78,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: activeTabStyle;
       color: ${theme.colors.text.primary};
       background: ${theme.colors.emphasize(theme.colors.background.canvas, 0.03)};
-      font-weight: ${theme.typography.fontWeightMedium};
 
       &::before {
         display: block;
@@ -94,22 +98,19 @@ const getStyles = (theme: GrafanaTheme2) => {
       height: 18,
     }),
     isSectionRoot: css({
-      color: theme.colors.text.primary,
       fontSize: theme.typography.h4.fontSize,
       marginTop: 0,
       marginBottom: theme.spacing(2),
       fontWeight: theme.typography.fontWeightMedium,
     }),
     isSection: css({
+      color: theme.colors.text.primary,
       fontSize: theme.typography.h5.fontSize,
       marginTop: theme.spacing(2),
       fontWeight: theme.typography.fontWeightMedium,
     }),
     noRootMargin: css({
       marginBottom: 0,
-    }),
-    hasActiveChild: css({
-      color: theme.colors.text.primary,
     }),
   };
 };

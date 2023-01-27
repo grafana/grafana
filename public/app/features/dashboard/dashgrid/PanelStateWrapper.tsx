@@ -636,6 +636,8 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     const title = panel.getDisplayTitle();
     const padding: PanelPadding = plugin.noPadding ? 'none' : 'md';
 
+    const dragClass = !(isViewing || isEditing) ? 'grid-drag-handle' : '';
+
     const titleItems = [
       <PanelHeaderTitleItems
         key="title-items"
@@ -674,6 +676,8 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           description={!!panel.description ? this.onShowPanelDescription : undefined}
           titleItems={titleItems}
           menu={menu}
+          dragClass={dragClass}
+          dragClassCancel="grid-drag-cancel"
           padding={padding}
         >
           {(innerWidth, innerHeight) => (

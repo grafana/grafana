@@ -97,7 +97,7 @@ const PublicDashboardPage = (props: Props) => {
       layout={PageLayoutType.Custom}
       toolbar={<Toolbar dashboard={dashboard} />}
     >
-      {dashboardState.initError && <DashboardFailed />}
+      {dashboardState.initError && <DashboardFailed initError={dashboardState.initError} />}
       <div className={styles.gridContainer}>
         <DashboardGrid dashboard={dashboard} isEditable={false} viewPanel={null} editPanel={null} />
       </div>
@@ -108,6 +108,7 @@ const PublicDashboardPage = (props: Props) => {
 
 const getStyles = (theme: GrafanaTheme2) => ({
   gridContainer: css({
+    flex: 1,
     padding: theme.spacing(0, 2, 2, 2),
     overflow: 'auto',
   }),
