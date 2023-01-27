@@ -273,7 +273,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
 
   render() {
     const { showContext } = this.state;
-    const { logsSortOrder, row, getRowContext } = this.props;
+    const { logsSortOrder, row, getRowContext, getLogRowContextUi } = this.props;
 
     if (showContext) {
       return (
@@ -288,7 +288,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
                     hasMoreContextRows,
                     updateLimit,
                     logsSortOrder,
-                    this.props.getLogRowContextUi,
+                    getLogRowContextUi,
                     runContextQuery
                   )}
                 </>
