@@ -4,7 +4,7 @@ import * as React from 'react';
 import { useVirtual } from 'react-virtual';
 
 // From https://github.com/timc1/kbar/blob/main/src/KBarResults.tsx
-// TODO: Go back to KBarResults from kbar when https://github.com/timc1/kbar/issues/2815 is fixed
+// TODO: Go back to KBarResults from kbar when https://github.com/timc1/kbar/issues/281 is fixed
 // Remember to remove dependency on react-virtual when removing this file
 
 const START_INDEX = 0;
