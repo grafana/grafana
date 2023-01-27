@@ -54,7 +54,7 @@
     "rxjs": "7.5.7",
     "tinycolor2": "1.4.2",
     "tslib": "2.4.1",
-    "uplot": "1.6.23",
+    "uplot": "1.6.24",
     "xss": "1.0.14"
   },
   "devDependencies": {
