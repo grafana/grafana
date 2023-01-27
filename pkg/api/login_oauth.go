@@ -388,7 +388,7 @@ func (hs *HTTPServer) hashStatecode(code, seed string) string {
 	return hex.EncodeToString(hashBytes[:])
 }
 
-func (hs *HTTPServer) handleAuthnOAuthErr(c *models.ReqContext, msg string, err error) {
+func (hs *HTTPServer) handleAuthnOAuthErr(c *contextmodel.ReqContext, msg string, err error) {
 	gfErr := &errutil.Error{}
 	if errors.As(err, gfErr) {
 		if gfErr.Public().Message != "" {
