@@ -5,7 +5,6 @@
   "enabledManagers": ["npm"],
   "ignoreDeps": [
     "@types/systemjs",
-    "@types/react-icons", // jaeger-ui-components is being refactored to use @grafana/ui icons instead
     "commander", // we are planning to remove this, so no need to update it
     "execa", // we should bump this once we move to esm modules
     "history", // we should bump this together with react-router-dom
@@ -13,7 +12,6 @@
     "monaco-editor", // due to us exposing this via @grafana/ui/CodeEditor's props bumping can break plugins
     "node-fetch", // we should bump this once we move to esm modules
     "react-hook-form", // due to us exposing these hooks via @grafana/ui form components bumping can break plugins
-    "react-icons", // jaeger-ui-components is being refactored to use @grafana/ui icons instead
     "react-redux", // react-beautiful-dnd depends on react-redux 7.x, we need to update that one first
     "react-router-dom", // we should bump this together with history
     "systemjs",
