@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { isString, uniqueId } from 'lodash';
 import React, { ReactNode, useCallback, useState } from 'react';
-import { Accept, DropEvent, DropzoneOptions, FileRejection, useDropzone } from 'react-dropzone';
+import { Accept, DropEvent, DropzoneOptions, FileError, FileRejection, useDropzone, ErrorCode } from 'react-dropzone';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { formattedValueToString, getValueFormat, GrafanaTheme2 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
 import { Alert } from '../Alert/Alert';
@@ -68,7 +68,7 @@ export function FileDropzone({
   onFileRemove,
 }: FileDropzoneProps) {
   const [files, setFiles] = useState<DropzoneFile[]>([]);
-  const [errorMessages, setErrorMessages] = useState<string[]>([]);
+  const [fileErrors, setErrorMessages] = useState<FileError[]>([]);
 
   const setFileProperty = useCallback(
     (customFile: DropzoneFile, action: (customFileToModify: DropzoneFile) => void) => {
@@ -175,11 +175,15 @@ export function FileDropzone({
   });
 
   const setErrors = (rejectedFiles: FileRejection[]) => {
-    let errors: string[] = [];
+    let errors: FileError[] = [];
     rejectedFiles.map((rejectedFile) => {
-      rejectedFile.errors.map((error) => {
-        if (errors.indexOf(error.message) === -1) {
-          errors.push(error.message);
+      rejectedFile.errors.map((newError) => {
+        if (
+          errors.findIndex((presentError) => {
+            return presentError.code === newError.code && presentError.message === newError.message;
+          }) === -1
+        ) {
+          errors.push(newError);
         }
       });
     });
@@ -187,12 +191,22 @@ export function FileDropzone({
     setErrorMessages(errors);
   };
 
-  const getErrorMessages = () => {
+  const renderErrorMessages = (errors: FileError[]) => {
     return (
       <div className={styles.errorAlert}>
         <Alert title="Upload failed" severity="error" onRemove={clearAlert}>
-          {errorMessages.map((error) => {
-            return <div key={error}>{error}</div>;
+          {errors.map((error) => {
+            switch (error.code) {
+              case ErrorCode.FileTooLarge:
+                const formattedSize = getValueFormat('decbytes')(options?.maxSize!);
+                return (
+                  <div key={error.message + error.code}>
+                    File is larger than {formattedValueToString(formattedSize)}
+                  </div>
+                );
+              default:
+                return <div key={error.message + error.code}>{error.message}</div>;
+            }
           })}
         </Alert>
       </div>
@@ -209,7 +223,7 @@ export function FileDropzone({
         <input {...getInputProps()} />
         {children ?? <FileDropzoneDefaultChildren primaryText={primaryTextSupplier(files, options)} />}
       </div>
-      {errorMessages.length > 0 && getErrorMessages()}
+      {fileErrors.length > 0 && renderErrorMessages(fileErrors)}
       {options?.accept && (
         <small className={cx(styles.small, styles.acceptMargin)}>{getAcceptedFileTypeText(options.accept)}</small>
       )}
@@ -261,11 +275,12 @@ export function FileDropzoneDefaultChildren({
     </div>
   );
 }
-function getPrimaryText(files?: DropzoneFile[], options?: BackwardsCompatibleDropzoneOptions) {
+
+function getPrimaryText(files: DropzoneFile[], options?: BackwardsCompatibleDropzoneOptions) {
   if (options?.multiple === undefined || options?.multiple) {
     return 'Upload file';
   }
-  return files && files.length ? 'Replace file' : 'Upload file';
+  return files.length ? 'Replace file' : 'Upload file';
 }
 
 function getAcceptedFileTypeText(accept: string | string[] | Accept) {
