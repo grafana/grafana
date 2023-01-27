@@ -611,13 +611,6 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
-    dashboard.new('timeline-thresholds-mappings', import '../dev-dashboards/panel-timeline/timeline-thresholds-mappings.json') +
-    resource.addMetadata('folder', 'dev-dashboards') +
-    {
-      spec+: {
-        id: 0,
-      }
-    },
     dashboard.new('timeseries', import '../dev-dashboards/panel-timeseries/timeseries.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
