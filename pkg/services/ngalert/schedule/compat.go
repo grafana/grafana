@@ -10,12 +10,11 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/go-openapi/strfmt"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
+	alertingModels "github.com/grafana/alerting/alerting/models"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/common/model"
 
-	alertingModels "github.com/grafana/alerting/alerting/models"
-
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
