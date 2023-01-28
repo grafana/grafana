@@ -191,7 +191,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
 }
 
 function getThemeMode(config: GrafanaBootConfig) {
-  let mode: 'light' | 'dark';
+  let mode: 'light' | 'dark' = 'dark';
   const themePref = config.bootData.user.theme;
 
   if (themePref === 'light' || themePref === 'dark') {
@@ -199,15 +199,13 @@ function getThemeMode(config: GrafanaBootConfig) {
   } else if (themePref === 'system') {
     const mediaResult = window.matchMedia('(prefers-color-scheme: dark)');
     mode = mediaResult.matches ? 'dark' : 'light';
-  } else {
-    // TODO: decide what to do here
-    mode = 'dark';
   }
 
   return mode;
 }
 
 function getThemeCustomizations(config: GrafanaBootConfig) {
+  // if/when we remove CurrentUserDTO.lightTheme, change this to use getThemeMode instead
   const mode = config.bootData.user.lightTheme ? 'light' : 'dark';
 
   const themeOptions: NewThemeOptions = {

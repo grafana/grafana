@@ -134,16 +134,12 @@ export interface CurrentUserDTO {
   lightTheme: boolean;
 }
 
-export interface CurrentUser extends CurrentUserDTO {
-  lightTheme: boolean;
-}
-
 /** Contains essential user and config info
  *
  * @internal
  */
 export interface BootData {
-  user: CurrentUser;
+  user: CurrentUserDTO;
   settings: GrafanaConfig;
   navTree: NavLinkDTO[];
   themePaths: {
