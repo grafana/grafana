@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/common/model"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
-
-	"github.com/prometheus/common/model"
 )
 
 type RuleDelete struct {
