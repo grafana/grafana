@@ -23,6 +23,7 @@ steps:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.20/grabpl
   - chmod +x bin/grabpl
+  - env
   image: byrnedo/alpine-curl:0.1.8
   name: grabpl
 - commands:
