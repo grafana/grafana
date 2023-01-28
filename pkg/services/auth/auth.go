@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/models/usertoken"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -74,4 +74,4 @@ type UserTokenBackgroundService interface {
 	registry.BackgroundService
 }
 
-type JWTVerifierService = models.JWTService
+type JWTVerifierService = jwt.JWTService

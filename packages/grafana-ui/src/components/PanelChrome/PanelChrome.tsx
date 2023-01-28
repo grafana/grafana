@@ -26,9 +26,13 @@ export interface PanelChromeProps {
   description?: string | (() => string);
   titleItems?: ReactNode[];
   menu?: ReactElement | (() => ReactElement);
-  /** dragClass, hoverHeader not yet implemented */
-  // dragClass?: string;
+  dragClass?: string;
+  dragClassCancel?: string;
   hoverHeader?: boolean;
+  /**
+   * Use only to indicate loading or streaming data in the panel.
+   * Any other values of loadingState are ignored.
+   */
   loadingState?: LoadingState;
   /**
    * Used to display status message (used for panel errors currently)
@@ -38,11 +42,13 @@ export interface PanelChromeProps {
    * Handle opening error details view (like inspect / error tab)
    */
   statusMessageOnClick?: (e: React.SyntheticEvent) => void;
-  /** @deprecated in favor of props
-   * status for errors and loadingState for loading and streaming
+  /**
+   * @deprecated in favor of props
+   * statusMessage for error messages
+   * and loadingState for loading and streaming data
    * which will serve the same purpose
-   * of showing/interacting with the panel's data state
-   * */
+   * of showing/interacting with the panel's state
+   */
   leftItems?: ReactNode[];
 }
 
@@ -63,7 +69,8 @@ export function PanelChrome({
   description = '',
   titleItems = [],
   menu,
-  // dragClass,
+  dragClass,
+  dragClassCancel,
   hoverHeader = false,
   loadingState,
   statusMessage,
@@ -91,6 +98,7 @@ export function PanelChrome({
 
   const headerStyles: CSSProperties = {
     height: headerHeight,
+    cursor: dragClass ? 'move' : 'auto',
   };
 
   const itemStyles: CSSProperties = {
@@ -104,26 +112,28 @@ export function PanelChrome({
   return (
     <div className={styles.container} style={containerStyles} aria-label={ariaLabel}>
       <div className={styles.loadingBarContainer}>
-        {loadingState === LoadingState.Loading ? <LoadingBar width={'28%'} height={'2px'} /> : null}
+        {loadingState === LoadingState.Loading ? (
+          <LoadingBar width={'28%'} height={'2px'} ariaLabel="Panel loading bar" />
+        ) : null}
       </div>
 
-      <div className={styles.headerContainer} style={headerStyles} data-testid="header-container">
+      <div className={cx(styles.headerContainer, dragClass)} style={headerStyles} data-testid="header-container">
         {title && (
           <h6 title={title} className={styles.title}>
             {title}
           </h6>
         )}
 
-        <PanelDescription description={description} />
+        <PanelDescription description={description} className={dragClassCancel} />
 
         {titleItems.length > 0 && (
-          <div className={styles.titleItems} data-testid="title-items-container">
+          <div className={cx(styles.titleItems, dragClassCancel)} data-testid="title-items-container">
             {titleItems.map((item) => item)}
           </div>
         )}
 
         {loadingState === LoadingState.Streaming && (
-          <div className={styles.item} style={itemStyles}>
+          <div className={styles.item} style={itemStyles} data-testid="panel-streaming">
             <Tooltip content="Streaming">
               <Icon name="circle-mono" size="sm" className={styles.streaming} />
             </Tooltip>
@@ -139,7 +149,7 @@ export function PanelChrome({
                 icon="ellipsis-v"
                 narrow
                 data-testid="panel-menu-button"
-                className={cx(styles.menuItem, 'menu-icon')}
+                className={cx(styles.menuItem, dragClassCancel, 'menu-icon')}
               />
             </Dropdown>
           )}
@@ -148,7 +158,12 @@ export function PanelChrome({
         </div>
 
         {statusMessage && (
-          <PanelStatus className={styles.errorContainer} message={statusMessage} onClick={statusMessageOnClick} />
+          <PanelStatus
+            className={cx(styles.errorContainer, dragClassCancel)}
+            message={statusMessage}
+            onClick={statusMessageOnClick}
+            ariaLabel="Panel status"
+          />
         )}
       </div>
 
@@ -221,6 +236,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     loadingBarContainer: css({
+      label: 'panel-loading-bar-container',
       position: 'absolute',
       top: 0,
       width: '100%',
@@ -238,6 +254,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(0, 0, 0, 1),
     }),
     streaming: css({
+      label: 'panel-streaming',
       marginRight: 0,
       color: theme.colors.success.text,
 
@@ -246,6 +263,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       },
     }),
     title: css({
+      label: 'panel-title',
       marginBottom: 0, // override default h6 margin-bottom
       textOverflow: 'ellipsis',
       overflow: 'hidden',
@@ -262,6 +280,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       alignItems: 'center',
     }),
     menuItem: css({
+      label: 'panel-menu',
       visibility: 'hidden',
       border: 'none',
     }),

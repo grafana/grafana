@@ -17,9 +17,19 @@ type Plugin interface {
 	Exited() bool
 	Decommission() error
 	IsDecommissioned() bool
+	Target() Target
 	backend.CollectMetricsHandler
 	backend.CheckHealthHandler
 	backend.QueryDataHandler
 	backend.CallResourceHandler
 	backend.StreamHandler
 }
+
+type Target string
+
+const (
+	TargetNone     Target = "none"
+	TargetUnknown  Target = "unknown"
+	TargetInMemory Target = "in_memory"
+	TargetLocal    Target = "local"
+)

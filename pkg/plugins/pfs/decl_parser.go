@@ -61,6 +61,7 @@ func (psr *declParser) Parse(root fs.FS) ([]*PluginDecl, error) {
 				Imports:         pp.CUEImports,
 				PluginMeta:      pp.Properties,
 				PluginPath:      path,
+				KindDecl:        kind.Decl(),
 			})
 		}
 	}

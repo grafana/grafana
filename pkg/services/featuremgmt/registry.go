@@ -155,6 +155,12 @@ var (
 			RequiresDevMode: true,
 		},
 		{
+			Name:            "k8sDashboards",
+			Description:     "Save dashboards via k8s",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
 			Name:        "supportBundles",
 			Description: "Support bundles for troubleshooting",
 			State:       FeatureStateAlpha,
@@ -299,8 +305,9 @@ var (
 		},
 		{
 			Name:        "cloudWatchCrossAccountQuerying",
-			Description: "Use cross-account querying in CloudWatch datasource",
-			State:       FeatureStateAlpha,
+			Description: "Enables cross-account querying in CloudWatch datasources",
+			State:       FeatureStateStable,
+			Expression:  "true", //enabled by default
 		},
 		{
 			Name:         "redshiftAsyncQueryDataSupport",
@@ -398,10 +405,41 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:         "editPanelCSVDragAndDrop",
+			Description:  "Enables drag and drop for CSV and Excel files",
+			FrontendOnly: true,
+			State:        FeatureStateAlpha,
+		},
+		{
 			Name:            "alertingNoNormalState",
 			Description:     "Stop maintaining state of alerts that are not firing",
 			State:           FeatureStateBeta,
 			RequiresRestart: false,
+		},
+		{
+			Name:        "azureMultipleResourcePicker",
+			Description: "Azure multiple resource picker",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:         "topNavCommandPalette",
+			Description:  "Launch the Command Palette from the top navigation search box",
+			State:        FeatureStateBeta,
+			FrontendOnly: true,
+		},
+		{
+
+			Name:         "logsSampleInExplore",
+			Description:  "Enables access to the logs sample feature in Explore",
+			State:        FeatureStateStable,
+			Expression:   "true", //turned on by default
+			FrontendOnly: true,
+		},
+		{
+			Name:         "logsContextDatasourceUi",
+			Description:  "Allow datasource to provide custom UI for context view",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
 		},
 	}
 )

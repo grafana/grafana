@@ -30,12 +30,6 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 		VectorWideSeries: s.enableWideSeries,
 	})
 
-	// The ExecutedQueryString can be viewed in QueryInspector in UI
-	// Add frame to attach metadata to it
-	if len(r.Frames) == 0 {
-		r.Frames = append(r.Frames, data.NewFrame(""))
-	}
-
 	for _, frame := range r.Frames {
 		if s.enableWideSeries {
 			addMetadataToWideFrame(q, frame)

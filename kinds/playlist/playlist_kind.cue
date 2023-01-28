@@ -1,12 +1,13 @@
 package kind
 
-name: "Playlist"
+name:     "Playlist"
 maturity: "merged"
 
 lineage: seqs: [
 	{
 		schemas: [
-			{//0.0
+			//0.0
+			{
 				// Unique playlist identifier. Generated on creation, either by the
 				// creator of the playlist of by the application.
 				uid: string
@@ -39,9 +40,9 @@ lineage: seqs: [
 					value: string
 
 					// Title is an unused property -- it will be removed in the future
-    				title?: string
+					title?: string
 				} @cuetsy(kind="interface")
-			}
+			},
 		]
-	}
+	},
 ]

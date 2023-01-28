@@ -15,6 +15,7 @@ import {
   EventBusExtended,
   DataQueryResponse,
   ExplorePanelsState,
+  SupplementaryQueryType,
 } from '@grafana/data';
 import { RichHistorySearchFilters, RichHistorySettings } from 'app/core/utils/richHistoryTypes';
 
@@ -279,7 +280,3 @@ export interface SupplementaryQuery {
 export type SupplementaryQueries = {
   [key in SupplementaryQueryType]: SupplementaryQuery;
 };
-
-export enum SupplementaryQueryType {
-  LogsVolume = 'LogsVolume',
-}

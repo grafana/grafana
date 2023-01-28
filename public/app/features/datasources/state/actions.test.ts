@@ -6,6 +6,7 @@ import { ThunkResult, ThunkDispatch } from 'app/types';
 
 import { getMockDataSource } from '../__mocks__';
 import * as api from '../api';
+import { DATASOURCES_ROUTES } from '../constants';
 import { trackDataSourceCreated, trackDataSourceTested } from '../tracking';
 import { GenericDataSourcePlugin } from '../types';
 
@@ -357,6 +358,7 @@ describe('addDataSource', () => {
       plugin_version: '1.2.3',
       datasource_uid: 'azure23',
       grafana_version: '1.0',
+      editLink: DATASOURCES_ROUTES.Edit.replace(':uid', 'azure23'),
     });
   });
 });

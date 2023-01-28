@@ -12,7 +12,7 @@ import { PanelEditEnteredEvent, PanelEditExitedEvent } from 'app/types/events';
 import { InlineEdit } from './InlineEdit';
 import { SetBackground } from './SetBackground';
 import { PanelOptions } from './models.gen';
-import { AnchorPoint } from './types';
+import { AnchorPoint, CanvasTooltipPayload } from './types';
 
 interface Props extends PanelProps<PanelOptions> {}
 
@@ -71,6 +71,7 @@ export class CanvasPanel extends Component<Props, State> {
     this.scene.updateData(props.data);
     this.scene.inlineEditingCallback = this.openInlineEdit;
     this.scene.setBackgroundCallback = this.openSetBackground;
+    this.scene.tooltipCallback = this.tooltipCallback;
 
     this.subs.add(
       this.props.eventBus.subscribe(PanelEditEnteredEvent, (evt: PanelEditEnteredEvent) => {
@@ -184,11 +185,10 @@ export class CanvasPanel extends Component<Props, State> {
     }
 
     // After editing, the options are valid, but the scene was in a different panel or inline editing mode has changed
-    const shouldUpdateSceneAndPanel = this.needsReload && this.props.options !== nextProps.options;
     const inlineEditingSwitched = this.props.options.inlineEditing !== nextProps.options.inlineEditing;
     const shouldShowAdvancedTypesSwitched =
       this.props.options.showAdvancedTypes !== nextProps.options.showAdvancedTypes;
-    if (shouldUpdateSceneAndPanel || inlineEditingSwitched || shouldShowAdvancedTypesSwitched) {
+    if (this.needsReload || inlineEditingSwitched || shouldShowAdvancedTypesSwitched) {
       if (inlineEditingSwitched) {
         // Replace scene div to prevent selecto instance leaks
         this.scene.revId++;
@@ -228,6 +228,11 @@ export class CanvasPanel extends Component<Props, State> {
     this.setState({ contextMenuAnchorPoint: anchorPoint });
 
     isSetBackgroundOpen = true;
+  };
+
+  tooltipCallback = (tooltip: CanvasTooltipPayload | undefined) => {
+    this.scene.tooltip = tooltip;
+    this.forceUpdate();
   };
 
   closeInlineEdit = () => {

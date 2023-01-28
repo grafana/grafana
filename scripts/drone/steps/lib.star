@@ -6,7 +6,7 @@ load(
 )
 
 grabpl_version = 'v3.0.20'
-build_image = 'grafana/build-container:1.6.6'
+build_image = 'grafana/build-container:1.6.7'
 publish_image = 'grafana/grafana-ci-deploy:1.3.3'
 deploy_docker_image = 'us.gcr.io/kubernetes-dev/drone/plugins/deploy-image'
 alpine_image = 'alpine:3.15.6'
@@ -943,7 +943,8 @@ def redis_integration_tests_step():
         },
         'commands': [
             'dockerize -wait tcp://redis:6379/0 -timeout 120s',
-            './bin/grabpl integration-tests',
+            'go clean -testcache',
+            "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=5m {}'",
         ],
     }
 
@@ -958,7 +959,8 @@ def memcached_integration_tests_step():
         },
         'commands': [
             'dockerize -wait tcp://memcached:11211 -timeout 120s',
-            './bin/grabpl integration-tests',
+            'go clean -testcache',
+            "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=5m {}'",
         ],
     }
 
