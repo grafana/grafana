@@ -164,7 +164,7 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'receivers':
       return t(
         'nav.alerting-receivers.subtitle',
-        'Choose how to notify your  contact points when an alert instance fires'
+        'Choose how to notify your contact points when an alert instance fires'
       );
     case 'am-routes':
       return t('nav.alerting-am-routes.subtitle', 'Determine how alerts are routed to contact points');
