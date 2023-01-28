@@ -8,8 +8,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-plugin-sdk-go/experimental"
 )
 
 // these snapshot-tests test the whole request-response flow:

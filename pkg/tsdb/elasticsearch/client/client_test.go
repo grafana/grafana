@@ -10,10 +10,11 @@ import (
 	"time"
 
 	"github.com/Masterminds/semver"
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 func TestClient_ExecuteMultisearch(t *testing.T) {

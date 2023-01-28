@@ -11,10 +11,11 @@ import (
 	"path"
 	"strconv"
 
+	jsoniter "github.com/json-iterator/go"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util/converter"
-	jsoniter "github.com/json-iterator/go"
 )
 
 type LokiAPI struct {
