@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/influxdata/influxdb-client-go/v2/api/query"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/data/converters"
-	"github.com/influxdata/influxdb-client-go/v2/api/query"
 )
 
 // based on https://docs.influxdata.com/influxdb/v2.0/reference/syntax/annotated-csv/#data-types
