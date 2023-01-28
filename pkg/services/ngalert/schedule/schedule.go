@@ -479,7 +479,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 						// Do not clean up state if the eval loop has just started.
 						// We need to reset state if the loop has started and the alert is already paused. It can happen,
 						// if we file provision with stateful Grafana, that alert instances are in DB.
-						if currentRuleVersion > 0 || (currentRuleVersion == 0 && isPaused) {
+						if currentRuleVersion > 0 || isPaused {
 							logger.Debug("Got a new version of alert rule. Clear up the state and refresh extra labels", "version", currentRuleVersion, "newVersion", newVersion)
 							resetState(grafanaCtx, isPaused)
 						}
