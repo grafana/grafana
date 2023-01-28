@@ -34,6 +34,7 @@ steps:
   name: compile-build-cmd
 - commands:
   - env
+  - git remote -v
   - ./bin/build verify-drone
   depends_on:
   - compile-build-cmd
