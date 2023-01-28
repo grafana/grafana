@@ -901,6 +901,7 @@ steps:
   image: golang:1.19.4
   name: compile-build-cmd
 - commands:
+  - env
   - ./bin/build verify-drone
   depends_on:
   - compile-build-cmd
