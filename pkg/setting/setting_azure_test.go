@@ -3,10 +3,10 @@ package setting
 import (
 	"testing"
 
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 )
 
 func TestAzureSettings(t *testing.T) {
