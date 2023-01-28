@@ -1289,7 +1289,7 @@ environment:
 image_pull_secrets:
 - dockerconfigjson
 kind: pipeline
-name: pr-build-e2e
+name: external-pr-build-e2e
 node:
   type: no-parallel
 platform:
@@ -1343,6 +1343,51 @@ steps:
   image: grafana/build-container:1.6.7
   name: yarn-install
 - commands:
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    --depth=1
+  - cd grafana-enterprise
+  - git fetch origin "refs/tags/*:refs/tags/*" --quiet
+  - if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git
+    push --delete origin $${TEST_TAG}; fi
+  - git tag $${TEST_TAG} && git push origin $${TEST_TAG}
+  - cd -
+  - git fetch https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git "refs/tags/*:refs/tags/*"
+    --quiet && git fetch --quiet
+  - if git show-ref --tags $${TEST_TAG} --quiet; then git tag -d $${TEST_TAG} && git
+    push --delete https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git $${TEST_TAG};
+    fi
+  - git tag $${TEST_TAG} && git push https://$${GITHUB_TOKEN}@github.com/grafana/grafana.git
+    $${TEST_TAG}
+  environment:
+    DOWNSTREAM_REPO:
+      from_secret: downstream
+    GITHUB_TOKEN:
+      from_secret: github_token_pr
+    TEST_TAG: v0.0.0-test
+  failure: ignore
+  image: grafana/build-container:1.6.7
+  name: trigger-test-release
+  when:
+    paths:
+      include:
+      - .drone.yml
+      - pkg/build/**
+    repo:
+    - grafana/grafana
+- failure: ignore
+  image: grafana/drone-downstream
+  name: trigger-enterprise-downstream
+  settings:
+    params:
+    - SOURCE_BUILD_NUMBER=${DRONE_COMMIT}
+    - SOURCE_COMMIT=${DRONE_COMMIT}
+    - OSS_PULL_REQUEST=${DRONE_PULL_REQUEST}
+    repositories:
+    - grafana/grafana-enterprise@${DRONE_SOURCE_BRANCH}
+    server: https://drone.grafana.net
+    token:
+      from_secret: drone_token
+- commands:
   - ./bin/build build-backend --jobs 8 --edition oss --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - wire-install
@@ -1377,7 +1422,7 @@ steps:
   name: build-plugins
 - commands:
   - . scripts/build/gpg-test-vars.sh && ./bin/build package --jobs 8 --edition oss
-    --build-id ${DRONE_BUILD_NUMBER}
+    --build-id ${DRONE_BUILD_NUMBER} --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64
   depends_on:
   - build-plugins
   - build-backend

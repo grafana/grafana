@@ -108,7 +108,7 @@ def fork_pipelines():
             ver_mode,
             external=True,
         ),
-        build_e2e(get_pr_trigger(), ver_mode),
+        build_e2e(get_pr_trigger(), ver_mode, external=True),
         integration_tests(
             get_pr_trigger(
                 include_paths=[
