@@ -44,7 +44,9 @@ func GetAuthProviderLabel(authModule string) string {
 		return "JWT"
 	case AuthProxyAuthModule:
 		return "Auth Proxy"
+	case "oauth_generic_oauth":
+		return "Generic OAuth"
 	default:
-		return "OAuth" // FIXME: replace with "Unknown" and handle generic oauth as a case
+		return "Unknown"
 	}
 }

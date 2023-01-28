@@ -435,6 +435,9 @@ type Cfg struct {
 	// Gitlab
 	GitLabSkipOrgRoleSync bool
 
+	// Generic OAuth
+	GenericOAuthSkipOrgRoleSync bool
+
 	// LDAP
 	LDAPEnabled         bool
 	LDAPSkipOrgRoleSync bool
@@ -1395,6 +1398,11 @@ func readAuthGitlabSettings(iniFile *ini.File, cfg *Cfg) {
 	cfg.GitLabSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
+func readGenericOAuthSettings(iniFile *ini.File, cfg *Cfg) {
+	sec := iniFile.Section("auth.generic_oauth")
+	cfg.GenericOAuthSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+}
+
 func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	auth := iniFile.Section("auth")
 
@@ -1454,6 +1462,9 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	// GitLab Auth
 	readAuthGitlabSettings(iniFile, cfg)
+
+	// Generic OAuth
+	readGenericOAuthSettings(iniFile, cfg)
 
 	// anonymous access
 	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)
