@@ -3,9 +3,10 @@ package pluginproxy
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/plugins"
 )
 
 func TestApplyRoute_interpolateAuthParams(t *testing.T) {

@@ -3,10 +3,11 @@ package assetpath
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
-	"github.com/stretchr/testify/require"
 )
 
 func extPath(pluginID string) string {

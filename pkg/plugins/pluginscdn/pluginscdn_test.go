@@ -3,8 +3,9 @@ package pluginscdn
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/plugins/config"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/plugins/config"
 )
 
 func TestService(t *testing.T) {

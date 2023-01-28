@@ -8,10 +8,11 @@ import (
 	copenapi "cuelang.org/go/encoding/openapi"
 	"github.com/dave/dst/dstutil"
 	"github.com/grafana/codejen"
-	corecodegen "github.com/grafana/grafana/pkg/codegen"
-	"github.com/grafana/grafana/pkg/plugins/pfs"
 	"github.com/grafana/thema/encoding/gocode"
 	"github.com/grafana/thema/encoding/openapi"
+
+	corecodegen "github.com/grafana/grafana/pkg/codegen"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
 
 // TODO this is duplicative of other Go type jennies. Remove it in favor of a better-abstracted version in thema itself
