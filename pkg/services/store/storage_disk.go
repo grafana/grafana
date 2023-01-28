@@ -4,9 +4,10 @@ import (
 	"context"
 	"strings"
 
+	"gocloud.dev/blob"
+
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/infra/filestorage"
-	"gocloud.dev/blob"
 )
 
 const rootStorageTypeDisk = "disk"

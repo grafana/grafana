@@ -8,10 +8,11 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
-	"github.com/stretchr/testify/require"
 )
 
 func loadTestData(tb testing.TB, file string) []byte {

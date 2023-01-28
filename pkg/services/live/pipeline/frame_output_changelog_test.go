@@ -6,8 +6,9 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
 func TestChangeLogOutput_NoPreviousFrame_SingleRow(t *testing.T) {

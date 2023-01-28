@@ -3,10 +3,9 @@ package searchV2
 import (
 	"context"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/user"
-
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
 type FacetField struct {
