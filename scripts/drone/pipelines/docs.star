@@ -20,6 +20,7 @@ load(
 load(
     'scripts/drone/utils/utils.star',
     'pipeline',
+    'external_name',
 )
 
 docs_paths = {
@@ -32,7 +33,7 @@ docs_paths = {
 }
 
 
-def docs_pipelines(ver_mode, trigger):
+def docs_pipelines(ver_mode, trigger, external=False):
     environment = {'EDITION': 'oss'}
     steps = [
         download_grabpl_step(),
@@ -44,7 +45,7 @@ def docs_pipelines(ver_mode, trigger):
     ]
 
     return pipeline(
-        name='{}-docs'.format(ver_mode),
+        name=external_name('{}-docs'.format(ver_mode), external),
         edition='oss',
         trigger=trigger,
         services=[],

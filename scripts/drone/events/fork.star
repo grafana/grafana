@@ -51,13 +51,14 @@ load(
 
 ver_mode = 'pr'
 
-def pr_pipelines():
+def fork_pipelines():
     return [
         verify_drone(
             get_pr_trigger(
                 include_paths=['scripts/drone/**', '.drone.yml', '.drone.star']
             ),
             ver_mode,
+            external=True,
         ),
         test_frontend(
             get_pr_trigger(
@@ -65,12 +66,14 @@ def pr_pipelines():
             ),
             ver_mode,
             source='${DRONE_COMMIT}',
+            external=True,
         ),
         lint_frontend_pipeline(
             get_pr_trigger(
                 exclude_paths=['pkg/**', 'packaging/**', 'go.sum', 'go.mod']
             ),
             ver_mode,
+            external=True,
         ),
         test_backend(
             get_pr_trigger(
@@ -86,6 +89,7 @@ def pr_pipelines():
                 ]
             ),
             ver_mode,
+            external=True,
             source='${DRONE_COMMIT}',
         ),
         lint_backend_pipeline(
@@ -102,6 +106,7 @@ def pr_pipelines():
                 ]
             ),
             ver_mode,
+            external=True,
         ),
         build_e2e(get_pr_trigger(), ver_mode),
         integration_tests(
@@ -117,9 +122,10 @@ def pr_pipelines():
                 ]
             ),
             prefix=ver_mode,
+            external=True,
         ),
-        docs_pipelines(ver_mode, trigger_docs_pr()),
-        shellcheck_pipeline(),
+        docs_pipelines(ver_mode, trigger_docs_pr(), external=True),
+        shellcheck_pipeline(external=True),
     ]
 
 
@@ -141,6 +147,6 @@ def get_pr_trigger(include_paths=None, exclude_paths=None):
             'include': paths_in,
         },
         'repo': {
-            'include': ['grafana/*'],
+            'exclude': ['grafana/*'],
         },
     }

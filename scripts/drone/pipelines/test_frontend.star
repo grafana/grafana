@@ -14,10 +14,11 @@ load(
     'scripts/drone/utils/utils.star',
     'pipeline',
     'with_deps',
+    'external_name',
 )
 
 
-def test_frontend(trigger, ver_mode, source):
+def test_frontend(trigger, ver_mode, source, external=False):
     environment = {'EDITION': 'oss'}
 
     steps = [
@@ -29,7 +30,7 @@ def test_frontend(trigger, ver_mode, source):
 
     test_step = test_frontend_step(edition='oss')
 
-    if ver_mode == 'pr':
+    if ver_mode == 'pr' and external:
         # In pull requests, attempt to clone grafana enterprise.
         steps.append(enterprise_setup_step(location='../grafana-enterpise'))
         # Also, make the test step depend on 'clone-enterprise
@@ -42,7 +43,7 @@ def test_frontend(trigger, ver_mode, source):
         pipeline_name = '{}-{}-test-frontend'.format(ver_mode, 'oss')
 
     return pipeline(
-        name=pipeline_name,
+        name=external_name(pipeline_name, external),
         edition='oss',
         trigger=trigger,
         steps=steps,

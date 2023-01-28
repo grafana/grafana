@@ -41,10 +41,11 @@ load(
 load(
     'scripts/drone/utils/utils.star',
     'pipeline',
+    'external_name',
 )
 
 
-def build_e2e(trigger, ver_mode):
+def build_e2e(trigger, ver_mode, external=False):
     edition = 'oss'
     environment = {'EDITION': edition}
     init_steps = [
@@ -60,7 +61,7 @@ def build_e2e(trigger, ver_mode):
     build_steps = []
     variants = None
 
-    if ver_mode == 'pr':
+    if ver_mode == 'pr' and external:
         build_steps.extend(
             [
                 trigger_test_release(),
@@ -151,7 +152,7 @@ def build_e2e(trigger, ver_mode):
         publish_suffix = '-publish'
 
     return pipeline(
-        name='{}-build-e2e{}'.format(ver_mode, publish_suffix),
+        name=external_name('{}-build-e2e{}'.format(ver_mode, publish_suffix), external),
         edition="oss",
         trigger=trigger,
         services=[],

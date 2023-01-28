@@ -12,10 +12,11 @@ load(
 load(
     'scripts/drone/utils/utils.star',
     'pipeline',
+    'external_name',
 )
 
 
-def lint_backend_pipeline(trigger, ver_mode):
+def lint_backend_pipeline(trigger, ver_mode, external=False):
     environment = {'EDITION': 'oss'}
 
     wire_step = wire_install_step()
@@ -27,7 +28,7 @@ def lint_backend_pipeline(trigger, ver_mode):
 
     ]
 
-    if ver_mode == 'pr':
+    if ver_mode == 'pr' and external:
         # In pull requests, attempt to clone grafana enterprise.
         init_steps.append(enterprise_setup_step(location='../grafana-enterpise'))
 
@@ -41,7 +42,7 @@ def lint_backend_pipeline(trigger, ver_mode):
         test_steps.append(lint_drone_step())
 
     return pipeline(
-        name='{}-lint-backend'.format(ver_mode),
+        name=external_name('{}-lint-backend'.format(ver_mode), external),
         edition="oss",
         trigger=trigger,
         services=[],

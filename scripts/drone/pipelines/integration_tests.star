@@ -21,10 +21,11 @@ load(
 load(
     'scripts/drone/utils/utils.star',
     'pipeline',
+    'external_name',
 )
 
 
-def integration_tests(trigger, prefix, ver_mode='pr'):
+def integration_tests(trigger, prefix, ver_mode='pr', external=False):
     environment = {'EDITION': 'oss'}
 
     services = integration_test_services(edition="oss")
@@ -35,7 +36,7 @@ def integration_tests(trigger, prefix, ver_mode='pr'):
 
     verify_step = verify_gen_cue_step()
 
-    if ver_mode == 'pr':
+    if ver_mode == 'pr' and external:
         # In pull requests, attempt to clone grafana enterprise.
         init_steps.append(enterprise_setup_step(location='../grafana-enterpise'))
         # Ensure that verif_gen_cue happens after we clone enterprise
@@ -57,7 +58,7 @@ def integration_tests(trigger, prefix, ver_mode='pr'):
     ]
 
     return pipeline(
-        name='{}-integration-tests'.format(prefix),
+        name=external_name('{}-integration-tests'.format(prefix), external),
         edition='oss',
         trigger=trigger,
         environment=environment,

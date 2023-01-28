@@ -3,21 +3,26 @@ load('scripts/drone/steps/lib.star', 'build_image', 'compile_build_cmd')
 load(
     'scripts/drone/utils/utils.star',
     'pipeline',
+    'external_name',
 )
 
-trigger = {
-    'event': [
-        'pull_request',
-    ],
-    'paths': {
-        'exclude': [
-            '*.md',
-            'docs/**',
-            'latest.json',
+def trigger():
+    return {
+        'event': [
+            'pull_request',
         ],
-        'include': ['scripts/**/*.sh'],
-    },
-}
+        'paths': {
+            'exclude': [
+                '*.md',
+                'docs/**',
+                'latest.json',
+            ],
+            'include': ['scripts/**/*.sh'],
+        },
+        'repo': {
+            'include': ['grafana/*'],
+        }
+    }
 
 
 def shellcheck_step():
@@ -33,16 +38,24 @@ def shellcheck_step():
     }
 
 
-def shellcheck_pipeline():
+def shellcheck_pipeline(external=False):
     environment = {'EDITION': 'oss'}
     steps = [
         compile_build_cmd(),
         shellcheck_step(),
     ]
+
+    t = trigger()
+
+    if external:
+        t['repo'] = {
+            'exclude': ['grafana/*'],
+        }
+
     return pipeline(
-        name='pr-shellcheck',
+        name=external_name('pr-shellcheck', external),
         edition="oss",
-        trigger=trigger,
+        trigger=t,
         services=[],
         steps=steps,
         environment=environment,
