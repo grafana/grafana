@@ -151,14 +151,10 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		data.User.Name = data.User.Login
 	}
 
-	// TODO: clean this up :)
 	themeURLParam := c.Query("theme")
-	if themeURLParam == lightName {
-		data.User.Theme = lightName
-		data.Theme = lightName
-	} else if themeURLParam == darkName {
-		data.User.Theme = darkName
-		data.Theme = darkName
+	if themeURLParam == lightName || themeURLParam == darkName || themeURLParam == systemName {
+		data.User.Theme = themeURLParam
+		data.Theme = themeURLParam
 	}
 
 	hs.HooksService.RunIndexDataHooks(&data, c)
