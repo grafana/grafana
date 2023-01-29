@@ -46,7 +46,7 @@ const RuleList = withErrorBoundary(
     const [queryParams] = useQueryParams();
     const { filterState, hasActiveFilters } = useRulesFilter();
 
-    const { canCreateGrafanaRules, canCreateCloudRules } = useRulesAccess();
+    const { canCreateGrafanaRules, canCreateCloudRules, canReadProvisioning } = useRulesAccess();
 
     const view = VIEWS[queryParams['view'] as keyof typeof VIEWS]
       ? (queryParams['view'] as keyof typeof VIEWS)
@@ -110,9 +110,11 @@ const RuleList = withErrorBoundary(
                 <RuleStats namespaces={filteredNamespaces} includeTotal />
               </div>
               <Stack direction="row" gap={0.5}>
-                <Button icon="download-alt" type="button" onClick={onExport}>
-                  Export
-                </Button>
+                {canReadProvisioning && (
+                  <Button icon="download-alt" type="button" onClick={onExport}>
+                    Export
+                  </Button>
+                )}
                 {(canCreateGrafanaRules || canCreateCloudRules) && (
                   <LinkButton
                     href={urlUtil.renderUrl('alerting/new', { returnTo: location.pathname + location.search })}
