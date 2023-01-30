@@ -7,6 +7,7 @@ import {
   hasSupplementaryQuerySupport,
   DataQueryRequest,
   LoadingState,
+  LogsVolumeType,
 } from '@grafana/data';
 
 import { ExplorePanelData } from '../../../types';
@@ -32,7 +33,7 @@ export const getSupplementaryQueryProvider = (
                 meta: {
                   custom: {
                     ...custom,
-                    logsVolumeType: 'limited',
+                    logsVolumeType: LogsVolumeType.Limited,
                     absoluteRange: exploreData.logsResult?.visibleRange,
                   },
                 },
