@@ -23,8 +23,6 @@ def main(ctx):
         + release_pipelines()
         + publish_image_pipelines_public()
         + publish_image_pipelines_security()
-        + publish_github_pipeline('public')
-        + publish_github_pipeline('security')
         + publish_artifacts_pipelines('security')
         + publish_artifacts_pipelines('public')
         + publish_npm_pipelines('public')

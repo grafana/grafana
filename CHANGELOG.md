@@ -1,3 +1,12 @@
+<!-- 9.3.6 START -->
+
+# 9.3.6 (2023-01-26)
+
+### Bug fixes
+
+- **QueryEditorRow:** Fixes issue loading query editor when data source variable selected. [#61927](https://github.com/grafana/grafana/pull/61927), [@torkelo](https://github.com/torkelo)
+
+<!-- 9.3.6 END -->
 <!-- 9.3.4 START -->
 
 # 9.3.4 (2023-01-25)
