@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -66,7 +65,7 @@ func sanitizeJWT(jwtToken string) string {
 	return strings.ReplaceAll(jwtToken, string(base64.StdPadding), "")
 }
 
-func (s *AuthService) Verify(ctx context.Context, strToken string) (models.JWTClaims, error) {
+func (s *AuthService) Verify(ctx context.Context, strToken string) (JWTClaims, error) {
 	s.log.Debug("Parsing JSON Web Token")
 
 	strToken = sanitizeJWT(strToken)
@@ -85,7 +84,7 @@ func (s *AuthService) Verify(ctx context.Context, strToken string) (models.JWTCl
 
 	s.log.Debug("Trying to verify JSON Web Token using a key")
 
-	var claims models.JWTClaims
+	var claims JWTClaims
 	for _, key := range keys {
 		if err = token.Claims(key, &claims); err == nil {
 			break

@@ -133,6 +133,12 @@ func main() {
 			Action: VerifyDrone,
 		},
 		{
+			Name:      "verify-starlark",
+			Usage:     "Verify Starlark configuration",
+			ArgsUsage: "<workspace path>",
+			Action:    VerifyStarlark,
+		},
+		{
 			Name:   "export-version",
 			Usage:  "Exports version in dist/grafana.version",
 			Action: ExportVersion,
@@ -205,6 +211,46 @@ func main() {
 								&cli.StringFlag{
 									Name:  "dockerhub-repo",
 									Usage: "DockerHub repo to push images",
+								},
+							},
+						},
+					},
+				},
+				{
+					Name:  "npm",
+					Usage: "Handle Grafana npm packages",
+					Subcommands: cli.Commands{
+						{
+							Name:      "release",
+							Usage:     "Release npm packages",
+							ArgsUsage: "[version]",
+							Action:    NpmReleaseAction,
+							Flags: []cli.Flag{
+								&cli.StringFlag{
+									Name:  "tag",
+									Usage: "Grafana version tag",
+								},
+							},
+						},
+						{
+							Name:   "store",
+							Usage:  "Store npm packages tarball",
+							Action: NpmStoreAction,
+							Flags: []cli.Flag{
+								&cli.StringFlag{
+									Name:  "tag",
+									Usage: "Grafana version tag",
+								},
+							},
+						},
+						{
+							Name:   "retrieve",
+							Usage:  "Retrieve npm packages tarball",
+							Action: NpmRetrieveAction,
+							Flags: []cli.Flag{
+								&cli.StringFlag{
+									Name:  "tag",
+									Usage: "Grafana version tag",
 								},
 							},
 						},

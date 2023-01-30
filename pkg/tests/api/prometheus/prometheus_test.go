@@ -10,13 +10,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationPrometheus(t *testing.T) {
@@ -87,7 +88,7 @@ func TestIntegrationPrometheus(t *testing.T) {
 		// nolint:gosec
 		resp, err := http.Post(u, "application/json", buf1)
 		require.NoError(t, err)
-		require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
 		t.Cleanup(func() {
 			err := resp.Body.Close()
 			require.NoError(t, err)
@@ -123,7 +124,7 @@ func TestIntegrationPrometheus(t *testing.T) {
 		// nolint:gosec
 		resp, err := http.Post(u, "application/json", buf1)
 		require.NoError(t, err)
-		require.Equal(t, http.StatusInternalServerError, resp.StatusCode)
+		require.Equal(t, http.StatusOK, resp.StatusCode)
 		t.Cleanup(func() {
 			err := resp.Body.Close()
 			require.NoError(t, err)

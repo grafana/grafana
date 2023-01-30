@@ -28,8 +28,10 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `commandPalette`                    | Enable command palette                                                               | Yes                |
 | `cloudWatchDynamicLabels`           | Use dynamic labels instead of alias patterns in CloudWatch datasource                | Yes                |
 | `internationalization`              | Enables internationalization                                                         | Yes                |
+| `cloudWatchCrossAccountQuerying`    | Enables cross-account querying in CloudWatch datasources                             | Yes                |
 | `accessTokenExpirationCheck`        | Enable OAuth access_token expiration check and token refresh using the refresh_token |                    |
 | `disablePrometheusExemplarSampling` | Disable Prometheus examplar sampling                                                 |                    |
+| `logsSampleInExplore`               | Enables access to the logs sample feature in Explore                                 | Yes                |
 
 ## Beta feature toggles
 
@@ -46,6 +48,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `datasourceLogger`                | Logs all datasource requests                                                    |
 | `accessControlOnCall`             | Access control primitives for OnCall                                            |
 | `alertingNoNormalState`           | Stop maintaining state of alerts that are not firing                            |
+| `topNavCommandPalette`            | Launch the Command Palette from the top navigation search box                   |
 
 ## Alpha feature toggles
 
@@ -82,7 +85,6 @@ Alpha features might be changed or removed without prior notice.
 | `dataConnectionsConsole`           | Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins. |
 | `topnav`                           | New top nav and page layouts                                                                                                                                                 |
 | `flameGraph`                       | Show the flame graph                                                                                                                                                         |
-| `cloudWatchCrossAccountQuerying`   | Use cross-account querying in CloudWatch datasource                                                                                                                          |
 | `redshiftAsyncQueryDataSupport`    | Enable async query data support for Redshift                                                                                                                                 |
 | `athenaAsyncQueryDataSupport`      | Enable async query data support for Athena                                                                                                                                   |
 | `increaseInMemDatabaseQueryCache`  | Enable more in memory caching for database queries                                                                                                                           |
@@ -95,7 +97,9 @@ Alpha features might be changed or removed without prior notice.
 | `authnService`                     | Use new auth service to perform authentication                                                                                                                               |
 | `sessionRemoteCache`               | Enable using remote cache for user sessions                                                                                                                                  |
 | `alertingBacktesting`              | Rule backtesting API for alerting                                                                                                                                            |
-| `individualCookiePreferences`      | Support overriding cookie preferences on an individual level                                                                                                                 |
+| `editPanelCSVDragAndDrop`          | Enables drag and drop for CSV and Excel files                                                                                                                                |
+| `azureMultipleResourcePicker`      | Azure multiple resource picker                                                                                                                                               |
+| `logsContextDatasourceUi`          | Allow datasource to provide custom UI for context view                                                                                                                       |
 
 ## Development feature toggles
 
@@ -107,6 +111,7 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | `showFeatureFlagsInUI`                 | Show feature flags in the settings UI                                   |
 | `publicDashboardsEmailSharing`         | Allows public dashboard sharing to be restricted to only allowed emails |
 | `k8s`                                  | Explore native k8s integrations                                         |
+| `k8sDashboards`                        | Save dashboards via k8s                                                 |
 | `dashboardsFromStorage`                | Load dashboards from the generic storage interface                      |
 | `export`                               | Export grafana instance (to git, etc)                                   |
 | `azureMonitorResourcePickerForMetrics` | New UI for Azure Monitor Metrics Query                                  |

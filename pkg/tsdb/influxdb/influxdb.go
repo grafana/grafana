@@ -101,7 +101,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 	logger.Debug("Making a non-Flux type query")
 
 	var allRawQueries string
-	var queries []Query
+	queries := make([]Query, 0, len(req.Queries))
 
 	for _, reqQuery := range req.Queries {
 		query, err := s.queryParser.Parse(reqQuery)

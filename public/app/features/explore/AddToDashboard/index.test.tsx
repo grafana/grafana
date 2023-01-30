@@ -3,9 +3,8 @@ import userEvent from '@testing-library/user-event';
 import React, { ReactNode } from 'react';
 import { Provider } from 'react-redux';
 
-import { DataQuery } from '@grafana/data';
 import { locationService, setEchoSrv } from '@grafana/runtime';
-import { defaultDashboard } from '@grafana/schema';
+import { DataQuery, defaultDashboard } from '@grafana/schema';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';

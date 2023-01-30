@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"reflect"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/log"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/licensing"
 )
 
 var (
@@ -18,7 +18,7 @@ var (
 
 type FeatureManager struct {
 	isDevMod  bool
-	licensing models.Licensing
+	licensing licensing.Licensing
 	flags     map[string]*FeatureFlag
 	enabled   map[string]bool // only the "on" values
 	config    string          // path to config file
@@ -151,7 +151,7 @@ func (fm *FeatureManager) GetFlags() []FeatureFlag {
 	return v
 }
 
-func (fm *FeatureManager) HandleGetSettings(c *models.ReqContext) {
+func (fm *FeatureManager) HandleGetSettings(c *contextmodel.ReqContext) {
 	res := make(map[string]interface{}, 3)
 	res["enabled"] = fm.GetEnabled(c.Req.Context())
 

@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -25,10 +24,13 @@ func TestDashboardService(t *testing.T) {
 		fakeStore := dashboards.FakeDashboardStore{}
 		defer fakeStore.AssertExpectations(t)
 
+		folderStore := dashboards.NewFakeFolderStore(t)
+
 		service := &DashboardServiceImpl{
 			cfg:                setting.NewCfg(),
 			log:                log.New("test.logger"),
 			dashboardStore:     &fakeStore,
+			folderStore:        folderStore,
 			dashAlertExtractor: &dummyDashAlertExtractor{},
 		}
 
@@ -227,7 +229,7 @@ func TestDashboardService(t *testing.T) {
 		})
 
 		t.Run("Count dashboards in folder", func(t *testing.T) {
-			fakeStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
+			folderStore.On("GetFolderByUID", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).Return(&folder.Folder{}, nil)
 			fakeStore.On("CountDashboardsInFolder", mock.Anything, mock.AnythingOfType("*dashboards.CountDashboardsInFolderRequest")).Return(int64(3), nil)
 
 			// set up a ctx with signed in user
@@ -258,22 +260,22 @@ func TestDashboardService(t *testing.T) {
 
 	t.Run("When org user is deleted", func(t *testing.T) {
 		fakeStore := dashboards.FakeDashboardStore{}
-		fakeStore.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Return(nil)
+		fakeStore.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(nil, nil)
 		t.Run("Should remove dependent permissions for deleted org user", func(t *testing.T) {
-			permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: 1, Result: nil}
+			permQuery := &dashboards.GetDashboardACLInfoListQuery{DashboardID: 1, OrgID: 1}
 
-			err := fakeStore.GetDashboardACLInfoList(context.Background(), permQuery)
+			permQueryResult, err := fakeStore.GetDashboardACLInfoList(context.Background(), permQuery)
 			require.NoError(t, err)
 
-			require.Equal(t, len(permQuery.Result), 0)
+			require.Equal(t, len(permQueryResult), 0)
 		})
 
 		t.Run("Should not remove dashboard permissions for same user in another org", func(t *testing.T) {
 			fakeStore := dashboards.FakeDashboardStore{}
-			fakeStore.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*models.GetDashboardACLInfoListQuery")).Return(nil)
-			permQuery := &models.GetDashboardACLInfoListQuery{DashboardID: 2, OrgID: 3}
+			fakeStore.On("GetDashboardACLInfoList", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardACLInfoListQuery")).Return(nil, nil)
+			permQuery := &dashboards.GetDashboardACLInfoListQuery{DashboardID: 2, OrgID: 3}
 
-			err := fakeStore.GetDashboardACLInfoList(context.Background(), permQuery)
+			_, err := fakeStore.GetDashboardACLInfoList(context.Background(), permQuery)
 			require.NoError(t, err)
 		})
 	})

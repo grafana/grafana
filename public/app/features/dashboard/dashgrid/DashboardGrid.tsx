@@ -240,6 +240,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
                   cols={GRID_COLUMN_COUNT}
                   rowHeight={GRID_CELL_HEIGHT}
                   draggableHandle=".grid-drag-handle"
+                  draggableCancel=".grid-drag-cancel"
                   layout={this.buildLayout()}
                   onDragStop={this.onDragStop}
                   onResize={this.onResize}
