@@ -162,8 +162,14 @@ type AlertRule struct {
 	IsPaused    bool
 }
 
+// AlertRuleWithOptionals This is to avoid having to pass in additional arguments deep in the call stack. Alert rule
+// object is created in an early validation step without knowledge about current alert rule fields or if they need to be
+// overriden. This is done in a later step and, in that step, we did not have knowledge about if a field was optional
+// nor its possible value.
 type AlertRuleWithOptionals struct {
 	AlertRule
+	// This parameter is to know if an optional API field was sent and, therefore, patch it with the current field from
+	// DB in case it was not sent.
 	HasPause bool
 }
 

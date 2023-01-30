@@ -165,52 +165,43 @@ func TestSetDashboardAndPanelFromAnnotations(t *testing.T) {
 func TestPatchPartialAlertRule(t *testing.T) {
 	t.Run("patches", func(t *testing.T) {
 		testCases := []struct {
-			name                         string
-			existingRulesWithoutIsPaused func(uid string) map[string]struct{}
-			mutator                      func(r *AlertRule)
+			name    string
+			mutator func(r *AlertRuleWithOptionals)
 		}{
 			{
-				name:                         "title is empty",
-				existingRulesWithoutIsPaused: func(uid string) map[string]struct{} { return map[string]struct{}{} },
-				mutator: func(r *AlertRule) {
+				name: "title is empty",
+				mutator: func(r *AlertRuleWithOptionals) {
 					r.Title = ""
 				},
 			},
 			{
-				name:                         "condition and data are empty",
-				existingRulesWithoutIsPaused: func(uid string) map[string]struct{} { return map[string]struct{}{} },
-				mutator: func(r *AlertRule) {
+				name: "condition and data are empty",
+				mutator: func(r *AlertRuleWithOptionals) {
 					r.Condition = ""
 					r.Data = nil
 				},
 			},
 			{
-				name:                         "ExecErrState is empty",
-				existingRulesWithoutIsPaused: func(uid string) map[string]struct{} { return map[string]struct{}{} },
-				mutator: func(r *AlertRule) {
+				name: "ExecErrState is empty",
+				mutator: func(r *AlertRuleWithOptionals) {
 					r.ExecErrState = ""
 				},
 			},
 			{
-				name:                         "NoDataState is empty",
-				existingRulesWithoutIsPaused: func(uid string) map[string]struct{} { return map[string]struct{}{} },
-				mutator: func(r *AlertRule) {
+				name: "NoDataState is empty",
+				mutator: func(r *AlertRuleWithOptionals) {
 					r.NoDataState = ""
 				},
 			},
 			{
-				name:                         "For is -1",
-				existingRulesWithoutIsPaused: func(uid string) map[string]struct{} { return map[string]struct{}{} },
-				mutator: func(r *AlertRule) {
+				name: "For is -1",
+				mutator: func(r *AlertRuleWithOptionals) {
 					r.For = -1
 				},
 			},
 			{
 				name: "IsPaused did not come in request",
-				existingRulesWithoutIsPaused: func(uid string) map[string]struct{} {
-					return map[string]struct{}{uid: {}}
-				},
-				mutator: func(r *AlertRule) {
+				mutator: func(r *AlertRuleWithOptionals) {
 					r.IsPaused = true
 				},
 			},
@@ -218,14 +209,15 @@ func TestPatchPartialAlertRule(t *testing.T) {
 
 		for _, testCase := range testCases {
 			t.Run(testCase.name, func(t *testing.T) {
-				var existing *AlertRule
+				var existing *AlertRuleWithOptionals
 				for {
-					existing = AlertRuleGen(func(rule *AlertRule) {
+					rule := AlertRuleGen(func(rule *AlertRule) {
 						rule.For = time.Duration(rand.Int63n(1000) + 1)
 					})()
+					existing = &AlertRuleWithOptionals{AlertRule: *rule}
 					cloned := *existing
-					testCase.mutator(&cloned)
-					if !cmp.Equal(*existing, cloned, cmp.FilterPath(func(path cmp.Path) bool {
+					testCase.mutator(existing)
+					if !cmp.Equal(existing, cloned, cmp.FilterPath(func(path cmp.Path) bool {
 						return path.String() == "Data.modelProps"
 					}, cmp.Ignore())) {
 						break
@@ -235,7 +227,7 @@ func TestPatchPartialAlertRule(t *testing.T) {
 				testCase.mutator(&patch)
 
 				require.NotEqual(t, *existing, patch)
-				PatchPartialAlertRule(existing, &patch, testCase.existingRulesWithoutIsPaused(existing.UID))
+				PatchPartialAlertRule(&existing.AlertRule, &patch)
 				require.Equal(t, *existing, patch)
 			})
 		}
@@ -316,10 +308,10 @@ func TestPatchPartialAlertRule(t *testing.T) {
 						break
 					}
 				}
-				patch := *existing
-				testCase.mutator(&patch)
-				PatchPartialAlertRule(existing, &patch, map[string]struct{}{})
-				require.NotEqual(t, *existing, patch)
+				patch := AlertRuleWithOptionals{AlertRule: *existing}
+				testCase.mutator(&patch.AlertRule)
+				PatchPartialAlertRule(existing, &patch)
+				require.NotEqual(t, *existing, &patch.AlertRule)
 			})
 		}
 	})
