@@ -224,13 +224,7 @@ const AmRoutes = () => {
   const isLoading = !result && resultLoading;
   const haveError = resultError && !resultLoading;
 
-  const childPolicies = rootRoute?.routes ?? [];
   const matchers = normalizeMatchers(rootRoute ?? {});
-  const timingOptions = {
-    group_wait: rootRoute?.group_wait,
-    group_interval: rootRoute?.group_interval,
-    repeat_interval: rootRoute?.repeat_interval,
-  };
 
   const muteTimingsTabActive = activeTab === ActiveTab.MuteTimings;
   const policyTreeTabActive = activeTab === ActiveTab.NotificationPolicies;
@@ -287,20 +281,13 @@ const AmRoutes = () => {
                   )}
                   {rootRoute && haveData && (
                     <Policy
-                      isDefault
                       receivers={receivers}
                       routeTree={rootRoute}
                       currentRoute={rootRoute}
                       alertGroups={fetchAlertGroups.result}
-                      contactPoint={rootRoute.receiver}
                       contactPointsState={contactPointsState.receivers}
-                      groupBy={rootRoute.group_by}
-                      timingOptions={timingOptions}
                       readOnly={readOnly}
                       matchers={matchers}
-                      muteTimings={rootRoute.mute_time_intervals}
-                      childPolicies={childPolicies}
-                      continueMatching={rootRoute.continue}
                       alertManagerSourceName={alertManagerSourceName}
                       onAddPolicy={openAddModal}
                       onEditPolicy={openEditModal}

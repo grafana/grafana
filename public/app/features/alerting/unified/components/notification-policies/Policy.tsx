@@ -50,18 +50,11 @@ type InhertitableProperties = Pick<
 >;
 
 interface PolicyComponentProps {
-  childPolicies: RouteWithID[];
   receivers: Receiver[];
-  isDefault?: boolean;
   matchers?: ObjectMatcher[];
   alertGroups?: AlertmanagerGroup[];
-  contactPoint?: string;
   contactPointsState: ReceiversState;
-  groupBy?: string[];
-  muteTimings?: string[];
   readOnly?: boolean;
-  timingOptions?: TimingOptions;
-  continueMatching?: boolean;
   alertManagerSourceName: string;
   inheritedProperties?: InhertitableProperties;
   routesMatchingFilters?: RouteWithID[];
@@ -75,17 +68,10 @@ interface PolicyComponentProps {
 }
 
 const Policy: FC<PolicyComponentProps> = ({
-  childPolicies,
   receivers,
-  isDefault,
   matchers,
-  contactPoint,
   contactPointsState,
-  groupBy,
-  muteTimings = [],
-  timingOptions,
-  readOnly = true,
-  continueMatching = false,
+  readOnly = false,
   alertGroups = [],
   alertManagerSourceName,
   currentRoute,
@@ -98,11 +84,21 @@ const Policy: FC<PolicyComponentProps> = ({
   onShowAlertInstances,
 }) => {
   const styles = useStyles2(getStyles);
-  const isDefaultPolicy = isDefault !== undefined;
+  const isDefaultPolicy = currentRoute === routeTree;
 
   const permissions = getNotificationsPermissions(alertManagerSourceName);
   const canEditRoutes = contextSrv.hasPermission(permissions.update);
   const canDeleteRoutes = contextSrv.hasPermission(permissions.delete);
+
+  const contactPoint = currentRoute.receiver;
+  const continueMatching = currentRoute.continue ?? false;
+  const groupBy = currentRoute.group_by ?? [];
+  const muteTimings = currentRoute.mute_time_intervals ?? [];
+  const timingOptions: TimingOptions = {
+    group_wait: currentRoute.group_wait,
+    group_interval: currentRoute.group_interval,
+    repeat_interval: currentRoute.repeat_interval,
+  };
 
   const hasMatchers = Boolean(matchers && matchers.length);
   const hasMuteTimings = Boolean(muteTimings.length);
@@ -126,12 +122,13 @@ const Policy: FC<PolicyComponentProps> = ({
     errors.push(error);
   });
 
+  const childPolicies = currentRoute.routes ?? [];
   const hasChildPolicies = Boolean(childPolicies.length);
   const isGrouping = Array.isArray(groupBy) && groupBy.length > 0;
   const hasInheritedProperties = inheritedProperties && Object.keys(inheritedProperties).length > 0;
 
   const isEditable = canEditRoutes;
-  const isDeletable = canDeleteRoutes && !isDefault;
+  const isDeletable = canDeleteRoutes && !isDefaultPolicy;
 
   const matchingAlertGroups = useMemo(
     () => findMatchingAlertGroups(routeTree, currentRoute, alertGroups),
@@ -144,10 +141,13 @@ const Policy: FC<PolicyComponentProps> = ({
   // TODO dead branch detection, warnings for all sort of configs that won't work or will never be activated
   return (
     <Stack direction="column" gap={1.5}>
-      <div className={styles.policyWrapper(hasFocus)}>
+      <div
+        className={styles.policyWrapper(hasFocus)}
+        data-testid={isDefaultPolicy ? 'am-root-route-container' : 'am-route-container'}
+      >
         {continueMatching === true && (
           <Tooltip placement="top" content="This route will continue matching other policies">
-            <div className={styles.continueMatching}>
+            <div className={styles.continueMatching} data-testid="continue-matching">
               <Icon name="arrow-down" />
             </div>
           </Tooltip>
@@ -216,7 +216,7 @@ const Policy: FC<PolicyComponentProps> = ({
                       icon="pen"
                       size="sm"
                       disabled={!isEditable}
-                      onClick={() => onEditPolicy(currentRoute, isDefault)}
+                      onClick={() => onEditPolicy(currentRoute, isDefaultPolicy)}
                       type="button"
                     >
                       Edit
@@ -251,7 +251,13 @@ const Policy: FC<PolicyComponentProps> = ({
                         </Menu>
                       }
                     >
-                      <Button variant="secondary" size="sm" icon="angle-down" type="button" />
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        icon="angle-down"
+                        type="button"
+                        data-testid="more-actions"
+                      />
                     </Dropdown>
                   </ButtonGroup>
                 </Stack>
@@ -267,12 +273,13 @@ const Policy: FC<PolicyComponentProps> = ({
                 onClick={() => {
                   onShowAlertInstances(matchingAlertGroups, matchers);
                 }}
+                data-testid="matching-instances"
               >
                 <Strong>{numberOfAlertInstances}</Strong>
                 <span>{pluralize('instance', numberOfAlertInstances)}</span>
               </MetaText>
               {contactPoint && (
-                <MetaText icon="at">
+                <MetaText icon="at" data-testid="contact-point">
                   <span>Delivered to</span>
                   <ContactPointsHoverDetails
                     alertManagerSourceName={alertManagerSourceName}
@@ -282,7 +289,7 @@ const Policy: FC<PolicyComponentProps> = ({
                 </MetaText>
               )}
               {isGrouping && (
-                <MetaText icon="layer-group">
+                <MetaText icon="layer-group" data-testid="grouping">
                   <span>Grouped by</span>
                   <Strong>{groupBy.join(', ')}</Strong>
                 </MetaText>
@@ -294,7 +301,7 @@ const Policy: FC<PolicyComponentProps> = ({
                 </MetaText>
               )}
               {hasMuteTimings && (
-                <MetaText icon="calendar-slash">
+                <MetaText icon="calendar-slash" data-testid="mute-timings">
                   <span>Muted when</span>
                   {/* TODO make a better mite timing overview, allow combining multiple in to one overview */}
                   {/* <HoverCard
@@ -328,7 +335,7 @@ const Policy: FC<PolicyComponentProps> = ({
               )}
               {hasInheritedProperties && (
                 <>
-                  <MetaText icon="corner-down-right-alt">
+                  <MetaText icon="corner-down-right-alt" data-testid="inherited-properties">
                     <span>Inherited</span>
                     <HoverCard
                       arrow
@@ -398,19 +405,9 @@ const Policy: FC<PolicyComponentProps> = ({
               routeTree={routeTree}
               currentRoute={route}
               receivers={receivers}
-              contactPoint={route.receiver}
               contactPointsState={contactPointsState}
-              groupBy={route.group_by}
-              timingOptions={{
-                group_wait: route.group_wait,
-                group_interval: route.group_interval,
-                repeat_interval: route.repeat_interval,
-              }}
               readOnly={readOnly}
               matchers={normalizeMatchers(route)}
-              muteTimings={route.mute_time_intervals}
-              childPolicies={route.routes ?? []}
-              continueMatching={route.continue}
               inheritedProperties={inherited}
               onAddPolicy={onAddPolicy}
               onEditPolicy={onEditPolicy}
@@ -438,7 +435,7 @@ const TimingOptionsMeta = ({ timingOptions }: { timingOptions: TimingOptions }) 
   const groupInterval = timingOptions.group_interval ?? TIMING_OPTIONS_DEFAULTS.group_interval;
 
   return (
-    <MetaText icon="hourglass">
+    <MetaText icon="hourglass" data-testid="timing-options">
       <span>Wait</span>
       <Tooltip
         placement="top"

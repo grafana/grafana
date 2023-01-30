@@ -22,30 +22,32 @@ const Matchers: FC<MatchersProps> = ({ matchers }) => {
   const hasMoreMatchers = rest.length > 0;
 
   return (
-    <Stack direction="row" gap={1} alignItems="center">
-      {firstFew.map((matcher) => (
-        <MatcherBadge key={uniqueId()} matcher={matcher} />
-      ))}
-      {/* TODO hover state to show all matchers we're not showing */}
-      {hasMoreMatchers && (
-        <HoverCard
-          arrow
-          placement="top"
-          showAfter={100}
-          content={
-            <>
-              {rest.map((matcher) => (
-                <MatcherBadge key={uniqueId()} matcher={matcher} />
-              ))}
-            </>
-          }
-        >
-          <span>
-            <div className={styles.metadata}>{`and ${rest.length} more`}</div>
-          </span>
-        </HoverCard>
-      )}
-    </Stack>
+    <span data-testid="label-matchers">
+      <Stack direction="row" gap={1} alignItems="center">
+        {firstFew.map((matcher) => (
+          <MatcherBadge key={uniqueId()} matcher={matcher} />
+        ))}
+        {/* TODO hover state to show all matchers we're not showing */}
+        {hasMoreMatchers && (
+          <HoverCard
+            arrow
+            placement="top"
+            showAfter={100}
+            content={
+              <>
+                {rest.map((matcher) => (
+                  <MatcherBadge key={uniqueId()} matcher={matcher} />
+                ))}
+              </>
+            }
+          >
+            <span>
+              <div className={styles.metadata}>{`and ${rest.length} more`}</div>
+            </span>
+          </HoverCard>
+        )}
+      </Stack>
+    </span>
   );
 };
 
