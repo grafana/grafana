@@ -15,9 +15,6 @@
     "search-box": {
       "placeholder": "Rechercher dans Grafana"
     },
-    "search-box": {
-      "placeholder": ""
-    },
     "section": {
       "actions": "Actions",
       "dashboard-search-results": "Tableaux de bord",
@@ -163,7 +160,7 @@
       "title": "Règles d'alerte"
     },
     "alerting-receivers": {
-      "subtitle": "Décider la manière dont vos contacts sont informés lorsqu'une alerte se déclenche",
+      "subtitle": "",
       "title": "Points de contact"
     },
     "alerting-silences": {
@@ -194,7 +191,7 @@
       "title": "Créer"
     },
     "create-alert": {
-      "title": "Nouvelle règle d'alerte"
+      "title": ""
     },
     "create-dashboard": {
       "title": "Tableau de bord"
