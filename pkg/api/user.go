@@ -63,7 +63,7 @@ func (hs *HTTPServer) getUserUserProfile(c *contextmodel.ReqContext, userID int6
 		return response.Error(500, "Failed to get user", err)
 	}
 
-	getAuthQuery := models.GetAuthInfoQuery{UserId: userID}
+	getAuthQuery := login.GetAuthInfoQuery{UserId: userID}
 	userProfile.AuthLabels = []string{}
 	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
 		authLabel := login.GetAuthProviderLabel(getAuthQuery.Result.AuthModule)
@@ -224,7 +224,7 @@ func (hs *HTTPServer) handleUpdateUser(ctx context.Context, cmd user.UpdateUserC
 }
 
 func (hs *HTTPServer) isExternalUser(ctx context.Context, userID int64) (bool, error) {
-	getAuthQuery := models.GetAuthInfoQuery{UserId: userID}
+	getAuthQuery := login.GetAuthInfoQuery{UserId: userID}
 	var err error
 	if err = hs.authInfoService.GetAuthInfo(ctx, &getAuthQuery); err == nil {
 		return true, nil
@@ -434,7 +434,7 @@ func (hs *HTTPServer) ChangeUserPassword(c *contextmodel.ReqContext) response.Re
 		return response.Error(500, "Could not read user from database", err)
 	}
 
-	getAuthQuery := models.GetAuthInfoQuery{UserId: user.ID}
+	getAuthQuery := login.GetAuthInfoQuery{UserId: user.ID}
 	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
 		authModule := getAuthQuery.Result.AuthModule
 		if authModule == login.LDAPAuthModule || authModule == login.AuthProxyAuthModule {

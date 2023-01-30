@@ -14,9 +14,10 @@ import (
 	"os"
 	"time"
 
+	jose "gopkg.in/square/go-jose.v2"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	jose "gopkg.in/square/go-jose.v2"
 )
 
 var ErrFailedToParsePemFile = errors.New("failed to parse pem-encoded file")
