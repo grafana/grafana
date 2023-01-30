@@ -130,7 +130,7 @@ export function PanelChrome({
 
         {loadingState === LoadingState.Streaming && (
           <Tooltip content="Streaming">
-            <TitleItem className={styles.item} data-testid="panel-streaming">
+            <TitleItem className={dragClassCancel} data-testid="panel-streaming">
               <Icon name="circle-mono" size="md" className={styles.streaming} />
             </TitleItem>
           </Tooltip>
@@ -296,9 +296,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     titleItems: css({
       display: 'flex',
-      alignItems: 'center',
-      overflow: 'hidden',
-      padding: theme.spacing(1),
     }),
   };
 };
