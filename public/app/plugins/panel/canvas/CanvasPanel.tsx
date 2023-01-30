@@ -21,6 +21,7 @@ interface State {
   openInlineEdit: boolean;
   openSetBackground: boolean;
   contextMenuAnchorPoint: AnchorPoint;
+  moveableAction: boolean;
 }
 
 export interface InstanceState {
@@ -56,6 +57,7 @@ export class CanvasPanel extends Component<Props, State> {
       openInlineEdit: false,
       openSetBackground: false,
       contextMenuAnchorPoint: { x: 0, y: 0 },
+      moveableAction: false,
     };
 
     // Only the initial options are ever used.
@@ -72,6 +74,7 @@ export class CanvasPanel extends Component<Props, State> {
     this.scene.inlineEditingCallback = this.openInlineEdit;
     this.scene.setBackgroundCallback = this.openSetBackground;
     this.scene.tooltipCallback = this.tooltipCallback;
+    this.scene.moveableActionCallback = this.moveableActionCallback;
 
     this.subs.add(
       this.props.eventBus.subscribe(PanelEditEnteredEvent, (evt: PanelEditEnteredEvent) => {
@@ -184,6 +187,10 @@ export class CanvasPanel extends Component<Props, State> {
       changed = true;
     }
 
+    if (this.state.moveableAction !== nextState.moveableAction) {
+      changed = true;
+    }
+
     // After editing, the options are valid, but the scene was in a different panel or inline editing mode has changed
     const inlineEditingSwitched = this.props.options.inlineEditing !== nextProps.options.inlineEditing;
     const shouldShowAdvancedTypesSwitched =
@@ -232,6 +239,11 @@ export class CanvasPanel extends Component<Props, State> {
 
   tooltipCallback = (tooltip: CanvasTooltipPayload | undefined) => {
     this.scene.tooltip = tooltip;
+    this.forceUpdate();
+  };
+
+  moveableActionCallback = (updated: boolean) => {
+    this.setState({ moveableAction: updated });
     this.forceUpdate();
   };
 

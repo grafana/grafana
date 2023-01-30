@@ -219,7 +219,7 @@ describe('migrateStringQueriesToObjectQueries', () => {
         queryType: AzureQueryType.LogAnalytics,
         azureLogAnalytics: {
           query: 'some kind of kql query',
-          resources: [''],
+          resources: [],
         },
         subscription: 'defaultSubscriptionId',
       },
