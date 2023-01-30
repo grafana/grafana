@@ -218,6 +218,10 @@ func (c *httpLokiClient) query(ctx context.Context, selectors []Selector, start,
 		return QueryRes{}, fmt.Errorf("error executing request: %w", err)
 	}
 
+	defer func() {
+		_ = res.Body.Close()
+	}()
+
 	data, err := io.ReadAll(res.Body)
 	if err != nil {
 		return QueryRes{}, fmt.Errorf("error reading request response: %w", err)
@@ -245,7 +249,6 @@ func selectorString(selectors []Selector) string {
 	// Remove the last comma, as we append one to every selector.
 	query = query[:len(query)-1]
 	return "{" + query + "}"
-
 }
 
 func NewSelector(label, op, value string) (Selector, error) {

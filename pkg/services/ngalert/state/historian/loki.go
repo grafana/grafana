@@ -167,7 +167,7 @@ func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
 			}
 			curVal, err := strconv.ParseInt(stream.Values[pointers[i]][0], 10, 64)
 			if err != nil {
-				return nil, fmt.Errorf("failed to parse timestamp from loki repsonse: %w", err)
+				return nil, fmt.Errorf("failed to parse timestamp from loki response: %w", err)
 			}
 			if pointers[i] < len(stream.Values) && curVal < minVal {
 				minVal = curVal
