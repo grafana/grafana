@@ -180,7 +180,10 @@ func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
 			break
 		}
 		var entry lokiEntry
-		json.Unmarshal([]byte(minEl[1]), &entry)
+		err := json.Unmarshal([]byte(minEl[1]), &entry)
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmarshal entry: %w", err)
+		}
 		// Append the minimum element to the merged slice and move the pointer.
 		ts, err := strconv.ParseInt(minEl[0], 10, 64)
 		if err != nil {
