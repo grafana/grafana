@@ -178,6 +178,10 @@ export function buildFieldsForOptionalRowNums(totalRows: number): Field {
   };
 }
 
+/*
+  This gives us a buffered ArrayVector that begins with "1", and increments by 1 until reaching the desired length.
+  Values are converted to strings so that the Footer component doesn't attempt to sum and render their total.
+*/
 function buildBufferedIncrementingValues(totalRows: number): ArrayVector<string> {
   let arr = [];
   for (let i = 1; i <= totalRows; i++) {

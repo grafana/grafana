@@ -89,8 +89,8 @@ export const Table = memo((props: Props) => {
     return EXTENDED_ROW_HEIGHT;
   }, [footerItems, headerHeight]);
 
-  // React table data array. This data acts just like a dummy array to let react-table know how many rows exist
-  // The cells use the field to look up values
+  // React table data array. This data acts just like a dummy array to let react-table know how many rows exist.
+  // The cells use the field to look up values, therefore this is simply a length/size placeholder.
   const memoizedData = useMemo(() => {
     if (!data.fields.length) {
       return [];
