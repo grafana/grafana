@@ -152,7 +152,7 @@ type UserProfileDTO struct {
 	AuthLabels     []string        `json:"authLabels"`
 	UpdatedAt      time.Time       `json:"updatedAt"`
 	CreatedAt      time.Time       `json:"createdAt"`
-	AvatarUrl      string          `json:"avatarUrl"`
+	AvatarURL      string          `json:"avatarUrl"`
 	AccessControl  map[string]bool `json:"accessControl,omitempty"`
 }
 
@@ -362,3 +362,14 @@ const (
 	QuotaTargetSrv string = "user"
 	QuotaTarget    string = "user"
 )
+
+type UserIDDTO struct {
+	ID      int64  `json:"id"`
+	Message string `json:"message"`
+}
+
+type Password string
+
+func (p Password) IsWeak() bool {
+	return len(p) <= 4
+}

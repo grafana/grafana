@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -83,9 +82,9 @@ func (hs *HTTPServer) AdminCreateUser(c *contextmodel.ReqContext) response.Respo
 
 	metrics.MApiAdminUserCreate.Inc()
 
-	result := models.UserIdDTO{
+	result := user.UserIDDTO{
 		Message: "User created",
-		Id:      usr.ID,
+		ID:      usr.ID,
 	}
 
 	return response.JSON(http.StatusOK, result)
@@ -506,7 +505,7 @@ type AdminUpdateUserPermissionsParams struct {
 // swagger:response adminCreateUserResponse
 type AdminCreateUserResponseResponse struct {
 	// in:body
-	Body models.UserIdDTO `json:"body"`
+	Body user.UserIDDTO `json:"body"`
 }
 
 // swagger:response adminGetUserAuthTokensResponse
