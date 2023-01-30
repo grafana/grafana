@@ -173,30 +173,12 @@ export function getColumns(
 */
 export function buildFieldsForOptionalRowNums(totalRows: number): Field {
   return {
-    // White space as the name, so the column title is blank
-    // JEV: move to default vals module
-    name: ' ',
-    display: function (value) {
-      return {
-        numeric: Number(value),
-        text: value,
-      };
-    },
-    type: FieldType.string,
-    config: {
-      color: { mode: 'thresholds' },
-      custom: {
-        align: 'auto',
-        cellOptions: { type: 'auto' },
-        inspect: false,
-        width: OPTIONAL_ROW_NUMBER_COLUMN_WIDTH,
-      },
-    },
-    values: buildBufferedValues(totalRows),
+    ...defaultRowNumberColumnFieldData,
+    values: buildBufferedIncrementingValues(totalRows),
   };
 }
 
-function buildBufferedValues(totalRows: number): ArrayVector<string> {
+function buildBufferedIncrementingValues(totalRows: number): ArrayVector<string> {
   let arr = [];
   for (let i = 1; i <= totalRows; i++) {
     arr.push(String(i));
@@ -470,3 +452,23 @@ export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDispl
       };
   }
 }
+
+const defaultRowNumberColumnFieldData = {
+  name: ' ',
+  display: function (value: string) {
+    return {
+      numeric: Number(value),
+      text: value,
+    };
+  },
+  type: FieldType.string,
+  config: {
+    color: { mode: 'thresholds' },
+    custom: {
+      align: 'auto',
+      cellOptions: { type: 'auto' },
+      inspect: false,
+      width: OPTIONAL_ROW_NUMBER_COLUMN_WIDTH,
+    },
+  },
+};
