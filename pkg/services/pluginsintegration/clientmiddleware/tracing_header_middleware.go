@@ -4,13 +4,11 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/infra/tracing"
+	
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/query"
 )
-
-const traceIDHeaderName = "X-Trace-Id"
 
 // NewTracingHeaderMiddleware creates a new plugins.ClientMiddleware that will
 // populate useful tracing headers on outgoing plugins.Client and HTTP
@@ -46,22 +44,6 @@ func (m *TracingHeaderMiddleware) applyHeaders(ctx context.Context, req backend.
 			continue
 		}
 		req.SetHTTPHeader(headerName, gotVal)
-	}
-	m.applyTraceIDHeader(ctx, req)
-}
-
-func (m *TracingHeaderMiddleware) applyTraceIDHeader(ctx context.Context, req interface{}) {
-	tid := tracing.TraceIDFromContext(ctx, false)
-	if tid == "" {
-		return
-	}
-	switch r := req.(type) {
-	case *backend.QueryDataRequest:
-		r.Headers[traceIDHeaderName] = tid
-	case *backend.CheckHealthRequest:
-		r.Headers[traceIDHeaderName] = tid
-	case *backend.CallResourceRequest:
-		r.Headers[traceIDHeaderName] = []string{tid}
 	}
 }
 
