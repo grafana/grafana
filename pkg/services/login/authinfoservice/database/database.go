@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -35,19 +34,19 @@ func ProvideAuthInfoStore(sqlStore db.DB, secretsService secrets.Service, userSe
 	return store
 }
 
-func (s *AuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error {
+func (s *AuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *login.GetExternalUserInfoByLoginQuery) error {
 	userQuery := user.GetUserByLoginQuery{LoginOrEmail: query.LoginOrEmail}
 	usr, err := s.userService.GetByLogin(ctx, &userQuery)
 	if err != nil {
 		return err
 	}
 
-	authInfoQuery := &models.GetAuthInfoQuery{UserId: usr.ID}
+	authInfoQuery := &login.GetAuthInfoQuery{UserId: usr.ID}
 	if err := s.GetAuthInfo(ctx, authInfoQuery); err != nil {
 		return err
 	}
 
-	query.Result = &models.ExternalUserInfo{
+	query.Result = &login.ExternalUserInfo{
 		UserId:     usr.ID,
 		Login:      usr.Login,
 		Email:      usr.Email,
@@ -59,12 +58,12 @@ func (s *AuthInfoStore) GetExternalUserInfoByLogin(ctx context.Context, query *m
 	return nil
 }
 
-func (s *AuthInfoStore) GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error {
+func (s *AuthInfoStore) GetAuthInfo(ctx context.Context, query *login.GetAuthInfoQuery) error {
 	if query.UserId == 0 && query.AuthId == "" {
 		return user.ErrUserNotFound
 	}
 
-	userAuth := &models.UserAuth{
+	userAuth := &login.UserAuth{
 		UserId:     query.UserId,
 		AuthModule: query.AuthModule,
 		AuthId:     query.AuthId,
@@ -110,8 +109,8 @@ func (s *AuthInfoStore) GetAuthInfo(ctx context.Context, query *models.GetAuthIn
 	return nil
 }
 
-func (s *AuthInfoStore) GetUserLabels(ctx context.Context, query models.GetUserLabelsQuery) (map[int64]string, error) {
-	userAuths := []models.UserAuth{}
+func (s *AuthInfoStore) GetUserLabels(ctx context.Context, query login.GetUserLabelsQuery) (map[int64]string, error) {
+	userAuths := []login.UserAuth{}
 	params := make([]interface{}, 0, len(query.UserIDs))
 	for _, id := range query.UserIDs {
 		params = append(params, id)
@@ -134,8 +133,8 @@ func (s *AuthInfoStore) GetUserLabels(ctx context.Context, query models.GetUserL
 	return labelMap, nil
 }
 
-func (s *AuthInfoStore) SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfoCommand) error {
-	authUser := &models.UserAuth{
+func (s *AuthInfoStore) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
+	authUser := &login.UserAuth{
 		UserId:     cmd.UserId,
 		AuthModule: cmd.AuthModule,
 		AuthId:     cmd.AuthId,
@@ -179,10 +178,10 @@ func (s *AuthInfoStore) SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfo
 
 // UpdateAuthInfoDate updates the auth info for the user with the latest date.
 // Avoids overlapping entries hiding the last used one (ex: LDAP->SAML->LDAP).
-func (s *AuthInfoStore) UpdateAuthInfoDate(ctx context.Context, authInfo *models.UserAuth) error {
+func (s *AuthInfoStore) UpdateAuthInfoDate(ctx context.Context, authInfo *login.UserAuth) error {
 	authInfo.Created = GetTime()
 
-	cond := &models.UserAuth{
+	cond := &login.UserAuth{
 		Id:         authInfo.Id,
 		UserId:     authInfo.UserId,
 		AuthModule: authInfo.AuthModule,
@@ -193,8 +192,8 @@ func (s *AuthInfoStore) UpdateAuthInfoDate(ctx context.Context, authInfo *models
 	})
 }
 
-func (s *AuthInfoStore) UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error {
-	authUser := &models.UserAuth{
+func (s *AuthInfoStore) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error {
+	authUser := &login.UserAuth{
 		UserId:     cmd.UserId,
 		AuthModule: cmd.AuthModule,
 		AuthId:     cmd.AuthId,
@@ -237,7 +236,7 @@ func (s *AuthInfoStore) UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAu
 	})
 }
 
-func (s *AuthInfoStore) DeleteAuthInfo(ctx context.Context, cmd *models.DeleteAuthInfoCommand) error {
+func (s *AuthInfoStore) DeleteAuthInfo(ctx context.Context, cmd *login.DeleteAuthInfoCommand) error {
 	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		_, err := sess.Delete(cmd.UserAuth)
 		return err

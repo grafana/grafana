@@ -39,7 +39,7 @@ func (hs *HTTPServer) SendResetPasswordEmail(c *contextmodel.ReqContext) respons
 		return response.Error(http.StatusOK, "Email sent", nil)
 	}
 
-	getAuthQuery := models.GetAuthInfoQuery{UserId: usr.ID}
+	getAuthQuery := login.GetAuthInfoQuery{UserId: usr.ID}
 	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
 		authModule := getAuthQuery.Result.AuthModule
 		if authModule == login.LDAPAuthModule || authModule == login.AuthProxyAuthModule {

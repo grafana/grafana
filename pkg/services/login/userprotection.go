@@ -3,7 +3,6 @@ package login
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -12,13 +11,13 @@ type UserProtectionService interface {
 }
 
 type Store interface {
-	GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error
-	GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error
-	GetUserLabels(ctx context.Context, query models.GetUserLabelsQuery) (map[int64]string, error)
-	SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfoCommand) error
-	UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error
-	UpdateAuthInfoDate(ctx context.Context, authInfo *models.UserAuth) error
-	DeleteAuthInfo(ctx context.Context, cmd *models.DeleteAuthInfoCommand) error
+	GetExternalUserInfoByLogin(ctx context.Context, query *GetExternalUserInfoByLoginQuery) error
+	GetAuthInfo(ctx context.Context, query *GetAuthInfoQuery) error
+	GetUserLabels(ctx context.Context, query GetUserLabelsQuery) (map[int64]string, error)
+	SetAuthInfo(ctx context.Context, cmd *SetAuthInfoCommand) error
+	UpdateAuthInfo(ctx context.Context, cmd *UpdateAuthInfoCommand) error
+	UpdateAuthInfoDate(ctx context.Context, authInfo *UserAuth) error
+	DeleteAuthInfo(ctx context.Context, cmd *DeleteAuthInfoCommand) error
 	GetUserById(ctx context.Context, id int64) (*user.User, error)
 	GetUserByLogin(ctx context.Context, login string) (*user.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*user.User, error)

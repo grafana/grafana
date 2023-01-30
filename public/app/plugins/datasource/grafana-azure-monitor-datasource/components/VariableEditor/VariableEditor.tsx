@@ -30,6 +30,7 @@ const VariableEditor = (props: Props) => {
     { label: 'Subscriptions', value: AzureQueryType.SubscriptionsQuery },
     { label: 'Resource Groups', value: AzureQueryType.ResourceGroupsQuery },
     { label: 'Namespaces', value: AzureQueryType.NamespacesQuery },
+    { label: 'Regions', value: AzureQueryType.LocationsQuery },
     { label: 'Resource Names', value: AzureQueryType.ResourceNamesQuery },
     { label: 'Metric Names', value: AzureQueryType.MetricNamesQuery },
     { label: 'Workspaces', value: AzureQueryType.WorkspacesQuery },
@@ -92,6 +93,9 @@ const VariableEditor = (props: Props) => {
         setRequireResourceGroup(true);
         setRequireNamespace(true);
         setRequireResource(true);
+        break;
+      case AzureQueryType.LocationsQuery:
+        setRequireSubscription(true);
         break;
     }
   }, [queryType]);

@@ -5384,7 +5384,7 @@ __metadata:
     rc-drawer: 6.1.2
     rc-slider: 10.1.0
     rc-time-picker: ^3.7.3
-    rc-tooltip: 5.2.2
+    rc-tooltip: 5.3.1
     react: 17.0.2
     react-beautiful-dnd: 13.1.1
     react-calendar: 3.9.0
@@ -22260,6 +22260,7 @@ __metadata:
     react-test-renderer: 17.0.2
     react-transition-group: 4.4.5
     react-use: 17.4.0
+    react-virtual: 2.8.2
     react-virtualized-auto-sizer: 1.0.7
     react-window: 1.8.8
     react-window-infinite-loader: 1.0.8
@@ -32305,17 +32306,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-tooltip@npm:5.2.2":
-  version: 5.2.2
-  resolution: "rc-tooltip@npm:5.2.2"
+"rc-tooltip@npm:5.3.1":
+  version: 5.3.1
+  resolution: "rc-tooltip@npm:5.3.1"
   dependencies:
     "@babel/runtime": ^7.11.2
     classnames: ^2.3.1
-    rc-trigger: ^5.0.0
+    rc-trigger: ^5.3.1
   peerDependencies:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
-  checksum: df6a59096876becf930df0347cfe6379cde9647f338a333dd0aae99039bf45e72db866f03ab6b5fd5ce616b074ec888f50e61ebe0f8d2a135c2617595dbf0583
+  checksum: 93a99dd8f83ca6187cae7d09e498156e660331837f7ff16d6c50165e5cbc810d566552535d8c92c6fb3093f45cadfa0b62a03b9f78ba22e8b6123eda27333cf4
   languageName: node
   linkType: hard
 
@@ -32350,22 +32351,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-trigger@npm:^5.0.0":
-  version: 5.3.1
-  resolution: "rc-trigger@npm:5.3.1"
-  dependencies:
-    "@babel/runtime": ^7.18.3
-    classnames: ^2.2.6
-    rc-align: ^4.0.0
-    rc-motion: ^2.0.0
-    rc-util: ^5.19.2
-  peerDependencies:
-    react: ">=16.9.0"
-    react-dom: ">=16.9.0"
-  checksum: 29302e9a0a66eb26cef5ce0b291ada9bb3e284f19980bf02da6863a5306d5de863aa87fbbf30c176a4453c13db160b69789ac50aae09af8e5c53942ac0368a3b
-  languageName: node
-  linkType: hard
-
 "rc-trigger@npm:^5.0.4":
   version: 5.2.10
   resolution: "rc-trigger@npm:5.2.10"
@@ -32379,6 +32364,22 @@ __metadata:
     react: ">=16.9.0"
     react-dom: ">=16.9.0"
   checksum: 0c71935467bfb3dd86b52c85c106e671c2933409ba4568152f386498b807d5ab680cb2de2f6fc370289368d2b65507afd0e6fc2269965b67e4016c2f61e9bbb1
+  languageName: node
+  linkType: hard
+
+"rc-trigger@npm:^5.3.1":
+  version: 5.3.4
+  resolution: "rc-trigger@npm:5.3.4"
+  dependencies:
+    "@babel/runtime": ^7.18.3
+    classnames: ^2.2.6
+    rc-align: ^4.0.0
+    rc-motion: ^2.0.0
+    rc-util: ^5.19.2
+  peerDependencies:
+    react: ">=16.9.0"
+    react-dom: ">=16.9.0"
+  checksum: 6ca7694a4cf064040b5e0fd9b4629b0e0a19ebb29c4eb5614ee9eb22b4193e21909171fd95e48be73a94e44f249cb9616d7670b696164620b722d3de6f280017
   languageName: node
   linkType: hard
 
@@ -33298,6 +33299,17 @@ __metadata:
     react: ^16.8.0  || ^17.0.0 || ^18.0.0
     react-dom: ^16.8.0  || ^17.0.0 || ^18.0.0
   checksum: 0889da919b49a186de375ec15d2778b954ae981c523acd17dd496e4a4da7b6190efe7993491e1b85fdd6de3e745d08a4eaba4caa35408d570b5f1de550f35d11
+  languageName: node
+  linkType: hard
+
+"react-virtual@npm:2.8.2":
+  version: 2.8.2
+  resolution: "react-virtual@npm:2.8.2"
+  dependencies:
+    "@reach/observe-rect": ^1.1.0
+  peerDependencies:
+    react: ^16.6.3 || ^17.0.0
+  checksum: 3c95c7ea951d33d6da8d5461ea28b39dea7bd536b06ccae58ac808907761bc2425dcb469be5618c95a6f9f021f70b8019f386d21d33c64540d051f11e3f10e4a
   languageName: node
   linkType: hard
 
