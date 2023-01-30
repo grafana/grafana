@@ -7,11 +7,11 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -333,7 +333,7 @@ func (st DBstore) GetUserVisibleNamespaces(ctx context.Context, orgID int64, use
 		Type:         searchstore.TypeAlertFolder,
 		Limit:        -1,
 		Permission:   dashboards.PERMISSION_VIEW,
-		Sort:         models.SortOption{},
+		Sort:         model.SortOption{},
 		Filters: []interface{}{
 			searchstore.FolderWithAlertsFilter{},
 		},
