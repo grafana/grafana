@@ -4269,20 +4269,27 @@ platform:
 services: []
 steps:
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.20/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
-  - ./bin/grabpl artifacts publish --security --tag $${DRONE_TAG} --src-bucket $${PRERELEASE_BUCKET}
-  depends_on:
-  - grabpl
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.4
+  name: compile-build-cmd
+- commands:
+  - ./bin/build artifacts publish --security --tag $${DRONE_TAG} --src-bucket $${PRERELEASE_BUCKET}
+  depends_on:
+  - compile-build-cmd
+  environment:
+    ENTERPRISE2_SECURITY_PREFIX:
+      from_secret: enterprise2_security_prefix
     GCP_KEY:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
+    SECURITY_DEST_BUCKET:
+      from_secret: security_dest_bucket
+    STATIC_ASSET_EDITIONS:
+      from_secret: static_asset_editions
   image: grafana/grafana-ci-deploy:1.3.3
   name: publish-artifacts
 trigger:
@@ -4313,20 +4320,27 @@ platform:
 services: []
 steps:
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.20/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
-  - ./bin/grabpl artifacts publish --tag $${DRONE_TAG} --src-bucket $${PRERELEASE_BUCKET}
-  depends_on:
-  - grabpl
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.4
+  name: compile-build-cmd
+- commands:
+  - ./bin/build artifacts publish --tag $${DRONE_TAG} --src-bucket $${PRERELEASE_BUCKET}
+  depends_on:
+  - compile-build-cmd
+  environment:
+    ENTERPRISE2_SECURITY_PREFIX:
+      from_secret: enterprise2_security_prefix
     GCP_KEY:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
+    SECURITY_DEST_BUCKET:
+      from_secret: security_dest_bucket
+    STATIC_ASSET_EDITIONS:
+      from_secret: static_asset_editions
   image: grafana/grafana-ci-deploy:1.3.3
   name: publish-artifacts
 trigger:
@@ -6451,6 +6465,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: 5b2831b92627887ebe7ee9963796449981a12a96ea775a331fb84536598536ce
+hmac: f0c01f0b208f5d30732b1e03f093f8422cdc2ab4b7f15d5bdfaeb1cd09972e72
 
 ...
