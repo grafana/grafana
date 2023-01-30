@@ -4,9 +4,11 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 )
 
 type SqlBackend struct {
@@ -19,7 +21,10 @@ func NewSqlBackend() *SqlBackend {
 	}
 }
 
-func (h *SqlBackend) RecordStatesAsync(ctx context.Context, _ *models.AlertRule, _ []state.StateTransition) {
+func (h *SqlBackend) RecordStatesAsync(ctx context.Context, _ history_model.RuleMeta, _ []state.StateTransition) <-chan error {
+	errCh := make(chan error)
+	close(errCh)
+	return errCh
 }
 
 func (h *SqlBackend) QueryStates(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {

@@ -98,7 +98,8 @@ func TestIntegrationTestReceivers(t *testing.T) {
 					"type": "email",
 					"disableResolveMessage": false,
 					"settings": {
-						"addresses":"example@email.com"
+						"addresses":"example@email.com",
+						"singleEmail": true
 					},
 					"secureFields": {}
 				}

@@ -8,11 +8,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/prometheus/alertmanager/cluster"
 	"gopkg.in/ini.v1"
+
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
@@ -109,6 +108,7 @@ type UnifiedAlertingStateHistorySettings struct {
 	// if one of them is set.
 	LokiBasicAuthPassword string
 	LokiBasicAuthUsername string
+	ExternalLabels        map[string]string
 }
 
 // IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
@@ -318,6 +318,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.ReservedLabels = uaCfgReservedLabels
 
 	stateHistory := iniFile.Section("unified_alerting.state_history")
+	stateHistoryLabels := iniFile.Section("unified_alerting.state_history.external_labels")
 	uaCfgStateHistory := UnifiedAlertingStateHistorySettings{
 		Enabled:               stateHistory.Key("enabled").MustBool(stateHistoryDefaultEnabled),
 		Backend:               stateHistory.Key("backend").MustString("annotations"),
@@ -325,6 +326,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		LokiTenantID:          stateHistory.Key("loki_tenant_id").MustString(""),
 		LokiBasicAuthUsername: stateHistory.Key("loki_basic_auth_username").MustString(""),
 		LokiBasicAuthPassword: stateHistory.Key("loki_basic_auth_password").MustString(""),
+		ExternalLabels:        stateHistoryLabels.KeysHash(),
 	}
 	uaCfg.StateHistory = uaCfgStateHistory
 

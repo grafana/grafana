@@ -141,6 +141,10 @@ after switching to the Logs data source, the query changes to:
 
 This will return a chunk of logs in the selected time range that can be grepped/text searched.
 
+### Logs sample
+
+If the selected data source implements logs sample, and supports both log and metric queries, then for metric queries you will be able to automatically see samples of log lines that contributed to visualized metrics. This feature is currently supported by Loki data sources.
+
 #### Live tailing
 
 Use the Live tailing feature to see real-time logs on supported data sources.

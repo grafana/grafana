@@ -13,6 +13,8 @@ import (
 
 	"github.com/grafana/alerting/alerting"
 	"github.com/grafana/alerting/alerting/notifier/channels"
+	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -22,8 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
-
-	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 )
 
 const (
