@@ -23,7 +23,7 @@ func (crd Kind) GVK() k8schema.GroupVersionKind {
 	// TODO custom structured
 	props := crd.GrafanaKind.Props().(kindsys.CoreProperties)
 	gvk := k8schema.GroupVersionKind{
-		Group: fmt.Sprintf("%s.core.grafana", props.MachineName),
+		Group: fmt.Sprintf("%s.core.grafana.com", props.MachineName),
 		Kind:  props.Name,
 	}
 	if props.Maturity.Less(kindsys.MaturityStable) {

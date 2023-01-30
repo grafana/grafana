@@ -3,6 +3,7 @@ package k8saccess
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -25,19 +26,11 @@ type k8sDashboardService struct {
 
 var _ dashboards.DashboardService = (*k8sDashboardService)(nil)
 
-func NewDashboardService(cfg *setting.Cfg, orig dashboards.DashboardService, store entity.EntityStoreServer, reg *corecrd.Registry) dashboards.DashboardService {
-	config, err := bridge.LoadRestConfig(cfg)
-	if err != nil {
-		panic(err)
-	}
-	clientSet, err := bridge.NewClientset(config)
-	if err != nil {
-		panic(err)
-	}
+func NewDashboardService(cfg *setting.Cfg, orig dashboards.DashboardService, store entity.EntityStoreServer, reg *corecrd.Registry, bridge *bridge.Service) dashboards.DashboardService {
 	return &k8sDashboardService{
 		reg:       reg,
 		orig:      orig,
-		clientSet: clientSet,
+		clientSet: bridge.ClientSet,
 		store:     store,
 	}
 }
@@ -98,6 +91,7 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 	namespace := "default"
 	restClient := s.clientSet.RESTClient()
 	labels := make(map[string]string)
+	annotations := make(map[string]string)
 
 	// take the kindsys dashboard kind and alias it so it's easier to distinguish from dashboards.Dashboard
 	type dashboardKind = dashboard.Dashboard
@@ -111,12 +105,14 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 
 	b := k8ssys.Base[dashboardKind]{
 		TypeMeta: metav1.TypeMeta{
-			Kind:       dashboardCRD.Schema.Kind,
-			APIVersion: dashboardCRD.Schema.APIVersion,
+			Kind:       dashboardCRD.GVK().Kind,
+			APIVersion: dashboardCRD.GVK().Group + "/" + dashboardCRD.GVK().Version,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   dto.Dashboard.UID,
-			Labels: labels,
+			Namespace:   namespace,
+			Name:        dto.Dashboard.Title,
+			Labels:      labels,
+			Annotations: annotations,
 		},
 		Spec: d,
 	}
@@ -125,16 +121,25 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println("json", string(raw))
 	status := 0
-	into := k8ssys.Base[dashboardKind]{}
-	err = restClient.
+	fmt.Println("UID", "uid", dashboardCRD.Schema.Spec.Names.Plural+"."+dashboardCRD.GVK().Group)
+	req := restClient.
 		Post().
-		Resource("Dashboard").
+		Resource(dashboardCRD.Schema.Spec.Names.Plural).
 		Namespace(namespace).
-		Body(raw).
+		Name(dto.Dashboard.Title).
+		Body(raw)
+
+	fmt.Println("req", req.URL())
+
+	res, err := req.
 		Do(ctx).
 		StatusCode(&status).
-		Into(&into)
+		Raw()
+
+	fmt.Println(string(res))
 
 	return dto.Dashboard, err
 

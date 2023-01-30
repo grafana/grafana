@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/grafana/grafana/pkg/apimachinery/bridge"
 	"github.com/grafana/grafana/pkg/registry/corecrd"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -15,9 +16,10 @@ func ProvideSimpleDashboardService(
 	svc *DashboardServiceImpl,
 	store entity.EntityStoreServer,
 	reg *corecrd.Registry,
+	bridge *bridge.Service,
 ) dashboards.DashboardService {
 	if features.IsEnabled(featuremgmt.FlagK8sDashboards) {
-		return k8saccess.NewDashboardService(cfg, svc, store, reg)
+		return k8saccess.NewDashboardService(cfg, svc, store, reg, bridge)
 	}
 	return svc
 }

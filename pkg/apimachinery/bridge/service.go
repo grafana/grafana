@@ -28,7 +28,7 @@ import (
 type Service struct {
 	enabled   bool
 	config    *rest.Config
-	clientset *Clientset
+	ClientSet *Clientset
 	manager   ctrl.Manager
 	logger    log.Logger
 }
@@ -69,7 +69,7 @@ func ProvideService(cfg *setting.Cfg, feat featuremgmt.FeatureToggles, reg *core
 
 	s := &Service{
 		config:    config,
-		clientset: clientset,
+		ClientSet: clientset,
 		manager:   mgr,
 		enabled:   enabled,
 		logger:    log.New("apimachinery.bridge.service"),
@@ -99,7 +99,7 @@ func (s *Service) Run(ctx context.Context) error {
 // RegisterModels registers models to clientset and controller manager.
 func (s *Service) RegisterModels(ctx context.Context, crds ...k8ssys.Kind) error {
 	for _, crd := range crds {
-		if err := s.clientset.RegisterSchema(ctx, crd); err != nil {
+		if err := s.ClientSet.RegisterSchema(ctx, crd); err != nil {
 			return err
 		}
 
@@ -131,7 +131,12 @@ func LoadRestConfig(cfg *setting.Cfg) (*rest.Config, error) {
 		return nil, fmt.Errorf("cannot find kubeconfig file at '%s'", configPath)
 	}
 
-	return clientcmd.BuildConfigFromFlags("", configPath)
+	c, err := clientcmd.BuildConfigFromFlags("", configPath)
+	if err != nil {
+		return nil, err
+	}
+
+	return c, err
 }
 
 // GenerateScheme generates a kubernetes runtime Scheme from a list of models.
