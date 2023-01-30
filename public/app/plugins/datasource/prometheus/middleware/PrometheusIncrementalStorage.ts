@@ -22,7 +22,7 @@ import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nul
 const PROMETHEUS_INCREMENTAL_QUERY_OVERLAP_DURATION_MS = 60 * 10 * 1000;
 const PROMETHEUS_STORAGE_TIME_INDEX = '__time__';
 const PROMETHEUS_STORAGE_EXEMPLAR_INDEX = 'exemplar';
-const DEBUG = true;
+const DEBUG = false;
 
 // Another issue: if the query window starts at a time when there is no results from the database, we'll always fail the cache check and pull fresh data, even though the cache has everything available
 // Also the cache can def get really big for big queries, need to look into if we want to find a way to limit the size of requests we add to the cache?
@@ -72,7 +72,7 @@ export class PrometheusIncrementalStorage {
 
   // @todo gate
   private setStorageFieldsValues = (queryIndex: string, seriesIndex: string, values: number[]) => {
-    if(queryIndex in this.storage && seriesIndex in this.storage[queryIndex][seriesIndex]){
+    if(queryIndex in this.storage){
       this.storage[queryIndex][seriesIndex] = values;
     }else{
       this.throwError(new Error('Invalid storage index'))
@@ -80,14 +80,10 @@ export class PrometheusIncrementalStorage {
   };
 
   private setStorageTimeFields = (queryIndex: string, values: number[]) => {
-    if(queryIndex in this.storage){
-      this.storage[queryIndex] = {
-        __time__: values,
-        ...this.storage[queryIndex],
-      };
-    }else{
-      this.throwError(new Error('Invalid storage index'))
-    }
+    this.storage[queryIndex] = {
+      __time__: values,
+      ...this.storage[queryIndex],
+    };
   };
 
   private getStorageTimeFields = (queryIndex: string) => {
@@ -327,9 +323,7 @@ export class PrometheusIncrementalStorage {
             if (existingTimeFrames && existingValueFrames && existingTimeFrames.length !== existingValueFrames.length) {
               if (DEBUG) {
                 // Ok, if there are fewer time frames then value frames?
-                console.error('Time frame and value frames are different lengths, something got screwed up!');
-                console.log('existingTimeFrames', existingTimeFrames.length);
-                console.log('existingValueFrames', existingValueFrames.length);
+                console.error('Time frame and value frames are different lengths, something got screwed up!', existingTimeFrames.length, existingValueFrames.length);
               }
             }
 
