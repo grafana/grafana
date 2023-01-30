@@ -92,4 +92,6 @@ export interface FeatureToggles {
   alertingNoNormalState?: boolean;
   azureMultipleResourcePicker?: boolean;
   topNavCommandPalette?: boolean;
+  logsSampleInExplore?: boolean;
+  logsContextDatasourceUi?: boolean;
 }

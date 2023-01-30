@@ -4,17 +4,18 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestOrgSync_SyncOrgUser(t *testing.T) {
@@ -79,7 +80,7 @@ func TestOrgSync_SyncOrgUser(t *testing.T) {
 					IsGrafanaAdmin: ptrBool(false),
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
-						LookUpParams: models.UserLookupParams{
+						LookUpParams: login.UserLookupParams{
 							UserID: nil,
 							Email:  ptrString("test"),
 							Login:  nil,
@@ -97,7 +98,7 @@ func TestOrgSync_SyncOrgUser(t *testing.T) {
 				IsGrafanaAdmin: ptrBool(false),
 				ClientParams: authn.ClientParams{
 					SyncUser: true,
-					LookUpParams: models.UserLookupParams{
+					LookUpParams: login.UserLookupParams{
 						UserID: nil,
 						Email:  ptrString("test"),
 						Login:  nil,

@@ -17,15 +17,6 @@ const (
 	StyleLight Style = "light"
 )
 
-// Defines values for Timezone.
-const (
-	TimezoneBrowser Timezone = "browser"
-
-	TimezoneEmpty Timezone = ""
-
-	TimezoneUtc Timezone = "utc"
-)
-
 // Defines values for CursorSync.
 const (
 	CursorSyncN0 CursorSync = 0
@@ -290,8 +281,8 @@ type Dashboard struct {
 		TimeOptions []string `json:"time_options"`
 	} `json:"timepicker,omitempty"`
 
-	// Timezone of dashboard,
-	Timezone *Timezone `json:"timezone,omitempty"`
+	// Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc".
+	Timezone *string `json:"timezone,omitempty"`
 
 	// Title of dashboard.
 	Title *string `json:"title,omitempty"`
@@ -308,9 +299,6 @@ type Dashboard struct {
 
 // Theme of dashboard.
 type Style string
-
-// Timezone of dashboard,
-type Timezone string
 
 // 0 for no shared crosshair or tooltip (default).
 // 1 for shared crosshair.
