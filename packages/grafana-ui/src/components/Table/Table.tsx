@@ -111,7 +111,7 @@ export const Table = memo((props: Props) => {
   // React-table column definitions
   const memoizedColumns = useMemo(
     () =>
-      getColumns(addNumbersRowFieldToData(data), width, columnMinWidth, !!subData?.length, footerItems, isCountRowsSet),
+      getColumns(addRowNumbersFieldToData(data), width, columnMinWidth, !!subData?.length, footerItems, isCountRowsSet),
     [data, width, columnMinWidth, footerItems, subData, isCountRowsSet]
   );
 
@@ -329,9 +329,14 @@ export const Table = memo((props: Props) => {
     );
   }
 
-  function addNumbersRowFieldToData(data: DataFrame): DataFrame {
+  // This adds the `Field` data needed to display a Column with Row Numbers.
+  function addRowNumbersFieldToData(data: DataFrame): DataFrame {
+    /*
+      `length` prop in a DataFrame tell us the amount of rows that will appear in our table;
+      with that we can build the correct buffered incrementing values for our Row Number column data.
+    */
     const rowField: Field = buildFieldsForOptionalRowNums(data.length);
-    // Since we are mutating data, we make a deep copy to avoid any issues with other components that might share this data
+    // Since we are mutating data, we make a deep copy to avoid any issues with other components that might share this data.
     const newData = cloneDeep(data);
     newData.fields = [rowField, ...newData.fields];
     return newData;
