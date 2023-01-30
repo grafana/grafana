@@ -135,7 +135,7 @@ export function PanelChrome({
         {loadingState === LoadingState.Streaming && (
           <div className={styles.item} style={itemStyles} data-testid="panel-streaming">
             <Tooltip content="Streaming">
-              <Icon name="circle-mono" size="sm" className={styles.streaming} />
+              <Icon name="circle-mono" size="md" className={styles.streaming} />
             </Tooltip>
           </div>
         )}
@@ -147,6 +147,7 @@ export function PanelChrome({
                 aria-label={`Menu for panel with ${title ? `title ${title}` : 'no title'}`}
                 title="Menu"
                 icon="ellipsis-v"
+                iconSize="md"
                 narrow
                 data-testid="panel-menu-button"
                 className={cx(styles.menuItem, dragClassCancel, 'menu-icon')}
@@ -265,6 +266,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     title: css({
       label: 'panel-title',
       marginBottom: 0, // override default h6 margin-bottom
+      paddingRight: theme.spacing(1),
       textOverflow: 'ellipsis',
       overflow: 'hidden',
       whiteSpace: 'nowrap',
