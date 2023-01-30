@@ -148,7 +148,7 @@ function operationWithRangeVectorRenderer(
 }
 
 export function labelFilterRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-  if (model.params[1] === '<' || model.params[1] === '>' || /\d/.test(model.params[2] as string)) {
+  if (!Number.isNaN(Number(model.params[2]))) {
     return `${innerExpr} | ${model.params[0]} ${model.params[1]} ${model.params[2]}`;
   }
 
