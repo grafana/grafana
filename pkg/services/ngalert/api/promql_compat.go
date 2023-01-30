@@ -8,11 +8,11 @@ import (
 	"strings"
 
 	cortex_util "github.com/cortexproject/cortex/pkg/util"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/prometheus/prometheus/pkg/labels"
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/promql/parser"
 
-	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/util"
