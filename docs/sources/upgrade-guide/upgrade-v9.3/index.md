@@ -1,6 +1,7 @@
 ---
 aliases:
   - ../installation/upgrading/
+  - ../setup-grafana/upgrade-grafana/
 description: Guide for upgrading to Grafana v9.3
 keywords:
   - grafana
