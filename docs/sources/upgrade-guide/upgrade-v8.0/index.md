@@ -1,5 +1,4 @@
 ---
-aliases:
 description: Guide for upgrading to Grafana v8.0
 keywords:
   - grafana
