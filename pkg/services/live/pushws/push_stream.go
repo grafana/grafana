@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gorilla/websocket"
-
 	liveDto "github.com/grafana/grafana-plugin-sdk-go/live"
+
 	"github.com/grafana/grafana/pkg/services/live/convert"
 	"github.com/grafana/grafana/pkg/services/live/livecontext"
 	"github.com/grafana/grafana/pkg/services/live/managedstream"

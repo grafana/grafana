@@ -5,9 +5,9 @@ package searchV2
 import (
 	context "context"
 
+	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	mock "github.com/stretchr/testify/mock"
 
-	backend "github.com/grafana/grafana-plugin-sdk-go/backend"
 	user "github.com/grafana/grafana/pkg/services/user"
 )
 

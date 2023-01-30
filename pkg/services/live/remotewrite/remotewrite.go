@@ -8,9 +8,8 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/snappy"
-	"github.com/prometheus/prometheus/prompb"
-
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/prometheus/prometheus/prompb"
 )
 
 type metricKey uint64

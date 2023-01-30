@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	liveDto "github.com/grafana/grafana-plugin-sdk-go/live"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/live"

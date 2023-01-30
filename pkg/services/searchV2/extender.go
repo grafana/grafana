@@ -2,7 +2,6 @@ package searchV2
 
 import (
 	"github.com/blugelabs/bluge"
-
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
