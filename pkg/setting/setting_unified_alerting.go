@@ -103,6 +103,8 @@ type UnifiedAlertingStateHistorySettings struct {
 	Enabled       bool
 	Backend       string
 	LokiRemoteURL string
+	LokiReadURL   string
+	LokiWriteURL  string
 	LokiTenantID  string
 	// LokiBasicAuthUsername and LokiBasicAuthPassword are used for basic auth
 	// if one of them is set.
@@ -323,6 +325,8 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		Enabled:               stateHistory.Key("enabled").MustBool(stateHistoryDefaultEnabled),
 		Backend:               stateHistory.Key("backend").MustString("annotations"),
 		LokiRemoteURL:         stateHistory.Key("loki_remote_url").MustString(""),
+		LokiReadURL:           stateHistory.Key("loki_remote_read_url").MustString(""),
+		LokiWriteURL:          stateHistory.Key("loki_remote_write_url").MustString(""),
 		LokiTenantID:          stateHistory.Key("loki_tenant_id").MustString(""),
 		LokiBasicAuthUsername: stateHistory.Key("loki_basic_auth_username").MustString(""),
 		LokiBasicAuthPassword: stateHistory.Key("loki_basic_auth_password").MustString(""),
