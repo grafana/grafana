@@ -108,7 +108,7 @@ describe('rule-editor', () => {
       expression: 'B',
       datasource: {
         type: '__expr__',
-        uid: '-100',
+        uid: '__expr__',
       },
       conditions: [
         {

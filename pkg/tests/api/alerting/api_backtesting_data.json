@@ -227,7 +227,7 @@
           "hide": false,
           "type": "reduce",
           "datasource": {
-            "uid": "-100",
+            "uid": "__expr__",
             "type": "__expr__"
           },
           "conditions": [
@@ -268,7 +268,7 @@
           "hide": false,
           "type": "threshold",
           "datasource": {
-            "uid": "-100",
+            "uid": "__expr__",
             "type": "__expr__"
           },
           "conditions": [

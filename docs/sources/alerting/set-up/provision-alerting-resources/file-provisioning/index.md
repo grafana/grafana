@@ -86,7 +86,7 @@ groups:
                   type: query
               datasource:
                 type: __expr__
-                uid: '-100'
+                uid: '__expr__'
               expression: 1==0
               intervalMs: 1000
               maxDataPoints: 43200
