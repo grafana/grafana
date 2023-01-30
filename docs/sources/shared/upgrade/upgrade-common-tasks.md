@@ -9,7 +9,7 @@ In addition to common tasks you should complete for all versions of Grafana, the
 
 > **Note:** There might be minor breaking changes in some releases. We outline these changes in the [What's New ]({{< relref "../whatsnew/" >}}) document for each release.
 
-For versions of Grafana prior to v9.2, we published additional information in the [Release Notes]({{< relref "../release-notes/" >}}).
+For versions of Grafana prior to v9.2, we published additional information in the [Release Notes]({{< relref "../../release-notes/" >}}).
 
 When available, we list all changes with links to pull requests or issues in the [Changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
 
