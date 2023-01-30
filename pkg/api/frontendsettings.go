@@ -2,12 +2,13 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -18,7 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func (hs *HTTPServer) GetFrontendSettings(c *models.ReqContext) {
+func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
 	settings, err := hs.getFrontendSettingsMap(c)
 	if err != nil {
 		c.JsonApiErr(400, "Failed to get frontend settings", err)
@@ -29,7 +30,7 @@ func (hs *HTTPServer) GetFrontendSettings(c *models.ReqContext) {
 }
 
 // getFrontendSettingsMap returns a json object with all the settings needed for front end initialisation.
-func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]interface{}, error) {
+func (hs *HTTPServer) getFrontendSettingsMap(c *contextmodel.ReqContext) (map[string]interface{}, error) {
 	enabledPlugins, err := hs.enabledPlugins(c.Req.Context(), c.OrgID)
 	if err != nil {
 		return nil, err
@@ -154,6 +155,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 			"GrafanaComSkipOrgRoleSync":  hs.Cfg.GrafanaComSkipOrgRoleSync,
 			"GitLabSkipOrgRoleSync":      hs.Cfg.GitLabSkipOrgRoleSync,
 			"AzureADSkipOrgRoleSync":     hs.Cfg.AzureADSkipOrgRoleSync,
+			"OktaSkipOrgRoleSync":        hs.Cfg.OktaSkipOrgRoleSync,
 			"DisableSyncLock":            hs.Cfg.DisableSyncLock,
 		},
 		"buildInfo": map[string]interface{}{
@@ -209,6 +211,15 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *models.ReqContext) (map[string]i
 		"samlEnabled":             hs.samlEnabled(),
 		"samlName":                hs.samlName(),
 		"tokenExpirationDayLimit": hs.Cfg.SATokenExpirationDayLimit,
+		"snapshotEnabled":         hs.Cfg.SnapshotEnabled,
+	}
+
+	if hs.pluginsCDNService != nil && hs.pluginsCDNService.IsEnabled() {
+		cdnBaseURL, err := hs.pluginsCDNService.BaseURL()
+		if err != nil {
+			return nil, fmt.Errorf("plugins cdn base url: %w", err)
+		}
+		jsonObj["pluginsCDNBaseURL"] = cdnBaseURL
 	}
 
 	if hs.ThumbService != nil {
@@ -230,7 +241,7 @@ func isSupportBundlesEnabled(hs *HTTPServer) bool {
 		hs.Features.IsEnabled(featuremgmt.FlagSupportBundles)
 }
 
-func (hs *HTTPServer) getFSDataSources(c *models.ReqContext, enabledPlugins EnabledPlugins) (map[string]plugins.DataSourceDTO, error) {
+func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, enabledPlugins EnabledPlugins) (map[string]plugins.DataSourceDTO, error) {
 	orgDataSources := make([]*datasources.DataSource, 0)
 	if c.OrgID != 0 {
 		query := datasources.GetDataSourcesQuery{OrgId: c.OrgID, DataSourceLimit: hs.Cfg.DataSourceLimit}

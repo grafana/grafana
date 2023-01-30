@@ -10,8 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashboardsDB "github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/service"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
 	"github.com/grafana/grafana/pkg/setting"
@@ -693,7 +693,7 @@ func insertPublicDashboard(t *testing.T, publicdashboardStore *PublicDashboardSt
 
 	uid := util.GenerateShortUID()
 
-	accessToken, err := tokens.GenerateAccessToken()
+	accessToken, err := service.GenerateAccessToken()
 	require.NoError(t, err)
 
 	cmd := SavePublicDashboardCommand{

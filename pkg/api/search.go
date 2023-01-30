@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/util"
@@ -20,7 +21,7 @@ import (
 // 401: unauthorisedError
 // 422: unprocessableEntityError
 // 500: internalServerError
-func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) Search(c *contextmodel.ReqContext) response.Response {
 	query := c.Query("query")
 	tags := c.QueryStrings("tag")
 	starred := c.Query("starred")
@@ -28,14 +29,14 @@ func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
 	page := c.QueryInt64("page")
 	dashboardType := c.Query("type")
 	sort := c.Query("sort")
-	permission := models.PERMISSION_VIEW
+	permission := dashboards.PERMISSION_VIEW
 
 	if limit > 5000 {
 		return response.Error(422, "Limit is above maximum allowed (5000), use page parameter to access hits beyond limit", nil)
 	}
 
 	if c.Query("permission") == "Edit" {
-		permission = models.PERMISSION_EDIT
+		permission = dashboards.PERMISSION_EDIT
 	}
 
 	dbIDs := make([]int64, 0)
@@ -94,7 +95,7 @@ func (hs *HTTPServer) Search(c *models.ReqContext) response.Response {
 	return hs.searchHitsWithMetadata(c, searchQuery.Result)
 }
 
-func (hs *HTTPServer) searchHitsWithMetadata(c *models.ReqContext, hits models.HitList) response.Response {
+func (hs *HTTPServer) searchHitsWithMetadata(c *contextmodel.ReqContext, hits models.HitList) response.Response {
 	folderUIDs := make(map[string]bool)
 	dashboardUIDs := make(map[string]bool)
 
@@ -136,7 +137,7 @@ func (hs *HTTPServer) searchHitsWithMetadata(c *models.ReqContext, hits models.H
 // Responses:
 // 200: listSortOptionsResponse
 // 401: unauthorisedError
-func (hs *HTTPServer) ListSortOptions(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) ListSortOptions(c *contextmodel.ReqContext) response.Response {
 	opts := hs.SearchService.SortOptions()
 
 	res := []util.DynMap{}

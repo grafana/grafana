@@ -35,8 +35,11 @@ export const ResultItem = React.forwardRef(
 
     let name = action.name;
 
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const hasAction = Boolean(action.command?.perform || (action as ActionImpl & { url?: string }).url);
+
     // TODO: does this needs adjusting for i18n?
-    if (action.children && !action.command?.perform && !name.endsWith('...')) {
+    if (action.children.length && !hasAction && !name.endsWith('...')) {
       name += '...';
     }
 

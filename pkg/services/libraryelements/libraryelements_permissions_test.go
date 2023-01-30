@@ -6,20 +6,22 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/web"
-	"github.com/stretchr/testify/require"
 )
 
 func TestLibraryElementPermissions(t *testing.T) {
 	var defaultPermissions = []folderACLItem{}
-	var adminOnlyPermissions = []folderACLItem{{org.RoleAdmin, models.PERMISSION_EDIT}}
-	var editorOnlyPermissions = []folderACLItem{{org.RoleEditor, models.PERMISSION_EDIT}}
-	var editorAndViewerPermissions = []folderACLItem{{org.RoleEditor, models.PERMISSION_EDIT}, {org.RoleViewer, models.PERMISSION_EDIT}}
-	var viewerOnlyPermissions = []folderACLItem{{org.RoleViewer, models.PERMISSION_EDIT}}
-	var everyonePermissions = []folderACLItem{{org.RoleAdmin, models.PERMISSION_EDIT}, {org.RoleEditor, models.PERMISSION_EDIT}, {org.RoleViewer, models.PERMISSION_EDIT}}
-	var noPermissions = []folderACLItem{{org.RoleViewer, models.PERMISSION_VIEW}}
+	var adminOnlyPermissions = []folderACLItem{{org.RoleAdmin, dashboards.PERMISSION_EDIT}}
+	var editorOnlyPermissions = []folderACLItem{{org.RoleEditor, dashboards.PERMISSION_EDIT}}
+	var editorAndViewerPermissions = []folderACLItem{{org.RoleEditor, dashboards.PERMISSION_EDIT}, {org.RoleViewer, dashboards.PERMISSION_EDIT}}
+	var viewerOnlyPermissions = []folderACLItem{{org.RoleViewer, dashboards.PERMISSION_EDIT}}
+	var everyonePermissions = []folderACLItem{{org.RoleAdmin, dashboards.PERMISSION_EDIT}, {org.RoleEditor, dashboards.PERMISSION_EDIT}, {org.RoleViewer, dashboards.PERMISSION_EDIT}}
+	var noPermissions = []folderACLItem{{org.RoleViewer, dashboards.PERMISSION_VIEW}}
 	var folderCases = [][]folderACLItem{
 		defaultPermissions,
 		adminOnlyPermissions,
@@ -250,9 +252,9 @@ func TestLibraryElementPermissions(t *testing.T) {
 					resp := sc.service.createHandler(sc.reqContext)
 					result := validateAndUnMarshalResponse(t, resp)
 					result.Result.Meta.CreatedBy.Name = userInDbName
-					result.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+					result.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
 					result.Result.Meta.UpdatedBy.Name = userInDbName
-					result.Result.Meta.UpdatedBy.AvatarURL = userInDbAvatar
+					result.Result.Meta.UpdatedBy.AvatarUrl = userInDbAvatar
 					result.Result.Meta.FolderName = folder.Title
 					result.Result.Meta.FolderUID = folder.UID
 					results = append(results, result.Result)
@@ -273,9 +275,9 @@ func TestLibraryElementPermissions(t *testing.T) {
 				resp := sc.service.createHandler(sc.reqContext)
 				result := validateAndUnMarshalResponse(t, resp)
 				result.Result.Meta.CreatedBy.Name = userInDbName
-				result.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+				result.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
 				result.Result.Meta.UpdatedBy.Name = userInDbName
-				result.Result.Meta.UpdatedBy.AvatarURL = userInDbAvatar
+				result.Result.Meta.UpdatedBy.AvatarUrl = userInDbAvatar
 				result.Result.Meta.FolderName = "General"
 				result.Result.Meta.FolderUID = ""
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
@@ -313,9 +315,9 @@ func TestLibraryElementPermissions(t *testing.T) {
 					resp := sc.service.createHandler(sc.reqContext)
 					result := validateAndUnMarshalResponse(t, resp)
 					result.Result.Meta.CreatedBy.Name = userInDbName
-					result.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+					result.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
 					result.Result.Meta.UpdatedBy.Name = userInDbName
-					result.Result.Meta.UpdatedBy.AvatarURL = userInDbAvatar
+					result.Result.Meta.UpdatedBy.AvatarUrl = userInDbAvatar
 					result.Result.Meta.FolderName = folder.Title
 					result.Result.Meta.FolderUID = folder.UID
 					results = append(results, result.Result)
@@ -365,9 +367,9 @@ func TestLibraryElementPermissions(t *testing.T) {
 				resp := sc.service.createHandler(sc.reqContext)
 				result := validateAndUnMarshalResponse(t, resp)
 				result.Result.Meta.CreatedBy.Name = userInDbName
-				result.Result.Meta.CreatedBy.AvatarURL = userInDbAvatar
+				result.Result.Meta.CreatedBy.AvatarUrl = userInDbAvatar
 				result.Result.Meta.UpdatedBy.Name = userInDbName
-				result.Result.Meta.UpdatedBy.AvatarURL = userInDbAvatar
+				result.Result.Meta.UpdatedBy.AvatarUrl = userInDbAvatar
 				result.Result.Meta.FolderName = "General"
 				sc.reqContext.SignedInUser.OrgRole = testCase.role
 
