@@ -46,7 +46,6 @@ export interface FileDropzoneProps {
    */
   fileListRenderer?: (file: DropzoneFile, removeFile: (file: DropzoneFile) => void) => ReactNode;
   onFileRemove?: (file: DropzoneFile) => void;
-  primaryTextSupplier?: (files: DropzoneFile[], options?: BackwardsCompatibleDropzoneOptions) => string;
 }
 
 export interface DropzoneFile {
@@ -58,17 +57,11 @@ export interface DropzoneFile {
   retryUpload?: () => void;
 }
 
-export function FileDropzone({
-  options,
-  primaryTextSupplier = getPrimaryText,
-  children,
-  readAs,
-  onLoad,
-  fileListRenderer,
-  onFileRemove,
-}: FileDropzoneProps) {
+export function FileDropzone({ options, children, readAs, onLoad, fileListRenderer, onFileRemove }: FileDropzoneProps) {
   const [files, setFiles] = useState<DropzoneFile[]>([]);
   const [fileErrors, setErrorMessages] = useState<FileError[]>([]);
+
+  const formattedSize = getValueFormat('decbytes')(options?.maxSize ? options?.maxSize : 0);
 
   const setFileProperty = useCallback(
     (customFile: DropzoneFile, action: (customFileToModify: DropzoneFile) => void) => {
@@ -198,7 +191,6 @@ export function FileDropzone({
           {errors.map((error) => {
             switch (error.code) {
               case ErrorCode.FileTooLarge:
-                const formattedSize = getValueFormat('decbytes')(options?.maxSize!);
                 return (
                   <div key={error.message + error.code}>
                     File is larger than {formattedValueToString(formattedSize)}
@@ -221,12 +213,21 @@ export function FileDropzone({
     <div className={styles.container}>
       <div data-testid="dropzone" {...getRootProps({ className: styles.dropzone })}>
         <input {...getInputProps()} />
-        {children ?? <FileDropzoneDefaultChildren primaryText={primaryTextSupplier(files, options)} />}
+        {children ?? <FileDropzoneDefaultChildren primaryText={getPrimaryText(files, options)} />}
       </div>
       {fileErrors.length > 0 && renderErrorMessages(fileErrors)}
-      {options?.accept && (
-        <small className={cx(styles.small, styles.acceptMargin)}>{getAcceptedFileTypeText(options.accept)}</small>
-      )}
+      <div className={styles.acceptContainer}>
+        {options?.accept && (
+          <small className={cx(styles.small, styles.acceptMargin, styles.acceptedFiles)}>
+            {getAcceptedFileTypeText(options.accept)}
+          </small>
+        )}
+        {options?.maxSize && (
+          <small className={cx(styles.small, styles.acceptMargin)}>{`Max file size: ${formattedValueToString(
+            formattedSize
+          )}`}</small>
+        )}
+      </div>
       {fileList}
     </div>
   );
@@ -327,6 +328,12 @@ function getStyles(theme: GrafanaTheme2, isDragActive?: boolean) {
       display: flex;
       flex-direction: column;
       align-items: center;
+    `,
+    acceptContainer: css`
+      display: flex;
+    `,
+    acceptedFiles: css`
+      flex-grow: 1;
     `,
     acceptMargin: css`
       margin: ${theme.spacing(2, 0, 1)};
