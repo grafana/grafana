@@ -1,21 +1,31 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { createTheme, Field, getDisplayProcessor } from '@grafana/data';
+import { createTheme, Field, getDisplayProcessor, Vector } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 
 import { Metadata, SampleUnit } from '../types';
 
+import { ItemWithStart } from './dataTransform';
+
 type Props = {
-  metadata: Metadata;
+  levels: ItemWithStart[][];
+  topLevelIndex: number;
+  selectedBarIndex: number;
+  valueField: Field<number, Vector<number>>;
+  totalTicks: number;
 };
 
-const FlameGraphMetadata = ({ metadata }: Props) => {
+const FlameGraphMetadata = React.memo(({ levels, topLevelIndex, selectedBarIndex, valueField, totalTicks }: Props) => {
   const styles = useStyles2(getStyles);
-  const metadataText = `${metadata?.unitValue} (${metadata?.percentValue}%) of ${metadata?.samples} total samples (${metadata?.unitTitle})`;
-
-  return <>{metadata && <div className={styles.metadata}>{metadataText}</div>}</>;
-};
+  if (levels[topLevelIndex] && levels[topLevelIndex][selectedBarIndex]) {
+    const bar = levels[topLevelIndex][selectedBarIndex];
+    const metadata = getMetadata(valueField, bar.value, totalTicks);
+    const metadataText = `${metadata?.unitValue} (${metadata?.percentValue}%) of ${metadata?.samples} total samples (${metadata?.unitTitle})`;
+    return <>{<div className={styles.metadata}>{metadataText}</div>}</>;
+  }
+  return <></>;
+});
 
 export const getMetadata = (field: Field, value: number, totalTicks: number): Metadata => {
   let unitTitle;
@@ -47,6 +57,8 @@ export const getMetadata = (field: Field, value: number, totalTicks: number): Me
     samples: totalTicks.toLocaleString(),
   };
 };
+
+FlameGraphMetadata.displayName = 'FlameGraphMetadata';
 
 const getStyles = () => ({
   metadata: css`

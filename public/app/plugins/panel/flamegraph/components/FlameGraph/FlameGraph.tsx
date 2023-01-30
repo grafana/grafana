@@ -24,9 +24,9 @@ import { useMeasure } from 'react-use';
 import { CoreApp, createTheme, DataFrame, FieldType, getDisplayProcessor } from '@grafana/data';
 
 import { PIXELS_PER_LEVEL } from '../../constants';
-import { TooltipData, Metadata, SelectedView } from '../types';
+import { TooltipData, SelectedView } from '../types';
 
-import FlameGraphMetadata, { getMetadata } from './FlameGraphMetadata';
+import FlameGraphMetadata from './FlameGraphMetadata';
 import FlameGraphTooltip, { getTooltipData } from './FlameGraphTooltip';
 import { ItemWithStart } from './dataTransform';
 import { getBarX, getRectDimensionsForLevel, renderRect } from './rendering';
@@ -78,7 +78,6 @@ const FlameGraph = ({
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [tooltipData, setTooltipData] = useState<TooltipData>();
   const [showTooltip, setShowTooltip] = useState(false);
-  const [metadata, setMetadata] = useState<Metadata>();
 
   // Convert pixel coordinates to bar coordinates in the levels array so that we can add mouse events like clicks to
   // the canvas.
@@ -132,13 +131,6 @@ const FlameGraph = ({
     },
     [levels, wrapperWidth, valueField, totalTicks, rangeMin, rangeMax, search, topLevelIndex]
   );
-
-  useEffect(() => {
-    if (levels[topLevelIndex] && levels[topLevelIndex][selectedBarIndex]) {
-      const bar = levels[topLevelIndex][selectedBarIndex];
-      setMetadata(getMetadata(valueField, bar.value, totalTicks));
-    }
-  }, [levels, selectedBarIndex, setMetadata, topLevelIndex, totalTicks, valueField]);
 
   useEffect(() => {
     if (graphRef.current) {
@@ -200,7 +192,13 @@ const FlameGraph = ({
 
   return (
     <div className={styles.graph} ref={sizeRef}>
-      <FlameGraphMetadata metadata={metadata!} />
+      <FlameGraphMetadata
+        levels={levels}
+        topLevelIndex={topLevelIndex}
+        selectedBarIndex={selectedBarIndex}
+        valueField={valueField}
+        totalTicks={totalTicks}
+      />
       <canvas ref={graphRef} data-testid="flameGraph" />
       <FlameGraphTooltip tooltipRef={tooltipRef} tooltipData={tooltipData!} showTooltip={showTooltip} />
     </div>
