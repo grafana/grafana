@@ -107,7 +107,7 @@ export interface CurrentUserDTO {
   login: string;
   email: string;
   name: string;
-  lightTheme: boolean;
+  theme: string; // dark | light | system
   orgCount: number;
   orgId: number;
   orgName: string;
@@ -119,6 +119,9 @@ export interface CurrentUserDTO {
   locale: string;
   language: string;
   permissions?: Record<string, boolean>;
+
+  /** @deprecated Use theme instead */
+  lightTheme: boolean;
 }
 
 /** Contains essential user and config info
@@ -218,6 +221,7 @@ export interface AuthSettings {
   GrafanaComSkipOrgRoleSync?: boolean;
   GithubSkipOrgRoleSync?: boolean;
   GitLabSkipOrgRoleSync?: boolean;
+  OktaSkipOrgRoleSync?: boolean;
   AzureADSkipOrgRoleSync?: boolean;
   GoogleSkipOrgRoleSync?: boolean;
   DisableSyncLock?: boolean;

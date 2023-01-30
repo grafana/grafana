@@ -154,6 +154,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *contextmodel.ReqContext) (map[st
 			"GrafanaComSkipOrgRoleSync":  hs.Cfg.GrafanaComSkipOrgRoleSync,
 			"GitLabSkipOrgRoleSync":      hs.Cfg.GitLabSkipOrgRoleSync,
 			"AzureADSkipOrgRoleSync":     hs.Cfg.AzureADSkipOrgRoleSync,
+			"OktaSkipOrgRoleSync":        hs.Cfg.OktaSkipOrgRoleSync,
 			"DisableSyncLock":            hs.Cfg.DisableSyncLock,
 		},
 		"buildInfo": map[string]interface{}{

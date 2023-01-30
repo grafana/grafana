@@ -3,11 +3,11 @@ package authnimpl
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/authn/authntest"
 )
 
 func TestQueue(t *testing.T) {

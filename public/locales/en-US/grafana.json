@@ -489,7 +489,8 @@
     "theme": {
       "dark-label": "Dark",
       "default-label": "Default",
-      "light-label": "Light"
+      "light-label": "Light",
+      "system-label": "System"
     },
     "title": "Preferences"
   },

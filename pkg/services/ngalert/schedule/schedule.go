@@ -7,11 +7,12 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/benbjohnson/clock"
+	alertingModels "github.com/grafana/alerting/alerting/models"
 	"github.com/hashicorp/go-multierror"
 	prometheusModel "github.com/prometheus/common/model"
 	"go.opentelemetry.io/otel/attribute"
-
-	alertingModels "github.com/grafana/alerting/alerting/models"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -24,9 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/ticker"
-
-	"github.com/benbjohnson/clock"
-	"golang.org/x/sync/errgroup"
 )
 
 // ScheduleService is an interface for a service that schedules the evaluation
