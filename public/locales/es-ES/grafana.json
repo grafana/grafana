@@ -15,9 +15,6 @@
     "search-box": {
       "placeholder": "Buscar Grafana"
     },
-    "search-box": {
-      "placeholder": ""
-    },
     "section": {
       "actions": "Acciones",
       "dashboard-search-results": "Paneles de control",
@@ -163,7 +160,7 @@
       "title": "Reglas de alerta"
     },
     "alerting-receivers": {
-      "subtitle": "Decida cómo se notifica a sus contactos cuando se activa una alerta",
+      "subtitle": "",
       "title": "Puntos de contacto"
     },
     "alerting-silences": {
@@ -194,7 +191,7 @@
       "title": "Crear"
     },
     "create-alert": {
-      "title": "Nueva regla de alerta"
+      "title": ""
     },
     "create-dashboard": {
       "title": "Panel de control"
