@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -201,6 +202,7 @@ type HTTPServer struct {
 	playlistService              playlist.Service
 	apiKeyService                apikey.Service
 	kvStore                      kvstore.KVStore
+	pluginsCDNService            *pluginscdn.Service
 
 	userService            user.Service
 	tempUserService        tempUser.Service
@@ -258,6 +260,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService,
 	queryLibraryHTTPService querylibrary.HTTPService, queryLibraryService querylibrary.Service, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service,
+	pluginsCDNService *pluginscdn.Service,
 	k8saccess k8saccess.K8SAccess, // required so that the router is registered
 	starApi *starApi.API,
 ) (*HTTPServer, error) {
@@ -366,6 +369,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		oauthTokenService:            oauthTokenService,
 		statsService:                 statsService,
 		authnService:                 authnService,
+		pluginsCDNService:            pluginsCDNService,
 		starApi:                      starApi,
 	}
 	if hs.Listener != nil {

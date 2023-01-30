@@ -12,12 +12,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/loginservice"
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -42,7 +43,7 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 
 	req, err := http.NewRequest("POST", "http://example.com", nil)
 	require.NoError(t, err)
-	ctx := &models.ReqContext{
+	ctx := &contextmodel.ReqContext{
 		Context: &web.Context{Req: req},
 		Logger:  log.New("Test"),
 	}
@@ -113,6 +114,6 @@ func getContextHandler(t *testing.T) *ContextHandler {
 
 type fakeAuthenticator struct{}
 
-func (fa *fakeAuthenticator) AuthenticateUser(c context.Context, query *models.LoginUserQuery) error {
+func (fa *fakeAuthenticator) AuthenticateUser(c context.Context, query *login.LoginUserQuery) error {
 	return nil
 }

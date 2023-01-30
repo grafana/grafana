@@ -239,7 +239,7 @@ func (ng *AlertNG) init() error {
 	contactPointService := provisioning.NewContactPointService(store, ng.SecretsService, store, store, ng.Log)
 	templateService := provisioning.NewTemplateService(store, store, store, ng.Log)
 	muteTimingService := provisioning.NewMuteTimingService(store, store, store, ng.Log)
-	alertRuleService := provisioning.NewAlertRuleService(store, store, ng.QuotaService, store,
+	alertRuleService := provisioning.NewAlertRuleService(store, store, ng.dashboardService, ng.QuotaService, store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
 		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()), ng.Log)
 
@@ -310,7 +310,7 @@ func subscribeToFolderChanges(ctx context.Context, logger log.Logger, bus bus.Bu
 			if len(updated) > 0 {
 				logger.Info("Rules that belong to the folder have been updated successfully. Clearing their status", "folderUID", evt.UID, "updatedRules", len(updated))
 				for _, key := range updated {
-					scheduler.UpdateAlertRule(key.AlertRuleKey, key.Version)
+					scheduler.UpdateAlertRule(key.AlertRuleKey, key.Version, key.IsPaused)
 				}
 			} else {
 				logger.Debug("No alert rules found in the folder. nothing to update", "folderUID", evt.UID, "folder", evt.Title)

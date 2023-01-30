@@ -111,6 +111,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   pluginAdminEnabled = true;
   pluginAdminExternalManageEnabled = false;
   pluginCatalogHiddenPlugins: string[] = [];
+  pluginsCDNBaseURL = '';
   expressionsEnabled = false;
   customTheme?: undefined;
   awsAllowedAuthProviders: string[] = [];
@@ -148,6 +149,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
 
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;
+    this.bootData.user.lightTheme = getThemeMode(options) === 'light';
     this.isPublicDashboardView = options.bootData.settings.isPublicDashboardView;
 
     const defaults = {
@@ -188,8 +190,24 @@ export class GrafanaBootConfig implements GrafanaConfig {
   }
 }
 
+function getThemeMode(config: GrafanaBootConfig) {
+  let mode: 'light' | 'dark' = 'dark';
+  const themePref = config.bootData.user.theme;
+
+  if (themePref === 'light' || themePref === 'dark') {
+    mode = themePref;
+  } else if (themePref === 'system') {
+    const mediaResult = window.matchMedia('(prefers-color-scheme: dark)');
+    mode = mediaResult.matches ? 'dark' : 'light';
+  }
+
+  return mode;
+}
+
 function getThemeCustomizations(config: GrafanaBootConfig) {
+  // if/when we remove CurrentUserDTO.lightTheme, change this to use getThemeMode instead
   const mode = config.bootData.user.lightTheme ? 'light' : 'dark';
+
   const themeOptions: NewThemeOptions = {
     colors: { mode },
   };
