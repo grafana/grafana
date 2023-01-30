@@ -40,7 +40,7 @@ const (
 type remoteLokiClient interface {
 	ping(context.Context) error
 	push(context.Context, []stream) error
-	query(ctx context.Context, selectors [][3]string, start, end int64) (QueryRes, error)
+	query(ctx context.Context, selectors []Selector, start, end int64) (QueryRes, error)
 }
 
 type RemoteLokiBackend struct {

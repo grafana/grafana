@@ -213,11 +213,7 @@ func (c *httpLokiClient) query(ctx context.Context, selectors []Selector, start,
 	req = req.WithContext(ctx)
 	c.setAuthAndTenantHeaders(req)
 
-	client := http.Client{
-		Timeout: time.Second * 30,
-	}
-
-	res, err := client.Do(req)
+	res, err := c.client.Do(req)
 	if err != nil {
 		return QueryRes{}, fmt.Errorf("error executing request: %w", err)
 	}
