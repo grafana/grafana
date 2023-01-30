@@ -7,12 +7,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/alerting/alerting"
-
 	"github.com/go-openapi/strfmt"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/alerting/alerting"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/types"
+
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 )
 
 var (
