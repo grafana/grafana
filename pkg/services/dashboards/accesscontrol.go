@@ -180,7 +180,7 @@ func GetInheritedScopes(ctx context.Context, orgID int64, folderUID string, fold
 	})
 
 	if err != nil {
-		return nil, folder.ErrInternal.Errorf("could not retrieve folder parents: %w", err)
+		return nil, ac.ErrInternal.Errorf("could not retrieve folder parents: %w", err)
 	}
 
 	result := make([]string, 0, len(ancestors))
