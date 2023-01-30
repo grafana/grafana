@@ -33,7 +33,7 @@ const recoverRefIdMissing = (
 
 type Props = StandardEditorProps<MatcherConfig>;
 
-export const FrameSelectionEditor = ({ value, context, onChange }: Props) => {
+export const FrameSelectionEditor = ({ value, context, onChange, item }: Props) => {
   const listOfRefId = useMemo(() => {
     return context.data.map((f) => ({
       value: f.refId,

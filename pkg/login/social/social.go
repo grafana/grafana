@@ -1,6 +1,7 @@
 package social
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -8,8 +9,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-
-	"context"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/text/cases"
@@ -184,9 +183,10 @@ func ProvideService(cfg *setting.Cfg,
 		// Okta
 		if name == "okta" {
 			ss.socialMap["okta"] = &SocialOkta{
-				SocialBase:    newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-				apiUrl:        info.ApiUrl,
-				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
+				SocialBase:      newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+				apiUrl:          info.ApiUrl,
+				allowedGroups:   util.SplitString(sec.Key("allowed_groups").String()),
+				skipOrgRoleSync: cfg.OktaSkipOrgRoleSync,
 			}
 		}
 
