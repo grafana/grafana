@@ -458,6 +458,10 @@ export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDispl
   `values` property is omitted, as it will be added at a later time.
 */
 const defaultRowNumberColumnFieldData: Omit<Field, 'values'> = {
+  /* 
+    White-spaced `name` property so as to render an empty/invisible column header;
+    without the single whitespace, falsey headers (empty strings) are given a default name of "Value".
+  */
   name: ' ',
   display: function (value: string) {
     return {
