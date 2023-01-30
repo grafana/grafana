@@ -21,16 +21,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gobwas/glob"
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+	"github.com/prometheus/common/model"
+	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
-
-	"github.com/gobwas/glob"
-	"github.com/prometheus/common/model"
-	"gopkg.in/ini.v1"
 )
 
 type Scheme string
@@ -500,6 +499,9 @@ type Cfg struct {
 	Search SearchSettings
 
 	SecureSocksDSProxy SecureSocksDSProxySettings
+
+	// Okta OAuth
+	OktaSkipOrgRoleSync bool
 
 	// Access Control
 	RBACEnabled         bool
@@ -1395,6 +1397,11 @@ func readAuthGitlabSettings(iniFile *ini.File, cfg *Cfg) {
 	cfg.GitLabSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
+func readAuthOktaSettings(iniFile *ini.File, cfg *Cfg) {
+	sec := iniFile.Section("auth.okta")
+	cfg.OktaSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+}
+
 func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 	auth := iniFile.Section("auth")
 
@@ -1454,6 +1461,9 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	// GitLab Auth
 	readAuthGitlabSettings(iniFile, cfg)
+
+	// Okta Auth
+	readAuthOktaSettings(iniFile, cfg)
 
 	// anonymous access
 	AnonymousEnabled = iniFile.Section("auth.anonymous").Key("enabled").MustBool(false)

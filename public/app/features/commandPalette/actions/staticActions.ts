@@ -31,7 +31,7 @@ function navTreeToActions(navTree: NavModelItem[], parent?: NavModelItem): Comma
       id: idForNavItem(navItem),
       name: text, // TODO: translate
       section: section,
-      perform: url ? () => locationService.push(locationUtil.stripBaseFromUrl(url)) : undefined,
+      url: url && locationUtil.stripBaseFromUrl(url),
       parent: parent && idForNavItem(parent),
       priority: DEFAULT_PRIORITY,
     };

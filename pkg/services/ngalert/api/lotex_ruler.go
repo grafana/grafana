@@ -6,13 +6,13 @@ import (
 	"net/http"
 	"net/url"
 
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/web"
 	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 const (

@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	loginpkg "github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
@@ -419,7 +418,7 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *contextmodel.ReqCo
 	ctx := WithAuthHTTPHeader(reqContext.Req.Context(), "Authorization")
 	*reqContext.Req = *reqContext.Req.WithContext(ctx)
 
-	authQuery := models.LoginUserQuery{
+	authQuery := login.LoginUserQuery{
 		Username: username,
 		Password: password,
 		Cfg:      h.Cfg,
@@ -774,7 +773,7 @@ func AuthHTTPHeaderListFromContext(c context.Context) *AuthHTTPHeaderList {
 	return nil
 }
 
-func (h *ContextHandler) hasAccessTokenExpired(token *models.UserAuth) bool {
+func (h *ContextHandler) hasAccessTokenExpired(token *login.UserAuth) bool {
 	if token.OAuthExpiry.IsZero() {
 		return false
 	}

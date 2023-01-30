@@ -4,8 +4,9 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type testData struct {
