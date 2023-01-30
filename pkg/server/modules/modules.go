@@ -65,15 +65,15 @@ func (m *Modules) Run() error {
 	}
 	m.serviceMap = serviceMap
 
-	var servs []services.Service
-	var keys []string
+	var svcs []services.Service
+	var svcNames []string
 	for key, s := range serviceMap {
-		keys = append(keys, key)
-		servs = append(servs, s)
+		svcNames = append(svcNames, key)
+		svcs = append(svcs, s)
 	}
 
-	m.log.Info("Starting services", "services", keys)
-	sm, err := services.NewManager(servs...)
+	m.log.Info("Starting services", "services", svcNames)
+	sm, err := services.NewManager(svcs...)
 	if err != nil {
 		return err
 	}
