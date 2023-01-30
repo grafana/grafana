@@ -5392,7 +5392,7 @@ __metadata:
     react-custom-scrollbars-2: 4.5.0
     react-dom: 17.0.2
     react-dropzone: 14.2.3
-    react-highlight-words: 0.18.0
+    react-highlight-words: 0.20.0
     react-hook-form: 7.5.3
     react-i18next: ^12.0.0
     react-inlinesvg: 3.0.1
@@ -22240,7 +22240,7 @@ __metadata:
     react-dom: 17.0.2
     react-draggable: 4.4.5
     react-grid-layout: 1.3.4
-    react-highlight-words: 0.18.0
+    react-highlight-words: 0.20.0
     react-hook-form: 7.5.3
     react-i18next: ^12.0.0
     react-inlinesvg: 3.0.1
@@ -28773,9 +28773,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"node-fetch@npm:2.6.7":
-  version: 2.6.7
-  resolution: "node-fetch@npm:2.6.7"
+"node-fetch@npm:^2.6.1, node-fetch@npm:^2.6.7":
+  version: 2.6.8
+  resolution: "node-fetch@npm:2.6.8"
   dependencies:
     whatwg-url: ^5.0.0
   peerDependencies:
@@ -28783,7 +28783,7 @@ __metadata:
   peerDependenciesMeta:
     encoding:
       optional: true
-  checksum: 8d816ffd1ee22cab8301c7756ef04f3437f18dace86a1dae22cf81db8ef29c0bf6655f3215cb0cdb22b420b6fe141e64b26905e7f33f9377a7fa59135ea3e10b
+  checksum: 91f57be68e29f9b1382750693619e199733a6936998e6d618f1aa779853ad8fc4a2facf170db7957bf1d2510bad33449edf74b5802713d81b63de5986fa3be00
   languageName: node
   linkType: hard
 
@@ -32825,16 +32825,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-highlight-words@npm:0.18.0":
-  version: 0.18.0
-  resolution: "react-highlight-words@npm:0.18.0"
+"react-highlight-words@npm:0.20.0":
+  version: 0.20.0
+  resolution: "react-highlight-words@npm:0.20.0"
   dependencies:
     highlight-words-core: ^1.2.0
     memoize-one: ^4.0.0
     prop-types: ^15.5.8
   peerDependencies:
     react: ^0.14.0 || ^15.0.0 || ^16.0.0-0 || ^17.0.0-0 || ^18.0.0-0
-  checksum: ff9759e7ebeb140067854d8cad3021123ba0e3b78bda14d35d9b21dd7890986c858955885ddbcb537e9f88472aebe4a23a1841b7af190989efb0a8ecf7dc2a57
+  checksum: 6794b6fe409ee81390e342ccdb951696e06354d8591b4cac050a6d64dbc77dfc7bb636fee0aabcfda841e57778aa5108fe351e7c1dc27b28abedd36aec8141e7
   languageName: node
   linkType: hard
 

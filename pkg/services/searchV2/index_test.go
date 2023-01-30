@@ -6,8 +6,11 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/blugelabs/bluge"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -15,10 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/blugelabs/bluge"
-	"github.com/grafana/grafana-plugin-sdk-go/experimental"
-	"github.com/stretchr/testify/require"
 )
 
 type testDashboardLoader struct {

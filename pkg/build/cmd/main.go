@@ -133,6 +133,12 @@ func main() {
 			Action: VerifyDrone,
 		},
 		{
+			Name:      "verify-starlark",
+			Usage:     "Verify Starlark configuration",
+			ArgsUsage: "<workspace path>",
+			Action:    VerifyStarlark,
+		},
+		{
 			Name:   "export-version",
 			Usage:  "Exports version in dist/grafana.version",
 			Action: ExportVersion,
