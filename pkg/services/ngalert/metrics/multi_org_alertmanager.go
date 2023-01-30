@@ -21,7 +21,7 @@ type MultiOrgAlertmanager struct {
 }
 
 func NewMultiOrgAlertmanagerMetrics(r prometheus.Registerer) *MultiOrgAlertmanager {
-	registries := NewUserRegistries(log.New("multi-org-am-metrics")) //TODO: Should this be here? Probably not.
+	registries := NewUserRegistries(log.New("ngalert.multiorg.alertmanager.metrics")) //TODO: Should this be here? Probably not.
 	moa := &MultiOrgAlertmanager{
 		Registerer: r,
 		registries: registries,
