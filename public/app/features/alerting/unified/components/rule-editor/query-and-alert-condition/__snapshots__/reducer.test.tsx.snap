@@ -233,7 +233,7 @@ exports[`Query and expressions reducer should update an expression 1`] = `
 {
   "queries": [
     {
-      "datasourceUid": "-100",
+      "datasourceUid": "__expr__",
       "model": {
         "conditions": [
           {
