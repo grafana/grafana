@@ -49,7 +49,7 @@ export const QueryOperationRowHeader: React.FC<QueryOperationRowHeaderProps> = (
           aria-labelledby={titleId}
         />
         {titleElement && (
-          <div className={styles.titleWrapper} aria-label="Query operation row title">
+          <div className={styles.titleWrapper}>
             <div id={titleId} className={cx(styles.title, disabled && styles.disabled)}>
               {titleElement}
             </div>
