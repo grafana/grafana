@@ -28,7 +28,6 @@ export function generateCopiedTemplateName(config: AlertManagerCortexConfig, ori
 
 export const DuplicateTemplateView: FC<Props> = ({ config, templateName, alertManagerSourceName }) => {
   const template = config.template_files?.[templateName];
-  const provenance = config.template_file_provenances?.[templateName];
 
   if (!template) {
     return (
@@ -45,7 +44,6 @@ export const DuplicateTemplateView: FC<Props> = ({ config, templateName, alertMa
       alertManagerSourceName={alertManagerSourceName}
       config={config}
       existing={{ name: duplicatedName, content: updateAndSanitizeDefine(duplicatedName, template) }}
-      provenance={provenance}
     />
   );
 };
