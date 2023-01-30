@@ -9,7 +9,7 @@ import { alertingApi } from './alertingApi';
 
 export interface AlertmanagersChoiceResponse {
   alertmanagersChoice: AlertmanagerChoice;
-  externalAlertmanagers: number;
+  numExternalAlertmanagers: number;
 }
 
 export const alertmanagerApi = alertingApi.injectEndpoints({

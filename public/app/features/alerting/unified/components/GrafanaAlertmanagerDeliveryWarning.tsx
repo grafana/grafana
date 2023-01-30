@@ -28,7 +28,7 @@ export function GrafanaAlertmanagerDeliveryWarning({ currentAlertmanager }: Graf
     return null;
   }
 
-  const hasActiveExternalAMs = amChoiceStatus.externalAlertmanagers > 0;
+  const hasActiveExternalAMs = amChoiceStatus.numExternalAlertmanagers > 0;
 
   if (amChoiceStatus.alertmanagersChoice === AlertmanagerChoice.External && hasActiveExternalAMs) {
     return (

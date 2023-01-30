@@ -66,7 +66,7 @@ const mocks = {
 
 const alertmanagerChoiceMockedResponse: AlertmanagersChoiceResponse = {
   alertmanagersChoice: AlertmanagerChoice.Internal,
-  externalAlertmanagers: 0,
+  numExternalAlertmanagers: 0,
 };
 
 const renderReceivers = (alertManagerSourceName?: string) => {

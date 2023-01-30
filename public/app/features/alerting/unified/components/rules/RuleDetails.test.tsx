@@ -40,7 +40,7 @@ const server = setupServer();
 
 const alertmanagerChoiceMockedResponse: AlertmanagersChoiceResponse = {
   alertmanagersChoice: AlertmanagerChoice.Internal,
-  externalAlertmanagers: 0,
+  numExternalAlertmanagers: 0,
 };
 
 beforeAll(() => {
