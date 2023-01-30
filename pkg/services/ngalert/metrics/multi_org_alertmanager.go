@@ -143,6 +143,6 @@ func (a *AlertmanagerAggregatedMetrics) Collect(out chan<- prometheus.Metric) {
 	data.SendSumOfCounters(out, a.silencesQueriesTotal, "alertmanager_silences_queries_total")
 	data.SendSumOfCounters(out, a.silencesQueryErrorsTotal, "alertmanager_silences_query_errors_total")
 	data.SendSumOfHistograms(out, a.silencesQueryDuration, "alertmanager_silences_query_duration_seconds")
-	data.SendSumOfCountersPerUser(out, a.silencesPropagatedMessagesTotal, "alertmanager_silences_gossip_messages_propagated_total")
+	data.SendSumOfCounters(out, a.silencesPropagatedMessagesTotal, "alertmanager_silences_gossip_messages_propagated_total")
 	data.SendSumOfGaugesPerUserWithLabels(out, a.silences, "alertmanager_silences", "state")
 }
