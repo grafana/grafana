@@ -121,7 +121,7 @@ const RuleList = withErrorBoundary(
                     icon="plus"
                     onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
                   >
-                    New alert rule
+                    Create alert rule
                   </LinkButton>
                 )}
               </Stack>
