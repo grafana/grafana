@@ -948,7 +948,7 @@ This also impacts `allow_assign_grafana_admin` setting, by not syncing the grafa
 The following table shows the OAuth provider's setting with the default value and the skip org role sync setting.
 | OAuth Provider | `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | Behavior |
 | --- | --- | --- | --- |
-| Okta | false | false | User organization roles are set with `defaultRole` and cannot be changed |
+| Okta | false | false | User organization roles are set with `defaultRole` and cannot be changed. |
 | Github | true | false | User organization roles are set with `defaultRole` for Okta, and Grafana Admins are set. For other providers, the synchronization is skipped, and the org role can be changed, along with other OAuth provider users' org roles. |
 | Okta | false | true | User organization roles are set with `defaultRole`, and the organization role can be changed for Okta synced users. |
 | Okta | true | true | User organization roles are set with `defaultRole` for Okta. For other providers, the synchronization is skipped, and the org role can be changed, along with other OAuth provider users' org roles. |
