@@ -28,7 +28,7 @@ func (s SchemaInterface) Name() string {
 	return s.name
 }
 
-// Interface returns the cue.Value representing the meta-schema that is the
+// Kind returns the cue.Value representing the meta-schema that is the
 // contract between core or custom kinds that compose the meta-schema, and the
 // plugin-defined composable kinds that implement the meta-schema.
 func (s SchemaInterface) Interface() cue.Value {

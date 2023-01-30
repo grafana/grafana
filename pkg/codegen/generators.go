@@ -10,40 +10,41 @@ import (
 	"github.com/grafana/thema"
 )
 
-type OneToOne codejen.OneToOne[*DeclForGen]
-type OneToMany codejen.OneToMany[*DeclForGen]
-type ManyToOne codejen.ManyToOne[*DeclForGen]
-type ManyToMany codejen.ManyToMany[*DeclForGen]
+type OneToOne codejen.OneToOne[*DefForGen]
+type OneToMany codejen.OneToMany[*DefForGen]
+type ManyToOne codejen.ManyToOne[*DefForGen]
+type ManyToMany codejen.ManyToMany[*DefForGen]
 
 // ForGen is a codejen input transformer that converts a pure kindsys.SomeDef into
-// a DeclForGen by binding its contained lineage.
-func ForGen(rt *thema.Runtime, decl kindsys.SomeDef) (*DeclForGen, error) {
+// a DefForGen by binding its contained lineage.
+func ForGen(rt *thema.Runtime, decl kindsys.SomeDef) (*DefForGen, error) {
 	lin, err := decl.BindKindLineage(rt)
 	if err != nil {
 		return nil, err
 	}
 
-	return &DeclForGen{
+	return &DefForGen{
 		SomeDef: decl,
 		lin:     lin,
 	}, nil
 }
 
-// DeclForGen wraps [kindsys.SomeDef] to provide trivial caching of
+// DefForGen wraps [kindsys.SomeDef] to provide trivial caching of
 // the lineage declared by the kind (nil for raw kinds).
-type DeclForGen struct {
+// TODO this type is unneeded - kindsys.Kind is sufficient.
+type DefForGen struct {
 	kindsys.SomeDef
 	lin thema.Lineage
 }
 
 // Lineage returns the [thema.Lineage] for the underlying [kindsys.SomeDef].
-func (decl *DeclForGen) Lineage() thema.Lineage {
+func (decl *DefForGen) Lineage() thema.Lineage {
 	return decl.lin
 }
 
 // ForLatestSchema returns a [SchemaForGen] for the latest schema in this
-// DeclForGen's lineage.
-func (decl *DeclForGen) ForLatestSchema() SchemaForGen {
+// DefForGen's lineage.
+func (decl *DefForGen) ForLatestSchema() SchemaForGen {
 	comm := decl.Properties.Common()
 	return SchemaForGen{
 		Name:    comm.Name,

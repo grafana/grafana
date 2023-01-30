@@ -29,7 +29,7 @@ func (j *lmox) JennyName() string {
 	return "LatestMajorsOrXJenny"
 }
 
-func (j *lmox) Generate(decl *DeclForGen) (codejen.Files, error) {
+func (j *lmox) Generate(decl *DefForGen) (codejen.Files, error) {
 	comm := decl.Properties.Common()
 	sfg := SchemaForGen{
 		Name:    comm.Name,

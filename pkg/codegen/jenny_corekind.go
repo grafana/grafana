@@ -20,7 +20,7 @@ func CoreKindJenny(gokindsdir string, cfg *CoreKindJennyConfig) OneToOne {
 		cfg = new(CoreKindJennyConfig)
 	}
 	if cfg.GenDirName == nil {
-		cfg.GenDirName = func(decl *DeclForGen) string {
+		cfg.GenDirName = func(decl *DefForGen) string {
 			return decl.Properties.Common().MachineName
 		}
 	}
@@ -34,8 +34,8 @@ func CoreKindJenny(gokindsdir string, cfg *CoreKindJennyConfig) OneToOne {
 // CoreKindJennyConfig holds configuration options for [CoreKindJenny].
 type CoreKindJennyConfig struct {
 	// GenDirName returns the name of the directory in which the file should be
-	// generated. Defaults to DeclForGen.Lineage().Name() if nil.
-	GenDirName func(*DeclForGen) string
+	// generated. Defaults to DefForGen.Lineage().Name() if nil.
+	GenDirName func(*DefForGen) string
 }
 
 type coreKindJenny struct {
@@ -49,7 +49,7 @@ func (gen *coreKindJenny) JennyName() string {
 	return "CoreKindJenny"
 }
 
-func (gen *coreKindJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
+func (gen *coreKindJenny) Generate(decl *DefForGen) (*codejen.File, error) {
 	if !decl.IsCore() {
 		return nil, nil
 	}

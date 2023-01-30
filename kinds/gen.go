@@ -31,7 +31,7 @@ func main() {
 
 	// Core kinds composite code generator. Produces all generated code in
 	// grafana/grafana that derives from core kinds.
-	coreKindsGen := codejen.JennyListWithNamer(func(decl *codegen.DeclForGen) string {
+	coreKindsGen := codejen.JennyListWithNamer(func(decl *codegen.DefForGen) string {
 		return decl.Properties.Common().MachineName
 	})
 
@@ -56,7 +56,7 @@ func main() {
 	groot := filepath.Dir(cwd)
 
 	rt := cuectx.GrafanaThemaRuntime()
-	var all []*codegen.DeclForGen
+	var all []*codegen.DefForGen
 
 	f := os.DirFS(filepath.Join(groot, kindsys.CoreDeclParentPath))
 	kinddirs := elsedie(fs.ReadDir(f, "."))("error reading core kind fs root directory")

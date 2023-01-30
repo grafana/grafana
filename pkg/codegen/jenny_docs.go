@@ -34,7 +34,7 @@ func (j docsJenny) JennyName() string {
 	return "DocsJenny"
 }
 
-func (j docsJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
+func (j docsJenny) Generate(decl *DefForGen) (*codejen.File, error) {
 	f, err := jsonschema.GenerateSchema(decl.Lineage().Latest())
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate json representation for the schema: %v", err)

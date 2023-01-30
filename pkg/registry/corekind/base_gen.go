@@ -23,7 +23,7 @@ import (
 	"github.com/grafana/thema"
 )
 
-// Base is a registry of kindsys.Interface. It provides two modes for accessing
+// Base is a registry of kindsys.Kind. It provides two modes for accessing
 // kinds: individually via literal named methods, or as a slice returned from
 // an All*() method.
 //
@@ -55,37 +55,37 @@ var (
 	_ kindsys.Core = &team.Kind{}
 )
 
-// Dashboard returns the [kindsys.Interface] implementation for the dashboard kind.
+// Dashboard returns the [kindsys.Kind] implementation for the dashboard kind.
 func (b *Base) Dashboard() *dashboard.Kind {
 	return b.dashboard
 }
 
-// LibraryPanel returns the [kindsys.Interface] implementation for the librarypanel kind.
+// LibraryPanel returns the [kindsys.Kind] implementation for the librarypanel kind.
 func (b *Base) LibraryPanel() *librarypanel.Kind {
 	return b.librarypanel
 }
 
-// Playlist returns the [kindsys.Interface] implementation for the playlist kind.
+// Playlist returns the [kindsys.Kind] implementation for the playlist kind.
 func (b *Base) Playlist() *playlist.Kind {
 	return b.playlist
 }
 
-// Preferences returns the [kindsys.Interface] implementation for the preferences kind.
+// Preferences returns the [kindsys.Kind] implementation for the preferences kind.
 func (b *Base) Preferences() *preferences.Kind {
 	return b.preferences
 }
 
-// PublicDashboard returns the [kindsys.Interface] implementation for the publicdashboard kind.
+// PublicDashboard returns the [kindsys.Kind] implementation for the publicdashboard kind.
 func (b *Base) PublicDashboard() *publicdashboard.Kind {
 	return b.publicdashboard
 }
 
-// ServiceAccount returns the [kindsys.Interface] implementation for the serviceaccount kind.
+// ServiceAccount returns the [kindsys.Kind] implementation for the serviceaccount kind.
 func (b *Base) ServiceAccount() *serviceaccount.Kind {
 	return b.serviceaccount
 }
 
-// Team returns the [kindsys.Interface] implementation for the team kind.
+// Team returns the [kindsys.Kind] implementation for the team kind.
 func (b *Base) Team() *team.Kind {
 	return b.team
 }

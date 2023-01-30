@@ -39,7 +39,7 @@ func (gen *genTSVeneerIndex) JennyName() string {
 	return "TSVeneerIndexJenny"
 }
 
-func (gen *genTSVeneerIndex) Generate(decls ...*DeclForGen) (*codejen.File, error) {
+func (gen *genTSVeneerIndex) Generate(decls ...*DefForGen) (*codejen.File, error) {
 	tsf := new(ast.File)
 	for _, decl := range decls {
 		sch := decl.Lineage().Latest()
@@ -60,7 +60,7 @@ func (gen *genTSVeneerIndex) Generate(decls ...*DeclForGen) (*codejen.File, erro
 	return codejen.NewFile(filepath.Join(gen.dir, "index.gen.ts"), []byte(tsf.String()), gen), nil
 }
 
-func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(decl *DeclForGen, tf *ast.File) ([]ast.Decl, error) {
+func (gen *genTSVeneerIndex) extractTSIndexVeneerElements(decl *DefForGen, tf *ast.File) ([]ast.Decl, error) {
 	lin := decl.Lineage()
 	comm := decl.Properties.Common()
 

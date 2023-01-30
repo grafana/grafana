@@ -31,7 +31,7 @@ func (gen *genBaseRegistry) JennyName() string {
 	return "BaseCoreRegistryJenny"
 }
 
-func (gen *genBaseRegistry) Generate(decls ...*DeclForGen) (*codejen.File, error) {
+func (gen *genBaseRegistry) Generate(decls ...*DefForGen) (*codejen.File, error) {
 	buf := new(bytes.Buffer)
 	if err := tmpls.Lookup("kind_registry.tmpl").Execute(buf, tvars_kind_registry{
 		PackageName:       filepath.Base(gen.path),
