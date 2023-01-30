@@ -297,7 +297,7 @@ export function GrafanaEvaluationBehavior({
                       content="Pausing the rule will stop its evaluation until unpaused"
                       theme={'info'}
                     >
-                      <Icon tabIndex={0} name="info-circle" size="sm" style={{ marginLeft: '10px' }} />
+                      <Icon tabIndex={0} name="info-circle" size="sm" className={styles.infoIcon} />
                     </Tooltip>
                   </label>
                 </Stack>
@@ -376,6 +376,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-right: ${theme.spacing(1)};
     color: ${theme.colors.warning.text};
   `,
+  infoIcon: css`
+    margin-left: 10px;
+  `,
   warningMessage: css`
     color: ${theme.colors.warning.text};
   `,
@@ -389,9 +392,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   marginTop: css`
     margin-top: ${theme.spacing(1)};
   `,
-  switchLabel: css({
-    color: theme.colors.text.primary,
+  switchLabel: css(`
+    color: ${theme.colors.text.primary},
     cursor: 'pointer',
-    fontSize: theme.typography.bodySmall.fontSize,
-  }),
+    fontSize: ${theme.typography.bodySmall.fontSize},
+  `),
 });
