@@ -1,11 +1,13 @@
 package historian
 
 import (
+	"context"
 	"net/url"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 // This function can be used for local testing, just remove the skip call.
@@ -21,7 +23,7 @@ func TestLokiHTTPClient(t *testing.T) {
 		}, log.NewNopLogger())
 
 		// Unauthorized request should fail against Grafana Cloud.
-		err = client.ping()
+		err = client.ping(context.Background())
 		require.Error(t, err)
 
 		client.cfg.BasicAuthUser = "<your_username>"
@@ -32,7 +34,7 @@ func TestLokiHTTPClient(t *testing.T) {
 		// client.cfg.TenantID = "<your_tenant_id>"
 
 		// Authorized request should fail against Grafana Cloud.
-		err = client.ping()
+		err = client.ping(context.Background())
 		require.NoError(t, err)
 	})
 }

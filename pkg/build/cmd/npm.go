@@ -6,8 +6,9 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/build/npm"
 	"github.com/urfave/cli/v2"
+
+	"github.com/grafana/grafana/pkg/build/npm"
 )
 
 func NpmRetrieveAction(c *cli.Context) error {

@@ -1,12 +1,12 @@
 import { SerializedError } from '@reduxjs/toolkit';
-import { render, waitFor, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { locationService, setDataSourceSrv, logInfo, setBackendSrv } from '@grafana/runtime';
+import { locationService, logInfo, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
@@ -123,6 +123,7 @@ const ui = {
   editCloudGroupIcon: byTestId('edit-group'),
 
   newRuleButton: byRole('link', { name: 'New alert rule' }),
+  exportButton: byRole('button', { name: /export/i }),
 
   editGroupModal: {
     namespaceInput: byRole('textbox', { hidden: true, name: /namespace/i }),
@@ -498,10 +499,10 @@ describe('RuleList', () => {
     expect(groups).toHaveLength(2);
 
     const filterInput = ui.rulesFilterInput.get();
-    await userEvent.type(filterInput, '{{foo="bar"}');
+    await userEvent.type(filterInput, 'label:foo=bar');
 
     // Input is debounced so wait for it to be visible
-    await waitFor(() => expect(filterInput).toHaveValue('{foo="bar"}'));
+    await waitFor(() => expect(filterInput).toHaveValue('label:foo=bar'));
     // Group doesn't contain matching labels
     await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(1));
 
@@ -517,17 +518,17 @@ describe('RuleList', () => {
 
     // Check for different label matchers
     await userEvent.clear(filterInput);
-    await userEvent.type(filterInput, '{{foo!="bar",foo!="baz"}');
+    await userEvent.type(filterInput, 'label:foo!=bar label:foo!=baz');
     // Group doesn't contain matching labels
     await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(1));
     await waitFor(() => expect(ui.ruleGroup.get()).toHaveTextContent('group-2'));
 
     await userEvent.clear(filterInput);
-    await userEvent.type(filterInput, '{{foo=~"b.+"}');
+    await userEvent.type(filterInput, 'label:"foo=~b.+"');
     await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(2));
 
     await userEvent.clear(filterInput);
-    await userEvent.type(filterInput, '{{region="US"}');
+    await userEvent.type(filterInput, 'label:region=US');
     await waitFor(() => expect(ui.ruleGroup.queryAll()).toHaveLength(1));
     await waitFor(() => expect(ui.ruleGroup.get()).toHaveTextContent('group-2'));
   });
@@ -681,6 +682,34 @@ describe('RuleList', () => {
   });
 
   describe('RBAC Enabled', () => {
+    describe('Export button', () => {
+      it('Export button should be visible when the user has alert provisioning read permissions', async () => {
+        enableRBAC();
+
+        grantUserPermissions([AccessControlAction.AlertingProvisioningRead]);
+
+        mocks.getAllDataSourcesMock.mockReturnValue([]);
+        setDataSourceSrv(new MockDataSourceSrv({}));
+        mocks.api.fetchRules.mockResolvedValue([]);
+        mocks.api.fetchRulerRules.mockResolvedValue({});
+
+        renderRuleList();
+
+        expect(ui.exportButton.get()).toBeInTheDocument();
+      });
+      it('Export button should not be visible when the user has no alert provisioning read permissions', async () => {
+        enableRBAC();
+
+        mocks.getAllDataSourcesMock.mockReturnValue([]);
+        setDataSourceSrv(new MockDataSourceSrv({}));
+        mocks.api.fetchRules.mockResolvedValue([]);
+        mocks.api.fetchRulerRules.mockResolvedValue({});
+
+        renderRuleList();
+
+        expect(ui.exportButton.query()).not.toBeInTheDocument();
+      });
+    });
     describe('Grafana Managed Alerts', () => {
       it('New alert button should be visible when the user has alert rule create and folder read permissions and no rules exists', async () => {
         enableRBAC();

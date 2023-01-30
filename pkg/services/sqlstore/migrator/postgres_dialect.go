@@ -9,7 +9,6 @@ import (
 
 	"github.com/golang-migrate/migrate/v4/database"
 	"github.com/lib/pq"
-
 	"xorm.io/xorm"
 )
 

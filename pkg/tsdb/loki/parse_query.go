@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 )
 
@@ -82,6 +83,21 @@ func parseDirection(jsonValue string) (Direction, error) {
 	}
 }
 
+func parseSupportingQueryType(jsonValue string) (SupportingQueryType, error) {
+	switch jsonValue {
+	case "logsVolume":
+		return SupportingQueryLogsVolume, nil
+	case "logsSample":
+		return SupportingQueryLogsSample, nil
+	case "dataSample":
+		return SupportingQueryDataSample, nil
+	case "":
+		return SupportingQueryNone, nil
+	default:
+		return SupportingQueryNone, fmt.Errorf("invalid supportingQueryType: %s", jsonValue)
+	}
+}
+
 func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 	qs := []*lokiQuery{}
 	for _, query := range queryContext.Queries {
@@ -115,17 +131,22 @@ func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 			return nil, err
 		}
 
+		supportingQueryType, err := parseSupportingQueryType(model.SupportingQueryType)
+		if err != nil {
+			return nil, err
+		}
+
 		qs = append(qs, &lokiQuery{
-			Expr:         expr,
-			QueryType:    queryType,
-			Direction:    direction,
-			Step:         step,
-			MaxLines:     model.MaxLines,
-			LegendFormat: model.LegendFormat,
-			Start:        start,
-			End:          end,
-			RefID:        query.RefID,
-			VolumeQuery:  model.VolumeQuery,
+			Expr:                expr,
+			QueryType:           queryType,
+			Direction:           direction,
+			Step:                step,
+			MaxLines:            model.MaxLines,
+			LegendFormat:        model.LegendFormat,
+			Start:               start,
+			End:                 end,
+			RefID:               query.RefID,
+			SupportingQueryType: supportingQueryType,
 		})
 	}
 

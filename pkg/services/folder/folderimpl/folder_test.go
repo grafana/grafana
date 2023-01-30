@@ -37,7 +37,7 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 	t.Run("should register scope resolvers", func(t *testing.T) {
 		cfg := setting.NewCfg()
 		ac := acmock.New()
-		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, nil, &featuremgmt.FeatureManager{}, nil)
+		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, nil, &featuremgmt.FeatureManager{})
 
 		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 2)
 	})
@@ -57,7 +57,6 @@ func TestIntegrationFolderService(t *testing.T) {
 		cfg := setting.NewCfg()
 		cfg.RBACEnabled = false
 		features := featuremgmt.WithFeatures()
-		folderPermissions := acmock.NewMockedPermissionsService()
 
 		service := &Service{
 			cfg:                  cfg,
@@ -66,7 +65,6 @@ func TestIntegrationFolderService(t *testing.T) {
 			dashboardFolderStore: folderStore,
 			store:                nestedFolderStore,
 			features:             features,
-			permissions:          folderPermissions,
 			bus:                  bus.ProvideBus(tracing.InitializeTracerForTest()),
 		}
 
@@ -126,11 +124,9 @@ func TestIntegrationFolderService(t *testing.T) {
 
 			title := "Folder-TEST"
 			t.Run("When updating folder should return access denied error", func(t *testing.T) {
-				dashStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Run(func(args mock.Arguments) {
-					folder := args.Get(1).(*dashboards.GetDashboardQuery)
-					folder.Result = dashboards.NewDashboard("dashboard-test")
-					folder.Result.IsFolder = true
-				}).Return(&dashboards.Dashboard{}, nil)
+				folderResult := dashboards.NewDashboard("dashboard-test")
+				folderResult.IsFolder = true
+				dashStore.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(folderResult, nil)
 				_, err := service.Update(context.Background(), &folder.UpdateFolderCommand{
 					UID:          folderUID,
 					OrgID:        orgID,
