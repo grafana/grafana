@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -68,14 +69,17 @@ func TestServer_Run_Error(t *testing.T) {
 }
 
 func TestServer_Shutdown(t *testing.T) {
+	ctx := context.Background()
 	s := testServer(t, newTestService(nil, false), newTestService(nil, true))
 
 	ch := make(chan error)
 
 	go func() {
 		defer close(ch)
-		s.Shutdown()
-		ch <- nil
+		ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+		defer cancel()
+		err := s.Shutdown(ctx, "test interrupt")
+		ch <- err
 	}()
 	err := s.Run()
 	require.NoError(t, err)

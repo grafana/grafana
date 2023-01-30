@@ -39,6 +39,7 @@ func StartGrafana(t *testing.T, grafDir, cfgPath string) (string, *sqlstore.SQLS
 
 func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.TestEnv) {
 	t.Helper()
+	ctx := context.Background()
 
 	setting.IsEnterprise = extensions.IsEnterprise
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
@@ -51,7 +52,7 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	require.NoError(t, err)
 	require.NoError(t, env.SQLStore.Sync())
 
-	err = env.RoleRegistry.RegisterFixedRoles(context.Background())
+	err = env.RoleRegistry.RegisterFixedRoles(ctx)
 	require.NoError(t, err)
 
 	go func() {
@@ -61,7 +62,9 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 		}
 	}()
 	t.Cleanup(func() {
-		env.Server.Shutdown()
+		if err := env.Server.Shutdown(ctx, "test cleanup"); err != nil {
+			t.Error("Timed out waiting on server to shut down")
+		}
 	})
 
 	// Wait for Grafana to be ready

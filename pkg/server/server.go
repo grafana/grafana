@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os"
@@ -39,21 +40,23 @@ func New(opts Options, cfg *setting.Cfg, moduleService *modules.Modules) (*Serve
 
 func newServer(opts Options, cfg *setting.Cfg, moduleService *modules.Modules) *Server {
 	return &Server{
-		log:           log.New("server"),
-		cfg:           cfg,
-		pidFile:       opts.PidFile,
-		moduleService: moduleService,
+		log:              log.New("server"),
+		cfg:              cfg,
+		shutdownFinished: make(chan struct{}),
+		pidFile:          opts.PidFile,
+		moduleService:    moduleService,
 	}
 }
 
 // Server is responsible for managing the lifecycle of services.
 type Server struct {
-	log           log.Logger
-	cfg           *setting.Cfg
-	shutdownOnce  sync.Once
-	isInitialized bool
-	mtx           sync.Mutex
-	pidFile       string
+	log              log.Logger
+	cfg              *setting.Cfg
+	shutdownOnce     sync.Once
+	isInitialized    bool
+	mtx              sync.Mutex
+	pidFile          string
+	shutdownFinished chan struct{}
 
 	moduleService *modules.Modules
 	roleRegistry  accesscontrol.RoleRegistry
@@ -83,6 +86,7 @@ func (s *Server) init() error {
 // Run initializes and starts services. This will block until all services have
 // exited. To initiate shutdown, call the Shutdown method in another goroutine.
 func (s *Server) Run() error {
+	defer close(s.shutdownFinished)
 	if err := s.init(); err != nil {
 		return err
 	}
@@ -96,14 +100,26 @@ func (s *Server) Run() error {
 // Shutdown initiates Grafana graceful shutdown. This shuts down all
 // running background services. Since Run blocks Shutdown supposed to
 // be run from a separate goroutine.
-func (s *Server) Shutdown() {
+func (s *Server) Shutdown(ctx context.Context, reason string) error {
+	var err error
 	s.shutdownOnce.Do(func() {
-		s.log.Info("Shutdown started")
-		if err := s.moduleService.Stop(); err != nil {
+		s.log.Info("Shutdown started", "reason", reason)
+
+		if err = s.moduleService.Stop(); err != nil {
 			s.log.Error("Failed to stop modules", "error", err)
 		}
-		s.log.Info("Shutdown complete")
+
+		// Wait for server to shut down
+		select {
+		case <-s.shutdownFinished:
+			s.log.Debug("Finished waiting for server to shut down")
+		case <-ctx.Done():
+			s.log.Warn("Timed out while waiting for server to shut down")
+			err = fmt.Errorf("timeout waiting for shutdown")
+		}
 	})
+
+	return err
 }
 
 // writePIDFile retrieves the current process ID and writes it to file.

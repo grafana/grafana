@@ -279,10 +279,12 @@ func listenToSystemSignals(ctx context.Context, s *server.Server) {
 			if err := log.Reload(); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to reload loggers: %s\n", err)
 			}
-		case <-signalChan:
-			_, cancel := context.WithTimeout(ctx, 30*time.Second)
+		case sig := <-signalChan:
+			ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 			defer cancel()
-			s.Shutdown()
+			if err := s.Shutdown(ctx, fmt.Sprintf("System signal: %s", sig)); err != nil {
+				fmt.Fprintf(os.Stderr, "Timed out waiting for server to shut down\n")
+			}
 			return
 		}
 	}

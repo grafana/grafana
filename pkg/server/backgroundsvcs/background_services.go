@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
-	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/loginattempt/loginattemptimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -47,7 +46,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func ProvideBackgroundServiceRegistry(
@@ -116,9 +114,6 @@ func ProvideBackgroundServiceRegistry(
 // BackgroundServiceRegistry provides background services.
 type BackgroundServiceRegistry struct {
 	*services.BasicService
-	HTTPServer                  *api.HTTPServer
-	userService                 user.Service
-	loginAttemptService         loginattempt.Service
 	statsCollectorService       *statscollector.Service
 	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry
 	provisioningService         provisioning.ProvisioningService
