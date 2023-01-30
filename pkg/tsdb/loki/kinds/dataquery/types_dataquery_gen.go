@@ -16,6 +16,13 @@ const (
 	EditorModeCode EditorMode = "code"
 )
 
+// Defines values for LokiQueryDirection.
+const (
+	LokiQueryDirectionBackward LokiQueryDirection = "backward"
+
+	LokiQueryDirectionForward LokiQueryDirection = "forward"
+)
+
 // Defines values for LokiQueryType.
 const (
 	LokiQueryTypeInstant LokiQueryType = "instant"
@@ -84,6 +91,9 @@ type LokiDataQuery struct {
 
 // EditorMode defines model for LokiDataQuery.EditorMode.
 type EditorMode string
+
+// LokiQueryDirection defines model for LokiQueryDirection.
+type LokiQueryDirection string
 
 // LokiQueryType defines model for LokiQueryType.
 type LokiQueryType string

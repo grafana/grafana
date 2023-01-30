@@ -8,6 +8,7 @@ import (
 
 type QueryType = dataquery.LokiQueryType
 type SupportingQueryType = dataquery.SupportingQueryType
+type Direction = dataquery.LokiQueryDirection
 
 const (
 	QueryTypeRange   = dataquery.LokiQueryTypeRange
@@ -21,11 +22,9 @@ const (
 	SupportingQueryNone       SupportingQueryType = "none"
 )
 
-type Direction string
-
 const (
-	DirectionBackward Direction = "backward"
-	DirectionForward  Direction = "forward"
+	DirectionBackward = dataquery.LokiQueryDirectionBackward
+	DirectionForward  = dataquery.LokiQueryDirectionForward
 )
 
 type lokiQuery struct {

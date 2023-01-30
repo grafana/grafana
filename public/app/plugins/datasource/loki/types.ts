@@ -1,8 +1,8 @@
 import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
 
-import { Loki as LokiQueryFromSchema, LokiQueryType, SupportingQueryType } from './dataquery.gen';
+import { Loki as LokiQueryFromSchema, LokiQueryType, SupportingQueryType, LokiQueryDirection } from './dataquery.gen';
 
-export { LokiQueryType, SupportingQueryType };
+export { LokiQueryDirection, LokiQueryType, SupportingQueryType };
 
 export interface LokiInstantQueryRequest {
   query: string;
@@ -24,11 +24,6 @@ export enum LokiResultType {
   Stream = 'streams',
   Vector = 'vector',
   Matrix = 'matrix',
-}
-
-export enum LokiQueryDirection {
-  Backward = 'backward',
-  Forward = 'forward',
 }
 
 export interface LokiQuery extends LokiQueryFromSchema {

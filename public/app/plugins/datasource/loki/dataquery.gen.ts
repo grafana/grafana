@@ -29,6 +29,11 @@ export enum SupportingQueryType {
   LogsVolume = 'logsVolume',
 }
 
+export enum LokiQueryDirection {
+  Backward = 'backward',
+  Forward = 'forward',
+}
+
 export interface Loki extends common.DataQuery {
   editorMode?: QueryEditorMode;
   /**
