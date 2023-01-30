@@ -56,6 +56,7 @@ export const Table = memo((props: Props) => {
     footerValues,
     enablePagination,
   } = props;
+  // console.log(footerOptions, 'footerOptions');
 
   const listRef = useRef<VariableSizeList>(null);
   const tableDivRef = useRef<HTMLDivElement>(null);
@@ -148,7 +149,9 @@ export const Table = memo((props: Props) => {
     pageOptions,
     setHiddenColumns,
   } = useTable(options, useFilters, useSortBy, useAbsoluteLayout, useResizeColumns, useExpanded, usePagination);
+  // JEV: footerGroups and headerGroups are identical
   console.log(headerGroups, 'headerGroups');
+  console.log(footerGroups, 'footerGroups');
   console.log(rows, 'rows');
 
   const extendedState = state as GrafanaTableState;
@@ -181,7 +184,9 @@ export const Table = memo((props: Props) => {
     }
 
     const footerItems = getFooterItems(
+      // JEV: headerGroups are based not on the table fields, but the currently rendered headers, which may or may not include our row nums
       headerGroups[0].headers as unknown as Array<{ field: Field }>,
+      // JEV: this may be true here as well for our rows
       createFooterCalculationValues(rows),
       footerOptions,
       theme
@@ -381,7 +386,7 @@ export const Table = memo((props: Props) => {
           {footerItems && (
             <FooterRow
               isPaginationVisible={Boolean(enablePagination)}
-              footerValues={[undefined, ...footerItems]}
+              footerValues={footerItems}
               footerGroups={footerGroups}
               totalColumnsWidth={totalColumnsWidth}
               tableStyles={tableStyles}

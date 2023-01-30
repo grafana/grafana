@@ -131,7 +131,7 @@ export function getColumns(
       id: fieldIndex.toString(),
       field: field,
       Header: getFieldDisplayName(field, data),
-      accessor: (row: any, i: number) => {
+      accessor: (_row: any, i: number) => {
         return field.values.get(i);
       },
       sortType: selectSortType(field.type),
@@ -174,6 +174,7 @@ export function getColumns(
 export function buildFieldsForOptionalRowNums(totalRows: number): Field {
   return {
     // White space as the name, so the column title is blank
+    // JEV: move to default vals module
     name: ' ',
     display: function (value) {
       return {
@@ -345,6 +346,7 @@ export function getFooterItems(
   options: TableFooterCalc,
   theme2: GrafanaTheme2
 ): FooterItem[] {
+  // JEV: we need to add the row nums field if it doesn't exist; we can do that by searching for id === "0"
   // console.log(filterFields, 'filterFields');
   // console.log(values, 'values');
   // console.log(options, 'options');
