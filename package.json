@@ -180,7 +180,7 @@
     "browserslist": "^4.21.4",
     "chance": "^1.0.10",
     "codeowners": "^5.1.1",
-    "copy-webpack-plugin": "9.0.1",
+    "copy-webpack-plugin": "11.0.0",
     "css-loader": "6.7.1",
     "css-minimizer-webpack-plugin": "4.2.2",
     "cypress": "9.5.1",
