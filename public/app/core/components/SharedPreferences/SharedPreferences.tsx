@@ -71,6 +71,7 @@ export class SharedPreferences extends PureComponent<Props, State> {
       { value: '', label: t('shared-preferences.theme.default-label', 'Default') },
       { value: 'dark', label: t('shared-preferences.theme.dark-label', 'Dark') },
       { value: 'light', label: t('shared-preferences.theme.light-label', 'Light') },
+      { value: 'system', label: t('shared-preferences.theme.system-label', 'System') },
     ];
   }
 

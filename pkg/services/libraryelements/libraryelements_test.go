@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -165,10 +166,10 @@ func TestGetLibraryPanelConnections(t *testing.T) {
 							ConnectionID:  dashInDB.ID,
 							ConnectionUID: dashInDB.UID,
 							Created:       res.Result[0].Created,
-							CreatedBy: LibraryElementDTOMetaUser{
-								ID:        1,
+							CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								Id:        1,
 								Name:      userInDbName,
-								AvatarURL: userInDbAvatar,
+								AvatarUrl: userInDbAvatar,
 							},
 						},
 					},
@@ -312,12 +313,11 @@ func createFolderWithACL(t *testing.T, sqlStore db.DB, title string, user user.S
 	features := featuremgmt.WithFeatures()
 	cfg.IsFeatureToggleEnabled = features.IsEnabled
 	ac := acmock.New()
-	folderPermissions := acmock.NewMockedPermissionsService()
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
 	require.NoError(t, err)
 
-	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, dashboardStore, nil, features, folderPermissions)
+	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, dashboardStore, nil, features)
 	t.Logf("Creating folder with title and UID %q", title)
 	ctx := appcontext.WithUser(context.Background(), &user)
 	folder, err := s.Create(ctx, &folder.CreateFolderCommand{
@@ -446,7 +446,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		service := LibraryElementService{
 			Cfg:           sqlStore.Cfg,
 			SQLStore:      sqlStore,
-			folderService: folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardStore, dashboardStore, nil, features, folderPermissions),
+			folderService: folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), sqlStore.Cfg, dashboardStore, dashboardStore, nil, features),
 		}
 
 		// deliberate difference between signed in user and user in db to make it crystal clear

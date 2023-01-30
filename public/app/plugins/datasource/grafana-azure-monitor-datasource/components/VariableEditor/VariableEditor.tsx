@@ -51,6 +51,7 @@ const VariableEditor = (props: Props) => {
   const [requireSubscription, setRequireSubscription] = useState(false);
   const [hasResourceGroup, setHasResourceGroup] = useState(false);
   const [hasNamespace, setHasNamespace] = useState(false);
+  const [hasRegion, setHasRegion] = useState(false);
   const [requireResourceGroup, setRequireResourceGroup] = useState(false);
   const [requireNamespace, setRequireNamespace] = useState(false);
   const [requireResource, setRequireResource] = useState(false);
@@ -58,6 +59,7 @@ const VariableEditor = (props: Props) => {
   const [resourceGroups, setResourceGroups] = useState<SelectableValue[]>([]);
   const [namespaces, setNamespaces] = useState<SelectableValue[]>([]);
   const [resources, setResources] = useState<SelectableValue[]>([]);
+  const [regions, setRegions] = useState<SelectableValue[]>([]);
   const [errorMessage, setError] = useLastError();
   const queryType = typeof query === 'string' ? '' : query.queryType;
 
@@ -87,6 +89,7 @@ const VariableEditor = (props: Props) => {
         setRequireSubscription(true);
         setHasResourceGroup(true);
         setHasNamespace(true);
+        setHasRegion(true);
         break;
       case AzureQueryType.MetricNamesQuery:
         setRequireSubscription(true);
@@ -133,6 +136,16 @@ const VariableEditor = (props: Props) => {
     if (subscription) {
       datasource.getMetricNamespaces(subscription, resourceGroup).then((rgs) => {
         setNamespaces(rgs.map((s) => ({ label: s.text, value: s.value })));
+      });
+    }
+  }, [datasource, subscription, resourceGroup]);
+
+  useEffect(() => {
+    if (subscription) {
+      datasource.azureMonitorDatasource.getLocations([subscription]).then((rgs) => {
+        const regions: SelectableValue[] = [];
+        rgs.forEach((r) => regions.push({ label: r.displayName, value: r.name }));
+        setRegions(regions);
       });
     }
   }, [datasource, subscription, resourceGroup]);
@@ -190,6 +203,13 @@ const VariableEditor = (props: Props) => {
       ...query,
       namespace: selectableValue.value,
       resource: undefined,
+    });
+  };
+
+  const onChangeRegion = (selectableValue: SelectableValue) => {
+    onChange({
+      ...query,
+      region: selectableValue.value,
     });
   };
 
@@ -295,6 +315,22 @@ const VariableEditor = (props: Props) => {
             width={25}
             value={query.namespace || null}
             placeholder={requireNamespace ? undefined : 'Optional'}
+          />
+        </InlineField>
+      )}
+      {hasRegion && (
+        <InlineField
+          label="Select region"
+          labelWidth={20}
+          data-testid={selectors.components.variableEditor.region.input}
+        >
+          <Select
+            aria-label="select region"
+            onChange={onChangeRegion}
+            options={regions.concat(variableOptionGroup)}
+            width={25}
+            value={query.region || null}
+            placeholder="Optional"
           />
         </InlineField>
       )}
