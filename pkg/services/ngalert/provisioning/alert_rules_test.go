@@ -371,7 +371,7 @@ func createTestRule(title string, groupTitle string, orgID int64) models.AlertRu
 			{
 				RefID:         "A",
 				Model:         json.RawMessage("{}"),
-				DatasourceUID: "-100",
+				DatasourceUID: "__expr__",
 				RelativeTimeRange: models.RelativeTimeRange{
 					From: models.Duration(60),
 					To:   models.Duration(0),

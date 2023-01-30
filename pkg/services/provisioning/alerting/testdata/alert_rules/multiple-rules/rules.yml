@@ -30,7 +30,7 @@ groups:
         relativeTimeRange:
           from: 0
           to: 0
-        datasourceUID: "-100"
+        datasourceUid: "__expr__"
         model:
           conditions:
           - evaluator:
@@ -84,7 +84,7 @@ groups:
         relativeTimeRange:
           from: 0
           to: 0
-        datasourceUID: "-100"
+        datasourceUid: "__expr__"
         model:
           conditions:
           - evaluator:

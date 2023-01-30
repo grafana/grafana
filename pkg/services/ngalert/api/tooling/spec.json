@@ -4843,7 +4843,7 @@
           },
           "example": [
             {
-              "datasourceUid": "-100",
+              "datasourceUid": "__expr__",
               "model": {
                 "conditions": [
                   {

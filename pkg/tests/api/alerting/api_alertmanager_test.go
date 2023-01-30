@@ -508,7 +508,7 @@ func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: "__expr__",
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -649,7 +649,7 @@ func TestIntegrationRulerAccess(t *testing.T) {
 										From: ngmodels.Duration(time.Duration(5) * time.Hour),
 										To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 									},
-									DatasourceUID: "-100",
+									DatasourceUID: "__expr__",
 									Model: json.RawMessage(`{
 								"type": "math",
 								"expression": "2 + 3 > 1"
@@ -752,7 +752,7 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 											"from": 18000,
 											"to": 10800
 										},
-										"datasourceUid": "-100",
+										"datasourceUid": "__expr__",
 										"model": {
 											"expression": "2 + 3 > 1",
 											"intervalMs": 1000,
@@ -907,7 +907,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: "__expr__",
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -937,7 +937,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: "__expr__",
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -967,7 +967,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: "__expr__",
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -998,7 +998,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: "__expr__",
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -1058,7 +1058,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: "__expr__",
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -1117,7 +1117,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: "__expr__",
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -1137,7 +1137,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: "__expr__",
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -1208,7 +1208,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 								   "from":18000,
 								   "to":10800
 								},
-								"datasourceUid":"-100",
+								"datasourceUid":"__expr__",
 								"model":{
 								   "expression":"2 + 3 \u003e 1",
 								   "intervalMs":1000,
@@ -1244,7 +1244,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 								   "from":18000,
 								   "to":10800
 								},
-								"datasourceUid":"-100",
+								"datasourceUid":"__expr__",
 								"model":{
 								   "expression":"2 + 3 \u003e 1",
 								   "intervalMs":1000,
@@ -1302,7 +1302,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: "__expr__",
 								Model: json.RawMessage(`{
 											"type": "math",
 											"expression": "2 + 3 < 1"
@@ -1375,7 +1375,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: "__expr__",
 								Model: json.RawMessage(`{
 												"type": "math",
 												"expression": "2 + 3 < 1"
@@ -1409,7 +1409,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: "__expr__",
 								Model: json.RawMessage(`{
 												"type": "math",
 												"expression": "2 + 3 > 1"
@@ -1483,7 +1483,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: "__expr__",
 								Model: json.RawMessage(`{
 											"type": "math",
 											"expression": "2 + 3 < 1"
@@ -1551,7 +1551,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		                           "from":18000,
 		                           "to":10800
 		                        },
-		                        "datasourceUid":"-100",
+		                        "datasourceUid":"__expr__",
 								"model":{
 		                           "expression":"2 + 3 \u003C 1",
 		                           "intervalMs":1000,
@@ -1600,7 +1600,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: "__expr__",
 								Model: json.RawMessage(`{
 												"type": "math",
 												"expression": "2 + 3 < 1"
@@ -1660,7 +1660,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						   "from":18000,
 						   "to":10800
 						},
-						"datasourceUid":"-100",
+						"datasourceUid":"__expr__",
 									"model":{
 						   "expression":"2 + 3 \u003C 1",
 						   "intervalMs":1000,
@@ -1745,7 +1745,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						   "from":18000,
 						   "to":10800
 						},
-						"datasourceUid":"-100",
+						"datasourceUid":"__expr__",
 									"model":{
 						   "expression":"2 + 3 \u003C 1",
 						   "intervalMs":1000,
@@ -1957,7 +1957,7 @@ func TestIntegrationQuota(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: "__expr__",
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -1992,7 +1992,7 @@ func TestIntegrationQuota(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: "__expr__",
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 4 > 1"
@@ -2051,7 +2051,7 @@ func TestIntegrationQuota(t *testing.T) {
 							   "from":18000,
 							   "to":10800
 							},
-							"datasourceUid":"-100",
+							"datasourceUid":"__expr__",
 										"model":{
 							   "expression":"2 + 4 \u003E 1",
 							   "intervalMs":1000,
@@ -2122,7 +2122,7 @@ func TestIntegrationEval(t *testing.T) {
 							"from": 18000,
 							"to": 10800
 						},
-						"datasourceUid":"-100",
+						"datasourceUid":"__expr__",
 						"model": {
 							"type":"math",
 							"expression":"1 < 2"
@@ -2186,7 +2186,7 @@ func TestIntegrationEval(t *testing.T) {
 							"from": 18000,
 							"to": 10800
 						},
-						"datasourceUid": "-100",
+						"datasourceUid": "__expr__",
 						"model": {
 							"type":"math",
 							"expression":"1 > 2"
@@ -2250,7 +2250,7 @@ func TestIntegrationEval(t *testing.T) {
 							"from": 18000,
 							"to": 10800
 						},
-						"datasourceUid": "-100",
+						"datasourceUid": "__expr__",
 						"model": {
 							"type":"math",
 							"expression":"1 > 2"
@@ -2351,7 +2351,7 @@ func TestIntegrationEval(t *testing.T) {
 								"from": 18000,
 								"to": 10800
 							},
-							"datasourceUid": "-100",
+							"datasourceUid": "__expr__",
 							"model": {
 								"type":"math",
 								"expression":"1 < 2"
@@ -2408,7 +2408,7 @@ func TestIntegrationEval(t *testing.T) {
 								"from": 18000,
 								"to": 10800
 							},
-							"datasourceUid": "-100",
+							"datasourceUid": "__expr__",
 							"model": {
 								"type":"math",
 								"expression":"1 > 2"

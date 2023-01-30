@@ -737,7 +737,7 @@ func insertTestRule(t *testing.T, sqlStore db.DB, foderOrgID int64, folderUID st
 			Data: []alertQuery{
 				{
 					RefID:         "A",
-					DatasourceUID: "-100",
+					DatasourceUID: "__expr__",
 					Model: json.RawMessage(`{
 						"type": "math",
 						"expression": "2 + 3 > 1"

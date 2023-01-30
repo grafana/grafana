@@ -69,7 +69,7 @@ groups:
         #                  evaluation - should be obtained trough the API
         data:
           - refId: A
-            datasourceUid: '-100'
+            datasourceUid: '__expr__'
             model:
               conditions:
                 - evaluator:

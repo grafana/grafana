@@ -979,7 +979,7 @@ func getRulesConfig(t *testing.T) string {
 							From: ngmodels.Duration(time.Duration(5) * time.Hour),
 							To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 						},
-						DatasourceUID: "-100",
+						DatasourceUID: "__expr__",
 						Model: json.RawMessage(`{
 							"type": "math",
 							"expression": "2 + 3 > 1"

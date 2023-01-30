@@ -220,7 +220,7 @@
       },
       {
         "refId": "B",
-        "datasourceUid": "-100",
+        "datasourceUid": "__expr__",
         "queryType": "",
         "model": {
           "refId": "B",
@@ -261,7 +261,7 @@
       },
       {
         "refId": "C",
-        "datasourceUid": "-100",
+        "datasourceUid": "__expr__",
         "queryType": "",
         "model": {
           "refId": "C",

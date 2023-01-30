@@ -29,7 +29,7 @@ func TestAlertQuery(t *testing.T) {
 					"queryType": "metricQuery",
 					"extraParam": "some text"
 				}`),
-				DatasourceUID: "-100",
+				DatasourceUID: "__expr__",
 			},
 			expectedIsExpression: true,
 			expectedMaxPoints:    int64(defaultMaxDataPoints),

@@ -39,7 +39,7 @@ exports[`PanelAlertTabContent Will render alerts belonging to panel and a button
       },
     },
     {
-      "datasourceUid": "-100",
+      "datasourceUid": "__expr__",
       "model": {
         "conditions": [
           {
@@ -76,7 +76,7 @@ exports[`PanelAlertTabContent Will render alerts belonging to panel and a button
       "refId": "B",
     },
     {
-      "datasourceUid": "-100",
+      "datasourceUid": "__expr__",
       "model": {
         "conditions": [
           {

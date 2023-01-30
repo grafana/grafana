@@ -23,7 +23,7 @@ apiVersion: 1
 #       #                  evaluation - should be obtained via the API
 #       data:
 #       - refId: A
-#         datasourceUid: "-100"
+#         datasourceUid: "__expr__"
 #         model:
 #           conditions:
 #           - evaluator:
