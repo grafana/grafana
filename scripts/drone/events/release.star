@@ -532,13 +532,16 @@ def publish_artifacts_step(mode):
         "environment": {
             "GCP_KEY": from_secret("gcp_key"),
             "PRERELEASE_BUCKET": from_secret("prerelease_bucket"),
+            "ENTERPRISE2_SECURITY_PREFIX": from_secret("enterprise2_security_prefix"),
+            "SECURITY_DEST_BUCKET": from_secret("security_dest_bucket"),
+            "STATIC_ASSET_EDITIONS": from_secret("static_asset_editions"),
         },
         "commands": [
-            "./bin/grabpl artifacts publish {}--tag $${{DRONE_TAG}} --src-bucket $${{PRERELEASE_BUCKET}}".format(
+            "./bin/build artifacts publish {}--tag $${{DRONE_TAG}} --src-bucket $${{PRERELEASE_BUCKET}}".format(
                 security,
             ),
         ],
-        "depends_on": ["grabpl"],
+        "depends_on": ["compile-build-cmd"],
     }
 
 def publish_artifacts_pipelines(mode):
@@ -547,7 +550,7 @@ def publish_artifacts_pipelines(mode):
         "target": [mode],
     }
     steps = [
-        download_grabpl_step(),
+        compile_build_cmd(),
         publish_artifacts_step(mode),
     ]
 
