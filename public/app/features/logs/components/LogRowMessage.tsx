@@ -176,7 +176,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
       getLogRowContextUi,
     } = this.props;
 
-    const style = getLogRowStyles(theme, row.logLevel);
+    const style = getLogRowStyles(theme);
     const { hasAnsi, raw } = row;
     const restructuredEntry = restructureLog(raw, prettifyLogMessage);
     const shouldShowContextToggle = showContextToggle ? showContextToggle(row) : false;
