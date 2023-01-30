@@ -1,9 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/getting-started/build-first-dashboard/
-  - /docs/grafana/latest/getting-started/getting-started/
-  - /docs/grafana/latest/guides/getting_started/
-  - /docs/grafana/latest/guides/gettingstarted/
+  - ../guides/getting_started/
+  - ../guides/gettingstarted/
+  - getting-started/
 description: Learn how to get started with Grafana by adding a preconfigured dashboard.
 title: Build your first dashboard
 weight: 200
@@ -41,7 +40,7 @@ To sign in to Grafana for the first time:
 To create your first dashboard:
 
 1. Click the **New dashboard** item under the **Dashboards** icon in the side menu.
-1. On the dashboard, click **Add an empty panel**.
+1. On the dashboard, click **Add a new panel**.
 1. In the New dashboard/Edit panel view, go to the **Query** tab.
 1. Configure your [query]({{< relref "../panels-visualizations/query-transform-data/#add-a-query" >}}) by selecting `-- Grafana --` from the data source selector.
 

@@ -1,6 +1,4 @@
 ---
-aliases:
-  - /docs/grafana/latest/shared/visualizations/stack-series-link/
 title: Stack series link
 ---
 

@@ -511,6 +511,7 @@ export interface DataQueryTimings {
 }
 
 export interface QueryFix {
+  title?: string;
   label: string;
   action?: QueryFixAction;
 }
@@ -558,6 +559,10 @@ export interface DataSourceSettings<T extends DataSourceJsonData = DataSourceJso
   access: string;
   url: string;
   user: string;
+  /**
+   *  @deprecated -- use jsonData to store information related to database.
+   *  This field should only be used by Elasticsearch and Influxdb.
+   */
   database: string;
   basicAuth: boolean;
   basicAuthUser: string;
@@ -586,6 +591,10 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
   jsonData: T;
   username?: string;
   password?: string; // when access is direct, for some legacy datasources
+  /**
+   *  @deprecated -- use jsonData to store information related to database.
+   *  This field should only be used by Elasticsearch and Influxdb.
+   */
   database?: string;
   isDefault?: boolean;
   access: 'direct' | 'proxy'; // Currently we support 2 options - direct (browser) and proxy (server)

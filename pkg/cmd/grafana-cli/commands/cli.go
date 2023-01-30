@@ -4,10 +4,11 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/urfave/cli/v2"
+
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
-	"github.com/urfave/cli/v2"
 )
 
 // RunCLI is the entrypoint for the grafana-cli command. It returns the exit code for the grafana-cli program.
@@ -16,6 +17,23 @@ func CLICommand(version string) *cli.Command {
 		Name:  "cli",
 		Usage: "run the grafana cli",
 		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "config",
+				Usage: "Path to config file",
+			},
+			&cli.StringFlag{
+				Name:  "homepath",
+				Usage: "Path to Grafana install/home path, defaults to working directory",
+			},
+			&cli.StringFlag{
+				Name:  "configOverrides",
+				Usage: "Configuration options to override defaults as a string. e.g. cfg:default.paths.log=/dev/null",
+			},
+			cli.VersionFlag,
+			&cli.BoolFlag{
+				Name:  "debug, d",
+				Usage: "Enable debug logging",
+			},
 			&cli.StringFlag{
 				Name:    "pluginsDir",
 				Usage:   "Path to the Grafana plugin directory",
@@ -38,23 +56,6 @@ func CLICommand(version string) *cli.Command {
 				Name:  "insecure",
 				Usage: "Skip TLS verification (insecure)",
 			},
-			&cli.BoolFlag{
-				Name:  "debug, d",
-				Usage: "Enable debug logging",
-			},
-			&cli.StringFlag{
-				Name:  "configOverrides",
-				Usage: "Configuration options to override defaults as a string. e.g. cfg:default.paths.log=/dev/null",
-			},
-			&cli.StringFlag{
-				Name:  "homepath",
-				Usage: "Path to Grafana install/home path, defaults to working directory",
-			},
-			&cli.StringFlag{
-				Name:  "config",
-				Usage: "Path to config file",
-			},
-			cli.VersionFlag,
 		},
 		Subcommands: Commands,
 		Before: func(c *cli.Context) error {

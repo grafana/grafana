@@ -6,7 +6,7 @@ describe('Azure Monitor Datasource', () => {
   describe('interpolateVariablesInQueries()', () => {
     it('should interpolate variables in the queries', () => {
       const ds = new Datasource(createMockInstanceSetttings());
-      const queries = [createMockQuery({ azureMonitor: { resourceGroup: '$resourceGroup' } })];
+      const queries = [createMockQuery({ azureMonitor: { resources: [{ resourceGroup: '$resourceGroup' }] } })];
 
       const interpolatedQueries = ds.interpolateVariablesInQueries(queries, {
         resourceGroup: { text: 'the-resource-group', value: 'the-resource-group' },
@@ -14,7 +14,9 @@ describe('Azure Monitor Datasource', () => {
 
       expect(interpolatedQueries).toContainEqual(
         expect.objectContaining({
-          azureMonitor: expect.objectContaining({ resourceGroup: 'the-resource-group' }),
+          azureMonitor: expect.objectContaining({
+            resources: [expect.objectContaining({ resourceGroup: 'the-resource-group' })],
+          }),
         })
       );
     });
@@ -33,5 +35,18 @@ describe('Azure Monitor Datasource', () => {
         })
       );
     });
+  });
+
+  it('should not filter a valid query', () => {
+    const ds = new Datasource(createMockInstanceSetttings());
+    const query = createMockQuery();
+    expect(ds.filterQuery(query)).toBe(true);
+  });
+
+  it('should filter out a query with no query type', () => {
+    const ds = new Datasource(createMockInstanceSetttings());
+    const query = createMockQuery();
+    delete query.queryType;
+    expect(ds.filterQuery(query)).toBe(false);
   });
 });

@@ -66,11 +66,17 @@ func newInstanceSettings(cfg *setting.Cfg) datasource.InstanceFactoryFunc {
 		if err != nil {
 			return nil, fmt.Errorf("error reading settings: %w", err)
 		}
+
+		database := jsonData.Database
+		if database == "" {
+			database = settings.Database
+		}
+
 		dsInfo := sqleng.DataSourceInfo{
 			JsonData:                jsonData,
 			URL:                     settings.URL,
 			User:                    settings.User,
-			Database:                settings.Database,
+			Database:                database,
 			ID:                      settings.ID,
 			Updated:                 settings.Updated,
 			UID:                     settings.UID,
@@ -191,6 +197,22 @@ func (t *mssqlQueryResultTransformer) TransformQueryError(logger log.Logger, err
 	}
 
 	return err
+}
+
+// CheckHealth pings the connected SQL database
+func (s *Service) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
+	dsHandler, err := s.getDataSourceHandler(req.PluginContext)
+	if err != nil {
+		return nil, err
+	}
+
+	err = dsHandler.Ping()
+
+	if err != nil {
+		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: dsHandler.TransformQueryError(logger, err).Error()}, nil
+	}
+
+	return &backend.CheckHealthResult{Status: backend.HealthStatusOk, Message: "Database Connection OK"}, nil
 }
 
 func (t *mssqlQueryResultTransformer) GetConverterList() []sqlutil.StringConverter {

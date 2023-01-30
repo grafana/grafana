@@ -10,16 +10,14 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
-			Name:        "alertingBigTransactions",
-			Description: "Use big transactions for alerting database writes",
+			Name:        "returnUnameHeader",
+			Description: "Return user login as header for authenticated requests",
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:         "promQueryBuilder",
-			Description:  "Show Prometheus query builder",
-			State:        FeatureStateStable,
-			Expression:   "true", // on by default
-			FrontendOnly: true,
+			Name:        "alertingBigTransactions",
+			Description: "Use big transactions for alerting database writes",
+			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "trimDefaults",
@@ -86,12 +84,6 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:         "influxdbBackendMigration",
-			Description:  "Query InfluxDB InfluxQL without the proxy",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-		},
-		{
 			Name:            "showFeatureFlagsInUI",
 			Description:     "Show feature flags in the settings UI",
 			State:           FeatureStateAlpha,
@@ -101,6 +93,13 @@ var (
 			Name:        "publicDashboards",
 			Description: "Enables public access to dashboards",
 			State:       FeatureStateAlpha,
+		},
+		{
+			Name:            "publicDashboardsEmailSharing",
+			Description:     "Allows public dashboard sharing to be restricted to only allowed emails",
+			State:           FeatureStateAlpha,
+			RequiresLicense: true,
+			RequiresDevMode: true,
 		},
 		{
 			Name:        "lokiLive",
@@ -147,6 +146,23 @@ var (
 		{
 			Name:        "storage",
 			Description: "Configurable storage for dashboards, datasources, and resources",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:            "k8s",
+			Description:     "Explore native k8s integrations",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
+			Name:            "k8sDashboards",
+			Description:     "Save dashboards via k8s",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
+			Name:        "supportBundles",
+			Description: "Support bundles for troubleshooting",
 			State:       FeatureStateAlpha,
 		},
 		{
@@ -208,11 +224,6 @@ var (
 			Description:  "Enable trace to metrics links",
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
-		},
-		{
-			Name:        "prometheusBufferedClient",
-			Description: "Enable buffered (old) client for Prometheus datasource as default instead of streaming JSON parser client (new)",
-			State:       FeatureStateStable,
 		},
 		{
 			Name:        "newDBLibrary",
@@ -288,19 +299,15 @@ var (
 			RequiresDevMode: true,
 		},
 		{
-			Name:        "traceqlEditor",
-			Description: "Show the TraceQL editor in the explore page",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:        "flameGraph",
 			Description: "Show the flame graph",
 			State:       FeatureStateAlpha,
 		},
 		{
 			Name:        "cloudWatchCrossAccountQuerying",
-			Description: "Use cross-account querying in CloudWatch datasource",
-			State:       FeatureStateAlpha,
+			Description: "Enables cross-account querying in CloudWatch datasources",
+			State:       FeatureStateStable,
+			Expression:  "true", //enabled by default
 		},
 		{
 			Name:         "redshiftAsyncQueryDataSupport",
@@ -347,10 +354,9 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:            "accessControlOnCall",
-			Description:     "Access control primitives for OnCall",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
+			Name:        "accessControlOnCall",
+			Description: "Access control primitives for OnCall",
+			State:       FeatureStateBeta,
 		},
 		{
 			Name:            "nestedFolders",
@@ -369,6 +375,11 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
+			Name:        "datasourceOnboarding",
+			Description: "Enable data source onboarding page",
+			State:       FeatureStateAlpha,
+		},
+		{
 			Name:        "secureSocksDatasourceProxy",
 			Description: "Enable secure socks tunneling for supported core datasources",
 			State:       FeatureStateAlpha,
@@ -377,6 +388,58 @@ var (
 			Name:        "authnService",
 			Description: "Use new auth service to perform authentication",
 			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "sessionRemoteCache",
+			Description: "Enable using remote cache for user sessions",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:        "disablePrometheusExemplarSampling",
+			Description: "Disable Prometheus examplar sampling",
+			State:       FeatureStateStable,
+		},
+		{
+			Name:        "alertingBacktesting",
+			Description: "Rule backtesting API for alerting",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:         "editPanelCSVDragAndDrop",
+			Description:  "Enables drag and drop for CSV and Excel files",
+			FrontendOnly: true,
+			State:        FeatureStateAlpha,
+		},
+		{
+			Name:            "alertingNoNormalState",
+			Description:     "Stop maintaining state of alerts that are not firing",
+			State:           FeatureStateBeta,
+			RequiresRestart: false,
+		},
+		{
+			Name:        "azureMultipleResourcePicker",
+			Description: "Azure multiple resource picker",
+			State:       FeatureStateAlpha,
+		},
+		{
+			Name:         "topNavCommandPalette",
+			Description:  "Launch the Command Palette from the top navigation search box",
+			State:        FeatureStateBeta,
+			FrontendOnly: true,
+		},
+		{
+
+			Name:         "logsSampleInExplore",
+			Description:  "Enables access to the logs sample feature in Explore",
+			State:        FeatureStateStable,
+			Expression:   "true", //turned on by default
+			FrontendOnly: true,
+		},
+		{
+			Name:         "logsContextDatasourceUi",
+			Description:  "Allow datasource to provide custom UI for context view",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
 		},
 	}
 )

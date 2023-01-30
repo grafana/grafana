@@ -3,7 +3,6 @@ import { isEmpty, isObject, mapValues, omitBy } from 'lodash';
 import {
   AbsoluteTimeRange,
   DataSourceApi,
-  DataSourceRef,
   EventBusExtended,
   ExploreUrlState,
   getDefaultTimeRange,
@@ -11,13 +10,14 @@ import {
   LoadingState,
   PanelData,
 } from '@grafana/data';
+import { DataSourceRef } from '@grafana/schema';
 import { ExplorePanelData } from 'app/types';
 import { ExploreItemState } from 'app/types/explore';
 
 import store from '../../../core/store';
 import { clearQueryKeys, lastUsedDatasourceKeyForOrgId } from '../../../core/utils/explore';
 import { getDatasourceSrv } from '../../plugins/datasource_srv';
-import { SETTINGS_KEYS } from '../utils/logs';
+import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
 import { toRawTimeRange } from '../utils/time';
 
 export const DEFAULT_RANGE = {
@@ -28,21 +28,6 @@ export const DEFAULT_RANGE = {
 const GRAPH_STYLE_KEY = 'grafana.explore.style.graph';
 export const storeGraphStyle = (graphStyle: string): void => {
   store.set(GRAPH_STYLE_KEY, graphStyle);
-};
-
-const LOGS_VOLUME_ENABLED_KEY = SETTINGS_KEYS.enableVolumeHistogram;
-export const storeLogsVolumeEnabled = (enabled: boolean): void => {
-  store.set(LOGS_VOLUME_ENABLED_KEY, enabled ? 'true' : 'false');
-};
-
-const loadLogsVolumeEnabled = (): boolean => {
-  const data = store.get(LOGS_VOLUME_ENABLED_KEY);
-  // we default to `enabled=true`
-  if (data === 'false') {
-    return false;
-  }
-
-  return true;
 };
 
 /**
@@ -73,12 +58,11 @@ export const makeExplorePaneState = (): ExploreItemState => ({
   tableResult: null,
   graphResult: null,
   logsResult: null,
+  rawPrometheusResult: null,
   eventBridge: null as unknown as EventBusExtended,
   cache: [],
   richHistory: [],
-  logsVolumeEnabled: loadLogsVolumeEnabled(),
-  logsVolumeDataProvider: undefined,
-  logsVolumeData: undefined,
+  supplementaryQueries: loadSupplementaryQueries(),
   panelsState: {},
 });
 
@@ -92,6 +76,8 @@ export const createEmptyQueryResponse = (): ExplorePanelData => ({
   nodeGraphFrames: [],
   flameGraphFrames: [],
   tableFrames: [],
+  rawPrometheusFrames: [],
+  rawPrometheusResult: null,
   graphResult: null,
   logsResult: null,
   tableResult: null,

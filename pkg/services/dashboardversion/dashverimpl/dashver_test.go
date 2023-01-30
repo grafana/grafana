@@ -5,10 +5,11 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/require"
 )
 
 func TestDashboardVersionService(t *testing.T) {
@@ -23,7 +24,7 @@ func TestDashboardVersionService(t *testing.T) {
 		dashboardVersionStore.ExpectedDashboardVersion = dashboard
 		dashboardVersion, err := dashboardVersionService.Get(context.Background(), &dashver.GetDashboardVersionQuery{})
 		require.NoError(t, err)
-		require.Equal(t, dashboardVersion, dashboard)
+		require.Equal(t, dashboard.ToDTO(""), dashboardVersion)
 	})
 }
 
@@ -59,7 +60,7 @@ func TestListDashboardVersions(t *testing.T) {
 
 	t.Run("Get all versions for a given Dashboard ID", func(t *testing.T) {
 		query := dashver.ListDashboardVersionsQuery{}
-		dashboardVersionStore.ExpectedListVersions = []*dashver.DashboardVersionDTO{{}}
+		dashboardVersionStore.ExpectedListVersions = []*dashver.DashboardVersion{{}}
 		res, err := dashboardVersionService.List(context.Background(), &query)
 		require.Nil(t, err)
 		require.Equal(t, 1, len(res))
@@ -70,7 +71,7 @@ type FakeDashboardVersionStore struct {
 	ExpectedDashboardVersion *dashver.DashboardVersion
 	ExptectedDeletedVersions int64
 	ExpectedVersions         []interface{}
-	ExpectedListVersions     []*dashver.DashboardVersionDTO
+	ExpectedListVersions     []*dashver.DashboardVersion
 	ExpectedError            error
 }
 
@@ -90,6 +91,6 @@ func (f *FakeDashboardVersionStore) DeleteBatch(ctx context.Context, cmd *dashve
 	return f.ExptectedDeletedVersions, f.ExpectedError
 }
 
-func (f *FakeDashboardVersionStore) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) ([]*dashver.DashboardVersionDTO, error) {
+func (f *FakeDashboardVersionStore) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) ([]*dashver.DashboardVersion, error) {
 	return f.ExpectedListVersions, f.ExpectedError
 }

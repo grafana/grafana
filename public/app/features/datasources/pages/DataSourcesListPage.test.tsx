@@ -49,18 +49,55 @@ describe('Render', () => {
     expect(await screen.findByRole('link', { name: 'Documentation' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'Support' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'Community' })).toBeInTheDocument();
-    expect(await screen.findByRole('link', { name: 'Add new data source' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Add data source' })).toBeInTheDocument();
   });
 
-  it('should not render "Add new data source" button if user has no permissions', async () => {
-    (contextSrv.hasPermission as jest.Mock) = jest.fn().mockReturnValue(false);
+  describe('when user has no permissions', () => {
+    beforeEach(() => {
+      (contextSrv.hasPermission as jest.Mock) = jest.fn().mockReturnValue(false);
+    });
+
+    it('should disable the "Add data source" button if user has no permissions', async () => {
+      setup({ isSortAscending: true });
+
+      expect(await screen.findByRole('heading', { name: 'Configuration' })).toBeInTheDocument();
+      expect(await screen.findByRole('link', { name: 'Documentation' })).toBeInTheDocument();
+      expect(await screen.findByRole('link', { name: 'Support' })).toBeInTheDocument();
+      expect(await screen.findByRole('link', { name: 'Community' })).toBeInTheDocument();
+      expect(await screen.findByRole('link', { name: 'Add data source' })).toHaveStyle('pointer-events: none');
+    });
+
+    it('should not show the Explore button', async () => {
+      getDataSourcesMock.mockResolvedValue(getMockDataSources(3));
+      setup({ isSortAscending: true });
+
+      expect(await screen.findAllByRole('link', { name: /Build a dashboard/i })).toHaveLength(3);
+      expect(screen.queryAllByRole('link', { name: 'Explore' })).toHaveLength(0);
+    });
+
+    it('should not link cards to edit pages', async () => {
+      getDataSourcesMock.mockResolvedValue(getMockDataSources(1));
+      setup({ isSortAscending: true });
+
+      expect(await screen.findByRole('heading', { name: 'dataSource-0' })).toBeInTheDocument();
+      expect(await screen.queryByRole('link', { name: 'dataSource-0' })).toBeNull();
+    });
+  });
+
+  it('should show the Explore button', async () => {
+    getDataSourcesMock.mockResolvedValue(getMockDataSources(3));
     setup({ isSortAscending: true });
 
-    expect(await screen.findByRole('heading', { name: 'Configuration' })).toBeInTheDocument();
-    expect(await screen.findByRole('link', { name: 'Documentation' })).toBeInTheDocument();
-    expect(await screen.findByRole('link', { name: 'Support' })).toBeInTheDocument();
-    expect(await screen.findByRole('link', { name: 'Community' })).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Add new data source' })).toBeNull();
+    expect(await screen.findAllByRole('link', { name: /Build a dashboard/i })).toHaveLength(3);
+    expect(screen.queryAllByRole('link', { name: 'Explore' })).toHaveLength(3);
+  });
+
+  it('should link cards to edit pages', async () => {
+    getDataSourcesMock.mockResolvedValue(getMockDataSources(1));
+    setup({ isSortAscending: true });
+
+    expect(await screen.findByRole('heading', { name: 'dataSource-0' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'dataSource-0' })).toBeInTheDocument();
   });
 
   it('should render action bar and datasources', async () => {

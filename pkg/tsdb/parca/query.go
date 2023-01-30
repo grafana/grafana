@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
+	v1alpha1 "buf.build/gen/go/parca-dev/parca/protocolbuffers/go/parca/query/v1alpha1"
 	"github.com/bufbuild/connect-go"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	v1alpha1 "github.com/parca-dev/parca/gen/proto/go/parca/query/v1alpha1"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -73,6 +73,8 @@ func makeProfileRequest(qm queryModel, query backend.DataQuery) *connect.Request
 					},
 				},
 			},
+			// We should change this to QueryRequest_REPORT_TYPE_FLAMEGRAPH_TABLE later on
+			// nolint:staticcheck
 			ReportType: v1alpha1.QueryRequest_REPORT_TYPE_FLAMEGRAPH_UNSPECIFIED,
 		},
 	}
@@ -140,7 +142,7 @@ type Node struct {
 }
 
 func walkTree(tree *v1alpha1.FlamegraphRootNode, fn func(level int64, value int64, name string, self int64)) {
-	var stack []*Node
+	stack := make([]*Node, 0, len(tree.Children))
 	var childrenValue int64 = 0
 
 	for _, child := range tree.Children {
@@ -215,7 +217,7 @@ func normalizeUnit(unit string) string {
 }
 
 func seriesToDataFrame(seriesResp *connect.Response[v1alpha1.QueryRangeResponse], profileTypeID string) []*data.Frame {
-	var frames []*data.Frame
+	frames := make([]*data.Frame, 0, len(seriesResp.Msg.Series))
 
 	for _, series := range seriesResp.Msg.Series {
 		frame := data.NewFrame("series")

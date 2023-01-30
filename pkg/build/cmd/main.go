@@ -133,6 +133,12 @@ func main() {
 			Action: VerifyDrone,
 		},
 		{
+			Name:      "verify-starlark",
+			Usage:     "Verify Starlark configuration",
+			ArgsUsage: "<workspace path>",
+			Action:    VerifyStarlark,
+		},
+		{
 			Name:   "export-version",
 			Usage:  "Exports version in dist/grafana.version",
 			Action: ExportVersion,
@@ -152,7 +158,7 @@ func main() {
 		},
 		{
 			Name:   "store-storybook",
-			Usage:  "Integrity check for storybook build",
+			Usage:  "Stores storybook to GCS buckets",
 			Action: StoreStorybook,
 			Flags: []cli.Flag{
 				&cli.StringFlag{
@@ -162,12 +168,21 @@ func main() {
 			},
 		},
 		{
+			Name:   "verify-storybook",
+			Usage:  "Integrity check for storybook build",
+			Action: VerifyStorybook,
+		},
+		{
 			Name:   "upload-packages",
 			Usage:  "Upload Grafana packages",
 			Action: UploadPackages,
 			Flags: []cli.Flag{
 				&jobsFlag,
 				&editionFlag,
+				&cli.BoolFlag{
+					Name:  "enterprise2",
+					Usage: "Declare if the edition is enterprise2",
+				},
 			},
 		},
 		{
@@ -201,6 +216,46 @@ func main() {
 						},
 					},
 				},
+				{
+					Name:  "npm",
+					Usage: "Handle Grafana npm packages",
+					Subcommands: cli.Commands{
+						{
+							Name:      "release",
+							Usage:     "Release npm packages",
+							ArgsUsage: "[version]",
+							Action:    NpmReleaseAction,
+							Flags: []cli.Flag{
+								&cli.StringFlag{
+									Name:  "tag",
+									Usage: "Grafana version tag",
+								},
+							},
+						},
+						{
+							Name:   "store",
+							Usage:  "Store npm packages tarball",
+							Action: NpmStoreAction,
+							Flags: []cli.Flag{
+								&cli.StringFlag{
+									Name:  "tag",
+									Usage: "Grafana version tag",
+								},
+							},
+						},
+						{
+							Name:   "retrieve",
+							Usage:  "Retrieve npm packages tarball",
+							Action: NpmRetrieveAction,
+							Flags: []cli.Flag{
+								&cli.StringFlag{
+									Name:  "tag",
+									Usage: "Grafana version tag",
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 		{
@@ -229,9 +284,8 @@ func main() {
 					Flags: []cli.Flag{
 						&dryRunFlag,
 						&cli.StringFlag{
-							Name:     "path",
-							Required: true,
-							Usage:    "Path to the asset to be published",
+							Name:  "path",
+							Usage: "Path to the asset to be published",
 						},
 						&cli.StringFlag{
 							Name:     "repo",

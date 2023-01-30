@@ -1,25 +1,24 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/working-with-panels/navigate-panel-editor/
-  - /docs/grafana/latest/panels/working-with-panels/navigate-inspector-panel/
-  - /docs/grafana/latest/dashboards/dashboard-create/
-  - /docs/grafana/latest/features/dashboard/dashboards/
-  - /docs/grafana/latest/panels/working-with-panels/add-panel/
-  - /docs/grafana/latest/dashboards/add-organize-panels/
-  - /docs/grafana/latest/panels/add-panels-dynamically/about-repeating-panels-rows/
-  - /docs/grafana/latest/panels/add-panels-dynamically/configure-repeating-rows/
-  - /docs/grafana/latest/panels/add-panels-dynamically/configure-repeating-panels/
-  - /docs/grafana/next/dashboards/build-dashboards/add-organize-panels/
-  - /docs/grafana/latest/panels-visualizations/add-organize-panels/
-title: Panel editor overview
-menuTitle: Panel editor overview
-weight: 1
+  - ../dashboards/add-organize-panels/
+  - ../dashboards/dashboard-create/
+  - ../features/dashboard/dashboards/
+  - ../panels/add-panels-dynamically/about-repeating-panels-rows/
+  - ../panels/add-panels-dynamically/configure-repeating-panels/
+  - ../panels/add-panels-dynamically/configure-repeating-rows/
+  - ../panels/working-with-panels/add-panel/
+  - ../panels/working-with-panels/navigate-inspector-panel/
+  - ../panels/working-with-panels/navigate-panel-editor/
+  - add-organize-panels/
 keywords:
   - panel
   - dashboard
   - dynamic
   - rows
   - add
+menuTitle: Panel editor overview
+title: Panel editor overview
+weight: 1
 ---
 
 # Panel editor overview
@@ -37,10 +36,10 @@ This section describes the areas of the Grafana panel editor.
 
 1. Visualization preview: The visualization preview section contains the following options:
 
-   - **Table view:** Convert any visualization to a table so that you can see the data. Table views are useful for troubleshooting.
+   - **Table view:** Convert any visualization to a table so you can see the data. Table views are helpful for troubleshooting. This view only contains the raw data. It does not include transformations you might have applied to the data or the formatting options available in the [Table]({{< relref "../visualizations/table/" >}}) visualization.
    - **Fill:** The visualization preview fills the available space. If you change the width of the side pane or height of the bottom pane the visualization changes to fill the available space.
    - **Actual:** The visualization preview will have the exact size as the size on the dashboard. If not enough space is available, the visualization will scale down preserving the aspect ratio.
-   - **Time range controls:** For more information, refer to [Time range controls]({{< relref "../../dashboards/manage-dashboards/#configure-dashboard-time-range-controls" >}}).
+   - **Time range controls:** **Default** is either the browser local timezone or the timezone selected at a higher level.
 
 1. Data section: The data section contains tabs where you enter queries, transform your data, and create alert rules (if applicable).
 

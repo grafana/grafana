@@ -22,17 +22,17 @@ keywords:
   - guide
   - contact point
   - templating
-title: Create and edit message templates
+title: Create and edit notification templates
 weight: 200
 ---
 
-# Create and edit message templates
+# Create and edit notification templates
 
-You can use message templates to customize notification messages for the contact point types.
+You can use notification templates to customize notification messages for the contact point types.
 
-## Create a message template:
+## Create a notification template:
 
-To create a message template, complete the following steps.
+To create a notification template, complete the following steps.
 
 1. In the Grafana menu, click the **Alerting** (bell) icon to open the Alerting page listing existing alerts.
 2. In the Alerting page, click **Contact points** to open the page listing existing contact points.
@@ -46,17 +46,17 @@ To create a message template, complete the following steps.
 
 The `define` tag in the Content section assigns the template name. This tag is optional, and when omitted, the template name is derived from the **Name** field. When both are specified, it is a best practice to ensure that they are the same.
 
-## Edit a message template:
+## Edit a notification template:
 
-To edit a message template, complete the following steps.
+To edit a notification template, complete the following steps.
 
 1. In the Alerting page, click **Contact points** to open the page listing existing contact points.
 1. In the Template table, find the template you want to edit, then click the **Edit** (pen icon).
 1. Make your changes, then click **Save template**.
 
-## Delete a message template:
+## Delete a notification template:
 
-To delete a message template, complete the following steps.
+To delete a notification template, complete the following steps.
 
 1. In the Alerting page, click **Contact points** to open the page listing existing contact points.
 1. In the Template table, find the template you want to delete, then click the **Delete** (trash icon).
@@ -119,7 +119,7 @@ Alert summary:
 
 ## Template data
 
-Template data is passed on to message templates as well as sent as payload to webhook pushes.
+Template data is passed on to notification templates as well as sent as payload to webhook pushes.
 
 | Name              | Type     | Notes                                                                                                                |
 | ----------------- | -------- | -------------------------------------------------------------------------------------------------------------------- |

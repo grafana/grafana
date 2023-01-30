@@ -2,10 +2,15 @@ package cloudmonitoring
 
 import (
 	"context"
+	"fmt"
 	"net/url"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/huandu/xstrings"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -45,6 +50,10 @@ type (
 		SecondaryCrossSeriesReducer string   `json:"secondaryCrossSeriesReducer"`
 		SecondaryPerSeriesAligner   string   `json:"secondaryPerSeriesAligner"`
 		SecondaryGroupBys           []string `json:"secondaryGroupBys"`
+		// Preprocessor is not part of the GCM API but added for simplicity
+		// It will overwrite AligmentPeriod, CrossSeriesReducer, PerSeriesAligner, GroupBys
+		// and its secondary counterparts
+		Preprocessor string `json:"preprocessor"`
 	}
 
 	// sloQuery is an internal convention but the API is the same as timeSeriesList
@@ -139,12 +148,14 @@ type point interface {
 }
 
 type timeSeriesDescriptor struct {
-	LabelDescriptors []struct {
-		Key         string `json:"key"`
-		ValueType   string `json:"valueType"`
-		Description string `json:"description"`
-	} `json:"labelDescriptors"`
+	LabelDescriptors []LabelDescriptor           `json:"labelDescriptors"`
 	PointDescriptors []timeSeriesPointDescriptor `json:"pointDescriptors"`
+}
+
+type LabelDescriptor struct {
+	Key         string `json:"key"`
+	ValueType   string `json:"valueType"`
+	Description string `json:"description"`
 }
 
 type timeSeriesPointDescriptor struct {
@@ -176,6 +187,35 @@ func (ts timeSeriesData) length() int {
 
 func (ts timeSeriesData) getPoint(index int) point {
 	return &ts.PointData[index]
+}
+
+func (ts timeSeriesData) getLabels(labelDescriptors []LabelDescriptor) (data.Labels, string) {
+	seriesLabels := make(map[string]string)
+	defaultMetricName := ""
+
+	for n, d := range labelDescriptors {
+		key := xstrings.ToSnakeCase(d.Key)
+		key = strings.Replace(key, ".", ".label.", 1)
+
+		labelValue := ts.LabelValues[n]
+		switch d.ValueType {
+		case "BOOL":
+			strVal := strconv.FormatBool(labelValue.BoolValue)
+			seriesLabels[key] = strVal
+		case "INT64":
+			seriesLabels[key] = labelValue.Int64Value
+		default:
+			seriesLabels[key] = labelValue.StringValue
+		}
+
+		if strings.Contains(key, "metric.label") || strings.Contains(key, "resource.label") {
+			defaultMetricName += seriesLabels[key] + " "
+		}
+	}
+
+	defaultMetricName = strings.Trim(defaultMetricName, " ")
+
+	return seriesLabels, defaultMetricName
 }
 
 type timeSeriesDataIterator struct {
@@ -248,6 +288,56 @@ func (ts timeSeries) metricType() string {
 
 func (ts timeSeries) valueType() string {
 	return ts.ValueType
+}
+
+func (ts timeSeries) getLabels(groupBys []string) (data.Labels, string) {
+	seriesLabels := data.Labels{}
+	defaultMetricName := ts.Metric.Type
+	seriesLabels["resource.type"] = ts.Resource.Type
+	groupBysMap := make(map[string]bool)
+	for _, groupBy := range groupBys {
+		groupBysMap[groupBy] = true
+	}
+
+	for key, value := range ts.Metric.Labels {
+		seriesLabels["metric.label."+key] = value
+
+		if len(groupBys) == 0 || groupBysMap["metric.label."+key] {
+			defaultMetricName += " " + value
+		}
+	}
+
+	for key, value := range ts.Resource.Labels {
+		seriesLabels["resource.label."+key] = value
+
+		if groupBysMap["resource.label."+key] {
+			defaultMetricName += " " + value
+		}
+	}
+
+	for labelType, labelTypeValues := range ts.MetaData {
+		for labelKey, labelValue := range labelTypeValues {
+			key := xstrings.ToSnakeCase(fmt.Sprintf("metadata.%s.%s", labelType, labelKey))
+
+			switch v := labelValue.(type) {
+			case string:
+				seriesLabels[key] = v
+			case bool:
+				strVal := strconv.FormatBool(v)
+				seriesLabels[key] = strVal
+			case []interface{}:
+				for _, v := range v {
+					strVal := v.(string)
+					if len(seriesLabels[key]) > 0 {
+						strVal = fmt.Sprintf("%s, %s", seriesLabels[key], strVal)
+					}
+					seriesLabels[key] = strVal
+				}
+			}
+		}
+	}
+
+	return seriesLabels, defaultMetricName
 }
 
 type timeSeriesPoint struct {

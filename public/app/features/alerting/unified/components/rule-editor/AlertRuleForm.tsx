@@ -1,18 +1,19 @@
 import { css } from '@emotion/css';
-import React, { FC, useMemo, useState } from 'react';
-import { FormProvider, useForm, useFormContext, UseFormWatch } from 'react-hook-form';
+import React, { FC, useEffect, useMemo, useState } from 'react';
+import { DeepMap, FieldError, FormProvider, useForm, useFormContext, UseFormWatch } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { logInfo } from '@grafana/runtime';
+import { logInfo, config } from '@grafana/runtime';
 import { Button, ConfirmModal, CustomScrollbar, Spinner, useStyles2, HorizontalGroup, Field, Input } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
+import { contextSrv } from 'app/core/core';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 
-import { LogMessages } from '../../Analytics';
+import { LogMessages, trackNewAlerRuleFormCancelled, trackNewAlerRuleFormError } from '../../Analytics';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { deleteRuleAction, saveRuleFormAction } from '../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
@@ -121,7 +122,18 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
   const submitState = useUnifiedAlertingSelector((state) => state.ruleForm.saveRule) || initialAsyncRequestState;
   useCleanup((state) => (state.unifiedAlerting.ruleForm.saveRule = initialAsyncRequestState));
 
+  const [conditionErrorMsg, setConditionErrorMsg] = useState('');
+
+  const checkAlertCondition = (msg = '') => {
+    setConditionErrorMsg(msg);
+  };
+
   const submit = (values: RuleFormValues, exitOnSave: boolean) => {
+    if (conditionErrorMsg !== '') {
+      notifyApp.error(conditionErrorMsg);
+      return;
+    }
+
     dispatch(
       saveRuleFormAction({
         values: {
@@ -157,9 +169,30 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
     }
   };
 
-  const onInvalid = () => {
+  const onInvalid = (errors: DeepMap<RuleFormValues, FieldError>): void => {
+    if (!existing) {
+      trackNewAlerRuleFormError({
+        grafana_version: config.buildInfo.version,
+        org_id: contextSrv.user.orgId,
+        user_id: contextSrv.user.id,
+        error: Object.keys(errors).toString(),
+      });
+    }
     notifyApp.error('There are errors in the form. Please correct them and try again!');
   };
+
+  const cancelRuleCreation = () => {
+    logInfo(LogMessages.cancelSavingAlertRule);
+    if (!existing) {
+      trackNewAlerRuleFormCancelled({
+        grafana_version: config.buildInfo.version,
+        org_id: contextSrv.user.orgId,
+        user_id: contextSrv.user.id,
+      });
+    }
+  };
+  const evaluateEveryInForm = watch('evaluateEvery');
+  useEffect(() => setEvaluateEvery(evaluateEveryInForm), [evaluateEveryInForm]);
 
   return (
     <FormProvider {...formAPI}>
@@ -171,7 +204,7 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
               disabled={submitState.loading}
               type="button"
               fill="outline"
-              onClick={() => logInfo(LogMessages.cancelSavingAlertRule)}
+              onClick={cancelRuleCreation}
             >
               Cancel
             </Button>
@@ -214,7 +247,7 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
             <div className={styles.contentInner}>
               <AlertRuleNameInput />
-              <QueryAndExpressionsStep editingExistingRule={!!existing} />
+              <QueryAndExpressionsStep editingExistingRule={!!existing} onDataChange={checkAlertCondition} />
               {showStep2 && (
                 <>
                   {type === RuleFormType.grafana ? (

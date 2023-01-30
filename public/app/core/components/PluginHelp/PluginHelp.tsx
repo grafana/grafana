@@ -1,83 +1,32 @@
-import React, { PureComponent } from 'react';
+import React from 'react';
+import { useAsync } from 'react-use';
 
 import { renderMarkdown } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
+import { LoadingPlaceholder } from '@grafana/ui';
 
 interface Props {
-  plugin: {
-    name: string;
-    id: string;
-  };
-  type: string;
+  pluginId: string;
 }
 
-interface State {
-  isError: boolean;
-  isLoading: boolean;
-  help: string;
-}
+export function PluginHelp({ pluginId }: Props) {
+  const { value, loading, error } = useAsync(async () => {
+    return getBackendSrv().get(`/api/plugins/${pluginId}/markdown/query_help`);
+  }, []);
 
-export class PluginHelp extends PureComponent<Props, State> {
-  state = {
-    isError: false,
-    isLoading: false,
-    help: '',
-  };
+  const renderedMarkdown = renderMarkdown(value);
 
-  componentDidMount(): void {
-    this.loadHelp();
+  if (loading) {
+    return <LoadingPlaceholder text="Loading help..." />;
   }
 
-  constructPlaceholderInfo() {
-    return 'No plugin help or readme markdown file was found';
+  if (error) {
+    return <h3>An error occurred when loading help.</h3>;
   }
 
-  loadHelp = () => {
-    const { plugin, type } = this.props;
-    this.setState({ isLoading: true });
-
-    getBackendSrv()
-      .get(`/api/plugins/${plugin.id}/markdown/${type}`)
-      .then((response: string) => {
-        const helpHtml = renderMarkdown(response);
-
-        if (response === '' && type === 'help') {
-          this.setState({
-            isError: false,
-            isLoading: false,
-            help: this.constructPlaceholderInfo(),
-          });
-        } else {
-          this.setState({
-            isError: false,
-            isLoading: false,
-            help: helpHtml,
-          });
-        }
-      })
-      .catch(() => {
-        this.setState({
-          isError: true,
-          isLoading: false,
-        });
-      });
-  };
-
-  render() {
-    const { type } = this.props;
-    const { isError, isLoading, help } = this.state;
-
-    if (isLoading) {
-      return <h2>Loading help...</h2>;
-    }
-
-    if (isError) {
-      return <h3>&apos;Error occurred when loading help&apos;</h3>;
-    }
-
-    if (type === 'panel_help' && help === '') {
-    }
-
-    return <div className="markdown-html" dangerouslySetInnerHTML={{ __html: help }} />;
+  if (value === '') {
+    return <h3>No query help could be found.</h3>;
   }
+
+  return <div className="markdown-html" dangerouslySetInnerHTML={{ __html: renderedMarkdown }} />;
 }

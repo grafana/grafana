@@ -1,7 +1,7 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
 //  Frame[0] {
-//      "type": "timeseries-many",
+//      "type": "timeseries-multi",
 //      "executedQueryString": "Expr: up(ALERTS)\nStep: 42s"
 //  }
 //  Name: {level="error", location="moon"}
@@ -20,7 +20,7 @@
 //  
 //  
 //  Frame[1] {
-//      "type": "timeseries-many",
+//      "type": "timeseries-multi",
 //      "executedQueryString": "Expr: up(ALERTS)\nStep: 42s"
 //  }
 //  Name: {level="info", location="mars"}
@@ -46,7 +46,7 @@
       "schema": {
         "name": "{level=\"error\", location=\"moon\"}",
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-multi",
           "executedQueryString": "Expr: up(ALERTS)\nStep: 42s"
         },
         "fields": [
@@ -97,7 +97,7 @@
       "schema": {
         "name": "{level=\"info\", location=\"mars\"}",
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-multi",
           "executedQueryString": "Expr: up(ALERTS)\nStep: 42s"
         },
         "fields": [

@@ -52,6 +52,9 @@ export const components = {
         namespace: {
           input: 'data-testid resource-picker-namespace',
         },
+        region: {
+          input: 'data-testid resource-picker-region',
+        },
         resource: {
           input: 'data-testid resource-picker-resource',
         },
@@ -91,6 +94,9 @@ export const components = {
     },
     resource: {
       input: 'data-testid resource',
+    },
+    region: {
+      input: 'data-testid region',
     },
   },
 };

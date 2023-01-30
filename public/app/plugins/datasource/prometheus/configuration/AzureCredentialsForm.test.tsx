@@ -17,7 +17,6 @@ const setup = (propsFunc?: (props: Props) => Props) => {
     azureCloudOptions: [
       { value: 'azuremonitor', label: 'Azure' },
       { value: 'govazuremonitor', label: 'Azure US Government' },
-      { value: 'germanyazuremonitor', label: 'Azure Germany' },
       { value: 'chinaazuremonitor', label: 'Azure China' },
     ],
     onCredentialsChange: jest.fn(),

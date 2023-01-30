@@ -8,9 +8,20 @@ import {
   updateDatasourcePluginJsonDataOption,
   updateDatasourcePluginResetOption,
 } from '@grafana/data';
-import { Alert, InlineSwitch, FieldSet, InlineField, InlineFieldRow, Input, Select, SecretInput } from '@grafana/ui';
+import {
+  Alert,
+  InlineSwitch,
+  FieldSet,
+  InlineField,
+  InlineFieldRow,
+  Input,
+  Select,
+  SecretInput,
+  Link,
+} from '@grafana/ui';
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
 import { TLSSecretsConfig } from 'app/features/plugins/sql/components/configuration/TLSSecretsConfig';
+import { useMigrateDatabaseField } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseField';
 
 import { PostgresOptions, PostgresTLSMethods, PostgresTLSModes, SecureJsonData } from '../types';
 
@@ -36,6 +47,8 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
   const [versionOptions, setVersionOptions] = useState(postgresVersions);
 
   useAutoDetectFeatures({ props, setVersionOptions });
+
+  useMigrateDatabaseField(props);
 
   const { options, onOptionsChange } = props;
   const jsonData = options.jsonData;
@@ -93,9 +106,9 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
           <Input
             width={40}
             name="database"
-            value={options.database || ''}
+            value={jsonData.database || ''}
             placeholder="database name"
-            onChange={onDSOptionChanged('database')}
+            onChange={onUpdateDatasourceJsonDataOption(props, 'database')}
           ></Input>
         </InlineField>
         <InlineFieldRow>
@@ -280,7 +293,11 @@ export const PostgresConfigEditor = (props: DataSourcePluginOptionsEditorProps<P
         query. Grafana does not validate that queries are safe so queries can contain any SQL statement. For example,
         statements like <code>DELETE FROM user;</code> and <code>DROP TABLE user;</code> would be executed. To protect
         against this we <strong>Highly</strong> recommend you create a specific PostgreSQL user with restricted
-        permissions.
+        permissions. Check out the{' '}
+        <Link rel="noreferrer" target="_blank" href="http://docs.grafana.org/features/datasources/postgres/">
+          PostgreSQL Data Source Docs
+        </Link>{' '}
+        for more information.
       </Alert>
     </>
   );

@@ -2,7 +2,12 @@ import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWi
 import { ClassicCondition, ExpressionQuery } from 'app/features/expressions/types';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { checkForPathSeparator, queriesWithUpdatedReferences, updateMathExpressionRefs } from './util';
+import {
+  checkForPathSeparator,
+  getThresholdsForQueries,
+  queriesWithUpdatedReferences,
+  updateMathExpressionRefs,
+} from './util';
 
 describe('rule-editor', () => {
   const dataSource: AlertQuery = {
@@ -236,3 +241,126 @@ describe('checkForPathSeparator', () => {
     expect(checkForPathSeparator('foo bar')).toBe(true);
   });
 });
+
+describe('getThresholdsForQueries', () => {
+  it('should work for threshold condition', () => {
+    const queries = createThresholdExample('gt');
+    expect(getThresholdsForQueries(queries)).toMatchSnapshot();
+  });
+
+  it('should work for classic_condition', () => {
+    const [dataQuery] = createThresholdExample('gt');
+
+    const classicCondition = {
+      refId: 'B',
+      datasourceUid: '-100',
+      queryType: '',
+      model: {
+        refId: 'B',
+        type: 'classic_conditions',
+        datasource: ExpressionDatasourceRef,
+        conditions: [
+          {
+            type: 'query',
+            evaluator: {
+              params: [0],
+              type: 'gt',
+            },
+            operator: {
+              type: 'and',
+            },
+            query: {
+              params: ['A'],
+            },
+            reducer: {
+              params: [],
+              type: 'last',
+            },
+          },
+        ],
+      },
+    };
+
+    const thresholdsClassic = getThresholdsForQueries([dataQuery, classicCondition]);
+    expect(thresholdsClassic).toMatchSnapshot();
+  });
+
+  it('should work for within_range', () => {
+    const queries = createThresholdExample('within_range');
+    const thresholds = getThresholdsForQueries(queries);
+    expect(thresholds).toMatchSnapshot();
+  });
+
+  it('should work for lt and gt', () => {
+    expect(getThresholdsForQueries(createThresholdExample('gt'))).toMatchSnapshot();
+    expect(getThresholdsForQueries(createThresholdExample('lt'))).toMatchSnapshot();
+  });
+
+  it('should work for outside_range', () => {
+    const queries = createThresholdExample('outside_range');
+    const thresholds = getThresholdsForQueries(queries);
+    expect(thresholds).toMatchSnapshot();
+  });
+});
+
+function createThresholdExample(thresholdType: string): AlertQuery[] {
+  const dataQuery: AlertQuery = {
+    refId: 'A',
+    datasourceUid: 'abc123',
+    queryType: '',
+    relativeTimeRange: {
+      from: 600,
+      to: 0,
+    },
+    model: {
+      refId: 'A',
+    },
+  };
+
+  const reduceExpression = {
+    refId: 'B',
+    datasourceUid: '-100',
+    queryType: '',
+    model: {
+      refId: 'B',
+      type: 'reduce',
+      datasource: ExpressionDatasourceRef,
+      conditions: [],
+      reducer: 'mean',
+      expression: 'A',
+    },
+  };
+
+  const thresholdExpression = {
+    refId: 'C',
+    datasourceUid: '-100',
+    queryType: '',
+    model: {
+      refId: 'C',
+      type: 'threshold',
+      datasource: ExpressionDatasourceRef,
+      conditions: [
+        {
+          type: 'query',
+          evaluator: {
+            params: [0, 10],
+            type: thresholdType ?? 'gt',
+          },
+          operator: {
+            type: 'and',
+          },
+          query: {
+            params: ['B'],
+          },
+          reducer: {
+            params: [],
+            type: 'last',
+          },
+        },
+      ],
+      expression: 'B',
+    },
+  };
+
+  return [dataQuery, reduceExpression, thresholdExpression];
+}

@@ -28,7 +28,11 @@ export const Trans: typeof I18NextTrans = (props) => {
   return <I18NextTrans {...props} />;
 };
 
+// Reassign t() so i18next-parser doesn't warn on dynamic key, and we can have 'failOnWarnings' enabled
+const tFunc = i18next.t;
+
 export const t = (id: string, defaultMessage: string, values?: Record<string, unknown>) => {
   initI18n();
-  return i18next.t(id, defaultMessage, values);
+
+  return tFunc(id, defaultMessage, values);
 };

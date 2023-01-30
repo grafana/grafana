@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/image_rendering/
-  - /docs/grafana/latest/image-rendering/
-  - /docs/grafana/latest/setup-grafana/image-rendering/
+  - ../administration/image_rendering/
+  - ../image-rendering/
 description: Image rendering
 keywords:
   - grafana
@@ -54,6 +53,34 @@ docker run -d --name=renderer --network=host -v /some/path/config.json:/usr/src/
 ```
 
 You can see a docker-compose example using a custom configuration file [here](https://github.com/grafana/grafana-image-renderer/tree/master/devenv/docker/custom-config).
+
+### Security
+
+> **Note:** This feature is available in Image Renderer v3.6.1 and later.
+
+You can restrict access to the rendering endpoint by specifying a secret token. The token should be configured in the Grafana configuration file and the renderer configuration file. This token is important when you run the plugin in remote rendering mode.
+
+Renderer versions v3.6.1 or later require a Grafana version with this feature. These include:
+
+- Grafana v9.1.2 or later
+- Grafana v9.0.8 or later patch releases
+- Grafana v8.5.11 or later patch releases
+- Grafana v8.4.11 or later patch releases
+- Grafana v8.3.11 or later patch releases
+
+```bash
+AUTH_TOKEN=-
+```
+
+```json
+{
+  "security": {
+    "authToken": "-"
+  }
+}
+```
+
+See the [Grafana configuration]({{< relref "../configure-grafana/#renderer_token" >}}) for how to configure the token in Grafana.
 
 ### Rendering mode
 

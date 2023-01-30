@@ -236,9 +236,9 @@ const addVariable = (config: PartialAddVariableConfig, isFirst: boolean): AddVar
     e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2()
       .should('be.visible')
       .within(() => {
-        e2e.components.Select.singleValue().should('have.text', 'Query').click();
+        e2e.components.Select.singleValue().should('have.text', 'Query').parent().click();
       });
-    e2e.components.Select.option().should('be.visible').contains(type).click();
+    e2e.pages.Dashboard.Settings.Variables.Edit.General.generalTypeSelectV2().find('input').type(`${type}{enter}`);
   }
 
   if (label) {

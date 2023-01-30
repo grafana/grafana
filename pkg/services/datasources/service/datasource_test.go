@@ -180,6 +180,72 @@ func TestService_IDScopeResolver(t *testing.T) {
 	}
 }
 
+func TestService_awsServiceNamespace(t *testing.T) {
+	type testCaseResolver struct {
+		desc      string
+		givenDs   string
+		givenJson string
+		want      string
+		panic     bool
+	}
+
+	testCases := []testCaseResolver{
+		{
+			desc:      "elasticsearch",
+			givenDs:   datasources.DS_ES,
+			givenJson: `{ "sigV4Auth": true, "serverless": true }`,
+			want:      "es",
+		}, {
+			desc:      "opendistro",
+			givenDs:   datasources.DS_ES_OPEN_DISTRO,
+			givenJson: `{ "sigV4Auth": true, "serverless": true }`,
+			want:      "es",
+		}, {
+			desc:      "opensearch not serverless",
+			givenDs:   datasources.DS_ES_OPENSEARCH,
+			givenJson: `{ "sigV4Auth": true }`,
+			want:      "es",
+		}, {
+			desc:      "opensearch not serverless",
+			givenDs:   datasources.DS_ES_OPENSEARCH,
+			givenJson: `{ "sigV4Auth": true, "serverless": false }`,
+			want:      "es",
+		}, {
+			desc:      "opensearch serverless",
+			givenDs:   datasources.DS_ES_OPENSEARCH,
+			givenJson: `{ "sigV4Auth": true, "serverless": true }`,
+			want:      "aoss",
+		}, {
+			desc:      "prometheus",
+			givenDs:   datasources.DS_PROMETHEUS,
+			givenJson: `{ "sigV4Auth": true, "serverless": true }`,
+			want:      "aps",
+		}, {
+			desc:      "alertmanager",
+			givenDs:   datasources.DS_ALERTMANAGER,
+			givenJson: `{ "sigV4Auth": true, "serverless": true }`,
+			want:      "aps",
+		}, {
+			desc:      "panic",
+			givenDs:   "panic",
+			givenJson: `{ "sigV4Auth": true, "serverless": true }`,
+			want:      "aps",
+			panic:     true,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			json, _ := simplejson.NewJson([]byte(tc.givenJson))
+			if tc.panic {
+				require.Panics(t, func() { awsServiceNamespace(tc.givenDs, json) })
+			} else {
+				resolved := awsServiceNamespace(tc.givenDs, json)
+				require.Equal(t, tc.want, resolved)
+			}
+		})
+	}
+}
+
 //nolint:goconst
 func TestService_GetHttpTransport(t *testing.T) {
 	cfg := &setting.Cfg{}
@@ -364,6 +430,9 @@ func TestService_GetHttpTransport(t *testing.T) {
 		tr := configuredTransport
 
 		require.False(t, tr.TLSClientConfig.InsecureSkipVerify)
+		// Ignoring deprecation, the system will not include the root CA
+		// used in this scenario.
+		//nolint:staticcheck
 		require.Len(t, tr.TLSClientConfig.RootCAs.Subjects(), 1)
 		require.Equal(t, "server-name", tr.TLSClientConfig.ServerName)
 	})

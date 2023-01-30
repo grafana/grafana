@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	ngalertmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/clients"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
@@ -162,7 +163,7 @@ func (e *cloudWatchExecutor) QueryData(ctx context.Context, req *backend.QueryDa
 	if err != nil {
 		return nil, err
 	}
-	_, fromAlert := req.Headers["FromAlert"]
+	_, fromAlert := req.Headers[ngalertmodels.FromAlertHeaderName]
 	isLogAlertQuery := fromAlert && model.QueryMode == logsQueryMode
 
 	if isLogAlertQuery {

@@ -23,6 +23,14 @@ export {
 } from './transformations/matchers/valueMatchers/types';
 export { LayoutModes, type LayoutMode } from './types/layout';
 export { PanelPlugin, type SetFieldConfigOptionsArgs, type StandardOptionConfig } from './panel/PanelPlugin';
+export {
+  getPanelOptionsWithDefaults,
+  filterFieldConfigOverrides,
+  restoreCustomOverrideRules,
+  isCustomFieldProp,
+  isStandardFieldProp,
+  type OptionDefaults,
+} from './panel/getPanelOptionsWithDefaults';
 export { createFieldConfigRegistry } from './panel/registryFactories';
 export { type QueryRunner, type QueryRunnerOptions } from './types/queryRunner';
 export { type GroupingToMatrixTransformerOptions } from './transformations/transformers/groupingToMatrix';

@@ -145,7 +145,7 @@ func (moa *MultiOrgAlertmanager) mergeProvenance(ctx context.Context, config def
 		}
 	}
 
-	tmpl := definitions.MessageTemplate{}
+	tmpl := definitions.NotificationTemplate{}
 	tmplProvs, err := moa.ProvStore.GetProvenances(ctx, org, tmpl.ResourceType())
 	if err != nil {
 		return definitions.GettableUserConfig{}, nil

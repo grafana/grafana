@@ -1,15 +1,14 @@
 ---
 aliases:
-  - /docs/grafana/latest/best-practices/
-  - /docs/grafana/latest/best-practices/common-observability-strategies/
-  - /docs/grafana/latest/getting-started/strategies/
-  - /docs/grafana/latest/best-practices/dashboard-management-maturity-levels/
-  - /docs/grafana/latest/best-practices/best-practices-for-creating-dashboards/
-  - /docs/grafana/latest/best-practices/best-practices-for-managing-dashboards/
-  - /docs/grafana/latest/dashboards/build-dashboards/best-practices/
+  - ../../best-practices/
+  - ../../best-practices/best-practices-for-creating-dashboards/
+  - ../../best-practices/best-practices-for-managing-dashboards/
+  - ../../best-practices/common-observability-strategies/
+  - ../../best-practices/dashboard-management-maturity-levels/
+  - ../../getting-started/strategies/
 description: Best practices for working with Grafana
-title: Grafana dashboard best practices
 menuTitle: Best practices
+title: Grafana dashboard best practices
 weight: 100
 ---
 

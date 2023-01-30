@@ -422,6 +422,7 @@ describe('UPlotConfigBuilder', () => {
               "stroke": "rgba(240, 250, 255, 0.09)",
               "width": 1,
             },
+            "incrs": undefined,
             "label": "test label",
             "labelFont": "12px "Inter", "Helvetica", "Arial", sans-serif",
             "labelGap": 8,

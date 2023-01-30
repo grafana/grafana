@@ -149,7 +149,7 @@ describe('PromQueryBuilder', () => {
     });
     await openMetricSelect(container);
     await userEvent.click(screen.getByText('histogram_metric_bucket'));
-    await waitFor(() => expect(screen.getByText('hint: add histogram_quantile()')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('hint: add histogram_quantile')).toBeInTheDocument());
   });
 
   it('shows hints for counter metrics', async () => {
@@ -160,7 +160,7 @@ describe('PromQueryBuilder', () => {
     });
     await openMetricSelect(container);
     await userEvent.click(screen.getByText('histogram_metric_sum'));
-    await waitFor(() => expect(screen.getByText('hint: add rate()')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('hint: add rate')).toBeInTheDocument());
   });
 
   it('shows hints for counter metrics', async () => {
@@ -171,7 +171,7 @@ describe('PromQueryBuilder', () => {
     });
     await openMetricSelect(container);
     await userEvent.click(screen.getByText('histogram_metric_sum'));
-    await waitFor(() => expect(screen.getByText('hint: add rate()')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('hint: add rate')).toBeInTheDocument());
   });
 
   it('shows multiple hints', async () => {

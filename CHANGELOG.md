@@ -1,3 +1,82 @@
+<!-- 9.3.6 START -->
+
+# 9.3.6 (2023-01-26)
+
+### Bug fixes
+
+- **QueryEditorRow:** Fixes issue loading query editor when data source variable selected. [#61927](https://github.com/grafana/grafana/pull/61927), [@torkelo](https://github.com/torkelo)
+
+<!-- 9.3.6 END -->
+<!-- 9.3.4 START -->
+
+# 9.3.4 (2023-01-25)
+
+### Features and enhancements
+
+- **Prometheus:** Add default editor configuration. [#61510](https://github.com/grafana/grafana/pull/61510), [@itsmylife](https://github.com/itsmylife)
+- **TextPanel:** Refactor to functional component (#60885). [#61937](https://github.com/grafana/grafana/pull/61937), [@ryantxu](https://github.com/ryantxu)
+
+### Bug fixes
+
+- **Alerting:** Fix webhook to use correct key for decrypting token. [#61717](https://github.com/grafana/grafana/pull/61717), [@yuri-tceretian](https://github.com/yuri-tceretian)
+- **Alerting:** Set error annotation on EvaluationError regardless of underlying error type. [#61506](https://github.com/grafana/grafana/pull/61506), [@alexweav](https://github.com/alexweav)
+- **Datasources:** Fix Proxy by UID Failing for UIDs with a Hyphen. [#61723](https://github.com/grafana/grafana/pull/61723), [@csmarchbanks](https://github.com/csmarchbanks)
+- **Elasticsearch:** Fix creating of span link with no tags. [#61753](https://github.com/grafana/grafana/pull/61753), [@ivanahuckova](https://github.com/ivanahuckova)
+- **Elasticsearch:** Fix failing requests when using SigV4. [#61923](https://github.com/grafana/grafana/pull/61923), [@svennergr](https://github.com/svennergr)
+- **Elasticsearch:** Fix toggle-settings are not shown correctly. [#61751](https://github.com/grafana/grafana/pull/61751), [@svennergr](https://github.com/svennergr)
+- **Explore:** Be sure time range key bindings are mounted after clear. [#61892](https://github.com/grafana/grafana/pull/61892), [@gelicia](https://github.com/gelicia)
+- **Explore:** Unsync time ranges when a pane is closed. [#61369](https://github.com/grafana/grafana/pull/61369), [@Elfo404](https://github.com/Elfo404)
+- **Logs:** Lines with long words do not break properly. [#61707](https://github.com/grafana/grafana/pull/61707), [@svennergr](https://github.com/svennergr)
+- **Loki:** Fix misaligned derived fields settings. [#61475](https://github.com/grafana/grafana/pull/61475), [@svennergr](https://github.com/svennergr)
+- **Query Builder:** Fix max width of input component to prevent overflows. [#61798](https://github.com/grafana/grafana/pull/61798), [@matyax](https://github.com/matyax)
+- **Search:** Auto focus input elements. [#61443](https://github.com/grafana/grafana/pull/61443), [@ryantxu](https://github.com/ryantxu)
+- **Search:** Fix empty folder message showing when by starred dashboards. [#61610](https://github.com/grafana/grafana/pull/61610), [@eledobleefe](https://github.com/eledobleefe)
+- **Table Panel:** Fix image of image cell overflowing table cell and cells ignoring text alignment setting when a data link is added. [#59392](https://github.com/grafana/grafana/pull/59392), [@oscarkilhed](https://github.com/oscarkilhed)
+
+<!-- 9.3.4 END -->
+<!-- 9.3.2 START -->
+
+# 9.3.2 (2023-12-13)
+
+### Features and enhancements
+
+- **Graphite:** Process multiple queries to Graphite plugin. [#59608](https://github.com/grafana/grafana/pull/59608), [@mmandrus](https://github.com/mmandrus)
+
+### Bug fixes
+
+- **API:** Fix delete user failure due to quota not enabled. [#59875](https://github.com/grafana/grafana/pull/59875), [@papagian](https://github.com/papagian)
+- **Accessibility:** Improved keyboard accessibility in BarGauge. [#59382](https://github.com/grafana/grafana/pull/59382), [@lpskdl](https://github.com/lpskdl)
+- **Accessibility:** Improved keyboard accessibility in BigValue. [#59830](https://github.com/grafana/grafana/pull/59830), [@lpskdl](https://github.com/lpskdl)
+- **Alerting:** Use the QuotaTargetSrv instead of the QuotaTarget in quota check. [#60026](https://github.com/grafana/grafana/pull/60026), [@joeblubaugh](https://github.com/joeblubaugh)
+- **AzureMonitor:** Automate location retrieval. [#59602](https://github.com/grafana/grafana/pull/59602), [@aangelisc](https://github.com/aangelisc)
+- **AzureMonitor:** Fix bad request when setting dimensions. [#59700](https://github.com/grafana/grafana/pull/59700), [@andresmgot](https://github.com/andresmgot)
+- **BarChart:** Fix value mappings. [#60066](https://github.com/grafana/grafana/pull/60066), [@leeoniya](https://github.com/leeoniya)
+- **Build:** Streamline and sync dockerfiles. [#58101](https://github.com/grafana/grafana/pull/58101), [@DanCech](https://github.com/DanCech)
+- **Build:** Unified dockerfile for all builds. [#59173](https://github.com/grafana/grafana/pull/59173), [@DanCech](https://github.com/DanCech)
+- **CloudWatch:** Fix - make sure dimensions are propagated to alert query editor. [#58281](https://github.com/grafana/grafana/pull/58281), [@conorevans](https://github.com/conorevans)
+- **Cloudwatch:** Fix deeplink with default region (#60260). [#60274](https://github.com/grafana/grafana/pull/60274), [@iwysiu](https://github.com/iwysiu)
+- **Command Palette:** Fix not being able to type if triggered whilst another modal is open. [#59728](https://github.com/grafana/grafana/pull/59728), [@ashharrison90](https://github.com/ashharrison90)
+- **Command Palette:** Maintain page state when changing theme. [#59787](https://github.com/grafana/grafana/pull/59787), [@ashharrison90](https://github.com/ashharrison90)
+- **Dashboards:** Fix 'Make Editable' button not working in Dashboard Settings. [#60306](https://github.com/grafana/grafana/pull/60306), [@joshhunt](https://github.com/joshhunt)
+- **Dashboards:** Show error when data source is missing. [#60099](https://github.com/grafana/grafana/pull/60099), [@joshhunt](https://github.com/joshhunt)
+- **Datasource:** Fix - apply default query also to queries in new panels. [#59625](https://github.com/grafana/grafana/pull/59625), [@sunker](https://github.com/sunker)
+- **Dropdown:** Menu now closes correctly when selecting options on touch devices. [#60181](https://github.com/grafana/grafana/pull/60181), [@ashharrison90](https://github.com/ashharrison90)
+- **Influx:** Query segment menus now position correctly near the bottom of the screen. [#60087](https://github.com/grafana/grafana/pull/60087), [@ashharrison90](https://github.com/ashharrison90)
+- **Login:** Fix failure to login a new user via an external provider if quota are enabled. [#60015](https://github.com/grafana/grafana/pull/60015), [@papagian](https://github.com/papagian)
+- **Loki/Prometheus:** Fix wrong queries executed in split view. [#60172](https://github.com/grafana/grafana/pull/60172), [@svennergr](https://github.com/svennergr)
+- **Loki:** Fix wrongly escaped label values when using LabelFilter. [#59812](https://github.com/grafana/grafana/pull/59812), [@svennergr](https://github.com/svennergr)
+- **Navigation:** Prevent app crash when importing a dashboard with a uid of `home`. [#59874](https://github.com/grafana/grafana/pull/59874), [@ashharrison90](https://github.com/ashharrison90)
+- **Panel Edit:** Fix data links edit icons being off screen when provided title is too long. [#59829](https://github.com/grafana/grafana/pull/59829), [@dprokop](https://github.com/dprokop)
+- **Prometheus:** Fix exemplar fill color to match series color in time series. [#59908](https://github.com/grafana/grafana/pull/59908), [@gtk-grafana](https://github.com/gtk-grafana)
+- **Prometheus:** Fix exemplars not respecting corresponding series display status. [#59743](https://github.com/grafana/grafana/pull/59743), [@gtk-grafana](https://github.com/gtk-grafana)
+- **StateTimeline:** Fix negative infinity legend/tooltip from thresholds. [#60279](https://github.com/grafana/grafana/pull/60279), [@leeoniya](https://github.com/leeoniya)
+- **Table:** Fixes row border style not showing and colored rows blending together. [#59660](https://github.com/grafana/grafana/pull/59660), [@torkelo](https://github.com/torkelo)
+- **Tempo:** Fix TraceQL autocomplete issues (#60058). [#60125](https://github.com/grafana/grafana/pull/60125), [@CrypticSignal](https://github.com/CrypticSignal)
+- **TimePicker:** Prevent TimePicker overflowing viewport on small screens. [#59808](https://github.com/grafana/grafana/pull/59808), [@ashharrison90](https://github.com/ashharrison90)
+- **TimeRangePicker:** Fix recently ranges only not showing all recent ranges. [#59836](https://github.com/grafana/grafana/pull/59836), [@joshhunt](https://github.com/joshhunt)
+- **TimeZonePicker:** Scroll menu correctly when using keyboard controls. [#60008](https://github.com/grafana/grafana/pull/60008), [@ashharrison90](https://github.com/ashharrison90)
+
+<!-- 9.3.2 END -->
 <!-- 9.3.1 START -->
 
 # 9.3.1 (2022-11-30)
@@ -244,6 +323,23 @@ The following functions and classes related to logs are deprecated in the `grafa
 - **Grafana UI:** Clean up bundle. [#56100](https://github.com/grafana/grafana/pull/56100), [@jackw](https://github.com/jackw)
 - **Toolkit:** Deprecate `component:create` command. [#56086](https://github.com/grafana/grafana/pull/56086), [@academo](https://github.com/academo)
 - **Toolkit:** Remove changelog command. [#56073](https://github.com/grafana/grafana/pull/56073), [@gitstart](https://github.com/gitstart)
+
+<!-- 9.2.10 START -->
+
+# 9.2.10 (2023-01-24)
+
+### Features and enhancements
+
+- **TextPanel:** Refactor to functional component (#60885). [#61940](https://github.com/grafana/grafana/pull/61940), [@ryantxu](https://github.com/ryantxu)
+- **[v9.2.x] Chore:** Upgrade Go to 1.19.4. [#60826](https://github.com/grafana/grafana/pull/60826), [@sakjur](https://github.com/sakjur)
+
+### Bug fixes
+
+- **Live:** Fix `Subscription to the channel already exists` live streaming error. [#61420](https://github.com/grafana/grafana/pull/61420), [@grafanabot](https://github.com/grafanabot)
+- **Live:** Fix `Subscription to the channel already exists` live streaming error. [#61419](https://github.com/grafana/grafana/pull/61419), [@grafanabot](https://github.com/grafanabot)
+- **Live:** Fix `Subscription to the channel already exists` live streaming error. [#61406](https://github.com/grafana/grafana/pull/61406), [@ArturWierzbicki](https://github.com/ArturWierzbicki)
+
+<!-- 9.2.10 END -->
 
 <!-- 9.2.7 START -->
 
@@ -1909,6 +2005,16 @@ Make sure to handle possible errors on the callsite where using `backendSrv.fetc
 In the Loki data source, for consistency and performance reasons, we changed how we represent `NaN` (not a number) values received from Loki. In the past versions, we converted these to `null` in the frontend (for dashboard and explore), and kept as `NaN` in the alerting path. Starting with this version, we will always keep it as `NaN`. This change should be mostly invisible for the users. Issue [#45389](https://github.com/grafana/grafana/issues/45389)
 
 The dependency to [grafana/aws-sdk](https://github.com/grafana/grafana-aws-sdk-react) is moved from [grafana/ui](https://github.com/grafana/grafana/blob/main/packages/grafana-ui/package.json) to the plugin. This means that any plugin that use SIGV4 auth need to pass a SIGV4 editor component as a prop to the `DataSourceHttpSettings` component. Issue [#43559](https://github.com/grafana/grafana/issues/43559)
+
+<!-- 8.5.20 START -->
+
+# 8.5.20 (2023-01-25)
+
+### Features and enhancements
+
+- **Chore:** Upgrade Go to 1.19.4 [v8.5.x]. [#60824](https://github.com/grafana/grafana/pull/60824), [@sakjur](https://github.com/sakjur)
+
+<!-- 8.5.20 END -->
 
 <!-- 8.5.15 START -->
 

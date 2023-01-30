@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 	"github.com/grafana/grafana/pkg/services/screenshot"
 )
 
@@ -13,6 +14,11 @@ var _ InstanceStore = &FakeInstanceStore{}
 type FakeInstanceStore struct {
 	mtx         sync.Mutex
 	RecordedOps []interface{}
+}
+
+type FakeInstanceStoreOp struct {
+	Name string
+	Args []interface{}
 }
 
 func (f *FakeInstanceStore) ListAlertInstances(_ context.Context, q *models.ListAlertInstancesQuery) error {
@@ -33,7 +39,15 @@ func (f *FakeInstanceStore) SaveAlertInstances(_ context.Context, q ...models.Al
 
 func (f *FakeInstanceStore) FetchOrgIds(_ context.Context) ([]int64, error) { return []int64{}, nil }
 
-func (f *FakeInstanceStore) DeleteAlertInstances(_ context.Context, _ ...models.AlertInstanceKey) error {
+func (f *FakeInstanceStore) DeleteAlertInstances(ctx context.Context, q ...models.AlertInstanceKey) error {
+	f.mtx.Lock()
+	defer f.mtx.Unlock()
+	f.RecordedOps = append(f.RecordedOps, FakeInstanceStoreOp{
+		Name: "DeleteAlertInstances", Args: []interface{}{
+			ctx,
+			q,
+		},
+	})
 	return nil
 }
 
@@ -47,9 +61,15 @@ func (f *FakeRuleReader) ListAlertRules(_ context.Context, q *models.ListAlertRu
 	return nil
 }
 
-type FakeHistorian struct{}
+type FakeHistorian struct {
+	StateTransitions []StateTransition
+}
 
-func (f *FakeHistorian) RecordStates(ctx context.Context, rule *models.AlertRule, states []StateTransition) {
+func (f *FakeHistorian) RecordStatesAsync(ctx context.Context, rule history_model.RuleMeta, states []StateTransition) <-chan error {
+	f.StateTransitions = append(f.StateTransitions, states...)
+	errCh := make(chan error)
+	close(errCh)
+	return errCh
 }
 
 // NotAvailableImageService is a service that returns ErrScreenshotsUnavailable.

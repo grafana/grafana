@@ -10,7 +10,6 @@ import { HideModalEvent, ShowModalEvent } from '../../types/events';
 export class UtilSrv {
   modalScope: any;
 
-  /** @ngInject */
   constructor() {}
 
   init() {

@@ -81,8 +81,8 @@ describe('useExternalDataSourceAlertmanagers', () => {
     const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
 
     // Act
-    const { result, waitForNextUpdate } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
-    await waitForNextUpdate();
+    const { result, waitForValueToChange } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
+    await waitForValueToChange(() => result.current[0].status);
 
     // Assert
     const { current } = result;
@@ -114,8 +114,8 @@ describe('useExternalDataSourceAlertmanagers', () => {
     const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
 
     // Act
-    const { result, waitForNextUpdate } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
-    await waitForNextUpdate();
+    const { result, waitForValueToChange } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
+    await waitForValueToChange(() => result.current[0].status);
 
     // Assert
     const { current } = result;
@@ -180,8 +180,8 @@ describe('useExternalDataSourceAlertmanagers', () => {
     const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
 
     // Act
-    const { result, waitForNextUpdate } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
-    await waitForNextUpdate();
+    const { result, waitForValueToChange } = renderHook(() => useExternalDataSourceAlertmanagers(), { wrapper });
+    await waitForValueToChange(() => result.current[0].status);
 
     // Assert
     const { current } = result;
@@ -213,11 +213,11 @@ describe('useExternalDataSourceAlertmanagers', () => {
     const wrapper: React.FC = ({ children }) => <Provider store={store}>{children}</Provider>;
 
     // Act
-    const { result, waitForNextUpdate } = renderHook(() => useExternalDataSourceAlertmanagers(), {
+    const { result, waitForValueToChange } = renderHook(() => useExternalDataSourceAlertmanagers(), {
       wrapper,
     });
 
-    await waitForNextUpdate();
+    await waitForValueToChange(() => result.current[0].status);
 
     // Assert
     expect(result.current).toHaveLength(1);

@@ -5,8 +5,9 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 )
 
 type datasourceInfo struct {

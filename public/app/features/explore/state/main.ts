@@ -1,8 +1,9 @@
 import { createAction } from '@reduxjs/toolkit';
 import { AnyAction } from 'redux';
 
-import { DataQuery, ExploreUrlState, serializeStateToUrlParam, SplitOpenOptions, UrlQueryMap } from '@grafana/data';
+import { ExploreUrlState, serializeStateToUrlParam, SplitOpenOptions, UrlQueryMap } from '@grafana/data';
 import { DataSourceSrv, locationService } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import { GetExploreUrlArguments, stopQueryState } from 'app/core/utils/explore';
 import { PanelModel } from 'app/features/dashboard/state';
 import { ExploreId, ExploreItemState, ExploreState } from 'app/types/explore';
@@ -184,7 +185,7 @@ export const initialExploreState: ExploreState = {
  */
 export const exploreReducer = (state = initialExploreState, action: AnyAction): ExploreState => {
   if (splitCloseAction.match(action)) {
-    const { itemId } = action.payload as SplitCloseActionPayload;
+    const { itemId } = action.payload;
     const targetSplit = {
       left: itemId === ExploreId.left ? state.right! : state.left,
       right: undefined,
@@ -195,6 +196,7 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
       largerExploreId: undefined,
       maxedExploreId: undefined,
       evenSplitPanes: true,
+      syncedTimes: false,
     };
   }
 
@@ -289,7 +291,7 @@ export const exploreReducer = (state = initialExploreState, action: AnyAction): 
     if (exploreId !== undefined) {
       // @ts-ignore
       const explorePaneState = state[exploreId];
-      return { ...state, [exploreId]: paneReducer(explorePaneState, action as any) };
+      return { ...state, [exploreId]: paneReducer(explorePaneState, action) };
     }
   }
 

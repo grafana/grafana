@@ -32,7 +32,7 @@ import { getStackingGroups } from '@grafana/ui/src/components/uPlot/utils';
 import { findField } from 'app/features/dimensions';
 
 import { BarsOptions, getConfig } from './bars';
-import { PanelFieldConfig, PanelOptions, defaultPanelFieldConfig } from './models.gen';
+import { PanelFieldConfig, PanelOptions, defaultPanelFieldConfig } from './panelcfg.gen';
 import { BarChartDisplayValues, BarChartDisplayWarning } from './types';
 
 function getBarCharScaleOrientation(orientation: VizOrientation) {
@@ -79,6 +79,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
   xTickLabelSpacing = 0,
   legend,
   timeZone,
+  fullHighlight,
 }) => {
   const builder = new UPlotConfigBuilder();
 
@@ -118,6 +119,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<BarChartOptionsEX> = ({
     xSpacing: xTickLabelSpacing,
     xTimeAuto: frame.fields[0]?.type === FieldType.time && !frame.fields[0].config.unit?.startsWith('time:'),
     negY: frame.fields.map((f) => f.config.custom?.transform === GraphTransform.NegativeY),
+    fullHighlight,
   };
 
   const config = getConfig(opts, theme);
@@ -488,6 +490,27 @@ export function prepareBarChartDisplayValues(
     );
   }
 
+  let legendFields: Field[] = fields;
+  if (options.stacking === StackingMode.Percent) {
+    legendFields = fields.map((field) => {
+      const alignedFrameField = frame.fields.find((f) => f.name === field.name)!;
+
+      const copy = {
+        ...field,
+        config: {
+          ...alignedFrameField.config,
+        },
+        values: field.values,
+      };
+
+      copy.display = getDisplayProcessor({ field: copy, theme });
+
+      return copy;
+    });
+
+    legendFields.unshift(firstField);
+  }
+
   // String field is first
   fields.unshift(firstField);
 
@@ -500,6 +523,10 @@ export function prepareBarChartDisplayValues(
         fields: fields, // ideally: fields.filter((f) => !Boolean(f.config.custom?.hideFrom?.viz)),
       },
     ],
+    legend: {
+      fields: legendFields,
+      length: firstField.values.length,
+    },
   };
 }
 

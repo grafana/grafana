@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestParseTreeTestdata(t *testing.T) {
+func TestParsePluginTestdata(t *testing.T) {
 	type tt struct {
 		tfs fs.FS
 		// TODO could remove this by getting rid of inconsistent subdirs
@@ -69,6 +69,10 @@ func TestParseTreeTestdata(t *testing.T) {
 			rootid:  "test-datasource",
 			subpath: "plugin",
 		},
+		"renderer-added-file": {
+			rootid:  "test-renderer",
+			subpath: "plugin",
+		},
 		"symbolic-plugin-dirs": {
 			skip: "io/fs-based scanner will not traverse symlinks; caller of ParsePluginFS() must do it",
 		},
@@ -106,14 +110,9 @@ func TestParseTreeTestdata(t *testing.T) {
 		"no-rootfile": {
 			err: ErrNoRootFile,
 		},
-		"valid-model-panel":      {},
-		"valid-model-datasource": {},
-		"wrong-slot-panel": {
-			err: ErrImplementedSlots,
-		},
-		"missing-slot-impl": {
-			err: ErrImplementedSlots,
-		},
+		"valid-model-panel":       {},
+		"valid-model-datasource":  {},
+		"missing-kind-datasource": {},
 		"panel-conflicting-joinschema": {
 			err:  ErrInvalidLineage,
 			skip: "TODO implement BindOption in thema, SatisfiesJoinSchema, then use it here",
@@ -122,14 +121,15 @@ func TestParseTreeTestdata(t *testing.T) {
 			err:  ErrInvalidLineage,
 			skip: "TODO implement BindOption in thema, SatisfiesJoinSchema, then use it here",
 		},
-		"name-id-mismatch": {
-			err: ErrLineageNameMismatch,
-		},
-		"mismatch": {
-			err: ErrLineageNameMismatch,
+		"name-mismatch-panel": {
+			err: ErrInvalidGrafanaPluginInstance,
 		},
 		"disallowed-cue-import": {
 			err: ErrDisallowedCUEImport,
+		},
+		"cdn": {
+			rootid:  "grafana-worldmap-panel",
+			subpath: "plugin",
 		},
 	}
 
@@ -168,11 +168,12 @@ func TestParseTreeTestdata(t *testing.T) {
 				t.Skip(tst.skip)
 			}
 
-			tree, err := ParsePluginFS(tst.tfs, lib)
+			pp, err := ParsePluginFS(tst.tfs, lib)
 			if tst.err == nil {
 				require.NoError(t, err, "unexpected error while parsing plugin tree")
 			} else {
 				require.Error(t, err)
+				t.Logf("%T %s", err, err)
 				require.ErrorIs(t, err, tst.err, "unexpected error type while parsing plugin tree")
 				return
 			}
@@ -181,8 +182,7 @@ func TestParseTreeTestdata(t *testing.T) {
 				tst.rootid = name
 			}
 
-			rootp := tree.RootPlugin()
-			require.Equal(t, tst.rootid, rootp.Meta().Id, "expected root plugin id and actual root plugin id differ")
+			require.Equal(t, tst.rootid, pp.Properties.Id, "expected plugin id and actual plugin id differ")
 		})
 	}
 }
@@ -268,11 +268,11 @@ func TestParseTreeZips(t *testing.T) {
 				t.Skip(tst.skip)
 			}
 
-			tree, err := ParsePluginFS(tst.tfs, lib)
+			pp, err := ParsePluginFS(tst.tfs, lib)
 			if tst.err == nil {
-				require.NoError(t, err, "unexpected error while parsing plugin tree")
+				require.NoError(t, err, "unexpected error while parsing plugin fs")
 			} else {
-				require.ErrorIs(t, err, tst.err, "unexpected error type while parsing plugin tree")
+				require.ErrorIs(t, err, tst.err, "unexpected error type while parsing plugin fs")
 				return
 			}
 
@@ -280,8 +280,7 @@ func TestParseTreeZips(t *testing.T) {
 				tst.rootid = name
 			}
 
-			rootp := tree.RootPlugin()
-			require.Equal(t, tst.rootid, rootp.Meta().Id, "expected root plugin id and actual root plugin id differ")
+			require.Equal(t, tst.rootid, pp.Properties.Id, "expected plugin id and actual plugin id differ")
 		})
 	}
 }

@@ -280,7 +280,7 @@ describe('Query Response parser', () => {
   });
 
   describe('Cache notice', () => {
-    let resp: any;
+    let resp: FetchResponse<BackendDataSourceResponse>;
 
     beforeEach(() => {
       resp = {
@@ -311,7 +311,7 @@ describe('Query Response parser', () => {
     test('does not remove existing notices', () => {
       const queries: DataQuery[] = [{ refId: 'A' }];
       resp.headers.set('X-Cache', 'HIT');
-      resp.data.results.A.frames[0].schema.meta = { notices: [{ severity: 'info', text: 'Example' }] };
+      resp.data.results.A.frames![0].schema!.meta = { notices: [{ severity: 'info', text: 'Example' }] };
       expect(toDataQueryResponse(resp, queries).data[0].meta.notices).toStrictEqual([
         { severity: 'info', text: 'Example' },
         cachedResponseNotice,

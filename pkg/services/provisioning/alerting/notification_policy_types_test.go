@@ -4,9 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"gopkg.in/yaml.v2"
-
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
 )
 
 func TestNotificationPolicy(t *testing.T) {

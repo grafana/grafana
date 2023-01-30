@@ -28,13 +28,20 @@ const filtersToStringArray = (filters: Filter[]) =>
 
 const operators = ['=', '!=', '=~', '!=~'].map(toOption);
 
+// These keys are not editable as labels but they have its own selector.
+// For example the 'metric.type' is set with the metric name selector.
+const protectedFilterKeys = ['metric.type'];
+
 export const LabelFilter: FunctionComponent<Props> = ({
   labels = {},
   filters: filterArray,
   onChange: _onChange,
   variableOptionGroup,
 }) => {
-  const filters: Filter[] = useMemo(() => stringArrayToFilters(filterArray), [filterArray]);
+  const rawFilters: Filter[] = stringArrayToFilters(filterArray);
+  const filters = rawFilters.filter(({ key }) => !protectedFilterKeys.includes(key));
+  const protectedFilters = rawFilters.filter(({ key }) => protectedFilterKeys.includes(key));
+
   const options = useMemo(
     () => [variableOptionGroup, ...labelsToGroupedOptions(Object.keys(labels))],
     [labels, variableOptionGroup]
@@ -64,7 +71,7 @@ export const LabelFilter: FunctionComponent<Props> = ({
   };
 
   const onChange = (items: Array<Partial<Filter>>) => {
-    const filters = items.map(({ key, operator, value, condition }) => ({
+    const filters = items.concat(protectedFilters).map(({ key, operator, value, condition }) => ({
       key: key || '',
       operator: operator || DEFAULT_OPERATOR,
       value: value || '',

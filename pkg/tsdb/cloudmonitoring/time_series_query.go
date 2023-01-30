@@ -3,13 +3,11 @@ package cloudmonitoring
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
-	"github.com/huandu/xstrings"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
@@ -42,26 +40,6 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) run(ctx context.Context, 
 	return runTimeSeriesRequest(ctx, timeSeriesQuery.logger, req, s, dsInfo, tracer, timeSeriesQuery.parameters.ProjectName, nil, requestBody)
 }
 
-func extractTimeSeriesDataLabels(response cloudMonitoringResponse, series timeSeriesData) map[string]string {
-	seriesLabels := make(map[string]string)
-	for n, d := range response.TimeSeriesDescriptor.LabelDescriptors {
-		key := xstrings.ToSnakeCase(d.Key)
-		key = strings.Replace(key, ".", ".label.", 1)
-
-		labelValue := series.LabelValues[n]
-		switch d.ValueType {
-		case "BOOL":
-			strVal := strconv.FormatBool(labelValue.BoolValue)
-			seriesLabels[key] = strVal
-		case "INT64":
-			seriesLabels[key] = labelValue.Int64Value
-		default:
-			seriesLabels[key] = labelValue.StringValue
-		}
-	}
-	return seriesLabels
-}
-
 func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *backend.DataResponse,
 	response cloudMonitoringResponse, executedQueryString string) error {
 	frames := data.Frames{}
@@ -69,7 +47,7 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *b
 	for _, series := range response.TimeSeriesData {
 		frame := data.NewFrameOfFieldTypes("", len(series.PointData), data.FieldTypeTime, data.FieldTypeFloat64)
 		frame.RefID = timeSeriesQuery.refID
-		seriesLabels := extractTimeSeriesDataLabels(response, series)
+		seriesLabels, defaultMetricName := series.getLabels(response.TimeSeriesDescriptor.LabelDescriptors)
 
 		for n, d := range response.TimeSeriesDescriptor.PointDescriptors {
 			// If more than 1 pointdescriptor was returned, three aggregations are returned per time series - min, mean and max.
@@ -81,7 +59,6 @@ func (timeSeriesQuery *cloudMonitoringTimeSeriesQuery) parseResponse(queryRes *b
 			}
 
 			seriesLabels["metric.name"] = d.Key
-			defaultMetricName := d.Key
 
 			customFrameMeta := map[string]interface{}{}
 			customFrameMeta["labels"] = seriesLabels

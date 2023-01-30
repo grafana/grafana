@@ -41,9 +41,6 @@ const (
 	NavIDDashboardsBrowse   = "dashboards/browse"
 	NavIDCfg                = "cfg" // NavIDCfg is the id for org configuration navigation node
 	NavIDAdmin              = "admin"
-	NavIDAdminGeneral       = "admin/general"
-	NavIDAdminPlugins       = "admin/plugins"
-	NavIDAdminAccess        = "admin/access"
 	NavIDAlertsAndIncidents = "alerts-and-incidents"
 	NavIDAlerting           = "alerting"
 	NavIDMonitoring         = "monitoring"
@@ -180,70 +177,33 @@ func ApplyAdminIA(root *NavTreeRoot) {
 		orgAdminNode.Url = "/admin"
 		orgAdminNode.Text = "Administration"
 
-		generalNodeLinks := []*NavLink{}
-		pluginsNodeLinks := []*NavLink{}
-		accessNodeLinks := []*NavLink{}
-
-		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("upgrading"))
-		if orgSettings := root.FindById("org-settings"); orgSettings != nil {
-			orgSettings.Text = "Default preferences"
-			generalNodeLinks = append(generalNodeLinks, orgSettings)
-		}
-		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("global-orgs"))
-		generalNodeLinks = AppendIfNotNil(generalNodeLinks, root.FindById("server-settings"))
-
-		pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("plugins"))
-		pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("datasources"))
-		pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("correlations"))
-		pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("plugin-page-grafana-cloud-link-app"))
-		pluginsNodeLinks = AppendIfNotNil(pluginsNodeLinks, root.FindById("recordedQueries")) // enterprise only
-
-		if globalUsers := root.FindById("global-users"); globalUsers != nil {
-			globalUsers.Text = "Users"
-			accessNodeLinks = append(accessNodeLinks, globalUsers)
-		}
-		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("teams"))
-		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("serviceaccounts"))
-		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("apikeys"))
-		accessNodeLinks = AppendIfNotNil(accessNodeLinks, root.FindById("standalone-plugin-page-/a/grafana-auth-app")) // Cloud Access Policies
-
-		generalNode := &NavLink{
-			Text:     "General",
-			Id:       NavIDAdminGeneral,
-			Url:      "/admin/general",
-			Icon:     "shield",
-			Children: generalNodeLinks,
-		}
-
-		pluginsNode := &NavLink{
-			Text:     "Plugins and data",
-			Id:       NavIDAdminPlugins,
-			Url:      "/admin/plugins",
-			Icon:     "shield",
-			Children: pluginsNodeLinks,
-		}
-
-		accessNode := &NavLink{
-			Text:     "Users and access",
-			Id:       NavIDAdminAccess,
-			Url:      "/admin/access",
-			Icon:     "shield",
-			Children: accessNodeLinks,
-		}
-
 		adminNodeLinks := []*NavLink{}
 
-		if len(generalNode.Children) > 0 {
-			adminNodeLinks = append(adminNodeLinks, generalNode)
+		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("datasources"))
+		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("plugins"))
+		if globalUsers := root.FindById("global-users"); globalUsers != nil {
+			globalUsers.Text = "Users"
+			adminNodeLinks = append(adminNodeLinks, globalUsers)
 		}
+		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("teams"))
+		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("serviceaccounts"))
+		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("apikeys"))
+		if orgSettings := root.FindById("org-settings"); orgSettings != nil {
+			orgSettings.Text = "Default preferences"
+			adminNodeLinks = append(adminNodeLinks, orgSettings)
+		}
+		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("server-settings"))
+		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("global-orgs"))
 
-		if len(pluginsNode.Children) > 0 {
-			adminNodeLinks = append(adminNodeLinks, pluginsNode)
-		}
+		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("upgrading"))
+		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("licensing"))
+		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("recordedQueries")) // enterprise only
+		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("correlations"))
+		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("plugin-page-grafana-cloud-link-app"))
 
-		if len(accessNode.Children) > 0 {
-			adminNodeLinks = append(adminNodeLinks, accessNode)
-		}
+		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("ldap"))
+		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("standalone-plugin-page-/a/grafana-auth-app")) // Cloud Access Policies
+		adminNodeLinks = AppendIfNotNil(adminNodeLinks, root.FindById("storage"))
 
 		if len(adminNodeLinks) > 0 {
 			orgAdminNode.Children = adminNodeLinks

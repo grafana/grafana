@@ -1,8 +1,7 @@
 ---
 aliases:
-  - /docs/grafana/latest/panels/visualizations/node-graph/
-  - /docs/grafana/latest/visualizations/node-graph/
-  - /docs/grafana/latest/panels-visualizations/visualizations/node-graph/
+  - ../../panels/visualizations/node-graph/
+  - ../../visualizations/node-graph/
 keywords:
   - grafana
   - dashboard
@@ -15,8 +14,6 @@ weight: 850
 ---
 
 # Node graph panel
-
-> **Note:** This panel is currently in beta. Expect changes in future releases.
 
 The _Node graph_ can visualize directed graphs or networks. It uses a directed force layout to effectively position the nodes, so it can display complex infrastructure maps, hierarchies, or execution diagrams.
 

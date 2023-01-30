@@ -39,7 +39,7 @@ type PrepData = (frames: DataFrame[]) => AlignedData | FacetedData;
 type PreDataStacked = (frames: DataFrame[], stackingGroups: StackingGroup[]) => AlignedData | FacetedData;
 
 export class UPlotConfigBuilder {
-  private series: UPlotSeriesBuilder[] = [];
+  series: UPlotSeriesBuilder[] = [];
   private axes: Record<string, UPlotAxisBuilder> = {};
   private scales: UPlotScaleBuilder[] = [];
   private bands: Band[] = [];

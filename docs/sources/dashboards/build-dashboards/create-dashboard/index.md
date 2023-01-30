@@ -1,14 +1,13 @@
 ---
 aliases:
-  - /docs/grafana/latest/dashboards/build-dashboards/create-dashboard/
-  - /docs/grafana/latest/dashboards/build-dashboards/add-organize-panels/
-title: Create a dashboard
-menuTitle: Create a dashboard
-weight: 1
+  - add-organize-panels/
 keywords:
   - panel
   - dashboard
   - create
+menuTitle: Create a dashboard
+title: Create a dashboard
+weight: 1
 ---
 
 ## Create a dashboard
@@ -55,7 +54,7 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
 ## Configure repeating rows
 
-You can configure Grafana to dynamically add panels or rows to a dashboard based on the value of a variable. Variables dynamically change your queries across all rows in a dashboard. For more information about repeating panels, refer to [Configure repeating panels](../../panels/configure-panel-options/#configure-repeating-panels).
+You can configure Grafana to dynamically add panels or rows to a dashboard based on the value of a variable. Variables dynamically change your queries across all rows in a dashboard. For more information about repeating panels, refer to [Configure repeating panels]({{< relref "../../../panels-visualizations/configure-panel-options/#configure-repeating-panels" >}}).
 
 To see an example of repeating rows, refer to [Dashboard with repeating rows](https://play.grafana.org/d/000000153/repeat-rows). The example shows that you can also repeat rows if you have variables set with `Multi-value` or `Include all values` selected.
 

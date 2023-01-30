@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"log"
 	"os"
 	"strconv"
 
@@ -113,9 +115,11 @@ func completeEnterpriseCheck(c *cli.Context, success bool) error {
 	}
 
 	// Delete branch if needed
+	log.Printf("Checking branch '%s' against '%s'", git.PRCheckRegexp().String(), opts.Branch)
 	if git.PRCheckRegexp().MatchString(opts.Branch) {
+		log.Println("Deleting branch", opts.Branch)
 		if err := git.DeleteEnterpriseBranch(ctx, client.Git, opts.Branch); err != nil {
-			return nil
+			return fmt.Errorf("error deleting enterprise branch: %w", err)
 		}
 	}
 

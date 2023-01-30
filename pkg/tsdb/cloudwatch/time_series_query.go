@@ -31,7 +31,12 @@ func (e *cloudWatchExecutor) executeTimeSeriesQuery(ctx context.Context, logger 
 		return nil, fmt.Errorf("invalid time range: start time must be before end time")
 	}
 
-	requestQueries, err := models.ParseMetricDataQueries(req.Queries, startTime, endTime,
+	instance, err := e.getInstance(req.PluginContext)
+	if err != nil {
+		return nil, err
+	}
+
+	requestQueries, err := models.ParseMetricDataQueries(req.Queries, startTime, endTime, instance.Settings.Region, logger,
 		e.features.IsEnabled(featuremgmt.FlagCloudWatchDynamicLabels),
 		e.features.IsEnabled(featuremgmt.FlagCloudWatchCrossAccountQuerying))
 	if err != nil {

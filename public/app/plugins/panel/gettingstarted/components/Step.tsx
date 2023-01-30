@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FC } from 'react';
+import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
@@ -13,7 +13,7 @@ interface Props {
   step: SetupStep;
 }
 
-export const Step: FC<Props> = ({ step }) => {
+export const Step = ({ step }: Props) => {
   const styles = useStyles2(getStyles);
 
   return (

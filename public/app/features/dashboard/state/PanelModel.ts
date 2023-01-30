@@ -16,8 +16,14 @@ import {
   urlUtil,
   PanelModel as IPanelModel,
   DataSourceRef,
+  CoreApp,
+  filterFieldConfigOverrides,
+  getPanelOptionsWithDefaults,
+  isStandardFieldProp,
+  restoreCustomOverrideRules,
 } from '@grafana/data';
 import { getTemplateSrv, RefreshEvent } from '@grafana/runtime';
+import { LibraryPanel, LibraryPanelRef } from '@grafana/schema';
 import config from 'app/core/config';
 import { safeStringifyValue } from 'app/core/utils/explore';
 import { getNextRefIdChar } from 'app/core/utils/query';
@@ -30,18 +36,10 @@ import {
   RenderEvent,
 } from 'app/types/events';
 
-import { LibraryElementDTO, LibraryPanelRef } from '../../library-panels/types';
 import { PanelQueryRunner } from '../../query/state/PanelQueryRunner';
 import { getVariablesUrlParams } from '../../variables/getAllVariableValuesForUrl';
 import { getTimeSrv } from '../services/TimeSrv';
 import { TimeOverrideResult } from '../utils/panel';
-
-import {
-  filterFieldConfigOverrides,
-  getPanelOptionsWithDefaults,
-  isStandardFieldProp,
-  restoreCustomOverrideRules,
-} from './getPanelOptionsWithDefaults';
 
 export interface GridPos {
   x: number;
@@ -174,7 +172,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
   links?: DataLink[];
   declare transparent: boolean;
 
-  libraryPanel?: LibraryPanelRef | LibraryElementDTO;
+  libraryPanel?: LibraryPanelRef | LibraryPanel;
 
   autoMigrateFrom?: string;
 
@@ -366,6 +364,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
       scopedVars: this.scopedVars,
       cacheTimeout: this.cacheTimeout,
       transformations: this.transformations,
+      app: this.isEditing ? CoreApp.PanelEditor : this.isViewing ? CoreApp.PanelViewer : CoreApp.Dashboard,
     });
   }
 
@@ -681,7 +680,7 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     return this.replaceVariables(this.title, undefined, 'text');
   }
 
-  initLibraryPanel(libPanel: LibraryElementDTO) {
+  initLibraryPanel(libPanel: LibraryPanel) {
     for (const [key, val] of Object.entries(libPanel.model)) {
       switch (key) {
         case 'id':

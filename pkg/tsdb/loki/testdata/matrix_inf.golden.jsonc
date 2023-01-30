@@ -1,7 +1,7 @@
 //  🌟 This was machine generated.  Do not edit. 🌟
 //  
 //  Frame[0] {
-//      "type": "timeseries-many",
+//      "type": "timeseries-multi",
 //      "executedQueryString": "Expr: up(ALERTS)\nStep: 42s"
 //  }
 //  Name: {level="info", location="moon", protocol="http"}
@@ -30,7 +30,7 @@
       "schema": {
         "name": "{level=\"info\", location=\"moon\", protocol=\"http\"}",
         "meta": {
-          "type": "timeseries-many",
+          "type": "timeseries-multi",
           "executedQueryString": "Expr: up(ALERTS)\nStep: 42s"
         },
         "fields": [

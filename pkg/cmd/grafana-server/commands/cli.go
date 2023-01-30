@@ -2,8 +2,6 @@ package commands
 
 import (
 	"context"
-	"errors"
-	"flag"
 	"fmt"
 	"net/http"
 	_ "net/http/pprof"
@@ -16,6 +14,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/urfave/cli/v2"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/extensions"
@@ -33,48 +33,99 @@ type ServerOptions struct {
 	Commit      string
 	BuildBranch string
 	BuildStamp  string
-	Args        []string
+	Context     *cli.Context
 }
 
-type exitWithCode struct {
-	reason string
-	code   int
+func ServerCommand(version, commit, buildBranch, buildstamp string) *cli.Command {
+	return &cli.Command{
+		Name:  "server",
+		Usage: "run the grafana server",
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "config",
+				Usage: "Path to config file",
+			},
+			&cli.StringFlag{
+				Name:  "homepath",
+				Usage: "Path to Grafana install/home path, defaults to working directory",
+			},
+			&cli.StringFlag{
+				Name:  "pidfile",
+				Usage: "Path to Grafana pid file",
+			},
+			&cli.StringFlag{
+				Name:  "packaging",
+				Value: "unknown",
+				Usage: "describes the way Grafana was installed",
+			},
+			&cli.StringFlag{
+				Name:  "configOverrides",
+				Usage: "Configuration options to override defaults as a string. e.g. cfg:default.paths.log=/dev/null",
+			},
+			cli.VersionFlag,
+			&cli.BoolFlag{
+				Name:  "vv",
+				Usage: "prints current version, all dependencies and exits",
+			},
+			&cli.BoolFlag{
+				Name:  "profile",
+				Value: false,
+				Usage: "Turn on pprof profiling",
+			},
+			&cli.StringFlag{
+				Name:  "profile-addr",
+				Value: "localhost",
+				Usage: "Define custom address for profiling",
+			},
+			&cli.Uint64Flag{
+				Name:  "profile-port",
+				Value: 6060,
+				Usage: "Define custom port for profiling",
+			},
+			&cli.BoolFlag{
+				Name:  "tracing",
+				Value: false,
+				Usage: "Turn on tracing",
+			},
+			&cli.StringFlag{
+				Name:  "tracing-file",
+				Value: "trace.out",
+				Usage: "Define tracing output file",
+			},
+		},
+		Action: func(context *cli.Context) error {
+			return RunServer(ServerOptions{
+				Version:     version,
+				Commit:      commit,
+				BuildBranch: buildBranch,
+				BuildStamp:  buildstamp,
+				Context:     context,
+			})
+		},
+	}
 }
 
-var serverFs = flag.NewFlagSet("server", flag.ContinueOnError)
-
-var clilog = log.New("cli")
-
-func (e exitWithCode) Error() string {
-	return e.reason
-}
-
-func RunServer(opt ServerOptions) int {
+func RunServer(opt ServerOptions) error {
 	var (
-		configFile = serverFs.String("config", "", "path to config file")
-		homePath   = serverFs.String("homepath", "", "path to grafana install/home path, defaults to working directory")
-		pidFile    = serverFs.String("pidfile", "", "path to pid file")
-		packaging  = serverFs.String("packaging", "unknown", "describes the way Grafana was installed")
+		configFile = opt.Context.String("config")
+		homePath   = opt.Context.String("homepath")
+		pidFile    = opt.Context.String("pidfile")
+		packaging  = opt.Context.String("packaging")
 
-		configOverrides = serverFs.String("configOverrides", "", "Configuration options to override defaults as a string. e.g. cfg:default.paths.log=/dev/null")
+		configOverrides = opt.Context.String("configOverrides")
 
-		v           = serverFs.Bool("v", false, "prints current version and exits")
-		vv          = serverFs.Bool("vv", false, "prints current version, all dependencies and exits")
-		profile     = serverFs.Bool("profile", false, "Turn on pprof profiling")
-		profileAddr = serverFs.String("profile-addr", "localhost", "Define custom address for profiling")
-		profilePort = serverFs.Uint64("profile-port", 6060, "Define custom port for profiling")
-		tracing     = serverFs.Bool("tracing", false, "Turn on tracing")
-		tracingFile = serverFs.String("tracing-file", "trace.out", "Define tracing output file")
+		v           = opt.Context.Bool("version")
+		vv          = opt.Context.Bool("vv")
+		profile     = opt.Context.Bool("profile")
+		profileAddr = opt.Context.String("profile-addr")
+		profilePort = opt.Context.Uint64("profile-port")
+		tracing     = opt.Context.Bool("tracing")
+		tracingFile = opt.Context.String("tracing-file")
 	)
 
-	if err := serverFs.Parse(opt.Args); err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		return 1
-	}
-
-	if *v || *vv {
+	if v || vv {
 		fmt.Printf("Version %s (commit: %s, branch: %s)\n", opt.Version, opt.Commit, opt.BuildBranch)
-		if *vv {
+		if vv {
 			fmt.Println("Dependencies:")
 			if info, ok := debug.ReadBuildInfo(); ok {
 				for _, dep := range info.Deps {
@@ -82,19 +133,17 @@ func RunServer(opt ServerOptions) int {
 				}
 			}
 		}
-		return 0
+		return nil
 	}
 
-	profileDiagnostics := newProfilingDiagnostics(*profile, *profileAddr, *profilePort)
+	profileDiagnostics := newProfilingDiagnostics(profile, profileAddr, profilePort)
 	if err := profileDiagnostics.overrideWithEnv(); err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		return 1
+		return err
 	}
 
-	traceDiagnostics := newTracingDiagnostics(*tracing, *tracingFile)
+	traceDiagnostics := newTracingDiagnostics(tracing, tracingFile)
 	if err := traceDiagnostics.overrideWithEnv(); err != nil {
-		fmt.Fprintln(os.Stderr, err.Error())
-		return 1
+		return err
 	}
 
 	if profileDiagnostics.enabled {
@@ -112,28 +161,13 @@ func RunServer(opt ServerOptions) int {
 		}()
 	}
 
-	if err := executeServer(*configFile, *homePath, *pidFile, *packaging, *configOverrides, traceDiagnostics, opt); err != nil {
-		code := 1
-		var ewc exitWithCode
-		if errors.As(err, &ewc) {
-			code = ewc.code
-		}
-		if code != 0 {
-			fmt.Fprintf(os.Stderr, "%s\n", err.Error())
-		}
-
-		return code
-	}
-
-	return 0
-}
-
-func executeServer(configFile, homePath, pidFile, packaging, configOverrides string, traceDiagnostics *tracingDiagnostics, opt ServerOptions) error {
 	defer func() {
 		if err := log.Close(); err != nil {
 			fmt.Fprintf(os.Stderr, "Failed to close log: %s\n", err)
 		}
 	}()
+
+	clilog := log.New("cli")
 
 	defer func() {
 		// If we've managed to initialize them, this is the last place
@@ -196,7 +230,7 @@ func executeServer(configFile, homePath, pidFile, packaging, configOverrides str
 			Config:   configFile,
 			HomePath: homePath,
 			// tailing arguments have precedence over the options string
-			Args: append(configOptions, serverFs.Args()...),
+			Args: append(configOptions, opt.Context.Args().Slice()...),
 		},
 		server.Options{
 			PidFile:     pidFile,
@@ -207,7 +241,6 @@ func executeServer(configFile, homePath, pidFile, packaging, configOverrides str
 		api.ServerOptions{},
 	)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to start grafana. error: %s\n", err.Error())
 		return err
 	}
 
@@ -215,15 +248,7 @@ func executeServer(configFile, homePath, pidFile, packaging, configOverrides str
 
 	go listenToSystemSignals(ctx, s)
 
-	if err := s.Run(); err != nil {
-		code := s.ExitCode(err)
-		return exitWithCode{
-			reason: err.Error(),
-			code:   code,
-		}
-	}
-
-	return nil
+	return s.Run()
 }
 
 func validPackaging(packaging string) string {

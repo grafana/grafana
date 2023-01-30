@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/developers/plugins/metadata/
-  - /docs/grafana/latest/plugins/developing/plugin.json/
+  - ../../plugins/developing/plugin.json/
 keywords:
   - grafana
   - plugins

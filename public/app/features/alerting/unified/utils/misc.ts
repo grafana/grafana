@@ -27,13 +27,11 @@ export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, retu
 
 export function createExploreLink(dataSourceName: string, query: string) {
   return createUrl(`/explore`, {
-    left: JSON.stringify([
-      'now-1h',
-      'now',
-      dataSourceName,
-      { datasource: dataSourceName, expr: query },
-      { ui: [true, true, true, 'none'] },
-    ]),
+    left: JSON.stringify({
+      datasource: dataSourceName,
+      queries: [{ refId: 'A', datasource: dataSourceName, expr: query }],
+      range: { from: 'now-1h', to: 'now' },
+    }),
   });
 }
 

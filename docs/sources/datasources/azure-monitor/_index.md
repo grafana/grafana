@@ -1,10 +1,9 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/azuremonitor/
-  - /docs/grafana/latest/features/datasources/azuremonitor/
-  - /docs/grafana/latest/datasources/azuremonitor/deprecated-application-insights/
-  - /docs/grafana/latest/datasources/azure-monitor/
-  - /docs/grafana/latest/data-sources/azure-monitor/
+  - ../data-sources/azure-monitor/
+  - ../features/datasources/azuremonitor/
+  - azuremonitor/
+  - azuremonitor/deprecated-application-insights/
 description: Guide for using Azure Monitor in Grafana
 keywords:
   - grafana
@@ -64,7 +63,6 @@ For details, refer to [Configuring using Managed Identity]({{< relref "#configur
 | **Application (client) ID** | Sets the application/client ID for the Azure AD app registration to use for authentication.                                                                                                                                                                                                           |
 | **Client secret**           | Sets the application client secret for the Azure AD app registration to use for authentication. For details, see the [Azure application secret docs](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal#option-2-create-a-new-application-secret). |
 | **Default subscription**    | _(Optional)_ Sets a default subscription for template variables to use.                                                                                                                                                                                                                               |
-| **Default workspace**       | _(Optional)_ Sets a default workspace for Log Analytics-based template variable queries to use.                                                                                                                                                                                                       |
 
 ### Provision the data source
 
@@ -110,12 +108,11 @@ datasources:
 
 #### Supported cloud names
 
-| Azure Cloud                                          | `cloudName` Value          |
-| ---------------------------------------------------- | -------------------------- |
-| **Microsoft Azure public cloud**                     | `azuremonitor` (_Default_) |
-| **Microsoft Chinese national cloud**                 | `chinaazuremonitor`        |
-| **US Government cloud**                              | `govazuremonitor`          |
-| **Microsoft German national cloud ("Black Forest")** | `germanyazuremonitor`      |
+| Azure Cloud                          | `cloudName` Value          |
+| ------------------------------------ | -------------------------- |
+| **Microsoft Azure public cloud**     | `azuremonitor` (_Default_) |
+| **Microsoft Chinese national cloud** | `chinaazuremonitor`        |
+| **US Government cloud**              | `govazuremonitor`          |
 
 ### Configure Managed Identity
 
@@ -158,4 +155,4 @@ Until Grafana v8.0, you could query the same Azure Application Insights data usi
 
 These queries were deprecated in Grafana v7.5. In Grafana v8.0, Application Insights and Insights Analytics were made read-only in favor of querying this data through Metrics and Logs. These query methods were completely removed in Grafana v9.0.
 
-If you're upgrading from a Grafana version prior to v9.0 and relied on Application Insights and Analytics queries, refer to the [Grafana v9.0 documentation](/v9.0/datasources/azuremonitor/deprecated-application-insights/) for help migrating these queries to Metrics and Logs queries.
+If you're upgrading from a Grafana version prior to v9.0 and relied on Application Insights and Analytics queries, refer to the [Grafana v9.0 documentation](/docs/grafana/v9.0/datasources/azuremonitor/deprecated-application-insights/) for help migrating these queries to Metrics and Logs queries.

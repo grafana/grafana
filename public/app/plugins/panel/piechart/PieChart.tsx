@@ -5,7 +5,7 @@ import { Group } from '@visx/group';
 import Pie, { PieArcDatum, ProvidedProps } from '@visx/shape/lib/shapes/Pie';
 import { useTooltip, useTooltipInPortal } from '@visx/tooltip';
 import { UseTooltipParams } from '@visx/tooltip/lib/hooks/useTooltip';
-import React, { FC, useCallback } from 'react';
+import React, { useCallback } from 'react';
 import tinycolor from 'tinycolor2';
 
 import {
@@ -29,7 +29,7 @@ import {
 import { getTooltipContainerStyles } from '@grafana/ui/src/themes/mixins';
 import { useComponentInstanceId } from '@grafana/ui/src/utils/useComponetInstanceId';
 
-import { PieChartType, PieChartLabels } from './models.gen';
+import { PieChartType, PieChartLabels } from './panelcfg.gen';
 import { filterDisplayItems, sumDisplayItemsReducer } from './utils';
 
 /**
@@ -46,7 +46,7 @@ interface PieChartProps {
   tooltipOptions: VizTooltipOptions;
 }
 
-export const PieChart: FC<PieChartProps> = ({
+export const PieChart = ({
   fieldDisplayValues,
   pieType,
   width,
@@ -54,7 +54,7 @@ export const PieChart: FC<PieChartProps> = ({
   highlightedTitle,
   displayLabels = [],
   tooltipOptions,
-}) => {
+}: PieChartProps) => {
   const theme = useTheme2();
   const componentInstanceId = useComponentInstanceId('PieChart');
   const styles = useStyles2(getStyles);

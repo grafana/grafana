@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 
@@ -20,62 +19,12 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) run(ctx context.Context, 
 	return runTimeSeriesRequest(ctx, timeSeriesFilter.logger, req, s, dsInfo, tracer, timeSeriesFilter.parameters.ProjectName, timeSeriesFilter.params, nil)
 }
 
-func extractTimeSeriesLabels(series timeSeries, groupBys []string) (data.Labels, string) {
-	seriesLabels := data.Labels{}
-	defaultMetricName := series.Metric.Type
-	seriesLabels["resource.type"] = series.Resource.Type
-	groupBysMap := make(map[string]bool)
-	for _, groupBy := range groupBys {
-		groupBysMap[groupBy] = true
-	}
-
-	for key, value := range series.Metric.Labels {
-		seriesLabels["metric.label."+key] = value
-
-		if len(groupBys) == 0 || groupBysMap["metric.label."+key] {
-			defaultMetricName += " " + value
-		}
-	}
-
-	for key, value := range series.Resource.Labels {
-		seriesLabels["resource.label."+key] = value
-
-		if groupBysMap["resource.label."+key] {
-			defaultMetricName += " " + value
-		}
-	}
-
-	for labelType, labelTypeValues := range series.MetaData {
-		for labelKey, labelValue := range labelTypeValues {
-			key := xstrings.ToSnakeCase(fmt.Sprintf("metadata.%s.%s", labelType, labelKey))
-
-			switch v := labelValue.(type) {
-			case string:
-				seriesLabels[key] = v
-			case bool:
-				strVal := strconv.FormatBool(v)
-				seriesLabels[key] = strVal
-			case []interface{}:
-				for _, v := range v {
-					strVal := v.(string)
-					if len(seriesLabels[key]) > 0 {
-						strVal = fmt.Sprintf("%s, %s", seriesLabels[key], strVal)
-					}
-					seriesLabels[key] = strVal
-				}
-			}
-		}
-	}
-
-	return seriesLabels, defaultMetricName
-}
-
 func parseTimeSeriesResponse(queryRes *backend.DataResponse,
 	response cloudMonitoringResponse, executedQueryString string, query cloudMonitoringQueryExecutor, params url.Values, groupBys []string) error {
 	frames := data.Frames{}
 
 	for _, series := range response.TimeSeries {
-		seriesLabels, defaultMetricName := extractTimeSeriesLabels(series, groupBys)
+		seriesLabels, defaultMetricName := series.getLabels(groupBys)
 		frame := data.NewFrameOfFieldTypes("", len(series.Points), data.FieldTypeTime, data.FieldTypeFloat64)
 		frame.RefID = query.getRefID()
 		frame.Meta = &data.FrameMeta{
@@ -198,6 +147,32 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) getFilter() string {
 	return strings.Trim(filterString, " ")
 }
 
+func (timeSeriesFilter *cloudMonitoringTimeSeriesList) setPreprocessor() {
+	// In case a preprocessor is defined, the preprocessor becomes the primary aggregation
+	// and the aggregation that is specified in the UI becomes the secondary aggregation
+	// Rules are specified in this issue: https://github.com/grafana/grafana/issues/30866
+	t := toPreprocessorType(timeSeriesFilter.parameters.Preprocessor)
+	if t != PreprocessorTypeNone {
+		// Move aggregation to secondaryAggregation
+		timeSeriesFilter.parameters.SecondaryAlignmentPeriod = timeSeriesFilter.parameters.AlignmentPeriod
+		timeSeriesFilter.parameters.SecondaryCrossSeriesReducer = timeSeriesFilter.parameters.CrossSeriesReducer
+		timeSeriesFilter.parameters.SecondaryPerSeriesAligner = timeSeriesFilter.parameters.PerSeriesAligner
+		timeSeriesFilter.parameters.SecondaryGroupBys = timeSeriesFilter.parameters.GroupBys
+
+		// Set a default cross series reducer if grouped
+		if len(timeSeriesFilter.parameters.GroupBys) == 0 {
+			timeSeriesFilter.parameters.CrossSeriesReducer = crossSeriesReducerDefault
+		}
+
+		// Set aligner based on preprocessor type
+		aligner := "ALIGN_RATE"
+		if t == PreprocessorTypeDelta {
+			aligner = "ALIGN_DELTA"
+		}
+		timeSeriesFilter.parameters.PerSeriesAligner = aligner
+	}
+}
+
 func (timeSeriesFilter *cloudMonitoringTimeSeriesList) setParams(startTime time.Time, endTime time.Time, durationSeconds int, intervalMs int64) {
 	params := url.Values{}
 	query := timeSeriesFilter.parameters
@@ -215,6 +190,8 @@ func (timeSeriesFilter *cloudMonitoringTimeSeriesList) setParams(startTime time.
 	if query.PerSeriesAligner == "" {
 		query.PerSeriesAligner = perSeriesAlignerDefault
 	}
+
+	timeSeriesFilter.setPreprocessor()
 
 	alignmentPeriod := calculateAlignmentPeriod(query.AlignmentPeriod, intervalMs, durationSeconds)
 	params.Add("aggregation.alignmentPeriod", alignmentPeriod)

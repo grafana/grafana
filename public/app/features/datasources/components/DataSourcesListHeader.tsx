@@ -1,10 +1,18 @@
 import React, { useCallback } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import PageActionBar from 'app/core/components/PageActionBar/PageActionBar';
-import { StoreState, useSelector, useDispatch } from 'app/types';
+import { contextSrv } from 'app/core/core';
+import { StoreState, useSelector, useDispatch, AccessControlAction } from 'app/types';
 
-import { getDataSourcesSearchQuery, getDataSourcesSort, setDataSourcesSearchQuery, setIsSortAscending } from '../state';
+import {
+  getDataSourcesSearchQuery,
+  getDataSourcesSort,
+  setDataSourcesSearchQuery,
+  setIsSortAscending,
+  useDataSourcesRoutes,
+} from '../state';
 
 const ascendingSortValue = 'alpha-asc';
 const descendingSortValue = 'alpha-desc';
@@ -22,6 +30,19 @@ export function DataSourcesListHeader() {
   const setSearchQuery = useCallback((q: string) => dispatch(setDataSourcesSearchQuery(q)), [dispatch]);
   const searchQuery = useSelector(({ dataSources }: StoreState) => getDataSourcesSearchQuery(dataSources));
 
+  // TODO remove this logic adding the link button once topnav is live
+  // instead use the actions in DataSourcesListPage
+  const canCreateDataSource = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
+  const dataSourcesRoutes = useDataSourcesRoutes();
+  const isTopnav = config.featureToggles.topnav;
+  const linkButton =
+    !isTopnav && canCreateDataSource
+      ? {
+          href: dataSourcesRoutes.New,
+          title: 'Add new data source',
+        }
+      : undefined;
+
   const setSort = useCallback(
     (sort: SelectableValue) => dispatch(setIsSortAscending(sort.value === ascendingSortValue)),
     [dispatch]
@@ -35,6 +56,12 @@ export function DataSourcesListHeader() {
   };
 
   return (
-    <PageActionBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} key="action-bar" sortPicker={sortPicker} />
+    <PageActionBar
+      searchQuery={searchQuery}
+      setSearchQuery={setSearchQuery}
+      key="action-bar"
+      sortPicker={sortPicker}
+      linkButton={linkButton}
+    />
   );
 }

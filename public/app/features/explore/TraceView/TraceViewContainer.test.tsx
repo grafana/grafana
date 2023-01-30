@@ -79,7 +79,7 @@ describe('TraceViewContainer', () => {
     renderTraceViewContainer();
     await userEvent.type(screen.getByPlaceholderText('Find...'), '1ed38015486087ca');
     expect(
-      (screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[0].parentNode! as HTMLElement).className
+      screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[0].parentElement!.className
     ).toContain('rowMatchingFilter');
   });
 
@@ -93,32 +93,32 @@ describe('TraceViewContainer', () => {
     await userEvent.click(nextResultButton);
     expect(suffix.textContent).toBe('1 of 2');
     expect(
-      (screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[1].parentNode! as HTMLElement).className
+      screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[1].parentElement!.className
     ).toContain('rowFocused');
     await userEvent.click(nextResultButton);
     expect(suffix.textContent).toBe('2 of 2');
     expect(
-      (screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[2].parentNode! as HTMLElement).className
+      screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[2].parentElement!.className
     ).toContain('rowFocused');
     await userEvent.click(nextResultButton);
     expect(suffix.textContent).toBe('1 of 2');
     expect(
-      (screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[1].parentNode! as HTMLElement).className
+      screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[1].parentElement!.className
     ).toContain('rowFocused');
     await userEvent.click(prevResultButton);
     expect(suffix.textContent).toBe('2 of 2');
     expect(
-      (screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[2].parentNode! as HTMLElement).className
+      screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[2].parentElement!.className
     ).toContain('rowFocused');
     await userEvent.click(prevResultButton);
     expect(suffix.textContent).toBe('1 of 2');
     expect(
-      (screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[1].parentNode! as HTMLElement).className
+      screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[1].parentElement!.className
     ).toContain('rowFocused');
     await userEvent.click(prevResultButton);
     expect(suffix.textContent).toBe('2 of 2');
     expect(
-      (screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[2].parentNode! as HTMLElement).className
+      screen.queryAllByText('', { selector: 'div[data-testid="span-view"]' })[2].parentElement!.className
     ).toContain('rowFocused');
   });
 });

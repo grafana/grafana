@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/installation/windows/
-  - /docs/grafana/latest/setup-grafana/installation/windows/
+  - ../../installation/windows/
 description: Install Grafana on Windows
 title: Install on Windows
 weight: 500

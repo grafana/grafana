@@ -4,7 +4,8 @@ import React from 'react';
 import { select } from 'react-select-event';
 
 import { setupMockedDataSource } from '../../__mocks__/CloudWatchDataSource';
-import { GetDimensionKeysRequest, VariableQueryType } from '../../types';
+import { GetDimensionKeysRequest } from '../../resources/types';
+import { VariableQueryType } from '../../types';
 
 import { VariableQueryEditor, Props } from './VariableQueryEditor';
 
@@ -22,22 +23,22 @@ const defaultQuery = {
 
 const ds = setupMockedDataSource();
 
-ds.datasource.api.getRegions = jest.fn().mockResolvedValue([
+ds.datasource.resources.getRegions = jest.fn().mockResolvedValue([
   { label: 'a1', value: 'a1' },
   { label: 'b1', value: 'b1' },
   { label: 'c1', value: 'c1' },
 ]);
-ds.datasource.api.getNamespaces = jest.fn().mockResolvedValue([
+ds.datasource.resources.getNamespaces = jest.fn().mockResolvedValue([
   { label: 'x2', value: 'x2' },
   { label: 'y2', value: 'y2' },
   { label: 'z2', value: 'z2' },
 ]);
-ds.datasource.api.getMetrics = jest.fn().mockResolvedValue([
+ds.datasource.resources.getMetrics = jest.fn().mockResolvedValue([
   { label: 'h3', value: 'h3' },
   { label: 'i3', value: 'i3' },
   { label: 'j3', value: 'j3' },
 ]);
-ds.datasource.api.getDimensionKeys = jest
+ds.datasource.resources.getDimensionKeys = jest
   .fn()
   .mockImplementation(({ namespace: region, dimensionFilters }: GetDimensionKeysRequest) => {
     if (!!dimensionFilters) {
@@ -55,12 +56,12 @@ ds.datasource.api.getDimensionKeys = jest
     }
     return Promise.resolve([{ label: 't4', value: 't4' }]);
   });
-ds.datasource.api.getDimensionValues = jest.fn().mockResolvedValue([
+ds.datasource.resources.getDimensionValues = jest.fn().mockResolvedValue([
   { label: 'foo', value: 'foo' },
   { label: 'bar', value: 'bar' },
 ]);
 ds.datasource.getVariables = jest.fn().mockReturnValue([]);
-ds.datasource.api.getEc2InstanceAttribute = jest.fn().mockReturnValue([]);
+ds.datasource.resources.getEc2InstanceAttribute = jest.fn().mockReturnValue([]);
 
 const onChange = jest.fn();
 const defaultProps: Props = {
@@ -142,7 +143,7 @@ describe('VariableEditor', () => {
       await select(keySelect, 'v4', {
         container: document.body,
       });
-      expect(ds.datasource.api.getDimensionKeys).toHaveBeenCalledWith({
+      expect(ds.datasource.resources.getDimensionKeys).toHaveBeenCalledWith({
         namespace: 'z2',
         region: 'a1',
         metricName: 'i3',
@@ -232,8 +233,8 @@ describe('VariableEditor', () => {
         })
       );
 
-      expect(ds.datasource.api.getMetrics).toHaveBeenCalledWith({ namespace: 'z2', region: 'b1' });
-      expect(ds.datasource.api.getDimensionKeys).toHaveBeenCalledWith({ namespace: 'z2', region: 'b1' });
+      expect(ds.datasource.resources.getMetrics).toHaveBeenCalledWith({ namespace: 'z2', region: 'b1' });
+      expect(ds.datasource.resources.getDimensionKeys).toHaveBeenCalledWith({ namespace: 'z2', region: 'b1' });
       expect(props.onChange).toHaveBeenCalledWith({
         ...defaultQuery,
         refId: 'CloudWatchVariableQueryEditor-VariableQuery',

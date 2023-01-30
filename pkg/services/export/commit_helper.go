@@ -13,8 +13,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	jsoniter "github.com/json-iterator/go"
 
+	"github.com/grafana/grafana/pkg/infra/appcontext"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -77,7 +77,7 @@ func (ch *commitHelper) initOrg(ctx context.Context, sql db.DB, orgID int64) err
 			OrgID:  orgID, // gets filled in from each row
 			UserID: 0,
 		}
-		ch.ctx = store.ContextWithUser(context.Background(), rowUser)
+		ch.ctx = appcontext.WithUser(context.Background(), rowUser)
 		return err
 	})
 }

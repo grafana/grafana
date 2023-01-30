@@ -1,12 +1,11 @@
 ---
 aliases:
-  - /docs/grafana/latest/datasources/cloudwatch/
-  - /docs/grafana/latest/datasources/aws-cloudwatch/
-  - /docs/grafana/latest/datasources/aws-cloudwatch/provision-cloudwatch/
-  - /docs/grafana/latest/datasources/aws-cloudwatch/preconfig-cloudwatch-dashboards/
-  - /docs/grafana/latest/data-sources/aws-cloudwatch/
-  - /docs/grafana/latest/data-sources/aws-cloudwatch/provision-cloudwatch/
-  - /docs/grafana/latest/data-sources/aws-cloudwatch/preconfig-cloudwatch-dashboards/
+  - ../data-sources/aws-cloudwatch/
+  - ../data-sources/aws-cloudwatch/preconfig-cloudwatch-dashboards/
+  - ../data-sources/aws-cloudwatch/provision-cloudwatch/
+  - cloudwatch/
+  - preconfig-cloudwatch-dashboards/
+  - provision-cloudwatch/
 description: Guide for using AWS CloudWatch in Grafana
 keywords:
   - grafana
@@ -168,7 +167,7 @@ You can attach these permissions to the IAM role or IAM user you configured in [
 }
 ```
 
-**Cross-account observability:**
+**Cross-account observability: (see below) **
 
 ```json
 {
@@ -370,3 +369,9 @@ If you use multiple regions or configured more than one CloudWatch data source t
 
 To request a quota increase, visit the [AWS Service Quotas console](https://console.aws.amazon.com/servicequotas/home?r#!/services/monitoring/quotas/L-5E141212).
 For more information, refer to the AWS documentation for [Service Quotas](https://docs.aws.amazon.com/servicequotas/latest/userguide/intro.html) and [CloudWatch limits](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch_limits.html).
+
+## Cross-account observability
+
+The CloudWatch plugin enables you to monitor and troubleshoot applications across multiple regional accounts. Using cross-account observability, you can seamlessly search, visualize and analyze metrics and logs without worrying about account boundaries.
+
+To use this feature, configure in the [AWS console under Cloudwatch Settings](https://aws.amazon.com/blogs/aws/new-amazon-cloudwatch-cross-account-observability/), a monitoring and source account, and then add the necessary IAM permissions as described above.

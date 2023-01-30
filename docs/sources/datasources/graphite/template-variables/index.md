@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/data-sources/graphite/template-variables/
+  - ../../data-sources/graphite/template-variables/
 description: Guide for using template variables when querying the Graphite data source
 keywords:
   - grafana
@@ -21,6 +21,16 @@ Grafana refers to such variables as template variables.
 
 For an introduction to templating and template variables, refer to the [Templating]({{< relref "../../../dashboards/variables" >}}) and [Add and manage variables]({{< relref "../../../dashboards/variables/add-template-variables" >}}) documentation.
 
+## Select a query type
+
+There are three query types for Graphite template variables
+
+| Query Type        | Description                                                                     |
+| ----------------- | ------------------------------------------------------------------------------- |
+| Default Query     | Use functions such as `tags()`, `tag_values()`, `expand(<metric>)` and metrics. |
+| Value Query       | Returns all the values for a query that includes a metric and function.         |
+| Metric Name Query | Returns all the names for a query that includes a metric and function.          |
+
 ## Use tag variables
 
 To create a variable using tag values, use the Grafana functions `tags` and `tag_values`.
@@ -40,7 +50,7 @@ tag_values(server, server=~backend\*, app=~${apps:regex})
 
 For details, refer to the [Graphite docs on the autocomplete API for tags](http://graphite.readthedocs.io/en/latest/tags.html#auto-complete-support).
 
-### Use multi-valie variables in tag queries
+### Use multi-value variables in tag queries
 
 Multi-value variables in tag queries use the advanced formatting syntax for variables introduced in Grafana v5.0: `{var:regex}`.
 Non-tag queries use the default glob formatting for multi-value variables.

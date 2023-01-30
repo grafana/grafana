@@ -106,7 +106,7 @@ export const addTooltipSupport = ({
         setFocusedSeriesIdx,
         setFocusedPointIdx,
         (clear) => {
-          if (clear && isActive) {
+          if (clear) {
             setCoords(null);
             return;
           }

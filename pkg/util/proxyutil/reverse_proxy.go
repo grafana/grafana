@@ -76,10 +76,6 @@ func wrapDirector(d func(*http.Request)) func(req *http.Request) {
 
 		d(req)
 		PrepareProxyRequest(req)
-
-		// Clear Origin and Referer to avoid CORS issues
-		req.Header.Del("Origin")
-		req.Header.Del("Referer")
 	}
 }
 

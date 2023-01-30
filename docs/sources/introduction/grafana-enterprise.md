@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/enterprise/
-  - /docs/grafana/latest/introduction/grafana-enterprise/
+  - ../enterprise/
 description: Grafana Enterprise overview
 title: Grafana Enterprise
 weight: 200
@@ -17,7 +16,7 @@ To learn more about Grafana Enterprise, refer to [our product page](https://graf
 
 ## Enterprise features in Grafana Cloud
 
-Many Grafana Enterprise features are also available in [Grafana Cloud]({{< ref "/docs/grafana-cloud" >}}) Pro and Advanced accounts. For details, refer to [the Grafana Cloud features table](https://grafana.com/pricing/#featuresTable).
+Many Grafana Enterprise features are also available in [Grafana Cloud](/docs/grafana-cloud) Pro and Advanced accounts. For details, refer to [the Grafana Cloud features table](https://grafana.com/pricing/#featuresTable).
 
 ## Authentication
 

@@ -198,7 +198,7 @@ func (ss *SqlStore) Count(ctx context.Context, scopeParams *quota.ScopeParameter
 		u.Set(tag, r.Count)
 	}
 
-	if scopeParams.OrgID != 0 {
+	if scopeParams != nil && scopeParams.OrgID != 0 {
 		if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 			rawSQL := "SELECT COUNT(*) AS count FROM data_source WHERE org_id=?"
 			if _, err := sess.SQL(rawSQL, scopeParams.OrgID).Get(&r); err != nil {
@@ -333,6 +333,8 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 		sess.UseBool("basic_auth")
 		sess.UseBool("with_credentials")
 		sess.UseBool("read_only")
+		// Make sure database field is zeroed out if empty. We want to migrate away from this field.
+		sess.MustCols("database")
 		// Make sure password are zeroed out if empty. We do this as we want to migrate passwords from
 		// plain text fields to SecureJsonData.
 		sess.MustCols("password")

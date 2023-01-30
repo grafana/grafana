@@ -1,6 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/data-sources/mssql/template-variables/
+  - ../../data-sources/mssql/template-variables/
 description: Using template variables with Microsoft SQL Server in Grafana
 keywords:
   - grafana
@@ -88,7 +88,7 @@ ORDER BY atimestamp
 
 ### Disabling Quoting for Multi-value Variables
 
-Grafana automatically creates a quoted, comma-separated string for multi-value variables. For example: if `server01` and `server02` are selected then it will be formatted as: `'server01', 'server02'`. Do disable quoting, use the csv formatting option for variables:
+Grafana automatically creates a quoted, comma-separated string for multi-value variables. For example: if `server01` and `server02` are selected then it will be formatted as: `'server01', 'server02'`. To disable quoting, use the csv formatting option for variables:
 
 `${servers:csv}`
 

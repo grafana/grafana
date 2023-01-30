@@ -49,8 +49,8 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
 
   return (
     <ReceiversSection
-      title="Message templates"
-      description="Templates construct the messages that get sent to the contact points."
+      title="Notification templates"
+      description="Notification templates customize notifications sent from contact points."
       addButtonLabel="New template"
       addButtonTo={makeAMLink('/alerting/notifications/templates/new', alertManagerName)}
       showButton={contextSrv.hasPermission(permissions.create)}

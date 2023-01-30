@@ -4,10 +4,10 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/ldap"
-
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/login"
 
 	//TODO(sh0rez): remove once import cycle resolved
 	_ "github.com/grafana/grafana/pkg/api/response"
@@ -71,7 +71,7 @@ func TestMultiLDAP(t *testing.T) {
 			setup()
 
 			multi := New([]*ldap.ServerConfig{})
-			_, err := multi.Login(&models.LoginUserQuery{})
+			_, err := multi.Login(&login.LoginUserQuery{})
 
 			require.Error(t, err)
 			require.Equal(t, ErrNoLDAPServers, err)
@@ -89,7 +89,7 @@ func TestMultiLDAP(t *testing.T) {
 				{}, {},
 			})
 
-			_, err := multi.Login(&models.LoginUserQuery{})
+			_, err := multi.Login(&login.LoginUserQuery{})
 
 			require.Error(t, err)
 			require.Equal(t, expected, err)
@@ -99,17 +99,18 @@ func TestMultiLDAP(t *testing.T) {
 
 		t.Run("Should call underlying LDAP methods", func(t *testing.T) {
 			mock := setup()
+			mock.loginErrReturn = ErrInvalidCredentials
 
 			multi := New([]*ldap.ServerConfig{
 				{}, {},
 			})
-			_, err := multi.Login(&models.LoginUserQuery{})
+			_, err := multi.Login(&login.LoginUserQuery{})
 
 			require.Equal(t, 2, mock.dialCalledTimes)
 			require.Equal(t, 2, mock.loginCalledTimes)
 			require.Equal(t, 2, mock.closeCalledTimes)
 
-			require.Equal(t, ErrInvalidCredentials, err)
+			require.Equal(t, ldap.ErrInvalidCredentials, err)
 
 			teardown()
 		})
@@ -117,14 +118,14 @@ func TestMultiLDAP(t *testing.T) {
 		t.Run("Should get login result", func(t *testing.T) {
 			mock := setup()
 
-			mock.loginReturn = &models.ExternalUserInfo{
+			mock.loginReturn = &login.ExternalUserInfo{
 				Login: "killa",
 			}
 
 			multi := New([]*ldap.ServerConfig{
 				{}, {},
 			})
-			result, err := multi.Login(&models.LoginUserQuery{})
+			result, err := multi.Login(&login.LoginUserQuery{})
 
 			require.Equal(t, 1, mock.dialCalledTimes)
 			require.Equal(t, 1, mock.loginCalledTimes)
@@ -144,13 +145,13 @@ func TestMultiLDAP(t *testing.T) {
 			multi := New([]*ldap.ServerConfig{
 				{}, {},
 			})
-			_, err := multi.Login(&models.LoginUserQuery{})
+			_, err := multi.Login(&login.LoginUserQuery{})
 
 			require.Equal(t, 2, mock.dialCalledTimes)
 			require.Equal(t, 2, mock.loginCalledTimes)
 			require.Equal(t, 2, mock.closeCalledTimes)
 
-			require.Equal(t, ErrInvalidCredentials, err)
+			require.Equal(t, ErrCouldNotFindUser, err)
 
 			teardown()
 		})
@@ -163,7 +164,7 @@ func TestMultiLDAP(t *testing.T) {
 			multi := New([]*ldap.ServerConfig{
 				{}, {},
 			})
-			_, err := multi.Login(&models.LoginUserQuery{})
+			_, err := multi.Login(&login.LoginUserQuery{})
 
 			require.Equal(t, 2, mock.dialCalledTimes)
 			require.Equal(t, 2, mock.loginCalledTimes)
@@ -183,7 +184,7 @@ func TestMultiLDAP(t *testing.T) {
 			multi := New([]*ldap.ServerConfig{
 				{}, {},
 			})
-			_, err := multi.Login(&models.LoginUserQuery{})
+			_, err := multi.Login(&login.LoginUserQuery{})
 
 			require.Equal(t, 2, mock.dialCalledTimes)
 
@@ -201,7 +202,7 @@ func TestMultiLDAP(t *testing.T) {
 			multi := New([]*ldap.ServerConfig{
 				{}, {},
 			})
-			_, err := multi.Login(&models.LoginUserQuery{})
+			_, err := multi.Login(&login.LoginUserQuery{})
 
 			require.Equal(t, 1, mock.dialCalledTimes)
 			require.Equal(t, 1, mock.loginCalledTimes)
@@ -284,7 +285,7 @@ func TestMultiLDAP(t *testing.T) {
 		t.Run("Should get only one user", func(t *testing.T) {
 			mock := setup()
 
-			mock.usersFirstReturn = []*models.ExternalUserInfo{
+			mock.usersFirstReturn = []*login.ExternalUserInfo{
 				{
 					Login: "one",
 				},
@@ -414,7 +415,7 @@ func TestMultiLDAP(t *testing.T) {
 		t.Run("Should get users", func(t *testing.T) {
 			mock := setup()
 
-			mock.usersFirstReturn = []*models.ExternalUserInfo{
+			mock.usersFirstReturn = []*login.ExternalUserInfo{
 				{
 					Login: "one",
 				},
@@ -424,7 +425,7 @@ func TestMultiLDAP(t *testing.T) {
 				},
 			}
 
-			mock.usersRestReturn = []*models.ExternalUserInfo{
+			mock.usersRestReturn = []*login.ExternalUserInfo{
 				{
 					Login: "three",
 				},
@@ -460,23 +461,23 @@ type mockLDAP struct {
 	dialErrReturn error
 
 	loginErrReturn error
-	loginReturn    *models.ExternalUserInfo
+	loginReturn    *login.ExternalUserInfo
 
 	bindErrReturn error
 
 	usersErrReturn   error
-	usersFirstReturn []*models.ExternalUserInfo
-	usersRestReturn  []*models.ExternalUserInfo
+	usersFirstReturn []*login.ExternalUserInfo
+	usersRestReturn  []*login.ExternalUserInfo
 }
 
 // Login test fn
-func (mock *mockLDAP) Login(*models.LoginUserQuery) (*models.ExternalUserInfo, error) {
+func (mock *mockLDAP) Login(*login.LoginUserQuery) (*login.ExternalUserInfo, error) {
 	mock.loginCalledTimes++
 	return mock.loginReturn, mock.loginErrReturn
 }
 
 // Users test fn
-func (mock *mockLDAP) Users([]string) ([]*models.ExternalUserInfo, error) {
+func (mock *mockLDAP) Users([]string) ([]*login.ExternalUserInfo, error) {
 	mock.usersCalledTimes++
 
 	if mock.usersCalledTimes == 1 {

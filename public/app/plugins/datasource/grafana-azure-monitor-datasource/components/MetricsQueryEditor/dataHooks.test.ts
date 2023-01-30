@@ -45,13 +45,21 @@ describe('AzureMonitor: metrics dataHooks', () => {
       hook: useMetricNames,
       emptyQueryPartial: {
         metricNamespace: 'azure/vm',
-        resourceGroup: 'rg',
-        resourceName: 'rn',
+        resources: [
+          {
+            resourceGroup: 'rg',
+            resourceName: 'rn',
+          },
+        ],
       },
       customProperties: {
         metricNamespace: 'azure/vm',
-        resourceGroup: 'rg',
-        resourceName: 'rn',
+        resources: [
+          {
+            resourceGroup: 'rg',
+            resourceName: 'rn',
+          },
+        ],
         metricName: 'metric-$ENVIRONMENT',
       },
       expectedOptions: [
@@ -75,13 +83,21 @@ describe('AzureMonitor: metrics dataHooks', () => {
       hook: useMetricNamespaces,
       emptyQueryPartial: {
         metricNamespace: 'azure/vm',
-        resourceGroup: 'rg',
-        resourceName: 'rn',
+        resources: [
+          {
+            resourceGroup: 'rg',
+            resourceName: 'rn',
+          },
+        ],
       },
       customProperties: {
         metricNamespace: 'azure/vm-$ENVIRONMENT',
-        resourceGroup: 'rg',
-        resourceName: 'rn',
+        resources: [
+          {
+            resourceGroup: 'rg',
+            resourceName: 'rn',
+          },
+        ],
         metricName: 'metric-name',
       },
       expectedOptions: [
@@ -188,8 +204,12 @@ describe('AzureMonitor: metrics dataHooks', () => {
       name: 'useMetricMetadata',
       hook: useMetricMetadata,
       emptyQueryPartial: {
-        resourceGroup: 'rg',
-        resourceName: 'rn',
+        resources: [
+          {
+            resourceGroup: 'rg',
+            resourceName: 'rn',
+          },
+        ],
         metricNamespace: 'azure/vm',
         metricName: 'Average CPU',
       },
@@ -240,8 +260,12 @@ describe('AzureMonitor: metrics dataHooks', () => {
       name: 'useMetricNamespaces',
       hook: useMetricNamespaces,
       emptyQueryPartial: {
-        resourceGroup: 'rg',
-        resourceName: 'rn',
+        resources: [
+          {
+            resourceGroup: 'rg',
+            resourceName: 'rn',
+          },
+        ],
         metricNamespace: 'azure/vm',
       },
       customProperties: {},
@@ -264,7 +288,11 @@ describe('AzureMonitor: metrics dataHooks', () => {
 
       expect(result.current).toEqual(metricNamespacesConfig.expectedOptions);
       expect(datasource.azureMonitorDatasource.getMetricNamespaces).toHaveBeenCalledWith(
-        expect.objectContaining(metricNamespacesConfig.emptyQueryPartial),
+        expect.objectContaining({
+          resourceGroup: 'rg',
+          resourceName: 'rn',
+          metricNamespace: 'azure/vm',
+        }),
         // Here, "global" should be false
         false
       );

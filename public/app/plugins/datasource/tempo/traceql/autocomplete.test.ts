@@ -26,14 +26,40 @@ describe('CompletionProvider', () => {
     ]);
   });
 
-  it('suggests tag names with quotes', async () => {
+  it('does not wrap the tag value in quotes if the type in the response is something other than "string"', async () => {
     const { provider, model } = setup('{foo=}', 5, defaultTags);
 
-    jest.spyOn(provider.languageProvider, 'getOptions').mockImplementation(
+    jest.spyOn(provider.languageProvider, 'getOptionsV2').mockImplementation(
       () =>
         new Promise((resolve) => {
           resolve([
             {
+              type: 'int',
+              value: 'foobar',
+              label: 'foobar',
+            },
+          ]);
+        })
+    );
+
+    const result = await provider.provideCompletionItems(
+      model as unknown as monacoTypes.editor.ITextModel,
+      {} as monacoTypes.Position
+    );
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
+      expect.objectContaining({ label: 'foobar', insertText: 'foobar' }),
+    ]);
+  });
+
+  it('wraps the tag value in quotes if the type in the response is set to "string"', async () => {
+    const { provider, model } = setup('{foo=}', 5, defaultTags);
+
+    jest.spyOn(provider.languageProvider, 'getOptionsV2').mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolve([
+            {
+              type: 'string',
               value: 'foobar',
               label: 'foobar',
             },
@@ -50,10 +76,10 @@ describe('CompletionProvider', () => {
     ]);
   });
 
-  it('suggests tag names without quotes', async () => {
+  it('inserts the tag value without quotes if the user has entered quotes', async () => {
     const { provider, model } = setup('{foo="}', 6, defaultTags);
 
-    jest.spyOn(provider.languageProvider, 'getOptions').mockImplementation(
+    jest.spyOn(provider.languageProvider, 'getOptionsV2').mockImplementation(
       () =>
         new Promise((resolve) => {
           resolve([
@@ -97,6 +123,17 @@ describe('CompletionProvider', () => {
     ]);
   });
 
+  it('only suggests tags after typing the global attribute scope', async () => {
+    const { provider, model } = setup('{.}', 2, defaultTags);
+    const result = await provider.provideCompletionItems(
+      model as unknown as monacoTypes.editor.ITextModel,
+      {} as monacoTypes.Position
+    );
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
+      defaultTags.map((s) => expect.objectContaining({ label: s, insertText: s }))
+    );
+  });
+
   it('suggests operators after a space after the tag name', async () => {
     const { provider, model } = setup('{ foo }', 6, defaultTags);
     const result = await provider.provideCompletionItems(
@@ -114,10 +151,9 @@ describe('CompletionProvider', () => {
       model as unknown as monacoTypes.editor.ITextModel,
       {} as monacoTypes.Position
     );
-    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual([
-      ...CompletionProvider.intrinsics.map((s) => expect.objectContaining({ label: s, insertText: s })),
-      ...defaultTags.map((s) => expect.objectContaining({ label: s, insertText: s })),
-    ]);
+    expect((result! as monacoTypes.languages.CompletionList).suggestions).toEqual(
+      defaultTags.map((s) => expect.objectContaining({ label: s, insertText: s }))
+    );
   });
 
   it('suggests logical operators and close bracket after the value', async () => {
@@ -135,7 +171,7 @@ describe('CompletionProvider', () => {
   it('suggests tag values after a space inside a string', async () => {
     const { provider, model } = setup('{foo="bar test " }', 15, defaultTags);
 
-    jest.spyOn(provider.languageProvider, 'getOptions').mockImplementation(
+    jest.spyOn(provider.languageProvider, 'getOptionsV2').mockImplementation(
       () =>
         new Promise((resolve) => {
           resolve([

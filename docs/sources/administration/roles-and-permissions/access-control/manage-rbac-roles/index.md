@@ -1,9 +1,8 @@
 ---
 aliases:
-  - /docs/grafana/latest/enterprise/access-control/manage-rbac-roles/
-  - /docs/grafana/latest/enterprise/access-control/manage-role-assignments/
-  - /docs/grafana/latest/enterprise/access-control/provisioning/
-  - /docs/grafana/latest/administration/roles-and-permissions/access-control/manage-rbac-roles/
+  - ../../../enterprise/access-control/manage-rbac-roles/
+  - ../../../enterprise/access-control/manage-role-assignments/
+  - ../../../enterprise/access-control/provisioning/
 description: Learn how to view permissions associated with roles, create custom roles,
   and update and delete roles in Grafana.
 menuTitle: Manage RBAC roles
@@ -13,7 +12,7 @@ weight: 50
 
 # Manage RBAC roles
 
-> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced]({{< ref "/docs/grafana-cloud" >}}).
+> **Note:** Available in [Grafana Enterprise]({{< relref "../../../../introduction/grafana-enterprise/" >}}) and [Grafana Cloud Advanced](/docs/grafana-cloud).
 
 This section includes instructions for how to view permissions associated with roles, create custom roles, and update and delete roles.
 
@@ -91,7 +90,7 @@ Create a custom role when basic roles and fixed roles do not meet your permissio
 
 - [Plan your RBAC rollout strategy]({{< relref "./plan-rbac-rollout-strategy/" >}}).
 - Determine which permissions you want to add to the custom role. To see a list of actions and scope, refer to [RBAC permissions, actions, and scopes]({{< relref "./custom-role-actions-scopes/" >}}).
-- [Enable role provisioning]({{< relref "./rbac-provisioning/" >}}).
+- [Enable role provisioning]({{< relref "./rbac-grafana-provisioning/" >}}).
 - Ensure that you have permissions to create a custom role.
   - By default, the Grafana Admin role has permission to create custom roles.
   - A Grafana Admin can delegate the custom role privilege to another user by creating a custom role with the relevant permissions and adding the `permissions:type:delegate` scope.

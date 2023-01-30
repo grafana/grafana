@@ -17,6 +17,7 @@
             },
             "terms": {
                 "field": "label",
+                "min_doc_count": 1,
                 "order": {
                     "_key": "desc"
                 },

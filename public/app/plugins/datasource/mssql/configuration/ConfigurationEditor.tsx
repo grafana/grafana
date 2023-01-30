@@ -17,12 +17,14 @@ import {
   InlineFieldRow,
   InlineSwitch,
   Input,
+  Link,
   SecretInput,
   Select,
   useStyles2,
 } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
 import { ConnectionLimits } from 'app/features/plugins/sql/components/configuration/ConnectionLimits';
+import { useMigrateDatabaseField } from 'app/features/plugins/sql/components/configuration/useMigrateDatabaseField';
 
 import { MSSQLAuthenticationType, MSSQLEncryptOptions, MssqlOptions } from '../types';
 
@@ -30,6 +32,8 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
   const { options, onOptionsChange } = props;
   const styles = useStyles2(getStyles);
   const jsonData = options.jsonData;
+
+  useMigrateDatabaseField(props);
 
   const onResetPassword = () => {
     updateDatasourcePluginResetOption(props, 'password');
@@ -98,9 +102,9 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
           <Input
             width={longWidth}
             name="database"
-            value={options.database || ''}
+            value={jsonData.database || ''}
             placeholder="database name"
-            onChange={onDSOptionChanged('database')}
+            onChange={onUpdateDatasourceJsonDataOption(props, 'database')}
           ></Input>
         </InlineField>
         <InlineField
@@ -270,7 +274,12 @@ export const ConfigurationEditor = (props: DataSourcePluginOptionsEditorProps<Ms
         The database user should only be granted SELECT permissions on the specified database and tables you want to
         query. Grafana does not validate that queries are safe so queries can contain any SQL statement. For example,
         statements like <code>USE otherdb;</code> and <code>DROP TABLE user;</code> would be executed. To protect
-        against this we <em>highly</em> recommend you create a specific MS SQL user with restricted permissions.
+        against this we <em>highly</em> recommend you create a specific MS SQL user with restricted permissions. Check
+        out the{' '}
+        <Link rel="noreferrer" target="_blank" href="http://docs.grafana.org/features/datasources/mssql/">
+          Microsoft SQL Server Data Source Docs
+        </Link>{' '}
+        for more information.
       </Alert>
     </>
   );

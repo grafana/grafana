@@ -1,11 +1,10 @@
 ---
 aliases:
-  - /docs/grafana/latest/administration/manage-users-and-permissions/about-users-and-permissions/
-  - /docs/grafana/latest/manage-users/
-  - /docs/grafana/latest/permissions/
-  - /docs/grafana/latest/permissions/organization_roles/
-  - /docs/grafana/latest/permissions/overview/
-  - /docs/grafana/latest/administration/roles-and-permissions/
+  - ../manage-users/
+  - ../permissions/
+  - ../permissions/organization_roles/
+  - ../permissions/overview/
+  - manage-users-and-permissions/about-users-and-permissions/
 description: Information about Grafana user, team, and organization roles and permissions
 title: Roles and permissions
 weight: 300
@@ -27,7 +26,7 @@ You can assign a user one of three types of permissions:
 
 A Grafana server administrator manages server-wide settings and access to resources such as organizations, users, and licenses. Grafana includes a default server administrator that you can use to manage all of Grafana, or you can divide that responsibility among other server administrators that you create.
 
-> **Note:** The server administrator role does not mean that the user is also a Grafana [organization administrator]({{< ref "#organization-roles" >}}).
+> **Note:** The server administrator role does not mean that the user is also a Grafana [organization administrator]({{< relref "#organization-roles" >}}).
 
 A server administrator can perform the following tasks:
 
@@ -124,7 +123,7 @@ For more information about assigning administrator permissions to editors, refer
 If you have access to the Grafana server, you can modify the default viewer role so that viewers can:
 
 - Edit and preview dashboards, but cannot save their changes or create new dashboards.
-- Access and use [Explore]({{< ref "/explore" >}}).
+- Access and use [Explore]({{< relref "../../explore" >}}).
 
 Extending the viewer role is useful for public Grafana installations where you want anonymous users to be able to edit panels and queries, but not be able to save or create new dashboards.
 

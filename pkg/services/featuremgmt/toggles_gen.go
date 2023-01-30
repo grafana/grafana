@@ -7,13 +7,13 @@
 package featuremgmt
 
 const (
+	// FlagReturnUnameHeader
+	// Return user login as header for authenticated requests
+	FlagReturnUnameHeader = "returnUnameHeader"
+
 	// FlagAlertingBigTransactions
 	// Use big transactions for alerting database writes
 	FlagAlertingBigTransactions = "alertingBigTransactions"
-
-	// FlagPromQueryBuilder
-	// Show Prometheus query builder
-	FlagPromQueryBuilder = "promQueryBuilder"
 
 	// FlagTrimDefaults
 	// Use cue schema to remove values that will be applied automatically
@@ -63,10 +63,6 @@ const (
 	// Experimental. Allow override default AAD audience for Azure Prometheus endpoint
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
 
-	// FlagInfluxdbBackendMigration
-	// Query InfluxDB InfluxQL without the proxy
-	FlagInfluxdbBackendMigration = "influxdbBackendMigration"
-
 	// FlagShowFeatureFlagsInUI
 	// Show feature flags in the settings UI
 	FlagShowFeatureFlagsInUI = "showFeatureFlagsInUI"
@@ -74,6 +70,10 @@ const (
 	// FlagPublicDashboards
 	// Enables public access to dashboards
 	FlagPublicDashboards = "publicDashboards"
+
+	// FlagPublicDashboardsEmailSharing
+	// Allows public dashboard sharing to be restricted to only allowed emails
+	FlagPublicDashboardsEmailSharing = "publicDashboardsEmailSharing"
 
 	// FlagLokiLive
 	// Support WebSocket streaming for loki (early prototype)
@@ -110,6 +110,18 @@ const (
 	// FlagStorage
 	// Configurable storage for dashboards, datasources, and resources
 	FlagStorage = "storage"
+
+	// FlagK8s
+	// Explore native k8s integrations
+	FlagK8s = "k8s"
+
+	// FlagK8sDashboards
+	// Save dashboards via k8s
+	FlagK8sDashboards = "k8sDashboards"
+
+	// FlagSupportBundles
+	// Support bundles for troubleshooting
+	FlagSupportBundles = "supportBundles"
 
 	// FlagDashboardsFromStorage
 	// Load dashboards from the generic storage interface
@@ -150,10 +162,6 @@ const (
 	// FlagTraceToMetrics
 	// Enable trace to metrics links
 	FlagTraceToMetrics = "traceToMetrics"
-
-	// FlagPrometheusBufferedClient
-	// Enable buffered (old) client for Prometheus datasource as default instead of streaming JSON parser client (new)
-	FlagPrometheusBufferedClient = "prometheusBufferedClient"
 
 	// FlagNewDBLibrary
 	// Use jmoiron/sqlx rather than xorm for a few backend services
@@ -207,16 +215,12 @@ const (
 	// SQL-based entity store (requires storage flag also)
 	FlagEntityStore = "entityStore"
 
-	// FlagTraceqlEditor
-	// Show the TraceQL editor in the explore page
-	FlagTraceqlEditor = "traceqlEditor"
-
 	// FlagFlameGraph
 	// Show the flame graph
 	FlagFlameGraph = "flameGraph"
 
 	// FlagCloudWatchCrossAccountQuerying
-	// Use cross-account querying in CloudWatch datasource
+	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
 
 	// FlagRedshiftAsyncQueryDataSupport
@@ -267,6 +271,10 @@ const (
 	// Use Elasticsearch as backend data source
 	FlagElasticsearchBackendMigration = "elasticsearchBackendMigration"
 
+	// FlagDatasourceOnboarding
+	// Enable data source onboarding page
+	FlagDatasourceOnboarding = "datasourceOnboarding"
+
 	// FlagSecureSocksDatasourceProxy
 	// Enable secure socks tunneling for supported core datasources
 	FlagSecureSocksDatasourceProxy = "secureSocksDatasourceProxy"
@@ -274,4 +282,40 @@ const (
 	// FlagAuthnService
 	// Use new auth service to perform authentication
 	FlagAuthnService = "authnService"
+
+	// FlagSessionRemoteCache
+	// Enable using remote cache for user sessions
+	FlagSessionRemoteCache = "sessionRemoteCache"
+
+	// FlagDisablePrometheusExemplarSampling
+	// Disable Prometheus examplar sampling
+	FlagDisablePrometheusExemplarSampling = "disablePrometheusExemplarSampling"
+
+	// FlagAlertingBacktesting
+	// Rule backtesting API for alerting
+	FlagAlertingBacktesting = "alertingBacktesting"
+
+	// FlagEditPanelCSVDragAndDrop
+	// Enables drag and drop for CSV and Excel files
+	FlagEditPanelCSVDragAndDrop = "editPanelCSVDragAndDrop"
+
+	// FlagAlertingNoNormalState
+	// Stop maintaining state of alerts that are not firing
+	FlagAlertingNoNormalState = "alertingNoNormalState"
+
+	// FlagAzureMultipleResourcePicker
+	// Azure multiple resource picker
+	FlagAzureMultipleResourcePicker = "azureMultipleResourcePicker"
+
+	// FlagTopNavCommandPalette
+	// Launch the Command Palette from the top navigation search box
+	FlagTopNavCommandPalette = "topNavCommandPalette"
+
+	// FlagLogsSampleInExplore
+	// Enables access to the logs sample feature in Explore
+	FlagLogsSampleInExplore = "logsSampleInExplore"
+
+	// FlagLogsContextDatasourceUi
+	// Allow datasource to provide custom UI for context view
+	FlagLogsContextDatasourceUi = "logsContextDatasourceUi"
 )

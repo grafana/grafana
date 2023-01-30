@@ -1,7 +1,6 @@
 ---
 aliases:
-  - /docs/grafana/latest/auth/okta/
-  - /docs/grafana/latest/setup-grafana/configure-security/configure-authentication/okta/
+  - ../../../auth/okta/
 description: Grafana Okta OAuth Guide
 title: Configure Okta OAuth2 authentication
 weight: 1200
@@ -82,6 +81,12 @@ The `allowed_domains` option limits access to the users belonging to the specifi
 allowed_domains = mycompany.com mycompany.org
 ```
 
+To put values containing spaces in the list, use the following JSON syntax:
+
+```ini
+allowed_groups = ["Admins", "Software Engineers"]
+```
+
 ### Map roles
 
 Grafana can attempt to do role mapping through Okta OAuth. In order to achieve this, Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option.
@@ -123,6 +128,17 @@ Example:
 
 ```ini
 role_attribute_path = contains(groups[*], 'admin') && 'GrafanaAdmin' || contains(groups[*], 'editor') && 'Editor' || 'Viewer'
+```
+
+## Skip organization role sync
+
+To prevent the sync of org roles from Okta, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
+
+```ini
+[auth.okta]
+# ..
+# prevents the sync of org roles from Okta
+skip_org_role_sync = true
 ```
 
 ### Team Sync (Enterprise only)

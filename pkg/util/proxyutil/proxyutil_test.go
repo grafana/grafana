@@ -5,9 +5,43 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestPrepareProxyRequest(t *testing.T) {
+	t.Run("Prepare proxy request should clear Origin and Referer headers", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+		req.Header.Set("Origin", "https://host.com")
+		req.Header.Set("Referer", "https://host.com/dashboard")
+
+		PrepareProxyRequest(req)
+		require.NotContains(t, req.Header, "Origin")
+		require.NotContains(t, req.Header, "Referer")
+	})
+
+	t.Run("Prepare proxy request should set X-Grafana-Referer header", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+		req.Header.Set("Referer", "https://host.com/dashboard")
+
+		PrepareProxyRequest(req)
+		require.Contains(t, req.Header, "X-Grafana-Referer")
+		require.Equal(t, "https://host.com/dashboard", req.Header.Get("X-Grafana-Referer"))
+	})
+
+	t.Run("Prepare proxy request X-Grafana-Referer handles multiline", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+		req.Header.Set("Referer", "https://www.google.ch\r\nOtherHeader:https://www.somethingelse.com")
+
+		PrepareProxyRequest(req)
+		require.Contains(t, req.Header, "X-Grafana-Referer")
+		require.NotContains(t, req.Header, "OtherHeader")
+		require.Equal(t, "https://www.google.ch\r\nOtherHeader:https://www.somethingelse.com", req.Header.Get("X-Grafana-Referer"))
+	})
+
 	t.Run("Prepare proxy request should clear X-Forwarded headers", func(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, "/", nil)
 		require.NoError(t, err)
@@ -75,5 +109,41 @@ func TestClearCookieHeader(t *testing.T) {
 		ClearCookieHeader(req, []string{"cookie1", "cookie3"}, []string{"cookie3"})
 		require.Contains(t, req.Header, "Cookie")
 		require.Equal(t, "cookie1=", req.Header.Get("Cookie"))
+	})
+}
+
+func TestApplyUserHeader(t *testing.T) {
+	t.Run("Should not apply user header when not enabled, should remove the existing", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+		req.Header.Set("X-Grafana-User", "admin")
+
+		ApplyUserHeader(false, req, &user.SignedInUser{Login: "admin"})
+		require.NotContains(t, req.Header, "X-Grafana-User")
+	})
+
+	t.Run("Should not apply user header when user is nil, should remove the existing", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+		req.Header.Set("X-Grafana-User", "admin")
+
+		ApplyUserHeader(false, req, nil)
+		require.NotContains(t, req.Header, "X-Grafana-User")
+	})
+
+	t.Run("Should not apply user header for anonomous user", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+
+		ApplyUserHeader(true, req, &user.SignedInUser{IsAnonymous: true})
+		require.NotContains(t, req.Header, "X-Grafana-User")
+	})
+
+	t.Run("Should apply user header for non-anonomous user", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/", nil)
+		require.NoError(t, err)
+
+		ApplyUserHeader(true, req, &user.SignedInUser{Login: "admin"})
+		require.Equal(t, "admin", req.Header.Get("X-Grafana-User"))
 	})
 }

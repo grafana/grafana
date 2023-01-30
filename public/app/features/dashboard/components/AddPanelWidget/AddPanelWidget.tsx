@@ -75,6 +75,7 @@ export const AddPanelWidgetUnconnected = ({ panel, dashboard }: Props) => {
     const newPanel: Partial<PanelModel> = {
       type: 'timeseries',
       title: 'Panel Title',
+      datasource: panel.datasource,
       gridPos: { x: gridPos.x, y: gridPos.y, w: gridPos.w, h: gridPos.h },
     };
 
@@ -112,7 +113,7 @@ export const AddPanelWidgetUnconnected = ({ panel, dashboard }: Props) => {
   const onAddLibraryPanel = (panelInfo: LibraryElementDTO) => {
     const { gridPos } = panel;
 
-    const newPanel: PanelModel = {
+    const newPanel = {
       ...panelInfo.model,
       gridPos,
       libraryPanel: panelInfo,

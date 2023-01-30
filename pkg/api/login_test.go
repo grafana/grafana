@@ -22,8 +22,9 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/hooks"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	loginservice "github.com/grafana/grafana/pkg/services/login"
@@ -40,7 +41,7 @@ func fakeSetIndexViewData(t *testing.T) {
 	t.Cleanup(func() {
 		setIndexViewData = origSetIndexViewData
 	})
-	setIndexViewData = func(*HTTPServer, *models.ReqContext) (*dtos.IndexViewData, error) {
+	setIndexViewData = func(*HTTPServer, *contextmodel.ReqContext) (*dtos.IndexViewData, error) {
 		data := &dtos.IndexViewData{
 			User:     &dtos.CurrentUser{},
 			Settings: map[string]interface{}{},
@@ -104,7 +105,7 @@ func TestLoginErrorCookieAPIEndpoint(t *testing.T) {
 		SecretsService:   secretsService,
 	}
 
-	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		hs.LoginView(c)
 		return response.Empty(http.StatusOK)
 	})
@@ -152,7 +153,7 @@ func TestLoginViewRedirect(t *testing.T) {
 	}
 	hs.Cfg.CookieSecure = true
 
-	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.IsSignedIn = true
 		c.SignedInUser = &user.SignedInUser{
 			UserID: 10,
@@ -324,10 +325,11 @@ func TestLoginPostRedirect(t *testing.T) {
 		HooksService:     &hooks.HooksService{},
 		License:          &licensing.OSSLicensingService{},
 		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
+		Features:         featuremgmt.WithFeatures(),
 	}
 	hs.Cfg.CookieSecure = true
 
-	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Header.Set("Content-Type", "application/json")
 		c.Req.Body = io.NopCloser(bytes.NewBufferString(`{"user":"admin","password":"admin"}`))
 		return hs.LoginPost(c)
@@ -491,7 +493,7 @@ func TestLoginOAuthRedirect(t *testing.T) {
 		SocialService:    mock,
 	}
 
-	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		hs.LoginView(c)
 		return response.Empty(http.StatusOK)
 	})
@@ -517,7 +519,7 @@ func TestLoginInternal(t *testing.T) {
 		log:     log.New("test"),
 	}
 
-	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.URL.RawQuery = "disableAutoLogin=true"
 		hs.LoginView(c)
 		return response.Empty(http.StatusOK)
@@ -569,7 +571,7 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 		SocialService:    &mockSocialService{},
 	}
 
-	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.IsSignedIn = true
 		c.SignedInUser = &user.SignedInUser{
 			UserID: 10,
@@ -588,10 +590,10 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 }
 
 type loginHookTest struct {
-	info *models.LoginInfo
+	info *loginservice.LoginInfo
 }
 
-func (r *loginHookTest) LoginHook(loginInfo *models.LoginInfo, req *models.ReqContext) {
+func (r *loginHookTest) LoginHook(loginInfo *loginservice.LoginInfo, req *contextmodel.ReqContext) {
 	r.info = loginInfo
 }
 
@@ -603,10 +605,11 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 		Cfg:              setting.NewCfg(),
 		License:          &licensing.OSSLicensingService{},
 		AuthTokenService: authtest.NewFakeUserAuthTokenService(),
+		Features:         featuremgmt.WithFeatures(),
 		HooksService:     hookService,
 	}
 
-	sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+	sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Header.Set("Content-Type", "application/json")
 		c.Req.Body = io.NopCloser(bytes.NewBufferString(`{"user":"admin","password":"admin"}`))
 		x := hs.LoginPost(c)
@@ -626,12 +629,12 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 		authUser   *user.User
 		authModule string
 		authErr    error
-		info       models.LoginInfo
+		info       loginservice.LoginInfo
 	}{
 		{
 			desc:    "invalid credentials",
 			authErr: login.ErrInvalidCredentials,
-			info: models.LoginInfo{
+			info: loginservice.LoginInfo{
 				AuthModule: "",
 				HTTPStatus: 401,
 				Error:      login.ErrInvalidCredentials,
@@ -640,7 +643,7 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 		{
 			desc:    "user disabled",
 			authErr: login.ErrUserDisabled,
-			info: models.LoginInfo{
+			info: loginservice.LoginInfo{
 				AuthModule: "",
 				HTTPStatus: 401,
 				Error:      login.ErrUserDisabled,
@@ -650,7 +653,7 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 			desc:       "valid Grafana user",
 			authUser:   testUser,
 			authModule: "grafana",
-			info: models.LoginInfo{
+			info: loginservice.LoginInfo{
 				AuthModule: "grafana",
 				User:       testUser,
 				HTTPStatus: 200,
@@ -660,7 +663,7 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 			desc:       "valid LDAP user",
 			authUser:   testUser,
 			authModule: loginservice.LDAPAuthModule,
-			info: models.LoginInfo{
+			info: loginservice.LoginInfo{
 				AuthModule: loginservice.LDAPAuthModule,
 				User:       testUser,
 				HTTPStatus: 200,
@@ -723,7 +726,7 @@ type fakeAuthenticator struct {
 	ExpectedError      error
 }
 
-func (fa *fakeAuthenticator) AuthenticateUser(c context.Context, query *models.LoginUserQuery) error {
+func (fa *fakeAuthenticator) AuthenticateUser(c context.Context, query *loginservice.LoginUserQuery) error {
 	query.User = fa.ExpectedUser
 	query.AuthModule = fa.ExpectedAuthModule
 	return fa.ExpectedError

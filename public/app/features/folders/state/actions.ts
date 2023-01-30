@@ -28,7 +28,8 @@ export function saveFolder(folder: FolderState): ThunkResult<void> {
     });
 
     dispatch(notifyApp(createSuccessNotification('Folder saved')));
-    locationService.push(`${res.url}/settings`);
+    dispatch(loadFolder(res));
+    locationService.push(locationUtil.stripBaseFromUrl(`${res.url}/settings`));
   };
 }
 

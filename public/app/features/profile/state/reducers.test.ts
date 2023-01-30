@@ -1,5 +1,6 @@
 import { reducerTester } from '../../../../test/core/redux/reducerTester';
 import { OrgRole, TeamPermissionLevel } from '../../../types';
+import { getMockTeam } from '../../teams/__mocks__/teamMocks';
 
 import {
   initialUserState,
@@ -89,31 +90,13 @@ describe('userReducer', () => {
         .givenReducer(userReducer, { ...initialUserState, teamsAreLoading: true })
         .whenActionIsDispatched(
           teamsLoaded({
-            teams: [
-              {
-                id: 1,
-                email: 'team@team.com',
-                name: 'Team',
-                avatarUrl: '/avatar/12345',
-                memberCount: 4,
-                permission: TeamPermissionLevel.Admin,
-              },
-            ],
+            teams: [getMockTeam(1, { permission: TeamPermissionLevel.Admin })],
           })
         )
         .thenStateShouldEqual({
           ...initialUserState,
           teamsAreLoading: false,
-          teams: [
-            {
-              id: 1,
-              email: 'team@team.com',
-              name: 'Team',
-              avatarUrl: '/avatar/12345',
-              memberCount: 4,
-              permission: TeamPermissionLevel.Admin,
-            },
-          ],
+          teams: [getMockTeam(1, { permission: TeamPermissionLevel.Admin })],
         });
     });
   });

@@ -1,6 +1,8 @@
 import { PanelModel } from '@grafana/data';
+import { FieldColorModeId, ThresholdsMode } from '@grafana/schema/src';
 
 import { DashboardModel } from '../state/DashboardModel';
+import { createDashboardModelFixture, createPanelJSONFixture } from '../state/__fixtures__/dashboardFixtures';
 
 describe('Merge dashbaord panels', () => {
   describe('simple changes', () => {
@@ -8,35 +10,35 @@ describe('Merge dashbaord panels', () => {
     let rawPanels: PanelModel[];
 
     beforeEach(() => {
-      dashboard = new DashboardModel({
+      dashboard = createDashboardModelFixture({
         title: 'simple title',
         panels: [
-          {
+          createPanelJSONFixture({
             id: 1,
             type: 'timeseries',
-          },
-          {
+          }),
+          createPanelJSONFixture({
             id: 2,
             type: 'timeseries',
-          },
-          {
+          }),
+          createPanelJSONFixture({
             id: 3,
             type: 'table',
             fieldConfig: {
               defaults: {
                 thresholds: {
-                  mode: 'absolute',
+                  mode: ThresholdsMode.Absolute,
                   steps: [
                     { color: 'green', value: -Infinity }, // save model has this as null
                     { color: 'red', value: 80 },
                   ],
                 },
                 mappings: [],
-                color: { mode: 'thresholds' },
+                color: { mode: FieldColorModeId.Thresholds },
               },
               overrides: [],
             },
-          },
+          }),
         ],
       });
       rawPanels = dashboard.getSaveModelClone().panels;
