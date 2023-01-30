@@ -30,6 +30,7 @@ import { CanvasTooltip } from 'app/plugins/panel/canvas/CanvasTooltip';
 import { CONNECTION_ANCHOR_DIV_ID } from 'app/plugins/panel/canvas/ConnectionAnchors';
 import { Connections } from 'app/plugins/panel/canvas/Connections';
 import { AnchorPoint, CanvasTooltipPayload, LayerActionID } from 'app/plugins/panel/canvas/types';
+import { isConnectionSource, isConnectionTarget } from 'app/plugins/panel/canvas/utils';
 
 import appEvents from '../../../core/app_events';
 import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
@@ -77,6 +78,8 @@ export class Scene {
 
   tooltipCallback?: (tooltip: CanvasTooltipPayload | undefined) => void;
   tooltip?: CanvasTooltipPayload;
+
+  moveableActionCallback?: (moved: boolean) => void;
 
   readonly editModeEnabled = new BehaviorSubject<boolean>(false);
   subscription: Subscription;
@@ -356,6 +359,10 @@ export class Scene {
     return targetElements;
   };
 
+  connectionsNeedUpdate = (element: ElementState): boolean => {
+    return isConnectionSource(element) || isConnectionTarget(element, this.byName);
+  };
+
   initMoveable = (destroySelecto = false, allowChanges = true) => {
     const targetElements = this.generateTargetElements(this.root.elements);
 
@@ -407,13 +414,29 @@ export class Scene {
       })
       .on('drag', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
-        targetedElement!.applyDrag(event);
+        if (targetedElement) {
+          targetedElement.applyDrag(event);
+
+          if (this.connectionsNeedUpdate(targetedElement) && this.moveableActionCallback) {
+            this.moveableActionCallback(true);
+          }
+        }
       })
       .on('dragGroup', (e) => {
-        e.events.forEach((event) => {
+        let needsUpdate = false;
+        for (let event of e.events) {
           const targetedElement = this.findElementByTarget(event.target);
-          targetedElement!.applyDrag(event);
-        });
+          if (targetedElement) {
+            targetedElement.applyDrag(event);
+            if (!needsUpdate) {
+              needsUpdate = this.connectionsNeedUpdate(targetedElement);
+            }
+          }
+        }
+
+        if (needsUpdate && this.moveableActionCallback) {
+          this.moveableActionCallback(true);
+        }
       })
       .on('dragGroupEnd', (e) => {
         e.events.forEach((event) => {
@@ -450,14 +473,32 @@ export class Scene {
       })
       .on('resize', (event) => {
         const targetedElement = this.findElementByTarget(event.target);
-        targetedElement!.applyResize(event);
+        if (targetedElement) {
+          targetedElement.applyResize(event);
+
+          if (this.connectionsNeedUpdate(targetedElement) && this.moveableActionCallback) {
+            this.moveableActionCallback(true);
+          }
+        }
         this.moved.next(Date.now()); // TODO only on end
       })
       .on('resizeGroup', (e) => {
-        e.events.forEach((event) => {
+        let needsUpdate = false;
+        for (let event of e.events) {
           const targetedElement = this.findElementByTarget(event.target);
-          targetedElement!.applyResize(event);
-        });
+          if (targetedElement) {
+            targetedElement.applyResize(event);
+
+            if (!needsUpdate) {
+              needsUpdate = this.connectionsNeedUpdate(targetedElement);
+            }
+          }
+        }
+
+        if (needsUpdate && this.moveableActionCallback) {
+          this.moveableActionCallback(true);
+        }
+
         this.moved.next(Date.now()); // TODO only on end
       })
       .on('resizeEnd', (event) => {
