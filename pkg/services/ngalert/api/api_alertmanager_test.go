@@ -316,7 +316,7 @@ func TestSilenceCreate(t *testing.T) {
 	}{
 		{"Valid Silence",
 			makeSilence("", "tests", dt(now), dt(now.Add(1*time.Second)), matchers),
-			http.StatusAccepted,
+			http.StatusCreated,
 		},
 		{"No Comment Silence",
 			func() amv2.Silence {
@@ -375,7 +375,7 @@ func TestRouteCreateSilence(t *testing.T) {
 					{Action: accesscontrol.ActionAlertingInstanceCreate},
 				})
 			},
-			expectedStatus: http.StatusAccepted,
+			expectedStatus: http.StatusCreated,
 		},
 		{
 			name:    "new silence, role-based access control is disabled, Viewer",
@@ -393,7 +393,7 @@ func TestRouteCreateSilence(t *testing.T) {
 				return acMock.New().WithDisabled()
 			},
 			role:           org.RoleEditor,
-			expectedStatus: http.StatusAccepted,
+			expectedStatus: http.StatusCreated,
 		},
 		{
 			name:    "new silence, role-based access control is disabled, Admin",
@@ -402,7 +402,7 @@ func TestRouteCreateSilence(t *testing.T) {
 				return acMock.New().WithDisabled()
 			},
 			role:           org.RoleAdmin,
-			expectedStatus: http.StatusAccepted,
+			expectedStatus: http.StatusCreated,
 		},
 		{
 			name:    "update silence, role-based access control is enabled, not authorized",
@@ -420,7 +420,7 @@ func TestRouteCreateSilence(t *testing.T) {
 					{Action: accesscontrol.ActionAlertingInstanceUpdate},
 				})
 			},
-			expectedStatus: http.StatusAccepted,
+			expectedStatus: http.StatusCreated,
 		},
 		{
 			name:    "update silence, role-based access control is disabled, Viewer",
@@ -438,7 +438,7 @@ func TestRouteCreateSilence(t *testing.T) {
 				return acMock.New().WithDisabled()
 			},
 			role:           org.RoleEditor,
-			expectedStatus: http.StatusAccepted,
+			expectedStatus: http.StatusCreated,
 		},
 		{
 			name:    "update silence, role-based access control is disabled, Admin",
@@ -447,7 +447,7 @@ func TestRouteCreateSilence(t *testing.T) {
 				return acMock.New().WithDisabled()
 			},
 			role:           org.RoleAdmin,
-			expectedStatus: http.StatusAccepted,
+			expectedStatus: http.StatusCreated,
 		},
 	}
 
