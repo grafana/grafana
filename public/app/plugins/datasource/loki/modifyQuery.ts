@@ -139,7 +139,7 @@ export function removeCommentsFromQuery(query: string): string {
  * selector.
  * @param query
  */
-function getStreamSelectorPositions(query: string): Position[] {
+export function getStreamSelectorPositions(query: string): Position[] {
   const tree = parser.parse(query);
   const positions: Position[] = [];
   tree.iterate({
