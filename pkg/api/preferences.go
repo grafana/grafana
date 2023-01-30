@@ -156,7 +156,6 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 	dtoCmd.HomeDashboardID = dashboardID
 
 	saveCmd := pref.SavePreferenceCommand{
-<<<<<<< HEAD
 		UserID:            userID,
 		OrgID:             orgID,
 		TeamID:            teamId,
@@ -166,19 +165,7 @@ func (hs *HTTPServer) updatePreferencesFor(ctx context.Context, orgID, userID, t
 		WeekStart:         dtoCmd.WeekStart,
 		HomeDashboardID:   dtoCmd.HomeDashboardID,
 		QueryHistory:      dtoCmd.QueryHistory,
-		Navbar:            dtoCmd.Navbar,
 		CookiePreferences: dtoCmd.Cookies,
-=======
-		UserID:          userID,
-		OrgID:           orgID,
-		TeamID:          teamId,
-		Theme:           dtoCmd.Theme,
-		Language:        dtoCmd.Language,
-		Timezone:        dtoCmd.Timezone,
-		WeekStart:       dtoCmd.WeekStart,
-		HomeDashboardID: dtoCmd.HomeDashboardID,
-		QueryHistory:    dtoCmd.QueryHistory,
->>>>>>> origin/main
 	}
 
 	if err := hs.preferenceService.Save(ctx, &saveCmd); err != nil {
@@ -206,13 +193,8 @@ func (hs *HTTPServer) PatchUserPreferences(c *contextmodel.ReqContext) response.
 }
 
 func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, teamId int64, dtoCmd *dtos.PatchPrefsCmd) response.Response {
-<<<<<<< HEAD
-	if dtoCmd.Theme != nil && *dtoCmd.Theme != lightTheme && *dtoCmd.Theme != darkTheme && *dtoCmd.Theme != defaultTheme {
-		return response.Error(http.StatusBadRequest, "Invalid theme", nil)
-=======
 	if dtoCmd.Theme != nil && *dtoCmd.Theme != lightTheme && *dtoCmd.Theme != darkTheme && *dtoCmd.Theme != defaultTheme && *dtoCmd.Theme != systemTheme {
-		return response.Error(400, "Invalid theme", nil)
->>>>>>> origin/main
+		return response.Error(http.StatusBadRequest, "Invalid theme", nil)
 	}
 
 	// convert dashboard UID to ID in order to store internally if it exists in the query, otherwise take the id from query
@@ -234,7 +216,6 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 	dtoCmd.HomeDashboardID = dashboardID
 
 	patchCmd := pref.PatchPreferenceCommand{
-<<<<<<< HEAD
 		UserID:            userID,
 		OrgID:             orgID,
 		TeamID:            teamId,
@@ -243,20 +224,8 @@ func (hs *HTTPServer) patchPreferencesFor(ctx context.Context, orgID, userID, te
 		WeekStart:         dtoCmd.WeekStart,
 		HomeDashboardID:   dtoCmd.HomeDashboardID,
 		Language:          dtoCmd.Language,
-		Navbar:            dtoCmd.Navbar,
 		QueryHistory:      dtoCmd.QueryHistory,
 		CookiePreferences: dtoCmd.Cookies,
-=======
-		UserID:          userID,
-		OrgID:           orgID,
-		TeamID:          teamId,
-		Theme:           dtoCmd.Theme,
-		Timezone:        dtoCmd.Timezone,
-		WeekStart:       dtoCmd.WeekStart,
-		HomeDashboardID: dtoCmd.HomeDashboardID,
-		Language:        dtoCmd.Language,
-		QueryHistory:    dtoCmd.QueryHistory,
->>>>>>> origin/main
 	}
 
 	if err := hs.preferenceService.Patch(ctx, &patchCmd); err != nil {
