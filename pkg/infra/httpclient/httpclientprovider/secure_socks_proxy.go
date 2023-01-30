@@ -8,10 +8,10 @@ import (
 	"os"
 	"strings"
 
-	"golang.org/x/net/proxy"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"golang.org/x/net/proxy"
+
 	"github.com/grafana/grafana/pkg/setting"
 )
 
