@@ -201,7 +201,16 @@ export class ConfigEditor extends PureComponent<Props, State> {
                 id={`${htmlPrefix}-db`}
                 className="width-20"
                 value={options.jsonData.dbName ?? options.database}
-                onChange={onUpdateDatasourceJsonDataOption(this.props, 'dbName')}
+                onChange={(event) => {
+                  this.props.onOptionsChange({
+                    ...options,
+                    database: '',
+                    jsonData: {
+                      ...options.jsonData,
+                      dbName: event.target.value,
+                    },
+                  });
+                }}
               />
             </div>
           </div>
