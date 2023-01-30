@@ -273,6 +273,56 @@ describe('RichHistoryCard', () => {
   });
 
   describe('run queries', () => {
+    it('should be disabled if at least one query datasource is missing when using mixed', async () => {
+      const setQueries = jest.fn();
+      const changeDatasource = jest.fn();
+      const queries: MockQuery[] = [
+        { query: 'query1', refId: 'A', datasource: { uid: 'nonexistent-ds' } },
+        { query: 'query2', refId: 'B', datasource: { uid: 'loki' } },
+      ];
+      setup({
+        setQueries,
+        changeDatasource,
+        query: {
+          id: '2',
+          createdAt: 1,
+          datasourceUid: 'mixed',
+          datasourceName: 'Mixed',
+          starred: false,
+          comment: '',
+          queries,
+        },
+      });
+      const runQueryButton = await screen.findByRole('button', { name: /run query/i });
+
+      expect(runQueryButton).toBeDisabled();
+    });
+
+    it('should be disabled if at datasource is missing', async () => {
+      const setQueries = jest.fn();
+      const changeDatasource = jest.fn();
+      const queries: MockQuery[] = [
+        { query: 'query1', refId: 'A' },
+        { query: 'query2', refId: 'B' },
+      ];
+      setup({
+        setQueries,
+        changeDatasource,
+        query: {
+          id: '2',
+          createdAt: 1,
+          datasourceUid: 'nonexistent-ds',
+          datasourceName: 'nonexistent-ds',
+          starred: false,
+          comment: '',
+          queries,
+        },
+      });
+      const runQueryButton = await screen.findByRole('button', { name: /run query/i });
+
+      expect(runQueryButton).toBeDisabled();
+    });
+
     it('should only set new queries when running queries from the same datasource', async () => {
       const setQueries = jest.fn();
       const changeDatasource = jest.fn();
