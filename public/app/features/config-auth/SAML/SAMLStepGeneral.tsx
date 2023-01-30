@@ -89,28 +89,6 @@ export const SAMLStepGeneralUnconnected = ({
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
-    container: css`
-      display: flex;
-      height: ${theme.spacing(6)};
-      padding: ${theme.spacing(2)};
-      margin: ${theme.spacing(2)} 0;
-      border-radius: ${theme.shape.borderRadius(1)};
-      border: 1px solid ${theme.colors.border.medium};
-    `,
-    stepContainer: css`
-      cursor: pointer;
-      color: ${theme.colors.text.secondary};
-    `,
-    active: css`
-      color: ${theme.colors.text.primary};
-    `,
-    separator: css`
-      color: ${theme.colors.secondary.shade};
-      white-space: nowrap;
-    `,
-    icon: css`
-      color: ${theme.colors.success.text};
-    `,
     enabledSwitch: css`
       margin-top: ${theme.spacing(2.5)};
     `,

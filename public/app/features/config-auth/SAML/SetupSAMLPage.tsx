@@ -11,6 +11,7 @@ import { loadSettings } from '../state/actions';
 import { selectSamlConfig } from '../state/selectors';
 import { getEnabledAuthProviders } from '../utils';
 
+import { SAMLStepConnectToIdP } from './SAMLStepConnectToIdP';
 import { SAMLStepGeneral } from './SAMLStepGeneral';
 import { SAMLStepKeyCert } from './SAMLStepKeyCert';
 import { SAMLStepSelector } from './SAMLStepSelector';
@@ -56,11 +57,12 @@ export const SetupSAMLPageUnconnected = ({ settings, samlSettings, step, loadSet
   return (
     <Page navId="authentication" pageNav={pageNav}>
       <Page.Contents>
-        <div>
+        <div className={styles.stepSelector}>
           <SAMLStepSelector />
         </div>
         {step === 1 && <SAMLStepGeneral />}
         {step === 2 && <SAMLStepKeyCert />}
+        {step === 3 && <SAMLStepConnectToIdP />}
       </Page.Contents>
     </Page>
   );
@@ -72,6 +74,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(288px, 1fr));
       gap: ${theme.spacing(3)};
+    `,
+    stepSelector: css`
+      margin-bottom: ${theme.spacing(4)};
     `,
   };
 };
