@@ -16,7 +16,6 @@ import { createAndCopyShortLink } from 'app/core/utils/shortLinks';
 import { changeDatasource } from 'app/features/explore/state/datasource';
 import { starHistoryItem, commentHistoryItem, deleteHistoryItem } from 'app/features/explore/state/history';
 import { setQueries } from 'app/features/explore/state/query';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { dispatch } from 'app/store/store';
 import { StoreState } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -153,10 +152,33 @@ export function RichHistoryCard(props: Props) {
   } = props;
   const [activeUpdateComment, setActiveUpdateComment] = useState(false);
   const [comment, setComment] = useState<string | undefined>(query.comment);
-  const { value: dsInstance, loading } = useAsync(
-    () => getDataSourceSrv().get(query.datasourceUid),
-    [query.datasourceUid]
-  );
+  const { value, loading } = useAsync(async () => {
+    let dsInstance: DataSourceApi | undefined;
+    try {
+      dsInstance = await getDataSourceSrv().get(query.datasourceUid);
+    } catch (e) {}
+
+    return {
+      dsInstance,
+      queries: await Promise.all(
+        query.queries.map(async (query) => {
+          let datasource;
+          if (dsInstance?.meta.mixed) {
+            try {
+              datasource = await getDataSourceSrv().get(query.datasource);
+            } catch (e) {}
+          } else {
+            datasource = dsInstance;
+          }
+
+          return {
+            query,
+            datasource,
+          };
+        })
+      ),
+    };
+  }, [query.datasourceUid, query.queries]);
 
   const styles = useStyles2(getStyles);
 
@@ -182,14 +204,14 @@ export function RichHistoryCard(props: Props) {
     const datasources = [...query.queries.map((q) => q.datasource?.type || 'unknown')];
     reportInteraction('grafana_explore_query_history_copy_query', {
       datasources,
-      mixed: Boolean(dsInstance?.meta.mixed),
+      mixed: Boolean(value?.dsInstance?.meta.mixed),
     });
 
     const queriesText = (
       await Promise.all(
         query.queries.map(async (q) => {
-          let queryDsInstance = dsInstance;
-          if (dsInstance?.meta.mixed) {
+          let queryDsInstance = value?.dsInstance;
+          if (value?.dsInstance?.meta.mixed) {
             queryDsInstance = await getDataSourceSrv().get(q.datasource);
           }
 
@@ -291,7 +313,7 @@ export function RichHistoryCard(props: Props) {
         title={query.comment?.length > 0 ? 'Edit comment' : 'Add comment'}
       />
       <IconButton name="copy" onClick={onCopyQuery} title="Copy query to clipboard" />
-      {dsInstance && (
+      {value?.dsInstance && (
         <IconButton name="share-alt" onClick={onCreateShortLink} title="Copy shortened link to clipboard" />
       )}
       <IconButton name="trash-alt" title={'Delete query'} onClick={onDeleteQuery} />
@@ -307,14 +329,14 @@ export function RichHistoryCard(props: Props) {
   return (
     <div className={styles.queryCard}>
       <div className={styles.cardRow}>
-        <DatasourceInfo dsApi={dsInstance} size="sm" />
+        <DatasourceInfo dsApi={value?.dsInstance} size="sm" />
 
         {queryActionButtons}
       </div>
       <div className={cx(styles.cardRow)}>
         <div className={styles.queryContainer}>
-          {query.queries.map((q, i) => {
-            return <Query query={q} key={`${q}-${i}`} showDsInfo={dsInstance?.meta.mixed} />;
+          {value?.queries.map((q, i) => {
+            return <Query query={q} key={`${q}-${i}`} showDsInfo={value?.dsInstance?.meta.mixed} />;
           })}
           {!activeUpdateComment && query.comment && (
             <div aria-label="Query comment" className={styles.comment}>
@@ -325,7 +347,11 @@ export function RichHistoryCard(props: Props) {
         </div>
         {!activeUpdateComment && (
           <div className={styles.runButton}>
-            <Button variant="secondary" onClick={onRunQuery} disabled={!dsInstance}>
+            <Button
+              variant="secondary"
+              onClick={onRunQuery}
+              disabled={!value?.dsInstance || value.queries.some((query) => !query.datasource)}
+            >
               {datasourceInstance?.uid === query.datasourceUid ? 'Run query' : 'Switch data source and run query'}
             </Button>
           </div>
@@ -351,31 +377,34 @@ const getQueryStyles = (theme: GrafanaTheme2) => ({
     display: flex;
     align-items: center;
   `,
+  queryText: css`
+    word-break: break-all;
+  `,
 });
 
 interface QueryProps {
-  query: DataQuery;
+  query: {
+    query: DataQuery;
+    datasource?: DataSourceApi;
+  };
   /** Show datasource info (icon+name) alongside the query text */
   showDsInfo?: boolean;
 }
 
 const Query = ({ query, showDsInfo = false }: QueryProps) => {
   const styles = useStyles2(getQueryStyles);
-  const { value: queryInfo, loading } = useQueryInfo(query);
-
-  if (!queryInfo || loading) {
-    return null;
-  }
 
   return (
     <div className={styles.queryRow}>
       {showDsInfo && (
         <div className={styles.dsInfoContainer}>
-          <DatasourceInfo dsApi={queryInfo.dsApi} size="md" />
+          <DatasourceInfo dsApi={query.datasource} size="md" />
           {': '}
         </div>
       )}
-      <span aria-label="Query text">{queryInfo.queryText}</span>
+      <span aria-label="Query text" className={styles.queryText}>
+        {createQueryText(query.query, query.datasource)}
+      </span>
     </div>
   );
 };
@@ -404,17 +433,5 @@ function DatasourceInfo({ dsApi, size }: { dsApi?: DataSourceApi; size: 'sm' | '
     </div>
   );
 }
-
-const useQueryInfo = (query: DataQuery) => {
-  return useAsync(async () => {
-    try {
-      const dsApi = await getDatasourceSrv().get(query?.datasource);
-
-      return { dsApi, queryText: createQueryText(query, dsApi) };
-    } catch (e) {
-      return { queryText: createQueryText(query) };
-    }
-  }, [query?.datasource]);
-};
 
 export default connector(RichHistoryCard);
