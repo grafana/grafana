@@ -17,8 +17,9 @@ import (
 
 const (
 	// Themes
-	lightName = "light"
-	darkName  = "dark"
+	lightName  = "light"
+	darkName   = "dark"
+	systemName = "system"
 )
 
 func (hs *HTTPServer) editorInAnyFolder(c *contextmodel.ReqContext) bool {
@@ -100,6 +101,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			OrgRole:                    c.OrgRole,
 			GravatarUrl:                dtos.GetGravatarUrl(c.Email),
 			IsGrafanaAdmin:             c.IsGrafanaAdmin,
+			Theme:                      prefs.Theme,
 			LightTheme:                 prefs.Theme == lightName,
 			Timezone:                   prefs.Timezone,
 			WeekStart:                  weekStart,
@@ -150,12 +152,9 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	}
 
 	themeURLParam := c.Query("theme")
-	if themeURLParam == lightName {
-		data.User.LightTheme = true
-		data.Theme = lightName
-	} else if themeURLParam == darkName {
-		data.User.LightTheme = false
-		data.Theme = darkName
+	if themeURLParam == lightName || themeURLParam == darkName || themeURLParam == systemName {
+		data.User.Theme = themeURLParam
+		data.Theme = themeURLParam
 	}
 
 	hs.HooksService.RunIndexDataHooks(&data, c)
