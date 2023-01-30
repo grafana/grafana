@@ -106,7 +106,8 @@ func TestLokiHTTPClient(t *testing.T) {
 		require.NoError(t, err)
 
 		client := newLokiClient(LokiConfig{
-			Url:               url,
+			ReadPathURL:       url,
+			WritePathURL:      url,
 			BasicAuthUser:     "<your_username>",
 			BasicAuthPassword: "<your_password>",
 		}, log.NewNopLogger())

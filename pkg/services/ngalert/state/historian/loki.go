@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"strconv"
 	"time"
 
@@ -23,6 +24,12 @@ const (
 	RuleUIDLabel   = "ruleUID"
 	GroupLabel     = "group"
 	FolderUIDLabel = "folderUID"
+	// Name of the columns used in the dataframe.
+	dfTime = "time"
+	dfText = "text"
+	dfPrev = "prev"
+	dfNext = "next"
+	dfData = "data"
 )
 
 const (
@@ -117,13 +124,13 @@ func buildSelectors(query models.HistoryQuery) ([]Selector, error) {
 
 // merge will put all the results in one array sorted by timestamp.
 func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
-	// Find the total number of elements in all arrays
+	// Find the total number of elements in all arrays.
 	totalLen := 0
 	for _, arr := range res.Data.Result {
 		totalLen += len(arr.Values)
 	}
 
-	// Create a new slice to store the merged elements
+	// Create a new slice to store the merged elements.
 	frame := data.NewFrame("states")
 
 	// Since we are guaranteed to have a single rule, we can return it as a single series.
@@ -145,14 +152,18 @@ func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
 	nextStates := make([]string, 0, totalLen)
 	values := make([]string, 0, totalLen)
 
-	// Initialize a slice of pointers to the current position in each array
+	// Initialize a slice of pointers to the current position in each array.
 	pointers := make([]int, len(res.Data.Result))
 	for {
-		// Find the minimum element among all arrays
-		minVal := (^int64(0) >> 1) // set initial value to max int
+		minVal := int64(math.MaxInt64)
 		minIdx := -1
 		minEl := [2]string{}
+		// Find the minimum element among all arrays.
 		for i, stream := range res.Data.Result {
+			// Skip if we already reached the end of the current array.
+			if len(stream.Values) == pointers[i] {
+				continue
+			}
 			curVal, err := strconv.ParseInt(stream.Values[pointers[i]][0], 10, 64)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse timestamp from loki repsonse: %w", err)
@@ -163,13 +174,13 @@ func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
 				minIdx = i
 			}
 		}
-		// If all pointers have reached the end of their arrays, we're done
+		// If all pointers have reached the end of their arrays, we're done.
 		if minIdx == -1 {
 			break
 		}
 		var entry lokiEntry
 		json.Unmarshal([]byte(minEl[1]), &entry)
-		// Append the minimum element to the merged slice and move the pointer
+		// Append the minimum element to the merged slice and move the pointer.
 		ts, err := strconv.ParseInt(minEl[0], 10, 64)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse timestampe in response: %w", err)
@@ -186,11 +197,11 @@ func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
 		pointers[minIdx]++
 	}
 
-	frame.Fields = append(frame.Fields, data.NewField("time", lbls, times))
-	frame.Fields = append(frame.Fields, data.NewField("text", lbls, texts))
-	frame.Fields = append(frame.Fields, data.NewField("prev", lbls, prevStates))
-	frame.Fields = append(frame.Fields, data.NewField("next", lbls, nextStates))
-	frame.Fields = append(frame.Fields, data.NewField("data", lbls, values))
+	frame.Fields = append(frame.Fields, data.NewField(dfTime, lbls, times))
+	frame.Fields = append(frame.Fields, data.NewField(dfText, lbls, texts))
+	frame.Fields = append(frame.Fields, data.NewField(dfPrev, lbls, prevStates))
+	frame.Fields = append(frame.Fields, data.NewField(dfNext, lbls, nextStates))
+	frame.Fields = append(frame.Fields, data.NewField(dfData, lbls, values))
 
 	return frame, nil
 }
