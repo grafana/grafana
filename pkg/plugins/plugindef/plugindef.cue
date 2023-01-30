@@ -130,13 +130,13 @@ seqs: [
 				}
 
 				// A extension point provided by the plugin.
-				#Extension: {
+				#Extensions: {
 					links?: [...#ExtensionsLink]
 					...
 				}
 
-				// Extensions by the plugin.
-				extensions?: [...#Extension]
+				// Extensions made by the plugin.
+				extensions?: [...#Extensions]
 
 				// For data source plugins, if the plugin supports logs.
 				logs?: bool

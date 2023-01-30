@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 
 	"github.com/google/go-cmp/cmp"
@@ -499,15 +500,15 @@ func TestLoader_Load(t *testing.T) {
 					Includes: []*plugins.Includes{
 						{Name: "Root Page (react)", Type: "page", Role: "Viewer", Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
 					},
-					Extensions: &plugins.Extensions{
-						Links: []*plugins.ExtensionsLink{
+					Extensions: &plugindef.Extensions{
+						Links: &[]plugindef.ExtensionsLink{
 							{
-								ID:          "root",
+								Id:          "root",
 								Description: "Link to the plugin root",
 								Path:        "/my-simple-app",
 							},
 							{
-								ID:          "root2",
+								Id:          "root2",
 								Description: "Link to the plugin root without backslash",
 								Path:        "/my-simple-app",
 							},

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/plugins/plugindef"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
@@ -251,11 +252,11 @@ type PanelDTO struct {
 }
 
 type AppDTO struct {
-	ID         string      `json:"id"`
-	Path       string      `json:"path"`
-	Version    string      `json:"version"`
-	Preload    bool        `json:"preload"`
-	Extensions *Extensions `json:"extensions,omitempty"`
+	ID         string                `json:"id"`
+	Path       string                `json:"path"`
+	Version    string                `json:"version"`
+	Preload    bool                  `json:"preload"`
+	Extensions *plugindef.Extensions `json:"extensions,omitempty"`
 }
 
 const (
@@ -290,14 +291,4 @@ type Role struct {
 type Permission struct {
 	Action string `json:"action"`
 	Scope  string `json:"scope"`
-}
-
-type Extensions struct {
-	Links []*ExtensionsLink `json:"links"`
-}
-
-type ExtensionsLink struct {
-	ID          string `json:"id"`
-	Description string `json:"description"`
-	Path        string `json:"path"`
 }

@@ -148,6 +148,22 @@ type Dependency struct {
 // DependencyType defines model for Dependency.Type.
 type DependencyType string
 
+// A extension point provided by the plugin.
+type Extensions struct {
+	Links *[]ExtensionsLink `json:"links,omitempty"`
+}
+
+// ExtensionsLink defines model for ExtensionsLink.
+type ExtensionsLink struct {
+	Description string `json:"description"`
+
+	// Unique identifier of the plugin link extension
+	Id string `json:"id"`
+
+	// Relative path to the plugin
+	Path string `json:"path"`
+}
+
 // Header describes an HTTP header that is forwarded with a proxied request for
 // a plugin route.
 type Header struct {
@@ -311,6 +327,9 @@ type PluginDef struct {
 	// Combination of $GOOS and $GOARCH can be found here:
 	// https://golang.org/doc/install/source#environment.
 	Executable *string `json:"executable,omitempty"`
+
+	// Extensions made by the plugin.
+	Extensions *[]Extensions `json:"extensions,omitempty"`
 
 	// For data source plugins, include hidden queries in the data
 	// request.
