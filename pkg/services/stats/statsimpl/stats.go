@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/stats"
@@ -97,10 +98,10 @@ func (ss *sqlStatsService) GetSystemStats(ctx context.Context, query *stats.GetS
 		WHERE d.is_folder = ?
 	) AS folder_permissions,`, dialect.BooleanStr(true))
 
-		sb.Write(viewersPermissionsCounterSQL(ss.db, "dashboards_viewers_can_edit", false, models.PERMISSION_EDIT))
-		sb.Write(viewersPermissionsCounterSQL(ss.db, "dashboards_viewers_can_admin", false, models.PERMISSION_ADMIN))
-		sb.Write(viewersPermissionsCounterSQL(ss.db, "folders_viewers_can_edit", true, models.PERMISSION_EDIT))
-		sb.Write(viewersPermissionsCounterSQL(ss.db, "folders_viewers_can_admin", true, models.PERMISSION_ADMIN))
+		sb.Write(viewersPermissionsCounterSQL(ss.db, "dashboards_viewers_can_edit", false, dashboards.PERMISSION_EDIT))
+		sb.Write(viewersPermissionsCounterSQL(ss.db, "dashboards_viewers_can_admin", false, dashboards.PERMISSION_ADMIN))
+		sb.Write(viewersPermissionsCounterSQL(ss.db, "folders_viewers_can_edit", true, dashboards.PERMISSION_EDIT))
+		sb.Write(viewersPermissionsCounterSQL(ss.db, "folders_viewers_can_admin", true, dashboards.PERMISSION_ADMIN))
 
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_provisioning") + `) AS provisioned_dashboards,`)
 		sb.Write(`(SELECT COUNT(id) FROM ` + dialect.Quote("dashboard_snapshot") + `) AS snapshots,`)
@@ -151,7 +152,7 @@ func (ss *sqlStatsService) roleCounterSQL(ctx context.Context) string {
 	return sqlQuery
 }
 
-func viewersPermissionsCounterSQL(db db.DB, statName string, isFolder bool, permission models.PermissionType) string {
+func viewersPermissionsCounterSQL(db db.DB, statName string, isFolder bool, permission dashboards.PermissionType) string {
 	dialect := db.GetDialect()
 	return `(
 		SELECT COUNT(*)

@@ -229,7 +229,6 @@
     "help/documentation": "Documentation",
     "help/keyboard-shortcuts": "Raccourcis clavier",
     "help/support": "Assistance",
-    "help/support-bundle": "Packs d’assistance",
     "home": {
       "title": "Accueil"
     },
@@ -292,7 +291,8 @@
       "title": "Scènes"
     },
     "search": {
-      "placeholder": "Rechercher dans Grafana"
+      "placeholder": "Rechercher dans Grafana",
+      "placeholderCommandPalette": ""
     },
     "search-dashboards": {
       "title": "Rechercher dans les tableaux de bord"
@@ -555,8 +555,7 @@
       "name-error": "Un nom est obligatoire",
       "name-label": "Nom",
       "username-label": "Nom d’utilisateur"
-    },
-    "title": "Profil"
+    }
   },
   "user-session": {
     "browser-column": "Navigateur et système d'exploitation",

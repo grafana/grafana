@@ -189,7 +189,7 @@ export function loadDataSourceMeta(dataSource: DataSourceSettings): ThunkResult<
   };
 }
 
-export function addDataSource(plugin: DataSourcePluginMeta, editLink = DATASOURCES_ROUTES.Edit): ThunkResult<void> {
+export function addDataSource(plugin: DataSourcePluginMeta, editRoute = DATASOURCES_ROUTES.Edit): ThunkResult<void> {
   return async (dispatch, getStore) => {
     await dispatch(loadDataSources());
 
@@ -207,6 +207,7 @@ export function addDataSource(plugin: DataSourcePluginMeta, editLink = DATASOURC
     }
 
     const result = await api.createDataSource(newInstance);
+    const editLink = editRoute.replace(/:uid/gi, result.datasource.uid);
 
     await getDatasourceSrv().reload();
     await contextSrv.fetchUserPermissions();
@@ -216,9 +217,10 @@ export function addDataSource(plugin: DataSourcePluginMeta, editLink = DATASOURC
       plugin_id: plugin.id,
       datasource_uid: result.datasource.uid,
       plugin_version: result.meta?.info?.version,
+      editLink,
     });
 
-    locationService.push(editLink.replace(/:uid/gi, result.datasource.uid));
+    locationService.push(editLink);
   };
 }
 

@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/multildap"
@@ -98,7 +98,7 @@ func (auth *AuthProxy) IsEnabled() bool {
 }
 
 // HasHeader checks if we have specified header
-func (auth *AuthProxy) HasHeader(reqCtx *models.ReqContext) bool {
+func (auth *AuthProxy) HasHeader(reqCtx *contextmodel.ReqContext) bool {
 	header := auth.getDecodedHeader(reqCtx, auth.cfg.AuthProxyHeaderName)
 	return len(header) != 0
 }
@@ -149,7 +149,7 @@ func HashCacheKey(key string) (string, error) {
 // getKey forms a key for the cache based on the headers received as part of the authentication flow.
 // Our configuration supports multiple headers. The main header contains the email or username.
 // And the additional ones that allow us to specify extra attributes: Name, Email, Role, or Groups.
-func (auth *AuthProxy) getKey(reqCtx *models.ReqContext) (string, error) {
+func (auth *AuthProxy) getKey(reqCtx *contextmodel.ReqContext) (string, error) {
 	header := auth.getDecodedHeader(reqCtx, auth.cfg.AuthProxyHeaderName)
 	key := strings.TrimSpace(header) // start the key with the main header
 
@@ -165,7 +165,7 @@ func (auth *AuthProxy) getKey(reqCtx *models.ReqContext) (string, error) {
 }
 
 // Login logs in user ID by whatever means possible.
-func (auth *AuthProxy) Login(reqCtx *models.ReqContext, ignoreCache bool) (int64, error) {
+func (auth *AuthProxy) Login(reqCtx *contextmodel.ReqContext, ignoreCache bool) (int64, error) {
 	if !ignoreCache {
 		// Error here means absent cache - we don't need to handle that
 		id, err := auth.getUserViaCache(reqCtx)
@@ -195,7 +195,7 @@ func (auth *AuthProxy) Login(reqCtx *models.ReqContext, ignoreCache bool) (int64
 }
 
 // getUserViaCache gets user ID from cache.
-func (auth *AuthProxy) getUserViaCache(reqCtx *models.ReqContext) (int64, error) {
+func (auth *AuthProxy) getUserViaCache(reqCtx *contextmodel.ReqContext) (int64, error) {
 	cacheKey, err := auth.getKey(reqCtx)
 	if err != nil {
 		return 0, err
@@ -212,7 +212,7 @@ func (auth *AuthProxy) getUserViaCache(reqCtx *models.ReqContext) (int64, error)
 }
 
 // RemoveUserFromCache removes user from cache.
-func (auth *AuthProxy) RemoveUserFromCache(reqCtx *models.ReqContext) error {
+func (auth *AuthProxy) RemoveUserFromCache(reqCtx *contextmodel.ReqContext) error {
 	cacheKey, err := auth.getKey(reqCtx)
 	if err != nil {
 		return err
@@ -227,7 +227,7 @@ func (auth *AuthProxy) RemoveUserFromCache(reqCtx *models.ReqContext) error {
 }
 
 // LoginViaLDAP logs in user via LDAP request
-func (auth *AuthProxy) LoginViaLDAP(reqCtx *models.ReqContext) (int64, error) {
+func (auth *AuthProxy) LoginViaLDAP(reqCtx *contextmodel.ReqContext) (int64, error) {
 	config, err := getLDAPConfig(auth.cfg)
 	if err != nil {
 		return 0, newError("failed to get LDAP config", err)
@@ -241,11 +241,11 @@ func (auth *AuthProxy) LoginViaLDAP(reqCtx *models.ReqContext) (int64, error) {
 	}
 
 	// Have to sync grafana and LDAP user during log in
-	upsert := &models.UpsertUserCommand{
+	upsert := &login.UpsertUserCommand{
 		ReqContext:    reqCtx,
 		SignupAllowed: auth.cfg.LDAPAllowSignup,
 		ExternalUser:  extUser,
-		UserLookupParams: models.UserLookupParams{
+		UserLookupParams: login.UserLookupParams{
 			Login:  &extUser.Login,
 			Email:  &extUser.Email,
 			UserID: nil,
@@ -259,9 +259,9 @@ func (auth *AuthProxy) LoginViaLDAP(reqCtx *models.ReqContext) (int64, error) {
 }
 
 // loginViaHeader logs in user from the header only
-func (auth *AuthProxy) loginViaHeader(reqCtx *models.ReqContext) (int64, error) {
+func (auth *AuthProxy) loginViaHeader(reqCtx *contextmodel.ReqContext) (int64, error) {
 	header := auth.getDecodedHeader(reqCtx, auth.cfg.AuthProxyHeaderName)
-	extUser := &models.ExternalUserInfo{
+	extUser := &login.ExternalUserInfo{
 		AuthModule: login.AuthProxyAuthModule,
 		AuthId:     header,
 	}
@@ -303,11 +303,11 @@ func (auth *AuthProxy) loginViaHeader(reqCtx *models.ReqContext) (int64, error) 
 		}
 	})
 
-	upsert := &models.UpsertUserCommand{
+	upsert := &login.UpsertUserCommand{
 		ReqContext:    reqCtx,
 		SignupAllowed: auth.cfg.AuthProxyAutoSignUp,
 		ExternalUser:  extUser,
-		UserLookupParams: models.UserLookupParams{
+		UserLookupParams: login.UserLookupParams{
 			UserID: nil,
 			Login:  &extUser.Login,
 			Email:  &extUser.Email,
@@ -323,7 +323,7 @@ func (auth *AuthProxy) loginViaHeader(reqCtx *models.ReqContext) (int64, error) 
 }
 
 // getDecodedHeader gets decoded value of a header with given headerName
-func (auth *AuthProxy) getDecodedHeader(reqCtx *models.ReqContext, headerName string) string {
+func (auth *AuthProxy) getDecodedHeader(reqCtx *contextmodel.ReqContext, headerName string) string {
 	headerValue := reqCtx.Req.Header.Get(headerName)
 
 	if auth.cfg.AuthProxyHeadersEncoded {
@@ -334,7 +334,7 @@ func (auth *AuthProxy) getDecodedHeader(reqCtx *models.ReqContext, headerName st
 }
 
 // headersIterator iterates over all non-empty supported additional headers
-func (auth *AuthProxy) headersIterator(reqCtx *models.ReqContext, fn func(field string, header string)) {
+func (auth *AuthProxy) headersIterator(reqCtx *contextmodel.ReqContext, fn func(field string, header string)) {
 	for _, field := range supportedHeaderFields {
 		h := auth.cfg.AuthProxyHeaders[field]
 		if h == "" {
@@ -356,7 +356,7 @@ func (auth *AuthProxy) GetSignedInUser(userID int64, orgID int64) (*user.SignedI
 }
 
 // Remember user in cache
-func (auth *AuthProxy) Remember(reqCtx *models.ReqContext, id int64) error {
+func (auth *AuthProxy) Remember(reqCtx *contextmodel.ReqContext, id int64) error {
 	key, err := auth.getKey(reqCtx)
 	if err != nil {
 		return err

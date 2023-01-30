@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { Menu, Dropdown, Button, Icon } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
@@ -30,13 +30,31 @@ export const DashboardActions: FC<Props> = ({ folderUid, canCreateFolders = fals
     return (
       <Menu>
         {canCreateDashboards && (
-          <Menu.Item url={actionUrl('new')} label={t('search.dashboard-actions.new-dashboard', 'New Dashboard')} />
+          <Menu.Item
+            url={actionUrl('new')}
+            label={t('search.dashboard-actions.new-dashboard', 'New Dashboard')}
+            onClick={() =>
+              reportInteraction('grafana_menu_item_clicked', { url: actionUrl('new'), from: '/dashboards' })
+            }
+          />
         )}
         {canCreateFolders && (config.featureToggles.nestedFolders || !folderUid) && (
-          <Menu.Item url={actionUrl('new_folder')} label={t('search.dashboard-actions.new-folder', 'New Folder')} />
+          <Menu.Item
+            url={actionUrl('new_folder')}
+            label={t('search.dashboard-actions.new-folder', 'New Folder')}
+            onClick={() =>
+              reportInteraction('grafana_menu_item_clicked', { url: actionUrl('new_folder'), from: '/dashboards' })
+            }
+          />
         )}
         {canCreateDashboards && (
-          <Menu.Item url={actionUrl('import')} label={t('search.dashboard-actions.import', 'Import')} />
+          <Menu.Item
+            url={actionUrl('import')}
+            label={t('search.dashboard-actions.import', 'Import')}
+            onClick={() =>
+              reportInteraction('grafana_menu_item_clicked', { url: actionUrl('import'), from: '/dashboards' })
+            }
+          />
         )}
       </Menu>
     );

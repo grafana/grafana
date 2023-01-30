@@ -25,7 +25,7 @@ import { GeomapHoverPayload } from './event';
 import { getGlobalStyles } from './globalStyles';
 import { defaultMarkersConfig } from './layers/data/markersLayer';
 import { DEFAULT_BASEMAP_CONFIG } from './layers/registry';
-import { ControlsOptions, GeomapPanelOptions, MapLayerState, MapViewConfig, TooltipMode } from './types';
+import { ControlsOptions, PanelOptions, MapLayerState, MapViewConfig, TooltipMode } from './types';
 import { getActions } from './utils/actions';
 import { getLayersExtent } from './utils/getLayersExtent';
 import { applyLayerFilter, initLayer } from './utils/layers';
@@ -36,7 +36,7 @@ import { centerPointRegistry, MapCenterID } from './view';
 // Allows multiple panels to share the same view instance
 let sharedView: View | undefined = undefined;
 
-type Props = PanelProps<GeomapPanelOptions>;
+type Props = PanelProps<PanelOptions>;
 interface State extends OverlayProps {
   ttip?: GeomapHoverPayload;
   ttipOpen: boolean;
@@ -144,7 +144,7 @@ export class GeomapPanel extends Component<Props, State> {
    *
    * NOTE: changes to basemap and layers are handled independently
    */
-  optionsChanged(options: GeomapPanelOptions) {
+  optionsChanged(options: PanelOptions) {
     const oldOptions = this.props.options;
     if (options.view !== oldOptions.view) {
       const [updatedSharedView, view] = this.initMapView(options.view, sharedView);

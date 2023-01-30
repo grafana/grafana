@@ -6,11 +6,12 @@ import { config } from '@grafana/runtime';
 
 import { multiResourceCompatibleTypes } from '../../azureMetadata';
 import type Datasource from '../../datasource';
-import type { AzureMonitorQuery, AzureMonitorOption, AzureMonitorErrorish } from '../../types';
+import type { AzureMonitorQuery, AzureMonitorOption, AzureMonitorErrorish, AzureMetricResource } from '../../types';
 import ResourceField from '../ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails } from '../ResourcePicker/utils';
 
+import AdvancedResourcePicker from './AdvancedResourcePicker';
 import AggregationField from './AggregationField';
 import DimensionFields from './DimensionFields';
 import LegendFormatField from './LegendFormatField';
@@ -88,6 +89,12 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
               resources={resources ?? []}
               queryType={'metrics'}
               disableRow={disableRow}
+              renderAdvanced={(resources, onChange) => (
+                // It's required to cast resources because the resource picker
+                // specifies the type to string | AzureMetricResource.
+                // eslint-disable-next-line
+                <AdvancedResourcePicker resources={resources as AzureMetricResource[]} onChange={onChange} />
+              )}
             />
             <MetricNamespaceField
               metricNamespaces={metricNamespaces}

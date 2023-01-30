@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -18,8 +19,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/database"
-	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -914,7 +915,7 @@ func TestPublicDashboardServiceImpl_NewPublicDashboardAccessToken(t *testing.T) 
 
 			if err == nil {
 				assert.NotEqual(t, got, tt.want, "NewPublicDashboardAccessToken(%v)", tt.args.ctx)
-				assert.True(t, tokens.IsValidAccessToken(got), "NewPublicDashboardAccessToken(%v)", tt.args.ctx)
+				assert.True(t, validation.IsValidAccessToken(got), "NewPublicDashboardAccessToken(%v)", tt.args.ctx)
 				store.AssertNumberOfCalls(t, "FindByAccessToken", 1)
 			} else {
 				store.AssertNumberOfCalls(t, "FindByAccessToken", 3)
@@ -1027,4 +1028,17 @@ func insertTestDashboard(t *testing.T, dashboardStore *dashboardsDB.DashboardSto
 	dash.Data.Set("id", dash.ID)
 	dash.Data.Set("uid", dash.UID)
 	return dash
+}
+
+func TestGenerateAccessToken(t *testing.T) {
+	accessToken, err := GenerateAccessToken()
+
+	t.Run("length", func(t *testing.T) {
+		require.NoError(t, err)
+		assert.Equal(t, 32, len(accessToken))
+	})
+
+	t.Run("no - ", func(t *testing.T) {
+		assert.False(t, strings.Contains("-", accessToken))
+	})
 }
