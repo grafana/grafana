@@ -443,9 +443,8 @@ var (
 		},
 		{
 			Name:        "individualCookiePreferences",
-			Description: "Support overriding cookie preferences on an individual level",
+			Description: "Support overriding cookie preferences per user",
 			State:       FeatureStateAlpha,
-
 		},
 	}
 )

@@ -100,6 +100,7 @@ Alpha features might be changed or removed without prior notice.
 | `editPanelCSVDragAndDrop`          | Enables drag and drop for CSV and Excel files                                                                                                                                |
 | `azureMultipleResourcePicker`      | Azure multiple resource picker                                                                                                                                               |
 | `logsContextDatasourceUi`          | Allow datasource to provide custom UI for context view                                                                                                                       |
+| `individualCookiePreferences`      | Support overriding cookie preferences per user                                                                                                                               |
 
 ## Development feature toggles
 

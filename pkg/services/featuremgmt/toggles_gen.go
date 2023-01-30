@@ -318,4 +318,8 @@ const (
 	// FlagLogsContextDatasourceUi
 	// Allow datasource to provide custom UI for context view
 	FlagLogsContextDatasourceUi = "logsContextDatasourceUi"
+
+	// FlagIndividualCookiePreferences
+	// Support overriding cookie preferences per user
+	FlagIndividualCookiePreferences = "individualCookiePreferences"
 )
