@@ -8,11 +8,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/prometheus/alertmanager/cluster"
 	"gopkg.in/ini.v1"
+
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const (

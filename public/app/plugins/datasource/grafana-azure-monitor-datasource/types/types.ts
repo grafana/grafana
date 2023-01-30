@@ -263,6 +263,7 @@ export interface AzureGetResourceNamesQuery {
   subscriptionId: string;
   resourceGroup?: string;
   metricNamespace?: string;
+  region?: string;
 }
 
 export interface AzureMonitorLocations {

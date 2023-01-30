@@ -97,7 +97,6 @@ func validateRuleNode(
 		RuleGroup:       groupName,
 		NoDataState:     noDataState,
 		ExecErrState:    errorState,
-		IsPaused:        ruleNode.GrafanaManagedAlert.IsPaused,
 	}
 
 	newAlertRule.For, err = validateForInterval(ruleNode)
