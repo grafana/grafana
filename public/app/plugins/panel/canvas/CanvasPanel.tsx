@@ -242,8 +242,8 @@ export class CanvasPanel extends Component<Props, State> {
     this.forceUpdate();
   };
 
-  moveableActionCallback = (moved: boolean) => {
-    this.setState({ moveableAction: moved });
+  moveableActionCallback = (updated: boolean) => {
+    this.setState({ moveableAction: updated });
     this.forceUpdate();
   };
 

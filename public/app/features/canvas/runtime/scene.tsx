@@ -30,7 +30,6 @@ import { CanvasTooltip } from 'app/plugins/panel/canvas/CanvasTooltip';
 import { CONNECTION_ANCHOR_DIV_ID } from 'app/plugins/panel/canvas/ConnectionAnchors';
 import { Connections } from 'app/plugins/panel/canvas/Connections';
 import { AnchorPoint, CanvasTooltipPayload, LayerActionID } from 'app/plugins/panel/canvas/types';
-import { isConnectionSource, isConnectionTarget } from 'app/plugins/panel/canvas/utils';
 
 import appEvents from '../../../core/app_events';
 import { CanvasPanel } from '../../../plugins/panel/canvas/CanvasPanel';
@@ -359,10 +358,6 @@ export class Scene {
     return targetElements;
   };
 
-  connectionsNeedUpdate = (element: ElementState): boolean => {
-    return isConnectionSource(element) || isConnectionTarget(element, this.byName);
-  };
-
   initMoveable = (destroySelecto = false, allowChanges = true) => {
     const targetElements = this.generateTargetElements(this.root.elements);
 
@@ -417,7 +412,7 @@ export class Scene {
         if (targetedElement) {
           targetedElement.applyDrag(event);
 
-          if (this.connectionsNeedUpdate(targetedElement) && this.moveableActionCallback) {
+          if (this.connections.connectionsNeedUpdate(targetedElement) && this.moveableActionCallback) {
             this.moveableActionCallback(true);
           }
         }
@@ -429,7 +424,7 @@ export class Scene {
           if (targetedElement) {
             targetedElement.applyDrag(event);
             if (!needsUpdate) {
-              needsUpdate = this.connectionsNeedUpdate(targetedElement);
+              needsUpdate = this.connections.connectionsNeedUpdate(targetedElement);
             }
           }
         }
@@ -476,7 +471,7 @@ export class Scene {
         if (targetedElement) {
           targetedElement.applyResize(event);
 
-          if (this.connectionsNeedUpdate(targetedElement) && this.moveableActionCallback) {
+          if (this.connections.connectionsNeedUpdate(targetedElement) && this.moveableActionCallback) {
             this.moveableActionCallback(true);
           }
         }
@@ -490,7 +485,7 @@ export class Scene {
             targetedElement.applyResize(event);
 
             if (!needsUpdate) {
-              needsUpdate = this.connectionsNeedUpdate(targetedElement);
+              needsUpdate = this.connections.connectionsNeedUpdate(targetedElement);
             }
           }
         }
