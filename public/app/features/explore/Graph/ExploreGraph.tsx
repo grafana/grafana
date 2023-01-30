@@ -1,7 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { identity } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
-import { useCounter, usePrevious } from 'react-use';
 
 import {
   AbsoluteTimeRange,
@@ -18,8 +17,6 @@ import {
   TimeZone,
   DashboardCursorSync,
   EventBus,
-  compareArrayValues,
-  compareDataFrameStructures,
 } from '@grafana/data';
 import { PanelRenderer } from '@grafana/runtime';
 import { GraphDrawStyle, LegendDisplayMode, TooltipDisplayMode, SortOrder } from '@grafana/schema';
@@ -39,6 +36,7 @@ import { ExploreGraphStyle } from 'app/types';
 import { seriesVisibilityConfigFactory } from '../../dashboard/dashgrid/SeriesVisibilityConfigFactory';
 
 import { applyGraphStyle } from './exploreGraphStyleUtils';
+import { useStructureRev } from './useStructureRev';
 
 const MAX_NUMBER_OF_TIME_SERIES = 20;
 
@@ -78,7 +76,6 @@ export function ExploreGraph({
   const theme = useTheme2();
   const style = useStyles2(getStyles);
   const [showAllTimeSeries, setShowAllTimeSeries] = useState(false);
-  const [structureRev, { inc }] = useCounter(0);
 
   const timeRange = {
     from: dateTime(absoluteRange.from),
@@ -122,16 +119,7 @@ export function ExploreGraph({
     });
   }, [fieldConfigRegistry, data, timeZone, theme, styledFieldConfig, showAllTimeSeries]);
 
-  const prevDataWithConfig = usePrevious(dataWithConfig);
-
-  // We need to increment structureRev when the number of series changes.
-  // the function passed to useMemo runs during rendering, so when we get a different
-  // amount of data, structureRev is incremented before we render it
-  useMemo(() => {
-    if (prevDataWithConfig && !compareArrayValues(dataWithConfig, prevDataWithConfig, compareDataFrameStructures)) {
-      inc();
-    }
-  }, [dataWithConfig, prevDataWithConfig, inc]);
+  const structureRev = useStructureRev(dataWithConfig);
 
   useEffect(() => {
     if (onHiddenSeriesChanged) {
@@ -180,7 +168,7 @@ export function ExploreGraph({
             onClick={() => setShowAllTimeSeries(true)}
             className={style.showAllButton}
           >
-            Show all {dataWithConfig.length}
+            Show all {data.length}
           </Button>
         </div>
       )}
