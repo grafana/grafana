@@ -50,12 +50,13 @@ composableKinds: DataQuery: {
 							resourceGroup?: string
 							namespace?:     string
 							resource?:      string
+							region?:        string
 							// Azure Monitor query type.
-							// queryType:      #AzureQueryType & "Azure Monitor"
+							// queryType: #AzureQueryType
 						} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 						// Defines the supported queryTypes. GrafanaTemplateVariableFn is deprecated
-						#AzureQueryType: "Azure Monitor" | "Azure Log Analytics" | "Azure Resource Graph" | "Azure Subscriptions" | "Azure Resource Groups" | "Azure Namespaces" | "Azure Resource Names" | "Azure Metric Names" | "Azure Workspaces" | "Grafana Template Variable Function" @cuetsy(kind="enum", memberNames="AzureMonitor|LogAnalytics|AzureResourceGraph|SubscriptionsQuery|ResourceGroupsQuery|NamespacesQuery|ResourceNamesQuery|MetricNamesQuery|WorkspacesQuery|GrafanaTemplateVariableFn")
+						#AzureQueryType: "Azure Monitor" | "Azure Log Analytics" | "Azure Resource Graph" | "Azure Subscriptions" | "Azure Resource Groups" | "Azure Namespaces" | "Azure Resource Names" | "Azure Metric Names" | "Azure Workspaces" | "Azure Regions" | "Grafana Template Variable Function" @cuetsy(kind="enum", memberNames="AzureMonitor|LogAnalytics|AzureResourceGraph|SubscriptionsQuery|ResourceGroupsQuery|NamespacesQuery|ResourceNamesQuery|MetricNamesQuery|WorkspacesQuery|LocationsQuery|GrafanaTemplateVariableFn")
 
 						#AzureMetricQuery: {
 							// Array of resource URIs to be queried.

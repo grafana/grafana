@@ -43,6 +43,8 @@ const (
 
 	AzureQueryTypeAzureNamespaces AzureQueryType = "Azure Namespaces"
 
+	AzureQueryTypeAzureRegions AzureQueryType = "Azure Regions"
+
 	AzureQueryTypeAzureResourceGraph AzureQueryType = "Azure Resource Graph"
 
 	AzureQueryTypeAzureResourceGroups AzureQueryType = "Azure Resource Groups"
@@ -376,7 +378,8 @@ type AzureMonitorQuery struct {
 	RefId string `json:"refId"`
 
 	// Azure Monitor query type.
-	// queryType:      #AzureQueryType & "Azure Monitor"
+	// queryType: #AzureQueryType
+	Region   *string `json:"region,omitempty"`
 	Resource *string `json:"resource,omitempty"`
 
 	// Template variables params. These exist for backwards compatiblity with legacy template variables.

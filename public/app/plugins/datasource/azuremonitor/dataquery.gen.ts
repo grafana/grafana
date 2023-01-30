@@ -32,8 +32,9 @@ export interface AzureMonitorQuery extends common.DataQuery {
   namespace?: string;
   /**
    * Azure Monitor query type.
-   * queryType:      #AzureQueryType & "Azure Monitor"
+   * queryType: #AzureQueryType
    */
+  region?: string;
   resource?: string;
   /**
    * Template variables params. These exist for backwards compatiblity with legacy template variables.
@@ -60,6 +61,7 @@ export enum AzureQueryType {
   AzureMonitor = 'Azure Monitor',
   AzureResourceGraph = 'Azure Resource Graph',
   GrafanaTemplateVariableFn = 'Grafana Template Variable Function',
+  LocationsQuery = 'Azure Regions',
   LogAnalytics = 'Azure Log Analytics',
   MetricNamesQuery = 'Azure Metric Names',
   NamespacesQuery = 'Azure Namespaces',
