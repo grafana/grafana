@@ -37,9 +37,8 @@ ENTERPRISE_SPEC_TARGET = public/api-enterprise-spec.json
 MERGED_SPEC_TARGET = public/api-merged.json
 NGALERT_SPEC_TARGET = pkg/services/ngalert/api/tooling/api.json
 ENTERPRISE_EXT_FILE = pkg/extensions/ext.go
-ENTERPRISE_EXT_DIR = pkg/extensions
-SWAGGER_OSS_FILES ?= $(shell git diff --name-only . ':(exclude)Makefile' | xargs grep -H swagger: | cut -d: -f1 )
-SWAGGER_ENTERPRISE_FILES ?= $(shell cd ../grafana-enterprise && git diff --name-only | xargs grep -H swagger: | cut -d: -f1 )
+SWAGGER_OSS_FILES ?= $(shell git diff main...HEAD --name-only . ':(exclude)Makefile' | xargs grep -H swagger: | cut -d: -f1 )
+SWAGGER_ENTERPRISE_FILES ?= $(shell cd ../grafana-enterprise && git diff main...HEAD --name-only | xargs grep -H swagger: | cut -d: -f1 )
 
 $(NGALERT_SPEC_TARGET):
 	+$(MAKE) -C pkg/services/ngalert/api/tooling api.json
@@ -56,6 +55,7 @@ swagger-oss-gen: $(SWAGGER) ## Generate API Swagger specification
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/prometheus/alertmanager" \
 	-i pkg/api/swagger_tags.json \
+	--exclude-tag=alpha \
 	--exclude-tag=enterprise
 else
 swagger-oss-gen: $(SWAGGER) ## Generate API Swagger specification
@@ -139,7 +139,7 @@ build-js: ## Build frontend assets.
 
 build: build-go build-js ## Build backend and frontend.
 
-run: $(BRA) openapi3-gen ## Build and run web server on filesystem changes.
+run: $(BRA) ## Build and run web server on filesystem changes.
 	$(BRA) run
 
 run-frontend: deps-js ## Fetch js dependencies and watch frontend for rebuild
