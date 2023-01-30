@@ -40,7 +40,7 @@ func TestDashboardPermissionAPIEndpoint(t *testing.T) {
 		folderPermissions := accesscontrolmock.NewMockedPermissionsService()
 		dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 
-		folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), settings, dashboardStore, dashboards.NewFakeFolderStore(t), mockSQLStore, featuremgmt.WithFeatures(), nil)
+		folderSvc := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), settings, dashboardStore, dashboards.NewFakeFolderStore(t), mockSQLStore, featuremgmt.WithFeatures())
 		hs := &HTTPServer{
 			Cfg:      settings,
 			SQLStore: mockSQLStore,

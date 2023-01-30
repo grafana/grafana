@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/auth"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util"
@@ -293,7 +294,7 @@ func (hs *HTTPServer) AdminDisableUser(c *contextmodel.ReqContext) response.Resp
 	}
 
 	// External users shouldn't be disabled from API
-	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
+	authInfoQuery := &login.GetAuthInfoQuery{UserId: userID}
 	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authInfoQuery); !errors.Is(err, user.ErrUserNotFound) {
 		return response.Error(500, "Could not disable external user", nil)
 	}
@@ -336,7 +337,7 @@ func (hs *HTTPServer) AdminEnableUser(c *contextmodel.ReqContext) response.Respo
 	}
 
 	// External users shouldn't be disabled from API
-	authInfoQuery := &models.GetAuthInfoQuery{UserId: userID}
+	authInfoQuery := &login.GetAuthInfoQuery{UserId: userID}
 	if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), authInfoQuery); !errors.Is(err, user.ErrUserNotFound) {
 		return response.Error(500, "Could not enable external user", nil)
 	}

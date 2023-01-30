@@ -29,6 +29,7 @@ interface ResourcePickerProps<T> {
   onCancel: () => void;
   disableRow: (row: ResourceRow, selectedRows: ResourceRowGroup) => boolean;
   renderAdvanced: (resources: T[], onChange: (resources: T[]) => void) => React.ReactNode;
+  selectionNotice?: (selectedRows: ResourceRowGroup) => string;
 }
 
 const ResourcePicker = ({
@@ -40,6 +41,7 @@ const ResourcePicker = ({
   queryType,
   disableRow,
   renderAdvanced,
+  selectionNotice,
 }: ResourcePickerProps<string | AzureMetricResource>) => {
   const styles = useStyles2(getStyles);
 
@@ -49,6 +51,7 @@ const ResourcePicker = ({
   const [internalSelected, setInternalSelected] = useState(resources);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const [shouldShowLimitFlag, setShouldShowLimitFlag] = useState(false);
+  const selectionNoticeText = selectionNotice?.(selectedRows);
 
   // Sync the resourceURI prop to internal state
   useEffect(() => {
@@ -241,6 +244,11 @@ const ResourcePicker = ({
               </table>
             </div>
             <Space v={2} />
+            {selectionNoticeText?.length ? (
+              <Alert title="" severity="info">
+                {selectionNoticeText}
+              </Alert>
+            ) : null}
           </>
         )}
 
