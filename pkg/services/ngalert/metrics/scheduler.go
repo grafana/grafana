@@ -1,9 +1,10 @@
 package metrics
 
 import (
-	"github.com/grafana/grafana/pkg/util/ticker"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+
+	"github.com/grafana/grafana/pkg/util/ticker"
 )
 
 type Scheduler struct {
