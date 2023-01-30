@@ -8,7 +8,10 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/util/errutil"
 )
+
+var ErrInternal = errutil.NewBase(errutil.StatusInternal, "accesscontrol.internal")
 
 // RoleRegistration stores a role and its assignments to built-in roles
 // (Viewer, Editor, Admin, Grafana Admin)
