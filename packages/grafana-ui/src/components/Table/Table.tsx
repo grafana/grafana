@@ -321,10 +321,10 @@ export const Table = memo((props: Props) => {
     );
   }
 
-  // This adds the `Field` data needed to display a Column with Row Numbers.
+  // This adds the `Field` data needed to display a column with Row Numbers.
   function addRowNumbersFieldToData(data: DataFrame): DataFrame {
     /*
-      `length` prop in a DataFrame tell us the amount of rows that will appear in our table;
+      The `length` prop in a DataFrame tells us the amount of rows of data that will appear in our table;
       with that we can build the correct buffered incrementing values for our Row Number column data.
     */
     const rowField: Field = buildFieldsForOptionalRowNums(data.length);

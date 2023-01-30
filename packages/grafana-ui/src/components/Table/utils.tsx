@@ -164,7 +164,7 @@ export function getColumns(
 }
 
 /*
-  Build data field for row numbers and prepend to the field array; 
+  Build `Field` data for row numbers and prepend to the field array; 
   this way, on other column's sort, the row numbers will persist in their proper place.
 */
 export function buildFieldsForOptionalRowNums(totalRows: number): Field {
