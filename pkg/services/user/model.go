@@ -241,7 +241,7 @@ type UserDisplayDTO struct {
 	ID        int64  `json:"id,omitempty"`
 	Name      string `json:"name,omitempty"`
 	Login     string `json:"login,omitempty"`
-	AvatarUrl string `json:"avatarUrl"`
+	AvatarURL string `json:"avatarUrl"`
 }
 
 // ------------------------
@@ -363,7 +363,7 @@ const (
 	QuotaTarget    string = "user"
 )
 
-type UserIDDTO struct {
+type AdminCreateUserResponse struct {
 	ID      int64  `json:"id"`
 	Message string `json:"message"`
 }

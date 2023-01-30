@@ -82,7 +82,7 @@ func (hs *HTTPServer) AdminCreateUser(c *contextmodel.ReqContext) response.Respo
 
 	metrics.MApiAdminUserCreate.Inc()
 
-	result := user.UserIDDTO{
+	result := user.AdminCreateUserResponse{
 		Message: "User created",
 		ID:      usr.ID,
 	}
@@ -505,7 +505,7 @@ type AdminUpdateUserPermissionsParams struct {
 // swagger:response adminCreateUserResponse
 type AdminCreateUserResponseResponse struct {
 	// in:body
-	Body user.UserIDDTO `json:"body"`
+	Body user.AdminCreateUserResponse `json:"body"`
 }
 
 // swagger:response adminGetUserAuthTokensResponse
