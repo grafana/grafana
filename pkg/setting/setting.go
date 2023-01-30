@@ -22,12 +22,12 @@ import (
 	"time"
 
 	"github.com/gobwas/glob"
-	"github.com/prometheus/common/model"
-	"gopkg.in/ini.v1"
-
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
+	"github.com/prometheus/common/model"
+	"gopkg.in/ini.v1"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
 )
