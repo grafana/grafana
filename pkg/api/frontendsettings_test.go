@@ -43,12 +43,12 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.
 		})
 	}
 
-	var pluginStore plugins.Store = pstore
+	var pluginStore = pstore
 	if pluginStore == nil {
 		pluginStore = &plugins.FakePluginStore{}
 	}
 
-	var pluginsSettings pluginSettings.Service = psettings
+	var pluginsSettings = psettings
 	if pluginsSettings == nil {
 		pluginsSettings = &pluginSettings.FakePluginSettings{}
 	}
