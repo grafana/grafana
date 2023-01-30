@@ -15,7 +15,7 @@ interface QueryOperationRowHeaderProps {
   isContentVisible: boolean;
   onRowToggle: () => void;
   reportDragMousePosition: MouseEventHandler<HTMLDivElement>;
-  titleElement?: React.ReactNode;
+  title?: string;
   id: string;
 }
 
@@ -28,7 +28,7 @@ export const QueryOperationRowHeader: React.FC<QueryOperationRowHeaderProps> = (
   isContentVisible,
   onRowToggle,
   reportDragMousePosition,
-  titleElement,
+  title,
   id,
 }: QueryOperationRowHeaderProps) => {
   const styles = useStyles2(getStyles);
@@ -48,10 +48,10 @@ export const QueryOperationRowHeader: React.FC<QueryOperationRowHeaderProps> = (
           aria-controls={id}
           aria-labelledby={titleId}
         />
-        {titleElement && (
+        {title && (
           <div className={styles.titleWrapper}>
             <div id={titleId} className={cx(styles.title, disabled && styles.disabled)}>
-              {titleElement}
+              {title}
             </div>
           </div>
         )}
