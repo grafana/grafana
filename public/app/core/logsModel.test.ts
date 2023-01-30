@@ -13,6 +13,7 @@ import {
   LogRowModel,
   LogsDedupStrategy,
   LogsMetaKind,
+  LogsVolumeType,
   MutableDataFrame,
   toDataFrame,
 } from '@grafana/data';
@@ -1185,6 +1186,43 @@ describe('logs volume', () => {
   function setupErrorResponse() {
     datasource = new MockObservableDataSourceApi('loki', [], undefined, 'Error message');
   }
+
+  it('applies correct meta data', async () => {
+    setup(setupMultipleResults);
+
+    await expect(volumeProvider).toEmitValuesWith((received) => {
+      expect(received).toMatchObject([
+        { state: LoadingState.Loading, error: undefined, data: [] },
+        {
+          state: LoadingState.Done,
+          error: undefined,
+          data: [
+            {
+              fields: expect.anything(),
+              meta: {
+                custom: {
+                  targets: [
+                    {
+                      target: 'volume query 1',
+                    },
+                    {
+                      target: 'volume query 2',
+                    },
+                  ],
+                  logsVolumeType: LogsVolumeType.FullRange,
+                  absoluteRange: {
+                    from: 1623888000000,
+                    to: 1623888000000,
+                  },
+                },
+              },
+            },
+            expect.anything(),
+          ],
+        },
+      ]);
+    });
+  });
 
   it('aggregates data frames by level', async () => {
     setup(setupMultipleResults);
