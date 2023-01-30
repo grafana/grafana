@@ -15,9 +15,6 @@
     "search-box": {
       "placeholder": "搜索 Grafana"
     },
-    "search-box": {
-      "placeholder": ""
-    },
     "section": {
       "actions": "操作",
       "dashboard-search-results": "仪表板",
@@ -163,7 +160,7 @@
       "title": "警报规则"
     },
     "alerting-receivers": {
-      "subtitle": "确定警报触发时如何通知联络人",
+      "subtitle": "",
       "title": "联络点"
     },
     "alerting-silences": {
@@ -194,7 +191,7 @@
       "title": "创建"
     },
     "create-alert": {
-      "title": "新建警报规则"
+      "title": ""
     },
     "create-dashboard": {
       "title": "仪表板"
