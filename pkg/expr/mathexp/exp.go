@@ -7,6 +7,7 @@ import (
 	"runtime"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/expr/mathexp/parse"
 )
 

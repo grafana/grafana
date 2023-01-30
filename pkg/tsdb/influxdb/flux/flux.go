@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/api"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/tsdb/influxdb/models"
 )
