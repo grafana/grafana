@@ -26,7 +26,7 @@ func TestIntegrationCreate(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db := sqlstore.InitTestDB(t)
+	db := sqlstore.InitTestDBWithoutEntityFeatureEnabled(t)
 	folderStore := ProvideStore(db, db.Cfg, &featuremgmt.FeatureManager{})
 
 	orgID := CreateOrg(t, db)
@@ -141,7 +141,7 @@ func TestIntegrationDelete(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db := sqlstore.InitTestDB(t)
+	db := sqlstore.InitTestDBWithoutEntityFeatureEnabled(t)
 	folderStore := ProvideStore(db, db.Cfg, &featuremgmt.FeatureManager{})
 
 	orgID := CreateOrg(t, db)
@@ -188,7 +188,7 @@ func TestIntegrationUpdate(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db := sqlstore.InitTestDB(t)
+	db := sqlstore.InitTestDBWithoutEntityFeatureEnabled(t)
 	folderStore := ProvideStore(db, db.Cfg, &featuremgmt.FeatureManager{})
 
 	orgID := CreateOrg(t, db)
@@ -292,7 +292,7 @@ func TestIntegrationGet(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db := sqlstore.InitTestDB(t)
+	db := sqlstore.InitTestDBWithoutEntityFeatureEnabled(t)
 	folderStore := ProvideStore(db, db.Cfg, &featuremgmt.FeatureManager{})
 
 	orgID := CreateOrg(t, db)
@@ -370,7 +370,7 @@ func TestIntegrationGetParents(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db := sqlstore.InitTestDB(t)
+	db := sqlstore.InitTestDBWithoutEntityFeatureEnabled(t)
 	folderStore := ProvideStore(db, db.Cfg, &featuremgmt.FeatureManager{})
 
 	orgID := CreateOrg(t, db)
@@ -436,7 +436,7 @@ func TestIntegrationGetChildren(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db := sqlstore.InitTestDB(t)
+	db := sqlstore.InitTestDBWithoutEntityFeatureEnabled(t)
 	folderStore := ProvideStore(db, db.Cfg, &featuremgmt.FeatureManager{})
 
 	orgID := CreateOrg(t, db)
@@ -589,7 +589,7 @@ func TestIntegrationGetHeight(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	db := sqlstore.InitTestDB(t)
+	db := sqlstore.InitTestDBWithoutEntityFeatureEnabled(t)
 	folderStore := ProvideStore(db, db.Cfg, &featuremgmt.FeatureManager{})
 
 	orgID := CreateOrg(t, db)

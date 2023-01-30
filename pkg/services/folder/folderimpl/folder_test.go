@@ -49,7 +49,7 @@ func TestIntegrationFolderService(t *testing.T) {
 	}
 	t.Run("Folder service tests", func(t *testing.T) {
 		dashStore := &dashboards.FakeDashboardStore{}
-		db := sqlstore.InitTestDB(t)
+		db := sqlstore.InitTestDBWithoutEntityFeatureEnabled(t)
 		nestedFolderStore := ProvideStore(db, db.Cfg, featuremgmt.WithFeatures([]interface{}{"nestedFolders"}))
 
 		folderStore := dashboards.NewFakeFolderStore(t)
