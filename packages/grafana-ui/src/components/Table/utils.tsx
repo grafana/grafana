@@ -1,5 +1,5 @@
 import { Property } from 'csstype';
-import { clone } from 'lodash';
+import { cloneDeep } from 'lodash';
 import memoizeOne from 'memoize-one';
 import { Row } from 'react-table';
 
@@ -328,24 +328,36 @@ export function getFooterItems(
   options: TableFooterCalc,
   theme2: GrafanaTheme2
 ): FooterItem[] {
-  // JEV: we need to add the row nums field if it doesn't exist; we can do that by searching for id === "0"
-  const length = values.length;
-  const addedField = { id: '0', field: buildFieldsForOptionalRowNums(length) };
-  if (!filterFields.some((field) => field.id === '0')) {
-    filterFields.unshift(addedField);
+  // Deep clone the `filterFields` array, since we will be conditionally mutating it later on.
+  let footerFieldData: Array<{ id: string; field: Field }> = cloneDeep(filterFields);
+
+  /*
+    Here, `filterFields` is passed to as the `headerGroups[0].headers` array that was destrcutured from the `useTable` hook.
+    Unfortunately, since the `headerGroups` object is data based ONLY on the rendered "non-hidden" column headers,
+    it will NOT include the Row Number column if it has been toggled off. This will shift the rendering of the footer left 1 column,
+    creating an off-by-one issue. This is why we test for a `field.id` of "0". If the condition is truthy, the togglable Row Number column is being rendered,
+    and we can proceed normally. If not, we must add the field data in its place so that the footer data renders in the expected column.
+  */
+  if (!footerFieldData.some((field) => field.id === '0')) {
+    const length = values.length;
+    // Build the additional field that will correct the off-by-one footer issue.
+    const fieldToAdd = { id: '0', field: buildFieldsForOptionalRowNums(length) };
+    // unshift() the new field to the cloned data.
+    footerFieldData.unshift(fieldToAdd);
   }
 
-  return filterFields.map((data, i) => {
+  return footerFieldData.map((data, i) => {
     if (data.field.type !== FieldType.number) {
-      // show the reducer in the first column
-      // JEV: we'll have to change what coulumn this is viewed in...
+      // Show the reducer type ("Total", "Range", "Count", "Delta", etc) in the first non-RowNumber column, only if it cannot be numerically reduced.
       if (i === 1 && options.reducer && options.reducer.length > 0) {
         const reducer = fieldReducers.get(options.reducer[0]);
         return reducer.name;
       }
+      // Otherwise return `undefined`, which will render an <EmptyCell />.
       return undefined;
     }
-    let newField = clone(data.field);
+
+    let newField = cloneDeep(data.field);
     newField.values = new ArrayVector(values[i]);
     newField.state = undefined;
 
@@ -452,7 +464,7 @@ export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDispl
 */
 const defaultRowNumberColumnFieldData: Omit<Field, 'values'> = {
   /* 
-    White-spaced `name` property so as to render an empty/invisible column header;
+    Single whitespace as value for `name` property so as to render an empty/invisible column header;
     without the single whitespace, falsey headers (empty strings) are given a default name of "Value".
   */
   name: ' ',
