@@ -232,6 +232,7 @@ export interface AuthSettings {
   GrafanaComSkipOrgRoleSync?: boolean;
   GithubSkipOrgRoleSync?: boolean;
   GitLabSkipOrgRoleSync?: boolean;
+  OktaSkipOrgRoleSync?: boolean;
   AzureADSkipOrgRoleSync?: boolean;
   GoogleSkipOrgRoleSync?: boolean;
   DisableSyncLock?: boolean;
