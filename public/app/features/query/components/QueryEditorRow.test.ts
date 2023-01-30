@@ -124,6 +124,20 @@ describe('filterPanelDataToQuery', () => {
     const panelDataA = filterPanelDataToQuery(loadingData, 'A');
     expect(panelDataA?.state).toBe(LoadingState.Loading);
   });
+  it('should not set the state to error if a frame has previously returned an error, but is now still loading', () => {
+    const loadingData: PanelData = {
+      state: LoadingState.Loading,
+      series: [],
+      error: {
+        refId: 'A',
+        message: 'Error',
+      },
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+    };
+
+    const panelDataA = filterPanelDataToQuery(loadingData, 'A');
+    expect(panelDataA?.state).toBe(LoadingState.Loading);
+  });
 });
 
 describe('frame results with warnings', () => {
