@@ -22,6 +22,7 @@ export const DEFAULT_METRICS_QUERY: Omit<CloudWatchMetricsQuery, 'refId'> = {
   sqlExpression: '',
   matchExact: true,
 };
+
 export const DEFAULT_ANNOTATIONS_QUERY: Omit<CloudWatchAnnotationQuery, 'refId'> = {
   queryMode: 'Annotations',
   namespace: '',
