@@ -84,7 +84,8 @@ func (h *RemoteLokiBackend) QueryStates(ctx context.Context, query models.Histor
 	if err != nil {
 		return nil, fmt.Errorf("failed to build the provided selectors: %w", err)
 	}
-	res, err := h.client.query(ctx, selectors, query.From.Unix(), query.To.Unix())
+	// Timestamps are expected in RFC3339Nano.
+	res, err := h.client.query(ctx, selectors, query.From.UnixNano(), query.To.UnixNano())
 	if err != nil {
 		return nil, err
 	}

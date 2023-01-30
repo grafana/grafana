@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -196,16 +195,17 @@ func (c *httpLokiClient) query(ctx context.Context, selectors []Selector, start,
 		return QueryRes{}, fmt.Errorf("start time cannot be after end time")
 	}
 
+	queryURL := c.cfg.ReadPathURL.JoinPath("/loki/api/v1/query_range")
+
 	values := url.Values{}
 	values.Set("query", selectorString(selectors))
 	values.Set("start", fmt.Sprintf("%d", start))
 	values.Set("end", fmt.Sprintf("%d", end))
 
-	encodedValues := values.Encode()
+	queryURL.RawQuery = values.Encode()
 
 	req, err := http.NewRequest(http.MethodGet,
-		c.cfg.ReadPathURL.JoinPath("/loki/api/v1/query_range?"+encodedValues).String(),
-		strings.NewReader(encodedValues))
+		queryURL.String(), nil)
 	if err != nil {
 		return QueryRes{}, fmt.Errorf("error creating request: %w", err)
 	}

@@ -119,12 +119,12 @@ func TestLokiHTTPClient(t *testing.T) {
 		// Create an array of selectors that should be used for the
 		// query.
 		selectors := []Selector{
-			{Label: "", Op: Eq, Value: ""},
+			{Label: "probe", Op: Eq, Value: "Paris"},
 		}
 
 		// Define the query time range
-		start := time.Now().UnixMilli() - 10000
-		end := time.Now().UnixMilli()
+		start := time.Now().Add(-30 * time.Minute).UnixNano()
+		end := time.Now().UnixNano()
 
 		// Authorized request should not fail against Grafana Cloud.
 		res, err := client.query(context.Background(), selectors, start, end)
