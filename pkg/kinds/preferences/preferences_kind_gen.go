@@ -26,7 +26,7 @@ type Kind struct {
 	lin    thema.ConvergentLineage[*Preferences]
 	jcodec vmux.Codec
 	valmux vmux.ValueMux[*Preferences]
-	decl   kindsys.Decl[kindsys.CoreProperties]
+	decl   kindsys.Def[kindsys.CoreProperties]
 }
 
 // type guard
@@ -98,16 +98,16 @@ func (k *Kind) Maturity() kindsys.Maturity {
 	return k.decl.Properties.Maturity
 }
 
-// Decl returns the [kindsys.Decl] containing both CUE and Go representations of the
+// Def returns the [kindsys.Def] containing both CUE and Go representations of the
 // preferences declaration in .cue files.
-func (k *Kind) Decl() kindsys.Decl[kindsys.CoreProperties] {
+func (k *Kind) Def() kindsys.Def[kindsys.CoreProperties] {
 	return k.decl
 }
 
 // Props returns a [kindsys.SomeKindProps], with underlying type [kindsys.CoreProperties],
 // representing the static properties declared in the preferences kind.
 //
-// This method is identical to calling Decl().Props. It is provided to satisfy [kindsys.Interface].
+// This method is identical to calling Def().Props. It is provided to satisfy [kindsys.Interface].
 func (k *Kind) Props() kindsys.SomeKindProperties {
 	return k.decl.Properties
 }

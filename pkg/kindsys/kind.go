@@ -54,7 +54,7 @@ type Interface interface {
 	//
 	// This method is largely for convenience, as all actual kind categories are
 	// expected to implement one of the other interfaces, each of which contain
-	// a Decl() method through which these same properties are accessible.
+	// a Def() method through which these same properties are accessible.
 	Props() SomeKindProperties
 
 	// TODO docs
@@ -74,19 +74,19 @@ type Core interface {
 	Interface
 
 	// TODO docs
-	Decl() Decl[CoreProperties]
+	Def() Def[CoreProperties]
 }
 
 type Custom interface {
 	Interface
 
 	// TODO docs
-	Decl() Decl[CustomProperties]
+	Def() Def[CustomProperties]
 }
 
 type Composable interface {
 	Interface
 
 	// TODO docs
-	Decl() Decl[ComposableProperties]
+	Def() Def[ComposableProperties]
 }
