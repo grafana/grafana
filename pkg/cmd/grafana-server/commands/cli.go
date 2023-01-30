@@ -46,6 +46,11 @@ func ServerCommand(version, commit, buildBranch, buildstamp string) *cli.Command
 				Usage: "Path to config file",
 			},
 			&cli.StringFlag{
+				Name:  "target",
+				Value: "all",
+				Usage: "Target to execute",
+			},
+			&cli.StringFlag{
 				Name:  "homepath",
 				Usage: "Path to Grafana install/home path, defaults to working directory",
 			},
@@ -274,12 +279,10 @@ func listenToSystemSignals(ctx context.Context, s *server.Server) {
 			if err := log.Reload(); err != nil {
 				fmt.Fprintf(os.Stderr, "Failed to reload loggers: %s\n", err)
 			}
-		case sig := <-signalChan:
-			ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		case <-signalChan:
+			_, cancel := context.WithTimeout(ctx, 30*time.Second)
 			defer cancel()
-			if err := s.Shutdown(ctx, fmt.Sprintf("System signal: %s", sig)); err != nil {
-				fmt.Fprintf(os.Stderr, "Timed out waiting for server to shut down\n")
-			}
+			s.Shutdown()
 			return
 		}
 	}

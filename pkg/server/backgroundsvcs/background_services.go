@@ -1,14 +1,25 @@
 package backgroundsvcs
 
 import (
+	"context"
+	"errors"
+	"fmt"
+	"reflect"
+
+	"github.com/grafana/dskit/services"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/grafana/grafana/pkg/api"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	uss "github.com/grafana/grafana/pkg/infra/usagestats/service"
 	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
+	pluginStore "github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/cleanup"
@@ -18,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/live/pushhttp"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
+	"github.com/grafana/grafana/pkg/services/loginattempt"
 	"github.com/grafana/grafana/pkg/services/loginattempt/loginattemptimpl"
 	"github.com/grafana/grafana/pkg/services/ngalert"
 	"github.com/grafana/grafana/pkg/services/notifications"
@@ -35,6 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/services/thumbs"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func ProvideBackgroundServiceRegistry(
@@ -49,13 +62,18 @@ func ProvideBackgroundServiceRegistry(
 	saService *samanager.ServiceAccountsService, authInfoService *authinfoservice.Implementation,
 	grpcServerProvider grpcserver.Provider, secretMigrationProvider secretsMigrations.SecretMigrationProvider, loginAttemptService *loginattemptimpl.Service,
 	bundleService *supportbundlesimpl.Service,
+	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry,
+	roleRegistry accesscontrol.RoleRegistry,
+	provisioningService provisioning.ProvisioningService,
+	pluginStore *pluginStore.Service,
 	// Need to make sure these are initialized, is there a better place to put them?
 	_ dashboardsnapshots.Service, _ *alerting.AlertNotificationService,
 	_ serviceaccounts.Service, _ *guardian.Provider,
 	_ *plugindashboardsservice.DashboardUpdater, _ *sanitizer.Provider,
 	_ *grpcserver.HealthService, _ entity.EntityStoreServer, _ *grpcserver.ReflectionService,
 ) *BackgroundServiceRegistry {
-	return NewBackgroundServiceRegistry(
+	r := NewBackgroundServiceRegistry(
+		pluginStore,
 		httpServer,
 		ng,
 		cleanup,
@@ -86,15 +104,85 @@ func ProvideBackgroundServiceRegistry(
 		loginAttemptService,
 		bundleService,
 	)
+
+	r.usageStatsProvidersRegistry = usageStatsProvidersRegistry
+	r.statsCollectorService = statsCollector
+	r.provisioningService = provisioningService
+	r.roleRegistry = roleRegistry
+
+	return r
 }
 
 // BackgroundServiceRegistry provides background services.
 type BackgroundServiceRegistry struct {
+	*services.BasicService
+	HTTPServer                  *api.HTTPServer
+	userService                 user.Service
+	loginAttemptService         loginattempt.Service
+	statsCollectorService       *statscollector.Service
+	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry
+	provisioningService         provisioning.ProvisioningService
+	roleRegistry                accesscontrol.RoleRegistry
+
+	log      log.Logger
 	Services []registry.BackgroundService
 }
 
-func NewBackgroundServiceRegistry(services ...registry.BackgroundService) *BackgroundServiceRegistry {
-	return &BackgroundServiceRegistry{services}
+func NewBackgroundServiceRegistry(s ...registry.BackgroundService) *BackgroundServiceRegistry {
+	r := &BackgroundServiceRegistry{
+		Services: s,
+		log:      log.New("background-services"),
+	}
+	r.BasicService = services.NewBasicService(nil, r.run, r.stop)
+	return r
+}
+
+func (r *BackgroundServiceRegistry) start(ctx context.Context) error {
+	r.statsCollectorService.RegisterProviders(r.usageStatsProvidersRegistry.GetServices())
+	if err := r.roleRegistry.RegisterFixedRoles(ctx); err != nil {
+		return err
+	}
+
+	return r.provisioningService.RunInitProvisioners(ctx)
+}
+
+func (r *BackgroundServiceRegistry) run(ctx context.Context) error {
+	rootCtx, _ := context.WithCancel(ctx) // TODO: cancelFunc
+	childRoutines, childCtx := errgroup.WithContext(rootCtx)
+
+	// Start background services.
+	for _, svc := range r.Services {
+		if registry.IsDisabled(svc) {
+			continue
+		}
+
+		service := svc
+		serviceName := reflect.TypeOf(service).String()
+		childRoutines.Go(func() error {
+			select {
+			case <-childCtx.Done():
+				return childCtx.Err()
+			default:
+			}
+			r.log.Debug("Starting background service", "service", serviceName)
+			err := service.Run(childCtx)
+			// Do not return context.Canceled error since errgroup.Group only
+			// returns the first error to the caller - thus we can miss a more
+			// interesting error.
+			if err != nil && !errors.Is(err, context.Canceled) {
+				r.log.Error("Stopped background service", "service", serviceName, "reason", err)
+				return fmt.Errorf("%s run error: %w", serviceName, err)
+			}
+			r.log.Debug("Stopped background service", "service", serviceName, "reason", err)
+			return nil
+		})
+	}
+
+	return childRoutines.Wait()
+}
+
+func (r *BackgroundServiceRegistry) stop(err error) error {
+	return err
 }
 
 func (r *BackgroundServiceRegistry) GetServices() []registry.BackgroundService {

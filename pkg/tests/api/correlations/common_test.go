@@ -120,9 +120,9 @@ func (c TestContext) Delete(params DeleteParams) *http.Response {
 func (c TestContext) getURL(url string, user User) string {
 	c.t.Helper()
 
-	baseUrl := fmt.Sprintf("http://%s", c.env.Server.HTTPServer.Listener.Addr())
+	baseUrl := fmt.Sprintf("http://%s", c.env.HTTPServer.Listener.Addr())
 	if user.username != "" && user.password != "" {
-		baseUrl = fmt.Sprintf("http://%s:%s@%s", user.username, user.password, c.env.Server.HTTPServer.Listener.Addr())
+		baseUrl = fmt.Sprintf("http://%s:%s@%s", user.username, user.password, c.env.HTTPServer.Listener.Addr())
 	}
 
 	return fmt.Sprintf(
@@ -151,13 +151,13 @@ func (c TestContext) createUser(cmd user.CreateUserCommand) {
 func (c TestContext) createDs(cmd *datasources.AddDataSourceCommand) {
 	c.t.Helper()
 
-	err := c.env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), cmd)
+	err := c.env.HTTPServer.DataSourcesService.AddDataSource(context.Background(), cmd)
 	require.NoError(c.t, err)
 }
 
 func (c TestContext) createCorrelation(cmd correlations.CreateCorrelationCommand) correlations.Correlation {
 	c.t.Helper()
-	correlation, err := c.env.Server.HTTPServer.CorrelationsService.CreateCorrelation(context.Background(), cmd)
+	correlation, err := c.env.HTTPServer.CorrelationsService.CreateCorrelation(context.Background(), cmd)
 
 	require.NoError(c.t, err)
 	return correlation

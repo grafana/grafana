@@ -302,17 +302,17 @@ func newTestScenario(t *testing.T, name string, opts []testScenarioOption, callb
 	tsCtx.modifyIncomingRequest = in.modifyIncomingRequest
 	tsCtx.testEnv.OAuthTokenService.Token = in.token
 
-	err = testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx, cmd)
+	err = testEnv.HTTPServer.DataSourcesService.AddDataSource(ctx, cmd)
 	require.NoError(t, err)
 
 	getDataSourceQuery := &datasources.GetDataSourceQuery{
 		OrgId: 1,
 		Uid:   tsCtx.uid,
 	}
-	err = testEnv.Server.HTTPServer.DataSourcesService.GetDataSource(ctx, getDataSourceQuery)
+	err = testEnv.HTTPServer.DataSourcesService.GetDataSource(ctx, getDataSourceQuery)
 	require.NoError(t, err)
 
-	rt, err := testEnv.Server.HTTPServer.DataSourcesService.GetHTTPTransport(ctx, getDataSourceQuery.Result, testEnv.HTTPClientProvider)
+	rt, err := testEnv.HTTPServer.DataSourcesService.GetHTTPTransport(ctx, getDataSourceQuery.Result, testEnv.HTTPClientProvider)
 	require.NoError(t, err)
 
 	tsCtx.rt = rt
@@ -370,13 +370,13 @@ func (tsCtx *testScenarioContext) runQueryDataTest(t *testing.T, mr dtos.MetricR
 			}
 			defer func() {
 				if err := resp.Body.Close(); err != nil {
-					tsCtx.testEnv.Server.HTTPServer.Cfg.Logger.Error("Failed to close body", "error", err)
+					tsCtx.testEnv.HTTPServer.Cfg.Logger.Error("Failed to close body", "error", err)
 				}
 			}()
 
 			_, err = io.Copy(io.Discard, resp.Body)
 			if err != nil {
-				tsCtx.testEnv.Server.HTTPServer.Cfg.Logger.Error("Failed to discard body", "error", err)
+				tsCtx.testEnv.HTTPServer.Cfg.Logger.Error("Failed to discard body", "error", err)
 			}
 
 			return &backend.QueryDataResponse{}, nil
@@ -432,13 +432,13 @@ func (tsCtx *testScenarioContext) runCheckHealthTest(t *testing.T, callback func
 			}
 			defer func() {
 				if err := resp.Body.Close(); err != nil {
-					tsCtx.testEnv.Server.HTTPServer.Cfg.Logger.Error("Failed to close body", "error", err)
+					tsCtx.testEnv.HTTPServer.Cfg.Logger.Error("Failed to close body", "error", err)
 				}
 			}()
 
 			_, err = io.Copy(io.Discard, resp.Body)
 			if err != nil {
-				tsCtx.testEnv.Server.HTTPServer.Cfg.Logger.Error("Failed to discard body", "error", err)
+				tsCtx.testEnv.HTTPServer.Cfg.Logger.Error("Failed to discard body", "error", err)
 			}
 
 			return &backend.CheckHealthResult{
@@ -499,13 +499,13 @@ func (tsCtx *testScenarioContext) runCallResourceTest(t *testing.T, callback fun
 			}
 			defer func() {
 				if err := resp.Body.Close(); err != nil {
-					tsCtx.testEnv.Server.HTTPServer.Cfg.Logger.Error("Failed to close body", "error", err)
+					tsCtx.testEnv.HTTPServer.Cfg.Logger.Error("Failed to close body", "error", err)
 				}
 			}()
 
 			_, err = io.Copy(io.Discard, resp.Body)
 			if err != nil {
-				tsCtx.testEnv.Server.HTTPServer.Cfg.Logger.Error("Failed to discard body", "error", err)
+				tsCtx.testEnv.HTTPServer.Cfg.Logger.Error("Failed to discard body", "error", err)
 			}
 
 			responseHeaders := map[string][]string{

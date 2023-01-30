@@ -54,7 +54,7 @@ func TestIntegrationLoki(t *testing.T) {
 	}
 
 	uid := "loki"
-	err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
+	err := testEnv.HTTPServer.DataSourcesService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
 		OrgId:          1,
 		Access:         datasources.DS_ACCESS_PROXY,
 		Name:           "Loki",

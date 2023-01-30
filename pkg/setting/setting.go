@@ -182,6 +182,7 @@ func AddChangePasswordLink() bool {
 
 // TODO move all global vars to this struct
 type Cfg struct {
+	Target []string
 	Raw    *ini.File
 	Logger log.Logger
 
@@ -522,6 +523,7 @@ type CommandLineArgs struct {
 	Config   string
 	HomePath string
 	Args     []string
+	Target   string
 }
 
 func (cfg Cfg) parseAppUrlAndSubUrl(section *ini.Section) (string, string, error) {
@@ -726,7 +728,16 @@ func applyCommandLineDefaultProperties(props map[string]string, file *ini.File) 
 	}
 }
 
-func applyCommandLineProperties(props map[string]string, file *ini.File) {
+func applyCommandLineProperties(target string, props map[string]string, file *ini.File) {
+	defaultSection, err := file.GetSection("")
+	if err == nil {
+		key, err := defaultSection.GetKey("target")
+		if err == nil {
+			key.SetValue(target)
+		} else {
+			defaultSection.NewKey("target", target)
+		}
+	}
 	for _, section := range file.Sections() {
 		sectionName := section.Name() + "."
 		if section.Name() == ini.DefaultSection {
@@ -852,7 +863,7 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 	}
 
 	// apply command line overrides
-	applyCommandLineProperties(commandLineProps, parsedFile)
+	applyCommandLineProperties(args.Target, commandLineProps, parsedFile)
 
 	// evaluate config values containing environment variables
 	err = expandConfig(parsedFile)
@@ -915,6 +926,7 @@ var skipStaticRootValidation = false
 
 func NewCfg() *Cfg {
 	return &Cfg{
+		Target:      []string{"all"},
 		Logger:      log.New("settings"),
 		Raw:         ini.Empty(),
 		Azure:       &azsettings.AzureSettings{},
@@ -973,6 +985,8 @@ func (cfg *Cfg) Load(args CommandLineArgs) error {
 
 	cfg.ErrTemplateName = "error"
 
+	Target := valueAsString(iniFile.Section(""), "target", "all")
+	cfg.Target = strings.Split(Target, " ")
 	Env = valueAsString(iniFile.Section(""), "app_mode", "development")
 	cfg.Env = Env
 	cfg.ForceMigration = iniFile.Section("").Key("force_migration").MustBool(false)
@@ -1268,6 +1282,7 @@ func (cfg *Cfg) LogConfigSources() {
 		}
 	}
 
+	cfg.Logger.Info("Target", "target", cfg.Target)
 	cfg.Logger.Info("Path Home", "path", HomePath)
 	cfg.Logger.Info("Path Data", "path", cfg.DataPath)
 	cfg.Logger.Info("Path Logs", "path", cfg.LogsPath)

@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	pluginDashboards "github.com/grafana/grafana/pkg/plugins/manager/dashboards"
 	"github.com/grafana/grafana/pkg/registry/corekind"
+	"github.com/grafana/grafana/pkg/server/modules"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
@@ -361,6 +362,7 @@ var wireBasicSet = wire.NewSet(
 	k8saccess.ProvideK8SAccess,
 	supportbundlesimpl.ProvideService,
 	wire.Bind(new(supportbundles.Service), new(*supportbundlesimpl.Service)),
+	modules.ProvideService,
 )
 
 var wireSet = wire.NewSet(

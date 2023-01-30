@@ -34,7 +34,8 @@ func TestStore_ProvideService(t *testing.T) {
 			},
 		}
 
-		_, err := ProvideService(cfg, pCfg, fakes.NewFakePluginRegistry(), l)
+		s := ProvideService(cfg, pCfg, fakes.NewFakePluginRegistry(), l)
+		err := s.Run(context.Background())
 		require.NoError(t, err)
 		require.Equal(t, []string{"app/plugins/datasource", "app/plugins/panel", "path1", "path2", "path3"}, addedPaths)
 	})

@@ -15,23 +15,34 @@ import (
 var _ plugins.Store = (*Service)(nil)
 
 type Service struct {
+	gCfg           *setting.Cfg
+	cfg            *config.Cfg
 	pluginRegistry registry.Service
+	pluginLoader   loader.Service
 }
 
-func ProvideService(gCfg *setting.Cfg, cfg *config.Cfg, pluginRegistry registry.Service,
-	pluginLoader loader.Service) (*Service, error) {
-	for _, ps := range pluginSources(gCfg, cfg) {
-		if _, err := pluginLoader.Load(context.Background(), ps.Class, ps.Paths); err != nil {
-			return nil, err
-		}
+func ProvideService(gCfg *setting.Cfg, cfg *config.Cfg, pluginRegistry registry.Service, pluginLoader loader.Service) *Service {
+	return &Service{
+		gCfg:           gCfg,
+		cfg:            cfg,
+		pluginRegistry: pluginRegistry,
+		pluginLoader:   pluginLoader,
 	}
-	return New(pluginRegistry), nil
 }
 
 func New(pluginRegistry registry.Service) *Service {
 	return &Service{
 		pluginRegistry: pluginRegistry,
 	}
+}
+
+func (s *Service) Run(ctx context.Context) error {
+	for _, ps := range s.pluginSources() {
+		if _, err := s.pluginLoader.Load(context.Background(), ps.Class, ps.Paths); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *Service) Plugin(ctx context.Context, pluginID string) (plugins.PluginDTO, bool) {
@@ -120,11 +131,11 @@ func (s *Service) Routes() []*plugins.StaticRoute {
 	return staticRoutes
 }
 
-func pluginSources(gCfg *setting.Cfg, cfg *config.Cfg) []plugins.PluginSource {
+func (s *Service) pluginSources() []plugins.PluginSource {
 	return []plugins.PluginSource{
-		{Class: plugins.Core, Paths: corePluginPaths(gCfg.StaticRootPath)},
-		{Class: plugins.Bundled, Paths: []string{gCfg.BundledPluginsPath}},
-		{Class: plugins.External, Paths: append([]string{cfg.PluginsPath}, pluginSettingPaths(cfg.PluginSettings)...)},
+		{Class: plugins.Core, Paths: corePluginPaths(s.gCfg.StaticRootPath)},
+		{Class: plugins.Bundled, Paths: []string{s.gCfg.BundledPluginsPath}},
+		{Class: plugins.External, Paths: append([]string{s.cfg.PluginsPath}, pluginSettingPaths(s.cfg.PluginSettings)...)},
 	}
 }
 

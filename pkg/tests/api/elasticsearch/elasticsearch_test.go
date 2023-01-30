@@ -56,7 +56,7 @@ func TestIntegrationElasticsearch(t *testing.T) {
 	}
 
 	uid := "es"
-	err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
+	err := testEnv.HTTPServer.DataSourcesService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
 		OrgId:          1,
 		Access:         datasources.DS_ACCESS_PROXY,
 		Name:           "Elasticsearch",
