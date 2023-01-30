@@ -35,8 +35,9 @@ type Service struct {
 
 	log log.Logger
 
-	enabled         bool
-	serverAdminOnly bool
+	enabled             bool
+	serverAdminOnly     bool
+	encryptionPublicKey string
 
 	collectors map[string]supportbundles.Collector
 }
@@ -56,16 +57,17 @@ func ProvideService(cfg *setting.Cfg,
 	usageStats usagestats.Service) (*Service, error) {
 	section := cfg.SectionWithEnvOverrides("support_bundles")
 	s := &Service{
-		cfg:             cfg,
-		store:           newStore(kvStore),
-		pluginStore:     pluginStore,
-		pluginSettings:  pluginSettings,
-		accessControl:   accessControl,
-		features:        features,
-		log:             log.New("supportbundle.service"),
-		enabled:         section.Key("enabled").MustBool(true),
-		serverAdminOnly: section.Key("server_admin_only").MustBool(true),
-		collectors:      make(map[string]supportbundles.Collector),
+		cfg:                 cfg,
+		store:               newStore(kvStore),
+		pluginStore:         pluginStore,
+		pluginSettings:      pluginSettings,
+		accessControl:       accessControl,
+		features:            features,
+		log:                 log.New("supportbundle.service"),
+		enabled:             section.Key("enabled").MustBool(true),
+		serverAdminOnly:     section.Key("server_admin_only").MustBool(true),
+		encryptionPublicKey: section.Key("encryption_public_key").MustString(""),
+		collectors:          make(map[string]supportbundles.Collector),
 	}
 
 	if !features.IsEnabled(featuremgmt.FlagSupportBundles) || !s.enabled {
