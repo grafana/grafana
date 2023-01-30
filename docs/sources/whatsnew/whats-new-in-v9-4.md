@@ -66,4 +66,4 @@ have a unified configuration style among all authentication providers. Instead o
 
 We added support to validate queries and visually display errors as a query is being written, without having to execute it to receive this feedback. This feature supports single and multi-line queries, with and without variables.
 
-{{< figure src="/static/img/logs/logs-loki-query-validation-whats-new-9-4.png.png" max-width="750px" caption="Loki query validation" >}}
+{{< figure src="/media/docs/grafana/logs-loki-query-validation-whats-new-9-4.png" max-width="750px" caption="Loki query validation" >}}
