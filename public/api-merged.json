@@ -639,30 +639,6 @@
         }
       }
     },
-    "/admin/ldap-sync-status": {
-      "get": {
-        "description": "You need to have a permission with action `ldap.status:read`.",
-        "tags": [
-          "ldap_debug"
-        ],
-        "summary": "Returns the current state of the LDAP background sync integration.",
-        "operationId": "getSyncStatus",
-        "responses": {
-          "200": {
-            "$ref": "#/responses/getSyncStatusResponse"
-          },
-          "401": {
-            "$ref": "#/responses/unauthorisedError"
-          },
-          "403": {
-            "$ref": "#/responses/forbiddenError"
-          },
-          "500": {
-            "$ref": "#/responses/internalServerError"
-          }
-        }
-      }
-    },
     "/admin/ldap/reload": {
       "post": {
         "security": [
