@@ -7,11 +7,12 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 type SearchHTTPService interface {

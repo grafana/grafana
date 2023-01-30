@@ -16003,6 +16003,10 @@
           "type": "integer",
           "format": "int64"
         },
+        "isPaused": {
+          "type": "boolean",
+          "example": true
+        },
         "labels": {
           "type": "object",
           "additionalProperties": {
@@ -18929,6 +18933,7 @@
       }
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "$ref": "#/definitions/alertGroup"
@@ -19033,7 +19038,6 @@
       }
     },
     "gettableAlert": {
-      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
@@ -19144,6 +19148,7 @@
       }
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
@@ -19293,7 +19298,6 @@
       }
     },
     "postableSilence": {
-      "description": "PostableSilence postable silence",
       "type": "object",
       "required": [
         "comment",
