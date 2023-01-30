@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
-	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -32,6 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
+	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -84,7 +84,7 @@ func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 			require.NoError(t, err)
 
 			err = sc.service.DeleteLibraryElementsInFolder(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.UID)
-			require.EqualError(t, err, ErrFolderHasConnectedLibraryElements.Error())
+			require.EqualError(t, err, model.ErrFolderHasConnectedLibraryElements.Error())
 		})
 
 	scenarioWithPanel(t, "When an admin tries to delete a folder uid that doesn't exist, it should fail",
@@ -156,9 +156,9 @@ func TestGetLibraryPanelConnections(t *testing.T) {
 			err := sc.service.ConnectElementsToDashboard(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, []string{sc.initialResult.Result.UID}, dashInDB.ID)
 			require.NoError(t, err)
 
-			var expected = func(res LibraryElementConnectionsResponse) LibraryElementConnectionsResponse {
-				return LibraryElementConnectionsResponse{
-					Result: []LibraryElementConnectionDTO{
+			var expected = func(res model.LibraryElementConnectionsResponse) model.LibraryElementConnectionsResponse {
+				return model.LibraryElementConnectionsResponse{
+					Result: []model.LibraryElementConnectionDTO{
 						{
 							ID:            sc.initialResult.Result.ID,
 							Kind:          sc.initialResult.Result.Kind,
@@ -187,17 +187,17 @@ func TestGetLibraryPanelConnections(t *testing.T) {
 }
 
 type libraryElement struct {
-	ID          int64                  `json:"id"`
-	OrgID       int64                  `json:"orgId"`
-	FolderID    int64                  `json:"folderId"`
-	UID         string                 `json:"uid"`
-	Name        string                 `json:"name"`
-	Kind        int64                  `json:"kind"`
-	Type        string                 `json:"type"`
-	Description string                 `json:"description"`
-	Model       map[string]interface{} `json:"model"`
-	Version     int64                  `json:"version"`
-	Meta        LibraryElementDTOMeta  `json:"meta"`
+	ID          int64                       `json:"id"`
+	OrgID       int64                       `json:"orgId"`
+	FolderID    int64                       `json:"folderId"`
+	UID         string                      `json:"uid"`
+	Name        string                      `json:"name"`
+	Kind        int64                       `json:"kind"`
+	Type        string                      `json:"type"`
+	Description string                      `json:"description"`
+	Model       map[string]interface{}      `json:"model"`
+	Version     int64                       `json:"version"`
+	Meta        model.LibraryElementDTOMeta `json:"meta"`
 }
 
 type libraryElementResult struct {
@@ -219,8 +219,8 @@ type libraryElementsSearchResult struct {
 	PerPage    int              `json:"perPage"`
 }
 
-func getCreatePanelCommand(folderID int64, name string) CreateLibraryElementCommand {
-	command := getCreateCommandWithModel(folderID, name, models.PanelElement, []byte(`
+func getCreatePanelCommand(folderID int64, name string) model.CreateLibraryElementCommand {
+	command := getCreateCommandWithModel(folderID, name, model.PanelElement, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "id": 1,
@@ -233,8 +233,8 @@ func getCreatePanelCommand(folderID int64, name string) CreateLibraryElementComm
 	return command
 }
 
-func getCreateVariableCommand(folderID int64, name string) CreateLibraryElementCommand {
-	command := getCreateCommandWithModel(folderID, name, models.VariableElement, []byte(`
+func getCreateVariableCommand(folderID int64, name string) model.CreateLibraryElementCommand {
+	command := getCreateCommandWithModel(folderID, name, model.VariableElement, []byte(`
 			{
 			  "datasource": "${DS_GDEV-TESTDATA}",
 			  "name": "query0",
@@ -246,11 +246,11 @@ func getCreateVariableCommand(folderID int64, name string) CreateLibraryElementC
 	return command
 }
 
-func getCreateCommandWithModel(folderID int64, name string, kind models.LibraryElementKind, model []byte) CreateLibraryElementCommand {
-	command := CreateLibraryElementCommand{
+func getCreateCommandWithModel(folderID int64, name string, kind model.LibraryElementKind, byteModel []byte) model.CreateLibraryElementCommand {
+	command := model.CreateLibraryElementCommand{
 		FolderID: folderID,
 		Name:     name,
-		Model:    model,
+		Model:    byteModel,
 		Kind:     int64(kind),
 	}
 
@@ -366,10 +366,10 @@ func validateAndUnMarshalResponse(t *testing.T, resp response.Response) libraryE
 	return result
 }
 
-func validateAndUnMarshalConnectionResponse(t *testing.T, resp response.Response) LibraryElementConnectionsResponse {
+func validateAndUnMarshalConnectionResponse(t *testing.T, resp response.Response) model.LibraryElementConnectionsResponse {
 	t.Helper()
 	require.Equal(t, 200, resp.Status())
-	var result = LibraryElementConnectionsResponse{}
+	var result = model.LibraryElementConnectionsResponse{}
 	err := json.Unmarshal(resp.Body(), &result)
 	require.NoError(t, err)
 	return result
