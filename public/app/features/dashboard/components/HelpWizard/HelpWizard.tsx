@@ -94,9 +94,10 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
             To request troubleshooting help, send a snapshot of this panel to Grafana Labs Technical Support. The
             snapshot contains query response data and panel settings.
           </span>
-          {config.featureToggles.supportBundles && (
+          {config.supportBundlesEnabled && (
             <span className="muted">
-              <a href="/support-bundles">???? Support bundles???</a>
+              You can also retrieve a support bundle containing information concerning your Grafana instance and
+              configured datasources in the <a href="/support-bundles">support bundles section</a>.
             </span>
           )}
         </Stack>
