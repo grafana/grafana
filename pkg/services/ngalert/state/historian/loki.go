@@ -127,9 +127,6 @@ func (h *RemoteLokiBackend) recordStreams(ctx context.Context, streams []stream,
 }
 
 func (h *RemoteLokiBackend) addExternalLabels(labels data.Labels) data.Labels {
-	if h.externalLabels == nil {
-		return labels
-	}
 	for k, v := range h.externalLabels {
 		labels[k] = v
 	}
