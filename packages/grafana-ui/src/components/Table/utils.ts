@@ -75,10 +75,6 @@ export function getColumns(
   footerValues?: FooterItem[],
   isCountRowsSet?: boolean
 ): GrafanaTableColumn[] {
-  // console.log(footerValues, 'footerValues1');
-  // const updatedFooterValues = footerValues;
-  // updatedFooterValues?.unshift(undefined);
-  // console.log(updatedFooterValues, 'footerValues2');
   const columns: GrafanaTableColumn[] = [];
   let fieldCountWithoutWidth = 0;
 
@@ -333,15 +329,12 @@ export function getFooterItems(
   theme2: GrafanaTheme2
 ): FooterItem[] {
   // JEV: we need to add the row nums field if it doesn't exist; we can do that by searching for id === "0"
-  // console.log(values, 'values');
-  // console.log(options, 'options');
   const length = values.length;
   const addedField = { id: '0', field: buildFieldsForOptionalRowNums(length) };
   if (!filterFields.some((field) => field.id === '0')) {
     filterFields.unshift(addedField);
   }
 
-  // console.log(filterFields, 'filterFields');
   return filterFields.map((data, i) => {
     if (data.field.type !== FieldType.number) {
       // show the reducer in the first column
@@ -359,7 +352,6 @@ export function getFooterItems(
     data.field = newField;
     if (options.fields && options.fields.length > 0) {
       const f = options.fields.find((f) => f === data.field.name);
-      // console.log(f, 'f');
       if (f) {
         return getFormattedValue(data.field, options.reducer, theme2);
       }
@@ -370,11 +362,9 @@ export function getFooterItems(
 }
 
 function getFormattedValue(field: Field, reducer: string[], theme: GrafanaTheme2) {
-  // console.log(getFormattedValue, 'getFormattedValue fired');
   const fmt = field.display ?? getDisplayProcessor({ field, theme });
   const calc = reducer[0];
   const v = reduceField({ field, reducers: reducer })[calc];
-  // console.log(formattedValueToString(fmt(v)), 'formattedValueToString(fmt(v));');
   return formattedValueToString(fmt(v));
 }
 
@@ -391,7 +381,6 @@ export function createFooterCalculationValues(rows: Row[]): any[number] {
     }
   }
 
-  // console.log(values, 'calculatedValues');
   return values;
 }
 
