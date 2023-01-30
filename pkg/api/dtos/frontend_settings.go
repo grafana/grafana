@@ -37,41 +37,9 @@ type FrontendSettingsLicenseInfoDTO struct {
 	Edition         string          `json:"edition"`
 	EnabledFeatures map[string]bool `json:"enabledFeatures"`
 
-	// PR TODO: enterprise fields - should these be here at all? should they be pointers?
-	TrialExpiry int64  `json:"trialExpiry,omitempty"`
-	AppUrl      string `json:"appUrl,omitempty"`
-}
-
-// PR TODO: enterprise
-type FrontendSettingsLicensing struct {
-	Slug                   *string `json:"slug,omitempty"`
-	LimitBy                *string `json:"limitBy,omitempty"`
-	IncludedUsers          *int64  `json:"includedUsers,omitempty"`
-	LicenseExpiry          *int64  `json:"licenseExpiry,omitempty"`
-	LicenseExpiryWarnDays  *int64  `json:"licenseExpiryWarnDays,omitempty"`
-	TokenExpiry            *int64  `json:"tokenExpiry,omitempty"`
-	IsTrial                *bool   `json:"isTrial,omitempty"`
-	TokenExpiryWarnDays    *int64  `json:"tokenExpiryWarnDays,omitempty"`
-	UsageBilling           *bool   `json:"usageBilling,omitempty"`
-	ActiveAdminsAndEditors *int64  `json:"activeAdminsAndEditors,omitempty"`
-	ActiveViewers          *int64  `json:"activeViewers,omitempty"`
-	ActiveUsers            *int64  `json:"ActiveUsers,omitempty"`
-}
-
-// PR TODO: enterprise
-type FrontendSettingsWhitelabeling struct {
-	Links      any    `json:"links"` // PR TODO: type this properly
-	LoginTitle string `json:"loginTitle"`
-
-	// PR TODO: optional config
-	AppTitle              *string `json:"appTitle,omitempty"`
-	LoginLogo             *string `json:"loginLogo,omitempty"`
-	MenuLogo              *string `json:"menuLogo,omitempty"`
-	LoginBackground       *string `json:"loginBackground,omitempty"`
-	LoginSubtitle         *string `json:"loginSubtitle,omitempty"`
-	LoginBoxBackground    *string `json:"loginBoxBackground,omitempty"`
-	LoadingLogo           *string `json:"loadingLogo,omitempty"`
-	PublicDashboardFooter any     `json:"publicDashboardFooter,omitempty"` // PR TODO: type this properly
+	// Enterprise-only
+	TrialExpiry *int64  `json:"trialExpiry,omitempty"`
+	AppUrl      *string `json:"appUrl,omitempty"`
 }
 
 type FrontendSettingsAzureDTO struct {
@@ -103,6 +71,53 @@ type DashboardPreviewsSystemRequirements struct {
 type DashboardPreviewsSetupConfig struct {
 	SystemRequirements DashboardPreviewsSystemRequirements `json:"systemRequirements"`
 	ThumbnailsExist    bool                                `json:"thumbnailsExist"`
+}
+
+// Enterprise-only
+type FrontendSettingsLicensingDTO struct {
+	Slug                   *string `json:"slug,omitempty"`
+	LimitBy                *string `json:"limitBy,omitempty"`
+	IncludedUsers          *int64  `json:"includedUsers,omitempty"`
+	LicenseExpiry          *int64  `json:"licenseExpiry,omitempty"`
+	LicenseExpiryWarnDays  *int64  `json:"licenseExpiryWarnDays,omitempty"`
+	TokenExpiry            *int64  `json:"tokenExpiry,omitempty"`
+	IsTrial                *bool   `json:"isTrial,omitempty"`
+	TokenExpiryWarnDays    *int64  `json:"tokenExpiryWarnDays,omitempty"`
+	UsageBilling           *bool   `json:"usageBilling,omitempty"`
+	ActiveAdminsAndEditors *int64  `json:"activeAdminsAndEditors,omitempty"`
+	ActiveViewers          *int64  `json:"activeViewers,omitempty"`
+	ActiveUsers            *int64  `json:"ActiveUsers,omitempty"`
+}
+
+// Enterprise-only
+type FrontendSettingsFooterConfigItemDTO struct {
+	Text   string `json:"text"`
+	Url    string `json:"url"`
+	Icon   string `json:"icon"`
+	Target string `json:"blank"`
+}
+
+// Enterprise-only
+type FrontendSettingsPublicDashboardFooterConfigDTO struct {
+	Hide bool   `json:"hide"`
+	Text string `json:"text"`
+	Logo string `json:"logo"`
+	Link string `json:"link"`
+}
+
+// Enterprise-only
+type FrontendSettingsWhitelabelingDTO struct {
+	Links      []FrontendSettingsFooterConfigItemDTO `json:"links"`
+	LoginTitle string                                `json:"loginTitle"`
+
+	AppTitle              *string                                         `json:"appTitle,omitempty"`
+	LoginLogo             *string                                         `json:"loginLogo,omitempty"`
+	MenuLogo              *string                                         `json:"menuLogo,omitempty"`
+	LoginBackground       *string                                         `json:"loginBackground,omitempty"`
+	LoginSubtitle         *string                                         `json:"loginSubtitle,omitempty"`
+	LoginBoxBackground    *string                                         `json:"loginBoxBackground,omitempty"`
+	LoadingLogo           *string                                         `json:"loadingLogo,omitempty"`
+	PublicDashboardFooter *FrontendSettingsPublicDashboardFooterConfigDTO `json:"publicDashboardFooter,omitempty"` // PR TODO: type this properly
 }
 
 type FrontendSettingsDTO struct {
@@ -204,8 +219,9 @@ type FrontendSettingsDTO struct {
 
 	LoginError string `json:"loginError,omitempty"`
 
-	Licensing     *FrontendSettingsLicensing     `json:"licensing,omitempty"`
-	Whitelabeling *FrontendSettingsWhitelabeling `json:"whitelabeling,omitempty"`
+	PluginsCDNBaseURL string `json:"pluginsCDNBaseURL,omitempty"`
 
-	PluginsCDNBaseURL string `json:"pluginsCDNBaseURL,omitEmpty"`
+	// Enterprise
+	Licensing     *FrontendSettingsLicensingDTO     `json:"licensing,omitempty"`
+	Whitelabeling *FrontendSettingsWhitelabelingDTO `json:"whitelabeling,omitempty"`
 }

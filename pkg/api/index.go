@@ -40,8 +40,6 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		return nil, err
 	}
 
-	// PR TODO: Should this just move to frontendsettings.go?
-	settings.DateFormats = hs.Cfg.DateFormats
 	settings.IsPublicDashboardView = c.IsPublicDashboardView
 
 	prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: c.UserID, OrgID: c.OrgID, Teams: c.Teams}

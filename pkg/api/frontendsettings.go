@@ -145,6 +145,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		EditorsCanAdmin:                     hs.Cfg.EditorsCanAdmin,
 		DisableSanitizeHtml:                 hs.Cfg.DisableSanitizeHtml,
 		PluginsToPreload:                    pluginsToPreload,
+		DateFormats:                         hs.Cfg.DateFormats,
 
 		Auth: dtos.FrontendSettingsAuthDTO{
 			OAuthSkipOrgRoleUpdateSync: hs.Cfg.OAuthSkipOrgRoleUpdateSync,
