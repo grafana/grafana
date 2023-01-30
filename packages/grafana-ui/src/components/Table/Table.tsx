@@ -137,7 +137,6 @@ export const Table = memo((props: Props) => {
     rows,
     prepareRow,
     totalColumnsWidth,
-    footerGroups,
     page,
     state,
     gotoPage,
@@ -145,7 +144,6 @@ export const Table = memo((props: Props) => {
     pageOptions,
     setHiddenColumns,
   } = useTable(options, useFilters, useSortBy, useAbsoluteLayout, useResizeColumns, useExpanded, usePagination);
-  // JEV: footerGroups and headerGroups are identical
 
   const extendedState = state as GrafanaTableState;
 
@@ -384,7 +382,11 @@ export const Table = memo((props: Props) => {
             <FooterRow
               isPaginationVisible={Boolean(enablePagination)}
               footerValues={footerItems}
-              footerGroups={footerGroups}
+              /*
+                The `headerGroups` and `footerGroups` objects destructured from the `useTable` hook are perfectly equivalent, in deep value, but not reference.
+                So we can use `headerGroups` here for building the footer, and no longer have a need for `footerGroups`.
+              */
+              footerGroups={headerGroups}
               totalColumnsWidth={totalColumnsWidth}
               tableStyles={tableStyles}
             />
