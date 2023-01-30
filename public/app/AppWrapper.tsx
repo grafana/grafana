@@ -5,7 +5,6 @@ import { Router, Route, Redirect, Switch } from 'react-router-dom';
 
 import { config, locationService, navigationLogger, reportInteraction } from '@grafana/runtime';
 import { ErrorBoundaryAlert, GlobalStyles, ModalRoot, ModalsProvider, PortalContainer } from '@grafana/ui';
-import { SearchWrapper } from 'app/features/search';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
 
@@ -13,15 +12,12 @@ import { AngularRoot } from './angular/AngularRoot';
 import { loadAndInitAngularIfEnabled } from './angular/loadAndInitAngularIfEnabled';
 import { GrafanaApp } from './app';
 import { AppChrome } from './core/components/AppChrome/AppChrome';
-import { DisabledOnChromelessRoutes } from './core/components/AppChrome/DisableOnChromelessRoutes';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
-import { NavBar } from './core/components/NavBar/NavBar';
 import { GrafanaContext } from './core/context/GrafanaContext';
 import { GrafanaRoute } from './core/navigation/GrafanaRoute';
 import { RouteDescriptor } from './core/navigation/types';
 import { contextSrv } from './core/services/context_srv';
 import { ThemeProvider } from './core/utils/ConfigProvider';
-import { CommandPalette } from './features/commandPalette/CommandPalette';
 import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 
 interface AppWrapperProps {
@@ -83,14 +79,6 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
     return <Switch>{getAppRoutes().map((r) => this.renderRoute(r))}</Switch>;
   }
 
-  renderNavBar() {
-    if (!this.state.ready || config.featureToggles.topnav) {
-      return null;
-    }
-
-    return <NavBar />;
-  }
-
   render() {
     const { app } = this.props;
     const { ready } = this.state;
@@ -118,13 +106,6 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                     <GlobalStyles />
                     <div className="grafana-app">
                       <Router history={locationService.getHistory()}>
-                        <DisabledOnChromelessRoutes>
-                          <>
-                            {config.featureToggles.commandPalette && <CommandPalette />}
-                            {this.renderNavBar()}
-                            <SearchWrapper />
-                          </>
-                        </DisabledOnChromelessRoutes>
                         <AppChrome>
                           {pageBanners.map((Banner, index) => (
                             <Banner key={index.toString()} />
