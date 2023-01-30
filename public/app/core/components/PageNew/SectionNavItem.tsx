@@ -28,6 +28,14 @@ export function SectionNavItem({ item, isSectionRoot = false }: Props) {
     [styles.noRootMargin]: noRootMargin,
   });
 
+  let icon: React.ReactNode | null = null;
+
+  if (item.img) {
+    icon = <img data-testid="section-image" className={styles.sectionImg} src={item.img} alt="" />;
+  } else if (item.icon) {
+    icon = <Icon data-testid="section-icon" name={item.icon} />;
+  }
+
   return (
     <>
       <a
@@ -37,8 +45,7 @@ export function SectionNavItem({ item, isSectionRoot = false }: Props) {
         role="tab"
         aria-selected={item.active}
       >
-        {isSectionRoot && item.icon && <Icon name={item.icon} />}
-        {isSectionRoot && item.img && <img className={styles.sectionImg} src={item.img} alt={`logo of ${item.text}`} />}
+        {isSectionRoot && icon}
         {getNavTitle(item.id) ?? item.text}
         {item.tabSuffix && <item.tabSuffix className={styles.suffix} />}
       </a>

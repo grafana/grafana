@@ -165,19 +165,71 @@ func (st *Manager) Get(orgID int64, alertRuleUID, stateId string) *State {
 	return st.cache.get(orgID, alertRuleUID, stateId)
 }
 
-// ResetStateByRuleUID deletes all entries in the state manager that match the given rule UID.
-func (st *Manager) ResetStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey) []*State {
-	logger := st.log.New(ruleKey.LogContext()...)
+// DeleteStateByRuleUID removes the rule instances from cache and instanceStore. A closed channel is returned to be able
+// to gracefully handle the clear state step in scheduler in case we do not need to use the historian to save state
+// history.
+func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.AlertRuleKey, reason string) []StateTransition {
+	logger := st.log.FromContext(ctx)
 	logger.Debug("Resetting state of the rule")
+
 	states := st.cache.removeByRuleUID(ruleKey.OrgID, ruleKey.UID)
-	if len(states) > 0 && st.instanceStore != nil {
+
+	if len(states) == 0 {
+		return nil
+	}
+
+	now := st.clock.Now()
+	transitions := make([]StateTransition, 0, len(states))
+	for _, s := range states {
+		oldState := s.State
+		oldReason := s.StateReason
+		startsAt := s.StartsAt
+		if s.State != eval.Normal {
+			startsAt = now
+		}
+		s.SetNormal(reason, startsAt, now)
+		// Set Resolved property so the scheduler knows to send a postable alert
+		// to Alertmanager.
+		s.Resolved = oldState == eval.Alerting
+		s.LastEvaluationTime = now
+		s.Values = map[string]float64{}
+		transitions = append(transitions, StateTransition{
+			State:               s,
+			PreviousState:       oldState,
+			PreviousStateReason: oldReason,
+		})
+	}
+
+	if st.instanceStore != nil {
 		err := st.instanceStore.DeleteAlertInstancesByRule(ctx, ruleKey)
 		if err != nil {
 			logger.Error("Failed to delete states that belong to a rule from database", "error", err)
 		}
 	}
 	logger.Info("Rules state was reset", "states", len(states))
-	return states
+
+	return transitions
+}
+
+// ResetStateByRuleUID removes the rule instances from cache and instanceStore and saves state history. If the state
+// history has to be saved, rule must not be nil.
+func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.AlertRule, reason string) []StateTransition {
+	ruleKey := rule.GetKey()
+	transitions := st.DeleteStateByRuleUID(ctx, ruleKey, reason)
+
+	if rule == nil || st.historian == nil || len(transitions) == 0 {
+		return transitions
+	}
+
+	ruleMeta := history_model.NewRuleMeta(rule, st.log)
+	errCh := st.historian.RecordStatesAsync(ctx, ruleMeta, transitions)
+	go func() {
+		err := <-errCh
+		if err != nil {
+			st.log.FromContext(ctx).Error("Error updating historian state reset transitions", append(ruleKey.LogContext(), "reason", reason, "error", err)...)
+		}
+	}()
+	return transitions
 }
 
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
@@ -240,7 +292,7 @@ func (st *Manager) setNextState(ctx context.Context, alertRule *ngModels.AlertRu
 		logger.Debug("Ignoring set next state as result is pending")
 	}
 
-	// Set reason iff: result is different than state, reason is not Alerting or Normal
+	// Set reason iff: result and state are different, reason is not Alerting or Normal
 	currentState.StateReason = ""
 
 	if currentState.State != result.State &&

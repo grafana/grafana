@@ -167,6 +167,13 @@ export interface DataSourceWithLogsContextSupport<TQuery extends DataQuery = Dat
    * This method can be used to show "context" button based on runtime conditions (for example row model data or plugin settings, etc.)
    */
   showContextToggle(row?: LogRowModel): boolean;
+
+  /**
+   * This method can be used to display a custom UI in the context view.
+   * @alpha
+   * @internal
+   */
+  getLogRowContextUi?(row: LogRowModel, runContextQuery?: () => void): React.ReactNode;
 }
 
 export const hasLogsContextSupport = (datasource: unknown): datasource is DataSourceWithLogsContextSupport => {
@@ -195,11 +202,23 @@ export enum SupplementaryQueryType {
  * @internal
  */
 export interface DataSourceWithSupplementaryQueriesSupport<TQuery extends DataQuery> {
+  /**
+   * Returns an observable that will be used to fetch supplementary data based on the provided
+   * supplementary query type and original request.
+   */
   getDataProvider(
     type: SupplementaryQueryType,
     request: DataQueryRequest<TQuery>
   ): Observable<DataQueryResponse> | undefined;
+  /**
+   * Returns supplementary query types that data source supports.
+   */
   getSupportedSupplementaryQueryTypes(): SupplementaryQueryType[];
+  /**
+   * Returns a supplementary query to be used to fetch supplementary data based on the provided type and original query.
+   * If provided query is not suitable for provided supplementary query type, undefined should be returned.
+   */
+  getSupplementaryQuery(type: SupplementaryQueryType, query: TQuery): TQuery | undefined;
 }
 
 export const hasSupplementaryQuerySupport = <TQuery extends DataQuery>(
@@ -214,6 +233,17 @@ export const hasSupplementaryQuerySupport = <TQuery extends DataQuery>(
 
   return (
     withSupplementaryQueriesSupport.getDataProvider !== undefined &&
+    withSupplementaryQueriesSupport.getSupplementaryQuery !== undefined &&
     withSupplementaryQueriesSupport.getSupportedSupplementaryQueryTypes().includes(type)
   );
+};
+
+export const hasLogsContextUiSupport = (datasource: unknown): datasource is DataSourceWithLogsContextSupport => {
+  if (!datasource) {
+    return false;
+  }
+
+  const withLogsSupport = datasource as DataSourceWithLogsContextSupport;
+
+  return withLogsSupport.getLogRowContextUi !== undefined;
 };
