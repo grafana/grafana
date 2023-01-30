@@ -37,6 +37,7 @@ You can specify these Azure Monitor data source queries in the Variable edit vie
 | **Subscriptions**   | Returns subscriptions.                                                                                             |
 | **Resource Groups** | Returns resource groups for a specified. Supports multi-value. subscription.                                       |
 | **Namespaces**      | Returns metric namespaces for the specified subscription and resource group.                                       |
+| **Regions**         | Returns regions for the specified subscription                                                                     |
 | **Resource Names**  | Returns a list of resource names for a specified subscription, resource group and namespace. Supports multi-value. |
 | **Metric Names**    | Returns a list of metric names for a resource.                                                                     |
 | **Workspaces**      | Returns a list of workspaces for the specified subscription.                                                       |
@@ -68,10 +69,10 @@ Perf
 
 ### Multi-value variables
 
-It is possible to select multiple values for **Resource Groups** and **Resource Names** and use a single metrics query pointing to those values as far as they:
+It is possible to select multiple values for **Resource Groups** and **Resource Names** and use a single metrics query pointing to those values as long as they:
 
 - Belong to the same subscription.
 - Are in the same region.
 - Are of the same type (namespace).
 
-Also, note that if a template variable pointing to multiple resource groups or names is used in other template variable as a parameter (e.g. to retrieve metric names), only the first value will be used. This means that the combination of the first resource group and name selected should be valid.
+Also, note that if a template variable pointing to multiple resource groups or names is used in another template variable as a parameter (e.g. to retrieve metric names), only the first value will be used. This means that the combination of the first resource group and name selected should be valid.
