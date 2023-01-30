@@ -62,7 +62,6 @@ export const getDefaultFormValues = (): RuleFormValues => {
     execErrState: GrafanaAlertStateDecision.Error,
     evaluateFor: '5m',
     evaluateEvery: MINUTE,
-    isPaused: null,
 
     // cortex / loki
     namespace: '',

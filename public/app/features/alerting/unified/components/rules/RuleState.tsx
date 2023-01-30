@@ -14,7 +14,7 @@ interface Props {
   rule: CombinedRule;
   isDeleting: boolean;
   isCreating: boolean;
-  isPaused: boolean;
+  isPaused?: boolean;
 }
 
 export const RuleState: FC<Props> = ({ rule, isDeleting, isCreating, isPaused }) => {

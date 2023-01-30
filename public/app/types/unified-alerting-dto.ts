@@ -200,7 +200,7 @@ export interface PostableGrafanaRuleDefinition {
   no_data_state: GrafanaAlertStateDecision;
   exec_err_state: GrafanaAlertStateDecision;
   data: AlertQuery[];
-  is_paused: boolean | null;
+  is_paused?: boolean;
 }
 export interface GrafanaRuleDefinition extends PostableGrafanaRuleDefinition {
   id?: string;

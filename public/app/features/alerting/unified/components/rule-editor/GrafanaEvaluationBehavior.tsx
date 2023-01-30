@@ -282,7 +282,7 @@ export function GrafanaEvaluationBehavior({
           <Field htmlFor="pause-alert-switch">
             <InputControl
               render={() => (
-                <Stack gap={1}>
+                <Stack gap={1} direction="row" alignItems="center">
                   <Switch
                     id="pause-alert"
                     onChange={(value) => {
@@ -292,11 +292,7 @@ export function GrafanaEvaluationBehavior({
                   />
                   <label htmlFor="pause-alert" className={styles.switchLabel}>
                     Pause evaluation
-                    <Tooltip
-                      placement="top"
-                      content="Pausing the rule will stop its evaluation until unpaused"
-                      theme={'info'}
-                    >
+                    <Tooltip placement="top" content="Turn on to pause evaluation for this alert rule." theme={'info'}>
                       <Icon tabIndex={0} name="info-circle" size="sm" className={styles.infoIcon} />
                     </Tooltip>
                   </label>
