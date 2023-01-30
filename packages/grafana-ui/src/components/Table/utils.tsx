@@ -453,7 +453,11 @@ export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDispl
   }
 }
 
-const defaultRowNumberColumnFieldData = {
+/*
+  For building the column data for the togglable Row Number field.
+  `values` property is omitted, as it will be added at a later time.
+*/
+const defaultRowNumberColumnFieldData: Omit<Field, 'values'> = {
   name: ' ',
   display: function (value: string) {
     return {
