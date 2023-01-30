@@ -73,12 +73,6 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:         "tempoApmTable",
-			Description:  "Show APM table",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-		},
-		{
 			Name:        "prometheusAzureOverrideAudience",
 			Description: "Experimental. Allow override default AAD audience for Azure Prometheus endpoint",
 			State:       FeatureStateBeta,
