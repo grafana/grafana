@@ -306,7 +306,7 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGro
 		return toNamespaceErrorResponse(err)
 	}
 
-	rules, existingRulesWithoutIsPaused, err := validateRuleGroup(&ruleGroupConfig, c.SignedInUser.OrgID, namespace, func(condition ngmodels.Condition) error {
+	rules, err := validateRuleGroup(&ruleGroupConfig, c.SignedInUser.OrgID, namespace, func(condition ngmodels.Condition) error {
 		return srv.conditionValidator.Validate(eval.Context(c.Req.Context(), c.SignedInUser), condition)
 	}, srv.cfg)
 	if err != nil {
@@ -319,17 +319,17 @@ func (srv RulerSrv) RoutePostNameRulesConfig(c *contextmodel.ReqContext, ruleGro
 		RuleGroup:    ruleGroupConfig.Name,
 	}
 
-	return srv.updateAlertRulesInGroup(c, groupKey, rules, existingRulesWithoutIsPaused)
+	return srv.updateAlertRulesInGroup(c, groupKey, rules)
 }
 
 // updateAlertRulesInGroup calculates changes (rules to add,update,delete), verifies that the user is authorized to do the calculated changes and updates database.
 // All operations are performed in a single transaction
-func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey ngmodels.AlertRuleGroupKey, rules []*ngmodels.AlertRule, existingRulesWithoutIsPaused map[string]struct{}) response.Response {
+func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey ngmodels.AlertRuleGroupKey, rules []*ngmodels.AlertRuleWithOptionals) response.Response {
 	var finalChanges *store.GroupDelta
 	hasAccess := accesscontrol.HasAccess(srv.ac, c)
 	err := srv.xactManager.InTransaction(c.Req.Context(), func(tranCtx context.Context) error {
 		logger := srv.log.New("namespace_uid", groupKey.NamespaceUID, "group", groupKey.RuleGroup, "org_id", groupKey.OrgID, "user_id", c.UserID)
-		groupChanges, err := store.CalculateChanges(tranCtx, srv.store, groupKey, rules, existingRulesWithoutIsPaused)
+		groupChanges, err := store.CalculateChanges(tranCtx, srv.store, groupKey, rules)
 		if err != nil {
 			return err
 		}

@@ -162,6 +162,11 @@ type AlertRule struct {
 	IsPaused    bool
 }
 
+type AlertRuleWithOptionals struct {
+	AlertRule
+	HasPause bool
+}
+
 // GetDashboardUID returns the DashboardUID or "".
 func (alertRule *AlertRule) GetDashboardUID() string {
 	if alertRule.DashboardUID != nil {
@@ -443,7 +448,7 @@ func (c Condition) IsValid() bool {
 //   - AlertRule.Condition and AlertRule.Data
 //
 // If either of the pair is specified, neither is patched.
-func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRule, existingRulesWithoutIsPaused map[string]struct{}) {
+func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRuleWithOptionals) {
 	if ruleToPatch.Title == "" {
 		ruleToPatch.Title = existingRule.Title
 	}
@@ -469,7 +474,7 @@ func PatchPartialAlertRule(existingRule *AlertRule, ruleToPatch *AlertRule, exis
 	if ruleToPatch.For == -1 {
 		ruleToPatch.For = existingRule.For
 	}
-	if _, exists := existingRulesWithoutIsPaused[ruleToPatch.UID]; exists {
+	if !ruleToPatch.HasPause {
 		ruleToPatch.IsPaused = existingRule.IsPaused
 	}
 }

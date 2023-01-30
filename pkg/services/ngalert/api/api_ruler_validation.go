@@ -155,13 +155,13 @@ func validateRuleGroup(
 	orgId int64,
 	namespace *folder.Folder,
 	conditionValidator func(ngmodels.Condition) error,
-	cfg *setting.UnifiedAlertingSettings) ([]*ngmodels.AlertRule, map[string]struct{}, error) {
+	cfg *setting.UnifiedAlertingSettings) ([]*ngmodels.AlertRuleWithOptionals, error) {
 	if ruleGroupConfig.Name == "" {
-		return nil, nil, errors.New("rule group name cannot be empty")
+		return nil, errors.New("rule group name cannot be empty")
 	}
 
 	if len(ruleGroupConfig.Name) > store.AlertRuleMaxRuleGroupNameLength {
-		return nil, nil, fmt.Errorf("rule group name is too long. Max length is %d", store.AlertRuleMaxRuleGroupNameLength)
+		return nil, fmt.Errorf("rule group name is too long. Max length is %d", store.AlertRuleMaxRuleGroupNameLength)
 	}
 
 	interval := time.Duration(ruleGroupConfig.Interval)
@@ -171,34 +171,38 @@ func validateRuleGroup(
 	}
 
 	if interval < 0 || int64(interval.Seconds())%int64(cfg.BaseInterval.Seconds()) != 0 {
-		return nil, nil, fmt.Errorf("rule evaluation interval (%d second) should be positive number that is multiple of the base interval of %d seconds", int64(interval.Seconds()), int64(cfg.BaseInterval.Seconds()))
+		return nil, fmt.Errorf("rule evaluation interval (%d second) should be positive number that is multiple of the base interval of %d seconds", int64(interval.Seconds()), int64(cfg.BaseInterval.Seconds()))
 	}
 
 	// TODO should we validate that interval is >= cfg.MinInterval? Currently, we allow to save but fix the specified interval if it is < cfg.MinInterval
 
-	result := make([]*ngmodels.AlertRule, 0, len(ruleGroupConfig.Rules))
-	existingRulesWithoutIsPaused := make(map[string]struct{})
+	result := make([]*ngmodels.AlertRuleWithOptionals, 0, len(ruleGroupConfig.Rules))
 	uids := make(map[string]int, cap(result))
 	for idx := range ruleGroupConfig.Rules {
 		rule, err := validateRuleNode(&ruleGroupConfig.Rules[idx], ruleGroupConfig.Name, interval, orgId, namespace, conditionValidator, cfg)
 		// TODO do not stop on the first failure but return all failures
 		if err != nil {
-			return nil, nil, fmt.Errorf("invalid rule specification at index [%d]: %w", idx, err)
+			return nil, fmt.Errorf("invalid rule specification at index [%d]: %w", idx, err)
 		}
 		if rule.UID != "" {
 			if existingIdx, ok := uids[rule.UID]; ok {
-				return nil, nil, fmt.Errorf("rule [%d] has UID %s that is already assigned to another rule at index %d", idx, rule.UID, existingIdx)
+				return nil, fmt.Errorf("rule [%d] has UID %s that is already assigned to another rule at index %d", idx, rule.UID, existingIdx)
 			}
 			uids[rule.UID] = idx
 		}
-		isRulePaused := ruleGroupConfig.Rules[idx].GrafanaManagedAlert.IsPaused
-		if isRulePaused != nil {
-			rule.IsPaused = *isRulePaused
-		} else if rule.UID != "" {
-			existingRulesWithoutIsPaused[rule.UID] = struct{}{}
+
+		v := ngmodels.AlertRuleWithOptionals{AlertRule: *rule}
+
+		original := ruleGroupConfig.Rules[idx]
+		if alert := original.GrafanaManagedAlert; alert != nil {
+			isPaused := alert.IsPaused
+			if isPaused != nil {
+				v.IsPaused = *isPaused
+				v.HasPause = true
+			}
 		}
 		rule.RuleGroupIndex = idx + 1
-		result = append(result, rule)
+		result = append(result, v)
 	}
-	return result, existingRulesWithoutIsPaused, nil
+	return result, nil
 }
