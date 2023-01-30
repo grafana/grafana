@@ -20,6 +20,8 @@ export function AppChrome({ children }: Props) {
   const { chrome } = useGrafana();
   const state = chrome.useState();
 
+  console.log('AppChrome render');
+
   if (!config.featureToggles.topnav) {
     return <main className="main-view">{children}</main>;
   }

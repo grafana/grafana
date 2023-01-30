@@ -24,7 +24,7 @@ export interface AppChromeState {
 export class AppChromeService {
   searchBarStorageKey = 'SearchBar_Hidden';
   private currentRoute?: RouteDescriptor;
-  private routeChangeHandled?: boolean;
+  private routeChangeHandled = true;
 
   readonly state = new BehaviorSubject<AppChromeState>({
     chromeless: true, // start out hidden to not flash it on pages without chrome
@@ -60,9 +60,26 @@ export class AppChromeService {
     // KioskMode overrides chromeless state
     newState.chromeless = newState.kioskMode === KioskMode.Full || this.currentRoute?.chromeless;
 
-    if (!isShallowEqual(current, newState)) {
+    if (!this.ignoreStateUpdate(newState, current)) {
       this.state.next(newState);
     }
+  }
+
+  ignoreStateUpdate(newState: AppChromeState, current: AppChromeState) {
+    if (isShallowEqual(newState, current)) {
+      return true;
+    }
+
+    // If we have new section nav or page nav but text is the same, skip update
+    if (newState.sectionNav !== current.sectionNav || newState.pageNav !== current.pageNav) {
+      // Some item level pages pass a new instance of pageNav on every render which will cause unnecessary AppChrome re-renders
+      // Here we ignore all state updates where we get a new navModel or pageNav instance but with same text property
+      if (newState.sectionNav.text === current.sectionNav.text && newState.pageNav?.text === current.pageNav?.text) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   useState() {
