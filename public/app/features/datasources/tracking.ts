@@ -53,4 +53,6 @@ type DataSourceTestedProps = {
   plugin_version?: string;
   /** Whether or not the datasource test succeeded = the datasource was successfully configured */
   success: boolean;
+  /** The URL that points to the edit page for the datasoruce. We are using this to be able to distinguish between the performance of different datasource edit locations. */
+  editLink?: string;
 };

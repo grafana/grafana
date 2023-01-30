@@ -3,9 +3,10 @@ package utils
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
-	"github.com/stretchr/testify/require"
 )
 
 func TestDashTemplateEvaluator(t *testing.T) {

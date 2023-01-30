@@ -489,7 +489,8 @@
     "theme": {
       "dark-label": "深色",
       "default-label": "默认",
-      "light-label": "浅色"
+      "light-label": "浅色",
+      "system-label": ""
     },
     "title": "首选项"
   },

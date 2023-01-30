@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/common/model"
+
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/provisioning/values"
-
-	"github.com/prometheus/common/model"
 )
 
 type RuleDelete struct {
@@ -78,6 +78,7 @@ type AlertRuleV1 struct {
 	For          values.StringValue    `json:"for" yaml:"for"`
 	Annotations  values.StringMapValue `json:"annotations" yaml:"annotations"`
 	Labels       values.StringMapValue `json:"labels" yaml:"labels"`
+	IsPaused     values.BoolValue      `json:"isPaused" yaml:"isPaused"`
 }
 
 func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
@@ -134,6 +135,7 @@ func (rule *AlertRuleV1) mapToModel(orgID int64) (models.AlertRule, error) {
 	if len(alertRule.Data) == 0 {
 		return models.AlertRule{}, fmt.Errorf("rule '%s' failed to parse: no data set", alertRule.Title)
 	}
+	alertRule.IsPaused = rule.IsPaused.Value()
 	return alertRule, nil
 }
 
@@ -205,6 +207,7 @@ type AlertRuleExport struct {
 	For          model.Duration             `json:"for" yaml:"for"`
 	Annotations  map[string]string          `json:"annotations,omitempty" yaml:"annotations,omitempty"`
 	Labels       map[string]string          `json:"labels,omitempty" yaml:"labels,omitempty"`
+	IsPaused     bool                       `json:"isPaused" yaml:"isPaused"`
 }
 
 // AlertQueryExport is the provisioned export of models.AlertQuery.
@@ -281,6 +284,7 @@ func newAlertRuleExport(rule models.AlertRule) (AlertRuleExport, error) {
 		ExecErrState: rule.ExecErrState,
 		Annotations:  rule.Annotations,
 		Labels:       rule.Labels,
+		IsPaused:     rule.IsPaused,
 	}, nil
 }
 

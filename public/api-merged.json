@@ -16006,6 +16006,10 @@
           "type": "integer",
           "format": "int64"
         },
+        "isPaused": {
+          "type": "boolean",
+          "example": true
+        },
         "labels": {
           "type": "object",
           "additionalProperties": {
@@ -19148,6 +19152,7 @@
       }
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableSilence"
