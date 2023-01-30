@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	
+
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/query"
@@ -15,8 +15,6 @@ import (
 // requests.
 // Tracing headers are X-Datasource-Uid, X-Dashboard-Uid,
 // X-Panel-Id, X-Grafana-Org-Id.
-// Additionally, it also sets X-Trace-Id as a non-http header, if the provided context
-// contains a trace ID.
 func NewTracingHeaderMiddleware() plugins.ClientMiddleware {
 	return plugins.ClientMiddlewareFunc(func(next plugins.Client) plugins.Client {
 		return &TracingHeaderMiddleware{
