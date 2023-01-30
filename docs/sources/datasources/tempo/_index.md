@@ -68,10 +68,10 @@ There are two ways to configure the trace to logs feature. You can use simplifie
 
 1. Select the target data source.
 1. Set start and end time shift. As the logs timestamps may not exactly match the timestamps of the spans in the trace it may be necessary to widen or shift the time range to find the desired logs.
-1. Optionally select tags to map. In the custom query you can use all tags separately, even those not mapped here or you can use ${\_\_tags} variable which will use and interpolate the tags mapped here. The tags you configure must be present in the span's attributes or resources for a trace to logs span link to appear. You can optionally configure a new name for the tag. This is useful in cases where the tag has dots in the name and the target data source does not allow using dots in labels. For example, you can remap `http.status` to `http_status` in such a case.
+1. Optionally select tags to map. These tags can be used in the custom query with `${__tags}` variable. This variable will interpolate the mapped tags as list in an appropriate syntax for the data source and will only include the tags that were present in the span omitting those that weren't present. You can optionally configure a new name for the tag. This is useful in cases where the tag has dots in the name and the target data source does not allow using dots in labels. For example, you can remap `http.status` to `http_status` in such a case. If you don't map any tags here, you can still use any tag in the query like this `method="${__span.tags.method}"`.
 1. Skip Filter by Trace ID or Filter by Span ID as these cannot be used with custom query.
 1. Switch on Use custom query.
-1. Specify custom query to be used to query the logs. You can use various variables to make that query relevant for current span. The link will only be shown only if all the variables are interpolated with non empty values to prevent creating invalid query.
+1. Specify custom query to be used to query the logs. You can use various variables to make that query relevant for current span. The link will only be shown only if all the variables are interpolated with non-empty values to prevent creating invalid query.
 
 **Variables that can be used in custom query**
 To use a variable you need to wrap it in `${}`. For example `${__span.name}`.
