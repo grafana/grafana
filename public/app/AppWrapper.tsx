@@ -13,7 +13,7 @@ import { AngularRoot } from './angular/AngularRoot';
 import { loadAndInitAngularIfEnabled } from './angular/loadAndInitAngularIfEnabled';
 import { GrafanaApp } from './app';
 import { AppChrome } from './core/components/AppChrome/AppChrome';
-import { DisabledOnChromeless as DisabledOnChromelessRoutes } from './core/components/AppChrome/DisableOnChromeless';
+import { DisabledOnChromelessRoutes } from './core/components/AppChrome/DisableOnChromelessRoutes';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { NavBar } from './core/components/NavBar/NavBar';
 import { GrafanaContext } from './core/context/GrafanaContext';
