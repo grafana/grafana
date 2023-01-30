@@ -67,7 +67,7 @@ There are two ways to configure the trace to logs feature. You can use simplifie
 **To use custom query configuration:**
 
 1. Select the target data source.
-1. Set start and end time shift. As the logs timestamps may not exactly match the timestamps of the spans in trace it may be necessary to search in larger or shifted time range to find the desired logs.
+1. Set start and end time shift. As the logs timestamps may not exactly match the timestamps of the spans in the trace it may be necessary to widen or shift the time range to find the desired logs.
 1. Optionally select tags to map. In the custom query you can use all tags separately, even those not mapped here or you can use ${\_\_tags} variable which will use and interpolate the tags mapped here. The tags you configure must be present in the spans attributes or resources for a trace to logs span link to appear. You can optionally configure a new name for the tag. This is useful for example if the tag has dots in the name and the target data source does not allow using dots in labels. In that case you can for example remap `http.status` to `http_status`.
 1. Skip Filter by Trace ID or Filter by Span ID as these cannot be used with custom query.
 1. Switch on Use custom query.
