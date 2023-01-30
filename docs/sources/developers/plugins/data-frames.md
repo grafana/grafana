@@ -74,6 +74,8 @@ A data frame with at least one time field is considered a _time series_.
 
 For more information on time series, refer to our [Introduction to time series]({{< relref "../../fundamentals/timeseries/" >}}).
 
+For multiple `FieldType.time` values in a data frame, see [Time Series Wide Format (TimeSeriesWide)](https://github.com/grafana/grafana-plugin-sdk-go/blob/main/data/contract_docs/timeseries.md#time-series-wide-format-timeserieswide).
+
 ### Wide format
 
 When a collection of time series shares the same _time index_—the time fields in each time series are identical—they can be stored together, in a _wide_ format. By reusing the time field, we can reduce the amount of data being sent to the browser.
