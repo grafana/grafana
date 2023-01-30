@@ -5,6 +5,15 @@ timeout = "10m"
 min-len = 5
 min-occurrences = 5
 
+[linters-settings.gci]
+local-prefixes = "github.com/grafana/grafana"
+sections = [
+  "standard",
+  "default",
+  "github.com/grafana/grafana"
+]
+section-separators = ["newLine"]
+
 [linters-settings.exhaustive]
 default-signifies-exhaustive = true
 
