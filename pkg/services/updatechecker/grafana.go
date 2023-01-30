@@ -31,9 +31,13 @@ func ProvideGrafanaService(cfg *setting.Cfg, tracer tracing.Tracer) *GrafanaServ
 	return &GrafanaService{
 		enabled:        cfg.CheckForGrafanaUpdates,
 		grafanaVersion: cfg.BuildVersion,
-		httpClient:     newInstrumentedHTTPClient(&http.Client{Timeout: time.Second * 10}, tracer),
-		log:            log.New("grafana.update.checker"),
-		tracer:         tracer,
+		httpClient: mustNewInstrumentedHTTPClient(
+			&http.Client{Timeout: time.Second * 10},
+			tracer,
+			"grafana_update_checker",
+		),
+		log:    log.New("grafana.update.checker"),
+		tracer: tracer,
 	}
 }
 
@@ -61,13 +65,11 @@ func (s *GrafanaService) Run(ctx context.Context) error {
 
 func (s *GrafanaService) checkForUpdates(ctx context.Context) {
 	var err error
+	ctx, span := s.tracer.Start(ctx, "updatechecker.GrafanaService.checkForUpdates")
+	defer span.End()
 
 	traceID := tracing.TraceIDFromContext(ctx, false)
 	traceIDLogOpts := []interface{}{"traceID", traceID}
-	s.log.Debug("Checking for updates", traceIDLogOpts...)
-
-	ctx, span := s.tracer.Start(ctx, "updatechecker.GrafanaService.checkForUpdates")
-	defer span.End()
 	defer func() {
 		if err != nil {
 			span.RecordError(err)
@@ -77,6 +79,7 @@ func (s *GrafanaService) checkForUpdates(ctx context.Context) {
 		}
 	}()
 
+	s.log.Debug("Checking for updates", traceIDLogOpts...)
 	resp, err := s.httpClient.Get(ctx, "https://raw.githubusercontent.com/grafana/grafana/main/latest.json")
 	if err != nil {
 		s.log.Debug("Failed to get latest.json repo from github.com", "error", err)

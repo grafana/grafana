@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
-	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/prometheus/client_golang/prometheus"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.opentelemetry.io/otel/trace"
+
+	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 type httpClient interface {
@@ -23,23 +26,69 @@ type instrumentedHTTPClient struct {
 
 	// spanName is the name that request spans will have.
 	spanName string
+
+	requestsCounter   prometheus.Counter
+	failureCounter    prometheus.Counter
+	durationHistogram prometheus.Histogram
+	inFlightCounter   prometheus.Gauge
 }
 
 // defaultInstrumentedHTTPClientSpanName is the default span name for spans created by instrumentedHTTPClient
 const defaultInstrumentedHTTPClientSpanName = "instrumentedHTTPClient.request"
 
+// TODO: customizable registry
+
 // newInstrumentedHTTPClient returns a new usable instrumentedHTTPClient.
-func newInstrumentedHTTPClient(cl *http.Client, tracer tracing.Tracer) *instrumentedHTTPClient {
-	return &instrumentedHTTPClient{
+func newInstrumentedHTTPClient(cl *http.Client, tracer tracing.Tracer, metricsName string) (*instrumentedHTTPClient, error) {
+	r := &instrumentedHTTPClient{
 		Client:   cl,
 		tracer:   tracer,
 		spanName: defaultInstrumentedHTTPClientSpanName,
+
+		// TODO: helps
+
+		requestsCounter: prometheus.NewCounter(prometheus.CounterOpts{
+			Name: metricsName + "_request_total",
+		}),
+		failureCounter: prometheus.NewCounter(prometheus.CounterOpts{
+			Name: metricsName + "_failure_total",
+		}),
+		durationHistogram: prometheus.NewHistogram(prometheus.HistogramOpts{
+			Name: metricsName + "_request_duration_seconds",
+		}),
+		inFlightCounter: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: metricsName + "_in_flight_request_total",
+		}),
 	}
+	if err := r.registerMetrics(prometheus.DefaultRegisterer); err != nil {
+		return nil, fmt.Errorf("register metrics: %w", err)
+	}
+	return r, nil
+}
+
+// mustNewInstrumentedHTTPClient is like newInstrumentedHTTPClient but it panics instead of returning an error.
+func mustNewInstrumentedHTTPClient(cl *http.Client, tracer tracing.Tracer, metricsName string) *instrumentedHTTPClient {
+	r, err := newInstrumentedHTTPClient(cl, tracer, metricsName)
+	if err != nil {
+		panic(err)
+	}
+	return r
+}
+
+func (r *instrumentedHTTPClient) registerMetrics(registerer prometheus.Registerer) error {
+	for _, collector := range []prometheus.Collector{
+		r.requestsCounter, r.failureCounter, r.inFlightCounter, r.durationHistogram,
+	} {
+		if err := registerer.Register(collector); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // request performs a request, wrapping it in a new span. The method, url and response status code will be tracked
 // as span attributes. Any errors will be recorded in the span as well.
-func (r instrumentedHTTPClient) request(ctx context.Context, method string, url string, body io.Reader) (*http.Response, error) {
+func (r *instrumentedHTTPClient) request(ctx context.Context, method string, url string, body io.Reader) (*http.Response, error) {
 	if r.Timeout > 0 {
 		var canc func()
 		ctx, canc = context.WithTimeout(ctx, r.Timeout)
@@ -55,20 +104,32 @@ func (r instrumentedHTTPClient) request(ctx context.Context, method string, url 
 		),
 	)
 	defer span.End()
+
+	var err error
+	startTime := time.Now()
+	r.inFlightCounter.Inc()
+	defer func() {
+		r.inFlightCounter.Dec()
+		r.requestsCounter.Inc()
+		r.durationHistogram.Observe(time.Since(startTime).Seconds())
+		if err != nil {
+			r.failureCounter.Inc()
+			span.RecordError(err)
+		}
+	}()
+
 	req, err := http.NewRequestWithContext(ctx, method, url, body)
 	if err != nil {
-		span.RecordError(err)
 		return nil, fmt.Errorf("new request: %w", err)
 	}
 	resp, err := r.Client.Do(req)
 	if err != nil {
-		span.RecordError(err)
 		return nil, err
 	}
 	return resp, err
 }
 
 // Get performs an instrumented Get request.
-func (r instrumentedHTTPClient) Get(ctx context.Context, url string) (*http.Response, error) {
+func (r *instrumentedHTTPClient) Get(ctx context.Context, url string) (*http.Response, error) {
 	return r.request(ctx, http.MethodGet, url, nil)
 }

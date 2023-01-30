@@ -10,38 +10,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
-
 	"github.com/hashicorp/go-version"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
-)
-
-var (
-	pluginUpdaterRequestTotal = promauto.NewCounter(prometheus.CounterOpts{
-		Namespace: "grafana",
-		Name:      "plugin_updater_request_total",
-		Help:      "The total number of plugin updater update requests",
-	})
-	pluginUpdaterRequestFailureTotal = promauto.NewCounter(prometheus.CounterOpts{
-		Namespace: "grafana",
-		Name:      "plugin_updater_request_failure_total",
-		Help:      "The total number of failed plugin updater update requests",
-	})
-	pluginUpdaterRequestDurationSeconds = promauto.NewHistogram(prometheus.HistogramOpts{
-		Namespace: "grafana",
-		Name:      "plugin_updater_request_duration_seconds",
-		Help:      "Plugin updater request duration",
-	})
-	pluginUpdaterInFlightRequest = promauto.NewGauge(prometheus.GaugeOpts{
-		Namespace: "grafana",
-		Name:      "plugin_updater_in_flight_request_total",
-		Help:      "Plugin updater request currently in progress",
-	})
 )
 
 type PluginsService struct {
@@ -58,9 +32,13 @@ type PluginsService struct {
 
 func ProvidePluginsService(cfg *setting.Cfg, pluginStore plugins.Store, tracer tracing.Tracer) *PluginsService {
 	return &PluginsService{
-		enabled:          cfg.CheckForPluginUpdates,
-		grafanaVersion:   cfg.BuildVersion,
-		httpClient:       newInstrumentedHTTPClient(&http.Client{Timeout: time.Second * 10}, tracer),
+		enabled:        cfg.CheckForPluginUpdates,
+		grafanaVersion: cfg.BuildVersion,
+		httpClient: mustNewInstrumentedHTTPClient(
+			&http.Client{Timeout: time.Second * 10},
+			tracer,
+			"grafana_plugins_update_checker",
+		),
 		log:              log.New("plugins.update.checker"),
 		tracer:           tracer,
 		pluginStore:      pluginStore,
@@ -111,23 +89,13 @@ func (s *PluginsService) HasUpdate(ctx context.Context, pluginID string) (string
 
 func (s *PluginsService) checkForUpdates(ctx context.Context) {
 	var err error
-
 	ctx, span := s.tracer.Start(ctx, "updatechecker.PluginsService.checkForUpdates")
 	defer span.End()
 
 	traceID := tracing.TraceIDFromContext(ctx, false)
 	traceIDLogOpts := []interface{}{"traceID", traceID}
-	s.log.Debug("Checking for updates", traceIDLogOpts...)
-
-	startTime := time.Now()
-	pluginUpdaterInFlightRequest.Inc()
 	defer func() {
-		pluginUpdaterInFlightRequest.Dec()
-		pluginUpdaterRequestTotal.Inc()
-		pluginUpdaterRequestDurationSeconds.Observe(time.Since(startTime).Seconds())
-
 		if err != nil {
-			pluginUpdaterRequestFailureTotal.Inc()
 			span.RecordError(err)
 			s.log.Debug("Update check failed", traceIDLogOpts...)
 		} else {
@@ -135,6 +103,7 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) {
 		}
 	}()
 
+	s.log.Debug("Checking for updates", traceIDLogOpts...)
 	localPlugins := s.pluginsEligibleForVersionCheck(ctx)
 	requestURL := "https://grafana.com/api/plugins/versioncheck?" + url.Values{
 		"slugIn":         []string{s.pluginIDsCSV(localPlugins)},
