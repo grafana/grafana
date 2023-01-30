@@ -1,6 +1,6 @@
 package kind
 
-name:     "Serviceaccount"
+name:     "ServiceAccount"
 maturity: "merged"
 
 lineage: seqs: [

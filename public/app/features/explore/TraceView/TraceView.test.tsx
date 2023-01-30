@@ -1,5 +1,3 @@
-import { TopOfViewRefType } from '@jaegertracing/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView';
-import { TraceData, TraceSpanData } from '@jaegertracing/jaeger-ui-components/src/types/trace';
 import { render, prettyDOM, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { createRef } from 'react';
@@ -12,6 +10,8 @@ import { ExploreId } from 'app/types';
 import { configureStore } from '../../../store/configureStore';
 
 import { TraceView } from './TraceView';
+import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
+import { TraceData, TraceSpanData } from './components/types/trace';
 import { transformDataFrames } from './utils/transform';
 
 function getTraceView(frames: DataFrame[]) {
@@ -23,7 +23,7 @@ function getTraceView(frames: DataFrame[]) {
   };
   const topOfViewRef = createRef<HTMLDivElement>();
 
-  const traceView = (
+  return (
     <Provider store={store}>
       <TraceView
         exploreId={ExploreId.left}
@@ -39,7 +39,6 @@ function getTraceView(frames: DataFrame[]) {
       />
     </Provider>
   );
-  return traceView;
 }
 
 function renderTraceView(frames = [frameOld]) {

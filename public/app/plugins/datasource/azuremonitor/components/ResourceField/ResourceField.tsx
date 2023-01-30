@@ -21,6 +21,7 @@ interface ResourceFieldProps<T> extends AzureQueryEditorFieldProps {
   labelWidth?: number;
   disableRow: (row: ResourceRow, selectedRows: ResourceRowGroup) => boolean;
   renderAdvanced: (resources: T[], onChange: (resources: T[]) => void) => React.ReactNode;
+  selectionNotice?: (selectedRows: ResourceRowGroup) => string;
 }
 
 const ResourceField: React.FC<ResourceFieldProps<string | AzureMonitorResource>> = ({
@@ -34,6 +35,7 @@ const ResourceField: React.FC<ResourceFieldProps<string | AzureMonitorResource>>
   labelWidth,
   disableRow,
   renderAdvanced,
+  selectionNotice,
 }) => {
   const styles = useStyles2(getStyles);
   const [pickerIsOpen, setPickerIsOpen] = useState(false);
@@ -74,6 +76,7 @@ const ResourceField: React.FC<ResourceFieldProps<string | AzureMonitorResource>>
           queryType={queryType}
           disableRow={disableRow}
           renderAdvanced={renderAdvanced}
+          selectionNotice={selectionNotice}
         />
       </Modal>
       <Field label="Resource" inlineField={inlineField} labelWidth={labelWidth}>

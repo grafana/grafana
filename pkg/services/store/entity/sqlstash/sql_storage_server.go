@@ -532,10 +532,10 @@ func (s *sqlEntityServer) writeSearchInfo(
 			return err
 		}
 		_, err = tx.Exec(ctx, `INSERT INTO entity_ref (`+
-			"grn, parent_grn, kind, type, uid, "+
+			"grn, parent_grn, family, type, id, "+
 			"resolved_ok, resolved_to, resolved_warning, resolved_time) "+
 			`VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-			grn, parent_grn, ref.Kind, ref.Type, ref.UID,
+			grn, parent_grn, ref.Family, ref.Type, ref.Identifier,
 			resolved.OK, resolved.Key, resolved.Warning, resolved.Timestamp,
 		)
 		if err != nil {
