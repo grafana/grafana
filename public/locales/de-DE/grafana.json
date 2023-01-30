@@ -229,7 +229,6 @@
     "help/documentation": "Dokumentation",
     "help/keyboard-shortcuts": "Tastaturbefehle",
     "help/support": "Support",
-    "help/support-bundle": "Support Bundles",
     "home": {
       "title": "Home"
     },
@@ -292,7 +291,8 @@
       "title": "Szenen"
     },
     "search": {
-      "placeholder": "Grafana durchsuchen"
+      "placeholder": "Grafana durchsuchen",
+      "placeholderCommandPalette": ""
     },
     "search-dashboards": {
       "title": "Dashboards durchsuchen"
@@ -489,7 +489,8 @@
     "theme": {
       "dark-label": "Dunkel",
       "default-label": "Standard",
-      "light-label": "Hell"
+      "light-label": "Hell",
+      "system-label": ""
     },
     "title": "Einstellungen"
   },

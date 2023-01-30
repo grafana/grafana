@@ -12,10 +12,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/alerting/alerting/notifier/channels"
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"xorm.io/xorm"
-
-	"github.com/grafana/alerting/alerting/notifier/channels"
 
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"

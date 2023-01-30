@@ -30,8 +30,8 @@ lineage: seqs: [
 				tags?: [...string] @grafanamaturity(NeedsExpertReview)
 				// Theme of dashboard.
 				style: "light" | *"dark" @grafanamaturity(NeedsExpertReview)
-				// Timezone of dashboard,
-				timezone?: *"browser" | "utc" | "" @grafanamaturity(NeedsExpertReview)
+				// Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc".
+				timezone?: string | *"browser"
 				// Whether a dashboard is editable or not.
 				editable: bool | *true
 				// Configuration of dashboard cursor sync behavior.
@@ -397,6 +397,9 @@ lineage: seqs: [
 					// TODO tighter constraint
 					timeShift?: string @grafanamaturity(NeedsExpertReview)
 
+					// Dynamically load the panel
+					libraryPanel?: #LibraryPanelRef
+
 					// options is specified by the PanelOptions field in panel
 					// plugin schemas.
 					options: {...} @grafanamaturity(NeedsExpertReview)
@@ -411,6 +414,11 @@ lineage: seqs: [
 						properties: [...#DynamicConfigValue]
 					}] @grafanamaturity(NeedsExpertReview)
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
+
+				#LibraryPanelRef: {
+					name: string
+					uid:  string
+				} @cuetsy(kind="interface")
 
 				#MatcherConfig: {
 					id:       string | *"" @grafanamaturity(NeedsExpertReview)
