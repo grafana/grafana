@@ -123,6 +123,6 @@ export function getRulesAccess() {
         rulesSourceName === GRAFANA_RULES_SOURCE_NAME ? contextSrv.hasEditPermissionInFolders : contextSrv.isEditor;
       return contextSrv.hasAccess(getRulesPermissions(rulesSourceName).update, permissionFallback);
     },
-    canReadProvisioning: contextSrv.hasAccess(AccessControlAction.AlertingProvisioningRead, contextSrv.isGrafanaAdmin),
+    canReadProvisioning: contextSrv.hasAccess(provisioningPermissions.read, contextSrv.isGrafanaAdmin),
   };
 }
