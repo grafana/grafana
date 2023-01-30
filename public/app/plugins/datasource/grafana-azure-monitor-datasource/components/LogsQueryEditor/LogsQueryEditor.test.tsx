@@ -2,8 +2,6 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import config from 'app/core/config';
-
 import createMockDatasource from '../../__mocks__/datasource';
 import createMockQuery from '../../__mocks__/query';
 import { createMockResourcePickerData } from '../MetricsQueryEditor/MetricsQueryEditor.test';
@@ -23,10 +21,6 @@ const variableOptionGroup = {
   label: 'Template variables',
   options: [],
 };
-
-beforeEach(() => {
-  config.featureToggles.azureMultipleResourcePicker = true;
-});
 
 describe('LogsQueryEdiutor', () => {
   const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;

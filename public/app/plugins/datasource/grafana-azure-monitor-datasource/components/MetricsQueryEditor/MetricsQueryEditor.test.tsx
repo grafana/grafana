@@ -3,8 +3,6 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
-import config from 'app/core/config';
-
 import createMockDatasource from '../../__mocks__/datasource';
 import { createMockInstanceSetttings } from '../../__mocks__/instanceSettings';
 import createMockPanelData from '../../__mocks__/panelData';
@@ -32,10 +30,6 @@ const variableOptionGroup = {
   label: 'Template variables',
   options: [],
 };
-
-beforeEach(() => {
-  config.featureToggles.azureMultipleResourcePicker = true;
-});
 
 export function createMockResourcePickerData() {
   const mockDatasource = createMockDatasource();
