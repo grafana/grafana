@@ -49,6 +49,8 @@ composableKinds: DataQuery: {
 						#QueryEditorMode: "code" | "builder" @cuetsy(kind="enum")
 
 						#LokiQueryType: "range" | "instant" | "stream" @cuetsy(kind="enum")
+
+						#SupportingQueryType: "logsVolume" | "logsSample" | "dataSample" @cuetsy(kind="enum")
 					},
 				]
 			},

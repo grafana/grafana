@@ -23,6 +23,12 @@ export enum LokiQueryType {
   Stream = 'stream',
 }
 
+export enum SupportingQueryType {
+  DataSample = 'dataSample',
+  LogsSample = 'logsSample',
+  LogsVolume = 'logsVolume',
+}
+
 export interface Loki extends common.DataQuery {
   editorMode?: QueryEditorMode;
   /**

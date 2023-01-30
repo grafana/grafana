@@ -32,6 +32,15 @@ const (
 	QueryEditorModeCode QueryEditorMode = "code"
 )
 
+// Defines values for SupportingQueryType.
+const (
+	SupportingQueryTypeDataSample SupportingQueryType = "dataSample"
+
+	SupportingQueryTypeLogsSample SupportingQueryType = "logsSample"
+
+	SupportingQueryTypeLogsVolume SupportingQueryType = "logsVolume"
+)
+
 // LokiDataQuery defines model for LokiDataQuery.
 type LokiDataQuery struct {
 	// For mixed data sources the selected datasource is on the query level.
@@ -81,3 +90,6 @@ type LokiQueryType string
 
 // QueryEditorMode defines model for QueryEditorMode.
 type QueryEditorMode string
+
+// SupportingQueryType defines model for SupportingQueryType.
+type SupportingQueryType string

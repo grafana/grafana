@@ -1,8 +1,8 @@
 import { DataQuery, DataSourceJsonData, QueryResultMeta, ScopedVars } from '@grafana/data';
 
-import { Loki as LokiQueryFromSchema, LokiQueryType } from './dataquery.gen';
+import { Loki as LokiQueryFromSchema, LokiQueryType, SupportingQueryType } from './dataquery.gen';
 
-export { LokiQueryType };
+export { LokiQueryType, SupportingQueryType };
 
 export interface LokiInstantQueryRequest {
   query: string;
@@ -33,7 +33,8 @@ export enum LokiQueryDirection {
 
 export interface LokiQuery extends LokiQueryFromSchema {
   direction?: LokiQueryDirection;
-  volumeQuery?: boolean;
+  /** Used only to identify supporting queries, e.g. logs volume, logs sample and data sample */
+  supportingQueryType?: SupportingQueryType;
   // CUE autogenerates `queryType` as `?string`, as that's how it is defined
   // in the parent-interface (in DataQuery).
   // the temporary fix (until this gets improved in the codegen), is to
@@ -142,4 +143,19 @@ export interface LokiVariableQuery extends DataQuery {
   type: LokiVariableQueryType;
   label?: string;
   stream?: string;
+}
+
+export interface QueryStats {
+  streams: number;
+  chunks: number;
+  bytes: number;
+  entries: number;
+}
+
+export interface ContextFilter {
+  enabled: boolean;
+  label: string;
+  value: string;
+  fromParser: boolean;
+  description?: string;
 }

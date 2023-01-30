@@ -88,6 +88,24 @@ func parseDirection(jsonPointerValue *string) (Direction, error) {
 	}
 }
 
+func parseSupportingQueryType(jsonPointerValue *string) (SupportingQueryType, error) {
+	if jsonPointerValue == nil {
+		return SupportingQueryNone, nil
+	} else {
+		jsonValue := *jsonPointerValue
+		switch jsonValue {
+		case "logsVolume":
+			return SupportingQueryLogsVolume, nil
+		case "logsSample":
+			return SupportingQueryLogsSample, nil
+		case "dataSample":
+			return SupportingQueryDataSample, nil
+		default:
+			return SupportingQueryNone, fmt.Errorf("invalid supportingQueryType: %s", jsonValue)
+		}
+	}
+}
+
 func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 	qs := []*lokiQuery{}
 	for _, query := range queryContext.Queries {
@@ -131,22 +149,22 @@ func parseQuery(queryContext *backend.QueryDataRequest) ([]*lokiQuery, error) {
 			legendFormat = *model.LegendFormat
 		}
 
-		var volumeQuery bool
-		if model.VolumeQuery != nil {
-			volumeQuery = *model.VolumeQuery
+		supportingQueryType, err := parseSupportingQueryType(model.SupportingQueryType)
+		if err != nil {
+			return nil, err
 		}
 
 		qs = append(qs, &lokiQuery{
-			Expr:         expr,
-			QueryType:    queryType,
-			Direction:    direction,
-			Step:         step,
-			MaxLines:     int(maxLines),
-			LegendFormat: legendFormat,
-			Start:        start,
-			End:          end,
-			RefID:        query.RefID,
-			VolumeQuery:  volumeQuery,
+			Expr:                expr,
+			QueryType:           queryType,
+			Direction:           direction,
+			Step:                step,
+			MaxLines:            int(maxLines),
+			LegendFormat:        legendFormat,
+			Start:               start,
+			End:                 end,
+			RefID:               query.RefID,
+			SupportingQueryType: supportingQueryType,
 		})
 	}
 
