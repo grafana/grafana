@@ -84,9 +84,8 @@ jest.mock('@grafana/runtime', () => ({
       get: (uid?: string) => datasources.find((ds) => ds.uid === uid) || datasources[0],
     };
   },
-  __esModule: true,
   config: {
-    featureToggles: { exploreMixedDatasource: null },
+    featureToggles: { exploreMixedDatasource: false },
   },
 }));
 
@@ -264,10 +263,6 @@ describe('importing queries', () => {
 
 describe('adding new query rows', () => {
   describe('with mixed datasources disabled', () => {
-    beforeEach(() => {
-      config.featureToggles.exploreMixedDatasource = false;
-    });
-
     it('should add query row when there is not yet a row and meta.mixed === true (impossible in UI)', async () => {
       const queries: DataQuery[] = [];
       const datasourceInstance = {
@@ -339,6 +334,10 @@ describe('adding new query rows', () => {
   describe('with mixed datasources enabled', () => {
     beforeEach(() => {
       config.featureToggles.exploreMixedDatasource = true;
+    });
+
+    afterEach(() => {
+      config.featureToggles.exploreMixedDatasource = false;
     });
 
     it('should add query row whith rootdatasource (without datasourceOverride) when there is not yet a row', async () => {
