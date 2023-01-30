@@ -5,6 +5,8 @@ import {
   LogGroup,
   MetricEditorMode,
   MetricQueryType,
+  VariableQuery,
+  VariableQueryType,
 } from './types';
 
 export const DEFAULT_METRICS_QUERY: Omit<CloudWatchMetricsQuery, 'refId'> = {
@@ -43,3 +45,8 @@ export const getDefaultLogsQuery = (
   logGroupNames: legacyDefaultLogGroups,
   logGroups: defaultLogGroups ?? [],
 });
+
+export const DEFAULT_VARIABLE_QUERY: Partial<VariableQuery> = {
+  queryType: VariableQueryType.Regions,
+  region: 'default',
+};

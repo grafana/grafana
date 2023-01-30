@@ -5,8 +5,9 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 // This function can be used for local testing, just remove the skip call.

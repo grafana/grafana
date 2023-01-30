@@ -37,7 +37,7 @@
   "dependencies": {
     "@braintree/sanitize-url": "6.0.1",
     "@grafana/schema": "9.4.0-pre",
-    "@types/d3-interpolate": "^1.4.0",
+    "@types/d3-interpolate": "^3.0.0",
     "d3-interpolate": "3.0.1",
     "date-fns": "2.29.3",
     "eventemitter3": "4.0.7",
@@ -54,7 +54,7 @@
     "rxjs": "7.5.7",
     "tinycolor2": "1.4.2",
     "tslib": "2.4.1",
-    "uplot": "1.6.23",
+    "uplot": "1.6.24",
     "xss": "1.0.14"
   },
   "devDependencies": {
@@ -62,7 +62,7 @@
     "@rollup/plugin-commonjs": "23.0.2",
     "@rollup/plugin-json": "5.0.1",
     "@rollup/plugin-node-resolve": "15.0.1",
-    "@testing-library/dom": "8.19.0",
+    "@testing-library/dom": "8.20.0",
     "@testing-library/jest-dom": "5.16.5",
     "@testing-library/react": "12.1.4",
     "@testing-library/react-hooks": "8.0.1",

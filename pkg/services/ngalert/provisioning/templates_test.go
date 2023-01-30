@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"testing"
 
+	mock "github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/setting"
-	mock "github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestTemplateService(t *testing.T) {
