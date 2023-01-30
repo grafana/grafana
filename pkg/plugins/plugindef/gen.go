@@ -14,7 +14,6 @@ import (
 
 	"cuelang.org/go/cue/cuecontext"
 	"github.com/dave/dst"
-	"github.com/dave/dst/dstutil"
 	"github.com/grafana/codejen"
 	"github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
@@ -62,9 +61,7 @@ func (j *jennytypego) JennyName() string {
 }
 
 func (j *jennytypego) Generate(lin thema.Lineage) (*codejen.File, error) {
-	f, err := codegen.GoTypesJenny{ApplyFuncs: []dstutil.ApplyFunc{
-		codegen.PrefixReplacer("Plugindef", "PluginDef"),
-	}}.Generate(codegen.SchemaForGen{
+	f, err := codegen.GoTypesJenny{}.Generate(codegen.SchemaForGen{
 		Name:    "PluginDef",
 		Schema:  lin.Latest(),
 		IsGroup: false,

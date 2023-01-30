@@ -4,6 +4,8 @@ import React from 'react';
 import { Field, GrafanaTheme2 } from '@grafana/data/';
 import { useStyles2 } from '@grafana/ui/';
 
+import { InstantQueryRefIdIndex } from '../../../plugins/datasource/prometheus/datasource';
+
 import { rawListItemColumnWidth } from './RawListItem';
 
 const getItemLabelsStyles = (theme: GrafanaTheme2, expanded: boolean) => {
@@ -22,14 +24,22 @@ const getItemLabelsStyles = (theme: GrafanaTheme2, expanded: boolean) => {
   };
 };
 
+const formatValueName = (name: string): string => {
+  if (name.includes(InstantQueryRefIdIndex)) {
+    return name.replace(InstantQueryRefIdIndex, '');
+  }
+  return name;
+};
+
 export const ItemLabels = ({ valueLabels, expanded }: { valueLabels: Field[]; expanded: boolean }) => {
   const styles = useStyles2((theme) => getItemLabelsStyles(theme, expanded));
+
   return (
     <div className={styles.itemLabelsWrap}>
       <div className={styles.valueNavigationWrapper}>
         {valueLabels.map((value, index) => (
           <span className={styles.valueNavigation} key={value.name}>
-            {value.name}
+            {formatValueName(value.name)}
           </span>
         ))}
       </div>

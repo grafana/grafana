@@ -6,11 +6,12 @@ import { config } from '@grafana/runtime';
 
 import { multiResourceCompatibleTypes } from '../../azureMetadata';
 import type Datasource from '../../datasource';
-import type { AzureMonitorQuery, AzureMonitorOption, AzureMonitorErrorish } from '../../types';
+import type { AzureMonitorQuery, AzureMonitorOption, AzureMonitorErrorish, AzureMetricResource } from '../../types';
 import ResourceField from '../ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails } from '../ResourcePicker/utils';
 
+import AdvancedResourcePicker from './AdvancedResourcePicker';
 import AggregationField from './AggregationField';
 import DimensionFields from './DimensionFields';
 import LegendFormatField from './LegendFormatField';
@@ -48,6 +49,11 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
       resourceName: r.resourceName,
       region: query.azureMonitor?.region,
     })) ?? [];
+
+  const supportMultipleResource = (namespace?: string) => {
+    return multiResourceCompatibleTypes[namespace?.toLocaleLowerCase() ?? ''] ?? false;
+  };
+
   const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) => {
     if (selectedRows.length === 0) {
       // Only if there is some resource(s) selected we should disable rows
@@ -69,8 +75,18 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
       rowResource.subscription !== selectedRowSample.subscription ||
       rowResource.region !== selectedRowSample.region ||
       rowResource.metricNamespace?.toLocaleLowerCase() !== selectedRowSample.metricNamespace?.toLocaleLowerCase() ||
-      !multiResourceCompatibleTypes[rowResource.metricNamespace?.toLocaleLowerCase() ?? '']
+      !supportMultipleResource(rowResource.metricNamespace)
     );
+  };
+
+  const selectionNotice = (selectedRows: ResourceRowGroup) => {
+    if (selectedRows.length === 0 || !config.featureToggles.azureMultipleResourcePicker) {
+      return '';
+    }
+    const selectedRowSample = parseResourceDetails(selectedRows[0].uri, selectedRows[0].location);
+    return supportMultipleResource(selectedRowSample.metricNamespace)
+      ? 'You can select items of the same resource type and location. To select resources of a different resource type or location, please first uncheck your current selection.'
+      : '';
   };
 
   return (
@@ -88,6 +104,13 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
               resources={resources ?? []}
               queryType={'metrics'}
               disableRow={disableRow}
+              renderAdvanced={(resources, onChange) => (
+                // It's required to cast resources because the resource picker
+                // specifies the type to string | AzureMetricResource.
+                // eslint-disable-next-line
+                <AdvancedResourcePicker resources={resources as AzureMetricResource[]} onChange={onChange} />
+              )}
+              selectionNotice={selectionNotice}
             />
             <MetricNamespaceField
               metricNamespaces={metricNamespaces}

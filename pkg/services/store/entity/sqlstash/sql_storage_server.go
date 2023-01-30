@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/slugify"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store"
@@ -447,7 +446,7 @@ func (s *sqlEntityServer) AdminWrite(ctx context.Context, r *entity.AdminWriteEn
 				origin.Source, origin.Key, origin.Time,
 			)
 		}
-		if err == nil && models.StandardKindFolder == r.GRN.Kind {
+		if err == nil && entity.StandardKindFolder == r.GRN.Kind {
 			err = updateFolderTree(ctx, tx, grn.TenantId)
 		}
 		if err == nil {
@@ -533,10 +532,10 @@ func (s *sqlEntityServer) writeSearchInfo(
 			return err
 		}
 		_, err = tx.Exec(ctx, `INSERT INTO entity_ref (`+
-			"grn, parent_grn, kind, type, uid, "+
+			"grn, parent_grn, family, type, id, "+
 			"resolved_ok, resolved_to, resolved_warning, resolved_time) "+
 			`VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-			grn, parent_grn, ref.Kind, ref.Type, ref.UID,
+			grn, parent_grn, ref.Family, ref.Type, ref.Identifier,
 			resolved.OK, resolved.Key, resolved.Warning, resolved.Timestamp,
 		)
 		if err != nil {
@@ -663,7 +662,7 @@ func doDelete(ctx context.Context, tx *session.SessionTx, grn *entity.GRN) (bool
 		return false, err
 	}
 
-	if grn.Kind == models.StandardKindFolder {
+	if grn.Kind == entity.StandardKindFolder {
 		err = updateFolderTree(ctx, tx, grn.TenantId)
 	}
 	return rows > 0, err

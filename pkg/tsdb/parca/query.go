@@ -142,7 +142,7 @@ type Node struct {
 }
 
 func walkTree(tree *v1alpha1.FlamegraphRootNode, fn func(level int64, value int64, name string, self int64)) {
-	var stack []*Node
+	stack := make([]*Node, 0, len(tree.Children))
 	var childrenValue int64 = 0
 
 	for _, child := range tree.Children {
@@ -217,7 +217,7 @@ func normalizeUnit(unit string) string {
 }
 
 func seriesToDataFrame(seriesResp *connect.Response[v1alpha1.QueryRangeResponse], profileTypeID string) []*data.Frame {
-	var frames []*data.Frame
+	frames := make([]*data.Frame, 0, len(seriesResp.Msg.Series))
 
 	for _, series := range seriesResp.Msg.Series {
 		frame := data.NewFrame("series")

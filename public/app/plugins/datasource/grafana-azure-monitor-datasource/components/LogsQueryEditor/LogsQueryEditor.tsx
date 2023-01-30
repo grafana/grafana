@@ -10,6 +10,7 @@ import ResourceField from '../ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails } from '../ResourcePicker/utils';
 
+import AdvancedResourcePicker from './AdvancedResourcePicker';
 import FormatAsField from './FormatAsField';
 import QueryField from './QueryField';
 import useMigrations from './useMigrations';
@@ -75,6 +76,17 @@ const LogsQueryEditor: React.FC<LogsQueryEditorProps> = ({
               resources={query.azureLogAnalytics?.resources ?? []}
               queryType="logs"
               disableRow={disableRow}
+              renderAdvanced={(resources, onChange) => (
+                // It's required to cast resources because the resource picker
+                // specifies the type to string | AzureMetricResource.
+                // eslint-disable-next-line
+                <AdvancedResourcePicker resources={resources as string[]} onChange={onChange} />
+              )}
+              selectionNotice={() =>
+                config.featureToggles.azureMultipleResourcePicker
+                  ? 'You may only choose items of the same resource type.'
+                  : ''
+              }
             />
           </EditorFieldGroup>
         </EditorRow>

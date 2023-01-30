@@ -56,7 +56,7 @@ const addAzureMonitorVariable = (
   name: string,
   type: AzureQueryType,
   isFirst: boolean,
-  options?: { subscription?: string; resourceGroup?: string; namespace?: string; resource?: string }
+  options?: { subscription?: string; resourceGroup?: string; namespace?: string; resource?: string; region?: string }
 ) => {
   e2e.components.PageToolbar.item('Dashboard settings').click();
   e2e.components.Tab.title('Variables').click();
@@ -75,6 +75,9 @@ const addAzureMonitorVariable = (
     case AzureQueryType.ResourceGroupsQuery:
       e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
       break;
+    case AzureQueryType.LocationsQuery:
+      e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
+      break;
     case AzureQueryType.NamespacesQuery:
       e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
       e2eSelectors.variableEditor.resourceGroup.input().find('input').type(`${options?.resourceGroup}{enter}`);
@@ -83,6 +86,7 @@ const addAzureMonitorVariable = (
       e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
       e2eSelectors.variableEditor.resourceGroup.input().find('input').type(`${options?.resourceGroup}{enter}`);
       e2eSelectors.variableEditor.namespace.input().find('input').type(`${options?.namespace}{enter}`);
+      e2eSelectors.variableEditor.region.input().find('input').type(`${options?.region}{enter}`);
       break;
     case AzureQueryType.MetricNamesQuery:
       e2eSelectors.variableEditor.subscription.input().find('input').type(`${options?.subscription}{enter}`);
@@ -223,10 +227,14 @@ e2e.scenario({
       subscription: '$subscription',
       resourceGroup: '$resourceGroups',
     });
+    addAzureMonitorVariable('region', AzureQueryType.LocationsQuery, false, {
+      subscription: '$subscription',
+    });
     addAzureMonitorVariable('resource', AzureQueryType.ResourceNamesQuery, false, {
       subscription: '$subscription',
       resourceGroup: '$resourceGroups',
       namespace: '$namespace',
+      region: '$region',
     });
     e2e.pages.Dashboard.SubMenu.submenuItemLabels('subscription').click();
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownOptionTexts('grafanalabs-datasources-dev').click();
@@ -254,6 +262,8 @@ e2e.scenario({
         e2eSelectors.queryEditor.resourcePicker.advanced.subscription.input().find('input').type('$subscription');
         e2eSelectors.queryEditor.resourcePicker.advanced.resourceGroup.input().find('input').type('$resourceGroups');
         e2eSelectors.queryEditor.resourcePicker.advanced.namespace.input().find('input').type('$namespaces');
+        // TODO: Enable this input once multiple resources feature flag is removed
+        // e2eSelectors.queryEditor.resourcePicker.advanced.region.input().find('input').type('$region');
         e2eSelectors.queryEditor.resourcePicker.advanced.resource.input().find('input').type('$resource');
         e2eSelectors.queryEditor.resourcePicker.apply.button().click();
         e2eSelectors.queryEditor.metricsQueryEditor.metricName.input().find('input').type('Transactions{enter}');
