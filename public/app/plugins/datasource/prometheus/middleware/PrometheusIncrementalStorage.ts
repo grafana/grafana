@@ -47,9 +47,13 @@ export class PrometheusIncrementalStorage {
   };
 
   // @todo
-  getStorageTimeFields = (queryIndex) => {
+  getStorageTimeFields = (queryIndex: string) => {
     return this.storage[queryIndex]['__time__'];
   };
+
+  getStorageValueField = (queryIndex: string, seriesIndex: string) => {
+    return this.storage[queryIndex][seriesIndex];
+  }
 
   /**
    * @todo need to interpolate variables or we'll get bugs
@@ -213,8 +217,8 @@ export class PrometheusIncrementalStorage {
             );
           } else if (thisQueryHasBeenDoneBefore && seriesLabelsIndexString && originalRange) {
             // If the labels are the same as saved, append any new values, making sure that any additional data is taken from the newest response
-            const existingTimeFrames = this.storage[responseQueryExpressionAndStepString]['__time__'];
-            const existingValueFrames = this.storage[responseQueryExpressionAndStepString][seriesLabelsIndexString];
+            const existingTimeFrames = this.getStorageTimeFields(responseQueryExpressionAndStepString);
+            const existingValueFrames = this.getStorageValueField(responseQueryExpressionAndStepString, seriesLabelsIndexString);
 
             if (existingTimeFrames.length !== existingValueFrames.length) {
               if (DEBUG) {
@@ -319,26 +323,38 @@ export class PrometheusIncrementalStorage {
    */
   private preProcessDataFrames(data: DataFrame[] | DataFrameDTO[]) {
     //
-    let lastLength = data[0]?.length ?? 0;
+    let longestLength = data[0]?.length ?? 0;
 
-    let min = data[0].fields[0].values.get(0);
-    let max = data[0].fields[0].values.get(data[0].fields[0].values.length - 1);
+    const firstFrameTimeValues = data[0].fields[0].values?.toArray()
+
+    // Get first time value
+    let min = firstFrameTimeValues[0];
+
+    // Get last time value
+    let max = firstFrameTimeValues[firstFrameTimeValues.length - 1]
 
     for (let i = 0; i < data.length; i++) {
-      // Come on dude!
-      if (min > data[i].fields[0]?.values?.get(0)) {
-        min = data[i]?.fields[0]?.values?.get(0);
+      const thisFrameTimeValues = data[i].fields[0]?.values?.toArray()
+      const firstFrameValue = thisFrameTimeValues[0]
+      const lastFrameValue = thisFrameTimeValues[thisFrameTimeValues.length - 1]
+
+      if (min > firstFrameValue) {
+        min = firstFrameValue;
       }
 
-      if (max > data[i].fields[0].values.get(data[i].fields[0].values.length - 1)) {
-        max = data[i].fields[0].values.get(data[i].fields[0].values.length - 1);
+      if (max < lastFrameValue) {
+        max = lastFrameValue;
+      }
+
+      if(data[i].length > longestLength){
+        longestLength = data[i].length
       }
     }
 
     // Could be rounding issue, for off by one
     //
     for (let i = 0; i < data.length; i++) {
-      if (lastLength && lastLength !== data[i].length) {
+      if (longestLength && longestLength !== data[i].length) {
         data[i] = applyNullInsertThreshold({
           frame: data[i] as DataFrame,
           refFieldName: 'Time',
@@ -378,7 +394,8 @@ export class PrometheusIncrementalStorage {
         break;
       }
 
-      // @leon exemplars could work, but they're not step/interval-aligned so the current algorithm of merging frames from storage with the response won't work
+      // exemplars could work, but they're not step/interval-aligned so the current algorithm of merging frames from storage with the response won't work
+      // Would backfilling these values work? Or do we need to store the time frames for each exemplar?
       if (target?.range !== true || target.hide || target.exemplar) {
         if (DEBUG) {
           console.log('target invalid for incremental querying', target);
@@ -407,8 +424,6 @@ export class PrometheusIncrementalStorage {
           ) {
             canCache.push(true);
 
-            // @leon this feels like a source of bugs
-
             const range = alignRange(
               cacheTo,
               requestTo.valueOf(),
@@ -418,6 +433,7 @@ export class PrometheusIncrementalStorage {
             neededDurations.push({ start: range.start, end: range.end });
           } else {
             if (DEBUG) {
+              // debugger;
               console.log('invalid duration!');
               delete this.storage[cacheKey];
             }
