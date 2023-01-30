@@ -43,7 +43,7 @@ export const OldPage: PageType = ({
 
   useEffect(() => {
     if (navModel) {
-      // This is needed for chrome to update it's chromeless state which is used by the DisabledOnChromeless component (used even in old nav)
+      // This is needed for chrome to update it's chromeless state
       chrome.update({
         sectionNav: navModel.node,
       });
