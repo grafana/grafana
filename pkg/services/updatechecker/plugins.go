@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-version"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -37,7 +38,7 @@ func ProvidePluginsService(cfg *setting.Cfg, pluginStore plugins.Store, tracer t
 		httpClient: mustNewInstrumentedHTTPClient(
 			&http.Client{Timeout: time.Second * 10},
 			tracer,
-			"grafana_plugins_update_checker",
+			instrumentedHTTPClientWithMetrics(prometheus.DefaultRegisterer, "grafana_plugins_update_checker"),
 		),
 		log:              log.New("plugins.update.checker"),
 		tracer:           tracer,

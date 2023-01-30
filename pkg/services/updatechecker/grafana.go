@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/hashicorp/go-version"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type GrafanaService struct {
@@ -34,7 +35,7 @@ func ProvideGrafanaService(cfg *setting.Cfg, tracer tracing.Tracer) *GrafanaServ
 		httpClient: mustNewInstrumentedHTTPClient(
 			&http.Client{Timeout: time.Second * 10},
 			tracer,
-			"grafana_update_checker",
+			instrumentedHTTPClientWithMetrics(prometheus.DefaultRegisterer, "grafana_update_checker"),
 		),
 		log:    log.New("grafana.update.checker"),
 		tracer: tracer,

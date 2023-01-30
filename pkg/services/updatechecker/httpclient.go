@@ -36,43 +36,56 @@ type instrumentedHTTPClient struct {
 // defaultInstrumentedHTTPClientSpanName is the default span name for spans created by instrumentedHTTPClient
 const defaultInstrumentedHTTPClientSpanName = "instrumentedHTTPClient.request"
 
-// TODO: customizable registry
-
 // newInstrumentedHTTPClient returns a new usable instrumentedHTTPClient.
-func newInstrumentedHTTPClient(cl *http.Client, tracer tracing.Tracer, metricsName string) (*instrumentedHTTPClient, error) {
+func newInstrumentedHTTPClient(cl *http.Client, tracer tracing.Tracer, opts ...instrumentedHTTPClientOption) (*instrumentedHTTPClient, error) {
 	r := &instrumentedHTTPClient{
 		Client:   cl,
 		tracer:   tracer,
 		spanName: defaultInstrumentedHTTPClientSpanName,
-
-		// TODO: helps
-
-		requestsCounter: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: metricsName + "_request_total",
-		}),
-		failureCounter: prometheus.NewCounter(prometheus.CounterOpts{
-			Name: metricsName + "_failure_total",
-		}),
-		durationHistogram: prometheus.NewHistogram(prometheus.HistogramOpts{
-			Name: metricsName + "_request_duration_seconds",
-		}),
-		inFlightCounter: prometheus.NewGauge(prometheus.GaugeOpts{
-			Name: metricsName + "_in_flight_request_total",
-		}),
 	}
-	if err := r.registerMetrics(prometheus.DefaultRegisterer); err != nil {
-		return nil, fmt.Errorf("register metrics: %w", err)
+	for _, opt := range opts {
+		if err := opt(r); err != nil {
+			return nil, err
+		}
 	}
 	return r, nil
 }
 
-// mustNewInstrumentedHTTPClient is like newInstrumentedHTTPClient but it panics instead of returning an error.
-func mustNewInstrumentedHTTPClient(cl *http.Client, tracer tracing.Tracer, metricsName string) *instrumentedHTTPClient {
-	r, err := newInstrumentedHTTPClient(cl, tracer, metricsName)
+// mustNewInstrumentedHTTPClient is like newInstrumentedHTTPClient, but it panics instead of returning an error.
+func mustNewInstrumentedHTTPClient(cl *http.Client, tracer tracing.Tracer, opts ...instrumentedHTTPClientOption) *instrumentedHTTPClient {
+	r, err := newInstrumentedHTTPClient(cl, tracer, opts...)
 	if err != nil {
 		panic(err)
 	}
 	return r
+}
+
+type instrumentedHTTPClientOption func(cl *instrumentedHTTPClient) error
+
+func instrumentedHTTPClientWithMetrics(registerer prometheus.Registerer, prefix string) instrumentedHTTPClientOption {
+	return func(cl *instrumentedHTTPClient) error {
+		// TODO: helps
+		cl.requestsCounter = prometheus.NewCounter(prometheus.CounterOpts{
+			Name: prefix + "_request_total",
+		})
+		cl.failureCounter = prometheus.NewCounter(prometheus.CounterOpts{
+			Name: prefix + "_failure_total",
+		})
+		cl.durationHistogram = prometheus.NewHistogram(prometheus.HistogramOpts{
+			Name: prefix + "_request_duration_seconds",
+		})
+		cl.inFlightCounter = prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: prefix + "_in_flight_request_total",
+		})
+		return cl.registerMetrics(registerer)
+	}
+}
+
+func instrumentedHTTPClientWithSpanName(spanName string) instrumentedHTTPClientOption {
+	return func(cl *instrumentedHTTPClient) error {
+		cl.spanName = spanName
+		return nil
+	}
 }
 
 func (r *instrumentedHTTPClient) registerMetrics(registerer prometheus.Registerer) error {
