@@ -10,6 +10,7 @@ export interface FooterProps {
 }
 
 export const FooterCell = (props: FooterProps) => {
+  console.log(props.value, 'foootercellvalue');
   const cell = css`
     width: 100%;
     list-style: none;

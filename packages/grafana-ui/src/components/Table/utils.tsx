@@ -178,11 +178,11 @@ export function buildFieldsForOptionalRowNums(totalRows: number): Field {
     name: ' ',
     display: function (value) {
       return {
-        numeric: value,
-        text: String(value),
+        numeric: Number(value),
+        text: value,
       };
     },
-    type: FieldType.number,
+    type: FieldType.string,
     config: {
       color: { mode: 'thresholds' },
       custom: {
@@ -196,10 +196,10 @@ export function buildFieldsForOptionalRowNums(totalRows: number): Field {
   };
 }
 
-function buildBufferedValues(totalRows: number): ArrayVector<number> {
+function buildBufferedValues(totalRows: number): ArrayVector<string> {
   let arr = [];
   for (let i = 1; i <= totalRows; i++) {
-    arr.push(i);
+    arr.push(String(i));
   }
   return new ArrayVector(arr);
 }
@@ -341,20 +341,26 @@ function toNumber(value: any): number {
 }
 
 export function getFooterItems(
-  filterFields: Array<{ field: Field }>,
+  filterFields: Array<{ id: string; field: Field }>,
   values: any[number],
   options: TableFooterCalc,
   theme2: GrafanaTheme2
 ): FooterItem[] {
   // JEV: we need to add the row nums field if it doesn't exist; we can do that by searching for id === "0"
-  // console.log(filterFields, 'filterFields');
   // console.log(values, 'values');
   // console.log(options, 'options');
+  const length = values.length;
+  const addedField = { id: '0', field: buildFieldsForOptionalRowNums(length) };
+  if (!filterFields.some((field) => field.id === '0')) {
+    filterFields.unshift(addedField);
+  }
+
+  // console.log(filterFields, 'filterFields');
   return filterFields.map((data, i) => {
     if (data.field.type !== FieldType.number) {
       // show the reducer in the first column
       // JEV: we'll have to change what coulumn this is viewed in...
-      if (i === 0 && options.reducer && options.reducer.length > 0) {
+      if (i === 1 && options.reducer && options.reducer.length > 0) {
         const reducer = fieldReducers.get(options.reducer[0]);
         return reducer.name;
       }
@@ -386,6 +392,7 @@ function getFormattedValue(field: Field, reducer: string[], theme: GrafanaTheme2
   return formattedValueToString(fmt(v));
 }
 
+// JEV: strips the raw vales from the rows
 export function createFooterCalculationValues(rows: Row[]): any[number] {
   const values: any[number] = [];
 
@@ -398,6 +405,7 @@ export function createFooterCalculationValues(rows: Row[]): any[number] {
     }
   }
 
+  // console.log(values, 'calculatedValues');
   return values;
 }
 

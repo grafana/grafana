@@ -17,7 +17,7 @@ export interface FooterRowProps {
 
 export const FooterRow = (props: FooterRowProps) => {
   const { totalColumnsWidth, footerGroups, isPaginationVisible, tableStyles } = props;
-  console.log(props, 'footerProps');
+  // console.log(props, 'footerProps');
   const e2eSelectorsTable = selectors.components.Panels.Visualization.Table;
 
   return (
