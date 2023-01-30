@@ -1,23 +1,34 @@
-load(
-    'scripts/drone/steps/lib.star',
-    'identify_runner_step',
-    'wire_install_step',
-    'lint_backend_step',
-    'lint_drone_step',
-    'compile_build_cmd',
-)
+"""
+This module returns the pipeline used for linting backend code.
+"""
 
 load(
-    'scripts/drone/utils/utils.star',
-    'pipeline',
+    "scripts/drone/steps/lib.star",
+    "compile_build_cmd",
+    "identify_runner_step",
+    "lint_backend_step",
+    "lint_drone_step",
+    "wire_install_step",
 )
-
+load(
+    "scripts/drone/utils/utils.star",
+    "pipeline",
+)
 
 def lint_backend_pipeline(trigger, ver_mode):
-    environment = {'EDITION': 'oss'}
+    """Generates the pipelines used linting backend code.
+
+    Args:
+      trigger: controls which events can trigger the pipeline execution.
+      ver_mode: used in the naming of the pipeline.
+
+    Returns:
+      Drone pipeline.
+    """
+    environment = {"EDITION": "oss"}
 
     wire_step = wire_install_step()
-    wire_step.update({'depends_on': []})
+    wire_step.update({"depends_on": []})
 
     init_steps = [
         identify_runner_step(),
@@ -29,14 +40,14 @@ def lint_backend_pipeline(trigger, ver_mode):
         lint_backend_step(),
     ]
 
-    if ver_mode == 'main':
+    if ver_mode == "main":
         test_steps.append(lint_drone_step())
 
     return pipeline(
-        name='{}-lint-backend'.format(ver_mode),
-        edition="oss",
-        trigger=trigger,
-        services=[],
-        steps=init_steps + test_steps,
-        environment=environment,
+        name = "{}-lint-backend".format(ver_mode),
+        edition = "oss",
+        trigger = trigger,
+        services = [],
+        steps = init_steps + test_steps,
+        environment = environment,
     )
