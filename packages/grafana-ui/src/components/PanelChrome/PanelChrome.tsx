@@ -13,6 +13,7 @@ import { Tooltip } from '../Tooltip';
 
 import { PanelDescription } from './PanelDescription';
 import { PanelStatus } from './PanelStatus';
+import { TitleItem } from './TitleItem';
 
 /**
  * @internal
@@ -101,11 +102,6 @@ export function PanelChrome({
     cursor: dragClass ? 'move' : 'auto',
   };
 
-  const itemStyles: CSSProperties = {
-    minHeight: headerHeight,
-    minWidth: headerHeight,
-  };
-
   const containerStyles: CSSProperties = { width, height };
   const ariaLabel = title ? selectors.components.Panels.Panel.containerByTitle(title) : 'Panel';
 
@@ -133,11 +129,11 @@ export function PanelChrome({
         )}
 
         {loadingState === LoadingState.Streaming && (
-          <div className={styles.item} style={itemStyles} data-testid="panel-streaming">
-            <Tooltip content="Streaming">
+          <Tooltip content="Streaming">
+            <TitleItem className={styles.item} data-testid="panel-streaming">
               <Icon name="circle-mono" size="md" className={styles.streaming} />
-            </Tooltip>
-          </div>
+            </TitleItem>
+          </Tooltip>
         )}
 
         <div className={styles.rightAligned}>
