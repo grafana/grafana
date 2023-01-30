@@ -4,7 +4,7 @@ import { ConnectionPath } from 'app/features/canvas';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
-import { ConnectionAnchors } from './ConnectionAnchors';
+import { CONNECTION_ANCHOR_ALT, ConnectionAnchors } from './ConnectionAnchors';
 import { ConnectionSVG } from './ConnectionSVG';
 
 export class Connections {
@@ -32,28 +32,47 @@ export class Connections {
     this.connectionLine = connectionLine;
   };
 
+  // Recursively find the first parent that is a canvas element
+  findElementTarget = (element: Element): ElementState | undefined => {
+    let elementTarget = undefined;
+
+    // Cap recursion at the scene level
+    if (element === this.scene.div) {
+      return undefined;
+    }
+
+    elementTarget = this.scene.findElementByTarget(element);
+
+    if (!elementTarget && element.parentElement) {
+      elementTarget = this.findElementTarget(element.parentElement);
+    }
+
+    return elementTarget;
+  };
+
   handleMouseEnter = (event: React.MouseEvent) => {
-    if (!(event.target instanceof HTMLElement) || !this.scene.isEditingEnabled) {
+    if (!(event.target instanceof Element) || !this.scene.isEditingEnabled) {
       return;
     }
 
-    const element = event.target.parentElement?.parentElement;
+    let element: ElementState | undefined = this.findElementTarget(event.target);
+
     if (!element) {
       console.log('no element');
       return;
     }
 
     if (this.isDrawingConnection) {
-      this.connectionTarget = this.scene.findElementByTarget(element);
+      this.connectionTarget = element;
     } else {
-      this.connectionSource = this.scene.findElementByTarget(element);
+      this.connectionSource = element;
       if (!this.connectionSource) {
         console.log('no connection source');
         return;
       }
     }
 
-    const elementBoundingRect = element!.getBoundingClientRect();
+    const elementBoundingRect = element.div!.getBoundingClientRect();
     const parentBoundingRect = this.scene.div?.getBoundingClientRect();
 
     const relativeTop = elementBoundingRect.top - (parentBoundingRect?.top ?? 0);
@@ -69,8 +88,18 @@ export class Connections {
     }
   };
 
-  handleMouseLeave = (event: React.MouseEvent | React.FocusEvent) => {
+  // Return boolean indicates if connection anchors were hidden or not
+  handleMouseLeave = (event: React.MouseEvent | React.FocusEvent): boolean => {
+    // If mouse is leaving INTO the anchor image, don't remove div
+    if (
+      event.relatedTarget instanceof HTMLImageElement &&
+      event.relatedTarget.getAttribute('alt') === CONNECTION_ANCHOR_ALT
+    ) {
+      return false;
+    }
+
     this.connectionAnchorDiv!.style.display = 'none';
+    return true;
   };
 
   connectionListener = (event: MouseEvent) => {

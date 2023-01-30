@@ -65,10 +65,6 @@ func (s *Service) GetWithDefaults(ctx context.Context, query *pref.GetPreference
 				res.JSONData.Language = p.JSONData.Language
 			}
 
-			if len(p.JSONData.Navbar.SavedItems) > 0 {
-				res.JSONData.Navbar = p.JSONData.Navbar
-			}
-
 			if p.JSONData.QueryHistory.HomeTab != "" {
 				res.JSONData.QueryHistory.HomeTab = p.JSONData.QueryHistory.HomeTab
 			}
@@ -134,9 +130,6 @@ func (s *Service) Save(ctx context.Context, cmd *pref.SavePreferenceCommand) err
 		Language: cmd.Language,
 	}
 
-	if cmd.Navbar != nil {
-		preference.JSONData.Navbar = *cmd.Navbar
-	}
 	if cmd.QueryHistory != nil {
 		preference.JSONData.QueryHistory = *cmd.QueryHistory
 	}
@@ -173,15 +166,6 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 		preference.JSONData.Language = *cmd.Language
 	}
 
-	if cmd.Navbar != nil {
-		if preference.JSONData == nil {
-			preference.JSONData = &pref.PreferenceJSONData{}
-		}
-		if cmd.Navbar.SavedItems != nil {
-			preference.JSONData.Navbar.SavedItems = cmd.Navbar.SavedItems
-		}
-	}
-
 	if cmd.QueryHistory != nil {
 		if preference.JSONData == nil {
 			preference.JSONData = &pref.PreferenceJSONData{}
@@ -209,16 +193,6 @@ func (s *Service) Patch(ctx context.Context, cmd *pref.PatchPreferenceCommand) e
 
 	preference.Updated = time.Now()
 	preference.Version += 1
-
-	// Wrap this in an if statement to maintain backwards compatibility
-	if cmd.Navbar != nil {
-		if preference.JSONData == nil {
-			preference.JSONData = &pref.PreferenceJSONData{}
-		}
-		if cmd.Navbar.SavedItems != nil {
-			preference.JSONData.Navbar.SavedItems = cmd.Navbar.SavedItems
-		}
-	}
 
 	if exists {
 		err = s.store.Update(ctx, preference)

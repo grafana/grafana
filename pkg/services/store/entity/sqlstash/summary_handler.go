@@ -3,12 +3,11 @@ package sqlstash
 import (
 	"encoding/json"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 )
 
 type summarySupport struct {
-	model       *models.EntitySummary
+	model       *entity.EntitySummary
 	name        string
 	description *string // null or empty
 	slug        *string // null or empty
@@ -23,7 +22,7 @@ type summarySupport struct {
 	isNested   bool // set when this is for a nested item
 }
 
-func newSummarySupport(summary *models.EntitySummary) (*summarySupport, error) {
+func newSummarySupport(summary *entity.EntitySummary) (*summarySupport, error) {
 	var err error
 	var js []byte
 	s := &summarySupport{
@@ -72,9 +71,9 @@ func newSummarySupport(summary *models.EntitySummary) (*summarySupport, error) {
 	return s, err
 }
 
-func (s summarySupport) toEntitySummary() (*models.EntitySummary, error) {
+func (s summarySupport) toEntitySummary() (*entity.EntitySummary, error) {
 	var err error
-	summary := &models.EntitySummary{
+	summary := &entity.EntitySummary{
 		Name: s.name,
 	}
 	if s.description != nil {

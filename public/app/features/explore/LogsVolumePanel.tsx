@@ -1,9 +1,8 @@
 import { css } from '@emotion/css';
-import React, { useState } from 'react';
+import React from 'react';
 
 import {
   AbsoluteTimeRange,
-  DataQueryError,
   DataQueryResponse,
   GrafanaTheme2,
   LoadingState,
@@ -12,9 +11,10 @@ import {
   EventBus,
   LogsVolumeType,
 } from '@grafana/data';
-import { Alert, Button, Collapse, InlineField, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, Collapse, InlineField, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { ExploreGraph } from './Graph/ExploreGraph';
+import { SupplementaryResultError } from './SupplementaryResultError';
 
 type Props = {
   logsVolumeData: DataQueryResponse | undefined;
@@ -29,35 +29,6 @@ type Props = {
   onHiddenSeriesChanged: (hiddenSeries: string[]) => void;
   eventBus: EventBus;
 };
-
-const SHORT_ERROR_MESSAGE_LIMIT = 100;
-
-function ErrorAlert(props: { error: DataQueryError }) {
-  const [isOpen, setIsOpen] = useState(false);
-  // generic get-error-message-logic, taken from
-  // /public/app/features/explore/ErrorContainer.tsx
-  const message = props.error.message || props.error.data?.message || '';
-
-  const showButton = !isOpen && message.length > SHORT_ERROR_MESSAGE_LIMIT;
-
-  return (
-    <Alert title="Failed to load log volume for this query" severity="warning">
-      {showButton ? (
-        <Button
-          variant="secondary"
-          size="xs"
-          onClick={() => {
-            setIsOpen(true);
-          }}
-        >
-          Show details
-        </Button>
-      ) : (
-        message
-      )}
-    </Alert>
-  );
-}
 
 export function LogsVolumePanel(props: Props) {
   const { width, timeZone, splitOpen, onUpdateTimeRange, onLoadLogsVolume, onHiddenSeriesChanged } = props;
@@ -75,7 +46,7 @@ export function LogsVolumePanel(props: Props) {
   const fullRangeData = logsVolumeData.data[0]?.meta?.custom?.logsVolumeType !== LogsVolumeType.Limited;
 
   if (logsVolumeData.error !== undefined) {
-    return <ErrorAlert error={logsVolumeData.error} />;
+    return <SupplementaryResultError error={logsVolumeData.error} title="Failed to load log volume for this query" />;
   }
 
   let LogsVolumePanelContent;

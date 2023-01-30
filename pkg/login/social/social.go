@@ -1,6 +1,7 @@
 package social
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -8,8 +9,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-
-	"context"
 
 	"golang.org/x/oauth2"
 	"golang.org/x/text/cases"
@@ -60,7 +59,9 @@ type OAuthInfo struct {
 	AutoLogin               bool
 }
 
-func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager) *SocialService {
+func ProvideService(cfg *setting.Cfg,
+	features *featuremgmt.FeatureManager,
+) *SocialService {
 	ss := SocialService{
 		cfg:           cfg,
 		oAuthProvider: make(map[string]*OAuthInfo),
@@ -146,15 +147,17 @@ func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager) *Soc
 				apiUrl:               info.ApiUrl,
 				teamIds:              sec.Key("team_ids").Ints(","),
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
+				skipOrgRoleSync:      cfg.GithubSkipOrgRoleSync,
 			}
 		}
 
 		// GitLab.
 		if name == "gitlab" {
 			ss.socialMap["gitlab"] = &SocialGitlab{
-				SocialBase:    newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
-				apiUrl:        info.ApiUrl,
-				allowedGroups: util.SplitString(sec.Key("allowed_groups").String()),
+				SocialBase:      newSocialBase(name, &config, info, cfg.AutoAssignOrgRole, cfg.OAuthSkipOrgRoleUpdateSync, *features),
+				apiUrl:          info.ApiUrl,
+				allowedGroups:   util.SplitString(sec.Key("allowed_groups").String()),
+				skipOrgRoleSync: cfg.GitLabSkipOrgRoleSync,
 			}
 		}
 
@@ -225,6 +228,7 @@ func ProvideService(cfg *setting.Cfg, features *featuremgmt.FeatureManager) *Soc
 			}
 		}
 	}
+
 	return &ss
 }
 

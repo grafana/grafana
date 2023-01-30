@@ -6,7 +6,6 @@ import { mergeMap, throttleTime } from 'rxjs/operators';
 
 import {
   AbsoluteTimeRange,
-  DataQuery,
   DataQueryErrorType,
   DataQueryResponse,
   DataSourceApi,
@@ -21,6 +20,7 @@ import {
   toLegacyResponseData,
 } from '@grafana/data';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import {
   buildQueryTransaction,
   ensureQueries,
