@@ -197,28 +197,21 @@ export function RichHistoryCard(props: Props) {
   };
 
   const onCopyQuery = async () => {
-    if (loading) {
-      return;
-    }
-
     const datasources = [...query.queries.map((q) => q.datasource?.type || 'unknown')];
     reportInteraction('grafana_explore_query_history_copy_query', {
       datasources,
       mixed: Boolean(value?.dsInstance?.meta.mixed),
     });
 
-    const queriesText = (
-      await Promise.all(
-        query.queries.map(async (q) => {
-          let queryDsInstance = value?.dsInstance;
-          if (value?.dsInstance?.meta.mixed) {
-            queryDsInstance = await getDataSourceSrv().get(q.datasource);
-          }
+    if (loading || !value) {
+      return;
+    }
 
-          return createQueryText(q, queryDsInstance);
-        })
-      )
-    ).join('\n');
+    const queriesText = value.queries
+      .map((q) => {
+        return createQueryText(q.query, q.datasource);
+      })
+      .join('\n');
 
     copyStringToClipboard(queriesText);
     dispatch(notifyApp(createSuccessNotification('Query copied to clipboard')));
