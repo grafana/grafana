@@ -9,6 +9,7 @@ import (
 	"reflect"
 
 	jsoniter "github.com/json-iterator/go"
+	"gopkg.in/yaml.v3"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -173,7 +174,8 @@ func (r *RedirectResponse) Body() []byte {
 
 // JSON creates a JSON response.
 func JSON(status int, body interface{}) *NormalResponse {
-	return Respond(status, body).SetHeader("Content-Type", "application/json")
+	return Respond(status, body).
+		SetHeader("Content-Type", "application/json")
 }
 
 // JSONStreaming creates a streaming JSON response.
@@ -185,6 +187,30 @@ func JSONStreaming(status int, body interface{}) StreamingResponse {
 		status: status,
 		header: header,
 	}
+}
+
+// JSONDownload creates a JSON response indicating that it should be downloaded.
+func JSONDownload(status int, body interface{}, filename string) *NormalResponse {
+	return JSON(status, body).
+		SetHeader("Content-Disposition", fmt.Sprintf(`attachment;filename="%s"`, filename))
+}
+
+// YAML creates a YAML response.
+func YAML(status int, body interface{}) *NormalResponse {
+	b, err := yaml.Marshal(body)
+	if err != nil {
+		return Error(http.StatusInternalServerError, "body yaml marshal", err)
+	}
+	// As of now, application/yaml is downloaded by default in chrome regardless of Content-Disposition, so we use text/yaml instead.
+	return Respond(status, b).
+		SetHeader("Content-Type", "text/yaml")
+}
+
+// YAMLDownload creates a YAML response indicating that it should be downloaded.
+func YAMLDownload(status int, body interface{}, filename string) *NormalResponse {
+	return YAML(status, body).
+		SetHeader("Content-Type", "application/yaml").
+		SetHeader("Content-Disposition", fmt.Sprintf(`attachment;filename="%s"`, filename))
 }
 
 // Success create a successful response

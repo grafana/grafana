@@ -283,6 +283,10 @@ export class ElasticQueryBuilder {
           };
           break;
         }
+        case 'nested': {
+          esAgg['nested'] = { path: aggDef.field };
+          break;
+        }
       }
 
       nestedAggs.aggs = nestedAggs.aggs || {};

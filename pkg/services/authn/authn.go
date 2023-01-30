@@ -10,8 +10,8 @@ import (
 
 	"golang.org/x/oauth2"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
@@ -45,7 +45,7 @@ type ClientParams struct {
 	// EnableDisabledUsers is a hint to the auth service that it should reenable disabled users
 	EnableDisabledUsers bool
 	// LookUpParams are the arguments used to look up the entity in the DB.
-	LookUpParams models.UserLookupParams
+	LookUpParams login.UserLookupParams
 }
 
 type PostAuthHookFn func(ctx context.Context, identity *Identity, r *Request) error
@@ -247,9 +247,9 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 	return u
 }
 
-func (i *Identity) ExternalUserInfo() models.ExternalUserInfo {
+func (i *Identity) ExternalUserInfo() login.ExternalUserInfo {
 	_, id := i.NamespacedID()
-	return models.ExternalUserInfo{
+	return login.ExternalUserInfo{
 		OAuthToken:     i.OAuthToken,
 		AuthModule:     i.AuthModule,
 		AuthId:         i.AuthID,
