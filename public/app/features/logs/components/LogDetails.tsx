@@ -66,7 +66,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
       getFieldLinks,
       wrapLogMessage,
     } = this.props;
-    const style = getLogRowStyles(theme, row.logLevel);
+    const style = getLogRowStyles(theme);
     const levelStyles = getLogLevelStyles(theme, row.logLevel);
     const styles = getStyles(theme);
     const labels = row.labels ? row.labels : {};

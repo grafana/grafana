@@ -229,6 +229,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               app={app}
               scrollElement={scrollElement}
               logsSortOrder={logsSortOrder}
+              styles={styles}
             />
           )}
         </tr>

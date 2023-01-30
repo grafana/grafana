@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import tinycolor from 'tinycolor2';
 
 import { GrafanaTheme2, LogLevel } from '@grafana/data';
 import { styleMixins } from '@grafana/ui';
@@ -50,6 +51,7 @@ export const getLogLevelStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => 
 
 export const getLogRowStyles = (theme: GrafanaTheme2) => {
   const hoverBgColor = styleMixins.hoverColor(theme.colors.background.secondary, theme);
+  const contextOutlineColor = tinycolor(theme.components.dashboard.background).setAlpha(0.7).toRgbString();
   return {
     logsRowLevel: css``,
     logsRowMatchHighLight: css`
@@ -179,6 +181,7 @@ export const getLogRowStyles = (theme: GrafanaTheme2) => {
         background-color: ${hoverBgColor};
       }
     `,
+    // Log row
     topVerticalAlign: css`
       label: topVerticalAlign;
       margin-top: -${theme.spacing(0.9)};
@@ -192,6 +195,70 @@ export const getLogRowStyles = (theme: GrafanaTheme2) => {
     errorLogRow: css`
       label: erroredLogRow;
       color: ${theme.colors.text.secondary};
+    `,
+    // Log Row Message
+    positionRelative: css`
+      label: positionRelative;
+      position: relative;
+    `,
+    rowWithContext: css`
+      label: rowWithContext;
+      z-index: 1;
+      outline: 9999px solid ${contextOutlineColor};
+      display: inherit;
+    `,
+    horizontalScroll: css`
+      label: horizontalScroll;
+      white-space: pre;
+    `,
+    contextNewline: css`
+      display: block;
+      margin-left: 0px;
+    `,
+    rowMenu: css`
+      display: flex;
+      flex-wrap: nowrap;
+      flex-direction: row;
+      align-content: flex-end;
+      justify-content: space-evenly;
+      align-items: center;
+      position: absolute;
+      top: 0;
+      bottom: auto;
+      height: ${theme.spacing(4.5)};
+      background: ${theme.colors.background.primary};
+      box-shadow: ${theme.shadows.z3};
+      padding: ${theme.spacing(0, 0, 0, 0.5)};
+      z-index: 100;
+      visibility: hidden;
+      width: ${theme.spacing(5)};
+    `,
+    rowMenuWithContextButton: css`
+      width: ${theme.spacing(10)};
+    `,
+    logRowMenuCell: css`
+      position: absolute;
+      margin-top: -${theme.spacing(0.125)};
+    `,
+    logRowMenuCellDefaultPosition: css`
+      right: 40px;
+    `,
+    logRowMenuCellExplore: css`
+      right: calc(115px + ${theme.spacing(1)});
+    `,
+    logRowMenuCellExploreWithContextButton: css`
+      right: calc(155px + ${theme.spacing(1)});
+    `,
+    logLine: css`
+      background-color: transparent;
+      border: none;
+      diplay: inline;
+      font-family: ${theme.typography.fontFamilyMonospace};
+      font-size: ${theme.typography.bodySmall.fontSize};
+      letter-spacing: ${theme.typography.bodySmall.letterSpacing};
+      text-align: left;
+      padding: 0;
+      user-select: text;
     `,
   };
 };
