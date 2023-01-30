@@ -90,7 +90,7 @@ export function getColumns(
       Cell: RowExpander,
       width: EXPANDER_WIDTH,
       minWidth: EXPANDER_WIDTH,
-      filter: (rows: Row[], id: string, filterValues?: SelectableValue[]) => {
+      filter: (_rows: Row[], _id: string, _filterValues?: SelectableValue[]) => {
         return [];
       },
       justifyContent: 'left',
