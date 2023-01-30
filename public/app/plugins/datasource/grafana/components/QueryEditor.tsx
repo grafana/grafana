@@ -24,6 +24,7 @@ import {
   InlineFieldRow,
   InlineLabel,
   FileDropzone,
+  FileDropzoneDefaultChildren,
   DropzoneFile,
   Themeable2,
   withTheme2,
@@ -67,10 +68,6 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
       description: 'Show directory listings for public resources',
     },
   ];
-
-  dropzoneTextSupplier = () => {
-    return this.props?.query?.file ? 'Replace file' : 'Upload file';
-  };
 
   constructor(props: Props) {
     super(props);
@@ -414,8 +411,9 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
                 },
               }}
               onLoad={this.onFileDrop}
-              primaryTextSupplier={this.dropzoneTextSupplier}
-            ></FileDropzone>
+            >
+              <FileDropzoneDefaultChildren primaryText={this.props?.query?.file ? 'Replace file' : 'Upload file'} />
+            </FileDropzone>
             {file && (
               <div className={styles.file}>
                 <span>{file?.name}</span>

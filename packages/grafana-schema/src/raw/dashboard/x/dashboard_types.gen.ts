@@ -405,6 +405,10 @@ export interface Panel {
    */
   interval?: string;
   /**
+   * Dynamically load the panel
+   */
+  libraryPanel?: LibraryPanelRef;
+  /**
    * Panel links.
    * TODO fill this out - seems there are a couple variants?
    */
@@ -502,6 +506,11 @@ export interface FieldConfigSource {
 export const defaultFieldConfigSource: Partial<FieldConfigSource> = {
   overrides: [],
 };
+
+export interface LibraryPanelRef {
+  name: string;
+  uid: string;
+}
 
 export interface MatcherConfig {
   id: string;
@@ -808,5 +817,5 @@ export const defaultDashboard: Partial<Dashboard> = {
   schemaVersion: 36,
   style: 'dark',
   tags: [],
-  timezone: '',
+  timezone: 'browser',
 };
