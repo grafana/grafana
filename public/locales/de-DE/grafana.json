@@ -489,7 +489,8 @@
     "theme": {
       "dark-label": "Dunkel",
       "default-label": "Standard",
-      "light-label": "Hell"
+      "light-label": "Hell",
+      "system-label": ""
     },
     "title": "Einstellungen"
   },
