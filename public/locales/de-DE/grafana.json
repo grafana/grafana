@@ -15,9 +15,6 @@
     "search-box": {
       "placeholder": "Grafana durchsuchen"
     },
-    "search-box": {
-      "placeholder": ""
-    },
     "section": {
       "actions": "Aktionen",
       "dashboard-search-results": "Dashboards",
@@ -163,7 +160,7 @@
       "title": "Warnregeln"
     },
     "alerting-receivers": {
-      "subtitle": "Entscheide, wie deine Kontakte benachrichtigt werden, wenn eine Warnung ausgelöst wird",
+      "subtitle": "",
       "title": "Kontaktpunkte"
     },
     "alerting-silences": {
@@ -194,7 +191,7 @@
       "title": "Erstellen"
     },
     "create-alert": {
-      "title": "Neue Warnregel"
+      "title": ""
     },
     "create-dashboard": {
       "title": "Dashboard"
