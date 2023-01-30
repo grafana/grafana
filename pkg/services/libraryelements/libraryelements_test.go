@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -165,10 +166,10 @@ func TestGetLibraryPanelConnections(t *testing.T) {
 							ConnectionID:  dashInDB.ID,
 							ConnectionUID: dashInDB.UID,
 							Created:       res.Result[0].Created,
-							CreatedBy: LibraryElementDTOMetaUser{
-								ID:        1,
+							CreatedBy: librarypanel.LibraryElementDTOMetaUser{
+								Id:        1,
 								Name:      userInDbName,
-								AvatarURL: userInDbAvatar,
+								AvatarUrl: userInDbAvatar,
 							},
 						},
 					},
