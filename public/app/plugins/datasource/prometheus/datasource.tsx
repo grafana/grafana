@@ -70,6 +70,8 @@ import { PrometheusVariableSupport } from './variables';
 const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
 
+export const InstantQueryRefIdIndex = '-Instant';
+
 export class PrometheusDatasource
   extends DataSourceWithBackend<PromQuery, PromOptions>
   implements DataSourceWithQueryImportSupport<PromQuery>, DataSourceWithQueryExportSupport<PromQuery>
@@ -430,7 +432,7 @@ export class PrometheusDatasource
         },
         {
           ...processedTarget,
-          refId: processedTarget.refId + '-Instant',
+          refId: processedTarget.refId + InstantQueryRefIdIndex,
           range: false,
         }
       );

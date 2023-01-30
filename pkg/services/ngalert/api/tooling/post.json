@@ -121,6 +121,28 @@
    "title": "AlertQuery represents a single query associated with an alert definition.",
    "type": "object"
   },
+  "AlertQueryExport": {
+   "properties": {
+    "datasourceUid": {
+     "type": "string"
+    },
+    "model": {
+     "additionalProperties": {},
+     "type": "object"
+    },
+    "queryType": {
+     "type": "string"
+    },
+    "refId": {
+     "type": "string"
+    },
+    "relativeTimeRange": {
+     "$ref": "#/definitions/RelativeTimeRange"
+    }
+   },
+   "title": "AlertQueryExport is the provisioned export of models.AlertQuery.",
+   "type": "object"
+  },
   "AlertResponse": {
    "properties": {
     "data": {
@@ -139,6 +161,77 @@
    "required": [
     "status"
    ],
+   "type": "object"
+  },
+  "AlertRuleExport": {
+   "properties": {
+    "annotations": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "condition": {
+     "type": "string"
+    },
+    "dasboardUid": {
+     "type": "string"
+    },
+    "data": {
+     "items": {
+      "$ref": "#/definitions/AlertQueryExport"
+     },
+     "type": "array"
+    },
+    "execErrState": {
+     "enum": [
+      "Alerting",
+      "Error",
+      "OK"
+     ],
+     "type": "string"
+    },
+    "for": {
+     "$ref": "#/definitions/Duration"
+    },
+    "labels": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "noDataState": {
+     "enum": [
+      "Alerting",
+      "NoData",
+      "OK"
+     ],
+     "type": "string"
+    },
+    "panelId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "title": {
+     "type": "string"
+    },
+    "uid": {
+     "type": "string"
+    }
+   },
+   "title": "AlertRuleExport is the provisioned export of models.AlertRule.",
+   "type": "object"
+  },
+  "AlertRuleFileExport": {
+   "properties": {
+    "groups": {
+     "items": {
+      "$ref": "#/definitions/AlertRuleGroupExport"
+     },
+     "type": "array"
+    }
+   },
+   "title": "AlertRuleFileExport is the provisioned export of multiple models.AlertRuleGroup.",
    "type": "object"
   },
   "AlertRuleGroup": {
@@ -160,6 +253,31 @@
      "type": "string"
     }
    },
+   "type": "object"
+  },
+  "AlertRuleGroupExport": {
+   "properties": {
+    "folder": {
+     "type": "string"
+    },
+    "interval": {
+     "$ref": "#/definitions/Duration"
+    },
+    "name": {
+     "type": "string"
+    },
+    "orgId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "rules": {
+     "items": {
+      "$ref": "#/definitions/AlertRuleExport"
+     },
+     "type": "array"
+    }
+   },
+   "title": "AlertRuleGroupExport is the provisioned export of models.AlertRuleGroup.",
    "type": "object"
   },
   "AlertRuleGroupMetadata": {
@@ -3501,7 +3619,6 @@
    "type": "object"
   },
   "gettableAlert": {
-   "description": "GettableAlert gettable alert",
    "properties": {
     "annotations": {
      "$ref": "#/definitions/labelSet"
@@ -5645,6 +5762,35 @@
     ]
    }
   },
+  "/api/v1/provisioning/alert-rules/export": {
+   "get": {
+    "operationId": "RouteGetAlertRulesExport",
+    "parameters": [
+     {
+      "default": false,
+      "description": "Whether to initiate a download of the file or not.",
+      "in": "query",
+      "name": "download",
+      "type": "boolean"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertRuleFileExport",
+      "schema": {
+       "$ref": "#/definitions/AlertRuleFileExport"
+      }
+     },
+     "404": {
+      "description": " Not found."
+     }
+    },
+    "summary": "Export all alert rules in provisioning file format.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
   "/api/v1/provisioning/alert-rules/{UID}": {
    "delete": {
     "operationId": "RouteDeleteAlertRule",
@@ -5735,6 +5881,47 @@
      }
     },
     "summary": "Update an existing alert rule.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/v1/provisioning/alert-rules/{UID}/export": {
+   "get": {
+    "operationId": "RouteGetAlertRuleExport",
+    "parameters": [
+     {
+      "description": "Alert rule UID",
+      "in": "path",
+      "name": "UID",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "default": false,
+      "description": "Whether to initiate a download of the file or not.",
+      "in": "query",
+      "name": "download",
+      "type": "boolean"
+     }
+    ],
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "text/yaml"
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertRuleExport",
+      "schema": {
+       "$ref": "#/definitions/AlertRuleExport"
+      }
+     },
+     "404": {
+      "description": " Not found."
+     }
+    },
+    "summary": "Export an alert rule in provisioning file format.",
     "tags": [
      "provisioning"
     ]
@@ -5938,6 +6125,52 @@
      }
     },
     "summary": "Update the interval of a rule group.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export": {
+   "get": {
+    "operationId": "RouteGetAlertRuleGroupExport",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "FolderUID",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "path",
+      "name": "Group",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "default": false,
+      "description": "Whether to initiate a download of the file or not.",
+      "in": "query",
+      "name": "download",
+      "type": "boolean"
+     }
+    ],
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "text/yaml"
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertRuleGroupExport",
+      "schema": {
+       "$ref": "#/definitions/AlertRuleGroupExport"
+      }
+     },
+     "404": {
+      "description": " Not found."
+     }
+    },
+    "summary": "Export an alert rule group in provisioning file format.",
     "tags": [
      "provisioning"
     ]

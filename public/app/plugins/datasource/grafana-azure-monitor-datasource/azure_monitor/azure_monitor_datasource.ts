@@ -125,6 +125,7 @@ export default class AzureMonitorDatasource extends DataSourceWithBackend<AzureM
       timeGrain,
       allowedTimeGrainsMs: item.allowedTimeGrainsMs,
       metricName: templateSrv.replace(item.metricName, scopedVars),
+      region: templateSrv.replace(item.region, scopedVars),
       aggregation: aggregation,
       dimensionFilters,
       top: top || '10',

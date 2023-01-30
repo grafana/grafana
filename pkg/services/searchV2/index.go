@@ -901,7 +901,8 @@ func (l sqlDashboardLoader) LoadDashboards(ctx context.Context, orgID int64, das
 	limit := 1
 
 	if dashboardUID == "" {
-		dashboards = make([]dashboard, 0, l.settings.DashboardLoadingBatchSize)
+		limit = l.settings.DashboardLoadingBatchSize
+		dashboards = make([]dashboard, 0, limit)
 	}
 
 	loadDatasourceCtx, loadDatasourceSpan := l.tracer.Start(ctx, "sqlDashboardLoader LoadDatasourceLookup")

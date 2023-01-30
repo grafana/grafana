@@ -20,6 +20,7 @@ import (
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/querylibrary"
 	"github.com/grafana/grafana/pkg/services/star"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -232,6 +233,11 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 	return homeNode
 }
 
+func isSupportBundlesEnabled(s *ServiceImpl) bool {
+	return s.cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(false) &&
+		s.features.IsEnabled(featuremgmt.FlagSupportBundles)
+}
+
 func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmodel.ReqContext) {
 	if setting.HelpEnabled {
 		helpVersion := fmt.Sprintf(`%s v%s (%s)`, setting.ApplicationName, setting.BuildVersion, setting.BuildCommit)
@@ -239,16 +245,7 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmode
 			helpVersion = setting.ApplicationName
 		}
 
-		supportBundleNode := &navtree.NavLink{
-			Text:       "Support bundles",
-			Id:         "support-bundles",
-			Url:        "/support-bundles",
-			Icon:       "wrench",
-			Section:    navtree.NavSectionConfig,
-			SortWeight: navtree.WeightHelp,
-		}
-
-		treeRoot.AddSection(&navtree.NavLink{
+		helpNode := &navtree.NavLink{
 			Text:       "Help",
 			SubTitle:   helpVersion,
 			Id:         "help",
@@ -256,8 +253,29 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmode
 			Icon:       "question-circle",
 			SortWeight: navtree.WeightHelp,
 			Section:    navtree.NavSectionConfig,
-			Children:   []*navtree.NavLink{supportBundleNode},
-		})
+			Children:   []*navtree.NavLink{},
+		}
+
+		treeRoot.AddSection(helpNode)
+
+		hasAccess := ac.HasAccess(s.accessControl, c)
+		supportBundleAccess := ac.EvalAny(
+			ac.EvalPermission(supportbundlesimpl.ActionRead),
+			ac.EvalPermission(supportbundlesimpl.ActionCreate),
+		)
+
+		if isSupportBundlesEnabled(s) && hasAccess(ac.ReqGrafanaAdmin, supportBundleAccess) {
+			supportBundleNode := &navtree.NavLink{
+				Text:       "Support bundles",
+				Id:         "support-bundles",
+				Url:        "/support-bundles",
+				Icon:       "wrench",
+				Section:    navtree.NavSectionConfig,
+				SortWeight: navtree.WeightHelp,
+			}
+
+			helpNode.Children = append(helpNode.Children, supportBundleNode)
+		}
 	}
 }
 
