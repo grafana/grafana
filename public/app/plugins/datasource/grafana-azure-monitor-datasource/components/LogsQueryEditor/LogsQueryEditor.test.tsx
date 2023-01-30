@@ -2,8 +2,6 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-import config from 'app/core/config';
-
 import createMockDatasource from '../../__mocks__/datasource';
 import createMockQuery from '../../__mocks__/query';
 import { createMockResourcePickerData } from '../MetricsQueryEditor/MetricsQueryEditor.test';
@@ -23,10 +21,6 @@ const variableOptionGroup = {
   label: 'Template variables',
   options: [],
 };
-
-beforeEach(() => {
-  config.featureToggles.azureMultipleResourcePicker = true;
-});
 
 describe('LogsQueryEdiutor', () => {
   const originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
@@ -150,5 +144,44 @@ describe('LogsQueryEdiutor', () => {
     expect(checkbox).toBeChecked();
 
     expect(await screen.findByText('You may only choose items of the same resource type.')).toBeInTheDocument();
+  });
+
+  it('should call onApply with a new subscription uri when a user types it in the selection box', async () => {
+    const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
+    const query = createMockQuery();
+    delete query?.subscription;
+    delete query?.azureLogAnalytics?.resources;
+    const onChange = jest.fn();
+
+    render(
+      <LogsQueryEditor
+        query={query}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={onChange}
+        setError={() => {}}
+      />
+    );
+
+    const resourcePickerButton = await screen.findByRole('button', { name: 'Select a resource' });
+    resourcePickerButton.click();
+
+    const advancedSection = screen.getByText('Advanced');
+    advancedSection.click();
+
+    const advancedInput = await screen.findByTestId('input-advanced-resource-picker-1');
+    // const advancedInput = await screen.findByLabelText('Resource URI(s)');
+    await userEvent.type(advancedInput, '/subscriptions/def-123');
+
+    const applyButton = screen.getByRole('button', { name: 'Apply' });
+    applyButton.click();
+
+    expect(onChange).toBeCalledWith(
+      expect.objectContaining({
+        azureLogAnalytics: expect.objectContaining({
+          resources: ['/subscriptions/def-123'],
+        }),
+      })
+    );
   });
 });

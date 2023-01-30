@@ -246,7 +246,7 @@ const createLogAnalyticsTemplateVariableQuery = async (
     queryType: AzureQueryType.LogAnalytics,
     azureLogAnalytics: {
       query: rawQuery,
-      resources: [resource],
+      resources: resource ? [resource] : [],
     },
     subscription: defaultSubscriptionId,
   };

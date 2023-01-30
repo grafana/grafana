@@ -1,7 +1,6 @@
 import React from 'react';
 
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 
 import Datasource from '../../datasource';
@@ -39,10 +38,6 @@ const LogsQueryEditor: React.FC<LogsQueryEditorProps> = ({
     if (selectedRows.length === 0) {
       // Only if there is some resource(s) selected we should disable rows
       return false;
-    }
-    // Disable multiple selection until the feature is ready
-    if (!config.featureToggles.azureMultipleResourcePicker) {
-      return true;
     }
     const rowResourceNS = parseResourceDetails(row.uri, row.location).metricNamespace?.toLowerCase();
     const selectedRowSampleNs = parseResourceDetails(
@@ -82,11 +77,7 @@ const LogsQueryEditor: React.FC<LogsQueryEditorProps> = ({
                 // eslint-disable-next-line
                 <AdvancedResourcePicker resources={resources as string[]} onChange={onChange} />
               )}
-              selectionNotice={() =>
-                config.featureToggles.azureMultipleResourcePicker
-                  ? 'You may only choose items of the same resource type.'
-                  : ''
-              }
+              selectionNotice={() => 'You may only choose items of the same resource type.'}
             />
           </EditorFieldGroup>
         </EditorRow>
