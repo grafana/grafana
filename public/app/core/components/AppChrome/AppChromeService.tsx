@@ -70,11 +70,12 @@ export class AppChromeService {
       return true;
     }
 
-    // If we have new section nav or page nav but text is the same, skip update
+    // Some updates can have new instance of sectionNav or pageNav but with same values
     if (newState.sectionNav !== current.sectionNav || newState.pageNav !== current.pageNav) {
-      // Some item level pages pass a new instance of pageNav on every render which will cause unnecessary AppChrome re-renders
-      // Here we ignore all state updates where we get a new navModel or pageNav instance but with same text property
-      if (newState.sectionNav.text === current.sectionNav.text && newState.pageNav?.text === current.pageNav?.text) {
+      if (
+        navItemsAreTheSame(newState.sectionNav, current.sectionNav) &&
+        navItemsAreTheSame(newState.pageNav, current.pageNav)
+      ) {
         return true;
       }
     }
@@ -148,4 +149,18 @@ export class AppChromeService {
 
     return null;
   }
+}
+
+/**
+ * Checks if text, url and active child url are the same
+ **/
+function navItemsAreTheSame(a: NavModelItem | undefined, b: NavModelItem | undefined) {
+  if (a === b) {
+    return true;
+  }
+
+  const aActiveChild = a?.children?.find((child) => child.active);
+  const bActiveChild = b?.children?.find((child) => child.active);
+
+  return a?.text === b?.text && a?.url === b?.url && aActiveChild?.url === bActiveChild?.url;
 }
