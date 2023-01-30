@@ -14,7 +14,7 @@ weight: 2900
 
 # Upgrade to Grafana v8.0
 
-{{< docs/shared "upgrade/upgrade-common-tasks.md" >}}
+{{< docs/shared lookup="upgrade/upgrade-common-tasks.md" source="grafana" >}}
 
 ## Technical notes
 
