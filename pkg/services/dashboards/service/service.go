@@ -16,10 +16,10 @@ func ProvideSimpleDashboardService(
 	svc *DashboardServiceImpl,
 	store entity.EntityStoreServer,
 	reg *corecrd.Registry,
-	bridge *bridge.Service,
+	troll *bridge.Service,
 ) dashboards.DashboardService {
 	if features.IsEnabled(featuremgmt.FlagK8sDashboards) {
-		return k8saccess.NewDashboardService(cfg, svc, store, reg, bridge)
+		return k8saccess.NewDashboardService(svc, store, reg, troll)
 	}
 	return svc
 }

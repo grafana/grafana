@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type k8sDashboardService struct {
@@ -26,11 +25,11 @@ type k8sDashboardService struct {
 
 var _ dashboards.DashboardService = (*k8sDashboardService)(nil)
 
-func NewDashboardService(cfg *setting.Cfg, orig dashboards.DashboardService, store entity.EntityStoreServer, reg *corecrd.Registry, bridge *bridge.Service) dashboards.DashboardService {
+func NewDashboardService(orig dashboards.DashboardService, store entity.EntityStoreServer, reg *corecrd.Registry, troll *bridge.Service) dashboards.DashboardService {
 	return &k8sDashboardService{
 		reg:       reg,
 		orig:      orig,
-		clientSet: bridge.ClientSet,
+		clientSet: troll.ClientSet,
 		store:     store,
 	}
 }
@@ -90,6 +89,7 @@ func (s *k8sDashboardService) MakeUserAdmin(ctx context.Context, orgID int64, us
 func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO, allowUiUpdate bool) (*dashboards.Dashboard, error) {
 	namespace := "default"
 	restClient := s.clientSet.RESTClient()
+
 	labels := make(map[string]string)
 	annotations := make(map[string]string)
 
@@ -132,6 +132,8 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 		Name(dto.Dashboard.Title).
 		Body(raw)
 
+	// should be
+	// https://localhost:8443/apis/dashboard.core.grafana.com/v0-0alpha1/namespaces/default/dashboards?limit=500
 	fmt.Println("req", req.URL())
 
 	res, err := req.
@@ -142,7 +144,6 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 	fmt.Println(string(res))
 
 	return dto.Dashboard, err
-
 }
 
 func (s *k8sDashboardService) SearchDashboards(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) error {
