@@ -10,16 +10,24 @@ load(
     'pipeline',
 )
 
+
 def lint_frontend_pipeline(trigger, ver_mode):
-    yarn_step = yarn_install_step()
-    yarn_step.update({ 'depends_on': [] })
+    environment = {'EDITION': 'oss'}
+
     init_steps = [
         identify_runner_step(),
-        yarn_step,
+        yarn_install_step(),
     ]
+
     test_steps = [
         lint_frontend_step(),
     ]
+
     return pipeline(
-        name='{}-lint-frontend'.format(ver_mode), edition="oss", trigger=trigger, services=[], steps=init_steps + test_steps,
+        name='{}-lint-frontend'.format(ver_mode),
+        edition="oss",
+        trigger=trigger,
+        services=[],
+        steps=init_steps + test_steps,
+        environment=environment,
     )
