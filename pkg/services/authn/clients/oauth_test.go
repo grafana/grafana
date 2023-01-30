@@ -6,14 +6,15 @@ import (
 	"net/url"
 	"testing"
 
+	"golang.org/x/oauth2"
+
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/oauth2"
 )
 
 func TestOAuth_Authenticate(t *testing.T) {
@@ -137,7 +138,7 @@ func TestOAuth_Authenticate(t *testing.T) {
 					SyncUser:        true,
 					SyncTeamMembers: true,
 					AllowSignUp:     true,
-					LookUpParams:    models.UserLookupParams{Email: strPtr("some@email.com")},
+					LookUpParams:    login.UserLookupParams{Email: strPtr("some@email.com")},
 				},
 			},
 		},

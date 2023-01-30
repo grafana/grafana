@@ -14,8 +14,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util/errutil"
@@ -137,7 +137,7 @@ func (c *OAuth) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 			SyncUser:        true,
 			SyncTeamMembers: true,
 			AllowSignUp:     c.connector.IsSignupAllowed(),
-			LookUpParams:    models.UserLookupParams{Email: &userInfo.Email},
+			LookUpParams:    login.UserLookupParams{Email: &userInfo.Email},
 		},
 	}, nil
 }
