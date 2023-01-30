@@ -4,7 +4,7 @@ import { ConnectionPath } from 'app/features/canvas';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
-import { ConnectionAnchors } from './ConnectionAnchors';
+import { CONNECTION_ANCHOR_ALT, ConnectionAnchors } from './ConnectionAnchors';
 import { ConnectionSVG } from './ConnectionSVG';
 
 export class Connections {
@@ -88,8 +88,18 @@ export class Connections {
     }
   };
 
-  handleMouseLeave = (event: React.MouseEvent | React.FocusEvent) => {
+  // Return boolean indicates if connection anchors were hidden or not
+  handleMouseLeave = (event: React.MouseEvent | React.FocusEvent): boolean => {
+    // If mouse is leaving INTO the anchor image, don't remove div
+    if (
+      event.relatedTarget instanceof HTMLImageElement &&
+      event.relatedTarget.getAttribute('alt') === CONNECTION_ANCHOR_ALT
+    ) {
+      return false;
+    }
+
     this.connectionAnchorDiv!.style.display = 'none';
+    return true;
   };
 
   connectionListener = (event: MouseEvent) => {
