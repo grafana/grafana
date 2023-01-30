@@ -11,19 +11,17 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type Service struct {
@@ -34,7 +32,6 @@ type Service struct {
 	dashboardStore       dashboards.Store
 	dashboardFolderStore dashboards.FolderStore
 	features             featuremgmt.FeatureToggles
-	permissions          accesscontrol.FolderPermissionsService
 	accessControl        accesscontrol.AccessControl
 
 	// bus is currently used to publish events that cause scheduler to update rules.
@@ -49,10 +46,7 @@ func ProvideService(
 	folderStore dashboards.FolderStore,
 	db db.DB, // DB for the (new) nested folder store
 	features featuremgmt.FeatureToggles,
-	folderPermissionsService accesscontrol.FolderPermissionsService,
 ) folder.Service {
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashboardStore, folderStore))
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(dashboardStore, folderStore))
 	store := ProvideStore(db, cfg, features)
 	svr := &Service{
 		cfg:                  cfg,
@@ -61,13 +55,15 @@ func ProvideService(
 		dashboardFolderStore: folderStore,
 		store:                store,
 		features:             features,
-		permissions:          folderPermissionsService,
 		accessControl:        ac,
 		bus:                  bus,
 	}
 	if features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		svr.DBMigration(db)
 	}
+
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashboardStore, folderStore, svr))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(dashboardStore, folderStore, svr))
 	return svr
 }
 
@@ -183,6 +179,13 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 	}
 
 	return filtered, nil
+}
+
+func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
+	if !s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		return nil, nil
+	}
+	return s.store.GetParents(ctx, q)
 }
 
 func (s *Service) getFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*folder.Folder, error) {
@@ -305,29 +308,6 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		return nil, err
 	}
 
-	var permissionErr error
-	if !accesscontrol.IsDisabled(s.cfg) {
-		var permissions []accesscontrol.SetResourcePermissionCommand
-		if user.IsRealUser() && !user.IsAnonymous {
-			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
-				UserID: userID, Permission: models.PERMISSION_ADMIN.String(),
-			})
-		}
-
-		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: string(org.RoleEditor), Permission: models.PERMISSION_EDIT.String()},
-			{BuiltinRole: string(org.RoleViewer), Permission: models.PERMISSION_VIEW.String()},
-		}...)
-
-		_, permissionErr = s.permissions.SetPermissions(ctx, cmd.OrgID, createdFolder.UID, permissions...)
-	} else if s.cfg.EditorsCanAdmin && user.IsRealUser() && !user.IsAnonymous {
-		permissionErr = s.MakeUserAdmin(ctx, cmd.OrgID, userID, createdFolder.ID, true)
-	}
-
-	if permissionErr != nil {
-		logger.Error("Could not make user admin", "folder", createdFolder.Title, "user", userID, "error", permissionErr)
-	}
-
 	var nestedFolder *folder.Folder
 	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		cmd := &folder.CreateFolderCommand{
@@ -408,12 +388,12 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 	logger := s.log.FromContext(ctx)
 
 	query := dashboards.GetDashboardQuery{OrgID: cmd.OrgID, UID: cmd.UID}
-	_, err := s.dashboardStore.GetDashboard(ctx, &query)
+	queryResult, err := s.dashboardStore.GetDashboard(ctx, &query)
 	if err != nil {
 		return nil, toFolderError(err)
 	}
 
-	dashFolder := query.Result
+	dashFolder := queryResult
 	currentTitle := dashFolder.Title
 
 	if !dashFolder.IsFolder {
@@ -626,7 +606,7 @@ func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folder
 			OrgID:       orgID,
 			DashboardID: folderID,
 			UserID:      userID,
-			Permission:  models.PERMISSION_ADMIN,
+			Permission:  dashboards.PERMISSION_ADMIN,
 			Created:     time.Now(),
 			Updated:     time.Now(),
 		},
@@ -638,7 +618,7 @@ func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folder
 				OrgID:       orgID,
 				DashboardID: folderID,
 				Role:        &rtEditor,
-				Permission:  models.PERMISSION_EDIT,
+				Permission:  dashboards.PERMISSION_EDIT,
 				Created:     time.Now(),
 				Updated:     time.Now(),
 			},
@@ -646,7 +626,7 @@ func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folder
 				OrgID:       orgID,
 				DashboardID: folderID,
 				Role:        &rtViewer,
-				Permission:  models.PERMISSION_VIEW,
+				Permission:  dashboards.PERMISSION_VIEW,
 				Created:     time.Now(),
 				Updated:     time.Now(),
 			},
