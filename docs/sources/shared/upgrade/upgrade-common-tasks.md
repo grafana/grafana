@@ -115,7 +115,7 @@ To upgrade Grafana running on Centos or RHEL, complete the following steps:
 
 1. Perform one of the following steps based on your installation.
 
-   - If you [downloaded an RPM package](https://grafana.com/grafana/download) to install Grafana, then complete the steps documented in [Install on RPM-based Linux]({{< relref "./installation/rpm" >}}) to upgrade Grafana.
+   - If you [downloaded an RPM package](https://grafana.com/grafana/download) to install Grafana, then complete the steps documented in [Install on RPM-based Linux]({{< relref "../../setup-grafana/installation/rpm/" >}}) to upgrade Grafana.
    - If you used the Grafana YUM repository, run the following command:
 
      ```bash
