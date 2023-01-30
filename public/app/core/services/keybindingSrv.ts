@@ -35,7 +35,7 @@ export class KeybindingSrv {
     Mousetrap.reset();
 
     // Chromeless pages like login and signup page don't get any global bindings
-    if (route.chromeless !== true) {
+    if (!route.chromeless) {
       this.bind(['?', 'h'], this.showHelpModal);
       this.bind('g h', this.goToHome);
       this.bind('g a', this.openAlerting);
