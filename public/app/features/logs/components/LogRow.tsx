@@ -30,7 +30,7 @@ import {
 } from './LogRowContextProvider';
 import { LogRowMessage } from './LogRowMessage';
 import { LogRowMessageDisplayedFields } from './LogRowMessageDisplayedFields';
-import { getLogRowStyles } from './getLogRowStyles';
+import { getLogLevelStyles, getLogRowStyles } from './getLogRowStyles';
 
 //Components
 
@@ -175,6 +175,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
     const { showDetails, showContext } = this.state;
     const style = getLogRowStyles(theme, row.logLevel);
     const styles = getStyles(theme);
+    const levelStyles = getLogLevelStyles(theme, row.logLevel);
     const { errorMessage, hasError } = checkLogsError(row);
     const logRowBackground = cx(style.logsRow, {
       [styles.errorLogRow]: hasError,
@@ -203,7 +204,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
               {processedRow.duplicates && processedRow.duplicates > 0 ? `${processedRow.duplicates + 1}x` : null}
             </td>
           )}
-          <td className={cx({ [style.logsRowLevel]: !hasError })}>
+          <td className={cx({ [levelStyles.logsRowLevel]: !hasError })}>
             {hasError && (
               <Tooltip content={`Error: ${errorMessage}`} placement="right" theme="error">
                 <Icon className={style.logIconError} name="exclamation-triangle" size="xs" />

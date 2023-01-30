@@ -3,10 +3,8 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2, LogLevel } from '@grafana/data';
 import { styleMixins } from '@grafana/ui';
 
-export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
+export const getLogLevelStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
   let logColor = theme.isLight ? theme.v1.palette.gray5 : theme.v1.palette.gray2;
-  const hoverBgColor = styleMixins.hoverColor(theme.colors.background.secondary, theme);
-
   switch (logLevel) {
     case LogLevel.crit:
     case LogLevel.critical:
@@ -32,6 +30,29 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
   }
 
   return {
+    logsRowLevel: css`
+      label: logs-row__level;
+      max-width: ${theme.spacing(1.25)};
+      cursor: default;
+      &::after {
+        content: '';
+        display: block;
+        position: absolute;
+        top: 1px;
+        bottom: 1px;
+        width: 3px;
+        left: ${theme.spacing(0.5)};
+        background-color: ${logColor};
+      }
+    `,
+  };
+};
+
+export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
+  const hoverBgColor = styleMixins.hoverColor(theme.colors.background.secondary, theme);
+
+  return {
+    logsRowLevel: css``,
     logsRowMatchHighLight: css`
       label: logs-row__match-highlight;
       background: inherit;
@@ -80,21 +101,6 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
       text-align: right;
       width: 4em;
       cursor: default;
-    `,
-    logsRowLevel: css`
-      label: logs-row__level;
-      max-width: ${theme.spacing(1.25)};
-      cursor: default;
-      &::after {
-        content: '';
-        display: block;
-        position: absolute;
-        top: 1px;
-        bottom: 1px;
-        width: 3px;
-        left: ${theme.spacing(0.5)};
-        background-color: ${logColor};
-      }
     `,
     logIconError: css`
       color: ${theme.colors.warning.main};

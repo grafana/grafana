@@ -7,7 +7,7 @@ import { Themeable2, withTheme2 } from '@grafana/ui';
 import { calculateLogsLabelStats, calculateStats } from '../utils';
 
 import { LogDetailsRow } from './LogDetailsRow';
-import { getLogRowStyles } from './getLogRowStyles';
+import { getLogLevelStyles, getLogRowStyles } from './getLogRowStyles';
 import { getAllFields } from './logParser';
 
 //Components
@@ -67,6 +67,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
       wrapLogMessage,
     } = this.props;
     const style = getLogRowStyles(theme, row.logLevel);
+    const levelStyles = getLogLevelStyles(theme, row.logLevel);
     const styles = getStyles(theme);
     const labels = row.labels ? row.labels : {};
     const labelsAvailable = Object.keys(labels).length > 0;
@@ -77,7 +78,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
     const linksAvailable = links && links.length > 0;
 
     // If logs with error, we are not showing the level color
-    const levelClassName = cx(!hasError && [style.logsRowLevel, styles.logsRowLevelDetails]);
+    const levelClassName = cx(!hasError && [levelStyles.logsRowLevel, styles.logsRowLevelDetails]);
 
     return (
       <tr className={cx(className, styles.logDetails)}>
