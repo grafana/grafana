@@ -13,6 +13,7 @@ import { AngularRoot } from './angular/AngularRoot';
 import { loadAndInitAngularIfEnabled } from './angular/loadAndInitAngularIfEnabled';
 import { GrafanaApp } from './app';
 import { AppChrome } from './core/components/AppChrome/AppChrome';
+import { DisabledOnChromeless as DisabledOnChromelessRoutes } from './core/components/AppChrome/DisableOnChromeless';
 import { AppNotificationList } from './core/components/AppNotifications/AppNotificationList';
 import { NavBar } from './core/components/NavBar/NavBar';
 import { GrafanaContext } from './core/context/GrafanaContext';
@@ -83,20 +84,11 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
   }
 
   renderNavBar() {
-    if (config.isPublicDashboardView || !this.state.ready || config.featureToggles.topnav) {
+    if (!this.state.ready || config.featureToggles.topnav) {
       return null;
     }
 
     return <NavBar />;
-  }
-
-  commandPaletteEnabled() {
-    const isLoginPage = locationService.getLocation().pathname === '/login';
-    return config.featureToggles.commandPalette && !config.isPublicDashboardView && !isLoginPage;
-  }
-
-  searchBarEnabled() {
-    return !config.isPublicDashboardView;
   }
 
   render() {
@@ -124,18 +116,21 @@ export class AppWrapper extends React.Component<AppWrapperProps, AppWrapperState
                 >
                   <ModalsProvider>
                     <GlobalStyles />
-                    {this.commandPaletteEnabled() && <CommandPalette />}
                     <div className="grafana-app">
                       <Router history={locationService.getHistory()}>
-                        {this.renderNavBar()}
+                        <DisabledOnChromelessRoutes>
+                          <>
+                            {config.featureToggles.commandPalette && <CommandPalette />}
+                            {this.renderNavBar()}
+                            <SearchWrapper />
+                          </>
+                        </DisabledOnChromelessRoutes>
                         <AppChrome>
                           {pageBanners.map((Banner, index) => (
                             <Banner key={index.toString()} />
                           ))}
-
                           <AngularRoot />
                           <AppNotificationList />
-                          {this.searchBarEnabled() && <SearchWrapper />}
                           {ready && this.renderRoutes()}
                           {bodyRenderHooks.map((Hook, index) => (
                             <Hook key={index.toString()} />

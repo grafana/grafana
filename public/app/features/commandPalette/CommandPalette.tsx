@@ -26,7 +26,7 @@ import useActions from './actions/useActions';
 import { CommandPaletteAction } from './types';
 import { useMatches } from './useMatches';
 
-export const CommandPalette = () => {
+export function CommandPalette() {
   const styles = useStyles2(getSearchStyles);
 
   const { query, showing, searchQuery } = useKBar((state) => ({
@@ -43,6 +43,7 @@ export const CommandPalette = () => {
     { isOpen: showing, onClose: () => query.setVisualState(VisualState.animatingOut) },
     ref
   );
+
   const { dialogProps } = useDialog({}, ref);
 
   // Report interaction when opened
@@ -72,7 +73,7 @@ export const CommandPalette = () => {
       </KBarPositioner>
     </KBarPortal>
   ) : null;
-};
+}
 
 interface RenderResultsProps {
   dashboardResults: CommandPaletteAction[];
