@@ -340,7 +340,7 @@ describe('adding new query rows', () => {
       config.featureToggles.exploreMixedDatasource = false;
     });
 
-    it('should add query row whith rootdatasource (without datasourceOverride) when there is not yet a row', async () => {
+    it('should add query row whith root ds (without overriding the default ds) when there is not yet a row', async () => {
       const queries: DataQuery[] = [];
       const datasourceInstance = {
         query: jest.fn(),
@@ -360,7 +360,7 @@ describe('adding new query rows', () => {
       expect(getState().explore[exploreId].queryKeys).toEqual(['ds1-0']);
     });
 
-    it('should add query row whith rootdatasource (with datasourceOverride) when there is not yet a row', async () => {
+    it('should add query row whith root ds (with overriding the default ds) when there is not yet a row', async () => {
       const queries: DataQuery[] = [];
       const datasourceInstance = {
         query: jest.fn(),
@@ -382,7 +382,7 @@ describe('adding new query rows', () => {
       expect(getState().explore[exploreId].queryKeys).toEqual(['uid-loki-0']);
     });
 
-    it('should add another query row if there are two rows already', async () => {
+    it('should add another query row if there are two rows already (impossible in UI)', async () => {
       const queries = [
         {
           datasource: { type: 'postgres', uid: 'ds3' },
@@ -397,6 +397,7 @@ describe('adding new query rows', () => {
         query: jest.fn(),
         getRef: jest.fn(),
         meta: {
+          // datasourceInstance.meta.id is set to postgres because it's the default datasource
           id: 'postgres',
           mixed: false,
         } as unknown as DataSourcePluginMeta<{}>,
