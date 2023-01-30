@@ -247,6 +247,7 @@ class UnThemedLogRow extends PureComponent<Props, State> {
             hasError={hasError}
             displayedFields={displayedFields}
             app={app}
+            styles={styles}
           />
         )}
       </>

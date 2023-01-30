@@ -193,6 +193,20 @@ export const getLogRowStyles = (theme: GrafanaTheme2) => {
       label: erroredLogRow;
       color: ${theme.colors.text.secondary};
     `,
+    logsRowLevelDetails: css`
+      label: logs-row__level_details;
+      &::after {
+        top: -3px;
+      }
+    `,
+    logDetails: css`
+      label: logDetailsDefaultCursor;
+      cursor: default;
+
+      &:hover {
+        background-color: ${theme.colors.background.primary};
+      }
+    `,
   };
 };
 
