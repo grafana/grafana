@@ -424,7 +424,7 @@
           "stringInput": "-50,-50,-50,-50,-50,-50,-50,-50"
         },
         {
-          "alias": "__expr__",
+          "alias": "-100",
           "datasource": {
             "type": "testdata",
             "uid": "PD8C576611E62080A"
@@ -1964,7 +1964,7 @@
           "stringInput": "-50,-50,null,-50,-50,-50,-50,-50"
         },
         {
-          "alias": "__expr__",
+          "alias": "-100",
           "datasource": {
             "type": "testdata",
             "uid": "PD8C576611E62080A"
