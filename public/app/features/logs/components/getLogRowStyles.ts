@@ -48,9 +48,8 @@ export const getLogLevelStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => 
   };
 };
 
-export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
+export const getLogRowStyles = (theme: GrafanaTheme2) => {
   const hoverBgColor = styleMixins.hoverColor(theme.colors.background.secondary, theme);
-
   return {
     logsRowLevel: css``,
     logsRowMatchHighLight: css`
@@ -180,5 +179,21 @@ export const getLogRowStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => {
         background-color: ${hoverBgColor};
       }
     `,
+    topVerticalAlign: css`
+      label: topVerticalAlign;
+      margin-top: -${theme.spacing(0.9)};
+      margin-left: -${theme.spacing(0.25)};
+    `,
+    detailsOpen: css`
+      &:hover {
+        background-color: ${styleMixins.hoverColor(theme.colors.background.primary, theme)};
+      }
+    `,
+    errorLogRow: css`
+      label: erroredLogRow;
+      color: ${theme.colors.text.secondary};
+    `,
   };
 };
+
+export type LogRowStyles = ReturnType<typeof getLogRowStyles>;
