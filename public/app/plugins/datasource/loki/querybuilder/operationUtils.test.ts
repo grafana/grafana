@@ -1,6 +1,11 @@
 import { QueryBuilderOperationDef } from '../../prometheus/querybuilder/shared/types';
 
-import { createRangeOperation, createRangeOperationWithGrouping, getLineFilterRenderer } from './operationUtils';
+import {
+  createRangeOperation,
+  createRangeOperationWithGrouping,
+  getLineFilterRenderer,
+  labelFilterRenderer,
+} from './operationUtils';
 import { LokiVisualQueryOperationCategory } from './types';
 
 describe('createRangeOperation', () => {
@@ -154,5 +159,21 @@ describe('getLineFilterRenderer', () => {
     expect(lineFilterRenderer(MOCK_MODEL_INSENSITIVE, MOCK_DEF, MOCK_INNER_EXPR)).toBe(
       '{job="grafana"} !~ `(?i)ERrOR`'
     );
+  });
+});
+
+describe('labelFilterRenderer', () => {
+  const MOCK_MODEL = { id: '__label_filter', params: ['', '', ''] };
+  const MOCK_DEF = undefined as unknown as QueryBuilderOperationDef;
+  const MOCK_INNER_EXPR = '{job="grafana"}';
+
+  it('should use backticks if the value is a string', () => {
+    MOCK_MODEL.params = ['test', '=', 'one'];
+    expect(labelFilterRenderer(MOCK_MODEL, MOCK_DEF, MOCK_INNER_EXPR)).toBe('{job="grafana"} | test = `one`');
+  });
+
+  it('should not backticks if the value is a number', () => {
+    MOCK_MODEL.params = ['test', '=', '3'];
+    expect(labelFilterRenderer(MOCK_MODEL, MOCK_DEF, MOCK_INNER_EXPR)).toBe('{job="grafana"} | test = 3');
   });
 });
