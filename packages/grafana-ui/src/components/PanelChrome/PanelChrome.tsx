@@ -221,7 +221,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       flex: '1 1 0',
 
-      '&:focus-visible, &:hover': {
+      '&:focus-within, &:hover': {
         // only show menu icon on hover or focused panel
         '.menu-icon': {
           visibility: 'visible',
