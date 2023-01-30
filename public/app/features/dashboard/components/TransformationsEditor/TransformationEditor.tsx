@@ -8,6 +8,7 @@ import {
   GrafanaTheme2,
   transformDataFrame,
   TransformerRegistryItem,
+  getFrameMatchers,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Icon, JSONFormatter, useStyles2 } from '@grafana/ui';
@@ -37,9 +38,16 @@ export const TransformationEditor = ({
   const config = useMemo(() => configs[index], [configs, index]);
 
   useEffect(() => {
+    const config = configs[index].transformation;
+    const matcher = config.filter?.options ? getFrameMatchers(config.filter) : undefined;
     const inputTransforms = configs.slice(0, index).map((t) => t.transformation);
     const outputTransforms = configs.slice(index, index + 1).map((t) => t.transformation);
-    const inputSubscription = transformDataFrame(inputTransforms, data).subscribe(setInput);
+    const inputSubscription = transformDataFrame(inputTransforms, data).subscribe((v) => {
+      if (matcher) {
+        v = data.filter((v) => matcher(v));
+      }
+      setInput(v);
+    });
     const outputSubscription = transformDataFrame(inputTransforms, data)
       .pipe(mergeMap((before) => transformDataFrame(outputTransforms, before)))
       .subscribe(setOutput);
