@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { omit } from 'lodash';
 import React from 'react';
@@ -105,6 +105,9 @@ describe('AzureMonitor ResourcePicker', () => {
 
   it('should show scroll down to a resource and mark it as selected if there is one saved', async () => {
     render(<ResourcePicker {...defaultProps} resources={[singleResourceSelectionURI]} />);
+    await waitFor(() => {
+      expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+    });
     const resourceCheckboxes = await screen.findAllByLabelText('db-server');
     expect(resourceCheckboxes.length).toBe(2);
     expect(resourceCheckboxes[0]).toBeChecked();
@@ -222,6 +225,9 @@ describe('AzureMonitor ResourcePicker', () => {
         ]}
       />
     );
+    await waitFor(() => {
+      expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+    });
     const checkbox = await screen.findAllByLabelText('web-server');
     expect(checkbox).toHaveLength(2);
     expect(checkbox.at(0)).toBeChecked();
@@ -330,6 +336,29 @@ describe('AzureMonitor ResourcePicker', () => {
     expect(error).toHaveTextContent(
       'Unable to resolve a list of valid metric namespaces. Validate the datasource configuration is correct and required permissions have been granted for all subscriptions. Grafana requires at least the Reader role to be assigned.'
     );
+  });
+
+  it('display a row for a selected resource even if it is not part of the current rows', async () => {
+    const resourcePickerData = createMockResourcePickerData([]);
+    resourcePickerData.fetchInitialRows = jest.fn().mockResolvedValue([]);
+    render(
+      <ResourcePicker
+        {...defaultProps}
+        resources={[
+          {
+            metricNamespace: 'Microsoft.Compute/virtualMachines',
+            region: 'northeurope',
+            resourceGroup: 'dev-3',
+            resourceName: 'web-server',
+            subscription: 'def-456',
+          },
+        ]}
+        resourcePickerData={resourcePickerData}
+      />
+    );
+    const checkbox = await screen.findAllByLabelText('web-server');
+    expect(checkbox).toHaveLength(1);
+    expect(checkbox.at(0)).toBeChecked();
   });
 
   describe('when rendering resource picker without any selectable entry types', () => {
