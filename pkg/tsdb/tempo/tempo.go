@@ -4,9 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
 	"io"
 	"net/http"
+
+	"github.com/grafana/grafana/pkg/tsdb/tempo/kinds/dataquery"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
