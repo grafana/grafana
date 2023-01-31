@@ -2,7 +2,6 @@ import { cx } from '@emotion/css';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
-import { config } from '@grafana/runtime';
 import { Alert, Button, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
@@ -11,7 +10,6 @@ import { AzureMetricResource } from '../../types';
 import messageFromError from '../../utils/messageFromError';
 import { Space } from '../Space';
 
-import Advanced from './Advanced';
 import AdvancedMulti from './AdvancedMulti';
 import NestedRow from './NestedRow';
 import Search from './Search';
@@ -29,6 +27,7 @@ interface ResourcePickerProps<T> {
   onCancel: () => void;
   disableRow: (row: ResourceRow, selectedRows: ResourceRowGroup) => boolean;
   renderAdvanced: (resources: T[], onChange: (resources: T[]) => void) => React.ReactNode;
+  selectionNotice?: (selectedRows: ResourceRowGroup) => string;
 }
 
 const ResourcePicker = ({
@@ -40,6 +39,7 @@ const ResourcePicker = ({
   queryType,
   disableRow,
   renderAdvanced,
+  selectionNotice,
 }: ResourcePickerProps<string | AzureMetricResource>) => {
   const styles = useStyles2(getStyles);
 
@@ -49,6 +49,7 @@ const ResourcePicker = ({
   const [internalSelected, setInternalSelected] = useState(resources);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const [shouldShowLimitFlag, setShouldShowLimitFlag] = useState(false);
+  const selectionNoticeText = selectionNotice?.(selectedRows);
 
   // Sync the resourceURI prop to internal state
   useEffect(() => {
@@ -120,7 +121,7 @@ const ResourcePicker = ({
       if (isSelected) {
         const newRes = queryType === 'logs' ? row.uri : parseMultipleResourceDetails([row.uri], row.location)[0];
         const newSelected = internalSelected ? internalSelected.concat(newRes) : [newRes];
-        setInternalSelected(newSelected);
+        setInternalSelected(newSelected.filter((r) => isValid(r)));
       } else {
         const newInternalSelected = internalSelected?.filter((r) => {
           return !matchURI(resourceToString(r), row.uri);
@@ -241,18 +242,19 @@ const ResourcePicker = ({
               </table>
             </div>
             <Space v={2} />
+            {selectionNoticeText?.length ? (
+              <Alert title="" severity="info">
+                {selectionNoticeText}
+              </Alert>
+            ) : null}
           </>
         )}
 
-        {config.featureToggles.azureMultipleResourcePicker ? (
-          <AdvancedMulti
-            resources={internalSelected}
-            onChange={(r) => setInternalSelected(r)}
-            renderAdvanced={renderAdvanced}
-          />
-        ) : (
-          <Advanced resources={internalSelected} onChange={(r) => setInternalSelected(r)} />
-        )}
+        <AdvancedMulti
+          resources={internalSelected}
+          onChange={(r) => setInternalSelected(r)}
+          renderAdvanced={renderAdvanced}
+        />
 
         <Space v={2} />
 
