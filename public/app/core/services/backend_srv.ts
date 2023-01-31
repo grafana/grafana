@@ -304,7 +304,7 @@ export class BackendSrv implements BackendService {
     }
   }
 
-  showErrorAlert<T>(config: BackendSrvRequest, err: FetchError) {
+  showErrorAlert(config: BackendSrvRequest, err: FetchError) {
     if (config.showErrorAlert === false) {
       return;
     }
@@ -314,13 +314,18 @@ export class BackendSrv implements BackendService {
       return;
     }
 
-    let data = err.data;
-    let message = 'Error';
-    let description = data.message;
+    let description = '';
+    let message = err.data.message;
+
+    if (message.length > 80) {
+      description = message;
+      message = 'Error';
+    }
 
     // Validation
     if (err.status === 422) {
-      message = 'Validation error';
+      description = err.data.message;
+      message = 'Validation failed';
     }
 
     this.dependencies.appEvents.emit(err.status < 500 ? AppEvents.alertWarning : AppEvents.alertError, [
