@@ -42,8 +42,6 @@ export function TablePanel(props: Props) {
     subData = subFrames.filter((f) => f.refId === main.refId);
   }
 
-  // console.log(options, 'options');
-
   const tableElement = (
     <Table
       height={tableHeight}

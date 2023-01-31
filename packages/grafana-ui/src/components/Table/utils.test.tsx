@@ -474,7 +474,7 @@ describe('Table utils', () => {
       expect(sortNumber(a, b, '0')).toEqual(expected);
     });
 
-    it.skip('should have good performance', () => {
+    it('should have good performance', () => {
       const ITERATIONS = 100000;
       const a: any = { values: Array(ITERATIONS) };
       const b: any = { values: Array(ITERATIONS) };
