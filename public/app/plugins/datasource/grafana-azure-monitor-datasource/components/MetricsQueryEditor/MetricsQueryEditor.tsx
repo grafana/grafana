@@ -2,7 +2,6 @@ import React from 'react';
 
 import { PanelData } from '@grafana/data/src/types';
 import { EditorRows, EditorRow, EditorFieldGroup } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
 
 import { multiResourceCompatibleTypes } from '../../azureMetadata';
 import type Datasource from '../../datasource';
@@ -59,10 +58,6 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
       // Only if there is some resource(s) selected we should disable rows
       return false;
     }
-    if (!config.featureToggles.azureMultipleResourcePicker) {
-      // Disable multiple selection until the feature is ready
-      return true;
-    }
 
     const rowResource = parseResourceDetails(row.uri, row.location);
     const selectedRowSample = parseResourceDetails(selectedRows[0].uri, selectedRows[0].location);
@@ -80,7 +75,7 @@ const MetricsQueryEditor: React.FC<MetricsQueryEditorProps> = ({
   };
 
   const selectionNotice = (selectedRows: ResourceRowGroup) => {
-    if (selectedRows.length === 0 || !config.featureToggles.azureMultipleResourcePicker) {
+    if (selectedRows.length === 0) {
       return '';
     }
     const selectedRowSample = parseResourceDetails(selectedRows[0].uri, selectedRows[0].location);
