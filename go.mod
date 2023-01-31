@@ -430,3 +430,6 @@ replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-aler
 replace google.golang.org/grpc => google.golang.org/grpc v1.45.0
 
 replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20220421151946-72621c1f0bd3
+
+// Remove this once https://github.com/grafana/dskit/pull/258 is merged.
+replace github.com/grafana/dskit => github.com/gotjosh/dskit v0.0.0-20230131123646-8dda768daa27
