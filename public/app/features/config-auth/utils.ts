@@ -30,22 +30,6 @@ export function getAuthProviderInfo(provider: string) {
   return providers[provider];
 }
 
-export function getEnabledAuthProviders(cfg: Settings): string[] {
-  const enabled: string[] = [];
-  for (const section in cfg) {
-    if (Object.prototype.hasOwnProperty.call(cfg, section)) {
-      const sectionConfig = cfg[section];
-      const provider = AvailableAuthProviders.find((provider) => `auth.${provider}` === section);
-      if (provider) {
-        if (sectionConfig['enabled'] === 'true') {
-          enabled.push(provider);
-        }
-      }
-    }
-  }
-  return enabled;
-}
-
 export function getAuthProviders(cfg: Settings): SettingsSection[] {
   const providers: SettingsSection[] = [];
   for (const section in cfg) {

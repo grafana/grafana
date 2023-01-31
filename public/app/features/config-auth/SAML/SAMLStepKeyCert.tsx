@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { FormEvent, useState } from 'react';
+import React, { FormEvent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -8,7 +8,7 @@ import { SettingsSection, StoreState } from 'app/types';
 
 import { ConfigStepContainer } from '../components/ConfigStepContainer';
 import { loadSettings } from '../state/actions';
-import { samlStepChanged } from '../state/reducers';
+import { samlStepChanged, setSignatureAlgorithm } from '../state/reducers';
 import { selectSamlConfig } from '../state/selectors';
 
 interface OwnProps {
@@ -23,12 +23,14 @@ function mapStateToProps(state: StoreState) {
     settings: state.authConfig.settings,
     step: state.authConfig.samlStep,
     samlSettings: selectSamlConfig(state.authConfig),
+    signatureAlgorithm: state.authConfig.samlSignatureAlgorithm,
   };
 }
 
 const mapDispatchToProps = {
   loadSettings,
   samlStepChanged,
+  setSignatureAlgorithm,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -46,13 +48,13 @@ const signatureOptions = [
 
 export const SAMLStepKeyCertUnconnected = ({
   samlSettings,
-  step,
   loadSettings,
-  samlStepChanged,
+  signatureAlgorithm,
+  setSignatureAlgorithm,
   onSettingsUpdate,
   onSave,
 }: Props): JSX.Element => {
-  const [signatureAlgorithm, setSignatureAlgorithm] = useState(samlSettings.signature_algorithm || 'rsa-sha256');
+  // const [signatureAlgorithm, setSignatureAlgorithm] = useState(samlSettings.signature_algorithm || 'rsa-sha256');
   const styles = useStyles2(getStyles);
 
   const onPropChange = (prop: string) => {
@@ -73,8 +75,13 @@ export const SAMLStepKeyCertUnconnected = ({
     if (samlSettings.signature_algorithm !== '') {
       onSettingsUpdate({ ...samlSettings, signature_algorithm: '' });
     } else {
-      onSettingsUpdate({ ...samlSettings, signature_algorithm: signatureAlgorithm });
+      onSettingsUpdate({ ...samlSettings, signature_algorithm: signatureAlgorithm || 'rsa-sha256' });
     }
+  };
+
+  const onSignatureAlgorithmChange = (value: string) => {
+    setSignatureAlgorithm(value);
+    onSettingsUpdate({ ...samlSettings, signature_algorithm: value });
   };
 
   return (
@@ -107,9 +114,15 @@ export const SAMLStepKeyCertUnconnected = ({
       <Field label="Sign requests">
         <Switch id="signRequests" value={samlSettings.signature_algorithm !== ''} onChange={onSignatureOptionChange} />
       </Field>
-      <Field label="Signature algorithm" description="Must be the same as set-up or required by IdP.">
-        <RadioButtonGroup options={signatureOptions} value={signatureAlgorithm} onChange={setSignatureAlgorithm} />
-      </Field>
+      {samlSettings.signature_algorithm !== '' && (
+        <Field label="Signature algorithm" description="Must be the same as set-up or required by IdP.">
+          <RadioButtonGroup
+            options={signatureOptions}
+            value={signatureAlgorithm || 'rsa-sha256'}
+            onChange={onSignatureAlgorithmChange}
+          />
+        </Field>
+      )}
     </ConfigStepContainer>
   );
 };

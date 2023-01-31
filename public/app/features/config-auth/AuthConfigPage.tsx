@@ -9,7 +9,7 @@ import { StoreState } from 'app/types';
 
 import { ProviderCard } from './components/ProviderCard';
 import { loadSettings } from './state/actions';
-import { getAuthProviderInfo, getAuthProviders, getEnabledAuthProviders } from './utils';
+import { getAuthProviderInfo, getAuthProviders } from './utils';
 
 interface OwnProps {}
 

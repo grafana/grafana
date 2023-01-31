@@ -12,7 +12,6 @@ import { SettingsSection, StoreState } from 'app/types';
 import { loadSettings, saveSettings } from '../state/actions';
 import { samlStepChanged, settingsUpdated } from '../state/reducers';
 import { selectSamlConfig } from '../state/selectors';
-import { getEnabledAuthProviders } from '../utils';
 
 import { SAMLStepAssertionMapping } from './SAMLStepAssertionMapping';
 import { SAMLStepConnectToIdP } from './SAMLStepConnectToIdP';
@@ -85,9 +84,6 @@ export const SetupSAMLPageUnconnected = ({
     const data = { updates: { 'auth.saml': rest } };
     saveSettings(data);
   };
-
-  const enabledAuthProviders = getEnabledAuthProviders(settings);
-  console.log(enabledAuthProviders);
 
   step = Number(queryParams.step) || step;
 
