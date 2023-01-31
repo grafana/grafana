@@ -76,9 +76,8 @@ class UnThemedLogDetails extends PureComponent<Props> {
     const linksAvailable = links && links.length > 0;
 
     // If logs with error, we are not showing the level color
-    const levelClassName = !hasError
-      ? `${levelStyles.logsRowLevelColor} ${rowStyles.logsRowLevel} ${styles.logsRowLevelDetails}`
-      : '';
+    const levelClassName = hasError
+      ? '' : `${levelStyles.logsRowLevelColor} ${rowStyles.logsRowLevel} ${styles.logsRowLevelDetails}`;
 
     return (
       <tr className={cx(className, styles.logDetails)}>
