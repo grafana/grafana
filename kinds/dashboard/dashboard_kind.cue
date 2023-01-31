@@ -2,8 +2,9 @@ package kind
 
 import "strings"
 
-name:     "Dashboard"
-maturity: "experimental"
+name:        "Dashboard"
+maturity:    "experimental"
+description: "A Grafana dashboard."
 
 lineage: seqs: [
 	{

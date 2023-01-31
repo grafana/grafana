@@ -10,6 +10,7 @@ type CommonProperties struct {
 	PluralMachineName string   `json:"pluralMachineName"`
 	LineageIsGroup    bool     `json:"lineageIsGroup"`
 	Maturity          Maturity `json:"maturity"`
+	Description       string   `json:"description,omitempty"`
 }
 
 // CoreProperties represents the static properties in the definition of a
