@@ -10,8 +10,6 @@ import { LogDetailsRow } from './LogDetailsRow';
 import { getLogLevelStyles, getLogRowStyles } from './getLogRowStyles';
 import { getAllFields } from './logParser';
 
-//Components
-
 export interface Props extends Themeable2 {
   row: LogRowModel;
   showDuplicates: boolean;
@@ -66,7 +64,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
       getFieldLinks,
       wrapLogMessage,
     } = this.props;
-    const style = getLogRowStyles(theme);
+    const rowStyles = getLogRowStyles(theme);
     const levelStyles = getLogLevelStyles(theme, row.logLevel);
     const styles = getStyles(theme);
     const labels = row.labels ? row.labels : {};
@@ -78,19 +76,21 @@ class UnThemedLogDetails extends PureComponent<Props> {
     const linksAvailable = links && links.length > 0;
 
     // If logs with error, we are not showing the level color
-    const levelClassName = cx(!hasError && [levelStyles.logsRowLevel, styles.logsRowLevelDetails]);
+    const levelClassName = !hasError
+      ? `${levelStyles.logsRowLevelColor} ${rowStyles.logsRowLevel} ${styles.logsRowLevelDetails}`
+      : '';
 
     return (
       <tr className={cx(className, styles.logDetails)}>
         {showDuplicates && <td />}
         <td className={levelClassName} aria-label="Log level" />
         <td colSpan={4}>
-          <div className={style.logDetailsContainer}>
-            <table className={style.logDetailsTable}>
+          <div className={rowStyles.logDetailsContainer}>
+            <table className={rowStyles.logDetailsTable}>
               <tbody>
                 {(labelsAvailable || fieldsAvailable) && (
                   <tr>
-                    <td colSpan={100} className={style.logDetailsHeading} aria-label="Fields">
+                    <td colSpan={100} className={rowStyles.logDetailsHeading} aria-label="Fields">
                       Fields
                     </td>
                   </tr>
@@ -139,7 +139,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
 
                 {linksAvailable && (
                   <tr>
-                    <td colSpan={100} className={style.logDetailsHeading} aria-label="Data Links">
+                    <td colSpan={100} className={rowStyles.logDetailsHeading} aria-label="Data Links">
                       Links
                     </td>
                   </tr>

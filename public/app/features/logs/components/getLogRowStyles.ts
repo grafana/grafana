@@ -31,6 +31,18 @@ export const getLogLevelStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => 
   }
 
   return {
+    logsRowLevelColor: css`
+      &::after {
+        background-color: ${logColor};
+      }
+    `,
+  };
+};
+
+export const getLogRowStyles = (theme: GrafanaTheme2) => {
+  const hoverBgColor = styleMixins.hoverColor(theme.colors.background.secondary, theme);
+  const contextOutlineColor = tinycolor(theme.components.dashboard.background).setAlpha(0.7).toRgbString();
+  return {
     logsRowLevel: css`
       label: logs-row__level;
       max-width: ${theme.spacing(1.25)};
@@ -43,17 +55,8 @@ export const getLogLevelStyles = (theme: GrafanaTheme2, logLevel?: LogLevel) => 
         bottom: 1px;
         width: 3px;
         left: ${theme.spacing(0.5)};
-        background-color: ${logColor};
       }
     `,
-  };
-};
-
-export const getLogRowStyles = (theme: GrafanaTheme2) => {
-  const hoverBgColor = styleMixins.hoverColor(theme.colors.background.secondary, theme);
-  const contextOutlineColor = tinycolor(theme.components.dashboard.background).setAlpha(0.7).toRgbString();
-  return {
-    logsRowLevel: css``,
     logsRowMatchHighLight: css`
       label: logs-row__match-highlight;
       background: inherit;
