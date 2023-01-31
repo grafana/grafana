@@ -242,12 +242,12 @@ func TestIntegrationAMConfigAccess(t *testing.T) {
 			{
 				desc:      "editor request should succeed",
 				url:       "http://editor:editor@%s/api/alertmanager/grafana/api/v2/silences",
-				expStatus: http.StatusAccepted,
+				expStatus: http.StatusCreated,
 			},
 			{
 				desc:      "admin request should succeed",
 				url:       "http://admin:admin@%s/api/alertmanager/grafana/api/v2/silences",
-				expStatus: http.StatusAccepted,
+				expStatus: http.StatusCreated,
 			},
 		}
 
