@@ -225,7 +225,11 @@ export const fetchRulerRulesAction = createAsyncThunk(
   }
 );
 
-export function fetchPromAndRulerRulesAction({ rulesSourceName }: { rulesSourceName: string }): ThunkResult<void> {
+export function fetchPromAndRulerRulesAction({
+  rulesSourceName,
+}: {
+  rulesSourceName: string;
+}): ThunkResult<Promise<void>> {
   return async (dispatch, getState) => {
     await dispatch(fetchRulesSourceBuildInfoAction({ rulesSourceName }));
     const dsConfig = getDataSourceConfig(getState, rulesSourceName);

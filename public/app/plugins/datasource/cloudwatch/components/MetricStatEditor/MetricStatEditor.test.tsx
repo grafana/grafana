@@ -243,7 +243,7 @@ describe('MetricStatEditor', () => {
         );
       });
       expect(onChange).toHaveBeenCalledWith({ ...validMetricSearchBuilderQuery, accountId: undefined });
-      expect(await screen.queryByText('Account')).not.toBeInTheDocument();
+      expect(screen.queryByText('Account')).not.toBeInTheDocument();
     });
   });
 });

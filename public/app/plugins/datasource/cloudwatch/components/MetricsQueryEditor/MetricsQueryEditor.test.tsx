@@ -143,7 +143,7 @@ describe('QueryEditor', () => {
         const expected = 'Period: {{period}} InstanceId: {{InstanceId}}';
         render(<MetricsQueryEditor {...props} query={{ ...props.query, refId: 'A', alias: expected }} />);
 
-        expect(await screen.getByText('Alias')).toBeInTheDocument();
+        expect(screen.getByText('Alias')).toBeInTheDocument();
         expect(screen.queryByText('Label')).toBeNull();
         expect(screen.getByLabelText('Alias - optional')).toHaveValue(expected);
 

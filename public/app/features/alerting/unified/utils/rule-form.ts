@@ -324,7 +324,7 @@ const dataQueriesToGrafanaQueries = async (
     };
 
     const interpolatedTarget = datasource.interpolateVariablesInQueries
-      ? await datasource.interpolateVariablesInQueries([target], queryVariables)[0]
+      ? datasource.interpolateVariablesInQueries([target], queryVariables)[0]
       : target;
 
     // expressions

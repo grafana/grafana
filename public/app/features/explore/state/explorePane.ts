@@ -134,7 +134,7 @@ export function initializeExplore(
   eventBridge: EventBusExtended,
   panelsState?: ExplorePanelsState,
   isFromCompactUrl?: boolean
-): ThunkResult<void> {
+): ThunkResult<Promise<void>> {
   return async (dispatch, getState) => {
     const exploreDatasources = getDataSourceSrv().getList();
     let instance = undefined;
@@ -177,7 +177,7 @@ export function initializeExplore(
  * Reacts to changes in URL state that we need to sync back to our redux state. Computes diff of newUrlQuery vs current
  * state and runs update actions for relevant parts.
  */
-export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): ThunkResult<void> {
+export function refreshExplore(exploreId: ExploreId, newUrlQuery: string): ThunkResult<Promise<void>> {
   return async (dispatch, getState) => {
     const itemState = getState().explore[exploreId];
     if (!itemState?.initialized) {

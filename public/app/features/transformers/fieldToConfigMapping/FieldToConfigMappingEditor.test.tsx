@@ -47,7 +47,7 @@ describe('FieldToConfigMappingEditor', () => {
     setup();
 
     const select = (await screen.findByTestId('Miiin-config-key')).childNodes[0];
-    await fireEvent.keyDown(select, { keyCode: 40 });
+    fireEvent.keyDown(select, { keyCode: 40 });
     await selectOptionInTest(select as HTMLElement, 'Min');
 
     expect(mockOnChange).toHaveBeenCalledWith(expect.arrayContaining([{ fieldName: 'Miiin', handlerKey: 'min' }]));
@@ -80,9 +80,9 @@ describe('FieldToConfigMappingEditor', () => {
   it('Can change reducer', async () => {
     setup();
 
-    const reducer = await (await screen.findByTestId('max-reducer')).childNodes[0];
+    const reducer = (await screen.findByTestId('max-reducer')).childNodes[0];
 
-    await fireEvent.keyDown(reducer, { keyCode: 40 });
+    fireEvent.keyDown(reducer, { keyCode: 40 });
     await selectOptionInTest(reducer as HTMLElement, 'Last');
 
     expect(mockOnChange).toHaveBeenCalledWith(

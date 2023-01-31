@@ -45,7 +45,7 @@ describe('when setOptionFromUrl is dispatched with a custom variable (no refresh
       )
       .whenAsyncActionIsDispatched(setOptionFromUrl(toKeyedVariableIdentifier(custom), urlValue), true);
 
-    await tester.thenDispatchedActionsShouldEqual(
+    tester.thenDispatchedActionsShouldEqual(
       toKeyedAction(
         key,
         setCurrentVariableValue(
@@ -81,7 +81,7 @@ describe('when setOptionFromUrl is dispatched for a variable with a custom all v
       )
       .whenAsyncActionIsDispatched(setOptionFromUrl(toKeyedVariableIdentifier(custom), urlValue), true);
 
-    await tester.thenDispatchedActionsShouldEqual(
+    tester.thenDispatchedActionsShouldEqual(
       toKeyedAction(
         key,
         setCurrentVariableValue(
@@ -115,7 +115,7 @@ describe('when setOptionFromUrl is dispatched for a variable with a custom all v
       )
       .whenAsyncActionIsDispatched(setOptionFromUrl(toKeyedVariableIdentifier(custom), urlValue), true);
 
-    await tester.thenDispatchedActionsShouldEqual(
+    tester.thenDispatchedActionsShouldEqual(
       toKeyedAction(
         key,
         setCurrentVariableValue(
@@ -146,7 +146,7 @@ describe('when setOptionFromUrl is dispatched for a variable with a custom all v
       )
       .whenAsyncActionIsDispatched(setOptionFromUrl(toKeyedVariableIdentifier(custom), urlValue), true);
 
-    await tester.thenDispatchedActionsShouldEqual(
+    tester.thenDispatchedActionsShouldEqual(
       toKeyedAction(
         key,
         setCurrentVariableValue(
@@ -179,7 +179,7 @@ describe('when setOptionFromUrl is dispatched for a variable with a custom all v
       )
       .whenAsyncActionIsDispatched(setOptionFromUrl(toKeyedVariableIdentifier(custom), urlValue), true);
 
-    await tester.thenDispatchedActionsShouldEqual(
+    tester.thenDispatchedActionsShouldEqual(
       toKeyedAction(
         key,
         setCurrentVariableValue(

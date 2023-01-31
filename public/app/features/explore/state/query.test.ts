@@ -142,8 +142,8 @@ describe('runQueries', () => {
   it('should pass dataFrames to state even if there is error in response', async () => {
     const { dispatch, getState } = setupTests();
     setupQueryResponse(getState());
-    await dispatch(saveCorrelationsAction([]));
-    await dispatch(runQueries(ExploreId.left));
+    dispatch(saveCorrelationsAction([]));
+    dispatch(runQueries(ExploreId.left));
     expect(getState().explore[ExploreId.left].showMetrics).toBeTruthy();
     expect(getState().explore[ExploreId.left].graphResult).toBeDefined();
   });
@@ -171,8 +171,8 @@ describe('runQueries', () => {
     const { dispatch, getState } = setupTests();
     const leftDatasourceInstance = assertIsDefined(getState().explore[ExploreId.left].datasourceInstance);
     jest.mocked(leftDatasourceInstance.query).mockReturnValueOnce(EMPTY);
-    await dispatch(saveCorrelationsAction([]));
-    await dispatch(runQueries(ExploreId.left));
+    dispatch(saveCorrelationsAction([]));
+    dispatch(runQueries(ExploreId.left));
     await new Promise((resolve) => setTimeout(() => resolve(''), 500));
     expect(getState().explore[ExploreId.left].queryResponse.state).toBe(LoadingState.Done);
   });
@@ -180,9 +180,9 @@ describe('runQueries', () => {
   it('shows results only after correlations are loaded', async () => {
     const { dispatch, getState } = setupTests();
     setupQueryResponse(getState());
-    await dispatch(runQueries(ExploreId.left));
+    dispatch(runQueries(ExploreId.left));
     expect(getState().explore[ExploreId.left].graphResult).not.toBeDefined();
-    await dispatch(saveCorrelationsAction([]));
+    dispatch(saveCorrelationsAction([]));
     expect(getState().explore[ExploreId.left].graphResult).toBeDefined();
   });
 });
@@ -504,7 +504,7 @@ describe('reducer', () => {
         },
       } as unknown as Partial<StoreState>);
 
-      await dispatch(addResultsToCache(ExploreId.left));
+      dispatch(addResultsToCache(ExploreId.left));
 
       expect(getState().explore[ExploreId.left].cache).toEqual([
         { key: 'from=1621348027000&to=1621348050000', value: { series: [{ name: 'test name' }], state: 'Done' } },
@@ -523,7 +523,7 @@ describe('reducer', () => {
         },
       } as unknown as Partial<StoreState>);
 
-      await dispatch(addResultsToCache(ExploreId.left));
+      dispatch(addResultsToCache(ExploreId.left));
 
       expect(getState().explore[ExploreId.left].cache).toEqual([]);
     });
@@ -549,7 +549,7 @@ describe('reducer', () => {
         },
       } as unknown as Partial<StoreState>);
 
-      await dispatch(addResultsToCache(ExploreId.left));
+      dispatch(addResultsToCache(ExploreId.left));
 
       expect(getState().explore[ExploreId.left].cache).toHaveLength(1);
       expect(getState().explore[ExploreId.left].cache).toEqual([
@@ -573,7 +573,7 @@ describe('reducer', () => {
         },
       } as unknown as Partial<StoreState>);
 
-      await dispatch(clearCache(ExploreId.left));
+      dispatch(clearCache(ExploreId.left));
 
       expect(getState().explore[ExploreId.left].cache).toEqual([]);
     });

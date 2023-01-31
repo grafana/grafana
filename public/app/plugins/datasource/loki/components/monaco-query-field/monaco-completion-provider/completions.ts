@@ -121,7 +121,7 @@ function getLineFilterCompletions(afterPipe: boolean): Completion[] {
 }
 
 async function getAllHistoryCompletions(dataProvider: CompletionDataProvider): Promise<Completion[]> {
-  const history = await dataProvider.getHistory();
+  const history = dataProvider.getHistory();
 
   return history.map((expr) => ({
     type: 'HISTORY',

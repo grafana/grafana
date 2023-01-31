@@ -40,7 +40,7 @@ describe('Test Datasource Query Editor', () => {
     const { rerender } = setup();
 
     let select = (await screen.findByText('Scenario')).nextSibling!.firstChild!;
-    await fireEvent.keyDown(select, { keyCode: 40 });
+    fireEvent.keyDown(select, { keyCode: 40 });
     const scs = screen.getAllByLabelText('Select option');
 
     expect(scs).toHaveLength(scenarios.length);
@@ -49,7 +49,7 @@ describe('Test Datasource Query Editor', () => {
     expect(mockOnChange).toHaveBeenCalledWith(
       expect.objectContaining({ scenarioId: TestDataQueryType.CSVMetricValues })
     );
-    await rerender(
+    rerender(
       <QueryEditor
         {...props}
         query={{ ...defaultQuery, scenarioId: TestDataQueryType.CSVMetricValues, stringInput: '1,20,90,30,5,0' }}
@@ -58,7 +58,7 @@ describe('Test Datasource Query Editor', () => {
     expect(await screen.findByRole('textbox', { name: /string input/i })).toBeInTheDocument();
     expect(screen.getByRole('textbox', { name: /string input/i })).toHaveValue('1,20,90,30,5,0');
 
-    await fireEvent.keyDown(select, { keyCode: 40 });
+    fireEvent.keyDown(select, { keyCode: 40 });
     await userEvent.click(screen.getByText('Grafana API'));
     expect(mockOnChange).toHaveBeenCalledWith(
       expect.objectContaining({ scenarioId: 'grafana_api', stringInput: 'datasources' })
@@ -72,7 +72,7 @@ describe('Test Datasource Query Editor', () => {
     expect(await screen.findByText('Grafana API')).toBeInTheDocument();
     expect(screen.getByText('Data Sources')).toBeInTheDocument();
 
-    await fireEvent.keyDown(select, { keyCode: 40 });
+    fireEvent.keyDown(select, { keyCode: 40 });
     await userEvent.click(screen.getByText('Streaming Client'));
     expect(mockOnChange).toHaveBeenCalledWith(
       expect.objectContaining({ scenarioId: 'streaming_client', stream: defaultStreamQuery })
@@ -102,7 +102,7 @@ describe('Test Datasource Query Editor', () => {
       },
     });
     let select = (await screen.findByText('Scenario')).nextSibling!.firstChild!;
-    await fireEvent.keyDown(select, { keyCode: 40 });
+    fireEvent.keyDown(select, { keyCode: 40 });
     await userEvent.click(screen.getByText('Grafana API'));
     expect(mockOnChange).toHaveBeenCalledWith(expect.objectContaining({ datasource: mockDatasource }));
   });

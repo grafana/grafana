@@ -489,7 +489,7 @@ describe('options picker actions', () => {
       const variable = createMultiVariable({ options, current: createOption(['A'], ['A'], true), includeAll: false });
       const clearOthers = false;
 
-      const tester = await reduxTester<RootReducerType>()
+      const tester = reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(
           toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))
@@ -512,7 +512,7 @@ describe('options picker actions', () => {
       const variable = createMultiVariable({ options, current: createOption(['A'], ['A'], true), includeAll: false });
       const clearOthers = false;
 
-      const tester = await reduxTester<RootReducerType>()
+      const tester = reduxTester<RootReducerType>()
         .givenRootReducer(getRootReducer())
         .whenActionIsDispatched(
           toKeyedAction('key', addVariable(toVariablePayload(variable, { global: false, index: 0, model: variable })))

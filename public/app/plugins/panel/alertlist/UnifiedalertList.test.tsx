@@ -78,7 +78,7 @@ const renderPanel = (options: UnifiedAlertListOptions = defaultOptions) => {
 
 describe('UnifiedAlertList', () => {
   it('subscribes to the dashboard refresh interval', async () => {
-    await renderPanel();
+    renderPanel();
     expect(dashboard.events.subscribe).toHaveBeenCalledTimes(1);
     expect(dashboard.events.subscribe.mock.calls[0][0]).toEqual(TimeRangeUpdatedEvent);
   });

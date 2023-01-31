@@ -190,7 +190,7 @@ describe('RuleEditor grafana managed rules', () => {
     //check that '+ Add new' option is in folders drop down even if we don't have values
     const emptyFolderInput = await ui.inputs.folderContainer.find();
     mocks.searchFolders.mockResolvedValue([] as DashboardSearchHit[]);
-    await renderRuleEditor(uid);
+    renderRuleEditor(uid);
     await userEvent.click(within(emptyFolderInput).getByRole('combobox'));
     expect(screen.getByText(ADD_NEW_FOLER_OPTION)).toBeInTheDocument();
 

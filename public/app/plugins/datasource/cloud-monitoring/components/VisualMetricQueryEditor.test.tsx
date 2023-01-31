@@ -45,7 +45,7 @@ describe('VisualMetricQueryEditor', () => {
     render(<VisualMetricQueryEditor {...defaultProps} onChange={onChange} datasource={datasource} query={query} />);
 
     const service = await screen.findByLabelText('Service');
-    await openMenu(service);
+    openMenu(service);
     await act(async () => {
       await select(service, 'Srv', { container: document.body });
       expect(onChange).toBeCalledWith(
@@ -66,12 +66,12 @@ describe('VisualMetricQueryEditor', () => {
     render(<VisualMetricQueryEditor {...defaultProps} onChange={onChange} datasource={datasource} query={query} />);
 
     const service = await screen.findByLabelText('Service');
-    await openMenu(service);
+    openMenu(service);
     await act(async () => {
       await select(service, 'Srv', { container: document.body });
     });
     const metricName = await screen.findByLabelText('Metric name');
-    await openMenu(metricName);
+    openMenu(metricName);
     await waitFor(() => expect(document.body).toHaveTextContent('metricName_test'));
     await act(async () => {
       await select(metricName, 'metricName_test', { container: document.body });
@@ -114,12 +114,12 @@ describe('VisualMetricQueryEditor', () => {
     render(<VisualMetricQueryEditor {...defaultProps} onChange={onChange} datasource={datasource} query={query} />);
 
     const service = await screen.findByLabelText('Service');
-    await openMenu(service);
+    openMenu(service);
     await act(async () => {
       await select(service, 'Srv A', { container: document.body });
     });
     const metricName = await screen.findByLabelText('Metric name');
-    await openMenu(metricName);
+    openMenu(metricName);
 
     const metricNameOptions = screen.getByLabelText('Select options menu');
     expect(within(metricNameOptions).getByText('description_metric1')).toBeInTheDocument();
@@ -129,7 +129,7 @@ describe('VisualMetricQueryEditor', () => {
     expect(within(metricNameOptions).queryByText('displayName_metric3')).not.toBeInTheDocument();
     expect(within(metricNameOptions).queryByText('description_metric3')).not.toBeInTheDocument();
 
-    await openMenu(service);
+    openMenu(service);
     await act(async () => {
       await select(service, 'Srv B', { container: document.body });
     });
@@ -172,7 +172,7 @@ describe('VisualMetricQueryEditor', () => {
 
     render(<VisualMetricQueryEditor {...defaultProps} onChange={onChange} datasource={datasource} query={query} />);
     const service = await screen.findByLabelText('Service');
-    await openMenu(service);
+    openMenu(service);
     expect(screen.getAllByLabelText('Select option').length).toEqual(2);
   });
 
@@ -233,8 +233,8 @@ describe('VisualMetricQueryEditor', () => {
     );
     expect(query).toEqual(defaultQuery);
     expect(document.body).toHaveTextContent('metric.test_label');
-    expect(await screen.queryByText('Delta')).not.toBeInTheDocument();
-    expect(await screen.queryByText('metric.test_groupby')).not.toBeInTheDocument();
+    expect(screen.queryByText('Delta')).not.toBeInTheDocument();
+    expect(screen.queryByText('metric.test_groupby')).not.toBeInTheDocument();
   });
 
   it('updates labels on time range change', async () => {
@@ -257,18 +257,18 @@ describe('VisualMetricQueryEditor', () => {
     );
 
     const service = await screen.findByLabelText('Service');
-    await openMenu(service);
+    openMenu(service);
     await act(async () => {
       await select(service, 'Srv', { container: document.body });
     });
     const metricName = await screen.findByLabelText('Metric name');
-    await openMenu(metricName);
+    openMenu(metricName);
     await waitFor(() => expect(document.body).toHaveTextContent('metricName'));
     await act(async () => {
       await select(metricName, 'metricName', { container: document.body });
     });
     const groupBy = await screen.findByLabelText('Group by');
-    await openMenu(groupBy);
+    openMenu(groupBy);
     await waitFor(() => expect(document.body).toHaveTextContent('metric.test_groupby'));
     await act(async () => {
       timeSrv.setTime({ from: 'now-12h', to: 'now' });
@@ -279,7 +279,7 @@ describe('VisualMetricQueryEditor', () => {
       rerender(
         <VisualMetricQueryEditor {...defaultProps} onChange={onChange} datasource={datasourceUpdated} query={query} />
       );
-      await openMenu(groupBy);
+      openMenu(groupBy);
       await waitFor(() => expect(document.body).toHaveTextContent('metric.test_groupby_1'));
     });
   });

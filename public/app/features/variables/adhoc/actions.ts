@@ -60,7 +60,7 @@ export const applyFilterFromTable = (options: AdHocTableOptions): ThunkResult<vo
 export const changeFilter = (
   identifier: KeyedVariableIdentifier,
   update: AdHocVariabelFilterUpdate
-): ThunkResult<void> => {
+): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
     const variable = getVariable(identifier, getState());
     dispatch(toKeyedAction(identifier.rootStateKey, filterUpdated(toVariablePayload(variable, update))));
@@ -76,7 +76,10 @@ export const removeFilter = (identifier: KeyedVariableIdentifier, index: number)
   };
 };
 
-export const addFilter = (identifier: KeyedVariableIdentifier, filter: AdHocVariableFilter): ThunkResult<void> => {
+export const addFilter = (
+  identifier: KeyedVariableIdentifier,
+  filter: AdHocVariableFilter
+): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
     const variable = getVariable(identifier, getState());
     dispatch(toKeyedAction(identifier.rootStateKey, filterAdded(toVariablePayload(variable, filter))));

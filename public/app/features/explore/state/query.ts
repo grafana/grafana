@@ -223,7 +223,7 @@ export const clearCacheAction = createAction<ClearCachePayload>('explore/clearCa
 /**
  * Adds a query row after the row with the given index.
  */
-export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<void> {
+export function addQueryRow(exploreId: ExploreId, index: number): ThunkResult<Promise<void>> {
   return async (dispatch, getState) => {
     const queries = getState().explore[exploreId]!.queries;
     let datasourceOverride = undefined;
@@ -305,7 +305,7 @@ export const importQueries = (
   sourceDataSource: DataSourceApi | undefined | null,
   targetDataSource: DataSourceApi,
   singleQueryChangeRef?: string // when changing one query DS to another in a mixed environment, we do not want to change all queries, just the one being changed
-): ThunkResult<void> => {
+): ThunkResult<Promise<void>> => {
   return async (dispatch) => {
     if (!sourceDataSource) {
       // explore not initialized
@@ -411,8 +411,8 @@ async function handleHistory(
   // Because filtering happens in the backend we cannot add a new entry without checking if it matches currently
   // used filters. Instead, we refresh the query history list.
   // TODO: run only if Query History list is opened (#47252)
-  await dispatch(loadRichHistory(ExploreId.left));
-  await dispatch(loadRichHistory(ExploreId.right));
+  dispatch(loadRichHistory(ExploreId.left));
+  dispatch(loadRichHistory(ExploreId.right));
 }
 
 /**

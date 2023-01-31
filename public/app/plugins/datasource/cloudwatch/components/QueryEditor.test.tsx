@@ -194,7 +194,7 @@ describe('QueryEditor should render right editor', () => {
         await act(async () => {
           render(<QueryEditor {...props} datasource={datasourceMock.datasource} query={query} />);
         });
-        expect(await screen.getByText('Monitoring account')).toBeInTheDocument();
+        expect(screen.getByText('Monitoring account')).toBeInTheDocument();
       });
     });
 
@@ -227,7 +227,7 @@ describe('QueryEditor should render right editor', () => {
         await act(async () => {
           render(<QueryEditor {...props} datasource={datasourceMock.datasource} query={query} />);
         });
-        expect(await screen.queryByText('Monitoring account')).toBeNull();
+        expect(screen.queryByText('Monitoring account')).toBeNull();
       });
     });
   });
@@ -319,7 +319,7 @@ describe('QueryEditor should render right editor', () => {
       const builderElement = screen.getByLabelText('Builder');
       expect(builderElement).toBeInTheDocument();
       await act(async () => {
-        await builderElement.click();
+        builderElement.click();
       });
 
       const modalTitleElem = screen.getByText('Are you sure?');
@@ -333,7 +333,7 @@ describe('QueryEditor should render right editor', () => {
       const builderElement = screen.getByLabelText('Builder');
       expect(builderElement).toBeInTheDocument();
       await act(async () => {
-        await builderElement.click();
+        builderElement.click();
       });
       expect(screen.queryByText('Are you sure?')).toBeNull();
     });
@@ -344,7 +344,7 @@ describe('QueryEditor should render right editor', () => {
       const builderElement = screen.getByLabelText('Builder');
       expect(builderElement).toBeInTheDocument();
       await act(async () => {
-        await builderElement.click();
+        builderElement.click();
       });
       expect(screen.queryByText('Are you sure?')).toBeNull();
     });

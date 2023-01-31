@@ -275,7 +275,7 @@ describe('ExplorePage', () => {
       fireEvent.click(splitButton);
       await waitForExplore(undefined, true);
       let widenButton = await screen.findAllByLabelText('Widen pane');
-      let narrowButton = await screen.queryAllByLabelText('Narrow pane');
+      let narrowButton = screen.queryAllByLabelText('Narrow pane');
       const panes = screen.getAllByRole('main');
       expect(widenButton.length).toBe(2);
       expect(narrowButton.length).toBe(0);
@@ -286,7 +286,7 @@ describe('ExplorePage', () => {
       fireEvent.mouseMove(resizer, { clientX: -700, buttons: 1 });
       fireEvent.mouseUp(resizer);
       widenButton = await screen.findAllByLabelText('Widen pane');
-      narrowButton = await screen.queryAllByLabelText('Narrow pane');
+      narrowButton = screen.queryAllByLabelText('Narrow pane');
       expect(widenButton.length).toBe(1);
       expect(narrowButton.length).toBe(1);
       // the autosizer is mocked so there is no actual resize here

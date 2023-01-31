@@ -197,7 +197,7 @@ export class QueryGroup extends PureComponent<Props, State> {
     // We need to pass in newSettings.uid as well here as that can be a variable expression and we want to store that in the query model not the current ds variable value
     const queries = await updateQueries(nextDS, nextDS.uid, savedQuery.queries, currentDS);
 
-    const newDsSettings = await getDataSourceSrv().getInstanceSettings(nextDS.uid);
+    const newDsSettings = getDataSourceSrv().getInstanceSettings(nextDS.uid);
     if (!newDsSettings) {
       throw new Error('TODO error handling');
     }

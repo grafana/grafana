@@ -236,8 +236,8 @@ function describeInitScenario(description: string, scenarioFn: ScenarioFn) {
       setEchoSrv(new Echo());
 
       const store = mockStore(ctx.storeState);
-      // @ts-ignore
-      await store.dispatch(initDashboard(ctx.args));
+      // @ts-expect-error
+      store.dispatch(initDashboard(ctx.args));
 
       ctx.actions = store.getActions();
     });

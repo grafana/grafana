@@ -33,7 +33,7 @@ describe('Lookup gazetteer', () => {
       ],
     });
     const gaz = frameAsGazetter(frame, { path: 'path/to/gaz.json' });
-    const out = await addFieldsFromGazetteer([data], gaz, matcher)[0];
+    const out = addFieldsFromGazetteer([data], gaz, matcher)[0];
 
     expect(out.fields).toMatchInlineSnapshot(`
       [

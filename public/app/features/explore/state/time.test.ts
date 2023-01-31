@@ -37,7 +37,7 @@ describe('Explore item reducer', () => {
       const { dispatch } = configureStore({
         ...(createDefaultInitialState() as any),
       });
-      await dispatch(updateTime({ exploreId: ExploreId.left }));
+      dispatch(updateTime({ exploreId: ExploreId.left }));
       expect(mockTimeSrv.init).toBeCalled();
       expect(mockTemplateSrv.updateTimeRange).toBeCalledWith(MOCK_TIME_RANGE);
     });

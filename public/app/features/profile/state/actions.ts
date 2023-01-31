@@ -33,7 +33,7 @@ export function initUserProfilePage(): ThunkResult<void> {
   };
 }
 
-export function loadUser(): ThunkResult<void> {
+export function loadUser(): ThunkResult<Promise<void>> {
   return async function (dispatch) {
     const user = await api.loadUser();
     dispatch(userLoaded({ user }));

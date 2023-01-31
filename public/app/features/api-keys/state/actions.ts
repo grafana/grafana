@@ -20,7 +20,7 @@ export function addApiKey(apiKey: ApiKey, openModal: (key: string) => void): Thu
   };
 }
 
-export function loadApiKeys(): ThunkResult<void> {
+export function loadApiKeys(): ThunkResult<Promise<void>> {
   return async (dispatch) => {
     dispatch(isFetching());
     const [keys, keysIncludingExpired] = await Promise.all([
@@ -68,7 +68,7 @@ export function getApiKeysMigrationStatus(): ThunkResult<void> {
   };
 }
 
-export function hideApiKeys(): ThunkResult<void> {
+export function hideApiKeys(): ThunkResult<Promise<void>> {
   return async (dispatch) => {
     await getBackendSrv().post('/api/serviceaccounts/hideApiKeys');
   };

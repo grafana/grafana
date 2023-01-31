@@ -65,7 +65,7 @@ describe('PluginSettings', () => {
 
     // act
     const response1 = await getPluginSettings('test');
-    await clearPluginSettingsCache('test');
+    clearPluginSettingsCache('test');
     const response2 = await getPluginSettings('test');
 
     // assert
@@ -85,7 +85,7 @@ describe('PluginSettings', () => {
     const getRequestSpy = jest.spyOn(getBackendSrv(), 'get');
     // act
     const response1 = await getPluginSettings('test');
-    await clearPluginSettingsCache('another-test');
+    clearPluginSettingsCache('another-test');
     const response2 = await getPluginSettings('test');
 
     // assert
@@ -106,7 +106,7 @@ describe('PluginSettings', () => {
 
     // act
     const response1 = await getPluginSettings('test');
-    await clearPluginSettingsCache();
+    clearPluginSettingsCache();
     const response2 = await getPluginSettings('test');
 
     // assert

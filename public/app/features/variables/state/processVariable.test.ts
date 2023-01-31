@@ -123,9 +123,7 @@ describe('processVariable', () => {
           .whenActionIsDispatched(initDashboardTemplating(key, dashboard))
           .whenAsyncActionIsDispatched(processVariable(toKeyedVariableIdentifier(custom), queryParams), true);
 
-        await tester.thenDispatchedActionsShouldEqual(
-          toKeyedAction(key, variableStateCompleted(toVariablePayload(custom)))
-        );
+        tester.thenDispatchedActionsShouldEqual(toKeyedAction(key, variableStateCompleted(toVariablePayload(custom))));
       });
     });
 
@@ -139,7 +137,7 @@ describe('processVariable', () => {
           .whenActionIsDispatched(initDashboardTemplating(key, dashboard))
           .whenAsyncActionIsDispatched(processVariable(toKeyedVariableIdentifier(custom), queryParams), true);
 
-        await tester.thenDispatchedActionsShouldEqual(
+        tester.thenDispatchedActionsShouldEqual(
           toKeyedAction(
             key,
             setCurrentVariableValue(
@@ -171,7 +169,7 @@ describe('processVariable', () => {
             .whenActionIsDispatched(initDashboardTemplating(key, dashboard))
             .whenAsyncActionIsDispatched(processVariable(toKeyedVariableIdentifier(queryNoDepends), queryParams), true);
 
-          await tester.thenDispatchedActionsShouldEqual(
+          tester.thenDispatchedActionsShouldEqual(
             toKeyedAction(key, variableStateCompleted(toVariablePayload(queryNoDepends)))
           );
         });
@@ -190,7 +188,7 @@ describe('processVariable', () => {
           .whenActionIsDispatched(initDashboardTemplating(key, dashboard))
           .whenAsyncActionIsDispatched(processVariable(toKeyedVariableIdentifier(queryNoDepends), queryParams), true);
 
-        await tester.thenDispatchedActionsShouldEqual(
+        tester.thenDispatchedActionsShouldEqual(
           toKeyedAction(key, variableStateFetching(toVariablePayload({ type: 'query', id: 'queryNoDepends' }))),
           toKeyedAction(
             key,
@@ -236,7 +234,7 @@ describe('processVariable', () => {
             .whenActionIsDispatched(initDashboardTemplating(key, dashboard))
             .whenAsyncActionIsDispatched(processVariable(toKeyedVariableIdentifier(queryNoDepends), queryParams), true);
 
-          await tester.thenDispatchedActionsShouldEqual(
+          tester.thenDispatchedActionsShouldEqual(
             toKeyedAction(
               key,
               setCurrentVariableValue(
@@ -264,7 +262,7 @@ describe('processVariable', () => {
           .whenActionIsDispatched(initDashboardTemplating(key, dashboard))
           .whenAsyncActionIsDispatched(processVariable(toKeyedVariableIdentifier(queryNoDepends), queryParams), true);
 
-        await tester.thenDispatchedActionsShouldEqual(
+        tester.thenDispatchedActionsShouldEqual(
           toKeyedAction(key, variableStateFetching(toVariablePayload({ type: 'query', id: 'queryNoDepends' }))),
           toKeyedAction(
             key,
@@ -327,7 +325,7 @@ describe('processVariable', () => {
             true
           );
 
-          await tester.thenDispatchedActionsShouldEqual(
+          tester.thenDispatchedActionsShouldEqual(
             toKeyedAction(key, variableStateCompleted(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' })))
           );
         });
@@ -351,7 +349,7 @@ describe('processVariable', () => {
           true
         );
 
-        await tester.thenDispatchedActionsShouldEqual(
+        tester.thenDispatchedActionsShouldEqual(
           toKeyedAction(key, variableStateFetching(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }))),
           toKeyedAction(
             key,
@@ -402,7 +400,7 @@ describe('processVariable', () => {
             true
           );
 
-          await tester.thenDispatchedActionsShouldEqual(
+          tester.thenDispatchedActionsShouldEqual(
             toKeyedAction(
               key,
               setCurrentVariableValue(
@@ -435,7 +433,7 @@ describe('processVariable', () => {
           true
         );
 
-        await tester.thenDispatchedActionsShouldEqual(
+        tester.thenDispatchedActionsShouldEqual(
           toKeyedAction(key, variableStateFetching(toVariablePayload({ type: 'query', id: 'queryDependsOnCustom' }))),
           toKeyedAction(
             key,

@@ -235,7 +235,7 @@ describe('Graphite actions', () => {
     });
 
     it('getAltSegmentsSelectables should handle autocomplete errors', async () => {
-      await expect(async () => {
+      expect(async () => {
         await getAltSegmentsSelectables(ctx.state, 0, 'any');
         expect(mockDispatch).toBeCalledWith(
           expect.objectContaining({
@@ -265,7 +265,7 @@ describe('Graphite actions', () => {
     });
 
     it('getTagsSelectables should handle autocomplete errors', async () => {
-      await expect(async () => {
+      expect(async () => {
         await getTagsSelectables(ctx.state, 0, 'any');
         expect(mockDispatch).toBeCalledWith(
           expect.objectContaining({
@@ -284,7 +284,7 @@ describe('Graphite actions', () => {
     });
 
     it('getTagsAsSegmentsSelectables should handle autocomplete errors', async () => {
-      await expect(async () => {
+      expect(async () => {
         await getTagsAsSegmentsSelectables(ctx.state, 'any');
         expect(mockDispatch).toBeCalledWith(
           expect.objectContaining({

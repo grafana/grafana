@@ -66,7 +66,7 @@ export const updateQueryVariableOptions = (
 };
 
 export const initQueryVariableEditor =
-  (identifier: KeyedVariableIdentifier): ThunkResult<void> =>
+  (identifier: KeyedVariableIdentifier): ThunkResult<Promise<void>> =>
   async (dispatch, getState) => {
     const variable = getVariable(identifier, getState());
     if (variable.type !== 'query') {
@@ -79,7 +79,7 @@ export const initQueryVariableEditor =
 export const changeQueryVariableDataSource = (
   identifier: KeyedVariableIdentifier,
   name: DataSourceRef | null
-): ThunkResult<void> => {
+): ThunkResult<Promise<void>> => {
   return async (dispatch, getState) => {
     try {
       const { rootStateKey } = identifier;

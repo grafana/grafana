@@ -128,7 +128,7 @@ export function exitPanelEditor(): ThunkResult<void> {
         sourcePanel.plugin = panel.plugin;
         sourcePanel.generateNewKey();
 
-        await dispatch(panelModelAndPluginReady({ key: sourcePanel.key, plugin: panel.plugin! }));
+        dispatch(panelModelAndPluginReady({ key: sourcePanel.key, plugin: panel.plugin! }));
       }
 
       // Resend last query result on source panel query runner

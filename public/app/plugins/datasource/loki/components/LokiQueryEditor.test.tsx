@@ -105,7 +105,7 @@ describe('LokiQueryEditorSelector', () => {
 
   it('hides Run Queries button in Correlations Page', async () => {
     renderWithProps({}, { app: CoreApp.Correlations });
-    await expectNoRunQueriesButton();
+    expectNoRunQueriesButton();
   });
 
   it('changes to builder mode', async () => {

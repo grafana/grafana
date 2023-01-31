@@ -33,7 +33,7 @@ describe('GroupBy', () => {
     const option = 'metadata.system_labels.cloud_account';
 
     expect(screen.queryByText(option)).not.toBeInTheDocument();
-    await openMenu(groupBy);
+    openMenu(groupBy);
     expect(screen.getByText(option)).toBeInTheDocument();
 
     await select(groupBy, option, { container: document.body });

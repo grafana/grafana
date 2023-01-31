@@ -80,7 +80,7 @@ describe('Render', () => {
       setup({ isSortAscending: true });
 
       expect(await screen.findByRole('heading', { name: 'dataSource-0' })).toBeInTheDocument();
-      expect(await screen.queryByRole('link', { name: 'dataSource-0' })).toBeNull();
+      expect(screen.queryByRole('link', { name: 'dataSource-0' })).toBeNull();
     });
   });
 

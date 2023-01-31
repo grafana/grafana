@@ -226,7 +226,7 @@ describe('PromQueryBuilder', () => {
         }}
       />
     );
-    expect(await screen.queryByText(EXPLAIN_LABEL_FILTER_CONTENT)).not.toBeInTheDocument();
+    expect(screen.queryByText(EXPLAIN_LABEL_FILTER_CONTENT)).not.toBeInTheDocument();
   });
 
   // <ModernPrometheus>

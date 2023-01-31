@@ -13,7 +13,7 @@ import { getTimeSrv } from '../services/TimeSrv';
 
 import { cleanUpDashboard, loadDashboardPermissions } from './reducers';
 
-export function getDashboardPermissions(id: number): ThunkResult<void> {
+export function getDashboardPermissions(id: number): ThunkResult<Promise<void>> {
   return async (dispatch) => {
     const permissions = await getBackendSrv().get(`/api/dashboards/id/${id}/permissions`);
     dispatch(loadDashboardPermissions(permissions));

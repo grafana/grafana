@@ -279,7 +279,7 @@ describe('Query imports', () => {
 
   it('returns empty queries', async () => {
     const instance = new LanguageProvider(datasource);
-    const result = await instance.importFromAbstractQuery({ refId: 'bar', labelMatchers: [] });
+    const result = instance.importFromAbstractQuery({ refId: 'bar', labelMatchers: [] });
     expect(result).toEqual({ refId: 'bar', expr: '', queryType: LokiQueryType.Range });
   });
 

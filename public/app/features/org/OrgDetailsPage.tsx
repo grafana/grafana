@@ -1,26 +1,32 @@
 import React, { PureComponent } from 'react';
-import { connect } from 'react-redux';
+import { connect, ConnectedProps } from 'react-redux';
 
-import { NavModel } from '@grafana/data';
 import { VerticalGroup } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import SharedPreferences from 'app/core/components/SharedPreferences/SharedPreferences';
 import { appEvents, contextSrv } from 'app/core/core';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { AccessControlAction, Organization, StoreState } from 'app/types';
+import { AccessControlAction, StoreState } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import OrgProfile from './OrgProfile';
 import { loadOrganization, updateOrganization } from './state/actions';
 import { setOrganizationName } from './state/reducers';
 
-export interface Props {
-  navModel: NavModel;
-  organization: Organization;
-  loadOrganization: typeof loadOrganization;
-  setOrganizationName: typeof setOrganizationName;
-  updateOrganization: typeof updateOrganization;
+function mapStateToProps(state: StoreState) {
+  return {
+    navModel: getNavModel(state.navIndex, 'org-settings'),
+    organization: state.organization.organization,
+  };
 }
+
+const mapDispatchToProps = {
+  loadOrganization,
+  setOrganizationName,
+  updateOrganization,
+};
+
+export type Props = ConnectedProps<typeof connector>;
 
 export class OrgDetailsPage extends PureComponent<Props> {
   async componentDidMount() {
@@ -76,17 +82,6 @@ export class OrgDetailsPage extends PureComponent<Props> {
   }
 }
 
-function mapStateToProps(state: StoreState) {
-  return {
-    navModel: getNavModel(state.navIndex, 'org-settings'),
-    organization: state.organization.organization,
-  };
-}
+const connector = connect(mapStateToProps, mapDispatchToProps);
 
-const mapDispatchToProps = {
-  loadOrganization,
-  setOrganizationName,
-  updateOrganization,
-};
-
-export default connect(mapStateToProps, mapDispatchToProps)(OrgDetailsPage);
+export default connector(OrgDetailsPage);

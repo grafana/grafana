@@ -91,13 +91,12 @@ export class TeamPages extends PureComponent<Props, State> {
   async fetchTeam() {
     const { loadTeam, teamId } = this.props;
     this.setState({ isLoading: true });
-    const team = await loadTeam(teamId);
+    await loadTeam(teamId);
     // With accesscontrol, the TeamPermissions will fetch team members
     if (!contextSrv.accessControlEnabled()) {
       await this.props.loadTeamMembers();
     }
     this.setState({ isLoading: false });
-    return team;
   }
 
   getCurrentPage() {

@@ -144,7 +144,7 @@ export const testDataSource = (
   };
 };
 
-export function loadDataSources(): ThunkResult<void> {
+export function loadDataSources(): ThunkResult<Promise<void>> {
   return async (dispatch) => {
     const response = await api.getDataSources();
     dispatch(dataSourcesLoaded(response));
@@ -176,7 +176,7 @@ export function loadDataSource(uid: string): ThunkResult<Promise<DataSourceSetti
   };
 }
 
-export function loadDataSourceMeta(dataSource: DataSourceSettings): ThunkResult<void> {
+export function loadDataSourceMeta(dataSource: DataSourceSettings): ThunkResult<Promise<void>> {
   return async (dispatch) => {
     const pluginInfo = (await getPluginSettings(dataSource.type)) as DataSourcePluginMeta;
     const plugin = await importDataSourcePlugin(pluginInfo);

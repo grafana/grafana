@@ -38,7 +38,7 @@ describe('RowsToFieldsTransformerEditor', () => {
     setup();
 
     const select = (await screen.findByTestId('Name-config-key')).childNodes[0];
-    await fireEvent.keyDown(select, { keyCode: 40 });
+    fireEvent.keyDown(select, { keyCode: 40 });
     await selectOptionInTest(select as HTMLElement, 'Field name');
 
     expect(mockOnChange).toHaveBeenCalledWith(
@@ -52,7 +52,7 @@ describe('RowsToFieldsTransformerEditor', () => {
     setup();
 
     const select = (await screen.findByTestId('Value-config-key')).childNodes[0];
-    await fireEvent.keyDown(select, { keyCode: 40 });
+    fireEvent.keyDown(select, { keyCode: 40 });
     await selectOptionInTest(select as HTMLElement, 'Field value');
 
     expect(mockOnChange).toHaveBeenCalledWith(

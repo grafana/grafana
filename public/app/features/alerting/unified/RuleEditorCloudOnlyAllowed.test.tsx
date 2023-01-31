@@ -168,12 +168,12 @@ describe('RuleEditor cloud: checking editable data sources', () => {
     await waitForElementToBeRemoved(screen.getAllByTestId('Spinner'));
 
     await ui.inputs.name.find();
-    await userEvent.click(await ui.buttons.lotexAlert.get());
+    await userEvent.click(ui.buttons.lotexAlert.get());
 
     // check that only rules sources that have ruler available are there
     const dataSourceSelect = ui.inputs.dataSource.get();
     await userEvent.click(byRole('combobox').get(dataSourceSelect));
-    expect(await byText('loki with ruler').query()).toBeInTheDocument();
+    expect(byText('loki with ruler').query()).toBeInTheDocument();
     expect(byText('cortex with ruler').query()).toBeInTheDocument();
     expect(byText('loki with local rule store').query()).not.toBeInTheDocument();
     expect(byText('prom without ruler api').query()).not.toBeInTheDocument();

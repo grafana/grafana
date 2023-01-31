@@ -41,7 +41,7 @@ describe('ConfigFromQueryTransformerEditor', () => {
     setup();
 
     let select = (await screen.findByText('Config query')).nextSibling!.firstChild!;
-    await fireEvent.keyDown(select, { keyCode: 40 });
+    fireEvent.keyDown(select, { keyCode: 40 });
     await selectOptionInTest(select as HTMLElement, 'A');
 
     expect(mockOnChange).toHaveBeenCalledWith(

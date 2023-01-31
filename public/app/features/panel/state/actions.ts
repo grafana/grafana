@@ -121,7 +121,7 @@ export function changeToLibraryPanel(panel: PanelModel, libraryPanel: LibraryEle
       panel.pluginLoaded(plugin);
       panel.generateNewKey();
 
-      await dispatch(panelModelAndPluginReady({ key: panel.key, plugin }));
+      dispatch(panelModelAndPluginReady({ key: panel.key, plugin }));
     } else {
       // Even if the plugin is the same, we want to change the key
       // to force a rerender

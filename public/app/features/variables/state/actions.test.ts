@@ -188,7 +188,7 @@ describe('shared actions', () => {
         .whenActionIsDispatched(initDashboardTemplating(key, dashboard))
         .whenAsyncActionIsDispatched(processVariables(key), true);
 
-      await tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
+      tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
         expect(dispatchedActions.length).toEqual(5);
 
         expect(dispatchedActions[0]).toEqual(
@@ -273,7 +273,7 @@ describe('shared actions', () => {
         .whenActionIsDispatched(initDashboardTemplating(key, dashboard))
         .whenAsyncActionIsDispatched(processVariables(key), true);
 
-      await tester.thenDispatchedActionsShouldEqual(
+      tester.thenDispatchedActionsShouldEqual(
         toKeyedAction(key, variableStateFetching(toVariablePayload(stats))),
         toKeyedAction(
           key,
@@ -358,7 +358,7 @@ describe('shared actions', () => {
             true
           );
 
-        await tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
+        tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
           const expectedActions: AnyAction[] = withOptions
             ? [
                 toKeyedAction(
@@ -420,7 +420,7 @@ describe('shared actions', () => {
               true
             );
 
-          await tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
+          tester.thenDispatchedActionsPredicateShouldEqual((dispatchedActions) => {
             const expectedActions: AnyAction[] = withOptions
               ? [
                   toKeyedAction(

@@ -150,7 +150,7 @@ describe('Render', () => {
 
   it('should display log group selector field', async () => {
     setup();
-    await waitFor(async () => expect(await screen.getByText('Select Log Groups')).toBeInTheDocument());
+    await waitFor(async () => expect(screen.getByText('Select Log Groups')).toBeInTheDocument());
   });
 
   it('should only display the first two default log groups and show all of them when clicking "Show all" button', async () => {
@@ -165,13 +165,13 @@ describe('Render', () => {
       },
     });
     await waitFor(async () => {
-      expect(await screen.getByText('logGroup-foo')).toBeInTheDocument();
-      expect(await screen.getByText('logGroup-bar')).toBeInTheDocument();
-      expect(await screen.queryByText('logGroup-baz')).not.toBeInTheDocument();
+      expect(screen.getByText('logGroup-foo')).toBeInTheDocument();
+      expect(screen.getByText('logGroup-bar')).toBeInTheDocument();
+      expect(screen.queryByText('logGroup-baz')).not.toBeInTheDocument();
 
       await userEvent.click(screen.getByText('Show all'));
 
-      expect(await screen.getByText('logGroup-baz')).toBeInTheDocument();
+      expect(screen.getByText('logGroup-baz')).toBeInTheDocument();
     });
   });
 

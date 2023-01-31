@@ -53,7 +53,7 @@ describe('PublicDashboardDatasource', () => {
     const panelId = 1;
     const publicDashboardAccessToken = undefined;
 
-    await ds.query({
+    ds.query({
       maxDataPoints: 10,
       intervalMs: 5000,
       targets: [
@@ -81,7 +81,7 @@ describe('PublicDashboardDatasource', () => {
     const panelId = 1;
     const publicDashboardAccessToken = 'abc123';
 
-    await ds.query({
+    ds.query({
       maxDataPoints: 10,
       intervalMs: 5000,
       targets: [

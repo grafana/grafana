@@ -237,7 +237,7 @@ describe(`Azure Monitor QueryEditor`, () => {
       />
     );
     const labelSelect = screen.getByLabelText('dimension-labels-select');
-    await openMenu(labelSelect);
+    openMenu(labelSelect);
     const options = await screen.findAllByLabelText('Select option');
     expect(options).toHaveLength(2);
     expect(options[0]).toHaveTextContent('testlabel');
@@ -286,7 +286,7 @@ describe(`Azure Monitor QueryEditor`, () => {
     );
     const labelSelect = screen.getByLabelText('dimension-labels-select');
     await user.click(labelSelect);
-    await openMenu(labelSelect);
+    openMenu(labelSelect);
     screen.getByText('testlabel');
     screen.getByText('testlabel2');
     await selectOptionInTest(labelSelect, 'testlabel');
@@ -323,7 +323,7 @@ describe(`Azure Monitor QueryEditor`, () => {
       />
     );
     const labelSelect2 = screen.getByLabelText('dimension-labels-select');
-    await openMenu(labelSelect2);
+    openMenu(labelSelect2);
     const refreshedOptions = await screen.findAllByLabelText('Select options menu');
     expect(refreshedOptions).toHaveLength(1);
     expect(refreshedOptions[0]).toHaveTextContent('testlabel2');

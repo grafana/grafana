@@ -10,7 +10,7 @@ import { createConstantOptionsFromQuery } from './reducer';
 export const updateConstantVariableOptions = (identifier: KeyedVariableIdentifier): ThunkResult<void> => {
   return async (dispatch) => {
     const { rootStateKey } = identifier;
-    await dispatch(toKeyedAction(rootStateKey, createConstantOptionsFromQuery(toVariablePayload(identifier))));
-    await dispatch(validateVariableSelectionState(identifier));
+    dispatch(toKeyedAction(rootStateKey, createConstantOptionsFromQuery(toVariablePayload(identifier))));
+    dispatch(validateVariableSelectionState(identifier));
   };
 };

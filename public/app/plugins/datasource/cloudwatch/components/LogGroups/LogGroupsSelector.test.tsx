@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 // eslint-disable-next-line lodash/import-scope
 import lodash from 'lodash';
@@ -285,7 +285,7 @@ describe('LogGroupsSelector', () => {
       />
     );
     await userEvent.click(screen.getByText('Select Log Groups'));
-    await screen.getByRole('button', { name: 'select-clear-value' }).click();
+    fireEvent.click(screen.getByRole('button', { name: 'select-clear-value' }));
     await userEvent.click(screen.getByText('Add log groups'));
     expect(onChange).toHaveBeenCalledWith([
       {

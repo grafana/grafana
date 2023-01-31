@@ -16,7 +16,7 @@ describe('QueryHeader', () => {
     render(<QueryHeader query={query} onChange={onChange} onRunQuery={onRunQuery} />);
 
     const queryType = screen.getByLabelText(/Query type/);
-    await openMenu(queryType);
+    openMenu(queryType);
     await select(screen.getByLabelText('Select options menu'), 'Service Level Objectives (SLO)');
     expect(onChange).toBeCalledWith(expect.objectContaining({ queryType: QueryType.SLO }));
   });
@@ -29,7 +29,7 @@ describe('QueryHeader', () => {
     render(<QueryHeader query={query} onChange={onChange} onRunQuery={onRunQuery} />);
 
     const queryType = screen.getByLabelText(/Query type/);
-    await openMenu(queryType);
+    openMenu(queryType);
     await select(screen.getByLabelText('Select options menu'), 'MQL');
     expect(onChange).toBeCalledWith(expect.objectContaining({ queryType: QueryType.TIME_SERIES_QUERY }));
   });

@@ -52,6 +52,6 @@ describe('PromQueryCodeEditor', () => {
     const { datasource } = createDatasource();
     const props = createProps(datasource);
     render(<PromQueryCodeEditor {...props} query={{ expr: '', refId: 'refid', interval: '1s' }} />);
-    expect(await screen.queryByText(EXPLAIN_LABEL_FILTER_CONTENT)).not.toBeInTheDocument();
+    expect(screen.queryByText(EXPLAIN_LABEL_FILTER_CONTENT)).not.toBeInTheDocument();
   });
 });

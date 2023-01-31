@@ -81,6 +81,6 @@ describe('AnnotationQueryEditor', () => {
       .mockResolvedValue([[{ label: 'dimVal1', value: 'dimVal1' }]]);
     (props.query as CloudWatchAnnotationQuery).dimensions = { instanceId: 'instance-123' };
     await waitFor(() => render(<AnnotationQueryEditor {...props} />));
-    expect(await screen.queryByText('Account')).toBeNull();
+    expect(screen.queryByText('Account')).toBeNull();
   });
 });

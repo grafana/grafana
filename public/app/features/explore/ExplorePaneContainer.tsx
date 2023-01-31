@@ -111,7 +111,7 @@ class ExplorePaneContainerUnconnected extends React.PureComponent<Props> {
               const datasource = await getDatasourceSrv().get(changeDatasourceUid);
               const datasourceInit = await getDatasourceSrv().get(initialDatasource);
               await this.props.importQueries(exploreId, queries, datasourceInit, datasource);
-              await this.props.stateSave({ replace: true });
+              this.props.stateSave({ replace: true });
               queries = this.props.initialQueries;
             }
           }

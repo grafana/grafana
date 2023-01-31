@@ -114,7 +114,7 @@ describe('AlertGroupsPanel', () => {
   });
 
   it('renders the panel with the groups', async () => {
-    await renderPanel();
+    renderPanel();
 
     await waitFor(() => expect(mocks.api.fetchAlertGroups).toHaveBeenCalled());
     const groups = ui.group.getAll();
@@ -129,7 +129,7 @@ describe('AlertGroupsPanel', () => {
   });
 
   it('renders panel with groups expanded', async () => {
-    await renderPanel({ labels: '', alertmanager: 'Alertmanager', expandAll: true });
+    renderPanel({ labels: '', alertmanager: 'Alertmanager', expandAll: true });
 
     await waitFor(() => expect(mocks.api.fetchAlertGroups).toHaveBeenCalled());
     const alerts = ui.alert.queryAll();
@@ -137,7 +137,7 @@ describe('AlertGroupsPanel', () => {
   });
 
   it('filters alerts by label filter', async () => {
-    await renderPanel({ labels: 'region=US-Central', alertmanager: 'Alertmanager', expandAll: true });
+    renderPanel({ labels: 'region=US-Central', alertmanager: 'Alertmanager', expandAll: true });
 
     await waitFor(() => expect(mocks.api.fetchAlertGroups).toHaveBeenCalled());
     const alerts = ui.alert.queryAll();

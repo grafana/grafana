@@ -196,7 +196,7 @@ export const initRichHistory = (): ThunkResult<void> => {
   };
 };
 
-export const updateHistorySettings = (settings: RichHistorySettings): ThunkResult<void> => {
+export const updateHistorySettings = (settings: RichHistorySettings): ThunkResult<Promise<void>> => {
   return async (dispatch) => {
     dispatch(richHistorySettingsUpdatedAction(settings));
     await updateRichHistorySettings(settings);
@@ -211,7 +211,7 @@ export const updateHistorySearchFilters = (
   filters: RichHistorySearchFilters
 ): ThunkResult<void> => {
   return async (dispatch, getState) => {
-    await dispatch(richHistorySearchFiltersUpdatedAction({ exploreId, filters: { ...filters } }));
+    dispatch(richHistorySearchFiltersUpdatedAction({ exploreId, filters: { ...filters } }));
     const currentSettings = getState().explore.richHistorySettings!;
     if (supportedFeatures().lastUsedDataSourcesAvailable) {
       await dispatch(

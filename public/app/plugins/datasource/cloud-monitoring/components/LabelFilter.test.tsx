@@ -44,7 +44,7 @@ describe('LabelFilter', () => {
     const filters = ['key_1', '=', 'value_1'];
     render(<LabelFilter labels={labels} filters={filters} onChange={() => {}} variableOptionGroup={[]} />);
 
-    await openMenu(screen.getByLabelText('Filter label key'));
+    openMenu(screen.getByLabelText('Filter label key'));
 
     expect(screen.getByText('Metric Label')).toBeInTheDocument();
     expect(screen.getByText('metric.label.instance_name')).toBeInTheDocument();
@@ -73,7 +73,7 @@ describe('LabelFilter', () => {
     const filters = ['metric.label.instance_name', '=', ''];
     render(<LabelFilter labels={labels} filters={filters} onChange={() => {}} variableOptionGroup={[]} />);
 
-    await openMenu(screen.getByLabelText('Filter label value'));
+    openMenu(screen.getByLabelText('Filter label value'));
     expect(screen.getByText('instance_name_1')).toBeInTheDocument();
     expect(screen.getByText('instance_name_2')).toBeInTheDocument();
     expect(screen.queryByText('instance_id_1')).not.toBeInTheDocument();

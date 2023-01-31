@@ -330,7 +330,7 @@ describe('AzureMonitor ResourcePicker', () => {
       />
     );
     const subscriptionExpand = await screen.findByLabelText('Expand Primary Subscription');
-    await subscriptionExpand.click();
+    subscriptionExpand.click();
     const error = await screen.findByRole('alert');
     expect(error).toHaveTextContent('An error occurred while requesting resources from Azure Monitor');
     expect(error).toHaveTextContent(

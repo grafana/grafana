@@ -698,7 +698,7 @@ const timeRangeUpdated =
   };
 
 export const templateVarsChangedInUrl =
-  (key: string, vars: ExtendedUrlQueryMap, events: typeof appEvents = appEvents): ThunkResult<void> =>
+  (key: string, vars: ExtendedUrlQueryMap, events: typeof appEvents = appEvents): ThunkResult<Promise<void>> =>
   async (dispatch, getState) => {
     const update: Array<Promise<any>> = [];
     const dashboard = getState().dashboard.getModel();
@@ -929,7 +929,7 @@ export const completeVariableLoading =
 export function upgradeLegacyQueries(
   identifier: KeyedVariableIdentifier,
   getDatasourceSrvFunc: typeof getDatasourceSrv = getDatasourceSrv
-): ThunkResult<void> {
+): ThunkResult<Promise<void>> {
   return async function (dispatch, getState) {
     const { id, rootStateKey } = identifier;
     if (!hasOngoingTransaction(rootStateKey, getState())) {

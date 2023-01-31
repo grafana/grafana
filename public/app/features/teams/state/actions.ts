@@ -36,7 +36,7 @@ export function loadTeams(initial = false): ThunkResult<void> {
 
 const loadTeamsWithDebounce = debounce((dispatch) => dispatch(loadTeams()), 500);
 
-export function loadTeam(id: number): ThunkResult<void> {
+export function loadTeam(id: number): ThunkResult<Promise<void>> {
   return async (dispatch) => {
     const response = await getBackendSrv().get(`/api/teams/${id}`, accessControlQueryParam());
     dispatch(teamLoaded(response));
@@ -67,7 +67,7 @@ export function changePage(page: number): ThunkResult<void> {
   };
 }
 
-export function loadTeamMembers(): ThunkResult<void> {
+export function loadTeamMembers(): ThunkResult<Promise<void>> {
   return async (dispatch, getStore) => {
     const team = getStore().team.team;
     const response = await getBackendSrv().get(`/api/teams/${team.id}/members`);
@@ -99,7 +99,7 @@ export function updateTeam(name: string, email: string): ThunkResult<void> {
   };
 }
 
-export function loadTeamGroups(): ThunkResult<void> {
+export function loadTeamGroups(): ThunkResult<Promise<void>> {
   return async (dispatch, getStore) => {
     const team = getStore().team.team;
     const response = await getBackendSrv().get(`/api/teams/${team.id}/groups`);

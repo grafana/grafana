@@ -149,7 +149,7 @@ const getQueriesByDatasource = (
  * Then it handles the initializing of the old angular services that the dashboard components & panels still depend on
  *
  */
-export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
+export function initDashboard(args: InitDashboardArgs): ThunkResult<Promise<void>> {
   return async (dispatch, getState) => {
     // set fetching state
     dispatch(dashboardInitFetching());
