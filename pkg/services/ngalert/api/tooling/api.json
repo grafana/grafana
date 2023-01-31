@@ -144,7 +144,7 @@
   "AlertQuery": {
    "properties": {
     "datasourceUid": {
-     "description": "Grafana data source unique identifier; it should be '-100' for a Server Side Expression operation.",
+     "description": "Grafana data source unique identifier; it should be '__expr__' for a Server Side Expression operation.",
      "type": "string",
      "x-go-name": "DatasourceUID"
     },
@@ -3127,7 +3127,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "A URL represents a parsed URL (technically, a URI reference).",
+   "title": "URL is a custom URL type that allows validation at configuration load time.",
    "type": "object",
    "x-go-package": "net/url"
   },

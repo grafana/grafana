@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
@@ -201,7 +202,7 @@ func dummyRule(title string, orgID int64) models.AlertRule {
 			{
 				RefID:         "A",
 				Model:         json.RawMessage("{}"),
-				DatasourceUID: "-100",
+				DatasourceUID: expr.DatasourceUID,
 				RelativeTimeRange: models.RelativeTimeRange{
 					From: models.Duration(60),
 					To:   models.Duration(0),
