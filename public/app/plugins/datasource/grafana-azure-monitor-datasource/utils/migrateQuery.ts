@@ -95,6 +95,9 @@ function migrateDimensionToDimensionFilter(query: AzureMonitorQuery): AzureMonit
     ]);
   }
 
+  delete workingQuery.azureMonitor?.dimension;
+  delete workingQuery.azureMonitor?.dimensionFilter;
+
   return workingQuery;
 }
 

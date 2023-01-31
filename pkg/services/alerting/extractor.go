@@ -106,7 +106,7 @@ func UAEnabled(ctx context.Context) bool {
 	return enabled
 }
 
-func (e *DashAlertExtractorService) getAlertFromPanels(ctx context.Context, jsonWithPanels *simplejson.Json, validateAlertFunc func(*models.Alert) bool, logTranslationFailures bool, dashAlertInfo DashAlertInfo) ([]*models.Alert, error) {
+func (e *DashAlertExtractorService) getAlertFromPanels(ctx context.Context, jsonWithPanels *simplejson.Json, validateAlertFunc func(*models.Alert) error, logTranslationFailures bool, dashAlertInfo DashAlertInfo) ([]*models.Alert, error) {
 	alerts := make([]*models.Alert, 0)
 
 	for _, panelObj := range jsonWithPanels.Get("panels").MustArray() {
@@ -238,8 +238,8 @@ func (e *DashAlertExtractorService) getAlertFromPanels(ctx context.Context, json
 			return nil, err
 		}
 
-		if !validateAlertFunc(alert) {
-			return nil, ValidationError{Reason: fmt.Sprintf("Panel id is not correct, alertName=%v, panelId=%v", alert.Name, alert.PanelId)}
+		if err := validateAlertFunc(alert); err != nil {
+			return nil, err
 		}
 
 		alerts = append(alerts, alert)
@@ -248,8 +248,14 @@ func (e *DashAlertExtractorService) getAlertFromPanels(ctx context.Context, json
 	return alerts, nil
 }
 
-func validateAlertRule(alert *models.Alert) bool {
-	return alert.ValidToSave()
+func validateAlertRule(alert *models.Alert) error {
+	if !alert.ValidDashboardPanel() {
+		return ValidationError{Reason: fmt.Sprintf("Panel id is not correct, alertName=%v, panelId=%v", alert.Name, alert.PanelId)}
+	}
+	if !alert.ValidTags() {
+		return ValidationError{Reason: "Invalid tags, must be less than 100 characters"}
+	}
+	return nil
 }
 
 // GetAlerts extracts alerts from the dashboard json and does full validation on the alert json data.
@@ -257,7 +263,7 @@ func (e *DashAlertExtractorService) GetAlerts(ctx context.Context, dashAlertInfo
 	return e.extractAlerts(ctx, validateAlertRule, true, dashAlertInfo)
 }
 
-func (e *DashAlertExtractorService) extractAlerts(ctx context.Context, validateFunc func(alert *models.Alert) bool, logTranslationFailures bool, dashAlertInfo DashAlertInfo) ([]*models.Alert, error) {
+func (e *DashAlertExtractorService) extractAlerts(ctx context.Context, validateFunc func(alert *models.Alert) error, logTranslationFailures bool, dashAlertInfo DashAlertInfo) ([]*models.Alert, error) {
 	dashboardJSON, err := copyJSON(dashAlertInfo.Dash.Data)
 	if err != nil {
 		return nil, err
@@ -294,8 +300,11 @@ func (e *DashAlertExtractorService) extractAlerts(ctx context.Context, validateF
 // ValidateAlerts validates alerts in the dashboard json but does not require a valid dashboard id
 // in the first validation pass.
 func (e *DashAlertExtractorService) ValidateAlerts(ctx context.Context, dashAlertInfo DashAlertInfo) error {
-	_, err := e.extractAlerts(ctx, func(alert *models.Alert) bool {
-		return alert.OrgId != 0 && alert.PanelId != 0
+	_, err := e.extractAlerts(ctx, func(alert *models.Alert) error {
+		if alert.OrgId == 0 || alert.PanelId == 0 {
+			return errors.New("missing OrgId, PanelId or both")
+		}
+		return nil
 	}, false, dashAlertInfo)
 	return err
 }

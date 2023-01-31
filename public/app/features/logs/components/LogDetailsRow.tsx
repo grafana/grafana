@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { isEqual } from 'lodash';
 import React, { PureComponent } from 'react';
 
 import { Field, LinkModel, LogLabelStatsModel, GrafanaTheme2, LogRowModel, CoreApp } from '@grafana/data';
@@ -76,6 +77,12 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     mouseOver: false,
   };
 
+  componentDidUpdate() {
+    if (this.state.showFieldsStats) {
+      this.updateStats();
+    }
+  }
+
   showField = () => {
     const { onClickShowDetectedField, parsedKey, row } = this.props;
     if (onClickShowDetectedField) {
@@ -128,13 +135,20 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
     });
   };
 
+  updateStats = () => {
+    const { getStats } = this.props;
+    const fieldStats = getStats();
+    const fieldCount = fieldStats ? fieldStats.reduce((sum, stat) => sum + stat.count, 0) : 0;
+    if (!isEqual(this.state.fieldStats, fieldStats) || fieldCount !== this.state.fieldCount) {
+      this.setState({ fieldStats, fieldCount });
+    }
+  };
+
   showStats = () => {
-    const { getStats, isLabel, row, app } = this.props;
+    const { isLabel, row, app } = this.props;
     const { showFieldsStats } = this.state;
     if (!showFieldsStats) {
-      const fieldStats = getStats();
-      const fieldCount = fieldStats ? fieldStats.reduce((sum, stat) => sum + stat.count, 0) : 0;
-      this.setState({ fieldStats, fieldCount });
+      this.updateStats();
     }
     this.toggleFieldsStats();
 
