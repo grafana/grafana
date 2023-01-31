@@ -1,0 +1,87 @@
+import { css } from '@emotion/css';
+import React from 'react';
+import { useForm } from 'react-hook-form';
+
+import { GrafanaTheme2 } from '@grafana/data/src';
+import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { reportInteraction } from '@grafana/runtime/src';
+import { Button, Spinner, useStyles2 } from '@grafana/ui/src';
+
+import { contextSrv } from '../../../../../../core/services/context_srv';
+import { AccessControlAction } from '../../../../../../types';
+import { isOrgAdmin } from '../../../../../plugins/admin/permissions';
+import { useCreatePublicDashboardMutation } from '../../../../api/publicDashboardApi';
+import { DashboardModel } from '../../../../state';
+import { SharePublicDashboardInputs } from '../ConfigPublicDashboard/ConfigPublicDashboard';
+
+import { AcknowledgeCheckboxes } from './AcknowledgeCheckboxes';
+import { Description } from './Description';
+
+const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
+
+export type SharePublicDashboardAcknowledgmentInputs = {
+  publicAcknowledgment: boolean;
+  dataSourcesAcknowledgment: boolean;
+  usageAcknowledgment: boolean;
+};
+
+const CreatePublicDashboard = ({ dashboard }: { dashboard: DashboardModel }) => {
+  const styles = useStyles2(getStyles);
+  const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
+
+  const {
+    handleSubmit,
+    register,
+    formState: { isValid },
+  } = useForm<SharePublicDashboardAcknowledgmentInputs>({
+    mode: 'onChange',
+    defaultValues: {
+      publicAcknowledgment: false,
+      dataSourcesAcknowledgment: false,
+      usageAcknowledgment: false,
+    },
+  });
+
+  const [createPublicDashboard, { isLoading: isSaveLoading }] = useCreatePublicDashboardMutation();
+
+  const onCreate = async (values: SharePublicDashboardInputs) => {
+    reportInteraction('grafana_dashboards_public_create_clicked');
+    createPublicDashboard({ dashboard });
+  };
+
+  return (
+    <div>
+      <p className={styles.title}>Welcome to Grafana public dashboards alpha!</p>
+      <Description />
+      <form onSubmit={handleSubmit(onCreate)}>
+        <div className={styles.checkboxes}>
+          <AcknowledgeCheckboxes disabled={!hasWritePermissions || isSaveLoading} register={register} />
+        </div>
+        <div className={styles.buttonContainer}>
+          <Button type="submit" disabled={!hasWritePermissions || !isValid} data-testid={selectors.CreateButton}>
+            Generate public URL {isSaveLoading && <Spinner className={styles.loadingSpinner} />}
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  title: css`
+    font-size: ${theme.typography.h4.fontSize};
+    margin: ${theme.spacing(0, 0, 2)};
+  `,
+  checkboxes: css`
+    margin: ${theme.spacing(3, 0, 4)};
+  `,
+  buttonContainer: css`
+    display: flex;
+    justify-content: end;
+  `,
+  loadingSpinner: css`
+    margin-left: ${theme.spacing(1)};
+  `,
+});
+
+export default CreatePublicDashboard;

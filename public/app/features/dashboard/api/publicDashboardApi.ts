@@ -55,7 +55,7 @@ export const publicDashboardApi = createApi({
       },
       providesTags: (result, error, dashboardUid) => [{ type: 'PublicDashboard', id: dashboardUid }],
     }),
-    createPublicDashboard: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
+    createPublicDashboard: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload?: PublicDashboard }>({
       query: (params) => ({
         url: `/uid/${params.dashboard.uid}/public-dashboards`,
         method: 'POST',
@@ -63,7 +63,7 @@ export const publicDashboardApi = createApi({
       }),
       async onQueryStarted({ dashboard, payload }, { dispatch, queryFulfilled }) {
         const { data } = await queryFulfilled;
-        dispatch(notifyApp(createSuccessNotification('Public dashboard created!')));
+        dispatch(notifyApp(createSuccessNotification('Dashboard is public!')));
 
         // Update runtime meta flag
         dashboard.updateMeta({
@@ -71,7 +71,7 @@ export const publicDashboardApi = createApi({
           publicDashboardEnabled: data.isEnabled,
         });
       },
-      invalidatesTags: (result, error, { payload }) => [{ type: 'PublicDashboard', id: payload.dashboardUid }],
+      invalidatesTags: (result, error, { payload }) => [{ type: 'PublicDashboard', id: payload?.dashboardUid }],
     }),
     updatePublicDashboard: builder.mutation<PublicDashboard, { dashboard: DashboardModel; payload: PublicDashboard }>({
       query: (params) => ({

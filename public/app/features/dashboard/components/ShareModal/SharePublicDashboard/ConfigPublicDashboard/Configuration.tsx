@@ -11,7 +11,7 @@ import { DashboardModel } from 'app/features/dashboard/state';
 import { useIsDesktop } from 'app/features/dashboard/utils/screen';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 
-import { SharePublicDashboardInputs } from './SharePublicDashboard';
+import { SharePublicDashboardInputs } from './ConfigPublicDashboard';
 
 export const Configuration = ({
   disabled,
@@ -30,21 +30,20 @@ export const Configuration = ({
 
   return (
     <>
-      <h4 className={styles.title}>Public dashboard configuration</h4>
+      <h4 className={styles.title}>Settings</h4>
       <FieldSet disabled={disabled} className={styles.dashboardConfig}>
         <VerticalGroup spacing="md">
-          <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">
-            <Label description="The public dashboard uses the default time settings of the dashboard">
+          <Layout orientation={1} spacing="xs" justify="space-between">
+            <Label description="The public dashboard uses the default time range settings of the dashboard">
               Default time range
             </Label>
             <TimeRangeInput value={timeRange} disabled onChange={() => {}} />
           </Layout>
-          <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">
-            <Label description="Allow viewers to change time range">Time range picker enabled</Label>
+          <Layout orientation={isDesktop ? 0 : 1} spacing="xs">
             <Switch {...register('isTimeRangeEnabled')} data-testid={selectors.EnableTimeRangeSwitch} />
+            <Label description="Allow viewers to change time range">Time range picker enabled</Label>
           </Layout>
-          <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">
-            <Label description="Show annotations on public dashboard">Show annotations</Label>
+          <Layout orientation={isDesktop ? 0 : 1} spacing="xs">
             <Switch
               {...register('isAnnotationsEnabled')}
               onChange={(e) => {
@@ -56,21 +55,22 @@ export const Configuration = ({
               }}
               data-testid={selectors.EnableAnnotationsSwitch}
             />
+            <Label description="Show annotations on public dashboard">Show annotations</Label>
           </Layout>
-          <Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">
-            <Label description="Configures whether current dashboard can be available publicly">Enabled</Label>
-            <Switch
-              {...register('enabledSwitch')}
-              onChange={(e) => {
-                const { onChange } = register('enabledSwitch');
-                reportInteraction('grafana_dashboards_public_enable_clicked', {
-                  action: e.currentTarget.checked ? 'enable' : 'disable',
-                });
-                onChange(e);
-              }}
-              data-testid={selectors.EnableSwitch}
-            />
-          </Layout>
+          {/*<Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">*/}
+          {/*  <Label description="Configures whether current dashboard can be available publicly">Enabled</Label>*/}
+          {/*  <Switch*/}
+          {/*    {...register('enabledSwitch')}*/}
+          {/*    onChange={(e) => {*/}
+          {/*      const { onChange } = register('enabledSwitch');*/}
+          {/*      reportInteraction('grafana_dashboards_public_enable_clicked', {*/}
+          {/*        action: e.currentTarget.checked ? 'enable' : 'disable',*/}
+          {/*      });*/}
+          {/*      onChange(e);*/}
+          {/*    }}*/}
+          {/*    data-testid={selectors.EnableSwitch}*/}
+          {/*  />*/}
+          {/*</Layout>*/}
         </VerticalGroup>
       </FieldSet>
     </>
@@ -83,11 +83,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
   `,
   dashboardConfig: css`
     margin: ${theme.spacing(0, 0, 3, 0)};
-  `,
-  timeRange: css`
-    margin-bottom: ${theme.spacing(0)};
-  `,
-  timeRangeDisabledText: css`
-    font-size: ${theme.typography.bodySmall.fontSize};
   `,
 });
