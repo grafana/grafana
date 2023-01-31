@@ -8,6 +8,7 @@ import { BarGauge } from '../BarGauge/BarGauge';
 import { DataLinksContextMenu, DataLinksContextMenuApi } from '../DataLinks/DataLinksContextMenu';
 
 import { TableCellProps, TableCellDisplayMode } from './types';
+import { getCellOptions } from './utils';
 
 const defaultScale: ThresholdsConfig = {
   mode: ThresholdsMode.Absolute,
@@ -39,28 +40,9 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
   // Set default display mode
   let barGaugeMode: BarGaugeDisplayMode = BarGaugeDisplayMode.Gradient;
 
-  // Support deprecated settings
-  const usingDeprecatedSettings = field.config.custom.displayMode !== undefined;
-
-  // If we're using the old settings format we read the displayMode directly from
-  // the cell options
-  if (usingDeprecatedSettings) {
-    if (
-      (field.config.custom && field.config.custom.cellOptions.displayMode === TableCellDisplayMode.Gauge) ||
-      (field.config.custom && field.config.custom.cellOptions.displayMode === BarGaugeDisplayMode.Lcd)
-    ) {
-      barGaugeMode = BarGaugeDisplayMode.Lcd;
-    } else if (
-      (field.config.custom && field.config.custom.cellOptions.displayMode === TableCellDisplayMode.Gauge) ||
-      (field.config.custom && field.config.custom.cellOptions.displayMode === BarGaugeDisplayMode.Basic)
-    ) {
-      barGaugeMode = BarGaugeDisplayMode.Basic;
-    }
-  }
-  // Otherwise in the case of sub-options we read specifically from the sub-options
-  // object in order to get the display mode
-  else {
-    barGaugeMode = field.config.custom.cellOptions.mode;
+  const cellOptions = getCellOptions(field);
+  if (cellOptions.type === TableCellDisplayMode.Gauge) {
+    barGaugeMode = cellOptions.mode ?? BarGaugeDisplayMode.Gradient;
   }
 
   const getLinks = () => {

@@ -1,5 +1,5 @@
-import { setupMockedAPI } from './__mocks__/API';
 import { dimensionVariable, labelsVariable, setupMockedDataSource } from './__mocks__/CloudWatchDataSource';
+import { setupMockedResourcesAPI } from './__mocks__/ResourcesAPI';
 import { VariableQuery, VariableQueryType } from './types';
 import { CloudWatchVariableSupport } from './variables';
 
@@ -16,20 +16,20 @@ const defaultQuery: VariableQuery = {
 };
 
 const mock = setupMockedDataSource({ variables: [labelsVariable, dimensionVariable] });
-mock.datasource.api.getRegions = jest.fn().mockResolvedValue([{ label: 'a', value: 'a' }]);
-mock.datasource.api.getNamespaces = jest.fn().mockResolvedValue([{ label: 'b', value: 'b' }]);
-mock.datasource.api.getMetrics = jest.fn().mockResolvedValue([{ label: 'c', value: 'c' }]);
-mock.datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([{ label: 'd', value: 'd' }]);
-mock.datasource.api.getLogGroups = jest
+mock.datasource.resources.getRegions = jest.fn().mockResolvedValue([{ label: 'a', value: 'a' }]);
+mock.datasource.resources.getNamespaces = jest.fn().mockResolvedValue([{ label: 'b', value: 'b' }]);
+mock.datasource.resources.getMetrics = jest.fn().mockResolvedValue([{ label: 'c', value: 'c' }]);
+mock.datasource.resources.getDimensionKeys = jest.fn().mockResolvedValue([{ label: 'd', value: 'd' }]);
+mock.datasource.resources.getLogGroups = jest
   .fn()
   .mockResolvedValue([{ value: { arn: 'a', name: 'a' } }, { value: { arn: 'b', name: 'b' } }]);
-mock.datasource.api.getAccounts = jest.fn().mockResolvedValue([]);
+mock.datasource.resources.getAccounts = jest.fn().mockResolvedValue([]);
 const getDimensionValues = jest.fn().mockResolvedValue([{ label: 'e', value: 'e' }]);
 const getEbsVolumeIds = jest.fn().mockResolvedValue([{ label: 'f', value: 'f' }]);
 const getEc2InstanceAttribute = jest.fn().mockResolvedValue([{ label: 'g', value: 'g' }]);
 const getResourceARNs = jest.fn().mockResolvedValue([{ label: 'h', value: 'h' }]);
 
-const variables = new CloudWatchVariableSupport(mock.datasource.api);
+const variables = new CloudWatchVariableSupport(mock.datasource.resources);
 
 describe('variables', () => {
   it('should run regions', async () => {
@@ -54,7 +54,7 @@ describe('variables', () => {
 
   describe('accounts', () => {
     it('should run accounts', async () => {
-      const { api } = setupMockedAPI();
+      const { api } = setupMockedResourcesAPI();
       const getAccountMock = jest.fn().mockResolvedValue([]);
       api.getAccounts = getAccountMock;
       const variables = new CloudWatchVariableSupport(api);
@@ -63,7 +63,7 @@ describe('variables', () => {
     });
 
     it('should map accounts to metric find value and insert "all" option', async () => {
-      const { api } = setupMockedAPI();
+      const { api } = setupMockedResourcesAPI();
       api.getAccounts = jest.fn().mockResolvedValue([{ id: '123', label: 'Account1' }]);
       const variables = new CloudWatchVariableSupport(api);
       const result = await variables.execute({ ...defaultQuery, queryType: VariableQueryType.Accounts });
@@ -83,7 +83,7 @@ describe('variables', () => {
       dimensionFilters: { a: 'b' },
     };
     beforeEach(() => {
-      mock.datasource.api.getDimensionValues = getDimensionValues;
+      mock.datasource.resources.getDimensionValues = getDimensionValues;
       getDimensionValues.mockClear();
     });
 
@@ -113,7 +113,7 @@ describe('variables', () => {
 
   describe('EBS volume ids', () => {
     beforeEach(() => {
-      mock.datasource.api.getEbsVolumeIds = getEbsVolumeIds;
+      mock.datasource.resources.getEbsVolumeIds = getEbsVolumeIds;
       getEbsVolumeIds.mockClear();
     });
 
@@ -142,7 +142,7 @@ describe('variables', () => {
       ec2Filters: { a: ['b'] },
     };
     beforeEach(() => {
-      mock.datasource.api.getEc2InstanceAttribute = getEc2InstanceAttribute;
+      mock.datasource.resources.getEc2InstanceAttribute = getEc2InstanceAttribute;
       getEc2InstanceAttribute.mockClear();
     });
 
@@ -167,7 +167,7 @@ describe('variables', () => {
       tags: { a: ['b'] },
     };
     beforeEach(() => {
-      mock.datasource.api.getResourceARNs = getResourceARNs;
+      mock.datasource.resources.getResourceARNs = getResourceARNs;
       getResourceARNs.mockClear();
     });
 

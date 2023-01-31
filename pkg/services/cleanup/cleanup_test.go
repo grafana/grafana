@@ -4,8 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestCleanUpTmpFiles(t *testing.T) {

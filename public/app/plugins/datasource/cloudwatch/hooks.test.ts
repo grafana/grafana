@@ -2,7 +2,6 @@ import { renderHook } from '@testing-library/react-hooks';
 
 import { config } from '@grafana/runtime';
 
-import { setupMockedAPI } from './__mocks__/API';
 import {
   accountIdVariable,
   dimensionVariable,
@@ -11,6 +10,7 @@ import {
   regionVariable,
   setupMockedDataSource,
 } from './__mocks__/CloudWatchDataSource';
+import { setupMockedResourcesAPI } from './__mocks__/ResourcesAPI';
 import { useAccountOptions, useDimensionKeys, useIsMonitoringAccount, useMetrics } from './hooks';
 
 const WAIT_OPTIONS = {
@@ -26,7 +26,7 @@ describe('hooks', () => {
   describe('useIsMonitoringAccount', () => {
     it('should interpolate variables before calling api', async () => {
       config.featureToggles.cloudWatchCrossAccountQuerying = true;
-      const { api } = setupMockedAPI({
+      const { api } = setupMockedResourcesAPI({
         variables: [regionVariable],
       });
       const isMonitoringAccountMock = jest.fn().mockResolvedValue(true);
@@ -44,7 +44,7 @@ describe('hooks', () => {
         variables: [regionVariable, namespaceVariable, accountIdVariable],
       });
       const getMetricsMock = jest.fn().mockResolvedValue([]);
-      datasource.api.getMetrics = getMetricsMock;
+      datasource.resources.getMetrics = getMetricsMock;
 
       const { waitForNextUpdate } = renderHook(() =>
         useMetrics(datasource, {
@@ -70,7 +70,7 @@ describe('hooks', () => {
         variables: [regionVariable, namespaceVariable, accountIdVariable, metricVariable, dimensionVariable],
       });
       const getDimensionKeysMock = jest.fn().mockResolvedValue([]);
-      datasource.api.getDimensionKeys = getDimensionKeysMock;
+      datasource.resources.getDimensionKeys = getDimensionKeysMock;
 
       const { waitForNextUpdate } = renderHook(() =>
         useDimensionKeys(datasource, {
@@ -100,7 +100,7 @@ describe('hooks', () => {
   describe('useAccountOptions', () => {
     it('does not call the api if the feature toggle is off', async () => {
       config.featureToggles.cloudWatchCrossAccountQuerying = false;
-      const { api } = setupMockedAPI({
+      const { api } = setupMockedResourcesAPI({
         variables: [regionVariable],
       });
       const getAccountsMock = jest.fn().mockResolvedValue([{ id: '123', label: 'accountLabel' }]);
@@ -112,7 +112,7 @@ describe('hooks', () => {
 
     it('interpolates region variables before calling the api', async () => {
       config.featureToggles.cloudWatchCrossAccountQuerying = true;
-      const { api } = setupMockedAPI({
+      const { api } = setupMockedResourcesAPI({
         variables: [regionVariable],
       });
       const getAccountsMock = jest.fn().mockResolvedValue([{ id: '123', label: 'accountLabel' }]);
@@ -125,7 +125,7 @@ describe('hooks', () => {
 
     it('returns properly formatted account options, and template variables', async () => {
       config.featureToggles.cloudWatchCrossAccountQuerying = true;
-      const { api } = setupMockedAPI({
+      const { api } = setupMockedResourcesAPI({
         variables: [regionVariable],
       });
       const getAccountsMock = jest.fn().mockResolvedValue([{ id: '123', label: 'accountLabel' }]);

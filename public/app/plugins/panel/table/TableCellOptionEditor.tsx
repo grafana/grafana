@@ -1,21 +1,12 @@
 import { merge } from 'lodash';
-import React, { ReactNode, useState } from 'react';
+import React, { useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { TableCellOptions } from '@grafana/schema';
-import { Field, HorizontalGroup, Select, TableCellDisplayMode } from '@grafana/ui';
+import { Field, Select, TableCellDisplayMode } from '@grafana/ui';
 
 import { BarGaugeCellOptionsEditor } from './cells/BarGaugeCellOptionsEditor';
 import { ColorBackgroundCellOptionsEditor } from './cells/ColorBackgroundCellOptionsEditor';
-
-const cellDisplayModeOptions = [
-  { value: TableCellDisplayMode.Auto, label: 'Auto' },
-  { value: TableCellDisplayMode.ColorText, label: 'Colored text' },
-  { value: TableCellDisplayMode.ColorBackground, label: 'Colored background' },
-  { value: TableCellDisplayMode.Gauge, label: 'Gauge' },
-  { value: TableCellDisplayMode.JSONView, label: 'JSON View' },
-  { value: TableCellDisplayMode.Image, label: 'Image' },
-];
 
 // The props that any cell type editor are expected
 // to handle. In this case the generic type should
@@ -25,29 +16,6 @@ export interface TableCellEditorProps<T> {
   onChange: (value: T) => void;
 }
 
-// Maps display modes to editor components
-interface ComponentMap {
-  [key: string]: Function;
-}
-
-// Maps cell type to options for caching
-interface SettingMap {
-  [key: string]: TableCellOptions;
-}
-
-/*
-  Map of display modes to editor components
-  Additional cell types can be placed here
-  ---
-  A cell editor is expected to be a functional
-  component that accepts options and displays
-  them in a form.
-*/
-const displayModeComponentMap: ComponentMap = {
-  [TableCellDisplayMode.Gauge]: BarGaugeCellOptionsEditor,
-  [TableCellDisplayMode.ColorBackground]: ColorBackgroundCellOptionsEditor,
-};
-
 interface Props {
   value: TableCellOptions;
   onChange: (v: TableCellOptions) => void;
@@ -55,25 +23,21 @@ interface Props {
 
 export const TableCellOptionEditor = ({ value, onChange }: Props) => {
   const cellType = value.type;
-  let editor: ReactNode | null = null;
-  let [settingCache, setSettingCache] = useState<SettingMap>({});
+  const currentMode = cellDisplayModeOptions.find((o) => o.value!.type === cellType)!;
+
+  let [settingCache, setSettingCache] = useState<Record<string, TableCellOptions>>({});
 
   // Update display mode on change
-  const onCellTypeChange = (v: SelectableValue<TableCellDisplayMode>) => {
+  const onCellTypeChange = (v: SelectableValue<TableCellOptions>) => {
     if (v.value !== undefined) {
       // Set the new type of cell starting
       // with default settings
-      value = {
-        type: v.value,
-      };
+      value = v.value;
 
       // When changing cell type see if there were previously stored
       // settings and merge those with the changed value
-      if (settingCache[v.value] !== undefined && Object.keys(settingCache[v.value]).length > 1) {
-        settingCache[v.value] = merge(value, settingCache[v.value]);
-        setSettingCache(settingCache);
-        onChange(settingCache[v.value]);
-        return;
+      if (settingCache[value.type] !== undefined && Object.keys(settingCache[value.type]).length > 1) {
+        value = merge(value, settingCache[value.type]);
       }
 
       onChange(value);
@@ -88,19 +52,27 @@ export const TableCellOptionEditor = ({ value, onChange }: Props) => {
     onChange(settingCache[value.type]);
   };
 
-  // Setup specific cell editor
-  if (cellType !== undefined && displayModeComponentMap[cellType] !== undefined) {
-    let Comp: Function = displayModeComponentMap[cellType];
-    editor = <Comp cellOptions={value} onChange={onCellOptionsChange} />;
-  }
-
   // Setup and inject editor
   return (
     <>
       <Field>
-        <Select options={cellDisplayModeOptions} value={cellType} onChange={onCellTypeChange} />
+        <Select options={cellDisplayModeOptions} value={currentMode} onChange={onCellTypeChange} />
       </Field>
-      <HorizontalGroup>{editor}</HorizontalGroup>
+      {cellType === TableCellDisplayMode.Gauge && (
+        <BarGaugeCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
+      )}
+      {cellType === TableCellDisplayMode.ColorBackground && (
+        <ColorBackgroundCellOptionsEditor cellOptions={value} onChange={onCellOptionsChange} />
+      )}
     </>
   );
 };
+
+const cellDisplayModeOptions: Array<SelectableValue<TableCellOptions>> = [
+  { value: { type: TableCellDisplayMode.Auto }, label: 'Auto' },
+  { value: { type: TableCellDisplayMode.ColorText }, label: 'Colored text' },
+  { value: { type: TableCellDisplayMode.ColorBackground }, label: 'Colored background' },
+  { value: { type: TableCellDisplayMode.Gauge }, label: 'Gauge' },
+  { value: { type: TableCellDisplayMode.JSONView }, label: 'JSON View' },
+  { value: { type: TableCellDisplayMode.Image }, label: 'Image' },
+];

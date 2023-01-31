@@ -15,8 +15,8 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/localcache"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/temp_user/tempuserimpl"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -63,7 +62,7 @@ func TestOrgUsersAPIEndpoint_userLoggedIn(t *testing.T) {
 	orgService := orgtest.NewOrgServiceFake()
 	orgService.ExpectedSearchOrgUsersResult = &org.SearchOrgUsersQueryResult{}
 	hs.orgService = orgService
-	mock := mockstore.NewSQLStoreMock()
+	mock := dbtest.NewFakeDB()
 
 	loggedInUserScenario(t, "When calling GET on", "api/org/users", "api/org/users", func(sc *scenarioContext) {
 		setUpGetOrgUsersDB(t, sqlStore)
@@ -219,12 +218,12 @@ func TestOrgUsersAPIEndpoint_LegacyAccessControl_FolderAdmin(t *testing.T) {
 	require.NotNil(t, folder)
 
 	// Grant our test Viewer with permission to admin the folder
-	acls := []*models.DashboardACL{
+	acls := []*dashboards.DashboardACL{
 		{
 			DashboardID: folder.ID,
 			OrgID:       testOrgID,
 			UserID:      testUserID,
-			Permission:  models.PERMISSION_ADMIN,
+			Permission:  dashboards.PERMISSION_ADMIN,
 			Created:     time.Now(),
 			Updated:     time.Now(),
 		},
@@ -245,7 +244,7 @@ func TestOrgUsersAPIEndpoint_LegacyAccessControl_TeamAdmin(t *testing.T) {
 	// Setup store teams
 	team1, err := sc.teamService.CreateTeam("testteam1", "testteam1@example.org", testOrgID)
 	require.NoError(t, err)
-	err = sc.teamService.AddTeamMember(testUserID, testOrgID, team1.ID, false, models.PERMISSION_ADMIN)
+	err = sc.teamService.AddTeamMember(testUserID, testOrgID, team1.ID, false, dashboards.PERMISSION_ADMIN)
 	require.NoError(t, err)
 
 	response := callAPI(sc.server, http.MethodGet, "/api/org/users/lookup", nil, t)

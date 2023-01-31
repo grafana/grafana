@@ -25,6 +25,7 @@ export const availableIconsIndex = {
   'arrow-left': true,
   'arrow-random': true,
   'arrow-right': true,
+  'arrow-to-right': true,
   'arrow-up': true,
   'arrows-h': true,
   'arrows-v': true,

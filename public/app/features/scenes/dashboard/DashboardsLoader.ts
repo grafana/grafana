@@ -13,7 +13,6 @@ import {
   SceneTimeRange,
   SceneObject,
   SceneQueryRunner,
-  SceneSubMenu,
   SceneVariableSet,
   VariableValueSelectors,
   SceneVariable,
@@ -150,7 +149,6 @@ export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneObjec
 }
 
 export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel) {
-  let subMenu: SceneSubMenu | undefined = undefined;
   let variables: SceneVariableSet | undefined = undefined;
 
   if (oldModel.templating.list.length) {
@@ -166,9 +164,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
       // TODO: Remove filter
       // Added temporarily to allow skipping non-compatible variables
       .filter((v): v is SceneVariable => Boolean(v));
-    subMenu = new SceneSubMenu({
-      children: [new VariableValueSelectors({})],
-    });
+
     variables = new SceneVariableSet({
       variables: variableObjects,
     });
@@ -183,7 +179,9 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel)
     $timeRange: new SceneTimeRange(oldModel.time),
     actions: [new SceneTimePicker({})],
     $variables: variables,
-    subMenu,
+    ...(variables && {
+      controls: [new VariableValueSelectors({})],
+    }),
   });
 }
 

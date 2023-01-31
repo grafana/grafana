@@ -16,7 +16,6 @@ import {
   LogsSortOrder,
   LinkModel,
   Field,
-  DataQuery,
   DataFrame,
   GrafanaTheme2,
   LoadingState,
@@ -26,8 +25,10 @@ import {
   DataHoverEvent,
   DataHoverClearEvent,
   EventBus,
+  DataSourceWithLogsContextSupport,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import {
   RadioButtonGroup,
   Button,
@@ -79,6 +80,7 @@ interface Props extends Themeable2 {
   onStartScanning?: () => void;
   onStopScanning?: () => void;
   getRowContext?: (row: LogRowModel, options?: RowContextOptions) => Promise<any>;
+  getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
   getFieldLinks: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
   addResultsToCache: () => void;
   clearCache: () => void;
@@ -344,6 +346,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
       addResultsToCache,
       exploreId,
       scrollElement,
+      getRowContext,
+      getLogRowContextUi,
     } = this.props;
 
     const {
@@ -487,7 +491,8 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 logRows={logRows}
                 deduplicatedRows={dedupedRows}
                 dedupStrategy={dedupStrategy}
-                getRowContext={this.props.getRowContext}
+                getRowContext={getRowContext}
+                getLogRowContextUi={getLogRowContextUi}
                 onClickFilterLabel={onClickFilterLabel}
                 onClickFilterOutLabel={onClickFilterOutLabel}
                 showContextToggle={showContextToggle}
@@ -507,6 +512,22 @@ class UnthemedLogs extends PureComponent<Props, State> {
                 scrollElement={scrollElement}
                 onLogRowHover={this.onLogRowHover}
               />
+              {!loading && !hasData && !scanning && (
+                <div className={styles.noData}>
+                  No logs found.
+                  <Button size="sm" variant="secondary" onClick={this.onClickScan}>
+                    Scan for older logs
+                  </Button>
+                </div>
+              )}
+              {scanning && (
+                <div className={styles.noData}>
+                  <span>{scanText}</span>
+                  <Button size="sm" variant="secondary" onClick={this.onClickStopScan}>
+                    Stop scan
+                  </Button>
+                </div>
+              )}
             </div>
             <LogsNavigation
               logsSortOrder={logsSortOrder}
@@ -521,22 +542,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
               clearCache={clearCache}
             />
           </div>
-          {!loading && !hasData && !scanning && (
-            <div className={styles.noData}>
-              No logs found.
-              <Button size="xs" fill="text" onClick={this.onClickScan}>
-                Scan for older logs
-              </Button>
-            </div>
-          )}
-          {scanning && (
-            <div className={styles.noData}>
-              <span>{scanText}</span>
-              <Button size="xs" fill="text" onClick={this.onClickStopScan}>
-                Stop scan
-              </Button>
-            </div>
-          )}
         </Collapse>
       </>
     );

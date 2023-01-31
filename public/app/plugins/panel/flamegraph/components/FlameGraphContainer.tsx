@@ -24,6 +24,7 @@ type Props = {
 
 const FlameGraphContainer = (props: Props) => {
   const [topLevelIndex, setTopLevelIndex] = useState(0);
+  const [selectedBarIndex, setSelectedBarIndex] = useState(0);
   const [rangeMin, setRangeMin] = useState(0);
   const [rangeMax, setRangeMax] = useState(1);
   const [search, setSearch] = useState('');
@@ -56,6 +57,7 @@ const FlameGraphContainer = (props: Props) => {
 
   useEffect(() => {
     setTopLevelIndex(0);
+    setSelectedBarIndex(0);
     setRangeMin(0);
     setRangeMax(1);
   }, [props.data]);
@@ -65,6 +67,7 @@ const FlameGraphContainer = (props: Props) => {
       <FlameGraphHeader
         app={props.app}
         setTopLevelIndex={setTopLevelIndex}
+        setSelectedBarIndex={setSelectedBarIndex}
         setRangeMin={setRangeMin}
         setRangeMax={setRangeMax}
         search={search}
@@ -83,6 +86,7 @@ const FlameGraphContainer = (props: Props) => {
           search={search}
           setSearch={setSearch}
           setTopLevelIndex={setTopLevelIndex}
+          setSelectedBarIndex={setSelectedBarIndex}
           setRangeMin={setRangeMin}
           setRangeMax={setRangeMax}
         />
@@ -95,10 +99,12 @@ const FlameGraphContainer = (props: Props) => {
           flameGraphHeight={props.flameGraphHeight}
           levels={levels}
           topLevelIndex={topLevelIndex}
+          selectedBarIndex={selectedBarIndex}
           rangeMin={rangeMin}
           rangeMax={rangeMax}
           search={search}
           setTopLevelIndex={setTopLevelIndex}
+          setSelectedBarIndex={setSelectedBarIndex}
           setRangeMin={setRangeMin}
           setRangeMax={setRangeMax}
           selectedView={selectedView}

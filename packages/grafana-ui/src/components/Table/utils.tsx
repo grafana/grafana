@@ -16,6 +16,12 @@ import {
   GrafanaTheme2,
   ArrayVector,
 } from '@grafana/data';
+import {
+  BarGaugeDisplayMode,
+  TableAutoCellOptions,
+  TableCellBackgroundDisplayMode,
+  TableCellOptions,
+} from '@grafana/schema';
 
 import { BarGaugeCell } from './BarGaugeCell';
 import { DefaultCell } from './DefaultCell';
@@ -343,4 +349,66 @@ export function createFooterCalculationValues(rows: Row[]): any[number] {
   }
 
   return values;
+}
+
+const defaultCellOptions: TableAutoCellOptions = { type: TableCellDisplayMode.Auto };
+
+export function getCellOptions(field: Field): TableCellOptions {
+  if (field.config.custom?.displayMode) {
+    return migrateTableDisplayModeToCellOptions(field.config.custom?.displayMode);
+  }
+
+  if (!field.config.custom?.cellOptions) {
+    return defaultCellOptions;
+  }
+
+  return (field.config.custom as TableFieldOptions).cellOptions;
+}
+
+/**
+ * Migrates table cell display mode to new object format.
+ *
+ * @param displayMode The display mode of the cell
+ * @returns TableCellOptions object in the correct format
+ * relative to the old display mode.
+ */
+export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDisplayMode): TableCellOptions {
+  switch (displayMode) {
+    // In the case of the gauge we move to a different option
+    case 'basic':
+    case 'gradient-gauge':
+    case 'lcd-gauge':
+      let gaugeMode = BarGaugeDisplayMode.Basic;
+
+      if (displayMode === 'gradient-gauge') {
+        gaugeMode = BarGaugeDisplayMode.Gradient;
+      } else if (displayMode === 'lcd-gauge') {
+        gaugeMode = BarGaugeDisplayMode.Lcd;
+      }
+
+      return {
+        type: TableCellDisplayMode.Gauge,
+        mode: gaugeMode,
+      };
+    // Also true in the case of the color background
+    case 'color-background':
+    case 'color-background-solid':
+      let mode = TableCellBackgroundDisplayMode.Basic;
+
+      // Set the new mode field, somewhat confusingly the
+      // color-background mode is for gradient display
+      if (displayMode === 'color-background') {
+        mode = TableCellBackgroundDisplayMode.Gradient;
+      }
+
+      return {
+        type: TableCellDisplayMode.ColorBackground,
+        mode: mode,
+      };
+    default:
+      return {
+        // @ts-ignore
+        type: displayMode,
+      };
+  }
 }

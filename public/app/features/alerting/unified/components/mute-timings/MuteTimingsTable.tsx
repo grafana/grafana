@@ -80,7 +80,7 @@ export const MuteTimingsTable: FC<Props> = ({ alertManagerSourceName, muteTiming
               variant="primary"
               href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
             >
-              New mute timing
+              Add mute timing
             </LinkButton>
           </Authorize>
         )}

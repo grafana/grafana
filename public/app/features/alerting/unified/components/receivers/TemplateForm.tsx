@@ -105,7 +105,7 @@ export const TemplateForm: FC<Props> = ({ existing, alertManagerSourceName, conf
 
   return (
     <form onSubmit={handleSubmit(submit)}>
-      <h4>{existing ? 'Edit message template' : 'Create message template'}</h4>
+      <h4>{existing ? 'Edit notification template' : 'Create notification template'}</h4>
       {error && (
         <Alert severity="error" title="Error saving template">
           {error.message || (error as any)?.data?.message || String(error)}
