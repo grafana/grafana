@@ -127,6 +127,10 @@ func TestParsePluginTestdata(t *testing.T) {
 		"disallowed-cue-import": {
 			err: ErrDisallowedCUEImport,
 		},
+		"cdn": {
+			rootid:  "grafana-worldmap-panel",
+			subpath: "plugin",
+		},
 	}
 
 	staticRootPath, err := filepath.Abs("../manager/testdata")

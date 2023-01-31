@@ -16,7 +16,7 @@ import { liveTimer } from 'app/features/dashboard/dashgrid/liveTimer';
 import { StreamingDataFrame } from 'app/features/live/data/StreamingDataFrame';
 
 import { getRandomLine } from './LogIpsum';
-import { TestDataQuery, StreamingQuery } from './types';
+import { TestData, StreamingQuery } from './dataquery.gen';
 
 export const defaultStreamQuery: StreamingQuery = {
   type: 'signal',
@@ -26,7 +26,7 @@ export const defaultStreamQuery: StreamingQuery = {
   bands: 1,
 };
 
-export function runStream(target: TestDataQuery, req: DataQueryRequest<TestDataQuery>): Observable<DataQueryResponse> {
+export function runStream(target: TestData, req: DataQueryRequest<TestData>): Observable<DataQueryResponse> {
   const query = defaults(target.stream, defaultStreamQuery);
   if ('signal' === query.type) {
     return runSignalStream(target, query, req);
@@ -41,9 +41,9 @@ export function runStream(target: TestDataQuery, req: DataQueryRequest<TestDataQ
 }
 
 export function runSignalStream(
-  target: TestDataQuery,
+  target: TestData,
   query: StreamingQuery,
-  req: DataQueryRequest<TestDataQuery>
+  req: DataQueryRequest<TestData>
 ): Observable<DataQueryResponse> {
   return new Observable<DataQueryResponse>((subscriber) => {
     const streamId = `signal-${req.panelId}-${target.refId}`;
@@ -128,9 +128,9 @@ export function runSignalStream(
 }
 
 export function runLogsStream(
-  target: TestDataQuery,
+  target: TestData,
   query: StreamingQuery,
-  req: DataQueryRequest<TestDataQuery>
+  req: DataQueryRequest<TestData>
 ): Observable<DataQueryResponse> {
   return new Observable<DataQueryResponse>((subscriber) => {
     const streamId = `logs-${req.panelId}-${target.refId}`;
@@ -173,9 +173,9 @@ export function runLogsStream(
 }
 
 export function runFetchStream(
-  target: TestDataQuery,
+  target: TestData,
   query: StreamingQuery,
-  req: DataQueryRequest<TestDataQuery>
+  req: DataQueryRequest<TestData>
 ): Observable<DataQueryResponse> {
   return new Observable<DataQueryResponse>((subscriber) => {
     const streamId = `fetch-${req.panelId}-${target.refId}`;

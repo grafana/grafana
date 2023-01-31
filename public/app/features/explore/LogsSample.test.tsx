@@ -2,7 +2,15 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React, { ComponentProps } from 'react';
 
-import { ArrayVector, FieldType, LoadingState, MutableDataFrame } from '@grafana/data';
+import {
+  ArrayVector,
+  FieldType,
+  LoadingState,
+  MutableDataFrame,
+  SupplementaryQueryType,
+  DataSourceApi,
+} from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
 
 import { LogsSamplePanel } from './LogsSamplePanel';
 
@@ -20,6 +28,8 @@ const createProps = (propOverrides?: Partial<ComponentProps<typeof LogsSamplePan
     timeZone: 'timeZone',
     datasourceInstance: undefined,
     setLogsSampleEnabled: jest.fn(),
+    queries: [],
+    splitOpen: jest.fn(),
   };
 
   return { ...props, ...propOverrides };
@@ -99,5 +109,33 @@ describe('LogsSamplePanel', () => {
     );
     expect(screen.getByText('Failed to load logs sample for this query')).toBeInTheDocument();
     expect(screen.getByText('Test error message')).toBeInTheDocument();
+  });
+  it('has split open button functionality', async () => {
+    const datasourceInstance = {
+      uid: 'test_uid',
+      getDataProvider: jest.fn(),
+      getSupportedSupplementaryQueryTypes: jest.fn().mockImplementation(() => [SupplementaryQueryType.LogsSample]),
+      getSupplementaryQuery: jest.fn().mockImplementation(() => {
+        return {
+          refId: 'test_refid',
+        } as DataQuery;
+      }),
+    } as unknown as DataSourceApi;
+    const splitOpen = jest.fn();
+    render(
+      <LogsSamplePanel
+        {...createProps({
+          queries: [{ refId: 'test_refid' }],
+          queryResponse: { data: [sampleDataFrame], state: LoadingState.Done },
+          splitOpen,
+          datasourceInstance,
+        })}
+      />
+    );
+    const splitButton = screen.getByText('Open logs in split view');
+    expect(splitButton).toBeInTheDocument();
+
+    await userEvent.click(splitButton);
+    expect(splitOpen).toHaveBeenCalledWith({ datasourceUid: 'test_uid', query: { refId: 'test_refid' } });
   });
 });
