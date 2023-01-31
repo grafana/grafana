@@ -29,6 +29,7 @@ import { ReceiversState } from 'app/types';
 
 import { getNotificationsPermissions } from '../../utils/access-control';
 import { normalizeMatchers } from '../../utils/amroutes';
+import { createContactPointLink, createMuteTimingLink } from '../../utils/misc';
 import { findMatchingAlertGroups } from '../../utils/notification-policies';
 import { HoverCard } from '../HoverCard';
 import { Label } from '../Label';
@@ -50,17 +51,17 @@ type InhertitableProperties = Pick<
 >;
 
 interface PolicyComponentProps {
-  receivers: Receiver[];
+  receivers?: Receiver[];
   matchers?: ObjectMatcher[];
   alertGroups?: AlertmanagerGroup[];
-  contactPointsState: ReceiversState;
+  contactPointsState?: ReceiversState;
   readOnly?: boolean;
   alertManagerSourceName: string;
   inheritedProperties?: InhertitableProperties;
   routesMatchingFilters?: RouteWithID[];
 
-  currentRoute: RouteWithID;
   routeTree: RouteWithID;
+  currentRoute: RouteWithID;
   onEditPolicy: (route: RouteWithID, isDefault?: boolean) => void;
   onAddPolicy: (route: RouteWithID) => void;
   onDeletePolicy: (route: RouteWithID) => void;
@@ -68,7 +69,7 @@ interface PolicyComponentProps {
 }
 
 const Policy: FC<PolicyComponentProps> = ({
-  receivers,
+  receivers = [],
   matchers,
   contactPointsState,
   readOnly = false,
@@ -116,7 +117,7 @@ const Policy: FC<PolicyComponentProps> = ({
 
   // if the receiver / contact point has any errors show it on the policy
   const actualContactPoint = contactPoint ?? inheritedProperties?.receiver ?? '';
-  const contactPointErrors = getContactPointErrors(actualContactPoint, contactPointsState);
+  const contactPointErrors = contactPointsState ? getContactPointErrors(actualContactPoint, contactPointsState) : [];
 
   contactPointErrors.forEach((error) => {
     errors.push(error);
@@ -527,16 +528,6 @@ const ContactPointsHoverDetails = ({ alertManagerSourceName, contactPoint, recei
     </HoverCard>
   );
 };
-
-function createContactPointLink(contactPoint: string, alertManagerSourceName = ''): string {
-  return `/alerting/notifications/receivers/${encodeURIComponent(contactPoint)}/edit?alertmanager=${encodeURIComponent(
-    alertManagerSourceName
-  )}`;
-}
-
-function createMuteTimingLink(muteTimingName: string, alertManagerSourceName = ''): string {
-  return `/alerting/routes/mute-timing/edit?muteName=${muteTimingName}&alertmanager=${alertManagerSourceName}`;
-}
 
 const wildcardRouteWarning = <Badge icon="exclamation-triangle" text="Matches all labels" color="orange" />;
 

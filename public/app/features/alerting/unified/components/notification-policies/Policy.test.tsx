@@ -12,7 +12,9 @@ import {
   ObjectMatcher,
   RouteWithID,
 } from 'app/plugins/datasource/alertmanager/types';
+import { ReceiversState } from 'app/types/alerting';
 
+import { mockAlertGroup, mockAlertmanagerAlert, mockReceiversState } from '../../mocks';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import { Policy } from './Policy';
@@ -26,13 +28,13 @@ describe('Policy', () => {
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
   });
 
-  it('should render a default policy for Grafana managed rules', async () => {
+  it('should render a policy tree', async () => {
     const onEditPolicy = jest.fn();
     const onAddPolicy = jest.fn();
     const onDeletePolicy = jest.fn();
-    const onShowAlertInstances = jest.fn((alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => {
-      throw new Error('Function not implemented.');
-    });
+    const onShowAlertInstances = jest.fn(
+      (alertGroups: AlertmanagerGroup[], matchers?: ObjectMatcher[] | undefined) => {}
+    );
 
     const routeTree = mockRoutes;
 
@@ -41,7 +43,6 @@ describe('Policy', () => {
         routeTree={routeTree}
         currentRoute={routeTree}
         receivers={[]}
-        contactPointsState={{}}
         alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
         onEditPolicy={onEditPolicy}
         onAddPolicy={onAddPolicy}
@@ -138,7 +139,6 @@ describe('Policy', () => {
         routeTree={routeTree}
         currentRoute={routeTree}
         receivers={[]}
-        contactPointsState={{}}
         alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
         onEditPolicy={noop}
         onAddPolicy={noop}
@@ -148,6 +148,76 @@ describe('Policy', () => {
     );
 
     expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
+  });
+
+  it('should show matching instances', () => {
+    const routeTree: RouteWithID = {
+      id: '0',
+      routes: [{ id: '1', object_matchers: [['foo', eq, 'bar']] }],
+    };
+
+    const matchingGroups: AlertmanagerGroup[] = [
+      mockAlertGroup({
+        labels: {},
+        alerts: [mockAlertmanagerAlert({ labels: { foo: 'bar' } }), mockAlertmanagerAlert({ labels: { foo: 'bar' } })],
+      }),
+      mockAlertGroup({
+        labels: {},
+        alerts: [mockAlertmanagerAlert({ labels: { bar: 'baz' } })],
+      }),
+    ];
+
+    renderPolicy(
+      <Policy
+        readOnly
+        alertGroups={matchingGroups}
+        routeTree={routeTree}
+        currentRoute={routeTree}
+        receivers={[]}
+        alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
+        onEditPolicy={noop}
+        onAddPolicy={noop}
+        onDeletePolicy={noop}
+        onShowAlertInstances={noop}
+      />
+    );
+
+    const defaultPolicy = screen.getByTestId('am-root-route-container');
+    expect(within(defaultPolicy).getByTestId('matching-instances')).toHaveTextContent('1instance');
+    const customPolicy = screen.getByTestId('am-route-container');
+    expect(within(customPolicy).getByTestId('matching-instances')).toHaveTextContent('2instances');
+  });
+
+  it('should show warnings and errors', () => {
+    const routeTree: RouteWithID = {
+      id: '0', // this one should show an error
+      receiver: 'broken-receiver',
+      routes: [{ id: '1', object_matchers: [] }], // this one should show a warning
+    };
+
+    const receiversState: ReceiversState = mockReceiversState();
+
+    renderPolicy(
+      <Policy
+        readOnly
+        routeTree={routeTree}
+        currentRoute={routeTree}
+        receivers={[]}
+        contactPointsState={receiversState}
+        alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
+        onEditPolicy={noop}
+        onAddPolicy={noop}
+        onDeletePolicy={noop}
+        onShowAlertInstances={noop}
+      />
+    );
+
+    const defaultPolicy = screen.getByTestId('am-root-route-container');
+    expect(within(defaultPolicy).queryByText('Matches all labels')).not.toBeInTheDocument();
+    expect(within(defaultPolicy).getByText('1 error')).toBeInTheDocument();
+
+    const customPolicy = screen.getByTestId('am-route-container');
+    expect(within(customPolicy).getByText('Matches all labels'));
   });
 });
 
