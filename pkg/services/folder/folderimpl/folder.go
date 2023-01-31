@@ -15,14 +15,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type Service struct {
@@ -33,7 +32,6 @@ type Service struct {
 	dashboardStore       dashboards.Store
 	dashboardFolderStore dashboards.FolderStore
 	features             featuremgmt.FeatureToggles
-	permissions          accesscontrol.FolderPermissionsService
 	accessControl        accesscontrol.AccessControl
 
 	// bus is currently used to publish events that cause scheduler to update rules.
@@ -48,7 +46,6 @@ func ProvideService(
 	folderStore dashboards.FolderStore,
 	db db.DB, // DB for the (new) nested folder store
 	features featuremgmt.FeatureToggles,
-	folderPermissionsService accesscontrol.FolderPermissionsService,
 ) folder.Service {
 	store := ProvideStore(db, cfg, features)
 	svr := &Service{
@@ -58,7 +55,6 @@ func ProvideService(
 		dashboardFolderStore: folderStore,
 		store:                store,
 		features:             features,
-		permissions:          folderPermissionsService,
 		accessControl:        ac,
 		bus:                  bus,
 	}
@@ -310,29 +306,6 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 	createdFolder, err = s.dashboardFolderStore.GetFolderByID(ctx, cmd.OrgID, dash.ID)
 	if err != nil {
 		return nil, err
-	}
-
-	var permissionErr error
-	if !accesscontrol.IsDisabled(s.cfg) {
-		var permissions []accesscontrol.SetResourcePermissionCommand
-		if user.IsRealUser() && !user.IsAnonymous {
-			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
-				UserID: userID, Permission: dashboards.PERMISSION_ADMIN.String(),
-			})
-		}
-
-		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
-			{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
-		}...)
-
-		_, permissionErr = s.permissions.SetPermissions(ctx, cmd.OrgID, createdFolder.UID, permissions...)
-	} else if s.cfg.EditorsCanAdmin && user.IsRealUser() && !user.IsAnonymous {
-		permissionErr = s.MakeUserAdmin(ctx, cmd.OrgID, userID, createdFolder.ID, true)
-	}
-
-	if permissionErr != nil {
-		logger.Error("Could not make user admin", "folder", createdFolder.Title, "user", userID, "error", permissionErr)
 	}
 
 	var nestedFolder *folder.Folder

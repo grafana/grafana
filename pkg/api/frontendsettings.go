@@ -157,6 +157,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *contextmodel.ReqContext) (map[st
 			"GenericOAuthSkipOrgRoleSync": hs.Cfg.GenericOAuthSkipOrgRoleSync,
 			"AzureADSkipOrgRoleSync":      hs.Cfg.AzureADSkipOrgRoleSync,
 			"DisableSyncLock":             hs.Cfg.DisableSyncLock,
+			"OktaSkipOrgRoleSync":         hs.Cfg.OktaSkipOrgRoleSync,
 		},
 		"buildInfo": map[string]interface{}{
 			"hideVersion":   hideVersion,

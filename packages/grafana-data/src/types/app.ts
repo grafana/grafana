@@ -52,7 +52,6 @@ export interface AppPluginMeta<T extends KeyValue = KeyValue> extends PluginMeta
 export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppPluginMeta<T>> {
   // Content under: /a/${plugin-id}/*
   root?: ComponentType<AppRootProps<T>>;
-  rootNav?: NavModel; // Initial navigation model
 
   /**
    * Called after the module has loaded, and before the app is used.
@@ -66,12 +65,9 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
    *   /a/${plugin-id}/*
    *
    * If the NavModel is configured, the page will have a managed frame, otheriwse it has full control.
-   *
-   * NOTE: this structure will change in 7.2+ so that it is managed with a normal react router
    */
-  setRootPage(root: ComponentType<AppRootProps<T>>, rootNav?: NavModel) {
+  setRootPage(root: ComponentType<AppRootProps<T>>) {
     this.root = root;
-    this.rootNav = rootNav;
     return this;
   }
 

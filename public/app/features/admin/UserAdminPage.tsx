@@ -113,6 +113,7 @@ export class UserAdminPage extends PureComponent<Props> {
     const isGitLabUser = user?.isExternal && user?.authLabels?.includes('GitLab');
     const isAuthProxyUser = user?.isExternal && user?.authLabels?.includes('Auth Proxy');
     const isAzureADUser = user?.isExternal && user?.authLabels?.includes('AzureAD');
+    const isOktaUser = user?.isExternal && user?.authLabels?.includes('Okta');
     const isGrafanaComUser = user?.isExternal && user?.authLabels?.includes('grafana.com');
     const isGenericOAuthUser = user?.isExternal && user?.authLabels?.includes('Generic OAuth');
     const isUserSynced =
@@ -124,6 +125,7 @@ export class UserAdminPage extends PureComponent<Props> {
           isGitLabUser ||
           isGenericOAuthUser ||
           isSAMLUser ||
+          isOktaUser ||
           isLDAPUser ||
           isGithubUser ||
           isAzureADUser ||
@@ -135,6 +137,7 @@ export class UserAdminPage extends PureComponent<Props> {
         (!config.auth.JWTAuthSkipOrgRoleSync && isJWTUser) ||
         // both OAuthSkipOrgRoleUpdateSync and specific provider settings needs to be false for a user to be synced
         (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.GrafanaComSkipOrgRoleSync && isGrafanaComUser) ||
+        (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.OktaSkipOrgRoleSync && isOktaUser) ||
         (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.GithubSkipOrgRoleSync && isGithubUser) ||
         (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.AzureADSkipOrgRoleSync && isAzureADUser) ||
         (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.GitLabSkipOrgRoleSync && isGitLabUser) ||
