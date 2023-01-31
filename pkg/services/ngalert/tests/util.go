@@ -127,7 +127,7 @@ func CreateTestAlertRuleWithLabels(t *testing.T, ctx context.Context, dbstore *s
 			Data: []models.AlertQuery{
 				{
 					Model: json.RawMessage(`{
-										"datasourceUid": "-100",
+										"datasourceUid": "__expr__",
 										"type":"math",
 										"expression":"2 + 2 > 1"
 									}`),

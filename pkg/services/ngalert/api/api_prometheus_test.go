@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -570,7 +571,7 @@ func withClassicConditionSingleQuery() func(r *ngmodels.AlertRule) {
 				RefID:             "B",
 				QueryType:         "",
 				RelativeTimeRange: ngmodels.RelativeTimeRange{From: ngmodels.Duration(0), To: ngmodels.Duration(0)},
-				DatasourceUID:     "-100",
+				DatasourceUID:     expr.DatasourceUID,
 				Model:             json.RawMessage(fmt.Sprintf(classicConditionsModel, "A", "B")),
 			},
 		}
@@ -599,21 +600,21 @@ func withExpressionsMultiQuery() func(r *ngmodels.AlertRule) {
 				RefID:             "C",
 				QueryType:         "",
 				RelativeTimeRange: ngmodels.RelativeTimeRange{From: ngmodels.Duration(0), To: ngmodels.Duration(0)},
-				DatasourceUID:     "-100",
+				DatasourceUID:     expr.DatasourceUID,
 				Model:             json.RawMessage(fmt.Sprintf(reduceLastExpressionModel, "A", "C")),
 			},
 			{
 				RefID:             "D",
 				QueryType:         "",
 				RelativeTimeRange: ngmodels.RelativeTimeRange{From: ngmodels.Duration(0), To: ngmodels.Duration(0)},
-				DatasourceUID:     "-100",
+				DatasourceUID:     expr.DatasourceUID,
 				Model:             json.RawMessage(fmt.Sprintf(reduceLastExpressionModel, "B", "D")),
 			},
 			{
 				RefID:             "E",
 				QueryType:         "",
 				RelativeTimeRange: ngmodels.RelativeTimeRange{From: ngmodels.Duration(0), To: ngmodels.Duration(0)},
-				DatasourceUID:     "-100",
+				DatasourceUID:     expr.DatasourceUID,
 				Model:             json.RawMessage(fmt.Sprintf(mathExpressionModel, "A", "B", "E")),
 			},
 		}
