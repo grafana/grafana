@@ -363,6 +363,10 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.NotNil(t, rt)
 		tr := configuredTransport
 
+		// make sure we can still marshal the JsonData after httpClientOptions (avoid cycles)
+		_, err = ds.JsonData.MarshalJSON()
+		require.NoError(t, err)
+
 		require.False(t, tr.TLSClientConfig.InsecureSkipVerify)
 		require.Len(t, tr.TLSClientConfig.RootCAs.Subjects(), 1)
 		require.Equal(t, "server-name", tr.TLSClientConfig.ServerName)
