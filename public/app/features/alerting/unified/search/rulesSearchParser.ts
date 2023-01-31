@@ -50,7 +50,7 @@ export function getSearchFilterFromQuery(query: string): RulesFilter {
     [terms.GroupToken]: (value) => (filter.groupName = value),
     [terms.RuleToken]: (value) => (filter.ruleName = value),
     [terms.LabelToken]: (value) => filter.labels.push(value),
-    [terms.StateToken]: (value) => (isPromAlertingRuleState(value) ? (filter.ruleState = value) : undefined),
+    [terms.StateToken]: (value) => (filter.ruleState = parseStateToken(value)),
     [terms.TypeToken]: (value) => (isPromRuleType(value) ? (filter.ruleType = value) : undefined),
     [terms.HealthToken]: (value) => (filter.ruleHealth = getRuleHealth(value)),
     [terms.FreeFormExpression]: (value) => filter.freeFormWords.push(value),
@@ -97,4 +97,16 @@ export function applySearchFilterToQuery(query: string, filter: RulesFilter): st
   }
 
   return applyFiltersToQuery(query, filterSupportedTerms, filterStateArray);
+}
+
+function parseStateToken(value: string): PromAlertingRuleState | undefined {
+  if (value === 'normal') {
+    return PromAlertingRuleState.Inactive;
+  }
+
+  if (isPromAlertingRuleState(value)) {
+    return value;
+  }
+
+  return;
 }
