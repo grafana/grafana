@@ -6,13 +6,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 
+	"github.com/grafana/dskit/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 type MultiOrgAlertmanager struct {
 	Registerer prometheus.Registerer
-	registries *UserRegistries
+	registries *metrics.TenantRegistries
 
 	ActiveConfigurations     prometheus.Gauge
 	DiscoveredConfigurations prometheus.Gauge
@@ -21,7 +22,7 @@ type MultiOrgAlertmanager struct {
 }
 
 func NewMultiOrgAlertmanagerMetrics(r prometheus.Registerer) *MultiOrgAlertmanager {
-	registries := NewUserRegistries(log.New("ngalert.multiorg.alertmanager.metrics")) //TODO: Should this be here? Probably not.
+	registries := metrics.NewTenantRegistries(log.New("ngalert.multiorg.alertmanager.metrics")) //TODO: Should this be here? Probably not.
 	moa := &MultiOrgAlertmanager{
 		Registerer: r,
 		registries: registries,
@@ -49,19 +50,19 @@ func NewMultiOrgAlertmanagerMetrics(r prometheus.Registerer) *MultiOrgAlertmanag
 
 // RemoveOrgRegistry removes the *prometheus.Registry for the specified org. It is safe to call concurrently.
 func (moa *MultiOrgAlertmanager) RemoveOrgRegistry(id int64) {
-	moa.registries.RemoveUserRegistry(strconv.FormatInt(id, 10), false)
+	moa.registries.RemoveTenantRegistry(strconv.FormatInt(id, 10), false)
 }
 
 // GetOrCreateOrgRegistry gets or creates a *prometheus.Registry for the specified org. It is safe to call concurrently.
 func (moa *MultiOrgAlertmanager) GetOrCreateOrgRegistry(id int64) prometheus.Registerer {
 	sid := strconv.FormatInt(id, 10)
-	reg := moa.registries.GetRegistryForUser(sid)
+	reg := moa.registries.GetRegistryForTenant(sid)
 	if reg != nil {
 		return reg
 	}
 
 	result := prometheus.NewRegistry()
-	moa.registries.AddUserRegistry(sid, result)
+	moa.registries.AddTenantRegistry(sid, result)
 
 	return result
 }
@@ -69,7 +70,7 @@ func (moa *MultiOrgAlertmanager) GetOrCreateOrgRegistry(id int64) prometheus.Reg
 // AlertmanagerAggregatedMetrics are metrics collected directly from the registry.
 // Unlike metrics.Alertmanager they are not called within this codebase hence the need for direct collection.
 type AlertmanagerAggregatedMetrics struct {
-	registries *UserRegistries
+	registries *metrics.TenantRegistries
 
 	// exported metrics, gathered from Alertmanager Silences
 	silencesGCDuration              *prometheus.Desc
@@ -82,7 +83,7 @@ type AlertmanagerAggregatedMetrics struct {
 	silencesPropagatedMessagesTotal *prometheus.Desc
 }
 
-func NewAlertmanagerAggregatedMetrics(registries *UserRegistries) *AlertmanagerAggregatedMetrics {
+func NewAlertmanagerAggregatedMetrics(registries *metrics.TenantRegistries) *AlertmanagerAggregatedMetrics {
 	aggregatedMetrics := &AlertmanagerAggregatedMetrics{
 		registries: registries,
 
@@ -135,7 +136,7 @@ func (a *AlertmanagerAggregatedMetrics) Describe(out chan<- *prometheus.Desc) {
 }
 
 func (a *AlertmanagerAggregatedMetrics) Collect(out chan<- prometheus.Metric) {
-	data := a.registries.BuildMetricFamiliesPerUser()
+	data := a.registries.BuildMetricFamiliesPerTenant()
 
 	data.SendSumOfSummaries(out, a.silencesGCDuration, "alertmanager_silences_gc_duration_seconds")
 	data.SendSumOfSummaries(out, a.silencesSnapshotDuration, "alertmanager_silences_snapshot_duration_seconds")
@@ -144,5 +145,5 @@ func (a *AlertmanagerAggregatedMetrics) Collect(out chan<- prometheus.Metric) {
 	data.SendSumOfCounters(out, a.silencesQueryErrorsTotal, "alertmanager_silences_query_errors_total")
 	data.SendSumOfHistograms(out, a.silencesQueryDuration, "alertmanager_silences_query_duration_seconds")
 	data.SendSumOfCounters(out, a.silencesPropagatedMessagesTotal, "alertmanager_silences_gossip_messages_propagated_total")
-	data.SendSumOfGaugesPerUserWithLabels(out, a.silences, "alertmanager_silences", "state")
+	data.SendSumOfGaugesPerTenantWithLabels(out, a.silences, "alertmanager_silences", "state")
 }
