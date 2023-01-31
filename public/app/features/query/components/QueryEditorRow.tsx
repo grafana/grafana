@@ -571,7 +571,7 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
   if (state !== LoadingState.Loading) {
     if (error) {
       state = LoadingState.Error;
-    } else if (!error && data.state === LoadingState.Error) {
+    } else if (data.state === LoadingState.Error) {
       state = LoadingState.Done;
     }
   }
