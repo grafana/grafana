@@ -1449,7 +1449,7 @@
         0,
         0
       ],
-      "description": "A Grafana service account.",
+      "description": "system account",
       "grafanaMaturityCount": 9,
       "lineageIsGroup": false,
       "links": {
