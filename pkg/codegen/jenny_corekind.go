@@ -50,14 +50,14 @@ func (gen *coreKindJenny) JennyName() string {
 	return "CoreKindJenny"
 }
 
-func (gen *coreKindJenny) Generate(def kindsys.Kind) (*codejen.File, error) {
-	if _, is := def.(kindsys.Core); !is {
+func (gen *coreKindJenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
+	if _, is := kind.(kindsys.Core); !is {
 		return nil, nil
 	}
 
-	path := filepath.Join(gen.gokindsdir, gen.cfg.GenDirName(def), def.Props().Common().MachineName+"_kind_gen.go")
+	path := filepath.Join(gen.gokindsdir, gen.cfg.GenDirName(kind), kind.Props().Common().MachineName+"_kind_gen.go")
 	buf := new(bytes.Buffer)
-	if err := tmpls.Lookup("kind_core.tmpl").Execute(buf, def); err != nil {
+	if err := tmpls.Lookup("kind_core.tmpl").Execute(buf, kind); err != nil {
 		return nil, fmt.Errorf("failed executing kind_core template for %s: %w", path, err)
 	}
 	b, err := postprocessGoFile(genGoFile{

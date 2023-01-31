@@ -32,17 +32,17 @@ func (j *latestj) JennyName() string {
 	return "LatestJenny"
 }
 
-func (j *latestj) Generate(def kindsys.Kind) (*codejen.File, error) {
-	comm := def.Props().Common()
+func (j *latestj) Generate(kind kindsys.Kind) (*codejen.File, error) {
+	comm := kind.Props().Common()
 	sfg := SchemaForGen{
 		Name:    comm.Name,
-		Schema:  def.Lineage().Latest(),
+		Schema:  kind.Lineage().Latest(),
 		IsGroup: comm.LineageIsGroup,
 	}
 
 	f, err := j.inner.Generate(sfg)
 	if err != nil {
-		return nil, fmt.Errorf("%s jenny failed on %s schema for %s: %w", j.inner.JennyName(), sfg.Schema.Version(), def.Props().Common().Name, err)
+		return nil, fmt.Errorf("%s jenny failed on %s schema for %s: %w", j.inner.JennyName(), sfg.Schema.Version(), kind.Props().Common().Name, err)
 	}
 	if f == nil || !f.Exists() {
 		return nil, nil

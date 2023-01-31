@@ -35,13 +35,13 @@ func (j docsJenny) JennyName() string {
 	return "DocsJenny"
 }
 
-func (j docsJenny) Generate(def kindsys.Kind) (*codejen.File, error) {
+func (j docsJenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
 	// TODO remove this once codejen catches nils https://github.com/grafana/codejen/issues/5
-	if def == nil {
+	if kind == nil {
 		return nil, nil
 	}
 
-	f, err := jsonschema.GenerateSchema(def.Lineage().Latest())
+	f, err := jsonschema.GenerateSchema(kind.Lineage().Latest())
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate json representation for the schema: %v", err)
 	}
@@ -67,10 +67,10 @@ func (j docsJenny) Generate(def kindsys.Kind) (*codejen.File, error) {
 	// fixes the references between the types within a json after making components.schema.<types> the root of the json
 	kindJsonStr := strings.Replace(string(obj.Components.Schemas), "#/components/schemas/", "#/", -1)
 
-	kindProps := def.Props().Common()
+	kindProps := kind.Props().Common()
 	data := templateData{
 		KindName:     kindProps.Name,
-		KindVersion:  def.Lineage().Latest().Version().String(),
+		KindVersion:  kind.Lineage().Latest().Version().String(),
 		KindMaturity: string(kindProps.Maturity),
 		Markdown:     "{{ .Markdown 1 }}",
 	}

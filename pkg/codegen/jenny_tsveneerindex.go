@@ -39,9 +39,9 @@ func (gen *genTSVeneerIndex) JennyName() string {
 	return "TSVeneerIndexJenny"
 }
 
-func (gen *genTSVeneerIndex) Generate(decls ...kindsys.Kind) (*codejen.File, error) {
+func (gen *genTSVeneerIndex) Generate(kinds ...kindsys.Kind) (*codejen.File, error) {
 	tsf := new(ast.File)
-	for _, def := range decls {
+	for _, def := range kinds {
 		sch := def.Lineage().Latest()
 		f, err := typescript.GenerateTypes(sch, &typescript.TypeConfig{
 			RootName: def.Props().Common().Name,

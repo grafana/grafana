@@ -32,12 +32,12 @@ func (gen *genBaseRegistry) JennyName() string {
 	return "BaseCoreRegistryJenny"
 }
 
-func (gen *genBaseRegistry) Generate(defs ...kindsys.Kind) (*codejen.File, error) {
+func (gen *genBaseRegistry) Generate(kinds ...kindsys.Kind) (*codejen.File, error) {
 	buf := new(bytes.Buffer)
 	if err := tmpls.Lookup("kind_registry.tmpl").Execute(buf, tvars_kind_registry{
 		PackageName:       filepath.Base(gen.path),
 		KindPackagePrefix: filepath.ToSlash(filepath.Join("github.com/grafana/grafana", gen.kindrelroot)),
-		Kinds:             defs,
+		Kinds:             kinds,
 	}); err != nil {
 		return nil, fmt.Errorf("failed executing kind registry template: %w", err)
 	}
