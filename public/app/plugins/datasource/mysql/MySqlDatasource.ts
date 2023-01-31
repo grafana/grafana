@@ -4,7 +4,7 @@ import { SqlDatasource } from 'app/features/plugins/sql/datasource/SqlDatasource
 import { DB, SQLQuery } from 'app/features/plugins/sql/types';
 import { formatSQL } from 'app/features/plugins/sql/utils/formatSQL';
 
-import MySQLQueryModel from './MySqlQueryModel';
+import { quoteLiteral } from './MySqlQueryModel';
 import { mapFieldsToTypes } from './fields';
 import { buildColumnQuery, buildTableQuery, showDatabases } from './mySqlMetaQuery';
 import { getSqlCompletionProvider } from './sqlCompletionProvider';
@@ -19,7 +19,7 @@ export class MySqlDatasource extends SqlDatasource {
   }
 
   getQueryModel() {
-    return { quoteLiteral: MySQLQueryModel.quoteLiteral };
+    return { quoteLiteral };
   }
 
   getSqlLanguageDefinition(): LanguageDefinition {

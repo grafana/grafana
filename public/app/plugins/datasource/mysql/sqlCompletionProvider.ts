@@ -21,26 +21,32 @@ export const getSqlCompletionProvider: (args: CompletionProviderGetterArgs) => L
   ({ getMeta }) =>
   (monaco, language) => ({
     ...(language && getStandardSQLCompletionProvider(monaco, language)),
-    customStatementPlacement,
+    customStatementPlacement: customStatementPlacementProvider,
     customSuggestionKinds: customSuggestionKinds(getMeta),
   });
 
-export enum CustomStatementPlacement {
-  AfterDatabase = 'afterDatabase',
-}
+const customStatementPlacement = {
+  afterDatabase: 'afterDatabase',
+};
 
-export enum CustomSuggestionKind {
-  TablesWithinDatabase = 'tablesWithinDatabase',
-}
+const customSuggestionKind = {
+  tablesWithinDatabase: 'tablesWithinDatabase',
+};
 
-export const customStatementPlacement: StatementPlacementProvider = () => [
+const FROMKEYWORD = 'FROM';
+
+export const customStatementPlacementProvider: StatementPlacementProvider = () => [
   {
-    id: CustomStatementPlacement.AfterDatabase,
-    //TODO: Figure out to only match this once
-    resolve: (currentToken, _, previousNonWhiteSpace) => {
+    id: customStatementPlacement.afterDatabase,
+    resolve: (currentToken, previousKeyword, previousNonWhiteSpace) => {
       return Boolean(
         currentToken?.is(TokenType.Delimiter, '.') &&
-          (previousNonWhiteSpace?.is(TokenType.IdentifierQuote) || previousNonWhiteSpace?.isIdentifier())
+          previousKeyword?.value === FROMKEYWORD &&
+          (previousNonWhiteSpace?.is(TokenType.IdentifierQuote) || previousNonWhiteSpace?.isIdentifier()) &&
+          // don't match after table name
+          currentToken
+            ?.getPreviousUntil(TokenType.Keyword, [TokenType.IdentifierQuote], FROMKEYWORD)
+            ?.filter((t) => t.isIdentifier()).length === 1
       );
     },
   },
@@ -78,8 +84,8 @@ export const customSuggestionKinds: (getMeta: CompletionProviderGetterArgs['getM
         },
       },
       {
-        id: CustomSuggestionKind.TablesWithinDatabase,
-        applyTo: [CustomStatementPlacement.AfterDatabase],
+        id: customSuggestionKind.tablesWithinDatabase,
+        applyTo: [customStatementPlacement.afterDatabase],
         suggestionsResolver: async (ctx) => {
           const databaseName = getDatabaseName(ctx.currentToken);
 
@@ -129,7 +135,7 @@ function getTableName(token: LinkedToken | null | undefined) {
 
 const getFromKeywordToken = (currentToken: LinkedToken | null) => {
   const selectToken = currentToken?.getPreviousOfType(TokenType.Keyword, 'SELECT') ?? null;
-  return selectToken?.getNextOfType(TokenType.Keyword, 'FROM');
+  return selectToken?.getNextOfType(TokenType.Keyword, FROMKEYWORD);
 };
 
 const getDatabaseToken = (currentToken: LinkedToken | null) => {

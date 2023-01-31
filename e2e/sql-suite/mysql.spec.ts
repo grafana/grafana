@@ -52,5 +52,8 @@ describe('MySQL datasource', () => {
     e2e().get('.suggest-widget').contains(tableNameWithSpecialCharacter).should('be.visible');
     e2e().get('textarea').type('S{downArrow}{enter}');
     e2e().get('textarea').should('have.value', `SELECT  FROM grafana.${normalTableName}`);
+
+    e2e().get('textarea').type('.');
+    e2e().get('.suggest-widget').contains('No suggestions.').should('be.visible');
   });
 });

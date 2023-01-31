@@ -1,4 +1,4 @@
-import MySQLQueryModel from './MySqlQueryModel';
+import { quoteLiteral, unquoteIdentifier } from './MySqlQueryModel';
 
 export function buildTableQuery(dataset?: string) {
   const database = dataset !== undefined ? quoteIdentAsLiteral(dataset) : 'database()';
@@ -36,5 +36,5 @@ export function buildTableConstraint(table: string, dbName?: string) {
 }
 
 export function quoteIdentAsLiteral(value: string) {
-  return MySQLQueryModel.quoteLiteral(MySQLQueryModel.unquoteIdentifier(value));
+  return quoteLiteral(unquoteIdentifier(value));
 }
