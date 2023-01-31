@@ -48,7 +48,7 @@ func (h *RemoteLokiBackend) TestConnection(ctx context.Context) error {
 
 func (h *RemoteLokiBackend) RecordStatesAsync(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
 	logger := h.log.FromContext(ctx)
-	streams := h.statesToStreams(rule, states, logger)
+	streams := statesToStreams(rule, states, h.externalLabels, logger)
 	errCh := make(chan error, 1)
 	go func() {
 		defer close(errCh)
@@ -64,14 +64,14 @@ func (h *RemoteLokiBackend) QueryStates(ctx context.Context, query models.Histor
 	return data.NewFrame("states"), nil
 }
 
-func (h *RemoteLokiBackend) statesToStreams(rule history_model.RuleMeta, states []state.StateTransition, logger log.Logger) []stream {
+func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger) []stream {
 	buckets := make(map[string][]row) // label repr -> entries
 	for _, state := range states {
 		if !shouldRecord(state) {
 			continue
 		}
 
-		labels := mergeLabels(removePrivateLabels(state.State.Labels), h.externalLabels)
+		labels := mergeLabels(removePrivateLabels(state.State.Labels), externalLabels)
 		labels[OrgIDLabel] = fmt.Sprint(rule.OrgID)
 		labels[RuleUIDLabel] = fmt.Sprint(rule.UID)
 		labels[GroupLabel] = fmt.Sprint(rule.Group)
