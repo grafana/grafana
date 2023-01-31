@@ -85,7 +85,7 @@ func ProvideService(cfg *setting.Cfg, cacheService *localcache.CacheService, mig
 }
 
 func ProvideServiceForTests(migrations registry.DatabaseMigrator) (*SQLStore, error) {
-	return initTestDB(migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true}, InitTestDBOpt{FeatureFlags: featuresEnabledDuringTests})
+	return initTestDB(migrations, InitTestDBOpt{EnsureDefaultOrgAndUser: true})
 }
 
 func newSQLStore(cfg *setting.Cfg, cacheService *localcache.CacheService, engine *xorm.Engine,
@@ -504,7 +504,6 @@ var featuresEnabledDuringTests = []string{
 // InitTestDBWithMigration initializes the test DB given custom migrations.
 func InitTestDBWithMigration(t ITestDB, migration registry.DatabaseMigrator, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
-	opts = append(opts, InitTestDBOpt{FeatureFlags: featuresEnabledDuringTests})
 	store, err := initTestDB(migration, opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
@@ -515,19 +514,6 @@ func InitTestDBWithMigration(t ITestDB, migration registry.DatabaseMigrator, opt
 // InitTestDB initializes the test DB.
 func InitTestDB(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
 	t.Helper()
-	opts = append(opts, InitTestDBOpt{FeatureFlags: featuresEnabledDuringTests})
-	store, err := initTestDB(&migrations.OSSMigrations{}, opts...)
-	if err != nil {
-		t.Fatalf("failed to initialize sql store: %s", err)
-	}
-	return store
-}
-
-// InitTestDBWithoutEntityFeatureEnabled initializes the test DB.
-// Temporary for running integration tests successfully againse MySQL 5.6
-func InitTestDBWithoutEntityFeatureEnabled(t ITestDB, opts ...InitTestDBOpt) *SQLStore {
-	t.Helper()
-	opts = append(opts, InitTestDBOpt{FeatureFlags: featuresEnabledDuringTests[:len(featuresEnabledDuringTests)-1]})
 	store, err := initTestDB(&migrations.OSSMigrations{}, opts...)
 	if err != nil {
 		t.Fatalf("failed to initialize sql store: %s", err)
@@ -536,7 +522,6 @@ func InitTestDBWithoutEntityFeatureEnabled(t ITestDB, opts ...InitTestDBOpt) *SQ
 }
 
 func InitTestDBWithCfg(t ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.Cfg) {
-	opts = append(opts, InitTestDBOpt{FeatureFlags: featuresEnabledDuringTests})
 	store := InitTestDB(t, opts...)
 	return store, store.Cfg
 }
@@ -549,7 +534,8 @@ func initTestDB(migration registry.DatabaseMigrator, opts ...InitTestDBOpt) (*SQ
 		opts = []InitTestDBOpt{{EnsureDefaultOrgAndUser: false, FeatureFlags: []string{}}}
 	}
 
-	features := make([]string, 0)
+	features := make([]string, len(featuresEnabledDuringTests))
+	copy(features, featuresEnabledDuringTests)
 	for _, opt := range opts {
 		if len(opt.FeatureFlags) > 0 {
 			features = append(features, opt.FeatureFlags...)
