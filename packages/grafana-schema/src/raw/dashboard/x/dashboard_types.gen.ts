@@ -353,21 +353,25 @@ export interface ValueMappingResult {
 
 /**
  * TODO docs
- * FIXME this is extremely underspecfied; wasn't obvious which typescript types corresponded to it
  */
-export interface Transformation {
+export interface TransformationConfig {
   /**
-   * only apply to some frames
+   * Disabled transformations are skipped
+   */
+  disabled?: boolean;
+  /**
+   * Optional frame matcher.  When missing it will be applied to all results
    */
   filter?: MatcherConfig;
-  hide: boolean;
+  /**
+   * Unique identifier of transformer
+   */
   id: string;
-  options: Record<string, unknown>;
+  /**
+   * Options to be passed to the transformer
+   */
+  options: unknown;
 }
-
-export const defaultTransformation: Partial<Transformation> = {
-  hide: false,
-};
 
 /**
  * 0 for no shared crosshair or tooltip (default).
@@ -479,7 +483,7 @@ export interface Panel {
    * Panel title.
    */
   title?: string;
-  transformations: Array<Transformation>;
+  transformations: Array<TransformationConfig>;
   /**
    * Whether to display the panel without a background.
    */

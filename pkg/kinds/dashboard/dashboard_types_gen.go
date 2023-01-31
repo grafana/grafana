@@ -545,8 +545,8 @@ type Panel struct {
 	TimeShift *string `json:"timeShift,omitempty"`
 
 	// Panel title.
-	Title           *string          `json:"title,omitempty"`
-	Transformations []Transformation `json:"transformations"`
+	Title           *string                `json:"title,omitempty"`
+	Transformations []TransformationConfig `json:"transformations"`
 
 	// Whether to display the panel without a background.
 	Transparent bool `json:"transparent"`
@@ -708,12 +708,16 @@ type ThresholdsConfig struct {
 type ThresholdsMode string
 
 // TODO docs
-// FIXME this is extremely underspecfied; wasn't obvious which typescript types corresponded to it
-type Transformation struct {
-	Filter  *MatcherConfig         `json:"filter,omitempty"`
-	Hide    bool                   `json:"hide"`
-	Id      string                 `json:"id"`
-	Options map[string]interface{} `json:"options"`
+type TransformationConfig struct {
+	// Disabled transformations are skipped
+	Disabled *bool          `json:"disabled,omitempty"`
+	Filter   *MatcherConfig `json:"filter,omitempty"`
+
+	// Unique identifier of transformer
+	Id string `json:"id"`
+
+	// Options to be passed to the transformer
+	Options interface{} `json:"options"`
 }
 
 // TODO docs

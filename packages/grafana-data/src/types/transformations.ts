@@ -1,6 +1,6 @@
 import { MonoTypeOperatorFunction } from 'rxjs';
 
-import { MatcherConfig } from '@grafana/schema';
+import { MatcherConfig, TransformationConfig } from '@grafana/schema';
 
 import { RegistryItemWithOptions } from '../utils/Registry';
 
@@ -41,27 +41,9 @@ export interface SynchronousDataTransformerInfo<TOptions = any> extends DataTran
 }
 
 /**
- * @public
+ * @deprecated use TransformationConfig from schema
  */
-export interface DataTransformerConfig<TOptions = any> {
-  /**
-   * Unique identifier of transformer
-   */
-  id: string;
-
-  /**
-   * Disabled transformations are skipped
-   */
-  disabled?: boolean;
-
-  /** Optional frame matcher.  When missing it will be applied to all results  */
-  filter?: MatcherConfig;
-
-  /**
-   * Options to be passed to the transformer
-   */
-  options: TOptions;
-}
+export interface DataTransformerConfig<TOptions = any> extends TransformationConfig<TOptions> {}
 
 export type FrameMatcher = (frame: DataFrame) => boolean;
 export type FieldMatcher = (field: Field, frame: DataFrame, allFrames: DataFrame[]) => boolean;

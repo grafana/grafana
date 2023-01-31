@@ -283,13 +283,17 @@ lineage: seqs: [
 				} @cuetsy(kind="interface")
 
 				// TODO docs
-				// FIXME this is extremely underspecfied; wasn't obvious which typescript types corresponded to it
-				#Transformation: {
-					id:   string
-					hide: bool | *false
-					// only apply to some frames
+				#TransformationConfig: {
+					@grafana(TSVeneer="type")
+
+					// Unique identifier of transformer
+					id: string
+					// Disabled transformations are skipped
+					disabled?: bool
+					// Optional frame matcher.  When missing it will be applied to all results
 					filter?: #MatcherConfig
-					options: {...}
+					// Options to be passed to the transformer
+					options: _
 				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
 				// 0 for no shared crosshair or tooltip (default).
@@ -386,7 +390,7 @@ lineage: seqs: [
 					// TODO docs
 					timeRegions?: [...] @grafanamaturity(NeedsExpertReview)
 
-					transformations: [...#Transformation] @grafanamaturity(NeedsExpertReview)
+					transformations: [...#TransformationConfig] @grafanamaturity(NeedsExpertReview)
 
 					// TODO docs
 					// TODO tighter constraint
