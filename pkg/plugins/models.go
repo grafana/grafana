@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/services/datasources/querycaching"
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
@@ -209,7 +208,7 @@ type PluginMetaDTO struct {
 	Module  string `json:"module"`
 	BaseURL string `json:"baseUrl"`
 
-	EnterpriseCachingConfig querycaching.CacheConfig `json:"cachingConfig,omitempty"`
+	CachingConfig EnterpriseCachingConfig `json:"cachingConfig,omitempty"`
 }
 
 type DataSourceDTO struct {
@@ -290,4 +289,10 @@ type Role struct {
 type Permission struct {
 	Action string `json:"action"`
 	Scope  string `json:"scope"`
+}
+
+type EnterpriseCachingConfig struct {
+	Enabled       bool  `json:"enabled"`
+	TTLMS         int64 `json:"TTLMs"`
+	UseDefaultTTL bool  `json:"useDefaultTTL"`
 }

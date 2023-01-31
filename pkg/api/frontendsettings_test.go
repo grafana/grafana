@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/plugins"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
-	"github.com/grafana/grafana/pkg/services/datasources/querycaching"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsettings/service"
@@ -65,8 +64,7 @@ func setupTestEnvironment(t *testing.T, cfg *setting.Cfg, features *featuremgmt.
 			PluginsCDNURLTemplate: cfg.PluginsCDNURLTemplate,
 			PluginSettings:        cfg.PluginSettings,
 		}),
-		SocialService:             social.ProvideService(cfg, features),
-		DataSourceCacheCfgService: &querycaching.OSSDatasourceCacheConfigImpl{},
+		SocialService: social.ProvideService(cfg, features),
 	}
 
 	m := web.New()

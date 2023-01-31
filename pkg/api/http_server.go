@@ -51,7 +51,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasourceproxy"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
-	"github.com/grafana/grafana/pkg/services/datasources/querycaching"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	"github.com/grafana/grafana/pkg/services/export"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -170,7 +169,6 @@ type HTTPServer struct {
 	secretsMigrator              secrets.Migrator
 	secretsPluginMigrator        spm.SecretMigrationProvider
 	DataSourcesService           datasources.DataSourceService
-	DataSourceCacheCfgService    querycaching.DatasourceCacheConfig
 	cleanUpService               *cleanup.CleanUpService
 	tracer                       tracing.Tracer
 	grafanaUpdateChecker         *updatechecker.GrafanaService
@@ -261,7 +259,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	accesscontrolService accesscontrol.Service, dashboardThumbsService thumbs.DashboardThumbService, navTreeService navtree.Service,
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService,
 	queryLibraryHTTPService querylibrary.HTTPService, queryLibraryService querylibrary.Service, oauthTokenService oauthtoken.OAuthTokenService,
-	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service, dataSourceCacheCfgService querycaching.DatasourceCacheConfig,
+	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service,
 	k8saccess k8saccess.K8SAccess, // required so that the router is registered
 	starApi *starApi.API,
 ) (*HTTPServer, error) {
@@ -326,7 +324,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		secretsStore:                 secretsStore,
 		httpEntityStore:              httpEntityStore,
 		DataSourcesService:           dataSourcesService,
-		DataSourceCacheCfgService:    dataSourceCacheCfgService,
 		searchUsersService:           searchUsersService,
 		ldapGroups:                   ldapGroups,
 		teamGuardian:                 teamGuardian,

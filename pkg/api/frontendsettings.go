@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/datasources/querycaching"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
@@ -262,13 +261,6 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, enabledPlugin
 		}
 	}
 
-	// load enterprise caching config for all datasources
-	cacheCfgs, err := hs.DataSourceCacheCfgService.GetAllDatasourceConfig(c.Req.Context())
-	if err != nil {
-		// non-fatal - log and continue
-		c.Logger.Error("failed to get datasource caching config", "error", err.Error())
-		cacheCfgs = querycaching.CacheConfigMap{}
-	}
 	dataSources := make(map[string]plugins.DataSourceDTO)
 
 	for _, ds := range orgDataSources {
@@ -357,10 +349,6 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, enabledPlugin
 			ds.JsonData.Set("directUrl", ds.Url)
 		}
 
-		if cfg, ok := cacheCfgs[dsDTO.UID]; ok {
-			dsDTO.PluginMeta.EnterpriseCachingConfig = cfg
-		}
-
 		dataSources[ds.Name] = dsDTO
 	}
 
@@ -382,10 +370,6 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, enabledPlugin
 			if ds.Name == grafanads.DatasourceName {
 				dto.ID = grafanads.DatasourceID
 				dto.UID = grafanads.DatasourceUID
-			}
-
-			if cfg, ok := cacheCfgs[dto.UID]; ok {
-				dto.PluginMeta.EnterpriseCachingConfig = cfg
 			}
 
 			dataSources[ds.Name] = dto
