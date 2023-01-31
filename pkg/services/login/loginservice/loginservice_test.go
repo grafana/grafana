@@ -123,7 +123,7 @@ func TestUpsertUser_crashOnLog_issue62538(t *testing.T) {
 	authInfoMock := &logintest.AuthInfoServiceFake{}
 	authInfoMock.ExpectedError = user.ErrUserNotFound
 	loginsvc := Implementation{
-		QuotaService:    quotatest.New(false, nil),
+		QuotaService:    &quotaimpl.Service{},
 		AuthInfoService: authInfoMock,
 	}
 
