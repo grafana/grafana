@@ -354,7 +354,7 @@ export interface ValueMappingResult {
 /**
  * TODO docs
  */
-export interface TransformationConfig {
+export interface DataTransformerConfig {
   /**
    * Disabled transformations are skipped
    */
@@ -369,6 +369,7 @@ export interface TransformationConfig {
   id: string;
   /**
    * Options to be passed to the transformer
+   * Valid options depend on the transformer id
    */
   options: unknown;
 }
@@ -483,7 +484,7 @@ export interface Panel {
    * Panel title.
    */
   title?: string;
-  transformations: Array<TransformationConfig>;
+  transformations: Array<DataTransformerConfig>;
   /**
    * Whether to display the panel without a background.
    */

@@ -61,7 +61,7 @@ export type {
   Dashboard,
   VariableModel,
   DataSourceRef,
-  TransformationConfig,
+  DataTransformerConfig,
   Panel,
   FieldConfigSource,
   MatcherConfig,

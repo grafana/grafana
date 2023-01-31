@@ -1,6 +1,6 @@
 import { MonoTypeOperatorFunction } from 'rxjs';
 
-import { MatcherConfig, TransformationConfig } from '@grafana/schema';
+import { MatcherConfig, DataTransformerConfig } from '@grafana/schema';
 
 import { RegistryItemWithOptions } from '../utils/Registry';
 
@@ -43,7 +43,7 @@ export interface SynchronousDataTransformerInfo<TOptions = any> extends DataTran
 /**
  * @deprecated use TransformationConfig from schema
  */
-export interface DataTransformerConfig<TOptions = any> extends TransformationConfig<TOptions> {}
+export type { DataTransformerConfig };
 
 export type FrameMatcher = (frame: DataFrame) => boolean;
 export type FieldMatcher = (field: Field, frame: DataFrame, allFrames: DataFrame[]) => boolean;

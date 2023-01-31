@@ -47,7 +47,7 @@ export interface MatcherConfig<TConfig = any> extends raw.MatcherConfig {
   options?: TConfig;
 }
 
-export interface TransformationConfig<TOptions = any> extends raw.TransformationConfig {
+export interface DataTransformerConfig<TOptions = any> extends raw.DataTransformerConfig {
   options: TOptions;
 }
 

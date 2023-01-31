@@ -283,7 +283,7 @@ lineage: seqs: [
 				} @cuetsy(kind="interface")
 
 				// TODO docs
-				#TransformationConfig: {
+				#DataTransformerConfig: {
 					@grafana(TSVeneer="type")
 
 					// Unique identifier of transformer
@@ -293,6 +293,7 @@ lineage: seqs: [
 					// Optional frame matcher.  When missing it will be applied to all results
 					filter?: #MatcherConfig
 					// Options to be passed to the transformer
+					// Valid options depend on the transformer id
 					options: _
 				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
@@ -390,7 +391,7 @@ lineage: seqs: [
 					// TODO docs
 					timeRegions?: [...] @grafanamaturity(NeedsExpertReview)
 
-					transformations: [...#TransformationConfig] @grafanamaturity(NeedsExpertReview)
+					transformations: [...#DataTransformerConfig] @grafanamaturity(NeedsExpertReview)
 
 					// TODO docs
 					// TODO tighter constraint
