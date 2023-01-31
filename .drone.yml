@@ -278,7 +278,7 @@ steps:
   image: grafana/build-container:v1.7.1
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:v1.7.1
@@ -1178,7 +1178,7 @@ steps:
   image: grafana/build-container:v1.7.1
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:v1.7.1
@@ -2406,7 +2406,7 @@ steps:
   image: grafana/build-container:v1.7.1
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:v1.7.1
@@ -3079,7 +3079,7 @@ steps:
   image: grafana/build-container:v1.7.1
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:v1.7.1
@@ -5089,7 +5089,7 @@ steps:
   image: grafana/build-container:v1.7.1
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:v1.7.1
@@ -5747,7 +5747,7 @@ steps:
   image: grafana/build-container:v1.7.1
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:v1.7.1
@@ -6516,6 +6516,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: eba6c445aae6d75df0a2963d5e1e90c44474587a9e1d11e21bf2ba4d99f14da8
+hmac: c00de1a52b82b9729caca47e8294a83be348f1456a6b4527fbc045e814595735
 
 ...
