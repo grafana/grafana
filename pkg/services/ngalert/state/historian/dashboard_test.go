@@ -5,9 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
 func TestDashboardResolver(t *testing.T) {

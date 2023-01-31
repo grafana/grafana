@@ -47,7 +47,6 @@ export interface FeatureToggles {
   supportBundles?: boolean;
   dashboardsFromStorage?: boolean;
   export?: boolean;
-  azureMonitorResourcePickerForMetrics?: boolean;
   exploreMixedDatasource?: boolean;
   tracing?: boolean;
   commandPalette?: boolean;
@@ -90,8 +89,6 @@ export interface FeatureToggles {
   alertingBacktesting?: boolean;
   editPanelCSVDragAndDrop?: boolean;
   alertingNoNormalState?: boolean;
-  azureMultipleResourcePicker?: boolean;
-  apiserver?: boolean;
   topNavCommandPalette?: boolean;
   logsSampleInExplore?: boolean;
   logsContextDatasourceUi?: boolean;

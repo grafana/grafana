@@ -1,4 +1,0 @@
-# Ignore X.509 keys, certs and certrequests
-*.pem
-*.csr
-*.kubeconfig

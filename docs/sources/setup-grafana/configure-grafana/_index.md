@@ -772,7 +772,9 @@ Text used as placeholder text on login page for password input.
 
 ### default_theme
 
-Set the default UI theme: `dark` or `light`. Default is `dark`.
+Sets the default UI theme: `dark`, `light`, or `system`. The default theme is `dark`.
+
+`system` matches the user's system theme.
 
 ### default_language
 
@@ -937,6 +939,21 @@ The following table shows the OAuth provider's setting with the default value an
 | Github | true | false | User organization roles are set with `defaultRole` for GitLab, and Grafana Admins are set. For other providers, the synchronization is skipped, and the org role can be changed, along with other OAuth provider users' org roles. |
 | GitLab | false | true | User organization roles are set with `defaultRole`, and the organization role can be changed for GitLab synced users. |
 | GitLab | true | true | User organization roles are set with `defaultRole` for GitLab. For other providers, the synchronization is skipped, and the org role can be changed, along with other OAuth provider users' org roles. |
+
+### [auth.okta] skip_org_role_sync
+
+When a user logs in the first time, Grafana sets the organization role based on the value specified in `AutoAssignOrgRole`. If you want to manage organization roles through Grafana's UI, set the `skip_org_role_sync` option to `true`.
+This also impacts `allow_assign_grafana_admin` setting, by not syncing the grafana admin role from GitLab.
+
+> **Note:** There is a separate setting called `oauth_skip_org_role_update_sync` which has a different scope. While `skip_org_role_sync` only applies to the specific OAuth provider, `oauth_skip_org_role_update_sync` is a generic setting that affects all configured OAuth providers.
+
+The following table shows the OAuth provider's setting with the default value and the skip org role sync setting.
+| OAuth Provider | `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | Behavior |
+| --- | --- | --- | --- |
+| Okta | false | false | User organization roles are set with `defaultRole` and cannot be changed. |
+| Github | true | false | User organization roles are set with `defaultRole` for Okta, and Grafana Admins are set. For other providers, the synchronization is skipped, and the org role can be changed, along with other OAuth provider users' org roles. |
+| Okta | false | true | User organization roles are set with `defaultRole`, and the organization role can be changed for Okta synced users. |
+| Okta | true | true | User organization roles are set with `defaultRole` for Okta. For other providers, the synchronization is skipped, and the org role can be changed, along with other OAuth provider users' org roles. |
 
 ### api_key_max_seconds_to_live
 
@@ -2203,51 +2220,3 @@ Refer to the [dashboards previews]({{< relref "../../search/dashboard-previews/"
 ## [rbac]
 
 Refer to [Role-based access control]({{< relref "../../administration/roles-and-permissions/access-control/" >}}) for more information.
-
-## [apiserver]
-
-Settings related to the embedded Kubernetes API.
-
-## [apiserver.server]
-
-Settings related to the K8S HTTP server.
-
-### listen_address
-
-Which address the K8S HTTP server will be listening on, must be in `host:port` format. Default value is `127.0.0.1:8443`.
-
-### cert_file_path
-
-Path to TLS certificate that would be used by the embedded K8S API. Since k8s effectively enforces TLS, this is required. Unset by default, it must be set to enable embedded K8S API.
-
-### key_file_path
-
-Path to TLS key file that would be used by the embedded K8S API. Since k8s effectively enforces TLS, this is required. Unset by default, make sure to set it if using the embedded K8S API.
-
-### read_timeout
-
-The maximum duration for reading the entire request, including the body. A zero or negative value means there will be no timeout. Default value is `1m`.
-
-### write_timeout
-
-The maximum duration before timing out writes of the response. It is reset whenever a new request's header is read. A zero or negative value means there will be no timeout. Default value is `1m`.
-
-### shutdown_timeout
-
-The maximum duration before timing out graceful server shutdown. Default value is `1m`.
-
-## [apiserver.kubebridge]
-
-Settings related to the embedded K8S API kubernetes bridge.
-
-### kubeconfig_path
-
-The kubeconfig file which contains contexts, namespaces and auth. The file must contain all necessary information to connect and authenticate to remote `kube-apiserver`. Unset by default, make sure to set it if using the embedded K8S API.
-
-## [apiserver.proxy]
-
-Settings related to the embedded K8S API apiserver proxy.
-
-### keepalive_timeout
-
-The maximum duration after which a TCP connection to the remote `kube-apiserver` is no longer considered alive and will be terminated.

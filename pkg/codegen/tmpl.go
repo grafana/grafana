@@ -40,7 +40,7 @@ type (
 	tvars_kind_registry struct {
 		PackageName       string
 		KindPackagePrefix string
-		Kinds             []*DeclForGen
+		Kinds             []*DefForGen
 	}
 	tvars_kind_registry_backend struct {
 		BackendKindPackagePrefix string
