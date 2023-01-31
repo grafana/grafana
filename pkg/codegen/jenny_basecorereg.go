@@ -31,21 +31,12 @@ func (gen *genBaseRegistry) JennyName() string {
 	return "BaseCoreRegistryJenny"
 }
 
-func (gen *genBaseRegistry) Generate(decls ...*DeclForGen) (*codejen.File, error) {
-	var numRaw int
-	for _, k := range decls {
-		if k.IsRaw() {
-			numRaw++
-		}
-	}
-
+func (gen *genBaseRegistry) Generate(defs ...*DefForGen) (*codejen.File, error) {
 	buf := new(bytes.Buffer)
 	if err := tmpls.Lookup("kind_registry.tmpl").Execute(buf, tvars_kind_registry{
-		NumRaw:            numRaw,
-		NumStructured:     len(decls) - numRaw,
 		PackageName:       filepath.Base(gen.path),
 		KindPackagePrefix: filepath.ToSlash(filepath.Join("github.com/grafana/grafana", gen.kindrelroot)),
-		Kinds:             decls,
+		Kinds:             defs,
 	}); err != nil {
 		return nil, fmt.Errorf("failed executing kind registry template: %w", err)
 	}

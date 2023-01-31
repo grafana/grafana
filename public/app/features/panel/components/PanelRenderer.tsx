@@ -33,7 +33,8 @@ export function PanelRenderer<P extends object = any, F extends object = any>(pr
   } = props;
 
   const theme = useTheme2();
-  const replace = useMemo(() => getTemplateSrv().replace, []);
+  const templateSrv = getTemplateSrv();
+  const replace = useMemo(() => templateSrv.replace.bind(templateSrv), [templateSrv]);
   const [plugin, setPlugin] = useState(syncGetPanelPlugin(pluginId));
   const [error, setError] = useState<string | undefined>();
   const optionsWithDefaults = useOptionDefaults(plugin, options, fieldConfig);

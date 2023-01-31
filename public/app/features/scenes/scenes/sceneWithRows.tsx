@@ -1,15 +1,12 @@
-import { VizPanel } from '../components';
-import { NestedScene } from '../components/NestedScene';
-import { EmbeddedScene, Scene } from '../components/Scene';
-import { SceneTimePicker } from '../components/SceneTimePicker';
-import { SceneFlexLayout } from '../components/layout/SceneFlexLayout';
-import { SceneTimeRange } from '../core/SceneTimeRange';
+import { VizPanel, NestedScene, SceneTimePicker, SceneFlexLayout, SceneTimeRange } from '@grafana/scenes';
+
+import { DashboardScene } from '../dashboard/DashboardScene';
 import { SceneEditManager } from '../editor/SceneEditManager';
 
 import { getQueryRunnerWithRandomWalkQuery } from './queries';
 
-export function getSceneWithRows(standalone: boolean): Scene {
-  const state = {
+export function getSceneWithRows(): DashboardScene {
+  return new DashboardScene({
     title: 'Scene with rows',
     body: new SceneFlexLayout({
       direction: 'column',
@@ -56,7 +53,5 @@ export function getSceneWithRows(standalone: boolean): Scene {
     $timeRange: new SceneTimeRange(),
     $data: getQueryRunnerWithRandomWalkQuery(),
     actions: [new SceneTimePicker({})],
-  };
-
-  return standalone ? new Scene(state) : new EmbeddedScene(state);
+  });
 }

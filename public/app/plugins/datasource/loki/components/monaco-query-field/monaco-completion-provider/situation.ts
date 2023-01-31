@@ -119,6 +119,7 @@ export type Situation =
   | {
       type: 'AFTER_SELECTOR';
       afterPipe: boolean;
+      hasSpace: boolean;
       logQuery: string;
     }
   | {
@@ -450,6 +451,7 @@ function resolveLogOrLogRange(node: SyntaxNode, text: string, pos: number, after
   return {
     type: 'AFTER_SELECTOR',
     afterPipe,
+    hasSpace: text.endsWith(' '),
     logQuery: getLogQueryFromMetricsQuery(text).trim(),
   };
 }

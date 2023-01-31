@@ -9,11 +9,8 @@ import {
   TypedVariableModel,
 } from '@grafana/data';
 import { getDataSourceSrv, setTemplateSrv, TemplateSrv as BaseTemplateSrv } from '@grafana/runtime';
+import { sceneGraph, FormatRegistryID, formatRegistry, CustomFormatterFn } from '@grafana/scenes';
 
-import { SceneObjectBase } from '../scenes/core/SceneObjectBase';
-import { sceneGraph } from '../scenes/core/sceneGraph';
-import { formatRegistry, FormatRegistryID } from '../scenes/variables/interpolation/formatRegistry';
-import { CustomFormatterFn } from '../scenes/variables/interpolation/sceneInterpolator';
 import { variableAdapters } from '../variables/adapters';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from '../variables/constants';
 import { isAdHoc } from '../variables/guard';
@@ -279,7 +276,7 @@ export class TemplateSrv implements BaseTemplateSrv {
   }
 
   replace(target?: string, scopedVars?: ScopedVars, format?: string | Function): string {
-    if (scopedVars && scopedVars.__sceneObject && scopedVars.__sceneObject.value instanceof SceneObjectBase) {
+    if (scopedVars && scopedVars.__sceneObject) {
       return sceneGraph.interpolate(
         scopedVars.__sceneObject.value,
         target,

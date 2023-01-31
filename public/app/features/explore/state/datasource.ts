@@ -8,6 +8,8 @@ import { stopQueryState } from 'app/core/utils/explore';
 import { ExploreItemState, ThunkResult } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 
+import { loadSupplementaryQueries } from '../utils/supplementaryQueries';
+
 import { importQueries, runQueries } from './query';
 import { changeRefreshInterval } from './time';
 import { createEmptyQueryResponse, loadAndInitDatasource } from './utils';
@@ -99,8 +101,7 @@ export const datasourceReducer = (state: ExploreItemState, action: AnyAction): E
       graphResult: null,
       tableResult: null,
       logsResult: null,
-      logsVolumeDataProvider: undefined,
-      logsVolumeData: undefined,
+      supplementaryQueries: loadSupplementaryQueries(),
       queryResponse: createEmptyQueryResponse(),
       loading: false,
       queryKeys: [],

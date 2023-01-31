@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { uniqueId } from 'lodash';
-import React, { FC, ReactNode, useRef, useState } from 'react';
+import React, { ReactNode, useRef, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
@@ -22,7 +22,7 @@ export interface Props {
   contentDataTestId?: string;
 }
 
-export const CollapsableSection: FC<Props> = ({
+export const CollapsableSection = ({
   label,
   isOpen,
   onToggle,
@@ -33,7 +33,7 @@ export const CollapsableSection: FC<Props> = ({
   loading = false,
   headerDataTestId,
   contentDataTestId,
-}) => {
+}: Props) => {
   const [open, toggleOpen] = useState<boolean>(isOpen);
   const styles = useStyles2(collapsableSectionStyles);
 

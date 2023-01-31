@@ -42,6 +42,7 @@ describe('situation', () => {
     assertSituation('{level="info"} ^', {
       type: 'AFTER_SELECTOR',
       afterPipe: false,
+      hasSpace: true,
       logQuery: '{level="info"}',
     });
 
@@ -54,18 +55,21 @@ describe('situation', () => {
     assertSituation('{level="info"} | json ^', {
       type: 'AFTER_SELECTOR',
       afterPipe: false,
+      hasSpace: true,
       logQuery: '{level="info"} | json',
     });
 
-    assertSituation('{level="info"} | json | ^', {
+    assertSituation('{level="info"} | json |^', {
       type: 'AFTER_SELECTOR',
       afterPipe: true,
+      hasSpace: false,
       logQuery: '{level="info"} | json |',
     });
 
     assertSituation('count_over_time({level="info"}^[10s])', {
       type: 'AFTER_SELECTOR',
       afterPipe: false,
+      hasSpace: false,
       logQuery: '{level="info"}',
     });
 
@@ -76,18 +80,21 @@ describe('situation', () => {
     assertSituation('count_over_time({level="info"}^)', {
       type: 'AFTER_SELECTOR',
       afterPipe: false,
+      hasSpace: false,
       logQuery: '{level="info"}',
     });
 
     assertSituation('{level="info"} |= "a" | logfmt ^', {
       type: 'AFTER_SELECTOR',
       afterPipe: false,
+      hasSpace: true,
       logQuery: '{level="info"} |= "a" | logfmt',
     });
 
     assertSituation('sum(count_over_time({place="luna"} | logfmt |^)) by (place)', {
       type: 'AFTER_SELECTOR',
       afterPipe: true,
+      hasSpace: false,
       logQuery: '{place="luna"}| logfmt |',
     });
   });

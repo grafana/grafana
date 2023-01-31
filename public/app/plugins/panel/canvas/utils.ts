@@ -1,4 +1,4 @@
-import { AppEvents, PluginState, SelectableValue } from '@grafana/data';
+import { AppEvents, Field, LinkModel, PluginState, SelectableValue } from '@grafana/data';
 import { hasAlphaPanels } from 'app/core/config';
 
 import appEvents from '../../../core/app_events';
@@ -8,11 +8,15 @@ import {
   CanvasElementOptions,
   canvasElementRegistry,
   defaultElementItems,
+  TextConfig,
 } from '../../../features/canvas';
 import { notFoundItem } from '../../../features/canvas/elements/notFound';
 import { ElementState } from '../../../features/canvas/runtime/element';
 import { FrameState } from '../../../features/canvas/runtime/frame';
 import { Scene, SelectionParams } from '../../../features/canvas/runtime/scene';
+import { DimensionContext } from '../../../features/dimensions';
+
+import { AnchorPoint, ConnectionInfo } from './types';
 
 export function doSelect(scene: Scene, element: ElementState | FrameState) {
   try {
@@ -74,10 +78,15 @@ export function getElementTypesOptions(items: CanvasElementItem[], current: stri
   return selectables;
 }
 
-export function onAddItem(sel: SelectableValue<string>, rootLayer: FrameState | undefined) {
+export function onAddItem(sel: SelectableValue<string>, rootLayer: FrameState | undefined, anchorPoint?: AnchorPoint) {
   const newItem = canvasElementRegistry.getIfExists(sel.value) ?? notFoundItem;
   const newElementOptions = newItem.getNewOptions() as CanvasElementOptions;
   newElementOptions.type = newItem.id;
+
+  if (anchorPoint) {
+    newElementOptions.placement = { ...newElementOptions.placement, top: anchorPoint.y, left: anchorPoint.x };
+  }
+
   if (newItem.defaultSize) {
     newElementOptions.placement = { ...newElementOptions.placement, ...newItem.defaultSize };
   }
@@ -87,7 +96,68 @@ export function onAddItem(sel: SelectableValue<string>, rootLayer: FrameState | 
     newElement.updateData(rootLayer.scene.context);
     rootLayer.elements.push(newElement);
     rootLayer.scene.save();
-
     rootLayer.reinitializeMoveable();
+
+    setTimeout(() => doSelect(rootLayer.scene, newElement));
   }
+}
+
+export function getDataLinks(ctx: DimensionContext, cfg: TextConfig, textData: string | undefined): LinkModel[] {
+  const panelData = ctx.getPanelData();
+  const frames = panelData?.series;
+
+  const links: Array<LinkModel<Field>> = [];
+  const linkLookup = new Set<string>();
+
+  frames?.forEach((frame) => {
+    const visibleFields = frame.fields.filter((field) => !Boolean(field.config.custom?.hideFrom?.tooltip));
+
+    if (cfg.text?.field && visibleFields.some((f) => f.name === cfg.text?.field)) {
+      const field = visibleFields.filter((field) => field.name === cfg.text?.field)[0];
+      if (field?.getLinks) {
+        const disp = field.display ? field.display(textData) : { text: `${textData}`, numeric: +textData! };
+        field.getLinks({ calculatedValue: disp }).forEach((link) => {
+          const key = `${link.title}/${link.href}`;
+          if (!linkLookup.has(key)) {
+            links.push(link);
+            linkLookup.add(key);
+          }
+        });
+      }
+    }
+  });
+
+  return links;
+}
+
+export function isConnectionSource(element: ElementState) {
+  return element.options.connections && element.options.connections.length > 0;
+}
+export function isConnectionTarget(element: ElementState, sceneByName: Map<string, ElementState>) {
+  const connections = getConnections(sceneByName);
+  return connections.some((connection) => connection.target === element);
+}
+
+export function getConnections(sceneByName: Map<string, ElementState>) {
+  const connections: ConnectionInfo[] = [];
+  for (let v of sceneByName.values()) {
+    if (v.options.connections) {
+      for (let c of v.options.connections) {
+        const target = c.targetName ? sceneByName.get(c.targetName) : v.parent;
+        if (target) {
+          connections.push({
+            source: v,
+            target,
+            info: c,
+          });
+        }
+      }
+    }
+  }
+
+  return connections;
+}
+
+export function getConnectionsByTarget(element: ElementState, scene: Scene) {
+  return getConnections(scene.byName).filter((connection) => connection.target === element);
 }

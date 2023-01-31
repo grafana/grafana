@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -191,6 +191,10 @@ func (s *Service) GetByEmail(ctx context.Context, query *user.GetUserByEmailQuer
 }
 
 func (s *Service) Update(ctx context.Context, cmd *user.UpdateUserCommand) error {
+	if s.cfg.CaseInsensitiveLogin {
+		cmd.Login = strings.ToLower(cmd.Login)
+		cmd.Email = strings.ToLower(cmd.Email)
+	}
 	return s.store.Update(ctx, cmd)
 }
 
@@ -266,19 +270,19 @@ func (s *Service) GetSignedInUser(ctx context.Context, query *user.GetSignedInUs
 			},
 		},
 	}
-	getTeamsByUserQuery := &models.GetTeamsByUserQuery{
-		OrgId:        signedInUser.OrgID,
-		UserId:       signedInUser.UserID,
+	getTeamsByUserQuery := &team.GetTeamsByUserQuery{
+		OrgID:        signedInUser.OrgID,
+		UserID:       signedInUser.UserID,
 		SignedInUser: tempUser,
 	}
-	err = s.teamService.GetTeamsByUser(ctx, getTeamsByUserQuery)
+	getTeamsByUserQueryResult, err := s.teamService.GetTeamsByUser(ctx, getTeamsByUserQuery)
 	if err != nil {
 		return nil, err
 	}
 
-	signedInUser.Teams = make([]int64, len(getTeamsByUserQuery.Result))
-	for i, t := range getTeamsByUserQuery.Result {
-		signedInUser.Teams[i] = t.Id
+	signedInUser.Teams = make([]int64, len(getTeamsByUserQueryResult))
+	for i, t := range getTeamsByUserQueryResult {
+		signedInUser.Teams[i] = t.ID
 	}
 	return signedInUser, err
 }
@@ -440,7 +444,7 @@ func (s *Service) CreateUserForTests(ctx context.Context, cmd *user.CreateUserCo
 
 func (s *Service) getOrgIDForNewUser(ctx context.Context, cmd *user.CreateUserCommand) (int64, error) {
 	if s.cfg.AutoAssignOrg && cmd.OrgID != 0 {
-		if _, err := s.orgService.GetByID(ctx, &org.GetOrgByIdQuery{ID: cmd.OrgID}); err != nil {
+		if _, err := s.orgService.GetByID(ctx, &org.GetOrgByIDQuery{ID: cmd.OrgID}); err != nil {
 			return -1, err
 		}
 		return cmd.OrgID, nil

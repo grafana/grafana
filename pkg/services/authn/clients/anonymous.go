@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ authn.Client = new(Anonymous)
+var _ authn.ContextAwareClient = new(Anonymous)
 
 func ProvideAnonymous(cfg *setting.Cfg, orgService org.Service) *Anonymous {
 	return &Anonymous{
@@ -25,6 +25,10 @@ type Anonymous struct {
 	orgService org.Service
 }
 
+func (a *Anonymous) Name() string {
+	return authn.ClientAnonymous
+}
+
 func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
 	o, err := a.orgService.GetByName(ctx, &org.GetOrgByNameQuery{Name: a.cfg.AnonymousOrgName})
 	if err != nil {
@@ -33,17 +37,19 @@ func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 	}
 
 	return &authn.Identity{
-		OrgID:    o.ID,
-		OrgName:  o.Name,
-		OrgRoles: map[int64]org.RoleType{o.ID: org.RoleType(a.cfg.AnonymousOrgRole)},
+		IsAnonymous:  true,
+		OrgID:        o.ID,
+		OrgName:      o.Name,
+		OrgRoles:     map[int64]org.RoleType{o.ID: org.RoleType(a.cfg.AnonymousOrgRole)},
+		ClientParams: authn.ClientParams{},
 	}, nil
-}
-
-func (a *Anonymous) ClientParams() *authn.ClientParams {
-	return &authn.ClientParams{}
 }
 
 func (a *Anonymous) Test(ctx context.Context, r *authn.Request) bool {
 	// If anonymous client is register it can always be used for authentication
 	return true
+}
+
+func (a *Anonymous) Priority() uint {
+	return 100
 }

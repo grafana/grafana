@@ -21,6 +21,7 @@ import {
 
 import { useMuteTimingOptions } from '../../hooks/useMuteTimingOptions';
 import { FormAmRoute } from '../../types/amroutes';
+import { SupportedPlugin } from '../../types/pluginBridges';
 import { matcherFieldOptions } from '../../utils/alertmanager';
 import {
   emptyArrayFieldMatcher,
@@ -32,7 +33,7 @@ import {
   commonGroupByOptions,
 } from '../../utils/amroutes';
 import { timeOptions } from '../../utils/time';
-import { AmRouteReceiver, GrafanaAppReceiverEnum } from '../receivers/grafanaAppReceivers/types';
+import { AmRouteReceiver } from '../receivers/grafanaAppReceivers/types';
 
 import { getFormStyles } from './formStyles';
 
@@ -50,7 +51,7 @@ export const AmRoutesExpandedForm: FC<AmRoutesExpandedFormProps> = ({ onCancel, 
   const muteTimingOptions = useMuteTimingOptions();
 
   const receiversWithOnCallOnTop = receivers.sort((receiver1, receiver2) => {
-    if (receiver1.grafanaAppReceiverType === GrafanaAppReceiverEnum.GRAFANA_ONCALL) {
+    if (receiver1.grafanaAppReceiverType === SupportedPlugin.OnCall) {
       return -1;
     } else {
       return 0;

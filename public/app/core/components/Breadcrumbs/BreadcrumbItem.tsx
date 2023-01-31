@@ -2,6 +2,8 @@ import { css, cx } from '@emotion/css';
 import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Components } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { Breadcrumb } from './types';
@@ -10,18 +12,28 @@ type Props = Breadcrumb & {
   isCurrent: boolean;
 };
 
-export function BreadcrumbItem(props: Props) {
+export function BreadcrumbItem({ href, isCurrent, text }: Props) {
   const styles = useStyles2(getStyles);
+
+  const onBreadcrumbClick = () => {
+    reportInteraction('grafana_breadcrumb_clicked', { url: href });
+  };
+
   return (
     <li className={styles.breadcrumbWrapper}>
-      {props.isCurrent ? (
-        <span className={styles.breadcrumb} aria-current="page">
-          {props.text}
+      {isCurrent ? (
+        <span data-testid={Components.Breadcrumbs.breadcrumb(text)} className={styles.breadcrumb} aria-current="page">
+          {text}
         </span>
       ) : (
         <>
-          <a className={cx(styles.breadcrumb, styles.breadcrumbLink)} href={props.href}>
-            {props.text}
+          <a
+            onClick={onBreadcrumbClick}
+            data-testid={Components.Breadcrumbs.breadcrumb(text)}
+            className={cx(styles.breadcrumb, styles.breadcrumbLink)}
+            href={href}
+          >
+            {text}
           </a>
           <div className={styles.separator} aria-hidden={true}>
             <Icon name="angle-right" />

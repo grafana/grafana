@@ -10,13 +10,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationElasticsearch(t *testing.T) {
@@ -77,6 +78,11 @@ func TestIntegrationElasticsearch(t *testing.T) {
 			"rawQuery":  "*",
 			"type":      "",
 			"timeField": "@timestamp",
+			"metrics": []interface{}{
+				map[string]interface{}{
+					"type": "logs",
+				},
+			},
 		})
 		buf1 := &bytes.Buffer{}
 		err = json.NewEncoder(buf1).Encode(dtos.MetricRequest{

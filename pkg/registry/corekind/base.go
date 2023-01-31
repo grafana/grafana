@@ -37,40 +37,11 @@ func NewBase(rt *thema.Runtime) *Base {
 	return doNewBase(rt)
 }
 
-// All returns a slice of the [kindsys.Interface] instances corresponding to all
-// core raw and structured kinds.
+// All returns a slice of [kindsys.Core] containing all core Grafana kinds.
 //
 // The returned slice is sorted lexicographically by kind machine name.
-func (b *Base) All() []kindsys.Interface {
-	ret := make([]kindsys.Interface, len(b.all))
+func (b *Base) All() []kindsys.Core {
+	ret := make([]kindsys.Core, len(b.all))
 	copy(ret, b.all)
-	return ret
-}
-
-// AllRaw returns a slice of the [kindsys.Raw] instances for all raw kinds.
-//
-// The returned slice is sorted lexicographically by kind machine name.
-func (b *Base) AllRaw() []kindsys.Raw {
-	ret := make([]kindsys.Raw, 0, b.numRaw)
-	for _, k := range b.all {
-		if rk, is := k.(kindsys.Raw); is {
-			ret = append(ret, rk)
-		}
-	}
-
-	return ret
-}
-
-// AllStructured returns a slice of the [kindsys.Structured] instances for
-// all core structured kinds.
-//
-// The returned slice is sorted lexicographically by kind machine name.
-func (b *Base) AllStructured() []kindsys.Structured {
-	ret := make([]kindsys.Structured, 0, b.numStructured)
-	for _, k := range b.all {
-		if rk, is := k.(kindsys.Structured); is {
-			ret = append(ret, rk)
-		}
-	}
 	return ret
 }

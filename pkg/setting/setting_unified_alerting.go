@@ -8,11 +8,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/prometheus/alertmanager/cluster"
 	"gopkg.in/ini.v1"
+
+	"github.com/grafana/grafana/pkg/util"
 )
 
 const (
@@ -50,6 +49,8 @@ const (
 	schedulerDefaultMaxAttempts             = 3
 	schedulerDefaultLegacyMinInterval       = 1
 	screenshotsDefaultCapture               = false
+	screenshotsDefaultCaptureTimeout        = 10 * time.Second
+	screenshotsMaxCaptureTimeout            = 30 * time.Second
 	screenshotsDefaultMaxConcurrent         = 5
 	screenshotsDefaultUploadImageStorage    = false
 	// SchedulerBaseInterval base interval of the scheduler. Controls how often the scheduler fetches database for new changes as well as schedules evaluation of a rule
@@ -58,6 +59,7 @@ const (
 	SchedulerBaseInterval = 10 * time.Second
 	// DefaultRuleEvaluationInterval indicates a default interval of for how long a rule should be evaluated to change state from Pending to Alerting
 	DefaultRuleEvaluationInterval = SchedulerBaseInterval * 6 // == 60 seconds
+	stateHistoryDefaultEnabled    = true
 )
 
 type UnifiedAlertingSettings struct {
@@ -83,16 +85,32 @@ type UnifiedAlertingSettings struct {
 	DefaultRuleEvaluationInterval time.Duration
 	Screenshots                   UnifiedAlertingScreenshotSettings
 	ReservedLabels                UnifiedAlertingReservedLabelSettings
+	StateHistory                  UnifiedAlertingStateHistorySettings
 }
 
 type UnifiedAlertingScreenshotSettings struct {
 	Capture                    bool
+	CaptureTimeout             time.Duration
 	MaxConcurrentScreenshots   int64
 	UploadExternalImageStorage bool
 }
 
 type UnifiedAlertingReservedLabelSettings struct {
 	DisabledLabels map[string]struct{}
+}
+
+type UnifiedAlertingStateHistorySettings struct {
+	Enabled       bool
+	Backend       string
+	LokiRemoteURL string
+	LokiReadURL   string
+	LokiWriteURL  string
+	LokiTenantID  string
+	// LokiBasicAuthUsername and LokiBasicAuthPassword are used for basic auth
+	// if one of them is set.
+	LokiBasicAuthPassword string
+	LokiBasicAuthUsername string
+	ExternalLabels        map[string]string
 }
 
 // IsEnabled returns true if UnifiedAlertingSettings.Enabled is either nil or true.
@@ -281,6 +299,13 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfgScreenshots := uaCfg.Screenshots
 
 	uaCfgScreenshots.Capture = screenshots.Key("capture").MustBool(screenshotsDefaultCapture)
+
+	captureTimeout := screenshots.Key("capture_timeout").MustDuration(screenshotsDefaultCaptureTimeout)
+	if captureTimeout > screenshotsMaxCaptureTimeout {
+		return fmt.Errorf("value of setting 'capture_timeout' cannot exceed %s", screenshotsMaxCaptureTimeout)
+	}
+	uaCfgScreenshots.CaptureTimeout = captureTimeout
+
 	uaCfgScreenshots.MaxConcurrentScreenshots = screenshots.Key("max_concurrent_screenshots").MustInt64(screenshotsDefaultMaxConcurrent)
 	uaCfgScreenshots.UploadExternalImageStorage = screenshots.Key("upload_external_image_storage").MustBool(screenshotsDefaultUploadImageStorage)
 	uaCfg.Screenshots = uaCfgScreenshots
@@ -293,6 +318,21 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		uaCfgReservedLabels.DisabledLabels[label] = struct{}{}
 	}
 	uaCfg.ReservedLabels = uaCfgReservedLabels
+
+	stateHistory := iniFile.Section("unified_alerting.state_history")
+	stateHistoryLabels := iniFile.Section("unified_alerting.state_history.external_labels")
+	uaCfgStateHistory := UnifiedAlertingStateHistorySettings{
+		Enabled:               stateHistory.Key("enabled").MustBool(stateHistoryDefaultEnabled),
+		Backend:               stateHistory.Key("backend").MustString("annotations"),
+		LokiRemoteURL:         stateHistory.Key("loki_remote_url").MustString(""),
+		LokiReadURL:           stateHistory.Key("loki_remote_read_url").MustString(""),
+		LokiWriteURL:          stateHistory.Key("loki_remote_write_url").MustString(""),
+		LokiTenantID:          stateHistory.Key("loki_tenant_id").MustString(""),
+		LokiBasicAuthUsername: stateHistory.Key("loki_basic_auth_username").MustString(""),
+		LokiBasicAuthPassword: stateHistory.Key("loki_basic_auth_password").MustString(""),
+		ExternalLabels:        stateHistoryLabels.KeysHash(),
+	}
+	uaCfg.StateHistory = uaCfgStateHistory
 
 	cfg.UnifiedAlerting = uaCfg
 	return nil

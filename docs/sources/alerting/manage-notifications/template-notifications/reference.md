@@ -6,7 +6,7 @@ keywords:
   - notifications
   - templates
 title: Reference
-weight: 600
+weight: 400
 ---
 
 # Reference

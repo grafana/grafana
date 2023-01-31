@@ -9,7 +9,7 @@ import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOp
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { AlertDataQuery, AlertQuery } from 'app/types/unified-alerting-dto';
 
-import { EmptyQueryWrapper, QueryWrapper } from './QueryWrapper';
+import { AlertQueryOptions, EmptyQueryWrapper, QueryWrapper } from './QueryWrapper';
 import { errorFromSeries, getThresholdsForQueries } from './util';
 
 interface Props {
@@ -51,6 +51,21 @@ export class QueryRows extends PureComponent<Props> {
     );
   };
 
+  onChangeQueryOptions = (options: AlertQueryOptions, index: number) => {
+    const { queries, onQueriesChange } = this.props;
+    onQueriesChange(
+      queries.map((item, itemIndex) => {
+        if (itemIndex !== index) {
+          return item;
+        }
+        return {
+          ...item,
+          model: { ...item.model, maxDataPoints: options.maxDataPoints },
+        };
+      })
+    );
+  };
+
   onChangeDataSource = (settings: DataSourceInstanceSettings, index: number) => {
     const { queries, onQueriesChange } = this.props;
 
@@ -59,8 +74,15 @@ export class QueryRows extends PureComponent<Props> {
         return item;
       }
 
-      return copyModel(item, settings.uid);
+      const previousSettings = this.getDataSourceSettings(item);
+
+      // Copy model if changing to a datasource of same type.
+      if (settings.type === previousSettings?.type) {
+        return copyModel(item, settings);
+      }
+      return newModel(item, settings);
     });
+
     onQueriesChange(updatedQueries);
   };
 
@@ -163,6 +185,7 @@ export class QueryRows extends PureComponent<Props> {
                       onChangeDataSource={this.onChangeDataSource}
                       onDuplicateQuery={this.props.onDuplicateQuery}
                       onChangeTimeRange={this.onChangeTimeRange}
+                      onChangeQueryOptions={this.onChangeQueryOptions}
                       thresholds={thresholdByRefId[query.refId]?.config}
                       thresholdsType={thresholdByRefId[query.refId]?.mode}
                       onRunQueries={this.props.onRunQueries}
@@ -181,11 +204,34 @@ export class QueryRows extends PureComponent<Props> {
   }
 }
 
-function copyModel(item: AlertQuery, uid: string): Omit<AlertQuery, 'datasource'> {
+function copyModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit<AlertQuery, 'datasource'> {
   return {
     ...item,
-    model: omit(item.model, 'datasource'),
-    datasourceUid: uid,
+    model: {
+      ...omit(item.model, 'datasource'),
+      datasource: {
+        type: settings.type,
+        uid: settings.uid,
+      },
+    },
+    datasourceUid: settings.uid,
+  };
+}
+
+function newModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit<AlertQuery, 'datasource'> {
+  return {
+    refId: item.refId,
+    relativeTimeRange: item.relativeTimeRange,
+    queryType: '',
+    datasourceUid: settings.uid,
+    model: {
+      refId: item.refId,
+      hide: false,
+      datasource: {
+        type: settings.type,
+        uid: settings.uid,
+      },
+    },
   };
 }
 

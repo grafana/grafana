@@ -1,6 +1,7 @@
 package plugindef
 
 import (
+	"strings"
 	"sync"
 
 	"cuelang.org/go/cue/build"
@@ -9,10 +10,6 @@ import (
 )
 
 //go:generate go run gen.go
-
-// PkgName is the name of the CUE package that Grafana will load when looking
-// for kind declarations by a Grafana plugin.
-const PkgName = "grafanaplugin"
 
 func loadInstanceForplugindef() (*build.Instance, error) {
 	return cuectx.LoadGrafanaInstance("pkg/plugins/plugindef", "", nil)
@@ -35,4 +32,42 @@ func Lineage(rt *thema.Runtime, opts ...thema.BindOption) (thema.ConvergentLinea
 		return pdlin, pdlinerr
 	}
 	return doLineage(rt, opts...)
+}
+
+// DerivePascalName derives a PascalCase name from a PluginDef.
+//
+// This function does not mutate the input PluginDef; as such, it ignores
+// whether there exists any value for PluginDef.PascalName.
+//
+// FIXME this should be removable once CUE logic for it works/unmarshals correctly.
+func DerivePascalName(pd PluginDef) string {
+	sani := func(s string) string {
+		ret := strings.Title(strings.Map(func(r rune) rune {
+			switch {
+			case r >= 'a' && r <= 'z':
+				return r
+			case r >= 'A' && r <= 'Z':
+				return r
+			default:
+				return -1
+			}
+		}, strings.Title(strings.Map(func(r rune) rune {
+			switch r {
+			case '-', '_':
+				return ' '
+			default:
+				return r
+			}
+		}, s))))
+		if len(ret) > 63 {
+			return ret[:63]
+		}
+		return ret
+	}
+
+	fromname := sani(pd.Name)
+	if len(fromname) != 0 {
+		return fromname
+	}
+	return sani(strings.Split(pd.Id, "-")[1])
 }

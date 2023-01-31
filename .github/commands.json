@@ -11,7 +11,7 @@
     "type":"comment",
     "name":"duplicate",
     "allowUsers":[],
-    "action":"updateLabels",
+    "action":"close",
     "addLabel":"type/duplicate"
   },
   {
@@ -313,6 +313,14 @@
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/86"
+    }
+  },
+  {
+    "type": "label",
+    "name": "area/internationalization",
+    "action": "addToProject",
+    "addToProject": {
+      "url": "https://github.com/orgs/grafana/projects/78"
     }
   }
 ]

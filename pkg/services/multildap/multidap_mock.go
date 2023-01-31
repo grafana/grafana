@@ -1,8 +1,8 @@
 package multildap
 
 import (
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -16,25 +16,25 @@ type MultiLDAPmock struct {
 	ExpectedErr error
 }
 
-func (m *MultiLDAPmock) Login(query *models.LoginUserQuery) (
-	*models.ExternalUserInfo, error,
+func (m *MultiLDAPmock) Login(query *login.LoginUserQuery) (
+	*login.ExternalUserInfo, error,
 ) {
 	m.LoginCalled = true
 	query.User = m.UserInfo
 	query.AuthModule = m.AuthModule
-	result := &models.ExternalUserInfo{
+	result := &login.ExternalUserInfo{
 		UserId: m.ID,
 	}
 	return result, m.ExpectedErr
 }
 
-func (m *MultiLDAPmock) User(login string) (
-	*models.ExternalUserInfo,
+func (m *MultiLDAPmock) User(loginstr string) (
+	*login.ExternalUserInfo,
 	ldap.ServerConfig,
 	error,
 ) {
 	m.UserCalled = true
-	result := &models.ExternalUserInfo{
+	result := &login.ExternalUserInfo{
 		UserId: m.ID,
 	}
 	return result, ldap.ServerConfig{}, nil

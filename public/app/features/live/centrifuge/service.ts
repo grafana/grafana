@@ -133,7 +133,10 @@ export class CentrifugeService implements CentrifugeSrv {
       return channel;
     }
     channel.shutdownCallback = () => {
-      this.open.delete(id); // remove it from the list of open channels
+      this.open.delete(id);
+
+      // without a call to `removeSubscription`, the subscription will remain in centrifuge's internal registry
+      this.centrifuge.removeSubscription(this.centrifuge.getSubscription(id));
     };
     this.open.set(id, channel);
 

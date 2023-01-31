@@ -4,11 +4,11 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/apikeygen"
-	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts/tests"
-	"github.com/stretchr/testify/require"
 )
 
 func TestStore_AddServiceAccountToken(t *testing.T) {
@@ -34,17 +34,15 @@ func TestStore_AddServiceAccountToken(t *testing.T) {
 				OrgId:         user.OrgID,
 				Key:           key.HashedKey,
 				SecondsToLive: tc.secondsToLive,
-				Result:        &apikey.APIKey{},
 			}
 
-			err = store.AddServiceAccountToken(context.Background(), user.ID, &cmd)
+			newKey, err := store.AddServiceAccountToken(context.Background(), user.ID, &cmd)
 			if tc.secondsToLive < 0 {
 				require.Error(t, err)
 				return
 			}
 
 			require.NoError(t, err)
-			newKey := cmd.Result
 			require.Equal(t, t.Name(), newKey.Name)
 
 			// Verify against DB
@@ -89,10 +87,9 @@ func TestStore_AddServiceAccountToken_WrongServiceAccount(t *testing.T) {
 		OrgId:         sa.OrgID,
 		Key:           key.HashedKey,
 		SecondsToLive: 0,
-		Result:        &apikey.APIKey{},
 	}
 
-	err = store.AddServiceAccountToken(context.Background(), sa.ID+1, &cmd)
+	_, err = store.AddServiceAccountToken(context.Background(), sa.ID+1, &cmd)
 	require.Error(t, err, "It should not be possible to add token to non-existing service account")
 }
 
@@ -110,12 +107,10 @@ func TestStore_RevokeServiceAccountToken(t *testing.T) {
 		OrgId:         sa.OrgID,
 		Key:           key.HashedKey,
 		SecondsToLive: 0,
-		Result:        &apikey.APIKey{},
 	}
 
-	err = store.AddServiceAccountToken(context.Background(), sa.ID, &cmd)
+	newKey, err := store.AddServiceAccountToken(context.Background(), sa.ID, &cmd)
 	require.NoError(t, err)
-	newKey := cmd.Result
 
 	// Revoke SAT
 	err = store.RevokeServiceAccountToken(context.Background(), sa.OrgID, sa.ID, newKey.Id)
@@ -152,12 +147,10 @@ func TestStore_DeleteServiceAccountToken(t *testing.T) {
 		OrgId:         sa.OrgID,
 		Key:           key.HashedKey,
 		SecondsToLive: 0,
-		Result:        &apikey.APIKey{},
 	}
 
-	err = store.AddServiceAccountToken(context.Background(), sa.ID, &cmd)
+	newKey, err := store.AddServiceAccountToken(context.Background(), sa.ID, &cmd)
 	require.NoError(t, err)
-	newKey := cmd.Result
 
 	// Delete key from wrong service account
 	err = store.DeleteServiceAccountToken(context.Background(), sa.OrgID, sa.ID+2, newKey.Id)

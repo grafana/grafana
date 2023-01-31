@@ -44,7 +44,6 @@ export interface DashboardMeta {
   publicDashboardAccessToken?: string;
   publicDashboardUid?: string;
   publicDashboardEnabled?: boolean;
-  hasPublicDashboard?: boolean;
   dashboardNotFound?: boolean;
 }
 

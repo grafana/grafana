@@ -12,17 +12,21 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/prometheus/client_golang/prometheus"
+	dto "github.com/prometheus/client_model/go"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/config"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
@@ -123,26 +127,126 @@ func Test_PluginsInstallAndUninstall_AccessControl(t *testing.T) {
 	}
 
 	for _, tc := range tcs {
-		sc := setupHTTPServerWithCfg(t, true, &setting.Cfg{
-			RBACEnabled:                      true,
-			PluginAdminEnabled:               tc.pluginAdminEnabled,
-			PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled})
-		setInitCtxSignedInViewer(sc.initCtx)
-		setAccessControlPermissions(sc.acmock, tc.permissions, sc.initCtx.OrgID)
-		sc.hs.pluginInstaller = NewFakePluginInstaller()
+		server := SetupAPITestServer(t, func(hs *HTTPServer) {
+			hs.Cfg = &setting.Cfg{
+				RBACEnabled:                      true,
+				PluginAdminEnabled:               tc.pluginAdminEnabled,
+				PluginAdminExternalManageEnabled: tc.pluginAdminExternalManageEnabled}
+			hs.orgService = &orgtest.FakeOrgService{ExpectedOrg: &org.Org{}}
+			hs.pluginInstaller = NewFakePluginInstaller()
+		})
 
 		t.Run(testName("Install", tc), func(t *testing.T) {
-			input := strings.NewReader("{ \"version\": \"1.0.2\" }")
-			response := callAPI(sc.server, http.MethodPost, "/api/plugins/test/install", input, t)
-			require.Equal(t, tc.expectedCode, response.Code)
+			input := strings.NewReader(`{"version": "1.0.2"}`)
+			req := webtest.RequestWithSignedInUser(server.NewPostRequest("/api/plugins/test/install", input), userWithPermissions(1, tc.permissions))
+			res, err := server.SendJSON(req)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
 		})
 
 		t.Run(testName("Uninstall", tc), func(t *testing.T) {
 			input := strings.NewReader("{ }")
-			response := callAPI(sc.server, http.MethodPost, "/api/plugins/test/uninstall", input, t)
-			require.Equal(t, tc.expectedCode, response.Code)
+			req := webtest.RequestWithSignedInUser(server.NewPostRequest("/api/plugins/test/uninstall", input), userWithPermissions(1, tc.permissions))
+			res, err := server.SendJSON(req)
+			require.NoError(t, err)
+			require.Equal(t, tc.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
 		})
 	}
+}
+
+func Test_GetPluginAssetCDNRedirect(t *testing.T) {
+	const cdnPluginID = "cdn-plugin"
+	const nonCDNPluginID = "non-cdn-plugin"
+	t.Run("Plugin CDN asset redirect", func(t *testing.T) {
+		cdnPlugin := &plugins.Plugin{
+			JSONData: plugins.JSONData{ID: cdnPluginID, Info: plugins.Info{Version: "1.0.0"}},
+		}
+		nonCdnPlugin := &plugins.Plugin{
+			JSONData: plugins.JSONData{ID: nonCDNPluginID, Info: plugins.Info{Version: "2.0.0"}},
+		}
+		service := &plugins.FakePluginStore{
+			PluginList: []plugins.PluginDTO{
+				cdnPlugin.ToDTO(),
+				nonCdnPlugin.ToDTO(),
+			},
+		}
+		cfg := setting.NewCfg()
+		cfg.PluginsCDNURLTemplate = "https://cdn.example.com/{id}/{version}/public/plugins/{id}/{assetPath}"
+		cfg.PluginSettings = map[string]map[string]string{
+			cdnPluginID: {"cdn": "true"},
+		}
+
+		const cdnFolderBaseURL = "https://cdn.example.com/cdn-plugin/1.0.0/public/plugins/cdn-plugin"
+
+		type tc struct {
+			assetURL       string
+			expRelativeURL string
+		}
+		for _, cas := range []tc{
+			{"module.js", "module.js"},
+			{"other/folder/file.js", "other/folder/file.js"},
+			{"double////slashes/file.js", "double/slashes/file.js"},
+		} {
+			pluginAssetScenario(
+				t,
+				"When calling GET for a CDN plugin on",
+				fmt.Sprintf("/public/plugins/%s/%s", cdnPluginID, cas.assetURL),
+				"/public/plugins/:pluginId/*",
+				cfg, service, func(sc *scenarioContext) {
+					// Get the prometheus metric (to test that the handler is instrumented correctly)
+					counter := pluginsCDNFallbackRedirectRequests.With(prometheus.Labels{
+						"plugin_id":      cdnPluginID,
+						"plugin_version": "1.0.0",
+					})
+
+					// Encode the prometheus metric and get its value
+					var m dto.Metric
+					require.NoError(t, counter.Write(&m))
+					before := m.Counter.GetValue()
+
+					// Call handler
+					callGetPluginAsset(sc)
+
+					// Check redirect code + location
+					require.Equal(t, http.StatusTemporaryRedirect, sc.resp.Code, "wrong status code")
+					require.Equal(t, cdnFolderBaseURL+"/"+cas.expRelativeURL, sc.resp.Header().Get("Location"), "wrong location header")
+
+					// Check metric
+					require.NoError(t, counter.Write(&m))
+					require.Equal(t, before+1, m.Counter.GetValue(), "prometheus metric not incremented")
+				},
+			)
+		}
+		pluginAssetScenario(
+			t,
+			"When calling GET for a non-CDN plugin on",
+			fmt.Sprintf("/public/plugins/%s/%s", nonCDNPluginID, "module.js"),
+			"/public/plugins/:pluginId/*",
+			cfg, service, func(sc *scenarioContext) {
+				// Here the metric should not increment
+				var m dto.Metric
+				counter := pluginsCDNFallbackRedirectRequests.With(prometheus.Labels{
+					"plugin_id":      nonCDNPluginID,
+					"plugin_version": "2.0.0",
+				})
+				require.NoError(t, counter.Write(&m))
+				require.Zero(t, m.Counter.GetValue())
+
+				// Call handler
+				callGetPluginAsset(sc)
+
+				// 404 implies access to fs
+				require.Equal(t, http.StatusNotFound, sc.resp.Code)
+				require.Empty(t, sc.resp.Header().Get("Location"))
+
+				// Ensure the metric did not change
+				require.NoError(t, counter.Write(&m))
+				require.Zero(t, m.Counter.GetValue())
+			},
+		)
+	})
 }
 
 func Test_GetPluginAssets(t *testing.T) {
@@ -176,8 +280,8 @@ func Test_GetPluginAssets(t *testing.T) {
 		}
 
 		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
-		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service,
-			func(sc *scenarioContext) {
+		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*",
+			setting.NewCfg(), service, func(sc *scenarioContext) {
 				callGetPluginAsset(sc)
 
 				require.Equal(t, 200, sc.resp.Code)
@@ -192,8 +296,8 @@ func Test_GetPluginAssets(t *testing.T) {
 		}
 
 		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, tmpFileInParentDir.Name())
-		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service,
-			func(sc *scenarioContext) {
+		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*",
+			setting.NewCfg(), service, func(sc *scenarioContext) {
 				callGetPluginAsset(sc)
 
 				require.Equal(t, 404, sc.resp.Code)
@@ -208,8 +312,8 @@ func Test_GetPluginAssets(t *testing.T) {
 
 		requestedFile := "nonExistent"
 		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
-		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service,
-			func(sc *scenarioContext) {
+		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*",
+			setting.NewCfg(), service, func(sc *scenarioContext) {
 				callGetPluginAsset(sc)
 
 				var respJson map[string]interface{}
@@ -228,8 +332,8 @@ func Test_GetPluginAssets(t *testing.T) {
 
 		requestedFile := "nonExistent"
 		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
-		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service,
-			func(sc *scenarioContext) {
+		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*",
+			setting.NewCfg(), service, func(sc *scenarioContext) {
 				callGetPluginAsset(sc)
 
 				var respJson map[string]interface{}
@@ -253,8 +357,8 @@ func Test_GetPluginAssets(t *testing.T) {
 		l := &logtest.Fake{}
 
 		url := fmt.Sprintf("/public/plugins/%s/%s", pluginID, requestedFile)
-		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*", service,
-			func(sc *scenarioContext) {
+		pluginAssetScenario(t, "When calling GET on", url, "/public/plugins/:pluginId/*",
+			setting.NewCfg(), service, func(sc *scenarioContext) {
 				callGetPluginAsset(sc)
 
 				require.Equal(t, 200, sc.resp.Code)
@@ -374,16 +478,22 @@ func callGetPluginAsset(sc *scenarioContext) {
 	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 }
 
-func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern string, pluginStore plugins.Store,
-	fn scenarioFunc) {
+func pluginAssetScenario(t *testing.T, desc string, url string, urlPattern string,
+	cfg *setting.Cfg, pluginStore plugins.Store, fn scenarioFunc) {
 	t.Run(fmt.Sprintf("%s %s", desc, url), func(t *testing.T) {
+		cfg.IsFeatureToggleEnabled = func(_ string) bool { return false }
 		hs := HTTPServer{
-			Cfg:         setting.NewCfg(),
+			Cfg:         cfg,
 			pluginStore: pluginStore,
+			log:         log.NewNopLogger(),
+			pluginsCDNService: pluginscdn.ProvideService(&config.Cfg{
+				PluginsCDNURLTemplate: cfg.PluginsCDNURLTemplate,
+				PluginSettings:        cfg.PluginSettings,
+			}),
 		}
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = func(c *models.ReqContext) {
+		sc.defaultHandler = func(c *contextmodel.ReqContext) {
 			sc.context = c
 			hs.getPluginAssets(c)
 		}

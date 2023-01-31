@@ -32,7 +32,7 @@ export default function NewDashboardPage(props: GrafanaRouteComponentProps) {
       title={t('datasource-onboarding.welcome', 'Welcome to Grafana dashboards!')}
       CTAText={t('datasource-onboarding.sampleData', 'Or set up a new dashboard with sample data')}
       navId="dashboards/browse"
-      pageNav={{ text: t('dashboard', 'New dashboard'), url: '/dashboard/new' }}
+      pageNav={{ text: t('datasource-onboarding.new-dashboard', 'New dashboard'), url: '/dashboard/new' }}
     />
   );
 }

@@ -6,14 +6,13 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
 	"gopkg.in/ldap.v3"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/login"
 )
 
-var defaultLogin = &models.LoginUserQuery{
+var defaultLogin = &login.LoginUserQuery{
 	Username:  "user",
 	Password:  "pwd",
 	IpAddress: "192.168.1.1:56433",
