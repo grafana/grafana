@@ -705,8 +705,9 @@ func createDashboard(t *testing.T, sqlStore db.DB, user *user.SignedInUser, dash
 	require.NoError(t, err)
 	dashAlertService := alerting.ProvideDashAlertExtractorService(nil, nil, nil)
 	ac := acmock.New()
+	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
 	service := dashboardservice.ProvideDashboardService(
-		cfg, dashboardStore, dashboardStore, dashAlertService,
+		cfg, dashboardStore, folderStore, dashAlertService,
 		featuremgmt.WithFeatures(), acmock.NewMockedPermissionsService(), acmock.NewMockedPermissionsService(), ac,
 		foldertest.NewFakeService(),
 	)
@@ -728,7 +729,8 @@ func createFolderWithACL(t *testing.T, sqlStore db.DB, title string, user *user.
 	quotaService := quotatest.New(false, nil)
 	dashboardStore, err := database.ProvideDashboardStore(sqlStore, cfg, featuremgmt.WithFeatures(), tagimpl.ProvideService(sqlStore, cfg), quotaService)
 	require.NoError(t, err)
-	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, dashboardStore, nil, features)
+	folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+	s := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, nil, features)
 
 	t.Logf("Creating folder with title and UID %q", title)
 	ctx := appcontext.WithUser(context.Background(), user)
@@ -836,7 +838,9 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 
 		features := featuremgmt.WithFeatures()
 		ac := acmock.New()
-		folderService := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, dashboardStore, nil, features)
+
+		folderStore := folderimpl.ProvideDashboardFolderStore(sqlStore)
+		folderService := folderimpl.ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, dashboardStore, folderStore, nil, features)
 
 		elementService := libraryelements.ProvideService(cfg, sqlStore, routing.NewRouteRegister(), folderService)
 		service := LibraryPanelService{
