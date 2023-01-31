@@ -41,6 +41,7 @@
         ]
       }
     ],
+    "@typescript-eslint/await-thenable": "error",
 
     // Use typescript's no-redeclare for compatibility with overrides
     "no-redeclare": "off",
