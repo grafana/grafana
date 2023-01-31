@@ -177,11 +177,11 @@ export const Table = memo((props: Props) => {
 
     const footerItems = getFooterItems(
       /*
-        The `headerGroups` object is NOT based on the `data.fields`, but instead on the currently rendered headers,
+        The `headerGroups` object is NOT based on the `data.fields`, but instead on the currently rendered headers in the Table,
         which may or may not include the Row Numbers column.
       */
       headerGroups[0].headers as unknown as Array<{ id: string; field: Field }>,
-      // The `rows` object, on the other hand, is based on the `data.fields` data, and therefore DO have the Row Numbers column data.
+      // The `rows` object, on the other hand, is based on the `data.fields` data, and therefore ALWAYS include the Row Numbers column data.
       createFooterCalculationValues(rows),
       footerOptions,
       theme
