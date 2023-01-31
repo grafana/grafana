@@ -710,6 +710,8 @@ type ThresholdsMode string
 // TODO docs
 // FIXME this is extremely underspecfied; wasn't obvious which typescript types corresponded to it
 type Transformation struct {
+	Filter  *MatcherConfig         `json:"filter,omitempty"`
+	Hide    bool                   `json:"hide"`
 	Id      string                 `json:"id"`
 	Options map[string]interface{} `json:"options"`
 }
