@@ -2,6 +2,7 @@ package k8saccess
 
 import (
 	"context"
+	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -12,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
 	"github.com/grafana/grafana/pkg/registry/corecrd"
+	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/store/entity"
@@ -22,16 +24,18 @@ type k8sDashboardService struct {
 	clientSet *bridge.Clientset
 	reg       *corecrd.Registry
 	store     entity.EntityStoreServer
+	Kinds     *corekind.Base
 }
 
 var _ dashboards.DashboardService = (*k8sDashboardService)(nil)
 
-func NewDashboardService(orig dashboards.DashboardService, store entity.EntityStoreServer, reg *corecrd.Registry, troll *bridge.Service) dashboards.DashboardService {
+func NewDashboardService(orig dashboards.DashboardService, store entity.EntityStoreServer, reg *corecrd.Registry, troll *bridge.Service, kinds *corekind.Base) dashboards.DashboardService {
 	return &k8sDashboardService{
 		reg:       reg,
 		orig:      orig,
 		clientSet: troll.ClientSet,
 		store:     store,
+		Kinds:     kinds,
 	}
 }
 
@@ -102,6 +106,20 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 	d := dashboardKind{
 		Uid:   &dto.Dashboard.UID,
 		Title: &dto.Dashboard.Title,
+	}
+
+	if dto.Dashboard.Data == nil {
+		return nil, fmt.Errorf("POTATO: DASHBOARD DATA NIL")
+	}
+
+	//dashbytes, err := json.Marshal(dto.Dashboard)
+	dashbytes, err := dto.Dashboard.Data.Bytes()
+	if err != nil {
+		return nil, err
+	}
+
+	if _, _, err := s.Kinds.Dashboard().JSONValueMux(dashbytes); err != nil {
+		return nil, err
 	}
 
 	b := k8ssys.Base[dashboardKind]{
