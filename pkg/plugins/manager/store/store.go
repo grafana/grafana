@@ -38,7 +38,7 @@ func New(pluginRegistry registry.Service) *Service {
 
 func (s *Service) Run(ctx context.Context) error {
 	for _, ps := range s.pluginSources() {
-		if _, err := s.pluginLoader.Load(context.Background(), ps.Class, ps.Paths); err != nil {
+		if _, err := s.pluginLoader.Load(ctx, ps.Class, ps.Paths); err != nil {
 			return err
 		}
 	}

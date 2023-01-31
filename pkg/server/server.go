@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/server/modules"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -59,7 +58,6 @@ type Server struct {
 	shutdownFinished chan struct{}
 
 	moduleService *modules.Modules
-	roleRegistry  accesscontrol.RoleRegistry
 }
 
 // init initializes the server and its services.
