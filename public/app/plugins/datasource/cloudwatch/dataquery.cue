@@ -30,10 +30,26 @@ composableKinds: DataQuery: {
 			{
 				schemas: [
 					{
-						common.DataQuery
+
+						#MetricStat: {
+							region:      string
+							namespace:   string
+							metricName?: string
+							dimensions?: #Dimensions
+							matchExact?: bool
+							period?:     string
+							accountId?:  string
+							statistic?:  string
+							// @deprecated use statistic
+							statistics?: [...string]
+						} @cuetsy(kind="interface")
+
+						#Dimensions: {[string]: string | [...string]} @cuetsy(kind="type")
 
 						//#CloudWatchMetricsQuery | #CloudWatchLogsQuery
 						#CloudWatchMetricsQuery: {
+							common.DataQuery
+							#MetricStat
 							queryMode?:        #CloudWatchQueryMode
 							metricQueryType?:  #MetricQueryType
 							metricEditorMode?: #MetricEditorMode
@@ -112,6 +128,7 @@ composableKinds: DataQuery: {
 						} @cuetsy(kind="interface")
 
 						#CloudWatchLogsQuery: {
+							common.DataQuery
 							queryMode:   #CloudWatchQueryMode
 							id:          string
 							region:      string

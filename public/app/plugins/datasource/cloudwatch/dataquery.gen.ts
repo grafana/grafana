@@ -12,23 +12,68 @@ import * as common from '@grafana/schema';
 
 export const DataQueryModelVersion = Object.freeze([0, 0]);
 
+export interface MetricStat {
+  accountId?: string;
+  dimensions?: Dimensions;
+  matchExact?: boolean;
+  metricName?: string;
+  namespace: string;
+  period?: string;
+  region: string;
+  statistic?: string;
+  /**
+   * @deprecated use statistic
+   */
+  statistics?: Array<string>;
+}
+
+export const defaultMetricStat: Partial<MetricStat> = {
+  statistics: [],
+};
+
+export type Dimensions = Record<string, (string | Array<string>)>;
+
 /**
  * #CloudWatchMetricsQuery | #CloudWatchLogsQuery
  */
-export interface CloudWatchMetricsQuery {
+export interface CloudWatchMetricsQuery extends common.DataQuery, MetricStat {
   alias?: string;
+  /**
+   * For mixed data sources the selected datasource is on the query level.
+   * For non mixed scenarios this is undefined.
+   * TODO find a better way to do this ^ that's friendly to schema
+   * TODO this shouldn't be unknown but DataSourceRef | null
+   */
+  datasource?: unknown;
   /**
    * Math expression query
    */
   expression?: string;
   /**
+   * true if query is disabled (ie should not be returned to the dashboard)
+   */
+  hide?: boolean;
+  /**
    * common props
    */
   id: string;
+  /**
+   * Unique, guid like, string used in explore mode
+   */
+  key?: string;
   label?: string;
   metricEditorMode?: MetricEditorMode;
   metricQueryType?: MetricQueryType;
   queryMode?: CloudWatchQueryMode;
+  /**
+   * Specify the query flavor
+   * TODO make this required and give it a default
+   */
+  queryType?: string;
+  /**
+   * A - Z
+   */
+  refId: string;
   sql?: SQLExpression;
   sqlExpression?: string;
 }
@@ -120,7 +165,7 @@ export interface QueryEditorArrayExpression {
   type: QueryEditorExpressionType;
 }
 
-export interface CloudWatchLogsQuery {
+export interface CloudWatchLogsQuery extends common.DataQuery {
   expression?: string;
   id: string;
   /**
@@ -146,4 +191,4 @@ export interface LogGroup {
   name: string;
 }
 
-export interface CloudWatch extends common.DataQuery {}
+export interface CloudWatch {}

@@ -215,31 +215,23 @@ const (
 )
 
 // CloudWatchDataQuery defines model for CloudWatchDataQuery.
-type CloudWatchDataQuery struct {
+type CloudWatchDataQuery map[string]interface{}
+
+// CloudWatchLogsQuery defines model for CloudWatchLogsQuery.
+type CloudWatchLogsQuery struct {
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
 	// TODO find a better way to do this ^ that's friendly to schema
 	// TODO this shouldn't be unknown but DataSourceRef | null
 	Datasource *interface{} `json:"datasource,omitempty"`
+	Expression *string      `json:"expression,omitempty"`
 
 	// true if query is disabled (ie should not be returned to the dashboard)
-	Hide *bool `json:"hide,omitempty"`
+	Hide *bool  `json:"hide,omitempty"`
+	Id   string `json:"id"`
 
 	// Unique, guid like, string used in explore mode
 	Key *string `json:"key,omitempty"`
-
-	// Specify the query flavor
-	// TODO make this required and give it a default
-	QueryType *string `json:"queryType,omitempty"`
-
-	// A - Z
-	RefId string `json:"refId"`
-}
-
-// CloudWatchLogsQuery defines model for CloudWatchLogsQuery.
-type CloudWatchLogsQuery struct {
-	Expression *string `json:"expression,omitempty"`
-	Id         string  `json:"id"`
 
 	// deprecated, use logGroups instead
 	LogGroupNames *[]string `json:"logGroupNames,omitempty"`
@@ -249,9 +241,16 @@ type CloudWatchLogsQuery struct {
 		Arn          string  `json:"arn"`
 		Name         string  `json:"name"`
 	} `json:"logGroups,omitempty"`
-	QueryMode   CloudWatchLogsQueryQueryMode `json:"queryMode"`
-	Region      string                       `json:"region"`
-	StatsGroups *[]string                    `json:"statsGroups,omitempty"`
+	QueryMode CloudWatchLogsQueryQueryMode `json:"queryMode"`
+
+	// Specify the query flavor
+	// TODO make this required and give it a default
+	QueryType *string `json:"queryType,omitempty"`
+
+	// A - Z
+	RefId       string    `json:"refId"`
+	Region      string    `json:"region"`
+	StatsGroups *[]string `json:"statsGroups,omitempty"`
 }
 
 // CloudWatchLogsQueryQueryMode defines model for CloudWatchLogsQuery.QueryMode.
@@ -259,18 +258,44 @@ type CloudWatchLogsQueryQueryMode string
 
 // #CloudWatchMetricsQuery | #CloudWatchLogsQuery
 type CloudWatchMetricsQuery struct {
-	Alias *string `json:"alias,omitempty"`
+	AccountId *string `json:"accountId,omitempty"`
+	Alias     *string `json:"alias,omitempty"`
+
+	// For mixed data sources the selected datasource is on the query level.
+	// For non mixed scenarios this is undefined.
+	// TODO find a better way to do this ^ that's friendly to schema
+	// TODO this shouldn't be unknown but DataSourceRef | null
+	Datasource *interface{}           `json:"datasource,omitempty"`
+	Dimensions map[string]interface{} `json:"dimensions,omitempty"`
 
 	// Math expression query
 	Expression *string `json:"expression,omitempty"`
 
+	// true if query is disabled (ie should not be returned to the dashboard)
+	Hide *bool `json:"hide,omitempty"`
+
 	// common props
-	Id               string                                  `json:"id"`
+	Id string `json:"id"`
+
+	// Unique, guid like, string used in explore mode
+	Key              *string                                 `json:"key,omitempty"`
 	Label            *string                                 `json:"label,omitempty"`
+	MatchExact       *bool                                   `json:"matchExact,omitempty"`
 	MetricEditorMode *CloudWatchMetricsQueryMetricEditorMode `json:"metricEditorMode,omitempty"`
+	MetricName       *string                                 `json:"metricName,omitempty"`
 	MetricQueryType  *CloudWatchMetricsQueryMetricQueryType  `json:"metricQueryType,omitempty"`
+	Namespace        string                                  `json:"namespace"`
+	Period           *string                                 `json:"period,omitempty"`
 	QueryMode        *CloudWatchMetricsQueryQueryMode        `json:"queryMode,omitempty"`
-	Sql              *struct {
+
+	// Specify the query flavor
+	// TODO make this required and give it a default
+	QueryType *string `json:"queryType,omitempty"`
+
+	// A - Z
+	RefId  string `json:"refId"`
+	Region string `json:"region"`
+	Sql    *struct {
 		From    *interface{} `json:"from,omitempty"`
 		GroupBy *struct {
 			Expressions interface{}                          `json:"expressions"`
@@ -300,6 +325,10 @@ type CloudWatchMetricsQuery struct {
 		} `json:"where,omitempty"`
 	} `json:"sql,omitempty"`
 	SqlExpression *string `json:"sqlExpression,omitempty"`
+	Statistic     *string `json:"statistic,omitempty"`
+
+	// @deprecated use statistic
+	Statistics *[]string `json:"statistics,omitempty"`
 }
 
 // CloudWatchMetricsQueryMetricEditorMode defines model for CloudWatchMetricsQuery.MetricEditorMode.
@@ -345,6 +374,21 @@ type MetricEditorMode int
 
 // MetricQueryType defines model for MetricQueryType.
 type MetricQueryType int
+
+// MetricStat defines model for MetricStat.
+type MetricStat struct {
+	AccountId  *string                `json:"accountId,omitempty"`
+	Dimensions map[string]interface{} `json:"dimensions,omitempty"`
+	MatchExact *bool                  `json:"matchExact,omitempty"`
+	MetricName *string                `json:"metricName,omitempty"`
+	Namespace  string                 `json:"namespace"`
+	Period     *string                `json:"period,omitempty"`
+	Region     string                 `json:"region"`
+	Statistic  *string                `json:"statistic,omitempty"`
+
+	// @deprecated use statistic
+	Statistics *[]string `json:"statistics,omitempty"`
+}
 
 // QueryEditorArrayExpression defines model for QueryEditorArrayExpression.
 type QueryEditorArrayExpression struct {
