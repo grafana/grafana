@@ -4,7 +4,14 @@ import React, { PureComponent } from 'react';
 import Highlighter from 'react-highlight-words';
 import tinycolor from 'tinycolor2';
 
-import { LogRowModel, findHighlightChunksInText, GrafanaTheme2, LogsSortOrder, CoreApp } from '@grafana/data';
+import {
+  LogRowModel,
+  findHighlightChunksInText,
+  GrafanaTheme2,
+  LogsSortOrder,
+  CoreApp,
+  DataSourceWithLogsContextSupport,
+} from '@grafana/data';
 import { withTheme2, Themeable2, IconButton, Tooltip } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
@@ -26,9 +33,11 @@ interface Props extends Themeable2 {
   app?: CoreApp;
   scrollElement?: HTMLDivElement;
   showContextToggle?: (row?: LogRowModel) => boolean;
+  getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
   getRows: () => LogRowModel[];
   onToggleContext: (method: string) => void;
   updateLimit?: () => void;
+  runContextQuery?: () => void;
   logsSortOrder?: LogsSortOrder | null;
 }
 
@@ -154,6 +163,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
       errors,
       hasMoreContextRows,
       updateLimit,
+      runContextQuery,
       context,
       contextIsOpen,
       showRowMenu,
@@ -163,6 +173,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
       app,
       logsSortOrder,
       showContextToggle,
+      getLogRowContextUi,
     } = this.props;
 
     const style = getLogRowStyles(theme, row.logLevel);
@@ -191,6 +202,8 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
             {contextIsOpen && context && (
               <LogRowContext
                 row={row}
+                getLogRowContextUi={getLogRowContextUi}
+                runContextQuery={runContextQuery}
                 context={context}
                 errors={errors}
                 wrapLogMessage={wrapLogMessage}

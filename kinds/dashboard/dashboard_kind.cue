@@ -30,8 +30,8 @@ lineage: seqs: [
 				tags?: [...string] @grafanamaturity(NeedsExpertReview)
 				// Theme of dashboard.
 				style: "light" | *"dark" @grafanamaturity(NeedsExpertReview)
-				// Timezone of dashboard,
-				timezone?: *"browser" | "utc" | "" @grafanamaturity(NeedsExpertReview)
+				// Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc".
+				timezone?: string | *"browser"
 				// Whether a dashboard is editable or not.
 				editable: bool | *true
 				// Configuration of dashboard cursor sync behavior.
@@ -63,8 +63,8 @@ lineage: seqs: [
 				// TODO docs
 				weekStart?: string @grafanamaturity(NeedsExpertReview)
 
-				// TODO docs
-				refresh?: string | false @grafanamaturity(NeedsExpertReview)
+				// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
+				refresh?: string | false
 				// Version of the JSON schema, incremented each time a Grafana update brings
 				// changes to said schema.
 				// TODO this is the existing schema numbering system. It will be replaced by Thema's themaVersion
@@ -397,6 +397,9 @@ lineage: seqs: [
 					// TODO tighter constraint
 					timeShift?: string @grafanamaturity(NeedsExpertReview)
 
+					// Dynamically load the panel
+					libraryPanel?: #LibraryPanelRef
+
 					// options is specified by the PanelOptions field in panel
 					// plugin schemas.
 					options: {...} @grafanamaturity(NeedsExpertReview)
@@ -411,6 +414,11 @@ lineage: seqs: [
 						properties: [...#DynamicConfigValue]
 					}] @grafanamaturity(NeedsExpertReview)
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
+
+				#LibraryPanelRef: {
+					name: string
+					uid:  string
+				} @cuetsy(kind="interface")
 
 				#MatcherConfig: {
 					id:       string | *"" @grafanamaturity(NeedsExpertReview)

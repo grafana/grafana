@@ -17,15 +17,6 @@ const (
 	StyleLight Style = "light"
 )
 
-// Defines values for Timezone.
-const (
-	TimezoneBrowser Timezone = "browser"
-
-	TimezoneEmpty Timezone = ""
-
-	TimezoneUtc Timezone = "utc"
-)
-
 // Defines values for CursorSync.
 const (
 	CursorSyncN0 CursorSync = 0
@@ -240,7 +231,7 @@ type Dashboard struct {
 	LiveNow *bool          `json:"liveNow,omitempty"`
 	Panels  *[]interface{} `json:"panels,omitempty"`
 
-	// TODO docs
+	// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
 	Refresh *interface{} `json:"refresh,omitempty"`
 
 	// Version of the current dashboard data
@@ -290,8 +281,8 @@ type Dashboard struct {
 		TimeOptions []string `json:"time_options"`
 	} `json:"timepicker,omitempty"`
 
-	// Timezone of dashboard,
-	Timezone *Timezone `json:"timezone,omitempty"`
+	// Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc".
+	Timezone *string `json:"timezone,omitempty"`
 
 	// Title of dashboard.
 	Title *string `json:"title,omitempty"`
@@ -308,9 +299,6 @@ type Dashboard struct {
 
 // Theme of dashboard.
 type Style string
-
-// Timezone of dashboard,
-type Timezone string
 
 // 0 for no shared crosshair or tooltip (default).
 // 1 for shared crosshair.
@@ -470,6 +458,12 @@ type HeatmapPanel struct {
 // HeatmapPanelType defines model for HeatmapPanel.Type.
 type HeatmapPanelType string
 
+// LibraryPanelRef defines model for LibraryPanelRef.
+type LibraryPanelRef struct {
+	Name string `json:"name"`
+	Uid  string `json:"uid"`
+}
+
 // LoadingState defines model for LoadingState.
 type LoadingState string
 
@@ -502,7 +496,8 @@ type Panel struct {
 
 	// TODO docs
 	// TODO tighter constraint
-	Interval *string `json:"interval,omitempty"`
+	Interval     *string          `json:"interval,omitempty"`
+	LibraryPanel *LibraryPanelRef `json:"libraryPanel,omitempty"`
 
 	// Panel links.
 	// TODO fill this out - seems there are a couple variants?

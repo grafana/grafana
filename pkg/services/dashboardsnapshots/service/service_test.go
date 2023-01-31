@@ -17,7 +17,7 @@ import (
 
 func TestDashboardSnapshotsService(t *testing.T) {
 	sqlStore := db.InitTestDB(t)
-	dsStore := dashsnapdb.ProvideStore(sqlStore)
+	dsStore := dashsnapdb.ProvideStore(sqlStore, setting.NewCfg())
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(sqlStore))
 	s := ProvideService(dsStore, secretsService)
 

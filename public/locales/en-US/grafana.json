@@ -13,7 +13,7 @@
       "search": "Search"
     },
     "search-box": {
-      "placeholder": "Search or jump to..."
+      "placeholder": "Search Grafana"
     },
     "section": {
       "actions": "Actions",
@@ -160,7 +160,7 @@
       "title": "Alert rules"
     },
     "alerting-receivers": {
-      "subtitle": "Decide how your contacts are notified when an alert fires",
+      "subtitle": "Choose how to notify your  contact points when an alert instance fires",
       "title": "Contact points"
     },
     "alerting-silences": {
@@ -191,7 +191,7 @@
       "title": "Create"
     },
     "create-alert": {
-      "title": "New alert rule"
+      "title": "Create alert rule"
     },
     "create-dashboard": {
       "title": "Dashboard"
@@ -229,7 +229,6 @@
     "help/documentation": "Documentation",
     "help/keyboard-shortcuts": "Keyboard shortcuts",
     "help/support": "Support",
-    "help/support-bundle": "Support Bundles",
     "home": {
       "title": "Home"
     },
@@ -292,7 +291,8 @@
       "title": "Scenes"
     },
     "search": {
-      "placeholder": "Search Grafana"
+      "placeholder": "Search Grafana",
+      "placeholderCommandPalette": "Search or jump to..."
     },
     "search-dashboards": {
       "title": "Search dashboards"
@@ -489,7 +489,8 @@
     "theme": {
       "dark-label": "Dark",
       "default-label": "Default",
-      "light-label": "Light"
+      "light-label": "Light",
+      "system-label": "System"
     },
     "title": "Preferences"
   },

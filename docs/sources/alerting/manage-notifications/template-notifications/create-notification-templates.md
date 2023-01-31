@@ -24,7 +24,7 @@ In the Contact points tab, you can see a list of your notification templates.
 
 To create a template, complete the following steps.
 
-1. Click New template.
+1. Click **Add template**.
 
 2. Choose a name for the notification template.
 
@@ -40,7 +40,7 @@ To create a template, complete the following steps.
 
 To create a notification template that contains more than one template:
 
-1. Click New Template.
+1. Click **Add Template**.
 
 2. Enter a name for the notification template.
 
