@@ -2,10 +2,11 @@ package k8saccess
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/bridge"
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
@@ -88,10 +89,10 @@ func (s *k8sDashboardService) MakeUserAdmin(ctx context.Context, orgID int64, us
 // - how do we translate incoming dashboard DTO to dashboard kind?
 func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO, allowUiUpdate bool) (*dashboards.Dashboard, error) {
 	namespace := "default"
-	restClient := s.clientSet.RESTClient()
+	//restClient := s.clientSet.Clientset.RESTClient()
 
-	labels := make(map[string]string)
-	annotations := make(map[string]string)
+	//labels := make(map[string]string)
+	//annotations := make(map[string]string)
 
 	// take the kindsys dashboard kind and alias it so it's easier to distinguish from dashboards.Dashboard
 	type dashboardKind = dashboard.Dashboard
@@ -109,39 +110,35 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 			APIVersion: dashboardCRD.GVK().Group + "/" + dashboardCRD.GVK().Version,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace:   namespace,
-			Name:        dto.Dashboard.Title,
-			Labels:      labels,
-			Annotations: annotations,
+			Namespace: namespace,
+			Name:      dto.Dashboard.Title,
 		},
 		Spec: d,
 	}
 
-	raw, err := json.Marshal(&b)
+	gk := schema.GroupKind{
+		Group: dashboardCRD.GVK().Group,
+		Kind:  dashboardCRD.GVK().Kind,
+	}
+
+	resource, err := s.clientSet.GetResource(gk, namespace, dashboardCRD.GVK().Version)
 	if err != nil {
 		return nil, err
 	}
 
-	fmt.Println("json", string(raw))
-	status := 0
-	fmt.Println("UID", "uid", dashboardCRD.Schema.Spec.Names.Plural+"."+dashboardCRD.GVK().Group)
-	req := restClient.
-		Post().
-		Resource(dashboardCRD.Schema.Spec.Names.Plural).
-		Namespace(namespace).
-		Name(dto.Dashboard.Title).
-		Body(raw)
+	o, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&b)
+	if err != nil {
+		return nil, err
+	}
 
-	// should be
-	// https://localhost:8443/apis/dashboard.core.grafana.com/v0-0alpha1/namespaces/default/dashboards?limit=500
-	fmt.Println("req", req.URL())
+	uObj := &unstructured.Unstructured{
+		Object: o,
+	}
 
-	res, err := req.
-		Do(ctx).
-		StatusCode(&status).
-		Raw()
-
-	fmt.Println(string(res))
+	_, err = resource.Create(ctx, uObj, metav1.CreateOptions{})
+	if err != nil {
+		return nil, err
+	}
 
 	return dto.Dashboard, err
 }
