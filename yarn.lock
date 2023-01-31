@@ -5151,9 +5151,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@portal:/home/torkel/dev/scenes::locator=grafana%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@grafana/scenes@portal:/home/torkel/dev/scenes::locator=grafana%40workspace%3A."
+"@grafana/scenes@npm:latest":
+  version: 0.0.8
+  resolution: "@grafana/scenes@npm:0.0.8"
   dependencies:
     "@grafana/e2e-selectors": canary
     "@grafana/experimental": 1.0.1
@@ -5161,8 +5161,9 @@ __metadata:
     react-use: 17.4.0
     react-virtualized-auto-sizer: 1.0.7
     uuid: ^9.0.0
+  checksum: 4c76ca9850906b98fc9131b48ea6a664f84a0f8ac5f7d87543d73f8ca8214c33483fc4454447e46d67096826f7cb32f3db70461323e65aefc241c4169c88fd98
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "@grafana/schema@9.4.0-pre, @grafana/schema@workspace:*, @grafana/schema@workspace:packages/grafana-schema":
   version: 0.0.0-use.local
@@ -16563,20 +16564,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"copy-webpack-plugin@npm:9.0.1":
-  version: 9.0.1
-  resolution: "copy-webpack-plugin@npm:9.0.1"
+"copy-webpack-plugin@npm:11.0.0":
+  version: 11.0.0
+  resolution: "copy-webpack-plugin@npm:11.0.0"
   dependencies:
-    fast-glob: ^3.2.5
-    glob-parent: ^6.0.0
-    globby: ^11.0.3
+    fast-glob: ^3.2.11
+    glob-parent: ^6.0.1
+    globby: ^13.1.1
     normalize-path: ^3.0.0
-    p-limit: ^3.1.0
-    schema-utils: ^3.0.0
+    schema-utils: ^4.0.0
     serialize-javascript: ^6.0.0
   peerDependencies:
     webpack: ^5.1.0
-  checksum: f3e69883e173f9a298b63dcf35ba5aafc02e252c67c236029424af19fb2e36fc93de94054bd7a9ada8b4cbcc4e96e9a3a269f972e4a45f4fd1b32a3d199d2cae
+  checksum: df4f8743f003a29ee7dd3d9b1789998a3a99051c92afb2ba2203d3dacfa696f4e757b275560fafb8f206e520a0aa78af34b990324a0e36c2326cefdeef3ca82e
   languageName: node
   linkType: hard
 
@@ -20535,7 +20535,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fast-glob@npm:3.2.7, fast-glob@npm:^3.1.1, fast-glob@npm:^3.2.5":
+"fast-glob@npm:3.2.7, fast-glob@npm:^3.1.1":
   version: 3.2.7
   resolution: "fast-glob@npm:3.2.7"
   dependencies:
@@ -20562,7 +20562,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fast-glob@npm:^3.2.12":
+"fast-glob@npm:^3.2.11, fast-glob@npm:^3.2.12":
   version: 3.2.12
   resolution: "fast-glob@npm:3.2.12"
   dependencies:
@@ -21705,7 +21705,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"glob-parent@npm:^6.0.0, glob-parent@npm:^6.0.1, glob-parent@npm:^6.0.2":
+"glob-parent@npm:^6.0.1, glob-parent@npm:^6.0.2":
   version: 6.0.2
   resolution: "glob-parent@npm:6.0.2"
   dependencies:
@@ -21921,6 +21921,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"globby@npm:^13.1.1":
+  version: 13.1.3
+  resolution: "globby@npm:13.1.3"
+  dependencies:
+    dir-glob: ^3.0.1
+    fast-glob: ^3.2.11
+    ignore: ^5.2.0
+    merge2: ^1.4.1
+    slash: ^4.0.0
+  checksum: 93f06e02002cdf368f7e3d55bd59e7b00784c7cc8fe92c7ee5082cc7171ff6109fda45e1c97a80bb48bc811dedaf7843c7c9186f5f84bde4883ab630e13c43df
+  languageName: node
+  linkType: hard
+
 "globby@npm:^9.2.0":
   version: 9.2.0
   resolution: "globby@npm:9.2.0"
@@ -22012,7 +22025,7 @@ __metadata:
     "@grafana/lezer-logql": 0.1.1
     "@grafana/monaco-logql": ^0.0.6
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": "portal:/home/torkel/dev/scenes"
+    "@grafana/scenes": latest
     "@grafana/schema": "workspace:*"
     "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.2.0-rc1
@@ -22137,7 +22150,7 @@ __metadata:
     combokeys: ^3.0.0
     comlink: 4.3.1
     common-tags: 1.8.2
-    copy-webpack-plugin: 9.0.1
+    copy-webpack-plugin: 11.0.0
     core-js: 3.27.1
     css-loader: 6.7.1
     css-minimizer-webpack-plugin: 4.2.2
@@ -22233,7 +22246,7 @@ __metadata:
     rc-tree: 5.7.0
     re-resizable: 6.9.9
     react: 17.0.2
-    react-awesome-query-builder: 5.3.1
+    react-awesome-query-builder: 5.4.0
     react-beautiful-dnd: 13.1.1
     react-diff-viewer: ^3.1.1
     react-dom: 17.0.2
@@ -32476,9 +32489,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-awesome-query-builder@npm:5.3.1":
-  version: 5.3.1
-  resolution: "react-awesome-query-builder@npm:5.3.1"
+"react-awesome-query-builder@npm:5.4.0":
+  version: 5.4.0
+  resolution: "react-awesome-query-builder@npm:5.4.0"
   dependencies:
     "@date-io/moment": ^1.3.13
     classnames: ^2.3.1
@@ -32512,7 +32525,7 @@ __metadata:
     react: ^16.8.4 || ^17.0.1 || ^18.0.0
     react-dom: ^16.8.4 || ^17.0.1 || ^18.0.0
     reactstrap: ^9.0.0
-  checksum: d9c27f5c0ce66ab9ad3f57f7c003471afd5465f732e2359ff916a6f62d0161ccf33a738bd67349d0b82384561242714c8d29f0216c8d5148fdb10c420f5fe914
+  checksum: 96f97b94c6544549e9d0991cec3f7753db722066ed2c24ba75cc0c8f90f2b04ab7f338c6a4a124bac78a0916c53ea864af4382ecb552e283602941c40ae9a035
   languageName: node
   linkType: hard
 
@@ -35234,6 +35247,13 @@ __metadata:
   version: 3.0.0
   resolution: "slash@npm:3.0.0"
   checksum: 94a93fff615f25a999ad4b83c9d5e257a7280c90a32a7cb8b4a87996e4babf322e469c42b7f649fd5796edd8687652f3fb452a86dc97a816f01113183393f11c
+  languageName: node
+  linkType: hard
+
+"slash@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "slash@npm:4.0.0"
+  checksum: da8e4af73712253acd21b7853b7e0dbba776b786e82b010a5bfc8b5051a1db38ed8aba8e1e8f400dd2c9f373be91eb1c42b66e91abb407ff42b10feece5e1d2d
   languageName: node
   linkType: hard
 
