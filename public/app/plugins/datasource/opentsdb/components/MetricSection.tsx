@@ -16,7 +16,6 @@ export interface MetricSectionProps {
 
 export function MetricSection({ query, onChange, onRunQuery, suggestMetrics, aggregators }: MetricSectionProps) {
   const aggregatorOptions = aggregators.map((value: string) => toOption(value));
-
   const metricSearch = debounce((query: string) => suggestMetrics(query), 350);
 
   return (
