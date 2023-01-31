@@ -191,9 +191,9 @@ func validateRuleGroup(
 			uids[rule.UID] = idx
 		}
 
-		ruleWithOptionals := ngmodels.AlertRuleWithOptionals{AlertRule: *rule}
-
+		ruleWithOptionals := ngmodels.AlertRuleWithOptionals{}
 		original := ruleGroupConfig.Rules[idx]
+
 		if alert := original.GrafanaManagedAlert; alert != nil {
 			isPaused := alert.IsPaused
 			if isPaused != nil {
@@ -202,6 +202,7 @@ func validateRuleGroup(
 			}
 		}
 		rule.RuleGroupIndex = idx + 1
+		ruleWithOptionals.AlertRule = *rule
 		result = append(result, &ruleWithOptionals)
 	}
 	return result, nil
