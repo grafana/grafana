@@ -38,6 +38,11 @@ func (ls *Implementation) CreateUser(cmd models.CreateUserCommand) (*models.User
 
 // UpsertUser updates an existing user, or if it doesn't exist, inserts a new one.
 func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUserCommand) error {
+	var logger log.Logger = logger
+	if cmd.ReqContext != nil && cmd.ReqContext.Logger != nil {
+		logger = cmd.ReqContext.Logger
+	}
+
 	extUser := cmd.ExternalUser
 
 	user, err := ls.AuthInfoService.LookupAndUpdate(ctx, &models.GetUserByAuthInfoQuery{
@@ -50,13 +55,13 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *models.UpsertUser
 			return err
 		}
 		if !cmd.SignupAllowed {
-			cmd.ReqContext.Logger.Warn("Not allowing login, user not found in internal user database and allow signup = false", "authmode", extUser.AuthModule)
+			logger.Warn("Not allowing login, user not found in internal user database and allow signup = false", "authmode", extUser.AuthModule)
 			return login.ErrSignupNotAllowed
 		}
 
 		limitReached, err := ls.QuotaService.QuotaReached(cmd.ReqContext, "user")
 		if err != nil {
-			cmd.ReqContext.Logger.Warn("Error getting user quota.", "error", err)
+			logger.Warn("Error getting user quota.", "error", err)
 			return login.ErrGettingUserQuota
 		}
 		if limitReached {
