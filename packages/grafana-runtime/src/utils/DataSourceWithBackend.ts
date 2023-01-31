@@ -2,19 +2,19 @@ import { merge, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
 import {
-  DataSourceApi,
+  DataFrame,
+  dataFrameToJSON,
+  DataQuery,
   DataQueryRequest,
   DataQueryResponse,
+  DataSourceApi,
   DataSourceInstanceSettings,
-  DataQuery,
   DataSourceJsonData,
-  ScopedVars,
-  makeClassES5Compatible,
-  DataFrame,
-  parseLiveChannelAddress,
-  getDataSourceRef,
   DataSourceRef,
-  dataFrameToJSON,
+  getDataSourceRef,
+  makeClassES5Compatible,
+  parseLiveChannelAddress,
+  ScopedVars,
 } from '@grafana/data';
 
 import { config } from '../config';
@@ -22,8 +22,8 @@ import {
   getBackendSrv,
   getDataSourceSrv,
   getGrafanaLiveSrv,
-  StreamingFrameOptions,
   StreamingFrameAction,
+  StreamingFrameOptions,
 } from '../services';
 
 import { BackendDataSourceResponse, toDataQueryResponse } from './queryResponse';
