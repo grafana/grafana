@@ -299,7 +299,6 @@ var irregularPluginNames = map[string]string{
 	"azuremonitor":          "grafana-azure-monitor-datasource",
 	"microsoftsqlserver":    "mssql",
 	"postgresql":            "postgres",
-	"testdatadb":            "testdata",
 }
 
 func buildComposableLinks(pp plugindef.PluginDef, cp kindsys.ComposableProperties) KindLinks {
