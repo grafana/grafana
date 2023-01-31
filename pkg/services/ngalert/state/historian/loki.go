@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sort"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
@@ -85,6 +84,13 @@ func (h *RemoteLokiBackend) statesToStreams(rule history_model.RuleMeta, states 
 			Current:       state.Formatted(),
 			Values:        valuesAsDataBlob(state.State),
 		}
+		if state.State.State == eval.Error {
+			entry.Error = state.Error.Error()
+		}
+		if state.State.State == eval.NoData {
+			entry.NoData = true
+		}
+
 		jsn, err := json.Marshal(entry)
 		if err != nil {
 			logger.Error("Failed to construct history record for state, skipping", "error", err)
@@ -126,28 +132,15 @@ type lokiEntry struct {
 	SchemaVersion int              `json:"schemaVersion"`
 	Previous      string           `json:"previous"`
 	Current       string           `json:"current"`
+	Error         string           `json:"error"`
+	NoData        bool             `json:"noData"`
 	Values        *simplejson.Json `json:"values"`
 }
 
 func valuesAsDataBlob(state *state.State) *simplejson.Json {
-	jsonData := simplejson.New()
-
-	switch state.State {
-	case eval.Error:
-		if state.Error == nil {
-			jsonData.Set("error", nil)
-		} else {
-			jsonData.Set("error", state.Error.Error())
-		}
-	case eval.NoData:
-		jsonData.Set("noData", true)
-	default:
-		keys := make([]string, 0, len(state.Values))
-		for k := range state.Values {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-		jsonData.Set("values", simplejson.NewFromAny(state.Values))
+	if state.State == eval.Error || state.State == eval.NoData {
+		return simplejson.New()
 	}
-	return jsonData
+
+	return jsonifyValues(state.Values)
 }
