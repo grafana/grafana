@@ -41,6 +41,7 @@ export const BarGaugeCell: FC<TableCellProps> = (props) => {
   // and update the valueMode if defined
   let barGaugeMode: BarGaugeDisplayMode = BarGaugeDisplayMode.Gradient;
   let valueMode: BarGaugeValueMode | undefined = undefined;
+
   if (cellOptions.type === TableCellDisplayMode.Gauge) {
     barGaugeMode = cellOptions.mode ?? BarGaugeDisplayMode.Gradient;
     valueMode = cellOptions.valueMode !== undefined ? cellOptions.valueMode : BarGaugeValueMode.Text;

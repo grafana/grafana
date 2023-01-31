@@ -39,7 +39,7 @@ interface OwnProps extends GrafanaRouteComponentProps<{ id: string }> {
   error?: UserAdminError;
 }
 
-const SyncedOAuthLabels: string[] = ['GitHub', 'GitLab', 'OAuth'];
+const SyncedOAuthLabels: string[] = ['OAuth'];
 
 export class UserAdminPage extends PureComponent<Props> {
   async componentDidMount() {
@@ -113,8 +113,11 @@ export class UserAdminPage extends PureComponent<Props> {
       user?.isExternal && user?.authLabels?.some((r) => SyncedOAuthLabels.includes(r));
     const isSAMLUser = user?.isExternal && user?.authLabels?.includes('SAML');
     const isGoogleUser = user?.isExternal && user?.authLabels?.includes('Google');
+    const isGithubUser = user?.isExternal && user?.authLabels?.includes('GitHub');
+    const isGitLabUser = user?.isExternal && user?.authLabels?.includes('GitLab');
     const isAuthProxyUser = user?.isExternal && user?.authLabels?.includes('Auth Proxy');
     const isAzureADUser = user?.isExternal && user?.authLabels?.includes('AzureAD');
+    const isOktaUser = user?.isExternal && user?.authLabels?.includes('Okta');
     const isGrafanaComUser = user?.isExternal && user?.authLabels?.includes('grafana.com');
     const isUserSynced =
       !config.auth.DisableSyncLock &&
@@ -122,9 +125,12 @@ export class UserAdminPage extends PureComponent<Props> {
         !(
           isAuthProxyUser ||
           isGoogleUser ||
+          isGitLabUser ||
           isOAuthUserWithSkippableSync ||
           isSAMLUser ||
+          isOktaUser ||
           isLDAPUser ||
+          isGithubUser ||
           isAzureADUser ||
           isJWTUser ||
           isGrafanaComUser
@@ -135,7 +141,11 @@ export class UserAdminPage extends PureComponent<Props> {
         (!config.auth.JWTAuthSkipOrgRoleSync && isJWTUser) ||
         // both OAuthSkipOrgRoleUpdateSync and specific provider settings needs to be false for a user to be synced
         (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.GrafanaComSkipOrgRoleSync && isGrafanaComUser) ||
-        (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.AzureADSkipOrgRoleSync && isAzureADUser));
+        (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.OktaSkipOrgRoleSync && isOktaUser) ||
+        (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.GithubSkipOrgRoleSync && isGithubUser) ||
+        (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.AzureADSkipOrgRoleSync && isAzureADUser) ||
+        (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.GitLabSkipOrgRoleSync && isGitLabUser) ||
+        (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.GoogleSkipOrgRoleSync && isGoogleUser));
 
     const pageNav: NavModelItem = {
       text: user?.login ?? '',

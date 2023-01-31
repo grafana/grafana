@@ -14,7 +14,7 @@ import (
 const prefix = "github.com/grafana/grafana/public/app/plugins"
 
 // PluginTreeListJenny creates a [codejen.ManyToOne] that produces Go code
-// for loading a [pfs.TreeList] given [*kindsys.PluginDecl] as inputs.
+// for loading a [pfs.PluginList] given [*kindsys.PluginDecl] as inputs.
 func PluginTreeListJenny() codejen.ManyToOne[*pfs.PluginDecl] {
 	outputFile := filepath.Join("pkg", "plugins", "pfs", "corelist", "corelist_load_gen.go")
 

@@ -99,7 +99,7 @@ Each linked query consists of:
 
 ### Enable Node Graph
 
-The **Node Graph** setting enables the beta [Node Graph visualization]({{< relref "../../panels-visualizations/visualizations/node-graph/" >}}), which is disabled by default.
+The **Node Graph** setting enables the [Node Graph visualization]({{< relref "../../panels-visualizations/visualizations/node-graph/" >}}), which is disabled by default.
 
 Once enabled, Grafana displays the Node Graph after loading the trace view.
 
@@ -154,7 +154,7 @@ datasources:
         tags: [{ key: 'service.name', value: 'service' }, { key: 'job' }]
         queries:
           - name: 'Sample query'
-            query: 'sum(rate(tempo_spanmetrics_latency_bucket{$__tags}[5m]))'
+            query: 'sum(rate(traces_spanmetrics_latency_bucket{$__tags}[5m]))'
     secureJsonData:
       basicAuthPassword: my_password
 ```

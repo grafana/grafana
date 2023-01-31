@@ -6,7 +6,7 @@ import React, { PureComponent } from 'react';
 import { QueryEditorHelpProps } from '@grafana/data';
 import { flattenTokens } from '@grafana/ui/src/slate-plugins/slate-prism';
 
-import tokenizer from '../syntax';
+import tokenizer from '../language/cloudwatch-logs/syntax';
 import { CloudWatchQuery } from '../types';
 
 interface QueryExample {
@@ -237,6 +237,7 @@ export default class LogsCheatSheet extends PureComponent<
             region: this.props.query.region,
             id: this.props.query.refId ?? 'A',
             logGroupNames: 'logGroupNames' in this.props.query ? this.props.query.logGroupNames : [],
+            logGroups: 'logGroups' in this.props.query ? this.props.query.logGroups : [],
           })
         }
       >
