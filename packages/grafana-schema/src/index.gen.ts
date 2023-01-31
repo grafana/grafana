@@ -25,7 +25,6 @@ export type {
   RegexMap,
   SpecialValueMap,
   ValueMappingResult,
-  Transformation,
   LibraryPanelRef,
   RowPanel,
   GraphPanel,
@@ -44,7 +43,6 @@ export {
   defaultThresholdsConfig,
   MappingType,
   SpecialValueMatch,
-  defaultTransformation,
   DashboardCursorSync,
   defaultDashboardCursorSync,
   defaultRowPanel
@@ -63,6 +61,7 @@ export type {
   Dashboard,
   VariableModel,
   DataSourceRef,
+  DataTransformerConfig,
   Panel,
   FieldConfigSource,
   MatcherConfig,
