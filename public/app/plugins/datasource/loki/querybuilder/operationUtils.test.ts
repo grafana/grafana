@@ -163,47 +163,24 @@ describe('getLineFilterRenderer', () => {
 });
 
 describe('labelFilterRenderer', () => {
-  const MOCK_MODEL = { id: '__label_filter', params: ['', '', ''] };
+  const MOCK_MODEL = { id: '__label_filter', params: ['label', '', 'value'] };
   const MOCK_DEF = undefined as unknown as QueryBuilderOperationDef;
   const MOCK_INNER_EXPR = '{job="grafana"}';
 
-  it('should wrap the label value in `` when operator is "="', () => {
-    MOCK_MODEL.params = ['label', '=', 'value'];
-    expect(labelFilterRenderer(MOCK_MODEL, MOCK_DEF, MOCK_INNER_EXPR)).toBe('{job="grafana"} | label = `value`');
-  });
-
-  it('should wrap the label value in `` when operator is "!="', () => {
-    MOCK_MODEL.params = ['label', '!=', 'value'];
-    expect(labelFilterRenderer(MOCK_MODEL, MOCK_DEF, MOCK_INNER_EXPR)).toBe('{job="grafana"} | label != `value`');
-  });
-
-  it('should wrap the label value in `` when operator is "=~"', () => {
-    MOCK_MODEL.params = ['label', '=~', 'value'];
-    expect(labelFilterRenderer(MOCK_MODEL, MOCK_DEF, MOCK_INNER_EXPR)).toBe('{job="grafana"} | label =~ `value`');
-  });
-
-  it('should wrap the label value in `` when operator is "!~"', () => {
-    MOCK_MODEL.params = ['label', '!~', 'value'];
-    expect(labelFilterRenderer(MOCK_MODEL, MOCK_DEF, MOCK_INNER_EXPR)).toBe('{job="grafana"} | label !~ `value`');
-  });
-
-  it('should not wrap the label value in `` when operator is ">"', () => {
-    MOCK_MODEL.params = ['label', '>', 'value'];
-    expect(labelFilterRenderer(MOCK_MODEL, MOCK_DEF, MOCK_INNER_EXPR)).toBe('{job="grafana"} | label > value');
-  });
-
-  it('should not wrap the label value in `` when operator is "<"', () => {
-    MOCK_MODEL.params = ['label', '<', 'value'];
-    expect(labelFilterRenderer(MOCK_MODEL, MOCK_DEF, MOCK_INNER_EXPR)).toBe('{job="grafana"} | label < value');
-  });
-
-  it('should not wrap the label value in `` when operator is ">="', () => {
-    MOCK_MODEL.params = ['label', '>=', 'value'];
-    expect(labelFilterRenderer(MOCK_MODEL, MOCK_DEF, MOCK_INNER_EXPR)).toBe('{job="grafana"} | label >= value');
-  });
-
-  it('should not wrap the label value in `` when operator is "<="', () => {
-    MOCK_MODEL.params = ['label', '<=', 'value'];
-    expect(labelFilterRenderer(MOCK_MODEL, MOCK_DEF, MOCK_INNER_EXPR)).toBe('{job="grafana"} | label <= value');
+  it.each`
+    operator | type        | expected
+    ${'='}   | ${'string'} | ${'`value`'}
+    ${'!='}  | ${'string'} | ${'`value`'}
+    ${'=~'}  | ${'string'} | ${'`value`'}
+    ${'!~'}  | ${'string'} | ${'`value`'}
+    ${'>'}   | ${'number'} | ${'value'}
+    ${'>='}  | ${'number'} | ${'value'}
+    ${'<'}   | ${'number'} | ${'value'}
+    ${'<='}  | ${'number'} | ${'value'}
+  `("value should be of type '$type' when operator is: $operator", ({ operator, expected }) => {
+    MOCK_MODEL.params[1] = operator;
+    expect(labelFilterRenderer(MOCK_MODEL, MOCK_DEF, MOCK_INNER_EXPR)).toBe(
+      `{job="grafana"} | label ${operator} ${expected}`
+    );
   });
 });
