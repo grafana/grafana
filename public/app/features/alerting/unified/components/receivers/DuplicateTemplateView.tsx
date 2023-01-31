@@ -4,7 +4,7 @@ import { Alert } from '@grafana/ui';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { generateCopiedName } from '../../utils/duplicate';
-import { updateAndSanitizeDefine } from '../../utils/templates';
+import { updateDefinesWithUniqueValue } from '../../utils/templates';
 
 import { TemplateForm } from './TemplateForm';
 
@@ -31,7 +31,7 @@ export const DuplicateTemplateView: FC<Props> = ({ config, templateName, alertMa
     <TemplateForm
       alertManagerSourceName={alertManagerSourceName}
       config={config}
-      existing={{ name: duplicatedName, content: updateAndSanitizeDefine(duplicatedName, template) }}
+      existing={{ name: duplicatedName, content: updateDefinesWithUniqueValue(template) }}
     />
   );
 };

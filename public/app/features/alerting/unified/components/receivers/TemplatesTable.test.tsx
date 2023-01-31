@@ -61,7 +61,7 @@ describe('TemplatesTable', () => {
   it('Should render duplicate template button when having permissions', () => {
     renderWithProvider();
     const rows = screen.getAllByRole('row', { name: /template1/i });
-    expect(within(rows[0]).getByRole('cell', { name: /duplicate template/i })).toBeInTheDocument();
+    expect(within(rows[0]).getByRole('cell', { name: /Copy/i })).toBeInTheDocument();
   });
   it('Should not render duplicate template button when not having write permissions', () => {
     contextSrvMock.hasPermission.mockImplementation((action) => {
@@ -73,6 +73,6 @@ describe('TemplatesTable', () => {
     });
     renderWithProvider();
     const rows = screen.getAllByRole('row', { name: /template1/i });
-    expect(within(rows[0]).queryByRole('cell', { name: /duplicate template/i })).not.toBeInTheDocument();
+    expect(within(rows[0]).queryByRole('cell', { name: /Copy/i })).not.toBeInTheDocument();
   });
 });
