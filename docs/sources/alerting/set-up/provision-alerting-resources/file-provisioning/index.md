@@ -313,7 +313,7 @@ settings:
 ```yaml
 type: pagerduty
 settings:
-  # <string, required>
+  # <string, required> the 32-character Events API key https://support.pagerduty.com/docs/api-access-keys#events-api-keys
   integrationKey: XXX
   # <string> options: critical, error, warning, info
   severity: critical

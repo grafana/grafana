@@ -133,13 +133,6 @@ const tableStyles = {
     justify-content: space-between;
     height: 100%;
   `,
-  noData: css`
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-  `,
   selectWrapper: css`
     padding: 8px 8px 0px 8px;
   `,

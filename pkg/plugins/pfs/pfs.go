@@ -220,7 +220,7 @@ func ParsePluginFS(fsys fs.FS, rt *thema.Runtime) (ParsedPlugin, error) {
 			return ParsedPlugin{}, err
 		}
 
-		compo, err := kindsys.BindComposable(rt, kindsys.Decl[kindsys.ComposableProperties]{
+		compo, err := kindsys.BindComposable(rt, kindsys.Def[kindsys.ComposableProperties]{
 			Properties: props,
 			V:          iv,
 		})
