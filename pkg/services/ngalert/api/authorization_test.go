@@ -401,7 +401,7 @@ func TestCheckDatasourcePermissionsForRule(t *testing.T) {
 	expressionByType := models.GenerateAlertQuery()
 	expressionByType.QueryType = expr.DatasourceType
 	expressionByUID := models.GenerateAlertQuery()
-	expressionByUID.DatasourceUID = expr.OldDatasourceUID
+	expressionByUID.DatasourceUID = expr.DatasourceUID
 
 	var data []models.AlertQuery
 	var scopes []string

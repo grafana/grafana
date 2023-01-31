@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -737,7 +738,7 @@ func insertTestRule(t *testing.T, sqlStore sqlstore.Store, foderOrgID int64, fol
 			Data: []alertQuery{
 				{
 					RefID:         "A",
-					DatasourceUID: "-100",
+					DatasourceUID: expr.DatasourceUID,
 					Model: json.RawMessage(`{
 						"type": "math",
 						"expression": "2 + 3 > 1"

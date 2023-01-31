@@ -691,13 +691,13 @@ func withQueryForState(t *testing.T, evalResult eval.State) models.AlertRuleMuta
 	switch evalResult {
 	case eval.Normal:
 		expression = `{
-			"datasourceUid": "-100",
+			"datasourceUid": "__expr__",
 			"type":"math",
 			"expression":"2 + 1 < 1"
 		}`
 	case eval.Pending, eval.Alerting:
 		expression = `{
-			"datasourceUid": "-100",
+			"datasourceUid": "__expr__",
 			"type":"math",
 			"expression":"2 + 2 > 1"
 		}`
@@ -706,7 +706,7 @@ func withQueryForState(t *testing.T, evalResult eval.State) models.AlertRuleMuta
 		}
 	case eval.Error:
 		expression = `{
-			"datasourceUid": "-100",
+			"datasourceUid": "__expr__",
 			"type":"math",
 			"expression":"$A"
 		}`
@@ -718,7 +718,7 @@ func withQueryForState(t *testing.T, evalResult eval.State) models.AlertRuleMuta
 		rule.Condition = "A"
 		rule.Data = []models.AlertQuery{
 			{
-				DatasourceUID: "-100",
+				DatasourceUID: expr.DatasourceUID,
 				Model:         json.RawMessage(expression),
 				RelativeTimeRange: models.RelativeTimeRange{
 					From: models.Duration(5 * time.Hour),

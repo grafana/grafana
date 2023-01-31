@@ -18,7 +18,7 @@ title: 'Alerting Provisioning HTTP API '
 
 ### Version
 
-1.0.0
+1.1.0
 
 ## Content negotiation
 
@@ -821,14 +821,14 @@ Status: Bad Request
 
 **Properties**
 
-| Name                                                      | Type                                      | Go type             | Required | Default | Description                                                                                        | Example |
-| --------------------------------------------------------- | ----------------------------------------- | ------------------- | :------: | ------- | -------------------------------------------------------------------------------------------------- | ------- |
-| DatasourceUID                                             | string                                    | `string`            |          |         | Grafana data source unique identifier; it should be '-100' for a Server Side Expression operation. |         |
-| Model                                                     | object                                    | `interface{}`       |          |         | JSON is the raw JSON query and includes the above properties as well as custom properties.         |         |
-| QueryType                                                 | string                                    | `string`            |          |         | QueryType is an optional identifier for the type of query.                                         |
+| Name                                                      | Type                                      | Go type             | Required | Default | Description                                                                                            | Example |
+| --------------------------------------------------------- | ----------------------------------------- | ------------------- | :------: | ------- | ------------------------------------------------------------------------------------------------------ | ------- |
+| DatasourceUID                                             | string                                    | `string`            |          |         | Grafana data source unique identifier; it should be '**expr**' for a Server Side Expression operation. |         |
+| Model                                                     | object                                    | `interface{}`       |          |         | JSON is the raw JSON query and includes the above properties as well as custom properties.             |         |
+| QueryType                                                 | string                                    | `string`            |          |         | QueryType is an optional identifier for the type of query.                                             |
 | It can be used to distinguish different types of queries. |                                           |
-| RefID                                                     | string                                    | `string`            |          |         | RefID is the unique identifier of the query, set by the frontend call.                             |         |
-| relativeTimeRange                                         | [RelativeTimeRange](#relative-time-range) | `RelativeTimeRange` |          |         |                                                                                                    |         |
+| RefID                                                     | string                                    | `string`            |          |         | RefID is the unique identifier of the query, set by the frontend call.                                 |         |
+| relativeTimeRange                                         | [RelativeTimeRange](#relative-time-range) | `RelativeTimeRange` |          |         |                                                                                                        |         |
 
 ### <span id="alert-rule"></span> AlertRule
 
@@ -964,6 +964,45 @@ Status: Bad Request
 [Matchers](#matchers)
 
 #### Inlined models
+
+### <span id="provenance"></span> Provenance
+
+| Name       | Type   | Go type | Default | Description | Example |
+| ---------- | ------ | ------- | ------- | ----------- | ------- |
+| Provenance | string | string  |         |             |         |
+
+### <span id="provisioned-alert-rule"></span> ProvisionedAlertRule
+
+**Properties**
+
+| Name         | Type                         | Go type             | Required | Default | Description | Example                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------ | ---------------------------- | ------------------- | :------: | ------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| annotations  | map of string                | `map[string]string` |          |         |             | `{"runbook_url":"https://supercoolrunbook.com/page/13"}`                                                                                                                                                                                                                                                                                                                                                                         |
+| condition    | string                       | `string`            |    ✓     |         |             | `A`                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| data         | [][alertquery](#alert-query) | `[]*AlertQuery`     |    ✓     |         |             | `[{"datasourceUid":"__expr__","model":{"conditions":[{"evaluator":{"params":[0,0],"type":"gt"},"operator":{"type":"and"},"query":{"params":[]},"reducer":{"params":[],"type":"avg"},"type":"query"}],"datasource":{"type":"__expr__","uid":"__expr__"},"expression":"1 == 1","hide":false,"intervalMs":1000,"maxDataPoints":43200,"refId":"A","type":"math"},"queryType":"","refId":"A","relativeTimeRange":{"from":0,"to":0}}]` |
+| execErrState | string                       | `string`            |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| folderUID    | string                       | `string`            |    ✓     |         |             | `project_x`                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| for          | [Duration](#duration)        | `Duration`          |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| id           | int64 (formatted integer)    | `int64`             |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| labels       | map of string                | `map[string]string` |          |         |             | `{"team":"sre-team-1"}`                                                                                                                                                                                                                                                                                                                                                                                                          |
+| noDataState  | string                       | `string`            |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| orgID        | int64 (formatted integer)    | `int64`             |    ✓     |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| provenance   | [Provenance](#provenance)    | `Provenance`        |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ruleGroup    | string                       | `string`            |    ✓     |         |             | `eval_group_1`                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| title        | string                       | `string`            |    ✓     |         |             | `Always firing`                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| uid          | string                       | `string`            |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| updated      | date-time (formatted string) | `strfmt.DateTime`   |          |         |             |                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+
+### <span id="provisioned-alert-rules"></span> ProvisionedAlertRules
+
+[][provisionedalertrule](#provisioned-alert-rule)
+
+### <span id="regexp"></span> Regexp
+
+> A Regexp is safe for concurrent use by multiple goroutines,
+> except for configuration methods, such as Longest.
+
+[interface{}](#interface)
 
 ### <span id="relative-time-range"></span> RelativeTimeRange
 
