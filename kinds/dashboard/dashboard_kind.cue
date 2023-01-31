@@ -397,6 +397,9 @@ lineage: seqs: [
 					// TODO tighter constraint
 					timeShift?: string @grafanamaturity(NeedsExpertReview)
 
+					// Dynamically load the panel
+					libraryPanel?: #LibraryPanelRef
+
 					// options is specified by the PanelOptions field in panel
 					// plugin schemas.
 					options: {...} @grafanamaturity(NeedsExpertReview)
@@ -411,6 +414,11 @@ lineage: seqs: [
 						properties: [...#DynamicConfigValue]
 					}] @grafanamaturity(NeedsExpertReview)
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
+
+				#LibraryPanelRef: {
+					name: string
+					uid:  string
+				} @cuetsy(kind="interface")
 
 				#MatcherConfig: {
 					id:       string | *"" @grafanamaturity(NeedsExpertReview)

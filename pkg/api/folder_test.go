@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -25,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -151,7 +151,7 @@ func TestHTTPServer_FolderMetadata(t *testing.T) {
 		hs.AccessControl = acmock.New()
 		hs.QuotaService = quotatest.New(false, nil)
 		hs.SearchService = &mockSearchService{
-			ExpectedResult: models.HitList{},
+			ExpectedResult: model.HitList{},
 		}
 	})
 
@@ -248,12 +248,15 @@ func createFolderScenario(t *testing.T, desc string, url string, routePattern st
 		dashSvc.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(qResult, nil)
 		store := dbtest.NewFakeDB()
 		guardian.InitLegacyGuardian(store, dashSvc, teamSvc)
+		folderPermissions := acmock.NewMockedPermissionsService()
+		folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 		hs := HTTPServer{
-			AccessControl:        acmock.New(),
-			folderService:        folderService,
-			Cfg:                  setting.NewCfg(),
-			Features:             featuremgmt.WithFeatures(),
-			accesscontrolService: actest.FakeService{},
+			AccessControl:            acmock.New(),
+			folderService:            folderService,
+			Cfg:                      setting.NewCfg(),
+			Features:                 featuremgmt.WithFeatures(),
+			accesscontrolService:     actest.FakeService{},
+			folderPermissionsService: folderPermissions,
 		}
 
 		sc := setupScenarioContext(t, url)

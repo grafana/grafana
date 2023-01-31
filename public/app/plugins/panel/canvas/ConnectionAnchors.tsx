@@ -7,10 +7,13 @@ import { ConnectionCoordinates } from 'app/features/canvas';
 
 type Props = {
   setRef: (anchorElement: HTMLDivElement) => void;
-  handleMouseLeave: (event: React.MouseEvent<Element, MouseEvent> | React.FocusEvent<HTMLDivElement, Element>) => void;
+  handleMouseLeave: (
+    event: React.MouseEvent<Element, MouseEvent> | React.FocusEvent<HTMLDivElement, Element>
+  ) => boolean;
 };
 
 export const CONNECTION_ANCHOR_DIV_ID = 'connectionControl';
+export const CONNECTION_ANCHOR_ALT = 'connection anchor';
 
 export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
   const highlightEllipseRef = useRef<HTMLDivElement>(null);
@@ -38,7 +41,15 @@ export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
     }
   };
 
-  const connectionAnchorAlt = 'connection anchor';
+  const handleMouseLeaveAnchors = (
+    event: React.MouseEvent<Element, MouseEvent> | React.FocusEvent<HTMLDivElement, Element>
+  ) => {
+    const didHideAnchors = handleMouseLeave(event);
+
+    if (didHideAnchors) {
+      onMouseLeaveHighlightElement();
+    }
+  };
 
   // Unit is percentage from the middle of the element
   // 0, 0 middle; -1, -1 bottom left; 1, 1 top right
@@ -75,7 +86,7 @@ export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
         <img
           id={id}
           key={id}
-          alt={connectionAnchorAlt}
+          alt={CONNECTION_ANCHOR_ALT}
           className={styles.anchor}
           style={style}
           src={anchorImage}
@@ -87,7 +98,7 @@ export const ConnectionAnchors = ({ setRef, handleMouseLeave }: Props) => {
 
   return (
     <div className={styles.root} ref={setRef}>
-      <div className={styles.mouseoutDiv} onMouseOut={handleMouseLeave} onBlur={handleMouseLeave} />
+      <div className={styles.mouseoutDiv} onMouseOut={handleMouseLeaveAnchors} onBlur={handleMouseLeaveAnchors} />
       <div
         id={CONNECTION_ANCHOR_DIV_ID}
         ref={highlightEllipseRef}

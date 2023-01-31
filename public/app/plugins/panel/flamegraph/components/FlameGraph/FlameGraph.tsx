@@ -26,6 +26,7 @@ import { CoreApp, createTheme, DataFrame, FieldType, getDisplayProcessor } from 
 import { PIXELS_PER_LEVEL } from '../../constants';
 import { TooltipData, SelectedView } from '../types';
 
+import FlameGraphMetadata from './FlameGraphMetadata';
 import FlameGraphTooltip, { getTooltipData } from './FlameGraphTooltip';
 import { ItemWithStart } from './dataTransform';
 import { getBarX, getRectDimensionsForLevel, renderRect } from './rendering';
@@ -36,10 +37,12 @@ type Props = {
   flameGraphHeight?: number;
   levels: ItemWithStart[][];
   topLevelIndex: number;
+  selectedBarIndex: number;
   rangeMin: number;
   rangeMax: number;
   search: string;
   setTopLevelIndex: (level: number) => void;
+  setSelectedBarIndex: (bar: number) => void;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
   selectedView: SelectedView;
@@ -52,10 +55,12 @@ const FlameGraph = ({
   flameGraphHeight,
   levels,
   topLevelIndex,
+  selectedBarIndex,
   rangeMin,
   rangeMax,
   search,
   setTopLevelIndex,
+  setSelectedBarIndex,
   setRangeMin,
   setRangeMax,
   selectedView,
@@ -156,6 +161,7 @@ const FlameGraph = ({
 
         if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
           setTopLevelIndex(levelIndex);
+          setSelectedBarIndex(barIndex);
           setRangeMin(levels[levelIndex][barIndex].start / totalTicks);
           setRangeMax((levels[levelIndex][barIndex].start + levels[levelIndex][barIndex].value) / totalTicks);
         }
@@ -197,10 +203,18 @@ const FlameGraph = ({
     setRangeMax,
     selectedView,
     valueField,
+    setSelectedBarIndex,
   ]);
 
   return (
     <div className={styles.graph} ref={sizeRef}>
+      <FlameGraphMetadata
+        levels={levels}
+        topLevelIndex={topLevelIndex}
+        selectedBarIndex={selectedBarIndex}
+        valueField={valueField}
+        totalTicks={totalTicks}
+      />
       <canvas ref={graphRef} data-testid="flameGraph" />
       <FlameGraphTooltip tooltipRef={tooltipRef} tooltipData={tooltipData!} showTooltip={showTooltip} />
     </div>
@@ -214,8 +228,8 @@ const getStyles = (selectedView: SelectedView, app: CoreApp, flameGraphHeight: n
     overflow: scroll;
     width: ${selectedView === SelectedView.FlameGraph ? '100%' : '50%'};
     ${app !== CoreApp.Explore
-      ? `height: calc(${flameGraphHeight}px - 44px)`
-      : ''}; // 44px to adjust for header pushing content down
+      ? `height: calc(${flameGraphHeight}px - 50px)`
+      : ''}; // 50px to adjust for header pushing content down
   `,
 });
 
