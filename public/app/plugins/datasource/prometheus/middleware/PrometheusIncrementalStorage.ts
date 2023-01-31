@@ -35,10 +35,12 @@ export class PrometheusIncrementalStorage {
   throwError = (error: Error) => {
     if (DEBUG) {
       console.error('Fatal storage error:', error);
-      console.log('Storage state', this.storage);
+      console.log('Storage state before clear', this.storage);
     }
+    // Wipe storage
     this.storage = {};
 
+    // Let calling context handle exceptions?
     throw error;
   };
 
@@ -60,44 +62,26 @@ export class PrometheusIncrementalStorage {
     } else {
       // If there are no labels then this query should only be for a single series
       // This will return '{}' as the index for this series, this should work as long as this is indeed the only series returned by this query
-      // @leon throw an error when there are more than one series without labels
+      // @todo throw an error when there are more than one series without labels
     }
 
-    // @leon better
+    // @todo better
     return JSON.stringify(keyValues);
   };
 
-  // @todo gate
   private setStorageFieldsValues = (queryIndex: string, seriesIndex: string, values: number[]) => {
     if (queryIndex in this.storage) {
       this.storage[queryIndex][seriesIndex] = values;
     } else {
-      this.throwError(new Error('Invalid storage index'));
+      this.throwError(new Error('Invalid query index'));
     }
   };
 
   private setStorageTimeFields = (queryIndex: string, values: number[]) => {
-    const valuesToSet = {
+    this.storage[queryIndex] = {
       ...this.storage[queryIndex],
       __time__: values,
     };
-    this.storage[queryIndex] = valuesToSet;
-  };
-
-  private getStorageTimeFields = (queryIndex: string) => {
-    if (queryIndex in this.storage) {
-      return this.storage[queryIndex]['__time__'];
-    }
-
-    return null;
-  };
-
-  private getStorageValueField = (queryIndex: string, seriesIndex: string) => {
-    if (queryIndex in this.storage && seriesIndex in this.storage[queryIndex]) {
-      return this.storage[queryIndex][seriesIndex];
-    }
-
-    return null;
   };
 
   private getStorageFieldsForQuery = (queryIndex: string): Record<string, number[]> | null => {
@@ -109,7 +93,7 @@ export class PrometheusIncrementalStorage {
   };
 
   /**
-   * @todo need to interpolate variables or we'll get bugs
+   * @todo need to interpolate variables or we'll get bugs?
    * @param target
    * @param request
    */
@@ -127,6 +111,7 @@ export class PrometheusIncrementalStorage {
       return;
     }
 
+    // Interpolating is hard outside the datasource class... @todo
     // target.expr =
 
     // If the query (target) doesn't explicitly have an interval defined it's gonna use the one that's available on the request object.
@@ -139,6 +124,10 @@ export class PrometheusIncrementalStorage {
 
     return target?.expr + '__' + intervalString;
   };
+
+  getStorage = () => {
+    return this.storage
+  }
 
   removeFramesFromStorageThatExistInRequest(
     existingTimeFrames: number[],
@@ -154,13 +143,10 @@ export class PrometheusIncrementalStorage {
       const doesResponseNotContainFrameTimeValue = responseTimeFieldValues.indexOf(existingTimeFrames[i]) === -1;
 
       // Remove values from before new start
-      // Note this acts as the only eviction strategy so far, we only store frames that exist after the start of the current query, minus twice the overlap as a buffer as we don't want to
-      // need to add one stime step of buffer @todo
+      // Note this acts as the only eviction strategy so far, we only store frames that exist after the start of the current query, minus the interval time
       const isFrameOlderThenQueryStart = existingTimeFrames[i] <= originalRange.start - (intervalInSeconds * 1000)
 
       if (isFrameOlderThenQueryStart && DEBUG) {
-        debugger;
-
         console.log('Frame is older then query, evicting', existingTimeFrames[i] - originalRange.start, existingTimeFrames[i], originalRange.start);
       }
 
@@ -193,8 +179,10 @@ export class PrometheusIncrementalStorage {
       }
       return;
     }
+    // Initialize with the length of the first time series
     let longestLength = data[0]?.length ?? 0;
 
+    // Get the times of the first series
     const firstFrameTimeValues = data[0].fields[0].values?.toArray();
 
     // Get first time value
@@ -205,6 +193,7 @@ export class PrometheusIncrementalStorage {
 
     // Walk through the data frames and get the first and last values of the time array
     //@todo doesn't transform v2 nest the dataframes for heatmaps? is this going to get the wrong min/max values for nested frames?
+    // Add unit test for this
     for (let i = 0; i < data.length; i++) {
       const thisFrameTimeValues = data[i].fields[0]?.values?.toArray();
       const firstFrameValue = thisFrameTimeValues[0];
@@ -249,13 +238,6 @@ export class PrometheusIncrementalStorage {
     dataFrames: DataQueryResponse,
     originalRange?: { end: number, start: number }
   ): DataQueryResponse => {
-    if (DEBUG) {
-      // console.warn('request', JSON.stringify(request));
-      // console.warn('dataFrames', JSON.stringify(dataFrames));
-      // console.warn('originalRange', JSON.stringify(originalRange));
-      // console.warn('TIMESRV', JSON.stringify(this.timeSrv.timeRange()))
-    }
-
     const data: DataFrame[] | DataFrameDTO[] = dataFrames.data;
 
     // Frames aren't always the same length, since this storage assumes a single time array for all values, that means we need to back-fill missing values
@@ -344,6 +326,7 @@ export class PrometheusIncrementalStorage {
               responseTimeFieldValues.length > 0
             ) {
               const intervalSeconds = rangeUtil.intervalToSeconds(request.interval);
+
               // Filter out values in storage from before query range
               const dedupedFrames = this.removeFramesFromStorageThatExistInRequest(
                 existingTimeFrames,
@@ -352,7 +335,6 @@ export class PrometheusIncrementalStorage {
                 existingValueFrames,
                 intervalSeconds
               );
-
 
               const allTimeValuesMerged = [...dedupedFrames.time, ...responseTimeFieldValues];
 
