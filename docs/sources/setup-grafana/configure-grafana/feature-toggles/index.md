@@ -99,6 +99,7 @@ Alpha features might be changed or removed without prior notice.
 | `alertingBacktesting`              | Rule backtesting API for alerting                                                                                                                                            |
 | `editPanelCSVDragAndDrop`          | Enables drag and drop for CSV and Excel files                                                                                                                                |
 | `logsContextDatasourceUi`          | Allow datasource to provide custom UI for context view                                                                                                                       |
+| `newTraceView`                     | Updated Trace View with improved support for large traces and span filtering                                                                                                 |
 
 ## Development feature toggles
 

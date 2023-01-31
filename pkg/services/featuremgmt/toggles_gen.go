@@ -310,4 +310,8 @@ const (
 	// FlagLogsContextDatasourceUi
 	// Allow datasource to provide custom UI for context view
 	FlagLogsContextDatasourceUi = "logsContextDatasourceUi"
+
+	// FlagNewTraceView
+	// Updated Trace View with improved support for large traces and span filtering
+	FlagNewTraceView = "newTraceView"
 )

@@ -429,5 +429,11 @@ var (
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
+		{
+			Name:         "newTraceView",
+			Description:  "Updated Trace View with improved support for large traces and span filtering",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
+		},
 	}
 )
