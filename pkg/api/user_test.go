@@ -113,7 +113,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 			AuthLabels:     []string{},
 			CreatedAt:      fakeNow,
 			UpdatedAt:      fakeNow,
-			AvatarUrl:      avatarUrl,
+			AvatarURL:      avatarUrl,
 		}
 
 		var resp user.UserProfileDTO
@@ -122,7 +122,7 @@ func TestUserAPIEndpoint_userLoggedIn(t *testing.T) {
 		require.NoError(t, err)
 		resp.CreatedAt = fakeNow
 		resp.UpdatedAt = fakeNow
-		resp.AvatarUrl = avatarUrl
+		resp.AvatarURL = avatarUrl
 		require.EqualValues(t, expected, resp)
 	}, mock)
 
