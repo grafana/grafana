@@ -170,7 +170,6 @@ func (h *AnnotationBackend) recordAnnotationsSync(ctx context.Context, panel *pa
 		if err != nil {
 			logger.Error("Error getting dashboard for alert annotation", "dashboardUID", panel.dashUID, "error", err)
 			dashID = 0
-			err = nil
 		}
 
 		for i := range annotations {
