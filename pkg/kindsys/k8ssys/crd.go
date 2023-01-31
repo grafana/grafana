@@ -12,7 +12,7 @@ import (
 )
 
 type Kind struct {
-	GrafanaKind kindsys.Interface
+	GrafanaKind kindsys.Kind
 	Object      runtime.Object // singular type
 	ObjectList  runtime.Object // list type
 	Schema      apiextensionsv1.CustomResourceDefinition

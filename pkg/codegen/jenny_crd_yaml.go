@@ -33,12 +33,12 @@ func (yamlCRDJenny) JennyName() string {
 	return "YamlCRDJenny"
 }
 
-func (j yamlCRDJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
+func (j yamlCRDJenny) Generate(decl *DefForGen) (*codejen.File, error) {
 	if !decl.IsCore() {
 		return nil, nil
 	}
 
-	props := decl.SomeDecl.Properties.(kindsys.CoreProperties)
+	props := decl.SomeDef.Properties.(kindsys.CoreProperties)
 	lin := decl.Lineage()
 
 	// We need to go through every schema, as they all have to be defined in the CRD

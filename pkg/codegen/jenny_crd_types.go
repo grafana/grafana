@@ -24,7 +24,7 @@ func (j crdTypesJenny) JennyName() string {
 	return "CRDTypesJenny"
 }
 
-func (j crdTypesJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
+func (j crdTypesJenny) Generate(decl *DefForGen) (*codejen.File, error) {
 	if !(decl.IsCore() || decl.IsCustom()) {
 		return nil, nil
 	}

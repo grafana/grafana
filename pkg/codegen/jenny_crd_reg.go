@@ -29,8 +29,8 @@ func (j *crdregjenny) JennyName() string {
 	return "CRDKindRegistryJenny"
 }
 
-func (j *crdregjenny) Generate(decls ...*DeclForGen) (*codejen.File, error) {
-	sdecls := make([]*DeclForGen, 0, len(decls))
+func (j *crdregjenny) Generate(decls ...*DefForGen) (*codejen.File, error) {
+	sdecls := make([]*DefForGen, 0, len(decls))
 	for _, d := range decls {
 		if d.IsCore() {
 			sdecls = append(sdecls, d)

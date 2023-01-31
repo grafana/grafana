@@ -54,7 +54,7 @@ func main() {
 		codegen.PluginTreeListJenny(),
 		codegen.PluginGoTypesJenny("pkg/tsdb"),
 		codegen.PluginTSTypesJenny("public/app/plugins", adaptToPipeline(corecodegen.TSTypesJenny{})),
-		codegen.PluginDocsJenny(toDeclForGen(corecodegen.DocsJenny(
+		codegen.PluginDocsJenny(toDefForGen(corecodegen.DocsJenny(
 			filepath.Join("docs", "sources", "developers", "kinds", "composable"),
 		))),
 	)
@@ -91,7 +91,7 @@ func adaptToPipeline(j codejen.OneToOne[corecodegen.SchemaForGen]) codejen.OneTo
 	})
 }
 
-func toDeclForGen(j codejen.OneToOne[*corecodegen.DefForGen]) codejen.OneToOne[*pfs.PluginDecl] {
+func toDefForGen(j codejen.OneToOne[*corecodegen.DefForGen]) codejen.OneToOne[*pfs.PluginDecl] {
 	return codejen.AdaptOneToOne(j, func(pd *pfs.PluginDecl) *corecodegen.DefForGen {
 		kd, err := corecodegen.ForGen(pd.Lineage.Runtime(), pd.KindDecl.Some())
 		if err != nil {

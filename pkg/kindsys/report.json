@@ -871,10 +871,16 @@
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
+      "crd": {
+        "dummySchema": false,
+        "group": "librarypanel.core.grafana.com",
+        "scope": "Namespaced"
+      },
       "currentVersion": [
         0,
         0
       ],
+      "description": "Libray panel",
       "grafanaMaturityCount": 10,
       "lineageIsGroup": false,
       "links": {

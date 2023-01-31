@@ -44,7 +44,7 @@ type (
 	}
 	tvars_kind_registry_backend struct {
 		BackendKindPackagePrefix string
-		Kinds                    []*DeclForGen
+		Kinds                    []*DefForGen
 	}
 	tvars_coremodel_imports struct {
 		PackageName string
