@@ -83,6 +83,8 @@ func (h *RemoteLokiBackend) statesToStreams(rule history_model.RuleMeta, states 
 			Previous:      state.PreviousFormatted(),
 			Current:       state.Formatted(),
 			Values:        valuesAsDataBlob(state.State),
+			DashboardUID:  rule.DashboardUID,
+			PanelID:       rule.PanelID,
 		}
 		if state.State.State == eval.Error {
 			entry.Error = state.Error.Error()
@@ -132,9 +134,11 @@ type lokiEntry struct {
 	SchemaVersion int              `json:"schemaVersion"`
 	Previous      string           `json:"previous"`
 	Current       string           `json:"current"`
-	Error         string           `json:"error"`
+	Error         string           `json:"error,omitempty"`
 	NoData        bool             `json:"noData"`
 	Values        *simplejson.Json `json:"values"`
+	DashboardUID  string           `json:"dashboardUID"`
+	PanelID       int64            `json:"panelID"`
 }
 
 func valuesAsDataBlob(state *state.State) *simplejson.Json {
