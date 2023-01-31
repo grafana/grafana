@@ -1,5 +1,8 @@
 {
   "extends": ["@grafana/eslint-config"],
+  "parserOptions": {
+    "project": ["tsconfig.json", "packages/*/tsconfig.json", "e2e/tsconfig.json"]
+  },
   "root": true,
   "plugins": ["@emotion", "lodash", "jest", "import", "jsx-a11y", "@grafana"],
   "settings": {
