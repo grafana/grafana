@@ -216,7 +216,7 @@ func TestPatchPartialAlertRule(t *testing.T) {
 					})()
 					existing = &AlertRuleWithOptionals{AlertRule: *rule}
 					cloned := *existing
-					testCase.mutator(existing)
+					testCase.mutator(&cloned)
 					if !cmp.Equal(existing, cloned, cmp.FilterPath(func(path cmp.Path) bool {
 						return path.String() == "Data.modelProps"
 					}, cmp.Ignore())) {
