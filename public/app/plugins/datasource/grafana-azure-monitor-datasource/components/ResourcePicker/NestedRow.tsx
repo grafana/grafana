@@ -32,7 +32,7 @@ const NestedRow: React.FC<NestedRowProps> = ({
   const styles = useStyles2(getStyles);
   const [rowStatus, setRowStatus] = useState<'open' | 'closed' | 'loading'>('closed');
 
-  const isSelected = !!selectedRows.find((v) => v.uri === row.uri);
+  const isSelected = !!selectedRows.find((v) => v.uri.toLowerCase() === row.uri.toLowerCase());
   const isDisabled = !isSelected && disableRow(row, selectedRows);
   const isOpen = rowStatus === 'open';
 
