@@ -64,6 +64,8 @@ type Service interface {
 	RegisterPostLoginHook(hook PostLoginHookFn, priority uint)
 	// RedirectURL will generate url that we can use to initiate auth flow for supported clients.
 	RedirectURL(ctx context.Context, client string, r *Request) (*Redirect, error)
+	// RegisterClient that can be used for authentication
+	RegisterClient(c Client)
 }
 
 type Client interface {
