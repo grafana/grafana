@@ -6,7 +6,7 @@ The following documentation is meant to shed light on the different authorizatio
 
 The first thing to consider is who are my users? Are the user exclusively within my organization or will they be outside of my organization?
 
-If the users are within my organization, this means that Grafana might be able to integrate with those users by providing connection with to the corresponding Identiy Provider.
+If the users are within my organization, this means that Grafana might be able to integrate with those users by providing connection with to the corresponding Identity Provider.
 
 If the users are outside of my organization, this means that Grafana needs to provide anonymous access, which is not enabled by default.
 
