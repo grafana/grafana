@@ -237,7 +237,7 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *contextmodel.ReqContext) (map[st
 }
 
 func isSupportBundlesEnabled(hs *HTTPServer) bool {
-	return hs.Cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(false) &&
+	return hs.Cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true) &&
 		hs.Features.IsEnabled(featuremgmt.FlagSupportBundles)
 }
 
