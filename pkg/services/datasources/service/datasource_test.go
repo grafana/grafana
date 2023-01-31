@@ -429,6 +429,10 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.NotNil(t, rt)
 		tr := configuredTransport
 
+		// make sure we can still marshal the JsonData after httpClientOptions (avoid cycles)
+		_, err = ds.JsonData.MarshalJSON()
+		require.NoError(t, err)
+
 		require.False(t, tr.TLSClientConfig.InsecureSkipVerify)
 		// Ignoring deprecation, the system will not include the root CA
 		// used in this scenario.

@@ -58,7 +58,7 @@ _sharedKind: {
 	// object that is expected to exist in the wild
 	//
 	// This value of this field is set by the kindsys framework. It cannot be changed
-	// in the declaration of any individual kind.
+	// in the definition of any individual kind.
 	//
 	// This is likely to eventually become a first-class property in Thema:
 	// https://github.com/grafana/thema/issues/62
@@ -79,7 +79,15 @@ _sharedKind: {
 	maturity: *"merged" | "experimental"
 }
 
-// Maturity indicates the how far a given kind declaration is in its initial
+// properties shared by all kinds that represent a complete object from root (i.e., not composable)
+_rootKind: {
+	// description is a brief narrative description of the nature and purpose of the kind.
+	// The contents of this field is shown to end users. Prefer clear, concise wording
+	// with minimal jargon.
+	description: nonEmptyString
+}
+
+// Maturity indicates the how far a given kind definition is in its initial
 // journey. Mature kinds still evolve, but with guarantees about compatibility.
 Maturity: "merged" | "experimental" | "stable" | "mature"
 
@@ -88,7 +96,10 @@ Maturity: "merged" | "experimental" | "stable" | "mature"
 // and datasources, are represented as core kinds.
 Core: S=close({
 	_sharedKind
+	_rootKind
 
 	lineage: { name: S.machineName }
 	lineageIsGroup: false
 })
+
+nonEmptyString: string & strings.MinRunes(1)

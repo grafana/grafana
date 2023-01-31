@@ -99,6 +99,7 @@ export class Connections {
       return false;
     }
 
+    this.connectionTarget = undefined;
     this.connectionAnchorDiv!.style.display = 'none';
     return true;
   };

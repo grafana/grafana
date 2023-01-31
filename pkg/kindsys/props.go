@@ -10,15 +10,16 @@ type CommonProperties struct {
 	PluralMachineName string   `json:"pluralMachineName"`
 	LineageIsGroup    bool     `json:"lineageIsGroup"`
 	Maturity          Maturity `json:"maturity"`
+	Description       string   `json:"description,omitempty"`
 }
 
-// CoreProperties represents the static properties in the declaration of a
+// CoreProperties represents the static properties in the definition of a
 // Core kind that are representable with basic Go types. This
 // excludes Thema schemas.
 //
-// When a .cue Core declaration is loaded through the standard [LoadCoreKind],
-// func, it is fully validated and populated according to all rules specified
-// in CUE for Core kinds.
+// When .cue file(s) containing a Core definition is loaded through the standard
+// [LoadCoreKind], func, it is fully validated and populated according to all
+// rules specified in CUE for Core kinds.
 type CoreProperties struct {
 	CommonProperties
 	CurrentVersion thema.SyntacticVersion `json:"currentVersion"`
@@ -29,7 +30,7 @@ func (m CoreProperties) Common() CommonProperties {
 	return m.CommonProperties
 }
 
-// CustomProperties represents the static properties in the declaration of a
+// CustomProperties represents the static properties in the definition of a
 // Custom kind that are representable with basic Go types. This
 // excludes Thema schemas.
 type CustomProperties struct {
@@ -42,7 +43,7 @@ func (m CustomProperties) Common() CommonProperties {
 	return m.CommonProperties
 }
 
-// ComposableProperties represents the static properties in the declaration of a
+// ComposableProperties represents the static properties in the definition of a
 // Composable kind that are representable with basic Go types. This
 // excludes Thema schemas.
 type ComposableProperties struct {

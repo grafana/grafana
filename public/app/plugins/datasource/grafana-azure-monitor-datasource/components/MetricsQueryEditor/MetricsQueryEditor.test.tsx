@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
@@ -107,6 +107,10 @@ describe('MetricsQueryEditor', () => {
     const resourcePickerButton = await screen.findByRole('button', { name: 'web-server' });
     expect(resourcePickerButton).toBeInTheDocument();
     resourcePickerButton.click();
+
+    await waitFor(() => {
+      expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+    });
 
     const selection = await screen.findAllByLabelText('web-server');
     expect(selection).toHaveLength(2);
@@ -412,8 +416,11 @@ describe('MetricsQueryEditor', () => {
     await userEvent.type(advancedInput, 'def-123');
 
     const updatedCheckboxes = await screen.findAllByLabelText('web-server');
-    expect(updatedCheckboxes.length).toBe(1);
+    expect(updatedCheckboxes.length).toBe(2);
+    // Unselect the one listed in the rows
     expect(updatedCheckboxes[0]).not.toBeChecked();
+    // But the one in the advanced section should still be selected
+    expect(updatedCheckboxes[1]).toBeChecked();
   });
 
   it('should call onApply with a new subscription when a user types it in the selection box', async () => {

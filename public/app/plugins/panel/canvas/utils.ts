@@ -157,3 +157,7 @@ export function getConnections(sceneByName: Map<string, ElementState>) {
 
   return connections;
 }
+
+export function getConnectionsByTarget(element: ElementState, scene: Scene) {
+  return getConnections(scene.byName).filter((connection) => connection.target === element);
+}

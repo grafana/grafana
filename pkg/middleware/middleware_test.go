@@ -167,7 +167,7 @@ func TestMiddlewareContext(t *testing.T) {
 			t.Log("Handler called")
 			data := &dtos.IndexViewData{
 				User:     &dtos.CurrentUser{},
-				Settings: map[string]interface{}{},
+				Settings: &dtos.FrontendSettingsDTO{},
 				NavTree:  &navtree.NavTreeRoot{},
 			}
 			t.Log("Calling HTML", "data", data)
