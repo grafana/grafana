@@ -30,7 +30,7 @@ export function GrafanaAlertmanagerDeliveryWarning({ currentAlertmanager }: Graf
 
   const hasActiveExternalAMs = amChoiceStatus.numExternalAlertmanagers > 0;
 
-  if (amChoiceStatus.alertmanagersChoice === AlertmanagerChoice.External && hasActiveExternalAMs) {
+  if (amChoiceStatus.alertmanagersChoice === AlertmanagerChoice.External) {
     return (
       <Alert title="Grafana alerts are not delivered to Grafana Alertmanager">
         Grafana is configured to send alerts to external Alertmanagers only. Changing Grafana Alertmanager configuration

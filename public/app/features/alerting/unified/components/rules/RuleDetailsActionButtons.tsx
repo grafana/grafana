@@ -86,8 +86,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
   const rulesPermissions = getRulesPermissions(rulesSourceName);
   const hasCreateRulePermission = contextSrv.hasPermission(rulesPermissions.create);
   const { isEditable, isRemovable } = useIsRuleEditable(rulesSourceName, rulerRule);
-
-  const canSilence = useCanSilence(alertmanagerSourceName);
+  const canSilence = useCanSilence(rule);
 
   const returnTo = location.pathname + location.search;
   // explore does not support grafana rule queries atm
@@ -272,18 +271,24 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
  * 1. the user has no permissions to create silences
  * 2. the admin has configured to only send instances to external AMs
  */
-function useCanSilence(alertmanagerSourceName?: string) {
-  const hasAlertmanagerSource = Boolean(alertmanagerSourceName);
+function useCanSilence(rule: CombinedRule) {
+  const isGrafanaManagedRule = isGrafanaRulerRule(rule.rulerRule);
 
   const { useGetAlertmanagerChoiceStatusQuery } = alertmanagerApi;
-  const { currentData: amConfigStatus } = useGetAlertmanagerChoiceStatusQuery();
+  const { currentData: amConfigStatus, isLoading } = useGetAlertmanagerChoiceStatusQuery(undefined, {
+    skip: !isGrafanaManagedRule,
+  });
+
+  if (!isGrafanaManagedRule || isLoading) {
+    return false;
+  }
 
   const hasPermissions = contextSrv.hasAccess(AccessControlAction.AlertingInstanceCreate, contextSrv.isEditor);
 
   const interactsOnlyWithExternalAMs = amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.External;
   const interactsWithAll = amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.All;
 
-  return hasAlertmanagerSource && hasPermissions && (!interactsOnlyWithExternalAMs || interactsWithAll);
+  return hasPermissions && (!interactsOnlyWithExternalAMs || interactsWithAll);
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({
