@@ -134,6 +134,8 @@ type ProvisionedAlertRule struct {
 	Labels map[string]string `json:"labels,omitempty"`
 	// readonly: true
 	Provenance models.Provenance `json:"provenance,omitempty"`
+	// example: false
+	IsPaused bool `json:"isPaused"`
 }
 
 func (a *ProvisionedAlertRule) UpstreamModel() (models.AlertRule, error) {
@@ -152,6 +154,7 @@ func (a *ProvisionedAlertRule) UpstreamModel() (models.AlertRule, error) {
 		For:          time.Duration(a.For),
 		Annotations:  a.Annotations,
 		Labels:       a.Labels,
+		IsPaused:     a.IsPaused,
 	}, nil
 }
 
@@ -172,6 +175,7 @@ func NewAlertRule(rule models.AlertRule, provenance models.Provenance) Provision
 		Annotations:  rule.Annotations,
 		Labels:       rule.Labels,
 		Provenance:   provenance,
+		IsPaused:     rule.IsPaused,
 	}
 }
 

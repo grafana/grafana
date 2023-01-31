@@ -5,8 +5,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/build/docker"
 	"github.com/urfave/cli/v2"
+
+	"github.com/grafana/grafana/pkg/build/docker"
 )
 
 func main() {
@@ -189,6 +190,59 @@ func main() {
 			Name:  "artifacts",
 			Usage: "Handle Grafana artifacts",
 			Subcommands: cli.Commands{
+				{
+					Name:   "publish",
+					Usage:  "Publish Grafana artifacts",
+					Action: PublishArtifactsAction,
+					Flags: []cli.Flag{
+						&editionFlag,
+						&cli.BoolFlag{
+							Name:  "security",
+							Usage: "Security release",
+						},
+						&cli.StringFlag{
+							Name:  "security-dest-bucket",
+							Usage: "Google Cloud Storage bucket for security packages (or $SECURITY_DEST_BUCKET)",
+						},
+						&cli.StringFlag{
+							Name:  "tag",
+							Usage: "Grafana version tag",
+						},
+						&cli.StringFlag{
+							Name:  "src-bucket",
+							Value: "grafana-prerelease",
+							Usage: "Google Cloud Storage bucket",
+						},
+						&cli.StringFlag{
+							Name:  "dest-bucket",
+							Value: "grafana-downloads",
+							Usage: "Google Cloud Storage bucket for published packages",
+						},
+						&cli.StringFlag{
+							Name:  "enterprise2-dest-bucket",
+							Value: "grafana-downloads-enterprise2",
+							Usage: "Google Cloud Storage bucket for published packages",
+						},
+						&cli.StringFlag{
+							Name:  "enterprise2-security-prefix",
+							Usage: "Bucket path prefix for enterprise2 security releases (or $ENTERPRISE2_SECURITY_PREFIX)",
+						},
+						&cli.StringFlag{
+							Name:  "static-assets-bucket",
+							Value: "grafana-static-assets",
+							Usage: "Google Cloud Storage bucket for static assets",
+						},
+						&cli.StringSliceFlag{
+							Name:  "static-asset-editions",
+							Usage: "All the editions of the static assets (or $STATIC_ASSET_EDITIONS)",
+						},
+						&cli.StringFlag{
+							Name:  "storybook-bucket",
+							Value: "grafana-storybook",
+							Usage: "Google Cloud Storage bucket for storybooks",
+						},
+					},
+				},
 				{
 					Name:  "docker",
 					Usage: "Handle Grafana Docker images",
