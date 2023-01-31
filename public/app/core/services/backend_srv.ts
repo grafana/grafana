@@ -304,7 +304,7 @@ export class BackendSrv implements BackendService {
     }
   }
 
-  showErrorAlert<T>(config: BackendSrvRequest, err: FetchError) {
+  showErrorAlert(config: BackendSrvRequest, err: FetchError) {
     if (config.showErrorAlert === false) {
       return;
     }
@@ -324,6 +324,7 @@ export class BackendSrv implements BackendService {
 
     // Validation
     if (err.status === 422) {
+      description = err.data.message;
       message = 'Validation failed';
     }
 

@@ -100,7 +100,7 @@ func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
 		// and the view should return immediately before attempting
 		// to login again via OAuth and enter to a redirect loop
 		cookies.DeleteCookie(c.Resp, loginErrorCookieName, hs.CookieOptionsFromCfg)
-		viewData.Settings["loginError"] = loginError
+		viewData.Settings.LoginError = loginError
 		c.HTML(http.StatusOK, getViewIndex(), viewData)
 		return
 	}

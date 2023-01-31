@@ -567,7 +567,7 @@ def test_backend_step():
             "wire-install",
         ],
         "commands": [
-            "go test -short -covermode=atomic -timeout=5m ./pkg/...",
+            "go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...",
         ],
     }
 

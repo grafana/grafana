@@ -3,6 +3,7 @@ import React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
+import { reportInteraction } from '@grafana/runtime';
 import { Icon, useStyles2 } from '@grafana/ui';
 
 import { Breadcrumb } from './types';
@@ -13,6 +14,11 @@ type Props = Breadcrumb & {
 
 export function BreadcrumbItem({ href, isCurrent, text }: Props) {
   const styles = useStyles2(getStyles);
+
+  const onBreadcrumbClick = () => {
+    reportInteraction('grafana_breadcrumb_clicked', { url: href });
+  };
+
   return (
     <li className={styles.breadcrumbWrapper}>
       {isCurrent ? (
@@ -22,6 +28,7 @@ export function BreadcrumbItem({ href, isCurrent, text }: Props) {
       ) : (
         <>
           <a
+            onClick={onBreadcrumbClick}
             data-testid={Components.Breadcrumbs.breadcrumb(text)}
             className={cx(styles.breadcrumb, styles.breadcrumbLink)}
             href={href}
