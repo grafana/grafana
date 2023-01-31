@@ -11,9 +11,9 @@ import {
 } from '@grafana/data';
 import { IconButton } from '@grafana/ui';
 
-import { DebugPanelOptions, UpdateCounters, UpdateConfig } from './panelcfg.gen';
+import { PanelOptions, UpdateCounters, UpdateConfig } from './panelcfg.gen';
 
-type Props = PanelProps<DebugPanelOptions>;
+type Props = PanelProps<PanelOptions>;
 
 export class RenderInfoViewer extends Component<Props> {
   // Intentionally not state to avoid overhead -- yes, things will be 1 tick behind
