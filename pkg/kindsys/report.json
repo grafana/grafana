@@ -1914,7 +1914,7 @@
           "textpanelcfg",
           "xychartpanelcfg"
         ],
-        "count": 18
+        "count": 19
       },
       "mature": {
         "name": "mature",
@@ -1991,7 +1991,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 55
+        "count": 54
       },
       "stable": {
         "name": "stable",
