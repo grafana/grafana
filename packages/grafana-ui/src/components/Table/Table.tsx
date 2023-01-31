@@ -98,7 +98,7 @@ export const Table = memo((props: Props) => {
     return Array(data.length).fill(0);
   }, [data]);
 
-  // JEV: anno here
+  // This tests whether `Show table footer` toggled on, the `Calculation` is set to `Count`, and finally, whether `Count rows` is toggled on.
   const isCountRowsSet = Boolean(
     footerOptions?.countRows &&
       footerOptions.reducer &&
@@ -145,6 +145,7 @@ export const Table = memo((props: Props) => {
     pageOptions,
     setHiddenColumns,
   } = useTable(options, useFilters, useSortBy, useAbsoluteLayout, useResizeColumns, useExpanded, usePagination);
+  console.log(rows, 'rows');
 
   const extendedState = state as GrafanaTableState;
 
@@ -176,9 +177,12 @@ export const Table = memo((props: Props) => {
     }
 
     const footerItems = getFooterItems(
-      // JEV: headerGroups are based not on the table fields, but the currently rendered headers, which may or may not include our row nums
+      /*
+        The `headerGroups` object is NOT based on the `data.fields`, but instead on the currently rendered headers,
+        which may or may not include the Row Numbers column.
+      */
       headerGroups[0].headers as unknown as Array<{ id: string; field: Field }>,
-      // JEV: this may be true here as well for our rows
+      // The `rows` object, on the other hand, is based on the `data.fields` data, and therefore DO have the Row Numbers column data.
       createFooterCalculationValues(rows),
       footerOptions,
       theme

@@ -380,7 +380,7 @@ function getFormattedValue(field: Field, reducer: string[], theme: GrafanaTheme2
   return formattedValueToString(fmt(v));
 }
 
-// JEV: strips the raw vales from the rows
+// This strips the raw vales from the rows data.
 export function createFooterCalculationValues(rows: Row[]): any[number] {
   const values: any[number] = [];
 
