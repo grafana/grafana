@@ -9,7 +9,7 @@ import { StoreState } from 'app/types';
 
 import { ProviderCard } from './components/ProviderCard';
 import { loadSettings } from './state/actions';
-import { getAuthProviderInfo, getEnabledAuthProviders } from './utils';
+import { getAuthProviderInfo, getAuthProviders, getEnabledAuthProviders } from './utils';
 
 interface OwnProps {}
 
@@ -34,21 +34,34 @@ export const AuthConfigPageUnconnected = ({ settings, loadSettings }: Props): JS
     loadSettings();
   }, [loadSettings]);
 
-  const enabledAuthProviders = getEnabledAuthProviders(settings);
-  console.log(enabledAuthProviders);
+  const authProviders = getAuthProviders(settings);
+  const enabledProviders = authProviders.filter((p) => p.enabled === 'true');
+  const availableProviders = authProviders.filter((p) => p.enabled !== 'true');
+  console.log(authProviders);
 
   return (
     <Page navId="authentication">
       <Page.Contents>
-        <span>Authentication</span>
+        <h4>Advanced authentication</h4>
         <div className={styles.cardsContainer}>
-          {enabledAuthProviders.map((provider) => (
+          {enabledProviders.map((provider) => (
             <ProviderCard
-              key={provider}
-              providerId={provider}
+              key={provider.providerId}
+              providerId={provider.providerId}
               configPath="admin/authentication"
-              displayName={getAuthProviderInfo(provider).displayName}
-              enabled={true}
+              displayName={getAuthProviderInfo(provider.providerId).displayName}
+              enabled={provider.enabled === 'true'}
+            />
+          ))}
+        </div>
+        <div className={styles.cardsContainer}>
+          {availableProviders.map((provider) => (
+            <ProviderCard
+              key={provider.providerId}
+              providerId={provider.providerId}
+              configPath="admin/authentication"
+              displayName={getAuthProviderInfo(provider.providerId).displayName}
+              enabled={provider.enabled === 'true'}
             />
           ))}
         </div>
@@ -63,6 +76,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(288px, 1fr));
       gap: ${theme.spacing(3)};
+      margin-bottom: ${theme.spacing(3)};
     `,
   };
 };
