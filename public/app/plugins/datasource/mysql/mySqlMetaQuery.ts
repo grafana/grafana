@@ -1,4 +1,4 @@
-import { quoteLiteral, unquoteIdentifier } from './MySqlQueryModel';
+import { quoteLiteral, unquoteIdentifier } from './sqlUtil';
 
 export function buildTableQuery(dataset?: string) {
   const database = dataset !== undefined ? quoteIdentAsLiteral(dataset) : 'database()';

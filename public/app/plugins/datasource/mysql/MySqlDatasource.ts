@@ -4,11 +4,10 @@ import { SqlDatasource } from 'app/features/plugins/sql/datasource/SqlDatasource
 import { DB, SQLQuery } from 'app/features/plugins/sql/types';
 import { formatSQL } from 'app/features/plugins/sql/utils/formatSQL';
 
-import { quoteLiteral } from './MySqlQueryModel';
 import { mapFieldsToTypes } from './fields';
 import { buildColumnQuery, buildTableQuery, showDatabases } from './mySqlMetaQuery';
 import { getSqlCompletionProvider } from './sqlCompletionProvider';
-import { quoteIdentifierIfNecessary, toRawSql } from './sqlUtil';
+import { quoteIdentifierIfNecessary, quoteLiteral, toRawSql } from './sqlUtil';
 import { MySQLOptions } from './types';
 
 export class MySqlDatasource extends SqlDatasource {
