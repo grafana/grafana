@@ -75,13 +75,12 @@ def identify_runner_step(platform = "linux"):
             ],
         }
 
-def enterprise_setup_step(source = "${DRONE_SOURCE_BRANCH}", location = "grafana-enterprise", canFail = True):
-    step = clone_enterprise_step(source = source, target = "${DRONE_TARGET_BRANCH}", canFail = canFail, location = location)
+def enterprise_setup_step(source = "${DRONE_SOURCE_BRANCH}", canFail = True):
+    step = clone_enterprise_step(source = source, target = "${DRONE_TARGET_BRANCH}", canFail = canFail, location = "../grafana-enterprise")
     step["commands"] += [
         "cd ../",
         "ln -s src grafana",
-        "cd -",
-        "cd {}".format(location),
+        "cd ./grafana-enterprise",
         "./build.sh",
     ]
 

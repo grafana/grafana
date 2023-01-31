@@ -31,7 +31,7 @@ def lint_frontend_pipeline(trigger, ver_mode):
 
     if ver_mode == "pr":
         # In pull requests, attempt to clone grafana enterprise.
-        init_steps = [enterprise_setup_step(location = "../grafana-enterpise")]
+        init_steps = [enterprise_setup_step()]
         # Ensure the lint step happens after the clone-enterprise step
 
         lint_step["depends_on"].append("clone-enterprise")

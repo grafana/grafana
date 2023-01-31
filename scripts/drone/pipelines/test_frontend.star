@@ -44,7 +44,7 @@ def test_frontend(trigger, ver_mode):
 
     if ver_mode == "pr":
         # In pull requests, attempt to clone grafana enterprise.
-        steps.append(enterprise_setup_step(location = "../grafana-enterpise"))
+        steps.append(enterprise_setup_step())
 
         # Also, make the test step depend on 'clone-enterprise
         test_step["depends_on"].append("clone-enterprise")

@@ -41,7 +41,7 @@ def test_backend(trigger, ver_mode):
 
     if ver_mode == "pr":
         # In pull requests, attempt to clone grafana enterprise.
-        steps.append(enterprise_setup_step(location = "../grafana-enterpise"))
+        steps.append(enterprise_setup_step())
 
         # Ensure that verif_gen_cue happens after we clone enterprise
         # At the time of writing this, very_gen_cue is depended on by the wire step which is what everything else depends on.

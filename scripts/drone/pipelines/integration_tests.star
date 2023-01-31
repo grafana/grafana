@@ -47,7 +47,7 @@ def integration_tests(trigger, prefix, ver_mode = "pr"):
 
     if ver_mode == "pr":
         # In pull requests, attempt to clone grafana enterprise.
-        init_steps.append(enterprise_setup_step(location = "../grafana-enterpise"))
+        init_steps.append(enterprise_setup_step())
 
         # Ensure that verif_gen_cue happens after we clone enterprise
         # At the time of writing this, very_gen_cue is depended on by the wire step which is what everything else depends on.
