@@ -49,12 +49,8 @@ export const SAMLStepKeyCertUnconnected = ({
 }: Props): JSX.Element => {
   const styles = useStyles2(getStyles);
 
-  const onStepChange = (step: number) => {
-    samlStepChanged(step);
-  };
-
   return (
-    <ConfigStepContainer name="Key and certificate" onStepChange={() => onStepChange(step + 1)}>
+    <ConfigStepContainer name="Key and certificate" onSave={() => {}}>
       <Field
         label="Signing and encryption key and certificate provision specification (required)"
         description="X.509 certificate provides the public part, while the private key issued in a PKCS#8 format provides the private part of the asymmetric encryption."

@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import React from 'react';
 
-import { Badge, HorizontalGroup, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Badge, useStyles2 } from '@grafana/ui';
 
 export const AuthBadge = ({ children }: React.PropsWithChildren<{}>) => {
   const styles = useStyles2(getStyles);

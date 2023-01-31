@@ -38,13 +38,8 @@ export const SAMLStepGeneralUnconnected = ({
 }: Props): JSX.Element => {
   const styles = useStyles2(getStyles);
 
-  const onStepChange = (step: number) => {
-    console.log(step);
-    samlStepChanged(step);
-  };
-
   return (
-    <ConfigStepContainer name="General settings" onStepChange={() => onStepChange(step + 1)}>
+    <ConfigStepContainer name="General settings" onSave={() => {}}>
       <HorizontalGroup>
         <Field
           label="Display name for this SAML 2.0 intergration"

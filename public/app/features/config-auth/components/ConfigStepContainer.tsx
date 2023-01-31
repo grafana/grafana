@@ -6,17 +6,21 @@ import { Button, useStyles2 } from '@grafana/ui';
 
 interface Props {
   name: string;
-  onStepChange: () => void;
+  onSave: () => void;
 }
 
-export const ConfigStepContainer = ({ name, children, onStepChange }: PropsWithChildren<Props>): JSX.Element => {
+export const ConfigStepContainer = ({ name, onSave, children }: PropsWithChildren<Props>): JSX.Element => {
   const styles = useStyles2(getStyles);
 
   return (
     <div>
-      <h2>{name}</h2>
+      <div className={styles.header}>
+        <h2>{name}</h2>
+        <Button size="sm" fill="outline" onClick={() => onSave()}>
+          Save changes
+        </Button>
+      </div>
       <div className={styles.formContent}>{children}</div>
-      <Button onClick={onStepChange}>Next</Button>
     </div>
   );
 };
@@ -25,6 +29,10 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     formContent: css`
       margin: ${theme.spacing(4)} 0;
+    `,
+    header: css`
+      display: flex;
+      justify-content: space-between;
     `,
   };
 };

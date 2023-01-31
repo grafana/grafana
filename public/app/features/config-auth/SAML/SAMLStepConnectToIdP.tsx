@@ -3,7 +3,7 @@ import React from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { ClipboardButton, Field, Icon, Input, RadioButtonGroup, Switch, Tooltip, useStyles2 } from '@grafana/ui';
+import { ClipboardButton, Field, Input, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { StoreState } from 'app/types';
 
 import { ConfigStepContainer } from '../components/ConfigStepContainer';
@@ -43,12 +43,8 @@ export const SAMLStepConnectToIdPUnconnected = ({
 }: Props): JSX.Element => {
   const styles = useStyles2(getStyles);
 
-  const onStepChange = (step: number) => {
-    samlStepChanged(step);
-  };
-
   return (
-    <ConfigStepContainer name="Connect Grafana with Identity Provider" onStepChange={() => onStepChange(step + 1)}>
+    <ConfigStepContainer name="Connect Grafana with Identity Provider" onSave={() => {}}>
       <div className={styles.externalBorder}>
         <div className={styles.doubleSideContainer}>
           <div className={styles.internalContainer}>
