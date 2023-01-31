@@ -15,6 +15,7 @@ import (
 	"cuelang.org/go/cue/cuecontext"
 	"github.com/grafana/codejen"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/thema/encoding/jsonschema"
 	"github.com/olekukonko/tablewriter"
 	"github.com/xeipuuv/gojsonpointer"
@@ -34,7 +35,12 @@ func (j docsJenny) JennyName() string {
 	return "DocsJenny"
 }
 
-func (j docsJenny) Generate(def *DefForGen) (*codejen.File, error) {
+func (j docsJenny) Generate(def kindsys.Kind) (*codejen.File, error) {
+	// TODO remove this once codejen catches nils https://github.com/grafana/codejen/issues/5
+	if def == nil {
+		return nil, nil
+	}
+
 	f, err := jsonschema.GenerateSchema(def.Lineage().Latest())
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate json representation for the schema: %v", err)
@@ -61,7 +67,7 @@ func (j docsJenny) Generate(def *DefForGen) (*codejen.File, error) {
 	// fixes the references between the types within a json after making components.schema.<types> the root of the json
 	kindJsonStr := strings.Replace(string(obj.Components.Schemas), "#/components/schemas/", "#/", -1)
 
-	kindProps := def.Properties.Common()
+	kindProps := def.Props().Common()
 	data := templateData{
 		KindName:     kindProps.Name,
 		KindVersion:  def.Lineage().Latest().Version().String(),

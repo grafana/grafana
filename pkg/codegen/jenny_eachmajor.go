@@ -29,8 +29,8 @@ func (j *lmox) JennyName() string {
 	return "LatestMajorsOrXJenny"
 }
 
-func (j *lmox) Generate(def *DefForGen) (codejen.Files, error) {
-	comm := def.Properties.Common()
+func (j *lmox) Generate(def kindsys.Kind) (codejen.Files, error) {
+	comm := def.Props().Common()
 	sfg := SchemaForGen{
 		Name:    comm.Name,
 		IsGroup: comm.LineageIsGroup,
@@ -39,7 +39,7 @@ func (j *lmox) Generate(def *DefForGen) (codejen.Files, error) {
 	do := func(sfg SchemaForGen, infix string) (codejen.Files, error) {
 		f, err := j.inner.Generate(sfg)
 		if err != nil {
-			return nil, fmt.Errorf("%s jenny failed on %s schema for %s: %w", j.inner.JennyName(), sfg.Schema.Version(), def.Properties.Common().Name, err)
+			return nil, fmt.Errorf("%s jenny failed on %s schema for %s: %w", j.inner.JennyName(), sfg.Schema.Version(), def.Props().Common().Name, err)
 		}
 		if f == nil || !f.Exists() {
 			return nil, nil
