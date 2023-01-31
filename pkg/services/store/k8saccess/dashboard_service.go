@@ -2,7 +2,9 @@ package k8saccess
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -10,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/apimachinery/bridge"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
 	"github.com/grafana/grafana/pkg/registry/corecrd"
@@ -100,6 +103,7 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 	if uid == "" {
 		uid = util.GenerateShortUID()
 	}
+	uid = strings.ToLower(uid) // !!!!!!
 
 	//labels := make(map[string]string)
 	//annotations := make(map[string]string)
@@ -117,6 +121,7 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 	dto.Dashboard.Data.Del("id")
 	dto.Dashboard.Data.Set("uid", uid)
 	// strip nulls...
+	stripNulls(dto.Dashboard.Data)
 
 	//dashbytes, err := json.Marshal(dto.Dashboard)
 	dashbytes, err := dto.Dashboard.Data.MarshalJSON()
@@ -137,6 +142,8 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 	if d.Title == nil {
 		d.Title = &dto.Dashboard.Title
 	}
+
+	fmt.Printf("Dashboard title: %s", *d.Title)
 
 	b := k8ssys.Base[dashboardKind]{
 		TypeMeta: metav1.TypeMeta{
@@ -169,10 +176,13 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 		Object: o,
 	}
 
-	_, err = resource.Create(ctx, uObj, metav1.CreateOptions{})
+	out, err := resource.Create(ctx, uObj, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}
+
+	jj, err := json.MarshalIndent(out, "", " ")
+	fmt.Printf("GOT: %v", string(jj))
 
 	return dto.Dashboard, err
 }
@@ -191,4 +201,24 @@ func (s *k8sDashboardService) DeleteACLByUser(ctx context.Context, userID int64)
 
 func (s *k8sDashboardService) CountDashboardsInFolder(ctx context.Context, query *dashboards.CountDashboardsInFolderQuery) (int64, error) {
 	return s.orig.CountDashboardsInFolder(ctx, query)
+}
+
+func stripNulls(j *simplejson.Json) {
+	m, err := j.Map()
+	if err != nil {
+		arr, err := j.Array()
+		if err == nil {
+			for i := range arr {
+				stripNulls(j.GetIndex(i))
+			}
+		}
+		return
+	}
+	for k, v := range m {
+		if v == nil {
+			j.Del(k)
+		} else {
+			stripNulls(j.Get(k))
+		}
+	}
 }
