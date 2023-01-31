@@ -16,6 +16,7 @@ import {
   toDataFrame,
   dataFrameFromJSON,
   LoadingState,
+  DataFrame,
 } from '@grafana/data';
 import {
   DataSourceWithBackend,
@@ -30,6 +31,7 @@ import { migrateDatasourceNameToRef } from 'app/features/dashboard/state/Dashboa
 import { getDashboardSrv } from '../../../features/dashboard/services/DashboardSrv';
 
 import AnnotationQueryEditor from './components/AnnotationQueryEditor';
+import { doTimeRegionQuery } from './timeRegions';
 import { GrafanaAnnotationQuery, GrafanaAnnotationType, GrafanaQuery, GrafanaQueryType } from './types';
 
 let counter = 100;
@@ -93,6 +95,25 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
         );
         continue;
       }
+      if (target.queryType === GrafanaQueryType.TimeRegions) {
+        const regions: DataFrame[] = [];
+        for (const region of target.timeRegions ?? []) {
+          const frame = doTimeRegionQuery(region, request.range);
+          if (frame) {
+            regions.push(frame);
+          }
+        }
+        if (regions.length) {
+          results.push(
+            of({
+              data: regions,
+              state: LoadingState.Done,
+            })
+          );
+        }
+        continue;
+      }
+
       if (target.queryType === GrafanaQueryType.LiveMeasurements) {
         let channel = templateSrv.replace(target.channel, request.scopedVars);
         const { filter } = target;

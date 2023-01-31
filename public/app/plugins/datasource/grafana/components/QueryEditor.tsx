@@ -79,6 +79,13 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
         description: 'Search for grafana resources',
       });
     }
+    if (hasAlphaPanels) {
+      this.queryTypes.push({
+        label: 'Time regions',
+        value: GrafanaQueryType.TimeRegions,
+        description: 'Configure a repeating time region',
+      });
+    }
     if (config.featureToggles.editPanelCSVDragAndDrop) {
       this.queryTypes.push({
         label: 'Spreadsheet or snapshot',
@@ -335,6 +342,14 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
     onRunQuery();
   };
 
+  renderTimeRegionEditor() {
+    return (
+      <InlineFieldRow>
+        <div>TODO.... show time region editor</div>
+      </InlineFieldRow>
+    );
+  }
+
   renderListPublicFiles() {
     let { path } = this.props.query;
     let { folders } = this.state;
@@ -500,6 +515,7 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
         {queryType === GrafanaQueryType.LiveMeasurements && this.renderMeasurementsQuery()}
         {queryType === GrafanaQueryType.List && this.renderListPublicFiles()}
         {queryType === GrafanaQueryType.Snapshot && this.renderSnapshotQuery()}
+        {queryType === GrafanaQueryType.TimeRegions && this.renderTimeRegionEditor()}
         {queryType === GrafanaQueryType.Search && (
           <SearchEditor value={query.search ?? {}} onChange={this.onSearchChange} />
         )}
