@@ -6,7 +6,6 @@ import {
   LinkModel,
   LogRowModel,
   LogsSortOrder,
-  TimeZone,
   DataQueryResponse,
   dateTimeFormat,
   CoreApp,
@@ -14,6 +13,7 @@ import {
   DataSourceWithLogsContextSupport,
 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
+import { TimeZone } from '@grafana/schema';
 import { withTheme2, Themeable2, Icon, Tooltip } from '@grafana/ui';
 
 import { checkLogsError, escapeUnescapedString } from '../utils';
