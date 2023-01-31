@@ -55,7 +55,7 @@ export function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier
 
   return (
     <Alert
-      title="Cannot duplicate. The rule does not exist"
+      title="Cannot copy the rule. The rule does not exist"
       buttonContent="Go back to alert list"
       onRemove={() => locationService.replace(createUrl('/alerting/list'))}
     />

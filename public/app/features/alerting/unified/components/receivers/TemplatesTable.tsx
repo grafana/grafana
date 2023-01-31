@@ -119,7 +119,7 @@ export const TemplatesTable: FC<Props> = ({ config, alertManagerName }) => {
                           `/alerting/notifications/templates/${encodeURIComponent(name)}/duplicate`,
                           alertManagerName
                         )}
-                        tooltip="Duplicate template"
+                        tooltip="Copy template"
                         icon="copy"
                       />
                     )}
