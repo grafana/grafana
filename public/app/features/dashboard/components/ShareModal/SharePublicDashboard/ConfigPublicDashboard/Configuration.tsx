@@ -8,7 +8,6 @@ import { reportInteraction } from '@grafana/runtime/src';
 import { FieldSet, Label, Switch, TimeRangeInput, useStyles2, VerticalGroup } from '@grafana/ui/src';
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 import { DashboardModel } from 'app/features/dashboard/state';
-import { useIsDesktop } from 'app/features/dashboard/utils/screen';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 
 import { SharePublicDashboardInputs } from './ConfigPublicDashboard';
@@ -24,7 +23,6 @@ export const Configuration = ({
 }) => {
   const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
   const styles = useStyles2(getStyles);
-  const isDesktop = useIsDesktop();
 
   const timeRange = getTimeRange(dashboard.getDefaultTime(), dashboard);
 
@@ -39,11 +37,11 @@ export const Configuration = ({
             </Label>
             <TimeRangeInput value={timeRange} disabled onChange={() => {}} />
           </Layout>
-          <Layout orientation={isDesktop ? 0 : 1} spacing="xs">
+          <Layout orientation={0} spacing="sm">
             <Switch {...register('isTimeRangeEnabled')} data-testid={selectors.EnableTimeRangeSwitch} />
             <Label description="Allow viewers to change time range">Time range picker enabled</Label>
           </Layout>
-          <Layout orientation={isDesktop ? 0 : 1} spacing="xs">
+          <Layout orientation={0} spacing="sm">
             <Switch
               {...register('isAnnotationsEnabled')}
               onChange={(e) => {
@@ -57,20 +55,6 @@ export const Configuration = ({
             />
             <Label description="Show annotations on public dashboard">Show annotations</Label>
           </Layout>
-          {/*<Layout orientation={isDesktop ? 0 : 1} spacing="xs" justify="space-between">*/}
-          {/*  <Label description="Configures whether current dashboard can be available publicly">Enabled</Label>*/}
-          {/*  <Switch*/}
-          {/*    {...register('enabledSwitch')}*/}
-          {/*    onChange={(e) => {*/}
-          {/*      const { onChange } = register('enabledSwitch');*/}
-          {/*      reportInteraction('grafana_dashboards_public_enable_clicked', {*/}
-          {/*        action: e.currentTarget.checked ? 'enable' : 'disable',*/}
-          {/*      });*/}
-          {/*      onChange(e);*/}
-          {/*    }}*/}
-          {/*    data-testid={selectors.EnableSwitch}*/}
-          {/*  />*/}
-          {/*</Layout>*/}
         </VerticalGroup>
       </FieldSet>
     </>
@@ -79,7 +63,7 @@ export const Configuration = ({
 
 const getStyles = (theme: GrafanaTheme2) => ({
   title: css`
-    margin-bottom: ${theme.spacing(2)};
+    margin-bottom: ${theme.spacing(1)};
   `,
   dashboardConfig: css`
     margin: ${theme.spacing(0, 0, 3, 0)};

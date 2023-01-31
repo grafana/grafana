@@ -1,11 +1,23 @@
 import { css } from '@emotion/css';
+import cx from 'classnames';
 import React, { useContext, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { reportInteraction } from '@grafana/runtime/src';
-import { Alert, ClipboardButton, Field, HorizontalGroup, Input, ModalsContext, useStyles2 } from '@grafana/ui/src';
+import {
+  Alert,
+  ClipboardButton,
+  Field,
+  HorizontalGroup,
+  Input,
+  Label,
+  ModalsContext,
+  Switch,
+  useStyles2,
+} from '@grafana/ui/src';
+import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 
 import { contextSrv } from '../../../../../../core/services/context_srv';
 import { AccessControlAction } from '../../../../../../types';
@@ -13,19 +25,19 @@ import { DeletePublicDashboardButton } from '../../../../../manage-dashboards/co
 import { isOrgAdmin } from '../../../../../plugins/admin/permissions';
 import { useUpdatePublicDashboardMutation } from '../../../../api/publicDashboardApi';
 import { DashboardModel } from '../../../../state';
+import { useIsDesktop } from '../../../../utils/screen';
 import { ShareModal } from '../../ShareModal';
 import {
   dashboardHasTemplateVariables,
   generatePublicDashboardUrl,
   PublicDashboard,
-  publicDashboardPersisted,
 } from '../SharePublicDashboardUtils';
 
 import { Configuration } from './Configuration';
 
 export type SharePublicDashboardInputs = {
   isAnnotationsEnabled: boolean;
-  enabledSwitch: boolean;
+  pauseShare: boolean;
   isTimeRangeEnabled: boolean;
 };
 
@@ -40,6 +52,7 @@ const ConfigPublicDashboard = ({
 }) => {
   const styles = useStyles2(getStyles);
   const { showModal, hideModal } = useContext(ModalsContext);
+  const isDesktop = useIsDesktop();
 
   const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
   const dashboardVariables = dashboard.getVariables();
@@ -48,7 +61,7 @@ const ConfigPublicDashboard = ({
     defaultValues: {
       isAnnotationsEnabled: false,
       isTimeRangeEnabled: false,
-      enabledSwitch: false,
+      pauseShare: false,
     },
   });
 
@@ -58,7 +71,7 @@ const ConfigPublicDashboard = ({
     reset({
       isAnnotationsEnabled: publicDashboard?.annotationsEnabled,
       isTimeRangeEnabled: publicDashboard?.timeSelectionEnabled,
-      enabledSwitch: publicDashboard?.isEnabled,
+      pauseShare: !publicDashboard?.isEnabled,
     });
   }, [publicDashboard, reset]);
 
@@ -78,7 +91,7 @@ const ConfigPublicDashboard = ({
       dashboard,
       payload: {
         ...publicDashboard!,
-        isEnabled: values.enabledSwitch,
+        isEnabled: values.pauseShare,
         annotationsEnabled: values.isAnnotationsEnabled,
         timeSelectionEnabled: values.isTimeRangeEnabled,
       },
@@ -90,7 +103,7 @@ const ConfigPublicDashboard = ({
   return (
     <form onSubmit={handleSubmit(onUpdate)}>
       <Configuration register={register} dashboard={dashboard} disabled={!hasWritePermissions || isUpdateLoading} />
-      {publicDashboardPersisted(publicDashboard) && watch('enabledSwitch') && (
+      {!watch('pauseShare') && (
         <Field label="Link URL" className={styles.publicUrl}>
           <Input
             disabled={isUpdateLoading}
@@ -124,26 +137,53 @@ const ConfigPublicDashboard = ({
       ) : (
         <Alert title="You don't have permissions to create or update a public dashboard" severity="warning" />
       )}
-      <HorizontalGroup justify="flex-end">
-        {publicDashboard && hasWritePermissions && (
-          <DeletePublicDashboardButton
-            type="button"
-            disabled={isUpdateLoading}
-            data-testid={selectors.DeleteButton}
-            onDismiss={onDismissDelete}
-            variant="destructive"
-            fill="outline"
-            dashboard={dashboard}
-            publicDashboard={{
-              uid: publicDashboard.uid,
-              dashboardUid: dashboard.uid,
-              title: dashboard.title,
+      <Layout
+        orientation={isDesktop ? 0 : 1}
+        justify={isDesktop ? 'flex-end' : 'flex-start'}
+        align={isDesktop ? 'center' : 'normal'}
+      >
+        <HorizontalGroup spacing="sm">
+          <Switch
+            {...register('pauseShare')}
+            onChange={(e) => {
+              const { onChange } = register('pauseShare');
+              reportInteraction('grafana_dashboards_public_enable_clicked', {
+                action: e.currentTarget.checked ? 'enable' : 'disable',
+              });
+              onChange(e);
             }}
+            data-testid={selectors.EnableSwitch}
+          />
+          <Label
+            className={css`
+              margin-bottom: 0;
+            `}
           >
-            Revoke public URL {/*{(isSaveLoading || isFetching) && <Spinner />}*/}
-          </DeletePublicDashboardButton>
+            Pause sharing dashboard
+          </Label>
+        </HorizontalGroup>
+        {hasWritePermissions && (
+          <HorizontalGroup justify="flex-end">
+            <DeletePublicDashboardButton
+              className={cx(styles.deleteButton, { [styles.deleteButtonMobile]: !isDesktop })}
+              type="button"
+              disabled={isUpdateLoading}
+              data-testid={selectors.DeleteButton}
+              onDismiss={onDismissDelete}
+              variant="destructive"
+              fill="outline"
+              dashboard={dashboard}
+              publicDashboard={{
+                uid: publicDashboard.uid,
+                dashboardUid: dashboard.uid,
+                title: dashboard.title,
+              }}
+            >
+              Revoke public URL {/*{(isSaveLoading || isFetching) && <Spinner />}*/}
+            </DeletePublicDashboardButton>
+          </HorizontalGroup>
         )}
-      </HorizontalGroup>
+      </Layout>
     </form>
   );
 };
@@ -152,6 +192,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
   publicUrl: css`
     width: 100%;
     margin-bottom: ${theme.spacing(0, 0, 3, 0)};
+  `,
+  deleteButton: css`
+    margin-left: ${theme.spacing(3)}; ;
+  `,
+  deleteButtonMobile: css`
+    margin-top: ${theme.spacing(2)}; ;
   `,
 });
 
