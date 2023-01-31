@@ -11,16 +11,45 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 const defaultClientTimeout = 30 * time.Second
 
 type LokiConfig struct {
-	Url               *url.URL
+	ReadPathURL       *url.URL
+	WritePathURL      *url.URL
 	BasicAuthUser     string
 	BasicAuthPassword string
 	TenantID          string
 	ExternalLabels    map[string]string
+}
+
+func NewLokiConfig(cfg setting.UnifiedAlertingStateHistorySettings) (LokiConfig, error) {
+	read, write := cfg.LokiReadURL, cfg.LokiWriteURL
+	if read == "" {
+		read = cfg.LokiRemoteURL
+	}
+	if write == "" {
+		write = cfg.LokiRemoteURL
+	}
+
+	readURL, err := url.Parse(read)
+	if err != nil {
+		return LokiConfig{}, fmt.Errorf("failed to parse loki remote read URL: %w", err)
+	}
+	writeURL, err := url.Parse(write)
+	if err != nil {
+		return LokiConfig{}, fmt.Errorf("failed to parse loki remote write URL: %w", err)
+	}
+
+	return LokiConfig{
+		ReadPathURL:       readURL,
+		WritePathURL:      writeURL,
+		BasicAuthUser:     cfg.LokiBasicAuthUsername,
+		BasicAuthPassword: cfg.LokiBasicAuthPassword,
+		TenantID:          cfg.LokiTenantID,
+	}, nil
 }
 
 type httpLokiClient struct {
@@ -40,7 +69,7 @@ func newLokiClient(cfg LokiConfig, logger log.Logger) *httpLokiClient {
 }
 
 func (c *httpLokiClient) ping(ctx context.Context) error {
-	uri := c.cfg.Url.JoinPath("/loki/api/v1/labels")
+	uri := c.cfg.ReadPathURL.JoinPath("/loki/api/v1/labels")
 	req, err := http.NewRequest(http.MethodGet, uri.String(), nil)
 	if err != nil {
 		return fmt.Errorf("error creating request: %w", err)
@@ -92,7 +121,7 @@ func (c *httpLokiClient) push(ctx context.Context, s []stream) error {
 		return fmt.Errorf("failed to serialize Loki payload: %w", err)
 	}
 
-	uri := c.cfg.Url.JoinPath("/loki/api/v1/push")
+	uri := c.cfg.WritePathURL.JoinPath("/loki/api/v1/push")
 	req, err := http.NewRequest(http.MethodPost, uri.String(), bytes.NewBuffer(enc))
 	if err != nil {
 		return fmt.Errorf("failed to create Loki request: %w", err)
