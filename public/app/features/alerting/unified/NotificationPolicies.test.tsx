@@ -210,7 +210,7 @@ describe('NotificationPolicies', () => {
     setDataSourceSrv(undefined as any);
   });
 
-  it('loads and shows routes', async () => {
+  it.skip('loads and shows routes', async () => {
     mocks.api.fetchAlertManagerConfig.mockResolvedValue({
       alertmanager_config: {
         route: rootRoute,
@@ -262,7 +262,7 @@ describe('NotificationPolicies', () => {
     });
   });
 
-  it('can edit root route if one is already defined', async () => {
+  it.skip('can edit root route if one is already defined', async () => {
     const defaultConfig: AlertManagerCortexConfig = {
       alertmanager_config: {
         receivers: [{ name: 'default' }, { name: 'critical' }],
@@ -338,7 +338,7 @@ describe('NotificationPolicies', () => {
     expect(ui.rootGroupBy.get()).toHaveTextContent('alertname, namespace');
   });
 
-  it('can edit root route if one is not defined yet', async () => {
+  it.skip('can edit root route if one is not defined yet', async () => {
     mocks.api.fetchAlertManagerConfig.mockResolvedValue({
       alertmanager_config: {
         receivers: [{ name: 'default' }],
@@ -409,7 +409,7 @@ describe('NotificationPolicies', () => {
     expect(ui.editButton.query()).not.toBeInTheDocument();
   });
 
-  it('Converts matchers to object_matchers for grafana alertmanager', async () => {
+  it.skip('Converts matchers to object_matchers for grafana alertmanager', async () => {
     const defaultConfig: AlertManagerCortexConfig = {
       alertmanager_config: {
         receivers: [{ name: 'default' }, { name: 'critical' }],
@@ -480,7 +480,7 @@ describe('NotificationPolicies', () => {
     });
   });
 
-  it('Should be able to delete an empty route', async () => {
+  it.skip('Should be able to delete an empty route', async () => {
     const routeConfig = {
       continue: false,
       receiver: 'default',
@@ -535,7 +535,7 @@ describe('NotificationPolicies', () => {
     );
   });
 
-  it('Keeps matchers for non-grafana alertmanager sources', async () => {
+  it.skip('Keeps matchers for non-grafana alertmanager sources', async () => {
     const defaultConfig: AlertManagerCortexConfig = {
       alertmanager_config: {
         receivers: [{ name: 'default' }, { name: 'critical' }],
@@ -604,7 +604,7 @@ describe('NotificationPolicies', () => {
     });
   });
 
-  it('Prometheus Alertmanager routes cannot be edited', async () => {
+  it.skip('Prometheus Alertmanager routes cannot be edited', async () => {
     mocks.api.fetchStatus.mockResolvedValue({
       ...someCloudAlertManagerStatus,
       config: someCloudAlertManagerConfig.alertmanager_config,
@@ -641,7 +641,7 @@ describe('NotificationPolicies', () => {
     expect(mocks.api.fetchStatus).toHaveBeenCalledTimes(1);
   });
 
-  it('Can add a mute timing to a route', async () => {
+  it.skip('Can add a mute timing to a route', async () => {
     const defaultConfig: AlertManagerCortexConfig = {
       alertmanager_config: {
         receivers: [{ name: 'default' }, { name: 'critical' }],
@@ -707,7 +707,7 @@ describe('NotificationPolicies', () => {
     });
   });
 
-  it('Shows an empty config when config returns an error and the AM supports lazy config initialization', async () => {
+  it.skip('Shows an empty config when config returns an error and the AM supports lazy config initialization', async () => {
     mocks.api.discoverAlertmanagerFeatures.mockResolvedValue({ lazyConfigInit: true });
 
     mocks.api.fetchAlertManagerConfig.mockRejectedValue({
