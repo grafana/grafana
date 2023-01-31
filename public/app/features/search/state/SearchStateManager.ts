@@ -171,10 +171,6 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       q.kind = ['dashboard', 'folder']; // skip panels
     }
 
-    // if (q.query === '*' && !q.sort?.length) {
-    //   q.sort = 'name_sort';
-    // }
-
     return q;
   }
 
