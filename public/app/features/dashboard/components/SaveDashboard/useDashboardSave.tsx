@@ -26,7 +26,7 @@ const saveDashboard = async (saveModel: any, options: SaveDashboardOptions, dash
   return result;
 };
 
-export const useDashboardSave = (dashboard: DashboardModel) => {
+export const useDashboardSave = (dashboard: DashboardModel, isCopy = false) => {
   const [state, onDashboardSave] = useAsyncFn(
     async (clone: any, options: SaveDashboardOptions, dashboard: DashboardModel) =>
       await saveDashboard(clone, options, dashboard),
@@ -49,6 +49,7 @@ export const useDashboardSave = (dashboard: DashboardModel) => {
       reportInteraction(`grafana_dashboard_${dashboard.id ? 'saved' : 'created'}`, {
         name: dashboard.title,
         url: state.value.url,
+        isCopy,
       });
 
       const currentPath = locationService.getLocation().pathname;
@@ -67,7 +68,7 @@ export const useDashboardSave = (dashboard: DashboardModel) => {
         );
       }
     }
-  }, [dashboard, state, notifyApp, dispatch]);
+  }, [dashboard, isCopy, state, notifyApp, dispatch]);
 
   return { state, onDashboardSave };
 };
