@@ -164,6 +164,7 @@ func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, da
 	for i := range queries {
 		queries[i].Set("intervalMs", safeInterval)
 		queries[i].Set("maxDataPoints", safeResolution)
+		queries[i].Set("queryCachingTTL", reqDTO.QueryCachingTTL)
 	}
 
 	return dtos.MetricRequest{
@@ -243,7 +244,6 @@ func groupQueriesByPanelId(dashboard *simplejson.Json) map[int64][]*simplejson.J
 
 		var panelQueries []*simplejson.Json
 
-		cacheTTLOverride := panel.Get("queryCachingTTL").MustInt64(0)
 		for _, queryObj := range panel.Get("targets").MustArray() {
 			query := simplejson.NewFromAny(queryObj)
 
@@ -256,10 +256,6 @@ func groupQueriesByPanelId(dashboard *simplejson.Json) map[int64][]*simplejson.J
 					uid := getDataSourceUidFromJson(panel)
 					datasource := map[string]interface{}{"type": "public-ds", "uid": uid}
 					query.Set("datasource", datasource)
-				}
-
-				if cacheTTLOverride > 0 {
-					query.Set("queryCachingTTL", cacheTTLOverride)
 				}
 
 				panelQueries = append(panelQueries, query)
