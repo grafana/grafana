@@ -68,8 +68,18 @@ We added support to validate queries and visually display errors as a query is b
 
 {{< figure src="/media/docs/grafana/logs-loki-query-validation-whats-new-9-4.png" max-width="750px" caption="Loki query validation" >}}
 
-# Loki logs sample in Explore
+## Loki logs sample in Explore
 
 For Loki metric queries in Explore, you are now able to see the sample of log lines that contributed to the displayed results. To see these logs, click on the collapsed "Logs sample" panel under your graph or table panel. If you would like to interact with your log lines or modify the log query, click on the "Open logs in split view" button and the log query will be executed in the split view.
 
 {{< figure src="/media/docs/grafana/logs-sample-whats-new-9-4.png" max-width="750px" caption="Logs sample in Explore" >}}
+
+## New data source connection page in Dashboards and Explore
+
+When you start your journey to create a dashboard or explore your data, but you have no data source connected yet, you’ll be presented with a page that informs you of this and guides you to set up a first connection.
+
+Administrators can choose between selecting one of the most popular data sources or viewing the full list of data sources. Editors are guided to contact their administrator to configure data sources. In both cases, there's also an option to continue without setting up a data source and to use sample data instead.
+
+This is currently a beta feature that can be accessed by enabling the `datasourceOnboarding` feature toggle.
+
+{{< figure src="/media/docs/grafana/screenshot-datasource-connection-onboarding-whats-new-9-4.png" max-width="750px" caption="Admin view of data source connection page on dashboard creation" >}}
