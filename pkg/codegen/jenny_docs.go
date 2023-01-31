@@ -114,6 +114,7 @@ type schema struct {
 	Definitions map[string]*schema `json:"definitions,omitempty"`
 	Enum        []Any              `json:"enum"`
 	Default     any                `json:"default"`
+	AllOf       []*schema          `json:"allOf"`
 }
 
 func jsonToMarkdown(jsonData []byte, tpl string, kindName string) ([]byte, error) {
@@ -183,7 +184,54 @@ func resolveSchema(schem *schema, root *simplejson.Json) (*schema, error) {
 		*schem.Items = *foo
 	}
 
+	if len(schem.AllOf) > 0 {
+		var extensions []string
+		for idx, child := range schem.AllOf {
+			tmp, err := resolveSubSchema(schem, child, root)
+			if err != nil {
+				return nil, err
+			}
+			schem.AllOf[idx] = tmp
+
+			if len(tmp.Title) > 0 {
+				extensions = append(extensions, fmt.Sprintf("[%s](#%s)", tmp.Title, strings.ToLower(tmp.Title)))
+			}
+		}
+		schem.Description += fmt.Sprintf("\nThis kind extends: %s.", strings.Join(extensions, " and "))
+	}
+
 	return schem, nil
+}
+
+func resolveSubSchema(parent, child *schema, root *simplejson.Json) (*schema, error) {
+	if child.Ref != "" {
+		tmp, err := resolveReference(child.Ref, root)
+		if err != nil {
+			return nil, err
+		}
+		*child = *tmp
+	}
+
+	if len(child.Required) > 0 {
+		parent.Required = append(parent.Required, child.Required...)
+	}
+
+	child, err := resolveSchema(child, root)
+	if err != nil {
+		return nil, err
+	}
+
+	if parent.Properties == nil {
+		parent.Properties = make(map[string]*schema)
+	}
+
+	for k, v := range child.Properties {
+		prop := *v
+		prop.Description = fmt.Sprintf("*(Inherited from [%s](#%s))*", child.Title, strings.ToLower(child.Title))
+		parent.Properties[k] = &prop
+	}
+
+	return child, err
 }
 
 // resolveReference loads a schema from a $ref.
@@ -301,6 +349,21 @@ func findDefinitions(s *schema) []*schema {
 						p.Items.Title = k
 					}
 					objs = append(objs, p.Items)
+				}
+			}
+		}
+	}
+
+	// This code could probably be unified with the one above
+	for _, child := range s.AllOf {
+		if child.Type.HasType(PropertyTypeObject) {
+			objs = append(objs, child)
+		}
+
+		if child.Type.HasType(PropertyTypeArray) {
+			if child.Items != nil {
+				if child.Items.Type.HasType(PropertyTypeObject) {
+					objs = append(objs, child.Items)
 				}
 			}
 		}
