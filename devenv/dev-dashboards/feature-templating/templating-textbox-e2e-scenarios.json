@@ -6,7 +6,7 @@
       "description": "",
       "type": "datasource",
       "pluginId": "testdata",
-      "pluginName": "TestData DB"
+      "pluginName": "TestData"
     }
   ],
   "__requires": [
@@ -19,7 +19,7 @@
     {
       "type": "datasource",
       "id": "testdata",
-      "name": "TestData DB",
+      "name": "TestData",
       "version": "1.0.0"
     },
     {
