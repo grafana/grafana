@@ -17,14 +17,14 @@ type ManyToMany codejen.ManyToMany[*DefForGen]
 
 // ForGen is a codejen input transformer that converts a pure kindsys.SomeDef into
 // a DefForGen by binding its contained lineage.
-func ForGen(rt *thema.Runtime, decl kindsys.SomeDef) (*DefForGen, error) {
-	lin, err := decl.BindKindLineage(rt)
+func ForGen(rt *thema.Runtime, def kindsys.SomeDef) (*DefForGen, error) {
+	lin, err := def.BindKindLineage(rt)
 	if err != nil {
 		return nil, err
 	}
 
 	return &DefForGen{
-		SomeDef: decl,
+		SomeDef: def,
 		lin:     lin,
 	}, nil
 }
@@ -38,17 +38,17 @@ type DefForGen struct {
 }
 
 // Lineage returns the [thema.Lineage] for the underlying [kindsys.SomeDef].
-func (decl *DefForGen) Lineage() thema.Lineage {
-	return decl.lin
+func (def *DefForGen) Lineage() thema.Lineage {
+	return def.lin
 }
 
 // ForLatestSchema returns a [SchemaForGen] for the latest schema in this
 // DefForGen's lineage.
-func (decl *DefForGen) ForLatestSchema() SchemaForGen {
-	comm := decl.Properties.Common()
+func (def *DefForGen) ForLatestSchema() SchemaForGen {
+	comm := def.Properties.Common()
 	return SchemaForGen{
 		Name:    comm.Name,
-		Schema:  decl.Lineage().Latest(),
+		Schema:  def.Lineage().Latest(),
 		IsGroup: comm.LineageIsGroup,
 	}
 }

@@ -107,7 +107,7 @@ func (k *Kind) Def() kindsys.Def[kindsys.CoreProperties] {
 // Props returns a [kindsys.SomeKindProps], with underlying type [kindsys.CoreProperties],
 // representing the static properties declared in the publicdashboard kind.
 //
-// This method is identical to calling Def().Props. It is provided to satisfy [kindsys.Kind].
+// This method is identical to calling Def().Props. It is provided to satisfy [kindsys.Interface].
 func (k *Kind) Props() kindsys.SomeKindProperties {
 	return k.def.Properties
 }

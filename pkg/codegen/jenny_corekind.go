@@ -20,8 +20,8 @@ func CoreKindJenny(gokindsdir string, cfg *CoreKindJennyConfig) OneToOne {
 		cfg = new(CoreKindJennyConfig)
 	}
 	if cfg.GenDirName == nil {
-		cfg.GenDirName = func(decl *DefForGen) string {
-			return decl.Properties.Common().MachineName
+		cfg.GenDirName = func(def *DefForGen) string {
+			return def.Properties.Common().MachineName
 		}
 	}
 
@@ -49,14 +49,14 @@ func (gen *coreKindJenny) JennyName() string {
 	return "CoreKindJenny"
 }
 
-func (gen *coreKindJenny) Generate(decl *DefForGen) (*codejen.File, error) {
-	if !decl.IsCore() {
+func (gen *coreKindJenny) Generate(def *DefForGen) (*codejen.File, error) {
+	if !def.IsCore() {
 		return nil, nil
 	}
 
-	path := filepath.Join(gen.gokindsdir, gen.cfg.GenDirName(decl), decl.Properties.Common().MachineName+"_kind_gen.go")
+	path := filepath.Join(gen.gokindsdir, gen.cfg.GenDirName(def), def.Properties.Common().MachineName+"_kind_gen.go")
 	buf := new(bytes.Buffer)
-	if err := tmpls.Lookup("kind_core.tmpl").Execute(buf, decl); err != nil {
+	if err := tmpls.Lookup("kind_core.tmpl").Execute(buf, def); err != nil {
 		return nil, fmt.Errorf("failed executing kind_core template for %s: %w", path, err)
 	}
 	b, err := postprocessGoFile(genGoFile{

@@ -31,8 +31,8 @@ func main() {
 
 	// Core kinds composite code generator. Produces all generated code in
 	// grafana/grafana that derives from core kinds.
-	coreKindsGen := codejen.JennyListWithNamer(func(decl *codegen.DefForGen) string {
-		return decl.Properties.Common().MachineName
+	coreKindsGen := codejen.JennyListWithNamer(func(def *codegen.DefForGen) string {
+		return def.Properties.Common().MachineName
 	})
 
 	// All the jennies that comprise the core kinds generator pipeline
