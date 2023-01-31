@@ -2030,11 +2030,11 @@ describe('PrometheusIncrementalStorage', function () {
         length: 43,
       },
       originalRange: mockOriginalRange('2023-01-30T19:33:31.357Z', '2023-01-30T20:33:31.357Z'),
-      originalRange: {
-        start: new Date('2023-01-30T19:33:31.357Z').valueOf(),
-        end: new Date('2023-01-30T20:33:31.357Z').valueOf(),
-        raw: { from: 'now-1h', to: 'now' },
-      },
+      // originalRange: {
+      //   start: new Date('2023-01-30T19:33:31.357Z').valueOf(),
+      //   end: new Date('2023-01-30T20:33:31.357Z').valueOf(),
+      //   raw: { from: 'now-1h', to: 'now' },
+      // },
       timeSrv: { from: '2023-01-30T19:33:31.498Z', to: '2023-01-30T20:33:31.498Z', raw: { from: 'now-1h', to: 'now' } },
     };
 

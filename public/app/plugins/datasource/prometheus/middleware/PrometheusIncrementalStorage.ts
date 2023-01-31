@@ -68,6 +68,44 @@ export class PrometheusIncrementalStorage {
     return JSON.stringify(keyValues);
   };
 
+  static removeFramesFromStorageThatExistInRequest(
+    existingTimeFrames: number[],
+    responseTimeFieldValues: number[],
+    originalRange: { end: number, start: number },
+    existingValueFrames: number[],
+    intervalInSeconds: number
+  ) {
+    let existingTimeFrameNewValuesRemoved: number[] = [];
+    let existingValueFrameNewValuesRemoved: number[] = [];
+
+    for (let i = 0; i < existingTimeFrames?.length; i++) {
+      const doesResponseNotContainFrameTimeValue = responseTimeFieldValues.indexOf(existingTimeFrames[i]) === -1;
+
+      // Remove values from before new start
+      // Note this acts as the only eviction strategy so far, we only store frames that exist after the start of the current query, minus the interval time
+      const isFrameOlderThenQueryStart = existingTimeFrames[i] <= originalRange.start - (intervalInSeconds * 1000)
+
+      if (isFrameOlderThenQueryStart && DEBUG) {
+        console.log('Frame is older then query, evicting', existingTimeFrames[i] - originalRange.start, existingTimeFrames[i], originalRange.start);
+      }
+
+      const isThisAFrameWeWantToCombineWithCurrentResult = doesResponseNotContainFrameTimeValue && !isFrameOlderThenQueryStart;
+      // Only add timeframes from the old data to the new data, if they aren't already contained in the new data
+      if (isThisAFrameWeWantToCombineWithCurrentResult) {
+        if (existingValueFrames[i] !== undefined && existingTimeFrames[i] !== undefined) {
+          existingTimeFrameNewValuesRemoved.push(existingTimeFrames[i]);
+          existingValueFrameNewValuesRemoved.push(existingValueFrames[i]);
+        } else {
+          if (DEBUG) {
+            console.warn('empty value frame?', i, existingValueFrames);
+          }
+        }
+      }
+    }
+
+    return { time: existingTimeFrameNewValuesRemoved, values: existingValueFrameNewValuesRemoved };
+  }
+
   private setStorageFieldsValues = (queryIndex: string, seriesIndex: string, values: number[]) => {
     if (queryIndex in this.storage) {
       this.storage[queryIndex][seriesIndex] = values;
@@ -126,44 +164,6 @@ export class PrometheusIncrementalStorage {
 
   getStorage = () => {
     return this.storage
-  }
-
-  removeFramesFromStorageThatExistInRequest(
-    existingTimeFrames: number[],
-    responseTimeFieldValues: number[],
-    originalRange: { end: number, start: number },
-    existingValueFrames: number[],
-    intervalInSeconds: number
-  ) {
-    let framesFromStorageRelevantToCurrentQuery: number[] = [];
-    let existingValueFrameNewValuesRemoved: number[] = [];
-
-    for (let i = 0; i < existingTimeFrames?.length; i++) {
-      const doesResponseNotContainFrameTimeValue = responseTimeFieldValues.indexOf(existingTimeFrames[i]) === -1;
-
-      // Remove values from before new start
-      // Note this acts as the only eviction strategy so far, we only store frames that exist after the start of the current query, minus the interval time
-      const isFrameOlderThenQueryStart = existingTimeFrames[i] <= originalRange.start - (intervalInSeconds * 1000)
-
-      if (isFrameOlderThenQueryStart && DEBUG) {
-        console.log('Frame is older then query, evicting', existingTimeFrames[i] - originalRange.start, existingTimeFrames[i], originalRange.start);
-      }
-
-      const isThisAFrameWeWantToCombineWithCurrentResult = doesResponseNotContainFrameTimeValue && !isFrameOlderThenQueryStart;
-      // Only add timeframes from the old data to the new data, if they aren't already contained in the new data
-      if (isThisAFrameWeWantToCombineWithCurrentResult) {
-        if (existingValueFrames[i] !== undefined && existingTimeFrames[i] !== undefined) {
-          framesFromStorageRelevantToCurrentQuery.push(existingTimeFrames[i]);
-          existingValueFrameNewValuesRemoved.push(existingValueFrames[i]);
-        } else {
-          if (DEBUG) {
-            console.warn('empty value frame?', i, existingValueFrames);
-          }
-        }
-      }
-    }
-
-    return { time: framesFromStorageRelevantToCurrentQuery, values: existingValueFrameNewValuesRemoved };
   }
 
   /**
@@ -326,7 +326,7 @@ export class PrometheusIncrementalStorage {
               const intervalSeconds = rangeUtil.intervalToSeconds(request.interval);
 
               // Filter out values in storage from before query range
-              const dedupedFrames = this.removeFramesFromStorageThatExistInRequest(
+              const dedupedFrames = PrometheusIncrementalStorage.removeFramesFromStorageThatExistInRequest(
                 existingTimeFrames,
                 responseTimeFieldValues,
                 originalRange,
