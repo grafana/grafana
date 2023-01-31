@@ -24,13 +24,16 @@ const alertPanelWindowBeforeTriggerInMinutes = 5 //LOGZ.IO GRAFANA CHANGE :: DEV
 
 const LogzioSwitchToAccountQueryParamName = "switchToAccountId"
 
-// see `extract_md.go` (extractEvalString func) to
+// LOGZ.IO GRAFANA CHANGE :: DEV-37882 - Access evaluation results in grafana alert template
+// see `extract_md.go` (extractEvalString func) so those prefixes match
 const (
 	EvalStrVarNamePrefix = "var='"
 	EvalStrMetricPrefix  = "metric='"
 	EvalStrLabelsPrefix  = "labels="
 	EvalStrValuePrefix   = "value="
 )
+
+// LOGZ.IO GRAFANA CHANGE :: end
 
 type ExtendedAlert struct {
 	Status       string      `json:"status"`
@@ -44,15 +47,18 @@ type ExtendedAlert struct {
 	DashboardURL string      `json:"dashboardURL"`
 	PanelURL     string      `json:"panelURL"`
 	ValueString  string      `json:"valueString"`
-	EvalValues   []EvalValue `json:"evalValues"`
+	EvalValues   []EvalValue `json:"evalValues"` // LOGZ.IO GRAFANA CHANGE :: DEV-37882 - Access evaluation results in grafana alert template
 }
 
+// LOGZ.IO GRAFANA CHANGE :: DEV-37882 - Access evaluation results in grafana alert template
 type EvalValue struct {
 	Var    string
 	Metric string
 	Labels string
 	Value  string
 }
+
+// LOGZ.IO GRAFANA CHANGE :: end
 
 type ExtendedAlerts []ExtendedAlert
 
@@ -237,8 +243,9 @@ func appendAlertPanelTimeframeToQueryString(queryString string, alert template.A
 
 //LOGZ.IO GRAFANA CHANGE :: end
 
-//
+// LOGZ.IO GRAFANA CHANGE :: DEV-37882 - Access evaluation results in grafana alert template
 func parseEvalValues(evaluationStr string) []EvalValue {
+	// Example of eval string - [ var='I0' metric='eu-central-1' labels={region=eu-central-1} value=1 ], metric is optional
 	evalValues := make([]EvalValue, 0)
 
 	if len(evaluationStr) == 0 {
@@ -355,3 +362,5 @@ func parseValue(evalStr string) string {
 
 	return valueStr
 }
+
+// LOGZ.IO GRAFANA CHANGE :: end
