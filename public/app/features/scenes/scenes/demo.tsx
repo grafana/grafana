@@ -75,7 +75,7 @@ export function getScenePanelRepeaterTest(): DashboardScene {
   });
 
   return new DashboardScene({
-    title: 'Flex layout with wrap test',
+    title: 'Panel repeater test',
     body: new SceneByFrameRepeater({
       body: new SceneFlexLayout({
         direction: 'column',
@@ -143,7 +143,7 @@ export function getRepeaterSceneWithFlexWrap(): DashboardScene {
   });
 
   return new DashboardScene({
-    title: 'Panel repeater test',
+    title: 'Flex layout with wrap test',
     body: new SceneByFrameRepeater({
       body: new SceneFlexLayout({
         direction: 'row',
