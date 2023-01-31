@@ -9,10 +9,10 @@ export const OPERATOR_COMPONENT_TO_UPDATE_MAP = {
   [Operators.psmdb]: ComponentToUpdate.psmdb,
 };
 
-export const DATABASE_COMPONENT_TO_UPDATE_MAP = {
+export const DATABASE_COMPONENT_TO_UPDATE_MAP: DatabaseComponentToUpdateMap = {
   [Databases.mysql]: ComponentToUpdate.pxc,
   [Databases.mongodb]: ComponentToUpdate.psmdb,
-} as DatabaseComponentToUpdateMap;
+};
 
 export const GET_KUBERNETES_CANCEL_TOKEN = 'getKubernetes';
 export const DELETE_KUBERNETES_CANCEL_TOKEN = 'deleteKubernetes';

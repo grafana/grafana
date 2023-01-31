@@ -1,7 +1,7 @@
 /* eslint-disable react/display-name */
 import { logger } from '@percona/platform-core';
+import { CancelToken } from 'axios';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { Column, Row } from 'react-table';
 
 import { OldPage } from 'app/core/components/Page/Page';
@@ -9,11 +9,12 @@ import { Table } from 'app/percona/integrated-alerting/components/Table';
 import { FeatureLoader } from 'app/percona/shared/components/Elements/FeatureLoader';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { usePerconaNavModel } from 'app/percona/shared/components/hooks/perconaNavModel';
-import { DATABASE_LABELS } from 'app/percona/shared/core';
+import { Databases, DATABASE_LABELS } from 'app/percona/shared/core';
 import { fetchStorageLocations } from 'app/percona/shared/core/reducers/backupLocations';
 import { getBackupLocations, getPerconaSettingFlag } from 'app/percona/shared/core/selectors';
 import { isApiCancelError } from 'app/percona/shared/helpers/api';
 import { useAppDispatch } from 'app/store/store';
+import { useSelector } from 'app/types';
 
 import { Messages } from '../../Backup.messages';
 import { formatLocationsToMap } from '../../Backup.utils';
@@ -26,10 +27,13 @@ import { RestoreHistoryService } from './RestoreHistory.service';
 import { Restore } from './RestoreHistory.types';
 import { RestoreHistoryActions } from './RestoreHistoryActions';
 import { RestoreHistoryDetails } from './RestoreHistoryDetails';
+import { RestoreLogsModal } from './RestoreLogsModal/RestoreLogsModal';
 
 export const RestoreHistory: FC = () => {
   const [pending, setPending] = useState(true);
+  const [logsModalVisible, setLogsModalVisible] = useState(false);
   const [data, setData] = useState<Restore[]>([]);
+  const [selectedRestore, setSelectedRestore] = useState<Restore | null>(null);
   const navModel = usePerconaNavModel('restore-history');
   const [generateToken] = useCancelToken();
   const [triggerTimeout] = useRecurringCall();
@@ -43,7 +47,13 @@ export const RestoreHistory: FC = () => {
       {
         Header: Messages.backupInventory.table.columns.status,
         accessor: 'status',
-        Cell: ({ value }) => <Status status={value} />,
+        Cell: ({ value, row }) => (
+          <Status
+            showLogsAction={row.original.vendor === Databases.mongodb}
+            status={value}
+            onLogClick={() => onLogClick(row.original)}
+          />
+        ),
         width: '100px',
       },
       {
@@ -103,6 +113,22 @@ export const RestoreHistory: FC = () => {
     []
   );
 
+  const handleLogsClose = () => {
+    setSelectedRestore(null);
+    setLogsModalVisible(false);
+  };
+
+  const onLogClick = (restore: Restore) => {
+    setSelectedRestore(restore);
+    setLogsModalVisible(true);
+  };
+
+  const getLogs = useCallback(
+    async (startingChunk: number, offset: number, token?: CancelToken) =>
+      RestoreHistoryService.getLogs(selectedRestore!.id, startingChunk, offset, token),
+    [selectedRestore]
+  );
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const featureSelector = useCallback(getPerconaSettingFlag('backupEnabled'), []);
 
@@ -141,6 +167,14 @@ export const RestoreHistory: FC = () => {
             renderExpandedRow={renderSelectedSubRow}
             getRowId={useCallback((row: Restore) => row.id, [])}
           />
+          {logsModalVisible && (
+            <RestoreLogsModal
+              title={Messages.backupInventory.getLogsTitle(selectedRestore?.name || '')}
+              isVisible
+              onClose={handleLogsClose}
+              getLogChunks={getLogs}
+            />
+          )}
         </FeatureLoader>
       </OldPage.Contents>
     </OldPage>

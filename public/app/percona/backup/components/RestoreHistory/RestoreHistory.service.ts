@@ -2,6 +2,8 @@ import { CancelToken } from 'axios';
 
 import { api } from 'app/percona/shared/helpers/api';
 
+import { BackupLogResponse, BackupLogs } from '../../Backup.types';
+
 import { Restore, RestoreResponse } from './RestoreHistory.types';
 
 const BASE_URL = '/v1/management/backup';
@@ -40,5 +42,22 @@ export const RestoreHistoryService = {
         pitrTimestamp: pitr_timestamp ? new Date(pitr_timestamp).getTime() : undefined,
       })
     );
+  },
+  async getLogs(restoreId: string, offset: number, limit: number, token?: CancelToken): Promise<BackupLogs> {
+    const { logs = [], end } = await api.post<BackupLogResponse, Object>(
+      `${BASE_URL}/Backups/GetLogs`,
+      {
+        restore_id: restoreId,
+        offset,
+        limit,
+      },
+      false,
+      token
+    );
+
+    return {
+      logs: logs.map(({ chunk_id = 0, data, time }) => ({ id: chunk_id, data, time })),
+      end,
+    };
   },
 };

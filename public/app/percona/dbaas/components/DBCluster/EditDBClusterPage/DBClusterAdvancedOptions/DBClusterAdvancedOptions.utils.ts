@@ -14,11 +14,17 @@ export const resourceValidator = (value?: number) => {
 
 export const canGetExpectedResources = (
   kubernetesCluster: DBCluster | SelectableValue,
-  values: Record<string, any>
+  values: Record<string, number | string | undefined>
 ) => {
-  const { memory, cpu, disk, nodes } = values;
+  const { memory = 0, cpu = 0, disk = 0, nodes = 0 } = values;
 
-  return kubernetesCluster && memory > 0 && cpu > 0 && disk > 0 && nodes > 0;
+  return (
+    kubernetesCluster &&
+    parseInt(`${memory}`, 10) > 0 &&
+    parseInt(`${cpu}`, 10) > 0 &&
+    parseInt(`${disk}`, 10) > 0 &&
+    parseInt(`${nodes}`, 10) > 0
+  );
 };
 
 export const nodesValidator = (value?: string): string | undefined => {

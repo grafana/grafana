@@ -22,7 +22,6 @@ import {
   DBClusterExpectedResourcesAPI,
   DBClusterPayload,
   ResourcesUnits,
-  DBClusterComponent,
   DBClusterChangeComponentsAPI,
   DBClusterType,
   DBClusterStatus,
@@ -33,11 +32,11 @@ import { Operators } from './EditDBClusterPage/DBClusterBasicOptions/DBClusterBa
 
 export class PSMDBService extends DBClusterService {
   addDBCluster(dbCluster: DBCluster): Promise<void | DBClusterPayload> {
-    return apiManagement.post<DBClusterPayload, any>('/DBaaS/PSMDBCluster/Create', toAPI(dbCluster));
+    return apiManagement.post<void, DBClusterPayload>('/DBaaS/PSMDBCluster/Create', toAPI(dbCluster));
   }
 
   updateDBCluster(dbCluster: DBCluster): Promise<void | DBClusterPayload> {
-    return apiManagement.post<DBClusterPayload, any>('/DBaaS/PSMDBCluster/Update', toAPI(dbCluster));
+    return apiManagement.post<void, DBClusterPayload>('/DBaaS/PSMDBCluster/Update', toAPI(dbCluster));
   }
 
   resumeDBCluster(dbCluster: DBCluster): Promise<void | DBClusterPayload> {
@@ -65,7 +64,7 @@ export class PSMDBService extends DBClusterService {
   }
 
   getDBClusterCredentials(dbCluster: DBCluster): Promise<void | DBClusterConnectionAPI> {
-    return apiManagement.post<DBClusterConnectionAPI, any>(
+    return apiManagement.post<DBClusterConnectionAPI, Omit<DBClusterPayload, 'params'>>(
       '/DBaaS/PSMDBClusters/GetCredentials',
       omit(toAPI(dbCluster), ['params'])
     );
@@ -78,17 +77,17 @@ export class PSMDBService extends DBClusterService {
       cluster_type: DBClusterType.psmdb,
     };
 
-    return apiManagement.post<any, DBClusterActionAPI>('/DBaaS/DBClusters/Restart', body);
+    return apiManagement.post<void, DBClusterActionAPI>('/DBaaS/DBClusters/Restart', body);
   }
 
   getComponents(kubernetesClusterName: string): Promise<DBClusterComponents> {
-    return apiManagement.post<DBClusterComponents, any>('/DBaaS/Components/GetPSMDB', {
+    return apiManagement.post<DBClusterComponents, object>('/DBaaS/Components/GetPSMDB', {
       kubernetes_cluster_name: kubernetesClusterName,
     });
   }
 
   setComponents(kubernetesClusterName: string, componentsVersions: ManageComponentsVersionsRenderProps): Promise<void> {
-    return apiManagement.post<any, DBClusterChangeComponentsAPI>('/DBaaS/Components/ChangePSMDB', {
+    return apiManagement.post<void, DBClusterChangeComponentsAPI>('/DBaaS/Components/ChangePSMDB', {
       kubernetes_cluster_name: kubernetesClusterName,
       mongod: getComponentChange(Operators.psmdb, SupportedComponents.mongod, componentsVersions),
     });
@@ -96,11 +95,11 @@ export class PSMDBService extends DBClusterService {
 
   getDatabaseVersions(kubernetesClusterName: string): Promise<DatabaseVersion[]> {
     return this.getComponents(kubernetesClusterName).then(({ versions }) => {
-      return Object.entries(versions[0].matrix.mongod as DBClusterComponent).map(([version, component]) => ({
-        value: component.image_path,
-        label: version,
-        default: !!component.default,
-        disabled: !!component.disabled,
+      return Object.entries(versions[0].matrix.mongod || {}).map(([version, component]) => ({
+        value: component ? component.image_path : '',
+        label: version || '',
+        default: component.default || false,
+        disabled: component.disabled || false,
       }));
     });
   }

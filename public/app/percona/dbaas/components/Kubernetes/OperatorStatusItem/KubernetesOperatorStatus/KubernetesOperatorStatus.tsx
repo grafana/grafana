@@ -27,7 +27,7 @@ export const KubernetesOperatorStatus: FC<KubernetesOperatorStatusProps> = ({
   const updateOperator = () => {
     setSelectedCluster(kubernetes);
     setOperatorToUpdate({
-      operatorType: DATABASE_COMPONENT_TO_UPDATE_MAP[databaseType],
+      operatorType: DATABASE_COMPONENT_TO_UPDATE_MAP[databaseType]!,
       operatorTypeLabel: OPERATOR_LABELS[databaseType],
       ...operator,
     });

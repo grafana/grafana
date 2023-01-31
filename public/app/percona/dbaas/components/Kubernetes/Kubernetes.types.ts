@@ -74,7 +74,7 @@ export enum ComponentToUpdate {
   pxc = 'pxc-operator',
 }
 
-export type DatabaseComponentToUpdateMap = { [key in Databases]: ComponentToUpdate };
+export type DatabaseComponentToUpdateMap = { [key in Databases]?: ComponentToUpdate };
 
 export interface InstallOperatorRequest {
   kubernetes_cluster_name: string;
@@ -137,4 +137,8 @@ interface ExtensionInfo {
   'last-update'?: string;
   provider?: string;
   version?: string;
+}
+
+export interface KubeConfigResponse {
+  kube_auth: KubeAuth;
 }
