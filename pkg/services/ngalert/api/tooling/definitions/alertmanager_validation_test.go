@@ -478,5 +478,4 @@ func TestValidateNotificationTemplates(t *testing.T) {
 			require.Equal(t, tt.expContent, tt.template.Template)
 		})
 	}
-
 }
