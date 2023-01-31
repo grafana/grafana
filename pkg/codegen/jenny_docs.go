@@ -34,8 +34,8 @@ func (j docsJenny) JennyName() string {
 	return "DocsJenny"
 }
 
-func (j docsJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
-	f, err := jsonschema.GenerateSchema(decl.Lineage().Latest())
+func (j docsJenny) Generate(def *DefForGen) (*codejen.File, error) {
+	f, err := jsonschema.GenerateSchema(def.Lineage().Latest())
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate json representation for the schema: %v", err)
 	}
@@ -61,10 +61,10 @@ func (j docsJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
 	// fixes the references between the types within a json after making components.schema.<types> the root of the json
 	kindJsonStr := strings.Replace(string(obj.Components.Schemas), "#/components/schemas/", "#/", -1)
 
-	kindProps := decl.Properties.Common()
+	kindProps := def.Properties.Common()
 	data := templateData{
 		KindName:     kindProps.Name,
-		KindVersion:  decl.Lineage().Latest().Version().String(),
+		KindVersion:  def.Lineage().Latest().Version().String(),
 		KindMaturity: string(kindProps.Maturity),
 		Markdown:     "{{ .Markdown 1 }}",
 	}

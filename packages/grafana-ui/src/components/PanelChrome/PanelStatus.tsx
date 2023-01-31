@@ -10,9 +10,10 @@ export interface Props {
   className?: string;
   message?: string;
   onClick?: (e: React.SyntheticEvent) => void;
+  ariaLabel?: string;
 }
 
-export function PanelStatus({ className, message, onClick }: Props) {
+export function PanelStatus({ className, message, onClick, ariaLabel = 'status' }: Props) {
   const styles = useStyles2(getStyles);
 
   return (
@@ -21,7 +22,9 @@ export function PanelStatus({ className, message, onClick }: Props) {
       onClick={onClick}
       variant={'destructive'}
       icon="exclamation-triangle"
+      iconSize="md"
       tooltip={message || ''}
+      aria-label={ariaLabel}
     />
   );
 }

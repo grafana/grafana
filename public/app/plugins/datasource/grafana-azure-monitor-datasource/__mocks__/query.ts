@@ -41,6 +41,7 @@ export default function createMockQuery(overrides?: Partial<AzureMonitorQuery>):
       alias: '',
       // timeGrains: [],
       top: '10',
+      region: '',
       ...overrides?.azureMonitor,
     },
   };
