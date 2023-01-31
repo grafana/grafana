@@ -1,0 +1,52 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[` 1`] = `
+{
+  "fields": [
+    {
+      "config": {},
+      "labels": undefined,
+      "name": "Time",
+      "type": "time",
+      "values": [
+        1609736400000,
+        1609909199000,
+        1610341200000,
+        1610513999000,
+        1610946000000,
+        1611118799000,
+        1611550800000,
+        1611723599000,
+        1612155600000,
+        1612328399000,
+      ],
+    },
+    {
+      "config": {
+        "color": {
+          "fixedColor": "green",
+          "mode": "fixed",
+        },
+      },
+      "labels": undefined,
+      "name": "T1",
+      "type": "boolean",
+      "values": [
+        true,
+        false,
+        true,
+        false,
+        true,
+        false,
+        true,
+        false,
+        true,
+        false,
+      ],
+    },
+  ],
+  "meta": undefined,
+  "name": undefined,
+  "refId": undefined,
+}
+`;
