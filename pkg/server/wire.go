@@ -10,8 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/routing"
-	"github.com/grafana/grafana/pkg/apimachinery/bridge"
-	apiserver "github.com/grafana/grafana/pkg/apimachinery/srv"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cuectx"
 	"github.com/grafana/grafana/pkg/expr"
@@ -31,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	pluginDashboards "github.com/grafana/grafana/pkg/plugins/manager/dashboards"
-	"github.com/grafana/grafana/pkg/registry/corecrd"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -364,11 +361,6 @@ var wireBasicSet = wire.NewSet(
 	k8saccess.ProvideK8SAccess,
 	supportbundlesimpl.ProvideService,
 	wire.Bind(new(supportbundles.Service), new(*supportbundlesimpl.Service)),
-	corecrd.New,
-	apiserver.ProvideApiserverProxy,
-	apiserver.ProvideHTTPServer,
-	bridge.ProvideService,
-	wire.Bind(new(apiserver.Handler), new(*apiserver.ApiserverProxy)), // TODO decide this somewhere other than wire
 )
 
 var wireSet = wire.NewSet(
