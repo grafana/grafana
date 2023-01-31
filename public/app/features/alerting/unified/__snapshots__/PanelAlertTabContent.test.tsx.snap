@@ -39,7 +39,7 @@ Object {
       },
     },
     Object {
-      "datasourceUid": "-100",
+      "datasourceUid": "__expr__",
       "model": Object {
         "conditions": Array [
           Object {
@@ -64,7 +64,7 @@ Object {
         ],
         "datasource": Object {
           "type": "__expr__",
-          "uid": "-100",
+          "uid": "__expr__",
         },
         "expression": "A",
         "hide": false,
@@ -76,7 +76,7 @@ Object {
       "refId": "B",
     },
     Object {
-      "datasourceUid": "-100",
+      "datasourceUid": "__expr__",
       "model": Object {
         "conditions": Array [
           Object {
@@ -103,7 +103,7 @@ Object {
         ],
         "datasource": Object {
           "type": "__expr__",
-          "uid": "-100",
+          "uid": "__expr__",
         },
         "expression": "B",
         "hide": false,

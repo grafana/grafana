@@ -747,7 +747,7 @@ func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryData
 	c.req = req
 
 	// If an expression query ends up getting directly queried, we want it to return an error in our test.
-	if req.PluginContext.PluginID == "__expr__" {
+	if req.PluginContext.PluginID == expr.DatasourceUID {
 		return nil, errors.New("cant query an expression datasource")
 	}
 
