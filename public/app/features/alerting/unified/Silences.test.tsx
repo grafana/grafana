@@ -56,7 +56,7 @@ const ui = {
   silencesTable: byTestId('dynamic-table'),
   silenceRow: byTestId('row'),
   silencedAlertCell: byTestId('alerts'),
-  addSilenceButton: byRole('button', { name: /new silence/i }),
+  addSilenceButton: byRole('button', { name: /add silence/i }),
   queryBar: byPlaceholderText('Search'),
   editor: {
     timeRange: byLabelText('Timepicker', { exact: false }),

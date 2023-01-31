@@ -1,7 +1,6 @@
 import React from 'react';
 
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 
 import Datasource from '../../datasource';
@@ -10,6 +9,7 @@ import ResourceField from '../ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
 import { parseResourceDetails } from '../ResourcePicker/utils';
 
+import AdvancedResourcePicker from './AdvancedResourcePicker';
 import FormatAsField from './FormatAsField';
 import QueryField from './QueryField';
 import useMigrations from './useMigrations';
@@ -38,10 +38,6 @@ const LogsQueryEditor: React.FC<LogsQueryEditorProps> = ({
     if (selectedRows.length === 0) {
       // Only if there is some resource(s) selected we should disable rows
       return false;
-    }
-    // Disable multiple selection until the feature is ready
-    if (!config.featureToggles.azureMultipleResourcePicker) {
-      return true;
     }
     const rowResourceNS = parseResourceDetails(row.uri, row.location).metricNamespace?.toLowerCase();
     const selectedRowSampleNs = parseResourceDetails(
@@ -75,6 +71,13 @@ const LogsQueryEditor: React.FC<LogsQueryEditorProps> = ({
               resources={query.azureLogAnalytics?.resources ?? []}
               queryType="logs"
               disableRow={disableRow}
+              renderAdvanced={(resources, onChange) => (
+                // It's required to cast resources because the resource picker
+                // specifies the type to string | AzureMetricResource.
+                // eslint-disable-next-line
+                <AdvancedResourcePicker resources={resources as string[]} onChange={onChange} />
+              )}
+              selectionNotice={() => 'You may only choose items of the same resource type.'}
             />
           </EditorFieldGroup>
         </EditorRow>

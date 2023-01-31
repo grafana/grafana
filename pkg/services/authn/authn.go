@@ -10,8 +10,8 @@ import (
 
 	"golang.org/x/oauth2"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
@@ -33,7 +33,7 @@ const (
 	MetaKeyAuthModule = "authModule"
 )
 
-// ClientParams are hints to the auth serviAuthN: Post login hooksce about how to handle the identity management
+// ClientParams are hints to the auth service about how to handle the identity management
 // from the authenticating client.
 type ClientParams struct {
 	// Update the internal representation of the entity from the identity provided
@@ -42,38 +42,48 @@ type ClientParams struct {
 	SyncTeamMembers bool
 	// Create entity in the DB if it doesn't exist
 	AllowSignUp bool
-	// EnableDisabledUsers is a hint to the auth service that it should reenable disabled users
+	// EnableDisabledUsers is a hint to the auth service that it should re-enable disabled users
 	EnableDisabledUsers bool
 	// LookUpParams are the arguments used to look up the entity in the DB.
-	LookUpParams models.UserLookupParams
+	LookUpParams login.UserLookupParams
 }
 
 type PostAuthHookFn func(ctx context.Context, identity *Identity, r *Request) error
 type PostLoginHookFn func(ctx context.Context, identity *Identity, r *Request, err error)
 
 type Service interface {
-	// Authenticate authenticates a request using the specified client.
-	Authenticate(ctx context.Context, client string, r *Request) (*Identity, bool, error)
-	// RegisterPostAuthHook registers a hook that is called after a successful authentication.
-	RegisterPostAuthHook(hook PostAuthHookFn)
+	// Authenticate authenticates a request
+	Authenticate(ctx context.Context, r *Request) (*Identity, error)
+	// RegisterPostAuthHook registers a hook with a priority that is called after a successful authentication.
+	// A lower number means higher priority.
+	RegisterPostAuthHook(hook PostAuthHookFn, priority uint)
 	// Login authenticates a request and creates a session on successful authentication.
 	Login(ctx context.Context, client string, r *Request) (*Identity, error)
 	// RegisterPostLoginHook registers a hook that that is called after a login request.
-	RegisterPostLoginHook(hook PostLoginHookFn)
+	// A lower number means higher priority.
+	RegisterPostLoginHook(hook PostLoginHookFn, priority uint)
 	// RedirectURL will generate url that we can use to initiate auth flow for supported clients.
-	RedirectURL(ctx context.Context, client string, r *Request) (string, error)
+	RedirectURL(ctx context.Context, client string, r *Request) (*Redirect, error)
 }
 
 type Client interface {
+	// Name returns the name of a client
+	Name() string
 	// Authenticate performs the authentication for the request
 	Authenticate(ctx context.Context, r *Request) (*Identity, error)
+}
+
+type ContextAwareClient interface {
+	Client
 	// Test should return true if client can be used to authenticate request
 	Test(ctx context.Context, r *Request) bool
+	// Priority for the client, a lower number means higher priority
+	Priority() uint
 }
 
 type RedirectClient interface {
 	Client
-	RedirectURL(ctx context.Context, r *Request) (string, error)
+	RedirectURL(ctx context.Context, r *Request) (*Redirect, error)
 }
 
 type PasswordClient interface {
@@ -113,6 +123,18 @@ func (r *Request) GetMeta(k string) string {
 }
 
 const (
+	KeyOAuthPKCE  = "pkce"
+	KeyOAuthState = "state"
+)
+
+type Redirect struct {
+	// Url used for redirect
+	URL string
+	// Extra contains data used for redirect, e.g. for oauth this would be state and pkce
+	Extra map[string]string
+}
+
+const (
 	NamespaceUser           = "user"
 	NamespaceAPIKey         = "api-key"
 	NamespaceServiceAccount = "service-account"
@@ -132,7 +154,9 @@ type Identity struct {
 	// Namespace* constants. For example, "user:1" or "api-key:1".
 	// If the entity is not found in the DB or this entity is non-persistent, this field will be empty.
 	ID string
-	// Login is the short hand identifier of the entity. Should be unique.
+	// IsAnonymous
+	IsAnonymous bool
+	// Login is the shorthand identifier of the entity. Should be unique.
 	Login string
 	// Name is the display name of the entity. It is not guaranteed to be unique.
 	Name string
@@ -169,11 +193,6 @@ type Identity struct {
 // Role returns the role of the identity in the active organization.
 func (i *Identity) Role() org.RoleType {
 	return i.OrgRoles[i.OrgID]
-}
-
-// IsAnonymous will return true if no ID is set on the identity
-func (i *Identity) IsAnonymous() bool {
-	return i.ID == ""
 }
 
 // TODO: improve error handling
@@ -222,7 +241,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		Email:              i.Email,
 		OrgCount:           i.OrgCount,
 		IsGrafanaAdmin:     isGrafanaAdmin,
-		IsAnonymous:        i.IsAnonymous(),
+		IsAnonymous:        i.IsAnonymous,
 		IsDisabled:         i.IsDisabled,
 		HelpFlags1:         i.HelpFlags1,
 		LastSeenAt:         i.LastSeenAt,
@@ -240,9 +259,9 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 	return u
 }
 
-func (i *Identity) ExternalUserInfo() models.ExternalUserInfo {
+func (i *Identity) ExternalUserInfo() login.ExternalUserInfo {
 	_, id := i.NamespacedID()
-	return models.ExternalUserInfo{
+	return login.ExternalUserInfo{
 		OAuthToken:     i.OAuthToken,
 		AuthModule:     i.AuthModule,
 		AuthId:         i.AuthID,
@@ -275,4 +294,9 @@ func IdentityFromSignedInUser(id string, usr *user.SignedInUser, params ClientPa
 		Teams:          usr.Teams,
 		ClientParams:   params,
 	}
+}
+
+// ClientWithPrefix returns a client name prefixed with "auth.client."
+func ClientWithPrefix(name string) string {
+	return fmt.Sprintf("auth.client.%s", name)
 }

@@ -16,9 +16,15 @@ export interface ExpressionEditorProps {
   value?: string;
   onChange: (value: string) => void;
   dataSourceName: string; // will be a prometheus or loki datasource
+  showPreviewAlertsButton: boolean;
 }
 
-export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, dataSourceName }) => {
+export const ExpressionEditor: FC<ExpressionEditorProps> = ({
+  value,
+  onChange,
+  dataSourceName,
+  showPreviewAlertsButton = true,
+}) => {
   const styles = useStyles2(getStyles);
 
   const { mapToValue, mapToQuery } = useQueryMappers(dataSourceName);
@@ -77,17 +83,23 @@ export const ExpressionEditor: FC<ExpressionEditorProps> = ({ value, onChange, d
           datasource={dataSource}
         />
       </DataSourcePluginContextProvider>
-      <div className={styles.preview}>
-        <Button type="button" onClick={onRunQueriesClick} disabled={alertPreview?.data.state === LoadingState.Loading}>
-          Preview alerts
-        </Button>
-        {previewLoaded && !previewHasAlerts && (
-          <Alert title="Alerts preview" severity="info" className={styles.previewAlert}>
-            There are no firing alerts for your query.
-          </Alert>
-        )}
-        {previewHasAlerts && <CloudAlertPreview preview={previewDataFrame} />}
-      </div>
+      {showPreviewAlertsButton && (
+        <div className={styles.preview}>
+          <Button
+            type="button"
+            onClick={onRunQueriesClick}
+            disabled={alertPreview?.data.state === LoadingState.Loading}
+          >
+            Preview alerts
+          </Button>
+          {previewLoaded && !previewHasAlerts && (
+            <Alert title="Alerts preview" severity="info" className={styles.previewAlert}>
+              There are no firing alerts for your query.
+            </Alert>
+          )}
+          {previewHasAlerts && <CloudAlertPreview preview={previewDataFrame} />}
+        </div>
+      )}
     </>
   );
 };

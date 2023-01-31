@@ -4,7 +4,14 @@ import React, { PureComponent } from 'react';
 import Highlighter from 'react-highlight-words';
 import tinycolor from 'tinycolor2';
 
-import { LogRowModel, findHighlightChunksInText, GrafanaTheme2, LogsSortOrder, CoreApp } from '@grafana/data';
+import {
+  LogRowModel,
+  findHighlightChunksInText,
+  GrafanaTheme2,
+  LogsSortOrder,
+  CoreApp,
+  DataSourceWithLogsContextSupport,
+} from '@grafana/data';
 import { withTheme2, Themeable2, IconButton, Tooltip } from '@grafana/ui';
 
 import { LogMessageAnsi } from './LogMessageAnsi';
@@ -26,13 +33,15 @@ interface Props extends Themeable2 {
   app?: CoreApp;
   scrollElement?: HTMLDivElement;
   showContextToggle?: (row?: LogRowModel) => boolean;
+  getLogRowContextUi?: DataSourceWithLogsContextSupport['getLogRowContextUi'];
   getRows: () => LogRowModel[];
   onToggleContext: (method: string) => void;
   updateLimit?: () => void;
+  runContextQuery?: () => void;
   logsSortOrder?: LogsSortOrder | null;
 }
 
-const getStyles = (theme: GrafanaTheme2, showContextButton: boolean, isInDashboard: boolean | undefined) => {
+const getStyles = (theme: GrafanaTheme2, showContextButton: boolean, isInExplore: boolean) => {
   const outlineColor = tinycolor(theme.components.dashboard.background).setAlpha(0.7).toRgbString();
 
   return {
@@ -74,7 +83,7 @@ const getStyles = (theme: GrafanaTheme2, showContextButton: boolean, isInDashboa
     `,
     logRowMenuCell: css`
       position: absolute;
-      right: ${isInDashboard ? '40px' : `calc(75px + ${theme.spacing()} + ${showContextButton ? '80px' : '40px'})`};
+      right: ${!isInExplore ? '40px' : `calc(75px + ${theme.spacing()} + ${showContextButton ? '80px' : '40px'})`};
       margin-top: -${theme.spacing(0.125)};
     `,
     logLine: css`
@@ -154,6 +163,7 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
       errors,
       hasMoreContextRows,
       updateLimit,
+      runContextQuery,
       context,
       contextIsOpen,
       showRowMenu,
@@ -163,13 +173,14 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
       app,
       logsSortOrder,
       showContextToggle,
+      getLogRowContextUi,
     } = this.props;
 
     const style = getLogRowStyles(theme, row.logLevel);
     const { hasAnsi, raw } = row;
     const restructuredEntry = restructureLog(raw, prettifyLogMessage);
     const shouldShowContextToggle = showContextToggle ? showContextToggle(row) : false;
-    const styles = getStyles(theme, shouldShowContextToggle, app === CoreApp.Dashboard);
+    const styles = getStyles(theme, shouldShowContextToggle, app === CoreApp.Explore);
 
     return (
       <>
@@ -191,6 +202,8 @@ class UnThemedLogRowMessage extends PureComponent<Props> {
             {contextIsOpen && context && (
               <LogRowContext
                 row={row}
+                getLogRowContextUi={getLogRowContextUi}
+                runContextQuery={runContextQuery}
                 context={context}
                 errors={errors}
                 wrapLogMessage={wrapLogMessage}
