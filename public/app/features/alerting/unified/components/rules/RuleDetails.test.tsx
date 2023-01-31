@@ -99,12 +99,12 @@ describe('RuleDetails RBAC', () => {
     });
 
     it('Should render Silence button for users with the instance create permissions', async () => {
+      mockAlertmanagerChoiceResponse(server, alertmanagerChoiceMockedResponse);
+
       // Arrange
       jest
         .spyOn(contextSrv, 'hasPermission')
         .mockImplementation((action) => action === AccessControlAction.AlertingInstanceCreate);
-
-      mockAlertmanagerChoiceResponse(server, alertmanagerChoiceMockedResponse);
 
       // Act
       renderRuleDetails(grafanaRule);
