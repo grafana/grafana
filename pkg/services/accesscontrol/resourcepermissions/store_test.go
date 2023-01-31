@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -519,4 +520,62 @@ func seedResourcePermissions(t *testing.T, store *store, sql *sqlstore.SQLStore,
 func setupTestEnv(t testing.TB) (*store, *sqlstore.SQLStore) {
 	sql := db.InitTestDB(t)
 	return NewStore(sql), sql
+}
+
+func TestStore_IsInherited(t *testing.T) {
+	type testCase struct {
+		description string
+		permScope   string
+		argScope    string
+		expected    bool
+	}
+
+	testCases := []testCase{
+		{
+			description: "same scope is not inherited",
+			permScope:   dashboards.ScopeDashboardsProvider.GetResourceScopeUID("some_uid"),
+			argScope:    dashboards.ScopeDashboardsProvider.GetResourceScopeUID("some_uid"),
+			expected:    false,
+		},
+		{
+			description: "specific folder scope for dashboards is inherited",
+			permScope:   dashboards.ScopeDashboardsProvider.GetResourceScopeUID("some_uid"),
+			argScope:    dashboards.ScopeFoldersProvider.GetResourceScopeUID("parent"),
+			expected:    true,
+		},
+		{
+			description: "wildcard folder scope for dashboards is inherited",
+			permScope:   dashboards.ScopeDashboardsProvider.GetResourceScopeUID("some_uid"),
+			argScope:    dashboards.ScopeFoldersAll,
+			expected:    true,
+		},
+		{
+			description: "wildcard dashboard scope for dashboards is not inherited",
+			permScope:   dashboards.ScopeDashboardsProvider.GetResourceScopeUID("some_uid"),
+			argScope:    dashboards.ScopeDashboardsAll,
+			expected:    false,
+		},
+		{
+			description: "parent folder scope for nested folders is inherited",
+			permScope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID("some_folder"),
+			argScope:    dashboards.ScopeFoldersProvider.GetResourceScopeUID("parent"),
+			expected:    true,
+		},
+		{
+			description: "wildcard folder scope for nested folders is not inherited",
+			permScope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID("some_folder"),
+			argScope:    dashboards.ScopeFoldersAll,
+			expected:    false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.description, func(t *testing.T) {
+			perms := &flatResourcePermission{
+				Scope: tc.permScope,
+			}
+			isInherited := perms.IsInherited(tc.argScope)
+			assert.Equal(t, tc.expected, isInherited)
+		})
+	}
 }
