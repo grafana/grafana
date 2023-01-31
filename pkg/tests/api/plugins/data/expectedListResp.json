@@ -1061,7 +1061,7 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/nodeGraph/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": ""
@@ -1575,7 +1575,7 @@
     "hasUpdate": false,
     "defaultNavUrl": "/plugins/traces/",
     "category": "",
-    "state": "beta",
+    "state": "",
     "signature": "internal",
     "signatureType": "",
     "signatureOrg": ""
