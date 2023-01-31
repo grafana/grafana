@@ -98,7 +98,7 @@ export const Table = memo((props: Props) => {
     return Array(data.length).fill(0);
   }, [data]);
 
-  // This tests whether `Show table footer` toggled on, the `Calculation` is set to `Count`, and finally, whether `Count rows` is toggled on.
+  // This checks whether `Show table footer` is toggled on, the `Calculation` is set to `Count`, and finally, whether `Count rows` is toggled on.
   const isCountRowsSet = Boolean(
     footerOptions?.countRows &&
       footerOptions.reducer &&
