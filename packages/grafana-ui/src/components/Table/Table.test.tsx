@@ -452,7 +452,7 @@ describe('Table', () => {
     });
 
     it('should show correct counts when turning `count rows` on and off', async () => {
-      // JEV: againm where the hell is the "count rows" selection???
+      // JEV: again where the hell is the "count rows" selection???
       const { rerender } = getTestContext({
         footerOptions: { show: true, reducer: ['count'], countRows: true },
         data: toDataFrame({

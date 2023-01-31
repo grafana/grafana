@@ -57,6 +57,8 @@ export const Table = memo((props: Props) => {
     enablePagination,
   } = props;
 
+  // console.log(footerOptions, 'footerOptions');
+
   const listRef = useRef<VariableSizeList>(null);
   const tableDivRef = useRef<HTMLDivElement>(null);
   const variableSizeListScrollbarRef = useRef<HTMLDivElement>(null);
@@ -98,6 +100,7 @@ export const Table = memo((props: Props) => {
     return Array(data.length).fill(0);
   }, [data]);
 
+  // JEV: anno here
   const isCountRowsSet = Boolean(
     footerOptions?.countRows &&
       footerOptions.reducer &&
@@ -185,7 +188,8 @@ export const Table = memo((props: Props) => {
 
     if (isCountRowsSet) {
       const footerItemsCountRows: FooterItem[] = new Array(footerItems.length).fill(undefined);
-      footerItemsCountRows[0] = data.length.toString();
+      footerItemsCountRows[1] = footerItems[1];
+      footerItemsCountRows[footerItems.length - 1] = data.length.toString();
       setFooterItems(footerItemsCountRows);
     } else {
       setFooterItems(footerItems);

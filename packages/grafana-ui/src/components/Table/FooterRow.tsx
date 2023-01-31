@@ -58,18 +58,20 @@ function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles) {
 }
 
 export function getFooterValue(index: number, footerValues?: FooterItem[], isCountRowsSet?: boolean) {
+  console.log(footerValues, 'footerValues');
   if (footerValues === undefined) {
     return EmptyCell;
   }
 
-  if (isCountRowsSet) {
-    const count = footerValues[index];
-    if (typeof count !== 'string') {
-      return EmptyCell;
-    }
+  // JEV: what does this do???
+  // if (isCountRowsSet) {
+  //   const count = footerValues[index];
+  //   if (typeof count !== 'string') {
+  //     return EmptyCell;
+  //   }
 
-    return FooterCell({ value: [{ Count: count }] });
-  }
+  //   return FooterCell({ value: [{ Count: count }] });
+  // }
 
   return FooterCell({ value: footerValues[index] });
 }
