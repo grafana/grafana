@@ -8,7 +8,7 @@ import (
 )
 
 // LatestJenny returns a jenny that runs another jenny for only the latest
-// schema in a DeclForGen, and prefixes the resulting file with the provided
+// schema in a DefForGen, and prefixes the resulting file with the provided
 // parentdir (e.g. "pkg/kinds/") and with a directory based on the kind's
 // machine name (e.g. "dashboard/").
 func LatestJenny(parentdir string, inner codejen.OneToOne[SchemaForGen]) OneToOne {
@@ -31,17 +31,17 @@ func (j *latestj) JennyName() string {
 	return "LatestJenny"
 }
 
-func (j *latestj) Generate(decl *DeclForGen) (*codejen.File, error) {
-	comm := decl.Properties.Common()
+func (j *latestj) Generate(def *DefForGen) (*codejen.File, error) {
+	comm := def.Properties.Common()
 	sfg := SchemaForGen{
 		Name:    comm.Name,
-		Schema:  decl.Lineage().Latest(),
+		Schema:  def.Lineage().Latest(),
 		IsGroup: comm.LineageIsGroup,
 	}
 
 	f, err := j.inner.Generate(sfg)
 	if err != nil {
-		return nil, fmt.Errorf("%s jenny failed on %s schema for %s: %w", j.inner.JennyName(), sfg.Schema.Version(), decl.Properties.Common().Name, err)
+		return nil, fmt.Errorf("%s jenny failed on %s schema for %s: %w", j.inner.JennyName(), sfg.Schema.Version(), def.Properties.Common().Name, err)
 	}
 	if f == nil || !f.Exists() {
 		return nil, nil

@@ -24,6 +24,7 @@ import {
   InlineFieldRow,
   InlineLabel,
   FileDropzone,
+  FileDropzoneDefaultChildren,
   DropzoneFile,
   Themeable2,
   withTheme2,
@@ -397,9 +398,22 @@ export class UnthemedQueryEditor extends PureComponent<Props, State> {
             <FileDropzone
               readAs="readAsArrayBuffer"
               fileListRenderer={this.fileListRenderer}
-              options={{ onDropAccepted: this.onDropAccepted, maxSize: 200000, multiple: false }}
+              options={{
+                onDropAccepted: this.onDropAccepted,
+                maxSize: 200000,
+                multiple: false,
+                accept: {
+                  'text/plain': ['.csv', '.txt'],
+                  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+                  'application/vnd.ms-excel': ['.xls'],
+                  'application/vnd.apple.numbers': ['.numbers'],
+                  'application/vnd.oasis.opendocument.spreadsheet': ['.ods'],
+                },
+              }}
               onLoad={this.onFileDrop}
-            ></FileDropzone>
+            >
+              <FileDropzoneDefaultChildren primaryText={this.props?.query?.file ? 'Replace file' : 'Upload file'} />
+            </FileDropzone>
             {file && (
               <div className={styles.file}>
                 <span>{file?.name}</span>

@@ -600,58 +600,80 @@ export class ElasticDatasource
     return [SupplementaryQueryType.LogsVolume];
   }
 
-  getLogsVolumeDataProvider(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> | undefined {
-    const isLogsVolumeAvailable = request.targets.some((target) => {
-      return target.metrics?.length === 1 && target.metrics[0].type === 'logs';
-    });
-    if (!isLogsVolumeAvailable) {
+  getSupplementaryQuery(type: SupplementaryQueryType, query: ElasticsearchQuery): ElasticsearchQuery | undefined {
+    if (!this.getSupportedSupplementaryQueryTypes().includes(type)) {
       return undefined;
     }
-    const logsVolumeRequest = cloneDeep(request);
-    logsVolumeRequest.targets = logsVolumeRequest.targets.map((target) => {
-      const bucketAggs: BucketAggregation[] = [];
-      const timeField = this.timeField ?? '@timestamp';
 
-      if (this.logLevelField) {
+    let isQuerySuitable = false;
+
+    switch (type) {
+      case SupplementaryQueryType.LogsVolume:
+        // it has to be a logs-producing range-query
+        isQuerySuitable = !!(query.metrics?.length === 1 && query.metrics[0].type === 'logs');
+        if (!isQuerySuitable) {
+          return undefined;
+        }
+        const bucketAggs: BucketAggregation[] = [];
+        const timeField = this.timeField ?? '@timestamp';
+
+        if (this.logLevelField) {
+          bucketAggs.push({
+            id: '2',
+            type: 'terms',
+            settings: {
+              min_doc_count: '0',
+              size: '0',
+              order: 'desc',
+              orderBy: '_count',
+              missing: LogLevel.unknown,
+            },
+            field: this.logLevelField,
+          });
+        }
         bucketAggs.push({
-          id: '2',
-          type: 'terms',
+          id: '3',
+          type: 'date_histogram',
           settings: {
+            interval: 'auto',
             min_doc_count: '0',
-            size: '0',
-            order: 'desc',
-            orderBy: '_count',
-            missing: LogLevel.unknown,
+            trimEdges: '0',
           },
-          field: this.logLevelField,
+          field: timeField,
         });
+
+        return {
+          refId: `${REF_ID_STARTER_LOG_VOLUME}${query.refId}`,
+          query: query.query,
+          metrics: [{ type: 'count', id: '1' }],
+          timeField,
+          bucketAggs,
+        };
+
+      default:
+        return undefined;
+    }
+  }
+
+  getLogsVolumeDataProvider(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> | undefined {
+    const logsVolumeRequest = cloneDeep(request);
+    const targets = logsVolumeRequest.targets
+      .map((target) => this.getSupplementaryQuery(SupplementaryQueryType.LogsVolume, target))
+      .filter((query): query is ElasticsearchQuery => !!query);
+
+    if (!targets.length) {
+      return undefined;
+    }
+
+    return queryLogsVolume(
+      this,
+      { ...logsVolumeRequest, targets },
+      {
+        range: request.range,
+        targets: request.targets,
+        extractLevel: (dataFrame) => getLogLevelFromKey(dataFrame.name || ''),
       }
-      bucketAggs.push({
-        id: '3',
-        type: 'date_histogram',
-        settings: {
-          interval: 'auto',
-          min_doc_count: '0',
-          trimEdges: '0',
-        },
-        field: timeField,
-      });
-
-      const logsVolumeQuery: ElasticsearchQuery = {
-        refId: `${REF_ID_STARTER_LOG_VOLUME}${target.refId}`,
-        query: target.query,
-        metrics: [{ type: 'count', id: '1' }],
-        timeField,
-        bucketAggs,
-      };
-      return logsVolumeQuery;
-    });
-
-    return queryLogsVolume(this, logsVolumeRequest, {
-      range: request.range,
-      targets: request.targets,
-      extractLevel: (dataFrame) => getLogLevelFromKey(dataFrame.name || ''),
-    });
+    );
   }
 
   query(request: DataQueryRequest<ElasticsearchQuery>): Observable<DataQueryResponse> {

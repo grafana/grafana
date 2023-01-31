@@ -196,7 +196,7 @@ func buildKindStateReport() *KindStateReport {
 		lin := k.Lineage()
 		switch k.Props().(type) {
 		case kindsys.CoreProperties:
-			links := buildCoreLinks(lin, k.Decl().Properties)
+			links := buildCoreLinks(lin, k.Def().Properties)
 			r.add(Kind{
 				SomeKindProperties:   k.Props(),
 				Category:             "core",
@@ -230,7 +230,7 @@ func buildKindStateReport() *KindStateReport {
 	for _, pp := range corelist.New(nil) {
 		for _, si := range all {
 			if ck, has := pp.ComposableKinds[si.Name()]; has {
-				links := buildComposableLinks(pp.Properties, ck.Decl().Properties)
+				links := buildComposableLinks(pp.Properties, ck.Def().Properties)
 				r.add(Kind{
 					SomeKindProperties:   ck.Props(),
 					Category:             "composable",

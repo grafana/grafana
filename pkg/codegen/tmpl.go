@@ -40,7 +40,7 @@ type (
 		// Header tvars_autogen_header
 		PackageName       string
 		KindPackagePrefix string
-		Kinds             []*DeclForGen
+		Kinds             []*DefForGen
 	}
 	tvars_coremodel_imports struct {
 		PackageName string
