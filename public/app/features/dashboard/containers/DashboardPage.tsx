@@ -15,7 +15,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
-import { Themeable2, withTheme2 } from '@grafana/ui';
+import { Icon, Themeable2, withTheme2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaContext, GrafanaContextType } from 'app/core/context/GrafanaContext';
@@ -438,6 +438,12 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
                 const styles = getStyles(this.props.theme, isDragActive);
                 return (
                   <div {...getRootProps({ className: styles.dropZone })}>
+                    <div className={styles.dropOverlay}>
+                      <div className={styles.dropHint}>
+                        <Icon name="upload" size="xxxl"></Icon>
+                        <h3>Create new table from a spreadsheet</h3>
+                      </div>
+                    </div>
                     <DashboardGrid
                       dashboard={dashboard}
                       isEditable={!!dashboard.meta.canEdit}
@@ -547,9 +553,24 @@ function getStyles(theme: GrafanaTheme2, isDragActive: boolean) {
   return {
     dropZone: css`
       height: 100%;
-      padding: ${theme.spacing(2)};
+    `,
+    dropOverlay: css`
+      background-color: ${isDragActive ? theme.colors.action.hover : `inherit`};
       border: ${isDragActive ? `2px dashed ${theme.colors.border.medium}` : 0};
-      background-color: ${isDragActive ? theme.colors.action.hover : theme.colors.background.primary};
+      position: absolute;
+      display: ${isDragActive ? 'flex' : 'none'};
+      z-index: ${theme.zIndex.modal};
+      top: 0px;
+      left: 0px;
+      height: 100%;
+      width: 100%;
+      align-items: center;
+      justify-content: center;
+    `,
+    dropHint: css`
+      align-items: center;
+      display: flex;
+      flex-direction: column;
     `,
   };
 }
