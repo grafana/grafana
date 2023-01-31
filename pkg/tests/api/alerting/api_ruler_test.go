@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -297,7 +298,7 @@ func createRule(t *testing.T, client apiClient, folder string) {
 								From: ngmodels.Duration(time.Duration(5) * time.Hour),
 								To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 							},
-							DatasourceUID: "__expr__",
+							DatasourceUID: expr.DatasourceUID,
 							Model: json.RawMessage(`{
 								"type": "math",
 								"expression": "2 + 3 > 1"
@@ -437,7 +438,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "__expr__",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -457,7 +458,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "__expr__",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -889,7 +890,7 @@ func newTestingRuleConfig(t *testing.T) apimodels.PostableRuleGroupConfig {
 						From: ngmodels.Duration(time.Duration(5) * time.Hour),
 						To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 					},
-					DatasourceUID: "__expr__",
+					DatasourceUID: expr.DatasourceUID,
 					Model: json.RawMessage(`{
 						"type": "math",
 						"expression": "2 + 3 > 1"
@@ -916,7 +917,7 @@ func newTestingRuleConfig(t *testing.T) apimodels.PostableRuleGroupConfig {
 						From: ngmodels.Duration(time.Duration(5) * time.Hour),
 						To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 					},
-					DatasourceUID: "__expr__",
+					DatasourceUID: expr.DatasourceUID,
 					Model: json.RawMessage(`{
 						"type": "math",
 						"expression": "2 + 3 > 1"

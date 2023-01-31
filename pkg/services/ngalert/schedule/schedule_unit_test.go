@@ -746,7 +746,7 @@ func withQueryForState(t *testing.T, evalResult eval.State) models.AlertRuleMuta
 		rule.Condition = "A"
 		rule.Data = []models.AlertQuery{
 			{
-				DatasourceUID: "__expr__",
+				DatasourceUID: expr.DatasourceUID,
 				Model:         json.RawMessage(expression),
 				RelativeTimeRange: models.RelativeTimeRange{
 					From: models.Duration(5 * time.Hour),

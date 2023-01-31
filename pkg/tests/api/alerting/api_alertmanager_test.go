@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -508,7 +509,7 @@ func TestIntegrationAlertAndGroupsQuery(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "__expr__",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -649,7 +650,7 @@ func TestIntegrationRulerAccess(t *testing.T) {
 										From: ngmodels.Duration(time.Duration(5) * time.Hour),
 										To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 									},
-									DatasourceUID: "__expr__",
+									DatasourceUID: expr.DatasourceUID,
 									Model: json.RawMessage(`{
 								"type": "math",
 								"expression": "2 + 3 > 1"
@@ -907,7 +908,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "__expr__",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -937,7 +938,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "__expr__",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -967,7 +968,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "__expr__",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -998,7 +999,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "__expr__",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -1058,7 +1059,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "__expr__",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -1117,7 +1118,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "__expr__",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -1137,7 +1138,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "__expr__",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -1302,7 +1303,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "__expr__",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 											"type": "math",
 											"expression": "2 + 3 < 1"
@@ -1375,7 +1376,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "__expr__",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 												"type": "math",
 												"expression": "2 + 3 < 1"
@@ -1409,7 +1410,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "__expr__",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 												"type": "math",
 												"expression": "2 + 3 > 1"
@@ -1483,7 +1484,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "__expr__",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 											"type": "math",
 											"expression": "2 + 3 < 1"
@@ -1600,7 +1601,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "__expr__",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 												"type": "math",
 												"expression": "2 + 3 < 1"
@@ -1957,7 +1958,7 @@ func TestIntegrationQuota(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "__expr__",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 3 > 1"
@@ -1992,7 +1993,7 @@ func TestIntegrationQuota(t *testing.T) {
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "__expr__",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 									"type": "math",
 									"expression": "2 + 4 > 1"
