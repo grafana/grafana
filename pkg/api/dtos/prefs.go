@@ -17,7 +17,7 @@ type UpdatePrefsCmd struct {
 	WeekStart    string                       `json:"weekStart"`
 	QueryHistory *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
 	Language     string                       `json:"language"`
-	Cookies      []string                     `json:"cookies"`
+	Cookies      []pref.CookieType            `json:"cookies,omitempty"`
 }
 
 // swagger:model
@@ -33,5 +33,5 @@ type PatchPrefsCmd struct {
 	Language         *string                      `json:"language,omitempty"`
 	QueryHistory     *pref.QueryHistoryPreference `json:"queryHistory,omitempty"`
 	HomeDashboardUID *string                      `json:"homeDashboardUID,omitempty"`
-	Cookies          []string                     `json:"cookies"`
+	Cookies          []pref.CookieType            `json:"cookies,omitempty"`
 }

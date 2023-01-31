@@ -67,7 +67,7 @@ type SavePreferenceCommand struct {
 	Theme             string                  `json:"theme,omitempty"`
 	Language          string                  `json:"language,omitempty"`
 	QueryHistory      *QueryHistoryPreference `json:"queryHistory,omitempty"`
-	CookiePreferences []string                `json:"cookiePreferences,omitempty"`
+	CookiePreferences []CookieType            `json:"cookiePreferences,omitempty"`
 }
 
 type PatchPreferenceCommand struct {
@@ -82,7 +82,7 @@ type PatchPreferenceCommand struct {
 	Theme             *string                 `json:"theme,omitempty"`
 	Language          *string                 `json:"language,omitempty"`
 	QueryHistory      *QueryHistoryPreference `json:"queryHistory,omitempty"`
-	CookiePreferences []string                `json:"cookiePreferences,omitempty"`
+	CookiePreferences []CookieType            `json:"cookiePreferences,omitempty"`
 }
 
 type PreferenceJSONData struct {
@@ -131,3 +131,7 @@ func (j *PreferenceJSONData) ToDB() ([]byte, error) {
 }
 
 func (p Preference) TableName() string { return "preferences" }
+
+// swagger:model
+// Enum: analytics,performance,functional
+type CookieType string

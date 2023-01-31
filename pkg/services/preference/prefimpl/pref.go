@@ -236,8 +236,8 @@ func (s *Service) DeleteByUser(ctx context.Context, userID int64) error {
 	return s.store.DeleteByUser(ctx, userID)
 }
 
-func parseCookiePreferences(prefs []string) (map[string]struct{}, error) {
-	allowed := map[string]struct{}{
+func parseCookiePreferences(prefs []pref.CookieType) (map[string]struct{}, error) {
+	allowed := map[pref.CookieType]struct{}{
 		"analytics":   {},
 		"performance": {},
 		"functional":  {},
@@ -249,7 +249,7 @@ func parseCookiePreferences(prefs []string) (map[string]struct{}, error) {
 			return nil, pref.ErrUnknownCookieType.Errorf("'%s' is not an allowed cookie type", c)
 		}
 
-		m[c] = struct{}{}
+		m[string(c)] = struct{}{}
 	}
 	return m, nil
 }
