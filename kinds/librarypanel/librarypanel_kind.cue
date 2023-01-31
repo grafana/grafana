@@ -4,7 +4,7 @@ import "strings"
 
 name:        "LibraryPanel"
 maturity:    "experimental"
-description: "Libray panel"
+description: "A standalone panel"
 
 lineage: seqs: [
 	{

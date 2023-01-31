@@ -87,7 +87,7 @@ _rootKind: {
 	description: nonEmptyString
 }
 
-// Maturity indicates the how far a given kind declaration is in its initial
+// Maturity indicates the how far a given kind definition is in its initial
 // journey. Mature kinds still evolve, but with guarantees about compatibility.
 Maturity: "merged" | "experimental" | "stable" | "mature"
 

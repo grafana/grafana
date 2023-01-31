@@ -2,7 +2,7 @@ package kind
 
 name:        "PublicDashboard"
 maturity:    "merged"
-description: "A Grafana public dashboard."
+description: "Public dashboard configuration"
 
 lineage: seqs: [
 	{
