@@ -36,7 +36,7 @@ import { useAlertManagersByPermission } from './hooks/useAlertManagerSources';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
 import { fetchAlertGroupsAction, fetchAlertManagerConfigAction, updateAlertManagerConfigAction } from './state/actions';
 import { FormAmRoute } from './types/amroutes';
-import { addUniqueIdentifierToRoute, normalizeMatchers } from './utils/amroutes';
+import { addUniqueIdentifierToRoute } from './utils/amroutes';
 import { isVanillaPrometheusAlertManagerDataSource } from './utils/datasource';
 import { findMatchingRoutes, Label } from './utils/notification-policies';
 import { initialAsyncRequestState } from './utils/redux';
@@ -224,8 +224,6 @@ const AmRoutes = () => {
   const isLoading = !result && resultLoading;
   const haveError = resultError && !resultLoading;
 
-  const matchers = normalizeMatchers(rootRoute ?? {});
-
   const muteTimingsTabActive = activeTab === ActiveTab.MuteTimings;
   const policyTreeTabActive = activeTab === ActiveTab.NotificationPolicies;
 
@@ -287,7 +285,6 @@ const AmRoutes = () => {
                       alertGroups={fetchAlertGroups.result}
                       contactPointsState={contactPointsState.receivers}
                       readOnly={readOnly}
-                      matchers={matchers}
                       alertManagerSourceName={alertManagerSourceName}
                       onAddPolicy={openAddModal}
                       onEditPolicy={openEditModal}

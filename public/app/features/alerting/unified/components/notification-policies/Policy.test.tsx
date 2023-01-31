@@ -42,7 +42,6 @@ describe('Policy', () => {
       <Policy
         routeTree={routeTree}
         currentRoute={routeTree}
-        receivers={[]}
         alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
         onEditPolicy={onEditPolicy}
         onAddPolicy={onAddPolicy}
@@ -138,7 +137,6 @@ describe('Policy', () => {
         readOnly
         routeTree={routeTree}
         currentRoute={routeTree}
-        receivers={[]}
         alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
         onEditPolicy={noop}
         onAddPolicy={noop}
@@ -173,7 +171,6 @@ describe('Policy', () => {
         alertGroups={matchingGroups}
         routeTree={routeTree}
         currentRoute={routeTree}
-        receivers={[]}
         alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
         onEditPolicy={noop}
         onAddPolicy={noop}
@@ -202,7 +199,6 @@ describe('Policy', () => {
         readOnly
         routeTree={routeTree}
         currentRoute={routeTree}
-        receivers={[]}
         contactPointsState={receiversState}
         alertManagerSourceName={GRAFANA_RULES_SOURCE_NAME}
         onEditPolicy={noop}

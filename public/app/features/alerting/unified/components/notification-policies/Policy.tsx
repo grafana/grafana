@@ -52,16 +52,15 @@ type InhertitableProperties = Pick<
 
 interface PolicyComponentProps {
   receivers?: Receiver[];
-  matchers?: ObjectMatcher[];
   alertGroups?: AlertmanagerGroup[];
   contactPointsState?: ReceiversState;
   readOnly?: boolean;
-  alertManagerSourceName: string;
   inheritedProperties?: InhertitableProperties;
   routesMatchingFilters?: RouteWithID[];
 
   routeTree: RouteWithID;
   currentRoute: RouteWithID;
+  alertManagerSourceName: string;
   onEditPolicy: (route: RouteWithID, isDefault?: boolean) => void;
   onAddPolicy: (route: RouteWithID) => void;
   onDeletePolicy: (route: RouteWithID) => void;
@@ -70,7 +69,6 @@ interface PolicyComponentProps {
 
 const Policy: FC<PolicyComponentProps> = ({
   receivers = [],
-  matchers,
   contactPointsState,
   readOnly = false,
   alertGroups = [],
@@ -101,6 +99,7 @@ const Policy: FC<PolicyComponentProps> = ({
     repeat_interval: currentRoute.repeat_interval,
   };
 
+  const matchers = normalizeMatchers(currentRoute);
   const hasMatchers = Boolean(matchers && matchers.length);
   const hasMuteTimings = Boolean(muteTimings.length);
   const hasFocus = routesMatchingFilters.some((route) => route.id === currentRoute.id);
@@ -408,7 +407,6 @@ const Policy: FC<PolicyComponentProps> = ({
               receivers={receivers}
               contactPointsState={contactPointsState}
               readOnly={readOnly}
-              matchers={normalizeMatchers(route)}
               inheritedProperties={inherited}
               onAddPolicy={onAddPolicy}
               onEditPolicy={onEditPolicy}
