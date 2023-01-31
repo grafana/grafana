@@ -356,9 +356,18 @@ export interface ValueMappingResult {
  * FIXME this is extremely underspecfied; wasn't obvious which typescript types corresponded to it
  */
 export interface Transformation {
+  /**
+   * only apply to some frames
+   */
+  filter?: MatcherConfig;
+  hide: boolean;
   id: string;
   options: Record<string, unknown>;
 }
+
+export const defaultTransformation: Partial<Transformation> = {
+  hide: false,
+};
 
 /**
  * 0 for no shared crosshair or tooltip (default).
