@@ -285,7 +285,10 @@ lineage: seqs: [
 				// TODO docs
 				// FIXME this is extremely underspecfied; wasn't obvious which typescript types corresponded to it
 				#Transformation: {
-					id: string
+					id:   string
+					hide: bool | *false
+					// only apply to some frames
+					filter?: #MatcherConfig
 					options: {...}
 				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
