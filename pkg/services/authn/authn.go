@@ -26,6 +26,7 @@ const (
 	ClientSession   = "auth.client.session"
 	ClientForm      = "auth.client.form"
 	ClientProxy     = "auth.client.proxy"
+	ClientSAML      = "auth.client.saml"
 )
 
 const (
