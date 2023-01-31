@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
+	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -14,7 +14,7 @@ import (
 func SetPublicDashboardOrgIdOnContext(publicDashboardService publicdashboards.Service) func(c *contextmodel.ReqContext) {
 	return func(c *contextmodel.ReqContext) {
 		accessToken, ok := web.Params(c.Req)[":accessToken"]
-		if !ok || !tokens.IsValidAccessToken(accessToken) {
+		if !ok || !validation.IsValidAccessToken(accessToken) {
 			return
 		}
 
@@ -45,7 +45,7 @@ func RequiresExistingAccessToken(publicDashboardService publicdashboards.Service
 			return
 		}
 
-		if !tokens.IsValidAccessToken(accessToken) {
+		if !validation.IsValidAccessToken(accessToken) {
 			c.JsonApiErr(http.StatusBadRequest, "Invalid access token", nil)
 		}
 

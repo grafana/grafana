@@ -283,7 +283,7 @@
         0,
         0
       ],
-      "grafanaMaturityCount": 140,
+      "grafanaMaturityCount": 139,
       "lineageIsGroup": false,
       "links": {
         "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/dashboard/schema-reference",
@@ -806,6 +806,32 @@
       "pluralMachineName": "jaegerdatasourcecfgs",
       "pluralName": "JaegerDataSourceCfgs",
       "schemaInterface": "DataSourceCfg"
+    },
+    "librarypanel": {
+      "category": "core",
+      "codeowners": [
+        "grafana/grafana-as-code",
+        "grafana/grafana-bi-squad",
+        "grafana/plugins-platform-frontend",
+        "grafana/user-essentials"
+      ],
+      "currentVersion": [
+        0,
+        0
+      ],
+      "grafanaMaturityCount": 10,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/librarypanel/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/kinds/librarypanel",
+        "schema": "https://github.com/grafana/grafana/tree/main/kinds/librarypanel/librarypanel_kind.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/packages/grafana-schema/src/raw/librarypanel/x/librarypanel_types.gen.ts"
+      },
+      "machineName": "librarypanel",
+      "maturity": "experimental",
+      "name": "LibraryPanel",
+      "pluralMachineName": "librarypanels",
+      "pluralName": "LibraryPanels"
     },
     "livepanelcfg": {
       "category": "composable",
@@ -1499,7 +1525,9 @@
     },
     "tempodataquery": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/observability-traces-and-profiling"
+      ],
       "currentVersion": [
         0,
         0
@@ -1507,13 +1535,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
-        "docs": "n/a",
-        "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/tempodataquery/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/tsdb/tempo/kinds/dataquery/types_dataquery_gen.go",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/tempo/dataquery.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/tempo/dataquery.gen.ts"
       },
       "machineName": "tempodataquery",
-      "maturity": "planned",
+      "maturity": "experimental",
       "name": "TempoDataQuery",
       "pluralMachineName": "tempodataquerys",
       "pluralName": "TempoDataQuerys",
@@ -1846,6 +1874,7 @@
           "dashboard",
           "datasource",
           "folder",
+          "librarypanel",
           "playlist",
           "preferences",
           "publicdashboard",
@@ -1856,7 +1885,7 @@
           "thumb",
           "user"
         ],
-        "count": 13
+        "count": 14
       }
     },
     "maturity": {
@@ -1870,17 +1899,19 @@
           "dashboardlistpanelcfg",
           "gaugepanelcfg",
           "histogrampanelcfg",
+          "librarypanel",
           "newspanelcfg",
           "nodegraphpanelcfg",
           "piechartpanelcfg",
           "statetimelinepanelcfg",
           "statpanelcfg",
           "statushistorypanelcfg",
+          "tempodataquery",
           "testdatadataquery",
           "textpanelcfg",
           "xychartpanelcfg"
         ],
-        "count": 16
+        "count": 18
       },
       "mature": {
         "name": "mature",
@@ -1949,7 +1980,6 @@
           "query",
           "queryhistory",
           "tableoldpanelcfg",
-          "tempodataquery",
           "tempodatasourcecfg",
           "testdatadatasourcecfg",
           "thumb",
@@ -1959,7 +1989,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 56
+        "count": 55
       },
       "stable": {
         "name": "stable",

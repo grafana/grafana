@@ -5,15 +5,15 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
 	"github.com/grafana/grafana/pkg/services/loginattempt/loginattempttest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestAuthenticateUser(t *testing.T) {
@@ -23,7 +23,7 @@ func TestAuthenticateUser(t *testing.T) {
 
 		loginAttemptService := &loginattempttest.FakeLoginAttemptService{ExpectedValid: true}
 		a := AuthenticatorService{loginAttemptService: loginAttemptService, loginService: &logintest.LoginServiceFake{}}
-		err := a.AuthenticateUser(context.Background(), &models.LoginUserQuery{
+		err := a.AuthenticateUser(context.Background(), &login.LoginUserQuery{
 			Username: "user",
 			Password: "",
 		})
@@ -180,7 +180,7 @@ func TestAuthenticateUser(t *testing.T) {
 }
 
 type authScenarioContext struct {
-	loginUserQuery        *models.LoginUserQuery
+	loginUserQuery        *login.LoginUserQuery
 	grafanaLoginWasCalled bool
 	ldapLoginWasCalled    bool
 }
@@ -188,14 +188,14 @@ type authScenarioContext struct {
 type authScenarioFunc func(sc *authScenarioContext)
 
 func mockLoginUsingGrafanaDB(err error, sc *authScenarioContext) {
-	loginUsingGrafanaDB = func(ctx context.Context, query *models.LoginUserQuery, _ user.Service) error {
+	loginUsingGrafanaDB = func(ctx context.Context, query *login.LoginUserQuery, _ user.Service) error {
 		sc.grafanaLoginWasCalled = true
 		return err
 	}
 }
 
 func mockLoginUsingLDAP(enabled bool, err error, sc *authScenarioContext) {
-	loginUsingLDAP = func(ctx context.Context, query *models.LoginUserQuery, _ login.Service) (bool, error) {
+	loginUsingLDAP = func(ctx context.Context, query *login.LoginUserQuery, _ login.Service) (bool, error) {
 		sc.ldapLoginWasCalled = true
 		return enabled, err
 	}
@@ -209,7 +209,7 @@ func authScenario(t *testing.T, desc string, fn authScenarioFunc) {
 		origLoginUsingLDAP := loginUsingLDAP
 		cfg := setting.Cfg{DisableLogin: false}
 		sc := &authScenarioContext{
-			loginUserQuery: &models.LoginUserQuery{
+			loginUserQuery: &login.LoginUserQuery{
 				Username:  "user",
 				Password:  "pwd",
 				IpAddress: "192.168.1.1:56433",

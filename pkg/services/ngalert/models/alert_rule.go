@@ -11,7 +11,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-
 	alertingModels "github.com/grafana/alerting/alerting/models"
 
 	"github.com/grafana/grafana/pkg/services/quota"

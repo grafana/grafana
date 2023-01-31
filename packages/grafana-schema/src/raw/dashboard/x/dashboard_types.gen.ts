@@ -356,9 +356,18 @@ export interface ValueMappingResult {
  * FIXME this is extremely underspecfied; wasn't obvious which typescript types corresponded to it
  */
 export interface Transformation {
+  /**
+   * only apply to some frames
+   */
+  filter?: MatcherConfig;
+  hide: boolean;
   id: string;
   options: Record<string, unknown>;
 }
+
+export const defaultTransformation: Partial<Transformation> = {
+  hide: false,
+};
 
 /**
  * 0 for no shared crosshair or tooltip (default).
@@ -404,6 +413,10 @@ export interface Panel {
    * TODO tighter constraint
    */
   interval?: string;
+  /**
+   * Dynamically load the panel
+   */
+  libraryPanel?: LibraryPanelRef;
   /**
    * Panel links.
    * TODO fill this out - seems there are a couple variants?
@@ -502,6 +515,11 @@ export interface FieldConfigSource {
 export const defaultFieldConfigSource: Partial<FieldConfigSource> = {
   overrides: [],
 };
+
+export interface LibraryPanelRef {
+  name: string;
+  uid: string;
+}
 
 export interface MatcherConfig {
   id: string;
@@ -777,9 +795,9 @@ export interface Dashboard {
     time_options: Array<string>;
   };
   /**
-   * Timezone of dashboard,
+   * Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc".
    */
-  timezone?: ('browser' | 'utc' | '');
+  timezone?: string;
   /**
    * Title of dashboard.
    */

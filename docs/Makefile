@@ -2,7 +2,7 @@
 
 PODMAN = $(shell if command -v podman &>/dev/null; then echo podman; else echo docker; fi)
 IMAGE = grafana/docs-base:latest
-CONTENT_PATH = /hugo/content/docs/grafana/next
+CONTENT_PATH = /hugo/content/docs/grafana/latest
 LOCAL_STATIC_PATH = ../../website/static
 PORT = 3002:3002
 

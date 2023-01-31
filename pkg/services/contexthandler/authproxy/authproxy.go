@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/models"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -242,11 +241,11 @@ func (auth *AuthProxy) LoginViaLDAP(reqCtx *contextmodel.ReqContext) (int64, err
 	}
 
 	// Have to sync grafana and LDAP user during log in
-	upsert := &models.UpsertUserCommand{
+	upsert := &login.UpsertUserCommand{
 		ReqContext:    reqCtx,
 		SignupAllowed: auth.cfg.LDAPAllowSignup,
 		ExternalUser:  extUser,
-		UserLookupParams: models.UserLookupParams{
+		UserLookupParams: login.UserLookupParams{
 			Login:  &extUser.Login,
 			Email:  &extUser.Email,
 			UserID: nil,
@@ -262,7 +261,7 @@ func (auth *AuthProxy) LoginViaLDAP(reqCtx *contextmodel.ReqContext) (int64, err
 // loginViaHeader logs in user from the header only
 func (auth *AuthProxy) loginViaHeader(reqCtx *contextmodel.ReqContext) (int64, error) {
 	header := auth.getDecodedHeader(reqCtx, auth.cfg.AuthProxyHeaderName)
-	extUser := &models.ExternalUserInfo{
+	extUser := &login.ExternalUserInfo{
 		AuthModule: login.AuthProxyAuthModule,
 		AuthId:     header,
 	}
@@ -304,11 +303,11 @@ func (auth *AuthProxy) loginViaHeader(reqCtx *contextmodel.ReqContext) (int64, e
 		}
 	})
 
-	upsert := &models.UpsertUserCommand{
+	upsert := &login.UpsertUserCommand{
 		ReqContext:    reqCtx,
 		SignupAllowed: auth.cfg.AuthProxyAutoSignUp,
 		ExternalUser:  extUser,
-		UserLookupParams: models.UserLookupParams{
+		UserLookupParams: login.UserLookupParams{
 			UserID: nil,
 			Login:  &extUser.Login,
 			Email:  &extUser.Email,
