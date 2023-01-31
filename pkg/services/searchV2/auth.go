@@ -44,11 +44,11 @@ func (a *simpleAuthService) GetDashboardReadFilter(ctx context.Context, orgID in
 				var err error
 				if kind == entityKindFolder {
 					scopes, err = dashboards.GetInheritedScopes(ctx, orgID, uid, a.folderService)
-				} else if kind == entityKindDashboard {
+				} else if kind == entityKindDashboard && parent != folder.GeneralFolderUID {
 					scopes, err = dashboards.GetInheritedScopes(ctx, orgID, parent, a.folderService)
 				}
 				if err != nil {
-					a.logger.Warn("could not retrieve inherited folder scopes: %w", err)
+					a.logger.Warn("could not retrieve inherited folder scopes:", "err", err)
 				}
 			}
 			if kind == entityKindFolder {
