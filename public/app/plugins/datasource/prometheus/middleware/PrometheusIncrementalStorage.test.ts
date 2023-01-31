@@ -2029,6 +2029,7 @@ describe('PrometheusIncrementalStorage', function () {
         ],
         length: 43,
       },
+      originalRange: mockOriginalRange('2023-01-30T19:33:31.357Z', '2023-01-30T20:33:31.357Z'),
       originalRange: {
         start: new Date('2023-01-30T19:33:31.357Z').valueOf(),
         end: new Date('2023-01-30T20:33:31.357Z').valueOf(),
@@ -3421,7 +3422,7 @@ describe('PrometheusIncrementalStorage', function () {
 
     // Now the second query we get is just for a few seconds later, without prometheus storage we'd have to ask prometheus for the entire set of data again!
     // But since we have the frames from the last request stored, we were able to modify the request to the backend to exclude data the client already has available
-    // So this request was much smaller then the first one!
+    // So this request was much smaller than the first one!
     // But now we have the arduous task of merging the new frames from the response with the ones we have in storage.
     // A few things to note here, we provide an overlap duration in this class PROMETHEUS_INCREMENTAL_QUERY_OVERLAP_DURATION_MS,
     // which adds a bit of overhead to these requests, but trends towards eventual consistency:

@@ -1,6 +1,5 @@
 import {
   DataFrame,
-  DataFrameDTO,
   DataQueryRequest,
   DataQueryResponse,
   dateTime,
@@ -172,14 +171,13 @@ export class PrometheusIncrementalStorage {
    * @param data
    * @private
    */
-  private preProcessDataFrames(data: DataFrame[] | DataFrameDTO[]) {
+  private preProcessDataFrames(data: DataFrame[]) {
     if (!data?.length) {
       if (DEBUG) {
         console.error('Dataframe has no fields!');
       }
       return;
     }
-    // Initialize with the length of the first time series
     let longestLength = data[0]?.length ?? 0;
 
     // Get the times of the first series
@@ -238,7 +236,7 @@ export class PrometheusIncrementalStorage {
     dataFrames: DataQueryResponse,
     originalRange?: { end: number, start: number }
   ): DataQueryResponse => {
-    const data: DataFrame[] | DataFrameDTO[] = dataFrames.data;
+    const data: DataFrame[] = dataFrames.data;
 
     // Frames aren't always the same length, since this storage assumes a single time array for all values, that means we need to back-fill missing values
     this.preProcessDataFrames(data);
@@ -341,7 +339,7 @@ export class PrometheusIncrementalStorage {
               const allValueFramesMerged = [...dedupedFrames.values, ...responseFrameValues];
 
               // This is a reference to the original dataframes passed in, so we're mutating the original dataframe here!
-              valueField!.values!.buffer = allValueFramesMerged;
+              valueField.values.buffer = allValueFramesMerged;
 
               // If we set the time values here we'll screw up the rest of the loop, we should be checking to see if each series has the same time steps, or we need to clear the cache
               timeValuesStorage = allTimeValuesMerged;
