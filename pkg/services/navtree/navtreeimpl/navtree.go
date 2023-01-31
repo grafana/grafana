@@ -234,7 +234,7 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 }
 
 func isSupportBundlesEnabled(s *ServiceImpl) bool {
-	return s.cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(false) &&
+	return s.cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true) &&
 		s.features.IsEnabled(featuremgmt.FlagSupportBundles)
 }
 

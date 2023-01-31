@@ -98,24 +98,22 @@ Alpha features might be changed or removed without prior notice.
 | `sessionRemoteCache`               | Enable using remote cache for user sessions                                                                                                                                  |
 | `alertingBacktesting`              | Rule backtesting API for alerting                                                                                                                                            |
 | `editPanelCSVDragAndDrop`          | Enables drag and drop for CSV and Excel files                                                                                                                                |
-| `azureMultipleResourcePicker`      | Azure multiple resource picker                                                                                                                                               |
 | `logsContextDatasourceUi`          | Allow datasource to provide custom UI for context view                                                                                                                       |
 
 ## Development feature toggles
 
 The following toggles require explicitly setting Grafana's [app mode]({{< relref "../_index.md/#app_mode" >}}) to 'development' before you can enable this feature toggle. These features tend to be experimental.
 
-| Feature toggle name                    | Description                                                             |
-| -------------------------------------- | ----------------------------------------------------------------------- |
-| `dashboardPreviewsAdmin`               | Manage the dashboard previews crawler process from the UI               |
-| `showFeatureFlagsInUI`                 | Show feature flags in the settings UI                                   |
-| `publicDashboardsEmailSharing`         | Allows public dashboard sharing to be restricted to only allowed emails |
-| `k8s`                                  | Explore native k8s integrations                                         |
-| `k8sDashboards`                        | Save dashboards via k8s                                                 |
-| `dashboardsFromStorage`                | Load dashboards from the generic storage interface                      |
-| `export`                               | Export grafana instance (to git, etc)                                   |
-| `azureMonitorResourcePickerForMetrics` | New UI for Azure Monitor Metrics Query                                  |
-| `grpcServer`                           | Run GRPC server                                                         |
-| `entityStore`                          | SQL-based entity store (requires storage flag also)                     |
-| `queryLibrary`                         | Reusable query library                                                  |
-| `nestedFolders`                        | Enable folder nesting                                                   |
+| Feature toggle name            | Description                                                             |
+| ------------------------------ | ----------------------------------------------------------------------- |
+| `dashboardPreviewsAdmin`       | Manage the dashboard previews crawler process from the UI               |
+| `showFeatureFlagsInUI`         | Show feature flags in the settings UI                                   |
+| `publicDashboardsEmailSharing` | Allows public dashboard sharing to be restricted to only allowed emails |
+| `k8s`                          | Explore native k8s integrations                                         |
+| `k8sDashboards`                | Save dashboards via k8s                                                 |
+| `dashboardsFromStorage`        | Load dashboards from the generic storage interface                      |
+| `export`                       | Export grafana instance (to git, etc)                                   |
+| `grpcServer`                   | Run GRPC server                                                         |
+| `entityStore`                  | SQL-based entity store (requires storage flag also)                     |
+| `queryLibrary`                 | Reusable query library                                                  |
+| `nestedFolders`                | Enable folder nesting                                                   |
