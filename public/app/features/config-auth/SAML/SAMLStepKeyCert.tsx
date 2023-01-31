@@ -1,17 +1,20 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { FormEvent, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Field, Icon, Input, RadioButtonGroup, Switch, Tooltip, useStyles2 } from '@grafana/ui';
-import { StoreState } from 'app/types';
+import { SettingsSection, StoreState } from 'app/types';
 
 import { ConfigStepContainer } from '../components/ConfigStepContainer';
 import { loadSettings } from '../state/actions';
 import { samlStepChanged } from '../state/reducers';
 import { selectSamlConfig } from '../state/selectors';
 
-interface OwnProps {}
+interface OwnProps {
+  onSettingsUpdate: (samlSettings: SettingsSection) => void;
+  onSave: () => void;
+}
 
 export type Props = OwnProps & ConnectedProps<typeof connector>;
 
@@ -46,11 +49,36 @@ export const SAMLStepKeyCertUnconnected = ({
   step,
   loadSettings,
   samlStepChanged,
+  onSettingsUpdate,
+  onSave,
 }: Props): JSX.Element => {
+  const [signatureAlgorithm, setSignatureAlgorithm] = useState(samlSettings.signature_algorithm || 'rsa-sha256');
   const styles = useStyles2(getStyles);
 
+  const onPropChange = (prop: string) => {
+    return (event: FormEvent<HTMLInputElement>) => {
+      const value = event.currentTarget.value;
+      onSettingsUpdate({ ...samlSettings, [prop]: value });
+    };
+  };
+
+  const onBooleanPropChange = (prop: string) => {
+    return (event: FormEvent<HTMLInputElement>) => {
+      const value = samlSettings[prop] === 'true' ? 'false' : 'true';
+      onSettingsUpdate({ ...samlSettings, [prop]: value });
+    };
+  };
+
+  const onSignatureOptionChange = () => {
+    if (samlSettings.signature_algorithm !== '') {
+      onSettingsUpdate({ ...samlSettings, signature_algorithm: '' });
+    } else {
+      onSettingsUpdate({ ...samlSettings, signature_algorithm: signatureAlgorithm });
+    }
+  };
+
   return (
-    <ConfigStepContainer name="Key and certificate" onSave={() => {}}>
+    <ConfigStepContainer name="Key and certificate" onSave={onSave}>
       <Field
         label="Signing and encryption key and certificate provision specification (required)"
         description="X.509 certificate provides the public part, while the private key issued in a PKCS#8 format provides the private part of the asymmetric encryption."
@@ -77,10 +105,10 @@ export const SAMLStepKeyCertUnconnected = ({
         <Input width={60} id="certPath" onChange={() => {}} />
       </Field>
       <Field label="Sign requests">
-        <Switch id="signRequests" onChange={() => {}} />
+        <Switch id="signRequests" value={samlSettings.signature_algorithm !== ''} onChange={onSignatureOptionChange} />
       </Field>
       <Field label="Signature algorithm" description="Must be the same as set-up or required by IdP.">
-        <RadioButtonGroup options={signatureOptions} value={samlSettings.signature_algorithm} onChange={() => {}} />
+        <RadioButtonGroup options={signatureOptions} value={signatureAlgorithm} onChange={setSignatureAlgorithm} />
       </Field>
     </ConfigStepContainer>
   );

@@ -7,10 +7,10 @@ import { locationService } from '@grafana/runtime';
 import { Button, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { StoreState } from 'app/types';
+import { SettingsSection, StoreState } from 'app/types';
 
-import { loadSettings } from '../state/actions';
-import { samlStepChanged } from '../state/reducers';
+import { loadSettings, saveSettings } from '../state/actions';
+import { samlStepChanged, settingsUpdated } from '../state/reducers';
 import { selectSamlConfig } from '../state/selectors';
 import { getEnabledAuthProviders } from '../utils';
 
@@ -38,7 +38,9 @@ function mapStateToProps(state: StoreState) {
 
 const mapDispatchToProps = {
   loadSettings,
+  saveSettings,
   samlStepChanged,
+  settingsUpdated,
 };
 
 const connector = connect(mapStateToProps, mapDispatchToProps);
@@ -58,8 +60,10 @@ export const SetupSAMLPageUnconnected = ({
   samlSettings,
   step,
   loadSettings,
+  saveSettings,
   queryParams,
   samlStepChanged,
+  settingsUpdated,
 }: Props): JSX.Element => {
   const styles = useStyles2(getStyles);
 
@@ -70,6 +74,16 @@ export const SetupSAMLPageUnconnected = ({
   const onStepChange = (step: number) => {
     samlStepChanged(step);
     locationService.partial({ step });
+  };
+
+  const onSAMLSettingsUpdate = (samlSettings: SettingsSection) => {
+    settingsUpdated({ ...settings, 'auth.saml': samlSettings });
+  };
+
+  const onSAMLSettingsSave = () => {
+    const { certificate_path, private_key_path, ...rest } = samlSettings;
+    const data = { updates: { 'auth.saml': rest } };
+    saveSettings(data);
   };
 
   const enabledAuthProviders = getEnabledAuthProviders(settings);
@@ -83,10 +97,10 @@ export const SetupSAMLPageUnconnected = ({
         <div className={styles.stepSelector}>
           <SAMLStepSelector step={step} onChange={onStepChange} />
         </div>
-        {step === 1 && <SAMLStepGeneral />}
-        {step === 2 && <SAMLStepKeyCert />}
-        {step === 3 && <SAMLStepConnectToIdP />}
-        {step === 4 && <SAMLStepAssertionMapping />}
+        {step === 1 && <SAMLStepGeneral onSettingsUpdate={onSAMLSettingsUpdate} onSave={onSAMLSettingsSave} />}
+        {step === 2 && <SAMLStepKeyCert onSettingsUpdate={onSAMLSettingsUpdate} onSave={onSAMLSettingsSave} />}
+        {step === 3 && <SAMLStepConnectToIdP onSettingsUpdate={onSAMLSettingsUpdate} />}
+        {step === 4 && <SAMLStepAssertionMapping onSettingsUpdate={onSAMLSettingsUpdate} />}
         <Button onClick={() => onStepChange(step + 1)}>Next</Button>
       </Page.Contents>
     </Page>

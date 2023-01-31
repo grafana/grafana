@@ -4,14 +4,16 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Field, Input, Switch, useStyles2 } from '@grafana/ui';
-import { StoreState } from 'app/types';
+import { SettingsSection, StoreState } from 'app/types';
 
 import { ConfigStepContainer } from '../components/ConfigStepContainer';
 import { loadSettings } from '../state/actions';
 import { samlStepChanged } from '../state/reducers';
 import { selectSamlConfig } from '../state/selectors';
 
-interface OwnProps {}
+interface OwnProps {
+  onSettingsUpdate: (samlSettings: SettingsSection) => void;
+}
 
 export type Props = OwnProps & ConnectedProps<typeof connector>;
 
@@ -35,6 +37,7 @@ export const SAMLStepAssertionMappingUnconnected = ({
   step,
   loadSettings,
   samlStepChanged,
+  onSettingsUpdate,
 }: Props): JSX.Element => {
   const styles = useStyles2(getStyles);
 

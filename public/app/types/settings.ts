@@ -1,1 +1,3 @@
-export type Settings = { [key: string]: { [key: string]: string } };
+export type Settings = { [key: string]: SettingsSection };
+
+export type SettingsSection = { [key: string]: string };
