@@ -524,57 +524,54 @@ func setupTestEnv(t testing.TB) (*store, *sqlstore.SQLStore) {
 
 func TestStore_IsInherited(t *testing.T) {
 	type testCase struct {
-		description string
-		permScope   string
-		argScope    string
-		expected    bool
+		description   string
+		permission    *flatResourcePermission
+		requiredScope string
+		expected      bool
 	}
 
 	testCases := []testCase{
 		{
 			description: "same scope is not inherited",
-			permScope:   dashboards.ScopeDashboardsProvider.GetResourceScopeUID("some_uid"),
-			argScope:    dashboards.ScopeDashboardsProvider.GetResourceScopeUID("some_uid"),
-			expected:    false,
+			permission: &flatResourcePermission{
+				Scope:    dashboards.ScopeDashboardsProvider.GetResourceScopeUID("some_uid"),
+				RoleName: fmt.Sprintf("%stest_role", accesscontrol.ManagedRolePrefix),
+			},
+			requiredScope: dashboards.ScopeDashboardsProvider.GetResourceScopeUID("some_uid"),
+			expected:      false,
 		},
 		{
 			description: "specific folder scope for dashboards is inherited",
-			permScope:   dashboards.ScopeDashboardsProvider.GetResourceScopeUID("some_uid"),
-			argScope:    dashboards.ScopeFoldersProvider.GetResourceScopeUID("parent"),
-			expected:    true,
+			permission: &flatResourcePermission{
+				Scope:    dashboards.ScopeFoldersProvider.GetResourceScopeUID("parent"),
+				RoleName: fmt.Sprintf("%stest_role", accesscontrol.ManagedRolePrefix),
+			},
+			requiredScope: dashboards.ScopeDashboardsProvider.GetResourceScopeUID("some_uid"),
+			expected:      true,
 		},
 		{
-			description: "wildcard folder scope for dashboards is inherited",
-			permScope:   dashboards.ScopeDashboardsProvider.GetResourceScopeUID("some_uid"),
-			argScope:    dashboards.ScopeFoldersAll,
-			expected:    true,
-		},
-		{
-			description: "wildcard dashboard scope for dashboards is not inherited",
-			permScope:   dashboards.ScopeDashboardsProvider.GetResourceScopeUID("some_uid"),
-			argScope:    dashboards.ScopeDashboardsAll,
-			expected:    false,
+			description: "wildcard scope from a fixed role is not inherited",
+			permission: &flatResourcePermission{
+				Scope:    dashboards.ScopeDashboardsAll,
+				RoleName: fmt.Sprintf("%sfixed_role", accesscontrol.FixedRolePrefix),
+			},
+			requiredScope: dashboards.ScopeDashboardsProvider.GetResourceScopeUID("some_uid"),
+			expected:      false,
 		},
 		{
 			description: "parent folder scope for nested folders is inherited",
-			permScope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID("some_folder"),
-			argScope:    dashboards.ScopeFoldersProvider.GetResourceScopeUID("parent"),
-			expected:    true,
-		},
-		{
-			description: "wildcard folder scope for nested folders is not inherited",
-			permScope:   dashboards.ScopeFoldersProvider.GetResourceScopeUID("some_folder"),
-			argScope:    dashboards.ScopeFoldersAll,
-			expected:    false,
+			permission: &flatResourcePermission{
+				Scope:    dashboards.ScopeFoldersProvider.GetResourceScopeUID("parent"),
+				RoleName: fmt.Sprintf("%stest_role", accesscontrol.ManagedRolePrefix),
+			},
+			requiredScope: dashboards.ScopeFoldersProvider.GetResourceScopeUID("some_folder"),
+			expected:      true,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
-			perms := &flatResourcePermission{
-				Scope: tc.permScope,
-			}
-			isInherited := perms.IsInherited(tc.argScope)
+			isInherited := tc.permission.IsInherited(tc.requiredScope)
 			assert.Equal(t, tc.expected, isInherited)
 		})
 	}

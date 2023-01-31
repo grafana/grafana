@@ -39,11 +39,13 @@ type flatResourcePermission struct {
 }
 
 func (p *flatResourcePermission) IsManaged(scope string) bool {
-	return strings.HasPrefix(p.RoleName, accesscontrol.ManagedRolePrefix) && !p.IsInherited(scope)
+	return strings.HasPrefix(p.RoleName, accesscontrol.ManagedRolePrefix) && p.Scope == scope
 }
 
+// IsInherited returns true for scopes from managed permissions that don't directly match the required scope
+// (ie, managed permissions on a parent resource)
 func (p *flatResourcePermission) IsInherited(scope string) bool {
-	return !strings.HasPrefix(p.Scope, strings.ReplaceAll(scope, "*", ""))
+	return strings.HasPrefix(p.RoleName, accesscontrol.ManagedRolePrefix) && p.Scope != scope
 }
 
 func (s *store) SetUserResourcePermission(
