@@ -60,7 +60,7 @@ require (
 	github.com/grafana/alerting v0.0.0-20230125210216-facc6b27b9e0
 	github.com/grafana/cuetsy v0.1.5
 	github.com/grafana/grafana-aws-sdk v0.12.0
-	github.com/grafana/grafana-azure-sdk-go v1.5.1
+	github.com/grafana/grafana-azure-sdk-go v1.6.0
 	github.com/grafana/grafana-plugin-sdk-go v0.147.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v1.2.0
