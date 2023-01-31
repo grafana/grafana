@@ -358,7 +358,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, enabledPlugin
 		}
 
 		if cfg, ok := cacheCfgs[dsDTO.UID]; ok {
-			dsDTO.EnterpriseCachingConfig = cfg
+			dsDTO.PluginMeta.EnterpriseCachingConfig = cfg
 		}
 
 		dataSources[ds.Name] = dsDTO
@@ -385,7 +385,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, enabledPlugin
 			}
 
 			if cfg, ok := cacheCfgs[dto.UID]; ok {
-				dto.EnterpriseCachingConfig = cfg
+				dto.PluginMeta.EnterpriseCachingConfig = cfg
 			}
 
 			dataSources[ds.Name] = dto

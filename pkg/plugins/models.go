@@ -208,6 +208,8 @@ type PluginMetaDTO struct {
 
 	Module  string `json:"module"`
 	BaseURL string `json:"baseUrl"`
+
+	EnterpriseCachingConfig querycaching.CacheConfig `json:"cachingConfig,omitempty"`
 }
 
 type DataSourceDTO struct {
@@ -226,8 +228,6 @@ type DataSourceDTO struct {
 
 	BasicAuth       string `json:"basicAuth,omitempty"`
 	WithCredentials bool   `json:"withCredentials,omitempty"`
-
-	EnterpriseCachingConfig querycaching.CacheConfig `json:"cachingConfig,omitempty"`
 
 	// InfluxDB
 	Username string `json:"username,omitempty"`
