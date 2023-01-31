@@ -24,6 +24,14 @@ const alertPanelWindowBeforeTriggerInMinutes = 5 //LOGZ.IO GRAFANA CHANGE :: DEV
 
 const LogzioSwitchToAccountQueryParamName = "switchToAccountId"
 
+// see `extract_md.go` (extractEvalString func) to
+const (
+	EvalStrVarNamePrefix = "var='"
+	EvalStrMetricPrefix  = "metric='"
+	EvalStrLabelsPrefix  = "labels="
+	EvalStrValuePrefix   = "value="
+)
+
 type ExtendedAlert struct {
 	Status       string      `json:"status"`
 	Labels       template.KV `json:"labels"`
@@ -36,6 +44,14 @@ type ExtendedAlert struct {
 	DashboardURL string      `json:"dashboardURL"`
 	PanelURL     string      `json:"panelURL"`
 	ValueString  string      `json:"valueString"`
+	EvalValues   []EvalValue `json:"evalValues"`
+}
+
+type EvalValue struct {
+	Var    string
+	Metric string
+	Labels string
+	Value  string
 }
 
 type ExtendedAlerts []ExtendedAlert
@@ -109,6 +125,7 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 
 	if alert.Annotations != nil {
 		extended.ValueString = alert.Annotations[`__value_string__`]
+		extended.EvalValues = parseEvalValues(extended.ValueString)
 	}
 
 	matchers := make([]string, 0)
@@ -219,3 +236,122 @@ func appendAlertPanelTimeframeToQueryString(queryString string, alert template.A
 }
 
 //LOGZ.IO GRAFANA CHANGE :: end
+
+//
+func parseEvalValues(evaluationStr string) []EvalValue {
+	evalValues := make([]EvalValue, 0)
+
+	if len(evaluationStr) == 0 {
+		return evalValues
+	}
+
+	isVariableEvalStr := false
+	buf := ""
+
+	for _, c := range evaluationStr {
+		if isVariableEvalStr {
+			buf += string(c)
+		}
+
+		if c == '[' {
+			isVariableEvalStr = true
+		}
+
+		if c == ']' {
+			isVariableEvalStr = false
+
+			evalValues = append(evalValues, parseEvalValueFromVariableEvalStr(buf))
+			buf = ""
+		}
+	}
+
+	return evalValues
+}
+
+func parseEvalValueFromVariableEvalStr(variableEvalStr string) EvalValue {
+	varName := parseVarName(variableEvalStr)
+	labelsStr := parseLabels(variableEvalStr)
+	metricName := parseMetricName(variableEvalStr)
+	v := parseValue(variableEvalStr)
+
+	return EvalValue{
+		Metric: metricName,
+		Labels: labelsStr,
+		Var:    varName,
+		Value:  v,
+	}
+}
+
+func parseVarName(evalStr string) string {
+	varName := ""
+	varStartIndex := strings.Index(evalStr, EvalStrVarNamePrefix)
+
+	if varStartIndex == -1 {
+		return ""
+	}
+
+	for i := varStartIndex + len(EvalStrVarNamePrefix); i < len(evalStr); i++ {
+		if evalStr[i] == '\'' {
+			break
+		}
+		varName += string(evalStr[i])
+	}
+
+	return varName
+}
+
+func parseLabels(evalStr string) string {
+	labelsString := ""
+	labelIndexStart := strings.Index(evalStr, EvalStrLabelsPrefix)
+
+	if labelIndexStart == -1 {
+		return ""
+	}
+
+	for i := labelIndexStart + len(EvalStrLabelsPrefix); i < len(evalStr); i++ {
+		labelsString += string(evalStr[i])
+
+		if evalStr[i] == '}' {
+			break
+		}
+	}
+
+	return labelsString
+}
+
+func parseMetricName(evalStr string) string {
+	metricName := ""
+	metricNameStartIndex := strings.Index(evalStr, EvalStrMetricPrefix)
+
+	if metricNameStartIndex == -1 {
+		return ""
+	}
+
+	for i := metricNameStartIndex + len(EvalStrMetricPrefix); i < len(evalStr); i++ {
+		if evalStr[i] == '\'' {
+			break
+		}
+		metricName += string(evalStr[i])
+	}
+
+	return metricName
+}
+
+func parseValue(evalStr string) string {
+	valueStr := ""
+	valueStartIndex := strings.Index(evalStr, EvalStrValuePrefix)
+
+	if valueStartIndex == -1 {
+		return ""
+	}
+
+	for i := valueStartIndex + len(EvalStrValuePrefix); i < len(evalStr); i++ {
+		if evalStr[i] == ' ' {
+			break
+		}
+
+		valueStr += string(evalStr[i])
+	}
+
+	return valueStr
+}

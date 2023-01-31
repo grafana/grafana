@@ -14,8 +14,14 @@ const DefaultMessageTitleEmbed = `{{ template "default.title" . }}`
 var DefaultTemplateString = `
 {{ define "__subject" }}[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ if gt (.Alerts.Resolved | len) 0 }}, RESOLVED:{{ .Alerts.Resolved | len }}{{ end }}{{ end }}] {{ .GroupLabels.SortedPairs.Values | join " " }} {{ if gt (len .CommonLabels) (len .GroupLabels) }}({{ with .CommonLabels.Remove .GroupLabels.Names }}{{ .Values | join " " }}{{ end }}){{ end }}{{ end }}
 
+{{ define "__eval_value_text" }} - {{ .Var }} [ {{ if .Metric }}metric={{ .Metric }} {{ end }}labels={{ .Labels }} ] = {{ .Value }}{{ end }}
+
+{{ define "__text_values_list" }}{{ if gt (len .EvalValues) 0 }}
+{{ range .EvalValues }}{{ template "__eval_value_text" . }}
+{{ end }}{{ else }}[no value]{{ end }}{{ end }}
+
 {{ define "__text_alert_list" }}{{ range . }}
-Value: {{ or .ValueString "[no value]" }}
+Value: {{ template "__text_values_list" . }}
 Labels:
 {{ range .Labels.SortedPairs }} - {{ .Name }} = {{ .Value }}
 {{ end }}Annotations:
