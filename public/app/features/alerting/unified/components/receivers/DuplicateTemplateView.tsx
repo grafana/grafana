@@ -3,6 +3,7 @@ import React, { FC } from 'react';
 import { Alert } from '@grafana/ui';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
+import { generateCopiedName } from '../../utils/duplicate';
 import { updateAndSanitizeDefine } from '../../utils/templates';
 
 import { TemplateForm } from './TemplateForm';
@@ -11,19 +12,6 @@ interface Props {
   templateName: string;
   config: AlertManagerCortexConfig;
   alertManagerSourceName: string;
-}
-
-export function generateCopiedTemplateName(config: AlertManagerCortexConfig, originalTemplateName: string): string {
-  const existingTemplates = Object.keys(config.template_files);
-  const nonDuplicateName = originalTemplateName.replace(/\(copy( [0-9]+)?\)$/, '').trim();
-
-  let newName = `${nonDuplicateName} (copy)`;
-
-  for (let i = 2; existingTemplates.includes(newName); i++) {
-    newName = `${nonDuplicateName} (copy ${i})`;
-  }
-
-  return newName;
 }
 
 export const DuplicateTemplateView: FC<Props> = ({ config, templateName, alertManagerSourceName }) => {
@@ -37,7 +25,7 @@ export const DuplicateTemplateView: FC<Props> = ({ config, templateName, alertMa
     );
   }
 
-  const duplicatedName = generateCopiedTemplateName(config, templateName);
+  const duplicatedName = generateCopiedName(templateName, Object.keys(config.template_files));
 
   return (
     <TemplateForm
