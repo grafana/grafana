@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { TopOfViewRefType } from '@jaegertracing/jaeger-ui-components/src/TraceTimelineViewer/VirtualizedTraceView';
 import React, { RefObject, useCallback, useMemo, useState } from 'react';
 
 import {
@@ -17,13 +16,6 @@ import {
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
-import {
-  SpanBarOptionsData,
-  Trace,
-  TracePageHeader,
-  TraceTimelineViewer,
-  TTraceTimeline,
-} from '@jaegertracing/jaeger-ui-components';
 import { getTraceToLogsOptions, TraceToLogsData } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricsData } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -34,6 +26,8 @@ import { ExploreId } from 'app/types/explore';
 
 import { changePanelState } from '../state/explorePane';
 
+import { SpanBarOptionsData, Trace, TracePageHeader, TraceTimelineViewer, TTraceTimeline } from './components';
+import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
 import { createSpanLinkFactory } from './createSpanLink';
 import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';

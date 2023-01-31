@@ -556,9 +556,10 @@ export function getFieldLegendItem(fields: Field[], theme: GrafanaTheme2): VizLe
   const items: VizLegendItem[] = [];
   const fieldConfig = fields[0].config;
   const colorMode = fieldConfig.color?.mode ?? FieldColorModeId.Fixed;
+  const thresholds = fieldConfig.thresholds;
 
   // If thresholds are enabled show each step in the legend
-  if (colorMode === FieldColorModeId.Thresholds) {
+  if (colorMode === FieldColorModeId.Thresholds && thresholds?.steps && thresholds.steps.length > 1) {
     return getThresholdItems(fieldConfig, theme);
   }
 
