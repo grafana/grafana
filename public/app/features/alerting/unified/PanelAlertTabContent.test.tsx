@@ -1,4 +1,4 @@
-import { render, act, waitFor } from '@testing-library/react';
+import { act, render, waitFor } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
@@ -324,7 +324,7 @@ describe('PanelAlertTabContent', () => {
         },
         {
           refId: 'B',
-          datasourceUid: '-100',
+          datasourceUid: '__expr__',
           queryType: '',
           model: {
             refId: 'B',
@@ -333,7 +333,7 @@ describe('PanelAlertTabContent', () => {
             type: 'classic_conditions',
             datasource: {
               type: ExpressionDatasourceRef.type,
-              uid: '-100',
+              uid: '__expr__',
             },
             conditions: [
               {
