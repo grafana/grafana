@@ -4,8 +4,11 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -15,28 +18,46 @@ type ResourceFilter func(kind entityKind, uid, parentUID string) bool
 
 // FutureAuthService eventually implemented by the security service
 type FutureAuthService interface {
-	GetDashboardReadFilter(user *user.SignedInUser) (ResourceFilter, error)
+	GetDashboardReadFilter(ctx context.Context, orgID int64, user *user.SignedInUser) (ResourceFilter, error)
 }
 
 var _ FutureAuthService = (*simpleAuthService)(nil)
 
 type simpleAuthService struct {
-	sql db.DB
-	ac  accesscontrol.Service
+	sql           db.DB
+	ac            accesscontrol.Service
+	features      featuremgmt.FeatureToggles
+	folderService folder.Service
+	logger        log.Logger
 }
 
 type dashIdQueryResult struct {
 	UID string `xorm:"uid"`
 }
 
-func (a *simpleAuthService) GetDashboardReadFilter(user *user.SignedInUser) (ResourceFilter, error) {
+func (a *simpleAuthService) GetDashboardReadFilter(ctx context.Context, orgID int64, user *user.SignedInUser) (ResourceFilter, error) {
 	if !a.ac.IsDisabled() {
 		canReadDashboard, canReadFolder := accesscontrol.Checker(user, dashboards.ActionDashboardsRead), accesscontrol.Checker(user, dashboards.ActionFoldersRead)
 		return func(kind entityKind, uid, parent string) bool {
+			var scopes []string
+			if a.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+				var err error
+				if kind == entityKindFolder {
+					scopes, err = dashboards.GetInheritedScopes(ctx, orgID, uid, a.folderService)
+				} else if kind == entityKindDashboard {
+					scopes, err = dashboards.GetInheritedScopes(ctx, orgID, parent, a.folderService)
+				}
+				if err != nil {
+					a.logger.Warn("could not retrieve inherited folder scopes: %w", err)
+				}
+			}
 			if kind == entityKindFolder {
-				return canReadFolder(dashboards.ScopeFoldersProvider.GetResourceScopeUID(uid))
+				scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(uid))
+				return canReadFolder(scopes...)
 			} else if kind == entityKindDashboard {
-				return canReadDashboard(dashboards.ScopeDashboardsProvider.GetResourceScopeUID(uid), dashboards.ScopeFoldersProvider.GetResourceScopeUID(parent))
+				scopes = append(scopes, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(uid))
+				scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(parent))
+				return canReadDashboard(scopes...)
 			}
 			return false
 		}, nil
