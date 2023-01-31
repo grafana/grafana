@@ -12,6 +12,8 @@ import {
   sortNumber,
   sortOptions,
   valuesToOptions,
+  buildBufferedIncrementingValues,
+  buildFieldsForOptionalRowNums,
 } from './utils';
 
 function getData() {
@@ -362,6 +364,30 @@ describe('Table utils', () => {
       ${{ label: 'a' }}       | ${{ label: 'a' }}       | ${0}
     `("when called with a: '$a.toString', b: '$b.toString' then result should be '$expected'", ({ a, b, expected }) => {
       expect(sortOptions(a, b)).toEqual(expected);
+    });
+  });
+
+  describe('buildBufferedIncrementingValues', () => {
+    it('should build a buffered VectorArray of values starting at 1, and incrementing by 1 up to the number passes as an argument', () => {
+      const arrayVectorLength = 10;
+      const bufferedArray = buildBufferedIncrementingValues(arrayVectorLength);
+      expect(bufferedArray).toBeInstanceOf(ArrayVector);
+
+      const nonBufferedArray = Array.from(bufferedArray);
+      // buildBufferedIncrementingValues builds values as string, not numbers.
+      expect(nonBufferedArray[0]).toEqual('1');
+      expect(nonBufferedArray[nonBufferedArray.length - 1]).toEqual(String(arrayVectorLength));
+    });
+  });
+
+  describe('buildFieldsForOptionalRowNums', () => {
+    it('should prepend a Field to a `DataFrame.field` so row numbers can be calculated and rendered', () => {
+      const builtField = buildFieldsForOptionalRowNums(10);
+
+      expect(builtField['name']).toEqual(' ');
+      expect(builtField['type']).toEqual(FieldType.string);
+      expect(typeof builtField['display']).toBe('function');
+      expect(typeof builtField['config']).toBe('object');
     });
   });
 

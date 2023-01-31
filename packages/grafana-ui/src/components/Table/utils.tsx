@@ -178,7 +178,7 @@ export function buildFieldsForOptionalRowNums(totalRows: number): Field {
   This gives us a buffered ArrayVector that begins with "1", and increments by 1 until reaching the desired length.
   Values are converted to strings so that the Footer component doesn't attempt to sum and render their total.
 */
-function buildBufferedIncrementingValues(totalRows: number): ArrayVector<string> {
+export function buildBufferedIncrementingValues(totalRows: number): ArrayVector<string> {
   let arr = [];
   for (let i = 1; i <= totalRows; i++) {
     arr.push(String(i));
@@ -462,7 +462,7 @@ export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDispl
   For building the column data for the togglable Row Number field.
   `values` property is omitted, as it will be added at a later time.
 */
-const defaultRowNumberColumnFieldData: Omit<Field, 'values'> = {
+export const defaultRowNumberColumnFieldData: Omit<Field, 'values'> = {
   /* 
     Single whitespace as value for `name` property so as to render an empty/invisible column header;
     without the single whitespace, falsey headers (empty strings) are given a default name of "Value".
