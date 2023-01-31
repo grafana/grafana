@@ -9,8 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/setting"
@@ -159,7 +159,7 @@ func (ss *sqlStore) HandleAlertsQuery(ctx context.Context, query *alertmodels.Ge
 		}
 
 		if query.User.OrgRole != org.RoleAdmin {
-			builder.WriteDashboardPermissionFilter(query.User, models.PERMISSION_VIEW)
+			builder.WriteDashboardPermissionFilter(query.User, dashboards.PERMISSION_VIEW)
 		}
 
 		builder.Write(" ORDER BY name ASC")

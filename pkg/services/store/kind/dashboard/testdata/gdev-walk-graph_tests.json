@@ -18,13 +18,13 @@
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -37,13 +37,13 @@
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -56,13 +56,13 @@
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -75,13 +75,13 @@
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -93,12 +93,12 @@
       },
       "references": [
         {
-          "kind": "ds"
+          "family": "ds"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "text"
+          "ID": "text"
         }
       ]
     },
@@ -111,13 +111,13 @@
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -129,12 +129,12 @@
       },
       "references": [
         {
-          "kind": "ds"
+          "family": "ds"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "text"
+          "ID": "text"
         }
       ]
     },
@@ -147,13 +147,13 @@
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -166,13 +166,13 @@
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -184,12 +184,12 @@
       },
       "references": [
         {
-          "kind": "ds"
+          "family": "ds"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "text"
+          "ID": "text"
         }
       ]
     },
@@ -202,13 +202,13 @@
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -220,12 +220,12 @@
       },
       "references": [
         {
-          "kind": "ds"
+          "family": "ds"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "text"
+          "ID": "text"
         }
       ]
     },
@@ -238,13 +238,13 @@
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -256,12 +256,12 @@
       },
       "references": [
         {
-          "kind": "ds"
+          "family": "ds"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "text"
+          "ID": "text"
         }
       ]
     },
@@ -274,13 +274,13 @@
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -292,12 +292,12 @@
       },
       "references": [
         {
-          "kind": "ds"
+          "family": "ds"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "text"
+          "ID": "text"
         }
       ]
     },
@@ -310,13 +310,13 @@
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -329,13 +329,13 @@
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -348,13 +348,13 @@
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -367,13 +367,13 @@
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     },
@@ -386,34 +386,34 @@
       },
       "references": [
         {
-          "kind": "ds",
-          "UID": "gdev-testdata"
+          "family": "ds",
+          "ID": "gdev-testdata"
         },
         {
-          "kind": "plugin",
+          "family": "plugin",
           "type": "panel",
-          "UID": "graph"
+          "ID": "graph"
         }
       ]
     }
   ],
   "references": [
     {
-      "kind": "ds"
+      "family": "ds"
     },
     {
-      "kind": "ds",
-      "UID": "gdev-testdata"
+      "family": "ds",
+      "ID": "gdev-testdata"
     },
     {
-      "kind": "plugin",
+      "family": "plugin",
       "type": "panel",
-      "UID": "graph"
+      "ID": "graph"
     },
     {
-      "kind": "plugin",
+      "family": "plugin",
       "type": "panel",
-      "UID": "text"
+      "ID": "text"
     }
   ]
 }
