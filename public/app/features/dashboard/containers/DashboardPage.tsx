@@ -131,7 +131,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           this.props.dashboard?.addPanel({
             type: 'table',
             gridPos: { x: 0, y: 0, w: 12, h: 8 },
-            title: 'Panel Title',
+            title: file.name,
             datasource: grafanaDS,
             targets: [
               {
@@ -441,7 +441,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
                     <div className={styles.dropOverlay}>
                       <div className={styles.dropHint}>
                         <Icon name="upload" size="xxxl"></Icon>
-                        <h3>Create a new table from a spreadsheet</h3>
+                        <h3>Create tables from spreadsheets</h3>
                       </div>
                     </div>
                     <DashboardGrid
