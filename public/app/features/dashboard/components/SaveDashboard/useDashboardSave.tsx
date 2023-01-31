@@ -46,11 +46,17 @@ export const useDashboardSave = (dashboard: DashboardModel, isCopy = false) => {
       // important that these happen before location redirect below
       appEvents.publish(new DashboardSavedEvent());
       notifyApp.success('Dashboard saved');
-      reportInteraction(`grafana_dashboard_${dashboard.id ? 'saved' : 'created'}`, {
-        name: dashboard.title,
-        url: state.value.url,
-        isCopy,
-      });
+      if (isCopy) {
+        reportInteraction('grafana_dashboard_copied', {
+          name: dashboard.title,
+          url: state.value.url,
+        });
+      } else {
+        reportInteraction(`grafana_dashboard_${dashboard.id ? 'saved' : 'created'}`, {
+          name: dashboard.title,
+          url: state.value.url,
+        });
+      }
 
       const currentPath = locationService.getLocation().pathname;
       const newUrl = locationUtil.stripBaseFromUrl(state.value.url);
