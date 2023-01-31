@@ -3,7 +3,6 @@ import {
   DataFrameDTO,
   DataQueryRequest,
   DataQueryResponse,
-  DataQueryResponseData,
   dateTime,
   Field,
   FieldDTO,
@@ -11,11 +10,11 @@ import {
   TIME_SERIES_TIME_FIELD_NAME,
   TimeRange,
 } from '@grafana/data/src';
-import { PromQuery } from '../types';
-import { cloneDeep } from 'lodash';
-import { alignRange } from '../datasource';
-import { getTimeSrv, TimeSrv } from '../../../../features/dashboard/services/TimeSrv';
-import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
+import {PromQuery} from '../types';
+import {cloneDeep} from 'lodash';
+import {alignRange} from '../datasource';
+import {getTimeSrv, TimeSrv} from '../../../../features/dashboard/services/TimeSrv';
+import {applyNullInsertThreshold} from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
 
 // Decreasing the duration of the overlap provides even further performance improvements, however prometheus data over the last 10 minutes is in flux, and could be out of order from the past 2 hours
 // Get link to prometheus doc for the above comment
@@ -27,22 +26,21 @@ const DEBUG = false;
 // Another issue: if the query window starts at a time when there is no results from the database, we'll always fail the cache check and pull fresh data, even though the cache has everything available
 // Also the cache can def get really big for big queries, need to look into if we want to find a way to limit the size of requests we add to the cache?
 export class PrometheusIncrementalStorage {
-  private readonly storage: Record<string, Record<string, number[]>>;
+  private storage: Record<string, Record<string, number[]>>;
 
   constructor(private readonly timeSrv: TimeSrv = getTimeSrv()) {
     this.storage = {};
   }
 
   throwError = (error: Error) => {
-    if(DEBUG){
+    if (DEBUG) {
       console.error('Fatal storage error:', error);
-      console.log('Storage state',  this.storage)
+      console.log('Storage state', this.storage);
     }
-    // Lazy cleanup, letting the GC
     this.storage = {};
 
     throw error;
-  }
+  };
 
   /**
    * Get index for flat storage
@@ -69,25 +67,25 @@ export class PrometheusIncrementalStorage {
     return JSON.stringify(keyValues);
   };
 
-
   // @todo gate
   private setStorageFieldsValues = (queryIndex: string, seriesIndex: string, values: number[]) => {
-    if(queryIndex in this.storage){
+    if (queryIndex in this.storage) {
       this.storage[queryIndex][seriesIndex] = values;
-    }else{
-      this.throwError(new Error('Invalid storage index'))
+    } else {
+      this.throwError(new Error('Invalid storage index'));
     }
   };
 
   private setStorageTimeFields = (queryIndex: string, values: number[]) => {
-    this.storage[queryIndex] = {
-      __time__: values,
+    const valuesToSet = {
       ...this.storage[queryIndex],
+      __time__: values,
     };
+    this.storage[queryIndex] = valuesToSet;
   };
 
   private getStorageTimeFields = (queryIndex: string) => {
-    if(queryIndex in this.storage){
+    if (queryIndex in this.storage) {
       return this.storage[queryIndex]['__time__'];
     }
 
@@ -95,7 +93,7 @@ export class PrometheusIncrementalStorage {
   };
 
   private getStorageValueField = (queryIndex: string, seriesIndex: string) => {
-    if(queryIndex in this.storage && seriesIndex in this.storage[queryIndex]){
+    if (queryIndex in this.storage && seriesIndex in this.storage[queryIndex]) {
       return this.storage[queryIndex][seriesIndex];
     }
 
@@ -129,22 +127,25 @@ export class PrometheusIncrementalStorage {
       return;
     }
 
+    // target.expr =
+
     // If the query (target) doesn't explicitly have an interval defined it's gonna use the one that's available on the request object.
     // @todo is the above true?
     const intervalString = target?.interval ?? request.interval;
 
     if (!intervalString) {
-      this.throwError(new Error('Request interval is required to build storage index'))
+      this.throwError(new Error('Request interval is required to build storage index'));
     }
 
     return target?.expr + '__' + intervalString;
   };
 
-  private removeFramesFromStorageThatExistInRequest(
+  removeFramesFromStorageThatExistInRequest(
     existingTimeFrames: number[],
     responseTimeFieldValues: number[],
-    originalRange: TimeRange,
-    existingValueFrames: number[]
+    originalRange: { end: number, start: number },
+    existingValueFrames: number[],
+    intervalInSeconds: number
   ) {
     let framesFromStorageRelevantToCurrentQuery: number[] = [];
     let existingValueFrameNewValuesRemoved: number[] = [];
@@ -153,15 +154,17 @@ export class PrometheusIncrementalStorage {
       const doesResponseNotContainFrameTimeValue = responseTimeFieldValues.indexOf(existingTimeFrames[i]) === -1;
 
       // Remove values from before new start
-      // Note this acts as the only eviction strategy so far, we only store frames that exist after the start of the current query
-      const isFrameOlderThenQuery =
-        existingTimeFrames[i] <= originalRange.from.valueOf() - PROMETHEUS_INCREMENTAL_QUERY_OVERLAP_DURATION_MS;
-      if (isFrameOlderThenQuery && DEBUG) {
-        console.log('Frame is older then query, evicting', existingTimeFrames[i] - originalRange.from.valueOf());
+      // Note this acts as the only eviction strategy so far, we only store frames that exist after the start of the current query, minus twice the overlap as a buffer as we don't want to
+      // need to add one stime step of buffer @todo
+      const isFrameOlderThenQueryStart = existingTimeFrames[i] <= originalRange.start - (intervalInSeconds * 1000)
+
+      if (isFrameOlderThenQueryStart && DEBUG) {
+        debugger;
+
+        console.log('Frame is older then query, evicting', existingTimeFrames[i] - originalRange.start, existingTimeFrames[i], originalRange.start);
       }
 
-      const isThisAFrameWeWantToCombineWithCurrentResult =
-        doesResponseNotContainFrameTimeValue && !isFrameOlderThenQuery;
+      const isThisAFrameWeWantToCombineWithCurrentResult = doesResponseNotContainFrameTimeValue && !isFrameOlderThenQueryStart;
       // Only add timeframes from the old data to the new data, if they aren't already contained in the new data
       if (isThisAFrameWeWantToCombineWithCurrentResult) {
         if (existingValueFrames[i] !== undefined && existingTimeFrames[i] !== undefined) {
@@ -184,6 +187,12 @@ export class PrometheusIncrementalStorage {
    * @private
    */
   private preProcessDataFrames(data: DataFrame[] | DataFrameDTO[]) {
+    if (!data?.length) {
+      if (DEBUG) {
+        console.error('Dataframe has no fields!');
+      }
+      return;
+    }
     let longestLength = data[0]?.length ?? 0;
 
     const firstFrameTimeValues = data[0].fields[0].values?.toArray();
@@ -226,7 +235,6 @@ export class PrometheusIncrementalStorage {
     }
   }
 
-
   /**
    * Note, a known problem for this is query "drift" when users are editing in a dashboard panel,
    * each change to the query or interval will create a new object in storage, which currently only get cleaned up as new responses come in
@@ -239,8 +247,15 @@ export class PrometheusIncrementalStorage {
   appendQueryResultToDataFrameStorage = (
     request: DataQueryRequest<PromQuery>,
     dataFrames: DataQueryResponse,
-    originalRange?: TimeRange
-  ): DataQueryResponseData => {
+    originalRange?: { end: number, start: number }
+  ): DataQueryResponse => {
+    if (DEBUG) {
+      // console.warn('request', JSON.stringify(request));
+      // console.warn('dataFrames', JSON.stringify(dataFrames));
+      // console.warn('originalRange', JSON.stringify(originalRange));
+      // console.warn('TIMESRV', JSON.stringify(this.timeSrv.timeRange()))
+    }
+
     const data: DataFrame[] | DataFrameDTO[] = dataFrames.data;
 
     // Frames aren't always the same length, since this storage assumes a single time array for all values, that means we need to back-fill missing values
@@ -272,7 +287,7 @@ export class PrometheusIncrementalStorage {
 
         // If we aren't able to create the query expression string to be used as the index, we should stop now
         if (!responseQueryExpressionAndStepString) {
-          this.throwError(new Error('Unable to generate storage index'))
+          this.throwError(new Error('Unable to generate storage index'));
           return;
         }
 
@@ -283,7 +298,7 @@ export class PrometheusIncrementalStorage {
           this.setStorageTimeFields(responseQueryExpressionAndStepString, responseTimeField?.values?.toArray());
         }
 
-        let timeValuesStorage: string | any[] = [];
+        let timeValuesStorage: number[] = [];
         responseValueFields.forEach((valueField) => {
           const responseFrameValues: number[] | undefined = valueField?.values?.toArray();
 
@@ -303,6 +318,7 @@ export class PrometheusIncrementalStorage {
             if (responseFrameValues.length !== responseTimeFieldValues.length) {
               if (DEBUG) {
                 console.warn('Initial values not same length?', responseFrameValues, responseTimeFieldValues);
+                debugger;
               }
             }
 
@@ -314,18 +330,9 @@ export class PrometheusIncrementalStorage {
             );
           } else if (thisQueryHasBeenDoneBefore && seriesLabelsIndexString && originalRange) {
             // If the labels are the same as saved, append any new values, making sure that any additional data is taken from the newest response
-            const existingTimeFrames = this.getStorageTimeFields(responseQueryExpressionAndStepString);
-            const existingValueFrames = this.getStorageValueField(
-              responseQueryExpressionAndStepString,
-              seriesLabelsIndexString
-            );
 
-            if (existingTimeFrames && existingValueFrames && existingTimeFrames.length !== existingValueFrames.length) {
-              if (DEBUG) {
-                // Ok, if there are fewer time frames then value frames?
-                console.error('Time frame and value frames are different lengths, something got screwed up!', existingTimeFrames.length, existingValueFrames.length);
-              }
-            }
+            const existingTimeFrames = previousDataFrames['__time__'];
+            const existingValueFrames = previousDataFrames[seriesLabelsIndexString];
 
             // These values could be undefined or null, so we have a bit of long conditional, but we're just checking that we have values in storage and the response
             if (
@@ -336,13 +343,16 @@ export class PrometheusIncrementalStorage {
               existingTimeFrames &&
               responseTimeFieldValues.length > 0
             ) {
+              const intervalSeconds = rangeUtil.intervalToSeconds(request.interval);
               // Filter out values in storage from before query range
               const dedupedFrames = this.removeFramesFromStorageThatExistInRequest(
                 existingTimeFrames,
                 responseTimeFieldValues,
                 originalRange,
-                existingValueFrames
+                existingValueFrames,
+                intervalSeconds
               );
+
 
               const allTimeValuesMerged = [...dedupedFrames.time, ...responseTimeFieldValues];
 
@@ -360,6 +370,10 @@ export class PrometheusIncrementalStorage {
                 seriesLabelsIndexString,
                 allValueFramesMerged
               );
+            } else {
+              if (DEBUG) {
+                console.warn('cannot merge values!');
+              }
             }
           }
         });
@@ -367,6 +381,7 @@ export class PrometheusIncrementalStorage {
         // If we changed the time steps, let's mutate the dataframe
         if (timeValuesStorage.length > 0 && responseTimeField?.values) {
           responseTimeField.values.buffer = timeValuesStorage;
+          this.setStorageTimeFields(responseQueryExpressionAndStepString, timeValuesStorage);
         }
       });
     });
@@ -381,7 +396,7 @@ export class PrometheusIncrementalStorage {
    */
   modifyRequestDurationsIfStorageOverlapsRequest(request: DataQueryRequest<PromQuery>): {
     request: DataQueryRequest<PromQuery>;
-    originalRange?: TimeRange;
+    originalRange?: { end: number, start: number };
   } {
     const requestFrom = request.range.from;
     const requestTo = request.range.to;
@@ -464,7 +479,16 @@ export class PrometheusIncrementalStorage {
         (val) => val && val.start === neededDurations[0].start && val.end === neededDurations[0].end
       )
     ) {
+      // @todo align this?
       const originalRange = cloneDeep(request.range);
+
+      const originalRangeAligned = alignRange(
+        originalRange.from.valueOf(),
+        originalRange.to.valueOf(),
+        interval,
+        this.timeSrv.timeRange().to.utcOffset() * 60
+      );
+
       const rawTimeRange = {
         from: dateTime(neededDurations[0].start - PROMETHEUS_INCREMENTAL_QUERY_OVERLAP_DURATION_MS),
         to: dateTime(neededDurations[0].end),
@@ -480,7 +504,7 @@ export class PrometheusIncrementalStorage {
       }
 
       // calculate new from/tos
-      return { request: { ...request, range: timeRange }, originalRange: originalRange };
+      return { request: { ...request, range: timeRange }, originalRange: originalRangeAligned };
     } else {
       if (DEBUG) {
         console.warn('QUERY NOT CONTAINED BY CACHE, NOT MODIFYING REQUEST', request);

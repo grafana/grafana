@@ -465,12 +465,11 @@ export class PrometheusDatasource
           });
 
           if (this.prometheusDataFrameStorage) {
-            const newFrames = this.prometheusDataFrameStorage.appendQueryResultToDataFrameStorage(
+            return this.prometheusDataFrameStorage.appendQueryResultToDataFrameStorage(
               requestWithUpdatedTargets,
               dataFrames,
               originalRange
             );
-            return newFrames;
           }
 
           return dataFrames;
