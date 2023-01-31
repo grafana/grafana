@@ -42,11 +42,23 @@ export class BlugeSearcher implements GrafanaSearcher {
     }
     // get the starred dashboards
     const starsUIDS = await getBackendSrv().get('api/user/stars');
-    const starredQuery = {
-      uid: starsUIDS,
-      query: query.query ?? '*',
+    if (starsUIDS?.length) {
+      return this.doSearchQuery({
+        uid: starsUIDS,
+        query: query.query ?? '*',
+      });
+    }
+    // Nothing is starred
+    return {
+      view: new DataFrameView({ length: 0, fields: [] }),
+      totalRows: 0,
+      loadMoreItems: async (startIndex: number, stopIndex: number): Promise<void> => {
+        return;
+      },
+      isItemLoaded: (index: number): boolean => {
+        return true;
+      },
     };
-    return this.doSearchQuery(starredQuery);
   }
 
   async tags(query: SearchQuery): Promise<TermCount[]> {

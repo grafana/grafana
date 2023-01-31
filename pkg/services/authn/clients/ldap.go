@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+var _ authn.ProxyClient = new(LDAP)
 var _ authn.PasswordClient = new(LDAP)
 
 func ProvideLDAP(cfg *setting.Cfg) *LDAP {
@@ -21,13 +22,27 @@ type LDAP struct {
 	service ldapService
 }
 
+func (c *LDAP) AuthenticateProxy(ctx context.Context, r *authn.Request, username string, _ map[string]string) (*authn.Identity, error) {
+	info, err := c.service.User(username)
+	if errors.Is(err, multildap.ErrDidNotFindUser) {
+		return nil, errIdentityNotFound.Errorf("no user found: %w", err)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return identityFromLDAPInfo(r.OrgID, info, c.cfg.LDAPAllowSignup), nil
+}
+
 func (c *LDAP) AuthenticatePassword(ctx context.Context, r *authn.Request, username, password string) (*authn.Identity, error) {
-	info, err := c.service.Login(&models.LoginUserQuery{
+	info, err := c.service.Login(&login.LoginUserQuery{
 		Username: username,
 		Password: password,
 	})
 
 	if errors.Is(err, multildap.ErrCouldNotFindUser) {
+		// FIXME: disable user in grafana if not found
 		return nil, errIdentityNotFound.Errorf("no user found: %w", err)
 	}
 
@@ -35,7 +50,6 @@ func (c *LDAP) AuthenticatePassword(ctx context.Context, r *authn.Request, usern
 	r.SetMeta(authn.MetaKeyAuthModule, "ldap")
 
 	if errors.Is(err, multildap.ErrInvalidCredentials) {
-		// FIXME: disable user in grafana if not found
 		return nil, errInvalidPassword.Errorf("invalid password: %w", err)
 	}
 
@@ -43,8 +57,41 @@ func (c *LDAP) AuthenticatePassword(ctx context.Context, r *authn.Request, usern
 		return nil, err
 	}
 
+	return identityFromLDAPInfo(r.OrgID, info, c.cfg.LDAPAllowSignup), nil
+}
+
+type ldapService interface {
+	Login(query *login.LoginUserQuery) (*login.ExternalUserInfo, error)
+	User(username string) (*login.ExternalUserInfo, error)
+}
+
+// FIXME: remove the implementation if we convert ldap to an actual service
+type ldapServiceImpl struct {
+	cfg *setting.Cfg
+}
+
+func (s *ldapServiceImpl) Login(query *login.LoginUserQuery) (*login.ExternalUserInfo, error) {
+	cfg, err := multildap.GetConfig(s.cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return multildap.New(cfg.Servers).Login(query)
+}
+
+func (s *ldapServiceImpl) User(username string) (*login.ExternalUserInfo, error) {
+	cfg, err := multildap.GetConfig(s.cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	user, _, err := multildap.New(cfg.Servers).User(username)
+	return user, err
+}
+
+func identityFromLDAPInfo(orgID int64, info *login.ExternalUserInfo, allowSignup bool) *authn.Identity {
 	return &authn.Identity{
-		OrgID:          r.OrgID,
+		OrgID:          orgID,
 		OrgRoles:       info.OrgRoles,
 		Login:          info.Login,
 		Name:           info.Name,
@@ -56,30 +103,12 @@ func (c *LDAP) AuthenticatePassword(ctx context.Context, r *authn.Request, usern
 		ClientParams: authn.ClientParams{
 			SyncUser:            true,
 			SyncTeamMembers:     true,
-			AllowSignUp:         c.cfg.LDAPAllowSignup,
+			AllowSignUp:         allowSignup,
 			EnableDisabledUsers: true,
-			LookUpParams: models.UserLookupParams{
+			LookUpParams: login.UserLookupParams{
 				Login: &info.Login,
 				Email: &info.Email,
 			},
 		},
-	}, nil
-}
-
-type ldapService interface {
-	Login(query *models.LoginUserQuery) (*models.ExternalUserInfo, error)
-}
-
-// FIXME: remove the implementation if we convert ldap to an actual service
-type ldapServiceImpl struct {
-	cfg *setting.Cfg
-}
-
-func (s *ldapServiceImpl) Login(query *models.LoginUserQuery) (*models.ExternalUserInfo, error) {
-	cfg, err := multildap.GetConfig(s.cfg)
-	if err != nil {
-		return nil, err
 	}
-
-	return multildap.New(cfg.Servers).Login(query)
 }

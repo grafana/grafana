@@ -15,7 +15,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -240,15 +239,15 @@ func (e emailSender) SendWebhook(ctx context.Context, cmd *channels.SendWebhookS
 }
 
 func (e emailSender) SendEmail(ctx context.Context, cmd *channels.SendEmailSettings) error {
-	attached := make([]*models.SendEmailAttachFile, 0, len(cmd.AttachedFiles))
+	attached := make([]*notifications.SendEmailAttachFile, 0, len(cmd.AttachedFiles))
 	for _, file := range cmd.AttachedFiles {
-		attached = append(attached, &models.SendEmailAttachFile{
+		attached = append(attached, &notifications.SendEmailAttachFile{
 			Name:    file.Name,
 			Content: file.Content,
 		})
 	}
-	return e.ns.SendEmailCommandHandlerSync(ctx, &models.SendEmailCommandSync{
-		SendEmailCommand: models.SendEmailCommand{
+	return e.ns.SendEmailCommandHandlerSync(ctx, &notifications.SendEmailCommandSync{
+		SendEmailCommand: notifications.SendEmailCommand{
 			To:            cmd.To,
 			SingleEmail:   cmd.SingleEmail,
 			Template:      cmd.Template,

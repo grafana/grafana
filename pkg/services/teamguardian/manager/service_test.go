@@ -4,13 +4,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/teamguardian/database"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestUpdateTeam(t *testing.T) {
@@ -36,7 +37,7 @@ func TestUpdateTeam(t *testing.T) {
 		t.Run("Given an editor and a team he isn't a member of", func(t *testing.T) {
 			t.Run("Should not be able to update the team", func(t *testing.T) {
 				ctx := context.Background()
-				store.On("GetTeamMembers", ctx, mock.Anything).Return([]*models.TeamMemberDTO{}, nil).Once()
+				store.On("GetTeamMembers", ctx, mock.Anything).Return([]*team.TeamMemberDTO{}, nil).Once()
 				err := teamGuardianService.CanAdmin(ctx, testTeam.OrgID, testTeam.ID, &editor)
 				require.Equal(t, team.ErrNotAllowedToUpdateTeam, err)
 			})
@@ -46,11 +47,11 @@ func TestUpdateTeam(t *testing.T) {
 			t.Run("Should be able to update the team", func(t *testing.T) {
 				ctx := context.Background()
 
-				result := []*models.TeamMemberDTO{{
-					OrgId:      testTeam.OrgID,
-					TeamId:     testTeam.ID,
-					UserId:     editor.UserID,
-					Permission: models.PERMISSION_ADMIN,
+				result := []*team.TeamMemberDTO{{
+					OrgID:      testTeam.OrgID,
+					TeamID:     testTeam.ID,
+					UserID:     editor.UserID,
+					Permission: dashboards.PERMISSION_ADMIN,
 				}}
 
 				store.On("GetTeamMembers", ctx, mock.Anything).Return(result, nil).Once()
@@ -68,11 +69,11 @@ func TestUpdateTeam(t *testing.T) {
 			}
 
 			t.Run("Shouldn't be able to update the team", func(t *testing.T) {
-				result := []*models.TeamMemberDTO{{
-					OrgId:      testTeamOtherOrg.OrgID,
-					TeamId:     testTeamOtherOrg.ID,
-					UserId:     editor.UserID,
-					Permission: models.PERMISSION_ADMIN,
+				result := []*team.TeamMemberDTO{{
+					OrgID:      testTeamOtherOrg.OrgID,
+					TeamID:     testTeamOtherOrg.ID,
+					UserID:     editor.UserID,
+					Permission: dashboards.PERMISSION_ADMIN,
 				}}
 
 				store.On("GetTeamMembers", ctx, mock.Anything).Return(result, nil).Once()

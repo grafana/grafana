@@ -165,9 +165,9 @@ describe('QueryEditor should render right editor', () => {
     let datasourceMock: ReturnType<typeof setupMockedDataSource>;
     beforeEach(() => {
       datasourceMock = setupMockedDataSource();
-      datasourceMock.datasource.api.isMonitoringAccount = jest.fn().mockResolvedValue(true);
-      datasourceMock.datasource.api.getMetrics = jest.fn().mockResolvedValue([]);
-      datasourceMock.datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([]);
+      datasourceMock.datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(true);
+      datasourceMock.datasource.resources.getMetrics = jest.fn().mockResolvedValue([]);
+      datasourceMock.datasource.resources.getDimensionKeys = jest.fn().mockResolvedValue([]);
       originalValue = config.featureToggles.cloudWatchCrossAccountQuerying;
     });
     afterEach(() => {

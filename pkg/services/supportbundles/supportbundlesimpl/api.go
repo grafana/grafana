@@ -5,37 +5,51 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 
+	grafanaApi "github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/web"
 )
 
 const rootUrl = "/api/support-bundles"
 
-func (s *Service) registerAPIEndpoints(routeRegister routing.RouteRegister) {
+func (s *Service) registerAPIEndpoints(httpServer *grafanaApi.HTTPServer, routeRegister routing.RouteRegister) {
 	authorize := ac.Middleware(s.accessControl)
 
+	orgRoleMiddleware := middleware.ReqGrafanaAdmin
+	if !s.serverAdminOnly {
+		orgRoleMiddleware = middleware.RoleAuth(roletype.RoleAdmin)
+	}
+
+	supportBundlePageAccess := ac.EvalAny(
+		ac.EvalPermission(ActionRead),
+		ac.EvalPermission(ActionCreate),
+	)
+
+	routeRegister.Get("/support-bundles", authorize(orgRoleMiddleware, supportBundlePageAccess), httpServer.Index)
+	routeRegister.Get("/support-bundles/create", authorize(orgRoleMiddleware, ac.EvalPermission(ActionCreate)), httpServer.Index)
+
 	routeRegister.Group(rootUrl, func(subrouter routing.RouteRegister) {
-		subrouter.Get("/", authorize(middleware.ReqGrafanaAdmin,
+		subrouter.Get("/", authorize(orgRoleMiddleware,
 			ac.EvalPermission(ActionRead)), routing.Wrap(s.handleList))
-		subrouter.Post("/", authorize(middleware.ReqGrafanaAdmin,
+		subrouter.Post("/", authorize(orgRoleMiddleware,
 			ac.EvalPermission(ActionCreate)), routing.Wrap(s.handleCreate))
-		subrouter.Get("/:uid", authorize(middleware.ReqGrafanaAdmin,
+		subrouter.Get("/:uid", authorize(orgRoleMiddleware,
 			ac.EvalPermission(ActionRead)), s.handleDownload)
-		subrouter.Delete("/:uid", authorize(middleware.ReqGrafanaAdmin,
+		subrouter.Delete("/:uid", authorize(orgRoleMiddleware,
 			ac.EvalPermission(ActionDelete)), s.handleRemove)
-		subrouter.Get("/collectors", authorize(middleware.ReqGrafanaAdmin,
+		subrouter.Get("/collectors", authorize(orgRoleMiddleware,
 			ac.EvalPermission(ActionCreate)), routing.Wrap(s.handleGetCollectors))
 	})
 }
 
-func (s *Service) handleList(ctx *models.ReqContext) response.Response {
+func (s *Service) handleList(ctx *contextmodel.ReqContext) response.Response {
 	bundles, err := s.list(ctx.Req.Context())
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to list bundles", err)
@@ -49,7 +63,7 @@ func (s *Service) handleList(ctx *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, data)
 }
 
-func (s *Service) handleCreate(ctx *models.ReqContext) response.Response {
+func (s *Service) handleCreate(ctx *contextmodel.ReqContext) response.Response {
 	type command struct {
 		Collectors []string `json:"collectors"`
 	}
@@ -72,35 +86,23 @@ func (s *Service) handleCreate(ctx *models.ReqContext) response.Response {
 	return response.JSON(http.StatusCreated, data)
 }
 
-func (s *Service) handleDownload(ctx *models.ReqContext) {
+func (s *Service) handleDownload(ctx *contextmodel.ReqContext) response.Response {
 	uid := web.Params(ctx.Req)[":uid"]
 	bundle, err := s.get(ctx.Req.Context(), uid)
 	if err != nil {
-		ctx.Redirect("/admin/support-bundles")
-		return
+		return response.Redirect("/support-bundles")
 	}
 
 	if bundle.State != supportbundles.StateComplete {
-		ctx.Redirect("/admin/support-bundles")
-		return
-	}
-
-	if bundle.FilePath == "" {
-		ctx.Redirect("/admin/support-bundles")
-		return
-	}
-
-	if _, err := os.Stat(bundle.FilePath); err != nil {
-		ctx.Redirect("/admin/support-bundles")
-		return
+		return response.Redirect("/support-bundles")
 	}
 
 	ctx.Resp.Header().Set("Content-Type", "application/tar+gzip")
-	ctx.Resp.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%d.tar.gz", bundle.CreatedAt))
-	http.ServeFile(ctx.Resp, ctx.Req, bundle.FilePath)
+	ctx.Resp.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s.tar.gz", uid))
+	return response.CreateNormalResponse(ctx.Resp.Header(), bundle.TarBytes, http.StatusOK)
 }
 
-func (s *Service) handleRemove(ctx *models.ReqContext) response.Response {
+func (s *Service) handleRemove(ctx *contextmodel.ReqContext) response.Response {
 	uid := web.Params(ctx.Req)[":uid"]
 	err := s.remove(ctx.Req.Context(), uid)
 	if err != nil {
@@ -110,7 +112,7 @@ func (s *Service) handleRemove(ctx *models.ReqContext) response.Response {
 	return response.Respond(http.StatusOK, "successfully removed the support bundle")
 }
 
-func (s *Service) handleGetCollectors(ctx *models.ReqContext) response.Response {
+func (s *Service) handleGetCollectors(ctx *contextmodel.ReqContext) response.Response {
 	collectors := make([]supportbundles.Collector, 0, len(s.collectors))
 
 	for _, c := range s.collectors {

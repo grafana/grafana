@@ -200,8 +200,12 @@ func verifyHash(mlog log.Logger, pluginID string, path string, hash string) erro
 	// on the path provided in a manifest file for a plugin and not user input.
 	f, err := os.Open(path)
 	if err != nil {
+		if os.IsPermission(err) {
+			mlog.Warn("Could not open plugin file due to lack of permissions", "plugin", pluginID, "path", path)
+			return errors.New("permission denied when attempting to read plugin file")
+		}
 		mlog.Warn("Plugin file listed in the manifest was not found", "plugin", pluginID, "path", path)
-		return fmt.Errorf("plugin file listed in the manifest was not found")
+		return errors.New("plugin file listed in the manifest was not found")
 	}
 	defer func() {
 		if err := f.Close(); err != nil {
@@ -211,12 +215,12 @@ func verifyHash(mlog log.Logger, pluginID string, path string, hash string) erro
 
 	h := sha256.New()
 	if _, err := io.Copy(h, f); err != nil {
-		return fmt.Errorf("could not calculate plugin file checksum")
+		return errors.New("could not calculate plugin file checksum")
 	}
 	sum := hex.EncodeToString(h.Sum(nil))
 	if sum != hash {
 		mlog.Warn("Plugin file checksum does not match signature checksum", "plugin", pluginID, "path", path)
-		return fmt.Errorf("plugin file checksum does not match signature checksum")
+		return errors.New("plugin file checksum does not match signature checksum")
 	}
 
 	return nil

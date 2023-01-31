@@ -3,16 +3,16 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
-	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/tokens"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/validation"
 	"github.com/grafana/grafana/pkg/services/query"
@@ -61,8 +61,16 @@ func ProvideService(
 	}
 }
 
+func (pd *PublicDashboardServiceImpl) Find(ctx context.Context, uid string) (*PublicDashboard, error) {
+	pubdash, err := pd.store.Find(ctx, uid)
+	if err != nil {
+		return nil, ErrInternalServerError.Errorf("Find: failed to find public dashboard%w", err)
+	}
+	return pubdash, nil
+}
+
 // FindDashboard Gets a dashboard by Uid
-func (pd *PublicDashboardServiceImpl) FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (*models.Dashboard, error) {
+func (pd *PublicDashboardServiceImpl) FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (*dashboards.Dashboard, error) {
 	dash, err := pd.store.FindDashboard(ctx, orgId, dashboardUid)
 	if err != nil {
 		return nil, ErrInternalServerError.Errorf("FindDashboard: failed to find dashboard by orgId: %d and dashboardUid: %s: %w", orgId, dashboardUid, err)
@@ -90,7 +98,7 @@ func (pd *PublicDashboardServiceImpl) FindByAccessToken(ctx context.Context, acc
 }
 
 // FindPublicDashboardAndDashboardByAccessToken Gets public dashboard and a dashboard by access token
-func (pd *PublicDashboardServiceImpl) FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, *models.Dashboard, error) {
+func (pd *PublicDashboardServiceImpl) FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, *dashboards.Dashboard, error) {
 	pubdash, err := pd.FindByAccessToken(ctx, accessToken)
 	if err != nil {
 		return nil, nil, err
@@ -166,15 +174,16 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 
 	cmd := SavePublicDashboardCommand{
 		PublicDashboard: PublicDashboard{
-			Uid:                uid,
-			DashboardUid:       dto.DashboardUid,
-			OrgId:              dto.OrgId,
-			IsEnabled:          dto.PublicDashboard.IsEnabled,
-			AnnotationsEnabled: dto.PublicDashboard.AnnotationsEnabled,
-			TimeSettings:       dto.PublicDashboard.TimeSettings,
-			CreatedBy:          dto.UserId,
-			CreatedAt:          time.Now(),
-			AccessToken:        accessToken,
+			Uid:                  uid,
+			DashboardUid:         dto.DashboardUid,
+			OrgId:                dto.OrgId,
+			IsEnabled:            dto.PublicDashboard.IsEnabled,
+			AnnotationsEnabled:   dto.PublicDashboard.AnnotationsEnabled,
+			TimeSelectionEnabled: dto.PublicDashboard.TimeSelectionEnabled,
+			TimeSettings:         dto.PublicDashboard.TimeSettings,
+			CreatedBy:            dto.UserId,
+			CreatedAt:            time.Now(),
+			AccessToken:          accessToken,
 		},
 	}
 
@@ -281,7 +290,7 @@ func (pd *PublicDashboardServiceImpl) NewPublicDashboardAccessToken(ctx context.
 	var accessToken string
 	for i := 0; i < 3; i++ {
 		var err error
-		accessToken, err = tokens.GenerateAccessToken()
+		accessToken, err = GenerateAccessToken()
 		if err != nil {
 			continue
 		}
@@ -395,4 +404,13 @@ func publicDashboardIsEnabledChanged(existingPubdash *PublicDashboard, newPubdas
 	// updating dashboard, enabled changed
 	isEnabledChanged := existingPubdash != nil && newPubdash.IsEnabled != existingPubdash.IsEnabled
 	return newDashCreated || isEnabledChanged
+}
+
+// GenerateAccessToken generates an uuid formatted without dashes to use as access token
+func GenerateAccessToken() (string, error) {
+	token, err := uuid.NewRandom()
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%x", token[:]), nil
 }

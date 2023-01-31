@@ -1,21 +1,22 @@
 import { Receiver } from 'app/plugins/datasource/alertmanager/types';
 
 import { useGetOnCallIntegrationsQuery } from '../../../api/onCallApi';
-import { SupportedPlugin, usePluginBridge } from '../../PluginBridge';
+import { usePluginBridge } from '../../../hooks/usePluginBridge';
+import { SupportedPlugin } from '../../../types/pluginBridges';
 
 import { isOnCallReceiver } from './onCall/onCall';
-import { AmRouteReceiver, GrafanaAppReceiverEnum, ReceiverWithTypes } from './types';
+import { AmRouteReceiver, ReceiverWithTypes } from './types';
 
 export const useGetGrafanaReceiverTypeChecker = () => {
   const { installed: isOnCallEnabled } = usePluginBridge(SupportedPlugin.OnCall);
   const { data } = useGetOnCallIntegrationsQuery(undefined, {
     skip: !isOnCallEnabled,
   });
-  const getGrafanaReceiverType = (receiver: Receiver): GrafanaAppReceiverEnum | undefined => {
+  const getGrafanaReceiverType = (receiver: Receiver): SupportedPlugin | undefined => {
     //CHECK FOR ONCALL PLUGIN
     const onCallIntegrations = data ?? [];
     if (isOnCallEnabled && isOnCallReceiver(receiver, onCallIntegrations)) {
-      return GrafanaAppReceiverEnum.GRAFANA_ONCALL;
+      return SupportedPlugin.OnCall;
     }
     //WE WILL ADD IN HERE IF THERE ARE MORE TYPES TO CHECK
     return undefined;

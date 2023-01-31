@@ -96,13 +96,13 @@ disable_login_form = true
 
 ### Automatic OAuth login
 
-Set to true to attempt login with OAuth automatically, skipping the login screen.
-This setting is ignored if multiple OAuth providers are configured.
+Set to true to attempt login with specific OAuth provider automatically, skipping the login screen.
+This setting is ignored if multiple auth providers are configured to use auto login.
 Defaults to `false`.
 
 ```bash
-[auth]
-oauth_auto_login = true
+[auth.generic_oauth]
+auto_login = true
 ```
 
 ### Hide sign-out menu

@@ -49,7 +49,8 @@ authentication:
 ```bash
 [auth.gitlab]
 enabled = true
-allow_sign_up = false
+allow_sign_up = true
+auto_login = false
 client_id = GITLAB_APPLICATION_ID
 client_secret = GITLAB_SECRET
 scopes = read_api
@@ -110,6 +111,12 @@ the group `foo`, set
 allowed_groups = example, foo/bar
 ```
 
+To put values containing spaces in the list, use the following JSON syntax:
+
+```ini
+allowed_groups = ["Admins", "Software Engineers"]
+```
+
 Note that in GitLab, the group or subgroup name doesn't always match its
 display name, especially if the display name contains spaces or special
 characters. Make sure you always use the group or subgroup name as it appears
@@ -122,6 +129,7 @@ the `example` and `foo/bar` groups. The example also promotes all GitLab Admins 
 [auth.gitlab]
 enabled = true
 allow_sign_up = true
+auto_login = false
 client_id = GITLAB_APPLICATION_ID
 client_secret = GITLAB_SECRET
 scopes = read_api
@@ -132,6 +140,15 @@ allowed_groups = example, foo/bar
 role_attribute_path = is_admin && 'Admin' || 'Viewer'
 role_attribute_strict = true
 allow_assign_grafana_admin = false
+```
+
+### Configure automatic login
+
+Set `auto_login` option to true to attempt login automatically, skipping the login screen.
+This setting is ignored if multiple auth providers are configured to use auto login.
+
+```
+auto_login = true
 ```
 
 ### Map roles
@@ -206,3 +223,16 @@ the correct teams.
 Your GitLab groups can be referenced in the same way as `allowed_groups`, like `example` or `foo/bar`.
 
 [Learn more about Team Sync]({{< relref "../../configure-team-sync/" >}})
+
+## Skip organization role sync
+
+To prevent the sync of organization roles from GitLab, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
+This also impacts the `allow_assign_grafana_admin` setting by not syncing the Grafana admin role from GitLab.
+
+```ini
+[auth.gitlab]
+# ..
+# prevents the sync of org roles from Github
+skip_org_role_sync = true
+``
+```

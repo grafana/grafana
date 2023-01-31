@@ -30,7 +30,6 @@ export interface FeatureToggles {
   panelTitleSearch?: boolean;
   tempoApmTable?: boolean;
   prometheusAzureOverrideAudience?: boolean;
-  influxdbBackendMigration?: boolean;
   showFeatureFlagsInUI?: boolean;
   publicDashboards?: boolean;
   publicDashboardsEmailSharing?: boolean;
@@ -44,10 +43,10 @@ export interface FeatureToggles {
   migrationLocking?: boolean;
   storage?: boolean;
   k8s?: boolean;
+  k8sDashboards?: boolean;
   supportBundles?: boolean;
   dashboardsFromStorage?: boolean;
   export?: boolean;
-  azureMonitorResourcePickerForMetrics?: boolean;
   exploreMixedDatasource?: boolean;
   tracing?: boolean;
   commandPalette?: boolean;
@@ -88,4 +87,9 @@ export interface FeatureToggles {
   sessionRemoteCache?: boolean;
   disablePrometheusExemplarSampling?: boolean;
   alertingBacktesting?: boolean;
+  editPanelCSVDragAndDrop?: boolean;
+  alertingNoNormalState?: boolean;
+  topNavCommandPalette?: boolean;
+  logsSampleInExplore?: boolean;
+  logsContextDatasourceUi?: boolean;
 }

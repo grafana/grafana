@@ -8,20 +8,21 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/teamguardian/database"
@@ -80,7 +81,7 @@ func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
 	hs.teamService = teamimpl.ProvideService(sqlStore, settings)
 	hs.License = &licensing.OSSLicensingService{}
 	hs.teamGuardian = &TeamGuardianMock{}
-	mock := mockstore.NewSQLStoreMock()
+	mock := dbtest.NewFakeDB()
 
 	loggedInUserScenarioWithRole(t, "When calling GET on", "GET", "api/teams/1/members",
 		"api/teams/:teamId/members", org.RoleAdmin, func(sc *scenarioContext) {
@@ -91,7 +92,7 @@ func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
 
 			require.Equal(t, http.StatusOK, sc.resp.Code)
 
-			var resp []models.TeamMemberDTO
+			var resp []team.TeamMemberDTO
 			err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 			require.NoError(t, err)
 			assert.Len(t, resp, 3)
@@ -113,7 +114,7 @@ func TestTeamMembersAPIEndpoint_userLoggedIn(t *testing.T) {
 
 				require.Equal(t, http.StatusOK, sc.resp.Code)
 
-				var resp []models.TeamMemberDTO
+				var resp []team.TeamMemberDTO
 				err := json.Unmarshal(sc.resp.Body.Bytes(), &resp)
 				require.NoError(t, err)
 				assert.Len(t, resp, 3)
@@ -132,9 +133,9 @@ func TestAddTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 		hs.Cfg = cfg
 		hs.teamService = teamtest.NewFakeService()
 		store := &database.TeamGuardianStoreMock{}
-		store.On("GetTeamMembers", mock.Anything, mock.Anything).Return([]*models.TeamMemberDTO{
-			{UserId: 2, Permission: models.PERMISSION_ADMIN},
-			{UserId: 3, Permission: models.PERMISSION_VIEW},
+		store.On("GetTeamMembers", mock.Anything, mock.Anything).Return([]*team.TeamMemberDTO{
+			{UserID: 2, Permission: dashboards.PERMISSION_ADMIN},
+			{UserID: 3, Permission: dashboards.PERMISSION_VIEW},
 		}, nil).Maybe()
 		hs.teamGuardian = manager.ProvideService(store)
 		hs.teamPermissionsService = &actest.FakePermissionsService{}
@@ -252,9 +253,9 @@ func TestUpdateTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 		hs.Cfg = cfg
 		hs.teamService = &teamtest.FakeService{ExpectedIsMember: true}
 		store := &database.TeamGuardianStoreMock{}
-		store.On("GetTeamMembers", mock.Anything, mock.Anything).Return([]*models.TeamMemberDTO{
-			{UserId: 2, Permission: models.PERMISSION_ADMIN},
-			{UserId: 3, Permission: models.PERMISSION_VIEW},
+		store.On("GetTeamMembers", mock.Anything, mock.Anything).Return([]*team.TeamMemberDTO{
+			{UserID: 2, Permission: dashboards.PERMISSION_ADMIN},
+			{UserID: 3, Permission: dashboards.PERMISSION_VIEW},
 		}, nil).Maybe()
 		hs.teamGuardian = manager.ProvideService(store)
 		hs.teamPermissionsService = &actest.FakePermissionsService{}
@@ -342,9 +343,9 @@ func TestDeleteTeamMembersAPIEndpoint_LegacyAccessControl(t *testing.T) {
 		hs.Cfg = cfg
 		hs.teamService = &teamtest.FakeService{ExpectedIsMember: true}
 		store := &database.TeamGuardianStoreMock{}
-		store.On("GetTeamMembers", mock.Anything, mock.Anything).Return([]*models.TeamMemberDTO{
-			{UserId: 2, Permission: models.PERMISSION_ADMIN},
-			{UserId: 3, Permission: models.PERMISSION_VIEW},
+		store.On("GetTeamMembers", mock.Anything, mock.Anything).Return([]*team.TeamMemberDTO{
+			{UserID: 2, Permission: dashboards.PERMISSION_ADMIN},
+			{UserID: 3, Permission: dashboards.PERMISSION_VIEW},
 		}, nil).Maybe()
 		hs.teamGuardian = manager.ProvideService(store)
 		hs.teamPermissionsService = &actest.FakePermissionsService{}

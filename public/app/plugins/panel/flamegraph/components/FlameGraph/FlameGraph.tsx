@@ -17,6 +17,7 @@
 // TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 // THIS SOFTWARE.
 import { css } from '@emotion/css';
+import uFuzzy from '@leeoniya/ufuzzy';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useMeasure } from 'react-use';
 
@@ -25,6 +26,7 @@ import { CoreApp, createTheme, DataFrame, FieldType, getDisplayProcessor } from 
 import { PIXELS_PER_LEVEL } from '../../constants';
 import { TooltipData, SelectedView } from '../types';
 
+import FlameGraphMetadata from './FlameGraphMetadata';
 import FlameGraphTooltip, { getTooltipData } from './FlameGraphTooltip';
 import { ItemWithStart } from './dataTransform';
 import { getBarX, getRectDimensionsForLevel, renderRect } from './rendering';
@@ -35,10 +37,12 @@ type Props = {
   flameGraphHeight?: number;
   levels: ItemWithStart[][];
   topLevelIndex: number;
+  selectedBarIndex: number;
   rangeMin: number;
   rangeMax: number;
   search: string;
   setTopLevelIndex: (level: number) => void;
+  setSelectedBarIndex: (bar: number) => void;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
   selectedView: SelectedView;
@@ -51,10 +55,12 @@ const FlameGraph = ({
   flameGraphHeight,
   levels,
   topLevelIndex,
+  selectedBarIndex,
   rangeMin,
   rangeMax,
   search,
   setTopLevelIndex,
+  setSelectedBarIndex,
   setRangeMin,
   setRangeMax,
   selectedView,
@@ -107,6 +113,11 @@ const FlameGraph = ({
         theme: createTheme() /* theme does not matter for us here */,
       });
 
+      const ufuzzy = new uFuzzy({
+        intraMode: 0,
+        intraIns: 0,
+      });
+
       for (let levelIndex = 0; levelIndex < levels.length; levelIndex++) {
         const level = levels[levelIndex];
         // Get all the dimensions of the rectangles for the level. We do this by level instead of per rectangle, because
@@ -114,7 +125,7 @@ const FlameGraph = ({
         const dimensions = getRectDimensionsForLevel(level, levelIndex, totalTicks, rangeMin, pixelsPerTick, processor);
         for (const rect of dimensions) {
           // Render each rectangle based on the computed dimensions
-          renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, search, levelIndex, topLevelIndex);
+          renderRect(ctx, rect, totalTicks, rangeMin, rangeMax, search, levelIndex, topLevelIndex, ufuzzy);
         }
       }
     },
@@ -134,6 +145,7 @@ const FlameGraph = ({
 
         if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
           setTopLevelIndex(levelIndex);
+          setSelectedBarIndex(barIndex);
           setRangeMin(levels[levelIndex][barIndex].start / totalTicks);
           setRangeMax((levels[levelIndex][barIndex].start + levels[levelIndex][barIndex].value) / totalTicks);
         }
@@ -175,10 +187,18 @@ const FlameGraph = ({
     setRangeMax,
     selectedView,
     valueField,
+    setSelectedBarIndex,
   ]);
 
   return (
     <div className={styles.graph} ref={sizeRef}>
+      <FlameGraphMetadata
+        levels={levels}
+        topLevelIndex={topLevelIndex}
+        selectedBarIndex={selectedBarIndex}
+        valueField={valueField}
+        totalTicks={totalTicks}
+      />
       <canvas ref={graphRef} data-testid="flameGraph" />
       <FlameGraphTooltip tooltipRef={tooltipRef} tooltipData={tooltipData!} showTooltip={showTooltip} />
     </div>
@@ -192,8 +212,8 @@ const getStyles = (selectedView: SelectedView, app: CoreApp, flameGraphHeight: n
     overflow: scroll;
     width: ${selectedView === SelectedView.FlameGraph ? '100%' : '50%'};
     ${app !== CoreApp.Explore
-      ? `height: calc(${flameGraphHeight}px - 44px)`
-      : ''}; // 44px to adjust for header pushing content down
+      ? `height: calc(${flameGraphHeight}px - 50px)`
+      : ''}; // 50px to adjust for header pushing content down
   `,
 });
 

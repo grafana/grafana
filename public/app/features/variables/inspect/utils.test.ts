@@ -1490,8 +1490,8 @@ const dashWithTemplateDependenciesAndPanels: any = {
       {
         current: {
           selected: false,
-          text: 'TestData DB',
-          value: 'TestData DB',
+          text: 'TestData',
+          value: 'TestData',
         },
         description: null,
         error: null,
@@ -1624,8 +1624,8 @@ const dashWithTemplateDependenciesAndPanels: any = {
         allValue: null,
         current: {
           selected: true,
-          text: 'TestData DB',
-          value: 'TestData DB',
+          text: 'TestData',
+          value: 'TestData',
         },
         description: null,
         error: null,
@@ -1637,8 +1637,8 @@ const dashWithTemplateDependenciesAndPanels: any = {
         options: [
           {
             selected: true,
-            text: 'TestData DB',
-            value: 'TestData DB',
+            text: 'TestData',
+            value: 'TestData',
           },
           {
             selected: false,
@@ -1646,7 +1646,7 @@ const dashWithTemplateDependenciesAndPanels: any = {
             value: 'gdev-testdata',
           },
         ],
-        query: 'TestData DB, gdev-testdata',
+        query: 'TestData, gdev-testdata',
         queryValue: '',
         skipUrlSync: false,
         type: 'custom',

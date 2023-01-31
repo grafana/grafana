@@ -11,7 +11,9 @@ import (
 	"github.com/grafana/grafana/pkg/components/imguploader"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
+	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/validations"
@@ -176,12 +178,12 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 			Factory:     newTestNotifier,
 		})
 
-		evalCtx.dashboardRef = &models.DashboardRef{Uid: "db-uid"}
+		evalCtx.dashboardRef = &dashboards.DashboardRef{UID: "db-uid"}
 
 		store := evalCtx.Store.(*AlertStoreMock)
 
-		store.getAlertNotificationsWithUidToSend = func(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error {
-			query.Result = []*models.AlertNotification{
+		store.getAlertNotificationsWithUidToSend = func(ctx context.Context, query *alertmodels.GetAlertNotificationsWithUidToSendQuery) error {
+			query.Result = []*alertmodels.AlertNotification{
 				{
 					Id:   1,
 					Type: "test",
@@ -193,13 +195,13 @@ func notificationServiceScenario(t *testing.T, name string, evalCtx *EvalContext
 			return nil
 		}
 
-		store.getOrCreateNotificationState = func(ctx context.Context, query *models.GetOrCreateNotificationStateQuery) error {
-			query.Result = &models.AlertNotificationState{
+		store.getOrCreateNotificationState = func(ctx context.Context, query *alertmodels.GetOrCreateNotificationStateQuery) error {
+			query.Result = &alertmodels.AlertNotificationState{
 				AlertId:                      evalCtx.Rule.ID,
 				AlertRuleStateUpdatedVersion: 1,
 				Id:                           1,
 				OrgId:                        evalCtx.Rule.OrgID,
-				State:                        models.AlertNotificationStateUnknown,
+				State:                        alertmodels.AlertNotificationStateUnknown,
 			}
 			return nil
 		}
@@ -274,7 +276,7 @@ type testNotifier struct {
 	Frequency             time.Duration
 }
 
-func newTestNotifier(model *models.AlertNotification, _ GetDecryptedValueFn, ns notifications.Service) (Notifier, error) {
+func newTestNotifier(model *alertmodels.AlertNotification, _ GetDecryptedValueFn, ns notifications.Service) (Notifier, error) {
 	uploadImage := true
 	value, exist := model.Settings.CheckGet("uploadImage")
 	if exist {
@@ -300,7 +302,7 @@ func (n *testNotifier) Notify(evalCtx *EvalContext) error {
 	return nil
 }
 
-func (n *testNotifier) ShouldNotify(ctx context.Context, evalCtx *EvalContext, notifierState *models.AlertNotificationState) bool {
+func (n *testNotifier) ShouldNotify(ctx context.Context, evalCtx *EvalContext, notifierState *alertmodels.AlertNotificationState) bool {
 	return true
 }
 

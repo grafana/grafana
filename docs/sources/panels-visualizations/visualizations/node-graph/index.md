@@ -15,8 +15,6 @@ weight: 850
 
 # Node graph panel
 
-> **Note:** This panel is currently in beta. Expect changes in future releases.
-
 The _Node graph_ can visualize directed graphs or networks. It uses a directed force layout to effectively position the nodes, so it can display complex infrastructure maps, hierarchies, or execution diagrams.
 
 ![Node graph panel](/static/img/docs/node-graph/node-graph-8-0.png 'Node graph')

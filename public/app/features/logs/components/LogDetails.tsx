@@ -1,11 +1,10 @@
 import { css, cx } from '@emotion/css';
-import memoizeOne from 'memoize-one';
 import React, { PureComponent } from 'react';
 
 import { CoreApp, DataFrame, Field, GrafanaTheme2, LinkModel, LogRowModel } from '@grafana/data';
 import { Themeable2, withTheme2 } from '@grafana/ui';
 
-import { calculateFieldStats, calculateLogsLabelStats, calculateStats, getParser } from '../utils';
+import { calculateLogsLabelStats, calculateStats } from '../utils';
 
 import { LogDetailsRow } from './LogDetailsRow';
 import { getLogRowStyles } from './getLogRowStyles';
@@ -50,13 +49,6 @@ const getStyles = (theme: GrafanaTheme2) => {
 };
 
 class UnThemedLogDetails extends PureComponent<Props> {
-  getParser = memoizeOne(getParser);
-
-  getStatsForField = (key: string) => {
-    const matcher = this.getParser(this.props.row.entry)!.buildMatcher(key);
-    return calculateFieldStats(this.props.getRows(), matcher);
-  };
-
   render() {
     const {
       app,
@@ -135,11 +127,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                       onClickHideField={onClickHideField}
                       onClickFilterOutLabel={onClickFilterOutLabel}
                       onClickFilterLabel={onClickFilterLabel}
-                      getStats={() =>
-                        fieldIndex === undefined
-                          ? this.getStatsForField(key)
-                          : calculateStats(row.dataFrame.fields[fieldIndex].values.toArray())
-                      }
+                      getStats={() => calculateStats(row.dataFrame.fields[fieldIndex].values.toArray())}
                       displayedFields={displayedFields}
                       wrapLogMessage={wrapLogMessage}
                       row={row}
@@ -165,11 +153,7 @@ class UnThemedLogDetails extends PureComponent<Props> {
                       links={links}
                       onClickShowField={onClickShowField}
                       onClickHideField={onClickHideField}
-                      getStats={() =>
-                        fieldIndex === undefined
-                          ? this.getStatsForField(key)
-                          : calculateStats(row.dataFrame.fields[fieldIndex].values.toArray())
-                      }
+                      getStats={() => calculateStats(row.dataFrame.fields[fieldIndex].values.toArray())}
                       displayedFields={displayedFields}
                       wrapLogMessage={wrapLogMessage}
                       row={row}
