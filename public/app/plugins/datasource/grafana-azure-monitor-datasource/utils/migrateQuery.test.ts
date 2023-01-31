@@ -151,6 +151,27 @@ describe('AzureMonitor: migrateQuery', () => {
         })
       );
     });
+    it('correctly removes outdated fields', () => {
+      const result = migrateQuery({
+        ...azureMonitorQueryV8,
+        azureMonitor: { dimension: 'testDimension', dimensionFilter: 'testFilter' },
+      });
+      expect(result).toMatchObject(
+        expect.objectContaining({
+          azureMonitor: expect.objectContaining({
+            dimensionFilters: [
+              {
+                dimension: 'testDimension',
+                operator: 'eq',
+                filters: ['testFilter'],
+              },
+            ],
+          }),
+        })
+      );
+      expect(result.azureMonitor).not.toHaveProperty('dimension');
+      expect(result.azureMonitor).not.toHaveProperty('dimensionFilter');
+    });
 
     it('correctly migrates a metric definition', () => {
       const result = migrateQuery({ ...azureMonitorQueryV8, azureMonitor: { metricDefinition: 'ms.ns/mn' } });
