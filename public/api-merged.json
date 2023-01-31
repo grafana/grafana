@@ -11140,7 +11140,7 @@
       "title": "AlertQuery represents a single query associated with an alert definition.",
       "properties": {
         "datasourceUid": {
-          "description": "Grafana data source unique identifier; it should be '-100' for a Server Side Expression operation.",
+          "description": "Grafana data source unique identifier; it should be '__expr__' for a Server Side Expression operation.",
           "type": "string"
         },
         "model": {
@@ -15940,7 +15940,7 @@
           },
           "example": [
             {
-              "datasourceUid": "-100",
+              "datasourceUid": "__expr__",
               "model": {
                 "conditions": [
                   {
@@ -18910,6 +18910,7 @@
       }
     },
     "alertGroup": {
+      "description": "AlertGroup alert group",
       "type": "object",
       "required": [
         "alerts",
@@ -19038,6 +19039,7 @@
       }
     },
     "gettableAlert": {
+      "description": "GettableAlert gettable alert",
       "type": "object",
       "required": [
         "labels",
