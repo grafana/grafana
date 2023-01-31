@@ -64,7 +64,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 		permissions    []accesscontrol.Permission
 		tokenTTL       int64
 		expectedErr    error
-		expectedApiKey *apikey.APIKey
+		expectedAPIKey *apikey.APIKey
 		expectedCode   int
 	}
 
@@ -75,7 +75,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 			body:           `{"name": "test"}`,
 			tokenTTL:       -1,
 			permissions:    []accesscontrol.Permission{{Action: serviceaccounts.ActionWrite, Scope: "serviceaccounts:id:1"}},
-			expectedApiKey: &apikey.APIKey{},
+			expectedAPIKey: &apikey.APIKey{},
 			expectedCode:   http.StatusOK,
 		},
 		{
@@ -111,7 +111,7 @@ func TestServiceAccountsAPI_CreateToken(t *testing.T) {
 				a.cfg.ApiKeyMaxSecondsToLive = tt.tokenTTL
 				a.service = &fakeService{
 					ExpectedErr:    tt.expectedErr,
-					ExpectedApiKey: tt.expectedApiKey,
+					ExpectedAPIKey: tt.expectedAPIKey,
 				}
 			})
 			req := server.NewRequest(http.MethodPost, fmt.Sprintf("/api/serviceaccounts/%d/tokens", tt.id), strings.NewReader(tt.body))
