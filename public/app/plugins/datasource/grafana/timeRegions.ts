@@ -5,7 +5,7 @@ import { calculateTimesWithin } from 'app/core/utils/timeRegions';
 import { TimeRegionConfig } from './types';
 
 // Returns a frame true/false values set at each region shift
-export function doTimeRegionQuery(config: TimeRegionConfig, range: TimeRange): DataFrame | undefined {
+export function doTimeRegionQuery(config: TimeRegionConfig, range: TimeRange, tz: string): DataFrame | undefined {
   const regions = calculateTimesWithin(config, range);
   if (!regions.length) {
     return undefined;
