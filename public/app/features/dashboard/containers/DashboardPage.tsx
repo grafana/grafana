@@ -441,7 +441,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
                     <div className={styles.dropOverlay}>
                       <div className={styles.dropHint}>
                         <Icon name="upload" size="xxxl"></Icon>
-                        <h3>Create new table from a spreadsheet</h3>
+                        <h3>Create a new table from a spreadsheet</h3>
                       </div>
                     </div>
                     <DashboardGrid
