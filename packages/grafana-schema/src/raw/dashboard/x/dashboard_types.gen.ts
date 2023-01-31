@@ -71,7 +71,7 @@ export const defaultAnnotationQuery: Partial<AnnotationQuery> = {
 /**
  * Dashboard variables. See https://grafana.com/docs/grafana/latest/variables/variable-types/
  */
-export type VariableModel = (QueryVariableModel | AdHocVariableModel | ConstantVariableModel | DataSourceVariableModel | IntervalVariableModel | TextBoxVariableModel | CustomVariableModel | UserSystemVariableModel | OrgSystemVariableModel | DashboardSystemVariableModel);
+export type VariableModel = (QueryVariableModel | AdHocVariableModel | ConstantVariableModel | DataSourceVariableModel | IntervalVariableModel | TextBoxVariableModel | CustomVariableModel | UserSystemVariableModel | OrgSystemVariableModel | DashSystemVariableModel);
 
 /**
  * Common information that all types of variables shares.
@@ -138,7 +138,7 @@ export interface SystemVariable extends BaseVariableModel {
 /**
  * Variable injected by the system which holds the current dashboard.
  */
-export interface DashboardSystemVariableModel extends SystemVariable {
+export interface DashSystemVariableModel extends SystemVariable {
   current: {
     value: {
       name: string;

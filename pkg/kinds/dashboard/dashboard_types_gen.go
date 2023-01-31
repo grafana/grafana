@@ -285,6 +285,13 @@ type CustomVariableModel struct {
 	// Embedded fields due to inline allOf schema
 }
 
+// DashSystemVariableModel defines model for DashSystemVariableModel.
+type DashSystemVariableModel struct {
+	// Embedded struct due to allOf(#/components/schemas/SystemVariable)
+	SystemVariable `yaml:",inline"`
+	// Embedded fields due to inline allOf schema
+}
+
 // 0 for no shared crosshair or tooltip (default).
 // 1 for shared crosshair.
 // 2 for shared crosshair AND shared tooltip.
@@ -309,13 +316,6 @@ type Link struct {
 
 // TODO docs
 type LinkType string
-
-// SystemVariableModel defines model for SystemVariableModel.
-type SystemVariableModel struct {
-	// Embedded struct due to allOf(#/components/schemas/SystemVariable)
-	SystemVariable `yaml:",inline"`
-	// Embedded fields due to inline allOf schema
-}
 
 // Ref to a DataSource instance
 type DataSourceRef struct {

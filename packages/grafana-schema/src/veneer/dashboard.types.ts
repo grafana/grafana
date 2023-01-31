@@ -110,8 +110,8 @@ export interface OrgSystemVariableModel
   description: string | null;
 }
 
-export interface DashboardSystemVariableModel
-  extends Omit<raw.DashboardSystemVariableModel, 'rootStateKey' | 'error' | 'description'> {
+export interface DashSystemVariableModel
+  extends Omit<raw.DashSystemVariableModel, 'rootStateKey' | 'error' | 'description'> {
   // Overrides nullable properties because CUE doesn't support null values
   rootStateKey: string | null;
   error: any | null;
@@ -128,7 +128,7 @@ export type VariableModel =
   | CustomVariableModel
   | UserSystemVariableModel
   | OrgSystemVariableModel
-  | DashboardSystemVariableModel;
+  | DashSystemVariableModel;
 
 export interface SystemVariable<TProps> extends BaseVariableModel {
   type: 'system';

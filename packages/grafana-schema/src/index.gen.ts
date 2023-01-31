@@ -68,7 +68,7 @@ export type {
   BaseVariableModel,
   AdHocVariableModel,
   SystemVariable,
-  DashboardSystemVariableModel,
+  DashSystemVariableModel,
   OrgSystemVariableModel,
   UserSystemVariableModel,
   VariableWithOptions,

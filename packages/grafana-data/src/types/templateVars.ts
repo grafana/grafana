@@ -68,7 +68,7 @@ export interface VariableWithMultiSupport extends schema.VariableWithMultiSuppor
 export interface VariableWithOptions extends schema.VariableWithOptions {}
 export interface BaseVariableModel extends schema.BaseVariableModel {}
 
-export type DashboardProps = schema.DashboardSystemVariableModel['current']['value'] & {
+export type DashboardProps = schema.DashSystemVariableModel['current']['value'] & {
   toString: () => string;
 };
 

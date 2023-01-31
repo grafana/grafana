@@ -121,7 +121,7 @@ lineage: seqs: [
 				} @cuetsy(kind="interface")
 
 				// Dashboard variables. See https://grafana.com/docs/grafana/latest/variables/variable-types/
-				#VariableModel: #QueryVariableModel | #AdHocVariableModel | #ConstantVariableModel | #DataSourceVariableModel | #IntervalVariableModel | #TextBoxVariableModel | #CustomVariableModel | #UserSystemVariableModel | #OrgSystemVariableModel | #DashboardSystemVariableModel @cuetsy(kind="type") @grafana(TSVeneer="type")
+				#VariableModel: #QueryVariableModel | #AdHocVariableModel | #ConstantVariableModel | #DataSourceVariableModel | #IntervalVariableModel | #TextBoxVariableModel | #CustomVariableModel | #UserSystemVariableModel | #OrgSystemVariableModel | #DashSystemVariableModel @cuetsy(kind="type") @grafana(TSVeneer="type")
 
 				// Common information that all types of variables shares.
 				// A variable in Grafana is a container that can hold different types of data, and it variates depending on the query.
@@ -167,7 +167,7 @@ lineage: seqs: [
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type")
 
 				// Variable injected by the system which holds the current dashboard.
-				#DashboardSystemVariableModel: {
+				#DashSystemVariableModel: {
 					#SystemVariable
 					current: {
 						value: {
