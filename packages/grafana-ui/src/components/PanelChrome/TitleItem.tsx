@@ -55,7 +55,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       border: 'none',
       borderRadius: `${theme.shape.borderRadius()}`,
       padding: `${theme.spacing(0, 1)}`,
-      height: `${theme.spacing(theme.components.height.md)}`,
+      height: `${theme.spacing(theme.components.panel.headerHeight)}`,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',

@@ -3,9 +3,10 @@ package pluginutils
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/stretchr/testify/require"
 )
 
 func TestToRegistrations(t *testing.T) {

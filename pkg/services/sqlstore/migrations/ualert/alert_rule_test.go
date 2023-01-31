@@ -5,9 +5,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 func TestMigrateAlertRuleQueries(t *testing.T) {

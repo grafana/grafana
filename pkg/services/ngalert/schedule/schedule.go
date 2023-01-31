@@ -7,11 +7,13 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/benbjohnson/clock"
+	alertingModels "github.com/grafana/alerting/alerting/models"
 	"github.com/hashicorp/go-multierror"
 	prometheusModel "github.com/prometheus/common/model"
 	"go.opentelemetry.io/otel/attribute"
+	"golang.org/x/sync/errgroup"
 
-	alertingModels "github.com/grafana/alerting/alerting/models"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -23,9 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/util/ticker"
-
-	"github.com/benbjohnson/clock"
-	"golang.org/x/sync/errgroup"
 )
 
 // ScheduleService is an interface for a service that schedules the evaluation
@@ -324,7 +323,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 	evalDuration := sch.metrics.EvalDuration.WithLabelValues(orgID)
 	evalTotalFailures := sch.metrics.EvalFailures.WithLabelValues(orgID)
 
-	notify := func(states []*state.State) {
+	notify := func(states []state.StateTransition) {
 		expiredAlerts := FromAlertsStateToStoppedAlert(states, sch.appURL, sch.clock)
 		if len(expiredAlerts.PostableAlerts) > 0 {
 			sch.alertsSender.Send(key, expiredAlerts)
@@ -475,7 +474,11 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 					isPaused := ctx.rule.IsPaused
 					// fetch latest alert rule version
 					if currentRuleVersion != newVersion {
-						if currentRuleVersion > 0 { // do not clean up state if the eval loop has just started.
+						// Do not clean up state if the eval loop has just started.
+						// We need to reset state if the loop has started and the alert is already paused. It can happen,
+						// if we have an alert with state and we do file provision with stateful Grafana, that state
+						// lingers in DB and won't be cleaned up until next alert rule update.
+						if currentRuleVersion > 0 || isPaused {
 							logger.Debug("Got a new version of alert rule. Clear up the state and refresh extra labels", "version", currentRuleVersion, "newVersion", newVersion)
 							resetState(grafanaCtx, isPaused)
 						}
@@ -508,7 +511,7 @@ func (sch *schedule) ruleRoutine(grafanaCtx context.Context, key ngmodels.AlertR
 				// cases.
 				ctx, cancelFunc := context.WithTimeout(context.Background(), time.Minute)
 				defer cancelFunc()
-				states := sch.stateManager.DeleteStateByRuleUID(ngmodels.WithRuleKey(ctx, key), key)
+				states := sch.stateManager.DeleteStateByRuleUID(ngmodels.WithRuleKey(ctx, key), key, ngmodels.StateReasonRuleDeleted)
 				notify(states)
 			}
 			logger.Debug("Stopping alert rule routine")

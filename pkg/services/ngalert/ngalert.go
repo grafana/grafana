@@ -239,7 +239,7 @@ func (ng *AlertNG) init() error {
 	contactPointService := provisioning.NewContactPointService(store, ng.SecretsService, store, store, ng.Log)
 	templateService := provisioning.NewTemplateService(store, store, store, ng.Log)
 	muteTimingService := provisioning.NewMuteTimingService(store, store, store, ng.Log)
-	alertRuleService := provisioning.NewAlertRuleService(store, store, ng.QuotaService, store,
+	alertRuleService := provisioning.NewAlertRuleService(store, store, ng.dashboardService, ng.QuotaService, store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
 		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()), ng.Log)
 
@@ -392,16 +392,12 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 		return historian.NewAnnotationBackend(ar, ds, rs), nil
 	}
 	if cfg.Backend == "loki" {
-		baseURL, err := url.Parse(cfg.LokiRemoteURL)
+		lcfg, err := historian.NewLokiConfig(cfg)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse remote loki URL: %w", err)
+			return nil, fmt.Errorf("invalid remote loki configuration: %w", err)
 		}
-		backend := historian.NewRemoteLokiBackend(historian.LokiConfig{
-			Url:               baseURL,
-			BasicAuthUser:     cfg.LokiBasicAuthUsername,
-			BasicAuthPassword: cfg.LokiBasicAuthPassword,
-			TenantID:          cfg.LokiTenantID,
-		})
+		backend := historian.NewRemoteLokiBackend(lcfg)
+
 		testConnCtx, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
 		defer cancelFunc()
 		if err := backend.TestConnection(testConnCtx); err != nil {

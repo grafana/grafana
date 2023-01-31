@@ -92,8 +92,17 @@ type Alert struct {
 	Settings *simplejson.Json
 }
 
-func (a *Alert) ValidToSave() bool {
-	return a.DashboardId != 0 && a.OrgId != 0 && a.PanelId != 0
+func (a *Alert) ValidDashboardPanel() bool {
+	return a.OrgId != 0 && a.DashboardId != 0 && a.PanelId != 0
+}
+
+func (a *Alert) ValidTags() bool {
+	for _, tag := range a.GetTagsFromSettings() {
+		if len(tag.Key) > 100 || len(tag.Value) > 100 {
+			return false
+		}
+	}
+	return true
 }
 
 func (a *Alert) ContainsUpdates(other *Alert) bool {

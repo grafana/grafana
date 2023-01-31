@@ -1,4 +1,3 @@
-import { SpanLinks } from '@jaegertracing/jaeger-ui-components/src/types/links';
 import { property } from 'lodash';
 import React from 'react';
 
@@ -19,7 +18,6 @@ import {
 import { getTemplateSrv } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Icon } from '@grafana/ui';
-import { SpanLinkFunc, Trace, TraceSpan } from '@jaegertracing/jaeger-ui-components';
 import { TraceToLogsOptionsV2 } from 'app/core/components/TraceToLogs/TraceToLogsSettings';
 import { TraceToMetricQuery, TraceToMetricsOptions } from 'app/core/components/TraceToMetrics/TraceToMetricsSettings';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
@@ -28,6 +26,9 @@ import { PromQuery } from 'app/plugins/datasource/prometheus/types';
 import { LokiQuery } from '../../../plugins/datasource/loki/types';
 import { variableRegex } from '../../variables/utils';
 import { getFieldLinksForExplore } from '../utils/links';
+
+import { SpanLinkFunc, Trace, TraceSpan } from './components';
+import { SpanLinks } from './components/types/links';
 
 /**
  * This is a factory for the link creator. It returns the function mainly so it can return undefined in which case
@@ -476,7 +477,7 @@ function buildMetricsQuery(
   span: TraceSpan
 ): string {
   if (!query.query) {
-    return `histogram_quantile(0.5, sum(rate(tempo_spanmetrics_latency_bucket{operation="${span.operationName}"}[5m])) by (le))`;
+    return `histogram_quantile(0.5, sum(rate(traces_spanmetrics_latency_bucket{service="${span.process.serviceName}"}[5m])) by (le))`;
   }
 
   let expr = query.query;

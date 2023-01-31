@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -35,7 +35,7 @@ var (
 type scenarioContext struct {
 	ctx           *web.Context
 	service       *QueryHistoryService
-	reqContext    *models.ReqContext
+	reqContext    *contextmodel.ReqContext
 	sqlStore      db.DB
 	initialResult QueryHistoryResponse
 }
@@ -82,7 +82,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			ctx:      &ctx,
 			service:  &service,
 			sqlStore: sqlStore,
-			reqContext: &models.ReqContext{
+			reqContext: &contextmodel.ReqContext{
 				Context:      &ctx,
 				SignedInUser: &usr,
 			},
