@@ -13,6 +13,7 @@
 
 # Documentation
 /docs/ @grafana/docs-grafana
+/docs/auth/ @grafana/docs-grafana @grafana/grafana-authnz-team
 /contribute/ @grafana/docs-grafana
 /docs/sources/developers/plugins/ @grafana/docs-grafana @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /docs/sources/developers/plugins/backend/ @grafana/docs-grafana @grafana/plugins-platform-backend
