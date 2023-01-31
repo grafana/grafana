@@ -154,7 +154,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
 
     this.setState({
       datasource: datasource as unknown as DataSourceApi<TQuery>,
-      loadedDataSourceIdentifier: dataSourceIdentifier,
+      loadedDataSourceIdentifier: this.props.dataSource.rawRef?.uid ?? dataSourceIdentifier,
       hasTextEditMode: has(datasource, 'components.QueryCtrl.prototype.toggleEditorMode'),
     });
   }
@@ -181,8 +181,10 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
       }
     }
 
+    const newDataSourceIdentifier = this.props.dataSource.rawRef?.uid ?? this.getQueryDataSourceIdentifier();
+
     // check if we need to load another datasource
-    if (datasource && loadedDataSourceIdentifier !== this.getQueryDataSourceIdentifier()) {
+    if (datasource && newDataSourceIdentifier !== loadedDataSourceIdentifier) {
       if (this.angularQueryEditor) {
         this.angularQueryEditor.destroy();
         this.angularQueryEditor = null;
@@ -243,7 +245,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   isWaitingForDatasourceToLoad(): boolean {
     // if we not yet have loaded the datasource in state the
     // ds in props and the ds in state will have different values.
-    return this.props.dataSource.uid !== this.state.loadedDataSourceIdentifier;
+    return (this.props.dataSource.rawRef?.uid ?? this.props.dataSource.uid) !== this.state.loadedDataSourceIdentifier;
   }
 
   renderPluginEditor = () => {
