@@ -545,13 +545,16 @@ function getContactPointErrors(contactPoint: string, contactPointsState: Receive
   const contactPointErrors = notifierStates.reduce((acc: JSX.Element[] = [], [_, notifierStatuses]) => {
     const notifierErrors = notifierStatuses
       .filter((status) => status.lastNotifyAttemptError)
-      .map((status) => status.lastNotifyAttemptError);
+      .map((status) => (
+        <Label
+          icon="at"
+          key={uniqueId()}
+          label={`Contact Point › ${status.name}`}
+          value={status.lastNotifyAttemptError}
+        />
+      ));
 
-    if (notifierErrors.length > 0) {
-      acc.push(<Label icon="at" key={uniqueId()} label={'Contact Point'} value={notifierErrors} />);
-    }
-
-    return acc;
+    return acc.concat(notifierErrors);
   }, []);
 
   return contactPointErrors;
