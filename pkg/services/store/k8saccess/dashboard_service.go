@@ -129,8 +129,6 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 		return nil, err
 	}
 
-	fmt.Printf("%s", string(dashbytes))
-
 	d, _, err := s.Kinds.Dashboard().JSONValueMux(dashbytes)
 	if err != nil {
 		// return nil, err
@@ -142,8 +140,6 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 	if d.Title == nil {
 		d.Title = &dto.Dashboard.Title
 	}
-
-	fmt.Printf("Dashboard title: %s", *d.Title)
 
 	b := k8ssys.Base[dashboardKind]{
 		TypeMeta: metav1.TypeMeta{
@@ -182,7 +178,6 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 	}
 
 	jj, err := json.MarshalIndent(out, "", " ")
-	fmt.Printf("GOT: %v", string(jj))
 
 	return dto.Dashboard, err
 }

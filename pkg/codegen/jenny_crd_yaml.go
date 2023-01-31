@@ -83,11 +83,11 @@ func (j yamlCRDJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
 		if props.CRD.DummySchema {
 			ver.Schema = map[string]any{
 				"openAPIV3Schema": map[string]any{
-					"type":                                 "object",
-					"x-kubernetes-preserve-unknown-fields": true,
+					"type": "object",
 					"properties": map[string]any{
 						"spec": map[string]any{
-							"type": "object",
+							"type":                                 "object",
+							"x-kubernetes-preserve-unknown-fields": true,
 						},
 					},
 					"required": []any{
