@@ -9,9 +9,9 @@
 // Run 'make gen-cue' from repository root to regenerate.
 
 /**
- * OrgRole is a Grafana Organization Role which can be 'Viewer', 'Editor', 'Admin'.
+ * Role is the Grafana organization role of the api key which can be 'Viewer', 'Editor', 'Admin'.
  */
-export type OrgRole = ('Admin' | 'Editor' | 'Viewer');
+export type role = ('Admin' | 'Editor' | 'Viewer');
 
 export interface APIKey {
   /**
@@ -33,5 +33,5 @@ export interface APIKey {
   /**
    * Role is the Grafana organization role of the api key which can be 'Viewer', 'Editor', 'Admin'.
    */
-  role: OrgRole;
+  role: ('Admin' | 'Editor' | 'Viewer');
 }

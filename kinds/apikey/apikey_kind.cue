@@ -13,7 +13,7 @@ lineage: seqs: [
 				// Name of the api key.
 				name: string
 				// Role is the Grafana organization role of the api key which can be 'Viewer', 'Editor', 'Admin'.
-				role: #OrgRole @grafanamaturity(ToMetadata="kind")
+				role: "Admin" | "Editor" | "Viewer" @cuetsy(kind="type") @grafanamaturity(ToMetadata="kind")
 				// Expiration indicates when the api key expires.
 				expiration?: int64 @grafanamaturity(ToMetadata="sys")
 				// AccessControl metadata associated with a given resource.
@@ -21,8 +21,9 @@ lineage: seqs: [
 					[string]: bool @grafanamaturity(ToMetadata="sys")
 				}
 
-				// OrgRole is a Grafana Organization Role which can be 'Viewer', 'Editor', 'Admin'.
-				#OrgRole: "Admin" | "Editor" | "Viewer" @cuetsy(kind="type")
+				// FIXME - Uncomment when we have a way to share this between Service Accounts and API Keys.
+				//// OrgRole is a Grafana Organization Role which can be 'Viewer', 'Editor', 'Admin'.
+				//#OrgRole: "Admin" | "Editor" | "Viewer" @cuetsy(kind="type")
 			},
 		]
 	},

@@ -8,10 +8,7 @@
 // Run 'make gen-cue' from repository root to regenerate.
 
 // Raw generated types from APIKey kind.
-export type {
-  APIKey,
-  OrgRole
-} from './raw/apikey/x/apikey_types.gen';
+export type { APIKey } from './raw/apikey/x/apikey_types.gen';
 
 // Raw generated types from Dashboard kind.
 export type {

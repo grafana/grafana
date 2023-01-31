@@ -10,13 +10,13 @@
 
 package apikey
 
-// Defines values for OrgRole.
+// Defines values for Role.
 const (
-	OrgRoleAdmin OrgRole = "Admin"
+	RoleAdmin Role = "Admin"
 
-	OrgRoleEditor OrgRole = "Editor"
+	RoleEditor Role = "Editor"
 
-	OrgRoleViewer OrgRole = "Viewer"
+	RoleViewer Role = "Viewer"
 )
 
 // APIKey defines model for APIKey.
@@ -33,9 +33,9 @@ type APIKey struct {
 	// Name of the api key.
 	Name string `json:"name"`
 
-	// OrgRole is a Grafana Organization Role which can be 'Viewer', 'Editor', 'Admin'.
-	Role OrgRole `json:"role"`
+	// Role is the Grafana organization role of the api key which can be 'Viewer', 'Editor', 'Admin'.
+	Role Role `json:"role"`
 }
 
-// OrgRole is a Grafana Organization Role which can be 'Viewer', 'Editor', 'Admin'.
-type OrgRole string
+// Role is the Grafana organization role of the api key which can be 'Viewer', 'Editor', 'Admin'.
+type Role string
