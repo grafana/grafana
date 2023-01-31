@@ -2,6 +2,7 @@ import debounce from 'debounce-promise';
 import { useEffect, useState } from 'react';
 
 import { locationUtil } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 import impressionSrv from 'app/core/services/impression_srv';
 import { getGrafanaSearcher } from 'app/features/search/service';
@@ -15,33 +16,37 @@ const MAX_RECENT_DASHBOARDS = 5;
 const debouncedDashboardSearch = debounce(getDashboardSearchResultActions, 200);
 
 export async function getRecentDashboardActions(): Promise<CommandPaletteAction[]> {
-  const recentUids = (await impressionSrv.getDashboardOpened()).slice(0, MAX_RECENT_DASHBOARDS);
-  const resultsDataFrame = await getGrafanaSearcher().search({
-    kind: ['dashboard'],
-    limit: MAX_RECENT_DASHBOARDS,
-    uid: recentUids,
-  });
+  if (config.bootData.user.isSignedIn) {
+    const recentUids = (await impressionSrv.getDashboardOpened()).slice(0, MAX_RECENT_DASHBOARDS);
+    const resultsDataFrame = await getGrafanaSearcher().search({
+      kind: ['dashboard'],
+      limit: MAX_RECENT_DASHBOARDS,
+      uid: recentUids,
+    });
 
-  // Search results are alphabetical, so reorder them according to recently viewed
-  const recentResults = resultsDataFrame.view.toArray();
-  recentResults.sort((resultA, resultB) => {
-    const orderA = recentUids.indexOf(resultA.uid);
-    const orderB = recentUids.indexOf(resultB.uid);
-    return orderA - orderB;
-  });
+    // Search results are alphabetical, so reorder them according to recently viewed
+    const recentResults = resultsDataFrame.view.toArray();
+    recentResults.sort((resultA, resultB) => {
+      const orderA = recentUids.indexOf(resultA.uid);
+      const orderB = recentUids.indexOf(resultB.uid);
+      return orderA - orderB;
+    });
 
-  const recentDashboardActions: CommandPaletteAction[] = recentResults.map((item) => {
-    const { url, name } = item; // items are backed by DataFrameView, so must hold the url in a closure
-    return {
-      id: `recent-dashboards${url}`,
-      name: `${name}`,
-      section: t('command-palette.section.recent-dashboards', 'Recent dashboards'),
-      priority: RECENT_DASHBOARDS_PRORITY,
-      url: locationUtil.stripBaseFromUrl(url),
-    };
-  });
+    const recentDashboardActions: CommandPaletteAction[] = recentResults.map((item) => {
+      const { url, name } = item; // items are backed by DataFrameView, so must hold the url in a closure
+      return {
+        id: `recent-dashboards${url}`,
+        name: `${name}`,
+        section: t('command-palette.section.recent-dashboards', 'Recent dashboards'),
+        priority: RECENT_DASHBOARDS_PRORITY,
+        url: locationUtil.stripBaseFromUrl(url),
+      };
+    });
 
-  return recentDashboardActions;
+    return recentDashboardActions;
+  } else {
+    return [];
+  }
 }
 
 export async function getDashboardSearchResultActions(searchQuery: string): Promise<CommandPaletteAction[]> {

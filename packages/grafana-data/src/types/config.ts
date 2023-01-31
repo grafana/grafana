@@ -200,6 +200,7 @@ export interface GrafanaConfig {
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
   pluginsToPreload: PreloadPlugin[];
+  anonymousEnabled: boolean;
   featureToggles: FeatureToggles;
   licenseInfo: LicenseInfo;
   http2Enabled: boolean;
