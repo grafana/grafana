@@ -320,14 +320,6 @@ steps:
   image: golang:1.19.4
   name: compile-build-cmd
 - commands:
-  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
-  - '# The following command will fail if running code generators produces any diff
-    in output.'
-  - CODEGEN_VERIFY=1 make gen-jsonnet
-  depends_on: []
-  image: grafana/build-container:v1.7.1
-  name: verify-gen-jsonnet
-- commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
   - '# The following command will fail if running code generators produces any diff
@@ -337,6 +329,15 @@ steps:
   - clone-enterprise
   image: grafana/build-container:v1.7.1
   name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on:
+  - clone-enterprise
+  image: grafana/build-container:v1.7.1
+  name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
@@ -427,7 +428,8 @@ steps:
   name: clone-enterprise
 - commands:
   - make gen-go
-  depends_on: []
+  depends_on:
+  - clone-enterprise
   image: grafana/build-container:v1.7.1
   name: wire-install
 - commands:
@@ -867,7 +869,8 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-jsonnet
-  depends_on: []
+  depends_on:
+  - clone-enterprise
   image: grafana/build-container:v1.7.1
   name: verify-gen-jsonnet
 - commands:
@@ -1264,14 +1267,6 @@ steps:
   image: golang:1.19.4
   name: compile-build-cmd
 - commands:
-  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
-  - '# The following command will fail if running code generators produces any diff
-    in output.'
-  - CODEGEN_VERIFY=1 make gen-jsonnet
-  depends_on: []
-  image: grafana/build-container:v1.7.1
-  name: verify-gen-jsonnet
-- commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
   - '# The following command will fail if running code generators produces any diff
@@ -1280,6 +1275,14 @@ steps:
   depends_on: []
   image: grafana/build-container:v1.7.1
   name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:v1.7.1
+  name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
@@ -1879,7 +1882,8 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-jsonnet
-  depends_on: []
+  depends_on:
+  - clone-enterprise
   image: grafana/build-container:v1.7.1
   name: verify-gen-jsonnet
 - commands:
@@ -2514,14 +2518,6 @@ steps:
   image: golang:1.19.4
   name: compile-build-cmd
 - commands:
-  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
-  - '# The following command will fail if running code generators produces any diff
-    in output.'
-  - CODEGEN_VERIFY=1 make gen-jsonnet
-  depends_on: []
-  image: grafana/build-container:v1.7.1
-  name: verify-gen-jsonnet
-- commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
   - '# The following command will fail if running code generators produces any diff
@@ -2530,6 +2526,14 @@ steps:
   depends_on: []
   image: grafana/build-container:v1.7.1
   name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:v1.7.1
+  name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
@@ -5227,14 +5231,6 @@ steps:
   image: golang:1.19.4
   name: compile-build-cmd
 - commands:
-  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
-  - '# The following command will fail if running code generators produces any diff
-    in output.'
-  - CODEGEN_VERIFY=1 make gen-jsonnet
-  depends_on: []
-  image: grafana/build-container:v1.7.1
-  name: verify-gen-jsonnet
-- commands:
   - '# It is required that code generated from Thema/CUE be committed and in sync
     with its inputs.'
   - '# The following command will fail if running code generators produces any diff
@@ -5243,6 +5239,14 @@ steps:
   depends_on: []
   image: grafana/build-container:v1.7.1
   name: verify-gen-cue
+- commands:
+  - '# It is required that generated jsonnet is committed and in sync with its inputs.'
+  - '# The following command will fail if running code generators produces any diff
+    in output.'
+  - CODEGEN_VERIFY=1 make gen-jsonnet
+  depends_on: []
+  image: grafana/build-container:v1.7.1
+  name: verify-gen-jsonnet
 - commands:
   - make gen-go
   depends_on:
@@ -6702,6 +6706,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: 768543c93b6b2e100bd27234b017c016394ce7c5c0fc590adb26b085d4632d9d
+hmac: 5f042694f172a257b1bdb2dd45377acf48c4a4a20bab9a78cec6ca59f4405a4b
 
 ...

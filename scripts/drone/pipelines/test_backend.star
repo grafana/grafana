@@ -37,6 +37,7 @@ def test_backend(trigger, ver_mode):
     steps = []
 
     verify_step = verify_gen_cue_step()
+    verify_jsonnet_step = verify_gen_jsonnet_step()
 
     if ver_mode == "pr":
         # In pull requests, attempt to clone grafana enterprise.
@@ -45,12 +46,13 @@ def test_backend(trigger, ver_mode):
         # Ensure that verif_gen_cue happens after we clone enterprise
         # At the time of writing this, very_gen_cue is depended on by the wire step which is what everything else depends on.
         verify_step["depends_on"].append("clone-enterprise")
+        verify_jsonnet_step["depends_on"].append("clone-enterprise")
 
     steps += [
         identify_runner_step(),
         compile_build_cmd(edition = "oss"),
-        verify_gen_jsonnet_step(),
         verify_step,
+        verify_jsonnet_step,
         wire_install_step(),
         test_backend_step(),
         test_backend_integration_step(),
