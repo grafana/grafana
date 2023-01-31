@@ -821,14 +821,14 @@ Status: Bad Request
 
 **Properties**
 
-| Name                                                      | Type                                      | Go type             | Required | Default | Description                                                                                        | Example |
-| --------------------------------------------------------- | ----------------------------------------- | ------------------- | :------: | ------- | -------------------------------------------------------------------------------------------------- | ------- |
-| DatasourceUID                                             | string                                    | `string`            |          |         | Grafana data source unique identifier; it should be '-100' for a Server Side Expression operation. |         |
-| Model                                                     | object                                    | `interface{}`       |          |         | JSON is the raw JSON query and includes the above properties as well as custom properties.         |         |
-| QueryType                                                 | string                                    | `string`            |          |         | QueryType is an optional identifier for the type of query.                                         |
+| Name                                                      | Type                                      | Go type             | Required | Default | Description                                                                                            | Example |
+| --------------------------------------------------------- | ----------------------------------------- | ------------------- | :------: | ------- | ------------------------------------------------------------------------------------------------------ | ------- |
+| DatasourceUID                                             | string                                    | `string` <br/>      |          |         | Grafana data source unique identifier; it should be '**expr**' for a Server Side Expression operation. |         |
+| Model                                                     | object                                    | `interface{}`       |          |         | JSON is the raw JSON query and includes the above properties as well as custom properties.             |         |
+| QueryType                                                 | string                                    | `string`            |          |         | QueryType is an optional identifier for the type of query.                                             |
 | It can be used to distinguish different types of queries. |                                           |
-| RefID                                                     | string                                    | `string`            |          |         | RefID is the unique identifier of the query, set by the frontend call.                             |         |
-| relativeTimeRange                                         | [RelativeTimeRange](#relative-time-range) | `RelativeTimeRange` |          |         |                                                                                                    |         |
+| RefID                                                     | string                                    | `string`            |          |         | RefID is the unique identifier of the query, set by the frontend call.                                 |         |
+| relativeTimeRange                                         | [RelativeTimeRange](#relative-time-range) | `RelativeTimeRange` |          |         |                                                                                                        |         |
 
 ### <span id="alert-rule"></span> AlertRule
 
