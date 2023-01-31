@@ -8,6 +8,9 @@ import (
 
 	"github.com/go-kit/log"
 	"github.com/go-kit/log/level"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -17,8 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func Test_syncOrgRoles_doesNotBreakWhenTryingToRemoveLastOrgAdmin(t *testing.T) {
@@ -125,9 +126,9 @@ func TestUpsertUser_crashOnLog_issue62538(t *testing.T) {
 	}
 
 	email := "test_user@example.org"
-	upsertCmd := &login.UpsertUserCommand{
-		ExternalUser:     &login.ExternalUserInfo{Email: email},
-		UserLookupParams: login.UserLookupParams{Email: &email},
+	upsertCmd := &models.UpsertUserCommand{
+		ExternalUser:     &models.ExternalUserInfo{Email: email},
+		UserLookupParams: models.UserLookupParams{Email: &email},
 		SignupAllowed:    false,
 	}
 
