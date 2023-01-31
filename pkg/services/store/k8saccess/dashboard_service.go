@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/store/entity"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type k8sDashboardService struct {
@@ -95,6 +96,11 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 	namespace := "default"
 	//restClient := s.clientSet.Clientset.RESTClient()
 
+	uid := dto.Dashboard.UID
+	if uid == "" {
+		uid = util.GenerateShortUID()
+	}
+
 	//labels := make(map[string]string)
 	//annotations := make(map[string]string)
 
@@ -102,24 +108,34 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 	type dashboardKind = dashboard.Dashboard
 	// get the dashboard CRD from the CRD registry
 	dashboardCRD := s.reg.Dashboard()
-	// map native Grafana dashboard object to kindsys dashboard object
-	d := dashboardKind{
-		Uid:   &dto.Dashboard.UID,
-		Title: &dto.Dashboard.Title,
-	}
 
 	if dto.Dashboard.Data == nil {
 		return nil, fmt.Errorf("POTATO: DASHBOARD DATA NIL")
 	}
 
+	// HACK, remove empty ID!!
+	dto.Dashboard.Data.Del("id")
+	dto.Dashboard.Data.Set("uid", uid)
+	// strip nulls...
+
 	//dashbytes, err := json.Marshal(dto.Dashboard)
-	dashbytes, err := dto.Dashboard.Data.Bytes()
+	dashbytes, err := dto.Dashboard.Data.MarshalJSON()
 	if err != nil {
 		return nil, err
 	}
 
-	if _, _, err := s.Kinds.Dashboard().JSONValueMux(dashbytes); err != nil {
-		return nil, err
+	fmt.Printf("%s", string(dashbytes))
+
+	d, _, err := s.Kinds.Dashboard().JSONValueMux(dashbytes)
+	if err != nil {
+		// return nil, err
+		fmt.Printf("ERRRO: %s", err)
+	}
+	if d.Uid == nil {
+		d.Uid = &uid
+	}
+	if d.Title == nil {
+		d.Title = &dto.Dashboard.Title
 	}
 
 	b := k8ssys.Base[dashboardKind]{
@@ -129,9 +145,9 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
-			Name:      dto.Dashboard.Title,
+			Name:      uid,
 		},
-		Spec: d,
+		Spec: *d,
 	}
 
 	gk := schema.GroupKind{
