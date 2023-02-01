@@ -42,8 +42,50 @@ We have included a new configuration option, disabled by default. This will allo
 
 This will not affect existing tokens, however newly created tokens will require an expiration date that doesn't exceed the configuration option `token_expiration_day_limit`.
 
-## GrafanaCom Skip org role sync
+## OAuth providers setting for skip org role sync
 
 Grafana integrates with different auth providers and have a demand for specific providers to skip syncronization for their organization roles. This option is now available for user who want to be able to manage their org roles from Grafana itself.
 
-This option to skip syncronization from grafanacom is available in the auth provider section under `skip_org_role_sync`.
+This option allows you to skip syncronization from your configured OAuth provider specifically in the auth provider section under `skip_org_role_sync`. Previously users could only do this for certain providers using the `oauth_skip_org_role_sync_update` option, but this would include all of the configured providers.
+
+## RBAC support for Grafana OnCall plugin
+
+We're rolling out RBAC support to Grafana plugins, with Grafana OnCall being the first plugin to fully support RBAC.
+Previously Grafana OnCall relied on the Grafana basic roles (eg. Viewer, Editor, and Admin) for authorization within
+the plugin.
+
+Before RBAC support in Grafana OnCall, it was only possible to allow your organization's users to either view everything,
+edit everything, or be an admin (which allowed edit access plus a few additional behaviours). With this new functionality,
+organizations will be able to harness fine-grained access control within Grafana OnCall.
+
+For example, you could assign a user in your organization, whom has the Viewer basic role (note that a user must still
+have a basic role assigned) the new Grafana OnCall RBAC role of "Schedules Editor". This would allow the user to view
+everything in Grafana OnCall, and also allow them to edit OnCall Schedules
+
+## SAML auto login
+
+We've added auto-login support for SAML authentication, which you can turn on with the `auto_login` configuration option. We also
+have a unified configuration style among all authentication providers. Instead of using
+`oauth_auto_login`, use the new `auto_login` option to enable automatic login for specific OAuth providers.
+
+## Loki datasource query validation
+
+We added support to validate queries and visually display errors as a query is being written, without having to execute it to receive this feedback. This feature supports single and multi-line queries, with and without variables.
+
+{{< figure src="/media/docs/grafana/logs-loki-query-validation-whats-new-9-4.png" max-width="750px" caption="Loki query validation" >}}
+
+## Loki logs sample in Explore
+
+For Loki metric queries in Explore, you are now able to see the sample of log lines that contributed to the displayed results. To see these logs, click on the collapsed "Logs sample" panel under your graph or table panel. If you would like to interact with your log lines or modify the log query, click on the "Open logs in split view" button and the log query will be executed in the split view.
+
+{{< figure src="/media/docs/grafana/logs-sample-whats-new-9-4.png" max-width="750px" caption="Logs sample in Explore" >}}
+
+## New data source connection page in Dashboards and Explore
+
+When you start your journey to create a dashboard or explore your data, but you have no data source connected yet, you’ll be presented with a page that informs you of this and guides you to set up a first connection.
+
+Administrators can choose between selecting one of the most popular data sources or viewing the full list of data sources. Editors are guided to contact their administrator to configure data sources. In both cases, there's also an option to continue without setting up a data source and to use sample data instead.
+
+This is currently a beta feature that can be accessed by enabling the `datasourceOnboarding` feature toggle.
+
+{{< figure src="/media/docs/grafana/screenshot-datasource-connection-onboarding-whats-new-9-4.png" max-width="750px" caption="Admin view of data source connection page on dashboard creation" >}}
