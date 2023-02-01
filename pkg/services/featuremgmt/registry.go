@@ -416,7 +416,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-
 			Name:         "logsSampleInExplore",
 			Description:  "Enables access to the logs sample feature in Explore",
 			State:        FeatureStateStable,
