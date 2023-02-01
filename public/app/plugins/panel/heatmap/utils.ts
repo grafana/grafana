@@ -251,31 +251,19 @@ export function prepConfig(opts: PrepConfigOpts) {
     // TODO: expand by x bucket size and layout
     range: (u, dataMin, dataMax) => {
       if (isTime) {
-        return [
-          getTimeRange().from.valueOf(),
-          getTimeRange().to.valueOf()
-        ]
+        return [getTimeRange().from.valueOf(), getTimeRange().to.valueOf()];
       } else {
         if (dataRef.current?.xLayout === HeatmapCellLayout.le) {
-          return [
-            dataMin - dataRef.current?.xBucketSize!,
-            dataMax,
-          ];
+          return [dataMin - dataRef.current?.xBucketSize!, dataMax];
         } else if (dataRef.current?.xLayout === HeatmapCellLayout.ge) {
-          return [
-            dataMin,
-            dataMax + dataRef.current?.xBucketSize!,
-          ];
+          return [dataMin, dataMax + dataRef.current?.xBucketSize!];
         } else {
           let offset = dataRef.current?.xBucketSize! / 2;
 
-          return [
-            dataMin - offset,
-            dataMax + offset,
-          ];
+          return [dataMin - offset, dataMax + offset];
         }
       }
-    }
+    },
   });
 
   let incrs;
