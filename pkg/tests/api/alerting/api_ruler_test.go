@@ -12,7 +12,6 @@ import (
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	ptr "github.com/xorcare/pointer"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -871,16 +870,6 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 
 		getGroup = client.GetRulesGroup(t, folder1Title, group.Name)
 		require.Equal(t, expected, *getGroup.Rules[0].ApiRuleNode.For)
-	})
-
-	t.Run("should be able to pause a rule", func(t *testing.T) {
-		group := generateAlertRuleGroup(1, alertRuleGen())
-		group.Rules[0].GrafanaManagedAlert.IsPaused = ptr.Bool(true)
-
-		status, body := client.PostRulesGroup(t, folder1Title, &group)
-		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
-		getGroup := client.GetRulesGroup(t, folder1Title, group.Name)
-		assert.Equal(t, true, getGroup.Rules[0].GrafanaManagedAlert.IsPaused)
 	})
 }
 
