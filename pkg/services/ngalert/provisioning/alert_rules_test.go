@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -371,7 +372,7 @@ func createTestRule(title string, groupTitle string, orgID int64) models.AlertRu
 			{
 				RefID:         "A",
 				Model:         json.RawMessage("{}"),
-				DatasourceUID: "-100",
+				DatasourceUID: expr.DatasourceUID,
 				RelativeTimeRange: models.RelativeTimeRange{
 					From: models.Duration(60),
 					To:   models.Duration(0),
