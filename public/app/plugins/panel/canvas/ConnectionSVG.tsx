@@ -7,17 +7,13 @@ import { CanvasConnection } from 'app/features/canvas/element';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
+import { getConnections } from './utils';
+
 type Props = {
   setSVGRef: (anchorElement: SVGSVGElement) => void;
   setLineRef: (anchorElement: SVGLineElement) => void;
   scene: Scene;
 };
-
-interface ConnectionInfo {
-  source: ElementState;
-  target: ElementState;
-  info: CanvasConnection;
-}
 
 let idCounter = 0;
 export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
@@ -89,22 +85,7 @@ export const ConnectionSVG = ({ setSVGRef, setLineRef, scene }: Props) => {
 
   // Flat list of all connections
   const findConnections = useCallback(() => {
-    const connections: ConnectionInfo[] = [];
-    for (let v of scene.byName.values()) {
-      if (v.options.connections) {
-        for (let c of v.options.connections) {
-          const target = c.targetName ? scene.byName.get(c.targetName) : v.parent;
-          if (target) {
-            connections.push({
-              source: v,
-              target,
-              info: c,
-            });
-          }
-        }
-      }
-    }
-    return connections;
+    return getConnections(scene.byName);
   }, [scene.byName]);
 
   // Figure out target and then target's relative coordinates drawing (if no target do parent)

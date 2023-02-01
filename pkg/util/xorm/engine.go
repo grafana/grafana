@@ -11,7 +11,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -44,13 +43,6 @@ type Engine struct {
 	tagHandlers map[string]tagHandler
 
 	defaultContext context.Context
-}
-
-// BufferSize sets buffer size for iterate
-func (engine *Engine) BufferSize(size int) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.BufferSize(size)
 }
 
 // CondDeleted returns the conditions whether a record is soft deleted.
@@ -206,23 +198,6 @@ func (engine *Engine) quote(sql string) string {
 	return engine.dialect.Quote(sql)
 }
 
-// SqlType will be deprecated, please use SQLType instead
-//
-// Deprecated: use SQLType instead
-func (engine *Engine) SqlType(c *core.Column) string {
-	return engine.SQLType(c)
-}
-
-// SQLType A simple wrapper to dialect's core.SqlType method
-func (engine *Engine) SQLType(c *core.Column) string {
-	return engine.dialect.SqlType(c)
-}
-
-// AutoIncrStr Database's autoincrement statement
-func (engine *Engine) AutoIncrStr() string {
-	return engine.dialect.AutoIncrStr()
-}
-
 // SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
 func (engine *Engine) SetConnMaxLifetime(d time.Duration) {
 	engine.db.SetConnMaxLifetime(d)
@@ -236,21 +211,6 @@ func (engine *Engine) SetMaxOpenConns(conns int) {
 // SetMaxIdleConns set the max idle connections on pool, default is 2
 func (engine *Engine) SetMaxIdleConns(conns int) {
 	engine.db.SetMaxIdleConns(conns)
-}
-
-// NoCache If you has set default cacher, and you want temporilly stop use cache,
-// you can use NoCache()
-func (engine *Engine) NoCache() *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.NoCache()
-}
-
-// NoCascade If you do not want to auto cascade load object
-func (engine *Engine) NoCascade() *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.NoCascade()
 }
 
 // NewDB provides an interface to operate database directly
@@ -287,25 +247,6 @@ func (engine *Engine) Ping() error {
 	return session.Ping()
 }
 
-// logSQL save sql
-func (engine *Engine) logSQL(sqlStr string, sqlArgs ...interface{}) {
-	if engine.showSQL && !engine.showExecTime {
-		if len(sqlArgs) > 0 {
-			engine.logger.Infof("[SQL] %v %#v", sqlStr, sqlArgs)
-		} else {
-			engine.logger.Infof("[SQL] %v", sqlStr)
-		}
-	}
-}
-
-// Sql provides raw sql input parameter. When you have a complex SQL statement
-// and cannot use Where, Id, In and etc. Methods to describe, you can use SQL.
-//
-// Deprecated: use SQL instead.
-func (engine *Engine) Sql(querystring string, args ...interface{}) *Session {
-	return engine.SQL(querystring, args...)
-}
-
 // SQL method let's you manually write raw SQL and operate
 // For example:
 //
@@ -316,22 +257,6 @@ func (engine *Engine) SQL(query interface{}, args ...interface{}) *Session {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.SQL(query, args...)
-}
-
-// NoAutoTime Default if your struct has "created" or "updated" filed tag, the fields
-// will automatically be filled with current time when Insert or Update
-// invoked. Call NoAutoTime if you dont' want to fill automatically.
-func (engine *Engine) NoAutoTime() *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.NoAutoTime()
-}
-
-// NoAutoCondition disable auto generate Where condition from bean or not
-func (engine *Engine) NoAutoCondition(no ...bool) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.NoAutoCondition(no...)
 }
 
 func (engine *Engine) loadTableInfo(table *core.Table) error {
@@ -375,25 +300,11 @@ func (engine *Engine) DBMetas() ([]*core.Table, error) {
 	return tables, nil
 }
 
-// Cascade use cascade or not
-func (engine *Engine) Cascade(trueOrFalse ...bool) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.Cascade(trueOrFalse...)
-}
-
 // Where method provide a condition query
 func (engine *Engine) Where(query interface{}, args ...interface{}) *Session {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.Where(query, args...)
-}
-
-// Id will be deprecated, please use ID instead
-func (engine *Engine) Id(id interface{}) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.Id(id)
 }
 
 // ID method provoide a condition as (id) = ?
@@ -431,182 +342,11 @@ func (engine *Engine) StoreEngine(storeEngine string) *Session {
 	return session.StoreEngine(storeEngine)
 }
 
-// Distinct use for distinct columns. Caution: when you are using cache,
-// distinct will not be cached because cache system need id,
-// but distinct will not provide id
-func (engine *Engine) Distinct(columns ...string) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.Distinct(columns...)
-}
-
-// Select customerize your select columns or contents
-func (engine *Engine) Select(str string) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.Select(str)
-}
-
-// Cols only use the parameters as select or update columns
-func (engine *Engine) Cols(columns ...string) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.Cols(columns...)
-}
-
-// AllCols indicates that all columns should be use
-func (engine *Engine) AllCols() *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.AllCols()
-}
-
-// MustCols specify some columns must use even if they are empty
-func (engine *Engine) MustCols(columns ...string) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.MustCols(columns...)
-}
-
-// UseBool xorm automatically retrieve condition according struct, but
-// if struct has bool field, it will ignore them. So use UseBool
-// to tell system to do not ignore them.
-// If no parameters, it will use all the bool field of struct, or
-// it will use parameters's columns
-func (engine *Engine) UseBool(columns ...string) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.UseBool(columns...)
-}
-
-// Omit only not use the parameters as select or update columns
-func (engine *Engine) Omit(columns ...string) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.Omit(columns...)
-}
-
-// Nullable set null when column is zero-value and nullable for update
-func (engine *Engine) Nullable(columns ...string) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.Nullable(columns...)
-}
-
-// In will generate "column IN (?, ?)"
-func (engine *Engine) In(column string, args ...interface{}) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.In(column, args...)
-}
-
-// NotIn will generate "column NOT IN (?, ?)"
-func (engine *Engine) NotIn(column string, args ...interface{}) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.NotIn(column, args...)
-}
-
-// Incr provides a update string like "column = column + ?"
-func (engine *Engine) Incr(column string, arg ...interface{}) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.Incr(column, arg...)
-}
-
-// Decr provides a update string like "column = column - ?"
-func (engine *Engine) Decr(column string, arg ...interface{}) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.Decr(column, arg...)
-}
-
-// SetExpr provides a update string like "column = {expression}"
-func (engine *Engine) SetExpr(column string, expression interface{}) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.SetExpr(column, expression)
-}
-
 // Table temporarily change the Get, Find, Update's table
 func (engine *Engine) Table(tableNameOrBean interface{}) *Session {
 	session := engine.NewSession()
 	session.isAutoClose = true
 	return session.Table(tableNameOrBean)
-}
-
-// Alias set the table alias
-func (engine *Engine) Alias(alias string) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.Alias(alias)
-}
-
-// Limit will generate "LIMIT start, limit"
-func (engine *Engine) Limit(limit int, start ...int) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.Limit(limit, start...)
-}
-
-// Desc will generate "ORDER BY column1 DESC, column2 DESC"
-func (engine *Engine) Desc(colNames ...string) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.Desc(colNames...)
-}
-
-// Asc will generate "ORDER BY column1,column2 Asc"
-// This method can chainable use.
-//
-//	engine.Desc("name").Asc("age").Find(&users)
-//	// SELECT * FROM user ORDER BY name DESC, age ASC
-func (engine *Engine) Asc(colNames ...string) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.Asc(colNames...)
-}
-
-// OrderBy will generate "ORDER BY order"
-func (engine *Engine) OrderBy(order string) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.OrderBy(order)
-}
-
-// Prepare enables prepare statement
-func (engine *Engine) Prepare() *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.Prepare()
-}
-
-// Join the join_operator should be one of INNER, LEFT OUTER, CROSS etc - this will be prepended to JOIN
-func (engine *Engine) Join(joinOperator string, tablename interface{}, condition string, args ...interface{}) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.Join(joinOperator, tablename, condition, args...)
-}
-
-// GroupBy generate group by statement
-func (engine *Engine) GroupBy(keys string) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.GroupBy(keys)
-}
-
-// Having generate having statement
-func (engine *Engine) Having(conditions string) *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.Having(conditions)
-}
-
-// UnMapType removes the database mapper of a type
-func (engine *Engine) UnMapType(t reflect.Type) {
-	engine.mutex.Lock()
-	defer engine.mutex.Unlock()
-	delete(engine.Tables, t)
 }
 
 func (engine *Engine) autoMapType(v reflect.Value) (*core.Table, error) {
@@ -643,11 +383,6 @@ func (engine *Engine) GobRegister(v interface{}) *Engine {
 type Table struct {
 	*core.Table
 	Name string
-}
-
-// IsValid if table is valid
-func (t *Table) IsValid() bool {
-	return t.Table != nil && len(t.Name) > 0
 }
 
 func addIndex(indexName string, table *core.Table, col *core.Column, indexType int) {
@@ -837,121 +572,11 @@ func (engine *Engine) mapType(v reflect.Value) (*core.Table, error) {
 	return table, nil
 }
 
-// IsTableEmpty if a table has any reocrd
-func (engine *Engine) IsTableEmpty(bean interface{}) (bool, error) {
-	session := engine.NewSession()
-	defer session.Close()
-	return session.IsTableEmpty(bean)
-}
-
 // IsTableExist if a table is exist
 func (engine *Engine) IsTableExist(beanOrTableName interface{}) (bool, error) {
 	session := engine.NewSession()
 	defer session.Close()
 	return session.IsTableExist(beanOrTableName)
-}
-
-// IdOf get id from one struct
-//
-// Deprecated: use IDOf instead.
-func (engine *Engine) IdOf(bean interface{}) core.PK {
-	return engine.IDOf(bean)
-}
-
-// IDOf get id from one struct
-func (engine *Engine) IDOf(bean interface{}) core.PK {
-	return engine.IdOfV(reflect.ValueOf(bean))
-}
-
-// IdOfV get id from one value of struct
-//
-// Deprecated: use IDOfV instead.
-func (engine *Engine) IdOfV(rv reflect.Value) core.PK {
-	return engine.IDOfV(rv)
-}
-
-// IDOfV get id from one value of struct
-func (engine *Engine) IDOfV(rv reflect.Value) core.PK {
-	pk, err := engine.idOfV(rv)
-	if err != nil {
-		engine.logger.Error(err)
-		return nil
-	}
-	return pk
-}
-
-func (engine *Engine) idOfV(rv reflect.Value) (core.PK, error) {
-	v := reflect.Indirect(rv)
-	table, err := engine.autoMapType(v)
-	if err != nil {
-		return nil, err
-	}
-
-	pk := make([]interface{}, len(table.PrimaryKeys))
-	for i, col := range table.PKColumns() {
-		var err error
-
-		fieldName := col.FieldName
-		for {
-			parts := strings.SplitN(fieldName, ".", 2)
-			if len(parts) == 1 {
-				break
-			}
-
-			v = v.FieldByName(parts[0])
-			if v.Kind() == reflect.Ptr {
-				v = v.Elem()
-			}
-			if v.Kind() != reflect.Struct {
-				return nil, ErrUnSupportedType
-			}
-			fieldName = parts[1]
-		}
-
-		pkField := v.FieldByName(fieldName)
-		switch pkField.Kind() {
-		case reflect.String:
-			pk[i], err = engine.idTypeAssertion(col, pkField.String())
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			pk[i], err = engine.idTypeAssertion(col, strconv.FormatInt(pkField.Int(), 10))
-		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			// id of uint will be converted to int64
-			pk[i], err = engine.idTypeAssertion(col, strconv.FormatUint(pkField.Uint(), 10))
-		}
-
-		if err != nil {
-			return nil, err
-		}
-	}
-	return core.PK(pk), nil
-}
-
-func (engine *Engine) idTypeAssertion(col *core.Column, sid string) (interface{}, error) {
-	if col.SQLType.IsNumeric() {
-		n, err := strconv.ParseInt(sid, 10, 64)
-		if err != nil {
-			return nil, err
-		}
-		return n, nil
-	} else if col.SQLType.IsText() {
-		return sid, nil
-	} else {
-		return nil, errors.New("not supported")
-	}
-}
-
-// CreateIndexes create indexes
-func (engine *Engine) CreateIndexes(bean interface{}) error {
-	session := engine.NewSession()
-	defer session.Close()
-	return session.CreateIndexes(bean)
-}
-
-// CreateUniques create uniques
-func (engine *Engine) CreateUniques(bean interface{}) error {
-	session := engine.NewSession()
-	defer session.Close()
-	return session.CreateUniques(bean)
 }
 
 // Sync the new struct changes to database, this method will automatically add
@@ -1057,79 +682,11 @@ func (engine *Engine) Sync2(beans ...interface{}) error {
 	return s.Sync2(beans...)
 }
 
-// CreateTables create tabls according bean
-func (engine *Engine) CreateTables(beans ...interface{}) error {
-	session := engine.NewSession()
-	defer session.Close()
-
-	err := session.Begin()
-	if err != nil {
-		return err
-	}
-
-	for _, bean := range beans {
-		err = session.createTable(bean)
-		if err != nil {
-			session.Rollback()
-			return err
-		}
-	}
-	return session.Commit()
-}
-
-// DropTables drop specify tables
-func (engine *Engine) DropTables(beans ...interface{}) error {
-	session := engine.NewSession()
-	defer session.Close()
-
-	err := session.Begin()
-	if err != nil {
-		return err
-	}
-
-	for _, bean := range beans {
-		err = session.dropTable(bean)
-		if err != nil {
-			session.Rollback()
-			return err
-		}
-	}
-	return session.Commit()
-}
-
-// DropIndexes drop indexes of a table
-func (engine *Engine) DropIndexes(bean interface{}) error {
-	session := engine.NewSession()
-	defer session.Close()
-	return session.DropIndexes(bean)
-}
-
 // Exec raw sql
 func (engine *Engine) Exec(sqlOrArgs ...interface{}) (sql.Result, error) {
 	session := engine.NewSession()
 	defer session.Close()
 	return session.Exec(sqlOrArgs...)
-}
-
-// Query a raw sql and return records as []map[string][]byte
-func (engine *Engine) Query(sqlOrArgs ...interface{}) (resultsSlice []map[string][]byte, err error) {
-	session := engine.NewSession()
-	defer session.Close()
-	return session.Query(sqlOrArgs...)
-}
-
-// QueryString runs a raw sql and return records as []map[string]string
-func (engine *Engine) QueryString(sqlOrArgs ...interface{}) ([]map[string]string, error) {
-	session := engine.NewSession()
-	defer session.Close()
-	return session.QueryString(sqlOrArgs...)
-}
-
-// QueryInterface runs a raw sql and return records as []map[string]interface{}
-func (engine *Engine) QueryInterface(sqlOrArgs ...interface{}) ([]map[string]interface{}, error) {
-	session := engine.NewSession()
-	defer session.Close()
-	return session.QueryInterface(sqlOrArgs...)
 }
 
 // Insert one or more records
@@ -1139,48 +696,6 @@ func (engine *Engine) Insert(beans ...interface{}) (int64, error) {
 	return session.Insert(beans...)
 }
 
-// InsertOne insert only one record
-func (engine *Engine) InsertOne(bean interface{}) (int64, error) {
-	session := engine.NewSession()
-	defer session.Close()
-	return session.InsertOne(bean)
-}
-
-// Update records, bean's non-empty fields are updated contents,
-// condiBean' non-empty filds are conditions
-// CAUTION:
-//
-//	1.bool will defaultly be updated content nor conditions
-//	 You should call UseBool if you have bool to use.
-//	2.float32 & float64 may be not inexact as conditions
-func (engine *Engine) Update(bean interface{}, condiBeans ...interface{}) (int64, error) {
-	session := engine.NewSession()
-	defer session.Close()
-	return session.Update(bean, condiBeans...)
-}
-
-// Delete records, bean's non-empty fields are conditions
-func (engine *Engine) Delete(bean interface{}) (int64, error) {
-	session := engine.NewSession()
-	defer session.Close()
-	return session.Delete(bean)
-}
-
-// Get retrieve one record from table, bean's non-empty fields
-// are conditions
-func (engine *Engine) Get(bean interface{}) (bool, error) {
-	session := engine.NewSession()
-	defer session.Close()
-	return session.Get(bean)
-}
-
-// Exist returns true if the record exist otherwise return false
-func (engine *Engine) Exist(bean ...interface{}) (bool, error) {
-	session := engine.NewSession()
-	defer session.Close()
-	return session.Exist(bean...)
-}
-
 // Find retrieve records from table, condiBeans's non-empty fields
 // are conditions. beans could be []Struct, []*Struct, map[int64]Struct
 // map[int64]*Struct
@@ -1188,63 +703,6 @@ func (engine *Engine) Find(beans interface{}, condiBeans ...interface{}) error {
 	session := engine.NewSession()
 	defer session.Close()
 	return session.Find(beans, condiBeans...)
-}
-
-// FindAndCount find the results and also return the counts
-func (engine *Engine) FindAndCount(rowsSlicePtr interface{}, condiBean ...interface{}) (int64, error) {
-	session := engine.NewSession()
-	defer session.Close()
-	return session.FindAndCount(rowsSlicePtr, condiBean...)
-}
-
-// Iterate record by record handle records from table, bean's non-empty fields
-// are conditions.
-func (engine *Engine) Iterate(bean interface{}, fun IterFunc) error {
-	session := engine.NewSession()
-	defer session.Close()
-	return session.Iterate(bean, fun)
-}
-
-// Rows return sql.Rows compatible Rows obj, as a forward Iterator object for iterating record by record, bean's non-empty fields
-// are conditions.
-func (engine *Engine) Rows(bean interface{}) (*Rows, error) {
-	session := engine.NewSession()
-	return session.Rows(bean)
-}
-
-// Count counts the records. bean's non-empty fields are conditions.
-func (engine *Engine) Count(bean ...interface{}) (int64, error) {
-	session := engine.NewSession()
-	defer session.Close()
-	return session.Count(bean...)
-}
-
-// Sum sum the records by some column. bean's non-empty fields are conditions.
-func (engine *Engine) Sum(bean interface{}, colName string) (float64, error) {
-	session := engine.NewSession()
-	defer session.Close()
-	return session.Sum(bean, colName)
-}
-
-// SumInt sum the records by some column. bean's non-empty fields are conditions.
-func (engine *Engine) SumInt(bean interface{}, colName string) (int64, error) {
-	session := engine.NewSession()
-	defer session.Close()
-	return session.SumInt(bean, colName)
-}
-
-// Sums sum the records by some columns. bean's non-empty fields are conditions.
-func (engine *Engine) Sums(bean interface{}, colNames ...string) ([]float64, error) {
-	session := engine.NewSession()
-	defer session.Close()
-	return session.Sums(bean, colNames...)
-}
-
-// SumsInt like Sums but return slice of int64 instead of float64.
-func (engine *Engine) SumsInt(bean interface{}, colNames ...string) ([]int64, error) {
-	session := engine.NewSession()
-	defer session.Close()
-	return session.SumsInt(bean, colNames...)
 }
 
 // nowTime return current time
@@ -1289,46 +747,4 @@ func (engine *Engine) formatTime(sqlTypeName string, t time.Time) (v interface{}
 		v = t
 	}
 	return
-}
-
-// GetColumnMapper returns the column name mapper
-func (engine *Engine) GetColumnMapper() core.IMapper {
-	return engine.ColumnMapper
-}
-
-// GetTableMapper returns the table name mapper
-func (engine *Engine) GetTableMapper() core.IMapper {
-	return engine.TableMapper
-}
-
-// GetTZLocation returns time zone of the application
-func (engine *Engine) GetTZLocation() *time.Location {
-	return engine.TZLocation
-}
-
-// SetTZLocation sets time zone of the application
-func (engine *Engine) SetTZLocation(tz *time.Location) {
-	engine.TZLocation = tz
-}
-
-// GetTZDatabase returns time zone of the database
-func (engine *Engine) GetTZDatabase() *time.Location {
-	return engine.DatabaseTZ
-}
-
-// SetTZDatabase sets time zone of the database
-func (engine *Engine) SetTZDatabase(tz *time.Location) {
-	engine.DatabaseTZ = tz
-}
-
-// SetSchema sets the schema of database
-func (engine *Engine) SetSchema(schema string) {
-	engine.dialect.URI().Schema = schema
-}
-
-// Unscoped always disable struct tag "deleted"
-func (engine *Engine) Unscoped() *Session {
-	session := engine.NewSession()
-	session.isAutoClose = true
-	return session.Unscoped()
 }

@@ -684,6 +684,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           dragClassCancel="grid-drag-cancel"
           padding={padding}
           gridPos={panel.gridPos}
+          displayMode={transparent ? 'transparent' : 'default'}
         >
           {(innerWidth, innerHeight) => (
             <>

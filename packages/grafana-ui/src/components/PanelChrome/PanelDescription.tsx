@@ -4,7 +4,6 @@ import React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
-import { getFocusStyles, getMouseFocusStyles } from '../../themes/mixins';
 import { Icon } from '../Icon/Icon';
 import { Tooltip } from '../Tooltip';
 
@@ -32,7 +31,7 @@ export function PanelDescription({ description, className }: Props) {
   return description !== '' ? (
     <Tooltip interactive content={getDescriptionContent}>
       <TitleItem className={cx(className, styles.description)}>
-        <Icon name="info-circle" size="lg" title="description" />
+        <Icon name="info-circle" size="md" title="description" />
       </TitleItem>
     </Tooltip>
   ) : null;
@@ -41,28 +40,6 @@ export function PanelDescription({ description, className }: Props) {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     description: css({
-      color: `${theme.colors.text.secondary}`,
-      backgroundColor: 'inherit',
-      cursor: 'auto',
-      border: 'none',
-      borderRadius: `${theme.shape.borderRadius()}`,
-      padding: `${theme.spacing(0, 1)}`,
-      height: '100%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-
-      '&:focus, &:focus-visible': {
-        ...getFocusStyles(theme),
-        zIndex: 1,
-      },
-      '&: focus:not(:focus-visible)': getMouseFocusStyles(theme),
-
-      '&:hover ': {
-        color: `${theme.colors.text.primary}`,
-        background: `${theme.colors.background.secondary}`,
-      },
-
       code: {
         whiteSpace: 'normal',
         wordWrap: 'break-word',

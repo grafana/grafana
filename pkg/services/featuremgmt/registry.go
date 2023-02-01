@@ -155,6 +155,12 @@ var (
 			RequiresDevMode: true,
 		},
 		{
+			Name:            "k8sDashboards",
+			Description:     "Save dashboards via k8s",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
 			Name:        "supportBundles",
 			Description: "Support bundles for troubleshooting",
 			State:       FeatureStateAlpha,
@@ -170,13 +176,6 @@ var (
 			Description:     "Export grafana instance (to git, etc)",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
-		},
-		{
-			Name:            "azureMonitorResourcePickerForMetrics",
-			Description:     "New UI for Azure Monitor Metrics Query",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-			FrontendOnly:    true,
 		},
 		{
 			Name:         "exploreMixedDatasource",
@@ -299,8 +298,9 @@ var (
 		},
 		{
 			Name:        "cloudWatchCrossAccountQuerying",
-			Description: "Use cross-account querying in CloudWatch datasource",
-			State:       FeatureStateAlpha,
+			Description: "Enables cross-account querying in CloudWatch datasources",
+			State:       FeatureStateStable,
+			Expression:  "true", //enabled by default
 		},
 		{
 			Name:         "redshiftAsyncQueryDataSupport",
@@ -410,9 +410,24 @@ var (
 			RequiresRestart: false,
 		},
 		{
-			Name:        "azureMultipleResourcePicker",
-			Description: "Azure multiple resource picker",
-			State:       FeatureStateAlpha,
+			Name:         "topNavCommandPalette",
+			Description:  "Launch the Command Palette from the top navigation search box",
+			State:        FeatureStateBeta,
+			FrontendOnly: true,
+		},
+		{
+
+			Name:         "logsSampleInExplore",
+			Description:  "Enables access to the logs sample feature in Explore",
+			State:        FeatureStateStable,
+			Expression:   "true", //turned on by default
+			FrontendOnly: true,
+		},
+		{
+			Name:         "logsContextDatasourceUi",
+			Description:  "Allow datasource to provide custom UI for context view",
+			State:        FeatureStateAlpha,
+			FrontendOnly: true,
 		},
 	}
 )
