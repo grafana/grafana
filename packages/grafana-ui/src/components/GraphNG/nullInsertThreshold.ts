@@ -11,9 +11,9 @@ const INSERT_MODES = {
 
 interface NullInsertOptions {
   frame: DataFrame;
-  refFieldName?: string | null; //Time field name 'Time'
-  refFieldPseudoMax?: number; // To
-  refFieldPseudoMin?: number;// Begining of what I'm expecting the first dataframe to be (from)
+  refFieldName?: string | null;
+  refFieldPseudoMax?: number;
+  refFieldPseudoMin?: number;
   insertMode?: InsertMode;
 }
 

@@ -1,3 +1,5 @@
+import { cloneDeep } from 'lodash';
+
 import {
   DataFrame,
   DataQueryRequest,
@@ -9,11 +11,11 @@ import {
   TIME_SERIES_TIME_FIELD_NAME,
   TimeRange,
 } from '@grafana/data/src';
-import {PromQuery} from '../types';
-import {cloneDeep} from 'lodash';
-import {alignRange, PrometheusDatasource} from '../datasource';
-import {getTimeSrv, TimeSrv} from '../../../../features/dashboard/services/TimeSrv';
-import {applyNullInsertThreshold} from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
+import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
+
+import { getTimeSrv, TimeSrv } from '../../../../features/dashboard/services/TimeSrv';
+import { alignRange, PrometheusDatasource } from '../datasource';
+import { PromQuery } from '../types';
 
 // Decreasing the duration of the overlap provides even further performance improvements, however prometheus data over the last 10 minutes is in flux, and could be out of order from the past 2 hours
 // Get link to prometheus doc for the above comment
@@ -51,7 +53,7 @@ export class PrometheusIncrementalStorage {
    * @param valueField
    */
   private static valueFrameToLabelsString = (valueField: FieldDTO | Field): string => {
-    let keyValues: Array<{ key: string; value: any }> = [];
+    let keyValues: Array<{ key: string; value: string | undefined }> = [];
 
     if (valueField?.labels) {
       const keys = Object.keys(valueField?.labels ?? {});
@@ -90,12 +92,12 @@ export class PrometheusIncrementalStorage {
         i,
         originalRange,
         intervalInSeconds,
-        existingValueFrames,
+        existingValueFrames
       );
 
-      if(startIndex !== null && startIndex >= 0){
-        existingTimeFrameNewValuesRemovedIndicies.push(startIndex)
-        existingValueFrameNewValuesRemovedIndicies.push(startIndex)
+      if (startIndex !== null && startIndex >= 0) {
+        existingTimeFrameNewValuesRemovedIndicies.push(startIndex);
+        existingValueFrameNewValuesRemovedIndicies.push(startIndex);
         break;
       }
     }
@@ -107,22 +109,31 @@ export class PrometheusIncrementalStorage {
         i,
         originalRange,
         intervalInSeconds,
-        existingValueFrames,
+        existingValueFrames
       );
 
-      if(endIndex !== null && endIndex >= 0){
-        existingTimeFrameNewValuesRemovedIndicies.push(endIndex)
-        existingValueFrameNewValuesRemovedIndicies.push(endIndex)
+      if (endIndex !== null && endIndex >= 0) {
+        existingTimeFrameNewValuesRemovedIndicies.push(endIndex);
+        existingValueFrameNewValuesRemovedIndicies.push(endIndex);
         break;
       }
     }
 
-    if(existingTimeFrameNewValuesRemovedIndicies.length === 2 && existingValueFrameNewValuesRemovedIndicies.length === 2){
-      existingTimeFrameNewValuesRemoved = existingTimeFrames.slice(existingTimeFrameNewValuesRemovedIndicies[0], existingTimeFrameNewValuesRemovedIndicies[1] + 1)
-      existingValueFrameNewValuesRemoved = existingValueFrames.slice(existingValueFrameNewValuesRemovedIndicies[0], existingValueFrameNewValuesRemovedIndicies[1] + 1)
-    }else{
-      if(DEBUG){
-        console.warn('Not enough indices, unable to merge frames')
+    if (
+      existingTimeFrameNewValuesRemovedIndicies.length === 2 &&
+      existingValueFrameNewValuesRemovedIndicies.length === 2
+    ) {
+      existingTimeFrameNewValuesRemoved = existingTimeFrames.slice(
+        existingTimeFrameNewValuesRemovedIndicies[0],
+        existingTimeFrameNewValuesRemovedIndicies[1] + 1
+      );
+      existingValueFrameNewValuesRemoved = existingValueFrames.slice(
+        existingValueFrameNewValuesRemovedIndicies[0],
+        existingValueFrameNewValuesRemovedIndicies[1] + 1
+      );
+    } else {
+      if (DEBUG) {
+        console.warn('Not enough indices, unable to merge frames');
       }
     }
 
@@ -135,7 +146,7 @@ export class PrometheusIncrementalStorage {
     i: number,
     originalRange: { end: number; start: number },
     intervalInSeconds: number,
-    existingValueFrames: number[],
+    existingValueFrames: number[]
   ): null | number {
     const doesResponseNotContainFrameTimeValue = responseTimeFieldValues.indexOf(existingTimeFrames[i]) === -1;
 
@@ -157,7 +168,7 @@ export class PrometheusIncrementalStorage {
     // Only add timeframes from the old data to the new data, if they aren't already contained in the new data
     if (isThisAFrameWeWantToCombineWithCurrentResult) {
       if (existingValueFrames[i] !== undefined && existingTimeFrames[i] !== undefined) {
-        return i
+        return i;
       }
     }
     return null;
@@ -187,7 +198,6 @@ export class PrometheusIncrementalStorage {
   };
 
   /**
-   * @todo need to interpolate variables or we'll get bugs?
    * @param target
    * @param request
    */
@@ -204,9 +214,6 @@ export class PrometheusIncrementalStorage {
       console.error('Request expression is required to build storage index');
       return;
     }
-
-    // Interpolating is hard outside the datasource class... @todo
-    // target.expr =
 
     // If the query (target) doesn't explicitly have an interval defined it's gonna use the one that's available on the request object.
     // @todo is the above true?
@@ -246,8 +253,6 @@ export class PrometheusIncrementalStorage {
     let max = firstFrameTimeValues[firstFrameTimeValues.length - 1];
 
     // Walk through the data frames and get the first and last values of the time array
-    //@todo doesn't transform v2 nest the dataframes for heatmaps? is this going to get the wrong min/max values for nested frames?
-    // Add unit test for this
     for (let i = 0; i < data.length; i++) {
       const thisFrameTimeValues = data[i].fields[0]?.values?.toArray();
       const firstFrameValue = thisFrameTimeValues[0];
@@ -269,7 +274,7 @@ export class PrometheusIncrementalStorage {
     for (let i = 0; i < data.length; i++) {
       if (longestLength && longestLength !== data[i].length) {
         data[i] = applyNullInsertThreshold({
-          frame: data[i] as DataFrame,
+          frame: data[i],
           refFieldName: 'Time',
           refFieldPseudoMax: max,
           refFieldPseudoMin: min,
@@ -514,7 +519,6 @@ export class PrometheusIncrementalStorage {
         (val) => val && val.start === neededDurations[0].start && val.end === neededDurations[0].end
       )
     ) {
-      // @todo align this?
       const originalRange = cloneDeep(request.range);
 
       const originalRangeAligned = alignRange(
