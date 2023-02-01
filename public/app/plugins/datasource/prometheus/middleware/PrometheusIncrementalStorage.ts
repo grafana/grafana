@@ -1,6 +1,7 @@
 import { cloneDeep } from 'lodash';
 
 import {
+  ArrayVector,
   DataFrame,
   DataQueryRequest,
   DataQueryResponse,
@@ -21,7 +22,7 @@ import { PromQuery } from '../types';
 // Get link to prometheus doc for the above comment
 const PROMETHEUS_INCREMENTAL_QUERY_OVERLAP_DURATION_MS = 60 * 10 * 1000;
 const PROMETHEUS_STORAGE_TIME_INDEX = '__time__';
-const DEBUG = false;
+const DEBUG = true;
 
 // Another issue: if the query window starts at a time when there is no results from the database, we'll always fail the cache check and pull fresh data, even though the cache has everything available
 // Also the cache can def get really big for big queries, need to look into if we want to find a way to limit the size of requests we add to the cache?
@@ -73,21 +74,23 @@ export class PrometheusIncrementalStorage {
   };
 
   static removeFramesFromStorageThatExistInRequest(
-    existingTimeFrames: number[],
+    timeValuesFromStorage: number[],
     responseTimeFieldValues: number[],
     originalRange: { end: number; start: number },
     existingValueFrames: number[],
     intervalInSeconds: number
   ) {
     let existingTimeFrameNewValuesRemoved: number[] = [];
-    let existingTimeFrameNewValuesRemovedIndicies: number[] = [];
+    let indiciesOfValuesInStorageToMergeWithResponse: { start: null | number; end: null | number } = {
+      start: null,
+      end: null,
+    };
     let existingValueFrameNewValuesRemoved: number[] = [];
-    let existingValueFrameNewValuesRemovedIndicies: number[] = [];
 
-    for (let i = 0; i < existingTimeFrames?.length; i++) {
+    for (let i = 0; i < timeValuesFromStorage?.length; i++) {
       const startIndex = this.getValidFrameIndicies(
         responseTimeFieldValues,
-        existingTimeFrames,
+        timeValuesFromStorage,
         i,
         originalRange,
         intervalInSeconds,
@@ -95,16 +98,15 @@ export class PrometheusIncrementalStorage {
       );
 
       if (startIndex !== null && startIndex >= 0) {
-        existingTimeFrameNewValuesRemovedIndicies.push(startIndex);
-        existingValueFrameNewValuesRemovedIndicies.push(startIndex);
+        indiciesOfValuesInStorageToMergeWithResponse.start = startIndex;
         break;
       }
     }
 
-    for (let i = existingTimeFrames?.length - 1; i >= 0; i--) {
+    for (let i = timeValuesFromStorage?.length - 1; i >= 0; i--) {
       const endIndex = this.getValidFrameIndicies(
         responseTimeFieldValues,
-        existingTimeFrames,
+        timeValuesFromStorage,
         i,
         originalRange,
         intervalInSeconds,
@@ -112,23 +114,24 @@ export class PrometheusIncrementalStorage {
       );
 
       if (endIndex !== null && endIndex >= 0) {
-        existingTimeFrameNewValuesRemovedIndicies.push(endIndex);
-        existingValueFrameNewValuesRemovedIndicies.push(endIndex);
+        indiciesOfValuesInStorageToMergeWithResponse.end = endIndex;
         break;
       }
     }
 
     if (
-      existingTimeFrameNewValuesRemovedIndicies.length === 2 &&
-      existingValueFrameNewValuesRemovedIndicies.length === 2
+      indiciesOfValuesInStorageToMergeWithResponse.start !== null &&
+      indiciesOfValuesInStorageToMergeWithResponse.end !== null &&
+      indiciesOfValuesInStorageToMergeWithResponse.start >= 0 &&
+      indiciesOfValuesInStorageToMergeWithResponse.end >= 0
     ) {
-      existingTimeFrameNewValuesRemoved = existingTimeFrames.slice(
-        existingTimeFrameNewValuesRemovedIndicies[0],
-        existingTimeFrameNewValuesRemovedIndicies[1] + 1
+      existingTimeFrameNewValuesRemoved = timeValuesFromStorage.slice(
+        indiciesOfValuesInStorageToMergeWithResponse.start,
+        indiciesOfValuesInStorageToMergeWithResponse.end + 1
       );
       existingValueFrameNewValuesRemoved = existingValueFrames.slice(
-        existingValueFrameNewValuesRemovedIndicies[0],
-        existingValueFrameNewValuesRemovedIndicies[1] + 1
+        indiciesOfValuesInStorageToMergeWithResponse.start,
+        indiciesOfValuesInStorageToMergeWithResponse.end + 1
       );
     } else {
       if (DEBUG) {
@@ -140,33 +143,38 @@ export class PrometheusIncrementalStorage {
   }
 
   private static getValidFrameIndicies(
-    responseTimeFieldValues: number[],
-    existingTimeFrames: number[],
+    timeValuesFromResponse: number[],
+    timeValuesFromStorage: number[],
     i: number,
     originalRange: { end: number; start: number },
     intervalInSeconds: number,
-    existingValueFrames: number[]
+    valuesFromStorage: number[]
   ): null | number {
-    const doesResponseNotContainFrameTimeValue = responseTimeFieldValues.indexOf(existingTimeFrames[i]) === -1;
+    const doesResponseNotContainStoredTimeValue = timeValuesFromResponse.indexOf(timeValuesFromStorage[i]) === -1;
 
     // Remove values from before new start
     // Note this acts as the only eviction strategy so far, we only store frames that exist after the start of the current query, minus the interval time
-    const isFrameOlderThenQueryStart = existingTimeFrames[i] <= originalRange.start - intervalInSeconds * 1000;
+    const isFrameOlderThenQueryStart = timeValuesFromStorage[i] <= originalRange.start - intervalInSeconds * 1000;
 
     if (isFrameOlderThenQueryStart && DEBUG) {
       console.log(
         'Frame is older then query, evicting',
-        existingTimeFrames[i] - originalRange.start,
-        existingTimeFrames[i],
-        originalRange.start
+        timeValuesFromStorage[i] - (originalRange.start - intervalInSeconds * 1000),
+        timeValuesFromStorage[i],
+        originalRange.start,
+        intervalInSeconds
       );
+      console.log('originalRange.start', new Date(originalRange.start));
+      console.log('current time value', new Date(timeValuesFromStorage[i]));
+      console.log('current time value', timeValuesFromStorage[i]);
+      console.log('current value', valuesFromStorage[i]);
     }
 
     const isThisAFrameWeWantToCombineWithCurrentResult =
-      doesResponseNotContainFrameTimeValue && !isFrameOlderThenQueryStart;
+      doesResponseNotContainStoredTimeValue && !isFrameOlderThenQueryStart;
     // Only add timeframes from the old data to the new data, if they aren't already contained in the new data
     if (isThisAFrameWeWantToCombineWithCurrentResult) {
-      if (existingValueFrames[i] !== undefined && existingTimeFrames[i] !== undefined) {
+      if (valuesFromStorage[i] !== undefined && timeValuesFromStorage[i] !== undefined) {
         return i;
       }
     }
@@ -351,17 +359,17 @@ export class PrometheusIncrementalStorage {
 
           const thisQueryHasBeenDoneBefore = !thisQueryHasNeverBeenDoneBefore;
 
-          const responseTimeFieldValues: number[] = responseTimeField?.values?.toArray() ?? [];
+          const timeValuesFromResponse: number[] = responseTimeField?.values?.toArray() ?? [];
 
           // Store the response if it's new
           if (thisQueryHasNeverBeenDoneBefore && seriesLabelsIndexString && responseFrameValues?.length) {
-            if (responseFrameValues.length !== responseTimeFieldValues.length) {
+            if (responseFrameValues.length !== timeValuesFromResponse.length) {
               if (DEBUG) {
-                console.warn('Initial values not same length?', responseFrameValues, responseTimeFieldValues);
+                console.warn('Initial values not same length?', responseFrameValues, timeValuesFromResponse);
               }
             }
 
-            this.setStorageTimeFields(responseQueryExpressionAndStepString, responseTimeFieldValues);
+            this.setStorageTimeFields(responseQueryExpressionAndStepString, timeValuesFromResponse);
             this.setStorageFieldsValues(
               responseQueryExpressionAndStepString,
               seriesLabelsIndexString,
@@ -370,35 +378,35 @@ export class PrometheusIncrementalStorage {
           } else if (thisQueryHasBeenDoneBefore && seriesLabelsIndexString && originalRange) {
             // If the labels are the same as saved, append any new values, making sure that any additional data is taken from the newest response
 
-            const existingTimeFrames = previousDataFrames['__time__'];
-            const existingValueFrames = previousDataFrames[seriesLabelsIndexString];
+            const timeValuesFromStorage = previousDataFrames['__time__'];
+            const valuesFromStorage = previousDataFrames[seriesLabelsIndexString];
 
             // These values could be undefined or null, so we have a bit of long conditional, but we're just checking that we have values in storage and the response
             if (
               responseFrameValues &&
               responseFrameValues?.length > 0 &&
-              existingValueFrames &&
-              existingValueFrames.length > 0 &&
-              existingTimeFrames &&
-              responseTimeFieldValues.length > 0
+              valuesFromStorage &&
+              valuesFromStorage.length > 0 &&
+              timeValuesFromStorage &&
+              timeValuesFromResponse.length > 0
             ) {
               const intervalSeconds = rangeUtil.intervalToSeconds(request.interval);
 
               // Filter out values in storage from before query range
               const dedupedFrames = PrometheusIncrementalStorage.removeFramesFromStorageThatExistInRequest(
-                existingTimeFrames,
-                responseTimeFieldValues,
+                timeValuesFromStorage,
+                timeValuesFromResponse,
                 originalRange,
-                existingValueFrames,
+                valuesFromStorage,
                 intervalSeconds
               );
 
-              const allTimeValuesMerged = [...dedupedFrames.time, ...responseTimeFieldValues];
+              const allTimeValuesMerged = dedupedFrames.time.concat(timeValuesFromResponse);
 
-              const allValueFramesMerged = [...dedupedFrames.values, ...responseFrameValues];
+              const allValueFramesMerged = dedupedFrames.values.concat(responseFrameValues);
 
               // This is a reference to the original dataframes passed in, so we're mutating the original dataframe here!
-              valueField.values.buffer = allValueFramesMerged;
+              valueField.values = new ArrayVector(allValueFramesMerged);
 
               // If we set the time values here we'll screw up the rest of the loop, we should be checking to see if each series has the same time steps, or we need to clear the cache
               timeValuesStorage = allTimeValuesMerged;
@@ -419,7 +427,7 @@ export class PrometheusIncrementalStorage {
 
         // If we changed the time steps, let's mutate the dataframe
         if (timeValuesStorage.length > 0 && responseTimeField?.values) {
-          responseTimeField.values.buffer = timeValuesStorage;
+          responseTimeField.values = new ArrayVector(timeValuesStorage);
           this.setStorageTimeFields(responseQueryExpressionAndStepString, timeValuesStorage);
         }
       });
