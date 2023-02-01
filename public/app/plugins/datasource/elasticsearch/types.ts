@@ -1,4 +1,4 @@
-import { DataQuery, DataSourceJsonData } from '@grafana/data';
+import { DataSourceJsonData } from '@grafana/data';
 
 import {
   BucketAggregation,
@@ -8,6 +8,11 @@ import {
   MetricAggregation,
   MetricAggregationType,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
+import {
+  PipelineMetricAggregationType,
+  BasePipelineMetricAggregation as SchemaBasePipelineMetricAggregation,
+  PipelineMetricAggregationWithMultipleBucketPaths as SchemaPipelineMetricAggregationWithMultipleBucketPaths,
+} from './dataquery.gen';
 
 export type Interval = 'Hourly' | 'Daily' | 'Weekly' | 'Monthly' | 'Yearly';
 
@@ -65,14 +70,6 @@ export interface ElasticsearchAggregation {
   hide: boolean;
 }
 
-export interface ElasticsearchQuery extends DataQuery {
-  alias?: string;
-  query?: string;
-  bucketAggs?: BucketAggregation[];
-  metrics?: MetricAggregation[];
-  timeField?: string;
-}
-
 export interface TermsQuery {
   query?: string;
   size?: number;
@@ -87,3 +84,14 @@ export type DataLinkConfig = {
   urlDisplayLabel?: string;
   datasourceUid?: string;
 };
+
+// We temporarily need to override the types from dataquery.gen.ts for SchemaBasePipelineMetricAggregation and PipelineMetricAggregationWithMultipleBucketPaths
+// as generated types are incorrect.
+export interface BasePipelineMetricAggregation extends SchemaBasePipelineMetricAggregation {
+  type: PipelineMetricAggregationType;
+}
+
+export interface PipelineMetricAggregationWithMultipleBucketPaths
+  extends SchemaPipelineMetricAggregationWithMultipleBucketPaths {
+  type: PipelineMetricAggregationType;
+}

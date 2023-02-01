@@ -83,17 +83,43 @@ const (
 
 // Defines values for BasePipelineMetricAggregationType.
 const (
+	BasePipelineMetricAggregationTypeAvg BasePipelineMetricAggregationType = "avg"
+
 	BasePipelineMetricAggregationTypeBucketScript BasePipelineMetricAggregationType = "bucket_script"
+
+	BasePipelineMetricAggregationTypeCardinality BasePipelineMetricAggregationType = "cardinality"
+
+	BasePipelineMetricAggregationTypeCount BasePipelineMetricAggregationType = "count"
 
 	BasePipelineMetricAggregationTypeCumulativeSum BasePipelineMetricAggregationType = "cumulative_sum"
 
 	BasePipelineMetricAggregationTypeDerivative BasePipelineMetricAggregationType = "derivative"
 
+	BasePipelineMetricAggregationTypeExtendedStats BasePipelineMetricAggregationType = "extended_stats"
+
+	BasePipelineMetricAggregationTypeLogs BasePipelineMetricAggregationType = "logs"
+
+	BasePipelineMetricAggregationTypeMax BasePipelineMetricAggregationType = "max"
+
+	BasePipelineMetricAggregationTypeMin BasePipelineMetricAggregationType = "min"
+
 	BasePipelineMetricAggregationTypeMovingAvg BasePipelineMetricAggregationType = "moving_avg"
 
 	BasePipelineMetricAggregationTypeMovingFn BasePipelineMetricAggregationType = "moving_fn"
 
+	BasePipelineMetricAggregationTypePercentiles BasePipelineMetricAggregationType = "percentiles"
+
+	BasePipelineMetricAggregationTypeRate BasePipelineMetricAggregationType = "rate"
+
+	BasePipelineMetricAggregationTypeRawData BasePipelineMetricAggregationType = "raw_data"
+
+	BasePipelineMetricAggregationTypeRawDocument BasePipelineMetricAggregationType = "raw_document"
+
 	BasePipelineMetricAggregationTypeSerialDiff BasePipelineMetricAggregationType = "serial_diff"
+
+	BasePipelineMetricAggregationTypeSum BasePipelineMetricAggregationType = "sum"
+
+	BasePipelineMetricAggregationTypeTopMetrics BasePipelineMetricAggregationType = "top_metrics"
 )
 
 // Defines values for BucketAggregationType.
@@ -481,17 +507,43 @@ const (
 
 // Defines values for PipelineMetricAggregationWithMultipleBucketPathsType.
 const (
+	PipelineMetricAggregationWithMultipleBucketPathsTypeAvg PipelineMetricAggregationWithMultipleBucketPathsType = "avg"
+
 	PipelineMetricAggregationWithMultipleBucketPathsTypeBucketScript PipelineMetricAggregationWithMultipleBucketPathsType = "bucket_script"
+
+	PipelineMetricAggregationWithMultipleBucketPathsTypeCardinality PipelineMetricAggregationWithMultipleBucketPathsType = "cardinality"
+
+	PipelineMetricAggregationWithMultipleBucketPathsTypeCount PipelineMetricAggregationWithMultipleBucketPathsType = "count"
 
 	PipelineMetricAggregationWithMultipleBucketPathsTypeCumulativeSum PipelineMetricAggregationWithMultipleBucketPathsType = "cumulative_sum"
 
 	PipelineMetricAggregationWithMultipleBucketPathsTypeDerivative PipelineMetricAggregationWithMultipleBucketPathsType = "derivative"
 
+	PipelineMetricAggregationWithMultipleBucketPathsTypeExtendedStats PipelineMetricAggregationWithMultipleBucketPathsType = "extended_stats"
+
+	PipelineMetricAggregationWithMultipleBucketPathsTypeLogs PipelineMetricAggregationWithMultipleBucketPathsType = "logs"
+
+	PipelineMetricAggregationWithMultipleBucketPathsTypeMax PipelineMetricAggregationWithMultipleBucketPathsType = "max"
+
+	PipelineMetricAggregationWithMultipleBucketPathsTypeMin PipelineMetricAggregationWithMultipleBucketPathsType = "min"
+
 	PipelineMetricAggregationWithMultipleBucketPathsTypeMovingAvg PipelineMetricAggregationWithMultipleBucketPathsType = "moving_avg"
 
 	PipelineMetricAggregationWithMultipleBucketPathsTypeMovingFn PipelineMetricAggregationWithMultipleBucketPathsType = "moving_fn"
 
+	PipelineMetricAggregationWithMultipleBucketPathsTypePercentiles PipelineMetricAggregationWithMultipleBucketPathsType = "percentiles"
+
+	PipelineMetricAggregationWithMultipleBucketPathsTypeRate PipelineMetricAggregationWithMultipleBucketPathsType = "rate"
+
+	PipelineMetricAggregationWithMultipleBucketPathsTypeRawData PipelineMetricAggregationWithMultipleBucketPathsType = "raw_data"
+
+	PipelineMetricAggregationWithMultipleBucketPathsTypeRawDocument PipelineMetricAggregationWithMultipleBucketPathsType = "raw_document"
+
 	PipelineMetricAggregationWithMultipleBucketPathsTypeSerialDiff PipelineMetricAggregationWithMultipleBucketPathsType = "serial_diff"
+
+	PipelineMetricAggregationWithMultipleBucketPathsTypeSum PipelineMetricAggregationWithMultipleBucketPathsType = "sum"
+
+	PipelineMetricAggregationWithMultipleBucketPathsTypeTopMetrics PipelineMetricAggregationWithMultipleBucketPathsType = "top_metrics"
 )
 
 // Defines values for RateType.
@@ -595,9 +647,12 @@ type BaseMovingAverageModelSettingsModel string
 
 // BasePipelineMetricAggregation defines model for BasePipelineMetricAggregation.
 type BasePipelineMetricAggregation struct {
-	Field       *string                           `json:"field,omitempty"`
-	Hide        *bool                             `json:"hide,omitempty"`
-	Id          string                            `json:"id"`
+	Field *string `json:"field,omitempty"`
+	Hide  *bool   `json:"hide,omitempty"`
+	Id    string  `json:"id"`
+
+	// TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
+	// type:         #PipelineMetricAggregationType
 	PipelineAgg *string                           `json:"pipelineAgg,omitempty"`
 	Type        BasePipelineMetricAggregationType `json:"type"`
 }
@@ -624,8 +679,11 @@ type BucketAggregationWithFieldType string
 
 // BucketScript defines model for BucketScript.
 type BucketScript struct {
-	Hide              *bool  `json:"hide,omitempty"`
-	Id                string `json:"id"`
+	Hide *bool  `json:"hide,omitempty"`
+	Id   string `json:"id"`
+
+	// TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
+	// type: #PipelineMetricAggregationType
 	PipelineVariables *[]struct {
 		Name        string `json:"name"`
 		PipelineAgg string `json:"pipelineAgg"`
@@ -651,9 +709,12 @@ type CountType string
 
 // CumulativeSum defines model for CumulativeSum.
 type CumulativeSum struct {
-	Field       *string `json:"field,omitempty"`
-	Hide        *bool   `json:"hide,omitempty"`
-	Id          string  `json:"id"`
+	Field *string `json:"field,omitempty"`
+	Hide  *bool   `json:"hide,omitempty"`
+	Id    string  `json:"id"`
+
+	// TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
+	// type:         #PipelineMetricAggregationType
 	PipelineAgg *string `json:"pipelineAgg,omitempty"`
 	Settings    *struct {
 		Format *string `json:"format,omitempty"`
@@ -692,9 +753,12 @@ type DateHistogramSettings struct {
 
 // Derivative defines model for Derivative.
 type Derivative struct {
-	Field       *string `json:"field,omitempty"`
-	Hide        *bool   `json:"hide,omitempty"`
-	Id          string  `json:"id"`
+	Field *string `json:"field,omitempty"`
+	Hide  *bool   `json:"hide,omitempty"`
+	Id    string  `json:"id"`
+
+	// TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
+	// type:         #PipelineMetricAggregationType
 	PipelineAgg *string `json:"pipelineAgg,omitempty"`
 	Settings    *struct {
 		Unit *string `json:"unit,omitempty"`
@@ -1014,9 +1078,12 @@ type MovingAverageSimpleModelSettingsModel string
 
 // MovingFunction defines model for MovingFunction.
 type MovingFunction struct {
-	Field       *string `json:"field,omitempty"`
-	Hide        *bool   `json:"hide,omitempty"`
-	Id          string  `json:"id"`
+	Field *string `json:"field,omitempty"`
+	Hide  *bool   `json:"hide,omitempty"`
+	Id    string  `json:"id"`
+
+	// TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
+	// type:         #PipelineMetricAggregationType
 	PipelineAgg *string `json:"pipelineAgg,omitempty"`
 	Settings    *struct {
 		Script *interface{} `json:"script,omitempty"`
@@ -1053,8 +1120,11 @@ type PipelineMetricAggregationType string
 
 // PipelineMetricAggregationWithMultipleBucketPaths defines model for PipelineMetricAggregationWithMultipleBucketPaths.
 type PipelineMetricAggregationWithMultipleBucketPaths struct {
-	Hide              *bool  `json:"hide,omitempty"`
-	Id                string `json:"id"`
+	Hide *bool  `json:"hide,omitempty"`
+	Id   string `json:"id"`
+
+	// TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
+	// type: #PipelineMetricAggregationType
 	PipelineVariables *[]struct {
 		Name        string `json:"name"`
 		PipelineAgg string `json:"pipelineAgg"`
@@ -1114,9 +1184,12 @@ type RawDocumentType string
 
 // SerialDiff defines model for SerialDiff.
 type SerialDiff struct {
-	Field       *string `json:"field,omitempty"`
-	Hide        *bool   `json:"hide,omitempty"`
-	Id          string  `json:"id"`
+	Field *string `json:"field,omitempty"`
+	Hide  *bool   `json:"hide,omitempty"`
+	Id    string  `json:"id"`
+
+	// TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
+	// type:         #PipelineMetricAggregationType
 	PipelineAgg *string `json:"pipelineAgg,omitempty"`
 	Settings    *struct {
 		Lag *string `json:"lag,omitempty"`
