@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
-	"github.com/grafana/grafana/pkg/models"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -31,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
+	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
@@ -92,7 +92,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 
 	scenarioWithLibraryPanel(t, "When an admin tries to store a dashboard with library panels inside and outside of rows, it should connect all",
 		func(t *testing.T, sc scenarioContext) {
-			cmd := libraryelements.CreateLibraryElementCommand{
+			cmd := model.CreateLibraryElementCommand{
 				FolderID: sc.initialResult.Result.FolderID,
 				Name:     "Outside row",
 				Model: []byte(`
@@ -104,7 +104,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 			  "description": "A description"
 			}
 		`),
-				Kind: int64(models.PanelElement),
+				Kind: int64(model.PanelElement),
 			}
 			outsidePanel, err := sc.elementService.CreateElement(sc.ctx, sc.user, cmd)
 			require.NoError(t, err)
@@ -231,7 +231,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 
 	scenarioWithLibraryPanel(t, "When an admin tries to store a dashboard with unused/removed library panels, it should disconnect unused/removed library panels",
 		func(t *testing.T, sc scenarioContext) {
-			unused, err := sc.elementService.CreateElement(sc.ctx, sc.user, libraryelements.CreateLibraryElementCommand{
+			unused, err := sc.elementService.CreateElement(sc.ctx, sc.user, model.CreateLibraryElementCommand{
 				FolderID: sc.folder.ID,
 				Name:     "Unused Libray Panel",
 				Model: []byte(`
@@ -243,7 +243,7 @@ func TestConnectLibraryPanelsForDashboard(t *testing.T) {
 			  "description": "Unused description"
 			}
 		`),
-				Kind: int64(models.PanelElement),
+				Kind: int64(model.PanelElement),
 			})
 			require.NoError(t, err)
 			dashJSON := map[string]interface{}{
@@ -368,7 +368,7 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 
 			_, err := sc.elementService.GetElement(sc.ctx, sc.user, missingUID)
 
-			require.EqualError(t, err, libraryelements.ErrLibraryElementNotFound.Error())
+			require.EqualError(t, err, model.ErrLibraryElementNotFound.Error())
 
 			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, simplejson.NewFromAny(libraryElements), panels, 0)
 			require.NoError(t, err)
@@ -520,9 +520,9 @@ func TestImportLibraryPanelsForDashboard(t *testing.T) {
 			}
 
 			_, err := sc.elementService.GetElement(sc.ctx, sc.user, outsideUID)
-			require.EqualError(t, err, libraryelements.ErrLibraryElementNotFound.Error())
+			require.EqualError(t, err, model.ErrLibraryElementNotFound.Error())
 			_, err = sc.elementService.GetElement(sc.ctx, sc.user, insideUID)
-			require.EqualError(t, err, libraryelements.ErrLibraryElementNotFound.Error())
+			require.EqualError(t, err, model.ErrLibraryElementNotFound.Error())
 
 			err = sc.service.ImportLibraryPanelsForDashboard(sc.ctx, sc.user, simplejson.NewFromAny(libraryElements), panels, 0)
 			require.NoError(t, err)
@@ -555,7 +555,7 @@ type libraryPanel struct {
 	Description string
 	Model       map[string]interface{}
 	Version     int64
-	Meta        libraryelements.LibraryElementDTOMeta
+	Meta        model.LibraryElementDTOMeta
 }
 
 type libraryElementGridPos struct {
@@ -581,17 +581,17 @@ type libraryElementModel struct {
 }
 
 type libraryElement struct {
-	ID          int64                                 `json:"id"`
-	OrgID       int64                                 `json:"orgId"`
-	FolderID    int64                                 `json:"folderId"`
-	UID         string                                `json:"uid"`
-	Name        string                                `json:"name"`
-	Kind        int64                                 `json:"kind"`
-	Type        string                                `json:"type"`
-	Description string                                `json:"description"`
-	Model       libraryElementModel                   `json:"model"`
-	Version     int64                                 `json:"version"`
-	Meta        libraryelements.LibraryElementDTOMeta `json:"meta"`
+	ID          int64                       `json:"id"`
+	OrgID       int64                       `json:"orgId"`
+	FolderID    int64                       `json:"folderId"`
+	UID         string                      `json:"uid"`
+	Name        string                      `json:"name"`
+	Kind        int64                       `json:"kind"`
+	Type        string                      `json:"type"`
+	Description string                      `json:"description"`
+	Model       libraryElementModel         `json:"model"`
+	Version     int64                       `json:"version"`
+	Meta        model.LibraryElementDTOMeta `json:"meta"`
 }
 
 type libraryPanelResult struct {
@@ -613,9 +613,9 @@ type folderACLItem struct {
 	permission dashboards.PermissionType
 }
 
-func toLibraryElement(t *testing.T, res libraryelements.LibraryElementDTO) libraryElement {
-	var model = libraryElementModel{}
-	err := json.Unmarshal(res.Model, &model)
+func toLibraryElement(t *testing.T, res model.LibraryElementDTO) libraryElement {
+	var libraryElementModel = libraryElementModel{}
+	err := json.Unmarshal(res.Model, &libraryElementModel)
 	require.NoError(t, err)
 
 	return libraryElement{
@@ -627,9 +627,9 @@ func toLibraryElement(t *testing.T, res libraryelements.LibraryElementDTO) libra
 		Type:        res.Type,
 		Description: res.Description,
 		Kind:        res.Kind,
-		Model:       model,
+		Model:       libraryElementModel,
 		Version:     res.Version,
-		Meta: libraryelements.LibraryElementDTOMeta{
+		Meta: model.LibraryElementDTOMeta{
 			FolderName:          res.Meta.FolderName,
 			FolderUID:           res.Meta.FolderUID,
 			ConnectedDashboards: res.Meta.ConnectedDashboards,
@@ -649,8 +649,8 @@ func toLibraryElement(t *testing.T, res libraryelements.LibraryElementDTO) libra
 	}
 }
 
-func getExpected(t *testing.T, res libraryelements.LibraryElementDTO, UID string, name string, model map[string]interface{}) libraryElement {
-	marshalled, err := json.Marshal(model)
+func getExpected(t *testing.T, res model.LibraryElementDTO, UID string, name string, lEModel map[string]interface{}) libraryElement {
+	marshalled, err := json.Marshal(lEModel)
 	require.NoError(t, err)
 	var libModel libraryElementModel
 	err = json.Unmarshal(marshalled, &libModel)
@@ -667,7 +667,7 @@ func getExpected(t *testing.T, res libraryelements.LibraryElementDTO, UID string
 		Kind:        1,
 		Model:       libModel,
 		Version:     1,
-		Meta: libraryelements.LibraryElementDTOMeta{
+		Meta: model.LibraryElementDTOMeta{
 			FolderName:          "General",
 			FolderUID:           "",
 			ConnectedDashboards: 0,
@@ -782,7 +782,7 @@ func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, s
 	t.Helper()
 
 	testScenario(t, desc, func(t *testing.T, sc scenarioContext) {
-		command := libraryelements.CreateLibraryElementCommand{
+		command := model.CreateLibraryElementCommand{
 			FolderID: sc.folder.ID,
 			Name:     "Text - Library Panel",
 			Model: []byte(`
@@ -794,7 +794,7 @@ func scenarioWithLibraryPanel(t *testing.T, desc string, fn func(t *testing.T, s
 			  "description": "A description"
 			}
 		`),
-			Kind: int64(models.PanelElement),
+			Kind: int64(model.PanelElement),
 		}
 		resp, err := sc.elementService.CreateElement(sc.ctx, sc.user, command)
 		require.NoError(t, err)
