@@ -27,6 +27,7 @@ import { ExploreId } from 'app/types/explore';
 import { changePanelState } from '../state/explorePane';
 
 import { SpanBarOptionsData, Trace, TracePageHeader, TraceTimelineViewer, TTraceTimeline } from './components';
+import SpanGraph from './components/TracePageHeader/SpanGraph';
 import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
 import { createSpanLinkFactory } from './createSpanLink';
 import { useChildrenState } from './useChildrenState';
@@ -64,6 +65,8 @@ type Props = {
   topOfViewRefType: TopOfViewRefType;
 };
 
+export type VisualizationTypes = 'spanList' | 'flamegraph';
+
 export function TraceView(props: Props) {
   const { spanFindMatches, traceProp, datasource, topOfViewRef, topOfViewRefType } = props;
 
@@ -94,6 +97,7 @@ export function TraceView(props: Props) {
    * State of the top minimap, slim means it is collapsed.
    */
   const [slim, setSlim] = useState(false);
+  const [visualization, setVisualization] = useState<VisualizationTypes>('spanList');
 
   const [focusedSpanId, createFocusSpanLink] = useFocusSpanLink({
     refId: props.dataFrames[0]?.refId,
@@ -141,58 +145,70 @@ export function TraceView(props: Props) {
         <>
           <TracePageHeader
             canCollapse={false}
-            hideMap={false}
             hideSummary={false}
             onSlimViewClicked={onSlimViewClicked}
             onTraceGraphViewClicked={noop}
             slimView={slim}
             trace={traceProp}
-            updateNextViewRangeTime={updateNextViewRangeTime}
-            updateViewRangeTime={updateViewRangeTime}
-            viewRange={viewRange}
             timeZone={timeZone}
+            visualization={visualization}
+            visualizationOnChange={setVisualization}
           />
-          <TraceTimelineViewer
-            registerAccessors={noop}
-            scrollToFirstVisibleSpan={noop}
-            findMatchesIDs={spanFindMatches}
-            trace={traceProp}
-            datasourceType={datasourceType}
-            spanBarOptions={spanBarOptions?.spanBar}
-            traceTimeline={traceTimeline}
-            updateNextViewRangeTime={updateNextViewRangeTime}
-            updateViewRangeTime={updateViewRangeTime}
-            viewRange={viewRange}
-            timeZone={timeZone}
-            setSpanNameColumnWidth={setSpanNameColumnWidth}
-            collapseAll={collapseAll}
-            collapseOne={collapseOne}
-            expandAll={expandAll}
-            expandOne={expandOne}
-            childrenToggle={childrenToggle}
-            clearShouldScrollToFirstUiFindMatch={noop}
-            detailLogItemToggle={detailLogItemToggle}
-            detailLogsToggle={detailLogsToggle}
-            detailWarningsToggle={detailWarningsToggle}
-            detailStackTracesToggle={detailStackTracesToggle}
-            detailReferencesToggle={detailReferencesToggle}
-            detailReferenceItemToggle={detailReferenceItemToggle}
-            detailProcessToggle={detailProcessToggle}
-            detailTagsToggle={detailTagsToggle}
-            detailToggle={toggleDetail}
-            setTrace={noop}
-            addHoverIndentGuideId={addHoverIndentGuideId}
-            removeHoverIndentGuideId={removeHoverIndentGuideId}
-            linksGetter={() => []}
-            uiFind={props.search}
-            createSpanLink={createSpanLink}
-            scrollElement={props.scrollElement}
-            focusedSpanId={focusedSpanId}
-            focusedSpanIdForSearch={props.focusedSpanIdForSearch!}
-            createFocusSpanLink={createFocusSpanLink}
-            topOfViewRef={topOfViewRef}
-            topOfViewRefType={topOfViewRefType}
-          />
+          {visualization === 'spanList' ? (
+            <>
+              {!slim && (
+                <SpanGraph
+                  trace={traceProp}
+                  viewRange={viewRange}
+                  updateNextViewRangeTime={updateNextViewRangeTime}
+                  updateViewRangeTime={updateViewRangeTime}
+                />
+              )}
+              <TraceTimelineViewer
+                registerAccessors={noop}
+                scrollToFirstVisibleSpan={noop}
+                findMatchesIDs={spanFindMatches}
+                trace={traceProp}
+                datasourceType={datasourceType}
+                spanBarOptions={spanBarOptions?.spanBar}
+                traceTimeline={traceTimeline}
+                updateNextViewRangeTime={updateNextViewRangeTime}
+                updateViewRangeTime={updateViewRangeTime}
+                viewRange={viewRange}
+                timeZone={timeZone}
+                setSpanNameColumnWidth={setSpanNameColumnWidth}
+                collapseAll={collapseAll}
+                collapseOne={collapseOne}
+                expandAll={expandAll}
+                expandOne={expandOne}
+                childrenToggle={childrenToggle}
+                clearShouldScrollToFirstUiFindMatch={noop}
+                detailLogItemToggle={detailLogItemToggle}
+                detailLogsToggle={detailLogsToggle}
+                detailWarningsToggle={detailWarningsToggle}
+                detailStackTracesToggle={detailStackTracesToggle}
+                detailReferencesToggle={detailReferencesToggle}
+                detailReferenceItemToggle={detailReferenceItemToggle}
+                detailProcessToggle={detailProcessToggle}
+                detailTagsToggle={detailTagsToggle}
+                detailToggle={toggleDetail}
+                setTrace={noop}
+                addHoverIndentGuideId={addHoverIndentGuideId}
+                removeHoverIndentGuideId={removeHoverIndentGuideId}
+                linksGetter={() => []}
+                uiFind={props.search}
+                createSpanLink={createSpanLink}
+                scrollElement={props.scrollElement}
+                focusedSpanId={focusedSpanId}
+                focusedSpanIdForSearch={props.focusedSpanIdForSearch!}
+                createFocusSpanLink={createFocusSpanLink}
+                topOfViewRef={topOfViewRef}
+                topOfViewRefType={topOfViewRefType}
+              />
+            </>
+          ) : (
+            <div>flamegraph</div>
+          )}
         </>
       ) : (
         <div className={styles.noDataMsg}>No data</div>

@@ -17,29 +17,29 @@ import cx from 'classnames';
 import { get as _get, maxBy as _maxBy, values as _values } from 'lodash';
 import * as React from 'react';
 
-import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { dateTimeFormat, GrafanaTheme2, SelectableValue, TimeZone } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { HorizontalGroup, Icon, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
+import { VisualizationTypes } from '../../TraceView';
 import ExternalLinks from '../common/ExternalLinks';
 import LabeledList from '../common/LabeledList';
 import TraceName from '../common/TraceName';
-import { autoColor, TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate } from '../index';
+import { autoColor } from '../index';
 import { getTraceLinks } from '../model/link-patterns';
 import { getTraceName } from '../model/trace-viewer';
 import { Trace } from '../types';
 import { uTxMuted } from '../uberUtilityStyles';
 import { formatDuration } from '../utils/date';
 
-import SpanGraph from './SpanGraph';
-
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     TracePageHeader: css`
       label: TracePageHeader;
-      & > :first-child {
+      & > :nth-child(2) {
         border-bottom: 1px solid ${autoColor(theme, '#e8e8e8')};
       }
-      & > :nth-child(2) {
+      & > :nth-child(3) {
         background-color: ${autoColor(theme, '#eee')};
         border-bottom: 1px solid ${autoColor(theme, '#e4e4e4')};
       }
@@ -141,16 +141,14 @@ const getStyles = (theme: GrafanaTheme2) => {
 
 export type TracePageHeaderEmbedProps = {
   canCollapse: boolean;
-  hideMap: boolean;
   hideSummary: boolean;
   onSlimViewClicked: () => void;
   onTraceGraphViewClicked: () => void;
   slimView: boolean;
   trace: Trace | null;
-  updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
-  updateViewRangeTime: TUpdateViewRangeTimeFunction;
-  viewRange: ViewRange;
   timeZone: TimeZone;
+  visualization: VisualizationTypes;
+  visualizationOnChange: (v: VisualizationTypes) => void;
 };
 
 export const HEADER_ITEMS = [
@@ -196,15 +194,13 @@ export const HEADER_ITEMS = [
 export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
   const {
     canCollapse,
-    hideMap,
     hideSummary,
     onSlimViewClicked,
     slimView,
     trace,
-    updateNextViewRangeTime,
-    updateViewRangeTime,
-    viewRange,
     timeZone,
+    visualization,
+    visualizationOnChange,
   } = props;
 
   const styles = useStyles2(getStyles);
@@ -218,6 +214,11 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
   if (!trace) {
     return null;
   }
+
+  const visualizationOptions: Array<SelectableValue<VisualizationTypes>> = [
+    { label: 'Span List', value: 'spanList', icon: 'list-ui-alt' },
+    { label: 'Flame Graph', value: 'flamegraph', icon: 'fire' },
+  ];
 
   const summaryItems =
     !hideSummary &&
@@ -259,15 +260,16 @@ export default function TracePageHeader(props: TracePageHeaderEmbedProps) {
           title
         )}
       </div>
-      {summaryItems && <LabeledList className={styles.TracePageHeaderOverviewItems} items={summaryItems} />}
-      {!hideMap && !slimView && (
-        <SpanGraph
-          trace={trace}
-          viewRange={viewRange}
-          updateNextViewRangeTime={updateNextViewRangeTime}
-          updateViewRangeTime={updateViewRangeTime}
-        />
+      {config.featureToggles.newTraceView && (
+        <HorizontalGroup spacing="lg" justify={'flex-end'}>
+          <RadioButtonGroup<VisualizationTypes>
+            options={visualizationOptions}
+            value={visualization}
+            onChange={visualizationOnChange}
+          />
+        </HorizontalGroup>
       )}
+      {summaryItems && <LabeledList className={styles.TracePageHeaderOverviewItems} items={summaryItems} />}
     </header>
   );
 }
