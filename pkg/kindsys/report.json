@@ -137,9 +137,7 @@
     },
     "azuremonitordataquery": {
       "category": "composable",
-      "codeowners": [
-        "grafana/partner-plugins"
-      ],
+      "codeowners": [],
       "currentVersion": [
         0,
         0
