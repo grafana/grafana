@@ -369,7 +369,7 @@ var wireBasicSet = wire.NewSet(
 	apiserver.ProvideHTTPServer,
 	bridge.ProvideService,
 	wire.Bind(new(apiserver.Handler), new(*apiserver.ApiserverProxy)), // TODO decide this somewhere other than wire
-	k8saccess.ProvideDashboardController,
+	dashboardservice.ProvideDashboardController,
 )
 
 var wireSet = wire.NewSet(

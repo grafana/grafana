@@ -1,4 +1,4 @@
-package k8saccess
+package service
 
 import (
 	"context"
@@ -13,14 +13,16 @@ import (
 )
 
 type DashboardController struct {
-	bridgeService *bridge.Service
-	reg           *corecrd.Registry
+	dashboardService *DashboardServiceImpl
+	bridgeService    *bridge.Service
+	reg              *corecrd.Registry
 }
 
-func ProvideDashboardController(bridgeService *bridge.Service, reg *corecrd.Registry) *DashboardController {
+func ProvideDashboardController(bridgeService *bridge.Service, reg *corecrd.Registry, dasboardService *DashboardServiceImpl) *DashboardController {
 	return &DashboardController{
-		bridgeService: bridgeService,
-		reg:           reg,
+		dashboardService: dasboardService,
+		bridgeService:    bridgeService,
+		reg:              reg,
 	}
 }
 
@@ -39,12 +41,15 @@ func (c *DashboardController) Run(ctx context.Context) error {
 	dashboardInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			fmt.Printf("dashboard added: %s \n", obj)
+			//c.dashboardService.SaveDashboard()
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			fmt.Printf("dashboard changed: %s \n", newObj)
+			fmt.Printf("dashboard changed:%s \n %s \n", oldObj, newObj)
+			//c.dashboardService.SaveDashboard()
 		},
 		DeleteFunc: func(obj interface{}) {
 			fmt.Printf("dashboard deleted: %s \n", obj)
+			//c.dashboardService.DeleteDashboard(ctx, obj.ID, obj.OrgID)
 		},
 	})
 
