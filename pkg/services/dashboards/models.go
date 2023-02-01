@@ -6,11 +6,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/slugify"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/search/model"
+	thumbsmodel "github.com/grafana/grafana/pkg/services/thumbs/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -164,7 +164,7 @@ func GetDashboardURL(uid string, slug string) string {
 }
 
 // GetKioskModeDashboardUrl returns the HTML url for a dashboard in kiosk mode.
-func GetKioskModeDashboardURL(uid string, slug string, theme models.Theme) string {
+func GetKioskModeDashboardURL(uid string, slug string, theme thumbsmodel.Theme) string {
 	return fmt.Sprintf("%s?kiosk&theme=%s", GetDashboardURL(uid, slug), string(theme))
 }
 

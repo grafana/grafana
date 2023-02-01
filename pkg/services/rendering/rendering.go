@@ -16,8 +16,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	thumbsmodel "github.com/grafana/grafana/pkg/services/thumbs/model"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -199,9 +199,9 @@ func (rs *RenderingService) Version() string {
 	return rs.version
 }
 
-func (rs *RenderingService) RenderErrorImage(theme models.Theme, err error) (*RenderResult, error) {
+func (rs *RenderingService) RenderErrorImage(theme thumbsmodel.Theme, err error) (*RenderResult, error) {
 	if theme == "" {
-		theme = models.ThemeDark
+		theme = thumbsmodel.ThemeDark
 	}
 	imgUrl := "public/img/rendering_%s_%s.png"
 	if errors.Is(err, ErrTimeout) {
@@ -250,7 +250,7 @@ func (rs *RenderingService) render(ctx context.Context, opts Opts, renderKeyProv
 			return nil, ErrConcurrentLimitReached
 		}
 
-		theme := models.ThemeDark
+		theme := thumbsmodel.ThemeDark
 		if opts.Theme != "" {
 			theme = opts.Theme
 		}

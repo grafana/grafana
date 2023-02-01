@@ -9,11 +9,11 @@ import (
 	"github.com/grafana/grafana/pkg/components/imguploader"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
-	"github.com/grafana/grafana/pkg/models"
 	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	thumbsmodel "github.com/grafana/grafana/pkg/services/thumbs/model"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -218,7 +218,7 @@ func (n *notificationService) renderAndUploadImage(evalCtx *EvalContext, timeout
 		Width:           1000,
 		Height:          500,
 		ConcurrentLimit: setting.AlertingRenderLimit,
-		Theme:           models.ThemeDark,
+		Theme:           thumbsmodel.ThemeDark,
 	}
 
 	ref, err := evalCtx.GetDashboardUID()

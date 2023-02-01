@@ -13,10 +13,10 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	thumbsmodel "github.com/grafana/grafana/pkg/services/thumbs/model"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -27,21 +27,21 @@ type simpleCrawler struct {
 	renderingTimeout time.Duration
 
 	glive                   *live.GrafanaLive
-	thumbnailRepo           thumbnailRepo
-	mode                    CrawlerMode
-	thumbnailKind           ThumbnailKind
+	thumbnailRepo           ThumbnailRepo
+	mode                    thumbsmodel.CrawlerMode
+	thumbnailKind           thumbsmodel.ThumbnailKind
 	auth                    CrawlerAuth
 	opts                    rendering.Opts
-	status                  crawlStatus
+	status                  thumbsmodel.CrawlStatus
 	statusMutex             sync.RWMutex
-	queue                   []*DashboardWithStaleThumbnail
+	queue                   []*thumbsmodel.DashboardWithStaleThumbnail
 	queueMutex              sync.Mutex
 	log                     log.Logger
 	renderingSessionByOrgId map[int64]rendering.Session
 	dsUidsLookup            getDatasourceUidsForDashboard
 }
 
-func newSimpleCrawler(renderService rendering.Service, gl *live.GrafanaLive, repo thumbnailRepo, cfg *setting.Cfg, settings setting.DashboardPreviewsSettings, dsUidsLookup getDatasourceUidsForDashboard) dashRenderer {
+func newSimpleCrawler(renderService rendering.Service, gl *live.GrafanaLive, repo ThumbnailRepo, cfg *setting.Cfg, settings setting.DashboardPreviewsSettings, dsUidsLookup getDatasourceUidsForDashboard) dashRenderer {
 	threadCount := int(settings.CrawlThreadCount)
 	c := &simpleCrawler{
 		// temporarily increases the concurrentLimit from the 'cfg.RendererConcurrentRequestLimit' to 'cfg.RendererConcurrentRequestLimit + crawlerThreadCount'
@@ -53,8 +53,8 @@ func newSimpleCrawler(renderService rendering.Service, gl *live.GrafanaLive, rep
 		dsUidsLookup:     dsUidsLookup,
 		thumbnailRepo:    repo,
 		log:              log.New("thumbnails_crawler"),
-		status: crawlStatus{
-			State:    initializing,
+		status: thumbsmodel.CrawlStatus{
+			State:    thumbsmodel.Initializing,
 			Complete: 0,
 			Queue:    0,
 		},
@@ -65,7 +65,7 @@ func newSimpleCrawler(renderService rendering.Service, gl *live.GrafanaLive, rep
 	return c
 }
 
-func (r *simpleCrawler) next(ctx context.Context) (*DashboardWithStaleThumbnail, rendering.Session, rendering.AuthOpts, error) {
+func (r *simpleCrawler) next(ctx context.Context) (*thumbsmodel.DashboardWithStaleThumbnail, rendering.Session, rendering.AuthOpts, error) {
 	r.queueMutex.Lock()
 	defer r.queueMutex.Unlock()
 
@@ -117,13 +117,13 @@ func (r *simpleCrawler) broadcastStatus() {
 	}
 }
 
-type byOrgId []*DashboardWithStaleThumbnail
+type byOrgId []*thumbsmodel.DashboardWithStaleThumbnail
 
 func (d byOrgId) Len() int           { return len(d) }
 func (d byOrgId) Less(i, j int) bool { return d[i].OrgId > d[j].OrgId }
 func (d byOrgId) Swap(i, j int)      { d[i], d[j] = d[j], d[i] }
 
-func (r *simpleCrawler) Run(ctx context.Context, auth CrawlerAuth, mode CrawlerMode, theme models.Theme, thumbnailKind ThumbnailKind) error {
+func (r *simpleCrawler) Run(ctx context.Context, auth CrawlerAuth, mode thumbsmodel.CrawlerMode, theme thumbsmodel.Theme, thumbnailKind thumbsmodel.ThumbnailKind) error {
 	res, err := r.renderService.HasCapability(ctx, rendering.ScalingDownImages)
 	if err != nil {
 		return err
@@ -173,9 +173,9 @@ func (r *simpleCrawler) Run(ctx context.Context, auth CrawlerAuth, mode CrawlerM
 
 	r.renderingSessionByOrgId = make(map[int64]rendering.Session)
 	r.queue = items
-	r.status = crawlStatus{
+	r.status = thumbsmodel.CrawlStatus{
 		Started:  runStarted,
-		State:    running,
+		State:    thumbsmodel.Running,
 		Complete: 0,
 	}
 	r.broadcastStatus()
@@ -209,24 +209,24 @@ func (r *simpleCrawler) Run(ctx context.Context, auth CrawlerAuth, mode CrawlerM
 func (r *simpleCrawler) IsRunning() bool {
 	r.statusMutex.Lock()
 	defer r.statusMutex.Unlock()
-	return r.status.State == running
+	return r.status.State == thumbsmodel.Running
 }
 
-func (r *simpleCrawler) Stop() (crawlStatus, error) {
+func (r *simpleCrawler) Stop() (thumbsmodel.CrawlStatus, error) {
 	r.statusMutex.Lock()
-	if r.status.State == running {
-		r.status.State = stopping
+	if r.status.State == thumbsmodel.Running {
+		r.status.State = thumbsmodel.Stopping
 	}
 	r.statusMutex.Unlock()
 
 	return r.Status()
 }
 
-func (r *simpleCrawler) Status() (crawlStatus, error) {
+func (r *simpleCrawler) Status() (thumbsmodel.CrawlStatus, error) {
 	r.statusMutex.RLock()
 	defer r.statusMutex.RUnlock()
 
-	status := crawlStatus{
+	status := thumbsmodel.CrawlStatus{
 		State:    r.status.State,
 		Started:  r.status.Started,
 		Complete: r.status.Complete,
@@ -257,7 +257,7 @@ func (r *simpleCrawler) crawlFinished() {
 	r.statusMutex.Lock()
 	defer r.statusMutex.Unlock()
 
-	r.status.State = stopped
+	r.status.State = thumbsmodel.Stopped
 	r.status.Finished = time.Now()
 }
 
@@ -265,7 +265,7 @@ func (r *simpleCrawler) shouldWalk() bool {
 	r.statusMutex.RLock()
 	defer r.statusMutex.RUnlock()
 
-	return r.status.State == running
+	return r.status.State == thumbsmodel.Running
 }
 
 func (r *simpleCrawler) walk(ctx context.Context, id int) {
@@ -326,7 +326,7 @@ func (r *simpleCrawler) walk(ctx context.Context, id int) {
 					}
 				}()
 
-				thumbnailId, err := r.thumbnailRepo.saveFromFile(ctx, res.FilePath, DashboardThumbnailMeta{
+				thumbnailId, err := r.thumbnailRepo.saveFromFile(ctx, res.FilePath, thumbsmodel.DashboardThumbnailMeta{
 					DashboardUID: item.Uid,
 					OrgId:        item.OrgId,
 					Theme:        r.opts.Theme,

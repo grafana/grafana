@@ -5,8 +5,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/org"
+	thumbsmodel "github.com/grafana/grafana/pkg/services/thumbs/model"
 	"github.com/grafana/grafana/pkg/util/errutil"
 )
 
@@ -53,7 +53,7 @@ type Opts struct {
 	ConcurrentLimit   int
 	DeviceScaleFactor float64
 	Headers           map[string][]string
-	Theme             models.Theme
+	Theme             thumbsmodel.Theme
 }
 
 type ErrorOpts struct {
@@ -123,7 +123,7 @@ type Service interface {
 	Version() string
 	Render(ctx context.Context, opts Opts, session Session) (*RenderResult, error)
 	RenderCSV(ctx context.Context, opts CSVOpts, session Session) (*RenderCSVResult, error)
-	RenderErrorImage(theme models.Theme, error error) (*RenderResult, error)
+	RenderErrorImage(theme thumbsmodel.Theme, error error) (*RenderResult, error)
 	GetRenderUser(ctx context.Context, key string) (*RenderUser, bool)
 	HasCapability(ctx context.Context, capability CapabilityName) (CapabilitySupportRequestResult, error)
 	CreateRenderingSession(ctx context.Context, authOpts AuthOpts, sessionOpts SessionOpts) (Session, error)

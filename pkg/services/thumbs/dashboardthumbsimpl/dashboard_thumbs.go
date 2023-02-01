@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/thumbs"
+	thumbsmodel "github.com/grafana/grafana/pkg/services/thumbs/model"
 )
 
 type Service struct {
@@ -17,27 +18,27 @@ func ProvideService(db db.DB) thumbs.DashboardThumbService {
 	}
 }
 
-func (s *Service) GetThumbnail(ctx context.Context, query *thumbs.GetDashboardThumbnailCommand) (*thumbs.DashboardThumbnail, error) {
+func (s *Service) GetThumbnail(ctx context.Context, query *thumbsmodel.GetDashboardThumbnailCommand) (*thumbsmodel.DashboardThumbnail, error) {
 	dt, err := s.store.Get(ctx, query)
 	return dt, err
 }
 
-func (s *Service) SaveThumbnail(ctx context.Context, cmd *thumbs.SaveDashboardThumbnailCommand) (*thumbs.DashboardThumbnail, error) {
+func (s *Service) SaveThumbnail(ctx context.Context, cmd *thumbsmodel.SaveDashboardThumbnailCommand) (*thumbsmodel.DashboardThumbnail, error) {
 	dt, err := s.store.Save(ctx, cmd)
 	return dt, err
 }
 
-func (s *Service) UpdateThumbnailState(ctx context.Context, cmd *thumbs.UpdateThumbnailStateCommand) error {
+func (s *Service) UpdateThumbnailState(ctx context.Context, cmd *thumbsmodel.UpdateThumbnailStateCommand) error {
 	err := s.store.UpdateState(ctx, cmd)
 	return err
 }
 
-func (s *Service) FindThumbnailCount(ctx context.Context, cmd *thumbs.FindDashboardThumbnailCountCommand) (int64, error) {
+func (s *Service) FindThumbnailCount(ctx context.Context, cmd *thumbsmodel.FindDashboardThumbnailCountCommand) (int64, error) {
 	n, err := s.store.Count(ctx, cmd)
 	return n, err
 }
 
-func (s *Service) FindDashboardsWithStaleThumbnails(ctx context.Context, cmd *thumbs.FindDashboardsWithStaleThumbnailsCommand) ([]*thumbs.DashboardWithStaleThumbnail, error) {
+func (s *Service) FindDashboardsWithStaleThumbnails(ctx context.Context, cmd *thumbsmodel.FindDashboardsWithStaleThumbnailsCommand) ([]*thumbsmodel.DashboardWithStaleThumbnail, error) {
 	thumbs, err := s.store.FindDashboardsWithStaleThumbnails(ctx, cmd)
 	return thumbs, err
 }

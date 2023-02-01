@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	thumbsmodel "github.com/grafana/grafana/pkg/services/thumbs/model"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -86,13 +86,13 @@ func TestRenderErrorImage(t *testing.T) {
 	})
 
 	t.Run("Timeout error returns timeout error image", func(t *testing.T) {
-		result, err := rs.RenderErrorImage(models.ThemeLight, ErrTimeout)
+		result, err := rs.RenderErrorImage(thumbsmodel.ThemeLight, ErrTimeout)
 		require.NoError(t, err)
 		assert.Equal(t, result.FilePath, path+"/public/img/rendering_timeout_light.png")
 	})
 
 	t.Run("Generic error returns error image", func(t *testing.T) {
-		result, err := rs.RenderErrorImage(models.ThemeLight, errors.New("an error"))
+		result, err := rs.RenderErrorImage(thumbsmodel.ThemeLight, errors.New("an error"))
 		require.NoError(t, err)
 		assert.Equal(t, result.FilePath, path+"/public/img/rendering_error_light.png")
 	})
@@ -134,17 +134,17 @@ func TestRenderLimitImage(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		theme    models.Theme
+		theme    thumbsmodel.Theme
 		expected string
 	}{
 		{
 			name:     "Light theme returns light image",
-			theme:    models.ThemeLight,
+			theme:    thumbsmodel.ThemeLight,
 			expected: path + "/public/img/rendering_limit_light.png",
 		},
 		{
 			name:     "Dark theme returns dark image",
-			theme:    models.ThemeDark,
+			theme:    thumbsmodel.ThemeDark,
 			expected: path + "/public/img/rendering_limit_dark.png",
 		},
 		{
@@ -173,7 +173,7 @@ func TestRenderLimitImageError(t *testing.T) {
 	opts := Opts{
 		ErrorOpts:       ErrorOpts{ErrorConcurrentLimitReached: true},
 		ConcurrentLimit: 1,
-		Theme:           models.ThemeDark,
+		Theme:           thumbsmodel.ThemeDark,
 	}
 	result, err := rs.Render(context.Background(), opts, nil)
 	assert.Equal(t, ErrConcurrentLimitReached, err)

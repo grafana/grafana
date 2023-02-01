@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	thumbsmodel "github.com/grafana/grafana/pkg/services/thumbs/model"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -70,7 +70,7 @@ func (hs *HTTPServer) RenderToPng(c *contextmodel.ReqContext) {
 		ConcurrentLimit:   hs.Cfg.RendererConcurrentRequestLimit,
 		DeviceScaleFactor: scale,
 		Headers:           headers,
-		Theme:             models.ThemeDark,
+		Theme:             thumbsmodel.ThemeDark,
 	}, nil)
 	if err != nil {
 		if errors.Is(err, rendering.ErrTimeout) {

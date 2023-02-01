@@ -10,7 +10,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 
-	models "github.com/grafana/grafana/pkg/models"
+	thumbsmodel "github.com/grafana/grafana/pkg/services/thumbs/model"
 )
 
 // MockService is a mock of Service interface.
@@ -126,7 +126,7 @@ func (mr *MockServiceMockRecorder) RenderCSV(arg0, arg1, arg2 interface{}) *gomo
 }
 
 // RenderErrorImage mocks base method.
-func (m *MockService) RenderErrorImage(arg0 models.Theme, arg1 error) (*RenderResult, error) {
+func (m *MockService) RenderErrorImage(arg0 thumbsmodel.Theme, arg1 error) (*RenderResult, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RenderErrorImage", arg0, arg1)
 	ret0, _ := ret[0].(*RenderResult)

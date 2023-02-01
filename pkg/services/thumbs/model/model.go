@@ -1,13 +1,10 @@
-package thumbs
+package thumbsmodel
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
-
-	"github.com/grafana/grafana/pkg/models"
 )
 
 type CrawlerMode string
@@ -27,25 +24,25 @@ const (
 type crawlerState string
 
 const (
-	initializing crawlerState = "initializing"
-	running      crawlerState = "running"
-	stopping     crawlerState = "stopping"
-	stopped      crawlerState = "stopped"
+	Initializing crawlerState = "initializing"
+	Running      crawlerState = "running"
+	Stopping     crawlerState = "stopping"
+	Stopped      crawlerState = "stopped"
 )
 
-type previewRequest struct {
+type PreviewRequest struct {
 	OrgID int64         `json:"orgId"`
 	UID   string        `json:"uid"`
 	Kind  ThumbnailKind `json:"kind"`
-	Theme models.Theme  `json:"theme"`
+	Theme Theme         `json:"theme"`
 }
 
-type crawlCmd struct {
-	Mode  CrawlerMode  `json:"mode"`  // thumbs | analytics | migrate
-	Theme models.Theme `json:"theme"` // light | dark
+type CrawlCmd struct {
+	Mode  CrawlerMode `json:"mode"`  // thumbs | analytics | migrate
+	Theme Theme       `json:"theme"` // light | dark
 }
 
-type crawlStatus struct {
+type CrawlStatus struct {
 	State    crawlerState `json:"state"`
 	Started  time.Time    `json:"started,omitempty"`
 	Finished time.Time    `json:"finished,omitempty"`
@@ -129,7 +126,7 @@ type DashboardThumbnail struct {
 	State            ThumbnailState `json:"state"`
 	PanelId          int64          `json:"panelId,omitempty"`
 	Kind             ThumbnailKind  `json:"kind"`
-	Theme            models.Theme   `json:"theme"`
+	Theme            Theme          `json:"theme"`
 	Image            []byte         `json:"image"`
 	MimeType         string         `json:"mimeType"`
 	Updated          time.Time      `json:"updated"`
@@ -146,7 +143,7 @@ type DashboardThumbnailMeta struct {
 	OrgId        int64
 	PanelID      int64
 	Kind         ThumbnailKind
-	Theme        models.Theme
+	Theme        Theme
 }
 
 type GetDashboardThumbnailCommand struct {
@@ -172,7 +169,7 @@ type FindDashboardThumbnailCountCommand struct {
 type FindDashboardsWithStaleThumbnailsCommand struct {
 	IncludeManuallyUploadedThumbnails bool
 	IncludeThumbnailsWithEmptyDsUIDs  bool
-	Theme                             models.Theme
+	Theme                             Theme
 	Kind                              ThumbnailKind
 	Result                            []*DashboardWithStaleThumbnail
 }
@@ -192,25 +189,19 @@ type UpdateThumbnailStateCommand struct {
 	DashboardThumbnailMeta
 }
 
-type dashRenderer interface {
+type Theme string
 
-	// Run Assumes you have already authenticated as admin.
-	Run(ctx context.Context, auth CrawlerAuth, mode CrawlerMode, theme models.Theme, kind ThumbnailKind) error
+const (
+	ThemeLight Theme = "light"
+	ThemeDark  Theme = "dark"
+)
 
-	// Assumes you have already authenticated as admin.
-	Stop() (crawlStatus, error)
-
-	// Assumes you have already authenticated as admin.
-	Status() (crawlStatus, error)
-
-	IsRunning() bool
-}
-
-type thumbnailRepo interface {
-	updateThumbnailState(ctx context.Context, state ThumbnailState, meta DashboardThumbnailMeta) error
-	doThumbnailsExist(ctx context.Context) (bool, error)
-	saveFromFile(ctx context.Context, filePath string, meta DashboardThumbnailMeta, dashboardVersion int, dsUids []string) (int64, error)
-	saveFromBytes(ctx context.Context, bytes []byte, mimeType string, meta DashboardThumbnailMeta, dashboardVersion int, dsUids []string) (int64, error)
-	getThumbnail(ctx context.Context, meta DashboardThumbnailMeta) (*DashboardThumbnail, error)
-	findDashboardsWithStaleThumbnails(ctx context.Context, theme models.Theme, thumbnailKind ThumbnailKind) ([]*DashboardWithStaleThumbnail, error)
+func ParseTheme(str string) (Theme, error) {
+	switch str {
+	case string(ThemeLight):
+		return ThemeLight, nil
+	case string(ThemeDark):
+		return ThemeDark, nil
+	}
+	return ThemeDark, errors.New("unknown theme " + str)
 }

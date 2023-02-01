@@ -10,12 +10,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/imguploader"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/rendering"
+	thumbsmodel "github.com/grafana/grafana/pkg/services/thumbs/model"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -370,7 +370,7 @@ func (s *testRenderService) RenderCSV(ctx context.Context, opts rendering.CSVOpt
 	return nil, nil
 }
 
-func (s *testRenderService) RenderErrorImage(theme models.Theme, err error) (*rendering.RenderResult, error) {
+func (s *testRenderService) RenderErrorImage(theme thumbsmodel.Theme, err error) (*rendering.RenderResult, error) {
 	if s.renderErrorImageProvider != nil {
 		return s.renderErrorImageProvider(err)
 	}

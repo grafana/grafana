@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana/pkg/models"
+	thumbsmodel "github.com/grafana/grafana/pkg/services/thumbs/model"
 )
 
 var (
@@ -13,7 +13,7 @@ var (
 	DefaultTo      = "now"
 	DefaultHeight  = 500
 	DefaultWidth   = 1000
-	DefaultTheme   = models.ThemeDark
+	DefaultTheme   = thumbsmodel.ThemeDark
 	DefaultTimeout = 15 * time.Second
 )
 
@@ -25,7 +25,7 @@ type ScreenshotOptions struct {
 	To           string
 	Width        int
 	Height       int
-	Theme        models.Theme
+	Theme        thumbsmodel.Theme
 	Timeout      time.Duration
 }
 
@@ -44,7 +44,7 @@ func (s ScreenshotOptions) SetDefaults() ScreenshotOptions {
 		s.Height = DefaultHeight
 	}
 	switch s.Theme {
-	case models.ThemeDark, models.ThemeLight:
+	case thumbsmodel.ThemeDark, thumbsmodel.ThemeLight:
 	default:
 		s.Theme = DefaultTheme
 	}

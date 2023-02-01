@@ -8,14 +8,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/thumbs"
+	thumbsmodel "github.com/grafana/grafana/pkg/services/thumbs/model"
 )
 
 type xormStore struct {
 	db db.DB
 }
 
-func (ss *xormStore) Get(ctx context.Context, query *thumbs.GetDashboardThumbnailCommand) (*thumbs.DashboardThumbnail, error) {
+func (ss *xormStore) Get(ctx context.Context, query *thumbsmodel.GetDashboardThumbnailCommand) (*thumbsmodel.DashboardThumbnail, error) {
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		result, err := findThumbnailByMeta(sess, query.DashboardThumbnailMeta)
 		if err != nil {
@@ -40,7 +40,7 @@ func marshalDatasourceUids(dsUids []string) (string, error) {
 	return string(b), nil
 }
 
-func (ss *xormStore) Save(ctx context.Context, cmd *thumbs.SaveDashboardThumbnailCommand) (*thumbs.DashboardThumbnail, error) {
+func (ss *xormStore) Save(ctx context.Context, cmd *thumbsmodel.SaveDashboardThumbnailCommand) (*thumbsmodel.DashboardThumbnail, error) {
 	err := ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		existing, err := findThumbnailByMeta(sess, cmd.DashboardThumbnailMeta)
 
@@ -59,13 +59,13 @@ func (ss *xormStore) Save(ctx context.Context, cmd *thumbs.SaveDashboardThumbnai
 			existing.Updated = time.Now()
 			existing.DashboardVersion = cmd.DashboardVersion
 			existing.DsUIDs = dsUids
-			existing.State = thumbs.ThumbnailStateDefault
+			existing.State = thumbsmodel.ThumbnailStateDefault
 			_, err = sess.ID(existing.Id).Update(existing)
 			cmd.Result = existing
 			return err
 		}
 
-		thumb := &thumbs.DashboardThumbnail{}
+		thumb := &thumbsmodel.DashboardThumbnail{}
 
 		dash, err := findDashboardIdByThumbMeta(sess, cmd.DashboardThumbnailMeta)
 
@@ -81,7 +81,7 @@ func (ss *xormStore) Save(ctx context.Context, cmd *thumbs.SaveDashboardThumbnai
 		thumb.MimeType = cmd.MimeType
 		thumb.DashboardId = dash.Id
 		thumb.DashboardVersion = cmd.DashboardVersion
-		thumb.State = thumbs.ThumbnailStateDefault
+		thumb.State = thumbsmodel.ThumbnailStateDefault
 		thumb.PanelId = cmd.PanelID
 		_, err = sess.Insert(thumb)
 		cmd.Result = thumb
@@ -91,7 +91,7 @@ func (ss *xormStore) Save(ctx context.Context, cmd *thumbs.SaveDashboardThumbnai
 	return cmd.Result, err
 }
 
-func (ss *xormStore) UpdateState(ctx context.Context, cmd *thumbs.UpdateThumbnailStateCommand) error {
+func (ss *xormStore) UpdateState(ctx context.Context, cmd *thumbsmodel.UpdateThumbnailStateCommand) error {
 	err := ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		existing, err := findThumbnailByMeta(sess, cmd.DashboardThumbnailMeta)
 
@@ -107,9 +107,9 @@ func (ss *xormStore) UpdateState(ctx context.Context, cmd *thumbs.UpdateThumbnai
 	return err
 }
 
-func (ss *xormStore) Count(ctx context.Context, cmd *thumbs.FindDashboardThumbnailCountCommand) (int64, error) {
+func (ss *xormStore) Count(ctx context.Context, cmd *thumbsmodel.FindDashboardThumbnailCountCommand) (int64, error) {
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		count, err := sess.Count(&thumbs.DashboardThumbnail{})
+		count, err := sess.Count(&thumbsmodel.DashboardThumbnail{})
 		if err != nil {
 			return err
 		}
@@ -121,7 +121,7 @@ func (ss *xormStore) Count(ctx context.Context, cmd *thumbs.FindDashboardThumbna
 	return cmd.Result, err
 }
 
-func (ss *xormStore) FindDashboardsWithStaleThumbnails(ctx context.Context, cmd *thumbs.FindDashboardsWithStaleThumbnailsCommand) ([]*thumbs.DashboardWithStaleThumbnail, error) {
+func (ss *xormStore) FindDashboardsWithStaleThumbnails(ctx context.Context, cmd *thumbsmodel.FindDashboardsWithStaleThumbnailsCommand) ([]*thumbsmodel.DashboardWithStaleThumbnail, error) {
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		sess.Table("dashboard")
 		sess.Join("LEFT", "dashboard_thumbnail", "dashboard.id = dashboard_thumbnail.dashboard_id AND dashboard_thumbnail.theme = ? AND dashboard_thumbnail.kind = ?", cmd.Theme, cmd.Kind)
@@ -130,7 +130,7 @@ func (ss *xormStore) FindDashboardsWithStaleThumbnails(ctx context.Context, cmd 
 		query := "(dashboard.version != dashboard_thumbnail.dashboard_version " +
 			"OR dashboard_thumbnail.state = ? " +
 			"OR dashboard_thumbnail.id IS NULL"
-		args := []interface{}{thumbs.ThumbnailStateStale}
+		args := []interface{}{thumbsmodel.ThumbnailStateStale}
 
 		if cmd.IncludeThumbnailsWithEmptyDsUIDs {
 			query += " OR dashboard_thumbnail.ds_uids = ? OR dashboard_thumbnail.ds_uids IS NULL"
@@ -141,10 +141,10 @@ func (ss *xormStore) FindDashboardsWithStaleThumbnails(ctx context.Context, cmd 
 		if !cmd.IncludeManuallyUploadedThumbnails {
 			sess.Where("(dashboard_thumbnail.id is not null AND dashboard_thumbnail.dashboard_version != ?) "+
 				"OR dashboard_thumbnail.id is null "+
-				"OR dashboard_thumbnail.state = ?", thumbs.DashboardVersionForManualThumbnailUpload, thumbs.ThumbnailStateStale)
+				"OR dashboard_thumbnail.state = ?", thumbsmodel.DashboardVersionForManualThumbnailUpload, thumbsmodel.ThumbnailStateStale)
 		}
 
-		sess.Where("(dashboard_thumbnail.id IS NULL OR dashboard_thumbnail.state != ?)", thumbs.ThumbnailStateLocked)
+		sess.Where("(dashboard_thumbnail.id IS NULL OR dashboard_thumbnail.state != ?)", thumbsmodel.ThumbnailStateLocked)
 
 		sess.Cols("dashboard.id",
 			"dashboard.uid",
@@ -152,7 +152,7 @@ func (ss *xormStore) FindDashboardsWithStaleThumbnails(ctx context.Context, cmd 
 			"dashboard.version",
 			"dashboard.slug")
 
-		var result = make([]*thumbs.DashboardWithStaleThumbnail, 0)
+		var result = make([]*thumbsmodel.DashboardWithStaleThumbnail, 0)
 		err := sess.Find(&result)
 
 		if err != nil {
@@ -165,8 +165,8 @@ func (ss *xormStore) FindDashboardsWithStaleThumbnails(ctx context.Context, cmd 
 	return cmd.Result, err
 }
 
-func findThumbnailByMeta(sess *db.Session, meta thumbs.DashboardThumbnailMeta) (*thumbs.DashboardThumbnail, error) {
-	result := &thumbs.DashboardThumbnail{}
+func findThumbnailByMeta(sess *db.Session, meta thumbsmodel.DashboardThumbnailMeta) (*thumbsmodel.DashboardThumbnail, error) {
+	result := &thumbsmodel.DashboardThumbnail{}
 
 	sess.Table("dashboard_thumbnail")
 	sess.Join("INNER", "dashboard", "dashboard.id = dashboard_thumbnail.dashboard_id")
@@ -199,7 +199,7 @@ type dash struct {
 	Id int64
 }
 
-func findDashboardIdByThumbMeta(sess *db.Session, meta thumbs.DashboardThumbnailMeta) (*dash, error) {
+func findDashboardIdByThumbMeta(sess *db.Session, meta thumbsmodel.DashboardThumbnailMeta) (*dash, error) {
 	result := &dash{}
 
 	sess.Table("dashboard").Where("dashboard.uid = ? AND dashboard.org_id = ?", meta.DashboardUID, meta.OrgId).Cols("id")

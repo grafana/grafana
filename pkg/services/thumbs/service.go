@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/registry"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -26,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/live"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/searchV2"
+	thumbsmodel "github.com/grafana/grafana/pkg/services/thumbs/model"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -51,7 +51,7 @@ type thumbService struct {
 	scheduleOptions            crawlerScheduleOptions
 	renderer                   dashRenderer
 	renderingService           rendering.Service
-	thumbnailRepo              thumbnailRepo
+	thumbnailRepo              ThumbnailRepo
 	lockService                *serverlock.ServerLockService
 	features                   featuremgmt.FeatureToggles
 	store                      db.DB
@@ -70,9 +70,9 @@ type crawlerScheduleOptions struct {
 	crawlInterval    time.Duration
 	tickerInterval   time.Duration
 	maxCrawlDuration time.Duration
-	crawlerMode      CrawlerMode
-	thumbnailKind    ThumbnailKind
-	themes           []models.Theme
+	crawlerMode      thumbsmodel.CrawlerMode
+	thumbnailKind    thumbsmodel.ThumbnailKind
+	themes           []thumbsmodel.Theme
 	auth             CrawlerAuth
 }
 
@@ -125,9 +125,9 @@ func ProvideService(cfg *setting.Cfg, features featuremgmt.FeatureToggles,
 			tickerInterval:   5 * time.Minute,
 			crawlInterval:    cfg.DashboardPreviews.SchedulerInterval,
 			maxCrawlDuration: cfg.DashboardPreviews.MaxCrawlDuration,
-			crawlerMode:      CrawlerModeThumbs,
-			thumbnailKind:    ThumbnailKindDefault,
-			themes:           []models.Theme{models.ThemeDark, models.ThemeLight},
+			crawlerMode:      thumbsmodel.CrawlerModeThumbs,
+			thumbnailKind:    thumbsmodel.ThumbnailKindDefault,
+			themes:           []thumbsmodel.Theme{thumbsmodel.ThemeDark, thumbsmodel.ThemeLight},
 			auth:             crawlerAuth,
 		},
 		dashboardService: dashboardService,
@@ -156,22 +156,22 @@ func (hs *thumbService) Enabled() bool {
 	return hs.features.IsEnabled(featuremgmt.FlagDashboardPreviews)
 }
 
-func (hs *thumbService) parseImageReq(c *contextmodel.ReqContext, checkSave bool) *previewRequest {
+func (hs *thumbService) parseImageReq(c *contextmodel.ReqContext, checkSave bool) *thumbsmodel.PreviewRequest {
 	params := web.Params(c.Req)
 
-	kind, err := ParseThumbnailKind(params[":kind"])
+	kind, err := thumbsmodel.ParseThumbnailKind(params[":kind"])
 	if err != nil {
 		c.JSON(400, map[string]string{"error": "invalid size"})
 		return nil
 	}
 
-	theme, err := models.ParseTheme(params[":theme"])
+	theme, err := thumbsmodel.ParseTheme(params[":theme"])
 	if err != nil {
 		c.JSON(400, map[string]string{"error": "invalid theme"})
 		return nil
 	}
 
-	req := &previewRequest{
+	req := &thumbsmodel.PreviewRequest{
 		OrgID: c.OrgID,
 		UID:   params[":uid"],
 		Theme: theme,
@@ -198,7 +198,7 @@ func (hs *thumbService) parseImageReq(c *contextmodel.ReqContext, checkSave bool
 }
 
 type updateThumbnailStateRequest struct {
-	State ThumbnailState `json:"state" binding:"Required"`
+	State thumbsmodel.ThumbnailState `json:"state" binding:"Required"`
 }
 
 func (hs *thumbService) UpdateThumbnailState(c *contextmodel.ReqContext) {
@@ -216,11 +216,11 @@ func (hs *thumbService) UpdateThumbnailState(c *contextmodel.ReqContext) {
 		return
 	}
 
-	err = hs.thumbnailRepo.updateThumbnailState(c.Req.Context(), body.State, DashboardThumbnailMeta{
+	err = hs.thumbnailRepo.updateThumbnailState(c.Req.Context(), body.State, thumbsmodel.DashboardThumbnailMeta{
 		DashboardUID: req.UID,
 		OrgId:        req.OrgID,
 		Theme:        req.Theme,
-		Kind:         ThumbnailKindDefault,
+		Kind:         thumbsmodel.ThumbnailKindDefault,
 	})
 
 	if err != nil {
@@ -239,11 +239,11 @@ func (hs *thumbService) GetImage(c *contextmodel.ReqContext) {
 		return // already returned value
 	}
 
-	res, err := hs.thumbnailRepo.getThumbnail(c.Req.Context(), DashboardThumbnailMeta{
+	res, err := hs.thumbnailRepo.getThumbnail(c.Req.Context(), thumbsmodel.DashboardThumbnailMeta{
 		DashboardUID: req.UID,
 		OrgId:        req.OrgID,
 		Theme:        req.Theme,
-		Kind:         ThumbnailKindDefault,
+		Kind:         thumbsmodel.ThumbnailKindDefault,
 	})
 
 	if errors.Is(err, dashboards.ErrDashboardThumbnailNotFound) {
@@ -276,7 +276,7 @@ func (hs *thumbService) GetImage(c *contextmodel.ReqContext) {
 	}
 }
 
-func (hs *thumbService) hasAccessToPreview(c *contextmodel.ReqContext, res *DashboardThumbnail, req *previewRequest) bool {
+func (hs *thumbService) hasAccessToPreview(c *contextmodel.ReqContext, res *thumbsmodel.DashboardThumbnail, req *thumbsmodel.PreviewRequest) bool {
 	if !hs.licensing.FeatureEnabled("accesscontrol.enforcement") {
 		return true
 	}
@@ -409,12 +409,12 @@ func (hs *thumbService) SetImage(c *contextmodel.ReqContext) {
 		return
 	}
 
-	_, err = hs.thumbnailRepo.saveFromBytes(c.Req.Context(), fileBytes, getMimeType(handler.Filename), DashboardThumbnailMeta{
+	_, err = hs.thumbnailRepo.saveFromBytes(c.Req.Context(), fileBytes, getMimeType(handler.Filename), thumbsmodel.DashboardThumbnailMeta{
 		DashboardUID: req.UID,
 		OrgId:        req.OrgID,
 		Theme:        req.Theme,
 		Kind:         req.Kind,
-	}, DashboardVersionForManualThumbnailUpload, dsUids)
+	}, thumbsmodel.DashboardVersionForManualThumbnailUpload, dsUids)
 
 	if err != nil {
 		c.JSON(400, map[string]string{"error": "error saving thumbnail file"})
@@ -430,16 +430,16 @@ func (hs *thumbService) StartCrawler(c *contextmodel.ReqContext) response.Respon
 	if err != nil {
 		return response.Error(500, "error reading bytes", err)
 	}
-	cmd := &crawlCmd{}
+	cmd := &thumbsmodel.CrawlCmd{}
 	err = json.Unmarshal(body, cmd)
 	if err != nil {
 		return response.Error(500, "error parsing bytes", err)
 	}
 	if cmd.Mode == "" {
-		cmd.Mode = CrawlerModeThumbs
+		cmd.Mode = thumbsmodel.CrawlerModeThumbs
 	}
 
-	go hs.runOnDemandCrawl(context.Background(), cmd.Theme, cmd.Mode, ThumbnailKindDefault, rendering.AuthOpts{
+	go hs.runOnDemandCrawl(context.Background(), cmd.Theme, cmd.Mode, thumbsmodel.ThumbnailKindDefault, rendering.AuthOpts{
 		OrgID:   c.OrgID,
 		UserID:  c.UserID,
 		OrgRole: c.OrgRole,
@@ -490,7 +490,7 @@ func (hs *thumbService) getStatus(c *contextmodel.ReqContext, uid string, checkS
 	return 200, nil // found and OK
 }
 
-func (hs *thumbService) runOnDemandCrawl(parentCtx context.Context, theme models.Theme, mode CrawlerMode, kind ThumbnailKind, authOpts rendering.AuthOpts) {
+func (hs *thumbService) runOnDemandCrawl(parentCtx context.Context, theme thumbsmodel.Theme, mode thumbsmodel.CrawlerMode, kind thumbsmodel.ThumbnailKind, authOpts rendering.AuthOpts) {
 	if !hs.canRunCrawler {
 		return
 	}
@@ -546,4 +546,27 @@ func (hs *thumbService) Run(ctx context.Context) error {
 			return nil
 		}
 	}
+}
+
+type dashRenderer interface {
+
+	// Run Assumes you have already authenticated as admin.
+	Run(ctx context.Context, auth CrawlerAuth, mode thumbsmodel.CrawlerMode, theme thumbsmodel.Theme, kind thumbsmodel.ThumbnailKind) error
+
+	// Assumes you have already authenticated as admin.
+	Stop() (thumbsmodel.CrawlStatus, error)
+
+	// Assumes you have already authenticated as admin.
+	Status() (thumbsmodel.CrawlStatus, error)
+
+	IsRunning() bool
+}
+
+type ThumbnailRepo interface {
+	updateThumbnailState(ctx context.Context, state thumbsmodel.ThumbnailState, meta thumbsmodel.DashboardThumbnailMeta) error
+	doThumbnailsExist(ctx context.Context) (bool, error)
+	saveFromFile(ctx context.Context, filePath string, meta thumbsmodel.DashboardThumbnailMeta, dashboardVersion int, dsUids []string) (int64, error)
+	saveFromBytes(ctx context.Context, bytes []byte, mimeType string, meta thumbsmodel.DashboardThumbnailMeta, dashboardVersion int, dsUids []string) (int64, error)
+	getThumbnail(ctx context.Context, meta thumbsmodel.DashboardThumbnailMeta) (*thumbsmodel.DashboardThumbnail, error)
+	findDashboardsWithStaleThumbnails(ctx context.Context, theme thumbsmodel.Theme, thumbnailKind thumbsmodel.ThumbnailKind) ([]*thumbsmodel.DashboardWithStaleThumbnail, error)
 }
