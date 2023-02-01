@@ -30,7 +30,6 @@ composableKinds: DataQuery: {
 			{
 				schemas: [
 					{
-
 						#MetricStat: {
 							region:      string
 							namespace:   string
@@ -147,6 +146,15 @@ composableKinds: DataQuery: {
 						} @cuetsy(kind="interface")
 
 						#CloudWatchQueryMode: "Metrics" | "Logs" | "Annotations" @cuetsy(kind="enum")
+
+						#CloudWatchAnnotationQuery: {
+							common.DataQuery
+							#MetricStat
+							queryMode:        #CloudWatchQueryMode
+							prefixMatching?:  bool
+							actionPrefix?:    string
+							alarmNamePrefix?: string
+						} @cuetsy(kind="interface")
 					},
 				]
 			},
