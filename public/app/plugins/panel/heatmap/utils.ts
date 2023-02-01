@@ -271,10 +271,20 @@ export function prepConfig(opts: PrepConfigOpts) {
     }
   });
 
+  let incrs;
+
+  if (!isTime) {
+    incrs = [];
+
+    for (let i = 0; i < 10; i++) {
+      incrs.push(i * dataRef.current?.xBucketSize!);
+    }
+  }
+
   builder.addAxis({
     scaleKey: xScaleKey,
     placement: AxisPlacement.Bottom,
-    // incrs: [],
+    incrs,
     isTime,
     theme: theme,
     timeZone,
