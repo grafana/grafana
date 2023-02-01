@@ -34,6 +34,7 @@ func setupSocialHTTPServerWithConfig(t *testing.T, cfg *setting.Cfg) *HTTPServer
 		SocialService:  social.ProvideService(cfg, featuremgmt.WithFeatures()),
 		HooksService:   hooks.ProvideService(),
 		SecretsService: fakes.NewFakeSecretsService(),
+		Features:       featuremgmt.WithFeatures(),
 	}
 }
 

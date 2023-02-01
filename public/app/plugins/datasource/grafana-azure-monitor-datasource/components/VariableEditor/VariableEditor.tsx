@@ -1,4 +1,4 @@
-import { get } from 'lodash';
+import { get, isEqual } from 'lodash';
 import React, { useEffect, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
@@ -65,7 +65,9 @@ const VariableEditor = (props: Props) => {
 
   useEffect(() => {
     migrateQuery(query, { datasource: datasource }).then((migratedQuery) => {
-      onChange(migratedQuery);
+      if (!isEqual(query, migratedQuery)) {
+        onChange(migratedQuery);
+      }
     });
   }, [query, datasource, onChange]);
 

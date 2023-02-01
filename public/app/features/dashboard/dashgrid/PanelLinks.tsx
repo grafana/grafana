@@ -32,13 +32,13 @@ export function PanelLinks({ panelLinks, onShowPanelLinks }: Props) {
         target={linkModel.target}
         title={linkModel.title}
       >
-        <Icon name="external-link-alt" size="lg" />
+        <Icon name="external-link-alt" size="md" />
       </PanelChrome.TitleItem>
     );
   } else {
     return (
       <Dropdown overlay={getLinksContent}>
-        <ToolbarButton icon="external-link-alt" aria-label="panel links" className={styles.menuTrigger} />
+        <ToolbarButton icon="external-link-alt" iconSize="md" aria-label="panel links" className={styles.menuTrigger} />
       </Dropdown>
     );
   }

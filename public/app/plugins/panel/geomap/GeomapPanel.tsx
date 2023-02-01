@@ -82,6 +82,8 @@ export class GeomapPanel extends Component<Props, State> {
     for (const lyr of this.layers) {
       lyr.handler.dispose?.();
     }
+    // Ensure map is disposed
+    this.map?.dispose();
   }
 
   shouldComponentUpdate(nextProps: Props) {
@@ -183,15 +185,15 @@ export class GeomapPanel extends Component<Props, State> {
   }
 
   initMapRef = async (div: HTMLDivElement) => {
+    if (!div) {
+      // Do not initialize new map or dispose old map
+      return;
+    }
     this.mapDiv = div;
     if (this.map) {
       this.map.dispose();
     }
 
-    if (!div) {
-      this.map = undefined;
-      return;
-    }
     const { options } = this.props;
 
     const map = getNewOpenLayersMap(this, options, div);
