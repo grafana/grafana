@@ -49,7 +49,7 @@ $(SPEC_TARGET): $(SWAGGER) ## Generate API Swagger specification
 	-x "github.com/prometheus/alertmanager" \
 	-i pkg/api/swagger_tags.json \
 	--exclude-tag=alpha
-	go run pkg/services/ngalert/api/tooling/cmd/clean-swagger/main.go -if $(SPEC_TARGET) -of $@
+	go run pkg/services/ngalert/api/tooling/cmd/clean-swagger/main.go -if $@ -of $@
 
 swagger-api-spec: gen-go $(SPEC_TARGET) $(MERGED_SPEC_TARGET) validate-api-spec
 
