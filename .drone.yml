@@ -2768,14 +2768,7 @@ steps:
   image: alpine:3.15.6
   name: identify-runner
 - commands:
-  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
-    | jq .head.repo.fork)
-  - if [ "$is_fork" != false ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
-    grafana-enterprise
-  - cd grafana-enterprise
-  - if git checkout ${DRONE_TAG}; then echo "checked out ${DRONE_TAG}"; elif git checkout
-    main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -3060,14 +3053,7 @@ platform:
 services: []
 steps:
 - commands:
-  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
-    | jq .head.repo.fork)
-  - if [ "$is_fork" != false ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
-    grafana-enterprise
-  - cd grafana-enterprise
-  - if git checkout ${DRONE_TAG}; then echo "checked out ${DRONE_TAG}"; elif git checkout
-    main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -3150,14 +3136,7 @@ platform:
 services: []
 steps:
 - commands:
-  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
-    | jq .head.repo.fork)
-  - if [ "$is_fork" != false ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
-    grafana-enterprise
-  - cd grafana-enterprise
-  - if git checkout ${DRONE_TAG}; then echo "checked out ${DRONE_TAG}"; elif git checkout
-    main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -3299,14 +3278,7 @@ steps:
   image: alpine:3.15.6
   name: identify-runner
 - commands:
-  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
-    | jq .head.repo.fork)
-  - if [ "$is_fork" != false ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
-    grafana-enterprise
-  - cd grafana-enterprise
-  - if git checkout ${DRONE_TAG}; then echo "checked out ${DRONE_TAG}"; elif git checkout
-    main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -3534,14 +3506,7 @@ steps:
   image: alpine:3.15.6
   name: identify-runner
 - commands:
-  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
-    | jq .head.repo.fork)
-  - if [ "$is_fork" != false ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
-    grafana-enterprise
-  - cd grafana-enterprise
-  - if git checkout ${DRONE_TAG}; then echo "checked out ${DRONE_TAG}"; elif git checkout
-    main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -3789,14 +3754,7 @@ steps:
   image: alpine:3.15.6
   name: identify-runner
 - commands:
-  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
-    | jq .head.repo.fork)
-  - if [ "$is_fork" != false ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
-    grafana-enterprise
-  - cd grafana-enterprise
-  - if git checkout ${DRONE_TAG}; then echo "checked out ${DRONE_TAG}"; elif git checkout
-    main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -5468,14 +5426,7 @@ steps:
   image: alpine:3.15.6
   name: identify-runner
 - commands:
-  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
-    | jq .head.repo.fork)
-  - if [ "$is_fork" != false ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
-    grafana-enterprise
-  - cd grafana-enterprise
-  - if git checkout ${DRONE_BRANCH}; then echo "checked out ${DRONE_BRANCH}"; elif
-    git checkout main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -5763,14 +5714,7 @@ platform:
 services: []
 steps:
 - commands:
-  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
-    | jq .head.repo.fork)
-  - if [ "$is_fork" != false ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
-    grafana-enterprise
-  - cd grafana-enterprise
-  - if git checkout ${DRONE_BRANCH}; then echo "checked out ${DRONE_BRANCH}"; elif
-    git checkout main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -5849,14 +5793,7 @@ platform:
 services: []
 steps:
 - commands:
-  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
-    | jq .head.repo.fork)
-  - if [ "$is_fork" != false ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
-    grafana-enterprise
-  - cd grafana-enterprise
-  - if git checkout ${DRONE_BRANCH}; then echo "checked out ${DRONE_BRANCH}"; elif
-    git checkout main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -5994,14 +5931,7 @@ steps:
   image: alpine:3.15.6
   name: identify-runner
 - commands:
-  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
-    | jq .head.repo.fork)
-  - if [ "$is_fork" != false ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
-    grafana-enterprise
-  - cd grafana-enterprise
-  - if git checkout ${DRONE_BRANCH}; then echo "checked out ${DRONE_BRANCH}"; elif
-    git checkout main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -6218,14 +6148,7 @@ steps:
   image: alpine:3.15.6
   name: identify-runner
 - commands:
-  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
-    | jq .head.repo.fork)
-  - if [ "$is_fork" != false ]; then return 1; fi
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
-    grafana-enterprise
-  - cd grafana-enterprise
-  - if git checkout ${DRONE_BRANCH}; then echo "checked out ${DRONE_BRANCH}"; elif
-    git checkout main; then echo "git checkout main"; else git checkout main; fi
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -6700,6 +6623,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: a94c08f534383590c2d60818fe16ab0b3c022df74dabc0ec490d1b9f8897ece0
+hmac: 150b256b1e6e4f3c7fe954ff0eff2343bb72aedda9c7ec3e3344798a1403c7b6
 
 ...
