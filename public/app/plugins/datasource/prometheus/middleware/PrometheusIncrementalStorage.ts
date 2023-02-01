@@ -11,7 +11,7 @@ import {
 } from '@grafana/data/src';
 import {PromQuery} from '../types';
 import {cloneDeep} from 'lodash';
-import {alignRange} from '../datasource';
+import {alignRange, PrometheusDatasource} from '../datasource';
 import {getTimeSrv, TimeSrv} from '../../../../features/dashboard/services/TimeSrv';
 import {applyNullInsertThreshold} from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
 
@@ -20,15 +20,18 @@ import {applyNullInsertThreshold} from '@grafana/ui/src/components/GraphNG/nullI
 const PROMETHEUS_INCREMENTAL_QUERY_OVERLAP_DURATION_MS = 60 * 10 * 1000;
 const PROMETHEUS_STORAGE_TIME_INDEX = '__time__';
 const PROMETHEUS_STORAGE_EXEMPLAR_INDEX = 'exemplar';
-const DEBUG = false;
+const DEBUG = true;
 
 // Another issue: if the query window starts at a time when there is no results from the database, we'll always fail the cache check and pull fresh data, even though the cache has everything available
 // Also the cache can def get really big for big queries, need to look into if we want to find a way to limit the size of requests we add to the cache?
 export class PrometheusIncrementalStorage {
   private storage: Record<string, Record<string, number[]>>;
+  private readonly datasource: PrometheusDatasource;
+  private readonly timeSrv: TimeSrv = getTimeSrv();
 
-  constructor(private readonly timeSrv: TimeSrv = getTimeSrv()) {
+  constructor(datasource: PrometheusDatasource) {
     this.storage = {};
+    this.datasource = datasource;
   }
 
   throwError = (error: Error) => {
@@ -71,7 +74,7 @@ export class PrometheusIncrementalStorage {
   static removeFramesFromStorageThatExistInRequest(
     existingTimeFrames: number[],
     responseTimeFieldValues: number[],
-    originalRange: { end: number, start: number },
+    originalRange: { end: number; start: number },
     existingValueFrames: number[],
     intervalInSeconds: number
   ) {
@@ -83,13 +86,19 @@ export class PrometheusIncrementalStorage {
 
       // Remove values from before new start
       // Note this acts as the only eviction strategy so far, we only store frames that exist after the start of the current query, minus the interval time
-      const isFrameOlderThenQueryStart = existingTimeFrames[i] <= originalRange.start - (intervalInSeconds * 1000)
+      const isFrameOlderThenQueryStart = existingTimeFrames[i] <= originalRange.start - intervalInSeconds * 1000;
 
       if (isFrameOlderThenQueryStart && DEBUG) {
-        console.log('Frame is older then query, evicting', existingTimeFrames[i] - originalRange.start, existingTimeFrames[i], originalRange.start);
+        console.log(
+          'Frame is older then query, evicting',
+          existingTimeFrames[i] - originalRange.start,
+          existingTimeFrames[i],
+          originalRange.start
+        );
       }
 
-      const isThisAFrameWeWantToCombineWithCurrentResult = doesResponseNotContainFrameTimeValue && !isFrameOlderThenQueryStart;
+      const isThisAFrameWeWantToCombineWithCurrentResult =
+        doesResponseNotContainFrameTimeValue && !isFrameOlderThenQueryStart;
       // Only add timeframes from the old data to the new data, if they aren't already contained in the new data
       if (isThisAFrameWeWantToCombineWithCurrentResult) {
         if (existingValueFrames[i] !== undefined && existingTimeFrames[i] !== undefined) {
@@ -153,18 +162,20 @@ export class PrometheusIncrementalStorage {
 
     // If the query (target) doesn't explicitly have an interval defined it's gonna use the one that's available on the request object.
     // @todo is the above true?
-    const intervalString = target?.interval ?? request.interval;
+    const intervalString = target?.interval ? target?.interval : request.interval;
 
     if (!intervalString) {
       this.throwError(new Error('Request interval is required to build storage index'));
     }
 
-    return target?.expr + '__' + intervalString;
+    const expressionInterpolated = this.datasource.interpolateString(target?.expr);
+
+    return expressionInterpolated + '__' + intervalString;
   };
 
   getStorage = () => {
-    return this.storage
-  }
+    return this.storage;
+  };
 
   /**
    * Back-fill dataframe missing values via applyNullInsertThreshold function
@@ -173,9 +184,6 @@ export class PrometheusIncrementalStorage {
    */
   private preProcessDataFrames(data: DataFrame[]) {
     if (!data?.length) {
-      if (DEBUG) {
-        console.error('Dataframe has no fields!');
-      }
       return;
     }
     let longestLength = data[0]?.length ?? 0;
@@ -234,7 +242,7 @@ export class PrometheusIncrementalStorage {
   appendQueryResultToDataFrameStorage = (
     request: DataQueryRequest<PromQuery>,
     dataFrames: DataQueryResponse,
-    originalRange?: { end: number, start: number }
+    originalRange?: { end: number; start: number }
   ): DataQueryResponse => {
     const data: DataFrame[] = dataFrames.data;
 
@@ -376,7 +384,7 @@ export class PrometheusIncrementalStorage {
    */
   modifyRequestDurationsIfStorageOverlapsRequest(request: DataQueryRequest<PromQuery>): {
     request: DataQueryRequest<PromQuery>;
-    originalRange?: { end: number, start: number };
+    originalRange?: { end: number; start: number };
   } {
     const requestFrom = request.range.from;
     const requestTo = request.range.to;
@@ -402,7 +410,7 @@ export class PrometheusIncrementalStorage {
       // Exclude instant queries, hidden queries, and exemplar queries, as they are not currently applicable for incremental querying.
       // exemplars could work, but they're not step/interval-aligned so the current algorithm of merging frames from storage with the response won't work
       // Would simply backfilling these values work? Or do we need to store the time frames for each exemplar? We're going to address this in another PR as there's enough going on already with this.
-      if (target?.range !== true || target.hide || target.exemplar) {
+      if ((target?.range !== true && target?.format !== 'time_series') || target.hide || target.exemplar) {
         if (DEBUG) {
           console.log('target invalid for incremental querying', target);
         }

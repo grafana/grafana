@@ -141,7 +141,7 @@ export class PrometheusDatasource
     this.defaultEditor = instanceSettings.jsonData.defaultEditor;
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
-    this.prometheusDataFrameStorage = new PrometheusIncrementalStorage();
+    this.prometheusDataFrameStorage = new PrometheusIncrementalStorage(this);
 
     // This needs to be here and cannot be static because of how annotations typing affects casting of data source
     // objects to DataSourceApi types.

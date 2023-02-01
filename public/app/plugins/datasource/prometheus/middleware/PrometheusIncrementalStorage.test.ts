@@ -3,15 +3,15 @@ import {
   DataFrame,
   DataFrameType,
   DataQueryRequest,
-  DataQueryResponse, DateTime,
+  DataQueryResponse, DataSourceInstanceSettings, DateTime,
   dateTime,
   FieldType,
   toDataFrame,
 } from '@grafana/data/src';
-import { TimeSrv } from '../../../../features/dashboard/services/TimeSrv';
-import { PromQuery } from '../types';
+import {PromOptions, PromQuery} from '../types';
 import { QueryEditorMode } from '../querybuilder/shared/types';
 import moment from "moment";
+import {PrometheusDatasource} from "../datasource";
 
 const timeSrvStub = {
   timeRange(): any {
@@ -21,6 +21,26 @@ const timeSrvStub = {
     };
   },
 };
+
+const templateSrvStub = {
+  getAdhocFilters: jest.fn(() => [] as any[]),
+  replace: jest.fn((a: string, ...rest: any) => a),
+};
+
+const getDatasourceStub = (): PrometheusDatasource => {
+  const instanceSettings = {
+    url: 'proxied',
+    id: 1,
+    directUrl: 'direct',
+    user: 'test',
+    password: 'mupp',
+    jsonData: {
+      customQueryParameters: '',
+    } as any,
+  } as unknown as DataSourceInstanceSettings<PromOptions>;
+
+  return new PrometheusDatasource(instanceSettings, templateSrvStub as any, timeSrvStub as any);
+}
 
 const mockDataFrame = (frameOverride?: Partial<DataFrame>): DataFrame => {
   return toDataFrame({
@@ -854,17 +874,17 @@ const mockOriginalRange = (startDateString?: string, endDateString?: string): { 
 
 describe('PrometheusIncrementalStorage', function () {
   it('instantiates without error', () => {
-    const storage = new PrometheusIncrementalStorage(timeSrvStub as TimeSrv);
+    const storage = new PrometheusIncrementalStorage(getDatasourceStub());
     expect(storage).toBeInstanceOf(PrometheusIncrementalStorage);
   });
 
   it('Throws error', () => {
-    const storage = new PrometheusIncrementalStorage(timeSrvStub as TimeSrv);
+    const storage = new PrometheusIncrementalStorage(getDatasourceStub());
     expect(() => storage.throwError(new Error('Hello world'))).toThrow('Hello world');
   });
 
   it('Thrown error wipes storage', () => {
-    const storage = new PrometheusIncrementalStorage(timeSrvStub as TimeSrv);
+    const storage = new PrometheusIncrementalStorage(getDatasourceStub());
 
     storage.appendQueryResultToDataFrameStorage(mockRequest(), {data: [mockDataFrame()]} )
     const storageLengthAfterInitialQuery = Object.values(storage.getStorage())[0]['__time__'].length
@@ -874,7 +894,7 @@ describe('PrometheusIncrementalStorage', function () {
   });
 
   it('Will evict old dataframes, and use stored data when user shortens query window', () => {
-    const storage = new PrometheusIncrementalStorage(timeSrvStub as TimeSrv);
+    const storage = new PrometheusIncrementalStorage(getDatasourceStub());
     // Initial request with all data for time range
     const firstRequest = {
       request: {
@@ -2352,7 +2372,7 @@ describe('PrometheusIncrementalStorage', function () {
   });
 
   it('Avoids off by one error', () => {
-    const storage = new PrometheusIncrementalStorage(timeSrvStub as TimeSrv);
+    const storage = new PrometheusIncrementalStorage(getDatasourceStub());
     const firstRequest = {
       request: {
         app: 'panel-viewer',
