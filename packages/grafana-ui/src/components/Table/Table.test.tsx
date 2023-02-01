@@ -476,7 +476,10 @@ describe('Table', () => {
         }),
       });
 
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('5');
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual(
+        'Count:'
+      );
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[1].textContent).toEqual('5');
     });
 
     it('should show correct counts when turning `count rows` on and off', async () => {
@@ -499,7 +502,10 @@ describe('Table', () => {
         }),
       });
 
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('5');
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual(
+        'Count:'
+      );
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[1].textContent).toEqual('5');
 
       const onSortByChange = jest.fn();
       const onCellFilterAdded = jest.fn();
