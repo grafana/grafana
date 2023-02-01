@@ -108,34 +108,29 @@ type templateData struct {
 // Copied from https://github.com/marcusolsson/json-schema-docs and slightly changed to fit the DocsJenny
 
 type schema struct {
-	ID                   string                `json:"$id,omitempty"`
-	Ref                  string                `json:"$ref,omitempty"`
-	Schema               string                `json:"$schema,omitempty"`
-	Title                string                `json:"title,omitempty"`
-	Description          string                `json:"description,omitempty"`
-	Required             []string              `json:"required,omitempty"`
-	Type                 PropertyTypes         `json:"type,omitempty"`
-	Properties           map[string]*schema    `json:"properties,omitempty"`
-	Items                *schema               `json:"items,omitempty"`
-	Definitions          map[string]*schema    `json:"definitions,omitempty"`
-	Enum                 []Any                 `json:"enum"`
-	AdditionalProperties *AdditionalProperties `json:"additionalProperties"`
-	Default              any                   `json:"default"`
+	ID                   string             `json:"$id,omitempty"`
+	Ref                  string             `json:"$ref,omitempty"`
+	Schema               string             `json:"$schema,omitempty"`
+	Title                string             `json:"title,omitempty"`
+	Description          string             `json:"description,omitempty"`
+	Required             []string           `json:"required,omitempty"`
+	Type                 PropertyTypes      `json:"type,omitempty"`
+	Properties           map[string]*schema `json:"properties,omitempty"`
+	Items                *schema            `json:"items,omitempty"`
+	Definitions          map[string]*schema `json:"definitions,omitempty"`
+	Enum                 []Any              `json:"enum"`
+	AdditionalProperties *schema            `json:"additionalProperties"`
+	Default              any                `json:"default"`
 }
 
-type AdditionalProperties struct {
-	Type                 string
-	Items                *AdditionalProperties
-	AdditionalProperties *AdditionalProperties
-}
-
-func renderMapType(props *AdditionalProperties) string {
+func renderMapType(props *schema) string {
 	if props == nil {
 		return ""
 	}
 
-	if props.AdditionalProperties == nil && props.Items == nil {
-		return props.Type
+	if props.Type.HasType(PropertyTypeObject) {
+		name, anchor := propNameAndAnchor(props.Title, props.Title)
+		return fmt.Sprintf("[%s](#%s)", name, anchor)
 	}
 
 	if props.AdditionalProperties != nil {
@@ -146,7 +141,11 @@ func renderMapType(props *AdditionalProperties) string {
 		return "[]" + renderMapType(props.Items)
 	}
 
-	return ""
+	var types []string
+	for _, t := range props.Type {
+		types = append(types, string(t))
+	}
+	return strings.Join(types, ", ")
 }
 
 func jsonToMarkdown(jsonData []byte, tpl string, kindName string) ([]byte, error) {
@@ -214,6 +213,21 @@ func resolveSchema(schem *schema, root *simplejson.Json) (*schema, error) {
 			return nil, err
 		}
 		*schem.Items = *foo
+	}
+
+	if schem.AdditionalProperties != nil {
+		if schem.AdditionalProperties.Ref != "" {
+			tmp, err := resolveReference(schem.AdditionalProperties.Ref, root)
+			if err != nil {
+				return nil, err
+			}
+			*schem.AdditionalProperties = *tmp
+		}
+		foo, err := resolveSchema(schem.AdditionalProperties, root)
+		if err != nil {
+			return nil, err
+		}
+		*schem.AdditionalProperties = *foo
 	}
 
 	return schem, nil
@@ -316,14 +330,9 @@ func findDefinitions(s *schema) []*schema {
 	// properties for them recursively.
 	var objs []*schema
 
-	for k, p := range s.Properties {
-		// No need to render properties table for a map type
-		if p.AdditionalProperties != nil {
-			continue
-		}
-
-		// Use the identifier as the title.
-		if p.Type.HasType(PropertyTypeObject) {
+	definition := func(k string, p *schema) {
+		if p.Type.HasType(PropertyTypeObject) && p.AdditionalProperties == nil {
+			// Use the identifier as the title.
 			if len(p.Title) == 0 {
 				p.Title = k
 			}
@@ -342,6 +351,15 @@ func findDefinitions(s *schema) []*schema {
 				}
 			}
 		}
+	}
+
+	for k, p := range s.Properties {
+		// If a property has AdditionalProperties, then it's a map
+		if p.AdditionalProperties != nil {
+			definition(k, p.AdditionalProperties)
+		}
+
+		definition(k, p)
 	}
 
 	// Sort the object schemas.
