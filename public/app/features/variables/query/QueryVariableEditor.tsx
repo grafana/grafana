@@ -134,9 +134,19 @@ export class QueryVariableEditorUnConnected extends PureComponent<Props, State> 
       return null;
     }
 
-    const query = variable.query;
     const datasource = extended.dataSource;
     const VariableQueryEditor = extended.VariableQueryEditor;
+
+    let query = variable.query;
+
+    if (typeof query === 'string') {
+      query = query || (datasource.variables?.getDefaultQuery?.() ?? '');
+    } else {
+      query = {
+        ...datasource.variables?.getDefaultQuery?.(),
+        ...variable.query,
+      };
+    }
 
     if (isLegacyQueryEditor(VariableQueryEditor, datasource)) {
       return (

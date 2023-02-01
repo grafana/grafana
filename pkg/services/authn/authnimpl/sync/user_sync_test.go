@@ -4,7 +4,8 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/authinfoservice"
@@ -13,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
-	"github.com/stretchr/testify/require"
 )
 
 func ptrString(s string) *string {
@@ -34,17 +34,17 @@ func TestUserSync_SyncUser(t *testing.T) {
 	authFakeNil := &logintest.AuthInfoServiceFake{
 		ExpectedUser:  nil,
 		ExpectedError: user.ErrUserNotFound,
-		SetAuthInfoFn: func(ctx context.Context, cmd *models.SetAuthInfoCommand) error {
+		SetAuthInfoFn: func(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
 			return nil
 		},
-		UpdateAuthInfoFn: func(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error {
+		UpdateAuthInfoFn: func(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error {
 			return nil
 		},
 	}
 	authFakeUserID := &logintest.AuthInfoServiceFake{
 		ExpectedUser:  nil,
 		ExpectedError: nil,
-		ExpectedUserAuth: &models.UserAuth{
+		ExpectedUserAuth: &login.UserAuth{
 			AuthModule: "oauth",
 			AuthId:     "2032",
 			UserId:     1,
@@ -111,7 +111,7 @@ func TestUserSync_SyncUser(t *testing.T) {
 					Name:  "test",
 					Email: "test",
 					ClientParams: authn.ClientParams{
-						LookUpParams: models.UserLookupParams{
+						LookUpParams: login.UserLookupParams{
 							UserID: nil,
 							Email:  ptrString("test"),
 							Login:  nil,
@@ -126,7 +126,7 @@ func TestUserSync_SyncUser(t *testing.T) {
 				Name:  "test",
 				Email: "test",
 				ClientParams: authn.ClientParams{
-					LookUpParams: models.UserLookupParams{
+					LookUpParams: login.UserLookupParams{
 						UserID: nil,
 						Email:  ptrString("test"),
 						Login:  nil,
@@ -150,7 +150,7 @@ func TestUserSync_SyncUser(t *testing.T) {
 					Email: "test",
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
-						LookUpParams: models.UserLookupParams{
+						LookUpParams: login.UserLookupParams{
 							UserID: nil,
 							Email:  ptrString("test"),
 							Login:  nil,
@@ -167,7 +167,7 @@ func TestUserSync_SyncUser(t *testing.T) {
 				IsGrafanaAdmin: ptrBool(false),
 				ClientParams: authn.ClientParams{
 					SyncUser: true,
-					LookUpParams: models.UserLookupParams{
+					LookUpParams: login.UserLookupParams{
 						UserID: nil,
 						Email:  ptrString("test"),
 						Login:  nil,
@@ -191,7 +191,7 @@ func TestUserSync_SyncUser(t *testing.T) {
 					Email: "test",
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
-						LookUpParams: models.UserLookupParams{
+						LookUpParams: login.UserLookupParams{
 							UserID: nil,
 							Email:  nil,
 							Login:  ptrString("test"),
@@ -207,7 +207,7 @@ func TestUserSync_SyncUser(t *testing.T) {
 				Email:          "test",
 				IsGrafanaAdmin: ptrBool(false),
 				ClientParams: authn.ClientParams{
-					LookUpParams: models.UserLookupParams{
+					LookUpParams: login.UserLookupParams{
 						UserID: nil,
 						Email:  nil,
 						Login:  ptrString("test"),
@@ -232,7 +232,7 @@ func TestUserSync_SyncUser(t *testing.T) {
 					Email: "test",
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
-						LookUpParams: models.UserLookupParams{
+						LookUpParams: login.UserLookupParams{
 							UserID: ptrInt64(1),
 							Email:  nil,
 							Login:  nil,
@@ -249,7 +249,7 @@ func TestUserSync_SyncUser(t *testing.T) {
 				IsGrafanaAdmin: ptrBool(false),
 				ClientParams: authn.ClientParams{
 					SyncUser: true,
-					LookUpParams: models.UserLookupParams{
+					LookUpParams: login.UserLookupParams{
 						UserID: ptrInt64(1),
 						Email:  nil,
 						Login:  nil,
@@ -274,7 +274,7 @@ func TestUserSync_SyncUser(t *testing.T) {
 					Email: "test",
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
-						LookUpParams: models.UserLookupParams{
+						LookUpParams: login.UserLookupParams{
 							UserID: nil,
 							Email:  nil,
 							Login:  nil,
@@ -291,7 +291,7 @@ func TestUserSync_SyncUser(t *testing.T) {
 				IsGrafanaAdmin: ptrBool(false),
 				ClientParams: authn.ClientParams{
 					SyncUser: true,
-					LookUpParams: models.UserLookupParams{
+					LookUpParams: login.UserLookupParams{
 						UserID: nil,
 						Email:  nil,
 						Login:  nil,
@@ -317,7 +317,7 @@ func TestUserSync_SyncUser(t *testing.T) {
 					AuthID:     "2032",
 					ClientParams: authn.ClientParams{
 						SyncUser: true,
-						LookUpParams: models.UserLookupParams{
+						LookUpParams: login.UserLookupParams{
 							UserID: nil,
 							Email:  nil,
 							Login:  nil,
@@ -348,7 +348,7 @@ func TestUserSync_SyncUser(t *testing.T) {
 						SyncUser:            true,
 						AllowSignUp:         true,
 						EnableDisabledUsers: true,
-						LookUpParams: models.UserLookupParams{
+						LookUpParams: login.UserLookupParams{
 							UserID: nil,
 							Email:  ptrString("test_create"),
 							Login:  nil,
@@ -369,7 +369,7 @@ func TestUserSync_SyncUser(t *testing.T) {
 					SyncUser:            true,
 					AllowSignUp:         true,
 					EnableDisabledUsers: true,
-					LookUpParams: models.UserLookupParams{
+					LookUpParams: login.UserLookupParams{
 						UserID: nil,
 						Email:  ptrString("test_create"),
 						Login:  nil,
@@ -396,7 +396,7 @@ func TestUserSync_SyncUser(t *testing.T) {
 					ClientParams: authn.ClientParams{
 						SyncUser:            true,
 						EnableDisabledUsers: true,
-						LookUpParams: models.UserLookupParams{
+						LookUpParams: login.UserLookupParams{
 							UserID: ptrInt64(3),
 							Email:  nil,
 							Login:  nil,
@@ -415,7 +415,7 @@ func TestUserSync_SyncUser(t *testing.T) {
 				ClientParams: authn.ClientParams{
 					SyncUser:            true,
 					EnableDisabledUsers: true,
-					LookUpParams: models.UserLookupParams{
+					LookUpParams: login.UserLookupParams{
 						UserID: ptrInt64(3),
 						Email:  nil,
 						Login:  nil,

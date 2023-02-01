@@ -95,9 +95,9 @@ const dataSources = {
 };
 
 const ui = {
-  newContactPointButton: byRole('link', { name: /new contact point/i }),
+  newContactPointButton: byRole('link', { name: /add contact point/i }),
   saveContactButton: byRole('button', { name: /save contact point/i }),
-  newContactPointIntegrationButton: byRole('button', { name: /new contact point integration/i }),
+  newContactPointIntegrationButton: byRole('button', { name: /add contact point integration/i }),
   testContactPointButton: byRole('button', { name: /Test/ }),
   testContactPointModal: byRole('heading', { name: /test contact point/i }),
   customContactPointOption: byRole('radio', { name: /custom/i }),

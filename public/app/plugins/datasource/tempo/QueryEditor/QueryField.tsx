@@ -3,7 +3,7 @@ import React from 'react';
 import useAsync from 'react-use/lib/useAsync';
 
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import {
   FileDropzone,
   InlineField,
@@ -17,9 +17,10 @@ import {
 import { LokiQueryField } from '../../loki/components/LokiQueryField';
 import { LokiDatasource } from '../../loki/datasource';
 import { LokiQuery } from '../../loki/types';
+import { TempoQueryType } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
 import { QueryEditor } from '../traceql/QueryEditor';
-import { TempoQuery, TempoQueryType } from '../types';
+import { TempoQuery } from '../types';
 
 import NativeSearch from './NativeSearch';
 import { ServiceGraphSection } from './ServiceGraphSection';
@@ -107,6 +108,7 @@ class TempoQueryFieldComponent extends React.PureComponent<Props> {
                 reportInteraction('grafana_traces_query_type_changed', {
                   datasourceType: 'tempo',
                   app: app ?? '',
+                  grafana_version: config.buildInfo.version,
                   newQueryType: v,
                   previousQueryType: query.queryType ?? '',
                 });

@@ -1,9 +1,9 @@
 import { css, cx } from '@emotion/css';
 import { isString, uniqueId } from 'lodash';
 import React, { ReactNode, useCallback, useState } from 'react';
-import { Accept, DropEvent, DropzoneOptions, FileRejection, useDropzone } from 'react-dropzone';
+import { Accept, DropEvent, DropzoneOptions, FileError, FileRejection, useDropzone, ErrorCode } from 'react-dropzone';
 
-import { GrafanaTheme2 } from '@grafana/data';
+import { formattedValueToString, getValueFormat, GrafanaTheme2 } from '@grafana/data';
 
 import { useTheme2 } from '../../themes';
 import { Alert } from '../Alert/Alert';
@@ -59,7 +59,9 @@ export interface DropzoneFile {
 
 export function FileDropzone({ options, children, readAs, onLoad, fileListRenderer, onFileRemove }: FileDropzoneProps) {
   const [files, setFiles] = useState<DropzoneFile[]>([]);
-  const [errorMessages, setErrorMessages] = useState<string[]>([]);
+  const [fileErrors, setErrorMessages] = useState<FileError[]>([]);
+
+  const formattedSize = getValueFormat('decbytes')(options?.maxSize ? options?.maxSize : 0);
 
   const setFileProperty = useCallback(
     (customFile: DropzoneFile, action: (customFileToModify: DropzoneFile) => void) => {
@@ -166,11 +168,15 @@ export function FileDropzone({ options, children, readAs, onLoad, fileListRender
   });
 
   const setErrors = (rejectedFiles: FileRejection[]) => {
-    let errors: string[] = [];
+    let errors: FileError[] = [];
     rejectedFiles.map((rejectedFile) => {
-      rejectedFile.errors.map((error) => {
-        if (errors.indexOf(error.message) === -1) {
-          errors.push(error.message);
+      rejectedFile.errors.map((newError) => {
+        if (
+          errors.findIndex((presentError) => {
+            return presentError.code === newError.code && presentError.message === newError.message;
+          }) === -1
+        ) {
+          errors.push(newError);
         }
       });
     });
@@ -178,12 +184,21 @@ export function FileDropzone({ options, children, readAs, onLoad, fileListRender
     setErrorMessages(errors);
   };
 
-  const getErrorMessages = () => {
+  const renderErrorMessages = (errors: FileError[]) => {
     return (
       <div className={styles.errorAlert}>
         <Alert title="Upload failed" severity="error" onRemove={clearAlert}>
-          {errorMessages.map((error) => {
-            return <div key={error}>{error}</div>;
+          {errors.map((error) => {
+            switch (error.code) {
+              case ErrorCode.FileTooLarge:
+                return (
+                  <div key={error.message + error.code}>
+                    File is larger than {formattedValueToString(formattedSize)}
+                  </div>
+                );
+              default:
+                return <div key={error.message + error.code}>{error.message}</div>;
+            }
           })}
         </Alert>
       </div>
@@ -200,10 +215,19 @@ export function FileDropzone({ options, children, readAs, onLoad, fileListRender
         <input {...getInputProps()} />
         {children ?? <FileDropzoneDefaultChildren primaryText={getPrimaryText(files, options)} />}
       </div>
-      {errorMessages.length > 0 && getErrorMessages()}
-      {options?.accept && (
-        <small className={cx(styles.small, styles.acceptMargin)}>{getAcceptedFileTypeText(options.accept)}</small>
-      )}
+      {fileErrors.length > 0 && renderErrorMessages(fileErrors)}
+      <div className={styles.acceptContainer}>
+        {options?.accept && (
+          <small className={cx(styles.small, styles.acceptMargin, styles.acceptedFiles)}>
+            {getAcceptedFileTypeText(options.accept)}
+          </small>
+        )}
+        {options?.maxSize && (
+          <small className={cx(styles.small, styles.acceptMargin)}>{`Max file size: ${formattedValueToString(
+            formattedSize
+          )}`}</small>
+        )}
+      </div>
       {fileList}
     </div>
   );
@@ -252,6 +276,7 @@ export function FileDropzoneDefaultChildren({
     </div>
   );
 }
+
 function getPrimaryText(files: DropzoneFile[], options?: BackwardsCompatibleDropzoneOptions) {
   if (options?.multiple === undefined || options?.multiple) {
     return 'Upload file';
@@ -303,6 +328,12 @@ function getStyles(theme: GrafanaTheme2, isDragActive?: boolean) {
       display: flex;
       flex-direction: column;
       align-items: center;
+    `,
+    acceptContainer: css`
+      display: flex;
+    `,
+    acceptedFiles: css`
+      flex-grow: 1;
     `,
     acceptMargin: css`
       margin: ${theme.spacing(2, 0, 1)};
