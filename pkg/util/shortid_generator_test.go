@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -25,7 +26,9 @@ func TestRandomUIDs(t *testing.T) {
 		if validation != nil {
 			t.Fatalf("created invalid name: %v", validation)
 		}
+		fmt.Println(v)
 	}
+	t.FailNow()
 }
 
 func TestIsShortUIDTooLong(t *testing.T) {

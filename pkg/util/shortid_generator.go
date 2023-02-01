@@ -4,6 +4,8 @@ import (
 	"math/rand"
 	"regexp"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 var uidrand = rand.New(rand.NewSource(time.Now().UnixNano()))
@@ -27,12 +29,14 @@ func IsShortUIDTooLong(uid string) bool {
 // GenerateShortUID generates a short unique identifier.
 // This will return a valid k8s name
 func GenerateShortUID() string {
-	size := 14
-	b := make([]rune, size)
-	b[0] = alphaRunes[uidrand.Intn(len(alphaRunes))]
-	b[size-1] = alphaRunes[uidrand.Intn(len(alphaRunes))]
-	for i := 1; i < size-1; i++ {
-		b[i] = alphaNumRunes[rand.Intn(len(alphaNumRunes))]
+	uid, err := uuid.NewRandom()
+	if err != nil {
+		panic("invalid uuid")
 	}
-	return string(b)
+	uuid := uid.String()
+	return string(alphaRunes[uidrand.Intn(len(alphaRunes))]) + // alpha
+		uuid[0:8] + // Low time
+		uuid[19:23] + // Clock sequence + variant
+		uuid[24:] + // Node
+		string(alphaRunes[uidrand.Intn(len(alphaRunes))]) // alpha
 }
