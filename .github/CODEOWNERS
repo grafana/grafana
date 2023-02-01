@@ -577,7 +577,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/commands.yml @torkelo
 /.github/workflows/detect-breaking-changes-* @grafana/plugins-platform-frontend
 /.github/workflows/doc-validator.yml @grafana/docs-grafana
-/.github/workflows/enterprise-pr-check.yml @grafana/grafana-release-eng
 /.github/workflows/epic-add-to-platform-ux-parent-project.yml @meanmina
 /.github/workflows/github-release.yml @torkelo
 /.github/workflows/issue-labeled.yml @armandgrillet
