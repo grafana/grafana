@@ -303,6 +303,13 @@ local dashboard = grafana.dashboard;
         id: 0,
       }
     },
+    dashboard.new('heatmap-x', import '../dev-dashboards/panel-heatmap/heatmap-x.json') +
+    resource.addMetadata('folder', 'dev-dashboards') +
+    {
+      spec+: {
+        id: 0,
+      }
+    },
     dashboard.new('histogram_tests', import '../dev-dashboards/panel-histogram/histogram_tests.json') +
     resource.addMetadata('folder', 'dev-dashboards') +
     {
