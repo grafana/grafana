@@ -215,11 +215,12 @@ func (s *ServiceImpl) getHomeNode(c *contextmodel.ReqContext, prefs *pref.Prefer
 	homeUrl := s.cfg.AppSubURL + "/"
 	if !c.IsSignedIn && !s.cfg.AnonymousEnabled {
 		homeUrl = s.cfg.AppSubURL + "/login"
-	}
-	homePage := s.cfg.HomePage
+	} else {
+		homePage := s.cfg.HomePage
 
-	if prefs.HomeDashboardID == 0 && len(homePage) > 0 {
-		homeUrl = homePage
+		if prefs.HomeDashboardID == 0 && len(homePage) > 0 {
+			homeUrl = homePage
+		}
 	}
 
 	homeNode := &navtree.NavLink{
