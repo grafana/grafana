@@ -131,7 +131,7 @@ func extendAlert(alert template.Alert, externalURL string, logger log.Logger) *E
 
 	if alert.Annotations != nil {
 		extended.ValueString = alert.Annotations[`__value_string__`]
-		extended.EvalValues = parseEvalValues(extended.ValueString)
+		extended.EvalValues = parseEvalValues(extended.ValueString) // LOGZ.IO GRAFANA CHANGE :: DEV-37882 - Access evaluation results in grafana alert template
 	}
 
 	matchers := make([]string, 0)
