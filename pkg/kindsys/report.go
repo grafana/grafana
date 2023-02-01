@@ -194,17 +194,14 @@ func buildKindStateReport() *KindStateReport {
 	for _, k := range b.All() {
 		seen[k.Props().Common().Name] = true
 		lin := k.Lineage()
-		switch k.Props().(type) {
-		case kindsys.CoreProperties:
-			links := buildCoreLinks(lin, k.Def().Properties)
-			r.add(Kind{
-				SomeKindProperties:   k.Props(),
-				Category:             "core",
-				Links:                links,
-				GrafanaMaturityCount: grafanaMaturityAttrCount(lin.Latest().Underlying()),
-				CodeOwners:           findCodeOwners(of, links),
-			})
-		}
+		links := buildCoreLinks(lin, k.Def().Properties)
+		r.add(Kind{
+			SomeKindProperties:   k.Props(),
+			Category:             "core",
+			Links:                links,
+			GrafanaMaturityCount: grafanaMaturityAttrCount(lin.Latest().Underlying()),
+			CodeOwners:           findCodeOwners(of, links),
+		})
 	}
 
 	for _, kn := range plannedCoreKinds {
