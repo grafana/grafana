@@ -3,7 +3,6 @@ import React, { CSSProperties, ReactElement, ReactNode } from 'react';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { GridPos } from '@grafana/schema';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { Icon } from '../Icon/Icon';
@@ -24,7 +23,7 @@ export interface PanelChromeProps {
   height: number;
   children: (innerWidth: number, innerHeight: number) => ReactNode;
   padding?: PanelPadding;
-  gridPos?: GridPos;
+  hoverHeaderOffset?: number;
   title?: string;
   description?: string | (() => string);
   titleItems?: ReactNode;
@@ -77,9 +76,9 @@ export function PanelChrome({
   dragClass,
   dragClassCancel,
   hoverHeader = false,
+  hoverHeaderOffset,
   loadingState,
   statusMessage,
-  gridPos,
   statusMessageOnClick,
   leftItems,
 }: PanelChromeProps) {
@@ -117,9 +116,6 @@ export function PanelChrome({
 
   const ariaLabel = title ? selectors.components.Panels.Panel.containerByTitle(title) : 'Panel';
 
-  // Shift the hover menu down if it's on the top row so it doesn't get clipped by topnav
-  const yOffset = (gridPos?.y ?? 0) === 0 ? -16 : undefined;
-
   const headerContent = (
     <>
       {title && (
@@ -155,7 +151,7 @@ export function PanelChrome({
       </div>
 
       {(hoverHeader || !hasHeader) && menu && (
-        <HoverWidget menu={menu} title={title} offset={yOffset} dragClass={dragClass}>
+        <HoverWidget menu={menu} title={title} offset={hoverHeaderOffset} dragClass={dragClass}>
           {headerContent}
         </HoverWidget>
       )}
