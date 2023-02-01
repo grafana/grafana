@@ -181,6 +181,9 @@ public/locales/_build/
 public/locales/*/*.js
 public/locales/*/grafana_old.json
 
+# Auto-generated swagger intermediate file
+public/api-spec.json
+
 deployment_tools_config.json
 
 .betterer.cache
