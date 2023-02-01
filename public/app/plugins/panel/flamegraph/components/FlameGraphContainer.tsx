@@ -11,7 +11,7 @@ import FlameGraph from './FlameGraph/FlameGraph';
 import { Item, nestedSetToLevels } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphTopTableContainer from './TopTable/FlameGraphTopTableContainer';
-import { ContextMenuEvent, SelectedView } from './types';
+import { SelectedView } from './types';
 
 type Props = {
   data: DataFrame;
@@ -29,7 +29,6 @@ const FlameGraphContainer = (props: Props) => {
   const [rangeMax, setRangeMax] = useState(1);
   const [search, setSearch] = useState('');
   const [selectedView, setSelectedView] = useState(SelectedView.Both);
-  const [contextMenuEvent, setContextMenuEvent] = useState<ContextMenuEvent>();
   const [sizeRef, { width: containerWidth }] = useMeasure<HTMLDivElement>();
 
   // Transform dataFrame with nested set format to array of levels. Each level contains all the bars for a particular
@@ -69,7 +68,6 @@ const FlameGraphContainer = (props: Props) => {
         app={props.app}
         setTopLevelIndex={setTopLevelIndex}
         setSelectedBarIndex={setSelectedBarIndex}
-        setContextMenuEvent={setContextMenuEvent}
         setRangeMin={setRangeMin}
         setRangeMax={setRangeMax}
         search={search}
@@ -102,13 +100,11 @@ const FlameGraphContainer = (props: Props) => {
           levels={levels}
           topLevelIndex={topLevelIndex}
           selectedBarIndex={selectedBarIndex}
-          contextMenuEvent={contextMenuEvent}
           rangeMin={rangeMin}
           rangeMax={rangeMax}
           search={search}
           setTopLevelIndex={setTopLevelIndex}
           setSelectedBarIndex={setSelectedBarIndex}
-          setContextMenuEvent={setContextMenuEvent}
           setRangeMin={setRangeMin}
           setRangeMax={setRangeMax}
           selectedView={selectedView}

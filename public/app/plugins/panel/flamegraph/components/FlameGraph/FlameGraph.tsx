@@ -39,13 +39,11 @@ type Props = {
   levels: ItemWithStart[][];
   topLevelIndex: number;
   selectedBarIndex: number;
-  contextMenuEvent: ContextMenuEvent | undefined;
   rangeMin: number;
   rangeMax: number;
   search: string;
   setTopLevelIndex: (level: number) => void;
   setSelectedBarIndex: (bar: number) => void;
-  setContextMenuEvent: (event: ContextMenuEvent | undefined) => void;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
   selectedView: SelectedView;
@@ -59,13 +57,11 @@ const FlameGraph = ({
   levels,
   topLevelIndex,
   selectedBarIndex,
-  contextMenuEvent,
   rangeMin,
   rangeMax,
   search,
   setTopLevelIndex,
   setSelectedBarIndex,
-  setContextMenuEvent,
   setRangeMin,
   setRangeMax,
   selectedView,
@@ -82,6 +78,7 @@ const FlameGraph = ({
   const graphRef = useRef<HTMLCanvasElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [tooltipData, setTooltipData] = useState<TooltipData>();
+  const [contextMenuEvent, setContextMenuEvent] = useState<ContextMenuEvent>();
 
   const render = useCallback(
     (pixelsPerTick: number) => {

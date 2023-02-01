@@ -20,7 +20,6 @@ describe('FlameGraphHeader', () => {
         setSearch={setSearch}
         setTopLevelIndex={jest.fn()}
         setSelectedBarIndex={jest.fn()}
-        setContextMenuEvent={jest.fn()}
         setRangeMin={jest.fn()}
         setRangeMax={jest.fn()}
         selectedView={selectedView}
