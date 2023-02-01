@@ -283,6 +283,7 @@
         0,
         0
       ],
+      "description": "A Grafana dashboard.",
       "grafanaMaturityCount": 139,
       "lineageIsGroup": false,
       "links": {
@@ -819,6 +820,7 @@
         0,
         0
       ],
+      "description": "A standalone panel",
       "grafanaMaturityCount": 10,
       "lineageIsGroup": false,
       "links": {
@@ -1181,6 +1183,7 @@
         0,
         0
       ],
+      "description": "A playlist is a series of dashboards that is automatically rotated in the browser, on a configurable interval.",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -1251,6 +1254,7 @@
         0,
         0
       ],
+      "description": "The user or team frontend preferences",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -1321,6 +1325,7 @@
         0,
         0
       ],
+      "description": "Public dashboard configuration",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -1389,6 +1394,7 @@
         0,
         0
       ],
+      "description": "system account",
       "grafanaMaturityCount": 9,
       "lineageIsGroup": false,
       "links": {
@@ -1509,6 +1515,7 @@
         0,
         0
       ],
+      "description": "A team is a named grouping of Grafana users to which access control rules may be assigned.",
       "grafanaMaturityCount": 7,
       "lineageIsGroup": false,
       "links": {
