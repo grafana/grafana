@@ -48,15 +48,9 @@ type CorrelationConfig struct {
 	// required:true
 	// example: { "expr": "job=app" }
 	Target map[string]interface{} `json:"target" binding:"Required"`
-	/*
-		date,text
-		1674078628,This is a news article about Superman. Batman was not involved at all.
-
-		UPDATE correlation
-		SET config='{"type":"query","field":"text","target":{"editorMode":"code","format":"table","rawQuery":true,"rawSql":"SELECT * FROM superhero WHERE name=''${name}''","refId":"A","sql":{"columns":[{"parameters":[],"type":"function"}],"groupBy":[{"property":{"type":"string"},"type":"groupBy"}],"limit":50}},"transformations":[{"type":"regex","expression":"(Superman|Batman)", "variable":"name"}]}'
-		WHERE id = 637
-
-	*/
+	// Source data transformations
+	// required:false
+	// example: [{"type": "logfmt"}]
 	Transformations []Transformation `json:"transformations,omitempty"`
 }
 
@@ -173,9 +167,9 @@ type CorrelationConfigUpdateDTO struct {
 	// Target data query
 	// example: { "expr": "job=app" }
 	Target *map[string]interface{} `json:"target"`
-	// Source data transformation
-	// example: TODO
-	Source *Transformation `json:"source"`
+	// Source data transformations
+	// example: [{"type": "logfmt"},{"type":"regex","expression":"(Superman|Batman)", "variable":"name"}]
+	Transformations []Transformation `json:"transformations"`
 }
 
 func (c CorrelationConfigUpdateDTO) Validate() error {
