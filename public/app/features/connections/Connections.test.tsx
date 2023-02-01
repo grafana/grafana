@@ -1,7 +1,6 @@
 import { render, RenderResult, screen } from '@testing-library/react';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { locationService } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -25,11 +24,9 @@ const renderPage = (
   locationService.push(path);
 
   return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <Connections />
-      </Router>
-    </Provider>
+    <TestProvider store={store}>
+      <Connections />
+    </TestProvider>
   );
 };
 
@@ -86,6 +83,7 @@ describe('Connections', () => {
       url: '/connections/connect-data',
       pluginId: 'grafana-easystart-app',
     };
+
     const connections = {
       ...navIndex.connections,
       children: navIndex.connections.children?.map((child) => {
@@ -96,6 +94,7 @@ describe('Connections', () => {
         return child;
       }),
     };
+
     const store = configureStore({
       navIndex: { ...navIndex, connections, [standalonePluginPage.id]: standalonePluginPage },
       plugins: getPluginsStateMock([]),

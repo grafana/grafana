@@ -2,8 +2,7 @@ import { render, waitFor, within, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { setupServer } from 'msw/node';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testing-library-selector';
 
@@ -17,7 +16,6 @@ import {
   AlertManagerDataSourceJsonData,
   AlertManagerImplementation,
 } from 'app/plugins/datasource/alertmanager/types';
-import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction, ContactPointsState } from 'app/types';
 
 import 'whatwg-fetch';
@@ -64,19 +62,15 @@ const mocks = {
 };
 
 const renderReceivers = (alertManagerSourceName?: string) => {
-  const store = configureStore();
-
   locationService.push(
     '/alerting/notifications' +
       (alertManagerSourceName ? `?${ALERTMANAGER_NAME_QUERY_KEY}=${alertManagerSourceName}` : '')
   );
 
   return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <Receivers />
-      </Router>
-    </Provider>
+    <TestProvider>
+      <Receivers />
+    </TestProvider>
   );
 };
 
