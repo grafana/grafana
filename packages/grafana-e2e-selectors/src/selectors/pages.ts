@@ -194,7 +194,7 @@ export const Pages = {
       CopyUrlInput: 'data-testid public dashboard copy url input',
       CopyUrlButton: 'data-testid public dashboard copy url button',
       TemplateVariablesWarningAlert: 'data-testid public dashboard disabled template variables alert',
-      UnsupportedDatasourcesWarningAlert: 'data-testid public dashboard unsupported datasources',
+      UnsupportedDataSourcesWarningAlert: 'data-testid public dashboard unsupported data sources',
       EnableTimeRangeSwitch: 'data-testid public dashboard on off switch for time range',
     },
   },

@@ -246,7 +246,7 @@ describe('SharePublic - New config setup', () => {
 
     await renderSharePublicDashboard({ panel: mockPanel, dashboard, onDismiss: () => {} });
 
-    expect(screen.queryByTestId(selectors.UnsupportedDatasourcesWarningAlert)).toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.UnsupportedDataSourcesWarningAlert)).toBeInTheDocument();
   });
   it('when fetch is done, then no loader spinner appears, inputs are enabled and save button is disabled', async () => {
     await renderSharePublicDashboard({ panel: mockPanel, dashboard: mockDashboard, onDismiss: () => {} });

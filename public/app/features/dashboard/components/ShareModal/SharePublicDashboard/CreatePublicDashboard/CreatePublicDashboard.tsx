@@ -8,11 +8,13 @@ import { reportInteraction } from '@grafana/runtime/src';
 import { Button, Spinner, useStyles2 } from '@grafana/ui/src';
 
 import { contextSrv } from '../../../../../../core/services/context_srv';
-import { AccessControlAction } from '../../../../../../types';
+import { AccessControlAction, useSelector } from '../../../../../../types';
 import { isOrgAdmin } from '../../../../../plugins/admin/permissions';
 import { useCreatePublicDashboardMutation } from '../../../../api/publicDashboardApi';
-import { DashboardModel } from '../../../../state';
 import { SharePublicDashboardInputs } from '../ConfigPublicDashboard/ConfigPublicDashboard';
+import { UnsupportedDataSourcesAlert } from '../ModalAlerts/UnsupportedDataSourcesAlert';
+import { UnsupportedTemplateVariablesAlert } from '../ModalAlerts/UnsupportedTemplateVariablesAlert';
+import { dashboardHasTemplateVariables, getUnsupportedDashboardDatasources } from '../SharePublicDashboardUtils';
 
 import { AcknowledgeCheckboxes } from './AcknowledgeCheckboxes';
 import { Description } from './Description';
@@ -25,9 +27,12 @@ export type SharePublicDashboardAcknowledgmentInputs = {
   usageAcknowledgment: boolean;
 };
 
-const CreatePublicDashboard = ({ dashboard }: { dashboard: DashboardModel }) => {
+const CreatePublicDashboard = () => {
   const styles = useStyles2(getStyles);
   const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
+  const dashboardState = useSelector((store) => store.dashboard);
+  const dashboard = dashboardState.getModel()!;
+  const unsupportedDataSources = getUnsupportedDashboardDatasources(dashboard.panels);
 
   const {
     handleSubmit,
@@ -46,13 +51,17 @@ const CreatePublicDashboard = ({ dashboard }: { dashboard: DashboardModel }) => 
 
   const onCreate = async (values: SharePublicDashboardInputs) => {
     reportInteraction('grafana_dashboards_public_create_clicked');
-    createPublicDashboard({ dashboard });
+    createPublicDashboard({ dashboard, payload: { isEnabled: true } });
   };
 
   return (
     <div>
       <p className={styles.title}>Welcome to Grafana public dashboards alpha!</p>
       <Description />
+      {!!unsupportedDataSources.length && (
+        <UnsupportedDataSourcesAlert unsupportedDataSources={unsupportedDataSources.join(', ')} />
+      )}
+      {dashboardHasTemplateVariables(dashboard.getVariables()) && <UnsupportedTemplateVariablesAlert />}
       <form onSubmit={handleSubmit(onCreate)}>
         <div className={styles.checkboxes}>
           <AcknowledgeCheckboxes disabled={!hasWritePermissions || isSaveLoading} register={register} />
@@ -73,7 +82,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin: ${theme.spacing(0, 0, 2)};
   `,
   checkboxes: css`
-    margin: ${theme.spacing(3, 0, 4)};
+    margin: ${theme.spacing(0, 0, 4)};
   `,
   buttonContainer: css`
     display: flex;

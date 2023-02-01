@@ -6,14 +6,17 @@ import { PanelModel } from '../../../state';
 
 import { supportedDatasources } from './SupportedPubdashDatasources';
 
-export interface PublicDashboard {
-  accessToken?: string;
+export interface PublicDashboardSettings {
   annotationsEnabled: boolean;
   isEnabled: boolean;
+  timeSelectionEnabled: boolean;
+}
+
+export interface PublicDashboard extends PublicDashboardSettings {
+  accessToken?: string;
   uid: string;
   dashboardUid: string;
   timeSettings?: object;
-  timeSelectionEnabled: boolean;
 }
 
 export interface DashboardResponse {
