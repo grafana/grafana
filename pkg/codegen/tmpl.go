@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/grafana/codejen"
+	"github.com/grafana/grafana/pkg/kindsys"
 )
 
 // All the parsed templates in the tmpl subdirectory
@@ -40,7 +41,7 @@ type (
 	tvars_kind_registry struct {
 		PackageName       string
 		KindPackagePrefix string
-		Kinds             []*DefForGen
+		Kinds             []kindsys.Kind
 	}
 	tvars_coremodel_imports struct {
 		PackageName string
