@@ -9,6 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
 	"github.com/grafana/grafana/pkg/registry/corecrd"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -17,13 +19,15 @@ import (
 )
 
 type DashboardController struct {
+	cfg              *setting.Cfg
 	dashboardService *DashboardServiceImpl
 	bridgeService    *bridge.Service
 	reg              *corecrd.Registry
 }
 
-func ProvideDashboardController(bridgeService *bridge.Service, reg *corecrd.Registry, dasboardService *DashboardServiceImpl) *DashboardController {
+func ProvideDashboardController(cfg *setting.Cfg, bridgeService *bridge.Service, reg *corecrd.Registry, dasboardService *DashboardServiceImpl) *DashboardController {
 	return &DashboardController{
+		cfg:              cfg,
 		dashboardService: dasboardService,
 		bridgeService:    bridgeService,
 		reg:              reg,
@@ -61,9 +65,12 @@ func (c *DashboardController) Run(ctx context.Context) error {
 			//c.dashboardService.SaveDashboard()
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
+			fmt.Printf("call to update dashboard: %+v \n", newObj)
+
 			dash, ok := newObj.(*k8ssys.Base[dashboard.Dashboard])
 			if !ok {
-				fmt.Println("dashboard update: failed to convert to dashboard")
+				fmt.Printf("%#v\n", dash)
+				//fmt.Println("dashboard update: failed to convert to dashboard")
 				return
 			}
 			fmt.Printf("dashboard updated: %+v \n", dash)
@@ -81,4 +88,8 @@ func (c *DashboardController) Run(ctx context.Context) error {
 	factory.Start(stop)
 	<-ctx.Done()
 	return nil
+}
+
+func (c *DashboardController) IsDisabled() bool {
+	return !c.cfg.IsFeatureToggleEnabled(featuremgmt.FlagApiserver)
 }

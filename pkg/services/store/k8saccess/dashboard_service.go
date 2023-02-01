@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana/pkg/apimachinery/bridge"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -21,6 +22,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/entity"
 	"github.com/grafana/grafana/pkg/util"
 )
+
+// NOTE this is how you reset the CRD
+//kubectl --kubeconfig=devenv/docker/blocks/apiserver/apiserver.kubeconfig delete CustomResourceDefinition dashboards.dashboard.core.grafana.com
 
 type k8sDashboardService struct {
 	orig      dashboards.DashboardService
@@ -95,21 +99,62 @@ func (s *k8sDashboardService) MakeUserAdmin(ctx context.Context, orgID int64, us
 // - how do we use the dashboard core kind?
 // - how do we translate incoming dashboard DTO to dashboard kind?
 func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO, allowUiUpdate bool) (*dashboards.Dashboard, error) {
+	s.orig.SaveDashboard(ctx, dto, true)
+
+	//////////////////
+	fmt.Println("POTATO")
+	// config and client setup
 	namespace := "default"
-
-	uid := dto.Dashboard.UID
-	if uid == "" {
-		uid = util.GenerateShortUID()
-	}
-	uid = strings.ToLower(uid) // !!!!!!
-
-	//labels := make(map[string]string)
-	//annotations := make(map[string]string)
-
 	// take the kindsys dashboard kind and alias it so it's easier to distinguish from dashboards.Dashboard
 	type dashboardKind = dashboard.Dashboard
 	// get the dashboard CRD from the CRD registry
 	dashboardCRD := s.reg.Dashboard()
+	gk := schema.GroupKind{
+		Group: dashboardCRD.GVK().Group,
+		Kind:  dashboardCRD.GVK().Kind,
+	}
+
+	// get's client to operate on resource (dashboard)
+	resourceClient, err := s.clientSet.GetResource(gk, namespace, dashboardCRD.GVK().Version)
+	if err != nil {
+		fmt.Println("POTATO: resource client missing", err)
+		return nil, err
+	}
+
+	/////////////////
+	// do  work
+
+	updateDashboard := false
+	resourceVersion := ""
+
+	// FIXME this is not reliable and is spaghetti. Change UID or create mapping
+	// for k8s with uuidV4
+	uid := strings.ToLower(dto.Dashboard.UID)
+	if uid == "" {
+		fmt.Println("POTATO: No UID")
+		// FIXME must be lowercase, also eventually we need to check k8s to see
+		// whether we've created a duplicate shortId
+		uid, err = generateUniqK8sUID(ctx, resourceClient)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// check if dashboard exists in k8s. if it does, we're gonna do an update, if
+		rv, ok, err := getResourceVersion(ctx, resourceClient, uid)
+		if !ok {
+			return nil, err
+		}
+		fmt.Println("POTATO: Have UID")
+
+		if rv != "" {
+			fmt.Println("POTATO: exists in k8s")
+			updateDashboard = true
+			resourceVersion = rv
+		}
+	}
+
+	//labels := make(map[string]string)
+	//annotations := make(map[string]string)
 
 	if dto.Dashboard.Data == nil {
 		return nil, fmt.Errorf("POTATO: DASHBOARD DATA NIL")
@@ -132,9 +177,11 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 		// return nil, err
 		fmt.Printf("ERRRO: %s", err)
 	}
+
 	if d.Uid == nil {
 		d.Uid = &uid
 	}
+
 	if d.Title == nil {
 		d.Title = &dto.Dashboard.Title
 	}
@@ -151,14 +198,8 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 		Spec: *d,
 	}
 
-	gk := schema.GroupKind{
-		Group: dashboardCRD.GVK().Group,
-		Kind:  dashboardCRD.GVK().Kind,
-	}
-
-	resource, err := s.clientSet.GetResource(gk, namespace, dashboardCRD.GVK().Version)
-	if err != nil {
-		return nil, err
+	if resourceVersion != "" {
+		b.ObjectMeta.ResourceVersion = resourceVersion
 	}
 
 	o, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&b)
@@ -170,7 +211,19 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 		Object: o,
 	}
 
-	_, err = resource.Create(ctx, uObj, metav1.CreateOptions{})
+	if updateDashboard {
+		fmt.Println("POTATO: CONTINUING, action: update")
+		//var u *unstructured.Unstructured
+		//u, err = resourceClient.Update(ctx, uObj, metav1.UpdateOptions{})
+		//fmt.Printf("%#v", u)
+		_, err = resourceClient.Update(ctx, uObj, metav1.UpdateOptions{})
+	} else {
+		fmt.Println("POTATO: CONTINUING, action: create")
+		_, err = resourceClient.Create(ctx, uObj, metav1.CreateOptions{})
+	}
+
+	//fmt.Println("POTATO: extra debug:", err)
+
 	if err != nil {
 		return nil, err
 	}
@@ -212,4 +265,45 @@ func stripNulls(j *simplejson.Json) {
 			stripNulls(j.Get(k))
 		}
 	}
+}
+
+// FIXME this shouldnt need to exist. use a uuidv4 and do some sort of mapping
+// generate a unique id in k8s
+func generateUniqK8sUID(ctx context.Context, resourceClient dynamic.ResourceInterface) (string, error) {
+	for i := 0; i < 3; i++ {
+		uid := strings.ToLower(util.GenerateShortUID())
+		isUniq, err := isUniqueK8sUID(ctx, resourceClient, uid)
+		if err == nil && isUniq {
+			return uid, nil
+		}
+	}
+	return "", fmt.Errorf("COULD NOT GENERATE ID")
+}
+
+// tells us whether uid exists in k8s
+func isUniqueK8sUID(ctx context.Context, resourceClient dynamic.ResourceInterface, uid string) (bool, error) {
+	_, err := resourceClient.Get(ctx, uid, metav1.GetOptions{})
+	if err == nil {
+		return false, nil
+	}
+
+	if err != nil && strings.Contains(err.Error(), "not found") {
+		return true, nil
+	}
+
+	return false, err
+}
+
+// Gets resource version tells us whether there was an error or not found
+func getResourceVersion(ctx context.Context, resourceClient dynamic.ResourceInterface, uid string) (string, bool, error) {
+	r, err := resourceClient.Get(ctx, uid, metav1.GetOptions{})
+	if err == nil {
+		return r.GetResourceVersion(), true, nil
+	}
+
+	if err != nil && strings.Contains(err.Error(), "not found") {
+		return "", true, nil
+	}
+
+	return "", false, err
 }
