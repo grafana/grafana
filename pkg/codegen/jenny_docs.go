@@ -442,7 +442,7 @@ func propTypeStr(propName string, propValue *schema) string {
 	if len(propType) == 0 {
 		return ""
 	}
-	
+
 	if len(propType) == 1 {
 		return propType[0]
 	}
