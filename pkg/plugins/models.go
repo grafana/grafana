@@ -208,7 +208,8 @@ type PluginMetaDTO struct {
 	Module  string `json:"module"`
 	BaseURL string `json:"baseUrl"`
 
-	CachingConfig EnterpriseCachingConfig `json:"cachingConfig,omitempty"`
+	// This is populated by an Enterprise hook
+	CachingConfig QueryCachingConfig `json:"cachingConfig,omitempty"`
 }
 
 type DataSourceDTO struct {
