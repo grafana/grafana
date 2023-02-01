@@ -155,6 +155,12 @@ var (
 			RequiresDevMode: true,
 		},
 		{
+			Name:            "apiserver",
+			Description:     "Add a k8s API server proxy",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
 			Name:        "supportBundles",
 			Description: "Support bundles for troubleshooting",
 			State:       FeatureStateAlpha,
