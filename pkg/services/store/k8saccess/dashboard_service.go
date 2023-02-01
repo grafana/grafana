@@ -2,7 +2,6 @@ package k8saccess
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -172,12 +171,10 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 		Object: o,
 	}
 
-	out, err := resource.Create(ctx, uObj, metav1.CreateOptions{})
+	_, err = resource.Create(ctx, uObj, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}
-
-	jj, err := json.MarshalIndent(out, "", " ")
 
 	return dto.Dashboard, err
 }
