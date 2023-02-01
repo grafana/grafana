@@ -148,7 +148,9 @@ function operationWithRangeVectorRenderer(
 }
 
 export function labelFilterRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
-  if (model.params[1] === '<' || model.params[1] === '>') {
+  const integerOperators = ['<', '<=', '>', '>='];
+
+  if (integerOperators.includes(String(model.params[1]))) {
     return `${innerExpr} | ${model.params[0]} ${model.params[1]} ${model.params[2]}`;
   }
 
