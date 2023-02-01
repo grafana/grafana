@@ -421,8 +421,6 @@ def enterprise2_pipelines(prefix = "", ver_mode = ver_mode, trigger = release_tr
     """
     if ver_mode == "release":
         source = "${DRONE_TAG}"
-        if prefix == "custom-":
-            source = "${DRONE_TARGET_BRANCH}"
     elif ver_mode == "release-branch":
         source = "${DRONE_BRANCH}"
     else:
@@ -649,14 +647,8 @@ def artifacts_page_pipeline():
         pipeline(
             name = "publish-artifacts-page",
             trigger = trigger,
-            steps = [
-                download_grabpl_step(),
-                clone_enterprise_step(source = "${DRONE_TAG}"),
-                init_enterprise_step("release"),
-                compile_build_cmd("enterprise"),
-                artifacts_page_step(),
-            ],
+            steps = [download_grabpl_step(), artifacts_page_step()],
             edition = "all",
-            environment = {"EDITION": "enterprise"},
+            environment = {"EDITION": "all"},
         ),
     ]
