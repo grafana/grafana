@@ -1,4 +1,18 @@
-# Plan IAM integration strategy
+---
+title: Planning IAM integration strategy
+menuTitle: IAM integration
+description: Considerations and .
+aliases:
+  - /docs/mimir/latest/old-architecture/
+  - docs/sources/auth/planning/
+weight: 200
+keywords:
+  - IdP
+  - IAM
+  - Auth
+---
+
+# Planning IAM integration strategy
 
 The following documentation is meant to shed light on the different authorization and authentications strategies available in Grafana. By doing preparation before implementation, the user will be able to decide which integration strategy suits best for their needs.
 
