@@ -24,7 +24,7 @@ export function NavBarMenuItemWrapper({
   if (link.emptyMessageId && !linkHasChildren(link)) {
     const emptyMessageTranslated = getNavTitle(link.emptyMessageId);
     return (
-      <NavBarMenuSection link={link}>
+      <NavBarMenuSection onClose={onClose} link={link} activeItem={activeItem}>
         <ul className={styles.children}>
           <div className={styles.emptyMessage}>{emptyMessageTranslated}</div>
         </ul>
