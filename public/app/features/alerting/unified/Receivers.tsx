@@ -10,7 +10,6 @@ import { useDispatch } from 'app/types';
 
 import { ContactPointsState } from '../../../types';
 
-import { alertmanagerApi } from './api/alertmanagerApi';
 import { useGetContactPointsState } from './api/receiversApi';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
@@ -54,8 +53,6 @@ function NotificationError({ errorCount }: NotificationErrorProps) {
 type PageType = 'receivers' | 'templates' | 'global-config';
 
 const Receivers = () => {
-  const { useGetAlertmanagerChoiceQuery } = alertmanagerApi;
-
   const alertManagers = useAlertManagersByPermission('notification');
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
   const dispatch = useDispatch();
@@ -96,8 +93,6 @@ const Receivers = () => {
   const contactPointsState: ContactPointsState = useGetContactPointsState(alertManagerSourceName ?? '');
   const integrationsErrorCount = contactPointsState?.errorCount ?? 0;
 
-  const { data: alertmanagerChoice } = useGetAlertmanagerChoiceQuery();
-
   const disableAmSelect = !isRoot;
 
   let pageNav = getPageNavigationModel(type, id);
@@ -130,10 +125,7 @@ const Receivers = () => {
           {error.message || 'Unknown error.'}
         </Alert>
       )}
-      <GrafanaAlertmanagerDeliveryWarning
-        alertmanagerChoice={alertmanagerChoice}
-        currentAlertmanager={alertManagerSourceName}
-      />
+      <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={alertManagerSourceName} />
       {loading && !config && <LoadingPlaceholder text="loading configuration..." />}
       {config && !error && (
         <Switch>
