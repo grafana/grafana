@@ -84,7 +84,7 @@ For Loki metric queries in Explore, you are now able to see the sample of log li
 
 When you start your journey to create a dashboard or explore your data, but you don't have a data source connected yet, you’ll be shown a page that tells you this and guides you to set up a first connection.
 
-Administrators can choose between selecting one of the most popular data sources or viewing the full list of data sources. Editors are guided to contact their administrator to configure data sources. In both cases, there's also an option to continue without setting up a data source and to use sample data instead.
+Administrators can choose between selecting one of the most popular data sources or viewing the full list of them. Editors are guided to contact their administrator to configure data sources. In both cases, there's also an option to continue without setting up a data source and to use sample data instead.
 
 This is currently a beta feature that can be accessed by enabling the `datasourceOnboarding` feature toggle.
 
