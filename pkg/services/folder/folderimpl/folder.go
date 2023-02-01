@@ -48,7 +48,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 ) folder.Service {
 	store := ProvideStore(db, cfg, features)
-	svr := &Service{
+	srv := &Service{
 		cfg:                  cfg,
 		log:                  log.New("folder-service"),
 		dashboardStore:       dashboardStore,
@@ -59,12 +59,13 @@ func ProvideService(
 		bus:                  bus,
 	}
 	if features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		svr.DBMigration(db)
+		srv.DBMigration(db)
 	}
 
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashboardStore, folderStore, svr))
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(dashboardStore, folderStore, svr))
-	return svr
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashboardStore, folderStore, srv))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(dashboardStore, folderStore, srv))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(dashboardStore, folderStore, srv))
+	return srv
 }
 
 func (s *Service) DBMigration(db db.DB) {
@@ -112,6 +113,21 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 		return nil, folder.ErrBadRequest.Errorf("either on of UID, ID, Title fields must be present")
 	}
 
+	// do not get guardian by the folder ID because it differs from the nested folder ID
+	// and the legacy folder ID has been associated with the permissions:
+	// use the folder UID instead that is the same for both
+	g, err := guardian.NewByUID(ctx, dashFolder.UID, dashFolder.OrgID, cmd.SignedInUser)
+	if err != nil {
+		return nil, err
+	}
+
+	if canView, err := g.CanView(); err != nil || !canView {
+		if err != nil {
+			return nil, toFolderError(err)
+		}
+		return nil, dashboards.ErrFolderAccessDenied
+	}
+
 	if !s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		return dashFolder, nil
 	}
@@ -124,21 +140,6 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 
 	if err != nil {
 		return nil, err
-	}
-
-	// do not get guardian by the folder ID because it differs from the nested folder ID
-	// and the legacy folder ID has been associated with the permissions:
-	// use the folde UID instead that is the same for both
-	g, err := guardian.NewByUID(ctx, f.UID, f.OrgID, cmd.SignedInUser)
-	if err != nil {
-		return nil, err
-	}
-
-	if canView, err := g.CanView(); err != nil || !canView {
-		if err != nil {
-			return nil, toFolderError(err)
-		}
-		return nil, dashboards.ErrFolderAccessDenied
 	}
 
 	// always expose the dashboard store sequential ID
@@ -193,72 +194,15 @@ func (s *Service) getFolderByID(ctx context.Context, user *user.SignedInUser, id
 		return &folder.Folder{ID: id, Title: "General"}, nil
 	}
 
-	dashFolder, err := s.dashboardFolderStore.GetFolderByID(ctx, orgID, id)
-	if err != nil {
-		return nil, err
-	}
-
-	// do not get guardian by the folder ID because it differs from the nested folder ID
-	// and the legacy folder ID has been associated with the permissions:
-	// use the folde UID instead that is the same for both
-	g, err := guardian.NewByUID(ctx, dashFolder.UID, orgID, user)
-	if err != nil {
-		return nil, err
-	}
-
-	if canView, err := g.CanView(); err != nil || !canView {
-		if err != nil {
-			return nil, toFolderError(err)
-		}
-		return nil, dashboards.ErrFolderAccessDenied
-	}
-
-	return dashFolder, nil
+	return s.dashboardFolderStore.GetFolderByID(ctx, orgID, id)
 }
 
 func (s *Service) getFolderByUID(ctx context.Context, user *user.SignedInUser, orgID int64, uid string) (*folder.Folder, error) {
-	dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, orgID, uid)
-	if err != nil {
-		return nil, err
-	}
-
-	// do not get guardian by the folder ID because it differs from the nested folder ID
-	// and the legacy folder ID has been associated with the permissions:
-	// use the folde UID instead that is the same for both
-	g, err := guardian.NewByUID(ctx, dashFolder.UID, orgID, user)
-	if err != nil {
-		return nil, err
-	}
-
-	if canView, err := g.CanView(); err != nil || !canView {
-		if err != nil {
-			return nil, toFolderError(err)
-		}
-		return nil, dashboards.ErrFolderAccessDenied
-	}
-
-	return dashFolder, nil
+	return s.dashboardFolderStore.GetFolderByUID(ctx, orgID, uid)
 }
 
 func (s *Service) getFolderByTitle(ctx context.Context, user *user.SignedInUser, orgID int64, title string) (*folder.Folder, error) {
-	dashFolder, err := s.dashboardFolderStore.GetFolderByTitle(ctx, orgID, title)
-	if err != nil {
-		return nil, err
-	}
-
-	g, err := guardian.NewByUID(ctx, dashFolder.UID, orgID, user)
-	if err != nil {
-		return nil, err
-	}
-
-	if canView, err := g.CanView(); err != nil || !canView {
-		if err != nil {
-			return nil, toFolderError(err)
-		}
-		return nil, dashboards.ErrFolderAccessDenied
-	}
-
-	return dashFolder, nil
+	return s.dashboardFolderStore.GetFolderByTitle(ctx, orgID, title)
 }
 
 func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (*folder.Folder, error) {
