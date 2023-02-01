@@ -68,7 +68,7 @@ type Service struct {
 	tracer          tracing.Tracer
 }
 
-func getDatasourceService(settings backend.DataSourceInstanceSettings, cfg *setting.Cfg, clientProvider *httpclient.Provider, dsInfo types.DatasourceInfo, routeName string) (types.DatasourceService, error) {
+func getDatasourceService(settings *backend.DataSourceInstanceSettings, cfg *setting.Cfg, clientProvider *httpclient.Provider, dsInfo types.DatasourceInfo, routeName string) (types.DatasourceService, error) {
 	route := dsInfo.Routes[routeName]
 	client, err := newHTTPClient(route, dsInfo, settings, cfg, clientProvider)
 	if err != nil {
@@ -125,7 +125,7 @@ func NewInstanceSettings(cfg *setting.Cfg, clientProvider *httpclient.Provider, 
 		}
 
 		for routeName := range executors {
-			service, err := getDatasourceService(settings, cfg, clientProvider, model, routeName)
+			service, err := getDatasourceService(&settings, cfg, clientProvider, model, routeName)
 			if err != nil {
 				return nil, err
 			}

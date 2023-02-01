@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
-func newHTTPClient(route types.AzRoute, model types.DatasourceInfo, settings backend.DataSourceInstanceSettings, cfg *setting.Cfg, clientProvider httpclient.Provider) (*http.Client, error) {
+func newHTTPClient(route types.AzRoute, model types.DatasourceInfo, settings *backend.DataSourceInstanceSettings, cfg *setting.Cfg, clientProvider httpclient.Provider) (*http.Client, error) {
 	clientOpts, err := settings.HTTPClientOptions()
 	if err != nil {
 		return nil, fmt.Errorf("error getting HTTP options: %w", err)
