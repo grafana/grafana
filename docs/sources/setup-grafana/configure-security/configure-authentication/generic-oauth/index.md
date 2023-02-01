@@ -217,7 +217,7 @@ By default, a refresh token is included in the response for the **Authorization 
    allow_sign_up = true
    auto_login = false
    client_id = <OpenID Connect Client ID from Centrify>
-   client_secret = <your generated OpenID Connect Client Secret"
+   client_secret = <your generated OpenID Connect Client Secret>
    scopes = openid profile email
    auth_url = https://<your domain>.my.centrify.com/OAuth2/Authorize/<Application ID>
    token_url = https://<your domain>.my.centrify.com/OAuth2/Token/<Application ID>
