@@ -1,12 +1,9 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { GrafanaContext } from 'app/core/context/GrafanaContext';
-import { configureStore } from 'app/store/configureStore';
 
 import { Page } from './Page';
 import { PageProps } from './types';
@@ -32,17 +29,12 @@ const setup = (props: Partial<PageProps>) => {
     },
   ];
 
-  const store = configureStore();
-  const context = getGrafanaContextMock();
-
   return render(
-    <Provider store={store}>
-      <GrafanaContext.Provider value={context}>
-        <Page {...props}>
-          <div data-testid="page-children">Children</div>
-        </Page>
-      </GrafanaContext.Provider>
-    </Provider>
+    <TestProvider>
+      <Page {...props}>
+        <div data-testid="page-children">Children</div>
+      </Page>
+    </TestProvider>
   );
 };
 

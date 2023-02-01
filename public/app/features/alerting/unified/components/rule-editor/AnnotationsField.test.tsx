@@ -5,6 +5,7 @@ import { setupServer } from 'msw/node';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Provider } from 'react-redux';
+import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byTestId } from 'testing-library-selector';
 
 import { setBackendSrv } from '@grafana/runtime';
@@ -63,11 +64,11 @@ function FormWrapper({ formValues }: { formValues?: Partial<RuleFormValues> }) {
   const formApi = useForm<RuleFormValues>({ defaultValues: { ...getDefaultFormValues(), ...formValues } });
 
   return (
-    <Provider store={store}>
+    <TestProvider store={store}>
       <FormProvider {...formApi}>
         <AnnotationsField />
       </FormProvider>
-    </Provider>
+    </TestProvider>
   );
 }
 
