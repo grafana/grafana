@@ -18,9 +18,8 @@ import {
   isMetricAggregationWithSettings,
   isPipelineAggregation,
   isPipelineAggregationWithMultipleBucketPaths,
-  MetricAggregation,
-  MetricAggregationType,
 } from './aggregations';
+import { MetricAggregation, MetricAggregationType } from '../../../types';
 import { changeMetricField, changeMetricType } from './state/actions';
 import { getStyles } from './styles';
 import { metricAggregationConfig } from './utils';

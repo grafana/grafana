@@ -11,11 +11,8 @@ import {
 import TableModel from 'app/core/TableModel';
 import flatten from 'app/core/utils/flatten';
 
-import {
-  ExtendedStatMetaType,
-  isMetricAggregationWithField,
-  TopMetrics,
-} from './components/QueryEditor/MetricAggregationsEditor/aggregations';
+import { isMetricAggregationWithField } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
+import { TopMetrics, ExtendedStatMetaType } from './types';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import * as queryDef from './queryDef';
 import { ElasticsearchAggregation, ElasticsearchQuery } from './types';

@@ -7,12 +7,8 @@ import { useDispatch } from '../../../../hooks/useStatelessReducer';
 import { extendedStats } from '../../../../queryDef';
 import { useQuery } from '../../ElasticsearchQueryContext';
 import { SettingsEditorContainer } from '../../SettingsEditorContainer';
-import {
-  MetricAggregation,
-  isMetricAggregationWithInlineScript,
-  isMetricAggregationWithMissingSupport,
-  ExtendedStat,
-} from '../aggregations';
+import { isMetricAggregationWithInlineScript, isMetricAggregationWithMissingSupport } from '../aggregations';
+import { MetricAggregation, ExtendedStat } from '../../../../types';
 import { changeMetricMeta, changeMetricSetting } from '../state/actions';
 import { metricAggregationConfig } from '../utils';
 

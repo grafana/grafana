@@ -6,7 +6,7 @@ import { removeEmpty } from '../../../../utils';
 import { changeMetricType } from '../../MetricAggregationsEditor/state/actions';
 import { metricAggregationConfig } from '../../MetricAggregationsEditor/utils';
 import { initQuery } from '../../state';
-import { BucketAggregation, Terms } from '../aggregations';
+import { Terms, BucketAggregation } from '../../../../types';
 import { bucketAggregationConfig } from '../utils';
 
 import {

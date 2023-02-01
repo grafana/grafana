@@ -6,7 +6,7 @@ import { Segment } from '@grafana/ui';
 
 import { describeMetric } from '../utils';
 
-import { MetricAggregation } from './QueryEditor/MetricAggregationsEditor/aggregations';
+import { MetricAggregation } from '../types';
 
 const noWrap = css`
   white-space: nowrap;

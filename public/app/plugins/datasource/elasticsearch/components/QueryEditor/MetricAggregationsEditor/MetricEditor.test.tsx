@@ -10,7 +10,7 @@ import { ElasticsearchQuery } from '../../../types';
 import { ElasticsearchProvider } from '../ElasticsearchQueryContext';
 
 import { MetricEditor } from './MetricEditor';
-import { Average, UniqueCount } from './aggregations';
+import { Average, UniqueCount } from './../../../types';
 
 describe('Metric Editor', () => {
   it('Should display a "None" option for "field" if the metric supports inline script', async () => {

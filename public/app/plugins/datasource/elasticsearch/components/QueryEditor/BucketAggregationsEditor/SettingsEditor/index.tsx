@@ -5,7 +5,7 @@ import { InlineField, Input } from '@grafana/ui';
 
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
 import { SettingsEditorContainer } from '../../SettingsEditorContainer';
-import { BucketAggregation } from '../aggregations';
+import { BucketAggregation } from '../../../../types';
 import { changeBucketAggregationSetting } from '../state/actions';
 import { bucketAggregationConfig } from '../utils';
 

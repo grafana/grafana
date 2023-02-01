@@ -8,7 +8,8 @@ import { useDispatch } from '../../../hooks/useStatelessReducer';
 import { segmentStyles } from '../styles';
 
 import { SettingsEditor } from './SettingsEditor';
-import { BucketAggregation, BucketAggregationType, isBucketAggregationWithField } from './aggregations';
+import { BucketAggregation, BucketAggregationType } from './../../../types';
+import { isBucketAggregationWithField } from './aggregations';
 import { changeBucketAggregationField, changeBucketAggregationType } from './state/actions';
 import { bucketAggregationConfig } from './utils';
 

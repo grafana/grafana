@@ -6,7 +6,7 @@ import { useQuery } from '../ElasticsearchQueryContext';
 import { QueryEditorRow } from '../QueryEditorRow';
 
 import { BucketAggregationEditor } from './BucketAggregationEditor';
-import { BucketAggregation } from './aggregations';
+import { BucketAggregation } from './../../../types';
 import { addBucketAggregation, removeBucketAggregation } from './state/actions';
 
 interface Props {

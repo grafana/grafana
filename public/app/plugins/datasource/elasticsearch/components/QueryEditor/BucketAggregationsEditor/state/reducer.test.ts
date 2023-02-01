@@ -5,7 +5,7 @@ import { ElasticsearchQuery } from 'app/plugins/datasource/elasticsearch/types';
 
 import { changeMetricType } from '../../MetricAggregationsEditor/state/actions';
 import { initQuery } from '../../state';
-import { BucketAggregation, DateHistogram } from '../aggregations';
+import { BucketAggregation, DateHistogram } from '../../../../types';
 import { bucketAggregationConfig } from '../utils';
 
 import {

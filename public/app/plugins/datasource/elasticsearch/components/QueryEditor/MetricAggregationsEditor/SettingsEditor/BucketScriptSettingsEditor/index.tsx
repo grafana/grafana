@@ -7,7 +7,7 @@ import { Input, InlineLabel } from '@grafana/ui';
 import { useStatelessReducer, useDispatch } from '../../../../../hooks/useStatelessReducer';
 import { AddRemove } from '../../../../AddRemove';
 import { MetricPicker } from '../../../../MetricPicker';
-import { BucketScript, MetricAggregation } from '../../aggregations';
+import { BucketScript, MetricAggregation } from '../../../../../types';
 import { changeMetricAttribute } from '../../state/actions';
 import { SettingField } from '../SettingField';
 

@@ -6,7 +6,7 @@ import { useQuery } from '../ElasticsearchQueryContext';
 import { QueryEditorRow } from '../QueryEditorRow';
 
 import { MetricEditor } from './MetricEditor';
-import { MetricAggregation } from './aggregations';
+import { MetricAggregation } from './../../../types';
 import { addMetric, removeMetric, toggleMetricVisibility } from './state/actions';
 import { metricAggregationConfig } from './utils';
 

@@ -40,15 +40,16 @@ import LanguageProvider from './LanguageProvider';
 import { ElasticQueryBuilder } from './QueryBuilder';
 import { ElasticsearchAnnotationsQueryEditor } from './components/QueryEditor/AnnotationQueryEditor';
 import {
-  BucketAggregation,
   isBucketAggregationWithField,
+  isFilters,
 } from './components/QueryEditor/BucketAggregationsEditor/aggregations';
 import { bucketAggregationConfig } from './components/QueryEditor/BucketAggregationsEditor/utils';
 import {
   isMetricAggregationWithField,
   isPipelineAggregationWithMultipleBucketPaths,
-  Logs,
 } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
+
+import { Logs, BucketAggregation } from './types';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import { defaultBucketAgg, hasMetricOfType } from './queryDef';
 import { trackQuery } from './tracking';
@@ -399,7 +400,7 @@ export class ElasticDatasource
     // We need a separate interpolation format for lucene queries, therefore we first interpolate any
     // lucene query string and then everything else
     const interpolateBucketAgg = (bucketAgg: BucketAggregation): BucketAggregation => {
-      if (bucketAgg.type === 'filters') {
+      if (isFilters(bucketAgg)) {
         return {
           ...bucketAgg,
           settings: {

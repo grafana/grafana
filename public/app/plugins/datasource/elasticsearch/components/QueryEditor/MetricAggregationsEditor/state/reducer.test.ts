@@ -4,7 +4,7 @@ import { ElasticsearchQuery } from 'app/plugins/datasource/elasticsearch/types';
 
 import { defaultMetricAgg } from '../../../../queryDef';
 import { initQuery } from '../../state';
-import { Derivative, ExtendedStats, MetricAggregation } from '../aggregations';
+import { Derivative, ExtendedStats, MetricAggregation } from '../../../../types';
 import { metricAggregationConfig } from '../utils';
 
 import {
