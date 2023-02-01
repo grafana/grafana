@@ -41,7 +41,7 @@ type (
 	tvars_kind_registry struct {
 		PackageName       string
 		KindPackagePrefix string
-		Kinds             []kindsys.Kind
+		Kinds             []kindsys.Core
 	}
 	tvars_coremodel_imports struct {
 		PackageName string

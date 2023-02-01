@@ -29,19 +29,22 @@ func (j *crdregjenny) JennyName() string {
 	return "CRDKindRegistryJenny"
 }
 
-func (j *crdregjenny) Generate(decls ...*DefForGen) (*codejen.File, error) {
-	sdecls := make([]*DefForGen, 0, len(decls))
-	for _, d := range decls {
-		if d.IsCore() {
-			sdecls = append(sdecls, d)
+func (j *crdregjenny) Generate(kinds ...kindsys.Kind) (*codejen.File, error) {
+	cores := make([]kindsys.Core, 0, len(kinds))
+	for _, d := range kinds {
+		if corekind, is := d.(kindsys.Core); is {
+			cores = append(cores, corekind)
 		}
+	}
+	if len(cores) == 0 {
+		return nil, nil
 	}
 
 	buf := new(bytes.Buffer)
 	if err := tmpls.Lookup("core_crd_registry.tmpl").Execute(buf, tvars_kind_registry{
 		PackageName:       "corecrd",
 		KindPackagePrefix: filepath.ToSlash(filepath.Join("github.com/grafana/grafana", kindsys.GoCoreKindParentPath)),
-		Kinds:             sdecls,
+		Kinds:             cores,
 	}); err != nil {
 		return nil, fmt.Errorf("failed executing core crd registry template: %w", err)
 	}

@@ -16,7 +16,7 @@ import (
 	goyaml "gopkg.in/yaml.v3"
 )
 
-// TODO this jenny is quite sloppy, having been quickly adapted from oasdk. It needs love
+// TODO this jenny is quite sloppy, having been quickly adapted from app-sdk. It needs love
 
 // YamlCRDJenny generates a representation of a core structured kind in YAML CRD form.
 func YamlCRDJenny(path string) OneToOne {
@@ -33,13 +33,14 @@ func (yamlCRDJenny) JennyName() string {
 	return "YamlCRDJenny"
 }
 
-func (j yamlCRDJenny) Generate(decl *DefForGen) (*codejen.File, error) {
-	if !decl.IsCore() {
+func (j yamlCRDJenny) Generate(k kindsys.Kind) (*codejen.File, error) {
+	kind, is := k.(kindsys.Core)
+	if !is {
 		return nil, nil
 	}
 
-	props := decl.SomeDef.Properties.(kindsys.CoreProperties)
-	lin := decl.Lineage()
+	props := kind.Def().Properties
+	lin := kind.Lineage()
 
 	// We need to go through every schema, as they all have to be defined in the CRD
 	sch, err := lin.Schema(thema.SV(0, 0))

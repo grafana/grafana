@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/grafana/codejen"
+	"github.com/grafana/grafana/pkg/kindsys"
 )
 
 // CRDTypesJenny generates the OpenAPI CRD representation for a core
@@ -24,17 +25,19 @@ func (j crdTypesJenny) JennyName() string {
 	return "CRDTypesJenny"
 }
 
-func (j crdTypesJenny) Generate(decl *DefForGen) (*codejen.File, error) {
-	if !(decl.IsCore() || decl.IsCustom()) {
+func (j crdTypesJenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
+	_, isCore := kind.(kindsys.Core)
+	_, isCustom := kind.(kindsys.Core)
+	if !(isCore || isCustom) {
 		return nil, nil
 	}
 
 	buf := new(bytes.Buffer)
-	if err := tmpls.Lookup("core_crd_types.tmpl").Execute(buf, decl); err != nil {
+	if err := tmpls.Lookup("core_crd_types.tmpl").Execute(buf, kind); err != nil {
 		return nil, fmt.Errorf("failed executing crd types template: %w", err)
 	}
 
-	name := decl.Properties.Common().MachineName
+	name := kind.Props().Common().MachineName
 	path := filepath.Join(j.parentpath, name, "crd", name+"_crd_gen.go")
 	b, err := postprocessGoFile(genGoFile{
 		path: path,
