@@ -448,7 +448,7 @@ export const runQueries = (
       supplementaryQueries,
     } = exploreItemState;
     let newQuerySource: Observable<ExplorePanelData>;
-    let newQuerySubscription: SubscriptionLike | undefined;
+    let newQuerySubscription: SubscriptionLike;
 
     const queries = exploreItemState.queries.map((query) => ({
       ...query,
