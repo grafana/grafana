@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/alerting/models"
-	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -51,16 +50,16 @@ func (handler *FakeResultHandler) handle(evalContext *EvalContext) error {
 
 // A mock implementation of the AlertStore interface, allowing to override certain methods individually
 type AlertStoreMock struct {
-	getAllAlerts                       func(context.Context, *models.GetAllAlertsQuery) ([]*alertmodels.Alert, error)
+	getAllAlerts                       func(context.Context, *models.GetAllAlertsQuery) ([]*models.Alert, error)
 	getAlertNotificationsWithUidToSend func(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) ([]*models.AlertNotification, error)
 	getOrCreateNotificationState       func(ctx context.Context, query *models.GetOrCreateNotificationStateQuery) (*models.AlertNotificationState, error)
 }
 
-func (a *AlertStoreMock) GetAlertById(c context.Context, cmd *models.GetAlertByIdQuery) (res *alertmodels.Alert, err error) {
+func (a *AlertStoreMock) GetAlertById(c context.Context, cmd *models.GetAlertByIdQuery) (res *models.Alert, err error) {
 	return nil, nil
 }
 
-func (a *AlertStoreMock) GetAllAlertQueryHandler(c context.Context, cmd *models.GetAllAlertsQuery) (res []*alertmodels.Alert, err error) {
+func (a *AlertStoreMock) GetAllAlertQueryHandler(c context.Context, cmd *models.GetAllAlertsQuery) (res []*models.Alert, err error) {
 	if a.getAllAlerts != nil {
 		return a.getAllAlerts(c, cmd)
 	}
@@ -97,15 +96,15 @@ func (a *AlertStoreMock) SetAlertNotificationStateToPendingCommand(_ context.Con
 	return nil
 }
 
-func (a *AlertStoreMock) SetAlertState(_ context.Context, _ *models.SetAlertStateCommand) (res alertmodels.Alert, err error) {
-	return alertmodels.Alert{}, nil
+func (a *AlertStoreMock) SetAlertState(_ context.Context, _ *models.SetAlertStateCommand) (res models.Alert, err error) {
+	return models.Alert{}, nil
 }
 
-func (a *AlertStoreMock) GetAlertStatesForDashboard(_ context.Context, _ *models.GetAlertStatesForDashboardQuery) (res []*alertmodels.AlertStateInfoDTO, err error) {
+func (a *AlertStoreMock) GetAlertStatesForDashboard(_ context.Context, _ *models.GetAlertStatesForDashboardQuery) (res []*models.AlertStateInfoDTO, err error) {
 	return nil, nil
 }
 
-func (a *AlertStoreMock) HandleAlertsQuery(context.Context, *models.GetAlertsQuery) (res []*alertmodels.AlertListItemDTO, err error) {
+func (a *AlertStoreMock) HandleAlertsQuery(context.Context, *models.GetAlertsQuery) (res []*models.AlertListItemDTO, err error) {
 	return nil, nil
 }
 
@@ -140,7 +139,7 @@ func TestEngineProcessJob(t *testing.T) {
 	job := &Job{running: true, Rule: &Rule{}}
 
 	t.Run("Should register usage metrics func", func(t *testing.T) {
-		store.getAllAlerts = func(ctx context.Context, q *models.GetAllAlertsQuery) (res []*alertmodels.Alert, err error) {
+		store.getAllAlerts = func(ctx context.Context, q *models.GetAllAlertsQuery) (res []*models.Alert, err error) {
 			settings, err := simplejson.NewJson([]byte(`{"conditions": [{"query": { "datasourceId": 1}}]}`))
 			if err != nil {
 				return nil, err

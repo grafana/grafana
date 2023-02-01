@@ -11,7 +11,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/alerting/models"
-	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	fd "github.com/grafana/grafana/pkg/services/datasources/fakes"
 )
@@ -31,7 +30,7 @@ func TestAlertingUsageStats(t *testing.T) {
 		datasourceService: dsMock,
 	}
 
-	store.getAllAlerts = func(ctx context.Context, query *models.GetAllAlertsQuery) (res []*alertmodels.Alert, err error) {
+	store.getAllAlerts = func(ctx context.Context, query *models.GetAllAlertsQuery) (res []*models.Alert, err error) {
 		var createFake = func(file string) *simplejson.Json {
 			// Ignore gosec warning G304 since it's a test
 			// nolint:gosec
