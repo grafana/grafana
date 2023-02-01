@@ -51,6 +51,7 @@ export interface PanelChromeProps {
    * of showing/interacting with the panel's state
    */
   leftItems?: ReactNode[];
+  displayMode?: 'default' | 'transparent';
 }
 
 /**
@@ -68,6 +69,7 @@ export function PanelChrome({
   padding = 'md',
   title = '',
   description = '',
+  displayMode = 'default',
   titleItems = [],
   menu,
   dragClass,
@@ -86,6 +88,7 @@ export function PanelChrome({
   //
   // Backwards compatibility for having a designated space for the header
 
+  // This logic is not working and needs to be moved outside (into PanelStateWrapper, and sent in as a prop)
   const hasHeader =
     hoverHeader === false &&
     (title.length > 0 ||
@@ -104,6 +107,11 @@ export function PanelChrome({
 
   const containerStyles: CSSProperties = { width, height };
   const ariaLabel = title ? selectors.components.Panels.Panel.containerByTitle(title) : 'Panel';
+
+  if (displayMode === 'transparent') {
+    containerStyles.backgroundColor = 'transparent';
+    containerStyles.border = 'none';
+  }
 
   return (
     <div className={styles.container} style={containerStyles} aria-label={ariaLabel}>
