@@ -71,6 +71,14 @@ The name of the annotation is {{ .Name }}, and the value is {{ .Value }}
 {{ end }}
 ```
 
+## Use a specific label value
+
+You may only want to use some specific label values in your text, or use a longer description. 
+
+```
+This alert is in the folder {{ index .Labels "grafana_folder" }}
+``` 
+
 ## If statements
 
 You can use if statements in templates. For example, to print `There are no alerts` if there are no alerts in `.Alerts` you would write the following:
