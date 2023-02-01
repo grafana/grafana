@@ -101,9 +101,9 @@ export function prepConfig(opts: PrepConfigOpts) {
   const xScaleKey = 'x';
   let xScaleUnit = 'time';
   let isTime = true;
+
   if (dataRef.current?.heatmap?.fields[0].type !== FieldType.time) {
-    xScaleUnit = dataRef.current?.heatmap?.fields[0].config?.unit ?? 'xaxis';
-    console.log('TIME Axis');
+    xScaleUnit = dataRef.current?.heatmap?.fields[0].config?.unit ?? 'x';
     isTime = false;
   }
 
@@ -152,22 +152,24 @@ export function prepConfig(opts: PrepConfigOpts) {
       u.setSelect({ left: 0, top: 0, width: 0, height: 0 }, false);
     });
 
-  // this is a tmp hack because in mode: 2, uplot does not currently call scales.x.range() for setData() calls
-  // scales.x.range() typically reads back from drilled-down panelProps.timeRange via getTimeRange()
-  builder.addHook('setData', (u) => {
-    //let [min, max] = (u.scales!.x!.range! as uPlot.Range.Function)(u, 0, 100, xScaleKey);
+  if (isTime) {
+    // this is a tmp hack because in mode: 2, uplot does not currently call scales.x.range() for setData() calls
+    // scales.x.range() typically reads back from drilled-down panelProps.timeRange via getTimeRange()
+    builder.addHook('setData', (u) => {
+      //let [min, max] = (u.scales!.x!.range! as uPlot.Range.Function)(u, 0, 100, xScaleKey);
 
-    let { min: xMin, max: xMax } = u.scales!.x;
+      let { min: xMin, max: xMax } = u.scales!.x;
 
-    let min = getTimeRange().from.valueOf();
-    let max = getTimeRange().to.valueOf();
+      let min = getTimeRange().from.valueOf();
+      let max = getTimeRange().to.valueOf();
 
-    if (xMin !== min || xMax !== max) {
-      queueMicrotask(() => {
-        u.setScale(xScaleKey, { min, max });
-      });
-    }
-  });
+      if (xMin !== min || xMax !== max) {
+        queueMicrotask(() => {
+          u.setScale(xScaleKey, { min, max });
+        });
+      }
+    });
+  }
 
   // rect of .u-over (grid area)
   builder.addHook('syncRect', (u, r) => {
@@ -241,32 +243,38 @@ export function prepConfig(opts: PrepConfigOpts) {
 
   builder.setMode(2);
 
-  if (isTime) {
-    builder.addScale({
-      scaleKey: xScaleKey,
-      isTime,
-      orientation: ScaleOrientation.Horizontal,
-      direction: ScaleDirection.Right,
-      // TODO: expand by x bucket size and layout
-      range: () => {
-        return [getTimeRange().from.valueOf(), getTimeRange().to.valueOf()];
-      },
-    });
-  } else {
-    builder.addScale({
-      scaleKey: xScaleKey,
-      isTime,
-      orientation: ScaleOrientation.Horizontal,
-      direction: ScaleDirection.Right,
-      // TODO: expand by x bucket size and layout
-      range: () => {
-        return [0, 10];
-      },
-    });
-  }
+  builder.addScale({
+    scaleKey: xScaleKey,
+    isTime,
+    orientation: ScaleOrientation.Horizontal,
+    direction: ScaleDirection.Right,
+    // TODO: expand by x bucket size and layout
+    range: (u, dataMin, dataMax) => {
+      if (isTime) {
+        return [
+          getTimeRange().from.valueOf(),
+          getTimeRange().to.valueOf()
+        ]
+      } else {
+        if (dataRef.current?.xLayout === HeatmapCellLayout.le) {
+          return [
+            dataMin - dataRef.current?.xBucketSize!,
+            dataMax,
+          ];
+        } else {
+          return [
+            dataMin,
+            dataMax + dataRef.current?.xBucketSize!,
+          ];
+        }
+      }
+    }
+  });
+
   builder.addAxis({
     scaleKey: xScaleKey,
     placement: AxisPlacement.Bottom,
+    // incrs: [],
     isTime,
     theme: theme,
     timeZone,
