@@ -6,7 +6,7 @@ describe('should get tooltip data correctly', () => {
   it('for bytes', () => {
     const tooltipData = getTooltipData(makeField('bytes'), 'total', 8_624_078_250, 978_250, 8_624_078_250);
     expect(tooltipData).toEqual({
-      name: 'total',
+      label: 'total',
       percentSelf: 0.01,
       percentValue: 100,
       unitTitle: 'RAM',
@@ -19,7 +19,7 @@ describe('should get tooltip data correctly', () => {
   it('with default unit', () => {
     const tooltipData = getTooltipData(makeField('none'), 'total', 8_624_078_250, 978_250, 8_624_078_250);
     expect(tooltipData).toEqual({
-      name: 'total',
+      label: 'total',
       percentSelf: 0.01,
       percentValue: 100,
       unitSelf: '978250',
@@ -43,7 +43,7 @@ describe('should get tooltip data correctly', () => {
       8_624_078_250
     );
     expect(tooltipData).toEqual({
-      name: 'total',
+      label: 'total',
       percentSelf: 0.01,
       percentValue: 100,
       unitTitle: 'Count',
@@ -56,7 +56,7 @@ describe('should get tooltip data correctly', () => {
   it('for objects', () => {
     const tooltipData = getTooltipData(makeField('short'), 'total', 8_624_078_250, 978_250, 8_624_078_250);
     expect(tooltipData).toEqual({
-      name: 'total',
+      label: 'total',
       percentSelf: 0.01,
       percentValue: 100,
       unitTitle: 'Count',
@@ -69,7 +69,7 @@ describe('should get tooltip data correctly', () => {
   it('for nanoseconds', () => {
     const tooltipData = getTooltipData(makeField('ns'), 'total', 8_624_078_250, 978_250, 8_624_078_250);
     expect(tooltipData).toEqual({
-      name: 'total',
+      label: 'total',
       percentSelf: 0.01,
       percentValue: 100,
       unitTitle: 'Time',

@@ -15,6 +15,10 @@ export type Metadata = {
   samples: string;
 };
 
+export type ContextMenuEvent = {
+  e: MouseEvent;
+};
+
 export enum SampleUnit {
   Bytes = 'bytes',
   Short = 'short',

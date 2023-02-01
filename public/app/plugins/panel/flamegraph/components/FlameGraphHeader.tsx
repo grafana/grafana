@@ -6,13 +6,14 @@ import { Button, Input, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 
 import { MIN_WIDTH_TO_SHOW_BOTH_TOPTABLE_AND_FLAMEGRAPH } from '../constants';
 
-import { SelectedView } from './types';
+import { ContextMenuEvent, SelectedView } from './types';
 
 type Props = {
   app: CoreApp;
   search: string;
   setTopLevelIndex: (level: number) => void;
   setSelectedBarIndex: (bar: number) => void;
+  setContextMenuEvent: (event: ContextMenuEvent | undefined) => void;
   setRangeMin: (range: number) => void;
   setRangeMax: (range: number) => void;
   setSearch: (search: string) => void;
@@ -26,6 +27,7 @@ const FlameGraphHeader = ({
   search,
   setTopLevelIndex,
   setSelectedBarIndex,
+  setContextMenuEvent,
   setRangeMin,
   setRangeMax,
   setSearch,
@@ -67,6 +69,7 @@ const FlameGraphHeader = ({
           onClick={() => {
             setTopLevelIndex(0);
             setSelectedBarIndex(0);
+            setContextMenuEvent(undefined);
             setRangeMin(0);
             setRangeMax(1);
             setSearch('');
