@@ -3924,8 +3924,8 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana/grafana-oss
-    --version-tag ${DRONE_TAG}
+  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana-oss --version-tag
+    ${DRONE_TAG}
   depends_on:
   - fetch-images-oss
   environment:
@@ -3936,7 +3936,7 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   image: google/cloud-sdk
-  name: publish-images-grafana/grafana-oss
+  name: publish-images-grafana-oss
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -6516,6 +6516,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: c00de1a52b82b9729caca47e8294a83be348f1456a6b4527fbc045e814595735
+hmac: 34e5513fe0155e3ca6a7e0cf8b908cc67a0565c963ef3c55688bff2837392900
 
 ...

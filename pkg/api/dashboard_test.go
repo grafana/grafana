@@ -960,7 +960,7 @@ func TestDashboardAPIEndpoint(t *testing.T) {
 	})
 }
 
-func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, provisioningService provisioning.ProvisioningService, dashboardStore dashboards.Store, dashboardService dashboards.DashboardService, folderStore dashboards.FolderStore) dtos.DashboardFullWithMeta {
+func getDashboardShouldReturn200WithConfig(t *testing.T, sc *scenarioContext, provisioningService provisioning.ProvisioningService, dashboardStore dashboards.Store, dashboardService dashboards.DashboardService, folderStore folder.FolderStore) dtos.DashboardFullWithMeta {
 	t.Helper()
 
 	if provisioningService == nil {
