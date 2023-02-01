@@ -55,10 +55,6 @@ export default function Home() {
             </ul>
             <div>
               <ArrowLink href="https://grafana.com/docs/grafana/latest/alerting/" title="Read more in the Docs" />
-              <ArrowLink
-                href="https://university.grafana.com//lms/index.php?r=coursepath/deeplink&id_path=42&hash=caa235c6321f80e03df017ae9ec6eed5c79da9ec"
-                title="Enroll in the Grafana University Alerting course"
-              />
             </div>
           </Stack>
         </ContentBox>
