@@ -1451,7 +1451,12 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
 	SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
-	cfg.OAuthSkipOrgRoleUpdateSync = auth.Key("oauth_skip_org_role_update_sync").MustBool(false)
+	// Deprecated
+	OAuthSkipOrgRoleUpdateSync := auth.Key("oauth_skip_org_role_update_sync").MustBool(false)
+	if OAuthSkipOrgRoleUpdateSync {
+		cfg.OAuthSkipOrgRoleUpdateSync = OAuthSkipOrgRoleUpdateSync
+		cfg.Logger.Warn("[Deprecated] The oauth_skip_org_role_update_sync configuration setting is deprecated. Please use skip_org_role_sync inside auth provider section instead.")
+	}
 
 	cfg.DisableLogin = auth.Key("disable_login").MustBool(false)
 
