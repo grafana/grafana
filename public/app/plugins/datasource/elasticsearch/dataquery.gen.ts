@@ -12,11 +12,11 @@ import * as common from '@grafana/schema';
 
 export const DataQueryModelVersion = Object.freeze([0, 0]);
 
-export type BucketAggregation = (DateHistogram | Histogram | Terms | Filters | GeoHashGrid);
+export type BucketAggregation = (DateHistogram | Histogram | Terms | Filters | GeoHashGrid | Nested);
 
 export type MetricAggregation = (Count | PipelineMetricAggregation | MetricAggregationWithSettings);
 
-export type BucketAggregationType = ('terms' | 'filters' | 'geohash_grid' | 'date_histogram' | 'histogram');
+export type BucketAggregationType = ('terms' | 'filters' | 'geohash_grid' | 'date_histogram' | 'histogram' | 'nested');
 
 export interface BaseBucketAggregation {
   id: string;
@@ -41,19 +41,19 @@ export interface DateHistogramSettings {
 }
 
 export interface Histogram extends BucketAggregationWithField {
-  settings?: {
-    interval: string;
-    min_doc_count?: string;
-  };
   type: 'histogram';
 }
 
 export interface HistogramSettings {
-  interval: string;
+  interval?: string;
   min_doc_count?: string;
 }
 
 export type TermsOrder = ('desc' | 'asc');
+
+export interface Nested extends BucketAggregationWithField {
+  type: 'nested';
+}
 
 export interface Terms extends BucketAggregationWithField {
   type: 'terms';
@@ -68,9 +68,6 @@ export interface TermsSettings {
 }
 
 export interface Filters extends BaseBucketAggregation {
-  settings?: {
-    filters: Array<Filter>;
-  };
   type: 'filters';
 }
 
@@ -80,7 +77,7 @@ export type Filter = {
 };
 
 export interface FiltersSettings {
-  filters: Array<Filter>;
+  filters?: Array<Filter>;
 }
 
 export const defaultFiltersSettings: Partial<FiltersSettings> = {
@@ -167,7 +164,7 @@ export interface Min extends MetricAggregationWithField, MetricAggregationWithIn
     script?: (InlineScript | InlineScript);
     missing?: string;
   };
-  type: 'max';
+  type: 'min';
 }
 
 export type ExtendedStatMetaType = ('avg' | 'min' | 'max' | 'sum' | 'count' | 'std_deviation' | 'std_deviation_bounds_upper' | 'std_deviation_bounds_lower');
@@ -306,9 +303,12 @@ export interface MovingAverageHoltWintersModelSettings extends BaseMovingAverage
 }
 
 /**
- * #MovingAverage Not sure how to do this one - for now just mocking it:
+ * #MovingAverage's settings are overridden in types.ts
  */
-export interface MovingAverage {}
+export interface MovingAverage extends BasePipelineMetricAggregation {
+  settings?: Record<string, unknown>;
+  type: 'moving_avg';
+}
 
 export interface MovingFunction extends BasePipelineMetricAggregation {
   settings?: {
@@ -362,8 +362,8 @@ export type MetricAggregationWithSettings = (BucketScript | CumulativeSum | Deri
 
 export interface Elasticsearch extends common.DataQuery {
   alias?: string;
-  bucketAggs: Array<BucketAggregation>;
-  metrics: Array<MetricAggregation>;
+  bucketAggs?: Array<BucketAggregation>;
+  metrics?: Array<MetricAggregation>;
   query?: string;
   timeField?: string;
 }

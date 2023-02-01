@@ -24,6 +24,8 @@ const (
 
 	BaseBucketAggregationTypeHistogram BaseBucketAggregationType = "histogram"
 
+	BaseBucketAggregationTypeNested BaseBucketAggregationType = "nested"
+
 	BaseBucketAggregationTypeTerms BaseBucketAggregationType = "terms"
 )
 
@@ -132,6 +134,8 @@ const (
 
 	BucketAggregationTypeHistogram BucketAggregationType = "histogram"
 
+	BucketAggregationTypeNested BucketAggregationType = "nested"
+
 	BucketAggregationTypeTerms BucketAggregationType = "terms"
 )
 
@@ -144,6 +148,8 @@ const (
 	BucketAggregationWithFieldTypeGeohashGrid BucketAggregationWithFieldType = "geohash_grid"
 
 	BucketAggregationWithFieldTypeHistogram BucketAggregationWithFieldType = "histogram"
+
+	BucketAggregationWithFieldTypeNested BucketAggregationWithFieldType = "nested"
 
 	BucketAggregationWithFieldTypeTerms BucketAggregationWithFieldType = "terms"
 )
@@ -364,25 +370,6 @@ const (
 	MetricAggregationWithInlineScriptTypeTopMetrics MetricAggregationWithInlineScriptType = "top_metrics"
 )
 
-// Defines values for MetricAggregationWithMetaValue.
-const (
-	MetricAggregationWithMetaValueAvg MetricAggregationWithMetaValue = "avg"
-
-	MetricAggregationWithMetaValueCount MetricAggregationWithMetaValue = "count"
-
-	MetricAggregationWithMetaValueMax MetricAggregationWithMetaValue = "max"
-
-	MetricAggregationWithMetaValueMin MetricAggregationWithMetaValue = "min"
-
-	MetricAggregationWithMetaValueStdDeviation MetricAggregationWithMetaValue = "std_deviation"
-
-	MetricAggregationWithMetaValueStdDeviationBoundsLower MetricAggregationWithMetaValue = "std_deviation_bounds_lower"
-
-	MetricAggregationWithMetaValueStdDeviationBoundsUpper MetricAggregationWithMetaValue = "std_deviation_bounds_upper"
-
-	MetricAggregationWithMetaValueSum MetricAggregationWithMetaValue = "sum"
-)
-
 // Defines values for MetricAggregationWithMissingSupportType.
 const (
 	MetricAggregationWithMissingSupportTypeAvg MetricAggregationWithMissingSupportType = "avg"
@@ -426,7 +413,12 @@ const (
 
 // Defines values for MinType.
 const (
-	MinTypeMax MinType = "max"
+	MinTypeMin MinType = "min"
+)
+
+// Defines values for MovingAverageType.
+const (
+	MovingAverageTypeMovingAvg MovingAverageType = "moving_avg"
 )
 
 // Defines values for MovingAverageEWMAModelSettingsModel.
@@ -483,6 +475,11 @@ const (
 // Defines values for MovingFunctionType.
 const (
 	MovingFunctionTypeMovingFn MovingFunctionType = "moving_fn"
+)
+
+// Defines values for NestedType.
+const (
+	NestedTypeNested NestedType = "nested"
 )
 
 // Defines values for PercentilesType.
@@ -771,8 +768,8 @@ type DerivativeType string
 
 // ElasticsearchDataQuery defines model for ElasticsearchDataQuery.
 type ElasticsearchDataQuery struct {
-	Alias      *string       `json:"alias,omitempty"`
-	BucketAggs []interface{} `json:"bucketAggs"`
+	Alias      *string        `json:"alias,omitempty"`
+	BucketAggs *[]interface{} `json:"bucketAggs,omitempty"`
 
 	// For mixed data sources the selected datasource is on the query level.
 	// For non mixed scenarios this is undefined.
@@ -784,9 +781,9 @@ type ElasticsearchDataQuery struct {
 	Hide *bool `json:"hide,omitempty"`
 
 	// Unique, guid like, string used in explore mode
-	Key     *string       `json:"key,omitempty"`
-	Metrics []interface{} `json:"metrics"`
-	Query   *string       `json:"query,omitempty"`
+	Key     *string        `json:"key,omitempty"`
+	Metrics *[]interface{} `json:"metrics,omitempty"`
+	Query   *string        `json:"query,omitempty"`
 
 	// Specify the query flavor
 	// TODO make this required and give it a default
@@ -836,10 +833,10 @@ type Filter struct {
 type Filters struct {
 	Id       string `json:"id"`
 	Settings *struct {
-		Filters []struct {
+		Filters *[]struct {
 			Label string `json:"label"`
 			Query string `json:"query"`
-		} `json:"filters"`
+		} `json:"filters,omitempty"`
 	} `json:"settings,omitempty"`
 	Type FiltersType `json:"type"`
 }
@@ -849,10 +846,10 @@ type FiltersType string
 
 // FiltersSettings defines model for FiltersSettings.
 type FiltersSettings struct {
-	Filters []struct {
+	Filters *[]struct {
 		Label string `json:"label"`
 		Query string `json:"query"`
-	} `json:"filters"`
+	} `json:"filters,omitempty"`
 }
 
 // GeoHashGrid defines model for GeoHashGrid.
@@ -878,7 +875,7 @@ type Histogram struct {
 	Field    *string `json:"field,omitempty"`
 	Id       string  `json:"id"`
 	Settings *struct {
-		Interval    string  `json:"interval"`
+		Interval    *string `json:"interval,omitempty"`
 		MinDocCount *string `json:"min_doc_count,omitempty"`
 	} `json:"settings,omitempty"`
 	Type HistogramType `json:"type"`
@@ -889,7 +886,7 @@ type HistogramType string
 
 // HistogramSettings defines model for HistogramSettings.
 type HistogramSettings struct {
-	Interval    string  `json:"interval"`
+	Interval    *string `json:"interval,omitempty"`
 	MinDocCount *string `json:"min_doc_count,omitempty"`
 }
 
@@ -954,15 +951,6 @@ type MetricAggregationWithInlineScript struct {
 // MetricAggregationWithInlineScriptType defines model for MetricAggregationWithInlineScript.Type.
 type MetricAggregationWithInlineScriptType string
 
-// MetricAggregationWithMeta defines model for MetricAggregationWithMeta.
-type MetricAggregationWithMeta struct {
-	Label string                         `json:"label"`
-	Value MetricAggregationWithMetaValue `json:"value"`
-}
-
-// MetricAggregationWithMetaValue defines model for MetricAggregationWithMeta.Value.
-type MetricAggregationWithMetaValue string
-
 // MetricAggregationWithMissingSupport defines model for MetricAggregationWithMissingSupport.
 type MetricAggregationWithMissingSupport struct {
 	Hide     *bool  `json:"hide,omitempty"`
@@ -994,8 +982,21 @@ type Min struct {
 // MinType defines model for Min.Type.
 type MinType string
 
-// #MovingAverage Not sure how to do this one - for now just mocking it:
-type MovingAverage map[string]interface{}
+// #MovingAverage's settings are overridden in types.ts
+type MovingAverage struct {
+	Field *string `json:"field,omitempty"`
+	Hide  *bool   `json:"hide,omitempty"`
+	Id    string  `json:"id"`
+
+	// TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
+	// type:         #PipelineMetricAggregationType
+	PipelineAgg *string                `json:"pipelineAgg,omitempty"`
+	Settings    map[string]interface{} `json:"settings,omitempty"`
+	Type        MovingAverageType      `json:"type"`
+}
+
+// MovingAverageType defines model for MovingAverage.Type.
+type MovingAverageType string
 
 // MovingAverageEWMAModelSettings defines model for MovingAverageEWMAModelSettings.
 type MovingAverageEWMAModelSettings struct {
@@ -1095,6 +1096,17 @@ type MovingFunction struct {
 
 // MovingFunctionType defines model for MovingFunction.Type.
 type MovingFunctionType string
+
+// Nested defines model for Nested.
+type Nested struct {
+	Field    *string                `json:"field,omitempty"`
+	Id       string                 `json:"id"`
+	Settings map[string]interface{} `json:"settings,omitempty"`
+	Type     NestedType             `json:"type"`
+}
+
+// NestedType defines model for Nested.Type.
+type NestedType string
 
 // Percentiles defines model for Percentiles.
 type Percentiles struct {

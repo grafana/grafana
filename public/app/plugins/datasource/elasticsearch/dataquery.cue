@@ -35,13 +35,13 @@ composableKinds: DataQuery: {
 						alias?:     string
 						query?:     string
 						timeField?: string
-						bucketAggs: [...#BucketAggregation]
-						metrics: [...#MetricAggregation]
+						bucketAggs?: [...#BucketAggregation]
+						metrics?: [...#MetricAggregation]
 
-						#BucketAggregation: #DateHistogram | #Histogram | #Terms | #Filters | #GeoHashGrid       @cuetsy(kind="type")
-						#MetricAggregation: #Count | #PipelineMetricAggregation | #MetricAggregationWithSettings @cuetsy(kind="type")
+						#BucketAggregation: #DateHistogram | #Histogram | #Terms | #Filters | #GeoHashGrid | #Nested @cuetsy(kind="type")
+						#MetricAggregation: #Count | #PipelineMetricAggregation | #MetricAggregationWithSettings     @cuetsy(kind="type")
 
-						#BucketAggregationType: "terms" | "filters" | "geohash_grid" | "date_histogram" | "histogram" @cuetsy(kind="type")
+						#BucketAggregationType: "terms" | "filters" | "geohash_grid" | "date_histogram" | "histogram" | "nested" @cuetsy(kind="type")
 
 						#BaseBucketAggregation: {
 							id:   string
@@ -75,11 +75,17 @@ composableKinds: DataQuery: {
 						} @cuetsy(kind="interface")
 
 						#HistogramSettings: {
-							interval:       string
+							interval?:      string
 							min_doc_count?: string
 						} @cuetsy(kind="interface")
 
 						#TermsOrder: "desc" | "asc" @cuetsy(kind="type")
+
+						#Nested: {
+							#BucketAggregationWithField
+							type: #BucketAggregationType & "nested"
+							settings?: {}
+						} @cuetsy(kind="interface")
 
 						#Terms: {
 							#BucketAggregationWithField
@@ -107,7 +113,7 @@ composableKinds: DataQuery: {
 						} @cuetsy(kind="type")
 
 						#FiltersSettings: {
-							filters: [...#Filter]
+							filters?: [...#Filter]
 						} @cuetsy(kind="interface")
 
 						#GeoHashGrid: {
@@ -194,7 +200,7 @@ composableKinds: DataQuery: {
 						#Min: {
 							#MetricAggregationWithField
 							#MetricAggregationWithInlineScript
-							type: #MetricAggregationType & "max"
+							type: #MetricAggregationType & "min"
 							settings?: {
 								script?:  #InlineScript
 								missing?: string
@@ -356,13 +362,12 @@ composableKinds: DataQuery: {
 						//   >
 						// >;
 
-						// #MovingAverage Not sure how to do this one - for now just mocking it:
-						#MovingAverage: {} @cuetsy(kind="interface")
-						// export interface MovingAverage<T extends MovingAverageModel = MovingAverageModel>
-						//   extends BasePipelineMetricAggregation {
-						//   type: 'moving_avg';
-						//   settings?: MovingAverageModelSettings<T>;
-						// }
+						// #MovingAverage's settings are overridden in types.ts
+						#MovingAverage: {
+							#BasePipelineMetricAggregation
+							type: "moving_avg"
+							settings?: {...}
+						} @cuetsy(kind="interface")
 
 						#MovingFunction: {
 							#BasePipelineMetricAggregation
@@ -418,8 +423,6 @@ composableKinds: DataQuery: {
 
 						#PipelineMetricAggregation:     #MovingAverage | #Derivative | #CumulativeSum | #BucketScript                                                                                                                                                                        @cuetsy(kind="type")
 						#MetricAggregationWithSettings: #BucketScript | #CumulativeSum | #Derivative | #SerialDiff | #RawData | #RawDocument | #UniqueCount | #Percentiles | #ExtendedStats | #Min | #Max | #Sum | #Average | #MovingAverage | #MovingFunction | #Logs | #Rate | #TopMetrics @cuetsy(kind="type")
-
-						#MetricAggregationWithMeta: #ExtendedStat
 					},
 				]
 			},
