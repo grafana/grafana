@@ -445,7 +445,7 @@ describe('Table', () => {
       });
 
       expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual(
-        'Count:'
+        'Count'
       );
       expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[1].textContent).toEqual('5');
     });
@@ -471,7 +471,7 @@ describe('Table', () => {
       });
 
       expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual(
-        'Count:'
+        'Count'
       );
       expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[1].textContent).toEqual('5');
 

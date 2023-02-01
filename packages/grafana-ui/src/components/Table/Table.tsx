@@ -165,6 +165,13 @@ export const Table = memo((props: Props) => {
       return;
     }
 
+    if (isCountRowsSet) {
+      const footerItemsCountRows: FooterItem[] = [];
+      footerItemsCountRows[0] = headerGroups[0]?.headers[0]?.filteredRows.length.toString() ?? data.length.toString();
+      setFooterItems(footerItemsCountRows);
+      return;
+    }
+
     const footerItems = getFooterItems(
       headerGroups[0].headers as unknown as Array<{ field: Field }>,
       createFooterCalculationValues(rows),
@@ -172,13 +179,7 @@ export const Table = memo((props: Props) => {
       theme
     );
 
-    if (isCountRowsSet) {
-      const footerItemsCountRows: FooterItem[] = new Array(footerItems.length).fill(undefined);
-      footerItemsCountRows[0] = data.length.toString();
-      setFooterItems(footerItemsCountRows);
-    } else {
-      setFooterItems(footerItems);
-    }
+    setFooterItems(footerItems);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [footerOptions, theme, state.filters, data]);
 

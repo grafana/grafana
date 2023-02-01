@@ -32,7 +32,7 @@ export const FooterCell = (props: FooterProps) => {
           const key = Object.keys(v)[0];
           return (
             <li className={list} key={i}>
-              <span>{key}:</span>
+              <span>{key}</span>
               <span>{v[key]}</span>
             </li>
           );
