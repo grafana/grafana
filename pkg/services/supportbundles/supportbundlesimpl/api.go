@@ -10,9 +10,9 @@ import (
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/web"
 )
@@ -49,7 +49,7 @@ func (s *Service) registerAPIEndpoints(httpServer *grafanaApi.HTTPServer, routeR
 	})
 }
 
-func (s *Service) handleList(ctx *models.ReqContext) response.Response {
+func (s *Service) handleList(ctx *contextmodel.ReqContext) response.Response {
 	bundles, err := s.list(ctx.Req.Context())
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "failed to list bundles", err)
@@ -63,7 +63,7 @@ func (s *Service) handleList(ctx *models.ReqContext) response.Response {
 	return response.JSON(http.StatusOK, data)
 }
 
-func (s *Service) handleCreate(ctx *models.ReqContext) response.Response {
+func (s *Service) handleCreate(ctx *contextmodel.ReqContext) response.Response {
 	type command struct {
 		Collectors []string `json:"collectors"`
 	}
@@ -86,7 +86,7 @@ func (s *Service) handleCreate(ctx *models.ReqContext) response.Response {
 	return response.JSON(http.StatusCreated, data)
 }
 
-func (s *Service) handleDownload(ctx *models.ReqContext) response.Response {
+func (s *Service) handleDownload(ctx *contextmodel.ReqContext) response.Response {
 	uid := web.Params(ctx.Req)[":uid"]
 	bundle, err := s.get(ctx.Req.Context(), uid)
 	if err != nil {
@@ -102,7 +102,7 @@ func (s *Service) handleDownload(ctx *models.ReqContext) response.Response {
 	return response.CreateNormalResponse(ctx.Resp.Header(), bundle.TarBytes, http.StatusOK)
 }
 
-func (s *Service) handleRemove(ctx *models.ReqContext) response.Response {
+func (s *Service) handleRemove(ctx *contextmodel.ReqContext) response.Response {
 	uid := web.Params(ctx.Req)[":uid"]
 	err := s.remove(ctx.Req.Context(), uid)
 	if err != nil {
@@ -112,7 +112,7 @@ func (s *Service) handleRemove(ctx *models.ReqContext) response.Response {
 	return response.Respond(http.StatusOK, "successfully removed the support bundle")
 }
 
-func (s *Service) handleGetCollectors(ctx *models.ReqContext) response.Response {
+func (s *Service) handleGetCollectors(ctx *contextmodel.ReqContext) response.Response {
 	collectors := make([]supportbundles.Collector, 0, len(s.collectors))
 
 	for _, c := range s.collectors {

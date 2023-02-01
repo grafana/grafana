@@ -4,11 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -16,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 )
 
 // AnnotationBackend is an implementation of state.Historian that uses Grafana Annotations as the backing datastore.
@@ -40,10 +43,10 @@ func NewAnnotationBackend(annotations annotations.Repository, dashboards dashboa
 }
 
 // RecordStates writes a number of state transitions for a given rule to state history.
-func (h *AnnotationBackend) RecordStatesAsync(ctx context.Context, rule *ngmodels.AlertRule, states []state.StateTransition) <-chan error {
+func (h *AnnotationBackend) RecordStatesAsync(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
 	logger := h.log.FromContext(ctx)
 	// Build annotations before starting goroutine, to make sure all data is copied and won't mutate underneath us.
-	annotations := h.buildAnnotations(rule, states, logger)
+	annotations := buildAnnotations(rule, states, logger)
 	panel := parsePanelKey(rule, logger)
 	errCh := make(chan error, 1)
 	go func() {
@@ -136,7 +139,7 @@ func (h *AnnotationBackend) QueryStates(ctx context.Context, query ngmodels.Hist
 	return frame, nil
 }
 
-func (h *AnnotationBackend) buildAnnotations(rule *ngmodels.AlertRule, states []state.StateTransition, logger log.Logger) []annotations.Item {
+func buildAnnotations(rule history_model.RuleMeta, states []state.StateTransition, logger log.Logger) []annotations.Item {
 	items := make([]annotations.Item, 0, len(states))
 	for _, state := range states {
 		if !shouldRecord(state) {
@@ -166,7 +169,7 @@ func (h *AnnotationBackend) recordAnnotationsSync(ctx context.Context, panel *pa
 		dashID, err := h.dashboards.getID(ctx, panel.orgID, panel.dashUID)
 		if err != nil {
 			logger.Error("Error getting dashboard for alert annotation", "dashboardUID", panel.dashUID, "error", err)
-			return fmt.Errorf("error getting dashboard for alert annotation: %w", err)
+			dashID = 0
 		}
 
 		for i := range annotations {
@@ -184,7 +187,7 @@ func (h *AnnotationBackend) recordAnnotationsSync(ctx context.Context, panel *pa
 	return nil
 }
 
-func buildAnnotationTextAndData(rule *ngmodels.AlertRule, currentState *state.State) (string, *simplejson.Json) {
+func buildAnnotationTextAndData(rule history_model.RuleMeta, currentState *state.State) (string, *simplejson.Json) {
 	jsonData := simplejson.New()
 	var value string
 
@@ -210,10 +213,27 @@ func buildAnnotationTextAndData(rule *ngmodels.AlertRule, currentState *state.St
 		for _, k := range keys {
 			values = append(values, fmt.Sprintf("%s=%f", k, currentState.Values[k]))
 		}
-		jsonData.Set("values", simplejson.NewFromAny(currentState.Values))
+		jsonData.Set("values", jsonifyValues(currentState.Values))
 		value = strings.Join(values, ", ")
 	}
 
 	labels := removePrivateLabels(currentState.Labels)
 	return fmt.Sprintf("%s {%s} - %s", rule.Title, labels.String(), value), jsonData
+}
+
+func jsonifyValues(vs map[string]float64) *simplejson.Json {
+	if vs == nil {
+		return nil
+	}
+
+	j := simplejson.New()
+	for k, v := range vs {
+		switch {
+		case math.IsInf(v, 0), math.IsNaN(v):
+			j.Set(k, fmt.Sprintf("%f", v))
+		default:
+			j.Set(k, v)
+		}
+	}
+	return j
 }

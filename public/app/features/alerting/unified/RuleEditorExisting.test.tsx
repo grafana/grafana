@@ -210,6 +210,7 @@ describe('RuleEditor grafana managed rules', () => {
               condition: 'B',
               data: getDefaultQueries(),
               exec_err_state: GrafanaAlertStateDecision.Error,
+              is_paused: false,
               no_data_state: 'NoData',
               title: 'my great new rule',
             },

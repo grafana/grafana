@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/services/store/entity"
 )
@@ -41,7 +40,7 @@ func updateFolderTree(ctx context.Context, tx *session.SessionTx, tenant int64) 
 
 	all := []*folderInfo{}
 	rows, err := tx.Query(ctx, "SELECT uid,folder,name,slug FROM entity WHERE kind=? AND tenant_id=? ORDER BY slug asc;",
-		models.StandardKindFolder, tenant)
+		entity.StandardKindFolder, tenant)
 	if err != nil {
 		return err
 	}
@@ -135,7 +134,7 @@ func setMPTTOrder(folder *folderInfo, stack []*folderInfo, idx int32) (int32, er
 
 func insertFolderInfo(ctx context.Context, tx *session.SessionTx, tenant int64, folder *folderInfo, isDetached bool) error {
 	js, _ := json.Marshal(folder.stack)
-	grn := entity.GRN{TenantId: tenant, Kind: models.StandardKindFolder, UID: folder.UID}
+	grn := entity.GRN{TenantId: tenant, Kind: entity.StandardKindFolder, UID: folder.UID}
 	_, err := tx.Exec(ctx,
 		`INSERT INTO entity_folder `+
 			"(grn, tenant_id, uid, slug_path, tree, depth, left, right, detached) "+

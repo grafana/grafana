@@ -14,6 +14,7 @@ import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
 import { useStateHistoryModal } from '../../hooks/useStateHistoryModal';
 import { deleteRuleAction } from '../../state/actions';
+import { getRulesPermissions } from '../../utils/access-control';
 import { getAlertmanagerByUid } from '../../utils/alertmanager';
 import { Annotation } from '../../utils/constants';
 import { getRulesSourceName, isCloudRulesSource, isGrafanaRulesSource } from '../../utils/datasource';
@@ -21,6 +22,8 @@ import { createExploreLink, makeRuleBasedSilenceLink } from '../../utils/misc';
 import * as ruleId from '../../utils/rule-id';
 import { isAlertingRule, isFederatedRuleGroup, isGrafanaRulerRule } from '../../utils/rules';
 import { DeclareIncident } from '../bridges/DeclareIncidentButton';
+
+import { CloneRuleButton } from './CloneRuleButton';
 
 interface Props {
   rule: CombinedRule;
@@ -78,6 +81,8 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
 
   const isFiringRule = isAlertingRule(rule.promRule) && rule.promRule.state === PromAlertingRuleState.Firing;
 
+  const rulesPermissions = getRulesPermissions(rulesSourceName);
+  const hasCreateRulePermission = contextSrv.hasPermission(rulesPermissions.create);
   const { isEditable, isRemovable } = useIsRuleEditable(rulesSourceName, rulerRule);
 
   const returnTo = location.pathname + location.search;
@@ -177,17 +182,11 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
     );
   }
 
-  if (isViewMode) {
-    if (isEditable && rulerRule && !isFederated && !isProvisioned) {
-      const sourceName = getRulesSourceName(rulesSource);
-      const identifier = ruleId.fromRulerRule(sourceName, namespace.name, group.name, rulerRule);
+  if (isViewMode && rulerRule) {
+    const sourceName = getRulesSourceName(rulesSource);
+    const identifier = ruleId.fromRulerRule(sourceName, namespace.name, group.name, rulerRule);
 
-      const editURL = urlUtil.renderUrl(
-        `${config.appSubUrl}/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`,
-        {
-          returnTo,
-        }
-      );
+    if (isEditable && !isFederated) {
       rightButtons.push(
         <ClipboardButton
           key="copy"
@@ -202,14 +201,29 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
         </ClipboardButton>
       );
 
+      if (!isProvisioned) {
+        const editURL = urlUtil.renderUrl(
+          `${config.appSubUrl}/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/edit`,
+          {
+            returnTo,
+          }
+        );
+
+        rightButtons.push(
+          <LinkButton size="sm" key="edit" variant="secondary" icon="pen" href={editURL}>
+            Edit
+          </LinkButton>
+        );
+      }
+    }
+
+    if (hasCreateRulePermission && !isFederated) {
       rightButtons.push(
-        <LinkButton size="sm" key="edit" variant="secondary" icon="pen" href={editURL}>
-          Edit
-        </LinkButton>
+        <CloneRuleButton key="clone" text="Copy" ruleIdentifier={identifier} isProvisioned={isProvisioned} />
       );
     }
 
-    if (isRemovable && rulerRule && !isFederated && !isProvisioned) {
+    if (isRemovable && !isFederated && !isProvisioned) {
       rightButtons.push(
         <Button
           size="sm"

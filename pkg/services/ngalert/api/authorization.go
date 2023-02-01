@@ -201,7 +201,10 @@ func (api *API) authorize(method, path string) web.Handler {
 		http.MethodGet + "/api/v1/provisioning/mute-timings/{name}",
 		http.MethodGet + "/api/v1/provisioning/alert-rules",
 		http.MethodGet + "/api/v1/provisioning/alert-rules/{UID}",
-		http.MethodGet + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}":
+		http.MethodGet + "/api/v1/provisioning/alert-rules/export",
+		http.MethodGet + "/api/v1/provisioning/alert-rules/{UID}/export",
+		http.MethodGet + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}",
+		http.MethodGet + "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export":
 		fallback = middleware.ReqOrgAdmin
 		eval = ac.EvalPermission(ac.ActionAlertingProvisioningRead) // organization scope
 
@@ -233,7 +236,9 @@ func (api *API) authorize(method, path string) web.Handler {
 // authorizeDatasourceAccessForRule checks that user has access to all data sources declared by the rule
 func authorizeDatasourceAccessForRule(rule *ngmodels.AlertRule, evaluator func(evaluator ac.Evaluator) bool) bool {
 	for _, query := range rule.Data {
-		if query.QueryType == expr.DatasourceType || query.DatasourceUID == expr.OldDatasourceUID {
+		if query.QueryType == expr.DatasourceType || query.DatasourceUID == expr.DatasourceUID || query.
+			DatasourceUID == expr.
+			OldDatasourceUID {
 			continue
 		}
 		if !evaluator(ac.EvalPermission(datasources.ActionQuery, datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))) {
