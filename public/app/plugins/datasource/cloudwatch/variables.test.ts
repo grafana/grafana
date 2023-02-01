@@ -1,7 +1,12 @@
 import { toOption } from '@grafana/data';
 
 import { setupMockedAPI } from './__mocks__/API';
-import { dimensionVariable, labelsVariable, setupMockedDataSource } from './__mocks__/CloudWatchDataSource';
+import {
+  dimensionVariable,
+  fieldsVariable,
+  labelsVariable,
+  setupMockedDataSource,
+} from './__mocks__/CloudWatchDataSource';
 import { VariableQuery, VariableQueryType } from './types';
 import { CloudWatchVariableSupport } from './variables';
 
@@ -17,7 +22,7 @@ const defaultQuery: VariableQuery = {
   refId: '',
 };
 
-const mock = setupMockedDataSource({ variables: [labelsVariable, dimensionVariable] });
+const mock = setupMockedDataSource({ variables: [labelsVariable, dimensionVariable, fieldsVariable] });
 mock.datasource.api.getRegions = jest.fn().mockResolvedValue([{ label: 'a', value: 'a' }]);
 mock.datasource.api.getNamespaces = jest.fn().mockResolvedValue([{ label: 'b', value: 'b' }]);
 mock.datasource.api.getMetrics = jest.fn().mockResolvedValue([{ label: 'c', value: 'c' }]);
@@ -28,6 +33,7 @@ const getDimensionValues = jest.fn().mockResolvedValue([{ label: 'e', value: 'e'
 const getEbsVolumeIds = jest.fn().mockResolvedValue([{ label: 'f', value: 'f' }]);
 const getEc2InstanceAttribute = jest.fn().mockResolvedValue([{ label: 'g', value: 'g' }]);
 const getResourceARNs = jest.fn().mockResolvedValue([{ label: 'h', value: 'h' }]);
+const describeAllLogGroups = jest.fn().mockResolvedValue(['a', 'b'].map(toOption));
 
 const variables = new CloudWatchVariableSupport(mock.datasource.api);
 
@@ -196,12 +202,29 @@ describe('variables', () => {
   });
 
   describe('log groups', () => {
+    beforeEach(() => {
+      mock.datasource.api.describeAllLogGroups = describeAllLogGroups;
+      describeAllLogGroups.mockClear();
+    });
+
     it('should call describe log groups', async () => {
       const result = await variables.execute({ ...defaultQuery, queryType: VariableQueryType.LogGroups });
       expect(result).toEqual([
         { text: 'a', value: 'a', expandable: true },
         { text: 'b', value: 'b', expandable: true },
       ]);
+    });
+    it('should replace variables', async () => {
+      const query = {
+        ...defaultQuery,
+        queryType: VariableQueryType.LogGroups,
+        logGroupPrefix: '$fields',
+      };
+      await variables.execute(query);
+      expect(describeAllLogGroups).toBeCalledWith({
+        region: query.region,
+        logGroupNamePrefix: 'templatedField',
+      });
     });
   });
 });
