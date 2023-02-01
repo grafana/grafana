@@ -97,7 +97,6 @@ Alpha features might be changed or removed without prior notice.
 | `sessionRemoteCache`               | Enable using remote cache for user sessions                                                                                                                                  |
 | `alertingBacktesting`              | Rule backtesting API for alerting                                                                                                                                            |
 | `editPanelCSVDragAndDrop`          | Enables drag and drop for CSV and Excel files                                                                                                                                |
-| `apiserver`                        | Enable the embedded Grafana K8S apiserver                                                                                                                                    |
 | `logsContextDatasourceUi`          | Allow datasource to provide custom UI for context view                                                                                                                       |
 
 ## Development feature toggles

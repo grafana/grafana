@@ -89,7 +89,6 @@ export interface FeatureToggles {
   alertingBacktesting?: boolean;
   editPanelCSVDragAndDrop?: boolean;
   alertingNoNormalState?: boolean;
-  apiserver?: boolean;
   topNavCommandPalette?: boolean;
   logsSampleInExplore?: boolean;
   logsContextDatasourceUi?: boolean;

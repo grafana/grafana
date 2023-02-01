@@ -299,10 +299,6 @@ const (
 	// Stop maintaining state of alerts that are not firing
 	FlagAlertingNoNormalState = "alertingNoNormalState"
 
-	// FlagApiserver
-	// Enable the embedded Grafana K8S apiserver
-	FlagApiserver = "apiserver"
-
 	// FlagTopNavCommandPalette
 	// Launch the Command Palette from the top navigation search box
 	FlagTopNavCommandPalette = "topNavCommandPalette"

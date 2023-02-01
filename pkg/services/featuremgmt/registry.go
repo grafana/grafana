@@ -410,17 +410,13 @@ var (
 			RequiresRestart: false,
 		},
 		{
-			Name:        "apiserver",
-			Description: "Enable the embedded Grafana K8S apiserver",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:         "topNavCommandPalette",
 			Description:  "Launch the Command Palette from the top navigation search box",
 			State:        FeatureStateBeta,
 			FrontendOnly: true,
 		},
 		{
+
 			Name:         "logsSampleInExplore",
 			Description:  "Enables access to the logs sample feature in Explore",
 			State:        FeatureStateStable,
