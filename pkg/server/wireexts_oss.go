@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth/authimpl"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
-	querycaching "github.com/grafana/grafana/pkg/services/datasources/querycaching"
 	datasourceservice "github.com/grafana/grafana/pkg/services/datasources/service"
 	"github.com/grafana/grafana/pkg/services/encryption"
 	encryptionprovider "github.com/grafana/grafana/pkg/services/encryption/provider"
@@ -81,8 +80,6 @@ var wireExtsBasicSet = wire.NewSet(
 	ossaccesscontrol.ProvideDatasourcePermissionsService,
 	wire.Bind(new(accesscontrol.DatasourcePermissionsService), new(*ossaccesscontrol.DatasourcePermissionsService)),
 	pluginsintegration.WireExtensionSet,
-	querycaching.ProvideService,
-	wire.Bind(new(querycaching.DatasourceCacheConfig), new(*querycaching.OSSDatasourceCacheConfigImpl)),
 )
 
 var wireExtsSet = wire.NewSet(
