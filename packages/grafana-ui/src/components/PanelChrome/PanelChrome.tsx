@@ -51,6 +51,7 @@ export interface PanelChromeProps {
    * of showing/interacting with the panel's state
    */
   leftItems?: ReactNode[];
+  displayMode?: 'default' | 'transparent';
 }
 
 /**
@@ -68,6 +69,7 @@ export function PanelChrome({
   padding = 'md',
   title = '',
   description = '',
+  displayMode = 'default',
   titleItems = [],
   menu,
   dragClass,
@@ -104,6 +106,11 @@ export function PanelChrome({
 
   const containerStyles: CSSProperties = { width, height };
   const ariaLabel = title ? selectors.components.Panels.Panel.containerByTitle(title) : 'Panel';
+
+  if (displayMode === 'transparent') {
+    containerStyles.backgroundColor = 'transparent';
+    containerStyles.border = 'none';
+  }
 
   return (
     <div className={styles.container} style={containerStyles} aria-label={ariaLabel}>
@@ -151,7 +158,7 @@ export function PanelChrome({
             </Dropdown>
           )}
 
-          {leftItems && <div className={styles.items}>{itemsRenderer(leftItems, (item) => item)}</div>}
+          {leftItems && <div className={styles.leftItems}>{itemsRenderer(leftItems, (item) => item)}</div>}
         </div>
 
         {statusMessage && (
@@ -207,7 +214,7 @@ const getContentStyle = (
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const { background, borderColor } = theme.components.panel;
+  const { background, borderColor, padding } = theme.components.panel;
 
   return {
     container: css({
@@ -248,7 +255,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-header',
       display: 'flex',
       alignItems: 'center',
-      padding: theme.spacing(0, 0, 0, 1),
+      padding: theme.spacing(0, 0, 0, padding),
     }),
     streaming: css({
       label: 'panel-streaming',
@@ -287,6 +294,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'absolute',
       left: '50%',
       transform: 'translateX(-50%)',
+    }),
+    leftItems: css({
+      display: 'flex',
+      paddingRight: theme.spacing(padding),
     }),
     rightAligned: css({
       label: 'right-aligned-container',

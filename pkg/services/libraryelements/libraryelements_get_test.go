@@ -7,11 +7,10 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/web"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/models"
 )
 
 func TestGetLibraryElement(t *testing.T) {
@@ -38,7 +37,7 @@ func TestGetLibraryElement(t *testing.T) {
 						FolderID:    1,
 						UID:         res.Result.UID,
 						Name:        "Text - Library Panel",
-						Kind:        int64(models.PanelElement),
+						Kind:        int64(model.PanelElement),
 						Type:        "text",
 						Description: "A description",
 						Model: map[string]interface{}{
@@ -49,7 +48,7 @@ func TestGetLibraryElement(t *testing.T) {
 							"type":        "text",
 						},
 						Version: 1,
-						Meta: LibraryElementDTOMeta{
+						Meta: model.LibraryElementDTOMeta{
 							FolderName:          "ScenarioFolder",
 							FolderUID:           sc.folder.UID,
 							ConnectedDashboards: 0,
@@ -133,7 +132,7 @@ func TestGetLibraryElement(t *testing.T) {
 						FolderID:    1,
 						UID:         res.Result.UID,
 						Name:        "Text - Library Panel",
-						Kind:        int64(models.PanelElement),
+						Kind:        int64(model.PanelElement),
 						Type:        "text",
 						Description: "A description",
 						Model: map[string]interface{}{
@@ -144,7 +143,7 @@ func TestGetLibraryElement(t *testing.T) {
 							"type":        "text",
 						},
 						Version: 1,
-						Meta: LibraryElementDTOMeta{
+						Meta: model.LibraryElementDTOMeta{
 							FolderName:          "ScenarioFolder",
 							FolderUID:           sc.folder.UID,
 							ConnectedDashboards: 1,
