@@ -67,6 +67,10 @@ func Logger(cfg *setting.Cfg) web.Middleware {
 					"referer", SanitizeURL(ctx, r.Referer()),
 				}
 
+				if xCacheHeader := rw.Header().Get("X-Cache"); xCacheHeader != "" {
+					logParams = append(logParams, "x-cache", xCacheHeader)
+				}
+
 				if cfg.IsFeatureToggleEnabled(featuremgmt.FlagDatabaseMetrics) {
 					logParams = append(logParams, "db_call_count", log.TotalDBCallCount(ctx.Req.Context()))
 				}
