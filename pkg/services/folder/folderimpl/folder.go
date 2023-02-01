@@ -72,7 +72,7 @@ func (s *Service) DBMigration(db db.DB) {
 	err := db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var err error
 		if db.GetDialect().DriverName() == migrator.SQLite {
-			_, err = sess.Exec("INSERT OR REPLACE INTO folder (id, uid, org_id, title, created, updated) SELECT id, uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1")
+			_, err = sess.Exec("INSERT OR IGNORE INTO folder (id, uid, org_id, title, created, updated) SELECT id, uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1")
 		} else if db.GetDialect().DriverName() == migrator.Postgres {
 			_, err = sess.Exec("INSERT INTO folder (id, uid, org_id, title, created, updated) SELECT id, uid, org_id, title, created, updated FROM dashboard WHERE is_folder = true ON CONFLICT DO NOTHING")
 		} else {
