@@ -55,10 +55,6 @@ const (
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
 
-	// FlagTempoApmTable
-	// Show APM table
-	FlagTempoApmTable = "tempoApmTable"
-
 	// FlagPrometheusAzureOverrideAudience
 	// Experimental. Allow override default AAD audience for Azure Prometheus endpoint
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"

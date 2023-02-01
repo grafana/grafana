@@ -40,7 +40,7 @@ type DashboardServiceImpl struct {
 	cfg                  *setting.Cfg
 	log                  log.Logger
 	dashboardStore       dashboards.Store
-	folderStore          dashboards.FolderStore
+	folderStore          folder.FolderStore
 	dashAlertExtractor   alerting.DashAlertExtractor
 	features             featuremgmt.FeatureToggles
 	folderPermissions    accesscontrol.FolderPermissionsService
@@ -50,7 +50,7 @@ type DashboardServiceImpl struct {
 
 // This is the uber service that implements a three smaller services
 func ProvideDashboardService(
-	cfg *setting.Cfg, dashboardStore dashboards.Store, folderStore dashboards.FolderStore, dashAlertExtractor alerting.DashAlertExtractor,
+	cfg *setting.Cfg, dashboardStore dashboards.Store, folderStore folder.FolderStore, dashAlertExtractor alerting.DashAlertExtractor,
 	features featuremgmt.FeatureToggles, folderPermissionsService accesscontrol.FolderPermissionsService,
 	dashboardPermissionsService accesscontrol.DashboardPermissionsService, ac accesscontrol.AccessControl,
 	folderSvc folder.Service,

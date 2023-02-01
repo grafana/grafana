@@ -2,14 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import {
-  ApplyFieldOverrideOptions,
-  DataTransformerConfig,
-  dateMath,
-  FieldColorModeId,
-  NavModelItem,
-  PanelData,
-} from '@grafana/data';
+import { ApplyFieldOverrideOptions, dateMath, FieldColorModeId, NavModelItem, PanelData } from '@grafana/data';
+import { DataTransformerConfig } from '@grafana/schema';
 import { Button, Table } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { config } from 'app/core/config';

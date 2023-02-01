@@ -283,6 +283,7 @@
         0,
         0
       ],
+      "description": "A Grafana dashboard.",
       "grafanaMaturityCount": 139,
       "lineageIsGroup": false,
       "links": {
@@ -821,6 +822,7 @@
         0,
         0
       ],
+      "description": "A standalone panel",
       "grafanaMaturityCount": 10,
       "lineageIsGroup": false,
       "links": {
@@ -1105,7 +1107,9 @@
     },
     "phlaredataquery": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/observability-traces-and-profiling"
+      ],
       "currentVersion": [
         0,
         0
@@ -1113,13 +1117,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
-        "docs": "n/a",
-        "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/phlaredataquery/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/tsdb/phlare/kinds/dataquery/types_dataquery_gen.go",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/phlare/dataquery.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/phlare/dataquery.gen.ts"
       },
       "machineName": "phlaredataquery",
-      "maturity": "planned",
+      "maturity": "experimental",
       "name": "PhlareDataQuery",
       "pluralMachineName": "phlaredataquerys",
       "pluralName": "PhlareDataQuerys",
@@ -1183,6 +1187,7 @@
         0,
         0
       ],
+      "description": "A playlist is a series of dashboards that is automatically rotated in the browser, on a configurable interval.",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -1253,6 +1258,7 @@
         0,
         0
       ],
+      "description": "The user or team frontend preferences",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -1323,6 +1329,7 @@
         0,
         0
       ],
+      "description": "Public dashboard configuration",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -1391,6 +1398,7 @@
         0,
         0
       ],
+      "description": "system account",
       "grafanaMaturityCount": 9,
       "lineageIsGroup": false,
       "links": {
@@ -1511,6 +1519,7 @@
         0,
         0
       ],
+      "description": "A team is a named grouping of Grafana users to which access control rules may be assigned.",
       "grafanaMaturityCount": 7,
       "lineageIsGroup": false,
       "links": {
@@ -1905,6 +1914,7 @@
           "librarypanel",
           "newspanelcfg",
           "nodegraphpanelcfg",
+          "phlaredataquery",
           "piechartpanelcfg",
           "statetimelinepanelcfg",
           "statpanelcfg",
@@ -1973,7 +1983,6 @@
           "mysqldatasourcecfg",
           "parcadataquery",
           "parcadatasourcecfg",
-          "phlaredataquery",
           "phlaredatasourcecfg",
           "postgresqldataquery",
           "postgresqldatasourcecfg",

@@ -148,9 +148,30 @@ steps:
   image: grafana/build-container:v1.7.1
   name: betterer-frontend
 - commands:
+  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
+    | jq .head.repo.fork)
+  - if [ "$is_fork" != false ]; then return 1; fi
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    ../grafana-enterprise
+  - cd ../grafana-enterprise
+  - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
+    elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
+    else git checkout main; fi
+  - cd ../
+  - ln -s src grafana
+  - cd ./grafana-enterprise
+  - ./build.sh
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  failure: ignore
+  image: grafana/build-container:v1.7.1
+  name: clone-enterprise
+- commands:
   - yarn run ci:test-frontend
   depends_on:
   - yarn-install
+  - clone-enterprise
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:v1.7.1
@@ -190,6 +211,26 @@ platform:
 services: []
 steps:
 - commands:
+  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
+    | jq .head.repo.fork)
+  - if [ "$is_fork" != false ]; then return 1; fi
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    ../grafana-enterprise
+  - cd ../grafana-enterprise
+  - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
+    elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
+    else git checkout main; fi
+  - cd ../
+  - ln -s src grafana
+  - cd ./grafana-enterprise
+  - ./build.sh
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  failure: ignore
+  image: grafana/build-container:v1.7.1
+  name: clone-enterprise
+- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15.6
   name: identify-runner
@@ -205,6 +246,7 @@ steps:
   - yarn run typecheck
   depends_on:
   - yarn-install
+  - clone-enterprise
   environment:
     TEST_MAX_WORKERS: 50%
   image: grafana/build-container:v1.7.1
@@ -244,6 +286,26 @@ platform:
 services: []
 steps:
 - commands:
+  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
+    | jq .head.repo.fork)
+  - if [ "$is_fork" != false ]; then return 1; fi
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    ../grafana-enterprise
+  - cd ../grafana-enterprise
+  - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
+    elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
+    else git checkout main; fi
+  - cd ../
+  - ln -s src grafana
+  - cd ./grafana-enterprise
+  - ./build.sh
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  failure: ignore
+  image: grafana/build-container:v1.7.1
+  name: clone-enterprise
+- commands:
   - echo $DRONE_RUNNER_NAME
   image: alpine:3.15.6
   name: identify-runner
@@ -260,7 +322,8 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
-  depends_on: []
+  depends_on:
+  - clone-enterprise
   image: grafana/build-container:v1.7.1
   name: verify-gen-cue
 - commands:
@@ -268,7 +331,8 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-jsonnet
-  depends_on: []
+  depends_on:
+  - clone-enterprise
   image: grafana/build-container:v1.7.1
   name: verify-gen-jsonnet
 - commands:
@@ -278,7 +342,7 @@ steps:
   image: grafana/build-container:v1.7.1
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:v1.7.1
@@ -339,8 +403,29 @@ steps:
   image: golang:1.19.4
   name: compile-build-cmd
 - commands:
+  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
+    | jq .head.repo.fork)
+  - if [ "$is_fork" != false ]; then return 1; fi
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    ../grafana-enterprise
+  - cd ../grafana-enterprise
+  - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
+    elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
+    else git checkout main; fi
+  - cd ../
+  - ln -s src grafana
+  - cd ./grafana-enterprise
+  - ./build.sh
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  failure: ignore
+  image: grafana/build-container:v1.7.1
+  name: clone-enterprise
+- commands:
   - make gen-go
-  depends_on: []
+  depends_on:
+  - clone-enterprise
   image: grafana/build-container:v1.7.1
   name: wire-install
 - commands:
@@ -728,6 +813,26 @@ services:
     path: /var/lib/mysql
 steps:
 - commands:
+  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
+    | jq .head.repo.fork)
+  - if [ "$is_fork" != false ]; then return 1; fi
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    ../grafana-enterprise
+  - cd ../grafana-enterprise
+  - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
+    elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
+    else git checkout main; fi
+  - cd ../
+  - ln -s src grafana
+  - cd ./grafana-enterprise
+  - ./build.sh
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  failure: ignore
+  image: grafana/build-container:v1.7.1
+  name: clone-enterprise
+- commands:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.20/grabpl
   - chmod +x bin/grabpl
@@ -750,7 +855,8 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
-  depends_on: []
+  depends_on:
+  - clone-enterprise
   image: grafana/build-container:v1.7.1
   name: verify-gen-cue
 - commands:
@@ -758,7 +864,8 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-jsonnet
-  depends_on: []
+  depends_on:
+  - clone-enterprise
   image: grafana/build-container:v1.7.1
   name: verify-gen-jsonnet
 - commands:
@@ -1178,7 +1285,7 @@ steps:
   image: grafana/build-container:v1.7.1
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:v1.7.1
@@ -1718,6 +1825,26 @@ services:
     path: /var/lib/mysql
 steps:
 - commands:
+  - is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST"
+    | jq .head.repo.fork)
+  - if [ "$is_fork" != false ]; then return 1; fi
+  - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+    ../grafana-enterprise
+  - cd ../grafana-enterprise
+  - if git checkout ${DRONE_SOURCE_BRANCH}; then echo "checked out ${DRONE_SOURCE_BRANCH}";
+    elif git checkout ${DRONE_TARGET_BRANCH}; then echo "git checkout ${DRONE_TARGET_BRANCH}";
+    else git checkout main; fi
+  - cd ../
+  - ln -s src grafana
+  - cd ./grafana-enterprise
+  - ./build.sh
+  environment:
+    GITHUB_TOKEN:
+      from_secret: github_token
+  failure: ignore
+  image: grafana/build-container:v1.7.1
+  name: clone-enterprise
+- commands:
   - mkdir -p bin
   - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.20/grabpl
   - chmod +x bin/grabpl
@@ -1740,7 +1867,8 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-cue
-  depends_on: []
+  depends_on:
+  - clone-enterprise
   image: grafana/build-container:v1.7.1
   name: verify-gen-cue
 - commands:
@@ -1748,7 +1876,8 @@ steps:
   - '# The following command will fail if running code generators produces any diff
     in output.'
   - CODEGEN_VERIFY=1 make gen-jsonnet
-  depends_on: []
+  depends_on:
+  - clone-enterprise
   image: grafana/build-container:v1.7.1
   name: verify-gen-jsonnet
 - commands:
@@ -2406,7 +2535,7 @@ steps:
   image: grafana/build-container:v1.7.1
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:v1.7.1
@@ -3079,7 +3208,7 @@ steps:
   image: grafana/build-container:v1.7.1
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:v1.7.1
@@ -3924,8 +4053,8 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana/grafana-oss
-    --version-tag ${DRONE_TAG}
+  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana-oss --version-tag
+    ${DRONE_TAG}
   depends_on:
   - fetch-images-oss
   environment:
@@ -3936,7 +4065,7 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   image: google/cloud-sdk
-  name: publish-images-grafana/grafana-oss
+  name: publish-images-grafana-oss
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -5089,7 +5218,7 @@ steps:
   image: grafana/build-container:v1.7.1
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:v1.7.1
@@ -5747,7 +5876,7 @@ steps:
   image: grafana/build-container:v1.7.1
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:v1.7.1
@@ -6516,6 +6645,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: eba6c445aae6d75df0a2963d5e1e90c44474587a9e1d11e21bf2ba4d99f14da8
+hmac: a46e69b6221d00313d924e36021b8f956a6cfa18c23a6a063891b586075717b9
 
 ...
