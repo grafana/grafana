@@ -6,9 +6,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/bridge"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
 	"github.com/grafana/grafana/pkg/registry/corecrd"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -48,36 +50,37 @@ func (c *DashboardController) Run(ctx context.Context) error {
 
 	dashboardInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			uObj, ok := obj.(*unstructured.Unstructured)
-			if !ok {
-				fmt.Println("dashboard add: failed to convert to dashboard")
-				return
-			}
-
-			dash := k8ssys.Base[dashboard.Dashboard]{}
-			err := runtime.DefaultUnstructuredConverter.FromUnstructured(uObj.UnstructuredContent(), &dash)
+			dash, err := interfaceToK8sDashboard(obj)
 			if err != nil {
-				fmt.Println("dashboard add: failed to convert to dashboard", err)
+				fmt.Println("dashboard add", err)
 				return
 			}
 
 			fmt.Printf("dashboard added: %+v \n", dash)
-			//c.dashboardService.SaveDashboard()
+
+			dto := k8sDashboardToDashboardDTO(dash)
+			_, err = c.dashboardService.SaveDashboard(context.Background(), dto, false)
+			if err != nil {
+				fmt.Println("dashboardService.SaveDashboard failed", err)
+				return
+			}
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			fmt.Printf("call to update dashboard: %+v \n", newObj)
-
-			dash, ok := newObj.(*k8ssys.Base[dashboard.Dashboard])
-			if !ok {
-				fmt.Printf("%#v\n", dash)
-				//fmt.Println("dashboard update: failed to convert to dashboard")
+			dash, err := interfaceToK8sDashboard(newObj)
+			if err != nil {
+				fmt.Println("dashboard update", err)
 				return
 			}
 			fmt.Printf("dashboard updated: %+v \n", dash)
-			//c.dashboardService.SaveDashboard()
 		},
 		DeleteFunc: func(obj interface{}) {
-			fmt.Printf("dashboard deleted: %s \n", obj)
+			dash, err := interfaceToK8sDashboard(obj)
+			if err != nil {
+				fmt.Println("dashboard delete", err)
+				return
+			}
+
+			fmt.Printf("dashboard deleted: %+v \n", dash)
 			//c.dashboardService.DeleteDashboard(ctx, obj.ID, obj.OrgID)
 		},
 	})
@@ -92,4 +95,38 @@ func (c *DashboardController) Run(ctx context.Context) error {
 
 func (c *DashboardController) IsDisabled() bool {
 	return !c.cfg.IsFeatureToggleEnabled(featuremgmt.FlagApiserver)
+}
+func interfaceToK8sDashboard(obj interface{}) (*k8ssys.Base[dashboard.Dashboard], error) {
+	uObj, ok := obj.(*unstructured.Unstructured)
+	if !ok {
+		return nil, fmt.Errorf("failed to convert interface{} to *unstructured.Unstructured")
+	}
+
+	dash := k8ssys.Base[dashboard.Dashboard]{}
+	err := runtime.DefaultUnstructuredConverter.FromUnstructured(uObj.UnstructuredContent(), &dash)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert *unstructured.Unstructured to *k8ssys.Base[dashboard.Dashboard]")
+	}
+	return &dash, nil
+}
+
+func k8sDashboardToDashboardDTO(dash *k8ssys.Base[dashboard.Dashboard]) *dashboards.SaveDashboardDTO {
+	data := simplejson.NewFromAny(dash.Spec)
+	dto := dashboards.SaveDashboardDTO{
+		Dashboard: &dashboards.Dashboard{
+			FolderID: 1,
+			IsFolder: false,
+			Data:     data,
+		},
+	}
+	if dash.Spec.Id != nil {
+		dto.Dashboard.ID = *dash.Spec.Id
+	}
+	if dash.Spec.Uid != nil {
+		dto.Dashboard.UID = *dash.Spec.Uid
+	}
+	if dash.Spec.Title != nil {
+		dto.Dashboard.Title = *dash.Spec.Title
+	}
+	return &dto
 }
