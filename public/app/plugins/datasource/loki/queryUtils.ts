@@ -1,6 +1,7 @@
 import { SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
+import { dateTime, DurationUnit, TimeRange } from '@grafana/data';
 import {
   parser,
   LineFilter,
@@ -294,4 +295,25 @@ export function getStreamSelectorsFromQuery(query: string): string[] {
   });
 
   return labelMatchers;
+}
+
+export function partitionTimeRange(range: TimeRange, unit: DurationUnit = 'd'): TimeRange[] {
+  const delta = range.to.diff(range.from, unit);
+
+  if (delta <= 1) {
+    return [range];
+  }
+
+  const partition: TimeRange[] = [];
+  for (let from = dateTime(range.from), to = dateTime(from).add(1, unit); to <= range.to; to.add(1, unit)) {
+    partition.push({
+      from,
+      to,
+      raw: { from, to },
+    });
+
+    from = dateTime(to);
+  }
+
+  return partition;
 }
