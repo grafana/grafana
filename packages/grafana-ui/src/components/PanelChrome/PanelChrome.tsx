@@ -88,7 +88,6 @@ export function PanelChrome({
   //
   // Backwards compatibility for having a designated space for the header
 
-  // This logic is not working and needs to be moved outside (into PanelStateWrapper, and sent in as a prop)
   const hasHeader =
     hoverHeader === false &&
     (title.length > 0 ||
