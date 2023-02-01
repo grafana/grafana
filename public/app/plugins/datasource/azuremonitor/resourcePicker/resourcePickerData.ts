@@ -421,7 +421,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     return logLocationsMap;
   }
 
-  parseRows(resources: Array<string | AzureMetricResource>): ResourceRow[] {
+  parseRows(resources: Array<string | AzureMonitorResource>): ResourceRow[] {
     const resourceObjs = parseMultipleResourceDetails(resources);
     const newSelectedRows: ResourceRow[] = [];
     resourceObjs.forEach((resource, i) => {
