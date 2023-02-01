@@ -131,8 +131,23 @@ const FlameGraph = ({
       render(pixelsPerTick);
 
       graphRef.current.onclick = (e) => {
-        setContextMenuEvent({ e });
         setTooltipData(undefined);
+        const pixelsPerTick = graphRef.current!.clientWidth / totalTicks / (rangeMax - rangeMin);
+        const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
+          e,
+          pixelsPerTick,
+          levels,
+          totalTicks,
+          rangeMin
+        );
+
+        // if clicking on a block in the canvas
+        if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
+          setContextMenuEvent({ e });
+        } else {
+          // if clicking on the canvas but there is no block beneath the cursor
+          setContextMenuEvent(undefined);
+        }
       };
 
       graphRef.current!.onmousemove = (e) => {
@@ -180,6 +195,18 @@ const FlameGraph = ({
     contextMenuEvent,
   ]);
 
+  // hide context menu if outside of the flame graph canvas is clicked
+  useEffect(() => {
+    const handleOnClick = (e: MouseEvent) => {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      if ((e.target as HTMLElement).parentElement?.id !== 'flameGraphCanvasContainer') {
+        setContextMenuEvent(undefined);
+      }
+    };
+    window.addEventListener('click', handleOnClick);
+    return () => window.removeEventListener('click', handleOnClick);
+  }, [setContextMenuEvent]);
+
   return (
     <div className={styles.graph} ref={sizeRef}>
       <FlameGraphMetadata
@@ -189,7 +216,9 @@ const FlameGraph = ({
         valueField={valueField}
         totalTicks={totalTicks}
       />
-      <canvas ref={graphRef} data-testid="flameGraph" />
+      <div className={styles.canvasContainer} id="flameGraphCanvasContainer">
+        <canvas ref={graphRef} data-testid="flameGraph" />
+      </div>
       <FlameGraphTooltip tooltipRef={tooltipRef} tooltipData={tooltipData!} />
       <FlameGraphContextMenu
         contextMenuEvent={contextMenuEvent!}
@@ -210,13 +239,15 @@ const FlameGraph = ({
 
 const getStyles = (selectedView: SelectedView, app: CoreApp, flameGraphHeight: number | undefined) => ({
   graph: css`
-    cursor: pointer;
     float: left;
     overflow: scroll;
     width: ${selectedView === SelectedView.FlameGraph ? '100%' : '50%'};
     ${app !== CoreApp.Explore
       ? `height: calc(${flameGraphHeight}px - 50px)`
       : ''}; // 50px to adjust for header pushing content down
+  `,
+  canvasContainer: css`
+    cursor: pointer;
   `,
 });
 

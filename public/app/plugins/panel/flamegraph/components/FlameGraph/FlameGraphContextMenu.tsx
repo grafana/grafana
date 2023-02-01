@@ -41,21 +41,23 @@ const FlameGraphContextMenu = ({
           label="Focus block"
           icon={'eye'}
           onClick={() => {
-            const pixelsPerTick = graphRef.current!.clientWidth / totalTicks / (rangeMax - rangeMin);
-            const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
-              contextMenuEvent.e,
-              pixelsPerTick,
-              levels,
-              totalTicks,
-              rangeMin
-            );
+            if (graphRef.current) {
+              const pixelsPerTick = graphRef.current!.clientWidth / totalTicks / (rangeMax - rangeMin);
+              const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
+                contextMenuEvent.e,
+                pixelsPerTick,
+                levels,
+                totalTicks,
+                rangeMin
+              );
 
-            if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
-              setTopLevelIndex(levelIndex);
-              setSelectedBarIndex(barIndex);
-              setRangeMin(levels[levelIndex][barIndex].start / totalTicks);
-              setRangeMax((levels[levelIndex][barIndex].start + levels[levelIndex][barIndex].value) / totalTicks);
-              setContextMenuEvent(undefined);
+              if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
+                setTopLevelIndex(levelIndex);
+                setSelectedBarIndex(barIndex);
+                setRangeMin(levels[levelIndex][barIndex].start / totalTicks);
+                setRangeMax((levels[levelIndex][barIndex].start + levels[levelIndex][barIndex].value) / totalTicks);
+                setContextMenuEvent(undefined);
+              }
             }
           }}
         />
@@ -63,20 +65,22 @@ const FlameGraphContextMenu = ({
           label="Copy function name"
           icon={'copy'}
           onClick={() => {
-            const pixelsPerTick = graphRef.current!.clientWidth / totalTicks / (rangeMax - rangeMin);
-            const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
-              contextMenuEvent.e,
-              pixelsPerTick,
-              levels,
-              totalTicks,
-              rangeMin
-            );
+            if (graphRef.current) {
+              const pixelsPerTick = graphRef.current!.clientWidth / totalTicks / (rangeMax - rangeMin);
+              const { levelIndex, barIndex } = convertPixelCoordinatesToBarCoordinates(
+                contextMenuEvent.e,
+                pixelsPerTick,
+                levels,
+                totalTicks,
+                rangeMin
+              );
 
-            if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
-              const bar = levels[levelIndex][barIndex];
-              navigator.clipboard.writeText(bar.label).then(() => {
-                setContextMenuEvent(undefined);
-              });
+              if (barIndex !== -1 && !isNaN(levelIndex) && !isNaN(barIndex)) {
+                const bar = levels[levelIndex][barIndex];
+                navigator.clipboard.writeText(bar.label).then(() => {
+                  setContextMenuEvent(undefined);
+                });
+              }
             }
           }}
         />
