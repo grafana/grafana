@@ -177,6 +177,11 @@ export const Table = memo((props: Props) => {
 
     if (isCountRowsSet) {
       const footerItemsCountRows: FooterItem[] = [];
+      /*
+        Update the 1st index of the empty array with the row length, which will then default the 0th index to `undefined`,
+        which will therefore account for our Row Numbers column, and render the count in the following column.
+        This will work with tables with only a single column as well, since our Row Numbers column is being prepended reguardless.
+      */
       footerItemsCountRows[1] = headerGroups[0]?.headers[0]?.filteredRows.length.toString() ?? data.length.toString();
       setFooterItems(footerItemsCountRows);
       return;

@@ -59,7 +59,6 @@ function renderFooterCell(column: ColumnInstance, tableStyles: TableStyles) {
 }
 
 export function getFooterValue(index: number, footerValues?: FooterItem[], isCountRowsSet?: boolean) {
-  // console.log(footerValues, 'footervalues');
   if (footerValues === undefined) {
     return EmptyCell;
   }
