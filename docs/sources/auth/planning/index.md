@@ -24,9 +24,11 @@ If the users are within my organization, this means that Grafana might be able t
 
 If the users are outside of my organization, this means that Grafana needs to provide anonymous access, which is not enabled by default.
 
-### 🚧 How are my users organized?
+### Users in teams
 
-### 🚧 Users in teams
+It makes sense to organize users within teams in order to assign the same roles and permissions rather than invidually. For example, instead of assigning five users access to the same dashboard, you can create a team that consists of those users and assign dashboard permissions to the team. A user can belong to multiple teams.
+
+A user can be a Member or an Administrator for a given team. Members of a team inherit permissions from the team, but they cannot edit the team itself. Team Administrators can add members to a team and update its settings, such as the team name, team member’s team roles, UI preferences, and the default dashbord to be displayed upon login for the team members.
 
 ### 🚧 Users in organizations
 
