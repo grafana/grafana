@@ -3,6 +3,9 @@ import React, { FC } from 'react';
 import { Alert } from '@grafana/ui';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
+import { generateCopiedName } from '../../utils/duplicate';
+import { updateDefinesWithUniqueValue } from '../../utils/templates';
+
 import { TemplateForm } from './TemplateForm';
 
 interface Props {
@@ -11,9 +14,8 @@ interface Props {
   alertManagerSourceName: string;
 }
 
-export const EditTemplateView: FC<Props> = ({ config, templateName, alertManagerSourceName }) => {
+export const DuplicateTemplateView: FC<Props> = ({ config, templateName, alertManagerSourceName }) => {
   const template = config.template_files?.[templateName];
-  const provenance = config.template_file_provenances?.[templateName];
 
   if (!template) {
     return (
@@ -22,12 +24,14 @@ export const EditTemplateView: FC<Props> = ({ config, templateName, alertManager
       </Alert>
     );
   }
+
+  const duplicatedName = generateCopiedName(templateName, Object.keys(config.template_files));
+
   return (
     <TemplateForm
       alertManagerSourceName={alertManagerSourceName}
       config={config}
-      existing={{ name: templateName, content: template }}
-      provenance={provenance}
+      existing={{ name: duplicatedName, content: updateDefinesWithUniqueValue(template) }}
     />
   );
 };
