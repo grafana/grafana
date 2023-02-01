@@ -276,6 +276,67 @@ describe('PrometheusIncrementalStorage', function () {
     expect(Object.values(storage.getStorage())).toEqual([]);
   });
 
+  it('Will not alter existing data when there are multiple series with missing data', () => {
+    const storage = new PrometheusIncrementalStorage(getDatasourceStub());
+    const intervalMs = 30000;
+
+    // Requests
+    const firstRequest = IncrementalStorageDataFrameScenarios.histogram.multipleSeriesGapInMiddle.first;
+    const secondRequest = IncrementalStorageDataFrameScenarios.histogram.multipleSeriesGapInMiddle.second;
+
+    const firstDataFrameResponse: DataQueryResponse = {
+      data: firstRequest.dataFrames.map((frame) => toDataFrame(frame)),
+    };
+    const secondDataFrameResponse: DataQueryResponse = {
+      data: secondRequest.dataFrames.map((frame) => toDataFrame(frame)),
+    };
+
+    const firstDataFrames = storage.appendQueryResultToDataFrameStorage(
+      firstRequest.request as unknown as DataQueryRequest<PromQuery>,
+      firstDataFrameResponse,
+      firstRequest.originalRange
+    );
+
+    const firstMergedLength = firstDataFrames.data[0].fields[0].values.length;
+
+    const secondDataFrames = storage.appendQueryResultToDataFrameStorage(
+      secondRequest.request as unknown as DataQueryRequest<PromQuery>,
+      secondDataFrameResponse,
+      secondRequest.originalRange
+    );
+
+    const secondMergedLength = secondDataFrames.data[0].fields[0].values.length;
+
+    expect(firstMergedLength).toEqual(secondMergedLength);
+    // expect(secondDataFrames.data[0].fields[1].values.toArray()).toContain(firstDataFrames.data[0].fields[1].values.toArray())
+    // I expect the original response to contain everything that's returned by the second merged response, expect for first and last values
+    const valuesFromFirstResponseWithoutFirstValue = firstDataFrames.data[0].fields[1].values.toArray();
+    valuesFromFirstResponseWithoutFirstValue.shift();
+    valuesFromFirstResponseWithoutFirstValue.shift();
+    valuesFromFirstResponseWithoutFirstValue.shift();
+    const valuesMergedAfterSecondResponse = secondDataFrames.data[0].fields[1].values.toArray();
+
+    valuesFromFirstResponseWithoutFirstValue.forEach((value) => {
+      expect(valuesMergedAfterSecondResponse).toContain(value);
+    });
+
+    const timeDeltasFirstRequest: number[] = firstDataFrames.data[0].fields[0].values
+      .toArray()
+      .map((v: number, i: number, a: number[]) => v - (a[i - 1] || 0));
+    // remove the first element
+    timeDeltasFirstRequest.shift();
+
+    const timeDeltasSecondRequest: number[] = secondDataFrames.data[0].fields[0].values
+      .toArray()
+      .map((v: number, i: number, a: number[]) => v - (a[i - 1] || 0));
+    //remove the first element
+    timeDeltasSecondRequest.shift();
+
+    const gapsInFirstRequest = timeDeltasFirstRequest.filter((value) => value !== intervalMs);
+    const gapsInSecondRequest = timeDeltasSecondRequest.filter((value) => value !== intervalMs);
+    expect(gapsInFirstRequest).toEqual(gapsInSecondRequest);
+  });
+
   it('Will evict old dataframes, and use stored data when user shortens query window', () => {
     const storage = new PrometheusIncrementalStorage(getDatasourceStub());
 

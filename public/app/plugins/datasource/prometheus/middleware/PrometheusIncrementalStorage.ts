@@ -22,7 +22,7 @@ import { PromQuery } from '../types';
 // Get link to prometheus doc for the above comment
 const PROMETHEUS_INCREMENTAL_QUERY_OVERLAP_DURATION_MS = 60 * 10 * 1000;
 const PROMETHEUS_STORAGE_TIME_INDEX = '__time__';
-const DEBUG = false;
+const DEBUG = true;
 
 // Another issue: if the query window starts at a time when there is no results from the database, we'll always fail the cache check and pull fresh data, even though the cache has everything available
 // Also the cache can def get really big for big queries, need to look into if we want to find a way to limit the size of requests we add to the cache?
@@ -304,6 +304,12 @@ export class PrometheusIncrementalStorage {
     dataFrames: DataQueryResponse,
     originalRange?: { end: number; start: number }
   ): DataQueryResponse => {
+    // console.log('appendQueryResultToDataFrameStorage');
+    // console.log('request', JSON.stringify(request));
+    // console.log('dataFrames', JSON.stringify(dataFrames));
+    // console.log('originalRange', JSON.stringify(originalRange));
+    // console.log('TimSrv', JSON.stringify(this.timeSrv.time));
+
     const data: DataFrame[] = dataFrames.data;
 
     // Frames aren't always the same length, since this storage assumes a single time array for all values, that means we need to back-fill missing values
