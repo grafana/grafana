@@ -102,7 +102,7 @@ def clone_enterprise_step(source = "${DRONE_COMMIT}"):
         },
         "commands": [
             'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"',
-            'git checkout {}'.format(source),
+            "git checkout {}".format(source),
         ],
     }
 
