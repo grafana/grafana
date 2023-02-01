@@ -151,7 +151,7 @@ describe('Query and expressions reducer', () => {
     const expressionQuery: AlertQuery = {
       refId: 'B',
       queryType: 'expression',
-      datasourceUid: '-100',
+      datasourceUid: '__expr__',
       relativeTimeRange: { from: 900, to: 1000 },
       model: {
         queryType: 'query',
@@ -166,7 +166,7 @@ describe('Query and expressions reducer', () => {
     const expressionQuery2: AlertQuery = {
       refId: 'C',
       queryType: 'expression',
-      datasourceUid: '-100',
+      datasourceUid: '__expr__',
       relativeTimeRange: { from: 1, to: 3 },
       model: {
         queryType: 'query',
@@ -205,7 +205,7 @@ describe('Query and expressions reducer', () => {
           queryType: 'query',
         },
         {
-          datasourceUid: '-100',
+          datasourceUid: '__expr__',
           relativeTimeRange: { from: 900, to: 1000 },
           model: {
             datasource: '__expr__',
@@ -219,7 +219,7 @@ describe('Query and expressions reducer', () => {
           refId: 'B',
         },
         {
-          datasourceUid: '-100',
+          datasourceUid: '__expr__',
           relativeTimeRange: { from: 900, to: 1000 },
           model: {
             datasource: '__expr__',
@@ -240,7 +240,7 @@ describe('Query and expressions reducer', () => {
     const expressionQuery: AlertQuery = {
       refId: 'B',
       queryType: 'expression',
-      datasourceUid: '-100',
+      datasourceUid: '__expr__',
       model: {
         queryType: 'query',
         datasource: '__expr__',
@@ -275,7 +275,7 @@ describe('Query and expressions reducer', () => {
           queryType: 'query',
         },
         {
-          datasourceUid: '-100',
+          datasourceUid: '__expr__',
           model: {
             datasource: '__expr__',
             expression: 'A',

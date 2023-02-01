@@ -278,7 +278,7 @@ steps:
   image: grafana/build-container:v1.7.1
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:v1.7.1
@@ -1178,7 +1178,7 @@ steps:
   image: grafana/build-container:v1.7.1
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:v1.7.1
@@ -2406,7 +2406,7 @@ steps:
   image: grafana/build-container:v1.7.1
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:v1.7.1
@@ -3079,7 +3079,7 @@ steps:
   image: grafana/build-container:v1.7.1
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:v1.7.1
@@ -4322,20 +4322,27 @@ platform:
 services: []
 steps:
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.20/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
-  - ./bin/grabpl artifacts publish --security --tag $${DRONE_TAG} --src-bucket $${PRERELEASE_BUCKET}
-  depends_on:
-  - grabpl
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.4
+  name: compile-build-cmd
+- commands:
+  - ./bin/build artifacts publish --security --tag $${DRONE_TAG} --src-bucket $${PRERELEASE_BUCKET}
+  depends_on:
+  - compile-build-cmd
+  environment:
+    ENTERPRISE2_SECURITY_PREFIX:
+      from_secret: enterprise2_security_prefix
     GCP_KEY:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
+    SECURITY_DEST_BUCKET:
+      from_secret: security_dest_bucket
+    STATIC_ASSET_EDITIONS:
+      from_secret: static_asset_editions
   image: grafana/grafana-ci-deploy:1.3.3
   name: publish-artifacts
 trigger:
@@ -4366,20 +4373,27 @@ platform:
 services: []
 steps:
 - commands:
-  - mkdir -p bin
-  - curl -fL -o bin/grabpl https://grafana-downloads.storage.googleapis.com/grafana-build-pipeline/v3.0.20/grabpl
-  - chmod +x bin/grabpl
-  image: byrnedo/alpine-curl:0.1.8
-  name: grabpl
-- commands:
-  - ./bin/grabpl artifacts publish --tag $${DRONE_TAG} --src-bucket $${PRERELEASE_BUCKET}
-  depends_on:
-  - grabpl
+  - go build -o ./bin/build -ldflags '-extldflags -static' ./pkg/build/cmd
+  depends_on: []
   environment:
+    CGO_ENABLED: 0
+  image: golang:1.19.4
+  name: compile-build-cmd
+- commands:
+  - ./bin/build artifacts publish --tag $${DRONE_TAG} --src-bucket $${PRERELEASE_BUCKET}
+  depends_on:
+  - compile-build-cmd
+  environment:
+    ENTERPRISE2_SECURITY_PREFIX:
+      from_secret: enterprise2_security_prefix
     GCP_KEY:
       from_secret: gcp_key
     PRERELEASE_BUCKET:
       from_secret: prerelease_bucket
+    SECURITY_DEST_BUCKET:
+      from_secret: security_dest_bucket
+    STATIC_ASSET_EDITIONS:
+      from_secret: static_asset_editions
   image: grafana/grafana-ci-deploy:1.3.3
   name: publish-artifacts
 trigger:
@@ -5075,7 +5089,7 @@ steps:
   image: grafana/build-container:v1.7.1
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:v1.7.1
@@ -5733,7 +5747,7 @@ steps:
   image: grafana/build-container:v1.7.1
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:v1.7.1
@@ -6502,6 +6516,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: 6e76bf175f2c58fd4ffdc42e2120c558345a71a45011279b14092acb67252b28
+hmac: c00de1a52b82b9729caca47e8294a83be348f1456a6b4527fbc045e814595735
 
 ...

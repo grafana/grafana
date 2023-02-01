@@ -176,7 +176,7 @@ func (hs *HTTPServer) CreateFolder(c *contextmodel.ReqContext) response.Response
 }
 
 func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int64, user *user.SignedInUser, folder *folder.Folder) error {
-	// Set default folder permissions
+	isNested := folder.ParentUID != ""
 	var permissionErr error
 	if !accesscontrol.IsDisabled(hs.Cfg) {
 		var permissions []accesscontrol.SetResourcePermissionCommand
@@ -186,15 +186,17 @@ func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int
 			})
 		}
 
-		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
-			{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
-		}...)
+		if !isNested {
+			permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
+				{BuiltinRole: string(org.RoleEditor), Permission: dashboards.PERMISSION_EDIT.String()},
+				{BuiltinRole: string(org.RoleViewer), Permission: dashboards.PERMISSION_VIEW.String()},
+			}...)
+		}
 
 		_, permissionErr = hs.folderPermissionsService.SetPermissions(ctx, orgID, folder.UID, permissions...)
 		return permissionErr
 	} else if hs.Cfg.EditorsCanAdmin && user.IsRealUser() && !user.IsAnonymous {
-		return hs.folderService.MakeUserAdmin(ctx, orgID, user.UserID, folder.ID, true)
+		return hs.folderService.MakeUserAdmin(ctx, orgID, user.UserID, folder.ID, !isNested)
 	}
 	return nil
 }
