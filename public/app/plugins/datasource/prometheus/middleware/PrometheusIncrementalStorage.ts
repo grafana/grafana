@@ -84,7 +84,7 @@ export class PrometheusIncrementalStorage {
     let existingValueFrameNewValuesRemovedIndicies: number[] = [];
 
     for (let i = 0; i < existingTimeFrames?.length; i++) {
-      const result = this.getValidFrameIndicies(
+      const startIndex = this.getValidFrameIndicies(
         responseTimeFieldValues,
         existingTimeFrames,
         i,
@@ -93,15 +93,15 @@ export class PrometheusIncrementalStorage {
         existingValueFrames,
       );
 
-      if(result && result.valueIndex >= 0){
-        existingTimeFrameNewValuesRemovedIndicies.push(result.timeIndex)
-        existingValueFrameNewValuesRemovedIndicies.push(result.valueIndex)
+      if(startIndex !== null && startIndex >= 0){
+        existingTimeFrameNewValuesRemovedIndicies.push(startIndex)
+        existingValueFrameNewValuesRemovedIndicies.push(startIndex)
         break;
       }
     }
 
     for (let i = existingTimeFrames?.length - 1; i >= 0; i--) {
-      const result = this.getValidFrameIndicies(
+      const endIndex = this.getValidFrameIndicies(
         responseTimeFieldValues,
         existingTimeFrames,
         i,
@@ -110,11 +110,9 @@ export class PrometheusIncrementalStorage {
         existingValueFrames,
       );
 
-      if(result && result.valueIndex >= 0){
-        existingTimeFrameNewValuesRemovedIndicies.push(result.timeIndex)
-        existingValueFrameNewValuesRemovedIndicies.push(result.valueIndex)
-        //   existingTimeFrameNewValuesRemoved.push(existingTimeFrames[i]);
-        //           existingValueFrameNewValuesRemoved.push(existingValueFrames[i]);
+      if(endIndex !== null && endIndex >= 0){
+        existingTimeFrameNewValuesRemovedIndicies.push(endIndex)
+        existingValueFrameNewValuesRemovedIndicies.push(endIndex)
         break;
       }
     }
@@ -138,7 +136,7 @@ export class PrometheusIncrementalStorage {
     originalRange: { end: number; start: number },
     intervalInSeconds: number,
     existingValueFrames: number[],
-  ): null | {timeIndex: number, valueIndex: number} {
+  ): null | number {
     const doesResponseNotContainFrameTimeValue = responseTimeFieldValues.indexOf(existingTimeFrames[i]) === -1;
 
     // Remove values from before new start
@@ -159,7 +157,7 @@ export class PrometheusIncrementalStorage {
     // Only add timeframes from the old data to the new data, if they aren't already contained in the new data
     if (isThisAFrameWeWantToCombineWithCurrentResult) {
       if (existingValueFrames[i] !== undefined && existingTimeFrames[i] !== undefined) {
-        return {timeIndex: i, valueIndex: i}
+        return i
       }
     }
     return null;
