@@ -97,7 +97,6 @@ export function PanelChrome({
       description !== '' ||
       loadingState === LoadingState.Streaming ||
       (leftItems?.length ?? 0) > 0);
-  console.log(titleItems, description, loadingState, leftItems);
 
   const headerHeight = getHeaderHeight(theme, hasHeader);
   const { contentStyle, innerWidth, innerHeight } = getContentStyle(padding, theme, width, headerHeight, height);
@@ -107,7 +106,6 @@ export function PanelChrome({
     cursor: dragClass ? 'move' : 'auto',
   };
 
-  console.log(`Has Header: ${hasHeader}`);
   const containerStyles: CSSProperties = { width, height };
   if (displayMode === 'transparent') {
     containerStyles.backgroundColor = 'transparent';
