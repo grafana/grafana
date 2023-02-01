@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { FocusScope } from '@react-aria/focus';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { usePopperTooltip } from 'react-popper-tooltip';
 import { CSSTransition } from 'react-transition-group';
 
@@ -21,18 +21,14 @@ export const Dropdown = React.memo(({ children, overlay, placement, offset, onVi
   const [show, setShow] = useState(false);
   const transitionRef = useRef(null);
 
-  const visibleChange = useCallback(
-    (state: boolean) => {
-      setShow(state);
-      onVisibleChange?.(state);
-    },
-    [onVisibleChange]
-  );
+  useEffect(() => {
+    onVisibleChange?.(show);
+  }, [onVisibleChange, show]);
 
   const { getArrowProps, getTooltipProps, setTooltipRef, setTriggerRef, visible } = usePopperTooltip({
     visible: show,
     placement: placement,
-    onVisibleChange: visibleChange,
+    onVisibleChange: setShow,
     interactive: true,
     delayHide: 0,
     delayShow: 0,
