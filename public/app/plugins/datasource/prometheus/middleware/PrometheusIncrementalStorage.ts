@@ -22,7 +22,7 @@ import { PromQuery } from '../types';
 // Get link to prometheus doc for the above comment
 const PROMETHEUS_INCREMENTAL_QUERY_OVERLAP_DURATION_MS = 60 * 10 * 1000;
 const PROMETHEUS_STORAGE_TIME_INDEX = '__time__';
-const DEBUG = true;
+const DEBUG = false;
 
 // Another issue: if the query window starts at a time when there is no results from the database, we'll always fail the cache check and pull fresh data, even though the cache has everything available
 // Also the cache can def get really big for big queries, need to look into if we want to find a way to limit the size of requests we add to the cache?
