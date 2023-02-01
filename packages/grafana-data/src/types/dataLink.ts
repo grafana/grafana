@@ -42,7 +42,7 @@ export interface DataLink<T extends DataQuery = any> {
 
 export interface Transformation {
   type: 'regex' | 'logfmt';
-  field: string;
+  field?: string;
   variable?: string;
   expression?: string;
 }

@@ -22,6 +22,7 @@ type Transformation struct {
 	Type       string `json:"type"`
 	Variable   string `json:"variable,omitempty"`
 	Expression string `json:"expression,omitempty"`
+	Field      string `json:"field,omitempty"`
 }
 
 const (

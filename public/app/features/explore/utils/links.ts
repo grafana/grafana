@@ -16,6 +16,7 @@ import {
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
+import { safeStringifyValue } from 'app/core/utils/explore';
 
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
 
@@ -130,8 +131,15 @@ export const getFieldLinksForExplore = (options: {
       } else {
         let internalLinkSpecificVars: ScopedVars = {};
         if (link.internal?.transformations) {
-          const fieldValue = field.values.get(rowIndex);
           link.internal?.transformations.forEach((transformation) => {
+            let fieldValue;
+            if (transformation.field) {
+              const transformField = dataFrame?.fields.find((field) => field.name === transformation.field);
+              fieldValue = transformField?.values.get(rowIndex);
+            } else {
+              fieldValue = field.values.get(rowIndex);
+            }
+
             if (transformation.type === 'regex' && transformation.expression) {
               const regexp = new RegExp(transformation.expression);
               const matches = fieldValue.match(regexp);
@@ -141,11 +149,11 @@ export const getFieldLinksForExplore = (options: {
                 };
               }
             } else if (transformation.type === 'logfmt') {
-              const logFmtVal = logfmt.parse(fieldValue) as { [key: string]: string };
+              const logFmtVal = logfmt.parse(fieldValue) as { [key: string]: string | boolean | null };
               let scopeVarFromLogFmt: ScopedVars = {};
               Object.keys(logFmtVal).forEach((key) => {
                 const logFmtValue = logFmtVal[key];
-                scopeVarFromLogFmt[key] = { value: logFmtValue };
+                scopeVarFromLogFmt[key] = { value: safeStringifyValue(logFmtValue) };
               });
               internalLinkSpecificVars = { ...internalLinkSpecificVars, ...scopeVarFromLogFmt };
             }
