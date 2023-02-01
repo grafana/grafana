@@ -2769,6 +2769,7 @@ steps:
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+  - git checkout ${DRONE_TAG}
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -3054,6 +3055,7 @@ services: []
 steps:
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+  - git checkout ${DRONE_TAG}
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -3137,6 +3139,7 @@ services: []
 steps:
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+  - git checkout ${DRONE_TAG}
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -3279,6 +3282,7 @@ steps:
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+  - git checkout ${DRONE_TAG}
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -3507,6 +3511,7 @@ steps:
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+  - git checkout ${DRONE_TAG}
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -3755,6 +3760,7 @@ steps:
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+  - git checkout ${DRONE_TAG}
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -5427,6 +5433,7 @@ steps:
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+  - git checkout ${DRONE_BRANCH}
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -5715,6 +5722,7 @@ services: []
 steps:
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+  - git checkout ${DRONE_BRANCH}
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -5794,6 +5802,7 @@ services: []
 steps:
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+  - git checkout ${DRONE_BRANCH}
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -5932,6 +5941,7 @@ steps:
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+  - git checkout ${DRONE_BRANCH}
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -6149,6 +6159,7 @@ steps:
   name: identify-runner
 - commands:
   - git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"
+  - git checkout ${DRONE_BRANCH}
   environment:
     GITHUB_TOKEN:
       from_secret: github_token
@@ -6623,6 +6634,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: 150b256b1e6e4f3c7fe954ff0eff2343bb72aedda9c7ec3e3344798a1403c7b6
+hmac: ada7cc1e3b5c04d4aaa1e2403e13fb11ff65149d8104b75c5958f8be12fbc191
 
 ...
