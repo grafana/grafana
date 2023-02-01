@@ -321,10 +321,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     titleItems: css({
       display: 'flex',
-      alignItems: 'center',
-      overflow: 'hidden',
       height: '100%',
-      padding: theme.spacing(1),
     }),
   };
 };
