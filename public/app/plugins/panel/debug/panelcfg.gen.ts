@@ -16,12 +16,6 @@ export type UpdateConfig = {
   schemaChanged: boolean,
 };
 
-export type UpdateCounters = {
-  render: number,
-  dataChanged: number,
-  schemaChanged: number,
-};
-
 export enum DebugMode {
   Cursor = 'cursor',
   Events = 'events',

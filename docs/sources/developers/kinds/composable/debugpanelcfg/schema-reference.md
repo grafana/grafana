@@ -13,12 +13,11 @@ title: DebugPanelCfg kind
 
 ## Properties
 
-| Property         | Type                      | Required | Description                                                               |
-|------------------|---------------------------|----------|---------------------------------------------------------------------------|
-| `DebugMode`      | string                    | **Yes**  | Possible values are: `render`, `events`, `cursor`, `State`, `ThrowError`. |
-| `PanelOptions`   | [object](#paneloptions)   | **Yes**  |                                                                           |
-| `UpdateConfig`   | [object](#updateconfig)   | **Yes**  |                                                                           |
-| `UpdateCounters` | [object](#updatecounters) | **Yes**  |                                                                           |
+| Property       | Type                    | Required | Description                                                               |
+|----------------|-------------------------|----------|---------------------------------------------------------------------------|
+| `DebugMode`    | string                  | **Yes**  | Possible values are: `render`, `events`, `cursor`, `State`, `ThrowError`. |
+| `PanelOptions` | [object](#paneloptions) | **Yes**  |                                                                           |
+| `UpdateConfig` | [object](#updateconfig) | **Yes**  |                                                                           |
 
 ## PanelOptions
 
@@ -48,15 +47,5 @@ title: DebugPanelCfg kind
 | `dataChanged`   | boolean | **Yes**  |             |
 | `render`        | boolean | **Yes**  |             |
 | `schemaChanged` | boolean | **Yes**  |             |
-
-## UpdateCounters
-
-### Properties
-
-| Property        | Type    | Required | Description |
-|-----------------|---------|----------|-------------|
-| `dataChanged`   | integer | **Yes**  |             |
-| `render`        | integer | **Yes**  |             |
-| `schemaChanged` | integer | **Yes**  |             |
 
 
