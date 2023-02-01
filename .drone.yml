@@ -3230,7 +3230,6 @@ steps:
   settings:
     access_key_id:
       from_secret: packages_access_key_id
-    deb_distribution: stable
     gpg_passphrase:
       from_secret: packages_gpg_passphrase
     gpg_private_key:
