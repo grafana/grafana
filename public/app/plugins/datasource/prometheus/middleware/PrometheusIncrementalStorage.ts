@@ -20,7 +20,7 @@ import {applyNullInsertThreshold} from '@grafana/ui/src/components/GraphNG/nullI
 const PROMETHEUS_INCREMENTAL_QUERY_OVERLAP_DURATION_MS = 60 * 10 * 1000;
 const PROMETHEUS_STORAGE_TIME_INDEX = '__time__';
 const PROMETHEUS_STORAGE_EXEMPLAR_INDEX = 'exemplar';
-const DEBUG = true;
+const DEBUG = false;
 
 // Another issue: if the query window starts at a time when there is no results from the database, we'll always fail the cache check and pull fresh data, even though the cache has everything available
 // Also the cache can def get really big for big queries, need to look into if we want to find a way to limit the size of requests we add to the cache?
@@ -79,40 +79,90 @@ export class PrometheusIncrementalStorage {
     intervalInSeconds: number
   ) {
     let existingTimeFrameNewValuesRemoved: number[] = [];
+    let existingTimeFrameNewValuesRemovedIndicies: number[] = [];
     let existingValueFrameNewValuesRemoved: number[] = [];
+    let existingValueFrameNewValuesRemovedIndicies: number[] = [];
 
     for (let i = 0; i < existingTimeFrames?.length; i++) {
-      const doesResponseNotContainFrameTimeValue = responseTimeFieldValues.indexOf(existingTimeFrames[i]) === -1;
+      const result = this.getValidFrameIndicies(
+        responseTimeFieldValues,
+        existingTimeFrames,
+        i,
+        originalRange,
+        intervalInSeconds,
+        existingValueFrames,
+      );
 
-      // Remove values from before new start
-      // Note this acts as the only eviction strategy so far, we only store frames that exist after the start of the current query, minus the interval time
-      const isFrameOlderThenQueryStart = existingTimeFrames[i] <= originalRange.start - intervalInSeconds * 1000;
-
-      if (isFrameOlderThenQueryStart && DEBUG) {
-        console.log(
-          'Frame is older then query, evicting',
-          existingTimeFrames[i] - originalRange.start,
-          existingTimeFrames[i],
-          originalRange.start
-        );
+      if(result && result.valueIndex >= 0){
+        existingTimeFrameNewValuesRemovedIndicies.push(result.timeIndex)
+        existingValueFrameNewValuesRemovedIndicies.push(result.valueIndex)
+        break;
       }
+    }
 
-      const isThisAFrameWeWantToCombineWithCurrentResult =
-        doesResponseNotContainFrameTimeValue && !isFrameOlderThenQueryStart;
-      // Only add timeframes from the old data to the new data, if they aren't already contained in the new data
-      if (isThisAFrameWeWantToCombineWithCurrentResult) {
-        if (existingValueFrames[i] !== undefined && existingTimeFrames[i] !== undefined) {
-          existingTimeFrameNewValuesRemoved.push(existingTimeFrames[i]);
-          existingValueFrameNewValuesRemoved.push(existingValueFrames[i]);
-        } else {
-          if (DEBUG) {
-            console.warn('empty value frame?', i, existingValueFrames);
-          }
-        }
+    for (let i = existingTimeFrames?.length - 1; i >= 0; i--) {
+      const result = this.getValidFrameIndicies(
+        responseTimeFieldValues,
+        existingTimeFrames,
+        i,
+        originalRange,
+        intervalInSeconds,
+        existingValueFrames,
+      );
+
+      if(result && result.valueIndex >= 0){
+        existingTimeFrameNewValuesRemovedIndicies.push(result.timeIndex)
+        existingValueFrameNewValuesRemovedIndicies.push(result.valueIndex)
+        //   existingTimeFrameNewValuesRemoved.push(existingTimeFrames[i]);
+        //           existingValueFrameNewValuesRemoved.push(existingValueFrames[i]);
+        break;
+      }
+    }
+
+    if(existingTimeFrameNewValuesRemovedIndicies.length === 2 && existingValueFrameNewValuesRemovedIndicies.length === 2){
+      existingTimeFrameNewValuesRemoved = existingTimeFrames.slice(existingTimeFrameNewValuesRemovedIndicies[0], existingTimeFrameNewValuesRemovedIndicies[1] + 1)
+      existingValueFrameNewValuesRemoved = existingValueFrames.slice(existingValueFrameNewValuesRemovedIndicies[0], existingValueFrameNewValuesRemovedIndicies[1] + 1)
+    }else{
+      if(DEBUG){
+        console.warn('Not enough indices, unable to merge frames')
       }
     }
 
     return { time: existingTimeFrameNewValuesRemoved, values: existingValueFrameNewValuesRemoved };
+  }
+
+  private static getValidFrameIndicies(
+    responseTimeFieldValues: number[],
+    existingTimeFrames: number[],
+    i: number,
+    originalRange: { end: number; start: number },
+    intervalInSeconds: number,
+    existingValueFrames: number[],
+  ): null | {timeIndex: number, valueIndex: number} {
+    const doesResponseNotContainFrameTimeValue = responseTimeFieldValues.indexOf(existingTimeFrames[i]) === -1;
+
+    // Remove values from before new start
+    // Note this acts as the only eviction strategy so far, we only store frames that exist after the start of the current query, minus the interval time
+    const isFrameOlderThenQueryStart = existingTimeFrames[i] <= originalRange.start - intervalInSeconds * 1000;
+
+    if (isFrameOlderThenQueryStart && DEBUG) {
+      console.log(
+        'Frame is older then query, evicting',
+        existingTimeFrames[i] - originalRange.start,
+        existingTimeFrames[i],
+        originalRange.start
+      );
+    }
+
+    const isThisAFrameWeWantToCombineWithCurrentResult =
+      doesResponseNotContainFrameTimeValue && !isFrameOlderThenQueryStart;
+    // Only add timeframes from the old data to the new data, if they aren't already contained in the new data
+    if (isThisAFrameWeWantToCombineWithCurrentResult) {
+      if (existingValueFrames[i] !== undefined && existingTimeFrames[i] !== undefined) {
+        return {timeIndex: i, valueIndex: i}
+      }
+    }
+    return null;
   }
 
   private setStorageFieldsValues = (queryIndex: string, seriesIndex: string, values: number[]) => {
@@ -306,7 +356,6 @@ export class PrometheusIncrementalStorage {
             if (responseFrameValues.length !== responseTimeFieldValues.length) {
               if (DEBUG) {
                 console.warn('Initial values not same length?', responseFrameValues, responseTimeFieldValues);
-                debugger;
               }
             }
 
