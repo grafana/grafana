@@ -6,6 +6,7 @@ package server
 import (
 	"github.com/google/wire"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana/pkg/services/folder"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/avatar"
@@ -290,11 +291,12 @@ var wireBasicSet = wire.NewSet(
 	dashboardservice.ProvideDashboardService, // DashboardServiceImpl
 	dashboardstore.ProvideDashboardStore,
 	folderimpl.ProvideService,
+	folderimpl.ProvideDashboardFolderStore,
 	dashboardservice.ProvideSimpleDashboardService,
 	dashboardservice.ProvideDashboardProvisioningService,
 	dashboardservice.ProvideDashboardPluginService,
 	wire.Bind(new(dashboards.Store), new(*dashboardstore.DashboardStore)),
-	wire.Bind(new(dashboards.FolderStore), new(*dashboardstore.DashboardStore)),
+	wire.Bind(new(folder.FolderStore), new(*folderimpl.DashboardFolderStoreImpl)),
 	dashboardimportservice.ProvideService,
 	wire.Bind(new(dashboardimport.Service), new(*dashboardimportservice.ImportDashboardService)),
 	plugindashboardsservice.ProvideService,

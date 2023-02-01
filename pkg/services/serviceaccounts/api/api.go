@@ -47,7 +47,7 @@ type service interface {
 	MigrateApiKey(ctx context.Context, orgID int64, keyId int64) error
 	RevertApiKey(ctx context.Context, saId int64, keyId int64) error
 	// Service account tokens
-	AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) error
+	AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error)
 	DeleteServiceAccountToken(ctx context.Context, orgID, serviceAccountID, tokenID int64) error
 }
 
