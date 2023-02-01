@@ -295,10 +295,6 @@ const (
 	// Stop maintaining state of alerts that are not firing
 	FlagAlertingNoNormalState = "alertingNoNormalState"
 
-	// FlagAzureMultipleResourcePicker
-	// Azure multiple resource picker
-	FlagAzureMultipleResourcePicker = "azureMultipleResourcePicker"
-
 	// FlagApiserver
 	// Enable the embedded Grafana K8S apiserver
 	FlagApiserver = "apiserver"

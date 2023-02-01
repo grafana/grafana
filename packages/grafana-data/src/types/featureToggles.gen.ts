@@ -88,7 +88,6 @@ export interface FeatureToggles {
   alertingBacktesting?: boolean;
   editPanelCSVDragAndDrop?: boolean;
   alertingNoNormalState?: boolean;
-  azureMultipleResourcePicker?: boolean;
   apiserver?: boolean;
   topNavCommandPalette?: boolean;
   logsSampleInExplore?: boolean;

@@ -404,11 +404,6 @@ var (
 			RequiresRestart: false,
 		},
 		{
-			Name:        "azureMultipleResourcePicker",
-			Description: "Azure multiple resource picker",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:        "apiserver",
 			Description: "Enable the embedded Grafana K8S apiserver",
 			State:       FeatureStateAlpha,
