@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 
-import { InfoBox } from '@grafana/ui';
+import { Alert } from '@grafana/ui';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 
 import { TemplateForm } from './TemplateForm';
@@ -17,9 +17,9 @@ export const EditTemplateView: FC<Props> = ({ config, templateName, alertManager
 
   if (!template) {
     return (
-      <InfoBox severity="error" title="Template not found">
-        Sorry, this template does not seem to exit.
-      </InfoBox>
+      <Alert severity="error" title="Template not found">
+        Sorry, this template does not seem to exists.
+      </Alert>
     );
   }
   return (
