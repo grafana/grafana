@@ -6,78 +6,72 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
-func TestOrgInvitesAPIEndpointAccess(t *testing.T) {
-	type accessControlTestCase2 struct {
-		expectedCode int
+func TestOrgInvitesAPIEndpoint_RBAC(t *testing.T) {
+	type testCase struct {
 		desc         string
-		url          string
-		method       string
+		body         string
 		permissions  []accesscontrol.Permission
-		input        string
+		expectedCode int
 	}
-	tests := []accessControlTestCase2{
+
+	tests := []testCase{
 		{
+			desc: "should be able to invite user to org with correct permissions",
+			body: `{"loginOrEmail": "new user", "role": "Viewer"}`,
+			permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionOrgUsersAdd, Scope: "users:id:1"},
+			},
 			expectedCode: http.StatusOK,
-			desc:         "org viewer with the correct permissions can invite an existing user to his org",
-			url:          "/api/org/invites",
-			method:       http.MethodPost,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
-			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(org.RoleViewer) + `"}`,
 		},
 		{
-			expectedCode: http.StatusForbidden,
-			desc:         "org viewer with missing permissions cannot invite an existing user to his org",
-			url:          "/api/org/invites",
-			method:       http.MethodPost,
+			desc:         "should not be able to invite user to org without correct permissions",
+			body:         `{"loginOrEmail": "new user", "role": "Viewer"}`,
 			permissions:  []accesscontrol.Permission{},
-			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(org.RoleViewer) + `"}`,
-		},
-		{
 			expectedCode: http.StatusForbidden,
-			desc:         "org viewer with the wrong scope cannot invite an existing user to his org",
-			url:          "/api/org/invites",
-			method:       http.MethodPost,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: "users:id:100"}},
-			input:        `{"loginOrEmail": "` + testAdminOrg2.Login + `", "role": "` + string(org.RoleViewer) + `"}`,
 		},
 		{
-			expectedCode: http.StatusOK,
-			desc:         "org viewer with the correct permissions can invite a new user to his org",
-			url:          "/api/org/invites",
-			method:       http.MethodPost,
-			permissions:  []accesscontrol.Permission{{Action: accesscontrol.ActionOrgUsersAdd, Scope: accesscontrol.ScopeUsersAll}},
-			input:        `{"loginOrEmail": "new user", "role": "` + string(org.RoleViewer) + `"}`,
-		},
-		{
+			desc: "should not be able to invite user to org with wrong scope",
+			body: `{"loginOrEmail": "new user", "role": "Viewer"}`,
+			permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionOrgUsersAdd, Scope: "users:id:2"},
+			},
 			expectedCode: http.StatusForbidden,
-			desc:         "org viewer with missing permissions cannot invite a new user to his org",
-			url:          "/api/org/invites",
-			method:       http.MethodPost,
-			permissions:  []accesscontrol.Permission{},
-			input:        `{"loginOrEmail": "new user", "role": "` + string(org.RoleViewer) + `"}`,
+		},
+		{
+			desc: "should not be able to invite user to org with higher role then requester",
+			body: `{"loginOrEmail": "new user", "role": "Admin"}`,
+			permissions: []accesscontrol.Permission{
+				{Action: accesscontrol.ActionOrgUsersAdd, Scope: "users:id:1"},
+			},
+			expectedCode: http.StatusForbidden,
 		},
 	}
 
-	for _, test := range tests {
-		t.Run(test.desc, func(t *testing.T) {
-			sc := setupHTTPServer(t, true)
-			userService := usertest.NewUserServiceFake()
-			userService.ExpectedUser = &user.User{ID: 2}
-			sc.hs.userService = userService
-			setInitCtxSignedInViewer(sc.initCtx)
-			setupOrgUsersDBForAccessControlTests(t, sc.db, sc.hs.orgService)
-			setAccessControlPermissions(sc.acmock, test.permissions, sc.initCtx.OrgID)
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				hs.Cfg = setting.NewCfg()
+				hs.orgService = orgtest.NewOrgServiceFake()
+				hs.userService = &usertest.FakeUserService{
+					ExpectedUser: &user.User{ID: 1},
+				}
+			})
 
-			input := strings.NewReader(test.input)
-			response := callAPI(sc.server, test.method, test.url, input, t)
-			assert.Equal(t, test.expectedCode, response.Code)
+			req := webtest.RequestWithSignedInUser(server.NewPostRequest("/api/org/invites", strings.NewReader(tt.body)), userWithPermissions(1, tt.permissions))
+			res, err := server.SendJSON(req)
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedCode, res.StatusCode)
+			require.NoError(t, res.Body.Close())
 		})
 	}
 }

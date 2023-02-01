@@ -1,12 +1,14 @@
 package validation
 
 import (
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/google/uuid"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	. "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/tsdb/legacydata"
+	"github.com/grafana/grafana/pkg/util"
 )
 
-func ValidatePublicDashboard(dto *SavePublicDashboardDTO, dashboard *models.Dashboard) error {
+func ValidatePublicDashboard(dto *SavePublicDashboardDTO, dashboard *dashboards.Dashboard) error {
 	if hasTemplateVariables(dashboard) {
 		return ErrPublicDashboardHasTemplateVariables.Errorf("ValidateSavePublicDashboard: public dashboard has template variables")
 	}
@@ -14,7 +16,7 @@ func ValidatePublicDashboard(dto *SavePublicDashboardDTO, dashboard *models.Dash
 	return nil
 }
 
-func hasTemplateVariables(dashboard *models.Dashboard) bool {
+func hasTemplateVariables(dashboard *dashboards.Dashboard) bool {
 	templateVariables := dashboard.Data.Get("templating").Get("list").MustArray()
 
 	return len(templateVariables) > 0
@@ -43,4 +45,16 @@ func ValidateQueryPublicDashboardRequest(req PublicDashboardQueryDTO, pd *Public
 	}
 
 	return nil
+}
+
+// IsValidAccessToken asserts that an accessToken is a valid uuid
+func IsValidAccessToken(token string) bool {
+	_, err := uuid.Parse(token)
+	return err == nil
+}
+
+// IsValidShortUID checks that the uid is not blank and contains valid
+// characters. Wraps utils.IsValidShortUID
+func IsValidShortUID(uid string) bool {
+	return uid != "" && util.IsValidShortUID(uid)
 }

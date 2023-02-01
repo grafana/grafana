@@ -10,13 +10,14 @@ import (
 	"path/filepath"
 	"strings"
 
-	"golang.org/x/tools/go/ast/astutil"
+	"github.com/dave/dst/decorator"
+	"github.com/dave/dst/dstutil"
 	"golang.org/x/tools/imports"
 )
 
 type genGoFile struct {
 	path   string
-	walker astutil.ApplyFunc
+	walker dstutil.ApplyFunc
 	in     []byte
 }
 
@@ -24,13 +25,13 @@ func postprocessGoFile(cfg genGoFile) ([]byte, error) {
 	fname := filepath.Base(cfg.path)
 	buf := new(bytes.Buffer)
 	fset := token.NewFileSet()
-	gf, err := parser.ParseFile(fset, fname, string(cfg.in), parser.ParseComments)
+	gf, err := decorator.ParseFile(fset, fname, string(cfg.in), parser.ParseComments)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing generated file: %w", err)
 	}
 
 	if cfg.walker != nil {
-		astutil.Apply(gf, cfg.walker, nil)
+		dstutil.Apply(gf, cfg.walker, nil)
 
 		err = format.Node(buf, fset, gf)
 		if err != nil {

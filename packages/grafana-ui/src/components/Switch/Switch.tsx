@@ -14,7 +14,7 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'value'> {
 }
 
 export const Switch = React.forwardRef<HTMLInputElement, Props>(
-  ({ value, checked, disabled, onChange, id, label, ...inputProps }, ref) => {
+  ({ value, checked, onChange, id, label, disabled, ...inputProps }, ref) => {
     if (checked) {
       deprecationWarning('Switch', 'checked prop', 'value');
     }
@@ -30,7 +30,7 @@ export const Switch = React.forwardRef<HTMLInputElement, Props>(
           disabled={disabled}
           checked={value}
           onChange={(event) => {
-            onChange?.(event);
+            !disabled && onChange?.(event);
           }}
           id={switchIdRef.current}
           {...inputProps}
@@ -52,8 +52,9 @@ export const InlineSwitch = React.forwardRef<HTMLInputElement, InlineSwitchProps
   ({ transparent, className, showLabel, label, value, id, ...props }, ref) => {
     const theme = useTheme2();
     const styles = getSwitchStyles(theme, transparent);
+
     return (
-      <div className={cx(styles.inlineContainer, className)}>
+      <div className={cx(styles.inlineContainer, className, props.disabled && styles.disabled)}>
         {showLabel && (
           <label
             htmlFor={id}
@@ -157,6 +158,11 @@ const getSwitchStyles = stylesFactory((theme: GrafanaTheme2, transparent?: boole
           color: ${theme.colors.text.primary};
         }
       }
+    `,
+    disabled: css`
+      background-color: rgba(204, 204, 220, 0.04);
+      color: rgba(204, 204, 220, 0.6);
+      border: 1px solid rgba(204, 204, 220, 0.04);
     `,
     inlineLabel: css`
       cursor: pointer;

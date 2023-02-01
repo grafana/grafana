@@ -10,8 +10,8 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
 
-	commonv1 "github.com/grafana/grafana/pkg/tsdb/phlare/gen/common/v1"
-	querierv1 "github.com/grafana/grafana/pkg/tsdb/phlare/gen/querier/v1"
+	querierv1 "github.com/grafana/phlare/api/gen/proto/go/querier/v1"
+	typesv1 "github.com/grafana/phlare/api/gen/proto/go/types/v1"
 )
 
 // This is where the tests for the datasource backend live.
@@ -202,8 +202,8 @@ func Test_seriesToDataFrame(t *testing.T) {
 	t.Run("single series", func(t *testing.T) {
 		resp := &connect.Response[querierv1.SelectSeriesResponse]{
 			Msg: &querierv1.SelectSeriesResponse{
-				Series: []*commonv1.Series{
-					{Labels: []*commonv1.LabelPair{}, Points: []*commonv1.Point{{Timestamp: int64(1000), Value: 30}, {Timestamp: int64(2000), Value: 10}}},
+				Series: []*typesv1.Series{
+					{Labels: []*typesv1.LabelPair{}, Points: []*typesv1.Point{{Timestamp: int64(1000), Value: 30}, {Timestamp: int64(2000), Value: 10}}},
 				},
 			},
 		}
@@ -215,8 +215,8 @@ func Test_seriesToDataFrame(t *testing.T) {
 		// with a label pair, the value field should name itself with a label pair name and not the profile type
 		resp = &connect.Response[querierv1.SelectSeriesResponse]{
 			Msg: &querierv1.SelectSeriesResponse{
-				Series: []*commonv1.Series{
-					{Labels: []*commonv1.LabelPair{{Name: "app", Value: "bar"}}, Points: []*commonv1.Point{{Timestamp: int64(1000), Value: 30}, {Timestamp: int64(2000), Value: 10}}},
+				Series: []*typesv1.Series{
+					{Labels: []*typesv1.LabelPair{{Name: "app", Value: "bar"}}, Points: []*typesv1.Point{{Timestamp: int64(1000), Value: 30}, {Timestamp: int64(2000), Value: 10}}},
 				},
 			},
 		}
@@ -227,9 +227,9 @@ func Test_seriesToDataFrame(t *testing.T) {
 	t.Run("single series", func(t *testing.T) {
 		resp := &connect.Response[querierv1.SelectSeriesResponse]{
 			Msg: &querierv1.SelectSeriesResponse{
-				Series: []*commonv1.Series{
-					{Labels: []*commonv1.LabelPair{{Name: "foo", Value: "bar"}}, Points: []*commonv1.Point{{Timestamp: int64(1000), Value: 30}, {Timestamp: int64(2000), Value: 10}}},
-					{Labels: []*commonv1.LabelPair{{Name: "foo", Value: "baz"}}, Points: []*commonv1.Point{{Timestamp: int64(1000), Value: 30}, {Timestamp: int64(2000), Value: 10}}},
+				Series: []*typesv1.Series{
+					{Labels: []*typesv1.LabelPair{{Name: "foo", Value: "bar"}}, Points: []*typesv1.Point{{Timestamp: int64(1000), Value: 30}, {Timestamp: int64(2000), Value: 10}}},
+					{Labels: []*typesv1.LabelPair{{Name: "foo", Value: "baz"}}, Points: []*typesv1.Point{{Timestamp: int64(1000), Value: 30}, {Timestamp: int64(2000), Value: 10}}},
 				},
 			},
 		}
@@ -261,8 +261,8 @@ func (f *FakeClient) LabelNames(context.Context, *connect.Request[querierv1.Labe
 func (f *FakeClient) Series(ctx context.Context, c *connect.Request[querierv1.SeriesRequest]) (*connect.Response[querierv1.SeriesResponse], error) {
 	return &connect.Response[querierv1.SeriesResponse]{
 		Msg: &querierv1.SeriesResponse{
-			LabelsSet: []*commonv1.Labels{{
-				Labels: []*commonv1.LabelPair{
+			LabelsSet: []*typesv1.Labels{{
+				Labels: []*typesv1.LabelPair{
 					{
 						Name:  "__unit__",
 						Value: "cpu",
@@ -303,10 +303,10 @@ func (f *FakeClient) SelectSeries(ctx context.Context, req *connect.Request[quer
 	f.Req = req
 	return &connect.Response[querierv1.SelectSeriesResponse]{
 		Msg: &querierv1.SelectSeriesResponse{
-			Series: []*commonv1.Series{
+			Series: []*typesv1.Series{
 				{
-					Labels: []*commonv1.LabelPair{{Name: "foo", Value: "bar"}},
-					Points: []*commonv1.Point{{Timestamp: int64(1000), Value: 30}, {Timestamp: int64(2000), Value: 10}},
+					Labels: []*typesv1.LabelPair{{Name: "foo", Value: "bar"}},
+					Points: []*typesv1.Point{{Timestamp: int64(1000), Value: 30}, {Timestamp: int64(2000), Value: 10}},
 				},
 			},
 		},

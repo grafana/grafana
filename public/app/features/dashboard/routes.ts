@@ -21,6 +21,7 @@ export const getPublicDashboardRoutes = (): RouteDescriptor[] => {
         path: '/public-dashboards/:accessToken',
         pageClass: 'page-dashboard',
         routeName: DashboardRoutes.Public,
+        chromeless: true,
         component: SafeDynamicImport(
           () =>
             import(

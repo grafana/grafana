@@ -9,7 +9,7 @@ import { configureStore } from 'app/store/configureStore';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
-import { mockCombinedRule, mockDataSource, mockPromAlertingRule, mockRulerAlertingRule } from '../../mocks';
+import { getCloudRule, getGrafanaRule } from '../../mocks';
 
 import { RulesTable } from './RulesTable';
 
@@ -39,30 +39,6 @@ function renderRulesTable(rule: CombinedRule) {
       </MemoryRouter>
     </Provider>
   );
-}
-
-function getGrafanaRule(override?: Partial<CombinedRule>) {
-  return mockCombinedRule({
-    namespace: {
-      groups: [],
-      name: 'Grafana',
-      rulesSource: 'grafana',
-    },
-    ...override,
-  });
-}
-
-function getCloudRule(override?: Partial<CombinedRule>) {
-  return mockCombinedRule({
-    namespace: {
-      groups: [],
-      name: 'Cortex',
-      rulesSource: mockDataSource(),
-    },
-    promRule: mockPromAlertingRule(),
-    rulerRule: mockRulerAlertingRule(),
-    ...override,
-  });
 }
 
 describe('RulesTable RBAC', () => {

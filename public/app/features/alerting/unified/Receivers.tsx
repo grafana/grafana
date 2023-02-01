@@ -180,7 +180,7 @@ const Receivers = () => {
 function getPageNavigationModel(type: PageType | undefined, id: string | undefined) {
   let pageNav: NavModelItem | undefined;
   if (type === 'receivers' || type === 'templates') {
-    const objectText = type === 'receivers' ? 'contact point' : 'message template';
+    const objectText = type === 'receivers' ? 'contact point' : 'notification template';
     if (id) {
       pageNav = {
         text: id,

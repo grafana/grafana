@@ -3,7 +3,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, Input, Form, Field } from '@grafana/ui';
+import { Button, Input, Form, Field, HorizontalGroup, LinkButton } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
@@ -71,7 +71,12 @@ function NewDashboardsFolder({ createNewFolder }: Props) {
                   })}
                 />
               </Field>
-              <Button type="submit">Create</Button>
+              <HorizontalGroup>
+                <Button type="submit">Create</Button>
+                <LinkButton variant="secondary" href={`${config.appSubUrl}/dashboards`}>
+                  Cancel
+                </LinkButton>
+              </HorizontalGroup>
             </>
           )}
         </Form>

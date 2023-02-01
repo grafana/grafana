@@ -69,6 +69,13 @@ describe('buildPluginSectionNav', () => {
     expect(result?.node.text).toBe('page2');
   });
 
+  it('Should only set the most specific match as active (not the parents)', () => {
+    config.featureToggles.topnav = true;
+    const result = buildPluginSectionNav(appsSection, null, '/a/plugin1/page2');
+    expect(result?.main.children![0].children![1].active).toBe(true);
+    expect(result?.main.children![0].active).not.toBe(true); // Parent should not be active
+  });
+
   it('Should set app section to active', () => {
     config.featureToggles.topnav = true;
     const result = buildPluginSectionNav(appsSection, null, '/a/plugin1');

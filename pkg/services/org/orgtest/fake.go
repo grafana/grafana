@@ -54,7 +54,7 @@ func (f *FakeOrgService) Search(ctx context.Context, query *org.SearchOrgsQuery)
 	return f.ExpectedOrgs, f.ExpectedError
 }
 
-func (f *FakeOrgService) GetByID(ctx context.Context, query *org.GetOrgByIdQuery) (*org.Org, error) {
+func (f *FakeOrgService) GetByID(ctx context.Context, query *org.GetOrgByIDQuery) (*org.Org, error) {
 	return f.ExpectedOrg, f.ExpectedError
 }
 

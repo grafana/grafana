@@ -66,7 +66,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     return (
       item.hide !== true &&
       !!item.azureLogAnalytics?.query &&
-      (!!item.azureLogAnalytics.resource || !!item.azureLogAnalytics.workspace)
+      (!!item.azureLogAnalytics.resources?.length || !!item.azureLogAnalytics.workspace)
     );
   }
 
@@ -124,10 +124,10 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
     }
 
     const templateSrv = getTemplateSrv();
-    const resource = templateSrv.replace(item.resource, scopedVars);
+    const resources = item.resources?.map((r) => templateSrv.replace(r, scopedVars));
     let workspace = templateSrv.replace(item.workspace, scopedVars);
 
-    if (!workspace && !resource && this.firstWorkspace) {
+    if (!workspace && !resources && this.firstWorkspace) {
       workspace = this.firstWorkspace;
     }
 
@@ -140,7 +140,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
       azureLogAnalytics: {
         resultFormat: item.resultFormat,
         query,
-        resource,
+        resources,
 
         // Workspace was removed in Grafana 8, but remains for backwards compat
         workspace,
