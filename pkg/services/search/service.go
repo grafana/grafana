@@ -6,17 +6,16 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/star"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-
-	"github.com/grafana/grafana/pkg/models"
 )
 
 func ProvideService(cfg *setting.Cfg, sqlstore db.DB, starService star.Service, dashboardService dashboards.DashboardService) *SearchService {
 	s := &SearchService{
 		Cfg: cfg,
-		sortOptions: map[string]models.SortOption{
+		sortOptions: map[string]model.SortOption{
 			SortAlphaAsc.Name:  SortAlphaAsc,
 			SortAlphaDesc.Name: SortAlphaDesc,
 		},
@@ -39,27 +38,27 @@ type Query struct {
 	DashboardUIDs []string
 	DashboardIds  []int64
 	FolderIds     []int64
-	Permission    models.PermissionType
+	Permission    dashboards.PermissionType
 	Sort          string
 
-	Result models.HitList
+	Result model.HitList
 }
 
 type Service interface {
 	SearchHandler(context.Context, *Query) error
-	SortOptions() []models.SortOption
+	SortOptions() []model.SortOption
 }
 
 type SearchService struct {
 	Cfg              *setting.Cfg
-	sortOptions      map[string]models.SortOption
+	sortOptions      map[string]model.SortOption
 	sqlstore         db.DB
 	starService      star.Service
 	dashboardService dashboards.DashboardService
 }
 
 func (s *SearchService) SearchHandler(ctx context.Context, query *Query) error {
-	dashboardQuery := models.FindPersistedDashboardsQuery{
+	dashboardQuery := dashboards.FindPersistedDashboardsQuery{
 		Title:         query.Title,
 		SignedInUser:  query.SignedInUser,
 		IsStarred:     query.IsStarred,
@@ -95,8 +94,8 @@ func (s *SearchService) SearchHandler(ctx context.Context, query *Query) error {
 	return nil
 }
 
-func sortedHits(unsorted models.HitList) models.HitList {
-	hits := make(models.HitList, 0)
+func sortedHits(unsorted model.HitList) model.HitList {
+	hits := make(model.HitList, 0)
 	hits = append(hits, unsorted...)
 
 	sort.Sort(hits)
@@ -108,7 +107,7 @@ func sortedHits(unsorted models.HitList) models.HitList {
 	return hits
 }
 
-func (s *SearchService) setStarredDashboards(ctx context.Context, userID int64, hits []*models.Hit) error {
+func (s *SearchService) setStarredDashboards(ctx context.Context, userID int64, hits []*model.Hit) error {
 	query := star.GetUserStarsQuery{
 		UserID: userID,
 	}

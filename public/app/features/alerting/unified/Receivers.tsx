@@ -3,9 +3,9 @@ import pluralize from 'pluralize';
 import React, { useEffect } from 'react';
 import { Redirect, Route, RouteChildrenProps, Switch, useLocation, useParams } from 'react-router-dom';
 
-import { NavModelItem, GrafanaTheme2 } from '@grafana/data';
+import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Alert, LoadingPlaceholder, withErrorBoundary, useStyles2, Icon } from '@grafana/ui';
+import { Alert, Icon, LoadingPlaceholder, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
 import { ContactPointsState } from '../../../types';
@@ -16,6 +16,7 @@ import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
 import { NoAlertManagerWarning } from './components/NoAlertManagerWarning';
+import { DuplicateTemplateView } from './components/receivers/DuplicateTemplateView';
 import { EditReceiverView } from './components/receivers/EditReceiverView';
 import { EditTemplateView } from './components/receivers/EditTemplateView';
 import { GlobalConfigForm } from './components/receivers/GlobalConfigForm';
@@ -142,6 +143,17 @@ const Receivers = () => {
           </Route>
           <Route exact={true} path="/alerting/notifications/templates/new">
             <NewTemplateView config={config} alertManagerSourceName={alertManagerSourceName} />
+          </Route>
+          <Route exact={true} path="/alerting/notifications/templates/:name/duplicate">
+            {({ match }: RouteChildrenProps<{ name: string }>) =>
+              match?.params.name && (
+                <DuplicateTemplateView
+                  alertManagerSourceName={alertManagerSourceName}
+                  config={config}
+                  templateName={decodeURIComponent(match?.params.name)}
+                />
+              )
+            }
           </Route>
           <Route exact={true} path="/alerting/notifications/templates/:name/edit">
             {({ match }: RouteChildrenProps<{ name: string }>) =>

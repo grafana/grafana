@@ -3,6 +3,7 @@ import { serializeStateToUrlParam } from '@grafana/data/src/utils/url';
 import { RefreshPicker } from '@grafana/ui';
 import store from 'app/core/store';
 
+import { DatasourceSrvMock, MockDataSourceApi } from '../../../test/mocks/datasource_srv';
 import { ExploreId } from '../../types';
 
 import {
@@ -19,6 +20,7 @@ import {
   GetExploreUrlArguments,
   getTimeRangeFromUrl,
   getTimeRange,
+  generateEmptyQuery,
 } from './explore';
 
 const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
@@ -26,6 +28,22 @@ const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   queries: [],
   range: DEFAULT_RANGE,
 };
+
+const defaultDs = new MockDataSourceApi('default datasource', { data: ['default data'] });
+
+const datasourceSrv = new DatasourceSrvMock(defaultDs, {
+  'generate empty query': new MockDataSourceApi('generateEmptyQuery'),
+  ds1: {
+    name: 'testDs',
+    type: 'loki',
+  } as MockDataSourceApi,
+});
+
+const getDataSourceSrvMock = jest.fn().mockReturnValue(datasourceSrv);
+jest.mock('@grafana/runtime', () => ({
+  ...(jest.requireActual('@grafana/runtime') as unknown as object),
+  getDataSourceSrv: () => getDataSourceSrvMock(),
+}));
 
 describe('state functions', () => {
   describe('parseUrlState', () => {
@@ -438,5 +456,30 @@ describe('when buildQueryTransaction', () => {
     const range = { from: dateTime().subtract(1, 'd'), to: dateTime(), raw: { from: '1h', to: '1h' } };
     const transaction = buildQueryTransaction(ExploreId.left, queries, queryOptions, range, false);
     expect(transaction.request.interval).toEqual('2h');
+  });
+});
+
+describe('generateEmptyQuery', () => {
+  it('should generate query with dataSourceOverride and without queries', async () => {
+    const query = await generateEmptyQuery([], 1, { type: 'loki', uid: 'ds1' });
+
+    expect(query.datasource?.uid).toBe('ds1');
+    expect(query.datasource?.type).toBe('loki');
+    expect(query.refId).toBe('A');
+  });
+  it('should generate query without dataSourceOverride and with queries', async () => {
+    const query = await generateEmptyQuery(
+      [
+        {
+          datasource: { type: 'loki', uid: 'ds1' },
+          refId: 'A',
+        },
+      ],
+      1
+    );
+
+    expect(query.datasource?.uid).toBe('ds1');
+    expect(query.datasource?.type).toBe('loki');
+    expect(query.refId).toBe('B');
   });
 });

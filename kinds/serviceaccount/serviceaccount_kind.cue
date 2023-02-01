@@ -1,7 +1,8 @@
 package kind
 
-name:     "Serviceaccount"
-maturity: "merged"
+name:        "ServiceAccount"
+maturity:    "merged"
+description: "system account"
 
 lineage: seqs: [
 	{

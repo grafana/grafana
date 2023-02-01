@@ -1,9 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
-
-import config from 'app/core/config';
 
 import createMockDatasource from '../../__mocks__/datasource';
 import { createMockInstanceSetttings } from '../../__mocks__/instanceSettings';
@@ -32,10 +30,6 @@ const variableOptionGroup = {
   label: 'Template variables',
   options: [],
 };
-
-beforeEach(() => {
-  config.featureToggles.azureMultipleResourcePicker = true;
-});
 
 export function createMockResourcePickerData() {
   const mockDatasource = createMockDatasource();
@@ -113,6 +107,10 @@ describe('MetricsQueryEditor', () => {
     const resourcePickerButton = await screen.findByRole('button', { name: 'web-server' });
     expect(resourcePickerButton).toBeInTheDocument();
     resourcePickerButton.click();
+
+    await waitFor(() => {
+      expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+    });
 
     const selection = await screen.findAllByLabelText('web-server');
     expect(selection).toHaveLength(2);
@@ -270,6 +268,45 @@ describe('MetricsQueryEditor', () => {
     expect(await screen.findByLabelText('web-server_DataDisk')).toBeDisabled();
   });
 
+  it('should show info about multiple selection', async () => {
+    const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
+    const query = createMockQuery();
+    delete query?.subscription;
+    delete query?.azureMonitor?.resources;
+    delete query?.azureMonitor?.metricNamespace;
+    const onChange = jest.fn();
+
+    render(
+      <MetricsQueryEditor
+        data={mockPanelData}
+        query={query}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={onChange}
+        setError={() => {}}
+      />
+    );
+
+    const resourcePickerButton = await screen.findByRole('button', { name: 'Select a resource' });
+    resourcePickerButton.click();
+
+    const subscriptionButton = await screen.findByRole('button', { name: 'Expand Primary Subscription' });
+    subscriptionButton.click();
+
+    const resourceGroupButton = await screen.findByRole('button', { name: 'Expand A Great Resource Group' });
+    resourceGroupButton.click();
+
+    const checkbox = await screen.findByLabelText('web-server');
+    await userEvent.click(checkbox);
+    expect(checkbox).toBeChecked();
+
+    expect(
+      await screen.findByText(
+        'You can select items of the same resource type and location. To select resources of a different resource type or location, please first uncheck your current selection.'
+      )
+    ).toBeInTheDocument();
+  });
+
   it('should change the metric name when selected', async () => {
     const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
     const onChange = jest.fn();
@@ -338,5 +375,98 @@ describe('MetricsQueryEditor', () => {
         aggregation: 'Maximum',
       },
     });
+  });
+
+  it('should show unselect a resource if the value is manually edited', async () => {
+    const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
+    const query = createMockQuery();
+    delete query?.subscription;
+    delete query?.azureMonitor?.resources;
+    delete query?.azureMonitor?.metricNamespace;
+    const onChange = jest.fn();
+
+    render(
+      <MetricsQueryEditor
+        data={mockPanelData}
+        query={query}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={onChange}
+        setError={() => {}}
+      />
+    );
+
+    const resourcePickerButton = await screen.findByRole('button', { name: 'Select a resource' });
+    resourcePickerButton.click();
+
+    const subscriptionButton = await screen.findByRole('button', { name: 'Expand Primary Subscription' });
+    subscriptionButton.click();
+
+    const resourceGroupButton = await screen.findByRole('button', { name: 'Expand A Great Resource Group' });
+    resourceGroupButton.click();
+
+    const checkbox = await screen.findByLabelText('web-server');
+    await userEvent.click(checkbox);
+    expect(checkbox).toBeChecked();
+
+    const advancedSection = screen.getByText('Advanced');
+    advancedSection.click();
+
+    const advancedInput = await screen.findByLabelText('Subscription');
+    await userEvent.type(advancedInput, 'def-123');
+
+    const updatedCheckboxes = await screen.findAllByLabelText('web-server');
+    expect(updatedCheckboxes.length).toBe(2);
+    // Unselect the one listed in the rows
+    expect(updatedCheckboxes[0]).not.toBeChecked();
+    // But the one in the advanced section should still be selected
+    expect(updatedCheckboxes[1]).toBeChecked();
+  });
+
+  it('should call onApply with a new subscription when a user types it in the selection box', async () => {
+    const mockDatasource = createMockDatasource({ resourcePickerData: createMockResourcePickerData() });
+    const query = createMockQuery();
+    delete query?.subscription;
+    delete query?.azureMonitor?.resources;
+    delete query?.azureMonitor?.metricNamespace;
+    const onChange = jest.fn();
+
+    render(
+      <MetricsQueryEditor
+        data={mockPanelData}
+        query={query}
+        datasource={mockDatasource}
+        variableOptionGroup={variableOptionGroup}
+        onChange={onChange}
+        setError={() => {}}
+      />
+    );
+
+    const resourcePickerButton = await screen.findByRole('button', { name: 'Select a resource' });
+    resourcePickerButton.click();
+
+    const advancedSection = screen.getByText('Advanced');
+    advancedSection.click();
+
+    const advancedInput = await screen.findByLabelText('Subscription');
+    await userEvent.type(advancedInput, 'def-123');
+    const nsInput = await screen.findByLabelText('Namespace');
+    await userEvent.type(nsInput, 'ns');
+    const rgInput = await screen.findByLabelText('Resource Group');
+    await userEvent.type(rgInput, 'rg');
+    const rnInput = await screen.findByLabelText('Resource Name');
+    await userEvent.type(rnInput, 'rn');
+
+    const applyButton = screen.getByRole('button', { name: 'Apply' });
+    applyButton.click();
+
+    expect(onChange).toBeCalledTimes(1);
+    expect(onChange).toBeCalledWith(
+      expect.objectContaining({
+        azureMonitor: expect.objectContaining({
+          resources: [{ subscription: 'def-123', metricNamespace: 'ns', resourceGroup: 'rg', resourceName: 'rn' }],
+        }),
+      })
+    );
   });
 });

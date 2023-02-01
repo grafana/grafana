@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
-	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/prometheus/alertmanager/config"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 )
 
 func TestMuteTimingService(t *testing.T) {

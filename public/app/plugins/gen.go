@@ -16,21 +16,20 @@ import (
 	"github.com/grafana/codejen"
 	corecodegen "github.com/grafana/grafana/pkg/codegen"
 	"github.com/grafana/grafana/pkg/cuectx"
+	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/plugins/codegen"
 	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
 
 var skipPlugins = map[string]bool{
-	"canvas":         true,
-	"heatmap":        true,
-	"candlestick":    true,
-	"state-timeline": true,
-	"status-history": true,
-	"table":          true,
-	"timeseries":     true,
-	"influxdb":       true, // plugin.json fails validation (defaultMatchFormat)
-	"mixed":          true, // plugin.json fails validation (mixed)
-	"opentsdb":       true, // plugin.json fails validation (defaultMatchFormat)
+	"canvas":      true,
+	"heatmap":     true,
+	"candlestick": true,
+	"table":       true,
+	"timeseries":  true,
+	"influxdb":    true, // plugin.json fails validation (defaultMatchFormat)
+	"mixed":       true, // plugin.json fails validation (mixed)
+	"opentsdb":    true, // plugin.json fails validation (defaultMatchFormat)
 }
 
 const sep = string(filepath.Separator)
@@ -56,9 +55,9 @@ func main() {
 		codegen.PluginTreeListJenny(),
 		codegen.PluginGoTypesJenny("pkg/tsdb"),
 		codegen.PluginTSTypesJenny("public/app/plugins", adaptToPipeline(corecodegen.TSTypesJenny{})),
-		codegen.PluginDocsJenny(toDeclForGen(corecodegen.DocsJenny(
+		kind2pd(corecodegen.DocsJenny(
 			filepath.Join("docs", "sources", "developers", "kinds", "composable"),
-		))),
+		)),
 	)
 
 	pluginKindGen.AddPostprocessors(corecodegen.SlashHeaderMapper("public/app/plugins/gen.go"))
@@ -93,11 +92,11 @@ func adaptToPipeline(j codejen.OneToOne[corecodegen.SchemaForGen]) codejen.OneTo
 	})
 }
 
-func toDeclForGen(j codejen.OneToOne[*corecodegen.DeclForGen]) codejen.OneToOne[*pfs.PluginDecl] {
-	return codejen.AdaptOneToOne(j, func(pd *pfs.PluginDecl) *corecodegen.DeclForGen {
-		kd, err := corecodegen.ForGen(pd.Lineage.Runtime(), pd.KindDecl.Some())
+func kind2pd(j codejen.OneToOne[kindsys.Kind]) codejen.OneToOne[*pfs.PluginDecl] {
+	return codejen.AdaptOneToOne(j, func(pd *pfs.PluginDecl) kindsys.Kind {
+		kd, err := kindsys.BindComposable(nil, pd.KindDecl)
 		if err != nil {
-			panic("should be unreachable")
+			return nil
 		}
 		return kd
 	})
