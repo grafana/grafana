@@ -9,7 +9,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -32,7 +31,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -55,7 +53,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -78,7 +75,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -103,7 +99,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -131,7 +126,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -153,7 +147,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -176,7 +169,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -201,7 +193,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -226,7 +217,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -249,7 +239,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -272,7 +261,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -327,7 +315,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -350,7 +337,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -375,7 +361,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -403,7 +388,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -425,7 +409,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -448,7 +431,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -471,7 +453,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -494,7 +475,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -522,7 +502,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -546,7 +525,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -569,7 +547,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -592,7 +569,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -615,7 +591,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -638,7 +613,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -661,7 +635,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -684,7 +657,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -707,7 +679,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -730,7 +701,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -753,7 +723,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -778,7 +747,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -801,7 +769,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -824,7 +791,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -847,7 +813,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -863,6 +828,38 @@
       "pluralName": "JaegerDataSourceCfgs",
       "schemaInterface": "DataSourceCfg"
     },
+    "librarypanel": {
+      "category": "core",
+      "codeowners": [
+        "grafana/grafana-as-code",
+        "grafana/grafana-bi-squad",
+        "grafana/plugins-platform-frontend",
+        "grafana/user-essentials"
+      ],
+      "crd": {
+        "dummySchema": false,
+        "group": "librarypanel.core.grafana.com",
+        "scope": "Namespaced"
+      },
+      "currentVersion": [
+        0,
+        0
+      ],
+      "description": "A standalone panel",
+      "grafanaMaturityCount": 10,
+      "lineageIsGroup": false,
+      "links": {
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/core/librarypanel/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/kinds/librarypanel",
+        "schema": "https://github.com/grafana/grafana/tree/main/kinds/librarypanel/librarypanel_kind.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/packages/grafana-schema/src/raw/librarypanel/x/librarypanel_types.gen.ts"
+      },
+      "machineName": "librarypanel",
+      "maturity": "experimental",
+      "name": "LibraryPanel",
+      "pluralMachineName": "librarypanels",
+      "pluralName": "LibraryPanels"
+    },
     "livepanelcfg": {
       "category": "composable",
       "codeowners": [],
@@ -870,7 +867,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -893,7 +889,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -916,7 +911,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -939,7 +933,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -962,7 +955,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -985,7 +977,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -1008,7 +999,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -1031,7 +1021,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -1056,7 +1045,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -1081,7 +1069,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -1104,7 +1091,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -1127,7 +1113,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -1145,22 +1130,23 @@
     },
     "phlaredataquery": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/observability-traces-and-profiling"
+      ],
       "currentVersion": [
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
-        "docs": "n/a",
-        "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/phlaredataquery/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/tsdb/phlare/kinds/dataquery/types_dataquery_gen.go",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/phlare/dataquery.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/phlare/dataquery.gen.ts"
       },
       "machineName": "phlaredataquery",
-      "maturity": "planned",
+      "maturity": "experimental",
       "name": "PhlareDataQuery",
       "pluralMachineName": "phlaredataquerys",
       "pluralName": "PhlareDataQuerys",
@@ -1173,7 +1159,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -1198,7 +1183,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -1253,7 +1237,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -1276,7 +1259,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -1309,7 +1291,7 @@
         0,
         0
       ],
-      "description": "Grafana preferences",
+      "description": "The user or team frontend preferences",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -1331,7 +1313,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -1354,7 +1335,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -1387,7 +1367,7 @@
         0,
         0
       ],
-      "description": "A Grafana public dashboard.",
+      "description": "Public dashboard configuration",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -1414,7 +1394,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -1441,7 +1420,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -1473,7 +1451,7 @@
         0,
         0
       ],
-      "description": "A Grafana service account.",
+      "description": "system account",
       "grafanaMaturityCount": 9,
       "lineageIsGroup": false,
       "links": {
@@ -1497,7 +1475,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -1522,7 +1499,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -1547,7 +1523,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -1570,7 +1545,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -1620,22 +1594,23 @@
     },
     "tempodataquery": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/observability-traces-and-profiling"
+      ],
       "currentVersion": [
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
-        "docs": "n/a",
-        "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/tempodataquery/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/tsdb/tempo/kinds/dataquery/types_dataquery_gen.go",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/tempo/dataquery.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/tempo/dataquery.gen.ts"
       },
       "machineName": "tempodataquery",
-      "maturity": "planned",
+      "maturity": "experimental",
       "name": "TempoDataQuery",
       "pluralMachineName": "tempodataquerys",
       "pluralName": "TempoDataQuerys",
@@ -1648,7 +1623,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -1673,7 +1647,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -1696,7 +1669,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -1721,7 +1693,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -1749,7 +1720,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -1771,7 +1741,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -1799,7 +1768,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -1821,7 +1789,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -1846,7 +1813,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -1869,7 +1835,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
@@ -1892,7 +1857,6 @@
         0,
         0
       ],
-      "description": "",
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
@@ -1989,6 +1953,7 @@
           "dashboard",
           "datasource",
           "folder",
+          "librarypanel",
           "playlist",
           "preferences",
           "publicdashboard",
@@ -1999,7 +1964,7 @@
           "thumb",
           "user"
         ],
-        "count": 13
+        "count": 14
       }
     },
     "maturity": {
@@ -2013,17 +1978,20 @@
           "dashboardlistpanelcfg",
           "gaugepanelcfg",
           "histogrampanelcfg",
+          "librarypanel",
           "newspanelcfg",
           "nodegraphpanelcfg",
+          "phlaredataquery",
           "piechartpanelcfg",
           "statetimelinepanelcfg",
           "statpanelcfg",
           "statushistorypanelcfg",
+          "tempodataquery",
           "testdatadataquery",
           "textpanelcfg",
           "xychartpanelcfg"
         ],
-        "count": 16
+        "count": 19
       },
       "mature": {
         "name": "mature",
@@ -2083,7 +2051,6 @@
           "mysqldatasourcecfg",
           "parcadataquery",
           "parcadatasourcecfg",
-          "phlaredataquery",
           "phlaredatasourcecfg",
           "postgresqldataquery",
           "postgresqldatasourcecfg",
@@ -2092,7 +2059,6 @@
           "query",
           "queryhistory",
           "tableoldpanelcfg",
-          "tempodataquery",
           "tempodatasourcecfg",
           "testdatadatasourcecfg",
           "thumb",
@@ -2102,7 +2068,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 56
+        "count": 54
       },
       "stable": {
         "name": "stable",

@@ -3,9 +3,10 @@ package tracing
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/stretchr/testify/assert"
 	"go.opentelemetry.io/otel/attribute"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestSplitCustomAttribs(t *testing.T) {

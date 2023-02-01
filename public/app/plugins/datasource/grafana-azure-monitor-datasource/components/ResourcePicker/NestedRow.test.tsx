@@ -69,4 +69,20 @@ describe('NestedRow', () => {
     const box = screen.queryByRole('checkbox');
     expect(box).toBeDisabled();
   });
+
+  it('should check a checkbox if the uri matches regardless of the case', () => {
+    render(
+      <table>
+        <tbody>
+          <NestedRow
+            {...defaultProps}
+            selectableEntryTypes={[ResourceRowType.Resource]}
+            selectedRows={[{ ...defaultProps.row, uri: defaultProps.row.uri.toUpperCase() }]}
+          />
+        </tbody>
+      </table>
+    );
+    const box = screen.queryByRole('checkbox');
+    expect(box).toBeChecked();
+  });
 });

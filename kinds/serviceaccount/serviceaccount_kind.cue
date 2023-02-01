@@ -2,7 +2,7 @@ package kind
 
 name:        "ServiceAccount"
 maturity:    "merged"
-description: "A Grafana service account."
+description: "system account"
 
 lineage: seqs: [
 	{

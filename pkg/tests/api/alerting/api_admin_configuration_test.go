@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
@@ -253,7 +254,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 									From: ngmodels.Duration(time.Duration(5) * time.Hour),
 									To:   ngmodels.Duration(time.Duration(3) * time.Hour),
 								},
-								DatasourceUID: "-100",
+								DatasourceUID: expr.DatasourceUID,
 								Model: json.RawMessage(`{
 								"type": "math",
 								"expression": "2 + 3 > 1"
@@ -274,7 +275,7 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 		_ = postRequest(t, ruleURL, buf.String(), http.StatusAccepted)
 	}
 
-	//Eventually, our Alertmanagers should receiver the alert.
+	// Eventually, our Alertmanagers should receiver the alert.
 	{
 		require.Eventually(t, func() bool {
 			return fakeAM1.AlertsCount() == 1 && fakeAM2.AlertsCount() == 1

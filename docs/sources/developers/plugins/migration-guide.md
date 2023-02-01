@@ -15,6 +15,8 @@ This guide helps you identify the steps required to update a plugin from the Gra
 - [Plugin migration guide](#plugin-migration-guide)
   - [Introduction](#introduction)
   - [Table of contents](#table-of-contents)
+  - [From version 9.3.x to 9.4.x](#from-version-93x-to-94x) - [Forwarded HTTP headers in grafana-plugin-sdk-go
+    ](#forwarded-http-headers-in-grafana-plugin-sdk-go)
   - [From version 9.1.x to 9.2.x](#from-version-91x-to-92x)
     - [React and React-dom as peer dependencies](#react-and-react-dom-as-peer-dependencies)
     - [NavModelItem requires a valid icon name](#navmodelitem-requires-a-valid-icon-name)
@@ -61,6 +63,19 @@ This guide helps you identify the steps required to update a plugin from the Gra
       - [Migrate a data source plugin](#migrate-a-data-source-plugin)
       - [Migrate to data frames](#migrate-to-data-frames)
     - [Troubleshoot plugin migration](#troubleshoot-plugin-migration)
+
+## From version 9.3.x to 9.4.x
+
+### Forwarded HTTP headers in grafana-plugin-sdk-go
+
+It's recommended to use the `<request>.GetHTTPHeader` or `<request>.GetHTTPHeaders` methods when retrieving forwarded HTTP headers. See [Forward OAuth identity for the logged-in user]({{< relref "add-authentication-for-data-source-plugins.md#forward-oauth-identity-for-the-logged-in-user" >}}), [Forward cookies for the logged-in user
+]({{< relref "add-authentication-for-data-source-plugins.md#forward-cookies-for-the-logged-in-user" >}}) or [Forward user header for the logged-in user]({{< relref "add-authentication-for-data-source-plugins.md#forward-user-header-for-the-logged-in-user" >}}) for example usages.
+
+#### Technical details
+
+The grafana-plugin-sdk-go [v0.147.0](https://github.com/grafana/grafana-plugin-sdk-go/releases/tag/v0.147.0) introduces a new interface [ForwardHTTPHeaders](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go@v0.147.0/backend#ForwardHTTPHeaders) that `QueryDataRequest`, `CheckHealthRequest` and `CallResourceRequest` implements.
+
+Newly introduced forwarded HTTP headers in Grafana v9.4.0 are `X-Grafana-User`, `X-Panel-Id`, `X-Dashboard-Uid`, `X-Datasource-Uid` and `X-Grafana-Org-Id`. Internally these are prefixed with `http_` and sent as `http_<HTTP header name>` in [CheckHealthRequest.Headers](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go@v0.147.0/backend#CheckHealthRequest) and [QueryDataRequest.Headers](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go@v0.147.0/backend#QueryDataRequest). By using the [ForwardHTTPHeaders](https://pkg.go.dev/github.com/grafana/grafana-plugin-sdk-go@v0.147.0/backend#ForwardHTTPHeaders) methods you're guaranteed to be able to operate on HTTP headers without using the prefix, i.e. `X-Grafana-User`, `X-Panel-Id`, `X-Dashboard-Uid`, `X-Datasource-Uid` and `X-Grafana-Org-Id`.
 
 ## From version 9.1.x to 9.2.x
 

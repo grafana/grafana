@@ -8,17 +8,18 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/database"
 	publicDashboardModels "github.com/grafana/grafana/pkg/services/publicdashboards/models"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/services/star"
@@ -407,7 +408,7 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 
 		require.Equal(t, len(query.Result), 1)
 		hit := query.Result[0]
-		require.Equal(t, hit.Type, models.DashHitFolder)
+		require.Equal(t, hit.Type, model.DashHitFolder)
 		require.Equal(t, hit.URL, fmt.Sprintf("/dashboards/f/%s/%s", savedFolder.UID, savedFolder.Slug))
 		require.Equal(t, hit.FolderTitle, "")
 	})
@@ -648,8 +649,8 @@ func TestIntegrationDashboard_SortingOptions(t *testing.T) {
 				1: {dashboards.ActionDashboardsRead: []string{dashboards.ScopeDashboardsAll}},
 			},
 		},
-		Sort: models.SortOption{
-			Filter: []models.SortOptionFilter{
+		Sort: model.SortOption{
+			Filter: []model.SortOptionFilter{
 				searchstore.TitleSorter{Descending: true},
 			},
 		},
@@ -737,7 +738,7 @@ func insertTestRule(t *testing.T, sqlStore db.DB, foderOrgID int64, folderUID st
 			Data: []alertQuery{
 				{
 					RefID:         "A",
-					DatasourceUID: "-100",
+					DatasourceUID: expr.DatasourceUID,
 					Model: json.RawMessage(`{
 						"type": "math",
 						"expression": "2 + 3 > 1"
@@ -850,18 +851,18 @@ func testSearchDashboards(d *DashboardStore, query *dashboards.FindPersistedDash
 }
 
 func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashboards.DashboardSearchProjection) {
-	query.Result = make([]*models.Hit, 0)
-	hits := make(map[int64]*models.Hit)
+	query.Result = make([]*model.Hit, 0)
+	hits := make(map[int64]*model.Hit)
 
 	for _, item := range res {
 		hit, exists := hits[item.ID]
 		if !exists {
-			hitType := models.DashHitDB
+			hitType := model.DashHitDB
 			if item.IsFolder {
-				hitType = models.DashHitFolder
+				hitType = model.DashHitFolder
 			}
 
-			hit = &models.Hit{
+			hit = &model.Hit{
 				ID:          item.ID,
 				UID:         item.UID,
 				Title:       item.Title,

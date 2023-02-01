@@ -2,7 +2,7 @@ package kind
 
 name:        "Preferences"
 maturity:    "merged"
-description: "Grafana preferences"
+description: "The user or team frontend preferences"
 
 lineage: seqs: [
 	{
