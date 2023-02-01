@@ -4,7 +4,6 @@ import { rest } from 'msw';
 import { setupServer } from 'msw/node';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { Provider } from 'react-redux';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byTestId } from 'testing-library-selector';
 
