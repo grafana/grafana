@@ -355,7 +355,7 @@ func readScalar(iter *jsoniter.Iterator) backend.DataResponse {
 
 	frame := data.NewFrame("", timeField, valueField)
 	frame.Meta = &data.FrameMeta{
-		Type:   data.FrameTypeTimeSeriesMulti,
+		Type:   data.FrameTypeNumericMulti,
 		Custom: resultTypeToCustomMeta("scalar"),
 	}
 
@@ -390,6 +390,9 @@ func readMatrixOrVectorWide(iter *jsoniter.Iterator, resultType string) backend.
 			switch l1Field {
 			case "metric":
 				iter.ReadVal(&valueField.Labels)
+				if n, ok := valueField.Labels["__name__"]; ok {
+					valueField.Name = n
+				}
 
 			case "value":
 				timeMap, rowIdx = addValuePairToFrame(frame, timeMap, rowIdx, iter)
@@ -488,6 +491,9 @@ func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string) backend
 			switch l1Field {
 			case "metric":
 				iter.ReadVal(&valueField.Labels)
+				if n, ok := valueField.Labels["__name__"]; ok {
+					valueField.Name = n
+				}
 
 			case "value":
 				t, v, err := readTimeValuePair(iter)
@@ -544,8 +550,12 @@ func readMatrixOrVectorMulti(iter *jsoniter.Iterator, resultType string) backend
 			rsp.Frames = append(rsp.Frames, frame)
 		} else {
 			frame := data.NewFrame("", timeField, valueField)
+			ft := data.FrameTypeTimeSeriesMulti
+			if resultType == "vector" {
+				ft = data.FrameTypeNumericMulti
+			}
 			frame.Meta = &data.FrameMeta{
-				Type:   data.FrameTypeTimeSeriesMulti,
+				Type:   ft,
 				Custom: resultTypeToCustomMeta(resultType),
 			}
 			rsp.Frames = append(rsp.Frames, frame)
