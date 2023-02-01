@@ -11,7 +11,7 @@ In order to build and publish the Grafana build Docker image, execute the follow
 
 ```
 # Download MacOSX10.15.sdk.tar.xz from our private GCS bucket into this directory
-docker build -t grafana/build-container:<VERSION> .
+docker build -t grafana/build-container:<VERSION> --ulimit nofile=2048:2048 .
 docker push grafana/build-container:<VERSION>
 ```
 

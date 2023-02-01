@@ -130,6 +130,17 @@ Example:
 role_attribute_path = contains(groups[*], 'admin') && 'GrafanaAdmin' || contains(groups[*], 'editor') && 'Editor' || 'Viewer'
 ```
 
+## Skip organization role sync
+
+To prevent the sync of org roles from Okta, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
+
+```ini
+[auth.okta]
+# ..
+# prevents the sync of org roles from Okta
+skip_org_role_sync = true
+```
+
 ### Team Sync (Enterprise only)
 
 Map your Okta groups to teams in Grafana so that your users will automatically be added to

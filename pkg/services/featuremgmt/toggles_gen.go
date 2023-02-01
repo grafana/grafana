@@ -131,10 +131,6 @@ const (
 	// Export grafana instance (to git, etc)
 	FlagExport = "export"
 
-	// FlagAzureMonitorResourcePickerForMetrics
-	// New UI for Azure Monitor Metrics Query
-	FlagAzureMonitorResourcePickerForMetrics = "azureMonitorResourcePickerForMetrics"
-
 	// FlagExploreMixedDatasource
 	// Enable mixed datasource in Explore
 	FlagExploreMixedDatasource = "exploreMixedDatasource"
@@ -302,10 +298,6 @@ const (
 	// FlagAlertingNoNormalState
 	// Stop maintaining state of alerts that are not firing
 	FlagAlertingNoNormalState = "alertingNoNormalState"
-
-	// FlagAzureMultipleResourcePicker
-	// Azure multiple resource picker
-	FlagAzureMultipleResourcePicker = "azureMultipleResourcePicker"
 
 	// FlagTopNavCommandPalette
 	// Launch the Command Palette from the top navigation search box

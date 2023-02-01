@@ -87,7 +87,7 @@ func SetupTestEnv(tb testing.TB, baseInterval time.Duration) (*ngalert.AlertNG, 
 
 	tracer := tracing.InitializeTracerForTest()
 	bus := bus.ProvideBus(tracer)
-	folderService := folderimpl.ProvideService(ac, bus, cfg, dashboardStore, dashboardStore, nil, features, folderPermissions)
+	folderService := folderimpl.ProvideService(ac, bus, cfg, dashboardStore, dashboardStore, nil, features)
 
 	ng, err := ngalert.ProvideService(
 		cfg, featuremgmt.WithFeatures(), nil, nil, routing.NewRouteRegister(), sqlStore, nil, nil, nil, quotatest.New(false, nil),
@@ -139,7 +139,7 @@ func CreateTestAlertRuleWithLabels(t testing.TB, ctx context.Context, dbstore *s
 			Data: []models.AlertQuery{
 				{
 					Model: json.RawMessage(`{
-										"datasourceUid": "-100",
+										"datasourceUid": "__expr__",
 										"type":"math",
 										"expression":"2 + 2 > 1"
 									}`),
