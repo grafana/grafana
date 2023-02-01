@@ -190,13 +190,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:         "commandPalette",
-			Description:  "Enable command palette",
-			State:        FeatureStateStable,
-			Expression:   "true", // enabled by default
-			FrontendOnly: true,
-		},
-		{
 			Name:        "correlations",
 			Description: "Correlations page",
 			State:       FeatureStateAlpha,
@@ -277,7 +270,7 @@ var (
 		{
 			Name:        "topnav",
 			Description: "New top nav and page layouts",
-			State:       FeatureStateAlpha,
+			State:       FeatureStateBeta,
 		},
 		{
 			Name:            "grpcServer",

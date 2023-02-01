@@ -139,10 +139,6 @@ const (
 	// Adds trace ID to error notifications
 	FlagTracing = "tracing"
 
-	// FlagCommandPalette
-	// Enable command palette
-	FlagCommandPalette = "commandPalette"
-
 	// FlagCorrelations
 	// Correlations page
 	FlagCorrelations = "correlations"
