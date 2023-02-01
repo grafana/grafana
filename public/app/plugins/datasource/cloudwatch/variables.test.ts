@@ -1,4 +1,9 @@
-import { dimensionVariable, labelsVariable, setupMockedDataSource } from './__mocks__/CloudWatchDataSource';
+import {
+  dimensionVariable,
+  fieldsVariable,
+  labelsVariable,
+  setupMockedDataSource,
+} from './__mocks__/CloudWatchDataSource';
 import { setupMockedResourcesAPI } from './__mocks__/ResourcesAPI';
 import { VariableQuery, VariableQueryType } from './types';
 import { CloudWatchVariableSupport } from './variables';
@@ -15,19 +20,19 @@ const defaultQuery: VariableQuery = {
   refId: '',
 };
 
-const mock = setupMockedDataSource({ variables: [labelsVariable, dimensionVariable] });
+const mock = setupMockedDataSource({ variables: [labelsVariable, dimensionVariable, fieldsVariable] });
 mock.datasource.resources.getRegions = jest.fn().mockResolvedValue([{ label: 'a', value: 'a' }]);
 mock.datasource.resources.getNamespaces = jest.fn().mockResolvedValue([{ label: 'b', value: 'b' }]);
 mock.datasource.resources.getMetrics = jest.fn().mockResolvedValue([{ label: 'c', value: 'c' }]);
 mock.datasource.resources.getDimensionKeys = jest.fn().mockResolvedValue([{ label: 'd', value: 'd' }]);
-mock.datasource.resources.getLogGroups = jest
-  .fn()
-  .mockResolvedValue([{ value: { arn: 'a', name: 'a' } }, { value: { arn: 'b', name: 'b' } }]);
 mock.datasource.resources.getAccounts = jest.fn().mockResolvedValue([]);
 const getDimensionValues = jest.fn().mockResolvedValue([{ label: 'e', value: 'e' }]);
 const getEbsVolumeIds = jest.fn().mockResolvedValue([{ label: 'f', value: 'f' }]);
 const getEc2InstanceAttribute = jest.fn().mockResolvedValue([{ label: 'g', value: 'g' }]);
 const getResourceARNs = jest.fn().mockResolvedValue([{ label: 'h', value: 'h' }]);
+const getLogGroups = jest
+  .fn()
+  .mockResolvedValue([{ value: { arn: 'a', name: 'a' } }, { value: { arn: 'b', name: 'b' } }]);
 
 const variables = new CloudWatchVariableSupport(mock.datasource.resources);
 
@@ -196,12 +201,30 @@ describe('variables', () => {
   });
 
   describe('log groups', () => {
+    beforeEach(() => {
+      mock.datasource.resources.getLogGroups = getLogGroups;
+      getLogGroups.mockClear();
+    });
+
     it('should call describe log groups', async () => {
       const result = await variables.execute({ ...defaultQuery, queryType: VariableQueryType.LogGroups });
       expect(result).toEqual([
         { text: 'a', value: 'a', expandable: true },
         { text: 'b', value: 'b', expandable: true },
       ]);
+    });
+    it('should replace variables', async () => {
+      const query = {
+        ...defaultQuery,
+        queryType: VariableQueryType.LogGroups,
+        logGroupPrefix: '$fields',
+      };
+      await variables.execute(query);
+      expect(getLogGroups).toBeCalledWith({
+        region: query.region,
+        logGroupNamePrefix: 'templatedField',
+        listAllLogGroups: true,
+      });
     });
   });
 });

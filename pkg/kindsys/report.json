@@ -117,6 +117,11 @@
     "apikey": {
       "category": "core",
       "codeowners": [],
+      "crd": {
+        "dummySchema": false,
+        "group": "",
+        "scope": ""
+      },
       "currentVersion": [
         0,
         0
@@ -279,6 +284,11 @@
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
+      "crd": {
+        "dummySchema": true,
+        "group": "dashboard.core.grafana.com",
+        "scope": "Namespaced"
+      },
       "currentVersion": [
         0,
         0
@@ -369,6 +379,11 @@
     "datasource": {
       "category": "core",
       "codeowners": [],
+      "crd": {
+        "dummySchema": false,
+        "group": "",
+        "scope": ""
+      },
       "currentVersion": [
         0,
         0
@@ -478,6 +493,11 @@
     "folder": {
       "category": "core",
       "codeowners": [],
+      "crd": {
+        "dummySchema": false,
+        "group": "",
+        "scope": ""
+      },
       "currentVersion": [
         0,
         0
@@ -816,6 +836,11 @@
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
+      "crd": {
+        "dummySchema": false,
+        "group": "librarypanel.core.grafana.com",
+        "scope": "Namespaced"
+      },
       "currentVersion": [
         0,
         0
@@ -1181,6 +1206,11 @@
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
+      "crd": {
+        "dummySchema": false,
+        "group": "playlist.core.grafana.com",
+        "scope": "Namespaced"
+      },
       "currentVersion": [
         0,
         0
@@ -1252,6 +1282,11 @@
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
+      "crd": {
+        "dummySchema": false,
+        "group": "preferences.core.grafana.com",
+        "scope": "Namespaced"
+      },
       "currentVersion": [
         0,
         0
@@ -1323,6 +1358,11 @@
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
+      "crd": {
+        "dummySchema": false,
+        "group": "publicdashboard.core.grafana.com",
+        "scope": "Namespaced"
+      },
       "currentVersion": [
         0,
         0
@@ -1345,6 +1385,11 @@
     "query": {
       "category": "core",
       "codeowners": [],
+      "crd": {
+        "dummySchema": false,
+        "group": "",
+        "scope": ""
+      },
       "currentVersion": [
         0,
         0
@@ -1366,6 +1411,11 @@
     "queryhistory": {
       "category": "core",
       "codeowners": [],
+      "crd": {
+        "dummySchema": false,
+        "group": "",
+        "scope": ""
+      },
       "currentVersion": [
         0,
         0
@@ -1392,6 +1442,11 @@
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
+      "crd": {
+        "dummySchema": false,
+        "group": "serviceaccount.core.grafana.com",
+        "scope": "Namespaced"
+      },
       "currentVersion": [
         0,
         0
@@ -1513,6 +1568,11 @@
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
+      "crd": {
+        "dummySchema": false,
+        "group": "team.core.grafana.com",
+        "scope": "Namespaced"
+      },
       "currentVersion": [
         0,
         0
@@ -1651,6 +1711,11 @@
     "thumb": {
       "category": "core",
       "codeowners": [],
+      "crd": {
+        "dummySchema": false,
+        "group": "",
+        "scope": ""
+      },
       "currentVersion": [
         0,
         0
@@ -1694,6 +1759,11 @@
     "user": {
       "category": "core",
       "codeowners": [],
+      "crd": {
+        "dummySchema": false,
+        "group": "",
+        "scope": ""
+      },
       "currentVersion": [
         0,
         0

@@ -75,16 +75,26 @@ def identify_runner_step(platform = "linux"):
             ],
         }
 
-def clone_enterprise_step(committish = "${DRONE_COMMIT}"):
+def enterprise_setup_step(source = "${DRONE_SOURCE_BRANCH}", canFail = True):
+    step = clone_enterprise_step_pr(source = source, target = "${DRONE_TARGET_BRANCH}", canFail = canFail, location = "../grafana-enterprise")
+    step["commands"] += [
+        "cd ../",
+        "ln -s src grafana",
+        "cd ./grafana-enterprise",
+        "./build.sh",
+    ]
+
+    return step
+
+def clone_enterprise_step(source = "${DRONE_COMMIT}"):
     """Clone the enterprise source into the ./grafana-enterprise directory.
 
     Args:
-      committish: controls which revision of grafana-enterprise is cloned.
-
+      source: controls which revision of grafana-enterprise is checked out, if it exists. The name 'source' derives from the 'source branch' of a pull request.
     Returns:
       Drone step.
     """
-    return {
+    step = {
         "name": "clone-enterprise",
         "image": build_image,
         "environment": {
@@ -93,9 +103,42 @@ def clone_enterprise_step(committish = "${DRONE_COMMIT}"):
         "commands": [
             'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"',
             "cd grafana-enterprise",
-            "git checkout {}".format(committish),
+            "git checkout {}".format(source),
         ],
     }
+
+    return step
+
+def clone_enterprise_step_pr(source = "${DRONE_COMMIT}", target = "main", canFail = False, location = "grafana-enterprise"):
+    """Clone the enterprise source into the ./grafana-enterprise directory.
+
+    Args:
+      source: controls which revision of grafana-enterprise is checked out, if it exists. The name 'source' derives from the 'source branch' of a pull request.
+      target: controls which revision of grafana-enterprise is checked out, if it 'source' does not exist. The name 'target' derives from the 'target branch' of a pull request. If this does not exist, then 'main' will be checked out.
+      canFail: controls whether or not this step is allowed to fail. If it fails and this is true, then the pipeline will continue. canFail is used in pull request pipelines where enterprise may be cloned but may not clone in forks.
+      location: the path where grafana-enterprise is cloned.
+    Returns:
+      Drone step.
+    """
+    step = {
+        "name": "clone-enterprise",
+        "image": build_image,
+        "environment": {
+            "GITHUB_TOKEN": from_secret("github_token"),
+        },
+        "commands": [
+            'is_fork=$(curl "https://$GITHUB_TOKEN@api.github.com/repos/grafana/grafana/pulls/$DRONE_PULL_REQUEST" | jq .head.repo.fork)',
+            'if [ "$is_fork" != false ]; then return 1; fi',  # Only clone if we're confident that 'fork' is 'false'. Fail if it's also empty.
+            'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git" ' + location,
+            "cd {}".format(location),
+            'if git checkout {0}; then echo "checked out {0}"; elif git checkout {1}; then echo "git checkout {1}"; else git checkout main; fi'.format(source, target),
+        ],
+    }
+
+    if canFail:
+        step["failure"] = "ignore"
+
+    return step
 
 def init_enterprise_step(ver_mode):
     """Adds the enterprise deployment configuration into the source directory.
@@ -1265,11 +1308,11 @@ def get_windows_steps(edition, ver_mode):
 
     if edition in ("enterprise", "enterprise2"):
         if ver_mode == "release":
-            committish = "${DRONE_TAG}"
+            source = "${DRONE_TAG}"
         elif ver_mode == "release-branch":
-            committish = "$$env:DRONE_BRANCH"
+            source = "$$env:DRONE_BRANCH"
         else:
-            committish = "$$env:DRONE_COMMIT"
+            source = "$$env:DRONE_COMMIT"
 
         # For enterprise, we have to clone both OSS and enterprise and merge the latter into the former
         download_grabpl_cmds = [
@@ -1282,7 +1325,7 @@ def get_windows_steps(edition, ver_mode):
         clone_cmds = [
             'git clone "https://$$env:GITHUB_TOKEN@github.com/grafana/grafana-enterprise.git"',
             "cd grafana-enterprise",
-            "git checkout {}".format(committish),
+            "git checkout {}".format(source),
         ]
 
         init_cmds = [
