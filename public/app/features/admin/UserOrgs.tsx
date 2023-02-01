@@ -183,6 +183,8 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
 
   render() {
     const { user, org, isExternalUser, theme } = this.props;
+    const authSource = user?.authLabels?.length && user?.authLabels[0];
+    const lockMessage = authSource ? `Synced via ${authSource}` : '';
     const { currentRole, isChangingRole } = this.state;
     const styles = getOrgRowStyles(theme);
     const labelClass = cx('width-16', styles.label);
@@ -209,7 +211,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
                   basicRoleDisabled={rolePickerDisabled}
                 />
               </div>
-              {isExternalUser && <ExternalUserTooltip />}
+              {isExternalUser && <ExternalUserTooltip lockMessage={lockMessage} />}
             </div>
           </td>
         ) : (
@@ -225,6 +227,7 @@ class UnThemedOrgRow extends PureComponent<OrgRowProps> {
               <div className="pull-right">
                 {canChangeRole && (
                   <ChangeOrgButton
+                    lockMessage={lockMessage}
                     isExternalUser={isExternalUser}
                     onChangeRoleClick={this.onChangeRoleClick}
                     onCancelClick={this.onCancelClick}
@@ -402,6 +405,7 @@ export class AddToOrgModal extends PureComponent<AddToOrgModalProps, AddToOrgMod
 }
 
 interface ChangeOrgButtonProps {
+  lockMessage?: string;
   isExternalUser?: boolean;
   onChangeRoleClick: () => void;
   onCancelClick: () => void;
@@ -415,9 +419,15 @@ const getChangeOrgButtonTheme = (theme: GrafanaTheme2) => ({
   tooltipItemLink: css`
     color: ${theme.v1.palette.blue95};
   `,
+  lockMessageClass: css`
+    font-style: italic;
+    margin-left: 1.8rem;
+    margin-right: 0.6rem;
+  `,
 });
 
 export function ChangeOrgButton({
+  lockMessage,
   onChangeRoleClick,
   isExternalUser,
   onOrgRoleSave,
@@ -436,32 +446,38 @@ export function ChangeOrgButton({
         Change role
       </ConfirmButton>
       {isExternalUser && (
-        <Tooltip
-          placement="right-end"
-          content={
-            <div>
-              This user&apos;s role is not editable because it is synchronized from your auth provider. Refer to
-              the&nbsp;
-              <a
-                className={styles.tooltipItemLink}
-                href={'https://grafana.com/docs/grafana/latest/auth'}
-                rel="noreferrer"
-                target="_blank"
-              >
-                Grafana authentication docs
-              </a>
-              &nbsp;for details.
-            </div>
-          }
-        >
-          <Icon name="question-circle" />
-        </Tooltip>
+        <>
+          <Tooltip
+            placement="right-end"
+            content={
+              <div>
+                This user&apos;s role is not editable because it is synchronized from your auth provider. Refer to
+                the&nbsp;
+                <a
+                  className={styles.tooltipItemLink}
+                  href={'https://grafana.com/docs/grafana/latest/auth'}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  Grafana authentication docs
+                </a>
+                &nbsp;for details.
+              </div>
+            }
+          >
+            <Icon name="question-circle" />
+          </Tooltip>
+          <span className={styles.lockMessageClass}>{lockMessage}</span>
+        </>
       )}
     </div>
   );
 }
+interface ExternalUserTooltipProps {
+  lockMessage?: string;
+}
 
-const ExternalUserTooltip = () => {
+const ExternalUserTooltip = ({ lockMessage }: ExternalUserTooltipProps) => {
   const styles = useStyles2(getTooltipStyles);
 
   return (
@@ -487,6 +503,7 @@ const ExternalUserTooltip = () => {
       >
         <Icon name="question-circle" />
       </Tooltip>
+      <span className={styles.lockMessageClass}>{lockMessage}</span>
     </div>
   );
 };
@@ -497,5 +514,10 @@ const getTooltipStyles = (theme: GrafanaTheme2) => ({
   `,
   tooltipItemLink: css`
     color: ${theme.v1.palette.blue95};
+  `,
+  lockMessageClass: css`
+    font-style: italic;
+    margin-left: 1.8rem;
+    margin-right: 0.6rem;
   `,
 });
