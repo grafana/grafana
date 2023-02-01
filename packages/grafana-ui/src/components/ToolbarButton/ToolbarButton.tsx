@@ -1,5 +1,6 @@
 import { cx, css } from '@emotion/css';
-import React, { forwardRef, ButtonHTMLAttributes, useState } from 'react';
+import { useEffect } from '@storybook/addons';
+import React, { forwardRef, ButtonHTMLAttributes, useState, useRef } from 'react';
 
 import { GrafanaTheme2, IconName, isIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -78,7 +79,27 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
       [styles.contentWithIcon]: !!icon,
       [styles.contentWithRightIcon]: isOpen !== undefined,
     });
-    const [showTooltip, setShowTooltip] = useState(true);
+
+    //Manage longpress in touch events
+    const isLongPress = useRef(false);
+    const timerRef = useRef();
+    const timer = 400;
+    const startPressTimer = () => {
+      isLongPress.current = false;
+      timerRef.current = setTimeout(() => {
+        isLongPress.current = true;
+      }, timer);
+    };
+
+    const handleOnTouchStart = () => {
+      startPressTimer();
+    };
+
+    const handleOnTouchEnd = () => {
+      //onTouchEnd is only triggered when there is not a longpress
+      isLongPress.current = false;
+      clearTimeout(timerRef.current);
+    };
     const body = (
       <button
         ref={ref}
@@ -86,7 +107,8 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
         aria-label={getButtonAriaLabel(ariaLabel, tooltip)}
         aria-expanded={isOpen}
         {...rest}
-        onTouchStart={() => setShowTooltip(false)}
+        onTouchStart={handleOnTouchStart}
+        onTouchEnd={handleOnTouchEnd}
       >
         {renderIcon(icon, iconSize)}
         {imgSrc && <img className={styles.img} src={imgSrc} alt={imgAlt ?? ''} />}
@@ -98,7 +120,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
     );
 
     return tooltip ? (
-      <Tooltip content={tooltip} placement="bottom" show={!showTooltip ? false : undefined}>
+      <Tooltip content={tooltip} placement="bottom" show={isLongPress ? undefined : false}>
         {body}
       </Tooltip>
     ) : (
