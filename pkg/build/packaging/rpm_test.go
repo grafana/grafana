@@ -5,8 +5,9 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/build/config"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/build/config"
 )
 
 const pubKey = `-----BEGIN PGP PUBLIC KEY BLOCK-----

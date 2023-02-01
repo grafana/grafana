@@ -6,7 +6,7 @@ import (
 
 // swagger:model
 type UpdatePrefsCmd struct {
-	// Enum: light,dark
+	// Enum: light,dark,system
 	Theme string `json:"theme"`
 	// The numerical :id of a favorited dashboard
 	// Default:0

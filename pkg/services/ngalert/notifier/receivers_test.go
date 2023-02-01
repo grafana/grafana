@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/grafana/alerting/alerting"
-
 	"github.com/stretchr/testify/require"
 )
 

@@ -107,12 +107,7 @@ func (*OSSMigrations) AddMigration(mg *Migrator) {
 
 	AddExternalAlertmanagerToDatasourceMigration(mg)
 
-	// TODO: This migration will be enabled later in the nested folder feature
-	// implementation process. It is on hold so we can continue working on the
-	// store implementation without impacting any grafana instances built off
-	// main.
-	//
-	// addFolderMigrations(mg)
+	addFolderMigrations(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

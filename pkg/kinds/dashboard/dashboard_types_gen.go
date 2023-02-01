@@ -17,15 +17,6 @@ const (
 	StyleLight Style = "light"
 )
 
-// Defines values for Timezone.
-const (
-	TimezoneBrowser Timezone = "browser"
-
-	TimezoneEmpty Timezone = ""
-
-	TimezoneUtc Timezone = "utc"
-)
-
 // Defines values for CursorSync.
 const (
 	CursorSyncN0 CursorSync = 0
@@ -290,8 +281,8 @@ type Dashboard struct {
 		TimeOptions []string `json:"time_options"`
 	} `json:"timepicker,omitempty"`
 
-	// Timezone of dashboard,
-	Timezone *Timezone `json:"timezone,omitempty"`
+	// Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc".
+	Timezone *string `json:"timezone,omitempty"`
 
 	// Title of dashboard.
 	Title *string `json:"title,omitempty"`
@@ -308,9 +299,6 @@ type Dashboard struct {
 
 // Theme of dashboard.
 type Style string
-
-// Timezone of dashboard,
-type Timezone string
 
 // 0 for no shared crosshair or tooltip (default).
 // 1 for shared crosshair.
@@ -344,6 +332,20 @@ type DataSourceRef struct {
 
 	// Specific datasource instance
 	Uid *string `json:"uid,omitempty"`
+}
+
+// TODO docs
+type DataTransformerConfig struct {
+	// Disabled transformations are skipped
+	Disabled *bool          `json:"disabled,omitempty"`
+	Filter   *MatcherConfig `json:"filter,omitempty"`
+
+	// Unique identifier of transformer
+	Id string `json:"id"`
+
+	// Options to be passed to the transformer
+	// Valid options depend on the transformer id
+	Options interface{} `json:"options"`
 }
 
 // DynamicConfigValue defines model for DynamicConfigValue.
@@ -470,6 +472,12 @@ type HeatmapPanel struct {
 // HeatmapPanelType defines model for HeatmapPanel.Type.
 type HeatmapPanelType string
 
+// LibraryPanelRef defines model for LibraryPanelRef.
+type LibraryPanelRef struct {
+	Name string `json:"name"`
+	Uid  string `json:"uid"`
+}
+
 // LoadingState defines model for LoadingState.
 type LoadingState string
 
@@ -502,7 +510,8 @@ type Panel struct {
 
 	// TODO docs
 	// TODO tighter constraint
-	Interval *string `json:"interval,omitempty"`
+	Interval     *string          `json:"interval,omitempty"`
+	LibraryPanel *LibraryPanelRef `json:"libraryPanel,omitempty"`
 
 	// Panel links.
 	// TODO fill this out - seems there are a couple variants?
@@ -550,8 +559,8 @@ type Panel struct {
 	TimeShift *string `json:"timeShift,omitempty"`
 
 	// Panel title.
-	Title           *string          `json:"title,omitempty"`
-	Transformations []Transformation `json:"transformations"`
+	Title           *string                 `json:"title,omitempty"`
+	Transformations []DataTransformerConfig `json:"transformations"`
 
 	// Whether to display the panel without a background.
 	Transparent bool `json:"transparent"`
@@ -711,13 +720,6 @@ type ThresholdsConfig struct {
 
 // ThresholdsMode defines model for ThresholdsMode.
 type ThresholdsMode string
-
-// TODO docs
-// FIXME this is extremely underspecfied; wasn't obvious which typescript types corresponded to it
-type Transformation struct {
-	Id      string                 `json:"id"`
-	Options map[string]interface{} `json:"options"`
-}
 
 // TODO docs
 type ValueMap struct {

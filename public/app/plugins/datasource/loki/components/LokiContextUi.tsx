@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2, LogRowModel, SelectableValue } from '@grafana/data';
+import { reportInteraction } from '@grafana/runtime';
 import { MultiSelect, Tag, Tooltip, useStyles2 } from '@grafana/ui';
 
 import LokiLanguageProvider from '../LanguageProvider';
@@ -13,6 +14,7 @@ export interface LokiContextUiProps {
   languageProvider: LokiLanguageProvider;
   row: LogRowModel;
   updateFilter: (value: ContextFilter[]) => void;
+  onClose: () => void;
 }
 
 function getStyles(theme: GrafanaTheme2) {
@@ -43,7 +45,7 @@ const formatOptionLabel = memoizeOne(({ label, description }: SelectableValue<st
 ));
 
 export function LokiContextUi(props: LokiContextUiProps) {
-  const { row, languageProvider, updateFilter } = props;
+  const { row, languageProvider, updateFilter, onClose } = props;
   const styles = useStyles2(getStyles);
 
   const [contextFilters, setContextFilters] = useState<ContextFilter[]>([]);
@@ -74,6 +76,13 @@ export function LokiContextUi(props: LokiContextUiProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contextFilters, initialized]);
 
+  useEffect(() => {
+    return () => {
+      clearTimeout(timerHandle.current);
+      onClose();
+    };
+  }, [onClose]);
+
   useAsync(async () => {
     await languageProvider.start();
     const allLabels = languageProvider.getLabelKeys();
@@ -93,6 +102,20 @@ export function LokiContextUi(props: LokiContextUiProps) {
     setContextFilters(contextFilters);
     setInitialized(true);
   });
+
+  useEffect(() => {
+    reportInteraction('grafana_explore_logs_loki_log_context_loaded', {
+      logRowUid: row.uid,
+      type: 'load',
+    });
+
+    return () => {
+      reportInteraction('grafana_explore_logs_loki_log_context_loaded', {
+        logRowUid: row.uid,
+        type: 'unload',
+      });
+    };
+  }, [row.uid]);
 
   const realLabels = contextFilters.filter(({ fromParser }) => !fromParser);
   const realLabelsEnabled = realLabels.filter(({ enabled }) => enabled);
@@ -133,7 +156,21 @@ export function LokiContextUi(props: LokiContextUiProps) {
           maxMenuHeight={200}
           menuShouldPortal={false}
           noOptionsMessage="No further labels available"
-          onChange={(keys) => {
+          onChange={(keys, actionMeta) => {
+            if (actionMeta.action === 'select-option') {
+              reportInteraction('grafana_explore_logs_loki_log_context_filtered', {
+                logRowUid: row.uid,
+                type: 'label',
+                action: 'select',
+              });
+            }
+            if (actionMeta.action === 'remove-value') {
+              reportInteraction('grafana_explore_logs_loki_log_context_filtered', {
+                logRowUid: row.uid,
+                type: 'label',
+                action: 'remove',
+              });
+            }
             return setContextFilters(
               contextFilters.map((filter) => {
                 if (filter.fromParser) {
@@ -159,7 +196,21 @@ export function LokiContextUi(props: LokiContextUiProps) {
             maxMenuHeight={200}
             noOptionsMessage="No further labels available"
             isClearable={true}
-            onChange={(keys) => {
+            onChange={(keys, actionMeta) => {
+              if (actionMeta.action === 'select-option') {
+                reportInteraction('grafana_explore_logs_loki_log_context_filtered', {
+                  logRowUid: row.uid,
+                  type: 'parsed_label',
+                  action: 'select',
+                });
+              }
+              if (actionMeta.action === 'remove-value') {
+                reportInteraction('grafana_explore_logs_loki_log_context_filtered', {
+                  logRowUid: row.uid,
+                  type: 'parsed_label',
+                  action: 'remove',
+                });
+              }
               setContextFilters(
                 contextFilters.map((filter) => {
                   if (!filter.fromParser) {
