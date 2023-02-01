@@ -1,5 +1,5 @@
 import { Property } from 'csstype';
-import { cloneDeep } from 'lodash';
+import { clone } from 'lodash';
 import memoizeOne from 'memoize-one';
 import { Row } from 'react-table';
 
@@ -328,9 +328,6 @@ export function getFooterItems(
   options: TableFooterCalc,
   theme2: GrafanaTheme2
 ): FooterItem[] {
-  // Deep clone the `filterFields` array, since we will be conditionally mutating it later on.
-  let footerFieldData: Array<{ id: string; field: Field }> = cloneDeep(filterFields);
-
   /*
     Here, `filterFields` is passed to as the `headerGroups[0].headers` array that was destrcutured from the `useTable` hook.
     Unfortunately, since the `headerGroups` object is data based ONLY on the rendered "non-hidden" column headers,
@@ -338,15 +335,15 @@ export function getFooterItems(
     creating an off-by-one issue. This is why we test for a `field.id` of "0". If the condition is truthy, the togglable Row Number column is being rendered,
     and we can proceed normally. If not, we must add the field data in its place so that the footer data renders in the expected column.
   */
-  if (!footerFieldData.some((field) => field.id === '0')) {
+  if (!filterFields.some((field) => field.id === '0')) {
     const length = values.length;
     // Build the additional field that will correct the off-by-one footer issue.
     const fieldToAdd = { id: '0', field: buildFieldsForOptionalRowNums(length) };
-    // unshift() the new field to the cloned data.
-    footerFieldData.unshift(fieldToAdd);
+    // unshift() the new field to the data.
+    filterFields.unshift(fieldToAdd);
   }
 
-  return footerFieldData.map((data, i) => {
+  return filterFields.map((data, i) => {
     if (data.field.type !== FieldType.number) {
       // Show the reducer type ("Total", "Range", "Count", "Delta", etc) in the first non "Row Number" column, only if it cannot be numerically reduced.
       if (i === 1 && options.reducer && options.reducer.length > 0) {
@@ -357,7 +354,7 @@ export function getFooterItems(
       return undefined;
     }
 
-    let newField = cloneDeep(data.field);
+    let newField = clone(data.field);
     newField.values = new ArrayVector(values[i]);
     newField.state = undefined;
 

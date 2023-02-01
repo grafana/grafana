@@ -1,4 +1,3 @@
-import { cloneDeep } from 'lodash';
 import React, { CSSProperties, memo, useCallback, useEffect, useMemo, useRef, useState, UIEventHandler } from 'react';
 import {
   Cell,
@@ -330,10 +329,8 @@ export const Table = memo((props: Props) => {
       with that we can build the correct buffered incrementing values for our Row Number column data.
     */
     const rowField: Field = buildFieldsForOptionalRowNums(data.length);
-    // Since we are mutating data, we make a deep copy to avoid any issues with other components that might share this data.
-    const newData = cloneDeep(data);
-    newData.fields = [rowField, ...newData.fields];
-    return newData;
+    data.fields = [rowField, ...data.fields];
+    return data;
   }
 
   const getItemSize = (index: number): number => {
