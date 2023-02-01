@@ -68,7 +68,7 @@ func (c CorrelationConfig) MarshalJSON() ([]byte, error) {
 		Type            CorrelationConfigType  `json:"type"`
 		Field           string                 `json:"field"`
 		Target          map[string]interface{} `json:"target"`
-		Transformations []Transformation       `json:"transformations"`
+		Transformations []Transformation       `json:"transformations,omitempty"`
 	}{
 		Type:            ConfigTypeQuery,
 		Field:           c.Field,
