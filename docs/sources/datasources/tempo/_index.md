@@ -293,7 +293,6 @@ For details, refer to the [APM dashboard documentation](/docs/tempo/latest/metri
 
 **To display the APM table:**
 
-1. Activate the `tempoApmTable` [feature toggle]({{< relref "../../setup-grafana/configure-grafana#feature_toggles" >}}) in your `grafana.ini` file.
 1. Link a Prometheus data source in the Tempo data source settings.
 1. Navigate to [Explore]({{< relref "../../explore/" >}}).
 1. Select the Tempo data source.
