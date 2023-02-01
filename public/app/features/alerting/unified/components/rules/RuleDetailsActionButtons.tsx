@@ -219,7 +219,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
 
     if (hasCreateRulePermission && !isFederated) {
       rightButtons.push(
-        <CloneRuleButton key="clone" text="Clone" ruleIdentifier={identifier} isProvisioned={isProvisioned} />
+        <CloneRuleButton key="clone" text="Copy" ruleIdentifier={identifier} isProvisioned={isProvisioned} />
       );
     }
 
