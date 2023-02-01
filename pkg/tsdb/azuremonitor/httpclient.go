@@ -6,14 +6,19 @@ import (
 
 	"github.com/grafana/grafana-azure-sdk-go/azcredentials"
 	"github.com/grafana/grafana-azure-sdk-go/azhttpclient"
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor/types"
 )
 
-func newHTTPClient(route types.AzRoute, model types.DatasourceInfo, cfg *setting.Cfg, clientProvider httpclient.Provider, clientOpts sdkhttpclient.Options) (*http.Client, error) {
+func newHTTPClient(route types.AzRoute, model types.DatasourceInfo, settings backend.DataSourceInstanceSettings, cfg *setting.Cfg, clientProvider httpclient.Provider) (*http.Client, error) {
+	clientOpts, err := settings.HTTPClientOptions()
+	if err != nil {
+		return nil, fmt.Errorf("error getting HTTP options: %w", err)
+	}
+
 	for header, value := range route.Headers {
 		clientOpts.Headers[header] = value
 	}
