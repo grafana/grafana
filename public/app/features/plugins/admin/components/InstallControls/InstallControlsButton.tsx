@@ -8,6 +8,7 @@ import appEvents from 'app/core/app_events';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 
 import { useInstallStatus, useUninstallStatus, useInstall, useUninstall } from '../../state/hooks';
+import { trackPluginInstalled, trackPluginUninstalled } from '../../tracking';
 import { CatalogPlugin, PluginStatus, PluginTabIds, Version } from '../../types';
 
 type InstallControlsButtonProps = {
@@ -27,8 +28,14 @@ export function InstallControlsButton({ plugin, pluginStatus, latestCompatibleVe
   const showConfirmModal = () => setIsConfirmModalVisible(true);
   const hideConfirmModal = () => setIsConfirmModalVisible(false);
   const uninstallBtnText = isUninstalling ? 'Uninstalling' : 'Uninstall';
+  const trackingProps = {
+    plugin_id: plugin.id,
+    plugin_type: plugin.type,
+    path: location.pathname,
+  };
 
   const onInstall = async () => {
+    trackPluginInstalled(trackingProps);
     await install(plugin.id, latestCompatibleVersion?.version);
     if (!errorInstalling) {
       appEvents.emit(AppEvents.alertSuccess, [`Installed ${plugin.name}`]);
@@ -37,6 +44,7 @@ export function InstallControlsButton({ plugin, pluginStatus, latestCompatibleVe
 
   const onUninstall = async () => {
     hideConfirmModal();
+    trackPluginUninstalled(trackingProps);
     await uninstall(plugin.id);
     if (!errorUninstalling) {
       // If an app plugin is uninstalled we need to reset the active tab when the config / dashboards tabs are removed.
