@@ -121,22 +121,21 @@ seqs: [
 				}
 
 				#ExtensionsLink: {
-					// Unique identifier of the plugin link extension
-					id:          string
+					// Target where the link will be rendered
+					target: string
+					// Type of extension
+					type: "link"
+					// Title that will be displayed for the rendered link
+					title: string
+					// Description for the rendered link
 					description: string
-					// Relative path to the plugin
+					// Path relative to the extending plugin e.g. /incidents/declare
 					path: string
 					...
 				}
 
-				// A extension point provided by the plugin.
-				#Extensions: {
-					links?: [...#ExtensionsLink]
-					...
-				}
-
-				// Extensions made by the plugin.
-				extensions?: [...#Extensions]
+				// Extensions made by the current plugin.
+				extensions?: [...#ExtensionsLink]
 
 				// For data source plugins, if the plugin supports logs.
 				logs?: bool

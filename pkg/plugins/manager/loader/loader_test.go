@@ -500,18 +500,20 @@ func TestLoader_Load(t *testing.T) {
 					Includes: []*plugins.Includes{
 						{Name: "Root Page (react)", Type: "page", Role: "Viewer", Path: "/a/my-simple-app", DefaultNav: true, AddToNav: true, Slug: "root-page-react"},
 					},
-					Extensions: &plugindef.Extensions{
-						Links: &[]plugindef.ExtensionsLink{
-							{
-								Id:          "root",
-								Description: "Link to the plugin root",
-								Path:        "/my-simple-app",
-							},
-							{
-								Id:          "root2",
-								Description: "Link to the plugin root without backslash",
-								Path:        "/my-simple-app",
-							},
+					Extensions: []*plugindef.ExtensionsLink{
+						{
+							Target:      "plugins/grafana-slo-app/slo-breach",
+							Title:       "Declare incident",
+							Type:        plugindef.ExtensionsLinkTypeLink,
+							Description: "Declares a new incident",
+							Path:        "/incidents/declare",
+						},
+						{
+							Target:      "plugins/grafana-slo-app/slo-breach",
+							Title:       "Declare incident",
+							Type:        plugindef.ExtensionsLinkTypeLink,
+							Description: "Declares a new incident (path without backslash)",
+							Path:        "/incidents/declare",
 						},
 					},
 					Backend: false,

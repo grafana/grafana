@@ -334,13 +334,9 @@ func (l *Loader) readPluginJSON(pluginJSONPath string) (plugins.JSONData, error)
 		}
 	}
 
-	if plugin.Extensions != nil && plugin.Extensions.Links != nil {
-		links := *plugin.Extensions.Links
-
-		for i, link := range links {
-			if !filepath.IsAbs(link.Path) {
-				links[i].Path = path.Join("/", link.Path)
-			}
+	for i, extension := range plugin.Extensions {
+		if !filepath.IsAbs(extension.Path) {
+			plugin.Extensions[i].Path = path.Join("/", extension.Path)
 		}
 	}
 

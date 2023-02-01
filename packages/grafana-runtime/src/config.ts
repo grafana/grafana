@@ -24,12 +24,14 @@ export interface AzureSettings {
   managedIdentityEnabled: boolean;
 }
 
-export type PluginsExtensionConfig = {
-  links: PluginsExtensionLinkConfig[];
-};
+export enum PluginExtensionTypes {
+  link = 'link',
+}
 
 export type PluginsExtensionLinkConfig = {
-  id: string;
+  target: string;
+  type: PluginExtensionTypes.link;
+  title: string;
   description: string;
   path: string;
 };
@@ -39,7 +41,7 @@ export type AppPluginConfig = {
   path: string;
   version: string;
   preload: boolean;
-  extensions?: PluginsExtensionConfig;
+  extensions?: PluginsExtensionLinkConfig[];
 };
 
 export class GrafanaBootConfig implements GrafanaConfig {

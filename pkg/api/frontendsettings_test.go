@@ -241,13 +241,13 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 			desc: "enabled app with link extensions",
 			pluginStore: func() plugins.Store {
 				return &plugins.FakePluginStore{
-					PluginList: newPlugins("test-app", &plugindef.Extensions{
-						Links: &[]plugindef.ExtensionsLink{
-							{
-								Id:          "home",
-								Path:        "/home",
-								Description: "Home route of app",
-							},
+					PluginList: newPlugins("test-app", []*plugindef.ExtensionsLink{
+						{
+							Target:      "core/home/menu",
+							Type:        plugindef.ExtensionsLinkTypeLink,
+							Title:       "Title",
+							Description: "Home route of app",
+							Path:        "/home",
 						},
 					}),
 				}
@@ -264,13 +264,13 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 						Preload: false,
 						Path:    "/test-app/module.js",
 						Version: "0.5.0",
-						Extensions: &plugindef.Extensions{
-							Links: &[]plugindef.ExtensionsLink{
-								{
-									Id:          "home",
-									Path:        "/home",
-									Description: "Home route of app",
-								},
+						Extensions: []*plugindef.ExtensionsLink{
+							{
+								Target:      "core/home/menu",
+								Type:        plugindef.ExtensionsLinkTypeLink,
+								Title:       "Title",
+								Description: "Home route of app",
+								Path:        "/home",
 							},
 						},
 					},
@@ -281,13 +281,13 @@ func TestHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 			desc: "disabled app with link extensions",
 			pluginStore: func() plugins.Store {
 				return &plugins.FakePluginStore{
-					PluginList: newPlugins("test-app", &plugindef.Extensions{
-						Links: &[]plugindef.ExtensionsLink{
-							{
-								Id:          "home",
-								Path:        "/home",
-								Description: "Home route of app",
-							},
+					PluginList: newPlugins("test-app", []*plugindef.ExtensionsLink{
+						{
+							Target:      "core/home/menu",
+							Type:        plugindef.ExtensionsLinkTypeLink,
+							Title:       "Title",
+							Description: "Home route of app",
+							Path:        "/home",
 						},
 					}),
 				}
@@ -339,7 +339,7 @@ func newAppSettings(id string, enabled bool) map[string]*pluginSettings.DTO {
 	}
 }
 
-func newPlugins(id string, extensions *plugindef.Extensions) []plugins.PluginDTO {
+func newPlugins(id string, extensions []*plugindef.ExtensionsLink) []plugins.PluginDTO {
 	return []plugins.PluginDTO{
 		{
 			Module: fmt.Sprintf("/%s/module.js", id),
