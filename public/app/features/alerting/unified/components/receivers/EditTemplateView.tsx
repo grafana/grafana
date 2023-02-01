@@ -18,7 +18,7 @@ export const EditTemplateView: FC<Props> = ({ config, templateName, alertManager
   if (!template) {
     return (
       <Alert severity="error" title="Template not found">
-        Sorry, this template does not seem to exit.
+        Sorry, this template does not seem to exists.
       </Alert>
     );
   }

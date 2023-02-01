@@ -20,7 +20,7 @@ export const DuplicateTemplateView: FC<Props> = ({ config, templateName, alertMa
   if (!template) {
     return (
       <Alert severity="error" title="Template not found">
-        Sorry, this template does not seem to exit.
+        Sorry, this template does not seem to exists.
       </Alert>
     );
   }
