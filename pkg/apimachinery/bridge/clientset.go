@@ -32,13 +32,13 @@ var (
 // It provides functionality to talk to the APIs as well as register new API clients for CRDs.
 type Clientset struct {
 	// TODO: this needs to be exposed, but only specific types (e.g. no pods / deployments / etc.).
-	Clientset *kubernetes.Clientset
-	extset    *apiextensionsclient.Clientset
-	config    *rest.Config
-	CRDs      map[k8schema.GroupVersion]apiextensionsv1.CustomResourceDefinition
-	lock      sync.RWMutex
+	*kubernetes.Clientset
+	extset *apiextensionsclient.Clientset
+	config *rest.Config
+	CRDs   map[k8schema.GroupVersion]apiextensionsv1.CustomResourceDefinition
+	lock   sync.RWMutex
 
-	dynamic    dynamic.Interface
+	Dynamic    dynamic.Interface
 	mapper     meta.RESTMapper
 	serializer runtime.Serializer
 }
@@ -72,7 +72,7 @@ func NewClientset(cfg *rest.Config) (*Clientset, error) {
 		config:    cfg,
 		CRDs:      make(map[k8schema.GroupVersion]apiextensionsv1.CustomResourceDefinition),
 
-		dynamic:    dynamic,
+		Dynamic:    dynamic,
 		serializer: yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme),
 		mapper:     mapper,
 	}, nil
@@ -117,9 +117,9 @@ func (c *Clientset) GetResource(gk k8schema.GroupKind, namespace string, version
 
 	var resource dynamic.ResourceInterface
 	if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
-		resource = c.dynamic.Resource(mapping.Resource).Namespace(namespace)
+		resource = c.Dynamic.Resource(mapping.Resource).Namespace(namespace)
 	} else {
-		resource = c.dynamic.Resource(mapping.Resource)
+		resource = c.Dynamic.Resource(mapping.Resource)
 	}
 
 	return resource, nil
