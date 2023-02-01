@@ -285,14 +285,14 @@ func TestMarkConfigurationAsApplied(t *testing.T) {
 		Logger:   log.NewNopLogger(),
 	}
 
-	t.Run("attempting to mark a non existent config as applied should fail", func(tt *testing.T) {
+	t.Run("attempting to mark a non existent config as applied shouldn't fail", func(tt *testing.T) {
 		cmd := models.MarkConfigurationAsAppliedCmd{
 			ConfigID:          10,
 			OrgID:             10,
 			ConfigurationHash: "test",
 		}
 		err := store.MarkConfigurationAsApplied(context.Background(), &cmd)
-		require.Error(tt, err)
+		require.NoError(tt, err)
 	})
 
 	t.Run("marking an existent config should succeed", func(tt *testing.T) {

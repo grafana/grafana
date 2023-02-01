@@ -12,7 +12,19 @@ type AlertConfiguration struct {
 	CreatedAt                 int64 `xorm:"created"`
 	Default                   bool
 	OrgID                     int64 `xorm:"org_id"`
-	AppliedAt                 int64 `xorm:"applied_at"`
+}
+
+// HistoricAlertConfiguration represents a previously used alerting configuration.
+type HistoricAlertConfiguration struct {
+	ID int64 `xorm:"pk autoincr 'id'"`
+
+	AlertmanagerConfiguration string
+	ConfigurationHash         string
+	ConfigurationVersion      string
+	CreatedAt                 int64 `xorm:"created"`
+	Default                   bool
+	OrgID                     int64 `xorm:"org_id"`
+	LastApplied               int64 `xorm:"last_applied"`
 }
 
 // GetLatestAlertmanagerConfigurationQuery is the query to get the latest alertmanager configuration.
@@ -28,7 +40,7 @@ type SaveAlertmanagerConfigurationCmd struct {
 	ConfigurationVersion      string
 	Default                   bool
 	OrgID                     int64
-	AppliedAt                 int64
+	LastApplied               int64
 }
 
 // MarkConfigurationAsAppliedCmd is the command for marking a previously saved configuration as successfully applied.
@@ -41,5 +53,15 @@ type MarkConfigurationAsAppliedCmd struct {
 // GetAppliedConfigurationsQuery is the query for getting configurations that have been previously applied with no errors.
 type GetAppliedConfigurationsQuery struct {
 	OrgID  int64
-	Result []*AlertConfiguration
+	Result []*HistoricAlertConfiguration
+}
+
+func HistoricConfigFromAlertConfig(config AlertConfiguration) HistoricAlertConfiguration {
+	return HistoricAlertConfiguration{
+		AlertmanagerConfiguration: config.AlertmanagerConfiguration,
+		ConfigurationHash:         config.ConfigurationHash,
+		ConfigurationVersion:      config.ConfigurationVersion,
+		Default:                   config.Default,
+		OrgID:                     config.OrgID,
+	}
 }

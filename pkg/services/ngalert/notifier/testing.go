@@ -79,7 +79,7 @@ func (f *fakeConfigStore) SaveAlertmanagerConfigurationWithCallback(_ context.Co
 		return err
 	}
 
-	if cmd.AppliedAt != 0 {
+	if cmd.LastApplied != 0 {
 		if _, ok := f.appliedConfigs[cmd.OrgID]; !ok {
 			f.appliedConfigs[cmd.OrgID] = make(map[string]*models.AlertConfiguration)
 		}
