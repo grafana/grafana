@@ -15799,6 +15799,9 @@
             "Error"
           ]
         },
+        "is_paused": {
+          "type": "boolean"
+        },
         "no_data_state": {
           "type": "string",
           "enum": [
@@ -19337,7 +19340,6 @@
       }
     },
     "receiver": {
-      "description": "Receiver receiver",
       "type": "object",
       "required": [
         "active",
