@@ -322,6 +322,58 @@ describe('getFieldLinksForExplore', () => {
     );
   });
 
+  it('returns internal links with logfmt with correct data on transportation-defined field', () => {
+    const transformationLink: DataLink = {
+      title: '',
+      url: '',
+      internal: {
+        query: { query: 'http_requests{app=${application}}' },
+        datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
+        transformations: [{ type: 'logfmt', field: 'rightField' }],
+      },
+    };
+
+    // wrongField has the transformation, but the transformation has defined rightField as its field to transform
+    const { field, range, dataFrame } = setup(
+      transformationLink,
+      true,
+      {
+        name: 'wrongField',
+        type: FieldType.string,
+        values: new ArrayVector(['application=bad', 'application=worse']),
+        config: {
+          links: [transformationLink],
+        },
+      },
+      [
+        {
+          name: 'rightField',
+          type: FieldType.string,
+          values: new ArrayVector(['application=good', 'application=great']),
+          config: {},
+        },
+      ]
+    );
+
+    const links = [
+      getFieldLinksForExplore({ field, rowIndex: 0, range, dataFrame }),
+      getFieldLinksForExplore({ field, rowIndex: 1, range, dataFrame }),
+    ];
+    expect(links[0]).toHaveLength(1);
+    expect(links[0][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=good}"}]}'
+      )}`
+    );
+    expect(links[1]).toHaveLength(1);
+    expect(links[1][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=great}"}]}'
+      )}`
+    );
+  });
+
   it('returns no internal links when target contains empty template variables', () => {
     const { field, range, dataFrame } = setup({
       title: '',
