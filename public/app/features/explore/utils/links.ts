@@ -152,8 +152,9 @@ export const getFieldLinksForExplore = (options: {
               const logFmtVal = logfmt.parse(fieldValue) as { [key: string]: string | boolean | null };
               let scopeVarFromLogFmt: ScopedVars = {};
               Object.keys(logFmtVal).forEach((key) => {
-                const logFmtValue = logFmtVal[key];
-                scopeVarFromLogFmt[key] = { value: safeStringifyValue(logFmtValue) };
+                const logFmtValueString =
+                  typeof logFmtVal[key] === 'string' ? logFmtVal[key] : safeStringifyValue(logFmtVal[key]);
+                scopeVarFromLogFmt[key] = { value: logFmtValueString };
               });
               internalLinkSpecificVars = { ...internalLinkSpecificVars, ...scopeVarFromLogFmt };
             }
