@@ -5158,9 +5158,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:latest":
-  version: 0.0.8
-  resolution: "@grafana/scenes@npm:0.0.8"
+"@grafana/scenes@npm:^0.0.11":
+  version: 0.0.11
+  resolution: "@grafana/scenes@npm:0.0.11"
   dependencies:
     "@grafana/e2e-selectors": canary
     "@grafana/experimental": 1.0.1
@@ -5168,7 +5168,7 @@ __metadata:
     react-use: 17.4.0
     react-virtualized-auto-sizer: 1.0.7
     uuid: ^9.0.0
-  checksum: 4c76ca9850906b98fc9131b48ea6a664f84a0f8ac5f7d87543d73f8ca8214c33483fc4454447e46d67096826f7cb32f3db70461323e65aefc241c4169c88fd98
+  checksum: 8cb56817f784c045ff8e91793e79722ed5ec22927a4528539de6f243eaf511f0f924ee1c883f88707eb0ef69cea39de29752da88f98156f25e1860e794ffcd9b
   languageName: node
   linkType: hard
 
@@ -16151,7 +16151,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"comlink@npm:4.3.1, comlink@npm:^4.3.0":
+"comlink@npm:4.4.0":
+  version: 4.4.0
+  resolution: "comlink@npm:4.4.0"
+  checksum: 429dc83e36d35c3dfd17e86343142ed3526fe2310a18f3816d0380eb9a162b50272bb40f7426e1c5a1f04f44203a178b60a4a0bcabed01d675d91474c53788f7
+  languageName: node
+  linkType: hard
+
+"comlink@npm:^4.3.0":
   version: 4.3.1
   resolution: "comlink@npm:4.3.1"
   checksum: 557360a6558708c55aff74a25f834bfb9bfca8a42444682c4d5aead57681534a0206202be2a2760b4de124c3ba6d485b08978b6d5469cb3d26bf1438ee28a4f1
@@ -22032,7 +22039,7 @@ __metadata:
     "@grafana/lezer-logql": 0.1.1
     "@grafana/monaco-logql": ^0.0.6
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": latest
+    "@grafana/scenes": ^0.0.11
     "@grafana/schema": "workspace:*"
     "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.2.0-rc1
@@ -22155,7 +22162,7 @@ __metadata:
     classnames: 2.3.2
     codeowners: ^5.1.1
     combokeys: ^3.0.0
-    comlink: 4.3.1
+    comlink: 4.4.0
     common-tags: 1.8.2
     copy-webpack-plugin: 11.0.0
     core-js: 3.27.1

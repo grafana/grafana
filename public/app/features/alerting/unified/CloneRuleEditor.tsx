@@ -6,11 +6,12 @@ import { locationService } from '@grafana/runtime/src';
 import { Alert, LoadingPlaceholder } from '@grafana/ui/src';
 
 import { useDispatch } from '../../../types';
-import { RuleIdentifier, RuleWithLocation } from '../../../types/unified-alerting';
+import { RuleIdentifier } from '../../../types/unified-alerting';
 import { RulerRuleDTO } from '../../../types/unified-alerting-dto';
 
 import { AlertRuleForm } from './components/rule-editor/AlertRuleForm';
 import { fetchEditableRuleAction } from './state/actions';
+import { generateCopiedName } from './utils/duplicate';
 import { rulerRuleToFormValues } from './utils/rule-form';
 import { getRuleName, isAlertingRulerRule, isGrafanaRulerRule, isRecordingRulerRule } from './utils/rules';
 import { createUrl } from './utils/url';
@@ -30,7 +31,10 @@ export function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier
 
   if (rule) {
     const ruleClone = cloneDeep(rule);
-    changeRuleName(ruleClone.rule, generateCopiedRuleTitle(ruleClone));
+    changeRuleName(
+      ruleClone.rule,
+      generateCopiedName(getRuleName(ruleClone.rule), ruleClone.group.rules.map(getRuleName))
+    );
     const formPrefill = rulerRuleToFormValues(ruleClone);
 
     // Provisioned alert rules have provisioned alert group which cannot be used in UI
@@ -51,26 +55,11 @@ export function CloneRuleEditor({ sourceRuleId }: { sourceRuleId: RuleIdentifier
 
   return (
     <Alert
-      title="Cannot duplicate. The rule does not exist"
+      title="Cannot copy the rule. The rule does not exist"
       buttonContent="Go back to alert list"
       onRemove={() => locationService.replace(createUrl('/alerting/list'))}
     />
   );
-}
-
-export function generateCopiedRuleTitle(originRuleWithLocation: RuleWithLocation): string {
-  const originName = getRuleName(originRuleWithLocation.rule);
-  const existingRulesNames = originRuleWithLocation.group.rules.map(getRuleName);
-
-  const nonDuplicateName = originName.replace(/\(copy( [0-9]+)?\)$/, '').trim();
-
-  let newName = `${nonDuplicateName} (copy)`;
-
-  for (let i = 2; existingRulesNames.includes(newName); i++) {
-    newName = `${nonDuplicateName} (copy ${i})`;
-  }
-
-  return newName;
 }
 
 function changeRuleName(rule: RulerRuleDTO, newName: string) {

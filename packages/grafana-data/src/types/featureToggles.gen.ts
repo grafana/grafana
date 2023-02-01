@@ -28,7 +28,6 @@ export interface FeatureToggles {
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
   panelTitleSearch?: boolean;
-  tempoApmTable?: boolean;
   prometheusAzureOverrideAudience?: boolean;
   showFeatureFlagsInUI?: boolean;
   publicDashboards?: boolean;
