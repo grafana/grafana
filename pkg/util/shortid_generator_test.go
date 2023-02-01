@@ -4,12 +4,26 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 func TestAllowedCharMatchesUidPattern(t *testing.T) {
-	for _, c := range allowedChars {
+	for _, c := range alphaNumRunes {
 		if !IsValidShortUID(string(c)) {
 			t.Fatalf("charset for creating new shortids contains chars not present in uid pattern")
+		}
+	}
+}
+
+func TestRandomUIDs(t *testing.T) {
+	for i := 0; i < 100; i++ {
+		v := GenerateShortUID()
+		if !IsValidShortUID(v) {
+			t.Fatalf("charset for creating new shortids contains chars not present in uid pattern")
+		}
+		validation := validation.IsQualifiedName(v)
+		if validation != nil {
+			t.Fatalf("created invalid name: %v", validation)
 		}
 	}
 }
@@ -22,7 +36,7 @@ func TestIsShortUIDTooLong(t *testing.T) {
 	}{
 		{
 			name:     "when the length of uid is longer than 40 chars then IsShortUIDTooLong should return true",
-			uid:      allowedChars,
+			uid:      string(alphaNumRunes) + string(alphaNumRunes),
 			expected: true,
 		},
 		{
