@@ -27,6 +27,8 @@ type EmailSender interface {
 	SendEmailCommandHandlerSync(ctx context.Context, cmd *SendEmailCommandSync) error
 	SendEmailCommandHandler(ctx context.Context, cmd *SendEmailCommand) error
 }
+
+//go:generate mockery --name Service --structname FakeNotificationService --inpackage --filename notifications_service_mock.go
 type Service interface {
 	WebhookSender
 	EmailSender
