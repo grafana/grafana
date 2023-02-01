@@ -261,10 +261,17 @@ export function prepConfig(opts: PrepConfigOpts) {
             dataMin - dataRef.current?.xBucketSize!,
             dataMax,
           ];
-        } else {
+        } else if (dataRef.current?.xLayout === HeatmapCellLayout.ge) {
           return [
             dataMin,
             dataMax + dataRef.current?.xBucketSize!,
+          ];
+        } else {
+          let offset = dataRef.current?.xBucketSize! / 2;
+
+          return [
+            dataMin - offset,
+            dataMax + offset,
           ];
         }
       }
