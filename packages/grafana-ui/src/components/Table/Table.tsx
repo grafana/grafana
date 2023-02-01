@@ -1,3 +1,4 @@
+import { clone } from 'lodash';
 import React, { CSSProperties, memo, useCallback, useEffect, useMemo, useRef, useState, UIEventHandler } from 'react';
 import {
   Cell,
@@ -176,7 +177,7 @@ export const Table = memo((props: Props) => {
 
     if (isCountRowsSet) {
       const footerItemsCountRows: FooterItem[] = [];
-      footerItemsCountRows[0] = headerGroups[0]?.headers[0]?.filteredRows.length.toString() ?? data.length.toString();
+      footerItemsCountRows[1] = headerGroups[0]?.headers[0]?.filteredRows.length.toString() ?? data.length.toString();
       setFooterItems(footerItemsCountRows);
       return;
     }
@@ -330,8 +331,10 @@ export const Table = memo((props: Props) => {
       with that we can build the correct buffered incrementing values for our Row Number column data.
     */
     const rowField: Field = buildFieldsForOptionalRowNums(data.length);
-    data.fields = [rowField, ...data.fields];
-    return data;
+    // Clone data to avoid unwanted mutation.
+    const clonedData = clone(data);
+    clonedData.fields = [rowField, ...data.fields];
+    return clonedData;
   }
 
   const getItemSize = (index: number): number => {

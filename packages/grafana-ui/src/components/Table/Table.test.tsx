@@ -177,7 +177,7 @@ describe('Table', () => {
       expect(screen.getAllByRole('columnheader')).toHaveLength(1);
     });
 
-    it.skip('should render (fields.length + 1) rows row when `showRowNums` is toggled', () => {
+    it('should render (fields.length + 1) rows row when `showRowNums` is toggled', () => {
       getTestContext({ ...showRowNumsTestContext, showRowNums: true });
 
       expect(screen.getAllByRole('columnheader')).toHaveLength(2);
@@ -241,7 +241,7 @@ describe('Table', () => {
       expect(within(getTable()).getAllByRole('row')).toHaveLength(4);
     });
 
-    it.skip('should redo footer calculations', async () => {
+    it('should redo footer calculations', async () => {
       getTestContext({
         footerOptions: { show: true, reducer: ['sum'] },
         data: toDataFrame({
@@ -270,7 +270,7 @@ describe('Table', () => {
       expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('3');
     });
 
-    it.skip('should filter rows and recalculate footer values when multiple filter values are selected', async () => {
+    it('should filter rows and recalculate footer values when multiple filter values are selected', async () => {
       getTestContext({
         footerOptions: { show: true, reducer: ['sum'] },
         data: toDataFrame({
@@ -303,7 +303,7 @@ describe('Table', () => {
       expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('10');
     });
 
-    it.skip('should reset when clear filters button is pressed', async () => {
+    it('should reset when clear filters button is pressed', async () => {
       getTestContext({
         footerOptions: { show: true, reducer: ['sum'] },
         data: toDataFrame({
@@ -341,7 +341,7 @@ describe('Table', () => {
   });
 
   describe('on data change', () => {
-    it.skip('should redo footer value calculations', async () => {
+    it('should redo footer value calculations', async () => {
       const { rerender } = getTestContext({
         footerOptions: { show: true, reducer: ['sum'] },
         data: toDataFrame({
@@ -433,7 +433,7 @@ describe('Table', () => {
   });
 
   describe('on table footer enabled and count calculation selected', () => {
-    it.skip('should show count of non-null values', async () => {
+    it('should show count of non-null values', async () => {
       getTestContext({
         footerOptions: { show: true, reducer: ['count'] },
         data: toDataFrame({
@@ -456,7 +456,7 @@ describe('Table', () => {
       expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0].textContent).toEqual('4');
     });
 
-    it.skip('should show count of rows when `count rows` is selected', async () => {
+    it('should show count of rows when `count rows` is selected', async () => {
       getTestContext({
         footerOptions: { show: true, reducer: ['count'], countRows: true },
         data: toDataFrame({
@@ -482,7 +482,7 @@ describe('Table', () => {
       expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[1].textContent).toEqual('5');
     });
 
-    it.skip('should show correct counts when turning `count rows` on and off', async () => {
+    it('should show correct counts when turning `count rows` on and off', async () => {
       const { rerender } = getTestContext({
         footerOptions: { show: true, reducer: ['count'], countRows: true },
         data: toDataFrame({
