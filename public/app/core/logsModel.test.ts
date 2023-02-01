@@ -32,6 +32,9 @@ import {
   queryLogsSample,
 } from './logsModel';
 
+const FROM = dateTimeParse('2021-06-17 00:00:00', { timeZone: 'utc' });
+const TO = dateTimeParse('2021-06-17 00:00:00', { timeZone: 'utc' });
+
 describe('dedupLogRows()', () => {
   test('should return rows as is when dedup is set to none', () => {
     const rows = [
@@ -1155,8 +1158,8 @@ describe('logs volume', () => {
         return dataFrame.fields[1]!.labels!.level === 'error' ? LogLevel.error : LogLevel.unknown;
       },
       range: {
-        from: dateTimeParse('2021-06-17 00:00:00', { timeZone: 'utc' }),
-        to: dateTimeParse('2021-06-17 00:00:00', { timeZone: 'utc' }),
+        from: FROM,
+        to: TO,
         raw: { from: '0', to: '1' },
       },
       targets: request.targets,
@@ -1211,8 +1214,8 @@ describe('logs volume', () => {
                   ],
                   logsVolumeType: LogsVolumeType.FullRange,
                   absoluteRange: {
-                    from: 1623888000000,
-                    to: 1623888000000,
+                    from: FROM.valueOf(),
+                    to: TO.valueOf(),
                   },
                 },
               },
