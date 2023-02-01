@@ -24,6 +24,11 @@ To declare an incident from a firing alert, complete the following steps.
 
 1. Navigate to Alerts & Incidents -> Alerting -> Alert rules.
 2. From the Alert rules list view, click the firing alert that you want to declare an incident for.
+
+   **Note:**
+
+   You can also access **Declare Incident** from the alert details page.
+
 3. Click **Declare Incident**.
    The **Declare Incident** pop-up opens in the Grafana Incident application.
 4. In the **Declare Incident** pop-up, enter what's going on.
