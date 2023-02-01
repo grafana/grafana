@@ -348,7 +348,7 @@ export function getFooterItems(
 
   return footerFieldData.map((data, i) => {
     if (data.field.type !== FieldType.number) {
-      // Show the reducer type ("Total", "Range", "Count", "Delta", etc) in the first non-RowNumber column, only if it cannot be numerically reduced.
+      // Show the reducer type ("Total", "Range", "Count", "Delta", etc) in the first non "Row Number" column, only if it cannot be numerically reduced.
       if (i === 1 && options.reducer && options.reducer.length > 0) {
         const reducer = fieldReducers.get(options.reducer[0]);
         return reducer.name;
@@ -380,7 +380,7 @@ function getFormattedValue(field: Field, reducer: string[], theme: GrafanaTheme2
   return formattedValueToString(fmt(v));
 }
 
-// This strips the raw vales from the rows data.
+// This strips the raw vales from the `rows` object.
 export function createFooterCalculationValues(rows: Row[]): any[number] {
   const values: any[number] = [];
 

@@ -148,7 +148,7 @@ export const Table = memo((props: Props) => {
 
   const extendedState = state as GrafanaTableState;
 
-  // Hide RowNumberColumn on toggle
+  // Hide Row Number column on toggle
   useEffect(() => {
     !!showRowNums ? setHiddenColumns([]) : setHiddenColumns(['0']);
   }, [showRowNums, setHiddenColumns]);

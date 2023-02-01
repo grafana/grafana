@@ -374,7 +374,7 @@ describe('Table utils', () => {
       expect(bufferedArray).toBeInstanceOf(ArrayVector);
 
       const nonBufferedArray = Array.from(bufferedArray);
-      // buildBufferedIncrementingValues builds values as string, not numbers.
+      // buildBufferedIncrementingValues builds values as strings, not numbers.
       expect(nonBufferedArray[0]).toEqual('1');
       expect(nonBufferedArray[nonBufferedArray.length - 1]).toEqual(String(arrayVectorLength));
     });
