@@ -62,5 +62,14 @@ export function getFooterValue(index: number, footerValues?: FooterItem[], isCou
     return EmptyCell;
   }
 
+  if (isCountRowsSet) {
+    const count = footerValues[index];
+    if (typeof count !== 'string') {
+      return EmptyCell;
+    }
+
+    return FooterCell({ value: [{ Count: count }] });
+  }
+
   return FooterCell({ value: footerValues[index] });
 }
