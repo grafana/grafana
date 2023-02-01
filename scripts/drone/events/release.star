@@ -409,6 +409,8 @@ def enterprise2_pipelines(prefix='', ver_mode=ver_mode, trigger=release_trigger)
         committish = '${DRONE_BRANCH}'
     else:
         committish = '${DRONE_COMMIT}'
+    if prefix == 'custom-':
+        committish = '${DRONE_TARGET_BRANCH}'
 
     environment = {
         'EDITION': 'enterprise2',
