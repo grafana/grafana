@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import React, { PureComponent } from 'react';
-import DropZone, { FileRejection, DropEvent } from 'react-dropzone';
+import DropZone, { FileRejection, DropEvent, ErrorCode } from 'react-dropzone';
 import { connect, ConnectedProps } from 'react-redux';
 
 import {
@@ -12,6 +12,8 @@ import {
   dataFrameToJSON,
   DataFrameJSON,
   GrafanaTheme2,
+  getValueFormat,
+  formattedValueToString,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config, locationService } from '@grafana/runtime';
@@ -109,6 +111,7 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
   private forceRouteReloadCounter = 0;
   state: State = this.getCleanState();
+  maxFileSize = 500000;
 
   onFileDrop = (acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent) => {
     console.log(acceptedFiles);
@@ -143,6 +146,32 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           });
         }
       };
+    });
+
+    fileRejections.forEach((fileRejection) => {
+      const errors = fileRejection.errors.map((error) => {
+        switch (error.code) {
+          case ErrorCode.FileTooLarge:
+            const formattedSize = getValueFormat('decbytes')(this.maxFileSize);
+            return `File is larger than ${formattedValueToString(formattedSize)}.`;
+          case ErrorCode.FileInvalidType:
+            return 'File must be a spreadsheet.';
+          default:
+            return error.message;
+        }
+      });
+      this.props.notifyApp(
+        createErrorNotification(
+          `Failed to load ${fileRejection.file.name}`,
+          undefined,
+          undefined,
+          <ul>
+            {errors.map((err) => {
+              return <li key={err}>{err}</li>;
+            })}
+          </ul>
+        )
+      );
     });
   };
 
@@ -433,7 +462,18 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
             </section>
           )}
           {config.featureToggles.editPanelCSVDragAndDrop ? (
-            <DropZone onDrop={this.onFileDrop} noClick={true}>
+            <DropZone
+              onDrop={this.onFileDrop}
+              accept={{
+                'text/plain': ['.csv', '.txt'],
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+                'application/vnd.ms-excel': ['.xls'],
+                'application/vnd.apple.numbers': ['.numbers'],
+                'application/vnd.oasis.opendocument.spreadsheet': ['.ods'],
+              }}
+              maxSize={this.maxFileSize}
+              noClick={true}
+            >
               {({ getRootProps, isDragActive }) => {
                 const styles = getStyles(this.props.theme, isDragActive);
                 return (
