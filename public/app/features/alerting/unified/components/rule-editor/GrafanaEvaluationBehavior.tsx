@@ -4,7 +4,7 @@ import { RegisterOptions, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { Button, Field, InlineLabel, Input, InputControl, useStyles2 } from '@grafana/ui';
+import { Button, Field, InlineLabel, Input, InputControl, useStyles2, Switch, Tooltip, Icon } from '@grafana/ui';
 import { RulerRuleDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { logInfo, LogMessages } from '../../Analytics';
@@ -253,13 +253,19 @@ export function GrafanaEvaluationBehavior({
   initialFolder,
   evaluateEvery,
   setEvaluateEvery,
+  existing,
 }: {
   initialFolder: RuleForm | null;
   evaluateEvery: string;
   setEvaluateEvery: (value: string) => void;
+  existing: boolean;
 }) {
   const styles = useStyles2(getStyles);
   const [showErrorHandling, setShowErrorHandling] = useState(false);
+
+  const { watch, setValue } = useFormContext<RuleFormValues>();
+
+  const isPaused = watch('isPaused');
 
   return (
     // TODO remove "and alert condition" for recording rules
@@ -271,6 +277,31 @@ export function GrafanaEvaluationBehavior({
           evaluateEvery={evaluateEvery}
         />
         <ForInput evaluateEvery={evaluateEvery} />
+
+        {existing && (
+          <Field htmlFor="pause-alert-switch">
+            <InputControl
+              render={() => (
+                <Stack gap={1} direction="row" alignItems="center">
+                  <Switch
+                    id="pause-alert"
+                    onChange={(value) => {
+                      setValue('isPaused', value.currentTarget.checked);
+                    }}
+                    value={Boolean(isPaused)}
+                  />
+                  <label htmlFor="pause-alert" className={styles.switchLabel}>
+                    Pause evaluation
+                    <Tooltip placement="top" content="Turn on to pause evaluation for this alert rule." theme={'info'}>
+                      <Icon tabIndex={0} name="info-circle" size="sm" className={styles.infoIcon} />
+                    </Tooltip>
+                  </label>
+                </Stack>
+              )}
+              name="isPaused"
+            />
+          </Field>
+        )}
       </Stack>
       <CollapseToggle
         isCollapsed={!showErrorHandling}
@@ -341,6 +372,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-right: ${theme.spacing(1)};
     color: ${theme.colors.warning.text};
   `,
+  infoIcon: css`
+    margin-left: 10px;
+  `,
   warningMessage: css`
     color: ${theme.colors.warning.text};
   `,
@@ -354,4 +388,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
   marginTop: css`
     margin-top: ${theme.spacing(1)};
   `,
+  switchLabel: css(`
+    color: ${theme.colors.text.primary},
+    cursor: 'pointer',
+    fontSize: ${theme.typography.bodySmall.fontSize},
+  `),
 });
