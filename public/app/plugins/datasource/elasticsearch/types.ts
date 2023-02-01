@@ -102,7 +102,7 @@ export interface Terms extends Schema.Terms {
   settings?: {
     min_doc_count?: string;
     missing?: string;
-    order?: Schema.TermsOrder;
+    order?: TermsOrder;
     orderBy?: string;
     size?: string;
   };
@@ -134,11 +134,6 @@ export interface Terms extends Schema.Terms {
     missing?: string;
   };
 }
-export interface Filters extends Schema.Filters {
-  settings?: {
-    filters?: Schema.Filter[];
-  };
-}
 
 interface GeoHashGrid extends Schema.GeoHashGrid {
   settings?: {
@@ -168,7 +163,7 @@ export interface ElasticsearchOptions extends DataSourceJsonData {
   includeFrozen?: boolean;
 }
 
-interface MetricConfiguration<T extends Schema.MetricAggregationType> {
+interface MetricConfiguration<T extends MetricAggregationType> {
   label: string;
   requiresField: boolean;
   supportsInlineScript: boolean;
@@ -184,10 +179,10 @@ interface MetricConfiguration<T extends Schema.MetricAggregationType> {
   isSingleMetric?: boolean;
   hasSettings: boolean;
   hasMeta: boolean;
-  defaults: Omit<Extract<Schema.MetricAggregation, { type: T }>, 'id' | 'type'>;
+  defaults: Omit<Extract<MetricAggregation, { type: T }>, 'id' | 'type'>;
 }
 
-type BucketConfiguration<T extends Schema.BucketAggregationType> = {
+type BucketConfiguration<T extends BucketAggregationType> = {
   label: string;
   requiresField: boolean;
   defaultSettings: Extract<BucketAggregation, { type: T }>['settings'];
