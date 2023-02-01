@@ -9,7 +9,6 @@ import {
   HistoryItem,
   LogsModel,
   PanelData,
-  QueryHint,
   RawTimeRange,
   TimeRange,
   EventBusExtended,
@@ -231,11 +230,8 @@ export interface QueryOptions {
 export interface QueryTransaction {
   id: string;
   done: boolean;
-  error?: string | JSX.Element;
-  hints?: QueryHint[];
   request: DataQueryRequest;
   queries: DataQuery[];
-  result?: any; // Table model / Timeseries[] / Logs
   scanning?: boolean;
 }
 

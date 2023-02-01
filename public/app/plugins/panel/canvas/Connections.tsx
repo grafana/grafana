@@ -6,6 +6,7 @@ import { Scene } from 'app/features/canvas/runtime/scene';
 
 import { CONNECTION_ANCHOR_ALT, ConnectionAnchors } from './ConnectionAnchors';
 import { ConnectionSVG } from './ConnectionSVG';
+import { isConnectionSource, isConnectionTarget } from './utils';
 
 export class Connections {
   scene: Scene;
@@ -98,6 +99,7 @@ export class Connections {
       return false;
     }
 
+    this.connectionTarget = undefined;
     this.connectionAnchorDiv!.style.display = 'none';
     return true;
   };
@@ -214,6 +216,11 @@ export class Connections {
     }
 
     this.scene.selecto?.rootContainer?.addEventListener('mousemove', this.connectionListener);
+  };
+
+  // used for moveable actions
+  connectionsNeedUpdate = (element: ElementState): boolean => {
+    return isConnectionSource(element) || isConnectionTarget(element, this.scene.byName);
   };
 
   render() {
