@@ -30,7 +30,7 @@ func (c *DashboardController) Run(ctx context.Context) error {
 	gvr := schema.GroupVersionResource{
 		Group:    dashboardCRD.GVK().Group,
 		Version:  dashboardCRD.GVK().Version,
-		Resource: dashboardCRD.Schema.Name,
+		Resource: dashboardCRD.Schema.Spec.Names.Plural,
 	}
 
 	factory := dynamicinformer.NewDynamicSharedInformerFactory(c.bridgeService.ClientSet.Dynamic, time.Minute)
