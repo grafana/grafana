@@ -4,11 +4,12 @@ keywords:
   - schema
 title: Dashboard kind
 ---
+> Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
 # Dashboard kind
 
-### Maturity: merged
-### Version: 0.0
+## Maturity: experimental
+## Version: 0.0
 
 ## Properties
 
@@ -21,19 +22,19 @@ title: Dashboard kind
 | `style`                | string                            | **Yes**  | Theme of dashboard. Possible values are: `dark`, `light`. Default: `dark`.                                                                                                                                              |
 | `annotations`          | [object](#annotations)            | No       | TODO docs                                                                                                                                                                                                               |
 | `description`          | string                            | No       | Description of dashboard.                                                                                                                                                                                               |
-| `fiscalYearStartMonth` | integer                           | No       | TODO docs                                                                                                                                                                                                               |
+| `fiscalYearStartMonth` | integer                           | No       | The month that the fiscal year starts on.  0 = January, 11 = December Default: `0`.                                                                                                                                     |
 | `gnetId`               | string                            | No       |                                                                                                                                                                                                                         |
 | `id`                   | integer                           | No       | Unique numeric identifier for the dashboard.<br/>TODO must isolate or remove identifiers local to a Grafana instance...?                                                                                                |
 | `links`                | [DashboardLink](#dashboardlink)[] | No       | TODO docs                                                                                                                                                                                                               |
 | `liveNow`              | boolean                           | No       | TODO docs                                                                                                                                                                                                               |
 | `panels`               | [object](#panels)[]               | No       |                                                                                                                                                                                                                         |
-| `refresh`              |                                   | No       | TODO docs                                                                                                                                                                                                               |
+| `refresh`              |                                   | No       | Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".                                                                                                                                |
 | `snapshot`             | [Snapshot](#snapshot)             | No       | TODO docs                                                                                                                                                                                                               |
 | `tags`                 | string[]                          | No       | Tags associated with dashboard.                                                                                                                                                                                         |
 | `templating`           | [object](#templating)             | No       | TODO docs                                                                                                                                                                                                               |
 | `time`                 | [object](#time)                   | No       | Time range for dashboard, e.g. last 6 hours, last 7 days, etc                                                                                                                                                           |
 | `timepicker`           | [object](#timepicker)             | No       | TODO docs<br/>TODO this appears to be spread all over in the frontend. Concepts will likely need tidying in tandem with schema changes                                                                                  |
-| `timezone`             | string                            | No       | Timezone of dashboard, Possible values are: `browser`, `utc`, ``. Default: `browser`.                                                                                                                                   |
+| `timezone`             | string                            | No       | Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc". Default: `browser`.                                                                                                                             |
 | `title`                | string                            | No       | Title of dashboard.                                                                                                                                                                                                     |
 | `uid`                  | string                            | No       | Unique dashboard identifier that can be generated by anyone. string (8-40)                                                                                                                                              |
 | `version`              | integer                           | No       | Version of the dashboard, incremented each time the dashboard is updated.                                                                                                                                               |

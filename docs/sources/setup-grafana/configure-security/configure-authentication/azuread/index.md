@@ -132,6 +132,7 @@ If the setting is set to `false`, the user is assigned the role of `Admin` of th
 name = Azure AD
 enabled = true
 allow_sign_up = true
+auto_login = false
 client_id = APPLICATION_ID
 client_secret = CLIENT_SECRET
 scopes = openid email profile
@@ -188,6 +189,15 @@ The `allowed_domains` option limits access to users who belong to specific domai
 
 ```
 allowed_domains = mycompany.com mycompany.org
+```
+
+### Configure automatic login
+
+Set `auto_login` option to true to attempt login automatically, skipping the login screen.
+This setting is ignored if multiple auth providers are configured to use auto login.
+
+```
+auto_login = true
 ```
 
 ### Team Sync (Enterprise only)

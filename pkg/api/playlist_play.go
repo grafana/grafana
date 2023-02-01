@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	_ "github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/playlist"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -20,17 +19,18 @@ func (hs *HTTPServer) populateDashboardsByID(ctx context.Context, dashboardByIDs
 
 	if len(dashboardByIDs) > 0 {
 		dashboardQuery := dashboards.GetDashboardsQuery{DashboardIDs: dashboardByIDs}
-		if err := hs.DashboardService.GetDashboards(ctx, &dashboardQuery); err != nil {
+		dashboardQueryResult, err := hs.DashboardService.GetDashboards(ctx, &dashboardQuery)
+		if err != nil {
 			return result, err
 		}
 
-		for _, item := range dashboardQuery.Result {
+		for _, item := range dashboardQueryResult {
 			result = append(result, dtos.PlaylistDashboard{
 				Id:    item.ID,
 				Slug:  item.Slug,
 				Title: item.Title,
 				Uri:   "db/" + item.Slug,
-				Url:   models.GetDashboardUrl(item.UID, item.Slug),
+				Url:   dashboards.GetDashboardURL(item.UID, item.Slug),
 				Order: dashboardIDOrder[item.ID],
 			})
 		}

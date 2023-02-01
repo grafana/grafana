@@ -7,9 +7,9 @@ import (
 
 	"golang.org/x/oauth2"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -113,7 +113,7 @@ func (s *FakeUserAuthTokenService) BatchRevokeAllUserTokens(ctx context.Context,
 
 type FakeOAuthTokenService struct {
 	passThruEnabled  bool
-	ExpectedAuthUser *models.UserAuth
+	ExpectedAuthUser *login.UserAuth
 	ExpectedErrors   map[string]error
 }
 
@@ -130,7 +130,7 @@ func (ts *FakeOAuthTokenService) IsOAuthPassThruEnabled(*datasources.DataSource)
 	return ts.passThruEnabled
 }
 
-func (ts *FakeOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUser) (*models.UserAuth, bool, error) {
+func (ts *FakeOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUser) (*login.UserAuth, bool, error) {
 	if ts.ExpectedAuthUser != nil {
 		return ts.ExpectedAuthUser, true, nil
 	}
@@ -140,14 +140,14 @@ func (ts *FakeOAuthTokenService) HasOAuthEntry(context.Context, *user.SignedInUs
 	return nil, false, nil
 }
 
-func (ts *FakeOAuthTokenService) InvalidateOAuthTokens(ctx context.Context, usr *models.UserAuth) error {
+func (ts *FakeOAuthTokenService) InvalidateOAuthTokens(ctx context.Context, usr *login.UserAuth) error {
 	ts.ExpectedAuthUser.OAuthAccessToken = ""
 	ts.ExpectedAuthUser.OAuthRefreshToken = ""
 	ts.ExpectedAuthUser.OAuthExpiry = time.Time{}
 	return nil
 }
 
-func (ts *FakeOAuthTokenService) TryTokenRefresh(ctx context.Context, usr *models.UserAuth) error {
+func (ts *FakeOAuthTokenService) TryTokenRefresh(ctx context.Context, usr *login.UserAuth) error {
 	if err, ok := ts.ExpectedErrors["TryTokenRefresh"]; ok {
 		return err
 	}

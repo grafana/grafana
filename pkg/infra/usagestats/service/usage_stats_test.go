@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -214,11 +215,15 @@ func createService(t *testing.T, cfg setting.Cfg, sqlStore db.DB, withDB bool) *
 		sqlStore = db.InitTestDB(t)
 	}
 
-	return ProvideService(
+	service, _ := ProvideService(
 		&cfg,
 		&plugins.FakePluginStore{},
 		kvstore.ProvideService(sqlStore),
 		routing.NewRouteRegister(),
 		tracing.InitializeTracerForTest(),
+		actest.FakeAccessControl{ExpectedDisabled: true},
+		actest.FakeService{},
 	)
+
+	return service
 }

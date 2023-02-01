@@ -2,7 +2,7 @@ import { useObservable } from 'react-use';
 import { BehaviorSubject } from 'rxjs';
 
 import { AppEvents, NavModelItem, UrlQueryValue } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
+import { locationService, reportInteraction } from '@grafana/runtime';
 import appEvents from 'app/core/app_events';
 import { t } from 'app/core/internationalization';
 import store from 'app/core/store';
@@ -71,7 +71,9 @@ export class AppChromeService {
   }
 
   onToggleMegaMenu = () => {
-    this.update({ megaMenuOpen: !this.state.getValue().megaMenuOpen });
+    const isOpen = !this.state.getValue().megaMenuOpen;
+    reportInteraction('grafana_toggle_menu_clicked', { action: isOpen ? 'open' : 'close' });
+    this.update({ megaMenuOpen: isOpen });
   };
 
   setMegaMenu = (megaMenuOpen: boolean) => {

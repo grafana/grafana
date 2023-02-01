@@ -1227,8 +1227,8 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					Required:     true,
 				},
 				{
-					Label:        "Message Template",
-					Description:  "Message template to use. Markdown is supported.",
+					Label:        "Notification Template",
+					Description:  "Notification template to use. Markdown is supported.",
 					Element:      ElementTypeInput,
 					InputType:    InputTypeText,
 					Placeholder:  `{{ template "default.message" . }}`,

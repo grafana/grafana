@@ -20,13 +20,6 @@ func testIntegrationPreferencesDataAccess(t *testing.T, fn getStore) {
 	weekStartOne := "1"
 	ss := db.InitTestDB(t)
 	prefStore := fn(ss)
-	orgNavbarPreferences := pref.NavbarPreference{
-		SavedItems: []pref.NavLink{{
-			ID:   "alerting",
-			Text: "Alerting",
-			Url:  "/alerting",
-		}},
-	}
 
 	t.Run("Get with saved org and user home dashboard returns not found", func(t *testing.T) {
 		query := &pref.Preference{OrgID: 1, UserID: 1, TeamID: 2}
@@ -124,7 +117,7 @@ func testIntegrationPreferencesDataAccess(t *testing.T, fn getStore) {
 			Timezone:        "browser",
 			HomeDashboardID: 5,
 			WeekStart:       &weekStartOne,
-			JSONData:        &pref.PreferenceJSONData{Navbar: orgNavbarPreferences},
+			JSONData:        &pref.PreferenceJSONData{},
 			Created:         time.Now(),
 			Updated:         time.Now(),
 		})

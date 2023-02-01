@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { omit } from 'lodash';
 import React from 'react';
@@ -59,7 +59,7 @@ const queryType: ResourcePickerQueryType = 'logs';
 
 const defaultProps = {
   templateVariables: [],
-  resources: [noResourceURI],
+  resources: [],
   resourcePickerData: createMockResourcePickerData(),
   onCancel: noop,
   onApply: noop,
@@ -70,6 +70,8 @@ const defaultProps = {
     ResourceRowType.Variable,
   ],
   queryType,
+  disableRow: jest.fn(),
+  renderAdvanced: jest.fn(),
 };
 
 describe('AzureMonitor ResourcePicker', () => {
@@ -103,6 +105,9 @@ describe('AzureMonitor ResourcePicker', () => {
 
   it('should show scroll down to a resource and mark it as selected if there is one saved', async () => {
     render(<ResourcePicker {...defaultProps} resources={[singleResourceSelectionURI]} />);
+    await waitFor(() => {
+      expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+    });
     const resourceCheckboxes = await screen.findAllByLabelText('db-server');
     expect(resourceCheckboxes.length).toBe(2);
     expect(resourceCheckboxes[0]).toBeChecked();
@@ -140,6 +145,7 @@ describe('AzureMonitor ResourcePicker', () => {
     expect(subscriptionCheckbox).not.toBeChecked();
     subscriptionCheckbox.click();
     const applyButton = screen.getByRole('button', { name: 'Apply' });
+    expect(applyButton).toBeEnabled();
     applyButton.click();
     expect(onApply).toBeCalledTimes(1);
     expect(onApply).toBeCalledWith(['/subscriptions/def-123']);
@@ -173,88 +179,63 @@ describe('AzureMonitor ResourcePicker', () => {
     expect(onApply).toBeCalledWith([]);
   });
 
-  it('should call onApply with a new subscription when a user clicks on the checkbox in the row', async () => {
+  it('should call onApply with a new resource when a user clicks on the checkbox in the row', async () => {
     const onApply = jest.fn();
-    render(<ResourcePicker {...defaultProps} onApply={onApply} resources={[]} />);
-    const subscriptionCheckbox = await screen.findByLabelText('Primary Subscription');
-    expect(subscriptionCheckbox).toBeInTheDocument();
-    expect(subscriptionCheckbox).not.toBeChecked();
-    subscriptionCheckbox.click();
+    render(<ResourcePicker {...defaultProps} queryType={'metrics'} onApply={onApply} resources={[]} />);
+
+    const subscriptionButton = await screen.findByRole('button', { name: 'Expand Primary Subscription' });
+    expect(subscriptionButton).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Expand A Great Resource Group' })).not.toBeInTheDocument();
+    subscriptionButton.click();
+
+    const resourceGroupButton = await screen.findByRole('button', { name: 'Expand A Great Resource Group' });
+    resourceGroupButton.click();
+    const checkbox = await screen.findByLabelText('web-server');
+    await userEvent.click(checkbox);
+    expect(checkbox).toBeChecked();
     const applyButton = screen.getByRole('button', { name: 'Apply' });
     applyButton.click();
+
     expect(onApply).toBeCalledTimes(1);
-    expect(onApply).toBeCalledWith([{ subscription: 'def-123' }]);
+    expect(onApply).toBeCalledWith([
+      {
+        metricNamespace: 'Microsoft.Compute/virtualMachines',
+        region: 'northeurope',
+        resourceGroup: 'dev-3',
+        resourceName: 'web-server',
+        subscription: 'def-456',
+      },
+    ]);
   });
 
   it('should call onApply removing a resource element', async () => {
     const onApply = jest.fn();
-    render(<ResourcePicker {...defaultProps} onApply={onApply} resources={[{ subscription: 'def-123' }]} />);
-    const subscriptionCheckbox = await screen.findAllByLabelText('Primary Subscription');
-    expect(subscriptionCheckbox).toHaveLength(2);
-    expect(subscriptionCheckbox.at(0)).toBeChecked();
-    subscriptionCheckbox.at(0)?.click();
+    render(
+      <ResourcePicker
+        {...defaultProps}
+        onApply={onApply}
+        resources={[
+          {
+            metricNamespace: 'Microsoft.Compute/virtualMachines',
+            region: 'northeurope',
+            resourceGroup: 'dev-3',
+            resourceName: 'web-server',
+            subscription: 'def-456',
+          },
+        ]}
+      />
+    );
+    await waitFor(() => {
+      expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
+    });
+    const checkbox = await screen.findAllByLabelText('web-server');
+    expect(checkbox).toHaveLength(2);
+    expect(checkbox.at(0)).toBeChecked();
+    checkbox.at(0)?.click();
     const applyButton = screen.getByRole('button', { name: 'Apply' });
     applyButton.click();
     expect(onApply).toBeCalledTimes(1);
     expect(onApply).toBeCalledWith([]);
-  });
-
-  it('should call onApply with a new subscription uri when a user types it in the selection box', async () => {
-    const onApply = jest.fn();
-    render(<ResourcePicker {...defaultProps} onApply={onApply} />);
-    const subscriptionCheckbox = await screen.findByLabelText('Primary Subscription');
-    expect(subscriptionCheckbox).toBeInTheDocument();
-    expect(subscriptionCheckbox).not.toBeChecked();
-
-    const advancedSection = screen.getByText('Advanced');
-    advancedSection.click();
-
-    const advancedInput = await screen.findByLabelText('Resource URI');
-    await userEvent.type(advancedInput, '/subscriptions/def-123');
-
-    const applyButton = screen.getByRole('button', { name: 'Apply' });
-    applyButton.click();
-
-    expect(onApply).toBeCalledTimes(1);
-    expect(onApply).toBeCalledWith(['/subscriptions/def-123']);
-  });
-
-  it('should call onApply with a new subscription when a user types it in the selection box', async () => {
-    const onApply = jest.fn();
-    render(<ResourcePicker {...defaultProps} onApply={onApply} resources={[{}]} />);
-    const subscriptionCheckbox = await screen.findByLabelText('Primary Subscription');
-    expect(subscriptionCheckbox).toBeInTheDocument();
-    expect(subscriptionCheckbox).not.toBeChecked();
-
-    const advancedSection = screen.getByText('Advanced');
-    advancedSection.click();
-
-    const advancedInput = await screen.findByLabelText('Subscription');
-    await userEvent.type(advancedInput, 'def-123');
-
-    const applyButton = screen.getByRole('button', { name: 'Apply' });
-    applyButton.click();
-
-    expect(onApply).toBeCalledTimes(1);
-    expect(onApply).toBeCalledWith([{ subscription: 'def-123' }]);
-  });
-
-  it('should show unselect a subscription if the value is manually edited', async () => {
-    render(<ResourcePicker {...defaultProps} resources={[{ subscription: 'def-456' }]} />);
-    const subscriptionCheckboxes = await screen.findAllByLabelText('Dev Subscription');
-    expect(subscriptionCheckboxes.length).toBe(2);
-    expect(subscriptionCheckboxes[0]).toBeChecked();
-    expect(subscriptionCheckboxes[1]).toBeChecked();
-
-    const advancedSection = screen.getByText('Advanced');
-    advancedSection.click();
-
-    const advancedInput = await screen.findByLabelText('Subscription');
-    await userEvent.type(advancedInput, 'def-123');
-
-    const updatedCheckboxes = await screen.findAllByLabelText('Dev Subscription');
-    expect(updatedCheckboxes.length).toBe(1);
-    expect(updatedCheckboxes[0]).not.toBeChecked();
   });
 
   it('renders a search field which show search results when there are results', async () => {
@@ -355,6 +336,29 @@ describe('AzureMonitor ResourcePicker', () => {
     expect(error).toHaveTextContent(
       'Unable to resolve a list of valid metric namespaces. Validate the datasource configuration is correct and required permissions have been granted for all subscriptions. Grafana requires at least the Reader role to be assigned.'
     );
+  });
+
+  it('display a row for a selected resource even if it is not part of the current rows', async () => {
+    const resourcePickerData = createMockResourcePickerData([]);
+    resourcePickerData.fetchInitialRows = jest.fn().mockResolvedValue([]);
+    render(
+      <ResourcePicker
+        {...defaultProps}
+        resources={[
+          {
+            metricNamespace: 'Microsoft.Compute/virtualMachines',
+            region: 'northeurope',
+            resourceGroup: 'dev-3',
+            resourceName: 'web-server',
+            subscription: 'def-456',
+          },
+        ]}
+        resourcePickerData={resourcePickerData}
+      />
+    );
+    const checkbox = await screen.findAllByLabelText('web-server');
+    expect(checkbox).toHaveLength(1);
+    expect(checkbox.at(0)).toBeChecked();
   });
 
   describe('when rendering resource picker without any selectable entry types', () => {
