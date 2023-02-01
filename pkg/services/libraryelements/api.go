@@ -56,7 +56,6 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 			cmd.FolderID = folder.ID
 		}
 	}
-
 	element, err := l.createLibraryElement(c.Req.Context(), c.SignedInUser, cmd)
 	if err != nil {
 		return toLibraryElementError(err, "Failed to create library element")
@@ -253,7 +252,7 @@ func toLibraryElementError(err error, message string) response.Response {
 	if errors.Is(err, model.ErrLibraryElementDashboardNotFound) {
 		return response.Error(404, model.ErrLibraryElementDashboardNotFound.Error(), err)
 	}
-	if errors.Is(err, model.ErrLibraryElementInvalidUID) {
+	if errors.Is(err, model.ErrLibraryElementVersionMismatch) {
 		return response.Error(412, model.ErrLibraryElementVersionMismatch.Error(), err)
 	}
 	if errors.Is(err, dashboards.ErrFolderNotFound) {
