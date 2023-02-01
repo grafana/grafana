@@ -41,6 +41,7 @@ import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { InspectTab } from 'app/features/inspector/types';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { partitionByValuesTransformer } from 'app/features/transformers/partitionByValues/partitionByValues';
 import { applyFilterFromTable } from 'app/features/variables/adhoc/actions';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
 import { dispatch } from 'app/store/store';
@@ -488,6 +489,27 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     // Yes this is called ever render for a function that is triggered on every mouse move
     this.eventFilter.onlyLocal = dashboard.graphTooltip === 0;
 
+    if (PanelComponent.name === 'TimeSeriesPanel' && data.series.every((df) => df.meta?.type === 'timeseries-long')) {
+      const stringFields = data.series[0].fields.filter((field) => field.type === 'string').map((field) => field.name);
+
+      const options = {
+        fields: stringFields,
+        naming: {
+          asLabels: true,
+          append: false,
+          withNames: false,
+          separator1: '=',
+          separator2: ' ',
+        },
+      };
+
+      const ctx = {
+        interpolate: (value: string) => value,
+      };
+
+      data.series = partitionByValuesTransformer.transformer(options, ctx)(data.series);
+    }
+
     return (
       <>
         <PanelContextProvider value={this.state.context}>
@@ -548,6 +570,27 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     this.eventFilter.onlyLocal = dashboard.graphTooltip === 0;
 
     const timeZone = this.props.timezone || this.props.dashboard.getTimezone();
+
+    if (PanelComponent.name === 'TimeSeriesPanel' && data.series.every((df) => df.meta?.type === 'timeseries-long')) {
+      const stringFields = data.series[0].fields.filter((field) => field.type === 'string').map((field) => field.name);
+
+      const options = {
+        fields: stringFields,
+        naming: {
+          asLabels: true,
+          append: false,
+          withNames: false,
+          separator1: '=',
+          separator2: ' ',
+        },
+      };
+
+      const ctx = {
+        interpolate: (value: string) => value,
+      };
+
+      data.series = partitionByValuesTransformer.transformer(options, ctx)(data.series);
+    }
 
     return (
       <>
