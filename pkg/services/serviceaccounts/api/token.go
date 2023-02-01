@@ -175,7 +175,8 @@ func (api *ServiceAccountsAPI) CreateToken(c *contextmodel.ReqContext) response.
 
 	cmd.Key = newKeyInfo.HashedKey
 
-	if err := api.service.AddServiceAccountToken(c.Req.Context(), saID, &cmd); err != nil {
+	apiKey, err := api.service.AddServiceAccountToken(c.Req.Context(), saID, &cmd)
+	if err != nil {
 		if errors.Is(err, database.ErrInvalidTokenExpiration) {
 			return response.Error(http.StatusBadRequest, err.Error(), nil)
 		}
@@ -186,8 +187,8 @@ func (api *ServiceAccountsAPI) CreateToken(c *contextmodel.ReqContext) response.
 	}
 
 	result := &dtos.NewApiKeyResult{
-		ID:   cmd.Result.Id,
-		Name: cmd.Result.Name,
+		ID:   apiKey.Id,
+		Name: apiKey.Name,
 		Key:  newKeyInfo.ClientSecret,
 	}
 

@@ -56,7 +56,7 @@ validate-api-spec: $(MERGED_SPEC_TARGET) $(SWAGGER) ## Validate API spec
 	$(SWAGGER) validate $(<)
 
 clean-api-spec:
-	rm $(SPEC_TARGET) $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
+	rm -f $(SPEC_TARGET) $(MERGED_SPEC_TARGET) $(OAPI_SPEC_TARGET)
 
 ##@ OpenAPI 3
 OAPI_SPEC_TARGET = public/openapi3.json

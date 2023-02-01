@@ -278,7 +278,7 @@ steps:
   image: grafana/build-container:v1.7.1
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:v1.7.1
@@ -1178,7 +1178,7 @@ steps:
   image: grafana/build-container:v1.7.1
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:v1.7.1
@@ -2406,7 +2406,7 @@ steps:
   image: grafana/build-container:v1.7.1
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:v1.7.1
@@ -3079,7 +3079,7 @@ steps:
   image: grafana/build-container:v1.7.1
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:v1.7.1
@@ -3924,8 +3924,8 @@ steps:
   - name: docker
     path: /var/run/docker.sock
 - commands:
-  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana/grafana-oss
-    --version-tag ${DRONE_TAG}
+  - ./bin/grabpl artifacts docker publish --dockerhub-repo grafana/grafana-oss --version-tag
+    ${DRONE_TAG}
   depends_on:
   - fetch-images-oss
   environment:
@@ -3936,7 +3936,7 @@ steps:
     GCP_KEY:
       from_secret: gcp_key
   image: google/cloud-sdk
-  name: publish-images-grafana/grafana-oss
+  name: publish-images-grafana-oss
   volumes:
   - name: docker
     path: /var/run/docker.sock
@@ -5089,7 +5089,7 @@ steps:
   image: grafana/build-container:v1.7.1
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:v1.7.1
@@ -5747,7 +5747,7 @@ steps:
   image: grafana/build-container:v1.7.1
   name: wire-install
 - commands:
-  - go test -short -covermode=atomic -timeout=5m ./pkg/...
+  - go test -tags requires_buildifer -short -covermode=atomic -timeout=5m ./pkg/...
   depends_on:
   - wire-install
   image: grafana/build-container:v1.7.1
@@ -6516,6 +6516,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: eba6c445aae6d75df0a2963d5e1e90c44474587a9e1d11e21bf2ba4d99f14da8
+hmac: 34e5513fe0155e3ca6a7e0cf8b908cc67a0565c963ef3c55688bff2837392900
 
 ...
