@@ -297,7 +297,7 @@ export function getStreamSelectorsFromQuery(query: string): string[] {
   return labelMatchers;
 }
 
-export function partitionTimeRange(range: TimeRange, unit: DurationUnit = 'd'): TimeRange[] {
+export function partitionTimeRange(range: TimeRange, unit: DurationUnit = 'h'): TimeRange[] {
   const delta = range.to.diff(range.from, unit);
 
   if (delta <= 1) {

@@ -1,4 +1,4 @@
-import { cloneDeep, map as lodashMap } from 'lodash';
+import { cloneDeep, map as lodashMap, partition } from 'lodash';
 import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
@@ -75,6 +75,7 @@ import {
   getParserFromQuery,
   isLogsQuery,
   isValidQuery,
+  partitionTimeRange,
 } from './queryUtils';
 import { sortDataFrameByTime } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
@@ -280,16 +281,27 @@ export class LokiDatasource
 
     if (fixedRequest.liveStreaming) {
       return this.runLiveQueryThroughBackend(fixedRequest);
-    } else {
-      const startTime = new Date();
-      return super.query(fixedRequest).pipe(
-        // in case of an empty query, this is somehow run twice. `share()` is no workaround here as the observable is generated from `of()`.
-        map((response) =>
-          transformBackendResult(response, fixedRequest.targets, this.instanceSettings.jsonData.derivedFields ?? [])
-        ),
-        tap((response) => trackQuery(response, fixedRequest, startTime))
-      );
     }
+
+    // const startTime = new Date();
+    // tap((response) => trackQuery(response, fixedRequest, startTime))
+    const partition = partitionTimeRange(fixedRequest.range);
+
+    const results = new Observable<DataQueryResponse>((subscriber) => {
+      for (const range of partition) {
+        super
+          .query({ ...fixedRequest, range, requestId: `${fixedRequest.requestId}${range.from}` })
+          .pipe(
+            // in case of an empty query, this is somehow run twice. `share()` is no workaround here as the observable is generated from `of()`.
+            map((response) =>
+              transformBackendResult(response, fixedRequest.targets, this.instanceSettings.jsonData.derivedFields ?? [])
+            )
+          )
+          .subscribe((result) => subscriber.next(result));
+      }
+    });
+
+    return results;
   }
 
   runLiveQueryThroughBackend(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
