@@ -76,7 +76,7 @@ def identify_runner_step(platform = "linux"):
         }
 
 def enterprise_setup_step(source = "${DRONE_SOURCE_BRANCH}", canFail = True):
-    step = clone_enterprise_step(source = source, target = "${DRONE_TARGET_BRANCH}", canFail = canFail, location = "../grafana-enterprise")
+    step = clone_enterprise_step_pr(source = source, target = "${DRONE_TARGET_BRANCH}", canFail = canFail, location = "../grafana-enterprise")
     step["commands"] += [
         "cd ../",
         "ln -s src grafana",
@@ -86,7 +86,29 @@ def enterprise_setup_step(source = "${DRONE_SOURCE_BRANCH}", canFail = True):
 
     return step
 
-def clone_enterprise_step(source = "${DRONE_COMMIT}", target = "main", canFail = False, location = "grafana-enterprise"):
+def clone_enterprise_step(source = "${DRONE_COMMIT}", target = "main"):
+    """Clone the enterprise source into the ./grafana-enterprise directory.
+
+    Args:
+      source: controls which revision of grafana-enterprise is checked out, if it exists. The name 'source' derives from the 'source branch' of a pull request.
+      target: controls which revision of grafana-enterprise is checked out, if it 'source' does not exist. The name 'target' derives from the 'target branch' of a pull request. If this does not exist, then 'main' will be checked out.
+    Returns:
+      Drone step.
+    """
+    step = {
+        "name": "clone-enterprise",
+        "image": build_image,
+        "environment": {
+            "GITHUB_TOKEN": from_secret("github_token"),
+        },
+        "commands": [
+            'git clone "https://$${GITHUB_TOKEN}@github.com/grafana/grafana-enterprise.git"',
+        ],
+    }
+
+    return step
+
+def clone_enterprise_step_pr(source = "${DRONE_COMMIT}", target = "main", canFail = False, location = "grafana-enterprise"):
     """Clone the enterprise source into the ./grafana-enterprise directory.
 
     Args:
