@@ -32,12 +32,13 @@ func (hs *HTTPServer) ValidateOrgAlert(c *contextmodel.ReqContext) {
 	}
 	query := alertmodels.GetAlertByIdQuery{Id: id}
 
-	if err := hs.AlertEngine.AlertStore.GetAlertById(c.Req.Context(), &query); err != nil {
+	res, err := hs.AlertEngine.AlertStore.GetAlertById(c.Req.Context(), &query)
+	if err != nil {
 		c.JsonApiErr(404, "Alert not found", nil)
 		return
 	}
 
-	if c.OrgID != query.Result.OrgId {
+	if c.OrgID != res.OrgId {
 		c.JsonApiErr(403, "You are not allowed to edit/view alert", nil)
 		return
 	}
@@ -64,11 +65,12 @@ func (hs *HTTPServer) GetAlertStatesForDashboard(c *contextmodel.ReqContext) res
 		DashboardId: c.QueryInt64("dashboardId"),
 	}
 
-	if err := hs.AlertEngine.AlertStore.GetAlertStatesForDashboard(c.Req.Context(), &query); err != nil {
+	res, err := hs.AlertEngine.AlertStore.GetAlertStatesForDashboard(c.Req.Context(), &query)
+	if err != nil {
 		return response.Error(500, "Failed to fetch alert states", err)
 	}
 
-	return response.JSON(http.StatusOK, query.Result)
+	return response.JSON(http.StatusOK, res)
 }
 
 // swagger:route GET /alerts legacy_alerts getAlerts
@@ -145,15 +147,16 @@ func (hs *HTTPServer) GetAlerts(c *contextmodel.ReqContext) response.Response {
 		query.State = states
 	}
 
-	if err := hs.AlertEngine.AlertStore.HandleAlertsQuery(c.Req.Context(), &query); err != nil {
+	res, err := hs.AlertEngine.AlertStore.HandleAlertsQuery(c.Req.Context(), &query)
+	if err != nil {
 		return response.Error(500, "List alerts failed", err)
 	}
 
-	for _, alert := range query.Result {
+	for _, alert := range res {
 		alert.Url = dashboards.GetDashboardURL(alert.DashboardUid, alert.DashboardSlug)
 	}
 
-	return response.JSON(http.StatusOK, query.Result)
+	return response.JSON(http.StatusOK, res)
 }
 
 // swagger:route POST /alerts/test legacy_alerts testAlert
@@ -227,11 +230,12 @@ func (hs *HTTPServer) GetAlert(c *contextmodel.ReqContext) response.Response {
 	}
 	query := alertmodels.GetAlertByIdQuery{Id: id}
 
-	if err := hs.AlertEngine.AlertStore.GetAlertById(c.Req.Context(), &query); err != nil {
+	res, err := hs.AlertEngine.AlertStore.GetAlertById(c.Req.Context(), &query)
+	if err != nil {
 		return response.Error(500, "List alerts failed", err)
 	}
 
-	return response.JSON(http.StatusOK, &query.Result)
+	return response.JSON(http.StatusOK, &res)
 }
 
 func (hs *HTTPServer) GetAlertNotifiers(ngalertEnabled bool) func(*contextmodel.ReqContext) response.Response {
@@ -695,11 +699,12 @@ func (hs *HTTPServer) PauseAlert(legacyAlertingEnabled *bool) func(c *contextmod
 		result["alertId"] = alertID
 
 		query := alertmodels.GetAlertByIdQuery{Id: alertID}
-		if err := hs.AlertEngine.AlertStore.GetAlertById(c.Req.Context(), &query); err != nil {
+		res, err := hs.AlertEngine.AlertStore.GetAlertById(c.Req.Context(), &query)
+		if err != nil {
 			return response.Error(500, "Get Alert failed", err)
 		}
 
-		guardian, err := guardian.New(c.Req.Context(), query.Result.DashboardId, c.OrgID, c.SignedInUser)
+		guardian, err := guardian.New(c.Req.Context(), res.DashboardId, c.OrgID, c.SignedInUser)
 		if err != nil {
 			return response.ErrOrFallback(http.StatusInternalServerError, "Error while creating permission guardian", err)
 		}
@@ -712,11 +717,11 @@ func (hs *HTTPServer) PauseAlert(legacyAlertingEnabled *bool) func(c *contextmod
 		}
 
 		// Alert state validation
-		if query.Result.State != alertmodels.AlertStatePaused && !dto.Paused {
+		if res.State != alertmodels.AlertStatePaused && !dto.Paused {
 			result["state"] = "un-paused"
 			result["message"] = "Alert is already un-paused"
 			return response.JSON(http.StatusOK, result)
-		} else if query.Result.State == alertmodels.AlertStatePaused && dto.Paused {
+		} else if res.State == alertmodels.AlertStatePaused && dto.Paused {
 			result["state"] = alertmodels.AlertStatePaused
 			result["message"] = "Alert is already paused"
 			return response.JSON(http.StatusOK, result)
