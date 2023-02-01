@@ -64,11 +64,24 @@ export const Table = memo((props: Props) => {
   const [footerItems, setFooterItems] = useState<FooterItem[] | undefined>(footerValues);
 
   const footerHeight = useMemo(() => {
-    if (!footerItems?.length) {
+    const EXTENDED_ROW_HEIGHT = FOOTER_ROW_HEIGHT;
+    let length = 0;
+
+    if (!footerItems) {
       return 0;
     }
 
-    return FOOTER_ROW_HEIGHT;
+    for (const fv of footerItems) {
+      if (Array.isArray(fv) && fv.length > length) {
+        length = fv.length;
+      }
+    }
+
+    if (length > 1) {
+      return EXTENDED_ROW_HEIGHT * length;
+    }
+
+    return EXTENDED_ROW_HEIGHT;
   }, [footerItems]);
 
   // React table data array. This data acts just like a dummy array to let react-table know how many rows exist
