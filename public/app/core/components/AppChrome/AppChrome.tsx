@@ -3,7 +3,7 @@ import React, { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { ToolbarButton, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { KioskMode } from 'app/types';
 
@@ -48,16 +48,6 @@ export function AppChrome({ children }: Props) {
           />
         </div>
       )}
-      {state.chromeless && state.kioskMode && (
-        <ToolbarButton
-          tooltip="Exit kiosk mode"
-          variant="canvas"
-          iconOnly
-          icon="monitor"
-          className={styles.exitKiosk}
-          onClick={() => chrome.exitKioskMode()}
-        />
-      )}
       <div className={contentClass}>{children}</div>
       {!state.chromeless && <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />}
     </main>
@@ -82,13 +72,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     contentChromeless: css({
       paddingTop: 0,
-    }),
-    exitKiosk: css({
-      boxShadow: theme.shadows.z1,
-      position: 'fixed',
-      right: theme.spacing(2),
-      top: theme.spacing(2),
-      zIndex: theme.zIndex.tooltip,
     }),
     topNav: css({
       display: 'flex',
