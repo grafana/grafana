@@ -429,5 +429,10 @@ var (
 			State:        FeatureStateAlpha,
 			FrontendOnly: true,
 		},
+		{
+			Name:        "logsXCacheHeader",
+			Description: "Adds the x-cache header to the context logger logs when present",
+			State:       FeatureStateStable,
+		},
 	}
 )

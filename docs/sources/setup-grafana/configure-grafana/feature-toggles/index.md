@@ -32,6 +32,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `accessTokenExpirationCheck`        | Enable OAuth access_token expiration check and token refresh using the refresh_token |                    |
 | `disablePrometheusExemplarSampling` | Disable Prometheus examplar sampling                                                 |                    |
 | `logsSampleInExplore`               | Enables access to the logs sample feature in Explore                                 | Yes                |
+| `logsXCacheHeader`                  | Adds the x-cache header to the context logger logs when present                      |                    |
 
 ## Beta feature toggles
 

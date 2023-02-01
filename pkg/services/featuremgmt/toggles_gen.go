@@ -310,4 +310,8 @@ const (
 	// FlagLogsContextDatasourceUi
 	// Allow datasource to provide custom UI for context view
 	FlagLogsContextDatasourceUi = "logsContextDatasourceUi"
+
+	// FlagLogsXCacheHeader
+	// Adds the x-cache header to the context logger logs when present
+	FlagLogsXCacheHeader = "logsXCacheHeader"
 )
