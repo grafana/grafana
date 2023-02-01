@@ -88,11 +88,16 @@ const ResourcePicker = ({
 
     const sanitized = internalSelected.filter((r) => isValid(r));
     const found = internalSelected && findRows(rows, resourcesToStrings(sanitized));
+    if (sanitized?.length > found.length) {
+      // Not all the selected items are in the current rows, so we need to generate the row
+      // information for those.
+      return setSelectedRows(resourcePickerData.parseRows(sanitized));
+    }
     if (found && found.length) {
       return setSelectedRows(found);
     }
     return setSelectedRows([]);
-  }, [internalSelected, rows]);
+  }, [internalSelected, rows, resourcePickerData]);
 
   // Request resources for an expanded resource group
   const requestNestedRows = useCallback(
