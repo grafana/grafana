@@ -371,7 +371,6 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, enabledPlugin
 				dto.ID = grafanads.DatasourceID
 				dto.UID = grafanads.DatasourceUID
 			}
-
 			dataSources[ds.Name] = dto
 		}
 	}

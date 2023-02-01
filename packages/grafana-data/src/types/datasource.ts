@@ -153,7 +153,6 @@ interface PluginMetaQueryOptions {
 interface PluginQueryCachingConfig {
   enabled?: boolean;
   TTLMs?: number;
-  useDefaultTTL?: boolean;
 }
 
 export interface DataSourcePluginComponents<

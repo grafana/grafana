@@ -291,8 +291,7 @@ type Permission struct {
 	Scope  string `json:"scope"`
 }
 
-type EnterpriseCachingConfig struct {
-	Enabled       bool  `json:"enabled"`
-	TTLMS         int64 `json:"TTLMs"`
-	UseDefaultTTL bool  `json:"useDefaultTTL"`
+type QueryCachingConfig struct {
+	Enabled bool  `json:"enabled"`
+	TTLMS   int64 `json:"TTLMs"`
 }
