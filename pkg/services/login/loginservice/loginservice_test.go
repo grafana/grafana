@@ -137,6 +137,28 @@ func Test_teamSync(t *testing.T) {
 	})
 }
 
+func TestUpsertUser_crashOnLog_issue62538(t *testing.T) {
+	authInfoMock := &logintest.AuthInfoServiceFake{}
+	authInfoMock.ExpectedError = user.ErrUserNotFound
+	loginsvc := Implementation{
+		QuotaService:    quotatest.New(false, nil),
+		AuthInfoService: authInfoMock,
+	}
+
+	email := "test_user@example.org"
+	upsertCmd := &login.UpsertUserCommand{
+		ExternalUser:     &login.ExternalUserInfo{Email: email},
+		UserLookupParams: login.UserLookupParams{Email: &email},
+		SignupAllowed:    false,
+	}
+
+	var err error
+	require.NotPanics(t, func() {
+		err = loginsvc.UpsertUser(context.Background(), upsertCmd)
+	})
+	require.ErrorIs(t, err, login.ErrSignupNotAllowed)
+}
+
 func createSimpleUser() user.User {
 	user := user.User{
 		ID: 1,

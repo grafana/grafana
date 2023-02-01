@@ -28,7 +28,7 @@ func TestStore_UsageStats(t *testing.T) {
 		SecondsToLive: 0,
 	}
 
-	err = store.AddServiceAccountToken(context.Background(), sa.ID, &cmd)
+	_, err = store.AddServiceAccountToken(context.Background(), sa.ID, &cmd)
 	require.NoError(t, err)
 
 	stats, err := store.GetUsageMetrics(context.Background())
