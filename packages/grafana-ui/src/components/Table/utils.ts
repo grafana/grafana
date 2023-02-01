@@ -339,8 +339,7 @@ export function getFooterItems(
     const length = values.length;
     // Build the additional field that will correct the off-by-one footer issue.
     const fieldToAdd = { id: '0', field: buildFieldsForOptionalRowNums(length) };
-    // unshift() the new field to the data.
-    filterFields.unshift(fieldToAdd);
+    filterFields = [fieldToAdd, ...filterFields];
   }
 
   return filterFields.map((data, i) => {
