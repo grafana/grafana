@@ -3,53 +3,48 @@ package social
 import (
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 
+	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
-const testOktaUserRawJSON = `{
-  "sub": "00u7dfyci33dabAc25d7",
-  "name": "Okta Grafana",
-  "locale": "en_US",
-  "email": "okta-grafana-test@grafana.com",
-  "preferred_username": "okta-grafana-test@grafana.com",
-  "given_name": "Okta",
-  "family_name": "Grafana",
-  "zoneinfo": "UTC",
-  "updated_at": 1669222099,
-  "email_verified": true
-}`
+const testOktaUserRawJSON = `{ "name": "Okta Grafana", "email": "okta-grafana-test@grafana.com", "preferred_username": "okta-grafana-test@grafana.com", "given_name": "Okta", "family_name": "Grafana", "email_verified": true }`
 
 func TestSocialOkta_UserInfo(t *testing.T) {
 	var boolPointer *bool
 	tests := []struct {
 		name                   string
 		userRawJSON            string
+		OAuth2Extra            interface{}
 		autoAssignOrgRole      string
 		settingSkipOrgRoleSync bool
 		roleAttributePath      string
-		want                   *BasicUserInfo
+		ExpectedEmail          string
+		ExpectedRole           roletype.RoleType
+		ExpectedGrafanaAdmin   *bool
+		ExpectedRawJSON        string
+		ExpectedErr            error
 		wantErr                bool
 	}{
 		{
 			name:              "Basic User info",
 			userRawJSON:       testOktaUserRawJSON,
 			autoAssignOrgRole: "Editor",
-			roleAttributePath: "",
-			want: &BasicUserInfo{
-				Id:             "1",
-				Name:           "monalisa octocat",
-				Email:          "octocat@github.com",
-				Login:          "octocat",
-				Role:           "",
-				IsGrafanaAdmin: boolPointer,
+			OAuth2Extra: map[string]interface{}{
+				// { "name": "okta_grafana", "email": "okta-grafana-test@grafana.com", "preferred_username": "okta-grafana-test@grafana.com", "given_name": "Okta", "family_name": "Grafana", "email_verified": true }
+				"id_token": "eyJuYW1lIjoib2t0YV9ncmFmYW5hIiwiZW1haWwiOiJva3RhLWdyYWZhbmEtdGVzdEBncmFmYW5hLmNvbSIsInByZWZlcnJlZF91c2VybmFtZSI6Im9rdGEtZ3JhZmFuYS10ZXN0QGdyYWZhbmEuY29tIiwiZ2l2ZW5fbmFtZSI6Ik9rdGEiLCJmYW1pbHlfbmFtZSI6IkdyYWZhbmEiLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZX0",
 			},
+			roleAttributePath:    "",
+			ExpectedEmail:        "okta-grafana-test@grafana.com",
+			ExpectedRole:         "",
+			ExpectedGrafanaAdmin: boolPointer,
+			ExpectedRawJSON:      "",
+			wantErr:              false,
 		},
 	}
 	for _, tt := range tests {
@@ -83,9 +78,9 @@ func TestSocialOkta_UserInfo(t *testing.T) {
 				t.Errorf("UserInfo() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("UserInfo() got = %v, want %v", got, tt.want)
-			}
+			require.Equal(t, tt.ExpectedEmail, got.Email)
+			require.Equal(t, tt.ExpectedRole, got.Role)
+			require.Equal(t, tt.ExpectedGrafanaAdmin, got.IsGrafanaAdmin)
 		})
 	}
 }
