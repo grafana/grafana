@@ -1252,6 +1252,8 @@ github.com/gotjosh/dskit v0.0.0-20230131123646-8dda768daa27 h1:rWMt8wsjGjzT/6AX6
 github.com/gotjosh/dskit v0.0.0-20230131123646-8dda768daa27/go.mod h1:ulYLLoSd71AWIjxgifLO86Lndx82Yj+IcV+fFnh8tkI=
 github.com/grafana/alerting v0.0.0-20230125210216-facc6b27b9e0 h1:BzkQNnj+eevX30EMqJiUS1w3CPoGc8kp7pDf/ari/4Y=
 github.com/grafana/alerting v0.0.0-20230125210216-facc6b27b9e0/go.mod h1:NoSLbfmUwE+omWFReFrLtbtOItmvTbuQERJ6XFYp9ME=
+github.com/grafana/alerting v0.0.0-20230203015918-0e4e2675d7aa h1:ue2fctL9LHJWYw9V+R1O/uWLNTfAr/KU1EUFRsqWlK4=
+github.com/grafana/alerting v0.0.0-20230203015918-0e4e2675d7aa/go.mod h1:NoSLbfmUwE+omWFReFrLtbtOItmvTbuQERJ6XFYp9ME=
 github.com/grafana/codejen v0.0.3 h1:tAWxoTUuhgmEqxJPOLtJoxlPBbMULFwKFOcRsPRPXDw=
 github.com/grafana/codejen v0.0.3/go.mod h1:zmwwM/DRyQB7pfuBjTWII3CWtxcXh8LTwAYGfDfpR6s=
 github.com/grafana/cuetsy v0.1.5 h1:mnFwAXdbqCsyL8r7kkdUMJ4kOAR26cxIPmrZj7JzTeY=
