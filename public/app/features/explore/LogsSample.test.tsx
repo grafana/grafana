@@ -136,6 +136,6 @@ describe('LogsSamplePanel', () => {
     expect(splitButton).toBeInTheDocument();
 
     await userEvent.click(splitButton);
-    expect(splitOpen).toHaveBeenCalledWith({ datasourceUid: 'test_uid', query: { refId: 'test_refid' } });
+    expect(splitOpen).toHaveBeenCalledWith({ datasourceUid: 'test_uid', queries: [{ refId: 'test_refid' }] });
   });
 });
