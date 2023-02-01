@@ -51,8 +51,8 @@ func (handler *FakeResultHandler) handle(evalContext *EvalContext) error {
 // A mock implementation of the AlertStore interface, allowing to override certain methods individually
 type AlertStoreMock struct {
 	getAllAlerts                       func(context.Context, *models.GetAllAlertsQuery) error
-	getAlertNotificationsWithUidToSend func(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) error
-	getOrCreateNotificationState       func(ctx context.Context, query *models.GetOrCreateNotificationStateQuery) error
+	getAlertNotificationsWithUidToSend func(ctx context.Context, query *models.GetAlertNotificationsWithUidToSendQuery) ([]*models.AlertNotification, error)
+	getOrCreateNotificationState       func(ctx context.Context, query *models.GetOrCreateNotificationStateQuery) (*models.AlertNotificationState, error)
 }
 
 func (a *AlertStoreMock) GetAlertById(c context.Context, cmd *models.GetAlertByIdQuery) error {
@@ -66,22 +66,22 @@ func (a *AlertStoreMock) GetAllAlertQueryHandler(c context.Context, cmd *models.
 	return nil
 }
 
-func (a *AlertStoreMock) GetAlertNotificationUidWithId(c context.Context, query *models.GetAlertNotificationUidQuery) error {
-	return nil
+func (a *AlertStoreMock) GetAlertNotificationUidWithId(c context.Context, query *models.GetAlertNotificationUidQuery) (res string, err error) {
+	return "", nil
 }
 
-func (a *AlertStoreMock) GetAlertNotificationsWithUidToSend(c context.Context, cmd *models.GetAlertNotificationsWithUidToSendQuery) error {
+func (a *AlertStoreMock) GetAlertNotificationsWithUidToSend(c context.Context, cmd *models.GetAlertNotificationsWithUidToSendQuery) (res []*models.AlertNotification, err error) {
 	if a.getAlertNotificationsWithUidToSend != nil {
 		return a.getAlertNotificationsWithUidToSend(c, cmd)
 	}
-	return nil
+	return nil, nil
 }
 
-func (a *AlertStoreMock) GetOrCreateAlertNotificationState(c context.Context, cmd *models.GetOrCreateNotificationStateQuery) error {
+func (a *AlertStoreMock) GetOrCreateAlertNotificationState(c context.Context, cmd *models.GetOrCreateNotificationStateQuery) (res *models.AlertNotificationState, err error) {
 	if a.getOrCreateNotificationState != nil {
 		return a.getOrCreateNotificationState(c, cmd)
 	}
-	return nil
+	return nil, nil
 }
 
 func (a *AlertStoreMock) GetDashboardUIDById(_ context.Context, _ *dashboards.GetDashboardRefByIDQuery) error {

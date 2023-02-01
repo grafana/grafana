@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	alertmodels "github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -25,9 +26,9 @@ type AlertStore interface {
 	HandleAlertsQuery(context.Context, *alertmodels.GetAlertsQuery) error
 	SetAlertNotificationStateToCompleteCommand(context.Context, *alertmodels.SetAlertNotificationStateToCompleteCommand) error
 	SetAlertNotificationStateToPendingCommand(context.Context, *alertmodels.SetAlertNotificationStateToPendingCommand) error
-	GetAlertNotificationUidWithId(context.Context, *alertmodels.GetAlertNotificationUidQuery) error
-	GetAlertNotificationsWithUidToSend(context.Context, *alertmodels.GetAlertNotificationsWithUidToSendQuery) error
-	GetOrCreateAlertNotificationState(context.Context, *alertmodels.GetOrCreateNotificationStateQuery) error
+	GetAlertNotificationUidWithId(context.Context, *alertmodels.GetAlertNotificationUidQuery) (string, error)
+	GetAlertNotificationsWithUidToSend(context.Context, *alertmodels.GetAlertNotificationsWithUidToSendQuery) ([]*models.AlertNotification, error)
+	GetOrCreateAlertNotificationState(context.Context, *alertmodels.GetOrCreateNotificationStateQuery) (*models.AlertNotificationState, error)
 	SetAlertState(context.Context, *alertmodels.SetAlertStateCommand) error
 	PauseAlert(context.Context, *alertmodels.PauseAlertCommand) error
 	PauseAllAlerts(context.Context, *alertmodels.PauseAllAlertCommand) error
