@@ -39,7 +39,7 @@ load(
 
 # @unused
 def build_e2e(trigger, ver_mode):
-    """Perform e2e building, testing, and publishing."
+    """Perform e2e building, testing, and publishing.
 
     Args:
       trigger: controls which events can trigger the pipeline execution.
@@ -48,6 +48,7 @@ def build_e2e(trigger, ver_mode):
     Returns:
       Drone pipeline.
     """
+
     edition = "oss"
     environment = {"EDITION": edition}
     init_steps = [

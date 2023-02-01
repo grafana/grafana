@@ -5,6 +5,8 @@ package runner
 
 import (
 	"context"
+	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 
 	"github.com/google/wire"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -257,7 +259,8 @@ var wireSet = wire.NewSet(
 	dashboardservice.ProvideDashboardProvisioningService,
 	dashboardservice.ProvideDashboardPluginService,
 	wire.Bind(new(dashboards.Store), new(*dashboardstore.DashboardStore)),
-	wire.Bind(new(dashboards.FolderStore), new(*dashboardstore.DashboardStore)),
+	folderimpl.ProvideDashboardFolderStore,
+	wire.Bind(new(folder.FolderStore), new(*folderimpl.DashboardFolderStoreImpl)),
 	dashboardimportservice.ProvideService,
 	wire.Bind(new(dashboardimport.Service), new(*dashboardimportservice.ImportDashboardService)),
 	plugindashboardsservice.ProvideService,

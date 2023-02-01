@@ -113,6 +113,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 		                  ],
 						  "updated":"2021-02-21T01:10:30Z",
 						  "intervalSeconds":60,
+						  "is_paused":false,
 						  "version":1,
 						  "uid":"uid",
 						  "namespace_uid":"nsuid",
@@ -163,6 +164,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 		                  ],
 						"updated":"2021-02-21T01:10:30Z",
 						"intervalSeconds":60,
+						"is_paused":false,
 						"version":1,
 						"uid":"uid",
 						"namespace_uid":"nsuid",
@@ -236,6 +238,7 @@ func TestIntegrationAlertRulePermissions(t *testing.T) {
 		                  ],
 						  "updated":"2021-02-21T01:10:30Z",
 						  "intervalSeconds":60,
+						  "is_paused":false,
 						  "version":1,
 						  "uid":"uid",
 						  "namespace_uid":"nsuid",
@@ -510,6 +513,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				}],
 				"updated": "2021-02-21T01:10:30Z",
 				"intervalSeconds": 60,
+				"is_paused": false,
 				"version": 1,
 				"uid": "uid",
 				"namespace_uid": "nsuid",
@@ -543,6 +547,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				}],
 				"updated": "2021-02-21T01:10:30Z",
 				"intervalSeconds": 60,
+				"is_paused": false,
 				"version": 1,
 				"uid": "uid",
 				"namespace_uid": "nsuid",
@@ -588,6 +593,7 @@ func TestIntegrationRulerRulesFilterByDashboard(t *testing.T) {
 				}],
 				"updated": "2021-02-21T01:10:30Z",
 				"intervalSeconds": 60,
+				"is_paused": false,
 				"version": 1,
 				"uid": "uid",
 				"namespace_uid": "nsuid",
@@ -933,5 +939,129 @@ func newTestingRuleConfig(t *testing.T) apimodels.PostableRuleGroupConfig {
 			firstRule,
 			secondRule,
 		},
+	}
+}
+
+func TestIntegrationRulePause(t *testing.T) {
+	testinfra.SQLiteIntegrationTest(t)
+
+	// Setup Grafana and its Database
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableLegacyAlerting: true,
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+	})
+	grafanaListedAddr, store := testinfra.StartGrafana(t, dir, path)
+
+	// Create a user to make authenticated requests
+	createUser(t, store, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleEditor),
+		Password:       "password",
+		Login:          "grafana",
+	})
+
+	client := newAlertingApiClient(grafanaListedAddr, "grafana", "password")
+	folder1Title := "folder1"
+	client.CreateFolder(t, util.GenerateShortUID(), folder1Title)
+
+	t.Run("should create a paused rule if isPaused is true", func(t *testing.T) {
+		group := generateAlertRuleGroup(1, alertRuleGen())
+		expectedIsPaused := true
+		group.Rules[0].GrafanaManagedAlert.IsPaused = &expectedIsPaused
+
+		status, body := client.PostRulesGroup(t, folder1Title, &group)
+		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+		getGroup := client.GetRulesGroup(t, folder1Title, group.Name)
+		require.Equalf(t, http.StatusAccepted, status, "failed to get rule group. Response: %s", body)
+		require.Equal(t, expectedIsPaused, getGroup.Rules[0].GrafanaManagedAlert.IsPaused)
+	})
+
+	t.Run("should create a unpaused rule if isPaused is false", func(t *testing.T) {
+		group := generateAlertRuleGroup(1, alertRuleGen())
+		expectedIsPaused := false
+		group.Rules[0].GrafanaManagedAlert.IsPaused = &expectedIsPaused
+
+		status, body := client.PostRulesGroup(t, folder1Title, &group)
+		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+		getGroup := client.GetRulesGroup(t, folder1Title, group.Name)
+		require.Equalf(t, http.StatusAccepted, status, "failed to get rule group. Response: %s", body)
+		require.Equal(t, expectedIsPaused, getGroup.Rules[0].GrafanaManagedAlert.IsPaused)
+	})
+
+	t.Run("should create a unpaused rule if isPaused is not present", func(t *testing.T) {
+		group := generateAlertRuleGroup(1, alertRuleGen())
+		group.Rules[0].GrafanaManagedAlert.IsPaused = nil
+
+		status, body := client.PostRulesGroup(t, folder1Title, &group)
+		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+		getGroup := client.GetRulesGroup(t, folder1Title, group.Name)
+		require.Equalf(t, http.StatusAccepted, status, "failed to get rule group. Response: %s", body)
+		require.False(t, getGroup.Rules[0].GrafanaManagedAlert.IsPaused)
+	})
+
+	getBooleanPointer := func(b bool) *bool { return &b }
+	testCases := []struct {
+		description          string
+		isPausedInDb         bool
+		isPausedInBody       *bool
+		expectedIsPausedInDb bool
+	}{
+		{
+			description:          "should pause rule if there is a paused rule in DB and isPaused is true",
+			isPausedInDb:         true,
+			isPausedInBody:       getBooleanPointer(true),
+			expectedIsPausedInDb: true,
+		},
+		{
+			description:          "should unpause rule if there is a paused rule in DB and isPaused is false",
+			isPausedInDb:         true,
+			isPausedInBody:       getBooleanPointer(false),
+			expectedIsPausedInDb: false,
+		},
+		{
+			description:          "should keep rule paused if there is a paused rule in DB and isPaused is not present",
+			isPausedInDb:         true,
+			isPausedInBody:       nil,
+			expectedIsPausedInDb: true,
+		},
+		{
+			description:          "should pause rule if there is an unpaused rule in DB and isPaused is true",
+			isPausedInDb:         false,
+			isPausedInBody:       getBooleanPointer(true),
+			expectedIsPausedInDb: true,
+		},
+		{
+			description:          "should unpause rule if there is an unpaused rule in DB and isPaused is false",
+			isPausedInDb:         false,
+			isPausedInBody:       getBooleanPointer(false),
+			expectedIsPausedInDb: false,
+		},
+		{
+			description:          "should keep rule unpaused if there is an unpaused rule in DB and isPaused is not present",
+			isPausedInDb:         false,
+			isPausedInBody:       nil,
+			expectedIsPausedInDb: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.description, func(t *testing.T) {
+			group := generateAlertRuleGroup(1, alertRuleGen())
+			group.Rules[0].GrafanaManagedAlert.IsPaused = &tc.isPausedInDb
+
+			status, body := client.PostRulesGroup(t, folder1Title, &group)
+			require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+			getGroup := client.GetRulesGroup(t, folder1Title, group.Name)
+			require.Equalf(t, http.StatusAccepted, status, "failed to get rule group. Response: %s", body)
+
+			group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
+			group.Rules[0].GrafanaManagedAlert.IsPaused = tc.isPausedInBody
+			status, body = client.PostRulesGroup(t, folder1Title, &group)
+			require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
+
+			getGroup = client.GetRulesGroup(t, folder1Title, group.Name)
+			require.Equal(t, tc.expectedIsPausedInDb, getGroup.Rules[0].GrafanaManagedAlert.IsPaused)
+		})
 	}
 }

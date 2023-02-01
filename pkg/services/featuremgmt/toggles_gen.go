@@ -55,10 +55,6 @@ const (
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
 
-	// FlagTempoApmTable
-	// Show APM table
-	FlagTempoApmTable = "tempoApmTable"
-
 	// FlagPrometheusAzureOverrideAudience
 	// Experimental. Allow override default AAD audience for Azure Prometheus endpoint
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
@@ -118,6 +114,10 @@ const (
 	// FlagK8sDashboards
 	// Save dashboards via k8s
 	FlagK8sDashboards = "k8sDashboards"
+
+	// FlagApiserver
+	// Add a k8s API server proxy
+	FlagApiserver = "apiserver"
 
 	// FlagSupportBundles
 	// Support bundles for troubleshooting

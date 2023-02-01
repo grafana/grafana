@@ -148,8 +148,15 @@ func (srv ConfigSrv) RouteGetAlertingStatus(c *contextmodel.ReqContext) response
 		sendsAlertsTo = cfg.SendAlertsTo
 	}
 
+	// handle errors
+	externalAlertManagers, err := srv.externalAlertmanagers(c.Req.Context(), c.OrgID)
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "")
+	}
+
 	resp := apimodels.AlertingStatus{
-		AlertmanagersChoice: apimodels.AlertmanagersChoice(sendsAlertsTo.String()),
+		AlertmanagersChoice:      apimodels.AlertmanagersChoice(sendsAlertsTo.String()),
+		NumExternalAlertmanagers: len(externalAlertManagers),
 	}
 	return response.JSON(http.StatusOK, resp)
 }

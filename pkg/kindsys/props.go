@@ -18,11 +18,16 @@ type CommonProperties struct {
 // excludes Thema schemas.
 //
 // When .cue file(s) containing a Core definition is loaded through the standard
-// [LoadCoreKind], func, it is fully validated and populated according to all
+// [LoadCoreKindDef], func, it is fully validated and populated according to all
 // rules specified in CUE for Core kinds.
 type CoreProperties struct {
 	CommonProperties
 	CurrentVersion thema.SyntacticVersion `json:"currentVersion"`
+	CRD            struct {
+		Group       string `json:"group"`
+		Scope       string `json:"scope"`
+		DummySchema bool   `json:"dummySchema"`
+	} `json:"crd"`
 }
 
 func (m CoreProperties) _private() {}

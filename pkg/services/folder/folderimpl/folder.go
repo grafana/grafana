@@ -30,7 +30,7 @@ type Service struct {
 	log                  log.Logger
 	cfg                  *setting.Cfg
 	dashboardStore       dashboards.Store
-	dashboardFolderStore dashboards.FolderStore
+	dashboardFolderStore folder.FolderStore
 	features             featuremgmt.FeatureToggles
 	accessControl        accesscontrol.AccessControl
 
@@ -43,7 +43,7 @@ func ProvideService(
 	bus bus.Bus,
 	cfg *setting.Cfg,
 	dashboardStore dashboards.Store,
-	folderStore dashboards.FolderStore,
+	folderStore folder.FolderStore,
 	db db.DB, // DB for the (new) nested folder store
 	features featuremgmt.FeatureToggles,
 ) folder.Service {
