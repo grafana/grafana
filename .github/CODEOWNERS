@@ -491,7 +491,7 @@ lerna.json @grafana/frontend-ops
 /public/app/plugins/datasource/elasticsearch/ @grafana/observability-logs
 /public/app/plugins/datasource/grafana/ @grafana/user-essentials
 /public/app/plugins/datasource/testdata/ @grafana/plugins-platform-frontend
-/public/app/plugins/datasource/grafana-azure-monitor-datasource/ @grafana/partner-plugins
+/public/app/plugins/datasource/azuremonitor/ @grafana/partner-plugins
 /public/app/plugins/datasource/graphite/ @grafana/observability-metrics
 /public/app/plugins/datasource/influxdb/ @grafana/observability-metrics
 /public/app/plugins/datasource/jaeger/ @grafana/observability-traces-and-profiling
