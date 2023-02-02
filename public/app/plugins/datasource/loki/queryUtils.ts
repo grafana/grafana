@@ -325,9 +325,6 @@ export function partitionTimeRange(range: TimeRange, timeShift = 1, unit: Durati
     }
   }
 
-  console.log(`${range.from}`, `${range.to}`);
-  console.log(partition);
-
   return partition;
 }
 
