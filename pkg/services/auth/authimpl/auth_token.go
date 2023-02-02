@@ -292,7 +292,7 @@ func (s *UserAuthTokenService) TryRotateToken(ctx context.Context, token *auth.U
 		newToken *auth.UserToken
 	}
 
-	rotResult, err, _ := s.singleflight.Do(fmt.Sprintf("%d-%s", model.Id, model.AuthToken), func() (interface{}, error) {
+	rotResult, err, _ := s.singleflight.Do(fmt.Sprint(model.Id), func() (interface{}, error) {
 		var needsRotation bool
 		rotatedAt := time.Unix(model.RotatedAt, 0)
 		if model.AuthTokenSeen {

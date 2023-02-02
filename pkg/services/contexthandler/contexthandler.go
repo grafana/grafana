@@ -572,7 +572,6 @@ func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *contextmodel.ReqCont
 			ip = nil
 		}
 
-		// FIXME (jguer): rotation should return a new token instead of modifying the existing one.
 		rotated, newToken, err := h.AuthTokenService.TryRotateToken(ctx, reqContext.UserToken, ip, reqContext.Req.UserAgent())
 		if err != nil {
 			reqContext.Logger.Error("Failed to rotate token", "error", err)
