@@ -146,7 +146,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 				reqContext.SignedInUser = identity.SignedInUser()
 				reqContext.AllowAnonymous = identity.IsAnonymous
 				reqContext.IsRenderCall = identity.AuthModule == login.RenderModule
-				// FIXME (kallep): Add auth headers used to context
+				reqContext.Req = reqContext.Req.WithContext(withAllAuthHTTPHeaders(reqContext.Req.Context(), h.Cfg))
 			}
 		} else {
 			const headerName = "X-Grafana-Org-Id"
@@ -741,6 +741,32 @@ func (h *ContextHandler) initContextWithAuthProxy(reqContext *contextmodel.ReqCo
 type authHTTPHeaderListContextKey struct{}
 
 var authHTTPHeaderListKey = authHTTPHeaderListContextKey{}
+
+func withAllAuthHTTPHeaders(ctx context.Context, cfg *setting.Cfg) context.Context {
+	list := AuthHTTPHeaderListFromContext(ctx)
+	if list == nil {
+		list = &AuthHTTPHeaderList{
+			Items: []string{},
+		}
+	}
+
+	list.Items = append(list.Items, "Authorization")
+
+	if cfg.JWTAuthEnabled && cfg.JWTAuthHeaderName != "" {
+		list.Items = append(list.Items, cfg.JWTAuthHeaderName)
+	}
+
+	if cfg.AuthProxyEnabled {
+		list.Items = append(list.Items, cfg.AuthProxyHeaderName)
+		for _, header := range cfg.AuthProxyHeaders {
+			if header != "" {
+				list.Items = append(list.Items, header)
+			}
+		}
+	}
+
+	return context.WithValue(ctx, authHTTPHeaderListKey, list)
+}
 
 // AuthHTTPHeaderList used to record HTTP headers that being when verifying authentication
 // of an incoming HTTP request.
