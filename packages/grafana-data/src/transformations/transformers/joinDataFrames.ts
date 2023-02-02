@@ -149,10 +149,77 @@ export function joinDataFrames(options: JoinOptions): DataFrame | undefined {
     return frameCopy;
   }
 
+  const joinFieldMatcher = getJoinMatcher(options);
+
+  // check if values of all joinBy fields match, then just cheaply glue them together
+  const joinFields = options.frames.map((frame) =>
+    frame.fields.find((field) => joinFieldMatcher(field, frame, options.frames))
+  );
+
+  if (joinFields.indexOf(undefined) === -1) {
+    if (isLikelyAscendingVector(joinFields[0]!.values)) {
+      let same = true;
+      let vals0 = joinFields[0]!.values.toArray();
+
+      for (let i = 1; i < joinFields.length; i++) {
+        let vals1 = joinFields[i]!.values.toArray();
+
+        if (vals1.length !== vals0.length) {
+          same = false;
+          break;
+        }
+
+        for (let j = 0; j < vals0.length; j++) {
+          if (vals1[j] !== vals0[j]) {
+            same = false;
+            break;
+          }
+        }
+
+        if (!same) {
+          break;
+        }
+      }
+
+      if (same) {
+        let joinedFrame = {
+          length: vals0.length,
+          fields: [
+            { ...joinFields[0]! },
+            ...options.frames.flatMap((frame, frameIndex) =>
+              frame.fields.map((field, fieldIndex) => {
+                if (field === joinFields[frameIndex]) {
+                  return null;
+                }
+
+                let fieldCopy = {
+                  ...field,
+                };
+
+                if (options.keepOriginIndices) {
+                  fieldCopy.state = {
+                    ...fieldCopy.state,
+                    origin: {
+                      frameIndex,
+                      fieldIndex,
+                    }
+                  };
+                }
+
+                return fieldCopy;
+              }).filter((field) => field != null)
+            ),
+          ],
+        };
+
+        return joinedFrame;
+      }
+    }
+  }
+
   const nullModes: JoinNullMode[][] = [];
   const allData: AlignedData[] = [];
   const originalFields: Field[] = [];
-  const joinFieldMatcher = getJoinMatcher(options);
 
   for (let frameIndex = 0; frameIndex < options.frames.length; frameIndex++) {
     const frame = options.frames[frameIndex];
