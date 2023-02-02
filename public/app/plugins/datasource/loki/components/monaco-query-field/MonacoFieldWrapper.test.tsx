@@ -21,7 +21,7 @@ function renderComponent({
       onChange={onChange}
       onRunQuery={onRunQuery}
       runQueryOnBlur={runQueryOnBlur}
-      placeholder="Enter a LogQL query."
+      placeholder="Enter a Loki query (run with Shift+Enter)"
     />
   );
 }
