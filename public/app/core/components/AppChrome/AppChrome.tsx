@@ -72,7 +72,7 @@ export function AppChrome({ children }: Props) {
       </div>
       <div className={contentClass}>{children}</div>
       <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
-      {featureToggles.commandPalette && <CommandPalette />}
+      <CommandPalette />
       {!featureToggles.topNavCommandPalette && <SearchWrapper />}
     </main>
   );
