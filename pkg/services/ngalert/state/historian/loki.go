@@ -140,7 +140,7 @@ func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
 	//   2. `line` - JSON - the full data of the transition
 	//   3. `labels` - JSON - the labels associated with that state transition
 	times := make([]time.Time, 0, totalLen)
-	lines := make([]string, 0, totalLen)
+	lines := make([]json.RawMessage, 0, totalLen)
 	labels := make([]json.RawMessage, 0, totalLen)
 
 	// Initialize a slice of pointers to the current position in each array.
@@ -179,14 +179,20 @@ func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse timestamp in response: %w", err)
 		}
+		// TODO: In general, perhaps we should omit the offending line and log, rather than failing the request entirely.
 		streamLbls := res.Data.Result[minElStreamIdx].Stream
-		lblsJson, err := jsonifyLabels(streamLbls)
+		lblsJson, err := json.Marshal(streamLbls)
 		if err != nil {
 			return nil, fmt.Errorf("failed to serialize stream labels: %w", err)
 		}
+		line, err := jsonifyRow(minEl[1])
+		if err != nil {
+			return nil, fmt.Errorf("a line was in an invalid format: %w", err)
+		}
+
 		times = append(times, time.Unix(0, tsNano))
-		lines = append(lines, minEl[1])
 		labels = append(labels, lblsJson)
+		lines = append(lines, line)
 		pointers[minElStreamIdx]++
 	}
 
@@ -281,4 +287,15 @@ func valuesAsDataBlob(state *state.State) *simplejson.Json {
 
 func jsonifyLabels(labels map[string]string) (json.RawMessage, error) {
 	return json.Marshal(labels)
+}
+
+func jsonifyRow(line string) (json.RawMessage, error) {
+	// Ser/deser to validate the contents of the log line before shipping it forward.
+	// TODO: We may want to remove this in the future, as we already have the value in the form of a []byte, and json.RawMessage is also a []byte.
+	// TODO: Though, if the log line does not contain valid JSON, this can cause problems later on when rendering the dataframe.
+	var entry lokiEntry
+	if err := json.Unmarshal([]byte(line), &entry); err != nil {
+		return nil, err
+	}
+	return json.Marshal(entry)
 }
