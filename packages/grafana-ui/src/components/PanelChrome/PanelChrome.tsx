@@ -313,6 +313,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
+      zIndex: theme.zIndex.tooltip,
     }),
     leftItems: css({
       display: 'flex',
