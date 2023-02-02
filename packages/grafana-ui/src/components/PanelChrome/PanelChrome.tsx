@@ -141,7 +141,11 @@ export function PanelChrome({
   );
 
   return (
-    <div className={styles.container} style={containerStyles} aria-label={ariaLabel}>
+    <div
+      className={cx(styles.container, { [styles.regularHeader]: hasHeader })}
+      style={containerStyles}
+      aria-label={ariaLabel}
+    >
       <div className={styles.loadingBarContainer}>
         {loadingState === LoadingState.Loading ? (
           <LoadingBar width={'28%'} height={'2px'} ariaLabel="Panel loading bar" />
@@ -242,7 +246,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         visibility: 'hidden',
         opacity: '0',
       },
-      '&:focus-within, &:focus-visible, &:hover': {
+      '&:focus-visible, &:hover': {
         // only show menu icon on hover or focused panel
         '.show-on-hover': {
           visibility: 'visible',
@@ -252,6 +256,14 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       '&:focus-visible': {
         outline: `1px solid ${theme.colors.action.focus}`,
+      },
+    }),
+    regularHeader: css({
+      '&:focus-within': {
+        '.show-on-hover': {
+          visibility: 'visible',
+          opacity: '1',
+        },
       },
     }),
     loadingBarContainer: css({
