@@ -39,8 +39,8 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
         <InlineField label="Index name" labelWidth={26}>
           <Input
             id="es_config_indexName"
-            value={value.database || ''}
-            onChange={changeHandler('database', value, onChange)}
+            value={value.jsonData.index || value.database || ''}
+            onChange={jsonDataChangeHandler('index', value, onChange)}
             width={24}
             placeholder="es-index-name"
             required
@@ -143,16 +143,6 @@ export const ElasticDetails = ({ value, onChange }: Props) => {
     </>
   );
 };
-
-// TODO: Use change handlers from @grafana/data
-const changeHandler =
-  (key: keyof DataSourceSettings<ElasticsearchOptions>, value: Props['value'], onChange: Props['onChange']) =>
-  (event: React.SyntheticEvent<HTMLInputElement | HTMLSelectElement>) => {
-    onChange({
-      ...value,
-      [key]: event.currentTarget.value,
-    });
-  };
 
 // TODO: Use change handlers from @grafana/data
 const jsonDataChangeHandler =
