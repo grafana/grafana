@@ -30,7 +30,6 @@ export const Configuration = ({
 
   return (
     <>
-      <h4 className={styles.title}>Settings</h4>
       <FieldSet disabled={disabled} className={styles.dashboardConfig}>
         <VerticalGroup spacing="md">
           <Layout orientation={1} spacing="xs" justify="space-between">
@@ -72,9 +71,6 @@ export const Configuration = ({
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  title: css`
-    margin-bottom: ${theme.spacing(1)};
-  `,
   dashboardConfig: css`
     margin: ${theme.spacing(0, 0, 3, 0)};
   `,

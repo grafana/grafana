@@ -21,7 +21,7 @@ export const UnsupportedDataSourcesAlert = ({ unsupportedDataSources }: { unsupp
         {`There are data sources in this dashboard that are unsupported for public dashboards. Panels that use these data sources may not function properly: ${unsupportedDataSources}.`}
       </p>
       <a
-        href="app/features/dashboard/components/ShareModal/SharePublicDashboard/ModalAlerts/UnsupportedDataSourcesAlert"
+        href="https://grafana.com/docs/grafana/latest/dashboards/dashboard-public/"
         className={cx('text-link', styles.unsupportedDataSourceDescription)}
       >
         Read more about supported data sources

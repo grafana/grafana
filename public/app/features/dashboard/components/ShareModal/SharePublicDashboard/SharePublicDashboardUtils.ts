@@ -1,6 +1,5 @@
 import { getConfig } from 'app/core/config';
 import { VariableModel } from 'app/features/variables/types';
-import { DashboardDataDTO, DashboardMeta } from 'app/types/dashboard';
 
 import { PanelModel } from '../../../state';
 
@@ -17,11 +16,6 @@ export interface PublicDashboard extends PublicDashboardSettings {
   uid: string;
   dashboardUid: string;
   timeSettings?: object;
-}
-
-export interface DashboardResponse {
-  dashboard: DashboardDataDTO;
-  meta: DashboardMeta;
 }
 
 // Instance methods

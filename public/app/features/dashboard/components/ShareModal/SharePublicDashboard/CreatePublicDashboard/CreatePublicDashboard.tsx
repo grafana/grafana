@@ -43,33 +43,40 @@ const CreatePublicDashboard = () => {
 
   return (
     <div>
-      <p className={styles.title}>Welcome to Grafana public dashboards alpha!</p>
+      <p className={styles.title}>Welcome to public dashboards alpha!</p>
       <Description />
       {!!unsupportedDataSources.length && (
         <UnsupportedDataSourcesAlert unsupportedDataSources={unsupportedDataSources.join(', ')} />
       )}
-      {dashboardHasTemplateVariables(dashboard.getVariables()) && <UnsupportedTemplateVariablesAlert />}
       {!hasWritePermissions && <NoUpsertPermissionsAlert mode="create" />}
-      <Form onSubmit={onCreate} validateOn="onChange" maxWidth="none">
-        {({
-          register,
-          formState: { isValid },
-        }: {
-          register: UseFormRegister<SharePublicDashboardAcknowledgmentInputs>;
-          formState: FormState<SharePublicDashboardAcknowledgmentInputs>;
-        }) => (
-          <>
-            <div className={styles.checkboxes}>
-              <AcknowledgeCheckboxes disabled={!hasWritePermissions || isSaveLoading} register={register} />
-            </div>
-            <div className={styles.buttonContainer}>
-              <Button type="submit" disabled={!hasWritePermissions || !isValid} data-testid={selectors.CreateButton}>
-                Generate public URL {isSaveLoading && <Spinner className={styles.loadingSpinner} />}
-              </Button>
-            </div>
-          </>
-        )}
-      </Form>
+      {dashboardHasTemplateVariables(dashboard.getVariables()) ? (
+        <UnsupportedTemplateVariablesAlert mode="create" />
+      ) : (
+        <Form onSubmit={onCreate} validateOn="onChange" maxWidth="none">
+          {({
+            register,
+            formState: { isValid },
+          }: {
+            register: UseFormRegister<SharePublicDashboardAcknowledgmentInputs>;
+            formState: FormState<SharePublicDashboardAcknowledgmentInputs>;
+          }) => (
+            <>
+              <div className={styles.checkboxes}>
+                <AcknowledgeCheckboxes disabled={!hasWritePermissions || isSaveLoading} register={register} />
+              </div>
+              <div className={styles.buttonContainer}>
+                <Button
+                  type="submit"
+                  disabled={!hasWritePermissions || !isValid || isSaveLoading}
+                  data-testid={selectors.CreateButton}
+                >
+                  Generate public URL {isSaveLoading && <Spinner className={styles.loadingSpinner} />}
+                </Button>
+              </div>
+            </>
+          )}
+        </Form>
+      )}
     </div>
   );
 };

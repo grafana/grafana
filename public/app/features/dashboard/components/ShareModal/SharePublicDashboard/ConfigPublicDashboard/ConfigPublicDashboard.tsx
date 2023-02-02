@@ -6,13 +6,13 @@ import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { reportInteraction } from '@grafana/runtime/src';
 import {
-  Alert,
   ClipboardButton,
   Field,
   HorizontalGroup,
   Input,
   Label,
   ModalsContext,
+  Spinner,
   Switch,
   useStyles2,
 } from '@grafana/ui/src';
@@ -26,12 +26,9 @@ import { useGetPublicDashboardQuery, useUpdatePublicDashboardMutation } from '..
 import { useIsDesktop } from '../../../../utils/screen';
 import { ShareModal } from '../../ShareModal';
 import { NoUpsertPermissionsAlert } from '../ModalAlerts/NoUpsertPermissionsAlert';
+import { SaveDashboardChangesAlert } from '../ModalAlerts/SaveDashboardChangesAlert';
 import { UnsupportedTemplateVariablesAlert } from '../ModalAlerts/UnsupportedTemplateVariablesAlert';
-import {
-  dashboardHasTemplateVariables,
-  generatePublicDashboardUrl,
-  PublicDashboardSettings,
-} from '../SharePublicDashboardUtils';
+import { dashboardHasTemplateVariables, generatePublicDashboardUrl } from '../SharePublicDashboardUtils';
 
 import { Configuration } from './Configuration';
 
@@ -45,9 +42,9 @@ const ConfigPublicDashboard = () => {
   const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
   const dashboardState = useSelector((store) => store.dashboard);
   const dashboard = dashboardState.getModel()!;
-  const { data: publicDashboard } = useGetPublicDashboardQuery(dashboard.uid);
   const dashboardVariables = dashboard.getVariables();
 
+  const { data: publicDashboard } = useGetPublicDashboardQuery(dashboard.uid);
   const [update, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
 
   const onDismissDelete = () => {
@@ -66,7 +63,7 @@ const ConfigPublicDashboard = () => {
       dashboard,
       payload: {
         ...publicDashboard!,
-        [name as keyof PublicDashboardSettings]: value,
+        [name]: value,
       },
     };
 
@@ -75,19 +72,32 @@ const ConfigPublicDashboard = () => {
 
   return (
     <div>
+      {hasWritePermissions ? (
+        dashboard.hasUnsavedChanges() ? (
+          <SaveDashboardChangesAlert />
+        ) : (
+          dashboardHasTemplateVariables(dashboardVariables) && <UnsupportedTemplateVariablesAlert mode="edit" />
+        )
+      ) : (
+        <NoUpsertPermissionsAlert mode="edit" />
+      )}
+      <HorizontalGroup className={styles.title} spacing="sm" align="center">
+        <h4>Settings</h4>
+        {isUpdateLoading && <Spinner />}
+      </HorizontalGroup>
       <Configuration disabled={!hasWritePermissions} onChange={onUpdate} />
-      <Field label="Link URL" className={styles.publicUrl}>
+      <hr />
+      <Field label="Dashboard URL" className={styles.publicUrl}>
         <Input
           value={generatePublicDashboardUrl(publicDashboard!)}
           readOnly
-          disabled={!publicDashboard!.isEnabled}
+          disabled={!publicDashboard?.isEnabled}
           data-testid={selectors.CopyUrlInput}
           addonAfter={
             <ClipboardButton
               data-testid={selectors.CopyUrlButton}
               variant="primary"
-              icon="copy"
-              disabled={!publicDashboard!.isEnabled}
+              disabled={!publicDashboard?.isEnabled}
               getText={() => generatePublicDashboardUrl(publicDashboard!)}
             >
               Copy
@@ -95,18 +105,6 @@ const ConfigPublicDashboard = () => {
           }
         />
       </Field>
-      {hasWritePermissions ? (
-        dashboard.hasUnsavedChanges() ? (
-          <Alert
-            title="Please save your dashboard changes before updating the public configuration"
-            severity="warning"
-          />
-        ) : (
-          dashboardHasTemplateVariables(dashboardVariables) && <UnsupportedTemplateVariablesAlert />
-        )
-      ) : (
-        <NoUpsertPermissionsAlert mode="edit" />
-      )}
       <Layout
         orientation={isDesktop ? 0 : 1}
         justify={isDesktop ? 'flex-end' : 'flex-start'}
@@ -116,8 +114,8 @@ const ConfigPublicDashboard = () => {
           <Switch
             disabled={!hasWritePermissions}
             name="isEnabled"
-            value={!publicDashboard!.isEnabled}
-            checked={!publicDashboard!.isEnabled}
+            value={!publicDashboard?.isEnabled}
+            checked={!publicDashboard?.isEnabled}
             onChange={(e) => {
               reportInteraction('grafana_dashboards_public_enable_clicked', {
                 action: e.currentTarget.checked ? 'disable' : 'enable',
@@ -134,36 +132,38 @@ const ConfigPublicDashboard = () => {
             Pause sharing dashboard
           </Label>
         </HorizontalGroup>
-        {hasWritePermissions && (
-          <HorizontalGroup justify="flex-end">
-            <DeletePublicDashboardButton
-              className={cx(styles.deleteButton, { [styles.deleteButtonMobile]: !isDesktop })}
-              type="button"
-              disabled={isUpdateLoading}
-              data-testid={selectors.DeleteButton}
-              onDismiss={onDismissDelete}
-              variant="destructive"
-              fill="outline"
-              dashboard={dashboard}
-              publicDashboard={{
-                uid: publicDashboard!.uid,
-                dashboardUid: dashboard.uid,
-                title: dashboard.title,
-              }}
-            >
-              Revoke public URL
-            </DeletePublicDashboardButton>
-          </HorizontalGroup>
-        )}
+        <HorizontalGroup justify="flex-end">
+          <DeletePublicDashboardButton
+            className={cx(styles.deleteButton, { [styles.deleteButtonMobile]: !isDesktop })}
+            type="button"
+            disabled={!hasWritePermissions || isUpdateLoading}
+            data-testid={selectors.DeleteButton}
+            onDismiss={onDismissDelete}
+            variant="destructive"
+            fill="outline"
+            dashboard={dashboard}
+            publicDashboard={{
+              uid: publicDashboard!.uid,
+              dashboardUid: dashboard.uid,
+              title: dashboard.title,
+            }}
+          >
+            Revoke public URL
+          </DeletePublicDashboardButton>
+        </HorizontalGroup>
       </Layout>
     </div>
   );
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  title: css`
+    margin-bottom: ${theme.spacing(1)};
+  `,
   publicUrl: css`
     width: 100%;
-    margin-bottom: ${theme.spacing(0, 0, 3, 0)};
+    padding-top: ${theme.spacing(1)};
+    margin-bottom: ${theme.spacing(3)};
   `,
   deleteButton: css`
     margin-left: ${theme.spacing(3)}; ;
