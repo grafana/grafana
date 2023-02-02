@@ -645,16 +645,16 @@ def artifacts_page_pipeline():
     }
     return [
         pipeline(
-            name="publish-artifacts-page",
-            trigger=trigger,
-            steps=[
+            name = "publish-artifacts-page",
+            trigger = trigger,
+            steps = [
                 download_grabpl_step(),
-                clone_enterprise_step(source='${DRONE_TAG}'),
+                clone_enterprise_step(source = "${DRONE_TAG}"),
                 init_enterprise_step("release"),
                 compile_build_cmd("enterprise"),
-                artifacts_page_step()
+                artifacts_page_step(),
             ],
-            edition="all",
-            environment={"EDITION": "enterprise"},
+            edition = "all",
+            environment = {"EDITION": "enterprise"},
         ),
     ]
