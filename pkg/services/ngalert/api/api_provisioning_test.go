@@ -424,7 +424,7 @@ func TestProvisioningApi(t *testing.T) {
 				require.Equal(t, "text/yaml", rc.Context.Resp.Header().Get("Content-Type"))
 			})
 
-			t.Run("query format contains unknown value, GET returns application json", func(t *testing.T) {
+			t.Run("query format contains unknown value, GET returns text yaml", func(t *testing.T) {
 				sut := createProvisioningSrvSut(t)
 				rc := createTestRequestCtx()
 				insertRule(t, sut, createTestAlertRule("rule", 1))
@@ -435,7 +435,7 @@ func TestProvisioningApi(t *testing.T) {
 				response.WriteTo(&rc)
 
 				require.Equal(t, 200, response.Status())
-				require.Equal(t, "application/json", rc.Context.Resp.Header().Get("Content-Type"))
+				require.Equal(t, "text/yaml", rc.Context.Resp.Header().Get("Content-Type"))
 			})
 
 			t.Run("accept header contains json, GET returns json", func(t *testing.T) {
