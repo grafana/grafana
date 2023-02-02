@@ -687,6 +687,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           dragClassCancel="grid-drag-cancel"
           padding={padding}
           hoverHeaderOffset={hoverHeaderOffset}
+          hoverHeader={title ? false : true}
           displayMode={transparent ? 'transparent' : 'default'}
         >
           {(innerWidth, innerHeight) => (
