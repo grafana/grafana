@@ -29,7 +29,7 @@ func (srv *HistorySrv) RouteQueryStateHistory(c *contextmodel.ReqContext) respon
 	to := c.QueryInt64("to")
 	ruleUID := c.Query("ruleUID")
 
-	var labels map[string]string
+	labels := make(map[string]string)
 	for k, v := range c.Req.URL.Query() {
 		if strings.HasPrefix(k, labelQueryPrefix) {
 			labels[k[len(labelQueryPrefix):]] = v[0]
