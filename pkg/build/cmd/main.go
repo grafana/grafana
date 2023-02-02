@@ -12,6 +12,7 @@ import (
 
 var additionalCommands []*cli.Command = make([]*cli.Command, 0, 5)
 
+//nolint:unused
 func registerAppCommand(c *cli.Command) {
 	additionalCommands = append(additionalCommands, c)
 }
