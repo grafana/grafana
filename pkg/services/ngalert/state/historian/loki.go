@@ -292,10 +292,6 @@ func valuesAsDataBlob(state *state.State) *simplejson.Json {
 	return jsonifyValues(state.Values)
 }
 
-func jsonifyLabels(labels map[string]string) (json.RawMessage, error) {
-	return json.Marshal(labels)
-}
-
 func jsonifyRow(line string) (json.RawMessage, error) {
 	// Ser/deser to validate the contents of the log line before shipping it forward.
 	// TODO: We may want to remove this in the future, as we already have the value in the form of a []byte, and json.RawMessage is also a []byte.
