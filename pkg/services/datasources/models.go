@@ -33,14 +33,14 @@ const (
 type DsAccess string
 
 type DataSource struct {
-	ID      int64 `json:"id,omitempty"`
-	OrgID   int64 `json:"orgId,omitempty"`
+	ID      int64 `json:"id,omitempty" xorm:"pk autoincr 'id'"`
+	OrgID   int64 `json:"orgId,omitempty" xorm:"org_id"`
 	Version int   `json:"version,omitempty"`
 
 	Name   string   `json:"name"`
 	Type   string   `json:"type"`
 	Access DsAccess `json:"access"`
-	URL    string   `json:"url"`
+	URL    string   `json:"url" xorm:"url"`
 	// swagger:ignore
 	Password      string `json:"-"`
 	User          string `json:"user"`
