@@ -22,6 +22,11 @@ const (
 	FolderUIDLabel = "folderUID"
 )
 
+const (
+	StateHistoryLabelKey   = "from"
+	StateHistoryLabelValue = "state-history"
+)
+
 type remoteLokiClient interface {
 	ping(context.Context) error
 	push(context.Context, []stream) error
@@ -72,6 +77,7 @@ func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition
 		}
 
 		labels := mergeLabels(removePrivateLabels(state.State.Labels), externalLabels)
+		labels[StateHistoryLabelKey] = StateHistoryLabelValue
 		labels[OrgIDLabel] = fmt.Sprint(rule.OrgID)
 		labels[RuleUIDLabel] = fmt.Sprint(rule.UID)
 		labels[GroupLabel] = fmt.Sprint(rule.Group)
