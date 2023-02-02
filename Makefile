@@ -85,7 +85,7 @@ fix-cue: $(CUE)
 gen-jsonnet:
 	go generate ./devenv/jsonnet
 
-build-go: $(MERGED_SPEC_TARGET) gen-go ## Build all Go binaries.
+build-go: gen-go ## Build all Go binaries.
 	@echo "build go files"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build
 
