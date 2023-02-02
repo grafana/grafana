@@ -324,12 +324,23 @@ export class LokiDatasource
               return mergedResponse;
             })
           )
-          .subscribe((response) => {
-            pendingQueries -= 1;
+          .subscribe({
+            next: (response) => {
+              pendingQueries -= 1;
+              response.state = pendingQueries > 0 ? LoadingState.Loading : LoadingState.Done;
 
-            response.state = pendingQueries > 0 ? LoadingState.Loading : LoadingState.Done;
+              subscriber.next(response);
+            },
+            error: (error) => {
+              console.error(error);
 
-            subscriber.next(response);
+              // If we request fails, we consider the full request as failed.
+              subscriber.next({
+                state: LoadingState.Done,
+                error: undefined,
+                data: [],
+              });
+            },
           });
       }
     });
