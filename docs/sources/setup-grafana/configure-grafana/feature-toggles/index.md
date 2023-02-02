@@ -64,7 +64,6 @@ Alpha features might be changed or removed without prior notice.
 | `live-pipeline`                    | Enable a generic live processing pipeline                                                                                                                                    |
 | `live-service-web-worker`          | This will use a webworker thread to processes events rather than the main thread                                                                                             |
 | `queryOverLive`                    | Use Grafana Live WebSocket to execute backend queries                                                                                                                        |
-| `tempoApmTable`                    | Show APM table                                                                                                                                                               |
 | `publicDashboards`                 | Enables public access to dashboards                                                                                                                                          |
 | `lokiLive`                         | Support WebSocket streaming for loki (early prototype)                                                                                                                       |
 | `lokiDataframeApi`                 | Use experimental loki api for WebSocket streaming (early prototype)                                                                                                          |
@@ -111,6 +110,7 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | `publicDashboardsEmailSharing` | Allows public dashboard sharing to be restricted to only allowed emails |
 | `k8s`                          | Explore native k8s integrations                                         |
 | `k8sDashboards`                | Save dashboards via k8s                                                 |
+| `apiserver`                    | Add a k8s API server proxy                                              |
 | `dashboardsFromStorage`        | Load dashboards from the generic storage interface                      |
 | `export`                       | Export grafana instance (to git, etc)                                   |
 | `grpcServer`                   | Run GRPC server                                                         |

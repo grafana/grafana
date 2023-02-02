@@ -73,12 +73,6 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:         "tempoApmTable",
-			Description:  "Show APM table",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-		},
-		{
 			Name:        "prometheusAzureOverrideAudience",
 			Description: "Experimental. Allow override default AAD audience for Azure Prometheus endpoint",
 			State:       FeatureStateBeta,
@@ -157,6 +151,12 @@ var (
 		{
 			Name:            "k8sDashboards",
 			Description:     "Save dashboards via k8s",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
+			Name:            "apiserver",
+			Description:     "Add a k8s API server proxy",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
 		},

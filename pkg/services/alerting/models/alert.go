@@ -158,8 +158,6 @@ type SetAlertStateCommand struct {
 	State    AlertStateType
 	Error    string
 	EvalData *simplejson.Json
-
-	Result Alert
 }
 
 // Queries
@@ -171,25 +169,17 @@ type GetAlertsQuery struct {
 	Limit        int64
 	Query        string
 	User         *user.SignedInUser
-
-	Result []*AlertListItemDTO
 }
 
-type GetAllAlertsQuery struct {
-	Result []*Alert
-}
+type GetAllAlertsQuery struct{}
 
 type GetAlertByIdQuery struct {
 	Id int64
-
-	Result *Alert
 }
 
 type GetAlertStatesForDashboardQuery struct {
 	OrgId       int64
 	DashboardId int64
-
-	Result []*AlertStateInfoDTO
 }
 
 type AlertListItemDTO struct {
