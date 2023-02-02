@@ -857,7 +857,7 @@ Administrators can increase this if they experience OAuth login state mismatch e
 
 ### oauth_skip_org_role_update_sync
 
-> **Note**: This option will soon be a legacy option in favor of OAuth provider specific `skip_org_role_sync` settings. The following sections explain settings for each provider.
+> **Note**: This option is deprecated in favor of OAuth provider specific `skip_org_role_sync` settings. The following sections explain settings for each provider.
 
 Skip forced assignment of OrgID `1` or `auto_assign_org_id` for external logins. Default is `false`.
 Use this setting to allow users with external login to be manually assigned to multiple organizations.
@@ -872,7 +872,7 @@ By default, the users' organization and role is reset on every new login.
 
 To prevent synchronization of organization roles for a specific OAuth integration, you can set the `skip_org_role_sync` option to `true`. Please note that there is also a separate setting called `oauth_skip_org_role_update_sync` which has a different scope. While `skip_org_role_sync` only applies to the specific OAuth provider, `oauth_skip_org_role_update_sync` is a generic setting that affects all configured OAuth providers.
 
-The setting `oauth_skip_org_role_update_sync` will be deprecated in favor of provider-specific settings.
+> **Note:** There is a separate setting called `oauth_skip_org_role_update_sync` which has a different scope. While `skip_org_role_sync` only applies to the specific OAuth provider, `oauth_skip_org_role_update_sync` is a generic setting that affects all configured OAuth providers.
 
 The table below show the OAuth provider and their setting with the default value and the skip org role sync setting.
 | OAuth Provider | `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | Behavior |
@@ -886,7 +886,7 @@ The table below show the OAuth provider and their setting with the default value
 
 To prevent synchronization of organization roles for a specific OAuth integration, you can set the `skip_org_role_sync` option to `true`. Please note that there is also a separate setting called `oauth_skip_org_role_update_sync` which has a different scope. While `skip_org_role_sync` only applies to the specific OAuth provider, `oauth_skip_org_role_update_sync` is a generic setting that affects all configured OAuth providers.
 
-The setting `oauth_skip_org_role_update_sync` will be deprecated in favor of provider-specific settings.
+> **Note:** There is a separate setting called `oauth_skip_org_role_update_sync` which has a different scope. While `skip_org_role_sync` only applies to the specific OAuth provider, `oauth_skip_org_role_update_sync` is a generic setting that affects all configured OAuth providers.
 
 The following table shows the OAuth provider's setting with the default value and the skip org role sync setting.
 | OAuth Provider | `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | Behavior |
@@ -900,7 +900,7 @@ The following table shows the OAuth provider's setting with the default value an
 
 Upon the first login from a user, we set the organization roles from the setting `AutoAssignOrgRole`. If you want to manage organizational roles, set the `skip_org_role_sync` option to `true`.
 
-> **Note:** There is a separate setting called `oauth_skip_org_role_update_sync` which has a different scope. While `skip_org_role_sync` only applies to the specific OAuth provider, `oauth_skip_org_role_update_sync` is a generic setting that affects all configured OAuth providers.
+> **Note:** There is a deprecated setting called `oauth_skip_org_role_update_sync` which has a different scope. While `skip_org_role_sync` only applies to the specific OAuth provider, `oauth_skip_org_role_update_sync` is a generic setting that affects all configured OAuth providers.
 
 The following table shows the OAuth provider's setting with the default value and the skip org role sync setting.
 | OAuth Provider | `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | Behavior |
@@ -915,7 +915,7 @@ The following table shows the OAuth provider's setting with the default value an
 When a user logs in the first time, Grafana sets the organization role based on the value specified in `AutoAssignOrgRole`. If you want to manage organization roles, set the `skip_org_role_sync` option to `true`. GitHub syncs organization roles and sets Grafana Admins.
 This also impacts `allow_assign_grafana_admin` setting, by not syncing the grafana admin role from GitHub.
 
-> **Note:** There is a separate setting called `oauth_skip_org_role_update_sync` which has a different scope. While `skip_org_role_sync` only applies to the specific OAuth provider, `oauth_skip_org_role_update_sync` is a generic setting that affects all configured OAuth providers.
+> **Note:** There is a deprecated setting called `oauth_skip_org_role_update_sync` which has a different scope. While `skip_org_role_sync` only applies to the specific OAuth provider, `oauth_skip_org_role_update_sync` is a generic setting that affects all configured OAuth providers.
 
 The following table shows the OAuth provider's setting with the default value and the skip org role sync setting.
 | OAuth Provider | `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | Behavior |
@@ -930,7 +930,7 @@ The following table shows the OAuth provider's setting with the default value an
 When a user logs in the first time, Grafana sets the organization role based on the value specified in `AutoAssignOrgRole`. If you want to manage organization roles, set the `skip_org_role_sync` option to `true`. GitLab syncs organization roles and sets Grafana Admins.
 This also impacts `allow_assign_grafana_admin` setting, by not syncing the grafana admin role from GitLab.
 
-> **Note:** There is a separate setting called `oauth_skip_org_role_update_sync` which has a different scope. While `skip_org_role_sync` only applies to the specific OAuth provider, `oauth_skip_org_role_update_sync` is a generic setting that affects all configured OAuth providers.
+> **Note:** There is a deprecated setting called `oauth_skip_org_role_update_sync` which has a different scope. While `skip_org_role_sync` only applies to the specific OAuth provider, `oauth_skip_org_role_update_sync` is a generic setting that affects all configured OAuth providers.
 
 The following table shows the OAuth provider's setting with the default value and the skip org role sync setting.
 | OAuth Provider | `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | Behavior |
@@ -945,7 +945,7 @@ The following table shows the OAuth provider's setting with the default value an
 When a user logs in the first time, Grafana sets the organization role based on the value specified in `AutoAssignOrgRole`. If you want to manage organization roles, set the `skip_org_role_sync` option to `true`. the OAuth provider syncs organization roles and sets Grafana Admins.
 This also impacts `allow_assign_grafana_admin` setting, by not syncing the grafana admin role from the OAuth provider.
 
-> **Note:** There is a separate setting called `oauth_skip_org_role_update_sync` which has a different scope. While `skip_org_role_sync` only applies to the specific OAuth provider, `oauth_skip_org_role_update_sync` is a generic setting that affects all configured OAuth providers.
+> **Note:** There is a deprecated setting called `oauth_skip_org_role_update_sync` which has a different scope. While `skip_org_role_sync` only applies to the specific OAuth provider, `oauth_skip_org_role_update_sync` is a generic setting that affects all configured OAuth providers.
 
 The following table shows the OAuth provider's setting with the default value and the skip org role sync setting.
 | OAuth Provider | `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | Behavior |
@@ -960,7 +960,7 @@ The following table shows the OAuth provider's setting with the default value an
 When a user logs in the first time, Grafana sets the organization role based on the value specified in `AutoAssignOrgRole`. If you want to manage organization roles through Grafana's UI, set the `skip_org_role_sync` option to `true`.
 This also impacts `allow_assign_grafana_admin` setting, by not syncing the grafana admin role from GitLab.
 
-> **Note:** There is a separate setting called `oauth_skip_org_role_update_sync` which has a different scope. While `skip_org_role_sync` only applies to the specific OAuth provider, `oauth_skip_org_role_update_sync` is a generic setting that affects all configured OAuth providers.
+> **Note:** There is a deprecated setting called `oauth_skip_org_role_update_sync` which has a different scope. While `skip_org_role_sync` only applies to the specific OAuth provider, `oauth_skip_org_role_update_sync` is a generic setting that affects all configured OAuth providers.
 
 The following table shows the OAuth provider's setting with the default value and the skip org role sync setting.
 | OAuth Provider | `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | Behavior |
