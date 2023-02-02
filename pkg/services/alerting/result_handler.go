@@ -52,8 +52,8 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 		handler.log.Info("New state change", "ruleId", evalContext.Rule.ID, "newState", evalContext.Rule.State, "prev state", evalContext.PrevAlertState)
 
 		cmd := &models.SetAlertStateCommand{
-			AlertId:  evalContext.Rule.ID,
-			OrgId:    evalContext.Rule.OrgID,
+			AlertID:  evalContext.Rule.ID,
+			OrgID:    evalContext.Rule.OrgID,
 			State:    evalContext.Rule.State,
 			Error:    executionError,
 			EvalData: annotationData,
