@@ -16,10 +16,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/updatechecker/instrumentation"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var pluginsUpdateCheckerMetrics = newPrometheusMetrics("grafana_plugins_update_checker").
+// Create and register metrics into the default Prometheus registry
+
+var pluginsUpdateCheckerMetrics = instrumentation.NewPrometheusMetrics("grafana_plugins_update_checker").
 	WithMustRegister(prometheus.DefaultRegisterer)
 
 type PluginsService struct {
@@ -38,10 +41,10 @@ func ProvidePluginsService(cfg *setting.Cfg, pluginStore plugins.Store, tracer t
 	return &PluginsService{
 		enabled:        cfg.CheckForPluginUpdates,
 		grafanaVersion: cfg.BuildVersion,
-		httpClient: newInstrumentedHTTPClient(
+		httpClient: instrumentation.NewInstrumentedHTTPClient(
 			&http.Client{Timeout: time.Second * 10},
 			tracer,
-			instrumentedHTTPClientWithMetrics(pluginsUpdateCheckerMetrics),
+			instrumentation.WithMetrics(pluginsUpdateCheckerMetrics),
 		),
 		log:              log.New("plugins.update.checker"),
 		tracer:           tracer,

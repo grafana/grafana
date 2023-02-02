@@ -11,12 +11,15 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/updatechecker/instrumentation"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/hashicorp/go-version"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-var grafanaUpdateCheckerMetrics = newPrometheusMetrics("grafana_update_checker").
+// Create and register metrics into the default Prometheus registry
+
+var grafanaUpdateCheckerMetrics = instrumentation.NewPrometheusMetrics("grafana_update_checker").
 	WithMustRegister(prometheus.DefaultRegisterer)
 
 type GrafanaService struct {
@@ -35,10 +38,10 @@ func ProvideGrafanaService(cfg *setting.Cfg, tracer tracing.Tracer) *GrafanaServ
 	return &GrafanaService{
 		enabled:        cfg.CheckForGrafanaUpdates,
 		grafanaVersion: cfg.BuildVersion,
-		httpClient: newInstrumentedHTTPClient(
+		httpClient: instrumentation.NewInstrumentedHTTPClient(
 			&http.Client{Timeout: time.Second * 10},
 			tracer,
-			instrumentedHTTPClientWithMetrics(grafanaUpdateCheckerMetrics),
+			instrumentation.WithMetrics(grafanaUpdateCheckerMetrics),
 		),
 		log:    log.New("grafana.update.checker"),
 		tracer: tracer,
