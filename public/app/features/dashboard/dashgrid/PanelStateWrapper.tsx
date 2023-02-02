@@ -657,7 +657,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       menu = (
         <div data-testid="panel-dropdown">
           <PanelHeaderMenuWrapper
-            style={{ top: 0 }}
+            style={{ top: 0, left: '-158px' }}
             panel={panel}
             dashboard={dashboard}
             loadingState={data.state}
