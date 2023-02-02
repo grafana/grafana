@@ -188,7 +188,7 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
 
     const tooltip = `Cache time-to-live: How long results from this queries in this panel will be cached, in milliseconds. Defaults to the TTL in the caching configuration for this datasource.`;
 
-    if (!dataSource.meta.cachingConfig?.enabled) {
+    if (!dataSource.cachingConfig?.enabled) {
       return null;
     }
 
@@ -201,7 +201,7 @@ export class QueryGroupOptionsEditor extends PureComponent<Props, State> {
           <Input
             type="number"
             className="width-6"
-            placeholder={`${dataSource.meta.cachingConfig.TTLMs}`}
+            placeholder={`${dataSource.cachingConfig.TTLMs}`}
             spellCheck={false}
             onBlur={this.onQueryCachingTTLBlur}
             defaultValue={options.queryCachingTTL ?? undefined}

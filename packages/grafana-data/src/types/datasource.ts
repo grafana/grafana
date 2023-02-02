@@ -133,7 +133,6 @@ export interface DataSourcePluginMeta<T extends KeyValue = {}> extends PluginMet
   hasQueryHelp?: boolean;
   category?: string;
   queryOptions?: PluginMetaQueryOptions;
-  cachingConfig?: PluginQueryCachingConfig;
   sort?: number;
   streaming?: boolean;
   unlicensed?: boolean;
@@ -146,10 +145,6 @@ interface PluginMetaQueryOptions {
   maxDataPoints?: boolean;
   minInterval?: boolean;
 }
-/**
- * Information about the datasource's query caching configuration
- * When the caching feature is disabled, this config will always be falsy
- */
 interface PluginQueryCachingConfig {
   enabled?: boolean;
   TTLMs?: number;
@@ -233,6 +228,7 @@ abstract class DataSourceApi<
     this.id = instanceSettings.id;
     this.type = instanceSettings.type;
     this.meta = instanceSettings.meta;
+    this.cachingConfig = instanceSettings.cachingConfig;
     this.uid = instanceSettings.uid;
   }
 
@@ -309,6 +305,12 @@ abstract class DataSourceApi<
    * static information about the datasource
    */
   meta: DataSourcePluginMeta;
+
+  /**
+   * Information about the datasource's query caching configuration
+   * When the caching feature is disabled, this config will always be falsy
+   */
+  cachingConfig?: PluginQueryCachingConfig;
 
   /**
    * Used by alerting to check if query contains template variables
@@ -596,6 +598,7 @@ export interface DataSourceInstanceSettings<T extends DataSourceJsonData = DataS
   type: string;
   name: string;
   meta: DataSourcePluginMeta;
+  cachingConfig?: PluginQueryCachingConfig;
   readOnly: boolean;
   url?: string;
   jsonData: T;
