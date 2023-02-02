@@ -8,7 +8,7 @@ title: NodeGraphPanelCfg kind
 
 ## NodeGraphPanelCfg
 
-#### Maturity: experimental
+#### Maturity: [experimental](../../../maturity/#experimental)
 #### Version: 0.0
 
 

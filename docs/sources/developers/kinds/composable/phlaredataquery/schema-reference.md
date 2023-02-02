@@ -8,7 +8,7 @@ title: PhlareDataQuery kind
 
 ## PhlareDataQuery
 
-#### Maturity: experimental
+#### Maturity: [experimental](../../../maturity/#experimental)
 #### Version: 0.0
 
 

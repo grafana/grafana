@@ -8,7 +8,7 @@ title: ElasticsearchDataQuery kind
 
 ## ElasticsearchDataQuery
 
-#### Maturity: merged
+#### Maturity: [merged](../../../maturity/#merged)
 #### Version: 0.0
 
 
