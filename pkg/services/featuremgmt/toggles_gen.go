@@ -139,10 +139,6 @@ const (
 	// Adds trace ID to error notifications
 	FlagTracing = "tracing"
 
-	// FlagCommandPalette
-	// Enable command palette
-	FlagCommandPalette = "commandPalette"
-
 	// FlagCorrelations
 	// Correlations page
 	FlagCorrelations = "correlations"
@@ -200,7 +196,7 @@ const (
 	FlagInternationalization = "internationalization"
 
 	// FlagTopnav
-	// New top nav and page layouts
+	// Displays new top nav and page layouts
 	FlagTopnav = "topnav"
 
 	// FlagGrpcServer

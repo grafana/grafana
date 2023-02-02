@@ -31,7 +31,7 @@ export function AppChrome({ children }: Props) {
           <>
             <NavBar />
             <SearchWrapper />
-            {featureToggles.commandPalette && <CommandPalette />}
+            <CommandPalette />
           </>
         )}
         <main className="main-view">{children}</main>
