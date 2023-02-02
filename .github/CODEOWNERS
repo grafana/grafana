@@ -112,7 +112,7 @@ WORKFLOW.md @torkelo
 /pkg/services/pluginsettings/ @grafana/backend-platform
 /pkg/services/preference/ @grafana/backend-platform
 /pkg/services/provisioning/ @grafana/backend-platform
-/pkg/services/publicdashboards/ @grafana/backend-platform
+/pkg/services/publicdashboards/ @grafana/dashboards-squad
 /pkg/services/query/ @grafana/backend-platform
 /pkg/services/queryhistory/ @grafana/backend-platform
 /pkg/services/quota/ @grafana/backend-platform
@@ -550,7 +550,7 @@ embed.go @grafana/grafana-as-code
 /pkg/registry/ @grafana/grafana-as-code
 /pkg/codegen/ @grafana/grafana-as-code
 /pkg/kindsys/ @grafana/grafana-as-code
-/pkg/kindsys/kindcat_custom.cue @grafana/apps-platform-core
+/pkg/kindsys/kindcat_custom.cue @grafana/cloud-app-platform-squad
 /pkg/kinds/*/*_gen.go @grafana/grafana-as-code
 /pkg/registry/corekind/ @grafana/grafana-as-code
 /public/app/plugins/*gen.go @grafana/grafana-as-code
@@ -571,13 +571,12 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/backport.yml @grafana/grafana-release-eng
 /.github/workflows/bump-version.yml @grafana/grafana-release-eng
 /.github/workflows/close-milestone.yml @grafana/grafana-release-eng
-/.github/workflows/cloud-data-sources-code-coverage.yml @grafana/partner-plugins
+/.github/workflows/cloud-data-sources-code-coverage.yml @grafana/partner-plugins @grafana/aws-plugins
 /.github/workflows/codeowners-validator.yml @tolzhabayev
 /.github/workflows/codeql-analysis.yml @DanCech
 /.github/workflows/commands.yml @torkelo
 /.github/workflows/detect-breaking-changes-* @grafana/plugins-platform-frontend
 /.github/workflows/doc-validator.yml @grafana/docs-grafana
-/.github/workflows/enterprise-pr-check.yml @grafana/grafana-release-eng
 /.github/workflows/epic-add-to-platform-ux-parent-project.yml @meanmina
 /.github/workflows/github-release.yml @torkelo
 /.github/workflows/issue-labeled.yml @armandgrillet

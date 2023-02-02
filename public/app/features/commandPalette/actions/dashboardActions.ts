@@ -2,7 +2,6 @@ import debounce from 'debounce-promise';
 import { useEffect, useState } from 'react';
 
 import { locationUtil } from '@grafana/data';
-import { locationService } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 import impressionSrv from 'app/core/services/impression_srv';
 import { getGrafanaSearcher } from 'app/features/search/service';
@@ -38,9 +37,7 @@ export async function getRecentDashboardActions(): Promise<CommandPaletteAction[
       name: `${name}`,
       section: t('command-palette.section.recent-dashboards', 'Recent dashboards'),
       priority: RECENT_DASHBOARDS_PRORITY,
-      perform: () => {
-        locationService.push(locationUtil.stripBaseFromUrl(url));
-      },
+      url: locationUtil.stripBaseFromUrl(url),
     };
   });
 
@@ -66,9 +63,7 @@ export async function getDashboardSearchResultActions(searchQuery: string): Prom
       name: `${name}`,
       section: t('command-palette.section.dashboard-search-results', 'Dashboards'),
       priority: SEARCH_RESULTS_PRORITY,
-      perform: () => {
-        locationService.push(locationUtil.stripBaseFromUrl(url));
-      },
+      url: locationUtil.stripBaseFromUrl(url),
     };
   });
 

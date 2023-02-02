@@ -2,8 +2,11 @@ package kind
 
 import "strings"
 
-name:     "Dashboard"
-maturity: "experimental"
+name:        "Dashboard"
+maturity:    "experimental"
+description: "A Grafana dashboard."
+
+crd: dummySchema: true
 
 lineage: seqs: [
 	{
@@ -30,8 +33,8 @@ lineage: seqs: [
 				tags?: [...string] @grafanamaturity(NeedsExpertReview)
 				// Theme of dashboard.
 				style: "light" | *"dark" @grafanamaturity(NeedsExpertReview)
-				// Timezone of dashboard,
-				timezone?: *"browser" | "utc" | "" @grafanamaturity(NeedsExpertReview)
+				// Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc".
+				timezone?: string | *"browser"
 				// Whether a dashboard is editable or not.
 				editable: bool | *true
 				// Configuration of dashboard cursor sync behavior.
@@ -283,10 +286,18 @@ lineage: seqs: [
 				} @cuetsy(kind="interface")
 
 				// TODO docs
-				// FIXME this is extremely underspecfied; wasn't obvious which typescript types corresponded to it
-				#Transformation: {
+				#DataTransformerConfig: {
+					@grafana(TSVeneer="type")
+
+					// Unique identifier of transformer
 					id: string
-					options: {...}
+					// Disabled transformations are skipped
+					disabled?: bool
+					// Optional frame matcher.  When missing it will be applied to all results
+					filter?: #MatcherConfig
+					// Options to be passed to the transformer
+					// Valid options depend on the transformer id
+					options: _
 				} @cuetsy(kind="interface") @grafanamaturity(NeedsExpertReview)
 
 				// 0 for no shared crosshair or tooltip (default).
@@ -383,7 +394,7 @@ lineage: seqs: [
 					// TODO docs
 					timeRegions?: [...] @grafanamaturity(NeedsExpertReview)
 
-					transformations: [...#Transformation] @grafanamaturity(NeedsExpertReview)
+					transformations: [...#DataTransformerConfig] @grafanamaturity(NeedsExpertReview)
 
 					// TODO docs
 					// TODO tighter constraint
@@ -396,6 +407,9 @@ lineage: seqs: [
 					// TODO docs
 					// TODO tighter constraint
 					timeShift?: string @grafanamaturity(NeedsExpertReview)
+
+					// Dynamically load the panel
+					libraryPanel?: #LibraryPanelRef
 
 					// options is specified by the PanelOptions field in panel
 					// plugin schemas.
@@ -411,6 +425,11 @@ lineage: seqs: [
 						properties: [...#DynamicConfigValue]
 					}] @grafanamaturity(NeedsExpertReview)
 				} @cuetsy(kind="interface") @grafana(TSVeneer="type") @grafanamaturity(NeedsExpertReview)
+
+				#LibraryPanelRef: {
+					name: string
+					uid:  string
+				} @cuetsy(kind="interface")
 
 				#MatcherConfig: {
 					id:       string | *"" @grafanamaturity(NeedsExpertReview)

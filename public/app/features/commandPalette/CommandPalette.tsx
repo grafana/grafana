@@ -6,7 +6,6 @@ import {
   KBarAnimator,
   KBarPortal,
   KBarPositioner,
-  KBarResults,
   KBarSearch,
   VisualState,
   useRegisterActions,
@@ -20,6 +19,7 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { Icon, Spinner, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
+import { KBarResults } from './KBarResults';
 import { ResultItem } from './ResultItem';
 import { useDashboardResults } from './actions/dashboardActions';
 import useActions from './actions/useActions';
@@ -59,7 +59,7 @@ export const CommandPalette = () => {
               <div className={styles.searchContainer}>
                 {isFetchingDashboardResults ? <Spinner className={styles.spinner} /> : <Icon name="search" size="md" />}
                 <KBarSearch
-                  defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search Grafana')}
+                  defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search or jump to...')}
                   className={styles.search}
                 />
               </div>
@@ -166,14 +166,15 @@ const getSearchStyles = (theme: GrafanaTheme2) => {
       paddingBottom: theme.spacing(1),
     }),
     sectionHeader: css({
-      padding: theme.spacing(1.5, 2, 1, 2),
+      padding: theme.spacing(1.5, 2, 2, 2),
       fontSize: theme.typography.bodySmall.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
-      color: theme.colors.text.primary,
+      color: theme.colors.text.secondary,
       borderTop: `1px solid ${theme.colors.border.weak}`,
       marginTop: theme.spacing(1),
     }),
     sectionHeaderFirst: css({
+      paddingBottom: theme.spacing(1),
       borderTop: 'none',
       marginTop: 0,
     }),

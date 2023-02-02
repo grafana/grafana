@@ -3,17 +3,16 @@ package login
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
 type AuthInfoService interface {
-	LookupAndUpdate(ctx context.Context, query *models.GetUserByAuthInfoQuery) (*user.User, error)
-	GetAuthInfo(ctx context.Context, query *models.GetAuthInfoQuery) error
-	GetUserLabels(ctx context.Context, query models.GetUserLabelsQuery) (map[int64]string, error)
-	GetExternalUserInfoByLogin(ctx context.Context, query *models.GetExternalUserInfoByLoginQuery) error
-	SetAuthInfo(ctx context.Context, cmd *models.SetAuthInfoCommand) error
-	UpdateAuthInfo(ctx context.Context, cmd *models.UpdateAuthInfoCommand) error
+	LookupAndUpdate(ctx context.Context, query *GetUserByAuthInfoQuery) (*user.User, error)
+	GetAuthInfo(ctx context.Context, query *GetAuthInfoQuery) error
+	GetUserLabels(ctx context.Context, query GetUserLabelsQuery) (map[int64]string, error)
+	GetExternalUserInfoByLogin(ctx context.Context, query *GetExternalUserInfoByLoginQuery) error
+	SetAuthInfo(ctx context.Context, cmd *SetAuthInfoCommand) error
+	UpdateAuthInfo(ctx context.Context, cmd *UpdateAuthInfoCommand) error
 	DeleteUserAuthInfo(ctx context.Context, userID int64) error
 }
 
@@ -35,6 +34,8 @@ func GetAuthProviderLabel(authModule string) string {
 		return "AzureAD"
 	case "oauth_gitlab":
 		return "GitLab"
+	case "oauth_okta":
+		return "Okta"
 	case "oauth_grafana_com", "oauth_grafananet":
 		return "grafana.com"
 	case SAMLAuthModule:
@@ -45,7 +46,9 @@ func GetAuthProviderLabel(authModule string) string {
 		return "JWT"
 	case AuthProxyAuthModule:
 		return "Auth Proxy"
+	case "oauth_generic_oauth":
+		return "Generic OAuth"
 	default:
-		return "OAuth" // FIXME: replace with "Unknown" and handle generic oauth as a case
+		return "Unknown"
 	}
 }

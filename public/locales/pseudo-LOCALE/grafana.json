@@ -13,7 +13,7 @@
       "search": "Ŝęäřčĥ"
     },
     "search-box": {
-      "placeholder": "Ŝęäřčĥ őř ĵūmp ŧő..."
+      "placeholder": "Ŝęäřčĥ Ğřäƒäŉä"
     },
     "section": {
       "actions": "Åčŧįőŉş",
@@ -229,7 +229,6 @@
     "help/documentation": "Đőčūmęŉŧäŧįőŉ",
     "help/keyboard-shortcuts": "Ķęyþőäřđ şĥőřŧčūŧş",
     "help/support": "Ŝūppőřŧ",
-    "help/support-bundle": "Ŝūppőřŧ ßūŉđľęş",
     "home": {
       "title": "Ħőmę"
     },
@@ -292,7 +291,8 @@
       "title": "Ŝčęŉęş"
     },
     "search": {
-      "placeholder": "Ŝęäřčĥ Ğřäƒäŉä"
+      "placeholder": "Ŝęäřčĥ Ğřäƒäŉä",
+      "placeholderCommandPalette": "Ŝęäřčĥ őř ĵūmp ŧő..."
     },
     "search-dashboards": {
       "title": "Ŝęäřčĥ đäşĥþőäřđş"
@@ -489,7 +489,8 @@
     "theme": {
       "dark-label": "Đäřĸ",
       "default-label": "Đęƒäūľŧ",
-      "light-label": "Ŀįģĥŧ"
+      "light-label": "Ŀįģĥŧ",
+      "system-label": "Ŝyşŧęm"
     },
     "title": "Přęƒęřęŉčęş"
   },

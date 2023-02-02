@@ -12,6 +12,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -19,7 +22,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/login/social"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -32,8 +34,6 @@ import (
 	secretsManager "github.com/grafana/grafana/pkg/services/secrets/manager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func fakeSetIndexViewData(t *testing.T) {
@@ -44,7 +44,7 @@ func fakeSetIndexViewData(t *testing.T) {
 	setIndexViewData = func(*HTTPServer, *contextmodel.ReqContext) (*dtos.IndexViewData, error) {
 		data := &dtos.IndexViewData{
 			User:     &dtos.CurrentUser{},
-			Settings: map[string]interface{}{},
+			Settings: &dtos.FrontendSettingsDTO{},
 			NavTree:  &navtree.NavTreeRoot{},
 		}
 		return data, nil
@@ -590,10 +590,10 @@ func setupAuthProxyLoginTest(t *testing.T, enableLoginToken bool) *scenarioConte
 }
 
 type loginHookTest struct {
-	info *models.LoginInfo
+	info *loginservice.LoginInfo
 }
 
-func (r *loginHookTest) LoginHook(loginInfo *models.LoginInfo, req *contextmodel.ReqContext) {
+func (r *loginHookTest) LoginHook(loginInfo *loginservice.LoginInfo, req *contextmodel.ReqContext) {
 	r.info = loginInfo
 }
 
@@ -629,12 +629,12 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 		authUser   *user.User
 		authModule string
 		authErr    error
-		info       models.LoginInfo
+		info       loginservice.LoginInfo
 	}{
 		{
 			desc:    "invalid credentials",
 			authErr: login.ErrInvalidCredentials,
-			info: models.LoginInfo{
+			info: loginservice.LoginInfo{
 				AuthModule: "",
 				HTTPStatus: 401,
 				Error:      login.ErrInvalidCredentials,
@@ -643,7 +643,7 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 		{
 			desc:    "user disabled",
 			authErr: login.ErrUserDisabled,
-			info: models.LoginInfo{
+			info: loginservice.LoginInfo{
 				AuthModule: "",
 				HTTPStatus: 401,
 				Error:      login.ErrUserDisabled,
@@ -653,7 +653,7 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 			desc:       "valid Grafana user",
 			authUser:   testUser,
 			authModule: "grafana",
-			info: models.LoginInfo{
+			info: loginservice.LoginInfo{
 				AuthModule: "grafana",
 				User:       testUser,
 				HTTPStatus: 200,
@@ -663,7 +663,7 @@ func TestLoginPostRunLokingHook(t *testing.T) {
 			desc:       "valid LDAP user",
 			authUser:   testUser,
 			authModule: loginservice.LDAPAuthModule,
-			info: models.LoginInfo{
+			info: loginservice.LoginInfo{
 				AuthModule: loginservice.LDAPAuthModule,
 				User:       testUser,
 				HTTPStatus: 200,
@@ -726,7 +726,7 @@ type fakeAuthenticator struct {
 	ExpectedError      error
 }
 
-func (fa *fakeAuthenticator) AuthenticateUser(c context.Context, query *models.LoginUserQuery) error {
+func (fa *fakeAuthenticator) AuthenticateUser(c context.Context, query *loginservice.LoginUserQuery) error {
 	query.User = fa.ExpectedUser
 	query.AuthModule = fa.ExpectedAuthModule
 	return fa.ExpectedError

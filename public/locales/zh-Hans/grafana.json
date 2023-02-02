@@ -229,7 +229,6 @@
     "help/documentation": "文档",
     "help/keyboard-shortcuts": "快捷键",
     "help/support": "支持",
-    "help/support-bundle": "",
     "home": {
       "title": "首页"
     },
@@ -292,7 +291,8 @@
       "title": "场景"
     },
     "search": {
-      "placeholder": "搜索 Grafana"
+      "placeholder": "搜索 Grafana",
+      "placeholderCommandPalette": ""
     },
     "search-dashboards": {
       "title": ""
@@ -489,7 +489,8 @@
     "theme": {
       "dark-label": "深色",
       "default-label": "默认",
-      "light-label": "浅色"
+      "light-label": "浅色",
+      "system-label": ""
     },
     "title": "首选项"
   },

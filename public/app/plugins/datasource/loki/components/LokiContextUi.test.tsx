@@ -55,6 +55,7 @@ describe('LokiContextUi', () => {
           label3: 'value3',
         },
       } as unknown as LogRowModel,
+      onClose: jest.fn(),
     };
 
     return defaults;
@@ -112,5 +113,15 @@ describe('LokiContextUi', () => {
     expect(props.updateFilter).toHaveBeenCalled();
 
     jest.useRealTimers();
+  });
+
+  it('unmounts and calls onClose', async () => {
+    const props = setupProps();
+    const comp = render(<LokiContextUi {...props} />);
+    comp.unmount();
+
+    await waitFor(() => {
+      expect(props.onClose).toHaveBeenCalled();
+    });
   });
 });

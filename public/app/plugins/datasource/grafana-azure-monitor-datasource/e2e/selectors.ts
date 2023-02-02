@@ -95,6 +95,9 @@ export const components = {
     resource: {
       input: 'data-testid resource',
     },
+    region: {
+      input: 'data-testid region',
+    },
   },
 };
 
