@@ -89,3 +89,67 @@ Administrators can choose between selecting one of the most popular data sources
 This is currently a beta feature that can be accessed by enabling the `datasourceOnboarding` feature toggle.
 
 {{< figure src="/media/docs/grafana/screenshot-datasource-connection-onboarding-whats-new-9-4.png" max-width="750px" caption="Admin view of data source connection page on dashboard creation" >}}
+
+## Alerting: alert rules
+
+We've made the following changes to alert rules
+
+### Declare incidents from firing alerts
+
+Declare an incident from a firing alert, streamlining the alert to incident workflow.
+
+### Make copies of alert rules and notification templates
+
+To help you reuse existing alert rules or templates, make copies of alert rules from the Alert rule list view and templates from the Contact points page.
+
+### View query definitions for provisioned alerts
+
+View read-only query definitions for provisioned alerts from the Alert rule details page. Check quickly if your alert rule queries are correct, without diving into your "as-code" repository for rule definitions.
+
+### Export alert rules to use in the provisioning API or files
+
+Create and tune an alert rule in the UI, then export to YAML or JSON, and use it in the provisioning API or files. You can also export an entire rule group to review or use. This is supported in both the UI and provisioning API.
+
+### Pause alert rule evaluation
+
+Pause alert rule evaluation to prevent noisy alerting while tuning your alerts. Pausing stops alert rule evaluation and does not create any alert instances. This is different to mute timings, which stop notifications from being delivered, but still allow for alert rule evaluation and the creation of alert instances.
+
+### View evaluation interval on the Group view
+
+View the evaluation interval more easily from the grouped view on the Alert list page. The view now also always displays recording and normal alert rules and highlights alert rule status in different colors.
+
+### Improved search for your alert rules
+
+When managing large volumes of alerts, use extended alert rule search capabilities to filter on folders, evaluation groups, and rules. Additionally, you can filter alert rules by their properties like labels, state, type, and health.
+
+### Adjust the amount and resolution of data used in your alerting queries
+
+Lower costs and improve performance by adjusting the maximum number of data points returned from your alerting queries.
+
+### Edit alert rule evaluation interval
+
+Simplifies editing the evaluation interval for an alert rule within a new group. You no longer have to save the alert rule and group before editing the evaluation interval.
+
+## Alerting: contact points
+
+### View Grafana OnCall contact point
+
+Connecting your OnCall workflows just got easier. OnCall has been added as a contact point to simplify the integration between alert notifications and your OnCall implementation.
+
+### Add support for Discord as a contact point receiver
+
+Adds Discord as a contact point receiver for Grafana Cloud alert rules.
+
+## Alerting: administration
+
+### Better guidance to configure your Alertmanagers
+
+Get additional help while configuring your Alertmanager. If you enter an invalid Alertmanager configuration, an error message displays, and you can choose from a previous working configuration to restart it.
+
+### Alerting landing page
+
+Introduces a new landing page that helps you get started quickly with Alerting. It also provides you with at a glance information on how Alerting works and a video to introduce you to key concepts.
+
+### Compatibility with AWS Aurora
+
+Grafana Alerting is now compatible with AWS Aurora, but does not provide technical support for it.
