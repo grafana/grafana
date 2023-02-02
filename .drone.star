@@ -6,7 +6,6 @@
 
 load('scripts/drone/events/pr.star', 'pr_pipelines')
 load('scripts/drone/events/main.star', 'main_pipelines')
-load('scripts/drone/pipelines/docs.star', 'docs_pipelines')
 load(
     'scripts/drone/events/release.star',
     'oss_pipelines',
