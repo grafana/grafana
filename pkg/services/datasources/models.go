@@ -54,7 +54,7 @@ type DataSource struct {
 	JsonData          *simplejson.Json  `json:"jsonData"`
 	SecureJsonData    map[string][]byte `json:"secureJsonData"`
 	ReadOnly          bool              `json:"readOnly"`
-	UID               string            `json:"uid"`
+	UID               string            `json:"uid" xorm:"uid"`
 
 	Created time.Time `json:"created,omitempty"`
 	Updated time.Time `json:"updated,omitempty"`
