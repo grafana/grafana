@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
@@ -183,7 +184,16 @@ func interfaceToK8sDashboard(obj interface{}) (*k8ssys.Base[dashboard.Dashboard]
 // TODO: this is a hack to convert the k8s dashboard to a DTO
 // unclear if any of the fields are missing at this point.
 func k8sDashboardToDashboardDTO(dash *k8ssys.Base[dashboard.Dashboard]) *dashboards.SaveDashboardDTO {
-	data := simplejson.NewFromAny(dash.Spec)
+	raw, err := json.Marshal(dash.Spec)
+	if err != nil {
+		fmt.Println("failed to marshal dashboard spec", err)
+		return nil
+	}
+	data, err := simplejson.NewJson(raw)
+	if err != nil {
+		fmt.Println("failed to convert dashboard spec to simplejson", err)
+		return nil
+	}
 	dto := dashboards.SaveDashboardDTO{
 		Dashboard: &dashboards.Dashboard{
 			FolderID: 0,
