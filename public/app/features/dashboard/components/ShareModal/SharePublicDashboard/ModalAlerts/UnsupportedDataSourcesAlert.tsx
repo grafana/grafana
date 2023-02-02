@@ -16,7 +16,6 @@ export const UnsupportedDataSourcesAlert = ({ unsupportedDataSources }: { unsupp
       severity="warning"
       title="Unsupported data sources"
       data-testid={selectors.UnsupportedDataSourcesWarningAlert}
-      className={styles.container}
     >
       <p className={styles.unsupportedDataSourceDescription}>
         {`There are data sources in this dashboard that are unsupported for public dashboards. Panels that use these data sources may not function properly: ${unsupportedDataSources}.`}
@@ -32,9 +31,6 @@ export const UnsupportedDataSourcesAlert = ({ unsupportedDataSources }: { unsupp
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  container: css`
-    margin-bottom: ${theme.spacing(3)};
-  `,
   unsupportedDataSourceDescription: css`
     color: ${theme.colors.text.secondary};
     margin-bottom: ${theme.spacing(1)};

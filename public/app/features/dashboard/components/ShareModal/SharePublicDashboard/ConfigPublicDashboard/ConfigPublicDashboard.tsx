@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import React, { useContext, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import React, { useContext } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
@@ -20,60 +19,36 @@ import {
 import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 
 import { contextSrv } from '../../../../../../core/services/context_srv';
-import { AccessControlAction } from '../../../../../../types';
+import { AccessControlAction, useSelector } from '../../../../../../types';
 import { DeletePublicDashboardButton } from '../../../../../manage-dashboards/components/PublicDashboardListTable/DeletePublicDashboardButton';
 import { isOrgAdmin } from '../../../../../plugins/admin/permissions';
-import { useUpdatePublicDashboardMutation } from '../../../../api/publicDashboardApi';
-import { DashboardModel } from '../../../../state';
+import { useGetPublicDashboardQuery, useUpdatePublicDashboardMutation } from '../../../../api/publicDashboardApi';
 import { useIsDesktop } from '../../../../utils/screen';
 import { ShareModal } from '../../ShareModal';
+import { NoUpsertPermissionsAlert } from '../ModalAlerts/NoUpsertPermissionsAlert';
+import { UnsupportedTemplateVariablesAlert } from '../ModalAlerts/UnsupportedTemplateVariablesAlert';
 import {
   dashboardHasTemplateVariables,
   generatePublicDashboardUrl,
-  PublicDashboard,
+  PublicDashboardSettings,
 } from '../SharePublicDashboardUtils';
 
 import { Configuration } from './Configuration';
 
-export type SharePublicDashboardInputs = {
-  isAnnotationsEnabled: boolean;
-  pauseShare: boolean;
-  isTimeRangeEnabled: boolean;
-};
-
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
 
-const ConfigPublicDashboard = ({
-  dashboard,
-  publicDashboard,
-}: {
-  dashboard: DashboardModel;
-  publicDashboard: PublicDashboard;
-}) => {
+const ConfigPublicDashboard = () => {
   const styles = useStyles2(getStyles);
   const { showModal, hideModal } = useContext(ModalsContext);
   const isDesktop = useIsDesktop();
 
   const hasWritePermissions = contextSrv.hasAccess(AccessControlAction.DashboardsPublicWrite, isOrgAdmin());
+  const dashboardState = useSelector((store) => store.dashboard);
+  const dashboard = dashboardState.getModel()!;
+  const { data: publicDashboard } = useGetPublicDashboardQuery(dashboard.uid);
   const dashboardVariables = dashboard.getVariables();
 
-  const { reset, handleSubmit, watch, register } = useForm<SharePublicDashboardInputs>({
-    defaultValues: {
-      isAnnotationsEnabled: false,
-      isTimeRangeEnabled: false,
-      pauseShare: false,
-    },
-  });
-
   const [update, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
-
-  useEffect(() => {
-    reset({
-      isAnnotationsEnabled: publicDashboard?.annotationsEnabled,
-      isTimeRangeEnabled: publicDashboard?.timeSelectionEnabled,
-      pauseShare: !publicDashboard?.isEnabled,
-    });
-  }, [publicDashboard, reset]);
 
   const onDismissDelete = () => {
     showModal(ShareModal, {
@@ -83,17 +58,15 @@ const ConfigPublicDashboard = ({
     });
   };
 
-  const onUpdate = async (values: SharePublicDashboardInputs) => {
-    //TODO: think about this tracking
+  const onUpdate = async (name: string, value: boolean) => {
+    //TODO: think about this tracking. This was being tracking when updating
     reportInteraction('grafana_dashboards_public_create_clicked');
 
     const req = {
       dashboard,
       payload: {
         ...publicDashboard!,
-        isEnabled: values.pauseShare,
-        annotationsEnabled: values.isAnnotationsEnabled,
-        timeSelectionEnabled: values.isTimeRangeEnabled,
+        [name as keyof PublicDashboardSettings]: value,
       },
     };
 
@@ -101,28 +74,27 @@ const ConfigPublicDashboard = ({
   };
 
   return (
-    <form onSubmit={handleSubmit(onUpdate)}>
-      <Configuration register={register} dashboard={dashboard} disabled={!hasWritePermissions || isUpdateLoading} />
-      {!watch('pauseShare') && (
-        <Field label="Link URL" className={styles.publicUrl}>
-          <Input
-            disabled={isUpdateLoading}
-            value={generatePublicDashboardUrl(publicDashboard!)}
-            readOnly
-            data-testid={selectors.CopyUrlInput}
-            addonAfter={
-              <ClipboardButton
-                data-testid={selectors.CopyUrlButton}
-                variant="primary"
-                icon="copy"
-                getText={() => generatePublicDashboardUrl(publicDashboard!)}
-              >
-                Copy
-              </ClipboardButton>
-            }
-          />
-        </Field>
-      )}
+    <div>
+      <Configuration disabled={!hasWritePermissions} onChange={onUpdate} />
+      <Field label="Link URL" className={styles.publicUrl}>
+        <Input
+          value={generatePublicDashboardUrl(publicDashboard!)}
+          readOnly
+          disabled={!publicDashboard!.isEnabled}
+          data-testid={selectors.CopyUrlInput}
+          addonAfter={
+            <ClipboardButton
+              data-testid={selectors.CopyUrlButton}
+              variant="primary"
+              icon="copy"
+              disabled={!publicDashboard!.isEnabled}
+              getText={() => generatePublicDashboardUrl(publicDashboard!)}
+            >
+              Copy
+            </ClipboardButton>
+          }
+        />
+      </Field>
       {hasWritePermissions ? (
         dashboard.hasUnsavedChanges() ? (
           <Alert
@@ -130,12 +102,10 @@ const ConfigPublicDashboard = ({
             severity="warning"
           />
         ) : (
-          dashboardHasTemplateVariables(dashboardVariables) && (
-            <Alert title="This public dashboard may not work since it uses template variables" severity="warning" />
-          )
+          dashboardHasTemplateVariables(dashboardVariables) && <UnsupportedTemplateVariablesAlert />
         )
       ) : (
-        <Alert title="You don't have permissions to create or update a public dashboard" severity="warning" />
+        <NoUpsertPermissionsAlert mode="edit" />
       )}
       <Layout
         orientation={isDesktop ? 0 : 1}
@@ -144,13 +114,15 @@ const ConfigPublicDashboard = ({
       >
         <HorizontalGroup spacing="sm">
           <Switch
-            {...register('pauseShare')}
+            disabled={!hasWritePermissions}
+            name="isEnabled"
+            value={!publicDashboard!.isEnabled}
+            checked={!publicDashboard!.isEnabled}
             onChange={(e) => {
-              const { onChange } = register('pauseShare');
               reportInteraction('grafana_dashboards_public_enable_clicked', {
-                action: e.currentTarget.checked ? 'enable' : 'disable',
+                action: e.currentTarget.checked ? 'disable' : 'enable',
               });
-              onChange(e);
+              onUpdate(e.currentTarget.name, !e.currentTarget.checked);
             }}
             data-testid={selectors.EnableSwitch}
           />
@@ -174,17 +146,17 @@ const ConfigPublicDashboard = ({
               fill="outline"
               dashboard={dashboard}
               publicDashboard={{
-                uid: publicDashboard.uid,
+                uid: publicDashboard!.uid,
                 dashboardUid: dashboard.uid,
                 title: dashboard.title,
               }}
             >
-              Revoke public URL {/*{(isSaveLoading || isFetching) && <Spinner />}*/}
+              Revoke public URL
             </DeletePublicDashboardButton>
           </HorizontalGroup>
         )}
       </Layout>
-    </form>
+    </div>
   );
 };
 

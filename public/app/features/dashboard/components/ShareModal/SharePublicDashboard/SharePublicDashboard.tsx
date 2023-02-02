@@ -15,13 +15,7 @@ interface Props extends ShareModalTabProps {}
 
 export const SharePublicDashboard = (props: Props) => {
   const forceUpdate = useForceUpdate();
-
-  const {
-    isLoading: isGetLoading,
-    data: publicDashboard,
-    // isError: isGetError,
-    isFetching,
-  } = useGetPublicDashboardQuery(props.dashboard.uid);
+  const { isLoading: isGetLoading, data: publicDashboard } = useGetPublicDashboardQuery(props.dashboard.uid);
 
   useEffect(() => {
     const eventSubs = new Subscription();
@@ -33,12 +27,12 @@ export const SharePublicDashboard = (props: Props) => {
 
   return (
     <>
-      {isGetLoading || isFetching ? (
+      {isGetLoading ? (
         <Spinner />
       ) : !publicDashboardPersisted(publicDashboard) ? (
         <CreatePublicDashboard />
       ) : (
-        <ConfigPublicDashboard dashboard={props.dashboard} publicDashboard={publicDashboard!} />
+        <ConfigPublicDashboard />
       )}
     </>
   );
