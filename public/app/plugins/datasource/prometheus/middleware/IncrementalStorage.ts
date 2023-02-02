@@ -88,8 +88,9 @@ export class IncrementalStorage {
     };
     let existingValueFrameNewValuesRemoved: number[] = [];
 
+    // Start at the beginning of the array and walk until we find a frame index
     for (let i = 0; i < timeValuesFromStorage?.length; i++) {
-      const startIndex = this.getValidFrameIndicies(
+      const startIndex = this.getValidFrameIndex(
         responseTimeFieldValues,
         timeValuesFromStorage,
         i,
@@ -106,7 +107,7 @@ export class IncrementalStorage {
     }
 
     for (let i = timeValuesFromStorage?.length - 1; i >= 0; i--) {
-      const endIndex = this.getValidFrameIndicies(
+      const endIndex = this.getValidFrameIndex(
         responseTimeFieldValues,
         timeValuesFromStorage,
         i,
@@ -145,7 +146,18 @@ export class IncrementalStorage {
     return { time: existingTimeFrameNewValuesRemoved, values: existingValueFrameNewValuesRemoved };
   }
 
-  private static getValidFrameIndicies(
+  /**
+   *
+   * @param timeValuesFromResponse
+   * @param timeValuesFromStorage
+   * @param i
+   * @param originalRange
+   * @param intervalInSeconds
+   * @param valuesFromStorage
+   * @param evict
+   * @private
+   */
+  private static getValidFrameIndex(
     timeValuesFromResponse: number[],
     timeValuesFromStorage: number[],
     i: number,
@@ -155,17 +167,13 @@ export class IncrementalStorage {
     evict: boolean
   ): false | number {
     const doesResponseNotContainStoredTimeValue = timeValuesFromResponse.indexOf(timeValuesFromStorage[i]) === -1;
-    // console.log('doesResponseNotContainStoredTimeValue', doesResponseNotContainStoredTimeValue);
-    // console.log('doesResponseNotContainStoredTimeValue', timeValuesFromStorage[i]);
-    // console.log('timeValuesFromResponse', timeValuesFromResponse);
-    // console.log('valuesFromStorage', valuesFromStorage);
 
     // Remove values from before new start
     // Note this acts as the only eviction strategy so far, we only store frames that exist after the start of the current query, minus the interval time
     const isFrameOlderThenQueryStart =
       timeValuesFromStorage[i] <= originalRange.start - intervalInSeconds * 1000 && evict;
 
-    if (isFrameOlderThenQueryStart && DEBUG && evict) {
+    if (isFrameOlderThenQueryStart && DEBUG) {
       console.log(
         'Frame is older then query, evicting',
         timeValuesFromStorage[i] - (originalRange.start - intervalInSeconds * 1000),
@@ -228,7 +236,7 @@ export class IncrementalStorage {
     }
 
     // If the query (target) doesn't explicitly have an interval defined it's gonna use the one that's available on the request object.
-    // @todo is the above true?
+    // @todo is the above true, or is there a standard way tro
     const intervalString = target?.interval ? target?.interval : request.interval;
 
     if (!intervalString) {
@@ -240,6 +248,9 @@ export class IncrementalStorage {
     return expressionInterpolated + '__' + intervalString;
   };
 
+  /**
+   * This is mostly used for debugging purposes right now, maybe should get cleaned up
+   */
   getStorage = () => {
     return this.storage;
   };
@@ -320,8 +331,11 @@ export class IncrementalStorage {
 
   /**
    * Note, a known problem for this is query "drift" when users are editing in a dashboard panel,
-   * each change to the query or interval will create a new object in storage, which currently only get cleaned up as new responses come in
-   * Since in a dashboard each panel
+   * each change to the query expression or interval will create a new object in storage,
+   * and the only cache eviction is managed when we have something in storage that matches the response.
+   * i.e. if you keep changing the query expression and interval, those old queries will remain in storage indefinitely.
+   * Until that is solved this might best belong in dashboard contexts only, and not explore?
+   * @todo
    *
    * @param request
    * @param dataFrames
@@ -385,12 +399,6 @@ export class IncrementalStorage {
 
           // Store the response if it's new
           if (thisQueryHasNeverBeenDoneBefore && seriesLabelsIndexString && responseFrameValues?.length) {
-            if (responseFrameValues.length !== timeValuesFromResponse.length) {
-              if (DEBUG) {
-                console.warn('Initial values not same length?', responseFrameValues, timeValuesFromResponse);
-              }
-            }
-
             this.setStorageTimeFields(responseQueryExpressionAndStepString, timeValuesFromResponse);
             this.setStorageFieldsValues(
               responseQueryExpressionAndStepString,
@@ -429,9 +437,6 @@ export class IncrementalStorage {
 
               // If we set the time values here we'll screw up the rest of the loop, we should be checking to see if each series has the same time steps, or we need to clear the cache
               timeValuesStorage = allTimeValuesMerged;
-              if (timeValuesStorage.length > 0 && timeValuesStorage.length !== allTimeValuesMerged.length) {
-                console.warn('ONE TIME IS DIFF LENGTH?');
-              }
 
               // this.setStorageTimeFields(responseQueryExpressionAndStepString, allTimeValuesMerged);
               this.setStorageFieldsValues(

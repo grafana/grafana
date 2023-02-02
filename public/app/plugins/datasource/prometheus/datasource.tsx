@@ -103,9 +103,7 @@ export class PrometheusDatasource
 
   // Record with string index of "super" dataframe to which we keep appending new records
   // Each dataframe has two indicies: the concatenation of query expression/step interval and the name of each series
-  // When reading we should assume that everything that's been populated in this storage has the same durations, otherwise we would purge when receiving the response
-  // @todo implement merging new series into old dataframe, and backfilling missing data?
-  // @todo make this a class and provide some abstraction? It's kinda hard to deal with and easy to make mistakes rn
+  // When reading we should assume that everything that's been populated in this storage has the same durations, otherwise we would purge when making the request
   prometheusDataFrameStorage: IncrementalStorage;
 
   constructor(
