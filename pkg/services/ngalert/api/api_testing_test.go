@@ -67,8 +67,8 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			})
 
 			ds := &fakes.FakeCacheService{DataSources: []*datasources.DataSource{
-				{Uid: data1.DatasourceUID},
-				{Uid: data2.DatasourceUID},
+				{UID: data1.DatasourceUID},
+				{UID: data2.DatasourceUID},
 			}}
 
 			var result []eval.Result
@@ -110,7 +110,7 @@ func TestRouteTestGrafanaRuleConfig(t *testing.T) {
 			data1 := models.GenerateAlertQuery()
 
 			ds := &fakes.FakeCacheService{DataSources: []*datasources.DataSource{
-				{Uid: data1.DatasourceUID},
+				{UID: data1.DatasourceUID},
 			}}
 			currentTime := time.Now()
 
@@ -193,8 +193,8 @@ func TestRouteEvalQueries(t *testing.T) {
 			})
 
 			ds := &fakes.FakeCacheService{DataSources: []*datasources.DataSource{
-				{Uid: data1.DatasourceUID},
-				{Uid: data2.DatasourceUID},
+				{UID: data1.DatasourceUID},
+				{UID: data2.DatasourceUID},
 			}}
 
 			evaluator := &eval_mocks.ConditionEvaluatorMock{}
@@ -237,7 +237,7 @@ func TestRouteEvalQueries(t *testing.T) {
 			data1 := models.GenerateAlertQuery()
 
 			ds := &fakes.FakeCacheService{DataSources: []*datasources.DataSource{
-				{Uid: data1.DatasourceUID},
+				{UID: data1.DatasourceUID},
 			}}
 
 			currentTime := time.Now()

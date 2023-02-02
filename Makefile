@@ -49,6 +49,7 @@ $(SPEC_TARGET): $(SWAGGER) ## Generate API Swagger specification
 	-x "github.com/prometheus/alertmanager" \
 	-i pkg/api/swagger_tags.json \
 	--exclude-tag=alpha
+	go run pkg/services/ngalert/api/tooling/cmd/clean-swagger/main.go -if $@ -of $@
 
 swagger-api-spec: gen-go $(SPEC_TARGET) $(MERGED_SPEC_TARGET) validate-api-spec
 
@@ -84,7 +85,7 @@ fix-cue: $(CUE)
 gen-jsonnet:
 	go generate ./devenv/jsonnet
 
-build-go: $(MERGED_SPEC_TARGET) gen-go ## Build all Go binaries.
+build-go: gen-go ## Build all Go binaries.
 	@echo "build go files"
 	$(GO) run build.go $(GO_BUILD_FLAGS) build
 

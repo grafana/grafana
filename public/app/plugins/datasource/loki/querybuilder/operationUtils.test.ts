@@ -1,6 +1,11 @@
 import { QueryBuilderOperationDef } from '../../prometheus/querybuilder/shared/types';
 
-import { createRangeOperation, createRangeOperationWithGrouping, getLineFilterRenderer } from './operationUtils';
+import {
+  createRangeOperation,
+  createRangeOperationWithGrouping,
+  getLineFilterRenderer,
+  labelFilterRenderer,
+} from './operationUtils';
 import { LokiVisualQueryOperationCategory } from './types';
 
 describe('createRangeOperation', () => {
@@ -153,6 +158,29 @@ describe('getLineFilterRenderer', () => {
     const lineFilterRenderer = getLineFilterRenderer('!~', true);
     expect(lineFilterRenderer(MOCK_MODEL_INSENSITIVE, MOCK_DEF, MOCK_INNER_EXPR)).toBe(
       '{job="grafana"} !~ `(?i)ERrOR`'
+    );
+  });
+});
+
+describe('labelFilterRenderer', () => {
+  const MOCK_MODEL = { id: '__label_filter', params: ['label', '', 'value'] };
+  const MOCK_DEF = undefined as unknown as QueryBuilderOperationDef;
+  const MOCK_INNER_EXPR = '{job="grafana"}';
+
+  it.each`
+    operator | type        | expected
+    ${'='}   | ${'string'} | ${'`value`'}
+    ${'!='}  | ${'string'} | ${'`value`'}
+    ${'=~'}  | ${'string'} | ${'`value`'}
+    ${'!~'}  | ${'string'} | ${'`value`'}
+    ${'>'}   | ${'number'} | ${'value'}
+    ${'>='}  | ${'number'} | ${'value'}
+    ${'<'}   | ${'number'} | ${'value'}
+    ${'<='}  | ${'number'} | ${'value'}
+  `("value should be of type '$type' when operator is: $operator", ({ operator, expected }) => {
+    MOCK_MODEL.params[1] = operator;
+    expect(labelFilterRenderer(MOCK_MODEL, MOCK_DEF, MOCK_INNER_EXPR)).toBe(
+      `{job="grafana"} | label ${operator} ${expected}`
     );
   });
 });

@@ -116,7 +116,7 @@ func prefixFS(prefix string, fsys fs.FS) (fs.FS, error) {
 			return nil
 		}
 
-		b, err := fs.ReadFile(fsys, path)
+		b, err := fs.ReadFile(fsys, filepath.ToSlash(path))
 		if err != nil {
 			return err
 		}
@@ -217,7 +217,7 @@ func BuildGrafanaInstance(ctx *cue.Context, relpath string, pkg string, overlay 
 //
 // NOTE This function will be deprecated in favor of a more generic loader
 func LoadInstanceWithGrafana(fsys fs.FS, dir string, opts ...load.Option) (*build.Instance, error) {
-	if modf, err := fs.ReadFile(fsys, filepath.Join("cue.mod", "module.cue")); err != nil {
+	if modf, err := fs.ReadFile(fsys, "cue.mod/module.cue"); err != nil {
 		// delegate error handling
 		return load.InstanceWithThema(fsys, dir, opts...)
 	} else if modname, err := cuecontext.New().CompileBytes(modf).LookupPath(cue.MakePath(cue.Str("module"))).String(); err != nil {

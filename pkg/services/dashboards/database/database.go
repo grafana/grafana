@@ -16,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -91,73 +90,6 @@ func (d *DashboardStore) ValidateDashboardBeforeSave(ctx context.Context, dashbo
 	}
 
 	return isParentFolderChanged, nil
-}
-
-func (d *DashboardStore) GetFolderByTitle(ctx context.Context, orgID int64, title string) (*folder.Folder, error) {
-	if title == "" {
-		return nil, dashboards.ErrFolderTitleEmpty
-	}
-
-	// there is a unique constraint on org_id, folder_id, title
-	// there are no nested folders so the parent folder id is always 0
-	dashboard := dashboards.Dashboard{OrgID: orgID, FolderID: 0, Title: title}
-	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		has, err := sess.Table(&dashboards.Dashboard{}).Where("is_folder = " + d.store.GetDialect().BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
-		if err != nil {
-			return err
-		}
-		if !has {
-			return dashboards.ErrFolderNotFound
-		}
-		dashboard.SetID(dashboard.ID)
-		dashboard.SetUID(dashboard.UID)
-		return nil
-	})
-	return dashboards.FromDashboard(&dashboard), err
-}
-
-func (d *DashboardStore) GetFolderByID(ctx context.Context, orgID int64, id int64) (*folder.Folder, error) {
-	dashboard := dashboards.Dashboard{OrgID: orgID, FolderID: 0, ID: id}
-	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		has, err := sess.Table(&dashboards.Dashboard{}).Where("is_folder = " + d.store.GetDialect().BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
-		if err != nil {
-			return err
-		}
-		if !has {
-			return dashboards.ErrFolderNotFound
-		}
-		dashboard.SetID(dashboard.ID)
-		dashboard.SetUID(dashboard.UID)
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	return dashboards.FromDashboard(&dashboard), nil
-}
-
-func (d *DashboardStore) GetFolderByUID(ctx context.Context, orgID int64, uid string) (*folder.Folder, error) {
-	if uid == "" {
-		return nil, dashboards.ErrDashboardIdentifierNotSet
-	}
-
-	dashboard := dashboards.Dashboard{OrgID: orgID, FolderID: 0, UID: uid}
-	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
-		has, err := sess.Table(&dashboards.Dashboard{}).Where("is_folder = " + d.store.GetDialect().BooleanStr(true)).Where("folder_id=0").Get(&dashboard)
-		if err != nil {
-			return err
-		}
-		if !has {
-			return dashboards.ErrFolderNotFound
-		}
-		dashboard.SetID(dashboard.ID)
-		dashboard.SetUID(dashboard.UID)
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	return dashboards.FromDashboard(&dashboard), nil
 }
 
 func (d *DashboardStore) GetProvisionedDataByDashboardID(ctx context.Context, dashboardID int64) (*dashboards.DashboardProvisioning, error) {
@@ -659,9 +591,9 @@ func (d *DashboardStore) updateAlerts(ctx context.Context, existingAlerts []*ale
 			var alertToUpdate *alertmodels.Alert
 
 			for _, k := range existingAlerts {
-				if alert.PanelId == k.PanelId {
+				if alert.PanelID == k.PanelID {
 					update = true
-					alert.Id = k.Id
+					alert.ID = k.ID
 					alertToUpdate = k
 					break
 				}
@@ -673,12 +605,12 @@ func (d *DashboardStore) updateAlerts(ctx context.Context, existingAlerts []*ale
 					alert.State = alertToUpdate.State
 					sess.MustCols("message", "for")
 
-					_, err := sess.ID(alert.Id).Update(alert)
+					_, err := sess.ID(alert.ID).Update(alert)
 					if err != nil {
 						return err
 					}
 
-					log.Debug("Alert updated", "name", alert.Name, "id", alert.Id)
+					log.Debug("Alert updated", "name", alert.Name, "id", alert.ID)
 				}
 			} else {
 				alert.Updated = time.Now()
@@ -691,10 +623,10 @@ func (d *DashboardStore) updateAlerts(ctx context.Context, existingAlerts []*ale
 					return err
 				}
 
-				log.Debug("Alert inserted", "name", alert.Name, "id", alert.Id)
+				log.Debug("Alert inserted", "name", alert.Name, "id", alert.ID)
 			}
 			tags := alert.GetTagsFromSettings()
-			if _, err := sess.Exec("DELETE FROM alert_rule_tag WHERE alert_id = ?", alert.Id); err != nil {
+			if _, err := sess.Exec("DELETE FROM alert_rule_tag WHERE alert_id = ?", alert.ID); err != nil {
 				return err
 			}
 			if tags != nil {
@@ -703,7 +635,7 @@ func (d *DashboardStore) updateAlerts(ctx context.Context, existingAlerts []*ale
 					return err
 				}
 				for _, tag := range tags {
-					if _, err := sess.Exec("INSERT INTO alert_rule_tag (alert_id, tag_id) VALUES(?,?)", alert.Id, tag.Id); err != nil {
+					if _, err := sess.Exec("INSERT INTO alert_rule_tag (alert_id, tag_id) VALUES(?,?)", alert.ID, tag.Id); err != nil {
 						return err
 					}
 				}
@@ -718,14 +650,14 @@ func (d *DashboardStore) deleteMissingAlerts(alerts []*alertmodels.Alert, existi
 		missing := true
 
 		for _, k := range existingAlerts {
-			if missingAlert.PanelId == k.PanelId {
+			if missingAlert.PanelID == k.PanelID {
 				missing = false
 				break
 			}
 		}
 
 		if missing {
-			if err := d.deleteAlertByIdInternal(missingAlert.Id, "Removed from dashboard", sess); err != nil {
+			if err := d.deleteAlertByIdInternal(missingAlert.ID, "Removed from dashboard", sess); err != nil {
 				// No use trying to delete more, since we're in a transaction and it will be
 				// rolled back on error.
 				return err
@@ -924,7 +856,7 @@ func (d *DashboardStore) deleteAlertDefinition(dashboardId int64, sess *db.Sessi
 	}
 
 	for _, alert := range alerts {
-		if err := d.deleteAlertByIdInternal(alert.Id, "Dashboard deleted", sess); err != nil {
+		if err := d.deleteAlertByIdInternal(alert.ID, "Dashboard deleted", sess); err != nil {
 			// If we return an error, the current transaction gets rolled back, so no use
 			// trying to delete more
 			return err

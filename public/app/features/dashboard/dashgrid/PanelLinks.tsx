@@ -47,6 +47,8 @@ export function PanelLinks({ panelLinks, onShowPanelLinks }: Props) {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     menuTrigger: css({
+      height: '100%',
+      background: 'inherit',
       border: 'none',
       borderRadius: `${theme.shape.borderRadius()}`,
       cursor: 'context-menu',

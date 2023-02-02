@@ -79,7 +79,7 @@ func (s *Service) detectPrometheusVariant(ctx context.Context, ds *datasources.D
 		return "", err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ds.Url+"/api/v1/status/buildinfo", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, ds.URL+"/api/v1/status/buildinfo", nil)
 	if err != nil {
 		s.log.Error("Failed to create Prometheus build info request", "error", err)
 		return "", err

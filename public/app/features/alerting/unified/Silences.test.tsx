@@ -1,15 +1,13 @@
 import { render, waitFor } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 import { byLabelText, byPlaceholderText, byRole, byTestId, byText } from 'testing-library-selector';
 
 import { dateTime } from '@grafana/data';
 import { locationService, setDataSourceSrv, config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AlertState, MatcherOperator } from 'app/plugins/datasource/alertmanager/types';
-import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 
 import Silences from './Silences';
@@ -33,15 +31,12 @@ const mocks = {
 };
 
 const renderSilences = (location = '/alerting/silences/') => {
-  const store = configureStore();
   locationService.push(location);
 
   return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <Silences />
-      </Router>
-    </Provider>
+    <TestProvider>
+      <Silences />
+    </TestProvider>
   );
 };
 
