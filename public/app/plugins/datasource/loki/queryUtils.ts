@@ -298,33 +298,35 @@ export function getStreamSelectorsFromQuery(query: string): string[] {
 }
 
 const PARTITION_LIMIT = 60;
-export function partitionTimeRange(range: TimeRange, unit: DurationUnit = 'm'): TimeRange[] {
-  const delta = range.to.diff(range.from, unit);
-
-  if (delta <= 1) {
-    return [range];
-  }
-
-  /**
-   * The user can request for any arbitrary time range. If we receive one from too
-   * long ago, this will cause an extremely large loop which could break the app.
-   * Additionally, data retention is limited, so ranges that go above PARTIION_LIMIT
-   * will be ignored.
-   */
-  if (delta > PARTITION_LIMIT) {
-    return [range];
-  }
-
+export function partitionTimeRange(range: TimeRange, timeShift = 1, unit: DurationUnit = 'm'): TimeRange[] {
   const partition: TimeRange[] = [];
-  for (let from = dateTime(range.from), to = dateTime(from).add(1, unit); to <= range.to; to.add(1, unit)) {
+  for (let from = dateTime(range.from), to = dateTime(from).add(1, unit); to <= range.to && from < range.to; ) {
     partition.push({
       from,
       to,
       raw: { from, to },
     });
 
+    /**
+     * The user can request for any arbitrary time range. If we receive one from too
+     * long ago, this will cause an extremely large loop which could break the app.
+     * Additionally, data retention is limited, so ranges that go above PARTIION_LIMIT
+     * will be ignored.
+     */
+    if (partition.length > PARTITION_LIMIT) {
+      return [range];
+    }
+
     from = dateTime(to);
+    to = dateTime(to).add(1, unit);
+
+    if (to > range.to) {
+      to = range.to;
+    }
   }
+
+  console.log(`${range.from}`, `${range.to}`);
+  console.log(partition);
 
   return partition;
 }
