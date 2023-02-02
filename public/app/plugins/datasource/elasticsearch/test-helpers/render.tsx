@@ -5,11 +5,10 @@ import { getDefaultTimeRange } from '@grafana/data';
 
 import { ElasticsearchProvider } from '../components/QueryEditor/ElasticsearchQueryContext';
 import { ElasticDatasource } from '../datasource';
-import { ElasticsearchQuery } from '../types';
 
 const defaultProviderProps = {
   datasource: {} as ElasticDatasource,
-  query: { refId: 'A' } as unknown as ElasticsearchQuery,
+  query: { refId: 'A' },
   onChange: () => void 0,
   onRunQuery: () => void 0,
   range: getDefaultTimeRange(),

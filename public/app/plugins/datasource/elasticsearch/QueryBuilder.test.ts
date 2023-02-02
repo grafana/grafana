@@ -699,7 +699,7 @@ describe('ElasticQueryBuilder', () => {
   describe('lucene query', () => {
     it('should add query_string filter when query is not empty', () => {
       const luceneQuery = 'foo';
-      const query = builder.build({ refId: 'A', query: luceneQuery } as unknown as ElasticsearchQuery);
+      const query = builder.build({ refId: 'A', query: luceneQuery });
 
       expect(query.query.bool.filter).toContainEqual({
         query_string: { analyze_wildcard: true, query: luceneQuery },
@@ -707,7 +707,7 @@ describe('ElasticQueryBuilder', () => {
     });
 
     it('should not add query_string filter when query is empty', () => {
-      const query = builder.build({ refId: 'A' } as unknown as ElasticsearchQuery);
+      const query = builder.build({ refId: 'A' });
 
       expect(
         query.query.bool.filter.find((filter: object) => Object.keys(filter).includes('query_string'))
@@ -717,7 +717,7 @@ describe('ElasticQueryBuilder', () => {
 
   describe('getLogsQuery', () => {
     it('should return query with defaults', () => {
-      const query = builder.getLogsQuery({ refId: 'A' } as unknown as ElasticsearchQuery, 500);
+      const query = builder.getLogsQuery({ refId: 'A' }, 500);
 
       expect(query.size).toEqual(500);
 
@@ -754,7 +754,7 @@ describe('ElasticQueryBuilder', () => {
     describe('lucene query', () => {
       it('should add query_string filter when query is not empty', () => {
         const luceneQuery = 'foo';
-        const query = builder.getLogsQuery({ refId: 'A', query: luceneQuery } as unknown as ElasticsearchQuery, 500);
+        const query = builder.getLogsQuery({ refId: 'A', query: luceneQuery }, 500);
 
         expect(query.query.bool.filter).toContainEqual({
           query_string: { analyze_wildcard: true, query: luceneQuery },
@@ -762,7 +762,7 @@ describe('ElasticQueryBuilder', () => {
       });
 
       it('should not add query_string filter when query is empty', () => {
-        const query = builder.getLogsQuery({ refId: 'A' } as unknown as ElasticsearchQuery, 500);
+        const query = builder.getLogsQuery({ refId: 'A' }, 500);
 
         expect(
           query.query.bool.filter.find((filter: object) => Object.keys(filter).includes('query_string'))
@@ -780,7 +780,7 @@ describe('ElasticQueryBuilder', () => {
         { key: 'key5', operator: '=~', value: 'value5', condition: '' },
         { key: 'key6', operator: '!~', value: 'value6', condition: '' },
       ];
-      const query = builder.getLogsQuery({ refId: 'A' } as unknown as ElasticsearchQuery, 500, adhocFilters);
+      const query = builder.getLogsQuery({ refId: 'A' }, 500, adhocFilters);
 
       expect(query.query.bool.must[0].match_phrase['key1'].query).toBe('value1');
       expect(query.query.bool.must_not[0].match_phrase['key2'].query).toBe('value2');

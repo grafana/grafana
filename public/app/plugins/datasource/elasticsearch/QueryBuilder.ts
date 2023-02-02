@@ -116,10 +116,10 @@ export class ElasticQueryBuilder {
 
   getHistogramAgg(aggDef: Histogram) {
     const esAgg: any = {};
-    const settings = aggDef.settings;
-    esAgg.interval = settings?.interval;
+    const settings = aggDef.settings || {};
+    esAgg.interval = settings.interval;
     esAgg.field = aggDef.field;
-    esAgg.min_doc_count = settings?.min_doc_count || 0;
+    esAgg.min_doc_count = settings.min_doc_count || 0;
 
     return esAgg;
   }

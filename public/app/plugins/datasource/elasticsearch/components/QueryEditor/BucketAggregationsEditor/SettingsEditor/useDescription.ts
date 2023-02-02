@@ -1,6 +1,6 @@
+import { BucketAggregation } from '../../../../types';
 import { describeMetric, convertOrderByToMetricId } from '../../../../utils';
 import { useQuery } from '../../ElasticsearchQueryContext';
-import { BucketAggregation } from '../../../../types';
 import { bucketAggregationConfig, orderByOptions, orderOptions } from '../utils';
 
 const hasValue = (value: string) => (object: { value?: string }) => object.value === value;
@@ -61,7 +61,6 @@ export const useDescription = (bucketAgg: BucketAggregation): string => {
     }
 
     case 'geohash_grid': {
-      // @ts-ignore
       const precision = Math.max(Math.min(parseInt(bucketAgg.settings?.precision || '5', 10), 12), 1);
       return `Precision: ${precision}`;
     }

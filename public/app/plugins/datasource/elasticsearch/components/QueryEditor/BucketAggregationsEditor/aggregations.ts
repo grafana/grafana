@@ -1,5 +1,6 @@
+import { BucketAggregationType, BucketAggregationWithField, BucketAggregation } from '../../../types';
+
 import { bucketAggregationConfig } from './utils';
-import { BucketAggregationType, BucketAggregationWithField, BucketAggregation, Filters } from '../../../types';
 
 export const isBucketAggregationWithField = (
   bucketAgg: BucketAggregation | BucketAggregationWithField
@@ -16,5 +17,3 @@ export const BUCKET_AGGREGATION_TYPES: BucketAggregationType[] = [
 
 export const isBucketAggregationType = (s: BucketAggregationType | string): s is BucketAggregationType =>
   BUCKET_AGGREGATION_TYPES.includes(s as BucketAggregationType);
-
-export const isFilters = (aggregation: BucketAggregation): aggregation is Filters => aggregation.type === 'filters';
