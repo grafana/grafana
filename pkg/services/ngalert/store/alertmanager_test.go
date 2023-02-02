@@ -185,7 +185,7 @@ func TestIntegrationAlertmanagerConfigCleanup(t *testing.T) {
 		SQLStore: sqlStore,
 		Logger:   log.NewNopLogger(),
 	}
-	t.Run("when calling the cleanup with fewer records than the limit all recrods should stay", func(t *testing.T) {
+	t.Run("when calling the cleanup with fewer records than the limit all records should stay", func(t *testing.T) {
 		var orgID int64 = 3
 		oldestConfig, _ := setupConfig(t, "oldest-record", store)
 		err := store.SaveAlertmanagerConfiguration(context.Background(), &models.SaveAlertmanagerConfigurationCmd{
@@ -275,7 +275,7 @@ func TestIntegrationAlertmanagerConfigCleanup(t *testing.T) {
 	})
 }
 
-func TestMarkConfigurationAsApplied(t *testing.T) {
+func TestIntegrationMarkConfigurationAsApplied(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
@@ -307,6 +307,14 @@ func TestMarkConfigurationAsApplied(t *testing.T) {
 		})
 		require.NoError(tt, err)
 
+		// Config should be saved but not marked as applied yet.
+		appliedCfgsQuery := models.GetAppliedConfigurationsQuery{
+			OrgID: orgID,
+		}
+		err = store.GetAppliedConfigurations(ctx, &appliedCfgsQuery)
+		require.NoError(tt, err)
+		require.Len(tt, appliedCfgsQuery.Result, 0)
+
 		query := models.GetLatestAlertmanagerConfigurationQuery{
 			OrgID: orgID,
 		}
@@ -321,12 +329,11 @@ func TestMarkConfigurationAsApplied(t *testing.T) {
 		require.NoError(tt, err)
 
 		// Config should now be saved and marked as successfully applied.
-		appliedCfgsQuery := models.GetAppliedConfigurationsQuery{
+		appliedCfgsQuery = models.GetAppliedConfigurationsQuery{
 			OrgID: orgID,
 		}
 		err = store.GetAppliedConfigurations(ctx, &appliedCfgsQuery)
 		require.NoError(tt, err)
-
 		require.Len(tt, appliedCfgsQuery.Result, 1)
 	})
 }

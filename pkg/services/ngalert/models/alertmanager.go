@@ -17,7 +17,10 @@ type AlertConfiguration struct {
 // HistoricAlertConfiguration represents a previously used alerting configuration.
 type HistoricAlertConfiguration struct {
 	AlertConfiguration `xorm:"extends"`
-	LastApplied        int64 `xorm:"last_applied"`
+
+	// LastApplied a timestamp indicating the most recent time at which the configuration was applied to an Alertmanager, or 0 otherwise.
+	// Only set this field if the configuration has been applied by the caller.
+	LastApplied int64 `xorm:"last_applied"`
 }
 
 // GetLatestAlertmanagerConfigurationQuery is the query to get the latest alertmanager configuration.
@@ -54,6 +57,7 @@ func HistoricConfigFromAlertConfig(config AlertConfiguration) HistoricAlertConfi
 			AlertmanagerConfiguration: config.AlertmanagerConfiguration,
 			ConfigurationHash:         config.ConfigurationHash,
 			ConfigurationVersion:      config.ConfigurationVersion,
+			CreatedAt:                 config.CreatedAt,
 			Default:                   config.Default,
 			OrgID:                     config.OrgID,
 		},

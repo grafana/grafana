@@ -83,27 +83,19 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 			[]string{"org_id"},
 			[]string{"alertmanager_configuration", "configuration_version", "created_at", "default", "org_id", "configuration_hash"},
 		)
-		params := append(
-			make([]interface{}, 0),
-			cmd.AlertmanagerConfiguration,
-			cmd.ConfigurationVersion, config.CreatedAt,
-			config.Default,
-			config.OrgID,
-			config.ConfigurationHash,
-		)
-
+		params := append(make([]interface{}, 0), cmd.AlertmanagerConfiguration, cmd.ConfigurationVersion, config.CreatedAt, config.Default, config.OrgID, config.ConfigurationHash)
 		if _, err := sess.SQL(upsertSQL, params...).Query(); err != nil {
 			return err
-		}
-
-		if _, err := st.deleteOldConfigurations(ctx, cmd.OrgID, ConfigRecordsLimit); err != nil {
-			st.Logger.Warn("failed to delete old am configs", "org", cmd.OrgID, "error", err)
 		}
 
 		historicConfig := models.HistoricConfigFromAlertConfig(config)
 		historicConfig.LastApplied = cmd.LastApplied
 		if _, err := sess.Table("alert_configuration_history").Insert(historicConfig); err != nil {
 			return err
+		}
+
+		if _, err := st.deleteOldConfigurations(ctx, cmd.OrgID, ConfigRecordsLimit); err != nil {
+			st.Logger.Warn("failed to delete old am configs", "org", cmd.OrgID, "error", err)
 		}
 
 		if err := callback(); err != nil {
@@ -161,16 +153,15 @@ func (st *DBstore) MarkConfigurationAsApplied(ctx context.Context, cmd *models.M
 			return err
 		}
 
-		// We should be updating 1 record max.
-		if rowsAffected > 1 {
-			return fmt.Errorf("update statement affected %d alert configuration history records", rowsAffected)
+		if rowsAffected != 1 {
+			st.Logger.Error("update statement affected %d alert configuration history records", rowsAffected)
 		}
 
 		return nil
 	})
 }
 
-// GetAppliedConfigurations returns all configurations that have been marked as applied, ordered newest -> oldest.
+// GetAppliedConfigurations returns all configurations that have been marked as applied, ordered newest -> oldest by id.
 func (st *DBstore) GetAppliedConfigurations(ctx context.Context, query *models.GetAppliedConfigurationsQuery) error {
 	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
 		cfgs := []*models.HistoricAlertConfiguration{}
