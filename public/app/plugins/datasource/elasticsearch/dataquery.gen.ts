@@ -361,10 +361,25 @@ export type PipelineMetricAggregation = (MovingAverage | Derivative | Cumulative
 export type MetricAggregationWithSettings = (BucketScript | CumulativeSum | Derivative | SerialDiff | RawData | RawDocument | UniqueCount | Percentiles | ExtendedStats | Min | Max | Sum | Average | MovingAverage | MovingFunction | Logs | Rate | TopMetrics);
 
 export interface Elasticsearch extends common.DataQuery {
+  /**
+   * Alias pattern
+   */
   alias?: string;
+  /**
+   * List of bucket aggregations
+   */
   bucketAggs?: Array<BucketAggregation>;
+  /**
+   * List of metric aggregations
+   */
   metrics?: Array<MetricAggregation>;
+  /**
+   * Lucene query
+   */
   query?: string;
+  /**
+   * Name of time field
+   */
   timeField?: string;
 }
 

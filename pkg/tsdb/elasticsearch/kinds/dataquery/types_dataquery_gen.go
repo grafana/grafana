@@ -768,7 +768,10 @@ type DerivativeType string
 
 // ElasticsearchDataQuery defines model for ElasticsearchDataQuery.
 type ElasticsearchDataQuery struct {
-	Alias      *string        `json:"alias,omitempty"`
+	// Alias pattern
+	Alias *string `json:"alias,omitempty"`
+
+	// List of bucket aggregations
 	BucketAggs *[]interface{} `json:"bucketAggs,omitempty"`
 
 	// For mixed data sources the selected datasource is on the query level.
@@ -781,16 +784,22 @@ type ElasticsearchDataQuery struct {
 	Hide *bool `json:"hide,omitempty"`
 
 	// Unique, guid like, string used in explore mode
-	Key     *string        `json:"key,omitempty"`
+	Key *string `json:"key,omitempty"`
+
+	// List of metric aggregations
 	Metrics *[]interface{} `json:"metrics,omitempty"`
-	Query   *string        `json:"query,omitempty"`
+
+	// Lucene query
+	Query *string `json:"query,omitempty"`
 
 	// Specify the query flavor
 	// TODO make this required and give it a default
 	QueryType *string `json:"queryType,omitempty"`
 
 	// A - Z
-	RefId     string  `json:"refId"`
+	RefId string `json:"refId"`
+
+	// Name of time field
 	TimeField *string `json:"timeField,omitempty"`
 }
 

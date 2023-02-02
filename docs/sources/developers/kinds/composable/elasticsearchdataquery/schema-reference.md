@@ -8,18 +8,18 @@ title: ElasticsearchDataQuery kind
 
 # ElasticsearchDataQuery kind
 
-## Maturity: merged
+## Maturity: experimental
 ## Version: 0.0
 
 ## Properties
 
-| Property     | Type                                      | Required | Description |
-|--------------|-------------------------------------------|----------|-------------|
-| `alias`      | string                                    | No       |             |
-| `bucketAggs` | [BucketAggregation](#bucketaggregation)[] | No       |             |
-| `metrics`    | [MetricAggregation](#metricaggregation)[] | No       |             |
-| `query`      | string                                    | No       |             |
-| `timeField`  | string                                    | No       |             |
+| Property     | Type                                      | Required | Description                 |
+|--------------|-------------------------------------------|----------|-----------------------------|
+| `alias`      | string                                    | No       | Alias pattern               |
+| `bucketAggs` | [BucketAggregation](#bucketaggregation)[] | No       | List of bucket aggregations |
+| `metrics`    | [MetricAggregation](#metricaggregation)[] | No       | List of metric aggregations |
+| `query`      | string                                    | No       | Lucene query                |
+| `timeField`  | string                                    | No       | Name of time field          |
 
 ## BucketAggregation
 
