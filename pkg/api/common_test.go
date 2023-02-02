@@ -40,6 +40,7 @@ import (
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -410,7 +411,7 @@ func setupHTTPServerWithCfgDb(
 		teamPermissionsService: teamPermissionService,
 		searchUsersService:     searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), usertest.NewUserServiceFake()),
 		DashboardService: dashboardservice.ProvideDashboardService(
-			cfg, dashboardsStore, dashboardsStore, nil, features,
+			cfg, dashboardsStore, folderimpl.ProvideDashboardFolderStore(db), nil, features,
 			folderPermissionsService, dashboardPermissionsService, ac,
 			folderSvc,
 		),
