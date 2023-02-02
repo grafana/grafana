@@ -132,7 +132,7 @@ export enum AccessControlAction {
 export interface Role {
   uid: string;
   name: string;
-  displayName: string;
+  displayName?: string;
   description: string;
   group: string;
   global: boolean;

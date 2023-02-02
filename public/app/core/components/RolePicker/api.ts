@@ -6,23 +6,26 @@ export const fetchRoleOptions = async (orgId?: number, query?: string): Promise<
   if (orgId) {
     rolesUrl += `&targetOrgId=${orgId}`;
   }
-  const roles = await getBackendSrv().get(rolesUrl);
+  let roles = await getBackendSrv().get(rolesUrl);
   if (!roles || !roles.length) {
     return [];
   }
+  roles = populateRoleDisplayNames(roles);
   return roles;
 };
 
 export const fetchUserRoles = async (userId: number, orgId?: number): Promise<Role[]> => {
+  console.log(`fetchUserRoles: userId: ${userId}, orgId: ${orgId}`);
   let userRolesUrl = `/api/access-control/users/${userId}/roles`;
   if (orgId) {
     userRolesUrl += `?targetOrgId=${orgId}`;
   }
   try {
-    const roles = await getBackendSrv().get(userRolesUrl);
+    let roles = await getBackendSrv().get(userRolesUrl);
     if (!roles || !roles.length) {
       return [];
     }
+    roles = populateRoleDisplayNames(roles);
     return roles;
   } catch (error) {
     if (isFetchError(error)) {
@@ -30,6 +33,38 @@ export const fetchUserRoles = async (userId: number, orgId?: number): Promise<Ro
     }
     return [];
   }
+};
+
+const fixedRolePrefix = 'fixed:';
+// fallbackDisplayName provides a fallback name for role
+// that can be displayed in the ui for better readability
+// example: currently this would give:
+// fixed:datasources:name -> datasources name
+// datasources:admin      -> datasources admin
+const fallbackDisplayName = (rName: string) => {
+  console.log(`fallbackDisplayName: rName: ${rName}`);
+  let newRoleName = '';
+  if (rName.startsWith(fixedRolePrefix)) {
+    let rNameWithoutFixedPrefix = rName.replace(fixedRolePrefix, '');
+    newRoleName = rNameWithoutFixedPrefix.replace(/:/g, ' ');
+  } else {
+    newRoleName = rName.replace(/:/g, ' ');
+  }
+  return newRoleName;
+};
+
+const populateRoleDisplayNames = (roles: Role[]) => {
+  console.log(`populateRoleDisplayNames: roles: ${JSON.stringify(roles)}`);
+  // filter role ids without a display name
+  let rolesWithDisplayNames = roles.map((role) => {
+    if (!role.displayName || role.displayName === '') {
+      role.displayName = fallbackDisplayName(role.name);
+      return role;
+    } else if (role.displayName && role.displayName !== '') {
+      return role;
+    }
+  });
+  return rolesWithDisplayNames;
 };
 
 export const updateUserRoles = (roles: Role[], userId: number, orgId?: number) => {
