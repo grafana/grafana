@@ -24,6 +24,7 @@ import {
   DataHoverEvent,
   DataFrame,
   FrameGeometrySourceMode,
+  textUtil,
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { PanelContext, PanelContextRoot, stylesFactory } from '@grafana/ui';
@@ -488,6 +489,10 @@ export class GeomapPanel extends Component<Props, State> {
     const item = geomapLayerRegistry.getIfExists(options.type);
     if (!item) {
       return Promise.reject('unknown layer: ' + options.type);
+    }
+
+    if (options.config?.attribution) {
+      options.config.attribution = textUtil.sanitizeTextPanelContent(options.config.attribution);
     }
 
     const handler = await item.create(map, options, config.theme2);
