@@ -53,7 +53,6 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: 
           title={title}
           placement="bottom"
           menuButtonClass={styles.menuButton}
-          offset={[59, 8]}
           onVisibleChange={setMenuOpen}
         />
       </div>

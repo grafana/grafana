@@ -652,12 +652,13 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       />
     );
 
+    // custom styles is neeeded to override legacy panel-menu styles and prevent menu from being cut off
     let menu;
     if (!dashboard.meta.publicDashboardAccessToken) {
       menu = (
         <div data-testid="panel-dropdown">
           <PanelHeaderMenuWrapper
-            style={{ top: 0, left: '-158px' }}
+            style={{ top: 0, left: '-156px' }}
             panel={panel}
             dashboard={dashboard}
             loadingState={data.state}
