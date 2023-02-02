@@ -2632,6 +2632,23 @@
           }
         }
       }
+    },
+    "/api/v1/rules/history": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "history"
+        ],
+        "summary": "Query state history.",
+        "operationId": "RouteGetStateHistory",
+        "responses": {
+          "200": {
+            "$ref": "#/responses/StateHistory"
+          }
+        }
+      }
     }
   },
   "definitions": {
@@ -6330,6 +6347,7 @@
       "$ref": "#/definitions/gettableAlert"
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"
