@@ -76,7 +76,7 @@ func (c *DashboardController) Run(ctx context.Context) error {
 
 			dto.User = signedInUser
 
-			_, err = c.dashboardService.SaveDashboard(context.Background(), dto, false)
+			_, err = c.dashboardService.SaveDashboard(context.Background(), dto, true)
 			if err != nil {
 				fmt.Println("dashboardService.SaveDashboard failed", err)
 				return
@@ -136,12 +136,15 @@ func (c *DashboardController) Run(ctx context.Context) error {
 	return nil
 }
 
+// only run service if feature toggle is enabled
 func (c *DashboardController) IsDisabled() bool {
 	return !c.cfg.IsFeatureToggleEnabled(featuremgmt.FlagApiserver)
 }
 
+// TODO: get the admin user using userID 1 and orgID 1
+// is this safe? probably not.
 func (c *DashboardController) getSignedInUser(ctx context.Context, orgID int64, userID int64) (*user.SignedInUser, error) {
-	querySignedInUser := user.GetSignedInUserQuery{UserID: userID, OrgID: orgID}
+	querySignedInUser := user.GetSignedInUserQuery{UserID: 1, OrgID: 1}
 	signedInUser, err := c.userService.GetSignedInUserWithCacheCtx(ctx, &querySignedInUser)
 	if err != nil {
 		return nil, err
@@ -162,6 +165,7 @@ func (c *DashboardController) getSignedInUser(ctx context.Context, orgID int64, 
 	return signedInUser, nil
 }
 
+// TODO: this is a hack to convert the k8s dashboard to a DTO
 func interfaceToK8sDashboard(obj interface{}) (*k8ssys.Base[dashboard.Dashboard], error) {
 	uObj, ok := obj.(*unstructured.Unstructured)
 	if !ok {
@@ -176,6 +180,8 @@ func interfaceToK8sDashboard(obj interface{}) (*k8ssys.Base[dashboard.Dashboard]
 	return &dash, nil
 }
 
+// TODO: this is a hack to convert the k8s dashboard to a DTO
+// unclear if any of the fields are missing at this point.
 func k8sDashboardToDashboardDTO(dash *k8ssys.Base[dashboard.Dashboard]) *dashboards.SaveDashboardDTO {
 	data := simplejson.NewFromAny(dash.Spec)
 	dto := dashboards.SaveDashboardDTO{
@@ -212,6 +218,7 @@ func k8sDashboardToDashboardDTO(dash *k8ssys.Base[dashboard.Dashboard]) *dashboa
 	return &dto
 }
 
+// parse k8s annotations into DTO fields
 func parseAnnotations(dash *k8ssys.Base[dashboard.Dashboard], dto dashboards.SaveDashboardDTO) dashboards.SaveDashboardDTO {
 	if dash.ObjectMeta.Annotations == nil {
 		return dto
@@ -299,6 +306,7 @@ func parseAnnotations(dash *k8ssys.Base[dashboard.Dashboard], dto dashboards.Sav
 	return dto
 }
 
+// parse k8s labels into DTO fields
 func parseLabels(dash *k8ssys.Base[dashboard.Dashboard], dto dashboards.SaveDashboardDTO) dashboards.SaveDashboardDTO {
 	if dash.ObjectMeta.Labels == nil {
 		return dto

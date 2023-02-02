@@ -228,7 +228,7 @@ func (a *AccessControlDashboardGuardian) evaluate(evaluator accesscontrol.Evalua
 	}
 
 	if !ok && err == nil {
-		a.log.Debug("Access denied to folder or dashboard", "userId", a.user.UserID, "id", a.dashboard.ID, "permissions", evaluator.GoString())
+		a.log.Debug("Access denied to folder or dashboard", "userId", a.user.UserID, "id", a.dashboard, "permissions", evaluator.GoString())
 	}
 
 	return ok, err

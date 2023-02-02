@@ -156,6 +156,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	}
 
 	if dash.ID == 0 {
+		dr.log.Debug("Creating new dashboard", "guard", guard, "dash", dash.FolderID, "dash.IsFolder", dash.IsFolder)
 		if canCreate, err := guard.CanCreate(dash.FolderID, dash.IsFolder); err != nil || !canCreate {
 			if err != nil {
 				return nil, err

@@ -159,12 +159,9 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 	}
 
 	// HACK, remove empty ID!!
-	if dto.Dashboard.Data.Get("id") == nil {
-		dto.Dashboard.Data.Del("id")
-	}
-	if dto.Dashboard.Data.Get("uid") == nil {
-		dto.Dashboard.Data.Set("uid", uid)
-	}
+	dto.Dashboard.Data.Del("id")
+	dto.Dashboard.Data.Set("uid", uid)
+	dto.Dashboard.UID = uid
 	// strip nulls...
 	stripNulls(dto.Dashboard.Data)
 
