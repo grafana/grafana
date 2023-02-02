@@ -40,7 +40,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	groot := filepath.Dir(filepath.Dir(filepath.Dir(cwd)))
+	groot := filepath.Clean(filepath.Join(cwd, "../../.."))
 
 	jfs := elsedie(jl.GenerateFS(lin))("plugindef jenny pipeline failed")
 	if _, set := os.LookupEnv("CODEGEN_VERIFY"); set {
