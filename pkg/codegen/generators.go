@@ -66,7 +66,7 @@ func SlashHeaderMapper(maingen string) codejen.FileMapper {
 		default:
 			buf := new(bytes.Buffer)
 			if err := tmpls.Lookup("gen_header.tmpl").Execute(buf, tvars_gen_header{
-				MainGenerator: maingen,
+				MainGenerator: filepath.ToSlash(maingen),
 				Using:         f.From,
 			}); err != nil {
 				return codejen.File{}, fmt.Errorf("failed executing gen header template: %w", err)
