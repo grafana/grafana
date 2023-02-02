@@ -1,3 +1,4 @@
+import { clone } from 'lodash';
 import moment from 'moment';
 
 /**
@@ -27,30 +28,292 @@ export const mockOriginalRange = (startDateString?: string, endDateString?: stri
 };
 
 /**
- *
- * @param length - Number of values to add
- * @param start - First timestamp (ms)
- * @param step - step duration (ms)
+ * @todo - replace with array.fill?
+ * This just a really terrible job of mocking values, Array.fill would probably be better,
+ * this happened because I was initially abstracting actual data frames into test scenarios, whenever I encountered a bug
+ * But I don't think testing of this class really cares about the values, making them sequential or unique could be helpful?
+ * @param length - number of "Values" to add
+ * @param low
+ * @param high
  */
-export const getMockValueFrameArray = (length: number, low: number, high: number): number[] => {
+export const getMockValueFrameArray = (length: number, low = 0, high = 1): number[] => {
   let timeValues = [];
   for (let i = 0; i < length; i++) {
-    timeValues.push(randomNumber(low, high));
+    // timeValues.push(randomNumber(low, high)); @todo
+    timeValues.push(i % 2 === 0 ? low : high);
   }
+
   return timeValues;
 };
 
-/**
- *
- * @param min
- * @param max
- */
-const randomNumber = (min: number, max: number): number => {
-  return Math.floor(Math.random() * (max - min) + min);
-};
+const timeFrameWithMissingValuesInMiddle = getMockTimeFrameArray(721, 1675262550000, 30000);
+const timeFrameWithMissingValuesAtStart = getMockTimeFrameArray(721, 1675262550000, 30000);
+const timeFrameWithMissingValuesAtEnd = getMockTimeFrameArray(721, 1675262550000, 30000);
 
-const timeFrameWithMissingValues = getMockTimeFrameArray(721, 1675262550000, 30000);
-timeFrameWithMissingValues.splice(360, 721 - 684);
+// Deleting some out the middle
+timeFrameWithMissingValuesInMiddle.splice(360, 721 - 684);
+timeFrameWithMissingValuesAtStart.splice(0, 721 - 684);
+timeFrameWithMissingValuesAtEnd.splice(721 - 684, 721 - 684);
+
+const twoRequestsOneCachedMissingData = {
+  first: {
+    request: {
+      app: 'panel-viewer',
+      requestId: 'Q100',
+      timezone: 'browser',
+      panelId: 19,
+      dashboardId: 884,
+      dashboardUID: 'dtngicc4z',
+      publicDashboardAccessToken: '',
+      range: {
+        from: '2023-02-01T14:42:54.929Z',
+        to: '2023-02-01T20:42:54.929Z',
+        raw: { from: 'now-6h', to: 'now' },
+      },
+      timeInfo: '',
+      interval: '30s',
+      intervalMs: 30000,
+      targets: [
+        {
+          datasource: { type: 'prometheus', uid: 'OPQv8Kc4z' },
+          editorMode: 'code',
+          expr: '{__name__="cortex_request_duration_seconds_bucket", cluster="dev-us-central-0", container="aggregator", instance=~"aggregator-7:aggregator:http-metrics|aggregator-6:aggregator:http-metrics", job="mimir-dev-11/aggregator", le=~"\\\\+Inf|0.5", method="GET", namespace="mimir-dev-11", pod="aggregator-7"}',
+          legendFormat: '{{le}}',
+          range: true,
+          refId: 'A',
+          exemplar: false,
+          requestId: '19A',
+          utcOffsetSec: -21600,
+        },
+      ],
+      maxDataPoints: 775,
+      scopedVars: { __interval: { text: '30s', value: '30s' }, __interval_ms: { text: '30000', value: 30000 } },
+      startTime: 1675284174929,
+      rangeRaw: { from: 'now-6h', to: 'now' },
+    },
+    dataFrames: [
+      {
+        name: '+Inf',
+        refId: 'A',
+        meta: {
+          type: 'timeseries-multi',
+          custom: { resultType: 'matrix' },
+          executedQueryString:
+            'Expr: {__name__="cortex_request_duration_seconds_bucket", cluster="dev-us-central-0", container="aggregator", instance=~"aggregator-7:aggregator:http-metrics|aggregator-6:aggregator:http-metrics", job="mimir-dev-11/aggregator", le=~"\\\\+Inf|0.5", method="GET", namespace="mimir-dev-11", pod="aggregator-7"}\nStep: 30s',
+          preferredVisualisationType: 'graph',
+        },
+        fields: [
+          {
+            name: 'Time',
+            type: 'time',
+            typeInfo: { frame: 'time.Time' },
+            config: { interval: 30000 },
+            // Delete values from the middle
+            values: timeFrameWithMissingValuesInMiddle,
+            entities: {},
+          },
+          {
+            name: 'Value',
+            type: 'number',
+            typeInfo: { frame: 'float64' },
+            labels: {
+              __name__: 'cortex_request_duration_seconds_bucket',
+              cluster: 'dev-us-central-0',
+              container: 'aggregator',
+              instance: 'aggregator-7:aggregator:http-metrics',
+              job: 'mimir-dev-11/aggregator',
+              le: '+Inf',
+              method: 'GET',
+              namespace: 'mimir-dev-11',
+              pod: 'aggregator-7',
+              route: 'metrics',
+              status_code: '200',
+              ws: 'false',
+            },
+            config: { displayNameFromDS: '+Inf' },
+            values: getMockValueFrameArray(684, 1, 2),
+            entities: {},
+          },
+        ],
+        length: 684,
+      },
+      {
+        name: '0.5',
+        refId: 'A',
+        meta: {
+          type: 'timeseries-multi',
+          custom: { resultType: 'matrix' },
+          executedQueryString:
+            'Expr: {__name__="cortex_request_duration_seconds_bucket", cluster="dev-us-central-0", container="aggregator", instance=~"aggregator-7:aggregator:http-metrics|aggregator-6:aggregator:http-metrics", job="mimir-dev-11/aggregator", le=~"\\\\+Inf|0.5", method="GET", namespace="mimir-dev-11", pod="aggregator-7"}\nStep: 30s',
+          preferredVisualisationType: 'graph',
+        },
+        fields: [
+          {
+            name: 'Time',
+            type: 'time',
+            typeInfo: { frame: 'time.Time' },
+            config: { interval: 30000 },
+            values: timeFrameWithMissingValuesInMiddle,
+            entities: {},
+          },
+          {
+            name: 'Value',
+            type: 'number',
+            typeInfo: { frame: 'float64' },
+            labels: {
+              __name__: 'cortex_request_duration_seconds_bucket',
+              cluster: 'dev-us-central-0',
+              container: 'aggregator',
+              instance: 'aggregator-7:aggregator:http-metrics',
+              job: 'mimir-dev-11/aggregator',
+              le: '0.5',
+              method: 'GET',
+              namespace: 'mimir-dev-11',
+              pod: 'aggregator-7',
+              route: 'metrics',
+              status_code: '200',
+              ws: 'false',
+            },
+            config: { displayNameFromDS: '0.5' },
+            values: getMockValueFrameArray(684, 25349, 33958),
+            entities: {},
+          },
+        ],
+        length: 684,
+      },
+    ],
+    originalRange: undefined,
+    timeSrv: { from: 'now-6h', to: 'now' },
+  },
+  second: {
+    request: {
+      app: 'panel-viewer',
+      requestId: 'Q101',
+      timezone: 'browser',
+      panelId: 19,
+      dashboardId: 884,
+      dashboardUID: 'dtngicc4z',
+      publicDashboardAccessToken: '',
+      range: {
+        from: '2023-02-01T14:44:01.928Z',
+        to: '2023-02-01T20:44:01.928Z',
+        raw: { from: 'now-6h', to: 'now' },
+      },
+      timeInfo: '',
+      interval: '30s',
+      intervalMs: 30000,
+      targets: [
+        {
+          datasource: { type: 'prometheus', uid: 'OPQv8Kc4z' },
+          editorMode: 'code',
+          expr: '{__name__="cortex_request_duration_seconds_bucket", cluster="dev-us-central-0", container="aggregator", instance=~"aggregator-7:aggregator:http-metrics|aggregator-6:aggregator:http-metrics", job="mimir-dev-11/aggregator", le=~"\\\\+Inf|0.5", method="GET", namespace="mimir-dev-11", pod="aggregator-7"}',
+          legendFormat: '{{le}}',
+          range: true,
+          refId: 'A',
+          exemplar: false,
+          requestId: '19A',
+          utcOffsetSec: -21600,
+        },
+      ],
+      maxDataPoints: 775,
+      scopedVars: { __interval: { text: '30s', value: '30s' }, __interval_ms: { text: '30000', value: 30000 } },
+      startTime: 1675284241929,
+      rangeRaw: { from: 'now-6h', to: 'now' },
+    },
+    dataFrames: [
+      {
+        name: '+Inf',
+        refId: 'A',
+        meta: {
+          type: 'timeseries-multi',
+          custom: { resultType: 'matrix' },
+          executedQueryString:
+            'Expr: {__name__="cortex_request_duration_seconds_bucket", cluster="dev-us-central-0", container="aggregator", instance=~"aggregator-7:aggregator:http-metrics|aggregator-6:aggregator:http-metrics", job="mimir-dev-11/aggregator", le=~"\\\\+Inf|0.5", method="GET", namespace="mimir-dev-11", pod="aggregator-7"}\nStep: 30s',
+          preferredVisualisationType: 'graph',
+        },
+        fields: [
+          {
+            name: 'Time',
+            type: 'time',
+            typeInfo: { frame: 'time.Time' },
+            config: { interval: 30000 },
+            values: getMockTimeFrameArray(24, 1675283550000, 30000),
+            entities: {},
+          },
+          {
+            name: 'Value',
+            type: 'number',
+            typeInfo: { frame: 'float64' },
+            labels: {
+              __name__: 'cortex_request_duration_seconds_bucket',
+              cluster: 'dev-us-central-0',
+              container: 'aggregator',
+              instance: 'aggregator-7:aggregator:http-metrics',
+              job: 'mimir-dev-11/aggregator',
+              le: '+Inf',
+              method: 'GET',
+              namespace: 'mimir-dev-11',
+              pod: 'aggregator-7',
+              route: 'metrics',
+              status_code: '200',
+              ws: 'false',
+            },
+            config: { displayNameFromDS: '+Inf' },
+            values: getMockValueFrameArray(24, 1, 2),
+            entities: {},
+          },
+        ],
+        length: 24,
+      },
+      {
+        name: '0.5',
+        refId: 'A',
+        meta: {
+          type: 'timeseries-multi',
+          custom: { resultType: 'matrix' },
+          executedQueryString:
+            'Expr: {__name__="cortex_request_duration_seconds_bucket", cluster="dev-us-central-0", container="aggregator", instance=~"aggregator-7:aggregator:http-metrics|aggregator-6:aggregator:http-metrics", job="mimir-dev-11/aggregator", le=~"\\\\+Inf|0.5", method="GET", namespace="mimir-dev-11", pod="aggregator-7"}\nStep: 30s',
+          preferredVisualisationType: 'graph',
+        },
+        fields: [
+          {
+            name: 'Time',
+            type: 'time',
+            typeInfo: { frame: 'time.Time' },
+            config: { interval: 30000 },
+            values: getMockTimeFrameArray(21, 1675283550000, 30000),
+            entities: {},
+          },
+          {
+            name: 'Value',
+            type: 'number',
+            typeInfo: { frame: 'float64' },
+            labels: {
+              __name__: 'cortex_request_duration_seconds_bucket',
+              cluster: 'dev-us-central-0',
+              container: 'aggregator',
+              instance: 'aggregator-7:aggregator:http-metrics',
+              job: 'mimir-dev-11/aggregator',
+              le: '0.5',
+              method: 'GET',
+              namespace: 'mimir-dev-11',
+              pod: 'aggregator-7',
+              route: 'metrics',
+              status_code: '200',
+              ws: 'false',
+            },
+            config: { displayNameFromDS: '0.5' },
+            values: getMockValueFrameArray(24, 2, 3),
+            entities: {},
+          },
+        ],
+        length: 24,
+      },
+    ],
+    originalRange: { end: 1675284241920, start: 1675262641920 },
+    timeSrv: { from: 'now-6h', to: 'now' },
+  },
+};
 
 export const IncrementalStorageDataFrameScenarios = {
   histogram: {
@@ -1144,322 +1407,29 @@ export const IncrementalStorageDataFrameScenarios = {
         },
       },
     },
-    multipleSeriesGapInMiddle: {
-      first: {
-        request: {
-          app: 'panel-viewer',
-          requestId: 'Q100',
-          timezone: 'browser',
-          panelId: 19,
-          dashboardId: 884,
-          dashboardUID: 'dtngicc4z',
-          publicDashboardAccessToken: '',
-          range: {
-            from: '2023-02-01T14:42:54.929Z',
-            to: '2023-02-01T20:42:54.929Z',
-            raw: { from: 'now-6h', to: 'now' },
-          },
-          timeInfo: '',
-          interval: '30s',
-          intervalMs: 30000,
-          targets: [
-            {
-              datasource: { type: 'prometheus', uid: 'OPQv8Kc4z' },
-              editorMode: 'code',
-              expr: '{__name__="cortex_request_duration_seconds_bucket", cluster="dev-us-central-0", container="aggregator", instance=~"aggregator-7:aggregator:http-metrics|aggregator-6:aggregator:http-metrics", job="mimir-dev-11/aggregator", le=~"\\\\+Inf|0.5", method="GET", namespace="mimir-dev-11", pod="aggregator-7"}',
-              legendFormat: '{{le}}',
-              range: true,
-              refId: 'A',
-              exemplar: false,
-              requestId: '19A',
-              utcOffsetSec: -21600,
-            },
-          ],
-          maxDataPoints: 775,
-          scopedVars: { __interval: { text: '30s', value: '30s' }, __interval_ms: { text: '30000', value: 30000 } },
-          startTime: 1675284174929,
-          rangeRaw: { from: 'now-6h', to: 'now' },
-        },
-        dataFrames: [
-          {
-            name: '+Inf',
-            refId: 'A',
-            meta: {
-              type: 'timeseries-multi',
-              custom: { resultType: 'matrix' },
-              executedQueryString:
-                'Expr: {__name__="cortex_request_duration_seconds_bucket", cluster="dev-us-central-0", container="aggregator", instance=~"aggregator-7:aggregator:http-metrics|aggregator-6:aggregator:http-metrics", job="mimir-dev-11/aggregator", le=~"\\\\+Inf|0.5", method="GET", namespace="mimir-dev-11", pod="aggregator-7"}\nStep: 30s',
-              preferredVisualisationType: 'graph',
-            },
-            fields: [
-              {
-                name: 'Time',
-                type: 'time',
-                typeInfo: { frame: 'time.Time' },
-                config: { interval: 30000 },
-                // Delete values from the middle
-                values: timeFrameWithMissingValues,
-                entities: {},
-              },
-              {
-                name: 'Value',
-                type: 'number',
-                typeInfo: { frame: 'float64' },
-                labels: {
-                  __name__: 'cortex_request_duration_seconds_bucket',
-                  cluster: 'dev-us-central-0',
-                  container: 'aggregator',
-                  instance: 'aggregator-7:aggregator:http-metrics',
-                  job: 'mimir-dev-11/aggregator',
-                  le: '+Inf',
-                  method: 'GET',
-                  namespace: 'mimir-dev-11',
-                  pod: 'aggregator-7',
-                  route: 'metrics',
-                  status_code: '200',
-                  ws: 'false',
-                },
-                config: { displayNameFromDS: '+Inf' },
-                values: getMockValueFrameArray(684, 1, 2),
-                entities: {},
-              },
-            ],
-            length: 684,
-          },
-          {
-            name: '0.5',
-            refId: 'A',
-            meta: {
-              type: 'timeseries-multi',
-              custom: { resultType: 'matrix' },
-              executedQueryString:
-                'Expr: {__name__="cortex_request_duration_seconds_bucket", cluster="dev-us-central-0", container="aggregator", instance=~"aggregator-7:aggregator:http-metrics|aggregator-6:aggregator:http-metrics", job="mimir-dev-11/aggregator", le=~"\\\\+Inf|0.5", method="GET", namespace="mimir-dev-11", pod="aggregator-7"}\nStep: 30s',
-              preferredVisualisationType: 'graph',
-            },
-            fields: [
-              {
-                name: 'Time',
-                type: 'time',
-                typeInfo: { frame: 'time.Time' },
-                config: { interval: 30000 },
-                values: timeFrameWithMissingValues,
-                entities: {},
-              },
-              {
-                name: 'Value',
-                type: 'number',
-                typeInfo: { frame: 'float64' },
-                labels: {
-                  __name__: 'cortex_request_duration_seconds_bucket',
-                  cluster: 'dev-us-central-0',
-                  container: 'aggregator',
-                  instance: 'aggregator-7:aggregator:http-metrics',
-                  job: 'mimir-dev-11/aggregator',
-                  le: '0.5',
-                  method: 'GET',
-                  namespace: 'mimir-dev-11',
-                  pod: 'aggregator-7',
-                  route: 'metrics',
-                  status_code: '200',
-                  ws: 'false',
-                },
-                config: { displayNameFromDS: '0.5' },
-                values: [
-                  25349, 25361, 25373, 25385, 25397, 25409, 25421, 25433, 25445, 25457, 25469, 25481, 25493, 25505,
-                  25517, 25529, 25541, 25553, 25565, 25577, 25589, 25601, 25613, 25625, 25637, 25649, 25661, 25673,
-                  25685, 25697, 25709, 25721, 25733, 25745, 25757, 25769, 25781, 25793, 25805, 25817, 25829, 25841,
-                  25853, 25865, 25877, 25889, 25901, 25913, 25925, 25937, 25949, 25961, 25973, 25985, 25997, 26009,
-                  26021, 26033, 26045, 26057, 26069, 26081, 26093, 26105, 26117, 26129, 26141, 26153, 26165, 26177,
-                  26189, 26201, 26213, 26225, 26237, 26249, 26261, 26273, 26285, 26297, 26309, 26321, 26333, 26345,
-                  26357, 26369, 26381, 26393, 26405, 26417, 26429, 26441, 26453, 26465, 26477, 26489, 26501, 26513,
-                  26525, 26537, 26549, 26561, 26573, 26585, 26597, 26609, 26621, 26633, 26645, 26657, 26669, 26681,
-                  26693, 26705, 26717, 26729, 26741, 26753, 26765, 26777, 26777, 26794, 26805, 26817, 26817, 26841,
-                  26853, 26865, 26877, 26889, 26901, 26913, 26925, 26937, 26949, 26961, 26973, 26985, 26997, 27009,
-                  27021, 27033, 27045, 27057, 27069, 27081, 27093, 27105, 27117, 27129, 27141, 27153, 27165, 27177,
-                  27189, 27201, 27213, 27225, 27237, 27249, 27261, 27273, 27285, 27297, 27309, 27321, 27333, 27345,
-                  27357, 27369, 27381, 27393, 27405, 27417, 27429, 27441, 27453, 27465, 27477, 27489, 27501, 27513,
-                  27525, 27537, 27549, 27561, 27573, 27585, 27597, 27609, 27621, 27633, 27645, 27657, 27669, 27681,
-                  27693, 27705, 27717, 27729, 27741, 27753, 27765, 27777, 27789, 27801, 27813, 27825, 27825, 27842,
-                  27853, 27865, 27871, 27871, 27871, 27871, 27871, 27871, 27871, 27871, 27966, 27976, 27988, 28000,
-                  28012, 28024, 28036, 28048, 28060, 28072, 28084, 28096, 28108, 28120, 28132, 28132, 28132, 28132,
-                  28132, 28132, 28132, 28132, 28132, 28132, 28696, 28708, 28720, 28732, 28744, 28756, 28768, 28780,
-                  28792, 28804, 28816, 28828, 28840, 28852, 28864, 28876, 28888, 28900, 28912, 28924, 28936, 28948,
-                  28960, 28972, 28984, 28996, 29008, 29020, 29032, 29044, 29056, 29068, 29080, 29092, 29104, 29116,
-                  29128, 29140, 29152, 29164, 29176, 29188, 29200, 29212, 29224, 29236, 29248, 29260, 29272, 29284,
-                  29296, 29308, 29320, 29332, 29344, 29356, 29368, 29380, 29392, 29404, 29416, 29428, 29440, 29452,
-                  29464, 29476, 29488, 29500, 29512, 29524, 29524, 29541, 29553, 29565, 29565, 29590, 29602, 29614,
-                  29626, 29638, 29650, 29662, 29674, 29686, 29698, 29710, 29722, 29734, 29746, 29758, 29770, 29782,
-                  29794, 29806, 29818, 29830, 29842, 29854, 29866, 29878, 29890, 29902, 29914, 29926, 29938, 29950,
-                  29962, 29974, 29986, 29998, 30010, 30022, 30034, 30046, 30058, 30070, 30082, 30094, 30106, 30118,
-                  30130, 30142, 30154, 30166, 30178, 30190, 30202, 30214, 30226, 30238, 30250, 30262, 30274, 30286,
-                  30298, 30310, 30322, 30334, 30346, 30358, 30370, 30382, 30394, 30406, 30418, 30430, 30442, 30454,
-                  30466, 30478, 30490, 30502, 30514, 30526, 30538, 30550, 30562, 30574, 30586, 30598, 30610, 30622,
-                  30634, 30646, 30658, 30670, 30682, 30694, 30706, 30718, 30730, 30742, 30754, 30766, 30778, 30790,
-                  30802, 30814, 30826, 30838, 30850, 30862, 30874, 30886, 30898, 30910, 30922, 30934, 30946, 30958,
-                  30970, 30982, 30994, 31006, 31018, 31030, 31042, 31054, 31066, 31078, 31090, 31102, 31114, 31126,
-                  31138, 31150, 31162, 31174, 31186, 31198, 31210, 31222, 31234, 31246, 31258, 31270, 31282, 31294,
-                  31306, 31318, 31330, 31342, 31354, 31366, 31378, 31390, 31402, 31414, 31426, 31438, 31450, 31462,
-                  31474, 31486, 31498, 31510, 31522, 31534, 31546, 31558, 31570, 31582, 31594, 31606, 31618, 31630,
-                  31642, 31654, 31666, 31678, 31690, 31702, 31714, 31726, 31738, 31750, 31762, 31774, 31786, 31798,
-                  31810, 31822, 31834, 31846, 31858, 31870, 31882, 31894, 31906, 31918, 31930, 31942, 31954, 31966,
-                  31978, 31990, 32002, 32014, 32026, 32038, 32050, 32062, 32074, 32086, 32098, 32110, 32122, 32134,
-                  32146, 32158, 32170, 32182, 32194, 32206, 32218, 32230, 32242, 32254, 32266, 32278, 32290, 32302,
-                  32314, 32326, 32338, 32350, 32362, 32374, 32386, 32398, 32410, 32422, 32434, 32446, 32458, 32470,
-                  32482, 32494, 32506, 32518, 32530, 32542, 32554, 32566, 32578, 32590, 32602, 32614, 32626, 32638,
-                  32650, 32662, 32674, 32686, 32698, 32710, 32722, 32734, 32746, 32758, 32770, 32782, 32794, 32806,
-                  32818, 32830, 32842, 32854, 32866, 32878, 32890, 32902, 32914, 32926, 32938, 32950, 32962, 32974,
-                  32986, 32998, 33010, 33022, 33034, 33046, 33058, 33070, 33082, 33094, 33106, 33118, 33130, 33142,
-                  33154, 33166, 33178, 33190, 33202, 33214, 33226, 33238, 33250, 33262, 33274, 33286, 33298, 33310,
-                  33322, 33334, 33346, 33358, 33370, 33382, 33394, 33406, 33418, 33430, 33442, 33454, 33466, 33478,
-                  33490, 33502, 33514, 33526, 33538, 33550, 33562, 33574, 33586, 33598, 33610, 33622, 33634, 33646,
-                  33658, 33670, 33682, 33694, 33706, 33718, 33730, 33742, 33754, 33766, 33778, 33790, 33802, 33814,
-                  33826, 33838, 33850, 33862, 33874, 33886, 33898, 33910, 33922, 33934, 33946, 33958,
-                ],
-                entities: {},
-              },
-            ],
-            length: 684,
-          },
-        ],
-        originalRange: undefined,
-        timeSrv: { from: 'now-6h', to: 'now' },
-      },
-      second: {
-        request: {
-          app: 'panel-viewer',
-          requestId: 'Q101',
-          timezone: 'browser',
-          panelId: 19,
-          dashboardId: 884,
-          dashboardUID: 'dtngicc4z',
-          publicDashboardAccessToken: '',
-          range: {
-            from: '2023-02-01T14:44:01.928Z',
-            to: '2023-02-01T20:44:01.928Z',
-            raw: { from: 'now-6h', to: 'now' },
-          },
-          timeInfo: '',
-          interval: '30s',
-          intervalMs: 30000,
-          targets: [
-            {
-              datasource: { type: 'prometheus', uid: 'OPQv8Kc4z' },
-              editorMode: 'code',
-              expr: '{__name__="cortex_request_duration_seconds_bucket", cluster="dev-us-central-0", container="aggregator", instance=~"aggregator-7:aggregator:http-metrics|aggregator-6:aggregator:http-metrics", job="mimir-dev-11/aggregator", le=~"\\\\+Inf|0.5", method="GET", namespace="mimir-dev-11", pod="aggregator-7"}',
-              legendFormat: '{{le}}',
-              range: true,
-              refId: 'A',
-              exemplar: false,
-              requestId: '19A',
-              utcOffsetSec: -21600,
-            },
-          ],
-          maxDataPoints: 775,
-          scopedVars: { __interval: { text: '30s', value: '30s' }, __interval_ms: { text: '30000', value: 30000 } },
-          startTime: 1675284241929,
-          rangeRaw: { from: 'now-6h', to: 'now' },
-        },
-        dataFrames: [
-          {
-            name: '+Inf',
-            refId: 'A',
-            meta: {
-              type: 'timeseries-multi',
-              custom: { resultType: 'matrix' },
-              executedQueryString:
-                'Expr: {__name__="cortex_request_duration_seconds_bucket", cluster="dev-us-central-0", container="aggregator", instance=~"aggregator-7:aggregator:http-metrics|aggregator-6:aggregator:http-metrics", job="mimir-dev-11/aggregator", le=~"\\\\+Inf|0.5", method="GET", namespace="mimir-dev-11", pod="aggregator-7"}\nStep: 30s',
-              preferredVisualisationType: 'graph',
-            },
-            fields: [
-              {
-                name: 'Time',
-                type: 'time',
-                typeInfo: { frame: 'time.Time' },
-                config: { interval: 30000 },
-                values: getMockTimeFrameArray(24, 1675283550000, 30000),
-                entities: {},
-              },
-              {
-                name: 'Value',
-                type: 'number',
-                typeInfo: { frame: 'float64' },
-                labels: {
-                  __name__: 'cortex_request_duration_seconds_bucket',
-                  cluster: 'dev-us-central-0',
-                  container: 'aggregator',
-                  instance: 'aggregator-7:aggregator:http-metrics',
-                  job: 'mimir-dev-11/aggregator',
-                  le: '+Inf',
-                  method: 'GET',
-                  namespace: 'mimir-dev-11',
-                  pod: 'aggregator-7',
-                  route: 'metrics',
-                  status_code: '200',
-                  ws: 'false',
-                },
-                config: { displayNameFromDS: '+Inf' },
-                values: getMockValueFrameArray(24, 1, 2),
-                entities: {},
-              },
-            ],
-            length: 24,
-          },
-          {
-            name: '0.5',
-            refId: 'A',
-            meta: {
-              type: 'timeseries-multi',
-              custom: { resultType: 'matrix' },
-              executedQueryString:
-                'Expr: {__name__="cortex_request_duration_seconds_bucket", cluster="dev-us-central-0", container="aggregator", instance=~"aggregator-7:aggregator:http-metrics|aggregator-6:aggregator:http-metrics", job="mimir-dev-11/aggregator", le=~"\\\\+Inf|0.5", method="GET", namespace="mimir-dev-11", pod="aggregator-7"}\nStep: 30s',
-              preferredVisualisationType: 'graph',
-            },
-            fields: [
-              {
-                name: 'Time',
-                type: 'time',
-                typeInfo: { frame: 'time.Time' },
-                config: { interval: 30000 },
-                values: getMockTimeFrameArray(21, 1675283550000, 30000),
-                entities: {},
-              },
-              {
-                name: 'Value',
-                type: 'number',
-                typeInfo: { frame: 'float64' },
-                labels: {
-                  __name__: 'cortex_request_duration_seconds_bucket',
-                  cluster: 'dev-us-central-0',
-                  container: 'aggregator',
-                  instance: 'aggregator-7:aggregator:http-metrics',
-                  job: 'mimir-dev-11/aggregator',
-                  le: '0.5',
-                  method: 'GET',
-                  namespace: 'mimir-dev-11',
-                  pod: 'aggregator-7',
-                  route: 'metrics',
-                  status_code: '200',
-                  ws: 'false',
-                },
-                config: { displayNameFromDS: '0.5' },
-                values: getMockValueFrameArray(24, 2, 3),
-                entities: {},
-              },
-            ],
-            length: 24,
-          },
-        ],
-        originalRange: { end: 1675284241920, start: 1675262641920 },
-        timeSrv: { from: 'now-6h', to: 'now' },
-      },
+
+    getSeriesWithGapAtEnd: (countOfSeries = 2) => {
+      const templateClone = clone(twoRequestsOneCachedMissingData);
+      for (let i = 0; i < countOfSeries - 1; i++) {
+        templateClone.first.dataFrames[i].fields[0].values = timeFrameWithMissingValuesAtEnd;
+      }
+      return templateClone;
     },
-    missingDataAtStart: {
-      first: {
-        request: null,
-        dataFrames: null,
-        originalRange: null,
-        timeSrv: null,
-      },
+
+    getSeriesWithGapAtStart: (countOfSeries = 2) => {
+      const templateClone = clone(twoRequestsOneCachedMissingData);
+      for (let i = 0; i < countOfSeries - 1; i++) {
+        templateClone.first.dataFrames[i].fields[0].values = timeFrameWithMissingValuesAtStart;
+      }
+      return templateClone;
+    },
+
+    getSeriesWithGapInMiddle: (countOfSeries = 2) => {
+      const templateClone = clone(twoRequestsOneCachedMissingData);
+      for (let i = 0; i < countOfSeries - 1; i++) {
+        templateClone.first.dataFrames[i].fields[0].values = timeFrameWithMissingValuesInMiddle;
+      }
+      return templateClone;
     },
   },
 };

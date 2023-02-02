@@ -280,66 +280,73 @@ describe('PrometheusIncrementalStorage', function () {
     const storage = new PrometheusIncrementalStorage(getDatasourceStub());
     const intervalMs = 30000;
 
-    // Requests
-    const firstRequest = IncrementalStorageDataFrameScenarios.histogram.multipleSeriesGapInMiddle.first;
-    const secondRequest = IncrementalStorageDataFrameScenarios.histogram.multipleSeriesGapInMiddle.second;
+    const scenarios = [
+      IncrementalStorageDataFrameScenarios.histogram.getSeriesWithGapAtEnd(),
+      IncrementalStorageDataFrameScenarios.histogram.getSeriesWithGapInMiddle(),
+      IncrementalStorageDataFrameScenarios.histogram.getSeriesWithGapAtStart(),
+    ];
+    scenarios.forEach((scenario) => {
+      const firstRequest = scenario.first;
+      const secondRequest = scenario.second;
 
-    const firstDataFrameResponse: DataQueryResponse = {
-      data: firstRequest.dataFrames.map((frame) => toDataFrame(frame)),
-    };
-    const secondDataFrameResponse: DataQueryResponse = {
-      data: secondRequest.dataFrames.map((frame) => toDataFrame(frame)),
-    };
+      const firstDataFrameResponse: DataQueryResponse = {
+        data: firstRequest.dataFrames.map((frame) => toDataFrame(frame)),
+      };
+      const secondDataFrameResponse: DataQueryResponse = {
+        data: secondRequest.dataFrames.map((frame) => toDataFrame(frame)),
+      };
 
-    const firstDataFrames = storage.appendQueryResultToDataFrameStorage(
-      firstRequest.request as unknown as DataQueryRequest<PromQuery>,
-      firstDataFrameResponse,
-      firstRequest.originalRange
-    );
+      const firstDataFrames = storage.appendQueryResultToDataFrameStorage(
+        firstRequest.request as unknown as DataQueryRequest<PromQuery>,
+        firstDataFrameResponse,
+        firstRequest.originalRange
+      );
 
-    // Since we are missing values in these series, the preprocessing should add a few null values in the middle
-    expect(firstDataFrames.data[0].fields[0].values.toArray().length).toBeGreaterThan(
-      firstRequest.dataFrames[0].fields[0].values.length
-    );
+      // Since we are missing values in these series, the preprocessing should add a few null values
+      expect(firstDataFrames.data[0].fields[0].values.toArray().length).toBeGreaterThan(
+        firstRequest.dataFrames[0].fields[0].values.length
+      );
 
-    const firstMergedLength = firstDataFrames.data[0].fields[0].values.length;
+      const firstMergedLength = firstDataFrames.data[0].fields[0].values.length;
 
-    const secondDataFrames = storage.appendQueryResultToDataFrameStorage(
-      secondRequest.request as unknown as DataQueryRequest<PromQuery>,
-      secondDataFrameResponse,
-      secondRequest.originalRange
-    );
+      const secondDataFrames = storage.appendQueryResultToDataFrameStorage(
+        secondRequest.request as unknown as DataQueryRequest<PromQuery>,
+        secondDataFrameResponse,
+        secondRequest.originalRange
+      );
 
-    const secondMergedLength = secondDataFrames.data[0].fields[0].values.length;
+      const secondMergedLength = secondDataFrames.data[0].fields[0].values.length;
 
-    expect(firstMergedLength).toEqual(secondMergedLength);
-    // expect(secondDataFrames.data[0].fields[1].values.toArray()).toContain(firstDataFrames.data[0].fields[1].values.toArray())
-    // I expect the original response to contain everything that's returned by the second merged response, expect for first and last values
-    const valuesFromFirstResponseWithoutFirstValue: number[] = firstDataFrames.data[0].fields[1].values.toArray();
-    const valuesMergedAfterSecondResponse: number[] = secondDataFrames.data[0].fields[1].values.toArray();
+      expect(firstMergedLength).toEqual(secondMergedLength);
+      // expect(secondDataFrames.data[0].fields[1].values.toArray()).toContain(firstDataFrames.data[0].fields[1].values.toArray())
+      // I expect the original response to contain everything that's returned by the second merged response, expect for first and last few values
+      const valuesFromFirstResponseWithoutFirstValue: number[] = firstDataFrames.data[0].fields[1].values.toArray();
+      const valuesMergedAfterSecondResponse: number[] = secondDataFrames.data[0].fields[1].values.toArray();
 
-    valuesFromFirstResponseWithoutFirstValue.forEach((value, index) => {
-      // Skip the first 3 values
-      if (index > 2) {
-        expect(valuesMergedAfterSecondResponse).toContain(value);
-      }
+      valuesFromFirstResponseWithoutFirstValue.forEach((value, index) => {
+        // Skip the first 3 values
+        if (index > 2) {
+          expect(valuesMergedAfterSecondResponse).toContain(value);
+        }
+      });
+
+      const timeDeltasFirstRequest: number[] = firstDataFrames.data[0].fields[0].values
+        .toArray()
+        .map((v: number, i: number, a: number[]) => v - (a[i - 1] ?? 0));
+      // remove the first element of the delta array, it's just the value of the first element: not needed
+      timeDeltasFirstRequest.shift();
+
+      const timeDeltasSecondRequest: number[] = secondDataFrames.data[0].fields[0].values
+        .toArray()
+        .map((v: number, i: number, a: number[]) => v - (a[i - 1] ?? 0));
+
+      timeDeltasSecondRequest.shift();
+
+      // Assert that the difference between each time value is always the interval
+      const gapsInFirstRequest = timeDeltasFirstRequest.filter((value) => value !== intervalMs);
+      const gapsInSecondRequest = timeDeltasSecondRequest.filter((value) => value !== intervalMs);
+      expect(gapsInFirstRequest).toEqual(gapsInSecondRequest);
     });
-
-    const timeDeltasFirstRequest: number[] = firstDataFrames.data[0].fields[0].values
-      .toArray()
-      .map((v: number, i: number, a: number[]) => v - (a[i - 1] || 0));
-    // remove the first element
-    timeDeltasFirstRequest.shift();
-
-    const timeDeltasSecondRequest: number[] = secondDataFrames.data[0].fields[0].values
-      .toArray()
-      .map((v: number, i: number, a: number[]) => v - (a[i - 1] || 0));
-    //remove the first element
-    timeDeltasSecondRequest.shift();
-
-    const gapsInFirstRequest = timeDeltasFirstRequest.filter((value) => value !== intervalMs);
-    const gapsInSecondRequest = timeDeltasSecondRequest.filter((value) => value !== intervalMs);
-    expect(gapsInFirstRequest).toEqual(gapsInSecondRequest);
   });
 
   it('Will evict old dataframes, and use stored data when user shortens query window', () => {
