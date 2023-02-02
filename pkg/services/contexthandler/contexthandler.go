@@ -125,6 +125,8 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 
 		// Inject ReqContext into http.Request.Context
 		*r = *r.WithContext(context.WithValue(ctx, reqContextKey{}, reqContext))
+		// store list of possible auth header in config
+		reqContext.Req = reqContext.Req.WithContext(WithAuthHTTPHeaders(reqContext.Req.Context(), h.Cfg))
 
 		traceID := tracing.TraceIDFromContext(mContext.Req.Context(), false)
 		if traceID != "" {
@@ -146,7 +148,6 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 				reqContext.SignedInUser = identity.SignedInUser()
 				reqContext.AllowAnonymous = identity.IsAnonymous
 				reqContext.IsRenderCall = identity.AuthModule == login.RenderModule
-				reqContext.Req = reqContext.Req.WithContext(withAllAuthHTTPHeaders(reqContext.Req.Context(), h.Cfg))
 			}
 		} else {
 			const headerName = "X-Grafana-Org-Id"
@@ -302,9 +303,6 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *contextmodel.ReqConte
 	_, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithAPIKey")
 	defer span.End()
 
-	ctx := WithAuthHTTPHeader(reqContext.Req.Context(), "Authorization")
-	*reqContext.Req = *reqContext.Req.WithContext(ctx)
-
 	var (
 		apiKey *apikey.APIKey
 		errKey error
@@ -415,15 +413,12 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *contextmodel.ReqCo
 		return true
 	}
 
-	ctx := WithAuthHTTPHeader(reqContext.Req.Context(), "Authorization")
-	*reqContext.Req = *reqContext.Req.WithContext(ctx)
-
 	authQuery := login.LoginUserQuery{
 		Username: username,
 		Password: password,
 		Cfg:      h.Cfg,
 	}
-	if err := h.authenticator.AuthenticateUser(ctx, &authQuery); err != nil {
+	if err := h.authenticator.AuthenticateUser(reqContext.Req.Context(), &authQuery); err != nil {
 		reqContext.Logger.Debug(
 			"Failed to authorize the user",
 			"username", username,
@@ -440,7 +435,7 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *contextmodel.ReqCo
 	usr := authQuery.User
 
 	query := user.GetSignedInUserQuery{UserID: usr.ID, OrgID: orgID}
-	queryResult, err := h.userService.GetSignedInUserWithCacheCtx(ctx, &query)
+	queryResult, err := h.userService.GetSignedInUserWithCacheCtx(reqContext.Req.Context(), &query)
 	if err != nil {
 		reqContext.Logger.Error(
 			"Failed at user signed in",
@@ -709,15 +704,6 @@ func (h *ContextHandler) initContextWithAuthProxy(reqContext *contextmodel.ReqCo
 
 	logger.Debug("Successfully got user info", "userID", user.UserID, "username", user.Login)
 
-	ctx := WithAuthHTTPHeader(reqContext.Req.Context(), h.Cfg.AuthProxyHeaderName)
-	for _, header := range h.Cfg.AuthProxyHeaders {
-		if header != "" {
-			ctx = WithAuthHTTPHeader(ctx, header)
-		}
-	}
-
-	*reqContext.Req = *reqContext.Req.WithContext(ctx)
-
 	// Add user info to context
 	reqContext.SignedInUser = user
 	reqContext.IsSignedIn = true
@@ -742,7 +728,15 @@ type authHTTPHeaderListContextKey struct{}
 
 var authHTTPHeaderListKey = authHTTPHeaderListContextKey{}
 
-func withAllAuthHTTPHeaders(ctx context.Context, cfg *setting.Cfg) context.Context {
+// AuthHTTPHeaderList used to record HTTP headers that being when verifying authentication
+// of an incoming HTTP request.
+type AuthHTTPHeaderList struct {
+	Items []string
+}
+
+// WithAuthHTTPHeaders returns a new context in which all possible configured auth header will be included
+// and later retrievable by AuthHTTPHeaderListFromContext.
+func WithAuthHTTPHeaders(ctx context.Context, cfg *setting.Cfg) context.Context {
 	list := AuthHTTPHeaderListFromContext(ctx)
 	if list == nil {
 		list = &AuthHTTPHeaderList{
@@ -750,12 +744,15 @@ func withAllAuthHTTPHeaders(ctx context.Context, cfg *setting.Cfg) context.Conte
 		}
 	}
 
+	// used by basic auth, api keys and potentially jwt auth
 	list.Items = append(list.Items, "Authorization")
 
-	if cfg.JWTAuthEnabled && cfg.JWTAuthHeaderName != "" {
+	// if jwt is enabled we add it to the list. We can ignore in case it is set to Authorization
+	if cfg.JWTAuthEnabled && cfg.JWTAuthHeaderName != "" && cfg.JWTAuthHeaderName != "Authorization" {
 		list.Items = append(list.Items, cfg.JWTAuthHeaderName)
 	}
 
+	// if auth proxy is enabled add the main proxy header and all configured headers
 	if cfg.AuthProxyEnabled {
 		list.Items = append(list.Items, cfg.AuthProxyHeaderName)
 		for _, header := range cfg.AuthProxyHeaders {
@@ -766,28 +763,6 @@ func withAllAuthHTTPHeaders(ctx context.Context, cfg *setting.Cfg) context.Conte
 	}
 
 	return context.WithValue(ctx, authHTTPHeaderListKey, list)
-}
-
-// AuthHTTPHeaderList used to record HTTP headers that being when verifying authentication
-// of an incoming HTTP request.
-type AuthHTTPHeaderList struct {
-	Items []string
-}
-
-// WithAuthHTTPHeader returns a copy of parent in which the named HTTP header will be included
-// and later retrievable by AuthHTTPHeaderListFromContext.
-func WithAuthHTTPHeader(parent context.Context, name string) context.Context {
-	list := AuthHTTPHeaderListFromContext(parent)
-
-	if list == nil {
-		list = &AuthHTTPHeaderList{
-			Items: []string{},
-		}
-	}
-
-	list.Items = append(list.Items, name)
-
-	return context.WithValue(parent, authHTTPHeaderListKey, list)
 }
 
 // AuthHTTPHeaderListFromContext returns the AuthHTTPHeaderList in a context.Context, if any,
