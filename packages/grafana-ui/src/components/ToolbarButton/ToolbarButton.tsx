@@ -1,6 +1,5 @@
 import { cx, css } from '@emotion/css';
-import { useEffect } from '@storybook/addons';
-import React, { forwardRef, ButtonHTMLAttributes, useState, useRef } from 'react';
+import React, { forwardRef, ButtonHTMLAttributes, useRef } from 'react';
 
 import { GrafanaTheme2, IconName, isIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -80,26 +79,16 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
       [styles.contentWithRightIcon]: isOpen !== undefined,
     });
 
-    //Manage longpress in touch events
-    const isLongPress = useRef(false);
-    const timerRef = useRef();
-    const timer = 400;
-    const startPressTimer = () => {
-      isLongPress.current = false;
-      timerRef.current = setTimeout(() => {
-        isLongPress.current = true;
-      }, timer);
+    //Avoid showing Tooltip when onTouch unless it is longpress
+    const showTooltip = useRef(false);
+    const isResponsive = (e: React.MouseEvent<HTMLElement>) => {
+      if (e.nativeEvent instanceof PointerEvent && e.nativeEvent.pointerType === 'touch') {
+        showTooltip.current = false;
+      } else {
+        showTooltip.current = true;
+      }
     };
 
-    const handleOnTouchStart = () => {
-      startPressTimer();
-    };
-
-    const handleOnTouchEnd = () => {
-      //onTouchEnd is only triggered when there is not a longpress
-      isLongPress.current = false;
-      clearTimeout(timerRef.current);
-    };
     const body = (
       <button
         ref={ref}
@@ -107,8 +96,7 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
         aria-label={getButtonAriaLabel(ariaLabel, tooltip)}
         aria-expanded={isOpen}
         {...rest}
-        onTouchStart={handleOnTouchStart}
-        onTouchEnd={handleOnTouchEnd}
+        onClick={(e) => isResponsive(e)}
       >
         {renderIcon(icon, iconSize)}
         {imgSrc && <img className={styles.img} src={imgSrc} alt={imgAlt ?? ''} />}
@@ -119,8 +107,8 @@ export const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
       </button>
     );
 
-    return tooltip ? (
-      <Tooltip content={tooltip} placement="bottom" show={isLongPress ? undefined : false}>
+    return tooltip && showTooltip ? (
+      <Tooltip content={tooltip} placement="bottom" show={!showTooltip.current ? false : undefined}>
         {body}
       </Tooltip>
     ) : (
