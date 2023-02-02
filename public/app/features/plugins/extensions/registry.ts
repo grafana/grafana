@@ -6,37 +6,36 @@ import type {
 } from '@grafana/runtime';
 
 export function createPluginExtensionsRegistry(apps: Record<string, AppPluginConfig> = {}): PluginsExtensionRegistry {
-  const registry = Object.entries(apps).reduce<PluginsExtensionRegistry>(
-    (registry, [pluginId, config]) => {
-      const extensions = config.extensions;
-      if (!extensions) {
-        return registry;
-      }
-      const links = createLinks(pluginId, extensions.links);
-      registry.links = { ...links, ...registry.links };
+  const registry: PluginsExtensionRegistry = {};
 
-      return registry;
-    },
-    { links: {} }
-  );
+  for (const [pluginId, config] of Object.entries(apps)) {
+    const extensions = config.extensions;
+
+    if (!Array.isArray(extensions)) {
+      continue;
+    }
+
+    for (const extension of extensions) {
+      const target = extension.target;
+      const item = createRegistryItem(pluginId, extension);
+
+      if (!Array.isArray(registry[target])) {
+        registry[target] = [item];
+        continue;
+      }
+
+      registry[target].push(item);
+      continue;
+    }
+  }
 
   return Object.freeze(registry);
 }
 
-function createLinks(pluginId: string, links: PluginsExtensionLinkConfig[]) {
-  return Object.freeze(
-    links.reduce<Record<string, PluginsExtensionRegistryLink>>((registryLinks, linkExtension) => {
-      const linkId = `${pluginId}.${linkExtension.id}`;
-
-      if (registryLinks[linkId]) {
-        return registryLinks;
-      }
-
-      registryLinks[linkId] = Object.freeze({
-        description: linkExtension.description,
-        href: `/a/${pluginId}${linkExtension.path}`,
-      });
-      return registryLinks;
-    }, {})
-  );
+function createRegistryItem(pluginId: string, extension: PluginsExtensionLinkConfig): PluginsExtensionRegistryLink {
+  return Object.freeze({
+    title: extension.title,
+    description: extension.description,
+    href: `/a/${pluginId}${extension.path}`,
+  });
 }
