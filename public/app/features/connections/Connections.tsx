@@ -2,13 +2,13 @@ import * as React from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
 
 import { NavLandingPage } from 'app/core/components/AppChrome/NavLandingPage';
-import { contextSrv } from 'app/core/core';
 import { DataSourcesRoutesContext } from 'app/features/datasources/state';
-import { AccessControlAction, StoreState, useSelector } from 'app/types';
+import { StoreState, useSelector } from 'app/types';
 
 import { ROUTES } from './constants';
 import {
   ConnectDataPage,
+  DataSourceDashboardsPage,
   DataSourceDetailsPage,
   DataSourcesListPage,
   EditDataSourcePage,
@@ -18,7 +18,6 @@ import {
 export default function Connections() {
   const navIndex = useSelector((state: StoreState) => state.navIndex);
   const isConnectDataPageOverriden = Boolean(navIndex['standalone-plugin-page-/connections/connect-data']);
-  const canAdminPlugins = contextSrv.hasPermission(AccessControlAction.PluginsInstall);
 
   return (
     <DataSourcesRoutesContext.Provider
@@ -30,17 +29,7 @@ export default function Connections() {
       }}
     >
       <Switch>
-        <Route
-          exact
-          path={ROUTES.Base}
-          component={() => {
-            if (canAdminPlugins) {
-              return <Redirect to={ROUTES.ConnectData} />;
-            }
-
-            return <Redirect to={ROUTES.DataSources} />;
-          }}
-        />
+        <Route exact path={ROUTES.Base} component={() => <Redirect to={ROUTES.ConnectData} />} />
         <Route
           exact
           path={ROUTES.YourConnections}
@@ -50,6 +39,7 @@ export default function Connections() {
         <Route exact path={ROUTES.DataSourcesDetails} component={DataSourceDetailsPage} />
         <Route exact path={ROUTES.DataSourcesNew} component={NewDataSourcePage} />
         <Route exact path={ROUTES.DataSourcesEdit} component={EditDataSourcePage} />
+        <Route exact path={ROUTES.DataSourcesDashboards} component={DataSourceDashboardsPage} />
         {!isConnectDataPageOverriden && <Route path={ROUTES.ConnectData} component={ConnectDataPage} />}
 
         {/* Default page */}

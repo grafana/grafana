@@ -7,13 +7,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
-
-	"github.com/stretchr/testify/require"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 )
 
 func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
@@ -41,24 +41,24 @@ func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
 
 		t.Run("Get no existing state should create a new state", func(t *testing.T) {
 			query := &models.GetOrCreateNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
-			err := store.GetOrCreateAlertNotificationState(context.Background(), query)
+			res, err := store.GetOrCreateAlertNotificationState(context.Background(), query)
 			require.Nil(t, err)
-			require.NotNil(t, query.Result)
-			require.Equal(t, models.AlertNotificationStateUnknown, query.Result.State)
-			require.Equal(t, int64(0), query.Result.Version)
-			require.Equal(t, now.Unix(), query.Result.UpdatedAt)
+			require.NotNil(t, res)
+			require.Equal(t, models.AlertNotificationStateUnknown, res.State)
+			require.Equal(t, int64(0), res.Version)
+			require.Equal(t, now.Unix(), res.UpdatedAt)
 
 			t.Run("Get existing state should not create a new state", func(t *testing.T) {
 				query2 := &models.GetOrCreateNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
-				err := store.GetOrCreateAlertNotificationState(context.Background(), query2)
+				res2, err := store.GetOrCreateAlertNotificationState(context.Background(), query2)
 				require.Nil(t, err)
-				require.NotNil(t, query2.Result)
-				require.Equal(t, query.Result.Id, query2.Result.Id)
-				require.Equal(t, now.Unix(), query2.Result.UpdatedAt)
+				require.NotNil(t, res2)
+				require.Equal(t, res.Id, res2.Id)
+				require.Equal(t, now.Unix(), res2.UpdatedAt)
 			})
 
 			t.Run("Update existing state to pending with correct version should update database", func(t *testing.T) {
-				s := *query.Result
+				s := *res
 
 				cmd := models.SetAlertNotificationStateToPendingCommand{
 					Id:                           s.Id,
@@ -71,14 +71,14 @@ func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
 				require.Equal(t, int64(1), cmd.ResultVersion)
 
 				query2 := &models.GetOrCreateNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
-				err = store.GetOrCreateAlertNotificationState(context.Background(), query2)
+				res2, err := store.GetOrCreateAlertNotificationState(context.Background(), query2)
 				require.Nil(t, err)
-				require.Equal(t, int64(1), query2.Result.Version)
-				require.Equal(t, models.AlertNotificationStatePending, query2.Result.State)
-				require.Equal(t, now.Unix(), query2.Result.UpdatedAt)
+				require.Equal(t, int64(1), res2.Version)
+				require.Equal(t, models.AlertNotificationStatePending, res2.State)
+				require.Equal(t, now.Unix(), res2.UpdatedAt)
 
 				t.Run("Update existing state to completed should update database", func(t *testing.T) {
-					s := *query.Result
+					s := *res
 					setStateCmd := models.SetAlertNotificationStateToCompleteCommand{
 						Id:      s.Id,
 						Version: cmd.ResultVersion,
@@ -87,15 +87,15 @@ func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
 					require.Nil(t, err)
 
 					query3 := &models.GetOrCreateNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
-					err = store.GetOrCreateAlertNotificationState(context.Background(), query3)
+					res3, err := store.GetOrCreateAlertNotificationState(context.Background(), query3)
 					require.Nil(t, err)
-					require.Equal(t, int64(2), query3.Result.Version)
-					require.Equal(t, models.AlertNotificationStateCompleted, query3.Result.State)
-					require.Equal(t, now.Unix(), query3.Result.UpdatedAt)
+					require.Equal(t, int64(2), res3.Version)
+					require.Equal(t, models.AlertNotificationStateCompleted, res3.State)
+					require.Equal(t, now.Unix(), res3.UpdatedAt)
 				})
 
 				t.Run("Update existing state to completed should update database. regardless of version", func(t *testing.T) {
-					s := *query.Result
+					s := *res
 					unknownVersion := int64(1000)
 					cmd := models.SetAlertNotificationStateToCompleteCommand{
 						Id:      s.Id,
@@ -105,16 +105,16 @@ func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
 					require.Nil(t, err)
 
 					query3 := &models.GetOrCreateNotificationStateQuery{AlertId: alertID, OrgId: orgID, NotifierId: notifierID}
-					err = store.GetOrCreateAlertNotificationState(context.Background(), query3)
+					res3, err := store.GetOrCreateAlertNotificationState(context.Background(), query3)
 					require.Nil(t, err)
-					require.Equal(t, unknownVersion+1, query3.Result.Version)
-					require.Equal(t, models.AlertNotificationStateCompleted, query3.Result.State)
-					require.Equal(t, now.Unix(), query3.Result.UpdatedAt)
+					require.Equal(t, unknownVersion+1, res3.Version)
+					require.Equal(t, models.AlertNotificationStateCompleted, res3.State)
+					require.Equal(t, now.Unix(), res3.UpdatedAt)
 				})
 			})
 
 			t.Run("Update existing state to pending with incorrect version should return version mismatch error", func(t *testing.T) {
-				s := *query.Result
+				s := *res
 				s.Version = 1000
 				cmd := models.SetAlertNotificationStateToPendingCommand{
 					Id:                           s.NotifierId,
@@ -126,7 +126,7 @@ func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
 			})
 
 			t.Run("Updating existing state to pending with incorrect version since alert rule state update version is higher", func(t *testing.T) {
-				s := *query.Result
+				s := *res
 				cmd := models.SetAlertNotificationStateToPendingCommand{
 					Id:                           s.Id,
 					Version:                      s.Version,
@@ -139,7 +139,7 @@ func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
 			})
 
 			t.Run("different version and same alert state change version should return error", func(t *testing.T) {
-				s := *query.Result
+				s := *res
 				s.Version = 1000
 				cmd := models.SetAlertNotificationStateToPendingCommand{
 					Id:                           s.Id,
@@ -159,9 +159,9 @@ func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
 			Name:  "email",
 		}
 
-		err := store.GetAlertNotifications(context.Background(), cmd)
+		res, err := store.GetAlertNotifications(context.Background(), cmd)
 		require.Nil(t, err)
-		require.Nil(t, cmd.Result)
+		require.Nil(t, res)
 	})
 
 	t.Run("Cannot save alert notifier with send reminder = true", func(t *testing.T) {
@@ -175,13 +175,13 @@ func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
 		}
 
 		t.Run("and missing frequency", func(t *testing.T) {
-			err := store.CreateAlertNotificationCommand(context.Background(), cmd)
+			_, err := store.CreateAlertNotificationCommand(context.Background(), cmd)
 			require.Equal(t, models.ErrNotificationFrequencyNotFound, err)
 		})
 
 		t.Run("invalid frequency", func(t *testing.T) {
 			cmd.Frequency = "invalid duration"
-			err := store.CreateAlertNotificationCommand(context.Background(), cmd)
+			_, err := store.CreateAlertNotificationCommand(context.Background(), cmd)
 			require.True(t, regexp.MustCompile(`^time: invalid duration "?invalid duration"?$`).MatchString(
 				err.Error()))
 		})
@@ -197,23 +197,23 @@ func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
 			Settings:     simplejson.New(),
 		}
 
-		err := store.CreateAlertNotificationCommand(context.Background(), cmd)
+		res, err := store.CreateAlertNotificationCommand(context.Background(), cmd)
 		require.Nil(t, err)
 
 		updateCmd := &models.UpdateAlertNotificationCommand{
-			Id:           cmd.Result.Id,
+			Id:           res.Id,
 			SendReminder: true,
 		}
 
 		t.Run("and missing frequency", func(t *testing.T) {
-			err := store.UpdateAlertNotification(context.Background(), updateCmd)
+			_, err := store.UpdateAlertNotification(context.Background(), updateCmd)
 			require.Equal(t, models.ErrNotificationFrequencyNotFound, err)
 		})
 
 		t.Run("invalid frequency", func(t *testing.T) {
 			updateCmd.Frequency = "invalid duration"
 
-			err := store.UpdateAlertNotification(context.Background(), updateCmd)
+			_, err := store.UpdateAlertNotification(context.Background(), updateCmd)
 			require.Error(t, err)
 			require.True(t, regexp.MustCompile(`^time: invalid duration "?invalid duration"?$`).MatchString(
 				err.Error()))
@@ -231,17 +231,17 @@ func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
 			Settings:     simplejson.New(),
 		}
 
-		err := store.CreateAlertNotificationCommand(context.Background(), cmd)
+		res, err := store.CreateAlertNotificationCommand(context.Background(), cmd)
 		require.Nil(t, err)
-		require.NotEqual(t, 0, cmd.Result.Id)
-		require.NotEqual(t, 0, cmd.Result.OrgId)
-		require.Equal(t, "email", cmd.Result.Type)
-		require.Equal(t, 10*time.Second, cmd.Result.Frequency)
-		require.False(t, cmd.Result.DisableResolveMessage)
-		require.NotEmpty(t, cmd.Result.Uid)
+		require.NotEqual(t, 0, res.Id)
+		require.NotEqual(t, 0, res.OrgId)
+		require.Equal(t, "email", res.Type)
+		require.Equal(t, 10*time.Second, res.Frequency)
+		require.False(t, res.DisableResolveMessage)
+		require.NotEmpty(t, res.Uid)
 
 		t.Run("Cannot save Alert Notification with the same name", func(t *testing.T) {
-			err = store.CreateAlertNotificationCommand(context.Background(), cmd)
+			_, err = store.CreateAlertNotificationCommand(context.Background(), cmd)
 			require.Error(t, err)
 		})
 		t.Run("Cannot save Alert Notification with the same name and another uid", func(t *testing.T) {
@@ -254,7 +254,7 @@ func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
 				Settings:     cmd.Settings,
 				Uid:          "notifier1",
 			}
-			err = store.CreateAlertNotificationCommand(context.Background(), anotherUidCmd)
+			_, err = store.CreateAlertNotificationCommand(context.Background(), anotherUidCmd)
 			require.Error(t, err)
 		})
 		t.Run("Can save Alert Notification with another name and another uid", func(t *testing.T) {
@@ -267,7 +267,7 @@ func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
 				Settings:     cmd.Settings,
 				Uid:          "notifier2",
 			}
-			err = store.CreateAlertNotificationCommand(context.Background(), anotherUidCmd)
+			_, err = store.CreateAlertNotificationCommand(context.Background(), anotherUidCmd)
 			require.Nil(t, err)
 		})
 
@@ -275,32 +275,32 @@ func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
 			newCmd := &models.UpdateAlertNotificationCommand{
 				Name:                  "NewName",
 				Type:                  "webhook",
-				OrgId:                 cmd.Result.OrgId,
+				OrgId:                 res.OrgId,
 				SendReminder:          true,
 				DisableResolveMessage: true,
 				Frequency:             "60s",
 				Settings:              simplejson.New(),
-				Id:                    cmd.Result.Id,
+				Id:                    res.Id,
 			}
-			err := store.UpdateAlertNotification(context.Background(), newCmd)
+			newres, err := store.UpdateAlertNotification(context.Background(), newCmd)
 			require.Nil(t, err)
-			require.Equal(t, "NewName", newCmd.Result.Name)
-			require.Equal(t, time.Minute, newCmd.Result.Frequency)
-			require.True(t, newCmd.Result.DisableResolveMessage)
+			require.Equal(t, "NewName", newres.Name)
+			require.Equal(t, time.Minute, newres.Frequency)
+			require.True(t, newres.DisableResolveMessage)
 		})
 
 		t.Run("Can update alert notification to disable sending of reminders", func(t *testing.T) {
 			newCmd := &models.UpdateAlertNotificationCommand{
 				Name:         "NewName",
 				Type:         "webhook",
-				OrgId:        cmd.Result.OrgId,
+				OrgId:        res.OrgId,
 				SendReminder: false,
 				Settings:     simplejson.New(),
-				Id:           cmd.Result.Id,
+				Id:           res.Id,
 			}
-			err := store.UpdateAlertNotification(context.Background(), newCmd)
+			newres, err := store.UpdateAlertNotification(context.Background(), newCmd)
 			require.Nil(t, err)
-			require.False(t, newCmd.Result.SendReminder)
+			require.False(t, newres.SendReminder)
 		})
 	})
 
@@ -313,21 +313,26 @@ func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
 
 		otherOrg := models.CreateAlertNotificationCommand{Name: "default", Type: "email", OrgId: 2, SendReminder: true, Frequency: "10s", Settings: simplejson.New()}
 
-		require.Nil(t, store.CreateAlertNotificationCommand(context.Background(), &cmd1))
-		require.Nil(t, store.CreateAlertNotificationCommand(context.Background(), &cmd2))
-		require.Nil(t, store.CreateAlertNotificationCommand(context.Background(), &cmd3))
-		require.Nil(t, store.CreateAlertNotificationCommand(context.Background(), &cmd4))
-		require.Nil(t, store.CreateAlertNotificationCommand(context.Background(), &otherOrg))
+		res1, err := store.CreateAlertNotificationCommand(context.Background(), &cmd1)
+		require.NoError(t, err)
+		res2, err := store.CreateAlertNotificationCommand(context.Background(), &cmd2)
+		require.NoError(t, err)
+		_, err = store.CreateAlertNotificationCommand(context.Background(), &cmd3)
+		require.NoError(t, err)
+		_, err = store.CreateAlertNotificationCommand(context.Background(), &cmd4)
+		require.NoError(t, err)
+		_, err = store.CreateAlertNotificationCommand(context.Background(), &otherOrg)
+		require.NoError(t, err)
 
 		t.Run("search", func(t *testing.T) {
 			query := &models.GetAlertNotificationsWithUidToSendQuery{
-				Uids:  []string{cmd1.Result.Uid, cmd2.Result.Uid, "112341231"},
+				Uids:  []string{res1.Uid, res2.Uid, "112341231"},
 				OrgId: 1,
 			}
 
-			err := store.GetAlertNotificationsWithUidToSend(context.Background(), query)
+			res, err := store.GetAlertNotificationsWithUidToSend(context.Background(), query)
 			require.Nil(t, err)
-			require.Equal(t, 3, len(query.Result))
+			require.Equal(t, 3, len(res))
 		})
 
 		t.Run("all", func(t *testing.T) {
@@ -335,13 +340,13 @@ func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
 				OrgId: 1,
 			}
 
-			err := store.GetAllAlertNotifications(context.Background(), query)
+			res, err := store.GetAllAlertNotifications(context.Background(), query)
 			require.Nil(t, err)
-			require.Equal(t, 4, len(query.Result))
-			require.Equal(t, cmd4.Name, query.Result[0].Name)
-			require.Equal(t, cmd1.Name, query.Result[1].Name)
-			require.Equal(t, cmd3.Name, query.Result[2].Name)
-			require.Equal(t, cmd2.Name, query.Result[3].Name)
+			require.Equal(t, 4, len(res))
+			require.Equal(t, cmd4.Name, res[0].Name)
+			require.Equal(t, cmd1.Name, res[1].Name)
+			require.Equal(t, cmd3.Name, res[2].Name)
+			require.Equal(t, cmd2.Name, res[3].Name)
 		})
 	})
 
@@ -349,7 +354,7 @@ func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
 		setup()
 
 		notification := &models.CreateAlertNotificationCommand{Uid: "aNotificationUid", OrgId: 1, Name: "aNotificationUid"}
-		err := store.CreateAlertNotificationCommand(context.Background(), notification)
+		_, err := store.CreateAlertNotificationCommand(context.Background(), notification)
 		require.Nil(t, err)
 
 		byUidQuery := &models.GetAlertNotificationsWithUidQuery{
@@ -357,13 +362,13 @@ func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
 			OrgId: notification.OrgId,
 		}
 
-		notificationByUidErr := store.GetAlertNotificationsWithUid(context.Background(), byUidQuery)
+		res, notificationByUidErr := store.GetAlertNotificationsWithUid(context.Background(), byUidQuery)
 		require.Nil(t, notificationByUidErr)
 
 		t.Run("Can cache notification Uid", func(t *testing.T) {
 			byIdQuery := &models.GetAlertNotificationUidQuery{
-				Id:    byUidQuery.Result.Id,
-				OrgId: byUidQuery.Result.OrgId,
+				Id:    res.Id,
+				OrgId: res.OrgId,
 			}
 
 			cacheKey := newAlertNotificationUidCacheKey(byIdQuery.OrgId, byIdQuery.Id)
@@ -372,7 +377,7 @@ func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
 			require.False(t, foundBeforeCaching)
 			require.Nil(t, resultBeforeCaching)
 
-			notificationByIdErr := store.GetAlertNotificationUidWithId(context.Background(), byIdQuery)
+			_, notificationByIdErr := store.GetAlertNotificationUidWithId(context.Background(), byIdQuery)
 			require.Nil(t, notificationByIdErr)
 
 			resultAfterCaching, foundAfterCaching := store.cache.Get(cacheKey)
@@ -388,9 +393,9 @@ func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
 			cacheKey := newAlertNotificationUidCacheKey(query.OrgId, query.Id)
 			store.cache.Set(cacheKey, "a-cached-uid", -1)
 
-			err := store.GetAlertNotificationUidWithId(context.Background(), query)
+			res, err := store.GetAlertNotificationUidWithId(context.Background(), query)
 			require.Nil(t, err)
-			require.Equal(t, "a-cached-uid", query.Result)
+			require.Equal(t, "a-cached-uid", res)
 		})
 
 		t.Run("Returns an error without populating cache when the notification doesn't exist in the database", func(t *testing.T) {
@@ -399,8 +404,8 @@ func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
 				OrgId: 100,
 			}
 
-			err := store.GetAlertNotificationUidWithId(context.Background(), query)
-			require.Equal(t, "", query.Result)
+			res, err := store.GetAlertNotificationUidWithId(context.Background(), query)
+			require.Equal(t, "", res)
 			require.Error(t, err)
 			require.True(t, errors.Is(err, models.ErrAlertNotificationFailedTranslateUniqueID))
 
@@ -423,7 +428,7 @@ func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
 			Settings:              simplejson.New(),
 			Id:                    1,
 		}
-		err := store.UpdateAlertNotification(context.Background(), updateCmd)
+		_, err := store.UpdateAlertNotification(context.Background(), updateCmd)
 		require.Equal(t, models.ErrAlertNotificationNotFound, err)
 
 		t.Run("using UID", func(t *testing.T) {
@@ -438,7 +443,7 @@ func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
 				Uid:                   "uid",
 				NewUid:                "newUid",
 			}
-			err := store.UpdateAlertNotificationWithUid(context.Background(), updateWithUidCmd)
+			_, err := store.UpdateAlertNotificationWithUid(context.Background(), updateWithUidCmd)
 			require.Equal(t, models.ErrAlertNotificationNotFound, err)
 		})
 	})
@@ -453,28 +458,28 @@ func TestIntegrationAlertNotificationSQLAccess(t *testing.T) {
 			Settings:     simplejson.New(),
 		}
 
-		err := store.CreateAlertNotificationCommand(context.Background(), cmd)
+		res, err := store.CreateAlertNotificationCommand(context.Background(), cmd)
 		require.Nil(t, err)
 
 		deleteCmd := &models.DeleteAlertNotificationCommand{
-			Id:    cmd.Result.Id,
+			Id:    res.Id,
 			OrgId: 1,
 		}
 		err = store.DeleteAlertNotification(context.Background(), deleteCmd)
 		require.Nil(t, err)
 
 		t.Run("using UID", func(t *testing.T) {
-			err := store.CreateAlertNotificationCommand(context.Background(), cmd)
+			res, err := store.CreateAlertNotificationCommand(context.Background(), cmd)
 			require.Nil(t, err)
 
 			deleteWithUidCmd := &models.DeleteAlertNotificationWithUidCommand{
-				Uid:   cmd.Result.Uid,
+				Uid:   res.Uid,
 				OrgId: 1,
 			}
 
 			err = store.DeleteAlertNotificationWithUid(context.Background(), deleteWithUidCmd)
 			require.Nil(t, err)
-			require.Equal(t, cmd.Result.Id, deleteWithUidCmd.DeletedAlertNotificationId)
+			require.Equal(t, res.Id, deleteWithUidCmd.DeletedAlertNotificationId)
 		})
 	})
 

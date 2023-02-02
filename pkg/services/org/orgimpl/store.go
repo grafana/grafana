@@ -420,7 +420,7 @@ func (ss *sqlStore) Count(ctx context.Context, scopeParams *quota.ScopeParameter
 		u.Set(tag, r.Count)
 	}
 
-	if scopeParams.OrgID != 0 {
+	if scopeParams != nil && scopeParams.OrgID != 0 {
 		if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 			rawSQL := fmt.Sprintf("SELECT COUNT(*) AS count FROM (SELECT user_id FROM org_user WHERE org_id=? AND user_id IN (SELECT id AS user_id FROM %s WHERE is_service_account=%s)) as subq",
 				ss.db.GetDialect().Quote("user"),
@@ -441,7 +441,7 @@ func (ss *sqlStore) Count(ctx context.Context, scopeParams *quota.ScopeParameter
 		}
 	}
 
-	if scopeParams.UserID != 0 {
+	if scopeParams != nil && scopeParams.UserID != 0 {
 		if err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 			// should we exclude service accounts?
 			rawSQL := "SELECT COUNT(*) AS count FROM org_user WHERE user_id=?"

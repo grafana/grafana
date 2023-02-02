@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/x/persistentcollection"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/querylibrary"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
@@ -67,7 +67,7 @@ type queryLoader interface {
 	byUID(uid string) (*querylibrary.Query, error)
 }
 
-func (s *service) UpdateDashboardQueries(ctx context.Context, user *user.SignedInUser, dash *models.Dashboard) error {
+func (s *service) UpdateDashboardQueries(ctx context.Context, user *user.SignedInUser, dash *dashboards.Dashboard) error {
 	queryLoader := newPerRequestQueryLoader(ctx, user, s)
 	return s.updateQueriesRecursively(queryLoader, dash.Data)
 }

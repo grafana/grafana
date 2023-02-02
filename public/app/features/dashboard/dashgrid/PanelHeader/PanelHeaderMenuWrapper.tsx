@@ -1,4 +1,6 @@
-import React, { FC } from 'react';
+import React from 'react';
+
+import { LoadingState } from '@grafana/data';
 
 import { DashboardModel, PanelModel } from '../../state';
 
@@ -8,15 +10,17 @@ import { PanelHeaderMenuProvider } from './PanelHeaderMenuProvider';
 interface Props {
   panel: PanelModel;
   dashboard: DashboardModel;
+  loadingState?: LoadingState;
   onClose: () => void;
+  style?: React.CSSProperties;
 }
 
-export const PanelHeaderMenuWrapper: FC<Props> = ({ panel, dashboard }) => {
+export function PanelHeaderMenuWrapper({ style, panel, dashboard, loadingState }: Props) {
   return (
-    <PanelHeaderMenuProvider panel={panel} dashboard={dashboard}>
+    <PanelHeaderMenuProvider panel={panel} dashboard={dashboard} loadingState={loadingState}>
       {({ items }) => {
-        return <PanelHeaderMenu items={items} />;
+        return <PanelHeaderMenu style={style} items={items} />;
       }}
     </PanelHeaderMenuProvider>
   );
-};
+}

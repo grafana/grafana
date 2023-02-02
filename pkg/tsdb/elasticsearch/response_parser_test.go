@@ -9,9 +9,10 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
-	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
 var update = flag.Bool("update", true, "update golden files")
@@ -21,7 +22,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("Simple query and count", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [{ "type": "count", "id": "1" }],
           "bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "2" }]
 				}`,
@@ -68,7 +68,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("Simple query count & avg aggregation", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [{ "type": "count", "id": "1" }, {"type": "avg", "field": "value", "id": "2" }],
           "bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "3" }]
 				}`,
@@ -127,7 +126,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("Single group by query one metric", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [{ "type": "count", "id": "1" }],
           "bucketAggs": [
 						{ "type": "terms", "field": "host", "id": "2" },
@@ -190,7 +188,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("Single group by query two metrics", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [{ "type": "count", "id": "1" }, { "type": "avg", "field": "@value", "id": "4" }],
           "bucketAggs": [
 						{ "type": "terms", "field": "host", "id": "2" },
@@ -276,7 +273,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("With percentiles", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [{ "type": "percentiles", "settings": { "percents": [75, 90] }, "id": "1" }],
           "bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "3" }]
 				}`,
@@ -333,7 +329,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("With extended stats", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [{ "type": "extended_stats", "meta": { "max": true, "std_deviation_bounds_upper": true, "std_deviation_bounds_lower": true }, "id": "1" }],
           "bucketAggs": [
 						{ "type": "terms", "field": "host", "id": "3" },
@@ -447,7 +442,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("Single group by with alias pattern", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"alias": "{{term @host}} {{metric}} and {{not_exist}} {{@host}}",
 					"metrics": [{ "type": "count", "id": "1" }],
           "bucketAggs": [
@@ -527,7 +521,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("Histogram response", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [{ "type": "count", "id": "1" }],
          "bucketAggs": [{ "type": "histogram", "field": "bytes", "id": "3" }]
 				}`,
@@ -557,7 +550,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("With two filters agg", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [{ "type": "count", "id": "1" }],
           "bucketAggs": [
 						{
@@ -623,7 +615,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("With drop first and last aggregation (numeric)", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [{ "type": "avg", "id": "1" }, { "type": "count" }],
           "bucketAggs": [
 						{
@@ -692,7 +683,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("With drop first and last aggregation (string)", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [{ "type": "avg", "id": "1" }, { "type": "count" }],
           "bucketAggs": [
 						{
@@ -761,7 +751,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("Larger trimEdges value", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [{ "type": "count" }],
           "bucketAggs": [
 						{
@@ -808,7 +797,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("No group by time", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [{ "type": "avg", "id": "1" }, { "type": "count" }],
          "bucketAggs": [{ "type": "terms", "field": "host", "id": "2" }]
 				}`,
@@ -859,7 +847,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("Multiple metrics of same type", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [{ "type": "avg", "field": "test", "id": "1" }, { "type": "avg", "field": "test2", "id": "2" }],
           "bucketAggs": [{ "type": "terms", "field": "host", "id": "2" }]
 				}`,
@@ -906,7 +893,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("With bucket_script", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [
 						{ "id": "1", "type": "sum", "field": "@value" },
             { "id": "3", "type": "max", "field": "@value" },
@@ -984,7 +970,6 @@ func TestResponseParser(t *testing.T) {
 		t.Run("Terms with two bucket_script", func(t *testing.T) {
 			targets := map[string]string{
 				"A": `{
-					"timeField": "@timestamp",
 					"metrics": [
 						{ "id": "1", "type": "sum", "field": "@value" },
             			{ "id": "3", "type": "max", "field": "@value" },
@@ -1061,7 +1046,6 @@ func TestResponseParser(t *testing.T) {
 	t.Run("With top_metrics", func(t *testing.T) {
 		targets := map[string]string{
 			"A": `{
-				"timeField": "@timestamp",
 				"metrics": [
 					{
 						"type": "top_metrics",
@@ -1179,4 +1163,95 @@ func parseTestResponse(tsdbQueries map[string]string, responseBody string) (*bac
 	}
 
 	return parseResponse(response.Responses, queries)
+}
+
+func TestLabelOrderInFieldName(t *testing.T) {
+	query := []byte(`
+	[
+		{
+		  "refId": "A",
+		  "metrics": [{ "type": "count", "id": "1" }],
+		  "bucketAggs": [
+			{ "type": "terms", "field": "f1", "id": "3" },
+			{ "type": "terms", "field": "f2", "id": "4" },
+			{ "type": "date_histogram", "field": "@timestamp", "id": "2" }
+		  ]
+		}
+	  ]
+	`)
+
+	response := []byte(`
+	{
+		"responses": [
+		  {
+			"aggregations": {
+			  "3": {
+				"buckets": [
+				  {
+					"key": "val3",
+					"4": {
+					  "buckets": [
+						{
+						  "key": "info",
+						  "2": {"buckets": [{ "key_as_string": "1675086600000", "key": 1675086600000, "doc_count": 5 }]}
+						},
+						{
+						  "key": "error",
+						  "2": {"buckets": [{ "key_as_string": "1675086600000", "key": 1675086600000, "doc_count": 2 }]}
+						}
+					  ]
+					}
+				  },
+				  {
+					"key": "val2",
+					"4": {
+					  "buckets": [
+						{
+						  "key": "info",
+						  "2": {"buckets": [{ "key_as_string": "1675086600000", "key": 1675086600000, "doc_count": 6 }]}
+						},
+						{
+						  "key": "error",
+						  "2": {"buckets": [{ "key_as_string": "1675086600000", "key": 1675086600000, "doc_count": 1 }]}
+						}
+					  ]
+					}
+				  },
+				  {
+					"key": "val1",
+					"4": {
+					  "buckets": [
+						{
+						  "key": "info",
+						  "2": {"buckets": [{ "key_as_string": "1675086600000", "key": 1675086600000, "doc_count": 6 }]}
+						},
+						{
+						  "key": "error",
+						  "2": {"buckets": [{ "key_as_string": "1675086600000", "key": 1675086600000, "doc_count": 2 }]}
+						}
+					  ]
+					}
+				  }
+				]
+			  }
+			}
+		  }
+		]
+	  }
+	`)
+
+	result, err := queryDataTest(query, response)
+	require.NoError(t, err)
+
+	require.Len(t, result.response.Responses, 1)
+	frames := result.response.Responses["A"].Frames
+	require.Len(t, frames, 6)
+
+	// the important part is that the label-value is always before the level-value
+	requireTimeSeriesName(t, "val3 info", frames[0])
+	requireTimeSeriesName(t, "val3 error", frames[1])
+	requireTimeSeriesName(t, "val2 info", frames[2])
+	requireTimeSeriesName(t, "val2 error", frames[3])
+	requireTimeSeriesName(t, "val1 info", frames[4])
+	requireTimeSeriesName(t, "val1 error", frames[5])
 }

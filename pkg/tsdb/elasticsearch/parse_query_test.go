@@ -10,7 +10,6 @@ func TestParseQuery(t *testing.T) {
 	t.Run("Test parse query", func(t *testing.T) {
 		t.Run("Should be able to parse query", func(t *testing.T) {
 			body := `{
-				"timeField": "@timestamp",
 				"query": "@metric:cpu",
 				"alias": "{{@hostname}} {{metric}}",
         		"interval": "10m",
@@ -67,7 +66,6 @@ func TestParseQuery(t *testing.T) {
 
 			q := queries[0]
 
-			require.Equal(t, q.TimeField, "@timestamp")
 			require.Equal(t, q.RawQuery, "@metric:cpu")
 			require.Equal(t, q.Alias, "{{@hostname}} {{metric}}")
 			require.Equal(t, q.Interval.String(), "10s")

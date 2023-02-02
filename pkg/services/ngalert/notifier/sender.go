@@ -5,7 +5,6 @@ import (
 
 	"github.com/grafana/alerting/alerting/notifier/channels"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 )
 
@@ -14,7 +13,7 @@ type sender struct {
 }
 
 func (s sender) SendWebhook(ctx context.Context, cmd *channels.SendWebhookSettings) error {
-	return s.ns.SendWebhookSync(ctx, &models.SendWebhookSync{
+	return s.ns.SendWebhookSync(ctx, &notifications.SendWebhookSync{
 		Url:         cmd.URL,
 		User:        cmd.User,
 		Password:    cmd.Password,
@@ -27,18 +26,18 @@ func (s sender) SendWebhook(ctx context.Context, cmd *channels.SendWebhookSettin
 }
 
 func (s sender) SendEmail(ctx context.Context, cmd *channels.SendEmailSettings) error {
-	var attached []*models.SendEmailAttachFile
+	var attached []*notifications.SendEmailAttachFile
 	if cmd.AttachedFiles != nil {
-		attached = make([]*models.SendEmailAttachFile, 0, len(cmd.AttachedFiles))
+		attached = make([]*notifications.SendEmailAttachFile, 0, len(cmd.AttachedFiles))
 		for _, file := range cmd.AttachedFiles {
-			attached = append(attached, &models.SendEmailAttachFile{
+			attached = append(attached, &notifications.SendEmailAttachFile{
 				Name:    file.Name,
 				Content: file.Content,
 			})
 		}
 	}
-	return s.ns.SendEmailCommandHandlerSync(ctx, &models.SendEmailCommandSync{
-		SendEmailCommand: models.SendEmailCommand{
+	return s.ns.SendEmailCommandHandlerSync(ctx, &notifications.SendEmailCommandSync{
+		SendEmailCommand: notifications.SendEmailCommand{
 			To:            cmd.To,
 			SingleEmail:   cmd.SingleEmail,
 			Template:      cmd.Template,

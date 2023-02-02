@@ -3,7 +3,7 @@ package team
 import (
 	"context"
 
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 )
 
 type Service interface {
@@ -13,11 +13,11 @@ type Service interface {
 	SearchTeams(ctx context.Context, query *SearchTeamsQuery) (SearchTeamQueryResult, error)
 	GetTeamByID(ctx context.Context, query *GetTeamByIDQuery) (*TeamDTO, error)
 	GetTeamsByUser(ctx context.Context, query *GetTeamsByUserQuery) ([]*TeamDTO, error)
-	AddTeamMember(userID, orgID, teamID int64, isExternal bool, permission models.PermissionType) error
-	UpdateTeamMember(ctx context.Context, cmd *models.UpdateTeamMemberCommand) error
+	AddTeamMember(userID, orgID, teamID int64, isExternal bool, permission dashboards.PermissionType) error
+	UpdateTeamMember(ctx context.Context, cmd *UpdateTeamMemberCommand) error
 	IsTeamMember(orgId int64, teamId int64, userId int64) (bool, error)
-	RemoveTeamMember(ctx context.Context, cmd *models.RemoveTeamMemberCommand) error
-	GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*models.TeamMemberDTO, error)
-	GetTeamMembers(ctx context.Context, query *models.GetTeamMembersQuery) error
+	RemoveTeamMember(ctx context.Context, cmd *RemoveTeamMemberCommand) error
+	GetUserTeamMemberships(ctx context.Context, orgID, userID int64, external bool) ([]*TeamMemberDTO, error)
+	GetTeamMembers(ctx context.Context, query *GetTeamMembersQuery) ([]*TeamMemberDTO, error)
 	IsAdminOfTeams(ctx context.Context, query *IsAdminOfTeamsQuery) (bool, error)
 }

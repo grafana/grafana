@@ -3,7 +3,7 @@ import { setupServer } from 'msw/node';
 
 // bit of setup to mock HTTP request responses
 import 'whatwg-fetch';
-import { SupportedPlugin } from './PluginBridge';
+import { SupportedPlugin } from '../types/pluginBridges';
 
 export const NON_EXISTING_PLUGIN = '__does_not_exist__';
 

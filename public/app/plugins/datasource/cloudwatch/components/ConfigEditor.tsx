@@ -14,8 +14,8 @@ import { createWarningNotification } from 'app/core/copy/appNotification';
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { store } from 'app/store/store';
 
-import { SelectableResourceValue } from '../api';
 import { CloudWatchDatasource } from '../datasource';
+import { SelectableResourceValue } from '../resources/types';
 import { CloudWatchJsonData, CloudWatchSecureJsonData } from '../types';
 
 import { LogGroupsField } from './LogGroups/LogGroupsField';
@@ -45,7 +45,7 @@ export const ConfigEditor: FC<Props> = (props: Props) => {
         loadRegions={
           datasource &&
           (async () => {
-            return datasource.api
+            return datasource.resources
               .getRegions()
               .then((regions) =>
                 regions.reduce(

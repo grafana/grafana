@@ -12,6 +12,9 @@
       "light-theme": "",
       "search": ""
     },
+    "search-box": {
+      "placeholder": ""
+    },
     "section": {
       "actions": "",
       "dashboard-search-results": "",
@@ -128,15 +131,6 @@
       "subtitle": "Gérer les paramètres à l'échelle du serveur et l'accès aux ressources telles que les organisations, les utilisateurs et les licences",
       "title": "Administrateur de serveur"
     },
-    "admin-access": {
-      "title": "Utilisateurs et droits d'accès"
-    },
-    "admin-general": {
-      "title": "Général"
-    },
-    "admin-plugins": {
-      "title": "Modules complémentaires et données"
-    },
     "alerting": {
       "subtitle": "En savoir plus sur les problèmes dans vos systèmes quelques instants après qu'ils se produisent",
       "title": "Alertes"
@@ -235,7 +229,6 @@
     "help/documentation": "Documentation",
     "help/keyboard-shortcuts": "Raccourcis clavier",
     "help/support": "Assistance",
-    "help/support-bundle": "Packs d’assistance",
     "home": {
       "title": "Accueil"
     },
@@ -261,6 +254,9 @@
     "monitoring": {
       "subtitle": "Applications de suivi et d'infrastructure",
       "title": "Suivi"
+    },
+    "new": {
+      "title": ""
     },
     "new-dashboard": {
       "title": "Nouveau tableau de bord"
@@ -295,7 +291,8 @@
       "title": "Scènes"
     },
     "search": {
-      "placeholder": "Rechercher dans Grafana"
+      "placeholder": "Rechercher dans Grafana",
+      "placeholderCommandPalette": ""
     },
     "search-dashboards": {
       "title": "Rechercher dans les tableaux de bord"
@@ -356,13 +353,22 @@
   },
   "panel": {
     "header-menu": {
+      "copy": "",
+      "create-library-panel": "",
+      "duplicate": "",
+      "edit": "",
+      "explore": "",
+      "get-help": "",
       "hide-legend": "Masquer la légende",
       "inspect": "Inspecter",
       "inspect-data": "Données",
       "inspect-json": "Panneau JSON",
       "more": "Plus...",
+      "query": "",
+      "remove": "",
       "share": "Partager",
       "show-legend": "Afficher la légende",
+      "unlink-library-panel": "",
       "view": "Afficher"
     }
   },
@@ -381,6 +387,14 @@
     },
     "select-button": {
       "auto-refresh": "Définir l'intervalle d'actualisation automatique"
+    }
+  },
+  "search": {
+    "dashboard-actions": {
+      "import": "",
+      "new": "",
+      "new-dashboard": "",
+      "new-folder": ""
     }
   },
   "share-modal": {
@@ -475,7 +489,8 @@
     "theme": {
       "dark-label": "Sombre",
       "default-label": "Par défaut",
-      "light-label": "Clair"
+      "light-label": "Clair",
+      "system-label": ""
     },
     "title": "Préférences"
   },
@@ -541,8 +556,7 @@
       "name-error": "Un nom est obligatoire",
       "name-label": "Nom",
       "username-label": "Nom d’utilisateur"
-    },
-    "title": "Modifier le profil"
+    }
   },
   "user-session": {
     "browser-column": "Navigateur et système d'exploitation",

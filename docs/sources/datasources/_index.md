@@ -8,12 +8,22 @@ weight: 60
 
 # Data sources
 
-Grafana can query and integrate with many different types of databases. This is done by adding a **data source** of the type you want to query or integrate with.
-When you have created and configured a data source you are ready to start exploring and visualizing data, either in Explore or in a new Dashboard. A dashboard is composed of [panels]({{< relref "../panels-visualizations/" >}}), each panel contains a set of queries to one or more data sources.
+Grafana comes with built-in support for many _data sources_.
+If you need other data sources, you can also install one of the many data source plugins.
+If the plugin you need doesn't exist, you can develop a custom plugin.
 
-You can also create new a alert rule from a data source query and have Grafana continuously evaluate it and notify you when things change.
+Each data source comes with a _query editor_,
+which formulates custom queries according to the source's structure.
+After you add and configure a data source, you can use it as an input for many operations, including:
 
-You can also query data sources without building a dashboard by using the [Explore]({{< relref "../explore/" >}}) feature.
+- Query the data with [Explore]({{< relref "../explore" >}}).
+- Visualize it in [panels]({{< relref "../panels-visualizations" >}}).
+- Create rules for [alerts]({{< relref "../alerting" >}}).
+
+This documentation describes how to manage data sources in general,
+and how to configure or query the built-in data sources.
+For other data sources, refer to the list of [datasource plugins](/grafana/plugins/).
+To develop a custom plugin, refer to [Build a plugin]({{< relref "../developers/plugins/" >}}).
 
 ## Manage data sources
 

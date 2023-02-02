@@ -183,6 +183,7 @@ export const resourceTypeDisplayNames: { [k: string]: string } = {
   'microsoft.hpcworkbench/instances/consortiums': 'Consortiums (preview)',
   'microsoft.hybridcompute/machines': 'Servers - Azure Arc',
   'microsoft.hybridcompute/privatelinkscopes': 'Azure Arc Private Link Scopes',
+  'microsoft.hybridcontainerservice/provisionedclusters': 'Provisioned clusters',
   'microsoft.hybriddata/datamanagers': 'StorSimple Data Managers',
   'microsoft.hybridnetwork/devices': 'Azure Network Function Manager – Devices',
   'microsoft.hybridnetwork/networkfunctions': 'Azure Network Function Manager – Network Functions',
@@ -269,6 +270,7 @@ export const resourceTypeDisplayNames: { [k: string]: string } = {
   'microsoft.network/networkmanagers': 'Network Managers',
   'microsoft.network/networksecuritygroups': 'Network security groups',
   'microsoft.network/networkwatchers': 'Network Watchers',
+  'microsoft.network/networkwatchers/connectionmonitors': 'Connection Monitors',
   'microsoft.network/networkwatchers/flowlogs': 'NSG Flow Logs',
   'microsoft.network/privatednszones': 'Private DNS zones',
   'microsoft.network/privateendpoints': 'Private endpoints',
@@ -399,4 +401,24 @@ export const resourceTypeDisplayNames: { [k: string]: string } = {
   'wandisco.fusion/migrators/targets': 'Targets',
   'microsoft.security/insights/classification': 'Data Sensitivity Security Insights (Preview)',
   'microsoft.security/locations/alerts': 'Security Alerts',
+};
+
+// This list has been manually written using the Azure Portal as the source.
+// Visit https://portal.azure.com/#view/Microsoft_Azure_Monitoring/AzureMonitoringBrowseBlade/~/metrics
+// and go to Select a scope > Resource types > Multi-resource compatible (preview)
+export const multiResourceCompatibleTypes: { [ns: string]: boolean } = {
+  'microsoft.cache/redis': true, // 'Azure Cache for Redis'
+  'microsoft.dbforpostgresql/flexibleservers': true, // 'Azure Database for PostgreSQL flexible servers'
+  'microsoft.storagecache/amlfilesystems': true, // 'Lustre File Systems'
+  'microsoft.databoxedge/databoxedgedevices': true, // 'Azure Stack Edge / Data Box Gateway'
+  'microsoft.dataprotection/backupvaults': true, // 'Backup vaults'
+  'microsoft.netapp/netappaccounts/capacitypools': true, // 'Capacity pools'
+  'microsoft.network/networkwatchers/connectionmonitors': true, // 'Connection Monitors'
+  'microsoft.keyvault/vaults': true, // 'Key vaults'
+  'microsoft.recoveryservices/vaults': true, // 'Recovery Services vaults'
+  'microsoft.sql/servers/databases': true, // 'SQL databases'
+  'microsoft.sql/servers/elasticpools': true, // 'SQL elastic pools'
+  'microsoft.compute/virtualmachinescalesets': true, // 'Virtual machine scale sets'
+  'microsoft.compute/virtualmachines': true, // 'Virtual machines'
+  'microsoft.signalrservice/webpubsub': true, // 'Web PubSub Service'
 };

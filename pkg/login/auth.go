@@ -6,7 +6,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/loginattempt"
@@ -30,7 +29,7 @@ var (
 var loginLogger = log.New("login")
 
 type Authenticator interface {
-	AuthenticateUser(context.Context, *models.LoginUserQuery) error
+	AuthenticateUser(context.Context, *login.LoginUserQuery) error
 }
 
 type AuthenticatorService struct {
@@ -49,7 +48,7 @@ func ProvideService(store db.DB, loginService login.Service, loginAttemptService
 }
 
 // AuthenticateUser authenticates the user via username & password
-func (a *AuthenticatorService) AuthenticateUser(ctx context.Context, query *models.LoginUserQuery) error {
+func (a *AuthenticatorService) AuthenticateUser(ctx context.Context, query *login.LoginUserQuery) error {
 	ok, err := a.loginAttemptService.Validate(ctx, query.Username)
 	if err != nil {
 		return err

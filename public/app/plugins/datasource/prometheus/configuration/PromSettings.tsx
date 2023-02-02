@@ -21,6 +21,7 @@ import {
 
 import { useUpdateDatasource } from '../../../../features/datasources/state';
 import { PromApplication, PromBuildInfoResponse } from '../../../../types/unified-alerting-dto';
+import { QueryEditorMode } from '../querybuilder/shared/types';
 import { PromOptions } from '../types';
 
 import { ExemplarsSettings } from './ExemplarsSettings';
@@ -31,6 +32,11 @@ const { Input, FormField } = LegacyForms;
 const httpOptions = [
   { value: 'POST', label: 'POST' },
   { value: 'GET', label: 'GET' },
+];
+
+const editorOptions = [
+  { value: QueryEditorMode.Builder, label: 'Builder' },
+  { value: QueryEditorMode.Code, label: 'Code' },
 ];
 
 type PrometheusSelectItemsType = Array<{ value: PromApplication; label: PromApplication }>;
@@ -136,7 +142,8 @@ export const PromSettings = (props: Props) => {
   // This update call is typed as void, but it returns a response which we need
   const onUpdate = useUpdateDatasource();
 
-  // We are explicitly adding httpMethod so it is correctly displayed in dropdown. This way, it is more predictable for users.
+  // We are explicitly adding httpMethod so, it is correctly displayed in dropdown.
+  // This way, it is more predictable for users.
   if (!options.jsonData.httpMethod) {
     options.jsonData.httpMethod = 'POST';
   }
@@ -291,6 +298,23 @@ export const PromSettings = (props: Props) => {
               onChange={onUpdateDatasourceJsonDataOptionChecked(props, 'disableMetricsLookup')}
             />
           </InlineField>
+        </div>
+        <div className="gf-form">
+          <FormField
+            label="Default Editor"
+            labelWidth={14}
+            inputEl={
+              <Select
+                aria-label={`Default Editor (Code or Builder)`}
+                options={editorOptions}
+                value={editorOptions.find((o) => o.value === options.jsonData.defaultEditor)}
+                onChange={onChangeHandler('defaultEditor', options, onOptionsChange)}
+                width={20}
+                disabled={options.readOnly}
+              />
+            }
+            tooltip={`Set default editor option (builder/code) for all users of this datasource. If no option was selected, the default editor will be the "builder". If they switch to other option rather than the specified with this setting on the panel we always show the selected editor for that user.`}
+          />
         </div>
         <div className="gf-form-inline">
           <div className="gf-form max-width-30">

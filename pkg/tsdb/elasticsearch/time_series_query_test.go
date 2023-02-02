@@ -6,9 +6,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
 
 func TestExecuteTimeSeriesQuery(t *testing.T) {
@@ -21,7 +22,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With defaults", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "2" }],
 				"metrics": [{"type": "count", "id": "0" }]
 			}`, from, to)
@@ -41,7 +41,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("Should clean settings from null values (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [{ "type": "date_histogram", "field": "@timestamp", "id": "1" }],
 				"metrics": [{"type": "avg", "id": "0", "settings": {"missing": "null", "script": "1" } }]
 			}`, from, to)
@@ -56,7 +55,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With multiple bucket aggs", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "terms", "field": "@host", "id": "2", "settings": { "size": "0", "order": "asc" } },
 					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
@@ -78,7 +76,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With select field", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "2" }
 				],
@@ -98,7 +95,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With term agg and order by term (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{
 						"type": "terms",
@@ -122,7 +118,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With term agg and order by metric agg", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{
 						"type": "terms",
@@ -154,7 +149,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With term agg and order by count metric agg", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{
 						"type": "terms",
@@ -178,7 +172,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With term agg and order by count agg (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"metrics": [
 					{"type": "count", "id": "1" },
 					{"type": "avg", "field": "@value", "id": "5" }
@@ -205,7 +198,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With term agg and order by percentiles agg", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{
 						"type": "terms",
@@ -234,7 +226,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With term agg and order by extended stats agg", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{
 						"type": "terms",
@@ -264,7 +255,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With term agg and order by term", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{
 						"type": "terms",
@@ -291,7 +281,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With term agg and valid min_doc_count (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{
 						"type": "terms",
@@ -317,7 +306,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With metric percentiles", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
 				],
@@ -351,7 +339,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With filters aggs", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{
 						"id": "2",
@@ -382,7 +369,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With filters aggs and empty label (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{
 						"id": "2",
@@ -413,7 +399,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With raw document metric size", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [],
 				"metrics": [{ "id": "1", "type": "raw_document", "settings": {}	}]
 			}`, from, to)
@@ -426,7 +411,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With raw document metric query (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [],
 				"metrics": [{ "id": "1", "type": "raw_document", "settings": {}	}]
 			}`, from, to)
@@ -448,7 +432,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With raw data metric query (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [],
 				"metrics": [{ "id": "1", "type": "raw_data", "settings": {}	}]
 			}`, from, to)
@@ -470,7 +453,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With raw document metric size set", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [],
 				"metrics": [{ "id": "1", "type": "raw_document", "settings": { "size": 1337 }	}]
 			}`, from, to)
@@ -483,7 +465,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With date histogram agg", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{
 						"id": "2",
@@ -508,7 +489,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			t.Run("Should not include time_zone if not present in the query model (from frontend tests)", func(t *testing.T) {
 				c := newFakeClient()
 				_, err := executeTsdbQuery(c, `{
-					"timeField": "@timestamp",
 					"bucketAggs": [
 						{
 							"id": "2",
@@ -531,7 +511,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			t.Run("Should not include time_zone when timeZone is utc", func(t *testing.T) {
 				c := newFakeClient()
 				_, err := executeTsdbQuery(c, `{
-					"timeField": "@timestamp",
 					"bucketAggs": [
 						{
 							"id": "2",
@@ -554,7 +533,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			t.Run("Should include time_zone when timeZone is not utc", func(t *testing.T) {
 				c := newFakeClient()
 				_, err := executeTsdbQuery(c, `{
-					"timeField": "@timestamp",
 					"bucketAggs": [
 						{
 							"id": "2",
@@ -578,7 +556,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With histogram agg", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{
 						"id": "3",
@@ -605,7 +582,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With histogram (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{
 						"id": "3",
@@ -631,7 +607,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With geo hash grid agg", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{
 						"id": "3",
@@ -656,7 +631,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With moving average (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
 				],
@@ -691,7 +665,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With moving average", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
 				],
@@ -729,7 +702,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With moving average doc count (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
 				],
@@ -760,7 +732,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With moving average doc count", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
 				],
@@ -792,7 +763,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With broken moving average (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
 				],
@@ -828,7 +798,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With broken moving average", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "5" }
 				],
@@ -864,7 +833,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With top_metrics (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
 				],
@@ -888,7 +856,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With cumulative sum", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
 				],
@@ -926,7 +893,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With cumulative sum doc count", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
 				],
@@ -958,7 +924,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With broken cumulative sum", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "5" }
 				],
@@ -994,7 +959,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With derivative", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
 				],
@@ -1024,7 +988,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			// This test is with pipelineAgg and is passing. Same test without pipelineAgg is failing.
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
 				],
@@ -1053,7 +1016,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With derivative doc count (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
 				],
@@ -1083,7 +1045,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 			// This test is with pipelineAgg and is passing. Same test without pipelineAgg is failing.
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
 				],
@@ -1114,7 +1075,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With serial_diff (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "3" }
 				],
@@ -1144,7 +1104,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With serial_diff doc count", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
 				],
@@ -1173,7 +1132,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With bucket_script", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "2" }
 				],
@@ -1210,7 +1168,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With bucket_script (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
 				],
@@ -1247,7 +1204,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With bucket_script doc count", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "4" }
 				],
@@ -1281,7 +1237,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With bucket_script doc count (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "2" }
 				],
@@ -1315,7 +1270,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With lucene query should add query_string filter when query is not empty (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"query": "foo",
 				"bucketAggs": [],
 				"metrics": [{ "id": "1", "type": "raw_data", "settings": {}	}]
@@ -1330,7 +1284,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With lucene query should add query_string filter when query is not empty (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"query": "foo",
 				"bucketAggs": [],
 				"metrics": [{ "id": "1", "type": "raw_data", "settings": {}	}]
@@ -1345,7 +1298,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With log query should return query with defaults (from frontend tests)", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"metrics": [{ "type": "logs", "id": "1"}]
 			}`, from, to)
 			require.NoError(t, err)
@@ -1378,7 +1330,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With log query with limit should return query with correct size", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"metrics": [{ "type": "logs", "id": "1", "settings": { "limit": 1000 }}]
 			}`, from, to)
 			require.NoError(t, err)
@@ -1389,7 +1340,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With log query should return highlight properties", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"metrics": [{ "type": "logs", "id": "1" }]
 			}`, from, to)
 			require.NoError(t, err)
@@ -1407,7 +1357,6 @@ func TestExecuteTimeSeriesQuery(t *testing.T) {
 		t.Run("With invalid query should return error", (func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"query": "foo",
 			}`, from, to)
 			require.Error(t, err)
@@ -1422,7 +1371,6 @@ func TestSettingsCasting(t *testing.T) {
 	t.Run("Correctly casts values in moving_avg (from frontend tests)", func(t *testing.T) {
 		c := newFakeClient()
 		_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"metrics": [
 					{ "type": "avg", "id" : "2" },
 					{
@@ -1463,7 +1411,6 @@ func TestSettingsCasting(t *testing.T) {
 		// This test is with pipelineAgg and is passing. Same test without pipelineAgg is failing.
 		c := newFakeClient()
 		_, err := executeTsdbQuery(c, `{
-			"timeField": "@timestamp",
 			"bucketAggs": [
 				{ "type": "date_histogram", "field": "@timestamp", "id": "2" }
 			],
@@ -1507,7 +1454,6 @@ func TestSettingsCasting(t *testing.T) {
 	t.Run("Correctly transforms serial_diff settings (from frontend tests)", func(t *testing.T) {
 		c := newFakeClient()
 		_, err := executeTsdbQuery(c, `{
-			"timeField": "@timestamp",
 			"bucketAggs": [
 				{ "type": "date_histogram", "field": "@timestamp", "id": "1" }
 			],
@@ -1533,7 +1479,6 @@ func TestSettingsCasting(t *testing.T) {
 		// This test is with pipelineAgg and is passing. Same test without pipelineAgg is failing.
 		c := newFakeClient()
 		_, err := executeTsdbQuery(c, `{
-			"timeField": "@timestamp",
 			"bucketAggs": [
 				{ "type": "date_histogram", "field": "@timestamp", "id": "2" }
 			],
@@ -1562,7 +1507,6 @@ func TestSettingsCasting(t *testing.T) {
 		t.Run("Correctly transforms date_histogram settings", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{
 						"type": "date_histogram",
@@ -1597,7 +1541,6 @@ func TestSettingsCasting(t *testing.T) {
 		t.Run("Correctly uses already int min_doc_count", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{
 						"type": "date_histogram",
@@ -1633,7 +1576,6 @@ func TestSettingsCasting(t *testing.T) {
 			t.Run("Uses fixed_interval", func(t *testing.T) {
 				c := newFakeClient()
 				_, err := executeTsdbQuery(c, `{
-					"timeField": "@timestamp",
 					"bucketAggs": [
 						{
 							"type": "date_histogram",
@@ -1662,7 +1604,6 @@ func TestSettingsCasting(t *testing.T) {
 		t.Run("Correctly handles scripts", func(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
-				"timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "field": "@timestamp", "id": "2" }
 				],
@@ -1702,7 +1643,6 @@ func TestSettingsCasting(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"metrics": [{ "type": "count", "id": "1" }],
-        "timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "id": "2", "settings": { "min_doc_count": "1" } }
 				]
@@ -1718,7 +1658,6 @@ func TestSettingsCasting(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"metrics": [{ "type": "count", "id": "1" }],
-        "timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "id": "2", "field": "@time", "settings": { "min_doc_count": "1" } }
 				]
@@ -1734,7 +1673,6 @@ func TestSettingsCasting(t *testing.T) {
 			c := newFakeClient()
 			_, err := executeTsdbQuery(c, `{
 				"metrics": [{ "type": "count", "id": "1" }],
-        "timeField": "@timestamp",
 				"bucketAggs": [
 					{ "type": "date_histogram", "id": "2", "field": "@time", "settings": { "min_doc_count": "1", "interval": "1d" } }
 				]

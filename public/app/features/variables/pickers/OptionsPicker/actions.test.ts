@@ -526,7 +526,7 @@ describe('options picker actions', () => {
         .whenActionIsDispatched(toggleOptionByHighlight('key', clearOthers));
 
       const optionA = createOption('A');
-      const optionBC = createOption('BD');
+      const optionBC = createOption('BC');
 
       tester.thenDispatchedActionsShouldEqual(
         toKeyedAction('key', toggleOption({ option: optionA, forceSelect: false, clearOthers })),
