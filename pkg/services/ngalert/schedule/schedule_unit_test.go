@@ -954,13 +954,13 @@ func CreateTestAlertRule(t *testing.T, dbstore *store.FakeRuleStore, intervalSec
 	switch evalResult {
 	case eval.Normal:
 		expression = `{
-			"datasourceUid": "-100",
+			"datasourceUid": "__expr__",
 			"type":"math",
 			"expression":"2 + 1 < 1"
 		}`
 	case eval.Pending, eval.Alerting:
 		expression = `{
-			"datasourceUid": "-100",
+			"datasourceUid": "__expr__",
 			"type":"math",
 			"expression":"2 + 2 > 1"
 		}`
@@ -969,7 +969,7 @@ func CreateTestAlertRule(t *testing.T, dbstore *store.FakeRuleStore, intervalSec
 		}
 	case eval.Error:
 		expression = `{
-			"datasourceUid": "-100",
+			"datasourceUid": "__expr__",
 			"type":"math",
 			"expression":"$A"
 		}`
@@ -985,7 +985,7 @@ func CreateTestAlertRule(t *testing.T, dbstore *store.FakeRuleStore, intervalSec
 		Condition: "A",
 		Data: []models.AlertQuery{
 			{
-				DatasourceUID: "-100",
+				DatasourceUID: expr.DatasourceUID,
 				Model:         json.RawMessage(expression),
 				RelativeTimeRange: models.RelativeTimeRange{
 					From: models.Duration(5 * time.Hour),
