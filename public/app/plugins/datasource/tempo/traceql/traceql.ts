@@ -45,7 +45,6 @@ export const language = {
   digits: /\d+(_+\d+)*/,
   octaldigits: /[0-7]+(_+[0-7]+)*/,
   binarydigits: /[0-1]+(_+[0-1]+)*/,
-  hexdigits: /[[0-9a-fA-F]+(_+[0-9a-fA-F]+)*/,
 
   tokenizer: {
     root: [
@@ -96,7 +95,6 @@ export const language = {
       // numbers
       [/(@digits)[eE]([\-+]?(@digits))?[fFdD]?/, 'number.float'],
       [/(@digits)\.(@digits)([eE][\-+]?(@digits))?[fFdD]?/, 'number.float'],
-      [/0[xX](@hexdigits)[Ll]?/, 'number.hex'],
       [/0(@octaldigits)[Ll]?/, 'number.octal'],
       [/0[bB](@binarydigits)[Ll]?/, 'number.binary'],
       [/(@digits)[fFdD]/, 'number.float'],
