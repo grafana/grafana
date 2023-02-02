@@ -81,13 +81,6 @@ func instrumentedHTTPClientWithMetrics(registerer prometheus.Registerer, prefix 
 	}
 }
 
-func instrumentedHTTPClientWithSpanName(spanName string) instrumentedHTTPClientOption {
-	return func(cl *instrumentedHTTPClient) error {
-		cl.spanName = spanName
-		return nil
-	}
-}
-
 func (r *instrumentedHTTPClient) registerMetrics(registerer prometheus.Registerer) error {
 	for _, collector := range []prometheus.Collector{
 		r.requestsCounter, r.failureCounter, r.inFlightCounter, r.durationHistogram,
