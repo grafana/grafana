@@ -36,44 +36,20 @@ export type Dimensions = Record<string, (string | Array<string>)>;
 /**
  * #CloudWatchMetricsQuery | #CloudWatchLogsQuery
  */
-export interface CloudWatchMetricsQuery extends common.DataQuery, MetricStat {
+export interface CloudWatchMetricsQuery extends MetricStat {
   alias?: string;
-  /**
-   * For mixed data sources the selected datasource is on the query level.
-   * For non mixed scenarios this is undefined.
-   * TODO find a better way to do this ^ that's friendly to schema
-   * TODO this shouldn't be unknown but DataSourceRef | null
-   */
-  datasource?: unknown;
   /**
    * Math expression query
    */
   expression?: string;
   /**
-   * true if query is disabled (ie should not be returned to the dashboard)
-   */
-  hide?: boolean;
-  /**
    * common props
    */
   id: string;
-  /**
-   * Unique, guid like, string used in explore mode
-   */
-  key?: string;
   label?: string;
   metricEditorMode?: MetricEditorMode;
   metricQueryType?: MetricQueryType;
   queryMode?: CloudWatchQueryMode;
-  /**
-   * Specify the query flavor
-   * TODO make this required and give it a default
-   */
-  queryType?: string;
-  /**
-   * A - Z
-   */
-  refId: string;
   sql?: SQLExpression;
   sqlExpression?: string;
 }
@@ -191,35 +167,11 @@ export interface LogGroup {
   name: string;
 }
 
-export interface CloudWatchAnnotationQuery extends common.DataQuery, MetricStat {
+export interface CloudWatchAnnotationQuery extends MetricStat {
   actionPrefix?: string;
   alarmNamePrefix?: string;
-  /**
-   * For mixed data sources the selected datasource is on the query level.
-   * For non mixed scenarios this is undefined.
-   * TODO find a better way to do this ^ that's friendly to schema
-   * TODO this shouldn't be unknown but DataSourceRef | null
-   */
-  datasource?: unknown;
-  /**
-   * true if query is disabled (ie should not be returned to the dashboard)
-   */
-  hide?: boolean;
-  /**
-   * Unique, guid like, string used in explore mode
-   */
-  key?: string;
   prefixMatching?: boolean;
   queryMode: CloudWatchQueryMode;
-  /**
-   * Specify the query flavor
-   * TODO make this required and give it a default
-   */
-  queryType?: string;
-  /**
-   * A - Z
-   */
-  refId: string;
 }
 
 export interface CloudWatch {}

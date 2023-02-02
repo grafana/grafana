@@ -47,7 +47,8 @@ composableKinds: DataQuery: {
 
 						//#CloudWatchMetricsQuery | #CloudWatchLogsQuery
 						#CloudWatchMetricsQuery: {
-							common.DataQuery
+							// TODO extend common.DataQuery when the issues with redundant fields is fixed
+							// common.DataQuery
 							#MetricStat
 							queryMode?:        #CloudWatchQueryMode
 							metricQueryType?:  #MetricQueryType
@@ -148,7 +149,8 @@ composableKinds: DataQuery: {
 						#CloudWatchQueryMode: "Metrics" | "Logs" | "Annotations" @cuetsy(kind="enum")
 
 						#CloudWatchAnnotationQuery: {
-							common.DataQuery
+							// TODO extend common.DataQuery when the issues with redundant fields is fixed
+							//common.DataQuery
 							#MetricStat
 							queryMode:        #CloudWatchQueryMode
 							prefixMatching?:  bool
