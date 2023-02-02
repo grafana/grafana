@@ -205,7 +205,7 @@ func (moa *MultiOrgAlertmanager) SyncAlertmanagersForOrgs(ctx context.Context, o
 			continue
 		}
 
-		err := alertmanager.ApplyConfig(dbConfig)
+		err := alertmanager.ApplyConfig(ctx, dbConfig)
 		if err != nil {
 			moa.logger.Error("failed to apply Alertmanager config for org", "org", orgID, "id", dbConfig.ID, "error", err)
 			continue
