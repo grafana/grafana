@@ -164,7 +164,7 @@ Read more about using the command palette [in the documentation.](https://grafan
 
 {{< figure src="/static/img/docs/navigation/command-palette-9-4.gif" max-width="750px" caption="Grafana command palette" >}}
 
-## Nav navigation
+## New navigation
 
 Early access on Grafana Cloud
 
