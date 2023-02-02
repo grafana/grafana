@@ -307,7 +307,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     errorContainer: css({
       label: 'error-container',
-      zIndex: 1000,
       position: 'absolute',
       left: '50%',
       transform: 'translateX(-50%)',
