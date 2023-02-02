@@ -183,6 +183,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
                       onChange={this.onChangeQuery}
                       onRunQuery={onRunQuery}
                       initialValue={query.expr ?? ''}
+                      placeholder="Enter a LogQL query."
                     />
                   ) : (
                     <QueryField
