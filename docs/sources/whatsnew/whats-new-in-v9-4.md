@@ -114,15 +114,29 @@ _Note:_ The Grafana documentation has not yet been updated to reflect changes to
 
 ## Auditing and Usage Insights: Support for Loki multi-tenancy
 
-*This feature is available for Enterprise customers*
-This feature adds support to push analytics events and auditing logs to Loki with multi-tenancy mode, by specifying a tenant id. 
+_This feature is available for Enterprise customers_
+This feature adds support to push analytics events and auditing logs to Loki with multi-tenancy mode, by specifying a tenant id.
 
 ## Reporting: Enable changing the report scale factor
 
-*This feature is available for Enterprise customers*
+_This feature is available for Enterprise customers_
 Scale factor is a new feature for reports that allows users to change the dimension of the panels of the PDF document. It allows you to show more columns in the tables zooming out or show panels bigger zooming in.
 You can modify the scale factor for each report in the report editor and/or when you share the whole PDF directly from the dashboard page.
 
 {{< figure src="/media/docs/grafana/FormatReportScheduler9.4.png" max-width="750px" caption="Scale factor feature in Report format page" >}}
 
 {{< figure src="/media/docs/grafana/FormatReportShare9.4.png" max-width="750px" caption="Scale factor feature in Share functionality" >}}
+
+## Dashboard panel redesign
+
+Dashboard panels hold a lot of information, some of which is difficult to discover or access entirely from the dashboard itself. With our redesigned panels, we've improved accessibility and made it easier to understand the status of a panel by adding and moving key elements.
+
+We’ve rethought the panel information architecture, added additional interaction points, and reduced visual clutter. To start, we’ve improved the support of panels without a header, made a distinction between details set by you and data-induced information, and then included all essential components in the header of the panel. All of these are laid out from left to right in a row, so there are no overlapping, unusable components.
+
+Grafana’s new panel is available only for React-based panels; no Angular-based panels will have the redesign (i.e., they’ll have the old Graph and Table visualizations).
+
+{{< video-embed src="/media/docs/grafana/screen-recording-panel-header-redesign-whats-new-9-4.mp4>" >}}
+
+However, we have more planned: we’re going to make even more improvements to the accessibility of panels and improvements to panels without a header.
+
+This is a beta feature, which you can access by enabling the `newPanelChromeUI` feature toggle.
