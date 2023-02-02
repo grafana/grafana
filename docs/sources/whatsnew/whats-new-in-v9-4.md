@@ -89,3 +89,25 @@ Administrators can choose between selecting one of the most popular data sources
 This is currently a beta feature that can be accessed by enabling the `datasourceOnboarding` feature toggle.
 
 {{< figure src="/media/docs/grafana/screenshot-datasource-connection-onboarding-whats-new-9-4.png" max-width="750px" caption="Admin view of data source connection page on dashboard creation" >}}
+
+## Command palette enhancements
+
+The command palette has been updated to provide a more efficient way to navigate Grafana. Now you can search and access all pages as well as recent dashboards, making it easier to perform tasks without taking your hands off the keyboard.
+
+Use the keyboard shortcut cmd + K on Mac or ctrl + K on Linux/Windows to launch the command palette.
+
+Read more about using the command palette [in the documentation.](https://grafana.com/docs/grafana/latest/search/)
+
+{{< figure src="/static/img/docs/navigation/command-palette-9-4.gif" max-width="750px" caption="Grafana command palette" >}}
+
+## Nav navigation
+
+Early access on Grafana Cloud
+
+Grafana’s navigation has been reorganized to make it easier for you to access the data you need. With this update, you'll be able to quickly navigate between features, giving you full visibility into the health of your systems.
+
+The new navigation is being gradually rolled out to users on Grafana Cloud.
+
+_Note:_ The Grafana documentation has not yet been updated to reflect changes to the navigation.
+
+{{< figure src="/static/img/docs/navigation/navigation-9-4.png" max-width="750px" caption="Grafana new navigation" >}}
