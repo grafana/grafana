@@ -334,7 +334,7 @@ func (s schema) Markdown(level int) string {
 	buf := new(bytes.Buffer)
 
 	if s.Title != "" && s.AdditionalProperties == nil {
-		fmt.Fprintln(buf, fmt.Sprintf("### %s", strings.Title(s.Title)))
+		fmt.Fprintf(buf, "### %s\n", strings.Title(s.Title))
 		fmt.Fprintln(buf)
 	}
 
@@ -395,7 +395,6 @@ func findDefinitions(s *schema) []*schema {
 				}
 			}
 		}
-
 	}
 
 	for k, p := range s.Properties {
