@@ -109,8 +109,21 @@ describe('filterPanelDataToQuery', () => {
     const panelDataA = filterPanelDataToQuery(loadingData, 'A');
     expect(panelDataA?.state).toBe(LoadingState.Loading);
   });
+  it('should keep the state in loading until all queries are finished, even if the current query has errored', () => {
+    const loadingData: PanelData = {
+      state: LoadingState.Loading,
+      series: [],
+      error: {
+        refId: 'A',
+        message: 'Error',
+      },
+      timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1d', to: 'now' } },
+    };
 
-  it('should not set the state to error if the frame is still loading', () => {
+    const panelDataA = filterPanelDataToQuery(loadingData, 'A');
+    expect(panelDataA?.state).toBe(LoadingState.Loading);
+  });
+  it('should keep the state in loading until all queries are finished, if another query has errored', () => {
     const loadingData: PanelData = {
       state: LoadingState.Loading,
       series: [],

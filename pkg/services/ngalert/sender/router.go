@@ -209,7 +209,7 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]string, erro
 	// We might have alertmanager datasources that are acting as external
 	// alertmanager, let's fetch them.
 	query := &datasources.GetDataSourcesByTypeQuery{
-		OrgId: orgID,
+		OrgID: orgID,
 		Type:  datasources.DS_ALERTMANAGER,
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
@@ -225,8 +225,8 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]string, erro
 		amURL, err := d.buildExternalURL(ds)
 		if err != nil {
 			d.logger.Error("Failed to build external alertmanager URL",
-				"org", ds.OrgId,
-				"uid", ds.Uid,
+				"org", ds.OrgID,
+				"uid", ds.UID,
 				"error", err)
 			continue
 		}
@@ -238,7 +238,7 @@ func (d *AlertsRouter) alertmanagersFromDatasources(orgID int64) ([]string, erro
 func (d *AlertsRouter) buildExternalURL(ds *datasources.DataSource) (string, error) {
 	// We re-use the same parsing logic as the datasource to make sure it matches whatever output the user received
 	// when doing the healthcheck.
-	parsed, err := datasource.ValidateURL(datasources.DS_ALERTMANAGER, ds.Url)
+	parsed, err := datasource.ValidateURL(datasources.DS_ALERTMANAGER, ds.URL)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse alertmanager datasource url: %w", err)
 	}
