@@ -73,12 +73,6 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:         "tempoApmTable",
-			Description:  "Show APM table",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-		},
-		{
 			Name:        "prometheusAzureOverrideAudience",
 			Description: "Experimental. Allow override default AAD audience for Azure Prometheus endpoint",
 			State:       FeatureStateBeta,
@@ -161,6 +155,12 @@ var (
 			RequiresDevMode: true,
 		},
 		{
+			Name:            "apiserver",
+			Description:     "Add a k8s API server proxy",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
 			Name:        "supportBundles",
 			Description: "Support bundles for troubleshooting",
 			State:       FeatureStateAlpha,
@@ -176,13 +176,6 @@ var (
 			Description:     "Export grafana instance (to git, etc)",
 			State:           FeatureStateAlpha,
 			RequiresDevMode: true,
-		},
-		{
-			Name:            "azureMonitorResourcePickerForMetrics",
-			Description:     "New UI for Azure Monitor Metrics Query",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-			FrontendOnly:    true,
 		},
 		{
 			Name:         "exploreMixedDatasource",
@@ -415,11 +408,6 @@ var (
 			Description:     "Stop maintaining state of alerts that are not firing",
 			State:           FeatureStateBeta,
 			RequiresRestart: false,
-		},
-		{
-			Name:        "azureMultipleResourcePicker",
-			Description: "Azure multiple resource picker",
-			State:       FeatureStateAlpha,
 		},
 		{
 			Name:         "topNavCommandPalette",

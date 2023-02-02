@@ -314,7 +314,7 @@ describe('ElasticDatasource', () => {
         database: 'mock-index',
       });
 
-      const query: DataQueryRequest<ElasticsearchQuery> = {
+      const query = {
         range: createTimeRange(toUtc([2015, 4, 30, 10]), toUtc([2019, 7, 1, 10])),
         targets: [
           {
@@ -332,7 +332,7 @@ describe('ElasticDatasource', () => {
             timeField: '@timestamp',
           },
         ],
-      } as DataQueryRequest<ElasticsearchQuery>;
+      } as unknown as DataQueryRequest<ElasticsearchQuery>;
 
       const queryBuilderSpy = jest.spyOn(ds.queryBuilder, 'getLogsQuery');
       let response: DataQueryResponse = { data: [] };

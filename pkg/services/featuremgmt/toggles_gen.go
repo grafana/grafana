@@ -55,10 +55,6 @@ const (
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
 
-	// FlagTempoApmTable
-	// Show APM table
-	FlagTempoApmTable = "tempoApmTable"
-
 	// FlagPrometheusAzureOverrideAudience
 	// Experimental. Allow override default AAD audience for Azure Prometheus endpoint
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
@@ -119,6 +115,10 @@ const (
 	// Save dashboards via k8s
 	FlagK8sDashboards = "k8sDashboards"
 
+	// FlagApiserver
+	// Add a k8s API server proxy
+	FlagApiserver = "apiserver"
+
 	// FlagSupportBundles
 	// Support bundles for troubleshooting
 	FlagSupportBundles = "supportBundles"
@@ -130,10 +130,6 @@ const (
 	// FlagExport
 	// Export grafana instance (to git, etc)
 	FlagExport = "export"
-
-	// FlagAzureMonitorResourcePickerForMetrics
-	// New UI for Azure Monitor Metrics Query
-	FlagAzureMonitorResourcePickerForMetrics = "azureMonitorResourcePickerForMetrics"
 
 	// FlagExploreMixedDatasource
 	// Enable mixed datasource in Explore
@@ -302,10 +298,6 @@ const (
 	// FlagAlertingNoNormalState
 	// Stop maintaining state of alerts that are not firing
 	FlagAlertingNoNormalState = "alertingNoNormalState"
-
-	// FlagAzureMultipleResourcePicker
-	// Azure multiple resource picker
-	FlagAzureMultipleResourcePicker = "azureMultipleResourcePicker"
 
 	// FlagTopNavCommandPalette
 	// Launch the Command Palette from the top navigation search box

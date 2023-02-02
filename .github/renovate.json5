@@ -14,7 +14,6 @@
     "react-redux", // react-beautiful-dnd depends on react-redux 7.x, we need to update that one first
     "react-router-dom", // we should bump this together with history
     "systemjs",
-    "copy-webpack-plugin", // try to upgrade with newer yarn release. Not working with 3.1.1
     "ts-loader", // we should remove ts-loader and use babel-loader instead
     "ora", // we should bump this once we move to esm modules
 
