@@ -297,10 +297,21 @@ export function getStreamSelectorsFromQuery(query: string): string[] {
   return labelMatchers;
 }
 
+const PARTITION_LIMIT = 60;
 export function partitionTimeRange(range: TimeRange, unit: DurationUnit = 'm'): TimeRange[] {
   const delta = range.to.diff(range.from, unit);
 
   if (delta <= 1) {
+    return [range];
+  }
+
+  /**
+   * The user can request for any arbitrary time range. If we receive one from too
+   * long ago, this will cause an extremely large loop which could break the app.
+   * Additionally, data retention is limited, so ranges that go above PARTIION_LIMIT
+   * will be ignored.
+   */
+  if (delta > PARTITION_LIMIT) {
     return [range];
   }
 
