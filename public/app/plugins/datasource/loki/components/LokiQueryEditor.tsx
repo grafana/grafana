@@ -113,6 +113,7 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
       />
       <EditorHeader>
         <Stack gap={1}>
+          <QueryEditorModeToggle mode={editorMode!} onChange={onEditorModeChange} />
           <Button
             aria-label={selectors.components.QueryBuilder.queryPatterns}
             variant="secondary"
@@ -149,7 +150,6 @@ export const LokiQueryEditor = React.memo<LokiQueryEditorProps>((props) => {
             Run queries
           </Button>
         )}
-        <QueryEditorModeToggle mode={editorMode!} onChange={onEditorModeChange} />
       </EditorHeader>
       <Space v={0.5} />
       <EditorRows>
