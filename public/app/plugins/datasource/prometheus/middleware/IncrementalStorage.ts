@@ -15,23 +15,24 @@ import {
 import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
 
 import { getTimeSrv, TimeSrv } from '../../../../features/dashboard/services/TimeSrv';
-import { alignRange, PrometheusDatasource } from '../datasource';
+import { LokiQuery } from '../../loki/types';
+import { alignRange } from '../datasource';
 import { PromQuery } from '../types';
 
 // Decreasing the duration of the overlap provides even further performance improvements, however prometheus data over the last 10 minutes is in flux, and could be out of order from the past 2 hours
 // Get link to prometheus doc for the above comment
-const PROMETHEUS_INCREMENTAL_QUERY_OVERLAP_DURATION_MS = 60 * 10 * 1000;
-const PROMETHEUS_STORAGE_TIME_INDEX = '__time__';
+const INCREMENTAL_QUERY_OVERLAP_DURATION_MS = 60 * 10 * 1000;
+const STORAGE_TIME_INDEX = '__time__';
 const DEBUG = false;
 
 // Another issue: if the query window starts at a time when there is no results from the database, we'll always fail the cache check and pull fresh data, even though the cache has everything available
 // Also the cache can def get really big for big queries, need to look into if we want to find a way to limit the size of requests we add to the cache?
-export class PrometheusIncrementalStorage {
+export class IncrementalStorage {
   private storage: Record<string, Record<string, number[]>>;
-  private readonly datasource: PrometheusDatasource;
+  private readonly datasource: { interpolateString: (s: string) => string };
   private readonly timeSrv: TimeSrv = getTimeSrv();
 
-  constructor(datasource: PrometheusDatasource) {
+  constructor(datasource: { interpolateString: (s: string) => string }) {
     this.storage = {};
     this.datasource = datasource;
   }
@@ -212,7 +213,7 @@ export class PrometheusIncrementalStorage {
    * @param target
    * @param request
    */
-  private createPrometheusStorageIndexFromRequestTarget = (
+  private createStorageIndexFromRequestTarget = (
     target: PromQuery,
     request: DataQueryRequest<PromQuery>
   ): string | undefined => {
@@ -327,7 +328,7 @@ export class PrometheusIncrementalStorage {
    * @param originalRange
    */
   appendQueryResultToDataFrameStorage = (
-    request: DataQueryRequest<PromQuery>,
+    request: DataQueryRequest<PromQuery | LokiQuery>,
     dataFrames: DataQueryResponse,
     originalRange?: { end: number; start: number }
   ): DataQueryResponse => {
@@ -342,16 +343,9 @@ export class PrometheusIncrementalStorage {
       // Filter out the series that aren't for this query
       const timeSeriesForThisQuery = data.filter((response) => response.refId === target.refId);
       timeSeriesForThisQuery.forEach((response) => {
-        if (response?.meta?.custom?.resultType !== 'matrix') {
-          return;
-        }
-
         // Concatenate query expression and step to use as index for all series returned by query
         // Multiple queries with same expression and step will share the same cache, I don't think that's a problem?
-        const responseQueryExpressionAndStepString = this.createPrometheusStorageIndexFromRequestTarget(
-          target,
-          request
-        );
+        const responseQueryExpressionAndStepString = this.createStorageIndexFromRequestTarget(target, request);
 
         // For each query response get the time and the values
         const responseTimeFields = response.fields?.filter((field) => field.name === TIME_SERIES_TIME_FIELD_NAME);
@@ -379,7 +373,7 @@ export class PrometheusIncrementalStorage {
           const responseFrameValues: number[] | undefined = valueField?.values?.toArray();
 
           // Generate a unique name for this dataframe using the values
-          const seriesLabelsIndexString = PrometheusIncrementalStorage.valueFrameToLabelsString(valueField);
+          const seriesLabelsIndexString = IncrementalStorage.valueFrameToLabelsString(valueField);
 
           // If we don't have storage, dataframes, or any values for this label, we haven't added this query to storage before
           const thisQueryHasNeverBeenDoneBefore =
@@ -418,7 +412,7 @@ export class PrometheusIncrementalStorage {
               timeValuesFromStorage &&
               timeValuesFromResponse.length > 0
             ) {
-              const dedupedFrames = PrometheusIncrementalStorage.removeFramesFromStorageThatExistInRequest(
+              const dedupedFrames = IncrementalStorage.removeFramesFromStorageThatExistInRequest(
                 timeValuesFromStorage,
                 timeValuesFromResponse,
                 originalRange,
@@ -469,7 +463,7 @@ export class PrometheusIncrementalStorage {
    *
    * @param request
    */
-  modifyRequestDurationsIfStorageOverlapsRequest(request: DataQueryRequest<PromQuery>): {
+  modifyRequestDurationsIfStorageOverlapsRequest(request: DataQueryRequest<PromQuery | LokiQuery>): {
     request: DataQueryRequest<PromQuery>;
     originalRange?: { end: number; start: number };
   } {
@@ -484,7 +478,7 @@ export class PrometheusIncrementalStorage {
     for (let i = 0; i < request.targets.length; i++) {
       const target = request.targets[i];
 
-      const storageIndex: string | undefined = this.createPrometheusStorageIndexFromRequestTarget(target, request);
+      const storageIndex: string | undefined = this.createStorageIndexFromRequestTarget(target, request);
 
       if (!storageIndex) {
         if (DEBUG) {
@@ -497,7 +491,11 @@ export class PrometheusIncrementalStorage {
       // Exclude instant queries, hidden queries, and exemplar queries, as they are not currently applicable for incremental querying.
       // exemplars could work, but they're not step/interval-aligned so the current algorithm of merging frames from storage with the response won't work
       // Would simply backfilling these values work? Or do we need to store the time frames for each exemplar? We're going to address this in another PR as there's enough going on already with this.
-      if ((target?.range !== true && target?.format !== 'time_series') || target.hide || target.exemplar) {
+      const prometheusQueryIsInvalid =
+        (target?.range !== true && 'format' in target && target?.format !== 'time_series') ||
+        target.hide ||
+        ('exemplar' in target && target.exemplar);
+      if (prometheusQueryIsInvalid) {
         if (DEBUG) {
           console.log('target invalid for incremental querying', target);
         }
@@ -507,7 +505,7 @@ export class PrometheusIncrementalStorage {
       const previousResultForThisQuery = this.getStorageFieldsForQuery(storageIndex);
 
       if (previousResultForThisQuery) {
-        const timeValuesFromStorage = previousResultForThisQuery[PROMETHEUS_STORAGE_TIME_INDEX];
+        const timeValuesFromStorage = previousResultForThisQuery[STORAGE_TIME_INDEX];
 
         // Assume that the added fields are contiguous (they should already be back-filled by now), and every series always has the most recent samples
         if (timeValuesFromStorage) {
@@ -564,7 +562,7 @@ export class PrometheusIncrementalStorage {
       );
 
       const rawTimeRange = {
-        from: dateTime(neededDurations[0].start - PROMETHEUS_INCREMENTAL_QUERY_OVERLAP_DURATION_MS),
+        from: dateTime(neededDurations[0].start - INCREMENTAL_QUERY_OVERLAP_DURATION_MS),
         to: dateTime(neededDurations[0].end),
       };
 

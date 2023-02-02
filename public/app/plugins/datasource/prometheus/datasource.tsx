@@ -49,7 +49,7 @@ import PrometheusLanguageProvider from './language_provider';
 import { expandRecordingRules } from './language_utils';
 import { renderLegendFormat } from './legend';
 import PrometheusMetricFindQuery from './metric_find_query';
-import { PrometheusIncrementalStorage } from './middleware/PrometheusIncrementalStorage';
+import { IncrementalStorage } from './middleware/IncrementalStorage';
 import { getInitHints, getQueryHints } from './query_hints';
 import { QueryEditorMode } from './querybuilder/shared/types';
 import { getOriginalMetricName, transform, transformV2 } from './result_transformer';
@@ -106,7 +106,7 @@ export class PrometheusDatasource
   // When reading we should assume that everything that's been populated in this storage has the same durations, otherwise we would purge when receiving the response
   // @todo implement merging new series into old dataframe, and backfilling missing data?
   // @todo make this a class and provide some abstraction? It's kinda hard to deal with and easy to make mistakes rn
-  prometheusDataFrameStorage: PrometheusIncrementalStorage;
+  prometheusDataFrameStorage: IncrementalStorage;
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -141,7 +141,7 @@ export class PrometheusDatasource
     this.defaultEditor = instanceSettings.jsonData.defaultEditor;
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
-    this.prometheusDataFrameStorage = new PrometheusIncrementalStorage(this);
+    this.prometheusDataFrameStorage = new IncrementalStorage(this);
 
     // This needs to be here and cannot be static because of how annotations typing affects casting of data source
     // objects to DataSourceApi types.

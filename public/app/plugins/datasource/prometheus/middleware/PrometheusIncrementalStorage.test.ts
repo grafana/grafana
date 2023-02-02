@@ -18,7 +18,7 @@ import { PrometheusDatasource } from '../datasource';
 import { QueryEditorMode } from '../querybuilder/shared/types';
 import { PromOptions, PromQuery } from '../types';
 
-import { PrometheusIncrementalStorage } from './PrometheusIncrementalStorage';
+import { IncrementalStorage } from './IncrementalStorage';
 import {
   getMockTimeFrameArray,
   getMockValueFrameArray,
@@ -257,17 +257,17 @@ const mockRequest = (request?: Partial<DataQueryRequest<PromQuery>>): DataQueryR
 
 describe('PrometheusIncrementalStorage', function () {
   it('instantiates without error', () => {
-    const storage = new PrometheusIncrementalStorage(getDatasourceStub());
-    expect(storage).toBeInstanceOf(PrometheusIncrementalStorage);
+    const storage = new IncrementalStorage(getDatasourceStub());
+    expect(storage).toBeInstanceOf(IncrementalStorage);
   });
 
   it('Throws error', () => {
-    const storage = new PrometheusIncrementalStorage(getDatasourceStub());
+    const storage = new IncrementalStorage(getDatasourceStub());
     expect(() => storage.throwError(new Error('Hello world'))).toThrow('Hello world');
   });
 
   it('Thrown error wipes storage', () => {
-    const storage = new PrometheusIncrementalStorage(getDatasourceStub());
+    const storage = new IncrementalStorage(getDatasourceStub());
 
     storage.appendQueryResultToDataFrameStorage(mockRequest(), { data: [mockDataFrame()] });
     const storageLengthAfterInitialQuery = Object.values(storage.getStorage())[0]['__time__'].length;
@@ -277,7 +277,7 @@ describe('PrometheusIncrementalStorage', function () {
   });
 
   it('Will not alter existing data when there are multiple series with missing data', () => {
-    const storage = new PrometheusIncrementalStorage(getDatasourceStub());
+    const storage = new IncrementalStorage(getDatasourceStub());
     const intervalMs = 30000;
 
     const scenarios = [
@@ -350,7 +350,7 @@ describe('PrometheusIncrementalStorage', function () {
   });
 
   it('Will evict old dataframes, and use stored data when user shortens query window', () => {
-    const storage = new PrometheusIncrementalStorage(getDatasourceStub());
+    const storage = new IncrementalStorage(getDatasourceStub());
 
     // Initial request with all data for time range
     const firstRequest = IncrementalStorageDataFrameScenarios.histogram.evictionRequests.first;
@@ -399,7 +399,7 @@ describe('PrometheusIncrementalStorage', function () {
   });
 
   it('Avoids off by one error', () => {
-    const storage = new PrometheusIncrementalStorage(getDatasourceStub());
+    const storage = new IncrementalStorage(getDatasourceStub());
 
     const firstRequest = IncrementalStorageDataFrameScenarios.histogram.noEvictionRequests.first;
     const secondRequest = IncrementalStorageDataFrameScenarios.histogram.noEvictionRequests.second;
