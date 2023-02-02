@@ -42,8 +42,7 @@ func main() {
 	if err != nil {
 		log.Fatal(fmt.Errorf("could not get working directory: %s", err))
 	}
-	grootp := strings.Split(cwd, sep)
-	groot := filepath.Join(sep, filepath.Join(grootp[:len(grootp)-3]...))
+	groot := filepath.Dir(filepath.Dir(filepath.Dir(cwd)))
 	rt := cuectx.GrafanaThemaRuntime()
 
 	pluginKindGen := codejen.JennyListWithNamer(func(d *pfs.PluginDecl) string {
