@@ -122,13 +122,13 @@ seqs: [
 
 				#ExtensionsLink: {
 					// Target where the link will be rendered
-					target: string
+					target: string <-- contsraints based on id
 					// Type of extension
 					type: "link"
 					// Title that will be displayed for the rendered link
-					title: string
+					title: string <--  max lenght?
 					// Description for the rendered link
-					description: string
+					description: string <--  max lenght?
 					// Path relative to the extending plugin e.g. /incidents/declare
 					path: string
 					...
