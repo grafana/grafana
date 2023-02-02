@@ -249,6 +249,12 @@ type ExportQueryParams struct {
 	// required: false
 	// default: false
 	Download bool `json:"download"`
+
+	// Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.
+	// in: query
+	// required: false
+	// default: yaml
+	Format string `json:"format"`
 }
 
 // swagger:model
