@@ -287,7 +287,6 @@ func TestMarkConfigurationAsApplied(t *testing.T) {
 
 	t.Run("attempting to mark a non existent config as applied shouldn't fail", func(tt *testing.T) {
 		cmd := models.MarkConfigurationAsAppliedCmd{
-			ConfigID:          10,
 			OrgID:             10,
 			ConfigurationHash: "test",
 		}
@@ -315,7 +314,6 @@ func TestMarkConfigurationAsApplied(t *testing.T) {
 		require.NoError(tt, err)
 
 		cmd := models.MarkConfigurationAsAppliedCmd{
-			ConfigID:          query.Result.ID,
 			OrgID:             orgID,
 			ConfigurationHash: query.Result.ConfigurationHash,
 		}

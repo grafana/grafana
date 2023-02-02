@@ -226,7 +226,7 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, dbCfg *ngmodels.AlertCo
 
 	var outerErr error
 	am.Base.WithLock(func() {
-		if err := am.applyAndMarkConfig(ctx, dbCfg.ID, dbCfg.ConfigurationHash, cfg, nil); err != nil {
+		if err := am.applyAndMarkConfig(ctx, dbCfg.ConfigurationHash, cfg, nil); err != nil {
 			outerErr = fmt.Errorf("unable to apply configuration: %w", err)
 			return
 		}
@@ -292,7 +292,7 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 }
 
 // applyAndMarkConfig applies a configuration and marks it as applied if no errors occur.
-func (am *Alertmanager) applyAndMarkConfig(ctx context.Context, id int64, hash string, cfg *apimodels.PostableUserConfig, rawConfig []byte) error {
+func (am *Alertmanager) applyAndMarkConfig(ctx context.Context, hash string, cfg *apimodels.PostableUserConfig, rawConfig []byte) error {
 	configChanged, err := am.applyConfig(cfg, rawConfig)
 	if err != nil {
 		return err
@@ -300,7 +300,6 @@ func (am *Alertmanager) applyAndMarkConfig(ctx context.Context, id int64, hash s
 
 	if configChanged {
 		markConfigCmd := ngmodels.MarkConfigurationAsAppliedCmd{
-			ConfigID:          id,
 			OrgID:             am.orgID,
 			ConfigurationHash: hash,
 		}
