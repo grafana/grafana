@@ -317,6 +317,8 @@ func annotationsFromDashboardDTO(dto *dashboards.SaveDashboardDTO) map[string]st
 		"updatedAt": strconv.FormatInt(dto.Dashboard.Updated.UnixNano(), 10),
 		"createdBy": strconv.FormatInt(dto.Dashboard.CreatedBy, 10),
 		"createdAt": strconv.FormatInt(dto.Dashboard.Created.UnixNano(), 10),
+		"folderID":  strconv.FormatInt(dto.Dashboard.FolderID, 10),
+		"isFolder":  strconv.FormatBool(dto.Dashboard.IsFolder),
 	}
 
 	return annotations

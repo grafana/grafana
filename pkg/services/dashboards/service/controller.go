@@ -208,6 +208,20 @@ func parseAnnotations(dash *k8ssys.Base[dashboard.Dashboard], dto dashboards.Sav
 		}
 	}
 
+	if v, ok := a["folderId"]; ok {
+		folderId, err := strconv.ParseInt(v, 10, 64)
+		if err == nil {
+			dto.Dashboard.FolderID = folderId
+		}
+	}
+
+	if v, ok := a["isFolder"]; ok {
+		isFolder, err := strconv.ParseBool(v)
+		if err == nil {
+			dto.Dashboard.IsFolder = isFolder
+		}
+	}
+
 	return dto
 }
 
