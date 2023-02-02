@@ -125,7 +125,7 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 
 		// Inject ReqContext into http.Request.Context
 		*r = *r.WithContext(context.WithValue(ctx, reqContextKey{}, reqContext))
-		// store list of possible auth header in config
+		// store list of possible auth header in context
 		reqContext.Req = reqContext.Req.WithContext(WithAuthHTTPHeaders(reqContext.Req.Context(), h.Cfg))
 
 		traceID := tracing.TraceIDFromContext(mContext.Req.Context(), false)
