@@ -94,7 +94,6 @@ const FlameGraph = ({
     return new uFuzzy();
   });
 
-  // TODO: only run on first search of new data
   const uniqueLabels = useMemo(() => {
     return [...new Set<string>(data.fields.find((f) => f.name === 'label')?.values.toArray())];
   }, [data]);
