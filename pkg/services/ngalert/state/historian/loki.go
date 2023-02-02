@@ -4,14 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sort"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 )
 
 const (
@@ -21,49 +22,65 @@ const (
 	FolderUIDLabel = "folderUID"
 )
 
+const (
+	StateHistoryLabelKey   = "from"
+	StateHistoryLabelValue = "state-history"
+)
+
 type remoteLokiClient interface {
-	ping() error
-	push([]stream) error
+	ping(context.Context) error
+	push(context.Context, []stream) error
 }
 
 type RemoteLokiBackend struct {
-	client remoteLokiClient
-	log    log.Logger
+	client         remoteLokiClient
+	externalLabels map[string]string
+	log            log.Logger
 }
 
 func NewRemoteLokiBackend(cfg LokiConfig) *RemoteLokiBackend {
 	logger := log.New("ngalert.state.historian", "backend", "loki")
 	return &RemoteLokiBackend{
-		client: newLokiClient(cfg, logger),
-		log:    logger,
+		client:         newLokiClient(cfg, logger),
+		externalLabels: cfg.ExternalLabels,
+		log:            logger,
 	}
 }
 
-func (h *RemoteLokiBackend) TestConnection() error {
-	return h.client.ping()
+func (h *RemoteLokiBackend) TestConnection(ctx context.Context) error {
+	return h.client.ping(ctx)
 }
 
-func (h *RemoteLokiBackend) RecordStatesAsync(ctx context.Context, rule *models.AlertRule, states []state.StateTransition) <-chan error {
+func (h *RemoteLokiBackend) RecordStatesAsync(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
 	logger := h.log.FromContext(ctx)
-	streams := h.statesToStreams(rule, states, logger)
-	return h.recordStreamsAsync(ctx, streams, logger)
+	streams := statesToStreams(rule, states, h.externalLabels, logger)
+	errCh := make(chan error, 1)
+	go func() {
+		defer close(errCh)
+		if err := h.recordStreams(ctx, streams, logger); err != nil {
+			logger.Error("Failed to save alert state history batch", "error", err)
+			errCh <- fmt.Errorf("failed to save alert state history batch: %w", err)
+		}
+	}()
+	return errCh
 }
 
 func (h *RemoteLokiBackend) QueryStates(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {
 	return data.NewFrame("states"), nil
 }
 
-func (h *RemoteLokiBackend) statesToStreams(rule *models.AlertRule, states []state.StateTransition, logger log.Logger) []stream {
+func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger) []stream {
 	buckets := make(map[string][]row) // label repr -> entries
 	for _, state := range states {
 		if !shouldRecord(state) {
 			continue
 		}
 
-		labels := removePrivateLabels(state.State.Labels)
+		labels := mergeLabels(removePrivateLabels(state.State.Labels), externalLabels)
+		labels[StateHistoryLabelKey] = StateHistoryLabelValue
 		labels[OrgIDLabel] = fmt.Sprint(rule.OrgID)
 		labels[RuleUIDLabel] = fmt.Sprint(rule.UID)
-		labels[GroupLabel] = fmt.Sprint(rule.RuleGroup)
+		labels[GroupLabel] = fmt.Sprint(rule.Group)
 		labels[FolderUIDLabel] = fmt.Sprint(rule.NamespaceUID)
 		repr := labels.String()
 
@@ -72,7 +89,13 @@ func (h *RemoteLokiBackend) statesToStreams(rule *models.AlertRule, states []sta
 			Previous:      state.PreviousFormatted(),
 			Current:       state.Formatted(),
 			Values:        valuesAsDataBlob(state.State),
+			DashboardUID:  rule.DashboardUID,
+			PanelID:       rule.PanelID,
 		}
+		if state.State.State == eval.Error {
+			entry.Error = state.Error.Error()
+		}
+
 		jsn, err := json.Marshal(entry)
 		if err != nil {
 			logger.Error("Failed to construct history record for state, skipping", "error", err)
@@ -102,20 +125,8 @@ func (h *RemoteLokiBackend) statesToStreams(rule *models.AlertRule, states []sta
 	return result
 }
 
-func (h *RemoteLokiBackend) recordStreamsAsync(ctx context.Context, streams []stream, logger log.Logger) <-chan error {
-	errCh := make(chan error, 1)
-	go func() {
-		defer close(errCh)
-		if err := h.recordStreams(ctx, streams, logger); err != nil {
-			logger.Error("Failed to save alert state history batch", "error", err)
-			errCh <- fmt.Errorf("failed to save alert state history batch: %w", err)
-		}
-	}()
-	return errCh
-}
-
 func (h *RemoteLokiBackend) recordStreams(ctx context.Context, streams []stream, logger log.Logger) error {
-	if err := h.client.push(streams); err != nil {
+	if err := h.client.push(ctx, streams); err != nil {
 		return err
 	}
 	logger.Debug("Done saving alert state history batch")
@@ -126,28 +137,16 @@ type lokiEntry struct {
 	SchemaVersion int              `json:"schemaVersion"`
 	Previous      string           `json:"previous"`
 	Current       string           `json:"current"`
+	Error         string           `json:"error,omitempty"`
 	Values        *simplejson.Json `json:"values"`
+	DashboardUID  string           `json:"dashboardUID"`
+	PanelID       int64            `json:"panelID"`
 }
 
 func valuesAsDataBlob(state *state.State) *simplejson.Json {
-	jsonData := simplejson.New()
-
-	switch state.State {
-	case eval.Error:
-		if state.Error == nil {
-			jsonData.Set("error", nil)
-		} else {
-			jsonData.Set("error", state.Error.Error())
-		}
-	case eval.NoData:
-		jsonData.Set("noData", true)
-	default:
-		keys := make([]string, 0, len(state.Values))
-		for k := range state.Values {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-		jsonData.Set("values", simplejson.NewFromAny(state.Values))
+	if state.State == eval.Error || state.State == eval.NoData {
+		return simplejson.New()
 	}
-	return jsonData
+
+	return jsonifyValues(state.Values)
 }

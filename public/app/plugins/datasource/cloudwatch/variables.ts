@@ -12,6 +12,7 @@ import {
 import { ALL_ACCOUNTS_OPTION } from './components/Account';
 import { VariableQueryEditor } from './components/VariableQueryEditor/VariableQueryEditor';
 import { CloudWatchDatasource } from './datasource';
+import { DEFAULT_VARIABLE_QUERY } from './defaultQueries';
 import { migrateVariableQuery } from './migrations/variableQueryMigrations';
 import { ResourcesAPI } from './resources/ResourcesAPI';
 import { standardStatistics } from './standardStatistics';
@@ -62,10 +63,11 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
     }
   }
   async handleLogGroupsQuery({ region, logGroupPrefix }: VariableQuery) {
+    const interpolatedPrefix = this.resources.templateSrv.replace(logGroupPrefix);
     return this.resources
       .getLogGroups({
         region,
-        logGroupNamePrefix: logGroupPrefix,
+        logGroupNamePrefix: interpolatedPrefix,
         listAllLogGroups: true,
       })
       .then((logGroups) =>
@@ -157,6 +159,10 @@ export class CloudWatchVariableSupport extends CustomVariableSupport<CloudWatchD
 
       return metricFindOptions.length ? [this.allMetricFindValue, ...metricFindOptions] : [];
     });
+  }
+
+  getDefaultQuery(): Partial<VariableQuery> {
+    return DEFAULT_VARIABLE_QUERY;
   }
 }
 

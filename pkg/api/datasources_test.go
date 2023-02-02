@@ -8,7 +8,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/web/webtest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -16,14 +15,15 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/datasources/permissions"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/web/webtest"
 )
 
 const (
@@ -88,10 +88,10 @@ func TestAddDataSource_InvalidURL(t *testing.T) {
 		Cfg:                setting.NewCfg(),
 	}
 
-	sc.m.Post(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
+	sc.m.Post(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
 			Name:   "Test",
-			Url:    "invalid:url",
+			URL:    "invalid:url",
 			Access: "direct",
 			Type:   "test",
 		})
@@ -119,10 +119,10 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 
 	sc := setupScenarioContext(t, "/api/datasources")
 
-	sc.m.Post(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
+	sc.m.Post(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
 			Name:   name,
-			Url:    url,
+			URL:    url,
 			Access: "direct",
 			Type:   "test",
 		})
@@ -149,10 +149,10 @@ func TestAddDataSource_InvalidJSONData(t *testing.T) {
 	jsonData := simplejson.New()
 	jsonData.Set("httpHeaderName1", hs.Cfg.AuthProxyHeaderName)
 
-	sc.m.Post(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
+	sc.m.Post(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
 			Name:     "Test",
-			Url:      "localhost:5432",
+			URL:      "localhost:5432",
 			Access:   "direct",
 			Type:     "test",
 			JsonData: jsonData,
@@ -173,10 +173,10 @@ func TestUpdateDataSource_InvalidURL(t *testing.T) {
 	}
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
-	sc.m.Put(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
+	sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
 			Name:   "Test",
-			Url:    "invalid:url",
+			URL:    "invalid:url",
 			Access: "direct",
 			Type:   "test",
 		})
@@ -201,10 +201,10 @@ func TestUpdateDataSource_InvalidJSONData(t *testing.T) {
 	jsonData := simplejson.New()
 	jsonData.Set("httpHeaderName1", hs.Cfg.AuthProxyHeaderName)
 
-	sc.m.Put(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
+	sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
 			Name:     "Test",
-			Url:      "localhost:5432",
+			URL:      "localhost:5432",
 			Access:   "direct",
 			Type:     "test",
 			JsonData: jsonData,
@@ -233,10 +233,10 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 
 	sc := setupScenarioContext(t, "/api/datasources/1234")
 
-	sc.m.Put(sc.url, routing.Wrap(func(c *models.ReqContext) response.Response {
+	sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
 			Name:   name,
-			Url:    url,
+			URL:    url,
 			Access: "direct",
 			Type:   "test",
 		})

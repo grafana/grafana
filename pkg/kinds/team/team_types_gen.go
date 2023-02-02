@@ -24,7 +24,7 @@ const (
 // Permission defines model for Permission.
 type Permission int
 
-// Team defines model for team.
+// Team defines model for Team.
 type Team struct {
 	// AccessControl metadata associated with a given resource.
 	AccessControl map[string]bool `json:"accessControl,omitempty"`

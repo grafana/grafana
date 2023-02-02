@@ -6,10 +6,6 @@ import { DataFrame, FieldType } from '@grafana/data';
 
 import { InspectDataTab } from './InspectDataTab';
 
-// the mock below gets rid of this warning from recompose:
-// Warning: React.createFactory() is deprecated and will be removed in a future major release. Consider using JSX or use React.createElement() directly instead.
-jest.mock('@jaegertracing/jaeger-ui-components', () => ({}));
-
 const createProps = (propsOverride?: Partial<ComponentProps<typeof InspectDataTab>>) => {
   const defaultProps = {
     isLoading: false,
@@ -54,14 +50,14 @@ describe('InspectDataTab', () => {
     });
     it('should show available options', async () => {
       render(<InspectDataTab {...createProps()} />);
-      const dataOptions = screen.getByText(/Data options/i);
+      const dataOptions = screen.getByRole('button', { name: /Data options/i });
       await userEvent.click(dataOptions);
       expect(screen.getByText(/Show data frame/i)).toBeInTheDocument();
       expect(screen.getByText(/Download for Excel/i)).toBeInTheDocument();
     });
     it('should show available dataFrame options', async () => {
       render(<InspectDataTab {...createProps()} />);
-      const dataOptions = screen.getByText(/Data options/i);
+      const dataOptions = screen.getByRole('button', { name: /Data options/i });
       await userEvent.click(dataOptions);
       const dataFrameInput = screen.getByRole('combobox', { name: /Select dataframe/i });
       await userEvent.click(dataFrameInput);
