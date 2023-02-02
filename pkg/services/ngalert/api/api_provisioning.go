@@ -428,7 +428,7 @@ func determineProvenance(ctx *contextmodel.ReqContext) alerting_models.Provenanc
 }
 
 func exportResponse(c *contextmodel.ReqContext, body any) response.Response {
-	var format string = "yaml"
+	var format = "yaml"
 
 	acceptHeader := c.Req.Header.Get("Accept")
 	if strings.Contains(acceptHeader, "yaml") {
