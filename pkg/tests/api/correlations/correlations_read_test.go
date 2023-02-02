@@ -68,14 +68,14 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 	createDsCommand := &datasources.AddDataSourceCommand{
 		Name:  "with-correlations",
 		Type:  "loki",
-		OrgId: 1,
+		OrgID: 1,
 	}
 	ctx.createDs(createDsCommand)
 	dsWithCorrelations := createDsCommand.Result
 	correlation := ctx.createCorrelation(correlations.CreateCorrelationCommand{
-		SourceUID: dsWithCorrelations.Uid,
-		TargetUID: &dsWithCorrelations.Uid,
-		OrgId:     dsWithCorrelations.OrgId,
+		SourceUID: dsWithCorrelations.UID,
+		TargetUID: &dsWithCorrelations.UID,
+		OrgId:     dsWithCorrelations.OrgID,
 		Config: correlations.CorrelationConfig{
 			Type:   correlations.ConfigTypeQuery,
 			Field:  "foo",
@@ -86,7 +86,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 	createDsCommand = &datasources.AddDataSourceCommand{
 		Name:  "without-correlations",
 		Type:  "loki",
-		OrgId: 1,
+		OrgID: 1,
 	}
 	ctx.createDs(createDsCommand)
 	dsWithoutCorrelations := createDsCommand.Result
@@ -99,13 +99,13 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 		created, err := sess.InsertMulti(&[]correlations.Correlation{
 			{
 				UID:       "uid-1",
-				SourceUID: dsWithoutCorrelations.Uid,
+				SourceUID: dsWithoutCorrelations.UID,
 				TargetUID: &nonExistingDsUID,
 			},
 			{
 				UID:       "uid-2",
 				SourceUID: "THIS-DOES-NOT_EXIST",
-				TargetUID: &dsWithoutCorrelations.Uid,
+				TargetUID: &dsWithoutCorrelations.UID,
 			},
 		})
 		require.Equal(t, int64(2), created)
@@ -215,7 +215,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 
 		t.Run("If no correlation exists it should return 200", func(t *testing.T) {
 			res := ctx.Get(GetParams{
-				url:  fmt.Sprintf("/api/datasources/uid/%s/correlations", dsWithoutCorrelations.Uid),
+				url:  fmt.Sprintf("/api/datasources/uid/%s/correlations", dsWithoutCorrelations.UID),
 				user: adminUser,
 			})
 			require.Equal(t, http.StatusOK, res.StatusCode)
@@ -234,7 +234,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 
 		t.Run("Should correctly return correlations", func(t *testing.T) {
 			res := ctx.Get(GetParams{
-				url:  fmt.Sprintf("/api/datasources/uid/%s/correlations", dsWithCorrelations.Uid),
+				url:  fmt.Sprintf("/api/datasources/uid/%s/correlations", dsWithCorrelations.UID),
 				user: adminUser,
 			})
 			require.Equal(t, http.StatusOK, res.StatusCode)
@@ -304,7 +304,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 
 		t.Run("If no correlation exists it should return 404", func(t *testing.T) {
 			res := ctx.Get(GetParams{
-				url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", dsWithoutCorrelations.Uid, "some-correlation-uid"),
+				url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", dsWithoutCorrelations.UID, "some-correlation-uid"),
 				user: adminUser,
 			})
 			require.Equal(t, http.StatusNotFound, res.StatusCode)
@@ -323,7 +323,7 @@ func TestIntegrationReadCorrelation(t *testing.T) {
 
 		t.Run("Should correctly return correlation", func(t *testing.T) {
 			res := ctx.Get(GetParams{
-				url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", dsWithCorrelations.Uid, correlation.UID),
+				url:  fmt.Sprintf("/api/datasources/uid/%s/correlations/%s", dsWithCorrelations.UID, correlation.UID),
 				user: adminUser,
 			})
 			require.Equal(t, http.StatusOK, res.StatusCode)

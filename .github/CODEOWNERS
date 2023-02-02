@@ -438,7 +438,6 @@ lerna.json @grafana/frontend-ops
 /public/app/features/explore/TraceView/ @grafana/observability-traces-and-profiling
 
 /public/api-merged.json @grafana/backend-platform
-/public/api-spec.json @grafana/backend-platform
 /public/openapi3.json @grafana/backend-platform
 /public/app/angular/ @torkelo
 /public/app/app.ts @grafana/frontend-ops

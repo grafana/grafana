@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"sort"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
@@ -21,6 +20,11 @@ const (
 	RuleUIDLabel   = "ruleUID"
 	GroupLabel     = "group"
 	FolderUIDLabel = "folderUID"
+)
+
+const (
+	StateHistoryLabelKey   = "from"
+	StateHistoryLabelValue = "state-history"
 )
 
 type remoteLokiClient interface {
@@ -49,7 +53,7 @@ func (h *RemoteLokiBackend) TestConnection(ctx context.Context) error {
 
 func (h *RemoteLokiBackend) RecordStatesAsync(ctx context.Context, rule history_model.RuleMeta, states []state.StateTransition) <-chan error {
 	logger := h.log.FromContext(ctx)
-	streams := h.statesToStreams(rule, states, logger)
+	streams := statesToStreams(rule, states, h.externalLabels, logger)
 	errCh := make(chan error, 1)
 	go func() {
 		defer close(errCh)
@@ -65,14 +69,15 @@ func (h *RemoteLokiBackend) QueryStates(ctx context.Context, query models.Histor
 	return data.NewFrame("states"), nil
 }
 
-func (h *RemoteLokiBackend) statesToStreams(rule history_model.RuleMeta, states []state.StateTransition, logger log.Logger) []stream {
+func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger) []stream {
 	buckets := make(map[string][]row) // label repr -> entries
 	for _, state := range states {
 		if !shouldRecord(state) {
 			continue
 		}
 
-		labels := h.addExternalLabels(removePrivateLabels(state.State.Labels))
+		labels := mergeLabels(removePrivateLabels(state.State.Labels), externalLabels)
+		labels[StateHistoryLabelKey] = StateHistoryLabelValue
 		labels[OrgIDLabel] = fmt.Sprint(rule.OrgID)
 		labels[RuleUIDLabel] = fmt.Sprint(rule.UID)
 		labels[GroupLabel] = fmt.Sprint(rule.Group)
@@ -84,7 +89,13 @@ func (h *RemoteLokiBackend) statesToStreams(rule history_model.RuleMeta, states 
 			Previous:      state.PreviousFormatted(),
 			Current:       state.Formatted(),
 			Values:        valuesAsDataBlob(state.State),
+			DashboardUID:  rule.DashboardUID,
+			PanelID:       rule.PanelID,
 		}
+		if state.State.State == eval.Error {
+			entry.Error = state.Error.Error()
+		}
+
 		jsn, err := json.Marshal(entry)
 		if err != nil {
 			logger.Error("Failed to construct history record for state, skipping", "error", err)
@@ -122,39 +133,20 @@ func (h *RemoteLokiBackend) recordStreams(ctx context.Context, streams []stream,
 	return nil
 }
 
-func (h *RemoteLokiBackend) addExternalLabels(labels data.Labels) data.Labels {
-	for k, v := range h.externalLabels {
-		labels[k] = v
-	}
-	return labels
-}
-
 type lokiEntry struct {
 	SchemaVersion int              `json:"schemaVersion"`
 	Previous      string           `json:"previous"`
 	Current       string           `json:"current"`
+	Error         string           `json:"error,omitempty"`
 	Values        *simplejson.Json `json:"values"`
+	DashboardUID  string           `json:"dashboardUID"`
+	PanelID       int64            `json:"panelID"`
 }
 
 func valuesAsDataBlob(state *state.State) *simplejson.Json {
-	jsonData := simplejson.New()
-
-	switch state.State {
-	case eval.Error:
-		if state.Error == nil {
-			jsonData.Set("error", nil)
-		} else {
-			jsonData.Set("error", state.Error.Error())
-		}
-	case eval.NoData:
-		jsonData.Set("noData", true)
-	default:
-		keys := make([]string, 0, len(state.Values))
-		for k := range state.Values {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-		jsonData.Set("values", simplejson.NewFromAny(state.Values))
+	if state.State == eval.Error || state.State == eval.NoData {
+		return simplejson.New()
 	}
-	return jsonData
+
+	return jsonifyValues(state.Values)
 }
