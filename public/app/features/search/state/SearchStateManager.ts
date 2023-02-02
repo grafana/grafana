@@ -115,6 +115,8 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   onSortChange = (sort: string | undefined) => {
     if (sort) {
       localStorage.setItem(SEARCH_SELECTED_SORT, sort);
+    } else {
+      localStorage.removeItem(SEARCH_SELECTED_SORT);
     }
 
     if (this.state.layout === SearchLayout.Folders) {
