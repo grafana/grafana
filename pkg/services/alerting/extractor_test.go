@@ -207,11 +207,11 @@ func TestAlertRuleExtraction(t *testing.T) {
 		sqlStore := sqlStore{db: sqlstore.InitTestDB(t)}
 
 		firstNotification := models.CreateAlertNotificationCommand{Uid: "notifier1", OrgId: 1, Name: "1"}
-		err = sqlStore.CreateAlertNotificationCommand(context.Background(), &firstNotification)
+		_, err = sqlStore.CreateAlertNotificationCommand(context.Background(), &firstNotification)
 		require.Nil(t, err)
 
 		secondNotification := models.CreateAlertNotificationCommand{Uid: "notifier2", OrgId: 1, Name: "2"}
-		err = sqlStore.CreateAlertNotificationCommand(context.Background(), &secondNotification)
+		_, err = sqlStore.CreateAlertNotificationCommand(context.Background(), &secondNotification)
 		require.Nil(t, err)
 
 		json, err := os.ReadFile("./testdata/influxdb-alert.json")
