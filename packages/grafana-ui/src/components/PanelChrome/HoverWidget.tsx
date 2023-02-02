@@ -37,7 +37,11 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32 }: 
   }
 
   return (
-    <div className={classnames(styles.container, { 'show-on-hover': !menuOpen })} style={{ top: `${offset}px` }}>
+    <div
+      className={classnames(styles.container, { 'show-on-hover': !menuOpen })}
+      style={{ top: `${offset}px` }}
+      data-testid="hover-header-container"
+    >
       <div
         className={classnames(styles.square, styles.draggable, dragClass)}
         onPointerDown={onPointerDown}
@@ -67,6 +71,7 @@ function getStyles(theme: GrafanaTheme2) {
       opacity: '0',
     }),
     container: css({
+      label: 'hover-container-widget',
       transition: `all .1s linear`,
       display: 'flex',
       position: 'absolute',
