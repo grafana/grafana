@@ -133,12 +133,8 @@ func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
 	// Create a new slice to store the merged elements.
 	frame := data.NewFrame("states")
 
-	// Since we are guaranteed to have a single rule, we can return it as a single series.
-	// This might change in a later point in time.
-	lbls := data.Labels(map[string]string{
-		"from":    "state-history",
-		"ruleUID": ruleUID,
-	})
+	// We merge all series into a single linear history.
+	lbls := data.Labels(map[string]string{})
 
 	// We represent state history as five vectors:
 	//   1. `time` - when the transition happened
