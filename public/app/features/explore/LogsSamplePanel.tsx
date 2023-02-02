@@ -58,7 +58,7 @@ export function LogsSamplePanel(props: Props) {
     }
 
     const onSplitOpen = () => {
-      splitOpen({ query: logSampleQueries[0], datasourceUid: datasourceInstance.uid });
+      splitOpen({ queries: logSampleQueries, datasourceUid: datasourceInstance.uid });
       reportInteraction('grafana_explore_logs_sample_split_button_clicked', {
         datasourceType: datasourceInstance?.type ?? 'unknown',
         queriesCount: logSampleQueries.length,

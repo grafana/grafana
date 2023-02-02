@@ -7,10 +7,12 @@ import { config } from '@grafana/runtime';
 import { Button, ClipboardButton, ConfirmModal, HorizontalGroup, LinkButton, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
+import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { AccessControlAction, useDispatch } from 'app/types';
 import { CombinedRule, RulesSource } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
+import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { useIsRuleEditable } from '../../hooks/useIsRuleEditable';
 import { useStateHistoryModal } from '../../hooks/useStateHistoryModal';
 import { deleteRuleAction } from '../../state/actions';
@@ -84,6 +86,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
   const rulesPermissions = getRulesPermissions(rulesSourceName);
   const hasCreateRulePermission = contextSrv.hasPermission(rulesPermissions.create);
   const { isEditable, isRemovable } = useIsRuleEditable(rulesSourceName, rulerRule);
+  const canSilence = useCanSilence(rule);
 
   const returnTo = location.pathname + location.search;
   // explore does not support grafana rule queries atm
@@ -149,7 +152,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
     }
   }
 
-  if (alertmanagerSourceName && contextSrv.hasAccess(AccessControlAction.AlertingInstanceCreate, contextSrv.isEditor)) {
+  if (canSilence && alertmanagerSourceName) {
     buttons.push(
       <LinkButton
         size="sm"
@@ -219,7 +222,7 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
 
     if (hasCreateRulePermission && !isFederated) {
       rightButtons.push(
-        <CloneRuleButton key="clone" text="Clone" ruleIdentifier={identifier} isProvisioned={isProvisioned} />
+        <CloneRuleButton key="clone" text="Copy" ruleIdentifier={identifier} isProvisioned={isProvisioned} />
       );
     }
 
@@ -262,6 +265,31 @@ export const RuleDetailsActionButtons: FC<Props> = ({ rule, rulesSource, isViewM
   }
   return null;
 };
+
+/**
+ * We don't want to show the silence button if either
+ * 1. the user has no permissions to create silences
+ * 2. the admin has configured to only send instances to external AMs
+ */
+function useCanSilence(rule: CombinedRule) {
+  const isGrafanaManagedRule = isGrafanaRulerRule(rule.rulerRule);
+
+  const { useGetAlertmanagerChoiceStatusQuery } = alertmanagerApi;
+  const { currentData: amConfigStatus, isLoading } = useGetAlertmanagerChoiceStatusQuery(undefined, {
+    skip: !isGrafanaManagedRule,
+  });
+
+  if (!isGrafanaManagedRule || isLoading) {
+    return false;
+  }
+
+  const hasPermissions = contextSrv.hasAccess(AccessControlAction.AlertingInstanceCreate, contextSrv.isEditor);
+
+  const interactsOnlyWithExternalAMs = amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.External;
+  const interactsWithAll = amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.All;
+
+  return hasPermissions && (!interactsOnlyWithExternalAMs || interactsWithAll);
+}
 
 export const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css`

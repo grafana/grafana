@@ -6,12 +6,12 @@ title: PublicDashboard kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
-# PublicDashboard kind
+## PublicDashboard
 
-## Maturity: merged
-## Version: 0.0
+#### Maturity: merged
+#### Version: 0.0
 
-## Properties
+Public dashboard configuration
 
 | Property               | Type    | Required | Description                                                     |
 |------------------------|---------|----------|-----------------------------------------------------------------|
