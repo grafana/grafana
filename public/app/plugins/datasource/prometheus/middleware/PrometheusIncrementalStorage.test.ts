@@ -297,6 +297,11 @@ describe('PrometheusIncrementalStorage', function () {
       firstRequest.originalRange
     );
 
+    // Since we are missing values in these series, the preprocessing should add a few null values in the middle
+    expect(firstDataFrames.data[0].fields[0].values.toArray().length).toBeGreaterThan(
+      firstRequest.dataFrames[0].fields[0].values.length
+    );
+
     const firstMergedLength = firstDataFrames.data[0].fields[0].values.length;
 
     const secondDataFrames = storage.appendQueryResultToDataFrameStorage(
@@ -310,14 +315,14 @@ describe('PrometheusIncrementalStorage', function () {
     expect(firstMergedLength).toEqual(secondMergedLength);
     // expect(secondDataFrames.data[0].fields[1].values.toArray()).toContain(firstDataFrames.data[0].fields[1].values.toArray())
     // I expect the original response to contain everything that's returned by the second merged response, expect for first and last values
-    const valuesFromFirstResponseWithoutFirstValue = firstDataFrames.data[0].fields[1].values.toArray();
-    valuesFromFirstResponseWithoutFirstValue.shift();
-    valuesFromFirstResponseWithoutFirstValue.shift();
-    valuesFromFirstResponseWithoutFirstValue.shift();
-    const valuesMergedAfterSecondResponse = secondDataFrames.data[0].fields[1].values.toArray();
+    const valuesFromFirstResponseWithoutFirstValue: number[] = firstDataFrames.data[0].fields[1].values.toArray();
+    const valuesMergedAfterSecondResponse: number[] = secondDataFrames.data[0].fields[1].values.toArray();
 
-    valuesFromFirstResponseWithoutFirstValue.forEach((value) => {
-      expect(valuesMergedAfterSecondResponse).toContain(value);
+    valuesFromFirstResponseWithoutFirstValue.forEach((value, index) => {
+      // Skip the first 3 values
+      if (index > 2) {
+        expect(valuesMergedAfterSecondResponse).toContain(value);
+      }
     });
 
     const timeDeltasFirstRequest: number[] = firstDataFrames.data[0].fields[0].values

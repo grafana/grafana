@@ -94,7 +94,8 @@ export class PrometheusIncrementalStorage {
         i,
         originalRange,
         intervalInSeconds,
-        existingValueFrames
+        existingValueFrames,
+        true
       );
 
       if (startIndex !== null && startIndex >= 0) {
@@ -110,7 +111,8 @@ export class PrometheusIncrementalStorage {
         i,
         originalRange,
         intervalInSeconds,
-        existingValueFrames
+        existingValueFrames,
+        false // don't evict from end, only start
       );
 
       if (endIndex !== null && endIndex >= 0) {
@@ -148,15 +150,17 @@ export class PrometheusIncrementalStorage {
     i: number,
     originalRange: { end: number; start: number },
     intervalInSeconds: number,
-    valuesFromStorage: number[]
+    valuesFromStorage: number[],
+    evict: boolean
   ): null | number {
     const doesResponseNotContainStoredTimeValue = timeValuesFromResponse.indexOf(timeValuesFromStorage[i]) === -1;
 
     // Remove values from before new start
     // Note this acts as the only eviction strategy so far, we only store frames that exist after the start of the current query, minus the interval time
-    const isFrameOlderThenQueryStart = timeValuesFromStorage[i] <= originalRange.start - intervalInSeconds * 1000;
+    const isFrameOlderThenQueryStart =
+      timeValuesFromStorage[i] <= originalRange.start - intervalInSeconds * 1000 && evict;
 
-    if (isFrameOlderThenQueryStart && DEBUG) {
+    if (isFrameOlderThenQueryStart && DEBUG && evict) {
       console.log(
         'Frame is older then query, evicting',
         timeValuesFromStorage[i] - (originalRange.start - intervalInSeconds * 1000),
@@ -244,11 +248,16 @@ export class PrometheusIncrementalStorage {
    * @param data
    * @private
    */
-  private preProcessDataFrames(data: DataFrame[]) {
+  private preProcessDataFrames(data: DataFrame[], intervalSeconds: number) {
     if (!data?.length) {
       return;
     }
-    let longestLength = data[0]?.length ?? 0;
+    const times = data[0].fields[0].values.toArray();
+    const firstTime = times[0];
+    const lastTime = times[times.length - 1];
+    const maxLength = Math.ceil(lastTime - firstTime / (intervalSeconds * 1000));
+
+    let longestLength = maxLength;
 
     // Get the times of the first series
     const firstFrameTimeValues = data[0].fields[0].values?.toArray();
@@ -271,10 +280,6 @@ export class PrometheusIncrementalStorage {
 
       if (max < lastFrameValue) {
         max = lastFrameValue;
-      }
-
-      if (data[i].length > longestLength) {
-        longestLength = data[i].length;
       }
     }
 
@@ -304,16 +309,11 @@ export class PrometheusIncrementalStorage {
     dataFrames: DataQueryResponse,
     originalRange?: { end: number; start: number }
   ): DataQueryResponse => {
-    // console.log('appendQueryResultToDataFrameStorage');
-    // console.log('request', JSON.stringify(request));
-    // console.log('dataFrames', JSON.stringify(dataFrames));
-    // console.log('originalRange', JSON.stringify(originalRange));
-    // console.log('TimSrv', JSON.stringify(this.timeSrv.time));
-
     const data: DataFrame[] = dataFrames.data;
 
+    const intervalSeconds = rangeUtil.intervalToSeconds(request.interval);
     // Frames aren't always the same length, since this storage assumes a single time array for all values, that means we need to back-fill missing values
-    this.preProcessDataFrames(data);
+    this.preProcessDataFrames(data, intervalSeconds);
 
     // Iterate through all of the queries
     request.targets.forEach((target) => {
@@ -396,9 +396,6 @@ export class PrometheusIncrementalStorage {
               timeValuesFromStorage &&
               timeValuesFromResponse.length > 0
             ) {
-              const intervalSeconds = rangeUtil.intervalToSeconds(request.interval);
-
-              // Filter out values in storage from before query range
               const dedupedFrames = PrometheusIncrementalStorage.removeFramesFromStorageThatExistInRequest(
                 timeValuesFromStorage,
                 timeValuesFromResponse,
@@ -416,8 +413,11 @@ export class PrometheusIncrementalStorage {
 
               // If we set the time values here we'll screw up the rest of the loop, we should be checking to see if each series has the same time steps, or we need to clear the cache
               timeValuesStorage = allTimeValuesMerged;
+              if (timeValuesStorage.length > 0 && timeValuesStorage.length !== allTimeValuesMerged.length) {
+                console.warn('ONE TIME IS DIFF LENGTH?');
+              }
 
-              this.setStorageTimeFields(responseQueryExpressionAndStepString, allTimeValuesMerged);
+              // this.setStorageTimeFields(responseQueryExpressionAndStepString, allTimeValuesMerged);
               this.setStorageFieldsValues(
                 responseQueryExpressionAndStepString,
                 seriesLabelsIndexString,
