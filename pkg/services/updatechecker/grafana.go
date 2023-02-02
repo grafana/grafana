@@ -69,31 +69,30 @@ func (s *GrafanaService) checkForUpdates(ctx context.Context) {
 	ctx, span := s.tracer.Start(ctx, "updatechecker.GrafanaService.checkForUpdates")
 	defer span.End()
 
-	traceID := tracing.TraceIDFromContext(ctx, false)
-	traceIDLogOpts := []interface{}{"traceID", traceID}
+	ctxLogger := s.log.FromContext(ctx)
 	defer func() {
 		if err != nil {
 			span.RecordError(err)
-			s.log.Debug("Update check failed", traceIDLogOpts...)
+			ctxLogger.Debug("Update check failed")
 		} else {
-			s.log.Debug("Update check succeeded", traceIDLogOpts...)
+			ctxLogger.Debug("Update check succeeded")
 		}
 	}()
 
-	s.log.Debug("Checking for updates", traceIDLogOpts...)
+	ctxLogger.Debug("Checking for updates")
 	resp, err := s.httpClient.Get(ctx, "https://raw.githubusercontent.com/grafana/grafana/main/latest.json")
 	if err != nil {
-		s.log.Debug("Failed to get latest.json repo from github.com", "error", err)
+		ctxLogger.Debug("Failed to get latest.json repo from github.com", "error", err)
 		return
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			s.log.Warn("Failed to close response body", "err", err)
+			ctxLogger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		s.log.Debug("Update check failed, reading response from github.com", "error", err)
+		ctxLogger.Debug("Update check failed, reading response from github.com", "error", err)
 		return
 	}
 
@@ -104,7 +103,7 @@ func (s *GrafanaService) checkForUpdates(ctx context.Context) {
 	var latest latestJSON
 	err = json.Unmarshal(body, &latest)
 	if err != nil {
-		s.log.Debug("Failed to unmarshal latest.json", "error", err)
+		ctxLogger.Debug("Failed to unmarshal latest.json", "error", err)
 		return
 	}
 

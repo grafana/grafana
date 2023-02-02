@@ -93,18 +93,17 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) {
 	ctx, span := s.tracer.Start(ctx, "updatechecker.PluginsService.checkForUpdates")
 	defer span.End()
 
-	traceID := tracing.TraceIDFromContext(ctx, false)
-	traceIDLogOpts := []interface{}{"traceID", traceID}
+	ctxLogger := s.log.FromContext(ctx)
 	defer func() {
 		if err != nil {
 			span.RecordError(err)
-			s.log.Debug("Update check failed", traceIDLogOpts...)
+			ctxLogger.Debug("Update check failed")
 		} else {
-			s.log.Debug("Update check succeeded", traceIDLogOpts...)
+			ctxLogger.Debug("Update check succeeded")
 		}
 	}()
 
-	s.log.Debug("Checking for updates", traceIDLogOpts...)
+	ctxLogger.Debug("Checking for updates")
 	localPlugins := s.pluginsEligibleForVersionCheck(ctx)
 	requestURL := "https://grafana.com/api/plugins/versioncheck?" + url.Values{
 		"slugIn":         []string{s.pluginIDsCSV(localPlugins)},
@@ -112,19 +111,19 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) {
 	}.Encode()
 	resp, err := s.httpClient.Get(ctx, requestURL)
 	if err != nil {
-		s.log.Debug("Failed to get plugins repo from grafana.com", "error", err.Error())
+		ctxLogger.Debug("Failed to get plugins repo from grafana.com", "error", err.Error())
 		return
 	}
 	defer func() {
 		err = resp.Body.Close()
 		if err != nil {
-			s.log.Warn("Failed to close response body", "err", err)
+			ctxLogger.Warn("Failed to close response body", "err", err)
 		}
 	}()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		s.log.Debug("Update check failed, reading response from grafana.com", "error", err.Error())
+		ctxLogger.Debug("Update check failed, reading response from grafana.com", "error", err.Error())
 		return
 	}
 
@@ -135,7 +134,7 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) {
 	var gcomPlugins []gcomPlugin
 	err = json.Unmarshal(body, &gcomPlugins)
 	if err != nil {
-		s.log.Debug("Failed to unmarshal plugin repo, reading response from grafana.com", "error", err.Error())
+		ctxLogger.Debug("Failed to unmarshal plugin repo, reading response from grafana.com", "error", err.Error())
 		return
 	}
 
