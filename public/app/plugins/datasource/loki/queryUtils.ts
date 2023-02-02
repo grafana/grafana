@@ -322,7 +322,7 @@ export function requestSupportsPartitioning(queries: LokiQuery[]) {
   return true;
 }
 
-export function mergeResults(currentResult: DataQueryResponse | null, newResult: DataQueryResponse) {
+export function mergeResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse) {
   if (!currentResult) {
     return newResult;
   }

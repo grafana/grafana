@@ -77,7 +77,7 @@ import {
   isValidQuery,
   partitionTimeRange,
   requestSupportsPartitioning,
-  mergeResults,
+  mergeResponses,
 } from './queryUtils';
 import { sortDataFrameByTime } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
@@ -304,30 +304,33 @@ export class LokiDatasource
     partition.reverse(); // Most recent to oldest data
 
     const response = new Observable<DataQueryResponse>((subscriber) => {
-      let accumulatedResult: DataQueryResponse | null;
-      let requestN = 1;
-      const totalRequests = partition.length;
+      let mergedResponse: DataQueryResponse | null;
+      let pendingQueries = partition.length;
       for (const range of partition) {
+        const requestId = `${request.requestId}_${partition.indexOf(range)}`;
         super
-          .query({ ...request, range, requestId: `${request.requestId}${range.from}` })
+          .query({ ...request, range, requestId })
           .pipe(
             // in case of an empty query, this is somehow run twice. `share()` is no workaround here as the observable is generated from `of()`.
             map((response) => {
-              const result = transformBackendResult(
+              const partialResponse = transformBackendResult(
                 response,
                 request.targets,
                 this.instanceSettings.jsonData.derivedFields ?? []
               );
 
-              accumulatedResult = mergeResults(accumulatedResult, result);
-              accumulatedResult.state = requestN < totalRequests ? LoadingState.Loading : LoadingState.Done;
+              mergedResponse = mergeResponses(mergedResponse, partialResponse);
 
-              requestN += 1;
-
-              return accumulatedResult;
+              return mergedResponse;
             })
           )
-          .subscribe((result) => subscriber.next(result));
+          .subscribe((response) => {
+            pendingQueries -= 1;
+
+            response.state = pendingQueries > 0 ? LoadingState.Loading : LoadingState.Done;
+
+            subscriber.next(response);
+          });
       }
     });
 
