@@ -33,9 +33,6 @@ export const defaultMetricStat: Partial<MetricStat> = {
 
 export type Dimensions = Record<string, (string | Array<string>)>;
 
-/**
- * #CloudWatchMetricsQuery | #CloudWatchLogsQuery
- */
 export interface CloudWatchMetricsQuery extends MetricStat {
   alias?: string;
   /**
@@ -54,11 +51,7 @@ export interface CloudWatchMetricsQuery extends MetricStat {
   sqlExpression?: string;
 }
 
-export enum CloudWatchQueryMode {
-  Annotations = 'Annotations',
-  Logs = 'Logs',
-  Metrics = 'Metrics',
-}
+export type CloudWatchQueryMode = ('Metrics' | 'Logs' | 'Annotations');
 
 export enum MetricQueryType {
   Query = 1,
@@ -116,6 +109,9 @@ export interface QueryEditorGroupByExpression {
 }
 
 export interface QueryEditorOperatorExpression {
+  /**
+   * TODO QueryEditorOperator<QueryEditorOperatorValueType>, extend in veneer
+   */
   operator: {
     name?: string;
     value?: (QueryEditorOperatorType | Array<QueryEditorOperatorType>);
@@ -123,6 +119,8 @@ export interface QueryEditorOperatorExpression {
   property: QueryEditorProperty;
   type: QueryEditorExpressionType.Operator;
 }
+
+export type QueryEditorOperatorValueType = (QueryEditorOperatorType | Array<QueryEditorOperatorType>);
 
 export type QueryEditorOperatorType = (string | boolean | number);
 
@@ -137,7 +135,13 @@ export enum QueryEditorPropertyType {
 }
 
 export interface QueryEditorArrayExpression {
+  /**
+   * TODO should be QueryEditorExpression[] | QueryEditorArrayExpression[], extend in veneer
+   */
   expressions: unknown;
+  /**
+   * TODO this doesn't work
+   */
   type: QueryEditorExpressionType;
 }
 

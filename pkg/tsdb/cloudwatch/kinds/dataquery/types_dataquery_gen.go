@@ -287,7 +287,7 @@ type CloudWatchLogsQuery struct {
 // CloudWatchLogsQueryQueryMode defines model for CloudWatchLogsQuery.QueryMode.
 type CloudWatchLogsQueryQueryMode string
 
-// #CloudWatchMetricsQuery | #CloudWatchLogsQuery
+// CloudWatchMetricsQuery defines model for CloudWatchMetricsQuery.
 type CloudWatchMetricsQuery struct {
 	AccountId  *string                `json:"accountId,omitempty"`
 	Alias      *string                `json:"alias,omitempty"`
@@ -310,8 +310,11 @@ type CloudWatchMetricsQuery struct {
 	Sql              *struct {
 		From    *interface{} `json:"from,omitempty"`
 		GroupBy *struct {
-			Expressions interface{}                          `json:"expressions"`
-			Type        CloudWatchMetricsQuerySqlGroupByType `json:"type"`
+			// TODO should be QueryEditorExpression[] | QueryEditorArrayExpression[], extend in veneer
+			Expressions interface{} `json:"expressions"`
+
+			// TODO this doesn't work
+			Type CloudWatchMetricsQuerySqlGroupByType `json:"type"`
 		} `json:"groupBy,omitempty"`
 		Limit   *int64 `json:"limit,omitempty"`
 		OrderBy *struct {
@@ -332,8 +335,11 @@ type CloudWatchMetricsQuery struct {
 			Type CloudWatchMetricsQuerySqlSelectType `json:"type"`
 		} `json:"select,omitempty"`
 		Where *struct {
-			Expressions interface{}                        `json:"expressions"`
-			Type        CloudWatchMetricsQuerySqlWhereType `json:"type"`
+			// TODO should be QueryEditorExpression[] | QueryEditorArrayExpression[], extend in veneer
+			Expressions interface{} `json:"expressions"`
+
+			// TODO this doesn't work
+			Type CloudWatchMetricsQuerySqlWhereType `json:"type"`
 		} `json:"where,omitempty"`
 	} `json:"sql,omitempty"`
 	SqlExpression *string `json:"sqlExpression,omitempty"`
@@ -352,7 +358,7 @@ type CloudWatchMetricsQueryMetricQueryType int
 // CloudWatchMetricsQueryQueryMode defines model for CloudWatchMetricsQuery.QueryMode.
 type CloudWatchMetricsQueryQueryMode string
 
-// CloudWatchMetricsQuerySqlGroupByType defines model for CloudWatchMetricsQuery.Sql.GroupBy.Type.
+// TODO this doesn't work
 type CloudWatchMetricsQuerySqlGroupByType string
 
 // CloudWatchMetricsQuerySqlOrderByParametersType defines model for CloudWatchMetricsQuery.Sql.OrderBy.Parameters.Type.
@@ -367,7 +373,7 @@ type CloudWatchMetricsQuerySqlSelectParametersType string
 // CloudWatchMetricsQuerySqlSelectType defines model for CloudWatchMetricsQuery.Sql.Select.Type.
 type CloudWatchMetricsQuerySqlSelectType string
 
-// CloudWatchMetricsQuerySqlWhereType defines model for CloudWatchMetricsQuery.Sql.Where.Type.
+// TODO this doesn't work
 type CloudWatchMetricsQuerySqlWhereType string
 
 // CloudWatchQueryMode defines model for CloudWatchQueryMode.
@@ -404,11 +410,14 @@ type MetricStat struct {
 
 // QueryEditorArrayExpression defines model for QueryEditorArrayExpression.
 type QueryEditorArrayExpression struct {
-	Expressions interface{}                    `json:"expressions"`
-	Type        QueryEditorArrayExpressionType `json:"type"`
+	// TODO should be QueryEditorExpression[] | QueryEditorArrayExpression[], extend in veneer
+	Expressions interface{} `json:"expressions"`
+
+	// TODO this doesn't work
+	Type QueryEditorArrayExpressionType `json:"type"`
 }
 
-// QueryEditorArrayExpressionType defines model for QueryEditorArrayExpression.Type.
+// TODO this doesn't work
 type QueryEditorArrayExpressionType string
 
 // QueryEditorExpressionType defines model for QueryEditorExpressionType.
@@ -454,7 +463,7 @@ type QueryEditorGroupByExpressionPropertyType string
 // QueryEditorGroupByExpressionType defines model for QueryEditorGroupByExpression.Type.
 type QueryEditorGroupByExpressionType string
 
-// QueryEditorOperator defines model for QueryEditorOperator.
+// TODO <T extends QueryEditorOperatorValueType>, extend in veneer
 type QueryEditorOperator struct {
 	Name  *string      `json:"name,omitempty"`
 	Value *interface{} `json:"value,omitempty"`
@@ -462,6 +471,7 @@ type QueryEditorOperator struct {
 
 // QueryEditorOperatorExpression defines model for QueryEditorOperatorExpression.
 type QueryEditorOperatorExpression struct {
+	// TODO QueryEditorOperator<QueryEditorOperatorValueType>, extend in veneer
 	Operator struct {
 		Name  *string      `json:"name,omitempty"`
 		Value *interface{} `json:"value,omitempty"`
@@ -481,6 +491,9 @@ type QueryEditorOperatorExpressionType string
 
 // QueryEditorOperatorType defines model for QueryEditorOperatorType.
 type QueryEditorOperatorType interface{}
+
+// QueryEditorOperatorValueType defines model for QueryEditorOperatorValueType.
+type QueryEditorOperatorValueType interface{}
 
 // QueryEditorProperty defines model for QueryEditorProperty.
 type QueryEditorProperty struct {
@@ -510,8 +523,11 @@ type QueryEditorPropertyExpressionType string
 type SQLExpression struct {
 	From    *interface{} `json:"from,omitempty"`
 	GroupBy *struct {
-		Expressions interface{}              `json:"expressions"`
-		Type        SQLExpressionGroupByType `json:"type"`
+		// TODO should be QueryEditorExpression[] | QueryEditorArrayExpression[], extend in veneer
+		Expressions interface{} `json:"expressions"`
+
+		// TODO this doesn't work
+		Type SQLExpressionGroupByType `json:"type"`
 	} `json:"groupBy,omitempty"`
 	Limit   *int64 `json:"limit,omitempty"`
 	OrderBy *struct {
@@ -532,12 +548,15 @@ type SQLExpression struct {
 		Type SQLExpressionSelectType `json:"type"`
 	} `json:"select,omitempty"`
 	Where *struct {
-		Expressions interface{}            `json:"expressions"`
-		Type        SQLExpressionWhereType `json:"type"`
+		// TODO should be QueryEditorExpression[] | QueryEditorArrayExpression[], extend in veneer
+		Expressions interface{} `json:"expressions"`
+
+		// TODO this doesn't work
+		Type SQLExpressionWhereType `json:"type"`
 	} `json:"where,omitempty"`
 }
 
-// SQLExpressionGroupByType defines model for SQLExpression.GroupBy.Type.
+// TODO this doesn't work
 type SQLExpressionGroupByType string
 
 // SQLExpressionOrderByParametersType defines model for SQLExpression.OrderBy.Parameters.Type.
@@ -552,5 +571,5 @@ type SQLExpressionSelectParametersType string
 // SQLExpressionSelectType defines model for SQLExpression.Select.Type.
 type SQLExpressionSelectType string
 
-// SQLExpressionWhereType defines model for SQLExpression.Where.Type.
+// TODO this doesn't work
 type SQLExpressionWhereType string
