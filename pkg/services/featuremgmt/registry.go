@@ -269,7 +269,7 @@ var (
 		},
 		{
 			Name:        "topnav",
-			Description: "New top nav and page layouts",
+			Description: "Displays new top nav and page layouts",
 			State:       FeatureStateBeta,
 		},
 		{
