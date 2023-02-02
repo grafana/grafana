@@ -288,8 +288,8 @@ func annotationsFromDashboardDTO(dto *dashboards.SaveDashboardDTO) map[string]st
 
 func labelsFromDashboardDTO(dto *dashboards.SaveDashboardDTO) map[string]string {
 	labels := map[string]string{
-		// "slug":  dto.Dashboard.Slug,
-		// "title": dto.Dashboard.Title,
+		"slug":  dto.Dashboard.Slug,
+		"title": dto.Dashboard.Title,
 	}
 	return labels
 }
