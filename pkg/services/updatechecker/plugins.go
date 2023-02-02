@@ -19,6 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+var pluginsUpdateCheckerMetrics = newPrometheusMetrics("grafana_plugins_update_checker").
+	WithMustRegister(prometheus.DefaultRegisterer)
+
 type PluginsService struct {
 	availableUpdates map[string]string
 
@@ -35,10 +38,10 @@ func ProvidePluginsService(cfg *setting.Cfg, pluginStore plugins.Store, tracer t
 	return &PluginsService{
 		enabled:        cfg.CheckForPluginUpdates,
 		grafanaVersion: cfg.BuildVersion,
-		httpClient: mustNewInstrumentedHTTPClient(
+		httpClient: newInstrumentedHTTPClient(
 			&http.Client{Timeout: time.Second * 10},
 			tracer,
-			instrumentedHTTPClientWithMetrics(prometheus.DefaultRegisterer, "grafana_plugins_update_checker"),
+			instrumentedHTTPClientWithMetrics(pluginsUpdateCheckerMetrics),
 		),
 		log:              log.New("plugins.update.checker"),
 		tracer:           tracer,

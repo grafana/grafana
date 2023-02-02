@@ -18,6 +18,52 @@ type httpClient interface {
 	Get(ctx context.Context, url string) (resp *http.Response, err error)
 }
 
+type instrumentedHTTPClientPrometheusMetrics struct {
+	requestsCounter   prometheus.Counter
+	failureCounter    prometheus.Counter
+	durationHistogram prometheus.Histogram
+	inFlightGauge     prometheus.Gauge
+}
+
+func (m *instrumentedHTTPClientPrometheusMetrics) Register(registry prometheus.Registerer) error {
+	for _, collector := range []prometheus.Collector{
+		m.requestsCounter, m.failureCounter, m.durationHistogram, m.inFlightGauge,
+	} {
+		if err := registry.Register(collector); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m *instrumentedHTTPClientPrometheusMetrics) MustRegister(registry prometheus.Registerer) {
+	if err := m.Register(registry); err != nil {
+		panic(err)
+	}
+}
+
+func (m *instrumentedHTTPClientPrometheusMetrics) WithMustRegister(registry prometheus.Registerer) *instrumentedHTTPClientPrometheusMetrics {
+	m.MustRegister(registry)
+	return m
+}
+
+func newPrometheusMetrics(prefix string) *instrumentedHTTPClientPrometheusMetrics {
+	return &instrumentedHTTPClientPrometheusMetrics{
+		requestsCounter: prometheus.NewCounter(prometheus.CounterOpts{
+			Name: prefix + "_request_total",
+		}),
+		failureCounter: prometheus.NewCounter(prometheus.CounterOpts{
+			Name: prefix + "_failure_total",
+		}),
+		durationHistogram: prometheus.NewHistogram(prometheus.HistogramOpts{
+			Name: prefix + "_request_duration_seconds",
+		}),
+		inFlightGauge: prometheus.NewGauge(prometheus.GaugeOpts{
+			Name: prefix + "_in_flight_request",
+		}),
+	}
+}
+
 // instrumentedHTTPClient is an HTTP client that wraps every request a span, tracking the method, url,
 // and response code as span attributes.
 type instrumentedHTTPClient struct {
@@ -30,66 +76,47 @@ type instrumentedHTTPClient struct {
 	requestsCounter   prometheus.Counter
 	failureCounter    prometheus.Counter
 	durationHistogram prometheus.Histogram
-	inFlightCounter   prometheus.Gauge
+	inFlightGauge     prometheus.Gauge
 }
 
 // defaultInstrumentedHTTPClientSpanName is the default span name for spans created by instrumentedHTTPClient
 const defaultInstrumentedHTTPClientSpanName = "instrumentedHTTPClient.request"
 
 // newInstrumentedHTTPClient returns a new usable instrumentedHTTPClient.
-func newInstrumentedHTTPClient(cl *http.Client, tracer tracing.Tracer, opts ...instrumentedHTTPClientOption) (*instrumentedHTTPClient, error) {
+func newInstrumentedHTTPClient(cl *http.Client, tracer tracing.Tracer, opts ...instrumentedHTTPClientOption) *instrumentedHTTPClient {
 	r := &instrumentedHTTPClient{
 		Client:   cl,
 		tracer:   tracer,
 		spanName: defaultInstrumentedHTTPClientSpanName,
 	}
 	for _, opt := range opts {
-		if err := opt(r); err != nil {
-			return nil, err
-		}
-	}
-	return r, nil
-}
-
-// mustNewInstrumentedHTTPClient is like newInstrumentedHTTPClient, but it panics instead of returning an error.
-func mustNewInstrumentedHTTPClient(cl *http.Client, tracer tracing.Tracer, opts ...instrumentedHTTPClientOption) *instrumentedHTTPClient {
-	r, err := newInstrumentedHTTPClient(cl, tracer, opts...)
-	if err != nil {
-		panic(err)
+		opt(r)
 	}
 	return r
 }
 
-type instrumentedHTTPClientOption func(cl *instrumentedHTTPClient) error
+type instrumentedHTTPClientOption func(cl *instrumentedHTTPClient)
 
-func instrumentedHTTPClientWithMetrics(registerer prometheus.Registerer, prefix string) instrumentedHTTPClientOption {
-	return func(cl *instrumentedHTTPClient) error {
-		// TODO: helps
-		cl.requestsCounter = prometheus.NewCounter(prometheus.CounterOpts{
-			Name: prefix + "_request_total",
-		})
-		cl.failureCounter = prometheus.NewCounter(prometheus.CounterOpts{
-			Name: prefix + "_failure_total",
-		})
-		cl.durationHistogram = prometheus.NewHistogram(prometheus.HistogramOpts{
-			Name: prefix + "_request_duration_seconds",
-		})
-		cl.inFlightCounter = prometheus.NewGauge(prometheus.GaugeOpts{
-			Name: prefix + "_in_flight_request_total",
-		})
-		return cl.registerMetrics(registerer)
+func instrumentedHTTPClientWithMetrics(metrics *instrumentedHTTPClientPrometheusMetrics) instrumentedHTTPClientOption {
+	return func(cl *instrumentedHTTPClient) {
+		cl.requestsCounter = metrics.requestsCounter
+		cl.failureCounter = metrics.failureCounter
+		cl.durationHistogram = metrics.durationHistogram
+		cl.inFlightGauge = metrics.inFlightGauge
 	}
 }
 
-func (r *instrumentedHTTPClient) registerMetrics(registerer prometheus.Registerer) error {
-	for _, collector := range []prometheus.Collector{
-		r.requestsCounter, r.failureCounter, r.inFlightCounter, r.durationHistogram,
-	} {
-		if err := registerer.Register(collector); err != nil {
-			return err
-		}
+func instrumentedHTTPClientWithSingleMetrics(
+	requestsCounter, failureCounter prometheus.Counter,
+	durationHistogram prometheus.Histogram,
+	inFlightGauge prometheus.Gauge,
+) instrumentedHTTPClientOption {
+	return func(cl *instrumentedHTTPClient) {
+		cl.requestsCounter = requestsCounter
+		cl.failureCounter = failureCounter
+		cl.durationHistogram = durationHistogram
+		cl.inFlightGauge = inFlightGauge
 	}
-	return nil
 }
 
 // request performs a request, wrapping it in a new span. The method, url and response status code will be tracked
@@ -113,9 +140,9 @@ func (r *instrumentedHTTPClient) request(ctx context.Context, method string, url
 
 	var err error
 	startTime := time.Now()
-	r.inFlightCounter.Inc()
+	r.inFlightGauge.Inc()
 	defer func() {
-		r.inFlightCounter.Dec()
+		r.inFlightGauge.Dec()
 		r.requestsCounter.Inc()
 		r.durationHistogram.Observe(time.Since(startTime).Seconds())
 		if err != nil {

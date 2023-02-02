@@ -16,6 +16,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+var grafanaUpdateCheckerMetrics = newPrometheusMetrics("grafana_update_checker").
+	WithMustRegister(prometheus.DefaultRegisterer)
+
 type GrafanaService struct {
 	hasUpdate     bool
 	latestVersion string
@@ -32,10 +35,10 @@ func ProvideGrafanaService(cfg *setting.Cfg, tracer tracing.Tracer) *GrafanaServ
 	return &GrafanaService{
 		enabled:        cfg.CheckForGrafanaUpdates,
 		grafanaVersion: cfg.BuildVersion,
-		httpClient: mustNewInstrumentedHTTPClient(
+		httpClient: newInstrumentedHTTPClient(
 			&http.Client{Timeout: time.Second * 10},
 			tracer,
-			instrumentedHTTPClientWithMetrics(prometheus.DefaultRegisterer, "grafana_update_checker"),
+			instrumentedHTTPClientWithMetrics(grafanaUpdateCheckerMetrics),
 		),
 		log:    log.New("grafana.update.checker"),
 		tracer: tracer,
