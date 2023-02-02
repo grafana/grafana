@@ -12,10 +12,9 @@ import TableModel from 'app/core/TableModel';
 import flatten from 'app/core/utils/flatten';
 
 import { isMetricAggregationWithField } from './components/QueryEditor/MetricAggregationsEditor/aggregations';
-import { TopMetrics, ExtendedStatMetaType } from './types';
 import { metricAggregationConfig } from './components/QueryEditor/MetricAggregationsEditor/utils';
 import * as queryDef from './queryDef';
-import { ElasticsearchAggregation, ElasticsearchQuery } from './types';
+import { ElasticsearchAggregation, ElasticsearchQuery, TopMetrics, ExtendedStatMetaType } from './types';
 import { describeMetric, getScriptValue } from './utils';
 
 const HIGHLIGHT_TAGS_EXP = `${queryDef.highlightTags.pre}([^@]+)${queryDef.highlightTags.post}`;

@@ -6,8 +6,8 @@ import { InternalTimeZones, SelectableValue } from '@grafana/data';
 import { InlineField, Input, Select, TimeZonePicker } from '@grafana/ui';
 
 import { useDispatch } from '../../../../hooks/useStatelessReducer';
-import { useCreatableSelectPersistedBehaviour } from '../../../hooks/useCreatableSelectPersistedBehaviour';
 import { DateHistogram } from '../../../../types';
+import { useCreatableSelectPersistedBehaviour } from '../../../hooks/useCreatableSelectPersistedBehaviour';
 import { changeBucketAggregationSetting } from '../state/actions';
 import { bucketAggregationConfig } from '../utils';
 

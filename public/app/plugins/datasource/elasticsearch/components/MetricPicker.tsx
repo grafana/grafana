@@ -4,9 +4,8 @@ import React from 'react';
 import { SelectableValue } from '@grafana/data';
 import { Segment } from '@grafana/ui';
 
-import { describeMetric } from '../utils';
-
 import { MetricAggregation } from '../types';
+import { describeMetric } from '../utils';
 
 const noWrap = css`
   white-space: nowrap;

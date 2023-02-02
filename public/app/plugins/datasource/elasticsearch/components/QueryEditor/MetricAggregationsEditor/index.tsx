@@ -5,8 +5,8 @@ import { IconButton } from '../../IconButton';
 import { useQuery } from '../ElasticsearchQueryContext';
 import { QueryEditorRow } from '../QueryEditorRow';
 
-import { MetricEditor } from './MetricEditor';
 import { MetricAggregation } from './../../../types';
+import { MetricEditor } from './MetricEditor';
 import { addMetric, removeMetric, toggleMetricVisibility } from './state/actions';
 import { metricAggregationConfig } from './utils';
 

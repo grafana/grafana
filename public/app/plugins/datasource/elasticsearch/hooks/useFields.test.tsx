@@ -3,6 +3,7 @@ import React, { PropsWithChildren } from 'react';
 import { from } from 'rxjs';
 
 import { getDefaultTimeRange } from '@grafana/data';
+
 import { ElasticsearchProvider } from '../components/QueryEditor/ElasticsearchQueryContext';
 import { ElasticDatasource } from '../datasource';
 import { defaultBucketAgg, defaultMetricAgg } from '../queryDef';

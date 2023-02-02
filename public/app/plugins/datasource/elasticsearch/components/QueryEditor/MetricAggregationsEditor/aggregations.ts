@@ -1,4 +1,3 @@
-import { metricAggregationConfig } from './utils';
 import {
   PipelineMetricAggregationWithMultipleBucketPaths,
   MetricAggregationWithMeta,
@@ -11,6 +10,8 @@ import {
   PipelineMetricAggregation,
   MetricAggregationWithSettings,
 } from '../../../types';
+
+import { metricAggregationConfig } from './utils';
 
 export const isEWMAMovingAverage = (metric: MovingAverage | MovingAverage<'ewma'>): metric is MovingAverage<'ewma'> =>
   metric.settings?.model === 'ewma';

@@ -5,8 +5,7 @@ import selectEvent from 'react-select-event';
 import { describeMetric } from 'app/plugins/datasource/elasticsearch/utils';
 
 import { renderWithESProvider } from '../../../../test-helpers/render';
-import { ElasticsearchQuery } from '../../../../types';
-import { Terms, Average, Derivative, TopMetrics } from '../../../../types';
+import { ElasticsearchQuery, Terms, Average, Derivative, TopMetrics } from '../../../../types';
 
 import { TermsSettingsEditor } from './TermsSettingsEditor';
 
