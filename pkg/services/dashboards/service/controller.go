@@ -139,9 +139,78 @@ func k8sDashboardToDashboardDTO(dash *k8ssys.Base[dashboard.Dashboard]) *dashboa
 		}
 	}
 
-	if dash.ObjectMeta.Annotations == nil {
-		return &dto
-	}
+	dto = parseAnnotations(dash, dto)
+	dto = parseLabels(dash, dto)
 
 	return &dto
+}
+
+func parseAnnotations(dash *k8ssys.Base[dashboard.Dashboard], dto dashboards.SaveDashboardDTO) dashboards.SaveDashboardDTO {
+	if dash.ObjectMeta.Annotations == nil {
+		return dto
+	}
+	a := dash.ObjectMeta.Annotations
+	if v, ok := a["message"]; ok {
+		dto.Message = v
+	}
+
+	if v, ok := a["orgID"]; ok {
+		orgID, err := strconv.ParseInt(v, 10, 64)
+		if err == nil {
+			dto.OrgID = orgID
+		}
+	}
+
+	if v, ok := a["overwrite"]; ok {
+		overwrite, err := strconv.ParseBool(v)
+		if err == nil {
+			dto.Overwrite = overwrite
+		}
+	}
+
+	if v, ok := a["updatedBy"]; ok {
+		updatedBy, err := strconv.ParseInt(v, 10, 64)
+		if err == nil {
+			dto.Dashboard.UpdatedBy = updatedBy
+		}
+	}
+
+	if v, ok := a["updatedAt"]; ok {
+		updatedAt, err := strconv.ParseInt(v, 10, 64)
+		if err == nil {
+			dto.Dashboard.Updated = time.Unix(0, updatedAt)
+		}
+	}
+
+	if v, ok := a["createdBy"]; ok {
+		createdBy, err := strconv.ParseInt(v, 10, 64)
+		if err == nil {
+			dto.Dashboard.CreatedBy = createdBy
+		}
+	}
+
+	if v, ok := a["createdAt"]; ok {
+		createdAt, err := strconv.ParseInt(v, 10, 64)
+		if err == nil {
+			dto.Dashboard.Created = time.Unix(0, createdAt)
+		}
+	}
+
+	return dto
+}
+
+func parseLabels(dash *k8ssys.Base[dashboard.Dashboard], dto dashboards.SaveDashboardDTO) dashboards.SaveDashboardDTO {
+	if dash.ObjectMeta.Labels == nil {
+		return dto
+	}
+	l := dash.ObjectMeta.Labels
+
+	if v, ok := l["slug"]; ok {
+		dto.Dashboard.Slug = v
+	}
+	if v, ok := l["title"]; ok {
+		dto.Dashboard.Title = v
+	}
+
+	return dto
 }
