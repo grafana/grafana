@@ -159,8 +159,12 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 	}
 
 	// HACK, remove empty ID!!
-	dto.Dashboard.Data.Del("id")
-	dto.Dashboard.Data.Set("uid", uid)
+	if dto.Dashboard.Data.Get("id") == nil {
+		dto.Dashboard.Data.Del("id")
+	}
+	if dto.Dashboard.Data.Get("uid") == nil {
+		dto.Dashboard.Data.Set("uid", uid)
+	}
 	// strip nulls...
 	stripNulls(dto.Dashboard.Data)
 
@@ -310,6 +314,7 @@ func getResourceVersion(ctx context.Context, resourceClient dynamic.ResourceInte
 
 func annotationsFromDashboardDTO(dto *dashboards.SaveDashboardDTO) map[string]string {
 	annotations := map[string]string{
+		"version":   strconv.FormatInt(int64(dto.Dashboard.Version), 10),
 		"message":   dto.Message,
 		"orgID":     strconv.FormatInt(dto.OrgID, 10),
 		"overwrite": strconv.FormatBool(dto.Overwrite),
@@ -319,6 +324,7 @@ func annotationsFromDashboardDTO(dto *dashboards.SaveDashboardDTO) map[string]st
 		"createdAt": strconv.FormatInt(dto.Dashboard.Created.UnixNano(), 10),
 		"folderID":  strconv.FormatInt(dto.Dashboard.FolderID, 10),
 		"isFolder":  strconv.FormatBool(dto.Dashboard.IsFolder),
+		"hasACL":    strconv.FormatBool(dto.Dashboard.HasACL),
 	}
 
 	return annotations

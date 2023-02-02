@@ -80,7 +80,7 @@ func (c *DashboardController) Run(ctx context.Context) error {
 				fmt.Println("dashboard version already exists, skipping")
 				return
 			}
-			_, err = c.dashboardService.SaveDashboard(context.Background(), dto, false)
+			_, err = c.dashboardService.SaveDashboard(context.Background(), dto, true)
 			if err != nil {
 				fmt.Println("dashboardService.SaveDashboard failed", err)
 				return
@@ -89,12 +89,20 @@ func (c *DashboardController) Run(ctx context.Context) error {
 		DeleteFunc: func(obj interface{}) {
 			dash, err := interfaceToK8sDashboard(obj)
 			if err != nil {
-				fmt.Println("dashboard delete", err)
+				fmt.Println("dashboard delete failed", err)
+				return
+			}
+			dto := k8sDashboardToDashboardDTO(dash)
+			existing, err := c.dashboardService.GetDashboard(context.Background(), &dashboards.GetDashboardQuery{UID: dto.Dashboard.UID, OrgID: dto.OrgID})
+			// no dashboard found, nothing to delete
+			if err != nil {
 				return
 			}
 
-			fmt.Printf("dashboard deleted: %+v \n", dash)
-			//c.dashboardService.DeleteDashboard(ctx, obj.ID, obj.OrgID)
+			if err := c.dashboardService.DeleteDashboard(ctx, existing.ID, existing.OrgID); err != nil {
+				fmt.Println("dashboardService.DeleteDashboard failed", err)
+			}
+			fmt.Println("dashboard deleted")
 		},
 	})
 
@@ -127,7 +135,7 @@ func k8sDashboardToDashboardDTO(dash *k8ssys.Base[dashboard.Dashboard]) *dashboa
 	data := simplejson.NewFromAny(dash.Spec)
 	dto := dashboards.SaveDashboardDTO{
 		Dashboard: &dashboards.Dashboard{
-			FolderID: 1,
+			FolderID: 0,
 			IsFolder: false,
 			Data:     data,
 		},
@@ -153,6 +161,8 @@ func k8sDashboardToDashboardDTO(dash *k8ssys.Base[dashboard.Dashboard]) *dashboa
 
 	dto = parseAnnotations(dash, dto)
 	dto = parseLabels(dash, dto)
+
+	fmt.Printf("controller dashboard %+v \n", dto.Dashboard)
 
 	return &dto
 }
@@ -208,7 +218,7 @@ func parseAnnotations(dash *k8ssys.Base[dashboard.Dashboard], dto dashboards.Sav
 		}
 	}
 
-	if v, ok := a["folderId"]; ok {
+	if v, ok := a["folderID"]; ok {
 		folderId, err := strconv.ParseInt(v, 10, 64)
 		if err == nil {
 			dto.Dashboard.FolderID = folderId
@@ -219,6 +229,24 @@ func parseAnnotations(dash *k8ssys.Base[dashboard.Dashboard], dto dashboards.Sav
 		isFolder, err := strconv.ParseBool(v)
 		if err == nil {
 			dto.Dashboard.IsFolder = isFolder
+		}
+	}
+
+	if v, ok := a["pluginID"]; ok {
+		dto.Dashboard.PluginID = v
+	}
+
+	if v, ok := a["version"]; ok {
+		version, err := strconv.ParseInt(v, 10, 64)
+		if err == nil {
+			dto.Dashboard.Version = int(version)
+		}
+	}
+
+	if v, ok := a["hasACL"]; ok {
+		hasACL, err := strconv.ParseBool(v)
+		if err == nil {
+			dto.Dashboard.HasACL = hasACL
 		}
 	}
 
