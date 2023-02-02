@@ -95,7 +95,7 @@ export const BackupInventoryService = {
     const { logs = [], end } = await api.post<BackupLogResponse, Object>(
       `${BASE_URL}/Backups/GetLogs`,
       {
-        backup_artifact_id: artifactId,
+        artifact_id: artifactId,
         offset,
         limit,
       },
