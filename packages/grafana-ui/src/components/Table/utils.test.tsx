@@ -12,7 +12,7 @@ import {
   sortNumber,
   sortOptions,
   valuesToOptions,
-  buildBufferedIncrementingValues,
+  buildBufferedEmptyValues,
   buildFieldsForOptionalRowNums,
 } from './utils';
 
@@ -367,16 +367,16 @@ describe('Table utils', () => {
     });
   });
 
-  describe('buildBufferedIncrementingValues', () => {
-    it('should build a buffered VectorArray of values starting at 1, and incrementing by 1 up to the number passes as an argument', () => {
+  describe('buildBufferedEmptyValues', () => {
+    it('should build a buffered VectorArray of empty values the length of the number passed to it as an argument', () => {
       const arrayVectorLength = 10;
-      const bufferedArray = buildBufferedIncrementingValues(arrayVectorLength);
+      const bufferedArray = buildBufferedEmptyValues(arrayVectorLength);
       expect(bufferedArray).toBeInstanceOf(ArrayVector);
 
+      // Convert back into a standard array type.
       const nonBufferedArray = Array.from(bufferedArray);
-      // buildBufferedIncrementingValues builds values as strings, not numbers.
-      expect(nonBufferedArray[0]).toEqual('1');
-      expect(nonBufferedArray[nonBufferedArray.length - 1]).toEqual(String(arrayVectorLength));
+      expect(nonBufferedArray[0]).toEqual(undefined);
+      expect(nonBufferedArray[nonBufferedArray.length - 1]).toEqual(undefined);
     });
   });
 

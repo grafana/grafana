@@ -272,22 +272,43 @@ export const Table = memo((props: Props) => {
       if (enablePagination) {
         row = page[rowIndex];
       }
+
       prepareRow(row);
 
       return (
         <div {...row.getRowProps({ style })} className={tableStyles.row}>
           {/*add the subtable to the DOM first to prevent a 1px border CSS issue on the last cell of the row*/}
           {renderSubTable(rowIndex)}
-          {row.cells.map((cell: Cell, index: number) => (
-            <TableCell
-              key={index}
-              tableStyles={tableStyles}
-              cell={cell}
-              onCellFilterAdded={onCellFilterAdded}
-              columnIndex={index}
-              columnCount={row.cells.length}
-            />
-          ))}
+          {row.cells.map((cell: Cell, index: number) => {
+            /*
+              Here we test if the `row.cell` is of id === "0"; only if the user has toggled ON `Show row numbers` in the panelOptions panel will this cell exist.
+              This cell had already been built, but with undefined values. This is so we can now update our empty/undefined `cell.value` to the current `rowIndex + 1`.
+              This will assure that on sort, our row numbers don't also sort; but instewad stay in their respective rows.
+            */
+            if (cell.column.id === '0') {
+              cell.value = rowIndex + 1;
+              return (
+                <TableCell
+                  key={index}
+                  tableStyles={tableStyles}
+                  cell={cell}
+                  onCellFilterAdded={onCellFilterAdded}
+                  columnIndex={index}
+                  columnCount={row.cells.length}
+                />
+              );
+            }
+            return (
+              <TableCell
+                key={index}
+                tableStyles={tableStyles}
+                cell={cell}
+                onCellFilterAdded={onCellFilterAdded}
+                columnIndex={index}
+                columnCount={row.cells.length}
+              />
+            );
+          })}
         </div>
       );
     },

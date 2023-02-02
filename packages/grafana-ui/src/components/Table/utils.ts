@@ -170,20 +170,16 @@ export function getColumns(
 export function buildFieldsForOptionalRowNums(totalRows: number): Field {
   return {
     ...defaultRowNumberColumnFieldData,
-    values: buildBufferedIncrementingValues(totalRows),
+    values: buildBufferedEmptyValues(totalRows),
   };
 }
 
 /*
-  This gives us a buffered ArrayVector that begins with "1", and increments by 1 until reaching the desired length.
-  Values are converted to strings so that the Footer component doesn't attempt to sum and render their total.
+  This gives us an empty buffered ArrayVector of the desired length to match the table data.
+  It is simply a data placeholder for the Row Number column data.
 */
-export function buildBufferedIncrementingValues(totalRows: number): ArrayVector<string> {
-  let arr = [];
-  for (let i = 1; i <= totalRows; i++) {
-    arr.push(String(i));
-  }
-  return new ArrayVector(arr);
+export function buildBufferedEmptyValues(totalRows: number): ArrayVector<string> {
+  return new ArrayVector(new Array(totalRows));
 }
 
 export function getCellComponent(displayMode: TableCellDisplayMode, field: Field): CellComponent {
