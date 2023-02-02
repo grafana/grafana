@@ -40,11 +40,11 @@ composableKinds: DataQuery: {
 						maxLines?: int64
 						// Used to scale the interval value.
 						resolution?: int64
+						editorMode?: #QueryEditorMode
 						// @deprecated, now use queryType.
 						range?: bool
 						// @deprecated, now use queryType.
-						instant?:    bool
-						editorMode?: #QueryEditorMode
+						instant?: bool
 
 						#QueryEditorMode: "code" | "builder" @cuetsy(kind="enum")
 
