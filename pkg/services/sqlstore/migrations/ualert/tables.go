@@ -22,7 +22,7 @@ func AddTablesMigrations(mg *migrator.Migrator) {
 	historicalTableMigrations(mg)
 
 	mg.AddMigration("add last_applied column to alert_configuration_history", migrator.NewAddColumnMigration(migrator.Table{Name: "alert_configuration_history"}, &migrator.Column{
-		Name: "last_applied", Type: migrator.DB_Int, Nullable: false,
+		Name: "last_applied", Type: migrator.DB_Int, Nullable: false, Default: "0",
 	}))
 }
 
