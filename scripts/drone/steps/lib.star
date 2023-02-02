@@ -1272,13 +1272,13 @@ def artifacts_page_step():
         'name': 'artifacts-page',
         'image': build_image,
         'depends_on': [
-            'grabpl',
+            'compile-build-cmd',
         ],
         'environment': {
             'GCP_KEY': from_secret('gcp_key'),
         },
         'commands': [
-            './bin/grabpl artifacts-page',
+            './bin/build artifacts-page',
         ],
     }
 
