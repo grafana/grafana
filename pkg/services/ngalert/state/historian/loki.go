@@ -3,7 +3,6 @@ package historian
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math"
 	"strconv"
@@ -77,9 +76,6 @@ func (h *RemoteLokiBackend) RecordStatesAsync(ctx context.Context, rule history_
 }
 
 func (h *RemoteLokiBackend) QueryStates(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {
-	if query.RuleUID == "" {
-		return nil, errors.New("the RuleUID is not set but required")
-	}
 	selectors, err := buildSelectors(query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build the provided selectors: %w", err)
@@ -93,24 +89,17 @@ func (h *RemoteLokiBackend) QueryStates(ctx context.Context, query models.Histor
 }
 
 func buildSelectors(query models.HistoryQuery) ([]Selector, error) {
-	// +2 as we put the RuleID and OrgID also into a label selector.
-	selectors := make([]Selector, len(query.Labels)+2)
-
-	// Set the predefined selector rule_id
-	selector, err := NewSelector("rule_id", "=", query.RuleUID)
-	if err != nil {
-		return nil, err
-	}
-	selectors[0] = selector
+	// +1 as OrgID will always be a selector at the API level.
+	selectors := make([]Selector, len(query.Labels)+1)
 
 	// Set the predefined selector org_id
-	selector, err = NewSelector("org_id", "=", fmt.Sprintf("%d", query.OrgID))
+	selector, err := NewSelector("org_id", "=", fmt.Sprintf("%d", query.OrgID))
 	if err != nil {
 		return nil, err
 	}
 	selectors[1] = selector
 
-	// Set all the other selectors
+	// Set the label selectors
 	i := 2
 	for label, val := range query.Labels {
 		selector, err = NewSelector(label, "=", val)
@@ -120,6 +109,16 @@ func buildSelectors(query models.HistoryQuery) ([]Selector, error) {
 		selectors[i] = selector
 		i++
 	}
+
+	// Set the optional special selector rule_id
+	if query.RuleUID != "" {
+		rsel, err := NewSelector("rule_id", "=", query.RuleUID)
+		if err != nil {
+			return nil, err
+		}
+		selectors = append(selectors, rsel)
+	}
+
 	return selectors, nil
 }
 
