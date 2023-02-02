@@ -299,10 +299,12 @@ func (s schema) Markdown(level int) string {
 
 	if s.Description != "" {
 		fmt.Fprintln(buf, s.Description)
+		fmt.Fprintln(buf)
 	}
 
 	if len(s.extends) > 0 {
 		fmt.Fprintln(buf, makeExtends(s.extends))
+		fmt.Fprintln(buf)
 	}
 
 	printProperties(buf, &s)
@@ -323,7 +325,7 @@ func makeExtends(from []string) string {
 		fromLinks = append(fromLinks, fmt.Sprintf("[%s](#%s)", f, strings.ToLower(f)))
 	}
 
-	return fmt.Sprintf("\nIt extends %s.\n", strings.Join(fromLinks, " and "))
+	return fmt.Sprintf("It extends %s.", strings.Join(fromLinks, " and "))
 }
 
 func findDefinitions(s *schema) []*schema {

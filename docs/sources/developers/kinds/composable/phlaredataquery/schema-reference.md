@@ -13,7 +13,6 @@ title: PhlareDataQuery kind
 
 
 
-
 It extends [DataQuery](#dataquery).
 
 | Property        | Type     | Required | Description                                                                                                                                                                                                                                                                                            |
@@ -32,6 +31,7 @@ It extends [DataQuery](#dataquery).
 These are the common properties available to all queries in all datasources.
 Specific implementations will *extend* this interface, adding the required
 properties for the given context.
+
 | Property     | Type    | Required | Description                                                                                                                                                                                                                                             |
 |--------------|---------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `refId`      | string  | **Yes**  | A - Z                                                                                                                                                                                                                                                   |

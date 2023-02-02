@@ -57,6 +57,7 @@ A standalone panel
 
 TODO: should be the same panel schema defined in dashboard
 Typescript: Omit<Panel, 'gridPos' | 'id' | 'libraryPanel'>;
+
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
 

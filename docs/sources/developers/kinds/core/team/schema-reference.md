@@ -28,6 +28,7 @@ A team is a named grouping of Grafana users to which access control rules may be
 ### AccessControl
 
 AccessControl metadata associated with a given resource.
+
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
 

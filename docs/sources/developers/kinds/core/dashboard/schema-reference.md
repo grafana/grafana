@@ -44,6 +44,7 @@ A Grafana dashboard.
 
 FROM public/app/features/dashboard/state/DashboardModels.ts - ish
 TODO docs
+
 | Property      | Type     | Required | Description                                              |
 |---------------|----------|----------|----------------------------------------------------------|
 | `asDropdown`  | boolean  | **Yes**  | Default: `false`.                                        |
@@ -60,6 +61,7 @@ TODO docs
 ### Snapshot
 
 TODO docs
+
 | Property      | Type    | Required | Description |
 |---------------|---------|----------|-------------|
 | `created`     | string  | **Yes**  | TODO docs   |
@@ -77,6 +79,7 @@ TODO docs
 ### Annotations
 
 TODO docs
+
 | Property | Type                                  | Required | Description |
 |----------|---------------------------------------|----------|-------------|
 | `list`   | [AnnotationQuery](#annotationquery)[] | No       |             |
@@ -85,6 +88,7 @@ TODO docs
 
 TODO docs
 FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
+
 | Property     | Type                                  | Required | Description                                     |
 |--------------|---------------------------------------|----------|-------------------------------------------------|
 | `builtIn`    | integer                               | **Yes**  | Default: `0`.                                   |
@@ -101,6 +105,7 @@ FROM: AnnotationQuery in grafana-data/src/types/annotations.ts
 ### AnnotationTarget
 
 TODO docs
+
 | Property   | Type     | Required | Description |
 |------------|----------|----------|-------------|
 | `limit`    | integer  | **Yes**  |             |
@@ -111,6 +116,7 @@ TODO docs
 ### Datasource
 
 Datasource to use for annotation.
+
 | Property | Type   | Required | Description |
 |----------|--------|----------|-------------|
 | `type`   | string | No       |             |
@@ -124,6 +130,7 @@ Datasource to use for annotation.
 ### Templating
 
 TODO docs
+
 | Property | Type                              | Required | Description |
 |----------|-----------------------------------|----------|-------------|
 | `list`   | [VariableModel](#variablemodel)[] | No       |             |
@@ -134,6 +141,7 @@ FROM: packages/grafana-data/src/types/templateVars.ts
 TODO docs
 TODO what about what's in public/app/features/types.ts?
 TODO there appear to be a lot of different kinds of [template] vars here? if so need a disjunction
+
 | Property       | Type                            | Required | Description                                                                                                                                                                                                                                                 |
 |----------------|---------------------------------|----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `global`       | boolean                         | **Yes**  | Default: `false`.                                                                                                                                                                                                                                           |
@@ -154,6 +162,7 @@ TODO there appear to be a lot of different kinds of [template] vars here? if so 
 ### DataSourceRef
 
 Ref to a DataSource instance
+
 | Property | Type   | Required | Description                  |
 |----------|--------|----------|------------------------------|
 | `type`   | string | No       | The plugin type-id           |
@@ -167,6 +176,7 @@ Ref to a DataSource instance
 ### Time
 
 Time range for dashboard, e.g. last 6 hours, last 7 days, etc
+
 | Property | Type   | Required | Description        |
 |----------|--------|----------|--------------------|
 | `from`   | string | **Yes**  | Default: `now-6h`. |
@@ -176,6 +186,7 @@ Time range for dashboard, e.g. last 6 hours, last 7 days, etc
 
 TODO docs
 TODO this appears to be spread all over in the frontend. Concepts will likely need tidying in tandem with schema changes
+
 | Property            | Type     | Required | Description                                                                            |
 |---------------------|----------|----------|----------------------------------------------------------------------------------------|
 | `collapse`          | boolean  | **Yes**  | Whether timepicker is collapsed or not. Default: `false`.                              |

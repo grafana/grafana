@@ -25,6 +25,7 @@ title: PieChartPanelCfg kind
 ### HideableFieldConfig
 
 TODO docs
+
 | Property   | Type                                  | Required | Description |
 |------------|---------------------------------------|----------|-------------|
 | `hideFrom` | [HideSeriesConfig](#hideseriesconfig) | No       | TODO docs   |
@@ -32,6 +33,7 @@ TODO docs
 ### HideSeriesConfig
 
 TODO docs
+
 | Property  | Type    | Required | Description |
 |-----------|---------|----------|-------------|
 | `legend`  | boolean | **Yes**  |             |
@@ -39,7 +41,6 @@ TODO docs
 | `viz`     | boolean | **Yes**  |             |
 
 ### PanelOptions
-
 
 It extends [OptionsWithTooltip](#optionswithtooltip) and [SingleStatBaseOptions](#singlestatbaseoptions).
 
@@ -56,6 +57,7 @@ It extends [OptionsWithTooltip](#optionswithtooltip) and [SingleStatBaseOptions]
 ### OptionsWithTooltip
 
 TODO docs
+
 | Property  | Type                                    | Required | Description |
 |-----------|-----------------------------------------|----------|-------------|
 | `tooltip` | [VizTooltipOptions](#viztooltipoptions) | **Yes**  | TODO docs   |
@@ -63,13 +65,13 @@ TODO docs
 ### VizTooltipOptions
 
 TODO docs
+
 | Property | Type   | Required | Description                                                   |
 |----------|--------|----------|---------------------------------------------------------------|
 | `mode`   | string | **Yes**  | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
 | `sort`   | string | **Yes**  | TODO docs<br/>Possible values are: `asc`, `desc`, `none`.     |
 
 ### PieChartLegendOptions
-
 
 It extends [VizLegendOptions](#vizlegendoptions).
 
@@ -89,6 +91,7 @@ It extends [VizLegendOptions](#vizlegendoptions).
 ### VizLegendOptions
 
 TODO docs
+
 | Property      | Type     | Required | Description                                                                                                                             |
 |---------------|----------|----------|-----------------------------------------------------------------------------------------------------------------------------------------|
 | `calcs`       | string[] | **Yes**  |                                                                                                                                         |
@@ -104,6 +107,7 @@ TODO docs
 ### ReduceDataOptions
 
 TODO docs
+
 | Property | Type     | Required | Description                                                   |
 |----------|----------|----------|---------------------------------------------------------------|
 | `calcs`  | string[] | **Yes**  | When !values, pick one value for the whole field              |
@@ -126,6 +130,7 @@ It extends [OptionsWithTextFormatting](#optionswithtextformatting).
 ### OptionsWithTextFormatting
 
 TODO docs
+
 | Property | Type                                            | Required | Description |
 |----------|-------------------------------------------------|----------|-------------|
 | `text`   | [VizTextDisplayOptions](#viztextdisplayoptions) | No       | TODO docs   |
@@ -133,6 +138,7 @@ TODO docs
 ### VizTextDisplayOptions
 
 TODO docs
+
 | Property    | Type   | Required | Description              |
 |-------------|--------|----------|--------------------------|
 | `titleSize` | number | No       | Explicit title text size |
@@ -141,6 +147,7 @@ TODO docs
 ### ReduceDataOptions
 
 TODO docs
+
 | Property | Type     | Required | Description                                                   |
 |----------|----------|----------|---------------------------------------------------------------|
 | `calcs`  | string[] | **Yes**  | When !values, pick one value for the whole field              |
@@ -151,6 +158,7 @@ TODO docs
 ### VizTextDisplayOptions
 
 TODO docs
+
 | Property    | Type   | Required | Description              |
 |-------------|--------|----------|--------------------------|
 | `titleSize` | number | No       | Explicit title text size |
@@ -159,6 +167,7 @@ TODO docs
 ### VizTextDisplayOptions
 
 TODO docs
+
 | Property    | Type   | Required | Description              |
 |-------------|--------|----------|--------------------------|
 | `titleSize` | number | No       | Explicit title text size |
@@ -167,13 +176,13 @@ TODO docs
 ### VizTooltipOptions
 
 TODO docs
+
 | Property | Type   | Required | Description                                                   |
 |----------|--------|----------|---------------------------------------------------------------|
 | `mode`   | string | **Yes**  | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
 | `sort`   | string | **Yes**  | TODO docs<br/>Possible values are: `asc`, `desc`, `none`.     |
 
 ### PieChartLegendOptions
-
 
 It extends [VizLegendOptions](#vizlegendoptions).
 
@@ -193,6 +202,7 @@ It extends [VizLegendOptions](#vizlegendoptions).
 ### VizLegendOptions
 
 TODO docs
+
 | Property      | Type     | Required | Description                                                                                                                             |
 |---------------|----------|----------|-----------------------------------------------------------------------------------------------------------------------------------------|
 | `calcs`       | string[] | **Yes**  |                                                                                                                                         |

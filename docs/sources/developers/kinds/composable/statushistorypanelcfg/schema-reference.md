@@ -20,7 +20,6 @@ title: StatusHistoryPanelCfg kind
 
 ### PanelFieldConfig
 
-
 It extends [HideableFieldConfig](#hideablefieldconfig).
 
 | Property      | Type                                  | Required | Description                                                                  |
@@ -32,6 +31,7 @@ It extends [HideableFieldConfig](#hideablefieldconfig).
 ### HideSeriesConfig
 
 TODO docs
+
 | Property  | Type    | Required | Description |
 |-----------|---------|----------|-------------|
 | `legend`  | boolean | **Yes**  |             |
@@ -41,6 +41,7 @@ TODO docs
 ### HideableFieldConfig
 
 TODO docs
+
 | Property   | Type                                  | Required | Description |
 |------------|---------------------------------------|----------|-------------|
 | `hideFrom` | [HideSeriesConfig](#hideseriesconfig) | No       | TODO docs   |
@@ -48,6 +49,7 @@ TODO docs
 ### HideSeriesConfig
 
 TODO docs
+
 | Property  | Type    | Required | Description |
 |-----------|---------|----------|-------------|
 | `legend`  | boolean | **Yes**  |             |
@@ -55,7 +57,6 @@ TODO docs
 | `viz`     | boolean | **Yes**  |             |
 
 ### PanelOptions
-
 
 It extends [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#optionswithtooltip) and [OptionsWithTimezones](#optionswithtimezones).
 
@@ -71,6 +72,7 @@ It extends [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#opt
 ### OptionsWithLegend
 
 TODO docs
+
 | Property | Type                                  | Required | Description |
 |----------|---------------------------------------|----------|-------------|
 | `legend` | [VizLegendOptions](#vizlegendoptions) | **Yes**  | TODO docs   |
@@ -78,6 +80,7 @@ TODO docs
 ### VizLegendOptions
 
 TODO docs
+
 | Property      | Type     | Required | Description                                                                                                                             |
 |---------------|----------|----------|-----------------------------------------------------------------------------------------------------------------------------------------|
 | `calcs`       | string[] | **Yes**  |                                                                                                                                         |
@@ -93,6 +96,7 @@ TODO docs
 ### OptionsWithTimezones
 
 TODO docs
+
 | Property   | Type     | Required | Description |
 |------------|----------|----------|-------------|
 | `timezone` | string[] | No       |             |
@@ -100,6 +104,7 @@ TODO docs
 ### OptionsWithTooltip
 
 TODO docs
+
 | Property  | Type                                    | Required | Description |
 |-----------|-----------------------------------------|----------|-------------|
 | `tooltip` | [VizTooltipOptions](#viztooltipoptions) | **Yes**  | TODO docs   |
@@ -107,6 +112,7 @@ TODO docs
 ### VizTooltipOptions
 
 TODO docs
+
 | Property | Type   | Required | Description                                                   |
 |----------|--------|----------|---------------------------------------------------------------|
 | `mode`   | string | **Yes**  | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
@@ -115,6 +121,7 @@ TODO docs
 ### VizLegendOptions
 
 TODO docs
+
 | Property      | Type     | Required | Description                                                                                                                             |
 |---------------|----------|----------|-----------------------------------------------------------------------------------------------------------------------------------------|
 | `calcs`       | string[] | **Yes**  |                                                                                                                                         |
@@ -130,6 +137,7 @@ TODO docs
 ### VizTooltipOptions
 
 TODO docs
+
 | Property | Type   | Required | Description                                                   |
 |----------|--------|----------|---------------------------------------------------------------|
 | `mode`   | string | **Yes**  | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |

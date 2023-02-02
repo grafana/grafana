@@ -19,7 +19,6 @@ title: GaugePanelCfg kind
 
 ### PanelOptions
 
-
 It extends [SingleStatBaseOptions](#singlestatbaseoptions).
 
 | Property               | Type                                            | Required | Description                                                                                                                                 |
@@ -33,6 +32,7 @@ It extends [SingleStatBaseOptions](#singlestatbaseoptions).
 ### ReduceDataOptions
 
 TODO docs
+
 | Property | Type     | Required | Description                                                   |
 |----------|----------|----------|---------------------------------------------------------------|
 | `calcs`  | string[] | **Yes**  | When !values, pick one value for the whole field              |
@@ -55,6 +55,7 @@ It extends [OptionsWithTextFormatting](#optionswithtextformatting).
 ### OptionsWithTextFormatting
 
 TODO docs
+
 | Property | Type                                            | Required | Description |
 |----------|-------------------------------------------------|----------|-------------|
 | `text`   | [VizTextDisplayOptions](#viztextdisplayoptions) | No       | TODO docs   |
@@ -62,6 +63,7 @@ TODO docs
 ### VizTextDisplayOptions
 
 TODO docs
+
 | Property    | Type   | Required | Description              |
 |-------------|--------|----------|--------------------------|
 | `titleSize` | number | No       | Explicit title text size |
@@ -70,6 +72,7 @@ TODO docs
 ### ReduceDataOptions
 
 TODO docs
+
 | Property | Type     | Required | Description                                                   |
 |----------|----------|----------|---------------------------------------------------------------|
 | `calcs`  | string[] | **Yes**  | When !values, pick one value for the whole field              |
@@ -80,6 +83,7 @@ TODO docs
 ### VizTextDisplayOptions
 
 TODO docs
+
 | Property    | Type   | Required | Description              |
 |-------------|--------|----------|--------------------------|
 | `titleSize` | number | No       | Explicit title text size |
@@ -88,6 +92,7 @@ TODO docs
 ### VizTextDisplayOptions
 
 TODO docs
+
 | Property    | Type   | Required | Description              |
 |-------------|--------|----------|--------------------------|
 | `titleSize` | number | No       | Explicit title text size |

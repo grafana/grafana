@@ -20,7 +20,6 @@ title: HistogramPanelCfg kind
 
 ### PanelFieldConfig
 
-
 It extends [AxisConfig](#axisconfig) and [HideableFieldConfig](#hideablefieldconfig).
 
 | Property            | Type                                                | Required | Description                                                                                                                             |
@@ -42,6 +41,7 @@ It extends [AxisConfig](#axisconfig) and [HideableFieldConfig](#hideablefieldcon
 ### AxisConfig
 
 TODO docs
+
 | Property            | Type                                                | Required | Description                                                                            |
 |---------------------|-----------------------------------------------------|----------|----------------------------------------------------------------------------------------|
 | `axisCenteredZero`  | boolean                                             | No       |                                                                                        |
@@ -57,6 +57,7 @@ TODO docs
 ### ScaleDistributionConfig
 
 TODO docs
+
 | Property          | Type   | Required | Description                                                              |
 |-------------------|--------|----------|--------------------------------------------------------------------------|
 | `type`            | string | **Yes**  | TODO docs<br/>Possible values are: `linear`, `log`, `ordinal`, `symlog`. |
@@ -66,6 +67,7 @@ TODO docs
 ### HideSeriesConfig
 
 TODO docs
+
 | Property  | Type    | Required | Description |
 |-----------|---------|----------|-------------|
 | `legend`  | boolean | **Yes**  |             |
@@ -75,6 +77,7 @@ TODO docs
 ### HideableFieldConfig
 
 TODO docs
+
 | Property   | Type                                  | Required | Description |
 |------------|---------------------------------------|----------|-------------|
 | `hideFrom` | [HideSeriesConfig](#hideseriesconfig) | No       | TODO docs   |
@@ -82,6 +85,7 @@ TODO docs
 ### HideSeriesConfig
 
 TODO docs
+
 | Property  | Type    | Required | Description |
 |-----------|---------|----------|-------------|
 | `legend`  | boolean | **Yes**  |             |
@@ -91,6 +95,7 @@ TODO docs
 ### ScaleDistributionConfig
 
 TODO docs
+
 | Property          | Type   | Required | Description                                                              |
 |-------------------|--------|----------|--------------------------------------------------------------------------|
 | `type`            | string | **Yes**  | TODO docs<br/>Possible values are: `linear`, `log`, `ordinal`, `symlog`. |
@@ -98,7 +103,6 @@ TODO docs
 | `log`             | number | No       |                                                                          |
 
 ### PanelOptions
-
 
 It extends [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#optionswithtooltip).
 
@@ -113,6 +117,7 @@ It extends [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#opt
 ### OptionsWithLegend
 
 TODO docs
+
 | Property | Type                                  | Required | Description |
 |----------|---------------------------------------|----------|-------------|
 | `legend` | [VizLegendOptions](#vizlegendoptions) | **Yes**  | TODO docs   |
@@ -120,6 +125,7 @@ TODO docs
 ### VizLegendOptions
 
 TODO docs
+
 | Property      | Type     | Required | Description                                                                                                                             |
 |---------------|----------|----------|-----------------------------------------------------------------------------------------------------------------------------------------|
 | `calcs`       | string[] | **Yes**  |                                                                                                                                         |
@@ -135,6 +141,7 @@ TODO docs
 ### OptionsWithTooltip
 
 TODO docs
+
 | Property  | Type                                    | Required | Description |
 |-----------|-----------------------------------------|----------|-------------|
 | `tooltip` | [VizTooltipOptions](#viztooltipoptions) | **Yes**  | TODO docs   |
@@ -142,6 +149,7 @@ TODO docs
 ### VizTooltipOptions
 
 TODO docs
+
 | Property | Type   | Required | Description                                                   |
 |----------|--------|----------|---------------------------------------------------------------|
 | `mode`   | string | **Yes**  | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
@@ -150,6 +158,7 @@ TODO docs
 ### VizLegendOptions
 
 TODO docs
+
 | Property      | Type     | Required | Description                                                                                                                             |
 |---------------|----------|----------|-----------------------------------------------------------------------------------------------------------------------------------------|
 | `calcs`       | string[] | **Yes**  |                                                                                                                                         |
@@ -165,6 +174,7 @@ TODO docs
 ### VizTooltipOptions
 
 TODO docs
+
 | Property | Type   | Required | Description                                                   |
 |----------|--------|----------|---------------------------------------------------------------|
 | `mode`   | string | **Yes**  | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
