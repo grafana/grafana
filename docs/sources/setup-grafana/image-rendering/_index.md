@@ -435,7 +435,7 @@ Limit the maximum device scale factor that can be requested. Default is `4`.
 
 #### Page zoom level
 
-Set a page zoom. Default is `1`, `1.5` equals 150% zoom.
+The following command sets a page zoom level. The default value is `1`. A value of `1.5` equals 150% zoom.
 ```bash
 RENDERING_VIEWPORT_PAGE_ZOOM_LEVEL=1
 ```  
