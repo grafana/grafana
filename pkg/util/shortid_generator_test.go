@@ -1,7 +1,6 @@
 package util
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -9,7 +8,7 @@ import (
 )
 
 func TestAllowedCharMatchesUidPattern(t *testing.T) {
-	for _, c := range alphaNumRunes {
+	for _, c := range alphaRunes {
 		if !IsValidShortUID(string(c)) {
 			t.Fatalf("charset for creating new shortids contains chars not present in uid pattern")
 		}
@@ -26,9 +25,9 @@ func TestRandomUIDs(t *testing.T) {
 		if validation != nil {
 			t.Fatalf("created invalid name: %v", validation)
 		}
-		fmt.Println(v)
+		//fmt.Println(v)
 	}
-	t.FailNow()
+	//t.FailNow()
 }
 
 func TestIsShortUIDTooLong(t *testing.T) {
@@ -39,7 +38,7 @@ func TestIsShortUIDTooLong(t *testing.T) {
 	}{
 		{
 			name:     "when the length of uid is longer than 40 chars then IsShortUIDTooLong should return true",
-			uid:      string(alphaNumRunes) + string(alphaNumRunes),
+			uid:      string(alphaRunes) + string(alphaRunes),
 			expected: true,
 		},
 		{

@@ -10,7 +10,6 @@ import (
 
 var uidrand = rand.New(rand.NewSource(time.Now().UnixNano()))
 var alphaRunes = []rune("abcdefghijklmnopqrstuvwxyz")
-var alphaNumRunes = []rune("abcdefghijklmnopqrstuvwxyz0123456789")
 
 // Legacy UID pattern
 var validUIDPattern = regexp.MustCompile(`^[a-zA-Z0-9\-\_]*$`).MatchString
@@ -35,8 +34,8 @@ func GenerateShortUID() string {
 	}
 	uuid := uid.String()
 	return string(alphaRunes[uidrand.Intn(len(alphaRunes))]) + // alpha
-		uuid[0:8] + // Low time
-		uuid[19:23] + // Clock sequence + variant
-		uuid[24:] + // Node
-		string(alphaRunes[uidrand.Intn(len(alphaRunes))]) // alpha
+		uuid[0:8] + // time_low
+		uuid[9:13] + // time_mid
+		uuid[19:22] + // Clock sequence + variant
+		uuid[28:] // Node
 }
