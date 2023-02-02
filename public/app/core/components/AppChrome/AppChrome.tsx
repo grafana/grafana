@@ -22,13 +22,18 @@ export function AppChrome({ children }: Props) {
   const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
   const state = chrome.useState();
-  const commandPaletteEnabled = config.featureToggles.commandPalette && !state.chromeless;
+  const featureToggles = config.featureToggles;
 
   if (!config.featureToggles.topnav) {
     return (
       <>
-        {!state.chromeless && <NavBar />}
-        {commandPaletteEnabled && <CommandPalette />}
+        {!state.chromeless && (
+          <>
+            <NavBar />
+            <SearchWrapper />
+            {featureToggles.commandPalette && <CommandPalette />}
+          </>
+        )}
         <main className="main-view">{children}</main>
       </>
     );
@@ -67,8 +72,8 @@ export function AppChrome({ children }: Props) {
       </div>
       <div className={contentClass}>{children}</div>
       <MegaMenu searchBarHidden={searchBarHidden} onClose={() => chrome.setMegaMenu(false)} />
-      {commandPaletteEnabled && <CommandPalette />}
-      {!config.featureToggles.topNavCommandPalette && <SearchWrapper />}
+      {featureToggles.commandPalette && <CommandPalette />}
+      {!featureToggles.topNavCommandPalette && <SearchWrapper />}
     </main>
   );
 }
