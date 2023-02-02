@@ -1,4 +1,4 @@
-package libraryelements
+package model
 
 import (
 	"encoding/json"
@@ -100,7 +100,7 @@ type LibraryElementDTOMeta struct {
 }
 
 // libraryElementConnection is the model for library element connections.
-type libraryElementConnection struct {
+type LibraryElementConnection struct {
 	ID           int64 `xorm:"pk autoincr 'id'"`
 	ElementID    int64 `xorm:"element_id"`
 	Kind         int64 `xorm:"kind"`
@@ -110,7 +110,7 @@ type libraryElementConnection struct {
 }
 
 // libraryElementConnectionWithMeta is the model for library element connections with meta.
-type libraryElementConnectionWithMeta struct {
+type LibraryElementConnectionWithMeta struct {
 	ID             int64  `xorm:"pk autoincr 'id'"`
 	ElementID      int64  `xorm:"element_id"`
 	Kind           int64  `xorm:"kind"`
@@ -135,23 +135,23 @@ type LibraryElementConnectionDTO struct {
 
 var (
 	// errLibraryElementAlreadyExists is an error for when the user tries to add a library element that already exists.
-	errLibraryElementAlreadyExists = errors.New("library element with that name or UID already exists")
+	ErrLibraryElementAlreadyExists = errors.New("library element with that name or UID already exists")
 	// ErrLibraryElementNotFound is an error for when a library element can't be found.
 	ErrLibraryElementNotFound = errors.New("library element could not be found")
 	// errLibraryElementDashboardNotFound is an error for when a library element connection can't be found.
-	errLibraryElementDashboardNotFound = errors.New("library element connection could not be found")
-	// errLibraryElementHasConnections is an error for when an user deletes a library element that is connected.
-	errLibraryElementHasConnections = errors.New("the library element has connections")
+	ErrLibraryElementDashboardNotFound = errors.New("library element connection could not be found")
+	// ErrLibraryElementHasConnections is an error for when an user deletes a library element that is connected.
+	ErrLibraryElementHasConnections = errors.New("the library element has connections")
 	// errLibraryElementVersionMismatch is an error for when a library element has been changed by someone else.
-	errLibraryElementVersionMismatch = errors.New("the library element has been changed by someone else")
+	ErrLibraryElementVersionMismatch = errors.New("the library element has been changed by someone else")
 	// errLibraryElementUnSupportedElementKind is an error for when the kind is unsupported.
-	errLibraryElementUnSupportedElementKind = errors.New("the element kind is not supported")
+	ErrLibraryElementUnSupportedElementKind = errors.New("the element kind is not supported")
 	// ErrFolderHasConnectedLibraryElements is an error for when a user deletes a folder that contains connected library elements.
 	ErrFolderHasConnectedLibraryElements = errors.New("folder contains library elements that are linked in use")
 	// errLibraryElementInvalidUID is an error for when the uid of a library element is invalid
-	errLibraryElementInvalidUID = errors.New("uid contains illegal characters")
+	ErrLibraryElementInvalidUID = errors.New("uid contains illegal characters")
 	// errLibraryElementUIDTooLong is an error for when the uid of a library element is invalid
-	errLibraryElementUIDTooLong = errors.New("uid too long, max 40 characters")
+	ErrLibraryElementUIDTooLong = errors.New("uid too long, max 40 characters")
 )
 
 // Commands
@@ -200,17 +200,17 @@ type PatchLibraryElementCommand struct {
 	UID string `json:"uid"`
 }
 
-// searchLibraryElementsQuery is the query used for searching for Elements
-type searchLibraryElementsQuery struct {
-	perPage          int
-	page             int
-	searchString     string
-	sortDirection    string
-	kind             int
-	typeFilter       string
-	excludeUID       string
-	folderFilter     string
-	folderFilterUIDs string
+// SearchLibraryElementsQuery is the query used for searching for Elements
+type SearchLibraryElementsQuery struct {
+	PerPage          int
+	Page             int
+	SearchString     string
+	SortDirection    string
+	Kind             int
+	TypeFilter       string
+	ExcludeUID       string
+	FolderFilter     string
+	FolderFilterUIDs string
 }
 
 // LibraryElementResponse is a response struct for LibraryElementDTO.
@@ -238,3 +238,15 @@ type DeleteLibraryElementResponse struct {
 	ID      int64  `json:"id"`
 	Message string `json:"message"`
 }
+
+// LibraryElementKind is used for the kind of library element
+type LibraryElementKind int
+
+const (
+	// PanelElement is used for library elements that are of the Panel kind
+	PanelElement LibraryElementKind = iota + 1
+	// VariableElement is used for library elements that are of the Variable kind
+	VariableElement
+)
+
+const LibraryElementConnectionTableName = "library_element_connection"

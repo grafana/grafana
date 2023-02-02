@@ -36,12 +36,12 @@ type (
 		MainGenerator string
 		Using         []codejen.NamedJenny
 		From          string
+		Leader        string
 	}
 	tvars_kind_registry struct {
-		// Header tvars_autogen_header
 		PackageName       string
 		KindPackagePrefix string
-		Kinds             []kindsys.Kind
+		Kinds             []kindsys.Core
 	}
 	tvars_coremodel_imports struct {
 		PackageName string
