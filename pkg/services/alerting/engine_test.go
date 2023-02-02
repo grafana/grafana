@@ -129,7 +129,7 @@ func TestEngineProcessJob(t *testing.T) {
 
 	store := &AlertStoreMock{}
 	dsMock := &fd.FakeDataSourceService{
-		DataSources: []*datasources.DataSource{{Id: 1, Type: datasources.DS_PROMETHEUS}},
+		DataSources: []*datasources.DataSource{{ID: 1, Type: datasources.DS_PROMETHEUS}},
 	}
 	engine := ProvideAlertEngine(nil, nil, nil, usMock, encService, nil, tracer, store, setting.NewCfg(), nil, nil, localcache.New(time.Minute, time.Minute), dsMock, annotationstest.NewFakeAnnotationsRepo())
 	setting.AlertingEvaluationTimeout = 30 * time.Second

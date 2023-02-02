@@ -30,7 +30,7 @@ func (hs *HTTPServer) ValidateOrgAlert(c *contextmodel.ReqContext) {
 		c.JsonApiErr(http.StatusBadRequest, "alertId is invalid", nil)
 		return
 	}
-	query := alertmodels.GetAlertByIdQuery{Id: id}
+	query := alertmodels.GetAlertByIdQuery{ID: id}
 
 	res, err := hs.AlertEngine.AlertStore.GetAlertById(c.Req.Context(), &query)
 	if err != nil {
@@ -38,7 +38,7 @@ func (hs *HTTPServer) ValidateOrgAlert(c *contextmodel.ReqContext) {
 		return
 	}
 
-	if c.OrgID != res.OrgId {
+	if c.OrgID != res.OrgID {
 		c.JsonApiErr(403, "You are not allowed to edit/view alert", nil)
 		return
 	}
@@ -61,8 +61,8 @@ func (hs *HTTPServer) GetAlertStatesForDashboard(c *contextmodel.ReqContext) res
 	}
 
 	query := alertmodels.GetAlertStatesForDashboardQuery{
-		OrgId:       c.OrgID,
-		DashboardId: c.QueryInt64("dashboardId"),
+		OrgID:       c.OrgID,
+		DashboardID: c.QueryInt64("dashboardId"),
 	}
 
 	res, err := hs.AlertEngine.AlertStore.GetAlertStatesForDashboard(c.Req.Context(), &query)
@@ -134,9 +134,9 @@ func (hs *HTTPServer) GetAlerts(c *contextmodel.ReqContext) response.Response {
 	}
 
 	query := alertmodels.GetAlertsQuery{
-		OrgId:        c.OrgID,
+		OrgID:        c.OrgID,
 		DashboardIDs: dashboardIDs,
-		PanelId:      c.QueryInt64("panelId"),
+		PanelID:      c.QueryInt64("panelId"),
 		Limit:        c.QueryInt64("limit"),
 		User:         c.SignedInUser,
 		Query:        c.Query("query"),
@@ -153,7 +153,7 @@ func (hs *HTTPServer) GetAlerts(c *contextmodel.ReqContext) response.Response {
 	}
 
 	for _, alert := range res {
-		alert.Url = dashboards.GetDashboardURL(alert.DashboardUid, alert.DashboardSlug)
+		alert.URL = dashboards.GetDashboardURL(alert.DashboardUID, alert.DashboardSlug)
 	}
 
 	return response.JSON(http.StatusOK, res)
@@ -228,7 +228,7 @@ func (hs *HTTPServer) GetAlert(c *contextmodel.ReqContext) response.Response {
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "alertId is invalid", err)
 	}
-	query := alertmodels.GetAlertByIdQuery{Id: id}
+	query := alertmodels.GetAlertByIdQuery{ID: id}
 
 	res, err := hs.AlertEngine.AlertStore.GetAlertById(c.Req.Context(), &query)
 	if err != nil {
@@ -698,13 +698,13 @@ func (hs *HTTPServer) PauseAlert(legacyAlertingEnabled *bool) func(c *contextmod
 		result := make(map[string]interface{})
 		result["alertId"] = alertID
 
-		query := alertmodels.GetAlertByIdQuery{Id: alertID}
+		query := alertmodels.GetAlertByIdQuery{ID: alertID}
 		res, err := hs.AlertEngine.AlertStore.GetAlertById(c.Req.Context(), &query)
 		if err != nil {
 			return response.Error(500, "Get Alert failed", err)
 		}
 
-		guardian, err := guardian.New(c.Req.Context(), res.DashboardId, c.OrgID, c.SignedInUser)
+		guardian, err := guardian.New(c.Req.Context(), res.DashboardID, c.OrgID, c.SignedInUser)
 		if err != nil {
 			return response.ErrOrFallback(http.StatusInternalServerError, "Error while creating permission guardian", err)
 		}
@@ -728,8 +728,8 @@ func (hs *HTTPServer) PauseAlert(legacyAlertingEnabled *bool) func(c *contextmod
 		}
 
 		cmd := alertmodels.PauseAlertCommand{
-			OrgId:    c.OrgID,
-			AlertIds: []int64{alertID},
+			OrgID:    c.OrgID,
+			AlertIDs: []int64{alertID},
 			Paused:   dto.Paused,
 		}
 
