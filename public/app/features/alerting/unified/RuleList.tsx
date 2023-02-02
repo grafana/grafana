@@ -5,7 +5,7 @@ import { useAsyncFn, useInterval } from 'react-use';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { BackendSrvRequest, getBackendSrv, logInfo } from '@grafana/runtime';
+import { logInfo } from '@grafana/runtime';
 import { Button, LinkButton, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
@@ -18,8 +18,8 @@ import { NoRulesSplash } from './components/rules/NoRulesCTA';
 import { RuleListErrors } from './components/rules/RuleListErrors';
 import { RuleListGroupView } from './components/rules/RuleListGroupView';
 import { RuleListStateView } from './components/rules/RuleListStateView';
-import { RuleStats } from './components/rules/RuleStats';
 import RulesFilter from './components/rules/RulesFilter';
+import { RuleStats } from './components/rules/RuleStats';
 import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
 import { useFilteredRules, useRulesFilter } from './hooks/useFilteredRules';
 import { useUnifiedAlertingSelector } from './hooks/useUnifiedAlertingSelector';
@@ -33,20 +33,7 @@ const VIEWS = {
   state: RuleListStateView,
 };
 
-const onExport = async () => {
-  const exportURL = `/api/v1/provisioning/alert-rules/export?download=true`;
-  const options: BackendSrvRequest = {
-    url: exportURL,
-    headers: { Accept: 'yaml' },
-    responseType: 'blob',
-  };
-  const blob = await getBackendSrv().get(exportURL, undefined, undefined, options);
-  const fileUrl = window.URL.createObjectURL(blob);
-  const downloadLink = document.createElement('a');
-  downloadLink.href = fileUrl;
-  downloadLink.download = 'export.yaml';
-  downloadLink.click();
-};
+const onExport = () => window.open('/api/v1/provisioning/alert-rules/export?download=true&format=yaml');
 
 const RuleList = withErrorBoundary(
   () => {

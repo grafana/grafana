@@ -428,10 +428,19 @@ func determineProvenance(ctx *contextmodel.ReqContext) alerting_models.Provenanc
 }
 
 func exportResponse(c *contextmodel.ReqContext, body any) response.Response {
-	format := "yaml"
+	var format string = "yaml"
+
 	acceptHeader := c.Req.Header.Get("Accept")
-	if strings.Contains(acceptHeader, "json") && !strings.Contains(acceptHeader, "yaml") {
+	if strings.Contains(acceptHeader, "yaml") {
+		format = "yaml"
+	}
+
+	if strings.Contains(acceptHeader, "json") {
 		format = "json"
+	}
+
+	if c.Query("format") != "" {
+		format = c.Query("format")
 	}
 
 	download := c.QueryBoolWithDefault("download", false)
