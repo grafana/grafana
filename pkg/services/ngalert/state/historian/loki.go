@@ -16,11 +16,14 @@ import (
 )
 
 const (
-	OrgIDLabel             = "orgID"
-	RuleUIDLabel           = "ruleUID"
-	GroupLabel             = "group"
-	FolderUIDLabel         = "folderUID"
-	StateHistoryLabel      = "from"
+	OrgIDLabel     = "orgID"
+	RuleUIDLabel   = "ruleUID"
+	GroupLabel     = "group"
+	FolderUIDLabel = "folderUID"
+)
+
+const (
+	StateHistoryLabelKey   = "from"
 	StateHistoryLabelValue = "state-history"
 )
 
@@ -74,7 +77,7 @@ func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition
 		}
 
 		labels := mergeLabels(removePrivateLabels(state.State.Labels), externalLabels)
-		labels[StateHistoryLabel] = StateHistoryLabelValue
+		labels[StateHistoryLabelKey] = StateHistoryLabelValue
 		labels[OrgIDLabel] = fmt.Sprint(rule.OrgID)
 		labels[RuleUIDLabel] = fmt.Sprint(rule.UID)
 		labels[GroupLabel] = fmt.Sprint(rule.Group)

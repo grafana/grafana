@@ -59,12 +59,12 @@ func TestRemoteLokiBackend(t *testing.T) {
 
 			require.Len(t, res, 1)
 			exp := map[string]string{
-				StateHistoryLabel: StateHistoryLabelValue,
-				"folderUID":       rule.NamespaceUID,
-				"group":           rule.Group,
-				"orgID":           fmt.Sprint(rule.OrgID),
-				"ruleUID":         rule.UID,
-				"a":               "b",
+				StateHistoryLabelKey: StateHistoryLabelValue,
+				"folderUID":          rule.NamespaceUID,
+				"group":              rule.Group,
+				"orgID":              fmt.Sprint(rule.OrgID),
+				"ruleUID":            rule.UID,
+				"a":                  "b",
 			}
 			require.Equal(t, exp, res[0].Stream)
 		})
