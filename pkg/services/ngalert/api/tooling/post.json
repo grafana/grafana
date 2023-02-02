@@ -6642,6 +6642,23 @@
      "testing"
     ]
    }
+  },
+  "/api/v1/rules/history": {
+   "get": {
+    "operationId": "RouteGetStateHistory",
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "200": {
+      "$ref": "#/responses/StateHistory"
+     }
+    },
+    "summary": "Query state history.",
+    "tags": [
+     "history"
+    ]
+   }
   }
  },
  "produces": [
