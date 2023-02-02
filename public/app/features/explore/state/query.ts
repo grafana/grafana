@@ -6,7 +6,6 @@ import { mergeMap, throttleTime } from 'rxjs/operators';
 
 import {
   AbsoluteTimeRange,
-  DataQuery,
   DataQueryErrorType,
   DataQueryResponse,
   DataSourceApi,
@@ -22,6 +21,7 @@ import {
   hasLogsVolumeSupport,
 } from '@grafana/data';
 import { config, getDataSourceSrv, reportInteraction } from '@grafana/runtime';
+import { DataQuery } from '@grafana/schema';
 import {
   buildQueryTransaction,
   ensureQueries,
@@ -305,7 +305,7 @@ export const importQueries = (
   sourceDataSource: DataSourceApi | undefined | null,
   targetDataSource: DataSourceApi,
   singleQueryChangeRef?: string // when changing one query DS to another in a mixed environment, we do not want to change all queries, just the one being changed
-): ThunkResult<void> => {
+): ThunkResult<Promise<void>> => {
   return async (dispatch) => {
     if (!sourceDataSource) {
       // explore not initialized

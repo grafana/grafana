@@ -15,6 +15,7 @@ import (
 	"cuelang.org/go/cue/cuecontext"
 	"github.com/grafana/codejen"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/thema/encoding/jsonschema"
 	"github.com/olekukonko/tablewriter"
 	"github.com/xeipuuv/gojsonpointer"
@@ -34,8 +35,13 @@ func (j docsJenny) JennyName() string {
 	return "DocsJenny"
 }
 
-func (j docsJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
-	f, err := jsonschema.GenerateSchema(decl.Lineage().Latest())
+func (j docsJenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
+	// TODO remove this once codejen catches nils https://github.com/grafana/codejen/issues/5
+	if kind == nil {
+		return nil, nil
+	}
+
+	f, err := jsonschema.GenerateSchema(kind.Lineage().Latest())
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate json representation for the schema: %v", err)
 	}
@@ -61,10 +67,10 @@ func (j docsJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
 	// fixes the references between the types within a json after making components.schema.<types> the root of the json
 	kindJsonStr := strings.Replace(string(obj.Components.Schemas), "#/components/schemas/", "#/", -1)
 
-	kindProps := decl.Properties.Common()
+	kindProps := kind.Props().Common()
 	data := templateData{
 		KindName:     kindProps.Name,
-		KindVersion:  decl.Lineage().Latest().Version().String(),
+		KindVersion:  kind.Lineage().Latest().Version().String(),
 		KindMaturity: string(kindProps.Maturity),
 		Markdown:     "{{ .Markdown 1 }}",
 	}
@@ -324,11 +330,10 @@ func printProperties(w io.Writer, s *schema) {
 	table.SetAutoWrapText(false)
 
 	// Buffer all property rows so that we can sort them before printing them.
-	var rows [][]string
-
+	rows := make([][]string, 0, len(s.Properties))
 	for k, p := range s.Properties {
 		// Generate relative links for objects and arrays of objects.
-		var propType []string
+		propType := make([]string, 0, len(p.Type))
 		for _, pt := range p.Type {
 			switch pt {
 			case PropertyTypeObject:
@@ -372,7 +377,7 @@ func printProperties(w io.Writer, s *schema) {
 		desc := p.Description
 
 		if len(p.Enum) > 0 {
-			var vals []string
+			vals := make([]string, 0, len(p.Enum))
 			for _, e := range p.Enum {
 				vals = append(vals, e.String())
 			}

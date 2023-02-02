@@ -173,7 +173,7 @@ export const FolderSection = ({
       label={
         <>
           {selectionToggle && selection && (
-            <div className={styles.checkbox} onClick={onToggleFolder}>
+            <div onClick={onToggleFolder}>
               <Checkbox value={selection(section.kind, section.uid)} aria-label="Select folder" />
             </div>
           )}
@@ -228,9 +228,6 @@ const getSectionHeaderStyles = (theme: GrafanaTheme2, selected = false, editable
     ),
     sectionItems: css`
       margin: 0 24px 0 32px;
-    `,
-    checkbox: css`
-      padding: 0 ${sm} 0 0;
     `,
     icon: css`
       padding: 0 ${sm} 0 ${editable ? 0 : sm};

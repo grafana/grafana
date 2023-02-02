@@ -126,7 +126,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'help':
       return t('nav.help.title', 'Help');
     case 'profile/settings':
-      return t('nav.profile/settings.title', 'Preferences');
+      return t('nav.profile/settings.title', 'Profile');
     case 'profile/notifications':
       return t('nav.profile/notifications.title', 'Notification history');
     case 'profile/password':
@@ -162,7 +162,10 @@ export function getNavSubTitle(navId: string | undefined) {
     case 'alert-list':
       return t('nav.alerting-list.subtitle', 'Rules that determine whether an alert will fire');
     case 'receivers':
-      return t('nav.alerting-receivers.subtitle', 'Decide how your contacts are notified when an alert fires');
+      return t(
+        'nav.alerting-receivers.subtitle',
+        'Choose how to notify your contact points when an alert instance fires'
+      );
     case 'am-routes':
       return t('nav.alerting-am-routes.subtitle', 'Determine how alerts are routed to contact points');
     case 'silences':

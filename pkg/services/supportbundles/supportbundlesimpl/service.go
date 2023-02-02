@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	grafanaApi "github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -51,6 +52,7 @@ func ProvideService(cfg *setting.Cfg,
 	pluginStore plugins.Store,
 	pluginSettings pluginsettings.Service,
 	features *featuremgmt.FeatureManager,
+	httpServer *grafanaApi.HTTPServer,
 	usageStats usagestats.Service) (*Service, error) {
 	section := cfg.SectionWithEnvOverrides("support_bundles")
 	s := &Service{
@@ -76,7 +78,7 @@ func ProvideService(cfg *setting.Cfg,
 		}
 	}
 
-	s.registerAPIEndpoints(routeRegister)
+	s.registerAPIEndpoints(httpServer, routeRegister)
 
 	// TODO: move to relevant services
 	s.RegisterSupportItemCollector(basicCollector(cfg))
