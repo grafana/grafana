@@ -323,7 +323,7 @@ describe('PanelAlertTabContent', () => {
         },
         {
           refId: 'B',
-          datasourceUid: '-100',
+          datasourceUid: '__expr__',
           queryType: '',
           model: {
             refId: 'B',
@@ -331,7 +331,7 @@ describe('PanelAlertTabContent', () => {
             type: 'classic_conditions',
             datasource: {
               type: ExpressionDatasourceRef.type,
-              uid: '-100',
+              uid: '__expr__',
             },
             conditions: [
               {
