@@ -6,549 +6,113 @@ title: XYChartPanelCfg kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
-# XYChartPanelCfg kind
+## XYChartPanelCfg
 
-## Maturity: experimental
-## Version: 0.0
-
-## Properties
-
-| Property              | Type                           | Required | Description                                                                                               |
-|-----------------------|--------------------------------|----------|-----------------------------------------------------------------------------------------------------------|
-| `PanelOptions`        | [object](#paneloptions)        | **Yes**  | This kind extends: [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#optionswithtooltip). |
-| `ScatterFieldConfig`  | [object](#scatterfieldconfig)  | **Yes**  | This kind extends: [HideableFieldConfig](#hideablefieldconfig) and [AxisConfig](#axisconfig).             |
-| `ScatterSeriesConfig` | [object](#scatterseriesconfig) | **Yes**  | This kind extends: [ScatterFieldConfig](#scatterfieldconfig).                                             |
-| `ScatterShow`         | string                         | **Yes**  | Possible values are: `points`, `lines`, `points+lines`.                                                   |
-| `SeriesMapping`       | string                         | **Yes**  | Possible values are: `auto`, `manual`.                                                                    |
-| `XYDimensionConfig`   | [object](#xydimensionconfig)   | **Yes**  |                                                                                                           |
-
-## PanelOptions
+#### Maturity: experimental
+#### Version: 0.0
 
 
-This kind extends: [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#optionswithtooltip).
 
-### Properties
+| Property              | Type                           | Required | Description                                             |
+|-----------------------|--------------------------------|----------|---------------------------------------------------------|
+| `PanelOptions`        | [object](#paneloptions)        | **Yes**  |                                                         |
+| `ScatterFieldConfig`  | [object](#scatterfieldconfig)  | **Yes**  |                                                         |
+| `ScatterSeriesConfig` | [object](#scatterseriesconfig) | **Yes**  |                                                         |
+| `ScatterShow`         | string                         | **Yes**  | Possible values are: `points`, `lines`, `points+lines`. |
+| `SeriesMapping`       | string                         | **Yes**  | Possible values are: `auto`, `manual`.                  |
+| `XYDimensionConfig`   | [object](#xydimensionconfig)   | **Yes**  |                                                         |
 
-| Property        | Type                                          | Required | Description                                                  |
-|-----------------|-----------------------------------------------|----------|--------------------------------------------------------------|
-| `dims`          | [XYDimensionConfig](#xydimensionconfig)       | **Yes**  |                                                              |
-| `legend`        | [VizLegendOptions](#vizlegendoptions)         | **Yes**  | *(Inherited from [OptionsWithLegend](#optionswithlegend))*   |
-| `series`        | [ScatterSeriesConfig](#scatterseriesconfig)[] | **Yes**  |                                                              |
-| `tooltip`       | [VizTooltipOptions](#viztooltipoptions)       | **Yes**  | *(Inherited from [OptionsWithTooltip](#optionswithtooltip))* |
-| `seriesMapping` | string                                        | No       | Possible values are: `auto`, `manual`.                       |
+### PanelOptions
+
+
+It extends [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#optionswithtooltip).
+
+| Property        | Type                                          | Required | Description                                                                |
+|-----------------|-----------------------------------------------|----------|----------------------------------------------------------------------------|
+| `dims`          | [XYDimensionConfig](#xydimensionconfig)       | **Yes**  |                                                                            |
+| `legend`        | [VizLegendOptions](#vizlegendoptions)         | **Yes**  | *(Inherited from [OptionsWithLegend](#optionswithlegend))*<br/>TODO docs   |
+| `series`        | [ScatterSeriesConfig](#scatterseriesconfig)[] | **Yes**  |                                                                            |
+| `tooltip`       | [VizTooltipOptions](#viztooltipoptions)       | **Yes**  | *(Inherited from [OptionsWithTooltip](#optionswithtooltip))*<br/>TODO docs |
+| `seriesMapping` | string                                        | No       | Possible values are: `auto`, `manual`.                                     |
 
 ### OptionsWithLegend
 
 TODO docs
-
-#### Properties
-
 | Property | Type                                  | Required | Description |
 |----------|---------------------------------------|----------|-------------|
 | `legend` | [VizLegendOptions](#vizlegendoptions) | **Yes**  | TODO docs   |
 
-#### VizLegendOptions
+### VizLegendOptions
 
 TODO docs
-
-##### Properties
-
-| Property      | Type     | Required | Description                                                                                                                         |
-|---------------|----------|----------|-------------------------------------------------------------------------------------------------------------------------------------|
-| `calcs`       | string[] | **Yes**  |                                                                                                                                     |
-| `displayMode` | string   | **Yes**  | TODO docs<br/>Note: "hidden" needs to remain as an option for plugins compatibility Possible values are: `list`, `table`, `hidden`. |
-| `placement`   | string   | **Yes**  | TODO docs Possible values are: `bottom`, `right`.                                                                                   |
-| `showLegend`  | boolean  | **Yes**  |                                                                                                                                     |
-| `asTable`     | boolean  | No       |                                                                                                                                     |
-| `isVisible`   | boolean  | No       |                                                                                                                                     |
-| `sortBy`      | string   | No       |                                                                                                                                     |
-| `sortDesc`    | boolean  | No       |                                                                                                                                     |
-| `width`       | number   | No       |                                                                                                                                     |
+| Property      | Type     | Required | Description                                                                                                                             |
+|---------------|----------|----------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| `calcs`       | string[] | **Yes**  |                                                                                                                                         |
+| `displayMode` | string   | **Yes**  | TODO docs<br/>Note: "hidden" needs to remain as an option for plugins compatibility<br/>Possible values are: `list`, `table`, `hidden`. |
+| `placement`   | string   | **Yes**  | TODO docs<br/>Possible values are: `bottom`, `right`.                                                                                   |
+| `showLegend`  | boolean  | **Yes**  |                                                                                                                                         |
+| `asTable`     | boolean  | No       |                                                                                                                                         |
+| `isVisible`   | boolean  | No       |                                                                                                                                         |
+| `sortBy`      | string   | No       |                                                                                                                                         |
+| `sortDesc`    | boolean  | No       |                                                                                                                                         |
+| `width`       | number   | No       |                                                                                                                                         |
 
 ### OptionsWithTooltip
 
 TODO docs
-
-#### Properties
-
 | Property  | Type                                    | Required | Description |
 |-----------|-----------------------------------------|----------|-------------|
 | `tooltip` | [VizTooltipOptions](#viztooltipoptions) | **Yes**  | TODO docs   |
 
-#### VizTooltipOptions
+### VizTooltipOptions
 
 TODO docs
-
-##### Properties
-
-| Property | Type   | Required | Description                                               |
-|----------|--------|----------|-----------------------------------------------------------|
-| `mode`   | string | **Yes**  | TODO docs Possible values are: `single`, `multi`, `none`. |
-| `sort`   | string | **Yes**  | TODO docs Possible values are: `asc`, `desc`, `none`.     |
+| Property | Type   | Required | Description                                                   |
+|----------|--------|----------|---------------------------------------------------------------|
+| `mode`   | string | **Yes**  | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
+| `sort`   | string | **Yes**  | TODO docs<br/>Possible values are: `asc`, `desc`, `none`.     |
 
 ### ScatterSeriesConfig
 
 
-This kind extends: [ScatterFieldConfig](#scatterfieldconfig).
-
-#### Properties
-
-| Property            | Type                                                | Required | Description                                                                                                                           |
-|---------------------|-----------------------------------------------------|----------|---------------------------------------------------------------------------------------------------------------------------------------|
-| `axisCenteredZero`  | boolean                                             | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                          |
-| `axisColorMode`     | string                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))* Possible values are: `text`, `series`.                                   |
-| `axisGridShow`      | boolean                                             | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                          |
-| `axisLabel`         | string                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                          |
-| `axisPlacement`     | string                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))* Possible values are: `auto`, `top`, `right`, `bottom`, `left`, `hidden`. |
-| `axisSoftMax`       | number                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                          |
-| `axisSoftMin`       | number                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                          |
-| `axisWidth`         | number                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                          |
-| `hideFrom`          | [HideSeriesConfig](#hideseriesconfig)               | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                          |
-| `labelValue`        | [TextDimensionConfig](#textdimensionconfig)         | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                          |
-| `label`             | string                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))* Possible values are: `auto`, `never`, `always`.                          |
-| `lineColor`         | [ColorDimensionConfig](#colordimensionconfig)       | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                          |
-| `lineStyle`         | [LineStyle](#linestyle)                             | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                          |
-| `lineWidth`         | integer                                             | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                          |
-| `name`              | string                                              | No       |                                                                                                                                       |
-| `pointColor`        | [ColorDimensionConfig](#colordimensionconfig)       | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                          |
-| `pointSize`         | [ScaleDimensionConfig](#scaledimensionconfig)       | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                          |
-| `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                          |
-| `show`              | string                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))* Possible values are: `points`, `lines`, `points+lines`.                  |
-| `x`                 | string                                              | No       |                                                                                                                                       |
-| `y`                 | string                                              | No       |                                                                                                                                       |
-
-#### ColorDimensionConfig
-
-*(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*
-
-##### Properties
-
-| Property | Type   | Required | Description                                                    |
-|----------|--------|----------|----------------------------------------------------------------|
-| `fixed`  |        | **Yes**  | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
-| `field`  | string | No       | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
-
-##### BaseDimensionConfig
-
-###### Properties
-
-| Property | Type   | Required | Description |
-|----------|--------|----------|-------------|
-| `fixed`  |        | **Yes**  |             |
-| `field`  | string | No       |             |
-
-#### ColorDimensionConfig
-
-*(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*
-
-##### Properties
-
-| Property | Type   | Required | Description                                                    |
-|----------|--------|----------|----------------------------------------------------------------|
-| `fixed`  |        | **Yes**  | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
-| `field`  | string | No       | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
-
-##### BaseDimensionConfig
-
-###### Properties
-
-| Property | Type   | Required | Description |
-|----------|--------|----------|-------------|
-| `fixed`  |        | **Yes**  |             |
-| `field`  | string | No       |             |
-
-#### HideSeriesConfig
-
-*(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*
-
-##### Properties
-
-| Property  | Type    | Required | Description |
-|-----------|---------|----------|-------------|
-| `legend`  | boolean | **Yes**  |             |
-| `tooltip` | boolean | **Yes**  |             |
-| `viz`     | boolean | **Yes**  |             |
-
-#### LineStyle
-
-*(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*
-
-##### Properties
-
-| Property | Type     | Required | Description                                            |
-|----------|----------|----------|--------------------------------------------------------|
-| `dash`   | number[] | No       |                                                        |
-| `fill`   | string   | No       | Possible values are: `solid`, `dash`, `dot`, `square`. |
-
-#### ScaleDimensionConfig
-
-*(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*
-
-##### Properties
-
-| Property | Type    | Required | Description                                                    |
-|----------|---------|----------|----------------------------------------------------------------|
-| `fixed`  |         | **Yes**  | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
-| `max`    | integer | **Yes**  |                                                                |
-| `min`    | integer | **Yes**  |                                                                |
-| `field`  | string  | No       | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
-
-##### BaseDimensionConfig
-
-###### Properties
-
-| Property | Type   | Required | Description |
-|----------|--------|----------|-------------|
-| `fixed`  |        | **Yes**  |             |
-| `field`  | string | No       |             |
-
-#### ScaleDistributionConfig
-
-*(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*
-
-##### Properties
-
-| Property          | Type   | Required | Description                                                          |
-|-------------------|--------|----------|----------------------------------------------------------------------|
-| `type`            | string | **Yes**  | TODO docs Possible values are: `linear`, `log`, `ordinal`, `symlog`. |
-| `linearThreshold` | number | No       |                                                                      |
-| `log`             | number | No       |                                                                      |
-
-#### ScatterFieldConfig
-
-
-This kind extends: [HideableFieldConfig](#hideablefieldconfig) and [AxisConfig](#axisconfig).
-
-##### Properties
-
-| Property            | Type                                                | Required | Description                                                                                                                     |
-|---------------------|-----------------------------------------------------|----------|---------------------------------------------------------------------------------------------------------------------------------|
-| `axisCenteredZero`  | boolean                                             | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                    |
-| `axisColorMode`     | string                                              | No       | *(Inherited from [AxisConfig](#axisconfig))* Possible values are: `text`, `series`.                                             |
-| `axisGridShow`      | boolean                                             | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                    |
-| `axisLabel`         | string                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                    |
-| `axisPlacement`     | string                                              | No       | *(Inherited from [AxisConfig](#axisconfig))* Possible values are: `auto`, `top`, `right`, `bottom`, `left`, `hidden`.           |
-| `axisSoftMax`       | number                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                    |
-| `axisSoftMin`       | number                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                    |
-| `axisWidth`         | number                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                    |
-| `hideFrom`          | [HideSeriesConfig](#hideseriesconfig)               | No       | *(Inherited from [HideableFieldConfig](#hideablefieldconfig))*                                                                  |
-| `labelValue`        | [TextDimensionConfig](#textdimensionconfig)         | No       | This kind extends: [BaseDimensionConfig](#basedimensionconfig).                                                                 |
-| `label`             | string                                              | No       | TODO docs Possible values are: `auto`, `never`, `always`.                                                                       |
-| `lineColor`         | [ColorDimensionConfig](#colordimensionconfig)       | No       | This is actually an empty interface used mainly for naming?<br/>This kind extends: [BaseDimensionConfig](#basedimensionconfig). |
-| `lineStyle`         | [LineStyle](#linestyle)                             | No       | TODO docs                                                                                                                       |
-| `lineWidth`         | integer                                             | No       |                                                                                                                                 |
-| `pointColor`        | [ColorDimensionConfig](#colordimensionconfig)       | No       | This is actually an empty interface used mainly for naming?<br/>This kind extends: [BaseDimensionConfig](#basedimensionconfig). |
-| `pointSize`         | [ScaleDimensionConfig](#scaledimensionconfig)       | No       | This kind extends: [BaseDimensionConfig](#basedimensionconfig).                                                                 |
-| `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                    |
-| `show`              | string                                              | No       | Possible values are: `points`, `lines`, `points+lines`.                                                                         |
-
-##### AxisConfig
-
-TODO docs
-
-###### Properties
-
-| Property            | Type                                                | Required | Description                                                                        |
-|---------------------|-----------------------------------------------------|----------|------------------------------------------------------------------------------------|
-| `axisCenteredZero`  | boolean                                             | No       |                                                                                    |
-| `axisColorMode`     | string                                              | No       | TODO docs Possible values are: `text`, `series`.                                   |
-| `axisGridShow`      | boolean                                             | No       |                                                                                    |
-| `axisLabel`         | string                                              | No       |                                                                                    |
-| `axisPlacement`     | string                                              | No       | TODO docs Possible values are: `auto`, `top`, `right`, `bottom`, `left`, `hidden`. |
-| `axisSoftMax`       | number                                              | No       |                                                                                    |
-| `axisSoftMin`       | number                                              | No       |                                                                                    |
-| `axisWidth`         | number                                              | No       |                                                                                    |
-| `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       | TODO docs                                                                          |
-
-###### ScaleDistributionConfig
-
-TODO docs
-
-**Properties**
-
-| Property          | Type   | Required | Description                                                          |
-|-------------------|--------|----------|----------------------------------------------------------------------|
-| `type`            | string | **Yes**  | TODO docs Possible values are: `linear`, `log`, `ordinal`, `symlog`. |
-| `linearThreshold` | number | No       |                                                                      |
-| `log`             | number | No       |                                                                      |
-
-##### ColorDimensionConfig
-
-This is actually an empty interface used mainly for naming?
-This kind extends: [BaseDimensionConfig](#basedimensionconfig).
-
-###### Properties
-
-| Property | Type   | Required | Description                                                    |
-|----------|--------|----------|----------------------------------------------------------------|
-| `fixed`  |        | **Yes**  | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
-| `field`  | string | No       | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
-
-###### BaseDimensionConfig
-
-**Properties**
-
-| Property | Type   | Required | Description |
-|----------|--------|----------|-------------|
-| `fixed`  |        | **Yes**  |             |
-| `field`  | string | No       |             |
-
-##### ColorDimensionConfig
-
-This is actually an empty interface used mainly for naming?
-This kind extends: [BaseDimensionConfig](#basedimensionconfig).
-
-###### Properties
-
-| Property | Type   | Required | Description                                                    |
-|----------|--------|----------|----------------------------------------------------------------|
-| `fixed`  |        | **Yes**  | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
-| `field`  | string | No       | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
-
-###### BaseDimensionConfig
-
-**Properties**
-
-| Property | Type   | Required | Description |
-|----------|--------|----------|-------------|
-| `fixed`  |        | **Yes**  |             |
-| `field`  | string | No       |             |
-
-##### HideSeriesConfig
-
-*(Inherited from [HideableFieldConfig](#hideablefieldconfig))*
-
-###### Properties
-
-| Property  | Type    | Required | Description |
-|-----------|---------|----------|-------------|
-| `legend`  | boolean | **Yes**  |             |
-| `tooltip` | boolean | **Yes**  |             |
-| `viz`     | boolean | **Yes**  |             |
-
-##### HideableFieldConfig
-
-TODO docs
-
-###### Properties
-
-| Property   | Type                                  | Required | Description |
-|------------|---------------------------------------|----------|-------------|
-| `hideFrom` | [HideSeriesConfig](#hideseriesconfig) | No       | TODO docs   |
-
-###### HideSeriesConfig
-
-TODO docs
-
-**Properties**
-
-| Property  | Type    | Required | Description |
-|-----------|---------|----------|-------------|
-| `legend`  | boolean | **Yes**  |             |
-| `tooltip` | boolean | **Yes**  |             |
-| `viz`     | boolean | **Yes**  |             |
-
-##### LineStyle
-
-TODO docs
-
-###### Properties
-
-| Property | Type     | Required | Description                                            |
-|----------|----------|----------|--------------------------------------------------------|
-| `dash`   | number[] | No       |                                                        |
-| `fill`   | string   | No       | Possible values are: `solid`, `dash`, `dot`, `square`. |
-
-##### ScaleDimensionConfig
-
-
-This kind extends: [BaseDimensionConfig](#basedimensionconfig).
-
-###### Properties
-
-| Property | Type    | Required | Description                                                    |
-|----------|---------|----------|----------------------------------------------------------------|
-| `fixed`  |         | **Yes**  | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
-| `max`    | integer | **Yes**  |                                                                |
-| `min`    | integer | **Yes**  |                                                                |
-| `field`  | string  | No       | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
-
-###### BaseDimensionConfig
-
-**Properties**
-
-| Property | Type   | Required | Description |
-|----------|--------|----------|-------------|
-| `fixed`  |        | **Yes**  |             |
-| `field`  | string | No       |             |
-
-##### ScaleDistributionConfig
-
-*(Inherited from [AxisConfig](#axisconfig))*
-
-###### Properties
-
-| Property          | Type   | Required | Description                                                          |
-|-------------------|--------|----------|----------------------------------------------------------------------|
-| `type`            | string | **Yes**  | TODO docs Possible values are: `linear`, `log`, `ordinal`, `symlog`. |
-| `linearThreshold` | number | No       |                                                                      |
-| `log`             | number | No       |                                                                      |
-
-##### TextDimensionConfig
-
-
-This kind extends: [BaseDimensionConfig](#basedimensionconfig).
-
-###### Properties
-
-| Property | Type   | Required | Description                                                    |
-|----------|--------|----------|----------------------------------------------------------------|
-| `fixed`  |        | **Yes**  | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
-| `mode`   | string | **Yes**  | Possible values are: `fixed`, `field`, `template`.             |
-| `field`  | string | No       | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
-
-###### BaseDimensionConfig
-
-**Properties**
-
-| Property | Type   | Required | Description |
-|----------|--------|----------|-------------|
-| `fixed`  |        | **Yes**  |             |
-| `field`  | string | No       |             |
-
-#### TextDimensionConfig
-
-*(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*
-
-##### Properties
-
-| Property | Type   | Required | Description                                                    |
-|----------|--------|----------|----------------------------------------------------------------|
-| `fixed`  |        | **Yes**  | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
-| `mode`   | string | **Yes**  | Possible values are: `fixed`, `field`, `template`.             |
-| `field`  | string | No       | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
-
-##### BaseDimensionConfig
-
-###### Properties
-
-| Property | Type   | Required | Description |
-|----------|--------|----------|-------------|
-| `fixed`  |        | **Yes**  |             |
-| `field`  | string | No       |             |
-
-### VizLegendOptions
-
-*(Inherited from [OptionsWithLegend](#optionswithlegend))*
-
-#### Properties
-
-| Property      | Type     | Required | Description                                                                                                                         |
-|---------------|----------|----------|-------------------------------------------------------------------------------------------------------------------------------------|
-| `calcs`       | string[] | **Yes**  |                                                                                                                                     |
-| `displayMode` | string   | **Yes**  | TODO docs<br/>Note: "hidden" needs to remain as an option for plugins compatibility Possible values are: `list`, `table`, `hidden`. |
-| `placement`   | string   | **Yes**  | TODO docs Possible values are: `bottom`, `right`.                                                                                   |
-| `showLegend`  | boolean  | **Yes**  |                                                                                                                                     |
-| `asTable`     | boolean  | No       |                                                                                                                                     |
-| `isVisible`   | boolean  | No       |                                                                                                                                     |
-| `sortBy`      | string   | No       |                                                                                                                                     |
-| `sortDesc`    | boolean  | No       |                                                                                                                                     |
-| `width`       | number   | No       |                                                                                                                                     |
-
-### VizTooltipOptions
-
-*(Inherited from [OptionsWithTooltip](#optionswithtooltip))*
-
-#### Properties
-
-| Property | Type   | Required | Description                                               |
-|----------|--------|----------|-----------------------------------------------------------|
-| `mode`   | string | **Yes**  | TODO docs Possible values are: `single`, `multi`, `none`. |
-| `sort`   | string | **Yes**  | TODO docs Possible values are: `asc`, `desc`, `none`.     |
-
-### XYDimensionConfig
-
-#### Properties
-
-| Property  | Type     | Required | Description |
-|-----------|----------|----------|-------------|
-| `frame`   | integer  | **Yes**  |             |
-| `exclude` | string[] | No       |             |
-| `x`       | string   | No       |             |
-
-## ScatterFieldConfig
-
-
-This kind extends: [HideableFieldConfig](#hideablefieldconfig) and [AxisConfig](#axisconfig).
-
-### Properties
-
-| Property            | Type                                                | Required | Description                                                                                                                     |
-|---------------------|-----------------------------------------------------|----------|---------------------------------------------------------------------------------------------------------------------------------|
-| `axisCenteredZero`  | boolean                                             | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                    |
-| `axisColorMode`     | string                                              | No       | *(Inherited from [AxisConfig](#axisconfig))* Possible values are: `text`, `series`.                                             |
-| `axisGridShow`      | boolean                                             | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                    |
-| `axisLabel`         | string                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                    |
-| `axisPlacement`     | string                                              | No       | *(Inherited from [AxisConfig](#axisconfig))* Possible values are: `auto`, `top`, `right`, `bottom`, `left`, `hidden`.           |
-| `axisSoftMax`       | number                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                    |
-| `axisSoftMin`       | number                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                    |
-| `axisWidth`         | number                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                    |
-| `hideFrom`          | [HideSeriesConfig](#hideseriesconfig)               | No       | *(Inherited from [HideableFieldConfig](#hideablefieldconfig))*                                                                  |
-| `labelValue`        | [TextDimensionConfig](#textdimensionconfig)         | No       | This kind extends: [BaseDimensionConfig](#basedimensionconfig).                                                                 |
-| `label`             | string                                              | No       | TODO docs Possible values are: `auto`, `never`, `always`.                                                                       |
-| `lineColor`         | [ColorDimensionConfig](#colordimensionconfig)       | No       | This is actually an empty interface used mainly for naming?<br/>This kind extends: [BaseDimensionConfig](#basedimensionconfig). |
-| `lineStyle`         | [LineStyle](#linestyle)                             | No       | TODO docs                                                                                                                       |
-| `lineWidth`         | integer                                             | No       |                                                                                                                                 |
-| `pointColor`        | [ColorDimensionConfig](#colordimensionconfig)       | No       | This is actually an empty interface used mainly for naming?<br/>This kind extends: [BaseDimensionConfig](#basedimensionconfig). |
-| `pointSize`         | [ScaleDimensionConfig](#scaledimensionconfig)       | No       | This kind extends: [BaseDimensionConfig](#basedimensionconfig).                                                                 |
-| `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                    |
-| `show`              | string                                              | No       | Possible values are: `points`, `lines`, `points+lines`.                                                                         |
-
-### AxisConfig
-
-TODO docs
-
-#### Properties
-
-| Property            | Type                                                | Required | Description                                                                        |
-|---------------------|-----------------------------------------------------|----------|------------------------------------------------------------------------------------|
-| `axisCenteredZero`  | boolean                                             | No       |                                                                                    |
-| `axisColorMode`     | string                                              | No       | TODO docs Possible values are: `text`, `series`.                                   |
-| `axisGridShow`      | boolean                                             | No       |                                                                                    |
-| `axisLabel`         | string                                              | No       |                                                                                    |
-| `axisPlacement`     | string                                              | No       | TODO docs Possible values are: `auto`, `top`, `right`, `bottom`, `left`, `hidden`. |
-| `axisSoftMax`       | number                                              | No       |                                                                                    |
-| `axisSoftMin`       | number                                              | No       |                                                                                    |
-| `axisWidth`         | number                                              | No       |                                                                                    |
-| `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       | TODO docs                                                                          |
-
-#### ScaleDistributionConfig
-
-TODO docs
-
-##### Properties
-
-| Property          | Type   | Required | Description                                                          |
-|-------------------|--------|----------|----------------------------------------------------------------------|
-| `type`            | string | **Yes**  | TODO docs Possible values are: `linear`, `log`, `ordinal`, `symlog`. |
-| `linearThreshold` | number | No       |                                                                      |
-| `log`             | number | No       |                                                                      |
+It extends [ScatterFieldConfig](#scatterfieldconfig).
+
+| Property            | Type                                                | Required | Description                                                                                                                                             |
+|---------------------|-----------------------------------------------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `axisCenteredZero`  | boolean                                             | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                                            |
+| `axisColorMode`     | string                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>TODO docs<br/>Possible values are: `text`, `series`.                                   |
+| `axisGridShow`      | boolean                                             | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                                            |
+| `axisLabel`         | string                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                                            |
+| `axisPlacement`     | string                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>TODO docs<br/>Possible values are: `auto`, `top`, `right`, `bottom`, `left`, `hidden`. |
+| `axisSoftMax`       | number                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                                            |
+| `axisSoftMin`       | number                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                                            |
+| `axisWidth`         | number                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                                            |
+| `hideFrom`          | [HideSeriesConfig](#hideseriesconfig)               | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>TODO docs                                                                              |
+| `labelValue`        | [TextDimensionConfig](#textdimensionconfig)         | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                                            |
+| `label`             | string                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>TODO docs<br/>Possible values are: `auto`, `never`, `always`.                          |
+| `lineColor`         | [ColorDimensionConfig](#colordimensionconfig)       | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>This is actually an empty interface used mainly for naming?                            |
+| `lineStyle`         | [LineStyle](#linestyle)                             | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>TODO docs                                                                              |
+| `lineWidth`         | integer                                             | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                                            |
+| `name`              | string                                              | No       |                                                                                                                                                         |
+| `pointColor`        | [ColorDimensionConfig](#colordimensionconfig)       | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>This is actually an empty interface used mainly for naming?                            |
+| `pointSize`         | [ScaleDimensionConfig](#scaledimensionconfig)       | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                                            |
+| `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>TODO docs                                                                              |
+| `show`              | string                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>Possible values are: `points`, `lines`, `points+lines`.                                |
+| `x`                 | string                                              | No       |                                                                                                                                                         |
+| `y`                 | string                                              | No       |                                                                                                                                                         |
 
 ### ColorDimensionConfig
 
 This is actually an empty interface used mainly for naming?
-This kind extends: [BaseDimensionConfig](#basedimensionconfig).
 
-#### Properties
+It extends [BaseDimensionConfig](#basedimensionconfig).
 
 | Property | Type   | Required | Description                                                    |
 |----------|--------|----------|----------------------------------------------------------------|
 | `fixed`  |        | **Yes**  | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
 | `field`  | string | No       | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
 
-#### BaseDimensionConfig
-
-##### Properties
+### BaseDimensionConfig
 
 | Property | Type   | Required | Description |
 |----------|--------|----------|-------------|
@@ -558,18 +122,15 @@ This kind extends: [BaseDimensionConfig](#basedimensionconfig).
 ### ColorDimensionConfig
 
 This is actually an empty interface used mainly for naming?
-This kind extends: [BaseDimensionConfig](#basedimensionconfig).
 
-#### Properties
+It extends [BaseDimensionConfig](#basedimensionconfig).
 
 | Property | Type   | Required | Description                                                    |
 |----------|--------|----------|----------------------------------------------------------------|
 | `fixed`  |        | **Yes**  | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
 | `field`  | string | No       | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
 
-#### BaseDimensionConfig
-
-##### Properties
+### BaseDimensionConfig
 
 | Property | Type   | Required | Description |
 |----------|--------|----------|-------------|
@@ -578,10 +139,138 @@ This kind extends: [BaseDimensionConfig](#basedimensionconfig).
 
 ### HideSeriesConfig
 
-*(Inherited from [HideableFieldConfig](#hideablefieldconfig))*
+TODO docs
+| Property  | Type    | Required | Description |
+|-----------|---------|----------|-------------|
+| `legend`  | boolean | **Yes**  |             |
+| `tooltip` | boolean | **Yes**  |             |
+| `viz`     | boolean | **Yes**  |             |
 
-#### Properties
+### LineStyle
 
+TODO docs
+| Property | Type     | Required | Description                                            |
+|----------|----------|----------|--------------------------------------------------------|
+| `dash`   | number[] | No       |                                                        |
+| `fill`   | string   | No       | Possible values are: `solid`, `dash`, `dot`, `square`. |
+
+### ScaleDimensionConfig
+
+
+It extends [BaseDimensionConfig](#basedimensionconfig).
+
+| Property | Type    | Required | Description                                                    |
+|----------|---------|----------|----------------------------------------------------------------|
+| `fixed`  |         | **Yes**  | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
+| `max`    | integer | **Yes**  |                                                                |
+| `min`    | integer | **Yes**  |                                                                |
+| `field`  | string  | No       | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
+
+### BaseDimensionConfig
+
+| Property | Type   | Required | Description |
+|----------|--------|----------|-------------|
+| `fixed`  |        | **Yes**  |             |
+| `field`  | string | No       |             |
+
+### ScaleDistributionConfig
+
+TODO docs
+| Property          | Type   | Required | Description                                                              |
+|-------------------|--------|----------|--------------------------------------------------------------------------|
+| `type`            | string | **Yes**  | TODO docs<br/>Possible values are: `linear`, `log`, `ordinal`, `symlog`. |
+| `linearThreshold` | number | No       |                                                                          |
+| `log`             | number | No       |                                                                          |
+
+### ScatterFieldConfig
+
+
+It extends [HideableFieldConfig](#hideablefieldconfig) and [AxisConfig](#axisconfig).
+
+| Property            | Type                                                | Required | Description                                                                                                                             |
+|---------------------|-----------------------------------------------------|----------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| `axisCenteredZero`  | boolean                                             | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
+| `axisColorMode`     | string                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs<br/>Possible values are: `text`, `series`.                                   |
+| `axisGridShow`      | boolean                                             | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
+| `axisLabel`         | string                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
+| `axisPlacement`     | string                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs<br/>Possible values are: `auto`, `top`, `right`, `bottom`, `left`, `hidden`. |
+| `axisSoftMax`       | number                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
+| `axisSoftMin`       | number                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
+| `axisWidth`         | number                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
+| `hideFrom`          | [HideSeriesConfig](#hideseriesconfig)               | No       | *(Inherited from [HideableFieldConfig](#hideablefieldconfig))*<br/>TODO docs                                                            |
+| `labelValue`        | [TextDimensionConfig](#textdimensionconfig)         | No       |                                                                                                                                         |
+| `label`             | string                                              | No       | TODO docs<br/>Possible values are: `auto`, `never`, `always`.                                                                           |
+| `lineColor`         | [ColorDimensionConfig](#colordimensionconfig)       | No       | This is actually an empty interface used mainly for naming?                                                                             |
+| `lineStyle`         | [LineStyle](#linestyle)                             | No       | TODO docs                                                                                                                               |
+| `lineWidth`         | integer                                             | No       |                                                                                                                                         |
+| `pointColor`        | [ColorDimensionConfig](#colordimensionconfig)       | No       | This is actually an empty interface used mainly for naming?                                                                             |
+| `pointSize`         | [ScaleDimensionConfig](#scaledimensionconfig)       | No       |                                                                                                                                         |
+| `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs                                                                              |
+| `show`              | string                                              | No       | Possible values are: `points`, `lines`, `points+lines`.                                                                                 |
+
+### AxisConfig
+
+TODO docs
+| Property            | Type                                                | Required | Description                                                                            |
+|---------------------|-----------------------------------------------------|----------|----------------------------------------------------------------------------------------|
+| `axisCenteredZero`  | boolean                                             | No       |                                                                                        |
+| `axisColorMode`     | string                                              | No       | TODO docs<br/>Possible values are: `text`, `series`.                                   |
+| `axisGridShow`      | boolean                                             | No       |                                                                                        |
+| `axisLabel`         | string                                              | No       |                                                                                        |
+| `axisPlacement`     | string                                              | No       | TODO docs<br/>Possible values are: `auto`, `top`, `right`, `bottom`, `left`, `hidden`. |
+| `axisSoftMax`       | number                                              | No       |                                                                                        |
+| `axisSoftMin`       | number                                              | No       |                                                                                        |
+| `axisWidth`         | number                                              | No       |                                                                                        |
+| `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       | TODO docs                                                                              |
+
+### ScaleDistributionConfig
+
+TODO docs
+| Property          | Type   | Required | Description                                                              |
+|-------------------|--------|----------|--------------------------------------------------------------------------|
+| `type`            | string | **Yes**  | TODO docs<br/>Possible values are: `linear`, `log`, `ordinal`, `symlog`. |
+| `linearThreshold` | number | No       |                                                                          |
+| `log`             | number | No       |                                                                          |
+
+### ColorDimensionConfig
+
+This is actually an empty interface used mainly for naming?
+
+It extends [BaseDimensionConfig](#basedimensionconfig).
+
+| Property | Type   | Required | Description                                                    |
+|----------|--------|----------|----------------------------------------------------------------|
+| `fixed`  |        | **Yes**  | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
+| `field`  | string | No       | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
+
+### BaseDimensionConfig
+
+| Property | Type   | Required | Description |
+|----------|--------|----------|-------------|
+| `fixed`  |        | **Yes**  |             |
+| `field`  | string | No       |             |
+
+### ColorDimensionConfig
+
+This is actually an empty interface used mainly for naming?
+
+It extends [BaseDimensionConfig](#basedimensionconfig).
+
+| Property | Type   | Required | Description                                                    |
+|----------|--------|----------|----------------------------------------------------------------|
+| `fixed`  |        | **Yes**  | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
+| `field`  | string | No       | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
+
+### BaseDimensionConfig
+
+| Property | Type   | Required | Description |
+|----------|--------|----------|-------------|
+| `fixed`  |        | **Yes**  |             |
+| `field`  | string | No       |             |
+
+### HideSeriesConfig
+
+TODO docs
 | Property  | Type    | Required | Description |
 |-----------|---------|----------|-------------|
 | `legend`  | boolean | **Yes**  |             |
@@ -591,19 +280,13 @@ This kind extends: [BaseDimensionConfig](#basedimensionconfig).
 ### HideableFieldConfig
 
 TODO docs
-
-#### Properties
-
 | Property   | Type                                  | Required | Description |
 |------------|---------------------------------------|----------|-------------|
 | `hideFrom` | [HideSeriesConfig](#hideseriesconfig) | No       | TODO docs   |
 
-#### HideSeriesConfig
+### HideSeriesConfig
 
 TODO docs
-
-##### Properties
-
 | Property  | Type    | Required | Description |
 |-----------|---------|----------|-------------|
 | `legend`  | boolean | **Yes**  |             |
@@ -613,9 +296,6 @@ TODO docs
 ### LineStyle
 
 TODO docs
-
-#### Properties
-
 | Property | Type     | Required | Description                                            |
 |----------|----------|----------|--------------------------------------------------------|
 | `dash`   | number[] | No       |                                                        |
@@ -624,9 +304,7 @@ TODO docs
 ### ScaleDimensionConfig
 
 
-This kind extends: [BaseDimensionConfig](#basedimensionconfig).
-
-#### Properties
+It extends [BaseDimensionConfig](#basedimensionconfig).
 
 | Property | Type    | Required | Description                                                    |
 |----------|---------|----------|----------------------------------------------------------------|
@@ -635,9 +313,7 @@ This kind extends: [BaseDimensionConfig](#basedimensionconfig).
 | `min`    | integer | **Yes**  |                                                                |
 | `field`  | string  | No       | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
 
-#### BaseDimensionConfig
-
-##### Properties
+### BaseDimensionConfig
 
 | Property | Type   | Required | Description |
 |----------|--------|----------|-------------|
@@ -646,22 +322,17 @@ This kind extends: [BaseDimensionConfig](#basedimensionconfig).
 
 ### ScaleDistributionConfig
 
-*(Inherited from [AxisConfig](#axisconfig))*
-
-#### Properties
-
-| Property          | Type   | Required | Description                                                          |
-|-------------------|--------|----------|----------------------------------------------------------------------|
-| `type`            | string | **Yes**  | TODO docs Possible values are: `linear`, `log`, `ordinal`, `symlog`. |
-| `linearThreshold` | number | No       |                                                                      |
-| `log`             | number | No       |                                                                      |
+TODO docs
+| Property          | Type   | Required | Description                                                              |
+|-------------------|--------|----------|--------------------------------------------------------------------------|
+| `type`            | string | **Yes**  | TODO docs<br/>Possible values are: `linear`, `log`, `ordinal`, `symlog`. |
+| `linearThreshold` | number | No       |                                                                          |
+| `log`             | number | No       |                                                                          |
 
 ### TextDimensionConfig
 
 
-This kind extends: [BaseDimensionConfig](#basedimensionconfig).
-
-#### Properties
+It extends [BaseDimensionConfig](#basedimensionconfig).
 
 | Property | Type   | Required | Description                                                    |
 |----------|--------|----------|----------------------------------------------------------------|
@@ -669,60 +340,124 @@ This kind extends: [BaseDimensionConfig](#basedimensionconfig).
 | `mode`   | string | **Yes**  | Possible values are: `fixed`, `field`, `template`.             |
 | `field`  | string | No       | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
 
-#### BaseDimensionConfig
-
-##### Properties
+### BaseDimensionConfig
 
 | Property | Type   | Required | Description |
 |----------|--------|----------|-------------|
 | `fixed`  |        | **Yes**  |             |
 | `field`  | string | No       |             |
 
-## ScatterSeriesConfig
+### TextDimensionConfig
 
 
-This kind extends: [ScatterFieldConfig](#scatterfieldconfig).
+It extends [BaseDimensionConfig](#basedimensionconfig).
 
-### Properties
+| Property | Type   | Required | Description                                                    |
+|----------|--------|----------|----------------------------------------------------------------|
+| `fixed`  |        | **Yes**  | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
+| `mode`   | string | **Yes**  | Possible values are: `fixed`, `field`, `template`.             |
+| `field`  | string | No       | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
 
-| Property            | Type                                                | Required | Description                                                                                                                           |
-|---------------------|-----------------------------------------------------|----------|---------------------------------------------------------------------------------------------------------------------------------------|
-| `axisCenteredZero`  | boolean                                             | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                          |
-| `axisColorMode`     | string                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))* Possible values are: `text`, `series`.                                   |
-| `axisGridShow`      | boolean                                             | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                          |
-| `axisLabel`         | string                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                          |
-| `axisPlacement`     | string                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))* Possible values are: `auto`, `top`, `right`, `bottom`, `left`, `hidden`. |
-| `axisSoftMax`       | number                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                          |
-| `axisSoftMin`       | number                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                          |
-| `axisWidth`         | number                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                          |
-| `hideFrom`          | [HideSeriesConfig](#hideseriesconfig)               | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                          |
-| `labelValue`        | [TextDimensionConfig](#textdimensionconfig)         | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                          |
-| `label`             | string                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))* Possible values are: `auto`, `never`, `always`.                          |
-| `lineColor`         | [ColorDimensionConfig](#colordimensionconfig)       | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                          |
-| `lineStyle`         | [LineStyle](#linestyle)                             | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                          |
-| `lineWidth`         | integer                                             | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                          |
-| `name`              | string                                              | No       |                                                                                                                                       |
-| `pointColor`        | [ColorDimensionConfig](#colordimensionconfig)       | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                          |
-| `pointSize`         | [ScaleDimensionConfig](#scaledimensionconfig)       | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                          |
-| `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                          |
-| `show`              | string                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))* Possible values are: `points`, `lines`, `points+lines`.                  |
-| `x`                 | string                                              | No       |                                                                                                                                       |
-| `y`                 | string                                              | No       |                                                                                                                                       |
+### BaseDimensionConfig
+
+| Property | Type   | Required | Description |
+|----------|--------|----------|-------------|
+| `fixed`  |        | **Yes**  |             |
+| `field`  | string | No       |             |
+
+### VizLegendOptions
+
+TODO docs
+| Property      | Type     | Required | Description                                                                                                                             |
+|---------------|----------|----------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| `calcs`       | string[] | **Yes**  |                                                                                                                                         |
+| `displayMode` | string   | **Yes**  | TODO docs<br/>Note: "hidden" needs to remain as an option for plugins compatibility<br/>Possible values are: `list`, `table`, `hidden`. |
+| `placement`   | string   | **Yes**  | TODO docs<br/>Possible values are: `bottom`, `right`.                                                                                   |
+| `showLegend`  | boolean  | **Yes**  |                                                                                                                                         |
+| `asTable`     | boolean  | No       |                                                                                                                                         |
+| `isVisible`   | boolean  | No       |                                                                                                                                         |
+| `sortBy`      | string   | No       |                                                                                                                                         |
+| `sortDesc`    | boolean  | No       |                                                                                                                                         |
+| `width`       | number   | No       |                                                                                                                                         |
+
+### VizTooltipOptions
+
+TODO docs
+| Property | Type   | Required | Description                                                   |
+|----------|--------|----------|---------------------------------------------------------------|
+| `mode`   | string | **Yes**  | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
+| `sort`   | string | **Yes**  | TODO docs<br/>Possible values are: `asc`, `desc`, `none`.     |
+
+### XYDimensionConfig
+
+| Property  | Type     | Required | Description |
+|-----------|----------|----------|-------------|
+| `frame`   | integer  | **Yes**  |             |
+| `exclude` | string[] | No       |             |
+| `x`       | string   | No       |             |
+
+### ScatterFieldConfig
+
+
+It extends [HideableFieldConfig](#hideablefieldconfig) and [AxisConfig](#axisconfig).
+
+| Property            | Type                                                | Required | Description                                                                                                                             |
+|---------------------|-----------------------------------------------------|----------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| `axisCenteredZero`  | boolean                                             | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
+| `axisColorMode`     | string                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs<br/>Possible values are: `text`, `series`.                                   |
+| `axisGridShow`      | boolean                                             | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
+| `axisLabel`         | string                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
+| `axisPlacement`     | string                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs<br/>Possible values are: `auto`, `top`, `right`, `bottom`, `left`, `hidden`. |
+| `axisSoftMax`       | number                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
+| `axisSoftMin`       | number                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
+| `axisWidth`         | number                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
+| `hideFrom`          | [HideSeriesConfig](#hideseriesconfig)               | No       | *(Inherited from [HideableFieldConfig](#hideablefieldconfig))*<br/>TODO docs                                                            |
+| `labelValue`        | [TextDimensionConfig](#textdimensionconfig)         | No       |                                                                                                                                         |
+| `label`             | string                                              | No       | TODO docs<br/>Possible values are: `auto`, `never`, `always`.                                                                           |
+| `lineColor`         | [ColorDimensionConfig](#colordimensionconfig)       | No       | This is actually an empty interface used mainly for naming?                                                                             |
+| `lineStyle`         | [LineStyle](#linestyle)                             | No       | TODO docs                                                                                                                               |
+| `lineWidth`         | integer                                             | No       |                                                                                                                                         |
+| `pointColor`        | [ColorDimensionConfig](#colordimensionconfig)       | No       | This is actually an empty interface used mainly for naming?                                                                             |
+| `pointSize`         | [ScaleDimensionConfig](#scaledimensionconfig)       | No       |                                                                                                                                         |
+| `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs                                                                              |
+| `show`              | string                                              | No       | Possible values are: `points`, `lines`, `points+lines`.                                                                                 |
+
+### AxisConfig
+
+TODO docs
+| Property            | Type                                                | Required | Description                                                                            |
+|---------------------|-----------------------------------------------------|----------|----------------------------------------------------------------------------------------|
+| `axisCenteredZero`  | boolean                                             | No       |                                                                                        |
+| `axisColorMode`     | string                                              | No       | TODO docs<br/>Possible values are: `text`, `series`.                                   |
+| `axisGridShow`      | boolean                                             | No       |                                                                                        |
+| `axisLabel`         | string                                              | No       |                                                                                        |
+| `axisPlacement`     | string                                              | No       | TODO docs<br/>Possible values are: `auto`, `top`, `right`, `bottom`, `left`, `hidden`. |
+| `axisSoftMax`       | number                                              | No       |                                                                                        |
+| `axisSoftMin`       | number                                              | No       |                                                                                        |
+| `axisWidth`         | number                                              | No       |                                                                                        |
+| `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       | TODO docs                                                                              |
+
+### ScaleDistributionConfig
+
+TODO docs
+| Property          | Type   | Required | Description                                                              |
+|-------------------|--------|----------|--------------------------------------------------------------------------|
+| `type`            | string | **Yes**  | TODO docs<br/>Possible values are: `linear`, `log`, `ordinal`, `symlog`. |
+| `linearThreshold` | number | No       |                                                                          |
+| `log`             | number | No       |                                                                          |
 
 ### ColorDimensionConfig
 
-*(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*
+This is actually an empty interface used mainly for naming?
 
-#### Properties
+It extends [BaseDimensionConfig](#basedimensionconfig).
 
 | Property | Type   | Required | Description                                                    |
 |----------|--------|----------|----------------------------------------------------------------|
 | `fixed`  |        | **Yes**  | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
 | `field`  | string | No       | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
 
-#### BaseDimensionConfig
-
-##### Properties
+### BaseDimensionConfig
 
 | Property | Type   | Required | Description |
 |----------|--------|----------|-------------|
@@ -731,18 +466,16 @@ This kind extends: [ScatterFieldConfig](#scatterfieldconfig).
 
 ### ColorDimensionConfig
 
-*(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*
+This is actually an empty interface used mainly for naming?
 
-#### Properties
+It extends [BaseDimensionConfig](#basedimensionconfig).
 
 | Property | Type   | Required | Description                                                    |
 |----------|--------|----------|----------------------------------------------------------------|
 | `fixed`  |        | **Yes**  | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
 | `field`  | string | No       | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
 
-#### BaseDimensionConfig
-
-##### Properties
+### BaseDimensionConfig
 
 | Property | Type   | Required | Description |
 |----------|--------|----------|-------------|
@@ -751,10 +484,23 @@ This kind extends: [ScatterFieldConfig](#scatterfieldconfig).
 
 ### HideSeriesConfig
 
-*(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*
+TODO docs
+| Property  | Type    | Required | Description |
+|-----------|---------|----------|-------------|
+| `legend`  | boolean | **Yes**  |             |
+| `tooltip` | boolean | **Yes**  |             |
+| `viz`     | boolean | **Yes**  |             |
 
-#### Properties
+### HideableFieldConfig
 
+TODO docs
+| Property   | Type                                  | Required | Description |
+|------------|---------------------------------------|----------|-------------|
+| `hideFrom` | [HideSeriesConfig](#hideseriesconfig) | No       | TODO docs   |
+
+### HideSeriesConfig
+
+TODO docs
 | Property  | Type    | Required | Description |
 |-----------|---------|----------|-------------|
 | `legend`  | boolean | **Yes**  |             |
@@ -763,10 +509,7 @@ This kind extends: [ScatterFieldConfig](#scatterfieldconfig).
 
 ### LineStyle
 
-*(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*
-
-#### Properties
-
+TODO docs
 | Property | Type     | Required | Description                                            |
 |----------|----------|----------|--------------------------------------------------------|
 | `dash`   | number[] | No       |                                                        |
@@ -774,9 +517,8 @@ This kind extends: [ScatterFieldConfig](#scatterfieldconfig).
 
 ### ScaleDimensionConfig
 
-*(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*
 
-#### Properties
+It extends [BaseDimensionConfig](#basedimensionconfig).
 
 | Property | Type    | Required | Description                                                    |
 |----------|---------|----------|----------------------------------------------------------------|
@@ -785,9 +527,7 @@ This kind extends: [ScatterFieldConfig](#scatterfieldconfig).
 | `min`    | integer | **Yes**  |                                                                |
 | `field`  | string  | No       | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
 
-#### BaseDimensionConfig
-
-##### Properties
+### BaseDimensionConfig
 
 | Property | Type   | Required | Description |
 |----------|--------|----------|-------------|
@@ -796,167 +536,117 @@ This kind extends: [ScatterFieldConfig](#scatterfieldconfig).
 
 ### ScaleDistributionConfig
 
-*(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*
-
-#### Properties
-
-| Property          | Type   | Required | Description                                                          |
-|-------------------|--------|----------|----------------------------------------------------------------------|
-| `type`            | string | **Yes**  | TODO docs Possible values are: `linear`, `log`, `ordinal`, `symlog`. |
-| `linearThreshold` | number | No       |                                                                      |
-| `log`             | number | No       |                                                                      |
-
-### ScatterFieldConfig
-
-
-This kind extends: [HideableFieldConfig](#hideablefieldconfig) and [AxisConfig](#axisconfig).
-
-#### Properties
-
-| Property            | Type                                                | Required | Description                                                                                                                     |
-|---------------------|-----------------------------------------------------|----------|---------------------------------------------------------------------------------------------------------------------------------|
-| `axisCenteredZero`  | boolean                                             | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                    |
-| `axisColorMode`     | string                                              | No       | *(Inherited from [AxisConfig](#axisconfig))* Possible values are: `text`, `series`.                                             |
-| `axisGridShow`      | boolean                                             | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                    |
-| `axisLabel`         | string                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                    |
-| `axisPlacement`     | string                                              | No       | *(Inherited from [AxisConfig](#axisconfig))* Possible values are: `auto`, `top`, `right`, `bottom`, `left`, `hidden`.           |
-| `axisSoftMax`       | number                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                    |
-| `axisSoftMin`       | number                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                    |
-| `axisWidth`         | number                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                    |
-| `hideFrom`          | [HideSeriesConfig](#hideseriesconfig)               | No       | *(Inherited from [HideableFieldConfig](#hideablefieldconfig))*                                                                  |
-| `labelValue`        | [TextDimensionConfig](#textdimensionconfig)         | No       | This kind extends: [BaseDimensionConfig](#basedimensionconfig).                                                                 |
-| `label`             | string                                              | No       | TODO docs Possible values are: `auto`, `never`, `always`.                                                                       |
-| `lineColor`         | [ColorDimensionConfig](#colordimensionconfig)       | No       | This is actually an empty interface used mainly for naming?<br/>This kind extends: [BaseDimensionConfig](#basedimensionconfig). |
-| `lineStyle`         | [LineStyle](#linestyle)                             | No       | TODO docs                                                                                                                       |
-| `lineWidth`         | integer                                             | No       |                                                                                                                                 |
-| `pointColor`        | [ColorDimensionConfig](#colordimensionconfig)       | No       | This is actually an empty interface used mainly for naming?<br/>This kind extends: [BaseDimensionConfig](#basedimensionconfig). |
-| `pointSize`         | [ScaleDimensionConfig](#scaledimensionconfig)       | No       | This kind extends: [BaseDimensionConfig](#basedimensionconfig).                                                                 |
-| `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                    |
-| `show`              | string                                              | No       | Possible values are: `points`, `lines`, `points+lines`.                                                                         |
-
-#### AxisConfig
-
 TODO docs
+| Property          | Type   | Required | Description                                                              |
+|-------------------|--------|----------|--------------------------------------------------------------------------|
+| `type`            | string | **Yes**  | TODO docs<br/>Possible values are: `linear`, `log`, `ordinal`, `symlog`. |
+| `linearThreshold` | number | No       |                                                                          |
+| `log`             | number | No       |                                                                          |
 
-##### Properties
+### TextDimensionConfig
 
-| Property            | Type                                                | Required | Description                                                                        |
-|---------------------|-----------------------------------------------------|----------|------------------------------------------------------------------------------------|
-| `axisCenteredZero`  | boolean                                             | No       |                                                                                    |
-| `axisColorMode`     | string                                              | No       | TODO docs Possible values are: `text`, `series`.                                   |
-| `axisGridShow`      | boolean                                             | No       |                                                                                    |
-| `axisLabel`         | string                                              | No       |                                                                                    |
-| `axisPlacement`     | string                                              | No       | TODO docs Possible values are: `auto`, `top`, `right`, `bottom`, `left`, `hidden`. |
-| `axisSoftMax`       | number                                              | No       |                                                                                    |
-| `axisSoftMin`       | number                                              | No       |                                                                                    |
-| `axisWidth`         | number                                              | No       |                                                                                    |
-| `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       | TODO docs                                                                          |
 
-##### ScaleDistributionConfig
-
-TODO docs
-
-###### Properties
-
-| Property          | Type   | Required | Description                                                          |
-|-------------------|--------|----------|----------------------------------------------------------------------|
-| `type`            | string | **Yes**  | TODO docs Possible values are: `linear`, `log`, `ordinal`, `symlog`. |
-| `linearThreshold` | number | No       |                                                                      |
-| `log`             | number | No       |                                                                      |
-
-#### ColorDimensionConfig
-
-This is actually an empty interface used mainly for naming?
-This kind extends: [BaseDimensionConfig](#basedimensionconfig).
-
-##### Properties
+It extends [BaseDimensionConfig](#basedimensionconfig).
 
 | Property | Type   | Required | Description                                                    |
 |----------|--------|----------|----------------------------------------------------------------|
 | `fixed`  |        | **Yes**  | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
+| `mode`   | string | **Yes**  | Possible values are: `fixed`, `field`, `template`.             |
 | `field`  | string | No       | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
 
-##### BaseDimensionConfig
-
-###### Properties
+### BaseDimensionConfig
 
 | Property | Type   | Required | Description |
 |----------|--------|----------|-------------|
 | `fixed`  |        | **Yes**  |             |
 | `field`  | string | No       |             |
 
-#### ColorDimensionConfig
+### ScatterSeriesConfig
+
+
+It extends [ScatterFieldConfig](#scatterfieldconfig).
+
+| Property            | Type                                                | Required | Description                                                                                                                                             |
+|---------------------|-----------------------------------------------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `axisCenteredZero`  | boolean                                             | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                                            |
+| `axisColorMode`     | string                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>TODO docs<br/>Possible values are: `text`, `series`.                                   |
+| `axisGridShow`      | boolean                                             | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                                            |
+| `axisLabel`         | string                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                                            |
+| `axisPlacement`     | string                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>TODO docs<br/>Possible values are: `auto`, `top`, `right`, `bottom`, `left`, `hidden`. |
+| `axisSoftMax`       | number                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                                            |
+| `axisSoftMin`       | number                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                                            |
+| `axisWidth`         | number                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                                            |
+| `hideFrom`          | [HideSeriesConfig](#hideseriesconfig)               | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>TODO docs                                                                              |
+| `labelValue`        | [TextDimensionConfig](#textdimensionconfig)         | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                                            |
+| `label`             | string                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>TODO docs<br/>Possible values are: `auto`, `never`, `always`.                          |
+| `lineColor`         | [ColorDimensionConfig](#colordimensionconfig)       | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>This is actually an empty interface used mainly for naming?                            |
+| `lineStyle`         | [LineStyle](#linestyle)                             | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>TODO docs                                                                              |
+| `lineWidth`         | integer                                             | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                                            |
+| `name`              | string                                              | No       |                                                                                                                                                         |
+| `pointColor`        | [ColorDimensionConfig](#colordimensionconfig)       | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>This is actually an empty interface used mainly for naming?                            |
+| `pointSize`         | [ScaleDimensionConfig](#scaledimensionconfig)       | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                                            |
+| `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>TODO docs                                                                              |
+| `show`              | string                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>Possible values are: `points`, `lines`, `points+lines`.                                |
+| `x`                 | string                                              | No       |                                                                                                                                                         |
+| `y`                 | string                                              | No       |                                                                                                                                                         |
+
+### ColorDimensionConfig
 
 This is actually an empty interface used mainly for naming?
-This kind extends: [BaseDimensionConfig](#basedimensionconfig).
 
-##### Properties
+It extends [BaseDimensionConfig](#basedimensionconfig).
 
 | Property | Type   | Required | Description                                                    |
 |----------|--------|----------|----------------------------------------------------------------|
 | `fixed`  |        | **Yes**  | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
 | `field`  | string | No       | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
 
-##### BaseDimensionConfig
-
-###### Properties
+### BaseDimensionConfig
 
 | Property | Type   | Required | Description |
 |----------|--------|----------|-------------|
 | `fixed`  |        | **Yes**  |             |
 | `field`  | string | No       |             |
 
-#### HideSeriesConfig
+### ColorDimensionConfig
 
-*(Inherited from [HideableFieldConfig](#hideablefieldconfig))*
+This is actually an empty interface used mainly for naming?
 
-##### Properties
+It extends [BaseDimensionConfig](#basedimensionconfig).
 
+| Property | Type   | Required | Description                                                    |
+|----------|--------|----------|----------------------------------------------------------------|
+| `fixed`  |        | **Yes**  | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
+| `field`  | string | No       | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
+
+### BaseDimensionConfig
+
+| Property | Type   | Required | Description |
+|----------|--------|----------|-------------|
+| `fixed`  |        | **Yes**  |             |
+| `field`  | string | No       |             |
+
+### HideSeriesConfig
+
+TODO docs
 | Property  | Type    | Required | Description |
 |-----------|---------|----------|-------------|
 | `legend`  | boolean | **Yes**  |             |
 | `tooltip` | boolean | **Yes**  |             |
 | `viz`     | boolean | **Yes**  |             |
 
-#### HideableFieldConfig
+### LineStyle
 
 TODO docs
-
-##### Properties
-
-| Property   | Type                                  | Required | Description |
-|------------|---------------------------------------|----------|-------------|
-| `hideFrom` | [HideSeriesConfig](#hideseriesconfig) | No       | TODO docs   |
-
-##### HideSeriesConfig
-
-TODO docs
-
-###### Properties
-
-| Property  | Type    | Required | Description |
-|-----------|---------|----------|-------------|
-| `legend`  | boolean | **Yes**  |             |
-| `tooltip` | boolean | **Yes**  |             |
-| `viz`     | boolean | **Yes**  |             |
-
-#### LineStyle
-
-TODO docs
-
-##### Properties
-
 | Property | Type     | Required | Description                                            |
 |----------|----------|----------|--------------------------------------------------------|
 | `dash`   | number[] | No       |                                                        |
 | `fill`   | string   | No       | Possible values are: `solid`, `dash`, `dot`, `square`. |
 
-#### ScaleDimensionConfig
+### ScaleDimensionConfig
 
 
-This kind extends: [BaseDimensionConfig](#basedimensionconfig).
-
-##### Properties
+It extends [BaseDimensionConfig](#basedimensionconfig).
 
 | Property | Type    | Required | Description                                                    |
 |----------|---------|----------|----------------------------------------------------------------|
@@ -965,33 +655,173 @@ This kind extends: [BaseDimensionConfig](#basedimensionconfig).
 | `min`    | integer | **Yes**  |                                                                |
 | `field`  | string  | No       | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
 
-##### BaseDimensionConfig
-
-###### Properties
+### BaseDimensionConfig
 
 | Property | Type   | Required | Description |
 |----------|--------|----------|-------------|
 | `fixed`  |        | **Yes**  |             |
 | `field`  | string | No       |             |
 
-#### ScaleDistributionConfig
+### ScaleDistributionConfig
 
-*(Inherited from [AxisConfig](#axisconfig))*
+TODO docs
+| Property          | Type   | Required | Description                                                              |
+|-------------------|--------|----------|--------------------------------------------------------------------------|
+| `type`            | string | **Yes**  | TODO docs<br/>Possible values are: `linear`, `log`, `ordinal`, `symlog`. |
+| `linearThreshold` | number | No       |                                                                          |
+| `log`             | number | No       |                                                                          |
 
-##### Properties
-
-| Property          | Type   | Required | Description                                                          |
-|-------------------|--------|----------|----------------------------------------------------------------------|
-| `type`            | string | **Yes**  | TODO docs Possible values are: `linear`, `log`, `ordinal`, `symlog`. |
-| `linearThreshold` | number | No       |                                                                      |
-| `log`             | number | No       |                                                                      |
-
-#### TextDimensionConfig
+### ScatterFieldConfig
 
 
-This kind extends: [BaseDimensionConfig](#basedimensionconfig).
+It extends [HideableFieldConfig](#hideablefieldconfig) and [AxisConfig](#axisconfig).
 
-##### Properties
+| Property            | Type                                                | Required | Description                                                                                                                             |
+|---------------------|-----------------------------------------------------|----------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| `axisCenteredZero`  | boolean                                             | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
+| `axisColorMode`     | string                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs<br/>Possible values are: `text`, `series`.                                   |
+| `axisGridShow`      | boolean                                             | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
+| `axisLabel`         | string                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
+| `axisPlacement`     | string                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs<br/>Possible values are: `auto`, `top`, `right`, `bottom`, `left`, `hidden`. |
+| `axisSoftMax`       | number                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
+| `axisSoftMin`       | number                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
+| `axisWidth`         | number                                              | No       | *(Inherited from [AxisConfig](#axisconfig))*                                                                                            |
+| `hideFrom`          | [HideSeriesConfig](#hideseriesconfig)               | No       | *(Inherited from [HideableFieldConfig](#hideablefieldconfig))*<br/>TODO docs                                                            |
+| `labelValue`        | [TextDimensionConfig](#textdimensionconfig)         | No       |                                                                                                                                         |
+| `label`             | string                                              | No       | TODO docs<br/>Possible values are: `auto`, `never`, `always`.                                                                           |
+| `lineColor`         | [ColorDimensionConfig](#colordimensionconfig)       | No       | This is actually an empty interface used mainly for naming?                                                                             |
+| `lineStyle`         | [LineStyle](#linestyle)                             | No       | TODO docs                                                                                                                               |
+| `lineWidth`         | integer                                             | No       |                                                                                                                                         |
+| `pointColor`        | [ColorDimensionConfig](#colordimensionconfig)       | No       | This is actually an empty interface used mainly for naming?                                                                             |
+| `pointSize`         | [ScaleDimensionConfig](#scaledimensionconfig)       | No       |                                                                                                                                         |
+| `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs                                                                              |
+| `show`              | string                                              | No       | Possible values are: `points`, `lines`, `points+lines`.                                                                                 |
+
+### AxisConfig
+
+TODO docs
+| Property            | Type                                                | Required | Description                                                                            |
+|---------------------|-----------------------------------------------------|----------|----------------------------------------------------------------------------------------|
+| `axisCenteredZero`  | boolean                                             | No       |                                                                                        |
+| `axisColorMode`     | string                                              | No       | TODO docs<br/>Possible values are: `text`, `series`.                                   |
+| `axisGridShow`      | boolean                                             | No       |                                                                                        |
+| `axisLabel`         | string                                              | No       |                                                                                        |
+| `axisPlacement`     | string                                              | No       | TODO docs<br/>Possible values are: `auto`, `top`, `right`, `bottom`, `left`, `hidden`. |
+| `axisSoftMax`       | number                                              | No       |                                                                                        |
+| `axisSoftMin`       | number                                              | No       |                                                                                        |
+| `axisWidth`         | number                                              | No       |                                                                                        |
+| `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       | TODO docs                                                                              |
+
+### ScaleDistributionConfig
+
+TODO docs
+| Property          | Type   | Required | Description                                                              |
+|-------------------|--------|----------|--------------------------------------------------------------------------|
+| `type`            | string | **Yes**  | TODO docs<br/>Possible values are: `linear`, `log`, `ordinal`, `symlog`. |
+| `linearThreshold` | number | No       |                                                                          |
+| `log`             | number | No       |                                                                          |
+
+### ColorDimensionConfig
+
+This is actually an empty interface used mainly for naming?
+
+It extends [BaseDimensionConfig](#basedimensionconfig).
+
+| Property | Type   | Required | Description                                                    |
+|----------|--------|----------|----------------------------------------------------------------|
+| `fixed`  |        | **Yes**  | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
+| `field`  | string | No       | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
+
+### BaseDimensionConfig
+
+| Property | Type   | Required | Description |
+|----------|--------|----------|-------------|
+| `fixed`  |        | **Yes**  |             |
+| `field`  | string | No       |             |
+
+### ColorDimensionConfig
+
+This is actually an empty interface used mainly for naming?
+
+It extends [BaseDimensionConfig](#basedimensionconfig).
+
+| Property | Type   | Required | Description                                                    |
+|----------|--------|----------|----------------------------------------------------------------|
+| `fixed`  |        | **Yes**  | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
+| `field`  | string | No       | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
+
+### BaseDimensionConfig
+
+| Property | Type   | Required | Description |
+|----------|--------|----------|-------------|
+| `fixed`  |        | **Yes**  |             |
+| `field`  | string | No       |             |
+
+### HideSeriesConfig
+
+TODO docs
+| Property  | Type    | Required | Description |
+|-----------|---------|----------|-------------|
+| `legend`  | boolean | **Yes**  |             |
+| `tooltip` | boolean | **Yes**  |             |
+| `viz`     | boolean | **Yes**  |             |
+
+### HideableFieldConfig
+
+TODO docs
+| Property   | Type                                  | Required | Description |
+|------------|---------------------------------------|----------|-------------|
+| `hideFrom` | [HideSeriesConfig](#hideseriesconfig) | No       | TODO docs   |
+
+### HideSeriesConfig
+
+TODO docs
+| Property  | Type    | Required | Description |
+|-----------|---------|----------|-------------|
+| `legend`  | boolean | **Yes**  |             |
+| `tooltip` | boolean | **Yes**  |             |
+| `viz`     | boolean | **Yes**  |             |
+
+### LineStyle
+
+TODO docs
+| Property | Type     | Required | Description                                            |
+|----------|----------|----------|--------------------------------------------------------|
+| `dash`   | number[] | No       |                                                        |
+| `fill`   | string   | No       | Possible values are: `solid`, `dash`, `dot`, `square`. |
+
+### ScaleDimensionConfig
+
+
+It extends [BaseDimensionConfig](#basedimensionconfig).
+
+| Property | Type    | Required | Description                                                    |
+|----------|---------|----------|----------------------------------------------------------------|
+| `fixed`  |         | **Yes**  | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
+| `max`    | integer | **Yes**  |                                                                |
+| `min`    | integer | **Yes**  |                                                                |
+| `field`  | string  | No       | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
+
+### BaseDimensionConfig
+
+| Property | Type   | Required | Description |
+|----------|--------|----------|-------------|
+| `fixed`  |        | **Yes**  |             |
+| `field`  | string | No       |             |
+
+### ScaleDistributionConfig
+
+TODO docs
+| Property          | Type   | Required | Description                                                              |
+|-------------------|--------|----------|--------------------------------------------------------------------------|
+| `type`            | string | **Yes**  | TODO docs<br/>Possible values are: `linear`, `log`, `ordinal`, `symlog`. |
+| `linearThreshold` | number | No       |                                                                          |
+| `log`             | number | No       |                                                                          |
+
+### TextDimensionConfig
+
+
+It extends [BaseDimensionConfig](#basedimensionconfig).
 
 | Property | Type   | Required | Description                                                    |
 |----------|--------|----------|----------------------------------------------------------------|
@@ -999,9 +829,7 @@ This kind extends: [BaseDimensionConfig](#basedimensionconfig).
 | `mode`   | string | **Yes**  | Possible values are: `fixed`, `field`, `template`.             |
 | `field`  | string | No       | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
 
-##### BaseDimensionConfig
-
-###### Properties
+### BaseDimensionConfig
 
 | Property | Type   | Required | Description |
 |----------|--------|----------|-------------|
@@ -1010,9 +838,8 @@ This kind extends: [BaseDimensionConfig](#basedimensionconfig).
 
 ### TextDimensionConfig
 
-*(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*
 
-#### Properties
+It extends [BaseDimensionConfig](#basedimensionconfig).
 
 | Property | Type   | Required | Description                                                    |
 |----------|--------|----------|----------------------------------------------------------------|
@@ -1020,18 +847,14 @@ This kind extends: [BaseDimensionConfig](#basedimensionconfig).
 | `mode`   | string | **Yes**  | Possible values are: `fixed`, `field`, `template`.             |
 | `field`  | string | No       | *(Inherited from [BaseDimensionConfig](#basedimensionconfig))* |
 
-#### BaseDimensionConfig
-
-##### Properties
+### BaseDimensionConfig
 
 | Property | Type   | Required | Description |
 |----------|--------|----------|-------------|
 | `fixed`  |        | **Yes**  |             |
 | `field`  | string | No       |             |
 
-## XYDimensionConfig
-
-### Properties
+### XYDimensionConfig
 
 | Property  | Type     | Required | Description |
 |-----------|----------|----------|-------------|

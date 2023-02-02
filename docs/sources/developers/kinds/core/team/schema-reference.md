@@ -6,12 +6,12 @@ title: Team kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
-# Team kind
+## Team
 
-## Maturity: merged
-## Version: 0.0
+#### Maturity: merged
+#### Version: 0.0
 
-## Properties
+A team is a named grouping of Grafana users to which access control rules may be assigned.
 
 | Property        | Type                     | Required | Description                                              |
 |-----------------|--------------------------|----------|----------------------------------------------------------|
@@ -25,10 +25,9 @@ title: Team kind
 | `avatarUrl`     | string                   | No       | AvatarUrl is the team's avatar URL.                      |
 | `email`         | string                   | No       | Email of the team.                                       |
 
-## accessControl
+### AccessControl
 
 AccessControl metadata associated with a given resource.
-
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
 

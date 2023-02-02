@@ -6,38 +6,33 @@ title: GaugePanelCfg kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
-# GaugePanelCfg kind
+## GaugePanelCfg
 
-## Maturity: experimental
-## Version: 0.0
-
-## Properties
-
-| Property       | Type                    | Required | Description                                                         |
-|----------------|-------------------------|----------|---------------------------------------------------------------------|
-| `PanelOptions` | [object](#paneloptions) | **Yes**  | This kind extends: [SingleStatBaseOptions](#singlestatbaseoptions). |
-
-## PanelOptions
+#### Maturity: experimental
+#### Version: 0.0
 
 
-This kind extends: [SingleStatBaseOptions](#singlestatbaseoptions).
 
-### Properties
+| Property       | Type                    | Required | Description |
+|----------------|-------------------------|----------|-------------|
+| `PanelOptions` | [object](#paneloptions) | **Yes**  |             |
 
-| Property               | Type                                            | Required | Description                                                                                                               |
-|------------------------|-------------------------------------------------|----------|---------------------------------------------------------------------------------------------------------------------------|
-| `showThresholdLabels`  | boolean                                         | **Yes**  | Default: `false`.                                                                                                         |
-| `showThresholdMarkers` | boolean                                         | **Yes**  | Default: `true`.                                                                                                          |
-| `orientation`          | string                                          | No       | *(Inherited from [SingleStatBaseOptions](#singlestatbaseoptions))* Possible values are: `auto`, `vertical`, `horizontal`. |
-| `reduceOptions`        | [ReduceDataOptions](#reducedataoptions)         | No       | *(Inherited from [SingleStatBaseOptions](#singlestatbaseoptions))*                                                        |
-| `text`                 | [VizTextDisplayOptions](#viztextdisplayoptions) | No       | *(Inherited from [SingleStatBaseOptions](#singlestatbaseoptions))*                                                        |
+### PanelOptions
+
+
+It extends [SingleStatBaseOptions](#singlestatbaseoptions).
+
+| Property               | Type                                            | Required | Description                                                                                                                                 |
+|------------------------|-------------------------------------------------|----------|---------------------------------------------------------------------------------------------------------------------------------------------|
+| `showThresholdLabels`  | boolean                                         | **Yes**  | Default: `false`.                                                                                                                           |
+| `showThresholdMarkers` | boolean                                         | **Yes**  | Default: `true`.                                                                                                                            |
+| `orientation`          | string                                          | No       | *(Inherited from [SingleStatBaseOptions](#singlestatbaseoptions))*<br/>TODO docs<br/>Possible values are: `auto`, `vertical`, `horizontal`. |
+| `reduceOptions`        | [ReduceDataOptions](#reducedataoptions)         | No       | *(Inherited from [SingleStatBaseOptions](#singlestatbaseoptions))*<br/>TODO docs                                                            |
+| `text`                 | [VizTextDisplayOptions](#viztextdisplayoptions) | No       | *(Inherited from [SingleStatBaseOptions](#singlestatbaseoptions))*<br/>TODO docs                                                            |
 
 ### ReduceDataOptions
 
-*(Inherited from [SingleStatBaseOptions](#singlestatbaseoptions))*
-
-#### Properties
-
+TODO docs
 | Property | Type     | Required | Description                                                   |
 |----------|----------|----------|---------------------------------------------------------------|
 | `calcs`  | string[] | **Yes**  | When !values, pick one value for the whole field              |
@@ -48,43 +43,33 @@ This kind extends: [SingleStatBaseOptions](#singlestatbaseoptions).
 ### SingleStatBaseOptions
 
 TODO docs
-This kind extends: [OptionsWithTextFormatting](#optionswithtextformatting).
 
-#### Properties
+It extends [OptionsWithTextFormatting](#optionswithtextformatting).
 
-| Property        | Type                                            | Required | Description                                                                |
-|-----------------|-------------------------------------------------|----------|----------------------------------------------------------------------------|
-| `orientation`   | string                                          | **Yes**  | TODO docs Possible values are: `auto`, `vertical`, `horizontal`.           |
-| `reduceOptions` | [ReduceDataOptions](#reducedataoptions)         | **Yes**  | TODO docs                                                                  |
-| `text`          | [VizTextDisplayOptions](#viztextdisplayoptions) | No       | *(Inherited from [OptionsWithTextFormatting](#optionswithtextformatting))* |
+| Property        | Type                                            | Required | Description                                                                              |
+|-----------------|-------------------------------------------------|----------|------------------------------------------------------------------------------------------|
+| `orientation`   | string                                          | **Yes**  | TODO docs<br/>Possible values are: `auto`, `vertical`, `horizontal`.                     |
+| `reduceOptions` | [ReduceDataOptions](#reducedataoptions)         | **Yes**  | TODO docs                                                                                |
+| `text`          | [VizTextDisplayOptions](#viztextdisplayoptions) | No       | *(Inherited from [OptionsWithTextFormatting](#optionswithtextformatting))*<br/>TODO docs |
 
-#### OptionsWithTextFormatting
+### OptionsWithTextFormatting
 
 TODO docs
-
-##### Properties
-
 | Property | Type                                            | Required | Description |
 |----------|-------------------------------------------------|----------|-------------|
 | `text`   | [VizTextDisplayOptions](#viztextdisplayoptions) | No       | TODO docs   |
 
-##### VizTextDisplayOptions
+### VizTextDisplayOptions
 
 TODO docs
-
-###### Properties
-
 | Property    | Type   | Required | Description              |
 |-------------|--------|----------|--------------------------|
 | `titleSize` | number | No       | Explicit title text size |
 | `valueSize` | number | No       | Explicit value text size |
 
-#### ReduceDataOptions
+### ReduceDataOptions
 
 TODO docs
-
-##### Properties
-
 | Property | Type     | Required | Description                                                   |
 |----------|----------|----------|---------------------------------------------------------------|
 | `calcs`  | string[] | **Yes**  | When !values, pick one value for the whole field              |
@@ -92,12 +77,9 @@ TODO docs
 | `limit`  | number   | No       | if showing all values limit                                   |
 | `values` | boolean  | No       | If true show each row value                                   |
 
-#### VizTextDisplayOptions
+### VizTextDisplayOptions
 
-*(Inherited from [OptionsWithTextFormatting](#optionswithtextformatting))*
-
-##### Properties
-
+TODO docs
 | Property    | Type   | Required | Description              |
 |-------------|--------|----------|--------------------------|
 | `titleSize` | number | No       | Explicit title text size |
@@ -105,10 +87,7 @@ TODO docs
 
 ### VizTextDisplayOptions
 
-*(Inherited from [SingleStatBaseOptions](#singlestatbaseoptions))*
-
-#### Properties
-
+TODO docs
 | Property    | Type   | Required | Description              |
 |-------------|--------|----------|--------------------------|
 | `titleSize` | number | No       | Explicit title text size |

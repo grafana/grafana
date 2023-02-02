@@ -69,10 +69,11 @@ func (j docsJenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
 
 	kindProps := kind.Props().Common()
 	data := templateData{
-		KindName:     kindProps.Name,
-		KindVersion:  kind.Lineage().Latest().Version().String(),
-		KindMaturity: string(kindProps.Maturity),
-		Markdown:     "{{ .Markdown 1 }}",
+		KindName:        kindProps.Name,
+		KindVersion:     kind.Lineage().Latest().Version().String(),
+		KindMaturity:    string(kindProps.Maturity),
+		KindDescription: kindProps.Description,
+		Markdown:        "{{ .Markdown 1 }}",
 	}
 
 	tmpl, err := makeTemplate(data, "docs.tmpl")
@@ -98,29 +99,32 @@ func makeTemplate(data templateData, tmpl string) ([]byte, error) {
 }
 
 type templateData struct {
-	KindName     string
-	KindVersion  string
-	KindMaturity string
-	Markdown     string
+	KindName        string
+	KindVersion     string
+	KindMaturity    string
+	KindDescription string
+	Markdown        string
 }
 
 // -------------------- JSON to Markdown conversion --------------------
 // Copied from https://github.com/marcusolsson/json-schema-docs and slightly changed to fit the DocsJenny
 
 type schema struct {
-	ID          string             `json:"$id,omitempty"`
-	Ref         string             `json:"$ref,omitempty"`
-	Schema      string             `json:"$schema,omitempty"`
-	Title       string             `json:"title,omitempty"`
-	Description string             `json:"description,omitempty"`
-	Required    []string           `json:"required,omitempty"`
-	Type        PropertyTypes      `json:"type,omitempty"`
-	Properties  map[string]*schema `json:"properties,omitempty"`
-	Items       *schema            `json:"items,omitempty"`
-	Definitions map[string]*schema `json:"definitions,omitempty"`
-	Enum        []Any              `json:"enum"`
-	Default     any                `json:"default"`
-	AllOf       []*schema          `json:"allOf"`
+	ID            string             `json:"$id,omitempty"`
+	Ref           string             `json:"$ref,omitempty"`
+	Schema        string             `json:"$schema,omitempty"`
+	Title         string             `json:"title,omitempty"`
+	Description   string             `json:"description,omitempty"`
+	Required      []string           `json:"required,omitempty"`
+	Type          PropertyTypes      `json:"type,omitempty"`
+	Properties    map[string]*schema `json:"properties,omitempty"`
+	Items         *schema            `json:"items,omitempty"`
+	Definitions   map[string]*schema `json:"definitions,omitempty"`
+	Enum          []Any              `json:"enum"`
+	Default       any                `json:"default"`
+	AllOf         []*schema          `json:"allOf"`
+	extends       []string           `json:"-"`
+	inheritedFrom string             `json:"-"`
 }
 
 func jsonToMarkdown(jsonData []byte, tpl string, kindName string) ([]byte, error) {
@@ -191,7 +195,6 @@ func resolveSchema(schem *schema, root *simplejson.Json) (*schema, error) {
 	}
 
 	if len(schem.AllOf) > 0 {
-		var extensions []string
 		for idx, child := range schem.AllOf {
 			tmp, err := resolveSubSchema(schem, child, root)
 			if err != nil {
@@ -200,10 +203,9 @@ func resolveSchema(schem *schema, root *simplejson.Json) (*schema, error) {
 			schem.AllOf[idx] = tmp
 
 			if len(tmp.Title) > 0 {
-				extensions = append(extensions, fmt.Sprintf("[%s](#%s)", tmp.Title, strings.ToLower(tmp.Title)))
+				schem.extends = append(schem.extends, tmp.Title)
 			}
 		}
-		schem.Description += fmt.Sprintf("\nThis kind extends: %s.", strings.Join(extensions, " and "))
 	}
 
 	return schem, nil
@@ -233,7 +235,7 @@ func resolveSubSchema(parent, child *schema, root *simplejson.Json) (*schema, er
 
 	for k, v := range child.Properties {
 		prop := *v
-		prop.Description = fmt.Sprintf("*(Inherited from [%s](#%s))*", child.Title, strings.ToLower(child.Title))
+		prop.inheritedFrom = child.Title
 		parent.Properties[k] = &prop
 	}
 
@@ -288,48 +290,40 @@ func (s schema) Markdown(level int) string {
 		level = 1
 	}
 
-	var buf bytes.Buffer
+	buf := new(bytes.Buffer)
 
 	if s.Title != "" {
-		fmt.Fprintln(&buf, makeHeading(s.Title, level))
-		fmt.Fprintln(&buf)
+		fmt.Fprintln(buf, fmt.Sprintf("### %s", strings.Title(s.Title)))
+		fmt.Fprintln(buf)
 	}
 
 	if s.Description != "" {
-		fmt.Fprintln(&buf, s.Description)
-		if s.Default != nil {
-			fmt.Fprintf(&buf, "The default value is: `%v`.", s.Default)
-		}
-		fmt.Fprintln(&buf)
+		fmt.Fprintln(buf, s.Description)
 	}
 
-	if len(s.Properties) > 0 {
-		fmt.Fprintln(&buf, makeHeading("Properties", level+1))
-		fmt.Fprintln(&buf)
+	if len(s.extends) > 0 {
+		fmt.Fprintln(buf, makeExtends(s.extends))
 	}
 
-	printProperties(&buf, &s)
+	printProperties(buf, &s)
 
 	// Add padding.
-	fmt.Fprintln(&buf)
+	fmt.Fprintln(buf)
 
 	for _, obj := range findDefinitions(&s) {
-		fmt.Fprint(&buf, obj.Markdown(level+1))
+		fmt.Fprint(buf, obj.Markdown(level+1))
 	}
 
 	return buf.String()
 }
 
-func makeHeading(heading string, level int) string {
-	if level < 0 {
-		return heading
+func makeExtends(from []string) string {
+	fromLinks := make([]string, 0, len(from))
+	for _, f := range from {
+		fromLinks = append(fromLinks, fmt.Sprintf("[%s](#%s)", f, strings.ToLower(f)))
 	}
 
-	if level <= 6 {
-		return strings.Repeat("#", level) + " " + heading
-	}
-
-	return fmt.Sprintf("**%s**", heading)
+	return fmt.Sprintf("\nIt extends %s.\n", strings.Join(fromLinks, " and "))
 }
 
 func findDefinitions(s *schema) []*schema {
@@ -437,14 +431,22 @@ func printProperties(w io.Writer, s *schema) {
 			required = "No"
 		}
 
-		desc := p.Description
+		var desc string
+
+		if p.inheritedFrom != "" {
+			desc = fmt.Sprintf("*(Inherited from [%s](#%s))*", p.inheritedFrom, strings.ToLower(p.inheritedFrom))
+		}
+
+		if p.Description != "" {
+			desc += "\n" + p.Description
+		}
 
 		if len(p.Enum) > 0 {
 			vals := make([]string, 0, len(p.Enum))
 			for _, e := range p.Enum {
 				vals = append(vals, e.String())
 			}
-			desc += " Possible values are: `" + strings.Join(vals, "`, `") + "`."
+			desc += "\nPossible values are: `" + strings.Join(vals, "`, `") + "`."
 		}
 
 		if p.Default != nil {
