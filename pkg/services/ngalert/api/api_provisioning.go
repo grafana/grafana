@@ -439,8 +439,9 @@ func exportResponse(c *contextmodel.ReqContext, body any) response.Response {
 		format = "json"
 	}
 
-	if c.Query("format") != "" {
-		format = c.Query("format")
+	queryFormat := c.Query("format")
+	if queryFormat == "yaml" || queryFormat == "json" {
+		format = queryFormat
 	}
 
 	download := c.QueryBoolWithDefault("download", false)
