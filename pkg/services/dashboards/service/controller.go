@@ -11,8 +11,10 @@ import (
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
 	"github.com/grafana/grafana/pkg/registry/corecrd"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -22,18 +24,22 @@ import (
 )
 
 type DashboardController struct {
-	cfg              *setting.Cfg
-	dashboardService *DashboardServiceImpl
-	bridgeService    *bridge.Service
-	reg              *corecrd.Registry
+	cfg                  *setting.Cfg
+	dashboardService     *DashboardServiceImpl
+	bridgeService        *bridge.Service
+	reg                  *corecrd.Registry
+	userService          user.Service
+	accessControlService accesscontrol.Service
 }
 
-func ProvideDashboardController(cfg *setting.Cfg, bridgeService *bridge.Service, reg *corecrd.Registry, dasboardService *DashboardServiceImpl) *DashboardController {
+func ProvideDashboardController(cfg *setting.Cfg, bridgeService *bridge.Service, reg *corecrd.Registry, dasboardService *DashboardServiceImpl, userService user.Service, accessControl accesscontrol.Service) *DashboardController {
 	return &DashboardController{
-		cfg:              cfg,
-		dashboardService: dasboardService,
-		bridgeService:    bridgeService,
-		reg:              reg,
+		cfg:                  cfg,
+		dashboardService:     dasboardService,
+		bridgeService:        bridgeService,
+		reg:                  reg,
+		userService:          userService,
+		accessControlService: accessControl,
 	}
 }
 
@@ -62,6 +68,14 @@ func (c *DashboardController) Run(ctx context.Context) error {
 				fmt.Println("dashboard already exists, skipping")
 				return
 			}
+
+			signedInUser, err := c.getSignedInUser(ctx, dto.OrgID, dto.Dashboard.UpdatedBy)
+			if err != nil {
+				fmt.Println("dashboardService.SaveDashboard failed", err)
+			}
+
+			dto.User = signedInUser
+
 			_, err = c.dashboardService.SaveDashboard(context.Background(), dto, false)
 			if err != nil {
 				fmt.Println("dashboardService.SaveDashboard failed", err)
@@ -80,6 +94,14 @@ func (c *DashboardController) Run(ctx context.Context) error {
 				fmt.Println("dashboard version already exists, skipping")
 				return
 			}
+
+			signedInUser, err := c.getSignedInUser(ctx, dto.OrgID, dto.Dashboard.UpdatedBy)
+			if err != nil {
+				fmt.Println("dashboardService.SaveDashboard failed", err)
+			}
+
+			dto.User = signedInUser
+
 			_, err = c.dashboardService.SaveDashboard(context.Background(), dto, true)
 			if err != nil {
 				fmt.Println("dashboardService.SaveDashboard failed", err)
@@ -117,6 +139,29 @@ func (c *DashboardController) Run(ctx context.Context) error {
 func (c *DashboardController) IsDisabled() bool {
 	return !c.cfg.IsFeatureToggleEnabled(featuremgmt.FlagApiserver)
 }
+
+func (c *DashboardController) getSignedInUser(ctx context.Context, orgID int64, userID int64) (*user.SignedInUser, error) {
+	querySignedInUser := user.GetSignedInUserQuery{UserID: userID, OrgID: orgID}
+	signedInUser, err := c.userService.GetSignedInUserWithCacheCtx(ctx, &querySignedInUser)
+	if err != nil {
+		return nil, err
+	}
+
+	if signedInUser.Permissions == nil {
+		signedInUser.Permissions = make(map[int64]map[string][]string)
+	}
+
+	if signedInUser.Permissions[signedInUser.OrgID] == nil {
+		permissions, err := c.accessControlService.GetUserPermissions(ctx, signedInUser, accesscontrol.Options{})
+		if err != nil {
+			return nil, err
+		}
+		signedInUser.Permissions[signedInUser.OrgID] = accesscontrol.GroupScopesByAction(permissions)
+	}
+
+	return signedInUser, nil
+}
+
 func interfaceToK8sDashboard(obj interface{}) (*k8ssys.Base[dashboard.Dashboard], error) {
 	uObj, ok := obj.(*unstructured.Unstructured)
 	if !ok {
@@ -201,6 +246,7 @@ func parseAnnotations(dash *k8ssys.Base[dashboard.Dashboard], dto dashboards.Sav
 		updatedAt, err := strconv.ParseInt(v, 10, 64)
 		if err == nil {
 			dto.Dashboard.Updated = time.Unix(0, updatedAt)
+			dto.UpdatedAt = time.Unix(0, updatedAt)
 		}
 	}
 
