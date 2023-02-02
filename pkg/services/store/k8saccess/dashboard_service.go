@@ -3,6 +3,7 @@ package k8saccess
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -153,9 +154,6 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 		}
 	}
 
-	//labels := make(map[string]string)
-	//annotations := make(map[string]string)
-
 	if dto.Dashboard.Data == nil {
 		return nil, fmt.Errorf("POTATO: DASHBOARD DATA NIL")
 	}
@@ -192,8 +190,10 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 			APIVersion: dashboardCRD.GVK().Group + "/" + dashboardCRD.GVK().Version,
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: namespace,
-			Name:      uid,
+			Namespace:   namespace,
+			Name:        uid,
+			Labels:      labelsFromDashboardDTO(dto),
+			Annotations: annotationsFromDashboardDTO(dto),
 		},
 		Spec: *d,
 	}
@@ -306,4 +306,26 @@ func getResourceVersion(ctx context.Context, resourceClient dynamic.ResourceInte
 	}
 
 	return "", false, err
+}
+
+func annotationsFromDashboardDTO(dto *dashboards.SaveDashboardDTO) map[string]string {
+	annotations := map[string]string{
+		"message":   dto.Message,
+		"orgID":     strconv.FormatInt(dto.OrgID, 10),
+		"overwrite": strconv.FormatBool(dto.Overwrite),
+		"updatedBy": strconv.FormatInt(dto.Dashboard.UpdatedBy, 10),
+		"updatedAt": strconv.FormatInt(dto.Dashboard.Updated.UnixNano(), 10),
+		"createdBy": strconv.FormatInt(dto.Dashboard.CreatedBy, 10),
+		"createdAt": strconv.FormatInt(dto.Dashboard.Created.UnixNano(), 10),
+	}
+
+	return annotations
+}
+
+func labelsFromDashboardDTO(dto *dashboards.SaveDashboardDTO) map[string]string {
+	labels := map[string]string{
+		"slug":  dto.Dashboard.Slug,
+		"title": dto.Dashboard.Title,
+	}
+	return labels
 }

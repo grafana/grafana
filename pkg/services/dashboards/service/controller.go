@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/bridge"
@@ -128,5 +129,19 @@ func k8sDashboardToDashboardDTO(dash *k8ssys.Base[dashboard.Dashboard]) *dashboa
 	if dash.Spec.Title != nil {
 		dto.Dashboard.Title = *dash.Spec.Title
 	}
+	if dash.Spec.Version != nil {
+		dto.Dashboard.Version = *dash.Spec.Version
+	}
+	if dash.Spec.GnetId != nil {
+		gnetId, err := strconv.ParseInt(*dash.Spec.GnetId, 10, 64)
+		if err == nil {
+			dto.Dashboard.GnetID = gnetId
+		}
+	}
+
+	if dash.ObjectMeta.Annotations == nil {
+		return &dto
+	}
+
 	return &dto
 }
