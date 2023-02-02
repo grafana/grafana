@@ -5,13 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
-	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/client-go/dynamic"
 
 	"github.com/grafana/grafana/pkg/apimachinery/bridge"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -22,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 // NOTE this is how you reset the CRD
@@ -131,12 +128,9 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 
 	// FIXME this is not reliable and is spaghetti. Change UID or create mapping
 	// for k8s with uuidV4
-	uid := strings.ToLower(dto.Dashboard.UID)
+	uid := dto.Dashboard.UID
 	if uid == "" {
-		fmt.Println("POTATO: No UID")
-		// FIXME must be lowercase, also eventually we need to check k8s to see
-		// whether we've created a duplicate shortId
-		uid, err = generateUniqK8sUID(ctx, resourceClient)
+		uid, err = getUnusedGrafanaUID(ctx, resourceClient)
 		if err != nil {
 			return nil, err
 		}
@@ -159,14 +153,9 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 		return nil, fmt.Errorf("POTATO: DASHBOARD DATA NIL")
 	}
 
-	// HACK, remove empty ID!!
-	if dto.Dashboard.Data.Get("id") == nil {
-		dto.Dashboard.Data.Del("id")
-	}
-	if dto.Dashboard.Data.Get("uid") == nil {
-		dto.Dashboard.Data.Set("uid", uid)
-	}
-	// strip nulls...
+	dto.Dashboard.Data.Del("id")
+	dto.Dashboard.Data.Set("uid", uid)
+	// strip nulls... thema not happy with null values
 	stripNulls(dto.Dashboard.Data)
 
 	//dashbytes, err := json.Marshal(dto.Dashboard)
@@ -196,7 +185,7 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace:   namespace,
-			Name:        uid,
+			Name:        GrafanaUIDToK8sName(uid),
 			Labels:      labelsFromDashboardDTO(dto),
 			Annotations: annotationsFromDashboardDTO(dto),
 		},
@@ -277,47 +266,6 @@ func stripNulls(j *simplejson.Json) {
 	}
 }
 
-// FIXME this shouldnt need to exist. use a uuidv4 and do some sort of mapping
-// generate a unique id in k8s
-func generateUniqK8sUID(ctx context.Context, resourceClient dynamic.ResourceInterface) (string, error) {
-	for i := 0; i < 3; i++ {
-		uid := strings.ToLower(util.GenerateShortUID())
-		isUniq, err := isUniqueK8sUID(ctx, resourceClient, uid)
-		if err == nil && isUniq {
-			return uid, nil
-		}
-	}
-	return "", fmt.Errorf("COULD NOT GENERATE ID")
-}
-
-// tells us whether uid exists in k8s
-func isUniqueK8sUID(ctx context.Context, resourceClient dynamic.ResourceInterface, uid string) (bool, error) {
-	_, err := resourceClient.Get(ctx, uid, metav1.GetOptions{})
-	if err == nil {
-		return false, nil
-	}
-
-	if err != nil && strings.Contains(err.Error(), "not found") {
-		return true, nil
-	}
-
-	return false, err
-}
-
-// Gets resource version tells us whether there was an error or not found
-func getResourceVersion(ctx context.Context, resourceClient dynamic.ResourceInterface, uid string) (string, bool, error) {
-	r, err := resourceClient.Get(ctx, uid, metav1.GetOptions{})
-	if err == nil {
-		return r.GetResourceVersion(), true, nil
-	}
-
-	if err != nil && strings.Contains(err.Error(), "not found") {
-		return "", true, nil
-	}
-
-	return "", false, err
-}
-
 func annotationsFromDashboardDTO(dto *dashboards.SaveDashboardDTO) map[string]string {
 	annotations := map[string]string{
 		"version":   strconv.FormatInt(int64(dto.Dashboard.Version), 10),
@@ -338,8 +286,8 @@ func annotationsFromDashboardDTO(dto *dashboards.SaveDashboardDTO) map[string]st
 
 func labelsFromDashboardDTO(dto *dashboards.SaveDashboardDTO) map[string]string {
 	labels := map[string]string{
-		"slug":  dto.Dashboard.Slug,
-		"title": dto.Dashboard.Title,
+		// "slug":  dto.Dashboard.Slug,
+		// "title": dto.Dashboard.Title,
 	}
 	return labels
 }
