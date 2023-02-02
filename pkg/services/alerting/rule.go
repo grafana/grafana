@@ -226,11 +226,12 @@ func getAlertNotificationUIDByIDAndOrgID(ctx context.Context, store AlertStore, 
 		Id:    notificationID,
 	}
 
-	if err := store.GetAlertNotificationUidWithId(ctx, query); err != nil {
+	uid, err := store.GetAlertNotificationUidWithId(ctx, query)
+	if err != nil {
 		return "", err
 	}
 
-	return query.Result, nil
+	return uid, nil
 }
 
 // ConditionFactory is the function signature for creating `Conditions`.
