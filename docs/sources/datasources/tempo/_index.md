@@ -48,7 +48,7 @@ You can also configure settings specific to the Tempo data source:
 
 ### Configure trace to logs
 
-{{< figure src="/static/img/docs/tempo/trace-to-logs-9-4.png" class="docs-image--no-shadow" caption="Screenshot of the trace to logs settings" >}}
+![Trace to logs settings](/media/docs/tempo/tempo-trace-to-logs-9-4.png)
 
 > **Note:** Available in Grafana v7.4 and higher.
 > If you use Grafana Cloud, open a [support ticket in the Cloud Portal](/profile/org#support) to access this feature.
