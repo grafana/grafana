@@ -330,6 +330,11 @@ export function partitionTimeRange(range: TimeRange, unit: DurationUnit = 'm'): 
 }
 
 export function requestSupportsPartitioning(queries: LokiQuery[]) {
+  for (const query of queries) {
+    if (isLogsQuery(query.expr)) {
+      return false;
+    }
+  }
   return true;
 }
 
