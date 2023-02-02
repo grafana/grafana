@@ -143,11 +143,10 @@ func TestRemoteLokiBackend(t *testing.T) {
 
 func TestMerge(t *testing.T) {
 	testCases := []struct {
-		name          string
-		res           QueryRes
-		ruleID        string
-		expectedTime  []time.Time
-		expectedState []string
+		name         string
+		res          QueryRes
+		ruleID       string
+		expectedTime []time.Time
 	}{
 		{
 			name: "Should return values from multiple streams in right order",
@@ -175,12 +174,8 @@ func TestMerge(t *testing.T) {
 			},
 			ruleID: "123456",
 			expectedTime: []time.Time{
-				time.Unix(1, 0),
-				time.Unix(2, 0),
-			},
-			expectedState: []string{
-				"pending",
-				"firing",
+				time.Unix(0, 1),
+				time.Unix(0, 2),
 			},
 		},
 		{
@@ -197,9 +192,8 @@ func TestMerge(t *testing.T) {
 					},
 				},
 			},
-			ruleID:        "123456",
-			expectedTime:  []time.Time{},
-			expectedState: []string{},
+			ruleID:       "123456",
+			expectedTime: []time.Time{},
 		},
 		{
 			name: "Should handle multiple values in one stream",
@@ -228,14 +222,9 @@ func TestMerge(t *testing.T) {
 			},
 			ruleID: "123456",
 			expectedTime: []time.Time{
-				time.Unix(1, 0),
-				time.Unix(2, 0),
-				time.Unix(3, 0),
-			},
-			expectedState: []string{
-				"normal",
-				"normal",
-				"firing",
+				time.Unix(0, 1),
+				time.Unix(0, 2),
+				time.Unix(0, 3),
 			},
 		},
 	}
@@ -245,25 +234,17 @@ func TestMerge(t *testing.T) {
 			m, err := merge(tc.res, tc.ruleID)
 			require.NoError(t, err)
 
-			var (
-				dfTimeColumn  *data.Field
-				dfStateColumn *data.Field
-			)
+			var dfTimeColumn *data.Field
 			for _, f := range m.Fields {
 				if f.Name == dfTime {
 					dfTimeColumn = f
 				}
-				if f.Name == dfNext {
-					dfStateColumn = f
-				}
 			}
 
-			require.NotNil(t, dfStateColumn)
 			require.NotNil(t, dfTimeColumn)
 
 			for i := 0; i < len(tc.expectedTime); i++ {
 				require.Equal(t, tc.expectedTime[i], dfTimeColumn.At(i))
-				require.Equal(t, tc.expectedState[i], dfStateColumn.At(i))
 			}
 		})
 	}

@@ -24,11 +24,9 @@ const (
 	GroupLabel     = "group"
 	FolderUIDLabel = "folderUID"
 	// Name of the columns used in the dataframe.
-	dfTime = "time"
-	dfText = "text"
-	dfPrev = "prev"
-	dfNext = "next"
-	dfData = "data"
+	dfTime   = "time"
+	dfLine   = "line"
+	dfLabels = "labels"
 )
 
 const (
@@ -93,14 +91,14 @@ func buildSelectors(query models.HistoryQuery) ([]Selector, error) {
 	selectors := make([]Selector, len(query.Labels)+1)
 
 	// Set the predefined selector org_id
-	selector, err := NewSelector("org_id", "=", fmt.Sprintf("%d", query.OrgID))
+	selector, err := NewSelector(OrgIDLabel, "=", fmt.Sprintf("%d", query.OrgID))
 	if err != nil {
 		return nil, err
 	}
-	selectors[1] = selector
+	selectors[0] = selector
 
 	// Set the label selectors
-	i := 2
+	i := 1
 	for label, val := range query.Labels {
 		selector, err = NewSelector(label, "=", val)
 		if err != nil {
@@ -112,7 +110,7 @@ func buildSelectors(query models.HistoryQuery) ([]Selector, error) {
 
 	// Set the optional special selector rule_id
 	if query.RuleUID != "" {
-		rsel, err := NewSelector("rule_id", "=", query.RuleUID)
+		rsel, err := NewSelector(RuleUIDLabel, "=", query.RuleUID)
 		if err != nil {
 			return nil, err
 		}
@@ -136,42 +134,39 @@ func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
 	// We merge all series into a single linear history.
 	lbls := data.Labels(map[string]string{})
 
-	// We represent state history as five vectors:
-	//   1. `time` - when the transition happened
-	//   2. `text` - only used in annotations
-	//   3. `prev` - the previous state and reason
-	//   4. `next` - the next state and reason
-	//   5. `data` - a JSON string, containing the values
+	// We represent state history as a single merged history, that roughly corresponds to what you get in the Grafana Explore tab when querying Loki directly.
+	// The format is composed of the following vectors:
+	//   1. `time` - timestamp - when the transition happened
+	//   2. `line` - JSON - the full data of the transition
+	//   3. `labels` - JSON - the labels associated with that state transition
 	times := make([]time.Time, 0, totalLen)
-	texts := make([]string, 0, totalLen)
-	prevStates := make([]string, 0, totalLen)
-	nextStates := make([]string, 0, totalLen)
-	values := make([]string, 0, totalLen)
+	lines := make([]string, 0, totalLen)
+	labels := make([]json.RawMessage, 0, totalLen)
 
 	// Initialize a slice of pointers to the current position in each array.
 	pointers := make([]int, len(res.Data.Result))
 	for {
-		minVal := int64(math.MaxInt64)
-		minIdx := -1
+		minTime := int64(math.MaxInt64)
 		minEl := [2]string{}
-		// Find the minimum element among all arrays.
+		minElStreamIdx := -1
+		// Find the element with the earliest time among all arrays.
 		for i, stream := range res.Data.Result {
 			// Skip if we already reached the end of the current array.
 			if len(stream.Values) == pointers[i] {
 				continue
 			}
-			curVal, err := strconv.ParseInt(stream.Values[pointers[i]][0], 10, 64)
+			curTime, err := strconv.ParseInt(stream.Values[pointers[i]][0], 10, 64)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse timestamp from loki response: %w", err)
 			}
-			if pointers[i] < len(stream.Values) && curVal < minVal {
-				minVal = curVal
+			if pointers[i] < len(stream.Values) && curTime < minTime {
+				minTime = curTime
 				minEl = stream.Values[pointers[i]]
-				minIdx = i
+				minElStreamIdx = i
 			}
 		}
 		// If all pointers have reached the end of their arrays, we're done.
-		if minIdx == -1 {
+		if minElStreamIdx == -1 {
 			break
 		}
 		var entry lokiEntry
@@ -180,27 +175,24 @@ func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
 			return nil, fmt.Errorf("failed to unmarshal entry: %w", err)
 		}
 		// Append the minimum element to the merged slice and move the pointer.
-		ts, err := strconv.ParseInt(minEl[0], 10, 64)
+		tsNano, err := strconv.ParseInt(minEl[0], 10, 64)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse timestampe in response: %w", err)
+			return nil, fmt.Errorf("failed to parse timestamp in response: %w", err)
 		}
-		value, err := entry.Values.MarshalJSON()
+		streamLbls := res.Data.Result[minElStreamIdx].Stream
+		lblsJson, err := jsonifyLabels(streamLbls)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse values in response: %w", err)
+			return nil, fmt.Errorf("failed to serialize stream labels: %w", err)
 		}
-		times = append(times, time.Unix(ts, 0))
-		texts = append(texts, minEl[1])
-		prevStates = append(prevStates, entry.Previous)
-		nextStates = append(nextStates, entry.Current)
-		values = append(values, string(value))
-		pointers[minIdx]++
+		times = append(times, time.Unix(0, tsNano))
+		lines = append(lines, minEl[1])
+		labels = append(labels, lblsJson)
+		pointers[minElStreamIdx]++
 	}
 
 	frame.Fields = append(frame.Fields, data.NewField(dfTime, lbls, times))
-	frame.Fields = append(frame.Fields, data.NewField(dfText, lbls, texts))
-	frame.Fields = append(frame.Fields, data.NewField(dfPrev, lbls, prevStates))
-	frame.Fields = append(frame.Fields, data.NewField(dfNext, lbls, nextStates))
-	frame.Fields = append(frame.Fields, data.NewField(dfData, lbls, values))
+	frame.Fields = append(frame.Fields, data.NewField(dfLine, lbls, lines))
+	frame.Fields = append(frame.Fields, data.NewField(dfLabels, lbls, labels))
 
 	return frame, nil
 }
@@ -285,4 +277,8 @@ func valuesAsDataBlob(state *state.State) *simplejson.Json {
 	}
 
 	return jsonifyValues(state.Values)
+}
+
+func jsonifyLabels(labels map[string]string) (json.RawMessage, error) {
+	return json.Marshal(labels)
 }

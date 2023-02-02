@@ -227,6 +227,15 @@ func (c *httpLokiClient) query(ctx context.Context, selectors []Selector, start,
 		return QueryRes{}, fmt.Errorf("error reading request response: %w", err)
 	}
 
+	if res.StatusCode < 200 || res.StatusCode >= 300 {
+		if len(data) > 0 {
+			c.log.Error("Error response from Loki", "response", string(data), "status", res.StatusCode)
+		} else {
+			c.log.Error("Error response from Loki with an empty body", "status", res.StatusCode)
+		}
+		return QueryRes{}, fmt.Errorf("received a non-200 response from loki, status: %d", res.StatusCode)
+	}
+
 	queryRes := QueryRes{}
 	err = json.Unmarshal(data, &queryRes)
 	if err != nil {
