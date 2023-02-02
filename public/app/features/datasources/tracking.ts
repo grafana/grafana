@@ -56,3 +56,21 @@ type DataSourceTestedProps = {
   /** The URL that points to the edit page for the datasoruce. We are using this to be able to distinguish between the performance of different datasource edit locations. */
   editLink?: string;
 };
+
+type DataSourceGeneralTrackingProps = {
+  grafana_version?: string;
+  /** The unique id of the newly created data source */
+  datasource_uid: string;
+  /** The name of the datasource (e.g. Cloudwatch, Loki, Prometheus) */
+  plugin_name: string;
+  /** The URL of the page where event was triggereed from. */
+  path?: string;
+};
+
+export const trackExploreClicked = (props: DataSourceGeneralTrackingProps) => {
+  reportInteraction('grafana_ds_explore_datasource_clicked', props);
+};
+
+export const trackCreateDashboardClicked = (props: DataSourceGeneralTrackingProps) => {
+  reportInteraction('grafana_ds_explore_datasource_clicked', props);
+};
