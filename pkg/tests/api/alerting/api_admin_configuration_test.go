@@ -129,11 +129,11 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 	// Add an alertmanager datasource
 	{
 		cmd := datasources.AddDataSourceCommand{
-			OrgId:  1,
+			OrgID:  1,
 			Name:   "AM1",
 			Type:   datasources.DS_ALERTMANAGER,
 			Access: "proxy",
-			Url:    fakeAM1.URL(),
+			URL:    fakeAM1.URL(),
 			JsonData: simplejson.NewFromAny(map[string]interface{}{
 				"handleGrafanaManagedAlerts": true,
 				"implementation":             "prometheus",
@@ -156,11 +156,11 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 	// Add another alertmanager datasource
 	{
 		cmd := datasources.AddDataSourceCommand{
-			OrgId:  1,
+			OrgID:  1,
 			Name:   "AM2",
 			Type:   datasources.DS_ALERTMANAGER,
 			Access: "proxy",
-			Url:    fakeAM2.URL(),
+			URL:    fakeAM2.URL(),
 			JsonData: simplejson.NewFromAny(map[string]interface{}{
 				"handleGrafanaManagedAlerts": true,
 				"implementation":             "prometheus",
@@ -285,11 +285,11 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 	// Add an alertmanager datasource fot the other organisation
 	{
 		cmd := datasources.AddDataSourceCommand{
-			OrgId:  2,
+			OrgID:  2,
 			Name:   "AM3",
 			Type:   datasources.DS_ALERTMANAGER,
 			Access: "proxy",
-			Url:    fakeAM3.URL(),
+			URL:    fakeAM3.URL(),
 			JsonData: simplejson.NewFromAny(map[string]interface{}{
 				"handleGrafanaManagedAlerts": true,
 				"implementation":             "prometheus",
