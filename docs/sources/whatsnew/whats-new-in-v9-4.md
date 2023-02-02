@@ -100,3 +100,7 @@ This feature adds support to push analytics events and auditing logs to Loki wit
 *This feature is available for Enterprise customers*
 Scale factor is a new feature for reports that allows users to change the dimension of the panels of the PDF document. It allows you to show more columns in the tables zooming out or show panels bigger zooming in.
 You can modify the scale factor for each report in the report editor and/or when you share the whole PDF directly from the dashboard page.
+
+{{< figure src="/media/docs/grafana/FormatReportScheduler9.4.png" max-width="750px" caption="Scale factor feature in Report format page" >}}
+
+{{< figure src="/media/docs/grafana/FormatReportShare9.4.png" max-width="750px" caption="Scale factor feature in Share functionality" >}}
