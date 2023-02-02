@@ -187,7 +187,7 @@ function useInternalMatches(filtered: ActionImpl[], search: string): Match[] {
     }
 
     const haystack = throttledFiltered.map(({ name, keywords, subtitle }) =>
-      `${name} ${keywords} ${subtitle}`.toLowerCase()
+      `${name} ${keywords ?? ''} ${subtitle ?? ''}`.toLowerCase()
     );
 
     const results: Match[] = [];
@@ -204,7 +204,7 @@ function useInternalMatches(filtered: ActionImpl[], search: string): Match[] {
         const substringPosition = haystackItem.indexOf(query);
 
         if (substringPosition > -1) {
-          const score = -substringPosition;
+          const score = substringPosition * -1; // lower position of the match should be a higher priority score
           const action = throttledFiltered[haystackIndex];
           results.push({ score, action });
         }
