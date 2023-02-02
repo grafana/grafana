@@ -29,12 +29,12 @@ type UsageStatsQuerier interface {
 // configured in Grafana.
 func (e *AlertEngine) QueryUsageStats(ctx context.Context) (*UsageStats, error) {
 	cmd := &models.GetAllAlertsQuery{}
-	err := e.AlertStore.GetAllAlertQueryHandler(ctx, cmd)
+	res, err := e.AlertStore.GetAllAlertQueryHandler(ctx, cmd)
 	if err != nil {
 		return nil, err
 	}
 
-	dsUsage, err := e.mapRulesToUsageStats(ctx, cmd.Result)
+	dsUsage, err := e.mapRulesToUsageStats(ctx, res)
 	if err != nil {
 		return nil, err
 	}

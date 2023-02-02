@@ -1,11 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { NavModelItem, NavSection } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { configureStore } from 'app/store/configureStore';
 
 import { QuickAdd } from './QuickAdd';
 
@@ -37,12 +36,10 @@ const setup = () => {
     },
   ];
 
-  const store = configureStore({ navBarTree });
-
   return render(
-    <Provider store={store}>
+    <TestProvider storeState={{ navBarTree }}>
       <QuickAdd />
-    </Provider>
+    </TestProvider>
   );
 };
 

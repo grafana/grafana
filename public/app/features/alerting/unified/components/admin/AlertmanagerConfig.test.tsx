@@ -1,8 +1,7 @@
 import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 
 import { locationService, setDataSourceSrv } from '@grafana/runtime';
@@ -13,7 +12,6 @@ import {
   AlertManagerDataSourceJsonData,
   AlertManagerImplementation,
 } from 'app/plugins/datasource/alertmanager/types';
-import { configureStore } from 'app/store/configureStore';
 
 import {
   fetchAlertManagerConfig,
@@ -50,19 +48,15 @@ const mocks = {
 };
 
 const renderAdminPage = (alertManagerSourceName?: string) => {
-  const store = configureStore();
-
   locationService.push(
     '/alerting/notifications' +
       (alertManagerSourceName ? `?${ALERTMANAGER_NAME_QUERY_KEY}=${alertManagerSourceName}` : '')
   );
 
   return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <AlertmanagerConfig />
-      </Router>
-    </Provider>
+    <TestProvider>
+      <AlertmanagerConfig />
+    </TestProvider>
   );
 };
 

@@ -1,10 +1,11 @@
 // Libraries
 import { css, cx } from '@emotion/css';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { CustomScrollbar, useStyles2 } from '@grafana/ui';
+import { useGrafana } from 'app/core/context/GrafanaContext';
 
 import { Footer } from '../Footer/Footer';
 import { PageHeader } from '../PageHeader/PageHeader';
@@ -34,10 +35,20 @@ export const OldPage: PageType = ({
 }) => {
   const styles = useStyles2(getStyles);
   const navModel = usePageNav(navId, oldNavProp);
+  const { chrome } = useGrafana();
 
   usePageTitle(navModel, pageNav);
 
   const pageHeaderNav = pageNav ?? navModel?.main;
+
+  useEffect(() => {
+    if (navModel) {
+      // This is needed for chrome to update it's chromeless state
+      chrome.update({
+        sectionNav: navModel.node,
+      });
+    }
+  }, [navModel, chrome]);
 
   return (
     <div className={cx(styles.wrapper, className)} {...otherProps}>

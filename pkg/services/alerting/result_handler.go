@@ -59,7 +59,8 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 			EvalData: annotationData,
 		}
 
-		if err := handler.sqlStore.SetAlertState(evalContext.Ctx, cmd); err != nil {
+		alert, err := handler.sqlStore.SetAlertState(evalContext.Ctx, cmd)
+		if err != nil {
 			if errors.Is(err, models.ErrCannotChangeStateOnPausedAlert) {
 				handler.log.Error("Cannot change state on alert that's paused", "error", err)
 				return err
@@ -75,7 +76,7 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 			// StateChanges is used for de duping alert notifications
 			// when two servers are raising. This makes sure that the server
 			// with the last state change always sends a notification.
-			evalContext.Rule.StateChanges = cmd.Result.StateChanges
+			evalContext.Rule.StateChanges = alert.StateChanges
 
 			// Update the last state change of the alert rule in memory
 			evalContext.Rule.LastStateChange = time.Now()

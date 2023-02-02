@@ -6,6 +6,8 @@ name:        "Dashboard"
 maturity:    "experimental"
 description: "A Grafana dashboard."
 
+crd: dummySchema: true
+
 lineage: seqs: [
 	{
 		schemas: [
