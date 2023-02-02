@@ -49,9 +49,13 @@ If the users are outside of my organization, this means that Grafana needs to pr
 1. **Cost attribution**: Track and bill costs to their customers, departments, or divisions.
 1. **Customization**: Each team could have a personalized experience like different dashboards or theme colours.
 
+### Users in Grafana Teams
+
+It makes sense to organize users in Teams in order to assign them roles and permissions reflecting the current organization. For example, instead of assigning five users access to the same dashboard, you can create a team that consists of those users and assign dashboard permissions to the team. A user can belong to multiple teams.
+
 A user can be a Member or an Administrator for a given team. Members of a team inherit permissions from the team, but they cannot edit the team itself. Team Administrators can add members to a team and update its settings, such as the team name, team member’s team roles, UI preferences, and the default dashbord to be displayed upon login for the team members.
 
-### 🚧 Users in organizations
+Teams is a perfect solution to work with a small subset of users. Teams can share resources among other teams.
 
 ### 🚧 Choosing between teams and organizations
 
