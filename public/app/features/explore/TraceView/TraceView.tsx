@@ -27,8 +27,10 @@ import { ExploreId } from 'app/types/explore';
 import { changePanelState } from '../state/explorePane';
 
 import { SpanBarOptionsData, Trace, TracePageHeader, TraceTimelineViewer, TTraceTimeline } from './components';
+import FlameGraphContainer from './components/FlameGraph/FlameGraphContainer';
 import SpanGraph from './components/TracePageHeader/SpanGraph';
 import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
+import { convertTraceToProfile } from './components/utils/convertTraceToProfile';
 import { createSpanLinkFactory } from './createSpanLink';
 import { useChildrenState } from './useChildrenState';
 import { useDetailState } from './useDetailState';
@@ -207,7 +209,7 @@ export function TraceView(props: Props) {
               />
             </>
           ) : (
-            <div>flamegraph</div>
+            <FlameGraphContainer data={convertTraceToProfile(traceProp)} />
           )}
         </>
       ) : (

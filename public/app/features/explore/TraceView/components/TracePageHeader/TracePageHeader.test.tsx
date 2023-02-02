@@ -15,6 +15,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 
+import { VisualizationTypes } from '../../TraceView';
 import traceGenerator from '../demo/trace-generators';
 import { getTraceName } from '../model/trace-viewer';
 import transformTraceData from '../model/transform-trace-data';
@@ -30,11 +31,9 @@ const setup = (propOverrides?: TracePageHeaderEmbedProps) => {
     onTraceGraphViewClicked: () => {},
     slimView: false,
     trace,
-    hideMap: false,
     timeZone: '',
-    viewRange: { time: { current: [10, 20] as [number, number] } },
-    updateNextViewRangeTime: () => {},
-    updateViewRangeTime: () => {},
+    visualization: 'spanList' as VisualizationTypes,
+    visualizationOnChange: (v: VisualizationTypes) => {},
     ...propOverrides,
   };
 
@@ -83,11 +82,6 @@ describe('TracePageHeader test', () => {
   });
 
   describe('observes the visibility toggles for various UX elements', () => {
-    it('hides the minimap when hideMap === true', () => {
-      setup({ hideMap: true } as TracePageHeaderEmbedProps);
-      expect(screen.queryByText(/Reset Selection/)).not.toBeInTheDocument();
-    });
-
     it('hides the summary when hideSummary === true', () => {
       const { rerender } = setup({ hideSummary: false } as TracePageHeaderEmbedProps);
       expect(screen.queryAllByRole('listitem')).toHaveLength(5);
@@ -100,8 +94,6 @@ describe('TracePageHeader test', () => {
           {...({
             trace: trace,
             hideSummary: true,
-            hideMap: false,
-            viewRange: { time: { current: [10, 20] } },
           } as TracePageHeaderEmbedProps)}
         />
       );
@@ -112,8 +104,6 @@ describe('TracePageHeader test', () => {
           {...({
             trace: trace,
             hideSummary: false,
-            hideMap: false,
-            viewRange: { time: { current: [10, 20] } },
           } as TracePageHeaderEmbedProps)}
         />
       );
