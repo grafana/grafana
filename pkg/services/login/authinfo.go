@@ -34,6 +34,8 @@ func GetAuthProviderLabel(authModule string) string {
 		return "AzureAD"
 	case "oauth_gitlab":
 		return "GitLab"
+	case "oauth_okta":
+		return "Okta"
 	case "oauth_grafana_com", "oauth_grafananet":
 		return "grafana.com"
 	case SAMLAuthModule:
@@ -44,7 +46,9 @@ func GetAuthProviderLabel(authModule string) string {
 		return "JWT"
 	case AuthProxyAuthModule:
 		return "Auth Proxy"
+	case "oauth_generic_oauth":
+		return "Generic OAuth"
 	default:
-		return "OAuth" // FIXME: replace with "Unknown" and handle generic oauth as a case
+		return "Unknown"
 	}
 }

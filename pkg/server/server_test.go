@@ -7,11 +7,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/stretchr/testify/require"
 )
 
 type testService struct {

@@ -4,12 +4,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
-
-	"github.com/stretchr/testify/require"
 )
 
 type FakeServiceAccountStore struct {
@@ -19,7 +19,8 @@ type FakeServiceAccountStore struct {
 	ExpectedSearchServiceAccountQueryResult *serviceaccounts.SearchOrgServiceAccountsResult
 	ExpectedServiceAccountMigrationStatus   *serviceaccounts.APIKeysMigrationStatus
 	ExpectedStats                           *serviceaccounts.Stats
-	ExpectedApiKeys                         []apikey.APIKey
+	ExpectedAPIKeys                         []apikey.APIKey
+	ExpectedAPIKey                          *apikey.APIKey
 	ExpectedError                           error
 }
 
@@ -85,7 +86,7 @@ func (f *FakeServiceAccountStore) RevertApiKey(ctx context.Context, saId int64, 
 
 // ListTokens is a fake listing tokens.
 func (f *FakeServiceAccountStore) ListTokens(ctx context.Context, query *serviceaccounts.GetSATokensQuery) ([]apikey.APIKey, error) {
-	return f.ExpectedApiKeys, f.ExpectedError
+	return f.ExpectedAPIKeys, f.ExpectedError
 }
 
 // RevokeServiceAccountToken is a fake revoking a service account token.
@@ -94,8 +95,8 @@ func (f *FakeServiceAccountStore) RevokeServiceAccountToken(ctx context.Context,
 }
 
 // AddServiceAccountToken is a fake adding a service account token.
-func (f *FakeServiceAccountStore) AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) error {
-	return f.ExpectedError
+func (f *FakeServiceAccountStore) AddServiceAccountToken(ctx context.Context, serviceAccountID int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error) {
+	return f.ExpectedAPIKey, f.ExpectedError
 }
 
 // DeleteServiceAccountToken is a fake deleting a service account token.

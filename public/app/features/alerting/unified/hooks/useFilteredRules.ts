@@ -7,7 +7,7 @@ import { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import { CombinedRuleGroup, CombinedRuleNamespace } from 'app/types/unified-alerting';
 import { isPromAlertingRuleState, PromRuleType, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { getSearchFilterFromQuery, RulesFilter, applySearchFilterToQuery } from '../search/rulesSearchParser';
+import { applySearchFilterToQuery, getSearchFilterFromQuery, RulesFilter } from '../search/rulesSearchParser';
 import { labelsMatchMatchers, matcherToMatcherField, parseMatcher, parseMatchers } from '../utils/alertmanager';
 import { isCloudRulesSource } from '../utils/datasource';
 import { getRuleHealth, isAlertingRule, isGrafanaRulerRule, isPromRuleType } from '../utils/rules';
