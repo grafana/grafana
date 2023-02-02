@@ -76,6 +76,8 @@ import {
   isLogsQuery,
   isValidQuery,
   partitionTimeRange,
+  requestSupportsPartitioning,
+  mergeResults,
 } from './queryUtils';
 import { sortDataFrameByTime } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
@@ -283,25 +285,53 @@ export class LokiDatasource
       return this.runLiveQueryThroughBackend(fixedRequest);
     }
 
-    // const startTime = new Date();
-    // tap((response) => trackQuery(response, fixedRequest, startTime))
-    const partition = partitionTimeRange(fixedRequest.range);
+    if (requestSupportsPartitioning(fixedRequest.targets)) {
+      return this.partitionedQuery(fixedRequest);
+    }
 
-    const results = new Observable<DataQueryResponse>((subscriber) => {
+    const startTime = new Date();
+    return super.query(fixedRequest).pipe(
+      // in case of an empty query, this is somehow run twice. `share()` is no workaround here as the observable is generated from `of()`.
+      map((response) =>
+        transformBackendResult(response, fixedRequest.targets, this.instanceSettings.jsonData.derivedFields ?? [])
+      ),
+      tap((response) => trackQuery(response, fixedRequest, startTime))
+    );
+  }
+
+  private partitionedQuery(request: DataQueryRequest<LokiQuery>) {
+    const partition = partitionTimeRange(request.range);
+    partition.reverse(); // Most recent to oldest data
+
+    const response = new Observable<DataQueryResponse>((subscriber) => {
+      let accumulatedResult: DataQueryResponse | null;
+      let requestN = 1;
+      const totalRequests = partition.length;
       for (const range of partition) {
         super
-          .query({ ...fixedRequest, range, requestId: `${fixedRequest.requestId}${range.from}` })
+          .query({ ...request, range, requestId: `${request.requestId}${range.from}` })
           .pipe(
             // in case of an empty query, this is somehow run twice. `share()` is no workaround here as the observable is generated from `of()`.
-            map((response) =>
-              transformBackendResult(response, fixedRequest.targets, this.instanceSettings.jsonData.derivedFields ?? [])
-            )
+            map((response) => {
+              const result = transformBackendResult(
+                response,
+                request.targets,
+                this.instanceSettings.jsonData.derivedFields ?? []
+              );
+
+              accumulatedResult = mergeResults(accumulatedResult, result);
+              accumulatedResult.state = requestN < totalRequests ? LoadingState.Loading : LoadingState.Done;
+
+              requestN += 1;
+
+              return accumulatedResult;
+            })
           )
           .subscribe((result) => subscriber.next(result));
       }
     });
 
-    return results;
+    return response;
   }
 
   runLiveQueryThroughBackend(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {

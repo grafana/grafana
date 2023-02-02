@@ -1,7 +1,7 @@
 import { SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
-import { dateTime, DurationUnit, TimeRange } from '@grafana/data';
+import { DataQueryResponse, dateTime, DurationUnit, TimeRange } from '@grafana/data';
 import {
   parser,
   LineFilter,
@@ -297,7 +297,7 @@ export function getStreamSelectorsFromQuery(query: string): string[] {
   return labelMatchers;
 }
 
-export function partitionTimeRange(range: TimeRange, unit: DurationUnit = 'h'): TimeRange[] {
+export function partitionTimeRange(range: TimeRange, unit: DurationUnit = 'm'): TimeRange[] {
   const delta = range.to.diff(range.from, unit);
 
   if (delta <= 1) {
@@ -316,4 +316,18 @@ export function partitionTimeRange(range: TimeRange, unit: DurationUnit = 'h'): 
   }
 
   return partition;
+}
+
+export function requestSupportsPartitioning(queries: LokiQuery[]) {
+  return true;
+}
+
+export function mergeResults(currentResult: DataQueryResponse | null, newResult: DataQueryResponse) {
+  if (!currentResult) {
+    return newResult;
+  }
+
+  currentResult.data = [...currentResult.data, ...newResult.data];
+
+  return currentResult;
 }
