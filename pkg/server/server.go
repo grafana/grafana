@@ -11,18 +11,17 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/api"
 	_ "github.com/grafana/grafana/pkg/extensions"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/usagestats/statscollector"
 	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/provisioning"
-
 	"github.com/grafana/grafana/pkg/setting"
-	"golang.org/x/sync/errgroup"
 )
 
 // Options contains parameters for the New function.

@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -20,7 +20,7 @@ import (
 )
 
 func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
-	settings, err := hs.getFrontendSettingsMap(c)
+	settings, err := hs.getFrontendSettings(c)
 	if err != nil {
 		c.JsonApiErr(400, "Failed to get frontend settings", err)
 		return
@@ -29,8 +29,8 @@ func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
 	c.JSON(http.StatusOK, settings)
 }
 
-// getFrontendSettingsMap returns a json object with all the settings needed for front end initialisation.
-func (hs *HTTPServer) getFrontendSettingsMap(c *contextmodel.ReqContext) (map[string]interface{}, error) {
+// getFrontendSettings returns a json object with all the settings needed for front end initialisation.
+func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.FrontendSettingsDTO, error) {
 	enabledPlugins, err := hs.enabledPlugins(c.Req.Context(), c.OrgID)
 	if err != nil {
 		return nil, err
@@ -97,120 +97,138 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *contextmodel.ReqContext) (map[st
 	hasAccess := accesscontrol.HasAccess(hs.AccessControl, c)
 	secretsManagerPluginEnabled := kvstore.EvaluateRemoteSecretsPlugin(c.Req.Context(), hs.secretsPluginManager, hs.Cfg) == nil
 
-	jsonObj := map[string]interface{}{
-		"defaultDatasource":                   defaultDS,
-		"datasources":                         dataSources,
-		"minRefreshInterval":                  setting.MinRefreshInterval,
-		"panels":                              panels,
-		"appUrl":                              hs.Cfg.AppURL,
-		"appSubUrl":                           hs.Cfg.AppSubURL,
-		"allowOrgCreate":                      (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
-		"authProxyEnabled":                    setting.AuthProxyEnabled,
-		"ldapEnabled":                         hs.Cfg.LDAPEnabled,
-		"jwtHeaderName":                       hs.Cfg.JWTAuthHeaderName,
-		"jwtUrlLogin":                         hs.Cfg.JWTAuthURLLogin,
-		"alertingEnabled":                     setting.AlertingEnabled,
-		"alertingErrorOrTimeout":              setting.AlertingErrorOrTimeout,
-		"alertingNoDataOrNullValues":          setting.AlertingNoDataOrNullValues,
-		"alertingMinInterval":                 setting.AlertingMinInterval,
-		"liveEnabled":                         hs.Cfg.LiveMaxConnections != 0,
-		"autoAssignOrg":                       setting.AutoAssignOrg,
-		"verifyEmailEnabled":                  setting.VerifyEmailEnabled,
-		"sigV4AuthEnabled":                    setting.SigV4AuthEnabled,
-		"azureAuthEnabled":                    setting.AzureAuthEnabled,
-		"rbacEnabled":                         hs.Cfg.RBACEnabled,
-		"exploreEnabled":                      setting.ExploreEnabled,
-		"helpEnabled":                         setting.HelpEnabled,
-		"profileEnabled":                      setting.ProfileEnabled,
-		"queryHistoryEnabled":                 hs.Cfg.QueryHistoryEnabled,
-		"googleAnalyticsId":                   setting.GoogleAnalyticsId,
-		"googleAnalytics4Id":                  setting.GoogleAnalytics4Id,
-		"GoogleAnalytics4SendManualPageViews": setting.GoogleAnalytics4SendManualPageViews,
-		"rudderstackWriteKey":                 setting.RudderstackWriteKey,
-		"rudderstackDataPlaneUrl":             setting.RudderstackDataPlaneUrl,
-		"rudderstackSdkUrl":                   setting.RudderstackSdkUrl,
-		"rudderstackConfigUrl":                setting.RudderstackConfigUrl,
-		"feedbackLinksEnabled":                hs.Cfg.FeedbackLinksEnabled,
-		"applicationInsightsConnectionString": hs.Cfg.ApplicationInsightsConnectionString,
-		"applicationInsightsEndpointUrl":      hs.Cfg.ApplicationInsightsEndpointUrl,
-		"disableLoginForm":                    setting.DisableLoginForm,
-		"disableUserSignUp":                   !setting.AllowUserSignUp,
-		"loginHint":                           setting.LoginHint,
-		"passwordHint":                        setting.PasswordHint,
-		"externalUserMngInfo":                 setting.ExternalUserMngInfo,
-		"externalUserMngLinkUrl":              setting.ExternalUserMngLinkUrl,
-		"externalUserMngLinkName":             setting.ExternalUserMngLinkName,
-		"viewersCanEdit":                      setting.ViewersCanEdit,
-		"angularSupportEnabled":               hs.Cfg.AngularSupportEnabled,
-		"editorsCanAdmin":                     hs.Cfg.EditorsCanAdmin,
-		"disableSanitizeHtml":                 hs.Cfg.DisableSanitizeHtml,
-		"pluginsToPreload":                    pluginsToPreload,
-		"auth": map[string]interface{}{
-			"OAuthSkipOrgRoleUpdateSync": hs.Cfg.OAuthSkipOrgRoleUpdateSync,
-			"SAMLSkipOrgRoleSync":        hs.Cfg.SectionWithEnvOverrides("auth.saml").Key("skip_org_role_sync").MustBool(false),
-			"LDAPSkipOrgRoleSync":        hs.Cfg.LDAPSkipOrgRoleSync,
-			"GithubSkipOrgRoleSync":      hs.Cfg.GithubSkipOrgRoleSync,
-			"GoogleSkipOrgRoleSync":      hs.Cfg.GoogleSkipOrgRoleSync,
-			"JWTAuthSkipOrgRoleSync":     hs.Cfg.JWTAuthSkipOrgRoleSync,
-			"GrafanaComSkipOrgRoleSync":  hs.Cfg.GrafanaComSkipOrgRoleSync,
-			"GitLabSkipOrgRoleSync":      hs.Cfg.GitLabSkipOrgRoleSync,
-			"AzureADSkipOrgRoleSync":     hs.Cfg.AzureADSkipOrgRoleSync,
-			"DisableSyncLock":            hs.Cfg.DisableSyncLock,
+	frontendSettings := &dtos.FrontendSettingsDTO{
+		DefaultDatasource:                   defaultDS,
+		Datasources:                         dataSources,
+		MinRefreshInterval:                  setting.MinRefreshInterval,
+		Panels:                              panels,
+		AppUrl:                              hs.Cfg.AppURL,
+		AppSubUrl:                           hs.Cfg.AppSubURL,
+		AllowOrgCreate:                      (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
+		AuthProxyEnabled:                    setting.AuthProxyEnabled,
+		LdapEnabled:                         hs.Cfg.LDAPEnabled,
+		JwtHeaderName:                       hs.Cfg.JWTAuthHeaderName,
+		JwtUrlLogin:                         hs.Cfg.JWTAuthURLLogin,
+		AlertingErrorOrTimeout:              setting.AlertingErrorOrTimeout,
+		AlertingNoDataOrNullValues:          setting.AlertingNoDataOrNullValues,
+		AlertingMinInterval:                 setting.AlertingMinInterval,
+		LiveEnabled:                         hs.Cfg.LiveMaxConnections != 0,
+		AutoAssignOrg:                       setting.AutoAssignOrg,
+		VerifyEmailEnabled:                  setting.VerifyEmailEnabled,
+		SigV4AuthEnabled:                    setting.SigV4AuthEnabled,
+		AzureAuthEnabled:                    setting.AzureAuthEnabled,
+		RbacEnabled:                         hs.Cfg.RBACEnabled,
+		ExploreEnabled:                      setting.ExploreEnabled,
+		HelpEnabled:                         setting.HelpEnabled,
+		ProfileEnabled:                      setting.ProfileEnabled,
+		QueryHistoryEnabled:                 hs.Cfg.QueryHistoryEnabled,
+		GoogleAnalyticsId:                   setting.GoogleAnalyticsId,
+		GoogleAnalytics4Id:                  setting.GoogleAnalytics4Id,
+		GoogleAnalytics4SendManualPageViews: setting.GoogleAnalytics4SendManualPageViews,
+		RudderstackWriteKey:                 setting.RudderstackWriteKey,
+		RudderstackDataPlaneUrl:             setting.RudderstackDataPlaneUrl,
+		RudderstackSdkUrl:                   setting.RudderstackSdkUrl,
+		RudderstackConfigUrl:                setting.RudderstackConfigUrl,
+		FeedbackLinksEnabled:                hs.Cfg.FeedbackLinksEnabled,
+		ApplicationInsightsConnectionString: hs.Cfg.ApplicationInsightsConnectionString,
+		ApplicationInsightsEndpointUrl:      hs.Cfg.ApplicationInsightsEndpointUrl,
+		DisableLoginForm:                    setting.DisableLoginForm,
+		DisableUserSignUp:                   !setting.AllowUserSignUp,
+		LoginHint:                           setting.LoginHint,
+		PasswordHint:                        setting.PasswordHint,
+		ExternalUserMngInfo:                 setting.ExternalUserMngInfo,
+		ExternalUserMngLinkUrl:              setting.ExternalUserMngLinkUrl,
+		ExternalUserMngLinkName:             setting.ExternalUserMngLinkName,
+		ViewersCanEdit:                      setting.ViewersCanEdit,
+		AngularSupportEnabled:               hs.Cfg.AngularSupportEnabled,
+		EditorsCanAdmin:                     hs.Cfg.EditorsCanAdmin,
+		DisableSanitizeHtml:                 hs.Cfg.DisableSanitizeHtml,
+		PluginsToPreload:                    pluginsToPreload,
+		DateFormats:                         hs.Cfg.DateFormats,
+
+		Auth: dtos.FrontendSettingsAuthDTO{
+			OAuthSkipOrgRoleUpdateSync:  hs.Cfg.OAuthSkipOrgRoleUpdateSync,
+			SAMLSkipOrgRoleSync:         hs.Cfg.SectionWithEnvOverrides("auth.saml").Key("skip_org_role_sync").MustBool(false),
+			LDAPSkipOrgRoleSync:         hs.Cfg.LDAPSkipOrgRoleSync,
+			GoogleSkipOrgRoleSync:       hs.Cfg.GoogleSkipOrgRoleSync,
+			JWTAuthSkipOrgRoleSync:      hs.Cfg.JWTAuthSkipOrgRoleSync,
+			GrafanaComSkipOrgRoleSync:   hs.Cfg.GrafanaComSkipOrgRoleSync,
+			GenericOAuthSkipOrgRoleSync: hs.Cfg.GenericOAuthSkipOrgRoleSync,
+			AzureADSkipOrgRoleSync:      hs.Cfg.AzureADSkipOrgRoleSync,
+			GithubSkipOrgRoleSync:       hs.Cfg.GithubSkipOrgRoleSync,
+			GitLabSkipOrgRoleSync:       hs.Cfg.GitLabSkipOrgRoleSync,
+			OktaSkipOrgRoleSync:         hs.Cfg.OktaSkipOrgRoleSync,
+			DisableSyncLock:             hs.Cfg.DisableSyncLock,
 		},
-		"buildInfo": map[string]interface{}{
-			"hideVersion":   hideVersion,
-			"version":       version,
-			"commit":        commit,
-			"buildstamp":    buildstamp,
-			"edition":       hs.License.Edition(),
-			"latestVersion": hs.grafanaUpdateChecker.LatestVersion(),
-			"hasUpdate":     hs.grafanaUpdateChecker.UpdateAvailable(),
-			"env":           setting.Env,
+
+		BuildInfo: dtos.FrontendSettingsBuildInfoDTO{
+			HideVersion:   hideVersion,
+			Version:       version,
+			Commit:        commit,
+			Buildstamp:    buildstamp,
+			Edition:       hs.License.Edition(),
+			LatestVersion: hs.grafanaUpdateChecker.LatestVersion(),
+			HasUpdate:     hs.grafanaUpdateChecker.UpdateAvailable(),
+			Env:           setting.Env,
 		},
-		"licenseInfo": map[string]interface{}{
-			"expiry":          hs.License.Expiry(),
-			"stateInfo":       hs.License.StateInfo(),
-			"licenseUrl":      hs.License.LicenseURL(hasAccess(accesscontrol.ReqGrafanaAdmin, licensing.PageAccess)),
-			"edition":         hs.License.Edition(),
-			"enabledFeatures": hs.License.EnabledFeatures(),
+
+		LicenseInfo: dtos.FrontendSettingsLicenseInfoDTO{
+			Expiry:          hs.License.Expiry(),
+			StateInfo:       hs.License.StateInfo(),
+			LicenseUrl:      hs.License.LicenseURL(hasAccess(accesscontrol.ReqGrafanaAdmin, licensing.PageAccess)),
+			Edition:         hs.License.Edition(),
+			EnabledFeatures: hs.License.EnabledFeatures(),
 		},
-		"featureToggles":                   hs.Features.GetEnabled(c.Req.Context()),
-		"rendererAvailable":                hs.RenderService.IsAvailable(c.Req.Context()),
-		"rendererVersion":                  hs.RenderService.Version(),
-		"secretsManagerPluginEnabled":      secretsManagerPluginEnabled,
-		"http2Enabled":                     hs.Cfg.Protocol == setting.HTTP2Scheme,
-		"sentry":                           hs.Cfg.Sentry,
-		"grafanaJavascriptAgent":           hs.Cfg.GrafanaJavascriptAgent,
-		"pluginCatalogURL":                 hs.Cfg.PluginCatalogURL,
-		"pluginAdminEnabled":               hs.Cfg.PluginAdminEnabled,
-		"pluginAdminExternalManageEnabled": hs.Cfg.PluginAdminEnabled && hs.Cfg.PluginAdminExternalManageEnabled,
-		"pluginCatalogHiddenPlugins":       hs.Cfg.PluginCatalogHiddenPlugins,
-		"expressionsEnabled":               hs.Cfg.ExpressionsEnabled,
-		"awsAllowedAuthProviders":          hs.Cfg.AWSAllowedAuthProviders,
-		"awsAssumeRoleEnabled":             hs.Cfg.AWSAssumeRoleEnabled,
-		"supportBundlesEnabled":            isSupportBundlesEnabled(hs),
-		"azure": map[string]interface{}{
-			"cloud":                  hs.Cfg.Azure.Cloud,
-			"managedIdentityEnabled": hs.Cfg.Azure.ManagedIdentityEnabled,
+
+		FeatureToggles:                   hs.Features.GetEnabled(c.Req.Context()),
+		RendererAvailable:                hs.RenderService.IsAvailable(c.Req.Context()),
+		RendererVersion:                  hs.RenderService.Version(),
+		SecretsManagerPluginEnabled:      secretsManagerPluginEnabled,
+		Http2Enabled:                     hs.Cfg.Protocol == setting.HTTP2Scheme,
+		Sentry:                           hs.Cfg.Sentry,
+		GrafanaJavascriptAgent:           hs.Cfg.GrafanaJavascriptAgent,
+		PluginCatalogURL:                 hs.Cfg.PluginCatalogURL,
+		PluginAdminEnabled:               hs.Cfg.PluginAdminEnabled,
+		PluginAdminExternalManageEnabled: hs.Cfg.PluginAdminEnabled && hs.Cfg.PluginAdminExternalManageEnabled,
+		PluginCatalogHiddenPlugins:       hs.Cfg.PluginCatalogHiddenPlugins,
+		ExpressionsEnabled:               hs.Cfg.ExpressionsEnabled,
+		AwsAllowedAuthProviders:          hs.Cfg.AWSAllowedAuthProviders,
+		AwsAssumeRoleEnabled:             hs.Cfg.AWSAssumeRoleEnabled,
+		SupportBundlesEnabled:            isSupportBundlesEnabled(hs),
+
+		Azure: dtos.FrontendSettingsAzureDTO{
+			Cloud:                  hs.Cfg.Azure.Cloud,
+			ManagedIdentityEnabled: hs.Cfg.Azure.ManagedIdentityEnabled,
 		},
-		"caching": map[string]bool{
-			"enabled": hs.Cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
+
+		Caching: dtos.FrontendSettingsCachingDTO{
+			Enabled: hs.Cfg.SectionWithEnvOverrides("caching").Key("enabled").MustBool(true),
 		},
-		"recordedQueries": map[string]bool{
-			"enabled": hs.Cfg.SectionWithEnvOverrides("recorded_queries").Key("enabled").MustBool(true),
+		RecordedQueries: dtos.FrontendSettingsRecordedQueriesDTO{
+			Enabled: hs.Cfg.SectionWithEnvOverrides("recorded_queries").Key("enabled").MustBool(true),
 		},
-		"reporting": map[string]bool{
-			"enabled": hs.Cfg.SectionWithEnvOverrides("reporting").Key("enabled").MustBool(true),
+		Reporting: dtos.FrontendSettingsReportingDTO{
+			Enabled: hs.Cfg.SectionWithEnvOverrides("reporting").Key("enabled").MustBool(true),
 		},
-		"unifiedAlertingEnabled": hs.Cfg.UnifiedAlerting.Enabled,
-		"unifiedAlerting": map[string]interface{}{
-			"minInterval": hs.Cfg.UnifiedAlerting.MinInterval.String(),
+
+		UnifiedAlerting: dtos.FrontendSettingsUnifiedAlertingDTO{
+			MinInterval: hs.Cfg.UnifiedAlerting.MinInterval.String(),
 		},
-		"oauth":                   hs.getEnabledOAuthProviders(),
-		"samlEnabled":             hs.samlEnabled(),
-		"samlName":                hs.samlName(),
-		"tokenExpirationDayLimit": hs.Cfg.SATokenExpirationDayLimit,
-		"snapshotEnabled":         hs.Cfg.SnapshotEnabled,
+
+		Oauth:                   hs.getEnabledOAuthProviders(),
+		SamlEnabled:             hs.samlEnabled(),
+		SamlName:                hs.samlName(),
+		TokenExpirationDayLimit: hs.Cfg.SATokenExpirationDayLimit,
+
+		SnapshotEnabled: hs.Cfg.SnapshotEnabled,
+	}
+
+	if hs.Cfg.UnifiedAlerting.Enabled != nil {
+		frontendSettings.UnifiedAlertingEnabled = *hs.Cfg.UnifiedAlerting.Enabled
+	}
+
+	if setting.AlertingEnabled != nil {
+		frontendSettings.AlertingEnabled = *setting.AlertingEnabled
 	}
 
 	if hs.pluginsCDNService != nil && hs.pluginsCDNService.IsEnabled() {
@@ -218,25 +236,26 @@ func (hs *HTTPServer) getFrontendSettingsMap(c *contextmodel.ReqContext) (map[st
 		if err != nil {
 			return nil, fmt.Errorf("plugins cdn base url: %w", err)
 		}
-		jsonObj["pluginsCDNBaseURL"] = cdnBaseURL
+		frontendSettings.PluginsCDNBaseURL = cdnBaseURL
 	}
 
 	if hs.ThumbService != nil {
-		jsonObj["dashboardPreviews"] = hs.ThumbService.GetDashboardPreviewsSetupSettings(c)
+		frontendSettings.DashboardPreviews = hs.ThumbService.GetDashboardPreviewsSetupSettings(c)
 	}
 
 	if hs.Cfg.GeomapDefaultBaseLayerConfig != nil {
-		jsonObj["geomapDefaultBaseLayerConfig"] = hs.Cfg.GeomapDefaultBaseLayerConfig
-	}
-	if !hs.Cfg.GeomapEnableCustomBaseLayers {
-		jsonObj["geomapDisableCustomBaseLayer"] = true
+		frontendSettings.GeomapDefaultBaseLayerConfig = &hs.Cfg.GeomapDefaultBaseLayerConfig
 	}
 
-	return jsonObj, nil
+	if !hs.Cfg.GeomapEnableCustomBaseLayers {
+		frontendSettings.GeomapDisableCustomBaseLayer = true
+	}
+
+	return frontendSettings, nil
 }
 
 func isSupportBundlesEnabled(hs *HTTPServer) bool {
-	return hs.Cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(false) &&
+	return hs.Cfg.SectionWithEnvOverrides("support_bundles").Key("enabled").MustBool(true) &&
 		hs.Features.IsEnabled(featuremgmt.FlagSupportBundles)
 }
 
@@ -267,7 +286,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, enabledPlugin
 		url := ds.Url
 
 		if ds.Access == datasources.DS_ACCESS_PROXY {
-			url = "/api/datasources/proxy/" + strconv.FormatInt(ds.Id, 10)
+			url = "/api/datasources/proxy/uid/" + ds.Uid
 		}
 
 		dsDTO := plugins.DataSourceDTO{

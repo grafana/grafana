@@ -10,13 +10,13 @@ import {
   DataQuery,
   DataSourceApi,
   DataSourceInstanceSettings,
+  DataSourcePluginContextProvider,
   EventBusExtended,
   EventBusSrv,
   HistoryItem,
   LoadingState,
   PanelData,
   PanelEvents,
-  DataSourcePluginContextProvider,
   QueryResultMetaNotice,
   TimeRange,
   toLegacyResponseData,
@@ -568,10 +568,12 @@ export function filterPanelDataToQuery(data: PanelData, refId: string): PanelDat
   // Only say this is an error if the error links to the query
   let state = data.state;
   const error = data.error && data.error.refId === refId ? data.error : undefined;
-  if (error) {
-    state = LoadingState.Error;
-  } else if (!error && data.state === LoadingState.Error) {
-    state = LoadingState.Done;
+  if (state !== LoadingState.Loading) {
+    if (error) {
+      state = LoadingState.Error;
+    } else if (data.state === LoadingState.Error) {
+      state = LoadingState.Done;
+    }
   }
 
   const timeRange = data.timeRange;

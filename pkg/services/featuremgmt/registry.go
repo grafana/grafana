@@ -73,12 +73,6 @@ var (
 			State:       FeatureStateBeta,
 		},
 		{
-			Name:         "tempoApmTable",
-			Description:  "Show APM table",
-			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-		},
-		{
 			Name:        "prometheusAzureOverrideAudience",
 			Description: "Experimental. Allow override default AAD audience for Azure Prometheus endpoint",
 			State:       FeatureStateBeta,
@@ -161,6 +155,12 @@ var (
 			RequiresDevMode: true,
 		},
 		{
+			Name:            "apiserver",
+			Description:     "Add a k8s API server proxy",
+			State:           FeatureStateAlpha,
+			RequiresDevMode: true,
+		},
+		{
 			Name:        "supportBundles",
 			Description: "Support bundles for troubleshooting",
 			State:       FeatureStateAlpha,
@@ -178,13 +178,6 @@ var (
 			RequiresDevMode: true,
 		},
 		{
-			Name:            "azureMonitorResourcePickerForMetrics",
-			Description:     "New UI for Azure Monitor Metrics Query",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-			FrontendOnly:    true,
-		},
-		{
 			Name:         "exploreMixedDatasource",
 			Description:  "Enable mixed datasource in Explore",
 			State:        FeatureStateAlpha,
@@ -194,13 +187,6 @@ var (
 			Name:         "tracing",
 			Description:  "Adds trace ID to error notifications",
 			State:        FeatureStateAlpha,
-			FrontendOnly: true,
-		},
-		{
-			Name:         "commandPalette",
-			Description:  "Enable command palette",
-			State:        FeatureStateStable,
-			Expression:   "true", // enabled by default
 			FrontendOnly: true,
 		},
 		{
@@ -283,8 +269,8 @@ var (
 		},
 		{
 			Name:        "topnav",
-			Description: "New top nav and page layouts",
-			State:       FeatureStateAlpha,
+			Description: "Displays new top nav and page layouts",
+			State:       FeatureStateBeta,
 		},
 		{
 			Name:            "grpcServer",
@@ -415,11 +401,6 @@ var (
 			Description:     "Stop maintaining state of alerts that are not firing",
 			State:           FeatureStateBeta,
 			RequiresRestart: false,
-		},
-		{
-			Name:        "azureMultipleResourcePicker",
-			Description: "Azure multiple resource picker",
-			State:       FeatureStateAlpha,
 		},
 		{
 			Name:         "topNavCommandPalette",

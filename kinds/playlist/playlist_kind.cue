@@ -1,7 +1,8 @@
 package kind
 
-name:     "Playlist"
-maturity: "merged"
+name:        "Playlist"
+maturity:    "merged"
+description: "A playlist is a series of dashboards that is automatically rotated in the browser, on a configurable interval."
 
 lineage: seqs: [
 	{

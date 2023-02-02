@@ -13,6 +13,7 @@ import { Tooltip } from '../Tooltip';
 
 import { PanelDescription } from './PanelDescription';
 import { PanelStatus } from './PanelStatus';
+import { TitleItem } from './TitleItem';
 
 /**
  * @internal
@@ -50,6 +51,7 @@ export interface PanelChromeProps {
    * of showing/interacting with the panel's state
    */
   leftItems?: ReactNode[];
+  displayMode?: 'default' | 'transparent';
 }
 
 /**
@@ -67,6 +69,7 @@ export function PanelChrome({
   padding = 'md',
   title = '',
   description = '',
+  displayMode = 'default',
   titleItems = [],
   menu,
   dragClass,
@@ -101,13 +104,13 @@ export function PanelChrome({
     cursor: dragClass ? 'move' : 'auto',
   };
 
-  const itemStyles: CSSProperties = {
-    minHeight: headerHeight,
-    minWidth: headerHeight,
-  };
-
   const containerStyles: CSSProperties = { width, height };
   const ariaLabel = title ? selectors.components.Panels.Panel.containerByTitle(title) : 'Panel';
+
+  if (displayMode === 'transparent') {
+    containerStyles.backgroundColor = 'transparent';
+    containerStyles.border = 'none';
+  }
 
   return (
     <div className={styles.container} style={containerStyles} aria-label={ariaLabel}>
@@ -133,11 +136,11 @@ export function PanelChrome({
         )}
 
         {loadingState === LoadingState.Streaming && (
-          <div className={styles.item} style={itemStyles} data-testid="panel-streaming">
-            <Tooltip content="Streaming">
-              <Icon name="circle-mono" size="sm" className={styles.streaming} />
-            </Tooltip>
-          </div>
+          <Tooltip content="Streaming">
+            <TitleItem className={dragClassCancel} data-testid="panel-streaming">
+              <Icon name="circle-mono" size="md" className={styles.streaming} />
+            </TitleItem>
+          </Tooltip>
         )}
 
         <div className={styles.rightAligned}>
@@ -147,6 +150,7 @@ export function PanelChrome({
                 aria-label={`Menu for panel with ${title ? `title ${title}` : 'no title'}`}
                 title="Menu"
                 icon="ellipsis-v"
+                iconSize="md"
                 narrow
                 data-testid="panel-menu-button"
                 className={cx(styles.menuItem, dragClassCancel, 'menu-icon')}
@@ -154,7 +158,7 @@ export function PanelChrome({
             </Dropdown>
           )}
 
-          {leftItems && <div className={styles.items}>{itemsRenderer(leftItems, (item) => item)}</div>}
+          {leftItems && <div className={styles.leftItems}>{itemsRenderer(leftItems, (item) => item)}</div>}
         </div>
 
         {statusMessage && (
@@ -210,7 +214,7 @@ const getContentStyle = (
 };
 
 const getStyles = (theme: GrafanaTheme2) => {
-  const { background, borderColor } = theme.components.panel;
+  const { background, borderColor, padding } = theme.components.panel;
 
   return {
     container: css({
@@ -224,7 +228,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       flex: '1 1 0',
 
-      '&:focus-visible, &:hover': {
+      '&:focus-within, &:hover': {
         // only show menu icon on hover or focused panel
         '.menu-icon': {
           visibility: 'visible',
@@ -251,7 +255,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'panel-header',
       display: 'flex',
       alignItems: 'center',
-      padding: theme.spacing(0, 0, 0, 1),
+      padding: theme.spacing(0, 0, 0, padding),
     }),
     streaming: css({
       label: 'panel-streaming',
@@ -265,6 +269,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     title: css({
       label: 'panel-title',
       marginBottom: 0, // override default h6 margin-bottom
+      paddingRight: theme.spacing(1),
       textOverflow: 'ellipsis',
       overflow: 'hidden',
       whiteSpace: 'nowrap',
@@ -290,6 +295,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       left: '50%',
       transform: 'translateX(-50%)',
     }),
+    leftItems: css({
+      display: 'flex',
+      paddingRight: theme.spacing(padding),
+    }),
     rightAligned: css({
       label: 'right-aligned-container',
       marginLeft: 'auto',
@@ -298,9 +307,6 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     titleItems: css({
       display: 'flex',
-      alignItems: 'center',
-      overflow: 'hidden',
-      padding: theme.spacing(1),
     }),
   };
 };

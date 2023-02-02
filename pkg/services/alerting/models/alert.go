@@ -92,8 +92,17 @@ type Alert struct {
 	Settings *simplejson.Json
 }
 
-func (a *Alert) ValidToSave() bool {
-	return a.DashboardId != 0 && a.OrgId != 0 && a.PanelId != 0
+func (a *Alert) ValidDashboardPanel() bool {
+	return a.OrgId != 0 && a.DashboardId != 0 && a.PanelId != 0
+}
+
+func (a *Alert) ValidTags() bool {
+	for _, tag := range a.GetTagsFromSettings() {
+		if len(tag.Key) > 100 || len(tag.Value) > 100 {
+			return false
+		}
+	}
+	return true
 }
 
 func (a *Alert) ContainsUpdates(other *Alert) bool {
@@ -149,8 +158,6 @@ type SetAlertStateCommand struct {
 	State    AlertStateType
 	Error    string
 	EvalData *simplejson.Json
-
-	Result Alert
 }
 
 // Queries
@@ -162,25 +169,17 @@ type GetAlertsQuery struct {
 	Limit        int64
 	Query        string
 	User         *user.SignedInUser
-
-	Result []*AlertListItemDTO
 }
 
-type GetAllAlertsQuery struct {
-	Result []*Alert
-}
+type GetAllAlertsQuery struct{}
 
 type GetAlertByIdQuery struct {
 	Id int64
-
-	Result *Alert
 }
 
 type GetAlertStatesForDashboardQuery struct {
 	OrgId       int64
 	DashboardId int64
-
-	Result []*AlertStateInfoDTO
 }
 
 type AlertListItemDTO struct {

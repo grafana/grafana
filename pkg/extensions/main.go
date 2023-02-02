@@ -10,7 +10,6 @@ import (
 	_ "github.com/beevik/etree"
 	_ "github.com/blugelabs/bluge"
 	_ "github.com/blugelabs/bluge_segment_api"
-	_ "github.com/cortexproject/cortex/pkg/util"
 	_ "github.com/crewjam/saml"
 	_ "github.com/gobwas/glob"
 	_ "github.com/googleapis/gax-go/v2"
