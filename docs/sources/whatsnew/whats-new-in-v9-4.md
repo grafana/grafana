@@ -90,17 +90,24 @@ This is currently a beta feature that can be accessed by enabling the `datasourc
 
 {{< figure src="/media/docs/grafana/screenshot-datasource-connection-onboarding-whats-new-9-4.png" max-width="750px" caption="Admin view of data source connection page on dashboard creation" >}}
 
-## Auditing and Usage Insights: Support for Loki multi-tenancy
+## Command palette enhancements
 
-*This feature is available for Enterprise customers*
-This feature adds support to push analytics events and auditing logs to Loki with multi-tenancy mode, by specifying a tenant id. 
+The command palette has been updated to provide a more efficient way to navigate Grafana. Now you can search and access all pages as well as recent dashboards, making it easier to perform tasks without taking your hands off the keyboard.
 
-## Reporting: Enable changing the report scale factor
+Use the keyboard shortcut cmd + K on Mac or ctrl + K on Linux/Windows to launch the command palette.
 
-*This feature is available for Enterprise customers*
-Scale factor is a new feature for reports that allows users to change the dimension of the panels of the PDF document. It allows you to show more columns in the tables zooming out or show panels bigger zooming in.
-You can modify the scale factor for each report in the report editor and/or when you share the whole PDF directly from the dashboard page.
+Read more about using the command palette [in the documentation.](https://grafana.com/docs/grafana/latest/search/)
 
-{{< figure src="/media/docs/grafana/FormatReportScheduler9.4.png" max-width="750px" caption="Scale factor feature in Report format page" >}}
+{{< figure src="/static/img/docs/navigation/command-palette-9-4.gif" max-width="750px" caption="Grafana command palette" >}}
 
-{{< figure src="/media/docs/grafana/FormatReportShare9.4.png" max-width="750px" caption="Scale factor feature in Share functionality" >}}
+## Nav navigation
+
+Early access on Grafana Cloud
+
+Grafana’s navigation has been reorganized to make it easier for you to access the data you need. With this update, you'll be able to quickly navigate between features, giving you full visibility into the health of your systems.
+
+The new navigation is being gradually rolled out to users on Grafana Cloud.
+
+_Note:_ The Grafana documentation has not yet been updated to reflect changes to the navigation.
+
+{{< figure src="/static/img/docs/navigation/navigation-9-4.png" max-width="750px" caption="Grafana new navigation" >}}
