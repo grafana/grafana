@@ -233,18 +233,10 @@ export interface Rate extends MetricAggregationWithField {
 }
 
 export interface BasePipelineMetricAggregation extends MetricAggregationWithField {
-  /**
-   * TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
-   * type:         #PipelineMetricAggregationType
-   */
   pipelineAgg?: string;
 }
 
 export interface PipelineMetricAggregationWithMultipleBucketPaths extends BaseMetricAggregation {
-  /**
-   * TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
-   * type: #PipelineMetricAggregationType
-   */
   pipelineVariables?: Array<PipelineVariable>;
 }
 

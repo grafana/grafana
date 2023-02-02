@@ -286,17 +286,11 @@ composableKinds: DataQuery: {
 
 						#BasePipelineMetricAggregation: {
 							#MetricAggregationWithField
-
-							//TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.  
-							//type:         #PipelineMetricAggregationType
 							pipelineAgg?: string
 						} @cuetsy(kind="interface")
 
 						#PipelineMetricAggregationWithMultipleBucketPaths: {
 							#BaseMetricAggregation
-
-							//TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.  
-							//type: #PipelineMetricAggregationType
 							pipelineVariables?: [...#PipelineVariable]
 						} @cuetsy(kind="interface")
 
