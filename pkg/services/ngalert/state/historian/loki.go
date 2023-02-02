@@ -89,9 +89,6 @@ func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition
 		if state.State.State == eval.Error {
 			entry.Error = state.Error.Error()
 		}
-		if state.State.State == eval.NoData {
-			entry.NoData = true
-		}
 
 		jsn, err := json.Marshal(entry)
 		if err != nil {
@@ -135,7 +132,6 @@ type lokiEntry struct {
 	Previous      string           `json:"previous"`
 	Current       string           `json:"current"`
 	Error         string           `json:"error,omitempty"`
-	NoData        bool             `json:"noData"`
 	Values        *simplejson.Json `json:"values"`
 	DashboardUID  string           `json:"dashboardUID"`
 	PanelID       int64            `json:"panelID"`

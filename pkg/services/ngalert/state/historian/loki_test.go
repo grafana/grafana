@@ -44,8 +44,7 @@ func TestRemoteLokiBackend(t *testing.T) {
 
 			res := statesToStreams(rule, states, nil, l)
 
-			entry := requireSingleEntry(t, res)
-			require.True(t, entry.NoData)
+			_ = requireSingleEntry(t, res)
 		})
 
 		t.Run("produces expected stream identifier", func(t *testing.T) {
