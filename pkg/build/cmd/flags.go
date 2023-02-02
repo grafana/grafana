@@ -52,4 +52,8 @@ var (
 		EnvVars: []string{"GITHUB_TOKEN"},
 		Usage:   "GitHub token",
 	}
+	tagFlag = cli.StringFlag{
+		Name:  "tag",
+		Usage: "Grafana version tag",
+	}
 )
