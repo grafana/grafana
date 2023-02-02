@@ -253,14 +253,6 @@ func (s *fakeRenderService) Init() error {
 	return nil
 }
 
-type accessControlTestCase struct {
-	expectedCode int
-	desc         string
-	url          string
-	method       string
-	permissions  []accesscontrol.Permission
-}
-
 // accessControlScenarioContext contains the setups for accesscontrol tests
 type accessControlScenarioContext struct {
 	// server we registered hs routes on.
@@ -289,16 +281,6 @@ type accessControlScenarioContext struct {
 	dashboardPermissionsService *accesscontrolmock.MockPermissionsService
 }
 
-func setAccessControlPermissions(acmock *accesscontrolmock.Mock, perms []accesscontrol.Permission, org int64) {
-	acmock.GetUserPermissionsFunc =
-		func(_ context.Context, u *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
-			if u.OrgID == org {
-				return perms, nil
-			}
-			return nil, nil
-		}
-}
-
 func userWithPermissions(orgID int64, permissions []accesscontrol.Permission) *user.SignedInUser {
 	return &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(permissions)}}
 }
@@ -307,16 +289,6 @@ func userWithPermissions(orgID int64, permissions []accesscontrol.Permission) *u
 func setInitCtxSignedInUser(initCtx *contextmodel.ReqContext, user user.SignedInUser) {
 	initCtx.IsSignedIn = true
 	initCtx.SignedInUser = &user
-}
-
-func setInitCtxSignedInViewer(initCtx *contextmodel.ReqContext) {
-	initCtx.IsSignedIn = true
-	initCtx.SignedInUser = &user.SignedInUser{UserID: testUserID, OrgID: 1, OrgRole: org.RoleViewer, Login: testUserLogin}
-}
-
-func setInitCtxSignedInOrgAdmin(initCtx *contextmodel.ReqContext) {
-	initCtx.IsSignedIn = true
-	initCtx.SignedInUser = &user.SignedInUser{UserID: testUserID, OrgID: 1, OrgRole: org.RoleAdmin, Login: testUserLogin}
 }
 
 func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {

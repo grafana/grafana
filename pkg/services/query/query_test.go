@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -380,6 +381,33 @@ func TestQueryDataMultipleSources(t *testing.T) {
 		// Responses aren't mocked, so a "healthy" query will just return an empty response
 		require.NotContains(t, res.Responses, "A")
 	})
+
+	t.Run("ignores a deprecated datasourceID", func(t *testing.T) {
+		tc := setup(t)
+		query1, err := simplejson.NewJson([]byte(`
+			{
+				"datasource": {
+					"type": "mysql",
+					"uid": "ds1"
+				},
+				"datasourceId": 1,
+				"refId": "A"
+			}
+		`))
+		require.NoError(t, err)
+		queries := []*simplejson.Json{query1}
+		reqDTO := dtos.MetricRequest{
+			From:                       "2022-01-01",
+			To:                         "2022-01-02",
+			Queries:                    queries,
+			Debug:                      false,
+			PublicDashboardAccessToken: "abc123",
+		}
+
+		_, err = tc.queryService.QueryData(context.Background(), tc.signedInUser, true, reqDTO)
+
+		require.NoError(t, err)
+	})
 }
 
 func setup(t *testing.T) *testContext {
@@ -449,7 +477,8 @@ type fakeDataSourceCache struct {
 }
 
 func (c *fakeDataSourceCache) GetDatasource(ctx context.Context, datasourceID int64, user *user.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
-	return c.ds, nil
+	// deprecated: fake an error to ensure we are using GetDatasourceByUID
+	return nil, fmt.Errorf("not found")
 }
 
 func (c *fakeDataSourceCache) GetDatasourceByUID(ctx context.Context, datasourceUID string, user *user.SignedInUser, skipCache bool) (*datasources.DataSource, error) {

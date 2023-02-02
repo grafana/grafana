@@ -322,18 +322,18 @@ func (s *Service) getDataSourceFromQuery(ctx context.Context, user *user.SignedI
 		return grafanads.DataSourceModel(user.OrgID), nil
 	}
 
-	// use datasourceId if it exists
-	id := query.Get("datasourceId").MustInt64(0)
-	if id > 0 {
-		ds, err = s.dataSourceCache.GetDatasource(ctx, id, user, skipCache)
+	if uid != "" {
+		ds, err = s.dataSourceCache.GetDatasourceByUID(ctx, uid, user, skipCache)
 		if err != nil {
 			return nil, err
 		}
 		return ds, nil
 	}
 
-	if uid != "" {
-		ds, err = s.dataSourceCache.GetDatasourceByUID(ctx, uid, user, skipCache)
+	// use datasourceId if it exists
+	id := query.Get("datasourceId").MustInt64(0)
+	if id > 0 {
+		ds, err = s.dataSourceCache.GetDatasource(ctx, id, user, skipCache)
 		if err != nil {
 			return nil, err
 		}
