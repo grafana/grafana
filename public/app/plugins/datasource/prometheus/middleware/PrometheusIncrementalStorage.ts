@@ -81,9 +81,9 @@ export class PrometheusIncrementalStorage {
     intervalInSeconds: number
   ) {
     let existingTimeFrameNewValuesRemoved: number[] = [];
-    let indiciesOfValuesInStorageToMergeWithResponse: { start: null | number; end: null | number } = {
-      start: null,
-      end: null,
+    let indiciesOfValuesInStorageToMergeWithResponse: { start: undefined | number; end: undefined | number } = {
+      start: undefined,
+      end: undefined,
     };
     let existingValueFrameNewValuesRemoved: number[] = [];
 
@@ -98,7 +98,7 @@ export class PrometheusIncrementalStorage {
         true
       );
 
-      if (startIndex !== null && startIndex >= 0) {
+      if (startIndex !== false && startIndex >= 0) {
         indiciesOfValuesInStorageToMergeWithResponse.start = startIndex;
         break;
       }
@@ -115,15 +115,15 @@ export class PrometheusIncrementalStorage {
         false // don't evict from end, only start
       );
 
-      if (endIndex !== null && endIndex >= 0) {
+      if (endIndex !== false && endIndex >= 0) {
         indiciesOfValuesInStorageToMergeWithResponse.end = endIndex;
         break;
       }
     }
 
     if (
-      indiciesOfValuesInStorageToMergeWithResponse.start !== null &&
-      indiciesOfValuesInStorageToMergeWithResponse.end !== null &&
+      indiciesOfValuesInStorageToMergeWithResponse.start !== undefined &&
+      indiciesOfValuesInStorageToMergeWithResponse.end !== undefined &&
       indiciesOfValuesInStorageToMergeWithResponse.start >= 0 &&
       indiciesOfValuesInStorageToMergeWithResponse.end >= 0
     ) {
@@ -152,8 +152,12 @@ export class PrometheusIncrementalStorage {
     intervalInSeconds: number,
     valuesFromStorage: number[],
     evict: boolean
-  ): null | number {
+  ): false | number {
     const doesResponseNotContainStoredTimeValue = timeValuesFromResponse.indexOf(timeValuesFromStorage[i]) === -1;
+    // console.log('doesResponseNotContainStoredTimeValue', doesResponseNotContainStoredTimeValue);
+    // console.log('doesResponseNotContainStoredTimeValue', timeValuesFromStorage[i]);
+    // console.log('timeValuesFromResponse', timeValuesFromResponse);
+    // console.log('valuesFromStorage', valuesFromStorage);
 
     // Remove values from before new start
     // Note this acts as the only eviction strategy so far, we only store frames that exist after the start of the current query, minus the interval time
@@ -168,10 +172,6 @@ export class PrometheusIncrementalStorage {
         originalRange.start,
         intervalInSeconds
       );
-      console.log('originalRange.start', new Date(originalRange.start));
-      console.log('current time value', new Date(timeValuesFromStorage[i]));
-      console.log('current time value', timeValuesFromStorage[i]);
-      console.log('current value', valuesFromStorage[i]);
     }
 
     const isThisAFrameWeWantToCombineWithCurrentResult =
@@ -182,7 +182,7 @@ export class PrometheusIncrementalStorage {
         return i;
       }
     }
-    return null;
+    return false;
   }
 
   private setStorageFieldsValues = (queryIndex: string, seriesIndex: string, values: number[]) => {
@@ -248,10 +248,16 @@ export class PrometheusIncrementalStorage {
    * @param data
    * @private
    */
-  private preProcessDataFrames(data: DataFrame[], intervalSeconds: number) {
+  private preProcessDataFrames(
+    data: DataFrame[],
+    intervalSeconds: number,
+    requestRange: TimeRange,
+    rangeOfQueryBeforeModification?: { end: number; start: number }
+  ) {
     if (!data?.length) {
       return;
     }
+    const intervalMs = intervalSeconds * 1000;
     const times = data[0].fields[0].values.toArray();
     const firstTime = times[0];
     const lastTime = times[times.length - 1];
@@ -263,10 +269,26 @@ export class PrometheusIncrementalStorage {
     const firstFrameTimeValues = data[0].fields[0].values?.toArray();
 
     // Get first time value
-    let min = firstFrameTimeValues[0];
+    const requestMin = requestRange.from.valueOf();
+
+    let firstResponseTime: number = firstFrameTimeValues[0];
+
+    const numberOfSteps = Math.ceil((firstResponseTime - requestMin) / intervalMs);
+
+    let firstRequestTimeAlignedWithResponse = firstFrameTimeValues[0] - numberOfSteps * intervalMs;
 
     // Get last time value
-    let max = firstFrameTimeValues[firstFrameTimeValues.length - 1];
+    let max: number = firstFrameTimeValues[firstFrameTimeValues.length - 1];
+    let min;
+
+    if (rangeOfQueryBeforeModification === undefined) {
+      min =
+        firstRequestTimeAlignedWithResponse < firstResponseTime
+          ? firstRequestTimeAlignedWithResponse
+          : firstResponseTime;
+    } else {
+      min = firstFrameTimeValues[0];
+    }
 
     // Walk through the data frames and get the first and last values of the time array
     for (let i = 0; i < data.length; i++) {
@@ -313,7 +335,7 @@ export class PrometheusIncrementalStorage {
 
     const intervalSeconds = rangeUtil.intervalToSeconds(request.interval);
     // Frames aren't always the same length, since this storage assumes a single time array for all values, that means we need to back-fill missing values
-    this.preProcessDataFrames(data, intervalSeconds);
+    this.preProcessDataFrames(data, intervalSeconds, request.range, originalRange);
 
     // Iterate through all of the queries
     request.targets.forEach((target) => {

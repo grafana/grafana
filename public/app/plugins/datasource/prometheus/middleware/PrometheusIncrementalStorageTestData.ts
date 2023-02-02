@@ -1453,5 +1453,13 @@ export const IncrementalStorageDataFrameScenarios = {
         timeSrv: { from: 'now-6h', to: 'now' },
       },
     },
+    missingDataAtStart: {
+      first: {
+        request: null,
+        dataFrames: null,
+        originalRange: null,
+        timeSrv: null,
+      },
+    },
   },
 };
