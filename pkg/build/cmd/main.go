@@ -9,6 +9,13 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+var additionalCommands []*cli.Command = make([]*cli.Command, 0, 5)
+
+//nolint:unused
+func registerAppCommand(c *cli.Command) {
+	additionalCommands = append(additionalCommands, c)
+}
+
 func main() {
 	app := cli.NewApp()
 	app.Commands = cli.Commands{
@@ -279,10 +286,7 @@ func main() {
 							ArgsUsage: "[version]",
 							Action:    NpmReleaseAction,
 							Flags: []cli.Flag{
-								&cli.StringFlag{
-									Name:  "tag",
-									Usage: "Grafana version tag",
-								},
+								&tagFlag,
 							},
 						},
 						{
@@ -290,10 +294,7 @@ func main() {
 							Usage:  "Store npm packages tarball",
 							Action: NpmStoreAction,
 							Flags: []cli.Flag{
-								&cli.StringFlag{
-									Name:  "tag",
-									Usage: "Grafana version tag",
-								},
+								&tagFlag,
 							},
 						},
 						{
@@ -301,10 +302,7 @@ func main() {
 							Usage:  "Retrieve npm packages tarball",
 							Action: NpmRetrieveAction,
 							Flags: []cli.Flag{
-								&cli.StringFlag{
-									Name:  "tag",
-									Usage: "Grafana version tag",
-								},
+								&tagFlag,
 							},
 						},
 					},
@@ -415,6 +413,8 @@ func main() {
 			},
 		},
 	}
+
+	app.Commands = append(app.Commands, additionalCommands...)
 
 	if err := app.Run(os.Args); err != nil {
 		log.Fatalln(err)
