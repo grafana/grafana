@@ -102,4 +102,22 @@ describe('<KeyValuesTable>', () => {
       }
     });
   });
+
+  it('properly escapes values', () => {
+    const data = [
+      {
+        key: 'jsonkey',
+        value: JSON.stringify({
+          '<img src=x onerror=alert(1)>': '<img src=x onerror=alert(1)>',
+          url: 'https://example.com"id=x tabindex=1 onfocus=alert(1)',
+        }),
+      },
+    ];
+    const wrapper = shallow(<KeyValuesTable data={data} />);
+    const el = wrapper.find(`.${ubInlineBlock}`);
+    expect(el.length).toBe(1);
+    expect(el.html().replace(/\n/g, '')).toMatch(
+      `<div class=\"css-7kp13n\"><div class=\"json-markup\">{    <span class=\"json-markup-key\">\"&lt;img src=x onerror=alert(1)&gt;\":</span> <span class=\"json-markup-string\">\"&lt;img src=x onerror=alert(1)&gt;\"</span>,    <span class=\"json-markup-key\">\"url\":</span> <span class=\"json-markup-string\">\"<a href=\"https://example.com%22id=x%20tabindex=1%20onfocus=alert(1)\">https://example.com&quot;id=x tabindex=1 onfocus=alert(1)</a>\"</span>}</div></div>`
+    );
+  });
 });
