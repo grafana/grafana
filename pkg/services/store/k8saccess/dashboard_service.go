@@ -2,6 +2,7 @@ package k8saccess
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -214,19 +215,24 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 	uObj := &unstructured.Unstructured{
 		Object: o,
 	}
+	var uOut *unstructured.Unstructured
 
 	if updateDashboard {
 		fmt.Println("POTATO: CONTINUING, action: update")
 		//var u *unstructured.Unstructured
 		//u, err = resourceClient.Update(ctx, uObj, metav1.UpdateOptions{})
 		//fmt.Printf("%#v", u)
-		_, err = resourceClient.Update(ctx, uObj, metav1.UpdateOptions{})
+		uOut, err = resourceClient.Update(ctx, uObj, metav1.UpdateOptions{})
 	} else {
 		fmt.Println("POTATO: CONTINUING, action: create")
-		_, err = resourceClient.Create(ctx, uObj, metav1.CreateOptions{})
+		uOut, err = resourceClient.Create(ctx, uObj, metav1.CreateOptions{})
+	}
+	if err != nil {
+		return nil, err
 	}
 
-	//fmt.Println("POTATO: extra debug:", err)
+	jjjj, err := json.MarshalIndent(uOut, "", "  ")
+	fmt.Printf("POTATO: got: %s\n", jjjj)
 
 	if err != nil {
 		return nil, err
