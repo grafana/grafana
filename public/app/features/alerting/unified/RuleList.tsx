@@ -5,7 +5,7 @@ import { useAsyncFn, useInterval } from 'react-use';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { logInfo } from '@grafana/runtime';
+import { BackendSrvRequest, getBackendSrv, logInfo } from '@grafana/runtime';
 import { Button, LinkButton, useStyles2, withErrorBoundary } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
@@ -33,7 +33,20 @@ const VIEWS = {
   state: RuleListStateView,
 };
 
-const onExport = () => window.open(`/api/v1/provisioning/alert-rules/export?download=true`);
+const onExport = async () => {
+  const exportURL = `/api/v1/provisioning/alert-rules/export?download=true`;
+  const options: BackendSrvRequest = {
+    url: exportURL,
+    headers: { Accept: 'yaml' },
+    responseType: 'blob',
+  };
+  const blob = await getBackendSrv().get(exportURL, undefined, undefined, options);
+  const fileUrl = window.URL.createObjectURL(blob);
+  const downloadLink = document.createElement('a');
+  downloadLink.href = fileUrl;
+  downloadLink.download = 'export.yaml';
+  downloadLink.click();
+};
 
 const RuleList = withErrorBoundary(
   () => {
