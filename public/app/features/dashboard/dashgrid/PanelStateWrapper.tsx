@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import classNames from 'classnames';
 import React, { PureComponent } from 'react';
 import { Subscription } from 'rxjs';
@@ -652,17 +653,47 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
       />
     );
 
+    const overrideStyles: { menuItemsClassName?: string; menuWrapperClassName?: string; pos?: React.CSSProperties } = {
+      menuItemsClassName: undefined,
+      menuWrapperClassName: undefined,
+      pos: { top: 0, left: '-156px' },
+    };
+
+    if (config.featureToggles.newPanelChromeUI) {
+      // set override styles
+      overrideStyles.menuItemsClassName = css`
+        width: inherit;
+        top: inherit;
+        left: inherit;
+        position: inherit;
+        float: inherit;
+      `;
+      overrideStyles.menuWrapperClassName = css`
+        position: inherit;
+        width: inherit;
+        top: inherit;
+        left: inherit;
+        float: inherit;
+        .dropdown-submenu > .dropdown-menu {
+          position: absolute;
+        }
+      `;
+      overrideStyles.pos = undefined;
+    }
+
     // custom styles is neeeded to override legacy panel-menu styles and prevent menu from being cut off
     let menu;
     if (!dashboard.meta.publicDashboardAccessToken) {
       menu = (
         <div data-testid="panel-dropdown">
           <PanelHeaderMenuWrapper
-            style={{ top: 0, left: '-156px' }}
+            style={overrideStyles.pos}
             panel={panel}
             dashboard={dashboard}
             loadingState={data.state}
             onClose={() => {}}
+            menuItemsClassName={overrideStyles.menuItemsClassName}
+            menuWrapperClassName={overrideStyles.menuWrapperClassName}
           />
         </div>
       );
