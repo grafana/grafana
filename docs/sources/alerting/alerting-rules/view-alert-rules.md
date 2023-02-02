@@ -25,6 +25,7 @@ When managing large volumes of alerts, you can use extended alert rule search ca
 - [View and filter alert rules](#view-and-filter-alert-rules)
   - [View alert rules](#view-alert-rules)
   - [Export alert rules](#export-alert-rules)
+  - [View query definitions for provisioned alerts](#view-query-definitions-for-provisioned-alerts)
     - [Grouped view](#grouped-view)
     - [State view](#state-view)
   - [Filter alert rules](#filter-alert-rules)
@@ -46,6 +47,10 @@ From the Alert list page, you can also make copies of alert rules to help you re
 Click **Export** to create and tune an alert rule in the UI, then export to YAML or JSON, and use in the provisioning API or files. You can also export an entire rule group to review or use.
 
 **Note:** This is supported in both the UI and provisioning API.
+
+## View query definitions for provisioned alerts
+
+View read-only query definitions for provisioned alerts. Check quickly if your alert rule queries are correct, without diving into your "as-code" repository for rule definitions.
 
 ### Grouped view
 
