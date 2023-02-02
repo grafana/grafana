@@ -82,15 +82,15 @@ func GenerateDatasourcePermissions(b *testing.B, db *sqlstore.SQLStore, ac *stor
 	dataSources := make([]int64, 0)
 	for i := 0; i < dsNum; i++ {
 		addDSCommand := &datasources.AddDataSourceCommand{
-			OrgId:  0,
+			OrgID:  0,
 			Name:   fmt.Sprintf("ds_%d", i),
 			Type:   datasources.DS_GRAPHITE,
 			Access: datasources.DS_ACCESS_DIRECT,
-			Url:    "http://test",
+			URL:    "http://test",
 		}
 		dsStore := datasourcesService.CreateStore(db, log.New("publicdashboards.test"))
 		_ = dsStore.AddDataSource(context.Background(), addDSCommand)
-		dataSources = append(dataSources, addDSCommand.Result.Id)
+		dataSources = append(dataSources, addDSCommand.Result.ID)
 	}
 
 	userIds, teamIds := generateTeamsAndUsers(b, db, usersNum)

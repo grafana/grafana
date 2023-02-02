@@ -13,9 +13,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
@@ -167,7 +168,7 @@ func TestMiddlewareContext(t *testing.T) {
 			t.Log("Handler called")
 			data := &dtos.IndexViewData{
 				User:     &dtos.CurrentUser{},
-				Settings: map[string]interface{}{},
+				Settings: &dtos.FrontendSettingsDTO{},
 				NavTree:  &navtree.NavTreeRoot{},
 			}
 			t.Log("Calling HTML", "data", data)
@@ -344,9 +345,9 @@ func TestMiddlewareContext(t *testing.T) {
 		}
 
 		sc.userAuthTokenService.TryRotateTokenProvider = func(ctx context.Context, userToken *auth.UserToken,
-			clientIP net.IP, userAgent string) (bool, error) {
+			clientIP net.IP, userAgent string) (bool, *auth.UserToken, error) {
 			userToken.UnhashedToken = "rotated"
-			return true, nil
+			return true, userToken, nil
 		}
 
 		maxAge := int(sc.cfg.LoginMaxLifetime.Seconds())

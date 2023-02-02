@@ -65,12 +65,12 @@ func TestIntegrationAzureMonitor(t *testing.T) {
 
 	uid := "azuremonitor"
 	err := testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx, &datasources.AddDataSourceCommand{
-		OrgId:          1,
+		OrgID:          1,
 		Access:         datasources.DS_ACCESS_PROXY,
 		Name:           "Azure Monitor",
 		Type:           datasources.DS_AZURE_MONITOR,
-		Uid:            uid,
-		Url:            outgoingServer.URL,
+		UID:            uid,
+		URL:            outgoingServer.URL,
 		JsonData:       jsonData,
 		SecureJsonData: secureJSONData,
 	})

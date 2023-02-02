@@ -9,6 +9,7 @@ import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../components/Re
 import {
   addResources,
   findRow,
+  parseMultipleResourceDetails,
   parseResourceDetails,
   parseResourceURI,
   resourceToString,
@@ -418,5 +419,36 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     }
 
     return logLocationsMap;
+  }
+
+  parseRows(resources: Array<string | AzureMetricResource>): ResourceRow[] {
+    const resourceObjs = parseMultipleResourceDetails(resources);
+    const newSelectedRows: ResourceRow[] = [];
+    resourceObjs.forEach((resource, i) => {
+      let id = resource.resourceName;
+      let name = resource.resourceName;
+      let rtype = ResourceRowType.Resource;
+      if (!id) {
+        id = resource.resourceGroup;
+        name = resource.resourceGroup;
+        rtype = ResourceRowType.ResourceGroup;
+        if (!id) {
+          id = resource.subscription;
+          name = resource.subscription;
+          rtype = ResourceRowType.Subscription;
+        }
+      }
+      newSelectedRows.push({
+        id: id ?? '',
+        name: name ?? '',
+        type: rtype,
+        uri: resourceToString(resource),
+        typeLabel:
+          resourceTypeDisplayNames[resource.metricNamespace?.toLowerCase() ?? ''] ?? resource.metricNamespace ?? '',
+        locationDisplayName: this.logLocationsMap.get(resource.region ?? '')?.displayName || resource.region,
+        location: resource.region,
+      });
+    });
+    return newSelectedRows;
   }
 }

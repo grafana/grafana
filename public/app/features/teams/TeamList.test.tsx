@@ -1,11 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { contextSrv, User } from 'app/core/services/context_srv';
 
-import { configureStore } from '../../store/configureStore';
 import { OrgRole, Team } from '../../types';
 
 import { Props, TeamList } from './TeamList';
@@ -17,7 +16,6 @@ jest.mock('app/core/config', () => ({
 }));
 
 const setup = (propOverrides?: object) => {
-  const store = configureStore();
   const props: Props = {
     teams: [] as Team[],
     noTeams: false,
@@ -41,9 +39,9 @@ const setup = (propOverrides?: object) => {
   contextSrv.user = props.signedInUser;
 
   render(
-    <Provider store={store}>
+    <TestProvider>
       <TeamList {...props} />
-    </Provider>
+    </TestProvider>
   );
 };
 
