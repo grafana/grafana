@@ -100,7 +100,7 @@ func (s *k8sDashboardService) MakeUserAdmin(ctx context.Context, orgID int64, us
 // - how do we use the dashboard core kind?
 // - how do we translate incoming dashboard DTO to dashboard kind?
 func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO, allowUiUpdate bool) (*dashboards.Dashboard, error) {
-	s.orig.SaveDashboard(ctx, dto, true)
+	//s.orig.SaveDashboard(ctx, dto, true)
 
 	//////////////////
 	fmt.Println("POTATO")

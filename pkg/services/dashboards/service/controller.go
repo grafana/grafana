@@ -53,13 +53,15 @@ func (c *DashboardController) Run(ctx context.Context) error {
 		AddFunc: func(obj interface{}) {
 			dash, err := interfaceToK8sDashboard(obj)
 			if err != nil {
-				fmt.Println("dashboard add", err)
+				fmt.Println("dashboard add failed", err)
 				return
 			}
 
-			fmt.Printf("dashboard added: %+v \n", dash)
-
 			dto := k8sDashboardToDashboardDTO(dash)
+			if existing, err := c.dashboardService.GetDashboard(context.Background(), &dashboards.GetDashboardQuery{UID: dto.Dashboard.UID, OrgID: dto.OrgID}); err == nil && existing.Version >= dto.Dashboard.Version {
+				fmt.Println("dashboard already exists, skipping")
+				return
+			}
 			_, err = c.dashboardService.SaveDashboard(context.Background(), dto, false)
 			if err != nil {
 				fmt.Println("dashboardService.SaveDashboard failed", err)
@@ -69,10 +71,20 @@ func (c *DashboardController) Run(ctx context.Context) error {
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			dash, err := interfaceToK8sDashboard(newObj)
 			if err != nil {
-				fmt.Println("dashboard update", err)
+				fmt.Println("dashboard add failed", err)
 				return
 			}
-			fmt.Printf("dashboard updated: %+v \n", dash)
+
+			dto := k8sDashboardToDashboardDTO(dash)
+			if existing, err := c.dashboardService.GetDashboard(context.Background(), &dashboards.GetDashboardQuery{UID: dto.Dashboard.UID, OrgID: dto.OrgID}); err == nil && existing.Version >= dto.Dashboard.Version {
+				fmt.Println("dashboard version already exists, skipping")
+				return
+			}
+			_, err = c.dashboardService.SaveDashboard(context.Background(), dto, false)
+			if err != nil {
+				fmt.Println("dashboardService.SaveDashboard failed", err)
+				return
+			}
 		},
 		DeleteFunc: func(obj interface{}) {
 			dash, err := interfaceToK8sDashboard(obj)
