@@ -6,21 +6,19 @@ title: DashboardListPanelCfg kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
-# DashboardListPanelCfg kind
+## DashboardListPanelCfg
 
-## Maturity: experimental
-## Version: 0.0
+#### Maturity: experimental
+#### Version: 0.0
 
-## Properties
+
 
 | Property       | Type                    | Required | Description                              |
 |----------------|-------------------------|----------|------------------------------------------|
 | `PanelLayout`  | string                  | **Yes**  | Possible values are: `list`, `previews`. |
 | `PanelOptions` | [object](#paneloptions) | **Yes**  |                                          |
 
-## PanelOptions
-
-### Properties
+### PanelOptions
 
 | Property             | Type     | Required | Description                              |
 |----------------------|----------|----------|------------------------------------------|

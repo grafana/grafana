@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/tsdb/loki/kinds/dataquery"
 )
 
 var logger = log.New("tsdb.loki")
@@ -57,15 +58,9 @@ type datasourceInfo struct {
 }
 
 type QueryJSONModel struct {
-	QueryType           string `json:"queryType"`
-	Expr                string `json:"expr"`
-	Direction           string `json:"direction"`
-	LegendFormat        string `json:"legendFormat"`
-	Interval            string `json:"interval"`
-	IntervalMS          int    `json:"intervalMS"`
-	Resolution          int64  `json:"resolution"`
-	MaxLines            int    `json:"maxLines"`
-	SupportingQueryType string `json:"supportingQueryType"`
+	dataquery.LokiDataQuery
+	Direction           *string `json:"direction,omitempty"`
+	SupportingQueryType *string `json:"supportingQueryType"`
 }
 
 func parseQueryModel(raw json.RawMessage) (*QueryJSONModel, error) {

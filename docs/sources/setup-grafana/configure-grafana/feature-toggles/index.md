@@ -25,7 +25,6 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `database_metrics`                  | Add Prometheus metrics for database tables                                           |                    |
 | `lokiMonacoEditor`                  | Access to Monaco query editor for Loki                                               | Yes                |
 | `featureHighlights`                 | Highlight Grafana Enterprise features                                                |                    |
-| `commandPalette`                    | Enable command palette                                                               | Yes                |
 | `cloudWatchDynamicLabels`           | Use dynamic labels instead of alias patterns in CloudWatch datasource                | Yes                |
 | `internationalization`              | Enables internationalization                                                         | Yes                |
 | `cloudWatchCrossAccountQuerying`    | Enables cross-account querying in CloudWatch datasources                             | Yes                |
@@ -45,6 +44,7 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `newDBLibrary`                    | Use jmoiron/sqlx rather than xorm for a few backend services                    |
 | `validateDashboardsOnSave`        | Validate dashboard JSON POSTed to api/dashboards/db                             |
 | `autoMigrateGraphPanels`          | Replace the angular graph panel with timeseries                                 |
+| `topnav`                          | Displays new top nav and page layouts                                           |
 | `datasourceLogger`                | Logs all datasource requests                                                    |
 | `accessControlOnCall`             | Access control primitives for OnCall                                            |
 | `alertingNoNormalState`           | Stop maintaining state of alerts that are not firing                            |
@@ -82,7 +82,6 @@ Alpha features might be changed or removed without prior notice.
 | `disableSecretsCompatibility`      | Disable duplicated secret storage in legacy tables                                                                                                                           |
 | `logRequestsInstrumentedAsUnknown` | Logs the path for requests that are instrumented as unknown                                                                                                                  |
 | `dataConnectionsConsole`           | Enables a new top-level page called Connections. This page is an experiment that provides a better experience when you install and configure data sources and other plugins. |
-| `topnav`                           | New top nav and page layouts                                                                                                                                                 |
 | `flameGraph`                       | Show the flame graph                                                                                                                                                         |
 | `redshiftAsyncQueryDataSupport`    | Enable async query data support for Redshift                                                                                                                                 |
 | `athenaAsyncQueryDataSupport`      | Enable async query data support for Athena                                                                                                                                   |
@@ -110,6 +109,7 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 | `publicDashboardsEmailSharing` | Allows public dashboard sharing to be restricted to only allowed emails |
 | `k8s`                          | Explore native k8s integrations                                         |
 | `k8sDashboards`                | Save dashboards via k8s                                                 |
+| `apiserver`                    | Add a k8s API server proxy                                              |
 | `dashboardsFromStorage`        | Load dashboards from the generic storage interface                      |
 | `export`                       | Export grafana instance (to git, etc)                                   |
 | `grpcServer`                   | Run GRPC server                                                         |

@@ -115,6 +115,10 @@ const (
 	// Save dashboards via k8s
 	FlagK8sDashboards = "k8sDashboards"
 
+	// FlagApiserver
+	// Add a k8s API server proxy
+	FlagApiserver = "apiserver"
+
 	// FlagSupportBundles
 	// Support bundles for troubleshooting
 	FlagSupportBundles = "supportBundles"
@@ -134,10 +138,6 @@ const (
 	// FlagTracing
 	// Adds trace ID to error notifications
 	FlagTracing = "tracing"
-
-	// FlagCommandPalette
-	// Enable command palette
-	FlagCommandPalette = "commandPalette"
 
 	// FlagCorrelations
 	// Correlations page
@@ -196,7 +196,7 @@ const (
 	FlagInternationalization = "internationalization"
 
 	// FlagTopnav
-	// New top nav and page layouts
+	// Displays new top nav and page layouts
 	FlagTopnav = "topnav"
 
 	// FlagGrpcServer

@@ -48,7 +48,7 @@ func TestQueryCondition(t *testing.T) {
 			Store:            store,
 			DatasourceService: &fd.FakeDataSourceService{
 				DataSources: []*datasources.DataSource{
-					{Id: 1, Type: datasources.DS_GRAPHITE},
+					{ID: 1, Type: datasources.DS_GRAPHITE},
 				},
 			},
 		}
