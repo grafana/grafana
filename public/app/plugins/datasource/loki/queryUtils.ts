@@ -4,9 +4,9 @@ import { escapeRegExp } from 'lodash';
 import {
   DataQueryRequest,
   DataQueryResponse,
+  DataQueryResponseData,
   dateTime,
   DurationUnit,
-  MutableDataFrame,
   TimeRange,
 } from '@grafana/data';
 import {
@@ -376,27 +376,27 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
 
   newResult.data.forEach((newFrame) => {
     const currentFrame = currentResult.data.find((frame) => frame.name === newFrame.name);
-    const currentIndex = currentResult.data.findIndex((frame) => frame.name === newFrame.name);
-
     if (!currentFrame) {
       currentResult.data.push(newFrame);
       return;
     }
-    const frame = new MutableDataFrame(currentFrame);
-    combineFrames(frame, newFrame);
-    currentResult.data[currentIndex] = frame;
+    combineFrames(currentFrame, newFrame);
   });
 
   return currentResult;
 }
 
-function combineFrames(dest: MutableDataFrame, source: MutableDataFrame) {
-  dest.reverse();
+function combineFrames(dest: DataQueryResponseData, source: DataQueryResponseData) {
+  dest.fields[0].values.reverse();
+  dest.fields[1].values.reverse();
+
   for (let j = source.fields[0].values.length - 1; j > 0; j--) {
     dest.fields[0].values.add(source.fields[0].values.get(j));
     dest.fields[1].values.add(source.fields[1].values.get(j));
   }
-  dest.reverse();
+
+  dest.fields[0].values.reverse();
+  dest.fields[1].values.reverse();
 }
 
 /**
