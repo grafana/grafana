@@ -31,10 +31,6 @@ const (
 	// Create and show thumbnails for dashboard search results
 	FlagDashboardPreviews = "dashboardPreviews"
 
-	// FlagDashboardPreviewsAdmin
-	// Manage the dashboard previews crawler process from the UI
-	FlagDashboardPreviewsAdmin = "dashboardPreviewsAdmin"
-
 	// FlagLiveConfig
 	// Save Grafana Live configuration in SQL tables
 	FlagLiveConfig = "live-config"
