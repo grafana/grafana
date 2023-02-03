@@ -143,7 +143,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
             colorIndex={1}
           />
         </Tooltip>{' '}
-        Select labels to include in the context query:
+        Select labels to be included in the context query:
       </div>
       <div>
         <MultiSelect
