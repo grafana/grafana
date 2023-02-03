@@ -12,8 +12,7 @@ export const fetchRoleOptions = async (orgId?: number, query?: string): Promise<
   if (!roles || !roles.length) {
     return [];
   }
-  roles = roles.map(addDisplayNameForFixedRole);
-  return roles;
+  return roles.map(addDisplayNameForFixedRole);
 };
 
 export const fetchUserRoles = async (userId: number, orgId?: number): Promise<Role[]> => {
@@ -26,8 +25,7 @@ export const fetchUserRoles = async (userId: number, orgId?: number): Promise<Ro
     if (!roles || !roles.length) {
       return [];
     }
-    roles = roles.map(addDisplayNameForFixedRole);
-    return roles;
+    return roles.map(addDisplayNameForFixedRole);
   } catch (error) {
     if (isFetchError(error)) {
       error.isHandled = true;
@@ -54,11 +52,11 @@ export const fetchTeamRoles = async (teamId: number, orgId?: number): Promise<Ro
     teamRolesUrl += `?targetOrgId=${orgId}`;
   }
   try {
-    const roles = await getBackendSrv().get(teamRolesUrl);
+    let roles = await getBackendSrv().get(teamRolesUrl);
     if (!roles || !roles.length) {
       return [];
     }
-    return roles;
+    return roles.map(addDisplayNameForFixedRole);
   } catch (error) {
     if (isFetchError(error)) {
       error.isHandled = true;
