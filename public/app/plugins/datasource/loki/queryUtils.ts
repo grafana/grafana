@@ -343,16 +343,6 @@ export function requestSupportsPartitioning(queries: LokiQuery[]) {
   return true;
 }
 
-export function mergeResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse) {
-  if (!currentResult) {
-    return newResult;
-  }
-
-  currentResult.data = [...currentResult.data, ...newResult.data];
-
-  return currentResult;
-}
-
 export function combineResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse) {
   if (!currentResult) {
     return newResult;
@@ -364,13 +354,13 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
       currentResult.data.push(newFrame);
       return;
     }
-    combine(currentFrame, newFrame);
+    combineFrames(currentFrame, newFrame);
   });
 
   return currentResult;
 }
 
-function combine(dest: DataQueryResponseData, source: DataQueryResponseData) {
+function combineFrames(dest: DataQueryResponseData, source: DataQueryResponseData) {
   for (let j = 0; j < source.fields[0].values.length; j++) {
     dest.fields[0].values.add(source.fields[0].values.get(j));
     dest.fields[1].values.add(source.fields[1].values.get(j));
