@@ -71,6 +71,18 @@ Organizations, on the other hand, provide a higher level of management for multi
 
 That being said, Teams provide many of the same benefits as Organizations, and can be seen as a more streamlined and simplified approach to managing resources and access. As such, it is possible that in the future, Teams may eventually replace Organizations as the primary way to manage resources in Grafana.
 
+## Do I have external systems?
+
+Consider the need for [M2M] communications. If there's a system that needs to interact with Grafana, ensure that it has proper access for it.
+
+Here are some example scenarios:
+
+**IoT devices monitoring**: Sensors and actuators might want to ingest information to Grafana in an automatic way. Consider the security implications of a shared security access for all the devices or an individual access to each of them.
+
+**Network monitoring**: Having a distributed systems architecture performance reported back to Grafana might provide insight about bottlenecks and even trigger alerts in the need of a timely intervention.
+
+These are just a few examples of how Grafana can be used in M2M scenarios. The platform is highly flexible and can be used in a variety of other M2M applications, making it a powerful tool for organizations looking to gain insights into their systems and devices.
+
 ### 🚧 Service Accounts
 
 ### 🚧 Personal access tokens
