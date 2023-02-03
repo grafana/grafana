@@ -158,7 +158,6 @@ type Service struct {
 	clientQueue *queue[authn.ContextAwareClient]
 
 	tracer         tracing.Tracer
-	userService    user.Service
 	sessionService auth.UserTokenService
 
 	// postAuthHooks are called after a successful authentication. They can modify the identity.
