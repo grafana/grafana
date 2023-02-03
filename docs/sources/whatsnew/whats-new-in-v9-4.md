@@ -98,31 +98,43 @@ We've made the following changes to alert rules
 
 Declare an incident from a firing alert, streamlining the alert to incident workflow.
 
-### Make copies of alert rules and notification templates
+{{< figure src="/media/docs/alerting/declare-incident.png" max-width="750px" caption="Declare incidents from firing alerts" >}}
+
+### Copy alert rules and notification templates
 
 To help you reuse existing alert rules or templates, make copies of alert rules from the Alert rule list view and templates from the Contact points page.
+
+{{< figure src="/media/docs/alerting/copy-alert-rules.png" max-width="750px" caption="Copy alert rules and notification templates" >}}
 
 ### View query definitions for provisioned alerts
 
 View read-only query definitions for provisioned alerts from the Alert rule details page. Check quickly if your alert rule queries are correct, without diving into your "as-code" repository for rule definitions.
 
+{{< figure src="/media/docs/alerting/view-query-definitions.png" max-width="750px" caption="View query definitions for provisioned alerts" >}}
+
 ### Export alert rules to use in the provisioning API or files
 
 Create and tune an alert rule in the UI, then export to YAML or JSON, and use it in the provisioning API or files. You can also export an entire rule group to review or use. This is supported in both the UI and provisioning API.
+
+{{< figure src="/media/docs/alerting/export-alert-rules.png" max-width="750px" caption="Export alert rules" >}}
 
 ### Pause alert rule evaluation
 
 Pause alert rule evaluation to prevent noisy alerting while tuning your alerts. Pausing stops alert rule evaluation and does not create any alert instances. This is different to mute timings, which stop notifications from being delivered, but still allow for alert rule evaluation and the creation of alert instances.
 
-![Pause alert rule evaluation](/media/docs/alerting/pause-alerts.png)
+{{< figure src="/media/docs/alerting/pause-alerts.png" max-width="750px" caption="Pause alert rule evaluations" >}}
 
 ### View evaluation interval on the Group view
 
 View the evaluation interval more easily from the grouped view on the Alert list page. The view now also always displays recording and normal alert rules and highlights alert rule status in different colors.
 
+{{< figure src="/media/docs/alerting/view-evaluation-interval.png" max-width="750px" caption="View evaluation interval on the Group view" >}}
+
 ### Improved search for your alert rules
 
 When managing large volumes of alerts, use extended alert rule search capabilities to filter on folders, evaluation groups, and rules. Additionally, you can filter alert rules by their properties like labels, state, type, and health.
+
+{{< figure src="/media/docs/alerting/search-improvements.png" max-width="750px" caption="Improved search for your alert rules" >}}
 
 ### Adjust the amount and resolution of data used in your alerting queries
 
@@ -138,9 +150,13 @@ Simplifies editing the evaluation interval for an alert rule within a new group.
 
 Connecting your OnCall workflows just got easier. OnCall has been added as a contact point to simplify the integration between alert notifications and your OnCall implementation.
 
+{{< figure src="/media/docs/alerting/on-call-contact-point.png" max-width="750px" caption="View Grafana OnCall contact point" >}}
+
 ### Add support for Discord as a contact point receiver
 
 Adds Discord as a contact point receiver for Grafana Cloud alert rules.
+
+{{< figure src="/media/docs/alerting/support-discord.png" max-width="750px" caption="Add support for Discord" >}}
 
 ## Alerting: administration
 
@@ -148,9 +164,13 @@ Adds Discord as a contact point receiver for Grafana Cloud alert rules.
 
 Get additional help while configuring your Alertmanager. If you enter an invalid Alertmanager configuration, an error message displays, and you can choose from a previous working configuration to restart it.
 
+{{< figure src="/media/docs/alerting/alertmanager-config.png" max-width="750px" caption="Better guidance to configure your Alertmanager" >}}
+
 ### Alerting landing page
 
 Introduces a new landing page that helps you get started quickly with Alerting. It also provides you with at a glance information on how Alerting works and a video to introduce you to key concepts.
+
+{{< figure src="/media/docs/alerting/landing-page.png" max-width="750px" caption="Alerting landing page" >}}
 
 ### Compatibility with AWS Aurora
 
