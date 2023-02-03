@@ -21,24 +21,21 @@ import { PromQuery } from '../types';
 
 // Decreasing the duration of the overlap provides even further performance improvements, however prometheus data over the last 10 minutes is in flux, and could be out of order from the past 2 hours
 // Get link to prometheus doc for the above comment
-const INCREMENTAL_QUERY_OVERLAP_DURATION_MS = 60 * 10 * 1000;
-const STORAGE_TIME_INDEX = '__time__';
-const DEBUG = false;
 
 interface IncrementalStorageOptions {
-  queryOverlapDurationMs: number;
+  datasourceInstabilityDurationInMs: number;
   storageTimeIndex: string;
-  debug: boolean;
 }
+const DEBUG = true;
 
 export class IncrementalStorage {
   private storage: Record<string, Record<string, number[]>>;
   private readonly datasource: { interpolateString: (s: string) => string };
   private readonly timeSrv: TimeSrv = getTimeSrv();
   // Not currently in use @todo
-  private readonly options?: IncrementalStorageOptions;
+  private readonly options: IncrementalStorageOptions;
 
-  constructor(datasource: { interpolateString: (s: string) => string }, options?: IncrementalStorageOptions) {
+  constructor(datasource: { interpolateString: (s: string) => string }, options: IncrementalStorageOptions) {
     this.storage = {};
     this.datasource = datasource;
     this.options = options;
@@ -570,6 +567,17 @@ export class IncrementalStorage {
   } {
     const requestFrom = request.range.from;
     const requestTo = request.range.to;
+    const tenMinutesFromNow = dateTime().valueOf() - this.options.datasourceInstabilityDurationInMs;
+
+    if (
+      requestTo.valueOf() - requestFrom.valueOf() < this.options.datasourceInstabilityDurationInMs &&
+      requestTo.valueOf() > tenMinutesFromNow
+    ) {
+      if (DEBUG) {
+        console.log('this query duration is shorter then the lookback time for recent data, not modifying request!');
+        return { request: request };
+      }
+    }
 
     let canCache: Boolean[] = [];
     let neededDurations: Array<{ end: number; start: number }> = [];
@@ -606,7 +614,7 @@ export class IncrementalStorage {
       const previousResultForThisQuery = this.getStorageFieldsForQuery(storageIndex);
 
       if (previousResultForThisQuery) {
-        const timeValuesFromStorage = previousResultForThisQuery[STORAGE_TIME_INDEX];
+        const timeValuesFromStorage = previousResultForThisQuery[this.options?.storageTimeIndex];
 
         // Assume that the added fields are contiguous (they should already be back-filled by now), and every series always has the most recent samples
         if (timeValuesFromStorage) {
@@ -662,14 +670,19 @@ export class IncrementalStorage {
         this.timeSrv.timeRange().to.utcOffset() * 60
       );
 
-      const tenMinutesFromNow = dateTime().valueOf() - INCREMENTAL_QUERY_OVERLAP_DURATION_MS;
       const adjustedRequestStart = neededDurations[0].start;
       const adjustedRequestEnd = neededDurations[0].end;
       let newStartTime;
       // If the request ends within the last 10 minutes...
       if (adjustedRequestEnd > tenMinutesFromNow) {
-        // Calculate the start time as either 10 minutes ago, or the start time, whichever is smaller (older)
-        newStartTime = adjustedRequestStart > tenMinutesFromNow ? tenMinutesFromNow : adjustedRequestStart;
+        // If the request starts within the last 10 minutes...
+        if (adjustedRequestStart > tenMinutesFromNow) {
+          // Then we want include all the data within the last 10 minutes
+          newStartTime = tenMinutesFromNow;
+        } else {
+          // Otherwise leave the adjusted start alone
+          newStartTime = adjustedRequestStart;
+        }
       } else {
         newStartTime = adjustedRequestStart;
       }
