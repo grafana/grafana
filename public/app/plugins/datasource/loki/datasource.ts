@@ -302,7 +302,7 @@ export class LokiDatasource
 
   private partitionedQuery(request: DataQueryRequest<LokiQuery>) {
     const partition = partitionTimeRange(request.range);
-    partition.reverse(); // Most recent to oldest data
+    //partition.reverse(); // Most recent to oldest data
 
     let mergedResponse: DataQueryResponse | null;
     const totalRequests = partition.length;
