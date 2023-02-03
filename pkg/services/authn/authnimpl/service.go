@@ -173,7 +173,6 @@ func (s *Service) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 		if item.v.Test(ctx, r) {
 			identity, err := s.authenticate(ctx, item.v, r)
 			if err != nil {
-				s.log.Warn("failed to authenticate", "client", item.v.Name(), "err", err)
 				authErr = multierror.Append(authErr, err)
 				// try next
 				continue
