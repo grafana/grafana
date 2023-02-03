@@ -905,7 +905,7 @@ func TestBuildMetricRequest(t *testing.T) {
 				},
 				"intervalMs":      int64(10000000),
 				"maxDataPoints":   int64(200),
-				"queryCachingTTL": 0,
+				"queryCachingTTL": int64(0),
 				"refId":           "B",
 			}),
 			reqDTO.Queries[1],
