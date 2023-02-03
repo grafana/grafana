@@ -48,7 +48,7 @@ import { LogRows } from '../logs/components/LogRows';
 
 import { LogsMetaRow } from './LogsMetaRow';
 import LogsNavigation from './LogsNavigation';
-import { LogsVolumePanel } from './LogsVolumePanel';
+import { LogsVolumePanelList } from './utils/LogsVolumePanelList';
 import { SETTINGS_KEYS } from './utils/logs';
 
 interface Props extends Themeable2 {
@@ -377,7 +377,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
       <>
         <Collapse label="Logs volume" collapsible isOpen={logsVolumeEnabled} onToggle={this.onToggleLogsVolumeCollapse}>
           {logsVolumeEnabled && (
-            <LogsVolumePanel
+            <LogsVolumePanelList
               absoluteRange={absoluteRange}
               width={width}
               logsVolumeData={logsVolumeData}

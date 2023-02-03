@@ -34,6 +34,7 @@ import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/times
 import { TimeSeriesOptions } from 'app/plugins/panel/timeseries/types';
 import { ExploreGraphStyle } from 'app/types';
 
+import { PanelChrome } from '../../../../../packages/grafana-ui/src/components/PanelChrome/PanelChrome';
 import { seriesVisibilityConfigFactory } from '../../dashboard/dashgrid/SeriesVisibilityConfigFactory';
 
 import { applyGraphStyle } from './exploreGraphStyleUtils';
@@ -45,6 +46,7 @@ interface Props {
   height: number;
   width: number;
   absoluteRange: AbsoluteTimeRange;
+  title: string;
   timeZone: TimeZone;
   loadingState: LoadingState;
   annotations?: DataFrame[];
@@ -61,6 +63,7 @@ export function ExploreGraph({
   data,
   height,
   width,
+  title = '',
   timeZone,
   absoluteRange,
   onChangeTime,
@@ -178,16 +181,20 @@ export function ExploreGraph({
           </Button>
         </div>
       )}
-      <PanelRenderer
-        data={{ series: seriesToShow, timeRange, state: loadingState, annotations, structureRev }}
-        pluginId="timeseries"
-        title=""
-        width={width}
-        height={height}
-        onChangeTimeRange={onChangeTime}
-        timeZone={timeZone}
-        options={panelOptions}
-      />
+      <PanelChrome width={width} height={height} title={title}>
+        {(innerWidth, innerHeight) => (
+          <PanelRenderer
+            data={{ series: seriesToShow, timeRange, state: loadingState, annotations, structureRev }}
+            pluginId="timeseries"
+            title={title}
+            width={innerWidth}
+            height={innerHeight}
+            onChangeTimeRange={onChangeTime}
+            timeZone={timeZone}
+            options={panelOptions}
+          />
+        )}
+      </PanelChrome>
     </PanelContextProvider>
   );
 }

@@ -11,7 +11,7 @@ import {
   EventBus,
   LogsVolumeType,
 } from '@grafana/data';
-import { Button, Collapse, InlineField, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
+import { Button, InlineField, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { ExploreGraph } from './Graph/ExploreGraph';
 import { SupplementaryResultError } from './SupplementaryResultError';
@@ -41,6 +41,8 @@ export function LogsVolumePanel(props: Props) {
     return null;
   }
 
+  const title = props.logsVolumeData?.data[0]?.meta?.custom?.logsVolumeSource || '';
+
   const logsVolumeData = props.logsVolumeData;
   const range = logsVolumeData.data[0]?.meta?.custom?.absoluteRange || props.absoluteRange;
   const fullRangeData = logsVolumeData.data[0]?.meta?.custom?.logsVolumeType !== LogsVolumeType.Limited;
@@ -58,6 +60,7 @@ export function LogsVolumePanel(props: Props) {
       LogsVolumePanelContent = (
         <ExploreGraph
           graphStyle="lines"
+          title={title}
           loadingState={LoadingState.Done}
           data={logsVolumeData.data}
           height={height}
@@ -96,12 +99,12 @@ export function LogsVolumePanel(props: Props) {
     );
   }
   return (
-    <Collapse label="" isOpen={true}>
+    <>
       <div style={{ height }} className={styles.contentContainer}>
         {LogsVolumePanelContent}
       </div>
       <div className={styles.extraInfoContainer}>{extraInfo}</div>
-    </Collapse>
+    </>
   );
 }
 

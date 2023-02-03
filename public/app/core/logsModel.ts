@@ -635,6 +635,7 @@ export function aggregateRawLogsVolume(
  */
 function aggregateFields(dataFrames: DataFrame[], config: FieldConfig): DataFrame {
   const aggregatedDataFrame = new MutableDataFrame();
+  aggregatedDataFrame.meta = { custom: { logsVolumeType: LogsVolumeType.FullRange } };
   if (!dataFrames.length) {
     return aggregatedDataFrame;
   }
