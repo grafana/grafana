@@ -12,7 +12,7 @@ keywords:
   - Auth
 ---
 
-# Planning IAM integration strategy
+# Planning your IAM integration strategy
 
 The following documentation is meant to shed light on the different authorization and authentications strategies available in Grafana. By doing preparation before implementation, the user will be able to decide which integration strategy suits best for their needs.
 
@@ -20,15 +20,15 @@ Identity and Access Management (IAM) is needed to handle secure access to [Grafa
 
 ## Benefits of having an IAM integration
 
-Consider the following benefits for IAM integration strategy with Grafana.
+Integrating with an IAM provider provides the following benefits:
 
-1. **User management**: By providing Grafana access to your current user database, you eliminate the overhead of replicating any user information and instead have a centrilized user management for user's roles and permissions to Grafana resources.
+- **User management**: By providing Grafana access to your current user database, you eliminate the overhead of replicating user information and instead have centralized user management for users' roles and permissions to Grafana resources.
 
-1. **Better security**: IAM solutions already provide advanced security features such as MFA, RBCA, and audit trails, which can help to improve the security of your Grafana installation.
+- **Security**: IAM solutions provide advanced security features such as MFA, RBCA, and audit trails, which can help to improve the security of your Grafana installation.
 
-1. **SSO**: By properly setting up Grafana with your current IAM solution will benefit user experience by accessing the Grafana instance with the same set of credentials as they use for everything else within the organization.
+- **SSO**: Properly setting up Grafana with your current IAM solution enables users to access Grafana with the same credentials they use for other applications.
 
-1. **Scalability**: Adding, updating or removing users from your user database will reflect immediately at the Grafana instance.
+- **Scalability**: Adding, updating, or removing users from your user database is immediately reflected in Grafana.
 
 In order to plan an integration with Grafana, assess your organization's current needs, requirements and any existing IAM solutions being used. This should include which set of roles and permissions will be match to each type of user and which groups of users share the same set of permissions and access to shared resources.
 
