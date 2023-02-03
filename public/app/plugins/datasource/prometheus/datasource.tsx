@@ -101,9 +101,7 @@ export class PrometheusDatasource
   subType: PromApplication;
   rulerEnabled: boolean;
 
-  // Record with string index of "super" dataframe to which we keep appending new records
-  // Each dataframe has two indicies: the concatenation of query expression/step interval and the name of each series
-  // When reading we should assume that everything that's been populated in this storage has the same durations, otherwise we would purge when making the request
+  // Record with flattened dataframes to which we keep appending new records
   prometheusDataFrameStorage: IncrementalStorage;
 
   constructor(

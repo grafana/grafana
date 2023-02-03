@@ -169,7 +169,7 @@ export class IncrementalStorage {
   }
 
   /**
-   * A helper function that returns an index of a frame if it's not too old and we want to evict it, or if it's already contained in the response
+   * A helper function that returns an index of a frame if it's not too old and we don't want to evict it, or if it's already contained in the response
    * @param timeValuesFromResponse
    * @param timeValuesFromStorage
    * @param i
@@ -188,6 +188,7 @@ export class IncrementalStorage {
     valuesFromStorage: number[],
     evict: boolean
   ): false | number {
+    //@todo performance
     const doesResponseNotContainStoredTimeValue = timeValuesFromResponse.indexOf(timeValuesFromStorage[i]) === -1;
 
     // Remove values from before new start
