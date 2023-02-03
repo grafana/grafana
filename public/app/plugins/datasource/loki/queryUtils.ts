@@ -329,11 +329,17 @@ export function partitionTimeRange(range: TimeRange, timeShift = 1, unit: Durati
 }
 
 export function requestSupportsPartitioning(queries: LokiQuery[]) {
-  for (const query of queries) {
-    if (isLogsQuery(query.expr)) {
-      return false;
-    }
+  /*
+   * For now, we would not split when more than 1 query is requested.
+   */
+  if (queries.length > 1) {
+    return false;
   }
+
+  if (isLogsQuery(queries[0].expr)) {
+    return false;
+  }
+
   return true;
 }
 
