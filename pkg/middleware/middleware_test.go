@@ -154,6 +154,22 @@ func TestMiddlewareContext(t *testing.T) {
 		assert.Empty(t, sc.resp.Header().Get("Expires"))
 	})
 
+	middlewareScenario(t, "middleware should pass cache-control on resources with private cache control", func(t *testing.T, sc *scenarioContext) {
+		sc = sc.fakeReq("GET", "/api/datasources/1/resources/foo")
+		sc.resp.Header().Add("Cache-Control", "private")
+		sc.resp.Header().Add("X-Grafana-Cache", "true")
+		sc.exec()
+		assert.Equal(t, "private", sc.resp.Header().Get("Cache-Control"))
+	})
+
+	middlewareScenario(t, "middleware should not pass cache-control on resources with public cache control", func(t *testing.T, sc *scenarioContext) {
+		sc = sc.fakeReq("GET", "/api/datasources/1/resources/foo")
+		sc.resp.Header().Add("Cache-Control", "public")
+		sc.resp.Header().Add("X-Grafana-Cache", "true")
+		sc.exec()
+		assert.Equal(t, noStore, sc.resp.Header().Get("Cache-Control"))
+	})
+
 	middlewareScenario(t, "middleware should not add Cache-Control header for requests to datasource proxy API", func(
 		t *testing.T, sc *scenarioContext) {
 		sc.fakeReq("GET", "/api/datasources/proxy/1/test").exec()
@@ -210,7 +226,7 @@ func TestMiddlewareContext(t *testing.T) {
 		keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
 		require.NoError(t, err)
 
-		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgId: orgID, Role: org.RoleEditor, Key: keyhash}
+		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgID: orgID, Role: org.RoleEditor, Key: keyhash}
 
 		sc.fakeReq("GET", "/").withValidApiKey().exec()
 
@@ -226,7 +242,7 @@ func TestMiddlewareContext(t *testing.T) {
 		keyhash, err := util.EncodePassword("v5nAwpMafFP6znaS4urhdWDLS5511M42", "asd")
 		require.NoError(t, err)
 
-		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgId: orgID, Role: org.RoleEditor, Key: keyhash}
+		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgID: orgID, Role: org.RoleEditor, Key: keyhash}
 
 		sc.fakeReq("GET", "/").withValidApiKey().exec()
 
@@ -283,7 +299,7 @@ func TestMiddlewareContext(t *testing.T) {
 
 	middlewareScenario(t, "Valid API key, but does not match DB hash", func(t *testing.T, sc *scenarioContext) {
 		const keyhash = "Something_not_matching"
-		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgId: 12, Role: org.RoleEditor, Key: keyhash}
+		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgID: 12, Role: org.RoleEditor, Key: keyhash}
 
 		sc.fakeReq("GET", "/").withValidApiKey().exec()
 
@@ -298,7 +314,7 @@ func TestMiddlewareContext(t *testing.T) {
 		require.NoError(t, err)
 
 		expires := sc.contextHandler.GetTime().Add(-1 * time.Second).Unix()
-		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgId: 12, Role: org.RoleEditor, Key: keyhash, Expires: &expires}
+		sc.apiKeyService.ExpectedAPIKey = &apikey.APIKey{OrgID: 12, Role: org.RoleEditor, Key: keyhash, Expires: &expires}
 
 		sc.fakeReq("GET", "/").withValidApiKey().exec()
 

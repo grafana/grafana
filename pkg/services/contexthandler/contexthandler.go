@@ -270,7 +270,7 @@ func (h *ContextHandler) getAPIKey(ctx context.Context, keyString string) (*apik
 	}
 
 	// fetch key
-	keyQuery := apikey.GetByNameQuery{KeyName: decoded.Name, OrgId: decoded.OrgId}
+	keyQuery := apikey.GetByNameQuery{KeyName: decoded.Name, OrgID: decoded.OrgId}
 	if err := h.apiKeyService.GetApiKeyByName(ctx, &keyQuery); err != nil {
 		return nil, err
 	}
@@ -357,15 +357,15 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *contextmodel.ReqConte
 		if err := h.apiKeyService.UpdateAPIKeyLastUsedDate(context.Background(), id); err != nil {
 			reqContext.Logger.Warn("failed to update last use date for api key", "id", id)
 		}
-	}(apiKey.Id)
+	}(apiKey.ID)
 
 	if apiKey.ServiceAccountId == nil || *apiKey.ServiceAccountId < 1 { //There is no service account attached to the apikey
 		// Use the old APIkey method.  This provides backwards compatibility.
 		// will probably have to be supported for a long time.
 		reqContext.SignedInUser = &user.SignedInUser{}
 		reqContext.OrgRole = apiKey.Role
-		reqContext.ApiKeyID = apiKey.Id
-		reqContext.OrgID = apiKey.OrgId
+		reqContext.ApiKeyID = apiKey.ID
+		reqContext.OrgID = apiKey.OrgID
 		reqContext.IsSignedIn = true
 		return true
 	}
@@ -373,7 +373,7 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *contextmodel.ReqConte
 	//There is a service account attached to the API key
 
 	//Use service account linked to API key as the signed in user
-	querySignedInUser := user.GetSignedInUserQuery{UserID: *apiKey.ServiceAccountId, OrgID: apiKey.OrgId}
+	querySignedInUser := user.GetSignedInUserQuery{UserID: *apiKey.ServiceAccountId, OrgID: apiKey.OrgID}
 	querySignedInUserResult, err := h.userService.GetSignedInUserWithCacheCtx(reqContext.Req.Context(), &querySignedInUser)
 	if err != nil {
 		reqContext.Logger.Error(
