@@ -14,6 +14,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/experimental"
+	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds/dataquery"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/kindsys"
@@ -116,11 +117,13 @@ func loadStoredQuery(fileName string) (*backend.QueryDataRequest, error) {
 	}
 
 	qm := models.QueryModel{
-		Range:        &sq.RangeQuery,
-		Exemplar:     &sq.ExemplarQuery,
-		Expr:         sq.Expr,
-		Interval:     kindsys.Ptr(fmt.Sprintf("%ds", sq.Step)),
-		IntervalMs:   kindsys.Ptr(sq.Step * 1000),
+		PrometheusDataQuery: dataquery.PrometheusDataQuery{
+			Range:      &sq.RangeQuery,
+			Exemplar:   &sq.ExemplarQuery,
+			Expr:       sq.Expr,
+			Interval:   kindsys.Ptr(fmt.Sprintf("%ds", sq.Step)),
+			IntervalMs: kindsys.Ptr(sq.Step * 1000),
+		},
 		LegendFormat: kindsys.Ptr(sq.LegendFormat),
 	}
 
