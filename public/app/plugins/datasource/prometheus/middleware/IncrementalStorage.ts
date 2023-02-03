@@ -60,7 +60,7 @@ export class IncrementalStorage {
    * Get index for flat storage
    * @param valueField
    */
-  private static valueFrameToLabelsString = (valueField: FieldDTO | Field): string => {
+  private static valueFieldToLabelsString = (valueField: FieldDTO | Field): string => {
     let keyValues: Array<{ key: string; value: string | undefined }> = [];
 
     if (valueField?.labels) {
@@ -101,7 +101,7 @@ export class IncrementalStorage {
     valuesFromStorage: number[],
     intervalInSeconds: number
   ) {
-    let existingTimeFrameNewValuesRemoved: number[] = [];
+    let timeValuesFromStorageNoOverlapWithResponse: number[] = [];
     let indiciesOfValuesInStorageToMergeWithResponse: { start: undefined | number; end: undefined | number } = {
       start: undefined,
       end: undefined,
@@ -126,6 +126,7 @@ export class IncrementalStorage {
       }
     }
 
+    // Then go to the end and walk backwards until we find a valid frame index
     for (let i = timeValuesFromStorage?.length - 1; i >= 0; i--) {
       const endIndex = this.getValidFrameIndex(
         timeValuesFromResponse,
@@ -143,13 +144,14 @@ export class IncrementalStorage {
       }
     }
 
+    // Then assuming that we were able to get valid indices above, we slice the storage values using them
     if (
       indiciesOfValuesInStorageToMergeWithResponse.start !== undefined &&
       indiciesOfValuesInStorageToMergeWithResponse.end !== undefined &&
       indiciesOfValuesInStorageToMergeWithResponse.start >= 0 &&
       indiciesOfValuesInStorageToMergeWithResponse.end >= 0
     ) {
-      existingTimeFrameNewValuesRemoved = timeValuesFromStorage.slice(
+      timeValuesFromStorageNoOverlapWithResponse = timeValuesFromStorage.slice(
         indiciesOfValuesInStorageToMergeWithResponse.start,
         indiciesOfValuesInStorageToMergeWithResponse.end + 1
       );
@@ -163,7 +165,7 @@ export class IncrementalStorage {
       }
     }
 
-    return { time: existingTimeFrameNewValuesRemoved, values: existingValueFrameNewValuesRemoved };
+    return { time: timeValuesFromStorageNoOverlapWithResponse, values: existingValueFrameNewValuesRemoved };
   }
 
   /**
@@ -417,7 +419,7 @@ export class IncrementalStorage {
     const responseFrameValues: number[] | undefined = valueField?.values?.toArray();
 
     // Generate a unique name for this dataframe using the values
-    const seriesLabelsIndexString = IncrementalStorage.valueFrameToLabelsString(valueField);
+    const seriesLabelsIndexString = IncrementalStorage.valueFieldToLabelsString(valueField);
 
     // If we don't have storage, dataframes, or any values for this label, we haven't added this query to storage before
     const thisQueryHasNeverBeenDoneBefore =
