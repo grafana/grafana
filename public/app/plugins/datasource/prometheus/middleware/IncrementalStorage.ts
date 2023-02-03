@@ -26,7 +26,7 @@ interface IncrementalStorageOptions {
   datasourceInstabilityDurationInMs: number;
   storageTimeIndex: string;
 }
-const DEBUG = true;
+const DEBUG = false;
 
 export class IncrementalStorage {
   private storage: Record<string, Record<string, number[]>>;
