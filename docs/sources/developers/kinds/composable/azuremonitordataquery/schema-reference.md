@@ -6,10 +6,12 @@ title: AzureMonitorDataQuery kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
-# AzureMonitorDataQuery kind
+## AzureMonitorDataQuery
 
-## Maturity: merged
-## Version: 0.0
+#### Maturity: merged
+#### Version: 0.0
+
+
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
