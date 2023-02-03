@@ -103,7 +103,6 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 
 | Feature toggle name            | Description                                                             |
 | ------------------------------ | ----------------------------------------------------------------------- |
-| `dashboardPreviewsAdmin`       | Manage the dashboard previews crawler process from the UI               |
 | `publicDashboardsEmailSharing` | Allows public dashboard sharing to be restricted to only allowed emails |
 | `k8s`                          | Explore native k8s integrations                                         |
 | `k8sDashboards`                | Save dashboards via k8s                                                 |
