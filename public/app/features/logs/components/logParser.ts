@@ -57,10 +57,6 @@ function shouldRemoveField(field: Field, index: number, row: LogRowModel) {
   if (field.name === 'id' || field.name === 'tsNs') {
     return true;
   }
-  // entry field which we are showing as the log message
-  if (row.entryFieldIndex === index) {
-    return true;
-  }
   const firstTimeField = row.dataFrame.fields.find((f) => f.type === FieldType.time);
   if (
     field.name === firstTimeField?.name &&

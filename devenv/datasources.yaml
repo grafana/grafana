@@ -253,17 +253,22 @@ datasources:
           target:
             expr: "{ job=\"test\" }"
           field: "traceID"
-    jsonData:
-      manageAlerts: false
-      derivedFields:
-        - name: "traceID"
-          matcherRegex: "traceID=(\\w+)"
-          url: "$${__value.raw}"
-          datasourceUid: gdev-jaeger
-        - name: "traceID"
-          matcherRegex: "traceID=(\\w+)"
-          url: "$${__value.raw}"
-          datasourceUid: gdev-zipkin
+      - targetUID: WyFv5154z
+        label: "Superhero"
+        description: "this is a test correlation from provisioning"
+        config:
+          type: query
+          target:
+            editorMode: "code"
+            format: "table"
+            rawQuery: "true"
+            rawSql: "SELECT * FROM superhero WHERE name='$${path}'"
+            refId: "A"
+          field: "Line"
+          transformations:
+            - type: "regex"
+              expression: 'url=http[s]?:\/\/(\S*)'
+              variable: "path"
 
   - name: gdev-jaeger
     type: jaeger

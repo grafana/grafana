@@ -108,10 +108,6 @@ function shouldRemoveField(field: Field, index: number, row: LogRowModel) {
   if (field.name === 'id') {
     return true;
   }
-  // entry field which we are showing as the log message
-  if (row.entryFieldIndex === index) {
-    return true;
-  }
   // hidden field
   if (field.config.custom?.hidden) {
     return true;
