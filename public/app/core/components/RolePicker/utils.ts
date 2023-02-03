@@ -11,7 +11,7 @@ export const isNotDelegatable = (role: Role) => {
 // fixed:datasources:admin      -> datasources admin
 export const addDisplayNameForFixedRole = (role: Role) => {
   const fixedRolePrefix = 'fixed:';
-  if (role.name.startsWith(fixedRolePrefix) && !role.displayName) {
+  if (!role.displayName && role.name.startsWith(fixedRolePrefix)) {
     let newRoleName = '';
     let rNameWithoutFixedPrefix = role.name.replace(fixedRolePrefix, '');
     newRoleName = rNameWithoutFixedPrefix.replace(/:/g, ' ');
