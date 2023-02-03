@@ -23,7 +23,6 @@ export interface FeatureToggles {
   database_metrics?: boolean;
   dashboardPreviews?: boolean;
   dashboardPreviewsAdmin?: boolean;
-  ['live-config']?: boolean;
   ['live-pipeline']?: boolean;
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;

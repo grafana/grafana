@@ -35,10 +35,6 @@ const (
 	// Manage the dashboard previews crawler process from the UI
 	FlagDashboardPreviewsAdmin = "dashboardPreviewsAdmin"
 
-	// FlagLiveConfig
-	// Save Grafana Live configuration in SQL tables
-	FlagLiveConfig = "live-config"
-
 	// FlagLivePipeline
 	// Enable a generic live processing pipeline
 	FlagLivePipeline = "live-pipeline"
