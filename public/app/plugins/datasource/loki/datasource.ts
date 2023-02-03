@@ -327,7 +327,7 @@ export class LokiDatasource
         )
         .subscribe({
           next: (response) => {
-            response.state = requestN > 1 ? LoadingState.Loading : LoadingState.Done;
+            response.state = requestN > 1 ? LoadingState.Streaming : LoadingState.Done;
 
             subscriber.next(response);
 
