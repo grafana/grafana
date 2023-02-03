@@ -10,17 +10,24 @@ import (
 )
 
 type k8sDashboardService struct {
-	orig  dashboards.DashboardService
-	store entity.EntityStoreServer
+	orig   dashboards.DashboardService
+	store  entity.EntityStoreServer
+	access K8SAccess
 }
 
 var _ dashboards.DashboardService = (*k8sDashboardService)(nil)
 
-func NewDashboardService(orig dashboards.DashboardService, store entity.EntityStoreServer) dashboards.DashboardService {
+func NewDashboardService(orig dashboards.DashboardService, store entity.EntityStoreServer, access K8SAccess) dashboards.DashboardService {
 	return &k8sDashboardService{
-		orig:  orig,
-		store: store,
+		orig:   orig,
+		store:  store,
+		access: access,
 	}
+}
+
+func (dr *k8sDashboardService) Run(ctx context.Context) error {
+	fmt.Printf("background service required for ")
+	return nil // noop
 }
 
 func (s *k8sDashboardService) BuildSaveDashboardCommand(ctx context.Context, dto *dashboards.SaveDashboardDTO, shouldValidateAlerts bool, validateProvisionedDashboard bool) (*dashboards.SaveDashboardCommand, error) {

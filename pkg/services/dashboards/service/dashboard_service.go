@@ -70,6 +70,10 @@ func ProvideDashboardService(
 	}
 }
 
+func (dr *DashboardServiceImpl) Run(ctx context.Context) error {
+	return nil // noop
+}
+
 func (dr *DashboardServiceImpl) GetProvisionedDashboardData(ctx context.Context, name string) ([]*dashboards.DashboardProvisioning, error) {
 	return dr.dashboardStore.GetProvisionedDashboardData(ctx, name)
 }
