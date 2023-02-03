@@ -287,17 +287,8 @@ export const Table = memo((props: Props) => {
             */
             if (cell.column.id === '0') {
               cell.value = rowIndex + 1;
-              return (
-                <TableCell
-                  key={index}
-                  tableStyles={tableStyles}
-                  cell={cell}
-                  onCellFilterAdded={onCellFilterAdded}
-                  columnIndex={index}
-                  columnCount={row.cells.length}
-                />
-              );
             }
+
             return (
               <TableCell
                 key={index}
