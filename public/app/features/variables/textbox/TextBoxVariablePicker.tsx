@@ -4,6 +4,7 @@ import { Input } from '@grafana/ui';
 import { useDispatch } from 'app/types';
 
 import { variableAdapters } from '../adapters';
+import { VARIABLE_PREFIX } from '../constants';
 import { VariablePickerProps } from '../pickers/types';
 import { toKeyedAction } from '../state/keyedVariablesReducer';
 import { changeVariableProp } from '../state/sharedReducer';
@@ -71,7 +72,7 @@ export function TextBoxVariablePicker({ variable, onVariableChange, readOnly }: 
       disabled={readOnly}
       onKeyDown={onKeyDown}
       placeholder="Enter variable value"
-      id={`var-${variable.id}`}
+      id={VARIABLE_PREFIX + variable.id}
     />
   );
 }
