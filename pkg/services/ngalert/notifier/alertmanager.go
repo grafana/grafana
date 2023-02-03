@@ -350,7 +350,7 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 	for k, v := range r.SecureSettings {
 		d, err := base64.StdEncoding.DecodeString(v)
 		if err != nil {
-			return nil, InvalidReceiverError{
+			return nil, alertingNotify.InvalidReceiverError{
 				Receiver: r,
 				Err:      errors.New("failed to decode secure setting"),
 			}
@@ -371,21 +371,21 @@ func (am *Alertmanager) buildReceiverIntegration(r *apimodels.PostableGrafanaRec
 	)
 	factoryConfig, err := receivers.NewFactoryConfig(cfg, NewNotificationSender(am.NotificationService), am.decryptFn, tmpl, newImageStore(am.Store), LoggerFactory, setting.BuildVersion)
 	if err != nil {
-		return nil, InvalidReceiverError{
+		return nil, alertingNotify.InvalidReceiverError{
 			Receiver: r,
 			Err:      err,
 		}
 	}
 	receiverFactory, exists := alertingNotify.Factory(r.Type)
 	if !exists {
-		return nil, InvalidReceiverError{
+		return nil, alertingNotify.InvalidReceiverError{
 			Receiver: r,
 			Err:      fmt.Errorf("notifier %s is not supported", r.Type),
 		}
 	}
 	n, err := receiverFactory(factoryConfig)
 	if err != nil {
-		return nil, InvalidReceiverError{
+		return nil, alertingNotify.InvalidReceiverError{
 			Receiver: r,
 			Err:      err,
 		}
