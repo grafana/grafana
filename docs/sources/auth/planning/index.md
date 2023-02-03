@@ -16,7 +16,7 @@ keywords:
 
 The following documentation is meant to shed light on the different authorization and authentications strategies available in Grafana. By doing preparation before implementation, the user will be able to decide which integration strategy suits best for their needs.
 
-Identity and Access Management (IAM) is needed to handle secure access to [Grafana resources]. Integrating Grafana with the proper solution is a key step to allow user access to sensitive data and resouces, and to simplify user management and authentication.
+Identity and Access Management (IAM) is needed to handle secure access to [Grafana resources]. Integrating Grafana with the proper solution is a key step to allow user access to sensitive data and resources, and to simplify user management and authentication.
 
 ## Benefits of having an IAM integration
 
@@ -53,7 +53,7 @@ If the users are outside of my organization, this means that Grafana needs to pr
 
 It makes sense to organize users in Teams in order to assign them roles and permissions reflecting the current organization. For example, instead of assigning five users access to the same dashboard, you can create a team that consists of those users and assign dashboard permissions to the team. A user can belong to multiple teams.
 
-A user can be a Member or an Administrator for a given team. Members of a team inherit permissions from the team, but they cannot edit the team itself. Team Administrators can add members to a team and update its settings, such as the team name, team member’s team roles, UI preferences, and the default dashbord to be displayed upon login for the team members.
+A user can be a Member or an Administrator for a given team. Members of a team inherit permissions from the team, but they cannot edit the team itself. Team Administrators can add members to a team and update its settings, such as the team name, team member’s team roles, UI preferences, and the default dashboard to be displayed upon login for the team members.
 
 Teams is a perfect solution to work with a small subset of users. Teams can share resources among other teams.
 
