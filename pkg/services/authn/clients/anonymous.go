@@ -25,6 +25,7 @@ type Anonymous struct {
 	cfg        *setting.Cfg
 	log        log.Logger
 	orgService org.Service
+	kvstore    kvstore.KVStore
 }
 
 func (a *Anonymous) Name() string {
