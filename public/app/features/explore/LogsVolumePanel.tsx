@@ -41,7 +41,7 @@ export function LogsVolumePanel(props: Props) {
     return null;
   }
 
-  const title = props.logsVolumeData?.data[0]?.meta?.custom?.logsVolumeSource || '';
+  const title = props.logsVolumeData?.data[0]?.meta?.custom?.mixedDataSourceName || '';
 
   const logsVolumeData = props.logsVolumeData;
   const range = logsVolumeData.data[0]?.meta?.custom?.absoluteRange || props.absoluteRange;

@@ -1,4 +1,4 @@
-import { groupBy } from 'lodash';
+import { groupBy, sortBy, toPairs, fromPairs } from 'lodash';
 import React, { useMemo } from 'react';
 
 import { AbsoluteTimeRange, DataQueryResponse, EventBus, SplitOpen, TimeZone } from '@grafana/data';
@@ -25,20 +25,23 @@ export const LogsVolumePanelList = ({
   onUpdateTimeRange,
   width,
   onLoadLogsVolume,
+  onHiddenSeriesChanged,
   eventBus,
   splitOpen,
   timeZone,
 }: Props) => {
   const logVolumes = useMemo(() => {
-    return groupBy(logsVolumeData?.data || [], 'meta.custom.logsVolumeSourceUid');
+    const groups = groupBy(logsVolumeData?.data || [], 'meta.custom.mixedDataSourceUid');
+    const pairs = toPairs(groups);
+    const sorted = sortBy(pairs, 'meta.custom.mixedDataSourceName');
+    return fromPairs(sorted);
   }, [logsVolumeData]);
 
-  const onToggleLogLevel = () => {};
+  const numberOfLogVolumes = Object.keys(logVolumes).length;
 
   return (
     <>
       {Object.keys(logVolumes).map((name, index) => {
-        console.log(name);
         return (
           <LogsVolumePanel
             key={index}
@@ -51,7 +54,8 @@ export const LogsVolumePanelList = ({
             timeZone={timeZone}
             splitOpen={splitOpen}
             onLoadLogsVolume={onLoadLogsVolume}
-            onHiddenSeriesChanged={onToggleLogLevel}
+            // TODO: Support filtering level from multiple log levels
+            onHiddenSeriesChanged={numberOfLogVolumes > 1 ? () => {} : onHiddenSeriesChanged}
             eventBus={eventBus}
           />
         );

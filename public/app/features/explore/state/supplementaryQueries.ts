@@ -41,7 +41,7 @@ const createFallbackLogVolumeProvider = (
         });
       }
     });
-  }).pipe(enrichWithLogsVolumeSource('', 'Shown logs'));
+  }).pipe(enrichWithSource('', 'All visible logs'));
 };
 
 const getSupplementaryQueryFallback = (
@@ -58,7 +58,7 @@ const getSupplementaryQueryFallback = (
   }
 };
 
-const enrichWithLogsVolumeSource = (uid: string, title: string) => {
+const enrichWithSource = (uid: string, title: string) => {
   return mergeMap((response: DataQueryResponse) => {
     return of({
       ...response,
@@ -69,8 +69,8 @@ const enrichWithLogsVolumeSource = (uid: string, title: string) => {
             ...df.meta,
             custom: {
               ...df.meta.custom,
-              logsVolumeSourceUid: uid,
-              logsVolumeSource: title,
+              mixedDataSourceUid: uid,
+              mixedDataSourceName: title,
             },
           },
         };
@@ -127,7 +127,7 @@ export const getSupplementaryQueryProvider = (
               const dsProvider = ds.getDataProvider(type, dsRequest);
               if (dsProvider) {
                 // 1) It provides data for current request -> use the provider
-                return dsProvider.pipe(enrichWithLogsVolumeSource(ds.uid, ds.name));
+                return dsProvider.pipe(enrichWithSource(ds.uid, ds.name));
               } else {
                 // 2) It doesn't provide data for current request -> return nothing
                 return of({
