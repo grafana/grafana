@@ -1,7 +1,7 @@
 import { SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
-import { DataQueryResponse, dateTime, DurationUnit, TimeRange } from '@grafana/data';
+import { DataQueryResponse, DataQueryResponseData, dateTime, DurationUnit, TimeRange } from '@grafana/data';
 import {
   parser,
   LineFilter,
@@ -351,4 +351,28 @@ export function mergeResponses(currentResult: DataQueryResponse | null, newResul
   currentResult.data = [...currentResult.data, ...newResult.data];
 
   return currentResult;
+}
+
+export function combineResponses(currentResult: DataQueryResponse | null, newResult: DataQueryResponse) {
+  if (!currentResult) {
+    return newResult;
+  }
+
+  newResult.data.forEach((newFrame) => {
+    const currentFrame = currentResult.data.find((frame) => frame.name === newFrame.name);
+    if (!currentFrame) {
+      currentResult.data.push(newFrame);
+      return;
+    }
+    combine(currentFrame, newFrame);
+  });
+
+  return currentResult;
+}
+
+function combine(dest: DataQueryResponseData, source: DataQueryResponseData) {
+  for (let j = 0; j < source.fields[0].values.length; j++) {
+    dest.fields[0].values.add(source.fields[0].values.get(j));
+    dest.fields[1].values.add(source.fields[1].values.get(j));
+  }
 }

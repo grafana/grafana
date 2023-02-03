@@ -78,6 +78,7 @@ import {
   partitionTimeRange,
   requestSupportsPartitioning,
   mergeResponses,
+  combineResponses,
 } from './queryUtils';
 import { sortDataFrameByTime } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
@@ -320,26 +321,26 @@ export class LokiDatasource
               this.instanceSettings.jsonData.derivedFields ?? []
             );
 
-            mergedResponse = mergeResponses(mergedResponse, partialResponse);
+            mergedResponse = combineResponses(mergedResponse, partialResponse);
 
             return mergedResponse;
           })
         )
         .subscribe({
           next: (response) => {
-            response.state = requestN < totalRequests ? LoadingState.Loading : LoadingState.Done;
+            response.state = requestN > 1 ? LoadingState.Loading : LoadingState.Done;
 
             subscriber.next(response);
 
-            if (requestN < totalRequests) {
-              next(subscriber, requestN + 1);
+            if (requestN > 1) {
+              next(subscriber, requestN - 1);
             }
           },
         });
     };
 
     const response = new Observable<DataQueryResponse>((subscriber) => {
-      next(subscriber, 1);
+      next(subscriber, totalRequests);
     });
 
     return response;
