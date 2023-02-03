@@ -26,8 +26,8 @@ func IsShortUIDTooLong(uid string) bool {
 }
 
 // GenerateShortUID will generate a UUID that can also be a k8s name
-// it is gaurenteed to have a character as the first letter
-// This will return a valid k8s name
+// it is guaranteed to have a character as the first letter
+// This UID will be a valid k8s name
 func GenerateShortUID() string {
 	uid, err := uuid.NewRandom()
 	if err != nil {
