@@ -81,11 +81,24 @@ export class IncrementalStorage {
     return JSON.stringify(keyValues);
   };
 
-  static removeFramesFromStorageThatExistInRequest(
+  /**
+   * This function takes time values from the request and storage, and the values from storage,
+   * and gets the indices from the beginning and end of the time values from storage, that don't overlap with existing values from the request
+   * and uses those to splice the values and times in storage, and return the de-duped arrays to the calling function.
+   * This should always return any new values from the request that overlap with those in storage.
+   *
+   * @param timeValuesFromStorage
+   * @param timeValuesFromResponse
+   * @param originalRange
+   * @param valuesFromStorage
+   * @param intervalInSeconds
+   * @private
+   */
+  private static removeFramesFromStorageThatExistInRequest(
     timeValuesFromStorage: number[],
-    responseTimeFieldValues: number[],
+    timeValuesFromResponse: number[],
     originalRange: { end: number; start: number },
-    existingValueFrames: number[],
+    valuesFromStorage: number[],
     intervalInSeconds: number
   ) {
     let existingTimeFrameNewValuesRemoved: number[] = [];
@@ -98,12 +111,12 @@ export class IncrementalStorage {
     // Start at the beginning of the array and walk until we find a frame index
     for (let i = 0; i < timeValuesFromStorage?.length; i++) {
       const startIndex = this.getValidFrameIndex(
-        responseTimeFieldValues,
+        timeValuesFromResponse,
         timeValuesFromStorage,
         i,
         originalRange,
         intervalInSeconds,
-        existingValueFrames,
+        valuesFromStorage,
         true
       );
 
@@ -115,12 +128,12 @@ export class IncrementalStorage {
 
     for (let i = timeValuesFromStorage?.length - 1; i >= 0; i--) {
       const endIndex = this.getValidFrameIndex(
-        responseTimeFieldValues,
+        timeValuesFromResponse,
         timeValuesFromStorage,
         i,
         originalRange,
         intervalInSeconds,
-        existingValueFrames,
+        valuesFromStorage,
         false // don't evict from end, only start
       );
 
@@ -140,7 +153,7 @@ export class IncrementalStorage {
         indiciesOfValuesInStorageToMergeWithResponse.start,
         indiciesOfValuesInStorageToMergeWithResponse.end + 1
       );
-      existingValueFrameNewValuesRemoved = existingValueFrames.slice(
+      existingValueFrameNewValuesRemoved = valuesFromStorage.slice(
         indiciesOfValuesInStorageToMergeWithResponse.start,
         indiciesOfValuesInStorageToMergeWithResponse.end + 1
       );
@@ -154,7 +167,7 @@ export class IncrementalStorage {
   }
 
   /**
-   *
+   * A helper function that returns an index of a frame if it's not too old and we want to evict it, or if it's already contained in the response
    * @param timeValuesFromResponse
    * @param timeValuesFromStorage
    * @param i
@@ -202,6 +215,12 @@ export class IncrementalStorage {
     return false;
   }
 
+  /**
+   * Sets values for a given query index and series index
+   * @param queryIndex
+   * @param seriesIndex
+   * @param values
+   */
   private setStorageFieldsValues = (queryIndex: string, seriesIndex: string, values: number[]) => {
     if (queryIndex in this.storage) {
       this.storage[queryIndex][seriesIndex] = values;
@@ -210,6 +229,11 @@ export class IncrementalStorage {
     }
   };
 
+  /**
+   * Sets the time values for a given query index
+   * @param queryIndex
+   * @param values
+   */
   private setStorageTimeFields = (queryIndex: string, values: number[]) => {
     this.storage[queryIndex] = {
       ...this.storage[queryIndex],
@@ -217,6 +241,10 @@ export class IncrementalStorage {
     };
   };
 
+  /**
+   * gets all fields for a query index
+   * @param queryIndex
+   */
   private getStorageFieldsForQuery = (queryIndex: string): Record<string, number[]> | null => {
     if (queryIndex in this.storage) {
       return this.storage[queryIndex];
@@ -226,6 +254,7 @@ export class IncrementalStorage {
   };
 
   /**
+   * Generates the storage index by concatenating the interpolated expression string with step string
    * @param target
    * @param request
    */
@@ -301,6 +330,8 @@ export class IncrementalStorage {
     let min;
 
     if (rangeOfQueryBeforeModification === undefined) {
+      // If this is the first time we're seeing this particular request, we might be missing data at the start of the query window, since prometheus doesn't return null values in the response,
+      // we're going to need to backfill the entire duration of the request window, and not the response
       min =
         firstRequestTimeAlignedWithResponse < firstResponseTime
           ? firstRequestTimeAlignedWithResponse
@@ -324,6 +355,7 @@ export class IncrementalStorage {
       }
     }
 
+    // Square up the frames to match the longest series, or the desired query window
     for (let i = 0; i < data.length; i++) {
       if (longestLength && longestLength !== data[i].length) {
         data[i] = applyNullInsertThreshold({
