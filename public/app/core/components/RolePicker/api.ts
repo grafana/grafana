@@ -8,7 +8,7 @@ export const fetchRoleOptions = async (orgId?: number, query?: string): Promise<
   if (orgId) {
     rolesUrl += `&targetOrgId=${orgId}`;
   }
-  let roles = await getBackendSrv().get(rolesUrl);
+  const roles = await getBackendSrv().get(rolesUrl);
   if (!roles || !roles.length) {
     return [];
   }
@@ -21,7 +21,7 @@ export const fetchUserRoles = async (userId: number, orgId?: number): Promise<Ro
     userRolesUrl += `?targetOrgId=${orgId}`;
   }
   try {
-    let roles = await getBackendSrv().get(userRolesUrl);
+    const roles = await getBackendSrv().get(userRolesUrl);
     if (!roles || !roles.length) {
       return [];
     }
@@ -52,7 +52,7 @@ export const fetchTeamRoles = async (teamId: number, orgId?: number): Promise<Ro
     teamRolesUrl += `?targetOrgId=${orgId}`;
   }
   try {
-    let roles = await getBackendSrv().get(teamRolesUrl);
+    const roles = await getBackendSrv().get(teamRolesUrl);
     if (!roles || !roles.length) {
       return [];
     }
