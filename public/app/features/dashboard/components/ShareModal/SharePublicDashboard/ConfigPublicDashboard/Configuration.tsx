@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import React from 'react';
+import { UseFormRegister } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
@@ -9,22 +10,24 @@ import { Layout } from '@grafana/ui/src/components/Layout/Layout';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 
 import { useSelector } from '../../../../../../types';
-import { useGetPublicDashboardQuery } from '../../../../api/publicDashboardApi';
+
+import { ConfigPublicDashoardForm } from './ConfigPublicDashboard';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
 
 export const Configuration = ({
   disabled,
   onChange,
+  register,
 }: {
   disabled: boolean;
-  onChange: (name: string, value: boolean) => void;
+  onChange: (name: keyof ConfigPublicDashoardForm, value: boolean) => void;
+  register: UseFormRegister<ConfigPublicDashoardForm>;
 }) => {
   const styles = useStyles2(getStyles);
 
   const dashboardState = useSelector((store) => store.dashboard);
   const dashboard = dashboardState.getModel()!;
-  const { data: publicDashboard } = useGetPublicDashboardQuery(dashboard.uid);
 
   const timeRange = getTimeRange(dashboard.getDefaultTime(), dashboard);
 
@@ -40,25 +43,20 @@ export const Configuration = ({
           </Layout>
           <Layout orientation={0} spacing="sm">
             <Switch
-              name="timeSelectionEnabled"
-              value={publicDashboard!.timeSelectionEnabled}
-              checked={publicDashboard!.timeSelectionEnabled}
+              {...register('isTimeSelectionEnabled')}
               data-testid={selectors.EnableTimeRangeSwitch}
-              onChange={(e) => onChange(e.currentTarget.name, e.currentTarget.checked)}
+              onChange={(e) => onChange('isTimeSelectionEnabled', e.currentTarget.checked)}
             />
             <Label description="Allow viewers to change time range">Time range picker enabled</Label>
           </Layout>
           <Layout orientation={0} spacing="sm">
             <Switch
-              name="annotationsEnabled"
-              value={publicDashboard!.annotationsEnabled}
-              checked={publicDashboard!.annotationsEnabled}
+              {...register('isAnnotationsEnabled')}
               onChange={(e) => {
-                // const { onChange } = register('isAnnotationsEnabled');
                 reportInteraction('grafana_dashboards_annotations_clicked', {
                   action: e.currentTarget.checked ? 'enable' : 'disable',
                 });
-                onChange(e.currentTarget.name, e.currentTarget.checked);
+                onChange('isAnnotationsEnabled', e.currentTarget.checked);
               }}
               data-testid={selectors.EnableAnnotationsSwitch}
             />

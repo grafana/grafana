@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import cx from 'classnames';
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data/src';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
@@ -34,6 +35,12 @@ import { Configuration } from './Configuration';
 
 const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
 
+export interface ConfigPublicDashoardForm {
+  isAnnotationsEnabled: boolean;
+  isTimeSelectionEnabled: boolean;
+  isPaused: boolean;
+}
+
 const ConfigPublicDashboard = () => {
   const styles = useStyles2(getStyles);
   const { showModal, hideModal } = useContext(ModalsContext);
@@ -47,27 +54,49 @@ const ConfigPublicDashboard = () => {
   const { data: publicDashboard } = useGetPublicDashboardQuery(dashboard.uid);
   const [update, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
 
+  const { reset, handleSubmit, setValue, register } = useForm<ConfigPublicDashoardForm>({
+    defaultValues: {
+      isAnnotationsEnabled: false,
+      isTimeSelectionEnabled: false,
+      isPaused: false,
+    },
+  });
+
+  useEffect(() => {
+    reset({
+      isAnnotationsEnabled: publicDashboard?.annotationsEnabled,
+      isTimeSelectionEnabled: publicDashboard?.timeSelectionEnabled,
+      isPaused: !publicDashboard?.isEnabled,
+    });
+  }, [publicDashboard, reset]);
+
+  const onUpdate = async (values: ConfigPublicDashoardForm) => {
+    const { isAnnotationsEnabled, isTimeSelectionEnabled, isPaused } = values;
+
+    const req = {
+      dashboard,
+      payload: {
+        ...publicDashboard!,
+        annotationsEnabled: isAnnotationsEnabled,
+        timeSelectionEnabled: isTimeSelectionEnabled,
+        isEnabled: !isPaused,
+      },
+    };
+
+    update(req);
+  };
+
+  const onChange = async (name: keyof ConfigPublicDashoardForm, value: boolean) => {
+    setValue(name, value);
+    await handleSubmit((data) => onUpdate(data))();
+  };
+
   const onDismissDelete = () => {
     showModal(ShareModal, {
       dashboard,
       onDismiss: hideModal,
       activeTab: 'share',
     });
-  };
-
-  const onUpdate = async (name: string, value: boolean) => {
-    //TODO: think about this tracking. This was being tracking when updating
-    reportInteraction('grafana_dashboards_public_create_clicked');
-
-    const req = {
-      dashboard,
-      payload: {
-        ...publicDashboard!,
-        [name]: value,
-      },
-    };
-
-    update(req);
   };
 
   return (
@@ -85,7 +114,7 @@ const ConfigPublicDashboard = () => {
         <h4>Settings</h4>
         {isUpdateLoading && <Spinner />}
       </HorizontalGroup>
-      <Configuration disabled={!hasWritePermissions} onChange={onUpdate} />
+      <Configuration disabled={!hasWritePermissions} onChange={onChange} register={register} />
       <hr />
       <Field label="Dashboard URL" className={styles.publicUrl}>
         <Input
@@ -112,15 +141,13 @@ const ConfigPublicDashboard = () => {
       >
         <HorizontalGroup spacing="sm">
           <Switch
+            {...register('isPaused')}
             disabled={!hasWritePermissions}
-            name="isEnabled"
-            value={!publicDashboard?.isEnabled}
-            checked={!publicDashboard?.isEnabled}
             onChange={(e) => {
               reportInteraction('grafana_dashboards_public_enable_clicked', {
                 action: e.currentTarget.checked ? 'disable' : 'enable',
               });
-              onUpdate(e.currentTarget.name, !e.currentTarget.checked);
+              onChange('isPaused', e.currentTarget.checked);
             }}
             data-testid={selectors.EnableSwitch}
           />
