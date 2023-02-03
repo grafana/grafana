@@ -8,7 +8,8 @@ const (
 	TagMode           VersionMode = "release"
 	ReleaseBranchMode VersionMode = "branch"
 	PullRequestMode   VersionMode = "pull_request"
-	CustomMode        VersionMode = "custom"
+	DownstreamMode    VersionMode = "downstream"
+	Enterprise2Mode   VersionMode = "enterprise2"
 	CronjobMode       VersionMode = "cron"
 )
 
