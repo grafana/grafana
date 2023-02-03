@@ -31,7 +31,7 @@ func (s *QueryData) parseResponse(ctx context.Context, q *models.Query, res *htt
 	})
 
 	// Add frame to attach metadata
-	if len(r.Frames) == 0 && !q.ExemplarQuery {
+	if len(r.Frames) == 0 && q.ExemplarQuery != nil && !*q.ExemplarQuery {
 		r.Frames = append(r.Frames, data.NewFrame(""))
 	}
 
