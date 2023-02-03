@@ -54,8 +54,6 @@ type CreateAlertNotificationCommand struct {
 
 	OrgId                   int64             `json:"-"`
 	EncryptedSecureSettings map[string][]byte `json:"-"`
-
-	Result *AlertNotification `json:"-"`
 }
 
 type UpdateAlertNotificationCommand struct {
@@ -72,8 +70,6 @@ type UpdateAlertNotificationCommand struct {
 
 	OrgId                   int64             `json:"-"`
 	EncryptedSecureSettings map[string][]byte `json:"-"`
-
-	Result *AlertNotification `json:"-"`
 }
 
 type UpdateAlertNotificationWithUidCommand struct {
@@ -88,8 +84,7 @@ type UpdateAlertNotificationWithUidCommand struct {
 	Settings              *simplejson.Json  `json:"settings"  binding:"Required"`
 	SecureSettings        map[string]string `json:"secureSettings"`
 
-	OrgId  int64              `json:"-"`
-	Result *AlertNotification `json:"-"`
+	OrgId int64 `json:"-"`
 }
 
 type DeleteAlertNotificationCommand struct {
@@ -106,36 +101,26 @@ type DeleteAlertNotificationWithUidCommand struct {
 type GetAlertNotificationUidQuery struct {
 	Id    int64
 	OrgId int64
-
-	Result string
 }
 
 type GetAlertNotificationsQuery struct {
 	Name  string
 	Id    int64
 	OrgId int64
-
-	Result *AlertNotification
 }
 
 type GetAlertNotificationsWithUidQuery struct {
 	Uid   string
 	OrgId int64
-
-	Result *AlertNotification
 }
 
 type GetAlertNotificationsWithUidToSendQuery struct {
 	Uids  []string
 	OrgId int64
-
-	Result []*AlertNotification
 }
 
 type GetAllAlertNotificationsQuery struct {
 	OrgId int64
-
-	Result []*AlertNotification
 }
 
 type AlertNotificationState struct {
@@ -166,6 +151,4 @@ type GetOrCreateNotificationStateQuery struct {
 	OrgId      int64
 	AlertId    int64
 	NotifierId int64
-
-	Result *AlertNotificationState
 }

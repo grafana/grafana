@@ -143,9 +143,9 @@ func (f *fakeResponseWriter) WriteHeader(statusCode int) {
 
 func TestSession_RefreshHook(t *testing.T) {
 	s := ProvideSession(&authtest.FakeUserAuthTokenService{
-		TryRotateTokenProvider: func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, error) {
+		TryRotateTokenProvider: func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, *auth.UserToken, error) {
 			token.UnhashedToken = "new-token"
-			return true, nil
+			return true, token, nil
 		},
 	}, &usertest.FakeUserService{}, "grafana-session", 20*time.Second)
 

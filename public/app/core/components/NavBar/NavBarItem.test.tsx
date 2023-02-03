@@ -6,8 +6,6 @@ import { BrowserRouter } from 'react-router-dom';
 import { locationUtil } from '@grafana/data';
 import { config, setLocationService } from '@grafana/runtime';
 
-import TestProvider from '../../../../test/helpers/TestProvider';
-
 // Need to mock createBrowserHistory here to avoid errors
 jest.mock('history', () => ({
   ...jest.requireActual('history'),
@@ -45,18 +43,16 @@ async function getTestContext(overrides: Partial<Props> = {}, subUrl = '', isMen
   const props = { ...defaults, ...overrides };
 
   const { rerender } = render(
-    <TestProvider>
-      <BrowserRouter>
-        <NavBarContext.Provider
-          value={{
-            menuIdOpen: isMenuOpen ? props.link.id : undefined,
-            setMenuIdOpen: setMenuIdOpenMock,
-          }}
-        >
-          <NavBarItem {...props} />
-        </NavBarContext.Provider>
-      </BrowserRouter>
-    </TestProvider>
+    <BrowserRouter>
+      <NavBarContext.Provider
+        value={{
+          menuIdOpen: isMenuOpen ? props.link.id : undefined,
+          setMenuIdOpen: setMenuIdOpenMock,
+        }}
+      >
+        <NavBarItem {...props} />
+      </NavBarContext.Provider>
+    </BrowserRouter>
   );
 
   // Need to click this first to set the correct selection range

@@ -13,9 +13,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
@@ -151,6 +152,22 @@ func TestMiddlewareContext(t *testing.T) {
 		assert.Equal(t, noStore, sc.resp.Header().Get("Cache-Control"))
 		assert.Empty(t, sc.resp.Header().Get("Pragma"))
 		assert.Empty(t, sc.resp.Header().Get("Expires"))
+	})
+
+	middlewareScenario(t, "middleware should pass cache-control on resources with private cache control", func(t *testing.T, sc *scenarioContext) {
+		sc = sc.fakeReq("GET", "/api/datasources/1/resources/foo")
+		sc.resp.Header().Add("Cache-Control", "private")
+		sc.resp.Header().Add("X-Grafana-Cache", "true")
+		sc.exec()
+		assert.Equal(t, "private", sc.resp.Header().Get("Cache-Control"))
+	})
+
+	middlewareScenario(t, "middleware should not pass cache-control on resources with public cache control", func(t *testing.T, sc *scenarioContext) {
+		sc = sc.fakeReq("GET", "/api/datasources/1/resources/foo")
+		sc.resp.Header().Add("Cache-Control", "public")
+		sc.resp.Header().Add("X-Grafana-Cache", "true")
+		sc.exec()
+		assert.Equal(t, noStore, sc.resp.Header().Get("Cache-Control"))
 	})
 
 	middlewareScenario(t, "middleware should not add Cache-Control header for requests to datasource proxy API", func(
@@ -344,9 +361,9 @@ func TestMiddlewareContext(t *testing.T) {
 		}
 
 		sc.userAuthTokenService.TryRotateTokenProvider = func(ctx context.Context, userToken *auth.UserToken,
-			clientIP net.IP, userAgent string) (bool, error) {
+			clientIP net.IP, userAgent string) (bool, *auth.UserToken, error) {
 			userToken.UnhashedToken = "rotated"
-			return true, nil
+			return true, userToken, nil
 		}
 
 		maxAge := int(sc.cfg.LoginMaxLifetime.Seconds())

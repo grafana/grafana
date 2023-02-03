@@ -66,6 +66,7 @@ describe('DataSourceWithBackend', () => {
               "datasourceId": 1234,
               "intervalMs": 5000,
               "maxDataPoints": 10,
+              "queryCachingTTL": undefined,
               "refId": "A",
             },
             {
@@ -76,6 +77,7 @@ describe('DataSourceWithBackend', () => {
               "datasourceId": undefined,
               "intervalMs": 5000,
               "maxDataPoints": 10,
+              "queryCachingTTL": undefined,
               "refId": "B",
             },
           ],
@@ -133,6 +135,7 @@ describe('DataSourceWithBackend', () => {
               "datasourceId": 1234,
               "intervalMs": 5000,
               "maxDataPoints": 10,
+              "queryCachingTTL": undefined,
               "refId": "A",
             },
             {
@@ -143,6 +146,7 @@ describe('DataSourceWithBackend', () => {
               "datasourceId": undefined,
               "intervalMs": 5000,
               "maxDataPoints": 10,
+              "queryCachingTTL": undefined,
               "refId": "B",
             },
           ],

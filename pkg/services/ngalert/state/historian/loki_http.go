@@ -58,6 +58,28 @@ type httpLokiClient struct {
 	log    log.Logger
 }
 
+// Kind of Operation (=, !=, =~, !~)
+type Operator string
+
+const (
+	// Equal operator (=)
+	Eq Operator = "="
+	// Not Equal operator (!=)
+	Neq Operator = "!="
+	// Equal operator supporting RegEx (=~)
+	EqRegEx Operator = "=~"
+	// Not Equal operator supporting RegEx (!~)
+	NeqRegEx Operator = "!~"
+)
+
+type Selector struct {
+	// Label to Select
+	Label string
+	Op    Operator
+	// Value that is expected
+	Value string
+}
+
 func newLokiClient(cfg LokiConfig, logger log.Logger) *httpLokiClient {
 	return &httpLokiClient{
 		client: http.Client{
@@ -163,4 +185,106 @@ func (c *httpLokiClient) setAuthAndTenantHeaders(req *http.Request) {
 	if c.cfg.TenantID != "" {
 		req.Header.Add("X-Scope-OrgID", c.cfg.TenantID)
 	}
+}
+func (c *httpLokiClient) query(ctx context.Context, selectors []Selector, start, end int64) (QueryRes, error) {
+	// Run the pre-flight checks for the query.
+	if len(selectors) == 0 {
+		return QueryRes{}, fmt.Errorf("at least one selector required to query")
+	}
+	if start > end {
+		return QueryRes{}, fmt.Errorf("start time cannot be after end time")
+	}
+
+	queryURL := c.cfg.ReadPathURL.JoinPath("/loki/api/v1/query_range")
+
+	values := url.Values{}
+	values.Set("query", selectorString(selectors))
+	values.Set("start", fmt.Sprintf("%d", start))
+	values.Set("end", fmt.Sprintf("%d", end))
+
+	queryURL.RawQuery = values.Encode()
+
+	req, err := http.NewRequest(http.MethodGet,
+		queryURL.String(), nil)
+	if err != nil {
+		return QueryRes{}, fmt.Errorf("error creating request: %w", err)
+	}
+
+	req = req.WithContext(ctx)
+	c.setAuthAndTenantHeaders(req)
+
+	res, err := c.client.Do(req)
+	if err != nil {
+		return QueryRes{}, fmt.Errorf("error executing request: %w", err)
+	}
+
+	defer func() {
+		_ = res.Body.Close()
+	}()
+
+	data, err := io.ReadAll(res.Body)
+	if err != nil {
+		return QueryRes{}, fmt.Errorf("error reading request response: %w", err)
+	}
+
+	if res.StatusCode < 200 || res.StatusCode >= 300 {
+		if len(data) > 0 {
+			c.log.Error("Error response from Loki", "response", string(data), "status", res.StatusCode)
+		} else {
+			c.log.Error("Error response from Loki with an empty body", "status", res.StatusCode)
+		}
+		return QueryRes{}, fmt.Errorf("received a non-200 response from loki, status: %d", res.StatusCode)
+	}
+
+	queryRes := QueryRes{}
+	err = json.Unmarshal(data, &queryRes)
+	if err != nil {
+		fmt.Println(string(data))
+		return QueryRes{}, fmt.Errorf("error parsing request response: %w", err)
+	}
+
+	return queryRes, nil
+}
+
+func selectorString(selectors []Selector) string {
+	if len(selectors) == 0 {
+		return "{}"
+	}
+	// Build the query selector.
+	query := ""
+	for _, s := range selectors {
+		query += fmt.Sprintf("%s%s%q,", s.Label, s.Op, s.Value)
+	}
+	// Remove the last comma, as we append one to every selector.
+	query = query[:len(query)-1]
+	return "{" + query + "}"
+}
+
+func NewSelector(label, op, value string) (Selector, error) {
+	if !isValidOperator(op) {
+		return Selector{}, fmt.Errorf("'%s' is not a valid query operator", op)
+	}
+	return Selector{Label: label, Op: Operator(op), Value: value}, nil
+}
+
+func isValidOperator(op string) bool {
+	switch op {
+	case "=", "!=", "=~", "!~":
+		return true
+	}
+	return false
+}
+
+type Stream struct {
+	Stream map[string]string `json:"stream"`
+	Values [][2]string       `json:"values"`
+}
+
+type QueryRes struct {
+	Status string    `json:"status"`
+	Data   QueryData `json:"data"`
+}
+
+type QueryData struct {
+	Result []Stream `json:"result"`
 }

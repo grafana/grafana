@@ -79,10 +79,11 @@ func (h *AnnotationBackend) QueryStates(ctx context.Context, query ngmodels.Hist
 	}
 
 	q := annotations.ItemQuery{
-		AlertId: rq.Result.ID,
-		OrgId:   query.OrgID,
-		From:    query.From.Unix(),
-		To:      query.To.Unix(),
+		AlertId:      rq.Result.ID,
+		OrgId:        query.OrgID,
+		From:         query.From.Unix(),
+		To:           query.To.Unix(),
+		SignedInUser: query.SignedInUser,
 	}
 	items, err := h.annotations.Find(ctx, &q)
 	if err != nil {
