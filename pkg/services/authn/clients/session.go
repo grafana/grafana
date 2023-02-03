@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
+var _ authn.HookClient = new(Session)
 var _ authn.ContextAwareClient = new(Session)
 
 func ProvideSession(sessionService auth.UserTokenService, userService user.Service,
@@ -87,7 +88,7 @@ func (s *Session) Priority() uint {
 	return 60
 }
 
-func (s *Session) RefreshTokenHook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
+func (s *Session) Hook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
 	if identity.SessionToken == nil {
 		return nil
 	}
