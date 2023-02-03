@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/process"
 	pluginStore "github.com/grafana/grafana/pkg/plugins/manager/store"
 	"github.com/grafana/grafana/pkg/registry"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/cleanup"
@@ -61,7 +60,6 @@ func ProvideBackgroundServiceRegistry(
 	grpcServerProvider grpcserver.Provider, secretMigrationProvider secretsMigrations.SecretMigrationProvider, loginAttemptService *loginattemptimpl.Service,
 	bundleService *supportbundlesimpl.Service,
 	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry,
-	roleRegistry accesscontrol.RoleRegistry,
 	provisioningService provisioning.ProvisioningService,
 	pluginStore *pluginStore.Service,
 	// Need to make sure these are initialized, is there a better place to put them?
@@ -106,7 +104,6 @@ func ProvideBackgroundServiceRegistry(
 	r.usageStatsProvidersRegistry = usageStatsProvidersRegistry
 	r.statsCollectorService = statsCollector
 	r.provisioningService = provisioningService
-	r.roleRegistry = roleRegistry
 
 	return r
 }
@@ -117,7 +114,6 @@ type BackgroundServiceRegistry struct {
 	statsCollectorService       *statscollector.Service
 	usageStatsProvidersRegistry registry.UsageStatsProvidersRegistry
 	provisioningService         provisioning.ProvisioningService
-	roleRegistry                accesscontrol.RoleRegistry
 
 	log      log.Logger
 	Services []registry.BackgroundService
@@ -134,10 +130,6 @@ func NewBackgroundServiceRegistry(s ...registry.BackgroundService) *BackgroundSe
 
 func (r *BackgroundServiceRegistry) start(ctx context.Context) error {
 	r.statsCollectorService.RegisterProviders(r.usageStatsProvidersRegistry.GetServices())
-	if err := r.roleRegistry.RegisterFixedRoles(ctx); err != nil {
-		return err
-	}
-
 	return r.provisioningService.RunInitProvisioners(ctx)
 }
 

@@ -8,12 +8,14 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/server/backgroundsvcs"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
-	All  string = "all"
-	Core string = "core"
+	All           string = "all"
+	Core          string = "core"
+	AccessControl string = "access-control"
 )
 
 type Modules struct {
@@ -26,24 +28,29 @@ type Modules struct {
 	deps           map[string][]string
 
 	backgroundServiceRegistry *backgroundsvcs.BackgroundServiceRegistry
+	ac                        *acimpl.Service
 }
 
-func ProvideService(cfg *setting.Cfg, backgroundServiceRegistry *backgroundsvcs.BackgroundServiceRegistry) *Modules {
+func ProvideService(cfg *setting.Cfg, backgroundServiceRegistry *backgroundsvcs.BackgroundServiceRegistry,
+	ac *acimpl.Service) *Modules {
 	return &Modules{
 		targets:                   cfg.Target,
 		log:                       log.New("modules"),
 		backgroundServiceRegistry: backgroundServiceRegistry,
+		ac:                        ac,
 	}
 }
 
 func (m *Modules) Init() error {
 	mm := modules.NewManager(m.log)
 	mm.RegisterModule(Core, m.initBackgroundServices)
+	mm.RegisterModule(AccessControl, m.initAccessControl)
 	mm.RegisterModule(All, nil)
 
 	deps := map[string][]string{
-		Core: {},
-		All:  {Core},
+		AccessControl: {},
+		Core:          {AccessControl},
+		All:           {Core},
 	}
 
 	for mod, targets := range deps {
@@ -135,4 +142,8 @@ func (m *Modules) Stop() error {
 
 func (m *Modules) initBackgroundServices() (services.Service, error) {
 	return m.backgroundServiceRegistry, nil
+}
+
+func (m *Modules) initAccessControl() (services.Service, error) {
+	return m.ac, nil
 }

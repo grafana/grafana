@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -32,28 +33,22 @@ const (
 
 func ProvideService(cfg *setting.Cfg, store db.DB, routeRegister routing.RouteRegister, cache *localcache.CacheService,
 	accessControl accesscontrol.AccessControl, features *featuremgmt.FeatureManager) (*Service, error) {
-	service := ProvideOSSService(cfg, database.ProvideService(store), cache, features)
-
-	if !accesscontrol.IsDisabled(cfg) {
-		api.NewAccessControlAPI(routeRegister, accessControl, service, features).RegisterAPIEndpoints()
-		if err := accesscontrol.DeclareFixedRoles(service); err != nil {
-			return nil, err
-		}
-	}
-
-	return service, nil
+	return ProvideOSSService(cfg, database.ProvideService(store), cache, features, routeRegister, accessControl), nil
 }
 
-func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheService, features *featuremgmt.FeatureManager) *Service {
+func ProvideOSSService(cfg *setting.Cfg, store store, cache *localcache.CacheService, features *featuremgmt.FeatureManager,
+	routeRegister routing.RouteRegister, accessControl accesscontrol.AccessControl) *Service {
 	s := &Service{
-		cfg:      cfg,
-		store:    store,
-		log:      log.New("accesscontrol.service"),
-		cache:    cache,
-		roles:    accesscontrol.BuildBasicRoleDefinitions(),
-		features: features,
+		cfg:           cfg,
+		store:         store,
+		log:           log.New("accesscontrol.service"),
+		cache:         cache,
+		roles:         accesscontrol.BuildBasicRoleDefinitions(),
+		features:      features,
+		routeRegister: routeRegister,
+		accessControl: accessControl,
 	}
-
+	s.BasicService = services.NewBasicService(s.start, s.run, nil)
 	return s
 }
 
@@ -66,6 +61,7 @@ type store interface {
 
 // Service is the service implementing role based access control.
 type Service struct {
+	*services.BasicService
 	log           log.Logger
 	cfg           *setting.Cfg
 	store         store
@@ -73,6 +69,28 @@ type Service struct {
 	registrations accesscontrol.RegistrationList
 	roles         map[string]*accesscontrol.RoleDTO
 	features      *featuremgmt.FeatureManager
+
+	routeRegister routing.RouteRegister
+	accessControl accesscontrol.AccessControl
+}
+
+func (s *Service) start(ctx context.Context) error {
+	if err := s.RegisterFixedRoles(ctx); err != nil {
+		return err
+	}
+
+	if !accesscontrol.IsDisabled(s.cfg) {
+		api.NewAccessControlAPI(s.routeRegister, s.accessControl, s, s.features).RegisterAPIEndpoints()
+		if err := accesscontrol.DeclareFixedRoles(s); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Service) run(ctx context.Context) error {
+	<-ctx.Done()
+	return ctx.Err()
 }
 
 func (s *Service) GetUsageStats(_ context.Context) map[string]interface{} {
