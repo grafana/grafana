@@ -47,11 +47,11 @@ func TestMigrate(t *testing.T) {
 		dataSourceName := "Test"
 		dataSourceOrg := int64(1)
 		err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			OrgId:  dataSourceOrg,
+			OrgID:  dataSourceOrg,
 			Name:   dataSourceName,
 			Type:   datasources.DS_MYSQL,
 			Access: datasources.DS_ACCESS_DIRECT,
-			Url:    "http://test",
+			URL:    "http://test",
 			EncryptedSecureJsonData: map[string][]byte{
 				"password": []byte("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"),
 			},
@@ -59,7 +59,7 @@ func TestMigrate(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Check if the secret json data was added
-		query := &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
+		query := &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
 		err = ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
 		assert.NotNil(t, query.Result)
@@ -82,7 +82,7 @@ func TestMigrate(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Check if the secure json data was deleted
-		query = &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
+		query = &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
 		err = ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
 		assert.NotNil(t, query.Result)
@@ -113,11 +113,11 @@ func TestMigrate(t *testing.T) {
 
 		// Add test data source
 		err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			OrgId:  dataSourceOrg,
+			OrgID:  dataSourceOrg,
 			Name:   dataSourceName,
 			Type:   datasources.DS_MYSQL,
 			Access: datasources.DS_ACCESS_DIRECT,
-			Url:    "http://test",
+			URL:    "http://test",
 			EncryptedSecureJsonData: map[string][]byte{
 				"password": []byte("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"),
 			},
@@ -125,7 +125,7 @@ func TestMigrate(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Check if the secret json data was added
-		query := &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
+		query := &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
 		err = ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
 		assert.NotNil(t, query.Result)
@@ -148,7 +148,7 @@ func TestMigrate(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Check if the secure json data was maintained for compatibility
-		query = &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
+		query = &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
 		err = ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
 		assert.NotNil(t, query.Result)
@@ -181,11 +181,11 @@ func TestMigrate(t *testing.T) {
 
 		// Add test data source
 		err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			OrgId:  dataSourceOrg,
+			OrgID:  dataSourceOrg,
 			Name:   dataSourceName,
 			Type:   datasources.DS_MYSQL,
 			Access: datasources.DS_ACCESS_DIRECT,
-			Url:    "http://test",
+			URL:    "http://test",
 			EncryptedSecureJsonData: map[string][]byte{
 				"password": []byte("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"),
 			},
@@ -193,7 +193,7 @@ func TestMigrate(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Check if the secret json data was added
-		query := &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
+		query := &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
 		err = ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
 		assert.NotNil(t, query.Result)
@@ -216,7 +216,7 @@ func TestMigrate(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Check if the secure json data was deleted
-		query = &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
+		query = &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
 		err = ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
 		assert.NotNil(t, query.Result)
@@ -240,7 +240,7 @@ func TestMigrate(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Check if the secure json data was re-added for compatibility
-		query = &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
+		query = &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
 		err = ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
 		assert.NotNil(t, query.Result)
@@ -272,11 +272,11 @@ func TestMigrate(t *testing.T) {
 
 		// Add test data source
 		err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-			OrgId:  dataSourceOrg,
+			OrgID:  dataSourceOrg,
 			Name:   dataSourceName,
 			Type:   datasources.DS_MYSQL,
 			Access: datasources.DS_ACCESS_DIRECT,
-			Url:    "http://test",
+			URL:    "http://test",
 			EncryptedSecureJsonData: map[string][]byte{
 				"password": []byte("9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"),
 			},
@@ -284,7 +284,7 @@ func TestMigrate(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Check if the secret json data was added
-		query := &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
+		query := &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
 		err = ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
 		assert.NotNil(t, query.Result)
@@ -307,7 +307,7 @@ func TestMigrate(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Check if the secure json data was maintained for compatibility
-		query = &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
+		query = &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
 		err = ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
 		assert.NotNil(t, query.Result)
@@ -331,7 +331,7 @@ func TestMigrate(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Check if the secure json data was deleted
-		query = &datasources.GetDataSourceQuery{OrgId: dataSourceOrg, Name: dataSourceName}
+		query = &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
 		err = ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
 		assert.NotNil(t, query.Result)

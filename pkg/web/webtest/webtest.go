@@ -8,15 +8,16 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/web"
 )
 
-var requests = map[string]*models.ReqContext{}
+var requests = map[string]*contextmodel.ReqContext{}
 
 type Server struct {
 	t             testing.TB
@@ -30,7 +31,7 @@ func NewServer(t testing.TB, routeRegister routing.RouteRegister) *Server {
 	t.Helper()
 
 	m := web.New()
-	initCtx := &models.ReqContext{}
+	initCtx := &contextmodel.ReqContext{}
 	m.Use(func(c *web.Context) {
 		initCtx.Context = c
 		initCtx.Logger = log.New("api-test")
@@ -104,20 +105,20 @@ func requestIdentifierFromRequest(req *http.Request) string {
 	return req.Header.Get("X-GRAFANA-WEB-TEST-ID")
 }
 
-func RequestWithWebContext(req *http.Request, c *models.ReqContext) *http.Request {
+func RequestWithWebContext(req *http.Request, c *contextmodel.ReqContext) *http.Request {
 	reqID := requestIdentifierFromRequest(req)
 	requests[reqID] = c
 	return req
 }
 
 func RequestWithSignedInUser(req *http.Request, user *user.SignedInUser) *http.Request {
-	return RequestWithWebContext(req, &models.ReqContext{
+	return RequestWithWebContext(req, &contextmodel.ReqContext{
 		SignedInUser: user,
 		IsSignedIn:   true,
 	})
 }
 
-func requestContextFromRequest(req *http.Request) *models.ReqContext {
+func requestContextFromRequest(req *http.Request) *contextmodel.ReqContext {
 	reqID := requestIdentifierFromRequest(req)
 	val, exists := requests[reqID]
 	if !exists {
@@ -130,7 +131,7 @@ func requestContextFromRequest(req *http.Request) *models.ReqContext {
 func requestContextMiddleware() web.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			c := ctxkey.Get(r.Context()).(*models.ReqContext)
+			c := ctxkey.Get(r.Context()).(*contextmodel.ReqContext)
 
 			ctx := requestContextFromRequest(r)
 			if ctx != nil {

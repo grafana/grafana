@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -89,6 +90,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/shorturls"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/star"
+	starApi "github.com/grafana/grafana/pkg/services/star/api"
 	"github.com/grafana/grafana/pkg/services/stats"
 	"github.com/grafana/grafana/pkg/services/store"
 	"github.com/grafana/grafana/pkg/services/store/entity/httpentitystore"
@@ -200,6 +202,7 @@ type HTTPServer struct {
 	playlistService              playlist.Service
 	apiKeyService                apikey.Service
 	kvStore                      kvstore.KVStore
+	pluginsCDNService            *pluginscdn.Service
 
 	userService            user.Service
 	tempUserService        tempUser.Service
@@ -213,6 +216,7 @@ type HTTPServer struct {
 	oauthTokenService      oauthtoken.OAuthTokenService
 	statsService           stats.Service
 	authnService           authn.Service
+	starApi                *starApi.API
 }
 
 type ServerOptions struct {
@@ -255,8 +259,9 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	accesscontrolService accesscontrol.Service, dashboardThumbsService thumbs.DashboardThumbService, navTreeService navtree.Service,
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService,
 	queryLibraryHTTPService querylibrary.HTTPService, queryLibraryService querylibrary.Service, oauthTokenService oauthtoken.OAuthTokenService,
-	statsService stats.Service, authnService authn.Service,
+	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service,
 	k8saccess k8saccess.K8SAccess, // required so that the router is registered
+	starApi *starApi.API,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -363,6 +368,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		oauthTokenService:            oauthTokenService,
 		statsService:                 statsService,
 		authnService:                 authnService,
+		pluginsCDNService:            pluginsCDNService,
+		starApi:                      starApi,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")

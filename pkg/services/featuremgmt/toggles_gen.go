@@ -55,10 +55,6 @@ const (
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
 
-	// FlagTempoApmTable
-	// Show APM table
-	FlagTempoApmTable = "tempoApmTable"
-
 	// FlagPrometheusAzureOverrideAudience
 	// Experimental. Allow override default AAD audience for Azure Prometheus endpoint
 	FlagPrometheusAzureOverrideAudience = "prometheusAzureOverrideAudience"
@@ -115,6 +111,14 @@ const (
 	// Explore native k8s integrations
 	FlagK8s = "k8s"
 
+	// FlagK8sDashboards
+	// Save dashboards via k8s
+	FlagK8sDashboards = "k8sDashboards"
+
+	// FlagApiserver
+	// Add a k8s API server proxy
+	FlagApiserver = "apiserver"
+
 	// FlagSupportBundles
 	// Support bundles for troubleshooting
 	FlagSupportBundles = "supportBundles"
@@ -127,10 +131,6 @@ const (
 	// Export grafana instance (to git, etc)
 	FlagExport = "export"
 
-	// FlagAzureMonitorResourcePickerForMetrics
-	// New UI for Azure Monitor Metrics Query
-	FlagAzureMonitorResourcePickerForMetrics = "azureMonitorResourcePickerForMetrics"
-
 	// FlagExploreMixedDatasource
 	// Enable mixed datasource in Explore
 	FlagExploreMixedDatasource = "exploreMixedDatasource"
@@ -138,10 +138,6 @@ const (
 	// FlagTracing
 	// Adds trace ID to error notifications
 	FlagTracing = "tracing"
-
-	// FlagCommandPalette
-	// Enable command palette
-	FlagCommandPalette = "commandPalette"
 
 	// FlagCorrelations
 	// Correlations page
@@ -200,7 +196,7 @@ const (
 	FlagInternationalization = "internationalization"
 
 	// FlagTopnav
-	// New top nav and page layouts
+	// Displays new top nav and page layouts
 	FlagTopnav = "topnav"
 
 	// FlagGrpcServer
@@ -216,7 +212,7 @@ const (
 	FlagFlameGraph = "flameGraph"
 
 	// FlagCloudWatchCrossAccountQuerying
-	// Use cross-account querying in CloudWatch datasource
+	// Enables cross-account querying in CloudWatch datasources
 	FlagCloudWatchCrossAccountQuerying = "cloudWatchCrossAccountQuerying"
 
 	// FlagRedshiftAsyncQueryDataSupport
@@ -299,11 +295,15 @@ const (
 	// Stop maintaining state of alerts that are not firing
 	FlagAlertingNoNormalState = "alertingNoNormalState"
 
-	// FlagAzureMultipleResourcePicker
-	// Azure multiple resource picker
-	FlagAzureMultipleResourcePicker = "azureMultipleResourcePicker"
-
 	// FlagTopNavCommandPalette
 	// Launch the Command Palette from the top navigation search box
 	FlagTopNavCommandPalette = "topNavCommandPalette"
+
+	// FlagLogsSampleInExplore
+	// Enables access to the logs sample feature in Explore
+	FlagLogsSampleInExplore = "logsSampleInExplore"
+
+	// FlagLogsContextDatasourceUi
+	// Allow datasource to provide custom UI for context view
+	FlagLogsContextDatasourceUi = "logsContextDatasourceUi"
 )

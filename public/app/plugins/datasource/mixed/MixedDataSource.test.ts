@@ -13,8 +13,8 @@ const datasourceSrv = new DatasourceSrvMock(defaultDS, {
   A: new MockObservableDataSourceApi('DSA', [{ data: ['AAAA'] }]),
   B: new MockObservableDataSourceApi('DSB', [{ data: ['BBBB'] }]),
   C: new MockObservableDataSourceApi('DSC', [{ data: ['CCCC'] }]),
-  D: new MockObservableDataSourceApi('DSD', [{ data: [] }], {}, 'syntax error near FROM'),
-  E: new MockObservableDataSourceApi('DSE', [{ data: [] }], {}, 'syntax error near WHERE'),
+  D: new MockObservableDataSourceApi('DSD', [{ data: [] }], undefined, 'syntax error near FROM'),
+  E: new MockObservableDataSourceApi('DSE', [{ data: [] }], undefined, 'syntax error near WHERE'),
   Loki: new MockObservableDataSourceApi('Loki', [
     { data: ['A'], key: 'A' },
     { data: ['B'], key: 'B' },

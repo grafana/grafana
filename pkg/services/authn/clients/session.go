@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-var _ authn.Client = new(Session)
+var _ authn.ContextAwareClient = new(Session)
 
 func ProvideSession(sessionService auth.UserTokenService, userService user.Service,
 	cookieName string, maxLifetime time.Duration) *Session {
@@ -36,16 +36,8 @@ type Session struct {
 	log              log.Logger
 }
 
-func (s *Session) Test(ctx context.Context, r *authn.Request) bool {
-	if s.loginCookieName == "" {
-		return false
-	}
-
-	if _, err := r.HTTPRequest.Cookie(s.loginCookieName); err != nil {
-		return false
-	}
-
-	return true
+func (s *Session) Name() string {
+	return authn.ClientSession
 }
 
 func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Identity, error) {
@@ -79,6 +71,22 @@ func (s *Session) Authenticate(ctx context.Context, r *authn.Request) (*authn.Id
 	return identity, nil
 }
 
+func (s *Session) Test(ctx context.Context, r *authn.Request) bool {
+	if s.loginCookieName == "" {
+		return false
+	}
+
+	if _, err := r.HTTPRequest.Cookie(s.loginCookieName); err != nil {
+		return false
+	}
+
+	return true
+}
+
+func (s *Session) Priority() uint {
+	return 60
+}
+
 func (s *Session) RefreshTokenHook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
 	if identity.SessionToken == nil {
 		return nil
@@ -99,13 +107,14 @@ func (s *Session) RefreshTokenHook(ctx context.Context, identity *authn.Identity
 			s.log.Debug("failed to get client IP address", "addr", addr, "err", err)
 			ip = nil
 		}
-		rotated, err := s.sessionService.TryRotateToken(ctx, identity.SessionToken, ip, userAgent)
+		rotated, newToken, err := s.sessionService.TryRotateToken(ctx, identity.SessionToken, ip, userAgent)
 		if err != nil {
 			s.log.Error("failed to rotate token", "error", err)
 			return
 		}
 
 		if rotated {
+			identity.SessionToken = newToken
 			s.log.Debug("rotated session token", "user", identity.ID)
 
 			maxAge := int(s.loginMaxLifetime.Seconds())

@@ -13,6 +13,8 @@ import (
 
 	"github.com/grafana/alerting/alerting"
 	"github.com/grafana/alerting/alerting/notifier/channels"
+	amv2 "github.com/prometheus/alertmanager/api/v2/models"
+
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -22,8 +24,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
-
-	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 )
 
 const (
@@ -154,7 +154,7 @@ func (am *Alertmanager) StopAndWait() {
 	am.Base.StopAndWait()
 }
 
-// SaveAndApplyDefaultConfig saves the default configuration the database and applies the configuration to the Alertmanager.
+// SaveAndApplyDefaultConfig saves the default configuration to the database and applies it to the Alertmanager.
 // It rolls back the save if we fail to apply the configuration.
 func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 	var outerErr error
@@ -164,6 +164,7 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 			Default:                   true,
 			ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
 			OrgID:                     am.orgID,
+			LastApplied:               time.Now().UTC().Unix(),
 		}
 
 		cfg, err := Load([]byte(am.Settings.UnifiedAlerting.DefaultConfiguration))
@@ -173,10 +174,8 @@ func (am *Alertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
 		}
 
 		err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
-			if err := am.applyConfig(cfg, []byte(am.Settings.UnifiedAlerting.DefaultConfiguration)); err != nil {
-				return err
-			}
-			return nil
+			_, err := am.applyConfig(cfg, []byte(am.Settings.UnifiedAlerting.DefaultConfiguration))
+			return err
 		})
 		if err != nil {
 			outerErr = nil
@@ -201,13 +200,12 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 			AlertmanagerConfiguration: string(rawConfig),
 			ConfigurationVersion:      fmt.Sprintf("v%d", ngmodels.AlertConfigurationVersion),
 			OrgID:                     am.orgID,
+			LastApplied:               time.Now().UTC().Unix(),
 		}
 
 		err = am.Store.SaveAlertmanagerConfigurationWithCallback(ctx, cmd, func() error {
-			if err := am.applyConfig(cfg, rawConfig); err != nil {
-				return err
-			}
-			return nil
+			_, err := am.applyConfig(cfg, rawConfig)
+			return err
 		})
 		if err != nil {
 			outerErr = err
@@ -219,7 +217,7 @@ func (am *Alertmanager) SaveAndApplyConfig(ctx context.Context, cfg *apimodels.P
 }
 
 // ApplyConfig applies the configuration to the Alertmanager.
-func (am *Alertmanager) ApplyConfig(dbCfg *ngmodels.AlertConfiguration) error {
+func (am *Alertmanager) ApplyConfig(ctx context.Context, dbCfg *ngmodels.AlertConfiguration) error {
 	var err error
 	cfg, err := Load([]byte(dbCfg.AlertmanagerConfiguration))
 	if err != nil {
@@ -228,7 +226,7 @@ func (am *Alertmanager) ApplyConfig(dbCfg *ngmodels.AlertConfiguration) error {
 
 	var outerErr error
 	am.Base.WithLock(func() {
-		if err = am.applyConfig(cfg, nil); err != nil {
+		if err := am.applyAndMarkConfig(ctx, dbCfg.ConfigurationHash, cfg, nil); err != nil {
 			outerErr = fmt.Errorf("unable to apply configuration: %w", err)
 			return
 		}
@@ -238,21 +236,22 @@ func (am *Alertmanager) ApplyConfig(dbCfg *ngmodels.AlertConfiguration) error {
 }
 
 // applyConfig applies a new configuration by re-initializing all components using the configuration provided.
+// It returns a boolean indicating whether the user config was changed and an error.
 // It is not safe to call concurrently.
-func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig []byte) (err error) {
+func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig []byte) (bool, error) {
 	// First, let's make sure this config is not already loaded
-	var configChanged bool
+	var amConfigChanged bool
 	if rawConfig == nil {
 		enc, err := json.Marshal(cfg.AlertmanagerConfig)
 		if err != nil {
 			// In theory, this should never happen.
-			return err
+			return false, err
 		}
 		rawConfig = enc
 	}
 
 	if am.Base.ConfigHash() != md5.Sum(rawConfig) {
-		configChanged = true
+		amConfigChanged = true
 	}
 
 	if cfg.TemplateFiles == nil {
@@ -263,19 +262,19 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 	// next, we need to make sure we persist the templates to disk.
 	paths, templatesChanged, err := PersistTemplates(cfg, am.WorkingDirPath())
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	// If neither the configuration nor templates have changed, we've got nothing to do.
-	if !configChanged && !templatesChanged {
+	if !amConfigChanged && !templatesChanged {
 		am.logger.Debug("neither config nor template have changed, skipping configuration sync.")
-		return nil
+		return false, nil
 	}
 
 	// With the templates persisted, create the template list using the paths.
 	tmpl, err := am.Base.TemplateFromPaths(am.Settings.AppURL, paths...)
 	if err != nil {
-		return err
+		return false, err
 	}
 
 	err = am.Base.ApplyConfig(AlertingConfiguration{
@@ -286,7 +285,25 @@ func (am *Alertmanager) applyConfig(cfg *apimodels.PostableUserConfig, rawConfig
 		ReceiverIntegrationsFunc: am.buildReceiverIntegration,
 	})
 	if err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+// applyAndMarkConfig applies a configuration and marks it as applied if no errors occur.
+func (am *Alertmanager) applyAndMarkConfig(ctx context.Context, hash string, cfg *apimodels.PostableUserConfig, rawConfig []byte) error {
+	configChanged, err := am.applyConfig(cfg, rawConfig)
+	if err != nil {
 		return err
+	}
+
+	if configChanged {
+		markConfigCmd := ngmodels.MarkConfigurationAsAppliedCmd{
+			OrgID:             am.orgID,
+			ConfigurationHash: hash,
+		}
+		return am.Store.MarkConfigurationAsApplied(ctx, &markConfigCmd)
 	}
 
 	return nil

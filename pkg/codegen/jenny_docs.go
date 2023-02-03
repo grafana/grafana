@@ -15,6 +15,7 @@ import (
 	"cuelang.org/go/cue/cuecontext"
 	"github.com/grafana/codejen"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/thema/encoding/jsonschema"
 	"github.com/olekukonko/tablewriter"
 	"github.com/xeipuuv/gojsonpointer"
@@ -34,8 +35,13 @@ func (j docsJenny) JennyName() string {
 	return "DocsJenny"
 }
 
-func (j docsJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
-	f, err := jsonschema.GenerateSchema(decl.Lineage().Latest())
+func (j docsJenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
+	// TODO remove this once codejen catches nils https://github.com/grafana/codejen/issues/5
+	if kind == nil {
+		return nil, nil
+	}
+
+	f, err := jsonschema.GenerateSchema(kind.Lineage().Latest())
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate json representation for the schema: %v", err)
 	}
@@ -61,12 +67,13 @@ func (j docsJenny) Generate(decl *DeclForGen) (*codejen.File, error) {
 	// fixes the references between the types within a json after making components.schema.<types> the root of the json
 	kindJsonStr := strings.Replace(string(obj.Components.Schemas), "#/components/schemas/", "#/", -1)
 
-	kindProps := decl.Properties.Common()
+	kindProps := kind.Props().Common()
 	data := templateData{
-		KindName:     kindProps.Name,
-		KindVersion:  decl.Lineage().Latest().Version().String(),
-		KindMaturity: string(kindProps.Maturity),
-		Markdown:     "{{ .Markdown 1 }}",
+		KindName:        kindProps.Name,
+		KindVersion:     kind.Lineage().Latest().Version().String(),
+		KindMaturity:    string(kindProps.Maturity),
+		KindDescription: kindProps.Description,
+		Markdown:        "{{ .Markdown 1 }}",
 	}
 
 	tmpl, err := makeTemplate(data, "docs.tmpl")
@@ -92,28 +99,58 @@ func makeTemplate(data templateData, tmpl string) ([]byte, error) {
 }
 
 type templateData struct {
-	KindName     string
-	KindVersion  string
-	KindMaturity string
-	Markdown     string
+	KindName        string
+	KindVersion     string
+	KindMaturity    string
+	KindDescription string
+	Markdown        string
 }
 
 // -------------------- JSON to Markdown conversion --------------------
 // Copied from https://github.com/marcusolsson/json-schema-docs and slightly changed to fit the DocsJenny
 
 type schema struct {
-	ID          string             `json:"$id,omitempty"`
-	Ref         string             `json:"$ref,omitempty"`
-	Schema      string             `json:"$schema,omitempty"`
-	Title       string             `json:"title,omitempty"`
-	Description string             `json:"description,omitempty"`
-	Required    []string           `json:"required,omitempty"`
-	Type        PropertyTypes      `json:"type,omitempty"`
-	Properties  map[string]*schema `json:"properties,omitempty"`
-	Items       *schema            `json:"items,omitempty"`
-	Definitions map[string]*schema `json:"definitions,omitempty"`
-	Enum        []Any              `json:"enum"`
-	Default     any                `json:"default"`
+	ID                   string             `json:"$id,omitempty"`
+	Ref                  string             `json:"$ref,omitempty"`
+	Schema               string             `json:"$schema,omitempty"`
+	Title                string             `json:"title,omitempty"`
+	Description          string             `json:"description,omitempty"`
+	Required             []string           `json:"required,omitempty"`
+	Type                 PropertyTypes      `json:"type,omitempty"`
+	Properties           map[string]*schema `json:"properties,omitempty"`
+	Items                *schema            `json:"items,omitempty"`
+	Definitions          map[string]*schema `json:"definitions,omitempty"`
+	Enum                 []Any              `json:"enum"`
+	Default              any                `json:"default"`
+	AllOf                []*schema          `json:"allOf"`
+	AdditionalProperties *schema            `json:"additionalProperties"`
+	extends              []string           `json:"-"`
+	inheritedFrom        string             `json:"-"`
+}
+
+func renderMapType(props *schema) string {
+	if props == nil {
+		return ""
+	}
+
+	if props.Type.HasType(PropertyTypeObject) {
+		name, anchor := propNameAndAnchor(props.Title, props.Title)
+		return fmt.Sprintf("[%s](#%s)", name, anchor)
+	}
+
+	if props.AdditionalProperties != nil {
+		return "map[string]" + renderMapType(props.AdditionalProperties)
+	}
+
+	if props.Items != nil {
+		return "[]" + renderMapType(props.Items)
+	}
+
+	var types []string
+	for _, t := range props.Type {
+		types = append(types, string(t))
+	}
+	return strings.Join(types, ", ")
 }
 
 func jsonToMarkdown(jsonData []byte, tpl string, kindName string) ([]byte, error) {
@@ -183,7 +220,67 @@ func resolveSchema(schem *schema, root *simplejson.Json) (*schema, error) {
 		*schem.Items = *foo
 	}
 
+	if len(schem.AllOf) > 0 {
+		for idx, child := range schem.AllOf {
+			tmp, err := resolveSubSchema(schem, child, root)
+			if err != nil {
+				return nil, err
+			}
+			schem.AllOf[idx] = tmp
+
+			if len(tmp.Title) > 0 {
+				schem.extends = append(schem.extends, tmp.Title)
+			}
+		}
+	}
+
+	if schem.AdditionalProperties != nil {
+		if schem.AdditionalProperties.Ref != "" {
+			tmp, err := resolveReference(schem.AdditionalProperties.Ref, root)
+			if err != nil {
+				return nil, err
+			}
+			*schem.AdditionalProperties = *tmp
+		}
+		foo, err := resolveSchema(schem.AdditionalProperties, root)
+		if err != nil {
+			return nil, err
+		}
+		*schem.AdditionalProperties = *foo
+	}
+
 	return schem, nil
+}
+
+func resolveSubSchema(parent, child *schema, root *simplejson.Json) (*schema, error) {
+	if child.Ref != "" {
+		tmp, err := resolveReference(child.Ref, root)
+		if err != nil {
+			return nil, err
+		}
+		*child = *tmp
+	}
+
+	if len(child.Required) > 0 {
+		parent.Required = append(parent.Required, child.Required...)
+	}
+
+	child, err := resolveSchema(child, root)
+	if err != nil {
+		return nil, err
+	}
+
+	if parent.Properties == nil {
+		parent.Properties = make(map[string]*schema)
+	}
+
+	for k, v := range child.Properties {
+		prop := *v
+		prop.inheritedFrom = child.Title
+		parent.Properties[k] = &prop
+	}
+
+	return child, err
 }
 
 // resolveReference loads a schema from a $ref.
@@ -234,48 +331,42 @@ func (s schema) Markdown(level int) string {
 		level = 1
 	}
 
-	var buf bytes.Buffer
+	buf := new(bytes.Buffer)
 
-	if s.Title != "" {
-		fmt.Fprintln(&buf, makeHeading(s.Title, level))
-		fmt.Fprintln(&buf)
+	if s.Title != "" && s.AdditionalProperties == nil {
+		fmt.Fprintf(buf, "### %s\n", strings.Title(s.Title))
+		fmt.Fprintln(buf)
 	}
 
 	if s.Description != "" {
-		fmt.Fprintln(&buf, s.Description)
-		if s.Default != nil {
-			fmt.Fprintf(&buf, "The default value is: `%v`.", s.Default)
-		}
-		fmt.Fprintln(&buf)
+		fmt.Fprintln(buf, s.Description)
+		fmt.Fprintln(buf)
 	}
 
-	if len(s.Properties) > 0 {
-		fmt.Fprintln(&buf, makeHeading("Properties", level+1))
-		fmt.Fprintln(&buf)
+	if len(s.extends) > 0 {
+		fmt.Fprintln(buf, makeExtends(s.extends))
+		fmt.Fprintln(buf)
 	}
 
-	printProperties(&buf, &s)
+	printProperties(buf, &s)
 
 	// Add padding.
-	fmt.Fprintln(&buf)
+	fmt.Fprintln(buf)
 
 	for _, obj := range findDefinitions(&s) {
-		fmt.Fprint(&buf, obj.Markdown(level+1))
+		fmt.Fprint(buf, obj.Markdown(level+1))
 	}
 
 	return buf.String()
 }
 
-func makeHeading(heading string, level int) string {
-	if level < 0 {
-		return heading
+func makeExtends(from []string) string {
+	fromLinks := make([]string, 0, len(from))
+	for _, f := range from {
+		fromLinks = append(fromLinks, fmt.Sprintf("[%s](#%s)", f, strings.ToLower(f)))
 	}
 
-	if level <= 6 {
-		return strings.Repeat("#", level) + " " + heading
-	}
-
-	return fmt.Sprintf("**%s**", heading)
+	return fmt.Sprintf("It extends %s.", strings.Join(fromLinks, " and "))
 }
 
 func findDefinitions(s *schema) []*schema {
@@ -283,9 +374,9 @@ func findDefinitions(s *schema) []*schema {
 	// properties for them recursively.
 	var objs []*schema
 
-	for k, p := range s.Properties {
-		// Use the identifier as the title.
-		if p.Type.HasType(PropertyTypeObject) {
+	definition := func(k string, p *schema) {
+		if p.Type.HasType(PropertyTypeObject) && p.AdditionalProperties == nil {
+			// Use the identifier as the title.
 			if len(p.Title) == 0 {
 				p.Title = k
 			}
@@ -301,6 +392,30 @@ func findDefinitions(s *schema) []*schema {
 						p.Items.Title = k
 					}
 					objs = append(objs, p.Items)
+				}
+			}
+		}
+	}
+
+	for k, p := range s.Properties {
+		// If a property has AdditionalProperties, then it's a map
+		if p.AdditionalProperties != nil {
+			definition(k, p.AdditionalProperties)
+		}
+
+		definition(k, p)
+	}
+
+	// This code could probably be unified with the one above
+	for _, child := range s.AllOf {
+		if child.Type.HasType(PropertyTypeObject) {
+			objs = append(objs, child)
+		}
+
+		if child.Type.HasType(PropertyTypeArray) {
+			if child.Items != nil {
+				if child.Items.Type.HasType(PropertyTypeObject) {
+					objs = append(objs, child.Items)
 				}
 			}
 		}
@@ -325,64 +440,41 @@ func printProperties(w io.Writer, s *schema) {
 
 	// Buffer all property rows so that we can sort them before printing them.
 	rows := make([][]string, 0, len(s.Properties))
-	for k, p := range s.Properties {
-		// Generate relative links for objects and arrays of objects.
-		propType := make([]string, 0, len(p.Type))
-		for _, pt := range p.Type {
-			switch pt {
-			case PropertyTypeObject:
-				name, anchor := propNameAndAnchor(k, p.Title)
-				propType = append(propType, fmt.Sprintf("[%s](#%s)", name, anchor))
-			case PropertyTypeArray:
-				if p.Items != nil {
-					for _, pi := range p.Items.Type {
-						if pi == PropertyTypeObject {
-							name, anchor := propNameAndAnchor(k, p.Items.Title)
-							propType = append(propType, fmt.Sprintf("[%s](#%s)[]", name, anchor))
-						} else {
-							propType = append(propType, fmt.Sprintf("%s[]", pi))
-						}
-					}
-				} else {
-					propType = append(propType, string(pt))
-				}
-			default:
-				propType = append(propType, string(pt))
-			}
-		}
 
-		var propTypeStr string
-		if len(propType) == 1 {
-			propTypeStr = propType[0]
-		} else if len(propType) == 2 {
-			propTypeStr = strings.Join(propType, " or ")
-		} else if len(propType) > 2 {
-			propTypeStr = fmt.Sprintf("%s, or %s", strings.Join(propType[:len(propType)-1], ", "), propType[len(propType)-1])
-		}
+	for key, p := range s.Properties {
+		typeStr := propTypeStr(key, p)
 
 		// Emphasize required properties.
 		var required string
-		if in(s.Required, k) {
+		if in(s.Required, key) {
 			required = "**Yes**"
 		} else {
 			required = "No"
 		}
 
-		desc := p.Description
+		var desc string
+
+		if p.inheritedFrom != "" {
+			desc = fmt.Sprintf("*(Inherited from [%s](#%s))*", p.inheritedFrom, strings.ToLower(p.inheritedFrom))
+		}
+
+		if p.Description != "" {
+			desc += "\n" + p.Description
+		}
 
 		if len(p.Enum) > 0 {
 			vals := make([]string, 0, len(p.Enum))
 			for _, e := range p.Enum {
 				vals = append(vals, e.String())
 			}
-			desc += " Possible values are: `" + strings.Join(vals, "`, `") + "`."
+			desc += "\nPossible values are: `" + strings.Join(vals, "`, `") + "`."
 		}
 
 		if p.Default != nil {
 			desc += fmt.Sprintf(" Default: `%v`.", p.Default)
 		}
 
-		rows = append(rows, []string{fmt.Sprintf("`%s`", k), propTypeStr, required, formatForTable(desc)})
+		rows = append(rows, []string{fmt.Sprintf("`%s`", key), typeStr, required, formatForTable(desc)})
 	}
 
 	// Sort by the required column, then by the name column.
@@ -398,6 +490,53 @@ func printProperties(w io.Writer, s *schema) {
 
 	table.AppendBulk(rows)
 	table.Render()
+}
+
+func propTypeStr(propName string, propValue *schema) string {
+	// If the property has AdditionalProperties, it is most likely a map type
+	if propValue.AdditionalProperties != nil {
+		mapValue := renderMapType(propValue.AdditionalProperties)
+		return "map[string]" + mapValue
+	}
+
+	propType := make([]string, 0, len(propValue.Type))
+	// Generate relative links for objects and arrays of objects.
+	for _, pt := range propValue.Type {
+		switch pt {
+		case PropertyTypeObject:
+			name, anchor := propNameAndAnchor(propName, propValue.Title)
+			propType = append(propType, fmt.Sprintf("[%s](#%s)", name, anchor))
+		case PropertyTypeArray:
+			if propValue.Items != nil {
+				for _, pi := range propValue.Items.Type {
+					if pi == PropertyTypeObject {
+						name, anchor := propNameAndAnchor(propName, propValue.Items.Title)
+						propType = append(propType, fmt.Sprintf("[%s](#%s)[]", name, anchor))
+					} else {
+						propType = append(propType, fmt.Sprintf("%s[]", pi))
+					}
+				}
+			} else {
+				propType = append(propType, string(pt))
+			}
+		default:
+			propType = append(propType, string(pt))
+		}
+	}
+
+	if len(propType) == 0 {
+		return ""
+	}
+
+	if len(propType) == 1 {
+		return propType[0]
+	}
+
+	if len(propType) == 2 {
+		return strings.Join(propType, " or ")
+	}
+
+	return fmt.Sprintf("%s, or %s", strings.Join(propType[:len(propType)-1], ", "), propType[len(propType)-1])
 }
 
 func propNameAndAnchor(prop, title string) (string, string) {
