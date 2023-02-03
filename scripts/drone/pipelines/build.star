@@ -62,7 +62,6 @@ def build_e2e(trigger, ver_mode):
     ]
 
     build_steps = []
-    variants = None
 
     if ver_mode == "pr":
         build_steps.extend(
