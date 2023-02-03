@@ -7,10 +7,6 @@ go 1.19
 // Also, use our fork with fixes for unimplemented methods (required for Go 1.16).
 replace github.com/denisenkom/go-mssqldb => github.com/grafana/go-mssqldb v0.0.0-20210326084033-d0ce3c521036
 
-// Override k8s.io/client-go outdated dependency, which is an indirect dependency of grafana/loki.
-// It's also present on grafana/loki's go.mod so we'll need till it gets updated.
-replace k8s.io/client-go => k8s.io/client-go v0.25.0
-
 replace github.com/russellhaering/goxmldsig@v1.1.0 => github.com/russellhaering/goxmldsig v1.1.1
 
 // Avoid using v2.0.0+incompatible Redigo used by dependencies as the latest maintained branch of Redigo is v1.
@@ -23,6 +19,17 @@ replace github.com/docker/docker => github.com/moby/moby v0.7.3-0.20190826074503
 
 // contains openapi encoder fixes. remove ASAP
 replace cuelang.org/go => github.com/sdboyer/cue v0.5.0-beta.2.0.20221218111347-341999f48bdb
+
+// For some insane reason, client-go seems to have a broken v12.0.0 tag on it that forces us to
+// hoist a replace statement.
+replace k8s.io/client-go => k8s.io/client-go v0.25.3
+
+require (
+	k8s.io/api v0.25.3 // indirect
+	k8s.io/apiextensions-apiserver v0.25.3
+	k8s.io/apimachinery v0.25.3
+	k8s.io/client-go v12.0.0+incompatible
+)
 
 require (
 	cloud.google.com/go/storage v1.28.1
@@ -60,8 +67,8 @@ require (
 	github.com/grafana/alerting v0.0.0-20230125210216-facc6b27b9e0
 	github.com/grafana/cuetsy v0.1.5
 	github.com/grafana/grafana-aws-sdk v0.12.0
-	github.com/grafana/grafana-azure-sdk-go v1.5.1
-	github.com/grafana/grafana-plugin-sdk-go v0.147.0
+	github.com/grafana/grafana-azure-sdk-go v1.6.0
+	github.com/grafana/grafana-plugin-sdk-go v0.148.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v1.2.0
 	github.com/hashicorp/go-plugin v1.4.3
@@ -245,7 +252,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.7.0
 	github.com/google/go-github/v45 v45.2.0
 	github.com/grafana/codejen v0.0.3
-	github.com/grafana/dskit v0.0.0-20230126115530-71478074eab8
+	github.com/grafana/dskit v0.0.0-20230202092222-880a7f8141cc
 	github.com/grafana/phlare/api v0.1.2
 	github.com/huandu/xstrings v1.3.1
 	github.com/jmoiron/sqlx v1.3.5
@@ -257,7 +264,6 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.11.2
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.11.2
 	gocloud.dev v0.25.0
-	k8s.io/client-go v12.0.0+incompatible // gets replaced with v0.25.0
 )
 
 require (
@@ -268,7 +274,6 @@ require (
 	github.com/grafana/thema v0.0.0-20230122235053-b4b6714dd1c9
 	github.com/hmarr/codeowners v1.1.1
 	github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f
-	k8s.io/apimachinery v0.25.3
 )
 
 require (
@@ -296,6 +301,7 @@ require (
 	github.com/emicklei/go-restful/v3 v3.8.0 // indirect
 	github.com/envoyproxy/go-control-plane v0.10.2-0.20220325020618-49ff273808a1 // indirect
 	github.com/envoyproxy/protoc-gen-validate v0.6.7 // indirect
+	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/google/gnostic v0.5.7-v3refs // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
@@ -333,7 +339,6 @@ require (
 	golang.org/x/term v0.3.0 // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	k8s.io/api v0.25.3 // indirect
 	k8s.io/klog/v2 v2.80.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20220803162953-67bda5d908f1 // indirect
 	k8s.io/utils v0.0.0-20220728103510-ee6ede2d64ed // indirect
@@ -420,6 +425,3 @@ replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-aler
 replace google.golang.org/grpc => google.golang.org/grpc v1.45.0
 
 replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20220421151946-72621c1f0bd3
-
-// Remove this once https://github.com/grafana/dskit/pull/258 is merged.
-replace github.com/grafana/dskit => github.com/gotjosh/dskit v0.0.0-20230131123646-8dda768daa27

@@ -202,14 +202,14 @@ func (s *Service) handleExpressions(ctx context.Context, user *user.SignedInUser
 func (s *Service) handleQuerySingleDatasource(ctx context.Context, user *user.SignedInUser, parsedReq *parsedRequest) (*backend.QueryDataResponse, error) {
 	queries := parsedReq.getFlattenedQueries()
 	ds := queries[0].datasource
-	if err := s.pluginRequestValidator.Validate(ds.Url, nil); err != nil {
+	if err := s.pluginRequestValidator.Validate(ds.URL, nil); err != nil {
 		return nil, datasources.ErrDataSourceAccessDenied
 	}
 
 	// ensure that each query passed to this function has the same datasource
 	for _, pq := range queries {
-		if ds.Uid != pq.datasource.Uid {
-			return nil, fmt.Errorf("all queries must have the same datasource - found %s and %s", ds.Uid, pq.datasource.Uid)
+		if ds.UID != pq.datasource.UID {
+			return nil, fmt.Errorf("all queries must have the same datasource - found %s and %s", ds.UID, pq.datasource.UID)
 		}
 	}
 
@@ -220,7 +220,7 @@ func (s *Service) handleQuerySingleDatasource(ctx context.Context, user *user.Si
 
 	req := &backend.QueryDataRequest{
 		PluginContext: backend.PluginContext{
-			OrgID:                      ds.OrgId,
+			OrgID:                      ds.OrgID,
 			PluginID:                   ds.Type,
 			User:                       adapters.BackendUserFromSignedInUser(user),
 			DataSourceInstanceSettings: instanceSettings,
@@ -260,15 +260,15 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 			return nil, ErrInvalidDatasourceID
 		}
 
-		datasourcesByUid[ds.Uid] = ds
-		if expr.IsDataSource(ds.Uid) {
+		datasourcesByUid[ds.UID] = ds
+		if expr.IsDataSource(ds.UID) {
 			req.hasExpression = true
 		} else {
 			req.dsTypes[ds.Type] = true
 		}
 
-		if _, ok := req.parsedQueries[ds.Uid]; !ok {
-			req.parsedQueries[ds.Uid] = []parsedQuery{}
+		if _, ok := req.parsedQueries[ds.UID]; !ok {
+			req.parsedQueries[ds.UID] = []parsedQuery{}
 		}
 
 		s.log.Debug("Processing metrics query", "query", query)
@@ -278,7 +278,7 @@ func (s *Service) parseMetricRequest(ctx context.Context, user *user.SignedInUse
 			return nil, err
 		}
 
-		req.parsedQueries[ds.Uid] = append(req.parsedQueries[ds.Uid], parsedQuery{
+		req.parsedQueries[ds.UID] = append(req.parsedQueries[ds.UID], parsedQuery{
 			datasource: ds,
 			query: backend.DataQuery{
 				TimeRange: backend.TimeRange{
@@ -322,18 +322,18 @@ func (s *Service) getDataSourceFromQuery(ctx context.Context, user *user.SignedI
 		return grafanads.DataSourceModel(user.OrgID), nil
 	}
 
-	// use datasourceId if it exists
-	id := query.Get("datasourceId").MustInt64(0)
-	if id > 0 {
-		ds, err = s.dataSourceCache.GetDatasource(ctx, id, user, skipCache)
+	if uid != "" {
+		ds, err = s.dataSourceCache.GetDatasourceByUID(ctx, uid, user, skipCache)
 		if err != nil {
 			return nil, err
 		}
 		return ds, nil
 	}
 
-	if uid != "" {
-		ds, err = s.dataSourceCache.GetDatasourceByUID(ctx, uid, user, skipCache)
+	// use datasourceId if it exists
+	id := query.Get("datasourceId").MustInt64(0)
+	if id > 0 {
+		ds, err = s.dataSourceCache.GetDatasource(ctx, id, user, skipCache)
 		if err != nil {
 			return nil, err
 		}

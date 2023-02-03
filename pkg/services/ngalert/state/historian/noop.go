@@ -3,6 +3,8 @@ package historian
 import (
 	"context"
 
+	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 )
@@ -18,4 +20,8 @@ func (f *NoOpHistorian) RecordStatesAsync(ctx context.Context, _ history_model.R
 	errCh := make(chan error)
 	close(errCh)
 	return errCh
+}
+
+func (f *NoOpHistorian) QueryStates(ctx context.Context, query models.HistoryQuery) (*data.Frame, error) {
+	return data.NewFrame("states"), nil
 }

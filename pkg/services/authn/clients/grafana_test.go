@@ -52,6 +52,7 @@ func TestGrafana_AuthenticateProxy(t *testing.T) {
 					SyncUser:        true,
 					SyncTeamMembers: true,
 					AllowSignUp:     true,
+					FetchSyncedUser: true,
 					LookUpParams: login.UserLookupParams{
 						Email: strPtr("email@email.com"),
 						Login: strPtr("test"),

@@ -91,7 +91,7 @@ func TestAddDataSource_InvalidURL(t *testing.T) {
 	sc.m.Post(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
 			Name:   "Test",
-			Url:    "invalid:url",
+			URL:    "invalid:url",
 			Access: "direct",
 			Type:   "test",
 		})
@@ -122,7 +122,7 @@ func TestAddDataSource_URLWithoutProtocol(t *testing.T) {
 	sc.m.Post(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
 			Name:   name,
-			Url:    url,
+			URL:    url,
 			Access: "direct",
 			Type:   "test",
 		})
@@ -152,7 +152,7 @@ func TestAddDataSource_InvalidJSONData(t *testing.T) {
 	sc.m.Post(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
 			Name:     "Test",
-			Url:      "localhost:5432",
+			URL:      "localhost:5432",
 			Access:   "direct",
 			Type:     "test",
 			JsonData: jsonData,
@@ -176,7 +176,7 @@ func TestUpdateDataSource_InvalidURL(t *testing.T) {
 	sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
 			Name:   "Test",
-			Url:    "invalid:url",
+			URL:    "invalid:url",
 			Access: "direct",
 			Type:   "test",
 		})
@@ -204,7 +204,7 @@ func TestUpdateDataSource_InvalidJSONData(t *testing.T) {
 	sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
 			Name:     "Test",
-			Url:      "localhost:5432",
+			URL:      "localhost:5432",
 			Access:   "direct",
 			Type:     "test",
 			JsonData: jsonData,
@@ -236,7 +236,7 @@ func TestUpdateDataSource_URLWithoutProtocol(t *testing.T) {
 	sc.m.Put(sc.url, routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 		c.Req.Body = mockRequestBody(datasources.AddDataSourceCommand{
 			Name:   name,
-			Url:    url,
+			URL:    url,
 			Access: "direct",
 			Type:   "test",
 		})

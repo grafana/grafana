@@ -100,6 +100,28 @@ Core: S=close({
 
 	lineage: { name: S.machineName }
 	lineageIsGroup: false
+
+	// crd contains properties specific to converting this kind to a Kubernetes CRD.
+	crd: {
+		// group is used as the CRD group name in the GVK.
+		group: "\(S.machineName).core.grafana.com"
+
+		// scope determines whether resources of this kind exist globally ("Cluster") or
+		// within Kubernetes namespaces.
+		scope: "Cluster" | *"Namespaced"
+
+		// dummySchema determines whether a dummy OpenAPI schema - where the schema is
+		// simply an empty, open object - should be generated for the kind.
+		//
+		// It is a goal that this option eventually be force dto false. Only set to
+		// true when Grafana's code generators produce OpenAPI that is rejected by
+		// Kubernetes' CRD validation.
+		dummySchema: bool | *false
+
+		// deepCopy determines whether a generic implementation of copying should be
+		// generated, or a passthrough call to a Go function.
+		//   deepCopy: *"generic" | "passthrough"
+	}
 })
 
 nonEmptyString: string & strings.MinRunes(1)
