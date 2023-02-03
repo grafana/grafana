@@ -24,8 +24,6 @@ export function AppChrome({ children }: Props) {
   const state = chrome.useState();
   const featureToggles = config.featureToggles;
 
-  console.log('AppChrome render');
-
   if (!config.featureToggles.topnav) {
     return (
       <>
