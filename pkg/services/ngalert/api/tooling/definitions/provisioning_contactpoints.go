@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/alerting/logging"
-	"github.com/grafana/alerting/notify"
+	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -108,7 +108,7 @@ func (e *EmbeddedContactPoint) Valid(decryptFunc receivers.GetDecryptedValueFn) 
 	if e.Settings == nil {
 		return fmt.Errorf("settings should not be empty")
 	}
-	factory, exists := notify.Factory(e.Type)
+	factory, exists := alertingNotify.Factory(e.Type)
 	if !exists {
 		return fmt.Errorf("unknown type '%s'", e.Type)
 	}

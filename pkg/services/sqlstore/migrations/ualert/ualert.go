@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/alerting/logging"
-	"github.com/grafana/alerting/notify"
+	alertingLogging "github.com/grafana/alerting/logging"
+	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers"
 	pb "github.com/prometheus/alertmanager/silence/silencepb"
 	"xorm.io/xorm"
@@ -503,12 +503,12 @@ func (m *migration) validateAlertmanagerConfig(orgID int64, config *PostableUser
 				}
 				return fallback
 			}
-			receiverFactory, exists := notify.Factory(gr.Type)
+			receiverFactory, exists := alertingNotify.Factory(gr.Type)
 			if !exists {
 				return fmt.Errorf("notifier %s is not supported", gr.Type)
 			}
-			factoryConfig, err := receivers.NewFactoryConfig(cfg, nil, decryptFunc, nil, nil, func(ctx ...interface{}) logging.Logger {
-				return &logging.FakeLogger{}
+			factoryConfig, err := receivers.NewFactoryConfig(cfg, nil, decryptFunc, nil, nil, func(ctx ...interface{}) alertingLogging.Logger {
+				return &alertingLogging.FakeLogger{}
 			}, setting.BuildVersion)
 			if err != nil {
 				return err

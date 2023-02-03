@@ -12,7 +12,7 @@ import (
 	"github.com/prometheus/alertmanager/cluster"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/grafana/alerting/notify"
+	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -42,7 +42,7 @@ type MultiOrgAlertmanager struct {
 	logger   log.Logger
 
 	// clusterPeer represents the clustering peers of Alertmanagers between Grafana instances.
-	peer         notify.ClusterPeer
+	peer         alertingNotify.ClusterPeer
 	settleCancel context.CancelFunc
 
 	configStore AlertingStore

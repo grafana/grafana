@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/grafana/alerting/notify"
+	alertingNotify "github.com/grafana/alerting/notify"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	api "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -94,14 +94,14 @@ type AlertingConfiguration struct {
 	AlertmanagerConfig    api.PostableApiAlertingConfig
 	RawAlertmanagerConfig []byte
 
-	AlertmanagerTemplates *notify.Template
+	AlertmanagerTemplates *alertingNotify.Template
 
-	IntegrationsFunc         func(receivers []*api.PostableApiReceiver, templates *notify.Template) (map[string][]*notify.Integration, error)
-	ReceiverIntegrationsFunc func(r *api.PostableGrafanaReceiver, tmpl *notify.Template) (notify.NotificationChannel, error)
+	IntegrationsFunc         func(receivers []*api.PostableApiReceiver, templates *alertingNotify.Template) (map[string][]*alertingNotify.Integration, error)
+	ReceiverIntegrationsFunc func(r *api.PostableGrafanaReceiver, tmpl *alertingNotify.Template) (alertingNotify.NotificationChannel, error)
 }
 
-func (a AlertingConfiguration) BuildReceiverIntegrationsFunc() func(next *notify.GrafanaReceiver, tmpl *notify.Template) (notify.Notifier, error) {
-	return func(next *notify.GrafanaReceiver, tmpl *notify.Template) (notify.Notifier, error) {
+func (a AlertingConfiguration) BuildReceiverIntegrationsFunc() func(next *alertingNotify.GrafanaReceiver, tmpl *alertingNotify.Template) (alertingNotify.Notifier, error) {
+	return func(next *alertingNotify.GrafanaReceiver, tmpl *alertingNotify.Template) (alertingNotify.Notifier, error) {
 		// TODO: We shouldn't need to do all of this marshalling - there should be no difference between types.
 		var out api.RawMessage
 		settingsJSON, err := json.Marshal(next.Settings)
@@ -125,27 +125,27 @@ func (a AlertingConfiguration) BuildReceiverIntegrationsFunc() func(next *notify
 	}
 }
 
-func (a AlertingConfiguration) DispatcherLimits() notify.DispatcherLimits {
+func (a AlertingConfiguration) DispatcherLimits() alertingNotify.DispatcherLimits {
 	return &nilLimits{}
 }
 
-func (a AlertingConfiguration) InhibitRules() []notify.InhibitRule {
+func (a AlertingConfiguration) InhibitRules() []alertingNotify.InhibitRule {
 	return a.AlertmanagerConfig.InhibitRules
 }
 
-func (a AlertingConfiguration) MuteTimeIntervals() []notify.MuteTimeInterval {
+func (a AlertingConfiguration) MuteTimeIntervals() []alertingNotify.MuteTimeInterval {
 	return a.AlertmanagerConfig.MuteTimeIntervals
 }
 
-func (a AlertingConfiguration) ReceiverIntegrations() (map[string][]*notify.Integration, error) {
+func (a AlertingConfiguration) ReceiverIntegrations() (map[string][]*alertingNotify.Integration, error) {
 	return a.IntegrationsFunc(a.AlertmanagerConfig.Receivers, a.AlertmanagerTemplates)
 }
 
-func (a AlertingConfiguration) RoutingTree() *notify.Route {
+func (a AlertingConfiguration) RoutingTree() *alertingNotify.Route {
 	return a.AlertmanagerConfig.Route.AsAMRoute()
 }
 
-func (a AlertingConfiguration) Templates() *notify.Template {
+func (a AlertingConfiguration) Templates() *alertingNotify.Template {
 	return a.AlertmanagerTemplates
 }
 

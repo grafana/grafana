@@ -17,13 +17,13 @@ import (
 	"time"
 
 	"github.com/grafana/alerting/receivers"
-	"github.com/grafana/alerting/receivers/line"
-	"github.com/grafana/alerting/receivers/pagerduty"
-	"github.com/grafana/alerting/receivers/pushover"
-	"github.com/grafana/alerting/receivers/slack"
-	"github.com/grafana/alerting/receivers/telegram"
-	"github.com/grafana/alerting/receivers/threema"
-	"github.com/grafana/alerting/templates"
+	alertingLine "github.com/grafana/alerting/receivers/line"
+	alertingPagerduty "github.com/grafana/alerting/receivers/pagerduty"
+	alertingPushover "github.com/grafana/alerting/receivers/pushover"
+	alertingSlack "github.com/grafana/alerting/receivers/slack"
+	alertingTelegram "github.com/grafana/alerting/receivers/telegram"
+	alertingThreema "github.com/grafana/alerting/receivers/threema"
+	alertingTemplates "github.com/grafana/alerting/templates"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
@@ -728,23 +728,23 @@ func TestIntegrationNotificationChannels(t *testing.T) {
 	mockChannel.responses["slack_recvX"] = `{"ok": true}`
 
 	// Overriding some URLs to send to the mock channel.
-	os, opa, ot, opu, ogb, ol, oth := slack.APIURL, pagerduty.APIURL,
-		telegram.APIURL, pushover.APIURL, receivers.GetBoundary,
-		line.APIURL, threema.APIURL
-	originalTemplate := templates.DefaultTemplateString
+	os, opa, ot, opu, ogb, ol, oth := alertingSlack.APIURL, alertingPagerduty.APIURL,
+		alertingTelegram.APIURL, alertingPushover.APIURL, receivers.GetBoundary,
+		alertingLine.APIURL, alertingThreema.APIURL
+	originalTemplate := alertingTemplates.DefaultTemplateString
 	t.Cleanup(func() {
-		slack.APIURL, pagerduty.APIURL,
-			telegram.APIURL, pushover.APIURL, receivers.GetBoundary,
-			line.APIURL, threema.APIURL = os, opa, ot, opu, ogb, ol, oth
-		templates.DefaultTemplateString = originalTemplate
+		alertingSlack.APIURL, alertingPagerduty.APIURL,
+			alertingTelegram.APIURL, alertingPushover.APIURL, receivers.GetBoundary,
+			alertingLine.APIURL, alertingThreema.APIURL = os, opa, ot, opu, ogb, ol, oth
+		alertingTemplates.DefaultTemplateString = originalTemplate
 	})
-	templates.DefaultTemplateString = templates.TemplateForTestsString
-	slack.APIURL = fmt.Sprintf("http://%s/slack_recvX/slack_testX", mockChannel.server.Addr)
-	pagerduty.APIURL = fmt.Sprintf("http://%s/pagerduty_recvX/pagerduty_testX", mockChannel.server.Addr)
-	telegram.APIURL = fmt.Sprintf("http://%s/telegram_recv/bot%%s/%%s", mockChannel.server.Addr)
-	pushover.APIURL = fmt.Sprintf("http://%s/pushover_recv/pushover_test", mockChannel.server.Addr)
-	line.APIURL = fmt.Sprintf("http://%s/line_recv/line_test", mockChannel.server.Addr)
-	threema.APIURL = fmt.Sprintf("http://%s/threema_recv/threema_test", mockChannel.server.Addr)
+	alertingTemplates.DefaultTemplateString = alertingTemplates.TemplateForTestsString
+	alertingSlack.APIURL = fmt.Sprintf("http://%s/slack_recvX/slack_testX", mockChannel.server.Addr)
+	alertingPagerduty.APIURL = fmt.Sprintf("http://%s/pagerduty_recvX/pagerduty_testX", mockChannel.server.Addr)
+	alertingTelegram.APIURL = fmt.Sprintf("http://%s/telegram_recv/bot%%s/%%s", mockChannel.server.Addr)
+	alertingPushover.APIURL = fmt.Sprintf("http://%s/pushover_recv/pushover_test", mockChannel.server.Addr)
+	alertingLine.APIURL = fmt.Sprintf("http://%s/line_recv/line_test", mockChannel.server.Addr)
+	alertingThreema.APIURL = fmt.Sprintf("http://%s/threema_recv/threema_test", mockChannel.server.Addr)
 	receivers.GetBoundary = func() string { return "abcd" }
 
 	env.NotificationService.EmailHandlerSync = mockEmail.sendEmailCommandHandlerSync
@@ -1180,7 +1180,7 @@ type mockEmailHandler struct {
 
 func (e *mockEmailHandler) sendEmailCommandHandlerSync(_ context.Context, cmd *notifications.SendEmailCommandSync) error {
 	// We 0 out the start time since that is a variable that we cannot predict.
-	alerts := cmd.Data["Alerts"].(templates.ExtendedAlerts)
+	alerts := cmd.Data["Alerts"].(alertingTemplates.ExtendedAlerts)
 	for i := range alerts {
 		alerts[i].StartsAt = time.Time{}
 	}
@@ -2301,8 +2301,8 @@ var expEmailNotifications = []*notifications.SendEmailCommandSync{
 				"Title":   "[FIRING:1] EmailAlert (default)",
 				"Message": "",
 				"Status":  "firing",
-				"Alerts": templates.ExtendedAlerts{
-					templates.ExtendedAlert{
+				"Alerts": alertingTemplates.ExtendedAlerts{
+					alertingTemplates.ExtendedAlert{
 						Status:       "firing",
 						Labels:       template.KV{"alertname": "EmailAlert", "grafana_folder": "default"},
 						Annotations:  template.KV{},
