@@ -145,7 +145,7 @@ func ProvideService(
 		s.RegisterPostAuthHook(sync.ProvideOauthTokenSync(oauthTokenService, sessionService).SyncOauthToken, 60)
 	}
 
-	s.RegisterPostAuthHook(sync.ProvideFetchUserSync(userService).FetchSyncedUser, 100)
+	s.RegisterPostAuthHook(sync.ProvideFetchUserSync(userService).FetchSyncedUserHook, 100)
 
 	return s
 }

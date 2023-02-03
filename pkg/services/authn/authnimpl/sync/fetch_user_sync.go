@@ -19,7 +19,7 @@ type FetchUserSync struct {
 	userService user.Service
 }
 
-func (s *FetchUserSync) FetchSyncedUser(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
+func (s *FetchUserSync) FetchSyncedUserHook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
 	if !identity.ClientParams.FetchSyncedUser {
 		return nil
 	}
