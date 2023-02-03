@@ -204,13 +204,19 @@ func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Req
 
 	for _, hook := range s.postAuthHooks.items {
 		if err := hook.v(ctx, identity, r); err != nil {
-			s.log.FromContext(ctx).Warn("post auth hook failed", "error", err, "id", identity)
+			s.log.FromContext(ctx).Warn("post auth hook failed", "error", err, "client", c.Name(), "id", identity.ID)
 			return nil, err
 		}
 	}
 
 	if identity.IsDisabled {
 		return nil, errDisabledIdentity.Errorf("identity is disabled")
+	}
+
+	if hc, ok := c.(authn.HookClient); ok {
+		if err := hc.Hook(ctx, identity, r); err != nil {
+			s.log.FromContext(ctx).Warn("post client auth hook failed", "error", err, "client", c.Name(), "id", identity.ID)
+		}
 	}
 
 	return identity, nil
