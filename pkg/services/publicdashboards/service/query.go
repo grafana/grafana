@@ -164,6 +164,7 @@ func (pd *PublicDashboardServiceImpl) buildMetricRequest(ctx context.Context, da
 	for i := range queries {
 		queries[i].Set("intervalMs", safeInterval)
 		queries[i].Set("maxDataPoints", safeResolution)
+		queries[i].Set("queryCachingTTL", reqDTO.QueryCachingTTL)
 	}
 
 	return dtos.MetricRequest{
