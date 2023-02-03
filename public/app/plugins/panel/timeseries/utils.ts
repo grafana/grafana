@@ -1,6 +1,7 @@
 import {
   ArrayVector,
   DataFrame,
+  DataFrameType,
   Field,
   FieldType,
   getDisplayProcessor,
@@ -28,7 +29,7 @@ export function prepareGraphableFields(
     return null;
   }
 
-  if (series.every((df) => df.meta?.type === 'timeseries-long')) {
+  if (series.every((df) => df.meta?.type === DataFrameType.TimeSeriesLong)) {
     series = prepareTimeSeriesLong(series);
   }
 
@@ -180,22 +181,23 @@ export function regenerateLinksSupplier(
 }
 
 export function prepareTimeSeriesLong(series: DataFrame[]): DataFrame[] {
-  const stringFields = series[0].fields.filter((field) => field.type === 'string').map((field) => field.name);
-
-  const options = {
-    fields: stringFields,
-    naming: {
-      asLabels: true,
-      append: false,
-      withNames: false,
-      separator1: '=',
-      separator2: ' ',
-    },
-  };
+  const stringFields = series[0].fields.filter((field) => field.type === FieldType.string).map((field) => field.name);
 
   const ctx = {
     interpolate: (value: string) => value,
   };
 
-  return partitionByValuesTransformer.transformer(options, ctx)(series);
+  return partitionByValuesTransformer.transformer(
+    {
+      fields: stringFields,
+      naming: {
+        asLabels: true,
+        append: false,
+        withNames: false,
+        separator1: '=',
+        separator2: ' ',
+      },
+    },
+    ctx
+  )(series);
 }
