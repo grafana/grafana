@@ -619,8 +619,8 @@ func createAlertNotificationWithReminder(t *testing.T, orgId int64, uid string, 
 	}
 
 	return &models.AlertNotification{
-		OrgId:                 orgId,
-		Uid:                   uid,
+		OrgID:                 orgId,
+		UID:                   uid,
 		Name:                  uid, // Same as uid to make testing easier.
 		Type:                  channelType,
 		DisableResolveMessage: false,
