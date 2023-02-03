@@ -636,3 +636,7 @@ func (dr DashboardServiceImpl) CountDashboardsInFolder(ctx context.Context, quer
 
 	return dr.dashboardStore.CountDashboardsInFolder(ctx, &dashboards.CountDashboardsInFolderRequest{FolderID: folder.ID, OrgID: u.OrgID})
 }
+
+func (dr *DashboardServiceImpl) Run(ctx context.Context) error {
+	return nil // noop
+}

@@ -2,7 +2,6 @@ package k8saccess
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -13,35 +12,60 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/bridge"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/kinds/dashboard"
 	"github.com/grafana/grafana/pkg/kindsys/k8ssys"
 	"github.com/grafana/grafana/pkg/registry/corecrd"
 	"github.com/grafana/grafana/pkg/registry/corekind"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/store/entity"
+	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // NOTE this is how you reset the CRD
 //kubectl --kubeconfig=devenv/docker/blocks/apiserver/apiserver.kubeconfig delete CustomResourceDefinition dashboards.dashboard.core.grafana.com
 
 type k8sDashboardService struct {
+	log       log.Logger
 	orig      dashboards.DashboardService
 	clientSet *bridge.Clientset
 	reg       *corecrd.Registry
 	store     entity.EntityStoreServer
 	Kinds     *corekind.Base
+
+	cfg                  *setting.Cfg
+	bridgeService        *bridge.Service
+	userService          user.Service
+	accessControlService accesscontrol.Service
 }
 
 var _ dashboards.DashboardService = (*k8sDashboardService)(nil)
 
-func NewDashboardService(orig dashboards.DashboardService, store entity.EntityStoreServer, reg *corecrd.Registry, troll *bridge.Service, kinds *corekind.Base) dashboards.DashboardService {
+func NewDashboardService(
+	orig dashboards.DashboardService,
+	store entity.EntityStoreServer,
+	reg *corecrd.Registry,
+	troll *bridge.Service,
+	kinds *corekind.Base,
+	cfg *setting.Cfg,
+	userService user.Service,
+	accessControlService accesscontrol.Service,
+) dashboards.DashboardService {
 	return &k8sDashboardService{
+		log:       log.New("store.k8saccess.dashboard"),
 		reg:       reg,
 		orig:      orig,
 		clientSet: troll.ClientSet,
 		store:     store,
 		Kinds:     kinds,
+
+		cfg:                  cfg,
+		bridgeService:        troll,
+		userService:          userService,
+		accessControlService: accessControlService,
 	}
 }
 
@@ -93,15 +117,8 @@ func (s *k8sDashboardService) MakeUserAdmin(ctx context.Context, orgID int64, us
 	return s.orig.MakeUserAdmin(ctx, orgID, userID, dashboardID, setViewAndEditPermissions)
 }
 
-// example write from app sdk https://github.com/grafana/grafana-app-sdk/blob/44004e08c6cb131e3a2b8fed63f85ccc2ecc9220/crd/simplestore.go#L95
-// questions:
-// - how do we use the dashboard core kind?
-// - how do we translate incoming dashboard DTO to dashboard kind?
+// SaveDashboard saves the dashboard to kubernetes
 func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards.SaveDashboardDTO, allowUiUpdate bool) (*dashboards.Dashboard, error) {
-	//s.orig.SaveDashboard(ctx, dto, true)
-
-	//////////////////
-	fmt.Println("POTATO")
 	// config and client setup
 	namespace := "default"
 	// take the kindsys dashboard kind and alias it so it's easier to distinguish from dashboards.Dashboard
@@ -116,8 +133,7 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 	// get's client to operate on resource (dashboard)
 	resourceClient, err := s.clientSet.GetResource(gk, namespace, dashboardCRD.GVK().Version)
 	if err != nil {
-		fmt.Println("POTATO: resource client missing", err)
-		return nil, err
+		return nil, fmt.Errorf("resource client missing: %w", err)
 	}
 
 	/////////////////
@@ -140,17 +156,16 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 		if !ok {
 			return nil, err
 		}
-		fmt.Println("POTATO: Have UID")
 
 		if rv != "" {
-			fmt.Println("POTATO: exists in k8s")
+			// exists in k8s
 			updateDashboard = true
 			resourceVersion = rv
 		}
 	}
 
 	if dto.Dashboard.Data == nil {
-		return nil, fmt.Errorf("POTATO: DASHBOARD DATA NIL")
+		return nil, fmt.Errorf("dashboard data is nil")
 	}
 
 	// HACK, remove empty ID!!
@@ -160,7 +175,6 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 	// strip nulls...
 	stripNulls(dto.Dashboard.Data)
 
-	//dashbytes, err := json.Marshal(dto.Dashboard)
 	dashbytes, err := dto.Dashboard.Data.MarshalJSON()
 	if err != nil {
 		return nil, err
@@ -168,8 +182,7 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 
 	d, _, err := s.Kinds.Dashboard().JSONValueMux(dashbytes)
 	if err != nil {
-		// return nil, err
-		fmt.Printf("ERRRO: %s", err)
+		return nil, fmt.Errorf("dashboard JSONValueMux failed: %w", err)
 	}
 
 	if d.Uid == nil {
@@ -188,7 +201,6 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace:   namespace,
 			Name:        GrafanaUIDToK8sName(uid),
-			Labels:      labelsFromDashboardDTO(dto),
 			Annotations: annotationsFromDashboardDTO(dto),
 		},
 		Spec: *d,
@@ -206,24 +218,19 @@ func (s *k8sDashboardService) SaveDashboard(ctx context.Context, dto *dashboards
 	uObj := &unstructured.Unstructured{
 		Object: o,
 	}
-	var uOut *unstructured.Unstructured
 
 	if updateDashboard {
-		fmt.Println("POTATO: CONTINUING, action: update")
-		//var u *unstructured.Unstructured
-		//u, err = resourceClient.Update(ctx, uObj, metav1.UpdateOptions{})
-		//fmt.Printf("%#v", u)
-		uOut, err = resourceClient.Update(ctx, uObj, metav1.UpdateOptions{})
+		s.log.Debug("k8s action: update")
+		_, err = resourceClient.Update(ctx, uObj, metav1.UpdateOptions{})
 	} else {
-		fmt.Println("POTATO: CONTINUING, action: create")
-		uOut, err = resourceClient.Create(ctx, uObj, metav1.CreateOptions{})
+		s.log.Debug("k8s action: create")
+		_, err = resourceClient.Create(ctx, uObj, metav1.CreateOptions{})
 	}
+
+	// create or update error
 	if err != nil {
 		return nil, err
 	}
-
-	jjjj, err := json.MarshalIndent(uOut, "", "  ")
-	fmt.Printf("POTATO: got: %s\n", jjjj)
 
 	if err != nil {
 		return nil, err
@@ -281,15 +288,9 @@ func annotationsFromDashboardDTO(dto *dashboards.SaveDashboardDTO) map[string]st
 		"folderID":  strconv.FormatInt(dto.Dashboard.FolderID, 10),
 		"isFolder":  strconv.FormatBool(dto.Dashboard.IsFolder),
 		"hasACL":    strconv.FormatBool(dto.Dashboard.HasACL),
+		"slug":      dto.Dashboard.Slug,
+		"title":     dto.Dashboard.Title,
 	}
 
 	return annotations
-}
-
-func labelsFromDashboardDTO(dto *dashboards.SaveDashboardDTO) map[string]string {
-	labels := map[string]string{
-		"slug":  dto.Dashboard.Slug,
-		"title": dto.Dashboard.Title,
-	}
-	return labels
 }

@@ -15,6 +15,12 @@ type FakeDashboardService struct {
 	mock.Mock
 }
 
+var _ DashboardService = (*FakeDashboardService)(nil)
+
+func (dr *FakeDashboardService) Run(ctx context.Context) error {
+	return nil // noop
+}
+
 // BuildSaveDashboardCommand provides a mock function with given fields: ctx, dto, shouldValidateAlerts, validateProvisionedDashboard
 func (_m *FakeDashboardService) BuildSaveDashboardCommand(ctx context.Context, dto *SaveDashboardDTO, shouldValidateAlerts bool, validateProvisionedDashboard bool) (*SaveDashboardCommand, error) {
 	ret := _m.Called(ctx, dto, shouldValidateAlerts, validateProvisionedDashboard)
