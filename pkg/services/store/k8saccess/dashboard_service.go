@@ -26,7 +26,7 @@ func NewDashboardService(orig dashboards.DashboardService, store entity.EntitySt
 }
 
 func (dr *k8sDashboardService) Run(ctx context.Context) error {
-	fmt.Printf("dashbaord control loop")
+	fmt.Printf("TODO: dashboard operator loop")
 	return nil // noop
 }
 
