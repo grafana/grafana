@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"regexp"
 	"time"
+	"unicode"
 
 	"github.com/google/uuid"
 )
@@ -25,7 +26,8 @@ func IsShortUIDTooLong(uid string) bool {
 	return len(uid) > 40
 }
 
-// GenerateShortUID generates a short unique identifier.
+// GenerateShortUID will generate a UUID that can also be a k8s name
+// it is gaurenteed to have a character as the first letter
 // This will return a valid k8s name
 func GenerateShortUID() string {
 	uid, err := uuid.NewRandom()
@@ -33,9 +35,8 @@ func GenerateShortUID() string {
 		panic("invalid uuid")
 	}
 	uuid := uid.String()
-	return string(alphaRunes[uidrand.Intn(len(alphaRunes))]) + // alpha
-		uuid[0:8] + // time_low
-		uuid[9:13] + // time_mid
-		uuid[19:22] + // Clock sequence + variant
-		uuid[28:] // Node
+	if unicode.IsDigit(rune(uuid[0])) {
+		return string(alphaRunes[uidrand.Intn(len(alphaRunes))]) + uuid[1:]
+	}
+	return uuid
 }
