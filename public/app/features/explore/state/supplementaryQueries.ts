@@ -3,6 +3,7 @@ import { from, mergeMap, Observable, of } from 'rxjs';
 import { scan } from 'rxjs/operators';
 
 import {
+  DataFrame,
   DataQuery,
   DataQueryRequest,
   DataQueryResponse,
@@ -13,13 +14,8 @@ import {
   SupplementaryQueryType,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
-
-import {
-  BatchedQueries,
-  MIXED_DATASOURCE_NAME,
-  MixedDatasource,
-} from '../../../plugins/datasource/mixed/MixedDataSource';
-import { ExplorePanelData } from '../../../types';
+import { BatchedQueries, MIXED_DATASOURCE_NAME, MixedDatasource } from 'app/plugins/datasource/mixed/MixedDataSource';
+import { ExplorePanelData } from 'app/types';
 
 const createFallbackLogVolumeProvider = (
   explorePanelData: Observable<ExplorePanelData>
@@ -45,7 +41,21 @@ const createFallbackLogVolumeProvider = (
         });
       }
     });
-  });
+  }).pipe(enrichWithLogsVolumeSource('', 'Shown logs'));
+};
+
+const getSupplementaryQueryFallback = (
+  type: SupplementaryQueryType,
+  explorePanelData: Observable<ExplorePanelData>
+) => {
+  if (type === SupplementaryQueryType.LogsVolume) {
+    return createFallbackLogVolumeProvider(explorePanelData);
+  } else {
+    return of({
+      data: [],
+      state: LoadingState.NotStarted,
+    });
+  }
 };
 
 const enrichWithLogsVolumeSource = (uid: string, title: string) => {
@@ -69,6 +79,17 @@ const enrichWithLogsVolumeSource = (uid: string, title: string) => {
   });
 };
 
+const supplementaryQueryFallbackCleanUp = (type: SupplementaryQueryType, acc: DataFrame[], next: DataQueryResponse) => {
+  if (
+    type === SupplementaryQueryType.LogsVolume &&
+    next.data[0]?.meta?.custom?.logsVolumeType === LogsVolumeType.Limited
+  ) {
+    return acc.filter((dataframe) => dataframe.meta?.custom?.logsVolumeType !== LogsVolumeType.Limited);
+  } else {
+    return acc;
+  }
+};
+
 export const getSupplementaryQueryProvider = (
   datasourceInstance: DataSourceApi,
   type: SupplementaryQueryType,
@@ -77,11 +98,7 @@ export const getSupplementaryQueryProvider = (
 ): Observable<DataQueryResponse> | undefined => {
   if (hasSupplementaryQuerySupport(datasourceInstance, type)) {
     return datasourceInstance.getDataProvider(type, request);
-  } else if (
-    datasourceInstance.meta.mixed === true &&
-    datasourceInstance instanceof MixedDatasource &&
-    type === SupplementaryQueryType.LogsVolume
-  ) {
+  } else if (datasourceInstance.meta.mixed === true && datasourceInstance instanceof MixedDatasource) {
     // Remove any invalid queries
     const queries = request.targets.filter((t) => {
       return t.datasource?.uid !== MIXED_DATASOURCE_NAME;
@@ -105,17 +122,25 @@ export const getSupplementaryQueryProvider = (
             const dsRequest = cloneDeep(request);
             dsRequest.requestId = `mixed-${type}-${i}-${dsRequest.requestId || ''}`;
             dsRequest.targets = query.targets;
+
             if (hasSupplementaryQuerySupport(ds, type)) {
-              const provider = ds.getDataProvider(type, dsRequest);
-              if (provider) {
-                return provider.pipe(enrichWithLogsVolumeSource(ds.uid, ds.name + ' (full range)'));
+              const dsProvider = ds.getDataProvider(type, dsRequest);
+              if (dsProvider) {
+                // 1) It provides data for current request -> use the provider
+                return dsProvider.pipe(enrichWithLogsVolumeSource(ds.uid, ds.name));
+              } else {
+                // 2) It doesn't provide data for current request -> return nothing
+                return of({
+                  data: [],
+                  state: LoadingState.NotStarted,
+                });
               }
-              return of({
-                data: [],
-                state: LoadingState.Done,
-              });
+            } else {
+              // 2) Data source doesn't support the supplementary query -> use fallback
+              // the fallback cannot determine data availability based on request, it
+              // works on the results once they are available
+              return getSupplementaryQueryFallback(type, explorePanelData);
             }
-            return createFallbackLogVolumeProvider(explorePanelData).pipe(enrichWithLogsVolumeSource('', 'Shown logs'));
           })
         );
       }),
@@ -125,11 +150,7 @@ export const getSupplementaryQueryProvider = (
             return acc;
           }
 
-          if (next.data[0]?.meta?.custom?.logsVolumeType === LogsVolumeType.Limited) {
-            acc.data = acc.data.filter(
-              (dataframe) => dataframe.meta?.custom?.logsVolumeType !== LogsVolumeType.Limited
-            );
-          }
+          acc.data = supplementaryQueryFallbackCleanUp(type, acc.data, next);
 
           return {
             ...acc,
@@ -137,7 +158,7 @@ export const getSupplementaryQueryProvider = (
             state: LoadingState.Done,
           };
         },
-        { data: [], state: LoadingState.Loading }
+        { data: [], state: LoadingState.NotStarted }
       )
     );
   } else if (type === SupplementaryQueryType.LogsVolume) {
