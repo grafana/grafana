@@ -18,10 +18,6 @@ export const defaultParcaQueryType: ParcaQueryType = 'both';
 
 export interface Parca extends common.DataQuery {
   /**
-   * Allows to group the results.
-   */
-  groupBy: Array<string>;
-  /**
    * Specifies the query label selectors.
    */
   labelSelector: string;
@@ -32,6 +28,5 @@ export interface Parca extends common.DataQuery {
 }
 
 export const defaultParca: Partial<Parca> = {
-  groupBy: [],
   labelSelector: '{}',
 };

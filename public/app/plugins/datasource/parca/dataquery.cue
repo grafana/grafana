@@ -36,9 +36,7 @@ composableKinds: DataQuery: {
 						// Specifies the query label selectors.
 						labelSelector: string | *"{}"
 						// Specifies the type of profile to query.
-						profileTypeId: string
-						// Allows to group the results.
-						groupBy: [...string]
+						profileTypeId:   string
 						#ParcaQueryType: "metrics" | "profile" | *"both" @cuetsy(kind="type")
 					},
 				]

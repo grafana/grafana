@@ -26,9 +26,6 @@ type ParcaDataQuery struct {
 	// TODO this shouldn't be unknown but DataSourceRef | null
 	Datasource *interface{} `json:"datasource,omitempty"`
 
-	// Allows to group the results.
-	GroupBy []string `json:"groupBy"`
-
 	// true if query is disabled (ie should not be returned to the dashboard)
 	Hide *bool `json:"hide,omitempty"`
 
