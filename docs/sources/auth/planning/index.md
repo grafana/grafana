@@ -57,7 +57,11 @@ A user can be a Member or an Administrator for a given team. Members of a team i
 
 Teams is a perfect solution to work with a small subset of users. Teams can share resources among other teams.
 
-### 🚧 Choosing between teams and organizations
+### Users in Grafana Organizations
+
+[Grafana Organizations] was born as a concept to isolate users from dashboards and datasources by having multiple organizations under a single instance of Grafana. This means that users under different organizations won't share any resources such as dashboards, folders, and datasources.
+
+Grafana Organizations provide a mesure of isolation within Grafana by default. The intention is to present different user experiences, which give the sense of different instances of Grafana within a single instance. However, **we recommend aginast Grafana Organizations** because they lack the scalability of [Folders].
 
 ## 🚧 Do I have external systems?
 
