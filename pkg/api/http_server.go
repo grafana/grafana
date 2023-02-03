@@ -11,8 +11,8 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-	"sync"
 
+	"github.com/grafana/dskit/services"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
@@ -108,6 +108,7 @@ import (
 )
 
 type HTTPServer struct {
+	*services.BasicService
 	log              log.Logger
 	web              *web.Mux
 	context          context.Context
@@ -379,6 +380,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	// Register access control scope resolver for annotations
 	hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo))
 
+	hs.BasicService = services.NewBasicService(hs.start, nil, hs.stop)
 	if err := hs.declareFixedRoles(); err != nil {
 		return nil, err
 	}
@@ -393,7 +395,8 @@ func (hs *HTTPServer) AddNamedMiddleware(middleware routing.RegisterNamedMiddlew
 	hs.namedMiddlewares = append(hs.namedMiddlewares, middleware)
 }
 
-func (hs *HTTPServer) Run(ctx context.Context) error {
+func (hs *HTTPServer) start(ctx context.Context) error {
+	fmt.Println("Starting HTTP Server...")
 	hs.context = ctx
 
 	hs.applyRoutes()
@@ -425,19 +428,6 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	hs.log.Info("HTTP Server Listen", "address", listener.Addr().String(), "protocol",
 		hs.Cfg.Protocol, "subUrl", hs.Cfg.AppSubURL, "socket", hs.Cfg.SocketPath)
 
-	var wg sync.WaitGroup
-	wg.Add(1)
-
-	// handle http shutdown on server context done
-	go func() {
-		defer wg.Done()
-
-		<-ctx.Done()
-		if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
-			hs.log.Error("Failed to shutdown server", "error", err)
-		}
-	}()
-
 	switch hs.Cfg.Protocol {
 	case setting.HTTPScheme, setting.SocketScheme:
 		if err := hs.httpSrv.Serve(listener); err != nil {
@@ -458,10 +448,20 @@ func (hs *HTTPServer) Run(ctx context.Context) error {
 	default:
 		panic(fmt.Sprintf("Unhandled protocol %q", hs.Cfg.Protocol))
 	}
-
-	wg.Wait()
-
 	return nil
+}
+
+func (hs *HTTPServer) stop(failure error) error {
+	if failure != nil {
+		hs.log.Error("HTTP server encountered failure", "error", failure)
+	}
+
+	if err := hs.httpSrv.Shutdown(context.Background()); err != nil {
+		hs.log.Error("Failed to shutdown server", "error", err)
+		return err
+	}
+
+	return failure
 }
 
 func (hs *HTTPServer) getListener() (net.Listener, error) {
