@@ -26,16 +26,19 @@ func (s *Service) getUsageStats(ctx context.Context) (map[string]interface{}, er
 	}
 
 	// Add stats about anonymous auth
-	if strings.EqualFold(s.cfg.AnonymousOrgRole, "Viewer") {
-		m["stats.auth.anonymous.customized_role.count"] = 1
+	m["stats.anonymous.customized_role.count"] = 0
+	if !strings.EqualFold(s.cfg.AnonymousOrgRole, "Viewer") {
+		m["stats.anonymous.customized_role.count"] = 1
 	}
 
 	// Add stats about privilege elevators.
 	// FIXME: Move this to accesscontrol OSS
+	m["stats.authz.viewers_can_edit.count"] = 0
 	if setting.ViewersCanEdit {
 		m["stats.authz.viewers_can_edit.count"] = 1
 	}
 
+	m["stats.authz.editors_can_admin.count"] = 0
 	if s.cfg.EditorsCanAdmin {
 		m["stats.authz.editors_can_admin.count"] = 1
 	}
