@@ -1,3 +1,4 @@
+import classnames from 'classnames';
 import React, { PureComponent } from 'react';
 
 import { PanelMenuItem } from '@grafana/data';
@@ -7,13 +8,15 @@ import { PanelHeaderMenuItem } from './PanelHeaderMenuItem';
 export interface Props {
   items: PanelMenuItem[];
   style?: React.CSSProperties;
+  itemsClassName?: string;
+  className?: string;
 }
 
 export class PanelHeaderMenu extends PureComponent<Props> {
   renderItems = (menu: PanelMenuItem[], isSubMenu = false) => {
     return (
       <ul
-        className="dropdown-menu dropdown-menu--menu panel-menu"
+        className={classnames('dropdown-menu', 'dropdown-menu--menu', 'panel-menu', this.props.itemsClassName)}
         style={this.props.style}
         role={isSubMenu ? '' : 'menu'}
       >
@@ -36,6 +39,10 @@ export class PanelHeaderMenu extends PureComponent<Props> {
   };
 
   render() {
-    return <div className="panel-menu-container dropdown open">{this.renderItems(this.props.items)}</div>;
+    return (
+      <div className={classnames('panel-menu-container', 'dropdown', 'open', this.props.className)}>
+        {this.renderItems(this.props.items)}
+      </div>
+    );
   }
 }

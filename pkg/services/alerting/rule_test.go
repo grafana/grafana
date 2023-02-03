@@ -124,10 +124,10 @@ func TestAlertRuleModel(t *testing.T) {
 		require.Nil(t, jsonErr)
 
 		alert := &models.Alert{
-			Id:          1,
-			OrgId:       1,
-			DashboardId: 1,
-			PanelId:     1,
+			ID:          1,
+			OrgID:       1,
+			DashboardID: 1,
+			PanelID:     1,
 
 			Settings: alertJSON,
 		}
@@ -163,10 +163,10 @@ func TestAlertRuleModel(t *testing.T) {
 		require.Nil(t, jsonErr)
 
 		alert := &models.Alert{
-			Id:          1,
-			OrgId:       1,
-			DashboardId: 1,
-			PanelId:     1,
+			ID:          1,
+			OrgID:       1,
+			DashboardID: 1,
+			PanelID:     1,
 
 			Settings: alertJSON,
 		}
@@ -193,10 +193,10 @@ func TestAlertRuleModel(t *testing.T) {
 		require.Nil(t, jsonErr)
 
 		alert := &models.Alert{
-			Id:          1,
-			OrgId:       1,
-			DashboardId: 1,
-			PanelId:     1,
+			ID:          1,
+			OrgID:       1,
+			DashboardID: 1,
+			PanelID:     1,
 			Frequency:   0,
 
 			Settings: alertJSON,
@@ -231,10 +231,10 @@ func TestAlertRuleModel(t *testing.T) {
 		require.Nil(t, jsonErr)
 
 		alert := &models.Alert{
-			Id:          1,
-			OrgId:       1,
-			DashboardId: 1,
-			PanelId:     1,
+			ID:          1,
+			OrgID:       1,
+			DashboardID: 1,
+			PanelID:     1,
 			Frequency:   0,
 
 			Settings: alertJSON,

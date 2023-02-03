@@ -483,7 +483,7 @@ func (c *fakeDataSourceCache) GetDatasource(ctx context.Context, datasourceID in
 
 func (c *fakeDataSourceCache) GetDatasourceByUID(ctx context.Context, datasourceUID string, user *user.SignedInUser, skipCache bool) (*datasources.DataSource, error) {
 	return &datasources.DataSource{
-		Uid: datasourceUID,
+		UID: datasourceUID,
 	}, nil
 }
 

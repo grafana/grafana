@@ -69,10 +69,11 @@ func (j docsJenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
 
 	kindProps := kind.Props().Common()
 	data := templateData{
-		KindName:     kindProps.Name,
-		KindVersion:  kind.Lineage().Latest().Version().String(),
-		KindMaturity: string(kindProps.Maturity),
-		Markdown:     "{{ .Markdown 1 }}",
+		KindName:        kindProps.Name,
+		KindVersion:     kind.Lineage().Latest().Version().String(),
+		KindMaturity:    string(kindProps.Maturity),
+		KindDescription: kindProps.Description,
+		Markdown:        "{{ .Markdown 1 }}",
 	}
 
 	tmpl, err := makeTemplate(data, "docs.tmpl")
@@ -98,10 +99,11 @@ func makeTemplate(data templateData, tmpl string) ([]byte, error) {
 }
 
 type templateData struct {
-	KindName     string
-	KindVersion  string
-	KindMaturity string
-	Markdown     string
+	KindName        string
+	KindVersion     string
+	KindMaturity    string
+	KindDescription string
+	Markdown        string
 }
 
 // -------------------- JSON to Markdown conversion --------------------
@@ -119,8 +121,11 @@ type schema struct {
 	Items                *schema            `json:"items,omitempty"`
 	Definitions          map[string]*schema `json:"definitions,omitempty"`
 	Enum                 []Any              `json:"enum"`
-	AdditionalProperties *schema            `json:"additionalProperties"`
 	Default              any                `json:"default"`
+	AllOf                []*schema          `json:"allOf"`
+	AdditionalProperties *schema            `json:"additionalProperties"`
+	extends              []string           `json:"-"`
+	inheritedFrom        string             `json:"-"`
 }
 
 func renderMapType(props *schema) string {
@@ -215,6 +220,20 @@ func resolveSchema(schem *schema, root *simplejson.Json) (*schema, error) {
 		*schem.Items = *foo
 	}
 
+	if len(schem.AllOf) > 0 {
+		for idx, child := range schem.AllOf {
+			tmp, err := resolveSubSchema(schem, child, root)
+			if err != nil {
+				return nil, err
+			}
+			schem.AllOf[idx] = tmp
+
+			if len(tmp.Title) > 0 {
+				schem.extends = append(schem.extends, tmp.Title)
+			}
+		}
+	}
+
 	if schem.AdditionalProperties != nil {
 		if schem.AdditionalProperties.Ref != "" {
 			tmp, err := resolveReference(schem.AdditionalProperties.Ref, root)
@@ -231,6 +250,37 @@ func resolveSchema(schem *schema, root *simplejson.Json) (*schema, error) {
 	}
 
 	return schem, nil
+}
+
+func resolveSubSchema(parent, child *schema, root *simplejson.Json) (*schema, error) {
+	if child.Ref != "" {
+		tmp, err := resolveReference(child.Ref, root)
+		if err != nil {
+			return nil, err
+		}
+		*child = *tmp
+	}
+
+	if len(child.Required) > 0 {
+		parent.Required = append(parent.Required, child.Required...)
+	}
+
+	child, err := resolveSchema(child, root)
+	if err != nil {
+		return nil, err
+	}
+
+	if parent.Properties == nil {
+		parent.Properties = make(map[string]*schema)
+	}
+
+	for k, v := range child.Properties {
+		prop := *v
+		prop.inheritedFrom = child.Title
+		parent.Properties[k] = &prop
+	}
+
+	return child, err
 }
 
 // resolveReference loads a schema from a $ref.
@@ -281,48 +331,42 @@ func (s schema) Markdown(level int) string {
 		level = 1
 	}
 
-	var buf bytes.Buffer
+	buf := new(bytes.Buffer)
 
 	if s.Title != "" && s.AdditionalProperties == nil {
-		fmt.Fprintln(&buf, makeHeading(s.Title, level))
-		fmt.Fprintln(&buf)
+		fmt.Fprintf(buf, "### %s\n", strings.Title(s.Title))
+		fmt.Fprintln(buf)
 	}
 
 	if s.Description != "" {
-		fmt.Fprintln(&buf, s.Description)
-		if s.Default != nil {
-			fmt.Fprintf(&buf, "The default value is: `%v`.", s.Default)
-		}
-		fmt.Fprintln(&buf)
+		fmt.Fprintln(buf, s.Description)
+		fmt.Fprintln(buf)
 	}
 
-	if len(s.Properties) > 0 {
-		fmt.Fprintln(&buf, makeHeading("Properties", level+1))
-		fmt.Fprintln(&buf)
+	if len(s.extends) > 0 {
+		fmt.Fprintln(buf, makeExtends(s.extends))
+		fmt.Fprintln(buf)
 	}
 
-	printProperties(&buf, &s)
+	printProperties(buf, &s)
 
 	// Add padding.
-	fmt.Fprintln(&buf)
+	fmt.Fprintln(buf)
 
 	for _, obj := range findDefinitions(&s) {
-		fmt.Fprint(&buf, obj.Markdown(level+1))
+		fmt.Fprint(buf, obj.Markdown(level+1))
 	}
 
 	return buf.String()
 }
 
-func makeHeading(heading string, level int) string {
-	if level < 0 {
-		return heading
+func makeExtends(from []string) string {
+	fromLinks := make([]string, 0, len(from))
+	for _, f := range from {
+		fromLinks = append(fromLinks, fmt.Sprintf("[%s](#%s)", f, strings.ToLower(f)))
 	}
 
-	if level <= 6 {
-		return strings.Repeat("#", level) + " " + heading
-	}
-
-	return fmt.Sprintf("**%s**", heading)
+	return fmt.Sprintf("It extends %s.", strings.Join(fromLinks, " and "))
 }
 
 func findDefinitions(s *schema) []*schema {
@@ -362,6 +406,21 @@ func findDefinitions(s *schema) []*schema {
 		definition(k, p)
 	}
 
+	// This code could probably be unified with the one above
+	for _, child := range s.AllOf {
+		if child.Type.HasType(PropertyTypeObject) {
+			objs = append(objs, child)
+		}
+
+		if child.Type.HasType(PropertyTypeArray) {
+			if child.Items != nil {
+				if child.Items.Type.HasType(PropertyTypeObject) {
+					objs = append(objs, child.Items)
+				}
+			}
+		}
+	}
+
 	// Sort the object schemas.
 	sort.Slice(objs, func(i, j int) bool {
 		return objs[i].Title < objs[j].Title
@@ -382,8 +441,8 @@ func printProperties(w io.Writer, s *schema) {
 	// Buffer all property rows so that we can sort them before printing them.
 	rows := make([][]string, 0, len(s.Properties))
 
-	for key, val := range s.Properties {
-		typeStr := propTypeStr(key, val)
+	for key, p := range s.Properties {
+		typeStr := propTypeStr(key, p)
 
 		// Emphasize required properties.
 		var required string
@@ -393,24 +452,32 @@ func printProperties(w io.Writer, s *schema) {
 			required = "No"
 		}
 
-		desc := val.Description
+		var desc string
 
-		if len(val.Enum) > 0 {
-			vals := make([]string, 0, len(val.Enum))
-			for _, e := range val.Enum {
-				vals = append(vals, e.String())
-			}
-			desc += " Possible values are: `" + strings.Join(vals, "`, `") + "`."
+		if p.inheritedFrom != "" {
+			desc = fmt.Sprintf("*(Inherited from [%s](#%s))*", p.inheritedFrom, strings.ToLower(p.inheritedFrom))
 		}
 
-		if val.Default != nil {
-			desc += fmt.Sprintf(" Default: `%v`.", val.Default)
+		if p.Description != "" {
+			desc += "\n" + p.Description
+		}
+
+		if len(p.Enum) > 0 {
+			vals := make([]string, 0, len(p.Enum))
+			for _, e := range p.Enum {
+				vals = append(vals, e.String())
+			}
+			desc += "\nPossible values are: `" + strings.Join(vals, "`, `") + "`."
+		}
+
+		if p.Default != nil {
+			desc += fmt.Sprintf(" Default: `%v`.", p.Default)
 		}
 
 		rows = append(rows, []string{fmt.Sprintf("`%s`", key), typeStr, required, formatForTable(desc)})
 	}
 
-	// Sort by the required column, then by the key column.
+	// Sort by the required column, then by the name column.
 	sort.Slice(rows, func(i, j int) bool {
 		if rows[i][2] < rows[j][2] {
 			return true

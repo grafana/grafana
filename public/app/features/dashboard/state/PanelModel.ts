@@ -342,6 +342,9 @@ export class PanelModel implements DataConfigSource, IPanelModel {
     if (manuallyUpdated) {
       this.configRev++;
     }
+
+    // Maybe a bit heavy. Could add a "GridPosChanged" event instead?
+    this.render();
   }
 
   runAllPanelQueries({

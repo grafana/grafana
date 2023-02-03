@@ -6,12 +6,12 @@ title: ServiceAccount kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
-# ServiceAccount kind
+## ServiceAccount
 
-## Maturity: merged
-## Version: 0.0
+#### Maturity: merged
+#### Version: 0.0
 
-## Properties
+system account
 
 | Property        | Type               | Required | Description                                                                                                                             |
 |-----------------|--------------------|----------|-----------------------------------------------------------------------------------------------------------------------------------------|
@@ -21,7 +21,7 @@ title: ServiceAccount kind
 | `login`         | string             | **Yes**  | Login of the service account.                                                                                                           |
 | `name`          | string             | **Yes**  | Name of the service account.                                                                                                            |
 | `orgId`         | integer            | **Yes**  | OrgId is the ID of an organisation the service account belongs to.                                                                      |
-| `role`          | string             | **Yes**  | OrgRole is a Grafana Organization Role which can be 'Viewer', 'Editor', 'Admin'. Possible values are: `Admin`, `Editor`, `Viewer`.      |
+| `role`          | string             | **Yes**  | OrgRole is a Grafana Organization Role which can be 'Viewer', 'Editor', 'Admin'.<br/>Possible values are: `Admin`, `Editor`, `Viewer`.  |
 | `tokens`        | integer            | **Yes**  | Tokens is the number of active tokens for the service account.<br/>Tokens are used to authenticate the service account against Grafana. |
 | `accessControl` | map[string]boolean | No       | AccessControl metadata associated with a given resource.                                                                                |
 | `created`       | integer            | No       | Created indicates when the service account was created.                                                                                 |

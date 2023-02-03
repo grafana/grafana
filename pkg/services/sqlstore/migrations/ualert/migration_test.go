@@ -656,9 +656,9 @@ func createAlert(t *testing.T, orgId int64, dashboardId int64, panelsId int64, n
 	}
 
 	return &models.Alert{
-		OrgId:        orgId,
-		DashboardId:  dashboardId,
-		PanelId:      panelsId,
+		OrgID:        orgId,
+		DashboardID:  dashboardId,
+		PanelID:      panelsId,
 		Name:         name,
 		Message:      "message",
 		Frequency:    int64(60),
@@ -688,9 +688,9 @@ func createDashboard(t *testing.T, id int64, orgId int64, uid string) *dashboard
 func createDatasource(t *testing.T, id int64, orgId int64, uid string) *datasources.DataSource {
 	t.Helper()
 	return &datasources.DataSource{
-		Id:      id,
-		OrgId:   orgId,
-		Uid:     uid,
+		ID:      id,
+		OrgID:   orgId,
+		UID:     uid,
 		Created: now,
 		Updated: now,
 		Name:    uid, // Not tested, needed to satisfy contraint.

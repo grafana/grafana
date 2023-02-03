@@ -40,7 +40,7 @@ func (arr *defaultRuleReader) fetch(ctx context.Context) []*Rule {
 	res := make([]*Rule, 0)
 	for _, ruleDef := range alerts {
 		if model, err := NewRuleFromDBAlert(ctx, arr.sqlStore, ruleDef, false); err != nil {
-			arr.log.Error("Could not build alert model for rule", "ruleId", ruleDef.Id, "error", err)
+			arr.log.Error("Could not build alert model for rule", "ruleId", ruleDef.ID, "error", err)
 		} else {
 			res = append(res, model)
 		}
