@@ -14,6 +14,7 @@ import {
 import { GraphFieldConfig, LineInterpolation } from '@grafana/schema';
 import { applyNullInsertThreshold } from '@grafana/ui/src/components/GraphNG/nullInsertThreshold';
 import { nullToValue } from '@grafana/ui/src/components/GraphNG/nullToValue';
+import { partitionByValuesTransformer } from 'app/features/transformers/partitionByValues/partitionByValues';
 
 /**
  * Returns null if there are no graphable fields
@@ -25,6 +26,10 @@ export function prepareGraphableFields(
 ): DataFrame[] | null {
   if (!series?.length) {
     return null;
+  }
+
+  if (series.every((df) => df.meta?.type === 'timeseries-long')) {
+    series = prepareTimeSeriesLong(series);
   }
 
   let copy: Field;
@@ -172,4 +177,25 @@ export function regenerateLinksSupplier(
   });
 
   return alignedDataFrame;
+}
+
+export function prepareTimeSeriesLong(series: DataFrame[]): DataFrame[] {
+  const stringFields = series[0].fields.filter((field) => field.type === 'string').map((field) => field.name);
+
+  const options = {
+    fields: stringFields,
+    naming: {
+      asLabels: true,
+      append: false,
+      withNames: false,
+      separator1: '=',
+      separator2: ' ',
+    },
+  };
+
+  const ctx = {
+    interpolate: (value: string) => value,
+  };
+
+  return partitionByValuesTransformer.transformer(options, ctx)(series);
 }
