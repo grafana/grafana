@@ -302,7 +302,7 @@ func (hs *HTTPServer) GetAlertNotifications(c *contextmodel.ReqContext) response
 }
 
 func (hs *HTTPServer) getAlertNotificationsInternal(c *contextmodel.ReqContext) ([]*alertmodels.AlertNotification, error) {
-	query := &alertmodels.GetAllAlertNotificationsQuery{OrgId: c.OrgID}
+	query := &alertmodels.GetAllAlertNotificationsQuery{OrgID: c.OrgID}
 	return hs.AlertNotificationService.GetAllAlertNotifications(c.Req.Context(), query)
 }
 
@@ -324,11 +324,11 @@ func (hs *HTTPServer) GetAlertNotificationByID(c *contextmodel.ReqContext) respo
 		return response.Error(http.StatusBadRequest, "notificationId is invalid", err)
 	}
 	query := &alertmodels.GetAlertNotificationsQuery{
-		OrgId: c.OrgID,
-		Id:    notificationId,
+		OrgID: c.OrgID,
+		ID:    notificationId,
 	}
 
-	if query.Id == 0 {
+	if query.ID == 0 {
 		return response.Error(404, "Alert notification not found", nil)
 	}
 
@@ -358,11 +358,11 @@ func (hs *HTTPServer) GetAlertNotificationByID(c *contextmodel.ReqContext) respo
 // 500: internalServerError
 func (hs *HTTPServer) GetAlertNotificationByUID(c *contextmodel.ReqContext) response.Response {
 	query := &alertmodels.GetAlertNotificationsWithUidQuery{
-		OrgId: c.OrgID,
-		Uid:   web.Params(c.Req)[":uid"],
+		OrgID: c.OrgID,
+		UID:   web.Params(c.Req)[":uid"],
 	}
 
-	if query.Uid == "" {
+	if query.UID == "" {
 		return response.Error(404, "Alert notification not found", nil)
 	}
 
@@ -395,7 +395,7 @@ func (hs *HTTPServer) CreateAlertNotification(c *contextmodel.ReqContext) respon
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgId = c.OrgID
+	cmd.OrgID = c.OrgID
 
 	res, err := hs.AlertNotificationService.CreateAlertNotificationCommand(c.Req.Context(), &cmd)
 	if err != nil {
@@ -429,7 +429,7 @@ func (hs *HTTPServer) UpdateAlertNotification(c *contextmodel.ReqContext) respon
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgId = c.OrgID
+	cmd.OrgID = c.OrgID
 
 	err := hs.fillWithSecureSettingsData(c.Req.Context(), &cmd)
 	if err != nil {
@@ -448,8 +448,8 @@ func (hs *HTTPServer) UpdateAlertNotification(c *contextmodel.ReqContext) respon
 	}
 
 	query := alertmodels.GetAlertNotificationsQuery{
-		OrgId: c.OrgID,
-		Id:    cmd.Id,
+		OrgID: c.OrgID,
+		ID:    cmd.ID,
 	}
 
 	res, err := hs.AlertNotificationService.GetAlertNotifications(c.Req.Context(), &query)
@@ -477,8 +477,8 @@ func (hs *HTTPServer) UpdateAlertNotificationByUID(c *contextmodel.ReqContext) r
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
 	}
-	cmd.OrgId = c.OrgID
-	cmd.Uid = web.Params(c.Req)[":uid"]
+	cmd.OrgID = c.OrgID
+	cmd.UID = web.Params(c.Req)[":uid"]
 
 	err := hs.fillWithSecureSettingsDataByUID(c.Req.Context(), &cmd)
 	if err != nil {
@@ -493,8 +493,8 @@ func (hs *HTTPServer) UpdateAlertNotificationByUID(c *contextmodel.ReqContext) r
 	}
 
 	query := alertmodels.GetAlertNotificationsWithUidQuery{
-		OrgId: cmd.OrgId,
-		Uid:   cmd.Uid,
+		OrgID: cmd.OrgID,
+		UID:   cmd.UID,
 	}
 
 	res, err := hs.AlertNotificationService.GetAlertNotificationsWithUid(c.Req.Context(), &query)
@@ -511,8 +511,8 @@ func (hs *HTTPServer) fillWithSecureSettingsData(ctx context.Context, cmd *alert
 	}
 
 	query := &alertmodels.GetAlertNotificationsQuery{
-		OrgId: cmd.OrgId,
-		Id:    cmd.Id,
+		OrgID: cmd.OrgID,
+		ID:    cmd.ID,
 	}
 
 	res, err := hs.AlertNotificationService.GetAlertNotifications(ctx, query)
@@ -540,8 +540,8 @@ func (hs *HTTPServer) fillWithSecureSettingsDataByUID(ctx context.Context, cmd *
 	}
 
 	query := &alertmodels.GetAlertNotificationsWithUidQuery{
-		OrgId: cmd.OrgId,
-		Uid:   cmd.Uid,
+		OrgID: cmd.OrgID,
+		UID:   cmd.UID,
 	}
 
 	res, err := hs.AlertNotificationService.GetAlertNotificationsWithUid(ctx, query)
@@ -582,8 +582,8 @@ func (hs *HTTPServer) DeleteAlertNotification(c *contextmodel.ReqContext) respon
 	}
 
 	cmd := alertmodels.DeleteAlertNotificationCommand{
-		OrgId: c.OrgID,
-		Id:    notificationId,
+		OrgID: c.OrgID,
+		ID:    notificationId,
 	}
 
 	if err := hs.AlertNotificationService.DeleteAlertNotification(c.Req.Context(), &cmd); err != nil {
@@ -610,8 +610,8 @@ func (hs *HTTPServer) DeleteAlertNotification(c *contextmodel.ReqContext) respon
 // 500: internalServerError
 func (hs *HTTPServer) DeleteAlertNotificationByUID(c *contextmodel.ReqContext) response.Response {
 	cmd := alertmodels.DeleteAlertNotificationWithUidCommand{
-		OrgId: c.OrgID,
-		Uid:   web.Params(c.Req)[":uid"],
+		OrgID: c.OrgID,
+		UID:   web.Params(c.Req)[":uid"],
 	}
 
 	if err := hs.AlertNotificationService.DeleteAlertNotificationWithUid(c.Req.Context(), &cmd); err != nil {
@@ -623,7 +623,7 @@ func (hs *HTTPServer) DeleteAlertNotificationByUID(c *contextmodel.ReqContext) r
 
 	return response.JSON(http.StatusOK, util.DynMap{
 		"message": "Notification deleted",
-		"id":      cmd.DeletedAlertNotificationId,
+		"id":      cmd.DeletedAlertNotificationID,
 	})
 }
 
