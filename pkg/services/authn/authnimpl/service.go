@@ -70,9 +70,7 @@ func ProvideService(
 	s.RegisterClient(clients.ProvideAPIKey(apikeyService, userService))
 
 	if cfg.LoginCookieName != "" {
-		sessionClient := clients.ProvideSession(sessionService, userService, cfg.LoginCookieName, cfg.LoginMaxLifetime)
-		s.RegisterClient(sessionClient)
-		s.RegisterPostAuthHook(sessionClient.RefreshTokenHook, 20)
+		s.RegisterClient(clients.ProvideSession(sessionService, userService, cfg.LoginCookieName, cfg.LoginMaxLifetime))
 	}
 
 	if s.cfg.AnonymousEnabled {
@@ -216,6 +214,7 @@ func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Req
 	if hc, ok := c.(authn.HookClient); ok {
 		if err := hc.Hook(ctx, identity, r); err != nil {
 			s.log.FromContext(ctx).Warn("post client auth hook failed", "error", err, "client", c.Name(), "id", identity.ID)
+			return nil, err
 		}
 	}
 
