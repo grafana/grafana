@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/kinds/librarypanel"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -29,7 +29,7 @@ func TestCreateLibraryElement(t *testing.T) {
 					FolderID:    1,
 					UID:         sc.initialResult.Result.UID,
 					Name:        "Text - Library Panel",
-					Kind:        int64(models.PanelElement),
+					Kind:        int64(model.PanelElement),
 					Type:        "text",
 					Description: "A description",
 					Model: map[string]interface{}{
@@ -40,7 +40,7 @@ func TestCreateLibraryElement(t *testing.T) {
 						"type":        "text",
 					},
 					Version: 1,
-					Meta: LibraryElementDTOMeta{
+					Meta: model.LibraryElementDTOMeta{
 						FolderName:          "ScenarioFolder",
 						FolderUID:           "ScenarioFolder",
 						ConnectedDashboards: 0,
@@ -78,7 +78,7 @@ func TestCreateLibraryElement(t *testing.T) {
 					FolderID:    1,
 					UID:         command.UID,
 					Name:        "Nonexistent UID",
-					Kind:        int64(models.PanelElement),
+					Kind:        int64(model.PanelElement),
 					Type:        "text",
 					Description: "A description",
 					Model: map[string]interface{}{
@@ -89,7 +89,7 @@ func TestCreateLibraryElement(t *testing.T) {
 						"type":        "text",
 					},
 					Version: 1,
-					Meta: LibraryElementDTOMeta{
+					Meta: model.LibraryElementDTOMeta{
 						FolderName:          "ScenarioFolder",
 						FolderUID:           "ScenarioFolder",
 						ConnectedDashboards: 0,
@@ -153,7 +153,7 @@ func TestCreateLibraryElement(t *testing.T) {
 					FolderID:    1,
 					UID:         result.Result.UID,
 					Name:        "Library Panel Name",
-					Kind:        int64(models.PanelElement),
+					Kind:        int64(model.PanelElement),
 					Type:        "text",
 					Description: "A description",
 					Model: map[string]interface{}{
@@ -164,7 +164,7 @@ func TestCreateLibraryElement(t *testing.T) {
 						"type":        "text",
 					},
 					Version: 1,
-					Meta: LibraryElementDTOMeta{
+					Meta: model.LibraryElementDTOMeta{
 						FolderName:          "ScenarioFolder",
 						FolderUID:           "ScenarioFolder",
 						ConnectedDashboards: 0,

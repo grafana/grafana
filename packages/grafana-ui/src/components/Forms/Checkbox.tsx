@@ -59,7 +59,7 @@ export const getCheckboxStyles = stylesFactory((theme: GrafanaTheme2) => {
 
   return {
     wrapper: css`
-      display: flex;
+      display: inline-flex;
       gap: ${theme.spacing(labelPadding)};
       align-items: baseline;
       position: relative;

@@ -105,7 +105,7 @@ func toAPIError(c *contextmodel.ReqContext, err error) {
 }
 
 func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqContext, ds *datasources.DataSource) {
-	err := p.PluginRequestValidator.Validate(ds.Url, c.Req)
+	err := p.PluginRequestValidator.Validate(ds.URL, c.Req)
 	if err != nil {
 		c.JsonApiErr(http.StatusForbidden, "Access denied", err)
 		return
@@ -123,7 +123,7 @@ func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqConte
 		p.OAuthTokenService, p.DataSourcesService, p.tracer)
 	if err != nil {
 		if errors.Is(err, datasource.URLValidationError{}) {
-			c.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("Invalid data source URL: %q", ds.Url), err)
+			c.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("Invalid data source URL: %q", ds.URL), err)
 		} else {
 			c.JsonApiErr(http.StatusInternalServerError, "Failed creating data source proxy", err)
 		}

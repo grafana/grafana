@@ -6,6 +6,7 @@ import {
 import createMockDatasource from '../__mocks__/datasource';
 import { createMockInstanceSetttings } from '../__mocks__/instanceSettings';
 import { mockGetValidLocations } from '../__mocks__/resourcePickerRows';
+import { ResourceRowType } from '../components/ResourcePicker/types';
 import { AzureGraphResponse } from '../types';
 
 import ResourcePickerData from './resourcePickerData';
@@ -467,6 +468,36 @@ describe('AzureMonitor resourcePickerData', () => {
       // getResourcesForResourceGroup should only be called once because the resource group
       // of both resources is the same
       expect(resourcePickerData.getResourcesForResourceGroup).toBeCalledTimes(1);
+    });
+  });
+
+  describe('parseRows', () => {
+    [
+      {
+        input: '/subscriptions/def-456/resourceGroups/dev/providers/Microsoft.Compute/virtualMachines/web-server',
+        expected: {
+          id: 'web-server',
+          name: 'web-server',
+          type: ResourceRowType.Resource,
+          uri: '/subscriptions/def-456/resourceGroups/dev/providers/Microsoft.Compute/virtualMachines/web-server',
+          typeLabel: 'Virtual machines',
+        },
+      },
+      {
+        input: {
+          subscription: 'def-456',
+        },
+        expected: {
+          id: 'def-456',
+          name: 'def-456',
+          type: ResourceRowType.Subscription,
+          uri: '/subscriptions/def-456',
+          typeLabel: '',
+        },
+      },
+    ].forEach(({ input, expected }) => {
+      const { resourcePickerData } = createResourcePickerData([]);
+      expect(resourcePickerData.parseRows([input])[0]).toMatchObject(expected);
     });
   });
 });

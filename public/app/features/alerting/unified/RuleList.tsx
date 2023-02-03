@@ -33,7 +33,7 @@ const VIEWS = {
   state: RuleListStateView,
 };
 
-const onExport = () => window.open(`/api/v1/provisioning/alert-rules/export?download=true`);
+const onExport = () => window.open('/api/v1/provisioning/alert-rules/export?download=true&format=yaml');
 
 const RuleList = withErrorBoundary(
   () => {
@@ -121,7 +121,7 @@ const RuleList = withErrorBoundary(
                     icon="plus"
                     onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
                   >
-                    New alert rule
+                    Create alert rule
                   </LinkButton>
                 )}
               </Stack>
