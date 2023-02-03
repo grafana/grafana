@@ -24,18 +24,18 @@ import { PromQuery } from '../types';
 const INCREMENTAL_QUERY_OVERLAP_DURATION_MS = 60 * 10 * 1000;
 const STORAGE_TIME_INDEX = '__time__';
 const DEBUG = false;
+
 interface IncrementalStorageOptions {
   queryOverlapDurationMs: number;
   storageTimeIndex: string;
   debug: boolean;
 }
 
-// Another issue: if the query window starts at a time when there is no results from the database, we'll always fail the cache check and pull fresh data, even though the cache has everything available
-// Also the cache can def get really big for big queries, need to look into if we want to find a way to limit the size of requests we add to the cache?
 export class IncrementalStorage {
   private storage: Record<string, Record<string, number[]>>;
   private readonly datasource: { interpolateString: (s: string) => string };
   private readonly timeSrv: TimeSrv = getTimeSrv();
+  // Not currently in use @todo
   private readonly options?: IncrementalStorageOptions;
 
   constructor(datasource: { interpolateString: (s: string) => string }, options?: IncrementalStorageOptions) {
@@ -77,7 +77,7 @@ export class IncrementalStorage {
       // @todo throw an error when there are more than one series without labels
     }
 
-    // @todo better
+    // @todo faster
     return JSON.stringify(keyValues);
   };
 
@@ -282,9 +282,7 @@ export class IncrementalStorage {
     const times = data[0].fields[0].values.toArray();
     const firstTime = times[0];
     const lastTime = times[times.length - 1];
-    const maxLength = Math.ceil(lastTime - firstTime / (intervalSeconds * 1000));
-
-    let longestLength = maxLength;
+    let longestLength = Math.ceil(lastTime - firstTime / (intervalSeconds * 1000));
 
     // Get the times of the first series
     const firstFrameTimeValues = data[0].fields[0].values?.toArray();
@@ -339,6 +337,112 @@ export class IncrementalStorage {
   }
 
   /**
+   * Mutate the values on the dataFrame, and set the time value in storage for the given index, remember each query shares one time array for all series
+   * @param timeFieldsToSet
+   * @param dataFramesForThisQuery
+   * @private
+   */
+  private setTimeFields(timeFieldsToSet: { index?: string; values?: number[] }, dataFramesForThisQuery: DataFrame[]) {
+    const values = new ArrayVector(timeFieldsToSet.values);
+    // Save the values in storage
+    this.setStorageTimeFields(timeFieldsToSet.index ?? '', timeFieldsToSet?.values ?? []);
+
+    // Get all time series
+    dataFramesForThisQuery.forEach((dataFrame) => {
+      // Filter out the value fields, this is a loop but there's only one field
+      const responseTimeFields = dataFrame.fields?.filter((field) => field.name === TIME_SERIES_TIME_FIELD_NAME);
+      responseTimeFields.forEach((timeField) => {
+        // Overwrite the existing dataframe time fields with the values calculated in the previous loop
+        timeField.values = values;
+      });
+    });
+  }
+
+  /**
+   * This function takes a field value, and checks to see if the storage has any hits for this field and query string
+   * If not, it adds it to storage
+   * If it does, we dedupe any overlapping frames, pulling any new ones from the request,
+   * and save the values in storage and on the dataframe
+   * This means as we walk through the dataframes coming in from the request, the length of each field within that request will get longer one by one until the end of the loop when they are all the new size, which should match the number of intervals in the current request window
+   *
+   * @param valueField
+   * @param storedSeriesFromStorage
+   * @param responseTimeField
+   * @param responseQueryExpressionAndStepString
+   * @param originalRange
+   * @param intervalSeconds
+   * @private
+   */
+  private setValueFieldsGetTimeValues(
+    valueField: Field,
+    storedSeriesFromStorage: Record<string, number[]> | null,
+    responseTimeField: Field,
+    responseQueryExpressionAndStepString: string,
+    originalRange: { end: number; start: number } | undefined,
+    intervalSeconds: number
+  ) {
+    let timeValuesStorage: number[] = [];
+    const responseFrameValues: number[] | undefined = valueField?.values?.toArray();
+
+    // Generate a unique name for this dataframe using the values
+    const seriesLabelsIndexString = IncrementalStorage.valueFrameToLabelsString(valueField);
+
+    // If we don't have storage, dataframes, or any values for this label, we haven't added this query to storage before
+    const thisQueryHasNeverBeenDoneBefore =
+      !this.storage || !storedSeriesFromStorage || !storedSeriesFromStorage[seriesLabelsIndexString];
+
+    const thisQueryHasBeenDoneBefore = !thisQueryHasNeverBeenDoneBefore;
+
+    const timeValuesFromResponse: number[] = responseTimeField?.values?.toArray() ?? [];
+
+    // Store the response if it's new
+    if (thisQueryHasNeverBeenDoneBefore && seriesLabelsIndexString && responseFrameValues?.length) {
+      this.setStorageTimeFields(responseQueryExpressionAndStepString, timeValuesFromResponse);
+      this.setStorageFieldsValues(responseQueryExpressionAndStepString, seriesLabelsIndexString, responseFrameValues);
+    } else if (thisQueryHasBeenDoneBefore && seriesLabelsIndexString && originalRange) {
+      // If the labels are the same as saved, append any new values, making sure that any additional data is taken from the newest response
+
+      //@todo
+      const timeValuesFromStorage = storedSeriesFromStorage['__time__'];
+      const valuesFromStorage = storedSeriesFromStorage[seriesLabelsIndexString];
+
+      // These values could be undefined or null, so we have a bit of long conditional, but we're just checking that we have values in storage and the response
+      if (responseFrameValues?.length > 0 && valuesFromStorage.length > 0 && timeValuesFromResponse.length > 0) {
+        const dedupedFrames = IncrementalStorage.removeFramesFromStorageThatExistInRequest(
+          timeValuesFromStorage,
+          timeValuesFromResponse,
+          originalRange,
+          valuesFromStorage,
+          intervalSeconds
+        );
+
+        const allTimeValuesMerged = dedupedFrames.time.concat(timeValuesFromResponse);
+
+        const allValueFramesMerged = dedupedFrames.values.concat(responseFrameValues);
+
+        // This is a reference to the original dataframes passed in, so we're mutating the original dataframe here!
+        valueField.values = new ArrayVector(allValueFramesMerged);
+
+        // If we set the time values here we'll screw up the rest of the loop, we should be checking to see if each series has the same time steps, or we need to clear the cache
+        // So just set the values
+        this.setStorageFieldsValues(
+          responseQueryExpressionAndStepString,
+          seriesLabelsIndexString,
+          allValueFramesMerged
+        );
+
+        // And return the calculated time values
+        timeValuesStorage = allTimeValuesMerged;
+      } else {
+        if (DEBUG) {
+          console.warn('cannot merge values!');
+        }
+      }
+    }
+    return timeValuesStorage;
+  }
+
+  /**
    * Note, a known problem for this is query "drift" when users are editing in a dashboard panel,
    * each change to the query expression or interval will create a new object in storage,
    * and the only cache eviction is managed when we have something in storage that matches the response.
@@ -364,10 +468,10 @@ export class IncrementalStorage {
     // Iterate through all of the queries
     request.targets.forEach((target) => {
       // Filter out the series that aren't for this query
-      const timeSeriesForThisQuery = data.filter((response) => response.refId === target.refId);
+      const dataFramesForThisQuery = data.filter((response) => response.refId === target.refId);
 
-      let responseFieldsToSet: Array<{ index: string; values: number[] }> = [];
-      timeSeriesForThisQuery.forEach((responseFrame) => {
+      let timeFieldsToSet: { index?: string; values?: number[] } = {};
+      dataFramesForThisQuery.forEach((responseFrame) => {
         // Concatenate query expression and step to use as index for all series returned by query
         // Multiple queries with same expression and step will share the same cache, I don't think that's a problem?
         const responseQueryExpressionAndStepString = this.createStorageIndexFromRequestTarget(target, request);
@@ -386,7 +490,7 @@ export class IncrementalStorage {
           return;
         }
 
-        const previousDataFrames = this.getStorageFieldsForQuery(responseQueryExpressionAndStepString);
+        const storedSeriesFromStorage = this.getStorageFieldsForQuery(responseQueryExpressionAndStepString);
 
         // We're about to prime the storage, so let's prime the main object
         if (!(responseQueryExpressionAndStepString in this.storage)) {
@@ -395,104 +499,25 @@ export class IncrementalStorage {
 
         let timeValuesStorage: number[] = [];
         responseValueFields.forEach((valueField) => {
-          const responseFrameValues: number[] | undefined = valueField?.values?.toArray();
-
-          // Generate a unique name for this dataframe using the values
-          const seriesLabelsIndexString = IncrementalStorage.valueFrameToLabelsString(valueField);
-
-          // If we don't have storage, dataframes, or any values for this label, we haven't added this query to storage before
-          const thisQueryHasNeverBeenDoneBefore =
-            !this.storage || !previousDataFrames || !previousDataFrames[seriesLabelsIndexString];
-
-          const thisQueryHasBeenDoneBefore = !thisQueryHasNeverBeenDoneBefore;
-
-          const timeValuesFromResponse: number[] = responseTimeField?.values?.toArray() ?? [];
-
-          // Store the response if it's new
-          if (thisQueryHasNeverBeenDoneBefore && seriesLabelsIndexString && responseFrameValues?.length) {
-            this.setStorageTimeFields(responseQueryExpressionAndStepString, timeValuesFromResponse);
-            this.setStorageFieldsValues(
-              responseQueryExpressionAndStepString,
-              seriesLabelsIndexString,
-              responseFrameValues
-            );
-          } else if (thisQueryHasBeenDoneBefore && seriesLabelsIndexString && originalRange) {
-            // If the labels are the same as saved, append any new values, making sure that any additional data is taken from the newest response
-
-            const timeValuesFromStorage = previousDataFrames['__time__'];
-            const valuesFromStorage = previousDataFrames[seriesLabelsIndexString];
-
-            // These values could be undefined or null, so we have a bit of long conditional, but we're just checking that we have values in storage and the response
-            if (
-              responseFrameValues &&
-              responseFrameValues?.length > 0 &&
-              valuesFromStorage &&
-              valuesFromStorage.length > 0 &&
-              timeValuesFromStorage &&
-              timeValuesFromResponse.length > 0
-            ) {
-              const dedupedFrames = IncrementalStorage.removeFramesFromStorageThatExistInRequest(
-                timeValuesFromStorage,
-                timeValuesFromResponse,
-                originalRange,
-                valuesFromStorage,
-                intervalSeconds
-              );
-
-              const allTimeValuesMerged = dedupedFrames.time.concat(timeValuesFromResponse);
-
-              const allValueFramesMerged = dedupedFrames.values.concat(responseFrameValues);
-
-              // This is a reference to the original dataframes passed in, so we're mutating the original dataframe here!
-              valueField.values = new ArrayVector(allValueFramesMerged);
-
-              // If we set the time values here we'll screw up the rest of the loop, we should be checking to see if each series has the same time steps, or we need to clear the cache
-              if (!timeValuesStorage.length) {
-                timeValuesStorage = allTimeValuesMerged;
-              }
-
-              // this.setStorageTimeFields(responseQueryExpressionAndStepString, allTimeValuesMerged);
-              this.setStorageFieldsValues(
-                responseQueryExpressionAndStepString,
-                seriesLabelsIndexString,
-                allValueFramesMerged
-              );
-            } else {
-              if (DEBUG) {
-                console.warn('cannot merge values!');
-              }
-            }
-          }
+          timeValuesStorage = this.setValueFieldsGetTimeValues(
+            valueField,
+            storedSeriesFromStorage,
+            responseTimeField,
+            responseQueryExpressionAndStepString,
+            originalRange,
+            intervalSeconds
+          );
         });
 
-        // If we changed the time steps, let's mutate the dataframe
-        if (timeValuesStorage.length > 0 && responseTimeField?.values) {
-          responseFieldsToSet.push({ index: responseQueryExpressionAndStepString, values: timeValuesStorage });
-          responseTimeField.values = new ArrayVector(timeValuesStorage);
-          // this.setStorageTimeFields(responseQueryExpressionAndStepString, timeValuesStorage);
+        // If we have time values we want to save as well, let's save them until after this loop
+        if (timeValuesStorage.length > 0 && responseTimeField?.values && !timeFieldsToSet.index) {
+          timeFieldsToSet = { index: responseQueryExpressionAndStepString, values: timeValuesStorage };
         }
       });
 
-      responseFieldsToSet.forEach((field) => {
-        if (field.values.length !== responseFieldsToSet[0].values.length) {
-          if (DEBUG) {
-            console.warn('One of the fields was different length!');
-          }
-        }
-      });
-
-      const responseFields = responseFieldsToSet[0];
-      if (responseFields) {
-        const values = new ArrayVector(responseFields.values);
-        // Save the values in storage
-        this.setStorageTimeFields(responseFields.index, responseFields.values);
-        timeSeriesForThisQuery.forEach((dataFrame) => {
-          const responseTimeFields = dataFrame.fields?.filter((field) => field.name === TIME_SERIES_TIME_FIELD_NAME);
-          responseTimeFields.forEach((timeField) => {
-            // Overwrite the existing dataframe time fields with the above
-            timeField.values = values;
-          });
-        });
+      // Now that we're done setting values, we want to set the times in storage and in the dataframe, remember dataFramesForThisQuery is
+      if (timeFieldsToSet && timeFieldsToSet.index && timeFieldsToSet.values) {
+        this.setTimeFields(timeFieldsToSet, dataFramesForThisQuery);
       }
     });
 
