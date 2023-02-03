@@ -23,7 +23,7 @@ import { PromQuery } from '../types';
 // Get link to prometheus doc for the above comment
 const INCREMENTAL_QUERY_OVERLAP_DURATION_MS = 60 * 10 * 1000;
 const STORAGE_TIME_INDEX = '__time__';
-const DEBUG = false;
+const DEBUG = true;
 
 interface IncrementalStorageOptions {
   queryOverlapDurationMs: number;
@@ -662,8 +662,20 @@ export class IncrementalStorage {
         this.timeSrv.timeRange().to.utcOffset() * 60
       );
 
+      const tenMinutesFromNow = dateTime().valueOf() - INCREMENTAL_QUERY_OVERLAP_DURATION_MS;
+      const adjustedRequestStart = neededDurations[0].start;
+      const adjustedRequestEnd = neededDurations[0].end;
+      let newStartTime;
+      // If the request ends within the last 10 minutes...
+      if (adjustedRequestEnd > tenMinutesFromNow) {
+        // Calculate the start time as either 10 minutes ago, or the start time, whichever is smaller (older)
+        newStartTime = adjustedRequestStart > tenMinutesFromNow ? tenMinutesFromNow : adjustedRequestStart;
+      } else {
+        newStartTime = adjustedRequestStart;
+      }
+
       const newRange = alignRange(
-        dateTime(neededDurations[0].start - INCREMENTAL_QUERY_OVERLAP_DURATION_MS).valueOf(),
+        dateTime(newStartTime).valueOf(),
         dateTime(neededDurations[0].end).valueOf(),
         interval,
         this.timeSrv.timeRange().to.utcOffset() * 60
