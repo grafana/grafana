@@ -160,7 +160,7 @@ type Include struct {
 	// RBAC action the user must have to access the route
 	Action *string `json:"action,omitempty"`
 
-	// Add the include to the side menu.
+	// Add the include to the navigation menu.
 	AddToNav *bool `json:"addToNav,omitempty"`
 
 	// (Legacy) The Angular component to use for a page.
@@ -176,7 +176,9 @@ type Include struct {
 	Name *string `json:"name,omitempty"`
 
 	// Used for app plugins.
-	Path *string      `json:"path,omitempty"`
+	Path *string `json:"path,omitempty"`
+
+	// The minimum role a user must have to see this page in the navigation menu.
 	Role *IncludeRole `json:"role,omitempty"`
 
 	// IncludeType is a string identifier of a plugin include type, which is
@@ -187,7 +189,7 @@ type Include struct {
 	Uid *string `json:"uid,omitempty"`
 }
 
-// IncludeRole defines model for Include.Role.
+// The minimum role a user must have to see this page in the navigation menu.
 type IncludeRole string
 
 // IncludeType is a string identifier of a plugin include type, which is
