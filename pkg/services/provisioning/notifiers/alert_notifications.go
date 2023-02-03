@@ -80,7 +80,7 @@ func (dc *NotificationProvisioner) deleteNotifications(ctx context.Context, noti
 			notification.OrgID = 1
 		}
 
-		getNotification := &models.GetAlertNotificationsWithUidQuery{Uid: notification.UID, OrgId: notification.OrgID}
+		getNotification := &models.GetAlertNotificationsWithUidQuery{UID: notification.UID, OrgID: notification.OrgID}
 
 		res, err := dc.alertingManager.GetAlertNotificationsWithUid(ctx, getNotification)
 		if err != nil {
@@ -88,7 +88,7 @@ func (dc *NotificationProvisioner) deleteNotifications(ctx context.Context, noti
 		}
 
 		if res != nil {
-			cmd := &models.DeleteAlertNotificationWithUidCommand{Uid: res.Uid, OrgId: getNotification.OrgId}
+			cmd := &models.DeleteAlertNotificationWithUidCommand{UID: res.UID, OrgID: getNotification.OrgID}
 			if err := dc.alertingManager.DeleteAlertNotificationWithUid(ctx, cmd); err != nil {
 				return err
 			}
@@ -111,7 +111,7 @@ func (dc *NotificationProvisioner) mergeNotifications(ctx context.Context, notif
 			notification.OrgID = 1
 		}
 
-		cmd := &models.GetAlertNotificationsWithUidQuery{OrgId: notification.OrgID, Uid: notification.UID}
+		cmd := &models.GetAlertNotificationsWithUidQuery{OrgID: notification.OrgID, UID: notification.UID}
 		res, err := dc.alertingManager.GetAlertNotificationsWithUid(ctx, cmd)
 		if err != nil {
 			return err
@@ -120,13 +120,13 @@ func (dc *NotificationProvisioner) mergeNotifications(ctx context.Context, notif
 		if res == nil {
 			dc.log.Debug("inserting alert notification from configuration", "name", notification.Name, "uid", notification.UID)
 			insertCmd := &models.CreateAlertNotificationCommand{
-				Uid:                   notification.UID,
+				UID:                   notification.UID,
 				Name:                  notification.Name,
 				Type:                  notification.Type,
 				IsDefault:             notification.IsDefault,
 				Settings:              notification.SettingsToJSON(),
 				SecureSettings:        notification.SecureSettings,
-				OrgId:                 notification.OrgID,
+				OrgID:                 notification.OrgID,
 				DisableResolveMessage: notification.DisableResolveMessage,
 				Frequency:             notification.Frequency,
 				SendReminder:          notification.SendReminder,
@@ -139,13 +139,13 @@ func (dc *NotificationProvisioner) mergeNotifications(ctx context.Context, notif
 		} else {
 			dc.log.Debug("updating alert notification from configuration", "name", notification.Name)
 			updateCmd := &models.UpdateAlertNotificationWithUidCommand{
-				Uid:                   notification.UID,
+				UID:                   notification.UID,
 				Name:                  notification.Name,
 				Type:                  notification.Type,
 				IsDefault:             notification.IsDefault,
 				Settings:              notification.SettingsToJSON(),
 				SecureSettings:        notification.SecureSettings,
-				OrgId:                 notification.OrgID,
+				OrgID:                 notification.OrgID,
 				DisableResolveMessage: notification.DisableResolveMessage,
 				Frequency:             notification.Frequency,
 				SendReminder:          notification.SendReminder,

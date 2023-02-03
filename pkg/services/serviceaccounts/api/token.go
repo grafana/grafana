@@ -98,7 +98,7 @@ func (api *ServiceAccountsAPI) ListTokens(ctx *contextmodel.ReqContext) response
 		}
 
 		result[i] = TokenDTO{
-			Id:                     token.Id,
+			Id:                     token.ID,
 			Name:                   token.Name,
 			Created:                &token.Created,
 			Expiration:             expiration,
@@ -187,7 +187,7 @@ func (api *ServiceAccountsAPI) CreateToken(c *contextmodel.ReqContext) response.
 	}
 
 	result := &dtos.NewApiKeyResult{
-		ID:   apiKey.Id,
+		ID:   apiKey.ID,
 		Name: apiKey.Name,
 		Key:  newKeyInfo.ClientSecret,
 	}
