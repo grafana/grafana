@@ -121,6 +121,11 @@ function useAutocomplete(datasource: TempoDatasource) {
         const tags = datasource.languageProvider.getTags();
 
         if (tags) {
+          // This is needed because the /api/search/tag/${tag}/values API expects "status.code" and the v2 API expects "status"
+          // so Tempo doesn't send anything and we inject it here for the autocomplete
+          if (!tags.find((t) => t === 'status.code')) {
+            tags.push('status.code');
+          }
           providerRef.current.setTags(tags);
         }
       } catch (error) {

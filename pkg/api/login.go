@@ -15,12 +15,11 @@ import (
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/middleware/cookies"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/authn"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	loginService "github.com/grafana/grafana/pkg/services/login"
+	loginservice "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -101,7 +100,7 @@ func (hs *HTTPServer) LoginView(c *contextmodel.ReqContext) {
 		// and the view should return immediately before attempting
 		// to login again via OAuth and enter to a redirect loop
 		cookies.DeleteCookie(c.Resp, loginErrorCookieName, hs.CookieOptionsFromCfg)
-		viewData.Settings["loginError"] = loginError
+		viewData.Settings.LoginError = loginError
 		c.HTML(http.StatusOK, getViewIndex(), viewData)
 		return
 	}
@@ -236,7 +235,7 @@ func (hs *HTTPServer) LoginPost(c *contextmodel.ReqContext) response.Response {
 		if err == nil && resp.ErrMessage() != "" {
 			err = errors.New(resp.ErrMessage())
 		}
-		hs.HooksService.RunLoginHook(&models.LoginInfo{
+		hs.HooksService.RunLoginHook(&loginservice.LoginInfo{
 			AuthModule:    authModule,
 			User:          usr,
 			LoginUsername: cmd.User,
@@ -250,7 +249,7 @@ func (hs *HTTPServer) LoginPost(c *contextmodel.ReqContext) response.Response {
 		return resp
 	}
 
-	authQuery := &models.LoginUserQuery{
+	authQuery := &loginservice.LoginUserQuery{
 		ReqContext: c,
 		Username:   cmd.User,
 		Password:   cmd.Password,
@@ -327,7 +326,7 @@ func (hs *HTTPServer) loginUserWithUser(user *user.User, c *contextmodel.ReqCont
 	}
 
 	hs.log.Debug("Got IP address from client address", "addr", addr, "ip", ip)
-	ctx := context.WithValue(c.Req.Context(), models.RequestURIKey{}, c.Req.RequestURI)
+	ctx := context.WithValue(c.Req.Context(), loginservice.RequestURIKey{}, c.Req.RequestURI)
 	userToken, err := hs.AuthTokenService.CreateToken(ctx, user, ip, c.Req.UserAgent())
 	if err != nil {
 		return fmt.Errorf("%v: %w", "failed to create auth token", err)
@@ -342,9 +341,9 @@ func (hs *HTTPServer) loginUserWithUser(user *user.User, c *contextmodel.ReqCont
 func (hs *HTTPServer) Logout(c *contextmodel.ReqContext) {
 	// If SAML is enabled and this is a SAML user use saml logout
 	if hs.samlSingleLogoutEnabled() {
-		getAuthQuery := models.GetAuthInfoQuery{UserId: c.UserID}
+		getAuthQuery := loginservice.GetAuthInfoQuery{UserId: c.UserID}
 		if err := hs.authInfoService.GetAuthInfo(c.Req.Context(), &getAuthQuery); err == nil {
-			if getAuthQuery.Result.AuthModule == loginService.SAMLAuthModule {
+			if getAuthQuery.Result.AuthModule == loginservice.SAMLAuthModule {
 				c.Redirect(hs.Cfg.AppSubURL + "/logout/saml")
 				return
 			}

@@ -10,10 +10,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -49,10 +49,10 @@ func TestAuthenticateJWT(t *testing.T) {
 		IsDisabled:     false,
 		HelpFlags1:     0,
 		ClientParams: authn.ClientParams{
-			SyncTeamMembers: false,
 			SyncUser:        true,
 			AllowSignUp:     true,
-			LookUpParams: models.UserLookupParams{
+			FetchSyncedUser: true,
+			LookUpParams: login.UserLookupParams{
 				UserID: nil,
 				Email:  stringPtr("eai.doe@cor.po"),
 				Login:  stringPtr("eai-doe"),

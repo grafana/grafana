@@ -9,7 +9,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -300,7 +299,7 @@ func (hs *HTTPServer) searchOrgUsersHelper(c *contextmodel.ReqContext, query *or
 		filteredUsers = append(filteredUsers, user)
 	}
 
-	modules, err := hs.authInfoService.GetUserLabels(c.Req.Context(), models.GetUserLabelsQuery{
+	modules, err := hs.authInfoService.GetUserLabels(c.Req.Context(), login.GetUserLabelsQuery{
 		UserIDs: authLabelsUserIDs,
 	})
 
@@ -382,16 +381,23 @@ func (hs *HTTPServer) UpdateOrgUser(c *contextmodel.ReqContext) response.Respons
 
 func (hs *HTTPServer) updateOrgUserHelper(c *contextmodel.ReqContext, cmd org.UpdateOrgUserCommand) response.Response {
 	if !cmd.Role.IsValid() {
-		return response.Error(400, "Invalid role specified", nil)
+		return response.Error(http.StatusBadRequest, "Invalid role specified", nil)
 	}
 	if !c.OrgRole.Includes(cmd.Role) && !c.IsGrafanaAdmin {
 		return response.Error(http.StatusForbidden, "Cannot assign a role higher than user's role", nil)
 	}
 	if err := hs.orgService.UpdateOrgUser(c.Req.Context(), &cmd); err != nil {
 		if errors.Is(err, org.ErrLastOrgAdmin) {
-			return response.Error(400, "Cannot change role so that there is no organization admin left", nil)
+			return response.Error(http.StatusBadRequest, "Cannot change role so that there is no organization admin left", nil)
 		}
-		return response.Error(500, "Failed update org user", err)
+		return response.Error(http.StatusInternalServerError, "Failed update org user", err)
+	}
+
+	if !hs.accesscontrolService.IsDisabled() {
+		hs.accesscontrolService.ClearUserPermissionCache(&user.SignedInUser{
+			UserID: cmd.UserID,
+			OrgID:  cmd.OrgID,
+		})
 	}
 
 	return response.Success("Organization user updated")

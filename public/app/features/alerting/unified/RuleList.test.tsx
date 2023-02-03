@@ -1,17 +1,15 @@
 import { SerializedError } from '@reduxjs/toolkit';
-import { render, waitFor, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
-import { locationService, setDataSourceSrv, logInfo, setBackendSrv } from '@grafana/runtime';
+import { locationService, logInfo, setBackendSrv, setDataSourceSrv } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import * as ruleActionButtons from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import * as actions from 'app/features/alerting/unified/state/actions';
-import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 import { PromAlertingRuleState, PromApplication } from 'app/types/unified-alerting-dto';
 
@@ -76,15 +74,12 @@ const mocks = {
 };
 
 const renderRuleList = () => {
-  const store = configureStore();
   locationService.push('/');
 
   return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <RuleList />
-      </Router>
-    </Provider>
+    <TestProvider>
+      <RuleList />
+    </TestProvider>
   );
 };
 
@@ -121,9 +116,8 @@ const ui = {
   rulesFilterInput: byTestId('search-query-input'),
   moreErrorsButton: byRole('button', { name: /more errors/ }),
   editCloudGroupIcon: byTestId('edit-group'),
-
-  newRuleButton: byRole('link', { name: 'New alert rule' }),
-
+  newRuleButton: byRole('link', { name: 'Create alert rule' }),
+  exportButton: byRole('button', { name: /export/i }),
   editGroupModal: {
     namespaceInput: byRole('textbox', { hidden: true, name: /namespace/i }),
     ruleGroupInput: byRole('textbox', { name: 'Evaluation group', exact: true }),
@@ -372,8 +366,8 @@ describe('RuleList', () => {
     const instanceRows = byTestId('row').getAll(instancesTable);
     expect(instanceRows).toHaveLength(2);
 
-    expect(instanceRows![0]).toHaveTextContent('Firingfoo=barseverity=warning2021-03-18 08:47:05');
-    expect(instanceRows![1]).toHaveTextContent('Firingfoo=bazseverity=error2021-03-18 08:47:05');
+    expect(instanceRows![0]).toHaveTextContent('Firing foo=barseverity=warning2021-03-18 08:47:05');
+    expect(instanceRows![1]).toHaveTextContent('Firing foo=bazseverity=error2021-03-18 08:47:05');
 
     // expand details of an instance
     await userEvent.click(ui.ruleCollapseToggle.get(instanceRows![0]));
@@ -681,6 +675,34 @@ describe('RuleList', () => {
   });
 
   describe('RBAC Enabled', () => {
+    describe('Export button', () => {
+      it('Export button should be visible when the user has alert provisioning read permissions', async () => {
+        enableRBAC();
+
+        grantUserPermissions([AccessControlAction.AlertingProvisioningRead]);
+
+        mocks.getAllDataSourcesMock.mockReturnValue([]);
+        setDataSourceSrv(new MockDataSourceSrv({}));
+        mocks.api.fetchRules.mockResolvedValue([]);
+        mocks.api.fetchRulerRules.mockResolvedValue({});
+
+        renderRuleList();
+
+        expect(ui.exportButton.get()).toBeInTheDocument();
+      });
+      it('Export button should not be visible when the user has no alert provisioning read permissions', async () => {
+        enableRBAC();
+
+        mocks.getAllDataSourcesMock.mockReturnValue([]);
+        setDataSourceSrv(new MockDataSourceSrv({}));
+        mocks.api.fetchRules.mockResolvedValue([]);
+        mocks.api.fetchRulerRules.mockResolvedValue({});
+
+        renderRuleList();
+
+        expect(ui.exportButton.query()).not.toBeInTheDocument();
+      });
+    });
     describe('Grafana Managed Alerts', () => {
       it('New alert button should be visible when the user has alert rule create and folder read permissions and no rules exists', async () => {
         enableRBAC();
@@ -800,7 +822,7 @@ describe('RuleList', () => {
 
       await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(1));
 
-      const button = screen.getByText('New alert rule');
+      const button = screen.getByText('Create alert rule');
 
       button.addEventListener('click', (event) => event.preventDefault(), false);
 

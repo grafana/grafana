@@ -15,9 +15,10 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
-	"github.com/stretchr/testify/require"
 )
 
 // when memory-profiling this benchmark, these commands are recommended:

@@ -10,6 +10,7 @@ import (
 
 	"github.com/segmentio/encoding/json"
 
+	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -34,7 +35,7 @@ type Service interface {
 	Run(ctx context.Context) error
 	Enabled() bool
 	GetImage(c *contextmodel.ReqContext)
-	GetDashboardPreviewsSetupSettings(c *contextmodel.ReqContext) dashboardPreviewsSetupConfig
+	GetDashboardPreviewsSetupSettings(c *contextmodel.ReqContext) dtos.DashboardPreviewsSetupConfig
 
 	// from dashboard page
 	SetImage(c *contextmodel.ReqContext) // form post
@@ -319,44 +320,44 @@ func (hs *thumbService) hasAccessToPreview(c *contextmodel.ReqContext, res *Dash
 	return true
 }
 
-func (hs *thumbService) GetDashboardPreviewsSetupSettings(c *contextmodel.ReqContext) dashboardPreviewsSetupConfig {
+func (hs *thumbService) GetDashboardPreviewsSetupSettings(c *contextmodel.ReqContext) dtos.DashboardPreviewsSetupConfig {
 	return hs.getDashboardPreviewsSetupSettings(c.Req.Context())
 }
 
-func (hs *thumbService) getDashboardPreviewsSetupSettings(ctx context.Context) dashboardPreviewsSetupConfig {
+func (hs *thumbService) getDashboardPreviewsSetupSettings(ctx context.Context) dtos.DashboardPreviewsSetupConfig {
 	systemRequirements := hs.getSystemRequirements(ctx)
 	thumbnailsExist, err := hs.thumbnailRepo.doThumbnailsExist(ctx)
 
 	if err != nil {
-		return dashboardPreviewsSetupConfig{
+		return dtos.DashboardPreviewsSetupConfig{
 			SystemRequirements: systemRequirements,
 			ThumbnailsExist:    false,
 		}
 	}
 
-	return dashboardPreviewsSetupConfig{
+	return dtos.DashboardPreviewsSetupConfig{
 		SystemRequirements: systemRequirements,
 		ThumbnailsExist:    thumbnailsExist,
 	}
 }
 
-func (hs *thumbService) getSystemRequirements(ctx context.Context) dashboardPreviewsSystemRequirements {
+func (hs *thumbService) getSystemRequirements(ctx context.Context) dtos.DashboardPreviewsSystemRequirements {
 	res, err := hs.renderingService.HasCapability(ctx, rendering.ScalingDownImages)
 	if err != nil {
 		hs.log.Error("Error when verifying dashboard previews system requirements thumbnail", "err", err.Error())
-		return dashboardPreviewsSystemRequirements{
+		return dtos.DashboardPreviewsSystemRequirements{
 			Met: false,
 		}
 	}
 
 	if !res.IsSupported {
-		return dashboardPreviewsSystemRequirements{
+		return dtos.DashboardPreviewsSystemRequirements{
 			Met:                                false,
 			RequiredImageRendererPluginVersion: res.SemverConstraint,
 		}
 	}
 
-	return dashboardPreviewsSystemRequirements{
+	return dtos.DashboardPreviewsSystemRequirements{
 		Met: true,
 	}
 }

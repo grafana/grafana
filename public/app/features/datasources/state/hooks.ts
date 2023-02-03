@@ -23,6 +23,7 @@ import {
 } from './actions';
 import { DataSourcesRoutesContext } from './contexts';
 import { getDataSourceLoadingNav, buildNavModel, getDataSourceNav } from './navModel';
+import { initialDataSourceSettingsState } from './reducers';
 import { getDataSource, getDataSourceMeta } from './selectors';
 
 export const useInitDataSourceSettings = (uid: string) => {
@@ -34,7 +35,7 @@ export const useInitDataSourceSettings = (uid: string) => {
     return function cleanUp() {
       dispatch(
         cleanUpAction({
-          cleanupAction: (state) => state.dataSourceSettings,
+          cleanupAction: (state) => (state.dataSourceSettings = initialDataSourceSettingsState),
         })
       );
     };
@@ -43,8 +44,9 @@ export const useInitDataSourceSettings = (uid: string) => {
 
 export const useTestDataSource = (uid: string) => {
   const dispatch = useDispatch();
+  const dataSourcesRoutes = useDataSourcesRoutes();
 
-  return () => dispatch(testDataSource(uid));
+  return () => dispatch(testDataSource(uid, dataSourcesRoutes.Edit));
 };
 
 export const useLoadDataSources = () => {

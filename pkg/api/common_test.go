@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
@@ -41,6 +40,7 @@ import (
 	dashboardservice "github.com/grafana/grafana/pkg/services/dashboards/service"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -53,6 +53,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/searchusers"
 	"github.com/grafana/grafana/pkg/services/searchusers/filters"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -252,14 +253,6 @@ func (s *fakeRenderService) Init() error {
 	return nil
 }
 
-type accessControlTestCase struct {
-	expectedCode int
-	desc         string
-	url          string
-	method       string
-	permissions  []accesscontrol.Permission
-}
-
 // accessControlScenarioContext contains the setups for accesscontrol tests
 type accessControlScenarioContext struct {
 	// server we registered hs routes on.
@@ -288,16 +281,6 @@ type accessControlScenarioContext struct {
 	dashboardPermissionsService *accesscontrolmock.MockPermissionsService
 }
 
-func setAccessControlPermissions(acmock *accesscontrolmock.Mock, perms []accesscontrol.Permission, org int64) {
-	acmock.GetUserPermissionsFunc =
-		func(_ context.Context, u *user.SignedInUser, _ accesscontrol.Options) ([]accesscontrol.Permission, error) {
-			if u.OrgID == org {
-				return perms, nil
-			}
-			return nil, nil
-		}
-}
-
 func userWithPermissions(orgID int64, permissions []accesscontrol.Permission) *user.SignedInUser {
 	return &user.SignedInUser{OrgID: orgID, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{orgID: accesscontrol.GroupScopesByAction(permissions)}}
 }
@@ -306,16 +289,6 @@ func userWithPermissions(orgID int64, permissions []accesscontrol.Permission) *u
 func setInitCtxSignedInUser(initCtx *contextmodel.ReqContext, user user.SignedInUser) {
 	initCtx.IsSignedIn = true
 	initCtx.SignedInUser = &user
-}
-
-func setInitCtxSignedInViewer(initCtx *contextmodel.ReqContext) {
-	initCtx.IsSignedIn = true
-	initCtx.SignedInUser = &user.SignedInUser{UserID: testUserID, OrgID: 1, OrgRole: org.RoleViewer, Login: testUserLogin}
-}
-
-func setInitCtxSignedInOrgAdmin(initCtx *contextmodel.ReqContext) {
-	initCtx.IsSignedIn = true
-	initCtx.SignedInUser = &user.SignedInUser{UserID: testUserID, OrgID: 1, OrgRole: org.RoleAdmin, Login: testUserLogin}
 }
 
 func setupSimpleHTTPServer(features *featuremgmt.FeatureManager) *HTTPServer {
@@ -410,7 +383,7 @@ func setupHTTPServerWithCfgDb(
 		teamPermissionsService: teamPermissionService,
 		searchUsersService:     searchusers.ProvideUsersService(filters.ProvideOSSSearchUserFilter(), usertest.NewUserServiceFake()),
 		DashboardService: dashboardservice.ProvideDashboardService(
-			cfg, dashboardsStore, dashboardsStore, nil, features,
+			cfg, dashboardsStore, folderimpl.ProvideDashboardFolderStore(db), nil, features,
 			folderPermissionsService, dashboardPermissionsService, ac,
 			folderSvc,
 		),
@@ -524,13 +497,13 @@ type setUpConf struct {
 	aclMockResp []*dashboards.DashboardACLInfoDTO
 }
 
-type mockSearchService struct{ ExpectedResult models.HitList }
+type mockSearchService struct{ ExpectedResult model.HitList }
 
 func (mss *mockSearchService) SearchHandler(_ context.Context, q *search.Query) error {
 	q.Result = mss.ExpectedResult
 	return nil
 }
-func (mss *mockSearchService) SortOptions() []models.SortOption { return nil }
+func (mss *mockSearchService) SortOptions() []model.SortOption { return nil }
 
 func setUp(confs ...setUpConf) *HTTPServer {
 	store := dbtest.NewFakeDB()

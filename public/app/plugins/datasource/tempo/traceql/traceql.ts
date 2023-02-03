@@ -45,16 +45,17 @@ export const language = {
   digits: /\d+(_+\d+)*/,
   octaldigits: /[0-7]+(_+[0-7]+)*/,
   binarydigits: /[0-1]+(_+[0-1]+)*/,
-  hexdigits: /[[0-9a-fA-F]+(_+[0-9a-fA-F]+)*/,
-  integersuffix: /(ll|LL|u|U|l|L)?(ll|LL|u|U|l|L)?/,
-  floatsuffix: /[fFlL]?/,
 
   tokenizer: {
     root: [
       // labels
       [/[a-z_.][\w./_-]*(?=\s*(=|!=|>|<|>=|<=|=~|!~))/, 'tag'],
+      [/[a-z_.][\w./_-]*/, 'tag'],
 
-      //trace ID
+      // durations
+      [/[0-9.]+(s|ms|ns|m)/, 'number'],
+
+      // trace ID
       [/^\s*[0-9A-Fa-f]+\s*$/, 'tag'],
 
       // all keywords have the same color
@@ -92,14 +93,12 @@ export const language = {
       ],
 
       // numbers
-      [/\d+/, 'number'],
-      [/\d*\d+[eE]([\-+]?\d+)?(@floatsuffix)/, 'number.float'],
-      [/\d*\.\d+([eE][\-+]?\d+)?(@floatsuffix)/, 'number.float'],
-      [/0[xX][0-9a-fA-F']*[0-9a-fA-F](@integersuffix)/, 'number.hex'],
-      [/0[0-7']*[0-7](@integersuffix)/, 'number.octal'],
-      [/0[bB][0-1']*[0-1](@integersuffix)/, 'number.binary'],
-      [/\d[\d']*\d(@integersuffix)/, 'number'],
-      [/\d(@integersuffix)/, 'number'],
+      [/(@digits)[eE]([\-+]?(@digits))?[fFdD]?/, 'number.float'],
+      [/(@digits)\.(@digits)([eE][\-+]?(@digits))?[fFdD]?/, 'number.float'],
+      [/0(@octaldigits)[Ll]?/, 'number.octal'],
+      [/0[bB](@binarydigits)[Ll]?/, 'number.binary'],
+      [/(@digits)[fFdD]/, 'number.float'],
+      [/(@digits)[lL]?/, 'number'],
     ],
 
     string_double: [

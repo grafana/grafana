@@ -9,10 +9,10 @@ import (
 	"github.com/jmespath/go-jmespath"
 
 	"github.com/grafana/grafana/pkg/login"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/models/roletype"
 	authJWT "github.com/grafana/grafana/pkg/services/auth/jwt"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	loginsvc "github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -61,8 +61,7 @@ func (h *ContextHandler) initContextWithJWT(ctx *contextmodel.ReqContext, orgId 
 		ctx.JsonApiErr(http.StatusUnauthorized, InvalidJWT, err)
 		return true
 	}
-
-	extUser := &models.ExternalUserInfo{
+	extUser := &loginsvc.ExternalUserInfo{
 		AuthModule: "jwt",
 		AuthId:     sub,
 		OrgRoles:   map[int64]org.RoleType{},
@@ -118,11 +117,11 @@ func (h *ContextHandler) initContextWithJWT(ctx *contextmodel.ReqContext, orgId 
 	}
 
 	if h.Cfg.JWTAuthAutoSignUp {
-		upsert := &models.UpsertUserCommand{
+		upsert := &loginsvc.UpsertUserCommand{
 			ReqContext:    ctx,
 			SignupAllowed: h.Cfg.JWTAuthAutoSignUp,
 			ExternalUser:  extUser,
-			UserLookupParams: models.UserLookupParams{
+			UserLookupParams: loginsvc.UserLookupParams{
 				UserID: nil,
 				Login:  &query.Login,
 				Email:  &query.Email,
@@ -150,9 +149,6 @@ func (h *ContextHandler) initContextWithJWT(ctx *contextmodel.ReqContext, orgId 
 		}
 		return true
 	}
-
-	newCtx := WithAuthHTTPHeader(ctx.Req.Context(), h.Cfg.JWTAuthHeaderName)
-	*ctx.Req = *ctx.Req.WithContext(newCtx)
 
 	ctx.SignedInUser = queryResult
 	ctx.IsSignedIn = true

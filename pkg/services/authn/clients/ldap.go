@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -36,7 +36,7 @@ func (c *LDAP) AuthenticateProxy(ctx context.Context, r *authn.Request, username
 }
 
 func (c *LDAP) AuthenticatePassword(ctx context.Context, r *authn.Request, username, password string) (*authn.Identity, error) {
-	info, err := c.service.Login(&models.LoginUserQuery{
+	info, err := c.service.Login(&login.LoginUserQuery{
 		Username: username,
 		Password: password,
 	})
@@ -61,8 +61,8 @@ func (c *LDAP) AuthenticatePassword(ctx context.Context, r *authn.Request, usern
 }
 
 type ldapService interface {
-	Login(query *models.LoginUserQuery) (*models.ExternalUserInfo, error)
-	User(username string) (*models.ExternalUserInfo, error)
+	Login(query *login.LoginUserQuery) (*login.ExternalUserInfo, error)
+	User(username string) (*login.ExternalUserInfo, error)
 }
 
 // FIXME: remove the implementation if we convert ldap to an actual service
@@ -70,7 +70,7 @@ type ldapServiceImpl struct {
 	cfg *setting.Cfg
 }
 
-func (s *ldapServiceImpl) Login(query *models.LoginUserQuery) (*models.ExternalUserInfo, error) {
+func (s *ldapServiceImpl) Login(query *login.LoginUserQuery) (*login.ExternalUserInfo, error) {
 	cfg, err := multildap.GetConfig(s.cfg)
 	if err != nil {
 		return nil, err
@@ -79,7 +79,7 @@ func (s *ldapServiceImpl) Login(query *models.LoginUserQuery) (*models.ExternalU
 	return multildap.New(cfg.Servers).Login(query)
 }
 
-func (s *ldapServiceImpl) User(username string) (*models.ExternalUserInfo, error) {
+func (s *ldapServiceImpl) User(username string) (*login.ExternalUserInfo, error) {
 	cfg, err := multildap.GetConfig(s.cfg)
 	if err != nil {
 		return nil, err
@@ -89,7 +89,7 @@ func (s *ldapServiceImpl) User(username string) (*models.ExternalUserInfo, error
 	return user, err
 }
 
-func identityFromLDAPInfo(orgID int64, info *models.ExternalUserInfo, allowSignup bool) *authn.Identity {
+func identityFromLDAPInfo(orgID int64, info *login.ExternalUserInfo, allowSignup bool) *authn.Identity {
 	return &authn.Identity{
 		OrgID:          orgID,
 		OrgRoles:       info.OrgRoles,
@@ -103,9 +103,10 @@ func identityFromLDAPInfo(orgID int64, info *models.ExternalUserInfo, allowSignu
 		ClientParams: authn.ClientParams{
 			SyncUser:            true,
 			SyncTeamMembers:     true,
-			AllowSignUp:         allowSignup,
 			EnableDisabledUsers: true,
-			LookUpParams: models.UserLookupParams{
+			FetchSyncedUser:     true,
+			AllowSignUp:         allowSignup,
+			LookUpParams: login.UserLookupParams{
 				Login: &info.Login,
 				Email: &info.Email,
 			},

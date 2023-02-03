@@ -69,10 +69,14 @@ func newInstanceSettings(httpClientProvider httpclient.Provider) datasource.Inst
 		if version == "" {
 			version = influxVersionInfluxQL
 		}
+		database := jsonData.DbName
+		if database == "" {
+			database = settings.Database
+		}
 		model := &models.DatasourceInfo{
 			HTTPClient:    client,
 			URL:           settings.URL,
-			Database:      settings.Database,
+			DbName:        database,
 			Version:       version,
 			HTTPMode:      httpMode,
 			TimeInterval:  jsonData.TimeInterval,
@@ -178,7 +182,7 @@ func (s *Service) createRequest(ctx context.Context, logger log.Logger, dsInfo *
 	req.Header.Set("User-Agent", "Grafana")
 
 	params := req.URL.Query()
-	params.Set("db", dsInfo.Database)
+	params.Set("db", dsInfo.DbName)
 	params.Set("epoch", "ms")
 
 	if httpMode == "GET" {

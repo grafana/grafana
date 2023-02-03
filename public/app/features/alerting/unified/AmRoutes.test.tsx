@@ -1,8 +1,7 @@
 import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 
@@ -15,7 +14,6 @@ import {
   MuteTimeInterval,
   Route,
 } from 'app/plugins/datasource/alertmanager/types';
-import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 
 import AmRoutes from './AmRoutes';
@@ -47,19 +45,15 @@ const mocks = {
 const useGetGrafanaReceiverTypeCheckerMock = jest.spyOn(grafanaApp, 'useGetGrafanaReceiverTypeChecker');
 
 const renderAmRoutes = (alertManagerSourceName?: string) => {
-  const store = configureStore();
   locationService.push(location);
-
   locationService.push(
     '/alerting/routes' + (alertManagerSourceName ? `?${ALERTMANAGER_NAME_QUERY_KEY}=${alertManagerSourceName}` : '')
   );
 
   return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <AmRoutes />
-      </Router>
-    </Provider>
+    <TestProvider>
+      <AmRoutes />
+    </TestProvider>
   );
 };
 
@@ -92,8 +86,8 @@ const ui = {
 
   editRouteButton: byLabelText('Edit route'),
   deleteRouteButton: byLabelText('Delete route'),
-  newPolicyButton: byRole('button', { name: /New policy/ }),
-  newPolicyCTAButton: byRole('button', { name: /New specific policy/ }),
+  newPolicyButton: byRole('button', { name: /Add policy/ }),
+  newPolicyCTAButton: byRole('button', { name: /Add specific policy/ }),
   savePolicyButton: byRole('button', { name: /save policy/i }),
 
   receiverSelect: byTestId('am-receiver-select'),

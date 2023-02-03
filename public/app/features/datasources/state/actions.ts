@@ -90,6 +90,7 @@ export const initDataSourceSettings = (
 
 export const testDataSource = (
   dataSourceName: string,
+  editRoute = DATASOURCES_ROUTES.Edit,
   dependencies: TestDataSourceDependencies = {
     getDatasourceSrv,
     getBackendSrv,
@@ -97,6 +98,7 @@ export const testDataSource = (
 ): ThunkResult<void> => {
   return async (dispatch: ThunkDispatch, getState) => {
     const dsApi = await dependencies.getDatasourceSrv().get(dataSourceName);
+    const editLink = editRoute.replace(/:uid/gi, dataSourceName);
 
     if (!dsApi.testDatasource) {
       return;
@@ -114,6 +116,7 @@ export const testDataSource = (
           plugin_id: dsApi.type,
           datasource_uid: dsApi.uid,
           success: true,
+          path: editLink,
         });
       } catch (err) {
         let message: string | undefined;
@@ -134,6 +137,7 @@ export const testDataSource = (
           plugin_id: dsApi.type,
           datasource_uid: dsApi.uid,
           success: false,
+          path: editLink,
         });
       }
     });
@@ -217,7 +221,7 @@ export function addDataSource(plugin: DataSourcePluginMeta, editRoute = DATASOUR
       plugin_id: plugin.id,
       datasource_uid: result.datasource.uid,
       plugin_version: result.meta?.info?.version,
-      editLink,
+      path: editLink,
     });
 
     locationService.push(editLink);

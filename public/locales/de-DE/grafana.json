@@ -229,7 +229,6 @@
     "help/documentation": "Dokumentation",
     "help/keyboard-shortcuts": "Tastaturbefehle",
     "help/support": "Support",
-    "help/support-bundle": "Support Bundles",
     "home": {
       "title": "Home"
     },
@@ -490,7 +489,8 @@
     "theme": {
       "dark-label": "Dunkel",
       "default-label": "Standard",
-      "light-label": "Hell"
+      "light-label": "Hell",
+      "system-label": ""
     },
     "title": "Einstellungen"
   },

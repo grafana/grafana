@@ -334,6 +334,20 @@ type DataSourceRef struct {
 	Uid *string `json:"uid,omitempty"`
 }
 
+// TODO docs
+type DataTransformerConfig struct {
+	// Disabled transformations are skipped
+	Disabled *bool          `json:"disabled,omitempty"`
+	Filter   *MatcherConfig `json:"filter,omitempty"`
+
+	// Unique identifier of transformer
+	Id string `json:"id"`
+
+	// Options to be passed to the transformer
+	// Valid options depend on the transformer id
+	Options interface{} `json:"options"`
+}
+
 // DynamicConfigValue defines model for DynamicConfigValue.
 type DynamicConfigValue struct {
 	Id    string       `json:"id"`
@@ -458,6 +472,12 @@ type HeatmapPanel struct {
 // HeatmapPanelType defines model for HeatmapPanel.Type.
 type HeatmapPanelType string
 
+// LibraryPanelRef defines model for LibraryPanelRef.
+type LibraryPanelRef struct {
+	Name string `json:"name"`
+	Uid  string `json:"uid"`
+}
+
 // LoadingState defines model for LoadingState.
 type LoadingState string
 
@@ -490,7 +510,8 @@ type Panel struct {
 
 	// TODO docs
 	// TODO tighter constraint
-	Interval *string `json:"interval,omitempty"`
+	Interval     *string          `json:"interval,omitempty"`
+	LibraryPanel *LibraryPanelRef `json:"libraryPanel,omitempty"`
 
 	// Panel links.
 	// TODO fill this out - seems there are a couple variants?
@@ -538,8 +559,8 @@ type Panel struct {
 	TimeShift *string `json:"timeShift,omitempty"`
 
 	// Panel title.
-	Title           *string          `json:"title,omitempty"`
-	Transformations []Transformation `json:"transformations"`
+	Title           *string                 `json:"title,omitempty"`
+	Transformations []DataTransformerConfig `json:"transformations"`
 
 	// Whether to display the panel without a background.
 	Transparent bool `json:"transparent"`
@@ -699,13 +720,6 @@ type ThresholdsConfig struct {
 
 // ThresholdsMode defines model for ThresholdsMode.
 type ThresholdsMode string
-
-// TODO docs
-// FIXME this is extremely underspecfied; wasn't obvious which typescript types corresponded to it
-type Transformation struct {
-	Id      string                 `json:"id"`
-	Options map[string]interface{} `json:"options"`
-}
 
 // TODO docs
 type ValueMap struct {
