@@ -78,6 +78,8 @@ type Client interface {
 	Authenticate(ctx context.Context, r *Request) (*Identity, error)
 }
 
+// ContextAwareClient is an optional interface that auth client can implement.
+// Clients that implements this interface will be tried during request authentication
 type ContextAwareClient interface {
 	Client
 	// Test should return true if client can be used to authenticate request
@@ -86,6 +88,17 @@ type ContextAwareClient interface {
 	Priority() uint
 }
 
+// HookClient is an optional interface that auth clients can implement.
+// Clients that implements this interface can specify an auth hook that will
+// be called only for that client.
+type HookClient interface {
+	Client
+	Hook(ctx context.Context, identity *Identity, r *Request) error
+}
+
+// RedirectClient is an optional interface that auth clients can implement.
+// Clients that implements this interface can be used to generate redirect urls
+// for authentication flows, e.g. oauth clients
 type RedirectClient interface {
 	Client
 	RedirectURL(ctx context.Context, r *Request) (*Redirect, error)
