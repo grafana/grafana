@@ -42,12 +42,15 @@ export const LogsVolumePanelList = ({
   return (
     <>
       {Object.keys(logVolumes).map((name, index) => {
+        const logsVolumeData = { data: logVolumes[name] };
+        const title = logsVolumeData.data[0]?.meta?.custom?.mixedDataSourceName || '';
         return (
           <LogsVolumePanel
+            title={numberOfLogVolumes > 1 ? title : ''}
             key={index}
             absoluteRange={absoluteRange}
             width={width}
-            logsVolumeData={{ data: logVolumes[name] }}
+            logsVolumeData={logsVolumeData}
             logLinesBasedDataVisibleRange={undefined}
             logLinesBasedData={undefined}
             onUpdateTimeRange={onUpdateTimeRange}

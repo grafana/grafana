@@ -17,6 +17,7 @@ import { ExploreGraph } from './Graph/ExploreGraph';
 import { SupplementaryResultError } from './SupplementaryResultError';
 
 type Props = {
+  title: string;
   logsVolumeData: DataQueryResponse | undefined;
   absoluteRange: AbsoluteTimeRange;
   logLinesBasedData: DataQueryResponse | undefined;
@@ -31,7 +32,7 @@ type Props = {
 };
 
 export function LogsVolumePanel(props: Props) {
-  const { width, timeZone, splitOpen, onUpdateTimeRange, onLoadLogsVolume, onHiddenSeriesChanged } = props;
+  const { width, timeZone, splitOpen, onUpdateTimeRange, onLoadLogsVolume, onHiddenSeriesChanged, title } = props;
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const spacing = parseInt(theme.spacing(2).slice(0, -2), 10);
@@ -40,8 +41,6 @@ export function LogsVolumePanel(props: Props) {
   if (props.logsVolumeData === undefined) {
     return null;
   }
-
-  const title = props.logsVolumeData?.data[0]?.meta?.custom?.mixedDataSourceName || '';
 
   const logsVolumeData = props.logsVolumeData;
   const range = logsVolumeData.data[0]?.meta?.custom?.absoluteRange || props.absoluteRange;
