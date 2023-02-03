@@ -1,5 +1,5 @@
 import { cloneDeep, map as lodashMap } from 'lodash';
-import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
+import { lastValueFrom, merge, Observable, of, Subscriber, throwError } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
 import {
@@ -303,46 +303,43 @@ export class LokiDatasource
     const partition = partitionTimeRange(request.range);
     partition.reverse(); // Most recent to oldest data
 
+    let mergedResponse: DataQueryResponse | null;
+    const totalRequests = partition.length;
+
+    const next = (subscriber: Subscriber<DataQueryResponse>, requestN: number) => {
+      const requestId = `${request.requestId}_${requestN}`;
+      const range = partition[requestN - 1];
+      super
+        .query({ ...request, range, requestId })
+        .pipe(
+          // in case of an empty query, this is somehow run twice. `share()` is no workaround here as the observable is generated from `of()`.
+          map((response) => {
+            const partialResponse = transformBackendResult(
+              response,
+              request.targets,
+              this.instanceSettings.jsonData.derivedFields ?? []
+            );
+
+            mergedResponse = mergeResponses(mergedResponse, partialResponse);
+
+            return mergedResponse;
+          })
+        )
+        .subscribe({
+          next: (response) => {
+            response.state = requestN < totalRequests ? LoadingState.Loading : LoadingState.Done;
+
+            subscriber.next(response);
+
+            if (requestN < totalRequests) {
+              next(subscriber, requestN + 1);
+            }
+          },
+        });
+    };
+
     const response = new Observable<DataQueryResponse>((subscriber) => {
-      let mergedResponse: DataQueryResponse | null;
-      let pendingQueries = partition.length;
-      for (const range of partition) {
-        const requestId = `${request.requestId}_${partition.indexOf(range)}`;
-        super
-          .query({ ...request, range, requestId })
-          .pipe(
-            // in case of an empty query, this is somehow run twice. `share()` is no workaround here as the observable is generated from `of()`.
-            map((response) => {
-              const partialResponse = transformBackendResult(
-                response,
-                request.targets,
-                this.instanceSettings.jsonData.derivedFields ?? []
-              );
-
-              mergedResponse = mergeResponses(mergedResponse, partialResponse);
-
-              return mergedResponse;
-            })
-          )
-          .subscribe({
-            next: (response) => {
-              pendingQueries -= 1;
-              response.state = pendingQueries > 0 ? LoadingState.Loading : LoadingState.Done;
-
-              subscriber.next(response);
-            },
-            error: (error) => {
-              console.error(error);
-
-              // If we request fails, we consider the full request as failed.
-              subscriber.next({
-                state: LoadingState.Done,
-                error: undefined,
-                data: [],
-              });
-            },
-          });
-      }
+      next(subscriber, 1);
     });
 
     return response;
