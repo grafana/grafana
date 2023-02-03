@@ -546,7 +546,7 @@ func (r *xormRepositoryImpl) executeUntilDoneOrCancelled(ctx context.Context, sq
 			return totalAffected, ctx.Err()
 		default:
 			var affected int64
-			err := r.db.WithDbSession(ctx, func(session *db.Session) error {
+			err := r.db.WithTransactionalDbSession(ctx, func(session *db.Session) error {
 				res, err := session.Exec(sql)
 				if err != nil {
 					return err

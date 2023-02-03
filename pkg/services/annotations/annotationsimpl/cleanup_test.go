@@ -27,8 +27,6 @@ func TestAnnotationCleanUp(t *testing.T) {
 	})
 
 	createTestAnnotations(t, fakeSQL, 21, 6)
-	assertAnnotationCount(t, fakeSQL, "", 21)
-	assertAnnotationTagCount(t, fakeSQL, 42)
 
 	tests := []struct {
 		name                     string
@@ -165,6 +163,29 @@ func TestOldAnnotationsAreDeletedFirst(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestAnnotationCleanUp_Timeout(t *testing.T) {
+	annotationCount := 21 // createTestAnnotations works best in multiples of 3
+	fakeSQL := db.InitTestDB(t)
+	cfg := setting.NewCfg()
+	cfg.AnnotationCleanupJobBatchSize = 100 // batch size > total number of annotations
+	createTestAnnotations(t, fakeSQL, annotationCount, 6)
+	cleaner := ProvideCleanupService(fakeSQL, cfg)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
+	defer cancel()
+
+	// configuration to delete all but one of everything
+	cfg.AlertingAnnotationCleanupSetting = settingsFn(0, 1)
+	cfg.DashboardAnnotationCleanupSettings = settingsFn(0, 1)
+	cfg.APIAnnotationCleanupSettings = settingsFn(0, 1)
+
+	_, _, err := cleaner.Run(ctx, cfg)
+	require.ErrorIs(t, err, context.DeadlineExceeded)
+
+	// unfortunately we can't assert on the expected annotation counts here:
+	// occasional deletions succeed (one or more of the annotation "types").
+}
+
 func assertAnnotationCount(t *testing.T, fakeSQL db.DB, sql string, expectedCount int64) {
 	t.Helper()
 
@@ -225,18 +246,21 @@ func createTestAnnotations(t *testing.T, store db.DB, expectedCount int, oldAnno
 
 		err := store.WithDbSession(context.Background(), func(sess *db.Session) error {
 			_, err := sess.Insert(a)
-			require.NoError(t, err, "should be able to save annotation", err)
+			require.NoError(t, err)
 
 			// mimick the SQL annotation Save logic by writing records to the annotation_tag table
 			// we need to ensure they get deleted when we clean up annotations
 			for tagID := range []int{1, 2} {
 				_, err = sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", a.ID, tagID)
-				require.NoError(t, err, "should be able to save annotation tag ID", err)
+				require.NoError(t, err)
 			}
 			return err
 		})
 		require.NoError(t, err)
 	}
+
+	assertAnnotationCount(t, store, "", int64(expectedCount))
+	assertAnnotationTagCount(t, store, int64(expectedCount*2))
 }
 
 func settingsFn(maxAge time.Duration, maxCount int64) setting.AnnotationCleanupSettings {
