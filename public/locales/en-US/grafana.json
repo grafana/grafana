@@ -13,7 +13,7 @@
       "search": "Search"
     },
     "search-box": {
-      "placeholder": "Search Grafana"
+      "placeholder": "Search or jump to..."
     },
     "section": {
       "actions": "Actions",
@@ -160,7 +160,7 @@
       "title": "Alert rules"
     },
     "alerting-receivers": {
-      "subtitle": "Choose how to notify your  contact points when an alert instance fires",
+      "subtitle": "Choose how to notify your contact points when an alert instance fires",
       "title": "Contact points"
     },
     "alerting-silences": {
@@ -191,7 +191,7 @@
       "title": "Create"
     },
     "create-alert": {
-      "title": "Create alert rule"
+      "title": "New alert rule"
     },
     "create-dashboard": {
       "title": "Dashboard"
@@ -259,10 +259,10 @@
       "title": "New"
     },
     "new-dashboard": {
-      "title": "New dashboard"
+      "title": "Create dashboard"
     },
     "new-folder": {
-      "title": "New folder"
+      "title": "Create folder"
     },
     "org-settings": {
       "subtitle": "Manage preferences across an organization",

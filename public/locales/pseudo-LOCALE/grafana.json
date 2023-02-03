@@ -13,7 +13,7 @@
       "search": "Ŝęäřčĥ"
     },
     "search-box": {
-      "placeholder": "Ŝęäřčĥ Ğřäƒäŉä"
+      "placeholder": "Ŝęäřčĥ őř ĵūmp ŧő..."
     },
     "section": {
       "actions": "Åčŧįőŉş",
@@ -160,7 +160,7 @@
       "title": "Åľęřŧ řūľęş"
     },
     "alerting-receivers": {
-      "subtitle": "Đęčįđę ĥőŵ yőūř čőŉŧäčŧş äřę ŉőŧįƒįęđ ŵĥęŉ äŉ äľęřŧ ƒįřęş",
+      "subtitle": "Cĥőőşę ĥőŵ ŧő ŉőŧįƒy yőūř čőŉŧäčŧ pőįŉŧş ŵĥęŉ äŉ äľęřŧ įŉşŧäŉčę ƒįřęş",
       "title": "Cőŉŧäčŧ pőįŉŧş"
     },
     "alerting-silences": {
@@ -259,10 +259,10 @@
       "title": "Ńęŵ"
     },
     "new-dashboard": {
-      "title": "Ńęŵ đäşĥþőäřđ"
+      "title": "Cřęäŧę đäşĥþőäřđ"
     },
     "new-folder": {
-      "title": "Ńęŵ ƒőľđęř"
+      "title": "Cřęäŧę ƒőľđęř"
     },
     "org-settings": {
       "subtitle": "Mäŉäģę přęƒęřęŉčęş äčřőşş äŉ őřģäŉįžäŧįőŉ",

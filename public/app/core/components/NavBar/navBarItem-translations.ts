@@ -42,9 +42,9 @@ export function getNavTitle(navId: string | undefined) {
     case 'dashboards/library-panels':
       return t('nav.library-panels.title', 'Library panels');
     case 'dashboards/new':
-      return t('nav.new-dashboard.title', 'New dashboard');
+      return t('nav.new-dashboard.title', 'Create dashboard');
     case 'dashboards/folder/new':
-      return t('nav.new-folder.title', 'New folder');
+      return t('nav.new-folder.title', 'Create folder');
     case 'dashboards/import':
       return t('nav.create-import.title', 'Import');
     case 'scenes':

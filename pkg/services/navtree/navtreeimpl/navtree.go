@@ -440,7 +440,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext, hasEdit
 	if hasEditPerm {
 		if hasAccess(hasEditPermInAnyFolder, ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-				Text: "New dashboard", Icon: "plus", Url: s.cfg.AppSubURL + "/dashboard/new", HideFromTabs: true, Id: "dashboards/new", ShowIconInNavbar: true, IsCreateAction: true,
+				Text: "Create dashboard", Icon: "plus", Url: s.cfg.AppSubURL + "/dashboard/new", HideFromTabs: true, Id: "dashboards/new", ShowIconInNavbar: true, IsCreateAction: true,
 			})
 		}
 	}
@@ -448,7 +448,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext, hasEdit
 	if hasEditPerm && !s.features.IsEnabled(featuremgmt.FlagTopnav) {
 		if hasAccess(ac.ReqOrgAdminOrEditor, ac.EvalPermission(dashboards.ActionFoldersCreate)) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-				Text: "New folder", SubTitle: "Create a new folder to organize your dashboards", Id: "dashboards/folder/new",
+				Text: "Create folder", SubTitle: "Create a new folder to organize your dashboards", Id: "dashboards/folder/new",
 				Icon: "plus", Url: s.cfg.AppSubURL + "/dashboards/folder/new", HideFromTabs: true, ShowIconInNavbar: true,
 			})
 		}
