@@ -1,12 +1,10 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { locationService } from '@grafana/runtime';
 import { backendSrv } from 'app/core/services/backend_srv';
-
-import { configureStore } from '../../store/configureStore';
 
 import { PlaylistEditPage } from './PlaylistEditPage';
 import { Playlist } from './types';
@@ -24,7 +22,6 @@ jest.mock('app/core/components/TagFilter/TagFilter', () => ({
 
 async function getTestContext({ name, interval, items, uid }: Partial<Playlist> = {}) {
   jest.clearAllMocks();
-  const store = configureStore();
   const playlist = { name, items, interval, uid } as unknown as Playlist;
   const queryParams = {};
   const route: any = {};
@@ -33,16 +30,18 @@ async function getTestContext({ name, interval, items, uid }: Partial<Playlist> 
   const history: any = {};
   const getMock = jest.spyOn(backendSrv, 'get');
   const putMock = jest.spyOn(backendSrv, 'put');
+
   getMock.mockResolvedValue({
     name: 'Test Playlist',
     interval: '5s',
     items: [{ title: 'First item', type: 'dashboard_by_uid', order: 1, value: '1' }],
     uid: 'foo',
   });
+
   const { rerender } = render(
-    <Provider store={store}>
+    <TestProvider>
       <PlaylistEditPage queryParams={queryParams} route={route} match={match} location={location} history={history} />
-    </Provider>
+    </TestProvider>
   );
   await waitFor(() => expect(getMock).toHaveBeenCalledTimes(1));
 

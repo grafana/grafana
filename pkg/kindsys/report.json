@@ -117,6 +117,11 @@
     "apikey": {
       "category": "core",
       "codeowners": [],
+      "crd": {
+        "dummySchema": false,
+        "group": "",
+        "scope": ""
+      },
       "currentVersion": [
         0,
         0
@@ -279,6 +284,11 @@
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
+      "crd": {
+        "dummySchema": true,
+        "group": "dashboard.core.grafana.com",
+        "scope": "Namespaced"
+      },
       "currentVersion": [
         0,
         0
@@ -369,6 +379,11 @@
     "datasource": {
       "category": "core",
       "codeowners": [],
+      "crd": {
+        "dummySchema": false,
+        "group": "",
+        "scope": ""
+      },
       "currentVersion": [
         0,
         0
@@ -389,7 +404,9 @@
     },
     "debugpanelcfg": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "ryantxu"
+      ],
       "currentVersion": [
         0,
         0
@@ -397,13 +414,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
-        "docs": "n/a",
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/debugpanelcfg/schema-reference",
         "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/debug/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/debug/panelcfg.gen.ts"
       },
       "machineName": "debugpanelcfg",
-      "maturity": "planned",
+      "maturity": "experimental",
       "name": "DebugPanelCfg",
       "pluralMachineName": "debugpanelcfgs",
       "pluralName": "DebugPanelCfgs",
@@ -411,7 +428,9 @@
     },
     "elasticsearchdataquery": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/observability-logs"
+      ],
       "currentVersion": [
         0,
         0
@@ -419,13 +438,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
-        "docs": "n/a",
-        "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/elasticsearchdataquery/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/tsdb/elasticsearch/kinds/dataquery/types_dataquery_gen.go",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/elasticsearch/dataquery.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/elasticsearch/dataquery.gen.ts"
       },
       "machineName": "elasticsearchdataquery",
-      "maturity": "planned",
+      "maturity": "merged",
       "name": "ElasticsearchDataQuery",
       "pluralMachineName": "elasticsearchdataquerys",
       "pluralName": "ElasticsearchDataQuerys",
@@ -478,6 +497,11 @@
     "folder": {
       "category": "core",
       "codeowners": [],
+      "crd": {
+        "dummySchema": false,
+        "group": "",
+        "scope": ""
+      },
       "currentVersion": [
         0,
         0
@@ -816,6 +840,11 @@
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
+      "crd": {
+        "dummySchema": false,
+        "group": "librarypanel.core.grafana.com",
+        "scope": "Namespaced"
+      },
       "currentVersion": [
         0,
         0
@@ -881,7 +910,9 @@
     },
     "lokidataquery": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/observability-logs"
+      ],
       "currentVersion": [
         0,
         0
@@ -889,13 +920,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
-        "docs": "n/a",
-        "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/lokidataquery/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/tsdb/loki/kinds/dataquery/types_dataquery_gen.go",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/loki/dataquery.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/loki/dataquery.gen.ts"
       },
       "machineName": "lokidataquery",
-      "maturity": "planned",
+      "maturity": "experimental",
       "name": "LokiDataQuery",
       "pluralMachineName": "lokidataquerys",
       "pluralName": "LokiDataQuerys",
@@ -1181,6 +1212,11 @@
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
+      "crd": {
+        "dummySchema": false,
+        "group": "playlist.core.grafana.com",
+        "scope": "Namespaced"
+      },
       "currentVersion": [
         0,
         0
@@ -1252,6 +1288,11 @@
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
+      "crd": {
+        "dummySchema": false,
+        "group": "preferences.core.grafana.com",
+        "scope": "Namespaced"
+      },
       "currentVersion": [
         0,
         0
@@ -1323,6 +1364,11 @@
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
+      "crd": {
+        "dummySchema": false,
+        "group": "publicdashboard.core.grafana.com",
+        "scope": "Namespaced"
+      },
       "currentVersion": [
         0,
         0
@@ -1345,6 +1391,11 @@
     "query": {
       "category": "core",
       "codeowners": [],
+      "crd": {
+        "dummySchema": false,
+        "group": "",
+        "scope": ""
+      },
       "currentVersion": [
         0,
         0
@@ -1366,6 +1417,11 @@
     "queryhistory": {
       "category": "core",
       "codeowners": [],
+      "crd": {
+        "dummySchema": false,
+        "group": "",
+        "scope": ""
+      },
       "currentVersion": [
         0,
         0
@@ -1392,6 +1448,11 @@
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
+      "crd": {
+        "dummySchema": false,
+        "group": "serviceaccount.core.grafana.com",
+        "scope": "Namespaced"
+      },
       "currentVersion": [
         0,
         0
@@ -1513,6 +1574,11 @@
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
+      "crd": {
+        "dummySchema": false,
+        "group": "team.core.grafana.com",
+        "scope": "Namespaced"
+      },
       "currentVersion": [
         0,
         0
@@ -1651,6 +1717,11 @@
     "thumb": {
       "category": "core",
       "codeowners": [],
+      "crd": {
+        "dummySchema": false,
+        "group": "",
+        "scope": ""
+      },
       "currentVersion": [
         0,
         0
@@ -1694,6 +1765,11 @@
     "user": {
       "category": "core",
       "codeowners": [],
+      "crd": {
+        "dummySchema": false,
+        "group": "",
+        "scope": ""
+      },
       "currentVersion": [
         0,
         0
@@ -1906,9 +1982,11 @@
           "bargaugepanelcfg",
           "dashboard",
           "dashboardlistpanelcfg",
+          "debugpanelcfg",
           "gaugepanelcfg",
           "histogrampanelcfg",
           "librarypanel",
+          "lokidataquery",
           "newspanelcfg",
           "nodegraphpanelcfg",
           "phlaredataquery",
@@ -1921,7 +1999,7 @@
           "textpanelcfg",
           "xychartpanelcfg"
         ],
-        "count": 19
+        "count": 20
       },
       "mature": {
         "name": "mature",
@@ -1932,13 +2010,14 @@
         "name": "merged",
         "items": [
           "alertgroupspanelcfg",
+          "elasticsearchdataquery",
           "playlist",
           "preferences",
           "publicdashboard",
           "serviceaccount",
           "team"
         ],
-        "count": 6
+        "count": 7
       },
       "planned": {
         "name": "planned",
@@ -1954,8 +2033,6 @@
           "dashboarddataquery",
           "dashboarddatasourcecfg",
           "datasource",
-          "debugpanelcfg",
-          "elasticsearchdataquery",
           "elasticsearchdatasourcecfg",
           "flamegraphpanelcfg",
           "folder",
@@ -1973,7 +2050,6 @@
           "jaegerdatasourcecfg",
           "livepanelcfg",
           "logspanelcfg",
-          "lokidataquery",
           "lokidatasourcecfg",
           "microsoftsqlserverdataquery",
           "microsoftsqlserverdatasourcecfg",
@@ -1998,7 +2074,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 54
+        "count": 52
       },
       "stable": {
         "name": "stable",

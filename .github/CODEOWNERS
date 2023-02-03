@@ -438,7 +438,6 @@ lerna.json @grafana/frontend-ops
 /public/app/features/explore/TraceView/ @grafana/observability-traces-and-profiling
 
 /public/api-merged.json @grafana/backend-platform
-/public/api-spec.json @grafana/backend-platform
 /public/openapi3.json @grafana/backend-platform
 /public/app/angular/ @torkelo
 /public/app/app.ts @grafana/frontend-ops
@@ -550,7 +549,7 @@ embed.go @grafana/grafana-as-code
 /pkg/registry/ @grafana/grafana-as-code
 /pkg/codegen/ @grafana/grafana-as-code
 /pkg/kindsys/ @grafana/grafana-as-code
-/pkg/kindsys/kindcat_custom.cue @grafana/apps-platform-core
+/pkg/kindsys/kindcat_custom.cue @grafana/cloud-app-platform-squad
 /pkg/kinds/*/*_gen.go @grafana/grafana-as-code
 /pkg/registry/corekind/ @grafana/grafana-as-code
 /public/app/plugins/*gen.go @grafana/grafana-as-code
@@ -577,7 +576,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/commands.yml @torkelo
 /.github/workflows/detect-breaking-changes-* @grafana/plugins-platform-frontend
 /.github/workflows/doc-validator.yml @grafana/docs-grafana
-/.github/workflows/enterprise-pr-check.yml @grafana/grafana-release-eng
 /.github/workflows/epic-add-to-platform-ux-parent-project.yml @meanmina
 /.github/workflows/github-release.yml @torkelo
 /.github/workflows/issue-labeled.yml @armandgrillet

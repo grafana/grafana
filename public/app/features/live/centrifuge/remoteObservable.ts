@@ -14,7 +14,7 @@ export const remoteObservableAsObservable = <T>(remoteObs: comlink.RemoteObject<
       comlink.proxy((nextValueInRemoteObs: T) => {
         subscriber.next(nextValueInRemoteObs);
       }),
-      comlink.proxy((err) => {
+      comlink.proxy((err: unknown) => {
         subscriber.error(err);
       }),
       comlink.proxy(() => {
