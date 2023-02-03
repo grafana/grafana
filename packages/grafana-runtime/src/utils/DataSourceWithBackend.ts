@@ -120,7 +120,7 @@ class DataSourceWithBackend<
    * Ideally final -- any other implementation may not work as expected
    */
   query(request: DataQueryRequest<TQuery>): Observable<DataQueryResponse> {
-    const { intervalMs, maxDataPoints, range, requestId, hideFromInspector = false } = request;
+    const { intervalMs, maxDataPoints, queryCachingTTL, range, requestId, hideFromInspector = false } = request;
     let targets = request.targets;
 
     if (this.filterQuery) {
@@ -172,6 +172,7 @@ class DataSourceWithBackend<
         datasourceId, // deprecated!
         intervalMs,
         maxDataPoints,
+        queryCachingTTL,
       };
     });
 
