@@ -136,7 +136,7 @@ export const getSupplementaryQueryProvider = (
                 });
               }
             } else {
-              // 2) Data source doesn't support the supplementary query -> use fallback
+              // 3) Data source doesn't support the supplementary query -> use fallback
               // the fallback cannot determine data availability based on request, it
               // works on the results once they are available
               return getSupplementaryQueryFallback(type, explorePanelData);
