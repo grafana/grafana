@@ -25,7 +25,7 @@ const (
 	proxyFieldLogin  = "Login"
 	proxyFieldRole   = "Role"
 	proxyFieldGroups = "Groups"
-	proxyCachePrefix = "auth-proxy-sync-ttl:"
+	proxyCachePrefix = "auth-proxy-sync-ttl"
 )
 
 var proxyFields = [...]string{proxyFieldName, proxyFieldEmail, proxyFieldLogin, proxyFieldRole, proxyFieldGroups}
@@ -91,7 +91,6 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 			// if we for some reason cannot find the user we proceed with the normal flow, authenticate with ProxyClient
 			// and perform syncs
 			if usr != nil {
-				// skip all syncs
 				c.log.Debug("user was loaded from cache, skip syncs", "userId", usr.UserID)
 				return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, usr.UserID), usr, authn.ClientParams{}), nil
 			}
@@ -120,7 +119,7 @@ func (c *Proxy) Priority() uint {
 }
 
 func (c *Proxy) Hook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
-	if identity.ClientParams.CacheAuthProxyKey != "" {
+	if identity.ClientParams.CacheAuthProxyKey == "" {
 		return nil
 	}
 
@@ -210,7 +209,6 @@ func getAdditionalProxyHeaders(r *authn.Request, cfg *setting.Cfg) map[string]st
 
 func getProxyCacheKey(username string, additional map[string]string) (string, bool) {
 	key := strings.Builder{}
-	key.WriteString(proxyCachePrefix)
 	key.WriteString(username)
 	for _, k := range proxyFields {
 		if v, ok := additional[k]; ok {
@@ -223,5 +221,5 @@ func getProxyCacheKey(username string, additional map[string]string) (string, bo
 		return "", false
 	}
 
-	return hex.EncodeToString(hash.Sum(nil)), true
+	return strings.Join([]string{proxyCachePrefix, hex.EncodeToString(hash.Sum(nil))}, ":"), true
 }
