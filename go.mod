@@ -252,7 +252,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.7.0
 	github.com/google/go-github/v45 v45.2.0
 	github.com/grafana/codejen v0.0.3
-	github.com/grafana/dskit v0.0.0-20230126115530-71478074eab8
+	github.com/grafana/dskit v0.0.0-20230202092222-880a7f8141cc
 	github.com/grafana/phlare/api v0.1.2
 	github.com/huandu/xstrings v1.3.1
 	github.com/jmoiron/sqlx v1.3.5
@@ -425,6 +425,3 @@ replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-aler
 replace google.golang.org/grpc => google.golang.org/grpc v1.45.0
 
 replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20220421151946-72621c1f0bd3
-
-// Remove this once https://github.com/grafana/dskit/pull/258 is merged.
-replace github.com/grafana/dskit => github.com/gotjosh/dskit v0.0.0-20230131123646-8dda768daa27
