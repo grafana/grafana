@@ -170,7 +170,17 @@ export default class InfluxQueryModel {
       value = this.templateSrv.replace(value, this.scopedVars, 'regex');
     }
 
-    return str + '"' + tag.key + '" ' + operator + ' ' + value;
+    let escapedKey = `"${tag.key}"`;
+
+    if (tag.key.endsWith('::tag')) {
+      escapedKey = `"${tag.key.slice(0, -5)}"::tag`;
+    }
+
+    if (tag.key.endsWith('::field')) {
+      escapedKey = `"${tag.key.slice(0, -7)}"::field`;
+    }
+
+    return str + escapedKey + ' ' + operator + ' ' + value;
   }
 
   getMeasurementAndPolicy(interpolate: any) {

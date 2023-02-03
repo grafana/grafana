@@ -98,10 +98,23 @@ func init() {
 }
 
 func fieldRenderer(query *Query, queryContext *backend.QueryDataRequest, part *QueryPart, innerExpr string) string {
-	if part.Params[0] == "*" {
+	param := part.Params[0]
+
+	if param == "*" {
 		return "*"
 	}
-	return fmt.Sprintf(`"%s"`, part.Params[0])
+
+	escapedParam := fmt.Sprintf(`"%s"`, param)
+
+	if strings.HasSuffix(param, "::tag") {
+		escapedParam = fmt.Sprintf(`"%s"::tag`, strings.TrimSuffix(param, "::tag"))
+	}
+
+	if strings.HasSuffix(param, "::field") {
+		escapedParam = fmt.Sprintf(`"%s"::field`, strings.TrimSuffix(param, "::field"))
+	}
+
+	return escapedParam
 }
 
 func functionRenderer(query *Query, queryContext *backend.QueryDataRequest, part *QueryPart, innerExpr string) string {

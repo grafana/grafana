@@ -63,7 +63,7 @@ function withTemplateVariableOptions(optionsPromise: Promise<string[]>, filter?:
 // it is possible to add fields into the `InfluxQueryTag` structures, and they do work,
 // but in some cases, when we do metadata queries, we have to remove them from the queries.
 function filterTags(parts: InfluxQueryTag[], allTagKeys: Set<string>): InfluxQueryTag[] {
-  return parts.filter((t) => allTagKeys.has(t.key));
+  return parts.filter((t) => t.key.endsWith('::tag') || allTagKeys.has(t.key + '::tag'));
 }
 
 export const Editor = (props: Props): JSX.Element => {
@@ -76,10 +76,16 @@ export const Editor = (props: Props): JSX.Element => {
   const { datasource } = props;
   const { measurement, policy } = query;
 
-  const allTagKeys = useMemo(() => {
-    return getTagKeysForMeasurementAndTags(measurement, policy, [], datasource).then((tags) => {
-      return new Set(tags);
-    });
+  const allTagKeys = useMemo(async () => {
+    const tagKeys = (await getTagKeysForMeasurementAndTags(measurement, policy, [], datasource)).map(
+      (tag) => `${tag}::tag`
+    );
+
+    const fieldKeys = (await getFieldKeysForMeasurement(measurement || '', policy, datasource)).map(
+      (field) => `${field}::field`
+    );
+
+    return new Set([...tagKeys, ...fieldKeys]);
   }, [measurement, policy, datasource]);
 
   const selectLists = useMemo(() => {
@@ -98,12 +104,14 @@ export const Editor = (props: Props): JSX.Element => {
 
   // the following function is not complicated enough to memoize, but it's result
   // is used in both memoized and un-memoized parts, so we have no choice
-  const getTagKeys = useMemo(() => {
-    return () =>
-      allTagKeys.then((keys) =>
-        getTagKeysForMeasurementAndTags(measurement, policy, filterTags(query.tags ?? [], keys), datasource)
-      );
-  }, [measurement, policy, query.tags, datasource, allTagKeys]);
+  const getTagKeys = useMemo(
+    () => async () => {
+      const selectedTagKeys = new Set(query.tags?.map((tag) => tag.key));
+
+      return [...(await allTagKeys)].filter((tagKey) => !selectedTagKeys.has(tagKey));
+    },
+    [query.tags, allTagKeys]
+  );
 
   const groupByList = useMemo(() => {
     const dynamicGroupByPartOptions = new Map([['tag_0', getTagKeys]]);
