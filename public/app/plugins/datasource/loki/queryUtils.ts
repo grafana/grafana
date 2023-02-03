@@ -1,7 +1,14 @@
 import { SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
-import { DataQueryResponse, dateTime, DurationUnit, MutableDataFrame, TimeRange } from '@grafana/data';
+import {
+  DataQueryRequest,
+  DataQueryResponse,
+  dateTime,
+  DurationUnit,
+  MutableDataFrame,
+  TimeRange,
+} from '@grafana/data';
 import {
   parser,
   LineFilter,
@@ -390,4 +397,26 @@ function combineFrames(dest: MutableDataFrame, source: MutableDataFrame) {
     dest.fields[1].values.add(source.fields[1].values.get(j));
   }
   dest.reverse();
+}
+
+/**
+ * Checks if the current response has reached the requested amount of results or not.
+ * For log queries, we will ensure that the current amount of results doesn't go beyond `maxLines`.
+ */
+export function resultLimitReached(request: DataQueryRequest<LokiQuery>, result: DataQueryResponse) {
+  const logRequests = request.targets.filter((target) => isLogsQuery(target.expr));
+
+  if (logRequests.length === 0) {
+    return false;
+  }
+
+  for (const request of logRequests) {
+    for (const frame of result.data) {
+      if (request.maxLines && frame?.fields[0].values.length >= request.maxLines) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }

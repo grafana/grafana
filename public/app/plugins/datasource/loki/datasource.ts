@@ -79,6 +79,7 @@ import {
   requestSupportsPartitioning,
   mergeResponses,
   combineResponses,
+  resultLimitReached,
 } from './queryUtils';
 import { sortDataFrameByTime } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
@@ -327,13 +328,14 @@ export class LokiDatasource
         )
         .subscribe({
           next: (response) => {
-            response.state = requestN > 1 ? LoadingState.Streaming : LoadingState.Done;
+            if (requestN > 1 && resultLimitReached(request, response) === false) {
+              response.state = LoadingState.Streaming;
+              next(subscriber, requestN - 1);
+            } else {
+              response.state = LoadingState.Done;
+            }
 
             subscriber.next(response);
-
-            if (requestN > 1) {
-              next(subscriber, requestN - 1);
-            }
           },
         });
     };
