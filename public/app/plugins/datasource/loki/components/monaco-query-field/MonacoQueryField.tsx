@@ -110,6 +110,34 @@ const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasourc
     };
   }, []);
 
+  const setPlaceholder = (monaco: typeof monacoTypes, editor: monacoTypes.editor.IStandaloneCodeEditor) => {
+    const placeholderDecorators = [
+      {
+        range: new monaco.Range(1, 1, 1, 1),
+        options: {
+          className: styles.placeholder,
+          isWholeLine: true,
+        },
+      },
+    ];
+
+    let decorators: string[] = [];
+
+    const checkDecorators: () => void = () => {
+      const model = editor.getModel();
+
+      if (!model) {
+        return;
+      }
+
+      const newDecorators = model.getValueLength() === 0 ? placeholderDecorators : [];
+      decorators = model.deltaDecorations(decorators, newDecorators);
+    };
+
+    checkDecorators();
+    editor.onDidChangeModelContent(checkDecorators);
+  };
+
   return (
     <div
       aria-label={selectors.components.QueryField.container}
@@ -214,31 +242,7 @@ const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasourc
             }
           });
 
-          const placeholderDecorators = [
-            {
-              range: new monaco.Range(1, 1, 1, 1),
-              options: {
-                className: styles.placeholder,
-                isWholeLine: true,
-              },
-            },
-          ];
-
-          let decorators: string[] = [];
-
-          const checkDecorators: () => void = () => {
-            const model = editor.getModel();
-
-            if (!model) {
-              return;
-            }
-
-            const newDecorators = model.getValueLength() === 0 ? placeholderDecorators : [];
-            decorators = model.deltaDecorations(decorators, newDecorators);
-          };
-
-          checkDecorators();
-          editor.onDidChangeModelContent(checkDecorators);
+          setPlaceholder(monaco, editor);
         }}
       />
     </div>
