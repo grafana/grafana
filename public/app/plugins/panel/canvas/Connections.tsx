@@ -4,7 +4,7 @@ import { ConnectionPath } from 'app/features/canvas';
 import { ElementState } from 'app/features/canvas/runtime/element';
 import { Scene } from 'app/features/canvas/runtime/scene';
 
-import { CONNECTION_ANCHOR_ALT, ConnectionAnchors, connectionAnchorHighlightOffset } from './ConnectionAnchors';
+import { CONNECTION_ANCHOR_ALT, ConnectionAnchors, CONNECTION_ANCHOR_HIGHLIGHT_OFFSET } from './ConnectionAnchors';
 import { ConnectionSVG } from './ConnectionSVG';
 
 export class Connections {
@@ -121,7 +121,7 @@ export class Connections {
     const connectionLineY1 = this.connectionLine.y1.baseVal.value;
     if (!this.didConnectionLeaveHighlight) {
       const connectionLength = Math.hypot(x - connectionLineX1, y - connectionLineY1);
-      if (connectionLength > connectionAnchorHighlightOffset && this.connectionSVG) {
+      if (connectionLength > CONNECTION_ANCHOR_HIGHLIGHT_OFFSET && this.connectionSVG) {
         this.didConnectionLeaveHighlight = true;
         this.connectionSVG.style.display = 'block';
         this.isDrawingConnection = true;
@@ -206,8 +206,8 @@ export class Connections {
       const connectionStartTargetBox = selectedTarget.getBoundingClientRect();
       const parentBoundingRect = this.scene.div.parentElement.getBoundingClientRect();
 
-      const x = connectionStartTargetBox.x - parentBoundingRect.x + connectionAnchorHighlightOffset;
-      const y = connectionStartTargetBox.y - parentBoundingRect.y + connectionAnchorHighlightOffset;
+      const x = connectionStartTargetBox.x - parentBoundingRect.x + CONNECTION_ANCHOR_HIGHLIGHT_OFFSET;
+      const y = connectionStartTargetBox.y - parentBoundingRect.y + CONNECTION_ANCHOR_HIGHLIGHT_OFFSET;
 
       const mouseX = clientX - parentBoundingRect.x;
       const mouseY = clientY - parentBoundingRect.y;
