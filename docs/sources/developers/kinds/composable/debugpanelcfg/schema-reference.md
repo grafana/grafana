@@ -6,12 +6,12 @@ title: DebugPanelCfg kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
-# DebugPanelCfg kind
+## DebugPanelCfg
 
-## Maturity: experimental
-## Version: 0.0
+#### Maturity: experimental
+#### Version: 0.0
 
-## Properties
+
 
 | Property       | Type                    | Required | Description                                                               |
 |----------------|-------------------------|----------|---------------------------------------------------------------------------|
@@ -19,9 +19,7 @@ title: DebugPanelCfg kind
 | `PanelOptions` | [object](#paneloptions) | **Yes**  |                                                                           |
 | `UpdateConfig` | [object](#updateconfig) | **Yes**  |                                                                           |
 
-## PanelOptions
-
-### Properties
+### PanelOptions
 
 | Property   | Type                          | Required | Description                                                               |
 |------------|-------------------------------|----------|---------------------------------------------------------------------------|
@@ -30,17 +28,13 @@ title: DebugPanelCfg kind
 
 ### UpdateConfig
 
-#### Properties
-
 | Property        | Type    | Required | Description |
 |-----------------|---------|----------|-------------|
 | `dataChanged`   | boolean | **Yes**  |             |
 | `render`        | boolean | **Yes**  |             |
 | `schemaChanged` | boolean | **Yes**  |             |
 
-## UpdateConfig
-
-### Properties
+### UpdateConfig
 
 | Property        | Type    | Required | Description |
 |-----------------|---------|----------|-------------|
