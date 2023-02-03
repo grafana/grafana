@@ -6,20 +6,18 @@ title: AlertGroupsPanelCfg kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
-# AlertGroupsPanelCfg kind
+## AlertGroupsPanelCfg
 
-## Maturity: merged
-## Version: 0.0
+#### Maturity: merged
+#### Version: 0.0
 
-## Properties
+
 
 | Property       | Type                    | Required | Description |
 |----------------|-------------------------|----------|-------------|
 | `PanelOptions` | [object](#paneloptions) | **Yes**  |             |
 
-## PanelOptions
-
-### Properties
+### PanelOptions
 
 | Property       | Type    | Required | Description                                                 |
 |----------------|---------|----------|-------------------------------------------------------------|

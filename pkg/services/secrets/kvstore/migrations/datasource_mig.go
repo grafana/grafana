@@ -69,9 +69,9 @@ func (s *DataSourceSecretMigrationService) Migrate(ctx context.Context) error {
 			// Secrets are set by the update data source function if the SecureJsonData is set in the command
 			// Secrets are deleted by the update data source function if the disableSecretsCompatibility flag is enabled
 			err = s.dataSourcesService.UpdateDataSource(ctx, &datasources.UpdateDataSourceCommand{
-				Id:             ds.Id,
-				OrgId:          ds.OrgId,
-				Uid:            ds.Uid,
+				ID:             ds.ID,
+				OrgID:          ds.OrgID,
+				UID:            ds.UID,
 				Name:           ds.Name,
 				JsonData:       ds.JsonData,
 				SecureJsonData: secureJsonData,

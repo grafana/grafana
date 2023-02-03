@@ -6,12 +6,12 @@ title: Preferences kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
-# Preferences kind
+## Preferences
 
-## Maturity: merged
-## Version: 0.0
+#### Maturity: merged
+#### Version: 0.0
 
-## Properties
+The user or team frontend preferences
 
 | Property           | Type                                              | Required | Description                                                                     |
 |--------------------|---------------------------------------------------|----------|---------------------------------------------------------------------------------|
@@ -22,9 +22,7 @@ title: Preferences kind
 | `timezone`         | string                                            | No       | The timezone selection<br/>TODO: this should use the timezone defined in common |
 | `weekStart`        | string                                            | No       | day of the week (sunday, monday, etc)                                           |
 
-## QueryHistoryPreference
-
-### Properties
+### QueryHistoryPreference
 
 | Property  | Type   | Required | Description                                 |
 |-----------|--------|----------|---------------------------------------------|
