@@ -5,6 +5,16 @@ import { PanelModel } from '../../../state';
 
 import { supportedDatasources } from './SupportedPubdashDatasources';
 
+export enum PublicDashboardShareType {
+  PUBLIC = 'public',
+  EMAIL = 'email',
+}
+
+export interface SharingRecipient {
+  uid: string;
+  recipient: string;
+}
+
 export interface PublicDashboardSettings {
   annotationsEnabled: boolean;
   isEnabled: boolean;
@@ -16,6 +26,8 @@ export interface PublicDashboard extends PublicDashboardSettings {
   uid: string;
   dashboardUid: string;
   timeSettings?: object;
+  share: PublicDashboardShareType;
+  recipients?: SharingRecipient[];
 }
 
 // Instance methods
