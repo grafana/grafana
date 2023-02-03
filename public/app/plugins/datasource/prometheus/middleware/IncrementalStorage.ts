@@ -23,7 +23,7 @@ import { PromQuery } from '../types';
 // Get link to prometheus doc for the above comment
 const INCREMENTAL_QUERY_OVERLAP_DURATION_MS = 60 * 10 * 1000;
 const STORAGE_TIME_INDEX = '__time__';
-const DEBUG = true;
+const DEBUG = false;
 interface IncrementalStorageOptions {
   queryOverlapDurationMs: number;
   storageTimeIndex: string;
@@ -186,7 +186,8 @@ export class IncrementalStorage {
         timeValuesFromStorage[i] - (originalRange.start - intervalInSeconds * 1000),
         timeValuesFromStorage[i],
         originalRange.start,
-        intervalInSeconds
+        intervalInSeconds,
+        i
       );
     }
 
@@ -364,18 +365,20 @@ export class IncrementalStorage {
     request.targets.forEach((target) => {
       // Filter out the series that aren't for this query
       const timeSeriesForThisQuery = data.filter((response) => response.refId === target.refId);
-      timeSeriesForThisQuery.forEach((response) => {
+
+      let responseFieldsToSet: Array<{ index: string; values: number[] }> = [];
+      timeSeriesForThisQuery.forEach((responseFrame) => {
         // Concatenate query expression and step to use as index for all series returned by query
         // Multiple queries with same expression and step will share the same cache, I don't think that's a problem?
         const responseQueryExpressionAndStepString = this.createStorageIndexFromRequestTarget(target, request);
 
         // For each query response get the time and the values
-        const responseTimeFields = response.fields?.filter((field) => field.name === TIME_SERIES_TIME_FIELD_NAME);
+        const responseTimeFields = responseFrame.fields?.filter((field) => field.name === TIME_SERIES_TIME_FIELD_NAME);
 
         const responseTimeField = responseTimeFields[0];
 
         // We're consuming these dataFrames after the transform which will remove some duplicate time values that is sent in the raw response from prometheus
-        const responseValueFields = response.fields?.filter((field) => field.name !== TIME_SERIES_TIME_FIELD_NAME);
+        const responseValueFields = responseFrame.fields?.filter((field) => field.name !== TIME_SERIES_TIME_FIELD_NAME);
 
         // If we aren't able to create the query expression string to be used as the index, we should stop now
         if (!responseQueryExpressionAndStepString) {
@@ -444,7 +447,9 @@ export class IncrementalStorage {
               valueField.values = new ArrayVector(allValueFramesMerged);
 
               // If we set the time values here we'll screw up the rest of the loop, we should be checking to see if each series has the same time steps, or we need to clear the cache
-              timeValuesStorage = allTimeValuesMerged;
+              if (!timeValuesStorage.length) {
+                timeValuesStorage = allTimeValuesMerged;
+              }
 
               // this.setStorageTimeFields(responseQueryExpressionAndStepString, allTimeValuesMerged);
               this.setStorageFieldsValues(
@@ -462,10 +467,33 @@ export class IncrementalStorage {
 
         // If we changed the time steps, let's mutate the dataframe
         if (timeValuesStorage.length > 0 && responseTimeField?.values) {
+          responseFieldsToSet.push({ index: responseQueryExpressionAndStepString, values: timeValuesStorage });
           responseTimeField.values = new ArrayVector(timeValuesStorage);
-          this.setStorageTimeFields(responseQueryExpressionAndStepString, timeValuesStorage);
+          // this.setStorageTimeFields(responseQueryExpressionAndStepString, timeValuesStorage);
         }
       });
+
+      responseFieldsToSet.forEach((field) => {
+        if (field.values.length !== responseFieldsToSet[0].values.length) {
+          if (DEBUG) {
+            console.warn('One of the fields was different length!');
+          }
+        }
+      });
+
+      const responseFields = responseFieldsToSet[0];
+      if (responseFields) {
+        const values = new ArrayVector(responseFields.values);
+        // Save the values in storage
+        this.setStorageTimeFields(responseFields.index, responseFields.values);
+        timeSeriesForThisQuery.forEach((dataFrame) => {
+          const responseTimeFields = dataFrame.fields?.filter((field) => field.name === TIME_SERIES_TIME_FIELD_NAME);
+          responseTimeFields.forEach((timeField) => {
+            // Overwrite the existing dataframe time fields with the above
+            timeField.values = values;
+          });
+        });
+      }
     });
 
     return dataFrames;
@@ -574,14 +602,25 @@ export class IncrementalStorage {
         this.timeSrv.timeRange().to.utcOffset() * 60
       );
 
+      const newRange = alignRange(
+        dateTime(neededDurations[0].start - INCREMENTAL_QUERY_OVERLAP_DURATION_MS).valueOf(),
+        dateTime(neededDurations[0].end).valueOf(),
+        interval,
+        this.timeSrv.timeRange().to.utcOffset() * 60
+      );
+
       const rawTimeRange = {
-        from: dateTime(neededDurations[0].start - INCREMENTAL_QUERY_OVERLAP_DURATION_MS),
-        to: dateTime(neededDurations[0].end),
+        from: newRange.start,
+        to: newRange.end,
       };
 
-      const timeRange: TimeRange = {
-        ...rawTimeRange,
-        raw: rawTimeRange,
+      const newTimeRange: TimeRange = {
+        from: dateTime(rawTimeRange.from),
+        to: dateTime(rawTimeRange.to),
+        raw: {
+          from: dateTime(newRange.start),
+          to: dateTime(newRange.end),
+        },
       };
 
       if (DEBUG) {
@@ -589,7 +628,7 @@ export class IncrementalStorage {
       }
 
       // calculate new from/tos
-      return { request: { ...request, range: timeRange }, originalRange: originalRangeAligned };
+      return { request: { ...request, range: newTimeRange }, originalRange: originalRangeAligned };
     } else {
       if (DEBUG) {
         console.warn('QUERY NOT CONTAINED BY CACHE, NOT MODIFYING REQUEST', request);
