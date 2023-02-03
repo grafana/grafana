@@ -108,8 +108,14 @@ func addMigrationInfo(da *dashAlert) (map[string]string, map[string]string) {
 
 func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string) (*alertRule, error) {
 	lbls, annotations := addMigrationInfo(&da)
-	annotations["message"] = da.Message
-	var err error
+
+	tokens, err := tokenizeTmpl(da.Message)
+	if err != nil {
+		annotations["message"] = da.Message
+	} else {
+		tokens = prefixLabelsVariableToTokens(tokens)
+		annotations["message"] = tokens.String()
+	}
 
 	data, err := migrateAlertRuleQueries(cond.Data)
 	if err != nil {
@@ -326,4 +332,16 @@ func extractChannelIDs(d dashAlert) (channelUids []uidOrID) {
 	}
 
 	return channelUids
+}
+
+// prefixLabelsVariableToTokens adds $labels. before each variable
+func prefixLabelsVariableToTokens(tokens Tokens) Tokens {
+	result := make(Tokens, 0, len(tokens))
+	for _, token := range tokens {
+		if len(token.Variable) > 0 {
+			token.Variable = "$labels." + token.Variable
+		}
+		result = append(result, token)
+	}
+	return result
 }

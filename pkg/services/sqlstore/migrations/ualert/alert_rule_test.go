@@ -2,6 +2,7 @@ package ualert
 
 import (
 	"encoding/json"
+	"github.com/stretchr/testify/assert"
 	"strings"
 	"testing"
 
@@ -138,6 +139,12 @@ func TestMakeAlertRule(t *testing.T) {
 		require.NoError(t, err)
 		require.True(t, ar.IsPaused)
 	})
+}
+
+func TestPrefixLabelsVariableToTokens(t *testing.T) {
+	tokens := Tokens{{Variable: "instance"}, {Space: ' '}, {Literal: "is down"}}
+	expected := Tokens{{Variable: "$labels.instance"}, {Space: ' '}, {Literal: "is down"}}
+	assert.Equal(t, expected, prefixLabelsVariableToTokens(tokens))
 }
 
 func createTestDashAlert() dashAlert {
