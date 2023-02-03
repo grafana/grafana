@@ -17,8 +17,8 @@ var (
 )
 
 type APIKey struct {
-	ID               int64        `db:"id"`
-	OrgID            int64        `db:"org_id"`
+	ID               int64        `db:"id" xorm:"pk autoincr 'id'"`
+	OrgID            int64        `db:"org_id" xorm:"org_id"`
 	Name             string       `db:"name"`
 	Key              string       `db:"key"`
 	Role             org.RoleType `db:"role"`
@@ -36,7 +36,7 @@ func (k APIKey) TableName() string { return "api_key" }
 type AddCommand struct {
 	Name             string       `json:"name" binding:"Required"`
 	Role             org.RoleType `json:"role" binding:"Required"`
-	OrgID            int64        `json:"-"`
+	OrgID            int64        `json:"-" xorm:"org_id"`
 	Key              string       `json:"-"`
 	SecondsToLive    int64        `json:"secondsToLive"`
 	ServiceAccountID *int64       `json:"-"`
