@@ -90,6 +90,72 @@ This is currently a beta feature that can be accessed by enabling the `datasourc
 
 {{< figure src="/media/docs/grafana/screenshot-datasource-connection-onboarding-whats-new-9-4.png" max-width="750px" caption="Admin view of data source connection page on dashboard creation" >}}
 
+## Alerting: alert rules
+
+We've made the following changes to alert rules
+
+### Declare incidents from firing alerts
+
+Declare an incident from a firing alert, streamlining the alert to incident workflow.
+
+### Make copies of alert rules and notification templates
+
+To help you reuse existing alert rules or templates, make copies of alert rules from the Alert rule list view and templates from the Contact points page.
+
+### View query definitions for provisioned alerts
+
+View read-only query definitions for provisioned alerts from the Alert rule details page. Check quickly if your alert rule queries are correct, without diving into your "as-code" repository for rule definitions.
+
+### Export alert rules to use in the provisioning API or files
+
+Create and tune an alert rule in the UI, then export to YAML or JSON, and use it in the provisioning API or files. You can also export an entire rule group to review or use. This is supported in both the UI and provisioning API.
+
+### Pause alert rule evaluation
+
+Pause alert rule evaluation to prevent noisy alerting while tuning your alerts. Pausing stops alert rule evaluation and does not create any alert instances. This is different to mute timings, which stop notifications from being delivered, but still allow for alert rule evaluation and the creation of alert instances.
+
+![Pause alert rule evaluation](/media/docs/alerting/pause-alerts.png)
+
+### View evaluation interval on the Group view
+
+View the evaluation interval more easily from the grouped view on the Alert list page. The view now also always displays recording and normal alert rules and highlights alert rule status in different colors.
+
+### Improved search for your alert rules
+
+When managing large volumes of alerts, use extended alert rule search capabilities to filter on folders, evaluation groups, and rules. Additionally, you can filter alert rules by their properties like labels, state, type, and health.
+
+### Adjust the amount and resolution of data used in your alerting queries
+
+Lower costs and improve performance by adjusting the maximum number of data points returned from your alerting queries.
+
+### Edit alert rule evaluation interval
+
+Simplifies editing the evaluation interval for an alert rule within a new group. You no longer have to save the alert rule and group before editing the evaluation interval.
+
+## Alerting: contact points
+
+### View Grafana OnCall contact point
+
+Connecting your OnCall workflows just got easier. OnCall has been added as a contact point to simplify the integration between alert notifications and your OnCall implementation.
+
+### Add support for Discord as a contact point receiver
+
+Adds Discord as a contact point receiver for Grafana Cloud alert rules.
+
+## Alerting: administration
+
+### Better guidance to configure your Alertmanagers
+
+Get additional help while configuring your Alertmanager. If you enter an invalid Alertmanager configuration, an error message displays, and you can choose from a previous working configuration to restart it.
+
+### Alerting landing page
+
+Introduces a new landing page that helps you get started quickly with Alerting. It also provides you with at a glance information on how Alerting works and a video to introduce you to key concepts.
+
+### Compatibility with AWS Aurora
+
+Grafana Alerting is now compatible with AWS Aurora, but does not provide technical support for it.
+
 ## Command palette enhancements
 
 The command palette has been updated to provide a more efficient way to navigate Grafana. Now you can search and access all pages as well as recent dashboards, making it easier to perform tasks without taking your hands off the keyboard.
@@ -102,12 +168,41 @@ Read more about using the command palette [in the documentation.](https://grafan
 
 ## Nav navigation
 
-Early access on Grafana Cloud
+Generally available on Grafana Cloud
 
-Grafana’s navigation has been reorganized to make it easier for you to access the data you need. With this update, you'll be able to quickly navigate between features, giving you full visibility into the health of your systems.
+The navigation in Grafana has been updated with a new design and an improved structure to make it easier for you to access the data you need. With this update, you'll be able to quickly navigate between features, giving you full visibility into the health of your systems.
 
-The new navigation is being gradually rolled out to users on Grafana Cloud.
+The new navigation is gradually rolling out to all users on Grafana Cloud. If you’re using Grafana Open Source and Enterprise, you can enable this feature using the `topnav` feature toggle.
 
 _Note:_ The Grafana documentation has not yet been updated to reflect changes to the navigation.
 
 {{< figure src="/media/docs/grafana/navigation-9-4.png" max-width="750px" caption="Grafana new navigation" >}}
+
+## Auditing and Usage Insights: Support for Loki multi-tenancy
+
+_This feature is available for Enterprise customers_
+This feature adds support to push analytics events and auditing logs to Loki with multi-tenancy mode, by specifying a tenant id.
+
+## Reporting: Enable changing the report scale factor
+
+_This feature is available for Enterprise customers_
+Scale factor is a new feature for reports that allows users to change the dimension of the panels of the PDF document. It allows you to show more columns in the tables zooming out or show panels bigger zooming in.
+You can modify the scale factor for each report in the report editor and/or when you share the whole PDF directly from the dashboard page.
+
+{{< figure src="/media/docs/grafana/FormatReportScheduler9.4.png" max-width="750px" caption="Scale factor feature in Report format page" >}}
+
+{{< figure src="/media/docs/grafana/FormatReportShare9.4.png" max-width="750px" caption="Scale factor feature in Share functionality" >}}
+
+## Dashboard panel redesign
+
+Dashboard panels hold a lot of information, some of which is difficult to discover or access entirely from the dashboard itself. With our redesigned panels, we've improved accessibility and made it easier to understand the status of a panel by adding and moving key elements.
+
+We’ve rethought the panel information architecture, added additional interaction points, and reduced visual clutter. To start, we’ve improved the support of panels without a header, made a distinction between details set by you and data-induced information, and then included all essential components in the header of the panel. All of these are laid out from left to right in a row, so there are no overlapping, unusable components.
+
+Grafana’s new panel is available only for React-based panels; no Angular-based panels will have the redesign (i.e., they’ll have the old Graph and Table visualizations).
+
+{{< video-embed src="/media/docs/grafana/screen-recording-panel-header-redesign-whats-new-9-4.mp4>" >}}
+
+However, we have more planned: we’re going to make even more improvements to the accessibility of panels and improvements to panels without a header.
+
+This is a beta feature, which you can access by enabling the `newPanelChromeUI` feature toggle.
