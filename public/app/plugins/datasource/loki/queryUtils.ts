@@ -298,9 +298,9 @@ export function getStreamSelectorsFromQuery(query: string): string[] {
 }
 
 const PARTITION_LIMIT = 60;
-export function partitionTimeRange(range: TimeRange, timeShift = 1, unit: DurationUnit = 'm'): TimeRange[] {
+export function partitionTimeRange(range: TimeRange, timeShift = 5, unit: DurationUnit = 'm'): TimeRange[] {
   const partition: TimeRange[] = [];
-  for (let from = dateTime(range.from), to = dateTime(from).add(1, unit); to <= range.to && from < range.to; ) {
+  for (let from = dateTime(range.from), to = dateTime(from).add(timeShift, unit); to <= range.to && from < range.to; ) {
     partition.push({
       from,
       to,
@@ -318,7 +318,7 @@ export function partitionTimeRange(range: TimeRange, timeShift = 1, unit: Durati
     }
 
     from = dateTime(to);
-    to = dateTime(to).add(1, unit);
+    to = dateTime(to).add(timeShift, unit);
 
     if (to > range.to) {
       to = range.to;
