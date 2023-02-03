@@ -33,7 +33,7 @@ func GenerateShortUID() string {
 	if err != nil {
 		// This should never happen... but this seems better than a panic
 		for i := range uid {
-			uid[i] = byte(uidrand.Intn(254))
+			uid[i] = byte(uidrand.Intn(255))
 		}
 	}
 	uuid := uid.String()
