@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-
-	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/tsdb/intervalv2"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/kinds/dataquery"
 )
@@ -80,15 +78,32 @@ func Parse(query backend.DataQuery, timeInterval string, intervalCalculator inte
 		return nil, err
 	}
 
+	queryInterval := ""
+	if model.Interval != nil {
+		queryInterval = *model.Interval
+	}
+
+	queryIntervalMs := int64(0)
+	if model.IntervalMs != nil {
+		queryIntervalMs = *model.IntervalMs
+	}
+
+	queryIntervalFactor := int64(1)
+	if model.IntervalFactor != nil {
+		queryIntervalFactor = *model.IntervalFactor
+	}
+
 	// Final interval value
-	interval, err := calculatePrometheusInterval(model, timeInterval, query, intervalCalculator)
+	interval, err := calculatePrometheusInterval(queryInterval, timeInterval, queryIntervalMs,
+		queryIntervalFactor, query,
+		intervalCalculator)
 	if err != nil {
 		return nil, err
 	}
 
 	// Interpolate variables in expr
 	timeRange := query.TimeRange.To.Sub(query.TimeRange.From)
-	expr := interpolateVariables(model, interval, timeRange, intervalCalculator, timeInterval)
+	expr := interpolateVariables(model.Expr, queryInterval, interval, timeRange, intervalCalculator, timeInterval)
 	var rangeQuery, instantQuery bool
 	if model.Instant == nil {
 		instantQuery = false
@@ -160,16 +175,14 @@ func (query *Query) TimeRange() TimeRange {
 	}
 }
 
-func calculatePrometheusInterval(model *QueryModel, timeInterval string, query backend.DataQuery,
-	intervalCalculator intervalv2.Calculator) (time.Duration, error) {
-	queryInterval := model.Interval
-
+func calculatePrometheusInterval(queryInterval, timeInterval string, intervalMs, intervalFactor int64,
+	query backend.DataQuery, intervalCalculator intervalv2.Calculator) (time.Duration, error) {
 	// If we are using variable for interval/step, we will replace it with calculated interval
-	if isVariableInterval(*queryInterval) {
-		queryInterval = kindsys.Ptr("")
+	if isVariableInterval(queryInterval) {
+		queryInterval = ""
 	}
 
-	minInterval, err := intervalv2.GetIntervalFrom(timeInterval, *queryInterval, *model.IntervalMs, 15*time.Second)
+	minInterval, err := intervalv2.GetIntervalFrom(timeInterval, queryInterval, intervalMs, 15*time.Second)
 	if err != nil {
 		return time.Duration(0), err
 	}
@@ -181,15 +194,15 @@ func calculatePrometheusInterval(model *QueryModel, timeInterval string, query b
 		adjustedInterval = calculatedInterval.Value
 	}
 
-	if model.Interval != nil && *model.Interval == varRateInterval || *model.Interval == varRateIntervalAlt {
+	if queryInterval == varRateInterval || queryInterval == varRateIntervalAlt {
 		// Rate interval is final and is not affected by resolution
 		return calculateRateInterval(adjustedInterval, timeInterval, intervalCalculator), nil
 	} else {
-		var intervalFactor int64 = 1
-		if model.IntervalFactor != nil && *model.IntervalFactor != 0 {
-			intervalFactor = *model.IntervalFactor
+		queryIntervalFactor := intervalFactor
+		if queryIntervalFactor == 0 {
+			queryIntervalFactor = 1
 		}
-		return time.Duration(int64(adjustedInterval) * intervalFactor), nil
+		return time.Duration(int64(adjustedInterval) * queryIntervalFactor), nil
 	}
 }
 
@@ -208,14 +221,14 @@ func calculateRateInterval(interval time.Duration, scrapeInterval string, interv
 	return rateInterval
 }
 
-func interpolateVariables(model *QueryModel, interval time.Duration, timeRange time.Duration,
+func interpolateVariables(expr, queryInterval string, interval time.Duration,
+	timeRange time.Duration,
 	intervalCalculator intervalv2.Calculator, timeInterval string) string {
-	expr := model.Expr
 	rangeMs := timeRange.Milliseconds()
 	rangeSRounded := int64(math.Round(float64(rangeMs) / 1000.0))
 
 	var rateInterval time.Duration
-	if model.Interval != nil && *model.Interval == varRateInterval || *model.Interval == varRateIntervalAlt {
+	if queryInterval == varRateInterval || queryInterval == varRateIntervalAlt {
 		rateInterval = interval
 	} else {
 		rateInterval = calculateRateInterval(interval, timeInterval, intervalCalculator)

@@ -413,7 +413,7 @@ func TestParse(t *testing.T) {
 			"format": "time_series",
 			"intervalFactor": 1,
 			"interval": "$__rate_interval",
-			"intervalMs": 45000,
+			"intervalMs": 60000,
 			"refId": "A"
 		}`, timeRange)
 
