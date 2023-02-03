@@ -93,7 +93,6 @@ export const FolderSection = ({
   };
 
   const onToggleFolder = (evt: React.FormEvent) => {
-    evt.preventDefault();
     evt.stopPropagation();
     if (selectionToggle && selection) {
       const checked = !selection(section.kind, section.uid);
@@ -173,8 +172,12 @@ export const FolderSection = ({
       label={
         <>
           {selectionToggle && selection && (
-            <div onClick={onToggleFolder}>
-              <Checkbox value={selection(section.kind, section.uid)} aria-label="Select folder" />
+            <div>
+              <Checkbox
+                value={selection(section.kind, section.uid)}
+                aria-label="Select folder"
+                onClick={onToggleFolder}
+              />
             </div>
           )}
 
