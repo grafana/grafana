@@ -444,7 +444,7 @@
         "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/elasticsearch/dataquery.gen.ts"
       },
       "machineName": "elasticsearchdataquery",
-      "maturity": "merged",
+      "maturity": "experimental",
       "name": "ElasticsearchDataQuery",
       "pluralMachineName": "elasticsearchdataquerys",
       "pluralName": "ElasticsearchDataQuerys",
@@ -1985,6 +1985,7 @@
           "dashboard",
           "dashboardlistpanelcfg",
           "debugpanelcfg",
+          "elasticsearchdataquery",
           "gaugepanelcfg",
           "histogrampanelcfg",
           "librarypanel",
@@ -2001,7 +2002,7 @@
           "textpanelcfg",
           "xychartpanelcfg"
         ],
-        "count": 21
+        "count": 22
       },
       "mature": {
         "name": "mature",
@@ -2013,7 +2014,6 @@
         "items": [
           "alertgroupspanelcfg",
           "azuremonitordataquery",
-          "elasticsearchdataquery",
           "playlist",
           "preferences",
           "prometheusdataquery",
@@ -2021,7 +2021,7 @@
           "serviceaccount",
           "team"
         ],
-        "count": 9
+        "count": 8
       },
       "planned": {
         "name": "planned",
