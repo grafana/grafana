@@ -1,13 +1,7 @@
 import { SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
-import {
-  DataQueryResponse,
-  dateTime,
-  DurationUnit,
-  MutableDataFrame,
-  TimeRange,
-} from '@grafana/data';
+import { DataQueryResponse, dateTime, DurationUnit, MutableDataFrame, TimeRange } from '@grafana/data';
 import {
   parser,
   LineFilter,
@@ -356,11 +350,15 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
 
   newResult.data.forEach((newFrame) => {
     const currentFrame = currentResult.data.find((frame) => frame.name === newFrame.name);
+    const currentIndex = currentResult.data.findIndex((frame) => frame.name === newFrame.name);
+
     if (!currentFrame) {
       currentResult.data.push(newFrame);
       return;
     }
-    combineFrames(new MutableDataFrame(currentFrame), newFrame);
+    const frame = new MutableDataFrame(currentFrame);
+    combineFrames(frame, newFrame);
+    currentResult.data[currentIndex] = frame;
   });
 
   return currentResult;
