@@ -2,9 +2,7 @@ import { SyntaxNode } from '@lezer/common';
 import { escapeRegExp } from 'lodash';
 
 import {
-  DataFrame,
   DataQueryResponse,
-  DataQueryResponseData,
   dateTime,
   DurationUnit,
   MutableDataFrame,
@@ -362,16 +360,15 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
       currentResult.data.push(newFrame);
       return;
     }
-    combineFrames(currentFrame, newFrame);
+    combineFrames(new MutableDataFrame(currentFrame), newFrame);
   });
 
   return currentResult;
 }
 
 function combineFrames(dest: MutableDataFrame, source: MutableDataFrame) {
-  source.reverse();
   dest.reverse();
-  for (let j = 0; j < source.fields[0].values.length; j++) {
+  for (let j = source.fields[0].values.length - 1; j > 0; j--) {
     dest.fields[0].values.add(source.fields[0].values.get(j));
     dest.fields[1].values.add(source.fields[1].values.get(j));
   }
