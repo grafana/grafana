@@ -41,6 +41,8 @@ export interface TimeOption {
   from: string;
   to: string;
   display: string;
+  invalid?: boolean;
+  section?: number;
 }
 
 /** @deprecated use TimeZone from schema  */

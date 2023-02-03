@@ -20,6 +20,7 @@ import {
   DataSourceVariable,
   QueryVariable,
   ConstantVariable,
+  VizPanelState,
 } from '@grafana/scenes';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { dashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
@@ -27,6 +28,7 @@ import { DashboardModel, PanelModel } from 'app/features/dashboard/state';
 import { DashboardDTO } from 'app/types';
 
 import { DashboardScene } from './DashboardScene';
+import { PanelTimeRange } from './PanelTimeRange';
 
 export interface DashboardLoaderState {
   dashboard?: DashboardScene;
@@ -251,7 +253,7 @@ export function createSceneVariableFromVariableModel(variable: VariableModel): S
 }
 
 export function createVizPanelFromPanelModel(panel: PanelModel) {
-  return new VizPanel({
+  const state: VizPanelState = {
     title: panel.title,
     pluginId: panel.type,
     placement: {
@@ -267,7 +269,13 @@ export function createVizPanelFromPanelModel(panel: PanelModel) {
       transformations: panel.transformations,
       queries: panel.targets,
     }),
-  });
+  };
+
+  if (panel.timeFrom || panel.timeShift) {
+    state.$timeRange = new PanelTimeRange({ timeFrom: panel.timeFrom, timeShift: panel.timeShift });
+  }
+
+  return new VizPanel(state);
 }
 
 let loader: DashboardLoader | null = null;
