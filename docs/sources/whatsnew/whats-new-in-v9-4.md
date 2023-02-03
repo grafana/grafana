@@ -164,9 +164,9 @@ Use the keyboard shortcut cmd + K on Mac or ctrl + K on Linux/Windows to launch 
 
 Read more about using the command palette [in the documentation.](https://grafana.com/docs/grafana/latest/search/)
 
-{{< figure src="/media/docs/grafana/command-palette-9-4.gif" max-width="750px" caption="Grafana command palette" >}}
+{{< figure src="/media/docs/grafana/screenshot-grafana-94-command-palette.png" max-width="750px" caption="Grafana command palette" >}}
 
-## Nav navigation
+## New navigation
 
 Generally available on Grafana Cloud
 
