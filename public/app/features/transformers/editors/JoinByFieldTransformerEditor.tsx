@@ -8,15 +8,32 @@ import {
   TransformerUIProps,
   DataFrame,
 } from '@grafana/data';
-import { JoinByFieldOptions, JoinMode } from '@grafana/data/src/transformations/transformers/joinByField';
+import {
+  JoinByFieldOptions,
+  JoinMode,
+  FieldMatchingType,
+} from '@grafana/data/src/transformations/transformers/joinByField';
 import { Select, InlineFieldRow, InlineField, Checkbox, HorizontalGroup } from '@grafana/ui';
+
+import { useAllFieldNamesFromDataFrames } from '../utils';
 
 const modes = [
   { value: JoinMode.outer, label: 'OUTER', description: 'Keep all rows from any table with a value' },
   { value: JoinMode.inner, label: 'INNER', description: 'Drop rows that do not match a value in all tables' },
 ];
 
+const fieldMatchingTypes = [
+  {
+    value: FieldMatchingType.common,
+    label: 'Common',
+    description: 'Join on fields that have a common name accross tables.',
+  },
+  { value: FieldMatchingType.custom, label: 'Custom', description: 'Join on custom fields, selected for each table.' },
+];
+
 export function SeriesToFieldsTransformerEditor({ input, options, onChange }: TransformerUIProps<JoinByFieldOptions>) {
+  const fieldNames = useAllFieldNamesFromDataFrames(input).map((item: string) => ({ label: item, value: item }));
+
   useEffect(() => {
     if (options.fields && !Object.keys(options.fields).length && input.length && input[0].refId) {
       options.fields[input[0].refId] = input[0].fields[0].name;
@@ -43,6 +60,26 @@ export function SeriesToFieldsTransformerEditor({ input, options, onChange }: Tr
       }
 
       onChange({ ...options });
+    },
+    [onChange, options]
+  );
+
+  const onSelectFieldMatchingType = useCallback(
+    (value: SelectableValue<string>) => {
+      onChange({
+        ...options,
+        fieldMatchingType: value?.value || 'common',
+      });
+    },
+    [onChange, options]
+  );
+
+  const onSelectCommonField = useCallback(
+    (value: SelectableValue<string>) => {
+      onChange({
+        ...options,
+        byField: value?.value,
+      });
     },
     [onChange, options]
   );
@@ -74,6 +111,11 @@ export function SeriesToFieldsTransformerEditor({ input, options, onChange }: Tr
       <InlineFieldRow>
         <InlineField label="Mode" labelWidth={8} grow>
           <Select options={modes} value={options.mode} onChange={onSetMode} />
+        </InlineField>
+      </InlineFieldRow>
+      <InlineFieldRow>
+        <InlineField label="Field Matching Type" labelWidth={8} grow>
+          <Select options={fieldMatchingTypes} value={options.fieldMatchingType} onChange={onSetMode} />
         </InlineField>
       </InlineFieldRow>
       {input.map((dataFrame) => (
