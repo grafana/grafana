@@ -145,6 +145,8 @@ func ProvideService(
 		s.RegisterPostAuthHook(sync.ProvideOauthTokenSync(oauthTokenService, sessionService).SyncOauthToken, 60)
 	}
 
+	s.RegisterPostAuthHook(sync.ProvideFetchUserSync(userService).FetchSyncedUser, 100)
+
 	return s
 }
 
@@ -156,6 +158,7 @@ type Service struct {
 	clientQueue *queue[authn.ContextAwareClient]
 
 	tracer         tracing.Tracer
+	userService    user.Service
 	sessionService auth.UserTokenService
 
 	// postAuthHooks are called after a successful authentication. They can modify the identity.
