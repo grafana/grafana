@@ -45,6 +45,8 @@ type ClientParams struct {
 	AllowSignUp bool
 	// EnableDisabledUsers is a hint to the auth service that it should re-enable disabled users
 	EnableDisabledUsers bool
+	// FetchSyncedUser ensure that all required information is added to the identity
+	FetchSyncedUser bool
 	// LookUpParams are the arguments used to look up the entity in the DB.
 	LookUpParams login.UserLookupParams
 }
