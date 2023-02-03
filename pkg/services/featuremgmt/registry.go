@@ -40,17 +40,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:            "dashboardPreviewsAdmin",
-			Description:     "Manage the dashboard previews crawler process from the UI",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-		},
-		{
-			Name:        "live-config",
-			Description: "Save Grafana Live configuration in SQL tables",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:        "live-pipeline",
 			Description: "Enable a generic live processing pipeline",
 			State:       FeatureStateAlpha,

@@ -486,10 +486,6 @@ func (hs *HTTPServer) registerRoutes() {
 			dashboardRoute.Group("/uid/:uid", func(dashUidRoute routing.RouteRegister) {
 				if hs.ThumbService != nil {
 					dashUidRoute.Get("/img/:kind/:theme", hs.ThumbService.GetImage)
-					if hs.Features.IsEnabled(featuremgmt.FlagDashboardPreviewsAdmin) {
-						dashUidRoute.Post("/img/:kind/:theme", reqGrafanaAdmin, hs.ThumbService.SetImage)
-						dashUidRoute.Put("/img/:kind/:theme", reqGrafanaAdmin, hs.ThumbService.UpdateThumbnailState)
-					}
 				}
 			})
 
@@ -638,12 +634,6 @@ func (hs *HTTPServer) registerRoutes() {
 		}
 		adminRoute.Get("/stats", authorize(reqGrafanaAdmin, ac.EvalPermission(ac.ActionServerStatsRead)), routing.Wrap(hs.AdminGetStats))
 		adminRoute.Post("/pause-all-alerts", reqGrafanaAdmin, routing.Wrap(hs.PauseAllAlerts(setting.AlertingEnabled)))
-
-		if hs.ThumbService != nil && hs.Features.IsEnabled(featuremgmt.FlagDashboardPreviewsAdmin) {
-			adminRoute.Post("/crawler/start", reqGrafanaAdmin, routing.Wrap(hs.ThumbService.StartCrawler))
-			adminRoute.Post("/crawler/stop", reqGrafanaAdmin, routing.Wrap(hs.ThumbService.StopCrawler))
-			adminRoute.Get("/crawler/status", reqGrafanaAdmin, routing.Wrap(hs.ThumbService.CrawlerStatus))
-		}
 
 		if hs.Features.IsEnabled(featuremgmt.FlagExport) {
 			adminRoute.Get("/export", reqGrafanaAdmin, routing.Wrap(hs.ExportService.HandleGetStatus))
