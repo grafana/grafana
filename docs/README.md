@@ -52,8 +52,6 @@ To specify different menu text from the page title, use the front matter paramet
 
 ### Add images
 
-Any new images should be uploaded to Grafana's [media manager](https://admin.grafana.com/upload/media/). At the moment, legacy images are still hosted in the `grafana/website` repo. 
-
 Please see our help documentation on [Image, diagram, and screenshot guidelines](https://grafana.com/docs/writers-toolkit/writing-guide/image-guidelines/) for comprehensive information.
 
 ---
