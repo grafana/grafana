@@ -23,7 +23,7 @@ import { PromQuery } from '../types';
 // Get link to prometheus doc for the above comment
 const INCREMENTAL_QUERY_OVERLAP_DURATION_MS = 60 * 10 * 1000;
 const STORAGE_TIME_INDEX = '__time__';
-const DEBUG = true;
+const DEBUG = false;
 
 interface IncrementalStorageOptions {
   queryOverlapDurationMs: number;
