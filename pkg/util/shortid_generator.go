@@ -4,7 +4,6 @@ import (
 	"math/rand"
 	"regexp"
 	"time"
-	"unicode"
 
 	"github.com/google/uuid"
 )
@@ -32,10 +31,13 @@ func IsShortUIDTooLong(uid string) bool {
 func GenerateShortUID() string {
 	uid, err := uuid.NewRandom()
 	if err != nil {
-		panic("invalid uuid")
+		// This should never happen... but this seems better than a panic
+		for i := range uid {
+			uid[i] = byte(uidrand.Intn(254))
+		}
 	}
 	uuid := uid.String()
-	if !strings.Contains(alpharunes, string(uuid[0])) {
+	if rune(uuid[0]) < rune('a') {
 		return string(alphaRunes[uidrand.Intn(len(alphaRunes))]) + uuid[1:]
 	}
 	return uuid
