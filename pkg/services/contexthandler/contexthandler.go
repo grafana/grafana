@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/sync/singleflight"
+
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	apikeygenprefix "github.com/grafana/grafana/pkg/components/apikeygenprefixed"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -70,6 +72,7 @@ func ProvideService(cfg *setting.Cfg, tokenService auth.UserTokenService, jwtSer
 		oauthTokenService: oauthTokenService,
 		features:          features,
 		authnService:      authnService,
+		singleflight:      new(singleflight.Group),
 	}
 }
 
@@ -91,6 +94,7 @@ type ContextHandler struct {
 	oauthTokenService oauthtoken.OAuthTokenService
 	features          *featuremgmt.FeatureManager
 	authnService      authn.Service
+	singleflight      *singleflight.Group
 	// GetTime returns the current time.
 	// Stubbable by tests.
 	GetTime func() time.Time
@@ -125,6 +129,8 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 
 		// Inject ReqContext into http.Request.Context
 		*r = *r.WithContext(context.WithValue(ctx, reqContextKey{}, reqContext))
+		// store list of possible auth header in context
+		*reqContext.Req = *reqContext.Req.WithContext(WithAuthHTTPHeaders(reqContext.Req.Context(), h.Cfg))
 
 		traceID := tracing.TraceIDFromContext(mContext.Req.Context(), false)
 		if traceID != "" {
@@ -146,7 +152,6 @@ func (h *ContextHandler) Middleware(next http.Handler) http.Handler {
 				reqContext.SignedInUser = identity.SignedInUser()
 				reqContext.AllowAnonymous = identity.IsAnonymous
 				reqContext.IsRenderCall = identity.AuthModule == login.RenderModule
-				// FIXME (kallep): Add auth headers used to context
 			}
 		} else {
 			const headerName = "X-Grafana-Org-Id"
@@ -302,9 +307,6 @@ func (h *ContextHandler) initContextWithAPIKey(reqContext *contextmodel.ReqConte
 	_, span := h.tracer.Start(reqContext.Req.Context(), "initContextWithAPIKey")
 	defer span.End()
 
-	ctx := WithAuthHTTPHeader(reqContext.Req.Context(), "Authorization")
-	*reqContext.Req = *reqContext.Req.WithContext(ctx)
-
 	var (
 		apiKey *apikey.APIKey
 		errKey error
@@ -415,15 +417,12 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *contextmodel.ReqCo
 		return true
 	}
 
-	ctx := WithAuthHTTPHeader(reqContext.Req.Context(), "Authorization")
-	*reqContext.Req = *reqContext.Req.WithContext(ctx)
-
 	authQuery := login.LoginUserQuery{
 		Username: username,
 		Password: password,
 		Cfg:      h.Cfg,
 	}
-	if err := h.authenticator.AuthenticateUser(ctx, &authQuery); err != nil {
+	if err := h.authenticator.AuthenticateUser(reqContext.Req.Context(), &authQuery); err != nil {
 		reqContext.Logger.Debug(
 			"Failed to authorize the user",
 			"username", username,
@@ -440,7 +439,7 @@ func (h *ContextHandler) initContextWithBasicAuth(reqContext *contextmodel.ReqCo
 	usr := authQuery.User
 
 	query := user.GetSignedInUserQuery{UserID: usr.ID, OrgID: orgID}
-	queryResult, err := h.userService.GetSignedInUserWithCacheCtx(ctx, &query)
+	queryResult, err := h.userService.GetSignedInUserWithCacheCtx(reqContext.Req.Context(), &query)
 	if err != nil {
 		reqContext.Logger.Error(
 			"Failed at user signed in",
@@ -568,15 +567,15 @@ func (h *ContextHandler) rotateEndOfRequestFunc(reqContext *contextmodel.ReqCont
 			ip = nil
 		}
 
-		// FIXME (jguer): rotation should return a new token instead of modifying the existing one.
-		rotated, err := h.AuthTokenService.TryRotateToken(ctx, reqContext.UserToken, ip, reqContext.Req.UserAgent())
+		rotated, newToken, err := h.AuthTokenService.TryRotateToken(ctx, reqContext.UserToken, ip, reqContext.Req.UserAgent())
 		if err != nil {
 			reqContext.Logger.Error("Failed to rotate token", "error", err)
 			return
 		}
 
 		if rotated {
-			cookies.WriteSessionCookie(reqContext, h.Cfg, reqContext.UserToken.UnhashedToken, h.Cfg.LoginMaxLifetime)
+			reqContext.UserToken = newToken
+			cookies.WriteSessionCookie(reqContext, h.Cfg, newToken.UnhashedToken, h.Cfg.LoginMaxLifetime)
 		}
 	}
 }
@@ -709,15 +708,6 @@ func (h *ContextHandler) initContextWithAuthProxy(reqContext *contextmodel.ReqCo
 
 	logger.Debug("Successfully got user info", "userID", user.UserID, "username", user.Login)
 
-	ctx := WithAuthHTTPHeader(reqContext.Req.Context(), h.Cfg.AuthProxyHeaderName)
-	for _, header := range h.Cfg.AuthProxyHeaders {
-		if header != "" {
-			ctx = WithAuthHTTPHeader(ctx, header)
-		}
-	}
-
-	*reqContext.Req = *reqContext.Req.WithContext(ctx)
-
 	// Add user info to context
 	reqContext.SignedInUser = user
 	reqContext.IsSignedIn = true
@@ -748,20 +738,35 @@ type AuthHTTPHeaderList struct {
 	Items []string
 }
 
-// WithAuthHTTPHeader returns a copy of parent in which the named HTTP header will be included
+// WithAuthHTTPHeaders returns a new context in which all possible configured auth header will be included
 // and later retrievable by AuthHTTPHeaderListFromContext.
-func WithAuthHTTPHeader(parent context.Context, name string) context.Context {
-	list := AuthHTTPHeaderListFromContext(parent)
-
+func WithAuthHTTPHeaders(ctx context.Context, cfg *setting.Cfg) context.Context {
+	list := AuthHTTPHeaderListFromContext(ctx)
 	if list == nil {
 		list = &AuthHTTPHeaderList{
 			Items: []string{},
 		}
 	}
 
-	list.Items = append(list.Items, name)
+	// used by basic auth, api keys and potentially jwt auth
+	list.Items = append(list.Items, "Authorization")
 
-	return context.WithValue(parent, authHTTPHeaderListKey, list)
+	// if jwt is enabled we add it to the list. We can ignore in case it is set to Authorization
+	if cfg.JWTAuthEnabled && cfg.JWTAuthHeaderName != "" && cfg.JWTAuthHeaderName != "Authorization" {
+		list.Items = append(list.Items, cfg.JWTAuthHeaderName)
+	}
+
+	// if auth proxy is enabled add the main proxy header and all configured headers
+	if cfg.AuthProxyEnabled {
+		list.Items = append(list.Items, cfg.AuthProxyHeaderName)
+		for _, header := range cfg.AuthProxyHeaders {
+			if header != "" {
+				list.Items = append(list.Items, header)
+			}
+		}
+	}
+
+	return context.WithValue(ctx, authHTTPHeaderListKey, list)
 }
 
 // AuthHTTPHeaderListFromContext returns the AuthHTTPHeaderList in a context.Context, if any,

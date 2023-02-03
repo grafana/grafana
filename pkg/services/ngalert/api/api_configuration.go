@@ -118,7 +118,7 @@ func (srv ConfigSrv) RouteDeleteNGalertConfig(c *contextmodel.ReqContext) respon
 func (srv ConfigSrv) externalAlertmanagers(ctx context.Context, orgID int64) ([]string, error) {
 	var alertmanagers []string
 	query := &datasources.GetDataSourcesByTypeQuery{
-		OrgId: orgID,
+		OrgID: orgID,
 		Type:  datasources.DS_ALERTMANAGER,
 	}
 	err := srv.datasourceService.GetDataSourcesByType(ctx, query)
@@ -129,7 +129,7 @@ func (srv ConfigSrv) externalAlertmanagers(ctx context.Context, orgID int64) ([]
 		if ds.JsonData.Get(apimodels.HandleGrafanaManagedAlerts).MustBool(false) {
 			// we don't need to build the exact URL as we only need
 			// to know if any is set
-			alertmanagers = append(alertmanagers, ds.Uid)
+			alertmanagers = append(alertmanagers, ds.UID)
 		}
 	}
 	return alertmanagers, nil

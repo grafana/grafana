@@ -107,13 +107,14 @@ func (s *Session) RefreshTokenHook(ctx context.Context, identity *authn.Identity
 			s.log.Debug("failed to get client IP address", "addr", addr, "err", err)
 			ip = nil
 		}
-		rotated, err := s.sessionService.TryRotateToken(ctx, identity.SessionToken, ip, userAgent)
+		rotated, newToken, err := s.sessionService.TryRotateToken(ctx, identity.SessionToken, ip, userAgent)
 		if err != nil {
 			s.log.Error("failed to rotate token", "error", err)
 			return
 		}
 
 		if rotated {
+			identity.SessionToken = newToken
 			s.log.Debug("rotated session token", "user", identity.ID)
 
 			maxAge := int(s.loginMaxLifetime.Seconds())
