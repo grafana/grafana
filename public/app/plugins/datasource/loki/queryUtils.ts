@@ -372,16 +372,15 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
       currentResult.data.push(newFrame);
       return;
     }
-    combine(currentFrame, newFrame);
+    combine(new MutableDataFrame(currentFrame), newFrame);
   });
 
   return currentResult;
 }
 
 function combine(dest: MutableDataFrame, source: MutableDataFrame) {
-  source.reverse();
   dest.reverse();
-  for (let j = 0; j < source.fields[0].values.length; j++) {
+  for (let j = source.fields[0].values.length - 1; j > 0; j--) {
     dest.fields[0].values.add(source.fields[0].values.get(j));
     dest.fields[1].values.add(source.fields[1].values.get(j));
   }
