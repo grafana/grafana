@@ -17,7 +17,7 @@ import {
 import {
   AzureDataSourceJsonData,
   AzureGraphResponse,
-  AzureMetricResource,
+  AzureMonitorResource,
   AzureMonitorLocations,
   AzureMonitorQuery,
   AzureResourceGraphOptions,
@@ -53,7 +53,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
 
   async fetchInitialRows(
     type: ResourcePickerQueryType,
-    currentSelection?: AzureMetricResource[]
+    currentSelection?: AzureMonitorResource[]
   ): Promise<ResourceRowGroup> {
     const subscriptions = await this.getSubscriptions();
 
@@ -271,7 +271,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
   }
 
   // used to make the select resource button that launches the resource picker show a nicer file path to users
-  async getResourceURIDisplayProperties(resourceURI: string): Promise<AzureMetricResource> {
+  async getResourceURIDisplayProperties(resourceURI: string): Promise<AzureMonitorResource> {
     const { subscription, resourceGroup, resourceName } = parseResourceDetails(resourceURI) ?? {};
 
     if (!subscription) {
@@ -421,7 +421,7 @@ export default class ResourcePickerData extends DataSourceWithBackend<AzureMonit
     return logLocationsMap;
   }
 
-  parseRows(resources: Array<string | AzureMetricResource>): ResourceRow[] {
+  parseRows(resources: Array<string | AzureMonitorResource>): ResourceRow[] {
     const resourceObjs = parseMultipleResourceDetails(resources);
     const newSelectedRows: ResourceRow[] = [];
     resourceObjs.forEach((resource, i) => {

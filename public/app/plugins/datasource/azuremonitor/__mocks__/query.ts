@@ -1,4 +1,4 @@
-import { AzureMonitorQuery, AzureQueryType } from '../types';
+import { AzureMonitorQuery, AzureQueryType, ResultFormat } from '../types';
 
 export default function createMockQuery(overrides?: Partial<AzureMonitorQuery>): AzureMonitorQuery {
   return {
@@ -15,7 +15,7 @@ export default function createMockQuery(overrides?: Partial<AzureMonitorQuery>):
     azureLogAnalytics: {
       query:
         '//change this example to create your own time series query\n<table name>                                                              //the table to query (e.g. Usage, Heartbeat, Perf)\n| where $__timeFilter(TimeGenerated)                                      //this is a macro used to show the full chart’s time range, choose the datetime column here\n| summarize count() by <group by column>, bin(TimeGenerated, $__interval) //change “group by column” to a column in your table, such as “Computer”. The $__interval macro is used to auto-select the time grain. Can also use 1h, 5m etc.\n| order by TimeGenerated asc',
-      resultFormat: 'time_series',
+      resultFormat: ResultFormat.Table,
       workspace: 'e3fe4fde-ad5e-4d60-9974-e2f3562ffdf2',
       resources: ['test-resource'],
       ...overrides?.azureLogAnalytics,

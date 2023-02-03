@@ -4,7 +4,7 @@ import { getTemplateSrv } from '@grafana/runtime';
 
 import UrlBuilder from '../../azure_monitor/url_builder';
 import { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
-import { AzureMetricResource, AzureMonitorQuery } from '../../types';
+import { AzureMonitorResource, AzureMonitorQuery } from '../../types';
 
 import { ResourceRow, ResourceRowGroup } from './types';
 
@@ -35,7 +35,7 @@ function parseNamespaceAndName(metricNamespaceAndName?: string) {
   return { metricNamespace: namespaceArray.join('/'), resourceName: resourceNameArray.join('/') };
 }
 
-export function parseResourceURI(resourceURI: string): AzureMetricResource {
+export function parseResourceURI(resourceURI: string): AzureMonitorResource {
   const matches = RESOURCE_URI_REGEX.exec(resourceURI);
   const groups: RegexGroups = matches?.groups ?? {};
   const { subscription, resourceGroup, metricNamespaceAndResource } = groups;
@@ -44,13 +44,13 @@ export function parseResourceURI(resourceURI: string): AzureMetricResource {
   return { subscription, resourceGroup, metricNamespace, resourceName };
 }
 
-export function parseMultipleResourceDetails(resources: Array<string | AzureMetricResource>, location?: string) {
+export function parseMultipleResourceDetails(resources: Array<string | AzureMonitorResource>, location?: string) {
   return resources.map((resource) => {
     return parseResourceDetails(resource, location);
   });
 }
 
-export function parseResourceDetails(resource: string | AzureMetricResource, location?: string) {
+export function parseResourceDetails(resource: string | AzureMonitorResource, location?: string) {
   if (typeof resource === 'string') {
     const res = parseResourceURI(resource);
     if (location) {
@@ -61,11 +61,11 @@ export function parseResourceDetails(resource: string | AzureMetricResource, loc
   return resource;
 }
 
-export function resourcesToStrings(resources: Array<string | AzureMetricResource>) {
+export function resourcesToStrings(resources: Array<string | AzureMonitorResource>) {
   return resources.map((resource) => resourceToString(resource));
 }
 
-export function resourceToString(resource?: string | AzureMetricResource) {
+export function resourceToString(resource?: string | AzureMonitorResource) {
   return resource
     ? typeof resource === 'string'
       ? resource
@@ -157,7 +157,7 @@ export function addResources(rows: ResourceRowGroup, targetParentId: string, new
 export function setResources(
   query: AzureMonitorQuery,
   type: ResourcePickerQueryType,
-  resources: Array<string | AzureMetricResource>
+  resources: Array<string | AzureMonitorResource>
 ): AzureMonitorQuery {
   if (type === 'logs') {
     // Resource URI for LogAnalytics

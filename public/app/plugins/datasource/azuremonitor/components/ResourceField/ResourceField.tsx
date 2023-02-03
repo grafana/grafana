@@ -6,7 +6,7 @@ import { Button, Icon, Modal, useStyles2, IconName } from '@grafana/ui';
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
 import { ResourcePickerQueryType } from '../../resourcePicker/resourcePickerData';
-import { AzureQueryEditorFieldProps, AzureMetricResource } from '../../types';
+import { AzureQueryEditorFieldProps, AzureMonitorResource } from '../../types';
 import { Field } from '../Field';
 import ResourcePicker from '../ResourcePicker';
 import getStyles from '../ResourcePicker/styles';
@@ -24,7 +24,7 @@ interface ResourceFieldProps<T> extends AzureQueryEditorFieldProps {
   selectionNotice?: (selectedRows: ResourceRowGroup) => string;
 }
 
-const ResourceField: React.FC<ResourceFieldProps<string | AzureMetricResource>> = ({
+const ResourceField: React.FC<ResourceFieldProps<string | AzureMonitorResource>> = ({
   query,
   datasource,
   onQueryChange,
@@ -49,7 +49,7 @@ const ResourceField: React.FC<ResourceFieldProps<string | AzureMetricResource>> 
   }, []);
 
   const handleApply = useCallback(
-    (resources: Array<string | AzureMetricResource>) => {
+    (resources: Array<string | AzureMonitorResource>) => {
       onQueryChange(setResources(query, queryType, resources));
       closePicker();
     },
@@ -93,7 +93,7 @@ interface ResourceLabelProps<T> {
   datasource: Datasource;
 }
 
-const ResourceLabel = ({ resources, datasource }: ResourceLabelProps<string | AzureMetricResource>) => {
+const ResourceLabel = ({ resources, datasource }: ResourceLabelProps<string | AzureMonitorResource>) => {
   const [resourcesComponents, setResourcesComponents] = useState(parseMultipleResourceDetails(resources));
 
   useEffect(() => {
@@ -108,7 +108,7 @@ const ResourceLabel = ({ resources, datasource }: ResourceLabelProps<string | Az
 };
 
 interface FormattedResourceProps {
-  resources: AzureMetricResource[];
+  resources: AzureMonitorResource[];
 }
 
 const FormattedResource = ({ resources }: FormattedResourceProps) => {
