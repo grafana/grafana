@@ -106,10 +106,10 @@ export const ActionRow: FC<Props> = ({
             />
           )}
           <SortPicker
-            onChange={(change) => onSortChange(change.value)}
+            onChange={(change) => onSortChange(change?.value)}
             value={state.sort}
             getSortOptions={getSortOptions}
-            placeholder={sortPlaceholder}
+            placeholder={sortPlaceholder || 'Sort'}
             isClearable
           />
         </HorizontalGroup>

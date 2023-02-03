@@ -1,4 +1,4 @@
-// Copyright 2021 Grafana Labs
+// Copyright 2023 Grafana Labs
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,23 +15,33 @@
 package grafanaplugin
 
 import (
-	"github.com/grafana/grafana/packages/grafana-schema/src/common"
+	// "github.com/grafana/grafana/packages/grafana-schema/src/common"
+	"github.com/grafana/grafana/pkg/plugins/pfs"
 )
 
+// This file (with its sibling .cue files) implements pfs.GrafanaPlugin
+pfs.GrafanaPlugin
+
 composableKinds: PanelCfg: {
+	maturity: "experimental"
+
 	lineage: {
 		seqs: [
 			{
 				schemas: [
 					{
+						UpdateConfig: {
+							render:        bool
+							dataChanged:   bool
+							schemaChanged: bool
+						} @cuetsy(kind="type")
+
+						DebugMode: "render" | "events" | "cursor" | "State" | "ThrowError" @cuetsy(kind="enum")
+
 						PanelOptions: {
-							frameIndex:    number | *0
-							showHeader:    bool | *true
-							showTypeIcons: bool | *false
-							showRowNums?:  bool | *false
-							sortBy?: [...common.TableSortByFieldState]
+							mode:      DebugMode
+							counters?: UpdateConfig
 						} @cuetsy(kind="interface")
-						PanelFieldConfig: common.TableFieldOptions & {} @cuetsy(kind="interface")
 					},
 				]
 			},
