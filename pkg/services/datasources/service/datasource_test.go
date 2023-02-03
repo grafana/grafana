@@ -35,8 +35,8 @@ type dataSourceMockRetriever struct {
 
 func (d *dataSourceMockRetriever) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error {
 	for _, datasource := range d.res {
-		idMatch := query.Id != 0 && query.Id == datasource.Id
-		uidMatch := query.Uid != "" && query.Uid == datasource.Uid
+		idMatch := query.ID != 0 && query.ID == datasource.ID
+		uidMatch := query.UID != "" && query.UID == datasource.UID
 		nameMatch := query.Name != "" && query.Name == datasource.Name
 		if idMatch || nameMatch || uidMatch {
 			query.Result = datasource
@@ -49,10 +49,10 @@ func (d *dataSourceMockRetriever) GetDataSource(ctx context.Context, query *data
 
 func TestService_NameScopeResolver(t *testing.T) {
 	retriever := &dataSourceMockRetriever{[]*datasources.DataSource{
-		{Name: "test-datasource", Uid: "1"},
-		{Name: "*", Uid: "2"},
-		{Name: ":/*", Uid: "3"},
-		{Name: ":", Uid: "4"},
+		{Name: "test-datasource", UID: "1"},
+		{Name: "*", UID: "2"},
+		{Name: ":/*", UID: "3"},
+		{Name: ":", UID: "4"},
 	}}
 
 	type testCaseResolver struct {
@@ -126,7 +126,7 @@ func TestService_NameScopeResolver(t *testing.T) {
 
 func TestService_IDScopeResolver(t *testing.T) {
 	retriever := &dataSourceMockRetriever{[]*datasources.DataSource{
-		{Id: 1, Uid: "NnftN9Lnz"},
+		{ID: 1, UID: "NnftN9Lnz"},
 	}}
 
 	type testCaseResolver struct {
@@ -259,8 +259,8 @@ func TestService_GetHttpTransport(t *testing.T) {
 		})
 
 		ds := datasources.DataSource{
-			Id:   1,
-			Url:  "http://k8s:8001",
+			ID:   1,
+			URL:  "http://k8s:8001",
 			Type: "Kubernetes",
 		}
 
@@ -309,8 +309,8 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.NoError(t, err)
 
 		ds := datasources.DataSource{
-			Id:             1,
-			Url:            "http://k8s:8001",
+			ID:             1,
+			URL:            "http://k8s:8001",
 			Type:           "Kubernetes",
 			SecureJsonData: map[string][]byte{"tlsCACert": []byte(caCert)},
 			Updated:        time.Now().Add(-2 * time.Minute),
@@ -360,10 +360,10 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.NoError(t, err)
 
 		ds := datasources.DataSource{
-			Id:       1,
-			OrgId:    1,
+			ID:       1,
+			OrgID:    1,
 			Name:     "kubernetes",
-			Url:      "http://k8s:8001",
+			URL:      "http://k8s:8001",
 			Type:     "Kubernetes",
 			JsonData: sjson,
 		}
@@ -374,7 +374,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		err = secretsStore.Set(context.Background(), ds.OrgId, ds.Name, secretskvs.DataSourceSecretType, string(secureJsonData))
+		err = secretsStore.Set(context.Background(), ds.OrgID, ds.Name, secretskvs.DataSourceSecretType, string(secureJsonData))
 		require.NoError(t, err)
 
 		rt, err := dsService.GetHTTPTransport(context.Background(), &ds, provider)
@@ -408,10 +408,10 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.NoError(t, err)
 
 		ds := datasources.DataSource{
-			Id:       1,
-			OrgId:    1,
+			ID:       1,
+			OrgID:    1,
 			Name:     "kubernetes",
-			Url:      "http://k8s:8001",
+			URL:      "http://k8s:8001",
 			Type:     "Kubernetes",
 			JsonData: sjson,
 		}
@@ -421,13 +421,17 @@ func TestService_GetHttpTransport(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		err = secretsStore.Set(context.Background(), ds.OrgId, ds.Name, secretskvs.DataSourceSecretType, string(secureJsonData))
+		err = secretsStore.Set(context.Background(), ds.OrgID, ds.Name, secretskvs.DataSourceSecretType, string(secureJsonData))
 		require.NoError(t, err)
 
 		rt, err := dsService.GetHTTPTransport(context.Background(), &ds, provider)
 		require.NoError(t, err)
 		require.NotNil(t, rt)
 		tr := configuredTransport
+
+		// make sure we can still marshal the JsonData after httpClientOptions (avoid cycles)
+		_, err = ds.JsonData.MarshalJSON()
+		require.NoError(t, err)
 
 		require.False(t, tr.TLSClientConfig.InsecureSkipVerify)
 		// Ignoring deprecation, the system will not include the root CA
@@ -456,8 +460,8 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.NoError(t, err)
 
 		ds := datasources.DataSource{
-			Id:       1,
-			Url:      "http://k8s:8001",
+			ID:       1,
+			URL:      "http://k8s:8001",
 			Type:     "Kubernetes",
 			JsonData: sjson,
 		}
@@ -491,10 +495,10 @@ func TestService_GetHttpTransport(t *testing.T) {
 		require.NoError(t, err)
 
 		ds := datasources.DataSource{
-			Id:       1,
-			OrgId:    1,
+			ID:       1,
+			OrgID:    1,
 			Name:     "kubernetes",
-			Url:      "http://k8s:8001",
+			URL:      "http://k8s:8001",
 			Type:     "Kubernetes",
 			JsonData: sjson,
 		}
@@ -504,7 +508,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		err = secretsStore.Set(context.Background(), ds.OrgId, ds.Name, secretskvs.DataSourceSecretType, string(secureJsonData))
+		err = secretsStore.Set(context.Background(), ds.OrgID, ds.Name, secretskvs.DataSourceSecretType, string(secureJsonData))
 		require.NoError(t, err)
 
 		headers := dsService.getCustomHeaders(sjson, map[string]string{"httpHeaderValue1": "Bearer xf5yhfkpsnmgo"})
@@ -526,7 +530,7 @@ func TestService_GetHttpTransport(t *testing.T) {
 		defer backend.Close()
 
 		// 2. Get HTTP transport from datasource which uses the test server as backend
-		ds.Url = backend.URL
+		ds.URL = backend.URL
 		rt, err := dsService.GetHTTPTransport(context.Background(), &ds, provider)
 		require.NoError(t, err)
 		require.NotNil(t, rt)
@@ -559,8 +563,8 @@ func TestService_GetHttpTransport(t *testing.T) {
 		dsService, err := ProvideService(sqlStore, secretsService, secretsStore, cfg, featuremgmt.WithFeatures(), acmock.New(), acmock.NewMockedPermissionsService(), quotaService)
 		require.NoError(t, err)
 		ds := datasources.DataSource{
-			Id:       1,
-			Url:      "http://k8s:8001",
+			ID:       1,
+			URL:      "http://k8s:8001",
 			Type:     "Kubernetes",
 			JsonData: sjson,
 		}
@@ -645,8 +649,8 @@ func TestService_getTimeout(t *testing.T) {
 func TestService_GetDecryptedValues(t *testing.T) {
 	t.Run("should migrate and retrieve values from secure json data", func(t *testing.T) {
 		ds := &datasources.DataSource{
-			Id:   1,
-			Url:  "https://api.example.com",
+			ID:   1,
+			URL:  "https://api.example.com",
 			Type: "prometheus",
 		}
 
@@ -673,8 +677,8 @@ func TestService_GetDecryptedValues(t *testing.T) {
 
 	t.Run("should retrieve values from secret store", func(t *testing.T) {
 		ds := &datasources.DataSource{
-			Id:   1,
-			Url:  "https://api.example.com",
+			ID:   1,
+			URL:  "https://api.example.com",
 			Type: "prometheus",
 		}
 
@@ -691,7 +695,7 @@ func TestService_GetDecryptedValues(t *testing.T) {
 		jsonString, err := json.Marshal(jsonData)
 		require.NoError(t, err)
 
-		err = secretsStore.Set(context.Background(), ds.OrgId, ds.Name, secretskvs.DataSourceSecretType, string(jsonString))
+		err = secretsStore.Set(context.Background(), ds.OrgID, ds.Name, secretskvs.DataSourceSecretType, string(jsonString))
 		require.NoError(t, err)
 
 		values, err := dsService.DecryptedValues(context.Background(), ds)

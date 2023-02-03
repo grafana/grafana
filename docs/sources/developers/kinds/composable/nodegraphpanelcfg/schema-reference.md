@@ -6,12 +6,12 @@ title: NodeGraphPanelCfg kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
-# NodeGraphPanelCfg kind
+## NodeGraphPanelCfg
 
-## Maturity: experimental
-## Version: 0.0
+#### Maturity: experimental
+#### Version: 0.0
 
-## Properties
+
 
 | Property       | Type                    | Required | Description |
 |----------------|-------------------------|----------|-------------|
@@ -20,27 +20,21 @@ title: NodeGraphPanelCfg kind
 | `NodeOptions`  | [object](#nodeoptions)  | **Yes**  |             |
 | `PanelOptions` | [object](#paneloptions) | **Yes**  |             |
 
-## ArcOption
-
-### Properties
+### ArcOption
 
 | Property | Type   | Required | Description                                                                                         |
 |----------|--------|----------|-----------------------------------------------------------------------------------------------------|
 | `color`  | string | No       | The color of the arc.                                                                               |
 | `field`  | string | No       | Field from which to get the value. Values should be less than 1, representing fraction of a circle. |
 
-## EdgeOptions
-
-### Properties
+### EdgeOptions
 
 | Property            | Type   | Required | Description                                                                 |
 |---------------------|--------|----------|-----------------------------------------------------------------------------|
 | `mainStatUnit`      | string | No       | Unit for the main stat to override what ever is set in the data frame.      |
 | `secondaryStatUnit` | string | No       | Unit for the secondary stat to override what ever is set in the data frame. |
 
-## NodeOptions
-
-### Properties
+### NodeOptions
 
 | Property            | Type                      | Required | Description                                                                             |
 |---------------------|---------------------------|----------|-----------------------------------------------------------------------------------------|
@@ -50,16 +44,12 @@ title: NodeGraphPanelCfg kind
 
 ### ArcOption
 
-#### Properties
-
 | Property | Type   | Required | Description                                                                                         |
 |----------|--------|----------|-----------------------------------------------------------------------------------------------------|
 | `color`  | string | No       | The color of the arc.                                                                               |
 | `field`  | string | No       | Field from which to get the value. Values should be less than 1, representing fraction of a circle. |
 
-## PanelOptions
-
-### Properties
+### PanelOptions
 
 | Property | Type                        | Required | Description |
 |----------|-----------------------------|----------|-------------|
@@ -68,8 +58,6 @@ title: NodeGraphPanelCfg kind
 
 ### EdgeOptions
 
-#### Properties
-
 | Property            | Type   | Required | Description                                                                 |
 |---------------------|--------|----------|-----------------------------------------------------------------------------|
 | `mainStatUnit`      | string | No       | Unit for the main stat to override what ever is set in the data frame.      |
@@ -77,17 +65,13 @@ title: NodeGraphPanelCfg kind
 
 ### NodeOptions
 
-#### Properties
-
 | Property            | Type                      | Required | Description                                                                             |
 |---------------------|---------------------------|----------|-----------------------------------------------------------------------------------------|
 | `arcs`              | [ArcOption](#arcoption)[] | No       | Define which fields are shown as part of the node arc (colored circle around the node). |
 | `mainStatUnit`      | string                    | No       | Unit for the main stat to override what ever is set in the data frame.                  |
 | `secondaryStatUnit` | string                    | No       | Unit for the secondary stat to override what ever is set in the data frame.             |
 
-#### ArcOption
-
-##### Properties
+### ArcOption
 
 | Property | Type   | Required | Description                                                                                         |
 |----------|--------|----------|-----------------------------------------------------------------------------------------------------|

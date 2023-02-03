@@ -38,8 +38,10 @@ func (s *ServiceAccountsStoreImpl) ListTokens(
 	return result, err
 }
 
-func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, serviceAccountId int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) error {
-	return s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, serviceAccountId int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error) {
+	var apiKey *apikey.APIKey
+
+	return apiKey, s.sqlStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		if _, err := s.RetrieveServiceAccount(ctx, cmd.OrgId, serviceAccountId); err != nil {
 			return err
 		}
@@ -64,7 +66,7 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, s
 			return err
 		}
 
-		cmd.Result = addKeyCmd.Result
+		apiKey = addKeyCmd.Result
 		return nil
 	})
 }

@@ -114,12 +114,12 @@ func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.ScopeAt
 			return nil, accesscontrol.ErrInvalidScope
 		}
 
-		query := datasources.GetDataSourceQuery{Name: dsName, OrgId: orgID}
+		query := datasources.GetDataSourceQuery{Name: dsName, OrgID: orgID}
 		if err := db.GetDataSource(ctx, &query); err != nil {
 			return nil, err
 		}
 
-		return []string{datasources.ScopeProvider.GetResourceScopeUID(query.Result.Uid)}, nil
+		return []string{datasources.ScopeProvider.GetResourceScopeUID(query.Result.UID)}, nil
 	})
 }
 
@@ -142,12 +142,12 @@ func NewIDScopeResolver(db DataSourceRetriever) (string, accesscontrol.ScopeAttr
 			return nil, accesscontrol.ErrInvalidScope
 		}
 
-		query := datasources.GetDataSourceQuery{Id: dsID, OrgId: orgID}
+		query := datasources.GetDataSourceQuery{ID: dsID, OrgID: orgID}
 		if err := db.GetDataSource(ctx, &query); err != nil {
 			return nil, err
 		}
 
-		return []string{datasources.ScopeProvider.GetResourceScopeUID(query.Result.Uid)}, nil
+		return []string{datasources.ScopeProvider.GetResourceScopeUID(query.Result.UID)}, nil
 	})
 }
 
@@ -185,7 +185,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 				return err
 			}
 
-			return s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, kvstore.DataSourceSecretType, string(secret))
+			return s.SecretsStore.Set(ctx, cmd.OrgID, cmd.Name, kvstore.DataSourceSecretType, string(secret))
 		}
 
 		if err := s.SQLStore.AddDataSource(ctx, cmd); err != nil {
@@ -202,10 +202,10 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 				{BuiltinRole: "Viewer", Permission: "Query"},
 				{BuiltinRole: "Editor", Permission: "Query"},
 			}
-			if cmd.UserId != 0 {
-				permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserId, Permission: "Edit"})
+			if cmd.UserID != 0 {
+				permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserID, Permission: "Edit"})
 			}
-			if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgId, cmd.Result.Uid, permissions...); err != nil {
+			if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgID, cmd.Result.UID, permissions...); err != nil {
 				return err
 			}
 		}
@@ -229,8 +229,8 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 		var err error
 
 		query := &datasources.GetDataSourceQuery{
-			Id:    cmd.Id,
-			OrgId: cmd.OrgId,
+			ID:    cmd.ID,
+			OrgID: cmd.OrgID,
 		}
 		err = s.SQLStore.GetDataSource(ctx, query)
 		if err != nil {
@@ -242,7 +242,7 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 			return err
 		}
 
-		if cmd.OrgId > 0 && cmd.Name != "" {
+		if cmd.OrgID > 0 && cmd.Name != "" {
 			cmd.UpdateSecretFn = func() error {
 				secret, err := json.Marshal(cmd.SecureJsonData)
 				if err != nil {
@@ -250,13 +250,13 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 				}
 
 				if query.Result.Name != cmd.Name {
-					err := s.SecretsStore.Rename(ctx, cmd.OrgId, query.Result.Name, kvstore.DataSourceSecretType, cmd.Name)
+					err := s.SecretsStore.Rename(ctx, cmd.OrgID, query.Result.Name, kvstore.DataSourceSecretType, cmd.Name)
 					if err != nil {
 						return err
 					}
 				}
 
-				return s.SecretsStore.Set(ctx, cmd.OrgId, cmd.Name, kvstore.DataSourceSecretType, string(secret))
+				return s.SecretsStore.Set(ctx, cmd.OrgID, cmd.Name, kvstore.DataSourceSecretType, string(secret))
 			}
 		}
 
@@ -285,7 +285,7 @@ func (s *Service) GetHTTPTransport(ctx context.Context, ds *datasources.DataSour
 	s.ptc.Lock()
 	defer s.ptc.Unlock()
 
-	if t, present := s.ptc.cache[ds.Id]; present && ds.Updated.Equal(t.updated) {
+	if t, present := s.ptc.cache[ds.ID]; present && ds.Updated.Equal(t.updated) {
 		return t.roundTripper, nil
 	}
 
@@ -301,7 +301,7 @@ func (s *Service) GetHTTPTransport(ctx context.Context, ds *datasources.DataSour
 		return nil, err
 	}
 
-	s.ptc.cache[ds.Id] = cachedRoundTripper{
+	s.ptc.cache[ds.ID] = cachedRoundTripper{
 		roundTripper: rt,
 		updated:      ds.Updated,
 	}
@@ -319,7 +319,7 @@ func (s *Service) GetTLSConfig(ctx context.Context, ds *datasources.DataSource, 
 
 func (s *Service) DecryptedValues(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {
 	decryptedValues := make(map[string]string)
-	secret, exist, err := s.SecretsStore.Get(ctx, ds.OrgId, ds.Name, kvstore.DataSourceSecretType)
+	secret, exist, err := s.SecretsStore.Get(ctx, ds.OrgID, ds.Name, kvstore.DataSourceSecretType)
 	if err != nil {
 		return nil, err
 	}
@@ -409,7 +409,7 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 		Labels: map[string]string{
 			"datasource_type": ds.Type,
 			"datasource_name": ds.Name,
-			"datasource_uid":  ds.Uid,
+			"datasource_uid":  ds.UID,
 		},
 		TLS: &tlsOptions,
 	}
@@ -417,7 +417,10 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 	if ds.JsonData != nil {
 		opts.CustomOptions = ds.JsonData.MustMap()
 		// allow the plugin sdk to get the json data in JSONDataFromHTTPClientOptions
-		opts.CustomOptions["grafanaData"] = ds.JsonData.MustMap()
+		opts.CustomOptions["grafanaData"] = make(map[string]interface{})
+		for k, v := range opts.CustomOptions {
+			opts.CustomOptions[k] = v
+		}
 	}
 	if ds.BasicAuth {
 		password, err := s.DecryptedBasicAuthPassword(ctx, ds)

@@ -44,6 +44,11 @@ type Implementation struct {
 
 // UpsertUser updates an existing user, or if it doesn't exist, inserts a new one.
 func (ls *Implementation) UpsertUser(ctx context.Context, cmd *login.UpsertUserCommand) error {
+	var logger log.Logger = logger
+	if cmd.ReqContext != nil && cmd.ReqContext.Logger != nil {
+		logger = cmd.ReqContext.Logger
+	}
+
 	extUser := cmd.ExternalUser
 
 	usr, errAuthLookup := ls.AuthInfoService.LookupAndUpdate(ctx, &login.GetUserByAuthInfoQuery{
@@ -57,7 +62,7 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *login.UpsertUserC
 		}
 
 		if !cmd.SignupAllowed {
-			cmd.ReqContext.Logger.Warn("Not allowing login, user not found in internal user database and allow signup = false", "authmode", extUser.AuthModule)
+			logger.Warn("Not allowing login, user not found in internal user database and allow signup = false", "authmode", extUser.AuthModule)
 			return login.ErrSignupNotAllowed
 		}
 
@@ -67,7 +72,7 @@ func (ls *Implementation) UpsertUser(ctx context.Context, cmd *login.UpsertUserC
 		for _, srv := range []string{user.QuotaTargetSrv, org.QuotaTargetSrv} {
 			limitReached, errLimit := ls.QuotaService.CheckQuotaReached(ctx, quota.TargetSrv(srv), nil)
 			if errLimit != nil {
-				cmd.ReqContext.Logger.Warn("Error getting user quota.", "error", errLimit)
+				logger.Warn("Error getting user quota.", "error", errLimit)
 				return login.ErrGettingUserQuota
 			}
 			if limitReached {

@@ -1,8 +1,8 @@
 import { getDefaultNormalizer, render, RenderResult, SelectorMatcherOptions, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { MemoryRouter, Route } from 'react-router-dom';
+import { Route } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import {
   PluginErrorCode,
@@ -12,7 +12,7 @@ import {
   WithAccessControlMetadata,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { configureStore } from 'app/store/configureStore';
 
 import { mockPluginApis, getCatalogPluginMock, getPluginsStateMock, mockUserPermissions } from '../__mocks__';
@@ -73,12 +73,12 @@ const renderPluginDetails = (
     plugins: pluginsStateOverride || getPluginsStateMock([plugin]),
   });
 
+  locationService.push({ pathname: `/plugins/${id}`, search: pageId ? `?page=${pageId}` : '' });
+
   return render(
-    <MemoryRouter initialEntries={[{ pathname: `/plugins/${id}`, search: pageId ? `?page=${pageId}` : '' }]}>
-      <Provider store={store}>
-        <Route path="/plugins/:pluginId" component={PluginDetailsPage} />
-      </Provider>
-    </MemoryRouter>
+    <TestProvider store={store}>
+      <Route path="/plugins/:pluginId" component={PluginDetailsPage} />
+    </TestProvider>
   );
 };
 
