@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { cloneDeep } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React, { useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
@@ -49,9 +50,11 @@ export function LokiContextUi(props: LokiContextUiProps) {
   const styles = useStyles2(getStyles);
 
   const [contextFilters, setContextFilters] = useState<ContextFilter[]>([]);
+
   const [initialized, setInitialized] = useState(false);
   const timerHandle = React.useRef<number>();
   const previousInitialized = React.useRef<boolean>(false);
+  const previousContextFilters = React.useRef<ContextFilter[]>([]);
   useEffect(() => {
     if (!initialized) {
       return;
@@ -62,6 +65,13 @@ export function LokiContextUi(props: LokiContextUiProps) {
       previousInitialized.current = initialized;
       return;
     }
+
+    if (contextFilters.filter(({ enabled, fromParser }) => enabled && !fromParser).length === 0) {
+      setContextFilters(previousContextFilters.current);
+      return;
+    }
+
+    previousContextFilters.current = cloneDeep(contextFilters);
 
     if (timerHandle.current) {
       clearTimeout(timerHandle.current);
