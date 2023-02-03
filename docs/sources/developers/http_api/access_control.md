@@ -1336,3 +1336,85 @@ Content-Type: application/json; charset=UTF-8
 | ---- | --------------------------- |
 | 200  | Reset performed             |
 | 500  | Failed to reset basic roles |
+
+## Search through RBAC assignments
+
+`POST /api/access-control/assignments/search`
+
+`permissions:type:escalate` scope enables users to reset basic roles permissions.
+This could result in basic roles having permissions exceedind those of callers.
+
+Reset basic roles permissions to their default.
+
+#### Required permissions
+
+| Action           | Scope    |
+| ---------------- | -------- |
+| teams.roles:read | teams:\* |
+| users.roles:read | users:\* |
+
+#### Example request
+
+```http
+POST /api/access-control/assignments/search
+Accept: application/json
+Content-Type: application/json
+
+{
+	"userId": "16",
+	"teamId": "*",
+	"basicRole": "*",
+	"action": "dashboards:read",
+	"scope": "folders:uid:3RrgxsoVk",
+	"onlyRoles": false
+}
+```
+
+#### JSON body schema
+
+| Field Name | Data Type | Required | Description                                                                                                                    |
+| ---------- | --------- | -------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| userId     | string    | No       | Option to search through users direct assignments. Accepted values are a positive number or "\*"                               |
+| teamId     | string    | No       | Option to search through users team's assignments. Accepted values are a positive number or "\*"                               |
+| basicRole  | string    | No       | Option to search through users basicRole assignments. Accepted values are "Viewer", "Editor", "Admin", "Grafana Admin" or "\*" |
+| action     | string    | No       | Option to filter assignments granting a specific action.                                                                       |
+| scope      | string    | No       | Option to filter assignments targeting a specific resource.                                                                    |
+| roleName   | string    | No       | Option to filter assignments of a specific role.                                                                               |
+| onlyRoles  | bool      | No       | Option to display only the roles, not the permissions.                                                                         |
+
+#### Example response
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=UTF-8
+
+{
+  "result": [
+    {
+      "userId": 16,
+      "orgId": 1,
+      "roleName": "managed:users:1:permissions",
+      "version": 0,
+      "action": "dashboards:read",
+      "scope": "folders:uid:3RrgxsoVk"
+    },
+    {
+      "basicRole": "Admin",
+      "userId": 16,
+      "orgId": 1,
+      "roleName": "basic:admin",
+      "version": 19,
+      "action": "dashboards:read",
+      "scope": "folders:*"
+    }
+  ]
+}
+```
+
+#### Status codes
+
+| Code | Description                                                          |
+| ---- | -------------------------------------------------------------------- |
+| 200  | Search performed                                                     |
+| 400  | Bad request (missing content-type, missing or invalid fields, etc.). |
+| 500  | Failed to perform the search                                         |
