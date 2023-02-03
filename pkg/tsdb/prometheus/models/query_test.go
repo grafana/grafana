@@ -40,7 +40,7 @@ func TestParse(t *testing.T) {
 
 		res, err := models.Parse(q, "15s", intervalCalculator, true)
 		require.NoError(t, err)
-		require.Equal(t, false, *res.ExemplarQuery)
+		require.Equal(t, false, res.ExemplarQuery)
 	})
 
 	t.Run("parsing query model with step", func(t *testing.T) {
@@ -441,7 +441,7 @@ func TestParse(t *testing.T) {
 
 		res, err := models.Parse(q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
-		require.Equal(t, true, *res.RangeQuery)
+		require.Equal(t, true, res.RangeQuery)
 	})
 
 	t.Run("parsing query model of range and instant query", func(t *testing.T) {
@@ -463,8 +463,8 @@ func TestParse(t *testing.T) {
 
 		res, err := models.Parse(q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
-		require.Equal(t, true, *res.RangeQuery)
-		require.Equal(t, true, *res.InstantQuery)
+		require.Equal(t, true, res.RangeQuery)
+		require.Equal(t, true, res.InstantQuery)
 	})
 
 	t.Run("parsing query model of with no query type", func(t *testing.T) {
@@ -484,7 +484,7 @@ func TestParse(t *testing.T) {
 
 		res, err := models.Parse(q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
-		require.Equal(t, true, *res.RangeQuery)
+		require.Equal(t, true, res.RangeQuery)
 	})
 }
 

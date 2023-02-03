@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-	"github.com/grafana/grafana/pkg/kindsys"
 	"github.com/grafana/grafana/pkg/tsdb/prometheus/models"
 )
 
@@ -92,9 +91,9 @@ func TestClient(t *testing.T) {
 				Expr:         "rate(ALERTS{job=\"test\" [$__rate_interval]})",
 				Start:        time.Unix(0, 0),
 				End:          time.Unix(1234, 0),
-				RangeQuery:   kindsys.Ptr(true),
+				RangeQuery:   true,
 				Step:         1 * time.Second,
-				UtcOffsetSec: kindsys.Ptr(int64(1)),
+				UtcOffsetSec: int64(1),
 			}
 			res, err := client.QueryRange(context.Background(), req)
 			defer func() {
@@ -120,9 +119,9 @@ func TestClient(t *testing.T) {
 				Expr:         "rate(ALERTS{job=\"test\" [$__rate_interval]})",
 				Start:        time.Unix(0, 0),
 				End:          time.Unix(1234, 0),
-				RangeQuery:   kindsys.Ptr(true),
+				RangeQuery:   true,
 				Step:         1 * time.Second,
-				UtcOffsetSec: kindsys.Ptr(int64(1)),
+				UtcOffsetSec: int64(1),
 			}
 			res, err := client.QueryRange(context.Background(), req)
 			defer func() {

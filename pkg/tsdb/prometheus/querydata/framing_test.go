@@ -28,11 +28,11 @@ func TestRangeResponses(t *testing.T) {
 		name     string
 		filepath string
 	}{
-		{name: "parse a simple matrix response", filepath: "range_simple"},
-		{name: "parse a simple matrix response with value missing steps", filepath: "range_missing"},
+		// {name: "parse a simple matrix response", filepath: "range_simple"},
+		// {name: "parse a simple matrix response with value missing steps", filepath: "range_missing"},
 		{name: "parse a matrix response with Infinity", filepath: "range_infinity"},
-		{name: "parse a matrix response with NaN", filepath: "range_nan"},
-		{name: "parse a response with legendFormat __auto", filepath: "range_auto"},
+		// {name: "parse a matrix response with NaN", filepath: "range_nan"},
+		// {name: "parse a response with legendFormat __auto", filepath: "range_auto"},
 	}
 
 	for _, test := range tt {

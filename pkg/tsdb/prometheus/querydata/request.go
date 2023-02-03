@@ -120,13 +120,13 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 		Error:  nil,
 	}
 
-	if q.InstantQuery != nil && *q.InstantQuery {
+	if q.InstantQuery {
 		res := s.instantQuery(traceCtx, client, q, headers)
 		dr.Error = res.Error
 		dr.Frames = res.Frames
 	}
 
-	if q.RangeQuery != nil && *q.RangeQuery {
+	if q.RangeQuery {
 		res := s.rangeQuery(traceCtx, client, q, headers)
 		if res.Error != nil {
 			if dr.Error == nil {
@@ -138,7 +138,7 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 		dr.Frames = append(dr.Frames, res.Frames...)
 	}
 
-	if q.ExemplarQuery != nil && *q.ExemplarQuery {
+	if q.ExemplarQuery {
 		res := s.exemplarQuery(traceCtx, client, q, headers)
 		if res.Error != nil {
 			// If exemplar query returns error, we want to only log it and

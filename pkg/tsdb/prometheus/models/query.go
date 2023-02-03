@@ -64,14 +64,14 @@ type TimeRange struct {
 type Query struct {
 	Expr          string
 	Step          time.Duration
-	LegendFormat  *string
+	LegendFormat  string
 	Start         time.Time
 	End           time.Time
 	RefId         string
-	InstantQuery  *bool
-	RangeQuery    *bool
-	ExemplarQuery *bool
-	UtcOffsetSec  *int64
+	InstantQuery  bool
+	RangeQuery    bool
+	ExemplarQuery bool
+	UtcOffsetSec  int64
 }
 
 func Parse(query backend.DataQuery, timeInterval string, intervalCalculator intervalv2.Calculator, fromAlert bool) (*Query, error) {
@@ -106,33 +106,46 @@ func Parse(query backend.DataQuery, timeInterval string, intervalCalculator inte
 	}
 
 	// We never want to run exemplar query for alerting
-	exemplarQuery := model.Exemplar
+	exemplarQuery := false
+	if model.Exemplar != nil {
+		exemplarQuery = *model.Exemplar
+	}
 	if fromAlert {
-		exemplarQuery = kindsys.Ptr(false)
+		exemplarQuery = false
+	}
+
+	var utcOffsetSec int64 = 1
+	if model.UtcOffsetSec != nil {
+		utcOffsetSec = *model.UtcOffsetSec
+	}
+
+	legendFormat := ""
+	if model.LegendFormat != nil {
+		legendFormat = *model.LegendFormat
 	}
 
 	return &Query{
 		Expr:          expr,
 		Step:          interval,
-		LegendFormat:  model.LegendFormat,
+		LegendFormat:  legendFormat,
 		Start:         query.TimeRange.From,
 		End:           query.TimeRange.To,
 		RefId:         query.RefID,
-		InstantQuery:  kindsys.Ptr(instantQuery),
-		RangeQuery:    kindsys.Ptr(rangeQuery),
+		InstantQuery:  instantQuery,
+		RangeQuery:    rangeQuery,
 		ExemplarQuery: exemplarQuery,
-		UtcOffsetSec:  model.UtcOffsetSec,
+		UtcOffsetSec:  utcOffsetSec,
 	}, nil
 }
 
 func (query *Query) Type() TimeSeriesQueryType {
-	if query.InstantQuery != nil && *query.InstantQuery {
+	if query.InstantQuery {
 		return InstantQueryType
 	}
-	if query.RangeQuery != nil && *query.RangeQuery {
+	if query.RangeQuery {
 		return RangeQueryType
 	}
-	if query.ExemplarQuery != nil && *query.ExemplarQuery {
+	if query.ExemplarQuery {
 		return ExemplarQueryType
 	}
 	return UnknownQueryType
@@ -142,8 +155,8 @@ func (query *Query) TimeRange() TimeRange {
 	return TimeRange{
 		Step: query.Step,
 		// Align query range to step. It rounds start and end down to a multiple of step.
-		Start: AlignTimeRange(query.Start, query.Step, *query.UtcOffsetSec),
-		End:   AlignTimeRange(query.End, query.Step, *query.UtcOffsetSec),
+		Start: AlignTimeRange(query.Start, query.Step, query.UtcOffsetSec),
+		End:   AlignTimeRange(query.End, query.Step, query.UtcOffsetSec),
 	}
 }
 
