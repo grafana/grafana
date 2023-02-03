@@ -393,10 +393,12 @@ func (hs *HTTPServer) updateOrgUserHelper(c *contextmodel.ReqContext, cmd org.Up
 		return response.Error(http.StatusInternalServerError, "Failed update org user", err)
 	}
 
-	hs.accesscontrolService.ClearUserPermissionCache(&user.SignedInUser{
-		UserID: cmd.UserID,
-		OrgID:  cmd.OrgID,
-	})
+	if !hs.accesscontrolService.IsDisabled() {
+		hs.accesscontrolService.ClearUserPermissionCache(&user.SignedInUser{
+			UserID: cmd.UserID,
+			OrgID:  cmd.OrgID,
+		})
+	}
 
 	return response.Success("Organization user updated")
 }
