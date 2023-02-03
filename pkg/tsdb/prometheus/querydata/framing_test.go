@@ -124,6 +124,7 @@ func loadStoredQuery(fileName string) (*backend.QueryDataRequest, error) {
 			Interval:   kindsys.Ptr(fmt.Sprintf("%ds", sq.Step)),
 			IntervalMs: kindsys.Ptr(sq.Step * 1000),
 		},
+		UtcOffsetSec: kindsys.Ptr(int64(1)),
 		LegendFormat: kindsys.Ptr(sq.LegendFormat),
 	}
 

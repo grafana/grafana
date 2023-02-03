@@ -27,6 +27,8 @@ func TestParse(t *testing.T) {
 		queryJson := `{
 			"expr": "go_goroutines",
 			"refId": "A",
+			"interval": "1s",
+			"intervalMs": 1000,
 			"exemplar": true
 		}`
 
@@ -38,7 +40,7 @@ func TestParse(t *testing.T) {
 
 		res, err := models.Parse(q, "15s", intervalCalculator, true)
 		require.NoError(t, err)
-		require.Equal(t, false, res.ExemplarQuery)
+		require.Equal(t, false, *res.ExemplarQuery)
 	})
 
 	t.Run("parsing query model with step", func(t *testing.T) {
@@ -50,6 +52,8 @@ func TestParse(t *testing.T) {
 		q := queryContext(`{
 			"expr": "go_goroutines",
 			"format": "time_series",
+			"interval": "1s",
+			"intervalMs": 1000,
 			"refId": "A"
 		}`, timeRange)
 
@@ -68,6 +72,8 @@ func TestParse(t *testing.T) {
 			"expr": "go_goroutines",
 			"format": "time_series",
 			"intervalFactor": 1,
+			"interval": "15s",
+			"intervalMs": 15000,
 			"refId": "A"
 		}`, timeRange)
 
@@ -86,6 +92,8 @@ func TestParse(t *testing.T) {
 			"expr": "go_goroutines",
 			"format": "time_series",
 			"intervalFactor": 10,
+			"interval": "120s",
+			"intervalMs": 120000,
 			"refId": "A"
 		}`, timeRange)
 
@@ -104,6 +112,8 @@ func TestParse(t *testing.T) {
 			"expr": "go_goroutines",
 			"format": "time_series",
 			"intervalFactor": 1,
+			"interval": "120s",
+			"intervalMs": 120000,
 			"refId": "A"
 		}`, timeRange)
 
@@ -122,6 +132,8 @@ func TestParse(t *testing.T) {
 			"expr": "go_goroutines",
 			"format": "time_series",
 			"intervalFactor": 1,
+			"interval": "240s",
+			"intervalMs": 240000,
 			"refId": "A"
 		}`, timeRange)
 
@@ -140,6 +152,8 @@ func TestParse(t *testing.T) {
 			"expr": "rate(ALERTS{job=\"test\" [$__interval]})",
 			"format": "time_series",
 			"intervalFactor": 1,
+			"interval": "120s",
+			"intervalMs": 120000,
 			"refId": "A"
 		}`, timeRange)
 
@@ -158,6 +172,8 @@ func TestParse(t *testing.T) {
 			"expr": "rate(ALERTS{job=\"test\" [${__interval}]})",
 			"format": "time_series",
 			"intervalFactor": 1,
+			"interval": "120s",
+			"intervalMs": 120000,
 			"refId": "A"
 		}`, timeRange)
 
@@ -176,6 +192,8 @@ func TestParse(t *testing.T) {
 			"expr": "rate(ALERTS{job=\"test\" [$__interval_ms]})",
 			"format": "time_series",
 			"intervalFactor": 1,
+			"interval": "120s",
+			"intervalMs": 120000,
 			"refId": "A"
 		}`, timeRange)
 
@@ -194,6 +212,8 @@ func TestParse(t *testing.T) {
 			"expr": "rate(ALERTS{job=\"test\" [$__interval_ms]}) + rate(ALERTS{job=\"test\" [$__interval]})",
 			"format": "time_series",
 			"intervalFactor": 1,
+			"interval": "120s",
+			"intervalMs": 120000,
 			"refId": "A"
 		}`, timeRange)
 
@@ -212,6 +232,8 @@ func TestParse(t *testing.T) {
 			"expr": "rate(ALERTS{job=\"test\" [${__interval_ms}]}) + rate(ALERTS{job=\"test\" [${__interval}]})",
 			"format": "time_series",
 			"intervalFactor": 1,
+			"interval": "120s",
+			"intervalMs": 120000,
 			"refId": "A"
 		}`, timeRange)
 
@@ -230,6 +252,8 @@ func TestParse(t *testing.T) {
 			"expr": "rate(ALERTS{job=\"test\" [$__range]})",
 			"format": "time_series",
 			"intervalFactor": 1,
+			"interval": "120s",
+			"intervalMs": 120000,
 			"refId": "A"
 		}`, timeRange)
 
@@ -248,6 +272,8 @@ func TestParse(t *testing.T) {
 			"expr": "rate(ALERTS{job=\"test\" [$__range_s]})",
 			"format": "time_series",
 			"intervalFactor": 1,
+			"interval": "120s",
+			"intervalMs": 120000,
 			"refId": "A"
 		}`, timeRange)
 
@@ -266,6 +292,8 @@ func TestParse(t *testing.T) {
 			"expr": "rate(ALERTS{job=\"test\" [${__range_s}s]})",
 			"format": "time_series",
 			"intervalFactor": 1,
+			"interval": "120s",
+			"intervalMs": 120000,
 			"refId": "A"
 		}`, timeRange)
 
@@ -284,6 +312,8 @@ func TestParse(t *testing.T) {
 			"expr": "rate(ALERTS{job=\"test\" [$__range_s]})",
 			"format": "time_series",
 			"intervalFactor": 1,
+			"interval": "120s",
+			"intervalMs": 120000,
 			"refId": "A"
 		}`, timeRange)
 
@@ -302,6 +332,8 @@ func TestParse(t *testing.T) {
 			"expr": "rate(ALERTS{job=\"test\" [$__range_s]})",
 			"format": "time_series",
 			"intervalFactor": 1,
+			"interval": "120s",
+			"intervalMs": 120000,
 			"refId": "A"
 		}`, timeRange)
 
@@ -320,6 +352,8 @@ func TestParse(t *testing.T) {
 			"expr": "rate(ALERTS{job=\"test\" [$__range_ms]})",
 			"format": "time_series",
 			"intervalFactor": 1,
+			"interval": "120s",
+			"intervalMs": 120000,
 			"refId": "A"
 		}`, timeRange)
 
@@ -338,6 +372,8 @@ func TestParse(t *testing.T) {
 			"expr": "rate(ALERTS{job=\"test\" [$__range_ms]})",
 			"format": "time_series",
 			"intervalFactor": 1,
+			"interval": "120s",
+			"intervalMs": 120000,
 			"refId": "A"
 		}`, timeRange)
 
@@ -357,6 +393,7 @@ func TestParse(t *testing.T) {
 			"format": "time_series",
 			"intervalFactor": 1,
 			"interval": "5m",
+			"intervalMs": 300000,
 			"refId": "A"
 		}`, timeRange)
 
@@ -376,6 +413,7 @@ func TestParse(t *testing.T) {
 			"format": "time_series",
 			"intervalFactor": 1,
 			"interval": "$__rate_interval",
+			"intervalMs": 45000,
 			"refId": "A"
 		}`, timeRange)
 
@@ -395,13 +433,15 @@ func TestParse(t *testing.T) {
 			"expr": "go_goroutines",
 			"format": "time_series",
 			"intervalFactor": 1,
+			"interval": "120s",
+			"intervalMs": 120000,
 			"refId": "A",
 			"range": true
 		}`, timeRange)
 
 		res, err := models.Parse(q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
-		require.Equal(t, true, res.RangeQuery)
+		require.Equal(t, true, *res.RangeQuery)
 	})
 
 	t.Run("parsing query model of range and instant query", func(t *testing.T) {
@@ -414,6 +454,8 @@ func TestParse(t *testing.T) {
 			"expr": "go_goroutines",
 			"format": "time_series",
 			"intervalFactor": 1,
+			"interval": "120s",
+			"intervalMs": 120000,
 			"refId": "A",
 			"range": true,
 			"instant": true
@@ -421,8 +463,8 @@ func TestParse(t *testing.T) {
 
 		res, err := models.Parse(q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
-		require.Equal(t, true, res.RangeQuery)
-		require.Equal(t, true, res.InstantQuery)
+		require.Equal(t, true, *res.RangeQuery)
+		require.Equal(t, true, *res.InstantQuery)
 	})
 
 	t.Run("parsing query model of with no query type", func(t *testing.T) {
@@ -435,12 +477,14 @@ func TestParse(t *testing.T) {
 			"expr": "go_goroutines",
 			"format": "time_series",
 			"intervalFactor": 1,
+			"interval": "120s",
+			"intervalMs": 120000,
 			"refId": "A"
 		}`, timeRange)
 
 		res, err := models.Parse(q, "15s", intervalCalculator, false)
 		require.NoError(t, err)
-		require.Equal(t, true, res.RangeQuery)
+		require.Equal(t, true, *res.RangeQuery)
 	})
 }
 

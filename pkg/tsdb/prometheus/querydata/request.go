@@ -138,7 +138,7 @@ func (s *QueryData) fetch(ctx context.Context, client *client.Client, q *models.
 		dr.Frames = append(dr.Frames, res.Frames...)
 	}
 
-	if q.RangeQuery != nil && *q.ExemplarQuery {
+	if q.ExemplarQuery != nil && *q.ExemplarQuery {
 		res := s.exemplarQuery(traceCtx, client, q, headers)
 		if res.Error != nil {
 			// If exemplar query returns error, we want to only log it and

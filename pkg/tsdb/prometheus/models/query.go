@@ -89,11 +89,20 @@ func Parse(query backend.DataQuery, timeInterval string, intervalCalculator inte
 	// Interpolate variables in expr
 	timeRange := query.TimeRange.To.Sub(query.TimeRange.From)
 	expr := interpolateVariables(model, interval, timeRange, intervalCalculator, timeInterval)
-	rangeQuery := model.Range
-	instantQuery := model.Instant
-	if instantQuery != nil && rangeQuery != nil && !*instantQuery && !*rangeQuery {
+	var rangeQuery, instantQuery bool
+	if model.Instant == nil {
+		instantQuery = false
+	} else {
+		instantQuery = *model.Instant
+	}
+	if model.Range == nil {
+		rangeQuery = false
+	} else {
+		rangeQuery = *model.Range
+	}
+	if !instantQuery && !rangeQuery {
 		// In older dashboards, we were not setting range query param and !range && !instant was run as range query
-		rangeQuery = kindsys.Ptr(true)
+		rangeQuery = true
 	}
 
 	// We never want to run exemplar query for alerting
@@ -109,8 +118,8 @@ func Parse(query backend.DataQuery, timeInterval string, intervalCalculator inte
 		Start:         query.TimeRange.From,
 		End:           query.TimeRange.To,
 		RefId:         query.RefID,
-		InstantQuery:  instantQuery,
-		RangeQuery:    rangeQuery,
+		InstantQuery:  kindsys.Ptr(instantQuery),
+		RangeQuery:    kindsys.Ptr(rangeQuery),
 		ExemplarQuery: exemplarQuery,
 		UtcOffsetSec:  model.UtcOffsetSec,
 	}, nil
