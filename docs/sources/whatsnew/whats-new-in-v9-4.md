@@ -114,6 +114,8 @@ Create and tune an alert rule in the UI, then export to YAML or JSON, and use it
 
 Pause alert rule evaluation to prevent noisy alerting while tuning your alerts. Pausing stops alert rule evaluation and does not create any alert instances. This is different to mute timings, which stop notifications from being delivered, but still allow for alert rule evaluation and the creation of alert instances.
 
+![Pause alert rule evaluation](/media/docs/alerting/pause-alerts.png)
+
 ### View evaluation interval on the Group view
 
 View the evaluation interval more easily from the grouped view on the Alert list page. The view now also always displays recording and normal alert rules and highlights alert rule status in different colors.
