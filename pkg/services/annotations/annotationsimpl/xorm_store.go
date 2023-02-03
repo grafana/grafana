@@ -541,29 +541,24 @@ func (r *xormRepositoryImpl) CleanOrphanedAnnotationTags(ctx context.Context) (i
 func (r *xormRepositoryImpl) executeUntilDoneOrCancelled(ctx context.Context, sql string) (int64, error) {
 	var totalAffected int64
 	for {
-		select {
-		case <-ctx.Done():
-			return totalAffected, ctx.Err()
-		default:
-			var affected int64
-			err := r.db.WithTransactionalDbSession(ctx, func(session *db.Session) error {
-				res, err := session.Exec(sql)
-				if err != nil {
-					return err
-				}
-
-				affected, err = res.RowsAffected()
-				totalAffected += affected
-
-				return err
-			})
+		var affected int64
+		err := r.db.WithTransactionalDbSession(ctx, func(session *db.Session) error {
+			res, err := session.Exec(sql)
 			if err != nil {
-				return totalAffected, err
+				return err
 			}
 
-			if affected == 0 {
-				return totalAffected, nil
-			}
+			affected, err = res.RowsAffected()
+			totalAffected += affected
+
+			return err
+		})
+		if err != nil {
+			return totalAffected, err
+		}
+
+		if affected == 0 {
+			return totalAffected, nil
 		}
 	}
 }
