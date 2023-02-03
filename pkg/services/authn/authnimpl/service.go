@@ -110,7 +110,6 @@ func ProvideService(
 			s.log.Error("failed to configure auth proxy", "err", err)
 		} else {
 			s.RegisterClient(proxy)
-			s.RegisterPostAuthHook(proxy.CacheProxyUserHook, 100)
 		}
 	}
 

@@ -36,7 +36,10 @@ var (
 	errInvalidProxyHeader = errutil.NewBase(errutil.StatusInternal, "auth-proxy.invalid-proxy-header")
 )
 
-var _ authn.ContextAwareClient = new(Proxy)
+var (
+	_ authn.HookClient         = new(Proxy)
+	_ authn.ContextAwareClient = new(Proxy)
+)
 
 func ProvideProxy(cfg *setting.Cfg, cache *remotecache.RemoteCache, userSrv user.Service, clients ...authn.ProxyClient) (*Proxy, error) {
 	list, err := parseAcceptList(cfg.AuthProxyWhitelist)
@@ -116,7 +119,7 @@ func (c *Proxy) Priority() uint {
 	return 50
 }
 
-func (c *Proxy) CacheProxyUserHook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
+func (c *Proxy) Hook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
 	if identity.ClientParams.CacheAuthProxyKey != "" {
 		return nil
 	}
