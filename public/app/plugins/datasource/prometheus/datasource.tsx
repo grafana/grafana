@@ -139,7 +139,12 @@ export class PrometheusDatasource
     this.defaultEditor = instanceSettings.jsonData.defaultEditor;
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
-    this.prometheusDataFrameStorage = new IncrementalStorage(this);
+
+    this.prometheusDataFrameStorage = new IncrementalStorage(this, {
+      queryOverlapDurationMs: 60 * 10 * 1000, // 10 minutes
+      storageTimeIndex: '__time__',
+      debug: true,
+    });
 
     // This needs to be here and cannot be static because of how annotations typing affects casting of data source
     // objects to DataSourceApi types.

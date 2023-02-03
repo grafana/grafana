@@ -24,6 +24,11 @@ import { PromQuery } from '../types';
 const INCREMENTAL_QUERY_OVERLAP_DURATION_MS = 60 * 10 * 1000;
 const STORAGE_TIME_INDEX = '__time__';
 const DEBUG = true;
+interface IncrementalStorageOptions {
+  queryOverlapDurationMs: number;
+  storageTimeIndex: string;
+  debug: boolean;
+}
 
 // Another issue: if the query window starts at a time when there is no results from the database, we'll always fail the cache check and pull fresh data, even though the cache has everything available
 // Also the cache can def get really big for big queries, need to look into if we want to find a way to limit the size of requests we add to the cache?
@@ -31,10 +36,12 @@ export class IncrementalStorage {
   private storage: Record<string, Record<string, number[]>>;
   private readonly datasource: { interpolateString: (s: string) => string };
   private readonly timeSrv: TimeSrv = getTimeSrv();
+  private readonly options?: IncrementalStorageOptions;
 
-  constructor(datasource: { interpolateString: (s: string) => string }) {
+  constructor(datasource: { interpolateString: (s: string) => string }, options?: IncrementalStorageOptions) {
     this.storage = {};
     this.datasource = datasource;
+    this.options = options;
   }
 
   throwError = (error: Error) => {
