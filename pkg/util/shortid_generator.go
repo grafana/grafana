@@ -35,7 +35,7 @@ func GenerateShortUID() string {
 		panic("invalid uuid")
 	}
 	uuid := uid.String()
-	if unicode.IsDigit(rune(uuid[0])) {
+	if !strings.Contains(alpharunes, string(uuid[0])) {
 		return string(alphaRunes[uidrand.Intn(len(alphaRunes))]) + uuid[1:]
 	}
 	return uuid
