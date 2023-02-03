@@ -48,7 +48,7 @@ func NewDashboardService(
 	orig dashboards.DashboardService,
 	store entity.EntityStoreServer,
 	reg *corecrd.Registry,
-	troll *bridge.Service,
+	bridgeService *bridge.Service,
 	kinds *corekind.Base,
 	cfg *setting.Cfg,
 	userService user.Service,
@@ -58,12 +58,11 @@ func NewDashboardService(
 		log:       log.New("store.k8saccess.dashboard"),
 		reg:       reg,
 		orig:      orig,
-		clientSet: troll.ClientSet,
+		clientSet: bridgeService.ClientSet,
 		store:     store,
 		Kinds:     kinds,
 
 		cfg:                  cfg,
-		bridgeService:        troll,
 		userService:          userService,
 		accessControlService: accessControlService,
 	}

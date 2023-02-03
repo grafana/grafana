@@ -30,7 +30,7 @@ func (s *k8sDashboardService) Run(ctx context.Context) error {
 		Resource: dashboardCRD.Schema.Spec.Names.Plural,
 	}
 
-	factory := dynamicinformer.NewDynamicSharedInformerFactory(s.bridgeService.ClientSet.Dynamic, time.Minute)
+	factory := dynamicinformer.NewDynamicSharedInformerFactory(s.clientSet.Dynamic, time.Minute)
 	dashboardInformer := factory.ForResource(gvr).Informer()
 
 	dashboardInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
