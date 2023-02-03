@@ -49,7 +49,7 @@ export const AuthConfigPageUnconnected = ({ settings, loadSettings }: Props): JS
               key={provider.providerId}
               providerId={provider.providerId}
               configPath="admin/authentication"
-              displayName={getAuthProviderInfo(provider.providerId).displayName}
+              displayName={provider.name || getAuthProviderInfo(provider.providerId).displayName}
               enabled={provider.enabled === 'true'}
             />
           ))}
