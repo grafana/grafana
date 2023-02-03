@@ -574,6 +574,8 @@ export const runQueries = (
         }
       } else {
         for (const type of supplementaryQueryTypes) {
+          // We always prepare provider, even is supplementary query is disabled because when the user
+          // enables the query, we need to load the data, so we need the provider
           const dataProvider = getSupplementaryQueryProvider(
             datasourceInstance,
             type,
@@ -584,8 +586,6 @@ export const runQueries = (
             newQuerySource
           );
 
-          // We always prepare provider, even is supplementary query is disabled because when the user
-          // enables the query, we need to load the data, so we need the provider
           if (dataProvider) {
             dispatch(
               storeSupplementaryQueryDataProviderAction({
