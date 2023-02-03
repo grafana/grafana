@@ -180,14 +180,14 @@ func TestStore_MigrateApiKeys(t *testing.T) {
 			_, err := store.orgService.CreateWithMember(context.Background(), &org.CreateOrgCommand{Name: "main"})
 			require.NoError(t, err)
 			key := tests.SetupApiKey(t, db, c.key)
-			err = store.MigrateApiKey(context.Background(), key.OrgId, key.Id)
+			err = store.MigrateApiKey(context.Background(), key.OrgID, key.ID)
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
 			} else {
 				require.NoError(t, err)
 
 				q := serviceaccounts.SearchOrgServiceAccountsQuery{
-					OrgID: key.OrgId,
+					OrgID: key.OrgID,
 					Query: "",
 					Page:  1,
 					Limit: 50,
@@ -195,7 +195,7 @@ func TestStore_MigrateApiKeys(t *testing.T) {
 						UserID: 1,
 						OrgID:  1,
 						Permissions: map[int64]map[string][]string{
-							key.OrgId: {
+							key.OrgID: {
 								"serviceaccounts:read": {"serviceaccounts:id:*"},
 							},
 						},
@@ -208,7 +208,7 @@ func TestStore_MigrateApiKeys(t *testing.T) {
 				require.Equal(t, string(key.Role), saMigrated.Role)
 
 				tokens, err := store.ListTokens(context.Background(), &serviceaccounts.GetSATokensQuery{
-					OrgID:            &key.OrgId,
+					OrgID:            &key.OrgID,
 					ServiceAccountID: &saMigrated.Id,
 				})
 				require.NoError(t, err)
@@ -350,7 +350,7 @@ func TestStore_RevertApiKey(t *testing.T) {
 				saId = rand.Int63()
 			} else {
 				q := serviceaccounts.SearchOrgServiceAccountsQuery{
-					OrgID: key.OrgId,
+					OrgID: key.OrgID,
 					Query: "",
 					Page:  1,
 					Limit: 50,
@@ -358,7 +358,7 @@ func TestStore_RevertApiKey(t *testing.T) {
 						UserID: 1,
 						OrgID:  1,
 						Permissions: map[int64]map[string][]string{
-							key.OrgId: {
+							key.OrgID: {
 								"serviceaccounts:read": {"serviceaccounts:id:*"},
 							},
 						},
@@ -369,14 +369,14 @@ func TestStore_RevertApiKey(t *testing.T) {
 				saId = serviceAccounts.ServiceAccounts[0].Id
 			}
 
-			err = store.RevertApiKey(context.Background(), saId, key.Id)
+			err = store.RevertApiKey(context.Background(), saId, key.ID)
 
 			if c.expectedErr != nil {
 				require.ErrorIs(t, err, c.expectedErr)
 			} else {
 				require.NoError(t, err)
 				q := serviceaccounts.SearchOrgServiceAccountsQuery{
-					OrgID: key.OrgId,
+					OrgID: key.OrgID,
 					Query: "",
 					Page:  1,
 					Limit: 50,
@@ -384,7 +384,7 @@ func TestStore_RevertApiKey(t *testing.T) {
 						UserID: 1,
 						OrgID:  1,
 						Permissions: map[int64]map[string][]string{
-							key.OrgId: {
+							key.OrgID: {
 								"serviceaccounts:read": {"serviceaccounts:id:*"},
 							},
 						},
@@ -400,7 +400,7 @@ func TestStore_RevertApiKey(t *testing.T) {
 				require.Len(t, apiKeys, 1)
 				apiKey := apiKeys[0]
 				require.Equal(t, c.key.Name, apiKey.Name)
-				require.Equal(t, c.key.OrgId, apiKey.OrgId)
+				require.Equal(t, c.key.OrgId, apiKey.OrgID)
 				require.Equal(t, c.key.Role, apiKey.Role)
 				require.Equal(t, key.Key, apiKey.Key)
 				// Api key should not be linked to service account

@@ -150,13 +150,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
-        "docs": "n/a",
-        "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/azuremonitordataquery/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/tsdb/grafana-azure-monitor-datasource/kinds/dataquery/types_dataquery_gen.go",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/grafana-azure-monitor-datasource/dataquery.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/grafana-azure-monitor-datasource/dataquery.gen.ts"
       },
       "machineName": "azuremonitordataquery",
-      "maturity": "planned",
+      "maturity": "merged",
       "name": "AzureMonitorDataQuery",
       "pluralMachineName": "azuremonitordataquerys",
       "pluralName": "AzureMonitorDataQuerys",
@@ -1982,8 +1982,8 @@
           "bargaugepanelcfg",
           "dashboard",
           "dashboardlistpanelcfg",
-          "elasticsearchdataquery",
           "debugpanelcfg",
+          "elasticsearchdataquery",
           "gaugepanelcfg",
           "histogrampanelcfg",
           "librarypanel",
@@ -2000,7 +2000,7 @@
           "textpanelcfg",
           "xychartpanelcfg"
         ],
-        "count": 20
+        "count": 22
       },
       "mature": {
         "name": "mature",
@@ -2011,13 +2011,14 @@
         "name": "merged",
         "items": [
           "alertgroupspanelcfg",
+          "azuremonitordataquery",
           "playlist",
           "preferences",
           "publicdashboard",
           "serviceaccount",
           "team"
         ],
-        "count": 6
+        "count": 7
       },
       "planned": {
         "name": "planned",
@@ -2026,7 +2027,6 @@
           "alertmanagerdataquery",
           "alertmanagerdatasourcecfg",
           "apikey",
-          "azuremonitordataquery",
           "azuremonitordatasourcecfg",
           "cloudwatchdataquery",
           "cloudwatchdatasourcecfg",
@@ -2074,7 +2074,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 52
+        "count": 50
       },
       "stable": {
         "name": "stable",

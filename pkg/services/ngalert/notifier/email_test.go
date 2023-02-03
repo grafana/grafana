@@ -7,7 +7,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/grafana/alerting/alerting/notifier/channels"
+	"github.com/grafana/alerting/images"
+	alertingLogging "github.com/grafana/alerting/logging"
+	"github.com/grafana/alerting/receivers"
+	alertingEmail "github.com/grafana/alerting/receivers/email"
+	alertingTemplates "github.com/grafana/alerting/templates"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
@@ -19,7 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// TestEmailNotifierIntegration tests channels.EmailNotifier in conjunction with Grafana notifications.EmailSender and two staged expansion of the email body
+// TestEmailNotifierIntegration tests channels.EmailNotifier in conjunction with Grafana notifications.EmailSender and two staged expansion of the alertingEmail body
 func TestEmailNotifierIntegration(t *testing.T) {
 	ns := createEmailSender(t)
 
@@ -184,7 +188,7 @@ func TestEmailNotifierIntegration(t *testing.T) {
 	}
 }
 
-func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *template.Template, ns channels.NotificationSender) channels.NotificationChannel {
+func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *template.Template, ns receivers.NotificationSender) *alertingEmail.Notifier {
 	t.Helper()
 
 	jsonData := map[string]interface{}{
@@ -201,21 +205,21 @@ func createSut(t *testing.T, messageTmpl string, subjectTmpl string, emailTmpl *
 	bytes, err := json.Marshal(jsonData)
 	require.NoError(t, err)
 
-	fc := channels.FactoryConfig{
-		Config: &channels.NotificationChannelConfig{
+	fc := receivers.FactoryConfig{
+		Config: &receivers.NotificationChannelConfig{
 			Name:     "ops",
-			Type:     "email",
+			Type:     "alertingEmail",
 			Settings: json.RawMessage(bytes),
 		},
 		NotificationService: ns,
 		DecryptFunc: func(ctx context.Context, sjd map[string][]byte, key string, fallback string) string {
 			return fallback
 		},
-		ImageStore: &channels.UnavailableImageStore{},
+		ImageStore: &images.UnavailableImageStore{},
 		Template:   emailTmpl,
-		Logger:     &channels.FakeLogger{},
+		Logger:     &alertingLogging.FakeLogger{},
 	}
-	emailNotifier, err := channels.EmailFactory(fc)
+	emailNotifier, err := alertingEmail.New(fc)
 	require.NoError(t, err)
 	return emailNotifier
 }
@@ -234,11 +238,11 @@ type emailSender struct {
 	ns *notifications.NotificationService
 }
 
-func (e emailSender) SendWebhook(ctx context.Context, cmd *channels.SendWebhookSettings) error {
+func (e emailSender) SendWebhook(ctx context.Context, cmd *receivers.SendWebhookSettings) error {
 	panic("not implemented")
 }
 
-func (e emailSender) SendEmail(ctx context.Context, cmd *channels.SendEmailSettings) error {
+func (e emailSender) SendEmail(ctx context.Context, cmd *receivers.SendEmailSettings) error {
 	attached := make([]*notifications.SendEmailAttachFile, 0, len(cmd.AttachedFiles))
 	for _, file := range cmd.AttachedFiles {
 		attached = append(attached, &notifications.SendEmailAttachFile{
@@ -295,7 +299,7 @@ func templateForTests(t *testing.T) *template.Template {
 		require.NoError(t, os.RemoveAll(f.Name()))
 	})
 
-	_, err = f.WriteString(channels.TemplateForTestsString)
+	_, err = f.WriteString(alertingTemplates.TemplateForTestsString)
 	require.NoError(t, err)
 
 	tmpl, err := template.FromGlobs([]string{f.Name()})
