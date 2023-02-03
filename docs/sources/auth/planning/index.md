@@ -63,7 +63,13 @@ Teams is a perfect solution to work with a small subset of users. Teams can shar
 
 Grafana Organizations provide a mesure of isolation within Grafana by default. The intention is to present different user experiences, which give the sense of different instances of Grafana within a single instance. However, **we recommend aginast Grafana Organizations** because they lack the scalability of [Folders].
 
-## 🚧 Do I have external systems?
+### Choosing between teams and organizations
+
+Grafana Teams and Grafana Organizations serve similar purposes in the Grafana platform. Both are designed to help manage and control access to resources, Teams provide a more focused approach for smaller groups or projects. Teams allow for easy collaboration and shared ownership of resources among members, making it simple to manage access and control on who has access to said resources.
+
+Organizations, on the other hand, provide a higher level of management for multiple teams and resources, and are designed for larger enterprises or organizations with a complex setup or multiple and different business models.
+
+That being said, Teams provide many of the same benefits as Organizations, and can be seen as a more streamlined and simplified approach to managing resources and access. As such, it is possible that in the future, Teams may eventually replace Organizations as the primary way to manage resources in Grafana.
 
 ### 🚧 Service Accounts
 
