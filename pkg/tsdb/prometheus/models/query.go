@@ -89,9 +89,8 @@ func Parse(query backend.DataQuery, timeInterval string, intervalCalculator inte
 	timeRange := query.TimeRange.To.Sub(query.TimeRange.From)
 	expr := interpolateVariables(model, interval, timeRange, intervalCalculator, timeInterval)
 	rangeQuery := model.Range
-	if rangeQuery != nil && model.Instant != nil && model.
-		Range != nil && !*model.
-		Instant && !*model.Range {
+	instantQuery := model.Instant
+	if instantQuery != nil && rangeQuery != nil && !*instantQuery && !*rangeQuery {
 		// In older dashboards, we were not setting range query param and !range && !instant was run as range query
 		rangeQuery = kindsys.Ptr(true)
 	}
@@ -109,7 +108,7 @@ func Parse(query backend.DataQuery, timeInterval string, intervalCalculator inte
 		Start:         query.TimeRange.From,
 		End:           query.TimeRange.To,
 		RefId:         query.RefID,
-		InstantQuery:  model.Instant,
+		InstantQuery:  instantQuery,
 		RangeQuery:    rangeQuery,
 		ExemplarQuery: exemplarQuery,
 		UtcOffsetSec:  model.UtcOffsetSec,
@@ -117,13 +116,13 @@ func Parse(query backend.DataQuery, timeInterval string, intervalCalculator inte
 }
 
 func (query *Query) Type() TimeSeriesQueryType {
-	if *query.InstantQuery {
+	if query.InstantQuery != nil && *query.InstantQuery {
 		return InstantQueryType
 	}
-	if *query.RangeQuery {
+	if query.RangeQuery != nil && *query.RangeQuery {
 		return RangeQueryType
 	}
-	if *query.ExemplarQuery {
+	if query.ExemplarQuery != nil && *query.ExemplarQuery {
 		return ExemplarQueryType
 	}
 	return UnknownQueryType
