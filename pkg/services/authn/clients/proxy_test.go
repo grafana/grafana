@@ -2,9 +2,12 @@ package clients
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"testing"
+	"time"
 
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -109,7 +112,7 @@ func TestProxy_Authenticate(t *testing.T) {
 				calledAdditional = additional
 				return nil, nil
 			}}
-			c, err := ProvideProxy(cfg, nil, nil, proxyClient)
+			c, err := ProvideProxy(cfg, fakeCache{expectedErr: errors.New("")}, usertest.NewUserServiceFake(), proxyClient)
 			require.NoError(t, err)
 
 			_, err = c.Authenticate(context.Background(), tt.req)
@@ -169,4 +172,19 @@ func TestProxy_Test(t *testing.T) {
 			assert.Equal(t, tt.expectedOK, c.Test(context.Background(), tt.req))
 		})
 	}
+}
+
+var _ proxyCache = new(fakeCache)
+
+type fakeCache struct {
+	expectedErr  error
+	expectedItem interface{}
+}
+
+func (f fakeCache) Get(ctx context.Context, key string) (interface{}, error) {
+	return f.expectedItem, f.expectedErr
+}
+
+func (f fakeCache) Set(ctx context.Context, key string, value interface{}, expire time.Duration) error {
+	return f.expectedErr
 }

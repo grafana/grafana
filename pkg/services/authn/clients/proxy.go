@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -41,7 +40,7 @@ var (
 	_ authn.ContextAwareClient = new(Proxy)
 )
 
-func ProvideProxy(cfg *setting.Cfg, cache *remotecache.RemoteCache, userSrv user.Service, clients ...authn.ProxyClient) (*Proxy, error) {
+func ProvideProxy(cfg *setting.Cfg, cache proxyCache, userSrv user.Service, clients ...authn.ProxyClient) (*Proxy, error) {
 	list, err := parseAcceptList(cfg.AuthProxyWhitelist)
 	if err != nil {
 		return nil, err
@@ -49,10 +48,15 @@ func ProvideProxy(cfg *setting.Cfg, cache *remotecache.RemoteCache, userSrv user
 	return &Proxy{log.New(authn.ClientProxy), cfg, cache, userSrv, clients, list}, nil
 }
 
+type proxyCache interface {
+	Get(ctx context.Context, key string) (interface{}, error)
+	Set(ctx context.Context, key string, value interface{}, expire time.Duration) error
+}
+
 type Proxy struct {
 	log         log.Logger
 	cfg         *setting.Cfg
-	cache       *remotecache.RemoteCache
+	cache       proxyCache
 	userSrv     user.Service
 	clients     []authn.ProxyClient
 	acceptedIPs []*net.IPNet
@@ -95,8 +99,8 @@ func (c *Proxy) Authenticate(ctx context.Context, r *authn.Request) (*authn.Iden
 				return authn.IdentityFromSignedInUser(authn.NamespacedID(authn.NamespaceUser, usr.UserID), usr, authn.ClientParams{}), nil
 			}
 		}
-
 	}
+
 	var clientErr error
 	for _, proxyClient := range c.clients {
 		var identity *authn.Identity
