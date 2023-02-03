@@ -43,8 +43,8 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				},
 			}},
 			expectedKey: &apikey.APIKey{
-				Id:    1,
-				OrgId: 1,
+				ID:    1,
+				OrgID: 1,
 				Key:   hash,
 				Role:  org.RoleAdmin,
 			},
@@ -62,8 +62,8 @@ func TestAPIKey_Authenticate(t *testing.T) {
 				},
 			}},
 			expectedKey: &apikey.APIKey{
-				Id:               1,
-				OrgId:            1,
+				ID:               1,
+				OrgID:            1,
 				Key:              hash,
 				ServiceAccountId: intPtr(1),
 			},

@@ -233,18 +233,10 @@ export interface Rate extends MetricAggregationWithField {
 }
 
 export interface BasePipelineMetricAggregation extends MetricAggregationWithField {
-  /**
-   * TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
-   * type:         #PipelineMetricAggregationType
-   */
   pipelineAgg?: string;
 }
 
 export interface PipelineMetricAggregationWithMultipleBucketPaths extends BaseMetricAggregation {
-  /**
-   * TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
-   * type: #PipelineMetricAggregationType
-   */
   pipelineVariables?: Array<PipelineVariable>;
 }
 
@@ -361,10 +353,25 @@ export type PipelineMetricAggregation = (MovingAverage | Derivative | Cumulative
 export type MetricAggregationWithSettings = (BucketScript | CumulativeSum | Derivative | SerialDiff | RawData | RawDocument | UniqueCount | Percentiles | ExtendedStats | Min | Max | Sum | Average | MovingAverage | MovingFunction | Logs | Rate | TopMetrics);
 
 export interface Elasticsearch extends common.DataQuery {
+  /**
+   * Alias pattern
+   */
   alias?: string;
+  /**
+   * List of bucket aggregations
+   */
   bucketAggs?: Array<BucketAggregation>;
+  /**
+   * List of metric aggregations
+   */
   metrics?: Array<MetricAggregation>;
+  /**
+   * Lucene query
+   */
   query?: string;
+  /**
+   * Name of time field
+   */
   timeField?: string;
 }
 
