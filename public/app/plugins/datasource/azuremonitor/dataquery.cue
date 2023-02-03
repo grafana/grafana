@@ -121,7 +121,7 @@ composableKinds: DataQuery: {
 							resource?: string
 						} @cuetsy(kind="interface")
 
-						#ResultFormat: "table" | "time_series" @cuetsy(kind="enum")
+						#ResultFormat: "table" | "time_series" @cuetsy(kind="enum", memberNames="Table|TimeSeries")
 
 						#AzureResourceGraphQuery: {
 							// Azure Resource Graph KQL query to be executed.

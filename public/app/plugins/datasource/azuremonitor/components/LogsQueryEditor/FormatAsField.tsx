@@ -10,7 +10,7 @@ import { Field } from '../Field';
 import { setFormatAs } from './setQueryValue';
 
 const FORMAT_OPTIONS: Array<SelectableValue<ResultFormat>> = [
-  { label: 'Time series', value: ResultFormat.Time_series },
+  { label: 'Time series', value: ResultFormat.TimeSeries },
   { label: 'Table', value: ResultFormat.Table },
 ];
 

@@ -186,7 +186,7 @@ export const defaultAzureLogsQuery: Partial<AzureLogsQuery> = {
 
 export enum ResultFormat {
   Table = 'table',
-  Time_series = 'time_series',
+  TimeSeries = 'time_series',
 }
 
 export interface AzureResourceGraphQuery {
