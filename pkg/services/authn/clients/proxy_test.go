@@ -109,7 +109,7 @@ func TestProxy_Authenticate(t *testing.T) {
 				calledAdditional = additional
 				return nil, nil
 			}}
-			c, err := ProvideProxy(cfg, proxyClient)
+			c, err := ProvideProxy(cfg, nil, nil, proxyClient)
 			require.NoError(t, err)
 
 			_, err = c.Authenticate(context.Background(), tt.req)
@@ -165,7 +165,7 @@ func TestProxy_Test(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.AuthProxyHeaderName = "Proxy-Header"
 
-			c, _ := ProvideProxy(cfg, nil)
+			c, _ := ProvideProxy(cfg, nil, nil, nil)
 			assert.Equal(t, tt.expectedOK, c.Test(context.Background(), tt.req))
 		})
 	}
