@@ -1,15 +1,18 @@
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { Role } from 'app/types';
 
+import { addDisplayNameForFixedRole } from './utils';
+
 export const fetchRoleOptions = async (orgId?: number, query?: string): Promise<Role[]> => {
   let rolesUrl = '/api/access-control/roles?delegatable=true';
   if (orgId) {
     rolesUrl += `&targetOrgId=${orgId}`;
   }
-  const roles = await getBackendSrv().get(rolesUrl);
+  let roles = await getBackendSrv().get(rolesUrl);
   if (!roles || !roles.length) {
     return [];
   }
+  roles = roles.map(addDisplayNameForFixedRole);
   return roles;
 };
 
@@ -19,10 +22,11 @@ export const fetchUserRoles = async (userId: number, orgId?: number): Promise<Ro
     userRolesUrl += `?targetOrgId=${orgId}`;
   }
   try {
-    const roles = await getBackendSrv().get(userRolesUrl);
+    let roles = await getBackendSrv().get(userRolesUrl);
     if (!roles || !roles.length) {
       return [];
     }
+    roles = roles.map(addDisplayNameForFixedRole);
     return roles;
   } catch (error) {
     if (isFetchError(error)) {
