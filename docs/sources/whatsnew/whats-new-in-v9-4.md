@@ -16,7 +16,6 @@ weight: -33
 
 Welcome to Grafana 9.4! Read on to learn about [add short list of what's included in this release]. For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
-
 ## Alert email templating
 
 We've improved the design and functionality of email templates to make template creation much easier and more customizable. The email template framework utilizes MJML to define and compile the final email HTML output. Sprig functions in the email templates provide more customizable template functions.
