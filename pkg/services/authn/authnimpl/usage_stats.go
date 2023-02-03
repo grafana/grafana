@@ -2,6 +2,7 @@ package authnimpl
 
 import (
 	"context"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -22,6 +23,11 @@ func (s *Service) getUsageStats(ctx context.Context) (map[string]interface{}, er
 			enabledValue = 1
 		}
 		m["stats.auth_enabled."+authType+".count"] = enabledValue
+	}
+
+	// Add stats about anonymous auth
+	if strings.EqualFold(s.cfg.AnonymousOrgRole, "Viewer") {
+		m["stats.auth.anonymous.customized_role.count"] = 1
 	}
 
 	// Add stats about privilege elevators.
