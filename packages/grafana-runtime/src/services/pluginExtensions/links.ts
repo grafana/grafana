@@ -1,46 +1,34 @@
-import { UrlQueryMap, urlUtil } from '@grafana/data';
+import { getPluginsExtensionRegistry, PluginsExtensionRegistryLink } from './registry';
 
-import { getPluginsExtensionRegistry } from './registry';
-
-export type PluginLinkOptions = {
-  id: string;
-  queryParams?: UrlQueryMap;
+export type PluginLinksOptions = {
+  target: string;
 };
 
-export type PluginLinkResult = {
-  link?: PluginLink;
+export type PluginLinksResult = {
+  extensions: PluginsExtensionRegistryLink[];
   error?: Error;
 };
 
-export type PluginLink = {
-  href: string;
-  description: string;
-};
-
-export class PluginLinkMissingError extends Error {
+export class PluginLinkExtensionsMissingError extends Error {
   readonly id: string;
 
   constructor(id: string) {
     super(`Could not find link for '${id}'`);
     this.id = id;
-    this.name = PluginLinkMissingError.name;
+    this.name = PluginLinkExtensionsMissingError.name;
   }
 }
 
-export function getPluginLink({ id, queryParams }: PluginLinkOptions): PluginLinkResult {
+export function getPluginExtensions({ target }: PluginLinksOptions): PluginLinksResult {
   const registry = getPluginsExtensionRegistry();
-  const extension = registry.links[id];
+  const extensions = registry[target];
 
-  if (!extension) {
+  if (!Array.isArray(extensions)) {
     return {
-      error: new PluginLinkMissingError(id),
+      extensions: [],
+      error: new PluginLinkExtensionsMissingError(target),
     };
   }
 
-  return {
-    link: {
-      description: extension.description,
-      href: urlUtil.renderUrl(extension.href, queryParams),
-    },
-  };
+  return { extensions };
 }

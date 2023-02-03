@@ -10,5 +10,9 @@ export * from './LocationService';
 export * from './appEvents';
 export { setPluginsExtensionRegistry } from './pluginExtensions/registry';
 export type { PluginsExtensionRegistry, PluginsExtensionRegistryLink } from './pluginExtensions/registry';
-export { getPluginLink } from './pluginExtensions/links';
-export type { PluginLinkOptions, PluginLink, PluginLinkResult } from './pluginExtensions/links';
+export { getPluginExtensions as getPluginLink } from './pluginExtensions/links';
+export type {
+  PluginLinksOptions as PluginLinkOptions,
+  PluginLink,
+  PluginLinksResult as PluginLinkResult,
+} from './pluginExtensions/links';

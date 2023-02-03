@@ -1,4 +1,5 @@
 export type PluginsExtensionRegistryLink = {
+  type: 'link';
   title: string;
   description: string;
   href: string;

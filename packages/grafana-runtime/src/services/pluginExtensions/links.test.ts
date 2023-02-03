@@ -1,4 +1,4 @@
-import { getPluginLink, PluginLinkMissingError } from './links';
+import { getPluginExtensions, PluginLinkExtensionsMissingError } from './links';
 import { setPluginsExtensionRegistry } from './registry';
 
 describe('getPluginLink', () => {
@@ -18,8 +18,8 @@ describe('getPluginLink', () => {
     });
 
     it('should return a href to the plugin', () => {
-      const { link, error } = getPluginLink({
-        id: `${pluginId}.${linkId}`,
+      const { link, error } = getPluginExtensions({
+        target: `${pluginId}.${linkId}`,
       });
 
       expect(link?.href).toBe(`/a/${pluginId}/declare-incident`);
@@ -27,9 +27,9 @@ describe('getPluginLink', () => {
     });
 
     it('should return a href to the plugin with query parameters', () => {
-      const { link, error } = getPluginLink({
-        id: `${pluginId}.${linkId}`,
-        queryParams: {
+      const { link, error } = getPluginExtensions({
+        target: `${pluginId}.${linkId}`,
+        context: {
           title: 'my awesome incident',
           level: 2,
         },
@@ -40,8 +40,8 @@ describe('getPluginLink', () => {
     });
 
     it('should return a description for the requested link', () => {
-      const { link, error } = getPluginLink({
-        id: `${pluginId}.${linkId}`,
+      const { link, error } = getPluginExtensions({
+        target: `${pluginId}.${linkId}`,
       });
 
       expect(link?.href).toBe(`/a/${pluginId}/declare-incident`);
@@ -50,12 +50,12 @@ describe('getPluginLink', () => {
     });
 
     it('should return an empty href when link doesnt exist', () => {
-      const { link, error } = getPluginLink({
-        id: `some-different-app.${linkId}`,
+      const { link, error } = getPluginExtensions({
+        target: `some-different-app.${linkId}`,
       });
 
       expect(link?.href).toBeUndefined();
-      expect(error).toBeInstanceOf(PluginLinkMissingError);
+      expect(error).toBeInstanceOf(PluginLinkExtensionsMissingError);
     });
   });
 });
