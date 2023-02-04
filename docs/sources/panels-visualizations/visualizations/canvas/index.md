@@ -42,6 +42,13 @@ The rectangle element enables you to add a basic rectangle to the canvas. Rectan
 
 The icon element enables you to add a supported icon to the canvas. Icons can have their color set based on thresholds / value mappings.
 
+## Connections
+
+When building a canvas panel, you can connect elements together to create a more dynamic visualization. Connections are created by dragging from the output of one element to the input of another. Connections can also be created to the background of the canvas panel.
+
+TODO: Add a video here
+{{< video-embed src="/static/img/docs/canvas-panel/canvas-connections-9-2-0.mp4" max-width="750px" caption="Canvas connections demo" >}}
+
 ## Canvas Editing
 
 ### Inline editor
@@ -69,3 +76,15 @@ When right clicking an element, you are able to edit, delete, duplicate, and mod
 The inline editing toggle enables you to lock or unlock the canvas panel. When turned off the canvas panel becomes “locked”, freezing elements in place and preventing unintended modifications.
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-inline-editing-toggle-9-2-0.mp4" max-width="750px" caption="Inline editing toggle demo" >}}
+
+### Data Links
+
+Canvas supports [data links](https://grafana.com/docs/grafana/latest/panels-visualizations/configure-data-links/). Once you have a created a data link, you can use it following these steps:
+
+1. Set an element to be tied to a field value
+1. Turn off the inline editing toggle
+1. Now hover over the element and a data link tooltip will appear
+1. Click the data link tooltip to open the data link
+
+TODO: add a video here
+{{< video-embed src="/static/img/docs/canvas-panel/canvas-data-links-9-2-0.mp4" max-width="750px" caption="Data links demo" >}}
