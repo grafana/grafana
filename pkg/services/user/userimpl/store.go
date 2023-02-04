@@ -456,17 +456,21 @@ func (ss *sqlStore) GetProfile(ctx context.Context, query *user.GetUserProfileQu
 			return user.ErrUserNotFound
 		}
 
+		// TODO: implement a way to get users external sync status
+
 		userProfile = user.UserProfileDTO{
-			ID:             usr.ID,
-			Name:           usr.Name,
-			Email:          usr.Email,
-			Login:          usr.Login,
-			Theme:          usr.Theme,
-			IsGrafanaAdmin: usr.IsAdmin,
-			IsDisabled:     usr.IsDisabled,
-			OrgID:          usr.OrgID,
-			UpdatedAt:      usr.Updated,
-			CreatedAt:      usr.Created,
+			ID:                   usr.ID,
+			Name:                 usr.Name,
+			Email:                usr.Email,
+			Login:                usr.Login,
+			Theme:                usr.Theme,
+			IsGrafanaAdmin:       usr.IsAdmin,
+			IsDisabled:           usr.IsDisabled,
+			OrgID:                usr.OrgID,
+			UpdatedAt:            usr.Updated,
+			CreatedAt:            usr.Created,
+			IsExternallySynced:   true,
+			ExternallySyncedFrom: "eric-test",
 		}
 
 		return err

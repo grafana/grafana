@@ -46,6 +46,8 @@ export interface UserDTO extends WithAccessControlMetadata {
   permissions?: string[];
   teams?: Unit[];
   orgs?: Unit[];
+  isSynced?: boolean;
+  SyncedFrom?: string;
 }
 
 export interface Invitee {

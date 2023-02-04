@@ -133,6 +133,12 @@ func (s *AuthInfoStore) GetUserLabels(ctx context.Context, query login.GetUserLa
 	return labelMap, nil
 }
 
+// func (s *AuthInfoStore) GetUserExternallySyncedInfo(ctx context.Context, query *login.GetExternallySyncedInfoQuery) error {
+// 	query.IsExternallySynced = true
+// 	query.ExternallySyncedFrom = "grafana_com"
+// 	return nil
+// }
+
 func (s *AuthInfoStore) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
 	authUser := &login.UserAuth{
 		UserId:     cmd.UserId,

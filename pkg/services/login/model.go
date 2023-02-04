@@ -64,6 +64,8 @@ type ExternalUserInfo struct {
 	IsGrafanaAdmin *bool // This is a pointer to know if we should sync this or not (nil = ignore sync)
 	IsDisabled     bool
 	SkipTeamSync   bool
+	IsSynced       bool
+	SyncedFrom     string
 }
 
 func (e *ExternalUserInfo) String() string {
@@ -151,6 +153,17 @@ type GetAuthInfoQuery struct {
 	AuthId     string
 
 	Result *UserAuth
+}
+
+type GetExternallySyncedInfoQuery struct {
+	UserId int64
+
+	Result *ExternalSyncedInfo
+}
+
+type ExternalSyncedInfo struct {
+	IsSynced   bool
+	SyncedFrom string
 }
 
 type GetUserLabelsQuery struct {

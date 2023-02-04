@@ -144,6 +144,9 @@ export class UserAdminPage extends PureComponent<Props> {
         (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.GenericOAuthSkipOrgRoleSync && isGenericOAuthUser) ||
         (!config.auth.OAuthSkipOrgRoleUpdateSync && !config.auth.GoogleSkipOrgRoleSync && isGoogleUser));
 
+    console.log(`user`);
+    console.log(user);
+
     const pageNav: NavModelItem = {
       text: user?.login ?? '',
       icon: 'shield',
