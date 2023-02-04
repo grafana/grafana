@@ -70,7 +70,15 @@ class UnThemedLogDetails extends PureComponent<Props> {
     const labels = row.labels ? row.labels : {};
     const labelsAvailable = Object.keys(labels).length > 0;
     const fieldsAndLinks = getAllFields(row, getFieldLinks);
-    const links = fieldsAndLinks.filter((f) => f.links?.length).sort();
+    const links = fieldsAndLinks
+      .filter((f) => {
+        if (f.links?.length) {
+          return f.links.filter((link) => link.wasQueryInterpolated).length;
+        } else {
+          return false;
+        }
+      })
+      .sort();
     const fields = fieldsAndLinks.filter((f) => f.links?.length === 0).sort();
     const fieldsAvailable = fields && fields.length > 0;
     const linksAvailable = links && links.length > 0;

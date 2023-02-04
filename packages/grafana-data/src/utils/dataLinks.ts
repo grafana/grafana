@@ -64,6 +64,7 @@ export function mapInternalLinkToExplore(options: LinkToExploreOptions): LinkMod
       : undefined,
     target: link?.targetBlank ? '_blank' : '_self',
     origin: field,
+    wasQueryInterpolated: JSON.stringify(interpolatedQuery) !== JSON.stringify(link.internal?.query),
   };
 }
 
