@@ -21,7 +21,7 @@ func TestTokenizeLiteral(t *testing.T) {
 		text  string
 		token Token
 		pos   int
-		err   error
+		err   string
 	}{{
 		name:  "no characters",
 		text:  "",
@@ -72,7 +72,9 @@ func TestTokenizeLiteral(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			token, pos, err := tokenizeLiteral([]rune(test.text))
-			assert.Equal(t, test.err, err)
+			if test.err != "" {
+				assert.EqualError(t, err, test.err)
+			}
 			assert.Equal(t, test.pos, pos)
 			assert.Equal(t, test.token, token)
 		})
@@ -85,7 +87,7 @@ func TestTokenizeSpace(t *testing.T) {
 		text  string
 		token Token
 		pos   int
-		err   error
+		err   string
 	}{{
 		name:  "no spaces",
 		text:  "",
@@ -106,7 +108,9 @@ func TestTokenizeSpace(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			token, pos, err := tokenizeSpace([]rune(test.text))
-			assert.Equal(t, test.err, err)
+			if test.err != "" {
+				assert.EqualError(t, err, test.err)
+			}
 			assert.Equal(t, test.pos, pos)
 			assert.Equal(t, test.token, token)
 		})
@@ -119,7 +123,7 @@ func TestTokenizeVariable(t *testing.T) {
 		text  string
 		token Token
 		pos   int
-		err   error
+		err   string
 	}{{
 		name:  "variable with no trailing text",
 		text:  "${instance}",
@@ -145,12 +149,44 @@ func TestTokenizeVariable(t *testing.T) {
 		text:  "${variable1}${variable2}",
 		token: Token{Variable: "variable1"},
 		pos:   12,
+	}, {
+		name: "all dollars returns error",
+		text: "$$",
+		pos:  1,
+		err:  "expected opening {, got $",
+	}, {
+		name: "twos dollars before variable returns error",
+		text: "$${instance} is down",
+		pos:  1,
+		err:  "expected opening {, got $",
+	}, {
+		name: "variable without braces returns error",
+		text: "$instance is down",
+		pos:  1,
+		err:  "expected opening {, got i",
+	}, {
+		name: "variable with two opening braces returns error",
+		text: "${{instance}",
+		pos:  2,
+		err:  "expected letter, number or underscore, got {",
+	}, {
+		name: "variable without closing brace returns error",
+		text: "${instance",
+		pos:  10,
+		err:  "expected closing }, got e",
+	}, {
+		name: "variable without closing and literal brace returns error",
+		text: "${instance is down",
+		pos:  10,
+		err:  "expected letter, number or underscore, got  ",
 	}}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			token, pos, err := tokenizeVariable([]rune(test.text))
-			assert.Equal(t, test.err, err)
+			if test.err != "" {
+				assert.EqualError(t, err, test.err)
+			}
 			assert.Equal(t, test.pos, pos)
 			assert.Equal(t, test.token, token)
 		})
@@ -161,16 +197,16 @@ func TestTokenizeTmpl(t *testing.T) {
 	tests := []struct {
 		name   string
 		tmpl   string
-		tokens Tokens
-		err    error
+		tokens []Token
+		err    string
 	}{{
 		name:   "simple template can be tokenized",
 		tmpl:   "${instance} is down",
-		tokens: Tokens{{Variable: "instance"}, {Space: ' '}, {Literal: "is down"}},
+		tokens: []Token{{Variable: "instance"}, {Space: ' '}, {Literal: "is down"}},
 	}, {
 		name: "complex template can be tokenized",
 		tmpl: "More than ${value} ${status_code} in the last 5 minutes",
-		tokens: Tokens{
+		tokens: []Token{
 			{Literal: "More than"},
 			{Space: ' '},
 			{Variable: "value"},
@@ -182,7 +218,7 @@ func TestTokenizeTmpl(t *testing.T) {
 	}, {
 		name: "trailing spaces are removed",
 		tmpl: "More than ${value} ${status_code} in the last 5 minutes ",
-		tokens: Tokens{
+		tokens: []Token{
 			{Literal: "More than"},
 			{Space: ' '},
 			{Variable: "value"},
@@ -194,23 +230,20 @@ func TestTokenizeTmpl(t *testing.T) {
 	}, {
 		name:   "variables without spaces can be tokenized",
 		tmpl:   "${value}${status_code}",
-		tokens: Tokens{{Variable: "value"}, {Variable: "status_code"}},
+		tokens: []Token{{Variable: "value"}, {Variable: "status_code"}},
 	}, {
 		name:   "variables without spaces then literal can be tokenized",
 		tmpl:   "${value}${status_code}in the last 5 minutes",
-		tokens: Tokens{{Variable: "value"}, {Variable: "status_code"}, {Literal: "in the last 5 minutes"}},
+		tokens: []Token{{Variable: "value"}, {Variable: "status_code"}, {Literal: "in the last 5 minutes"}},
 	}}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			tokens, err := tokenizeTmpl(test.tmpl)
-			assert.Equal(t, test.err, err)
+			if test.err != "" {
+				assert.EqualError(t, err, test.err)
+			}
 			assert.Equal(t, test.tokens, tokens)
 		})
 	}
-}
-
-func TestTokensStringer(t *testing.T) {
-	tokens := Tokens{{Variable: "instance"}, {Space: ' '}, {Literal: "is down"}}
-	assert.Equal(t, "{{instance}} is down", tokens.String())
 }

@@ -4,10 +4,13 @@
 package ualert
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"unicode"
+)
+
+var (
+	EOF = errors.New("EOF")
 )
 
 // Token contains either a string literal or a variable.
@@ -23,18 +26,8 @@ func (t Token) String() string {
 	} else if len(t.Literal) > 0 {
 		return t.Literal
 	} else {
-		return "{{" + t.Variable + "}}"
+		return t.Variable
 	}
-}
-
-type Tokens []Token
-
-func (t Tokens) String() string {
-	buf := bytes.Buffer{}
-	for _, token := range t {
-		buf.WriteString(token.String())
-	}
-	return buf.String()
 }
 
 func tokenizeLiteral(in []rune) (Token, int, error) {
@@ -74,10 +67,10 @@ func tokenizeLiteral(in []rune) (Token, int, error) {
 }
 
 func tokenizeSpace(in []rune) (Token, int, error) {
-	if r := in[0]; unicode.IsSpace(r) {
-		return Token{Space: r}, 1, nil
+	if len(in) > 0 && unicode.IsSpace(in[0]) {
+		return Token{Space: in[0]}, 1, nil
 	}
-	return Token{}, 0, errors.New("EOL")
+	return Token{}, 0, EOF
 }
 
 func tokenizeVariable(in []rune) (Token, int, error) {
@@ -104,7 +97,7 @@ func tokenizeVariable(in []rune) (Token, int, error) {
 	pos = pos + 1
 	r = in[pos]
 	if r != '{' {
-		return Token{}, pos, fmt.Errorf("expected {, got %c", r)
+		return Token{}, pos, fmt.Errorf("expected opening {, got %c", r)
 	}
 
 	// consume all letters, numbers and undercores until the closing brace
@@ -117,26 +110,26 @@ func tokenizeVariable(in []rune) (Token, int, error) {
 			pos = pos + 1
 			break
 		} else {
-			return Token{}, pos, fmt.Errorf("unexpected %c", r)
+			return Token{}, pos, fmt.Errorf("expected letter, number or underscore, got %c", r)
 		}
 	}
 
 	// if the last character was not a closing brace, then this is not a valid variable
 	if r != '}' {
-		return Token{}, pos, fmt.Errorf("expected }, got %c", r)
+		return Token{}, pos, fmt.Errorf("expected closing }, got %c", r)
 	}
 
 	return Token{Variable: string(runes)}, pos, nil
 }
 
-func tokenizeTmpl(tmpl string) (Tokens, error) {
+func tokenizeTmpl(tmpl string) ([]Token, error) {
 	var (
 		in     []rune
 		err    error
 		offset int
 		pos    int
 		r      rune
-		tokens Tokens
+		tokens []Token
 		token  Token
 	)
 	in = []rune(tmpl)

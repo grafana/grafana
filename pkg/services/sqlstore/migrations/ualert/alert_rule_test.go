@@ -141,10 +141,22 @@ func TestMakeAlertRule(t *testing.T) {
 	})
 }
 
-func TestPrefixLabelsVariableToTokens(t *testing.T) {
-	tokens := Tokens{{Variable: "instance"}, {Space: ' '}, {Literal: "is down"}}
-	expected := Tokens{{Variable: "$labels.instance"}, {Space: ' '}, {Literal: "is down"}}
-	assert.Equal(t, expected, prefixLabelsVariableToTokens(tokens))
+func TestTokensToTmpl(t *testing.T) {
+	tokens := []Token{{Variable: "instance"}, {Space: ' '}, {Literal: "is down"}}
+	assert.Equal(t, "{{instance}} is down", tokensToTmpl(tokens))
+}
+
+func TestVariablesToPromLabels(t *testing.T) {
+	tokens := []Token{{Variable: "instance"}, {Space: ' '}, {Literal: "is down"}}
+	expected := []Token{{Variable: "$labels.instance"}, {Space: ' '}, {Literal: "is down"}}
+	assert.Equal(t, expected, variablesToPromLabels(tokens))
+}
+
+func TestTranslateTmpl(t *testing.T) {
+	tokens, err := tokenizeTmpl("${instance} is down")
+	require.NoError(t, err)
+	tmpl := tokensToTmpl(variablesToPromLabels(tokens))
+	assert.Equal(t, "{{$labels.instance}} is down", tmpl)
 }
 
 func createTestDashAlert() dashAlert {

@@ -1,6 +1,7 @@
 package ualert
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -113,8 +114,8 @@ func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string
 	if err != nil {
 		annotations["message"] = da.Message
 	} else {
-		tokens = prefixLabelsVariableToTokens(tokens)
-		annotations["message"] = tokens.String()
+		tokens = variablesToPromLabels(tokens)
+		annotations["message"] = tokensToTmpl(tokens)
 	}
 
 	data, err := migrateAlertRuleQueries(cond.Data)
@@ -334,9 +335,24 @@ func extractChannelIDs(d dashAlert) (channelUids []uidOrID) {
 	return channelUids
 }
 
-// prefixLabelsVariableToTokens adds $labels. before each variable
-func prefixLabelsVariableToTokens(tokens Tokens) Tokens {
-	result := make(Tokens, 0, len(tokens))
+// tokensToTmpl returns the tokens as a Go template
+func tokensToTmpl(tokens []Token) string {
+	buf := bytes.Buffer{}
+	for _, token := range tokens {
+		if token.Variable != "" {
+			buf.WriteString("{{")
+			buf.WriteString(token.String())
+			buf.WriteString("}}")
+		} else {
+			buf.WriteString(token.String())
+		}
+	}
+	return buf.String()
+}
+
+// variablesToPromLabels adds $labels. before each variable
+func variablesToPromLabels(tokens []Token) []Token {
+	result := make([]Token, 0, len(tokens))
 	for _, token := range tokens {
 		if len(token.Variable) > 0 {
 			token.Variable = "$labels." + token.Variable
