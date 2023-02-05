@@ -105,8 +105,6 @@ type AddDataSourceCommand struct {
 	ReadOnly                bool              `json:"-"`
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
 	UpdateSecretFn          UpdateSecretFn    `json:"-"`
-
-	Result *DataSource `json:"-"`
 }
 
 // Also acts as api DTO

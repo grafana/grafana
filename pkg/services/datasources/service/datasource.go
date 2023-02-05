@@ -167,8 +167,10 @@ func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.G
 	return s.SQLStore.GetDataSourcesByType(ctx, query)
 }
 
-func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
-	return s.db.InTransaction(ctx, func(ctx context.Context) error {
+func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
+	var dataSource *datasources.DataSource
+
+	return dataSource, s.db.InTransaction(ctx, func(ctx context.Context) error {
 		var err error
 
 		cmd.EncryptedSecureJsonData = make(map[string][]byte)
@@ -188,7 +190,8 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 			return s.SecretsStore.Set(ctx, cmd.OrgID, cmd.Name, kvstore.DataSourceSecretType, string(secret))
 		}
 
-		if err := s.SQLStore.AddDataSource(ctx, cmd); err != nil {
+		dataSource, err = s.SQLStore.AddDataSource(ctx, cmd)
+		if err != nil {
 			return err
 		}
 
@@ -205,7 +208,7 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 			if cmd.UserID != 0 {
 				permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserID, Permission: "Edit"})
 			}
-			if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgID, cmd.Result.UID, permissions...); err != nil {
+			if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgID, dataSource.UID, permissions...); err != nil {
 				return err
 			}
 		}

@@ -383,9 +383,8 @@ func (m *dataSourcesServiceMock) DeleteDataSource(ctx context.Context, cmd *data
 	return m.expectedError
 }
 
-func (m *dataSourcesServiceMock) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
-	cmd.Result = m.expectedDatasource
-	return m.expectedError
+func (m *dataSourcesServiceMock) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
+	return m.expectedDatasource, m.expectedError
 }
 
 func (m *dataSourcesServiceMock) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {

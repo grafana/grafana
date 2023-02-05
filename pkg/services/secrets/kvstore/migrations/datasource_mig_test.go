@@ -46,7 +46,7 @@ func TestMigrate(t *testing.T) {
 		ds := dsservice.CreateStore(sqlStore, log.NewNopLogger())
 		dataSourceName := "Test"
 		dataSourceOrg := int64(1)
-		err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+		_, err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 			OrgID:  dataSourceOrg,
 			Name:   dataSourceName,
 			Type:   datasources.DS_MYSQL,
@@ -112,7 +112,7 @@ func TestMigrate(t *testing.T) {
 		dataSourceOrg := int64(1)
 
 		// Add test data source
-		err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+		_, err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 			OrgID:  dataSourceOrg,
 			Name:   dataSourceName,
 			Type:   datasources.DS_MYSQL,
@@ -180,7 +180,7 @@ func TestMigrate(t *testing.T) {
 		dataSourceOrg := int64(1)
 
 		// Add test data source
-		err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+		_, err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 			OrgID:  dataSourceOrg,
 			Name:   dataSourceName,
 			Type:   datasources.DS_MYSQL,
@@ -271,7 +271,7 @@ func TestMigrate(t *testing.T) {
 		dataSourceOrg := int64(1)
 
 		// Add test data source
-		err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+		_, err := ds.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 			OrgID:  dataSourceOrg,
 			Name:   dataSourceName,
 			Type:   datasources.DS_MYSQL,

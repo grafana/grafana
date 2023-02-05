@@ -302,7 +302,7 @@ func newTestScenario(t *testing.T, name string, opts []testScenarioOption, callb
 	tsCtx.modifyIncomingRequest = in.modifyIncomingRequest
 	tsCtx.testEnv.OAuthTokenService.Token = in.token
 
-	err = testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx, cmd)
+	_, err = testEnv.Server.HTTPServer.DataSourcesService.AddDataSource(ctx, cmd)
 	require.NoError(t, err)
 
 	getDataSourceQuery := &datasources.GetDataSourceQuery{

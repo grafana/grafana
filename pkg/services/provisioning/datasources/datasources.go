@@ -15,7 +15,7 @@ import (
 
 type Store interface {
 	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error
-	AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error
+	AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error)
 	UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error
 	DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error
 }
@@ -74,12 +74,13 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs) error 
 		if errors.Is(err, datasources.ErrDataSourceNotFound) {
 			insertCmd := createInsertCommand(ds)
 			dc.log.Info("inserting datasource from configuration ", "name", insertCmd.Name, "uid", insertCmd.UID)
-			if err := dc.store.AddDataSource(ctx, insertCmd); err != nil {
+			dataSource, err := dc.store.AddDataSource(ctx, insertCmd)
+			if err != nil {
 				return err
 			}
 
 			for _, correlation := range ds.Correlations {
-				if insertCorrelationCmd, err := makeCreateCorrelationCommand(correlation, insertCmd.Result.UID, insertCmd.OrgID); err == nil {
+				if insertCorrelationCmd, err := makeCreateCorrelationCommand(correlation, dataSource.UID, insertCmd.OrgID); err == nil {
 					correlationsToInsert = append(correlationsToInsert, insertCorrelationCmd)
 				} else {
 					dc.log.Error("failed to parse correlation", "correlation", correlation)

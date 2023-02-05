@@ -28,7 +28,7 @@ type Store interface {
 	GetDataSourcesByType(context.Context, *datasources.GetDataSourcesByTypeQuery) error
 	GetDefaultDataSource(context.Context, *datasources.GetDefaultDataSourceQuery) error
 	DeleteDataSource(context.Context, *datasources.DeleteDataSourceCommand) error
-	AddDataSource(context.Context, *datasources.AddDataSourceCommand) error
+	AddDataSource(context.Context, *datasources.AddDataSourceCommand) (*datasources.DataSource, error)
 	UpdateDataSource(context.Context, *datasources.UpdateDataSourceCommand) error
 	GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) error
 
@@ -219,8 +219,10 @@ func (ss *SqlStore) Count(ctx context.Context, scopeParams *quota.ScopeParameter
 	return u, nil
 }
 
-func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {
+	var ds *datasources.DataSource
+
+	return ds, ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		existing := datasources.DataSource{OrgID: cmd.OrgID, Name: cmd.Name}
 		has, _ := sess.Get(&existing)
 
@@ -240,7 +242,7 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 			cmd.UID = uid
 		}
 
-		ds := &datasources.DataSource{
+		ds = &datasources.DataSource{
 			OrgID:           cmd.OrgID,
 			Name:            cmd.Name,
 			Type:            cmd.Type,
@@ -277,8 +279,6 @@ func (ss *SqlStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataS
 				return err
 			}
 		}
-
-		cmd.Result = ds
 
 		sess.PublishAfterCommit(&events.DataSourceCreated{
 			Timestamp: time.Now(),

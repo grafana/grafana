@@ -383,7 +383,8 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 		return response.Error(http.StatusBadRequest, "Failed to add datasource", err)
 	}
 
-	if err := hs.DataSourcesService.AddDataSource(c.Req.Context(), &cmd); err != nil {
+	dataSource, err := hs.DataSourcesService.AddDataSource(c.Req.Context(), &cmd)
+	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceNameExists) || errors.Is(err, datasources.ErrDataSourceUidExists) {
 			return response.Error(409, err.Error(), err)
 		}
@@ -401,11 +402,11 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 		hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
 	}
 
-	ds := hs.convertModelToDtos(c.Req.Context(), cmd.Result)
+	ds := hs.convertModelToDtos(c.Req.Context(), dataSource)
 	return response.JSON(http.StatusOK, util.DynMap{
-		"message":    "Datasource added",
-		"id":         cmd.Result.ID,
-		"name":       cmd.Result.Name,
+		"message":    "Data source added",
+		"id":         dataSource.ID,
+		"name":       dataSource.Name,
 		"datasource": ds,
 	})
 }

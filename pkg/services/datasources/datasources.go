@@ -25,7 +25,7 @@ type DataSourceService interface {
 	GetDataSourcesByType(ctx context.Context, query *GetDataSourcesByTypeQuery) error
 
 	// AddDataSource adds a new datasource.
-	AddDataSource(ctx context.Context, cmd *AddDataSourceCommand) error
+	AddDataSource(ctx context.Context, cmd *AddDataSourceCommand) (*DataSource, error)
 
 	// DeleteDataSource deletes an existing datasource.
 	DeleteDataSource(ctx context.Context, cmd *DeleteDataSourceCommand) error

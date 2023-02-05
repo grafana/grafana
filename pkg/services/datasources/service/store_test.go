@@ -39,7 +39,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 	initDatasource := func(db db.DB) *datasources.DataSource {
 		cmd := defaultAddDatasourceCommand
 		ss := SqlStore{db: db}
-		err := ss.AddDataSource(context.Background(), &cmd)
+		_, err := ss.AddDataSource(context.Background(), &cmd)
 		require.NoError(t, err)
 
 		query := datasources.GetDataSourcesQuery{OrgID: 10}
@@ -54,7 +54,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		t.Run("Can add datasource", func(t *testing.T) {
 			db := db.InitTestDB(t)
 			ss := SqlStore{db: db}
-			err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 				OrgID:    10,
 				Name:     "laban",
 				Type:     datasources.DS_GRAPHITE,
@@ -90,9 +90,9 @@ func TestIntegrationDataAccess(t *testing.T) {
 			cmd2 := defaultAddDatasourceCommand
 			cmd1.UID = "test"
 			cmd2.UID = "test"
-			err := ss.AddDataSource(context.Background(), &cmd1)
+			_, err := ss.AddDataSource(context.Background(), &cmd1)
 			require.NoError(t, err)
-			err = ss.AddDataSource(context.Background(), &cmd2)
+			_, err = ss.AddDataSource(context.Background(), &cmd2)
 			require.Error(t, err)
 			require.IsType(t, datasources.ErrDataSourceUidExists, err)
 		})
@@ -106,7 +106,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 				return nil
 			})
 
-			err := sqlStore.AddDataSource(context.Background(), &defaultAddDatasourceCommand)
+			_, err := sqlStore.AddDataSource(context.Background(), &defaultAddDatasourceCommand)
 			require.NoError(t, err)
 
 			require.Eventually(t, func() bool {
@@ -351,7 +351,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			ss := SqlStore{db: db}
 			datasourceLimit := 6
 			for i := 0; i < datasourceLimit+1; i++ {
-				err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+				_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 					OrgID:    10,
 					Name:     "laban" + strconv.Itoa(i),
 					Type:     datasources.DS_GRAPHITE,
@@ -375,7 +375,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			ss := SqlStore{db: db}
 			numberOfDatasource := 5100
 			for i := 0; i < numberOfDatasource; i++ {
-				err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+				_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 					OrgID:    10,
 					Name:     "laban" + strconv.Itoa(i),
 					Type:     datasources.DS_GRAPHITE,
@@ -399,7 +399,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			ss := SqlStore{db: db}
 			numberOfDatasource := 5100
 			for i := 0; i < numberOfDatasource; i++ {
-				err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+				_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 					OrgID:    10,
 					Name:     "laban" + strconv.Itoa(i),
 					Type:     datasources.DS_GRAPHITE,
@@ -424,7 +424,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			db := db.InitTestDB(t)
 			ss := SqlStore{db: db}
 
-			err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			_, err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 				OrgID:    10,
 				Name:     "Elasticsearch",
 				Type:     datasources.DS_ES,
@@ -435,7 +435,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			err = ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+			_, err = ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 				OrgID:    10,
 				Name:     "Graphite",
 				Type:     datasources.DS_GRAPHITE,
@@ -484,7 +484,7 @@ func TestIntegrationGetDefaultDataSource(t *testing.T) {
 			URL:    "http://test",
 		}
 
-		err := ss.AddDataSource(context.Background(), &cmd)
+		_, err := ss.AddDataSource(context.Background(), &cmd)
 		require.NoError(t, err)
 
 		query := datasources.GetDefaultDataSourceQuery{OrgID: 10}
@@ -506,7 +506,7 @@ func TestIntegrationGetDefaultDataSource(t *testing.T) {
 			IsDefault: true,
 		}
 
-		err := ss.AddDataSource(context.Background(), &cmd)
+		_, err := ss.AddDataSource(context.Background(), &cmd)
 		require.NoError(t, err)
 
 		query := datasources.GetDefaultDataSourceQuery{OrgID: 10}
