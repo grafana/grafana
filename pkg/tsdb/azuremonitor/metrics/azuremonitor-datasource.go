@@ -246,13 +246,7 @@ func (e *AzureMonitorDatasource) executeQuery(ctx context.Context, logger log.Lo
 		return dataResponse
 	}
 
-	azurePortalUrl, err := resourcegraph.GetAzurePortalUrl(dsInfo.Cloud)
-	if err != nil {
-		dataResponse.Error = err
-		return dataResponse
-	}
-
-	dataResponse.Frames, err = e.parseResponse(data, query, azurePortalUrl)
+	dataResponse.Frames, err = e.parseResponse(data, query, dsInfo.Routes["Azure Portal"].URL)
 	if err != nil {
 		dataResponse.Error = err
 		return dataResponse

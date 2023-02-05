@@ -14,6 +14,7 @@ const (
 	azureMonitor       = "Azure Monitor"
 	azureLogAnalytics  = "Azure Log Analytics"
 	azureResourceGraph = "Azure Resource Graph"
+	azurePortal        = "Azure Portal"
 )
 
 var azManagement = types.AzRoute{
@@ -52,6 +53,18 @@ var azUSGovLogAnalytics = types.AzRoute{
 	Headers: map[string]string{"x-ms-app": "Grafana", "Cache-Control": "public, max-age=60"},
 }
 
+var azPortal = types.AzRoute{
+	URL: "https://management.azure.com",
+}
+
+var azUSGovPortal = types.AzRoute{
+	URL: "https://management.usgovcloudapi.net",
+}
+
+var azChinaPortal = types.AzRoute{
+	URL: "https://management.chinacloudapi.cn",
+}
+
 var (
 	// The different Azure routes are identified by its cloud (e.g. public or gov)
 	// and the service to query (e.g. Azure Monitor or Azure Log Analytics)
@@ -60,16 +73,19 @@ var (
 			azureMonitor:       azManagement,
 			azureLogAnalytics:  azLogAnalytics,
 			azureResourceGraph: azManagement,
+			azurePortal:        azPortal,
 		},
 		azsettings.AzureUSGovernment: {
 			azureMonitor:       azUSGovManagement,
 			azureLogAnalytics:  azUSGovLogAnalytics,
 			azureResourceGraph: azUSGovManagement,
+			azurePortal:        azUSGovPortal,
 		},
 		azsettings.AzureChina: {
 			azureMonitor:       azChinaManagement,
 			azureLogAnalytics:  azChinaLogAnalytics,
 			azureResourceGraph: azChinaManagement,
+			azurePortal:        azChinaPortal,
 		},
 	}
 )

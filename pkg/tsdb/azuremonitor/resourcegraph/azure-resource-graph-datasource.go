@@ -11,7 +11,6 @@ import (
 	"path"
 	"time"
 
-	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
@@ -197,13 +196,8 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, logger 
 		return dataResponse
 	}
 
-	azurePortalUrl, err := GetAzurePortalUrl(dsInfo.Cloud)
-	if err != nil {
-		return dataResponseErrorWithExecuted(err)
-	}
-
-	url := azurePortalUrl + "/#blade/HubsExtension/ArgQueryBlade/query/" + url.PathEscape(query.InterpolatedQuery)
-	frameWithLink := AddConfigLinks(*frame, url)
+	portalUrl := fmt.Sprintf("%v/#blade/HubsExtension/ArgQueryBlade/query/%v", dsInfo.Routes["Azure Monitor"].URL, url.PathEscape(query.InterpolatedQuery))
+	frameWithLink := AddConfigLinks(*frame, portalUrl)
 	if frameWithLink.Meta == nil {
 		frameWithLink.Meta = &data.FrameMeta{}
 	}
@@ -267,17 +261,4 @@ func (e *AzureResourceGraphDatasource) unmarshalResponse(logger log.Logger, res 
 	}
 
 	return data, nil
-}
-
-func GetAzurePortalUrl(azureCloud string) (string, error) {
-	switch azureCloud {
-	case azsettings.AzurePublic:
-		return "https://portal.azure.com", nil
-	case azsettings.AzureChina:
-		return "https://portal.azure.cn", nil
-	case azsettings.AzureUSGovernment:
-		return "https://portal.azure.us", nil
-	default:
-		return "", fmt.Errorf("the cloud is not supported")
-	}
 }
