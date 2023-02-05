@@ -10,6 +10,7 @@ import (
 
 var uidrand = rand.New(rand.NewSource(time.Now().UnixNano()))
 var alphaRunes = []rune("abcdefghijklmnopqrstuvwxyz")
+var hexLetters = []rune("abcdef")
 
 // Legacy UID pattern
 var validUIDPattern = regexp.MustCompile(`^[a-zA-Z0-9\-\_]*$`).MatchString
@@ -38,7 +39,7 @@ func GenerateShortUID() string {
 	}
 	uuid := uid.String()
 	if rune(uuid[0]) < rune('a') {
-		return string(alphaRunes[uidrand.Intn(len(alphaRunes))]) + uuid[1:]
+		return string(hexLetters[uidrand.Intn(len(hexLetters))]) + uuid[1:]
 	}
 	return uuid
 }

@@ -3,6 +3,7 @@ package util
 import (
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/util/validation"
 )
@@ -25,9 +26,13 @@ func TestRandomUIDs(t *testing.T) {
 		if validation != nil {
 			t.Fatalf("created invalid name: %v", validation)
 		}
+
+		_, err := uuid.Parse(v)
+		require.NoError(t, err)
+
 		//fmt.Println(v)
 	}
-	//t.FailNow()
+	// t.FailNow()
 }
 
 func TestIsShortUIDTooLong(t *testing.T) {
