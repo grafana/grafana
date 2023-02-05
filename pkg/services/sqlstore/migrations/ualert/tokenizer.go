@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	EOF = errors.New("EOF")
+	ErrEOF = errors.New("EOF")
 )
 
 // Token contains either a string literal or a variable.
@@ -70,7 +70,7 @@ func tokenizeSpace(in []rune) (Token, int, error) {
 	if len(in) > 0 && unicode.IsSpace(in[0]) {
 		return Token{Space: in[0]}, 1, nil
 	}
-	return Token{}, 0, EOF
+	return Token{}, 0, ErrEOF
 }
 
 func tokenizeVariable(in []rune) (Token, int, error) {
