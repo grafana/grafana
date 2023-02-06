@@ -166,7 +166,7 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 			continue
 		}
 
-		g, err := guardian.New(ctx, f.ID, f.OrgID, cmd.SignedInUser)
+		g, err := guardian.NewByUID(ctx, f.UID, f.OrgID, cmd.SignedInUser)
 		if err != nil {
 			return nil, err
 		}
