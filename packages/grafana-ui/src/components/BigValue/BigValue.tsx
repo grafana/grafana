@@ -13,6 +13,7 @@ import { buildLayout } from './BigValueLayout';
 export enum BigValueColorMode {
   Value = 'value',
   Background = 'background',
+  BackgroundNoGradient = 'background_no_gradient',
   None = 'none',
 }
 

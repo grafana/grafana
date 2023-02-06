@@ -44,7 +44,8 @@ export const plugin = new PanelPlugin<PanelOptions>(StatPanel)
           options: [
             { value: BigValueColorMode.None, label: 'None' },
             { value: BigValueColorMode.Value, label: 'Value' },
-            { value: BigValueColorMode.Background, label: 'Background' },
+            { value: BigValueColorMode.BackgroundNoGradient, label: 'Background' },
+            { value: BigValueColorMode.Background, label: 'Background gradient' },
           ],
         },
       })
