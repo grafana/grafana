@@ -41,6 +41,7 @@ import {
 } from '@grafana/ui';
 import { dedupLogRows, filterLogLevels } from 'app/core/logsModel';
 import store from 'app/core/store';
+import { isLogLineJSON } from 'app/plugins/datasource/loki/lineParser';
 import { ExploreId } from 'app/types/explore';
 
 import { RowContextOptions } from '../logs/components/LogRowContextProvider';
@@ -372,6 +373,7 @@ class UnthemedLogs extends PureComponent<Props, State> {
     const navigationRange = this.createNavigationRange(logRows);
 
     const scanText = scanRange ? `Scanning ${rangeUtil.describeTimeRange(scanRange)}` : 'Scanning...';
+    let hasJsonLogs = logRows.some((row) => isLogLineJSON(row.raw));
 
     return (
       <>
@@ -429,15 +431,17 @@ class UnthemedLogs extends PureComponent<Props, State> {
                   id={`wrap-lines_${exploreId}`}
                 />
               </InlineField>
-              <InlineField label="Prettify JSON" className={styles.horizontalInlineLabel} transparent>
-                <InlineSwitch
-                  value={prettifyLogMessage}
-                  onChange={this.onChangePrettifyLogMessage}
-                  className={styles.horizontalInlineSwitch}
-                  transparent
-                  id={`prettify_${exploreId}`}
-                />
-              </InlineField>
+              {hasJsonLogs && (
+                <InlineField label="Prettify JSON" className={styles.horizontalInlineLabel} transparent>
+                  <InlineSwitch
+                    value={prettifyLogMessage}
+                    onChange={this.onChangePrettifyLogMessage}
+                    className={styles.horizontalInlineSwitch}
+                    transparent
+                    id={`prettify_${exploreId}`}
+                  />
+                </InlineField>
+              )}
               <InlineField label="Dedup" className={styles.horizontalInlineLabel} transparent>
                 <RadioButtonGroup
                   options={Object.values(LogsDedupStrategy).map((dedupType) => ({
