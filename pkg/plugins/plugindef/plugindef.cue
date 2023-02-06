@@ -122,15 +122,15 @@ seqs: [
 
 				#ExtensionsLink: {
 					// Target where the link will be rendered
-					target: string //<-- contsraints based on id
+					target: =~"^(plugins|grafana)\/[a-z-/0-9]*$"
 					// Type of extension
 					type: "link"
 					// Title that will be displayed for the rendered link
-					title: string //<--  max lenght?
+					title: string & strings.MinRunes(3) & strings.MaxRunes(22)
 					// Description for the rendered link
-					description: string //<--  max lenght?
+					description: string & strings.MaxRunes(200)
 					// Path relative to the extending plugin e.g. /incidents/declare
-					path: string
+					path: =~"^\/.*"
 					...
 				}
 
