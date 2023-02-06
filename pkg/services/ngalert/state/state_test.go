@@ -109,6 +109,54 @@ func TestSetPending(t *testing.T) {
 	}
 }
 
+func TestSetPendingError(t *testing.T) {
+	mock := clock.NewMock()
+	tests := []struct {
+		name     string
+		state    State
+		startsAt time.Time
+		endsAt   time.Time
+		error    error
+		expected State
+	}{{
+		name:     "state is set to Pending with error",
+		error:    errors.New("this is an error"),
+		startsAt: mock.Now(),
+		endsAt:   mock.Now().Add(time.Minute),
+		expected: State{
+			State:       eval.Pending,
+			StateReason: ngmodels.StateReasonError,
+			StartsAt:    mock.Now(),
+			EndsAt:      mock.Now().Add(time.Minute),
+			Error:       errors.New("this is an error"),
+		},
+	}, {
+		name:  "previous state is removed",
+		error: errors.New("this is an error"),
+		state: State{
+			State:       eval.Pending,
+			StateReason: "this is a reason",
+		},
+		startsAt: mock.Now(),
+		endsAt:   mock.Now().Add(time.Minute),
+		expected: State{
+			State:       eval.Pending,
+			StateReason: ngmodels.StateReasonError,
+			StartsAt:    mock.Now(),
+			EndsAt:      mock.Now().Add(time.Minute),
+			Error:       errors.New("this is an error"),
+		},
+	}}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			actual := test.state
+			actual.SetPendingError(test.error, test.startsAt, test.endsAt)
+			assert.Equal(t, test.expected, actual)
+		})
+	}
+}
+
 func TestNormal(t *testing.T) {
 	mock := clock.NewMock()
 	tests := []struct {
