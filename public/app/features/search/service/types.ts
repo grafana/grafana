@@ -1,6 +1,8 @@
 import { DataFrameView, SelectableValue } from '@grafana/data';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
+import { DashboardSectionItem } from '../types';
+
 export interface FacetField {
   field: string;
   count?: number;
@@ -75,6 +77,35 @@ export interface GrafanaSearcher {
   getSortOptions: () => Promise<SelectableValue[]>;
   sortPlaceholder?: string;
 
+  getFolderChildren: (folderUid?: string) => Promise<NestedFolderItem[]>;
+
   /** Gets the default sort used for the Folder view */
   getFolderViewSort: () => string;
 }
+
+export interface NestedFolderDTO {
+  uid: string;
+  title: string;
+}
+
+export interface NestedFolderItem extends DashboardSectionItem {
+  kind: 'folder' | 'dashboard';
+  uid: string;
+}
+
+// export interface NestedFolder extends NestedFolderDTO {
+//   kind: 'folder';
+// }
+
+// export interface NestedFolderDashboard extends DashboardSectionItem {
+//   kind: 'dashboard';
+
+//   // uid: string;
+//   // title: string;
+//   // url: string;
+//   // uri: string; // ???
+//   // isStarred: boolean;
+//   // tags: string[];
+//   // // folderUid: string;
+//   // // folderTitle: string;
+// }

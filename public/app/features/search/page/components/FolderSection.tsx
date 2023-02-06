@@ -9,6 +9,7 @@ import { getSectionStorageKey } from 'app/features/search/utils';
 import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
 
 import { SearchItem } from '../..';
+import { GENERAL_FOLDER_UID } from '../../constants';
 import { getGrafanaSearcher, SearchQuery } from '../../service';
 import { DashboardSearchItemType, DashboardSectionItem } from '../../types';
 import { SelectionChecker, SelectionToggle } from '../selection';
@@ -55,37 +56,11 @@ export const FolderSection = ({
     if (!sectionExpanded && !renderStandaloneBody) {
       return Promise.resolve([]);
     }
-    let folderUid: string | undefined = section.uid;
-    let folderTitle: string | undefined = section.title;
-    let query: SearchQuery = {
-      query: '*',
-      kind: ['dashboard'],
-      location: section.uid,
-      sort: 'name_sort',
-      limit: 1000, // this component does not have infinate scroll, so we need to load everything upfront
-    };
-    if (section.itemsUIDs) {
-      query = {
-        uid: section.itemsUIDs, // array of UIDs
-      };
-      folderUid = undefined;
-      folderTitle = undefined;
-    }
 
-    const raw = await getGrafanaSearcher().search({ ...query, tags });
-    const v = raw.view.map<DashboardSectionItem>((item) => ({
-      uid: item.uid,
-      title: item.name,
-      url: item.url,
-      uri: item.url,
-      type: item.kind === 'folder' ? DashboardSearchItemType.DashFolder : DashboardSearchItemType.DashDB,
-      id: 666, // do not use me!
-      isStarred: false,
-      tags: item.tags ?? [],
-      folderUid: folderUid || item.location,
-      folderTitle: folderTitle || raw.view.dataFrame.meta?.custom?.locationInfo[item.location].name,
-    }));
-    return v;
+    const searcher = getGrafanaSearcher();
+    const childItems = searcher.getFolderChildren(section.uid);
+
+    return childItems;
   }, [sectionExpanded, tags]);
 
   const onSectionExpand = () => {
@@ -126,28 +101,71 @@ export const FolderSection = ({
       );
     }
 
-    return results.value.map((v) => {
-      if (selection && selectionToggle) {
-        const type = v.type === DashboardSearchItemType.DashFolder ? 'folder' : 'dashboard';
-        v = {
-          ...v,
-          checked: selection(type, v.uid!),
-        };
+    return results.value.map((item) => {
+      if (item.type === DashboardSearchItemType.DashDB) {
+        return (
+          <SearchItem
+            key={item.uid}
+            item={item}
+            onTagSelected={onTagSelected}
+            onToggleChecked={(item) => {
+              if (selectionToggle) {
+                selectionToggle('dashboard', item.uid!);
+              }
+            }}
+            editable={Boolean(selection != null)}
+            onClickItem={onClickItem}
+          />
+        );
       }
-      return (
-        <SearchItem
-          key={v.uid}
-          item={v}
-          onTagSelected={onTagSelected}
-          onToggleChecked={(item) => {
-            if (selectionToggle) {
-              selectionToggle('dashboard', item.uid!);
-            }
-          }}
-          editable={Boolean(selection != null)}
-          onClickItem={onClickItem}
-        />
-      );
+
+      if (item.type === DashboardSearchItemType.DashFolder) {
+        return (
+          <SearchItem
+            key={item.uid}
+            item={item}
+            onTagSelected={onTagSelected}
+            onToggleChecked={(item) => {
+              if (selectionToggle) {
+                selectionToggle('dashboard', item.uid!);
+              }
+            }}
+            editable={Boolean(selection != null)}
+            onClickItem={onClickItem}
+          />
+        );
+        // return (
+        //   <Card key={item.uid}>
+        //     <code>Folder</code> {item.title}
+        //   </Card>
+        // );
+      }
+
+      throw new Error('Unhandled kind in FolderSection');
+
+      // if (selection && selectionToggle) {
+      //   const type = v.type === DashboardSearchItemType.DashFolder ? 'folder' : 'dashboard';
+
+      //   v = {
+      //     ...v,
+      //     checked: selection(type, v.uid!),
+      //   };
+      // }
+
+      // return (
+      //   <SearchItem
+      //     key={v.uid}
+      //     item={v}
+      //     onTagSelected={onTagSelected}
+      //     onToggleChecked={(item) => {
+      //       if (selectionToggle) {
+      //         selectionToggle('dashboard', item.uid!);
+      //       }
+      //     }}
+      //     editable={Boolean(selection != null)}
+      //     onClickItem={onClickItem}
+      //   />
+      // );
     });
   };
 
@@ -184,7 +202,7 @@ export const FolderSection = ({
 
           <div className={styles.text}>
             <span id={labelId}>{section.title}</span>
-            {section.url && section.uid !== 'general' && (
+            {section.url && section.uid !== GENERAL_FOLDER_UID && (
               <a href={section.url} className={styles.link}>
                 <span className={styles.separator}>|</span> <Icon name="folder-upload" /> Go to folder
               </a>

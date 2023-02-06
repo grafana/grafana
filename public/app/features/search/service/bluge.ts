@@ -10,6 +10,8 @@ import {
 import { config, getBackendSrv } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
+import { DashboardSectionItem } from '../types';
+
 import { replaceCurrentFolderQuery } from './utils';
 
 import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery, SearchResultMeta } from '.';
@@ -212,6 +214,11 @@ export class BlugeSearcher implements GrafanaSearcher {
         return index < view.dataFrame.length;
       },
     };
+  }
+
+  async getFolderChildren(folderUid?: string): Promise<DashboardSectionItem[]> {
+    // PR TODO: fill this out
+    throw new Error('searcher not supported - use sql searcher');
   }
 
   getFolderViewSort(): string {

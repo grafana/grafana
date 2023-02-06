@@ -6,7 +6,7 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Card, Icon, IconName, TagList, useStyles2 } from '@grafana/ui';
 
 import { SEARCH_ITEM_HEIGHT } from '../constants';
-import { DashboardSectionItem, OnToggleChecked } from '../types';
+import { DashboardSearchItemType, DashboardSectionItem, OnToggleChecked } from '../types';
 
 import { SearchCheckbox } from './SearchCheckbox';
 
@@ -62,7 +62,9 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
       className={styles.container}
       onClick={onClickItem}
     >
-      <Card.Heading>{item.title}</Card.Heading>
+      <Card.Heading>
+        <KindIcon kind={item.type} /> {item.title}
+      </Card.Heading>
       <Card.Figure align={'center'} className={styles.checkbox}>
         <SearchCheckbox
           aria-label="Select dashboard"
@@ -89,6 +91,14 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
     </Card>
   );
 };
+
+function KindIcon({ kind }: { kind: DashboardSearchItemType }) {
+  if (kind === DashboardSearchItemType.DashFolder) {
+    return <Icon name="folder" />;
+  }
+
+  return null;
+}
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
