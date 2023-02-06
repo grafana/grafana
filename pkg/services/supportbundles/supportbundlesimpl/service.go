@@ -83,7 +83,6 @@ func ProvideService(cfg *setting.Cfg,
 	// TODO: move to relevant services
 	s.bundleRegistry.RegisterSupportItemCollector(basicCollector(cfg))
 	s.bundleRegistry.RegisterSupportItemCollector(settingsCollector(settings))
-	s.bundleRegistry.RegisterSupportItemCollector(usageStatesCollector(usageStats))
 	s.bundleRegistry.RegisterSupportItemCollector(dbCollector(sql))
 	s.bundleRegistry.RegisterSupportItemCollector(pluginInfoCollector(pluginStore, pluginSettings))
 
