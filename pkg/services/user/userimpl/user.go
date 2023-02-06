@@ -556,14 +556,18 @@ func (s *Service) CreateServiceAccount(ctx context.Context, cmd *user.CreateUser
 func (s *Service) supportBundleCollector() supportbundles.Collector {
 	collectorFn := func(ctx context.Context) (*supportbundles.SupportItem, error) {
 		query := &user.SearchUsersQuery{
-			SignedInUser: &user.SignedInUser{},
-			OrgID:        0,
-			Query:        "",
-			Page:         0,
-			Limit:        0,
-			AuthModule:   "",
-			Filters:      []user.Filter{},
-			IsDisabled:   new(bool),
+			SignedInUser: &user.SignedInUser{
+				Login:            "sa-supportbundle",
+				OrgRole:          "Admin",
+				IsGrafanaAdmin:   true,
+				IsServiceAccount: true},
+			OrgID:      0,
+			Query:      "",
+			Page:       0,
+			Limit:      0,
+			AuthModule: "",
+			Filters:    []user.Filter{},
+			IsDisabled: new(bool),
 		}
 		res, err := s.Search(ctx, query)
 		if err != nil {
