@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
 import { DataSourceSettings, GrafanaTheme2 } from '@grafana/data';
@@ -11,7 +11,7 @@ import { contextSrv } from 'app/core/core';
 import { StoreState, AccessControlAction, useSelector } from 'app/types';
 
 import { getDataSources, getDataSourcesCount, useDataSourcesRoutes, useLoadDataSources } from '../state';
-import { trackCreateDashboardClicked, trackExploreClicked } from '../tracking';
+import { trackCreateDashboardClicked, trackExploreClicked, trackDataSourcesListViewed } from '../tracking';
 import { constructDataSourceExploreUrl } from '../utils';
 
 import { DataSourcesListHeader } from './DataSourcesListHeader';
@@ -58,6 +58,13 @@ export function DataSourcesListView({
   const styles = useStyles2(getStyles);
   const dataSourcesRoutes = useDataSourcesRoutes();
   const location = useLocation();
+
+  useEffect(() => {
+    trackDataSourcesListViewed({
+      grafana_version: config.buildInfo.version,
+      path: location.pathname,
+    });
+  }, [location]);
 
   if (isLoading) {
     return <PageLoader />;
