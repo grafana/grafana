@@ -37,11 +37,13 @@ export const useGetGroupOptionsFromFolder = (folderTitle: string) => {
   const folderGroups = grafanaFolders.find((f) => f.name === folderTitle)?.groups ?? [];
 
   const nonProvisionedGroups = folderGroups.filter((g) => {
-    return g.rules.every((r) => isGrafanaRulerRule(r.rulerRule) && Boolean(r.rulerRule.grafana_alert.provenance));
+    return g.rules.every(
+      (r) => isGrafanaRulerRule(r.rulerRule) && Boolean(r.rulerRule.grafana_alert.provenance) === false
+    );
   });
 
   const groupOptions = nonProvisionedGroups.map<SelectableValue<string>>((group) => ({
-    title: group.name,
+    label: group.name,
     value: group.name,
     description: group.interval ?? MINUTE,
   }));
