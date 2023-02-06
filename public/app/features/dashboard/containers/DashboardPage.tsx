@@ -25,8 +25,8 @@ import { createErrorNotification } from 'app/core/copy/appNotification';
 import { getKioskMode } from 'app/core/navigation/kiosk';
 import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { getNavModel } from 'app/core/selectors/navModel';
-import { readSpreadsheet } from 'app/core/utils/sheet';
 import { PanelModel } from 'app/features/dashboard/state';
+import * as DFImport from 'app/features/dataframe-import';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
 import { getPageNavFromSlug, getRootContentNavModel } from 'app/features/storage/StorageFolderPage';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
@@ -111,51 +111,42 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
 
   private forceRouteReloadCounter = 0;
   state: State = this.getCleanState();
-  maxFileSize = 500000;
 
   onFileDrop = (acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent) => {
-    console.log(acceptedFiles);
-    acceptedFiles.forEach((file) => {
-      const reader = new FileReader();
-      reader.readAsArrayBuffer(file);
-      reader.onload = () => {
-        const result = reader.result;
-        if (result && result instanceof ArrayBuffer) {
-          const dataFrames = readSpreadsheet(result);
-          const snapshot: DataFrameJSON[] = [];
-          dataFrames.forEach((df) => {
-            const dataframeJson = dataFrameToJSON(df);
-            snapshot.push(dataframeJson);
-          });
-          const grafanaDS = {
-            type: 'grafana',
-            uid: 'grafana',
-          };
-          this.props.dashboard?.addPanel({
-            type: 'table',
-            gridPos: { x: 0, y: 0, w: 12, h: 8 },
-            title: file.name,
+    const grafanaDS = {
+      type: 'grafana',
+      uid: 'grafana',
+    };
+    DFImport.filesToDataframes(acceptedFiles).subscribe((next) => {
+      const snapshot: DataFrameJSON[] = [];
+      next.dataFrames.forEach((df) => {
+        const dataframeJson = dataFrameToJSON(df);
+        snapshot.push(dataframeJson);
+      });
+      this.props.dashboard?.addPanel({
+        type: 'table',
+        gridPos: { x: 0, y: 0, w: 12, h: 8 },
+        title: next.file.name,
+        datasource: grafanaDS,
+        targets: [
+          {
+            queryType: GrafanaQueryType.Snapshot,
+            snapshot,
+            file: { name: next.file.name, size: next.file.size },
             datasource: grafanaDS,
-            targets: [
-              {
-                queryType: GrafanaQueryType.Snapshot,
-                snapshot,
-                datasource: grafanaDS,
-              },
-            ],
-          });
-        }
-      };
+          },
+        ],
+      });
     });
 
     fileRejections.forEach((fileRejection) => {
       const errors = fileRejection.errors.map((error) => {
         switch (error.code) {
           case ErrorCode.FileTooLarge:
-            const formattedSize = getValueFormat('decbytes')(this.maxFileSize);
-            return `File is larger than ${formattedValueToString(formattedSize)}.`;
+            const formattedSize = getValueFormat('decbytes')(DFImport.maxFileSize);
+            return `File size must be less than ${formattedValueToString(formattedSize)}.`;
           case ErrorCode.FileInvalidType:
-            return 'File must be a spreadsheet.';
+            return `File type must be one of the following types ${DFImport.formatFileTypes(DFImport.acceptedFiles)}.`;
           default:
             return error.message;
         }
@@ -464,14 +455,8 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
           {config.featureToggles.editPanelCSVDragAndDrop ? (
             <DropZone
               onDrop={this.onFileDrop}
-              accept={{
-                'text/plain': ['.csv', '.txt'],
-                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
-                'application/vnd.ms-excel': ['.xls'],
-                'application/vnd.apple.numbers': ['.numbers'],
-                'application/vnd.oasis.opendocument.spreadsheet': ['.ods'],
-              }}
-              maxSize={this.maxFileSize}
+              accept={DFImport.acceptedFiles}
+              maxSize={DFImport.maxFileSize}
               noClick={true}
             >
               {({ getRootProps, isDragActive }) => {
