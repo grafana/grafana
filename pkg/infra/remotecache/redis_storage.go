@@ -93,24 +93,41 @@ func (s *redisStorage) Set(ctx context.Context, key string, val interface{}, exp
 	if err != nil {
 		return err
 	}
-	status := s.c.Set(ctx, key, string(value), expires)
+
+	return s.SetByteArray(ctx, key, value, expires)
+}
+
+// Set sets value to a given key
+func (s *redisStorage) SetByteArray(ctx context.Context, key string, data []byte, expires time.Duration) error {
+	status := s.c.Set(ctx, key, data, expires)
 	return status.Err()
 }
 
 // Get gets value by given key in session.
 func (s *redisStorage) Get(ctx context.Context, key string) (interface{}, error) {
-	v := s.c.Get(ctx, key)
+	v, err := s.GetByteArray(ctx, key)
+
+	if err.Error() == "EOF" {
+		return nil, ErrCacheItemNotFound
+	}
+
+	if err != nil {
+		return nil, err
+	}
 
 	item := &cachedItem{}
-	err := s.codec.Decode(ctx, []byte(v.Val()), item)
+	err = s.codec.Decode(ctx, v, item)
 
 	if err == nil {
 		return item.Val, nil
 	}
-	if err.Error() == "EOF" {
-		return nil, ErrCacheItemNotFound
-	}
+
 	return nil, err
+}
+
+// GetByteArray returns the value as byte array
+func (s *redisStorage) GetByteArray(ctx context.Context, key string) ([]byte, error) {
+	return s.c.Get(ctx, key).Bytes()
 }
 
 // Delete delete a key from session.
