@@ -1,5 +1,6 @@
 import { cloneDeep, defaults } from 'lodash';
 import LRU from 'lru-cache';
+import moment from 'moment';
 import React from 'react';
 import { forkJoin, lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, filter, map, tap } from 'rxjs/operators';
@@ -9,6 +10,7 @@ import {
   AbstractQuery,
   AnnotationEvent,
   AnnotationQueryRequest,
+  ArrayVector,
   CoreApp,
   DataFrame,
   DataQueryError,
@@ -20,12 +22,15 @@ import {
   dateMath,
   DateTime,
   dateTime,
+  durationToMilliseconds,
   LoadingState,
+  parseDuration,
   QueryFixAction,
   rangeUtil,
   ScopedVars,
   TimeRange,
 } from '@grafana/data';
+import { join } from '@grafana/data/src/transformations/transformers/joinDataFrames';
 import {
   BackendDataSourceResponse,
   BackendSrvRequest,
@@ -42,6 +47,8 @@ import { discoverDataSourceFeatures } from 'app/features/alerting/unified/api/bu
 import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto';
+
+import { amendTimeSeries } from '../../../features/live/data/amendTimeSeries';
 
 import { addLabelToQuery } from './add_label_to_query';
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
@@ -72,6 +79,9 @@ const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', '
 
 export const InstantQueryRefIdIndex = '-Instant';
 
+type TargetIdent = string;
+type FieldIdent = string;
+
 export class PrometheusDatasource
   extends DataSourceWithBackend<PromQuery, PromOptions>
   implements DataSourceWithQueryImportSupport<PromQuery>, DataSourceWithQueryExportSupport<PromQuery>
@@ -99,6 +109,8 @@ export class PrometheusDatasource
   exemplarsAvailable: boolean;
   subType: PromApplication;
   rulerEnabled: boolean;
+
+  fieldsCache: Map<FieldIdent, [number[], any[]]> = new Map();
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -445,12 +457,87 @@ export class PrometheusDatasource
 
   query(request: DataQueryRequest<PromQuery>): Observable<DataQueryResponse> {
     if (this.access === 'proxy') {
+      const fullFromTs = request.range.from.valueOf();
+      const fullToTs = request.range.to.valueOf();
+      const fullRangeMs = fullToTs - fullFromTs;
+
+      // 10 min
+      const requeryLastMs = 10 * 60 * 1000;
+      const refreshMs = durationToMilliseconds(parseDuration(this.timeSrv.refresh));
+      const doIncrementalQuery = refreshMs > 0 && fullRangeMs > requeryLastMs;
+
+      // modify to incremental query
+      if (doIncrementalQuery) {
+        if (this.fieldsCache.size > 0) {
+          request.range.from = moment(fullToTs - refreshMs - requeryLastMs) as DateTime;
+          request.range.to = moment(fullToTs) as DateTime;
+
+          // TODO: adjust maxDataPoints as well?
+        }
+      }
+
       const targets = request.targets.map((target) => this.processTargetV2(target, request));
       const startTime = new Date();
       return super.query({ ...request, targets: targets.flat() }).pipe(
-        map((response) =>
-          transformV2(response, request, { exemplarTraceIdDestinations: this.exemplarTraceIdDestinations })
-        ),
+        map((response) => {
+          if (doIncrementalQuery) {
+            const refCacheKeys = new Map<string, TargetIdent>();
+
+            request.targets.forEach((t) => {
+              refCacheKeys.set(t.refId, `${t.datasource?.uid}|${t.expr}|${request.maxDataPoints}|${request.intervalMs}`);
+            });
+
+            // cache and amend with new
+            response.data.forEach((frame: DataFrame) => {
+              let nextTimes = frame.fields[0].values.toArray();
+
+              // unaligned timeseries from merged cache and next
+              let frameData: Array<[times: number[], ...values: any[][]]> = [];
+
+              // skip time field [0]
+              for (let i = 1; i < frame.fields.length; i++) {
+                let field = frame.fields[i];
+                let fieldIdent = refCacheKeys.get(frame.refId!) + '|' + field.name + '|' + JSON.stringify(field.labels ?? '');
+
+                let prevTimes: number[];
+                let prevVals: any[];
+                const nextVals = field.values.toArray();
+                const cached = this.fieldsCache.get(fieldIdent);
+
+                if (cached) {
+                  [prevTimes, prevVals] = cached;
+                } else {
+                  prevTimes = [];
+                  prevVals = [];
+                }
+
+                const amended = amendTimeSeries([prevTimes, prevVals], [nextTimes, nextVals], fullFromTs, fullToTs);
+                this.fieldsCache.set(fieldIdent, amended);
+                frameData.push(amended);
+              }
+
+              // align data by joining, set field data, update frame length
+              // TODO: not needed for exemplars/annotations?
+              join(frameData).forEach((data, fieldIdx) => {
+                frame.fields[fieldIdx].values = new ArrayVector(data as unknown as any[]);
+              });
+
+              frame.length = frame.fields[0].values.length;
+            });
+
+            // purge cache
+            this.fieldsCache.forEach((data, key) => {
+              if (data[0].length === 0) {
+                this.fieldsCache.delete(key);
+              }
+            });
+
+            request.range.from = moment(fullFromTs) as DateTime;
+            request.range.to = moment(fullToTs) as DateTime;
+          }
+
+          return transformV2(response, request, { exemplarTraceIdDestinations: this.exemplarTraceIdDestinations })
+        }),
         tap((response: DataQueryResponse) => {
           trackQuery(response, request, startTime);
         })
