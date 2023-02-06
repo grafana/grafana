@@ -5,7 +5,7 @@ import { RegisterOptions, useFormContext } from 'react-hook-form';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
 import { Button, Field, InlineLabel, Input, InputControl, useStyles2 } from '@grafana/ui';
-import { RulerRuleDTO, RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { CombinedRuleGroup, CombinedRuleNamespace } from '../../../../../types/unified-alerting';
 import { logInfo, LogMessages } from '../../Analytics';
@@ -23,18 +23,6 @@ import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { RuleEditorSection } from './RuleEditorSection';
 
 export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
-
-export const getIntervalForGroup = (
-  rulerRules: RulerRulesConfigDTO | null | undefined,
-  group: string,
-  folder: string
-) => {
-  const folderObj: Array<RulerRuleGroupDTO<RulerRuleDTO>> = rulerRules ? rulerRules[folder] : [];
-  const groupObj = folderObj?.find((rule) => rule.name === group);
-
-  const interval = groupObj?.interval ?? MINUTE;
-  return interval;
-};
 
 const forValidationOptions = (evaluateEvery: string): RegisterOptions => ({
   required: {
@@ -150,15 +138,13 @@ function FolderGroupAndEvaluationInterval({
   const isNewGroup = useIsNewGroup(folderName ?? '', groupName);
 
   useEffect(() => {
-    if (!isNewGroup) {
-      groupName &&
-        folderName &&
-        setEvaluateEvery(getIntervalForGroup(groupfoldersForGrafana?.result, groupName, folderName ?? ''));
+    if (!isNewGroup && existingGroup?.interval) {
+      setEvaluateEvery(existingGroup.interval);
     } else {
       setEvaluateEvery(MINUTE);
       setValue('evaluateEvery', MINUTE);
     }
-  }, [groupName, folderName, groupfoldersForGrafana?.result, setEvaluateEvery, isNewGroup, setValue]);
+  }, [setEvaluateEvery, isNewGroup, setValue, existingGroup]);
 
   const closeEditGroupModal = (saved = false) => {
     if (!saved) {
