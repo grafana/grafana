@@ -67,7 +67,6 @@ export interface FeatureToggles {
   cloudWatchCrossAccountQuerying?: boolean;
   redshiftAsyncQueryDataSupport?: boolean;
   athenaAsyncQueryDataSupport?: boolean;
-  increaseInMemDatabaseQueryCache?: boolean;
   newPanelChromeUI?: boolean;
   queryLibrary?: boolean;
   showDashboardValidationWarnings?: boolean;
