@@ -15,6 +15,7 @@ import (
 	"golang.org/x/text/language"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -61,12 +62,15 @@ type OAuthInfo struct {
 
 func ProvideService(cfg *setting.Cfg,
 	features *featuremgmt.FeatureManager,
+	usageStats usagestats.Service,
 ) *SocialService {
 	ss := SocialService{
 		cfg:           cfg,
 		oAuthProvider: make(map[string]*OAuthInfo),
 		socialMap:     make(map[string]SocialConnector),
 	}
+
+	usageStats.RegisterMetricsFunc(ss.getUsageStats)
 
 	for _, name := range allOauthes {
 		sec := cfg.Raw.Section("auth." + name)
@@ -460,4 +464,24 @@ func (ss *SocialService) GetOAuthInfoProvider(name string) *OAuthInfo {
 
 func (ss *SocialService) GetOAuthInfoProviders() map[string]*OAuthInfo {
 	return ss.oAuthProvider
+}
+
+func (ss *SocialService) getUsageStats(ctx context.Context) (map[string]interface{}, error) {
+	m := map[string]interface{}{}
+
+	authTypes := map[string]bool{}
+	for provider, enabled := range ss.GetOAuthProviders() {
+		authTypes["oauth_"+provider] = enabled
+	}
+
+	for authType, enabled := range authTypes {
+		enabledValue := 0
+		if enabled {
+			enabledValue = 1
+		}
+
+		m["stats.auth_enabled."+authType+".count"] = enabledValue
+	}
+
+	return m, nil
 }

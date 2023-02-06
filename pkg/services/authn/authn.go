@@ -94,6 +94,13 @@ type ProxyClient interface {
 	AuthenticateProxy(ctx context.Context, r *Request, username string, additional map[string]string) (*Identity, error)
 }
 
+// UsageStatClient is an optional interface that auth clients can implement.
+// Clients that implements this interface can specify a usage stat collection hook
+type UsageStatClient interface {
+	Client
+	UsageStatFn(ctx context.Context) (map[string]interface{}, error)
+}
+
 type Request struct {
 	// OrgID will be populated by authn.Service
 	OrgID int64

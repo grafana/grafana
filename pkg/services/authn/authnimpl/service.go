@@ -8,9 +8,11 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"go.opentelemetry.io/otel/attribute"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/network"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/auth"
@@ -48,6 +50,8 @@ func ProvideService(
 	accessControlService accesscontrol.Service,
 	apikeyService apikey.Service, userService user.Service,
 	jwtService auth.JWTVerifierService,
+	usageStats usagestats.Service,
+	kvstore kvstore.KVStore,
 	userProtectionService login.UserProtectionService,
 	loginAttempts loginattempt.Service, quotaService quota.Service,
 	authInfoService login.AuthInfoService, renderService rendering.Service,
@@ -64,6 +68,8 @@ func ProvideService(
 		postLoginHooks: newQueue[authn.PostLoginHookFn](),
 	}
 
+	usageStats.RegisterMetricsFunc(s.getUsageStats)
+
 	s.RegisterClient(clients.ProvideRender(userService, renderService))
 	s.RegisterClient(clients.ProvideAPIKey(apikeyService, userService))
 
@@ -74,7 +80,7 @@ func ProvideService(
 	}
 
 	if s.cfg.AnonymousEnabled {
-		s.RegisterClient(clients.ProvideAnonymous(cfg, orgService))
+		s.RegisterClient(clients.ProvideAnonymous(cfg, orgService, kvstore))
 	}
 
 	var proxyClients []authn.ProxyClient
