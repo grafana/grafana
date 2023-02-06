@@ -120,6 +120,11 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 		cmd.ID = nil
 		cmd.UID = &dashFolder.UID
 	}
+
+	if dashFolder.IsGeneral() {
+		return dashFolder, nil
+	}
+
 	f, err := s.store.Get(ctx, *cmd)
 
 	if err != nil {
@@ -190,7 +195,7 @@ func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*
 
 func (s *Service) getFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*folder.Folder, error) {
 	if id == 0 {
-		return &folder.Folder{ID: id, Title: "General"}, nil
+		return &folder.GeneralFolder, nil
 	}
 
 	dashFolder, err := s.dashboardFolderStore.GetFolderByID(ctx, orgID, id)
