@@ -31,14 +31,6 @@ const (
 	// Create and show thumbnails for dashboard search results
 	FlagDashboardPreviews = "dashboardPreviews"
 
-	// FlagDashboardPreviewsAdmin
-	// Manage the dashboard previews crawler process from the UI
-	FlagDashboardPreviewsAdmin = "dashboardPreviewsAdmin"
-
-	// FlagLiveConfig
-	// Save Grafana Live configuration in SQL tables
-	FlagLiveConfig = "live-config"
-
 	// FlagLivePipeline
 	// Enable a generic live processing pipeline
 	FlagLivePipeline = "live-pipeline"
@@ -54,10 +46,6 @@ const (
 	// FlagPanelTitleSearch
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
-
-	// FlagTempoApmTable
-	// Show APM table
-	FlagTempoApmTable = "tempoApmTable"
 
 	// FlagPrometheusAzureOverrideAudience
 	// Experimental. Allow override default AAD audience for Azure Prometheus endpoint
@@ -119,6 +107,10 @@ const (
 	// Save dashboards via k8s
 	FlagK8sDashboards = "k8sDashboards"
 
+	// FlagApiserver
+	// Add a k8s API server proxy
+	FlagApiserver = "apiserver"
+
 	// FlagSupportBundles
 	// Support bundles for troubleshooting
 	FlagSupportBundles = "supportBundles"
@@ -138,10 +130,6 @@ const (
 	// FlagTracing
 	// Adds trace ID to error notifications
 	FlagTracing = "tracing"
-
-	// FlagCommandPalette
-	// Enable command palette
-	FlagCommandPalette = "commandPalette"
 
 	// FlagCorrelations
 	// Correlations page
@@ -200,7 +188,7 @@ const (
 	FlagInternationalization = "internationalization"
 
 	// FlagTopnav
-	// New top nav and page layouts
+	// Displays new top nav and page layouts
 	FlagTopnav = "topnav"
 
 	// FlagGrpcServer

@@ -133,7 +133,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
       getLogRowContextUi,
     } = this.props;
     const { renderAll, contextIsOpen } = this.state;
-    const { logsRowsTable } = getLogRowStyles(theme);
+    const styles = getLogRowStyles(theme);
     const dedupedRows = deduplicatedRows ? deduplicatedRows : logRows;
     const hasData = logRows && logRows.length > 0;
     const dedupCount = dedupedRows
@@ -151,7 +151,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
     const getRowContext = this.props.getRowContext ? this.props.getRowContext : () => Promise.resolve([]);
 
     return (
-      <table className={logsRowsTable}>
+      <table className={styles.logsRowsTable}>
         <tbody>
           {hasData &&
             firstRows.map((row, index) => (
@@ -182,6 +182,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 onLogRowHover={onLogRowHover}
                 app={app}
                 scrollElement={scrollElement}
+                styles={styles}
               />
             ))}
           {hasData &&
@@ -214,6 +215,7 @@ class UnThemedLogRows extends PureComponent<Props, State> {
                 onLogRowHover={onLogRowHover}
                 app={app}
                 scrollElement={scrollElement}
+                styles={styles}
               />
             ))}
           {hasData && !renderAll && (

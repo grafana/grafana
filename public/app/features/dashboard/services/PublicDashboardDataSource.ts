@@ -86,6 +86,7 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
       requestId,
       publicDashboardAccessToken,
       panelId,
+      queryCachingTTL,
       range: { from: fromRange, to: toRange },
     } = request;
     let queries: DataQuery[];
@@ -110,6 +111,7 @@ export class PublicDashboardDataSource extends DataSourceApi<DataQuery, DataSour
       const body = {
         intervalMs,
         maxDataPoints,
+        queryCachingTTL,
         timeRange: { from: fromRange.valueOf().toString(), to: toRange.valueOf().toString() },
       };
 

@@ -99,6 +99,8 @@ seqs: [
 
 					// (Legacy) The Angular component to use for a page.
 					component?: string
+
+					// The minimum role a user must have to see this page in the navigation menu.
 					role?:      "Admin" | "Editor" | "Viewer"
 
 					// RBAC action the user must have to access the route
@@ -107,7 +109,7 @@ seqs: [
 					// Used for app plugins.
 					path?: string
 
-					// Add the include to the side menu.
+					// Add the include to the navigation menu.
 					addToNav?: bool
 
 					// Page or dashboard when user clicks the icon in the side menu.

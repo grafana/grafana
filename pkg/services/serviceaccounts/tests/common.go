@@ -69,7 +69,7 @@ func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) 
 	addKeyCmd := &apikey.AddCommand{
 		Name:             testKey.Name,
 		Role:             role,
-		OrgId:            testKey.OrgId,
+		OrgID:            testKey.OrgId,
 		ServiceAccountID: testKey.ServiceAccountID,
 	}
 
@@ -90,7 +90,7 @@ func SetupApiKey(t *testing.T, sqlStore *sqlstore.SQLStore, testKey TestApiKey) 
 			// Force setting expires to time before now to make key expired
 			var expires int64 = 1
 			key := apikey.APIKey{Expires: &expires}
-			rowsAffected, err := sess.ID(addKeyCmd.Result.Id).Update(&key)
+			rowsAffected, err := sess.ID(addKeyCmd.Result.ID).Update(&key)
 			require.Equal(t, int64(1), rowsAffected)
 			return err
 		})
