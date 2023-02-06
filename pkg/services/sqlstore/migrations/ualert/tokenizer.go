@@ -1,5 +1,6 @@
 // This file contains code that parses templates from old alerting into a sequence
-// of tokens. Each token can be either a literal or a variable.
+// of tokens. Each token can be either a whitespace character, such as a space, tab,
+// or newline; a string literal; or a variable.
 
 package ualert
 
@@ -13,7 +14,8 @@ var (
 	ErrEOF = errors.New("EOF")
 )
 
-// Token contains either a string literal or a variable.
+// Token contains either a whitespace character, such as a space, tab, or newline;
+// a string literal; or a variable.
 type Token struct {
 	Space    rune
 	Literal  string
