@@ -10,7 +10,7 @@ Yarn >= 1.22.4
 ## Build the doc site
 
 1. On the command line, first change to the docs folder: `cd docs`.
-1. Run `make docs`. This launches a preview of the website with the current grafana docs at `http://localhost:3002/docs/grafana/next/` which will refresh automatically when changes are made to content in the `sources` directory.
+1. Run `make docs`. This launches a preview of the website with the current grafana docs at `http://localhost:3002/docs/grafana/latest/` which will refresh automatically when changes are made to content in the `sources` directory.
 
 If you have the grafana/website repo checked out in the same directory as the grafana repo, then you can run `make docs-local-static` to use local assets (such as images).
 
@@ -52,7 +52,7 @@ To specify different menu text from the page title, use the front matter paramet
 
 ### Add images
 
-Images are currently hosted in the grafana/website repo.
+Please see our help documentation on [Image, diagram, and screenshot guidelines](https://grafana.com/docs/writers-toolkit/writing-guide/image-guidelines/) for comprehensive information.
 
 ---
 

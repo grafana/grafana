@@ -259,19 +259,15 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
 
       const dsId = this.serviceMap.datasourceUid;
       const tempoDsUid = this.uid;
-      if (config.featureToggles.tempoApmTable) {
-        subQueries.push(
-          serviceMapQuery(options, dsId, tempoDsUid).pipe(
-            concatMap((result) =>
-              rateQuery(options, result, dsId).pipe(
-                concatMap((result) => errorAndDurationQuery(options, result, dsId, tempoDsUid))
-              )
+      subQueries.push(
+        serviceMapQuery(options, dsId, tempoDsUid).pipe(
+          concatMap((result) =>
+            rateQuery(options, result, dsId).pipe(
+              concatMap((result) => errorAndDurationQuery(options, result, dsId, tempoDsUid))
             )
           )
-        );
-      } else {
-        subQueries.push(serviceMapQuery(options, dsId, tempoDsUid));
-      }
+        )
+      );
     }
 
     return merge(...subQueries);

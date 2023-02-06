@@ -57,13 +57,3 @@ func (ng *NGAlert) GetAPIMetrics() *API {
 func (ng *NGAlert) GetMultiOrgAlertmanagerMetrics() *MultiOrgAlertmanager {
 	return ng.multiOrgAlertmanagerMetrics
 }
-
-// RemoveOrgRegistry removes the *prometheus.Registry for the specified org. It is safe to call concurrently.
-func (moa *MultiOrgAlertmanager) RemoveOrgRegistry(id int64) {
-	moa.registries.RemoveOrgRegistry(id)
-}
-
-// GetOrCreateOrgRegistry gets or creates a *prometheus.Registry for the specified org. It is safe to call concurrently.
-func (moa *MultiOrgAlertmanager) GetOrCreateOrgRegistry(id int64) prometheus.Registerer {
-	return moa.registries.GetOrCreateOrgRegistry(id)
-}

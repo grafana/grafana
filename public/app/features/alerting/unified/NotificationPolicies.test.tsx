@@ -1,8 +1,7 @@
 import { render, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 
@@ -15,7 +14,6 @@ import {
   MuteTimeInterval,
   Route,
 } from 'app/plugins/datasource/alertmanager/types';
-import { configureStore } from 'app/store/configureStore';
 import { AccessControlAction } from 'app/types';
 
 import NotificationPolicies from './NotificationPolicies';
@@ -47,19 +45,15 @@ const mocks = {
 const useGetGrafanaReceiverTypeCheckerMock = jest.spyOn(grafanaApp, 'useGetGrafanaReceiverTypeChecker');
 
 const renderNotificationPolicies = (alertManagerSourceName?: string) => {
-  const store = configureStore();
   locationService.push(location);
-
   locationService.push(
     '/alerting/routes' + (alertManagerSourceName ? `?${ALERTMANAGER_NAME_QUERY_KEY}=${alertManagerSourceName}` : '')
   );
 
   return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <NotificationPolicies />
-      </Router>
-    </Provider>
+    <TestProvider>
+      <NotificationPolicies />
+    </TestProvider>
   );
 };
 
