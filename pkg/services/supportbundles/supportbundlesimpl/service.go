@@ -48,7 +48,6 @@ func ProvideService(cfg *setting.Cfg,
 	accessControl ac.AccessControl,
 	accesscontrolService ac.Service,
 	routeRegister routing.RouteRegister,
-	userService user.Service,
 	settings setting.Provider,
 	pluginStore plugins.Store,
 	pluginSettings pluginsettings.Service,
@@ -85,7 +84,6 @@ func ProvideService(cfg *setting.Cfg,
 	s.bundleRegistry.RegisterSupportItemCollector(basicCollector(cfg))
 	s.bundleRegistry.RegisterSupportItemCollector(settingsCollector(settings))
 	s.bundleRegistry.RegisterSupportItemCollector(usageStatesCollector(usageStats))
-	s.bundleRegistry.RegisterSupportItemCollector(userCollector(userService))
 	s.bundleRegistry.RegisterSupportItemCollector(dbCollector(sql))
 	s.bundleRegistry.RegisterSupportItemCollector(pluginInfoCollector(pluginStore, pluginSettings))
 
