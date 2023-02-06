@@ -390,7 +390,7 @@ function combineFrames(dest: DataQueryResponseData, source: DataQueryResponseDat
   dest.fields[0].values.reverse();
   dest.fields[1].values.reverse();
 
-  for (let j = source.fields[0].values.length - 1; j > 0; j--) {
+  for (let j = source.fields[0].values.length - 1; j >= 0; j--) {
     dest.fields[0].values.add(source.fields[0].values.get(j));
     dest.fields[1].values.add(source.fields[1].values.get(j));
   }
