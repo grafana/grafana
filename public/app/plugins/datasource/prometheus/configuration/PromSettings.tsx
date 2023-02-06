@@ -109,7 +109,7 @@ const setPrometheusVersion = (
   onUpdate(options)
     .then((updatedOptions) => {
       getBackendSrv()
-        .get(`/api/datasources/${updatedOptions.id}/resources/version-detect`)
+        .get(`/api/datasources/uid/${updatedOptions.uid}/resources/version-detect`)
         .then((rawResponse: PromBuildInfoResponse) => {
           const rawVersionStringFromApi = rawResponse.data?.version ?? '';
           if (rawVersionStringFromApi && semver.valid(rawVersionStringFromApi)) {
