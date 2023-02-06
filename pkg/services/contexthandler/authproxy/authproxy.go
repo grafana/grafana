@@ -203,6 +203,9 @@ func (auth *AuthProxy) getUserViaCache(reqCtx *contextmodel.ReqContext) (int64, 
 	}
 	auth.logger.Debug("Getting user ID via auth cache", "cacheKey", cacheKey)
 	cachedValue, err := auth.remoteCache.GetByteArray(reqCtx.Req.Context(), cacheKey)
+	if err != nil {
+		return 0, err
+	}
 
 	userId, err := strconv.ParseInt(string(cachedValue), 10, 64)
 	if err != nil {

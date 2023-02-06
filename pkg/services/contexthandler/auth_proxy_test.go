@@ -65,6 +65,7 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	require.True(t, ctx.IsSignedIn)
 
 	cachedByteArray, err := svc.RemoteCache.GetByteArray(context.Background(), key)
+	require.NoError(t, err)
 
 	cacheUserId, err := strconv.ParseInt(string(cachedByteArray), 10, 64)
 
