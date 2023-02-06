@@ -144,11 +144,11 @@ Usage of the fields is explained below:
 | --------------------- | -------------------------------------- |
 | **collapse**          | whether timepicker is collapsed or not |
 | **enable**            | whether timepicker is enabled or not   |
-| **notice**            | TODO                                   |
-| **now**               | TODO                                   |
-| **refresh_intervals** | TODO                                   |
-| **status**            | TODO                                   |
-| **type**              | TODO                                   |
+| **notice**            |                                    |
+| **now**               |                                    |
+| **refresh_intervals** |                                    |
+| **status**            |                                    |
+| **type**              |                                    |
 
 ### templating
 
@@ -236,6 +236,6 @@ Usage of the above mentioned fields in the templating section is explained below
 | **name**        | name of variable                                                                                        |
 | **options**     | array of variable text/value pairs available for selection on dashboard                                 |
 | **query**       | data source query used to fetch values for a variable                                                   |
-| **refresh**     | TODO                                                                                                    |
-| **regex**       | TODO                                                                                                    |
+| **refresh**     |                                                                                                     |
+| **regex**       |                                                                                                     |
 | **type**        | type of variable, i.e. `custom`, `query` or `interval`                                                  |
