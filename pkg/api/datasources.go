@@ -862,16 +862,16 @@ func (hs *HTTPServer) filterDatasourcesByQueryPermission(ctx context.Context, us
 		User:        user,
 		Datasources: ds,
 	}
-	query.Result = ds
 
-	if err := hs.DatasourcePermissionsService.FilterDatasourcesBasedOnQueryPermissions(ctx, &query); err != nil {
+	dataSources, err := hs.DatasourcePermissionsService.FilterDatasourcesBasedOnQueryPermissions(ctx, &query)
+	if err != nil {
 		if !errors.Is(err, permissions.ErrNotImplemented) {
 			return nil, err
 		}
 		return ds, nil
 	}
 
-	return query.Result, nil
+	return dataSources, nil
 }
 
 // swagger:parameters checkDatasourceHealthByID

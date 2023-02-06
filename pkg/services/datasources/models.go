@@ -191,7 +191,6 @@ type GetDataSourceQuery struct {
 type DatasourcesPermissionFilterQuery struct {
 	User        *user.SignedInUser
 	Datasources []*DataSource
-	Result      []*DataSource
 }
 
 const (
