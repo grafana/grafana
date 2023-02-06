@@ -97,7 +97,7 @@ func (h *AnnotationBackend) QueryStates(ctx context.Context, query ngmodels.Hist
 	// Also, annotations don't store labels in a strongly defined format. They are formatted into the label's text.
 	// We are not guaranteed that a given annotation has parseable text, so we instead use the entire text as an opaque value.
 
-	lbls := data.Labels(map[string]string{
+	columnLbls := data.Labels(map[string]string{
 		StateHistoryLabelKey: StateHistoryLabelValue,
 		LabelRuleUID:         fmt.Sprint(query.RuleUID),
 	})
@@ -113,6 +113,7 @@ func (h *AnnotationBackend) QueryStates(ctx context.Context, query ngmodels.Hist
 	//   3. `prev` - the previous state and reason
 	//   4. `next` - the next state and reason
 	//   5. `data` - a JSON string, containing the annotation's contents. analogous to item.Data
+
 	times := make([]time.Time, 0, len(items))
 	texts := make([]string, 0, len(items))
 	prevStates := make([]string, 0, len(items))
@@ -131,11 +132,11 @@ func (h *AnnotationBackend) QueryStates(ctx context.Context, query ngmodels.Hist
 		values = append(values, string(data))
 	}
 
-	frame.Fields = append(frame.Fields, data.NewField("time", lbls, times))
-	frame.Fields = append(frame.Fields, data.NewField("text", lbls, texts))
-	frame.Fields = append(frame.Fields, data.NewField("prev", lbls, prevStates))
-	frame.Fields = append(frame.Fields, data.NewField("next", lbls, nextStates))
-	frame.Fields = append(frame.Fields, data.NewField("data", lbls, values))
+	frame.Fields = append(frame.Fields, data.NewField(dfTime, columnLbls, times))
+	frame.Fields = append(frame.Fields, data.NewField("text", columnLbls, texts))
+	frame.Fields = append(frame.Fields, data.NewField("prev", columnLbls, prevStates))
+	frame.Fields = append(frame.Fields, data.NewField("next", columnLbls, nextStates))
+	frame.Fields = append(frame.Fields, data.NewField("data", columnLbls, values))
 
 	return frame, nil
 }

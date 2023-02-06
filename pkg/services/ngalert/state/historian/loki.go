@@ -134,7 +134,7 @@ func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
 	frame := data.NewFrame(dfStreamTitle)
 
 	// We merge all series into a single linear history.
-	lbls := data.Labels(map[string]string{})
+	columnLbls := data.Labels(map[string]string{})
 
 	// We represent state history as a single merged history, that roughly corresponds to what you get in the Grafana Explore tab when querying Loki directly.
 	// The format is composed of the following vectors:
@@ -198,9 +198,9 @@ func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
 		pointers[minElStreamIdx]++
 	}
 
-	frame.Fields = append(frame.Fields, data.NewField(dfTime, lbls, times))
-	frame.Fields = append(frame.Fields, data.NewField(dfLine, lbls, lines))
-	frame.Fields = append(frame.Fields, data.NewField(dfLabels, lbls, labels))
+	frame.Fields = append(frame.Fields, data.NewField(dfTime, columnLbls, times))
+	frame.Fields = append(frame.Fields, data.NewField(dfLine, columnLbls, lines))
+	frame.Fields = append(frame.Fields, data.NewField(dfLabels, columnLbls, labels))
 
 	return frame, nil
 }
