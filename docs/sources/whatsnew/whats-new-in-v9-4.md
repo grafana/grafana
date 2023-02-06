@@ -46,7 +46,7 @@ _Note:_ The Grafana documentation has not yet been updated to reflect changes to
 
 ## Dashboard panel redesign
 
-_Available to Preview using the `newPanelChromeUI` feature toggle in all editions of Grafana_
+_Available to preview using the `newPanelChromeUI` feature toggle in all editions of Grafana_
 
 Dashboard panels hold a lot of information, some of which is difficult to discover or access entirely from the dashboard itself. With our redesigned panels, we've improved accessibility and made it easier to understand the status of a panel by adding and moving key elements.
 
