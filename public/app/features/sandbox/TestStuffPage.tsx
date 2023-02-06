@@ -3,7 +3,7 @@ import { useObservable } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { ApplyFieldOverrideOptions, dateMath, FieldColorModeId, NavModelItem, PanelData } from '@grafana/data';
-import { getPluginLink } from '@grafana/runtime';
+import { getPluginExtensions } from '@grafana/runtime';
 import { DataTransformerConfig } from '@grafana/schema';
 import { Button, HorizontalGroup, LinkButton, Table } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -62,7 +62,7 @@ export const TestStuffPage = () => {
     <Page navModel={{ node: node, main: node }}>
       <Page.Contents>
         <HorizontalGroup>
-          <LinkToBasicApp linkId="myorg-basic-app.page-one" />
+          <LinkToBasicApp target="grafana/sandbox/testing" />
         </HorizontalGroup>
         {data && (
           <AutoSizer style={{ width: '100%', height: '600px' }}>
@@ -148,22 +148,23 @@ export function getDefaultState(): State {
   };
 }
 
-function LinkToBasicApp({ linkId }: { linkId: string }) {
-  const { link } = getPluginLink({
-    id: linkId,
-    queryParams: {
-      title: 'something',
-    },
-  });
+function LinkToBasicApp({ target }: { target: string }) {
+  const { extensions, error } = getPluginExtensions({ target });
 
-  if (!link) {
+  if (error) {
     return null;
   }
 
   return (
-    <LinkButton href={link.href} title={link.description}>
-      Go to basic app
-    </LinkButton>
+    <div>
+      {extensions.map((extension) => {
+        return (
+          <LinkButton href={extension.href} title={extension.description} key={extension.key}>
+            {extension.title}
+          </LinkButton>
+        );
+      })}
+    </div>
   );
 }
 

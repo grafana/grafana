@@ -3,7 +3,7 @@ import {
   PluginExtensionTypes,
   PluginsExtensionLinkConfig,
   PluginsExtensionRegistry,
-  PluginsExtensionRegistryLink,
+  PluginsExtensionLink,
 } from '@grafana/runtime';
 
 export function createPluginExtensionsRegistry(apps: Record<string, AppPluginConfig> = {}): PluginsExtensionRegistry {
@@ -37,11 +37,16 @@ export function createPluginExtensionsRegistry(apps: Record<string, AppPluginCon
   return Object.freeze(registry);
 }
 
-function createRegistryItem(pluginId: string, extension: PluginsExtensionLinkConfig): PluginsExtensionRegistryLink {
+function createRegistryItem(pluginId: string, extension: PluginsExtensionLinkConfig): PluginsExtensionLink {
   return Object.freeze({
     type: PluginExtensionTypes.link,
     title: extension.title,
     description: extension.description,
     href: `/a/${pluginId}${extension.path}`,
+    key: hashish(extension.title + extension.path),
   });
+}
+
+function hashish(vals: string): number {
+  return Array.from(vals).reduce((s, c) => (Math.imul(31, s) + c.charCodeAt(0)) | 0, 0);
 }

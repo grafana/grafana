@@ -462,7 +462,7 @@
     },
     "enterpriseFeatures": {
       "type": "object",
-      "description": "Grafana Enerprise specific features.",
+      "description": "Grafana Enterprise specific features.",
       "additionalProperties": true,
       "properties": {
         "healthDiagnosticsErrors": {
@@ -473,26 +473,33 @@
       }
     },
     "extensions": {
-      "type": "object",
+      "type": "array",
       "description": "Extends various parts of the Grafana UI with commands or links.",
-      "additionalProperties": false,
-      "properties": {
-        "links": {
-          "type": "array",
-          "description": "Expose a page link that can be used by Grafana core or other plugins to navigate users to the plugin",
-          "items": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "description": {
-                "type": "string"
-              },
-              "path": {
-                "type": "string"
-              }
-            }
+      "items": {
+        "type": "object",
+        "description": "Expose a page link that can be used by Grafana core or other plugins to navigate users to the plugin",
+        "additionalProperties": false,
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": ["link"]
+          },
+          "title": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 22
+          },
+          "target": {
+            "type": "string",
+            "pattern": "^(plugins|grafana)/[a-z-/0-9]*$"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^/.*"
           }
         }
       }

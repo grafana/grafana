@@ -1,4 +1,4 @@
-import { getPluginExtensions, PluginLinkExtensionsMissingError } from './links';
+import { getPluginExtensions, PluginExtensionsMissingError } from './extensions';
 import { setPluginsExtensionRegistry } from './registry';
 
 describe('getPluginExtensions', () => {
@@ -44,7 +44,7 @@ describe('getPluginExtensions', () => {
       });
 
       expect(extensions.length).toBe(0);
-      expect(error).toBeInstanceOf(PluginLinkExtensionsMissingError);
+      expect(error).toBeInstanceOf(PluginExtensionsMissingError);
     });
   });
 });

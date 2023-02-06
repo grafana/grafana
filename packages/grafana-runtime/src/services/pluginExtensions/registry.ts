@@ -1,11 +1,14 @@
-export type PluginsExtensionRegistryLink = {
+export type PluginsExtensionLink = {
   type: 'link';
   title: string;
   description: string;
   href: string;
+  key: number;
 };
 
-export type PluginsExtensionRegistry = Record<string, PluginsExtensionRegistryLink[]>;
+export type PluginsExtension = PluginsExtensionLink;
+
+export type PluginsExtensionRegistry = Record<string, PluginsExtension[]>;
 
 let registry: PluginsExtensionRegistry | undefined;
 

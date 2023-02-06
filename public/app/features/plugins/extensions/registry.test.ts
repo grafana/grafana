@@ -1,5 +1,3 @@
-import { EXPECTED_COLOR } from 'jest-matcher-utils';
-
 import { AppPluginConfig, PluginExtensionTypes, PluginsExtensionLinkConfig } from '@grafana/runtime';
 
 import { createPluginExtensionsRegistry } from './registry';
