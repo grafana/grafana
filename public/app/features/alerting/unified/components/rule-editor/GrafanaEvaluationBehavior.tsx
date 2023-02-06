@@ -183,9 +183,6 @@ function FolderGroupAndEvaluationInterval({
       <FolderAndGroup initialFolder={initialFolder} />
       {folderName && isEditingGroup && (
         <EditCloudGroupModal
-          // groupInterval={evaluateEvery}
-          // nameSpaceAndGroup={{ namespace: folder?.title ?? '', group: group }}
-          // sourceName={GRAFANA_RULES_SOURCE_NAME}
           namespace={existingNamespace ?? emptyNamespace}
           group={existingGroup ?? emptyGroup}
           onClose={() => closeEditGroupModal()}

@@ -179,11 +179,6 @@ export const RulesForGroupTable = ({ rulesWithoutRecordingRules }: { rulesWithou
   );
 };
 
-export interface CombinedGroupAndNameSpace {
-  namespace: CombinedRuleNamespace;
-  group: CombinedRuleGroup;
-}
-
 interface FormValues {
   namespaceName: string;
   groupName: string;
@@ -218,26 +213,15 @@ export const evaluateEveryValidationOptions = (rules: RulerRuleDTO[]): RegisterO
 });
 
 export interface ModalProps {
-  folderUrl?: string;
-  // nameSpaceAndGroup: CombinedGroupAndNameSpace | GroupAndNameSpaceNames;
   namespace: CombinedRuleNamespace;
   group: CombinedRuleGroup;
-  // sourceName: string;
-  // groupInterval: string;
   onClose: (saved?: boolean) => void;
   intervalEditOnly?: boolean;
+  folderUrl?: string;
 }
 
 export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
-  const {
-    namespace,
-    group,
-    // nameSpaceAndGroup: { namespace, group },
-    onClose,
-    // groupInterval,
-    // sourceName,
-    intervalEditOnly,
-  } = props;
+  const { namespace, group, onClose, intervalEditOnly } = props;
 
   const styles = useStyles2(getStyles);
   const dispatch = useDispatch();
