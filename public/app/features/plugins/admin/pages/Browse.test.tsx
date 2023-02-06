@@ -1,8 +1,7 @@
 import { render, RenderResult, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
-import { Router } from 'react-router-dom';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { PluginType, escapeStringForRegex } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
@@ -37,11 +36,9 @@ const renderBrowse = (
   });
 
   return render(
-    <Provider store={store}>
-      <Router history={locationService.getHistory()}>
-        <BrowsePage {...props} />
-      </Router>
-    </Provider>
+    <TestProvider store={store}>
+      <BrowsePage {...props} />
+    </TestProvider>
   );
 };
 

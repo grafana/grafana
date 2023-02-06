@@ -949,7 +949,7 @@ func (g *GrafanaLive) handleDatasourceScope(ctx context.Context, user *user.Sign
 	}
 	return features.NewPluginRunner(
 		ds.Type,
-		ds.Uid,
+		ds.UID,
 		g.runStreamManager,
 		g.contextGetter,
 		streamHandler,

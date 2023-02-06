@@ -18,10 +18,12 @@ export function getAppPluginRoutes(): RouteDescriptor[] {
       const pluginNavSection = getRootSectionForNode(navItem);
       const appPluginUrl = `/a/${navItem.pluginId}`;
       const path = isStandalonePluginPage(navItem.id) ? navItem.url || appPluginUrl : appPluginUrl; // Only standalone pages can use core URLs, otherwise we fall back to "/a/:pluginId"
+      const isSensitive = isStandalonePluginPage(navItem.id) && !navItem.url?.startsWith('/a/'); // Have case-sensitive URLs only for standalone pages that have custom URLs
 
       return {
         path,
         exact: false, // route everything under this path to the plugin, so it can define more routes under this path
+        sensitive: isSensitive,
         component: () => <AppRootPage pluginId={navItem.pluginId} pluginNavSection={pluginNavSection} />,
       };
     });
