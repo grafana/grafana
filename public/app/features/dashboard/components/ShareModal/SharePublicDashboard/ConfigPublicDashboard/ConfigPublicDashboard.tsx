@@ -51,8 +51,9 @@ const ConfigPublicDashboard = () => {
   const dashboard = dashboardState.getModel()!;
   const dashboardVariables = dashboard.getVariables();
 
-  const { data: publicDashboard } = useGetPublicDashboardQuery(dashboard.uid);
+  const { data: publicDashboard, isFetching: isGetLoading } = useGetPublicDashboardQuery(dashboard.uid);
   const [update, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
+  const disableInputs = !hasWritePermissions || isUpdateLoading || isGetLoading;
 
   const { reset, handleSubmit, setValue, register } = useForm<ConfigPublicDashoardForm>({
     defaultValues: {
@@ -112,9 +113,9 @@ const ConfigPublicDashboard = () => {
       )}
       <HorizontalGroup className={styles.title} spacing="sm" align="center">
         <h4>Settings</h4>
-        {isUpdateLoading && <Spinner />}
+        {(isUpdateLoading || isGetLoading) && <Spinner />}
       </HorizontalGroup>
-      <Configuration disabled={!hasWritePermissions} onChange={onChange} register={register} />
+      <Configuration disabled={disableInputs} onChange={onChange} register={register} />
       <hr />
       <Field label="Dashboard URL" className={styles.publicUrl}>
         <Input
@@ -142,7 +143,7 @@ const ConfigPublicDashboard = () => {
         <HorizontalGroup spacing="sm">
           <Switch
             {...register('isPaused')}
-            disabled={!hasWritePermissions}
+            disabled={disableInputs}
             onChange={(e) => {
               reportInteraction('grafana_dashboards_public_enable_clicked', {
                 action: e.currentTarget.checked ? 'disable' : 'enable',
@@ -163,7 +164,7 @@ const ConfigPublicDashboard = () => {
           <DeletePublicDashboardButton
             className={cx(styles.deleteButton, { [styles.deleteButtonMobile]: !isDesktop })}
             type="button"
-            disabled={!hasWritePermissions || isUpdateLoading}
+            disabled={disableInputs}
             data-testid={selectors.DeleteButton}
             onDismiss={onDismissDelete}
             variant="destructive"
