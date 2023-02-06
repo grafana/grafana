@@ -109,6 +109,11 @@ export const plugin = new PanelPlugin<PanelOptions, TableFieldOptions>(TablePane
         defaultValue: defaultPanelOptions.showHeader,
       })
       .addBooleanSwitch({
+        path: 'showRowNums',
+        name: 'Show row numbers',
+        defaultValue: defaultPanelOptions.showRowNums,
+      })
+      .addBooleanSwitch({
         path: 'footer.show',
         category: [footerCategory],
         name: 'Show table footer',

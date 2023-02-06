@@ -40,17 +40,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:            "dashboardPreviewsAdmin",
-			Description:     "Manage the dashboard previews crawler process from the UI",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-		},
-		{
-			Name:        "live-config",
-			Description: "Save Grafana Live configuration in SQL tables",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:        "live-pipeline",
 			Description: "Enable a generic live processing pipeline",
 			State:       FeatureStateAlpha,
@@ -104,13 +93,6 @@ var (
 			Name:        "lokiDataframeApi",
 			Description: "Use experimental loki api for WebSocket streaming (early prototype)",
 			State:       FeatureStateAlpha,
-		},
-		{
-			Name:         "lokiMonacoEditor",
-			Description:  "Access to Monaco query editor for Loki",
-			State:        FeatureStateStable,
-			Expression:   "true",
-			FrontendOnly: true,
 		},
 		{
 			Name:        "swaggerUi",

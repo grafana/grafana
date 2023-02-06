@@ -485,9 +485,9 @@ func TestGetAnnotations(t *testing.T) {
 
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
 			{
-				Id:          1,
-				DashboardId: 1,
-				PanelId:     1,
+				ID:          1,
+				DashboardID: 1,
+				PanelID:     1,
 				Tags:        []string{"tag1"},
 				TimeEnd:     2,
 				Time:        2,
@@ -545,9 +545,9 @@ func TestGetAnnotations(t *testing.T) {
 
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
 			{
-				Id:          1,
-				DashboardId: 1,
-				PanelId:     1,
+				ID:          1,
+				DashboardID: 1,
+				PanelID:     1,
 				Tags:        []string{},
 				TimeEnd:     1,
 				Time:        2,
@@ -617,9 +617,9 @@ func TestGetAnnotations(t *testing.T) {
 
 		annotationsRepo.On("Find", mock.Anything, mock.Anything).Return([]*annotations.ItemDTO{
 			{
-				Id:          1,
-				DashboardId: 1,
-				PanelId:     1,
+				ID:          1,
+				DashboardID: 1,
+				PanelID:     1,
 				Tags:        []string{},
 				TimeEnd:     1,
 				Time:        2,

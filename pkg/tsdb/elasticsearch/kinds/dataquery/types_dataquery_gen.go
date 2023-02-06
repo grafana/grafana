@@ -644,12 +644,9 @@ type BaseMovingAverageModelSettingsModel string
 
 // BasePipelineMetricAggregation defines model for BasePipelineMetricAggregation.
 type BasePipelineMetricAggregation struct {
-	Field *string `json:"field,omitempty"`
-	Hide  *bool   `json:"hide,omitempty"`
-	Id    string  `json:"id"`
-
-	// TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
-	// type:         #PipelineMetricAggregationType
+	Field       *string                           `json:"field,omitempty"`
+	Hide        *bool                             `json:"hide,omitempty"`
+	Id          string                            `json:"id"`
 	PipelineAgg *string                           `json:"pipelineAgg,omitempty"`
 	Type        BasePipelineMetricAggregationType `json:"type"`
 }
@@ -676,11 +673,8 @@ type BucketAggregationWithFieldType string
 
 // BucketScript defines model for BucketScript.
 type BucketScript struct {
-	Hide *bool  `json:"hide,omitempty"`
-	Id   string `json:"id"`
-
-	// TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
-	// type: #PipelineMetricAggregationType
+	Hide              *bool  `json:"hide,omitempty"`
+	Id                string `json:"id"`
 	PipelineVariables *[]struct {
 		Name        string `json:"name"`
 		PipelineAgg string `json:"pipelineAgg"`
@@ -706,12 +700,9 @@ type CountType string
 
 // CumulativeSum defines model for CumulativeSum.
 type CumulativeSum struct {
-	Field *string `json:"field,omitempty"`
-	Hide  *bool   `json:"hide,omitempty"`
-	Id    string  `json:"id"`
-
-	// TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
-	// type:         #PipelineMetricAggregationType
+	Field       *string `json:"field,omitempty"`
+	Hide        *bool   `json:"hide,omitempty"`
+	Id          string  `json:"id"`
 	PipelineAgg *string `json:"pipelineAgg,omitempty"`
 	Settings    *struct {
 		Format *string `json:"format,omitempty"`
@@ -750,12 +741,9 @@ type DateHistogramSettings struct {
 
 // Derivative defines model for Derivative.
 type Derivative struct {
-	Field *string `json:"field,omitempty"`
-	Hide  *bool   `json:"hide,omitempty"`
-	Id    string  `json:"id"`
-
-	// TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
-	// type:         #PipelineMetricAggregationType
+	Field       *string `json:"field,omitempty"`
+	Hide        *bool   `json:"hide,omitempty"`
+	Id          string  `json:"id"`
 	PipelineAgg *string `json:"pipelineAgg,omitempty"`
 	Settings    *struct {
 		Unit *string `json:"unit,omitempty"`
@@ -768,7 +756,10 @@ type DerivativeType string
 
 // ElasticsearchDataQuery defines model for ElasticsearchDataQuery.
 type ElasticsearchDataQuery struct {
-	Alias      *string        `json:"alias,omitempty"`
+	// Alias pattern
+	Alias *string `json:"alias,omitempty"`
+
+	// List of bucket aggregations
 	BucketAggs *[]interface{} `json:"bucketAggs,omitempty"`
 
 	// For mixed data sources the selected datasource is on the query level.
@@ -781,16 +772,22 @@ type ElasticsearchDataQuery struct {
 	Hide *bool `json:"hide,omitempty"`
 
 	// Unique, guid like, string used in explore mode
-	Key     *string        `json:"key,omitempty"`
+	Key *string `json:"key,omitempty"`
+
+	// List of metric aggregations
 	Metrics *[]interface{} `json:"metrics,omitempty"`
-	Query   *string        `json:"query,omitempty"`
+
+	// Lucene query
+	Query *string `json:"query,omitempty"`
 
 	// Specify the query flavor
 	// TODO make this required and give it a default
 	QueryType *string `json:"queryType,omitempty"`
 
 	// A - Z
-	RefId     string  `json:"refId"`
+	RefId string `json:"refId"`
+
+	// Name of time field
 	TimeField *string `json:"timeField,omitempty"`
 }
 
@@ -984,12 +981,9 @@ type MinType string
 
 // #MovingAverage's settings are overridden in types.ts
 type MovingAverage struct {
-	Field *string `json:"field,omitempty"`
-	Hide  *bool   `json:"hide,omitempty"`
-	Id    string  `json:"id"`
-
-	// TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
-	// type:         #PipelineMetricAggregationType
+	Field       *string                `json:"field,omitempty"`
+	Hide        *bool                  `json:"hide,omitempty"`
+	Id          string                 `json:"id"`
 	PipelineAgg *string                `json:"pipelineAgg,omitempty"`
 	Settings    map[string]interface{} `json:"settings,omitempty"`
 	Type        MovingAverageType      `json:"type"`
@@ -1079,12 +1073,9 @@ type MovingAverageSimpleModelSettingsModel string
 
 // MovingFunction defines model for MovingFunction.
 type MovingFunction struct {
-	Field *string `json:"field,omitempty"`
-	Hide  *bool   `json:"hide,omitempty"`
-	Id    string  `json:"id"`
-
-	// TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
-	// type:         #PipelineMetricAggregationType
+	Field       *string `json:"field,omitempty"`
+	Hide        *bool   `json:"hide,omitempty"`
+	Id          string  `json:"id"`
 	PipelineAgg *string `json:"pipelineAgg,omitempty"`
 	Settings    *struct {
 		Script *interface{} `json:"script,omitempty"`
@@ -1132,11 +1123,8 @@ type PipelineMetricAggregationType string
 
 // PipelineMetricAggregationWithMultipleBucketPaths defines model for PipelineMetricAggregationWithMultipleBucketPaths.
 type PipelineMetricAggregationWithMultipleBucketPaths struct {
-	Hide *bool  `json:"hide,omitempty"`
-	Id   string `json:"id"`
-
-	// TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
-	// type: #PipelineMetricAggregationType
+	Hide              *bool  `json:"hide,omitempty"`
+	Id                string `json:"id"`
 	PipelineVariables *[]struct {
 		Name        string `json:"name"`
 		PipelineAgg string `json:"pipelineAgg"`
@@ -1196,12 +1184,9 @@ type RawDocumentType string
 
 // SerialDiff defines model for SerialDiff.
 type SerialDiff struct {
-	Field *string `json:"field,omitempty"`
-	Hide  *bool   `json:"hide,omitempty"`
-	Id    string  `json:"id"`
-
-	// TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.
-	// type:         #PipelineMetricAggregationType
+	Field       *string `json:"field,omitempty"`
+	Hide        *bool   `json:"hide,omitempty"`
+	Id          string  `json:"id"`
 	PipelineAgg *string `json:"pipelineAgg,omitempty"`
 	Settings    *struct {
 		Lag *string `json:"lag,omitempty"`
