@@ -113,9 +113,9 @@ func (s *Service) handleRemove(ctx *contextmodel.ReqContext) response.Response {
 }
 
 func (s *Service) handleGetCollectors(ctx *contextmodel.ReqContext) response.Response {
-	collectors := make([]supportbundles.Collector, 0, len(s.collectors))
+	collectors := make([]supportbundles.Collector, 0, len(s.bundleRegistry.Collectors()))
 
-	for _, c := range s.collectors {
+	for _, c := range s.bundleRegistry.Collectors() {
 		collectors = append(collectors, c)
 	}
 

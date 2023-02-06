@@ -70,7 +70,7 @@ func (s *Service) bundle(ctx context.Context, collectors []string, uid string) (
 
 	files := map[string][]byte{}
 
-	for _, collector := range s.collectors {
+	for _, collector := range s.bundleRegistry.Collectors() {
 		if !lookup[collector.UID] && !collector.IncludedByDefault {
 			continue
 		}
