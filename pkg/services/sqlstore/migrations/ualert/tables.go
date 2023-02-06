@@ -290,6 +290,16 @@ func addAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64)
 			Default:  "false",
 		},
 	))
+
+	mg.AddMigration("add for_error column to alert_rule table", migrator.NewAddColumnMigration(
+		alertRule,
+		&migrator.Column{
+			Name:     "for_error",
+			Type:     migrator.DB_BigInt,
+			Nullable: false,
+			Default:  "0",
+		},
+	))
 }
 
 func addAlertRuleVersionMigrations(mg *migrator.Migrator) {
@@ -352,6 +362,16 @@ func addAlertRuleVersionMigrations(mg *migrator.Migrator) {
 			Type:     migrator.DB_Bool,
 			Nullable: false,
 			Default:  "false",
+		},
+	))
+
+	mg.AddMigration("add for_error column to alert_rule_version table", migrator.NewAddColumnMigration(
+		alertRuleVersion,
+		&migrator.Column{
+			Name:     "for_error",
+			Type:     migrator.DB_BigInt,
+			Nullable: false,
+			Default:  "0",
 		},
 	))
 }
