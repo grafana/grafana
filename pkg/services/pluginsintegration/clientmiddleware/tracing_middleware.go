@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"go.opentelemetry.io/otel/codes"
-	
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -30,7 +30,7 @@ func (m *TracingMiddleware) traceWrap(ctx context.Context, opName string) (conte
 	return ctx, func(err error) {
 		span.End()
 		if err != nil {
-			span.SetStatus(codes.Error, opName+" error")
+			span.SetStatus(codes.Error, opName+" error: "+err.Error())
 			span.RecordError(err)
 		}
 	}

@@ -12,6 +12,7 @@ import (
 
 	"github.com/hashicorp/go-version"
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -102,6 +103,7 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) {
 	ctxLogger := s.log.FromContext(ctx)
 	defer func() {
 		if err != nil {
+			span.SetStatus(codes.Error, "update check failed: "+err.Error())
 			span.RecordError(err)
 			ctxLogger.Debug("Update check failed")
 		} else {

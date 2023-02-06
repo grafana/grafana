@@ -9,12 +9,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hashicorp/go-version"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/codes"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/updatechecker/instrumentation"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/hashicorp/go-version"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 // Create and register metrics into the default Prometheus registry
@@ -78,6 +80,7 @@ func (s *GrafanaService) checkForUpdates(ctx context.Context) {
 	ctxLogger := s.log.FromContext(ctx)
 	defer func() {
 		if err != nil {
+			span.SetStatus(codes.Error, "update check failed: "+err.Error())
 			span.RecordError(err)
 			ctxLogger.Debug("Update check failed")
 		} else {

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/codes"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"go.opentelemetry.io/otel/trace"
 
@@ -105,6 +106,7 @@ func (r *InstrumentedHTTPClient) request(ctx context.Context, method string, url
 			if hasMetrics {
 				r.metrics.failureCounter.Inc()
 			}
+			span.SetStatus(codes.Error, err.Error())
 			span.RecordError(err)
 		}
 	}()
