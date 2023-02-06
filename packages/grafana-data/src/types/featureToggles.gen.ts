@@ -80,7 +80,6 @@ export interface FeatureToggles {
   datasourceOnboarding?: boolean;
   secureSocksDatasourceProxy?: boolean;
   authnService?: boolean;
-  sessionRemoteCache?: boolean;
   disablePrometheusExemplarSampling?: boolean;
   alertingBacktesting?: boolean;
   editPanelCSVDragAndDrop?: boolean;

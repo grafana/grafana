@@ -91,7 +91,6 @@ Alpha features might be changed or removed without prior notice.
 | `datasourceOnboarding`             | Enable data source onboarding page                                                                                                                                           |
 | `secureSocksDatasourceProxy`       | Enable secure socks tunneling for supported core datasources                                                                                                                 |
 | `authnService`                     | Use new auth service to perform authentication                                                                                                                               |
-| `sessionRemoteCache`               | Enable using remote cache for user sessions                                                                                                                                  |
 | `alertingBacktesting`              | Rule backtesting API for alerting                                                                                                                                            |
 | `editPanelCSVDragAndDrop`          | Enables drag and drop for CSV and Excel files                                                                                                                                |
 | `logsContextDatasourceUi`          | Allow datasource to provide custom UI for context view                                                                                                                       |
