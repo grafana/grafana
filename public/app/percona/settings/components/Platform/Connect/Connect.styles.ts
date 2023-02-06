@@ -1,14 +1,21 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme } from '@grafana/data';
+import { GrafanaTheme2 } from '@grafana/data';
 
-export const getStyles = ({ breakpoints, colors, spacing, typography }: GrafanaTheme) => ({
-  legend: css`
-    color: ${colors.formLabel};
-    font-size: ${typography.heading.h3};
-    font-weight: ${typography.weight.regular};
-    margin: ${spacing.formLabelMargin};
-    margin-bottom: ${spacing.lg};
+export const getStyles = ({ v1: { breakpoints, colors }, spacing }: GrafanaTheme2) => ({
+  titles: css`
+    margin-bottom: ${spacing(4)};
+  `,
+  serverDetails: css`
+    display: flex;
+
+    & > div {
+      flex: 1;
+
+      &:first-child {
+        margin-right: ${spacing(2)};
+      }
+    }
   `,
   form: css`
     max-width: 500px;
@@ -29,10 +36,22 @@ export const getStyles = ({ breakpoints, colors, spacing, typography }: GrafanaT
       text-align: right;
     }
   `,
+  connectionTitle: css`
+    margin-top: ${spacing(4)};
+  `,
+  getTokenAnchor: css`
+    // To match input height
+    height: 38px;
+    margin-top: -7px;
+
+    & > button {
+      height: 100%;
+    }
+  `,
   submitButton: css`
     padding-left: 50px;
     padding-right: 50px;
-    margin-bottom: ${spacing.formInputMargin};
+    margin-bottom: ${spacing(1)};
 
     @media (max-width: ${breakpoints.md}) {
       display: flex;

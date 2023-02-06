@@ -2,23 +2,21 @@ import { cx } from '@emotion/css';
 import React, { FC } from 'react';
 import { Link } from 'react-router-dom';
 
-import { Alert, useStyles } from '@grafana/ui';
+import { Card, useStyles } from '@grafana/ui';
 
+import { Messages } from './PMMServerUrlWarning.messages';
 import { getStyles } from './PMMServerUrlWarning.styles';
 
 export const PMMServerUrlWarning: FC<PMMServerUrlWarningProps> = ({ className }) => {
   const styles = useStyles(getStyles);
   return (
-    <Alert
-      className={cx(styles.alert, className)}
-      title="PMM Public Address"
-      severity="info"
-      data-testid="pmm-server-url-warning"
-    >
-      <p>
-        This will also set &quot;Public Address&quot; as {window.location.host}. If you need to set it differently or
-        edit later, use <Link to="/settings/advanced-settings">Advanced Settings</Link>.
-      </p>
-    </Alert>
+    <Card className={cx(styles.alert, className)} data-testid="pmm-server-url-warning">
+      <Card.Heading>{Messages.heading}</Card.Heading>
+      <Card.Description>
+        {Messages.addressSet(window.location.host)}
+        {Messages.editLater}
+        <Link to="/settings/advanced-settings">{Messages.advancedSettings}</Link>.
+      </Card.Description>
+    </Card>
   );
 };
