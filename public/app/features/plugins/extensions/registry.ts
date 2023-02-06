@@ -1,5 +1,6 @@
-import type {
+import {
   AppPluginConfig,
+  PluginExtensionTypes,
   PluginsExtensionLinkConfig,
   PluginsExtensionRegistry,
   PluginsExtensionRegistryLink,
@@ -29,11 +30,16 @@ export function createPluginExtensionsRegistry(apps: Record<string, AppPluginCon
     }
   }
 
+  for (const key of Object.keys(registry)) {
+    Object.freeze(registry[key]);
+  }
+
   return Object.freeze(registry);
 }
 
 function createRegistryItem(pluginId: string, extension: PluginsExtensionLinkConfig): PluginsExtensionRegistryLink {
   return Object.freeze({
+    type: PluginExtensionTypes.link,
     title: extension.title,
     description: extension.description,
     href: `/a/${pluginId}${extension.path}`,

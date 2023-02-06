@@ -1,60 +1,49 @@
 import { getPluginExtensions, PluginLinkExtensionsMissingError } from './links';
 import { setPluginsExtensionRegistry } from './registry';
 
-describe('getPluginLink', () => {
+describe('getPluginExtensions', () => {
   describe('when getting a registered extension link', () => {
     const pluginId = 'grafana-basic-app';
     const linkId = 'declare-incident';
 
     beforeAll(() => {
       setPluginsExtensionRegistry({
-        links: {
-          [`${pluginId}.${linkId}`]: {
+        [`plugins/${pluginId}.${linkId}`]: [
+          {
+            type: 'link',
+            title: 'Declare incident',
             description: 'Declaring an incident in the app',
             href: `/a/${pluginId}/declare-incident`,
           },
-        },
+        ],
       });
     });
 
-    it('should return a href to the plugin', () => {
-      const { link, error } = getPluginExtensions({
-        target: `${pluginId}.${linkId}`,
+    it('should return a collection of extensions to the plugin', () => {
+      const { extensions, error } = getPluginExtensions({
+        target: `plugins/${pluginId}.${linkId}`,
       });
 
-      expect(link?.href).toBe(`/a/${pluginId}/declare-incident`);
-      expect(error).toBeUndefined();
-    });
-
-    it('should return a href to the plugin with query parameters', () => {
-      const { link, error } = getPluginExtensions({
-        target: `${pluginId}.${linkId}`,
-        context: {
-          title: 'my awesome incident',
-          level: 2,
-        },
-      });
-
-      expect(link?.href).toBe(`/a/${pluginId}/declare-incident?title=my%20awesome%20incident&level=2`);
+      expect(extensions[0].href).toBe(`/a/${pluginId}/declare-incident`);
       expect(error).toBeUndefined();
     });
 
     it('should return a description for the requested link', () => {
-      const { link, error } = getPluginExtensions({
-        target: `${pluginId}.${linkId}`,
+      const { extensions, error } = getPluginExtensions({
+        target: `plugins/${pluginId}.${linkId}`,
       });
 
-      expect(link?.href).toBe(`/a/${pluginId}/declare-incident`);
-      expect(link?.description).toBe('Declaring an incident in the app');
+      expect(extensions[0].href).toBe(`/a/${pluginId}/declare-incident`);
+      expect(extensions[0].description).toBe('Declaring an incident in the app');
       expect(error).toBeUndefined();
     });
 
     it('should return an empty href when link doesnt exist', () => {
-      const { link, error } = getPluginExtensions({
+      const { extensions, error } = getPluginExtensions({
         target: `some-different-app.${linkId}`,
       });
 
-      expect(link?.href).toBeUndefined();
+      expect(extensions.length).toBe(0);
       expect(error).toBeInstanceOf(PluginLinkExtensionsMissingError);
     });
   });
