@@ -7,7 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -26,7 +25,6 @@ var _ FutureAuthService = (*simpleAuthService)(nil)
 type simpleAuthService struct {
 	sql           db.DB
 	ac            accesscontrol.Service
-	features      featuremgmt.FeatureToggles
 	folderService folder.Service
 	logger        log.Logger
 }
@@ -39,22 +37,18 @@ func (a *simpleAuthService) GetDashboardReadFilter(ctx context.Context, orgID in
 	if !a.ac.IsDisabled() {
 		canReadDashboard, canReadFolder := accesscontrol.Checker(user, dashboards.ActionDashboardsRead), accesscontrol.Checker(user, dashboards.ActionFoldersRead)
 		return func(kind entityKind, uid, parent string) bool {
-			var scopes []string
-			if a.features.IsEnabled(featuremgmt.FlagNestedFolders) {
-				var err error
-				if kind == entityKindFolder {
-					scopes, err = dashboards.GetInheritedScopes(ctx, orgID, uid, a.folderService)
-				} else if kind == entityKindDashboard && parent != folder.GeneralFolderUID {
-					scopes, err = dashboards.GetInheritedScopes(ctx, orgID, parent, a.folderService)
-				}
-				if err != nil {
-					a.logger.Warn("could not retrieve inherited folder scopes:", "err", err)
-				}
-			}
 			if kind == entityKindFolder {
+				scopes, err := dashboards.GetInheritedScopes(ctx, orgID, uid, a.folderService)
+				if err != nil {
+					a.logger.Debug("could not retrieve inherited folder scopes:", "err", err)
+				}
 				scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(uid))
 				return canReadFolder(scopes...)
 			} else if kind == entityKindDashboard {
+				scopes, err := dashboards.GetInheritedScopes(ctx, orgID, parent, a.folderService)
+				if err != nil {
+					a.logger.Debug("could not retrieve inherited folder scopes:", "err", err)
+				}
 				scopes = append(scopes, dashboards.ScopeDashboardsProvider.GetResourceScopeUID(uid))
 				scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(parent))
 				return canReadDashboard(scopes...)
