@@ -17,6 +17,7 @@ import {
 import { getTemplateSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
 import { safeStringifyValue } from 'app/core/utils/explore';
+import { getTransformationVars } from 'app/features/correlations/transformations';
 
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
 
@@ -140,24 +141,10 @@ export const getFieldLinksForExplore = (options: {
               fieldValue = field.values.get(rowIndex);
             }
 
-            if (transformation.type === 'regex' && transformation.expression) {
-              const regexp = new RegExp(transformation.expression);
-              const matches = fieldValue.match(regexp);
-              if (matches?.length > 0) {
-                internalLinkSpecificVars[transformation.variable || field.name] = {
-                  value: matches[1] || matches[0], // not global - return capture group if found, else full match
-                };
-              }
-            } else if (transformation.type === 'logfmt') {
-              const logFmtVal = logfmt.parse(fieldValue) as { [key: string]: string | boolean | null };
-              let scopeVarFromLogFmt: ScopedVars = {};
-              Object.keys(logFmtVal).forEach((key) => {
-                const logFmtValueString =
-                  typeof logFmtVal[key] === 'string' ? logFmtVal[key] : safeStringifyValue(logFmtVal[key]);
-                scopeVarFromLogFmt[key] = { value: logFmtValueString };
-              });
-              internalLinkSpecificVars = { ...internalLinkSpecificVars, ...scopeVarFromLogFmt };
-            }
+            internalLinkSpecificVars = {
+              ...internalLinkSpecificVars,
+              ...getTransformationVars(transformation, fieldValue, field.name),
+            };
           });
         }
 

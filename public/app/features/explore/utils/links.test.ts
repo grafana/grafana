@@ -330,27 +330,27 @@ describe('getFieldLinksForExplore', () => {
         query: { query: 'http_requests{app=${application}}' },
         datasourceUid: 'uid_1',
         datasourceName: 'test_ds',
-        transformations: [{ type: 'logfmt', field: 'rightField' }],
+        transformations: [{ type: 'logfmt', field: 'fieldNamedInTransformation' }],
       },
     };
 
-    // wrongField has the transformation, but the transformation has defined rightField as its field to transform
+    // fieldWithLink has the transformation, but the transformation has defined fieldNamedInTransformation as its field to transform
     const { field, range, dataFrame } = setup(
       transformationLink,
       true,
       {
-        name: 'wrongField',
+        name: 'fieldWithLink',
         type: FieldType.string,
-        values: new ArrayVector(['application=bad', 'application=worse']),
+        values: new ArrayVector(['application=link', 'application=link2']),
         config: {
           links: [transformationLink],
         },
       },
       [
         {
-          name: 'rightField',
+          name: 'fieldNamedInTransformation',
           type: FieldType.string,
-          values: new ArrayVector(['application=good', 'application=great']),
+          values: new ArrayVector(['application=transform', 'application=transform2']),
           config: {},
         },
       ]
@@ -363,13 +363,13 @@ describe('getFieldLinksForExplore', () => {
     expect(links[0]).toHaveLength(1);
     expect(links[0][0].href).toBe(
       `/explore?left=${encodeURIComponent(
-        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=good}"}]}'
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=transform}"}]}'
       )}`
     );
     expect(links[1]).toHaveLength(1);
     expect(links[1][0].href).toBe(
       `/explore?left=${encodeURIComponent(
-        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=great}"}]}'
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=transform2}"}]}'
       )}`
     );
   });
