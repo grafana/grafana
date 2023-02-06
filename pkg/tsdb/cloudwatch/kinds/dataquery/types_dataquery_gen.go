@@ -51,6 +51,12 @@ const (
 	CloudWatchMetricsQuerySqlFromParametersTypeFunctionParameter CloudWatchMetricsQuerySqlFromParametersType = "functionParameter"
 )
 
+// Defines values for CloudWatchMetricsQuerySqlFromPropertyType.
+const (
+	CloudWatchMetricsQuerySqlFromPropertyTypeString CloudWatchMetricsQuerySqlFromPropertyType = "string"
+	CloudWatchMetricsQuerySqlFromPropertyTypeTest   CloudWatchMetricsQuerySqlFromPropertyType = "test"
+)
+
 // Defines values for CloudWatchMetricsQuerySqlGroupByType.
 const (
 	CloudWatchMetricsQuerySqlGroupByTypeAnd CloudWatchMetricsQuerySqlGroupByType = "and"
@@ -134,19 +140,26 @@ const (
 	QueryEditorFunctionParameterExpressionTypeFunctionParameter QueryEditorFunctionParameterExpressionType = "functionParameter"
 )
 
+// Defines values for QueryEditorGroupByExpressionPropertyType.
+const (
+	QueryEditorGroupByExpressionPropertyTypeString QueryEditorGroupByExpressionPropertyType = "string"
+	QueryEditorGroupByExpressionPropertyTypeTest   QueryEditorGroupByExpressionPropertyType = "test"
+)
+
 // Defines values for QueryEditorGroupByExpressionType.
 const (
 	QueryEditorGroupByExpressionTypeGroupBy QueryEditorGroupByExpressionType = "groupBy"
 )
 
+// Defines values for QueryEditorOperatorExpressionPropertyType.
+const (
+	QueryEditorOperatorExpressionPropertyTypeString QueryEditorOperatorExpressionPropertyType = "string"
+	QueryEditorOperatorExpressionPropertyTypeTest   QueryEditorOperatorExpressionPropertyType = "test"
+)
+
 // Defines values for QueryEditorOperatorExpressionType.
 const (
 	QueryEditorOperatorExpressionTypeOperator QueryEditorOperatorExpressionType = "operator"
-)
-
-// Defines values for QueryEditorPropertyExpressionType.
-const (
-	QueryEditorPropertyExpressionTypeProperty QueryEditorPropertyExpressionType = "property"
 )
 
 // Defines values for QueryEditorPropertyType.
@@ -155,9 +168,26 @@ const (
 	QueryEditorPropertyTypeTest   QueryEditorPropertyType = "test"
 )
 
+// Defines values for QueryEditorPropertyExpressionPropertyType.
+const (
+	QueryEditorPropertyExpressionPropertyTypeString QueryEditorPropertyExpressionPropertyType = "string"
+	QueryEditorPropertyExpressionPropertyTypeTest   QueryEditorPropertyExpressionPropertyType = "test"
+)
+
+// Defines values for QueryEditorPropertyExpressionType.
+const (
+	QueryEditorPropertyExpressionTypeProperty QueryEditorPropertyExpressionType = "property"
+)
+
 // Defines values for SQLExpressionFromParametersType.
 const (
 	SQLExpressionFromParametersTypeFunctionParameter SQLExpressionFromParametersType = "functionParameter"
+)
+
+// Defines values for SQLExpressionFromPropertyType.
+const (
+	SQLExpressionFromPropertyTypeString SQLExpressionFromPropertyType = "string"
+	SQLExpressionFromPropertyTypeTest   SQLExpressionFromPropertyType = "test"
 )
 
 // Defines values for SQLExpressionGroupByType.
@@ -330,6 +360,9 @@ type CloudWatchMetricsQueryQueryMode string
 // CloudWatchMetricsQuerySqlFromParametersType defines model for CloudWatchMetricsQuery.Sql.From.Parameters.Type.
 type CloudWatchMetricsQuerySqlFromParametersType string
 
+// CloudWatchMetricsQuerySqlFromPropertyType defines model for CloudWatchMetricsQuery.Sql.From.Property.Type.
+type CloudWatchMetricsQuerySqlFromPropertyType string
+
 // CloudWatchMetricsQuery_Sql_From defines model for CloudWatchMetricsQuery.Sql.From.
 type CloudWatchMetricsQuery_Sql_From struct {
 	Name       *string `json:"name,omitempty"`
@@ -338,8 +371,8 @@ type CloudWatchMetricsQuery_Sql_From struct {
 		Type CloudWatchMetricsQuerySqlFromParametersType `json:"type"`
 	} `json:"parameters,omitempty"`
 	Property *struct {
-		// Name type:  #QueryEditorPropertyType
-		Name *string `json:"name,omitempty"`
+		Name *string                                   `json:"name,omitempty"`
+		Type CloudWatchMetricsQuerySqlFromPropertyType `json:"type"`
 	} `json:"property,omitempty"`
 	Type  *interface{} `json:"type,omitempty"`
 	union json.RawMessage
@@ -441,11 +474,14 @@ type QueryEditorFunctionParameterExpressionType string
 // QueryEditorGroupByExpression defines model for QueryEditorGroupByExpression.
 type QueryEditorGroupByExpression struct {
 	Property struct {
-		// Name type:  #QueryEditorPropertyType
-		Name *string `json:"name,omitempty"`
+		Name *string                                  `json:"name,omitempty"`
+		Type QueryEditorGroupByExpressionPropertyType `json:"type"`
 	} `json:"property"`
 	Type QueryEditorGroupByExpressionType `json:"type"`
 }
+
+// QueryEditorGroupByExpressionPropertyType defines model for QueryEditorGroupByExpression.Property.Type.
+type QueryEditorGroupByExpressionPropertyType string
 
 // QueryEditorGroupByExpressionType defines model for QueryEditorGroupByExpression.Type.
 type QueryEditorGroupByExpressionType string
@@ -464,35 +500,41 @@ type QueryEditorOperatorExpression struct {
 		Value *interface{} `json:"value,omitempty"`
 	} `json:"operator"`
 	Property struct {
-		// Name type:  #QueryEditorPropertyType
-		Name *string `json:"name,omitempty"`
+		Name *string                                   `json:"name,omitempty"`
+		Type QueryEditorOperatorExpressionPropertyType `json:"type"`
 	} `json:"property"`
 	Type QueryEditorOperatorExpressionType `json:"type"`
 }
+
+// QueryEditorOperatorExpressionPropertyType defines model for QueryEditorOperatorExpression.Property.Type.
+type QueryEditorOperatorExpressionPropertyType string
 
 // QueryEditorOperatorExpressionType defines model for QueryEditorOperatorExpression.Type.
 type QueryEditorOperatorExpressionType string
 
 // QueryEditorProperty defines model for QueryEditorProperty.
 type QueryEditorProperty struct {
-	// Name type:  #QueryEditorPropertyType
-	Name *string `json:"name,omitempty"`
+	Name *string                 `json:"name,omitempty"`
+	Type QueryEditorPropertyType `json:"type"`
 }
+
+// QueryEditorPropertyType defines model for QueryEditorProperty.Type.
+type QueryEditorPropertyType string
 
 // QueryEditorPropertyExpression defines model for QueryEditorPropertyExpression.
 type QueryEditorPropertyExpression struct {
 	Property struct {
-		// Name type:  #QueryEditorPropertyType
-		Name *string `json:"name,omitempty"`
+		Name *string                                   `json:"name,omitempty"`
+		Type QueryEditorPropertyExpressionPropertyType `json:"type"`
 	} `json:"property"`
 	Type QueryEditorPropertyExpressionType `json:"type"`
 }
 
+// QueryEditorPropertyExpressionPropertyType defines model for QueryEditorPropertyExpression.Property.Type.
+type QueryEditorPropertyExpressionPropertyType string
+
 // QueryEditorPropertyExpressionType defines model for QueryEditorPropertyExpression.Type.
 type QueryEditorPropertyExpressionType string
-
-// QueryEditorPropertyType defines model for QueryEditorPropertyType.
-type QueryEditorPropertyType string
 
 // SQLExpression defines model for SQLExpression.
 type SQLExpression struct {
@@ -534,6 +576,9 @@ type SQLExpression struct {
 // SQLExpressionFromParametersType defines model for SQLExpression.From.Parameters.Type.
 type SQLExpressionFromParametersType string
 
+// SQLExpressionFromPropertyType defines model for SQLExpression.From.Property.Type.
+type SQLExpressionFromPropertyType string
+
 // SQLExpression_From defines model for SQLExpression.From.
 type SQLExpression_From struct {
 	Name       *string `json:"name,omitempty"`
@@ -542,8 +587,8 @@ type SQLExpression_From struct {
 		Type SQLExpressionFromParametersType `json:"type"`
 	} `json:"parameters,omitempty"`
 	Property *struct {
-		// Name type:  #QueryEditorPropertyType
-		Name *string `json:"name,omitempty"`
+		Name *string                       `json:"name,omitempty"`
+		Type SQLExpressionFromPropertyType `json:"type"`
 	} `json:"property,omitempty"`
 	Type  *interface{} `json:"type,omitempty"`
 	union json.RawMessage

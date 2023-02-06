@@ -118,7 +118,7 @@ composableKinds: DataQuery: {
 						#QueryEditorOperatorType:      string | bool | int64                                    @cuetsy(kind="type")
 
 						#QueryEditorProperty: {
-							//type:  #QueryEditorPropertyType
+							type:  #QueryEditorPropertyType
 							name?: string
 						} @cuetsy(kind="interface")
 

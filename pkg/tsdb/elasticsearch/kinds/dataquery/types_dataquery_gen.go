@@ -83,6 +83,12 @@ const (
 	BasePipelineMetricAggregationTypeTopMetrics    BasePipelineMetricAggregationType = "top_metrics"
 )
 
+// Defines values for BucketAggregationSettingsOrder.
+const (
+	BucketAggregationSettingsOrderAsc  BucketAggregationSettingsOrder = "asc"
+	BucketAggregationSettingsOrderDesc BucketAggregationSettingsOrder = "desc"
+)
+
 // Defines values for BucketAggregationType.
 const (
 	BucketAggregationTypeDateHistogram BucketAggregationType = "date_histogram"
@@ -126,6 +132,12 @@ const (
 // Defines values for DerivativeType.
 const (
 	DerivativeTypeDerivative DerivativeType = "derivative"
+)
+
+// Defines values for BucketAggsSettingsOrder.
+const (
+	BucketAggsSettingsOrderAsc  BucketAggsSettingsOrder = "asc"
+	BucketAggsSettingsOrderDesc BucketAggsSettingsOrder = "desc"
 )
 
 // Defines values for ExtendedStatValue.
@@ -400,6 +412,12 @@ const (
 	SumTypeSum SumType = "sum"
 )
 
+// Defines values for TermsSettingsOrder.
+const (
+	TermsSettingsOrderAsc  TermsSettingsOrder = "asc"
+	TermsSettingsOrderDesc TermsSettingsOrder = "desc"
+)
+
 // Defines values for TermsType.
 const (
 	TermsTypeTerms TermsType = "terms"
@@ -487,24 +505,26 @@ type BucketAggregation struct {
 	union    json.RawMessage
 }
 
+// BucketAggregationSettingsOrder defines model for BucketAggregation.Settings.Order.
+type BucketAggregationSettingsOrder string
+
 // BucketAggregation_Settings defines model for BucketAggregation.Settings.
 type BucketAggregation_Settings struct {
 	Filters []struct {
 		Label string `json:"label"`
 		Query string `json:"query"`
 	} `json:"filters,omitempty"`
-	Interval    *string `json:"interval,omitempty"`
-	MinDocCount *string `json:"min_doc_count,omitempty"`
-	Missing     *string `json:"missing,omitempty"`
-	Offset      *string `json:"offset,omitempty"`
-	OrderBy     *string `json:"orderBy,omitempty"`
-	Precision   *string `json:"precision,omitempty"`
-
-	// Size order?:         #TermsOrder
-	Size                 *string                `json:"size,omitempty"`
-	TimeZone             *string                `json:"timeZone,omitempty"`
-	TrimEdges            *string                `json:"trimEdges,omitempty"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	Interval             *string                         `json:"interval,omitempty"`
+	MinDocCount          *string                         `json:"min_doc_count,omitempty"`
+	Missing              *string                         `json:"missing,omitempty"`
+	Offset               *string                         `json:"offset,omitempty"`
+	Order                *BucketAggregationSettingsOrder `json:"order,omitempty"`
+	OrderBy              *string                         `json:"orderBy,omitempty"`
+	Precision            *string                         `json:"precision,omitempty"`
+	Size                 *string                         `json:"size,omitempty"`
+	TimeZone             *string                         `json:"timeZone,omitempty"`
+	TrimEdges            *string                         `json:"trimEdges,omitempty"`
+	AdditionalProperties map[string]interface{}          `json:"-"`
 }
 
 // BucketAggregationType defines model for BucketAggregationType.
@@ -641,24 +661,26 @@ type ElasticsearchDataQuery struct {
 	TimeField *string `json:"timeField,omitempty"`
 }
 
+// BucketAggsSettingsOrder defines model for ElasticsearchDataQuery.BucketAggs.Settings.Order.
+type BucketAggsSettingsOrder string
+
 // _BucketAggs_Settings defines model for ElasticsearchDataQuery.BucketAggs.Settings.
 type _BucketAggs_Settings struct {
 	Filters []struct {
 		Label string `json:"label"`
 		Query string `json:"query"`
 	} `json:"filters,omitempty"`
-	Interval    *string `json:"interval,omitempty"`
-	MinDocCount *string `json:"min_doc_count,omitempty"`
-	Missing     *string `json:"missing,omitempty"`
-	Offset      *string `json:"offset,omitempty"`
-	OrderBy     *string `json:"orderBy,omitempty"`
-	Precision   *string `json:"precision,omitempty"`
-
-	// Size order?:         #TermsOrder
-	Size                 *string                `json:"size,omitempty"`
-	TimeZone             *string                `json:"timeZone,omitempty"`
-	TrimEdges            *string                `json:"trimEdges,omitempty"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	Interval             *string                  `json:"interval,omitempty"`
+	MinDocCount          *string                  `json:"min_doc_count,omitempty"`
+	Missing              *string                  `json:"missing,omitempty"`
+	Offset               *string                  `json:"offset,omitempty"`
+	Order                *BucketAggsSettingsOrder `json:"order,omitempty"`
+	OrderBy              *string                  `json:"orderBy,omitempty"`
+	Precision            *string                  `json:"precision,omitempty"`
+	Size                 *string                  `json:"size,omitempty"`
+	TimeZone             *string                  `json:"timeZone,omitempty"`
+	TrimEdges            *string                  `json:"trimEdges,omitempty"`
+	AdditionalProperties map[string]interface{}   `json:"-"`
 }
 
 // _BucketAggs_Item defines model for ElasticsearchDataQuery.bucketAggs.Item.
@@ -1218,15 +1240,17 @@ type Terms struct {
 	Field    *string `json:"field,omitempty"`
 	Id       string  `json:"id"`
 	Settings *struct {
-		MinDocCount *string `json:"min_doc_count,omitempty"`
-		Missing     *string `json:"missing,omitempty"`
-		OrderBy     *string `json:"orderBy,omitempty"`
-
-		// Size order?:         #TermsOrder
-		Size *string `json:"size,omitempty"`
+		MinDocCount *string             `json:"min_doc_count,omitempty"`
+		Missing     *string             `json:"missing,omitempty"`
+		Order       *TermsSettingsOrder `json:"order,omitempty"`
+		OrderBy     *string             `json:"orderBy,omitempty"`
+		Size        *string             `json:"size,omitempty"`
 	} `json:"settings,omitempty"`
 	Type TermsType `json:"type"`
 }
+
+// TermsSettingsOrder defines model for Terms.Settings.Order.
+type TermsSettingsOrder string
 
 // TermsType defines model for Terms.Type.
 type TermsType string
@@ -1236,12 +1260,11 @@ type TermsOrder string
 
 // TermsSettings defines model for TermsSettings.
 type TermsSettings struct {
-	MinDocCount *string `json:"min_doc_count,omitempty"`
-	Missing     *string `json:"missing,omitempty"`
-	OrderBy     *string `json:"orderBy,omitempty"`
-
-	// Size order?:         #TermsOrder
-	Size *string `json:"size,omitempty"`
+	MinDocCount *string             `json:"min_doc_count,omitempty"`
+	Missing     *string             `json:"missing,omitempty"`
+	Order       *TermsSettingsOrder `json:"order,omitempty"`
+	OrderBy     *string             `json:"orderBy,omitempty"`
+	Size        *string             `json:"size,omitempty"`
 }
 
 // TopMetrics defines model for TopMetrics.
