@@ -84,15 +84,3 @@ type Store interface {
 	// the given parent folder ID.
 	CountDashboardsInFolder(ctx context.Context, request *CountDashboardsInFolderRequest) (int64, error)
 }
-
-// FolderStore is a folder store.
-//
-//go:generate mockery --name FolderStore --structname FakeFolderStore --inpackage --filename folder_store_mock.go
-type FolderStore interface {
-	// GetFolderByTitle retrieves a folder by its title
-	GetFolderByTitle(ctx context.Context, orgID int64, title string) (*folder.Folder, error)
-	// GetFolderByUID retrieves a folder by its UID
-	GetFolderByUID(ctx context.Context, orgID int64, uid string) (*folder.Folder, error)
-	// GetFolderByID retrieves a folder by its ID
-	GetFolderByID(ctx context.Context, orgID int64, id int64) (*folder.Folder, error)
-}

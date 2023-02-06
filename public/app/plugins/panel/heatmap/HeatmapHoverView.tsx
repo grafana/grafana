@@ -237,7 +237,7 @@ const HeatmapHoverCell = ({ data, hover, showHistogram }: Props) => {
     <>
       <div>
         <div>{xDisp(xBucketMin)}</div>
-        <div>{xDisp(xBucketMax)}</div>
+        {data.xLayout !== HeatmapCellLayout.unknown && <div>{xDisp(xBucketMax)}</div>}
       </div>
       {showHistogram && (
         <canvas

@@ -1164,3 +1164,94 @@ func parseTestResponse(tsdbQueries map[string]string, responseBody string) (*bac
 
 	return parseResponse(response.Responses, queries)
 }
+
+func TestLabelOrderInFieldName(t *testing.T) {
+	query := []byte(`
+	[
+		{
+		  "refId": "A",
+		  "metrics": [{ "type": "count", "id": "1" }],
+		  "bucketAggs": [
+			{ "type": "terms", "field": "f1", "id": "3" },
+			{ "type": "terms", "field": "f2", "id": "4" },
+			{ "type": "date_histogram", "field": "@timestamp", "id": "2" }
+		  ]
+		}
+	  ]
+	`)
+
+	response := []byte(`
+	{
+		"responses": [
+		  {
+			"aggregations": {
+			  "3": {
+				"buckets": [
+				  {
+					"key": "val3",
+					"4": {
+					  "buckets": [
+						{
+						  "key": "info",
+						  "2": {"buckets": [{ "key_as_string": "1675086600000", "key": 1675086600000, "doc_count": 5 }]}
+						},
+						{
+						  "key": "error",
+						  "2": {"buckets": [{ "key_as_string": "1675086600000", "key": 1675086600000, "doc_count": 2 }]}
+						}
+					  ]
+					}
+				  },
+				  {
+					"key": "val2",
+					"4": {
+					  "buckets": [
+						{
+						  "key": "info",
+						  "2": {"buckets": [{ "key_as_string": "1675086600000", "key": 1675086600000, "doc_count": 6 }]}
+						},
+						{
+						  "key": "error",
+						  "2": {"buckets": [{ "key_as_string": "1675086600000", "key": 1675086600000, "doc_count": 1 }]}
+						}
+					  ]
+					}
+				  },
+				  {
+					"key": "val1",
+					"4": {
+					  "buckets": [
+						{
+						  "key": "info",
+						  "2": {"buckets": [{ "key_as_string": "1675086600000", "key": 1675086600000, "doc_count": 6 }]}
+						},
+						{
+						  "key": "error",
+						  "2": {"buckets": [{ "key_as_string": "1675086600000", "key": 1675086600000, "doc_count": 2 }]}
+						}
+					  ]
+					}
+				  }
+				]
+			  }
+			}
+		  }
+		]
+	  }
+	`)
+
+	result, err := queryDataTest(query, response)
+	require.NoError(t, err)
+
+	require.Len(t, result.response.Responses, 1)
+	frames := result.response.Responses["A"].Frames
+	require.Len(t, frames, 6)
+
+	// the important part is that the label-value is always before the level-value
+	requireTimeSeriesName(t, "val3 info", frames[0])
+	requireTimeSeriesName(t, "val3 error", frames[1])
+	requireTimeSeriesName(t, "val2 info", frames[2])
+	requireTimeSeriesName(t, "val2 error", frames[3])
+	requireTimeSeriesName(t, "val1 info", frames[4])
+	requireTimeSeriesName(t, "val1 error", frames[5])
+}

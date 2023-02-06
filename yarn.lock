@@ -4091,6 +4091,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@daybrush/utils@npm:^1.6.0":
+  version: 1.10.2
+  resolution: "@daybrush/utils@npm:1.10.2"
+  checksum: aa3513eb7571fa052de3c5216d41dbc6c7330719052881ea562f75e2bc89c8f00f32dbf6743b379e32deb80477ffe0ecd0c69bb77e3f78cf5ada123b57b3a7bd
+  languageName: node
+  linkType: hard
+
 "@daybrush/utils@npm:^1.7.1":
   version: 1.7.1
   resolution: "@daybrush/utils@npm:1.7.1"
@@ -5151,9 +5158,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/scenes@npm:latest":
-  version: 0.0.8
-  resolution: "@grafana/scenes@npm:0.0.8"
+"@grafana/scenes@npm:^0.0.11":
+  version: 0.0.11
+  resolution: "@grafana/scenes@npm:0.0.11"
   dependencies:
     "@grafana/e2e-selectors": canary
     "@grafana/experimental": 1.0.1
@@ -5161,7 +5168,7 @@ __metadata:
     react-use: 17.4.0
     react-virtualized-auto-sizer: 1.0.7
     uuid: ^9.0.0
-  checksum: 4c76ca9850906b98fc9131b48ea6a664f84a0f8ac5f7d87543d73f8ca8214c33483fc4454447e46d67096826f7cb32f3db70461323e65aefc241c4169c88fd98
+  checksum: 8cb56817f784c045ff8e91793e79722ed5ec22927a4528539de6f243eaf511f0f924ee1c883f88707eb0ef69cea39de29752da88f98156f25e1860e794ffcd9b
   languageName: node
   linkType: hard
 
@@ -5295,7 +5302,7 @@ __metadata:
     "@grafana/e2e-selectors": 9.4.0-pre
     "@grafana/schema": 9.4.0-pre
     "@grafana/tsconfig": ^1.2.0-rc1
-    "@leeoniya/ufuzzy": 0.9.0
+    "@leeoniya/ufuzzy": 1.0.2
     "@mdx-js/react": 1.6.22
     "@monaco-editor/react": 4.4.6
     "@popperjs/core": 2.11.6
@@ -6239,17 +6246,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@leeoniya/ufuzzy@npm:0.9.0":
-  version: 0.9.0
-  resolution: "@leeoniya/ufuzzy@npm:0.9.0"
-  checksum: ee1b781530b3dbddd44eb0923f576028829209648c7b7283e5981f89527ac029c034d234ac2e98c9c25e99fe1d97e524d1e3ee0a79f5cbb92230d36e9cfa69d5
-  languageName: node
-  linkType: hard
-
-"@leeoniya/ufuzzy@npm:0.9.1":
-  version: 0.9.1
-  resolution: "@leeoniya/ufuzzy@npm:0.9.1"
-  checksum: 27750dff2e754ec3729937abce7c36b87917325e934cef7b1bb54a2310fd1e497dcb725397abee8c714f24a84da155120177a93da8f9706eefe32a8a1bb66945
+"@leeoniya/ufuzzy@npm:1.0.2":
+  version: 1.0.2
+  resolution: "@leeoniya/ufuzzy@npm:1.0.2"
+  checksum: 5460378a8c32d121b0bc7c8e95cde995316516655528e248051b1bf360cdca0311ef3275de14b802587748231333cee6183c931b3abba26f9e4236ecc4959aa3
   languageName: node
   linkType: hard
 
@@ -8714,13 +8714,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@scena/dragscroll@npm:^1.3.0":
-  version: 1.3.0
-  resolution: "@scena/dragscroll@npm:1.3.0"
+"@scena/dragscroll@npm:^1.4.0":
+  version: 1.4.0
+  resolution: "@scena/dragscroll@npm:1.4.0"
   dependencies:
-    "@daybrush/utils": 1.6.0
+    "@daybrush/utils": ^1.6.0
     "@scena/event-emitter": ^1.0.2
-  checksum: 3191a253eb1a74540e7a88c4219089cc76c95ea66e3e28f9b99470948aacc8716aec6e0c987910b097d0915b56f7844f5913353b6f305a393fb8d4dabedc44f8
+  checksum: 90c75e3e858b159fd856a6e6fc071c5d0975174f4d9201a53bca1ae86748d3fa1e302ed9195532162d7bb08ac91c3a0040d863cf6a8ebe4ca18739eef65f76f5
   languageName: node
   linkType: hard
 
@@ -13972,6 +13972,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"array.prototype.tosorted@npm:^1.1.1":
+  version: 1.1.1
+  resolution: "array.prototype.tosorted@npm:1.1.1"
+  dependencies:
+    call-bind: ^1.0.2
+    define-properties: ^1.1.4
+    es-abstract: ^1.20.4
+    es-shim-unscopables: ^1.0.0
+    get-intrinsic: ^1.1.3
+  checksum: 7923324a67e70a2fc0a6e40237405d92395e45ebd76f5cb89c2a5cf1e66b47aca6baacd0cd628ffd88830b90d47fff268071493d09c9ae123645613dac2c2ca3
+  languageName: node
+  linkType: hard
+
 "arrify@npm:^1.0.1":
   version: 1.0.1
   resolution: "arrify@npm:1.0.1"
@@ -16144,7 +16157,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"comlink@npm:4.3.1, comlink@npm:^4.3.0":
+"comlink@npm:4.4.0":
+  version: 4.4.0
+  resolution: "comlink@npm:4.4.0"
+  checksum: 429dc83e36d35c3dfd17e86343142ed3526fe2310a18f3816d0380eb9a162b50272bb40f7426e1c5a1f04f44203a178b60a4a0bcabed01d675d91474c53788f7
+  languageName: node
+  linkType: hard
+
+"comlink@npm:^4.3.0":
   version: 4.3.1
   resolution: "comlink@npm:4.3.1"
   checksum: 557360a6558708c55aff74a25f834bfb9bfca8a42444682c4d5aead57681534a0206202be2a2760b4de124c3ba6d485b08978b6d5469cb3d26bf1438ee28a4f1
@@ -19745,6 +19765,31 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eslint-plugin-react@npm:7.32.1":
+  version: 7.32.1
+  resolution: "eslint-plugin-react@npm:7.32.1"
+  dependencies:
+    array-includes: ^3.1.6
+    array.prototype.flatmap: ^1.3.1
+    array.prototype.tosorted: ^1.1.1
+    doctrine: ^2.1.0
+    estraverse: ^5.3.0
+    jsx-ast-utils: ^2.4.1 || ^3.0.0
+    minimatch: ^3.1.2
+    object.entries: ^1.1.6
+    object.fromentries: ^2.0.6
+    object.hasown: ^1.1.2
+    object.values: ^1.1.6
+    prop-types: ^15.8.1
+    resolve: ^2.0.0-next.4
+    semver: ^6.3.0
+    string.prototype.matchall: ^4.0.8
+  peerDependencies:
+    eslint: ^3 || ^4 || ^5 || ^6 || ^7 || ^8
+  checksum: e20eab61161a3db6211c2bd1eb9be3e407fd14e72c06c5f39a078b6ac37427b2af6056ee70e3954249bca0a04088ae797a0c8ba909fb8802e29712de2a41262d
+  languageName: node
+  linkType: hard
+
 "eslint-scope@npm:5.1.1, eslint-scope@npm:^5.1.1":
   version: 5.1.1
   resolution: "eslint-scope@npm:5.1.1"
@@ -21455,13 +21500,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"gesto@npm:^1.14.0":
-  version: 1.14.0
-  resolution: "gesto@npm:1.14.0"
+"gesto@npm:^1.15.1":
+  version: 1.15.1
+  resolution: "gesto@npm:1.15.1"
   dependencies:
     "@daybrush/utils": ^1.7.1
     "@scena/event-emitter": ^1.0.2
-  checksum: ce9e2b0f3308e1747b3350b99f1a22e77b886b5de1a431f63b4f85e26f0c2853ddffc81055949844ac3dc19becc26eecad97d9e6147ea6a17e8a694ccf86d63e
+  checksum: e4b1874f86a453cd4229906a496b11a4bece943a9fe8246bd58aa3dcae334f6607804eedd523007458d532d466a0bccb389478f957a773dbf4885fe90aae1e3c
   languageName: node
   linkType: hard
 
@@ -22025,13 +22070,13 @@ __metadata:
     "@grafana/lezer-logql": 0.1.1
     "@grafana/monaco-logql": ^0.0.6
     "@grafana/runtime": "workspace:*"
-    "@grafana/scenes": latest
+    "@grafana/scenes": ^0.0.11
     "@grafana/schema": "workspace:*"
     "@grafana/toolkit": "workspace:*"
     "@grafana/tsconfig": ^1.2.0-rc1
     "@grafana/ui": "workspace:*"
     "@kusto/monaco-kusto": 5.3.6
-    "@leeoniya/ufuzzy": 0.9.1
+    "@leeoniya/ufuzzy": 1.0.2
     "@lezer/common": 1.0.1
     "@lezer/highlight": 1.1.2
     "@lezer/lr": 1.3.1
@@ -22148,7 +22193,7 @@ __metadata:
     classnames: 2.3.2
     codeowners: ^5.1.1
     combokeys: ^3.0.0
-    comlink: 4.3.1
+    comlink: 4.4.0
     common-tags: 1.8.2
     copy-webpack-plugin: 11.0.0
     core-js: 3.27.1
@@ -22173,7 +22218,7 @@ __metadata:
     eslint-plugin-jsdoc: 39.6.2
     eslint-plugin-jsx-a11y: 6.7.1
     eslint-plugin-lodash: 7.4.0
-    eslint-plugin-react: 7.31.10
+    eslint-plugin-react: 7.32.1
     eslint-plugin-react-hooks: 4.6.0
     eslint-webpack-plugin: 3.2.0
     eventemitter3: 4.0.7
@@ -22222,7 +22267,7 @@ __metadata:
     monaco-promql: 1.7.4
     mousetrap: 1.6.5
     mousetrap-global-bind: 1.1.0
-    moveable: 0.42.1
+    moveable: 0.43.1
     msw: 0.49.2
     mutationobserver-shim: 0.3.7
     ngtemplate-loader: 2.1.0
@@ -22256,7 +22301,7 @@ __metadata:
     react-hook-form: 7.5.3
     react-i18next: ^12.0.0
     react-inlinesvg: 3.0.1
-    react-moveable: 0.45.0
+    react-moveable: 0.46.1
     react-popper: 2.3.0
     react-popper-tooltip: 4.4.2
     react-redux: 7.2.6
@@ -28471,15 +28516,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"moveable@npm:0.42.1":
-  version: 0.42.1
-  resolution: "moveable@npm:0.42.1"
+"moveable@npm:0.43.1":
+  version: 0.43.1
+  resolution: "moveable@npm:0.43.1"
   dependencies:
     "@scena/event-emitter": ^1.0.5
-    react-compat-moveable: ~0.30.1
-    react-moveable: ~0.45.0
+    react-compat-moveable: ~0.31.1
+    react-moveable: ~0.46.1
     react-simple-compat: ^1.2.3
-  checksum: 6694f1f837915a39e02263488d6f2cba1d88319db275c6a4ca4dcc0328c591ff70e37ea430f0134e7ee6f86b86d5ad8ec8904950a45c6c7b4ef822678d70bfb9
+  checksum: af1ccdfade5d03fe44fad1083dc3575082172af457e7dd5f23319dccc783dce74119279c65cf7415205ee0a39a5277064d4aec1238bf697d65fddf127a5d96ae
   languageName: node
   linkType: hard
 
@@ -29443,6 +29488,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"object.hasown@npm:^1.1.2":
+  version: 1.1.2
+  resolution: "object.hasown@npm:1.1.2"
+  dependencies:
+    define-properties: ^1.1.4
+    es-abstract: ^1.20.4
+  checksum: b936572536db0cdf38eb30afd2f1026a8b6f2cc5d2c4497c9d9bbb01eaf3e980dead4fd07580cfdd098e6383e5a9db8212d3ea0c6bdd2b5e68c60aa7e3b45566
+  languageName: node
+  linkType: hard
+
 "object.pick@npm:^1.3.0":
   version: 1.3.0
   resolution: "object.pick@npm:1.3.0"
@@ -29452,7 +29507,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"object.values@npm:^1.1.0, object.values@npm:^1.1.5":
+"object.values@npm:^1.1.0, object.values@npm:^1.1.6":
+  version: 1.1.6
+  resolution: "object.values@npm:1.1.6"
+  dependencies:
+    call-bind: ^1.0.2
+    define-properties: ^1.1.4
+    es-abstract: ^1.20.4
+  checksum: f6fff9fd817c24cfd8107f50fb33061d81cd11bacc4e3dbb3852e9ff7692fde4dbce823d4333ea27cd9637ef1b6690df5fbb61f1ed314fa2959598dc3ae23d8e
+  languageName: node
+  linkType: hard
+
+"object.values@npm:^1.1.5":
   version: 1.1.5
   resolution: "object.values@npm:1.1.5"
   dependencies:
@@ -32584,25 +32650,25 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-compat-moveable@npm:~0.30.1":
-  version: 0.30.1
-  resolution: "react-compat-moveable@npm:0.30.1"
+"react-compat-moveable@npm:~0.31.1":
+  version: 0.31.1
+  resolution: "react-compat-moveable@npm:0.31.1"
   dependencies:
     "@daybrush/utils": ^1.10.0
     "@egjs/agent": ^2.2.1
     "@egjs/children-differ": ^1.0.1
     "@egjs/list-differ": ^1.0.0
-    "@scena/dragscroll": ^1.3.0
+    "@scena/dragscroll": ^1.4.0
     "@scena/event-emitter": ^1.0.5
     "@scena/matrix": ^1.1.1
     css-to-mat: ^1.0.3
     framework-utils: ^1.1.0
-    gesto: ^1.14.0
+    gesto: ^1.15.1
     overlap-area: ^1.1.0
     react-compat-css-styled: ^1.0.9
     react-css-styled: ^1.0.4
-    react-moveable: ~0.45.0
-  checksum: edf73443cd0eda5cf299b4a17207940c8f6e42a6fe9e050befef579efd977a3bc434ee7ddf882e66e25d6c3fb63e611cf8da9fd6647e43ebaafc621c4c555814
+    react-moveable: ~0.46.1
+  checksum: 301cc657065f99b2ee1b316f72582b157df49a42f61172274dde389d1943923cfbe659ba4acec162ca7a4af25262d5bad753bad1857a8e283f572b8254e22cb8
   languageName: node
   linkType: hard
 
@@ -32941,23 +33007,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-moveable@npm:0.45.0, react-moveable@npm:~0.45.0":
-  version: 0.45.0
-  resolution: "react-moveable@npm:0.45.0"
+"react-moveable@npm:0.46.1, react-moveable@npm:~0.46.1":
+  version: 0.46.1
+  resolution: "react-moveable@npm:0.46.1"
   dependencies:
     "@daybrush/utils": ^1.10.0
     "@egjs/agent": ^2.2.1
     "@egjs/children-differ": ^1.0.1
     "@egjs/list-differ": ^1.0.0
-    "@scena/dragscroll": ^1.3.0
+    "@scena/dragscroll": ^1.4.0
     "@scena/event-emitter": ^1.0.5
     "@scena/matrix": ^1.1.1
     css-to-mat: ^1.0.3
     framework-utils: ^1.1.0
-    gesto: ^1.14.0
+    gesto: ^1.15.1
     overlap-area: ^1.1.0
     react-css-styled: ^1.0.4
-  checksum: bcd05d08e4858ef9d50064b1989cfa1777fa0c85c082c342cf856823209548795468f141528f7ca6178219f560d92f3055c0aaaec04ccd8c86ba9c5d9ce2e4dd
+  checksum: 521623cd3e91363c6a239f3a6d022039af20565472b6832902ff73e66494369808d0252d5112e034917f70146ae2954ff996c25293c6a3961c6b5c85668ebd07
   languageName: node
   linkType: hard
 
@@ -33739,7 +33805,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"regexp.prototype.flags@npm:^1.4.1, regexp.prototype.flags@npm:^1.4.3":
+"regexp.prototype.flags@npm:^1.4.3":
   version: 1.4.3
   resolution: "regexp.prototype.flags@npm:1.4.3"
   dependencies:
@@ -34229,6 +34295,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"resolve@npm:^2.0.0-next.4":
+  version: 2.0.0-next.4
+  resolution: "resolve@npm:2.0.0-next.4"
+  dependencies:
+    is-core-module: ^2.9.0
+    path-parse: ^1.0.7
+    supports-preserve-symlinks-flag: ^1.0.0
+  bin:
+    resolve: bin/resolve
+  checksum: c438ac9a650f2030fd074219d7f12ceb983b475da2d89ad3d6dd05fbf6b7a0a8cd37d4d10b43cb1f632bc19f22246ab7f36ebda54d84a29bfb2910a0680906d3
+  languageName: node
+  linkType: hard
+
 "resolve@patch:resolve@^1.10.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.12.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.14.2#~builtin<compat/resolve>, resolve@patch:resolve@^1.19.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.20.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.9.0#~builtin<compat/resolve>":
   version: 1.20.0
   resolution: "resolve@patch:resolve@npm%3A1.20.0#~builtin<compat/resolve>::version=1.20.0&hash=c3c19d"
@@ -34272,6 +34351,19 @@ __metadata:
     is-core-module: ^2.2.0
     path-parse: ^1.0.6
   checksum: 21684b4d99a4877337cdbd5484311c811b3e8910edb5d868eec85c6e6550b0f570d911f9a384f9e176172d6713f2715bd0b0887fa512cb8c6aeece018de6a9f8
+  languageName: node
+  linkType: hard
+
+"resolve@patch:resolve@^2.0.0-next.4#~builtin<compat/resolve>":
+  version: 2.0.0-next.4
+  resolution: "resolve@patch:resolve@npm%3A2.0.0-next.4#~builtin<compat/resolve>::version=2.0.0-next.4&hash=c3c19d"
+  dependencies:
+    is-core-module: ^2.9.0
+    path-parse: ^1.0.7
+    supports-preserve-symlinks-flag: ^1.0.0
+  bin:
+    resolve: bin/resolve
+  checksum: 4bf9f4f8a458607af90518ff73c67a4bc1a38b5a23fef2bb0ccbd45e8be89820a1639b637b0ba377eb2be9eedfb1739a84cde24fe4cd670c8207d8fea922b011
   languageName: node
   linkType: hard
 
@@ -36120,19 +36212,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"string.prototype.matchall@npm:^4.0.0 || ^3.0.1, string.prototype.matchall@npm:^4.0.7":
-  version: 4.0.7
-  resolution: "string.prototype.matchall@npm:4.0.7"
+"string.prototype.matchall@npm:^4.0.0 || ^3.0.1, string.prototype.matchall@npm:^4.0.7, string.prototype.matchall@npm:^4.0.8":
+  version: 4.0.8
+  resolution: "string.prototype.matchall@npm:4.0.8"
   dependencies:
     call-bind: ^1.0.2
-    define-properties: ^1.1.3
-    es-abstract: ^1.19.1
-    get-intrinsic: ^1.1.1
+    define-properties: ^1.1.4
+    es-abstract: ^1.20.4
+    get-intrinsic: ^1.1.3
     has-symbols: ^1.0.3
     internal-slot: ^1.0.3
-    regexp.prototype.flags: ^1.4.1
+    regexp.prototype.flags: ^1.4.3
     side-channel: ^1.0.4
-  checksum: fc09f3ccbfb325de0472bcc87a6be0598a7499e0b4a31db5789676155b15754a4cc4bb83924f15fc9ed48934dac7366ee52c8b9bd160bed6fd072c93b489e75c
+  checksum: 952da3a818de42ad1c10b576140a5e05b4de7b34b8d9dbf00c3ac8c1293e9c0f533613a39c5cda53e0a8221f2e710bc2150e730b1c2278d60004a8a35726efb6
   languageName: node
   linkType: hard
 
