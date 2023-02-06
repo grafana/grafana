@@ -26,7 +26,7 @@ interface IncrementalStorageOptions {
   datasourceInstabilityDurationInMs: number;
   storageTimeIndex: string;
 }
-const DEBUG = false;
+const DEBUG = true;
 
 export class IncrementalStorage {
   private storage: Record<string, Record<string, number[]>>;
@@ -73,6 +73,12 @@ export class IncrementalStorage {
       // This will return '{}' as the index for this series, this should work as long as this is indeed the only series returned by this query
       // @todo throw an error when there are more than one series without labels
     }
+
+    // In Prom and Loki the labels and name are used to define a unique series, also table format will use "name" as the unique column header
+    keyValues.push({
+      key: '__name__',
+      value: valueField.name ?? '',
+    });
 
     // @todo faster
     return JSON.stringify(keyValues);
@@ -417,6 +423,7 @@ export class IncrementalStorage {
     const responseFrameValues: number[] | undefined = valueField?.values?.toArray();
 
     // Generate a unique name for this dataframe using the values
+    // debugger;
     const seriesLabelsIndexString = IncrementalStorage.valueFieldToLabelsString(valueField);
 
     // If we don't have storage, dataframes, or any values for this label, we haven't added this query to storage before
@@ -471,6 +478,7 @@ export class IncrementalStorage {
         }
       }
     }
+
     return timeValuesStorage;
   }
 
@@ -545,6 +553,10 @@ export class IncrementalStorage {
         if (timeValuesStorage.length > 0 && responseTimeField?.values && !timeFieldsToSet.index) {
           timeFieldsToSet = { index: responseQueryExpressionAndStepString, values: timeValuesStorage };
         }
+
+        if (responseFrame.length >= 0) {
+          responseFrame.length = timeFieldsToSet.values?.length ?? responseFrame.length;
+        }
       });
 
       // Now that we're done setting values, we want to set the times in storage and in the dataframe, remember dataFramesForThisQuery is
@@ -552,6 +564,10 @@ export class IncrementalStorage {
         this.setTimeFields(timeFieldsToSet, dataFramesForThisQuery);
       }
     });
+
+    if (DEBUG) {
+      console.log('updated storage', this.storage);
+    }
 
     return dataFrames;
   };
