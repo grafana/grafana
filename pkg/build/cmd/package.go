@@ -40,7 +40,7 @@ func Package(c *cli.Context) error {
 
 	variants := []config.Variant{}
 	variantStrs := strings.Split(c.String("variants"), ",")
-	if len(variantStrs) > 0 {
+	if c.String("variants") != "" {
 		for _, varStr := range variantStrs {
 			if varStr == "" {
 				continue
