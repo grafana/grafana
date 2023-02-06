@@ -479,6 +479,7 @@
         "type": "object",
         "description": "Expose a page link that can be used by Grafana core or other plugins to navigate users to the plugin",
         "additionalProperties": false,
+        "required": ["type", "title", "target", "path"],
         "properties": {
           "type": {
             "type": "string",
