@@ -12,16 +12,16 @@ func exportDataSources(helper *commitHelper, job *gitExportJob) error {
 	cmd := &datasources.GetDataSourcesQuery{
 		OrgID: helper.orgID,
 	}
-	err := job.datasourceService.GetDataSources(helper.ctx, cmd)
+	result, err := job.datasourceService.GetDataSources(helper.ctx, cmd)
 	if err != nil {
 		return nil
 	}
 
-	sort.SliceStable(cmd.Result, func(i, j int) bool {
-		return cmd.Result[i].Created.After(cmd.Result[j].Created)
+	sort.SliceStable(result, func(i, j int) bool {
+		return result[i].Created.After(result[j].Created)
 	})
 
-	for _, ds := range cmd.Result {
+	for _, ds := range result {
 		ds.OrgID = 0
 		ds.Version = 0
 		ds.SecureJsonData = map[string][]byte{

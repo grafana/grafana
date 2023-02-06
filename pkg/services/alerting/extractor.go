@@ -53,18 +53,11 @@ func (e *DashAlertExtractorService) lookupQueryDataSource(ctx context.Context, p
 
 	if dsName == "" && dsUid == "" {
 		query := &datasources.GetDefaultDataSourceQuery{OrgID: orgID}
-		if err := e.datasourceService.GetDefaultDataSource(ctx, query); err != nil {
-			return nil, err
-		}
-		return query.Result, nil
+		return e.datasourceService.GetDefaultDataSource(ctx, query)
 	}
 
 	query := &datasources.GetDataSourceQuery{Name: dsName, UID: dsUid, OrgID: orgID}
-	if err := e.datasourceService.GetDataSource(ctx, query); err != nil {
-		return nil, err
-	}
-
-	return query.Result, nil
+	return e.datasourceService.GetDataSource(ctx, query)
 }
 
 func findPanelQueryByRefID(panel *simplejson.Json, refID string) *simplejson.Json {

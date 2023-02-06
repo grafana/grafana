@@ -33,18 +33,17 @@ type dataSourceMockRetriever struct {
 	res []*datasources.DataSource
 }
 
-func (d *dataSourceMockRetriever) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error {
+func (d *dataSourceMockRetriever) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (res *datasources.DataSource, err error) {
 	for _, datasource := range d.res {
 		idMatch := query.ID != 0 && query.ID == datasource.ID
 		uidMatch := query.UID != "" && query.UID == datasource.UID
 		nameMatch := query.Name != "" && query.Name == datasource.Name
 		if idMatch || nameMatch || uidMatch {
-			query.Result = datasource
-
-			return nil
+			res = datasource
+			return res, nil
 		}
 	}
-	return datasources.ErrDataSourceNotFound
+	return nil, datasources.ErrDataSourceNotFound
 }
 
 func TestService_NameScopeResolver(t *testing.T) {

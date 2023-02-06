@@ -146,11 +146,12 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange l
 		OrgID: context.Rule.OrgID,
 	}
 
-	if err := context.GetDataSource(context.Ctx, getDsInfo); err != nil {
+	ds, err := context.GetDataSource(context.Ctx, getDsInfo)
+	if err != nil {
 		return nil, fmt.Errorf("could not find datasource: %w", err)
 	}
 
-	err := context.RequestValidator.Validate(getDsInfo.Result.URL, nil)
+	err = context.RequestValidator.Validate(ds.URL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("access denied: %w", err)
 	}

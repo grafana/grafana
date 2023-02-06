@@ -18,61 +18,58 @@ type FakeDataSourceService struct {
 
 var _ datasources.DataSourceService = &FakeDataSourceService{}
 
-func (s *FakeDataSourceService) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error {
+func (s *FakeDataSourceService) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (res *datasources.DataSource, err error) {
 	for _, datasource := range s.DataSources {
 		idMatch := query.ID != 0 && query.ID == datasource.ID
 		uidMatch := query.UID != "" && query.UID == datasource.UID
 		nameMatch := query.Name != "" && query.Name == datasource.Name
 		if idMatch || nameMatch || uidMatch {
-			query.Result = datasource
-
-			return nil
+			return datasource, nil
 		}
 	}
-	return datasources.ErrDataSourceNotFound
+	return nil, datasources.ErrDataSourceNotFound
 }
 
-func (s *FakeDataSourceService) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) error {
+func (s *FakeDataSourceService) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) (res []*datasources.DataSource, err error) {
 	for _, datasource := range s.DataSources {
 		orgMatch := query.OrgID != 0 && query.OrgID == datasource.OrgID
 		if orgMatch {
-			query.Result = append(query.Result, datasource)
+			res = append(res, datasource)
 		}
 	}
-	return nil
+	return res, nil
 }
 
-func (s *FakeDataSourceService) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) error {
-	query.Result = s.DataSources
-	return nil
+func (s *FakeDataSourceService) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) (res []*datasources.DataSource, err error) {
+	return s.DataSources, nil
 }
 
-func (s *FakeDataSourceService) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error {
+func (s *FakeDataSourceService) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) (res []*datasources.DataSource, err error) {
 	for _, datasource := range s.DataSources {
 		if query.OrgID > 0 && datasource.OrgID != query.OrgID {
 			continue
 		}
 		typeMatch := query.Type != "" && query.Type == datasource.Type
 		if typeMatch {
-			query.Result = append(query.Result, datasource)
+			res = append(res, datasource)
 		}
 	}
-	return nil
+	return res, nil
 }
 
-func (s *FakeDataSourceService) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
+func (s *FakeDataSourceService) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (res *datasources.DataSource, err error) {
 	if s.lastID == 0 {
 		s.lastID = int64(len(s.DataSources) - 1)
 	}
-	cmd.Result = &datasources.DataSource{
+	res = &datasources.DataSource{
 		ID:    s.lastID + 1,
 		Name:  cmd.Name,
 		Type:  cmd.Type,
 		UID:   cmd.UID,
 		OrgID: cmd.OrgID,
 	}
-	s.DataSources = append(s.DataSources, cmd.Result)
-	return nil
+	s.DataSources = append(s.DataSources, res)
+	return res, nil
 }
 
 func (s *FakeDataSourceService) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
@@ -88,7 +85,7 @@ func (s *FakeDataSourceService) DeleteDataSource(ctx context.Context, cmd *datas
 	return datasources.ErrDataSourceNotFound
 }
 
-func (s *FakeDataSourceService) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {
+func (s *FakeDataSourceService) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (res *datasources.DataSource, err error) {
 	for _, datasource := range s.DataSources {
 		idMatch := cmd.ID != 0 && cmd.ID == datasource.ID
 		uidMatch := cmd.UID != "" && cmd.UID == datasource.UID
@@ -97,14 +94,14 @@ func (s *FakeDataSourceService) UpdateDataSource(ctx context.Context, cmd *datas
 			if cmd.Name != "" {
 				datasource.Name = cmd.Name
 			}
-			return nil
+			return res, nil
 		}
 	}
-	return datasources.ErrDataSourceNotFound
+	return nil, datasources.ErrDataSourceNotFound
 }
 
-func (s *FakeDataSourceService) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) error {
-	return nil
+func (s *FakeDataSourceService) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) (res *datasources.DataSource, err error) {
+	return nil, nil
 }
 
 func (s *FakeDataSourceService) GetHTTPTransport(ctx context.Context, ds *datasources.DataSource, provider httpclient.Provider, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error) {

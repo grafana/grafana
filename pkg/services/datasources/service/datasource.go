@@ -97,7 +97,7 @@ func (s *Service) Usage(ctx context.Context, scopeParams *quota.ScopeParameters)
 // DataSourceRetriever interface for retrieving a datasource.
 type DataSourceRetriever interface {
 	// GetDataSource gets a datasource.
-	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error
+	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (res *datasources.DataSource, err error)
 }
 
 // NewNameScopeResolver provides an ScopeAttributeResolver able to
@@ -115,11 +115,12 @@ func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.ScopeAt
 		}
 
 		query := datasources.GetDataSourceQuery{Name: dsName, OrgID: orgID}
-		if err := db.GetDataSource(ctx, &query); err != nil {
+		ds, err := db.GetDataSource(ctx, &query)
+		if err != nil {
 			return nil, err
 		}
 
-		return []string{datasources.ScopeProvider.GetResourceScopeUID(query.Result.UID)}, nil
+		return []string{datasources.ScopeProvider.GetResourceScopeUID(ds.UID)}, nil
 	})
 }
 
@@ -143,32 +144,33 @@ func NewIDScopeResolver(db DataSourceRetriever) (string, accesscontrol.ScopeAttr
 		}
 
 		query := datasources.GetDataSourceQuery{ID: dsID, OrgID: orgID}
-		if err := db.GetDataSource(ctx, &query); err != nil {
+		ds, err := db.GetDataSource(ctx, &query)
+		if err != nil {
 			return nil, err
 		}
 
-		return []string{datasources.ScopeProvider.GetResourceScopeUID(query.Result.UID)}, nil
+		return []string{datasources.ScopeProvider.GetResourceScopeUID(ds.UID)}, nil
 	})
 }
 
-func (s *Service) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error {
+func (s *Service) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (res *datasources.DataSource, err error) {
 	return s.SQLStore.GetDataSource(ctx, query)
 }
 
-func (s *Service) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) error {
+func (s *Service) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) (res []*datasources.DataSource, err error) {
 	return s.SQLStore.GetDataSources(ctx, query)
 }
 
-func (s *Service) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) error {
+func (s *Service) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) (res []*datasources.DataSource, err error) {
 	return s.SQLStore.GetAllDataSources(ctx, query)
 }
 
-func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error {
+func (s *Service) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) (res []*datasources.DataSource, err error) {
 	return s.SQLStore.GetDataSourcesByType(ctx, query)
 }
 
-func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) error {
-	return s.db.InTransaction(ctx, func(ctx context.Context) error {
+func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (res *datasources.DataSource, err error) {
+	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
 		var err error
 
 		cmd.EncryptedSecureJsonData = make(map[string][]byte)
@@ -188,7 +190,8 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 			return s.SecretsStore.Set(ctx, cmd.OrgID, cmd.Name, kvstore.DataSourceSecretType, string(secret))
 		}
 
-		if err := s.SQLStore.AddDataSource(ctx, cmd); err != nil {
+		res, err = s.SQLStore.AddDataSource(ctx, cmd)
+		if err != nil {
 			return err
 		}
 
@@ -205,13 +208,14 @@ func (s *Service) AddDataSource(ctx context.Context, cmd *datasources.AddDataSou
 			if cmd.UserID != 0 {
 				permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{UserID: cmd.UserID, Permission: "Edit"})
 			}
-			if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgID, cmd.Result.UID, permissions...); err != nil {
+			if _, err := s.permissionsService.SetPermissions(ctx, cmd.OrgID, res.UID, permissions...); err != nil {
 				return err
 			}
 		}
 
 		return nil
 	})
+	return res, err
 }
 
 func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
@@ -224,20 +228,20 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteD
 	})
 }
 
-func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {
-	return s.db.InTransaction(ctx, func(ctx context.Context) error {
+func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (res *datasources.DataSource, err error) {
+	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
 		var err error
 
 		query := &datasources.GetDataSourceQuery{
 			ID:    cmd.ID,
 			OrgID: cmd.OrgID,
 		}
-		err = s.SQLStore.GetDataSource(ctx, query)
+		res, err = s.SQLStore.GetDataSource(ctx, query)
 		if err != nil {
 			return err
 		}
 
-		err = s.fillWithSecureJSONData(ctx, cmd, query.Result)
+		err = s.fillWithSecureJSONData(ctx, cmd, res)
 		if err != nil {
 			return err
 		}
@@ -249,8 +253,8 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 					return err
 				}
 
-				if query.Result.Name != cmd.Name {
-					err := s.SecretsStore.Rename(ctx, cmd.OrgID, query.Result.Name, kvstore.DataSourceSecretType, cmd.Name)
+				if res.Name != cmd.Name {
+					err := s.SecretsStore.Rename(ctx, cmd.OrgID, res.Name, kvstore.DataSourceSecretType, cmd.Name)
 					if err != nil {
 						return err
 					}
@@ -260,11 +264,13 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 			}
 		}
 
-		return s.SQLStore.UpdateDataSource(ctx, cmd)
+		res, err = s.SQLStore.UpdateDataSource(ctx, cmd)
+		return err
 	})
+	return res, err
 }
 
-func (s *Service) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) error {
+func (s *Service) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) (res *datasources.DataSource, err error) {
 	return s.SQLStore.GetDefaultDataSource(ctx, query)
 }
 

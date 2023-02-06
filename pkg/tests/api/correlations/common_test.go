@@ -152,7 +152,7 @@ func (c TestContext) createUser(cmd user.CreateUserCommand) {
 func (c TestContext) createDs(cmd *datasources.AddDataSourceCommand) {
 	c.t.Helper()
 
-	err := c.env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), cmd)
+	_, err := c.env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), cmd)
 	require.NoError(c.t, err)
 }
 
