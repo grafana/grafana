@@ -534,6 +534,24 @@ func trimDatapoints(queryResult backend.DataResponse, target *Query) {
 	}
 }
 
+// we sort the label's pairs by the label-key,
+// and return the label-values
+func getSortedLabelValues(labels data.Labels) []string {
+	var keys []string
+	for key := range labels {
+		keys = append(keys, key)
+	}
+
+	sort.Strings(keys)
+
+	var values []string
+	for _, key := range keys {
+		values = append(values, labels[key])
+	}
+
+	return values
+}
+
 func nameFields(queryResult backend.DataResponse, target *Query) {
 	set := make(map[string]struct{})
 	frames := queryResult.Frames
@@ -645,7 +663,7 @@ func getFieldName(dataField data.Field, target *Query, metricTypeCount int) stri
 	}
 
 	name := ""
-	for _, v := range dataField.Labels {
+	for _, v := range getSortedLabelValues(dataField.Labels) {
 		name += v + " "
 	}
 

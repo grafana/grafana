@@ -1,14 +1,13 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
-import { Provider } from 'react-redux';
+import { TestProvider } from 'test/helpers/TestProvider';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { ApiKey, OrgRole } from 'app/types';
 
 import { mockToolkitActionCreator } from '../../../test/core/redux/mocks';
 import { silenceConsoleOutput } from '../../../test/core/utils/silenceConsoleOutput';
-import { configureStore } from '../../store/configureStore';
 
 import { ApiKeysPageUnconnected, Props } from './ApiKeysPage';
 import { getMultipleMockKeys } from './__mocks__/apiKeysMock';
@@ -24,7 +23,6 @@ jest.mock('app/core/core', () => {
 });
 
 const setup = (propOverrides: Partial<Props>) => {
-  const store = configureStore();
   const loadApiKeysMock = jest.fn();
   const deleteApiKeyMock = jest.fn();
   const migrateApiKeyMock = jest.fn();
@@ -58,12 +56,12 @@ const setup = (propOverrides: Partial<Props>) => {
   Object.assign(props, propOverrides);
 
   const { rerender } = render(
-    <Provider store={store}>
+    <TestProvider>
       <ApiKeysPageUnconnected {...props} />
-    </Provider>
+    </TestProvider>
   );
   return {
-    rerender: (element: JSX.Element) => rerender(<Provider store={store}>{element}</Provider>),
+    rerender: (element: JSX.Element) => rerender(<TestProvider>{element}</TestProvider>),
     props,
     loadApiKeysMock,
     setSearchQueryMock,
