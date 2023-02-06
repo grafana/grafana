@@ -14,6 +14,7 @@ describe('getPluginExtensions', () => {
             title: 'Declare incident',
             description: 'Declaring an incident in the app',
             href: `/a/${pluginId}/declare-incident`,
+            key: 1,
           },
         ],
       });

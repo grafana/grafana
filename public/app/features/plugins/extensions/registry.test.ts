@@ -50,6 +50,7 @@ describe('Plugin registry', () => {
         type: 'link',
         description: 'Incidents are occurring!',
         href: '/a/belugacdn-app/incidents/declare',
+        key: 539074708,
       });
     });
 
@@ -68,6 +69,7 @@ describe('Plugin registry', () => {
         type: 'link',
         description: 'Incidents are occurring!',
         href: '/a/belugacdn-app/incidents/declare',
+        key: 539074708,
       });
 
       expect(pluginBLink).toEqual({
@@ -75,6 +77,7 @@ describe('Plugin registry', () => {
         type: 'link',
         description: 'Incidents are occurring!',
         href: '/a/strava-app/incidents/declare',
+        key: -1637066384,
       });
     });
 

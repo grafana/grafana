@@ -38,15 +38,17 @@ export function createPluginExtensionsRegistry(apps: Record<string, AppPluginCon
 }
 
 function createRegistryItem(pluginId: string, extension: PluginsExtensionLinkConfig): PluginsExtensionLink {
+  const href = `/a/${pluginId}${extension.path}`;
+
   return Object.freeze({
     type: PluginExtensionTypes.link,
     title: extension.title,
     description: extension.description,
-    href: `/a/${pluginId}${extension.path}`,
-    key: hashish(extension.title + extension.path),
+    href: href,
+    key: hashKey(`${extension.title}${href}`),
   });
 }
 
-function hashish(vals: string): number {
-  return Array.from(vals).reduce((s, c) => (Math.imul(31, s) + c.charCodeAt(0)) | 0, 0);
+function hashKey(key: string): number {
+  return Array.from(key).reduce((s, c) => (Math.imul(31, s) + c.charCodeAt(0)) | 0, 0);
 }
