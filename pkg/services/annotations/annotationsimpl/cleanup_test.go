@@ -185,8 +185,8 @@ func TestAnnotationCleanUp_Timeout(t *testing.T) {
 		require.ErrorIs(t, err, context.DeadlineExceeded)
 	}()
 
-	// unfortunately we can't assert on the expected annotation counts here:
-	// occasional deletions succeed (one or more of the annotation "types").
+	// nothing should have been deleted!
+	assertAnnotationCount(t, fakeSQL, "", int64(annotationCount))
 }
 
 func assertAnnotationCount(t *testing.T, fakeSQL db.DB, sql string, expectedCount int64) {
