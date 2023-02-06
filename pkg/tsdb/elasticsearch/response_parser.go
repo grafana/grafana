@@ -58,6 +58,7 @@ func parseResponse(responses []*es.SearchResponse, targets []*Query, timeField s
 
 		if isDocumentQuery(target) {
 			docs := make([]map[string]interface{}, 0)
+			propNames := make([]string, 0)
 			for _, hit := range res.Hits.Hits {
 				var flattened map[string]interface{}
 				if hit["_source"] != nil {
@@ -73,58 +74,89 @@ func parseResponse(responses []*es.SearchResponse, targets []*Query, timeField s
 					"_source":   flattened,
 				}
 
-				for k, v := range hit {
+				for k, v := range flattened {
 					doc[k] = v
 				}
 
-				propNames := make([]string, len(doc))
-				for docKey := range doc {
-					for _, propNamesValue := range propNames {
-						if docKey == propNamesValue {
-							continue
-						} else {
-							propNames = append(propNames, docKey)
-						}
+				for key := range doc {
+					if stringInSlice(key, propNames) {
+						continue
+					} else {
+						propNames = append(propNames, key)
 					}
 				}
+
 				docs = append(docs, doc)
-
-				frames := data.Frames{}
-				frames = append(frames, data.NewFrame(null,
-					data.NewField(timeField, nil, []time.Time{}),
-				))
-
-				frames = append(frames, data.NewFrame(name,
-					data.NewField("time", nil, timeVector),
-					data.NewField("value", tags, values)))
-
-				// Now we have docs and propNames and we need to process them to
-				// create a data.Frame
-				// queryRes = parseDocumentResponse(res.Hits, target)
-				// result.Responses[target.RefID] = queryRes
-				continue
 			}
-		}
 
-		props := make(map[string]string)
-		err := processBuckets(res.Aggregations, target, &queryRes, props, 0)
-		if err != nil {
-			return &backend.QueryDataResponse{}, err
-		}
-		nameFields(queryRes, target)
-		trimDatapoints(queryRes, target)
+			size := len(docs)
+			allFields := make([]*data.Field, 0)
 
-		result.Responses[target.RefID] = queryRes
+			// Process time field as first one
+			timeVector := make([]time.Time, size)
+			for i, doc := range docs {
+				timeString := doc[timeField].(string)
+				timeValue, err := time.Parse(time.RFC3339Nano, timeString)
+				if err != nil {
+					return nil, err
+				}
+				timeVector[i] = timeValue
+			}
+			timestampField := data.NewField(timeField, nil, timeVector)
+
+			filterable := true
+			timestampField.Config = &data.FieldConfig{Filterable: &filterable}
+			allFields = append(allFields, timestampField)
+
+			for _, propName := range propNames {
+				if propName == timeField {
+					continue
+				}
+
+				if propName == "_source" {
+					continue
+				}
+
+				_, ok := docs[0][propName].(string)
+
+				if ok {
+					fieldVector := make([]string, size)
+					for i, doc := range docs {
+						v, _ := doc[propName].(string)
+						fieldVector[i] = v
+					}
+
+					field := data.NewField(propName, nil, fieldVector)
+					filterable := true
+					field.Config = &data.FieldConfig{Filterable: &filterable}
+					allFields = append(allFields, field)
+				}
+			}
+
+			frames := data.Frames{}
+			frame := data.NewFrame("", allFields...)
+
+			frames = append(frames, frame)
+
+			queryRes.Frames = frames
+			result.Responses[target.RefID] = queryRes
+		} else {
+
+			props := make(map[string]string)
+			err := processBuckets(res.Aggregations, target, &queryRes, props, 0)
+			if err != nil {
+				return &backend.QueryDataResponse{}, err
+			}
+			nameFields(queryRes, target)
+			trimDatapoints(queryRes, target)
+
+			result.Responses[target.RefID] = queryRes
+		}
 	}
 
 	return &result, nil
 }
 
-// func parseDocumentResponse(hits *es.SearchHits, target *Query) backend.DataResponse {
-// 	queryRes := backend.DataResponse{}
-
-// 	return queryRes
-// }
 
 func processBuckets(aggs map[string]interface{}, target *Query,
 	queryResult *backend.DataResponse, props map[string]string, depth int) error {
@@ -848,4 +880,13 @@ func flatten(target map[string]interface{}) map[string]interface{} {
 	step(target, "")
 
 	return output
+}
+
+func stringInSlice(a string, list []string) bool {
+	for _, b := range list {
+		if b == a {
+			return true
+		}
+	}
+	return false
 }
