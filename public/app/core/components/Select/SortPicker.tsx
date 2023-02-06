@@ -3,9 +3,8 @@ import { useAsync } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
 import { Icon, Select } from '@grafana/ui';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { DEFAULT_SORT } from 'app/features/search/constants';
-
-import { SearchSrv } from '../../services/search_srv';
 
 export interface Props {
   onChange: (sortValue: SelectableValue) => void;
@@ -16,8 +15,12 @@ export interface Props {
   isClearable?: boolean;
 }
 
+function getSortOptions() {
+  return backendSrv.get('/api/search/sorting');
+}
+
 const defaultSortOptionsGetter = (): Promise<SelectableValue[]> => {
-  return new SearchSrv().getSortOptions().then(({ sortOptions }) => {
+  return getSortOptions().then(({ sortOptions }) => {
     return sortOptions.map((opt: any) => ({ label: opt.displayName, value: opt.name }));
   });
 };
