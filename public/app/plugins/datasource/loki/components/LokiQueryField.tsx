@@ -66,6 +66,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
 
   render() {
     const { ExtraFieldElement, query, app, datasource, history, onRunQuery } = this.props;
+    const placeholder = this.props.placeholder ?? 'Enter a Loki query (run with Shift+Enter)';
 
     return (
       <>
@@ -81,6 +82,7 @@ export class LokiQueryField extends React.PureComponent<LokiQueryFieldProps, Lok
               onChange={this.onChangeQuery}
               onRunQuery={onRunQuery}
               initialValue={query.expr ?? ''}
+              placeholder={placeholder}
             />
           </div>
         </div>
