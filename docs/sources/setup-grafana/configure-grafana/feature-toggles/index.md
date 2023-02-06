@@ -23,7 +23,6 @@ Some stable features are enabled by default. You can disable a stable feature by
 | ----------------------------------- | ------------------------------------------------------------------------------------ | ------------------ |
 | `disableEnvelopeEncryption`         | Disable envelope encryption (emergency only)                                         |                    |
 | `database_metrics`                  | Add Prometheus metrics for database tables                                           |                    |
-| `lokiMonacoEditor`                  | Access to Monaco query editor for Loki                                               | Yes                |
 | `featureHighlights`                 | Highlight Grafana Enterprise features                                                |                    |
 | `cloudWatchDynamicLabels`           | Use dynamic labels instead of alias patterns in CloudWatch datasource                | Yes                |
 | `internationalization`              | Enables internationalization                                                         | Yes                |
@@ -60,7 +59,6 @@ Alpha features might be changed or removed without prior notice.
 | `returnUnameHeader`                | Return user login as header for authenticated requests                                                                                                                       |
 | `alertingBigTransactions`          | Use big transactions for alerting database writes                                                                                                                            |
 | `dashboardPreviews`                | Create and show thumbnails for dashboard search results                                                                                                                      |
-| `live-config`                      | Save Grafana Live configuration in SQL tables                                                                                                                                |
 | `live-pipeline`                    | Enable a generic live processing pipeline                                                                                                                                    |
 | `live-service-web-worker`          | This will use a webworker thread to processes events rather than the main thread                                                                                             |
 | `queryOverLive`                    | Use Grafana Live WebSocket to execute backend queries                                                                                                                        |
@@ -93,7 +91,6 @@ Alpha features might be changed or removed without prior notice.
 | `datasourceOnboarding`             | Enable data source onboarding page                                                                                                                                           |
 | `secureSocksDatasourceProxy`       | Enable secure socks tunneling for supported core datasources                                                                                                                 |
 | `authnService`                     | Use new auth service to perform authentication                                                                                                                               |
-| `sessionRemoteCache`               | Enable using remote cache for user sessions                                                                                                                                  |
 | `alertingBacktesting`              | Rule backtesting API for alerting                                                                                                                                            |
 | `editPanelCSVDragAndDrop`          | Enables drag and drop for CSV and Excel files                                                                                                                                |
 | `logsContextDatasourceUi`          | Allow datasource to provide custom UI for context view                                                                                                                       |
@@ -104,7 +101,6 @@ The following toggles require explicitly setting Grafana's [app mode]({{< relref
 
 | Feature toggle name            | Description                                                             |
 | ------------------------------ | ----------------------------------------------------------------------- |
-| `dashboardPreviewsAdmin`       | Manage the dashboard previews crawler process from the UI               |
 | `showFeatureFlagsInUI`         | Show feature flags in the settings UI                                   |
 | `publicDashboardsEmailSharing` | Allows public dashboard sharing to be restricted to only allowed emails |
 | `k8s`                          | Explore native k8s integrations                                         |

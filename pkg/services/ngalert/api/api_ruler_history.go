@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -21,16 +22,27 @@ type HistorySrv struct {
 	hist   Historian
 }
 
+const labelQueryPrefix = "labels_"
+
 func (srv *HistorySrv) RouteQueryStateHistory(c *contextmodel.ReqContext) response.Response {
 	from := c.QueryInt64("from")
 	to := c.QueryInt64("to")
+	ruleUID := c.Query("ruleUID")
+
+	labels := make(map[string]string)
+	for k, v := range c.Req.URL.Query() {
+		if strings.HasPrefix(k, labelQueryPrefix) {
+			labels[k[len(labelQueryPrefix):]] = v[0]
+		}
+	}
+
 	query := models.HistoryQuery{
-		RuleUID:      c.Query("ruleUID"),
+		RuleUID:      ruleUID,
 		OrgID:        c.OrgID,
 		SignedInUser: c.SignedInUser,
 		From:         time.Unix(from, 0),
 		To:           time.Unix(to, 0),
-		Labels:       map[string]string{}, // TODO, not supported by all backends yet.
+		Labels:       labels,
 	}
 	frame, err := srv.hist.QueryStates(c.Req.Context(), query)
 	if err != nil {
