@@ -6,12 +6,12 @@ title: TextPanelCfg kind
 ---
 > Both documentation generation and kinds schemas are in active development and subject to change without prior notice.
 
-# TextPanelCfg kind
+## TextPanelCfg
 
-## Maturity: experimental
-## Version: 0.0
+#### Maturity: experimental
+#### Version: 0.0
 
-## Properties
+
 
 | Property       | Type                    | Required | Description                                                                                                                   |
 |----------------|-------------------------|----------|-------------------------------------------------------------------------------------------------------------------------------|
@@ -20,9 +20,7 @@ title: TextPanelCfg kind
 | `PanelOptions` | [object](#paneloptions) | **Yes**  |                                                                                                                               |
 | `TextMode`     | string                  | **Yes**  | Possible values are: `html`, `markdown`, `code`.                                                                              |
 
-## CodeOptions
-
-### Properties
+### CodeOptions
 
 | Property          | Type    | Required | Description                                                                                                                   |
 |-------------------|---------|----------|-------------------------------------------------------------------------------------------------------------------------------|
@@ -30,9 +28,7 @@ title: TextPanelCfg kind
 | `showLineNumbers` | boolean | **Yes**  | Default: `false`.                                                                                                             |
 | `showMiniMap`     | boolean | **Yes**  | Default: `false`.                                                                                                             |
 
-## PanelOptions
-
-### Properties
+### PanelOptions
 
 | Property  | Type                        | Required | Description                                                                                                |
 |-----------|-----------------------------|----------|------------------------------------------------------------------------------------------------------------|
@@ -41,8 +37,6 @@ title: TextPanelCfg kind
 | `code`    | [CodeOptions](#codeoptions) | No       |                                                                                                            |
 
 ### CodeOptions
-
-#### Properties
 
 | Property          | Type    | Required | Description                                                                                                                   |
 |-------------------|---------|----------|-------------------------------------------------------------------------------------------------------------------------------|

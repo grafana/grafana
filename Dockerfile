@@ -49,7 +49,7 @@ COPY cue.mod cue.mod
 COPY kinds kinds
 COPY packages/grafana-schema packages/grafana-schema
 COPY public/app/plugins public/app/plugins
-COPY public/api-spec.json public/api-spec.json
+COPY public/api-merged.json public/api-merged.json
 COPY pkg pkg
 COPY scripts scripts
 COPY conf conf

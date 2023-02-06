@@ -1,5 +1,5 @@
 import { extendedStats } from '../../../../queryDef';
-import { MetricAggregation } from '../aggregations';
+import { MetricAggregation } from '../../../../types';
 
 const hasValue = (value: string) => (object: { value: string }) => object.value === value;
 

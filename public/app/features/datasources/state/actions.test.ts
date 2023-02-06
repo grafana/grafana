@@ -242,7 +242,7 @@ describe('testDataSource', () => {
         datasource_uid: 'CW1234',
         grafana_version: '1.0',
         success: true,
-        editLink: '/datasources/edit/CloudWatch',
+        path: '/datasources/edit/CloudWatch',
       });
     });
 
@@ -279,7 +279,7 @@ describe('testDataSource', () => {
         datasource_uid: 'azM0nit0R',
         grafana_version: '1.0',
         success: false,
-        editLink: '/datasources/edit/Azure Monitor',
+        path: '/datasources/edit/Azure Monitor',
       });
     });
 
@@ -360,7 +360,7 @@ describe('addDataSource', () => {
       plugin_version: '1.2.3',
       datasource_uid: 'azure23',
       grafana_version: '1.0',
-      editLink: DATASOURCES_ROUTES.Edit.replace(':uid', 'azure23'),
+      path: DATASOURCES_ROUTES.Edit.replace(':uid', 'azure23'),
     });
   });
 });

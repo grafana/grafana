@@ -150,7 +150,7 @@ const UserListAdminPageUnConnected = ({
                       <Icon name="question-circle" />
                     </Tooltip>
                   </th>
-                  <th style={{ width: '1%' }}></th>
+                  <th style={{ width: '1%' }}>Synced from</th>
                 </tr>
               </thead>
               <tbody>

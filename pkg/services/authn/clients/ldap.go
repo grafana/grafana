@@ -103,8 +103,9 @@ func identityFromLDAPInfo(orgID int64, info *login.ExternalUserInfo, allowSignup
 		ClientParams: authn.ClientParams{
 			SyncUser:            true,
 			SyncTeamMembers:     true,
-			AllowSignUp:         allowSignup,
 			EnableDisabledUsers: true,
+			FetchSyncedUser:     true,
+			AllowSignUp:         allowSignup,
 			LookUpParams: login.UserLookupParams{
 				Login: &info.Login,
 				Email: &info.Email,

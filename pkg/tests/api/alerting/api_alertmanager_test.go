@@ -12,10 +12,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/grafana/grafana/pkg/expr"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/expr"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -24,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	"github.com/grafana/grafana/pkg/setting"
@@ -764,6 +766,7 @@ func TestIntegrationDeleteFolderWithRules(t *testing.T) {
 								],
 								"updated": "2021-05-19T19:47:55Z",
 								"intervalSeconds": 60,
+								"is_paused": false,
 								"version": 1,
 								"uid": "",
 								"namespace_uid": %q,
@@ -1220,6 +1223,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  ],
 						  "updated":"2021-02-21T01:10:30Z",
 						  "intervalSeconds":60,
+						  "is_paused": false,
 						  "version":1,
 						  "uid":"uid",
 						  "namespace_uid":"nsuid",
@@ -1256,6 +1260,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  ],
 						  "updated":"2021-02-21T01:10:30Z",
 						  "intervalSeconds":60,
+						  "is_paused": false,
 						  "version":1,
 						  "uid":"uid",
 						  "namespace_uid":"nsuid",
@@ -1563,6 +1568,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 		                  ],
 		                  "updated":"2021-02-21T01:10:30Z",
 		                  "intervalSeconds":60,
+		                  "is_paused": false,
 		                  "version":2,
 		                  "uid":"uid",
 		                  "namespace_uid":"nsuid",
@@ -1672,6 +1678,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					  ],
 					  "updated":"2021-02-21T01:10:30Z",
 					  "intervalSeconds":60,
+					  "is_paused":false,
 					  "version":3,
 					  "uid":"uid",
 					  "namespace_uid":"nsuid",
@@ -1757,6 +1764,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 					  ],
 					  "updated":"2021-02-21T01:10:30Z",
 					  "intervalSeconds":60,
+					  "is_paused":false,
 					  "version":3,
 					  "uid":"uid",
 					  "namespace_uid":"nsuid",
@@ -2063,6 +2071,7 @@ func TestIntegrationQuota(t *testing.T) {
 						  ],
 						  "updated":"2021-02-21T01:10:30Z",
 						  "intervalSeconds":60,
+						  "is_paused": false,
 						  "version":2,
 						  "uid":"uid",
 						  "namespace_uid":"nsuid",
@@ -2557,7 +2566,7 @@ func createUser(t *testing.T, store *sqlstore.SQLStore, cmd user.CreateUserComma
 	quotaService := quotaimpl.ProvideService(store, store.Cfg)
 	orgService, err := orgimpl.ProvideService(store, store.Cfg, quotaService)
 	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(store, orgService, store.Cfg, nil, nil, quotaService)
+	usrSvc, err := userimpl.ProvideService(store, orgService, store.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 
 	u, err := usrSvc.CreateUserForTests(context.Background(), &cmd)

@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { debounce } from 'lodash';
-import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Stack } from '@grafana/experimental';
-import { AsyncSelect, Field, InputControl, Label, useStyles2, LoadingPlaceholder } from '@grafana/ui';
+import { AsyncSelect, Field, InputControl, Label, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 import { FolderPickerFilter } from 'app/core/components/Select/FolderPicker';
 import { contextSrv } from 'app/core/core';
 import { DashboardSearchHit } from 'app/features/search/types';
@@ -235,6 +235,7 @@ export function FolderAndGroup({ initialFolder }: FolderAndGroupProps) {
                 value={selectedGroup}
                 allowCustomValue
                 formatCreateLabel={(_) => '+ Add new '}
+                noOptionsMessage="Start typing to create evaluation group"
               />
             )
           }
