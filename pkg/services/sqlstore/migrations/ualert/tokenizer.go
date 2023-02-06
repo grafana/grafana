@@ -42,7 +42,7 @@ func (t Token) String() string {
 	} else if t.IsVariable() {
 		return t.Variable
 	} else {
-		return "empty token"
+		panic("empty token")
 	}
 }
 
