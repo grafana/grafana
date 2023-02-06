@@ -20,13 +20,27 @@ type Token struct {
 	Variable string
 }
 
+func (t Token) IsSpace() bool {
+	return t.Space > 0
+}
+
+func (t Token) IsLiteral() bool {
+	return t.Literal != ""
+}
+
+func (t Token) IsVariable() bool {
+	return t.Variable != ""
+}
+
 func (t Token) String() string {
-	if t.Space > 0 {
+	if t.IsSpace() {
 		return string(t.Space)
-	} else if len(t.Literal) > 0 {
+	} else if t.IsLiteral() {
 		return t.Literal
-	} else {
+	} else if t.IsVariable() {
 		return t.Variable
+	} else {
+		return "empty token"
 	}
 }
 
@@ -36,6 +50,7 @@ func tokenizeLiteral(in []rune) (Token, int, error) {
 		r     rune
 		runes []rune
 	)
+
 	// consume leading spaces
 	for pos < len(in) {
 		if r = in[pos]; unicode.IsSpace(r) {
@@ -44,6 +59,7 @@ func tokenizeLiteral(in []rune) (Token, int, error) {
 			break
 		}
 	}
+
 	// consume runes until the first dollar or the end of in
 	for pos < len(in) {
 		if r = in[pos]; r == '$' {
@@ -54,6 +70,7 @@ func tokenizeLiteral(in []rune) (Token, int, error) {
 		// if there are more runes update pos
 		pos = pos + 1
 	}
+
 	// remove trailing spaces and rewind pos
 	for i := len(runes) - 1; i > 0; i-- {
 		if unicode.IsSpace(runes[i]) {
@@ -63,6 +80,7 @@ func tokenizeLiteral(in []rune) (Token, int, error) {
 			break
 		}
 	}
+
 	return Token{Literal: string(runes)}, pos, nil
 }
 
@@ -79,6 +97,7 @@ func tokenizeVariable(in []rune) (Token, int, error) {
 		r     rune
 		runes []rune
 	)
+
 	// consume leading spaces
 	for pos < len(in) {
 		if r = in[pos]; unicode.IsSpace(r) {
@@ -87,6 +106,7 @@ func tokenizeVariable(in []rune) (Token, int, error) {
 			break
 		}
 	}
+
 	// variables must start with a $
 	r = in[pos]
 	if r != '$' {
@@ -137,6 +157,7 @@ func tokenizeTmpl(tmpl string) ([]Token, error) {
 		tokens []Token
 		token  Token
 	)
+
 	in = []rune(tmpl)
 	for pos < len(in) {
 		r = in[pos]
@@ -153,6 +174,7 @@ func tokenizeTmpl(tmpl string) ([]Token, error) {
 		tokens = append(tokens, token)
 		pos = pos + offset
 	}
+
 	// remove the last tokens if spaces
 	for i := len(tokens) - 1; i > 0; i-- {
 		if tokens[i].Space > 0 {
@@ -161,5 +183,6 @@ func tokenizeTmpl(tmpl string) ([]Token, error) {
 			break
 		}
 	}
+
 	return tokens, nil
 }

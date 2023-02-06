@@ -343,7 +343,7 @@ func extractChannelIDs(d dashAlert) (channelUids []uidOrID) {
 func tokensToTmpl(tokens []Token) string {
 	buf := bytes.Buffer{}
 	for _, token := range tokens {
-		if token.Variable != "" {
+		if token.IsVariable() {
 			buf.WriteString("{{")
 			buf.WriteString(token.String())
 			buf.WriteString("}}")
@@ -358,7 +358,7 @@ func tokensToTmpl(tokens []Token) string {
 func variablesToPromLabels(tokens []Token) []Token {
 	result := make([]Token, 0, len(tokens))
 	for _, token := range tokens {
-		if len(token.Variable) > 0 {
+		if token.IsVariable() {
 			token.Variable = "$labels." + token.Variable
 		}
 		result = append(result, token)
