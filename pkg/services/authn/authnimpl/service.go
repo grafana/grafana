@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/hashicorp/go-multierror"
 	"go.opentelemetry.io/otel/attribute"
 
@@ -53,7 +54,7 @@ func ProvideService(
 	loginAttempts loginattempt.Service, quotaService quota.Service,
 	authInfoService login.AuthInfoService, renderService rendering.Service,
 	features *featuremgmt.FeatureManager, oauthTokenService oauthtoken.OAuthTokenService,
-	socialService social.Service,
+	socialService social.Service, cache *remotecache.RemoteCache,
 ) *Service {
 	s := &Service{
 		log:            log.New("authn.service"),
@@ -104,7 +105,7 @@ func ProvideService(
 	}
 
 	if s.cfg.AuthProxyEnabled && len(proxyClients) > 0 {
-		proxy, err := clients.ProvideProxy(cfg, proxyClients...)
+		proxy, err := clients.ProvideProxy(cfg, cache, userService, proxyClients...)
 		if err != nil {
 			s.log.Error("failed to configure auth proxy", "err", err)
 		} else {
