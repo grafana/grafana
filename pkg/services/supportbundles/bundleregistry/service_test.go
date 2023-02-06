@@ -33,5 +33,4 @@ func TestService_RegisterSupportItemCollector(t *testing.T) {
 		require.Len(t, s.collectors, 1)
 		require.Len(t, s.Collectors(), 1)
 	})
-
 }
