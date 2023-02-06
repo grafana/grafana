@@ -11,7 +11,6 @@ import { useDispatch } from 'app/types';
 
 import { useCleanup } from '../../../core/hooks/useCleanup';
 
-import { alertmanagerApi } from './api/alertmanagerApi';
 import { useGetContactPointsState } from './api/receiversApi';
 import { AlertManagerPicker } from './components/AlertManagerPicker';
 import { AlertingPageWrapper } from './components/AlertingPageWrapper';
@@ -58,9 +57,6 @@ const AmRoutes = () => {
   const [updatingTree, setUpdatingTree] = useState<boolean>(false);
   const [contactPointFilter, setContactPointFilter] = useState<string | undefined>();
   const [labelsFilter, setLabelsFilter] = useState<Label[] | undefined>();
-
-  const { useGetAlertmanagerChoiceQuery } = alertmanagerApi;
-  const { currentData: alertmanagerChoice } = useGetAlertmanagerChoiceQuery();
 
   const alertManagers = useAlertManagersByPermission('notification');
   const [alertManagerSourceName, setAlertManagerSourceName] = useAlertManagerSourceName(alertManagers);
@@ -264,10 +260,7 @@ const AmRoutes = () => {
           <>
             {policyTreeTabActive && (
               <>
-                <GrafanaAlertmanagerDeliveryWarning
-                  currentAlertmanager={alertManagerSourceName}
-                  alertmanagerChoice={alertmanagerChoice}
-                />
+                <GrafanaAlertmanagerDeliveryWarning currentAlertmanager={alertManagerSourceName} />
                 {isProvisioned && <ProvisioningAlert resource={ProvisionedResource.RootNotificationPolicy} />}
                 <Stack direction="column" gap={1}>
                   {rootRoute && (
