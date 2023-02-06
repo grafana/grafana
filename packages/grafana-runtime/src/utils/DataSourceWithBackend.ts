@@ -281,7 +281,7 @@ class DataSourceWithBackend<
         method: 'GET',
         headers: options?.headers ? { ...options.headers, ...headers } : headers,
         params: params ?? options?.params,
-        url: `/api/datasources/${this.id}/resources/${path}`,
+        url: `/api/datasources/uid/${this.uid}/resources/${path}`,
       })
     );
     return result.data;
@@ -302,7 +302,7 @@ class DataSourceWithBackend<
         method: 'POST',
         headers: options?.headers ? { ...options.headers, ...headers } : headers,
         data: data ?? { ...data },
-        url: `/api/datasources/${this.id}/resources/${path}`,
+        url: `/api/datasources/uid/${this.uid}/resources/${path}`,
       })
     );
     return result.data;
@@ -315,7 +315,7 @@ class DataSourceWithBackend<
     return lastValueFrom(
       getBackendSrv().fetch<HealthCheckResult>({
         method: 'GET',
-        url: `/api/datasources/${this.id}/health`,
+        url: `/api/datasources/uid/${this.uid}/health`,
         showErrorAlert: false,
         headers: this.getRequestHeaders(),
       })
