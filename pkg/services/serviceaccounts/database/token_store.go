@@ -49,7 +49,7 @@ func (s *ServiceAccountsStoreImpl) AddServiceAccountToken(ctx context.Context, s
 		addKeyCmd := &apikey.AddCommand{
 			Name:             cmd.Name,
 			Role:             org.RoleViewer,
-			OrgId:            cmd.OrgId,
+			OrgID:            cmd.OrgId,
 			Key:              cmd.Key,
 			SecondsToLive:    cmd.SecondsToLive,
 			ServiceAccountID: &serviceAccountId,
@@ -107,7 +107,7 @@ func (s *ServiceAccountsStoreImpl) RevokeServiceAccountToken(ctx context.Context
 
 // assignApiKeyToServiceAccount sets the API key service account ID
 func (s *ServiceAccountsStoreImpl) assignApiKeyToServiceAccount(sess *db.Session, apiKeyId int64, serviceAccountId int64) error {
-	key := apikey.APIKey{Id: apiKeyId}
+	key := apikey.APIKey{ID: apiKeyId}
 	exists, err := sess.Get(&key)
 	if err != nil {
 		s.log.Warn("API key not loaded", "err", err)
@@ -119,7 +119,7 @@ func (s *ServiceAccountsStoreImpl) assignApiKeyToServiceAccount(sess *db.Session
 	}
 	key.ServiceAccountId = &serviceAccountId
 
-	if _, err := sess.ID(key.Id).Update(&key); err != nil {
+	if _, err := sess.ID(key.ID).Update(&key); err != nil {
 		s.log.Warn("Could not update api key", "err", err)
 		return err
 	}
@@ -129,7 +129,7 @@ func (s *ServiceAccountsStoreImpl) assignApiKeyToServiceAccount(sess *db.Session
 
 // detachApiKeyFromServiceAccount converts service account token to old API key
 func (s *ServiceAccountsStoreImpl) detachApiKeyFromServiceAccount(sess *db.Session, apiKeyId int64) error {
-	key := apikey.APIKey{Id: apiKeyId}
+	key := apikey.APIKey{ID: apiKeyId}
 	exists, err := sess.Get(&key)
 	if err != nil {
 		s.log.Warn("Cannot get API key", "err", err)
@@ -141,7 +141,7 @@ func (s *ServiceAccountsStoreImpl) detachApiKeyFromServiceAccount(sess *db.Sessi
 	}
 	key.ServiceAccountId = nil
 
-	if _, err := sess.ID(key.Id).AllCols().Update(&key); err != nil {
+	if _, err := sess.ID(key.ID).AllCols().Update(&key); err != nil {
 		s.log.Error("Could not update api key", "err", err)
 		return err
 	}

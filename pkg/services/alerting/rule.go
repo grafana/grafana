@@ -222,8 +222,8 @@ func translateNotificationIDToUID(ctx context.Context, store AlertStore, id int6
 
 func getAlertNotificationUIDByIDAndOrgID(ctx context.Context, store AlertStore, notificationID int64, orgID int64) (string, error) {
 	query := &models.GetAlertNotificationUidQuery{
-		OrgId: orgID,
-		Id:    notificationID,
+		OrgID: orgID,
+		ID:    notificationID,
 	}
 
 	uid, err := store.GetAlertNotificationUidWithId(ctx, query)
