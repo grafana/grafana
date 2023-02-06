@@ -93,7 +93,7 @@ func tokenizeVariable(in []rune) (Token, int, error) {
 		return Token{}, pos, fmt.Errorf("expected $, got %c", r)
 	}
 
-	// the next character must be an open brace
+	// the next rune must be an open brace
 	pos = pos + 1
 	r = in[pos]
 	if r != '{' {
@@ -114,9 +114,14 @@ func tokenizeVariable(in []rune) (Token, int, error) {
 		}
 	}
 
-	// if the last character was not a closing brace, then this is not a valid variable
+	// if the last rune is not a closing brace then this is not a valid variable
 	if r != '}' {
 		return Token{}, pos, fmt.Errorf("expected closing }, got %c", r)
+	}
+
+	// if there is more than one closing brace then this is not a valid variable either
+	if pos < len(in) && in[pos] == '}' {
+		return Token{}, pos, errors.New("unexpected }")
 	}
 
 	return Token{Variable: string(runes)}, pos, nil

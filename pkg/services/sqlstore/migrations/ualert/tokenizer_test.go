@@ -179,6 +179,11 @@ func TestTokenizeVariable(t *testing.T) {
 		text: "${instance is down",
 		pos:  10,
 		err:  "expected letter, number or underscore, got  ",
+	}, {
+		name: "variable with two closing braces returns error",
+		text: "${instance}} is down",
+		pos:  11,
+		err:  "unexpected }",
 	}}
 
 	for _, test := range tests {
