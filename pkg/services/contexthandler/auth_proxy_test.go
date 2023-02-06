@@ -54,8 +54,8 @@ func TestInitContextWithAuthProxy_CachedInvalidUserID(t *testing.T) {
 	key := fmt.Sprintf(authproxy.CachePrefix, h)
 
 	t.Logf("Injecting stale user ID in cache with key %q", key)
-	barray := []byte(strconv.FormatInt(int64(33), 10))
-	err = svc.RemoteCache.SetByteArray(context.Background(), key, barray, 0)
+	userIdPayload := []byte(strconv.FormatInt(int64(33), 10))
+	err = svc.RemoteCache.SetByteArray(context.Background(), key, userIdPayload, 0)
 	require.NoError(t, err)
 
 	authEnabled := svc.initContextWithAuthProxy(ctx, orgID)

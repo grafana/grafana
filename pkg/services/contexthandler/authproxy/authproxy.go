@@ -376,8 +376,8 @@ func (auth *AuthProxy) Remember(reqCtx *contextmodel.ReqContext, id int64) error
 
 	expiration := time.Duration(auth.cfg.AuthProxySyncTTL) * time.Minute
 
-	barray := []byte(strconv.FormatInt(id, 10))
-	if err := auth.remoteCache.SetByteArray(reqCtx.Req.Context(), key, barray, expiration); err != nil {
+	userIdPayload := []byte(strconv.FormatInt(id, 10))
+	if err := auth.remoteCache.SetByteArray(reqCtx.Req.Context(), key, userIdPayload, expiration); err != nil {
 		return err
 	}
 

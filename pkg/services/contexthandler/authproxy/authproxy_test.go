@@ -61,8 +61,8 @@ func TestMiddlewareContext(t *testing.T) {
 		h, err := HashCacheKey(hdrName)
 		require.NoError(t, err)
 		key := fmt.Sprintf(CachePrefix, h)
-		barray := []byte(strconv.FormatInt(id, 10))
-		err = cache.SetByteArray(context.Background(), key, barray, 0)
+		userIdPayload := []byte(strconv.FormatInt(id, 10))
+		err = cache.SetByteArray(context.Background(), key, userIdPayload, 0)
 		require.NoError(t, err)
 		// Set up the middleware
 		auth, reqCtx := prepareMiddleware(t, cache, nil)
@@ -84,8 +84,8 @@ func TestMiddlewareContext(t *testing.T) {
 		h, err := HashCacheKey(hdrName + "-" + group + "-" + role)
 		require.NoError(t, err)
 		key := fmt.Sprintf(CachePrefix, h)
-		barray := []byte(strconv.FormatInt(id, 10))
-		err = cache.SetByteArray(context.Background(), key, barray, 0)
+		userIdPayload := []byte(strconv.FormatInt(id, 10))
+		err = cache.SetByteArray(context.Background(), key, userIdPayload, 0)
 		require.NoError(t, err)
 
 		auth, reqCtx := prepareMiddleware(t, cache, func(req *http.Request, cfg *setting.Cfg) {
