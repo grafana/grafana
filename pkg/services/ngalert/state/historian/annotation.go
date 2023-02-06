@@ -90,7 +90,7 @@ func (h *AnnotationBackend) QueryStates(ctx context.Context, query ngmodels.Hist
 		return nil, fmt.Errorf("failed to query annotations for state history: %w", err)
 	}
 
-	frame := data.NewFrame("states")
+	frame := data.NewFrame(dfStreamTitle)
 
 	// Annotations only support querying for a single rule's history.
 	// Since we are guaranteed to have a single rule, we can return it as a single series.
@@ -98,8 +98,8 @@ func (h *AnnotationBackend) QueryStates(ctx context.Context, query ngmodels.Hist
 	// We are not guaranteed that a given annotation has parseable text, so we instead use the entire text as an opaque value.
 
 	lbls := data.Labels(map[string]string{
-		"from":    "state-history",
-		"ruleUID": fmt.Sprint(query.RuleUID),
+		StateHistoryLabelKey: StateHistoryLabelValue,
+		LabelRuleUID:         fmt.Sprint(query.RuleUID),
 	})
 
 	// TODO: In the future, we probably want to have one series per unique text string, instead. For simplicity, let's just make it a new column.

@@ -12,6 +12,27 @@ import (
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 )
 
+const (
+	StateHistoryLabelKey   = "from"
+	StateHistoryLabelValue = "state-history"
+)
+
+const (
+	LabelOrgID     = "orgID"
+	LabelRuleUID   = "ruleUID"
+	LabelGroup     = "group"
+	LabelFolderUID = "folderUID"
+)
+
+const dfStreamTitle = "states"
+
+const (
+	// Name of the columns used in the dataframe.
+	dfTime   = "time"
+	dfLine   = "line"
+	dfLabels = "labels"
+)
+
 func shouldRecord(transition state.StateTransition) bool {
 	if !transition.Changed() {
 		return false
