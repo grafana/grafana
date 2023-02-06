@@ -186,7 +186,7 @@ func (c *httpLokiClient) setAuthAndTenantHeaders(req *http.Request) {
 		req.Header.Add("X-Scope-OrgID", c.cfg.TenantID)
 	}
 }
-func (c *httpLokiClient) query(ctx context.Context, selectors []Selector, start, end int64) (QueryRes, error) {
+func (c *httpLokiClient) rangeQuery(ctx context.Context, selectors []Selector, start, end int64) (QueryRes, error) {
 	// Run the pre-flight checks for the query.
 	if len(selectors) == 0 {
 		return QueryRes{}, fmt.Errorf("at least one selector required to query")
@@ -199,8 +199,12 @@ func (c *httpLokiClient) query(ctx context.Context, selectors []Selector, start,
 
 	values := url.Values{}
 	values.Set("query", selectorString(selectors))
-	values.Set("start", fmt.Sprintf("%d", start))
-	values.Set("end", fmt.Sprintf("%d", end))
+	if start != 0 {
+		values.Set("start", fmt.Sprintf("%d", start))
+	}
+	if end != 0 {
+		values.Set("end", fmt.Sprintf("%d", end))
+	}
 
 	queryURL.RawQuery = values.Encode()
 

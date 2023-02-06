@@ -37,7 +37,7 @@ const (
 type remoteLokiClient interface {
 	ping(context.Context) error
 	push(context.Context, []stream) error
-	query(ctx context.Context, selectors []Selector, start, end int64) (QueryRes, error)
+	rangeQuery(ctx context.Context, selectors []Selector, start, end int64) (QueryRes, error)
 }
 
 type RemoteLokiBackend struct {
@@ -79,7 +79,7 @@ func (h *RemoteLokiBackend) QueryStates(ctx context.Context, query models.Histor
 		return nil, fmt.Errorf("failed to build the provided selectors: %w", err)
 	}
 	// Timestamps are expected in RFC3339Nano.
-	res, err := h.client.query(ctx, selectors, query.From.UnixNano(), query.To.UnixNano())
+	res, err := h.client.rangeQuery(ctx, selectors, query.From.UnixNano(), query.To.UnixNano())
 	if err != nil {
 		return nil, err
 	}
