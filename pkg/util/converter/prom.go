@@ -227,8 +227,8 @@ func readArrayData(iter *jsoniter.Iterator) backend.DataResponse {
 }
 
 // For consistent ordering read values to an array not a map
-func readLabelsAsPairs(iter *jsoniter.Iterator) [][2]string {
-	pairs := make([][2]string, 0, 10)
+func readLabelsAsPairs(iter *jsoniter.Iterator, pairs [][2]string) [][2]string {
+	pairs = pairs[:0]
 	for k := iter.ReadObject(); k != ""; k = iter.ReadObject() {
 		pairs = append(pairs, [2]string{k, iter.ReadString()})
 	}
@@ -269,7 +269,7 @@ func readLabelsOrExemplars(iter *jsoniter.Iterator) (*data.Frame, [][2]string) {
 
 					case "labels":
 						max := 0
-						for _, pair := range readLabelsAsPairs(iter) {
+						for _, pair := range readLabelsAsPairs(iter, pairs) {
 							k := pair[0]
 							v := pair[1]
 							f, ok := lookup[k]
@@ -304,6 +304,7 @@ func readLabelsOrExemplars(iter *jsoniter.Iterator) (*data.Frame, [][2]string) {
 			}
 		default:
 			v := fmt.Sprintf("%v", iter.Read())
+			pairs = pairs[:0]
 			pairs = append(pairs, [2]string{l1Field, v})
 		}
 	}

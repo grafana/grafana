@@ -15,9 +15,9 @@ const ds = setupMockedDataSource({
   variables: [],
 });
 
-ds.datasource.api.getNamespaces = jest.fn().mockResolvedValue([]);
-ds.datasource.api.getMetrics = jest.fn().mockResolvedValue([]);
-ds.datasource.api.getDimensionKeys = jest.fn().mockResolvedValue([]);
+ds.datasource.resources.getNamespaces = jest.fn().mockResolvedValue([]);
+ds.datasource.resources.getMetrics = jest.fn().mockResolvedValue([]);
+ds.datasource.resources.getDimensionKeys = jest.fn().mockResolvedValue([]);
 ds.datasource.getVariables = jest.fn().mockReturnValue([]);
 const metricStat: MetricStat = {
   region: 'us-east-2',
@@ -121,8 +121,8 @@ describe('MetricStatEditor', () => {
     };
 
     beforeEach(() => {
-      propsNamespaceMetrics.datasource.api.getNamespaces = jest.fn().mockResolvedValue(namespaces);
-      propsNamespaceMetrics.datasource.api.getMetrics = jest.fn().mockResolvedValue(metrics);
+      propsNamespaceMetrics.datasource.resources.getNamespaces = jest.fn().mockResolvedValue(namespaces);
+      propsNamespaceMetrics.datasource.resources.getMetrics = jest.fn().mockResolvedValue(metrics);
       onChange.mockClear();
     });
 
@@ -146,7 +146,7 @@ describe('MetricStatEditor', () => {
     });
 
     it('should remove metricName from metricStat if it does not exist in new namespace', async () => {
-      propsNamespaceMetrics.datasource.api.getMetrics = jest.fn().mockImplementation(({ namespace, region }) => {
+      propsNamespaceMetrics.datasource.resources.getMetrics = jest.fn().mockImplementation(({ namespace, region }) => {
         let mockMetrics =
           namespace === 'n1' && region === props.metricStat.region
             ? metrics
@@ -202,8 +202,8 @@ describe('MetricStatEditor', () => {
     it('should set value to "all" when its a monitoring account and no account id is defined in the query', async () => {
       config.featureToggles.cloudWatchCrossAccountQuerying = true;
       const onChange = jest.fn();
-      props.datasource.api.isMonitoringAccount = jest.fn().mockResolvedValue(true);
-      props.datasource.api.getAccounts = jest.fn().mockResolvedValue([
+      props.datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(true);
+      props.datasource.resources.getAccounts = jest.fn().mockResolvedValue([
         {
           value: '123456789',
           label: 'test-account1',
@@ -231,8 +231,8 @@ describe('MetricStatEditor', () => {
     it('should unset value when no accounts were found and an account id is defined in the query', async () => {
       config.featureToggles.cloudWatchCrossAccountQuerying = true;
       const onChange = jest.fn();
-      props.datasource.api.isMonitoringAccount = jest.fn().mockResolvedValue(false);
-      props.datasource.api.getAccounts = jest.fn().mockResolvedValue([]);
+      props.datasource.resources.isMonitoringAccount = jest.fn().mockResolvedValue(false);
+      props.datasource.resources.getAccounts = jest.fn().mockResolvedValue([]);
       await act(async () => {
         render(
           <MetricStatEditor

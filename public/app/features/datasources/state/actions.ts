@@ -90,6 +90,7 @@ export const initDataSourceSettings = (
 
 export const testDataSource = (
   dataSourceName: string,
+  editRoute = DATASOURCES_ROUTES.Edit,
   dependencies: TestDataSourceDependencies = {
     getDatasourceSrv,
     getBackendSrv,
@@ -97,6 +98,7 @@ export const testDataSource = (
 ): ThunkResult<void> => {
   return async (dispatch: ThunkDispatch, getState) => {
     const dsApi = await dependencies.getDatasourceSrv().get(dataSourceName);
+    const editLink = editRoute.replace(/:uid/gi, dataSourceName);
 
     if (!dsApi.testDatasource) {
       return;
@@ -114,6 +116,7 @@ export const testDataSource = (
           plugin_id: dsApi.type,
           datasource_uid: dsApi.uid,
           success: true,
+          path: editLink,
         });
       } catch (err) {
         let message: string | undefined;
@@ -134,6 +137,7 @@ export const testDataSource = (
           plugin_id: dsApi.type,
           datasource_uid: dsApi.uid,
           success: false,
+          path: editLink,
         });
       }
     });
@@ -189,7 +193,7 @@ export function loadDataSourceMeta(dataSource: DataSourceSettings): ThunkResult<
   };
 }
 
-export function addDataSource(plugin: DataSourcePluginMeta, editLink = DATASOURCES_ROUTES.Edit): ThunkResult<void> {
+export function addDataSource(plugin: DataSourcePluginMeta, editRoute = DATASOURCES_ROUTES.Edit): ThunkResult<void> {
   return async (dispatch, getStore) => {
     await dispatch(loadDataSources());
 
@@ -207,6 +211,7 @@ export function addDataSource(plugin: DataSourcePluginMeta, editLink = DATASOURC
     }
 
     const result = await api.createDataSource(newInstance);
+    const editLink = editRoute.replace(/:uid/gi, result.datasource.uid);
 
     await getDatasourceSrv().reload();
     await contextSrv.fetchUserPermissions();
@@ -216,9 +221,10 @@ export function addDataSource(plugin: DataSourcePluginMeta, editLink = DATASOURC
       plugin_id: plugin.id,
       datasource_uid: result.datasource.uid,
       plugin_version: result.meta?.info?.version,
+      path: editLink,
     });
 
-    locationService.push(editLink.replace(/:uid/gi, result.datasource.uid));
+    locationService.push(editLink);
   };
 }
 

@@ -12,15 +12,15 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/db/dbtest"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	pref "github.com/grafana/grafana/pkg/services/preference"
 	"github.com/grafana/grafana/pkg/services/preference/preftest"
-	"github.com/grafana/grafana/pkg/services/sqlstore/mockstore"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
@@ -38,7 +38,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 		store.Cfg = hs.Cfg
 		hs.teamService = teamimpl.ProvideService(store, hs.Cfg)
 		hs.SQLStore = store
-		mock := &mockstore.SQLStoreMock{}
+		mock := dbtest.NewFakeDB()
 
 		loggedInUserScenarioWithRole(t, "When admin is calling GET on", "GET", "/api/teams/search", "/api/teams/search",
 			org.RoleAdmin, func(sc *scenarioContext) {
@@ -108,7 +108,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 	t.Run("When creating team with API key", func(t *testing.T) {
 		hs := setupSimpleHTTPServer(nil)
 		hs.Cfg.EditorsCanAdmin = true
-		hs.SQLStore = mockstore.NewSQLStoreMock()
+		hs.SQLStore = dbtest.NewFakeDB()
 		hs.teamService = &teamtest.FakeService{}
 		teamName := "team foo"
 
@@ -124,7 +124,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 
 		t.Run("with no real signed in user", func(t *testing.T) {
 			logger := &logtest.Fake{}
-			c := &models.ReqContext{
+			c := &contextmodel.ReqContext{
 				Context:      &web.Context{Req: req},
 				SignedInUser: &user.SignedInUser{},
 				Logger:       logger,
@@ -141,7 +141,7 @@ func TestTeamAPIEndpoint(t *testing.T) {
 
 		t.Run("with real signed in user", func(t *testing.T) {
 			logger := &logtest.Fake{}
-			c := &models.ReqContext{
+			c := &contextmodel.ReqContext{
 				Context:      &web.Context{Req: req},
 				SignedInUser: &user.SignedInUser{UserID: 42},
 				Logger:       logger,

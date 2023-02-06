@@ -4,8 +4,7 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { applyFieldOverrides, DataFrame, SelectableValue, SplitOpen, TimeZone, ValueLinkConfig } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime/src';
-import { Collapse, RadioButtonGroup, Table } from '@grafana/ui';
-import { FilterItem } from '@grafana/ui/src/components/Table/types';
+import { Collapse, RadioButtonGroup, Table, AdHocFilterItem } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { PANEL_BORDER } from 'app/core/constants';
 import { StoreState, TABLE_RESULTS_STYLE } from 'app/types';
@@ -20,7 +19,7 @@ interface RawPrometheusContainerProps {
   exploreId: ExploreId;
   width: number;
   timeZone: TimeZone;
-  onCellFilterAdded?: (filter: FilterItem) => void;
+  onCellFilterAdded?: (filter: AdHocFilterItem) => void;
   showRawPrometheus?: boolean;
   splitOpenFn: SplitOpen;
 }

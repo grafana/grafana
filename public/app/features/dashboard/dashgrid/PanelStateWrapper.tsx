@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import classNames from 'classnames';
 import React, { PureComponent } from 'react';
 import { Subscription } from 'rxjs';
@@ -10,6 +11,7 @@ import {
   DashboardCursorSync,
   EventFilterOptions,
   FieldConfigSource,
+  getDataSourceRef,
   getDefaultTimeRange,
   LinkModel,
   LoadingState,
@@ -32,13 +34,17 @@ import {
   PanelContextProvider,
   PanelPadding,
   SeriesVisibilityChangeMode,
+  AdHocFilterItem,
 } from '@grafana/ui';
 import { PANEL_BORDER } from 'app/core/constants';
 import { profiler } from 'app/core/profiler';
 import { applyPanelTimeOverrides } from 'app/features/dashboard/utils/panel';
 import { InspectTab } from 'app/features/inspector/types';
 import { getPanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
+import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
+import { applyFilterFromTable } from 'app/features/variables/adhoc/actions';
 import { changeSeriesColorConfigFactory } from 'app/plugins/panel/timeseries/overrides/colorSeriesConfigFactory';
+import { dispatch } from 'app/store/store';
 import { RenderEvent } from 'app/types/events';
 
 import { isSoloRoute } from '../../../routes/utils';
@@ -108,6 +114,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         canAddAnnotations: props.dashboard.canAddAnnotations.bind(props.dashboard),
         canEditAnnotations: props.dashboard.canEditAnnotations.bind(props.dashboard),
         canDeleteAnnotations: props.dashboard.canDeleteAnnotations.bind(props.dashboard),
+        onAddAdHocFilter: this.onAddAdHocFilter,
       },
       data: this.getInitialPanelDataState(),
     };
@@ -444,6 +451,20 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     );
   }
 
+  onAddAdHocFilter = (filter: AdHocFilterItem) => {
+    const { key, value, operator } = filter;
+
+    // When the datasource is null/undefined (for a default datasource), we use getInstanceSettings
+    // to find the real datasource ref for the default datasource.
+    const datasourceInstance = getDatasourceSrv().getInstanceSettings(this.props.panel.datasource);
+    const datasourceRef = datasourceInstance && getDataSourceRef(datasourceInstance);
+    if (!datasourceRef) {
+      return;
+    }
+
+    dispatch(applyFilterFromTable({ datasource: datasourceRef, key, operator, value }));
+  };
+
   renderPanelContent(innerWidth: number, innerHeight: number) {
     const { panel, plugin, dashboard } = this.props;
     const { renderCounter, data } = this.state;
@@ -616,7 +637,12 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     const title = panel.getDisplayTitle();
     const padding: PanelPadding = plugin.noPadding ? 'none' : 'md';
 
-    const titleItems = [
+    const showTitleItems =
+      (panel.links && panel.links.length > 0 && this.onShowPanelLinks) ||
+      (data.series.length > 0 && data.series.some((v) => (v.meta?.notices?.length ?? 0) > 0)) ||
+      (data.request && data.request.timeInfo) ||
+      alertState;
+    const titleItems = showTitleItems && (
       <PanelHeaderTitleItems
         key="title-items"
         alertState={alertState}
@@ -624,25 +650,60 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
         panelId={panel.id}
         panelLinks={panel.links}
         onShowPanelLinks={this.onShowPanelLinks}
-      />,
-    ];
+      />
+    );
 
+    const overrideStyles: { menuItemsClassName?: string; menuWrapperClassName?: string; pos?: React.CSSProperties } = {
+      menuItemsClassName: undefined,
+      menuWrapperClassName: undefined,
+      pos: { top: 0, left: '-156px' },
+    };
+
+    if (config.featureToggles.newPanelChromeUI) {
+      // set override styles
+      overrideStyles.menuItemsClassName = css`
+        width: inherit;
+        top: inherit;
+        left: inherit;
+        position: inherit;
+        float: inherit;
+      `;
+      overrideStyles.menuWrapperClassName = css`
+        position: inherit;
+        width: inherit;
+        top: inherit;
+        left: inherit;
+        float: inherit;
+        .dropdown-submenu > .dropdown-menu {
+          position: absolute;
+        }
+      `;
+      overrideStyles.pos = undefined;
+    }
+
+    // custom styles is neeeded to override legacy panel-menu styles and prevent menu from being cut off
     let menu;
     if (!dashboard.meta.publicDashboardAccessToken) {
       menu = (
         <div data-testid="panel-dropdown">
           <PanelHeaderMenuWrapper
-            style={{ top: 0 }}
+            style={overrideStyles.pos}
             panel={panel}
             dashboard={dashboard}
             loadingState={data.state}
             onClose={() => {}}
+            menuItemsClassName={overrideStyles.menuItemsClassName}
+            menuWrapperClassName={overrideStyles.menuWrapperClassName}
           />
         </div>
       );
     }
 
+    const dragClass = !(isViewing || isEditing) ? 'grid-drag-handle' : '';
     if (config.featureToggles.newPanelChromeUI) {
+      // Shift the hover menu down if it's on the top row so it doesn't get clipped by topnav
+      const hoverHeaderOffset = (panel.gridPos?.y ?? 0) === 0 ? -16 : undefined;
+
       return (
         <PanelChrome
           width={width}
@@ -654,7 +715,12 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
           description={!!panel.description ? this.onShowPanelDescription : undefined}
           titleItems={titleItems}
           menu={menu}
+          dragClass={dragClass}
+          dragClassCancel="grid-drag-cancel"
           padding={padding}
+          hoverHeaderOffset={hoverHeaderOffset}
+          hoverHeader={title ? false : true}
+          displayMode={transparent ? 'transparent' : 'default'}
         >
           {(innerWidth, innerHeight) => (
             <>

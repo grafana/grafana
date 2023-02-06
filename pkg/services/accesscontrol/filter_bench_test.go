@@ -58,7 +58,7 @@ func setupFilterBenchmark(b *testing.B, numDs, numPermissions int) (db.DB, []acc
 	for i := 1; i <= numDs; i++ {
 		err := store.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
 			Name:  fmt.Sprintf("ds:%d", i),
-			OrgId: 1,
+			OrgID: 1,
 		})
 		require.NoError(b, err)
 	}

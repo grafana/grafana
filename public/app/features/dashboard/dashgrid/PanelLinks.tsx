@@ -2,8 +2,7 @@ import { css } from '@emotion/css';
 import React from 'react';
 
 import { DataLink, GrafanaTheme2, LinkModel } from '@grafana/data';
-import { Dropdown, Icon, Menu, ToolbarButton, useStyles2 } from '@grafana/ui';
-import { getFocusStyles, getMouseFocusStyles } from '@grafana/ui/src/themes/mixins';
+import { Dropdown, Icon, Menu, ToolbarButton, useStyles2, PanelChrome } from '@grafana/ui';
 
 interface Props {
   panelLinks: DataLink[];
@@ -27,20 +26,19 @@ export function PanelLinks({ panelLinks, onShowPanelLinks }: Props) {
   if (panelLinks.length === 1) {
     const linkModel = onShowPanelLinks()[0];
     return (
-      <a
+      <PanelChrome.TitleItem
         href={linkModel.href}
         onClick={linkModel.onClick}
         target={linkModel.target}
         title={linkModel.title}
-        className={styles.singleLink}
       >
-        <Icon name="external-link-alt" size="lg" />
-      </a>
+        <Icon name="external-link-alt" size="md" />
+      </PanelChrome.TitleItem>
     );
   } else {
     return (
       <Dropdown overlay={getLinksContent}>
-        <ToolbarButton icon="external-link-alt" aria-label="panel links" className={styles.menuTrigger} />
+        <ToolbarButton icon="external-link-alt" iconSize="md" aria-label="panel links" className={styles.menuTrigger} />
       </Dropdown>
     );
   }
@@ -49,29 +47,11 @@ export function PanelLinks({ panelLinks, onShowPanelLinks }: Props) {
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     menuTrigger: css({
+      height: '100%',
+      background: 'inherit',
       border: 'none',
       borderRadius: `${theme.shape.borderRadius()}`,
       cursor: 'context-menu',
-    }),
-    singleLink: css({
-      color: theme.colors.text.secondary,
-      padding: `${theme.spacing(0, 1)}`,
-      height: ` ${theme.spacing(theme.components.height.md)}`,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-
-      '&:focus, &:focus-visible': {
-        ...getFocusStyles(theme),
-        zIndex: 1,
-      },
-      '&: focus:not(:focus-visible)': getMouseFocusStyles(theme),
-
-      '&:hover ': {
-        boxShadow: `${theme.shadows.z1}`,
-        color: `${theme.colors.text.primary}`,
-        background: `${theme.colors.background.secondary}`,
-      },
     }),
   };
 };

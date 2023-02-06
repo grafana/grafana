@@ -5,7 +5,8 @@ import { EditorField, Space } from '@grafana/experimental';
 import { Button, Checkbox, Icon, Label, LoadingPlaceholder, Modal, Select, useStyles2 } from '@grafana/ui';
 
 import Search from '../../Search';
-import { DescribeLogGroupsRequest, LogGroup, LogGroupResponse, ResourceResponse } from '../../types';
+import { DescribeLogGroupsRequest, ResourceResponse, LogGroupResponse } from '../../resources/types';
+import { LogGroup } from '../../types';
 import { Account, ALL_ACCOUNTS_OPTION } from '../Account';
 import getStyles from '../styles';
 

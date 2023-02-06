@@ -50,6 +50,7 @@ import { expandRecordingRules } from './language_utils';
 import { renderLegendFormat } from './legend';
 import PrometheusMetricFindQuery from './metric_find_query';
 import { getInitHints, getQueryHints } from './query_hints';
+import { QueryEditorMode } from './querybuilder/shared/types';
 import { getOriginalMetricName, transform, transformV2 } from './result_transformer';
 import { trackQuery } from './tracking';
 import {
@@ -68,6 +69,8 @@ import { PrometheusVariableSupport } from './variables';
 
 const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', 'api/v1/series', 'api/v1/labels'];
+
+export const InstantQueryRefIdIndex = '-Instant';
 
 export class PrometheusDatasource
   extends DataSourceWithBackend<PromQuery, PromOptions>
@@ -92,6 +95,7 @@ export class PrometheusDatasource
   customQueryParameters: any;
   datasourceConfigurationPrometheusFlavor?: PromApplication;
   datasourceConfigurationPrometheusVersion?: string;
+  defaultEditor?: QueryEditorMode;
   exemplarsAvailable: boolean;
   subType: PromApplication;
   rulerEnabled: boolean;
@@ -126,6 +130,7 @@ export class PrometheusDatasource
     this.customQueryParameters = new URLSearchParams(instanceSettings.jsonData.customQueryParameters);
     this.datasourceConfigurationPrometheusFlavor = instanceSettings.jsonData.prometheusType;
     this.datasourceConfigurationPrometheusVersion = instanceSettings.jsonData.prometheusVersion;
+    this.defaultEditor = instanceSettings.jsonData.defaultEditor;
     this.variables = new PrometheusVariableSupport(this, this.templateSrv, this.timeSrv);
     this.exemplarsAvailable = true;
 
@@ -208,7 +213,7 @@ export class PrometheusDatasource
     }
 
     let queryUrl = this.url + url;
-    if (url.startsWith(`/api/datasources/${this.id}`)) {
+    if (url.startsWith(`/api/datasources/uid/${this.uid}`)) {
       // This url is meant to be a replacement for the whole URL. Replace the entire URL
       queryUrl = url;
     }
@@ -258,7 +263,7 @@ export class PrometheusDatasource
     if (GET_AND_POST_METADATA_ENDPOINTS.some((endpoint) => url.includes(endpoint))) {
       try {
         return await lastValueFrom(
-          this._request<T>(`/api/datasources/${this.id}/resources${url}`, params, {
+          this._request<T>(`/api/datasources/uid/${this.uid}/resources${url}`, params, {
             method: this.httpMethod,
             hideFromInspector: true,
             showErrorAlert: false,
@@ -276,7 +281,7 @@ export class PrometheusDatasource
     }
 
     return await lastValueFrom(
-      this._request<T>(`/api/datasources/${this.id}/resources${url}`, params, {
+      this._request<T>(`/api/datasources/uid/${this.uid}/resources${url}`, params, {
         method: 'GET',
         hideFromInspector: true,
         ...options,
@@ -427,7 +432,7 @@ export class PrometheusDatasource
         },
         {
           ...processedTarget,
-          refId: processedTarget.refId + '-Instant',
+          refId: processedTarget.refId + InstantQueryRefIdIndex,
           range: false,
         }
       );
@@ -697,7 +702,7 @@ export class PrometheusDatasource
     }
 
     return this._request<PromDataSuccessResponse<PromVectorData | PromScalarData>>(
-      `/api/datasources/${this.id}/resources${url}`,
+      `/api/datasources/uid/${this.uid}/resources${url}`,
       data,
       {
         requestId: query.requestId,

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -101,7 +102,7 @@ func (s *store) List() ([]supportbundles.Bundle, error) {
 		return nil, err
 	}
 
-	var res []supportbundles.Bundle
+	res := make([]supportbundles.Bundle, 0)
 	for _, items := range data {
 		for _, s := range items {
 			var b supportbundles.Bundle

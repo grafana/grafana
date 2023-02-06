@@ -5,7 +5,7 @@ import lodash from 'lodash';
 import React from 'react';
 import selectEvent from 'react-select-event';
 
-import { ResourceResponse, LogGroupResponse } from '../../types';
+import { ResourceResponse, LogGroupResponse } from '../../resources/types';
 
 import { LogGroupsSelector } from './LogGroupsSelector';
 
