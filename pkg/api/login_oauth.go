@@ -327,16 +327,12 @@ func (hs *HTTPServer) buildExternalUserInfo(token *oauth2.Token, userInfo *socia
 		OrgRoles:       map[int64]org.RoleType{},
 		Groups:         userInfo.Groups,
 		IsGrafanaAdmin: userInfo.IsGrafanaAdmin,
-		IsSynced:       true,
-		SyncedFrom:     name,
 	}
 
-	// TODO: should we refactor this to use the same logic to be able to extract if we have synced the user externally?
-	// this could be made into a method to populate fields into the externalUserInfo
+	// FIXME: this is a hack to support the old way of assigning roles to users
+	// we should remove this once we have a better way of assigning roles to users
+	// potentially add externallySynced logic here
 	if userInfo.Role != "" && !hs.Cfg.OAuthSkipOrgRoleUpdateSync {
-		// user has a role assignment, and we are not skipping role sync
-		extUser.IsSynced = false
-		extUser.SyncedFrom = ""
 		rt := userInfo.Role
 		if rt.IsValid() {
 			// The user will be assigned a role in either the auto-assigned organization or in the default one
