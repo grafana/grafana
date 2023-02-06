@@ -238,6 +238,7 @@ func (m *migration) SQL(dialect migrator.Dialect) string {
 
 //nolint:gocyclo
 func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
+	logger := mg.Logger
 	m.sess = sess
 	m.mg = mg
 
@@ -245,7 +246,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	if err != nil {
 		return err
 	}
-	mg.Logger.Info("alerts found to migrate", "alerts", len(dashAlerts))
+	logger.Info("alerts found to migrate", "alerts", len(dashAlerts))
 
 	// [orgID, dataSourceId] -> UID
 	dsIDMap, err := m.slurpDSIDs()
@@ -268,6 +269,8 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 	rulesPerOrg := make(map[int64]map[*alertRule][]uidOrID)
 
 	for _, da := range dashAlerts {
+		alertLogger := logger.New("alert_id", da.Id, "alert_name", da.Name)
+
 		newCond, err := transConditions(*da.ParsedSettings, da.OrgId, dsIDMap)
 		if err != nil {
 			return err
@@ -363,7 +366,7 @@ func (m *migration) Exec(sess *xorm.Session, mg *migrator.Migrator) error {
 				AlertId: da.Id,
 			}
 		}
-		rule, err := m.makeAlertRule(*newCond, da, folder.Uid)
+		rule, err := m.makeAlertRule(alertLogger, *newCond, da, folder.Uid)
 		if err != nil {
 			return err
 		}

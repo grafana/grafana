@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -107,11 +108,14 @@ func addMigrationInfo(da *dashAlert) (map[string]string, map[string]string) {
 	return lbls, annotations
 }
 
-func (m *migration) makeAlertRule(cond condition, da dashAlert, folderUID string) (*alertRule, error) {
-	lbls, annotations := addMigrationInfo(&da)
+func (m *migration) makeAlertRule(logger log.Logger, cond condition, da dashAlert, folderUID string) (*alertRule, error) {
+	logger = logger.New("dashboard", folderUID)
 
+	lbls, annotations := addMigrationInfo(&da)
 	tokens, err := tokenizeTmpl(da.Message)
 	if err != nil {
+		logger.Warn("failed to migrate invalid message template, message template has been copied unchanged",
+			"message", da.Message, "err", err)
 		annotations["message"] = da.Message
 	} else {
 		tokens = variablesToPromLabels(tokens)
