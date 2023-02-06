@@ -217,7 +217,7 @@ By default, a refresh token is included in the response for the **Authorization 
    allow_sign_up = true
    auto_login = false
    client_id = <OpenID Connect Client ID from Centrify>
-   client_secret = <your generated OpenID Connect Client Secret"
+   client_secret = <your generated OpenID Connect Client Secret>
    scopes = openid profile email
    auth_url = https://<your domain>.my.centrify.com/OAuth2/Authorize/<Application ID>
    token_url = https://<your domain>.my.centrify.com/OAuth2/Token/<Application ID>
@@ -391,4 +391,17 @@ Payload:
     },
     ...
 }
+```
+
+## Skip organization role sync
+
+To prevent the sync of organization roles from the OAuth provider, set `skip_org_role_sync` to `true`. This is useful if you want to manage the organization roles for your users from within Grafana.
+This also impacts the `allow_assign_grafana_admin` setting by not syncing the Grafana admin role from the OAuth provider.
+
+```ini
+[auth.generic_oauth]
+# ..
+# prevents the sync of org roles from the Oauth provider
+skip_org_role_sync = true
+``
 ```
