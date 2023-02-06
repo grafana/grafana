@@ -154,7 +154,7 @@ func (st *DBstore) MarkConfigurationAsApplied(ctx context.Context, cmd *models.M
 		}
 
 		if rowsAffected != 1 {
-			st.Logger.Error("update statement affected %d alert configuration history records", rowsAffected)
+			st.Logger.Warn("Alert configuration history updated", "rows", rowsAffected)
 		}
 
 		return nil
