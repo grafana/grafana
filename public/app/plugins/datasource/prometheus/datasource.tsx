@@ -489,6 +489,10 @@ export class PrometheusDatasource
 
             // cache and amend with new
             response.data.forEach((frame: DataFrame) => {
+              if (frame.fields.length > 0) {
+                return;
+              }
+
               let nextTimes = frame.fields[0].values.toArray();
 
               // unaligned timeseries from merged cache and next
@@ -524,6 +528,8 @@ export class PrometheusDatasource
 
               frame.length = frame.fields[0].values.length;
             });
+
+            // TODO: trim fields/frames that were missing or empty in response
 
             // purge cache
             this.fieldsCache.forEach((data, key) => {
