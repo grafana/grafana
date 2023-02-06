@@ -14,7 +14,7 @@ keywords:
 
 # Planning your IAM integration strategy
 
-The following documentation is meant to shed light on the different authorization and authentications strategies available in Grafana. By doing preparation before implementation, the user will be able to decide which integration strategy suits best for their needs.
+This topic describes the decisions you should make when using an identity and access management (IAM) provider to manage access to Grafana. When you prepare before you implement, you can decide which integration strategy best meets your needs.
 
 Identity and Access Management (IAM) is needed to handle secure access to [Grafana resources]. Integrating Grafana with the proper solution is a key step to allow user access to sensitive data and resources, and to simplify user management and authentication.
 
@@ -34,13 +34,15 @@ In order to plan an integration with Grafana, assess your organization's current
 
 After considering needs, chosen IAM solution and taking into consideration the security requirements, the last step is to test it out thoroughly before deploying it to a production environment.
 
-## Where are my users?
+## Internal vs external users
 
-The first thing to consider is who are my users? Are the user exclusively within my organization or will they be outside of my organization?
+As a first step, determine where your Grafana users are located. Are the users located within your organization, or are they outside your organization?
 
-If the users are within my organization, this means that Grafana might be able to integrate with those users by providing connection with to the corresponding Identity Provider.
+If the users are within your organization, Grafana might be able to integrate with those users through an identify provider.
 
-If the users are outside of my organization, this means that Grafana needs to provide anonymous access, which is not enabled by default.
+If the users are outside your organization, you must provide anonymous access to Grafana, which is not enabled by default.
+
+For information about enabling anonymous access, refer to the [documentation](../../setup-grafana/configure-security/configure-authentication/_index.md#anonymous-authentication)
 
 ### Why do I need to organize the users?
 
@@ -71,15 +73,17 @@ Organizations, on the other hand, provide a higher level of management for multi
 
 That being said, Teams provide many of the same benefits as Organizations, and can be seen as a more streamlined and simplified approach to managing resources and access. As such, it is possible that in the future, Teams may eventually replace Organizations as the primary way to manage resources in Grafana.
 
-## Do I have external systems?
+## Access to external systems
 
-Consider the need for [M2M] communications. If there's a system that needs to interact with Grafana, ensure that it has proper access for it.
+Consider the need for machine-to-machine [M2M] communications. If a system needs to interact with Grafana, ensure it has proper access.
 
-Here are some example scenarios:
+Consider the following scenarios:
 
-**IoT devices monitoring**: Sensors and actuators might want to ingest information to Grafana in an automatic way. Consider the security implications of a shared security access for all the devices or an individual access to each of them.
+**IoT devices monitoring**: Sensors and actuators might feed information into Grafana in an automatic way. Consider the security implications of a shared security access for all the devices or an individual access to each of them.
 
-**Network monitoring**: Having a distributed systems architecture performance reported back to Grafana might provide insight about bottlenecks and even trigger alerts in the need of a timely intervention.
+**Network monitoring**: Having distributed systems architecture performance reported back to Grafana can provide insight into bottlenecks and trigger alerts that should be resolved promptly.
+
+**Stocks**: Keeping track of the stocks changes overtime can be automated with by an automated agent feeding information into Grafana. Thus, keeping track of the changes overtime.
 
 These are just a few examples of how Grafana can be used in M2M scenarios. The platform is highly flexible and can be used in a variety of other M2M applications, making it a powerful tool for organizations looking to gain insights into their systems and devices.
 
