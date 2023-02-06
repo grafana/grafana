@@ -10,11 +10,16 @@ import {
 import { config, getBackendSrv } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
-import { DashboardSectionItem } from '../types';
-
 import { replaceCurrentFolderQuery } from './utils';
 
-import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery, SearchResultMeta } from '.';
+import {
+  DashboardQueryResult,
+  GrafanaSearcher,
+  NestedFolderItem,
+  QueryResponse,
+  SearchQuery,
+  SearchResultMeta,
+} from '.';
 
 // The backend returns an empty frame with a special name to indicate that the indexing engine is being rebuilt,
 // and that it can not serve any search requests. We are temporarily using the old SQL Search API as a fallback when that happens.
@@ -216,9 +221,9 @@ export class BlugeSearcher implements GrafanaSearcher {
     };
   }
 
-  async getFolderChildren(folderUid?: string): Promise<DashboardSectionItem[]> {
+  async getFolderChildren(folderUid?: string): Promise<NestedFolderItem[]> {
     // PR TODO: fill this out
-    throw new Error('searcher not supported - use sql searcher');
+    throw new Error('PR TODO: Searcher not supported - use sql searcher');
   }
 
   getFolderViewSort(): string {

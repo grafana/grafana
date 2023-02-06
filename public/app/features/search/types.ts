@@ -2,7 +2,7 @@ import { Action } from 'redux';
 
 import { WithAccessControlMetadata } from '@grafana/data';
 
-import { QueryResponse } from './service';
+import { NestedFolderItem, QueryResponse } from './service';
 
 export enum DashboardSearchItemType {
   DashDB = 'dash-db',
@@ -88,7 +88,7 @@ export interface SearchState {
   eventTrackingNamespace: EventTrackingNamespace;
 }
 
-export type OnToggleChecked = (item: DashboardSectionItem | DashboardSection) => void;
+export type OnToggleChecked = (item: NestedFolderItem) => void;
 
 export enum SearchLayout {
   List = 'list',

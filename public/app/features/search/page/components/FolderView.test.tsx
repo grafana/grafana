@@ -9,7 +9,7 @@ import impressionSrv from '../../../../core/services/impression_srv';
 import { DashboardQueryResult, getGrafanaSearcher, QueryResponse } from '../../service';
 import { DashboardSearchItemType } from '../../types';
 
-import { FolderView } from './FolderView';
+import { RootFolderView } from './RootFolderView';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -69,7 +69,11 @@ describe('FolderView', () => {
     grafanaSearcherSpy.mockImplementationOnce(() => promise);
 
     render(
-      <FolderView onTagSelected={mockOnTagSelected} selection={mockSelection} selectionToggle={mockSelectionToggle} />
+      <RootFolderView
+        onTagSelected={mockOnTagSelected}
+        selection={mockSelection}
+        selectionToggle={mockSelectionToggle}
+      />
     );
     expect(await screen.findByTestId('Spinner')).toBeInTheDocument();
 
@@ -84,7 +88,11 @@ describe('FolderView', () => {
   it('does not show the starred items if not signed in', async () => {
     contextSrv.isSignedIn = false;
     render(
-      <FolderView onTagSelected={mockOnTagSelected} selection={mockSelection} selectionToggle={mockSelectionToggle} />
+      <RootFolderView
+        onTagSelected={mockOnTagSelected}
+        selection={mockSelection}
+        selectionToggle={mockSelectionToggle}
+      />
     );
     expect((await screen.findAllByTestId(selectors.components.Search.sectionV2))[0]).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Starred' })).not.toBeInTheDocument();
@@ -93,7 +101,11 @@ describe('FolderView', () => {
   it('shows the starred items if signed in', async () => {
     contextSrv.isSignedIn = true;
     render(
-      <FolderView onTagSelected={mockOnTagSelected} selection={mockSelection} selectionToggle={mockSelectionToggle} />
+      <RootFolderView
+        onTagSelected={mockOnTagSelected}
+        selection={mockSelection}
+        selectionToggle={mockSelectionToggle}
+      />
     );
     expect(await screen.findByRole('button', { name: 'Starred' })).toBeInTheDocument();
   });
@@ -101,7 +113,11 @@ describe('FolderView', () => {
   it('does not show the recent items if no dashboards have been opened recently', async () => {
     jest.spyOn(impressionSrv, 'getDashboardOpened').mockResolvedValue([]);
     render(
-      <FolderView onTagSelected={mockOnTagSelected} selection={mockSelection} selectionToggle={mockSelectionToggle} />
+      <RootFolderView
+        onTagSelected={mockOnTagSelected}
+        selection={mockSelection}
+        selectionToggle={mockSelectionToggle}
+      />
     );
     expect((await screen.findAllByTestId(selectors.components.Search.sectionV2))[0]).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Recent' })).not.toBeInTheDocument();
@@ -110,14 +126,22 @@ describe('FolderView', () => {
   it('shows the recent items if any dashboards have recently been opened', async () => {
     jest.spyOn(impressionSrv, 'getDashboardOpened').mockResolvedValue(['7MeksYbmk']);
     render(
-      <FolderView onTagSelected={mockOnTagSelected} selection={mockSelection} selectionToggle={mockSelectionToggle} />
+      <RootFolderView
+        onTagSelected={mockOnTagSelected}
+        selection={mockSelection}
+        selectionToggle={mockSelectionToggle}
+      />
     );
     expect(await screen.findByRole('button', { name: 'Recent' })).toBeInTheDocument();
   });
 
   it('shows the general folder by default', async () => {
     render(
-      <FolderView onTagSelected={mockOnTagSelected} selection={mockSelection} selectionToggle={mockSelectionToggle} />
+      <RootFolderView
+        onTagSelected={mockOnTagSelected}
+        selection={mockSelection}
+        selectionToggle={mockSelectionToggle}
+      />
     );
     expect(await screen.findByRole('button', { name: 'General' })).toBeInTheDocument();
   });
@@ -126,7 +150,7 @@ describe('FolderView', () => {
     it('does not show the starred items even if signed in', async () => {
       contextSrv.isSignedIn = true;
       render(
-        <FolderView
+        <RootFolderView
           hidePseudoFolders
           onTagSelected={mockOnTagSelected}
           selection={mockSelection}
@@ -140,7 +164,7 @@ describe('FolderView', () => {
     it('does not show the recent items even if recent dashboards have been opened', async () => {
       jest.spyOn(impressionSrv, 'getDashboardOpened').mockResolvedValue(['7MeksYbmk']);
       render(
-        <FolderView
+        <RootFolderView
           hidePseudoFolders
           onTagSelected={mockOnTagSelected}
           selection={mockSelection}
@@ -156,7 +180,11 @@ describe('FolderView', () => {
     // reject with a specific Error object
     grafanaSearcherSpy.mockRejectedValueOnce(new Error('Uh oh spagghettios!'));
     render(
-      <FolderView onTagSelected={mockOnTagSelected} selection={mockSelection} selectionToggle={mockSelectionToggle} />
+      <RootFolderView
+        onTagSelected={mockOnTagSelected}
+        selection={mockSelection}
+        selectionToggle={mockSelectionToggle}
+      />
     );
     expect(await screen.findByRole('alert', { name: 'Uh oh spagghettios!' })).toBeInTheDocument();
   });
@@ -165,7 +193,11 @@ describe('FolderView', () => {
     // reject with nothing
     grafanaSearcherSpy.mockRejectedValueOnce(null);
     render(
-      <FolderView onTagSelected={mockOnTagSelected} selection={mockSelection} selectionToggle={mockSelectionToggle} />
+      <RootFolderView
+        onTagSelected={mockOnTagSelected}
+        selection={mockSelection}
+        selectionToggle={mockSelectionToggle}
+      />
     );
     expect(await screen.findByRole('alert', { name: 'Something went wrong' })).toBeInTheDocument();
   });

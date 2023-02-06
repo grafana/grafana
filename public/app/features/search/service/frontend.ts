@@ -3,9 +3,7 @@ import uFuzzy from '@leeoniya/ufuzzy';
 import { DataFrameView, SelectableValue, ArrayVector } from '@grafana/data';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
-import { DashboardSectionItem } from '../types';
-
-import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery } from '.';
+import { DashboardQueryResult, GrafanaSearcher, NestedFolderItem, QueryResponse, SearchQuery } from '.';
 
 export class FrontendSearcher implements GrafanaSearcher {
   readonly cache = new Map<string, Promise<FullResultCache>>();
@@ -82,9 +80,9 @@ export class FrontendSearcher implements GrafanaSearcher {
     return this.parent.getFolderViewSort();
   }
 
-  async getFolderChildren(folderUid?: string): Promise<DashboardSectionItem[]> {
+  async getFolderChildren(folderUid?: string): Promise<NestedFolderItem[]> {
     // PR TODO: fill this out
-    throw new Error('searcher not supported - use sql searcher');
+    throw new Error('PR TODO: Searcher not supported - use sql searcher');
   }
 }
 

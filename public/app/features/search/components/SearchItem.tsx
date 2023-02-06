@@ -6,12 +6,14 @@ import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Card, Icon, IconName, TagList, useStyles2 } from '@grafana/ui';
 
 import { SEARCH_ITEM_HEIGHT } from '../constants';
-import { DashboardSearchItemType, DashboardSectionItem, OnToggleChecked } from '../types';
+import { NestedFolderItem } from '../service';
+import { OnToggleChecked } from '../types';
 
 import { SearchCheckbox } from './SearchCheckbox';
 
 export interface Props {
-  item: DashboardSectionItem;
+  item: NestedFolderItem;
+  isSelected?: boolean;
   editable?: boolean;
   onTagSelected: (name: string) => any;
   onToggleChecked?: OnToggleChecked;
@@ -30,7 +32,7 @@ const getIconFromMeta = (meta = ''): IconName => {
 };
 
 /** @deprecated */
-export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSelected, onClickItem }) => {
+export const SearchItem: FC<Props> = ({ item, isSelected, editable, onToggleChecked, onTagSelected, onClickItem }) => {
   const styles = useStyles2(getStyles);
   const tagSelected = useCallback(
     (tag: string, event: React.MouseEvent<HTMLElement>) => {
@@ -53,7 +55,6 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
     [item, onToggleChecked]
   );
 
-  const folderTitle = item.folderTitle || 'General';
   return (
     <Card
       data-testid={selectors.dashboardItem(item.title)}
@@ -63,21 +64,26 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
       onClick={onClickItem}
     >
       <Card.Heading>
-        <KindIcon kind={item.type} /> {item.title}
+        <KindIcon kind={item.kind} /> {item.title}
       </Card.Heading>
+
       <Card.Figure align={'center'} className={styles.checkbox}>
         <SearchCheckbox
           aria-label="Select dashboard"
           editable={editable}
-          checked={item.checked}
+          checked={isSelected}
           onClick={handleCheckboxClick}
         />
       </Card.Figure>
+
       <Card.Meta separator={''}>
-        <span className={styles.metaContainer}>
-          <Icon name={'folder'} aria-hidden />
-          {folderTitle}
-        </span>
+        {item.folderTitle && (
+          <span className={styles.metaContainer}>
+            <Icon name={'folder'} aria-hidden />
+            {item.folderTitle}
+          </span>
+        )}
+
         {item.sortMetaName && (
           <span className={styles.metaContainer}>
             <Icon name={getIconFromMeta(item.sortMetaName)} />
@@ -86,14 +92,14 @@ export const SearchItem: FC<Props> = ({ item, editable, onToggleChecked, onTagSe
         )}
       </Card.Meta>
       <Card.Tags>
-        <TagList tags={item.tags} onClick={tagSelected} getAriaLabel={(tag) => `Filter by tag "${tag}"`} />
+        <TagList tags={item.tags ?? []} onClick={tagSelected} getAriaLabel={(tag) => `Filter by tag "${tag}"`} />
       </Card.Tags>
     </Card>
   );
 };
 
-function KindIcon({ kind }: { kind: DashboardSearchItemType }) {
-  if (kind === DashboardSearchItemType.DashFolder) {
+function KindIcon({ kind }: { kind: NestedFolderItem['kind'] }) {
+  if (kind === 'folder') {
     return <Icon name="folder" />;
   }
 

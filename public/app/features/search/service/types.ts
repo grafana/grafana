@@ -1,8 +1,6 @@
 import { DataFrameView, SelectableValue } from '@grafana/data';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
-import { DashboardSectionItem } from '../types';
-
 export interface FacetField {
   field: string;
   count?: number;
@@ -88,24 +86,19 @@ export interface NestedFolderDTO {
   title: string;
 }
 
-export interface NestedFolderItem extends DashboardSectionItem {
+export interface NestedFolderItem {
   kind: 'folder' | 'dashboard';
   uid: string;
+  title: string;
+  url?: string;
+  tags?: string[];
+
+  icon?: string;
+  folderTitle?: string; // where does this come from?
+  sortMeta?: string; // PR TODO: test with enterprise
+  sortMetaName?: string; // PR TODO: test with enterprise
+
+  itemsUIDs?: string[];
+
+  // selected?: boolean; // PR TODO: is this the right place for it? I don't think this shape should contain state
 }
-
-// export interface NestedFolder extends NestedFolderDTO {
-//   kind: 'folder';
-// }
-
-// export interface NestedFolderDashboard extends DashboardSectionItem {
-//   kind: 'dashboard';
-
-//   // uid: string;
-//   // title: string;
-//   // url: string;
-//   // uri: string; // ???
-//   // isStarred: boolean;
-//   // tags: string[];
-//   // // folderUid: string;
-//   // // folderTitle: string;
-// }

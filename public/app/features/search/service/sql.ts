@@ -3,8 +3,8 @@ import { config } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { backendSrv } from 'app/core/services/backend_srv';
 
-import { DEFAULT_MAX_VALUES, GENERAL_FOLDER_UID, TYPE_KIND_MAP } from '../constants';
-import { DashboardSearchHit, DashboardSearchItemType, DashboardSectionItem } from '../types';
+import { DEFAULT_MAX_VALUES, TYPE_KIND_MAP } from '../constants';
+import { DashboardSearchHit, DashboardSearchItemType } from '../types';
 
 import { LocationInfo, NestedFolderDTO, NestedFolderItem } from './types';
 import { replaceCurrentFolderQuery } from './utils';
@@ -227,27 +227,13 @@ export class SQLSearcher implements GrafanaSearcher {
 
   async getFolderChildren(parentUid?: string): Promise<NestedFolderItem[]> {
     if (!config.featureToggles.nestedFolders) {
-      throw new Error('require nestedFolders enabled');
+      throw new Error('PR TODO: Require nestedFolders enabled');
     }
 
     if (!parentUid) {
-      // We don't show dashboards at root in folder view yet - we create a dummy 'General' folder
-      // and FolderSection for General will fetch them
-      const generalFolder: NestedFolderItem = {
-        type: DashboardSearchItemType.DashFolder,
-        kind: 'folder',
-
-        uid: GENERAL_FOLDER_UID,
-        title: 'General',
-        isStarred: false,
-        tags: [],
-        uri: '/dashboards',
-        url: '/dashboards',
-      };
-
+      // We don't show dashboards at root in folder view yet - they're shown under a dummy 'general'
+      // folder that FolderView adds in
       const folders = await getChildFolders();
-      folders.unshift(generalFolder);
-
       return folders;
     }
 
@@ -260,17 +246,11 @@ export class SQLSearcher implements GrafanaSearcher {
 
     const dashboardItems: NestedFolderItem[] = dashboardsResults.view.map((item) => {
       return {
-        type: DashboardSearchItemType.DashDB,
         kind: 'dashboard',
-
         uid: item.uid,
         title: item.name,
         url: item.url,
-        uri: item.url,
-        id: 666, // do not use me!
-        isStarred: false,
         tags: item.tags ?? [],
-        folderUid: parentUid || item.location,
         folderTitle: dashboardsResults.view.dataFrame.meta?.custom?.locationInfo[item.location].name,
       };
     });
