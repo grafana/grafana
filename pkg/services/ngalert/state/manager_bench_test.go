@@ -87,15 +87,15 @@ func makeBenchResults(count int) eval.Results {
 			EvaluatedAt:        time.Now().UTC(),
 			EvaluationDuration: 5 * time.Second,
 			Values: map[string]eval.NumberValueCapture{
-				"A": {
+				"A": eval.NumberValueCapture{
 					Var:   "A",
 					Value: &one,
 				},
-				"B": {
+				"B": eval.NumberValueCapture{
 					Var:   "B",
 					Value: &one,
 				},
-				"C": {
+				"C": eval.NumberValueCapture{
 					Var:   "C",
 					Value: &one,
 				},
