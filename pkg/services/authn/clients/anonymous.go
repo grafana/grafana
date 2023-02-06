@@ -13,7 +13,7 @@ import (
 
 var _ authn.ContextAwareClient = new(Anonymous)
 
-func ProvideAnonymous(cfg *setting.Cfg, orgService org.Service, kvStore kvstore.KVStore) *Anonymous {
+func ProvideAnonymous(cfg *setting.Cfg, orgService org.Service, _ kvstore.KVStore) *Anonymous {
 	return &Anonymous{
 		cfg:        cfg,
 		log:        log.New("authn.anonymous"),
@@ -25,7 +25,6 @@ type Anonymous struct {
 	cfg        *setting.Cfg
 	log        log.Logger
 	orgService org.Service
-	kvstore    kvstore.KVStore
 }
 
 func (a *Anonymous) Name() string {
@@ -59,11 +58,6 @@ func (a *Anonymous) Priority() uint {
 
 func (a *Anonymous) UsageStatFn(ctx context.Context) (map[string]interface{}, error) {
 	m := map[string]interface{}{}
-
-	m["stats.auth_enabled.anonymous.count"] = 0
-	if a.cfg.AnonymousEnabled {
-		m["stats.auth_enabled.anonymous.count"] = 1
-	}
 
 	// Add stats about anonymous auth
 	m["stats.anonymous.customized_role.count"] = 0
