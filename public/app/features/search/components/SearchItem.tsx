@@ -63,7 +63,10 @@ export const SearchItem = ({ item, isSelected, editable, onToggleChecked, onTagS
       className={styles.container}
       onClick={onClickItem}
     >
-      <Card.Heading>{item.title}</Card.Heading>
+      <Card.Heading>
+        <KindIcon kind={item.kind} /> {item.title}
+      </Card.Heading>
+
       <Card.Figure align={'center'} className={styles.checkbox}>
         <SearchCheckbox
           aria-label="Select dashboard"
@@ -72,6 +75,7 @@ export const SearchItem = ({ item, isSelected, editable, onToggleChecked, onTagS
           onClick={handleCheckboxClick}
         />
       </Card.Figure>
+
       <Card.Meta separator={''}>
         <span className={styles.metaContainer}>
           <Icon name={getIconForKind(item.parentKind ?? 'folder')} aria-hidden />
@@ -91,6 +95,14 @@ export const SearchItem = ({ item, isSelected, editable, onToggleChecked, onTagS
     </Card>
   );
 };
+
+function KindIcon({ kind }: { kind: DashboardViewItem['kind'] }) {
+  if (kind === 'folder') {
+    return <Icon name="folder" />;
+  }
+
+  return null;
+}
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {

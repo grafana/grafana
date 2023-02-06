@@ -12,13 +12,13 @@ import { FolderDTO } from 'app/types';
 import { PreviewsSystemRequirements } from '../../components/PreviewsSystemRequirements';
 import { getGrafanaSearcher } from '../../service';
 import { getSearchStateManager } from '../../state/SearchStateManager';
-import { SearchLayout } from '../../types';
+import { SearchLayout, DashboardViewItem } from '../../types';
 import { newSearchSelection, updateSearchSelection } from '../selection';
 
 import { ActionRow, getValidQueryLayout } from './ActionRow';
 import { FolderSection } from './FolderSection';
-import { FolderView } from './FolderView';
 import { ManageActions } from './ManageActions';
+import { RootFolderView } from './RootFolderView';
 import { SearchResultsCards } from './SearchResultsCards';
 import { SearchResultsGrid } from './SearchResultsGrid';
 import { SearchResultsTable, SearchResultsProps } from './SearchResultsTable';
@@ -86,11 +86,12 @@ export const SearchView = ({ showManage, folderDTO, hidePseudoFolders, keyboardE
     }
 
     const selection = showManage ? searchSelection.isSelected : undefined;
+
     if (layout === SearchLayout.Folders) {
       if (folderDTO) {
         return (
           <FolderSection
-            section={{ uid: folderDTO.uid, kind: 'folder', title: folderDTO.title }}
+            section={sectionForFolderView(folderDTO)}
             selection={selection}
             selectionToggle={toggleSelection}
             onTagSelected={stateManager.onAddTag}
@@ -102,7 +103,7 @@ export const SearchView = ({ showManage, folderDTO, hidePseudoFolders, keyboardE
         );
       }
       return (
-        <FolderView
+        <RootFolderView
           key={listKey}
           selection={selection}
           selectionToggle={toggleSelection}
@@ -215,3 +216,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     margin-top: ${theme.v1.spacing.md};
   `,
 });
+
+function sectionForFolderView(folderDTO: FolderDTO): DashboardViewItem {
+  return { uid: folderDTO.uid, kind: 'folder', title: folderDTO.title };
+}

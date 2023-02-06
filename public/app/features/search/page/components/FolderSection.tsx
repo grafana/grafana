@@ -10,8 +10,8 @@ import { getSectionStorageKey } from 'app/features/search/utils';
 import { useUniqueId } from 'app/plugins/datasource/influxdb/components/useUniqueId';
 
 import { SearchItem } from '../..';
-import { getGrafanaSearcher, SearchQuery } from '../../service';
-import { queryResultToViewItem } from '../../service/utils';
+import { GENERAL_FOLDER_UID } from '../../constants';
+import { getGrafanaSearcher } from '../../service';
 import { DashboardViewItem } from '../../types';
 import { SelectionChecker, SelectionToggle } from '../selection';
 
@@ -42,22 +42,11 @@ export const FolderSection = ({
     if (!sectionExpanded && !renderStandaloneBody) {
       return Promise.resolve([]);
     }
-    let query: SearchQuery = {
-      query: '*',
-      kind: ['dashboard'],
-      location: section.uid,
-      sort: 'name_sort',
-      limit: 1000, // this component does not have infinate scroll, so we need to load everything upfront
-    };
-    if (section.itemsUIDs) {
-      query = {
-        uid: section.itemsUIDs, // array of UIDs
-      };
-    }
 
-    const raw = await getGrafanaSearcher().search({ ...query, tags });
-    const items = raw.view.map((v) => queryResultToViewItem(v, raw.view));
-    return items;
+    const searcher = getGrafanaSearcher();
+    const childItems = searcher.getFolderChildren(section.uid);
+
+    return childItems;
   }, [sectionExpanded, tags]);
 
   const onSectionExpand = () => {
@@ -99,21 +88,67 @@ export const FolderSection = ({
     }
 
     return results.value.map((item) => {
-      return (
-        <SearchItem
-          key={item.uid}
-          item={item}
-          onTagSelected={onTagSelected}
-          onToggleChecked={(item) => {
-            if (selectionToggle) {
-              selectionToggle('dashboard', item.uid!);
-            }
-          }}
-          editable={Boolean(selection != null)}
-          onClickItem={onClickItem}
-          isSelected={selectionToggle && selection?.(item.kind, item.uid)}
-        />
-      );
+      if (item.kind === 'dashboard') {
+        return (
+          <SearchItem
+            key={item.uid}
+            item={item}
+            onTagSelected={onTagSelected}
+            onToggleChecked={(item) => {
+              if (selectionToggle) {
+                selectionToggle('dashboard', item.uid);
+              }
+            }}
+            editable={Boolean(selection != null)}
+            onClickItem={onClickItem}
+            isSelected={selection?.(item.kind, item.uid)}
+          />
+        );
+      }
+
+      if (item.kind === 'folder') {
+        return (
+          <SearchItem
+            key={item.uid}
+            item={item}
+            onTagSelected={onTagSelected}
+            onToggleChecked={(item) => {
+              if (selectionToggle) {
+                selectionToggle('dashboard', item.uid);
+              }
+            }}
+            editable={Boolean(selection != null)}
+            onClickItem={onClickItem}
+            isSelected={selection?.(item.kind, item.uid)}
+          />
+        );
+      }
+
+      throw new Error('Unhandled kind in FolderSection');
+
+      // if (selection && selectionToggle) {
+      //   const type = v.type === DashboardSearchItemType.DashFolder ? 'folder' : 'dashboard';
+
+      //   v = {
+      //     ...v,
+      //     checked: selection(type, v.uid!),
+      //   };
+      // }
+
+      // return (
+      //   <SearchItem
+      //     key={v.uid}
+      //     item={v}
+      //     onTagSelected={onTagSelected}
+      //     onToggleChecked={(item) => {
+      //       if (selectionToggle) {
+      //         selectionToggle('dashboard', item.uid!);
+      //       }
+      //     }}
+      //     editable={Boolean(selection != null)}
+      //     onClickItem={onClickItem}
+      //   />
+      // );
     });
   };
 
@@ -153,7 +188,7 @@ export const FolderSection = ({
 
           <div className={styles.text}>
             <span id={labelId}>{section.title}</span>
-            {section.url && section.uid !== 'general' && (
+            {section.url && section.uid !== GENERAL_FOLDER_UID && (
               <a href={section.url} className={styles.link}>
                 <span className={styles.separator}>|</span> <Icon name="folder-upload" />{' '}
                 {t('search.folder-view.go-to-folder', 'Go to folder')}
@@ -170,6 +205,7 @@ export const FolderSection = ({
 
 const getSectionHeaderStyles = (theme: GrafanaTheme2, editable: boolean) => {
   const sm = theme.spacing(1);
+
   return {
     wrapper: css`
       align-items: center;

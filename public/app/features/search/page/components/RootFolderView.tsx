@@ -11,18 +11,15 @@ import { contextSrv } from '../../../../core/services/context_srv';
 import impressionSrv from '../../../../core/services/impression_srv';
 import { GENERAL_FOLDER_UID } from '../../constants';
 import { getGrafanaSearcher } from '../../service';
-import { queryResultToViewItem } from '../../service/utils';
-import { DashboardViewItem } from '../../types';
-import { SearchResultsProps } from '../components/SearchResultsTable';
 
 import { FolderSection } from './FolderSection';
+import { SearchResultsProps } from './SearchResultsTable';
 
 type Props = Pick<SearchResultsProps, 'selection' | 'selectionToggle' | 'onTagSelected' | 'onClickItem'> & {
   tags?: string[];
   hidePseudoFolders?: boolean;
 };
-
-export const FolderView = ({
+export const RootFolderView = ({
   selection,
   selectionToggle,
   onTagSelected,
@@ -33,34 +30,24 @@ export const FolderView = ({
   const styles = useStyles2(getStyles);
 
   const results = useAsync(async () => {
-    const folders: DashboardViewItem[] = [];
+    const searcher = getGrafanaSearcher();
+    const folders = await searcher.getFolderChildren();
 
     if (!hidePseudoFolders) {
       if (contextSrv.isSignedIn) {
         const stars = await getBackendSrv().get('api/user/stars');
         if (stars.length > 0) {
-          folders.push({ title: 'Starred', icon: 'star', kind: 'folder', uid: '__starred', itemsUIDs: stars });
+          folders.unshift({ title: 'Starred', icon: 'star', kind: 'folder', uid: '__starred', itemsUIDs: stars });
         }
       }
 
       const itemsUIDs = await impressionSrv.getDashboardOpened();
       if (itemsUIDs.length) {
-        folders.push({ title: 'Recent', icon: 'clock-nine', kind: 'folder', uid: '__recent', itemsUIDs });
+        folders.unshift({ title: 'Recent', icon: 'clock-nine', kind: 'folder', uid: '__recent', itemsUIDs });
       }
     }
 
-    folders.push({ title: 'General', url: '/dashboards', kind: 'folder', uid: GENERAL_FOLDER_UID });
-
-    const searcher = getGrafanaSearcher();
-    const results = await searcher.search({
-      query: '*',
-      kind: ['folder'],
-      sort: searcher.getFolderViewSort(),
-      limit: 1000,
-    });
-    for (const row of results.view) {
-      folders.push(queryResultToViewItem(row, results.view));
-    }
+    folders.unshift({ title: 'General', url: '/dashboards', kind: 'folder', uid: GENERAL_FOLDER_UID });
 
     return folders;
   }, []);

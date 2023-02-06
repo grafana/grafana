@@ -1,6 +1,8 @@
 import { SelectableValue, DataFrame, DataFrameView } from '@grafana/data';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 
+import { DashboardViewItem } from '../types';
+
 import { GrafanaSearcher, QueryResponse, SearchQuery } from '.';
 
 // This is a dummy search useful for tests
@@ -37,5 +39,9 @@ export class DummySearcher implements GrafanaSearcher {
 
   getFolderViewSort(): string {
     return '';
+  }
+
+  async getFolderChildren(folderUid?: string): Promise<DashboardViewItem[]> {
+    return [];
   }
 }
