@@ -32,7 +32,6 @@ const Matchers: FC<MatchersProps> = ({ matchers }) => {
           <HoverCard
             arrow
             placement="top"
-            showAfter={100}
             content={
               <>
                 {rest.map((matcher) => (

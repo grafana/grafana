@@ -340,7 +340,6 @@ const Policy: FC<PolicyComponentProps> = ({
                     <HoverCard
                       arrow
                       placement="top"
-                      showAfter={100}
                       content={
                         <Stack direction="row" gap={0.5}>
                           {Object.entries(inheritedProperties).map(([key, value]) => {

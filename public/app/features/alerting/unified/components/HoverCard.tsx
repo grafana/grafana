@@ -46,7 +46,7 @@ export const HoverCard: FC<HoverCardProps> = ({
   );
 
   return (
-    <PopoverController content={body} showAfter={showAfter} hideAfter={100}>
+    <PopoverController content={body} hideAfter={100}>
       {(showPopper, hidePopper, popperProps) => {
         return (
           <>
