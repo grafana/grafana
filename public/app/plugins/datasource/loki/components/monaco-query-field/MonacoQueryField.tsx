@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { languageConfiguration, monarchlanguage } from '@grafana/monaco-logql';
-import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes } from '@grafana/ui';
+import { useTheme2, ReactMonacoEditor, Monaco, monacoTypes, MonacoEditor } from '@grafana/ui';
 
 import { Props } from './MonacoQueryFieldProps';
 import { getOverrideServices } from './getOverrideServices';
@@ -110,7 +110,7 @@ const MonacoQueryField = ({ history, onBlur, onRunQuery, initialValue, datasourc
     };
   }, []);
 
-  const setPlaceholder = (monaco: typeof monacoTypes, editor: monacoTypes.editor.IStandaloneCodeEditor) => {
+  const setPlaceholder = (monaco: Monaco, editor: MonacoEditor) => {
     const placeholderDecorators = [
       {
         range: new monaco.Range(1, 1, 1, 1),
