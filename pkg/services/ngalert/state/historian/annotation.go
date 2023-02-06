@@ -102,41 +102,54 @@ func (h *AnnotationBackend) QueryStates(ctx context.Context, query ngmodels.Hist
 		LabelRuleUID:         fmt.Sprint(query.RuleUID),
 	})
 
-	// TODO: In the future, we probably want to have one series per unique text string, instead. For simplicity, let's just make it a new column.
-	//
 	// TODO: This is a really naive mapping that will evolve in the next couple changes.
 	// TODO: It will converge over time with the other implementations.
 	//
-	// We represent state history as five vectors:
+	// We represent state history from annotations as five vectors:
 	//   1. `time` - when the transition happened
 	//   2. `text` - a text string containing metadata about the rule
-	//   3. `prev` - the previous state and reason
-	//   4. `next` - the next state and reason
-	//   5. `data` - a JSON string, containing the annotation's contents. analogous to item.Data
+	//   3. `line` - a JSON object, containing most of the annotation's data fields
+
+	type annotationsEntry struct {
+		SchemaVersion int    `json:"schemaVersion"`
+		Previous      string `json:"previous"`
+		Current       string `json:"current"`
+		// Values is synonymous to item.Data, the data field from an annotation.
+		Values       *simplejson.Json `json:"values"`
+		DashboardUID string           `json:"dashboardUID"`
+		PanelID      int64            `json:"panelID"`
+	}
 
 	times := make([]time.Time, 0, len(items))
 	texts := make([]string, 0, len(items))
-	prevStates := make([]string, 0, len(items))
-	nextStates := make([]string, 0, len(items))
-	values := make([]string, 0, len(items))
+	lines := make([]json.RawMessage, 0, len(items))
 	for _, item := range items {
-		data, err := json.Marshal(item.Data)
+		var dashUID string
+		if item.DashboardUID != nil {
+			dashUID = *item.DashboardUID // TODO: Doesn't alerting only fill out the ID field? Does this get auto-populated?
+		}
+		entry := annotationsEntry{
+			SchemaVersion: 1,
+			Previous:      item.PrevState,
+			Current:       item.NewState,
+			Values:        item.Data,
+			DashboardUID:  dashUID,
+			PanelID:       item.PanelID,
+		}
+
+		line, err := json.Marshal(entry)
 		if err != nil {
 			logger.Error("Annotation service gave an annotation with unparseable data, skipping", "id", item.ID, "err", err)
 			continue
 		}
 		times = append(times, time.Unix(item.Time, 0))
 		texts = append(texts, item.Text)
-		prevStates = append(prevStates, item.PrevState)
-		nextStates = append(nextStates, item.NewState)
-		values = append(values, string(data))
+		lines = append(lines, line)
 	}
 
 	frame.Fields = append(frame.Fields, data.NewField(dfTime, columnLbls, times))
 	frame.Fields = append(frame.Fields, data.NewField("text", columnLbls, texts))
-	frame.Fields = append(frame.Fields, data.NewField("prev", columnLbls, prevStates))
-	frame.Fields = append(frame.Fields, data.NewField("next", columnLbls, nextStates))
-	frame.Fields = append(frame.Fields, data.NewField("data", columnLbls, values))
+	frame.Fields = append(frame.Fields, data.NewField(dfLine, columnLbls, lines))
 
 	return frame, nil
 }
