@@ -20,6 +20,8 @@ Welcome to Grafana 9.4! Read on to learn about [add short list of what's include
 
 ## Command palette enhancements
 
+_Generally available on Grafana Cloud, and available to preview using the `topNavCommandPalette` feature toggle in all editions of Grafana._
+
 The command palette has been updated to provide a more efficient way to navigate Grafana. Now you can search and access all pages as well as recent dashboards, making it easier to perform tasks without taking your hands off the keyboard.
 
 Use the keyboard shortcut cmd + K on Mac or ctrl + K on Linux/Windows to launch the command palette.
@@ -30,7 +32,7 @@ Read more about using the command palette [in the documentation.](https://grafan
 
 ## New navigation
 
-*Generally available on Grafana Cloud, and available to preview using the `topnav` feature toggle in all editions of Grafana.*
+_Generally available on Grafana Cloud, and available to preview using the `topnav` feature toggle in all editions of Grafana._
 
 The navigation in Grafana has been updated with a new design and an improved structure to make it easier for you to access the data you need. With this update, you'll be able to quickly navigate between features, giving you full visibility into the health of your systems.
 
@@ -44,7 +46,7 @@ _Note:_ The Grafana documentation has not yet been updated to reflect changes to
 
 ## Dashboard panel redesign
 
-*Available to Preview using the `newPanelChromeUI` feature toggle in all editions of Grafana*
+_Available to Preview using the `newPanelChromeUI` feature toggle in all editions of Grafana_
 
 Dashboard panels hold a lot of information, some of which is difficult to discover or access entirely from the dashboard itself. With our redesigned panels, we've improved accessibility and made it easier to understand the status of a panel by adding and moving key elements.
 
@@ -58,7 +60,7 @@ However, we have more planned: we’re going to make even more improvements to t
 
 ## New data source connection page in Dashboards and Explore
 
-*Available to preview using the `datasourceOnboarding` feature toggle.*
+_Available to preview using the `datasourceOnboarding` feature toggle._
 
 When you start your journey to create a dashboard or explore your data, but you don't have a data source connected yet, you’ll be shown a page that tells you this and guides you to set up a first connection.
 
@@ -68,7 +70,7 @@ Administrators can choose between selecting one of the most popular data sources
 
 ## Log details redesign
 
-*Generally available in all editions of Grafana.*
+_Generally available in all editions of Grafana._
 
 The "details" section of a log line has been updated. Previously some of the interactions, such as filtering, showing statistics or toggling the visibility were split across "Labels" and "Detected fields". With the recent changes those two sections were unified into one and the interactions are available for all fields.
 
@@ -76,7 +78,7 @@ The "details" section of a log line has been updated. Previously some of the int
 
 ## Loki datasource query validation
 
-*Generally available in all editions of Grafana.*
+_Generally available in all editions of Grafana._
 
 We added support to validate queries and visually display errors as a query is being written, without having to execute it to receive this feedback. This feature supports single and multi-line queries, with and without variables.
 
@@ -84,7 +86,7 @@ We added support to validate queries and visually display errors as a query is b
 
 ## Loki logs sample in Explore
 
-*Generally available in all editions of Grafana.*
+_Generally available in all editions of Grafana._
 
 For Loki metric queries in Explore, you are now able to see the sample of log lines that contributed to the displayed results. To see these logs, click on the collapsed "Logs sample" panel under your graph or table panel. If you would like to interact with your log lines or modify the log query, click on the "Open logs in split view" button and the log query will be executed in the split view.
 
