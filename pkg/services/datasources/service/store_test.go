@@ -21,19 +21,19 @@ func TestIntegrationDataAccess(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	defaultAddDatasourceCommand := datasources.AddDataSourceCommand{
-		OrgId:  10,
+		OrgID:  10,
 		Name:   "nisse",
 		Type:   datasources.DS_GRAPHITE,
 		Access: datasources.DS_ACCESS_DIRECT,
-		Url:    "http://test",
+		URL:    "http://test",
 	}
 
 	defaultUpdateDatasourceCommand := datasources.UpdateDataSourceCommand{
-		OrgId:  10,
+		OrgID:  10,
 		Name:   "nisse_updated",
 		Type:   datasources.DS_GRAPHITE,
 		Access: datasources.DS_ACCESS_DIRECT,
-		Url:    "http://test",
+		URL:    "http://test",
 	}
 
 	initDatasource := func(db db.DB) *datasources.DataSource {
@@ -42,7 +42,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		err := ss.AddDataSource(context.Background(), &cmd)
 		require.NoError(t, err)
 
-		query := datasources.GetDataSourcesQuery{OrgId: 10}
+		query := datasources.GetDataSourcesQuery{OrgID: 10}
 		err = ss.GetDataSources(context.Background(), &query)
 		require.NoError(t, err)
 		require.Equal(t, 1, len(query.Result))
@@ -55,24 +55,24 @@ func TestIntegrationDataAccess(t *testing.T) {
 			db := db.InitTestDB(t)
 			ss := SqlStore{db: db}
 			err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-				OrgId:    10,
+				OrgID:    10,
 				Name:     "laban",
 				Type:     datasources.DS_GRAPHITE,
 				Access:   datasources.DS_ACCESS_DIRECT,
-				Url:      "http://test",
+				URL:      "http://test",
 				Database: "site",
 				ReadOnly: true,
 			})
 			require.NoError(t, err)
 
-			query := datasources.GetDataSourcesQuery{OrgId: 10}
+			query := datasources.GetDataSourcesQuery{OrgID: 10}
 			err = ss.GetDataSources(context.Background(), &query)
 			require.NoError(t, err)
 
 			require.Equal(t, 1, len(query.Result))
 			ds := query.Result[0]
 
-			require.EqualValues(t, 10, ds.OrgId)
+			require.EqualValues(t, 10, ds.OrgID)
 			require.Equal(t, "site", ds.Database)
 			require.True(t, ds.ReadOnly)
 		})
@@ -80,7 +80,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 		t.Run("generates uid if not specified", func(t *testing.T) {
 			db := db.InitTestDB(t)
 			ds := initDatasource(db)
-			require.NotEmpty(t, ds.Uid)
+			require.NotEmpty(t, ds.UID)
 		})
 
 		t.Run("fails to insert ds with same uid", func(t *testing.T) {
@@ -88,8 +88,8 @@ func TestIntegrationDataAccess(t *testing.T) {
 			ss := SqlStore{db: db}
 			cmd1 := defaultAddDatasourceCommand
 			cmd2 := defaultAddDatasourceCommand
-			cmd1.Uid = "test"
-			cmd2.Uid = "test"
+			cmd1.UID = "test"
+			cmd2.UID = "test"
 			err := ss.AddDataSource(context.Background(), &cmd1)
 			require.NoError(t, err)
 			err = ss.AddDataSource(context.Background(), &cmd2)
@@ -113,13 +113,13 @@ func TestIntegrationDataAccess(t *testing.T) {
 				return assert.NotNil(t, created)
 			}, time.Second, time.Millisecond)
 
-			query := datasources.GetDataSourcesQuery{OrgId: 10}
+			query := datasources.GetDataSourcesQuery{OrgID: 10}
 			err = sqlStore.GetDataSources(context.Background(), &query)
 			require.NoError(t, err)
 			require.Equal(t, 1, len(query.Result))
 
-			require.Equal(t, query.Result[0].Id, created.ID)
-			require.Equal(t, query.Result[0].Uid, created.UID)
+			require.Equal(t, query.Result[0].ID, created.ID)
+			require.Equal(t, query.Result[0].UID, created.UID)
 			require.Equal(t, int64(10), created.OrgID)
 			require.Equal(t, "nisse", created.Name)
 		})
@@ -130,28 +130,28 @@ func TestIntegrationDataAccess(t *testing.T) {
 			db := db.InitTestDB(t)
 			ds := initDatasource(db)
 			cmd := defaultUpdateDatasourceCommand
-			cmd.Id = ds.Id
+			cmd.ID = ds.ID
 			cmd.Version = ds.Version
 			ss := SqlStore{db: db}
 			err := ss.UpdateDataSource(context.Background(), &cmd)
 			require.NoError(t, err)
 		})
 
-		t.Run("does not overwrite Uid if not specified", func(t *testing.T) {
+		t.Run("does not overwrite UID if not specified", func(t *testing.T) {
 			db := db.InitTestDB(t)
 			ds := initDatasource(db)
 			ss := SqlStore{db: db}
-			require.NotEmpty(t, ds.Uid)
+			require.NotEmpty(t, ds.UID)
 
 			cmd := defaultUpdateDatasourceCommand
-			cmd.Id = ds.Id
+			cmd.ID = ds.ID
 			err := ss.UpdateDataSource(context.Background(), &cmd)
 			require.NoError(t, err)
 
-			query := datasources.GetDataSourceQuery{Id: ds.Id, OrgId: 10}
+			query := datasources.GetDataSourceQuery{ID: ds.ID, OrgID: 10}
 			err = ss.GetDataSource(context.Background(), &query)
 			require.NoError(t, err)
-			require.Equal(t, ds.Uid, query.Result.Uid)
+			require.Equal(t, ds.UID, query.Result.UID)
 		})
 
 		t.Run("prevents update if version changed", func(t *testing.T) {
@@ -160,12 +160,12 @@ func TestIntegrationDataAccess(t *testing.T) {
 			ss := SqlStore{db: db}
 
 			cmd := datasources.UpdateDataSourceCommand{
-				Id:      ds.Id,
-				OrgId:   10,
+				ID:      ds.ID,
+				OrgID:   10,
 				Name:    "nisse",
 				Type:    datasources.DS_GRAPHITE,
 				Access:  datasources.DS_ACCESS_PROXY,
-				Url:     "http://test",
+				URL:     "http://test",
 				Version: ds.Version,
 			}
 			// Make a copy as UpdateDataSource modifies it
@@ -184,12 +184,12 @@ func TestIntegrationDataAccess(t *testing.T) {
 			ss := SqlStore{db: db}
 
 			cmd := &datasources.UpdateDataSourceCommand{
-				Id:     ds.Id,
-				OrgId:  10,
+				ID:     ds.ID,
+				OrgID:  10,
 				Name:   "nisse",
 				Type:   datasources.DS_GRAPHITE,
 				Access: datasources.DS_ACCESS_PROXY,
-				Url:    "http://test",
+				URL:    "http://test",
 			}
 
 			err := ss.UpdateDataSource(context.Background(), cmd)
@@ -202,12 +202,12 @@ func TestIntegrationDataAccess(t *testing.T) {
 			ss := SqlStore{db: db}
 
 			cmd := &datasources.UpdateDataSourceCommand{
-				Id:      ds.Id,
-				OrgId:   10,
+				ID:      ds.ID,
+				OrgID:   10,
 				Name:    "nisse",
 				Type:    datasources.DS_GRAPHITE,
 				Access:  datasources.DS_ACCESS_PROXY,
-				Url:     "http://test",
+				URL:     "http://test",
 				Version: 90000,
 			}
 
@@ -222,10 +222,10 @@ func TestIntegrationDataAccess(t *testing.T) {
 			ds := initDatasource(db)
 			ss := SqlStore{db: db}
 
-			err := ss.DeleteDataSource(context.Background(), &datasources.DeleteDataSourceCommand{ID: ds.Id, OrgID: ds.OrgId})
+			err := ss.DeleteDataSource(context.Background(), &datasources.DeleteDataSourceCommand{ID: ds.ID, OrgID: ds.OrgID})
 			require.NoError(t, err)
 
-			query := datasources.GetDataSourcesQuery{OrgId: 10}
+			query := datasources.GetDataSourcesQuery{OrgID: 10}
 			err = ss.GetDataSources(context.Background(), &query)
 			require.NoError(t, err)
 
@@ -238,10 +238,10 @@ func TestIntegrationDataAccess(t *testing.T) {
 			ss := SqlStore{db: db}
 
 			err := ss.DeleteDataSource(context.Background(),
-				&datasources.DeleteDataSourceCommand{ID: ds.Id, OrgID: 123123})
+				&datasources.DeleteDataSourceCommand{ID: ds.ID, OrgID: 123123})
 			require.NoError(t, err)
 
-			query := datasources.GetDataSourcesQuery{OrgId: 10}
+			query := datasources.GetDataSourcesQuery{OrgID: 10}
 			err = ss.GetDataSources(context.Background(), &query)
 			require.NoError(t, err)
 
@@ -261,17 +261,17 @@ func TestIntegrationDataAccess(t *testing.T) {
 		})
 
 		err := ss.DeleteDataSource(context.Background(),
-			&datasources.DeleteDataSourceCommand{ID: ds.Id, UID: ds.Uid, Name: ds.Name, OrgID: ds.OrgId})
+			&datasources.DeleteDataSourceCommand{ID: ds.ID, UID: ds.UID, Name: ds.Name, OrgID: ds.OrgID})
 		require.NoError(t, err)
 
 		require.Eventually(t, func() bool {
 			return assert.NotNil(t, deleted)
 		}, time.Second, time.Millisecond)
 
-		require.Equal(t, ds.Id, deleted.ID)
-		require.Equal(t, ds.OrgId, deleted.OrgID)
+		require.Equal(t, ds.ID, deleted.ID)
+		require.Equal(t, ds.OrgID, deleted.OrgID)
 		require.Equal(t, ds.Name, deleted.Name)
-		require.Equal(t, ds.Uid, deleted.UID)
+		require.Equal(t, ds.UID, deleted.UID)
 	})
 
 	t.Run("does not fire an event when the datasource is not deleted", func(t *testing.T) {
@@ -297,9 +297,9 @@ func TestIntegrationDataAccess(t *testing.T) {
 		db := db.InitTestDB(t)
 		ds := initDatasource(db)
 		ss := SqlStore{db: db}
-		query := datasources.GetDataSourcesQuery{OrgId: 10}
+		query := datasources.GetDataSourcesQuery{OrgID: 10}
 
-		err := ss.DeleteDataSource(context.Background(), &datasources.DeleteDataSourceCommand{Name: ds.Name, OrgID: ds.OrgId})
+		err := ss.DeleteDataSource(context.Background(), &datasources.DeleteDataSourceCommand{Name: ds.Name, OrgID: ds.OrgID})
 		require.NoError(t, err)
 
 		err = ss.GetDataSources(context.Background(), &query)
@@ -318,17 +318,17 @@ func TestIntegrationDataAccess(t *testing.T) {
 			_, err := sess.Table("permission").Insert(ac.Permission{
 				RoleID:  1,
 				Action:  "datasources:read",
-				Scope:   datasources.ScopeProvider.GetResourceScope(ds.Uid),
+				Scope:   datasources.ScopeProvider.GetResourceScope(ds.UID),
 				Updated: time.Now(),
 				Created: time.Now(),
 			})
 			return err
 		})
 		require.NoError(t, errAddPermissions)
-		query := datasources.GetDataSourcesQuery{OrgId: 10}
+		query := datasources.GetDataSourcesQuery{OrgID: 10}
 
 		errDeletingDS := ss.DeleteDataSource(context.Background(),
-			&datasources.DeleteDataSourceCommand{Name: ds.Name, OrgID: ds.OrgId},
+			&datasources.DeleteDataSourceCommand{Name: ds.Name, OrgID: ds.OrgID},
 		)
 		require.NoError(t, errDeletingDS)
 
@@ -352,17 +352,17 @@ func TestIntegrationDataAccess(t *testing.T) {
 			datasourceLimit := 6
 			for i := 0; i < datasourceLimit+1; i++ {
 				err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-					OrgId:    10,
+					OrgID:    10,
 					Name:     "laban" + strconv.Itoa(i),
 					Type:     datasources.DS_GRAPHITE,
 					Access:   datasources.DS_ACCESS_DIRECT,
-					Url:      "http://test",
+					URL:      "http://test",
 					Database: "site",
 					ReadOnly: true,
 				})
 				require.NoError(t, err)
 			}
-			query := datasources.GetDataSourcesQuery{OrgId: 10, DataSourceLimit: datasourceLimit}
+			query := datasources.GetDataSourcesQuery{OrgID: 10, DataSourceLimit: datasourceLimit}
 
 			err := ss.GetDataSources(context.Background(), &query)
 
@@ -376,17 +376,17 @@ func TestIntegrationDataAccess(t *testing.T) {
 			numberOfDatasource := 5100
 			for i := 0; i < numberOfDatasource; i++ {
 				err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-					OrgId:    10,
+					OrgID:    10,
 					Name:     "laban" + strconv.Itoa(i),
 					Type:     datasources.DS_GRAPHITE,
 					Access:   datasources.DS_ACCESS_DIRECT,
-					Url:      "http://test",
+					URL:      "http://test",
 					Database: "site",
 					ReadOnly: true,
 				})
 				require.NoError(t, err)
 			}
-			query := datasources.GetDataSourcesQuery{OrgId: 10}
+			query := datasources.GetDataSourcesQuery{OrgID: 10}
 
 			err := ss.GetDataSources(context.Background(), &query)
 
@@ -400,17 +400,17 @@ func TestIntegrationDataAccess(t *testing.T) {
 			numberOfDatasource := 5100
 			for i := 0; i < numberOfDatasource; i++ {
 				err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-					OrgId:    10,
+					OrgID:    10,
 					Name:     "laban" + strconv.Itoa(i),
 					Type:     datasources.DS_GRAPHITE,
 					Access:   datasources.DS_ACCESS_DIRECT,
-					Url:      "http://test",
+					URL:      "http://test",
 					Database: "site",
 					ReadOnly: true,
 				})
 				require.NoError(t, err)
 			}
-			query := datasources.GetDataSourcesQuery{OrgId: 10, DataSourceLimit: -1}
+			query := datasources.GetDataSourcesQuery{OrgID: 10, DataSourceLimit: -1}
 
 			err := ss.GetDataSources(context.Background(), &query)
 
@@ -425,22 +425,22 @@ func TestIntegrationDataAccess(t *testing.T) {
 			ss := SqlStore{db: db}
 
 			err := ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-				OrgId:    10,
+				OrgID:    10,
 				Name:     "Elasticsearch",
 				Type:     datasources.DS_ES,
 				Access:   datasources.DS_ACCESS_DIRECT,
-				Url:      "http://test",
+				URL:      "http://test",
 				Database: "site",
 				ReadOnly: true,
 			})
 			require.NoError(t, err)
 
 			err = ss.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-				OrgId:    10,
+				OrgID:    10,
 				Name:     "Graphite",
 				Type:     datasources.DS_GRAPHITE,
 				Access:   datasources.DS_ACCESS_DIRECT,
-				Url:      "http://test",
+				URL:      "http://test",
 				Database: "site",
 				ReadOnly: true,
 			})
@@ -477,17 +477,17 @@ func TestIntegrationGetDefaultDataSource(t *testing.T) {
 		ss := SqlStore{db: db}
 
 		cmd := datasources.AddDataSourceCommand{
-			OrgId:  10,
+			OrgID:  10,
 			Name:   "nisse",
 			Type:   datasources.DS_GRAPHITE,
 			Access: datasources.DS_ACCESS_DIRECT,
-			Url:    "http://test",
+			URL:    "http://test",
 		}
 
 		err := ss.AddDataSource(context.Background(), &cmd)
 		require.NoError(t, err)
 
-		query := datasources.GetDefaultDataSourceQuery{OrgId: 10}
+		query := datasources.GetDefaultDataSourceQuery{OrgID: 10}
 		err = ss.GetDefaultDataSource(context.Background(), &query)
 		require.Error(t, err)
 		assert.True(t, errors.Is(err, datasources.ErrDataSourceNotFound))
@@ -498,18 +498,18 @@ func TestIntegrationGetDefaultDataSource(t *testing.T) {
 		ss := SqlStore{db: db}
 
 		cmd := datasources.AddDataSourceCommand{
-			OrgId:     10,
+			OrgID:     10,
 			Name:      "default datasource",
 			Type:      datasources.DS_GRAPHITE,
 			Access:    datasources.DS_ACCESS_DIRECT,
-			Url:       "http://test",
+			URL:       "http://test",
 			IsDefault: true,
 		}
 
 		err := ss.AddDataSource(context.Background(), &cmd)
 		require.NoError(t, err)
 
-		query := datasources.GetDefaultDataSourceQuery{OrgId: 10}
+		query := datasources.GetDefaultDataSourceQuery{OrgID: 10}
 		err = ss.GetDefaultDataSource(context.Background(), &query)
 		require.NoError(t, err)
 		assert.Equal(t, "default datasource", query.Result.Name)
@@ -518,7 +518,7 @@ func TestIntegrationGetDefaultDataSource(t *testing.T) {
 	t.Run("should not return default datasource of other organisation", func(t *testing.T) {
 		db := db.InitTestDB(t)
 		ss := SqlStore{db: db}
-		query := datasources.GetDefaultDataSourceQuery{OrgId: 1}
+		query := datasources.GetDefaultDataSourceQuery{OrgID: 1}
 		err := ss.GetDefaultDataSource(context.Background(), &query)
 		require.Error(t, err)
 		assert.True(t, errors.Is(err, datasources.ErrDataSourceNotFound))

@@ -12,10 +12,10 @@ import (
 	"github.com/grafana/thema"
 )
 
-// CoreDeclParentPath is the path, relative to the repository root, where
+// CoreDefParentPath is the path, relative to the repository root, where
 // each child directory is expected to contain .cue files defining one
 // Core kind.
-var CoreDeclParentPath = "kinds"
+var CoreDefParentPath = "kinds"
 
 // GoCoreKindParentPath is the path, relative to the repository root, to the directory
 // containing one directory per kind, full of generated Go kind output: types and bindings.
@@ -115,7 +115,7 @@ func ToKindProps[T KindProperties](v cue.Value) (T, error) {
 }
 
 // SomeDef represents a single kind definition, having been loaded and
-// validated by a func such as [LoadCoreKind].
+// validated by a func such as [LoadCoreKindDef].
 //
 // The underlying type of the Properties field indicates the category of kind.
 type SomeDef struct {
@@ -155,10 +155,13 @@ func (def SomeDef) IsComposable() bool {
 	return is
 }
 
-// Def represents a single kind definition, having been loaded
-// and validated by a func such as [LoadCoreKind].
+// Def represents a single kind definition, having been loaded and validated by
+// a func such as [LoadCoreKindDef].
 //
 // Its type parameter indicates the category of kind.
+//
+// Thema lineages in the contained definition have not yet necessarily been
+// validated.
 type Def[T KindProperties] struct {
 	// V is the cue.Value containing the entire Kind definition.
 	V cue.Value
@@ -174,7 +177,7 @@ func (def Def[T]) Some() SomeDef {
 	}
 }
 
-// LoadCoreKind loads and validates a core kind definition of the kind category
+// LoadCoreKindDef loads and validates a core kind definition of the kind category
 // indicated by the type parameter. On success, it returns a [Def] which
 // contains the entire contents of the kind definition.
 //
@@ -191,7 +194,7 @@ func (def Def[T]) Some() SomeDef {
 // This is a low-level function, primarily intended for use in code generation.
 // For representations of core kinds that are useful in Go programs at runtime,
 // see ["github.com/grafana/grafana/pkg/registry/corekind"].
-func LoadCoreKind(defpath string, ctx *cue.Context, overlay fs.FS) (Def[CoreProperties], error) {
+func LoadCoreKindDef(defpath string, ctx *cue.Context, overlay fs.FS) (Def[CoreProperties], error) {
 	none := Def[CoreProperties]{}
 	vk, err := cuectx.BuildGrafanaInstance(ctx, defpath, "kind", overlay)
 	if err != nil {

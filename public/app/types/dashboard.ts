@@ -84,7 +84,7 @@ export enum DashboardInitPhase {
 
 export interface DashboardInitError {
   message: string;
-  error: any;
+  error: unknown;
 }
 
 export enum KioskMode {
