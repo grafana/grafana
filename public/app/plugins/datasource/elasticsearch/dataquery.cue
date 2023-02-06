@@ -23,7 +23,7 @@ import (
 pfs.GrafanaPlugin
 
 composableKinds: DataQuery: {
-	maturity: "merged"
+	maturity: "experimental"
 
 	lineage: {
 		seqs: [
@@ -32,10 +32,15 @@ composableKinds: DataQuery: {
 					{
 						common.DataQuery
 
-						alias?:     string
-						query?:     string
+						// Alias pattern
+						alias?: string
+						// Lucene query
+						query?: string
+						// Name of time field
 						timeField?: string
+						// List of bucket aggregations
 						bucketAggs?: [...#BucketAggregation]
+						// List of metric aggregations
 						metrics?: [...#MetricAggregation]
 
 						#BucketAggregation: #DateHistogram | #Histogram | #Terms | #Filters | #GeoHashGrid | #Nested @cuetsy(kind="type")
@@ -281,17 +286,11 @@ composableKinds: DataQuery: {
 
 						#BasePipelineMetricAggregation: {
 							#MetricAggregationWithField
-
-							//TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.  
-							//type:         #PipelineMetricAggregationType
 							pipelineAgg?: string
 						} @cuetsy(kind="interface")
 
 						#PipelineMetricAggregationWithMultipleBucketPaths: {
 							#BaseMetricAggregation
-
-							//TODO: Type is temporarily commented out as it causes a type error in the generated code. In the meantime, we decided to manually extend the type in types.ts.  
-							//type: #PipelineMetricAggregationType
 							pipelineVariables?: [...#PipelineVariable]
 						} @cuetsy(kind="interface")
 
