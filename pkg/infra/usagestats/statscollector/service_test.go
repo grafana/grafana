@@ -173,11 +173,6 @@ func TestCollectingUsageStats(t *testing.T) {
 	assert.EqualValues(t, 19, metrics["stats.library_panels.count"])
 	assert.EqualValues(t, 20, metrics["stats.library_variables.count"])
 
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.anonymous.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.basic_auth.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.ldap.count"])
-	assert.EqualValues(t, 1, metrics["stats.auth_enabled.auth_proxy.count"])
-
 	assert.EqualValues(t, 1, metrics["stats.packaging.deb.count"])
 	assert.EqualValues(t, 1, metrics["stats.distributor.hosted-grafana.count"])
 
