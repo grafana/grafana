@@ -77,7 +77,6 @@ import {
   isValidQuery,
   partitionTimeRange,
   requestSupportsPartitioning,
-  mergeResponses,
   combineResponses,
   resultLimitReached,
 } from './queryUtils';
