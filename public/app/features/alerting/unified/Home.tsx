@@ -26,7 +26,7 @@ export default function Home() {
               </li>
               <li>If the condition is breached, an alert instance fires</li>
               <li>Firing instances are routed to notification policies based on matching labels</li>
-              <li>Notifications are sent out to the contact points specified in the notification policy policy</li>
+              <li>Notifications are sent out to the contact points specified in the notification policy</li>
             </ul>
           </div>
           <SVG
