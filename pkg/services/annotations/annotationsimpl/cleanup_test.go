@@ -179,8 +179,11 @@ func TestAnnotationCleanUp_Timeout(t *testing.T) {
 	cfg.DashboardAnnotationCleanupSettings = settingsFn(0, 1)
 	cfg.APIAnnotationCleanupSettings = settingsFn(0, 1)
 
-	_, _, err := cleaner.Run(ctx, cfg)
-	require.ErrorIs(t, err, context.DeadlineExceeded)
+	go func() {
+		time.Sleep(1 * time.Second)
+		_, _, err := cleaner.Run(ctx, cfg)
+		require.ErrorIs(t, err, context.DeadlineExceeded)
+	}()
 
 	// unfortunately we can't assert on the expected annotation counts here:
 	// occasional deletions succeed (one or more of the annotation "types").
