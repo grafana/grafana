@@ -2,7 +2,9 @@ package clients
 
 import (
 	"context"
+	"strings"
 
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -11,7 +13,7 @@ import (
 
 var _ authn.ContextAwareClient = new(Anonymous)
 
-func ProvideAnonymous(cfg *setting.Cfg, orgService org.Service) *Anonymous {
+func ProvideAnonymous(cfg *setting.Cfg, orgService org.Service, _ kvstore.KVStore) *Anonymous {
 	return &Anonymous{
 		cfg:        cfg,
 		log:        log.New("authn.anonymous"),
@@ -52,4 +54,16 @@ func (a *Anonymous) Test(ctx context.Context, r *authn.Request) bool {
 
 func (a *Anonymous) Priority() uint {
 	return 100
+}
+
+func (a *Anonymous) UsageStatFn(ctx context.Context) (map[string]interface{}, error) {
+	m := map[string]interface{}{}
+
+	// Add stats about anonymous auth
+	m["stats.anonymous.customized_role.count"] = 0
+	if !strings.EqualFold(a.cfg.AnonymousOrgRole, "Viewer") {
+		m["stats.anonymous.customized_role.count"] = 1
+	}
+
+	return m, nil
 }
