@@ -62,8 +62,10 @@ export interface Terms extends BucketAggregationWithField {
 export interface TermsSettings {
   min_doc_count?: string;
   missing?: string;
-  order?: TermsOrder;
   orderBy?: string;
+  /**
+   * order?:         #TermsOrder
+   */
   size?: string;
 }
 

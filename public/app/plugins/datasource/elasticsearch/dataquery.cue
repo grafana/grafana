@@ -99,7 +99,7 @@ composableKinds: DataQuery: {
 						} @cuetsy(kind="interface")
 
 						#TermsSettings: {
-							order?:         #TermsOrder
+							//order?:         #TermsOrder
 							size?:          string
 							min_doc_count?: string
 							orderBy?:       string

@@ -125,8 +125,10 @@ export type QueryEditorOperatorValueType = (QueryEditorOperatorType | Array<Quer
 export type QueryEditorOperatorType = (string | boolean | number);
 
 export interface QueryEditorProperty {
+  /**
+   * type:  #QueryEditorPropertyType
+   */
   name?: string;
-  type: QueryEditorPropertyType;
 }
 
 export enum QueryEditorPropertyType {
