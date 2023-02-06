@@ -1,5 +1,5 @@
 import { cloneDeep, map as lodashMap } from 'lodash';
-import { lastValueFrom, merge, Observable, of, Subscriber, throwError } from 'rxjs';
+import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 
 import {
@@ -68,6 +68,7 @@ import {
   getLabelFilterPositions,
 } from './modifyQuery';
 import { getQueryHints } from './queryHints';
+import { runPartitionedQuery } from './querySplitting';
 import {
   getLogQueryFromMetricsQuery,
   getNormalizedLokiQuery,
@@ -75,10 +76,7 @@ import {
   getParserFromQuery,
   isLogsQuery,
   isValidQuery,
-  partitionTimeRange,
   requestSupportsPartitioning,
-  combineResponses,
-  resultLimitReached,
 } from './queryUtils';
 import { sortDataFrameByTime } from './sortDataFrame';
 import { doLokiChannelStream } from './streaming';
@@ -287,9 +285,13 @@ export class LokiDatasource
     }
 
     if (requestSupportsPartitioning(fixedRequest.targets)) {
-      return this.partitionedQuery(fixedRequest);
+      return runPartitionedQuery(this, fixedRequest);
     }
 
+    return this.runQuery(fixedRequest);
+  }
+
+  runQuery(fixedRequest: DataQueryRequest<LokiQuery> & { targets: LokiQuery[] }) {
     const startTime = new Date();
     return super.query(fixedRequest).pipe(
       // in case of an empty query, this is somehow run twice. `share()` is no workaround here as the observable is generated from `of()`.
@@ -298,52 +300,6 @@ export class LokiDatasource
       ),
       tap((response) => trackQuery(response, fixedRequest, startTime))
     );
-  }
-
-  private partitionedQuery(request: DataQueryRequest<LokiQuery>) {
-    const partition = partitionTimeRange(request.range);
-
-    let mergedResponse: DataQueryResponse | null;
-    const totalRequests = partition.length;
-
-    const next = (subscriber: Subscriber<DataQueryResponse>, requestN: number) => {
-      const requestId = `${request.requestId}_${requestN}`;
-      const range = partition[requestN - 1];
-      super
-        .query({ ...request, range, requestId })
-        .pipe(
-          // in case of an empty query, this is somehow run twice. `share()` is no workaround here as the observable is generated from `of()`.
-          map((response) => {
-            const partialResponse = transformBackendResult(
-              response,
-              request.targets,
-              this.instanceSettings.jsonData.derivedFields ?? []
-            );
-
-            mergedResponse = combineResponses(mergedResponse, partialResponse);
-
-            return mergedResponse;
-          })
-        )
-        .subscribe({
-          next: (response) => {
-            if (requestN > 1 && resultLimitReached(request, response) === false) {
-              response.state = LoadingState.Streaming;
-              next(subscriber, requestN - 1);
-            } else {
-              response.state = LoadingState.Done;
-            }
-
-            subscriber.next(response);
-          },
-        });
-    };
-
-    const response = new Observable<DataQueryResponse>((subscriber) => {
-      next(subscriber, totalRequests);
-    });
-
-    return response;
   }
 
   runLiveQueryThroughBackend(request: DataQueryRequest<LokiQuery>): Observable<DataQueryResponse> {
