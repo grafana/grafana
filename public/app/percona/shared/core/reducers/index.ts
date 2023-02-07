@@ -24,7 +24,7 @@ import { api } from 'app/percona/shared/helpers/api';
 
 import { ServerInfo } from '../types';
 
-import perconaBackupLocations from './backupLocations';
+import perconaBackupLocations from './backups/backupLocations';
 import perconaAddDBCluster from './dbaas/addDBCluster/addDBCluster';
 import perconaDBClustersReducer from './dbaas/dbClusters/dbClusters';
 import perconaDBaaSReducer from './dbaas/dbaas';

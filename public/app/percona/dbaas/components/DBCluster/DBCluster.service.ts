@@ -20,6 +20,8 @@ import {
   ResourcesUnits,
   CpuUnits,
   DBClusterListResponse,
+  DBClusterSecretsResponse,
+  DBClusterSecretsRequest,
 } from './DBCluster.types';
 import { formatResources } from './DBCluster.utils';
 
@@ -63,6 +65,16 @@ export abstract class DBClusterService {
       {
         kubernetes_cluster_name: kubernetesClusterName,
         cluster_name: clusterName,
+      },
+      true
+    );
+  }
+
+  static async getDBClusterSecrets(kubernetesClusterName: string): Promise<DBClusterSecretsResponse> {
+    return apiManagement.post<DBClusterSecretsResponse, DBClusterSecretsRequest>(
+      '/DBaaS/Secrets/List',
+      {
+        kubernetes_cluster_name: kubernetesClusterName,
       },
       true
     );

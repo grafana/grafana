@@ -23,7 +23,7 @@ import { SelectField } from 'app/percona/shared/components/Form/SelectField';
 import { PageSwitcherValue } from 'app/percona/shared/components/PageSwitcherCard/PageSwitcherCard.types';
 import { useCancelToken } from 'app/percona/shared/components/hooks/cancelToken.hook';
 import { ApiVerboseError, Databases, DATABASE_LABELS } from 'app/percona/shared/core';
-import { fetchStorageLocations } from 'app/percona/shared/core/reducers/backupLocations';
+import { fetchStorageLocations } from 'app/percona/shared/core/reducers/backups/backupLocations';
 import { getBackupLocations } from 'app/percona/shared/core/selectors';
 import { apiErrorParser, isApiCancelError } from 'app/percona/shared/helpers/api';
 import { useAppDispatch } from 'app/store/store';

@@ -1,10 +1,11 @@
 import { SelectableValue } from '@grafana/data';
 import { BackupMode, BackupType, DataModel, RetryMode } from 'app/percona/backup/Backup.types';
 import { ApiVerboseError, Databases } from 'app/percona/shared/core';
-import { PeriodType } from 'app/percona/shared/helpers/cron/types';
 
 import { Backup } from '../BackupInventory/BackupInventory.types';
 import { ScheduledBackup } from '../ScheduledBackups/ScheduledBackups.types';
+
+import { ScheduledSectionFieldsValuesProps } from './ScheduleSection/ScheduleSectionFields/ScheduleSectionFields.types';
 
 export interface AddBackupModalProps {
   backup: Backup | ScheduledBackup | null;
@@ -20,7 +21,7 @@ export interface SelectableService {
   id: string;
 }
 
-export interface AddBackupFormProps {
+export interface AddBackupFormProps extends ScheduledSectionFieldsValuesProps {
   id: string;
   service: SelectableValue<SelectableService> | null;
   dataModel: DataModel;
@@ -31,12 +32,6 @@ export interface AddBackupFormProps {
   retryMode?: RetryMode;
   retryTimes?: number;
   retryInterval?: number;
-  period?: SelectableValue<PeriodType>;
-  month?: Array<SelectableValue<number>>;
-  day?: Array<SelectableValue<number>>;
-  weekDay?: Array<SelectableValue<number>>;
-  startHour?: Array<SelectableValue<number>>;
-  startMinute?: Array<SelectableValue<number>>;
   logs?: boolean;
   active?: boolean;
   vendor: Databases | null;

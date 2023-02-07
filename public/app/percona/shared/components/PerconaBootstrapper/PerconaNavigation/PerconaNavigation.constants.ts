@@ -64,7 +64,7 @@ export const PMM_BACKUP_PAGE: NavModelItem = {
   id: 'backup',
   icon: 'history',
   text: 'Backup',
-  subTitle: 'Percona Backups',
+  subTitle: 'Percona DBaaSBackups',
   url: `${config.appSubUrl}/backup`,
   section: NavSection.Core,
   breadcrumbs: [
@@ -76,7 +76,7 @@ export const PMM_BACKUP_PAGE: NavModelItem = {
   children: [
     {
       id: 'backup-inventory',
-      text: 'All Backups',
+      text: 'All DBaaSBackups',
       url: `${config.appSubUrl}/backup/inventory`,
       hideFromMenu: true,
     },

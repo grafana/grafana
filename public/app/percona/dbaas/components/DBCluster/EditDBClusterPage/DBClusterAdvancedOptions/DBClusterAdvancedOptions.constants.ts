@@ -1,5 +1,7 @@
 import { SelectableValue } from '@grafana/data/src';
 
+import { AddDBClusterFormValues } from '../EditDBClusterPage.types';
+
 import { Messages } from './DBClusterAdvancedOptions.messages';
 import { DBClusterResources, DBClusterDefaultResources } from './DBClusterAdvancedOptions.types';
 
@@ -28,14 +30,19 @@ export const DEFAULT_SIZES: DBClusterDefaultResources = {
   },
 };
 
-export const INITIAL_VALUES = {
+export const INITIAL_VALUES: AddDBClusterFormValues = {
   nodes: 3,
-  single: 1,
   resources: DBClusterResources.small,
   memory: DEFAULT_SIZES.small.memory,
   cpu: DEFAULT_SIZES.small.cpu,
   disk: DEFAULT_SIZES.small.disk,
   sourceRanges: [{}],
+  day: [],
+  month: [],
+  period: { value: 'year', label: 'every year' },
+  startHour: [{ label: '00', value: 0 }],
+  startMinute: [{ value: 0, label: '00' }],
+  weekDay: [],
 };
 
 export const MIN_NODES = 1;

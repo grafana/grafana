@@ -78,7 +78,7 @@ export const Messages = {
   backup: {
     title: 'Backup',
     feature:
-      'The backup feature allows you to back up the databases that PMM is monitoring. PMM supports backup for MySQL and MongoDB (Point-In-Time-Recoverable Backups) databases.',
+      'The backup feature allows you to back up the databases that PMM is monitoring. PMM supports backup for MySQL and MongoDB (Point-In-Time-Recoverable DBaaSBackups) databases.',
     onDemand:
       'You can set up backup on demand. In case of failures, you can predefine the retry mode, either manual or auto, along with the retry times and retry intervals.',
     shedule:

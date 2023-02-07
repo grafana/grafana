@@ -1,7 +1,10 @@
-import { render, fireEvent, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 import { Form, FormRenderProps } from 'react-final-form';
+import { Provider } from 'react-redux';
 
+import { configureStore } from '../../../../../../store/configureStore';
+import { StoreState } from '../../../../../../types';
 import { kubernetesStub } from '../../../Kubernetes/__mocks__/kubernetesStubs';
 import { Messages } from '../EditDBClusterPage.messages';
 
@@ -9,13 +12,20 @@ import { DBClusterBasicOptions } from './DBClusterBasicOptions';
 import { BasicOptionsFields } from './DBClusterBasicOptions.types';
 import { kubernetesClusterNameValidator } from './DBClusterBasicOptions.utils';
 
+const store = configureStore({
+  percona: {
+    settings: { loading: false, result: { dbaasEnabled: true } },
+  },
+} as StoreState);
 describe('DBClusterBasicOptions::', () => {
   it('renders correctly', () => {
     render(
-      <Form
-        onSubmit={jest.fn()}
-        render={({ form }: FormRenderProps) => <DBClusterBasicOptions kubernetes={kubernetesStub} form={form} />}
-      />
+      <Provider store={store}>
+        <Form
+          onSubmit={jest.fn()}
+          render={({ form }: FormRenderProps) => <DBClusterBasicOptions kubernetes={kubernetesStub} form={form} />}
+        />
+      </Provider>
     );
 
     expect(screen.getByTestId('name-text-input')).toBeInTheDocument();
@@ -28,13 +38,15 @@ describe('DBClusterBasicOptions::', () => {
 
   it('renders correctly with default values', () => {
     render(
-      <Form
-        initialValues={{
-          [BasicOptionsFields.name]: 'dbcluster',
-        }}
-        onSubmit={jest.fn()}
-        render={({ form }: FormRenderProps) => <DBClusterBasicOptions kubernetes={kubernetesStub} form={form} />}
-      />
+      <Provider store={store}>
+        <Form
+          initialValues={{
+            [BasicOptionsFields.name]: 'dbcluster',
+          }}
+          onSubmit={jest.fn()}
+          render={({ form }: FormRenderProps) => <DBClusterBasicOptions kubernetes={kubernetesStub} form={form} />}
+        />
+      </Provider>
     );
     expect(screen.getByTestId('name-text-input')).toHaveValue('dbcluster');
   });
@@ -51,13 +63,15 @@ describe('DBClusterBasicOptions::', () => {
 
   it('should validate cluster name length', () => {
     render(
-      <Form
-        initialValues={{
-          [BasicOptionsFields.name]: 'testname',
-        }}
-        onSubmit={jest.fn()}
-        render={({ form }: FormRenderProps) => <DBClusterBasicOptions kubernetes={kubernetesStub} form={form} />}
-      />
+      <Provider store={store}>
+        <Form
+          initialValues={{
+            [BasicOptionsFields.name]: 'testname',
+          }}
+          onSubmit={jest.fn()}
+          render={({ form }: FormRenderProps) => <DBClusterBasicOptions kubernetes={kubernetesStub} form={form} />}
+        />
+      </Provider>
     );
 
     const name = screen.getByTestId('name-text-input');

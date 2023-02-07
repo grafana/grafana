@@ -11,6 +11,10 @@ import { ScheduledBackup } from '../ScheduledBackups/ScheduledBackups.types';
 import { LocationType } from '../StorageLocations/StorageLocations.types';
 
 import { AddBackupFormProps } from './AddBackupPage.types';
+import {
+  ScheduleSectionFields as ScheduleSectionFieldsEnum,
+  ScheduleSectionFields,
+} from './ScheduleSection/ScheduleSectionFields/ScheduleSectionFields.types';
 
 export const PERIOD_OPTIONS: Array<SelectableValue<PeriodType>> = [
   {
@@ -143,15 +147,27 @@ export const toFormBackup = (backup: Backup | ScheduledBackup | null, scheduleMo
   }
 };
 
-type BackupFormTimeProps = keyof Pick<AddBackupFormProps, 'month' | 'day' | 'weekDay' | 'startHour' | 'startMinute'>;
+type BackupFormTimeProps = keyof typeof ScheduleSectionFields;
+
 export const isCronFieldDisabled = (period: PeriodType, field: BackupFormTimeProps) => {
   const map: Record<PeriodType, BackupFormTimeProps[]> = {
     year: [],
-    month: ['month'],
-    week: ['month', 'day'],
-    day: ['month', 'day', 'weekDay'],
-    hour: ['month', 'day', 'weekDay', 'startHour'],
-    minute: ['month', 'day', 'weekDay', 'startHour', 'startMinute'],
+    month: [ScheduleSectionFieldsEnum.month],
+    week: [ScheduleSectionFieldsEnum.month, ScheduleSectionFieldsEnum.day],
+    day: [ScheduleSectionFieldsEnum.month, ScheduleSectionFieldsEnum.day, ScheduleSectionFieldsEnum.weekDay],
+    hour: [
+      ScheduleSectionFieldsEnum.month,
+      ScheduleSectionFieldsEnum.day,
+      ScheduleSectionFieldsEnum.weekDay,
+      ScheduleSectionFields.startHour,
+    ],
+    minute: [
+      ScheduleSectionFieldsEnum.month,
+      ScheduleSectionFieldsEnum.day,
+      ScheduleSectionFieldsEnum.weekDay,
+      ScheduleSectionFields.startHour,
+      ScheduleSectionFields.startMinute,
+    ],
   };
 
   return map[period].includes(field);

@@ -7,7 +7,10 @@ export const getStyles = ({ spacing }: GrafanaTheme) => ({
     display: flex;
     gap: ${spacing.lg};
     > div {
-      flex: 1 0 auto;
+      flex: 1 0;
     }
+  `,
+  basicOptions: css`
+    margin-bottom: 25px;
   `,
 });

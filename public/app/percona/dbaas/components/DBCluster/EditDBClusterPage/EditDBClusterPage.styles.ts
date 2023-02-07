@@ -8,10 +8,6 @@ export const getStyles = ({ spacing }: GrafanaTheme2) => ({
     max-width: 720px;
   `,
 
-  basicOptions: css`
-    margin-bottom: 64px;
-  `,
-
   collapsableSection: css`
     max-width: 170px;
     margin: ${spacing(6)} 0 ${spacing(3)} 0;

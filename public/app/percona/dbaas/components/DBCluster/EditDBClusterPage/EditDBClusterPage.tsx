@@ -6,12 +6,13 @@ import { Redirect, useHistory } from 'react-router-dom';
 
 import { Spinner, useStyles2 } from '@grafana/ui/src';
 import { useShowPMMAddressWarning } from 'app/percona/shared/components/hooks/showPMMAddressWarning';
-import { useDispatch } from 'app/types';
+import { useSelector, useDispatch } from 'app/types';
 
+import { fetchStorageLocations } from '../../../../shared/core/reducers/backups/backupLocations';
 import { resetAddDBClusterState } from '../../../../shared/core/reducers/dbaas/addDBCluster/addDBCluster';
 import { resetDBCluster } from '../../../../shared/core/reducers/dbaas/dbaas';
 import { resetUpdateDBClusterState } from '../../../../shared/core/reducers/dbaas/updateDBCluster/updateDBCluster';
-import { getPerconaSettingFlag } from '../../../../shared/core/selectors';
+import { getPerconaSettingFlag, getPerconaSettings } from '../../../../shared/core/selectors';
 import { Messages as DBaaSMessages } from '../../../DBaaS.messages';
 import { useUpdateOfKubernetesList } from '../../../hooks/useKubernetesList';
 import DBaaSPage from '../../DBaaSPage/DBaaSPage';
@@ -24,6 +25,7 @@ import { PMMServerUrlWarning } from '../../PMMServerURLWarning/PMMServerUrlWarni
 import { DBClusterAdvancedOptions } from './DBClusterAdvancedOptions/DBClusterAdvancedOptions';
 import { DBClusterBasicOptions } from './DBClusterBasicOptions/DBClusterBasicOptions';
 import { BasicOptionsFields } from './DBClusterBasicOptions/DBClusterBasicOptions.types';
+import DBaaSBackups from './DBaaSBackups/DBaaSBackups';
 import { DB_CLUSTER_INVENTORY_URL } from './EditDBClusterPage.constants';
 import { Messages } from './EditDBClusterPage.messages';
 import { getStyles } from './EditDBClusterPage.styles';
@@ -39,11 +41,12 @@ export const EditDBClusterPage: FC<EditDBClusterPageProps> = () => {
   const dispatch = useDispatch();
   const history = useHistory();
   const mode = useDefaultMode();
+  const { result: settings } = useSelector(getPerconaSettings);
   const [kubernetes, kubernetesLoading] = useUpdateOfKubernetesList();
   const [showPMMAddressWarning] = useShowPMMAddressWarning();
   const [showUnsafeConfigurationWarning, setShowUnsafeConfigurationWarning] = useState(false);
   const [initialValues, selectedDBCluster] = useEditDBClusterPageDefaultValues({ kubernetes, mode });
-  const [onSubmit, loading, buttonMessage] = useEditDBClusterFormSubmit({ mode, showPMMAddressWarning });
+  const [onSubmit, loading, buttonMessage] = useEditDBClusterFormSubmit({ mode, showPMMAddressWarning, settings });
   const [result] = useEditDBClusterPageResult(mode);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -63,6 +66,11 @@ export const EditDBClusterPage: FC<EditDBClusterPageProps> = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [result]);
+
+  useEffect(() => {
+    dispatch(fetchStorageLocations());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return kubernetes === undefined || kubernetesLoading ? (
     <div data-testid="db-cluster-form-loading">
@@ -100,6 +108,9 @@ export const EditDBClusterPage: FC<EditDBClusterPageProps> = () => {
             {showPMMAddressWarning && <PMMServerUrlWarning />}
             <div className={styles.optionsWrapper}>
               {mode === 'create' && <DBClusterBasicOptions kubernetes={kubernetes} form={form} />}
+              {settings?.backupEnabled && mode === 'create' && (
+                <DBaaSBackups handleSubmit={handleSubmit} pristine={pristine} valid={valid} form={form} {...props} />
+              )}
               <DBClusterAdvancedOptions
                 mode={mode}
                 showUnsafeConfigurationWarning={showUnsafeConfigurationWarning}

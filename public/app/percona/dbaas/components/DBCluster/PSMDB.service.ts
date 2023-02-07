@@ -169,6 +169,21 @@ const toAPI = (dbCluster: DBCluster): DBClusterPayload => ({
       disk_size: dbCluster.disk * BILLION,
     },
     image: dbCluster.databaseImage,
+    ...(dbCluster.backup && {
+      backup: {
+        location_id: dbCluster.backup?.locationId,
+        keep_copies: dbCluster.backup?.keepCopies,
+        cron_expression: dbCluster.backup?.cronExpression,
+        service_account: dbCluster.backup?.serviceAccount,
+      },
+    }),
+    ...(dbCluster.restore && {
+      restore: {
+        location_id: dbCluster.restore?.locationId,
+        destination: dbCluster.restore?.destination,
+        secrets_name: dbCluster.restore?.secretsName,
+      },
+    }),
   },
 });
 

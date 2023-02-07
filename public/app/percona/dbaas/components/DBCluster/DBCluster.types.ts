@@ -36,6 +36,34 @@ export interface DBCluster {
   internetFacing?: boolean;
   sourceRanges?: string[];
   storageClass?: string;
+  backup?: DBaaSBackup;
+  restore?: DBaaSRestore;
+}
+
+interface DBaaSBackup {
+  locationId: string;
+  keepCopies: number;
+  cronExpression: string;
+  serviceAccount: string;
+}
+
+interface DBaaSBackupPayload {
+  location_id: string;
+  keep_copies: number;
+  cron_expression: string;
+  service_account: string;
+}
+
+interface DBaaSRestorePayload {
+  location_id: string;
+  destination: string;
+  secrets_name: string;
+}
+
+interface DBaaSRestore {
+  locationId: string;
+  destination: string;
+  secretsName: string;
 }
 
 export enum DBClusterStatus {
@@ -164,6 +192,8 @@ export interface DBClusterParamsAPI {
   replicaset?: Omit<DBClusterContainerAPI, 'image'>;
   proxysql?: Omit<DBClusterContainerAPI, 'configuration' | 'storage_class'>;
   image?: string;
+  backup?: DBaaSBackupPayload;
+  restore?: DBaaSRestorePayload;
 }
 
 interface DBClusterContainerAPI {
@@ -191,6 +221,18 @@ export interface DBClusterConnectionAPI {
 
 export interface DBClusterLogsAPI {
   logs: DBClusterLogAPI[];
+}
+
+export interface DBClusterSecretsResponse {
+  secrets: DBClusterSecret[];
+}
+
+export interface DBClusterSecretsRequest {
+  kubernetes_cluster_name: string;
+}
+
+export interface DBClusterSecret {
+  name: string;
 }
 
 export interface DBClusterLogAPI {
