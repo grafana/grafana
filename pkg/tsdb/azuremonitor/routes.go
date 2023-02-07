@@ -54,15 +54,15 @@ var azUSGovLogAnalytics = types.AzRoute{
 }
 
 var azPortal = types.AzRoute{
-	URL: "https://management.azure.com",
+	URL: "https://portal.azure.com",
 }
 
 var azUSGovPortal = types.AzRoute{
-	URL: "https://management.usgovcloudapi.net",
+	URL: "https://portal.azure.us",
 }
 
 var azChinaPortal = types.AzRoute{
-	URL: "https://management.chinacloudapi.cn",
+	URL: "https://portal.azure.cn",
 }
 
 var (
