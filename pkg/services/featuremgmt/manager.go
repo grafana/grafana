@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
-	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/licensing"
 )
 
@@ -148,11 +146,6 @@ func (fm *FeatureManager) GetFlags() []FeatureFlag {
 		v = append(v, *value)
 	}
 	return v
-}
-
-func (fm *FeatureManager) HandleGetSettings(c *contextmodel.ReqContext) {
-	// pkg/services/accesscontrol/scope_test.go
-	response.Err(fmt.Errorf("WHY DOES REMOVING THIS BREAK TESTS!!!!"))
 }
 
 // WithFeatures is used to define feature toggles for testing.
