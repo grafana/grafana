@@ -29,7 +29,7 @@ e2e.scenario({
     e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().should('be.disabled');
 
     // Switch on enabling toggle
-    e2e.pages.ShareDashboardModal.PublicDashboard.EnableSwitch().should('be.enabled').click({ force: true });
+    e2e.pages.ShareDashboardModal.PublicDashboard.PauseSwitch().should('be.enabled').click({ force: true });
     e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().should('be.enabled');
 
     // Save public dashboard
@@ -120,7 +120,7 @@ e2e.scenario({
       .then((text) => e2e().wrap(text).as('url'));
 
     // Switch off enabling toggle
-    e2e.pages.ShareDashboardModal.PublicDashboard.EnableSwitch().should('be.enabled').click({ force: true });
+    e2e.pages.ShareDashboardModal.PublicDashboard.PauseSwitch().should('be.enabled').click({ force: true });
 
     // Save public dashboard
     e2e().intercept('PUT', '/api/dashboards/uid/ZqZnVvFZz/public-dashboards/*').as('update');

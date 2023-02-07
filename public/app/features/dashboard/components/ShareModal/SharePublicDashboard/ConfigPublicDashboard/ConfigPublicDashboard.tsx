@@ -155,7 +155,7 @@ const ConfigPublicDashboard = () => {
               });
               onChange('isPaused', e.currentTarget.checked);
             }}
-            data-testid={selectors.EnableSwitch}
+            data-testid={selectors.PauseSwitch}
           />
           <Label
             className={css`

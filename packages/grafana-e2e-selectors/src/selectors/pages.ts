@@ -186,7 +186,7 @@ export const Pages = {
       WillBePublicCheckbox: 'data-testid public dashboard will be public checkbox',
       LimitedDSCheckbox: 'data-testid public dashboard limited datasources checkbox',
       CostIncreaseCheckbox: 'data-testid public dashboard cost may increase checkbox',
-      EnableSwitch: 'data-testid public dashboard on off switch',
+      PauseSwitch: 'data-testid public dashboard pause switch',
       EnableAnnotationsSwitch: 'data-testid public dashboard on off switch for annotations',
       CreateButton: 'data-testid public dashboard create button',
       SaveConfigButton: 'data-testid public dashboard save config button',

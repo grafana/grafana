@@ -23,7 +23,7 @@ e2e.scenario({
     e2e.pages.ShareDashboardModal.PublicDashboard.WillBePublicCheckbox().should('not.exist');
     e2e.pages.ShareDashboardModal.PublicDashboard.LimitedDSCheckbox().should('not.exist');
     e2e.pages.ShareDashboardModal.PublicDashboard.CostIncreaseCheckbox().should('not.exist');
-    e2e.pages.ShareDashboardModal.PublicDashboard.EnableSwitch().should('not.exist');
+    e2e.pages.ShareDashboardModal.PublicDashboard.PauseSwitch().should('not.exist');
     e2e.pages.ShareDashboardModal.PublicDashboard.SaveConfigButton().should('not.exist');
   },
 });
