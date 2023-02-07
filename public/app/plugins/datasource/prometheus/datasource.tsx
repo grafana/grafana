@@ -462,17 +462,25 @@ export class PrometheusDatasource
 
       return super.query(updatedRequest).pipe(
         map((response) => {
-          const dataFrames = transformV2(response, request, {
-            exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
-          });
+          let queryResponse = response;
+
+          console.log('response', response);
 
           if (this.prometheusDataFrameStorage) {
-            return this.prometheusDataFrameStorage.appendQueryResultToDataFrameStorage(
+            queryResponse = this.prometheusDataFrameStorage.appendQueryResultToDataFrameStorage(
               requestWithUpdatedTargets,
-              dataFrames,
+              response,
               originalRange
             );
           }
+
+          console.log('queryResponse', queryResponse);
+
+          const dataFrames = transformV2(queryResponse, request, {
+            exemplarTraceIdDestinations: this.exemplarTraceIdDestinations,
+          });
+
+          console.log('dataFrames', dataFrames);
 
           return dataFrames;
         }),
