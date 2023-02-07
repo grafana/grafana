@@ -456,7 +456,6 @@ func (ss *sqlStore) GetProfile(ctx context.Context, query *user.GetUserProfileQu
 			return user.ErrUserNotFound
 		}
 
-		// this is not the full object?
 		userProfile = user.UserProfileDTO{
 			ID:             usr.ID,
 			Name:           usr.Name,

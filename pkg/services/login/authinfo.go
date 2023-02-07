@@ -39,14 +39,14 @@ const (
 	LDAPLabel = "LDAP"
 	JWTLabel  = "JWT"
 	// OAuth provider labels
-	AuthProxtLabel  = "Auth Proxy"
-	AzureADLabel    = "AzureAD"
-	GoogleLabel     = "Google"
-	GenericOAuth    = "Generic OAuth"
-	GitLabLabel     = "GitLab"
-	GithubLabel     = "GitHub"
-	GrafanaComLabel = "grafana.com"
-	OktaLabel       = "Okta"
+	AuthProxtLabel    = "Auth Proxy"
+	AzureADLabel      = "AzureAD"
+	GoogleLabel       = "Google"
+	GenericOAuthLabel = "Generic OAuth"
+	GitLabLabel       = "GitLab"
+	GithubLabel       = "GitHub"
+	GrafanaComLabel   = "grafana.com"
+	OktaLabel         = "Okta"
 )
 
 // User is allowed to change org role in the UI
@@ -71,7 +71,7 @@ func IsExternallySynced(cfg *setting.Cfg, autoProviderLabel string) bool {
 		return !cfg.GithubSkipOrgRoleSync
 	case GrafanaComLabel:
 		return !cfg.GrafanaComSkipOrgRoleSync
-	case GenericOAuth:
+	case GenericOAuthLabel:
 		return !cfg.GenericOAuthSkipOrgRoleSync
 	case SAMLLabel:
 		return !cfg.SAMLSkipOrgRoleSync
@@ -89,7 +89,7 @@ func GetAuthProviderLabel(authModule string) string {
 	case AzureADAuthModule:
 		return AzureADLabel
 	case GenericOAuthModule:
-		return GenericOAuth
+		return GenericOAuthLabel
 	case GoogleAuthModule:
 		return GoogleLabel
 	case GithubAuthModule:
