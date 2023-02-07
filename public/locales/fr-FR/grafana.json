@@ -13,7 +13,7 @@
       "search": "Chercher"
     },
     "search-box": {
-      "placeholder": "Rechercher dans Grafana"
+      "placeholder": ""
     },
     "section": {
       "actions": "Actions",
