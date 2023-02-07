@@ -4,27 +4,29 @@ import (
 	"context"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/authn/anonymous"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 var _ authn.ContextAwareClient = new(Anonymous)
 
-func ProvideAnonymous(cfg *setting.Cfg, orgService org.Service, _ kvstore.KVStore) *Anonymous {
+func ProvideAnonymous(cfg *setting.Cfg, orgService org.Service, anonSessionService anonymous.Service) *Anonymous {
 	return &Anonymous{
-		cfg:        cfg,
-		log:        log.New("authn.anonymous"),
-		orgService: orgService,
+		cfg:                cfg,
+		log:                log.New("authn.anonymous"),
+		orgService:         orgService,
+		anonSessionService: anonSessionService,
 	}
 }
 
 type Anonymous struct {
-	cfg        *setting.Cfg
-	log        log.Logger
-	orgService org.Service
+	cfg                *setting.Cfg
+	log                log.Logger
+	orgService         org.Service
+	anonSessionService anonymous.Service
 }
 
 func (a *Anonymous) Name() string {
@@ -36,6 +38,10 @@ func (a *Anonymous) Authenticate(ctx context.Context, r *authn.Request) (*authn.
 	if err != nil {
 		a.log.FromContext(ctx).Error("failed to find organization", "name", a.cfg.AnonymousOrgName, "error", err)
 		return nil, err
+	}
+
+	if err := a.anonSessionService.TagSession(ctx, r.HTTPRequest); err != nil {
+		a.log.Warn("Failed to tag anonymous session", "error", err)
 	}
 
 	return &authn.Identity{
