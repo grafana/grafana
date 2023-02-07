@@ -14,7 +14,7 @@ weight: -33
 
 # What’s new in Grafana v9.4
 
-Welcome to Grafana 9.4! Read on to learn about [add short list of what's included in this release]. For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
+Welcome to Grafana 9.4! Read on to learn about [add short list of what's included in this release]. For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md). 
 
 # Search and navigation
 
@@ -230,3 +230,7 @@ You can modify the scale factor for each report in the report editor and/or when
 {{< figure src="/media/docs/grafana/FormatReportScheduler9.4.png" max-width="750px" caption="Scale factor feature in Report format page" >}}
 
 {{< figure src="/media/docs/grafana/FormatReportShare9.4.png" max-width="750px" caption="Scale factor feature in Share functionality" >}}
+
+# Before you upgrade
+
+<!-- TODO: Add content -->
