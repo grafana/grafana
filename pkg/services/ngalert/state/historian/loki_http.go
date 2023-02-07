@@ -199,12 +199,8 @@ func (c *httpLokiClient) rangeQuery(ctx context.Context, selectors []Selector, s
 
 	values := url.Values{}
 	values.Set("query", selectorString(selectors))
-	if start != 0 {
-		values.Set("start", fmt.Sprintf("%d", start))
-	}
-	if end != 0 {
-		values.Set("end", fmt.Sprintf("%d", end))
-	}
+	values.Set("start", fmt.Sprintf("%d", start))
+	values.Set("end", fmt.Sprintf("%d", end))
 
 	queryURL.RawQuery = values.Encode()
 

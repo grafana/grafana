@@ -34,6 +34,8 @@ const (
 	StateHistoryLabelValue = "state-history"
 )
 
+const defaultQueryRange = 6 * time.Hour
+
 type remoteLokiClient interface {
 	ping(context.Context) error
 	push(context.Context, []stream) error
@@ -78,6 +80,15 @@ func (h *RemoteLokiBackend) QueryStates(ctx context.Context, query models.Histor
 	if err != nil {
 		return nil, fmt.Errorf("failed to build the provided selectors: %w", err)
 	}
+
+	now := time.Now().UTC()
+	if query.To.IsZero() {
+		query.To = now
+	}
+	if query.From.IsZero() {
+		query.From = now.Add(-defaultQueryRange)
+	}
+
 	// Timestamps are expected in RFC3339Nano.
 	res, err := h.client.rangeQuery(ctx, selectors, query.From.UnixNano(), query.To.UnixNano())
 	if err != nil {
