@@ -151,14 +151,3 @@ func (c *Clientset) GetResourceClient(gcrd k8ssys.Kind, namespace ...string) (dy
 
 	return resourceClient, nil
 }
-
-// GetResourceInformer returns a SharedIndexInformer for the given Kind.
-func (c *Clientset) GetResourceInformer(gcrd k8ssys.Kind) cache.SharedIndexInformer {
-	gvk := gcrd.GVK()
-	gvr := k8schema.GroupVersionResource{
-		Group:    gvk.Group,
-		Version:  gvk.Version,
-		Resource: gcrd.Schema.Spec.Names.Plural,
-	}
-	return c.factory.ForResource(gvr).Informer()
-}
