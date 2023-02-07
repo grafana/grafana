@@ -71,6 +71,7 @@ describe('SearchView', () => {
   });
 
   beforeEach(() => {
+    console.log(config);
     config.featureToggles.panelTitleSearch = false;
   });
 
