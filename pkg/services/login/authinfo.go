@@ -35,7 +35,10 @@ const (
 )
 
 const (
-	// Auth provider labels
+	SAMLLabel = "SAML"
+	LDAPLabel = "LDAP"
+	JWTLabel  = "JWT"
+	// OAuth provider labels
 	AuthProxtLabel  = "Auth Proxy"
 	AzureADLabel    = "AzureAD"
 	GoogleLabel     = "Google"
@@ -43,10 +46,7 @@ const (
 	GitLabLabel     = "GitLab"
 	GithubLabel     = "GitHub"
 	GrafanaComLabel = "grafana.com"
-	LDAPLabel       = "LDAP"
 	OktaLabel       = "Okta"
-	SAMLLabel       = "SAML"
-	JWTLabel        = "JWT"
 )
 
 // User is allowed to change org role in the UI
@@ -58,30 +58,49 @@ func IsExternallySynced(cfg *setting.Cfg, autoProviderLabel string) bool {
 		return false
 	}
 	switch autoProviderLabel {
+	// true means that the org role sync is handled by Grafana
 	case GoogleLabel:
 		return !cfg.GoogleSkipOrgRoleSync
 	case OktaLabel:
-		// skip org role sync for Okta if the setting is set
-		// means that the org role sync is handled by the Grafana
 		return !cfg.OktaSkipOrgRoleSync
+	case AzureADLabel:
+		return !cfg.AzureADSkipOrgRoleSync
+	case GitLabLabel:
+		return !cfg.GitLabSkipOrgRoleSync
+	case GithubLabel:
+		return !cfg.GithubSkipOrgRoleSync
+	case GrafanaComLabel:
+		return !cfg.GrafanaComSkipOrgRoleSync
+	case GenericOAuth:
+		return !cfg.GenericOAuthSkipOrgRoleSync
+	case SAMLLabel:
+		return !cfg.SAMLSkipOrgRoleSync
+	case LDAPLabel:
+		return !cfg.LDAPSkipOrgRoleSync
+	case JWTLabel:
+		return !cfg.JWTAuthSkipOrgRoleSync
 	}
 	return true
 }
 
 func GetAuthProviderLabel(authModule string) string {
 	switch authModule {
-	case GithubAuthModule:
-		return GithubLabel
-	case GoogleAuthModule:
-		return GoogleLabel
+	// OAuth provider modules
 	case AzureADAuthModule:
 		return AzureADLabel
+	case GenericOAuthModule:
+		return GenericOAuth
+	case GoogleAuthModule:
+		return GoogleLabel
+	case GithubAuthModule:
+		return GithubLabel
 	case GitLabAuthModule:
 		return GitLabLabel
-	case OktaAuthModule:
-		return OktaLabel
 	case GrafanaComAuthModule, GrafanaNetAuthModule:
 		return GrafanaComLabel
+	case OktaAuthModule:
+		return OktaLabel
+	// Other Auth procotols
 	case SAMLAuthModule:
 		return SAMLLabel
 	case LDAPAuthModule, "": // FIXME: verify this situation doesn't exist anymore
@@ -90,8 +109,6 @@ func GetAuthProviderLabel(authModule string) string {
 		return JWTLabel
 	case AuthProxyAuthModule:
 		return AuthProxtLabel
-	case GenericOAuthModule:
-		return GenericOAuth
 	default:
 		return "Unknown"
 	}
