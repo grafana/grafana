@@ -83,7 +83,6 @@ Alpha features might be changed or removed without prior notice.
 | `flameGraph`                       | Show the flame graph                                                                                                                                                         |
 | `redshiftAsyncQueryDataSupport`    | Enable async query data support for Redshift                                                                                                                                 |
 | `athenaAsyncQueryDataSupport`      | Enable async query data support for Athena                                                                                                                                   |
-| `increaseInMemDatabaseQueryCache`  | Enable more in memory caching for database queries                                                                                                                           |
 | `newPanelChromeUI`                 | Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu                                                                                          |
 | `showDashboardValidationWarnings`  | Show warnings when dashboards do not validate against the schema                                                                                                             |
 | `mysqlAnsiQuotes`                  | Use double quotes to escape keyword in a MySQL query                                                                                                                         |

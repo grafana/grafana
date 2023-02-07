@@ -290,11 +290,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "increaseInMemDatabaseQueryCache",
-			Description: "Enable more in memory caching for database queries",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:         "newPanelChromeUI",
 			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
 			State:        FeatureStateAlpha,
