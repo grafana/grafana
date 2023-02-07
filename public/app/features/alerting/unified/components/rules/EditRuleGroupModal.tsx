@@ -327,7 +327,13 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                   className={styles.formInput}
                 />
                 {isGrafanaManagedGroup && (
-                  <LinkButton href={props.folderUrl} variant="secondary" icon="folder-open" target="_blank" />
+                  <LinkButton
+                    href={props.folderUrl}
+                    title="Go to folder"
+                    variant="secondary"
+                    icon="folder-open"
+                    target="_blank"
+                  />
                 )}
               </Stack>
             </Field>
