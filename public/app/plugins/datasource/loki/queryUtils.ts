@@ -394,16 +394,20 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
 }
 
 function combineFrames(dest: DataQueryResponseData, source: DataQueryResponseData) {
-  dest.fields[0].values.reverse();
-  dest.fields[1].values.reverse();
-
-  for (let j = source.fields[0].values.length - 1; j >= 0; j--) {
-    dest.fields[0].values.add(source.fields[0].values.get(j));
-    dest.fields[1].values.add(source.fields[1].values.get(j));
+  for (const field of dest.fields) {
+    field.values.reverse();
   }
 
-  dest.fields[0].values.reverse();
-  dest.fields[1].values.reverse();
+  const totalFields = source.fields.length;
+  for (let j = source.fields[0].values.length - 1; j >= 0; j--) {
+    for (let i = 0; i < totalFields; i++) {
+      dest.fields[i].values.add(source.fields[i].values.get(j));
+    }
+  }
+
+  for (const field of dest.fields) {
+    field.values.reverse();
+  }
 }
 
 /**
