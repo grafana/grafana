@@ -1,3 +1,4 @@
+import { debounce } from 'lodash';
 import React, { PureComponent } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
@@ -44,10 +45,12 @@ interface LogsContainerProps extends PropsFromRedux {
 }
 
 class LogsContainer extends PureComponent<LogsContainerProps> {
-  onChangeTime = (absoluteRange: AbsoluteTimeRange) => {
+  // uPlot dispatches setSelect event twice on mouseUp. That trigger onChangeTime run twice
+  onChangeTime = debounce((absoluteRange: AbsoluteTimeRange) => {
+    console.log('time changed', absoluteRange);
     const { exploreId, updateTimeRange } = this.props;
     updateTimeRange({ exploreId, absoluteRange });
-  };
+  }, 0);
 
   getLogRowContext = async (row: LogRowModel, options?: any): Promise<any> => {
     const { datasourceInstance, logsQueries } = this.props;

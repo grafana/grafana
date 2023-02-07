@@ -46,7 +46,7 @@ interface Props {
   height: number;
   width: number;
   absoluteRange: AbsoluteTimeRange;
-  title: string;
+  title?: string;
   timeZone: TimeZone;
   loadingState: LoadingState;
   annotations?: DataFrame[];

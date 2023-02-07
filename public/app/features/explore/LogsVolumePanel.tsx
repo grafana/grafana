@@ -43,7 +43,11 @@ export function LogsVolumePanel(props: Props) {
   }
 
   const logsVolumeData = props.logsVolumeData;
-  const range = logsVolumeData.data[0]?.meta?.custom?.absoluteRange || props.absoluteRange;
+
+  const range =
+    logsVolumeData.data[0]?.meta?.custom?.logsVolumeType === LogsVolumeType.Limited
+      ? logsVolumeData.data[0]?.meta?.custom?.absoluteRange
+      : props.absoluteRange;
 
   if (logsVolumeData.error !== undefined) {
     return <SupplementaryResultError error={logsVolumeData.error} title="Failed to load log volume for this query" />;

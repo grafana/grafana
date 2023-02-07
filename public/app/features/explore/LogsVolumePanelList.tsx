@@ -3,7 +3,7 @@ import React, { useMemo } from 'react';
 
 import { AbsoluteTimeRange, DataQueryResponse, EventBus, SplitOpen, TimeZone } from '@grafana/data';
 
-import { LogsVolumePanel } from '../LogsVolumePanel';
+import { LogsVolumePanel } from './LogsVolumePanel';
 
 type Props = {
   logsVolumeData: DataQueryResponse | undefined;
@@ -31,9 +31,9 @@ export const LogsVolumePanelList = ({
   timeZone,
 }: Props) => {
   const logVolumes = useMemo(() => {
-    const groups = groupBy(logsVolumeData?.data || [], 'meta.custom.mixedDataSourceUid');
+    const groups = groupBy(logsVolumeData?.data || [], 'meta.custom.datasourceUid');
     const pairs = toPairs(groups);
-    const sorted = sortBy(pairs, 'meta.custom.mixedDataSourceName');
+    const sorted = sortBy(pairs, 'meta.custom.datasourceName');
     return fromPairs(sorted);
   }, [logsVolumeData]);
 

@@ -1,8 +1,9 @@
-import { cloneDeep, groupBy } from 'lodash';
+import { cloneDeep, filter, groupBy, head } from 'lodash';
 import { from, mergeMap, Observable, of } from 'rxjs';
 import { scan } from 'rxjs/operators';
 
 import {
+  AbsoluteTimeRange,
   DataFrame,
   DataQuery,
   DataQueryRequest,
@@ -58,6 +59,11 @@ const getSupplementaryQueryFallback = (
   }
 };
 
+/**
+ * Adds extra information to the data frame to indicate what data source it originated from.
+ * This can be used by visualizations to split data frames by source (but visualization can
+ * also decide to merge all results in a single view).
+ */
 const enrichWithSource = (uid: string, title: string) => {
   return mergeMap((response: DataQueryResponse) => {
     return of({
@@ -69,8 +75,8 @@ const enrichWithSource = (uid: string, title: string) => {
             ...df.meta,
             custom: {
               ...df.meta.custom,
-              mixedDataSourceUid: uid,
-              mixedDataSourceName: title,
+              datasourceUid: uid,
+              datasourceName: title,
             },
           },
         };
@@ -79,6 +85,13 @@ const enrichWithSource = (uid: string, title: string) => {
   });
 };
 
+/**
+ * Cleans-up duplicated results. In case multiple data sources do not support logs volume histograms, ensures there's
+ * only one result coming from the fallback.
+ *
+ * Note: The code seems simpler this way though it's less performant. In case of performance issues caused by processing
+ * too many log lines in the fallback multiple times this can be optimised to create only one fallback all the time.
+ */
 const supplementaryQueryFallbackCleanUp = (type: SupplementaryQueryType, acc: DataFrame[], next: DataQueryResponse) => {
   if (
     type === SupplementaryQueryType.LogsVolume &&
@@ -90,11 +103,39 @@ const supplementaryQueryFallbackCleanUp = (type: SupplementaryQueryType, acc: Da
   }
 };
 
+/**
+ * CacheInfo contains previous results. If queries didn't change and previous results cover wider time range,
+ * the previous results are used and returned straight away.
+ */
+const getCachedResults = (cacheInfo: SupplementaryQueryCacheInfo, uid: string) => {
+  const prev = filter(cacheInfo.previousData, ['meta.custom.datasourceUid', uid]);
+  const frame = head(prev);
+  if (frame) {
+    const dataRange = frame.meta?.custom?.absoluteRange;
+    const hasWiderRange =
+      dataRange && dataRange.from <= cacheInfo.newRange.from && cacheInfo.newRange.to <= dataRange.to;
+    if (hasWiderRange) {
+      return of({ state: LoadingState.Done, data: prev });
+    }
+  }
+  return undefined;
+};
+
+/**
+ * Used for reusing the existing data if possible
+ */
+type SupplementaryQueryCacheInfo = {
+  previousData: DataFrame[];
+  newQueries: DataQuery[];
+  newRange: AbsoluteTimeRange;
+};
+
 export const getSupplementaryQueryProvider = (
   datasourceInstance: DataSourceApi,
   type: SupplementaryQueryType,
   request: DataQueryRequest,
-  explorePanelData: Observable<ExplorePanelData>
+  explorePanelData: Observable<ExplorePanelData>,
+  cacheInfo: SupplementaryQueryCacheInfo
 ): Observable<DataQueryResponse> | undefined => {
   if (hasSupplementaryQuerySupport(datasourceInstance, type)) {
     return datasourceInstance.getDataProvider(type, request);
@@ -126,26 +167,27 @@ export const getSupplementaryQueryProvider = (
             if (hasSupplementaryQuerySupport(ds, type)) {
               const dsProvider = ds.getDataProvider(type, dsRequest);
               if (dsProvider) {
-                // 1) It provides data for current request -> use the provider
-                return dsProvider.pipe(enrichWithSource(ds.uid, ds.name));
+                const cached = getCachedResults(cacheInfo, ds.uid);
+                // 1) It provides data for current request -> use cached results or 2) get fresh data
+                return cached || dsProvider.pipe(enrichWithSource(ds.uid, ds.name));
               } else {
-                // 2) It doesn't provide data for current request -> return nothing
+                // 3) It doesn't provide data for current request -> return nothing
                 return of({
                   data: [],
                   state: LoadingState.NotStarted,
                 });
               }
             } else {
-              // 3) Data source doesn't support the supplementary query -> use fallback
+              // 4) Data source doesn't support the supplementary query -> use fallback
               // the fallback cannot determine data availability based on request, it
-              // works on the results once they are available
+              // works on the results once they are available so it never uses the cache
               return getSupplementaryQueryFallback(type, explorePanelData);
             }
           })
         );
       }),
       scan<DataQueryResponse, DataQueryResponse>(
-        (acc, next, i) => {
+        (acc, next) => {
           if (next.state !== LoadingState.Done) {
             return acc;
           }
