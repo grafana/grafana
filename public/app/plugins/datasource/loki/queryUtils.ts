@@ -7,6 +7,7 @@ import {
   DataQueryResponseData,
   dateTime,
   DurationUnit,
+  QueryResultMetaStat,
   TimeRange,
 } from '@grafana/data';
 import {
@@ -399,6 +400,12 @@ function combineFrames(dest: DataQueryResponseData, source: DataQueryResponseDat
     dest.fields[i].values.buffer = [].concat.apply([], [source.fields[i].values.buffer, dest.fields[i].values.buffer]);
   }
   dest.length += source.length;
+  if (dest.meta.stats) {
+    dest.meta.stats.forEach((stat: QueryResultMetaStat, i: number) => {
+      // We assume same order and meaning of meta stats.
+      stat.value += source.meta.stats[i].value;
+    });
+  }
 }
 
 /**
