@@ -40,7 +40,7 @@ Public plugins need to be reviewed by the Grafana team before you can sign them.
    1. Click **Submit New Plugin**. 
    1. Complete the form, and then click **Submit**.
 
-   **NOTE:** You must be an administrator for the organization to sign a public plugin. 
+   > **Note:** You must be an organization administrator to sign a public plugin. 
 
 2. When your plugin is approved, you're granted a plugin signature level. **Without a plugin signature level, you won't be able to sign your plugin**.
 3. In your plugin directory, sign the plugin with the API key you just created. Grafana Sign Plugin creates a [MANIFEST.txt](#plugin-manifest) file in the `dist` directory of your plugin.
