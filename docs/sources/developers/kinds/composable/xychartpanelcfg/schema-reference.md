@@ -94,7 +94,7 @@ It extends [ScatterFieldConfig](#scatterfieldconfig).
 | `label`             | string                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>TODO docs<br/>Possible values are: `auto`, `never`, `always`.                          |
 | `lineColor`         | [ColorDimensionConfig](#colordimensionconfig)       | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>This is actually an empty interface used mainly for naming?                            |
 | `lineStyle`         | [LineStyle](#linestyle)                             | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>TODO docs                                                                              |
-| `lineWidth`         | integer                                             | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                                            |
+| `lineWidth`         | integer                                             | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>Constraint: `0 <= val <= 2147483647`.                                                  |
 | `name`              | string                                              | No       |                                                                                                                                                         |
 | `pointColor`        | [ColorDimensionConfig](#colordimensionconfig)       | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>This is actually an empty interface used mainly for naming?                            |
 | `pointSize`         | [ScaleDimensionConfig](#scaledimensionconfig)       | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                                            |
@@ -205,7 +205,7 @@ It extends [HideableFieldConfig](#hideablefieldconfig) and [AxisConfig](#axiscon
 | `label`             | string                                              | No       | TODO docs<br/>Possible values are: `auto`, `never`, `always`.                                                                           |
 | `lineColor`         | [ColorDimensionConfig](#colordimensionconfig)       | No       | This is actually an empty interface used mainly for naming?                                                                             |
 | `lineStyle`         | [LineStyle](#linestyle)                             | No       | TODO docs                                                                                                                               |
-| `lineWidth`         | integer                                             | No       |                                                                                                                                         |
+| `lineWidth`         | integer                                             | No       | Constraint: `0 <= val <= 2147483647`.                                                                                                   |
 | `pointColor`        | [ColorDimensionConfig](#colordimensionconfig)       | No       | This is actually an empty interface used mainly for naming?                                                                             |
 | `pointSize`         | [ScaleDimensionConfig](#scaledimensionconfig)       | No       |                                                                                                                                         |
 | `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs                                                                              |
@@ -399,11 +399,11 @@ TODO docs
 
 ### XYDimensionConfig
 
-| Property  | Type     | Required | Description |
-|-----------|----------|----------|-------------|
-| `frame`   | integer  | **Yes**  |             |
-| `exclude` | string[] | No       |             |
-| `x`       | string   | No       |             |
+| Property  | Type     | Required | Description                           |
+|-----------|----------|----------|---------------------------------------|
+| `frame`   | integer  | **Yes**  | Constraint: `0 <= val <= 2147483647`. |
+| `exclude` | string[] | No       |                                       |
+| `x`       | string   | No       |                                       |
 
 ### ScatterFieldConfig
 
@@ -424,7 +424,7 @@ It extends [HideableFieldConfig](#hideablefieldconfig) and [AxisConfig](#axiscon
 | `label`             | string                                              | No       | TODO docs<br/>Possible values are: `auto`, `never`, `always`.                                                                           |
 | `lineColor`         | [ColorDimensionConfig](#colordimensionconfig)       | No       | This is actually an empty interface used mainly for naming?                                                                             |
 | `lineStyle`         | [LineStyle](#linestyle)                             | No       | TODO docs                                                                                                                               |
-| `lineWidth`         | integer                                             | No       |                                                                                                                                         |
+| `lineWidth`         | integer                                             | No       | Constraint: `0 <= val <= 2147483647`.                                                                                                   |
 | `pointColor`        | [ColorDimensionConfig](#colordimensionconfig)       | No       | This is actually an empty interface used mainly for naming?                                                                             |
 | `pointSize`         | [ScaleDimensionConfig](#scaledimensionconfig)       | No       |                                                                                                                                         |
 | `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs                                                                              |
@@ -593,7 +593,7 @@ It extends [ScatterFieldConfig](#scatterfieldconfig).
 | `label`             | string                                              | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>TODO docs<br/>Possible values are: `auto`, `never`, `always`.                          |
 | `lineColor`         | [ColorDimensionConfig](#colordimensionconfig)       | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>This is actually an empty interface used mainly for naming?                            |
 | `lineStyle`         | [LineStyle](#linestyle)                             | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>TODO docs                                                                              |
-| `lineWidth`         | integer                                             | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                                            |
+| `lineWidth`         | integer                                             | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>Constraint: `0 <= val <= 2147483647`.                                                  |
 | `name`              | string                                              | No       |                                                                                                                                                         |
 | `pointColor`        | [ColorDimensionConfig](#colordimensionconfig)       | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*<br/>This is actually an empty interface used mainly for naming?                            |
 | `pointSize`         | [ScaleDimensionConfig](#scaledimensionconfig)       | No       | *(Inherited from [ScatterFieldConfig](#scatterfieldconfig))*                                                                                            |
@@ -704,7 +704,7 @@ It extends [HideableFieldConfig](#hideablefieldconfig) and [AxisConfig](#axiscon
 | `label`             | string                                              | No       | TODO docs<br/>Possible values are: `auto`, `never`, `always`.                                                                           |
 | `lineColor`         | [ColorDimensionConfig](#colordimensionconfig)       | No       | This is actually an empty interface used mainly for naming?                                                                             |
 | `lineStyle`         | [LineStyle](#linestyle)                             | No       | TODO docs                                                                                                                               |
-| `lineWidth`         | integer                                             | No       |                                                                                                                                         |
+| `lineWidth`         | integer                                             | No       | Constraint: `0 <= val <= 2147483647`.                                                                                                   |
 | `pointColor`        | [ColorDimensionConfig](#colordimensionconfig)       | No       | This is actually an empty interface used mainly for naming?                                                                             |
 | `pointSize`         | [ScaleDimensionConfig](#scaledimensionconfig)       | No       |                                                                                                                                         |
 | `scaleDistribution` | [ScaleDistributionConfig](#scaledistributionconfig) | No       | *(Inherited from [AxisConfig](#axisconfig))*<br/>TODO docs                                                                              |
@@ -873,10 +873,10 @@ It extends [BaseDimensionConfig](#basedimensionconfig).
 
 ### XYDimensionConfig
 
-| Property  | Type     | Required | Description |
-|-----------|----------|----------|-------------|
-| `frame`   | integer  | **Yes**  |             |
-| `exclude` | string[] | No       |             |
-| `x`       | string   | No       |             |
+| Property  | Type     | Required | Description                           |
+|-----------|----------|----------|---------------------------------------|
+| `frame`   | integer  | **Yes**  | Constraint: `0 <= val <= 2147483647`. |
+| `exclude` | string[] | No       |                                       |
+| `x`       | string   | No       |                                       |
 
 
