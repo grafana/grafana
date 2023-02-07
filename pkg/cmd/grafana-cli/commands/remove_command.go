@@ -29,5 +29,6 @@ func (cmd Command) removeCommand(c utils.CommandLine) error {
 		return err
 	}
 
+	warnAboutRestart()
 	return nil
 }

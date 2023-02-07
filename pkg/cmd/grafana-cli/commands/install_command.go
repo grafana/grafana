@@ -49,7 +49,11 @@ func (cmd Command) installCommand(c utils.CommandLine) error {
 
 	pluginID := c.Args().First()
 	version := c.Args().Get(1)
-	return installPlugin(context.Background(), pluginID, version, c)
+	if err := installPlugin(context.Background(), pluginID, version, c); err != nil {
+		return err
+	}
+	warnAboutRestart()
+	return nil
 }
 
 // installPlugin downloads the plugin code as a zip file from the Grafana.com API

@@ -49,19 +49,32 @@ func (cmd Command) upgradeAllCommand(c utils.CommandLine) error {
 		}
 	}
 
+	if len(pluginsToUpgrade) == 0 {
+		return nil
+	}
+
+	var upgraded = false
 	for _, p := range pluginsToUpgrade {
 		logger.Infof("Updating %v \n", p.ID)
 
 		err := services.RemoveInstalledPlugin(pluginsDir, p.ID)
 		if err != nil {
+			if upgraded {
+				warnAboutRestart()
+			}
 			return err
 		}
 
 		err = installPlugin(context.Background(), p.ID, "", c)
 		if err != nil {
+			if upgraded {
+				warnAboutRestart()
+			}
 			return err
 		}
+		upgraded = true
 	}
 
+	warnAboutRestart()
 	return nil
 }
