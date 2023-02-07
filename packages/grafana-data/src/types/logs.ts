@@ -206,6 +206,34 @@ export enum LogsVolumeType {
 }
 
 /**
+ * Custom meta information required by Logs Volume responses
+ */
+export type LogsVolumeCustom = {
+  absoluteRange: AbsoluteTimeRange;
+  logsVolumeType: LogsVolumeType;
+  datasourceUid: string;
+  datasourceName: string;
+};
+
+export const getLogsVolumeAbsoluteRange = (
+  dataFrames: DataFrame[],
+  defaultRange: AbsoluteTimeRange
+): AbsoluteTimeRange => {
+  return dataFrames[0].meta?.custom?.absoluteRange || defaultRange;
+};
+
+export const getLogsVolumeDataSourceInfo = (dataFrames: DataFrame[]): { uid: string; name: string } => {
+  return {
+    uid: dataFrames[0].meta?.custom?.datasourceUid || '',
+    name: dataFrames[0].meta?.custom?.datasourceName || '',
+  };
+};
+
+export const isLogsVolumeLimited = (dataFrames: DataFrame[]) => {
+  return dataFrames[0].meta?.custom?.logsVolumeType === LogsVolumeType.Limited;
+};
+
+/**
  * Data sources that support supplementary queries in Explore.
  * This will enable users to see additional data when running original queries.
  * Supported supplementary queries are defined in SupplementaryQueryType enum.
