@@ -33,7 +33,7 @@ export const AlertConditionIndicator: FC<AlertConditionProps> = ({
 
   if (!enabled) {
     return (
-      <button className={styles.actionLink} onClick={() => onSetCondition && onSetCondition()}>
+      <button type="button" className={styles.actionLink} onClick={() => onSetCondition && onSetCondition()}>
         Make this the alert condition
       </button>
     );
