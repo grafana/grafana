@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgtest"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/team/teamtest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -41,7 +42,7 @@ func setUpGetOrgUsersDB(t *testing.T, sqlStore *sqlstore.SQLStore) {
 	quotaService := quotaimpl.ProvideService(sqlStore, sqlStore.Cfg)
 	orgService, err := orgimpl.ProvideService(sqlStore, sqlStore.Cfg, quotaService)
 	require.NoError(t, err)
-	usrSvc, err := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, quotaService)
+	usrSvc, err := userimpl.ProvideService(sqlStore, orgService, sqlStore.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 
 	_, err = usrSvc.Create(context.Background(), &user.CreateUserCommand{Email: "testUser@grafana.com", Login: testUserLogin})
@@ -630,6 +631,7 @@ func TestOrgUsersAPIEndpointWithSetPerms_AccessControl(t *testing.T) {
 					ExpectedUser:         &user.User{},
 					ExpectedSignedInUser: userWithPermissions(1, tt.permissions),
 				}
+				hs.accesscontrolService = &actest.FakeService{}
 			})
 
 			u := userWithPermissions(1, tt.permissions)
@@ -703,6 +705,7 @@ func TestPatchOrgUsersAPIEndpoint_AccessControl(t *testing.T) {
 				hs.Cfg.RBACEnabled = tt.enableAccessControl
 				hs.orgService = &orgtest.FakeOrgService{}
 				hs.authInfoService = &logintest.AuthInfoServiceFake{}
+				hs.accesscontrolService = &actest.FakeService{}
 				hs.userService = &usertest.FakeUserService{
 					ExpectedUser:         &user.User{},
 					ExpectedSignedInUser: userWithPermissions(1, tt.permissions),

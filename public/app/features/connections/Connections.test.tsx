@@ -103,9 +103,7 @@ describe('Connections', () => {
     renderPage(ROUTES.ConnectData, store);
 
     // We expect not to see the text that would be rendered by the core "Connect data" page
-    // (Instead we expect to see the default route "Datasources")
-    expect(await screen.findByText('Datasources')).toBeVisible();
-    expect(await screen.findByText('Manage your existing datasource connections')).toBeVisible();
+    expect(screen.queryByText('Data sources')).not.toBeInTheDocument();
     expect(screen.queryByText('No results matching your query were found.')).not.toBeInTheDocument();
   });
 });

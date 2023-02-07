@@ -116,7 +116,7 @@ export const testDataSource = (
           plugin_id: dsApi.type,
           datasource_uid: dsApi.uid,
           success: true,
-          editLink,
+          path: editLink,
         });
       } catch (err) {
         let message: string | undefined;
@@ -137,7 +137,7 @@ export const testDataSource = (
           plugin_id: dsApi.type,
           datasource_uid: dsApi.uid,
           success: false,
-          editLink,
+          path: editLink,
         });
       }
     });
@@ -221,7 +221,7 @@ export function addDataSource(plugin: DataSourcePluginMeta, editRoute = DATASOUR
       plugin_id: plugin.id,
       datasource_uid: result.datasource.uid,
       plugin_version: result.meta?.info?.version,
-      editLink,
+      path: editLink,
     });
 
     locationService.push(editLink);
