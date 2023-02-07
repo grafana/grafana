@@ -108,8 +108,18 @@ type templateData struct {
 
 // -------------------- JSON to Markdown conversion --------------------
 // Copied from https://github.com/marcusolsson/json-schema-docs and slightly changed to fit the DocsJenny
+type constraints struct {
+	Pattern          string `json:"pattern"`
+	Maximum          any    `json:"maximum"`
+	ExclusiveMinimum bool   `json:"exclusiveMinimum"`
+	Minimum          any    `json:"minimum"`
+	ExclusiveMaximum bool   `json:"exclusiveMaximum"`
+	MinLength        uint   `json:"minLength"`
+	MaxLength        uint   `json:"maxLength"`
+}
 
 type schema struct {
+	constraints
 	ID                   string             `json:"$id,omitempty"`
 	Ref                  string             `json:"$ref,omitempty"`
 	Schema               string             `json:"$schema,omitempty"`
@@ -474,6 +484,7 @@ func printProperties(w io.Writer, s *schema) {
 			desc += fmt.Sprintf(" Default: `%v`.", p.Default)
 		}
 
+		desc += constraintDescr(p)
 		rows = append(rows, []string{fmt.Sprintf("`%s`", key), typeStr, required, formatForTable(desc)})
 	}
 
@@ -490,6 +501,44 @@ func printProperties(w io.Writer, s *schema) {
 
 	table.AppendBulk(rows)
 	table.Render()
+}
+
+func constraintDescr(s *schema) string {
+	// TODO: check case when val > 100 in cue - are both values set?
+	if s.Minimum != nil && s.Maximum != nil {
+		left := fmt.Sprintf("%.20g ", s.Minimum)
+
+		if s.ExclusiveMinimum {
+			left += "<"
+		} else {
+			left += "<="
+		}
+
+		right := ""
+		if s.ExclusiveMaximum {
+			right += "<"
+		} else {
+			right += "<="
+		}
+		right += fmt.Sprintf(" %.20g", s.Maximum)
+		return fmt.Sprintf("\nConstraint: `%s val %s`.", left, right)
+	}
+
+	if s.MinLength > 0 {
+		left := fmt.Sprintf("%v <=", s.MinLength)
+		right := ""
+
+		if s.MaxLength > 0 {
+			right = fmt.Sprintf("<= %v", s.MaxLength)
+		}
+		return fmt.Sprintf("\nConstraint: `%s len(val) %s`.", left, right)
+	}
+
+	if s.Pattern != "" {
+		fmt.Sprintf("\nConstraint: must match `%s`.", s.Pattern)
+	}
+
+	return ""
 }
 
 func propTypeStr(propName string, propValue *schema) string {
