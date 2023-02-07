@@ -127,7 +127,7 @@ func (s CorrelationsService) updateCorrelation(ctx context.Context, cmd UpdateCo
 				correlation.Config.Target = *cmd.Config.Target
 			}
 			if cmd.Config.Transformations != nil {
-				correlation.Config.Transformations = *&cmd.Config.Transformations
+				correlation.Config.Transformations = cmd.Config.Transformations
 			}
 		}
 
