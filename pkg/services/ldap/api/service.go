@@ -34,6 +34,7 @@ type Service struct {
 	orgService        org.Service
 	sessionService    auth.UserTokenService
 	router            routing.RouteRegister
+	log               log.Logger
 }
 
 func ProvideService(cfg *setting.Cfg, router routing.RouteRegister, accessControl ac.AccessControl,
@@ -47,6 +48,7 @@ func ProvideService(cfg *setting.Cfg, router routing.RouteRegister, accessContro
 		loginService:      loginService,
 		orgService:        orgService,
 		sessionService:    sessionService,
+		log:               log.New("ldap.api"),
 	}
 
 	authorize := ac.Middleware(accessControl)
@@ -65,8 +67,6 @@ func ProvideService(cfg *setting.Cfg, router routing.RouteRegister, accessContro
 var (
 	getLDAPConfig = multildap.GetConfig
 	newLDAP       = multildap.New
-
-	ldapLogger = log.New("LDAP.debug")
 
 	errOrganizationNotFound = func(orgId int64) error {
 		return fmt.Errorf("unable to find organization with ID '%d'", orgId)
@@ -279,7 +279,7 @@ func (s *Service) PostSyncUserWithLDAP(c *contextmodel.ReqContext) response.Resp
 		if errors.Is(err, multildap.ErrDidNotFindUser) { // User was not in the LDAP server - we need to take action:
 			if s.cfg.AdminUser == usr.Login { // User is *the* Grafana Admin. We cannot disable it.
 				errMsg := fmt.Sprintf(`Refusing to sync grafana super admin "%s" - it would be disabled`, usr.Login)
-				ldapLogger.Error(errMsg)
+				s.log.Error(errMsg)
 				return response.Error(http.StatusBadRequest, errMsg, err)
 			}
 
@@ -297,7 +297,7 @@ func (s *Service) PostSyncUserWithLDAP(c *contextmodel.ReqContext) response.Resp
 			return response.Error(http.StatusBadRequest, "User not found in LDAP. Disabled the user without updating information", nil) // should this be a success?
 		}
 
-		ldapLogger.Debug("Failed to sync the user with LDAP", "err", err)
+		s.log.Debug("Failed to sync the user with LDAP", "err", err)
 		return response.Error(http.StatusBadRequest, "Something went wrong while finding the user in LDAP", err)
 	}
 
@@ -357,7 +357,7 @@ func (s *Service) GetUserFromLDAP(c *contextmodel.ReqContext) response.Response 
 		return response.Error(http.StatusNotFound, "No user was found in the LDAP server(s) with that username", err)
 	}
 
-	ldapLogger.Debug("user found", "user", user)
+	s.log.Debug("user found", "user", user)
 
 	name, surname := splitName(user.Name)
 
@@ -396,7 +396,7 @@ func (s *Service) GetUserFromLDAP(c *contextmodel.ReqContext) response.Response 
 		u.OrgRoles = append(u.OrgRoles, LDAPRoleDTO{GroupDN: userGroup})
 	}
 
-	ldapLogger.Debug("mapping org roles", "orgsRoles", u.OrgRoles)
+	s.log.Debug("mapping org roles", "orgsRoles", u.OrgRoles)
 	if err := u.FetchOrgs(c.Req.Context(), s.orgService); err != nil {
 		return response.Error(http.StatusBadRequest, "An organization was not found - Please verify your LDAP configuration", err)
 	}
