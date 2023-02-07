@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -300,7 +301,7 @@ func getDashboards(t *testing.T, sqlStore *sqlstore.SQLStore, search Search, acl
 		sqlStore.Cfg.RBACEnabled = old
 	}()
 
-	builder := NewSqlBuilder(sqlStore.Cfg, sqlStore.GetDialect())
+	builder := NewSqlBuilder(sqlStore.Cfg, featuremgmt.WithFeatures(), sqlStore.GetDialect())
 	signedInUser := &user.SignedInUser{
 		UserID: 9999999999,
 	}

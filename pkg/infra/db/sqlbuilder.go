@@ -5,21 +5,23 @@ import (
 
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func NewSqlBuilder(cfg *setting.Cfg, dialect migrator.Dialect) SQLBuilder {
+func NewSqlBuilder(cfg *setting.Cfg, features featuremgmt.FeatureToggles, dialect migrator.Dialect) SQLBuilder {
 	return SQLBuilder{cfg: cfg, dialect: dialect}
 }
 
 type SQLBuilder struct {
-	cfg     *setting.Cfg
-	sql     bytes.Buffer
-	params  []interface{}
-	dialect migrator.Dialect
+	cfg      *setting.Cfg
+	features featuremgmt.FeatureToggles
+	sql      bytes.Buffer
+	params   []interface{}
+	dialect  migrator.Dialect
 }
 
 func (sb *SQLBuilder) Write(sql string, params ...interface{}) {

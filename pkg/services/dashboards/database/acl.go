@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 )
@@ -104,7 +105,7 @@ func (d *DashboardStore) HasEditPermissionInFolders(ctx context.Context, query *
 		return queryResult, nil
 	}
 	err := d.store.WithDbSession(ctx, func(dbSession *db.Session) error {
-		builder := db.NewSqlBuilder(d.cfg, d.store.GetDialect())
+		builder := db.NewSqlBuilder(d.cfg, featuremgmt.WithFeatures(), d.store.GetDialect())
 		builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ? AND dashboard.is_folder = ?",
 			query.SignedInUser.OrgID, d.store.GetDialect().BooleanStr(true))
 		builder.WriteDashboardPermissionFilter(query.SignedInUser, dashboards.PERMISSION_EDIT)
@@ -137,7 +138,7 @@ func (d *DashboardStore) HasAdminPermissionInDashboardsOrFolders(ctx context.Con
 			return nil
 		}
 
-		builder := db.NewSqlBuilder(d.cfg, d.store.GetDialect())
+		builder := db.NewSqlBuilder(d.cfg, featuremgmt.WithFeatures(), d.store.GetDialect())
 		builder.Write("SELECT COUNT(dashboard.id) AS count FROM dashboard WHERE dashboard.org_id = ?", query.SignedInUser.OrgID)
 		builder.WriteDashboardPermissionFilter(query.SignedInUser, dashboards.PERMISSION_ADMIN)
 
