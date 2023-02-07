@@ -45,7 +45,7 @@ export const LogsVolumePanelList = ({
   const logVolumes = useMemo(() => {
     const groups = groupBy(logsVolumeData?.data || [], 'meta.custom.datasourceUid');
     const pairs = toPairs(groups);
-    const sorted = sortBy(pairs, 'meta.custom.datasourceName');
+    const sorted = sortBy(pairs, '1.0.meta.custom.datasourceName');
     return fromPairs(sorted);
   }, [logsVolumeData]);
 
