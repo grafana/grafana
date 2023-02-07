@@ -18,9 +18,12 @@ import (
 
 type TestClient struct {
 	plugins.Client
-	QueryDataFunc    backend.QueryDataHandlerFunc
-	CallResourceFunc backend.CallResourceHandlerFunc
-	CheckHealthFunc  backend.CheckHealthHandlerFunc
+	QueryDataFunc       backend.QueryDataHandlerFunc
+	CallResourceFunc    backend.CallResourceHandlerFunc
+	CheckHealthFunc     backend.CheckHealthHandlerFunc
+	CollectMetricsFunc  backend.CollectMetricsHandlerFunc
+	SubscribeStreamFunc func(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error)
+	PublishStreamFunc   func(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error)
 }
 
 func (c *TestClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
@@ -42,6 +45,30 @@ func (c *TestClient) CallResource(ctx context.Context, req *backend.CallResource
 func (c *TestClient) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	if c.CheckHealthFunc != nil {
 		return c.CheckHealthFunc(ctx, req)
+	}
+
+	return nil, nil
+}
+
+func (c *TestClient) CollectMetrics(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
+	if c.CollectMetricsFunc != nil {
+		return c.CollectMetricsFunc(ctx, req)
+	}
+
+	return nil, nil
+}
+
+func (c *TestClient) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	if c.PublishStreamFunc != nil {
+		return c.PublishStreamFunc(ctx, req)
+	}
+
+	return nil, nil
+}
+
+func (c *TestClient) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	if c.SubscribeStreamFunc != nil {
+		return c.SubscribeStreamFunc(ctx, req)
 	}
 
 	return nil, nil
@@ -125,18 +152,24 @@ func (m *TestMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRe
 var _ plugins.Client = &TestClient{}
 
 type ClientDecoratorTest struct {
-	T               *testing.T
-	Context         context.Context
-	TestClient      *TestClient
-	Middlewares     []plugins.ClientMiddleware
-	Decorator       *client.Decorator
-	ReqContext      *contextmodel.ReqContext
-	QueryDataReq    *backend.QueryDataRequest
-	QueryDataCtx    context.Context
-	CallResourceReq *backend.CallResourceRequest
-	CallResourceCtx context.Context
-	CheckHealthReq  *backend.CheckHealthRequest
-	CheckHealthCtx  context.Context
+	T                  *testing.T
+	Context            context.Context
+	TestClient         *TestClient
+	Middlewares        []plugins.ClientMiddleware
+	Decorator          *client.Decorator
+	ReqContext         *contextmodel.ReqContext
+	QueryDataReq       *backend.QueryDataRequest
+	QueryDataCtx       context.Context
+	CallResourceReq    *backend.CallResourceRequest
+	CallResourceCtx    context.Context
+	CheckHealthReq     *backend.CheckHealthRequest
+	CheckHealthCtx     context.Context
+	CollectMetricsReq  *backend.CollectMetricsRequest
+	CollectMetricsCtx  context.Context
+	SubscribeStreamReq *backend.SubscribeStreamRequest
+	SubscribeStreamCtx context.Context
+	PublishStreamReq   *backend.PublishStreamRequest
+	PublishStreamCtx   context.Context
 }
 
 type ClientDecoratorTestOption func(*ClientDecoratorTest)
@@ -160,6 +193,21 @@ func NewClientDecoratorTest(t *testing.T, opts ...ClientDecoratorTestOption) *Cl
 		CheckHealthFunc: func(ctx context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 			cdt.CheckHealthReq = req
 			cdt.CheckHealthCtx = ctx
+			return nil, nil
+		},
+		CollectMetricsFunc: func(ctx context.Context, req *backend.CollectMetricsRequest) (*backend.CollectMetricsResult, error) {
+			cdt.CollectMetricsReq = req
+			cdt.CollectMetricsCtx = ctx
+			return nil, nil
+		},
+		SubscribeStreamFunc: func(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+			cdt.SubscribeStreamReq = req
+			cdt.SubscribeStreamCtx = ctx
+			return nil, nil
+		},
+		PublishStreamFunc: func(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+			cdt.PublishStreamReq = req
+			cdt.PublishStreamCtx = ctx
 			return nil, nil
 		},
 	}
