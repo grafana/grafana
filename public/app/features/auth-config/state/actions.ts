@@ -1,15 +1,16 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, ThunkResult, UpdateSettingsQuery } from 'app/types';
+import { AccessControlAction, Settings, ThunkResult, UpdateSettingsQuery } from 'app/types';
 
 import { settingsUpdated } from './reducers';
 
-export function loadSettings(): ThunkResult<void> {
+export function loadSettings(): ThunkResult<Promise<Settings>> {
   return async (dispatch) => {
     if (contextSrv.hasPermission(AccessControlAction.SettingsRead)) {
       const result = await getBackendSrv().get('/api/admin/settings');
       console.log(result);
       dispatch(settingsUpdated(result));
+      return result;
     }
   };
 }
