@@ -1,6 +1,7 @@
 package elasticsearch
 
 import (
+	"encoding/json"
 	"errors"
 	"regexp"
 	"sort"
@@ -57,91 +58,12 @@ func parseResponse(responses []*es.SearchResponse, targets []*Query, timeField s
 		queryRes := backend.DataResponse{}
 
 		if isDocumentQuery(target) {
-			docs := make([]map[string]interface{}, 0)
-			propNames := make([]string, 0)
-			for _, hit := range res.Hits.Hits {
-				var flattened map[string]interface{}
-				if hit["_source"] != nil {
-					flattened = flatten(hit["_source"].(map[string]interface{}))
-				}
-
-				doc := map[string]interface{}{
-					"_id":       hit["_id"],
-					"_type":     hit["_type"],
-					"_index":    hit["_index"],
-					"sort":      hit["sort"],
-					"highlight": hit["highlight"],
-					"_source":   flattened,
-				}
-
-				for k, v := range flattened {
-					doc[k] = v
-				}
-
-				for key := range doc {
-					if stringInSlice(key, propNames) {
-						continue
-					} else {
-						propNames = append(propNames, key)
-					}
-				}
-
-				docs = append(docs, doc)
+			err := processDocumentResponse(res, target, timeField, &queryRes)
+			if err != nil {
+				return &backend.QueryDataResponse{}, err
 			}
-
-			size := len(docs)
-			allFields := make([]*data.Field, 0)
-
-			// Process time field as first one
-			timeVector := make([]time.Time, size)
-			for i, doc := range docs {
-				timeString := doc[timeField].(string)
-				timeValue, err := time.Parse(time.RFC3339Nano, timeString)
-				if err != nil {
-					return nil, err
-				}
-				timeVector[i] = timeValue
-			}
-			timestampField := data.NewField(timeField, nil, timeVector)
-
-			filterable := true
-			timestampField.Config = &data.FieldConfig{Filterable: &filterable}
-			allFields = append(allFields, timestampField)
-
-			for _, propName := range propNames {
-				if propName == timeField {
-					continue
-				}
-
-				if propName == "_source" {
-					continue
-				}
-
-				_, ok := docs[0][propName].(string)
-
-				if ok {
-					fieldVector := make([]string, size)
-					for i, doc := range docs {
-						v, _ := doc[propName].(string)
-						fieldVector[i] = v
-					}
-
-					field := data.NewField(propName, nil, fieldVector)
-					filterable := true
-					field.Config = &data.FieldConfig{Filterable: &filterable}
-					allFields = append(allFields, field)
-				}
-			}
-
-			frames := data.Frames{}
-			frame := data.NewFrame("", allFields...)
-
-			frames = append(frames, frame)
-
-			queryRes.Frames = frames
 			result.Responses[target.RefID] = queryRes
 		} else {
-
 			props := make(map[string]string)
 			err := processBuckets(res.Aggregations, target, &queryRes, props, 0)
 			if err != nil {
@@ -157,6 +79,137 @@ func parseResponse(responses []*es.SearchResponse, targets []*Query, timeField s
 	return &result, nil
 }
 
+func processDocumentResponse(res *es.SearchResponse, target *Query, timeField string, queryRes *backend.DataResponse) error {
+	docs := make([]map[string]interface{}, len(res.Hits.Hits))
+	propNames := make([]string, 0)
+
+	for hitIdx, hit := range res.Hits.Hits {
+		var flattened map[string]interface{}
+		if hit["_source"] != nil {
+			flattened = flatten(hit["_source"].(map[string]interface{}))
+		}
+
+		doc := map[string]interface{}{
+			"_id":       hit["_id"],
+			"_type":     hit["_type"],
+			"_index":    hit["_index"],
+			"sort":      hit["sort"],
+			"highlight": hit["highlight"],
+			"_source":   flattened,
+		}
+
+		for k, v := range flattened {
+			doc[k] = v
+		}
+
+		for key := range doc {
+			// We want to add only unique propNames
+			if isStringInSlice(key, propNames) {
+				continue
+			} else {
+				propNames = append(propNames, key)
+			}
+		}
+
+		docs[hitIdx] = doc
+	}
+
+	size := len(docs)
+	isFilterable := true
+	allFields := make([]*data.Field, len(propNames))
+
+	sortedPropNames := sortPropNames(propNames, timeField)
+
+	for propNameIdx, propName := range sortedPropNames {
+		// Special handling for time field
+		if propName == timeField {
+			timeVector := make([]time.Time, size)
+			for i, doc := range docs {
+				timeString := doc[timeField].(string)
+				timeValue, err := time.Parse(time.RFC3339Nano, timeString)
+				if err != nil {
+					// We skip time values that cannot be parsed
+					continue
+				} else {
+					timeVector[i] = timeValue
+				}
+			}
+			field := data.NewField(timeField, nil, timeVector)
+			field.Config = &data.FieldConfig{Filterable: &isFilterable}
+			allFields[propNameIdx] = field
+			continue
+		}
+
+		propNameValue := findTheFirstNonNilDocValueForPropName(docs, propName)
+		switch propNameValue.(type) {
+		// We are checking for default data types values (float64, int, bool, string)
+		// and default to json.RawMessage if we cannot find any of them
+		case float64:
+			fieldVector := make([]float64, size)
+			for i, doc := range docs {
+				v, _ := doc[propName].(float64)
+				fieldVector[i] = v
+			}
+			field := data.NewField(propName, nil, fieldVector)
+			field.Config = &data.FieldConfig{Filterable: &isFilterable}
+			allFields[propNameIdx] = field
+
+		case int:
+			fieldVector := make([]int, size)
+			for i, doc := range docs {
+				v, _ := doc[propName].(int)
+				fieldVector[i] = v
+			}
+			field := data.NewField(propName, nil, fieldVector)
+			field.Config = &data.FieldConfig{Filterable: &isFilterable}
+			allFields[propNameIdx] = field
+
+		case string:
+			fieldVector := make([]string, size)
+			for i, doc := range docs {
+				v, _ := doc[propName].(string)
+				fieldVector[i] = v
+			}
+			field := data.NewField(propName, nil, fieldVector)
+			field.Config = &data.FieldConfig{Filterable: &isFilterable}
+			allFields[propNameIdx] = field
+
+		case bool:
+			fieldVector := make([]bool, size)
+			for i, doc := range docs {
+				v, _ := doc[propName].(bool)
+				fieldVector[i] = v
+			}
+			field := data.NewField(propName, nil, fieldVector)
+			field.Config = &data.FieldConfig{Filterable: &isFilterable}
+			allFields[propNameIdx] = field
+
+		default:
+			fieldVector := make([]json.RawMessage, size)
+			for i, doc := range docs {
+				bytes, err := json.Marshal(doc[propName])
+				if err != nil {
+					// TODO: Not sure what to do with empty values
+					bytes = []byte{}
+				}
+				fieldVector[i] = json.RawMessage(bytes)
+			}
+			field := data.NewField(propName, nil, fieldVector)
+			field.Config = &data.FieldConfig{Filterable: &isFilterable}
+			allFields[propNameIdx] = field
+		}
+
+	}
+
+	frames := data.Frames{}
+	frame := data.NewFrame("", allFields...)
+	frames = append(frames, frame)
+
+	queryRes.Frames = frames
+
+	return nil
+
+}
 
 func processBuckets(aggs map[string]interface{}, target *Query,
 	queryResult *backend.DataResponse, props map[string]string, depth int) error {
@@ -843,8 +896,11 @@ func getErrorFromElasticResponse(response *es.SearchResponse) string {
 	return errorString
 }
 
+// flatten flattens multi-level map[string]interface{} to single level map[string]interface{}. It uses dot notation to join keys.
 func flatten(target map[string]interface{}) map[string]interface{} {
-	maxDepth := 0
+	// On frontend maxDepth wasn't used but as we are processing on backend
+	// let's put a limit to avoid infinite loop. 10 was chosen arbitrary.
+	maxDepth := 10
 	currentDepth := 0
 	delimiter := ""
 	output := make(map[string]interface{})
@@ -860,10 +916,6 @@ func flatten(target map[string]interface{}) map[string]interface{} {
 			}
 			newKey := prev + delimiter + key
 
-			if maxDepth == 0 {
-				maxDepth = currentDepth + 1
-			}
-
 			v, ok := value.(map[string]interface{})
 			if ok {
 				if len(v) > 0 && currentDepth < maxDepth {
@@ -872,21 +924,51 @@ func flatten(target map[string]interface{}) map[string]interface{} {
 
 				}
 			}
-
 			output[newKey] = value
 		}
 	}
 
 	step(target, "")
-
 	return output
 }
 
-func stringInSlice(a string, list []string) bool {
+func isStringInSlice(a string, list []string) bool {
 	for _, b := range list {
 		if b == a {
 			return true
 		}
 	}
 	return false
+}
+
+// sortPropNames orders propNames so that timeField is first, if it exists and rest of propNames are ordered alphabetically
+func sortPropNames(propNames []string, timeField string) []string {
+	sortedPropNames := make([]string, 0, len(propNames))
+	sortedPropNames = append(sortedPropNames, propNames...)
+
+	sort.Strings(sortedPropNames)
+	if len(sortedPropNames) == 0 || sortedPropNames[0] == timeField {
+		return sortedPropNames
+	}
+
+	if sortedPropNames[len(sortedPropNames)-1] == timeField {
+		return append([]string{timeField}, (sortedPropNames)[:len(sortedPropNames)-1]...)
+	}
+
+	for idx, propName := range sortedPropNames {
+		if propName == timeField {
+			return append([]string{timeField}, append((sortedPropNames)[:idx], (sortedPropNames)[idx+1:]...)...)
+		}
+	}
+	return sortedPropNames
+}
+
+// findTheFirstNonNilDocValueForPropName finds the first non-nil value for propName in docs. If none of the values are non-nil, it returns the value of propName in the first doc.
+func findTheFirstNonNilDocValueForPropName(docs []map[string]interface{}, propName string) interface{} {
+	for _, doc := range docs {
+		if doc[propName] != nil {
+			return doc[propName]
+		}
+	}
+	return docs[0][propName]
 }
