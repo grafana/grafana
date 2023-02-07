@@ -260,13 +260,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin-right: ${theme.spacing(1)};
     `,
     withShortcut: css`
-      min-width: ${theme.spacing(10)};
+      min-width: ${theme.spacing(10.5)};
     `,
     shortcut: css`
       display: flex;
       align-items: center;
       gap: ${theme.spacing(1)};
-      margin-left: ${theme.spacing(1)};
+      margin-left: ${theme.spacing(2)};
       color: ${theme.colors.text.secondary};
       opacity: 0.7;
     `,
