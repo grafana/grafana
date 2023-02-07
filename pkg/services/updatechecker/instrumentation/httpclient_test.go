@@ -6,11 +6,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/infra/tracing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/codes"
-	
-	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 func TestHTTPClientTracing(t *testing.T) {
@@ -21,6 +21,7 @@ func TestHTTPClientTracing(t *testing.T) {
 	}))
 	t.Cleanup(srv.Close)
 	resp, err := cl.Get(context.Background(), srv.URL)
+	defer func() { _ = resp.Body.Close() }()
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 
