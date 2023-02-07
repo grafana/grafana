@@ -55,7 +55,7 @@ import { DashboardModel, PanelModel } from '../state';
 import { loadSnapshotData } from '../utils/loadSnapshotData';
 
 import { PanelHeader } from './PanelHeader/PanelHeader';
-import { PanelHeaderMenuWrapper } from './PanelHeader/PanelHeaderMenuWrapper';
+import { PanelHeaderMenuWrapper, PanelHeaderMenuWrapperNew } from './PanelHeader/PanelHeaderMenuWrapper';
 import { PanelHeaderTitleItems } from './PanelHeader/PanelHeaderTitleItems';
 import { seriesVisibilityConfigFactory } from './SeriesVisibilityConfigFactory';
 import { liveTimer } from './liveTimer';
@@ -691,7 +691,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
             panel={panel}
             dashboard={dashboard}
             loadingState={data.state}
-            onClose={() => {}}
             menuItemsClassName={overrideStyles.menuItemsClassName}
             menuWrapperClassName={overrideStyles.menuWrapperClassName}
           />
@@ -703,6 +702,12 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
     if (config.featureToggles.newPanelChromeUI) {
       // Shift the hover menu down if it's on the top row so it doesn't get clipped by topnav
       const hoverHeaderOffset = (panel.gridPos?.y ?? 0) === 0 ? -16 : undefined;
+
+      menu = (
+        <div data-testid="panel-dropdown">
+          <PanelHeaderMenuWrapperNew panel={panel} dashboard={dashboard} loadingState={data.state} />
+        </div>
+      );
 
       return (
         <PanelChrome
