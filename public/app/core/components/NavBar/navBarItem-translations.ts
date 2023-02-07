@@ -5,7 +5,7 @@
 import { config } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 
-// The keys of the TRANSLATED_MENU_ITEMS object (NOT the id inside the defineMessage function)
+// The keys of the TRANSLATED_MENU_ITEMS object ((NOT the id inside the defineMessage function)
 // must match the ID of the navigation item, as defined in the backend nav model
 
 // see pkg/api/index.go
@@ -42,9 +42,9 @@ export function getNavTitle(navId: string | undefined) {
     case 'dashboards/library-panels':
       return t('nav.library-panels.title', 'Library panels');
     case 'dashboards/new':
-      return t('nav.new-dashboard.title', 'Create dashboard');
+      return t('nav.new-dashboard.title', 'New dashboard');
     case 'dashboards/folder/new':
-      return t('nav.new-folder.title', 'Create folder');
+      return t('nav.new-folder.title', 'New folder');
     case 'dashboards/import':
       return t('nav.create-import.title', 'Import');
     case 'scenes':
