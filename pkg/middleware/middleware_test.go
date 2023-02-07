@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/authtest"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
+	"github.com/grafana/grafana/pkg/services/authn/anonymous/anontest"
 	"github.com/grafana/grafana/pkg/services/authn/authntest"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
@@ -951,7 +952,12 @@ func getContextHandler(t *testing.T, cfg *setting.Cfg, mockSQLStore *dbtest.Fake
 	tracer := tracing.InitializeTracerForTest()
 	authProxy := authproxy.ProvideAuthProxy(cfg, remoteCacheSvc, loginService, userService, mockSQLStore)
 	authenticator := &logintest.AuthenticatorFake{ExpectedUser: &user.User{}}
-	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc, remoteCacheSvc, renderSvc, mockSQLStore, tracer, authProxy, loginService, apiKeyService, authenticator, userService, orgService, oauthTokenService, featuremgmt.WithFeatures(featuremgmt.FlagAccessTokenExpirationCheck), &authntest.FakeService{})
+	return contexthandler.ProvideService(cfg, userAuthTokenSvc, authJWTSvc,
+		remoteCacheSvc, renderSvc, mockSQLStore, tracer, authProxy,
+		loginService, apiKeyService, authenticator, userService, orgService,
+		oauthTokenService,
+		featuremgmt.WithFeatures(featuremgmt.FlagAccessTokenExpirationCheck),
+		&authntest.FakeService{}, &anontest.FakeAnonymousSessionService{})
 }
 
 type fakeRenderService struct {

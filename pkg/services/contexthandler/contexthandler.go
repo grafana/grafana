@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/auth"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/authn/anonymous"
 	"github.com/grafana/grafana/pkg/services/contexthandler/authproxy"
 	"github.com/grafana/grafana/pkg/services/contexthandler/ctxkey"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -53,48 +54,50 @@ func ProvideService(cfg *setting.Cfg, tokenService auth.UserTokenService, jwtSer
 	tracer tracing.Tracer, authProxy *authproxy.AuthProxy, loginService login.Service,
 	apiKeyService apikey.Service, authenticator loginpkg.Authenticator, userService user.Service,
 	orgService org.Service, oauthTokenService oauthtoken.OAuthTokenService, features *featuremgmt.FeatureManager,
-	authnService authn.Service,
+	authnService authn.Service, anonSessionService anonymous.Service,
 ) *ContextHandler {
 	return &ContextHandler{
-		Cfg:               cfg,
-		AuthTokenService:  tokenService,
-		JWTAuthService:    jwtService,
-		RemoteCache:       remoteCache,
-		RenderService:     renderService,
-		SQLStore:          sqlStore,
-		tracer:            tracer,
-		authProxy:         authProxy,
-		authenticator:     authenticator,
-		loginService:      loginService,
-		apiKeyService:     apiKeyService,
-		userService:       userService,
-		orgService:        orgService,
-		oauthTokenService: oauthTokenService,
-		features:          features,
-		authnService:      authnService,
-		singleflight:      new(singleflight.Group),
+		Cfg:                cfg,
+		AuthTokenService:   tokenService,
+		JWTAuthService:     jwtService,
+		RemoteCache:        remoteCache,
+		RenderService:      renderService,
+		SQLStore:           sqlStore,
+		tracer:             tracer,
+		authProxy:          authProxy,
+		authenticator:      authenticator,
+		loginService:       loginService,
+		apiKeyService:      apiKeyService,
+		userService:        userService,
+		orgService:         orgService,
+		oauthTokenService:  oauthTokenService,
+		features:           features,
+		authnService:       authnService,
+		anonSessionService: anonSessionService,
+		singleflight:       new(singleflight.Group),
 	}
 }
 
 // ContextHandler is a middleware.
 type ContextHandler struct {
-	Cfg               *setting.Cfg
-	AuthTokenService  auth.UserTokenService
-	JWTAuthService    auth.JWTVerifierService
-	RemoteCache       *remotecache.RemoteCache
-	RenderService     rendering.Service
-	SQLStore          db.DB
-	tracer            tracing.Tracer
-	authProxy         *authproxy.AuthProxy
-	authenticator     loginpkg.Authenticator
-	loginService      login.Service
-	apiKeyService     apikey.Service
-	userService       user.Service
-	orgService        org.Service
-	oauthTokenService oauthtoken.OAuthTokenService
-	features          *featuremgmt.FeatureManager
-	authnService      authn.Service
-	singleflight      *singleflight.Group
+	Cfg                *setting.Cfg
+	AuthTokenService   auth.UserTokenService
+	JWTAuthService     auth.JWTVerifierService
+	RemoteCache        *remotecache.RemoteCache
+	RenderService      rendering.Service
+	SQLStore           db.DB
+	tracer             tracing.Tracer
+	authProxy          *authproxy.AuthProxy
+	authenticator      loginpkg.Authenticator
+	loginService       login.Service
+	apiKeyService      apikey.Service
+	userService        user.Service
+	orgService         org.Service
+	oauthTokenService  oauthtoken.OAuthTokenService
+	features           *featuremgmt.FeatureManager
+	authnService       authn.Service
+	singleflight       *singleflight.Group
+	anonSessionService anonymous.Service
 	// GetTime returns the current time.
 	// Stubbable by tests.
 	GetTime func() time.Time
@@ -232,6 +235,10 @@ func (h *ContextHandler) initContextWithAnonymousUser(reqContext *contextmodel.R
 	if err != nil {
 		reqContext.Logger.Error("Anonymous access organization error.", "org_name", h.Cfg.AnonymousOrgName, "error", err)
 		return false
+	}
+
+	if err := h.anonSessionService.TagSession(reqContext.Req.Context(), reqContext.Req); err != nil {
+		reqContext.Logger.Warn("Failed to tag anonymous session", "error", err)
 	}
 
 	reqContext.IsSignedIn = false

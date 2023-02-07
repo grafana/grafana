@@ -40,6 +40,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/apikey/apikeyimpl"
 	"github.com/grafana/grafana/pkg/services/auth/jwt"
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/authn/anonymous"
+	"github.com/grafana/grafana/pkg/services/authn/anonymous/anonimpl"
 	"github.com/grafana/grafana/pkg/services/authn/authnimpl"
 	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/comments"
@@ -217,8 +219,11 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(correlations.Service), new(*correlations.CorrelationsService)),
 	quotaimpl.ProvideService,
 	remotecache.ProvideService,
+	wire.Bind(new(remotecache.CacheStorage), new(*remotecache.RemoteCache)),
 	loginservice.ProvideService,
 	wire.Bind(new(login.Service), new(*loginservice.Implementation)),
+	anonimpl.ProvideAnonymousSessionService,
+	wire.Bind(new(anonymous.Service), new(*anonimpl.AnonSessionService)),
 	authinfoservice.ProvideAuthInfoService,
 	wire.Bind(new(login.AuthInfoService), new(*authinfoservice.Implementation)),
 	authinfodatabase.ProvideAuthInfoStore,
