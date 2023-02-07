@@ -396,7 +396,7 @@ export function combineResponses(currentResult: DataQueryResponse | null, newRes
 function combineFrames(dest: DataQueryResponseData, source: DataQueryResponseData) {
   const totalFields = dest.fields.length;
   for (let i = 0; i < totalFields; i++) {
-    dest.fields[i].values = [...source.fields[i].values, ...dest.fields[i].values];
+    dest.fields[i].values.buffer = [].concat.apply([], [source.fields[i].values.buffer, dest.fields[i].values.buffer]);
   }
 }
 
