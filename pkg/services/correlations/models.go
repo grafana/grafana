@@ -61,9 +61,6 @@ func (c CorrelationConfig) MarshalJSON() ([]byte, error) {
 	if target == nil {
 		target = map[string]interface{}{}
 	}
-	if transformations == nil {
-		transformations = nil
-	}
 	return json.Marshal(struct {
 		Type            CorrelationConfigType  `json:"type"`
 		Field           string                 `json:"field"`
