@@ -2,7 +2,6 @@ package ualert
 
 import (
 	"encoding/json"
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"strings"
 	"testing"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 )
 
 func TestMigrateAlertRuleQueries(t *testing.T) {
