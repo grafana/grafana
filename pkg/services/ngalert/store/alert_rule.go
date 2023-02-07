@@ -275,8 +275,25 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 		q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
 
 		alertRules := make([]*ngmodels.AlertRule, 0)
-		if err := q.Find(&alertRules); err != nil {
+		var faultyRules int64 = 0
+		rule := new(ngmodels.AlertRule)
+		rows, err := q.Rows(rule)
+		if err != nil {
 			return err
+		}
+		defer rows.Close()
+		for rows.Next() {
+			rule := new(ngmodels.AlertRule)
+			err = rows.Scan(rule)
+			if err != nil {
+				faultyRules++
+				continue
+			}
+			alertRules = append(alertRules, rule)
+		}
+
+		if faultyRules > 0 {
+			st.Logger.Error("Faulty rules found in DB store.", "func", "ListAlertRules", "faultyRules", faultyRules)
 		}
 
 		query.Result = alertRules
@@ -455,9 +472,28 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 			alertRulesSql += " WHERE " + filter
 		}
 
-		if err := sess.SQL(alertRulesSql, args...).Find(&rules); err != nil {
+		var faultyRules int64 = 0
+		rule := new(ngmodels.AlertRule)
+		rows, err := sess.SQL(alertRulesSql, args...).Rows(rule)
+		if err != nil {
 			return fmt.Errorf("failed to fetch alert rules: %w", err)
 		}
+		defer rows.Close()
+
+		for rows.Next() {
+			rule := new(ngmodels.AlertRule)
+			err = rows.Scan(rule)
+			if err != nil {
+				faultyRules++
+				continue
+			}
+			rules = append(rules, rule)
+		}
+
+		if faultyRules > 0 {
+			st.Logger.Error("Faulty rules found in DB store.", "func", "GetAlertRulesForScheduling", "faultyRules", faultyRules)
+		}
+
 		query.ResultRules = rules
 		if query.PopulateFolders {
 			if err := sess.SQL(foldersSql, args...).Find(&folders); err != nil {
