@@ -128,6 +128,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/resolver"
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
+	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/tag/tagimpl"
@@ -185,6 +186,8 @@ var wireBasicSet = wire.NewSet(
 	hooks.ProvideService,
 	kvstore.ProvideService,
 	localcache.ProvideService,
+	bundleregistry.ProvideService,
+	wire.Bind(new(supportbundles.Service), new(*bundleregistry.Service)),
 	dashboardthumbsimpl.ProvideService,
 	updatechecker.ProvideGrafanaService,
 	updatechecker.ProvidePluginsService,
@@ -362,7 +365,6 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(authn.Service), new(*authnimpl.Service)),
 	k8saccess.ProvideK8SAccess,
 	supportbundlesimpl.ProvideService,
-	wire.Bind(new(supportbundles.Service), new(*supportbundlesimpl.Service)),
 )
 
 var wireSet = wire.NewSet(
