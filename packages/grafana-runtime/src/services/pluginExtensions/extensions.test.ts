@@ -8,7 +8,7 @@ describe('getPluginExtensions', () => {
 
     beforeAll(() => {
       setPluginsExtensionRegistry({
-        [`plugins/${pluginId}.${linkId}`]: [
+        [`plugins/${pluginId}/${linkId}`]: [
           {
             type: 'link',
             title: 'Declare incident',
@@ -22,7 +22,7 @@ describe('getPluginExtensions', () => {
 
     it('should return a collection of extensions to the plugin', () => {
       const { extensions, error } = getPluginExtensions({
-        target: `plugins/${pluginId}.${linkId}`,
+        target: `plugins/${pluginId}/${linkId}`,
       });
 
       expect(extensions[0].href).toBe(`/a/${pluginId}/declare-incident`);
@@ -31,7 +31,7 @@ describe('getPluginExtensions', () => {
 
     it('should return a description for the requested link', () => {
       const { extensions, error } = getPluginExtensions({
-        target: `plugins/${pluginId}.${linkId}`,
+        target: `plugins/${pluginId}/${linkId}`,
       });
 
       expect(extensions[0].href).toBe(`/a/${pluginId}/declare-incident`);
@@ -39,9 +39,9 @@ describe('getPluginExtensions', () => {
       expect(error).toBeUndefined();
     });
 
-    it('should return an empty href when link doesnt exist', () => {
+    it('should return an empty array when no links can be found', () => {
       const { extensions, error } = getPluginExtensions({
-        target: `some-different-app.${linkId}`,
+        target: `an-unknown-app/${linkId}`,
       });
 
       expect(extensions.length).toBe(0);
