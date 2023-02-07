@@ -40,7 +40,7 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 		ac := acmock.New()
 		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, nil, &featuremgmt.FeatureManager{})
 
-		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 2)
+		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 3)
 	})
 }
 
