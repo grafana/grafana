@@ -370,8 +370,8 @@ func (m *dataSourcesServiceMock) GetDataSources(ctx context.Context, query *data
 	return m.expectedError
 }
 
-func (m *dataSourcesServiceMock) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error {
-	return m.expectedError
+func (m *dataSourcesServiceMock) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error) {
+	return m.expectedDatasources, m.expectedError
 }
 
 func (m *dataSourcesServiceMock) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) error {

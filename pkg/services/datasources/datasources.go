@@ -22,7 +22,7 @@ type DataSourceService interface {
 	GetAllDataSources(ctx context.Context, query *GetAllDataSourcesQuery) error
 
 	// GetDataSourcesByType gets datasources by type.
-	GetDataSourcesByType(ctx context.Context, query *GetDataSourcesByTypeQuery) error
+	GetDataSourcesByType(ctx context.Context, query *GetDataSourcesByTypeQuery) ([]*DataSource, error)
 
 	// AddDataSource adds a new datasource.
 	AddDataSource(ctx context.Context, cmd *AddDataSourceCommand) (*DataSource, error)

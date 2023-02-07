@@ -45,17 +45,18 @@ func (s *FakeDataSourceService) GetAllDataSources(ctx context.Context, query *da
 	return nil
 }
 
-func (s *FakeDataSourceService) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error {
+func (s *FakeDataSourceService) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error) {
+	var dataSources []*datasources.DataSource
 	for _, datasource := range s.DataSources {
 		if query.OrgID > 0 && datasource.OrgID != query.OrgID {
 			continue
 		}
 		typeMatch := query.Type != "" && query.Type == datasource.Type
 		if typeMatch {
-			query.Result = append(query.Result, datasource)
+			dataSources = append(dataSources, datasource)
 		}
 	}
-	return nil
+	return dataSources, nil
 }
 
 func (s *FakeDataSourceService) AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error) {

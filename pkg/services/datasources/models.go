@@ -165,9 +165,8 @@ type GetAllDataSourcesQuery struct {
 }
 
 type GetDataSourcesByTypeQuery struct {
-	OrgID  int64 // optional: filter by org_id
-	Type   string
-	Result []*DataSource
+	OrgID int64 // optional: filter by org_id
+	Type  string
 }
 
 type GetDefaultDataSourceQuery struct {

@@ -448,10 +448,10 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 			query := datasources.GetDataSourcesByTypeQuery{Type: datasources.DS_ES}
 
-			err = ss.GetDataSourcesByType(context.Background(), &query)
+			dataSources, err := ss.GetDataSourcesByType(context.Background(), &query)
 
 			require.NoError(t, err)
-			require.Equal(t, 1, len(query.Result))
+			require.Equal(t, 1, len(dataSources))
 		})
 
 		t.Run("Returns an error if no type specified", func(t *testing.T) {
@@ -460,7 +460,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 			query := datasources.GetDataSourcesByTypeQuery{}
 
-			err := ss.GetDataSourcesByType(context.Background(), &query)
+			_, err := ss.GetDataSourcesByType(context.Background(), &query)
 
 			require.Error(t, err)
 		})

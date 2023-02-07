@@ -25,7 +25,7 @@ import (
 type Store interface {
 	GetDataSource(context.Context, *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
 	GetDataSources(context.Context, *datasources.GetDataSourcesQuery) error
-	GetDataSourcesByType(context.Context, *datasources.GetDataSourcesByTypeQuery) error
+	GetDataSourcesByType(context.Context, *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error)
 	GetDefaultDataSource(context.Context, *datasources.GetDefaultDataSourceQuery) error
 	DeleteDataSource(context.Context, *datasources.DeleteDataSourceCommand) error
 	AddDataSource(context.Context, *datasources.AddDataSourceCommand) (*datasources.DataSource, error)
@@ -99,17 +99,17 @@ func (ss *SqlStore) GetAllDataSources(ctx context.Context, query *datasources.Ge
 }
 
 // GetDataSourcesByType returns all datasources for a given type or an error if the specified type is an empty string
-func (ss *SqlStore) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) error {
+func (ss *SqlStore) GetDataSourcesByType(ctx context.Context, query *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error) {
 	if query.Type == "" {
-		return fmt.Errorf("datasource type cannot be empty")
+		return nil, fmt.Errorf("datasource type cannot be empty")
 	}
 
-	query.Result = make([]*datasources.DataSource, 0)
-	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+	dataSources := make([]*datasources.DataSource, 0)
+	return dataSources, ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		if query.OrgID > 0 {
-			return sess.Where("type=? AND org_id=?", query.Type, query.OrgID).Asc("id").Find(&query.Result)
+			return sess.Where("type=? AND org_id=?", query.Type, query.OrgID).Asc("id").Find(&dataSources)
 		}
-		return sess.Where("type=?", query.Type).Asc("id").Find(&query.Result)
+		return sess.Where("type=?", query.Type).Asc("id").Find(&dataSources)
 	})
 }
 
