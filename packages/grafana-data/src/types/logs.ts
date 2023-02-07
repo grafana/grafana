@@ -196,6 +196,16 @@ export enum SupplementaryQueryType {
 }
 
 /**
+ * Types of logs volume responses. A data source may return full range histogram (based on selected range)
+ * or limited (based on returned results). This information is attached to DataFrame.meta.custom object.
+ * @internal
+ */
+export enum LogsVolumeType {
+  FullRange = 'FullRange',
+  Limited = 'Limited',
+}
+
+/**
  * Data sources that support supplementary queries in Explore.
  * This will enable users to see additional data when running original queries.
  * Supported supplementary queries are defined in SupplementaryQueryType enum.
