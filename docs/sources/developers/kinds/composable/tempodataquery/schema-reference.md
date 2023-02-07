@@ -8,7 +8,7 @@ title: TempoDataQuery kind
 
 ## TempoDataQuery
 
-#### Maturity: experimental
+#### Maturity: [experimental](../../../maturity/#experimental)
 #### Version: 0.0
 
 

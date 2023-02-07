@@ -8,7 +8,7 @@ title: HistogramPanelCfg kind
 
 ## HistogramPanelCfg
 
-#### Maturity: experimental
+#### Maturity: [experimental](../../../maturity/#experimental)
 #### Version: 0.0
 
 

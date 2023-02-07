@@ -8,7 +8,7 @@ title: LibraryPanel kind
 
 ## LibraryPanel
 
-#### Maturity: experimental
+#### Maturity: [experimental](../../../maturity/#experimental)
 #### Version: 0.0
 
 A standalone panel

@@ -8,7 +8,7 @@ title: BarChartPanelCfg kind
 
 ## BarChartPanelCfg
 
-#### Maturity: experimental
+#### Maturity: [experimental](../../../maturity/#experimental)
 #### Version: 0.0
 
 

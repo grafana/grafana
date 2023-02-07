@@ -8,7 +8,7 @@ title: Playlist kind
 
 ## Playlist
 
-#### Maturity: merged
+#### Maturity: [merged](../../../maturity/#merged)
 #### Version: 0.0
 
 A playlist is a series of dashboards that is automatically rotated in the browser, on a configurable interval.
