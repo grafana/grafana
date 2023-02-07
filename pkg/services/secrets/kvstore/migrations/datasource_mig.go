@@ -82,6 +82,7 @@ func (s *DataSourceSecretMigrationService) Migrate(ctx context.Context) error {
 				WithCredentials: ds.WithCredentials,
 				ReadOnly:        ds.ReadOnly,
 				User:            ds.User,
+				Database:        ds.Database,
 			})
 			if err != nil {
 				return err
