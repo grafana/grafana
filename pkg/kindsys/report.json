@@ -234,7 +234,9 @@
     },
     "cloudwatchdataquery": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/aws-plugins"
+      ],
       "currentVersion": [
         0,
         0
@@ -242,13 +244,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
-        "docs": "n/a",
-        "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/cloudwatchdataquery/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/tsdb/cloudwatch/kinds/dataquery/types_dataquery_gen.go",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/cloudwatch/dataquery.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/cloudwatch/dataquery.gen.ts"
       },
       "machineName": "cloudwatchdataquery",
-      "maturity": "planned",
+      "maturity": "merged",
       "name": "CloudWatchDataQuery",
       "pluralMachineName": "cloudwatchdataquerys",
       "pluralName": "CloudWatchDataQuerys",
@@ -1092,7 +1094,9 @@
     },
     "parcadataquery": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/observability-traces-and-profiling"
+      ],
       "currentVersion": [
         0,
         0
@@ -1100,13 +1104,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
-        "docs": "n/a",
-        "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/parcadataquery/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/tsdb/parca/kinds/dataquery/types_dataquery_gen.go",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/parca/dataquery.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/parca/dataquery.gen.ts"
       },
       "machineName": "parcadataquery",
-      "maturity": "planned",
+      "maturity": "experimental",
       "name": "ParcaDataQuery",
       "pluralMachineName": "parcadataquerys",
       "pluralName": "ParcaDataQuerys",
@@ -1990,6 +1994,7 @@
           "lokidataquery",
           "newspanelcfg",
           "nodegraphpanelcfg",
+          "parcadataquery",
           "phlaredataquery",
           "piechartpanelcfg",
           "statetimelinepanelcfg",
@@ -2000,7 +2005,7 @@
           "textpanelcfg",
           "xychartpanelcfg"
         ],
-        "count": 22
+        "count": 23
       },
       "mature": {
         "name": "mature",
@@ -2012,13 +2017,14 @@
         "items": [
           "alertgroupspanelcfg",
           "azuremonitordataquery",
+          "cloudwatchdataquery",
           "playlist",
           "preferences",
           "publicdashboard",
           "serviceaccount",
           "team"
         ],
-        "count": 7
+        "count": 8
       },
       "planned": {
         "name": "planned",
@@ -2028,7 +2034,6 @@
           "alertmanagerdatasourcecfg",
           "apikey",
           "azuremonitordatasourcecfg",
-          "cloudwatchdataquery",
           "cloudwatchdatasourcecfg",
           "dashboarddataquery",
           "dashboarddatasourcecfg",
@@ -2055,7 +2060,6 @@
           "microsoftsqlserverdatasourcecfg",
           "mysqldataquery",
           "mysqldatasourcecfg",
-          "parcadataquery",
           "parcadatasourcecfg",
           "phlaredatasourcecfg",
           "postgresqldataquery",
@@ -2074,7 +2078,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 50
+        "count": 48
       },
       "stable": {
         "name": "stable",

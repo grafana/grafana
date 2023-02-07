@@ -40,7 +40,7 @@ func TestIntegrationProvideFolderService(t *testing.T) {
 		ac := acmock.New()
 		ProvideService(ac, bus.ProvideBus(tracing.InitializeTracerForTest()), cfg, nil, nil, nil, &featuremgmt.FeatureManager{})
 
-		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 2)
+		require.Len(t, ac.Calls.RegisterAttributeScopeResolver, 3)
 	})
 }
 
@@ -300,7 +300,6 @@ func TestIntegrationFolderService(t *testing.T) {
 				{ActualError: dashboards.ErrDashboardWithSameUIDExists, ExpectedError: dashboards.ErrFolderWithSameUIDExists},
 				{ActualError: dashboards.ErrDashboardVersionMismatch, ExpectedError: dashboards.ErrFolderVersionMismatch},
 				{ActualError: dashboards.ErrDashboardNotFound, ExpectedError: dashboards.ErrFolderNotFound},
-				{ActualError: dashboards.ErrDashboardFailedGenerateUniqueUid, ExpectedError: dashboards.ErrFolderFailedGenerateUniqueUid},
 				{ActualError: dashboards.ErrDashboardInvalidUid, ExpectedError: dashboards.ErrDashboardInvalidUid},
 			}
 

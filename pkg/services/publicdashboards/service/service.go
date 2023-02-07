@@ -163,7 +163,7 @@ func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.Signed
 	}
 
 	if dto.PublicDashboard.Share == "" {
-		dto.PublicDashboard.Share = EmailShareType
+		dto.PublicDashboard.Share = PublicShareType
 	}
 
 	uid, err := pd.NewPublicDashboardUid(ctx)
