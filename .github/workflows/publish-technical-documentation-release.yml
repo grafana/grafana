@@ -66,7 +66,11 @@ jobs:
 
       - name: "Clone website-sync Action"
         if: "steps.has-matching-release-tag.outputs.bool == 'true'"
-        run: "git clone --single-branch --no-tags --depth 1 -b master https://grafanabot:${{ secrets.GH_BOT_ACCESS_TOKEN }}@github.com/grafana/website-sync ./.github/actions/website-sync"
+        # WEBSITE_SYNC_TOKEN is a fine-grained GitHub Personal Access Token that expires.
+        # It must be regenerated in the grafanabot GitHub account and requires a Grafana organization
+        # GitHub administrator to update the organization secret.
+        # The IT helpdesk can update the organization secret.
+        run: "git clone --single-branch --no-tags --depth 1 -b master https://grafanabot:${{ secrets.WEBSITE_SYNC_TOKEN }}@github.com/grafana/website-sync ./.github/actions/website-sync"
 
       - name: "Publish to website repository (release)"
         if: "steps.has-matching-release-tag.outputs.bool == 'true'"
@@ -76,6 +80,10 @@ jobs:
           repository: "grafana/website"
           branch: "master"
           host: "github.com"
-          github_pat: "${{ secrets.GH_BOT_ACCESS_TOKEN }}"
+          # PUBLISH_TO_WEBSITE_TOKEN is a fine-grained GitHub Personal Access Token that expires.
+          # It must be regenerated in the grafanabot GitHub account and requires a Grafana organization
+          # GitHub administrator to update the organization secret.
+          # The IT helpdesk can update the organization secret.
+          github_pat: "grafanabot:${{ secrets.PUBLISH_TO_WEBSITE_TOKEN }}"
           source_folder: "docs/sources"
           target_folder: "content/docs/grafana/${{ steps.target.outputs.target }}"
