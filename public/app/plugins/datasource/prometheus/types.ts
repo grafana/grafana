@@ -35,7 +35,6 @@ export interface PromOptions extends DataSourceJsonData {
   exemplarTraceIdDestinations?: ExemplarTraceIdDestination[];
   prometheusType?: PromApplication;
   prometheusVersion?: string;
-  enableSecureSocksProxy?: boolean;
   cacheLevel?: PrometheusCacheLevel;
   defaultEditor?: QueryEditorMode;
 }

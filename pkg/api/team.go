@@ -7,7 +7,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/util"
@@ -24,7 +25,7 @@ import (
 // 403: forbiddenError
 // 409: conflictError
 // 500: internalServerError
-func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) CreateTeam(c *contextmodel.ReqContext) response.Response {
 	cmd := team.CreateTeamCommand{}
 	if err := web.Bind(c.Req, &cmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)
@@ -53,7 +54,7 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 		// the SignedInUser is an empty struct therefore
 		// an additional check whether it is an actual user is required
 		if c.SignedInUser.IsRealUser() {
-			if err := addOrUpdateTeamMember(c.Req.Context(), hs.teamPermissionsService, c.SignedInUser.UserID, c.OrgID, t.ID, models.PERMISSION_ADMIN.String()); err != nil {
+			if err := addOrUpdateTeamMember(c.Req.Context(), hs.teamPermissionsService, c.SignedInUser.UserID, c.OrgID, t.ID, dashboards.PERMISSION_ADMIN.String()); err != nil {
 				c.Logger.Error("Could not add creator to team", "error", err)
 			}
 		} else {
@@ -77,7 +78,7 @@ func (hs *HTTPServer) CreateTeam(c *models.ReqContext) response.Response {
 // 404: notFoundError
 // 409: conflictError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateTeam(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateTeam(c *contextmodel.ReqContext) response.Response {
 	cmd := team.UpdateTeamCommand{}
 	var err error
 	if err := web.Bind(c.Req, &cmd); err != nil {
@@ -115,7 +116,7 @@ func (hs *HTTPServer) UpdateTeam(c *models.ReqContext) response.Response {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) DeleteTeamByID(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) DeleteTeamByID(c *contextmodel.ReqContext) response.Response {
 	orgID := c.OrgID
 	teamID, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
@@ -147,7 +148,7 @@ func (hs *HTTPServer) DeleteTeamByID(c *models.ReqContext) response.Response {
 // 401: unauthorisedError
 // 403: forbiddenError
 // 500: internalServerError
-func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) SearchTeams(c *contextmodel.ReqContext) response.Response {
 	perPage := c.QueryInt("perpage")
 	if perPage <= 0 {
 		perPage = 1000
@@ -201,7 +202,7 @@ func (hs *HTTPServer) SearchTeams(c *models.ReqContext) response.Response {
 // UserFilter returns the user ID used in a filter when querying a team
 // 1. If the user is a viewer or editor, this will return the user's ID.
 // 2. If the user is an admin, this will return models.FilterIgnoreUser (0)
-func userFilter(c *models.ReqContext) int64 {
+func userFilter(c *contextmodel.ReqContext) int64 {
 	userIdFilter := c.SignedInUser.UserID
 	if c.OrgRole == org.RoleAdmin {
 		userIdFilter = team.FilterIgnoreUser
@@ -219,7 +220,7 @@ func userFilter(c *models.ReqContext) int64 {
 // 403: forbiddenError
 // 404: notFoundError
 // 500: internalServerError
-func (hs *HTTPServer) GetTeamByID(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetTeamByID(c *contextmodel.ReqContext) response.Response {
 	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
@@ -263,7 +264,7 @@ func (hs *HTTPServer) GetTeamByID(c *models.ReqContext) response.Response {
 // 200: getPreferencesResponse
 // 401: unauthorisedError
 // 500: internalServerError
-func (hs *HTTPServer) GetTeamPreferences(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) GetTeamPreferences(c *contextmodel.ReqContext) response.Response {
 	teamId, err := strconv.ParseInt(web.Params(c.Req)[":teamId"], 10, 64)
 	if err != nil {
 		return response.Error(http.StatusBadRequest, "teamId is invalid", err)
@@ -289,7 +290,7 @@ func (hs *HTTPServer) GetTeamPreferences(c *models.ReqContext) response.Response
 // 400: badRequestError
 // 401: unauthorisedError
 // 500: internalServerError
-func (hs *HTTPServer) UpdateTeamPreferences(c *models.ReqContext) response.Response {
+func (hs *HTTPServer) UpdateTeamPreferences(c *contextmodel.ReqContext) response.Response {
 	dtoCmd := dtos.UpdatePrefsCmd{}
 	if err := web.Bind(c.Req, &dtoCmd); err != nil {
 		return response.Error(http.StatusBadRequest, "bad request data", err)

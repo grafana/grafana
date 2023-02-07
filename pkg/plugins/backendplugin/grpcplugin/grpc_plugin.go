@@ -120,6 +120,10 @@ func (p *grpcPlugin) IsDecommissioned() bool {
 	return p.decommissioned
 }
 
+func (p *grpcPlugin) Target() backendplugin.Target {
+	return backendplugin.TargetLocal
+}
+
 func (p *grpcPlugin) getPluginClient() (pluginClient, bool) {
 	p.mutex.RLock()
 	if p.client == nil || p.client.Exited() || p.pluginClient == nil {

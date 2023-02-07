@@ -2,10 +2,9 @@ package middleware
 
 import (
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/models"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/web"
@@ -22,7 +21,7 @@ var (
 	ReqOrgAdmin            = RoleAuth(org.RoleAdmin)
 )
 
-func HandleNoCacheHeader(ctx *models.ReqContext) {
+func HandleNoCacheHeader(ctx *contextmodel.ReqContext) {
 	ctx.SkipCache = ctx.Req.Header.Get("X-Grafana-NoCache") == "true"
 }
 
@@ -31,24 +30,20 @@ func AddDefaultResponseHeaders(cfg *setting.Cfg) web.Handler {
 	t.Add("/api/datasources/uid/:uid/resources/*", nil)
 	t.Add("/api/datasources/:id/resources/*", nil)
 	return func(c *web.Context) {
-		c.Resp.Before(func(w web.ResponseWriter) {
-			// if response has already been written, skip.
+		c.Resp.Before(func(w web.ResponseWriter) { // if response has already been written, skip.
 			if w.Written() {
 				return
 			}
 
-			// TODO case if keeping this
 			_, _, resourceURLMatch := t.Match(c.Req.URL.Path)
-			if !strings.HasPrefix(c.Req.URL.Path, "/api/datasources/proxy/") && !resourceURLMatch {
+			resourceCachable := resourceURLMatch && allowCacheControl(c.Resp)
+			if !strings.HasPrefix(c.Req.URL.Path, "/api/datasources/proxy/") && !resourceCachable {
 				addNoCacheHeaders(c.Resp)
-			} else {
-				spew.Printf("not override cache headers on %s \n", c.Req.URL.Path) // TODO Remove before merging
 			}
 
 			if !cfg.AllowEmbedding {
 				addXFrameOptionsDenyHeader(w)
 			}
-
 			addSecurityHeaders(w, cfg)
 		})
 	}
@@ -77,9 +72,9 @@ func addSecurityHeaders(w web.ResponseWriter, cfg *setting.Cfg) {
 }
 
 func addNoCacheHeaders(w web.ResponseWriter) {
-	w.Header().Set("Cache-Control", "no-cache")
-	w.Header().Set("Pragma", "no-cache")
-	w.Header().Set("Expires", "-1")
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Del("Pragma")
+	w.Header().Del("Expires")
 }
 
 func addXFrameOptionsDenyHeader(w web.ResponseWriter) {
@@ -102,4 +97,25 @@ func AddCustomResponseHeaders(cfg *setting.Cfg) web.Handler {
 			}
 		})
 	}
+}
+
+func allowCacheControl(rw web.ResponseWriter) bool {
+	ccHeaderValues := rw.Header().Values("Cache-Control")
+
+	if len(ccHeaderValues) == 0 {
+		return false
+	}
+
+	foundPrivate := false
+	foundPublic := false
+	for _, val := range ccHeaderValues {
+		if val == "private" {
+			foundPrivate = true
+		}
+		if val == "public" {
+			foundPublic = true
+		}
+	}
+
+	return foundPrivate && !foundPublic && rw.Header().Get("X-Grafana-Cache") != ""
 }

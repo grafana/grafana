@@ -4,11 +4,12 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/web"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
+	"github.com/grafana/grafana/pkg/web"
 )
 
 type clientWrapper struct {
@@ -84,7 +85,7 @@ func defaultServerUrlFor(config *rest.Config) (*url.URL, string, error) {
 	return rest.DefaultServerURL(host, config.APIPath, schema.GroupVersion{}, defaultTLS)
 }
 
-func (s *clientWrapper) doProxy(c *models.ReqContext) {
+func (s *clientWrapper) doProxy(c *contextmodel.ReqContext) {
 	if s.baseURL == nil {
 		c.Resp.WriteHeader(500)
 		return

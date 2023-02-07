@@ -74,6 +74,7 @@ describe('PrometheusDatasource', () => {
   const instanceSettings = {
     url: 'proxied',
     id: 1,
+    uid: 'ABCDEF',
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
@@ -217,7 +218,7 @@ describe('PrometheusDatasource', () => {
       it('added to metadata request', () => {
         promDs.metadataRequest('/foo');
         expect(fetchMock.mock.calls.length).toBe(1);
-        expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/1/resources/foo?customQuery=123');
+        expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/uid/ABCDEF/resources/foo?customQuery=123');
       });
 
       it('adds params to timeseries query', () => {
@@ -252,13 +253,13 @@ describe('PrometheusDatasource', () => {
       it('added to metadata request with non-POST endpoint', () => {
         promDs.metadataRequest('/foo');
         expect(fetchMock.mock.calls.length).toBe(1);
-        expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/1/resources/foo?customQuery=123');
+        expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/uid/ABCDEF/resources/foo?customQuery=123');
       });
 
       it('added to metadata request with POST endpoint', () => {
         promDs.metadataRequest('/api/v1/labels');
         expect(fetchMock.mock.calls.length).toBe(1);
-        expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/1/resources/api/v1/labels');
+        expect(fetchMock.mock.calls[0][0].url).toBe('/api/datasources/uid/ABCDEF/resources/api/v1/labels');
         expect(fetchMock.mock.calls[0][0].data.customQuery).toBe('123');
       });
 
@@ -824,6 +825,7 @@ describe('PrometheusDatasource2', () => {
   const instanceSettings = {
     url: 'proxied',
     id: 1,
+    uid: 'ABCDEF',
     directUrl: 'direct',
     user: 'test',
     password: 'mupp',
@@ -986,7 +988,7 @@ describe('PrometheusDatasource2', () => {
 
   describe('When querying prometheus with one target and instant = true', () => {
     let results: any;
-    const urlExpected = `/api/datasources/1/resources/api/v1/query?query=${encodeURIComponent(
+    const urlExpected = `/api/datasources/uid/ABCDEF/resources/api/v1/query?query=${encodeURIComponent(
       'test{job="testjob"}'
     )}&time=123`;
     const query = {

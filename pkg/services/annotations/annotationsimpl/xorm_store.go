@@ -10,9 +10,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
@@ -131,7 +131,7 @@ func (r *xormRepositoryImpl) synchronizeTags(ctx context.Context, item *annotati
 				return err
 			}
 			for _, tag := range tags {
-				if _, err := sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", item.Id, tag.Id); err != nil {
+				if _, err := sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", item.ID, tag.Id); err != nil {
 					return err
 				}
 			}
@@ -148,7 +148,7 @@ func (r *xormRepositoryImpl) Update(ctx context.Context, item *annotations.Item)
 		)
 		existing := new(annotations.Item)
 
-		isExist, err = sess.Table("annotation").Where("id=? AND org_id=?", item.Id, item.OrgId).Get(existing)
+		isExist, err = sess.Table("annotation").Where("id=? AND org_id=?", item.ID, item.OrgID).Get(existing)
 
 		if err != nil {
 			return err
@@ -176,11 +176,11 @@ func (r *xormRepositoryImpl) Update(ctx context.Context, item *annotations.Item)
 			if err != nil {
 				return err
 			}
-			if _, err := sess.Exec("DELETE FROM annotation_tag WHERE annotation_id = ?", existing.Id); err != nil {
+			if _, err := sess.Exec("DELETE FROM annotation_tag WHERE annotation_id = ?", existing.ID); err != nil {
 				return err
 			}
 			for _, tag := range tags {
-				if _, err := sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", existing.Id, tag.Id); err != nil {
+				if _, err := sess.Exec("INSERT INTO annotation_tag (annotation_id, tag_id) VALUES(?,?)", existing.ID, tag.Id); err != nil {
 					return err
 				}
 			}
@@ -192,7 +192,7 @@ func (r *xormRepositoryImpl) Update(ctx context.Context, item *annotations.Item)
 			return err
 		}
 
-		_, err = sess.Table("annotation").ID(existing.Id).Cols("epoch", "text", "epoch_end", "updated", "tags", "data").Update(existing)
+		_, err = sess.Table("annotation").ID(existing.ID).Cols("epoch", "text", "epoch_end", "updated", "tags", "data").Update(existing)
 		return err
 	})
 }
@@ -228,32 +228,32 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQue
 			`)
 
 		sql.WriteString(`WHERE a.org_id = ?`)
-		params = append(params, query.OrgId)
+		params = append(params, query.OrgID)
 
-		if query.AnnotationId != 0 {
+		if query.AnnotationID != 0 {
 			// fmt.Print("annotation query")
 			sql.WriteString(` AND a.id = ?`)
-			params = append(params, query.AnnotationId)
+			params = append(params, query.AnnotationID)
 		}
 
-		if query.AlertId != 0 {
+		if query.AlertID != 0 {
 			sql.WriteString(` AND a.alert_id = ?`)
-			params = append(params, query.AlertId)
+			params = append(params, query.AlertID)
 		}
 
-		if query.DashboardId != 0 {
+		if query.DashboardID != 0 {
 			sql.WriteString(` AND a.dashboard_id = ?`)
-			params = append(params, query.DashboardId)
+			params = append(params, query.DashboardID)
 		}
 
-		if query.PanelId != 0 {
+		if query.PanelID != 0 {
 			sql.WriteString(` AND a.panel_id = ?`)
-			params = append(params, query.PanelId)
+			params = append(params, query.PanelID)
 		}
 
-		if query.UserId != 0 {
+		if query.UserID != 0 {
 			sql.WriteString(` AND a.user_id = ?`)
-			params = append(params, query.UserId)
+			params = append(params, query.UserID)
 		}
 
 		if query.From > 0 && query.To > 0 {
@@ -347,7 +347,7 @@ func getAccessControlFilter(user *user.SignedInUser) (string, []interface{}, err
 		}
 		// annotation read permission with scope annotations:type:dashboard allows listing annotations from dashboards which the user can view
 		if t == annotations.Dashboard.String() {
-			dashboardFilter, dashboardParams := permissions.NewAccessControlDashboardPermissionFilter(user, models.PERMISSION_VIEW, searchstore.TypeDashboard).Where()
+			dashboardFilter, dashboardParams := permissions.NewAccessControlDashboardPermissionFilter(user, dashboards.PERMISSION_VIEW, searchstore.TypeDashboard).Where()
 			filter := fmt.Sprintf("a.dashboard_id IN(SELECT id FROM dashboard WHERE %s)", dashboardFilter)
 			filters = append(filters, filter)
 			params = dashboardParams
@@ -363,27 +363,27 @@ func (r *xormRepositoryImpl) Delete(ctx context.Context, params *annotations.Del
 			annoTagSQL string
 		)
 
-		r.log.Info("delete", "orgId", params.OrgId)
-		if params.Id != 0 {
+		r.log.Info("delete", "orgId", params.OrgID)
+		if params.ID != 0 {
 			annoTagSQL = "DELETE FROM annotation_tag WHERE annotation_id IN (SELECT id FROM annotation WHERE id = ? AND org_id = ?)"
 			sql = "DELETE FROM annotation WHERE id = ? AND org_id = ?"
 
-			if _, err := sess.Exec(annoTagSQL, params.Id, params.OrgId); err != nil {
+			if _, err := sess.Exec(annoTagSQL, params.ID, params.OrgID); err != nil {
 				return err
 			}
 
-			if _, err := sess.Exec(sql, params.Id, params.OrgId); err != nil {
+			if _, err := sess.Exec(sql, params.ID, params.OrgID); err != nil {
 				return err
 			}
 		} else {
 			annoTagSQL = "DELETE FROM annotation_tag WHERE annotation_id IN (SELECT id FROM annotation WHERE dashboard_id = ? AND panel_id = ? AND org_id = ?)"
 			sql = "DELETE FROM annotation WHERE dashboard_id = ? AND panel_id = ? AND org_id = ?"
 
-			if _, err := sess.Exec(annoTagSQL, params.DashboardId, params.PanelId, params.OrgId); err != nil {
+			if _, err := sess.Exec(annoTagSQL, params.DashboardID, params.PanelID, params.OrgID); err != nil {
 				return err
 			}
 
-			if _, err := sess.Exec(sql, params.DashboardId, params.PanelId, params.OrgId); err != nil {
+			if _, err := sess.Exec(sql, params.DashboardID, params.PanelID, params.OrgID); err != nil {
 				return err
 			}
 		}

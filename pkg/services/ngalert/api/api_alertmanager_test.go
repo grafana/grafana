@@ -9,16 +9,16 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/grafana/alerting/alerting"
+	alertingNotify "github.com/grafana/alerting/notify"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acMock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -128,7 +128,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test1",
 				UID:    "uid1",
 				Status: "failed",
-				Error:  alerting.ReceiverTimeoutError{},
+				Error:  alertingNotify.ReceiverTimeoutError{},
 			}},
 		}, {
 			Name: "test2",
@@ -136,7 +136,7 @@ func TestStatusForTestReceivers(t *testing.T) {
 				Name:   "test2",
 				UID:    "uid2",
 				Status: "failed",
-				Error:  alerting.ReceiverTimeoutError{},
+				Error:  alertingNotify.ReceiverTimeoutError{},
 			}},
 		}}))
 	})
@@ -166,7 +166,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 	sut := createSut(t, nil)
 
 	t.Run("assert 404 Not Found when applying config to nonexistent org", func(t *testing.T) {
-		rc := models.ReqContext{
+		rc := contextmodel.ReqContext{
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
@@ -183,7 +183,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 	})
 
 	t.Run("assert 202 when config successfully applied", func(t *testing.T) {
-		rc := models.ReqContext{
+		rc := contextmodel.ReqContext{
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
@@ -200,7 +200,7 @@ func TestAlertmanagerConfig(t *testing.T) {
 
 	t.Run("assert 202 when alertmanager to configure is not ready", func(t *testing.T) {
 		sut := createSut(t, nil)
-		rc := models.ReqContext{
+		rc := contextmodel.ReqContext{
 			Context: &web.Context{
 				Req: &http.Request{},
 			},
@@ -330,7 +330,7 @@ func TestSilenceCreate(t *testing.T) {
 
 	for _, cas := range cases {
 		t.Run(cas.name, func(t *testing.T) {
-			rc := models.ReqContext{
+			rc := contextmodel.ReqContext{
 				Context: &web.Context{
 					Req: &http.Request{},
 				},
@@ -456,7 +456,7 @@ func TestRouteCreateSilence(t *testing.T) {
 			ac := tesCase.accessControl()
 			sut := createSut(t, ac)
 
-			rc := models.ReqContext{
+			rc := contextmodel.ReqContext{
 				Context: &web.Context{
 					Req: &http.Request{},
 				},
@@ -535,7 +535,7 @@ func createMultiOrgAlertmanager(t *testing.T) *notifier.MultiOrgAlertmanager {
 		}, // do not poll in tests.
 	}
 
-	mam, err := notifier.NewMultiOrgAlertmanager(cfg, &configStore, &orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
+	mam, err := notifier.NewMultiOrgAlertmanager(cfg, configStore, &orgStore, kvStore, provStore, decryptFn, m.GetMultiOrgAlertmanagerMetrics(), nil, log.New("testlogger"), secretsService)
 	require.NoError(t, err)
 	err = mam.LoadAndSyncAlertmanagersForOrgs(context.Background())
 	require.NoError(t, err)
@@ -622,8 +622,8 @@ func withEmptyID(silence *apimodels.PostableSilence) {
 	silence.ID = ""
 }
 
-func createRequestCtxInOrg(org int64) *models.ReqContext {
-	return &models.ReqContext{
+func createRequestCtxInOrg(org int64) *contextmodel.ReqContext {
+	return &contextmodel.ReqContext{
 		Context: &web.Context{
 			Req: &http.Request{},
 		},
