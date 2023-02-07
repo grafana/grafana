@@ -66,7 +66,7 @@ describe('LokiContextUi', () => {
     render(<LokiContextUi {...props} />);
 
     // Initial set of labels is available and not selected
-    expect(await screen.findByText(/Select labels to include in the context query/)).toBeInTheDocument();
+    expect(await screen.findByText(/Select labels to be included in the context query/)).toBeInTheDocument();
   });
 
   it('starts the languageProvider', async () => {
