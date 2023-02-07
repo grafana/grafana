@@ -1,6 +1,6 @@
 import { getBackendSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
-import { AccessControlAction, Settings, ThunkResult } from 'app/types';
+import { AccessControlAction, ThunkResult, UpdateSettingsQuery } from 'app/types';
 
 import { settingsUpdated } from './reducers';
 
@@ -14,7 +14,7 @@ export function loadSettings(): ThunkResult<void> {
   };
 }
 
-export function saveSettings(data: { [key: string]: Settings }): ThunkResult<void> {
+export function saveSettings(data: UpdateSettingsQuery): ThunkResult<void> {
   return async (dispatch) => {
     if (contextSrv.hasPermission(AccessControlAction.SettingsRead)) {
       try {
