@@ -71,7 +71,7 @@ func (j docsJenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
 	data := templateData{
 		KindName:        kindProps.Name,
 		KindVersion:     kind.Lineage().Latest().Version().String(),
-		KindMaturity:    string(kindProps.Maturity),
+		KindMaturity:    fmt.Sprintf("[%s](../../../maturity/#%[1]s)", kindProps.Maturity),
 		KindDescription: kindProps.Description,
 		Markdown:        "{{ .Markdown 1 }}",
 	}
