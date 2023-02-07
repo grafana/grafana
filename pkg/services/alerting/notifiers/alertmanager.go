@@ -9,8 +9,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/alerting/models"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -93,7 +93,7 @@ func (am *AlertmanagerNotifier) ShouldNotify(ctx context.Context, evalContext *a
 		return false
 	}
 
-	// Notify on Alerting -> OK to resolve before alertmanager timeout.
+	// Notify on Alerting -> OK to resolve before alertmanager timeout.models.AlertStateOK
 	if (evalContext.PrevAlertState == models.AlertStateAlerting) && (evalContext.Rule.State == models.AlertStateOK) {
 		return true
 	}

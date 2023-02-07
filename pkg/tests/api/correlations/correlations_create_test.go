@@ -7,11 +7,12 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationCreateCorrelation(t *testing.T) {
@@ -44,18 +45,18 @@ func TestIntegrationCreateCorrelation(t *testing.T) {
 		Name:     "read-only",
 		Type:     "loki",
 		ReadOnly: true,
-		OrgId:    1,
+		OrgID:    1,
 	}
 	ctx.createDs(createDsCommand)
-	readOnlyDS := createDsCommand.Result.Uid
+	readOnlyDS := createDsCommand.Result.UID
 
 	createDsCommand = &datasources.AddDataSourceCommand{
 		Name:  "writable",
 		Type:  "loki",
-		OrgId: 1,
+		OrgID: 1,
 	}
 	ctx.createDs(createDsCommand)
-	writableDs := createDsCommand.Result.Uid
+	writableDs := createDsCommand.Result.UID
 
 	t.Run("Unauthenticated users shouldn't be able to create correlations", func(t *testing.T) {
 		res := ctx.Post(PostParams{

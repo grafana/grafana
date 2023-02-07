@@ -39,6 +39,7 @@ type PublicDashboard struct {
 	AccessToken          string        `json:"accessToken" xorm:"access_token"`
 	AnnotationsEnabled   bool          `json:"annotationsEnabled" xorm:"annotations_enabled"`
 	TimeSelectionEnabled bool          `json:"timeSelectionEnabled" xorm:"time_selection_enabled"`
+	Share                string        `json:"share"`
 
 	CreatedBy int64 `json:"createdBy" xorm:"created_by"`
 	UpdatedBy int64 `json:"updatedBy" xorm:"updated_by"`
@@ -122,9 +123,10 @@ type SavePublicDashboardDTO struct {
 }
 
 type PublicDashboardQueryDTO struct {
-	IntervalMs    int64
-	MaxDataPoints int64
-	TimeRange     TimeSettings
+	IntervalMs      int64
+	MaxDataPoints   int64
+	QueryCachingTTL int64
+	TimeRange       TimeSettings
 }
 
 type AnnotationsQueryDTO struct {

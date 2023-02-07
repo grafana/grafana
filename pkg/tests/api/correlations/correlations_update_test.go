@@ -7,11 +7,12 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/stretchr/testify/require"
 )
 
 func TestIntegrationUpdateCorrelation(t *testing.T) {
@@ -44,19 +45,19 @@ func TestIntegrationUpdateCorrelation(t *testing.T) {
 		Name:     "read-only",
 		Type:     "loki",
 		ReadOnly: true,
-		OrgId:    1,
+		OrgID:    1,
 	}
 	ctx.createDs(createDsCommand)
-	readOnlyDS := createDsCommand.Result.Uid
+	readOnlyDS := createDsCommand.Result.UID
 
 	createDsCommand = &datasources.AddDataSourceCommand{
 		Name:  "writable",
 		Type:  "loki",
-		OrgId: 1,
+		OrgID: 1,
 	}
 	ctx.createDs(createDsCommand)
-	writableDs := createDsCommand.Result.Uid
-	writableDsOrgId := createDsCommand.Result.OrgId
+	writableDs := createDsCommand.Result.UID
+	writableDsOrgId := createDsCommand.Result.OrgID
 
 	t.Run("Unauthenticated users shouldn't be able to update correlations", func(t *testing.T) {
 		res := ctx.Patch(PatchParams{

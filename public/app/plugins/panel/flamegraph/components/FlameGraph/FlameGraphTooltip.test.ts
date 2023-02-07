@@ -8,7 +8,6 @@ describe('should get tooltip data correctly', () => {
     expect(tooltipData).toEqual({
       name: 'total',
       percentSelf: 0.01,
-      percentTitle: '% of total',
       percentValue: 100,
       unitTitle: 'RAM',
       unitSelf: '955 KiB',
@@ -17,12 +16,11 @@ describe('should get tooltip data correctly', () => {
     });
   });
 
-  it('with none unit', () => {
+  it('with default unit', () => {
     const tooltipData = getTooltipData(makeField('none'), 'total', 8_624_078_250, 978_250, 8_624_078_250);
     expect(tooltipData).toEqual({
       name: 'total',
       percentSelf: 0.01,
-      percentTitle: '% of total',
       percentValue: 100,
       unitSelf: '978250',
       unitTitle: 'Count',
@@ -47,7 +45,6 @@ describe('should get tooltip data correctly', () => {
     expect(tooltipData).toEqual({
       name: 'total',
       percentSelf: 0.01,
-      percentTitle: '% of total',
       percentValue: 100,
       unitTitle: 'Count',
       unitSelf: '978250',
@@ -61,7 +58,6 @@ describe('should get tooltip data correctly', () => {
     expect(tooltipData).toEqual({
       name: 'total',
       percentSelf: 0.01,
-      percentTitle: '% of total',
       percentValue: 100,
       unitTitle: 'Count',
       unitSelf: '978 K',
@@ -75,7 +71,6 @@ describe('should get tooltip data correctly', () => {
     expect(tooltipData).toEqual({
       name: 'total',
       percentSelf: 0.01,
-      percentTitle: '% of total time',
       percentValue: 100,
       unitTitle: 'Time',
       unitSelf: '978 µs',

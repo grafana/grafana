@@ -10,7 +10,7 @@ import (
 
 func exportDataSources(helper *commitHelper, job *gitExportJob) error {
 	cmd := &datasources.GetDataSourcesQuery{
-		OrgId: helper.orgID,
+		OrgID: helper.orgID,
 	}
 	err := job.datasourceService.GetDataSources(helper.ctx, cmd)
 	if err != nil {
@@ -22,7 +22,7 @@ func exportDataSources(helper *commitHelper, job *gitExportJob) error {
 	})
 
 	for _, ds := range cmd.Result {
-		ds.OrgId = 0
+		ds.OrgID = 0
 		ds.Version = 0
 		ds.SecureJsonData = map[string][]byte{
 			"TODO": []byte("XXX"),
@@ -31,7 +31,7 @@ func exportDataSources(helper *commitHelper, job *gitExportJob) error {
 		err := helper.add(commitOptions{
 			body: []commitBody{
 				{
-					fpath: filepath.Join(helper.orgDir, "datasources", fmt.Sprintf("%s-ds.json", ds.Uid)),
+					fpath: filepath.Join(helper.orgDir, "datasources", fmt.Sprintf("%s-ds.json", ds.UID)),
 					body:  prettyJSON(ds),
 				},
 			},

@@ -76,6 +76,7 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 			OrgID:                     cmd.OrgID,
 			CreatedAt:                 time.Now().Unix(),
 		}
+
 		// TODO: If we are more structured around how we seed configurations in the future, this can be a pure update instead of upsert. This should improve perf and code clarity.
 		upsertSQL := st.SQLStore.GetDialect().UpsertSQL(
 			"alert_configuration",
@@ -87,13 +88,16 @@ func (st DBstore) SaveAlertmanagerConfigurationWithCallback(ctx context.Context,
 			return err
 		}
 
-		if _, err := sess.Table("alert_configuration_history").Insert(config); err != nil {
+		historicConfig := models.HistoricConfigFromAlertConfig(config)
+		historicConfig.LastApplied = cmd.LastApplied
+		if _, err := sess.Table("alert_configuration_history").Insert(historicConfig); err != nil {
 			return err
 		}
 
 		if _, err := st.deleteOldConfigurations(ctx, cmd.OrgID, ConfigRecordsLimit); err != nil {
 			st.Logger.Warn("failed to delete old am configs", "org", cmd.OrgID, "error", err)
 		}
+
 		if err := callback(); err != nil {
 			return err
 		}
@@ -122,12 +126,55 @@ func (st *DBstore) UpdateAlertmanagerConfiguration(ctx context.Context, cmd *mod
 		if rows == 0 {
 			return ErrVersionLockedObjectNotFound
 		}
-		if _, err := sess.Table("alert_configuration_history").Insert(config); err != nil {
+
+		historicConfig := models.HistoricConfigFromAlertConfig(config)
+		if _, err := sess.Table("alert_configuration_history").Insert(historicConfig); err != nil {
 			return err
 		}
 		if _, err := st.deleteOldConfigurations(ctx, cmd.OrgID, ConfigRecordsLimit); err != nil {
 			st.Logger.Warn("failed to delete old am configs", "org", cmd.OrgID, "error", err)
 		}
+		return nil
+	})
+}
+
+// MarkConfigurationAsApplied sets the `last_applied` field of the last config with the given hash to the current UNIX timestamp.
+func (st *DBstore) MarkConfigurationAsApplied(ctx context.Context, cmd *models.MarkConfigurationAsAppliedCmd) error {
+	return st.SQLStore.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		update := map[string]interface{}{"last_applied": time.Now().UTC().Unix()}
+		rowsAffected, err := sess.Table("alert_configuration_history").
+			Desc("id").
+			Limit(1).
+			Where("org_id = ? AND configuration_hash = ?", cmd.OrgID, cmd.ConfigurationHash).
+			Cols("last_applied").
+			Update(&update)
+
+		if err != nil {
+			return err
+		}
+
+		if rowsAffected != 1 {
+			st.Logger.Error("update statement affected %d alert configuration history records", rowsAffected)
+		}
+
+		return nil
+	})
+}
+
+// GetAppliedConfigurations returns all configurations that have been marked as applied, ordered newest -> oldest by id.
+func (st *DBstore) GetAppliedConfigurations(ctx context.Context, query *models.GetAppliedConfigurationsQuery) error {
+	return st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
+		cfgs := []*models.HistoricAlertConfiguration{}
+		err := sess.Table("alert_configuration_history").
+			Desc("id").
+			Where("org_id = ? AND last_applied != 0", query.OrgID).
+			Find(&cfgs)
+
+		if err != nil {
+			return err
+		}
+
+		query.Result = cfgs
 		return nil
 	})
 }
@@ -143,7 +190,7 @@ func (st *DBstore) deleteOldConfigurations(ctx context.Context, orgID int64, lim
 
 	var affectedRows int64
 	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		highest := &models.AlertConfiguration{}
+		highest := &models.HistoricAlertConfiguration{}
 		ok, err := sess.Table("alert_configuration_history").Desc("id").Where("org_id = ?", orgID).OrderBy("id").Limit(1, limit-1).Get(highest)
 		if err != nil {
 			return err
