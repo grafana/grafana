@@ -100,7 +100,7 @@ func GetAuthProviderLabel(authModule string) string {
 		return GrafanaComLabel
 	case OktaAuthModule:
 		return OktaLabel
-	// Other Auth procotols
+	// Other Auth protocols
 	case SAMLAuthModule:
 		return SAMLLabel
 	case LDAPAuthModule, "": // FIXME: verify this situation doesn't exist anymore
