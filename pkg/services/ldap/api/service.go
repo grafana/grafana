@@ -33,7 +33,6 @@ type Service struct {
 	loginService      login.Service
 	orgService        org.Service
 	sessionService    auth.UserTokenService
-	router            routing.RouteRegister
 	log               log.Logger
 }
 

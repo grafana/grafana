@@ -597,16 +597,23 @@ func TestPostSyncUserWithLDAPAPIEndpoint_WhenUserNotInLDAP(t *testing.T) {
 
 func TestLDAP_AccessControl(t *testing.T) {
 	setting.LDAPEnabled = true
-	f, _ := os.CreateTemp("", "ldap.toml")
-	f.WriteString(
+
+	f, errC := os.CreateTemp("", "ldap.toml")
+	require.NoError(t, errC)
+
+	_, errF := f.WriteString(
 		`[[servers]]
 host = "127.0.0.1"
 port = 389
 search_filter = "(cn=%s)"
 search_base_dns = ["dc=grafana,dc=org"]`)
+	require.NoError(t, errF)
 
 	setting.LDAPConfigFile = f.Name()
-	f.Close()
+
+	errF = f.Close()
+	require.NoError(t, errF)
+
 	defer func() {
 		setting.LDAPEnabled = false
 		setting.LDAPConfigFile = ""
