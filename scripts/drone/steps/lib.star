@@ -736,7 +736,7 @@ def codespell_step():
         ],
     }
 
-def package_step(edition, ver_mode, variants = None):
+def package_step(edition, ver_mode):
     """Packages Grafana with the Grafana build tool.
 
     Args:
@@ -744,9 +744,6 @@ def package_step(edition, ver_mode, variants = None):
       ver_mode: controls whether the packages are signed for a release.
         If ver_mode != 'release', use the DRONE_BUILD_NUMBER environment
         variable as a build identifier.
-      variants: a list of variants be passed to the package subcommand
-        using the --variants option.
-        Defaults to None.
 
     Returns:
       Drone step.
@@ -757,10 +754,6 @@ def package_step(edition, ver_mode, variants = None):
         "build-frontend",
         "build-frontend-packages",
     ]
-
-    variants_str = ""
-    if variants:
-        variants_str = " --variants {}".format(",".join(variants))
 
     if ver_mode in ("main", "release", "release-branch"):
         sign_args = " --sign"
@@ -788,7 +781,7 @@ def package_step(edition, ver_mode, variants = None):
         build_no = "${DRONE_BUILD_NUMBER}"
         cmds = [
             "{}./bin/build package --jobs 8 --edition {} ".format(test_args, edition) +
-            "--build-id {}{}{}".format(build_no, variants_str, sign_args),
+            "--build-id {}{}".format(build_no, sign_args),
         ]
 
     return {
