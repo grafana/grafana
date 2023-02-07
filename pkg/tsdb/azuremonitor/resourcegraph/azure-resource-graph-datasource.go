@@ -196,7 +196,7 @@ func (e *AzureResourceGraphDatasource) executeQuery(ctx context.Context, logger 
 		return dataResponse
 	}
 
-	portalUrl := fmt.Sprintf("%v/#blade/HubsExtension/ArgQueryBlade/query/%v", dsInfo.Routes["Azure Monitor"].URL, url.PathEscape(query.InterpolatedQuery))
+	portalUrl := fmt.Sprintf("%v/#blade/HubsExtension/ArgQueryBlade/query/%v", dsInfo.Routes["Azure Portal"].URL, url.PathEscape(query.InterpolatedQuery))
 	frameWithLink := AddConfigLinks(*frame, portalUrl)
 	if frameWithLink.Meta == nil {
 		frameWithLink.Meta = &data.FrameMeta{}
