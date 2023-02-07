@@ -491,7 +491,7 @@ func TestIntegrationGetDefaultDataSource(t *testing.T) {
 		require.NoError(t, err)
 
 		query := datasources.GetDefaultDataSourceQuery{OrgID: 10}
-		err = ss.GetDefaultDataSource(context.Background(), &query)
+		_, err = ss.GetDefaultDataSource(context.Background(), &query)
 		require.Error(t, err)
 		assert.True(t, errors.Is(err, datasources.ErrDataSourceNotFound))
 	})
@@ -513,16 +513,16 @@ func TestIntegrationGetDefaultDataSource(t *testing.T) {
 		require.NoError(t, err)
 
 		query := datasources.GetDefaultDataSourceQuery{OrgID: 10}
-		err = ss.GetDefaultDataSource(context.Background(), &query)
+		dataSource, err := ss.GetDefaultDataSource(context.Background(), &query)
 		require.NoError(t, err)
-		assert.Equal(t, "default datasource", query.Result.Name)
+		assert.Equal(t, "default datasource", dataSource.Name)
 	})
 
 	t.Run("should not return default datasource of other organisation", func(t *testing.T) {
 		db := db.InitTestDB(t)
 		ss := SqlStore{db: db}
 		query := datasources.GetDefaultDataSourceQuery{OrgID: 1}
-		err := ss.GetDefaultDataSource(context.Background(), &query)
+		_, err := ss.GetDefaultDataSource(context.Background(), &query)
 		require.Error(t, err)
 		assert.True(t, errors.Is(err, datasources.ErrDataSourceNotFound))
 	})

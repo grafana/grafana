@@ -39,24 +39,25 @@ func (e *DashAlertExtractorService) lookupQueryDataSource(ctx context.Context, p
 	dsName := ""
 	dsUid := ""
 
-	datasource, ok := panelQuery.CheckGet("datasource")
+	ds, ok := panelQuery.CheckGet("datasource")
 
 	if !ok {
-		datasource = panel.Get("datasource")
+		ds = panel.Get("datasource")
 	}
 
-	if name, err := datasource.String(); err == nil {
+	if name, err := ds.String(); err == nil {
 		dsName = name
-	} else if uid, ok := datasource.CheckGet("uid"); ok {
+	} else if uid, ok := ds.CheckGet("uid"); ok {
 		dsUid = uid.MustString()
 	}
 
 	if dsName == "" && dsUid == "" {
 		query := &datasources.GetDefaultDataSourceQuery{OrgID: orgID}
-		if err := e.datasourceService.GetDefaultDataSource(ctx, query); err != nil {
+		dataSource, err := e.datasourceService.GetDefaultDataSource(ctx, query)
+		if err != nil {
 			return nil, err
 		}
-		return query.Result, nil
+		return dataSource, nil
 	}
 
 	query := &datasources.GetDataSourceQuery{Name: dsName, UID: dsUid, OrgID: orgID}

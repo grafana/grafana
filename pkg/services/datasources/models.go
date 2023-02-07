@@ -169,9 +169,8 @@ type GetDataSourcesByTypeQuery struct {
 }
 
 type GetDefaultDataSourceQuery struct {
-	OrgID  int64
-	User   *user.SignedInUser
-	Result *DataSource
+	OrgID int64
+	User  *user.SignedInUser
 }
 
 // GetDataSourceQuery will get a DataSource based on OrgID as well as the UID (preferred), ID, or Name.

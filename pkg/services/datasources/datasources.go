@@ -34,7 +34,7 @@ type DataSourceService interface {
 	UpdateDataSource(ctx context.Context, cmd *UpdateDataSourceCommand) error
 
 	// GetDefaultDataSource gets the default datasource.
-	GetDefaultDataSource(ctx context.Context, query *GetDefaultDataSourceQuery) error
+	GetDefaultDataSource(ctx context.Context, query *GetDefaultDataSourceQuery) (*DataSource, error)
 
 	// GetHTTPTransport gets a datasource specific HTTP transport.
 	GetHTTPTransport(ctx context.Context, ds *DataSource, provider httpclient.Provider, customMiddlewares ...sdkhttpclient.Middleware) (http.RoundTripper, error)
