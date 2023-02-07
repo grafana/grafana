@@ -293,16 +293,11 @@ func isValidOperator(op string) bool {
 	return false
 }
 
-type Stream struct {
-	Stream map[string]string `json:"stream"`
-	Values []row             `json:"values"`
-}
-
 type QueryRes struct {
 	Status string    `json:"status"`
 	Data   QueryData `json:"data"`
 }
 
 type QueryData struct {
-	Result []Stream `json:"result"`
+	Result []stream `json:"result"`
 }

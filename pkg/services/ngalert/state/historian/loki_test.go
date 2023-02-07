@@ -152,7 +152,7 @@ func TestMerge(t *testing.T) {
 			name: "Should return values from multiple streams in right order",
 			res: QueryRes{
 				Data: QueryData{
-					Result: []Stream{
+					Result: []stream{
 						{
 							Stream: map[string]string{
 								"current": "pending",
@@ -182,7 +182,7 @@ func TestMerge(t *testing.T) {
 			name: "Should handle empty values",
 			res: QueryRes{
 				Data: QueryData{
-					Result: []Stream{
+					Result: []stream{
 						{
 							Stream: map[string]string{
 								"current": "normal",
@@ -199,7 +199,7 @@ func TestMerge(t *testing.T) {
 			name: "Should handle multiple values in one stream",
 			res: QueryRes{
 				Data: QueryData{
-					Result: []Stream{
+					Result: []stream{
 						{
 							Stream: map[string]string{
 								"current": "normal",
