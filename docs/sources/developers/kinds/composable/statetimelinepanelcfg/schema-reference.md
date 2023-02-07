@@ -8,7 +8,7 @@ title: StateTimelinePanelCfg kind
 
 ## StateTimelinePanelCfg
 
-#### Maturity: experimental
+#### Maturity: [experimental](../../../maturity/#experimental)
 #### Version: 0.0
 
 

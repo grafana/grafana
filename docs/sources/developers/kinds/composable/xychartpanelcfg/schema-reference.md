@@ -8,7 +8,7 @@ title: XYChartPanelCfg kind
 
 ## XYChartPanelCfg
 
-#### Maturity: experimental
+#### Maturity: [experimental](../../../maturity/#experimental)
 #### Version: 0.0
 
 

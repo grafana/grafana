@@ -8,7 +8,7 @@ title: PublicDashboard kind
 
 ## PublicDashboard
 
-#### Maturity: merged
+#### Maturity: [merged](../../../maturity/#merged)
 #### Version: 0.0
 
 Public dashboard configuration

@@ -44,7 +44,6 @@ Some stable features are enabled by default. You can disable a stable feature by
 | `validateDashboardsOnSave`        | Validate dashboard JSON POSTed to api/dashboards/db                             |
 | `autoMigrateGraphPanels`          | Replace the angular graph panel with timeseries                                 |
 | `topnav`                          | Displays new top nav and page layouts                                           |
-| `datasourceLogger`                | Logs all datasource requests                                                    |
 | `accessControlOnCall`             | Access control primitives for OnCall                                            |
 | `alertingNoNormalState`           | Stop maintaining state of alerts that are not firing                            |
 | `topNavCommandPalette`            | Launch the Command Palette from the top navigation search box                   |
@@ -56,7 +55,6 @@ Alpha features might be changed or removed without prior notice.
 
 | Feature toggle name                | Description                                                                                                                                                                  |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `returnUnameHeader`                | Return user login as header for authenticated requests                                                                                                                       |
 | `alertingBigTransactions`          | Use big transactions for alerting database writes                                                                                                                            |
 | `dashboardPreviews`                | Create and show thumbnails for dashboard search results                                                                                                                      |
 | `live-pipeline`                    | Enable a generic live processing pipeline                                                                                                                                    |
@@ -83,7 +81,6 @@ Alpha features might be changed or removed without prior notice.
 | `flameGraph`                       | Show the flame graph                                                                                                                                                         |
 | `redshiftAsyncQueryDataSupport`    | Enable async query data support for Redshift                                                                                                                                 |
 | `athenaAsyncQueryDataSupport`      | Enable async query data support for Athena                                                                                                                                   |
-| `increaseInMemDatabaseQueryCache`  | Enable more in memory caching for database queries                                                                                                                           |
 | `newPanelChromeUI`                 | Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu                                                                                          |
 | `showDashboardValidationWarnings`  | Show warnings when dashboards do not validate against the schema                                                                                                             |
 | `mysqlAnsiQuotes`                  | Use double quotes to escape keyword in a MySQL query                                                                                                                         |
@@ -91,7 +88,6 @@ Alpha features might be changed or removed without prior notice.
 | `datasourceOnboarding`             | Enable data source onboarding page                                                                                                                                           |
 | `secureSocksDatasourceProxy`       | Enable secure socks tunneling for supported core datasources                                                                                                                 |
 | `authnService`                     | Use new auth service to perform authentication                                                                                                                               |
-| `sessionRemoteCache`               | Enable using remote cache for user sessions                                                                                                                                  |
 | `alertingBacktesting`              | Rule backtesting API for alerting                                                                                                                                            |
 | `editPanelCSVDragAndDrop`          | Enables drag and drop for CSV and Excel files                                                                                                                                |
 | `logsContextDatasourceUi`          | Allow datasource to provide custom UI for context view                                                                                                                       |
