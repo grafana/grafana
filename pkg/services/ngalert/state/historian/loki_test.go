@@ -157,16 +157,16 @@ func TestMerge(t *testing.T) {
 							Stream: map[string]string{
 								"current": "pending",
 							},
-							Values: [][2]string{
-								{"1", `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": "b"}}`},
+							Values: []row{
+								{time.Unix(0, 1), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": "b"}}`},
 							},
 						},
 						{
 							Stream: map[string]string{
 								"current": "firing",
 							},
-							Values: [][2]string{
-								{"2", `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": "b"}}`},
+							Values: []row{
+								{time.Unix(0, 2), `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": "b"}}`},
 							},
 						},
 					},
@@ -187,7 +187,7 @@ func TestMerge(t *testing.T) {
 							Stream: map[string]string{
 								"current": "normal",
 							},
-							Values: [][2]string{},
+							Values: []row{},
 						},
 					},
 				},
@@ -204,17 +204,17 @@ func TestMerge(t *testing.T) {
 							Stream: map[string]string{
 								"current": "normal",
 							},
-							Values: [][2]string{
-								{"1", `{"schemaVersion": 1, "previous": "firing", "current": "normal", "values":{"a": "b"}}`},
-								{"2", `{"schemaVersion": 1, "previous": "firing", "current": "normal", "values":{"a": "b"}}`},
+							Values: []row{
+								{time.Unix(0, 1), `{"schemaVersion": 1, "previous": "firing", "current": "normal", "values":{"a": "b"}}`},
+								{time.Unix(0, 2), `{"schemaVersion": 1, "previous": "firing", "current": "normal", "values":{"a": "b"}}`},
 							},
 						},
 						{
 							Stream: map[string]string{
 								"current": "firing",
 							},
-							Values: [][2]string{
-								{"3", `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": "b"}}`},
+							Values: []row{
+								{time.Unix(0, 3), `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": "b"}}`},
 							},
 						},
 					},

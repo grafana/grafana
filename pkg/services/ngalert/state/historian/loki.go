@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
-	"strconv"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
@@ -165,7 +164,7 @@ func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
 	pointers := make([]int, len(res.Data.Result))
 	for {
 		minTime := int64(math.MaxInt64)
-		minEl := [2]string{}
+		minEl := row{}
 		minElStreamIdx := -1
 		// Find the element with the earliest time among all arrays.
 		for i, stream := range res.Data.Result {
@@ -173,10 +172,7 @@ func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
 			if len(stream.Values) == pointers[i] {
 				continue
 			}
-			curTime, err := strconv.ParseInt(stream.Values[pointers[i]][0], 10, 64)
-			if err != nil {
-				return nil, fmt.Errorf("failed to parse timestamp from loki response: %w", err)
-			}
+			curTime := stream.Values[pointers[i]].At.UnixNano()
 			if pointers[i] < len(stream.Values) && curTime < minTime {
 				minTime = curTime
 				minEl = stream.Values[pointers[i]]
@@ -188,22 +184,19 @@ func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
 			break
 		}
 		var entry lokiEntry
-		err := json.Unmarshal([]byte(minEl[1]), &entry)
+		err := json.Unmarshal([]byte(minEl.Val), &entry)
 		if err != nil {
 			return nil, fmt.Errorf("failed to unmarshal entry: %w", err)
 		}
 		// Append the minimum element to the merged slice and move the pointer.
-		tsNano, err := strconv.ParseInt(minEl[0], 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse timestamp in response: %w", err)
-		}
+		tsNano := minEl.At.UnixNano()
 		// TODO: In general, perhaps we should omit the offending line and log, rather than failing the request entirely.
 		streamLbls := res.Data.Result[minElStreamIdx].Stream
 		lblsJson, err := json.Marshal(streamLbls)
 		if err != nil {
 			return nil, fmt.Errorf("failed to serialize stream labels: %w", err)
 		}
-		line, err := jsonifyRow(minEl[1])
+		line, err := jsonifyRow(minEl.Val)
 		if err != nil {
 			return nil, fmt.Errorf("a line was in an invalid format: %w", err)
 		}

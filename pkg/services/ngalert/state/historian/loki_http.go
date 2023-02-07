@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -132,6 +133,23 @@ func (r *row) MarshalJSON() ([]byte, error) {
 	return json.Marshal([2]string{
 		fmt.Sprintf("%d", r.At.UnixNano()), r.Val,
 	})
+}
+
+func (r *row) UnmarshalJSON(b []byte) error {
+	// A Loki stream sample is formatted like a list with two elements, [At, Val]
+	// At is a string wrapping a timestamp, in nanosecond unix epoch.
+	// Val is a string containing the log line.
+	var tuple [2]string
+	if err := json.Unmarshal(b, &tuple); err != nil {
+		return fmt.Errorf("failed to deserialize sample in Loki response: %w", err)
+	}
+	nano, err := strconv.ParseInt(tuple[0], 10, 64)
+	if err != nil {
+		return fmt.Errorf("timestamp in Loki sample not convertible to nanosecond epoch: %v", tuple[0])
+	}
+	r.At = time.Unix(0, nano)
+	r.Val = tuple[1]
+	return nil
 }
 
 func (c *httpLokiClient) push(ctx context.Context, s []stream) error {
@@ -277,7 +295,7 @@ func isValidOperator(op string) bool {
 
 type Stream struct {
 	Stream map[string]string `json:"stream"`
-	Values [][2]string       `json:"values"`
+	Values []row             `json:"values"`
 }
 
 type QueryRes struct {
