@@ -16,7 +16,6 @@
 export interface FeatureToggles {
   [name: string]: boolean | undefined; // support any string value
 
-  returnUnameHeader?: boolean;
   alertingBigTransactions?: boolean;
   trimDefaults?: boolean;
   disableEnvelopeEncryption?: boolean;
