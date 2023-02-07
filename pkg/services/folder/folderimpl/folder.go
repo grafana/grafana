@@ -34,7 +34,7 @@ type Service struct {
 	features             featuremgmt.FeatureToggles
 	accessControl        accesscontrol.AccessControl
 
-	// bus is currently used to publish events that cause scheduler to update rules.
+	// bus is currently used to publish event in case of title change
 	bus bus.Bus
 }
 
@@ -126,7 +126,6 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 	}
 
 	f, err := s.store.Get(ctx, *cmd)
-
 	if err != nil {
 		return nil, err
 	}
