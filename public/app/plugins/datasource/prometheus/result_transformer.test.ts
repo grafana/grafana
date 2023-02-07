@@ -742,14 +742,7 @@ describe('Prometheus Result Transformer', () => {
         }),
         new MutableDataFrame({
           refId: 'B',
-          fields: [
-            { name: 'time', type: FieldType.time, values: [] },
-            {
-              name: 'value',
-              type: FieldType.number,
-              values: [],
-            },
-          ],
+          fields: [],
         }),
       ];
 
