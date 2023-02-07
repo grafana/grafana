@@ -22,6 +22,7 @@ When you encounter problems with your Grafana instance, you can send us a suppor
 ## Available support bundle components
 
 A support bundle can include any of the following components:
+
 - **Usage statistics**: Usage statistic for the Grafana instance
 - **User information**: A list of users of the Grafana instance
 - **Database and Migration information**: Database information and migration log
