@@ -545,7 +545,7 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext, hasEditPerm
 		}
 
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
-			Text: "New alert rule", SubTitle: "Create an alert rule", Id: "alert",
+			Text: "Create alert rule", SubTitle: "Create an alert rule", Id: "alert",
 			Icon: "plus", Url: s.cfg.AppSubURL + "/alerting/new", HideFromTabs: true, ShowIconInNavbar: true, IsCreateAction: true,
 		})
 	}
