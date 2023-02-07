@@ -8,7 +8,7 @@ title: ParcaDataQuery kind
 
 ## ParcaDataQuery
 
-#### Maturity: experimental
+#### Maturity: [experimental](../../../maturity/#experimental)
 #### Version: 0.0
 
 
