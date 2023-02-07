@@ -95,13 +95,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:         "lokiMonacoEditor",
-			Description:  "Access to Monaco query editor for Loki",
-			State:        FeatureStateStable,
-			Expression:   "true",
-			FrontendOnly: true,
-		},
-		{
 			Name:        "swaggerUi",
 			Description: "Serves swagger UI",
 			State:       FeatureStateBeta,
@@ -297,11 +290,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "increaseInMemDatabaseQueryCache",
-			Description: "Enable more in memory caching for database queries",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:         "newPanelChromeUI",
 			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
 			State:        FeatureStateAlpha,
@@ -362,11 +350,6 @@ var (
 		{
 			Name:        "authnService",
 			Description: "Use new auth service to perform authentication",
-			State:       FeatureStateAlpha,
-		},
-		{
-			Name:        "sessionRemoteCache",
-			Description: "Enable using remote cache for user sessions",
 			State:       FeatureStateAlpha,
 		},
 		{
