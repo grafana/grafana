@@ -60,7 +60,7 @@ export const AcknowledgeCheckboxes = ({
 
   return (
     <>
-      <p className={styles.title}>Before you make the dashboard public please acknowledge the following information:</p>
+      <p className={styles.title}>Before you make the dashboard public, acknowledge the following:</p>
       <FieldSet disabled={disabled}>
         <VerticalGroup spacing="md">
           {ACKNOWLEDGES.map((acknowledge) => (

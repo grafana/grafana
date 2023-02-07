@@ -8,7 +8,7 @@ const selectors = e2eSelectors.pages.ShareDashboardModal.PublicDashboard;
 const FLOW_DESCRIPTION: Record<string, { severity: AlertVariant; description: string }> = {
   create: {
     severity: 'error',
-    description: 'Currently dashboards with template variables can’t be public.',
+    description: 'Currently, dashboards with template variables can’t be public',
   },
   edit: {
     severity: 'warning',
