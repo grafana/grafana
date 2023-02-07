@@ -673,17 +673,10 @@ export function addResultsToCache(exploreId: ExploreId): ThunkResult<void> {
   return (dispatch, getState) => {
     const queryResponse = getState().explore[exploreId]!.queryResponse;
     const absoluteRange = getState().explore[exploreId]!.absoluteRange;
-    const cache = getState().explore[exploreId]!.cache;
     const cacheKey = createCacheKey(absoluteRange);
 
-    const alreadyCached = cache.some(({ key, value }) => {
-      console.log(queryResponse, value);
-      return queryResponse === value;
-    });
-    console.log(alreadyCached);
-
     // Save results to cache only when all results received and loading is done
-    if (queryResponse.state === LoadingState.Done && !alreadyCached) {
+    if (queryResponse.state === LoadingState.Done) {
       dispatch(addResultsToCacheAction({ exploreId, cacheKey, queryResponse }));
     }
   };

@@ -9,7 +9,7 @@ import {
   EventBus,
   getLogsVolumeDataSourceInfo,
   GrafanaTheme2,
-  LogsVolumeType,
+  isLogsVolumeLimited,
   SplitOpen,
   TimeZone,
 } from '@grafana/data';
@@ -53,11 +53,11 @@ export const LogsVolumePanelList = ({
 
   const numberOfLogVolumes = Object.keys(logVolumes).length;
   const containsLimited = Object.values(logVolumes).some((data: DataFrame[]) => {
-    return data[0]?.meta?.custom?.logsVolumeType === LogsVolumeType.Limited;
+    return isLogsVolumeLimited(data);
   });
   const containsZoomed = Object.values(logVolumes).some((data: DataFrame[]) => {
     const zoomRatio = logsLevelZoomRatio(data, absoluteRange);
-    return data[0]?.meta?.custom?.logsVolumeType !== LogsVolumeType.Limited && zoomRatio && zoomRatio < 1;
+    return !isLogsVolumeLimited(data) && zoomRatio && zoomRatio < 1;
   });
 
   let limitedInfo;

@@ -27,13 +27,13 @@ import {
   PanelContextProvider,
   SeriesVisibilityChangeMode,
   useStyles2,
+  PanelChrome,
   useTheme2,
 } from '@grafana/ui';
 import { defaultGraphConfig, getGraphFieldConfig } from 'app/plugins/panel/timeseries/config';
 import { TimeSeriesOptions } from 'app/plugins/panel/timeseries/types';
 import { ExploreGraphStyle } from 'app/types';
 
-import { PanelChrome } from '../../../../../packages/grafana-ui/src/components/PanelChrome/PanelChrome';
 import { seriesVisibilityConfigFactory } from '../../dashboard/dashgrid/SeriesVisibilityConfigFactory';
 
 import { applyGraphStyle } from './exploreGraphStyleUtils';

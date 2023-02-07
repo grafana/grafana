@@ -213,6 +213,7 @@ export type LogsVolumeCustom = {
   logsVolumeType: LogsVolumeType;
   datasourceUid: string;
   datasourceName: string;
+  targets: DataQuery[];
 };
 
 export const getLogsVolumeAbsoluteRange = (
