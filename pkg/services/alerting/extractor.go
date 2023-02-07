@@ -206,11 +206,11 @@ func (e *DashAlertExtractorService) getAlertFromPanels(ctx context.Context, json
 				Datasources: []*datasources.DataSource{datasource},
 			}
 
-			if err := e.datasourcePermissionsService.FilterDatasourcesBasedOnQueryPermissions(ctx, &dsFilterQuery); err != nil {
+			if result, err := e.datasourcePermissionsService.FilterDatasourcesBasedOnQueryPermissions(ctx, &dsFilterQuery); err != nil {
 				if !errors.Is(err, permissions.ErrNotImplemented) {
 					return nil, err
 				}
-			} else if len(dsFilterQuery.Result) == 0 {
+			} else if len(result) == 0 {
 				return nil, datasources.ErrDataSourceAccessDenied
 			}
 

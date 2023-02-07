@@ -156,7 +156,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange l
 		return nil, fmt.Errorf("access denied: %w", err)
 	}
 
-	req, err := c.getRequestForAlertRule(getDsInfo.Result, timeRange, context.IsDebug)
+	req, err := c.getRequestForAlertRule(ds, timeRange, context.IsDebug)
 	if err != nil {
 		return nil, fmt.Errorf("interval calculation failed: %w", err)
 	}
@@ -199,7 +199,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange l
 		})
 	}
 
-	resp, err := requestHandler.HandleRequest(context.Ctx, getDsInfo.Result, req)
+	resp, err := requestHandler.HandleRequest(context.Ctx, ds, req)
 	if err != nil {
 		return nil, toCustomError(err)
 	}
