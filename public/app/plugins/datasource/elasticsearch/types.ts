@@ -13,6 +13,7 @@ import {
   MovingAverageSimpleModelSettings,
   PipelineMetricAggregationType,
   TermsOrder,
+  ExtendedStats,
   BasePipelineMetricAggregation as SchemaBasePipelineMetricAggregation,
   PipelineMetricAggregationWithMultipleBucketPaths as SchemaPipelineMetricAggregationWithMultipleBucketPaths,
   MovingAverage as SchemaMovingAverage,
@@ -27,7 +28,10 @@ import {
 export * from './dataquery.gen';
 export { Elasticsearch as ElasticsearchQuery } from './dataquery.gen';
 
+export type MetricAggregationWithMeta = ExtendedStats;
+
 // Start of temporary overrides because of incorrect type generation in dataquery.gen.ts
+// TODO: Remove this once the type generation is fixed
 export interface BasePipelineMetricAggregation extends SchemaBasePipelineMetricAggregation {
   type: PipelineMetricAggregationType;
 }

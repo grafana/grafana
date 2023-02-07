@@ -600,7 +600,7 @@ steps:
   name: build-plugins
 - commands:
   - . scripts/build/gpg-test-vars.sh && ./bin/build package --jobs 8 --edition oss
-    --build-id ${DRONE_BUILD_NUMBER} --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64
+    --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - build-plugins
   - build-backend
@@ -680,7 +680,7 @@ steps:
     paths:
       include:
       - pkg/tsdb/azuremonitor/**
-      - public/app/plugins/datasource/grafana-azure-monitor-datasource/**
+      - public/app/plugins/datasource/azuremonitor/**
       - e2e/cloud-plugins-suite/azure-monitor.spec.ts
     repo:
     - grafana/grafana
@@ -1558,7 +1558,7 @@ steps:
     paths:
       include:
       - pkg/tsdb/azuremonitor/**
-      - public/app/plugins/datasource/grafana-azure-monitor-datasource/**
+      - public/app/plugins/datasource/azuremonitor/**
       - e2e/cloud-plugins-suite/azure-monitor.spec.ts
     repo:
     - grafana/grafana
@@ -6270,7 +6270,7 @@ steps:
   name: build-backend-enterprise2
 - commands:
   - ./bin/build package --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
-    --variants linux-amd64 --sign
+    --sign
   depends_on:
   - build-plugins
   - build-backend-enterprise2
@@ -6656,6 +6656,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: 3e72bf092e103764489c02760188a3529c06c2e91ea34fa234794491f274a5a0
+hmac: bf02735eb33a58809b6ff6f786bd6170213f090a2f1d13166c982272a3f99620
 
 ...

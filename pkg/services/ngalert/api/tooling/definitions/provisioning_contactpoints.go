@@ -3,7 +3,9 @@ package definitions
 import (
 	"fmt"
 
-	"github.com/grafana/alerting/alerting/notifier/channels"
+	"github.com/grafana/alerting/logging"
+	alertingNotify "github.com/grafana/alerting/notify"
+	"github.com/grafana/alerting/receivers"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/channels_config"
@@ -99,14 +101,14 @@ type EmbeddedContactPoint struct {
 
 const RedactedValue = "[REDACTED]"
 
-func (e *EmbeddedContactPoint) Valid(decryptFunc channels.GetDecryptedValueFn) error {
+func (e *EmbeddedContactPoint) Valid(decryptFunc receivers.GetDecryptedValueFn) error {
 	if e.Type == "" {
 		return fmt.Errorf("type should not be an empty string")
 	}
 	if e.Settings == nil {
 		return fmt.Errorf("settings should not be empty")
 	}
-	factory, exists := channels_config.Factory(e.Type)
+	factory, exists := alertingNotify.Factory(e.Type)
 	if !exists {
 		return fmt.Errorf("unknown type '%s'", e.Type)
 	}
@@ -114,11 +116,11 @@ func (e *EmbeddedContactPoint) Valid(decryptFunc channels.GetDecryptedValueFn) e
 	if err != nil {
 		return err
 	}
-	cfg, _ := channels.NewFactoryConfig(&channels.NotificationChannelConfig{
+	cfg, _ := receivers.NewFactoryConfig(&receivers.NotificationChannelConfig{
 		Settings: jsonBytes,
 		Type:     e.Type,
-	}, nil, decryptFunc, nil, nil, func(ctx ...interface{}) channels.Logger {
-		return &channels.FakeLogger{}
+	}, nil, decryptFunc, nil, nil, func(ctx ...interface{}) logging.Logger {
+		return &logging.FakeLogger{}
 	}, setting.BuildVersion)
 	if _, err := factory(cfg); err != nil {
 		return err

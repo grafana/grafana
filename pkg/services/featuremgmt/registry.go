@@ -40,17 +40,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:            "dashboardPreviewsAdmin",
-			Description:     "Manage the dashboard previews crawler process from the UI",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-		},
-		{
-			Name:        "live-config",
-			Description: "Save Grafana Live configuration in SQL tables",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:        "live-pipeline",
 			Description: "Enable a generic live processing pipeline",
 			State:       FeatureStateAlpha,
@@ -104,13 +93,6 @@ var (
 			Name:        "lokiDataframeApi",
 			Description: "Use experimental loki api for WebSocket streaming (early prototype)",
 			State:       FeatureStateAlpha,
-		},
-		{
-			Name:         "lokiMonacoEditor",
-			Description:  "Access to Monaco query editor for Loki",
-			State:        FeatureStateStable,
-			Expression:   "true",
-			FrontendOnly: true,
 		},
 		{
 			Name:        "swaggerUi",
@@ -308,11 +290,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "increaseInMemDatabaseQueryCache",
-			Description: "Enable more in memory caching for database queries",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:         "newPanelChromeUI",
 			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
 			State:        FeatureStateAlpha,
@@ -373,11 +350,6 @@ var (
 		{
 			Name:        "authnService",
 			Description: "Use new auth service to perform authentication",
-			State:       FeatureStateAlpha,
-		},
-		{
-			Name:        "sessionRemoteCache",
-			Description: "Enable using remote cache for user sessions",
 			State:       FeatureStateAlpha,
 		},
 		{
