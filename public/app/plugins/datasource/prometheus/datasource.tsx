@@ -1220,37 +1220,6 @@ export class PrometheusDatasource
    * resulting in us returning labels/values that might not be applicable for the given window, this is a necessary trade off if we want to cache larger durations
    *
    */
-  // getQuantizedTimeRangeParams(): { start: string; end: string } {
-  //   const range = this.timeSrv.timeRange();
-  //   const cacheDurationInSeconds = this.getCacheDurationInMinutes();
-  //
-  //   // Don't round the range if we're not caching
-  //   if (this.cacheLevel === PrometheusCacheLevel.none) {
-  //     return {
-  //       start: this.getPrometheusTime(range.from, false).toString(),
-  //       end: this.getPrometheusTime(range.to, true).toString(),
-  //     };
-  //   }
-  //   // Otherwise round down to the nearest nth minute for the start time
-  //   const startTime = this.getPrometheusTime(range.from, false);
-  //   const startTimeQuantizedSeconds = roundSecToLastMin(startTime, cacheDurationInSeconds) * 60;
-  //
-  //   // Don't round up here, we'll need to pick the end time to match up with the current query window
-  //   const endTime = this.getPrometheusTime(range.to, true);
-  //
-  //   const endTimeQuantizedSeconds =
-  //     endTime - startTime === cacheDurationInSeconds ?
-  //       roundSecToNextMin(endTime, 1) * 60 :
-  //       roundSecToNextMin(endTime, cacheDurationInSeconds) * 60;
-  //
-  //   // If the start and end times are the same, the user is viewing a window that is shorter than the cache duration
-  //   // In this case we'll want to extend the end time of the query to run to the start of the next query interval window
-  //   if(startTimeQuantizedSeconds === endTimeQuantizedSeconds){
-  //     return { start: startTimeQuantizedSeconds.toString(), end: ((endTimeQuantizedSeconds + cacheDurationInSeconds) * 60).toString()};
-  //   }
-  //
-  //   return { start: startTimeQuantizedSeconds.toString(), end: endTimeQuantizedSeconds.toString() };
-  // }
 
   getTimeRangeParams(): { start: string; end: string } {
     const range = this.timeSrv.timeRange();
@@ -1324,14 +1293,14 @@ export class PrometheusDatasource
     }
   }
 
-  getCacheLength(): number {
+  getDaysToCacheMetadata(): number {
     switch (this.cacheLevel) {
-      case PrometheusCacheLevel.high:
-        return 20;
       case PrometheusCacheLevel.medium:
-        return 15;
+        return 7;
+      case PrometheusCacheLevel.high:
+        return 30;
       default:
-        return 10;
+        return 1;
     }
   }
 

@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -17,6 +19,7 @@ import (
 type Resource struct {
 	promClient *client.Client
 	log        log.Logger
+	cacheLevel string
 }
 
 func New(
@@ -29,10 +32,19 @@ func New(
 		return nil, err
 	}
 	httpMethod, _ := maputil.GetStringOptional(jsonData, "httpMethod")
+	jsonDataBytes, simpleJsonErr := simplejson.NewJson(settings.JSONData)
+	if simpleJsonErr != nil {
+		return nil, err
+	}
+	cacheLevel, jsonGetErr := jsonDataBytes.Get("cacheLevel").String()
+	if jsonGetErr != nil {
+		return nil, err
+	}
 
 	return &Resource{
 		log:        plog,
 		promClient: client.NewClient(httpClient, httpMethod, settings.URL),
+		cacheLevel: cacheLevel,
 	}, nil
 }
 
@@ -41,6 +53,11 @@ func (r *Resource) Execute(ctx context.Context, req *backend.CallResourceRequest
 	resp, err := r.promClient.QueryResource(ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("error querying resource: %v", err)
+	}
+
+	if len(req.GetHTTPHeaders().Get("X-Grafana-Cache")) > 0 && len(req.GetHTTPHeaders().Get("Cache-Control")) > 0 {
+		resp.Header.Set("X-Grafana-Cache", "y")
+		resp.Header.Set("Cache-Control", req.GetHTTPHeaders().Get("Cache-Control"))
 	}
 
 	defer func() {

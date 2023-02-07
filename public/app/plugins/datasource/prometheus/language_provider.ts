@@ -136,7 +136,18 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
   async loadMetricsMetadata() {
     this.metricsMetadata = fixSummariesMetadata(
-      await this.request('/api/v1/metadata', {}, {}, { showErrorAlert: false })
+      await this.request(
+        '/api/v1/metadata',
+        {},
+        {},
+        {
+          showErrorAlert: false,
+          headers: {
+            'Cache-Control': `private, max-age=${this.datasource.getDaysToCacheMetadata() * 86400}`,
+            'X-Grafana-Cache': 'y',
+          },
+        }
+      )
     );
   }
 
