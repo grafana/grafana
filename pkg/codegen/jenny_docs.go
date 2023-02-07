@@ -525,13 +525,13 @@ func constraintDescr(s *schema) string {
 	}
 
 	if s.MinLength > 0 {
-		left := fmt.Sprintf("%v <=", s.MinLength)
+		left := fmt.Sprintf("%v <= ", s.MinLength)
 		right := ""
 
 		if s.MaxLength > 0 {
-			right = fmt.Sprintf("<= %v", s.MaxLength)
+			right = fmt.Sprintf(" <= %v", s.MaxLength)
 		}
-		return fmt.Sprintf("\nConstraint: `%s len(val) %s`.", left, right)
+		return fmt.Sprintf("\nConstraint: `%slen(val)%s`.", left, right)
 	}
 
 	if s.Pattern != "" {
