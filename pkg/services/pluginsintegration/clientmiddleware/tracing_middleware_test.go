@@ -3,19 +3,15 @@ package clientmiddleware
 import (
 	"context"
 	"errors"
-	"net/http"
 	"testing"
-
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/client/clienttest"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/codes"
 )
 
 func TestTracingMiddleware(t *testing.T) {
@@ -84,7 +80,7 @@ func TestTracingMiddleware(t *testing.T) {
 	} {
 		t.Run("Creates spans on "+tc.name, func(t *testing.T) {
 			t.Run("successful", func(t *testing.T) {
-				tracer := newFakeTracer()
+				tracer := tracing.NewFakeTracer()
 
 				cdt := clienttest.NewClientDecoratorTest(
 					t,
@@ -93,15 +89,15 @@ func TestTracingMiddleware(t *testing.T) {
 
 				err := tc.run(pluginCtx, cdt)
 				require.NoError(t, err)
-				require.Len(t, tracer.spans, 1, "must have 1 span")
-				span := tracer.spans[0]
-				assert.True(t, span.ended, "span should be ended")
-				assert.NoError(t, span.err, "span should not have an error")
-				assert.Equal(t, codes.Unset, span.statusCode, "span should not have a status code")
+				require.Len(t, tracer.Spans, 1, "must have 1 span")
+				span := tracer.Spans[0]
+				assert.True(t, span.Ended, "span should be ended")
+				assert.NoError(t, span.Err, "span should not have an error")
+				assert.Equal(t, codes.Unset, span.StatusCode, "span should not have a status code")
 			})
 
 			t.Run("error", func(t *testing.T) {
-				tracer := newFakeTracer()
+				tracer := tracing.NewFakeTracer()
 
 				cdt := clienttest.NewClientDecoratorTest(
 					t,
@@ -113,11 +109,11 @@ func TestTracingMiddleware(t *testing.T) {
 
 				err := tc.run(pluginCtx, cdt)
 				require.Error(t, err)
-				require.Len(t, tracer.spans, 1, "must have 1 span")
-				span := tracer.spans[0]
-				assert.True(t, span.ended, "span should be ended")
-				assert.Error(t, span.err, "span should contain an error")
-				assert.Equal(t, codes.Error, span.statusCode, "span code should be error")
+				require.Len(t, tracer.Spans, 1, "must have 1 span")
+				span := tracer.Spans[0]
+				assert.True(t, span.Ended, "span should be ended")
+				assert.Error(t, span.Err, "span should contain an error")
+				assert.Equal(t, codes.Error, span.StatusCode, "span code should be error")
 			})
 		})
 	}
@@ -163,74 +159,4 @@ func newAlwaysErrorMiddleware(err error) plugins.ClientMiddleware {
 			err: err,
 		}
 	})
-}
-
-type fakeSpan struct {
-	name string
-
-	ended       bool
-	attributes  map[attribute.Key]attribute.Value
-	statusCode  codes.Code
-	description string
-	err         error
-	events      map[string]tracing.EventValue
-}
-
-func newFakeSpan(name string) *fakeSpan {
-	return &fakeSpan{
-		name:       name,
-		attributes: map[attribute.Key]attribute.Value{},
-		events:     map[string]tracing.EventValue{},
-	}
-}
-
-func (t *fakeSpan) End() {
-	t.ended = true
-}
-
-func (t *fakeSpan) SetAttributes(key string, value interface{}, kv attribute.KeyValue) {
-	t.attributes[kv.Key] = kv.Value
-}
-
-func (t *fakeSpan) SetName(name string) {
-	t.name = name
-}
-
-func (t *fakeSpan) SetStatus(code codes.Code, description string) {
-	t.statusCode = code
-	t.description = description
-}
-
-func (t *fakeSpan) RecordError(err error, options ...trace.EventOption) {
-	t.err = err
-}
-
-func (t *fakeSpan) AddEvents(keys []string, values []tracing.EventValue) {
-	if len(keys) != len(values) {
-		panic("different number of keys and values")
-	}
-	for i := 0; i < len(keys); i++ {
-		t.events[keys[i]] = values[i]
-	}
-}
-
-type fakeTracer struct {
-	spans []*fakeSpan
-}
-
-func (t *fakeTracer) Run(ctx context.Context) error {
-	return nil
-}
-
-func (t *fakeTracer) Start(ctx context.Context, spanName string, opts ...trace.SpanStartOption) (context.Context, tracing.Span) {
-	span := newFakeSpan(spanName)
-	t.spans = append(t.spans, span)
-	return ctx, span
-}
-
-func (t *fakeTracer) Inject(ctx context.Context, header http.Header, span tracing.Span) {
-}
-
-func newFakeTracer() *fakeTracer {
-	return &fakeTracer{spans: []*fakeSpan{}}
 }
