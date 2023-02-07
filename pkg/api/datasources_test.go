@@ -385,9 +385,8 @@ func (m *dataSourcesServiceMock) AddDataSource(ctx context.Context, cmd *datasou
 	return m.expectedDatasource, m.expectedError
 }
 
-func (m *dataSourcesServiceMock) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {
-	cmd.Result = m.expectedDatasource
-	return m.expectedError
+func (m *dataSourcesServiceMock) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
+	return m.expectedDatasource, m.expectedError
 }
 
 func (m *dataSourcesServiceMock) DecryptedValues(ctx context.Context, ds *datasources.DataSource) (map[string]string, error) {

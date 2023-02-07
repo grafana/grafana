@@ -29,7 +29,7 @@ type Store interface {
 	GetDefaultDataSource(context.Context, *datasources.GetDefaultDataSourceQuery) (*datasources.DataSource, error)
 	DeleteDataSource(context.Context, *datasources.DeleteDataSourceCommand) error
 	AddDataSource(context.Context, *datasources.AddDataSourceCommand) (*datasources.DataSource, error)
-	UpdateDataSource(context.Context, *datasources.UpdateDataSourceCommand) error
+	UpdateDataSource(context.Context, *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error)
 	GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) error
 
 	Count(context.Context, *quota.ScopeParameters) (*quota.Map, error)
@@ -305,13 +305,14 @@ func updateIsDefaultFlag(ds *datasources.DataSource, sess *db.Session) error {
 	return nil
 }
 
-func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {
-	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
+	var ds *datasources.DataSource
+	return ds, ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		if cmd.JsonData == nil {
 			cmd.JsonData = simplejson.New()
 		}
 
-		ds := &datasources.DataSource{
+		ds = &datasources.DataSource{
 			ID:              cmd.ID,
 			OrgID:           cmd.OrgID,
 			Name:            cmd.Name,
@@ -375,7 +376,6 @@ func (ss *SqlStore) UpdateDataSource(ctx context.Context, cmd *datasources.Updat
 			}
 		}
 
-		cmd.Result = ds
 		return err
 	})
 }

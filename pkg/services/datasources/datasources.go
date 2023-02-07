@@ -31,7 +31,7 @@ type DataSourceService interface {
 	DeleteDataSource(ctx context.Context, cmd *DeleteDataSourceCommand) error
 
 	// UpdateDataSource updates an existing datasource.
-	UpdateDataSource(ctx context.Context, cmd *UpdateDataSourceCommand) error
+	UpdateDataSource(ctx context.Context, cmd *UpdateDataSourceCommand) (*DataSource, error)
 
 	// GetDefaultDataSource gets the default datasource.
 	GetDefaultDataSource(ctx context.Context, query *GetDefaultDataSourceQuery) (*DataSource, error)

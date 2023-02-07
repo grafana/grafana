@@ -133,7 +133,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 			cmd.ID = ds.ID
 			cmd.Version = ds.Version
 			ss := SqlStore{db: db}
-			err := ss.UpdateDataSource(context.Background(), &cmd)
+			_, err := ss.UpdateDataSource(context.Background(), &cmd)
 			require.NoError(t, err)
 		})
 
@@ -145,7 +145,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 
 			cmd := defaultUpdateDatasourceCommand
 			cmd.ID = ds.ID
-			err := ss.UpdateDataSource(context.Background(), &cmd)
+			_, err := ss.UpdateDataSource(context.Background(), &cmd)
 			require.NoError(t, err)
 
 			query := datasources.GetDataSourceQuery{ID: ds.ID, OrgID: 10}
@@ -171,10 +171,10 @@ func TestIntegrationDataAccess(t *testing.T) {
 			// Make a copy as UpdateDataSource modifies it
 			cmd2 := cmd
 
-			err := ss.UpdateDataSource(context.Background(), &cmd)
+			_, err := ss.UpdateDataSource(context.Background(), &cmd)
 			require.NoError(t, err)
 
-			err = ss.UpdateDataSource(context.Background(), &cmd2)
+			_, err = ss.UpdateDataSource(context.Background(), &cmd2)
 			require.Error(t, err)
 		})
 
@@ -192,7 +192,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 				URL:    "http://test",
 			}
 
-			err := ss.UpdateDataSource(context.Background(), cmd)
+			_, err := ss.UpdateDataSource(context.Background(), cmd)
 			require.NoError(t, err)
 		})
 
@@ -211,7 +211,7 @@ func TestIntegrationDataAccess(t *testing.T) {
 				Version: 90000,
 			}
 
-			err := ss.UpdateDataSource(context.Background(), cmd)
+			_, err := ss.UpdateDataSource(context.Background(), cmd)
 			require.NoError(t, err)
 		})
 	})

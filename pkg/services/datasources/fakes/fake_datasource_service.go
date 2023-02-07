@@ -88,7 +88,7 @@ func (s *FakeDataSourceService) DeleteDataSource(ctx context.Context, cmd *datas
 	return datasources.ErrDataSourceNotFound
 }
 
-func (s *FakeDataSourceService) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {
+func (s *FakeDataSourceService) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
 	for _, datasource := range s.DataSources {
 		idMatch := cmd.ID != 0 && cmd.ID == datasource.ID
 		uidMatch := cmd.UID != "" && cmd.UID == datasource.UID
@@ -97,10 +97,10 @@ func (s *FakeDataSourceService) UpdateDataSource(ctx context.Context, cmd *datas
 			if cmd.Name != "" {
 				datasource.Name = cmd.Name
 			}
-			return nil
+			return datasource, nil
 		}
 	}
-	return datasources.ErrDataSourceNotFound
+	return nil, datasources.ErrDataSourceNotFound
 }
 
 func (s *FakeDataSourceService) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) (*datasources.DataSource, error) {

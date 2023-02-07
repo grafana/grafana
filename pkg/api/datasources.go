@@ -509,7 +509,7 @@ func (hs *HTTPServer) updateDataSourceByID(c *contextmodel.ReqContext, ds *datas
 		return response.Error(403, "Cannot update read-only data source", nil)
 	}
 
-	err := hs.DataSourcesService.UpdateDataSource(c.Req.Context(), &cmd)
+	_, err := hs.DataSourcesService.UpdateDataSource(c.Req.Context(), &cmd)
 	if err != nil {
 		if errors.Is(err, datasources.ErrDataSourceUpdatingOldVersion) {
 			return response.Error(409, "Datasource has already been updated by someone else. Please reload and try again", err)

@@ -129,8 +129,6 @@ type UpdateDataSourceCommand struct {
 	ReadOnly                bool              `json:"-"`
 	EncryptedSecureJsonData map[string][]byte `json:"-"`
 	UpdateSecretFn          UpdateSecretFn    `json:"-"`
-
-	Result *DataSource `json:"-"`
 }
 
 // DeleteDataSourceCommand will delete a DataSource based on OrgID as well as the UID (preferred), ID, or Name.

@@ -229,15 +229,16 @@ func (s *Service) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteD
 	})
 }
 
-func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {
-	return s.db.InTransaction(ctx, func(ctx context.Context) error {
+func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
+	var dataSource *datasources.DataSource
+	return dataSource, s.db.InTransaction(ctx, func(ctx context.Context) error {
 		var err error
 
 		query := &datasources.GetDataSourceQuery{
 			ID:    cmd.ID,
 			OrgID: cmd.OrgID,
 		}
-		dataSource, err := s.SQLStore.GetDataSource(ctx, query)
+		dataSource, err = s.SQLStore.GetDataSource(ctx, query)
 		if err != nil {
 			return err
 		}
@@ -265,7 +266,8 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 			}
 		}
 
-		return s.SQLStore.UpdateDataSource(ctx, cmd)
+		dataSource, err = s.SQLStore.UpdateDataSource(ctx, cmd)
+		return err
 	})
 }
 

@@ -16,7 +16,7 @@ import (
 type Store interface {
 	GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
 	AddDataSource(ctx context.Context, cmd *datasources.AddDataSourceCommand) (*datasources.DataSource, error)
-	UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error
+	UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error)
 	DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error
 }
 
@@ -90,7 +90,7 @@ func (dc *DatasourceProvisioner) apply(ctx context.Context, cfg *configs) error 
 		} else {
 			updateCmd := createUpdateCommand(ds, dataSource.ID)
 			dc.log.Debug("updating datasource from configuration", "name", updateCmd.Name, "uid", updateCmd.UID)
-			if err := dc.store.UpdateDataSource(ctx, updateCmd); err != nil {
+			if _, err := dc.store.UpdateDataSource(ctx, updateCmd); err != nil {
 				return err
 			}
 

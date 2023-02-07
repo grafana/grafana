@@ -392,7 +392,7 @@ func (s *spyStore) AddDataSource(ctx context.Context, cmd *datasources.AddDataSo
 	return &datasources.DataSource{UID: cmd.UID}, nil
 }
 
-func (s *spyStore) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) error {
+func (s *spyStore) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateDataSourceCommand) (*datasources.DataSource, error) {
 	s.updated = append(s.updated, cmd)
-	return nil
+	return nil, nil
 }
