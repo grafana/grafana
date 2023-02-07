@@ -1,4 +1,3 @@
-import logfmt from 'logfmt';
 import { useCallback } from 'react';
 
 import {
@@ -16,7 +15,6 @@ import {
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/services/context_srv';
-import { safeStringifyValue } from 'app/core/utils/explore';
 import { getTransformationVars } from 'app/features/correlations/transformations';
 
 import { getLinkSrv } from '../../panel/panellinks/link_srv';
