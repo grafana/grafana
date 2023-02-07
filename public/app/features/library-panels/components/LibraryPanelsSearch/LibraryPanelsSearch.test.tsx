@@ -69,7 +69,16 @@ async function getTestContext(
   config.featureToggles = { panelTitleSearch: false };
   const getSpy = jest.spyOn(backendSrv, 'get');
 
-  jest.spyOn(getGrafanaSearcher(), 'getSortOptions').mockResolvedValue([{ displayName: 'Desc', name: 'alpha-desc' }]);
+  jest.spyOn(getGrafanaSearcher(), 'getSortOptions').mockResolvedValue([
+    {
+      label: 'Alphabetically (A–Z)',
+      value: 'alpha-asc',
+    },
+    {
+      label: 'Alphabetically (Z–A)',
+      value: 'alpha-desc',
+    },
+  ]);
 
   const getLibraryPanelsSpy = jest.spyOn(api, 'getLibraryPanels').mockResolvedValue(searchResult);
   const getAllPanelPluginMetaSpy = jest.spyOn(panelUtils, 'getAllPanelPluginMeta').mockReturnValue([graph, timeseries]);
