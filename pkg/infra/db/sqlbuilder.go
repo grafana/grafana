@@ -50,7 +50,7 @@ func (sb *SQLBuilder) WriteDashboardPermissionFilter(user *user.SignedInUser, pe
 		params []interface{}
 	)
 	if !ac.IsDisabled(sb.cfg) {
-		sql, params = permissions.NewAccessControlDashboardPermissionFilter(user, permission, "").Where()
+		sql, params = permissions.NewAccessControlDashboardPermissionFilter(user, permission, "", sb.features).Where()
 	} else {
 		sql, params = permissions.DashboardPermissionFilter{
 			OrgRole:         user.OrgRole,

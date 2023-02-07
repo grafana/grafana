@@ -13,6 +13,7 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
@@ -42,6 +43,7 @@ func validateTimeRange(item *annotations.Item) error {
 
 type xormRepositoryImpl struct {
 	cfg               *setting.Cfg
+	features          featuremgmt.FeatureToggles
 	db                db.DB
 	log               log.Logger
 	maximumTagsLength int64
@@ -300,7 +302,7 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQue
 		}
 
 		if !ac.IsDisabled(r.cfg) {
-			acFilter, acArgs, err := getAccessControlFilter(query.SignedInUser)
+			acFilter, acArgs, err := r.getAccessControlFilter(query.SignedInUser)
 			if err != nil {
 				return err
 			}
@@ -325,7 +327,7 @@ func (r *xormRepositoryImpl) Get(ctx context.Context, query *annotations.ItemQue
 	return items, err
 }
 
-func getAccessControlFilter(user *user.SignedInUser) (string, []interface{}, error) {
+func (r *xormRepositoryImpl) getAccessControlFilter(user *user.SignedInUser) (string, []interface{}, error) {
 	if user == nil || user.Permissions[user.OrgID] == nil {
 		return "", nil, errors.New("missing permissions")
 	}
@@ -347,7 +349,7 @@ func getAccessControlFilter(user *user.SignedInUser) (string, []interface{}, err
 		}
 		// annotation read permission with scope annotations:type:dashboard allows listing annotations from dashboards which the user can view
 		if t == annotations.Dashboard.String() {
-			dashboardFilter, dashboardParams := permissions.NewAccessControlDashboardPermissionFilter(user, dashboards.PERMISSION_VIEW, searchstore.TypeDashboard).Where()
+			dashboardFilter, dashboardParams := permissions.NewAccessControlDashboardPermissionFilter(user, dashboards.PERMISSION_VIEW, searchstore.TypeDashboard, r.features).Where()
 			filter := fmt.Sprintf("a.dashboard_id IN(SELECT id FROM dashboard WHERE %s)", dashboardFilter)
 			filters = append(filters, filter)
 			params = dashboardParams

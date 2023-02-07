@@ -927,7 +927,7 @@ func (d *DashboardStore) FindDashboards(ctx context.Context, query *dashboards.F
 	if !ac.IsDisabled(d.cfg) {
 		// if access control is enabled, overwrite the filters so far
 		filters = []interface{}{
-			permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type),
+			permissions.NewAccessControlDashboardPermissionFilter(query.SignedInUser, query.Permission, query.Type, d.features),
 		}
 	}
 

@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
@@ -25,7 +26,7 @@ func benchmarkDashboardPermissionFilter(b *testing.B, numUsers, numDashboards in
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		usr := &user.SignedInUser{UserID: 1, OrgID: 1, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{1: {}}}
-		filter := permissions.NewAccessControlDashboardPermissionFilter(usr, dashboards.PERMISSION_VIEW, "")
+		filter := permissions.NewAccessControlDashboardPermissionFilter(usr, dashboards.PERMISSION_VIEW, "", featuremgmt.WithFeatures())
 		var result int
 		err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
 			q, params := filter.Where()

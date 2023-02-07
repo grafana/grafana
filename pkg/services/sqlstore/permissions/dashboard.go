@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
@@ -82,10 +83,11 @@ type AccessControlDashboardPermissionFilter struct {
 	user             *user.SignedInUser
 	dashboardActions []string
 	folderActions    []string
+	features         featuremgmt.FeatureToggles
 }
 
 // NewAccessControlDashboardPermissionFilter creates a new AccessControlDashboardPermissionFilter that is configured with specific actions calculated based on the dashboards.PermissionType and query type
-func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissionLevel dashboards.PermissionType, queryType string) AccessControlDashboardPermissionFilter {
+func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissionLevel dashboards.PermissionType, queryType string, features featuremgmt.FeatureToggles) AccessControlDashboardPermissionFilter {
 	needEdit := permissionLevel > dashboards.PERMISSION_VIEW
 
 	var folderActions []string
@@ -121,7 +123,7 @@ func NewAccessControlDashboardPermissionFilter(user *user.SignedInUser, permissi
 		}
 	}
 
-	return AccessControlDashboardPermissionFilter{user: user, folderActions: folderActions, dashboardActions: dashboardActions}
+	return AccessControlDashboardPermissionFilter{user: user, folderActions: folderActions, dashboardActions: dashboardActions, features: features}
 }
 
 func (f AccessControlDashboardPermissionFilter) Where() (string, []interface{}) {

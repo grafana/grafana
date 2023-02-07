@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/permissions"
@@ -130,7 +131,7 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			store := setupTest(t, 10, 100, tt.permissions)
 			usr := &user.SignedInUser{OrgID: 1, OrgRole: org.RoleViewer, Permissions: map[int64]map[string][]string{1: accesscontrol.GroupScopesByAction(tt.permissions)}}
-			filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tt.permission, tt.queryType)
+			filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tt.permission, tt.queryType, featuremgmt.WithFeatures())
 
 			var result int
 			err := store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
