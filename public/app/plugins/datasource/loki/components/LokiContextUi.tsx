@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { cloneDeep } from 'lodash';
 import memoizeOne from 'memoize-one';
 import React, { useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
@@ -71,7 +70,7 @@ export function LokiContextUi(props: LokiContextUiProps) {
       return;
     }
 
-    previousContextFilters.current = cloneDeep(contextFilters);
+    previousContextFilters.current = structuredClone(contextFilters);
 
     if (timerHandle.current) {
       clearTimeout(timerHandle.current);
