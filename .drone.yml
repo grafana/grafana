@@ -600,7 +600,7 @@ steps:
   name: build-plugins
 - commands:
   - . scripts/build/gpg-test-vars.sh && ./bin/build package --jobs 8 --edition oss
-    --build-id ${DRONE_BUILD_NUMBER} --variants linux-amd64,linux-amd64-musl,darwin-amd64,windows-amd64
+    --build-id ${DRONE_BUILD_NUMBER}
   depends_on:
   - build-plugins
   - build-backend
@@ -6270,7 +6270,7 @@ steps:
   name: build-backend-enterprise2
 - commands:
   - ./bin/build package --jobs 8 --edition enterprise2 --build-id ${DRONE_BUILD_NUMBER}
-    --variants linux-amd64 --sign
+    --sign
   depends_on:
   - build-plugins
   - build-backend-enterprise2
@@ -6656,6 +6656,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: 67e4732033d9f2882fa8bfc58fb38d813c89988f77136c72515e758b47df5272
+hmac: a541f0c1a294987a42d43f561def70db4d92e1b0e753f1e59384b61ad224adbb
 
 ...
