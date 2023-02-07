@@ -13,15 +13,16 @@ type Props = {
   providerId: string;
   displayName: string;
   enabled: boolean;
-  configPath: string;
+  configPath?: string;
   badges?: JSX.Element[];
 };
 
 export function ProviderCard({ providerId, displayName, enabled, configPath, badges }: Props) {
   const styles = useStyles2(getStyles);
+  const basePath = configPath || 'admin/authentication';
 
   return (
-    <a href={`${configPath}/${providerId}`} className={styles.container}>
+    <a href={`${basePath}/${providerId}`} className={styles.container}>
       <div className={styles.header}>
         <div className={styles.badgesContainer}>{getProviderBadges(providerId)}</div>
         <IconButton

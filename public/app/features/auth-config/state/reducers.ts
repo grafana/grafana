@@ -10,16 +10,13 @@ const authConfigSlice = createSlice({
   name: 'authConfig',
   initialState,
   reducers: {
-    settingsLoaded: (state, action: PayloadAction<Settings>): AuthConfigState => {
-      return { ...state, settings: action.payload };
-    },
     settingsUpdated: (state, action: PayloadAction<Settings>): AuthConfigState => {
       return { ...state, settings: action.payload };
     },
   },
 });
 
-export const { settingsLoaded, settingsUpdated } = authConfigSlice.actions;
+export const { settingsUpdated } = authConfigSlice.actions;
 
 export const authConfigReducer = authConfigSlice.reducer;
 
