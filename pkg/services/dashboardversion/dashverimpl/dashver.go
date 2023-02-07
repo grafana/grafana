@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/setting"
@@ -18,6 +19,7 @@ const (
 type Service struct {
 	store   store
 	dashSvc dashboards.DashboardService
+	log     log.Logger
 }
 
 func ProvideService(db db.DB, dashboardService dashboards.DashboardService) dashver.Service {
@@ -27,6 +29,7 @@ func ProvideService(db db.DB, dashboardService dashboards.DashboardService) dash
 			dialect: db.GetDialect(),
 		},
 		dashSvc: dashboardService,
+		log:     log.New("dashboard-version"),
 	}
 }
 
@@ -56,15 +59,6 @@ func (s *Service) Get(ctx context.Context, query *dashver.GetDashboardVersionQue
 		return nil, err
 	}
 	version.Data.Set("id", version.DashboardID)
-
-	// Populate the DashboardUID
-	if query.DashboardUID == "" {
-		uid, err := s.getDashUIDMaybeEmpty(ctx, version.DashboardID)
-		if err != nil {
-			return nil, err
-		}
-		return version.ToDTO(uid), nil
-	}
 	return version.ToDTO(query.DashboardUID), nil
 }
 
@@ -141,8 +135,10 @@ func (s *Service) getDashUIDMaybeEmpty(ctx context.Context, id int64) (string, e
 	result, err := s.dashSvc.GetDashboardUIDByID(ctx, &q)
 	if err != nil {
 		if errors.Is(err, dashboards.ErrDashboardNotFound) {
+			s.log.Debug("dashboard not found")
 			return "", nil
 		} else {
+			s.log.Error("error getting dashboard", err)
 			return "", err
 		}
 	}
@@ -156,8 +152,10 @@ func (s *Service) getDashIDMaybeEmpty(ctx context.Context, uid string) (int64, e
 	result, err := s.dashSvc.GetDashboard(ctx, &q)
 	if err != nil {
 		if errors.Is(err, dashboards.ErrDashboardNotFound) {
+			s.log.Debug("dashboard not found")
 			return -1, nil
 		} else {
+			s.log.Error("error getting dashboard", err)
 			return -1, err
 		}
 	}
