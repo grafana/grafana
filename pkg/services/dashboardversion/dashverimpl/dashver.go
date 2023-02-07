@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/setting"
@@ -102,7 +101,6 @@ func (s *Service) DeleteExpired(ctx context.Context, cmd *dashver.DeleteExpiredV
 // List all dashboard versions for the given dashboard ID.
 func (s *Service) List(ctx context.Context, query *dashver.ListDashboardVersionsQuery) ([]*dashver.DashboardVersionDTO, error) {
 	// Get the DashboardUID if not populated
-	// Get the DashboardUID if not populated
 	if query.DashboardUID == "" {
 		u, err := s.getDashUIDMaybeEmpty(ctx, query.DashboardID)
 		if err != nil {
@@ -139,8 +137,8 @@ func (s *Service) List(ctx context.Context, query *dashver.ListDashboardVersions
 // returns the UID. If the dashboard is not found, it will return an empty
 // string.
 func (s *Service) getDashUIDMaybeEmpty(ctx context.Context, id int64) (string, error) {
-	q := models.GetDashboardRefByIdQuery{Id: id}
-	err := s.dashSvc.GetDashboardUIDById(ctx, &q)
+	q := dashboards.GetDashboardRefByIDQuery{ID: id}
+	result, err := s.dashSvc.GetDashboardUIDByID(ctx, &q)
 	if err != nil {
 		if errors.Is(err, dashboards.ErrDashboardNotFound) {
 			return "", nil
@@ -148,14 +146,14 @@ func (s *Service) getDashUIDMaybeEmpty(ctx context.Context, id int64) (string, e
 			return "", err
 		}
 	}
-	return q.Result.Uid, nil
+	return result.UID, nil
 }
 
 // getDashIDMaybeEmpty is a helper function which takes a dashboardUID and
 // returns the ID. If the dashboard is not found, it will return -1.
 func (s *Service) getDashIDMaybeEmpty(ctx context.Context, uid string) (int64, error) {
-	q := models.GetDashboardQuery{Uid: uid}
-	err := s.dashSvc.GetDashboard(ctx, &q)
+	q := dashboards.GetDashboardQuery{UID: uid}
+	result, err := s.dashSvc.GetDashboard(ctx, &q)
 	if err != nil {
 		if errors.Is(err, dashboards.ErrDashboardNotFound) {
 			return -1, nil
@@ -163,5 +161,5 @@ func (s *Service) getDashIDMaybeEmpty(ctx context.Context, uid string) (int64, e
 			return -1, err
 		}
 	}
-	return q.Result.Id, nil
+	return result.ID, nil
 }
