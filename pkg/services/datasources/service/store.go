@@ -24,7 +24,7 @@ import (
 // Store is the interface for the datasource Service's storage.
 type Store interface {
 	GetDataSource(context.Context, *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
-	GetDataSources(context.Context, *datasources.GetDataSourcesQuery) error
+	GetDataSources(context.Context, *datasources.GetDataSourcesQuery) ([]*datasources.DataSource, error)
 	GetDataSourcesByType(context.Context, *datasources.GetDataSourcesByTypeQuery) ([]*datasources.DataSource, error)
 	GetDefaultDataSource(context.Context, *datasources.GetDefaultDataSourceQuery) error
 	DeleteDataSource(context.Context, *datasources.DeleteDataSourceCommand) error
@@ -77,17 +77,19 @@ func (ss *SqlStore) getDataSource(ctx context.Context, query *datasources.GetDat
 	return datasource, nil
 }
 
-func (ss *SqlStore) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) error {
-	var sess *xorm.Session
-	return ss.db.WithDbSession(ctx, func(dbSess *db.Session) error {
+func (ss *SqlStore) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) ([]*datasources.DataSource, error) {
+	var (
+		sess        *xorm.Session
+		dataSources []*datasources.DataSource
+	)
+	return dataSources, ss.db.WithDbSession(ctx, func(dbSess *db.Session) error {
 		if query.DataSourceLimit <= 0 {
 			sess = dbSess.Where("org_id=?", query.OrgID).Asc("name")
 		} else {
 			sess = dbSess.Limit(query.DataSourceLimit, 0).Where("org_id=?", query.OrgID).Asc("name")
 		}
 
-		query.Result = make([]*datasources.DataSource, 0)
-		return sess.Find(&query.Result)
+		return sess.Find(&dataSources)
 	})
 }
 

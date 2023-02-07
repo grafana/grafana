@@ -43,11 +43,11 @@ func TestIntegrationDataAccess(t *testing.T) {
 		require.NoError(t, err)
 
 		query := datasources.GetDataSourcesQuery{OrgID: 10}
-		err = ss.GetDataSources(context.Background(), &query)
+		dataSources, err := ss.GetDataSources(context.Background(), &query)
 		require.NoError(t, err)
-		require.Equal(t, 1, len(query.Result))
+		require.Equal(t, 1, len(dataSources))
 
-		return query.Result[0]
+		return dataSources[0]
 	}
 
 	t.Run("AddDataSource", func(t *testing.T) {
@@ -66,11 +66,11 @@ func TestIntegrationDataAccess(t *testing.T) {
 			require.NoError(t, err)
 
 			query := datasources.GetDataSourcesQuery{OrgID: 10}
-			err = ss.GetDataSources(context.Background(), &query)
+			dataSources, err := ss.GetDataSources(context.Background(), &query)
 			require.NoError(t, err)
 
-			require.Equal(t, 1, len(query.Result))
-			ds := query.Result[0]
+			require.Equal(t, 1, len(dataSources))
+			ds := dataSources[0]
 
 			require.EqualValues(t, 10, ds.OrgID)
 			require.Equal(t, "site", ds.Database)
@@ -114,12 +114,12 @@ func TestIntegrationDataAccess(t *testing.T) {
 			}, time.Second, time.Millisecond)
 
 			query := datasources.GetDataSourcesQuery{OrgID: 10}
-			err = sqlStore.GetDataSources(context.Background(), &query)
+			dataSources, err := sqlStore.GetDataSources(context.Background(), &query)
 			require.NoError(t, err)
-			require.Equal(t, 1, len(query.Result))
+			require.Equal(t, 1, len(dataSources))
 
-			require.Equal(t, query.Result[0].ID, created.ID)
-			require.Equal(t, query.Result[0].UID, created.UID)
+			require.Equal(t, dataSources[0].ID, created.ID)
+			require.Equal(t, dataSources[0].UID, created.UID)
 			require.Equal(t, int64(10), created.OrgID)
 			require.Equal(t, "nisse", created.Name)
 		})
@@ -226,13 +226,13 @@ func TestIntegrationDataAccess(t *testing.T) {
 			require.NoError(t, err)
 
 			query := datasources.GetDataSourcesQuery{OrgID: 10}
-			err = ss.GetDataSources(context.Background(), &query)
+			dataSources, err := ss.GetDataSources(context.Background(), &query)
 			require.NoError(t, err)
 
-			require.Equal(t, 0, len(query.Result))
+			require.Equal(t, 0, len(dataSources))
 		})
 
-		t.Run("Can not delete datasource with wrong orgId", func(t *testing.T) {
+		t.Run("Can not delete datasource with wrong orgID", func(t *testing.T) {
 			db := db.InitTestDB(t)
 			ds := initDatasource(db)
 			ss := SqlStore{db: db}
@@ -242,10 +242,10 @@ func TestIntegrationDataAccess(t *testing.T) {
 			require.NoError(t, err)
 
 			query := datasources.GetDataSourcesQuery{OrgID: 10}
-			err = ss.GetDataSources(context.Background(), &query)
+			dataSources, err := ss.GetDataSources(context.Background(), &query)
 			require.NoError(t, err)
 
-			require.Equal(t, 1, len(query.Result))
+			require.Equal(t, 1, len(dataSources))
 		})
 	})
 
@@ -302,10 +302,10 @@ func TestIntegrationDataAccess(t *testing.T) {
 		err := ss.DeleteDataSource(context.Background(), &datasources.DeleteDataSourceCommand{Name: ds.Name, OrgID: ds.OrgID})
 		require.NoError(t, err)
 
-		err = ss.GetDataSources(context.Background(), &query)
+		dataSources, err := ss.GetDataSources(context.Background(), &query)
 		require.NoError(t, err)
 
-		require.Equal(t, 0, len(query.Result))
+		require.Equal(t, 0, len(dataSources))
 	})
 
 	t.Run("DeleteDataSourceAccessControlPermissions", func(t *testing.T) {
@@ -342,7 +342,10 @@ func TestIntegrationDataAccess(t *testing.T) {
 		require.NoError(t, errGetPermissions)
 		require.Zero(t, permCount, "permissions associated to the data source should have been removed")
 
-		require.Equal(t, 0, len(query.Result))
+		dataSources, err := ss.GetDataSources(context.Background(), &query)
+
+		require.NoError(t, err)
+		require.Equal(t, 0, len(dataSources))
 	})
 
 	t.Run("GetDataSources", func(t *testing.T) {
@@ -364,10 +367,10 @@ func TestIntegrationDataAccess(t *testing.T) {
 			}
 			query := datasources.GetDataSourcesQuery{OrgID: 10, DataSourceLimit: datasourceLimit}
 
-			err := ss.GetDataSources(context.Background(), &query)
+			dataSources, err := ss.GetDataSources(context.Background(), &query)
 
 			require.NoError(t, err)
-			require.Equal(t, datasourceLimit, len(query.Result))
+			require.Equal(t, datasourceLimit, len(dataSources))
 		})
 
 		t.Run("No limit should be applied on the returned data sources if the limit is not set", func(t *testing.T) {
@@ -388,10 +391,10 @@ func TestIntegrationDataAccess(t *testing.T) {
 			}
 			query := datasources.GetDataSourcesQuery{OrgID: 10}
 
-			err := ss.GetDataSources(context.Background(), &query)
+			dataSources, err := ss.GetDataSources(context.Background(), &query)
 
 			require.NoError(t, err)
-			require.Equal(t, numberOfDatasource, len(query.Result))
+			require.Equal(t, numberOfDatasource, len(dataSources))
 		})
 
 		t.Run("No limit should be applied on the returned data sources if the limit is negative", func(t *testing.T) {
@@ -412,10 +415,10 @@ func TestIntegrationDataAccess(t *testing.T) {
 			}
 			query := datasources.GetDataSourcesQuery{OrgID: 10, DataSourceLimit: -1}
 
-			err := ss.GetDataSources(context.Background(), &query)
+			dataSources, err := ss.GetDataSources(context.Background(), &query)
 
 			require.NoError(t, err)
-			require.Equal(t, numberOfDatasource, len(query.Result))
+			require.Equal(t, numberOfDatasource, len(dataSources))
 		})
 	})
 

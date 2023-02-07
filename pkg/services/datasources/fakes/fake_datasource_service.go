@@ -30,14 +30,15 @@ func (s *FakeDataSourceService) GetDataSource(ctx context.Context, query *dataso
 	return nil, datasources.ErrDataSourceNotFound
 }
 
-func (s *FakeDataSourceService) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) error {
+func (s *FakeDataSourceService) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) ([]*datasources.DataSource, error) {
+	var dataSources []*datasources.DataSource
 	for _, datasource := range s.DataSources {
 		orgMatch := query.OrgID != 0 && query.OrgID == datasource.OrgID
 		if orgMatch {
-			query.Result = append(query.Result, datasource)
+			dataSources = append(dataSources, datasource)
 		}
 	}
-	return nil
+	return dataSources, nil
 }
 
 func (s *FakeDataSourceService) GetAllDataSources(ctx context.Context, query *datasources.GetAllDataSourcesQuery) error {

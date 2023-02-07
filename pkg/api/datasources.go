@@ -45,11 +45,12 @@ var secretsPluginError datasources.ErrDatasourceSecretsPluginUserFriendly
 func (hs *HTTPServer) GetDataSources(c *contextmodel.ReqContext) response.Response {
 	query := datasources.GetDataSourcesQuery{OrgID: c.OrgID, DataSourceLimit: hs.Cfg.DataSourceLimit}
 
-	if err := hs.DataSourcesService.GetDataSources(c.Req.Context(), &query); err != nil {
+	dataSources, err := hs.DataSourcesService.GetDataSources(c.Req.Context(), &query)
+	if err != nil {
 		return response.Error(500, "Failed to query datasources", err)
 	}
 
-	filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, query.Result)
+	filtered, err := hs.filterDatasourcesByQueryPermission(c.Req.Context(), c.SignedInUser, dataSources)
 	if err != nil {
 		return response.Error(500, "Failed to query datasources", err)
 	}
