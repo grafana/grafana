@@ -370,13 +370,13 @@ func TestValidateMuteTimeInterval(t *testing.T) {
 func TestValidateNotificationTemplates(t *testing.T) {
 	tc := []struct {
 		name       string
-		template   NotificationTemplate
+		template   MessageTemplate
 		expContent string
 		expError   error
 	}{
 		{
 			name: "Same template name as definition",
-			template: NotificationTemplate{
+			template: MessageTemplate{
 				Name:       "Same name as definition",
 				Template:   `{{ define "Same name as definition" }}\nFiring: {{ .Labels.alertname }}\nSilence: {{ .SilenceURL }}\n{{ end }}`,
 				Provenance: "test",
@@ -386,7 +386,7 @@ func TestValidateNotificationTemplates(t *testing.T) {
 		},
 		{
 			name: "Different template name than definition",
-			template: NotificationTemplate{
+			template: MessageTemplate{
 				Name:       "Different name than definition",
 				Template:   `{{ define "Alert Instance Template" }}\nFiring: {{ .Labels.alertname }}\nSilence: {{ .SilenceURL }}\n{{ end }}`,
 				Provenance: "test",
@@ -396,7 +396,7 @@ func TestValidateNotificationTemplates(t *testing.T) {
 		},
 		{
 			name: "Fix template - missing both {{ define }} and {{ end }}",
-			template: NotificationTemplate{
+			template: MessageTemplate{
 				Name:       "Alert Instance Template",
 				Template:   `Firing: {{ .Labels.alertname }}\nSilence: {{ .SilenceURL }}`,
 				Provenance: "test",
@@ -406,7 +406,7 @@ func TestValidateNotificationTemplates(t *testing.T) {
 		},
 		{
 			name: "Multiple definitions",
-			template: NotificationTemplate{
+			template: MessageTemplate{
 				Name:       "Alert Instance Template",
 				Template:   `{{ define "Alert Instance Template" }}\nFiring: {{ .Labels.alertname }}\nSilence: {{ .SilenceURL }}\n{{ end }}{{ define "Alert Instance Template2" }}\nFiring: {{ .Labels.alertname }}\nSilence: {{ .SilenceURL }}\n{{ end }}`,
 				Provenance: "test",
@@ -416,7 +416,7 @@ func TestValidateNotificationTemplates(t *testing.T) {
 		},
 		{
 			name: "Malformed template - missing {{ define }}",
-			template: NotificationTemplate{
+			template: MessageTemplate{
 				Name:       "Alert Instance Template",
 				Template:   `\nFiring: {{ .Labels.alertname }}\nSilence: {{ .SilenceURL }}\n{{ end }}`,
 				Provenance: "test",
@@ -425,7 +425,7 @@ func TestValidateNotificationTemplates(t *testing.T) {
 		},
 		{
 			name: "Malformed template - missing {{ end }}",
-			template: NotificationTemplate{
+			template: MessageTemplate{
 				Name:       "Alert Instance Template",
 				Template:   `{{ define "Alert Instance Template" }}\nFiring: {{ .Labels.alertname }}\nSilence: {{ .SilenceURL }}\n`,
 				Provenance: "test",
@@ -434,7 +434,7 @@ func TestValidateNotificationTemplates(t *testing.T) {
 		},
 		{
 			name: "Malformed template - multiple definitions duplicate name",
-			template: NotificationTemplate{
+			template: MessageTemplate{
 				Name:       "Alert Instance Template",
 				Template:   `{{ define "Alert Instance Template" }}\nFiring: {{ .Labels.alertname }}\nSilence: {{ .SilenceURL }}\n{{ end }}\n{{ define "Alert Instance Template" }}\nFiring: {{ .Labels.alertname }}\nSilence: {{ .SilenceURL }}\n{{ end }}`,
 				Provenance: "test",
@@ -444,7 +444,7 @@ func TestValidateNotificationTemplates(t *testing.T) {
 		{
 			// This is fine as long as the template name is different from the definition, it just ignores the extra text.
 			name: "Extra text outside definition block - different template name and definition",
-			template: NotificationTemplate{
+			template: MessageTemplate{
 				Name:       "Different name than definition",
 				Template:   `{{ define "Alert Instance Template" }}\nFiring: {{ .Labels.alertname }}\nSilence: {{ .SilenceURL }}\n{{ end }}[what is this?]`,
 				Provenance: "test",
@@ -456,7 +456,7 @@ func TestValidateNotificationTemplates(t *testing.T) {
 			// This is NOT fine as the template name is the same as the definition.
 			// GO template parser will treat it as if it's wrapped in {{ define "Alert Instance Template" }}, thus creating a duplicate definition.
 			name: "Extra text outside definition block - same template name and definition",
-			template: NotificationTemplate{
+			template: MessageTemplate{
 				Name:       "Alert Instance Template",
 				Template:   `{{ define "Alert Instance Template" }}\nFiring: {{ .Labels.alertname }}\nSilence: {{ .SilenceURL }}\n{{ end }}[what is this?]`,
 				Provenance: "test",
