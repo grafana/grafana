@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -11,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -34,7 +36,9 @@ func ProvideService(cfg *setting.Cfg,
 	routeRegister routing.RouteRegister,
 	tracer tracing.Tracer,
 	accesscontrol ac.AccessControl,
-	accesscontrolService ac.Service) (*UsageStats, error) {
+	accesscontrolService ac.Service,
+	bundleRegistry supportbundles.Service,
+) (*UsageStats, error) {
 	s := &UsageStats{
 		Cfg:           cfg,
 		RouteRegister: routeRegister,
@@ -52,6 +56,7 @@ func ProvideService(cfg *setting.Cfg,
 	}
 
 	s.registerAPIEndpoints()
+	bundleRegistry.RegisterSupportItemCollector(s.supportBundleCollector())
 
 	return s, nil
 }
@@ -117,4 +122,29 @@ func (uss *UsageStats) ShouldBeReported(ctx context.Context, dsType string) bool
 	}
 
 	return ds.Signature.IsValid() || ds.Signature.IsInternal()
+}
+
+func (uss *UsageStats) supportBundleCollector() supportbundles.Collector {
+	return supportbundles.Collector{
+		UID:               "usage-stats",
+		DisplayName:       "Usage statistics",
+		Description:       "Usage statistics of the Grafana instance",
+		IncludedByDefault: false,
+		Default:           true,
+		Fn: func(ctx context.Context) (*supportbundles.SupportItem, error) {
+			report, err := uss.GetUsageReport(context.Background())
+			if err != nil {
+				return nil, err
+			}
+
+			data, err := json.Marshal(report)
+			if err != nil {
+				return nil, err
+			}
+			return &supportbundles.SupportItem{
+				Filename:  "usage-stats.json",
+				FileBytes: data,
+			}, nil
+		},
+	}
 }
