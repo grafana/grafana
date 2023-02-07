@@ -172,7 +172,7 @@ func merge(res queryRes, ruleUID string) (*data.Frame, error) {
 			if len(stream.Values) == pointers[i] {
 				continue
 			}
-			curTime := stream.Values[pointers[i]].At.UnixNano()
+			curTime := stream.Values[pointers[i]].T.UnixNano()
 			if pointers[i] < len(stream.Values) && curTime < minTime {
 				minTime = curTime
 				minEl = stream.Values[pointers[i]]
@@ -184,19 +184,19 @@ func merge(res queryRes, ruleUID string) (*data.Frame, error) {
 			break
 		}
 		var entry lokiEntry
-		err := json.Unmarshal([]byte(minEl.Val), &entry)
+		err := json.Unmarshal([]byte(minEl.V), &entry)
 		if err != nil {
 			return nil, fmt.Errorf("failed to unmarshal entry: %w", err)
 		}
 		// Append the minimum element to the merged slice and move the pointer.
-		tsNano := minEl.At.UnixNano()
+		tsNano := minEl.T.UnixNano()
 		// TODO: In general, perhaps we should omit the offending line and log, rather than failing the request entirely.
 		streamLbls := res.Data.Result[minElStreamIdx].Stream
 		lblsJson, err := json.Marshal(streamLbls)
 		if err != nil {
 			return nil, fmt.Errorf("failed to serialize stream labels: %w", err)
 		}
-		line, err := jsonifyRow(minEl.Val)
+		line, err := jsonifyRow(minEl.V)
 		if err != nil {
 			return nil, fmt.Errorf("a line was in an invalid format: %w", err)
 		}
@@ -249,8 +249,8 @@ func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition
 		line := string(jsn)
 
 		buckets[repr] = append(buckets[repr], row{
-			At:  state.State.LastEvaluationTime,
-			Val: line,
+			T: state.State.LastEvaluationTime,
+			V: line,
 		})
 	}
 

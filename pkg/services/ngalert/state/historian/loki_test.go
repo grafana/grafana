@@ -280,7 +280,7 @@ func requireEntry(t *testing.T, row row) lokiEntry {
 	t.Helper()
 
 	var entry lokiEntry
-	err := json.Unmarshal([]byte(row.Val), &entry)
+	err := json.Unmarshal([]byte(row.V), &entry)
 	require.NoError(t, err)
 	return entry
 }

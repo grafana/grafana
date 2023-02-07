@@ -125,13 +125,13 @@ type stream struct {
 }
 
 type row struct {
-	At  time.Time
-	Val string
+	T time.Time
+	V string
 }
 
 func (r *row) MarshalJSON() ([]byte, error) {
 	return json.Marshal([2]string{
-		fmt.Sprintf("%d", r.At.UnixNano()), r.Val,
+		fmt.Sprintf("%d", r.T.UnixNano()), r.V,
 	})
 }
 
@@ -147,8 +147,8 @@ func (r *row) UnmarshalJSON(b []byte) error {
 	if err != nil {
 		return fmt.Errorf("timestamp in Loki sample not convertible to nanosecond epoch: %v", tuple[0])
 	}
-	r.At = time.Unix(0, nano)
-	r.Val = tuple[1]
+	r.T = time.Unix(0, nano)
+	r.V = tuple[1]
 	return nil
 }
 

@@ -160,8 +160,8 @@ func TestNewSelector(t *testing.T) {
 func TestRow(t *testing.T) {
 	t.Run("marshal", func(t *testing.T) {
 		row := row{
-			At:  time.Unix(0, 1234),
-			Val: "some sample",
+			T: time.Unix(0, 1234),
+			V: "some sample",
 		}
 
 		jsn, err := json.Marshal(&row)
@@ -177,8 +177,8 @@ func TestRow(t *testing.T) {
 		err := json.Unmarshal(jsn, &row)
 
 		require.NoError(t, err)
-		require.Equal(t, int64(1234), row.At.UnixNano())
-		require.Equal(t, "some sample", row.Val)
+		require.Equal(t, int64(1234), row.T.UnixNano())
+		require.Equal(t, "some sample", row.V)
 	})
 
 	t.Run("unmarshal invalid", func(t *testing.T) {
@@ -205,8 +205,8 @@ func TestStream(t *testing.T) {
 		stream := stream{
 			Stream: map[string]string{"a": "b"},
 			Values: []row{
-				{At: time.Unix(0, 1), Val: "one"},
-				{At: time.Unix(0, 2), Val: "two"},
+				{T: time.Unix(0, 1), V: "one"},
+				{T: time.Unix(0, 2), V: "two"},
 			},
 		}
 
