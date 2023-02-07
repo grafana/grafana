@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/setting"
@@ -26,15 +25,8 @@ func TestDashboardVersionService(t *testing.T) {
 			Data: &simplejson.Json{},
 		}
 		dashboardVersionStore.ExpectedDashboardVersion = dashboard
-		dashboardService.On("GetDashboardUIDById", mock.Anything, mock.AnythingOfType("*models.GetDashboardRefByIdQuery")).Return(nil).Run(func(args mock.Arguments) {
-			q := args.Get(1).(*models.GetDashboardRefByIdQuery)
-			q.Result = &models.DashboardRef{Uid: "uid"}
-		})
-		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Return(nil).Run(func(args mock.Arguments) {
-			q := args.Get(1).(*models.GetDashboardQuery)
-			q.Result = &models.Dashboard{Id: 42}
-		})
-
+		dashboardService.On("GetDashboardUIDByID", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardRefByIDQuery")).Return(&dashboards.DashboardRef{UID: "uid"}, nil)
+		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).Return(&dashboards.Dashboard{ID: 42}, nil)
 		dashboardVersion, err := dashboardVersionService.Get(context.Background(), &dashver.GetDashboardVersionQuery{})
 		require.NoError(t, err)
 		require.Equal(t, dashboard.ToDTO("uid"), dashboardVersion)
@@ -76,10 +68,9 @@ func TestListDashboardVersions(t *testing.T) {
 		dashboardVersionStore.ExpectedListVersions = []*dashver.DashboardVersion{
 			{ID: 1, DashboardID: 42},
 		}
-		dashboardService.On("GetDashboardUIDById", mock.Anything, mock.AnythingOfType("*models.GetDashboardRefByIdQuery")).Return(nil).Run(func(args mock.Arguments) {
-			q := args.Get(1).(*models.GetDashboardRefByIdQuery)
-			q.Result = &models.DashboardRef{Uid: "uid"}
-		}).Once()
+		dashboardService.On("GetDashboardUIDByID", mock.Anything,
+			mock.AnythingOfType("*dashboards.GetDashboardRefByIDQuery")).
+			Return(&dashboards.DashboardRef{UID: "uid"}, nil)
 
 		query := dashver.ListDashboardVersionsQuery{DashboardID: 42}
 		res, err := dashboardVersionService.List(context.Background(), &query)
@@ -96,8 +87,8 @@ func TestListDashboardVersions(t *testing.T) {
 		dashboardVersionStore.ExpectedListVersions = []*dashver.DashboardVersion{
 			{ID: 1, DashboardID: 42},
 		}
-		dashboardService.On("GetDashboardUIDById", mock.Anything, mock.AnythingOfType("*models.GetDashboardRefByIdQuery")).
-			Return(dashboards.ErrDashboardNotFound).Once()
+		dashboardService.On("GetDashboardUIDByID", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardRefByIDQuery")).
+			Return(nil, dashboards.ErrDashboardNotFound).Once()
 
 		query := dashver.ListDashboardVersionsQuery{DashboardID: 42}
 		res, err := dashboardVersionService.List(context.Background(), &query)
@@ -112,10 +103,8 @@ func TestListDashboardVersions(t *testing.T) {
 		dashboardService := dashboards.NewFakeDashboardService(t)
 		dashboardVersionService := Service{store: dashboardVersionStore, dashSvc: dashboardService}
 		dashboardVersionStore.ExpectedListVersions = []*dashver.DashboardVersion{{DashboardID: 42, ID: 1}}
-		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Return(nil).Run(func(args mock.Arguments) {
-			q := args.Get(1).(*models.GetDashboardQuery)
-			q.Result = &models.Dashboard{Id: 42}
-		})
+		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).
+			Return(&dashboards.Dashboard{ID: 42}, nil)
 
 		query := dashver.ListDashboardVersionsQuery{DashboardUID: "uid"}
 		res, err := dashboardVersionService.List(context.Background(), &query)
@@ -130,7 +119,8 @@ func TestListDashboardVersions(t *testing.T) {
 		dashboardService := dashboards.NewFakeDashboardService(t)
 		dashboardVersionService := Service{store: dashboardVersionStore, dashSvc: dashboardService}
 		dashboardVersionStore.ExpectedListVersions = []*dashver.DashboardVersion{{DashboardID: 42, ID: 1}}
-		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*models.GetDashboardQuery")).Return(dashboards.ErrDashboardNotFound)
+		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).
+			Return(nil, dashboards.ErrDashboardNotFound)
 
 		query := dashver.ListDashboardVersionsQuery{DashboardUID: "uid"}
 		res, err := dashboardVersionService.List(context.Background(), &query)
