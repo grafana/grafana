@@ -29,6 +29,11 @@ const (
 	DependencyTypePanel DependencyType = "panel"
 )
 
+// Defines values for ExtensionsLinkType.
+const (
+	ExtensionsLinkTypeLink ExtensionsLinkType = "link"
+)
+
 // Defines values for IncludeRole.
 const (
 	IncludeRoleAdmin IncludeRole = "Admin"
@@ -147,6 +152,27 @@ type Dependency struct {
 
 // DependencyType defines model for Dependency.Type.
 type DependencyType string
+
+// ExtensionsLink defines model for ExtensionsLink.
+type ExtensionsLink struct {
+	// Description for the rendered link
+	Description string `json:"description"`
+
+	// Path relative to the extending plugin e.g. /incidents/declare
+	Path string `json:"path"`
+
+	// Target where the link will be rendered
+	Target string `json:"target"`
+
+	// Title that will be displayed for the rendered link
+	Title string `json:"title"`
+
+	// Type of extension
+	Type ExtensionsLinkType `json:"type"`
+}
+
+// Type of extension
+type ExtensionsLinkType string
 
 // Header describes an HTTP header that is forwarded with a proxied request for
 // a plugin route.
@@ -313,6 +339,9 @@ type PluginDef struct {
 	// Combination of $GOOS and $GOARCH can be found here:
 	// https://golang.org/doc/install/source#environment.
 	Executable *string `json:"executable,omitempty"`
+
+	// Extensions made by the current plugin.
+	Extensions *[]ExtensionsLink `json:"extensions,omitempty"`
 
 	// For data source plugins, include hidden queries in the data
 	// request.
