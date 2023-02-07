@@ -159,7 +159,7 @@ func TestNewSelector(t *testing.T) {
 
 func TestRow(t *testing.T) {
 	t.Run("marshal", func(t *testing.T) {
-		row := row{
+		row := sample{
 			T: time.Unix(0, 1234),
 			V: "some sample",
 		}
@@ -173,7 +173,7 @@ func TestRow(t *testing.T) {
 	t.Run("unmarshal", func(t *testing.T) {
 		jsn := []byte(`["1234", "some sample"]`)
 
-		row := row{}
+		row := sample{}
 		err := json.Unmarshal(jsn, &row)
 
 		require.NoError(t, err)
@@ -184,7 +184,7 @@ func TestRow(t *testing.T) {
 	t.Run("unmarshal invalid", func(t *testing.T) {
 		jsn := []byte(`{"key": "wrong shape"}`)
 
-		row := row{}
+		row := sample{}
 		err := json.Unmarshal(jsn, &row)
 
 		require.ErrorContains(t, err, "failed to deserialize sample")
@@ -193,7 +193,7 @@ func TestRow(t *testing.T) {
 	t.Run("unmarshal bad timestamp", func(t *testing.T) {
 		jsn := []byte(`["not-unix-nano", "some sample"]`)
 
-		row := row{}
+		row := sample{}
 		err := json.Unmarshal(jsn, &row)
 
 		require.ErrorContains(t, err, "timestamp in Loki sample")
@@ -204,7 +204,7 @@ func TestStream(t *testing.T) {
 	t.Run("marshal", func(t *testing.T) {
 		stream := stream{
 			Stream: map[string]string{"a": "b"},
-			Values: []row{
+			Values: []sample{
 				{T: time.Unix(0, 1), V: "one"},
 				{T: time.Unix(0, 2), V: "two"},
 			},

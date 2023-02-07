@@ -121,21 +121,21 @@ func (c *httpLokiClient) ping(ctx context.Context) error {
 
 type stream struct {
 	Stream map[string]string `json:"stream"`
-	Values []row             `json:"values"`
+	Values []sample          `json:"values"`
 }
 
-type row struct {
+type sample struct {
 	T time.Time
 	V string
 }
 
-func (r *row) MarshalJSON() ([]byte, error) {
+func (r *sample) MarshalJSON() ([]byte, error) {
 	return json.Marshal([2]string{
 		fmt.Sprintf("%d", r.T.UnixNano()), r.V,
 	})
 }
 
-func (r *row) UnmarshalJSON(b []byte) error {
+func (r *sample) UnmarshalJSON(b []byte) error {
 	// A Loki stream sample is formatted like a list with two elements, [At, Val]
 	// At is a string wrapping a timestamp, in nanosecond unix epoch.
 	// Val is a string containing the log line.

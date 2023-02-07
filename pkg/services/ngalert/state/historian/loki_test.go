@@ -157,7 +157,7 @@ func TestMerge(t *testing.T) {
 							Stream: map[string]string{
 								"current": "pending",
 							},
-							Values: []row{
+							Values: []sample{
 								{time.Unix(0, 1), `{"schemaVersion": 1, "previous": "normal", "current": "pending", "values":{"a": "b"}}`},
 							},
 						},
@@ -165,7 +165,7 @@ func TestMerge(t *testing.T) {
 							Stream: map[string]string{
 								"current": "firing",
 							},
-							Values: []row{
+							Values: []sample{
 								{time.Unix(0, 2), `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": "b"}}`},
 							},
 						},
@@ -187,7 +187,7 @@ func TestMerge(t *testing.T) {
 							Stream: map[string]string{
 								"current": "normal",
 							},
-							Values: []row{},
+							Values: []sample{},
 						},
 					},
 				},
@@ -204,7 +204,7 @@ func TestMerge(t *testing.T) {
 							Stream: map[string]string{
 								"current": "normal",
 							},
-							Values: []row{
+							Values: []sample{
 								{time.Unix(0, 1), `{"schemaVersion": 1, "previous": "firing", "current": "normal", "values":{"a": "b"}}`},
 								{time.Unix(0, 2), `{"schemaVersion": 1, "previous": "firing", "current": "normal", "values":{"a": "b"}}`},
 							},
@@ -213,7 +213,7 @@ func TestMerge(t *testing.T) {
 							Stream: map[string]string{
 								"current": "firing",
 							},
-							Values: []row{
+							Values: []sample{
 								{time.Unix(0, 3), `{"schemaVersion": 1, "previous": "pending", "current": "firing", "values":{"a": "b"}}`},
 							},
 						},
@@ -276,7 +276,7 @@ func requireSingleEntry(t *testing.T, res []stream) lokiEntry {
 	return requireEntry(t, res[0].Values[0])
 }
 
-func requireEntry(t *testing.T, row row) lokiEntry {
+func requireEntry(t *testing.T, row sample) lokiEntry {
 	t.Helper()
 
 	var entry lokiEntry

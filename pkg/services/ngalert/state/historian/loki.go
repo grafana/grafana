@@ -164,7 +164,7 @@ func merge(res queryRes, ruleUID string) (*data.Frame, error) {
 	pointers := make([]int, len(res.Data.Result))
 	for {
 		minTime := int64(math.MaxInt64)
-		minEl := row{}
+		minEl := sample{}
 		minElStreamIdx := -1
 		// Find the element with the earliest time among all arrays.
 		for i, stream := range res.Data.Result {
@@ -215,7 +215,7 @@ func merge(res queryRes, ruleUID string) (*data.Frame, error) {
 }
 
 func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition, externalLabels map[string]string, logger log.Logger) []stream {
-	buckets := make(map[string][]row) // label repr -> entries
+	buckets := make(map[string][]sample) // label repr -> entries
 	for _, state := range states {
 		if !shouldRecord(state) {
 			continue
@@ -248,7 +248,7 @@ func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition
 		}
 		line := string(jsn)
 
-		buckets[repr] = append(buckets[repr], row{
+		buckets[repr] = append(buckets[repr], sample{
 			T: state.State.LastEvaluationTime,
 			V: line,
 		})
