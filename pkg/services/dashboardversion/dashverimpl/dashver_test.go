@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	dashver "github.com/grafana/grafana/pkg/services/dashboardversion"
 	"github.com/grafana/grafana/pkg/setting"
@@ -83,7 +84,7 @@ func TestListDashboardVersions(t *testing.T) {
 	t.Run("List all versions for a non-existent DashboardID", func(t *testing.T) {
 		dashboardVersionStore := newDashboardVersionStoreFake()
 		dashboardService := dashboards.NewFakeDashboardService(t)
-		dashboardVersionService := Service{store: dashboardVersionStore, dashSvc: dashboardService}
+		dashboardVersionService := Service{store: dashboardVersionStore, dashSvc: dashboardService, log: log.NewNopLogger()}
 		dashboardVersionStore.ExpectedListVersions = []*dashver.DashboardVersion{
 			{ID: 1, DashboardID: 42},
 		}
@@ -101,7 +102,7 @@ func TestListDashboardVersions(t *testing.T) {
 	t.Run("List all versions for a given DashboardUID", func(t *testing.T) {
 		dashboardVersionStore := newDashboardVersionStoreFake()
 		dashboardService := dashboards.NewFakeDashboardService(t)
-		dashboardVersionService := Service{store: dashboardVersionStore, dashSvc: dashboardService}
+		dashboardVersionService := Service{store: dashboardVersionStore, dashSvc: dashboardService, log: log.NewNopLogger()}
 		dashboardVersionStore.ExpectedListVersions = []*dashver.DashboardVersion{{DashboardID: 42, ID: 1}}
 		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).
 			Return(&dashboards.Dashboard{ID: 42}, nil)
@@ -117,7 +118,7 @@ func TestListDashboardVersions(t *testing.T) {
 	t.Run("List all versions for a given non-existent DashboardUID", func(t *testing.T) {
 		dashboardVersionStore := newDashboardVersionStoreFake()
 		dashboardService := dashboards.NewFakeDashboardService(t)
-		dashboardVersionService := Service{store: dashboardVersionStore, dashSvc: dashboardService}
+		dashboardVersionService := Service{store: dashboardVersionStore, dashSvc: dashboardService, log: log.NewNopLogger()}
 		dashboardVersionStore.ExpectedListVersions = []*dashver.DashboardVersion{{DashboardID: 42, ID: 1}}
 		dashboardService.On("GetDashboard", mock.Anything, mock.AnythingOfType("*dashboards.GetDashboardQuery")).
 			Return(nil, dashboards.ErrDashboardNotFound)
@@ -133,7 +134,7 @@ func TestListDashboardVersions(t *testing.T) {
 	t.Run("List Dashboard versions - error from store", func(t *testing.T) {
 		dashboardVersionStore := newDashboardVersionStoreFake()
 		dashboardService := dashboards.NewFakeDashboardService(t)
-		dashboardVersionService := Service{store: dashboardVersionStore, dashSvc: dashboardService}
+		dashboardVersionService := Service{store: dashboardVersionStore, dashSvc: dashboardService, log: log.NewNopLogger()}
 		dashboardVersionStore.ExpectedError = dashver.ErrDashboardVersionNotFound
 
 		query := dashver.ListDashboardVersionsQuery{DashboardID: 42, DashboardUID: "42"}
