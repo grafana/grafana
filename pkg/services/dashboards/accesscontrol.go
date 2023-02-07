@@ -111,6 +111,9 @@ func NewFolderUIDScopeResolver(db Store, folderDB folder.FolderStore, folderSvc 
 		}
 
 		inheritedScopes, err := GetInheritedScopes(ctx, orgID, uid, folderSvc)
+		if err != nil {
+			return nil, err
+		}
 		return append(inheritedScopes, ScopeFoldersProvider.GetResourceScopeUID(uid)), nil
 	})
 }
