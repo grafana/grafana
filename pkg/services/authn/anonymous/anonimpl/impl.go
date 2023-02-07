@@ -53,9 +53,15 @@ func ProvideAnonymousSessionService(remoteCache remotecache.CacheStorage, usageS
 	return a
 }
 
-func (a *AnonSessionService) UsageStatFn(context.Context) (map[string]interface{}, error) {
-	// TODO: add count of anon sessions
-	return map[string]interface{}{}, nil
+func (a *AnonSessionService) UsageStatFn(ctx context.Context) (map[string]interface{}, error) {
+	sessionCount, err := a.remoteCache.Count(ctx, anonCachePrefix)
+	if err != nil {
+		return nil, nil
+	}
+
+	return map[string]interface{}{
+		"stats.anonymous.session.count": sessionCount,
+	}, nil
 }
 
 func (a *AnonSessionService) TagSession(ctx context.Context, httpReq *http.Request) error {
