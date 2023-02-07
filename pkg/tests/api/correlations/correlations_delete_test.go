@@ -47,17 +47,17 @@ func TestIntegrationDeleteCorrelation(t *testing.T) {
 		ReadOnly: true,
 		OrgID:    1,
 	}
-	ctx.createDs(createDsCommand)
-	readOnlyDS := createDsCommand.Result.UID
+	ds := ctx.createDs(createDsCommand)
+	readOnlyDS := ds.UID
 
 	createDsCommand = &datasources.AddDataSourceCommand{
 		Name:  "writable",
 		Type:  "loki",
 		OrgID: 1,
 	}
-	ctx.createDs(createDsCommand)
-	writableDs := createDsCommand.Result.UID
-	writableDsOrgId := createDsCommand.Result.OrgID
+	ds = ctx.createDs(createDsCommand)
+	writableDs := ds.UID
+	writableDsOrgId := ds.OrgID
 
 	t.Run("Unauthenticated users shouldn't be able to delete correlations", func(t *testing.T) {
 		res := ctx.Delete(DeleteParams{

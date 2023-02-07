@@ -325,7 +325,6 @@ func TestIntegrationDataAccess(t *testing.T) {
 			return err
 		})
 		require.NoError(t, errAddPermissions)
-		query := datasources.GetDataSourcesQuery{OrgID: 10}
 
 		errDeletingDS := ss.DeleteDataSource(context.Background(),
 			&datasources.DeleteDataSourceCommand{Name: ds.Name, OrgID: ds.OrgID},
@@ -342,7 +341,9 @@ func TestIntegrationDataAccess(t *testing.T) {
 		require.NoError(t, errGetPermissions)
 		require.Zero(t, permCount, "permissions associated to the data source should have been removed")
 
-		require.Equal(t, 0, len(query.Result))
+		result, err := ss.GetDataSources(context.Background(), &datasources.GetDataSourcesQuery{OrgID: 10})
+		require.NoError(t, err)
+		require.Equal(t, 0, len(result))
 	})
 
 	t.Run("GetDataSources", func(t *testing.T) {
