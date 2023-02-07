@@ -9,7 +9,8 @@ import { StoreState } from 'app/types';
 
 import { ProviderCard } from './components/ProviderCard';
 import { loadSettings } from './state/actions';
-import { getAuthProviderInfo, getAuthProviders } from './utils';
+
+import { getAuthProviders } from '.';
 
 interface OwnProps {}
 
@@ -49,7 +50,7 @@ export const AuthConfigPageUnconnected = ({ settings, loadSettings }: Props): JS
               key={provider.providerId}
               providerId={provider.providerId}
               configPath="admin/authentication"
-              displayName={provider.name || getAuthProviderInfo(provider.providerId).displayName}
+              displayName={provider.name || provider.displayName}
               enabled={provider.enabled === 'true'}
             />
           ))}
@@ -60,7 +61,7 @@ export const AuthConfigPageUnconnected = ({ settings, loadSettings }: Props): JS
               key={provider.providerId}
               providerId={provider.providerId}
               configPath="admin/authentication"
-              displayName={getAuthProviderInfo(provider.providerId).displayName}
+              displayName={provider.name || provider.displayName}
               enabled={provider.enabled === 'true'}
             />
           ))}
