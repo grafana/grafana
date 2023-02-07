@@ -45,6 +45,10 @@ type ClientParams struct {
 	AllowSignUp bool
 	// EnableDisabledUsers is a hint to the auth service that it should re-enable disabled users
 	EnableDisabledUsers bool
+	// FetchSyncedUser ensure that all required information is added to the identity
+	FetchSyncedUser bool
+	// CacheAuthProxyKey  if this key is set we will try to cache the user id for proxy client
+	CacheAuthProxyKey string
 	// LookUpParams are the arguments used to look up the entity in the DB.
 	LookUpParams login.UserLookupParams
 }
@@ -76,6 +80,8 @@ type Client interface {
 	Authenticate(ctx context.Context, r *Request) (*Identity, error)
 }
 
+// ContextAwareClient is an optional interface that auth client can implement.
+// Clients that implements this interface will be tried during request authentication
 type ContextAwareClient interface {
 	Client
 	// Test should return true if client can be used to authenticate request
@@ -84,6 +90,17 @@ type ContextAwareClient interface {
 	Priority() uint
 }
 
+// HookClient is an optional interface that auth clients can implement.
+// Clients that implements this interface can specify an auth hook that will
+// be called only for that client.
+type HookClient interface {
+	Client
+	Hook(ctx context.Context, identity *Identity, r *Request) error
+}
+
+// RedirectClient is an optional interface that auth clients can implement.
+// Clients that implements this interface can be used to generate redirect urls
+// for authentication flows, e.g. oauth clients
 type RedirectClient interface {
 	Client
 	RedirectURL(ctx context.Context, r *Request) (*Redirect, error)
@@ -95,6 +112,13 @@ type PasswordClient interface {
 
 type ProxyClient interface {
 	AuthenticateProxy(ctx context.Context, r *Request, username string, additional map[string]string) (*Identity, error)
+}
+
+// UsageStatClient is an optional interface that auth clients can implement.
+// Clients that implements this interface can specify a usage stat collection hook
+type UsageStatClient interface {
+	Client
+	UsageStatFn(ctx context.Context) (map[string]interface{}, error)
 }
 
 type Request struct {

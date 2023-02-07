@@ -54,9 +54,9 @@ func createTestAnnotationBackendSut(t *testing.T) *AnnotationBackend {
 
 func createAnnotation() annotations.Item {
 	return annotations.Item{
-		Id:      1,
-		OrgId:   1,
-		AlertId: 1,
+		ID:      1,
+		OrgID:   1,
+		AlertID: 1,
 		Text:    "MyAlert {a=b} - No data",
 		Data:    simplejson.New(),
 		Epoch:   time.Now().UnixNano() / int64(time.Millisecond),
