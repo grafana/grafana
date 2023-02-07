@@ -4,7 +4,9 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { PanelPluginMeta, PluginType } from '@grafana/data';
+import { config } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
+import { getGrafanaSearcher } from 'app/features/search/service';
 
 import { backendSrv } from '../../../../core/services/backend_srv';
 import * as panelUtils from '../../../panel/state/util';
@@ -63,9 +65,21 @@ async function getTestContext(
     module: '',
     sort: 1,
   };
-  const getSpy = jest
-    .spyOn(backendSrv, 'get')
-    .mockResolvedValue({ sortOptions: [{ displaName: 'Desc', name: 'alpha-desc' }] });
+
+  config.featureToggles = { panelTitleSearch: false };
+  const getSpy = jest.spyOn(backendSrv, 'get');
+
+  jest.spyOn(getGrafanaSearcher(), 'getSortOptions').mockResolvedValue([
+    {
+      label: 'Alphabetically (A–Z)',
+      value: 'alpha-asc',
+    },
+    {
+      label: 'Alphabetically (Z–A)',
+      value: 'alpha-desc',
+    },
+  ]);
+
   const getLibraryPanelsSpy = jest.spyOn(api, 'getLibraryPanels').mockResolvedValue(searchResult);
   const getAllPanelPluginMetaSpy = jest.spyOn(panelUtils, 'getAllPanelPluginMeta').mockReturnValue([graph, timeseries]);
 
