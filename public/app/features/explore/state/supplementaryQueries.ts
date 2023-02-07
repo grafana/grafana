@@ -137,6 +137,8 @@ export const getSupplementaryQueryProvider = (
   explorePanelData: Observable<ExplorePanelData>,
   cacheInfo: SupplementaryQueryCacheInfo
 ): Observable<DataQueryResponse> | undefined => {
+  const allQueriesByRefId = groupBy(request.targets, 'refId');
+
   if (hasSupplementaryQuerySupport(datasourceInstance, type)) {
     return datasourceInstance.getDataProvider(type, request);
   } else if (datasourceInstance.meta.mixed === true && datasourceInstance instanceof MixedDatasource) {

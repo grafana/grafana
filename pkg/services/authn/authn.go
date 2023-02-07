@@ -47,6 +47,8 @@ type ClientParams struct {
 	EnableDisabledUsers bool
 	// FetchSyncedUser ensure that all required information is added to the identity
 	FetchSyncedUser bool
+	// CacheAuthProxyKey  if this key is set we will try to cache the user id for proxy client
+	CacheAuthProxyKey string
 	// LookUpParams are the arguments used to look up the entity in the DB.
 	LookUpParams login.UserLookupParams
 }
@@ -110,6 +112,13 @@ type PasswordClient interface {
 
 type ProxyClient interface {
 	AuthenticateProxy(ctx context.Context, r *Request, username string, additional map[string]string) (*Identity, error)
+}
+
+// UsageStatClient is an optional interface that auth clients can implement.
+// Clients that implements this interface can specify a usage stat collection hook
+type UsageStatClient interface {
+	Client
+	UsageStatFn(ctx context.Context) (map[string]interface{}, error)
 }
 
 type Request struct {
