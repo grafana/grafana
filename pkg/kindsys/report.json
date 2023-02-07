@@ -117,6 +117,11 @@
     "apikey": {
       "category": "core",
       "codeowners": [],
+      "crd": {
+        "dummySchema": false,
+        "group": "",
+        "scope": ""
+      },
       "currentVersion": [
         0,
         0
@@ -145,13 +150,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
-        "docs": "n/a",
-        "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/azuremonitordataquery/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/tsdb/grafana-azure-monitor-datasource/kinds/dataquery/types_dataquery_gen.go",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/grafana-azure-monitor-datasource/dataquery.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/grafana-azure-monitor-datasource/dataquery.gen.ts"
       },
       "machineName": "azuremonitordataquery",
-      "maturity": "planned",
+      "maturity": "merged",
       "name": "AzureMonitorDataQuery",
       "pluralMachineName": "azuremonitordataquerys",
       "pluralName": "AzureMonitorDataQuerys",
@@ -229,7 +234,9 @@
     },
     "cloudwatchdataquery": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/aws-plugins"
+      ],
       "currentVersion": [
         0,
         0
@@ -237,13 +244,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
-        "docs": "n/a",
-        "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/cloudwatchdataquery/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/tsdb/cloudwatch/kinds/dataquery/types_dataquery_gen.go",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/cloudwatch/dataquery.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/cloudwatch/dataquery.gen.ts"
       },
       "machineName": "cloudwatchdataquery",
-      "maturity": "planned",
+      "maturity": "merged",
       "name": "CloudWatchDataQuery",
       "pluralMachineName": "cloudwatchdataquerys",
       "pluralName": "CloudWatchDataQuerys",
@@ -279,6 +286,11 @@
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
+      "crd": {
+        "dummySchema": true,
+        "group": "dashboard.core.grafana.com",
+        "scope": "Namespaced"
+      },
       "currentVersion": [
         0,
         0
@@ -369,6 +381,11 @@
     "datasource": {
       "category": "core",
       "codeowners": [],
+      "crd": {
+        "dummySchema": false,
+        "group": "",
+        "scope": ""
+      },
       "currentVersion": [
         0,
         0
@@ -389,7 +406,9 @@
     },
     "debugpanelcfg": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "ryantxu"
+      ],
       "currentVersion": [
         0,
         0
@@ -397,13 +416,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": true,
       "links": {
-        "docs": "n/a",
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/debugpanelcfg/schema-reference",
         "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/debug/panelcfg.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/panel/debug/panelcfg.gen.ts"
       },
       "machineName": "debugpanelcfg",
-      "maturity": "planned",
+      "maturity": "experimental",
       "name": "DebugPanelCfg",
       "pluralMachineName": "debugpanelcfgs",
       "pluralName": "DebugPanelCfgs",
@@ -411,7 +430,9 @@
     },
     "elasticsearchdataquery": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/observability-logs"
+      ],
       "currentVersion": [
         0,
         0
@@ -419,13 +440,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
-        "docs": "n/a",
-        "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/elasticsearchdataquery/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/tsdb/elasticsearch/kinds/dataquery/types_dataquery_gen.go",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/elasticsearch/dataquery.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/elasticsearch/dataquery.gen.ts"
       },
       "machineName": "elasticsearchdataquery",
-      "maturity": "planned",
+      "maturity": "experimental",
       "name": "ElasticsearchDataQuery",
       "pluralMachineName": "elasticsearchdataquerys",
       "pluralName": "ElasticsearchDataQuerys",
@@ -478,6 +499,11 @@
     "folder": {
       "category": "core",
       "codeowners": [],
+      "crd": {
+        "dummySchema": false,
+        "group": "",
+        "scope": ""
+      },
       "currentVersion": [
         0,
         0
@@ -816,6 +842,11 @@
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
+      "crd": {
+        "dummySchema": false,
+        "group": "librarypanel.core.grafana.com",
+        "scope": "Namespaced"
+      },
       "currentVersion": [
         0,
         0
@@ -881,7 +912,9 @@
     },
     "lokidataquery": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/observability-logs"
+      ],
       "currentVersion": [
         0,
         0
@@ -889,13 +922,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
-        "docs": "n/a",
-        "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/lokidataquery/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/tsdb/loki/kinds/dataquery/types_dataquery_gen.go",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/loki/dataquery.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/loki/dataquery.gen.ts"
       },
       "machineName": "lokidataquery",
-      "maturity": "planned",
+      "maturity": "experimental",
       "name": "LokiDataQuery",
       "pluralMachineName": "lokidataquerys",
       "pluralName": "LokiDataQuerys",
@@ -1061,7 +1094,9 @@
     },
     "parcadataquery": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/observability-traces-and-profiling"
+      ],
       "currentVersion": [
         0,
         0
@@ -1069,13 +1104,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
-        "docs": "n/a",
-        "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/parcadataquery/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/tsdb/parca/kinds/dataquery/types_dataquery_gen.go",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/parca/dataquery.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/parca/dataquery.gen.ts"
       },
       "machineName": "parcadataquery",
-      "maturity": "planned",
+      "maturity": "experimental",
       "name": "ParcaDataQuery",
       "pluralMachineName": "parcadataquerys",
       "pluralName": "ParcaDataQuerys",
@@ -1105,7 +1140,9 @@
     },
     "phlaredataquery": {
       "category": "composable",
-      "codeowners": [],
+      "codeowners": [
+        "grafana/observability-traces-and-profiling"
+      ],
       "currentVersion": [
         0,
         0
@@ -1113,13 +1150,13 @@
       "grafanaMaturityCount": 0,
       "lineageIsGroup": false,
       "links": {
-        "docs": "n/a",
-        "go": "n/a",
-        "schema": "n/a",
-        "ts": "n/a"
+        "docs": "https://grafana.com/docs/grafana/next/developers/kinds/composable/phlaredataquery/schema-reference",
+        "go": "https://github.com/grafana/grafana/tree/main/pkg/tsdb/phlare/kinds/dataquery/types_dataquery_gen.go",
+        "schema": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/phlare/dataquery.cue",
+        "ts": "https://github.com/grafana/grafana/tree/main/public/app/plugins/datasource/phlare/dataquery.gen.ts"
       },
       "machineName": "phlaredataquery",
-      "maturity": "planned",
+      "maturity": "experimental",
       "name": "PhlareDataQuery",
       "pluralMachineName": "phlaredataquerys",
       "pluralName": "PhlareDataQuerys",
@@ -1179,6 +1216,11 @@
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
+      "crd": {
+        "dummySchema": false,
+        "group": "playlist.core.grafana.com",
+        "scope": "Namespaced"
+      },
       "currentVersion": [
         0,
         0
@@ -1250,6 +1292,11 @@
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
+      "crd": {
+        "dummySchema": false,
+        "group": "preferences.core.grafana.com",
+        "scope": "Namespaced"
+      },
       "currentVersion": [
         0,
         0
@@ -1321,6 +1368,11 @@
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
+      "crd": {
+        "dummySchema": false,
+        "group": "publicdashboard.core.grafana.com",
+        "scope": "Namespaced"
+      },
       "currentVersion": [
         0,
         0
@@ -1343,6 +1395,11 @@
     "query": {
       "category": "core",
       "codeowners": [],
+      "crd": {
+        "dummySchema": false,
+        "group": "",
+        "scope": ""
+      },
       "currentVersion": [
         0,
         0
@@ -1364,6 +1421,11 @@
     "queryhistory": {
       "category": "core",
       "codeowners": [],
+      "crd": {
+        "dummySchema": false,
+        "group": "",
+        "scope": ""
+      },
       "currentVersion": [
         0,
         0
@@ -1390,6 +1452,11 @@
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
+      "crd": {
+        "dummySchema": false,
+        "group": "serviceaccount.core.grafana.com",
+        "scope": "Namespaced"
+      },
       "currentVersion": [
         0,
         0
@@ -1511,6 +1578,11 @@
         "grafana/plugins-platform-frontend",
         "grafana/user-essentials"
       ],
+      "crd": {
+        "dummySchema": false,
+        "group": "team.core.grafana.com",
+        "scope": "Namespaced"
+      },
       "currentVersion": [
         0,
         0
@@ -1649,6 +1721,11 @@
     "thumb": {
       "category": "core",
       "codeowners": [],
+      "crd": {
+        "dummySchema": false,
+        "group": "",
+        "scope": ""
+      },
       "currentVersion": [
         0,
         0
@@ -1692,6 +1769,11 @@
     "user": {
       "category": "core",
       "codeowners": [],
+      "crd": {
+        "dummySchema": false,
+        "group": "",
+        "scope": ""
+      },
       "currentVersion": [
         0,
         0
@@ -1904,11 +1986,16 @@
           "bargaugepanelcfg",
           "dashboard",
           "dashboardlistpanelcfg",
+          "debugpanelcfg",
+          "elasticsearchdataquery",
           "gaugepanelcfg",
           "histogrampanelcfg",
           "librarypanel",
+          "lokidataquery",
           "newspanelcfg",
           "nodegraphpanelcfg",
+          "parcadataquery",
+          "phlaredataquery",
           "piechartpanelcfg",
           "statetimelinepanelcfg",
           "statpanelcfg",
@@ -1918,7 +2005,7 @@
           "textpanelcfg",
           "xychartpanelcfg"
         ],
-        "count": 18
+        "count": 23
       },
       "mature": {
         "name": "mature",
@@ -1929,13 +2016,15 @@
         "name": "merged",
         "items": [
           "alertgroupspanelcfg",
+          "azuremonitordataquery",
+          "cloudwatchdataquery",
           "playlist",
           "preferences",
           "publicdashboard",
           "serviceaccount",
           "team"
         ],
-        "count": 6
+        "count": 8
       },
       "planned": {
         "name": "planned",
@@ -1944,15 +2033,11 @@
           "alertmanagerdataquery",
           "alertmanagerdatasourcecfg",
           "apikey",
-          "azuremonitordataquery",
           "azuremonitordatasourcecfg",
-          "cloudwatchdataquery",
           "cloudwatchdatasourcecfg",
           "dashboarddataquery",
           "dashboarddatasourcecfg",
           "datasource",
-          "debugpanelcfg",
-          "elasticsearchdataquery",
           "elasticsearchdatasourcecfg",
           "flamegraphpanelcfg",
           "folder",
@@ -1970,15 +2055,12 @@
           "jaegerdatasourcecfg",
           "livepanelcfg",
           "logspanelcfg",
-          "lokidataquery",
           "lokidatasourcecfg",
           "microsoftsqlserverdataquery",
           "microsoftsqlserverdatasourcecfg",
           "mysqldataquery",
           "mysqldatasourcecfg",
-          "parcadataquery",
           "parcadatasourcecfg",
-          "phlaredataquery",
           "phlaredatasourcecfg",
           "postgresqldataquery",
           "postgresqldatasourcecfg",
@@ -1996,7 +2078,7 @@
           "zipkindataquery",
           "zipkindatasourcecfg"
         ],
-        "count": 55
+        "count": 48
       },
       "stable": {
         "name": "stable",

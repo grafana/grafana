@@ -42,6 +42,9 @@ func main() {
 		codegen.BaseCoreRegistryJenny(filepath.Join("pkg", "registry", "corekind"), kindsys.GoCoreKindParentPath),
 		codegen.LatestMajorsOrXJenny(kindsys.TSCoreKindParentPath, codegen.TSTypesJenny{}),
 		codegen.TSVeneerIndexJenny(filepath.Join("packages", "grafana-schema", "src")),
+		codegen.CRDTypesJenny(kindsys.GoCoreKindParentPath),
+		codegen.YamlCRDJenny(kindsys.GoCoreKindParentPath),
+		codegen.CRDKindRegistryJenny(filepath.Join("pkg", "registry", "corecrd")),
 		codegen.DocsJenny(filepath.Join("docs", "sources", "developers", "kinds", "core")),
 	)
 

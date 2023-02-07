@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotaimpl"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
+	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -30,7 +31,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 	orgService, err := orgimpl.ProvideService(ss, ss.Cfg, quotaService)
 	require.NoError(t, err)
 	userStore := ProvideStore(ss, setting.NewCfg())
-	usrSvc, err := ProvideService(ss, orgService, ss.Cfg, nil, nil, quotaService)
+	usrSvc, err := ProvideService(ss, orgService, ss.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 	usr := &user.SignedInUser{
 		OrgID:       1,
@@ -497,7 +498,7 @@ func TestIntegrationUserDataAccess(t *testing.T) {
 		ss := db.InitTestDB(t)
 		orgService, err := orgimpl.ProvideService(ss, ss.Cfg, quotaService)
 		require.NoError(t, err)
-		usrSvc, err := ProvideService(ss, orgService, ss.Cfg, nil, nil, quotaService)
+		usrSvc, err := ProvideService(ss, orgService, ss.Cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 		require.NoError(t, err)
 
 		createFiveTestUsers(t, usrSvc, func(i int) *user.CreateUserCommand {
@@ -942,7 +943,7 @@ func createOrgAndUserSvc(t *testing.T, store db.DB, cfg *setting.Cfg) (org.Servi
 	quotaService := quotaimpl.ProvideService(store, cfg)
 	orgService, err := orgimpl.ProvideService(store, cfg, quotaService)
 	require.NoError(t, err)
-	usrSvc, err := ProvideService(store, orgService, cfg, nil, nil, quotaService)
+	usrSvc, err := ProvideService(store, orgService, cfg, nil, nil, quotaService, supportbundlestest.NewFakeBundleService())
 	require.NoError(t, err)
 
 	return orgService, usrSvc

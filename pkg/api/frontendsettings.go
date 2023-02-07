@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -147,17 +146,18 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		DateFormats:                         hs.Cfg.DateFormats,
 
 		Auth: dtos.FrontendSettingsAuthDTO{
-			OAuthSkipOrgRoleUpdateSync: hs.Cfg.OAuthSkipOrgRoleUpdateSync,
-			SAMLSkipOrgRoleSync:        hs.Cfg.SectionWithEnvOverrides("auth.saml").Key("skip_org_role_sync").MustBool(false),
-			LDAPSkipOrgRoleSync:        hs.Cfg.LDAPSkipOrgRoleSync,
-			GoogleSkipOrgRoleSync:      hs.Cfg.GoogleSkipOrgRoleSync,
-			JWTAuthSkipOrgRoleSync:     hs.Cfg.JWTAuthSkipOrgRoleSync,
-			GrafanaComSkipOrgRoleSync:  hs.Cfg.GrafanaComSkipOrgRoleSync,
-			AzureADSkipOrgRoleSync:     hs.Cfg.AzureADSkipOrgRoleSync,
-			GithubSkipOrgRoleSync:      hs.Cfg.GithubSkipOrgRoleSync,
-			GitLabSkipOrgRoleSync:      hs.Cfg.GitLabSkipOrgRoleSync,
-			OktaSkipOrgRoleSync:        hs.Cfg.OktaSkipOrgRoleSync,
-			DisableSyncLock:            hs.Cfg.DisableSyncLock,
+			OAuthSkipOrgRoleUpdateSync:  hs.Cfg.OAuthSkipOrgRoleUpdateSync,
+			SAMLSkipOrgRoleSync:         hs.Cfg.SectionWithEnvOverrides("auth.saml").Key("skip_org_role_sync").MustBool(false),
+			LDAPSkipOrgRoleSync:         hs.Cfg.LDAPSkipOrgRoleSync,
+			GoogleSkipOrgRoleSync:       hs.Cfg.GoogleSkipOrgRoleSync,
+			JWTAuthSkipOrgRoleSync:      hs.Cfg.JWTAuthSkipOrgRoleSync,
+			GrafanaComSkipOrgRoleSync:   hs.Cfg.GrafanaComSkipOrgRoleSync,
+			GenericOAuthSkipOrgRoleSync: hs.Cfg.GenericOAuthSkipOrgRoleSync,
+			AzureADSkipOrgRoleSync:      hs.Cfg.AzureADSkipOrgRoleSync,
+			GithubSkipOrgRoleSync:       hs.Cfg.GithubSkipOrgRoleSync,
+			GitLabSkipOrgRoleSync:       hs.Cfg.GitLabSkipOrgRoleSync,
+			OktaSkipOrgRoleSync:         hs.Cfg.OktaSkipOrgRoleSync,
+			DisableSyncLock:             hs.Cfg.DisableSyncLock,
 		},
 
 		BuildInfo: dtos.FrontendSettingsBuildInfoDTO{
@@ -261,7 +261,7 @@ func isSupportBundlesEnabled(hs *HTTPServer) bool {
 func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlugins AvailablePlugins) (map[string]plugins.DataSourceDTO, error) {
 	orgDataSources := make([]*datasources.DataSource, 0)
 	if c.OrgID != 0 {
-		query := datasources.GetDataSourcesQuery{OrgId: c.OrgID, DataSourceLimit: hs.Cfg.DataSourceLimit}
+		query := datasources.GetDataSourcesQuery{OrgID: c.OrgID, DataSourceLimit: hs.Cfg.DataSourceLimit}
 		err := hs.DataSourcesService.GetDataSources(c.Req.Context(), &query)
 		if err != nil {
 			return nil, err
@@ -282,15 +282,15 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 	dataSources := make(map[string]plugins.DataSourceDTO)
 
 	for _, ds := range orgDataSources {
-		url := ds.Url
+		url := ds.URL
 
 		if ds.Access == datasources.DS_ACCESS_PROXY {
-			url = "/api/datasources/proxy/" + strconv.FormatInt(ds.Id, 10)
+			url = "/api/datasources/proxy/uid/" + ds.UID
 		}
 
 		dsDTO := plugins.DataSourceDTO{
-			ID:        ds.Id,
-			UID:       ds.Uid,
+			ID:        ds.ID,
+			UID:       ds.UID,
 			Type:      ds.Type,
 			Name:      ds.Name,
 			URL:       url,
@@ -365,7 +365,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 
 		if ds.Type == datasources.DS_PROMETHEUS {
 			// add unproxied server URL for link to Prometheus web UI
-			ds.JsonData.Set("directUrl", ds.Url)
+			ds.JsonData.Set("directUrl", ds.URL)
 		}
 
 		dataSources[ds.Name] = dsDTO

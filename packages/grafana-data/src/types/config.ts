@@ -224,5 +224,6 @@ export interface AuthSettings {
   OktaSkipOrgRoleSync?: boolean;
   AzureADSkipOrgRoleSync?: boolean;
   GoogleSkipOrgRoleSync?: boolean;
+  GenericOAuthSkipOrgRoleSync?: boolean;
   DisableSyncLock?: boolean;
 }

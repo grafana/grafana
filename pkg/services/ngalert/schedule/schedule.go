@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
-	alertingModels "github.com/grafana/alerting/alerting/models"
+	alertingModels "github.com/grafana/alerting/models"
 	"github.com/hashicorp/go-multierror"
 	prometheusModel "github.com/prometheus/common/model"
 	"go.opentelemetry.io/otel/attribute"

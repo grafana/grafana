@@ -79,6 +79,7 @@
           },
           "role": {
             "type": "string",
+            "description": "The minimum role a user must have to see this page in the navigation menu.",
             "enum": ["Admin", "Editor", "Viewer"]
           },
           "path": {
@@ -87,7 +88,7 @@
           },
           "addToNav": {
             "type": "boolean",
-            "description": "Add the include to the side menu."
+            "description": "Add the include to the navigation menu."
           },
           "defaultNav": {
             "type": "boolean",

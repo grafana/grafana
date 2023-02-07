@@ -19,7 +19,7 @@ import (
 
 func TestNewFolderNameScopeResolver(t *testing.T) {
 	t.Run("prefix should be expected", func(t *testing.T) {
-		prefix, _ := NewFolderNameScopeResolver(&FakeDashboardStore{}, NewFakeFolderStore(t), foldertest.NewFakeService())
+		prefix, _ := NewFolderNameScopeResolver(&FakeDashboardStore{}, foldertest.NewFakeFolderStore(t), foldertest.NewFakeService())
 		require.Equal(t, "folders:name:", prefix)
 	})
 
@@ -30,7 +30,7 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 
 		db := &folder.Folder{Title: title, ID: rand.Int63(), UID: util.GenerateShortUID()}
 
-		folderStore := NewFakeFolderStore(t)
+		folderStore := foldertest.NewFakeFolderStore(t)
 		folderStore.On("GetFolderByTitle", mock.Anything, mock.Anything, mock.Anything).Return(db, nil).Once()
 
 		scope := "folders:name:" + title
@@ -52,7 +52,7 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 
 		db := &folder.Folder{Title: title, ID: rand.Int63(), UID: util.GenerateShortUID()}
 
-		folderStore := NewFakeFolderStore(t)
+		folderStore := foldertest.NewFakeFolderStore(t)
 		folderStore.On("GetFolderByTitle", mock.Anything, mock.Anything, mock.Anything).Return(db, nil).Once()
 
 		scope := "folders:name:" + title
@@ -84,14 +84,14 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 	})
 	t.Run("resolver should fail if input scope is not expected", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
-		_, resolver := NewFolderNameScopeResolver(dashboardStore, NewFakeFolderStore(t), foldertest.NewFakeService())
+		_, resolver := NewFolderNameScopeResolver(dashboardStore, foldertest.NewFakeFolderStore(t), foldertest.NewFakeService())
 
 		_, err := resolver.Resolve(context.Background(), rand.Int63(), "folders:id:123")
 		require.ErrorIs(t, err, ac.ErrInvalidScope)
 	})
 	t.Run("resolver should fail if resource of input scope is empty", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
-		_, resolver := NewFolderNameScopeResolver(dashboardStore, NewFakeFolderStore(t), foldertest.NewFakeService())
+		_, resolver := NewFolderNameScopeResolver(dashboardStore, foldertest.NewFakeFolderStore(t), foldertest.NewFakeService())
 
 		_, err := resolver.Resolve(context.Background(), rand.Int63(), "folders:name:")
 		require.ErrorIs(t, err, ac.ErrInvalidScope)
@@ -99,7 +99,7 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 	t.Run("returns 'not found' if folder does not exist", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
 
-		folderStore := NewFakeFolderStore(t)
+		folderStore := foldertest.NewFakeFolderStore(t)
 		_, resolver := NewFolderNameScopeResolver(dashboardStore, folderStore, foldertest.NewFakeService())
 
 		orgId := rand.Int63()
@@ -115,13 +115,13 @@ func TestNewFolderNameScopeResolver(t *testing.T) {
 
 func TestNewFolderIDScopeResolver(t *testing.T) {
 	t.Run("prefix should be expected", func(t *testing.T) {
-		prefix, _ := NewFolderIDScopeResolver(&FakeDashboardStore{}, NewFakeFolderStore(t), foldertest.NewFakeService())
+		prefix, _ := NewFolderIDScopeResolver(&FakeDashboardStore{}, foldertest.NewFakeFolderStore(t), foldertest.NewFakeService())
 		require.Equal(t, "folders:id:", prefix)
 	})
 
 	t.Run("resolver should convert to uid scope", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
-		folderStore := NewFakeFolderStore(t)
+		folderStore := foldertest.NewFakeFolderStore(t)
 
 		_, resolver := NewFolderIDScopeResolver(dashboardStore, folderStore, foldertest.NewFakeService())
 
@@ -142,7 +142,7 @@ func TestNewFolderIDScopeResolver(t *testing.T) {
 	})
 	t.Run("resolver should should include inherited scopes if any", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
-		folderStore := NewFakeFolderStore(t)
+		folderStore := foldertest.NewFakeFolderStore(t)
 
 		folderSvc := foldertest.NewFakeService()
 		folderSvc.ExpectedFolders = []*folder.Folder{
@@ -179,7 +179,7 @@ func TestNewFolderIDScopeResolver(t *testing.T) {
 	})
 	t.Run("resolver should fail if input scope is not expected", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
-		_, resolver := NewFolderIDScopeResolver(dashboardStore, NewFakeFolderStore(t), foldertest.NewFakeService())
+		_, resolver := NewFolderIDScopeResolver(dashboardStore, foldertest.NewFakeFolderStore(t), foldertest.NewFakeService())
 
 		_, err := resolver.Resolve(context.Background(), rand.Int63(), "folders:uid:123")
 		require.ErrorIs(t, err, ac.ErrInvalidScope)
@@ -190,7 +190,7 @@ func TestNewFolderIDScopeResolver(t *testing.T) {
 			dashboardStore = &FakeDashboardStore{}
 			orgId          = rand.Int63()
 			scope          = "folders:id:0"
-			_, resolver    = NewFolderIDScopeResolver(dashboardStore, NewFakeFolderStore(t), foldertest.NewFakeService())
+			_, resolver    = NewFolderIDScopeResolver(dashboardStore, foldertest.NewFakeFolderStore(t), foldertest.NewFakeService())
 		)
 
 		resolved, err := resolver.Resolve(context.Background(), orgId, scope)
@@ -202,14 +202,14 @@ func TestNewFolderIDScopeResolver(t *testing.T) {
 
 	t.Run("resolver should fail if resource of input scope is empty", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
-		_, resolver := NewFolderIDScopeResolver(dashboardStore, NewFakeFolderStore(t), foldertest.NewFakeService())
+		_, resolver := NewFolderIDScopeResolver(dashboardStore, foldertest.NewFakeFolderStore(t), foldertest.NewFakeService())
 
 		_, err := resolver.Resolve(context.Background(), rand.Int63(), "folders:id:")
 		require.ErrorIs(t, err, ac.ErrInvalidScope)
 	})
 	t.Run("returns 'not found' if folder does not exist", func(t *testing.T) {
 		dashboardStore := &FakeDashboardStore{}
-		folderStore := NewFakeFolderStore(t)
+		folderStore := foldertest.NewFakeFolderStore(t)
 
 		_, resolver := NewFolderIDScopeResolver(dashboardStore, folderStore, foldertest.NewFakeService())
 
@@ -225,13 +225,13 @@ func TestNewFolderIDScopeResolver(t *testing.T) {
 
 func TestNewDashboardIDScopeResolver(t *testing.T) {
 	t.Run("prefix should be expected", func(t *testing.T) {
-		prefix, _ := NewDashboardIDScopeResolver(&FakeDashboardStore{}, NewFakeFolderStore(t), foldertest.NewFakeService())
+		prefix, _ := NewDashboardIDScopeResolver(&FakeDashboardStore{}, foldertest.NewFakeFolderStore(t), foldertest.NewFakeService())
 		require.Equal(t, "dashboards:id:", prefix)
 	})
 
 	t.Run("resolver should convert to uid dashboard and folder scope", func(t *testing.T) {
 		store := &FakeDashboardStore{}
-		folderStore := NewFakeFolderStore(t)
+		folderStore := foldertest.NewFakeFolderStore(t)
 
 		_, resolver := NewDashboardIDScopeResolver(store, folderStore, foldertest.NewFakeService())
 
@@ -252,7 +252,7 @@ func TestNewDashboardIDScopeResolver(t *testing.T) {
 
 	t.Run("resolver should inlude inherited scopes if any", func(t *testing.T) {
 		store := &FakeDashboardStore{}
-		folderStore := NewFakeFolderStore(t)
+		folderStore := foldertest.NewFakeFolderStore(t)
 
 		folderSvc := foldertest.NewFakeService()
 		folderSvc.ExpectedFolders = []*folder.Folder{
@@ -288,14 +288,14 @@ func TestNewDashboardIDScopeResolver(t *testing.T) {
 	})
 
 	t.Run("resolver should fail if input scope is not expected", func(t *testing.T) {
-		_, resolver := NewDashboardIDScopeResolver(&FakeDashboardStore{}, NewFakeFolderStore(t), foldertest.NewFakeService())
+		_, resolver := NewDashboardIDScopeResolver(&FakeDashboardStore{}, foldertest.NewFakeFolderStore(t), foldertest.NewFakeService())
 		_, err := resolver.Resolve(context.Background(), rand.Int63(), "dashboards:uid:123")
 		require.ErrorIs(t, err, ac.ErrInvalidScope)
 	})
 
 	t.Run("resolver should convert folderID 0 to general uid scope for the folder scope", func(t *testing.T) {
 		store := &FakeDashboardStore{}
-		_, resolver := NewDashboardIDScopeResolver(store, NewFakeFolderStore(t), foldertest.NewFakeService())
+		_, resolver := NewDashboardIDScopeResolver(store, foldertest.NewFakeFolderStore(t), foldertest.NewFakeService())
 
 		dashboard := &Dashboard{ID: 1, FolderID: 0, UID: "1"}
 		store.On("GetDashboard", mock.Anything, mock.Anything).Return(dashboard, nil)
@@ -310,13 +310,13 @@ func TestNewDashboardIDScopeResolver(t *testing.T) {
 
 func TestNewDashboardUIDScopeResolver(t *testing.T) {
 	t.Run("prefix should be expected", func(t *testing.T) {
-		prefix, _ := NewDashboardUIDScopeResolver(&FakeDashboardStore{}, NewFakeFolderStore(t), foldertest.NewFakeService())
+		prefix, _ := NewDashboardUIDScopeResolver(&FakeDashboardStore{}, foldertest.NewFakeFolderStore(t), foldertest.NewFakeService())
 		require.Equal(t, "dashboards:uid:", prefix)
 	})
 
 	t.Run("resolver should convert to uid dashboard and folder scope", func(t *testing.T) {
 		store := &FakeDashboardStore{}
-		folderStore := NewFakeFolderStore(t)
+		folderStore := foldertest.NewFakeFolderStore(t)
 		_, resolver := NewDashboardUIDScopeResolver(store, folderStore, foldertest.NewFakeService())
 
 		orgID := rand.Int63()
@@ -336,7 +336,7 @@ func TestNewDashboardUIDScopeResolver(t *testing.T) {
 
 	t.Run("resolver should include inherited scopes if any", func(t *testing.T) {
 		store := &FakeDashboardStore{}
-		folderStore := NewFakeFolderStore(t)
+		folderStore := foldertest.NewFakeFolderStore(t)
 
 		folderSvc := foldertest.NewFakeService()
 		folderSvc.ExpectedFolders = []*folder.Folder{
@@ -373,14 +373,14 @@ func TestNewDashboardUIDScopeResolver(t *testing.T) {
 	})
 
 	t.Run("resolver should fail if input scope is not expected", func(t *testing.T) {
-		_, resolver := NewDashboardUIDScopeResolver(&FakeDashboardStore{}, NewFakeFolderStore(t), foldertest.NewFakeService())
+		_, resolver := NewDashboardUIDScopeResolver(&FakeDashboardStore{}, foldertest.NewFakeFolderStore(t), foldertest.NewFakeService())
 		_, err := resolver.Resolve(context.Background(), rand.Int63(), "dashboards:id:123")
 		require.ErrorIs(t, err, ac.ErrInvalidScope)
 	})
 
 	t.Run("resolver should convert folderID 0 to general uid scope for the folder scope", func(t *testing.T) {
 		store := &FakeDashboardStore{}
-		_, resolver := NewDashboardUIDScopeResolver(store, NewFakeFolderStore(t), foldertest.NewFakeService())
+		_, resolver := NewDashboardUIDScopeResolver(store, foldertest.NewFakeFolderStore(t), foldertest.NewFakeService())
 
 		dashboard := &Dashboard{ID: 1, FolderID: 0, UID: "1"}
 		store.On("GetDashboard", mock.Anything, mock.Anything).Return(dashboard, nil)
