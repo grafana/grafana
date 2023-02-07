@@ -294,8 +294,7 @@ func isValidOperator(op string) bool {
 }
 
 type QueryRes struct {
-	Status string    `json:"status"`
-	Data   QueryData `json:"data"`
+	Data QueryData `json:"data"`
 }
 
 type QueryData struct {
