@@ -108,11 +108,6 @@ export class UserAdminPage extends PureComponent<Props> {
     const canReadLDAPStatus = contextSrv.hasPermission(AccessControlAction.LDAPStatusRead);
     const isUserSynced = !config.auth.DisableSyncLock && user?.isExternallySynced;
 
-    console.log(`isUserSynced`);
-    console.log(isUserSynced);
-    console.log(`user`);
-    console.log(user);
-
     const pageNav: NavModelItem = {
       text: user?.login ?? '',
       icon: 'shield',
