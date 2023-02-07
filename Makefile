@@ -187,7 +187,7 @@ ifeq ($(sources),)
 devenv:
 	@printf 'You have to define sources for this command \nexample: make devenv sources=postgres,openldap\n'
 else
-devenv: devenv-down ${KIND} ## Start optional services, e.g. postgres, prometheus, and elasticsearch.
+devenv: ${KIND} devenv-down ## Start optional services, e.g. postgres, prometheus, and elasticsearch.
 ifneq (,$(findstring apiserver,$(targets)))
 	@${KIND} create cluster --name grafana
 	$(eval targets := $(filter-out apiserver,$(targets)))
