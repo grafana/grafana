@@ -2,8 +2,10 @@ import { css } from '@emotion/css';
 import React, { FC } from 'react';
 
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Stack } from '@grafana/experimental';
+import { Icon, LinkButton, useStyles2 } from '@grafana/ui';
 import alertDef from 'app/features/alerting/state/alertDef';
+import { Spacer } from 'app/features/alerting/unified/components/Spacer';
 import { alertStateToReadable, alertStateToState, getFirstActiveAt } from 'app/features/alerting/unified/utils/rules';
 import { PromRuleWithLocation } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
@@ -38,11 +40,17 @@ const UngroupedModeView: FC<UngroupedModeProps> = ({ rules, options }) => {
                   size={'lg'}
                 />
               </div>
-              <div>
+              <Stack direction="column" flexGrow={1}>
                 <div className={styles.instanceDetails}>
-                  <div className={styles.alertName} title={rule.name}>
-                    {rule.name}
-                  </div>
+                  <Stack direction="row" gap={1}>
+                    <div className={styles.alertName} title={rule.name}>
+                      {rule.name}
+                    </div>
+                    <Spacer />
+                    <LinkButton href={''} size="sm" icon="external-link-alt">
+                      Alert view
+                    </LinkButton>
+                  </Stack>
                   <div className={styles.alertDuration}>
                     <span className={stateStyle[alertStateToState(rule.state)]}>
                       {alertStateToReadable(rule.state)}
@@ -61,7 +69,7 @@ const UngroupedModeView: FC<UngroupedModeProps> = ({ rules, options }) => {
                   </div>
                 </div>
                 <AlertInstances alerts={ruleWithLocation.rule.alerts ?? []} options={options} />
-              </div>
+              </Stack>
             </li>
           );
         })}
