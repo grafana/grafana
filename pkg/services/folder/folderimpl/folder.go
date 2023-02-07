@@ -805,9 +805,5 @@ func toFolderError(err error) error {
 		return dashboards.ErrFolderNotFound
 	}
 
-	if errors.Is(err, dashboards.ErrDashboardFailedGenerateUniqueUid) {
-		err = dashboards.ErrFolderFailedGenerateUniqueUid
-	}
-
 	return err
 }
