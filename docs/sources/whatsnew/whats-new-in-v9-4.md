@@ -13,7 +13,7 @@ weight: -33
 
 # What’s new in Grafana v9.4 - Beta
 
-Welcome to Grafana 9.4! Read on to learn about changes to search and navigation, dashboards and visualizations, and authentication and security. For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md). 
+Welcome to Grafana 9.4! Read on to learn about changes to search and navigation, dashboards and visualizations, and authentication and security. For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
 ## Search and navigation
 
