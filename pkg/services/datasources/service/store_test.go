@@ -149,9 +149,9 @@ func TestIntegrationDataAccess(t *testing.T) {
 			require.NoError(t, err)
 
 			query := datasources.GetDataSourceQuery{ID: ds.ID, OrgID: 10}
-			err = ss.GetDataSource(context.Background(), &query)
+			dataSource, err := ss.GetDataSource(context.Background(), &query)
 			require.NoError(t, err)
-			require.Equal(t, ds.UID, query.Result.UID)
+			require.Equal(t, ds.UID, dataSource.UID)
 		})
 
 		t.Run("prevents update if version changed", func(t *testing.T) {

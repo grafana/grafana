@@ -309,10 +309,10 @@ func newTestScenario(t *testing.T, name string, opts []testScenarioOption, callb
 		OrgID: 1,
 		UID:   tsCtx.uid,
 	}
-	err = testEnv.Server.HTTPServer.DataSourcesService.GetDataSource(ctx, getDataSourceQuery)
+	dataSource, err := testEnv.Server.HTTPServer.DataSourcesService.GetDataSource(ctx, getDataSourceQuery)
 	require.NoError(t, err)
 
-	rt, err := testEnv.Server.HTTPServer.DataSourcesService.GetHTTPTransport(ctx, getDataSourceQuery.Result, testEnv.HTTPClientProvider)
+	rt, err := testEnv.Server.HTTPServer.DataSourcesService.GetHTTPTransport(ctx, dataSource, testEnv.HTTPClientProvider)
 	require.NoError(t, err)
 
 	tsCtx.rt = rt

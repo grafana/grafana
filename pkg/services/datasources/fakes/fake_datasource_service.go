@@ -18,18 +18,16 @@ type FakeDataSourceService struct {
 
 var _ datasources.DataSourceService = &FakeDataSourceService{}
 
-func (s *FakeDataSourceService) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error {
-	for _, datasource := range s.DataSources {
-		idMatch := query.ID != 0 && query.ID == datasource.ID
-		uidMatch := query.UID != "" && query.UID == datasource.UID
-		nameMatch := query.Name != "" && query.Name == datasource.Name
+func (s *FakeDataSourceService) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
+	for _, dataSource := range s.DataSources {
+		idMatch := query.ID != 0 && query.ID == dataSource.ID
+		uidMatch := query.UID != "" && query.UID == dataSource.UID
+		nameMatch := query.Name != "" && query.Name == dataSource.Name
 		if idMatch || nameMatch || uidMatch {
-			query.Result = datasource
-
-			return nil
+			return dataSource, nil
 		}
 	}
-	return datasources.ErrDataSourceNotFound
+	return nil, datasources.ErrDataSourceNotFound
 }
 
 func (s *FakeDataSourceService) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) error {

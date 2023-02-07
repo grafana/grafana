@@ -184,8 +184,6 @@ type GetDataSourceQuery struct {
 	Name string
 
 	OrgID int64
-
-	Result *DataSource
 }
 
 type DatasourcesPermissionFilterQuery struct {

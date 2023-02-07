@@ -60,10 +60,10 @@ func TestMigrate(t *testing.T) {
 
 		// Check if the secret json data was added
 		query := &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
-		err = ds.GetDataSource(context.Background(), query)
+		dataSource, err := ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
-		assert.NotNil(t, query.Result)
-		assert.NotEmpty(t, query.Result.SecureJsonData)
+		assert.NotNil(t, dataSource)
+		assert.NotEmpty(t, dataSource.SecureJsonData)
 
 		// Check if the migration status key is empty
 		value, exist, err := kvStore.Get(context.Background(), 0, secretskvs.DataSourceSecretType, secretMigrationStatusKey)
@@ -83,10 +83,10 @@ func TestMigrate(t *testing.T) {
 
 		// Check if the secure json data was deleted
 		query = &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
-		err = ds.GetDataSource(context.Background(), query)
+		dataSource, err = ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
-		assert.NotNil(t, query.Result)
-		assert.Empty(t, query.Result.SecureJsonData)
+		assert.NotNil(t, dataSource)
+		assert.Empty(t, dataSource.SecureJsonData)
 
 		// Check if the secret was added to the secret store
 		value, exist, err = secretsStore.Get(context.Background(), dataSourceOrg, dataSourceName, secretskvs.DataSourceSecretType)
@@ -126,10 +126,10 @@ func TestMigrate(t *testing.T) {
 
 		// Check if the secret json data was added
 		query := &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
-		err = ds.GetDataSource(context.Background(), query)
+		dataSource, err := ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
-		assert.NotNil(t, query.Result)
-		assert.NotEmpty(t, query.Result.SecureJsonData)
+		assert.NotNil(t, dataSource)
+		assert.NotEmpty(t, dataSource.SecureJsonData)
 
 		// Check if the migration status key is empty
 		value, exist, err := kvStore.Get(context.Background(), 0, secretskvs.DataSourceSecretType, secretMigrationStatusKey)
@@ -149,10 +149,10 @@ func TestMigrate(t *testing.T) {
 
 		// Check if the secure json data was maintained for compatibility
 		query = &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
-		err = ds.GetDataSource(context.Background(), query)
+		dataSource, err = ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
-		assert.NotNil(t, query.Result)
-		assert.NotEmpty(t, query.Result.SecureJsonData)
+		assert.NotNil(t, dataSource)
+		assert.NotEmpty(t, dataSource.SecureJsonData)
 
 		// Check if the secret was added to the secret store
 		value, exist, err = secretsStore.Get(context.Background(), dataSourceOrg, dataSourceName, secretskvs.DataSourceSecretType)
@@ -194,10 +194,10 @@ func TestMigrate(t *testing.T) {
 
 		// Check if the secret json data was added
 		query := &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
-		err = ds.GetDataSource(context.Background(), query)
+		dataSource, err := ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
-		assert.NotNil(t, query.Result)
-		assert.NotEmpty(t, query.Result.SecureJsonData)
+		assert.NotNil(t, dataSource)
+		assert.NotEmpty(t, dataSource.SecureJsonData)
 
 		// Check if the migration status key is empty
 		value, exist, err := kvStore.Get(context.Background(), 0, secretskvs.DataSourceSecretType, secretMigrationStatusKey)
@@ -217,10 +217,10 @@ func TestMigrate(t *testing.T) {
 
 		// Check if the secure json data was deleted
 		query = &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
-		err = ds.GetDataSource(context.Background(), query)
+		dataSource, err = ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
-		assert.NotNil(t, query.Result)
-		assert.Empty(t, query.Result.SecureJsonData)
+		assert.NotNil(t, dataSource)
+		assert.Empty(t, dataSource.SecureJsonData)
 
 		// Check if the secret was added to the secret store
 		value, exist, err = secretsStore.Get(context.Background(), dataSourceOrg, dataSourceName, secretskvs.DataSourceSecretType)
@@ -241,10 +241,10 @@ func TestMigrate(t *testing.T) {
 
 		// Check if the secure json data was re-added for compatibility
 		query = &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
-		err = ds.GetDataSource(context.Background(), query)
+		dataSource, err = ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
-		assert.NotNil(t, query.Result)
-		assert.NotEmpty(t, query.Result.SecureJsonData)
+		assert.NotNil(t, dataSource)
+		assert.NotEmpty(t, dataSource.SecureJsonData)
 
 		// Check if the secret was added to the secret store
 		value, exist, err = secretsStore.Get(context.Background(), dataSourceOrg, dataSourceName, secretskvs.DataSourceSecretType)
@@ -285,10 +285,10 @@ func TestMigrate(t *testing.T) {
 
 		// Check if the secret json data was added
 		query := &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
-		err = ds.GetDataSource(context.Background(), query)
+		dataSource, err := ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
-		assert.NotNil(t, query.Result)
-		assert.NotEmpty(t, query.Result.SecureJsonData)
+		assert.NotNil(t, dataSource)
+		assert.NotEmpty(t, dataSource.SecureJsonData)
 
 		// Check if the migration status key is empty
 		value, exist, err := kvStore.Get(context.Background(), 0, secretskvs.DataSourceSecretType, secretMigrationStatusKey)
@@ -308,10 +308,10 @@ func TestMigrate(t *testing.T) {
 
 		// Check if the secure json data was maintained for compatibility
 		query = &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
-		err = ds.GetDataSource(context.Background(), query)
+		dataSource, err = ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
-		assert.NotNil(t, query.Result)
-		assert.NotEmpty(t, query.Result.SecureJsonData)
+		assert.NotNil(t, dataSource)
+		assert.NotEmpty(t, dataSource.SecureJsonData)
 
 		// Check if the secret was added to the secret store
 		value, exist, err = secretsStore.Get(context.Background(), dataSourceOrg, dataSourceName, secretskvs.DataSourceSecretType)
@@ -332,10 +332,10 @@ func TestMigrate(t *testing.T) {
 
 		// Check if the secure json data was deleted
 		query = &datasources.GetDataSourceQuery{OrgID: dataSourceOrg, Name: dataSourceName}
-		err = ds.GetDataSource(context.Background(), query)
+		dataSource, err = ds.GetDataSource(context.Background(), query)
 		assert.NoError(t, err)
-		assert.NotNil(t, query.Result)
-		assert.Empty(t, query.Result.SecureJsonData)
+		assert.NotNil(t, dataSource)
+		assert.Empty(t, dataSource.SecureJsonData)
 
 		// Check if the secret was added to the secret store
 		value, exist, err = secretsStore.Get(context.Background(), dataSourceOrg, dataSourceName, secretskvs.DataSourceSecretType)

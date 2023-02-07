@@ -361,9 +361,8 @@ type dataSourcesServiceMock struct {
 	expectedError       error
 }
 
-func (m *dataSourcesServiceMock) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error {
-	query.Result = m.expectedDatasource
-	return m.expectedError
+func (m *dataSourcesServiceMock) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
+	return m.expectedDatasource, m.expectedError
 }
 
 func (m *dataSourcesServiceMock) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) error {

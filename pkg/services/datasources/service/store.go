@@ -23,7 +23,7 @@ import (
 
 // Store is the interface for the datasource Service's storage.
 type Store interface {
-	GetDataSource(context.Context, *datasources.GetDataSourceQuery) error
+	GetDataSource(context.Context, *datasources.GetDataSourceQuery) (*datasources.DataSource, error)
 	GetDataSources(context.Context, *datasources.GetDataSourcesQuery) error
 	GetDataSourcesByType(context.Context, *datasources.GetDataSourcesByTypeQuery) error
 	GetDefaultDataSource(context.Context, *datasources.GetDefaultDataSourceQuery) error
@@ -46,17 +46,22 @@ func CreateStore(db db.DB, logger log.Logger) *SqlStore {
 
 // GetDataSource adds a datasource to the query model by querying by org_id as well as
 // either uid (preferred), id, or name and is added to the bus.
-func (ss *SqlStore) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error {
+func (ss *SqlStore) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
 	metrics.MDBDataSourceQueryByID.Inc()
 
-	return ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		return ss.getDataSource(ctx, query, sess)
+	var (
+		dataSource *datasources.DataSource
+		err        error
+	)
+	return dataSource, ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		dataSource, err = ss.getDataSource(ctx, query, sess)
+		return err
 	})
 }
 
-func (ss *SqlStore) getDataSource(ctx context.Context, query *datasources.GetDataSourceQuery, sess *db.Session) error {
+func (ss *SqlStore) getDataSource(ctx context.Context, query *datasources.GetDataSourceQuery, sess *db.Session) (*datasources.DataSource, error) {
 	if query.OrgID == 0 || (query.ID == 0 && len(query.Name) == 0 && len(query.UID) == 0) {
-		return datasources.ErrDataSourceIdentifierNotSet
+		return nil, datasources.ErrDataSourceIdentifierNotSet
 	}
 
 	datasource := &datasources.DataSource{Name: query.Name, OrgID: query.OrgID, ID: query.ID, UID: query.UID}
@@ -64,14 +69,12 @@ func (ss *SqlStore) getDataSource(ctx context.Context, query *datasources.GetDat
 
 	if err != nil {
 		ss.logger.Error("Failed getting data source", "err", err, "uid", query.UID, "id", query.ID, "name", query.Name, "orgId", query.OrgID)
-		return err
+		return nil, err
 	} else if !has {
-		return datasources.ErrDataSourceNotFound
+		return nil, datasources.ErrDataSourceNotFound
 	}
 
-	query.Result = datasource
-
-	return nil
+	return datasource, nil
 }
 
 func (ss *SqlStore) GetDataSources(ctx context.Context, query *datasources.GetDataSourcesQuery) error {
@@ -130,13 +133,12 @@ func (ss *SqlStore) GetDefaultDataSource(ctx context.Context, query *datasources
 func (ss *SqlStore) DeleteDataSource(ctx context.Context, cmd *datasources.DeleteDataSourceCommand) error {
 	return ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
 		dsQuery := &datasources.GetDataSourceQuery{ID: cmd.ID, UID: cmd.UID, Name: cmd.Name, OrgID: cmd.OrgID}
-		errGettingDS := ss.getDataSource(ctx, dsQuery, sess)
+		ds, errGettingDS := ss.getDataSource(ctx, dsQuery, sess)
 
 		if errGettingDS != nil && !errors.Is(errGettingDS, datasources.ErrDataSourceNotFound) {
 			return errGettingDS
 		}
 
-		ds := dsQuery.Result
 		if ds != nil {
 			// Delete the data source
 			result, err := sess.Exec("DELETE FROM data_source WHERE org_id=? AND id=?", ds.OrgID, ds.ID)
@@ -148,7 +150,7 @@ func (ss *SqlStore) DeleteDataSource(ctx context.Context, cmd *datasources.Delet
 
 			// Remove associated AccessControl permissions
 			if _, errDeletingPerms := sess.Exec("DELETE FROM permission WHERE scope=?",
-				ac.Scope(datasources.ScopeProvider.GetResourceScope(dsQuery.Result.UID))); errDeletingPerms != nil {
+				ac.Scope(datasources.ScopeProvider.GetResourceScope(ds.UID))); errDeletingPerms != nil {
 				return errDeletingPerms
 			}
 		}

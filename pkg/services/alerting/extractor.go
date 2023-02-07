@@ -60,11 +60,12 @@ func (e *DashAlertExtractorService) lookupQueryDataSource(ctx context.Context, p
 	}
 
 	query := &datasources.GetDataSourceQuery{Name: dsName, UID: dsUid, OrgID: orgID}
-	if err := e.datasourceService.GetDataSource(ctx, query); err != nil {
+	dataSource, err := e.datasourceService.GetDataSource(ctx, query)
+	if err != nil {
 		return nil, err
 	}
 
-	return query.Result, nil
+	return dataSource, nil
 }
 
 func findPanelQueryByRefID(panel *simplejson.Json, refID string) *simplejson.Json {

@@ -13,7 +13,7 @@ import (
 // DataSourceService interface for interacting with datasources.
 type DataSourceService interface {
 	// GetDataSource gets a datasource.
-	GetDataSource(ctx context.Context, query *GetDataSourceQuery) error
+	GetDataSource(ctx context.Context, query *GetDataSourceQuery) (*DataSource, error)
 
 	// GetDataSources gets datasources.
 	GetDataSources(ctx context.Context, query *GetDataSourcesQuery) error

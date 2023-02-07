@@ -377,7 +377,6 @@ func (f *fakeDatasourceService) GetDefaultDataSource(ctx context.Context, query 
 	return nil
 }
 
-func (f *fakeDatasourceService) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) error {
-	query.Result = f.ExpectedDatasource
-	return nil
+func (f *fakeDatasourceService) GetDataSource(ctx context.Context, query *datasources.GetDataSourceQuery) (*datasources.DataSource, error) {
+	return f.ExpectedDatasource, nil
 }
