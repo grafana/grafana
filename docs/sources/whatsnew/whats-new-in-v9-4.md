@@ -7,11 +7,11 @@ keywords:
   - documentation
   - '9.4'
   - release notes
-title: What's new in Grafana v9.4 - Beta
+title: What's new in Grafana v9.4
 weight: -33
 ---
 
-# What’s new in Grafana v9.4 - Beta
+# What’s new in Grafana v9.4
 
 Welcome to Grafana 9.4! Read on to learn about changes to search and navigation, dashboards and visualizations, and authentication and security. For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md).
 
@@ -79,7 +79,7 @@ We've updated the **Details** section of a log line. Previously some of the inte
 
 {{< figure src="/static/img/logs/log-details-whats-new-9-4.png" max-width="750px" caption="Log details redesign with interactions" >}}
 
-Learn more about viewing longs in our [Logs panel documentation]({{< relref "../panels-visualizations/visualizations/logs/" >}}).
+Learn more about viewing logs in our [Logs panel documentation]({{< relref "../panels-visualizations/visualizations/logs/" >}}).
 
 ### Loki datasource query validation
 
@@ -89,7 +89,7 @@ We added support to validate queries and visually display errors as a query is b
 
 {{< figure src="/media/docs/grafana/logs-loki-query-validation-whats-new-9-4.png" max-width="750px" caption="Loki query validation" >}}
 
-Learn more about viewing longs in our [Logs panel documentation]({{< relref "../panels-visualizations/visualizations/logs/" >}}).
+Learn more about viewing logs in our [Logs panel documentation]({{< relref "../panels-visualizations/visualizations/logs/" >}}).
 
 ### Loki logs sample in Explore
 
@@ -260,5 +260,7 @@ Introduces a new landing page that helps you get started quickly with Alerting. 
 Grafana Alerting is now compatible with AWS Aurora, but does not provide technical support for it.
 
 # Before you upgrade
+
+There are no known breaking changes associated with this version of Grafana.
 
 <!-- TODO: Add content -->
