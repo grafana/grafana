@@ -204,13 +204,13 @@ func (c *httpLokiClient) setAuthAndTenantHeaders(req *http.Request) {
 		req.Header.Add("X-Scope-OrgID", c.cfg.TenantID)
 	}
 }
-func (c *httpLokiClient) rangeQuery(ctx context.Context, selectors []Selector, start, end int64) (QueryRes, error) {
+func (c *httpLokiClient) rangeQuery(ctx context.Context, selectors []Selector, start, end int64) (queryRes, error) {
 	// Run the pre-flight checks for the query.
 	if len(selectors) == 0 {
-		return QueryRes{}, fmt.Errorf("at least one selector required to query")
+		return queryRes{}, fmt.Errorf("at least one selector required to query")
 	}
 	if start > end {
-		return QueryRes{}, fmt.Errorf("start time cannot be after end time")
+		return queryRes{}, fmt.Errorf("start time cannot be after end time")
 	}
 
 	queryURL := c.cfg.ReadPathURL.JoinPath("/loki/api/v1/query_range")
@@ -225,7 +225,7 @@ func (c *httpLokiClient) rangeQuery(ctx context.Context, selectors []Selector, s
 	req, err := http.NewRequest(http.MethodGet,
 		queryURL.String(), nil)
 	if err != nil {
-		return QueryRes{}, fmt.Errorf("error creating request: %w", err)
+		return queryRes{}, fmt.Errorf("error creating request: %w", err)
 	}
 
 	req = req.WithContext(ctx)
@@ -233,7 +233,7 @@ func (c *httpLokiClient) rangeQuery(ctx context.Context, selectors []Selector, s
 
 	res, err := c.client.Do(req)
 	if err != nil {
-		return QueryRes{}, fmt.Errorf("error executing request: %w", err)
+		return queryRes{}, fmt.Errorf("error executing request: %w", err)
 	}
 
 	defer func() {
@@ -242,7 +242,7 @@ func (c *httpLokiClient) rangeQuery(ctx context.Context, selectors []Selector, s
 
 	data, err := io.ReadAll(res.Body)
 	if err != nil {
-		return QueryRes{}, fmt.Errorf("error reading request response: %w", err)
+		return queryRes{}, fmt.Errorf("error reading request response: %w", err)
 	}
 
 	if res.StatusCode < 200 || res.StatusCode >= 300 {
@@ -251,17 +251,17 @@ func (c *httpLokiClient) rangeQuery(ctx context.Context, selectors []Selector, s
 		} else {
 			c.log.Error("Error response from Loki with an empty body", "status", res.StatusCode)
 		}
-		return QueryRes{}, fmt.Errorf("received a non-200 response from loki, status: %d", res.StatusCode)
+		return queryRes{}, fmt.Errorf("received a non-200 response from loki, status: %d", res.StatusCode)
 	}
 
-	queryRes := QueryRes{}
-	err = json.Unmarshal(data, &queryRes)
+	result := queryRes{}
+	err = json.Unmarshal(data, &result)
 	if err != nil {
 		fmt.Println(string(data))
-		return QueryRes{}, fmt.Errorf("error parsing request response: %w", err)
+		return queryRes{}, fmt.Errorf("error parsing request response: %w", err)
 	}
 
-	return queryRes, nil
+	return result, nil
 }
 
 func selectorString(selectors []Selector) string {
@@ -293,10 +293,10 @@ func isValidOperator(op string) bool {
 	return false
 }
 
-type QueryRes struct {
-	Data QueryData `json:"data"`
+type queryRes struct {
+	Data queryData `json:"data"`
 }
 
-type QueryData struct {
+type queryData struct {
 	Result []stream `json:"result"`
 }

@@ -38,7 +38,7 @@ const defaultQueryRange = 6 * time.Hour
 type remoteLokiClient interface {
 	ping(context.Context) error
 	push(context.Context, []stream) error
-	rangeQuery(ctx context.Context, selectors []Selector, start, end int64) (QueryRes, error)
+	rangeQuery(ctx context.Context, selectors []Selector, start, end int64) (queryRes, error)
 }
 
 type RemoteLokiBackend struct {
@@ -138,7 +138,7 @@ func buildSelectors(query models.HistoryQuery) ([]Selector, error) {
 }
 
 // merge will put all the results in one array sorted by timestamp.
-func merge(res QueryRes, ruleUID string) (*data.Frame, error) {
+func merge(res queryRes, ruleUID string) (*data.Frame, error) {
 	// Find the total number of elements in all arrays.
 	totalLen := 0
 	for _, arr := range res.Data.Result {

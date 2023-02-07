@@ -144,14 +144,14 @@ func TestRemoteLokiBackend(t *testing.T) {
 func TestMerge(t *testing.T) {
 	testCases := []struct {
 		name         string
-		res          QueryRes
+		res          queryRes
 		ruleID       string
 		expectedTime []time.Time
 	}{
 		{
 			name: "Should return values from multiple streams in right order",
-			res: QueryRes{
-				Data: QueryData{
+			res: queryRes{
+				Data: queryData{
 					Result: []stream{
 						{
 							Stream: map[string]string{
@@ -180,8 +180,8 @@ func TestMerge(t *testing.T) {
 		},
 		{
 			name: "Should handle empty values",
-			res: QueryRes{
-				Data: QueryData{
+			res: queryRes{
+				Data: queryData{
 					Result: []stream{
 						{
 							Stream: map[string]string{
@@ -197,8 +197,8 @@ func TestMerge(t *testing.T) {
 		},
 		{
 			name: "Should handle multiple values in one stream",
-			res: QueryRes{
-				Data: QueryData{
+			res: queryRes{
+				Data: queryData{
 					Result: []stream{
 						{
 							Stream: map[string]string{
