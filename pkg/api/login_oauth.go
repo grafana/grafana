@@ -329,9 +329,6 @@ func (hs *HTTPServer) buildExternalUserInfo(token *oauth2.Token, userInfo *socia
 		IsGrafanaAdmin: userInfo.IsGrafanaAdmin,
 	}
 
-	// FIXME: this is a hack to support the old way of assigning roles to users
-	// we should remove this once we have a better way of assigning roles to users
-	// potentially add externallySynced logic here
 	if userInfo.Role != "" && !hs.Cfg.OAuthSkipOrgRoleUpdateSync {
 		rt := userInfo.Role
 		if rt.IsValid() {
