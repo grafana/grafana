@@ -1,6 +1,6 @@
 .PHONY: pull docs docs-quick docs-no-pull docs-test docs-local-static
 
-PODMAN = $(shell if command -v podman &>/dev/null; then echo podman; else echo docker; fi)
+PODMAN = $(shell if command -v podman >/dev/null 2>&1; then echo podman; else echo docker; fi)
 IMAGE = grafana/docs-base:latest
 CONTENT_PATH = /hugo/content/docs/grafana/latest
 LOCAL_STATIC_PATH = ../../website/static
