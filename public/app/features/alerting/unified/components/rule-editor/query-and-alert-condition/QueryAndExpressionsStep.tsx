@@ -1,10 +1,10 @@
 import React, { FC, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { LoadingState, PanelData } from '@grafana/data';
+import { CoreApp, LoadingState, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Stack } from '@grafana/experimental';
-import { config } from '@grafana/runtime';
+import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Alert, Button, Field, InputControl, Tooltip } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
@@ -176,6 +176,15 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onData
     }
   }, [condition, queries, handleSetCondition]);
 
+  const onAddNewQuery = async () => {
+    const datasource = getDefaultOrFirstCompatibleDataSource();
+    if (!datasource) {
+      return;
+    }
+    const ds = await getDataSourceSrv().get(datasource.uid);
+    dispatch(addNewDataQuery({ ds: ds, defaultQuery: ds?.getDefaultQuery?.(CoreApp.UnifiedAlerting) }));
+  };
+
   return (
     <RuleEditorSection stepNo={2} title="Set a query and alert condition">
       <AlertType editingExistingRule={editingExistingRule} />
@@ -239,9 +248,7 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onData
               <Button
                 type="button"
                 icon="plus"
-                onClick={() => {
-                  dispatch(addNewDataQuery());
-                }}
+                onClick={onAddNewQuery}
                 variant="secondary"
                 aria-label={selectors.components.QueryTab.addQuery}
                 disabled={noCompatibleDataSources}

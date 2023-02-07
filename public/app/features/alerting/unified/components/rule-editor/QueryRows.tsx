@@ -2,7 +2,14 @@ import { omit } from 'lodash';
 import React, { PureComponent, useState } from 'react';
 import { DragDropContext, Droppable, DropResult } from 'react-beautiful-dnd';
 
-import { DataQuery, DataSourceInstanceSettings, LoadingState, PanelData, RelativeTimeRange } from '@grafana/data';
+import {
+  CoreApp,
+  DataQuery,
+  DataSourceInstanceSettings,
+  LoadingState,
+  PanelData,
+  RelativeTimeRange,
+} from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { Button, Card, Icon } from '@grafana/ui';
 import { QueryOperationRow } from 'app/core/components/QueryOperationRow/QueryOperationRow';
@@ -66,22 +73,24 @@ export class QueryRows extends PureComponent<Props> {
     );
   };
 
-  onChangeDataSource = (settings: DataSourceInstanceSettings, index: number) => {
+  onChangeDataSource = async (settings: DataSourceInstanceSettings, index: number) => {
     const { queries, onQueriesChange } = this.props;
 
-    const updatedQueries = queries.map((item, itemIndex) => {
-      if (itemIndex !== index) {
-        return item;
-      }
+    const updatedQueries = await Promise.all(
+      queries.map(async (item, itemIndex) => {
+        if (itemIndex !== index) {
+          return item;
+        }
 
-      const previousSettings = this.getDataSourceSettings(item);
+        const previousSettings = this.getDataSourceSettings(item);
 
-      // Copy model if changing to a datasource of same type.
-      if (settings.type === previousSettings?.type) {
-        return copyModel(item, settings);
-      }
-      return newModel(item, settings);
-    });
+        // Copy model if changing to a datasource of same type.
+        if (settings.type === previousSettings?.type) {
+          return copyModel(item, settings);
+        }
+        return newModel(item, settings);
+      })
+    );
 
     onQueriesChange(updatedQueries);
   };
@@ -218,13 +227,18 @@ function copyModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit
   };
 }
 
-function newModel(item: AlertQuery, settings: DataSourceInstanceSettings): Omit<AlertQuery, 'datasource'> {
+async function newModel(
+  item: AlertQuery,
+  settings: DataSourceInstanceSettings
+): Promise<Omit<AlertQuery, 'datasource'>> {
+  const ds = await getDataSourceSrv().get(item.datasourceUid);
   return {
     refId: item.refId,
     relativeTimeRange: item.relativeTimeRange,
     queryType: '',
     datasourceUid: settings.uid,
     model: {
+      ...ds?.getDefaultQuery?.(CoreApp.UnifiedAlerting),
       refId: item.refId,
       hide: false,
       datasource: {
