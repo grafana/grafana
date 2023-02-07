@@ -4,7 +4,7 @@ import React from 'react';
 import { PanelModel } from '../dashboard/state';
 import { createDashboardModelFixture, createPanelJSONFixture } from '../dashboard/state/__fixtures__/dashboardFixtures';
 
-import { TestRuleResult, Props } from './TestRuleResult';
+import { TestRuleResult } from './TestRuleResult';
 
 jest.mock('@grafana/runtime', () => {
   const original = jest.requireActual('@grafana/runtime');
@@ -17,7 +17,7 @@ jest.mock('@grafana/runtime', () => {
   };
 });
 
-const props: Props = {
+const props: React.ComponentProps<typeof TestRuleResult> = {
   panel: new PanelModel({ id: 1 }),
   dashboard: createDashboardModelFixture({
     panels: [createPanelJSONFixture({ id: 1 })],
