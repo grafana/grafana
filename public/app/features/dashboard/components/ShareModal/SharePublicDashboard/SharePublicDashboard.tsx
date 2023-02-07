@@ -28,7 +28,7 @@ const Loader = () => {
 };
 
 export const SharePublicDashboard = (props: Props) => {
-  const { isLoading: isGetLoading, data: publicDashboard } = useGetPublicDashboardQuery(props.dashboard.uid);
+  const { data: publicDashboard, isLoading, isError } = useGetPublicDashboardQuery(props.dashboard.uid);
 
   useEffect(() => {
     reportInteraction('grafana_dashboards_public_share_viewed');
@@ -36,10 +36,10 @@ export const SharePublicDashboard = (props: Props) => {
 
   return (
     <>
-      {isGetLoading ? (
+      {isLoading ? (
         <Loader />
       ) : !publicDashboardPersisted(publicDashboard) ? (
-        <CreatePublicDashboard />
+        <CreatePublicDashboard isError={isError} />
       ) : (
         <ConfigPublicDashboard />
       )}

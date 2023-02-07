@@ -28,8 +28,13 @@ import { useIsDesktop } from '../../../../utils/screen';
 import { ShareModal } from '../../ShareModal';
 import { NoUpsertPermissionsAlert } from '../ModalAlerts/NoUpsertPermissionsAlert';
 import { SaveDashboardChangesAlert } from '../ModalAlerts/SaveDashboardChangesAlert';
+import { UnsupportedDataSourcesAlert } from '../ModalAlerts/UnsupportedDataSourcesAlert';
 import { UnsupportedTemplateVariablesAlert } from '../ModalAlerts/UnsupportedTemplateVariablesAlert';
-import { dashboardHasTemplateVariables, generatePublicDashboardUrl } from '../SharePublicDashboardUtils';
+import {
+  dashboardHasTemplateVariables,
+  generatePublicDashboardUrl,
+  getUnsupportedDashboardDatasources,
+} from '../SharePublicDashboardUtils';
 
 import { Configuration } from './Configuration';
 
@@ -50,6 +55,7 @@ const ConfigPublicDashboard = () => {
   const dashboardState = useSelector((store) => store.dashboard);
   const dashboard = dashboardState.getModel()!;
   const dashboardVariables = dashboard.getVariables();
+  const unsupportedDataSources = getUnsupportedDashboardDatasources(dashboard.panels);
 
   const { data: publicDashboard, isFetching: isGetLoading } = useGetPublicDashboardQuery(dashboard.uid);
   const [update, { isLoading: isUpdateLoading }] = useUpdatePublicDashboardMutation();
@@ -102,19 +108,18 @@ const ConfigPublicDashboard = () => {
 
   return (
     <div>
-      {hasWritePermissions ? (
-        dashboard.hasUnsavedChanges() ? (
-          <SaveDashboardChangesAlert />
-        ) : (
-          dashboardHasTemplateVariables(dashboardVariables) && <UnsupportedTemplateVariablesAlert mode="edit" />
-        )
-      ) : (
-        <NoUpsertPermissionsAlert mode="edit" />
+      {hasWritePermissions && dashboard.hasUnsavedChanges() && <SaveDashboardChangesAlert />}
+      {!hasWritePermissions && <NoUpsertPermissionsAlert mode="edit" />}
+      {dashboardHasTemplateVariables(dashboardVariables) && <UnsupportedTemplateVariablesAlert />}
+      {!!unsupportedDataSources.length && (
+        <UnsupportedDataSourcesAlert unsupportedDataSources={unsupportedDataSources.join(', ')} />
       )}
-      <HorizontalGroup className={styles.title} spacing="sm" align="center">
-        <h4>Settings</h4>
-        {(isUpdateLoading || isGetLoading) && <Spinner />}
-      </HorizontalGroup>
+      <div className={styles.titleContainer}>
+        <HorizontalGroup spacing="sm" align="center">
+          <h4 className={styles.title}>Settings</h4>
+          {(isUpdateLoading || isGetLoading) && <Spinner />}
+        </HorizontalGroup>
+      </div>
       <Configuration disabled={disableInputs} onChange={onChange} register={register} />
       <hr />
       <Field label="Dashboard URL" className={styles.publicUrl}>
@@ -185,8 +190,11 @@ const ConfigPublicDashboard = () => {
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  titleContainer: css`
+    margin-bottom: ${theme.spacing(2)};
+  `,
   title: css`
-    margin-bottom: ${theme.spacing(1)};
+    margin: 0;
   `,
   publicUrl: css`
     width: 100%;
