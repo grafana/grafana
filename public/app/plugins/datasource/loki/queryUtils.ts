@@ -398,6 +398,7 @@ function combineFrames(dest: DataQueryResponseData, source: DataQueryResponseDat
   for (let i = 0; i < totalFields; i++) {
     dest.fields[i].values.buffer = [].concat.apply([], [source.fields[i].values.buffer, dest.fields[i].values.buffer]);
   }
+  dest.length += source.length;
 }
 
 /**
