@@ -22,8 +22,6 @@ export interface FeatureToggles {
   disableEnvelopeEncryption?: boolean;
   database_metrics?: boolean;
   dashboardPreviews?: boolean;
-  dashboardPreviewsAdmin?: boolean;
-  ['live-config']?: boolean;
   ['live-pipeline']?: boolean;
   ['live-service-web-worker']?: boolean;
   queryOverLive?: boolean;
@@ -49,7 +47,6 @@ export interface FeatureToggles {
   export?: boolean;
   exploreMixedDatasource?: boolean;
   tracing?: boolean;
-  commandPalette?: boolean;
   correlations?: boolean;
   cloudWatchDynamicLabels?: boolean;
   datasourceQueryMultiStatus?: boolean;

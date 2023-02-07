@@ -40,17 +40,6 @@ var (
 			State:       FeatureStateAlpha,
 		},
 		{
-			Name:            "dashboardPreviewsAdmin",
-			Description:     "Manage the dashboard previews crawler process from the UI",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-		},
-		{
-			Name:        "live-config",
-			Description: "Save Grafana Live configuration in SQL tables",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:        "live-pipeline",
 			Description: "Enable a generic live processing pipeline",
 			State:       FeatureStateAlpha,
@@ -190,13 +179,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:         "commandPalette",
-			Description:  "Enable command palette",
-			State:        FeatureStateStable,
-			Expression:   "true", // enabled by default
-			FrontendOnly: true,
-		},
-		{
 			Name:        "correlations",
 			Description: "Correlations page",
 			State:       FeatureStateAlpha,
@@ -276,8 +258,8 @@ var (
 		},
 		{
 			Name:        "topnav",
-			Description: "New top nav and page layouts",
-			State:       FeatureStateAlpha,
+			Description: "Displays new top nav and page layouts",
+			State:       FeatureStateBeta,
 		},
 		{
 			Name:            "grpcServer",

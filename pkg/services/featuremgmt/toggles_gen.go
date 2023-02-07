@@ -31,14 +31,6 @@ const (
 	// Create and show thumbnails for dashboard search results
 	FlagDashboardPreviews = "dashboardPreviews"
 
-	// FlagDashboardPreviewsAdmin
-	// Manage the dashboard previews crawler process from the UI
-	FlagDashboardPreviewsAdmin = "dashboardPreviewsAdmin"
-
-	// FlagLiveConfig
-	// Save Grafana Live configuration in SQL tables
-	FlagLiveConfig = "live-config"
-
 	// FlagLivePipeline
 	// Enable a generic live processing pipeline
 	FlagLivePipeline = "live-pipeline"
@@ -139,10 +131,6 @@ const (
 	// Adds trace ID to error notifications
 	FlagTracing = "tracing"
 
-	// FlagCommandPalette
-	// Enable command palette
-	FlagCommandPalette = "commandPalette"
-
 	// FlagCorrelations
 	// Correlations page
 	FlagCorrelations = "correlations"
@@ -200,7 +188,7 @@ const (
 	FlagInternationalization = "internationalization"
 
 	// FlagTopnav
-	// New top nav and page layouts
+	// Displays new top nav and page layouts
 	FlagTopnav = "topnav"
 
 	// FlagGrpcServer

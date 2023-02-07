@@ -8,7 +8,7 @@ load(
     "prerelease_bucket",
 )
 
-grabpl_version = "v3.0.20"
+grabpl_version = "v3.0.21"
 build_image = "grafana/build-container:v1.7.1"
 publish_image = "grafana/grafana-ci-deploy:1.3.3"
 deploy_docker_image = "us.gcr.io/kubernetes-dev/drone/plugins/deploy-image"
@@ -923,7 +923,7 @@ def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
             paths = {
                 "include": [
                     "pkg/tsdb/azuremonitor/**",
-                    "public/app/plugins/datasource/grafana-azure-monitor-datasource/**",
+                    "public/app/plugins/datasource/azuremonitor/**",
                     "e2e/cloud-plugins-suite/azure-monitor.spec.ts",
                 ],
             },
@@ -1520,13 +1520,13 @@ def artifacts_page_step():
         "name": "artifacts-page",
         "image": build_image,
         "depends_on": [
-            "grabpl",
+            "compile-build-cmd",
         ],
         "environment": {
             "GCP_KEY": from_secret("gcp_key"),
         },
         "commands": [
-            "./bin/grabpl artifacts-page",
+            "./bin/build artifacts-page",
         ],
     }
 

@@ -1,15 +1,10 @@
-import { MetricsConfiguration } from '../../../types';
+import { MetricsConfiguration, MetricAggregation, PipelineMetricAggregationType } from '../../../types';
 
 import {
   defaultPipelineVariable,
   generatePipelineVariableName,
 } from './SettingsEditor/BucketScriptSettingsEditor/utils';
-import {
-  isMetricAggregationWithField,
-  isPipelineAggregationWithMultipleBucketPaths,
-  MetricAggregation,
-  PipelineMetricAggregationType,
-} from './aggregations';
+import { isMetricAggregationWithField, isPipelineAggregationWithMultipleBucketPaths } from './aggregations';
 
 export const metricAggregationConfig: MetricsConfiguration = {
   count: {
