@@ -81,6 +81,9 @@ type = grpc
 url = localhost:9095
 # Defaults to true. If true, it establishes a secure connection to Loki
 tls = true
+# Set the tenant id for Loki communications. Disabled by default.
+# Mandatory to interact with Loki running in multi-tenant mode.
+tenant_id =
 ```
 
 Using `logger` will print usage insights to your [Grafana server log]({{< relref "../../setup-grafana/configure-grafana/#log" >}}).

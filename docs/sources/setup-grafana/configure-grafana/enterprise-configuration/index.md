@@ -102,6 +102,10 @@ Set the address for writing logs to Loki (format must be host:port).
 
 Decide whether or not to enable the TLS (Transport Layer Security) protocol when establishing the connection to Loki. Defaults to true.
 
+### tenant_id
+
+Set the tenant id for Loki communications. Disabled by default. Mandatory to interact with Loki running in multi-tenant mode.
+
 ## [analytics.summaries]
 
 ### buffer_write_interval
@@ -211,6 +215,10 @@ Set the URL for writing logs to Loki.
 ### tls
 
 If true, it establishes a secure connection to Loki. Defaults to true.
+
+### tenant_id
+
+Set the tenant id for Loki communications. Disabled by default. Mandatory to interact with Loki running in multi-tenant mode.
 
 ## [auth.saml]
 
