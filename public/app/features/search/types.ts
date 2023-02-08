@@ -53,6 +53,27 @@ export interface DashboardSectionItem {
   sortMetaName?: string;
 }
 
+export interface DashboardSearchHitDTO {
+  id: number;
+  uid: string;
+  title: string;
+  uri: string;
+  url: string;
+  slug: string;
+  type: string; // dash-db, dash-home
+  tags: string[];
+  isStarred: boolean;
+
+  sortMeta: number;
+  sortMetaName?: string;
+
+  // Only on dashboards in folders results
+  folderId?: number;
+  folderUid?: string;
+  folderTitle?: string;
+  folderUrl?: string;
+}
+
 /**
  * @deprecated - It uses dashboard ID which is deprecated in favor of dashboard UID. Please, use DashboardSearchItem instead.
  */

@@ -9,8 +9,8 @@ import { useStyles2 } from '@grafana/ui';
 
 import { SearchCard } from '../../components/SearchCard';
 import { useSearchKeyboardNavigation } from '../../hooks/useSearchKeyboardSelection';
+import { NestedFolderItem } from '../../service';
 import { queryResultToNestedFolderItem } from '../../service/utils';
-import { DashboardSearchItemType, DashboardSectionItem } from '../../types';
 
 import { SearchResultsProps } from './SearchResultsTable';
 
@@ -29,11 +29,9 @@ export const SearchResultsGrid = ({
   // Hacked to reuse existing SearchCard (and old DashboardSectionItem)
   const itemProps = {
     editable: selection != null,
-    onToggleChecked: (item: any) => {
-      const d = item as DashboardSectionItem;
-      const t = d.type === DashboardSearchItemType.DashFolder ? 'folder' : 'dashboard';
+    onToggleChecked: (item: NestedFolderItem) => {
       if (selectionToggle) {
-        selectionToggle(t, d.uid!);
+        selectionToggle(item.kind, item.uid);
       }
     },
     onTagSelected,
