@@ -259,6 +259,40 @@ Introduces a new landing page that helps you get started quickly with Alerting. 
 
 Grafana Alerting is now compatible with AWS Aurora, but does not provide technical support for it.
 
+## Enterprise Datasources
+
+We've made improvements to all [Enterprise Datasources](https://grafana.com/docs/grafana/latest/introduction/grafana-enterprise/#enterprise-data-sources), fixing small bugs and keeping libraries updated. We've also added many new features and support for additional APIs. Refer to each datasource's documentation and change log for additional information.
+
+
+### DataDog Datasource
+
+We've added support for many new query types, including: SLO/SLI Values, RUM data, Events, and monitor group status.
+
+### Dynatrace Datasource
+
+We've updated the Metric Selector to be faster and added support for filtering by management zone. We've also added support for Log Queries and querying the Dynatrace audit log.
+
+### GitLab Datasource
+
+We've added support for many new query types, including: Audit events, Users, Merge request approvals, Field tags, Environments, and Pipelines.
+
+### Honeycomb Datasource
+
+We've added support for derived columns and Honeycomb Environments.
+
+### NewRelic Datasource
+
+We've added support for trace search, log search, and support for NRQL histogram queries.
+
+### Salesforce Datasource
+
+We've added support for JWT authentication.
+
+### Snowflake Datasource
+
+We've added support for custom session parameters.
+
+
 # Before you upgrade
 
 There are no known breaking changes associated with this version of Grafana.
