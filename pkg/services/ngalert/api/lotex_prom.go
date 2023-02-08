@@ -87,7 +87,7 @@ func (p *LotexProm) getEndpoints(ctx *contextmodel.ReqContext) (*promEndpoints, 
 		return nil, err
 	}
 
-	if ds.Url == "" {
+	if ds.URL == "" {
 		return nil, fmt.Errorf("URL for this data source is empty")
 	}
 

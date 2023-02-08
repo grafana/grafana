@@ -10,11 +10,6 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
-			Name:        "returnUnameHeader",
-			Description: "Return user login as header for authenticated requests",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:        "alertingBigTransactions",
 			Description: "Use big transactions for alerting database writes",
 			State:       FeatureStateAlpha,
@@ -37,17 +32,6 @@ var (
 		{
 			Name:        "dashboardPreviews",
 			Description: "Create and show thumbnails for dashboard search results",
-			State:       FeatureStateAlpha,
-		},
-		{
-			Name:            "dashboardPreviewsAdmin",
-			Description:     "Manage the dashboard previews crawler process from the UI",
-			State:           FeatureStateAlpha,
-			RequiresDevMode: true,
-		},
-		{
-			Name:        "live-config",
-			Description: "Save Grafana Live configuration in SQL tables",
 			State:       FeatureStateAlpha,
 		},
 		{
@@ -104,13 +88,6 @@ var (
 			Name:        "lokiDataframeApi",
 			Description: "Use experimental loki api for WebSocket streaming (early prototype)",
 			State:       FeatureStateAlpha,
-		},
-		{
-			Name:         "lokiMonacoEditor",
-			Description:  "Access to Monaco query editor for Loki",
-			State:        FeatureStateStable,
-			Expression:   "true",
-			FrontendOnly: true,
 		},
 		{
 			Name:        "swaggerUi",
@@ -282,8 +259,8 @@ var (
 		},
 		{
 			Name:        "topnav",
-			Description: "New top nav and page layouts",
-			State:       FeatureStateAlpha,
+			Description: "Displays new top nav and page layouts",
+			State:       FeatureStateBeta,
 		},
 		{
 			Name:            "grpcServer",
@@ -321,11 +298,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "increaseInMemDatabaseQueryCache",
-			Description: "Enable more in memory caching for database queries",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:         "newPanelChromeUI",
 			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
 			State:        FeatureStateAlpha,
@@ -346,11 +318,6 @@ var (
 			Name:        "mysqlAnsiQuotes",
 			Description: "Use double quotes to escape keyword in a MySQL query",
 			State:       FeatureStateAlpha,
-		},
-		{
-			Name:        "datasourceLogger",
-			Description: "Logs all datasource requests",
-			State:       FeatureStateBeta,
 		},
 		{
 			Name:        "accessControlOnCall",
@@ -386,11 +353,6 @@ var (
 		{
 			Name:        "authnService",
 			Description: "Use new auth service to perform authentication",
-			State:       FeatureStateAlpha,
-		},
-		{
-			Name:        "sessionRemoteCache",
-			Description: "Enable using remote cache for user sessions",
 			State:       FeatureStateAlpha,
 		},
 		{

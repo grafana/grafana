@@ -52,8 +52,8 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 		handler.log.Info("New state change", "ruleId", evalContext.Rule.ID, "newState", evalContext.Rule.State, "prev state", evalContext.PrevAlertState)
 
 		cmd := &models.SetAlertStateCommand{
-			AlertId:  evalContext.Rule.ID,
-			OrgId:    evalContext.Rule.OrgID,
+			AlertID:  evalContext.Rule.ID,
+			OrgID:    evalContext.Rule.OrgID,
 			State:    evalContext.Rule.State,
 			Error:    executionError,
 			EvalData: annotationData,
@@ -84,10 +84,10 @@ func (handler *defaultResultHandler) handle(evalContext *EvalContext) error {
 
 		// save annotation
 		item := annotations.Item{
-			OrgId:       evalContext.Rule.OrgID,
-			DashboardId: evalContext.Rule.DashboardID,
-			PanelId:     evalContext.Rule.PanelID,
-			AlertId:     evalContext.Rule.ID,
+			OrgID:       evalContext.Rule.OrgID,
+			DashboardID: evalContext.Rule.DashboardID,
+			PanelID:     evalContext.Rule.PanelID,
+			AlertID:     evalContext.Rule.ID,
 			Text:        "",
 			NewState:    string(evalContext.Rule.State),
 			PrevState:   string(evalContext.PrevAlertState),

@@ -8,7 +8,7 @@ load(
     "prerelease_bucket",
 )
 
-grabpl_version = "v3.0.20"
+grabpl_version = "v3.0.21"
 build_image = "grafana/build-container:v1.7.1"
 publish_image = "grafana/grafana-ci-deploy:1.3.3"
 deploy_docker_image = "us.gcr.io/kubernetes-dev/drone/plugins/deploy-image"
@@ -779,7 +779,7 @@ def codespell_step():
         ],
     }
 
-def package_step(edition, ver_mode, variants = None):
+def package_step(edition, ver_mode):
     """Packages Grafana with the Grafana build tool.
 
     Args:
@@ -787,9 +787,6 @@ def package_step(edition, ver_mode, variants = None):
       ver_mode: controls whether the packages are signed for a release.
         If ver_mode != 'release', use the DRONE_BUILD_NUMBER environment
         variable as a build identifier.
-      variants: a list of variants be passed to the package subcommand
-        using the --variants option.
-        Defaults to None.
 
     Returns:
       Drone step.
@@ -800,10 +797,6 @@ def package_step(edition, ver_mode, variants = None):
         "build-frontend",
         "build-frontend-packages",
     ]
-
-    variants_str = ""
-    if variants:
-        variants_str = " --variants {}".format(",".join(variants))
 
     if ver_mode in ("main", "release", "release-branch"):
         sign_args = " --sign"
@@ -831,7 +824,7 @@ def package_step(edition, ver_mode, variants = None):
         build_no = "${DRONE_BUILD_NUMBER}"
         cmds = [
             "{}./bin/build package --jobs 8 --edition {} ".format(test_args, edition) +
-            "--build-id {}{}{}".format(build_no, variants_str, sign_args),
+            "--build-id {}{}".format(build_no, sign_args),
         ]
 
     return {
@@ -923,7 +916,7 @@ def cloud_plugins_e2e_tests_step(suite, cloud, trigger = None):
             paths = {
                 "include": [
                     "pkg/tsdb/azuremonitor/**",
-                    "public/app/plugins/datasource/grafana-azure-monitor-datasource/**",
+                    "public/app/plugins/datasource/azuremonitor/**",
                     "e2e/cloud-plugins-suite/azure-monitor.spec.ts",
                 ],
             },
@@ -1149,7 +1142,8 @@ def redis_integration_tests_step():
         },
         "commands": [
             "dockerize -wait tcp://redis:6379/0 -timeout 120s",
-            "./bin/grabpl integration-tests",
+            "go clean -testcache",
+            "go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic -timeout=5m {}'",
         ],
     }
 
@@ -1520,13 +1514,13 @@ def artifacts_page_step():
         "name": "artifacts-page",
         "image": build_image,
         "depends_on": [
-            "grabpl",
+            "compile-build-cmd",
         ],
         "environment": {
             "GCP_KEY": from_secret("gcp_key"),
         },
         "commands": [
-            "./bin/grabpl artifacts-page",
+            "./bin/build artifacts-page",
         ],
     }
 

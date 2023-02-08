@@ -453,11 +453,7 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 	}
 
 	if dash.UID == "" {
-		uid, err := generateNewDashboardUid(sess, dash.OrgID)
-		if err != nil {
-			return nil, err
-		}
-		dash.SetUID(uid)
+		dash.SetUID(util.GenerateShortUID())
 	}
 
 	parentVersion := dash.Version
@@ -536,23 +532,6 @@ func saveDashboard(sess *db.Session, cmd *dashboards.SaveDashboardCommand, emitE
 	return dash, nil
 }
 
-func generateNewDashboardUid(sess *db.Session, orgId int64) (string, error) {
-	for i := 0; i < 3; i++ {
-		uid := util.GenerateShortUID()
-
-		exists, err := sess.Where("org_id=? AND uid=?", orgId, uid).Get(&dashboards.Dashboard{})
-		if err != nil {
-			return "", err
-		}
-
-		if !exists {
-			return uid, nil
-		}
-	}
-
-	return "", dashboards.ErrDashboardFailedGenerateUniqueUid
-}
-
 func saveProvisionedData(sess *db.Session, provisioning *dashboards.DashboardProvisioning, dashboard *dashboards.Dashboard) error {
 	result := &dashboards.DashboardProvisioning{}
 
@@ -591,9 +570,9 @@ func (d *DashboardStore) updateAlerts(ctx context.Context, existingAlerts []*ale
 			var alertToUpdate *alertmodels.Alert
 
 			for _, k := range existingAlerts {
-				if alert.PanelId == k.PanelId {
+				if alert.PanelID == k.PanelID {
 					update = true
-					alert.Id = k.Id
+					alert.ID = k.ID
 					alertToUpdate = k
 					break
 				}
@@ -605,12 +584,12 @@ func (d *DashboardStore) updateAlerts(ctx context.Context, existingAlerts []*ale
 					alert.State = alertToUpdate.State
 					sess.MustCols("message", "for")
 
-					_, err := sess.ID(alert.Id).Update(alert)
+					_, err := sess.ID(alert.ID).Update(alert)
 					if err != nil {
 						return err
 					}
 
-					log.Debug("Alert updated", "name", alert.Name, "id", alert.Id)
+					log.Debug("Alert updated", "name", alert.Name, "id", alert.ID)
 				}
 			} else {
 				alert.Updated = time.Now()
@@ -623,10 +602,10 @@ func (d *DashboardStore) updateAlerts(ctx context.Context, existingAlerts []*ale
 					return err
 				}
 
-				log.Debug("Alert inserted", "name", alert.Name, "id", alert.Id)
+				log.Debug("Alert inserted", "name", alert.Name, "id", alert.ID)
 			}
 			tags := alert.GetTagsFromSettings()
-			if _, err := sess.Exec("DELETE FROM alert_rule_tag WHERE alert_id = ?", alert.Id); err != nil {
+			if _, err := sess.Exec("DELETE FROM alert_rule_tag WHERE alert_id = ?", alert.ID); err != nil {
 				return err
 			}
 			if tags != nil {
@@ -635,7 +614,7 @@ func (d *DashboardStore) updateAlerts(ctx context.Context, existingAlerts []*ale
 					return err
 				}
 				for _, tag := range tags {
-					if _, err := sess.Exec("INSERT INTO alert_rule_tag (alert_id, tag_id) VALUES(?,?)", alert.Id, tag.Id); err != nil {
+					if _, err := sess.Exec("INSERT INTO alert_rule_tag (alert_id, tag_id) VALUES(?,?)", alert.ID, tag.Id); err != nil {
 						return err
 					}
 				}
@@ -650,14 +629,14 @@ func (d *DashboardStore) deleteMissingAlerts(alerts []*alertmodels.Alert, existi
 		missing := true
 
 		for _, k := range existingAlerts {
-			if missingAlert.PanelId == k.PanelId {
+			if missingAlert.PanelID == k.PanelID {
 				missing = false
 				break
 			}
 		}
 
 		if missing {
-			if err := d.deleteAlertByIdInternal(missingAlert.Id, "Removed from dashboard", sess); err != nil {
+			if err := d.deleteAlertByIdInternal(missingAlert.ID, "Removed from dashboard", sess); err != nil {
 				// No use trying to delete more, since we're in a transaction and it will be
 				// rolled back on error.
 				return err
@@ -856,7 +835,7 @@ func (d *DashboardStore) deleteAlertDefinition(dashboardId int64, sess *db.Sessi
 	}
 
 	for _, alert := range alerts {
-		if err := d.deleteAlertByIdInternal(alert.Id, "Dashboard deleted", sess); err != nil {
+		if err := d.deleteAlertByIdInternal(alert.ID, "Dashboard deleted", sess); err != nil {
 			// If we return an error, the current transaction gets rolled back, so no use
 			// trying to delete more
 			return err

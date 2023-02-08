@@ -123,9 +123,10 @@ type SavePublicDashboardDTO struct {
 }
 
 type PublicDashboardQueryDTO struct {
-	IntervalMs    int64
-	MaxDataPoints int64
-	TimeRange     TimeSettings
+	IntervalMs      int64
+	MaxDataPoints   int64
+	QueryCachingTTL int64
+	TimeRange       TimeSettings
 }
 
 type AnnotationsQueryDTO struct {

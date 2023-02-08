@@ -5,11 +5,8 @@
 import { config } from '@grafana/runtime';
 import { t } from 'app/core/internationalization';
 
-// The keys of the TRANSLATED_MENU_ITEMS object (NOT the id inside the defineMessage function)
-// must match the ID of the navigation item, as defined in the backend nav model
-
-// see pkg/api/index.go
 export function getNavTitle(navId: string | undefined) {
+  // the switch cases must match the ID of the navigation item, as defined in the backend nav model
   switch (navId) {
     case 'home':
       return t('nav.home.title', 'Home');
@@ -24,7 +21,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'import':
       return t('nav.create-import.title', 'Import');
     case 'alert':
-      return t('nav.create-alert.title', 'New alert rule');
+      return t('nav.create-alert.title', 'Create alert rule');
     case 'starred':
       return t('nav.starred.title', 'Starred');
     case 'starred-empty':

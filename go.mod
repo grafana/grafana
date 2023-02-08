@@ -64,11 +64,11 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/google/wire v0.5.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/grafana/alerting v0.0.0-20230125210216-facc6b27b9e0
+	github.com/grafana/alerting v0.0.0-20230203015918-0e4e2675d7aa
 	github.com/grafana/cuetsy v0.1.5
 	github.com/grafana/grafana-aws-sdk v0.12.0
-	github.com/grafana/grafana-azure-sdk-go v1.5.1
-	github.com/grafana/grafana-plugin-sdk-go v0.147.0
+	github.com/grafana/grafana-azure-sdk-go v1.6.0
+	github.com/grafana/grafana-plugin-sdk-go v0.148.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/go-hclog v1.2.0
 	github.com/hashicorp/go-plugin v1.4.3
@@ -252,7 +252,7 @@ require (
 	github.com/golang-migrate/migrate/v4 v4.7.0
 	github.com/google/go-github/v45 v45.2.0
 	github.com/grafana/codejen v0.0.3
-	github.com/grafana/dskit v0.0.0-20230126115530-71478074eab8
+	github.com/grafana/dskit v0.0.0-20230202092222-880a7f8141cc
 	github.com/grafana/phlare/api v0.1.2
 	github.com/huandu/xstrings v1.3.1
 	github.com/jmoiron/sqlx v1.3.5
@@ -403,7 +403,7 @@ require (
 )
 
 // Use fork of crewjam/saml with fixes for some issues until changes get merged into upstream
-replace github.com/crewjam/saml => github.com/grafana/saml v0.4.13-0.20230123091136-3b6b1ec6c3cb
+replace github.com/crewjam/saml => github.com/grafana/saml v0.4.13-0.20230203140620-5f476db5c00a
 
 // Thema's thema CLI requires cobra, which eventually works its way down to go-hclog@v1.0.0.
 // Upgrading affects backend plugins: https://github.com/grafana/grafana/pull/47653#discussion_r850508593
@@ -425,6 +425,3 @@ replace github.com/prometheus/alertmanager => github.com/grafana/prometheus-aler
 replace google.golang.org/grpc => google.golang.org/grpc v1.45.0
 
 replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20220421151946-72621c1f0bd3
-
-// Remove this once https://github.com/grafana/dskit/pull/258 is merged.
-replace github.com/grafana/dskit => github.com/gotjosh/dskit v0.0.0-20230131123646-8dda768daa27
