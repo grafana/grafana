@@ -96,6 +96,7 @@ export const PageHeader: FC<Props> = ({ navItem: model, renderTitle, actions, in
   const renderHeader = (main: NavModelItem) => {
     const marginTop = main.icon === 'grafana' ? 12 : 14;
     const icon = main.icon && toIconName(main.icon);
+    const sub = subTitle ?? main.subTitle;
 
     return (
       <div className="page-header__inner">
@@ -109,7 +110,7 @@ export const PageHeader: FC<Props> = ({ navItem: model, renderTitle, actions, in
             ? renderTitle(main.text)
             : renderHeaderTitle(main.text, main.breadcrumbs ?? [], main.highlightText)}
           {info && <PageInfo info={info} />}
-          {main.subTitle && <div className="page-header__sub-title">{main.subTitle}</div>}
+          {sub && <div className="page-header__sub-title">{sub}</div>}
           {actions && <div className={styles.actions}>{actions}</div>}
         </div>
       </div>
