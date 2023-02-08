@@ -10,6 +10,7 @@ import (
 	"net/mail"
 	"path"
 	"reflect"
+	"strconv"
 	"strings"
 	"time"
 
@@ -201,14 +202,19 @@ func (auth *AuthProxy) getUserViaCache(reqCtx *contextmodel.ReqContext) (int64, 
 		return 0, err
 	}
 	auth.logger.Debug("Getting user ID via auth cache", "cacheKey", cacheKey)
-	userID, err := auth.remoteCache.Get(reqCtx.Req.Context(), cacheKey)
+	cachedValue, err := auth.remoteCache.GetByteArray(reqCtx.Req.Context(), cacheKey)
+	if err != nil {
+		return 0, err
+	}
+
+	userId, err := strconv.ParseInt(string(cachedValue), 10, 64)
 	if err != nil {
 		auth.logger.Debug("Failed getting user ID via auth cache", "error", err)
 		return 0, err
 	}
 
-	auth.logger.Debug("Successfully got user ID via auth cache", "id", userID)
-	return userID.(int64), nil
+	auth.logger.Debug("Successfully got user ID via auth cache", "id", cachedValue)
+	return userId, nil
 }
 
 // RemoveUserFromCache removes user from cache.
@@ -363,14 +369,15 @@ func (auth *AuthProxy) Remember(reqCtx *contextmodel.ReqContext, id int64) error
 	}
 
 	// Check if user already in cache
-	userID, err := auth.remoteCache.Get(reqCtx.Req.Context(), key)
-	if err == nil && userID != nil {
+	cachedValue, err := auth.remoteCache.GetByteArray(reqCtx.Req.Context(), key)
+	if err == nil && len(cachedValue) != 0 {
 		return nil
 	}
 
 	expiration := time.Duration(auth.cfg.AuthProxySyncTTL) * time.Minute
 
-	if err := auth.remoteCache.Set(reqCtx.Req.Context(), key, id, expiration); err != nil {
+	userIdPayload := []byte(strconv.FormatInt(id, 10))
+	if err := auth.remoteCache.SetByteArray(reqCtx.Req.Context(), key, userIdPayload, expiration); err != nil {
 		return err
 	}
 
