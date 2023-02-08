@@ -278,8 +278,13 @@ export class IncrementalStorage {
       return;
     }
 
+    if(!target?.datasource?.uid){
+      console.error('Datasource UID is required to build storage index');
+      return;
+    }
+
     // If the query (target) doesn't explicitly have an interval defined it's gonna use the one that's available on the request object.
-    // @todo is the above true, or is there a standard way tro
+    // @todo is the above true, or is there a standard way?
     const intervalString = target?.interval ? target?.interval : request.interval;
 
     if (!intervalString) {
@@ -288,7 +293,8 @@ export class IncrementalStorage {
 
     const expressionInterpolated = this.datasource.interpolateString(target?.expr);
 
-    return expressionInterpolated + '__' + intervalString;
+
+    return expressionInterpolated + '__' + intervalString + '__' + target.refId + '__' + target.datasource.uid + '__' + request.panelId + '__' + request.dashboardUID;
   };
 
   /**
@@ -504,6 +510,8 @@ export class IncrementalStorage {
     const intervalSeconds = rangeUtil.intervalToSeconds(request.interval);
     // Frames aren't always the same length, since this storage assumes a single time array for all values, that means we need to back-fill missing values
     this.preProcessDataFrames(data, intervalSeconds, request.range, originalRange);
+
+    debugger;
 
     // Iterate through all of the queries
     request.targets.forEach((target) => {
