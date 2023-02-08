@@ -284,7 +284,7 @@ export class LokiDatasource
       return this.runLiveQueryThroughBackend(fixedRequest);
     }
 
-    if (requestSupportsPartitioning(fixedRequest.targets)) {
+    if (config.featureToggles.lokiQuerySplitting && requestSupportsPartitioning(fixedRequest.targets)) {
       return runPartitionedQuery(this, fixedRequest);
     }
 
