@@ -51,6 +51,10 @@ const (
 
 // IsExternnalySynced is used to tell if the user is externallySynced or that we should the external sync
 // true means that the org role sync is handled by Grafana
+// Note: currently the users authinfo is overridden each time the user logs in
+// https://github.com/grafana/grafana/blob/4181acec72f76df7ad02badce13769bae4a1f840/pkg/services/login/authinfoservice/database/database.go#L61
+// this means that if the user has multiple auth providers and one of them is set to sync org roles
+// then the user will be synced from the provider they last logged in with
 func IsExternallySynced(cfg *setting.Cfg, autoProviderLabel string) bool {
 	// first check SAML, LDAP and JWT
 	switch autoProviderLabel {
