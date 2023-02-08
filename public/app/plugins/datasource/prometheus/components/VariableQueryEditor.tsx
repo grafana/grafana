@@ -4,7 +4,6 @@ import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 
 import { PrometheusDatasource } from '../datasource';
-import { labelNamesVarQuery } from '../metric_find_query';
 import {
   migrateVariableEditorBackToVariableSupport,
   migrateVariableQueryToEditor,
@@ -66,7 +65,7 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
       return;
     }
 
-    labelNamesVarQuery(datasource).then((labelNames: Array<{ text: string }>) => {
+    datasource.getLabelNames().then((labelNames: Array<{ text: string }>) => {
       setLabelOptions(labelNames.map(({ text }) => ({ label: text, value: text })));
     });
   }, [datasource, exprType]);
