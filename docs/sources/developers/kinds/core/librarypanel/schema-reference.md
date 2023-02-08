@@ -8,7 +8,7 @@ title: LibraryPanel kind
 
 ## LibraryPanel
 
-#### Maturity: experimental
+#### Maturity: [experimental](../../../maturity/#experimental)
 #### Version: 0.0
 
 A standalone panel
@@ -36,14 +36,6 @@ A standalone panel
 | `folderUid`           | string                                                  | **Yes**  |             |
 | `updatedBy`           | [LibraryElementDTOMetaUser](#libraryelementdtometauser) | **Yes**  |             |
 | `updated`             | string                                                  | **Yes**  |             |
-
-### LibraryElementDTOMetaUser
-
-| Property    | Type    | Required | Description |
-|-------------|---------|----------|-------------|
-| `avatarUrl` | string  | **Yes**  |             |
-| `id`        | integer | **Yes**  |             |
-| `name`      | string  | **Yes**  |             |
 
 ### LibraryElementDTOMetaUser
 
