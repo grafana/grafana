@@ -48,7 +48,7 @@ When building a canvas panel, you can connect elements together to create more c
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-connections-9-4-0.mp4" max-width="750px" caption="Canvas connections demo" >}}
 
-## Canvas Editing
+## Canvas editing
 
 ### Inline editor
 
