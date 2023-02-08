@@ -6,6 +6,6 @@ The Stat Panel allows you to show the one main summary stat of a SINGLE series. 
 
 The Stat Panel is a replacement for the Singlestat Panel, which was deprecated in Grafana v7.0 and removed after Grafana v8.4. Learn more about the now removed Singlestat Panel [here](https://grafana.com/docs/grafana/v8.4/visualizations/stat-panel/).
 
-Read more about it here:
+Read more about Stat Panel on our docs page:
 
 [https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/stat/](https://grafana.com/docs/grafana/latest/panels-visualizations/visualizations/stat/)
