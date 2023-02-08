@@ -2,6 +2,7 @@ import { DataQuery, DataQueryRequest, DataSourceJsonData, TimeRange } from '@gra
 
 import { TemplateSrv } from '../../../features/templating/template_srv';
 
+import { Graphite } from './dataquery.gen';
 import { GraphiteDatasource } from './datasource';
 
 export enum GraphiteQueryType {
@@ -10,12 +11,8 @@ export enum GraphiteQueryType {
   MetricName = 'Metric Name',
 }
 
-export interface GraphiteQuery extends DataQuery {
-  queryType?: string;
-  textEditor?: boolean;
-  target?: string;
-  tags?: string[];
-  fromAnnotations?: boolean;
+export interface GraphiteQuery extends Graphite {
+  // maybe frontend types only (runtime variables)
 }
 
 export interface GraphiteOptions extends DataSourceJsonData {
