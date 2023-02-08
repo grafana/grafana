@@ -10,7 +10,8 @@ import { resetError } from './state/reducers';
 
 interface OwnProps {
   name: string;
-  onSave: () => void;
+  showSave?: boolean;
+  onSave?: () => void;
 }
 
 export type Props = OwnProps & ConnectedProps<typeof connector>;
@@ -30,6 +31,7 @@ const connector = connect(mapStateToProps, mapDispatchToProps);
 export const ConfigStepContainerUnconnected = ({
   name,
   error,
+  showSave,
   onSave,
   children,
   resetError,
@@ -44,9 +46,11 @@ export const ConfigStepContainerUnconnected = ({
     <div>
       <div className={styles.header}>
         <h2>{name}</h2>
-        <Button size="sm" fill="outline" onClick={() => onSave()}>
-          Save changes
-        </Button>
+        {showSave && onSave && (
+          <Button size="sm" fill="outline" onClick={() => onSave()}>
+            Save changes
+          </Button>
+        )}
       </div>
       {error && (
         <Alert title={error.message} onRemove={onDismissError}>
