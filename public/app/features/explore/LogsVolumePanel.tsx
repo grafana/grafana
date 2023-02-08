@@ -14,7 +14,6 @@ import {
 import { TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
 
 import { ExploreGraph } from './Graph/ExploreGraph';
-import { SupplementaryResultError } from './SupplementaryResultError';
 
 type Props = {
   title: string;
@@ -48,15 +47,9 @@ export function LogsVolumePanel(props: Props) {
     ? getLogsVolumeAbsoluteRange(logsVolumeData.data, props.absoluteRange)
     : props.absoluteRange;
 
-  if (logsVolumeData.error !== undefined) {
-    return <SupplementaryResultError error={logsVolumeData.error} title="Failed to load log volume for this query" />;
-  }
-
   let LogsVolumePanelContent;
 
-  if (logsVolumeData?.state === LoadingState.Loading) {
-    LogsVolumePanelContent = <span>Log volume is loading...</span>;
-  } else if (logsVolumeData?.data) {
+  if (logsVolumeData?.data) {
     if (logsVolumeData.data.length > 0) {
       LogsVolumePanelContent = (
         <ExploreGraph

@@ -10,12 +10,14 @@ import {
   getLogsVolumeDataSourceInfo,
   GrafanaTheme2,
   isLogsVolumeLimited,
+  LoadingState,
   SplitOpen,
   TimeZone,
 } from '@grafana/data';
 import { Button, InlineField, useStyles2 } from '@grafana/ui';
 
 import { LogsVolumePanel } from './LogsVolumePanel';
+import { SupplementaryResultError } from './SupplementaryResultError';
 
 type Props = {
   logsVolumeData: DataQueryResponse | undefined;
@@ -84,6 +86,14 @@ export const LogsVolumePanelList = ({
       {zoomedInfo}
     </>
   );
+
+  if (logsVolumeData?.state === LoadingState.Loading) {
+    return <span>Log volume is loading...</span>;
+  }
+
+  if (logsVolumeData?.error !== undefined) {
+    return <SupplementaryResultError error={logsVolumeData.error} title="Failed to load log volume for this query" />;
+  }
 
   return (
     <>

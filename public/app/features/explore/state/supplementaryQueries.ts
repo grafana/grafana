@@ -11,6 +11,7 @@ import {
   hasSupplementaryQuerySupport,
   LoadingState,
   LogsVolumeType,
+  MutableDataFrame,
   SupplementaryQueryType,
 } from '@grafana/data';
 import { getDataSourceSrv } from '@grafana/runtime';
@@ -65,9 +66,11 @@ const getSupplementaryQueryFallback = (
  */
 const enrichWithSource = (uid: string, title: string) => {
   return mergeMap((response: DataQueryResponse) => {
+    const data = response.data || [new MutableDataFrame()];
+
     return of({
       ...response,
-      data: response.data.map((df) => {
+      data: data.map((df) => {
         return {
           ...df,
           meta: {
@@ -159,6 +162,14 @@ export const getSupplementaryQueryProvider = (
       scan<DataQueryResponse, DataQueryResponse>(
         (acc, next) => {
           if (next.state !== LoadingState.Done) {
+            return {
+              data: [],
+              state: next.state,
+              error: next.error,
+            };
+          }
+
+          if (acc.error) {
             return acc;
           }
 
