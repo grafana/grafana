@@ -71,7 +71,7 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
     });
   }, [datasource, exprType]);
 
-  const onChangeWithVariableString = (exprType: number) => {
+  const onChangeWithVariableString = (exprType: QueryType) => {
     const queryVar = {
       exprType: exprType,
       label,
