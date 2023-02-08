@@ -480,7 +480,7 @@
         "type": "object",
         "description": "Expose a page link that can be used by Grafana core or other plugins to navigate users to the plugin",
         "additionalProperties": false,
-        "required": ["type", "title", "target", "path"],
+        "required": ["type", "title", "placement", "path"],
         "properties": {
           "type": {
             "type": "string",
@@ -491,7 +491,7 @@
             "minLength": 3,
             "maxLength": 22
           },
-          "target": {
+          "placement": {
             "type": "string",
             "pattern": "^(plugins|grafana)/[a-z-/0-9]*$"
           },
