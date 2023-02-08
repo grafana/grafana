@@ -9,7 +9,6 @@ import {
   FieldSparkline,
   isDataFrame,
   Field,
-  Vector,
 } from '@grafana/data';
 import {
   BarAlignment,
@@ -19,7 +18,6 @@ import {
   GraphGradientMode,
   LineInterpolation,
   TableAreaChartCellOptions,
-  TableCellBackgroundDisplayMode,
   TableCellDisplayMode,
   VisibilityMode,
 } from '@grafana/schema';
