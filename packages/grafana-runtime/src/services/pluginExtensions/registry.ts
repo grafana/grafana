@@ -13,7 +13,7 @@ export type PluginsExtensionRegistry = Record<string, PluginsExtension[]>;
 let registry: PluginsExtensionRegistry | undefined;
 
 export function setPluginsExtensionRegistry(instance: PluginsExtensionRegistry): void {
-  if (registry) {
+  if (registry && process.env.NODE_ENV !== 'test') {
     throw new Error('setPluginsExtensionRegistry function should only be called once, when Grafana is starting.');
   }
   registry = instance;
