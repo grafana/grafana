@@ -7,8 +7,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/ldap/multildap"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/setting"
 )
 

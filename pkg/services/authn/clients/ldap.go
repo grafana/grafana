@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/ldap/multildap"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/setting"
 )
 

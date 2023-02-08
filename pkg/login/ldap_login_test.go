@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/ldap/multildap"
 	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/login/logintest"
-	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
