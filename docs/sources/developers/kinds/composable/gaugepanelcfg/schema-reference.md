@@ -8,7 +8,7 @@ title: GaugePanelCfg kind
 
 ## GaugePanelCfg
 
-#### Maturity: experimental
+#### Maturity: [experimental](../../../maturity/#experimental)
 #### Version: 0.0
 
 
