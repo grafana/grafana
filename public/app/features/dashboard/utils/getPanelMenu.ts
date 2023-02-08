@@ -1,5 +1,11 @@
 import { PanelMenuItem } from '@grafana/data';
-import { AngularComponent, getDataSourceSrv, locationService, reportInteraction } from '@grafana/runtime';
+import {
+  AngularComponent,
+  getDataSourceSrv,
+  getPluginExtensions,
+  locationService,
+  reportInteraction,
+} from '@grafana/runtime';
 import { LoadingState } from '@grafana/schema';
 import { PanelCtrl } from 'app/angular/panel/panel_ctrl';
 import config from 'app/core/config';
@@ -19,6 +25,7 @@ import {
 } from 'app/features/dashboard/utils/panel';
 import { InspectTab } from 'app/features/inspector/types';
 import { isPanelModelLibraryPanel } from 'app/features/library-panels/guard';
+import { GrafanaExtensions } from 'app/features/plugins/extensions/placements';
 import { store } from 'app/store/store';
 
 import { navigateToExplore } from '../../explore/state/main';
@@ -210,6 +217,16 @@ export function getPanelMenu(
         onClick: onAddLibraryPanel,
       });
     }
+  }
+
+  const { extensions } = getPluginExtensions({
+    placement: GrafanaExtensions.DashboardPanelMenu,
+  });
+  for (const extension of extensions) {
+    subMenu.push({
+      text: extension.title,
+      href: extension.path,
+    });
   }
 
   // add old angular panel options
