@@ -62,7 +62,7 @@ export const TestStuffPage = () => {
     <Page navModel={{ node: node, main: node }}>
       <Page.Contents>
         <HorizontalGroup>
-          <LinkToBasicApp target="grafana/sandbox/testing" />
+          <LinkToBasicApp placement="grafana/sandbox/testing" />
         </HorizontalGroup>
         {data && (
           <AutoSizer style={{ width: '100%', height: '600px' }}>
@@ -148,8 +148,8 @@ export function getDefaultState(): State {
   };
 }
 
-function LinkToBasicApp({ target }: { target: string }) {
-  const { extensions, error } = getPluginExtensions({ target });
+function LinkToBasicApp({ placement }: { placement: string }) {
+  const { extensions, error } = getPluginExtensions({ placement });
 
   if (error) {
     return null;
@@ -159,7 +159,7 @@ function LinkToBasicApp({ target }: { target: string }) {
     <div>
       {extensions.map((extension) => {
         return (
-          <LinkButton href={extension.href} title={extension.description} key={extension.key}>
+          <LinkButton href={extension.path} title={extension.description} key={extension.key}>
             {extension.title}
           </LinkButton>
         );

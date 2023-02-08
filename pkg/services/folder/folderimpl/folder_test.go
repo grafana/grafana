@@ -763,6 +763,32 @@ func TestNestedFolderService(t *testing.T) {
 			assert.ErrorIs(t, err, folder.ErrMaximumDepthReached)
 			require.NotNil(t, actualCmd)
 		})
+
+		t.Run("get default folder, no error", func(t *testing.T) {
+			g := guardian.New
+			guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanSaveValue: true})
+			t.Cleanup(func() {
+				guardian.New = g
+			})
+
+			// dashboard store commands that should be called.
+			dashStore := &dashboards.FakeDashboardStore{}
+
+			dashboardFolderStore := foldertest.NewFakeFolderStore(t)
+
+			nestedFolderStore := NewFakeStore()
+			nestedFolderStore.ExpectedError = folder.ErrFolderNotFound
+
+			folderSvc := setup(t, dashStore, dashboardFolderStore, nestedFolderStore, featuremgmt.WithFeatures("nestedFolders"), actest.FakeAccessControl{
+				ExpectedEvaluate: true,
+			})
+			_, err := folderSvc.Get(context.Background(), &folder.GetFolderQuery{
+				OrgID:        orgID,
+				ID:           &folder.GeneralFolder.ID,
+				SignedInUser: usr,
+			})
+			require.NoError(t, err)
+		})
 	})
 }
 

@@ -287,6 +287,9 @@
       "title": "首选项"
     },
     "profile/switch-org": "切换组织",
+    "public": {
+      "title": ""
+    },
     "scenes": {
       "title": "场景"
     },
