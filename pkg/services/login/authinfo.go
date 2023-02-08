@@ -54,7 +54,7 @@ const (
 // Note: currently the users authinfo is overridden each time the user logs in
 // https://github.com/grafana/grafana/blob/4181acec72f76df7ad02badce13769bae4a1f840/pkg/services/login/authinfoservice/database/database.go#L61
 // this means that if the user has multiple auth providers and one of them is set to sync org roles
-// then the user will be synced from the provider they last logged in with
+// then IsExternallySynced will be true for this one provider and false for the others
 func IsExternallySynced(cfg *setting.Cfg, autoProviderLabel string) bool {
 	// first check SAML, LDAP and JWT
 	switch autoProviderLabel {
