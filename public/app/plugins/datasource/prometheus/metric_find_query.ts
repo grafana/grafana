@@ -24,7 +24,7 @@ export default class PrometheusMetricFindQuery {
     const queryResultRegex = /^query_result\((.+)\)\s*$/;
     const labelNamesQuery = this.query.match(labelNamesRegex);
     if (labelNamesQuery) {
-      return labelNamesVarQuery(this.datasource);
+      return this.datasource.getLabelNames();
     }
 
     const labelValuesQuery = this.query.match(labelValuesRegex);
@@ -172,22 +172,4 @@ export default class PrometheusMetricFindQuery {
       });
     });
   }
-}
-
-export function labelNamesVarQuery(datasource: PrometheusDatasource) {
-  const range = getTimeSrv().timeRange();
-  const start = datasource.getPrometheusTime(range.from, false);
-  const end = datasource.getPrometheusTime(range.to, true);
-  const params = {
-    start: start.toString(),
-    end: end.toString(),
-  };
-
-  const url = `/api/v1/labels`;
-
-  return datasource.metadataRequest(url, params).then((result: any) => {
-    return _map(result.data.data, (value) => {
-      return { text: value };
-    });
-  });
 }
