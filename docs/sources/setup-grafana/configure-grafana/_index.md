@@ -865,7 +865,7 @@ Administrators can increase this if they experience OAuth login state mismatch e
 
 ### skip_org_role_sync
 
-If you want to manage the organization roles of your users from within Grafana or when you want to prevent synchronization conflicts when they are synchronized from another provider.
+Use this setting when you want to manage the organization roles of your users from within Grafana or to prevent synchronization conflicts when they are synchronized from another provider.
 
 Skip forced assignment of OrgID `1` or `auto_assign_org_id` for external logins. Default is `false`. Use this setting to allow users with external login to be manually assigned to multiple organizations.
 
