@@ -99,6 +99,16 @@ For Loki metric queries in Explore, you can now see the sample of log lines that
 
 {{< figure src="/media/docs/grafana/logs-sample-whats-new-9-4.png" max-width="750px" caption="Logs sample in Explore" >}}
 
+## Canvas panel
+
+_Available in **beta** in all editions of Grafana_
+
+Canvas is a new panel that combines the power of Grafana with the flexibility of custom elements. Canvas visualizations are extensible form-built panels that allow you to explicitly place elements within static and dynamic layouts. This empowers you to design custom visualizations and overlay data in ways that aren’t possible with standard Grafana panels, all within Grafana’s UI. If you’ve used popular UI and web design tools, then designing Canvas panels will feel very familiar.
+
+In Grafana v9.4, we have added the ability to create connections (arrows). Connections enable you to connect elements together to create more complex visualizations. We also added support for data links. To learn more about the Canvas panel, refer to [Canvas]({{< relref "../panels-visualizations/visualizations/canvas" >}}).
+
+{{< video-embed src="/static/img/docs/canvas-panel/canvas-connections-9-4-0.mp4" max-width="750px" caption="Canvas panel connections" >}}
+
 ## Auth and security
 
 _All auth updates are generally available in all editions of Grafana._
@@ -263,7 +273,6 @@ Grafana Alerting is now compatible with AWS Aurora, but does not provide technic
 
 We've made improvements to all [Enterprise Datasources](https://grafana.com/docs/grafana/latest/introduction/grafana-enterprise/#enterprise-data-sources), fixing small bugs and keeping libraries updated. We've also added many new features and support for additional APIs. Refer to each datasource's documentation and change log for additional information.
 
-
 ### DataDog Datasource
 
 We've added support for many new query types, including: SLO/SLI Values, RUM data, Events, and monitor group status.
@@ -291,7 +300,6 @@ We've added support for JWT authentication.
 ### Snowflake Datasource
 
 We've added support for custom session parameters.
-
 
 # Before you upgrade
 
