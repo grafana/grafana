@@ -46,7 +46,6 @@ The icon element enables you to add a supported icon to the canvas. Icons can ha
 
 When building a canvas panel, you can connect elements together to create more complex visualizations. Connections are created by dragging from the connection anchor of one element to the connection anchor of another element. Connections can also be created to the background of the canvas panel. Connection anchors are displayed when an element is hovered over and inline editing is turned on. To remove a connection, simply click on the connection directly and then press the "Delete" key.
 
-TODO: Add a video here
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-connections-9-4-0.mp4" max-width="750px" caption="Canvas connections demo" >}}
 
 ## Canvas Editing
@@ -86,5 +85,4 @@ Canvas supports [data links](https://grafana.com/docs/grafana/latest/panels-visu
 3. Now hover over the element and a data link tooltip will appear
 4. Click the data link tooltip to open the data link
 
-TODO: add a video here
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-data-links-9-4-0.mp4" max-width="750px" caption="Data links demo" >}}
