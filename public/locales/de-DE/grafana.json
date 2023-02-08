@@ -287,6 +287,9 @@
       "title": "Einstellungen"
     },
     "profile/switch-org": "Organisation wechseln",
+    "public": {
+      "title": ""
+    },
     "scenes": {
       "title": "Szenen"
     },
