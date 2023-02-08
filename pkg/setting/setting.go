@@ -442,6 +442,7 @@ type Cfg struct {
 	// LDAP
 	LDAPEnabled         bool
 	LDAPSkipOrgRoleSync bool
+	LDAPConfigFilePath  string
 	LDAPAllowSignup     bool
 
 	DefaultTheme    string
@@ -1197,6 +1198,7 @@ type RemoteCacheOptions struct {
 func (cfg *Cfg) readLDAPConfig() {
 	ldapSec := cfg.Raw.Section("auth.ldap")
 	LDAPConfigFile = ldapSec.Key("config_file").String()
+	cfg.LDAPConfigFilePath = LDAPConfigFile
 	LDAPSyncCron = ldapSec.Key("sync_cron").String()
 	LDAPEnabled = ldapSec.Key("enabled").MustBool(false)
 	cfg.LDAPEnabled = LDAPEnabled

@@ -81,7 +81,7 @@ func SkipOrgRoleSync() bool {
 }
 
 // ReloadConfig reads the config from the disk and caches it.
-func ReloadConfig() error {
+func ReloadConfig(ldapConfigFilePath string) error {
 	if !IsEnabled() {
 		return nil
 	}
@@ -90,7 +90,7 @@ func ReloadConfig() error {
 	defer loadingMutex.Unlock()
 
 	var err error
-	config, err = readConfig(setting.LDAPConfigFile)
+	config, err = readConfig(ldapConfigFilePath)
 	return err
 }
 
@@ -117,7 +117,7 @@ func GetConfig(cfg *setting.Cfg) (*Config, error) {
 	loadingMutex.Lock()
 	defer loadingMutex.Unlock()
 
-	return readConfig(setting.LDAPConfigFile)
+	return readConfig(cfg.LDAPConfigFilePath)
 }
 
 func readConfig(configFile string) (*Config, error) {
