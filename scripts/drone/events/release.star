@@ -37,7 +37,6 @@ load(
     "upload_cdn_step",
     "upload_packages_step",
     "verify_gen_cue_step",
-    "verify_gen_jsonnet_step",
     "wire_install_step",
     "yarn_install_step",
 )
@@ -233,7 +232,6 @@ def oss_pipelines(ver_mode = ver_mode, trigger = release_trigger):
                         download_grabpl_step(),
                         identify_runner_step(),
                         verify_gen_cue_step(),
-                        verify_gen_jsonnet_step(),
                         wire_install_step(),
                     ] +
                     integration_test_steps,
@@ -280,7 +278,6 @@ def enterprise_pipelines(ver_mode = ver_mode, trigger = release_trigger):
             wire_install_step(),
             yarn_install_step(),
             verify_gen_cue_step(),
-            verify_gen_jsonnet_step(),
         ],
         [
             "init-enterprise",
@@ -382,7 +379,6 @@ def enterprise_pipelines(ver_mode = ver_mode, trigger = release_trigger):
                     with_deps(
                         [
                             verify_gen_cue_step(),
-                            verify_gen_jsonnet_step(),
                         ],
                         [
                             "init-enterprise",

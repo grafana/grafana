@@ -28,7 +28,6 @@ load(
     "upload_cdn_step",
     "upload_packages_step",
     "verify_gen_cue_step",
-    "verify_gen_jsonnet_step",
     "wire_install_step",
     "yarn_install_step",
 )
@@ -56,7 +55,6 @@ def build_e2e(trigger, ver_mode):
         download_grabpl_step(),
         compile_build_cmd(),
         verify_gen_cue_step(),
-        verify_gen_jsonnet_step(),
         wire_install_step(),
         yarn_install_step(),
     ]
