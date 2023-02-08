@@ -314,7 +314,7 @@ type PluginDef struct {
 	Executable *string `json:"executable,omitempty"`
 
 	// Extensions made by the current plugin.
-	Extensions *[]ExtensionsLink `json:"extensions,omitempty"`
+	Extensions []ExtensionsLink `json:"extensions,omitempty"`
 
 	// For data source plugins, include hidden queries in the data
 	// request.
