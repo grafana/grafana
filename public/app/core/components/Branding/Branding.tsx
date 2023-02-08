@@ -43,7 +43,15 @@ const LoginBackground: FC<BrandComponentProps> = ({ className, children }) => {
 };
 
 const MenuLogo: FC<BrandComponentProps> = ({ className }) => {
-  return <img className={className} src="public/img/percona-logo.svg" alt="PMM" />;
+  const theme = useTheme2();
+
+  return (
+    <img
+      className={className}
+      src={theme.isLight ? 'public/img/percona-logo-light.svg' : 'public/img/percona-logo.svg'}
+      alt="PMM"
+    />
+  );
 };
 
 const LoginBoxBackground = () => {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-import { Button, HorizontalGroup, Icon, Modal, useStyles2 } from '@grafana/ui';
+import { Button, HorizontalGroup, Icon, Modal, useStyles2, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import {
   fetchSettingsAction,
@@ -30,6 +30,7 @@ export const PerconaBootstrapper = () => {
   const [showTour, setShowTour] = useState(false);
   const styles = useStyles2(getStyles);
   const isLoggedIn = contextSrv.user.isSignedIn;
+  const theme = useTheme2();
 
   const dismissModal = () => {
     setModalIsOpen(false);
@@ -88,7 +89,7 @@ export const PerconaBootstrapper = () => {
       {isLoggedIn && showTour && (
         <Modal onDismiss={dismissModal} isOpen={modalIsOpen} title={Messages.title}>
           <div className={styles.iconContainer}>
-            <Icon type="mono" name="pmm-logo" className={styles.svg} />
+            <Icon type="mono" name={theme.isLight ? 'pmm-logo-light' : 'pmm-logo'} className={styles.svg} />
           </div>
           <p>
             <strong>{Messages.pmm}</strong>

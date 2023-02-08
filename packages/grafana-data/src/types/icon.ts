@@ -206,6 +206,7 @@ export const availableIconsIndex = {
   'percona-surface': true,
   'percona-temperature': true,
   'pmm-logo': true,
+  'pmm-logo-light': true,
   'qan-logo': true,
   'percona-system': true,
   'percona-nav-overview': true,
