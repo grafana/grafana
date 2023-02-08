@@ -82,7 +82,7 @@ export const SupportBundlesCreateUnconnected = ({
                   })}
                   <HorizontalGroup>
                     <Button type="submit">Create</Button>
-                    <LinkButton href="/admin/support-bundles" variant="secondary">
+                    <LinkButton href="/support-bundles" variant="secondary">
                       Cancel
                     </LinkButton>
                   </HorizontalGroup>

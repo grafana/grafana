@@ -7,7 +7,6 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
@@ -86,7 +85,7 @@ func settingsCollector(settings setting.Provider) supportbundles.Collector {
 	return supportbundles.Collector{
 		UID:               "settings",
 		DisplayName:       "Settings",
-		Description:       "Settings for grafana instance",
+		Description:       "Settings of the Grafana instance",
 		IncludedByDefault: false,
 		Default:           true,
 		Fn: func(ctx context.Context) (*supportbundles.SupportItem, error) {
@@ -104,36 +103,11 @@ func settingsCollector(settings setting.Provider) supportbundles.Collector {
 	}
 }
 
-func usageStatesCollector(stats usagestats.Service) supportbundles.Collector {
-	return supportbundles.Collector{
-		UID:               "usage-stats",
-		DisplayName:       "Usage statistics",
-		Description:       "Usage statistic for grafana instance",
-		IncludedByDefault: false,
-		Default:           true,
-		Fn: func(ctx context.Context) (*supportbundles.SupportItem, error) {
-			report, err := stats.GetUsageReport(context.Background())
-			if err != nil {
-				return nil, err
-			}
-
-			data, err := json.Marshal(report)
-			if err != nil {
-				return nil, err
-			}
-			return &supportbundles.SupportItem{
-				Filename:  "usage-stats.json",
-				FileBytes: data,
-			}, nil
-		},
-	}
-}
-
 func pluginInfoCollector(pluginStore plugins.Store, pluginSettings pluginsettings.Service) supportbundles.Collector {
 	return supportbundles.Collector{
 		UID:               "plugins",
 		DisplayName:       "Plugin information",
-		Description:       "Plugin information for grafana instance",
+		Description:       "Plugin information for the Grafana instance",
 		IncludedByDefault: false,
 		Default:           true,
 		Fn: func(ctx context.Context) (*supportbundles.SupportItem, error) {

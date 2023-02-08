@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	grafanaApi "github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
@@ -15,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
+	"github.com/grafana/grafana/pkg/services/supportbundles/bundleregistry"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -31,64 +33,60 @@ type Service struct {
 	pluginSettings pluginsettings.Service
 	accessControl  ac.AccessControl
 	features       *featuremgmt.FeatureManager
+	bundleRegistry *bundleregistry.Service
 
 	log log.Logger
 
-	collectors map[string]supportbundles.Collector
+	enabled         bool
+	serverAdminOnly bool
 }
 
 func ProvideService(cfg *setting.Cfg,
+	bundleRegistry *bundleregistry.Service,
 	sql db.DB,
 	kvStore kvstore.KVStore,
 	accessControl ac.AccessControl,
 	accesscontrolService ac.Service,
 	routeRegister routing.RouteRegister,
-	userService user.Service,
 	settings setting.Provider,
 	pluginStore plugins.Store,
 	pluginSettings pluginsettings.Service,
 	features *featuremgmt.FeatureManager,
+	httpServer *grafanaApi.HTTPServer,
 	usageStats usagestats.Service) (*Service, error) {
+	section := cfg.SectionWithEnvOverrides("support_bundles")
 	s := &Service{
-		cfg:            cfg,
-		store:          newStore(kvStore),
-		pluginStore:    pluginStore,
-		pluginSettings: pluginSettings,
-		accessControl:  accessControl,
-		features:       features,
-		log:            log.New("supportbundle.service"),
-		collectors:     make(map[string]supportbundles.Collector),
+		cfg:             cfg,
+		store:           newStore(kvStore),
+		pluginStore:     pluginStore,
+		pluginSettings:  pluginSettings,
+		accessControl:   accessControl,
+		features:        features,
+		bundleRegistry:  bundleRegistry,
+		log:             log.New("supportbundle.service"),
+		enabled:         section.Key("enabled").MustBool(true),
+		serverAdminOnly: section.Key("server_admin_only").MustBool(true),
 	}
 
-	if !features.IsEnabled(featuremgmt.FlagSupportBundles) {
+	if !features.IsEnabled(featuremgmt.FlagSupportBundles) || !s.enabled {
 		return s, nil
 	}
 
 	if !accessControl.IsDisabled() {
-		if err := declareFixedRoles(accesscontrolService); err != nil {
+		if err := s.declareFixedRoles(accesscontrolService); err != nil {
 			return nil, err
 		}
 	}
 
-	s.registerAPIEndpoints(routeRegister)
+	s.registerAPIEndpoints(httpServer, routeRegister)
 
 	// TODO: move to relevant services
-	s.RegisterSupportItemCollector(basicCollector(cfg))
-	s.RegisterSupportItemCollector(settingsCollector(settings))
-	s.RegisterSupportItemCollector(usageStatesCollector(usageStats))
-	s.RegisterSupportItemCollector(userCollector(userService))
-	s.RegisterSupportItemCollector(dbCollector(sql))
-	s.RegisterSupportItemCollector(pluginInfoCollector(pluginStore, pluginSettings))
+	s.bundleRegistry.RegisterSupportItemCollector(basicCollector(cfg))
+	s.bundleRegistry.RegisterSupportItemCollector(settingsCollector(settings))
+	s.bundleRegistry.RegisterSupportItemCollector(dbCollector(sql))
+	s.bundleRegistry.RegisterSupportItemCollector(pluginInfoCollector(pluginStore, pluginSettings))
 
 	return s, nil
-}
-
-func (s *Service) RegisterSupportItemCollector(collector supportbundles.Collector) {
-	if _, ok := s.collectors[collector.UID]; ok {
-		s.log.Warn("Support bundle collector with the same UID already registered", "uid", collector.UID)
-	}
-
-	s.collectors[collector.UID] = collector
 }
 
 func (s *Service) Run(ctx context.Context) error {

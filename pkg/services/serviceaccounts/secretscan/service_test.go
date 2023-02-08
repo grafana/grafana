@@ -4,10 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/apikey"
 )
 
 func TestService_CheckTokens(t *testing.T) {
@@ -36,8 +37,8 @@ func TestService_CheckTokens(t *testing.T) {
 		{
 			desc: "one token leaked - no revoke, no notify",
 			retrievedTokens: []apikey.APIKey{{
-				Id:               1,
-				OrgId:            2,
+				ID:               1,
+				OrgID:            2,
 				Name:             "test",
 				Key:              "test-hash-1",
 				Role:             "Viewer",
@@ -53,8 +54,8 @@ func TestService_CheckTokens(t *testing.T) {
 		{
 			desc: "one token leaked - revoke, no notify",
 			retrievedTokens: []apikey.APIKey{{
-				Id:               1,
-				OrgId:            2,
+				ID:               1,
+				OrgID:            2,
 				Name:             "test",
 				Key:              "test-hash-1",
 				Role:             "Viewer",
@@ -70,8 +71,8 @@ func TestService_CheckTokens(t *testing.T) {
 		{
 			desc: "two tokens - one revoke, notify",
 			retrievedTokens: []apikey.APIKey{{
-				Id:               1,
-				OrgId:            2,
+				ID:               1,
+				OrgID:            2,
 				Name:             "test",
 				Key:              "test-hash-1",
 				Role:             "Viewer",
@@ -79,8 +80,8 @@ func TestService_CheckTokens(t *testing.T) {
 				ServiceAccountId: new(int64),
 				IsRevoked:        &falseBool,
 			}, {
-				Id:               2,
-				OrgId:            4,
+				ID:               2,
+				OrgID:            4,
 				Name:             "test-2",
 				Key:              "test-hash-2",
 				Role:             "Viewer",
@@ -96,8 +97,8 @@ func TestService_CheckTokens(t *testing.T) {
 		{
 			desc: "one token already revoked should not be checked",
 			retrievedTokens: []apikey.APIKey{{
-				Id:               1,
-				OrgId:            2,
+				ID:               1,
+				OrgID:            2,
 				Name:             "test",
 				Key:              "test-hash-1",
 				Role:             "Viewer",
@@ -113,8 +114,8 @@ func TestService_CheckTokens(t *testing.T) {
 		{
 			desc: "one token expired should not be checked",
 			retrievedTokens: []apikey.APIKey{{
-				Id:               1,
-				OrgId:            2,
+				ID:               1,
+				OrgID:            2,
 				Name:             "test",
 				Key:              "test-hash-1",
 				Role:             "Viewer",

@@ -353,11 +353,25 @@ export interface ValueMappingResult {
 
 /**
  * TODO docs
- * FIXME this is extremely underspecfied; wasn't obvious which typescript types corresponded to it
  */
-export interface Transformation {
+export interface DataTransformerConfig {
+  /**
+   * Disabled transformations are skipped
+   */
+  disabled?: boolean;
+  /**
+   * Optional frame matcher.  When missing it will be applied to all results
+   */
+  filter?: MatcherConfig;
+  /**
+   * Unique identifier of transformer
+   */
   id: string;
-  options: Record<string, unknown>;
+  /**
+   * Options to be passed to the transformer
+   * Valid options depend on the transformer id
+   */
+  options: unknown;
 }
 
 /**
@@ -404,6 +418,10 @@ export interface Panel {
    * TODO tighter constraint
    */
   interval?: string;
+  /**
+   * Dynamically load the panel
+   */
+  libraryPanel?: LibraryPanelRef;
   /**
    * Panel links.
    * TODO fill this out - seems there are a couple variants?
@@ -466,7 +484,7 @@ export interface Panel {
    * Panel title.
    */
   title?: string;
-  transformations: Array<Transformation>;
+  transformations: Array<DataTransformerConfig>;
   /**
    * Whether to display the panel without a background.
    */
@@ -502,6 +520,11 @@ export interface FieldConfigSource {
 export const defaultFieldConfigSource: Partial<FieldConfigSource> = {
   overrides: [],
 };
+
+export interface LibraryPanelRef {
+  name: string;
+  uid: string;
+}
 
 export interface MatcherConfig {
   id: string;
@@ -647,10 +670,13 @@ export interface Dashboard {
    */
   editable: boolean;
   /**
-   * TODO docs
+   * The month that the fiscal year starts on.  0 = January, 11 = December
    */
   fiscalYearStartMonth?: number;
   gnetId?: string;
+  /**
+   * Configuration of dashboard cursor sync behavior.
+   */
   graphTooltip: DashboardCursorSync;
   /**
    * Unique numeric identifier for the dashboard.
@@ -667,7 +693,7 @@ export interface Dashboard {
   liveNow?: boolean;
   panels?: Array<(Panel | RowPanel | GraphPanel | HeatmapPanel)>;
   /**
-   * TODO docs
+   * Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
    */
   refresh?: (string | false);
   /**
@@ -774,9 +800,9 @@ export interface Dashboard {
     time_options: Array<string>;
   };
   /**
-   * Timezone of dashboard,
+   * Timezone of dashboard. Accepts IANA TZDB zone ID or "browser" or "utc".
    */
-  timezone?: ('browser' | 'utc' | '');
+  timezone?: string;
   /**
    * Title of dashboard.
    */
@@ -797,6 +823,7 @@ export interface Dashboard {
 
 export const defaultDashboard: Partial<Dashboard> = {
   editable: true,
+  fiscalYearStartMonth: 0,
   graphTooltip: DashboardCursorSync.Off,
   links: [],
   panels: [],

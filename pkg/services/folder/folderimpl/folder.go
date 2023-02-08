@@ -11,20 +11,17 @@ import (
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/util"
-
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
-	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type Service struct {
@@ -33,10 +30,8 @@ type Service struct {
 	log                  log.Logger
 	cfg                  *setting.Cfg
 	dashboardStore       dashboards.Store
-	dashboardFolderStore dashboards.FolderStore
-	searchService        *search.SearchService
+	dashboardFolderStore folder.FolderStore
 	features             featuremgmt.FeatureToggles
-	permissions          accesscontrol.FolderPermissionsService
 	accessControl        accesscontrol.AccessControl
 
 	// bus is currently used to publish events that cause scheduler to update rules.
@@ -48,31 +43,29 @@ func ProvideService(
 	bus bus.Bus,
 	cfg *setting.Cfg,
 	dashboardStore dashboards.Store,
-	folderStore dashboards.FolderStore,
+	folderStore folder.FolderStore,
 	db db.DB, // DB for the (new) nested folder store
 	features featuremgmt.FeatureToggles,
-	folderPermissionsService accesscontrol.FolderPermissionsService,
-	searchService *search.SearchService,
 ) folder.Service {
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashboardStore, folderStore))
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(dashboardStore, folderStore))
 	store := ProvideStore(db, cfg, features)
-	svr := &Service{
+	srv := &Service{
 		cfg:                  cfg,
 		log:                  log.New("folder-service"),
 		dashboardStore:       dashboardStore,
 		dashboardFolderStore: folderStore,
 		store:                store,
-		searchService:        searchService,
 		features:             features,
-		permissions:          folderPermissionsService,
 		accessControl:        ac,
 		bus:                  bus,
 	}
 	if features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		svr.DBMigration(db)
+		srv.DBMigration(db)
 	}
-	return svr
+
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashboardStore, folderStore, srv))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(dashboardStore, folderStore, srv))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(dashboardStore, folderStore, srv))
+	return srv
 }
 
 func (s *Service) DBMigration(db db.DB) {
@@ -80,7 +73,7 @@ func (s *Service) DBMigration(db db.DB) {
 	err := db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var err error
 		if db.GetDialect().DriverName() == migrator.SQLite {
-			_, err = sess.Exec("INSERT OR REPLACE INTO folder (id, uid, org_id, title, created, updated) SELECT id, uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1")
+			_, err = sess.Exec("INSERT OR IGNORE INTO folder (id, uid, org_id, title, created, updated) SELECT id, uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1")
 		} else if db.GetDialect().DriverName() == migrator.Postgres {
 			_, err = sess.Exec("INSERT INTO folder (id, uid, org_id, title, created, updated) SELECT id, uid, org_id, title, created, updated FROM dashboard WHERE is_folder = true ON CONFLICT DO NOTHING")
 		} else {
@@ -160,62 +153,40 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		return nil, folder.ErrBadRequest.Errorf("missing signed in user")
 	}
 
-	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		children, err := s.store.GetChildren(ctx, *cmd)
-		if err != nil {
-			return nil, err
-		}
-
-		filtered := make([]*folder.Folder, 0, len(children))
-		for _, f := range children {
-			// fetch folder from dashboard store
-			dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, f.OrgID, f.UID)
-			if err != nil {
-				s.log.Error("failed to fetch folder by UID: %s from dashboard store", f.UID, err)
-				continue
-			}
-
-			g, err := guardian.New(ctx, f.ID, f.OrgID, cmd.SignedInUser)
-			if err != nil {
-				return nil, err
-			}
-			canView, err := g.CanView()
-			if err != nil || canView {
-				// always expose the dashboard store sequential ID
-				f.ID = dashFolder.ID
-				filtered = append(filtered, f)
-			}
-		}
-
-		return filtered, nil
-	}
-
-	searchQuery := search.Query{
-		SignedInUser: cmd.SignedInUser,
-		DashboardIds: make([]int64, 0),
-		FolderIds:    make([]int64, 0),
-		Limit:        cmd.Limit,
-		OrgId:        cmd.OrgID,
-		Type:         "dash-folder",
-		Permission:   models.PERMISSION_VIEW,
-		Page:         cmd.Page,
-	}
-
-	if err := s.searchService.SearchHandler(ctx, &searchQuery); err != nil {
+	children, err := s.store.GetChildren(ctx, *cmd)
+	if err != nil {
 		return nil, err
 	}
 
-	folders := make([]*folder.Folder, 0)
+	filtered := make([]*folder.Folder, 0, len(children))
+	for _, f := range children {
+		// fetch folder from dashboard store
+		dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, f.OrgID, f.UID)
+		if err != nil {
+			s.log.Error("failed to fetch folder by UID from dashboard store", "uid", f.UID, "error", err)
+			continue
+		}
 
-	for _, hit := range searchQuery.Result {
-		folders = append(folders, &folder.Folder{
-			ID:    hit.ID,
-			UID:   hit.UID,
-			Title: hit.Title,
-		})
+		g, err := guardian.NewByUID(ctx, f.UID, f.OrgID, cmd.SignedInUser)
+		if err != nil {
+			return nil, err
+		}
+		canView, err := g.CanView()
+		if err != nil || canView {
+			// always expose the dashboard store sequential ID
+			f.ID = dashFolder.ID
+			filtered = append(filtered, f)
+		}
 	}
 
-	return folders, nil
+	return filtered, nil
+}
+
+func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
+	if !s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
+		return nil, nil
+	}
+	return s.store.GetParents(ctx, q)
 }
 
 func (s *Service) getFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*folder.Folder, error) {
@@ -338,29 +309,6 @@ func (s *Service) Create(ctx context.Context, cmd *folder.CreateFolderCommand) (
 		return nil, err
 	}
 
-	var permissionErr error
-	if !accesscontrol.IsDisabled(s.cfg) {
-		var permissions []accesscontrol.SetResourcePermissionCommand
-		if user.IsRealUser() && !user.IsAnonymous {
-			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
-				UserID: userID, Permission: models.PERMISSION_ADMIN.String(),
-			})
-		}
-
-		permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
-			{BuiltinRole: string(org.RoleEditor), Permission: models.PERMISSION_EDIT.String()},
-			{BuiltinRole: string(org.RoleViewer), Permission: models.PERMISSION_VIEW.String()},
-		}...)
-
-		_, permissionErr = s.permissions.SetPermissions(ctx, cmd.OrgID, createdFolder.UID, permissions...)
-	} else if s.cfg.EditorsCanAdmin && user.IsRealUser() && !user.IsAnonymous {
-		permissionErr = s.MakeUserAdmin(ctx, cmd.OrgID, userID, createdFolder.ID, true)
-	}
-
-	if permissionErr != nil {
-		logger.Error("Could not make user admin", "folder", createdFolder.Title, "user", userID, "error", permissionErr)
-	}
-
 	var nestedFolder *folder.Folder
 	if s.features.IsEnabled(featuremgmt.FlagNestedFolders) {
 		cmd := &folder.CreateFolderCommand{
@@ -441,12 +389,12 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 	logger := s.log.FromContext(ctx)
 
 	query := dashboards.GetDashboardQuery{OrgID: cmd.OrgID, UID: cmd.UID}
-	_, err := s.dashboardStore.GetDashboard(ctx, &query)
+	queryResult, err := s.dashboardStore.GetDashboard(ctx, &query)
 	if err != nil {
 		return nil, toFolderError(err)
 	}
 
-	dashFolder := query.Result
+	dashFolder := queryResult
 	currentTitle := dashFolder.Title
 
 	if !dashFolder.IsFolder {
@@ -654,12 +602,12 @@ func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folder
 	rtEditor := org.RoleEditor
 	rtViewer := org.RoleViewer
 
-	items := []*models.DashboardACL{
+	items := []*dashboards.DashboardACL{
 		{
 			OrgID:       orgID,
 			DashboardID: folderID,
 			UserID:      userID,
-			Permission:  models.PERMISSION_ADMIN,
+			Permission:  dashboards.PERMISSION_ADMIN,
 			Created:     time.Now(),
 			Updated:     time.Now(),
 		},
@@ -667,19 +615,19 @@ func (s *Service) MakeUserAdmin(ctx context.Context, orgID int64, userID, folder
 
 	if setViewAndEditPermissions {
 		items = append(items,
-			&models.DashboardACL{
+			&dashboards.DashboardACL{
 				OrgID:       orgID,
 				DashboardID: folderID,
 				Role:        &rtEditor,
-				Permission:  models.PERMISSION_EDIT,
+				Permission:  dashboards.PERMISSION_EDIT,
 				Created:     time.Now(),
 				Updated:     time.Now(),
 			},
-			&models.DashboardACL{
+			&dashboards.DashboardACL{
 				OrgID:       orgID,
 				DashboardID: folderID,
 				Role:        &rtViewer,
-				Permission:  models.PERMISSION_VIEW,
+				Permission:  dashboards.PERMISSION_VIEW,
 				Created:     time.Now(),
 				Updated:     time.Now(),
 			},
@@ -856,10 +804,6 @@ func toFolderError(err error) error {
 
 	if errors.Is(err, dashboards.ErrDashboardNotFound) {
 		return dashboards.ErrFolderNotFound
-	}
-
-	if errors.Is(err, dashboards.ErrDashboardFailedGenerateUniqueUid) {
-		err = dashboards.ErrFolderFailedGenerateUniqueUid
 	}
 
 	return err

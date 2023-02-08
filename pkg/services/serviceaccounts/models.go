@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -72,11 +71,10 @@ type GetSATokensQuery struct {
 }
 
 type AddServiceAccountTokenCommand struct {
-	Name          string         `json:"name" binding:"Required"`
-	OrgId         int64          `json:"-"`
-	Key           string         `json:"-"`
-	SecondsToLive int64          `json:"secondsToLive"`
-	Result        *apikey.APIKey `json:"-"`
+	Name          string `json:"name" binding:"Required"`
+	OrgId         int64  `json:"-"`
+	Key           string `json:"-"`
+	SecondsToLive int64  `json:"secondsToLive"`
 }
 
 type SearchOrgServiceAccountsQuery struct {

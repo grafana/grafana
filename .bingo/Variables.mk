@@ -23,6 +23,12 @@ $(BRA): $(BINGO_DIR)/bra.mod
 	@echo "(re)installing $(GOBIN)/bra-v0.0.0-20200517080246-1e3013ecaff8"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=bra.mod -o=$(GOBIN)/bra-v0.0.0-20200517080246-1e3013ecaff8 "github.com/unknwon/bra"
 
+CUE := $(GOBIN)/cue-v0.5.0-beta.2
+$(CUE): $(BINGO_DIR)/cue.mod
+	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
+	@echo "(re)installing $(GOBIN)/cue-v0.5.0-beta.2"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=cue.mod -o=$(GOBIN)/cue-v0.5.0-beta.2 "cuelang.org/go/cmd/cue"
+
 DRONE := $(GOBIN)/drone-v1.5.0
 $(DRONE): $(BINGO_DIR)/drone.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
@@ -40,6 +46,12 @@ $(JB): $(BINGO_DIR)/jb.mod
 	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
 	@echo "(re)installing $(GOBIN)/jb-v0.5.1"
 	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=jb.mod -o=$(GOBIN)/jb-v0.5.1 "github.com/jsonnet-bundler/jsonnet-bundler/cmd/jb"
+
+KIND := $(GOBIN)/kind-v0.17.0
+$(KIND): $(BINGO_DIR)/kind.mod
+	@# Install binary/ries using Go 1.14+ build command. This is using bwplotka/bingo-controlled, separate go module with pinned dependencies.
+	@echo "(re)installing $(GOBIN)/kind-v0.17.0"
+	@cd $(BINGO_DIR) && GOWORK=off $(GO) build -mod=mod -modfile=kind.mod -o=$(GOBIN)/kind-v0.17.0 "sigs.k8s.io/kind"
 
 SWAGGER := $(GOBIN)/swagger-v0.30.2
 $(SWAGGER): $(BINGO_DIR)/swagger.mod
