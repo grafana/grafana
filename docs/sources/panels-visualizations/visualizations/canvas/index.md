@@ -44,10 +44,10 @@ The icon element enables you to add a supported icon to the canvas. Icons can ha
 
 ## Connections
 
-When building a canvas panel, you can connect elements together to create a more dynamic visualization. Connections are created by dragging from the output of one element to the input of another. Connections can also be created to the background of the canvas panel.
+When building a canvas panel, you can connect elements together to create more complex visualizations. Connections are created by dragging from the connection anchor of one element to the connection anchor of another element. Connections can also be created to the background of the canvas panel. Connection anchors are displayed when an element is hovered over and inline editing is turned on. To remove a connection, simply click on the connection directly and then press the "Delete" key.
 
 TODO: Add a video here
-{{< video-embed src="/static/img/docs/canvas-panel/canvas-connections-9-2-0.mp4" max-width="750px" caption="Canvas connections demo" >}}
+{{< video-embed src="/static/img/docs/canvas-panel/canvas-connections-9-4-0.mp4" max-width="750px" caption="Canvas connections demo" >}}
 
 ## Canvas Editing
 
@@ -79,12 +79,12 @@ The inline editing toggle enables you to lock or unlock the canvas panel. When t
 
 ### Data Links
 
-Canvas supports [data links](https://grafana.com/docs/grafana/latest/panels-visualizations/configure-data-links/). Once you have a created a data link, you can use it following these steps:
+Canvas supports [data links](https://grafana.com/docs/grafana/latest/panels-visualizations/configure-data-links/). Once you have added a data link to the panel, you can display it following these steps:
 
 1. Set an element to be tied to a field value
-1. Turn off the inline editing toggle
-1. Now hover over the element and a data link tooltip will appear
-1. Click the data link tooltip to open the data link
+2. Turn off the inline editing toggle
+3. Now hover over the element and a data link tooltip will appear
+4. Click the data link tooltip to open the data link
 
 TODO: add a video here
-{{< video-embed src="/static/img/docs/canvas-panel/canvas-data-links-9-2-0.mp4" max-width="750px" caption="Data links demo" >}}
+{{< video-embed src="/static/img/docs/canvas-panel/canvas-data-links-9-4-0.mp4" max-width="750px" caption="Data links demo" >}}
