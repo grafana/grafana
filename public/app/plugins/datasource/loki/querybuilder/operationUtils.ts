@@ -6,6 +6,7 @@ import {
   getPromAndLokiOperationDisplayName,
 } from '../../prometheus/querybuilder/shared/operationUtils';
 import {
+  QueryBuilderLabelFilter,
   QueryBuilderOperation,
   QueryBuilderOperationDef,
   QueryBuilderOperationParamDef,
@@ -155,6 +156,28 @@ export function labelFilterRenderer(model: QueryBuilderOperation, def: QueryBuil
   }
 
   return `${innerExpr} | ${model.params[0]} ${model.params[1]} \`${model.params[2]}\``;
+}
+
+export function isConflictingFilter(
+  operation: QueryBuilderOperation,
+  labelMatchers: QueryBuilderLabelFilter[]
+): boolean {
+  let conflictingFilter = false;
+
+  labelMatchers.forEach((matcher) => {
+    if (operation.params[0] !== matcher.label || operation.params[2] !== matcher.value) {
+      return;
+    }
+
+    if (
+      (String(operation.params[1]).startsWith('!') && !matcher.op.startsWith('!')) ||
+      (matcher.op.startsWith('!') && !String(operation.params[1]).startsWith('!'))
+    ) {
+      conflictingFilter = true;
+    }
+  });
+
+  return conflictingFilter;
 }
 
 export function pipelineRenderer(model: QueryBuilderOperation, def: QueryBuilderOperationDef, innerExpr: string) {
