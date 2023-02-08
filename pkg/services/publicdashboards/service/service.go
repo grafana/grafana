@@ -120,20 +120,6 @@ func (pd *PublicDashboardServiceImpl) FindPublicDashboardAndDashboardByAccessTok
 	return pubdash, dash, nil
 }
 
-// FindByDashboardUid is a helper method to retrieve the public dashboard configuration for a given dashboard from the database
-func (pd *PublicDashboardServiceImpl) FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error) {
-	pubdash, err := pd.store.FindByDashboardUid(ctx, orgId, dashboardUid)
-	if err != nil {
-		return nil, ErrInternalServerError.Errorf("FindByDashboardUid: failed to find a public dashboard by orgId: %d and dashboardUid: %s: %w", orgId, dashboardUid, err)
-	}
-
-	if pubdash == nil {
-		return nil, ErrPublicDashboardNotFound.Errorf("FindByDashboardUid: Public dashboard not found by orgId: %d and dashboardUid: %s", orgId, dashboardUid)
-	}
-
-	return pubdash, nil
-}
-
 // Creates and validates the public dashboard and saves it to the database
 func (pd *PublicDashboardServiceImpl) Create(ctx context.Context, u *user.SignedInUser, dto *SavePublicDashboardDTO) (*PublicDashboard, error) {
 	// ensure dashboard exists

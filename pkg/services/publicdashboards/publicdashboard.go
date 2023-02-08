@@ -17,7 +17,6 @@ import (
 type Service interface {
 	FindPublicDashboardAndDashboardByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, *dashboards.Dashboard, error)
 	FindByAccessToken(ctx context.Context, accessToken string) (*PublicDashboard, error)
-	FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
 	FindAnnotations(ctx context.Context, reqDTO AnnotationsQueryDTO, accessToken string) ([]AnnotationEvent, error)
 	FindDashboard(ctx context.Context, orgId int64, dashboardUid string) (*dashboards.Dashboard, error)
 	FindAll(ctx context.Context, u *user.SignedInUser, orgId int64) ([]PublicDashboardListResponse, error)
@@ -34,6 +33,11 @@ type Service interface {
 
 	ExistsEnabledByAccessToken(ctx context.Context, accessToken string) (bool, error)
 	ExistsEnabledByDashboardUid(ctx context.Context, dashboardUid string) (bool, error)
+}
+
+//go:generate mockery --name WrappedService --structname FakeWrappedPublicDashboardService --inpackage --filename public_dashboard_wrapped_service_mock.go
+type WrappedService interface {
+	FindByDashboardUid(ctx context.Context, orgId int64, dashboardUid string) (*PublicDashboard, error)
 }
 
 //go:generate mockery --name Store --structname FakePublicDashboardStore --inpackage --filename public_dashboard_store_mock.go

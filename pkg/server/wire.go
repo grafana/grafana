@@ -97,6 +97,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
 	publicdashboardsApi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
 	publicdashboardsStore "github.com/grafana/grafana/pkg/services/publicdashboards/database"
+	publicdashboardsService "github.com/grafana/grafana/pkg/services/publicdashboards/service"
 	"github.com/grafana/grafana/pkg/services/query"
 	"github.com/grafana/grafana/pkg/services/queryhistory"
 	"github.com/grafana/grafana/pkg/services/querylibrary/querylibraryimpl"
@@ -327,6 +328,8 @@ var wireBasicSet = wire.NewSet(
 	playlistimpl.ProvideService,
 	apikeyimpl.ProvideService,
 	dashverimpl.ProvideService,
+	publicdashboardsService.ProvideService,
+	wire.Bind(new(publicdashboards.Service), new(*publicdashboardsService.PublicDashboardServiceImpl)),
 	publicdashboardsStore.ProvideStore,
 	wire.Bind(new(publicdashboards.Store), new(*publicdashboardsStore.PublicDashboardStoreImpl)),
 	publicdashboardsApi.ProvideApi,
@@ -382,7 +385,6 @@ var wireTestSet = wire.NewSet(
 	ProvideTestEnv,
 	sqlstore.ProvideServiceForTests,
 	ngmetrics.ProvideServiceForTest,
-
 	notifications.MockNotificationService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationServiceMock)),
 	wire.Bind(new(notifications.WebhookSender), new(*notifications.NotificationServiceMock)),
