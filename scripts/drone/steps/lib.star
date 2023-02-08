@@ -1462,7 +1462,6 @@ def verify_gen_cue_step():
         ],
     }
 
-
 def trigger_test_release():
     return {
         "name": "trigger-test-release",
