@@ -1,15 +1,13 @@
+import { config } from '@grafana/runtime';
+import { t } from 'app/core/internationalization';
+
 // Maps the ID of the nav item to a translated phrase to later pass to <Trans />
 // Because the navigation content is dynamic (defined in the backend), we can not use
 // the normal inline message definition method.
 
-import { config } from '@grafana/runtime';
-import { t } from 'app/core/internationalization';
-
-// The keys of the TRANSLATED_MENU_ITEMS object (NOT the id inside the defineMessage function)
-// must match the ID of the navigation item, as defined in the backend nav model
-
 // see pkg/api/index.go
 export function getNavTitle(navId: string | undefined) {
+  // the switch cases must match the ID of the navigation item, as defined in the backend nav model
   switch (navId) {
     case 'home':
       return t('nav.home.title', 'Home');
@@ -24,7 +22,7 @@ export function getNavTitle(navId: string | undefined) {
     case 'import':
       return t('nav.create-import.title', 'Import');
     case 'alert':
-      return t('nav.create-alert.title', 'New alert rule');
+      return t('nav.create-alert.title', 'Create alert rule');
     case 'starred':
       return t('nav.starred.title', 'Starred');
     case 'starred-empty':
@@ -41,6 +39,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.snapshots.title', 'Snapshots');
     case 'dashboards/library-panels':
       return t('nav.library-panels.title', 'Library panels');
+    case 'dashboards/public':
+      return t('nav.public.title', 'Public dashboards');
     case 'dashboards/new':
       return t('nav.new-dashboard.title', 'New dashboard');
     case 'dashboards/folder/new':

@@ -74,7 +74,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     `,
     icon: css`
       opacity: 0.7;
-      margin-left: ${theme.spacing(2)};
+      margin-left: ${theme.spacing(1)};
       color: ${theme.colors.text.secondary};
     `,
     itemsWrapper: css`
