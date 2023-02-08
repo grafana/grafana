@@ -8,8 +8,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/ldap"
+	"github.com/grafana/grafana/pkg/services/ldap/multildap"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -49,8 +49,8 @@ func TestLDAP_AuthenticateProxy(t *testing.T) {
 				ClientParams: authn.ClientParams{
 					SyncUser:            true,
 					SyncTeamMembers:     true,
-					AllowSignUp:         false,
 					EnableDisabledUsers: true,
+					FetchSyncedUser:     true,
 					LookUpParams: login.UserLookupParams{
 						Email: strPtr("test@test.com"),
 						Login: strPtr("test"),
@@ -113,8 +113,8 @@ func TestLDAP_AuthenticatePassword(t *testing.T) {
 				ClientParams: authn.ClientParams{
 					SyncUser:            true,
 					SyncTeamMembers:     true,
-					AllowSignUp:         false,
 					EnableDisabledUsers: true,
+					FetchSyncedUser:     true,
 					LookUpParams: login.UserLookupParams{
 						Email: strPtr("test@test.com"),
 						Login: strPtr("test"),

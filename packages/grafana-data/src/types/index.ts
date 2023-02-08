@@ -45,7 +45,6 @@ export type {
   GrafanaConfig,
   BuildInfo,
   LicenseInfo,
-  PreloadPlugin,
 } from './config';
 export type { FeatureToggles } from './featureToggles.gen';
 export * from './alerts';

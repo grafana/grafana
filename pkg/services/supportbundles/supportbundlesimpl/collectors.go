@@ -7,7 +7,6 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
@@ -98,31 +97,6 @@ func settingsCollector(settings setting.Provider) supportbundles.Collector {
 
 			return &supportbundles.SupportItem{
 				Filename:  "settings.json",
-				FileBytes: data,
-			}, nil
-		},
-	}
-}
-
-func usageStatesCollector(stats usagestats.Service) supportbundles.Collector {
-	return supportbundles.Collector{
-		UID:               "usage-stats",
-		DisplayName:       "Usage statistics",
-		Description:       "Usage statistics of the Grafana instance",
-		IncludedByDefault: false,
-		Default:           true,
-		Fn: func(ctx context.Context) (*supportbundles.SupportItem, error) {
-			report, err := stats.GetUsageReport(context.Background())
-			if err != nil {
-				return nil, err
-			}
-
-			data, err := json.Marshal(report)
-			if err != nil {
-				return nil, err
-			}
-			return &supportbundles.SupportItem{
-				Filename:  "usage-stats.json",
 				FileBytes: data,
 			}, nil
 		},

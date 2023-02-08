@@ -39,7 +39,7 @@ var (
 )
 
 // NewFolderNameScopeResolver provides an ScopeAttributeResolver that is able to convert a scope prefixed with "folders:name:" into an uid based scope.
-func NewFolderNameScopeResolver(db Store, folderDB FolderStore, folderSvc folder.Service) (string, ac.ScopeAttributeResolver) {
+func NewFolderNameScopeResolver(db Store, folderDB folder.FolderStore, folderSvc folder.Service) (string, ac.ScopeAttributeResolver) {
 	prefix := ScopeFoldersProvider.GetResourceScopeName("")
 	return prefix, ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
 		if !strings.HasPrefix(scope, prefix) {
@@ -65,7 +65,7 @@ func NewFolderNameScopeResolver(db Store, folderDB FolderStore, folderSvc folder
 }
 
 // NewFolderIDScopeResolver provides an ScopeAttributeResolver that is able to convert a scope prefixed with "folders:id:" into an uid based scope.
-func NewFolderIDScopeResolver(db Store, folderDB FolderStore, folderSvc folder.Service) (string, ac.ScopeAttributeResolver) {
+func NewFolderIDScopeResolver(db Store, folderDB folder.FolderStore, folderSvc folder.Service) (string, ac.ScopeAttributeResolver) {
 	prefix := ScopeFoldersProvider.GetResourceScope("")
 	return prefix, ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
 		if !strings.HasPrefix(scope, prefix) {
@@ -96,9 +96,31 @@ func NewFolderIDScopeResolver(db Store, folderDB FolderStore, folderSvc folder.S
 	})
 }
 
+// NewFolderUIDScopeResolver provides an ScopeAttributeResolver that is able to convert a scope prefixed with "folders:uid:"
+// into uid based scopes for folder and its parents
+func NewFolderUIDScopeResolver(db Store, folderDB folder.FolderStore, folderSvc folder.Service) (string, ac.ScopeAttributeResolver) {
+	prefix := ScopeFoldersProvider.GetResourceScopeUID("")
+	return prefix, ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
+		if !strings.HasPrefix(scope, prefix) {
+			return nil, ac.ErrInvalidScope
+		}
+
+		uid, err := ac.ParseScopeUID(scope)
+		if err != nil {
+			return nil, err
+		}
+
+		inheritedScopes, err := GetInheritedScopes(ctx, orgID, uid, folderSvc)
+		if err != nil {
+			return nil, err
+		}
+		return append(inheritedScopes, ScopeFoldersProvider.GetResourceScopeUID(uid)), nil
+	})
+}
+
 // NewDashboardIDScopeResolver provides an ScopeAttributeResolver that is able to convert a scope prefixed with "dashboards:id:"
 // into uid based scopes for both dashboard and folder
-func NewDashboardIDScopeResolver(db Store, folderDB FolderStore, folderSvc folder.Service) (string, ac.ScopeAttributeResolver) {
+func NewDashboardIDScopeResolver(db Store, folderDB folder.FolderStore, folderSvc folder.Service) (string, ac.ScopeAttributeResolver) {
 	prefix := ScopeDashboardsProvider.GetResourceScope("")
 	return prefix, ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
 		if !strings.HasPrefix(scope, prefix) {
@@ -121,7 +143,7 @@ func NewDashboardIDScopeResolver(db Store, folderDB FolderStore, folderSvc folde
 
 // NewDashboardUIDScopeResolver provides an ScopeAttributeResolver that is able to convert a scope prefixed with "dashboards:uid:"
 // into uid based scopes for both dashboard and folder
-func NewDashboardUIDScopeResolver(db Store, folderDB FolderStore, folderSvc folder.Service) (string, ac.ScopeAttributeResolver) {
+func NewDashboardUIDScopeResolver(db Store, folderDB folder.FolderStore, folderSvc folder.Service) (string, ac.ScopeAttributeResolver) {
 	prefix := ScopeDashboardsProvider.GetResourceScopeUID("")
 	return prefix, ac.ScopeAttributeResolverFunc(func(ctx context.Context, orgID int64, scope string) ([]string, error) {
 		if !strings.HasPrefix(scope, prefix) {
@@ -142,7 +164,7 @@ func NewDashboardUIDScopeResolver(db Store, folderDB FolderStore, folderSvc fold
 	})
 }
 
-func resolveDashboardScope(ctx context.Context, db Store, folderDB FolderStore, orgID int64, dashboard *Dashboard, folderSvc folder.Service) ([]string, error) {
+func resolveDashboardScope(ctx context.Context, db Store, folderDB folder.FolderStore, orgID int64, dashboard *Dashboard, folderSvc folder.Service) ([]string, error) {
 	var folderUID string
 	if dashboard.FolderID < 0 {
 		return []string{ScopeDashboardsProvider.GetResourceScopeUID(dashboard.UID)}, nil

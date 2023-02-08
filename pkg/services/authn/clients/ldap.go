@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/services/authn"
+	"github.com/grafana/grafana/pkg/services/ldap/multildap"
 	"github.com/grafana/grafana/pkg/services/login"
-	"github.com/grafana/grafana/pkg/services/multildap"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -103,8 +103,9 @@ func identityFromLDAPInfo(orgID int64, info *login.ExternalUserInfo, allowSignup
 		ClientParams: authn.ClientParams{
 			SyncUser:            true,
 			SyncTeamMembers:     true,
-			AllowSignUp:         allowSignup,
 			EnableDisabledUsers: true,
+			FetchSyncedUser:     true,
+			AllowSignUp:         allowSignup,
 			LookUpParams: login.UserLookupParams{
 				Login: &info.Login,
 				Email: &info.Email,
