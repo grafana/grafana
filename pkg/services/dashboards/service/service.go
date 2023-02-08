@@ -10,13 +10,9 @@ import (
 func ProvideSimpleDashboardService(
 	features featuremgmt.FeatureToggles,
 	svc *DashboardServiceImpl,
-	k8s k8saccess.K8SAccess,
 	store entity.EntityStoreServer,
 ) dashboards.DashboardService {
 	if features.IsEnabled(featuremgmt.FlagK8sDashboards) {
-		if k8s.GetSystemClient() == nil {
-			panic("k8s dashboards requires the k8s client registered")
-		}
 		return k8saccess.NewDashboardService(svc, store)
 	}
 	return svc
