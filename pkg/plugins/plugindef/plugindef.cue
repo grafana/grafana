@@ -124,7 +124,7 @@ seqs: [
 
 				#ExtensionsLink: {
 					// Target where the link will be rendered
-					id: =~"^(plugins|grafana)\/[a-z-/0-9]*$"
+					placement: =~"^(plugins|grafana)\/[a-z-/0-9]*$"
 					// Type of extension
 					type: "link"
 					// Title that will be displayed for the rendered link

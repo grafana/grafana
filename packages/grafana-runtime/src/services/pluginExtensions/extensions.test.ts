@@ -22,7 +22,7 @@ describe('getPluginExtensions', () => {
 
     it('should return a collection of extensions to the plugin', () => {
       const { extensions, error } = getPluginExtensions({
-        id: `plugins/${pluginId}/${linkId}`,
+        placement: `plugins/${pluginId}/${linkId}`,
       });
 
       expect(extensions[0].path).toBe(`/a/${pluginId}/declare-incident`);
@@ -31,7 +31,7 @@ describe('getPluginExtensions', () => {
 
     it('should return a description for the requested link', () => {
       const { extensions, error } = getPluginExtensions({
-        id: `plugins/${pluginId}/${linkId}`,
+        placement: `plugins/${pluginId}/${linkId}`,
       });
 
       expect(extensions[0].path).toBe(`/a/${pluginId}/declare-incident`);
@@ -41,7 +41,7 @@ describe('getPluginExtensions', () => {
 
     it('should return an empty array when no links can be found', () => {
       const { extensions, error } = getPluginExtensions({
-        id: `an-unknown-app/${linkId}`,
+        placement: `an-unknown-app/${linkId}`,
       });
 
       expect(extensions.length).toBe(0);

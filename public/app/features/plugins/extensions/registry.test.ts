@@ -7,7 +7,7 @@ describe('Plugin registry', () => {
     const registry = createPluginExtensionsRegistry({
       'belugacdn-app': createConfig([
         {
-          target: 'plugins/belugacdn-app/menu',
+          placement: 'plugins/belugacdn-app/menu',
           title: 'The title',
           type: PluginExtensionTypes.link,
           description: 'Incidents are occurring!',
@@ -16,7 +16,7 @@ describe('Plugin registry', () => {
       ]),
       'strava-app': createConfig([
         {
-          target: 'plugins/strava-app/menu',
+          placement: 'plugins/strava-app/menu',
           title: 'The title',
           type: PluginExtensionTypes.link,
           description: 'Incidents are occurring!',
@@ -25,14 +25,14 @@ describe('Plugin registry', () => {
       ]),
       'duplicate-links-app': createConfig([
         {
-          target: 'plugins/duplicate-links-app/menu',
+          placement: 'plugins/duplicate-links-app/menu',
           title: 'The title',
           type: PluginExtensionTypes.link,
           description: 'Incidents are occurring!',
           path: '/incidents/declare',
         },
         {
-          target: 'plugins/duplicate-links-app/menu',
+          placement: 'plugins/duplicate-links-app/menu',
           title: 'The title',
           type: PluginExtensionTypes.link,
           description: 'Incidents are occurring!',

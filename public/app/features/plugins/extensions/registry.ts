@@ -17,15 +17,15 @@ export function createPluginExtensionsRegistry(apps: Record<string, AppPluginCon
     }
 
     for (const extension of extensions) {
-      const target = extension.target;
+      const placement = extension.placement;
       const item = createRegistryItem(pluginId, extension);
 
-      if (!Array.isArray(registry[target])) {
-        registry[target] = [item];
+      if (!Array.isArray(registry[placement])) {
+        registry[placement] = [item];
         continue;
       }
 
-      registry[target].push(item);
+      registry[placement].push(item);
       continue;
     }
   }
