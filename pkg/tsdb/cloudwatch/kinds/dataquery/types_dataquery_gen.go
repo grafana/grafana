@@ -148,9 +148,9 @@ const (
 
 // Defines values for QueryEditorGroupByExpressionPropertyType.
 const (
-	QueryEditorGroupByExpressionPropertyTypeString QueryEditorGroupByExpressionPropertyType = "string"
+	QueryEditorGroupByExpressionPropertyTypeAny QueryEditorGroupByExpressionPropertyType = "any"
 
-	QueryEditorGroupByExpressionPropertyTypeTest QueryEditorGroupByExpressionPropertyType = "test"
+	QueryEditorGroupByExpressionPropertyTypeString QueryEditorGroupByExpressionPropertyType = "string"
 )
 
 // Defines values for QueryEditorGroupByExpressionType.
@@ -160,9 +160,9 @@ const (
 
 // Defines values for QueryEditorOperatorExpressionPropertyType.
 const (
-	QueryEditorOperatorExpressionPropertyTypeString QueryEditorOperatorExpressionPropertyType = "string"
+	QueryEditorOperatorExpressionPropertyTypeAny QueryEditorOperatorExpressionPropertyType = "any"
 
-	QueryEditorOperatorExpressionPropertyTypeTest QueryEditorOperatorExpressionPropertyType = "test"
+	QueryEditorOperatorExpressionPropertyTypeString QueryEditorOperatorExpressionPropertyType = "string"
 )
 
 // Defines values for QueryEditorOperatorExpressionType.
@@ -172,16 +172,16 @@ const (
 
 // Defines values for QueryEditorPropertyType.
 const (
-	QueryEditorPropertyTypeString QueryEditorPropertyType = "string"
+	QueryEditorPropertyTypeAny QueryEditorPropertyType = "any"
 
-	QueryEditorPropertyTypeTest QueryEditorPropertyType = "test"
+	QueryEditorPropertyTypeString QueryEditorPropertyType = "string"
 )
 
 // Defines values for QueryEditorPropertyExpressionPropertyType.
 const (
-	QueryEditorPropertyExpressionPropertyTypeString QueryEditorPropertyExpressionPropertyType = "string"
+	QueryEditorPropertyExpressionPropertyTypeAny QueryEditorPropertyExpressionPropertyType = "any"
 
-	QueryEditorPropertyExpressionPropertyTypeTest QueryEditorPropertyExpressionPropertyType = "test"
+	QueryEditorPropertyExpressionPropertyTypeString QueryEditorPropertyExpressionPropertyType = "string"
 )
 
 // Defines values for QueryEditorPropertyExpressionType.
@@ -419,6 +419,9 @@ type QueryEditorArrayExpression struct {
 
 // TODO this doesn't work
 type QueryEditorArrayExpressionType string
+
+// QueryEditorExpression defines model for QueryEditorExpression.
+type QueryEditorExpression interface{}
 
 // QueryEditorExpressionType defines model for QueryEditorExpressionType.
 type QueryEditorExpressionType string

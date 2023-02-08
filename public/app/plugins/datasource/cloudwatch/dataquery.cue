@@ -112,7 +112,7 @@ composableKinds: DataQuery: {
 						#QueryEditorOperator: {
 							name?:  string
 							value?: #QueryEditorOperatorType | [...#QueryEditorOperatorType]
-						}
+						} @cuetsy(kind="interface")
 
 						#QueryEditorOperatorValueType: #QueryEditorOperatorType | [...#QueryEditorOperatorType] @cuetsy(kind="type")
 						#QueryEditorOperatorType:      string | bool | int64                                    @cuetsy(kind="type")
@@ -122,7 +122,8 @@ composableKinds: DataQuery: {
 							name?: string
 						} @cuetsy(kind="interface")
 
-						#QueryEditorPropertyType: "string" | "test" @cuetsy(kind="enum")
+						// TODO remove "any" member when one-member enum generation is fixed
+						#QueryEditorPropertyType: "string" | "any" @cuetsy(kind="enum")
 
 						#QueryEditorArrayExpression: {
 							// TODO this doesn't work
@@ -130,6 +131,8 @@ composableKinds: DataQuery: {
 							// TODO should be QueryEditorExpression[] | QueryEditorArrayExpression[], extend in veneer
 							expressions: _ // TODO modify this in veneer
 						} @cuetsy(kind="interface")
+
+						#QueryEditorExpression: #QueryEditorArrayExpression | #QueryEditorPropertyExpression | #QueryEditorGroupByExpression | #QueryEditorFunctionExpression | #QueryEditorFunctionParameterExpression | #QueryEditorOperatorExpression @cuetsy(kind="type")
 
 						#CloudWatchLogsQuery: {
 							common.DataQuery

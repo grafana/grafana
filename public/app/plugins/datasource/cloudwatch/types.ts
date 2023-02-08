@@ -1,80 +1,36 @@
 import { AwsAuthDataSourceJsonData, AwsAuthDataSourceSecureJsonData } from '@grafana/aws-sdk';
-import { DataFrame, DataQuery, DataSourceRef, SelectableValue } from '@grafana/data';
+import { DataFrame, DataSourceRef } from '@grafana/data';
+import { DataQuery } from '@grafana/schema';
 
-import {
-  QueryEditorArrayExpression,
-  QueryEditorFunctionExpression,
-  QueryEditorPropertyExpression,
-} from './expressions';
+import * as raw from './dataquery.gen';
+import { QueryEditorArrayExpression } from './expressions';
 
-export interface Dimensions {
-  [key: string]: string | string[];
+export * from './dataquery.gen';
+
+// QueryEditorArrayExpression has a recursive property, so cannot be defined in cue
+export interface SQLExpression extends raw.SQLExpression {
+  where?: QueryEditorArrayExpression;
+  groupBy?: QueryEditorArrayExpression;
 }
+
+export type CloudWatchQuery =
+  | CloudWatchMetricsQuery
+  | raw.CloudWatchLogsQuery
+  | CloudWatchAnnotationQuery
+  | CloudWatchDefaultQuery;
+
+export interface CloudWatchAnnotationQuery extends raw.CloudWatchAnnotationQuery, DataQuery {}
+
+export interface CloudWatchMetricsQuery extends raw.CloudWatchMetricsQuery, DataQuery {}
+
+// We want to allow setting defaults for both Logs and Metrics queries
+export type CloudWatchDefaultQuery = Omit<raw.CloudWatchLogsQuery, 'queryMode'> & CloudWatchMetricsQuery;
 
 export interface MultiFilters {
   [key: string]: string[];
 }
 
-export type CloudWatchQueryMode = 'Metrics' | 'Logs' | 'Annotations';
-
-export enum MetricQueryType {
-  'Search',
-  'Query',
-}
-
-export enum MetricEditorMode {
-  'Builder',
-  'Code',
-}
-
 export type Direction = 'ASC' | 'DESC';
-
-export interface SQLExpression {
-  select?: QueryEditorFunctionExpression;
-  from?: QueryEditorPropertyExpression | QueryEditorFunctionExpression;
-  where?: QueryEditorArrayExpression;
-  groupBy?: QueryEditorArrayExpression;
-  orderBy?: QueryEditorFunctionExpression;
-  orderByDirection?: string;
-  limit?: number;
-}
-
-export interface CloudWatchMetricsQuery extends MetricStat, DataQuery {
-  queryMode?: CloudWatchQueryMode;
-  metricQueryType?: MetricQueryType;
-  metricEditorMode?: MetricEditorMode;
-
-  //common props
-  id: string;
-
-  alias?: string;
-  label?: string;
-
-  // Math expression query
-  expression?: string;
-
-  sqlExpression?: string;
-  sql?: SQLExpression;
-}
-
-export interface MetricStat {
-  region: string;
-  namespace: string;
-  metricName?: string;
-  dimensions?: Dimensions;
-  matchExact?: boolean;
-  period?: string;
-  accountId?: string;
-  statistic?: string;
-  /**
-   * @deprecated use statistic
-   */
-  statistics?: string[];
-}
-
-export interface CloudWatchMathExpressionQuery extends DataQuery {
-  expression: string;
-}
 
 export type LogAction = 'GetQueryResults' | 'GetLogEvents' | 'StartQuery' | 'StopQuery';
 
@@ -86,34 +42,6 @@ export enum CloudWatchLogsQueryStatus {
   Cancelled = 'Cancelled',
   Timeout = 'Timeout',
 }
-
-export interface CloudWatchLogsQuery extends DataQuery {
-  queryMode: CloudWatchQueryMode;
-  id: string;
-  region: string;
-  expression?: string;
-  statsGroups?: string[];
-  logGroups?: LogGroup[];
-  /* deprecated, use logGroups instead */
-  logGroupNames?: string[];
-}
-// We want to allow setting defaults for both Logs and Metrics queries
-export type CloudWatchDefaultQuery = Omit<CloudWatchLogsQuery, 'queryMode'> & CloudWatchMetricsQuery;
-
-export type CloudWatchQuery =
-  | CloudWatchMetricsQuery
-  | CloudWatchLogsQuery
-  | CloudWatchAnnotationQuery
-  | CloudWatchDefaultQuery;
-
-export interface CloudWatchAnnotationQuery extends MetricStat, DataQuery {
-  queryMode: CloudWatchQueryMode;
-  prefixMatching?: boolean;
-  actionPrefix?: string;
-  alarmNamePrefix?: string;
-}
-
-export type SelectableStrings = Array<SelectableValue<string>>;
 
 export interface CloudWatchJsonData extends AwsAuthDataSourceJsonData {
   timeField?: string;
@@ -297,7 +225,7 @@ export interface VariableQuery extends DataQuery {
   region: string;
   metricName: string;
   dimensionKey: string;
-  dimensionFilters?: Dimensions;
+  dimensionFilters?: raw.Dimensions;
   ec2Filters?: MultiFilters;
   instanceID: string;
   attributeName: string;
@@ -306,13 +234,13 @@ export interface VariableQuery extends DataQuery {
   logGroupPrefix?: string;
 }
 
-export interface LegacyAnnotationQuery extends MetricStat, DataQuery {
+export interface LegacyAnnotationQuery extends raw.MetricStat, DataQuery {
   actionPrefix: string;
   alarmNamePrefix: string;
   alias: string;
   builtIn: number;
   datasource: any;
-  dimensions: Dimensions;
+  dimensions: raw.Dimensions;
   enable: boolean;
   expression: string;
   hide: boolean;

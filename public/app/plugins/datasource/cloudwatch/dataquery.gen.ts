@@ -112,12 +112,17 @@ export interface QueryEditorOperatorExpression {
   /**
    * TODO QueryEditorOperator<QueryEditorOperatorValueType>, extend in veneer
    */
-  operator: {
-    name?: string;
-    value?: (QueryEditorOperatorType | Array<QueryEditorOperatorType>);
-  };
+  operator: QueryEditorOperator;
   property: QueryEditorProperty;
   type: QueryEditorExpressionType.Operator;
+}
+
+/**
+ * TODO <T extends QueryEditorOperatorValueType>, extend in veneer
+ */
+export interface QueryEditorOperator {
+  name?: string;
+  value?: (QueryEditorOperatorType | Array<QueryEditorOperatorType>);
 }
 
 export type QueryEditorOperatorValueType = (QueryEditorOperatorType | Array<QueryEditorOperatorType>);
@@ -129,9 +134,12 @@ export interface QueryEditorProperty {
   type: QueryEditorPropertyType;
 }
 
+/**
+ * TODO remove "any" member when one-member enum generation is fixed
+ */
 export enum QueryEditorPropertyType {
+  Any = 'any',
   String = 'string',
-  Test = 'test',
 }
 
 export interface QueryEditorArrayExpression {
@@ -144,6 +152,8 @@ export interface QueryEditorArrayExpression {
    */
   type: QueryEditorExpressionType;
 }
+
+export type QueryEditorExpression = (QueryEditorArrayExpression | QueryEditorPropertyExpression | QueryEditorGroupByExpression | QueryEditorFunctionExpression | QueryEditorFunctionParameterExpression | QueryEditorOperatorExpression);
 
 export interface CloudWatchLogsQuery extends common.DataQuery {
   expression?: string;
