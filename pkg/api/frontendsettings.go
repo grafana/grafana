@@ -31,22 +31,20 @@ func (hs *HTTPServer) GetFrontendSettings(c *contextmodel.ReqContext) {
 
 // getFrontendSettings returns a json object with all the settings needed for front end initialisation.
 func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.FrontendSettingsDTO, error) {
-	enabledPlugins, err := hs.enabledPlugins(c.Req.Context(), c.OrgID)
+	availablePlugins, err := hs.availablePlugins(c.Req.Context(), c.OrgID)
 	if err != nil {
 		return nil, err
 	}
 
-	pluginsToPreload := make([]*plugins.PreloadPlugin, 0)
-	for _, app := range enabledPlugins[plugins.App] {
-		if app.Preload {
-			pluginsToPreload = append(pluginsToPreload, &plugins.PreloadPlugin{
-				Path:    app.Module,
-				Version: app.Info.Version,
-			})
-		}
+	apps := make(map[string]*plugins.AppDTO, 0)
+	for _, ap := range availablePlugins[plugins.App] {
+		apps[ap.Plugin.ID] = newAppDTO(
+			ap.Plugin,
+			ap.Settings,
+		)
 	}
 
-	dataSources, err := hs.getFSDataSources(c, enabledPlugins)
+	dataSources, err := hs.getFSDataSources(c, availablePlugins)
 	if err != nil {
 		return nil, err
 	}
@@ -59,7 +57,8 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	}
 
 	panels := make(map[string]plugins.PanelDTO)
-	for _, panel := range enabledPlugins[plugins.Panel] {
+	for _, ap := range availablePlugins[plugins.Panel] {
+		panel := ap.Plugin
 		if panel.State == plugins.AlphaRelease && !hs.Cfg.PluginsEnableAlpha {
 			continue
 		}
@@ -102,6 +101,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		Datasources:                         dataSources,
 		MinRefreshInterval:                  setting.MinRefreshInterval,
 		Panels:                              panels,
+		Apps:                                apps,
 		AppUrl:                              hs.Cfg.AppURL,
 		AppSubUrl:                           hs.Cfg.AppSubURL,
 		AllowOrgCreate:                      (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
@@ -143,7 +143,6 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		AngularSupportEnabled:               hs.Cfg.AngularSupportEnabled,
 		EditorsCanAdmin:                     hs.Cfg.EditorsCanAdmin,
 		DisableSanitizeHtml:                 hs.Cfg.DisableSanitizeHtml,
-		PluginsToPreload:                    pluginsToPreload,
 		DateFormats:                         hs.Cfg.DateFormats,
 
 		Auth: dtos.FrontendSettingsAuthDTO{
@@ -259,7 +258,7 @@ func isSupportBundlesEnabled(hs *HTTPServer) bool {
 		hs.Features.IsEnabled(featuremgmt.FlagSupportBundles)
 }
 
-func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, enabledPlugins EnabledPlugins) (map[string]plugins.DataSourceDTO, error) {
+func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlugins AvailablePlugins) (map[string]plugins.DataSourceDTO, error) {
 	orgDataSources := make([]*datasources.DataSource, 0)
 	if c.OrgID != 0 {
 		query := datasources.GetDataSourcesQuery{OrgID: c.OrgID, DataSourceLimit: hs.Cfg.DataSourceLimit}
@@ -300,11 +299,12 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, enabledPlugin
 			ReadOnly:  ds.ReadOnly,
 		}
 
-		plugin, exists := enabledPlugins.Get(plugins.DataSource, ds.Type)
+		ap, exists := availablePlugins.Get(plugins.DataSource, ds.Type)
 		if !exists {
 			c.Logger.Error("Could not find plugin definition for data source", "datasource_type", ds.Type)
 			continue
 		}
+		plugin := ap.Plugin
 		dsDTO.Preload = plugin.Preload
 		dsDTO.Module = plugin.Module
 		dsDTO.PluginMeta = &plugins.PluginMetaDTO{
@@ -397,6 +397,21 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, enabledPlugin
 	return dataSources, nil
 }
 
+func newAppDTO(plugin plugins.PluginDTO, settings pluginsettings.InfoDTO) *plugins.AppDTO {
+	app := &plugins.AppDTO{
+		ID:      plugin.ID,
+		Version: plugin.Info.Version,
+		Path:    plugin.Module,
+		Preload: plugin.Preload,
+	}
+
+	if settings.Enabled {
+		app.Extensions = plugin.Extensions
+	}
+
+	return app
+}
+
 func getPanelSort(id string) int {
 	sort := 100
 	switch id {
@@ -438,52 +453,66 @@ func getPanelSort(id string) int {
 	return sort
 }
 
-// EnabledPlugins represents a mapping from plugin types (panel, data source, etc.) to plugin IDs to plugins
-// For example ["panel"] -> ["piechart"] -> {pie chart plugin DTO}
-type EnabledPlugins map[plugins.Type]map[string]plugins.PluginDTO
-
-func (ep EnabledPlugins) Get(pluginType plugins.Type, pluginID string) (plugins.PluginDTO, bool) {
-	if _, exists := ep[pluginType][pluginID]; exists {
-		return ep[pluginType][pluginID], true
-	}
-
-	return plugins.PluginDTO{}, false
+type availablePluginDTO struct {
+	Plugin   plugins.PluginDTO
+	Settings pluginsettings.InfoDTO
 }
 
-func (hs *HTTPServer) enabledPlugins(ctx context.Context, orgID int64) (EnabledPlugins, error) {
-	ep := make(EnabledPlugins)
+// AvailablePlugins represents a mapping from plugin types (panel, data source, etc.) to plugin IDs to plugins
+// For example ["panel"] -> ["piechart"] -> {pie chart plugin DTO}
+type AvailablePlugins map[plugins.Type]map[string]*availablePluginDTO
+
+func (ap AvailablePlugins) Get(pluginType plugins.Type, pluginID string) (*availablePluginDTO, bool) {
+	if _, exists := ap[pluginType][pluginID]; exists {
+		return ap[pluginType][pluginID], true
+	}
+
+	return nil, false
+}
+
+func (hs *HTTPServer) availablePlugins(ctx context.Context, orgID int64) (AvailablePlugins, error) {
+	ap := make(AvailablePlugins)
 
 	pluginSettingMap, err := hs.pluginSettings(ctx, orgID)
 	if err != nil {
-		return ep, err
+		return ap, err
 	}
 
-	apps := make(map[string]plugins.PluginDTO)
+	apps := make(map[string]*availablePluginDTO)
 	for _, app := range hs.pluginStore.Plugins(ctx, plugins.App) {
-		if b, exists := pluginSettingMap[app.ID]; exists {
-			app.Pinned = b.Pinned
-			apps[app.ID] = app
+		if s, exists := pluginSettingMap[app.ID]; exists {
+			app.Pinned = s.Pinned
+			apps[app.ID] = &availablePluginDTO{
+				Plugin:   app,
+				Settings: *s,
+			}
 		}
 	}
-	ep[plugins.App] = apps
+	ap[plugins.App] = apps
 
-	dataSources := make(map[string]plugins.PluginDTO)
+	dataSources := make(map[string]*availablePluginDTO)
 	for _, ds := range hs.pluginStore.Plugins(ctx, plugins.DataSource) {
-		if _, exists := pluginSettingMap[ds.ID]; exists {
-			dataSources[ds.ID] = ds
+		if s, exists := pluginSettingMap[ds.ID]; exists {
+			dataSources[ds.ID] = &availablePluginDTO{
+				Plugin:   ds,
+				Settings: *s,
+			}
 		}
 	}
-	ep[plugins.DataSource] = dataSources
+	ap[plugins.DataSource] = dataSources
 
-	panels := make(map[string]plugins.PluginDTO)
+	panels := make(map[string]*availablePluginDTO)
 	for _, p := range hs.pluginStore.Plugins(ctx, plugins.Panel) {
-		if _, exists := pluginSettingMap[p.ID]; exists {
-			panels[p.ID] = p
+		if s, exists := pluginSettingMap[p.ID]; exists {
+			panels[p.ID] = &availablePluginDTO{
+				Plugin:   p,
+				Settings: *s,
+			}
 		}
 	}
-	ep[plugins.Panel] = panels
+	ap[plugins.Panel] = panels
 
-	return ep, nil
+	return ap, nil
 }
 
 func (hs *HTTPServer) pluginSettings(ctx context.Context, orgID int64) (map[string]*pluginsettings.InfoDTO, error) {

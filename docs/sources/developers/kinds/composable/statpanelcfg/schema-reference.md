@@ -8,7 +8,7 @@ title: StatPanelCfg kind
 
 ## StatPanelCfg
 
-#### Maturity: experimental
+#### Maturity: [experimental](../../../maturity/#experimental)
 #### Version: 0.0
 
 
