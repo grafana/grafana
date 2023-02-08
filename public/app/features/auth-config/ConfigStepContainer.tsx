@@ -63,7 +63,7 @@ export const ConfigStepContainerUnconnected = ({
 const getStyles = (theme: GrafanaTheme2) => {
   return {
     formContent: css`
-      margin: ${theme.spacing(4)} 0;
+      margin: ${theme.spacing(2)} 0;
     `,
     header: css`
       display: flex;
