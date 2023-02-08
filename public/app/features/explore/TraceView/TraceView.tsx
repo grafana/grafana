@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import React, { RefObject, useCallback, useMemo, useState } from 'react';
+import React, { RefObject, useMemo, useState } from 'react';
 
 import {
   DataFrame,
