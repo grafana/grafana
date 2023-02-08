@@ -7,10 +7,6 @@
 package featuremgmt
 
 const (
-	// FlagReturnUnameHeader
-	// Return user login as header for authenticated requests
-	FlagReturnUnameHeader = "returnUnameHeader"
-
 	// FlagAlertingBigTransactions
 	// Use big transactions for alerting database writes
 	FlagAlertingBigTransactions = "alertingBigTransactions"
@@ -226,10 +222,6 @@ const (
 	// FlagMysqlAnsiQuotes
 	// Use double quotes to escape keyword in a MySQL query
 	FlagMysqlAnsiQuotes = "mysqlAnsiQuotes"
-
-	// FlagDatasourceLogger
-	// Logs all datasource requests
-	FlagDatasourceLogger = "datasourceLogger"
 
 	// FlagAccessControlOnCall
 	// Access control primitives for OnCall
