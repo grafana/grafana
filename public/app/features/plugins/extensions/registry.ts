@@ -17,15 +17,15 @@ export function createPluginExtensionsRegistry(apps: Record<string, AppPluginCon
     }
 
     for (const extension of extensions) {
-      const target = extension.target;
+      const placement = extension.placement;
       const item = createRegistryItem(pluginId, extension);
 
-      if (!Array.isArray(registry[target])) {
-        registry[target] = [item];
+      if (!Array.isArray(registry[placement])) {
+        registry[placement] = [item];
         continue;
       }
 
-      registry[target].push(item);
+      registry[placement].push(item);
       continue;
     }
   }
@@ -38,14 +38,14 @@ export function createPluginExtensionsRegistry(apps: Record<string, AppPluginCon
 }
 
 function createRegistryItem(pluginId: string, extension: PluginsExtensionLinkConfig): PluginsExtensionLink {
-  const href = `/a/${pluginId}${extension.path}`;
+  const path = `/a/${pluginId}${extension.path}`;
 
   return Object.freeze({
     type: PluginExtensionTypes.link,
     title: extension.title,
     description: extension.description,
-    href: href,
-    key: hashKey(`${extension.title}${href}`),
+    path: path,
+    key: hashKey(`${extension.title}${path}`),
   });
 }
 

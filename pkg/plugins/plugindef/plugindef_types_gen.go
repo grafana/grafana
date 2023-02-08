@@ -162,7 +162,7 @@ type ExtensionsLink struct {
 	Path string `json:"path"`
 
 	// Target where the link will be rendered
-	Target string `json:"target"`
+	Placement string `json:"placement"`
 
 	// Title that will be displayed for the rendered link
 	Title string `json:"title"`

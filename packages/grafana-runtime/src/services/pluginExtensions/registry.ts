@@ -2,7 +2,7 @@ export type PluginsExtensionLink = {
   type: 'link';
   title: string;
   description: string;
-  href: string;
+  path: string;
   key: number;
 };
 
