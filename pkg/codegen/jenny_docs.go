@@ -365,9 +365,7 @@ func (md mdSection) write(w io.Writer) {
 func (s *schema) Markdown() string {
 	buf := new(bytes.Buffer)
 
-	sections := s.sections()
-
-	for _, v := range sections {
+	for _, v := range s.sections() {
 		v.write(buf)
 	}
 
@@ -375,18 +373,19 @@ func (s *schema) Markdown() string {
 }
 
 func (s *schema) sections() []mdSection {
-	sections := []mdSection{{}}
+	md := mdSection{}
 
 	if s.AdditionalProperties == nil {
-		sections[0].title = s.Title
+		md.title = s.Title
 	}
-	sections[0].description = s.Description
+	md.description = s.Description
 
 	if len(s.extends) > 0 {
-		sections[0].extends = makeExtends(s.extends)
+		md.extends = makeExtends(s.extends)
 	}
-	sections[0].rows = makeRows(s)
+	md.rows = makeRows(s)
 
+	sections := []mdSection{md}
 	for _, sch := range findDefinitions(s) {
 		for _, ss := range sch.sections() {
 			if !contains(sections, ss) {
@@ -399,10 +398,6 @@ func (s *schema) sections() []mdSection {
 }
 
 func contains(sl []mdSection, elem mdSection) bool {
-	if sl == nil {
-		return false
-	}
-
 	for _, s := range sl {
 		if reflect.DeepEqual(s, elem) {
 			return true
