@@ -1,5 +1,4 @@
 ---
-aliases:
 description: Feature and improvement highlights for Grafana v9.4
 keywords:
   - grafana
@@ -271,7 +270,7 @@ Grafana Alerting is now compatible with AWS Aurora, but does not provide technic
 
 ## Enterprise Datasources
 
-We've made improvements to all [Enterprise Datasources](https://grafana.com/docs/grafana/latest/introduction/grafana-enterprise/#enterprise-data-sources), fixing small bugs and keeping libraries updated. We've also added many new features and support for additional APIs. Refer to each datasource's documentation and change log for additional information.
+We've made improvements to all [Enterprise Datasources]({{< relref "../introduction/grafana-enterprise/#enterprise-data-sources" >}}), fixing small bugs, and updating libraries. We've also added many new features and support for additional APIs. Refer to each datasource's documentation and the change log for additional information.
 
 ### DataDog Datasource
 
@@ -301,7 +300,7 @@ We've added support for JWT authentication.
 
 We've added support for custom session parameters.
 
-# Before you upgrade
+## Before you upgrade
 
 There are no known breaking changes associated with this version of Grafana.
 
