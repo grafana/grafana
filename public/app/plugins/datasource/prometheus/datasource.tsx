@@ -465,7 +465,7 @@ export class PrometheusDatasource
 
       // 10 min
       const requeryLastMs = 10 * 60 * 1000;
-      const refreshMs = durationToMilliseconds(parseDuration(this.timeSrv.refresh));
+      const refreshMs = this.timeSrv.refresh ? durationToMilliseconds(parseDuration(this.timeSrv.refresh)) : 0;
       const doIncrementalQuery = refreshMs > 0 && fullRangeMs > requeryLastMs;
       let doPartialQuery = doIncrementalQuery;
 
