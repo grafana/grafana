@@ -224,18 +224,18 @@ const (
 
 // CloudWatchAnnotationQuery defines model for CloudWatchAnnotationQuery.
 type CloudWatchAnnotationQuery struct {
-	AccountId       *string                                                              `json:"accountId,omitempty"`
-	ActionPrefix    *string                                                              `json:"actionPrefix,omitempty"`
-	AlarmNamePrefix *string                                                              `json:"alarmNamePrefix,omitempty"`
-	Dimensions      map[string]CloudWatchAnnotationQuery_Dimensions_AdditionalProperties `json:"dimensions,omitempty"`
-	MatchExact      *bool                                                                `json:"matchExact,omitempty"`
-	MetricName      *string                                                              `json:"metricName,omitempty"`
-	Namespace       string                                                               `json:"namespace"`
-	Period          *string                                                              `json:"period,omitempty"`
-	PrefixMatching  *bool                                                                `json:"prefixMatching,omitempty"`
-	QueryMode       CloudWatchAnnotationQueryQueryMode                                   `json:"queryMode"`
-	Region          string                                                               `json:"region"`
-	Statistic       *string                                                              `json:"statistic,omitempty"`
+	AccountId       *string                            `json:"accountId,omitempty"`
+	ActionPrefix    *string                            `json:"actionPrefix,omitempty"`
+	AlarmNamePrefix *string                            `json:"alarmNamePrefix,omitempty"`
+	Dimensions      map[string]interface{}             `json:"dimensions,omitempty"`
+	MatchExact      *bool                              `json:"matchExact,omitempty"`
+	MetricName      *string                            `json:"metricName,omitempty"`
+	Namespace       string                             `json:"namespace"`
+	Period          *string                            `json:"period,omitempty"`
+	PrefixMatching  *bool                              `json:"prefixMatching,omitempty"`
+	QueryMode       CloudWatchAnnotationQueryQueryMode `json:"queryMode"`
+	Region          string                             `json:"region"`
+	Statistic       *string                            `json:"statistic,omitempty"`
 
 	// @deprecated use statistic
 	Statistics []string `json:"statistics,omitempty"`
@@ -288,9 +288,9 @@ type CloudWatchLogsQueryQueryMode string
 
 // CloudWatchMetricsQuery defines model for CloudWatchMetricsQuery.
 type CloudWatchMetricsQuery struct {
-	AccountId  *string                                                           `json:"accountId,omitempty"`
-	Alias      *string                                                           `json:"alias,omitempty"`
-	Dimensions map[string]CloudWatchMetricsQuery_Dimensions_AdditionalProperties `json:"dimensions,omitempty"`
+	AccountId  *string                `json:"accountId,omitempty"`
+	Alias      *string                `json:"alias,omitempty"`
+	Dimensions map[string]interface{} `json:"dimensions,omitempty"`
 
 	// Math expression query
 	Expression *string `json:"expression,omitempty"`
@@ -400,7 +400,7 @@ type CloudWatchMetricsQuerySqlWhereType string
 type CloudWatchQueryMode string
 
 // Dimensions defines model for Dimensions.
-type Dimensions map[string]Dimensions_AdditionalProperties
+type Dimensions map[string]interface{}
 
 // LogGroup defines model for LogGroup.
 type LogGroup struct {
@@ -418,14 +418,14 @@ type MetricQueryType int
 
 // MetricStat defines model for MetricStat.
 type MetricStat struct {
-	AccountId  *string                                               `json:"accountId,omitempty"`
-	Dimensions map[string]MetricStat_Dimensions_AdditionalProperties `json:"dimensions,omitempty"`
-	MatchExact *bool                                                 `json:"matchExact,omitempty"`
-	MetricName *string                                               `json:"metricName,omitempty"`
-	Namespace  string                                                `json:"namespace"`
-	Period     *string                                               `json:"period,omitempty"`
-	Region     string                                                `json:"region"`
-	Statistic  *string                                               `json:"statistic,omitempty"`
+	AccountId  *string                `json:"accountId,omitempty"`
+	Dimensions map[string]interface{} `json:"dimensions,omitempty"`
+	MatchExact *bool                  `json:"matchExact,omitempty"`
+	MetricName *string                `json:"metricName,omitempty"`
+	Namespace  string                 `json:"namespace"`
+	Period     *string                `json:"period,omitempty"`
+	Region     string                 `json:"region"`
+	Statistic  *string                `json:"statistic,omitempty"`
 
 	// @deprecated use statistic
 	Statistics []string `json:"statistics,omitempty"`
