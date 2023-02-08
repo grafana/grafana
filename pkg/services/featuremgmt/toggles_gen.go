@@ -127,10 +127,6 @@ const (
 	// Shows the new trace view design
 	FlagNewTraceView = "newTraceView"
 
-	// FlagCommandPalette
-	// Enable command palette
-	FlagCommandPalette = "commandPalette"
-
 	// FlagCorrelations
 	// Correlations page
 	FlagCorrelations = "correlations"
