@@ -53,7 +53,7 @@ func (s *Service) supportBundleCollector(context.Context) (*supportbundles.Suppo
 		for _, server := range ldapConfig.Servers {
 			if !strings.Contains(server.SearchFilter, server.Attr.Username) {
 				bWriter.WriteString(fmt.Sprintf(
-					"Search filter does not contain username attribute  \n"+
+					"Search filter does not match username attribute  \n"+
 						"Server: %s  \n"+
 						"Search filter: %s  \n"+
 						"Username attribute: %s  \n",
