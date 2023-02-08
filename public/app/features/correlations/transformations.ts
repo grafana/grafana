@@ -1,31 +1,34 @@
 import logfmt from 'logfmt';
 
-import { ScopedVars, Transformation } from '@grafana/data';
+import { ScopedVars, DataLinkTransformationConfig } from '@grafana/data';
 import { safeStringifyValue } from 'app/core/utils/explore';
 
 export const getTransformationVars = (
-  transformation: Transformation,
+  transformation: DataLinkTransformationConfig,
   fieldValue: string,
   fieldName: string
 ): ScopedVars => {
   let transformationScopedVars: ScopedVars = {};
+  let transformVal: { [key: string]: string | boolean | null } = {};
   if (transformation.type === 'regex' && transformation.expression) {
-    const regexp = new RegExp(transformation.expression);
-    const matches = fieldValue.match(regexp);
-    if (matches && matches?.length > 0) {
-      transformationScopedVars[transformation.variable || fieldName] = {
-        value: matches[1] || matches[0], // not global - return capture group if found, else full match
-      };
+    const regexp = new RegExp(transformation.expression, 'gi');
+    const matches = fieldValue.matchAll(regexp);
+    for (const match of matches) {
+      if (match.groups) {
+        transformVal = match.groups;
+      } else {
+        transformVal[transformation.variable || fieldName] = match[1] || match[0];
+      }
     }
   } else if (transformation.type === 'logfmt') {
-    const logFmtVal = logfmt.parse(fieldValue) as { [key: string]: string | boolean | null };
-    let scopeVarFromLogFmt: ScopedVars = {};
-    Object.keys(logFmtVal).forEach((key) => {
-      const logFmtValueString =
-        typeof logFmtVal[key] === 'string' ? logFmtVal[key] : safeStringifyValue(logFmtVal[key]);
-      scopeVarFromLogFmt[key] = { value: logFmtValueString };
-    });
-    transformationScopedVars = { ...transformationScopedVars, ...scopeVarFromLogFmt };
+    transformVal = logfmt.parse(fieldValue) as { [key: string]: string | boolean | null };
   }
+
+  Object.keys(transformVal).forEach((key) => {
+    const transformValString =
+      typeof transformVal[key] === 'string' ? transformVal[key] : safeStringifyValue(transformVal[key]);
+    transformationScopedVars[key] = { value: transformValString };
+  });
+
   return transformationScopedVars;
 };

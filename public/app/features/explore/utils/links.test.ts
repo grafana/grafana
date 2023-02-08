@@ -322,7 +322,7 @@ describe('getFieldLinksForExplore', () => {
     );
   });
 
-  it('returns internal links with logfmt with correct data on transportation-defined field', () => {
+  it('returns internal links with logfmt with correct data on transformation-defined field', () => {
     const transformationLink: DataLink = {
       title: '',
       url: '',
@@ -370,6 +370,55 @@ describe('getFieldLinksForExplore', () => {
     expect(links[1][0].href).toBe(
       `/explore?left=${encodeURIComponent(
         '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=transform2}"}]}'
+      )}`
+    );
+  });
+
+  it('returns internal links with regex named capture groups', () => {
+    const transformationLink: DataLink = {
+      title: '',
+      url: '',
+      internal: {
+        query: { query: 'http_requests{app=${application} env=${environment}}' },
+        datasourceUid: 'uid_1',
+        datasourceName: 'test_ds',
+        transformations: [
+          { type: 'regex', expression: '(?=.*(?<application>(grafana|loki)))(?=.*(?<environment>(dev|prod)))' },
+        ],
+      },
+    };
+
+    const { field, range, dataFrame } = setup(transformationLink, true, {
+      name: 'msg',
+      type: FieldType.string,
+      values: new ArrayVector(['foo loki prod', 'dev bar grafana', 'prod grafana foo']),
+      config: {
+        links: [transformationLink],
+      },
+    });
+
+    const links = [
+      getFieldLinksForExplore({ field, rowIndex: 0, range, dataFrame }),
+      getFieldLinksForExplore({ field, rowIndex: 1, range, dataFrame }),
+      getFieldLinksForExplore({ field, rowIndex: 2, range, dataFrame }),
+    ];
+    expect(links[0]).toHaveLength(1);
+    expect(links[0][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=loki env=prod}"}]}'
+      )}`
+    );
+    expect(links[1]).toHaveLength(1);
+    expect(links[1][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=grafana env=dev}"}]}'
+      )}`
+    );
+
+    expect(links[2]).toHaveLength(1);
+    expect(links[2][0].href).toBe(
+      `/explore?left=${encodeURIComponent(
+        '{"range":{"from":"now-1h","to":"now"},"datasource":"uid_1","queries":[{"query":"http_requests{app=grafana env=prod}"}]}'
       )}`
     );
   });

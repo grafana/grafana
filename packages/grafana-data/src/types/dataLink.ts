@@ -41,7 +41,7 @@ export interface DataLink<T extends DataQuery = any> {
 }
 
 /** @internal */
-export interface Transformation {
+export interface DataLinkTransformationConfig {
   type: 'regex' | 'logfmt';
   field?: string;
   variable?: string;
@@ -54,7 +54,7 @@ export interface InternalDataLink<T extends DataQuery = any> {
   datasourceUid: string;
   datasourceName: string; // used as a title if `DataLink.title` is empty
   panelsState?: ExplorePanelsState;
-  transformations?: Transformation[];
+  transformations?: DataLinkTransformationConfig[];
 }
 
 export type LinkTarget = '_blank' | '_self' | undefined;
