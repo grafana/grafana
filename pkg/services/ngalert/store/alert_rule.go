@@ -275,25 +275,24 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 		q = q.Asc("namespace_uid", "rule_group", "rule_group_idx", "id")
 
 		alertRules := make([]*ngmodels.AlertRule, 0)
-		var faultyRules int64 = 0
 		rule := new(ngmodels.AlertRule)
 		rows, err := q.Rows(rule)
 		if err != nil {
 			return err
 		}
-		defer rows.Close()
+		defer func() {
+			_ = rows.Close()
+		}()
+
+		// Deserialize each rule separately in case any of them contain invalid JSON.
 		for rows.Next() {
 			rule := new(ngmodels.AlertRule)
 			err = rows.Scan(rule)
 			if err != nil {
-				faultyRules++
+				st.Logger.Error("Invalid rule found in DB store, ignoring it", "func", "ListAlertRules", "error", err)
 				continue
 			}
 			alertRules = append(alertRules, rule)
-		}
-
-		if faultyRules > 0 {
-			st.Logger.Error("Faulty rules found in DB store.", "func", "ListAlertRules", "faultyRules", faultyRules)
 		}
 
 		query.Result = alertRules
@@ -472,26 +471,24 @@ func (st DBstore) GetAlertRulesForScheduling(ctx context.Context, query *ngmodel
 			alertRulesSql += " WHERE " + filter
 		}
 
-		var faultyRules int64 = 0
 		rule := new(ngmodels.AlertRule)
 		rows, err := sess.SQL(alertRulesSql, args...).Rows(rule)
 		if err != nil {
 			return fmt.Errorf("failed to fetch alert rules: %w", err)
 		}
-		defer rows.Close()
+		defer func() {
+			_ = rows.Close()
+		}()
 
+		// Deserialize each rule separately in case any of them contain invalid JSON.
 		for rows.Next() {
 			rule := new(ngmodels.AlertRule)
 			err = rows.Scan(rule)
 			if err != nil {
-				faultyRules++
+				st.Logger.Error("Invalid rule found in DB store, ignoring it", "func", "GetAlertRulesForScheduling", "error", err)
 				continue
 			}
 			rules = append(rules, rule)
-		}
-
-		if faultyRules > 0 {
-			st.Logger.Error("Faulty rules found in DB store.", "func", "GetAlertRulesForScheduling", "faultyRules", faultyRules)
 		}
 
 		query.ResultRules = rules
