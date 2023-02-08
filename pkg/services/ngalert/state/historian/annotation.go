@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
@@ -26,6 +27,7 @@ type AnnotationBackend struct {
 	annotations annotations.Repository
 	dashboards  *dashboardResolver
 	rules       RuleStore
+	metrics     *metrics.Historian
 	log         log.Logger
 }
 
@@ -33,11 +35,12 @@ type RuleStore interface {
 	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) error
 }
 
-func NewAnnotationBackend(annotations annotations.Repository, dashboards dashboards.DashboardService, rules RuleStore) *AnnotationBackend {
+func NewAnnotationBackend(annotations annotations.Repository, dashboards dashboards.DashboardService, rules RuleStore, metrics *metrics.Historian) *AnnotationBackend {
 	return &AnnotationBackend{
 		annotations: annotations,
 		dashboards:  newDashboardResolver(dashboards, defaultDashboardCacheExpiry),
 		rules:       rules,
+		metrics:     metrics,
 		log:         log.New("ngalert.state.historian"),
 	}
 }

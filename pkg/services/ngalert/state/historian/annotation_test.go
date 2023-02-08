@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -15,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
+	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
@@ -49,7 +51,8 @@ func createTestAnnotationBackendSut(t *testing.T) *AnnotationBackend {
 	rules.Rules[1] = []*models.AlertRule{
 		models.AlertRuleGen(withOrgID(1), withUID("my-rule"))(),
 	}
-	return NewAnnotationBackend(fakeAnnoRepo, &dashboards.FakeDashboardService{}, rules)
+	metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry())
+	return NewAnnotationBackend(fakeAnnoRepo, &dashboards.FakeDashboardService{}, rules, metrics)
 }
 
 func createAnnotation() annotations.Item {
