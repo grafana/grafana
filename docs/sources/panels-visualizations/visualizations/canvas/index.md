@@ -44,7 +44,7 @@ The icon element enables you to add a supported icon to the canvas. Icons can ha
 
 ## Connections
 
-When building a canvas panel, you can connect elements together to create more complex visualizations. Connections are created by dragging from the connection anchor of one element to the connection anchor of another element. Connections can also be created to the background of the canvas panel. Connection anchors are displayed when an element is hovered over and inline editing is turned on. To remove a connection, simply click on the connection directly and then press the "Delete" key.
+When building a canvas panel, you can connect elements together to create more complex visualizations. Connections are created by dragging from the connection anchor of one element to the connection anchor of another element. You can also create connections to the background of the canvas panel. Connection anchors are displayed when you hover over an element and inline editing is turned on. To remove a connection, simply click on the connection directly and then press the "Delete" key.
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-connections-9-4-0.mp4" max-width="750px" caption="Canvas connections demo" >}}
 
