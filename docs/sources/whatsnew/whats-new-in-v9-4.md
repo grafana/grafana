@@ -56,7 +56,7 @@ We’ve rethought the panel information architecture, added additional interacti
 
 Grafana’s new panel is available only for React-based panels; no Angular-based panels are redesigned. For example, Angular-based panel will still have the old Graph and Table visualizations.
 
-{{< video-embed src="/media/docs/grafana/screen-recording-panel-header-redesign-whats-new-9-4.mp4>" >}}
+{{< video-embed src="/media/docs/grafana/screen-recording-panel-header-redesign-whats-new-9-4.mp4" max-width="750px" caption="Panel header redesign" >}}
 
 However, we have more planned: we’re going to make even more improvements to the accessibility of panels and improvements to panels without a header.
 
