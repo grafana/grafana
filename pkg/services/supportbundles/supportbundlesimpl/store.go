@@ -4,14 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
 
 	"github.com/grafana/grafana/pkg/infra/kvstore"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/supportbundles"
 	"github.com/grafana/grafana/pkg/services/user"
 )
@@ -26,11 +29,14 @@ func newStore(kv kvstore.KVStore) *store {
 	return &store{
 		kv:     kvstore.WithNamespace(kv, 0, "supportbundle"),
 		statKV: kvstore.WithNamespace(kv, 0, "supportbundlestats"),
+		log:    log.New("supportbundle.store"),
 	}
 }
 
 type store struct {
 	kv     *kvstore.NamespacedKVStore
+	log    log.Logger
+	mu     sync.Mutex
 	statKV *kvstore.NamespacedKVStore
 }
 
@@ -56,6 +62,25 @@ func (s *store) Create(ctx context.Context, usr *user.SignedInUser) (*supportbun
 		CreatedAt: time.Now().Unix(),
 		ExpiresAt: time.Now().Add(defaultBundleExpiration).Unix(),
 	}
+
+	s.mu.Lock()
+
+	bundlesCreatedString, _, err := s.statKV.Get(ctx, key)
+	if err != nil {
+		s.log.Warn("An error has occurred upon retrieving value at statKV", "key", key)
+	}
+
+	bundlesCreated, err := strconv.ParseInt(bundlesCreatedString, 10, 64)
+	if err != nil {
+		s.log.Warn("No value was found at statKV", "key", key)
+	}
+
+	bundlesCreated = bundlesCreated + 1
+
+	if err := s.statKV.Set(ctx, key, fmt.Sprint(bundlesCreated)); err != nil {
+		s.log.Warn("An error has occurred upon setting a value at statKV", "key", key)
+	}
+	s.mu.Unlock()
 
 	if err := s.set(ctx, &bundle); err != nil {
 		return nil, err
