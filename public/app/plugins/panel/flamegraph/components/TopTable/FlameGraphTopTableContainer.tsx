@@ -35,7 +35,7 @@ const FlameGraphTopTableContainer = ({
   setRangeMin,
   setRangeMax,
 }: Props) => {
-  const styles = useStyles2(() => getStyles(selectedView, app));
+  const styles = useStyles2(() => getStyles(selectedView));
   const [topTable, setTopTable] = useState<TopTableData[]>();
   const valueField =
     data.fields.find((f) => f.name === 'value') ?? data.fields.find((f) => f.type === FieldType.number);
@@ -105,7 +105,12 @@ const FlameGraphTopTableContainer = ({
     <>
       {topTable && (
         <div className={styles.topTableContainer}>
-          <AutoSizer style={{ width: '100%', height: PIXELS_PER_LEVEL * totalLevels + 'px' }}>
+          <AutoSizer
+            style={{
+              width: '100%',
+              height: Math.max(PIXELS_PER_LEVEL * totalLevels, app === CoreApp.Explore ? 300 : 0) + 'px',
+            }}
+          >
             {({ width, height }) => (
               <FlameGraphTopTable
                 width={width}
@@ -126,7 +131,7 @@ const FlameGraphTopTableContainer = ({
   );
 };
 
-const getStyles = (selectedView: SelectedView, app: CoreApp) => {
+const getStyles = (selectedView: SelectedView) => {
   const marginRight = '20px';
 
   return {
@@ -135,9 +140,6 @@ const getStyles = (selectedView: SelectedView, app: CoreApp) => {
       float: left;
       margin-right: ${marginRight};
       width: ${selectedView === SelectedView.TopTable ? '100%' : `calc(50% - ${marginRight})`};
-      ${app !== CoreApp.Explore
-        ? 'height: calc(100% - 50px)'
-        : 'height: calc(100% + 50px)'}; // 50px to adjust for header pushing content down
     `,
   };
 };
