@@ -3238,7 +3238,9 @@ steps:
   name: mysql-integration-tests
 - commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
-  - ./bin/grabpl integration-tests
+  - go clean -testcache
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -5935,7 +5937,9 @@ steps:
   name: mysql-integration-tests
 - commands:
   - dockerize -wait tcp://redis:6379/0 -timeout 120s
-  - ./bin/grabpl integration-tests
+  - go clean -testcache
+  - go list './pkg/...' | xargs -I {} sh -c 'go test -run Integration -covermode=atomic
+    -timeout=5m {}'
   depends_on:
   - wire-install
   environment:
@@ -6549,6 +6553,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: 94308d22003a21481161c2875bb3008db353faf2d0053536d521f4be2d7bba22
+hmac: 231c3cfdadd0324e9b37b6fae0bd1b75c341759d80731e3f7dc20bd8f18db82a
 
 ...
