@@ -8,6 +8,7 @@ import (
 	"io"
 	"path"
 	"path/filepath"
+	"reflect"
 	"sort"
 	"strings"
 	"text/template"
@@ -73,7 +74,7 @@ func (j docsJenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
 		KindVersion:     kind.Lineage().Latest().Version().String(),
 		KindMaturity:    fmt.Sprintf("[%s](../../../maturity/#%[1]s)", kindProps.Maturity),
 		KindDescription: kindProps.Description,
-		Markdown:        "{{ .Markdown 1 }}",
+		Markdown:        "{{ .Markdown }}",
 	}
 
 	tmpl, err := makeTemplate(data, "docs.tmpl")
@@ -322,42 +323,87 @@ func resolveInSchemaReference(ref string, root *simplejson.Json) (*schema, error
 	return &sch, nil
 }
 
+type mdSection struct {
+	title       string
+	extends     string
+	description string
+	rows        [][]string
+}
+
+func (md mdSection) write(w io.Writer) {
+	if md.title != "" {
+		fmt.Fprintf(w, "### %s\n", strings.Title(md.title))
+		fmt.Fprintln(w)
+	}
+
+	if md.description != "" {
+		fmt.Fprintln(w, md.description)
+		fmt.Fprintln(w)
+	}
+
+	if md.extends != "" {
+		fmt.Fprintln(w, md.extends)
+		fmt.Fprintln(w)
+	}
+
+	table := tablewriter.NewWriter(w)
+	table.SetHeader([]string{"Property", "Type", "Required", "Description"})
+	table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
+	table.SetCenterSeparator("|")
+	table.SetAutoFormatHeaders(false)
+	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+	table.SetAutoWrapText(false)
+	table.AppendBulk(md.rows)
+	table.Render()
+	fmt.Fprintln(w)
+}
+
 // Markdown returns the Markdown representation of the schema.
 //
 // The level argument can be used to offset the heading levels. This can be
 // useful if you want to add the schema under a subheading.
-func (s schema) Markdown(level int) string {
-	if level < 1 {
-		level = 1
-	}
-
+func (s *schema) Markdown() string {
 	buf := new(bytes.Buffer)
 
-	if s.Title != "" && s.AdditionalProperties == nil {
-		fmt.Fprintf(buf, "### %s\n", strings.Title(s.Title))
-		fmt.Fprintln(buf)
-	}
-
-	if s.Description != "" {
-		fmt.Fprintln(buf, s.Description)
-		fmt.Fprintln(buf)
-	}
-
-	if len(s.extends) > 0 {
-		fmt.Fprintln(buf, makeExtends(s.extends))
-		fmt.Fprintln(buf)
-	}
-
-	printProperties(buf, &s)
-
-	// Add padding.
-	fmt.Fprintln(buf)
-
-	for _, obj := range findDefinitions(&s) {
-		fmt.Fprint(buf, obj.Markdown(level+1))
+	for _, v := range s.sections() {
+		v.write(buf)
 	}
 
 	return buf.String()
+}
+
+func (s *schema) sections() []mdSection {
+	md := mdSection{}
+
+	if s.AdditionalProperties == nil {
+		md.title = s.Title
+	}
+	md.description = s.Description
+
+	if len(s.extends) > 0 {
+		md.extends = makeExtends(s.extends)
+	}
+	md.rows = makeRows(s)
+
+	sections := []mdSection{md}
+	for _, sch := range findDefinitions(s) {
+		for _, ss := range sch.sections() {
+			if !contains(sections, ss) {
+				sections = append(sections, ss)
+			}
+		}
+	}
+
+	return sections
+}
+
+func contains(sl []mdSection, elem mdSection) bool {
+	for _, s := range sl {
+		if reflect.DeepEqual(s, elem) {
+			return true
+		}
+	}
+	return false
 }
 
 func makeExtends(from []string) string {
@@ -429,15 +475,7 @@ func findDefinitions(s *schema) []*schema {
 	return objs
 }
 
-func printProperties(w io.Writer, s *schema) {
-	table := tablewriter.NewWriter(w)
-	table.SetHeader([]string{"Property", "Type", "Required", "Description"})
-	table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
-	table.SetCenterSeparator("|")
-	table.SetAutoFormatHeaders(false)
-	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
-	table.SetAutoWrapText(false)
-
+func makeRows(s *schema) [][]string {
 	// Buffer all property rows so that we can sort them before printing them.
 	rows := make([][]string, 0, len(s.Properties))
 
@@ -487,9 +525,7 @@ func printProperties(w io.Writer, s *schema) {
 		}
 		return rows[i][0] < rows[j][0]
 	})
-
-	table.AppendBulk(rows)
-	table.Render()
+	return rows
 }
 
 func propTypeStr(propName string, propValue *schema) string {

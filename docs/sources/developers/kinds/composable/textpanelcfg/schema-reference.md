@@ -36,12 +36,4 @@ title: TextPanelCfg kind
 | `mode`    | string                      | **Yes**  | Possible values are: `html`, `markdown`, `code`.                                                           |
 | `code`    | [CodeOptions](#codeoptions) | No       |                                                                                                            |
 
-### CodeOptions
-
-| Property          | Type    | Required | Description                                                                                                                   |
-|-------------------|---------|----------|-------------------------------------------------------------------------------------------------------------------------------|
-| `language`        | string  | **Yes**  | Possible values are: `plaintext`, `yaml`, `xml`, `typescript`, `sql`, `go`, `markdown`, `html`, `json`. Default: `plaintext`. |
-| `showLineNumbers` | boolean | **Yes**  | Default: `false`.                                                                                                             |
-| `showMiniMap`     | boolean | **Yes**  | Default: `false`.                                                                                                             |
-
 

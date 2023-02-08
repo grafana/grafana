@@ -45,14 +45,6 @@ A standalone panel
 | `id`        | integer | **Yes**  |             |
 | `name`      | string  | **Yes**  |             |
 
-### LibraryElementDTOMetaUser
-
-| Property    | Type    | Required | Description |
-|-------------|---------|----------|-------------|
-| `avatarUrl` | string  | **Yes**  |             |
-| `id`        | integer | **Yes**  |             |
-| `name`      | string  | **Yes**  |             |
-
 ### Model
 
 TODO: should be the same panel schema defined in dashboard

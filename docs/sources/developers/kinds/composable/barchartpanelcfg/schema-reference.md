@@ -91,26 +91,6 @@ TODO docs
 |------------|---------------------------------------|----------|-------------|
 | `hideFrom` | [HideSeriesConfig](#hideseriesconfig) | No       | TODO docs   |
 
-### HideSeriesConfig
-
-TODO docs
-
-| Property  | Type    | Required | Description |
-|-----------|---------|----------|-------------|
-| `legend`  | boolean | **Yes**  |             |
-| `tooltip` | boolean | **Yes**  |             |
-| `viz`     | boolean | **Yes**  |             |
-
-### ScaleDistributionConfig
-
-TODO docs
-
-| Property          | Type   | Required | Description                                                              |
-|-------------------|--------|----------|--------------------------------------------------------------------------|
-| `type`            | string | **Yes**  | TODO docs<br/>Possible values are: `linear`, `log`, `ordinal`, `symlog`. |
-| `linearThreshold` | number | No       |                                                                          |
-| `log`             | number | No       |                                                                          |
-
 ### PanelOptions
 
 It extends [OptionsWithLegend](#optionswithlegend) and [OptionsWithTooltip](#optionswithtooltip) and [OptionsWithTextFormatting](#optionswithtextformatting).
@@ -181,40 +161,6 @@ TODO docs
 | Property  | Type                                    | Required | Description |
 |-----------|-----------------------------------------|----------|-------------|
 | `tooltip` | [VizTooltipOptions](#viztooltipoptions) | **Yes**  | TODO docs   |
-
-### VizTooltipOptions
-
-TODO docs
-
-| Property | Type   | Required | Description                                                   |
-|----------|--------|----------|---------------------------------------------------------------|
-| `mode`   | string | **Yes**  | TODO docs<br/>Possible values are: `single`, `multi`, `none`. |
-| `sort`   | string | **Yes**  | TODO docs<br/>Possible values are: `asc`, `desc`, `none`.     |
-
-### VizLegendOptions
-
-TODO docs
-
-| Property      | Type     | Required | Description                                                                                                                             |
-|---------------|----------|----------|-----------------------------------------------------------------------------------------------------------------------------------------|
-| `calcs`       | string[] | **Yes**  |                                                                                                                                         |
-| `displayMode` | string   | **Yes**  | TODO docs<br/>Note: "hidden" needs to remain as an option for plugins compatibility<br/>Possible values are: `list`, `table`, `hidden`. |
-| `placement`   | string   | **Yes**  | TODO docs<br/>Possible values are: `bottom`, `right`.                                                                                   |
-| `showLegend`  | boolean  | **Yes**  |                                                                                                                                         |
-| `asTable`     | boolean  | No       |                                                                                                                                         |
-| `isVisible`   | boolean  | No       |                                                                                                                                         |
-| `sortBy`      | string   | No       |                                                                                                                                         |
-| `sortDesc`    | boolean  | No       |                                                                                                                                         |
-| `width`       | number   | No       |                                                                                                                                         |
-
-### VizTextDisplayOptions
-
-TODO docs
-
-| Property    | Type   | Required | Description              |
-|-------------|--------|----------|--------------------------|
-| `titleSize` | number | No       | Explicit title text size |
-| `valueSize` | number | No       | Explicit value text size |
 
 ### VizTooltipOptions
 
