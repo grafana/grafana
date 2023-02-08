@@ -25,19 +25,22 @@ export function migrateVariableQueryToEditor(rawQuery: string | PromVariableQuer
   }
 
   const labelValues = rawQuery.match(labelValuesRegex);
+
   if (labelValues) {
-    if (labelValues[2]) {
+    const label = labelValues[2];
+    const metric = labelValues[1];
+    if (metric) {
       return {
         ...queryBase,
         exprType: QueryType.LabelValues,
-        label: labelValues[2],
-        metric: labelValues[1],
+        label,
+        metric,
       };
     } else {
       return {
         ...queryBase,
         exprType: QueryType.LabelValues,
-        label: labelValues[2],
+        label,
       };
     }
   }
