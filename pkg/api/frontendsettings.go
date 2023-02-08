@@ -147,7 +147,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 
 		Auth: dtos.FrontendSettingsAuthDTO{
 			OAuthSkipOrgRoleUpdateSync:  hs.Cfg.OAuthSkipOrgRoleUpdateSync,
-			SAMLSkipOrgRoleSync:         hs.Cfg.SectionWithEnvOverrides("auth.saml").Key("skip_org_role_sync").MustBool(false),
+			SAMLSkipOrgRoleSync:         hs.Cfg.SAMLSkipOrgRoleSync,
 			LDAPSkipOrgRoleSync:         hs.Cfg.LDAPSkipOrgRoleSync,
 			GoogleSkipOrgRoleSync:       hs.Cfg.GoogleSkipOrgRoleSync,
 			JWTAuthSkipOrgRoleSync:      hs.Cfg.JWTAuthSkipOrgRoleSync,
