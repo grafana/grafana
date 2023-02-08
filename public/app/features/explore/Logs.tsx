@@ -381,15 +381,6 @@ class UnthemedLogs extends PureComponent<Props, State> {
               absoluteRange={absoluteRange}
               width={width}
               logsVolumeData={logsVolumeData}
-              logLinesBasedData={
-                logsSeries
-                  ? {
-                      data: logsSeries,
-                      state: loadingState,
-                    }
-                  : undefined
-              }
-              logLinesBasedDataVisibleRange={visibleRange}
               onUpdateTimeRange={onChangeTime}
               timeZone={timeZone}
               splitOpen={splitOpen}

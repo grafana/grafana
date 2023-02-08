@@ -22,8 +22,6 @@ import { SupplementaryResultError } from './SupplementaryResultError';
 type Props = {
   logsVolumeData: DataQueryResponse | undefined;
   absoluteRange: AbsoluteTimeRange;
-  logLinesBasedData: DataQueryResponse | undefined;
-  logLinesBasedDataVisibleRange: AbsoluteTimeRange | undefined;
   timeZone: TimeZone;
   splitOpen: SplitOpen;
   width: number;
@@ -107,8 +105,6 @@ export const LogsVolumePanelList = ({
             absoluteRange={absoluteRange}
             width={width}
             logsVolumeData={logsVolumeData}
-            logLinesBasedDataVisibleRange={undefined}
-            logLinesBasedData={undefined}
             onUpdateTimeRange={onUpdateTimeRange}
             timeZone={timeZone}
             splitOpen={splitOpen}

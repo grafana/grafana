@@ -19,8 +19,6 @@ type Props = {
   title: string;
   logsVolumeData: DataQueryResponse | undefined;
   absoluteRange: AbsoluteTimeRange;
-  logLinesBasedData: DataQueryResponse | undefined;
-  logLinesBasedDataVisibleRange: AbsoluteTimeRange | undefined;
   timeZone: TimeZone;
   splitOpen: SplitOpen;
   width: number;
