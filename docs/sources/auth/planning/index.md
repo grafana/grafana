@@ -44,16 +44,16 @@ If the users are outside your organization, you must provide anonymous access to
 
 For information about enabling anonymous access, refer to the [documentation](../../setup-grafana/configure-security/configure-authentication/_index.md#anonymous-authentication)
 
-### Why do I need to organize the users?
+## Ways to organize users
 
-1. **Security**: Different teams and customer should only have access to their intended resources.
+1. **Security**: Different groups of users or customers should only have access to their intended resources.
 1. **Simplicity**: Reduce scope of dashboards and resources available.
 1. **Cost attribution**: Track and bill costs to their customers, departments, or divisions.
-1. **Customization**: Each team could have a personalized experience like different dashboards or theme colours.
+1. **Customization**: Each group of users could have a personalized experience like different dashboards or theme colours.
 
 ### Users in Grafana Teams
 
-It makes sense to organize users in Teams in order to assign them roles and permissions reflecting the current organization. For example, instead of assigning five users access to the same dashboard, you can create a team that consists of those users and assign dashboard permissions to the team. A user can belong to multiple teams.
+It makes sense to organize users in [Teams] in order to assign them roles and permissions reflecting the current organization. For example, instead of assigning five users access to the same dashboard, you can create a team that consists of those users and assign dashboard permissions to the team. A user can belong to multiple teams.
 
 A user can be a Member or an Administrator for a given team. Members of a team inherit permissions from the team, but they cannot edit the team itself. Team Administrators can add members to a team and update its settings, such as the team name, team member’s team roles, UI preferences, and the default dashboard to be displayed upon login for the team members.
 
@@ -67,7 +67,7 @@ Grafana Organizations provide a measure of isolation within Grafana by default. 
 
 ### Choosing between teams and organizations
 
-Grafana Teams and Grafana Organizations serve similar purposes in the Grafana platform. Both are designed to help manage and control access to resources, Teams provide a more focused approach for smaller groups or projects. Teams allow for easy collaboration and shared ownership of resources among members, making it simple to manage access and control on who has access to said resources.
+[Grafana Teams] and Grafana Organizations serve similar purposes in the Grafana platform. Both are designed to help manage and control access to resources, Teams provide a more focused approach for smaller groups or projects. Teams allow for easy collaboration and shared ownership of resources among members, making it simple to manage access and control on who has access to said resources.
 
 Organizations, on the other hand, provide a higher level of management for multiple teams and resources, and are designed for larger enterprises or organizations with a complex setup or multiple and different business models.
 
