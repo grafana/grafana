@@ -18,12 +18,14 @@ export function buildInitialState(): NavIndex {
     buildNavIndex(navIndex, [homeNav]);
   }
   // set home as parent for the other rootNodes
-  buildNavIndex(navIndex, otherRootNodes, homeNav);
+  // need to use the translated home node from the navIndex
+  buildNavIndex(navIndex, otherRootNodes, navIndex[HOME_NAV_ID]);
 
   return navIndex;
 }
 
 function buildNavIndex(navIndex: NavIndex, children: NavModelItem[], parentItem?: NavModelItem) {
+  const translatedChildren: NavModelItem[] = [];
   for (const node of children) {
     const translatedNode: NavModelItem = {
       ...node,
@@ -40,6 +42,11 @@ function buildNavIndex(navIndex: NavIndex, children: NavModelItem[], parentItem?
     if (translatedNode.children) {
       buildNavIndex(navIndex, translatedNode.children, translatedNode);
     }
+    translatedChildren.push(translatedNode);
+  }
+
+  if (parentItem) {
+    parentItem.children = translatedChildren;
   }
 
   navIndex['not-found'] = { ...buildWarningNav('Page not found', '404 Error').node };

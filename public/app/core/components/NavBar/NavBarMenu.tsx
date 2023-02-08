@@ -265,12 +265,11 @@ export function NavItem({
         </ul>
       </CollapsibleNavItem>
     );
-  } else if (link.emptyMessageId) {
-    const emptyMessageTranslated = getNavTitle(link.emptyMessageId);
+  } else if (link.emptyMessage) {
     return (
       <CollapsibleNavItem onClose={onClose} link={link} isActive={isMatchOrChildMatch(link, activeItem)}>
         <ul className={styles.children}>
-          <div className={styles.emptyMessage}>{emptyMessageTranslated}</div>
+          <div className={styles.emptyMessage}>{link.emptyMessage}</div>
         </ul>
       </CollapsibleNavItem>
     );
@@ -296,7 +295,7 @@ export function NavItem({
                 <NavBarItemIcon link={link} />
               </FeatureHighlightWrapper>
             </div>
-            <span className={styles.linkText}>{getNavTitle(link.id) ?? link.text}</span>
+            <span className={styles.linkText}>{link.text}</span>
           </div>
         </NavBarItemWithoutMenu>
       </li>
@@ -397,7 +396,7 @@ function CollapsibleNavItem({
           contentClassName={styles.collapseContent}
           label={
             <div className={cx(styles.labelWrapper, { [styles.primary]: isActive })}>
-              <span className={styles.linkText}>{getNavTitle(link.id) ?? link.text}</span>
+              <span className={styles.linkText}>{link.text}</span>
             </div>
           }
         >
