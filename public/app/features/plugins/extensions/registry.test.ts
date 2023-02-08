@@ -49,7 +49,7 @@ describe('Plugin registry', () => {
         title: 'The title',
         type: 'link',
         description: 'Incidents are occurring!',
-        href: '/a/belugacdn-app/incidents/declare',
+        path: '/a/belugacdn-app/incidents/declare',
         key: 539074708,
       });
     });
@@ -68,7 +68,7 @@ describe('Plugin registry', () => {
         title: 'The title',
         type: 'link',
         description: 'Incidents are occurring!',
-        href: '/a/belugacdn-app/incidents/declare',
+        path: '/a/belugacdn-app/incidents/declare',
         key: 539074708,
       });
 
@@ -76,7 +76,7 @@ describe('Plugin registry', () => {
         title: 'The title',
         type: 'link',
         description: 'Incidents are occurring!',
-        href: '/a/strava-app/incidents/declare',
+        path: '/a/strava-app/incidents/declare',
         key: -1637066384,
       });
     });

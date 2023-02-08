@@ -38,14 +38,14 @@ export function createPluginExtensionsRegistry(apps: Record<string, AppPluginCon
 }
 
 function createRegistryItem(pluginId: string, extension: PluginsExtensionLinkConfig): PluginsExtensionLink {
-  const href = `/a/${pluginId}${extension.path}`;
+  const path = `/a/${pluginId}${extension.path}`;
 
   return Object.freeze({
     type: PluginExtensionTypes.link,
     title: extension.title,
     description: extension.description,
-    href: href,
-    key: hashKey(`${extension.title}${href}`),
+    path: path,
+    key: hashKey(`${extension.title}${path}`),
   });
 }
 

@@ -158,11 +158,11 @@ type ExtensionsLink struct {
 	// Description for the rendered link
 	Description string `json:"description"`
 
+	// Target where the link will be rendered
+	Id string `json:"id"`
+
 	// Path relative to the extending plugin e.g. /incidents/declare
 	Path string `json:"path"`
-
-	// Target where the link will be rendered
-	Target string `json:"target"`
 
 	// Title that will be displayed for the rendered link
 	Title string `json:"title"`
