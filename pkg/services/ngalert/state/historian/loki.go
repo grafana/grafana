@@ -70,7 +70,7 @@ func (h *RemoteLokiBackend) RecordStatesAsync(ctx context.Context, rule history_
 	errCh := make(chan error, 1)
 	go func() {
 		defer close(errCh)
-		if err := h.recordStreams(ctx, streams, logger); err != nil {
+		if err := h.recordStreams(ctx, streams, rule.OrgID, logger); err != nil {
 			logger.Error("Failed to save alert state history batch", "error", err)
 			errCh <- fmt.Errorf("failed to save alert state history batch: %w", err)
 		}
@@ -274,11 +274,18 @@ func statesToStreams(rule history_model.RuleMeta, states []state.StateTransition
 	return result
 }
 
-func (h *RemoteLokiBackend) recordStreams(ctx context.Context, streams []stream, logger log.Logger) error {
+func (h *RemoteLokiBackend) recordStreams(ctx context.Context, streams []stream, orgID int64, logger log.Logger) error {
 	if err := h.client.push(ctx, streams); err != nil {
 		return err
 	}
+
 	logger.Debug("Done saving alert state history batch")
+	org := fmt.Sprint(orgID)
+	samples := 0
+	for _, s := range streams {
+		samples += len(s.Values)
+	}
+	h.metrics.TransitionsTotal.WithLabelValues(org).Add(float64(samples))
 	return nil
 }
 

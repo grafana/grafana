@@ -54,7 +54,7 @@ func (h *AnnotationBackend) RecordStatesAsync(ctx context.Context, rule history_
 	errCh := make(chan error, 1)
 	go func() {
 		defer close(errCh)
-		errCh <- h.recordAnnotationsSync(ctx, panel, annotations, logger)
+		errCh <- h.recordAnnotations(ctx, panel, annotations, logger)
 	}()
 	return errCh
 }
@@ -168,7 +168,11 @@ func buildAnnotations(rule history_model.RuleMeta, states []state.StateTransitio
 	return items
 }
 
-func (h *AnnotationBackend) recordAnnotationsSync(ctx context.Context, panel *panelKey, annotations []annotations.Item, logger log.Logger) error {
+func (h *AnnotationBackend) recordAnnotations(ctx context.Context, panel *panelKey, annotations []annotations.Item, logger log.Logger) error {
+	if len(annotations) == 0 {
+		return nil
+	}
+
 	if panel != nil {
 		dashID, err := h.dashboards.getID(ctx, panel.orgID, panel.dashUID)
 		if err != nil {
@@ -188,6 +192,8 @@ func (h *AnnotationBackend) recordAnnotationsSync(ctx context.Context, panel *pa
 	}
 
 	logger.Debug("Done saving alert annotation batch")
+	org := fmt.Sprint(annotations[0].OrgID) // We're guaranteed there is at least one annotation, and they all have the same org ID.
+	h.metrics.TransitionsTotal.WithLabelValues(org).Add(float64(len(annotations)))
 	return nil
 }
 
