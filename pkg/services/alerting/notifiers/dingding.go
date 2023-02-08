@@ -138,6 +138,14 @@ func (dd *DingDingNotifier) genBody(evalContext *alerting.EvalContext, messageUR
 				"singleURL":   messageURL,
 			},
 		}
+	} else if dd.MsgType == "markdown" {
+		bodyMsg = map[string]interface{}{
+			"msgtype": "markdown",
+			"markdown": map[string]string{
+				"title": title,
+				"text":  message,
+			},
+		}
 	} else {
 		link := map[string]string{
 			"text":       message,
