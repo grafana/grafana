@@ -242,14 +242,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
   const isGrafanaManagedGroup = rulesSourceName === GRAFANA_RULES_SOURCE_NAME;
 
   const nameSpaceLabel = isGrafanaManagedGroup ? 'Folder' : 'Namespace';
-  const nameSpaceInfoIconLabelEditable = isGrafanaManagedGroup
-    ? 'Folder name can be updated to a non-existing folder name'
-    : 'Name space can be updated to a non-existing name space';
-  const nameSpaceInfoIconLabelNonEditable = isGrafanaManagedGroup
-    ? 'Folder name can be updated in folder view'
-    : 'Name space can be updated folder view';
 
-  const spaceNameInfoIconLabel = intervalEditOnly ? nameSpaceInfoIconLabelNonEditable : nameSpaceInfoIconLabelEditable;
   // close modal if successfully saved
   useEffect(() => {
     if (dispatched && !loading && !error) {
@@ -308,10 +301,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                     'Change the current namespace name. Moving groups between namespaces is not supported'
                   }
                 >
-                  <Stack gap={0.5}>
-                    {nameSpaceLabel}
-                    {!isGrafanaManagedGroup && <InfoIcon text={spaceNameInfoIconLabel} />}
-                  </Stack>
+                  {nameSpaceLabel}
                 </Label>
               }
               invalid={!!errors.namespaceName}
@@ -326,7 +316,7 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
                   })}
                   className={styles.formInput}
                 />
-                {isGrafanaManagedGroup && (
+                {isGrafanaManagedGroup && props.folderUrl && (
                   <LinkButton
                     href={props.folderUrl}
                     title="Go to folder"
@@ -339,15 +329,11 @@ export function EditCloudGroupModal(props: ModalProps): React.ReactElement {
             </Field>
             <Field
               label={
-                <Label htmlFor="groupName">
-                  <Stack gap={0.5}>
-                    Evaluation group
-                    {isGrafanaManagedGroup ? (
-                      <InfoIcon text={'Group name can be updated on Group view.'} />
-                    ) : (
-                      <InfoIcon text={'Group name can be updated to a non existing group name.'} />
-                    )}
-                  </Stack>
+                <Label
+                  htmlFor="groupName"
+                  description={`Evaluation group name needs to be unique within a ${nameSpaceLabel.toLocaleLowerCase()}`}
+                >
+                  Evaluation group name
                 </Label>
               }
               invalid={!!errors.groupName}

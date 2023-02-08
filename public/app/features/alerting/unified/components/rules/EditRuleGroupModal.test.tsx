@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
-import { byLabelText, byTestId, byText } from 'testing-library-selector';
+import { byLabelText, byTestId, byText, byTitle } from 'testing-library-selector';
 
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
@@ -26,6 +26,7 @@ const ui = {
     group: byLabelText(/Evaluation group/),
     interval: byLabelText(/Rule group evaluation interval/),
   },
+  folderLink: byTitle(/Go to folder/), // <a> without a href has the generic role
   table: byTestId('dynamic-table'),
   tableRows: byTestId('row'),
   noRulesText: byText('This group does not contain alert rules.'),
@@ -179,5 +180,13 @@ describe('EditGroupModal component on grafana-managed alert rules', () => {
     });
 
     expect(ui.input.namespace.get()).toHaveAttribute('readonly');
+  });
+
+  it('Should not display folder link if no folderUrl provided', () => {
+    render(<EditCloudGroupModal namespace={grafanaNamespace} group={grafanaGroup1} onClose={jest.fn()} />, {
+      wrapper: getProvidersWrapper(),
+    });
+
+    expect(ui.folderLink.query()).not.toBeInTheDocument();
   });
 });
