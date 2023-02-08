@@ -933,7 +933,6 @@ By default, the users' organization and role is reset on every new login. When a
 
 #### Example skip_org_role_sync
 
-// TODO: rewrite all of the above tables with the same kind of structure
 [auth.google]
 | `oauth_skip_org_role_sync_update` | `skip_org_role_sync` | **Resulting Org Role** | **Example Scenario**
 | false | false | Synced with Google Auth organization roles | A user logs in to Grafana using their Google account and their organization role is automatically set based on their role in Google.
