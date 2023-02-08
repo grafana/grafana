@@ -36,6 +36,9 @@ export function runPartitionedQuery(datasource: LokiDatasource, request: DataQue
 
           subscriber.next(response);
         },
+        error: (error) => {
+          subscriber.error(error);
+        },
       });
   };
 
