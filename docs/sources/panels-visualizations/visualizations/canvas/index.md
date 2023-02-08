@@ -42,7 +42,19 @@ The rectangle element enables you to add a basic rectangle to the canvas. Rectan
 
 The icon element enables you to add a supported icon to the canvas. Icons can have their color set based on thresholds / value mappings.
 
-## Canvas Editing
+### Server
+
+The server element enables you to easily represent a single server, a stack of servers, a database, or a terminal. Server elements support status color, bulb color, and a bulb blink rate all configurable by fixed or field values.
+
+{{< figure src="/media/docs/grafana/canvas-server-element-9-4-0.png" max-width="750px" caption="Canvas server element" >}}
+
+## Connections
+
+When building a canvas panel, you can connect elements together to create more complex visualizations. Connections are created by dragging from the connection anchor of one element to the connection anchor of another element. You can also create connections to the background of the canvas panel. Connection anchors are displayed when you hover over an element and inline editing is turned on. To remove a connection, simply click on the connection directly and then press the "Delete" or "Backspace" key.
+
+{{< video-embed src="/media/docs/grafana/canvas-connections-9-4-0.mp4" max-width="750px" caption="Canvas connections demo" >}}
+
+## Canvas editing
 
 ### Inline editor
 
@@ -62,10 +74,21 @@ When right clicking an element, you are able to edit, delete, duplicate, and mod
 
 {{< figure src="/static/img/docs/canvas-panel/canvas-context-menu-9-2-0.png" max-width="750px" caption="Canvas element context menu" >}}
 
-## Canvas Options
+## Canvas options
 
 ### Inline editing
 
 The inline editing toggle enables you to lock or unlock the canvas panel. When turned off the canvas panel becomes “locked”, freezing elements in place and preventing unintended modifications.
 
 {{< video-embed src="/static/img/docs/canvas-panel/canvas-inline-editing-toggle-9-2-0.mp4" max-width="750px" caption="Inline editing toggle demo" >}}
+
+### Data links
+
+Canvas supports [data links](https://grafana.com/docs/grafana/latest/panels-visualizations/configure-data-links/). Once you've added a data link to the panel, you can display it by following these steps:
+
+1. Set an element to be tied to a field value.
+1. Turn off the inline editing toggle.
+1. Hover over the element to display the data link tooltip.
+1. Click on the element to be able to open the data link.
+
+{{< video-embed src="/media/docs/grafana/canvas-data-links-9-4-0.mp4" max-width="750px" caption="Data links demo" >}}
