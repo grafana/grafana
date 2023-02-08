@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 	"path"
 	"path/filepath"
 	"reflect"
@@ -61,7 +60,9 @@ func (j docsJenny) Generate(kind kindsys.Kind) (*codejen.File, error) {
 			Schemas json.RawMessage
 		}
 	}
-	err = json.Unmarshal(b, &obj)
+	dec := json.NewDecoder(bytes.NewReader(b))
+	dec.UseNumber()
+	err = dec.Decode(&obj)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal schema json: %v", err)
 	}
@@ -111,13 +112,13 @@ type templateData struct {
 // -------------------- JSON to Markdown conversion --------------------
 // Copied from https://github.com/marcusolsson/json-schema-docs and slightly changed to fit the DocsJenny
 type constraints struct {
-	Pattern          string `json:"pattern"`
-	Maximum          any    `json:"maximum"`
-	ExclusiveMinimum bool   `json:"exclusiveMinimum"`
-	Minimum          any    `json:"minimum"`
-	ExclusiveMaximum bool   `json:"exclusiveMaximum"`
-	MinLength        uint   `json:"minLength"`
-	MaxLength        uint   `json:"maxLength"`
+	Pattern          string      `json:"pattern"`
+	Maximum          json.Number `json:"maximum"`
+	ExclusiveMinimum bool        `json:"exclusiveMinimum"`
+	Minimum          json.Number `json:"minimum"`
+	ExclusiveMaximum bool        `json:"exclusiveMaximum"`
+	MinLength        uint        `json:"minLength"`
+	MaxLength        uint        `json:"maxLength"`
 }
 
 type schema struct {
@@ -550,29 +551,29 @@ func makeRows(s *schema) [][]string {
 }
 
 func propTypeAlias(prop *schema) string {
-	if !prop.Type.HasType("integer") || prop.Minimum == nil || prop.Maximum == nil {
+	if prop.Minimum == "" || prop.Maximum == "" {
 		return ""
 	}
 
-	min := int(prop.Minimum.(float64))
-	max := int(prop.Maximum.(float64))
+	min := prop.Minimum
+	max := prop.Maximum
 
 	switch {
-	case min == 0 && max == math.MaxUint8:
+	case min == "0" && max == "255":
 		return "uint8"
-	case min == 0 && max == math.MaxUint16:
+	case min == "0" && max == "65535":
 		return "uint16"
-	case min == 0 && max == math.MaxUint32:
+	case min == "0" && max == "4294967295":
 		return "uint32"
-	case min == 0 && max == uint(math.MaxUint64):
+	case min == "0" && max == "18446744073709551615":
 		return "uint64"
-	case min == math.MinInt8 && max == math.MaxInt8:
+	case min == "-128" && max == "127":
 		return "int8"
-	case min == math.MinInt16 && max == math.MaxInt16:
+	case min == "-32768" && max == "32767":
 		return "int16"
-	case min == math.MinInt32 && max == math.MaxInt32:
+	case min == "-2147483648" && max == "2147483647":
 		return "int32"
-	case min == math.MinInt64 && max == math.MaxInt64:
+	case min == "-9223372036854775808" && max == "9223372036854775807":
 		return "int64"
 	default:
 		return ""
@@ -580,32 +581,30 @@ func propTypeAlias(prop *schema) string {
 }
 
 func constraintDescr(prop *schema) string {
-	if prop.Minimum != nil && prop.Maximum != nil {
+	if prop.Minimum != "" && prop.Maximum != "" {
 		var left, right string
 		if prop.ExclusiveMinimum {
-			left += ">"
+			left = ">" + prop.Minimum.String()
 		} else {
-			left += ">="
+			left = ">=" + prop.Minimum.String()
 		}
-		left += fmt.Sprintf("%.20g", prop.Minimum)
 
 		if prop.ExclusiveMaximum {
-			right += "<"
+			right = "<" + prop.Maximum.String()
 		} else {
-			right += "<="
+			right = "<=" + prop.Maximum.String()
 		}
-		right += fmt.Sprintf("%.20g", prop.Maximum)
 		return fmt.Sprintf("\nConstraint: `%s & %s`.", left, right)
 	}
 
 	if prop.MinLength > 0 {
-		left := fmt.Sprintf(">=%v ", prop.MinLength)
+		left := fmt.Sprintf(">=%v", prop.MinLength)
 		right := ""
 
 		if prop.MaxLength > 0 {
-			right = fmt.Sprintf("<=%v", prop.MaxLength)
+			right = fmt.Sprintf(" && <=%v", prop.MaxLength)
 		}
-		return fmt.Sprintf("\nConstraint: `length %s && %s`.", left, right)
+		return fmt.Sprintf("\nConstraint: `length %s`.", left+right)
 	}
 
 	if prop.Pattern != "" {
