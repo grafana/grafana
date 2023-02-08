@@ -49,7 +49,7 @@ const (
 	OktaLabel         = "Okta"
 )
 
-// IsExternnalySynced is used to tell if the user is externallySynced or that we should the external sync
+// IsExternnalySynced is used to tell if the user roles are externally synced
 // true means that the org role sync is handled by Grafana
 // Note: currently the users authinfo is overridden each time the user logs in
 // https://github.com/grafana/grafana/blob/4181acec72f76df7ad02badce13769bae4a1f840/pkg/services/login/authinfoservice/database/database.go#L61
