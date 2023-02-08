@@ -1,16 +1,14 @@
 ---
 aliases:
-
-- ../../enterprise/auditing/
-  description: Auditing
-  keywords:
-- grafana
-- auditing
-- audit
-- logs
-  title: Audit a Grafana instance
-  weight: 800
-
+  - ../../enterprise/auditing/
+description: Auditing
+keywords:
+  - grafana
+  - auditing
+  - audit
+  - logs
+title: Audit a Grafana instance
+weight: 800
 ---
 
 # Audit a Grafana instance
