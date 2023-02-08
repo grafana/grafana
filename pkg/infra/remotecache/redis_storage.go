@@ -107,11 +107,10 @@ func (s *redisStorage) SetByteArray(ctx context.Context, key string, data []byte
 func (s *redisStorage) Get(ctx context.Context, key string) (interface{}, error) {
 	v, err := s.GetByteArray(ctx, key)
 
-	if err.Error() == "EOF" {
-		return nil, ErrCacheItemNotFound
-	}
-
 	if err != nil {
+		if err.Error() == "EOF" {
+			return nil, ErrCacheItemNotFound
+		}
 		return nil, err
 	}
 
