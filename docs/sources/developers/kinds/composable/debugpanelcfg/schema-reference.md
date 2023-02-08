@@ -8,7 +8,7 @@ title: DebugPanelCfg kind
 
 ## DebugPanelCfg
 
-#### Maturity: experimental
+#### Maturity: [experimental](../../../maturity/#experimental)
 #### Version: 0.0
 
 
@@ -25,14 +25,6 @@ title: DebugPanelCfg kind
 |------------|-------------------------------|----------|---------------------------------------------------------------------------|
 | `mode`     | string                        | **Yes**  | Possible values are: `render`, `events`, `cursor`, `State`, `ThrowError`. |
 | `counters` | [UpdateConfig](#updateconfig) | No       |                                                                           |
-
-### UpdateConfig
-
-| Property        | Type    | Required | Description |
-|-----------------|---------|----------|-------------|
-| `dataChanged`   | boolean | **Yes**  |             |
-| `render`        | boolean | **Yes**  |             |
-| `schemaChanged` | boolean | **Yes**  |             |
 
 ### UpdateConfig
 

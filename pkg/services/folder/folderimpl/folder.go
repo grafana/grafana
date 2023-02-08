@@ -34,7 +34,7 @@ type Service struct {
 	features             featuremgmt.FeatureToggles
 	accessControl        accesscontrol.AccessControl
 
-	// bus is currently used to publish events that cause scheduler to update rules.
+	// bus is currently used to publish event in case of title change
 	bus bus.Bus
 }
 
@@ -48,7 +48,7 @@ func ProvideService(
 	features featuremgmt.FeatureToggles,
 ) folder.Service {
 	store := ProvideStore(db, cfg, features)
-	svr := &Service{
+	srv := &Service{
 		cfg:                  cfg,
 		log:                  log.New("folder-service"),
 		dashboardStore:       dashboardStore,
@@ -59,12 +59,13 @@ func ProvideService(
 		bus:                  bus,
 	}
 	if features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		svr.DBMigration(db)
+		srv.DBMigration(db)
 	}
 
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashboardStore, folderStore, svr))
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(dashboardStore, folderStore, svr))
-	return svr
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashboardStore, folderStore, srv))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(dashboardStore, folderStore, srv))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(dashboardStore, folderStore, srv))
+	return srv
 }
 
 func (s *Service) DBMigration(db db.DB) {
@@ -120,8 +121,12 @@ func (s *Service) Get(ctx context.Context, cmd *folder.GetFolderQuery) (*folder.
 		cmd.ID = nil
 		cmd.UID = &dashFolder.UID
 	}
-	f, err := s.store.Get(ctx, *cmd)
 
+	if dashFolder.IsGeneral() {
+		return dashFolder, nil
+	}
+
+	f, err := s.store.Get(ctx, *cmd)
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +195,7 @@ func (s *Service) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*
 
 func (s *Service) getFolderByID(ctx context.Context, user *user.SignedInUser, id int64, orgID int64) (*folder.Folder, error) {
 	if id == 0 {
-		return &folder.Folder{ID: id, Title: "General"}, nil
+		return &folder.GeneralFolder, nil
 	}
 
 	dashFolder, err := s.dashboardFolderStore.GetFolderByID(ctx, orgID, id)
@@ -803,10 +808,6 @@ func toFolderError(err error) error {
 
 	if errors.Is(err, dashboards.ErrDashboardNotFound) {
 		return dashboards.ErrFolderNotFound
-	}
-
-	if errors.Is(err, dashboards.ErrDashboardFailedGenerateUniqueUid) {
-		err = dashboards.ErrFolderFailedGenerateUniqueUid
 	}
 
 	return err

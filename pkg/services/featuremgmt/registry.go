@@ -10,11 +10,6 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
-			Name:        "returnUnameHeader",
-			Description: "Return user login as header for authenticated requests",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:        "alertingBigTransactions",
 			Description: "Use big transactions for alerting database writes",
 			State:       FeatureStateAlpha,
@@ -284,11 +279,6 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "increaseInMemDatabaseQueryCache",
-			Description: "Enable more in memory caching for database queries",
-			State:       FeatureStateAlpha,
-		},
-		{
 			Name:         "newPanelChromeUI",
 			Description:  "Show updated look and feel of grafana-ui PanelChrome: panel header, icons, and menu",
 			State:        FeatureStateAlpha,
@@ -309,11 +299,6 @@ var (
 			Name:        "mysqlAnsiQuotes",
 			Description: "Use double quotes to escape keyword in a MySQL query",
 			State:       FeatureStateAlpha,
-		},
-		{
-			Name:        "datasourceLogger",
-			Description: "Logs all datasource requests",
-			State:       FeatureStateBeta,
 		},
 		{
 			Name:        "accessControlOnCall",
