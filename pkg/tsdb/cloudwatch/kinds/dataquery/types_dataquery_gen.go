@@ -420,7 +420,7 @@ type QueryEditorArrayExpression struct {
 // TODO this doesn't work
 type QueryEditorArrayExpressionType string
 
-// QueryEditorExpression defines model for QueryEditorExpression.
+// QueryEditorArrayExpression is added in veneer
 type QueryEditorExpression interface{}
 
 // QueryEditorExpressionType defines model for QueryEditorExpressionType.

@@ -21,7 +21,9 @@ export type CloudWatchQuery =
 
 export interface CloudWatchAnnotationQuery extends raw.CloudWatchAnnotationQuery, DataQuery {}
 
-export interface CloudWatchMetricsQuery extends raw.CloudWatchMetricsQuery, DataQuery {}
+export interface CloudWatchMetricsQuery extends raw.CloudWatchMetricsQuery, DataQuery {
+  sql?: SQLExpression;
+}
 
 // We want to allow setting defaults for both Logs and Metrics queries
 export type CloudWatchDefaultQuery = Omit<raw.CloudWatchLogsQuery, 'queryMode'> & CloudWatchMetricsQuery;

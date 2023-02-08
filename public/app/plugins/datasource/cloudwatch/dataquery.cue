@@ -132,7 +132,8 @@ composableKinds: DataQuery: {
 							expressions: _ // TODO modify this in veneer
 						} @cuetsy(kind="interface")
 
-						#QueryEditorExpression: #QueryEditorArrayExpression | #QueryEditorPropertyExpression | #QueryEditorGroupByExpression | #QueryEditorFunctionExpression | #QueryEditorFunctionParameterExpression | #QueryEditorOperatorExpression @cuetsy(kind="type")
+						// QueryEditorArrayExpression is added in veneer
+						#QueryEditorExpression: #QueryEditorPropertyExpression | #QueryEditorGroupByExpression | #QueryEditorFunctionExpression | #QueryEditorFunctionParameterExpression | #QueryEditorOperatorExpression @cuetsy(kind="type")
 
 						#CloudWatchLogsQuery: {
 							common.DataQuery

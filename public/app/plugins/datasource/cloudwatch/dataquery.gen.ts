@@ -153,7 +153,10 @@ export interface QueryEditorArrayExpression {
   type: QueryEditorExpressionType;
 }
 
-export type QueryEditorExpression = (QueryEditorArrayExpression | QueryEditorPropertyExpression | QueryEditorGroupByExpression | QueryEditorFunctionExpression | QueryEditorFunctionParameterExpression | QueryEditorOperatorExpression);
+/**
+ * QueryEditorArrayExpression is added in veneer
+ */
+export type QueryEditorExpression = (QueryEditorPropertyExpression | QueryEditorGroupByExpression | QueryEditorFunctionExpression | QueryEditorFunctionParameterExpression | QueryEditorOperatorExpression);
 
 export interface CloudWatchLogsQuery extends common.DataQuery {
   expression?: string;
