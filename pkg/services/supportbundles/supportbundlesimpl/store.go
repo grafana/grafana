@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -19,17 +20,24 @@ const (
 	defaultBundleExpiration = 72 * time.Hour // 72h
 )
 
+const key = "count"
+
 func newStore(kv kvstore.KVStore) *store {
-	return &store{kv: kvstore.WithNamespace(kv, 0, "supportbundle")}
+	return &store{
+		kv:     kvstore.WithNamespace(kv, 0, "supportbundle"),
+		statKV: kvstore.WithNamespace(kv, 0, "supportbundlestats"),
+	}
 }
 
 type store struct {
-	kv *kvstore.NamespacedKVStore
+	kv     *kvstore.NamespacedKVStore
+	statKV *kvstore.NamespacedKVStore
 }
 
 type bundleStore interface {
 	Create(ctx context.Context, usr *user.SignedInUser) (*supportbundles.Bundle, error)
 	Get(ctx context.Context, uid string) (*supportbundles.Bundle, error)
+	StatsCount(ctx context.Context) (int64, error)
 	List() ([]supportbundles.Bundle, error)
 	Remove(ctx context.Context, uid string) error
 	Update(ctx context.Context, uid string, state supportbundles.State, tarBytes []byte) error
@@ -120,4 +128,15 @@ func (s *store) List() ([]supportbundles.Bundle, error) {
 	})
 
 	return res, nil
+}
+
+func (s *store) StatsCount(ctx context.Context) (int64, error) {
+	countString, exists, err := s.statKV.Get(ctx, key)
+	if err != nil {
+		return 0, err
+	}
+	if !exists {
+		return 0, nil
+	}
+	return strconv.ParseInt(countString, 10, 64)
 }
