@@ -30,9 +30,11 @@ import perconaDBClustersReducer from './dbaas/dbClusters/dbClusters';
 import perconaDBaaSReducer from './dbaas/dbaas';
 import perconaK8SCluster from './dbaas/k8sCluster/k8sCluster';
 import perconaUpdateDBCluster from './dbaas/updateDBCluster/updateDBCluster';
+import rolesReducers from './roles/roles';
 import servicesReducer from './services';
 import tourReducer from './tour/tour';
 import perconaUserReducers from './user/user';
+import usersReducers from './users/users';
 
 const initialSettingsState: Settings = {
   updatesDisabled: true,
@@ -69,6 +71,8 @@ const initialSettingsState: Settings = {
     frequentInterval: '10s',
   },
   isConnectedToPortal: false,
+  defaultRoleId: 1,
+  enableAccessControl: false,
 };
 
 export const fetchSettingsAction = createAsyncThunk(
@@ -293,5 +297,7 @@ export default {
     services: servicesReducer,
     backupLocations: perconaBackupLocations,
     tour: tourReducer,
+    roles: rolesReducers,
+    users: usersReducers,
   }),
 };

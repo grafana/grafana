@@ -30,6 +30,9 @@ export interface Props {
   onRunQuery: () => void;
   data?: PanelData;
   showExplain: boolean;
+  // @PERCONA
+  hideMetric?: boolean;
+  hideOperations?: boolean;
 }
 
 export const PromQueryBuilder = React.memo<Props>((props) => {
@@ -206,13 +209,16 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
   return (
     <>
       <EditorRow>
-        <MetricSelect
-          query={query}
-          onChange={onChange}
-          onGetMetrics={onGetMetrics}
-          datasource={datasource}
-          labelsFilters={query.labels}
-        />
+        {/* @PERCONA */}
+        {!props.hideMetric && (
+          <MetricSelect
+            query={query}
+            onChange={onChange}
+            onGetMetrics={onGetMetrics}
+            datasource={datasource}
+            labelsFilters={query.labels}
+          />
+        )}
         <LabelFilters
           getLabelValuesAutofillSuggestions={getLabelValuesAutocompleteSuggestions}
           labelsFilters={query.labels}
@@ -230,25 +236,28 @@ export const PromQueryBuilder = React.memo<Props>((props) => {
           {EXPLAIN_LABEL_FILTER_CONTENT}
         </OperationExplainedBox>
       )}
-      <OperationsEditorRow>
-        <OperationList<PromVisualQuery>
-          queryModeller={promQueryModeller}
-          // eslint-ignore
-          datasource={datasource as DataSourceApi}
-          query={query}
-          onChange={onChange}
-          onRunQuery={onRunQuery}
-          highlightedOp={highlightedOp}
-        />
-        <QueryBuilderHints<PromVisualQuery>
-          datasource={datasource}
-          query={query}
-          onChange={onChange}
-          data={data}
-          queryModeller={promQueryModeller}
-          buildVisualQueryFromString={buildVisualQueryFromString}
-        />
-      </OperationsEditorRow>
+      {/* @PERCONA */}
+      {!props.hideOperations && (
+        <OperationsEditorRow>
+          <OperationList<PromVisualQuery>
+            queryModeller={promQueryModeller}
+            // eslint-ignore
+            datasource={datasource as DataSourceApi}
+            query={query}
+            onChange={onChange}
+            onRunQuery={onRunQuery}
+            highlightedOp={highlightedOp}
+          />
+          <QueryBuilderHints<PromVisualQuery>
+            datasource={datasource}
+            query={query}
+            onChange={onChange}
+            data={data}
+            queryModeller={promQueryModeller}
+            buildVisualQueryFromString={buildVisualQueryFromString}
+          />
+        </OperationsEditorRow>
+      )}
       {showExplain && (
         <OperationListExplained<PromVisualQuery>
           lang={lang}

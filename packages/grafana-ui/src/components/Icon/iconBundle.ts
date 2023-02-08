@@ -205,6 +205,8 @@ import u1194 from '../../../../../public/img/icons/unicons/cloud.svg';
 import u1195 from '../../../../../public/img/icons/unicons/angle-double-left.svg';
 import u1196 from '../../../../../public/img/icons/unicons/times-circle.svg';
 import u1197 from '../../../../../public/img/icons/mono/percona-asterisk.svg';
+import u1198 from '../../../../../public/img/icons/unicons/user-check.svg';
+import u1199 from '../../../../../public/img/icons/unicons/user-square.svg';
 // do not edit this list directly
 // the list of icons live here: @grafana/ui/components/Icon/cached.json
 
@@ -425,6 +427,8 @@ export function initIconCache() {
   cacheItem(u1195, 'unicons/angle-double-left.svg');
   cacheItem(u1196, 'unicons/times-circle.svg');
   cacheItem(u1197, 'mono/percona-asterisk.svg');
+  cacheItem(u1198, 'unicons/user-check.svg');
+  cacheItem(u1199, 'unicons/user-square.svg');
   // do not edit this list directly
   // the list of icons live here: @grafana/ui/components/Icon/cached.json
 }

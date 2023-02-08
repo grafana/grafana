@@ -12,4 +12,5 @@ export interface AdvancedFormProps {
   standardInterval: string;
   frequentInterval: string;
   telemetrySummaries: string[];
+  accessControl?: boolean;
 }

@@ -2,7 +2,6 @@ import { cx } from '@emotion/css';
 import { TextInputField, NumberInputField } from '@percona/platform-core';
 import React, { FC, useState } from 'react';
 import { Field, withTypes } from 'react-final-form';
-import { useSelector } from 'react-redux';
 
 import { Button, Spinner, Icon, useStyles2 } from '@grafana/ui';
 import { OldPage } from 'app/core/components/Page/Page';
@@ -16,6 +15,7 @@ import { updateSettingsAction } from 'app/percona/shared/core/reducers';
 import { getPerconaSettings } from 'app/percona/shared/core/selectors';
 import validators from 'app/percona/shared/helpers/validators';
 import { useAppDispatch } from 'app/store/store';
+import { useSelector } from 'app/types';
 
 import { SET_SETTINGS_CANCEL_TOKEN } from '../../Settings.constants';
 import { AdvancedChangePayload } from '../../Settings.types';
@@ -61,6 +61,7 @@ export const Advanced: FC = () => {
     publicAddress,
     alertingEnabled,
     telemetrySummaries,
+    enableAccessControl,
   } = settings!;
   const settingsStyles = useStyles2(getSettingsStyles);
   const { rareInterval, standardInterval, frequentInterval } = convertCheckIntervalsToHours(sttCheckIntervals);
@@ -87,6 +88,9 @@ export const Advanced: FC = () => {
       publicAddressLabel,
       publicAddressTooltip,
       publicAddressButton,
+      accessControl,
+      accessControlTooltip,
+      accessControlLink,
       alertingLabel,
       alertingTooltip,
       alertingLink,
@@ -117,6 +121,7 @@ export const Advanced: FC = () => {
     standardInterval,
     frequentInterval,
     telemetrySummaries,
+    accessControl: enableAccessControl,
   };
   const [loading, setLoading] = useState(false);
 
@@ -134,6 +139,7 @@ export const Advanced: FC = () => {
       standardInterval,
       frequentInterval,
       updates,
+      accessControl,
     } = values;
     const sttCheckIntervals = {
       rare_interval: `${convertHoursStringToSeconds(rareInterval)}s`,
@@ -160,6 +166,8 @@ export const Advanced: FC = () => {
       disable_dbaas: !dbaas,
       enable_updates: updates,
       disable_updates: !updates,
+      enable_access_control: accessControl,
+      disable_access_control: !accessControl,
     };
 
     setLoading(true);
@@ -340,6 +348,7 @@ export const Advanced: FC = () => {
                       link={dbaasLink}
                       dataTestId="advanced-dbaas"
                       component={SwitchRow}
+                      /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
                       onChange={(event: React.ChangeEvent<HTMLInputElement>, input: any) => {
                         dBaaSToggleOnChange(event, input, mutators);
                       }}
@@ -352,6 +361,16 @@ export const Advanced: FC = () => {
                       tooltipLinkText={tooltipLinkText}
                       link={azureDiscoverLink}
                       dataTestId="advanced-azure-discover"
+                      component={SwitchRow}
+                    />
+                    <Field
+                      name="accessControl"
+                      type="checkbox"
+                      label={accessControl}
+                      tooltip={accessControlTooltip}
+                      tooltipLinkText={tooltipLinkText}
+                      link={accessControlLink}
+                      dataTestId="access-control"
                       component={SwitchRow}
                     />
                   </fieldset>

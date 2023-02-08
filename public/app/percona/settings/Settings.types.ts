@@ -71,6 +71,8 @@ export interface AdvancedChangePayload extends AdvancedPayload {
   disable_dbaas?: boolean;
   enable_updates?: boolean;
   disable_updates?: boolean;
+  enable_access_control?: boolean;
+  disable_access_control?: boolean;
 }
 
 export interface MetricsResolutionsPayload {
@@ -112,6 +114,8 @@ export interface SettingsPayload
   stt_check_intervals: SttCheckIntervalsPayload;
   connected_to_platform: boolean;
   telemetry_summaries: string[];
+  default_role_id: number;
+  enable_access_control: boolean;
 }
 
 export type SettingsAPIChangePayload =
@@ -142,6 +146,8 @@ export interface Settings {
   sttCheckIntervals: SttCheckIntervalsSettings;
   isConnectedToPortal?: boolean;
   telemetrySummaries: string[];
+  defaultRoleId: number;
+  enableAccessControl: boolean;
 }
 
 export interface MetricsResolutions {

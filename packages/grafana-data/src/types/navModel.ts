@@ -22,6 +22,8 @@ export interface NavLinkDTO {
   children?: NavLinkDTO[];
   highlightText?: string;
   emptyMessageId?: string;
+  // @PERCONA
+  showDividerInExpanded?: boolean;
 }
 
 export interface NavModelItem extends NavLinkDTO {
@@ -38,6 +40,7 @@ export interface NavModelItem extends NavLinkDTO {
   hideFromBreadcrumbs?: boolean;
   // @Percona
   expanded?: boolean;
+  isSubheader?: boolean;
   showIconInNavbar?: boolean;
 }
 

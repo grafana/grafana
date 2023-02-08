@@ -7,6 +7,7 @@ export const stub: Settings = {
   telemetryEnabled: true,
   backupEnabled: false,
   dbaasEnabled: false,
+  enableAccessControl: false,
   metricsResolutions: {
     lr: '10s',
     hr: '15s',
@@ -36,6 +37,7 @@ export const stub: Settings = {
     standardInterval: '10s',
     frequentInterval: '10s',
   },
+  defaultRoleId: 1,
 };
 
 SettingsService.getSettings = () => Promise.resolve(stub);

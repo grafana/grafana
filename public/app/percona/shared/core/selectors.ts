@@ -17,3 +17,7 @@ export const getTemplates = (state: StoreState) => state.percona.templates;
 export const getServices = (state: StoreState) => state.percona.services;
 export const getBackupLocations = (state: StoreState) => state.percona.backupLocations;
 export const getTour = (state: StoreState) => state.percona.tour;
+export const getAccessRoles = (state: StoreState) => state.percona.roles;
+export const getUsersInfo = (state: StoreState) => state.percona.users;
+export const getDefaultRole = (state: StoreState) =>
+  state.percona.roles.roles.find((r) => r.roleId === state.percona.settings.result?.defaultRoleId);

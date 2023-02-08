@@ -12,3 +12,12 @@ export interface UserDetailsPutPayload {
   product_tour_completed?: boolean;
   alerting_tour_completed?: boolean;
 }
+
+export interface UserListItemResponse {
+  user_id: number;
+  role_ids: number[];
+}
+
+export interface UserListResponse {
+  users: UserListItemResponse[];
+}

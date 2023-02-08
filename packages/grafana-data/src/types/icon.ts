@@ -222,6 +222,8 @@ export const availableIconsIndex = {
   'angle-double-left': true,
   'times-circle': true,
   'percona-asterisk': true,
+  'user-check': true,
+  'user-square': true,
 };
 
 export type IconName = keyof typeof availableIconsIndex;

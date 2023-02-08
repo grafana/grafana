@@ -761,6 +761,24 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/roles',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AccessRolesPage" */ 'app/percona/rbac/AccessRoles/AccessRoles')
+      ),
+    },
+    {
+      path: '/roles/:id/edit',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AccessRoleEditPage" */ 'app/percona/rbac/AddEditRole/EditRolePage')
+      ),
+    },
+    {
+      path: '/roles/create',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "AccessRoleCreatePage" */ 'app/percona/rbac/AddEditRole/AddRolePage')
+      ),
+    },
+    {
       path: '/environment-overview',
       component: SafeDynamicImport(
         () =>
