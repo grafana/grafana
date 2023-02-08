@@ -21,7 +21,11 @@ const FlameGraphMetadata = React.memo(({ levels, topLevelIndex, selectedBarIndex
   if (levels[topLevelIndex] && levels[topLevelIndex][selectedBarIndex]) {
     const bar = levels[topLevelIndex][selectedBarIndex];
     const metadata = getMetadata(valueField, bar.value, totalTicks);
-    const metadataText = `${metadata?.unitValue} (${metadata?.percentValue}%) of ${metadata?.samples} total samples (${metadata?.unitTitle})`;
+    const rightSideText =
+      valueField.config.unit === SampleUnit.Nanoseconds
+        ? metadata.samples
+        : `${metadata?.samples} total samples (${metadata?.unitTitle})`;
+    const metadataText = `${metadata?.unitValue} (${metadata?.percentValue}%) of ${rightSideText}`;
     return <>{<div className={styles.metadata}>{metadataText}</div>}</>;
   }
   return <></>;
@@ -33,12 +37,15 @@ export const getMetadata = (field: Field, value: number, totalTicks: number): Me
   const displayValue = processor(value);
   const percentValue = Math.round(10000 * (value / totalTicks)) / 100;
   let unitValue = displayValue.text + displayValue.suffix;
+  let samples = totalTicks.toLocaleString();
 
   switch (field.config.unit) {
     case SampleUnit.Bytes:
       unitTitle = 'RAM';
       break;
     case SampleUnit.Nanoseconds:
+      const totalTicksDisplay = processor(totalTicks);
+      samples = totalTicksDisplay.text + totalTicksDisplay.suffix;
       unitTitle = 'Time';
       break;
     default:
@@ -54,7 +61,7 @@ export const getMetadata = (field: Field, value: number, totalTicks: number): Me
     percentValue,
     unitTitle,
     unitValue,
-    samples: totalTicks.toLocaleString(),
+    samples,
   };
 };
 
