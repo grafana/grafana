@@ -3,7 +3,7 @@ import { closestIdx } from "./StreamingDataFrame";
 // prevData and nextData are assumed sorted ASC on reference [0] arrays
 // nextData is assumed to be contiguous, only edges are checked for overlap
 // ...so prev: [1,2,5] + next: [3,4,6] -> [1,2,3,4,6]
-export function amendTimeSeries(prevData: [number[], any[]], nextData: [number[], any[]], fromRef: number, toRef: number): [number[], any[]] {
+export function amendTimeSeries(prevData: [number[], any[]], nextData: [number[], any[]]): [number[], any[]] {
   let [pr, pv] = prevData ?? [[], []];
   let [nr, nv] = nextData ?? [[], []];
 
@@ -71,31 +71,38 @@ export function amendTimeSeries(prevData: [number[], any[]], nextData: [number[]
     }
   }
 
-  let trimFrom;
-  let trimTo;
+  return [r!, v!];
+}
+
+type TimeSeries = [times: number[], vals: any[]];
+
+export function trimTimeSeries(data: TimeSeries, fromTime: number, toTime: number): TimeSeries {
+  let [times, vals] = data;
+  let fromIdx;
+  let toIdx;
 
   // trim to bounds
-  if (r![0] < fromRef) {
-    trimFrom = closestIdx(fromRef, r!);
+  if (times[0] < fromTime) {
+    fromIdx = closestIdx(fromTime, times);
 
-    if (r![trimFrom] < fromRef) {
-      trimFrom++;
+    if (times[fromIdx] < fromTime) {
+      fromIdx++;
     }
   }
 
-  if (r![r!.length - 1] > toRef) {
-    trimTo = closestIdx(toRef, r!);
+  if (times[times.length - 1] > toTime) {
+    toIdx = closestIdx(toTime, times);
 
-    if (r![trimTo] > toRef) {
-      trimTo--;
+    if (times[toIdx] > toTime) {
+      toIdx--;
     }
   }
 
-  if (trimFrom != null || trimTo != null) {
-    //	console.log('trim!', trimFrom ?? 0, trimTo);
-    r = r!.slice(trimFrom ?? 0, trimTo);
-    v = v!.slice(trimFrom ?? 0, trimTo);
+  if (fromIdx != null || toIdx != null) {
+    //	console.log('trim!', fromIdx ?? 0, toIdx);
+    times = times.slice(fromIdx ?? 0, toIdx);
+    vals = vals.slice(fromIdx ?? 0, toIdx);
   }
 
-  return [r!, v!];
+  return [times, vals];
 }

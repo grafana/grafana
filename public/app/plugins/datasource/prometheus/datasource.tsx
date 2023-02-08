@@ -23,6 +23,7 @@ import {
   DateTime,
   dateTime,
   durationToMilliseconds,
+  Field,
   LoadingState,
   parseDuration,
   QueryFixAction,
@@ -48,7 +49,7 @@ import { getTimeSrv, TimeSrv } from 'app/features/dashboard/services/TimeSrv';
 import { getTemplateSrv, TemplateSrv } from 'app/features/templating/template_srv';
 import { PromApiFeatures, PromApplication } from 'app/types/unified-alerting-dto';
 
-import { amendTimeSeries } from '../../../features/live/data/amendTimeSeries';
+import { amendTimeSeries, trimTimeSeries } from '../../../features/live/data/amendTimeSeries';
 
 import { addLabelToQuery } from './add_label_to_query';
 import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
@@ -80,7 +81,6 @@ const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', '
 export const InstantQueryRefIdIndex = '-Instant';
 
 type TargetIdent = string;
-type FieldIdent = string;
 
 export class PrometheusDatasource
   extends DataSourceWithBackend<PromQuery, PromOptions>
@@ -110,7 +110,7 @@ export class PrometheusDatasource
   subType: PromApplication;
   rulerEnabled: boolean;
 
-  fieldsCache: Map<FieldIdent, [number[], any[]]> = new Map();
+  cachedFrames: Map<TargetIdent, DataFrame[]> = new Map();
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -468,7 +468,7 @@ export class PrometheusDatasource
 
       // modify to incremental query
       if (doIncrementalQuery) {
-        if (this.fieldsCache.size > 0) {
+        if (this.cachedFrames.size > 0) {
           request.range.from = moment(fullToTs - refreshMs - requeryLastMs) as DateTime;
           request.range.to = moment(fullToTs) as DateTime;
 
@@ -476,70 +476,99 @@ export class PrometheusDatasource
         }
       }
 
+      // dashboardUID, panelId, refId
+
       const targets = request.targets.map((target) => this.processTargetV2(target, request));
       const startTime = new Date();
       return super.query({ ...request, targets: targets.flat() }).pipe(
         map((response) => {
           if (doIncrementalQuery) {
-            const refCacheKeys = new Map<string, TargetIdent>();
+            const getFieldIdent = (field: Field) => `${field.type}|${field.name}|${JSON.stringify(field.labels ?? '')}`;
 
-            request.targets.forEach((t) => {
-              refCacheKeys.set(t.refId, `${t.datasource?.uid}|${t.expr}|${request.maxDataPoints}|${request.intervalMs}`);
-            });
-
-            // cache and amend with new
+            // group frames by targets (refIds)
+            const respByTarget = new Map<TargetIdent, DataFrame[]>();
             response.data.forEach((frame: DataFrame) => {
-              if (frame.fields.length > 0) {
-                return;
-              }
+              if (frame.fields.length > 0 || frame.length > 0) {
+                let targIdent = `${frame.meta?.executedQueryString}|${request.maxDataPoints}|${request.intervalMs}`;
+                let frames = respByTarget.get(targIdent);
 
-              let nextTimes = frame.fields[0].values.toArray();
-
-              // unaligned timeseries from merged cache and next
-              let frameData: Array<[times: number[], ...values: any[][]]> = [];
-
-              // skip time field [0]
-              for (let i = 1; i < frame.fields.length; i++) {
-                let field = frame.fields[i];
-                let fieldIdent = refCacheKeys.get(frame.refId!) + '|' + field.name + '|' + JSON.stringify(field.labels ?? '');
-
-                let prevTimes: number[];
-                let prevVals: any[];
-                const nextVals = field.values.toArray();
-                const cached = this.fieldsCache.get(fieldIdent);
-
-                if (cached) {
-                  [prevTimes, prevVals] = cached;
-                } else {
-                  prevTimes = [];
-                  prevVals = [];
+                if (!frames) {
+                  frames = [];
+                  respByTarget.set(targIdent, frames);
                 }
 
-                const amended = amendTimeSeries([prevTimes, prevVals], [nextTimes, nextVals], fullFromTs, fullToTs);
-                this.fieldsCache.set(fieldIdent, amended);
-                frameData.push(amended);
+                frames.push(frame);
               }
+            });
 
-              // align data by joining, set field data, update frame length
-              // TODO: not needed for exemplars/annotations?
-              join(frameData).forEach((data, fieldIdx) => {
-                frame.fields[fieldIdx].values = new ArrayVector(data as unknown as any[]);
+            respByTarget.forEach((respFrames, targIdent) => {
+              let cachedFrames = (targIdent ? this.cachedFrames.get(targIdent) : null) ?? [];
+
+              respFrames.forEach((respFrame: DataFrame) => {
+                // frames are identified by their second (non-time) field's name + labels
+                // TODO: also add frame.meta.type, frame name and dataTopic? (exemplars, annotations)
+                // ${frame.meta?.type ?? ''}|${frame.meta?.custom?.resultType ?? ''}|
+                let respFrameIdent = getFieldIdent(respFrame.fields[1]);
+
+                let cachedFrame = cachedFrames.find((cached) => getFieldIdent(cached.fields[1]) === respFrameIdent);
+
+                if (!cachedFrame) {
+                  // append new unknown frames
+                  cachedFrames.push(respFrame);
+                } else {
+                  // we assume that fields cannot appear/disappear and will all exist in same order
+
+                  // amend & re-cache
+                  let prevTimes = cachedFrame.fields[0].values.toArray();
+                  let nextTimes = respFrame.fields[0].values.toArray();
+
+                  // potentially unaligned timeseries from merged cache and next
+                  let frameData: Array<[times: number[], ...values: any[][]]> = [];
+
+                  // skip time field [0]
+                  for (let i = 1; i < respFrame.fields.length; i++) {
+                    let respField = respFrame.fields[i];
+                    let cachedField = cachedFrame.fields[i];
+
+                    const prevVals = cachedField.values.toArray();
+                    const nextVals = respField.values.toArray();
+
+                    const amended = amendTimeSeries([prevTimes, prevVals], [nextTimes, nextVals]);
+                    const trimmed = trimTimeSeries(amended, fullFromTs, fullToTs); // todo: in full dataset?
+                    frameData.push(trimmed);
+                  }
+
+                  // align data by joining, set field data, update frame length
+                  // TODO: not needed for exemplars/annotations?
+                  join(frameData).forEach((data, fieldIdx) => {
+                    cachedFrame.fields[fieldIdx].values = new ArrayVector(data as unknown as any[]);
+                  });
+
+                  cachedFrame.length = cachedFrame.fields[0].values.length;
+                }
               });
 
-              frame.length = frame.fields[0].values.length;
+              // trim all frames in cache? use rawRange?, each cache should be aware of own trim range
+              // purge cache for this target
+              // cachedFrames.forEach((data, key) => {
+              //   if (data[0].length === 0) {
+              //     this.fieldsCache.delete(key);
+              //   }
+              // });
+
+              this.cachedFrames.set(targIdent, cachedFrames);
             });
 
             // TODO: trim fields/frames that were missing or empty in response
 
-            // purge cache
-            this.fieldsCache.forEach((data, key) => {
-              if (data[0].length === 0) {
-                this.fieldsCache.delete(key);
-              }
-            });
-
             request.range.from = moment(fullFromTs) as DateTime;
             request.range.to = moment(fullToTs) as DateTime;
+
+            let respFrames: DataFrame[] = [];
+            for (let targIdent of respByTarget.keys()) {
+              respFrames.push(...this.cachedFrames.get(targIdent)!);
+            }
+            response.data = respFrames;
           }
 
           return transformV2(response, request, { exemplarTraceIdDestinations: this.exemplarTraceIdDestinations })
