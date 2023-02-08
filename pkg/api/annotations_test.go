@@ -17,11 +17,11 @@ import (
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/db/dbtest"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/annotations/annotationstest"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -296,7 +296,7 @@ func postAnnotationScenario(t *testing.T, desc string, url string, routePattern 
 		sc := setupScenarioContext(t, url)
 		sc.dashboardService = dashSvc
 
-		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
@@ -320,7 +320,7 @@ func putAnnotationScenario(t *testing.T, desc string, url string, routePattern s
 		hs.SQLStore = store
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
@@ -345,7 +345,7 @@ func patchAnnotationScenario(t *testing.T, desc string, url string, routePattern
 		hs.SQLStore = store
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
@@ -370,7 +370,7 @@ func deleteAnnotationsScenario(t *testing.T, desc string, url string, routePatte
 		hs.DashboardService = dashSvc
 
 		sc := setupScenarioContext(t, url)
-		sc.defaultHandler = routing.Wrap(func(c *models.ReqContext) response.Response {
+		sc.defaultHandler = routing.Wrap(func(c *contextmodel.ReqContext) response.Response {
 			c.Req.Body = mockRequestBody(cmd)
 			c.Req.Header.Add("Content-Type", "application/json")
 			sc.context = c
@@ -595,8 +595,8 @@ func TestAPI_Annotations_AccessControl(t *testing.T) {
 			server := SetupAPITestServer(t, func(hs *HTTPServer) {
 				hs.Cfg = setting.NewCfg()
 				repo := annotationstest.NewFakeAnnotationsRepo()
-				_ = repo.Save(context.Background(), &annotations.Item{Id: 1, DashboardId: 0})
-				_ = repo.Save(context.Background(), &annotations.Item{Id: 2, DashboardId: 1})
+				_ = repo.Save(context.Background(), &annotations.Item{ID: 1, DashboardID: 0})
+				_ = repo.Save(context.Background(), &annotations.Item{ID: 2, DashboardID: 1})
 				hs.annotationsRepo = repo
 				hs.AccessControl = acimpl.ProvideAccessControl(hs.Cfg)
 				hs.AccessControl.RegisterScopeAttributeResolver(AnnotationTypeScopeResolver(hs.annotationsRepo))
@@ -649,8 +649,8 @@ func TestService_AnnotationTypeScopeResolver(t *testing.T) {
 		},
 	}
 
-	dashboardAnnotation := annotations.Item{Id: 1, DashboardId: 1}
-	organizationAnnotation := annotations.Item{Id: 2}
+	dashboardAnnotation := annotations.Item{ID: 1, DashboardID: 1}
+	organizationAnnotation := annotations.Item{ID: 2}
 
 	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
 	_ = fakeAnnoRepo.Save(context.Background(), &dashboardAnnotation)

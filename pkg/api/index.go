@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/models"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -17,11 +17,12 @@ import (
 
 const (
 	// Themes
-	lightName = "light"
-	darkName  = "dark"
+	lightName  = "light"
+	darkName   = "dark"
+	systemName = "system"
 )
 
-func (hs *HTTPServer) editorInAnyFolder(c *models.ReqContext) bool {
+func (hs *HTTPServer) editorInAnyFolder(c *contextmodel.ReqContext) bool {
 	hasEditPermissionInFoldersQuery := folder.HasEditPermissionInFoldersQuery{SignedInUser: c.SignedInUser}
 	hasEditPermissionInFoldersQueryResult, err := hs.DashboardService.HasEditPermissionInFolders(c.Req.Context(), &hasEditPermissionInFoldersQuery)
 	if err != nil {
@@ -30,16 +31,16 @@ func (hs *HTTPServer) editorInAnyFolder(c *models.ReqContext) bool {
 	return hasEditPermissionInFoldersQueryResult
 }
 
-func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewData, error) {
+func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexViewData, error) {
 	hasAccess := ac.HasAccess(hs.AccessControl, c)
 	hasEditPerm := hasAccess(hs.editorInAnyFolder, ac.EvalAny(ac.EvalPermission(dashboards.ActionDashboardsCreate), ac.EvalPermission(dashboards.ActionFoldersCreate)))
 
-	settings, err := hs.getFrontendSettingsMap(c)
+	settings, err := hs.getFrontendSettings(c)
 	if err != nil {
 		return nil, err
 	}
 
-	settings["dateFormats"] = hs.Cfg.DateFormats
+	settings.IsPublicDashboardView = c.IsPublicDashboardView
 
 	prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: c.UserID, OrgID: c.OrgID, Teams: c.Teams}
 	prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
@@ -69,16 +70,12 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 	if c.IsRenderCall && !hs.Cfg.ServeFromSubPath {
 		appURL = fmt.Sprintf("%s://localhost:%s", hs.Cfg.Protocol, hs.Cfg.HTTPPort)
 		appSubURL = ""
-		settings["appSubUrl"] = ""
+		settings.AppSubUrl = ""
 	}
 
 	navTree, err := hs.navTreeService.GetNavTree(c, hasEditPerm, prefs)
 	if err != nil {
 		return nil, err
-	}
-
-	if c.IsPublicDashboardView {
-		settings["isPublicDashboardView"] = true
 	}
 
 	weekStart := ""
@@ -100,6 +97,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 			OrgRole:                    c.OrgRole,
 			GravatarUrl:                dtos.GetGravatarUrl(c.Email),
 			IsGrafanaAdmin:             c.IsGrafanaAdmin,
+			Theme:                      prefs.Theme,
 			LightTheme:                 prefs.Theme == lightName,
 			Timezone:                   prefs.Timezone,
 			WeekStart:                  weekStart,
@@ -150,12 +148,9 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 	}
 
 	themeURLParam := c.Query("theme")
-	if themeURLParam == lightName {
-		data.User.LightTheme = true
-		data.Theme = lightName
-	} else if themeURLParam == darkName {
-		data.User.LightTheme = false
-		data.Theme = darkName
+	if themeURLParam == lightName || themeURLParam == darkName || themeURLParam == systemName {
+		data.User.Theme = themeURLParam
+		data.Theme = themeURLParam
 	}
 
 	hs.HooksService.RunIndexDataHooks(&data, c)
@@ -167,7 +162,7 @@ func (hs *HTTPServer) setIndexViewData(c *models.ReqContext) (*dtos.IndexViewDat
 	return &data, nil
 }
 
-func (hs *HTTPServer) Index(c *models.ReqContext) {
+func (hs *HTTPServer) Index(c *contextmodel.ReqContext) {
 	data, err := hs.setIndexViewData(c)
 	if err != nil {
 		c.Handle(hs.Cfg, 500, "Failed to get settings", err)
@@ -176,7 +171,7 @@ func (hs *HTTPServer) Index(c *models.ReqContext) {
 	c.HTML(http.StatusOK, "index", data)
 }
 
-func (hs *HTTPServer) NotFoundHandler(c *models.ReqContext) {
+func (hs *HTTPServer) NotFoundHandler(c *contextmodel.ReqContext) {
 	if c.IsApiRequest() {
 		c.JsonApiErr(404, "Not found", nil)
 		return

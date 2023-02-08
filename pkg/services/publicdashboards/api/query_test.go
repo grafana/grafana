@@ -268,12 +268,12 @@ func TestIntegrationUnauthenticatedUserCanGetPubdashPanelQueryData(t *testing.T)
 	qds := buildQueryDataService(t, cacheService, nil, db)
 	dsStore := datasourcesService.CreateStore(db, log.New("publicdashboards.test"))
 	_ = dsStore.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-		Uid:      "ds1",
-		OrgId:    1,
+		UID:      "ds1",
+		OrgID:    1,
 		Name:     "laban",
 		Type:     datasources.DS_MYSQL,
 		Access:   datasources.DS_ACCESS_DIRECT,
-		Url:      "http://test",
+		URL:      "http://test",
 		Database: "site",
 		ReadOnly: true,
 	})

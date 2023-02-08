@@ -239,7 +239,7 @@ func (ng *AlertNG) init() error {
 	contactPointService := provisioning.NewContactPointService(store, ng.SecretsService, store, store, ng.Log)
 	templateService := provisioning.NewTemplateService(store, store, store, ng.Log)
 	muteTimingService := provisioning.NewMuteTimingService(store, store, store, ng.Log)
-	alertRuleService := provisioning.NewAlertRuleService(store, store, ng.QuotaService, store,
+	alertRuleService := provisioning.NewAlertRuleService(store, store, ng.dashboardService, ng.QuotaService, store,
 		int64(ng.Cfg.UnifiedAlerting.DefaultRuleEvaluationInterval.Seconds()),
 		int64(ng.Cfg.UnifiedAlerting.BaseInterval.Seconds()), ng.Log)
 
@@ -268,6 +268,7 @@ func (ng *AlertNG) init() error {
 		EvaluatorFactory:     evalFactory,
 		FeatureManager:       ng.FeatureToggles,
 		AppUrl:               appUrl,
+		Historian:            history,
 	}
 	api.RegisterAPIEndpoints(ng.Metrics.GetAPIMetrics())
 
@@ -310,7 +311,7 @@ func subscribeToFolderChanges(ctx context.Context, logger log.Logger, bus bus.Bu
 			if len(updated) > 0 {
 				logger.Info("Rules that belong to the folder have been updated successfully. Clearing their status", "folderUID", evt.UID, "updatedRules", len(updated))
 				for _, key := range updated {
-					scheduler.UpdateAlertRule(key.AlertRuleKey, key.Version)
+					scheduler.UpdateAlertRule(key.AlertRuleKey, key.Version, key.IsPaused)
 				}
 			} else {
 				logger.Debug("No alert rules found in the folder. nothing to update", "folderUID", evt.UID, "folder", evt.Title)
@@ -383,7 +384,12 @@ func readQuotaConfig(cfg *setting.Cfg) (*quota.Map, error) {
 	return limits, nil
 }
 
-func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingStateHistorySettings, ar annotations.Repository, ds dashboards.DashboardService, rs historian.RuleStore) (state.Historian, error) {
+type Historian interface {
+	api.Historian
+	state.Historian
+}
+
+func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingStateHistorySettings, ar annotations.Repository, ds dashboards.DashboardService, rs historian.RuleStore) (Historian, error) {
 	if !cfg.Enabled {
 		return historian.NewNopHistorian(), nil
 	}
@@ -392,16 +398,12 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 		return historian.NewAnnotationBackend(ar, ds, rs), nil
 	}
 	if cfg.Backend == "loki" {
-		baseURL, err := url.Parse(cfg.LokiRemoteURL)
+		lcfg, err := historian.NewLokiConfig(cfg)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse remote loki URL: %w", err)
+			return nil, fmt.Errorf("invalid remote loki configuration: %w", err)
 		}
-		backend := historian.NewRemoteLokiBackend(historian.LokiConfig{
-			Url:               baseURL,
-			BasicAuthUser:     cfg.LokiBasicAuthUsername,
-			BasicAuthPassword: cfg.LokiBasicAuthPassword,
-			TenantID:          cfg.LokiTenantID,
-		})
+		backend := historian.NewRemoteLokiBackend(lcfg)
+
 		testConnCtx, cancelFunc := context.WithTimeout(ctx, 10*time.Second)
 		defer cancelFunc()
 		if err := backend.TestConnection(testConnCtx); err != nil {

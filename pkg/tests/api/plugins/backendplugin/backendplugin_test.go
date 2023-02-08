@@ -12,6 +12,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/oauth2"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -22,8 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
-	"github.com/stretchr/testify/require"
-	"golang.org/x/oauth2"
 )
 
 const loginCookieName = "grafana_session"
@@ -283,12 +284,12 @@ func newTestScenario(t *testing.T, name string, opts []testScenarioOption, callb
 
 	tsCtx.uid = "test-plugin"
 	cmd := &datasources.AddDataSourceCommand{
-		OrgId:          1,
+		OrgID:          1,
 		Access:         datasources.DS_ACCESS_PROXY,
 		Name:           "TestPlugin",
 		Type:           tsCtx.testPluginID,
-		Uid:            tsCtx.uid,
-		Url:            tsCtx.outgoingServer.URL,
+		UID:            tsCtx.uid,
+		URL:            tsCtx.outgoingServer.URL,
 		JsonData:       jsonData,
 		SecureJsonData: secureJSONData,
 	}
@@ -305,8 +306,8 @@ func newTestScenario(t *testing.T, name string, opts []testScenarioOption, callb
 	require.NoError(t, err)
 
 	getDataSourceQuery := &datasources.GetDataSourceQuery{
-		OrgId: 1,
-		Uid:   tsCtx.uid,
+		OrgID: 1,
+		UID:   tsCtx.uid,
 	}
 	err = testEnv.Server.HTTPServer.DataSourcesService.GetDataSource(ctx, getDataSourceQuery)
 	require.NoError(t, err)

@@ -29,6 +29,11 @@ const (
 	DependencyTypePanel DependencyType = "panel"
 )
 
+// Defines values for ExtensionsLinkType.
+const (
+	ExtensionsLinkTypeLink ExtensionsLinkType = "link"
+)
+
 // Defines values for IncludeRole.
 const (
 	IncludeRoleAdmin IncludeRole = "Admin"
@@ -148,6 +153,27 @@ type Dependency struct {
 // DependencyType defines model for Dependency.Type.
 type DependencyType string
 
+// ExtensionsLink defines model for ExtensionsLink.
+type ExtensionsLink struct {
+	// Description for the rendered link
+	Description string `json:"description"`
+
+	// Path relative to the extending plugin e.g. /incidents/declare
+	Path string `json:"path"`
+
+	// Target where the link will be rendered
+	Target string `json:"target"`
+
+	// Title that will be displayed for the rendered link
+	Title string `json:"title"`
+
+	// Type of extension
+	Type ExtensionsLinkType `json:"type"`
+}
+
+// Type of extension
+type ExtensionsLinkType string
+
 // Header describes an HTTP header that is forwarded with a proxied request for
 // a plugin route.
 type Header struct {
@@ -160,7 +186,7 @@ type Include struct {
 	// RBAC action the user must have to access the route
 	Action *string `json:"action,omitempty"`
 
-	// Add the include to the side menu.
+	// Add the include to the navigation menu.
 	AddToNav *bool `json:"addToNav,omitempty"`
 
 	// (Legacy) The Angular component to use for a page.
@@ -176,7 +202,9 @@ type Include struct {
 	Name *string `json:"name,omitempty"`
 
 	// Used for app plugins.
-	Path *string      `json:"path,omitempty"`
+	Path *string `json:"path,omitempty"`
+
+	// The minimum role a user must have to see this page in the navigation menu.
 	Role *IncludeRole `json:"role,omitempty"`
 
 	// IncludeType is a string identifier of a plugin include type, which is
@@ -187,7 +215,7 @@ type Include struct {
 	Uid *string `json:"uid,omitempty"`
 }
 
-// IncludeRole defines model for Include.Role.
+// The minimum role a user must have to see this page in the navigation menu.
 type IncludeRole string
 
 // IncludeType is a string identifier of a plugin include type, which is
@@ -311,6 +339,9 @@ type PluginDef struct {
 	// Combination of $GOOS and $GOARCH can be found here:
 	// https://golang.org/doc/install/source#environment.
 	Executable *string `json:"executable,omitempty"`
+
+	// Extensions made by the current plugin.
+	Extensions *[]ExtensionsLink `json:"extensions,omitempty"`
 
 	// For data source plugins, include hidden queries in the data
 	// request.

@@ -99,7 +99,7 @@
   "AlertQuery": {
    "properties": {
     "datasourceUid": {
-     "description": "Grafana data source unique identifier; it should be '-100' for a Server Side Expression operation.",
+     "description": "Grafana data source unique identifier; it should be '__expr__' for a Server Side Expression operation.",
      "type": "string"
     },
     "model": {
@@ -121,6 +121,28 @@
    "title": "AlertQuery represents a single query associated with an alert definition.",
    "type": "object"
   },
+  "AlertQueryExport": {
+   "properties": {
+    "datasourceUid": {
+     "type": "string"
+    },
+    "model": {
+     "additionalProperties": {},
+     "type": "object"
+    },
+    "queryType": {
+     "type": "string"
+    },
+    "refId": {
+     "type": "string"
+    },
+    "relativeTimeRange": {
+     "$ref": "#/definitions/RelativeTimeRange"
+    }
+   },
+   "title": "AlertQueryExport is the provisioned export of models.AlertQuery.",
+   "type": "object"
+  },
   "AlertResponse": {
    "properties": {
     "data": {
@@ -139,6 +161,68 @@
    "required": [
     "status"
    ],
+   "type": "object"
+  },
+  "AlertRuleExport": {
+   "properties": {
+    "annotations": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "condition": {
+     "type": "string"
+    },
+    "dasboardUid": {
+     "type": "string"
+    },
+    "data": {
+     "items": {
+      "$ref": "#/definitions/AlertQueryExport"
+     },
+     "type": "array"
+    },
+    "execErrState": {
+     "enum": [
+      "Alerting",
+      "Error",
+      "OK"
+     ],
+     "type": "string"
+    },
+    "for": {
+     "$ref": "#/definitions/Duration"
+    },
+    "isPaused": {
+     "type": "boolean"
+    },
+    "labels": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "noDataState": {
+     "enum": [
+      "Alerting",
+      "NoData",
+      "OK"
+     ],
+     "type": "string"
+    },
+    "panelId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "title": {
+     "type": "string"
+    },
+    "uid": {
+     "type": "string"
+    }
+   },
+   "title": "AlertRuleExport is the provisioned file export of models.AlertRule.",
    "type": "object"
   },
   "AlertRuleGroup": {
@@ -162,6 +246,31 @@
    },
    "type": "object"
   },
+  "AlertRuleGroupExport": {
+   "properties": {
+    "folder": {
+     "type": "string"
+    },
+    "interval": {
+     "$ref": "#/definitions/Duration"
+    },
+    "name": {
+     "type": "string"
+    },
+    "orgId": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "rules": {
+     "items": {
+      "$ref": "#/definitions/AlertRuleExport"
+     },
+     "type": "array"
+    }
+   },
+   "title": "AlertRuleGroupExport is the provisioned file export of AlertRuleGroupV1.",
+   "type": "object"
+  },
   "AlertRuleGroupMetadata": {
    "properties": {
     "interval": {
@@ -169,6 +278,22 @@
      "type": "integer"
     }
    },
+   "type": "object"
+  },
+  "AlertingFileExport": {
+   "properties": {
+    "apiVersion": {
+     "format": "int64",
+     "type": "integer"
+    },
+    "groups": {
+     "items": {
+      "$ref": "#/definitions/AlertRuleGroupExport"
+     },
+     "type": "array"
+    }
+   },
+   "title": "AlertingFileExport is the full provisioned file export.",
    "type": "object"
   },
   "AlertingRule": {
@@ -238,6 +363,10 @@
       "external"
      ],
      "type": "string"
+    },
+    "numExternalAlertmanagers": {
+     "format": "int64",
+     "type": "integer"
     }
    },
    "type": "object"
@@ -1084,6 +1213,9 @@
     "intervalSeconds": {
      "format": "int64",
      "type": "integer"
+    },
+    "is_paused": {
+     "type": "boolean"
     },
     "namespace_id": {
      "format": "int64",
@@ -2005,6 +2137,9 @@
      ],
      "type": "string"
     },
+    "is_paused": {
+     "type": "boolean"
+    },
     "no_data_state": {
      "enum": [
       "Alerting",
@@ -2087,7 +2222,7 @@
     "data": {
      "example": [
       {
-       "datasourceUid": "-100",
+       "datasourceUid": "__expr__",
        "model": {
         "conditions": [
          {
@@ -2153,6 +2288,10 @@
     "id": {
      "format": "int64",
      "type": "integer"
+    },
+    "isPaused": {
+     "example": false,
+     "type": "boolean"
     },
     "labels": {
      "additionalProperties": {
@@ -3155,6 +3294,7 @@
    "type": "object"
   },
   "URL": {
+   "description": "The general form represented is:\n\n[scheme:][//[userinfo@]host][/]path[?query][#fragment]\n\nURLs that do not start with a slash after the scheme are interpreted as:\n\nscheme:opaque[?query][#fragment]\n\nNote that the Path field is stored in decoded form: /%47%6f%2f becomes /Go/.\nA consequence is that it is impossible to tell which slashes in the Path were\nslashes in the raw URL and which were %2f. This distinction is rarely important,\nbut when it is, the code should use RawPath, an optional field which only gets\nset if the default encoding is different from Path.\n\nURL's String method uses the EscapedPath method to obtain the path. See the\nEscapedPath method for more details.",
    "properties": {
     "ForceQuery": {
      "type": "boolean"
@@ -3190,7 +3330,7 @@
      "$ref": "#/definitions/Userinfo"
     }
    },
-   "title": "URL is a custom URL type that allows validation at configuration load time.",
+   "title": "A URL represents a parsed URL (technically, a URI reference).",
    "type": "object"
   },
   "Userinfo": {
@@ -3391,7 +3531,6 @@
    "type": "object"
   },
   "alertGroups": {
-   "description": "AlertGroups alert groups",
    "items": {
     "$ref": "#/definitions/alertGroup"
    },
@@ -3558,6 +3697,7 @@
    "type": "array"
   },
   "gettableSilence": {
+   "description": "GettableSilence gettable silence",
    "properties": {
     "comment": {
      "description": "comment",
@@ -3606,6 +3746,7 @@
    "type": "object"
   },
   "gettableSilences": {
+   "description": "GettableSilences gettable silences",
    "items": {
     "$ref": "#/definitions/gettableSilence"
    },
@@ -3793,7 +3934,6 @@
    "type": "object"
   },
   "receiver": {
-   "description": "Receiver receiver",
    "properties": {
     "active": {
      "description": "active",
@@ -5640,6 +5780,42 @@
     ]
    }
   },
+  "/api/v1/provisioning/alert-rules/export": {
+   "get": {
+    "operationId": "RouteGetAlertRulesExport",
+    "parameters": [
+     {
+      "default": false,
+      "description": "Whether to initiate a download of the file or not.",
+      "in": "query",
+      "name": "download",
+      "type": "boolean"
+     },
+     {
+      "default": "yaml",
+      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "in": "query",
+      "name": "format",
+      "type": "string"
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertingFileExport",
+      "schema": {
+       "$ref": "#/definitions/AlertingFileExport"
+      }
+     },
+     "404": {
+      "description": " Not found."
+     }
+    },
+    "summary": "Export all alert rules in provisioning file format.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
   "/api/v1/provisioning/alert-rules/{UID}": {
    "delete": {
     "operationId": "RouteDeleteAlertRule",
@@ -5730,6 +5906,54 @@
      }
     },
     "summary": "Update an existing alert rule.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/v1/provisioning/alert-rules/{UID}/export": {
+   "get": {
+    "operationId": "RouteGetAlertRuleExport",
+    "parameters": [
+     {
+      "description": "Alert rule UID",
+      "in": "path",
+      "name": "UID",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "default": false,
+      "description": "Whether to initiate a download of the file or not.",
+      "in": "query",
+      "name": "download",
+      "type": "boolean"
+     },
+     {
+      "default": "yaml",
+      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "in": "query",
+      "name": "format",
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "text/yaml"
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertingFileExport",
+      "schema": {
+       "$ref": "#/definitions/AlertingFileExport"
+      }
+     },
+     "404": {
+      "description": " Not found."
+     }
+    },
+    "summary": "Export an alert rule in provisioning file format.",
     "tags": [
      "provisioning"
     ]
@@ -5933,6 +6157,59 @@
      }
     },
     "summary": "Update the interval of a rule group.",
+    "tags": [
+     "provisioning"
+    ]
+   }
+  },
+  "/api/v1/provisioning/folder/{FolderUID}/rule-groups/{Group}/export": {
+   "get": {
+    "operationId": "RouteGetAlertRuleGroupExport",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "FolderUID",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "in": "path",
+      "name": "Group",
+      "required": true,
+      "type": "string"
+     },
+     {
+      "default": false,
+      "description": "Whether to initiate a download of the file or not.",
+      "in": "query",
+      "name": "download",
+      "type": "boolean"
+     },
+     {
+      "default": "yaml",
+      "description": "Format of the downloaded file, either yaml or json. Accept header can also be used, but the query parameter will take precedence.",
+      "in": "query",
+      "name": "format",
+      "type": "string"
+     }
+    ],
+    "produces": [
+     "application/json",
+     "application/yaml",
+     "text/yaml"
+    ],
+    "responses": {
+     "200": {
+      "description": "AlertingFileExport",
+      "schema": {
+       "$ref": "#/definitions/AlertingFileExport"
+      }
+     },
+     "404": {
+      "description": " Not found."
+     }
+    },
+    "summary": "Export an alert rule group in provisioning file format.",
     "tags": [
      "provisioning"
     ]
@@ -6363,6 +6640,23 @@
     },
     "tags": [
      "testing"
+    ]
+   }
+  },
+  "/api/v1/rules/history": {
+   "get": {
+    "operationId": "RouteGetStateHistory",
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "200": {
+      "$ref": "#/responses/StateHistory"
+     }
+    },
+    "summary": "Query state history.",
+    "tags": [
+     "history"
     ]
    }
   }

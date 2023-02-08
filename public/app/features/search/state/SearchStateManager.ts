@@ -1,13 +1,12 @@
 import { debounce } from 'lodash';
 import { FormEvent } from 'react';
 
-import { SelectableValue } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import store from 'app/core/store';
 
-import { SEARCH_PANELS_LOCAL_STORAGE_KEY, SEARCH_SELECTED_LAYOUT } from '../constants';
+import { SEARCH_PANELS_LOCAL_STORAGE_KEY, SEARCH_SELECTED_LAYOUT, SEARCH_SELECTED_SORT } from '../constants';
 import {
   reportDashboardListViewed,
   reportSearchFailedQueryInteraction,
@@ -21,10 +20,10 @@ import { parseRouteParams } from '../utils';
 export const initialState: SearchState = {
   query: '',
   tag: [],
-  sort: null,
   starred: false,
   layout: SearchLayout.Folders,
-  prevSort: null,
+  sort: undefined,
+  prevSort: undefined,
   eventTrackingNamespace: 'dashboard_search',
 };
 
@@ -113,7 +112,13 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     this.setStateAndDoSearch({ starred: false });
   };
 
-  onSortChange = (sort: SelectableValue | null) => {
+  onSortChange = (sort: string | undefined) => {
+    if (sort) {
+      localStorage.setItem(SEARCH_SELECTED_SORT, sort);
+    } else {
+      localStorage.removeItem(SEARCH_SELECTED_SORT);
+    }
+
     if (this.state.layout === SearchLayout.Folders) {
       this.setStateAndDoSearch({ sort, layout: SearchLayout.List });
     } else {
@@ -125,7 +130,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     localStorage.setItem(SEARCH_SELECTED_LAYOUT, layout);
 
     if (this.state.sort && layout === SearchLayout.Folders) {
-      this.setStateAndDoSearch({ layout, prevSort: this.state.sort, sort: null });
+      this.setStateAndDoSearch({ layout, prevSort: this.state.sort, sort: undefined });
     } else {
       this.setStateAndDoSearch({ layout, sort: this.state.prevSort });
     }
@@ -146,7 +151,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       tags: this.state.tag as string[],
       ds_uid: this.state.datasource as string,
       location: this.state.folderUid, // This will scope all results to the prefix
-      sort: this.state.sort?.value,
+      sort: this.state.sort,
       explain: this.state.explain,
       withAllowedActions: this.state.explain, // allowedActions are currently not used for anything on the UI and added only in `explain` mode
       starred: this.state.starred,
@@ -168,10 +173,6 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
       q.kind = ['dashboard', 'folder']; // skip panels
     }
 
-    if (q.query === '*' && !q.sort?.length) {
-      q.sort = 'name_sort';
-    }
-
     return q;
   }
 
@@ -179,7 +180,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     const trackingInfo = {
       layout: this.state.layout,
       starred: this.state.starred,
-      sortValue: this.state.sort?.value,
+      sortValue: this.state.sort,
       query: this.state.query,
       tagCount: this.state.tag?.length,
       includePanels: this.state.includePanels,
@@ -227,13 +228,13 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
   onSearchItemClicked = (e: React.MouseEvent<HTMLElement>) => {
     // Clear some filters only if we're not opening a search item in a new tab
     if (!e.altKey && !e.ctrlKey && !e.metaKey) {
-      this.setState({ tag: [], starred: false, sort: null, query: '', folderUid: undefined });
+      this.setState({ tag: [], starred: false, sort: undefined, query: '', folderUid: undefined });
     }
 
     reportSearchResultInteraction(this.state.eventTrackingNamespace, {
       layout: this.state.layout,
       starred: this.state.starred,
-      sortValue: this.state.sort?.value,
+      sortValue: this.state.sort,
       query: this.state.query,
       tagCount: this.state.tag?.length,
       includePanels: this.state.includePanels,
@@ -247,7 +248,7 @@ export class SearchStateManager extends StateManagerBase<SearchState> {
     reportDashboardListViewed(this.state.eventTrackingNamespace, {
       layout: this.state.layout,
       starred: this.state.starred,
-      sortValue: this.state.sort?.value,
+      sortValue: this.state.sort,
       query: this.state.query,
       tagCount: this.state.tag?.length,
       includePanels: this.state.includePanels,
@@ -261,13 +262,14 @@ export function getSearchStateManager() {
   if (!stateManager) {
     const selectedLayout = localStorage.getItem(SEARCH_SELECTED_LAYOUT) as SearchLayout;
     const layout = selectedLayout ?? initialState.layout;
+    const sort = localStorage.getItem(SEARCH_SELECTED_SORT) ?? undefined;
 
     let includePanels = store.getBool(SEARCH_PANELS_LOCAL_STORAGE_KEY, true);
     if (includePanels) {
       includePanels = false;
     }
 
-    stateManager = new SearchStateManager({ ...initialState, layout: layout, includePanels });
+    stateManager = new SearchStateManager({ ...initialState, layout, sort, includePanels });
   }
 
   return stateManager;

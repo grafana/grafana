@@ -35,6 +35,7 @@ describe('Alert rules searchParser', () => {
     it.each([
       { query: 'state:firing', expectedFilter: PromAlertingRuleState.Firing },
       { query: 'state:inactive', expectedFilter: PromAlertingRuleState.Inactive },
+      { query: 'state:normal', expectedFilter: PromAlertingRuleState.Inactive },
       { query: 'state:pending', expectedFilter: PromAlertingRuleState.Pending },
     ])('should parse $expectedFilter rule state filter from "$query" query', ({ query, expectedFilter }) => {
       const filter = getSearchFilterFromQuery(query);

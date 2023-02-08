@@ -4,11 +4,14 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import { PanelPluginMeta, PluginType } from '@grafana/data';
+import { config } from '@grafana/runtime';
+import { Panel } from '@grafana/schema';
+import { getGrafanaSearcher } from 'app/features/search/service';
 
 import { backendSrv } from '../../../../core/services/backend_srv';
 import * as panelUtils from '../../../panel/state/util';
 import * as api from '../../state/api';
-import { LibraryElementKind, LibraryElementsSearchResult } from '../../types';
+import { LibraryElementsSearchResult } from '../../types';
 
 import { LibraryPanelsSearch, LibraryPanelsSearchProps } from './LibraryPanelsSearch';
 
@@ -62,9 +65,21 @@ async function getTestContext(
     module: '',
     sort: 1,
   };
-  const getSpy = jest
-    .spyOn(backendSrv, 'get')
-    .mockResolvedValue({ sortOptions: [{ displaName: 'Desc', name: 'alpha-desc' }] });
+
+  config.featureToggles = { panelTitleSearch: false };
+  const getSpy = jest.spyOn(backendSrv, 'get');
+
+  jest.spyOn(getGrafanaSearcher(), 'getSortOptions').mockResolvedValue([
+    {
+      label: 'Alphabetically (A–Z)',
+      value: 'alpha-asc',
+    },
+    {
+      label: 'Alphabetically (Z–A)',
+      value: 'alpha-desc',
+    },
+  ]);
+
   const getLibraryPanelsSpy = jest.spyOn(api, 'getLibraryPanels').mockResolvedValue(searchResult);
   const getAllPanelPluginMetaSpy = jest.spyOn(panelUtils, 'getAllPanelPluginMeta').mockReturnValue([graph, timeseries]);
 
@@ -182,15 +197,12 @@ describe('LibraryPanelsSearch', () => {
           {
             elements: [
               {
-                id: 1,
                 name: 'Library Panel Name',
-                kind: LibraryElementKind.Panel,
                 uid: 'uid',
                 description: 'Library Panel Description',
                 folderUid: '',
-                model: { type: 'timeseries', title: 'A title' },
+                model: { type: 'timeseries', title: 'A title' } as Panel,
                 type: 'timeseries',
-                orgId: 1,
                 version: 1,
                 meta: {
                   folderName: 'General',
@@ -237,15 +249,12 @@ describe('LibraryPanelsSearch', () => {
           perPage: 40,
           elements: [
             {
-              id: 1,
               name: 'Library Panel Name',
-              kind: LibraryElementKind.Panel,
               uid: 'uid',
               description: 'Library Panel Description',
               folderUid: '',
-              model: { type: 'timeseries', title: 'A title' },
+              model: { type: 'timeseries', title: 'A title' } as Panel,
               type: 'timeseries',
-              orgId: 1,
               version: 1,
               meta: {
                 folderName: 'General',
@@ -281,15 +290,12 @@ describe('LibraryPanelsSearch', () => {
           perPage: 40,
           elements: [
             {
-              id: 1,
               name: 'Library Panel Name',
-              kind: LibraryElementKind.Panel,
               uid: 'uid',
               description: 'Library Panel Description',
               folderUid: '',
-              model: { type: 'timeseries', title: 'A title' },
+              model: { type: 'timeseries', title: 'A title' } as Panel,
               type: 'timeseries',
-              orgId: 1,
               version: 1,
               meta: {
                 folderName: 'General',

@@ -61,7 +61,7 @@ export const SaveDashboardDrawer = ({ dashboard, onDismiss, onSaveSuccess, isCop
   }, [dashboard, previous.value, options, isNew]);
 
   const [showDiff, setShowDiff] = useState(false);
-  const { state, onDashboardSave } = useDashboardSave(dashboard);
+  const { state, onDashboardSave } = useDashboardSave(dashboard, isCopy);
   const onSuccess = onSaveSuccess
     ? () => {
         onDismiss();

@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	es "github.com/grafana/grafana/pkg/tsdb/elasticsearch/client"
 )
@@ -22,6 +23,7 @@ const (
 	topMetricsType    = "top_metrics"
 	// Bucket types
 	dateHistType    = "date_histogram"
+	nestedType      = "nested"
 	histogramType   = "histogram"
 	filtersType     = "filters"
 	termsType       = "terms"
@@ -82,6 +84,13 @@ func processBuckets(aggs map[string]interface{}, target *Query,
 		aggDef, _ := findAgg(target, aggID)
 		esAgg := simplejson.NewFromAny(v)
 		if aggDef == nil {
+			continue
+		}
+		if aggDef.Type == nestedType {
+			err = processBuckets(esAgg.MustMap(), target, queryResult, props, depth+1)
+			if err != nil {
+				return err
+			}
 			continue
 		}
 
@@ -525,6 +534,24 @@ func trimDatapoints(queryResult backend.DataResponse, target *Query) {
 	}
 }
 
+// we sort the label's pairs by the label-key,
+// and return the label-values
+func getSortedLabelValues(labels data.Labels) []string {
+	var keys []string
+	for key := range labels {
+		keys = append(keys, key)
+	}
+
+	sort.Strings(keys)
+
+	var values []string
+	for _, key := range keys {
+		values = append(values, labels[key])
+	}
+
+	return values
+}
+
 func nameFields(queryResult backend.DataResponse, target *Query) {
 	set := make(map[string]struct{})
 	frames := queryResult.Frames
@@ -636,7 +663,7 @@ func getFieldName(dataField data.Field, target *Query, metricTypeCount int) stri
 	}
 
 	name := ""
-	for _, v := range dataField.Labels {
+	for _, v := range getSortedLabelValues(dataField.Labels) {
 		name += v + " "
 	}
 

@@ -26,12 +26,11 @@ export function TopSearchBar() {
   const helpNode = navIndex['help'];
   const profileNode = navIndex['profile'];
 
-  const search =
-    config.featureToggles.commandPalette && config.featureToggles.topNavCommandPalette ? (
-      <TopSearchBarCommandPaletteTrigger />
-    ) : (
-      <TopSearchBarInput />
-    );
+  const search = config.featureToggles.topNavCommandPalette ? (
+    <TopSearchBarCommandPaletteTrigger />
+  ) : (
+    <TopSearchBarInput />
+  );
 
   return (
     <div className={styles.layout}>
@@ -79,7 +78,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     justifyContent: 'space-between',
 
     [theme.breakpoints.up('sm')]: {
-      gridTemplateColumns: '1.5fr minmax(200px, 1fr) 1.5fr', // search should not be smaller than 200px
+      gridTemplateColumns: '1.5fr minmax(240px, 1fr) 1.5fr', // search should not be smaller than 240px
       display: 'grid',
 
       justifyContent: 'flex-start',

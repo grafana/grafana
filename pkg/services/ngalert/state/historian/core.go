@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -12,8 +13,17 @@ import (
 )
 
 func shouldRecord(transition state.StateTransition) bool {
+	if !transition.Changed() {
+		return false
+	}
+
 	// Do not log not transitioned states normal states if it was marked as stale
-	if !transition.Changed() || transition.StateReason == models.StateReasonMissingSeries && transition.PreviousState == eval.Normal && transition.State.State == eval.Normal {
+	if transition.StateReason == models.StateReasonMissingSeries && transition.PreviousState == eval.Normal && transition.State.State == eval.Normal {
+		return false
+	}
+	// Do not log transition from Normal (Paused|Updated) to Normal
+	if transition.State.State == eval.Normal && transition.StateReason == "" &&
+		transition.PreviousState == eval.Normal && (transition.PreviousStateReason == models.StateReasonPaused || transition.PreviousStateReason == models.StateReasonUpdated) {
 		return false
 	}
 	return true
@@ -46,4 +56,11 @@ func parsePanelKey(rule history_model.RuleMeta, logger log.Logger) *panelKey {
 		}
 	}
 	return nil
+}
+
+func mergeLabels(base, into data.Labels) data.Labels {
+	for k, v := range into {
+		base[k] = v
+	}
+	return base
 }

@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/csrf"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/plugincontext"
+	"github.com/grafana/grafana/pkg/plugins/pluginscdn"
 	"github.com/grafana/grafana/pkg/registry/corekind"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -55,7 +56,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/hooks"
-	"github.com/grafana/grafana/pkg/services/ldap"
 	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/librarypanels"
 	"github.com/grafana/grafana/pkg/services/licensing"
@@ -173,7 +173,6 @@ type HTTPServer struct {
 	grafanaUpdateChecker         *updatechecker.GrafanaService
 	pluginsUpdateChecker         *updatechecker.PluginsService
 	searchUsersService           searchusers.Service
-	ldapGroups                   ldap.Groups
 	teamGuardian                 teamguardian.TeamGuardian
 	queryDataService             *query.Service
 	serviceAccountsService       serviceaccounts.Service
@@ -201,6 +200,7 @@ type HTTPServer struct {
 	playlistService              playlist.Service
 	apiKeyService                apikey.Service
 	kvStore                      kvstore.KVStore
+	pluginsCDNService            *pluginscdn.Service
 
 	userService            user.Service
 	tempUserService        tempUser.Service
@@ -239,7 +239,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	encryptionService encryption.Internal, grafanaUpdateChecker *updatechecker.GrafanaService,
 	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService datasources.DataSourceService, queryDataService *query.Service,
-	ldapGroups ldap.Groups, teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
+	teamGuardian teamguardian.TeamGuardian, serviceaccountsService serviceaccounts.Service,
 	authInfoService login.AuthInfoService, storageService store.StorageService, httpEntityStore httpentitystore.HTTPEntityStore,
 	notificationService *notifications.NotificationService, dashboardService dashboards.DashboardService,
 	dashboardProvisioningService dashboards.DashboardProvisioningService, folderService folder.Service,
@@ -257,7 +257,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	accesscontrolService accesscontrol.Service, dashboardThumbsService thumbs.DashboardThumbService, navTreeService navtree.Service,
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService,
 	queryLibraryHTTPService querylibrary.HTTPService, queryLibraryService querylibrary.Service, oauthTokenService oauthtoken.OAuthTokenService,
-	statsService stats.Service, authnService authn.Service,
+	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service,
 	k8saccess k8saccess.K8SAccess, // required so that the router is registered
 	starApi *starApi.API,
 ) (*HTTPServer, error) {
@@ -323,7 +323,6 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		httpEntityStore:              httpEntityStore,
 		DataSourcesService:           dataSourcesService,
 		searchUsersService:           searchUsersService,
-		ldapGroups:                   ldapGroups,
 		teamGuardian:                 teamGuardian,
 		queryDataService:             queryDataService,
 		serviceAccountsService:       serviceaccountsService,
@@ -366,6 +365,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		oauthTokenService:            oauthTokenService,
 		statsService:                 statsService,
 		authnService:                 authnService,
+		pluginsCDNService:            pluginsCDNService,
 		starApi:                      starApi,
 	}
 	if hs.Listener != nil {

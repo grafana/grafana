@@ -6,6 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/authn"
 )
 
+var _ authn.HookClient = new(MockClient)
 var _ authn.ContextAwareClient = new(MockClient)
 
 type MockClient struct {
@@ -13,6 +14,7 @@ type MockClient struct {
 	AuthenticateFunc func(ctx context.Context, r *authn.Request) (*authn.Identity, error)
 	TestFunc         func(ctx context.Context, r *authn.Request) bool
 	PriorityFunc     func() uint
+	HookFunc         func(ctx context.Context, identity *authn.Identity, r *authn.Request) error
 }
 
 func (m MockClient) Name() string {
@@ -41,6 +43,13 @@ func (m MockClient) Priority() uint {
 		return m.PriorityFunc()
 	}
 	return 0
+}
+
+func (m MockClient) Hook(ctx context.Context, identity *authn.Identity, r *authn.Request) error {
+	if m.HookFunc != nil {
+		return m.HookFunc(ctx, identity, r)
+	}
+	return nil
 }
 
 var _ authn.ProxyClient = new(MockProxyClient)

@@ -5,9 +5,10 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/build/fsutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/grafana/grafana/pkg/build/fsutil"
 )
 
 func TestCopyFile(t *testing.T) {
