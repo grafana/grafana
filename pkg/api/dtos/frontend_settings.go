@@ -6,17 +6,18 @@ import (
 )
 
 type FrontendSettingsAuthDTO struct {
-	OAuthSkipOrgRoleUpdateSync bool `json:"OAuthSkipOrgRoleUpdateSync"`
-	SAMLSkipOrgRoleSync        bool `json:"SAMLSkipOrgRoleSync"`
-	LDAPSkipOrgRoleSync        bool `json:"LDAPSkipOrgRoleSync"`
-	GoogleSkipOrgRoleSync      bool `json:"GoogleSkipOrgRoleSync"`
-	JWTAuthSkipOrgRoleSync     bool `json:"JWTAuthSkipOrgRoleSync"`
-	GrafanaComSkipOrgRoleSync  bool `json:"GrafanaComSkipOrgRoleSync"`
-	AzureADSkipOrgRoleSync     bool `json:"AzureADSkipOrgRoleSync"`
-	GithubSkipOrgRoleSync      bool `json:"GithubSkipOrgRoleSync"`
-	GitLabSkipOrgRoleSync      bool `json:"GitLabSkipOrgRoleSync"`
-	OktaSkipOrgRoleSync        bool `json:"OktaSkipOrgRoleSync"`
-	DisableSyncLock            bool `json:"DisableSyncLock"`
+	OAuthSkipOrgRoleUpdateSync  bool `json:"OAuthSkipOrgRoleUpdateSync"`
+	SAMLSkipOrgRoleSync         bool `json:"SAMLSkipOrgRoleSync"`
+	LDAPSkipOrgRoleSync         bool `json:"LDAPSkipOrgRoleSync"`
+	GoogleSkipOrgRoleSync       bool `json:"GoogleSkipOrgRoleSync"`
+	GenericOAuthSkipOrgRoleSync bool `json:"GenericOAuthSkipOrgRoleSync"`
+	JWTAuthSkipOrgRoleSync      bool `json:"JWTAuthSkipOrgRoleSync"`
+	GrafanaComSkipOrgRoleSync   bool `json:"GrafanaComSkipOrgRoleSync"`
+	AzureADSkipOrgRoleSync      bool `json:"AzureADSkipOrgRoleSync"`
+	GithubSkipOrgRoleSync       bool `json:"GithubSkipOrgRoleSync"`
+	GitLabSkipOrgRoleSync       bool `json:"GitLabSkipOrgRoleSync"`
+	OktaSkipOrgRoleSync         bool `json:"OktaSkipOrgRoleSync"`
+	DisableSyncLock             bool `json:"DisableSyncLock"`
 }
 
 type FrontendSettingsBuildInfoDTO struct {
@@ -125,6 +126,7 @@ type FrontendSettingsDTO struct {
 	Datasources                map[string]plugins.DataSourceDTO `json:"datasources"`
 	MinRefreshInterval         string                           `json:"minRefreshInterval"`
 	Panels                     map[string]plugins.PanelDTO      `json:"panels"`
+	Apps                       map[string]*plugins.AppDTO       `json:"apps"`
 	AppUrl                     string                           `json:"appUrl"`
 	AppSubUrl                  string                           `json:"appSubUrl"`
 	AllowOrgCreate             bool                             `json:"allowOrgCreate"`
@@ -157,21 +159,20 @@ type FrontendSettingsDTO struct {
 	RudderstackSdkUrl       string `json:"rudderstackSdkUrl"`
 	RudderstackConfigUrl    string `json:"rudderstackConfigUrl"`
 
-	FeedbackLinksEnabled                bool                     `json:"feedbackLinksEnabled"`
-	ApplicationInsightsConnectionString string                   `json:"applicationInsightsConnectionString"`
-	ApplicationInsightsEndpointUrl      string                   `json:"applicationInsightsEndpointUrl"`
-	DisableLoginForm                    bool                     `json:"disableLoginForm"`
-	DisableUserSignUp                   bool                     `json:"disableUserSignUp"`
-	LoginHint                           string                   `json:"loginHint"`
-	PasswordHint                        string                   `json:"passwordHint"`
-	ExternalUserMngInfo                 string                   `json:"externalUserMngInfo"`
-	ExternalUserMngLinkUrl              string                   `json:"externalUserMngLinkUrl"`
-	ExternalUserMngLinkName             string                   `json:"externalUserMngLinkName"`
-	ViewersCanEdit                      bool                     `json:"viewersCanEdit"`
-	AngularSupportEnabled               bool                     `json:"angularSupportEnabled"`
-	EditorsCanAdmin                     bool                     `json:"editorsCanAdmin"`
-	DisableSanitizeHtml                 bool                     `json:"disableSanitizeHtml"`
-	PluginsToPreload                    []*plugins.PreloadPlugin `json:"pluginsToPreload"`
+	FeedbackLinksEnabled                bool   `json:"feedbackLinksEnabled"`
+	ApplicationInsightsConnectionString string `json:"applicationInsightsConnectionString"`
+	ApplicationInsightsEndpointUrl      string `json:"applicationInsightsEndpointUrl"`
+	DisableLoginForm                    bool   `json:"disableLoginForm"`
+	DisableUserSignUp                   bool   `json:"disableUserSignUp"`
+	LoginHint                           string `json:"loginHint"`
+	PasswordHint                        string `json:"passwordHint"`
+	ExternalUserMngInfo                 string `json:"externalUserMngInfo"`
+	ExternalUserMngLinkUrl              string `json:"externalUserMngLinkUrl"`
+	ExternalUserMngLinkName             string `json:"externalUserMngLinkName"`
+	ViewersCanEdit                      bool   `json:"viewersCanEdit"`
+	AngularSupportEnabled               bool   `json:"angularSupportEnabled"`
+	EditorsCanAdmin                     bool   `json:"editorsCanAdmin"`
+	DisableSanitizeHtml                 bool   `json:"disableSanitizeHtml"`
 
 	Auth FrontendSettingsAuthDTO `json:"auth"`
 

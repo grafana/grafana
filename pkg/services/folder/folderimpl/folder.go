@@ -30,7 +30,7 @@ type Service struct {
 	log                  log.Logger
 	cfg                  *setting.Cfg
 	dashboardStore       dashboards.Store
-	dashboardFolderStore dashboards.FolderStore
+	dashboardFolderStore folder.FolderStore
 	features             featuremgmt.FeatureToggles
 	accessControl        accesscontrol.AccessControl
 
@@ -43,12 +43,12 @@ func ProvideService(
 	bus bus.Bus,
 	cfg *setting.Cfg,
 	dashboardStore dashboards.Store,
-	folderStore dashboards.FolderStore,
+	folderStore folder.FolderStore,
 	db db.DB, // DB for the (new) nested folder store
 	features featuremgmt.FeatureToggles,
 ) folder.Service {
 	store := ProvideStore(db, cfg, features)
-	svr := &Service{
+	srv := &Service{
 		cfg:                  cfg,
 		log:                  log.New("folder-service"),
 		dashboardStore:       dashboardStore,
@@ -59,12 +59,13 @@ func ProvideService(
 		bus:                  bus,
 	}
 	if features.IsEnabled(featuremgmt.FlagNestedFolders) {
-		svr.DBMigration(db)
+		srv.DBMigration(db)
 	}
 
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashboardStore, folderStore, svr))
-	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(dashboardStore, folderStore, svr))
-	return svr
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderNameScopeResolver(dashboardStore, folderStore, srv))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderIDScopeResolver(dashboardStore, folderStore, srv))
+	ac.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(dashboardStore, folderStore, srv))
+	return srv
 }
 
 func (s *Service) DBMigration(db db.DB) {
@@ -72,7 +73,7 @@ func (s *Service) DBMigration(db db.DB) {
 	err := db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		var err error
 		if db.GetDialect().DriverName() == migrator.SQLite {
-			_, err = sess.Exec("INSERT OR REPLACE INTO folder (id, uid, org_id, title, created, updated) SELECT id, uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1")
+			_, err = sess.Exec("INSERT OR IGNORE INTO folder (id, uid, org_id, title, created, updated) SELECT id, uid, org_id, title, created, updated FROM dashboard WHERE is_folder = 1")
 		} else if db.GetDialect().DriverName() == migrator.Postgres {
 			_, err = sess.Exec("INSERT INTO folder (id, uid, org_id, title, created, updated) SELECT id, uid, org_id, title, created, updated FROM dashboard WHERE is_folder = true ON CONFLICT DO NOTHING")
 		} else {
@@ -162,11 +163,11 @@ func (s *Service) GetChildren(ctx context.Context, cmd *folder.GetChildrenQuery)
 		// fetch folder from dashboard store
 		dashFolder, err := s.dashboardFolderStore.GetFolderByUID(ctx, f.OrgID, f.UID)
 		if err != nil {
-			s.log.Error("failed to fetch folder by UID: %s from dashboard store", f.UID, err)
+			s.log.Error("failed to fetch folder by UID from dashboard store", "uid", f.UID, "error", err)
 			continue
 		}
 
-		g, err := guardian.New(ctx, f.ID, f.OrgID, cmd.SignedInUser)
+		g, err := guardian.NewByUID(ctx, f.UID, f.OrgID, cmd.SignedInUser)
 		if err != nil {
 			return nil, err
 		}
@@ -803,10 +804,6 @@ func toFolderError(err error) error {
 
 	if errors.Is(err, dashboards.ErrDashboardNotFound) {
 		return dashboards.ErrFolderNotFound
-	}
-
-	if errors.Is(err, dashboards.ErrDashboardFailedGenerateUniqueUid) {
-		err = dashboards.ErrFolderFailedGenerateUniqueUid
 	}
 
 	return err

@@ -13790,6 +13790,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "is_paused": {
+          "type": "boolean"
+        },
         "namespace_id": {
           "type": "integer",
           "format": "int64"
@@ -15745,6 +15748,9 @@
             "Alerting",
             "Error"
           ]
+        },
+        "is_paused": {
+          "type": "boolean"
         },
         "no_data_state": {
           "type": "string",
@@ -19070,6 +19076,7 @@
       }
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "$ref": "#/definitions/gettableAlert"

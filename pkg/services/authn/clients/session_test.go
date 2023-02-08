@@ -141,11 +141,11 @@ func (f *fakeResponseWriter) WriteHeader(statusCode int) {
 	f.Status = statusCode
 }
 
-func TestSession_RefreshHook(t *testing.T) {
+func TestSession_Hook(t *testing.T) {
 	s := ProvideSession(&authtest.FakeUserAuthTokenService{
-		TryRotateTokenProvider: func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, error) {
+		TryRotateTokenProvider: func(ctx context.Context, token *auth.UserToken, clientIP net.IP, userAgent string) (bool, *auth.UserToken, error) {
 			token.UnhashedToken = "new-token"
-			return true, nil
+			return true, token, nil
 		},
 	}, &usertest.FakeUserService{}, "grafana-session", 20*time.Second)
 
@@ -168,7 +168,7 @@ func TestSession_RefreshHook(t *testing.T) {
 		Resp: web.NewResponseWriter(http.MethodConnect, mockResponseWriter),
 	}
 
-	err := s.RefreshTokenHook(context.Background(), sampleID, resp)
+	err := s.Hook(context.Background(), sampleID, resp)
 	require.NoError(t, err)
 
 	resp.Resp.WriteHeader(201)

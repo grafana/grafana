@@ -22,11 +22,12 @@ import (
 	"time"
 
 	"github.com/gobwas/glob"
+	"github.com/prometheus/common/model"
+	"gopkg.in/ini.v1"
+
 	"github.com/grafana/grafana-aws-sdk/pkg/awsds"
 	"github.com/grafana/grafana-azure-sdk-go/azsettings"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
-	"github.com/prometheus/common/model"
-	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/util"
@@ -275,7 +276,8 @@ type Cfg struct {
 	PluginAdminEnabled               bool
 	PluginAdminExternalManageEnabled bool
 
-	PluginsCDNURLTemplate string
+	PluginsCDNURLTemplate    string
+	PluginLogBackendRequests bool
 
 	// Panels
 	DisableSanitizeHtml bool
@@ -433,6 +435,9 @@ type Cfg struct {
 
 	// Gitlab
 	GitLabSkipOrgRoleSync bool
+
+	// Generic OAuth
+	GenericOAuthSkipOrgRoleSync bool
 
 	// LDAP
 	LDAPEnabled         bool
@@ -1397,6 +1402,11 @@ func readAuthGitlabSettings(iniFile *ini.File, cfg *Cfg) {
 	cfg.GitLabSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
 }
 
+func readGenericOAuthSettings(iniFile *ini.File, cfg *Cfg) {
+	sec := iniFile.Section("auth.generic_oauth")
+	cfg.GenericOAuthSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
+}
+
 func readAuthOktaSettings(iniFile *ini.File, cfg *Cfg) {
 	sec := iniFile.Section("auth.okta")
 	cfg.OktaSkipOrgRoleSync = sec.Key("skip_org_role_sync").MustBool(false)
@@ -1442,7 +1452,11 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	cfg.OAuthCookieMaxAge = auth.Key("oauth_state_cookie_max_age").MustInt(600)
 	SignoutRedirectUrl = valueAsString(auth, "signout_redirect_url", "")
+	// Deprecated
 	cfg.OAuthSkipOrgRoleUpdateSync = auth.Key("oauth_skip_org_role_update_sync").MustBool(false)
+	if cfg.OAuthSkipOrgRoleUpdateSync {
+		cfg.Logger.Warn("[Deprecated] The oauth_skip_org_role_update_sync configuration setting is deprecated. Please use skip_org_role_sync inside the auth provider section instead.")
+	}
 
 	cfg.DisableLogin = auth.Key("disable_login").MustBool(false)
 
@@ -1461,6 +1475,9 @@ func readAuthSettings(iniFile *ini.File, cfg *Cfg) (err error) {
 
 	// GitLab Auth
 	readAuthGitlabSettings(iniFile, cfg)
+
+	// Generic OAuth
+	readGenericOAuthSettings(iniFile, cfg)
 
 	// Okta Auth
 	readAuthOktaSettings(iniFile, cfg)

@@ -197,10 +197,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   navWrapper: css({
     position: 'relative',
     display: 'flex',
-
-    '.sidemenu-hidden &': {
-      display: 'none',
-    },
   }),
   sidemenu: css({
     label: 'sidemenu',

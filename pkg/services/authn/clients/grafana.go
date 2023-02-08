@@ -33,6 +33,7 @@ func (c *Grafana) AuthenticateProxy(ctx context.Context, r *authn.Request, usern
 		ClientParams: authn.ClientParams{
 			SyncUser:        true,
 			SyncTeamMembers: true,
+			FetchSyncedUser: true,
 			AllowSignUp:     c.cfg.AuthProxyAutoSignUp,
 		},
 	}

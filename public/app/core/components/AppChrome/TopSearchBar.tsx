@@ -28,12 +28,11 @@ export function TopSearchBar() {
   const helpNode = navIndex['help'];
   const profileNode = navIndex['profile'];
 
-  const search =
-    config.featureToggles.commandPalette && config.featureToggles.topNavCommandPalette ? (
-      <TopSearchBarCommandPaletteTrigger />
-    ) : (
-      <TopSearchBarInput />
-    );
+  const search = config.featureToggles.topNavCommandPalette ? (
+    <TopSearchBarCommandPaletteTrigger />
+  ) : (
+    <TopSearchBarInput />
+  );
 
   let homeUrl = config.appSubUrl || '/';
   if (!config.bootData.user.isSignedIn && !config.anonymousEnabled) {

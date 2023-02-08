@@ -13,7 +13,7 @@
       "search": "Search"
     },
     "search-box": {
-      "placeholder": "Search Grafana"
+      "placeholder": "Search or jump to..."
     },
     "section": {
       "actions": "Actions",
@@ -160,7 +160,7 @@
       "title": "Alert rules"
     },
     "alerting-receivers": {
-      "subtitle": "Choose how to notify your  contact points when an alert instance fires",
+      "subtitle": "Choose how to notify your contact points when an alert instance fires",
       "title": "Contact points"
     },
     "alerting-silences": {
