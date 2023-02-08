@@ -92,7 +92,7 @@ export class DashboardSrv {
     );
   }
 
-  async starDashboard(dashboardUid: string, isStarred: boolean) {
+  starDashboard(dashboardUid: string, isStarred: boolean) {
     const backendSrv = getBackendSrv();
 
     const request = {
@@ -101,21 +101,21 @@ export class DashboardSrv {
       method: isStarred ? 'DELETE' : 'POST',
     };
 
-    await backendSrv.request(request);
+    return backendSrv.request(request).then(() => {
+      const newIsStarred = !isStarred;
 
-    const newIsStarred = !isStarred;
+      if (this.dashboard?.uid === dashboardUid) {
+        this.dashboard.meta.isStarred = newIsStarred;
+      }
 
-    if (this.dashboard?.uid === dashboardUid) {
-      this.dashboard.meta.isStarred = newIsStarred;
-    }
+      const message = newIsStarred
+        ? t('notifications.starred-dashboard', 'Dashboard starred')
+        : t('notifications.unstarred-dashboard', 'Dashboard unstarred');
 
-    const message = newIsStarred
-      ? t('notifications.starred-dashboard', 'Dashboard starred')
-      : t('notifications.unstarred-dashboard', 'Dashboard unstarred');
+      appEvents.emit(AppEvents.alertSuccess, [message]);
 
-    appEvents.emit(AppEvents.alertSuccess, [message]);
-
-    return newIsStarred;
+      return newIsStarred;
+    });
   }
 }
 
