@@ -491,7 +491,7 @@
             "minLength": 3,
             "maxLength": 22
           },
-          "target": {
+          "id": {
             "type": "string",
             "pattern": "^(plugins|grafana)/[a-z-/0-9]*$"
           },
