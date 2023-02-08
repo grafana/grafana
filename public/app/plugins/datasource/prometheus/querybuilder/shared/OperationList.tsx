@@ -136,7 +136,7 @@ export function OperationList<T extends QueryWithOperations>({
       </Stack>
       {showConflictMessage && (
         <p className={styles.hasConflict}>
-          You have conflicting operations in your query, this will result in No Data.
+          You have conflicting operations in your query, this will result in no data.
         </p>
       )}
     </Stack>
