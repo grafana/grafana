@@ -407,7 +407,7 @@ func (hs *HTTPServer) AddDataSource(c *contextmodel.ReqContext) response.Respons
 
 	ds := hs.convertModelToDtos(c.Req.Context(), dataSource)
 	return response.JSON(http.StatusOK, util.DynMap{
-		"message":    "Data source added",
+		"message":    "Datasource added",
 		"id":         dataSource.ID,
 		"name":       dataSource.Name,
 		"datasource": ds,

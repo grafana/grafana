@@ -117,9 +117,9 @@ func (ss *SqlStore) GetDataSourcesByType(ctx context.Context, query *datasources
 
 // GetDefaultDataSource is used to get the default datasource of organization
 func (ss *SqlStore) GetDefaultDataSource(ctx context.Context, query *datasources.GetDefaultDataSourceQuery) (*datasources.DataSource, error) {
-	var dataSource *datasources.DataSource
-	return dataSource, ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		exists, err := sess.Where("org_id=? AND is_default=?", query.OrgID, true).Get(dataSource)
+	dataSource := datasources.DataSource{}
+	return &dataSource, ss.db.WithDbSession(ctx, func(sess *db.Session) error {
+		exists, err := sess.Where("org_id=? AND is_default=?", query.OrgID, true).Get(&dataSource)
 
 		if !exists {
 			return datasources.ErrDataSourceNotFound
