@@ -7,6 +7,7 @@ import {
   DataQueryResponseData,
   dateTime,
   DurationUnit,
+  QueryResultMeta,
   QueryResultMetaStat,
   TimeRange,
 } from '@grafana/data';
@@ -400,12 +401,23 @@ function combineFrames(dest: DataQueryResponseData, source: DataQueryResponseDat
     dest.fields[i].values.buffer = [].concat.apply([], [source.fields[i].values.buffer, dest.fields[i].values.buffer]);
   }
   dest.length += source.length;
-  if (dest.meta.stats) {
-    dest.meta.stats.forEach((stat: QueryResultMetaStat, i: number) => {
-      // We assume same order and meaning of meta stats.
-      stat.value += source.meta.stats[i].value;
-    });
+  combineMetadata(dest.meta, source.meta);
+}
+
+function combineMetadata(dest: QueryResultMeta, source: QueryResultMeta) {
+  if (!source.stats) {
+    return;
   }
+  if (!dest.stats) {
+    dest.stats = source.stats;
+    return;
+  }
+  dest.stats.forEach((destStat: QueryResultMetaStat, i: number) => {
+    const sourceStat = source.stats?.find((sourceStat) => destStat.displayName === sourceStat.displayName);
+    if (sourceStat) {
+      destStat.value += sourceStat.value;
+    }
+  });
 }
 
 /**
