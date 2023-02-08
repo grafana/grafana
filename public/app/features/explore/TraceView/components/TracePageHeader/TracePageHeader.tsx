@@ -18,7 +18,7 @@ import { get as _get, maxBy as _maxBy, values as _values } from 'lodash';
 import * as React from 'react';
 
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { useStyles2 } from '@grafana/ui';
 
 import ExternalLinks from '../common/ExternalLinks';
 import LabeledList from '../common/LabeledList';
