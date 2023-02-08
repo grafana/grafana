@@ -28,7 +28,7 @@ func TestIsExternallySynced(t *testing.T) {
 		},
 		// FIXME: remove this test as soon as we remove the deprecated setting for skipping org role sync for all external oauth providers
 		{
-			name:     "external user should return that it is not externally synced when oauth org role sync is set",
+			name:     "azuread external user should return that it is not externally synced when oauth org role sync is set",
 			cfg:      &setting.Cfg{AzureADSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
 			provider: AzureADLabel,
 			expected: false,
@@ -47,7 +47,7 @@ func TestIsExternallySynced(t *testing.T) {
 		},
 		// FIXME: remove this test as soon as we remove the deprecated setting for skipping org role sync for all external oauth providers
 		{
-			name:     "external user should return that it is not externally synced when oauth org role sync is set",
+			name:     "google external user should return that it is not externally synced when oauth org role sync is set",
 			cfg:      &setting.Cfg{GoogleSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
 			provider: GoogleLabel,
 			expected: false,
@@ -73,7 +73,7 @@ func TestIsExternallySynced(t *testing.T) {
 		},
 		// FIXME: remove this test as soon as we remove the deprecated setting for skipping org role sync for all external oauth providers
 		{
-			name:     "external user should return that it is not externally synced when oauth org role sync is set",
+			name:     "okta external user should return that it is not externally synced when oauth org role sync is set",
 			cfg:      &setting.Cfg{OktaSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
 			provider: OktaLabel,
 			expected: false,
@@ -92,7 +92,7 @@ func TestIsExternallySynced(t *testing.T) {
 		},
 		// FIXME: remove this test as soon as we remove the deprecated setting for skipping org role sync for all external oauth providers
 		{
-			name:     "external user should return that it is not externally synced when oauth org role sync is set",
+			name:     "github external user should return that it is not externally synced when oauth org role sync is set",
 			cfg:      &setting.Cfg{GithubSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
 			provider: GithubLabel,
 			expected: false,
@@ -112,7 +112,7 @@ func TestIsExternallySynced(t *testing.T) {
 		},
 		// FIXME: remove this test as soon as we remove the deprecated setting for skipping org role sync for all external oauth providers
 		{
-			name:     "external user should return that it is not externally synced when oauth org role sync is set",
+			name:     "gitlab external user should return that it is not externally synced when oauth org role sync is set",
 			cfg:      &setting.Cfg{GitLabSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
 			provider: GitLabLabel,
 			expected: false,
@@ -132,7 +132,7 @@ func TestIsExternallySynced(t *testing.T) {
 		},
 		// FIXME: remove this test as soon as we remove the deprecated setting for skipping org role sync for all external oauth providers
 		{
-			name:     "external user should return that it is not externally synced when oauth org role sync is set",
+			name:     "grafanacom external user should return that it is not externally synced when oauth org role sync is set",
 			cfg:      &setting.Cfg{GrafanaComSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
 			provider: GrafanaComLabel,
 			expected: false,
@@ -151,7 +151,7 @@ func TestIsExternallySynced(t *testing.T) {
 		},
 		// FIXME: remove this test as soon as we remove the deprecated setting for skipping org role sync for all external oauth providers
 		{
-			name:     "external user should return that it is not externally synced when oauth org role sync is set",
+			name:     "generic oauth external user should return that it is not externally synced when oauth org role sync is set",
 			cfg:      &setting.Cfg{GenericOAuthSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
 			provider: GenericOAuthLabel,
 			expected: false,
@@ -165,13 +165,6 @@ func TestIsExternallySynced(t *testing.T) {
 		{
 			name:     "SAML synced user should return that it is not externally synced when org role sync is set",
 			cfg:      &setting.Cfg{SAMLSkipOrgRoleSync: true},
-			provider: SAMLLabel,
-			expected: false,
-		},
-		// FIXME: remove this test as soon as we remove the deprecated setting for skipping org role sync for all external oauth providers
-		{
-			name:     "external user should return that it is not externally synced when oauth org role sync is set",
-			cfg:      &setting.Cfg{SAMLSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
 			provider: SAMLLabel,
 			expected: false,
 		},
@@ -196,13 +189,6 @@ func TestIsExternallySynced(t *testing.T) {
 		{
 			name:     "JWT synced user should return that it is not externally synced when org role sync is set",
 			cfg:      &setting.Cfg{JWTAuthSkipOrgRoleSync: true},
-			provider: JWTLabel,
-			expected: false,
-		},
-		// FIXME: remove this test as soon as we remove the deprecated setting for skipping org role sync for all external oauth providers
-		{
-			name:     "external user should return that it is not externally synced when oauth org role sync is set",
-			cfg:      &setting.Cfg{JWTAuthSkipOrgRoleSync: false, OAuthSkipOrgRoleUpdateSync: true},
 			provider: JWTLabel,
 			expected: false,
 		},
