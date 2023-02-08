@@ -160,8 +160,8 @@ export const PromVariableQueryEditor: FC<Props> = ({ onChange, query, datasource
             labelWidth={20}
             tooltip={
               <div>
-                If a metric is added, this calls /api/v1/series. This endpoint is available depending on prometheus type
-                and version in datasource configuration.
+                Returns a list of label values for the label in every metric unless a metric is specified, which then
+                returns a list of label values for the label in the specified metric.
               </div>
             }
           >
