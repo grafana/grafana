@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"path"
 	"path/filepath"
 	"reflect"
@@ -490,7 +491,14 @@ func makeRows(s *schema) [][]string {
 	rows := make([][]string, 0, len(s.Properties))
 
 	for key, p := range s.Properties {
-		typeStr := propTypeStr(key, p)
+		alias := propTypeAlias(p)
+
+		var typeStr string
+		if alias != "" {
+			typeStr = alias
+		} else {
+			typeStr = propTypeStr(key, p)
+		}
 
 		// Emphasize required properties.
 		var required string
@@ -501,7 +509,6 @@ func makeRows(s *schema) [][]string {
 		}
 
 		var desc string
-
 		if p.inheritedFrom != "" {
 			desc = fmt.Sprintf("*(Inherited from [%s](#%s))*", p.inheritedFrom, strings.ToLower(p.inheritedFrom))
 		}
@@ -522,7 +529,10 @@ func makeRows(s *schema) [][]string {
 			desc += fmt.Sprintf(" Default: `%v`.", p.Default)
 		}
 
-		desc += constraintDescr(p)
+		// Render a constraint only if it's not a type alias https://cuelang.org/docs/references/spec/#predeclared-identifiers
+		if alias == "" {
+			desc += constraintDescr(p)
+		}
 		rows = append(rows, []string{fmt.Sprintf("`%s`", key), typeStr, required, formatForTable(desc)})
 	}
 
@@ -539,39 +549,67 @@ func makeRows(s *schema) [][]string {
 	return rows
 }
 
-func constraintDescr(s *schema) string {
-	// TODO: check case when val > 100 in cue - are both values set?
-	if s.Minimum != nil && s.Maximum != nil {
-		left := fmt.Sprintf("%.20g ", s.Minimum)
+func propTypeAlias(prop *schema) string {
+	if !prop.Type.HasType("integer") || prop.Minimum == nil || prop.Maximum == nil {
+		return ""
+	}
 
-		if s.ExclusiveMinimum {
-			left += "<"
+	min := int(prop.Minimum.(float64))
+	max := int(prop.Maximum.(float64))
+
+	switch {
+	case min == 0 && max == math.MaxUint8:
+		return "uint8"
+	case min == 0 && max == math.MaxUint16:
+		return "uint16"
+	case min == 0 && max == math.MaxUint32:
+		return "uint32"
+	case min == 0 && max == uint(math.MaxUint64):
+		return "uint64"
+	case min == math.MinInt8 && max == math.MaxInt8:
+		return "int8"
+	case min == math.MinInt16 && max == math.MaxInt16:
+		return "int16"
+	case min == math.MinInt32 && max == math.MaxInt32:
+		return "int32"
+	case min == math.MinInt64 && max == math.MaxInt64:
+		return "int64"
+	default:
+		return ""
+	}
+}
+
+func constraintDescr(prop *schema) string {
+	if prop.Minimum != nil && prop.Maximum != nil {
+		var left, right string
+		if prop.ExclusiveMinimum {
+			left += ">"
 		} else {
-			left += "<="
+			left += ">="
 		}
+		left += fmt.Sprintf("%.20g", prop.Minimum)
 
-		right := ""
-		if s.ExclusiveMaximum {
+		if prop.ExclusiveMaximum {
 			right += "<"
 		} else {
 			right += "<="
 		}
-		right += fmt.Sprintf(" %.20g", s.Maximum)
-		return fmt.Sprintf("\nConstraint: `%s val %s`.", left, right)
+		right += fmt.Sprintf("%.20g", prop.Maximum)
+		return fmt.Sprintf("\nConstraint: `%s & %s`.", left, right)
 	}
 
-	if s.MinLength > 0 {
-		left := fmt.Sprintf("%v <= ", s.MinLength)
+	if prop.MinLength > 0 {
+		left := fmt.Sprintf(">=%v ", prop.MinLength)
 		right := ""
 
-		if s.MaxLength > 0 {
-			right = fmt.Sprintf(" <= %v", s.MaxLength)
+		if prop.MaxLength > 0 {
+			right = fmt.Sprintf("<=%v", prop.MaxLength)
 		}
-		return fmt.Sprintf("\nConstraint: `%slen(val)%s`.", left, right)
+		return fmt.Sprintf("\nConstraint: `length %s && %s`.", left, right)
 	}
 
-	if s.Pattern != "" {
-		fmt.Sprintf("\nConstraint: must match `%s`.", s.Pattern)
+	if prop.Pattern != "" {
+		fmt.Sprintf("\nConstraint: must match `%s`.", prop.Pattern)
 	}
 
 	return ""
