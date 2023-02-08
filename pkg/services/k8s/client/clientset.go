@@ -12,6 +12,7 @@ import (
 	kerrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	k8schema "k8s.io/apimachinery/pkg/runtime/schema"
 	memory "k8s.io/client-go/discovery/cached"
 	"k8s.io/client-go/dynamic"
@@ -150,4 +151,15 @@ func (c *Clientset) GetResourceClient(gcrd k8ssys.Kind, namespace ...string) (dy
 	}
 
 	return resourceClient, nil
+}
+
+// GetResourceInformer returns a SharedIndexInformer for the given Kind.
+func (c *Clientset) GetResourceInformer(gcrd k8ssys.Kind) cache.SharedIndexInformer {
+	gvk := gcrd.GVK()
+	gvr := schema.GroupVersionResource{
+		Group:    gvk.Group,
+		Version:  gvk.Version,
+		Resource: gcrd.Schema.Spec.Names.Plural,
+	}
+	return c.factory.ForResource(gvr).Informer()
 }
