@@ -209,7 +209,6 @@ const getStyles = (selectedView: SelectedView, app: CoreApp, flameGraphHeight: n
   graph: css`
     cursor: pointer;
     float: left;
-    overflow: scroll;
     width: ${selectedView === SelectedView.FlameGraph ? '100%' : '50%'};
     ${app !== CoreApp.Explore
       ? `height: calc(${flameGraphHeight}px - 50px)`
