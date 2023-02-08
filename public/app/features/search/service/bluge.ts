@@ -33,6 +33,11 @@ export class BlugeSearcher implements GrafanaSearcher {
     if (query.facet?.length) {
       throw new Error('facets not supported!');
     }
+
+    if (query.permission) {
+      console.warn('Permission search filter is not supported with bluge search v2');
+    }
+
     return this.doSearchQuery(query);
   }
 

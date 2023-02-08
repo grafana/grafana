@@ -22,6 +22,7 @@ interface APIQuery {
   folderIds?: number[];
   sort?: string;
   starred?: boolean;
+  permission?: 'Edit' | 'View';
 }
 
 // Internal object to hold folderId
@@ -75,6 +76,7 @@ export class SQLSearcher implements GrafanaSearcher {
         limit: query.limit ?? DEFAULT_MAX_VALUES, // default 1k max values
         tag: query.tags,
         sort: query.sort,
+        permission: query.permission,
       },
       query
     );

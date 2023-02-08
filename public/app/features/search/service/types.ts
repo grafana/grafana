@@ -25,6 +25,7 @@ export interface SearchQuery {
   limit?: number;
   from?: number;
   starred?: boolean;
+  permission?: 'Edit' | 'View'; // Not supported by bluge searcher
 }
 
 export interface DashboardQueryResult {
