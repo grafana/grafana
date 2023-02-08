@@ -1,10 +1,8 @@
-import deepEqual from 'fast-deep-equal';
-import { cloneDeep, filter, groupBy, head } from 'lodash';
+import { cloneDeep, groupBy } from 'lodash';
 import { from, mergeMap, Observable, of } from 'rxjs';
 import { scan } from 'rxjs/operators';
 
 import {
-  AbsoluteTimeRange,
   DataFrame,
   DataQuery,
   DataQueryRequest,
@@ -104,47 +102,12 @@ const supplementaryQueryFallbackCleanUp = (type: SupplementaryQueryType, acc: Da
   }
 };
 
-/**
- * CacheInfo contains previous results. If queries didn't change and previous results cover wider time range,
- * the previous results are used and returned straight away.
- */
-const getCachedResults = (
-  cacheInfo: SupplementaryQueryCacheInfo,
-  uid: string,
-  allQueriesByDataSourceUid: Record<string, DataQuery[]>
-) => {
-  const prev = filter(cacheInfo.previousData, ['meta.custom.datasourceUid', uid]);
-  const frame = head(prev);
-  if (frame) {
-    const dataRange = frame.meta?.custom?.absoluteRange;
-    const hasWiderRange =
-      dataRange && dataRange.from <= cacheInfo.newRange.from && cacheInfo.newRange.to <= dataRange.to;
-    const allQueriesAreTheSame = deepEqual(allQueriesByDataSourceUid[uid], frame.meta?.custom?.targets);
-    if (hasWiderRange && allQueriesAreTheSame) {
-      return of({ state: LoadingState.Done, data: prev });
-    }
-  }
-  return undefined;
-};
-
-/**
- * Used for reusing the existing data if possible
- */
-type SupplementaryQueryCacheInfo = {
-  previousData: DataFrame[];
-  newQueries: DataQuery[];
-  newRange: AbsoluteTimeRange;
-};
-
 export const getSupplementaryQueryProvider = (
   datasourceInstance: DataSourceApi,
   type: SupplementaryQueryType,
   request: DataQueryRequest,
-  explorePanelData: Observable<ExplorePanelData>,
-  cacheInfo: SupplementaryQueryCacheInfo
+  explorePanelData: Observable<ExplorePanelData>
 ): Observable<DataQueryResponse> | undefined => {
-  const allQueriesByDataSourceUid = groupBy(request.targets, 'datasource.uid');
-
   if (hasSupplementaryQuerySupport(datasourceInstance, type)) {
     return datasourceInstance.getDataProvider(type, request);
   } else if (datasourceInstance.meta.mixed === true && datasourceInstance instanceof MixedDatasource) {
@@ -175,18 +138,17 @@ export const getSupplementaryQueryProvider = (
             if (hasSupplementaryQuerySupport(ds, type)) {
               const dsProvider = ds.getDataProvider(type, dsRequest);
               if (dsProvider) {
-                const cached = getCachedResults(cacheInfo, ds.uid, allQueriesByDataSourceUid);
-                // 1) It provides data for current request -> use cached results or 2) get fresh data
-                return cached || dsProvider.pipe(enrichWithSource(ds.uid, ds.name));
+                // 1) It provides data for current request - use the provider
+                return dsProvider.pipe(enrichWithSource(ds.uid, ds.name));
               } else {
-                // 3) It doesn't provide data for current request -> return nothing
+                // 2) It doesn't provide data for current request -> return nothing
                 return of({
                   data: [],
                   state: LoadingState.NotStarted,
                 });
               }
             } else {
-              // 4) Data source doesn't support the supplementary query -> use fallback
+              // 3) Data source doesn't support the supplementary query -> use fallback
               // the fallback cannot determine data availability based on request, it
               // works on the results once they are available so it never uses the cache
               return getSupplementaryQueryFallback(type, explorePanelData);

@@ -1,9 +1,12 @@
 import { AnyAction, createAction, PayloadAction } from '@reduxjs/toolkit';
+import deepEqual from 'fast-deep-equal';
 import { flatten, groupBy, snakeCase } from 'lodash';
 import { combineLatest, identity, Observable, of, SubscriptionLike, Unsubscribable } from 'rxjs';
 import { mergeMap, throttleTime } from 'rxjs/operators';
 
 import {
+  AbsoluteTimeRange,
+  DataFrame,
   DataQueryErrorType,
   DataQueryResponse,
   DataSourceApi,
@@ -581,12 +584,7 @@ export const runQueries = (
               ...transaction.request,
               requestId: `${transaction.request.requestId}_${snakeCase(type)}`,
             },
-            newQuerySource,
-            {
-              previousData: [...(supplementaryQueries[type].data?.data || [])],
-              newQueries: queries,
-              newRange: absoluteRange,
-            }
+            newQuerySource
           );
 
           if (dataProvider) {
@@ -598,9 +596,11 @@ export const runQueries = (
               })
             );
 
-            dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
-            if (supplementaryQueries[type].enabled) {
-              dispatch(loadSupplementaryQueryData(exploreId, type));
+            if (!canReuseSupplementaryQueryData(supplementaryQueries[type].data, queries, absoluteRange)) {
+              dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
+              if (supplementaryQueries[type].enabled) {
+                dispatch(loadSupplementaryQueryData(exploreId, type));
+              }
             }
             // Code below (else if scenario) is for backward compatibility with data sources that don't support supplementary queries
             // TODO: Remove in next major version - v10 (https://github.com/grafana/grafana/issues/61845)
@@ -617,9 +617,11 @@ export const runQueries = (
               })
             );
 
-            dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
-            if (supplementaryQueries[type].enabled) {
-              dispatch(loadSupplementaryQueryData(exploreId, type));
+            if (!canReuseSupplementaryQueryData(supplementaryQueries[type].data, queries, absoluteRange)) {
+              dispatch(cleanSupplementaryQueryAction({ exploreId, type }));
+              if (supplementaryQueries[type].enabled) {
+                dispatch(loadSupplementaryQueryData(exploreId, type));
+              }
             }
           } else {
             // If data source instance doesn't support this supplementary query, we clean the data provider
@@ -637,6 +639,39 @@ export const runQueries = (
     dispatch(queryStoreSubscriptionAction({ exploreId, querySubscription: newQuerySubscription }));
   };
 };
+
+/**
+ * Checks if after changing the time range the existing data can be used to show supplementary query.
+ * It can happen if queries are the same and new time range is within existing data time range.
+ */
+function canReuseSupplementaryQueryData(
+  supplementaryQueryData: DataQueryResponse | undefined,
+  newQueries: DataQuery[],
+  selectedTimeRange: AbsoluteTimeRange
+): boolean {
+  if (!supplementaryQueryData) {
+    return false;
+  }
+
+  const newQueriesByRefId = groupBy(newQueries, 'refId');
+  const existingDataByRefId = groupBy(
+    flatten(supplementaryQueryData.data.map((dataFrame: DataFrame) => dataFrame.meta?.custom?.targets || [])),
+    'refId'
+  );
+
+  const allQueriesAreTheSame = deepEqual(newQueriesByRefId, existingDataByRefId);
+
+  const allResultsHaveWiderRange = supplementaryQueryData.data.every((data: DataFrame) => {
+    const dataRange = data.meta?.custom?.absoluteRange;
+    if (!dataRange) {
+      return true; // temp
+    }
+    const hasWiderRange = dataRange && dataRange.from <= selectedTimeRange.from && selectedTimeRange.to <= dataRange.to;
+    return hasWiderRange;
+  });
+
+  return allQueriesAreTheSame && allResultsHaveWiderRange;
+}
 
 /**
  * Reset queries to the given queries. Any modifications will be discarded.
