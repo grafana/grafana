@@ -110,6 +110,7 @@
       display: flex;
       padding: 5px 10px;
       border-left: 2px solid transparent;
+      align-items: center;
 
       &:hover {
         color: $link-hover-color;

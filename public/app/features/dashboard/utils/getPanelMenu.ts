@@ -6,6 +6,8 @@ import config from 'app/core/config';
 import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getExploreUrl } from 'app/core/utils/explore';
+import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import {
@@ -28,7 +30,8 @@ export function getPanelMenu(
   dashboard: DashboardModel,
   panel: PanelModel,
   loadingState?: LoadingState,
-  angularComponent?: AngularComponent | null
+  angularComponent?: AngularComponent | null,
+  isIncidentPluginInstalled?: boolean
 ): PanelMenuItem[] {
   const onViewPanel = (event: React.MouseEvent<any>) => {
     event.preventDefault();
@@ -104,6 +107,16 @@ export function getPanelMenu(
   const onCancelStreaming = (event: React.MouseEvent) => {
     event.preventDefault();
     panel.getQueryRunner().cancelQuery();
+  };
+
+  const onClickDeclareIncidnet = (event: React.MouseEvent) => {
+    event.preventDefault();
+    const bridgeURL = createBridgeURL(SupportedPlugin.Incident, '/incidents/declare', {
+      title: panel.title,
+      panelID: panel.id.toString(),
+      dashboardURL: dashboard.meta.url ?? '',
+    });
+    locationService.push(bridgeURL);
   };
 
   const menu: PanelMenuItem[] = [];
@@ -275,6 +288,16 @@ export function getPanelMenu(
       iconClassName: 'trash-alt',
       onClick: onRemovePanel,
       shortcut: 'p r',
+    });
+  }
+
+  if (isIncidentPluginInstalled) {
+    menu.push({ type: 'divider', text: '' });
+    menu.push({
+      text: t('panel.header-menu.remove', `Declare an incident`),
+      iconClassName: 'fire',
+      onClick: onClickDeclareIncidnet,
+      shortcut: 'p i',
     });
   }
 
