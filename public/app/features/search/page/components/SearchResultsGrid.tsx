@@ -9,6 +9,7 @@ import { useStyles2 } from '@grafana/ui';
 
 import { SearchCard } from '../../components/SearchCard';
 import { useSearchKeyboardNavigation } from '../../hooks/useSearchKeyboardSelection';
+import { queryResultToNestedFolderItem } from '../../service/utils';
 import { DashboardSearchItemType, DashboardSectionItem } from '../../types';
 
 import { SearchResultsProps } from './SearchResultsTable';
@@ -77,17 +78,7 @@ export const SearchResultsGrid = ({
             const item = view.get(index);
             const kind = item.kind ?? 'dashboard';
 
-            const facade: DashboardSectionItem = {
-              uid: item.uid,
-              title: item.name,
-              url: item.url,
-              uri: item.url,
-              type: kind === 'folder' ? DashboardSearchItemType.DashFolder : DashboardSearchItemType.DashDB,
-              id: 666, // do not use me!
-              isStarred: false,
-              tags: item.tags ?? [],
-              checked: selection ? selection(kind, item.uid) : false,
-            };
+            const facade = queryResultToNestedFolderItem(item, view.dataFrame.meta);
 
             if (kind === 'panel') {
               const type = item.panel_type;
@@ -112,7 +103,12 @@ export const SearchResultsGrid = ({
             // And without this wrapper there is no room for that margin
             return item ? (
               <li style={style} className={className}>
-                <SearchCard key={item.uid} {...itemProps} item={facade} />
+                <SearchCard
+                  {...itemProps}
+                  key={facade.uid}
+                  item={facade}
+                  isSelected={selection ? selection(facade.kind, facade.uid) : false}
+                />
               </li>
             ) : null;
           }}

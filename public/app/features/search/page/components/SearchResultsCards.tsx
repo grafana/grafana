@@ -54,7 +54,6 @@ export const SearchResultsCards = React.memo(
           title: item.name,
           url: item.url,
           kind: item.kind === 'folder' ? 'folder' : 'dashboard',
-          // isStarred: false,
           tags: item.tags ?? [],
         };
 
@@ -63,14 +62,11 @@ export const SearchResultsCards = React.memo(
           const finfo = meta.locationInfo[first];
 
           if (finfo) {
-            // searchItem.folderUid = item.location;
             searchItem.folderTitle = finfo.name;
           }
         }
 
-        if (selection && selectionToggle) {
-          searchItem.selected = selection(searchItem.kind, searchItem.uid!);
-        }
+        const isSelected = selection && selectionToggle && selection(searchItem.kind, searchItem.uid);
         return (
           <div style={style} key={item.uid} className={className} role="row">
             <SearchItem
@@ -82,6 +78,7 @@ export const SearchResultsCards = React.memo(
                 }
               }}
               editable={Boolean(selection != null)}
+              isSelected={isSelected}
               onClickItem={onClickItem}
             />
           </div>
