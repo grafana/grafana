@@ -578,7 +578,7 @@ export class PrometheusDatasource
                   // align data by joining, set field data, update frame length
                   // TODO: not needed for exemplars/annotations?
                   join(frameData).forEach((data, fieldIdx) => {
-                    cachedFrame.fields[fieldIdx].values = new ArrayVector(data as unknown as any[]);
+                    cachedFrame!.fields[fieldIdx].values = new ArrayVector(data as unknown as any[]);
                   });
 
                   cachedFrame.length = cachedFrame.fields[0].values.length;
@@ -607,7 +607,16 @@ export class PrometheusDatasource
             for (let targIdent of respByTarget.keys()) {
               respFrames.push(...this.cachedFrames.get(targIdent)!);
             }
-            response.data = respFrames;
+
+            // transformV2 mutates field values for heatmap de-accum, and modifies field order, so we gotta clone here, for now :(
+            let clonedFrames = respFrames.map((frame) => ({
+              ...frame,
+              fields: frame.fields.map((field) => ({
+                ...field,
+                values: new ArrayVector(field.values.toArray().slice())
+              }))
+            }));
+            response.data = clonedFrames;
           }
 
           return transformV2(response, request, { exemplarTraceIdDestinations: this.exemplarTraceIdDestinations })
