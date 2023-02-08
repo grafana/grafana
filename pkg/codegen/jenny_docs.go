@@ -365,8 +365,7 @@ func (md mdSection) write(w io.Writer) {
 func (s *schema) Markdown() string {
 	buf := new(bytes.Buffer)
 
-	var sections []mdSection
-	s.toSections(&sections)
+	sections := s.sections()
 
 	for _, v := range sections {
 		v.write(buf)
@@ -375,34 +374,36 @@ func (s *schema) Markdown() string {
 	return buf.String()
 }
 
-func (s *schema) toSections(sections *[]mdSection) {
-	md := mdSection{}
+func (s *schema) sections() []mdSection {
+	sections := []mdSection{{}}
 
 	if s.AdditionalProperties == nil {
-		md.title = s.Title
+		sections[0].title = s.Title
 	}
-	md.description = s.Description
+	sections[0].description = s.Description
 
 	if len(s.extends) > 0 {
-		md.extends = makeExtends(s.extends)
+		sections[0].extends = makeExtends(s.extends)
 	}
-	md.rows = makeRows(s)
-
-	if !contains(sections, md) {
-		*sections = append(*sections, md)
-	}
+	sections[0].rows = makeRows(s)
 
 	for _, sch := range findDefinitions(s) {
-		sch.toSections(sections)
+		for _, ss := range sch.sections() {
+			if !contains(sections, ss) {
+				sections = append(sections, ss)
+			}
+		}
 	}
+
+	return sections
 }
 
-func contains(sl *[]mdSection, elem mdSection) bool {
+func contains(sl []mdSection, elem mdSection) bool {
 	if sl == nil {
 		return false
 	}
 
-	for _, s := range *sl {
+	for _, s := range sl {
 		if reflect.DeepEqual(s, elem) {
 			return true
 		}
