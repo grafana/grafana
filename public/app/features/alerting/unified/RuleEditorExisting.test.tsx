@@ -1,4 +1,4 @@
-import { render, waitFor, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { Route } from 'react-router-dom';
@@ -25,7 +25,7 @@ import { disableRBAC, mockDataSource, MockDataSourceSrv, mockFolder } from './mo
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
-import { getDefaultQueries } from './utils/rule-form';
+import { getDefaultQueriesAsync } from './utils/rule-form';
 
 jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name
@@ -119,6 +119,7 @@ describe('RuleEditor grafana managed rules', () => {
     mocks.getAllDataSources.mockReturnValue(Object.values(dataSources));
     mocks.api.setRulerRuleGroup.mockResolvedValue();
     mocks.api.fetchRulerRulesNamespace.mockResolvedValue([]);
+    const defaultQueries = (await getDefaultQueriesAsync()).queries ?? [];
     mocks.api.fetchRulerRules.mockResolvedValue({
       [folder.title]: [
         {
@@ -134,7 +135,7 @@ describe('RuleEditor grafana managed rules', () => {
                 namespace_uid: 'abcd',
                 namespace_id: 1,
                 condition: 'B',
-                data: getDefaultQueries(),
+                data: defaultQueries,
                 exec_err_state: GrafanaAlertStateDecision.Error,
                 no_data_state: GrafanaAlertStateDecision.NoData,
                 title: 'my great new rule',
@@ -203,7 +204,7 @@ describe('RuleEditor grafana managed rules', () => {
             grafana_alert: {
               uid,
               condition: 'B',
-              data: getDefaultQueries(),
+              data: await getDefaultQueriesAsync(),
               exec_err_state: GrafanaAlertStateDecision.Error,
               is_paused: false,
               no_data_state: 'NoData',

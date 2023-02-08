@@ -3,22 +3,28 @@ import React, { FC, useEffect, useMemo, useState } from 'react';
 import { DeepMap, FieldError, FormProvider, useForm, useFormContext, UseFormWatch } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { logInfo, config } from '@grafana/runtime';
-import { Button, ConfirmModal, CustomScrollbar, Spinner, useStyles2, HorizontalGroup, Field, Input } from '@grafana/ui';
+import { DataQuery, DataSourceApi, DataSourceJsonData, GrafanaTheme2 } from '@grafana/data';
+import { config, logInfo } from '@grafana/runtime';
+import { Button, ConfirmModal, CustomScrollbar, Field, HorizontalGroup, Input, Spinner, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { useCleanup } from 'app/core/hooks/useCleanup';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { useDispatch } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
+import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { LogMessages, trackNewAlerRuleFormCancelled, trackNewAlerRuleFormError } from '../../Analytics';
 import { useUnifiedAlertingSelector } from '../../hooks/useUnifiedAlertingSelector';
 import { deleteRuleAction, saveRuleFormAction } from '../../state/actions';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { initialAsyncRequestState } from '../../utils/redux';
-import { getDefaultFormValues, getDefaultQueries, rulerRuleToFormValues } from '../../utils/rule-form';
+import {
+  getDefaultFormValues,
+  getDefaultQueriesAsync,
+  getInitialDefaultQueries,
+  rulerRuleToFormValues,
+} from '../../utils/rule-form';
 import * as ruleId from '../../utils/rule-id';
 
 import { CloudEvaluationBehavior } from './CloudEvaluationBehavior';
@@ -83,6 +89,22 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
 
   const returnTo: string = (queryParams['returnTo'] as string | undefined) ?? '/alerting/list';
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [defaultDsAndQueries, setDefaultDsAndQueries] = useState<{
+    queries: AlertQuery[] | null;
+    ds?: DataSourceApi<DataQuery, DataSourceJsonData, {}>;
+  }>({ queries: null });
+
+  useEffect(() => {
+    const getDefaultQueries_ = async () => {
+      setDefaultDsAndQueries(await getDefaultQueriesAsync());
+    };
+    getDefaultQueries_();
+  }, [existing]);
+  const defaultsInQueryParams: string = queryParams['defaults'] as string;
+  const defaultsInQueryParamsObject = useMemo(
+    () => ({ ...(defaultsInQueryParams ? JSON.parse(defaultsInQueryParams) : {}) }),
+    [defaultsInQueryParams]
+  );
 
   const defaultValues: RuleFormValues = useMemo(() => {
     if (existing) {
@@ -98,13 +120,13 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
 
     return {
       ...getDefaultFormValues(),
-      queries: getDefaultQueries(),
+      queries: getInitialDefaultQueries(),
       condition: 'C',
-      ...(queryParams['defaults'] ? JSON.parse(queryParams['defaults'] as string) : {}),
+      ...defaultsInQueryParamsObject,
       type: RuleFormType.grafana,
       evaluateEvery: evaluateEvery,
     };
-  }, [existing, prefill, queryParams, evaluateEvery]);
+  }, [existing, prefill, evaluateEvery, defaultsInQueryParamsObject]);
 
   const formAPI = useForm<RuleFormValues>({
     mode: 'onSubmit',
@@ -112,7 +134,21 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
     shouldFocusError: true,
   });
 
-  const { handleSubmit, watch } = formAPI;
+  const { handleSubmit, watch, reset } = formAPI;
+
+  useEffect(() => {
+    !existing &&
+      !prefill &&
+      defaultDsAndQueries.queries &&
+      reset({
+        ...getDefaultFormValues(),
+        queries: defaultDsAndQueries.queries,
+        condition: 'C',
+        ...defaultsInQueryParamsObject,
+        type: RuleFormType.grafana,
+        evaluateEvery: evaluateEvery,
+      });
+  }, [defaultDsAndQueries.queries, reset, existing, prefill, defaultsInQueryParamsObject, evaluateEvery]);
 
   const type = watch('type');
   const dataSourceName = watch('dataSourceName');
@@ -194,7 +230,7 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
   const evaluateEveryInForm = watch('evaluateEvery');
   useEffect(() => setEvaluateEvery(evaluateEveryInForm), [evaluateEveryInForm]);
 
-  return (
+  return defaultDsAndQueries.queries ? (
     <FormProvider {...formAPI}>
       <form onSubmit={(e) => e.preventDefault()} className={styles.form}>
         <HorizontalGroup height="auto" justify="flex-end">
@@ -247,7 +283,13 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
           <CustomScrollbar autoHeightMin="100%" hideHorizontalTrack={true}>
             <div className={styles.contentInner}>
               <AlertRuleNameInput />
-              <QueryAndExpressionsStep editingExistingRule={!!existing} onDataChange={checkAlertCondition} />
+              <QueryAndExpressionsStep
+                editingExistingRule={!!existing}
+                prefill={!!prefill}
+                onDataChange={checkAlertCondition}
+                lazyDefaultQueries={defaultDsAndQueries.queries}
+                lazyDataSource={defaultDsAndQueries.ds}
+              />
               {showStep2 && (
                 <>
                   {type === RuleFormType.grafana ? (
@@ -281,7 +323,7 @@ export const AlertRuleForm: FC<Props> = ({ existing, prefill }) => {
       ) : null}
       {showEditYaml ? <RuleInspector onClose={() => setShowEditYaml(false)} /> : null}
     </FormProvider>
-  );
+  ) : null;
 };
 
 const isCortexLokiOrRecordingRule = (watch: UseFormWatch<RuleFormValues>) => {

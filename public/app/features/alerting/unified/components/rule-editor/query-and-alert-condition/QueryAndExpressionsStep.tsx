@@ -1,10 +1,10 @@
 import React, { FC, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { CoreApp, LoadingState, PanelData } from '@grafana/data';
+import { DataQuery, DataSourceApi, DataSourceJsonData, LoadingState, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Stack } from '@grafana/experimental';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { Alert, Button, Field, InputControl, Tooltip } from '@grafana/ui';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
@@ -35,10 +35,19 @@ import {
 
 interface Props {
   editingExistingRule: boolean;
+  prefill: boolean;
   onDataChange: (error: string) => void;
+  lazyDefaultQueries?: AlertQuery[];
+  lazyDataSource?: DataSourceApi<DataQuery, DataSourceJsonData, {}>;
 }
 
-export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onDataChange }) => {
+export const QueryAndExpressionsStep: FC<Props> = ({
+  editingExistingRule,
+  onDataChange,
+  lazyDefaultQueries,
+  lazyDataSource,
+  prefill,
+}) => {
   const runner = useRef(new AlertingQueryRunner());
   const {
     setValue,
@@ -46,6 +55,7 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onData
     watch,
     formState: { errors },
     control,
+    formState: { isDirty },
   } = useFormContext<RuleFormValues>();
   const [panelData, setPanelData] = useState<Record<string, PanelData>>({});
 
@@ -54,7 +64,6 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onData
     panelData: {},
   };
   const [{ queries }, dispatch] = useReducer(queriesAndExpressionsReducer, initialState);
-
   const [type, condition, dataSourceName] = watch(['type', 'condition', 'dataSourceName']);
 
   const isGrafanaManagedType = type === RuleFormType.grafana;
@@ -70,6 +79,11 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onData
   const runQueries = useCallback(() => {
     runner.current.run(getValues('queries'));
   }, [getValues]);
+
+  //once default queries is updated
+  useEffect(() => {
+    !editingExistingRule && !isDirty && !prefill && lazyDefaultQueries && dispatch(setDataQueries(lazyDefaultQueries));
+  }, [lazyDefaultQueries, editingExistingRule, isDirty, prefill]);
 
   // whenever we update the queries we have to update the form too
   useEffect(() => {
@@ -176,13 +190,10 @@ export const QueryAndExpressionsStep: FC<Props> = ({ editingExistingRule, onData
     }
   }, [condition, queries, handleSetCondition]);
 
-  const onAddNewQuery = async () => {
-    const datasource = getDefaultOrFirstCompatibleDataSource();
-    if (!datasource) {
-      return;
-    }
-    const ds = await getDataSourceSrv().get(datasource.uid);
-    dispatch(addNewDataQuery({ ds: ds, defaultQuery: ds?.getDefaultQuery?.(CoreApp.UnifiedAlerting) }));
+  const onAddNewQuery = () => {
+    lazyDataSource &&
+      lazyDefaultQueries &&
+      dispatch(addNewDataQuery({ ds: lazyDataSource, defaultQuery: lazyDefaultQueries[0]?.model }));
   };
 
   return (

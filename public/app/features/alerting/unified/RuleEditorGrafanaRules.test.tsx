@@ -1,4 +1,4 @@
-import { waitFor, screen, within, waitForElementToBeRemoved } from '@testing-library/react';
+import { screen, waitFor, waitForElementToBeRemoved, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
 import React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
@@ -19,7 +19,7 @@ import { disableRBAC, mockDataSource, MockDataSourceSrv } from './mocks';
 import { fetchRulerRulesIfNotFetchedYet } from './state/actions';
 import * as config from './utils/config';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
-import { getDefaultQueries } from './utils/rule-form';
+import { getDefaultQueriesAsync } from './utils/rule-form';
 
 jest.mock('./components/rule-editor/ExpressionEditor', () => ({
   // eslint-disable-next-line react/display-name
@@ -158,7 +158,7 @@ describe('RuleEditor grafana managed rules', () => {
             for: '5m',
             grafana_alert: {
               condition: 'B',
-              data: getDefaultQueries(),
+              data: (await getDefaultQueriesAsync()).queries,
               exec_err_state: GrafanaAlertStateDecision.Error,
               is_paused: false,
               no_data_state: 'NoData',

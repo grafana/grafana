@@ -23,7 +23,7 @@ export function getDataSourceSrv() {
       Promise.resolve({
         filterQuery: () => true,
         getDefaultQuery: () => ({
-          expression: 'vector(1)',
+          expr: 'vector(1)',
         }),
       }),
   };
