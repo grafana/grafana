@@ -39,6 +39,8 @@ export function getNavTitle(navId: string | undefined) {
       return t('nav.snapshots.title', 'Snapshots');
     case 'dashboards/library-panels':
       return t('nav.library-panels.title', 'Library panels');
+    case 'dashboards/public':
+      return t('nav.public.title', 'Public dashboards');
     case 'dashboards/new':
       return t('nav.new-dashboard.title', 'New dashboard');
     case 'dashboards/folder/new':

@@ -26,6 +26,7 @@ export function buildInitialState(): NavIndex {
 
 function buildNavIndex(navIndex: NavIndex, children: NavModelItem[], parentItem?: NavModelItem) {
   const translatedChildren: NavModelItem[] = [];
+
   for (const node of children) {
     const translatedNode: NavModelItem = {
       ...node,
@@ -45,6 +46,7 @@ function buildNavIndex(navIndex: NavIndex, children: NavModelItem[], parentItem?
     translatedChildren.push(translatedNode);
   }
 
+  // need to update the parentItem children with the new translated children
   if (parentItem) {
     parentItem.children = translatedChildren;
   }
