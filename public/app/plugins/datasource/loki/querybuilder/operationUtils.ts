@@ -160,18 +160,38 @@ export function labelFilterRenderer(model: QueryBuilderOperation, def: QueryBuil
 
 export function isConflictingFilter(
   operation: QueryBuilderOperation,
-  labelMatchers: QueryBuilderLabelFilter[]
+  queryLabels: QueryBuilderLabelFilter[],
+  queryOperations: QueryBuilderOperation[]
 ): boolean {
   let conflictingFilter = false;
 
-  labelMatchers.forEach((matcher) => {
-    if (operation.params[0] !== matcher.label || operation.params[2] !== matcher.value) {
+  const labelFilters = queryOperations.filter((op) => {
+    return op.id === LokiOperationId.LabelFilter && op.params !== operation.params;
+  });
+
+  // check if the new filter conflicts with any other label filter
+  labelFilters.forEach((filter) => {
+    if (operation.params[0] !== filter.params[0] || operation.params[2] !== filter.params[2]) {
       return;
     }
 
     if (
-      (String(operation.params[1]).startsWith('!') && !matcher.op.startsWith('!')) ||
-      (matcher.op.startsWith('!') && !String(operation.params[1]).startsWith('!'))
+      (String(operation.params[1]).startsWith('!') && !String(filter.params[1]).startsWith('!')) ||
+      (String(filter.params[1]).startsWith('!') && !String(operation.params[1]).startsWith('!'))
+    ) {
+      conflictingFilter = true;
+    }
+  });
+
+  // check if the new filter conflicts with any label selector
+  queryLabels.forEach((label) => {
+    if (operation.params[0] !== label.label || operation.params[2] !== label.value) {
+      return;
+    }
+
+    if (
+      (String(operation.params[1]).startsWith('!') && !label.op.startsWith('!')) ||
+      (label.op.startsWith('!') && !String(operation.params[1]).startsWith('!'))
     ) {
       conflictingFilter = true;
     }

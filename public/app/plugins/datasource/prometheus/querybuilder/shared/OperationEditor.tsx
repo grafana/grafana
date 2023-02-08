@@ -132,7 +132,7 @@ export function OperationEditor({
 
   let isConflicting = false;
   if (operation.id === LokiOperationId.LabelFilter) {
-    const res = isConflictingFilter(operation, query.labels);
+    const res = isConflictingFilter(operation, query.labels, query.operations);
     isConflicting = res;
     setShowConflictMessage(res);
   }
