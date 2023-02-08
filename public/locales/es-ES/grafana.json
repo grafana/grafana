@@ -287,6 +287,9 @@
       "title": "Perfil"
     },
     "profile/switch-org": "Cambiar de organización",
+    "public": {
+      "title": ""
+    },
     "scenes": {
       "title": "Escenas"
     },
