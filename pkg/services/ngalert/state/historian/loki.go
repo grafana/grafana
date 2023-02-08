@@ -7,6 +7,7 @@ import (
 	"math"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/weaveworks/common/http/client"
 
@@ -46,6 +47,7 @@ type remoteLokiClient interface {
 type RemoteLokiBackend struct {
 	client         remoteLokiClient
 	externalLabels map[string]string
+	clock          clock.Clock
 	metrics        *metrics.Historian
 	log            log.Logger
 }
@@ -55,6 +57,7 @@ func NewRemoteLokiBackend(cfg LokiConfig, req client.Requester, metrics *metrics
 	return &RemoteLokiBackend{
 		client:         newLokiClient(cfg, req, metrics, logger),
 		externalLabels: cfg.ExternalLabels,
+		clock:          clock.New(),
 		metrics:        metrics,
 		log:            logger,
 	}
@@ -72,6 +75,11 @@ func (h *RemoteLokiBackend) RecordStatesAsync(ctx context.Context, rule history_
 		defer close(errCh)
 		h.metrics.ActiveWriteGoroutines.Inc()
 		defer h.metrics.ActiveWriteGoroutines.Dec()
+		start := h.clock.Now()
+		defer func() {
+			dur := h.clock.Now().Sub(start)
+			h.metrics.PersistDuration.Observe(dur.Seconds())
+		}()
 
 		if err := h.recordStreams(ctx, streams, rule.OrgID, logger); err != nil {
 			logger.Error("Failed to save alert state history batch", "error", err)

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -27,6 +28,7 @@ type AnnotationBackend struct {
 	annotations annotations.Repository
 	dashboards  *dashboardResolver
 	rules       RuleStore
+	clock       clock.Clock
 	metrics     *metrics.Historian
 	log         log.Logger
 }
@@ -40,6 +42,7 @@ func NewAnnotationBackend(annotations annotations.Repository, dashboards dashboa
 		annotations: annotations,
 		dashboards:  newDashboardResolver(dashboards, defaultDashboardCacheExpiry),
 		rules:       rules,
+		clock:       clock.New(),
 		metrics:     metrics,
 		log:         log.New("ngalert.state.historian"),
 	}
@@ -51,13 +54,20 @@ func (h *AnnotationBackend) RecordStatesAsync(ctx context.Context, rule history_
 	// Build annotations before starting goroutine, to make sure all data is copied and won't mutate underneath us.
 	annotations := buildAnnotations(rule, states, logger)
 	panel := parsePanelKey(rule, logger)
+
 	errCh := make(chan error, 1)
 	go func() {
 		defer close(errCh)
 		h.metrics.ActiveWriteGoroutines.Inc()
 		defer h.metrics.ActiveWriteGoroutines.Dec()
+		start := h.clock.Now()
+		defer func() {
+			dur := h.clock.Now().Sub(start)
+			h.metrics.PersistDuration.Observe(dur.Seconds())
+		}()
 
 		errCh <- h.recordAnnotations(ctx, panel, annotations, logger)
+
 	}()
 	return errCh
 }
