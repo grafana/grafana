@@ -1,6 +1,4 @@
 ---
-aliases:
-
 description: Guide for upgrading to Grafana v9.1
 keywords:
   - grafana
