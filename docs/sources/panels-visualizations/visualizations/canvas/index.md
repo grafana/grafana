@@ -78,7 +78,7 @@ The inline editing toggle enables you to lock or unlock the canvas panel. When t
 
 ### Data Links
 
-Canvas supports [data links](https://grafana.com/docs/grafana/latest/panels-visualizations/configure-data-links/). Once you have added a data link to the panel, you can display it following these steps:
+Canvas supports [data links](https://grafana.com/docs/grafana/latest/panels-visualizations/configure-data-links/). Once you've added a data link to the panel, you can display it by following these steps:
 
 1. Set an element to be tied to a field value
 2. Turn off the inline editing toggle
