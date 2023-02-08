@@ -4,9 +4,8 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { AsyncMultiSelect, Icon, Button, useStyles2 } from '@grafana/ui';
-import { getBackendSrv } from 'app/core/services/backend_srv';
-import { DashboardSearchHit, DashboardSearchItemType } from 'app/features/search/types';
-import { FolderInfo, PermissionLevelString } from 'app/types';
+import { getGrafanaSearcher } from 'app/features/search/service';
+import { FolderInfo } from 'app/types';
 
 export interface FolderFilterProps {
   onChange: (folder: FolderInfo[]) => void;
@@ -65,15 +64,21 @@ async function getFoldersAsOptions(
 ): Promise<Array<SelectableValue<FolderInfo>>> {
   setLoading(true);
 
-  const params = {
+  const query = {
+    kind: ['folder'],
     query: searchString,
-    type: DashboardSearchItemType.DashFolder,
-    permission: PermissionLevelString.View,
+    permission: 'View' as const,
   };
+  const searchResults = await getGrafanaSearcher().search(query);
 
-  // FIXME: stop using id from search and use UID instead
-  const searchHits: DashboardSearchHit[] = await getBackendSrv().search(params);
-  const options = searchHits.map((d) => ({ label: d.title, value: { uid: d.uid, title: d.title } }));
+  const options = searchResults.view.map((item) => ({
+    label: item.name,
+    value: {
+      uid: item.uid,
+      title: item.name,
+    },
+  }));
+
   if (!searchString || 'general'.includes(searchString.toLowerCase())) {
     options.unshift({ label: 'General', value: { uid: 'general', title: 'General' } });
   }
