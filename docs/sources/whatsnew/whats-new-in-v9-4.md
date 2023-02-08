@@ -107,7 +107,7 @@ Canvas is a new panel that combines the power of Grafana with the flexibility of
 
 In Grafana v9.4, we have added the ability to create connections (arrows). Connections enable you to connect elements together to create more complex visualizations. We also added support for data links. To learn more about the Canvas panel, refer to [Canvas]({{< relref "../panels-visualizations/visualizations/canvas" >}}).
 
-{{< video-embed src="/static/img/docs/canvas-panel/canvas-connections-9-4-0.mp4" max-width="750px" caption="Canvas panel connections" >}}
+{{< video-embed src="/media/docs/grafana/canvas-connections-9-4-0.mp4" max-width="750px" caption="Canvas panel connections" >}}
 
 ## Auth and security
 
