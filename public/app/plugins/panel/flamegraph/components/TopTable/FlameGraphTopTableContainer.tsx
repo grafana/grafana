@@ -44,12 +44,11 @@ const FlameGraphTopTableContainer = ({
   const sortLevelsIntoTable = useCallback(() => {
     let label, self, value;
     let table: { [key: string]: TableData } = {};
+    const valueValues = data.fields.find((f) => f.name === 'value')?.values;
+    const selfValues = data.fields.find((f) => f.name === 'self')?.values;
+    const labelValues = data.fields.find((f) => f.name === 'label')?.values;
 
-    if (data.fields.length === 4) {
-      const valueValues = data.fields[1].values;
-      const selfValues = data.fields[2].values;
-      const labelValues = data.fields[3].values;
-
+    if (valueValues && selfValues && labelValues) {
       for (let i = 0; i < valueValues.length; i++) {
         value = valueValues.get(i);
         self = selfValues.get(i);

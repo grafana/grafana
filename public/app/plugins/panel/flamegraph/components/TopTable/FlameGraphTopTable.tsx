@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef } from 'react';
 import { SortByFn, useSortBy, useAbsoluteLayout, useTable, CellProps } from 'react-table';
 import { FixedSizeList } from 'react-window';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, useStyles2, CustomScrollbar } from '@grafana/ui';
+import { CustomScrollbar, Icon, useStyles2 } from '@grafana/ui';
 
 import { TOP_TABLE_COLUMN_WIDTH } from '../../constants';
 import { ColumnTypes, TopTableData, TopTableValue } from '../types';
@@ -33,6 +33,7 @@ const FlameGraphTopTable = ({
   setRangeMax,
 }: Props) => {
   const styles = useStyles2((theme) => getStyles(theme));
+  const listRef = useRef<FixedSizeList>(null);
 
   const sortSymbols: SortByFn<object> = (a, b, column) => {
     return a.values[column].localeCompare(b.values[column]);
@@ -136,6 +137,14 @@ const FlameGraphTopTable = ({
     [rows, prepareRow, search, styles.matchedRow, styles.row, styles.cell, rowClicked]
   );
 
+  const handleScroll: React.UIEventHandler = (event) => {
+    const { scrollTop } = event.target as HTMLDivElement;
+
+    if (listRef.current !== null) {
+      listRef.current.scrollTo(scrollTop);
+    }
+  };
+
   return (
     <div className={styles.table(height)} data-testid="topTable">
       {headerGroups.map((headerGroup) => {
@@ -160,13 +169,14 @@ const FlameGraphTopTable = ({
       })}
 
       {rows.length > 0 ? (
-        <CustomScrollbar hideVerticalTrack={true}>
+        <CustomScrollbar onScroll={handleScroll} hideHorizontalTrack={true}>
           <FixedSizeList
             height={height}
             itemCount={rows.length}
             itemSize={38}
             width={'100%'}
-            style={{ overflow: 'hidden auto' }}
+            ref={listRef}
+            style={{ overflow: undefined }}
           >
             {renderRow}
           </FixedSizeList>
@@ -193,7 +203,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
     return css`
       background-color: ${theme.colors.background.primary};
       height: ${height}px;
-      overflow: scroll;
       display: flex;
       flex-direction: column;
       width: 100%;

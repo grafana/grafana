@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import React, { RefObject, useCallback, useMemo, useState } from 'react';
 
 import {
+  CoreApp,
   DataFrame,
   DataLink,
   DataSourceApi,
@@ -21,13 +22,13 @@ import { TraceToMetricsData } from 'app/core/components/TraceToMetrics/TraceToMe
 import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { TempoQuery } from 'app/plugins/datasource/tempo/types';
+import FlameGraphContainer from 'app/plugins/panel/flamegraph/components/FlameGraphContainer';
 import { useDispatch, useSelector } from 'app/types';
 import { ExploreId } from 'app/types/explore';
 
 import { changePanelState } from '../state/explorePane';
 
 import { SpanBarOptionsData, Trace, TracePageHeader, TraceTimelineViewer, TTraceTimeline } from './components';
-import FlameGraphContainer from './components/FlameGraph/FlameGraphContainer';
 import SpanGraph from './components/TracePageHeader/SpanGraph';
 import { TopOfViewRefType } from './components/TraceTimelineViewer/VirtualizedTraceView';
 import { convertTraceToProfile } from './components/utils/convertTraceToProfile';
@@ -209,7 +210,7 @@ export function TraceView(props: Props) {
               />
             </>
           ) : (
-            <FlameGraphContainer data={convertTraceToProfile(traceProp)} />
+            <FlameGraphContainer app={CoreApp.Explore} data={convertTraceToProfile(traceProp)} hideHeader={true} />
           )}
         </>
       ) : (

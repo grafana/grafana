@@ -20,6 +20,7 @@ type Props = {
   // This needs to be different to explore flame graph height as we
   // use panels with user adjustable heights in dashboards etc.
   flameGraphHeight?: number;
+  hideHeader?: boolean;
 };
 
 const FlameGraphContainer = (props: Props) => {
@@ -64,18 +65,20 @@ const FlameGraphContainer = (props: Props) => {
 
   return (
     <div ref={sizeRef} className={styles.container}>
-      <FlameGraphHeader
-        app={props.app}
-        setTopLevelIndex={setTopLevelIndex}
-        setSelectedBarIndex={setSelectedBarIndex}
-        setRangeMin={setRangeMin}
-        setRangeMax={setRangeMax}
-        search={search}
-        setSearch={setSearch}
-        selectedView={selectedView}
-        setSelectedView={setSelectedView}
-        containerWidth={containerWidth}
-      />
+      {!props.hideHeader && (
+        <FlameGraphHeader
+          app={props.app}
+          setTopLevelIndex={setTopLevelIndex}
+          setSelectedBarIndex={setSelectedBarIndex}
+          setRangeMin={setRangeMin}
+          setRangeMax={setRangeMax}
+          search={search}
+          setSearch={setSearch}
+          selectedView={selectedView}
+          setSelectedView={setSelectedView}
+          containerWidth={containerWidth}
+        />
+      )}
 
       {selectedView !== SelectedView.FlameGraph && (
         <FlameGraphTopTableContainer

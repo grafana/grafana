@@ -63,8 +63,8 @@ export function convertTraceToProfile(trace: Trace): DataFrame {
       level -= 1;
     } else {
       result.levels.push(level);
-      result.values.push(span.total || 0);
-      result.self.push(span.self || 0);
+      result.values.push(span.total * 1000 || 0);
+      result.self.push(span.self * 1000 || 0);
       result.names.push(
         (span.processID ? `${trace.processes[span.processID].serviceName}: ` : '') + (span.operationName || 'total')
       );
@@ -95,14 +95,14 @@ export function convertTraceToProfile(trace: Trace): DataFrame {
         name: 'value',
         values: result.values,
         config: {
-          unit: 'short',
+          unit: 'ns',
         },
       },
       {
         name: 'self',
         values: result.self,
         config: {
-          unit: 'short',
+          unit: 'ns',
         },
       },
       { name: 'label', values: result.names },
