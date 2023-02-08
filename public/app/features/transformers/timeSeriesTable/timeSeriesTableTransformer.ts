@@ -28,24 +28,36 @@ export const timeSeriesTableTransformer: DataTransformerInfo<TimeSeriesTableTran
 };
 
 export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOptions, data: DataFrame[]): DataFrame[] {
-  const table = new MutableDataFrame();
-  const labelFields = getLabelFields(data);
-  const frameField: Field<DataFrame, ArrayVector> = {
-    name: 'Trend',
-    type: FieldType.frame,
-    config: {},
-    values: new ArrayVector(),
-  };
+  const refId2LabelFields = getLabelFields(data);
 
-  for (const label of Object.values(labelFields)) {
-    table.addField(label);
-  }
+  const refId2frameField: Record<string, Field<DataFrame, ArrayVector>> = {};
 
-  table.addField(frameField);
+  const result: DataFrame[] = [];
 
   for (const frame of data) {
     if (!isTimeSeries(frame)) {
-      continue;
+      result.push(frame);
+    }
+
+    const refId = frame.refId ?? '';
+
+    const labelFields = refId2LabelFields[refId] ?? {};
+    let frameField = refId2frameField[refId];
+    if (!frameField) {
+      frameField = {
+        name: 'Trend' + (refId && Object.keys(refId2LabelFields).length > 1 ? ` #${refId}` : ''),
+        type: FieldType.frame,
+        config: {},
+        values: new ArrayVector(),
+      };
+      refId2frameField[refId] = frameField;
+      const table = new MutableDataFrame();
+      for (const label of Object.values(labelFields)) {
+        table.addField(label);
+      }
+      table.addField(frameField);
+      table.refId = refId;
+      result.push(table);
     }
 
     const labels = frame.fields[1].labels;
@@ -57,16 +69,22 @@ export function timeSeriesToTableTransform(options: TimeSeriesTableTransformerOp
 
     frameField.values.add(frame);
   }
-
-  return [table];
+  return result;
 }
 
-function getLabelFields(frames: DataFrame[]): Record<string, Field<string, ArrayVector>> {
-  const labelFields: Record<string, Field<string, ArrayVector>> = {};
+function getLabelFields(frames: DataFrame[]): Record<string, Record<string, Field<string, ArrayVector>>> {
+  // refId -> label name -> label value -> values
+  const labelFields: Record<string, Record<string, Field<string, ArrayVector>>> = {};
 
   for (const frame of frames) {
     if (!isTimeSeries(frame)) {
       continue;
+    }
+
+    const refId = frame.refId ?? '';
+
+    if (!labelFields[refId]) {
+      labelFields[refId] = {};
     }
 
     for (const field of frame.fields) {
@@ -75,8 +93,8 @@ function getLabelFields(frames: DataFrame[]): Record<string, Field<string, Array
       }
 
       for (const labelName of Object.keys(field.labels)) {
-        if (!labelFields[labelName]) {
-          labelFields[labelName] = {
+        if (!labelFields[refId][labelName]) {
+          labelFields[refId][labelName] = {
             name: labelName,
             type: FieldType.string,
             config: {},
