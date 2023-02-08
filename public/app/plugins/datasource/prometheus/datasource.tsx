@@ -81,6 +81,7 @@ const GET_AND_POST_METADATA_ENDPOINTS = ['api/v1/query', 'api/v1/query_range', '
 export const InstantQueryRefIdIndex = '-Instant';
 
 type TargetIdent = string;
+type TargetSig = string;
 
 export class PrometheusDatasource
   extends DataSourceWithBackend<PromQuery, PromOptions>
@@ -111,6 +112,7 @@ export class PrometheusDatasource
   rulerEnabled: boolean;
 
   cachedFrames: Map<TargetIdent, DataFrame[]> = new Map();
+  cachedSigs: Map<TargetIdent, TargetSig> = new Map();
 
   constructor(
     instanceSettings: DataSourceInstanceSettings<PromOptions>,
@@ -465,18 +467,46 @@ export class PrometheusDatasource
       const requeryLastMs = 10 * 60 * 1000;
       const refreshMs = durationToMilliseconds(parseDuration(this.timeSrv.refresh));
       const doIncrementalQuery = refreshMs > 0 && fullRangeMs > requeryLastMs;
+      let doPartialQuery = doIncrementalQuery;
 
-      // modify to incremental query
+      const targSigs = new Map<TargetIdent, TargetSig>();
+
       if (doIncrementalQuery) {
-        if (this.cachedFrames.size > 0) {
+        // if the target signature changes from what's in cache, invalidate and do full range query
+        request.targets.forEach((targ) => {
+          let targIdent = `${request.dashboardUID}|${request.panelId}|${targ.refId}`;
+          let targSig = `${targ.expr}|${request.intervalMs}|${JSON.stringify(request.rangeRaw ?? '')}`; // ${request.maxDataPoints} ?
+
+          // console.log(targSig);
+
+          targSigs.set(targIdent, targSig);
+
+          let cachedSig = this.cachedSigs.get(targIdent);
+
+          if (cachedSig) {
+            if (cachedSig !== targSig) {
+              console.log('purge cache due to sig change!', targIdent);
+
+              this.cachedFrames.delete(targIdent);
+              this.cachedSigs.delete(targIdent);
+
+              doPartialQuery = false;
+            }
+          } else {
+            doPartialQuery = false;
+          }
+        });
+
+        if (doPartialQuery) {
+          console.log('do partial query');
+
+          // modify to incremental query
           request.range.from = moment(fullToTs - refreshMs - requeryLastMs) as DateTime;
           request.range.to = moment(fullToTs) as DateTime;
-
-          // TODO: adjust maxDataPoints as well?
+        } else {
+          console.log('do full query');
         }
       }
-
-      // dashboardUID, panelId, refId
 
       const targets = request.targets.map((target) => this.processTargetV2(target, request));
       const startTime = new Date();
@@ -485,11 +515,18 @@ export class PrometheusDatasource
           if (doIncrementalQuery) {
             const getFieldIdent = (field: Field) => `${field.type}|${field.name}|${JSON.stringify(field.labels ?? '')}`;
 
-            // group frames by targets (refIds)
+            // group frames by targets
             const respByTarget = new Map<TargetIdent, DataFrame[]>();
+
+            // what happens when a target disappears? panel/dash deleted?
+            // do we get notified when auto refresh is disabled?
+            // lazy-loaded panels?
+            // will need to account for per-panel refreshes in the future
+
             response.data.forEach((frame: DataFrame) => {
               if (frame.fields.length > 0 || frame.length > 0) {
-                let targIdent = `${frame.meta?.executedQueryString}|${request.maxDataPoints}|${request.intervalMs}`;
+                let targIdent = `${request.dashboardUID}|${request.panelId}|${frame.refId}`;
+
                 let frames = respByTarget.get(targIdent);
 
                 if (!frames) {
@@ -557,10 +594,12 @@ export class PrometheusDatasource
               // });
 
               this.cachedFrames.set(targIdent, cachedFrames);
+              this.cachedSigs.set(targIdent, targSigs.get(targIdent)!);
             });
 
             // TODO: trim fields/frames that were missing or empty in response
 
+            // if (doPartialQuery)
             request.range.from = moment(fullFromTs) as DateTime;
             request.range.to = moment(fullToTs) as DateTime;
 
