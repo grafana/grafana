@@ -3,7 +3,7 @@ import React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { DashboardSearchItemType } from '../types';
+import { NestedFolderItem } from '../service';
 
 import { Props, SearchItem } from './SearchItem';
 
@@ -11,22 +11,17 @@ beforeEach(() => {
   jest.clearAllMocks();
 });
 
-const data = {
-  id: 1,
+const dashboardResult: NestedFolderItem = {
   uid: 'lBdLINUWk',
   title: 'Test 1',
-  uri: 'db/test1',
   url: '/d/lBdLINUWk/test1',
-  slug: '',
-  type: DashboardSearchItemType.DashDB,
+  kind: 'dashboard',
   tags: ['Tag1', 'Tag2'],
-  isStarred: false,
-  checked: false,
 };
 
 const setup = (propOverrides?: Partial<Props>) => {
   const props: Props = {
-    item: data,
+    item: dashboardResult,
     onTagSelected: jest.fn(),
     editable: false,
   };
@@ -50,11 +45,11 @@ describe('SearchItem', () => {
     expect(checkbox).not.toBeChecked();
     fireEvent.click(checkbox);
     expect(mockedOnToggleChecked).toHaveBeenCalledTimes(1);
-    expect(mockedOnToggleChecked).toHaveBeenCalledWith(data);
+    expect(mockedOnToggleChecked).toHaveBeenCalledWith(dashboardResult);
   });
 
   it('should mark items as checked', () => {
-    setup({ editable: true, item: { ...data, checked: true } });
+    setup({ editable: true, item: { ...dashboardResult }, isSelected: true });
     expect(screen.getByRole('checkbox')).toBeChecked();
   });
 

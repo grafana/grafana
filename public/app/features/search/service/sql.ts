@@ -7,7 +7,7 @@ import { DEFAULT_MAX_VALUES, TYPE_KIND_MAP } from '../constants';
 import { DashboardSearchHit, DashboardSearchItemType } from '../types';
 
 import { LocationInfo, NestedFolderDTO, NestedFolderItem } from './types';
-import { replaceCurrentFolderQuery } from './utils';
+import { queryResultToNestedFolderItem, replaceCurrentFolderQuery } from './utils';
 
 import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery } from '.';
 
@@ -244,15 +244,8 @@ export class SQLSearcher implements GrafanaSearcher {
       limit: 1000,
     });
 
-    const dashboardItems: NestedFolderItem[] = dashboardsResults.view.map((item) => {
-      return {
-        kind: 'dashboard',
-        uid: item.uid,
-        title: item.name,
-        url: item.url,
-        tags: item.tags ?? [],
-        folderTitle: dashboardsResults.view.dataFrame.meta?.custom?.locationInfo[item.location].name,
-      };
+    const dashboardItems = dashboardsResults.view.map((item) => {
+      return queryResultToNestedFolderItem(item, dashboardsResults.view.dataFrame.meta);
     });
 
     const folders = await getChildFolders(parentUid);

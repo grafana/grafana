@@ -1,6 +1,7 @@
+import { QueryResultMeta } from '@grafana/data';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
-import { SearchQuery } from './types';
+import { DashboardQueryResult, NestedFolderItem, SearchQuery } from './types';
 
 /** prepare the query replacing folder:current */
 export async function replaceCurrentFolderQuery(query: SearchQuery): Promise<SearchQuery> {
@@ -33,4 +34,18 @@ async function getCurrentFolderUID(): Promise<string | undefined> {
 
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export function queryResultToNestedFolderItem(
+  item: DashboardQueryResult,
+  queryMeta?: QueryResultMeta
+): NestedFolderItem {
+  return {
+    kind: 'dashboard',
+    uid: item.uid,
+    title: item.name,
+    url: item.url,
+    tags: item.tags ?? [],
+    folderTitle: queryMeta?.custom?.locationInfo[item.location].name,
+  };
 }
