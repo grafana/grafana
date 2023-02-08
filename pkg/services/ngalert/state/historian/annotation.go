@@ -54,6 +54,9 @@ func (h *AnnotationBackend) RecordStatesAsync(ctx context.Context, rule history_
 	errCh := make(chan error, 1)
 	go func() {
 		defer close(errCh)
+		h.metrics.ActiveWriteGoroutines.Inc()
+		defer h.metrics.ActiveWriteGoroutines.Dec()
+
 		errCh <- h.recordAnnotations(ctx, panel, annotations, logger)
 	}()
 	return errCh
