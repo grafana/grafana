@@ -4667,7 +4667,7 @@ volumes:
   name: docker
 ---
 clone:
-  retries: 3
+  disable: true
 depends_on: []
 environment:
   EDITION: enterprise
@@ -6553,6 +6553,6 @@ kind: secret
 name: aws_secret_access_key
 ---
 kind: signature
-hmac: 231c3cfdadd0324e9b37b6fae0bd1b75c341759d80731e3f7dc20bd8f18db82a
+hmac: 0296dba0ce97a0397b18982ddb4ee46ba55d1027c204dcc18303959389bc67ed
 
 ...
