@@ -584,14 +584,10 @@ search_filter = "(cn=%s)"
 search_base_dns = ["dc=grafana,dc=org"]`)
 	require.NoError(t, errF)
 
-	setting.LDAPConfigFile = f.Name()
+	ldapConfigFile := f.Name()
 
 	errF = f.Close()
 	require.NoError(t, errF)
-
-	defer func() {
-		setting.LDAPConfigFile = ""
-	}()
 
 	getLDAPConfig = func(*setting.Cfg) (*ldap.Config, error) {
 		return &ldap.Config{}, nil
@@ -691,6 +687,7 @@ search_base_dns = ["dc=grafana,dc=org"]`)
 		t.Run(tt.desc, func(t *testing.T) {
 			_, server := setupAPITest(t, func(a *Service) {
 				a.userService = &usertest.FakeUserService{ExpectedUser: &user.User{Login: "ldap-daniel", ID: 1}}
+				a.cfg.LDAPConfigFilePath = ldapConfigFile
 			})
 			// Add minimal setup to pass handler
 			res, err := server.Send(
