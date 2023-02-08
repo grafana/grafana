@@ -29,12 +29,13 @@ export function runPartitionedQuery(datasource: LokiDatasource, request: DataQue
         next: (response) => {
           if (requestN > 1 && resultLimitReached(request, response) === false) {
             response.state = LoadingState.Streaming;
+            subscriber.next(response);
             next(subscriber, requestN - 1);
-          } else {
-            response.state = LoadingState.Done;
+            return;
           }
-
+          response.state = LoadingState.Done;
           subscriber.next(response);
+          subscriber.complete();
         },
         error: (error) => {
           subscriber.error(error);
